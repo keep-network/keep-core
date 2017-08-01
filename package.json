@@ -1,0 +1,25 @@
+{
+  "name": "keep-contracts",
+  "version": "0.1.0",
+  "description": "Smart Contracts for the Keep Network",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keep-network/contracts.git"
+  },
+  "scripts": {
+    "truffle": "truffle"
+  },
+  "author": "Matt Luongo <mhluongo@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keep-network/contracts/issues"
+  },
+  "homepage": "https://github.com/keep-network/contracts",
+  "dependencies": {
+    "zeppelin-solidity": "^1.2.0"
+  },
+  "devDependencies": {
+    "ethereumjs-testrpc": "^4.0.1",
+    "truffle": "^3.2.93"
+  }
+}
