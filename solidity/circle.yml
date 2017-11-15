@@ -1,0 +1,5 @@
+machine:
+  services:
+    - docker
+  node:
+    version: 8.1.2
