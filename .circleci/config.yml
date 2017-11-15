@@ -1,8 +1,11 @@
 version: 2
 jobs:
-   solidity:
-     docker:
-       - image: circleci/node:latest
-     steps:
-       - checkout
-       - run: echo "test"
+  test_solidity:
+    docker:
+      - image: circleci/node:latest
+
+workflows:
+  version: 2
+  solidity:
+    jobs:
+      - test_solidity
