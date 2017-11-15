@@ -1,15 +1,21 @@
 = Glossary
 
-Staker:: A staking client that has a stake, but may not yet be in a signing
-	group.
+Stake:: An amount of KEEP that is put in escrow in order to participate in the
+  threshold relay and, optionally, the Keep network. Part or all of this can be
+  removed from escrow as penalties for misbehavior, while part or all of it can
+  be refunded if and when a participant chooses to withdraw in orderly fashion
+  from the network and relay.
 
-Minimum Stake Amount:: The minimum stake that will make a staking client a
-	staker.
+Staker:: A staking client that has a stake, but may not yet be in a signing
+  group.
+
+Minimum Stake Amount:: The minimum stake amount that will make a staking client
+  a staker.
 
 Stake Amount:: Total KEEP deposited for a single stake.
 
 Signing Member:: One member of one complete signing group in the threshold
-	relay.
+  relay.
 
 Signing Group:: One complete signing group in the threshold relay.
 
