@@ -1,3 +1,6 @@
+general:
+  build_dir: solidity
+
 machine:
   services:
     - docker
