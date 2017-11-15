@@ -1,0 +1,8 @@
+general:
+  build_dir: solidity
+
+machine:
+  services:
+    - docker
+  node:
+    version: 8.1.2
