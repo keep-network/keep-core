@@ -5,7 +5,7 @@ jobs:
       - image: circleci/node:latest
     steps:
         - checkout
-        - run: echo "test"
+        - run: cd solidity && npm install && npm run test && npm run posttest
 
 workflows:
   version: 2
