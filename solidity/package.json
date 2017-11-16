@@ -8,8 +8,7 @@
   },
   "scripts": {
     "truffle": "truffle",
-    "test": "docker run -d -p 8545:8545 --name testrpc wbuchwalter/testrpc  && truffle test",
-    "posttest": "docker stop testrpc"
+    "test": "truffle test"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
   "license": "MIT",
