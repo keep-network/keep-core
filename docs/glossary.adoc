@@ -63,11 +63,19 @@ Keep Owner, Delegate, Requester are described in the whitepaper.
 
 == Verbs
 
-The system *assigns* one *seat* of one *keep* to a *keep provider*.
+The network *assigns* one *seat* of one *keep* to a *keep provider*.
 
 One *keep provider* can only be assigned one *seat* for any given *keep*.
 
 One *keep* has 1 or more *seats*, which correspond to unique *keep providers*.
+
+One *staker* becomes a *signing member* on the threshold relay when the *signing
+group* they are a member of is *complete*.
+
+One *signing group* is *activated* once it is *complete* (meaning, it has a
+number of stakers assigned to it equal to the *signing group size*),
+*initialized* (meaning, the stakers have generated their key shares and the
+group has a public key registered), and the *activation delay* has elapsed.
 
 == Relationships
 
@@ -75,6 +83,13 @@ A greater *stake amount* leads to a greater probability of being *assigned* a
 *keep*.
 
 A greater number of *seats* costs more *native token* over time.
+
+The *threshold relay* generates one or more new *relay entry candidates* on
+request. One block on the chain can contain one or more requests for new relay
+entries.
+
+The pending *relay entry candidates* are finalized on the chain into *relay
+entries*.
 
 == Paying
 
