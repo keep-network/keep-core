@@ -8,10 +8,23 @@ contract TestKeepToken {
   KeepToken keepToken = KeepToken(DeployedAddresses.KeepToken());
 
   function testTotalSupply() {
-    uint returned = keepToken.totalSupply();
-
-    uint expected = 0;
-
-    Assert.equal(returned, expected, "Should start with a totalSupply of 0.");
+    // uint expected = 10000000000000000000000;
+    // Assert.equal(keepToken.balanceOf(tx.origin), expected, "Owner should have all KEEP tokens initially");
   }
+
+  function testCanStake() {
+  }
+
+  function testCanInitiateUnstake() {
+  }
+
+  function testCanFinishUnstakeAfterDelayIsOver() {
+  }
+
+  function testCannotFinishUnstakeBeforeDelayIsOver() {
+  }
+
+  function testCannotWithdrawStakeBeforeDelayIsOver() {
+  }
+
 }
