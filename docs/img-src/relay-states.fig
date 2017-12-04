@@ -1,0 +1,47 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{tikz}
+
+\begin{document}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows.meta}
+
+\tikz[state/.style={draw,circle,align=flush center},
+      decision/.style={draw,rectangle,align=flush center},
+      % Nested states and decisions use doubled borders to indicate
+      % that you have to reference a different diagram.
+      nested state/.style={draw,circle,double,align=flush center},
+      nested decision/.style={draw,rectangle,double,align=flush center},
+      % Set default arrow style to sealth.
+      >=Stealth]{
+
+  \node[state] (start) {};
+
+  \node[decision] (stake check) [right=of start] {Staked?}
+    edge [<-] (start)
+    edge [->,bend left=45] node [auto,below] {No} (start);
+
+  \node[state] (available) [right=2cm of stake check] {Available\\for group}
+    edge [<-,bend right=45] node [auto,above,sloped,near end] {Yes} node [auto,above,sloped,near start] {join \tt{libp2p}} (stake check);
+  \node[state] (completing) [right=4cm of available,text width=1.5cm] {Waiting for complete group}
+    edge [<-,bend right=45] node [auto,above] {assigned to group} (available);
+  \node[state] (generating) [below=3cm of completing] {Generating\\key material}
+    edge [<-,bend right=45] node [auto,above] {group complete} (completing);
+
+  \node[nested decision] (verifying group) [left=4cm of generating,text width=2cm] {Valid group material?}
+    edge [<-] node [auto,above] {material generated} (generating)
+    edge [->,bend left=45] node [auto,above] {no, abandon group} (available);
+
+  \node[state] (publishing) [below left=3cm of verifying group,text width=1.8cm] {Publishing group key}
+    edge [<-,bend left=45] node [auto,below,sloped] {material verified} (verifying group);
+
+  \node[state] (pending) [right=4cm of publishing,text width=1.7cm] {Pending activation}
+    edge [<-] node [auto,below] {group added to registry} (publishing);
+
+  \node[nested state] (waiting) [below=3cm of pending,text width=1.5cm] {Waiting for request}
+    edge [<-,bend right=45] node [auto,above] {group activated} (pending);
+}
+
+\end{document}
