@@ -65,11 +65,11 @@ contract VestableToken is StandardToken {
    * @param _duration duration in seconds of the period in which the tokens will vest
    * @param _revocable whether the vesting is revocable or not
    */
-  function newVesting(uint256 _amount, address _beneficiary, uint256 _duration, uint256 _start, uint256 _cliff, bool _revocable) public returns (uint256) {
+  function vest(uint256 _amount, address _beneficiary, uint256 _duration, uint256 _start, uint256 _cliff, bool _revocable) public returns (uint256) {
     require(_beneficiary != address(0));
     require(_cliff <= _duration);
     require(_amount <= balances[msg.sender]);
-
+    
     // Create new vesting schedule
     uint256 id = numVestings++;
     vestings[id] = Vesting(msg.sender, _beneficiary, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);

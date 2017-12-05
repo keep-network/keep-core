@@ -4,7 +4,7 @@ import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/KeepToken.sol";
 
-contract TestKeepToken {  
+contract TestKeepTokenStaking {  
   
   // Create KEEP token with 30 days withdrawal delay
   KeepToken token = new KeepToken(30 days);
