@@ -17,15 +17,10 @@ contract KeepToken is StakableToken, VestableToken {
 
   /**
    * @dev Gives msg.sender all of existing tokens.
+   * @param _withdrawalDelay Delay for stake and vested stake withdrawals
    */
-  function KeepToken() {
+  function KeepToken(uint256 _withdrawalDelay) StakableToken(_withdrawalDelay) VestableToken(_withdrawalDelay) {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
-
-    // Stakable token withdrawal delay
-    stakeWithdrawalDelay = 1000;
-
-    // Vestable token withdrawal delay
-    vestingWithdrawalDelay = 1000;
   }
 }

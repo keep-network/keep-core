@@ -31,6 +31,10 @@ contract StakableToken is StandardToken {
   // Stake withdrawals
   mapping(uint256 => StakeWithdrawal) public stakeWithdrawals;
   
+  function StakableToken(uint256 _withdrawalDelay) {
+    stakeWithdrawalDelay = _withdrawalDelay;
+  }
+
   /**
   * @dev Stake tokens
   * @param _value The amount to be staked
@@ -79,5 +83,14 @@ contract StakableToken is StandardToken {
   */
   function stakeBalanceOf(address _owner) public constant returns (uint256 stakeBalance) {
     return stakeBalances[_owner];
+  }
+
+  /**
+  * @dev Gets withdrawal request by ID.
+  * @param _id ID of withdrawal request.
+  * @return owner, amount, start, released.
+  */
+  function getWithdrawal(uint256 _id) public constant returns (address, uint256, uint256, bool) {
+    return (stakeWithdrawals[_id].owner, stakeWithdrawals[_id].amount, stakeWithdrawals[_id].start, stakeWithdrawals[_id].released);
   }
 }

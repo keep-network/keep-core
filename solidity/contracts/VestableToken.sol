@@ -28,16 +28,23 @@ contract VestableToken is StandardToken {
     uint256 released;
   }
 
-  uint256 numVestings;
+  uint256 public numVestings;
+  uint256 public vestingStakeWithdrawalDelay;
 
   // Vesting balances
   // Sum of all vested tokens to a beneficiary
   mapping(address => uint256) public vestingBalances;
+
+  mapping(address => uint256) public vestingStakedBalances;
   
+
   // Vestings
   mapping(uint256 => Vesting) public vestings;
   
   
+  function VestableToken(uint256 _withdrawalDelay) {
+    vestingStakeWithdrawalDelay = _withdrawalDelay;
+  }
 
   /**
   * @dev Gets the vesting balance of the specified address.
@@ -93,7 +100,24 @@ contract VestableToken is StandardToken {
 
     VestingReleased(unreleased);
   }
- 
+  
+  /**
+   * @notice Stake vested tokens.
+   * Stakable vested amount is the amount of vested tokens minus what user already released
+   * @param _id Vesting ID
+   */
+  function stakeVesting(uint256 _id) public {
+    require(!vestings[_id].locked);
+    require(!vestings[_id].revoked);
+
+    uint256 available = vestings[_id].amount.sub(vestings[_id].released);
+    require(available > 0);
+
+    vestings[_id].locked = true;
+  
+    // Transfer tokens to beneficiary vesting stake balance
+    vestingStakedBalances[vestings[_id].beneficiary] = vestingStakedBalances[vestings[_id].beneficiary].sub(available);
+  }
 
   /**
    * @dev Calculates the amount that has already vested, 
