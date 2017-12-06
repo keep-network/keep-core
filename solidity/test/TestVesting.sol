@@ -3,9 +3,9 @@ pragma solidity ^0.4.18;
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/KeepToken.sol";
-import "./ThrowProxy.sol";
+import "./helpers/ThrowProxy.sol";
 
-contract TestKeepTokenVesting {  
+contract TestVesting {  
   
   // Create KEEP token with 30 days withdrawal delay
   KeepToken token = new KeepToken(30 days);
@@ -15,11 +15,6 @@ contract TestKeepTokenVesting {
   uint vestingStart = now;
   uint vestingDuration = 10 days;
   uint vestingCliff = 0;
-
-  function testTotalSupply() {
-    uint expected = token.INITIAL_SUPPLY();
-    Assert.equal(token.balanceOf(address(this)), expected, "Owner should have all tokens initially");
-  }
 
   // Token holder should be able to vest it's tokens to a beneficiary
   function testCanVest() {
@@ -45,7 +40,6 @@ contract TestKeepTokenVesting {
 
   function testCannotReleaseVestedAmmount() {
     Assert.equal(token.releasableVestedAmount(vestingId), 0, "ReleasableVestedAmount should be 0");
-
 
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
     ThrowProxy throwProxy = new ThrowProxy(address(token));
