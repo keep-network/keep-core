@@ -2,46 +2,84 @@
 \usepackage[utf8]{inputenc}
 
 \usepackage{tikz}
+\usepackage[colorlinks=true]{hyperref}
 
 \begin{document}
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{arrows.meta}
 
-\tikz[state/.style={draw,circle,align=flush center},
-      decision/.style={draw,rectangle,align=flush center},
-      % Nested states and decisions use doubled borders to indicate
-      % that you have to reference a different diagram.
-      nested state/.style={draw,circle,double,align=flush center},
-      nested decision/.style={draw,rectangle,double,align=flush center},
-      % Set default arrow style to sealth.
-      >=Stealth]{
+\begin{figure}
+  \tikz[state/.style={draw,circle,align=flush center},
+        decision/.style={draw,rectangle,align=flush center},
+        % Nested states and decisions use doubled borders to indicate
+        % that you have to reference a different diagram.
+        nested state/.style={draw,circle,double,align=flush center},
+        nested decision/.style={draw,rectangle,double,align=flush center},
+        % Set default arrow style to sealth.
+        >=Stealth]{
 
-  \node[state] (start) {};
+    \node[state] (start) {};
 
-  \node[decision] (stake check) [right=of start] {Staked?}
-    edge [<-] (start)
-    edge [->,bend left=45] node [auto,below] {No} (start);
+    \node[decision] (stake check) [right=of start] {Staked?}
+      edge [<-] (start)
+      edge [->,bend left=45] node [auto,below] {No} (start);
 
-  \node[state] (available) [right=2cm of stake check] {Available\\for group}
-    edge [<-,bend right=45] node [auto,above,sloped,near end] {Yes} node [auto,above,sloped,near start] {join \tt{libp2p}} (stake check);
-  \node[state] (completing) [right=4cm of available,text width=1.5cm] {Waiting for complete group}
-    edge [<-,bend right=45] node [auto,above] {assigned to group} (available);
-  \node[state] (generating) [below=3cm of completing] {Generating\\key material}
-    edge [<-,bend right=45] node [auto,above] {group complete} (completing);
+    \node[state] (available) [right=2cm of stake check] {Available\\for group}
+      edge [<-,bend right=45] node [auto,above,sloped,near end] {Yes} node [auto,above,sloped,near start] {join \tt{libp2p}} (stake check);
+    \node[state] (completing) [right=4cm of available,text width=1.5cm] {Waiting for complete group}
+      edge [<-,bend right=45] node [auto,above] {assigned to group} (available);
+    \node[state] (generating) [below=3cm of completing] {Generating\\key material}
+      edge [<-,bend right=45] node [auto,above] {group complete} (completing);
 
-  \node[nested decision] (verifying group) [left=4cm of generating,text width=2cm] {Valid group material?}
-    edge [<-] node [auto,above] {material generated} (generating)
-    edge [->,bend left=45] node [auto,above] {no, abandon group} (available);
+    \node[nested decision] (verifying group) [left=4cm of generating,text width=2cm] {Valid group material?}
+      edge [<-] node [auto,above] {material generated} (generating)
+      edge [->,bend left=45] node [auto,above] {no, abandon group} (available);
 
-  \node[state] (publishing) [below left=3cm of verifying group,text width=1.8cm] {Publishing group key}
-    edge [<-,bend left=45] node [auto,below,sloped] {material verified} (verifying group);
+    \node[state] (publishing) [below left=3cm of verifying group,text width=1.8cm] {Publishing group key}
+      edge [<-,bend left=45] node [auto,below,sloped] {material verified} (verifying group);
 
-  \node[state] (pending) [right=4cm of publishing,text width=1.7cm] {Pending activation}
-    edge [<-] node [auto,below] {group added to registry} (publishing);
+    \node[state] (pending) [right=4cm of publishing,text width=1.7cm] {Pending activation}
+      edge [<-] node [auto,below] {group added to registry} (publishing);
 
-  \node[nested state] (waiting) [below=3cm of pending,text width=1.5cm] {Waiting for request}
-    edge [<-,bend right=45] node [auto,above] {group activated} (pending);
-}
+    \node[nested state] (processing) [below=3cm of pending,text width=1.7cm] {\hyperref[fig:request-processing]{Processing requests}}
+      edge [<-,bend right=45] node [auto,above] {group activated} (pending);
+  }
 
+  \caption{\label{fig:initialization}Initialization Process}
+\end{figure}
+
+\begin{figure}
+  \tikz[state/.style={draw,circle,align=flush center},
+        decision/.style={draw,rectangle,align=flush center},
+        % Nested states and decisions use doubled borders to indicate
+        % that you have to reference a different diagram.
+        nested state/.style={draw,circle,double,align=flush center},
+        nested decision/.style={draw,rectangle,double,align=flush center},
+        % Set default arrow style to sealth.
+        >=Stealth]{
+
+    \node[state] (initialization) [text width=1.7cm] {\hyperref[fig:initialization]{Pending Activation}};
+
+    \node[state] (waiting) [right=of initialization,text width=1.5cm] {Waiting for request}
+      edge [<-] node [auto] {} (initialization);
+
+    \node[decision] (determining) [right=3cm of waiting,text width=2cm] {Is group responsible?}
+      edge [<-] node [auto,above] {request received} (waiting)
+      edge [->,bend left=45] node [auto,below] {No} (waiting);
+
+    \node[state] (generating) [right=2cm of determining,text width=1.7cm] {Generating signature share}
+      edge [<-] node [auto,above] {Yes} (determining);
+
+    % Brodcasting? Might just be part of generating.
+    \node[state] (verifying shares) [below=2cm of generating,text width=1.7cm] {Verifying shares}
+      edge [<-,bend right=45] node [auto] {share generated} (generating);
+
+    \node[state] (submitting) [left=3cm of verifying shares,text width=1.7cm] {Submitting signature}
+      edge [<-] node [auto,below] {signature ready} (verifying shares)
+      edge [->,bend left=45] node [auto,below] {signature submitted} (waiting);
+  }
+
+  \caption{\label{fig:request-processing} Request Processing}
+\end{figure}
 \end{document}
