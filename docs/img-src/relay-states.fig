@@ -1,15 +1,42 @@
+
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 
 \usepackage{tikz}
 \usepackage[colorlinks=true]{hyperref}
+\usepackage{varwidth}
 
 \begin{document}
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes.symbols}
+\usetikzlibrary{calc}
 
 \begin{figure}
+  \label{fig:startup}
+
+  \tikz[every node/.style={node distance=2cm},
+        thread/.style={draw,signal,signal to=east,fill=white},
+        decision/.style={draw,rectangle,align=flush center},
+        fan/.style={to path={-- ++(0.5,0) -| ($ (\tikztotarget) - (1,0) $) -- (\tikztotarget)}}]{
+    \node[draw,circle] (start) {};
+
+    \node[thread] (group participation) [above right=2cm and 2cm of start] {\hyperref[fig:relay-group-initialization]{Relay group participation}};
+    \node[thread] (verification) [right=of start] {\hyperref[fig:relay-entry-verification-initialization]{Relay entry verification}};
+    \node[thread] (keep client) [below right=2cm and 2cm of start] {\hyperref[fig:keep-client-initialization]{Keep client}};
+
+    \path [->] (start) edge [fan]  (group participation.west)
+               (start) edge [fan]  (verification.west)
+               (start) edge [fan]  (keep client.west);
+  }
+
+  \caption{Startup Process}
+\end{figure}
+
+\begin{figure}
+  \label{fig:relay-group-initialization}
+
   \tikz[state/.style={draw,circle,align=flush center},
         decision/.style={draw,rectangle,align=flush center},
         % Nested states and decisions use doubled borders to indicate
@@ -28,7 +55,7 @@
     \node[state] (available) [right=2cm of stake check] {Available\\for group}
       edge [<-,bend right=45] node [auto,above,sloped,near end] {Yes} node [auto,above,sloped,near start] {join \tt{libp2p}} (stake check);
     \node[state] (completing) [right=4cm of available,text width=1.5cm] {Waiting for complete group}
-      edge [<-,bend right=45] node [auto,above] {assigned to group} (available);
+      edge [<-] node [auto,above] {assigned to group} (available);
     \node[state] (generating) [below=3cm of completing] {Generating\\key material}
       edge [<-,bend right=45] node [auto,above] {group complete} (completing);
 
@@ -37,19 +64,21 @@
       edge [->,bend left=45] node [auto,above] {no, abandon group} (available);
 
     \node[state] (publishing) [below left=3cm of verifying group,text width=1.8cm] {Publishing group key}
-      edge [<-,bend left=45] node [auto,below,sloped] {material verified} (verifying group);
+      edge [<-,bend left=45] node [auto,above,sloped] {material verified} (verifying group);
 
     \node[state] (pending) [right=4cm of publishing,text width=1.7cm] {Pending activation}
       edge [<-] node [auto,below] {group added to registry} (publishing);
 
-    \node[nested state] (processing) [below=3cm of pending,text width=1.7cm] {\hyperref[fig:request-processing]{Processing requests}}
+    \node[nested state] (processing) [below=3cm of pending,text width=1.7cm] {\hyperref[fig:relay-entry-request-processing]{Processing requests}}
       edge [<-,bend right=45] node [auto,above] {group activated} (pending);
   }
 
-  \caption{\label{fig:initialization}Initialization Process}
+  \caption{Relay Group Initialization}
 \end{figure}
 
 \begin{figure}
+  \label{fig:relay-entry-request-processing} 
+
   \tikz[state/.style={draw,circle,align=flush center},
         decision/.style={draw,rectangle,align=flush center},
         % Nested states and decisions use doubled borders to indicate
@@ -80,6 +109,36 @@
       edge [->,bend left=45] node [auto,below] {signature submitted} (waiting);
   }
 
-  \caption{\label{fig:request-processing} Request Processing}
+  \caption{Relay Entry Request Processing}
+\end{figure}
+
+\begin{figure}
+  \label{fig:relay-entry-verification-initialization}
+
+  \tikz[state/.style={draw,circle,align=flush center},
+        decision/.style={draw,rectangle,align=flush center},
+        % Nested states and decisions use doubled borders to indicate
+        % that you have to reference a different diagram.
+        nested state/.style={draw,circle,double,align=flush center},
+        nested decision/.style={draw,rectangle,double,align=flush center},
+        % Set default arrow style to sealth.
+        >=Stealth]{
+    \node [state] (start) {};
+
+    \node [state] (waiting for entry) [right=of start,text width=1.8cm] {Waiting for relay entry}
+      edge [<-] (start);
+
+    \node [decision] (verifying) [right=4cm of waiting for entry] {Is entry valid?}
+      edge [<-] node [auto,above] {relay entry published} (waiting for entry)
+      edge [->,bend left=45] node [auto] {Yes} (waiting for entry);
+
+    \node [state] (calling chain verification) [right=2cm of verifying,text width=1.8cm] {Calling on-chain verification}
+      edge [<-] node [auto,above] {No} (verifying)
+      % If on-chain verification fails do we back off?
+      edge [->,bend right=45] node [auto,above] {on-chain verification complete} (waiting for entry);
+  }
+
+  \caption{Relay Entry Verification Initialization}
 \end{figure}
 \end{document}
+
