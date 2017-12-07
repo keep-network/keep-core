@@ -3,10 +3,15 @@ package beacon
 import (
 	"fmt"
 
-	"./membership"
+	"keep-network/beacon/entry"
+	"keep-network/beacon/membership"
+	"keep-network/beacon/relay"
 )
 
 type participantState int
+
+// FIXME To become something more real...
+type libp2pHandle int
 
 const (
 	unstaked participantState = iota
@@ -22,8 +27,7 @@ const (
 
 func initialize() {
 	if curParticipantState, err := checkParticipantState(); err != nil {
-		fmt.Printf("Could not resolve current relay state, aborting: [%s]", err)
-		panic("Unknown participant state, aborting.")
+		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	} else {
 		switch curParticipantState {
 		case unstaked:
@@ -38,31 +42,39 @@ func checkParticipantState() (participantState, error) {
 	return unstaked, nil
 }
 
-func libp2pConnected() {
-	// get
-	participantState := staked
-	switch participantState {
-	case staked:
-		membership.WaitForGroup()
-	case waitingForGroup:
-		membership.WaitForGroup()
-	case inIncompleteGroup:
-		membership.WaitForGroupCompletion()
-	case inCompleteGroup:
-		membership.InitializeMembership()
-	case inInitializingGroup:
-		membership.InitializeMembership()
-	case inInitializedGroup:
-		membership.ActivateMembership()
-	case inActivatingGroup:
-		membership.ActivateMembership()
-	case inActiveGroup:
-		startRelay()
-	default:
-		panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
-	}
+func checkNetworkParticipantState(handle libp2pHandle) (participantState, error) {
+	// FIXME This will be a real handle, and we will do something real with it.
+	fmt.Println(handle)
+
+	// FIXME This will return a real libp2p-based state: are we waiting for a
+	// group, in an incomplete one, in a complete one, etc.
+	return unstaked, nil
 }
 
-func startRelay() {
-	// Start listening for beacon requests on chain.
+func libp2pConnected(handle libp2pHandle) {
+	if participantState, err := checkNetworkParticipantState(handle); err != nil {
+		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
+	} else {
+		switch participantState {
+		case staked:
+			membership.WaitForGroup()
+		case waitingForGroup:
+			membership.WaitForGroup()
+		case inIncompleteGroup:
+			membership.WaitForGroupCompletion()
+		case inCompleteGroup:
+			membership.InitializeMembership()
+		case inInitializingGroup:
+			membership.InitializeMembership()
+		case inInitializedGroup:
+			membership.ActivateMembership()
+		case inActivatingGroup:
+			membership.ActivateMembership()
+		case inActiveGroup:
+			// FIXME We should have a non-empty state at this point ;)
+			entry.ServeRequests(relay.EmptyState())
+		default:
+			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
+		}
+	}
 }
