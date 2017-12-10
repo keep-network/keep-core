@@ -1,0 +1,39 @@
+% -*- root: relay-states-preview.tex -*-
+\tikz{
+  \node[state] (start) {};
+
+  \node[decision] (stake check) [right=of start] {Staked?};
+
+  \node[state] (available) [right=2cm of stake check] {Available\\for group};
+  \node[state] (completing) [right=4cm of available,text width=1.5cm] {Waiting for complete group};
+  \node[state] (generating) [below=3cm of completing] {Generating\\key material};
+
+  \node[nested decision] (verifying group) [left=4cm of generating,text width=2cm] {Valid group material?};
+
+  \node[state] (publishing) [below left=3cm of verifying group,text width=1.8cm] {Publishing group key};
+
+  \node[state] (pending) [right=4cm of publishing,text width=1.7cm] {Pending activation};
+
+  \node[nested state] (processing) [below=3cm of pending,text width=1.7cm] {\hyperref[fig:relay-entry-request-processing]{Processing requests}};
+
+  \path [->] (start) edge (stake check)
+
+             (stake check) edge [bend left=45] node [below] {No} (start)
+             (stake check) edge [bend left=45]
+               node [sloped,near start] {join \tt{libp2p}}
+               node [sloped,near end] {Yes}
+               (available)
+
+             (available) edge node {assigned to group} (completing)
+
+             (completing) edge [bend left=45] node {group complete} (generating)
+
+             (generating) edge node {material generated} (verifying group)
+ 
+             (verifying group) edge [bend left=45] node {no, abandon group} (available)
+             (verifying group) edge [bend right=45] node [sloped] {material verified} (publishing)
+
+             (publishing) edge node {group added to registry} (pending)
+
+             (pending) edge [bend left=45] node {group activated} (processing);
+}
