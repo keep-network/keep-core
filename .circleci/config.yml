@@ -6,6 +6,15 @@ jobs:
     steps:
         - checkout
         - run: echo "test"
+  build_client:
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          docker build .
   generate_docs:
     docker:
       - image: thomasweise/texlive
@@ -25,7 +34,9 @@ workflows:
   solidity:
     jobs:
       - test_solidity
-
   docs:
     jobs:
       - generate_docs
+  go:
+    jobs:
+      - build_client
