@@ -1,15 +1,21 @@
 pragma solidity ^0.4.18;
 
+import 'zeppelin-solidity/contracts/token/BasicToken.sol';
 import 'zeppelin-solidity/contracts/token/StandardToken.sol';
+import 'zeppelin-solidity/contracts/token/SafeERC20.sol';
+import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 
 /**
- * @title StakableToken
- * @dev Adds staking functionality to the token. 
- * Staking balance can be withdrawn by the token holder.
+ * @title TokenStaking
+ * @dev Token Staking contract that stake and unstake ERC20 tokens. 
  * 
  */
-contract StakableToken is StandardToken {
+contract TokenStaking is BasicToken {
   using SafeMath for uint256;
+  using SafeERC20 for StandardToken;
+
+  // Token contract
+  StandardToken public token;
 
   event Stake(address indexed from, uint256 value);
   event InitiateUnstake(uint256 id);
@@ -31,8 +37,9 @@ contract StakableToken is StandardToken {
   // Stake withdrawals
   mapping(uint256 => StakeWithdrawal) public stakeWithdrawals;
   
-  function StakableToken(uint256 _withdrawalDelay) {
-    stakeWithdrawalDelay = _withdrawalDelay;
+  function TokenStaking(StandardToken _token, uint256 _delay) {
+    stakeWithdrawalDelay = _delay;
+    token = _token;
   }
 
   /**
@@ -40,9 +47,15 @@ contract StakableToken is StandardToken {
   * @param _value The amount to be staked
   */
   function stake(uint256 _value) public returns (bool) {
-    require(_value <= balances[msg.sender]);
 
-    balances[msg.sender] = balances[msg.sender].sub(_value);
+    // make sure sender has enough tokens
+    require(_value <= token.balanceOf(msg.sender));
+
+    // transfer tokens from sender balance to this staking contract balance
+    // Sender should approve the amount first by calling approve() on the token
+    token.transferFrom(msg.sender, this, _value);
+
+    // keep record of the stake amount by the sender
     stakeBalances[msg.sender] = stakeBalances[msg.sender].add(_value);
     Stake(msg.sender, _value);
     return true;
@@ -72,7 +85,11 @@ contract StakableToken is StandardToken {
     require(!stakeWithdrawals[_id].released);
     require(now >= stakeWithdrawals[_id].start.add(stakeWithdrawalDelay));
     stakeWithdrawals[_id].released = true;
-    balances[msg.sender] = balances[msg.sender].add(stakeWithdrawals[_id].amount);
+    
+    // transfer tokens from this staking contract balance to the sender token balance
+    // no need to call approve since msg.sender will be this staking contract
+    token.safeTransfer(stakeWithdrawals[_id].owner, stakeWithdrawals[_id].amount);
+
     FinishUnstake();
   }
 

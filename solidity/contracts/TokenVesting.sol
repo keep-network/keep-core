@@ -1,19 +1,26 @@
 pragma solidity ^0.4.18;
 
+import 'zeppelin-solidity/contracts/token/BasicToken.sol';
 import 'zeppelin-solidity/contracts/token/StandardToken.sol';
+import 'zeppelin-solidity/contracts/token/SafeERC20.sol';
+import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 
 /**
- * @title VestableToken
- * @dev Adds vesting functionality to the token. 
+ * @title TokenVesting
+ * @dev Token Vesting contract that vest and stake/unstake vested ERC20 tokens.  
  * Vesting balance released to the beneficiary gradually like a
  * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
  * owner.
  */
-contract VestableToken is StandardToken {
+contract TokenVesting is BasicToken {
   using SafeMath for uint256;
+  using SafeERC20 for StandardToken;
 
   event NewVesting(uint256 id);
   event VestingReleased(uint256 amount);
+
+  // Token contract
+  StandardToken public token;
 
   struct Vesting {
     address owner;
@@ -28,6 +35,7 @@ contract VestableToken is StandardToken {
     uint256 released;
   }
 
+  uint256 public stakeWithdrawalDelay;
   uint256 public numVestings;
 
   // Vesting balances
@@ -38,7 +46,9 @@ contract VestableToken is StandardToken {
   mapping(uint256 => Vesting) public vestings;
   
   
-  function VestableToken() {
+  function TokenVesting(StandardToken _token, uint256 _delay) {
+    stakeWithdrawalDelay = _delay;
+    token = _token;
   }
 
   /**
@@ -69,8 +79,11 @@ contract VestableToken is StandardToken {
     uint256 id = numVestings++;
     vestings[id] = Vesting(msg.sender, _beneficiary, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
 
-    // Transfer amount from sender to the beneficiary vesting balance
-    balances[msg.sender] = balances[msg.sender].sub(_amount);
+    // Transfer amount from sender to this vesting contract
+    // Sender should approve the amount first by calling approve() on the token
+    token.transferFrom(msg.sender, this, _value);
+
+    // keep record of the vested amount by the sender 
     vestingBalances[_beneficiary] = vestingBalances[_beneficiary].add(_amount);
     NewVesting(id);
     return id;
@@ -89,9 +102,11 @@ contract VestableToken is StandardToken {
     // Update released amount
     vestings[_id].released = vestings[_id].released.add(unreleased);
 
-    // Transfer tokens to beneficiary balance
+    // Update beneficiary vesting balance
     vestingBalances[vestings[_id].beneficiary] = vestingBalances[vestings[_id].beneficiary].sub(unreleased);
-    balances[vestings[_id].beneficiary] = balances[vestings[_id].beneficiary].add(unreleased);
+
+    // Transfer tokens from this vesting contract balance to the beneficiary token balance
+    token.safeTransfer(vestings[_id].beneficiary, unreleased);
 
     VestingReleased(unreleased);
   }
