@@ -45,7 +45,12 @@ contract TokenVesting is BasicToken {
   // Vestings
   mapping(uint256 => Vesting) public vestings;
   
-  
+  // Vestings stake balances
+  mapping(address => uint256) public vestingStakeBalances;
+
+  // Vesting stake withdrawals
+  mapping(uint256 => uint256) public vestingStakeWithdrawalStart;
+
   function TokenVesting(StandardToken _token, uint256 _delay) {
     stakeWithdrawalDelay = _delay;
     token = _token;
@@ -73,7 +78,7 @@ contract TokenVesting is BasicToken {
   function vest(uint256 _amount, address _beneficiary, uint256 _duration, uint256 _start, uint256 _cliff, bool _revocable) public returns (uint256) {
     require(_beneficiary != address(0));
     require(_cliff <= _duration);
-    require(_amount <= balances[msg.sender]);
+    require(_amount <= token.balanceOf(msg.sender));
     
     // Create new vesting schedule
     uint256 id = numVestings++;
@@ -81,7 +86,7 @@ contract TokenVesting is BasicToken {
 
     // Transfer amount from sender to this vesting contract
     // Sender should approve the amount first by calling approve() on the token
-    token.transferFrom(msg.sender, this, _value);
+    token.transferFrom(msg.sender, this, _amount);
 
     // keep record of the vested amount by the sender 
     vestingBalances[_beneficiary] = vestingBalances[_beneficiary].add(_amount);
@@ -136,4 +141,81 @@ contract TokenVesting is BasicToken {
     uint256 released = vestings[_id].released;
     return vestedAmount(_id).sub(released);
   }
+
+
+  /**
+   * @notice Stake vesting.
+   * Stakable vested amount is the amount of vested tokens minus what user already released from the vesting
+   * @param _id Vesting ID
+   */
+  function stakeVesting(uint256 _id) public {
+
+    // Vesting must be unlocked and not revoked
+    require(!vestings[_id].locked);
+    require(!vestings[_id].revoked);
+  
+    // Make sure decision to unstake is up to the beneficiary of the vesting
+    require(vestings[_id].beneficiary == msg.sender);
+    // Calculate available amount. Amount of vested tokens minus what user already released
+    uint256 available = vestings[_id].amount.sub(vestings[_id].released);
+    require(available > 0);
+
+    // Lock vesting from releasing it's balance
+    vestings[_id].locked = true;
+  
+    // Transfer tokens to beneficiary's vesting stake balance
+    vestingStakeBalances[vestings[_id].beneficiary] = vestingStakeBalances[vestings[_id].beneficiary].add(available);
+  }
+
+  /**
+   * @notice Initiate unstake of the vesting.
+   * @param _id Vesting ID
+   */
+  function initiateUnstakeVesting(uint256 _id) public {
+
+    // Vesting must be locked and not revoked
+    require(vestings[_id].locked);
+    require(!vestings[_id].revoked);
+
+    // Make sure decision to unstake is up to the beneficiary of the vesting
+    require(msg.sender == vestings[_id].beneficiary);
+    
+    // Vesting withdrawal start shouldn't be set
+    require(vestingStakeWithdrawalStart[_id] == 0);
+
+    // Set vesting stake withdrawal start
+    vestingStakeWithdrawalStart[_id] = now;
+  }
+
+  /**
+  * @dev Finish unstake of the vesting
+  * @param _id Vesting ID
+  */
+  function finishUnstakeVesting(uint256 _id) public {
+
+    // Vesting withdrawal start must be set
+    require(vestingStakeWithdrawalStart[_id] > 0);
+
+    // Vesting must be locked and not revoked
+    require(vestings[_id].locked);
+    require(!vestings[_id].revoked);
+
+    // Vesting withdrawal delay should be over
+    require(now >= vestingStakeWithdrawalStart[_id].add(stakeWithdrawalDelay));
+
+    // Calculate vesting amount that was staked
+    uint256 available = vestings[_id].amount.sub(vestings[_id].released);
+    require(available > 0);
+
+    // Remove tokens from vesting stake balance
+    vestingStakeBalances[vestings[_id].beneficiary] = vestingStakeBalances[vestings[_id].beneficiary].sub(available);
+    
+    // Unlock vesting
+    vestings[_id].locked = false;
+
+    // Unset vesting withdrawal start
+    vestingStakeWithdrawalStart[_id] = 0;
+
+  }
+
 }

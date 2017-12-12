@@ -4,22 +4,15 @@ import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/KeepToken.sol";
 import "../contracts/TokenStaking.sol";
-import "./helpers/ThrowProxy.sol";
 
-contract TestStake {  
-  
+contract TestStakeNoDelay {
   // Create KEEP token
   KeepToken token = new KeepToken();
 
-  // Create staking contract with 30 days withdrawal delay
-  TokenStaking stakingContract = new TokenStaking(token, 30 days);
+  // Create staking contract with no withdrawal delay
+  TokenStaking stakingContract = new TokenStaking(token, 0);
 
   uint withdrawalId;
-
-  function testTotalSupply() {
-    uint expected = token.INITIAL_SUPPLY();
-    Assert.equal(token.balanceOf(address(this)), expected, "Owner should have all tokens initially");
-  }
 
   // Token holder should be able to stake it's tokens
   function testCanStake() {
@@ -31,6 +24,7 @@ contract TestStake {
     Assert.equal(token.balanceOf(address(this)), balance - 100, "Stake amount should be taken out from token holder's main balance");
     Assert.equal(stakingContract.stakeBalanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance");
   }
+
 
   // Token holder should be able to initiate unstake of it's tokens
   function testCanInitiateUnstake() {
@@ -49,34 +43,16 @@ contract TestStake {
     Assert.equal(token.balanceOf(address(this)), balance, "Unstake amount should not be added to token holder main balance");
   }
 
-  // Should not be able to finish unstake when withdrawal delay is not over
-  function testCannotFinishUnstake() {
+  // Should be able to finish unstake of it's tokens when withdrawal delay is over
+  function testCanFinishUnstake() {
+    uint balance = token.balanceOf(address(this));
 
-    // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-    ThrowProxy throwProxy = new ThrowProxy(address(stakingContract));
+    stakingContract.finishUnstake(withdrawalId);
+    Assert.equal(token.balanceOf(address(this)), balance + 100, "Unstake amount should be added to token holder main balance");
+    Assert.equal(stakingContract.stakeBalanceOf(address(this)), 0, "Stake balance should be empty");
 
-    // Prime the proxy
-    TokenStaking(address(throwProxy)).finishUnstake(withdrawalId);
-
-    // Execute the call that is supposed to throw.
-    // r will be false if it threw and true if it didn't.
-    bool r = throwProxy.execute.gas(200000)();
-    Assert.isFalse(r, "Should throw when trying to unstake when withdrawal delay is not over");
-    Assert.equal(stakingContract.stakeBalanceOf(address(this)), 0, "Stake balance should stay unchanged");
-  }
-
-  // Token holder should not be able to stake without calling approve on the token first
-  function testCanNotStakeWithoutApprove() {
-    
-    // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-    ThrowProxy throwProxy = new ThrowProxy(address(stakingContract));
-
-    // Prime the proxy
-    TokenStaking(address(throwProxy)).stake(100);
-
-    // Execute the call that is supposed to throw.
-    // r will be false if it threw and true if it didn't.
-    bool r = throwProxy.execute.gas(200000)();
-    Assert.isFalse(r, "Should throw when trying to stake");
+    // Inspect changes in withdrawal request
+    var (owner, amount, start, released) = stakingContract.stakeWithdrawals(withdrawalId);
+    Assert.equal(released, true, "Withdrawal request should be marked as released");
   }
 }
