@@ -1,0 +1,51 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{tikz}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{varwidth}
+
+\begin{document}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes.symbols}
+\usetikzlibrary{calc}
+
+\tikzset{
+  every node/.style={above},
+  state/.style={draw,circle,align=flush center},
+  decision/.style={draw,rectangle,align=flush center},
+  % Nested states and decisions use doubled borders to indicate
+  % that you have to reference a different diagram.
+  nested state/.style={draw,circle,double,align=flush center},
+  nested decision/.style={draw,rectangle,double,align=flush center},
+  % Set default arrow style to sealth.
+  >=Stealth
+}
+
+\begin{figure}
+  \input{img-src/startup-diagram.tikz}
+  \label{fig:startup}
+
+  \caption{Startup Process}
+\end{figure}
+
+\begin{figure}
+  \input{img-src/relay-group-initialization.tikz}
+  
+  \caption{\label{fig:relay-group-initialization}Relay Group Initialization}
+\end{figure}
+
+\begin{figure}
+  \input{img-src/relay-entry-request-processing.tikz}
+   
+  \caption{\label{fig:relay-entry-request-processing}Relay Entry Request Processing}
+\end{figure}
+
+\begin{figure}
+  \input{img-src/relay-entry-verification.tikz}
+
+  \caption{\label{fig:relay-entry-verification}Relay Entry Verification}
+\end{figure}
+\end{document}

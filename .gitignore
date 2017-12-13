@@ -2,3 +2,4 @@ node_modules/
 build/
 *.swp
 *.swo
+*.DS_Store

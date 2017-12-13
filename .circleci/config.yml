@@ -11,9 +11,26 @@ jobs:
             command: testrpc
             background: true  
         - run: cd solidity && npm install && npm run test
+  generate_docs:
+    docker:
+      - image: thomasweise/texlive
+    steps:
+      - checkout
+      - run: |
+          cd docs
+          make clean
+          mkdir -p /tmp/docs
+          make relay-states.pdf
+          cp relay-states.pdf /tmp/docs
+      - store_artifacts:
+          path: /tmp/docs
 
 workflows:
   version: 2
   solidity:
     jobs:
       - test_solidity
+
+  docs:
+    jobs:
+      - generate_docs
