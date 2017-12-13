@@ -18,6 +18,7 @@ contract TokenVesting is BasicToken {
 
   event NewVesting(uint256 id);
   event VestingReleased(uint256 amount);
+  event InitiateUnstakeVesting(uint256 id);
 
   // Token contract
   StandardToken public token;
@@ -63,6 +64,15 @@ contract TokenVesting is BasicToken {
   */
   function vestingBalanceOf(address _owner) public constant returns (uint256 balance) {
     return vestingBalances[_owner];
+  }
+
+  /**
+  * @dev Gets the vesting stake balance of the specified address.
+  * @param _owner The address to query the vesting balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function vestingStakeBalanceOf(address _owner) public constant returns (uint256 balance) {
+    return vestingStakeBalances[_owner];
   }
 
   /**
@@ -185,6 +195,8 @@ contract TokenVesting is BasicToken {
 
     // Set vesting stake withdrawal start
     vestingStakeWithdrawalStart[_id] = now;
+
+    InitiateUnstakeVesting(_id);
   }
 
   /**

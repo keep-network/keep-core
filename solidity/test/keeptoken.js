@@ -138,4 +138,66 @@ contract('KeepToken', function(accounts) {
     assert.equal(account_two_vesting_balance.toNumber(), 0, "Vesting amount should become 0");
     
   });
+
+  it("should stake vested tokens correctly", async function() {
+    
+        let vestingAmount = 1000000000;
+        let vestingDuration = duration.days(60);
+        let vestingStart = latestTime();
+        let vestingCliff = duration.days(10);
+        let vestingRevocable = true;
+    
+        // Vest tokens
+        await token.approve(vestingContract.address, vestingAmount, {from: account_one});
+        let vestingId = await vestingContract.vest(vestingAmount, account_two, vestingDuration, 
+          vestingStart, vestingCliff, vestingRevocable, {from: account_one}).then((result)=>{
+          // Look for NewVesting event in transaction receipt and get vesting id
+          for (var i = 0; i < result.logs.length; i++) {
+            var log = result.logs[i];
+            if (log.event == "NewVesting") {
+              return log.args.id.toNumber();
+            }
+          }
+        })
+        
+        // should throw if stake vesting called by anyone except vesting beneficiary
+        await exceptThrow(vestingContract.stakeVesting(vestingId));
+
+        // stake vesting can be only called by vesting beneficiary
+        await vestingContract.stakeVesting(vestingId, {from: account_two});
+        let account_two_vesting_stake_balance = await vestingContract.vestingStakeBalanceOf.call(account_two);
+        assert.equal(account_two_vesting_stake_balance.toNumber(), vestingAmount, "Should stake vesting amount");
+
+        // should throw if initiate unstake called by anyone except vesting beneficiary
+        await exceptThrow(vestingContract.initiateUnstakeVesting(vestingId));
+
+        // Initiate unstake of vested tokens by vesting beneficiary
+        let stakeWithdrawalId = await vestingContract.initiateUnstakeVesting(vestingId, {from: account_two}).then((result)=>{
+          // Look for InitiateUnstakeVesting event in transaction receipt and get stake withdrawal id
+          for (var i = 0; i < result.logs.length; i++) {
+            var log = result.logs[i];
+            if (log.event == "InitiateUnstakeVesting") {
+              return log.args.id.toNumber();
+            }
+          }
+        });
+
+        // should not be able to finish unstake before withdrawal delay is over
+        await exceptThrow(vestingContract.finishUnstakeVesting(stakeWithdrawalId));
+
+        // should not be able to release vesting as its still locked for staking
+        await exceptThrow(vestingContract.releaseVesting(vestingId));
+
+        // jump in time over withdrawal delay
+        await increaseTimeTo(latestTime()+duration.days(30));
+        await vestingContract.finishUnstakeVesting(stakeWithdrawalId);
+        account_two_vesting_stake_balance = await vestingContract.vestingStakeBalanceOf.call(account_two);
+        assert.equal(account_two_vesting_stake_balance.toNumber(), 0, "Stake vesting amount should be 0");
+
+        // should be able to release 'releasable' vesting amount as it's not locked for staking anymore
+        await vestingContract.releaseVesting(vestingId);
+        let account_two_ending_balance = await token.balanceOf.call(account_two);
+        assert.isAbove(account_two_ending_balance.toNumber(), vestingAmount/2, "Should have some released vesting amount");
+
+      });
 });
