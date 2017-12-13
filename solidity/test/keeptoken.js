@@ -197,7 +197,7 @@ contract('KeepToken', function(accounts) {
         // should be able to release 'releasable' vesting amount as it's not locked for staking anymore
         await vestingContract.releaseVesting(vestingId);
         let account_two_ending_balance = await token.balanceOf.call(account_two);
-        assert.isAbove(account_two_ending_balance.toNumber(), vestingAmount/2, "Should have some released vesting amount");
+        assert.isAtLeast(account_two_ending_balance.toNumber(), vestingAmount/2, "Should have some released vesting amount");
 
       });
 });

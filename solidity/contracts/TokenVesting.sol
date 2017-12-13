@@ -19,6 +19,7 @@ contract TokenVesting is BasicToken {
   event NewVesting(uint256 id);
   event VestingReleased(uint256 amount);
   event InitiateUnstakeVesting(uint256 id);
+  event Revoked();
 
   // Token contract
   StandardToken public token;
@@ -110,7 +111,6 @@ contract TokenVesting is BasicToken {
    */
   function releaseVesting(uint256 _id) public {
     require(!vestings[_id].locked);
-    require(!vestings[_id].revoked);
     uint256 unreleased = releasableVestedAmount(_id);
     require(unreleased > 0);
 
@@ -230,4 +230,36 @@ contract TokenVesting is BasicToken {
 
   }
 
+
+  /**
+   * @notice Allows the owner to revoke the vesting. 
+   * Tokens already vested (releasable amount) remain so beneficiary can still release them
+   * the rest are returned to the vesting owner.
+   * @param _id Vesting ID
+   */
+  function revoke(uint256 _id) public {
+
+    // only vesting owner can revoke
+    require(vestings[_id].owner == msg.sender);
+
+    // vesting must be revocable in the first place
+    require(vestings[_id].revocable);
+
+    // vesting must not be already revoked
+    require(!vestings[_id].revoked);
+
+    // vesting must not be locked for staking
+    require(!vestings[_id].locked);
+
+    uint256 unreleased = releasableVestedAmount(_id);
+    uint256 refund = vestings[_id].amount.sub(unreleased);
+    vestings[_id].revoked = true;
+
+    // Update beneficiary vesting balance
+    vestingBalances[vestings[_id].beneficiary] = vestingBalances[vestings[_id].beneficiary].sub(refund);
+
+    // Transfer tokens from this vesting contract balance to the owner of the vesting
+    token.safeTransfer(vestings[_id].owner, refund);
+    Revoked();
+  }
 }

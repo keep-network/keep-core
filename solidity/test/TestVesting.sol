@@ -67,7 +67,6 @@ contract TestVesting {
     
     token.approve(address(vestingContract), 100);
     vestingId = vestingContract.vest(100, vestingBeneficiary, 0, now, 0, false);
-    Assert.equal(vestingContract.releasableVestedAmount(vestingId), 100, "Releasable vested amount should be 100");
 
     vestingContract.releaseVesting(vestingId);
     Assert.equal(token.balanceOf(vestingBeneficiary), 100, "Released balance should be added to beneficiary main balance");
