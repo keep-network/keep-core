@@ -1,21 +1,35 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import Web3 from 'web3'
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+
 import './App.css';
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
-      </div>
-    );
-  }
+import Token from './components/Token';
+import Staking from './components/Staking';
+import Vesting from './components/Vesting';
+
+const App = () => (
+  <Router>
+    <Switch>
+      <Route path="/token/:address" component={ Main }/>
+      <Route path="/staking/:address" component={ Staking }/>
+      <Route path="/vesting/:address" component={ Vesting }/>
+      <Route component={ MissingAddress } />
+    </Switch>
+  </Router>
+)
+
+const Main = function({ match }) {
+  let web3 = new Web3()
+  let { address } = match.params
+
+  return web3.utils.isAddress(address)
+    ? <Token address={ address } />
+    : <MissingAddress />
 }
+
+const MissingAddress = () => (
+  <p>This is not a Token address</p>
+)
 
 export default App;
