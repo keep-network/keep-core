@@ -46,7 +46,7 @@ contract TestVesting {
   }
 
   function testCannotReleaseVestedAmmount() {
-    Assert.equal(vestingContract.releasableVestedAmount(vestingId), 0, "ReleasableVestedAmount should be 0");
+    Assert.equal(vestingContract.unreleasedVestedAmount(vestingId), 0, "Unreleased Vested Amount should be 0");
 
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
     ThrowProxy throwProxy = new ThrowProxy(address(vestingContract));
@@ -70,6 +70,6 @@ contract TestVesting {
 
     vestingContract.releaseVesting(vestingId);
     Assert.equal(token.balanceOf(vestingBeneficiary), 100, "Released balance should be added to beneficiary main balance");
-    Assert.equal(vestingContract.releasableVestedAmount(vestingId), 0, "Releasable vested amount should be 0 after release");
+    Assert.equal(vestingContract.unreleasedVestedAmount(vestingId), 0, "Unreleased vested amount should be 0 after release");
   }
 }
