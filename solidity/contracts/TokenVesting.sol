@@ -19,22 +19,22 @@ contract TokenVesting is BasicToken {
   event NewVesting(uint256 id);
   event VestingReleased(uint256 amount);
   event InitiateUnstakeVesting(uint256 id);
-  event Revoked();
+  event Revoked(uint256 id);
 
   // Token contract
   StandardToken public token;
 
   struct Vesting {
-    address owner;
-    address beneficiary;
-    bool locked;
-    bool revoked;
-    bool revocable;
-    uint256 amount;
-    uint256 duration;
-    uint256 start;
-    uint256 cliff;
-    uint256 released;
+    address owner; // creator of vesting 
+    address beneficiary; // address to which vested tokens are transferred
+    bool locked; // whether the vesting is locked (i.e. for staking)
+    bool revoked; // whether the vesting is revoked
+    bool revocable; // whether creator of vesting can revoke it
+    uint256 amount; // amount to be vested
+    uint256 duration; // duration in seconds of the period in which the tokens will vest
+    uint256 start; // timestamp at which vesting will start
+    uint256 cliff; // duration in seconds of the cliff after which tokens will begin to vest
+    uint256 released; // amount that was released to the beneficiary
   }
 
   uint256 public stakeWithdrawalDelay;
@@ -166,7 +166,7 @@ contract TokenVesting is BasicToken {
     require(!vestings[_id].locked);
     require(!vestings[_id].revoked);
   
-    // Make sure decision to unstake is up to the beneficiary of the vesting
+    // Make sure decision to stake is up to the beneficiary of the vesting
     require(vestings[_id].beneficiary == msg.sender);
     // Calculate available amount. Amount of vested tokens minus what user already released
     uint256 available = vestings[_id].amount.sub(vestings[_id].released);
@@ -262,6 +262,6 @@ contract TokenVesting is BasicToken {
 
     // Transfer tokens from this vesting contract balance to the owner of the vesting
     token.safeTransfer(vestings[_id].owner, refund);
-    Revoked();
+    Revoked(_id);
   }
 }
