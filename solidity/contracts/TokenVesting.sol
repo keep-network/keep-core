@@ -61,7 +61,7 @@ contract TokenVesting is BasicToken {
   /**
   * @dev Gets the vesting balance of the specified address.
   * @param _owner The address to query the vesting balance of.
-  * @return An uint256 representing the amount owned by the passed address.
+  * @return An uint256 representing the vesting balance owned by the passed address.
   */
   function vestingBalanceOf(address _owner) public constant returns (uint256 balance) {
     return vestingBalances[_owner];
@@ -70,7 +70,7 @@ contract TokenVesting is BasicToken {
   /**
   * @dev Gets the vesting stake balance of the specified address.
   * @param _owner The address to query the vesting balance of.
-  * @return An uint256 representing the amount owned by the passed address.
+  * @return An uint256 representing the vesting stake balance owned by the passed address.
   */
   function vestingStakeBalanceOf(address _owner) public constant returns (uint256 balance) {
     return vestingStakeBalances[_owner];
@@ -81,9 +81,10 @@ contract TokenVesting is BasicToken {
    * beneficiary gradually in a linear fashion until start + duration. By then all
    * of the balance will have vested.
    * @param _amount to be vested
-   * @param _beneficiary address to whom vested tokens are transferred
-   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
+   * @param _beneficiary address to which vested tokens are transferred
+   * @param _cliff duration in seconds of the cliff after which tokens will begin to vest
    * @param _duration duration in seconds of the period in which the tokens will vest
+   * @param _start timestamp at which vesting will start
    * @param _revocable whether the vesting is revocable or not
    */
   function vest(uint256 _amount, address _beneficiary, uint256 _duration, uint256 _start, uint256 _cliff, bool _revocable) public returns (uint256) {
@@ -99,7 +100,7 @@ contract TokenVesting is BasicToken {
     // Sender should approve the amount first by calling approve() on the token
     token.transferFrom(msg.sender, this, _amount);
 
-    // keep record of the vested amount by the sender 
+    // Keep record of the vested amount 
     vestingBalances[_beneficiary] = vestingBalances[_beneficiary].add(_amount);
     NewVesting(id);
     return id;
@@ -128,7 +129,8 @@ contract TokenVesting is BasicToken {
   
   /**
    * @dev Calculates the amount that has already vested, 
-   * inlcuding amount that could be already withdrawn by the beneficiary
+   * including any tokens that have already been withdrawn by the beneficiary 
+   * as well as any tokens that are available to withdraw but have not yet been withdrawn
    * @param _id Vesting ID
    */
   function vestedAmount(uint256 _id) public constant returns (uint256) {
@@ -170,7 +172,7 @@ contract TokenVesting is BasicToken {
     uint256 available = vestings[_id].amount.sub(vestings[_id].released);
     require(available > 0);
 
-    // Lock vesting from releasing it's balance
+    // Lock vesting from releasing its balance
     vestings[_id].locked = true;
   
     // Transfer tokens to beneficiary's vesting stake balance
