@@ -49,7 +49,7 @@ contract('KeepToken', function(accounts) {
     
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    let account_one_stake_balance = await stakingContract.balanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber() - stakingAmount, "Staking amount should be transfered from sender balance");
     assert.equal(account_one_stake_balance.toNumber(), stakingAmount, "Staking amount should be added to the sender staking balance");
@@ -59,7 +59,7 @@ contract('KeepToken', function(accounts) {
       // Look for initiateUnstake event in transaction receipt and get stake withdrawal id
       for (var i = 0; i < result.logs.length; i++) {
         var log = result.logs[i];
-        if (log.event == "InitiateUnstake") {
+        if (log.event == "InitiatedUnstake") {
           return log.args.id.toNumber();
         }
       }
@@ -76,7 +76,7 @@ contract('KeepToken', function(accounts) {
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    account_one_stake_balance = await stakingContract.balanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber(), "Staking amount should be transfered to sender balance");
     assert.equal(account_one_stake_balance.toNumber(), 0, "Staking amount should be removed from sender staking balance");
