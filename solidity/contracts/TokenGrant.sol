@@ -84,20 +84,28 @@ contract TokenGrant {
   /**
    * @dev Gets grant by ID.
    * @param _id ID of the token grant.
-   * @return owner, beneficiary, locked, revoked, revocable, amount, duration, start, cliff, released
+   * @return amount, released, locked, revoked
    */
-  function getGrant(uint256 _id) public constant returns (address, address, bool, bool, bool, uint256, uint256, uint256, uint256, uint256) {
+  function getGrant(uint256 _id) public constant returns (uint256, uint256, bool, bool) {
+    return (
+      grants[_id].amount,
+      grants[_id].released,
+      grants[_id].locked,
+      grants[_id].revoked
+    );
+  }
+
+  /**
+   * @dev Gets grant vesting schedule by grant ID.
+   * @param _id ID of the token grant.
+   * @return  owner, duration, start, cliff
+   */
+  function getGrantVestingSchedule(uint256 _id) public constant returns (address, uint256, uint256, uint256) {
     return (
       grants[_id].owner,
-      grants[_id].beneficiary,
-      grants[_id].locked,
-      grants[_id].revoked,
-      grants[_id].revocable,
-      grants[_id].amount,
       grants[_id].duration,
       grants[_id].start,
-      grants[_id].cliff,
-      grants[_id].released
+      grants[_id].cliff
     );
   }
 
