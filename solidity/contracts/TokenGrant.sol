@@ -41,6 +41,7 @@ contract TokenGrant {
 
   // Token grants.
   mapping(uint256 => Grant) public grants;
+  mapping(address => uint256[]) public grantIndices;
 
   // Token grants balances. Sum of all granted tokens to a beneficiary.
   mapping(address => uint256) public balances;
@@ -81,6 +82,35 @@ contract TokenGrant {
   }
 
   /**
+   * @dev Gets grant by ID.
+   * @param _id ID of the token grant.
+   * @return owner, beneficiary, locked, revoked, revocable, amount, duration, start, cliff, released
+   */
+  function getGrant(uint256 _id) public constant returns (address, address, bool, bool, bool, uint256, uint256, uint256, uint256, uint256) {
+    return (
+      grants[_id].owner,
+      grants[_id].beneficiary,
+      grants[_id].locked,
+      grants[_id].revoked,
+      grants[_id].revocable,
+      grants[_id].amount,
+      grants[_id].duration,
+      grants[_id].start,
+      grants[_id].cliff,
+      grants[_id].released
+    );
+  }
+
+  /**
+   * @dev Gets grant ids of the specified address.
+   * @param _beneficiary The address to query.
+   * @return An uint256 array of grant IDs.
+   */
+  function getGrants(address _beneficiary) public constant returns (uint256[]) {
+    return grantIndices[_beneficiary];
+  }
+
+  /**
    * @notice Creates a token grant with a vesting schedule where balance released to the
    * beneficiary gradually in a linear fashion until start + duration. By then all
    * of the balance will have vested. You must approve the amount you want to grant 
@@ -101,7 +131,7 @@ contract TokenGrant {
     
     uint256 id = numGrants++;
     grants[id] = Grant(msg.sender, _beneficiary, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
-
+    grantIndices[msg.sender].push(id);
     token.transferFrom(msg.sender, this, _amount);
 
     // Keep record of the vested amount 
