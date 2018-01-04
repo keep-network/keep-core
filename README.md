@@ -4,7 +4,7 @@ The core code behind the [Keep network].
 
 ### Getting Started as a Developer
 
-For now, start with the README in [docs/dev/](the developer docs directory).
+For now, start with the README in [docs/development/](the developer docs directory).
 
 ### [`docs/`](docs/)
 
