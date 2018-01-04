@@ -31,17 +31,19 @@ contract TestTokenGrant {
   }
 
   function testCanGetGrantByID() {
-    var (_owner, _beneficiary, _locked, _revoked, _revocable, _amount, _duration, _start, _cliff, _released) = c.grants(id);
-    Assert.equal(_owner, address(this), "Grant should keep record of the creator.");
-    Assert.equal(_beneficiary, beneficiary, "Grant should keep record of the beneficiary.");
+    var (_amount, _released, _locked, _revoked) = c.getGrant(id);
+    Assert.equal(_amount, 100, "Grant should keep record of the granted amount.");
+    Assert.equal(_released, 0, "Grant should have 0 amount released initially.");
     Assert.equal(_locked, false, "Grant should initially be unlocked.");
     Assert.equal(_revoked, false, "Grant should not be marked as revoked initially.");
-    Assert.equal(_revocable, false, "Grant should have revocable parameter set.");
-    Assert.equal(_amount, 100, "Grant should keep record of the granted amount.");
+  }
+
+  function testCanGetGrantVestingScheduleByGrantID() {
+    var (_owner, _duration, _start, _cliff) = c.getGrantVestingSchedule(id);
+    Assert.equal(_owner, address(this), "Grant should keep record of the creator.");
     Assert.equal(_duration, duration, "Grant should have vesting schedule duration.");
     Assert.equal(_start, start, "Grant should have start time.");
     Assert.equal(_cliff, start+cliff, "Grant should have vesting schedule cliff duration.");
-    Assert.equal(_released, 0, "Grant should have 0 amount released initially.");
   }
 
   function testCannotReleaseGrantedAmmount() {
