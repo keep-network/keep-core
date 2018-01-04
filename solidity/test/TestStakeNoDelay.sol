@@ -22,7 +22,7 @@ contract TestStakeNoDelay {
     stakingContract.stake(100);
     
     Assert.equal(token.balanceOf(address(this)), balance - 100, "Stake amount should be taken out from token holder's main balance");
-    Assert.equal(stakingContract.stakeBalanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance");
+    Assert.equal(stakingContract.balanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance");
   }
 
 
@@ -33,13 +33,13 @@ contract TestStakeNoDelay {
     withdrawalId = stakingContract.initiateUnstake(100);
 
     // Inspect created withdrawal request
-    var (owner, amount, start, released) = stakingContract.stakeWithdrawals(withdrawalId);
+    var (owner, amount, start, released) = stakingContract.withdrawals(withdrawalId);
     Assert.equal(owner, address(this), "Withdrawal request should keep record of the owner");
     Assert.equal(amount, 100, "Withdrawal request should keep record of the amount");
     Assert.equal(start, now, "Withdrawal request should keep record of when it was initiated");
     Assert.equal(released, false, "Withdrawal request should not be marked as released");
 
-    Assert.equal(stakingContract.stakeBalanceOf(address(this)), 0, "Unstake amount should be taken out from token holder's stake balance"); 
+    Assert.equal(stakingContract.balanceOf(address(this)), 0, "Unstake amount should be taken out from token holder's stake balance"); 
     Assert.equal(token.balanceOf(address(this)), balance, "Unstake amount should not be added to token holder main balance");
   }
 
@@ -49,10 +49,10 @@ contract TestStakeNoDelay {
 
     stakingContract.finishUnstake(withdrawalId);
     Assert.equal(token.balanceOf(address(this)), balance + 100, "Unstake amount should be added to token holder main balance");
-    Assert.equal(stakingContract.stakeBalanceOf(address(this)), 0, "Stake balance should be empty");
+    Assert.equal(stakingContract.balanceOf(address(this)), 0, "Stake balance should be empty");
 
     // Inspect changes in withdrawal request
-    var (owner, amount, start, released) = stakingContract.stakeWithdrawals(withdrawalId);
+    var (owner, amount, start, released) = stakingContract.withdrawals(withdrawalId);
     Assert.equal(released, true, "Withdrawal request should be marked as released");
   }
 }

@@ -3,18 +3,18 @@ import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
-const TokenVesting = artifacts.require('./TokenVesting.sol');
+const TokenGrant = artifacts.require('./TokenGrant.sol');
 
 contract('KeepToken', function(accounts) {
 
-  let token, vestingContract, stakingContract,
+  let token, grantContract, stakingContract,
     account_one = accounts[0],
     account_two = accounts[1];
 
   beforeEach(async () => {
     token = await KeepToken.new();
     stakingContract  = await TokenStaking.new(token.address, duration.days(30));
-    vestingContract  = await TokenVesting.new(token.address, duration.days(30));
+    grantContract  = await TokenGrant.new(token.address, duration.days(30));
   });
 
   it("should send tokens correctly", async function() {
@@ -49,7 +49,7 @@ contract('KeepToken', function(accounts) {
     
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    let account_one_stake_balance = await stakingContract.balanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber() - stakingAmount, "Staking amount should be transfered from sender balance");
     assert.equal(account_one_stake_balance.toNumber(), stakingAmount, "Staking amount should be added to the sender staking balance");
@@ -59,7 +59,7 @@ contract('KeepToken', function(accounts) {
       // Look for initiateUnstake event in transaction receipt and get stake withdrawal id
       for (var i = 0; i < result.logs.length; i++) {
         var log = result.logs[i];
-        if (log.event == "InitiateUnstake") {
+        if (log.event == "InitiatedUnstake") {
           return log.args.id.toNumber();
         }
       }
@@ -76,7 +76,7 @@ contract('KeepToken', function(accounts) {
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    account_one_stake_balance = await stakingContract.balanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber(), "Staking amount should be transfered to sender balance");
     assert.equal(account_one_stake_balance.toNumber(), 0, "Staking amount should be removed from sender staking balance");
@@ -84,26 +84,26 @@ contract('KeepToken', function(accounts) {
   });
 
 
-  it("should vest tokens correctly", async function() {
+  it("should grant tokens correctly", async function() {
 
-    let vestingAmount = 1000000000;
+    let amount = 1000000000;
     let vestingDuration = duration.days(30);
-    let vestingStart = latestTime();
-    let vestingCliff = duration.days(10);
-    let vestingRevocable = true;
+    let start = latestTime();
+    let cliff = duration.days(10);
+    let revocable = true;
     
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
     let account_two_starting_balance = await token.balanceOf.call(account_two);
 
-    // Vest tokens
-    await token.approve(vestingContract.address, vestingAmount, {from: account_one});
-    let vestingId = await vestingContract.vest(vestingAmount, account_two, vestingDuration, 
-      vestingStart, vestingCliff, vestingRevocable, {from: account_one}).then((result)=>{
-      // Look for NewVesting event in transaction receipt and get vesting id
+    // Grant tokens
+    await token.approve(grantContract.address, amount, {from: account_one});
+    let id = await grantContract.grant(amount, account_two, vestingDuration, 
+      start, cliff, revocable, {from: account_one}).then((result)=>{
+      // Look for CreatedTokenGrant event in transaction receipt and get vesting id
       for (var i = 0; i < result.logs.length; i++) {
         var log = result.logs[i];
-        if (log.event == "NewVesting") {
+        if (log.event == "CreatedTokenGrant") {
           return log.args.id.toNumber();
         }
       }
@@ -112,92 +112,92 @@ contract('KeepToken', function(accounts) {
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
-    let account_two_vesting_balance = await vestingContract.vestingBalanceOf.call(account_two);
+    let account_two_grant_balance = await grantContract.balanceOf.call(account_two);
 
-    assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber() - vestingAmount, "Vesting amount should be transfered from sender balance");
-    assert.equal(account_two_vesting_balance.toNumber(), vestingAmount, "Vesting amount should be added to the beneficiary vesting balance");
+    assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber() - amount, "Amount should be transfered from sender balance");
+    assert.equal(account_two_grant_balance.toNumber(), amount, "Amount should be added to the beneficiary grant balance");
     assert.equal(account_two_ending_balance.toNumber(), account_two_starting_balance.toNumber(), "Beneficiary main balance should stay unchanged");
     
     // jump in time, third vesting duration
     await increaseTimeTo(latestTime()+vestingDuration/3);
-    await vestingContract.releaseVesting(vestingId)
+    await grantContract.release(id)
     
-    // should release some of vesting to the main balance
+    // should release some of grant to the main balance
     account_two_ending_balance = await token.balanceOf.call(account_two);
-    assert.isBelow(account_two_ending_balance.toNumber(), account_two_starting_balance.toNumber() + vestingAmount/2, 'Should release some of the vesting to the main balance')
+    assert.isBelow(account_two_ending_balance.toNumber(), account_two_starting_balance.toNumber() + amount/2, 'Should release some of the grant to the main balance')
 
     // jump in time, full vesting duration
     await increaseTimeTo(latestTime()+vestingDuration);
-    await vestingContract.releaseVesting(vestingId);
+    await grantContract.release(id);
 
-    // should release full vesting amount to the main balance
+    // should release full grant amount to the main balance
     account_two_ending_balance = await token.balanceOf.call(account_two);
-    assert.equal(account_two_ending_balance.toNumber(), account_two_starting_balance.toNumber() + vestingAmount, "Should release full vesting amount to the main balance");
+    assert.equal(account_two_ending_balance.toNumber(), account_two_starting_balance.toNumber() + amount, "Should release full grant amount to the main balance");
 
-    account_two_vesting_balance = await vestingContract.vestingBalanceOf.call(account_two);
-    assert.equal(account_two_vesting_balance.toNumber(), 0, "Vesting amount should become 0");
+    account_two_grant_balance = await grantContract.balanceOf.call(account_two);
+    assert.equal(account_two_grant_balance.toNumber(), 0, "Grant amount should become 0");
     
   });
 
-  it("should stake vested tokens correctly", async function() {
+  it("should stake granted tokens correctly", async function() {
     
-        let vestingAmount = 1000000000;
+        let amount = 1000000000;
         let vestingDuration = duration.days(60);
-        let vestingStart = latestTime();
-        let vestingCliff = duration.days(10);
-        let vestingRevocable = true;
+        let start = latestTime();
+        let cliff = duration.days(10);
+        let revocable = true;
     
-        // Vest tokens
-        await token.approve(vestingContract.address, vestingAmount, {from: account_one});
-        let vestingId = await vestingContract.vest(vestingAmount, account_two, vestingDuration, 
-          vestingStart, vestingCliff, vestingRevocable, {from: account_one}).then((result)=>{
-          // Look for NewVesting event in transaction receipt and get vesting id
+        // Grant tokens
+        await token.approve(grantContract.address, amount, {from: account_one});
+        let id = await grantContract.grant(amount, account_two, vestingDuration, 
+          start, cliff, revocable, {from: account_one}).then((result)=>{
+          // Look for CreatedTokenGrant event in transaction receipt and get grant id
           for (var i = 0; i < result.logs.length; i++) {
             var log = result.logs[i];
-            if (log.event == "NewVesting") {
+            if (log.event == "CreatedTokenGrant") {
               return log.args.id.toNumber();
             }
           }
         })
         
-        // should throw if stake vesting called by anyone except vesting beneficiary
-        await exceptThrow(vestingContract.stakeVesting(vestingId));
+        // should throw if stake granted tokens called by anyone except grant beneficiary
+        await exceptThrow(grantContract.stake(id));
 
-        // stake vesting can be only called by vesting beneficiary
-        await vestingContract.stakeVesting(vestingId, {from: account_two});
-        let account_two_vesting_stake_balance = await vestingContract.vestingStakeBalanceOf.call(account_two);
-        assert.equal(account_two_vesting_stake_balance.toNumber(), vestingAmount, "Should stake vesting amount");
+        // stake granted tokens can be only called by grant beneficiary
+        await grantContract.stake(id, {from: account_two});
+        let account_two_grant_stake_balance = await grantContract.stakeBalanceOf.call(account_two);
+        assert.equal(account_two_grant_stake_balance.toNumber(), amount, "Should stake grant amount");
 
-        // should throw if initiate unstake called by anyone except vesting beneficiary
-        await exceptThrow(vestingContract.initiateUnstakeVesting(vestingId));
+        // should throw if initiate unstake called by anyone except grant beneficiary
+        await exceptThrow(grantContract.initiateUnstake(id));
 
-        // Initiate unstake of vested tokens by vesting beneficiary
-        let stakeWithdrawalId = await vestingContract.initiateUnstakeVesting(vestingId, {from: account_two}).then((result)=>{
-          // Look for InitiateUnstakeVesting event in transaction receipt and get stake withdrawal id
+        // Initiate unstake of granted tokens by grant beneficiary
+        let stakeWithdrawalId = await grantContract.initiateUnstake(id, {from: account_two}).then((result)=>{
+          // Look for InitiatedTokenGrantUnstake event in transaction receipt and get stake withdrawal id
           for (var i = 0; i < result.logs.length; i++) {
             var log = result.logs[i];
-            if (log.event == "InitiateUnstakeVesting") {
+            if (log.event == "InitiatedTokenGrantUnstake") {
               return log.args.id.toNumber();
             }
           }
         });
 
         // should not be able to finish unstake before withdrawal delay is over
-        await exceptThrow(vestingContract.finishUnstakeVesting(stakeWithdrawalId));
+        await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId));
 
-        // should not be able to release vesting as its still locked for staking
-        await exceptThrow(vestingContract.releaseVesting(vestingId));
+        // should not be able to release grant as its still locked for staking
+        await exceptThrow(grantContract.release(id));
 
         // jump in time over withdrawal delay
         await increaseTimeTo(latestTime()+duration.days(30));
-        await vestingContract.finishUnstakeVesting(stakeWithdrawalId);
-        account_two_vesting_stake_balance = await vestingContract.vestingStakeBalanceOf.call(account_two);
-        assert.equal(account_two_vesting_stake_balance.toNumber(), 0, "Stake vesting amount should be 0");
+        await grantContract.finishUnstake(stakeWithdrawalId);
+        account_two_grant_stake_balance = await grantContract.stakeBalanceOf.call(account_two);
+        assert.equal(account_two_grant_stake_balance.toNumber(), 0, "Stake grant amount should be 0");
 
-        // should be able to release 'releasable' vesting amount as it's not locked for staking anymore
-        await vestingContract.releaseVesting(vestingId);
+        // should be able to release 'releasable' granted amount as it's not locked for staking anymore
+        await grantContract.release(id);
         let account_two_ending_balance = await token.balanceOf.call(account_two);
-        assert.isAtLeast(account_two_ending_balance.toNumber(), vestingAmount/2, "Should have some released vesting amount");
+        assert.isAtLeast(account_two_ending_balance.toNumber(), amount/2, "Should have some released grant amount");
 
       });
 });
