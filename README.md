@@ -10,7 +10,7 @@ For now, start with the README in [docs/dev/](the developer docs directory).
 
 Documentation related to the Keep network, Keep client, and Keep contracts.
 
-#### [`docs/dev/`](docs/dev/)
+#### [`docs/dev/`](docs/development/)
 
 Specifically developer documentation for the various parts of Keep.
 
