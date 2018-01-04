@@ -1,0 +1,319 @@
+@import 'vars';
+@import 'mixins';
+@import 'typography';
+@import 'forms';
+@import 'nav';
+
+body {
+  // background-color: @background-med-dark-color;
+}
+
+.App {
+  text-align: center;
+  overflow: hidden;
+  background-color: @white;
+  max-width: @max-page-width;
+  margin: 0 auto;
+}
+
+.main-content {
+  padding-top: 51px;
+  @media @tablet-up {
+    padding-top: 0;
+  }
+}
+
+.page-section {
+  display: flex;
+  align-items: center;
+  padding: 40px 0;
+  position: relative;
+  overflow: visible;
+
+  .page-section-content {
+    width: 100%;
+    position: relative;
+    z-index: 1;
+  }
+
+  h3 {
+    margin-bottom: 0;
+  }
+
+  @media @tablet-up {
+    padding: 0 0 100px;
+
+    h2 {
+      margin-bottom: 74px;
+    }
+
+    &.convex {
+      padding: 100px 0 270px;
+    }
+  }
+}
+
+.home {
+  h1 {
+    margin: 0 0 14px;
+  }
+
+  .form-inline {
+    width: 100%;
+  }
+
+   .arc-bottom(@background-med-color, 33vh);
+
+  @media @tablet-up {
+    min-height: 100vh;
+    max-height: 800px;
+    padding: 0 0 50px;
+
+    p {
+      margin: 0 0 42px;
+    }
+  }
+}
+
+.about {
+  background-color: @background-med-color;
+  color: @light-on-dark-color;
+
+  .slack-community {
+    img {
+      margin: 0 0 10px;
+      width: 129px;
+      height: 37px;
+
+      @media @tablet-up {
+        margin: 23px 0 10px;
+      }
+    }
+  }
+
+  .whitepaper {
+    h3 {
+      margin-top: 12px;
+    }
+
+    img {
+      height: 78px;
+    }
+  }
+
+  .form-inline {
+    border-color: @light-on-dark-color;
+    width: 100%;
+
+    &.has-error {
+      border-color: @error-color;
+    }
+
+    @media @tablet-up {
+      width: 75%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  @media @sm {
+    .row {
+      display: flex;
+      flex-direction: column-reverse;
+
+      > * {
+        padding: 35px 15px;
+      }
+    }
+  }
+}
+
+.learn {
+
+  .github {
+    img {
+      width: 129px;
+      height: 35px;
+
+      @media @tablet-up {
+        margin: 66px 0 0;
+      }
+    }
+  }
+
+  .snippet {
+    .small-title {
+      color: @grey-on-light-color;
+    }
+  }
+
+  @media @tablet-up {
+    &.convex {
+      padding-top: 120px;
+    }
+  }
+
+  @media @md-up {
+    .row {
+      display: flex;
+      align-items: flex-end;
+    }
+  }
+
+  @media @sm {
+    .row {
+      > * {
+        padding: 35px 15px;
+      }
+    }
+  }
+
+  .arc-top(@background-med-color, 300px);
+  .arc-bottom(@background-light-color, 300px);
+}
+
+.profile {
+  text-align: center;
+
+  h4 {
+    margin-bottom: 12px;
+
+    span {
+      display: block;
+      font-weight: bold;
+      margin: 0 0 6px;
+    }
+  }
+
+  .avatar {
+    display: inline-block;
+    max-width: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 0 4px;
+
+    img {
+      width: 100%;
+    }
+  }
+
+  .social-links {
+    a {
+      display: inline-block;
+      padding: 0 6px;
+    }
+  }
+
+  @media @sm {
+    margin-bottom: 50px;
+  }
+}
+
+.blurb {
+  background-color: @background-light-color;
+
+  .row {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  p {
+    margin: 0;
+
+    span {
+      font-weight: bold;
+    }
+  }
+
+  @media @md-up {
+    padding: 0 0 50px;
+
+    .col-md-9 {
+      text-align: left;
+    }
+
+    p {
+      font-size: 24px;
+    }
+
+    &.description {
+      .row {
+        flex-direction: row-reverse;
+      }
+    }
+  }
+
+  @media @sm {
+    .row {
+      flex-direction: column;
+
+      [class*="col"] {
+        padding: 35px 15px;
+
+        &:last-of-type {
+          padding: 0 15px 35px;
+        }
+      }
+    }
+  }
+}
+
+.timeline {
+  background-color: @background-light-color;
+
+  @media @md-up {
+    padding: 0;
+  }
+}
+
+.uses {
+  .arc-top(@background-light-color, 300px);
+  .arc-bottom(@background-light-color, 300px);
+
+  .use-case {
+    margin: 0 0 30px;
+
+    img {
+      width: 84px;
+      height: 84px;
+      margin-bottom: 15px;
+    }
+
+    p {
+      text-align: left;
+    }
+
+    .btn {
+      margin: 15px 0 0;
+    }
+
+    @media @mobile {
+      margin-bottom: 40px;
+    }
+  }
+}
+
+.team,
+.advisors {
+  @media @tablet-up {
+    .row {
+      margin-bottom: 50px;
+    }
+  }
+}
+
+.team {
+  .arc-top(@background-light-color, 300px);
+  .arc-bottom(@background-light-color, 300px);
+}
+
+.advisors {
+  .arc-top(@background-light-color, 300px);
+  .arc-bottom(@background-dark-color, 300px);
+}
+
+footer {
+  padding: 30px 0 60px;
+  background-color: @background-dark-color;
+}

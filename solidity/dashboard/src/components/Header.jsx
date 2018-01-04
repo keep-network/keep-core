@@ -7,12 +7,14 @@ const Header = () =>  {
     <Navbar>
       <Navbar.Header>
         <NavbarBrand>
-          <Icons.Keep height="61px" width="235px"/>
+          <a href="/"><Icons.Keep height="61px" width="235px"/></a>
+          <p>Token Dashboard</p>
         </NavbarBrand>
-        <Navbar.Toggle />
       </Navbar.Header>
-      <Navbar.Collapse>
-      </Navbar.Collapse>
+      <div className="pull-right">
+        <strong>KEEP Token: </strong> 
+        <span className="txt-primary">{ process.env.REACT_APP_TOKEN_ADDRESS }</span>
+      </div> 
     </Navbar>
   )
 }
