@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
+import { Pie } from 'react-chartjs-2';
 import { Table, Col, Grid, Row } from 'react-bootstrap';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import moment from 'moment'
 import { displayAmount } from './utils';
 import Network from './network';
-import { getKeepToken, getTokenStaking } from './contracts';
+import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
 import Header from './components/Header';
-import BalanceChart from './components/BalanceChart';
+import StakingForm from './components/StakingForm';
+import WithdrawalsTable from './components/WithdrawalsTable';
+
 import './App.css';
 
 const App = () => (
@@ -20,7 +24,8 @@ class Main extends Component {
 
   constructor() {
     super()
-    this.state = {}
+    this.state = {};
+    this.state.chartData = {};
   }
 
   componentDidMount() {
@@ -28,30 +33,65 @@ class Main extends Component {
   }
 
   render() {
-    const { yourAddress, tokenBalance, stakeBalance } = this.state;
+    const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, chartData, withdrawals, withdrawalsTotal } = this.state;
+
     return (
       <div className="main">
         <Header />
         <Grid>
           <Row>
-            <Col xs={12} md={12}>
-              <BalanceChart/>
+            <Col xs={12} md={6}>
+              <Pie dataKey="name" data={ chartData } />
+            </Col>
+            <Col xs={12} md={6}>
+              
               <Table className="small" striped bordered condensed>
                 <tbody>
-                  <TableRow title="Your address">
+                  <TableRow title="Your wallet address">
                     { yourAddress }
                   </TableRow>
-                  <TableRow title="Token Balance">
+                  <TableRow title="Tokens">
                     { tokenBalance } 
                   </TableRow>
-                  <TableRow title="Stake Balance">
+                  <TableRow title="Staked">
                     { stakeBalance } 
+                  </TableRow>
+                  <TableRow title="Pending withdrawals">
+                    { withdrawalsTotal } 
+                  </TableRow>
+                  <TableRow title="Token Grants">
+                    { grantBalance } 
+                  </TableRow>
+                  <TableRow title="Staked Token Grants">
+                    { grantStakeBalance } 
                   </TableRow>
                 </tbody>
               </Table>
+
+              <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+              <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+
             </Col>  
-            <Col xs={12} md={12}>
+            
+          </Row>
+          <Row>
+          <Col xs={12} md={4}>
+              <h4>Pending withdrawals</h4>
+              <WithdrawalsTable data={withdrawals}/>
+            </Col>  
+            <Col xs={12} md={4}>
+              <h4>Token grants</h4>
+              <Table className="small" condensed>
+                <thead>
+                  <tr>
+                    <th><strong>Amount</strong></th>
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </Table>
             </Col>
+            
           </Row>
         </Grid>
       </div>
@@ -62,15 +102,59 @@ class Main extends Component {
     const accounts = await Network.getAccounts();
     const yourAddress  = accounts[0];
     const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
-    const tokenBalance =  displayAmount(await token.balanceOf(yourAddress), 3);
-    
+    const tokenBalance =  displayAmount(await token.balanceOf(yourAddress), 0);
+
     const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
-    const stakeBalance  = displayAmount(await stakingContract.balanceOf(yourAddress), 3);
-    
+    const stakeBalance  = displayAmount(await stakingContract.balanceOf(yourAddress), 0);
+    const withdrawalDelay  = (await stakingContract.withdrawalDelay()).toNumber()
+
+    const withdrawalIndexes  = await stakingContract.getWithdrawals(yourAddress);
+    let withdrawals = [];
+    let withdrawalsTotal = 0;
+    // const now = new Date() / 1000; // normalize to seconds
+
+    for(let i=0; i < withdrawalIndexes.length; i++) {
+      const withdrawal  = await stakingContract.getWithdrawal(withdrawalIndexes[i].toNumber());
+      const availableAt = moment((withdrawalDelay+withdrawal[2].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a");
+      withdrawals.push({
+        'amount': withdrawal[1].toNumber(),
+        'availableAt': availableAt
+        }
+      );
+      withdrawalsTotal += withdrawal[1].toNumber();
+    }
+
+    const grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS);
+    const grantBalance  = displayAmount(await grantContract.balanceOf(yourAddress), 0);
+    const grantStakeBalance  = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 0);
+
+    const chartData = {
+      labels: [
+        'Tokens',
+        'Staked',
+        'Pending withdrawals',
+        'Token grants'
+      ],
+      datasets: [{
+        data: [tokenBalance, stakeBalance, withdrawalsTotal, grantBalance],
+        backgroundColor: [
+        '#505e5b',
+        '#48dbb4',
+        '#2f9278',
+        '#FFCE56'
+        ]
+      }]
+    };
+
     this.setState({
       yourAddress,
       tokenBalance,
-      stakeBalance
+      stakeBalance,
+      grantBalance,
+      grantStakeBalance,
+      chartData,
+      withdrawals,
+      withdrawalsTotal
     })
   }
 }
