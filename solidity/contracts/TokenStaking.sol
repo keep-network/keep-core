@@ -46,9 +46,9 @@ contract TokenStaking {
   }
 
   /**
-   * @notice Stakes provided token amount to this contract. You must approve the amount on the token contract first.
+   * @notice Stakes provided token amount to this contract. You must approve the amount 
+   * on the token first by calling `approve()`on the token contract.
    * @dev Transfers tokens from sender balance to this staking contract balance.
-   * Sender should approve the amount first by calling `approve()` on the token.
    * @param _value The amount to be staked.
    */
   function stake(uint256 _value) public {
@@ -63,9 +63,9 @@ contract TokenStaking {
   }
 
   /**
-   * @notice Initiates unstake of staked tokens.
-   * @dev Creates a new stake withdrawal request that 
-   * can be checked later and processed if withdrawal delay is over.
+   * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
+   * You will be able to call `finishUnstake()` with this ID and finish 
+   * unstake once withdrawal delay is over. 
    * @param _value The amount to be unstaked.
    */
   function initiateUnstake(uint256 _value) public returns (uint256 id) {
@@ -81,9 +81,9 @@ contract TokenStaking {
   }
 
   /**
-   * @notice Finishes unstake of the tokens.
-   * @dev Transfers tokens from this staking contract balance 
-   * to the staker token balance if the withdrawal delay is over.
+   * @notice Finishes unstake of the tokens of provided withdrawal request. 
+   * You can only finish unstake once withdrawal delay is over for the request, 
+   * otherwise the function will fail and remaining gas is returned.
    * @param _id Withdrawal ID.
    */
   function finishUnstake(uint256 _id) public {
