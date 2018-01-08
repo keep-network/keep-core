@@ -44,6 +44,8 @@ contract TokenGrant {
   mapping(address => uint256[]) public grantIndices;
 
   // Token grants balances. Sum of all granted tokens to a beneficiary.
+  // This includes granted tokens that are already vested and 
+  // available to be released to the beneficiary
   mapping(address => uint256) public balances;
 
   // Token grants stake balances.

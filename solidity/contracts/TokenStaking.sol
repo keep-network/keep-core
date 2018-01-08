@@ -48,7 +48,7 @@ contract TokenStaking {
   /**
    * @notice Stakes provided token amount to this contract. You must approve the amount on the token contract first.
    * @dev Transfers tokens from sender balance to this staking contract balance.
-   * Sender should approve the amount first by calling approve() on the token.
+   * Sender should approve the amount first by calling `approve()` on the token.
    * @param _value The amount to be staked.
    */
   function stake(uint256 _value) public {
