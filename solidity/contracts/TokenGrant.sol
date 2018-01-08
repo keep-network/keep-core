@@ -144,7 +144,7 @@ contract TokenGrant {
     grantIndices[msg.sender].push(id);
     token.transferFrom(msg.sender, this, _amount);
 
-    // Keep record of the vested amount 
+    // Maintain a record of the vested amount 
     balances[_beneficiary] = balances[_beneficiary].add(_amount);
     CreatedTokenGrant(id);
     return id;

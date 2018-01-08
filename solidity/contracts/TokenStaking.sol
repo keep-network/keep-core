@@ -36,8 +36,8 @@ contract TokenStaking {
 
   /**
    * @dev Creates a token staking contract for a provided Standard ERC20 token.
-   * @param _tokenAddress address of a token that will be linked to this contract.
-   * @param _delay withdrawal delay for unstake.
+   * @param _tokenAddress Address of a token that will be linked to this contract.
+   * @param _delay Withdrawal delay for unstake.
    */
   function TokenStaking(address _tokenAddress, uint256 _delay) {
     require(_tokenAddress != address(0x0));
@@ -57,7 +57,7 @@ contract TokenStaking {
 
     token.transferFrom(msg.sender, this, _value);
 
-    // Keep record of the stake amount by the sender.
+    // Maintain a record of the stake amount by the sender.
     balances[msg.sender] = balances[msg.sender].add(_value);
     Staked(msg.sender, _value);
   }

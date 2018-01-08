@@ -26,12 +26,12 @@ contract TestTokenGrantRevoke {
     id = c.grant(100, beneficiary, 10 days, now, 0, true);
     
     Assert.equal(t.balanceOf(address(this)), balance - 100, "Amount should be taken out from grant creator main balance.");
-    Assert.equal(c.balanceOf(beneficiary), 100, "Amount should be added to beneficiary's granted balance");
+    Assert.equal(c.balanceOf(beneficiary), 100, "Amount should be added to beneficiary's granted balance.");
     
     c.revoke(id);
 
     Assert.equal(t.balanceOf(address(this)), balance, "Amount should be returned to token grant owner.");
-    Assert.equal(c.balanceOf(beneficiary), 0, "Amount should be removed from beneficiary's grant balance");
+    Assert.equal(c.balanceOf(beneficiary), 0, "Amount should be removed from beneficiary's grant balance.");
   }
 
   // Token grant creator can revoke the grant but no amount 
@@ -49,7 +49,7 @@ contract TestTokenGrantRevoke {
     c.revoke(id);
 
     Assert.equal(t.balanceOf(address(this)), balance - 100, "No amount to be returned to grant creator since vesting duration is over.");
-    Assert.equal(c.balanceOf(beneficiary), 100, "Amount should stay at beneficiary's grant balance");
+    Assert.equal(c.balanceOf(beneficiary), 100, "Amount should stay at beneficiary's grant balance.");
   }
 
   // Test can not revoke token grant.
