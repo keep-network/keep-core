@@ -36,8 +36,8 @@ contract TokenStaking {
 
   /**
    * @dev Creates a token staking contract for a provided Standard ERC20 token.
-   * @param _tokenAddress address of a token that will be linked to this contract.
-   * @param _delay withdrawal delay for unstake.
+   * @param _tokenAddress Address of a token that will be linked to this contract.
+   * @param _delay Withdrawal delay for unstake.
    */
   function TokenStaking(address _tokenAddress, uint256 _delay) {
     require(_tokenAddress != address(0x0));
@@ -46,9 +46,9 @@ contract TokenStaking {
   }
 
   /**
-   * @notice Stakes provided token amount to this contract. You must approve the amount on the token contract first.
+   * @notice Stakes provided token amount to this contract. You must approve the amount 
+   * on the token first by calling `approve()`on the token contract.
    * @dev Transfers tokens from sender balance to this staking contract balance.
-   * Sender should approve the amount first by calling approve() on the token.
    * @param _value The amount to be staked.
    */
   function stake(uint256 _value) public {
@@ -57,15 +57,15 @@ contract TokenStaking {
 
     token.transferFrom(msg.sender, this, _value);
 
-    // Keep record of the stake amount by the sender.
+    // Maintain a record of the stake amount by the sender.
     balances[msg.sender] = balances[msg.sender].add(_value);
     Staked(msg.sender, _value);
   }
 
   /**
-   * @notice Initiates unstake of staked tokens.
-   * @dev Creates a new stake withdrawal request that 
-   * can be checked later and processed if withdrawal delay is over.
+   * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
+   * You will be able to call `finishUnstake()` with this ID and finish 
+   * unstake once withdrawal delay is over. 
    * @param _value The amount to be unstaked.
    */
   function initiateUnstake(uint256 _value) public returns (uint256 id) {
@@ -81,9 +81,9 @@ contract TokenStaking {
   }
 
   /**
-   * @notice Finishes unstake of the tokens.
-   * @dev Transfers tokens from this staking contract balance 
-   * to the staker token balance if the withdrawal delay is over.
+   * @notice Finishes unstake of the tokens of provided withdrawal request. 
+   * You can only finish unstake once withdrawal delay is over for the request, 
+   * otherwise the function will fail and remaining gas is returned.
    * @param _id Withdrawal ID.
    */
   function finishUnstake(uint256 _id) public {

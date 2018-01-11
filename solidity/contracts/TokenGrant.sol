@@ -44,6 +44,8 @@ contract TokenGrant {
   mapping(address => uint256[]) public grantIndices;
 
   // Token grants balances. Sum of all granted tokens to a beneficiary.
+  // This includes granted tokens that are already vested and 
+  // available to be released to the beneficiary
   mapping(address => uint256) public balances;
 
   // Token grants stake balances.
@@ -82,7 +84,10 @@ contract TokenGrant {
   }
 
   /**
-   * @dev Gets grant by ID.
+   * @dev Gets grant by ID. Returns only basic grant data.
+   * If you need vesting schedule for the grant you must call `getGrantVestingSchedule()`
+   * This is to avoid Ethereum `Stack too deep` issue described here:
+   * https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
    * @param _id ID of the token grant.
    * @return amount, released, locked, revoked
    */
@@ -142,7 +147,7 @@ contract TokenGrant {
     grantIndices[msg.sender].push(id);
     token.transferFrom(msg.sender, this, _amount);
 
-    // Keep record of the vested amount 
+    // Maintain a record of the vested amount 
     balances[_beneficiary] = balances[_beneficiary].add(_amount);
     CreatedTokenGrant(id);
     return id;
@@ -171,10 +176,10 @@ contract TokenGrant {
   }
   
   /**
-   * @notice Calculates vested grant amount.
+   * @notice Calculates and returns vested grant amount.
    * @dev Calculates token grant amount that has already vested, 
-   * including any tokens that have already been withdrawn by the beneficiary 
-   * as well as any tokens that are available to withdraw but have not yet been withdrawn.
+   * including any tokens that have already been withdrawn by the beneficiary as well 
+   * as any tokens that are available to withdraw but have not yet been withdrawn.
    * @param _id Grant ID.
    */
   function grantedAmount(uint256 _id) public constant returns (uint256) {

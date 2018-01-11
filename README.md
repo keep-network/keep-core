@@ -4,13 +4,13 @@ The core code behind the [Keep network].
 
 ### Getting Started as a Developer
 
-For now, start with the README in [docs/dev/](the developer docs directory).
+For now, start with the README in [the developer docs directory](docs/development/).
 
 ### [`docs/`](docs/)
 
 Documentation related to the Keep network, Keep client, and Keep contracts.
 
-#### [`docs/dev/`](docs/dev/)
+#### [`docs/development/`](docs/development/)
 
 Specifically developer documentation for the various parts of Keep.
 

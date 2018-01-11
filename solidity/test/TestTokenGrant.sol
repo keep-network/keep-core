@@ -32,7 +32,7 @@ contract TestTokenGrant {
 
   function testCanGetGrantByID() {
     var (_amount, _released, _locked, _revoked) = c.getGrant(id);
-    Assert.equal(_amount, 100, "Grant should keep record of the granted amount.");
+    Assert.equal(_amount, 100, "Grant should maintain a record of the granted amount.");
     Assert.equal(_released, 0, "Grant should have 0 amount released initially.");
     Assert.equal(_locked, false, "Grant should initially be unlocked.");
     Assert.equal(_revoked, false, "Grant should not be marked as revoked initially.");
@@ -40,7 +40,7 @@ contract TestTokenGrant {
 
   function testCanGetGrantVestingScheduleByGrantID() {
     var (_owner, _duration, _start, _cliff) = c.getGrantVestingSchedule(id);
-    Assert.equal(_owner, address(this), "Grant should keep record of the creator.");
+    Assert.equal(_owner, address(this), "Grant should maintain a record of the creator.");
     Assert.equal(_duration, duration, "Grant should have vesting schedule duration.");
     Assert.equal(_start, start, "Grant should have start time.");
     Assert.equal(_cliff, start+cliff, "Grant should have vesting schedule cliff duration.");

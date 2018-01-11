@@ -39,7 +39,7 @@ contract TestTokenGrantStake {
   // Token grant beneficiary should be able to initiate unstake of the token grant
   function testCanInitiateUnstakeTokenGrant() {
     c.initiateUnstake(id);
-    Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set");
+    Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
     Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
   }
 
@@ -55,7 +55,7 @@ contract TestTokenGrantStake {
     // Execute the call that is supposed to throw.
     // r will be false if it threw and true if it didn't.
     bool r = throwProxy.execute.gas(200000)();
-    Assert.isFalse(r, "Should throw when trying to unstake when delay is not over");
+    Assert.isFalse(r, "Should throw when trying to unstake when delay is not over.");
     Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
   }
 }

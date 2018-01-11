@@ -40,7 +40,7 @@ contract TestTokenGrantStakeNoDelay {
   // Token grant beneficiary should be able to initiate unstake of the token grant
   function testCanInitiateUnstakeTokenGrant() {
     c.initiateUnstake(id);
-    Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set");
+    Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
     Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
   }
 
@@ -49,6 +49,6 @@ contract TestTokenGrantStakeNoDelay {
     c.finishUnstake(id);
     Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should become 0.");
     var (_owner, _beneficiary, _locked, _revoked, _revocable, _amount, _duration, _start, _cliff, _released) = c.grants(id);
-    Assert.equal(_locked, false, "Grant should become unlocked");
+    Assert.equal(_locked, false, "Grant should become unlocked.");
   }
 }
