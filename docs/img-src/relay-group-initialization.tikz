@@ -1,14 +1,14 @@
-% -*- root: relay-states-preview.tex -*-
+% -*- root: ../relay-states.tex -*-
 \tikz{
   \node[start state] (start) {};
 
   \node[decision] (stake check) [right=of start] {Staked?\footnote{Local check to avoid doing unnecessary work.}};
 
-  \node[nested state] (joining) [right=of stake check] {Joining\\\tt{libp2p}\footnote{Subject to signed proof of stake id.}};
+  \node[nested state] (joining) [right=of stake check,text width=2cm] {\hyperref[fig:libp2p-join]{Joining\\\tt{libp2p}}};
 
-  \node[decision] (state check) [below=2cm of joining] {Checking\\current\\state};
+  \node[decision] (state check) [below=2cm of joining] {Checking\\current state};
 
-  \node[nested state] (waiting) [below left=3cm of state check,text width=2cm] {\hyperref[fig:relay-group-waiting]{Waiting\\for group}};
+  \node[nested state] (waiting) [below left=3cm of state check,text width=2cm] {\hyperref[fig:relay-group-assignment]{Waiting\\for group}};
   \node[nested state] (setting up group) [below right=3cm of waiting,text width=2cm] {\hyperref[fig:relay-group-setup]{Setting up group}};
 
   \node[nested state] (processing) [below right=3cm of state check,text width=1.7cm] {\hyperref[fig:relay-entry-request-processing]{Processing requests}};
