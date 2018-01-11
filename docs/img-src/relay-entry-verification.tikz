@@ -1,6 +1,6 @@
 % -*- root: relay-states-preview.tex -*-
 \tikz{
-  \node [state] (start) {};
+  \node [start state] (start) {};
 
   \node [state] (waiting for entry) [right=of start,text width=1.8cm] {Waiting for relay entry};
 

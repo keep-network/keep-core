@@ -1,6 +1,6 @@
 % -*- root: relay-states-preview.tex -*-
 \tikz{
-  \node[state] (start) {};
+  \node[start state] (start) {};
 
   \node[decision] (stake check) [right=of start] {Staked?\footnote{Local check to avoid doing unnecessary work.}};
 
