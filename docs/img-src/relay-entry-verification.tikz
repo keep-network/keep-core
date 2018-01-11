@@ -1,4 +1,4 @@
-% -*- root: relay-states-preview.tex -*-
+% !TEX root = ../relay-states.tex
 \tikz{
   \node [start state] (start) {};
 

@@ -1,4 +1,4 @@
-% -*- root: ../relay-states.tex -*-
+% !TEX root = ../relay-states.tex
 \tikz{
   \node[nested state,text width=2cm] (waiting) {\hyperref[fig:relay-group-initialization]{Waiting for group}};
 
