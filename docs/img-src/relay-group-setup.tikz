@@ -1,0 +1,67 @@
+% -*- root: ../relay-states.tex -*-
+\tikz[curve to exit/.style={to path={[rounded corners=2cm]-- ++(2.5,2.5) -- ($ (\tikztotarget) - (1,5) $)\tikztonodes -- (\tikztotarget)}}]{
+  \node[nested decision,text width=2cm] (start) {\hyperref[fig:relay-group-initialization]{Checking current state}};
+
+  \node[state] (awaiting entry) [right=of start] {Awaiting\\relay entry};
+
+  \node[decision] (eligibility check) [right=2.5cm of awaiting entry] {Eligible for group?};
+
+  \node[state] (joining channel) [right=2cm of eligibility check] {Joining broadcast channel};
+
+  \node[state] (generating) [below=2cm of joining channel] {Generating secret key share and proofs};
+
+  \node[state] (announcing) [left=2cm of generating] {Announcing secret key proofs};
+
+  \node[decision] (verifying) [below=2cm of announcing] {Verifying other proofs};
+
+  % FIXME Accusation process is incomplete and might be its own sub-diagram.
+  \node[state] (accusing) [left=2cm of verifying] {Publishing invalidity accusation};
+  \node[state] (generating pubkey) [below=2cm of verifying] {Generating public key};
+
+  \node[state] (submitting pubkey) [left=2cm of generating pubkey] {Submitting public key};
+
+  \node[state] (awaiting pubkey) [below=2cm of submitting pubkey] {Awaiting on-chain public key};
+  
+  \node[state] (pending activation delay) [right=2cm of awaiting pubkey] {Waiting for activation delay};
+
+  \node[start state] (exit) [below=2cm of generating,align=flush center,text width=0.3cm] {$\times$};
+
+  %\node[state] ()
+
+%   \node[decision] (stake check) [right=of start] {Staked?\footnote{Local check to avoid doing unnecessary work.}};
+
+%   \node[nested state] (joining) [right=of stake check] {\hyperref[fig:libp2p-join]{Joining\\\tt{libp2p}}};
+
+%   \node[decision] (state check) [below=2cm of joining] {Checking\\current\\state};
+
+%   \node[nested state] (waiting) [below left=3cm of state check,text width=2cm] {\hyperref[fig:relay-group-assignment]{Waiting\\for group}};
+%   \node[nested state] (setting up group) [below right=3cm of waiting,text width=2cm] {\hyperref[fig:relay-group-setup]{Setting up group}};
+
+%   \node[nested state] (processing) [below right=3cm of state check,text width=1.7cm] {\hyperref[fig:relay-entry-request-processing]{Processing requests}};
+
+   \path [->] (start) edge (awaiting entry)
+
+              (awaiting entry) edge node [above] {entry received} (eligibility check)
+
+              (eligibility check) edge [bend right=45] node [above] {No} (awaiting entry)
+              (eligibility check) edge [pos=0.6] node {Yes} (joining channel)
+
+              (joining channel) edge [bend left=45] node [sloped,below] {joining failed} (exit)
+              (joining channel) edge node {joined} (generating)
+
+               (generating) edge node [text width=1.5cm,align=flush center] {shares generated} (announcing)
+              
+               (announcing) edge node {shares announced} (verifying)
+              
+               (verifying) edge node {invalid share} (accusing)
+               (verifying) edge node {shares valid} (generating pubkey)
+
+               (generating pubkey) edge node {generated} (submitting pubkey)
+
+               (submitting pubkey) edge node {submitted} (awaiting pubkey)
+              
+               (awaiting pubkey) edge [curve to exit] node [below] {relay entry received} (exit)
+               (awaiting pubkey) edge node [text width=1.5cm,align=flush center] {pubkey published} (pending activation delay)
+
+               (pending activation delay) edge [bend right=45] node [sloped,below] {activation delay elapsed} (exit)
+}
