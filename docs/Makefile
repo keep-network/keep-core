@@ -11,7 +11,7 @@ clean:
 	rm -f *.aux *.log *.gz *.pdf *.ps *.dvi *.out *.fls *.fdb_latexmk \
 		img-src/*.aux img-src/*.log img-src/*.gz img-src/*.pdf img-src/*.ps \
 		img-src/*.dvi img-src/*.out img-src/*.fls img-src/*.fdb_latexmk; \
-	rm -r img/generated
+	rm -rf img/generated
 
 relay-states.pdf: relay-states.tex
 	pdflatex -halt-on-error relay-states.tex; \
