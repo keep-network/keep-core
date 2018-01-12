@@ -31,12 +31,51 @@
 }
 
 \begin{document}
-\begin{figure}
-  \input{img-src/startup-diagram.tikz}
-  \label{fig:startup}
 
-  \caption{Startup Process}
-\end{figure}
+Below are state diagrams elaborating on the various pieces of a Keep node. Note
+that Keep nodes actually run multiple processes in parallel, for participation
+in the random beacon threshold relay as well as for participating in the Keep
+network. The startup diagram indicates this and links to the subprocess state
+diagrams.
+
+First, however, a legend:
+
+\vspace{0.5cm}
+
+\begin{center}
+  \tikz{
+      \node[thread] (thread) {A thread};
+
+      \node[nested state] (nested state) [below=1cm of thread] {A nested state};
+      \node[state] [left=1cm of nested state](state) {A regular state};
+      \node[chain state] (chain state) [right=1cm of nested state] {A state dependent on the chain};
+
+      \node[nested decision] (nested decision) [below=1cm of nested state] {A nested decision};
+      \node[decision] (decision) [left=1cm of nested decision] {A decision};
+      \node[chain decision,text width=2cm] (chain decision) [right=1cm of nested decision] {A decision dependent on the chain};
+
+      \draw [<-] (-4.5,0.25) -- node [centered,text width=2cm,align=center] {state\\transition} (-2.5,0.25);
+      \draw [->,dashed] (2,0.25) -- node [centered,text width=4cm,align=center] {chain-dependent\\state transition} (5.25,0.25)
+  }
+\end{center}
+
+\vspace{0.5cm}
+
+Nested states and decisions should link to the nested diagrams that indicate
+what is going on within these states or decisions.
+
+\vspace{0.5cm}
+
+\begin{center}
+  \input{img-src/startup-diagram.tikz}
+
+  \vspace{0.5cm}
+  Keep node startup process: processes run in parallel
+\end{center}
+
+
+
+\clearpage
 
 \begin{figure}
   \input{img-src/relay-group-initialization.tikz}
