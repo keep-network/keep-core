@@ -27,8 +27,25 @@ jobs:
           make docs
           cp relay-states.pdf /tmp/docs
           cp -r img/generated /tmp/docs/img/generated
-      - store_artifacts:
-          path: /tmp/docs
+      - save_cache:
+          key: docs-cache
+          paths:
+            - /tmp/docs
+  upload_docs:
+    docker:
+      - image: google/cloud-sdk:slim
+    steps:
+      - checkout
+      - restore_cache:
+          key: docs-cache
+      - run: |
+          echo $CIRCLE_BRANCH
+          echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ~/gcloud-service-key.json
+          gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+          gcloud config set project cfc-production
+          cd /tmp/docs
+          gsutil -m cp -r * gs://docs.keep.network/$CIRCLE_BRANCH/
+
 
 workflows:
   version: 2
@@ -38,6 +55,7 @@ workflows:
   docs:
     jobs:
       - generate_docs
+      - upload_docs
   go:
     jobs:
       - build_client
