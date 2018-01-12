@@ -6,8 +6,6 @@
 \usepackage[colorlinks=true]{hyperref}
 \usepackage{varwidth}
 
-\begin{document}
-
 \usetikzlibrary{positioning}
 \usetikzlibrary{arrows.meta}
 \usetikzlibrary{shapes.symbols}
@@ -22,10 +20,16 @@
   % that you have to reference a different diagram.
   nested state/.style={draw,circle,double,align=flush center},
   nested decision/.style={draw,rectangle,double,align=flush center},
+  % Chain states and decisions use dashed borders to indicate
+  % that you have to interact with the chain.
+  chain state/.style={draw,circle,dashed,align=flush center,text width=2cm},
+  chain decision/.style={draw,rectangle,dashed,align=flush center},
+  chain transition/.style={draw,dashed},
   % Set default arrow style to stealth.
   >=Stealth
 }
 
+\begin{document}
 \begin{figure}
   \input{img-src/startup-diagram.tikz}
   \label{fig:startup}

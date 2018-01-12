@@ -2,7 +2,7 @@
 \tikz{
   \node[nested state,text width=2cm] (waiting) {\hyperref[fig:relay-group-initialization]{Waiting for group}};
 
-  \node[state] (awaiting entry) [right=of waiting] {Awaiting\\relay entry};
+  \node[chain state] (awaiting entry) [right=of waiting] {Awaiting\\relay entry};
 
   \node[decision] (eligibility check) [right=2.5cm of awaiting entry] {Eligible for group?};
 
@@ -18,9 +18,9 @@
   \node[state] (accusing) [below right=-0.8cm and 2cm of verifying] {Publishing invalidity accusation};
   \node[state] (generating pubkey) [below left=2cm of verifying.south] {Generating public key};
 
-  \node[state] (submitting pubkey) [right=2cm of generating pubkey] {Submitting public key};
+  \node[chain state] (submitting pubkey) [right=2cm of generating pubkey] {Submitting public key};
 
-  \node[state] (awaiting pubkey) [below=1cm of submitting pubkey] {Awaiting on-chain public key};
+  \node[chain state] (awaiting pubkey) [below=1cm of submitting pubkey] {Awaiting on-chain public key};
   
   \node[state] (pending activation delay) [right=2cm of awaiting pubkey] {Waiting for activation delay};
 
@@ -28,7 +28,7 @@
 
    \path [->] (waiting) edge (awaiting entry)
 
-              (awaiting entry) edge node [above] {entry received} (eligibility check)
+              (awaiting entry) edge [chain transition] node [above] {entry received} (eligibility check)
 
               (eligibility check) edge [bend right=45] node [above] {No} (awaiting entry)
                                   edge [pos=0.6] node {Yes} (joining channel)
@@ -45,10 +45,10 @@
 
                (generating pubkey) edge node {generated} (submitting pubkey)
 
-               (submitting pubkey) edge [pos=0.65] node {submitted} (awaiting pubkey)
+               (submitting pubkey) edge [chain transition,pos=0.65] node {submitted} (awaiting pubkey)
               
-               (awaiting pubkey) edge [to path={[rounded corners=3cm] -| (\tikztotarget) \tikztonodes}] node [pos=0.15,centered,text width=2cm] {relay entry received} (waiting)
-                                 edge node [centered,text width=1.5cm,align=flush center] {pubkey published} (pending activation delay)
+               (awaiting pubkey) edge [chain transition,to path={[rounded corners=3cm] -| (\tikztotarget) \tikztonodes}] node [pos=0.15,centered,text width=2cm] {relay entry received} (waiting)
+                                 edge [chain transition] node [centered,text width=1.5cm,align=flush center] {pubkey published} (pending activation delay)
 
                (pending activation delay) edge [bend right=15] node [right,text width=2cm] {activation delay elapsed} (processing)
 }
