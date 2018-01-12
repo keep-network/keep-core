@@ -26,7 +26,7 @@ jobs:
           mkdir -p /tmp/docs/img
           make docs
           cp relay-states.pdf /tmp/docs
-          cp img/generated /tmp/docs/img/generated
+          cp -r img/generated /tmp/docs/img/generated
       - store_artifacts:
           path: /tmp/docs
 
