@@ -1,8 +1,6 @@
 % -*- root: relay-states-preview.tex -*-
 
 \tikz[every node/.style={node distance=2cm},
-      thread/.style={draw,signal,signal to=east,fill=white},
-      decision/.style={draw,rectangle,align=flush center},
       fan out/.style={to path={-- ++(0.5,0) -| ($ (\tikztotarget) - (1,0) $) -- (\tikztotarget)}}]{
   \node[draw,circle] (start) {};
 
