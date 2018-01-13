@@ -9,7 +9,6 @@ echo "\documentclass{standalone}" > $target_basename.tex
 echo "\usepackage{tikz}" >> $target_basename.tex
 echo "\usepackage{hyperref}" >> $target_basename.tex
 echo "\usepackage[utf8]{inputenc}" >> $target_basename.tex
-echo "\usepackage[utf8]{inputenc}" >> $target_basename.tex
 echo "\usetikzlibrary{positioning}" >> $target_basename.tex
 echo "\usetikzlibrary{arrows.meta}" >> $target_basename.tex
 echo "\usetikzlibrary{shapes.symbols}" >> $target_basename.tex
