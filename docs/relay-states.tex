@@ -26,6 +26,10 @@
   chain state/.style={draw,circle,dashed,align=flush center,text width=2cm},
   chain decision/.style={draw,rectangle,dashed,align=flush center},
   chain transition/.style={draw,dashed},
+  % Nested chain decisions combine nested and chain styles to
+  % indicate a reference to a different diagram for a state that
+  % depends on chain interaction.
+  nested chain decision/.style={draw,rectangle,double,dashed,align=flush center},
   % Set default arrow style to stealth.
   >=Stealth
 }
