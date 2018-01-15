@@ -39,7 +39,6 @@ jobs:
       - restore_cache:
           key: docs-cache
       - run: |
-          echo $CIRCLE_BRANCH
           echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ~/gcloud-service-key.json
           gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
           gcloud config set project cfc-production
