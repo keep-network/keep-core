@@ -1,8 +1,10 @@
 SHELL = /bin/bash 
 
+generated_img_dir=img/generated
+
 tikz_files := $(wildcard img-src/*.tikz)
 
-tikz_pngs := $(foreach file, $(tikz_files), $(basename $(file)).png)
+tikz_pngs := $(foreach file, $(tikz_files), $(generated_img_dir)/$(notdir $(basename $(file))).png)
 
 .PHONY: clean docs pngs
 
@@ -17,8 +19,8 @@ relay-states.pdf: relay-states.tex
 	pdflatex -halt-on-error relay-states.tex; \
 	pdflatex -halt-on-error relay-states.tex
 
-$(tikz_pngs): %.png: %.tikz
-	bash scripts/generate-pngs.sh /tmp/png-generate img/generated $< $(notdir $(basename $@))
+$(tikz_pngs): img/generated/%.png: img-src/%.tikz
+	bash scripts/generate-pngs.sh /tmp/png-generate img/generated $< $(basename $(*F))
 
 pngs: $(tikz_pngs)
 
