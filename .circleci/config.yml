@@ -29,17 +29,17 @@ jobs:
             make docs
             cp relay-states.pdf /tmp/docs
             cp -r img/generated /tmp/docs/img/generated
-      - save_cache:
-          key: docs-cache
+      - persist_to_workspace:
+          root: /tmp/docs
           paths:
-            - /tmp/docs
+            - ./*.pdf
+            - img/generated/*.png
   upload_docs:
     docker:
       - image: google/cloud-sdk:slim
     steps:
-      - checkout
-      - restore_cache:
-          key: docs-cache
+      - attach_workspace:
+          at: /tmp/docs
       - run:
           name: Upload Document Files to docs.keep.network
           command: |
