@@ -19,11 +19,9 @@ echo "" >> $target_basename.tex
 cat $tikz_source >> $target_basename.tex
 echo "\end{document}" >> $target_basename.tex
 
-echo $tikz_source $target_basename
-
 pdflatex -halt-on-error $target_basename.tex $target_basename.pdf
 
 mkdir -p $img_dir
+echo "Generating $img_dir/$target_basename.png from $target_basename.pdf..."
 gs -dNOPAUSE -sDEVICE=pngalpha -dFirstPage=1 -dLastPage=1 -sOutputFile=$img_dir/$target_basename.png -r300 -q $target_basename.pdf -c quit
-
-#rm -r $(dirname $tmp_file)
+echo "Finished with exit status $?."
