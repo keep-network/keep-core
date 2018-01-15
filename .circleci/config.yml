@@ -20,13 +20,15 @@ jobs:
       - image: thomasweise/texlive
     steps:
       - checkout
-      - run: |
-          cd docs
-          make clean
-          mkdir -p /tmp/docs/img
-          make docs
-          cp relay-states.pdf /tmp/docs
-          cp -r img/generated /tmp/docs/img/generated
+      - run:
+          name: Generate Document Files
+          command: |
+            cd docs
+            make clean
+            mkdir -p /tmp/docs/img
+            make docs
+            cp relay-states.pdf /tmp/docs
+            cp -r img/generated /tmp/docs/img/generated
       - save_cache:
           key: docs-cache
           paths:
@@ -38,13 +40,14 @@ jobs:
       - checkout
       - restore_cache:
           key: docs-cache
-      - run: |
-          echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ~/gcloud-service-key.json
-          gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
-          gcloud config set project cfc-production
-          cd /tmp/docs
-          gsutil -m cp -r * gs://docs.keep.network/$CIRCLE_BRANCH/
-
+      - run:
+          name: Upload Document Files to docs.keep.network
+          command: |
+            echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+            gcloud config set project cfc-production
+            cd /tmp/docs
+            gsutil -m cp -r * gs://docs.keep.network/$CIRCLE_BRANCH/
 
 workflows:
   version: 2
