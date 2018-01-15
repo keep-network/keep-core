@@ -57,7 +57,9 @@ workflows:
   docs:
     jobs:
       - generate_docs
-      - upload_docs
+      - upload_docs:
+          requires:
+            - generate_docs
   go:
     jobs:
       - build_client
