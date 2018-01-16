@@ -47,7 +47,8 @@ jobs:
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             gcloud config set project cfc-production
             cd /tmp/docs
-            gsutil -m cp -r * gs://docs.keep.network/$CIRCLE_BRANCH/
+            export DIR=$(test $CIRCLE_BRANCH != master && echo $CIRCLE_BRANCH/)
+            gsutil -m cp -r * gs://docs.keep.network/$DIR
 
 workflows:
   version: 2
