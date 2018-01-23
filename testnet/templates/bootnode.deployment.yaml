@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1 
+kind: Deployment
+metadata:
+  name: {{ template "private-ethereum.fullname" . }}-bootnode-deployment
+  labels:
+    app: {{ template "private-ethereum.name" . }}-bootnode-deployment
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.bootnode.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "private-ethereum.name" . }}-bootnode
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "private-ethereum.name" . }}-bootnode
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: bootnode
+          image: {{ .Values.bootnode.image.repository }}:{{ .Values.bootnode.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["/bin/sh"]
+          args:
+            - "-c"
+            - "bootnode --nodekey=/etc/bootnode/node.key --verbosity=4"
+          volumeMounts:
+            - name: data
+              mountPath: /etc/bootnode
+          ports:
+            - name: discovery
+              containerPort: 30301
+              protocol: UDP
+        initContainers:
+          - name: genkey
+            image: {{ .Values.bootnode.image.repository }}:{{ .Values.bootnode.image.tag }}
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            command: ["/bin/sh"]
+            args:
+              - "-c"
+              - "bootnode --genkey=/etc/bootnode/node.key"
+            volumeMounts:
+              - name: data
+                mountPath: /etc/bootnode
+      volumes:
+        - name: data
+          emptyDir: {}

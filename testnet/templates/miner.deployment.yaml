@@ -1,0 +1,70 @@
+apiVersion: extensions/v1beta1 
+kind: Deployment
+metadata:
+  name: {{ template "private-ethereum.fullname" . }}-miner-deployment
+  labels:
+    app: {{ template "private-ethereum.name" . }}-miner-deployment
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.miner.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "private-ethereum.name" . }}-miner
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "private-ethereum.name" . }}-miner
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: miner
+          image: {{ .Values.miner.image.repository }}:{{ .Values.miner.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["/bin/sh"]
+          args: 
+            - "-c"
+            - "geth --bootnodes=`cat /root/.ethereum/bootnodes` --mine --etherbase=0 --networkid=${NETWORK_ID} --ethstats=${HOSTNAME}:${ETHSTATS_SECRET}@${ETHSTATS_SVC} --verbosity=5"
+          ports:
+            - name: discovery-udp
+              containerPort: 30303
+              protocol: UDP
+            - name: discovery-tcp
+              containerPort: 30303
+          volumeMounts:
+            - name: data
+              mountPath: /root/.ethereum
+        initContainers:
+          - name: init-genesis
+            image: {{ .Values.miner.image.repository }}:{{ .Values.miner.image.tag }}
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            args:
+              - "init"
+              - "/var/geth/genesis.json"
+            volumeMounts:
+              - name: data
+                mountPath: /root/.ethereum
+              - name: config
+                mountPath: /var/geth
+          - name: get-bootnodes
+            image: {{ .Values.miner.image.repository }}:{{ .Values.miner.image.tag }}
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            command: ["/bin/sh"]
+            args:
+              - "-c"
+              - |-
+              {{ .Files.Get "scripts/get-bootnode.sh" | indent 10 }}
+            env:
+              - name: BOOTNODE_SERVICE
+                value: {{ template "private-ethereum.fullname" . }}-bootnode-service.{{ .Release.Namespace }}
+            volumeMounts:
+              - name: data
+                mountPath: /geth
+        volumes:
+          - name: data
+            emptyDir: {}
+          - name: config 
+            configMap:
+            name: {{ template "private-ethereum.fullname" . }}-geth-config
