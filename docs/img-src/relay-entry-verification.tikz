@@ -1,20 +1,20 @@
-% -*- root: relay-states-preview.tex -*-
+% !TEX root = ../relay-states.tex
 \tikz{
-  \node [state] (start) {};
+  \node [start state] (start) {};
 
-  \node [state] (waiting for entry) [right=of start,text width=1.8cm] {Waiting for relay entry};
+  \node [chain state] (waiting for entry) [right=of start,text width=1.8cm] {Waiting for relay entry};
 
   \node [decision] (verifying) [right=4cm of waiting for entry] {Is entry valid?};
 
-  \node [state] (calling chain verification) [right=2cm of verifying,text width=1.8cm] {Calling on-chain verification};
+  \node [chain state] (calling chain verification) [right=2cm of verifying,text width=1.8cm] {Calling on-chain verification};
 
   \path[->] (start) edge (waiting for entry)
 
-            (waiting for entry) edge node {relay entry published} (verifying)
+            (waiting for entry) edge [chain transition] node {relay entry published} (verifying)
 
             (verifying) edge node {no} (calling chain verification)
-            (verifying) edge [bend left=45] node [auto] {yes} (waiting for entry)
+            (verifying) edge [bend left=30] node [below,pos=0.55] {yes} (waiting for entry)
 
             % If on-chain verification fails do we back off?
-            (calling chain verification) edge [bend right=45] node {on-chain verification complete} (waiting for entry);
+            (calling chain verification) edge [chain transition,bend right=30] node {on-chain verification complete} (waiting for entry);
 }
