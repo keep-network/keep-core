@@ -2,8 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-imagePullPolicy: IfNotPresent
-
 bootnode:
   replicaCount: 1
   image:
@@ -14,13 +12,11 @@ miner:
   image:
     repository: ethereum/client-go
     tag: v1.7.3
-  replicaCount: 1
-  account:
-    secret: my-secret-account-password
+  replicaCount: 2
 
-genesis:
-  networkId: 1101
-  initialBalance: 999000000000000000000
-  initialAccounts:
-    - 627306090abab3a6e1400e9345bc60c78a8bef57
-    - f17f52151ebef6c7334fad080c5704d77216b732
+monitor:
+  replicaCount: 1
+  image:
+    repository: ethereumex/eth-stats-dashboard
+    tag: latest
+  secret: websocket-access-secret

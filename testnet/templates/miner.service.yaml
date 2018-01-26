@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "private-ethereum.fullname" . }}-miner-service
+  name: {{ template "geth.fullname" . }}-miner-service
   labels:
-    app: {{ template "private-ethereum.name" . }}-miner-service
+    app: {{ template "geth.name" . }}-miner-service
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
   selector:
-    app: {{ template "private-ethereum.name" . }}-miner
+    app: {{ template "geth.name" . }}-miner
   type: NodePort
   ports:
   ports:

@@ -1,9 +1,9 @@
 apiVersion: extensions/v1beta1 
 kind: Deployment
 metadata:
-  name: {{ template "private-ethereum.fullname" . }}-bootnode-deployment
+  name: {{ template "geth.fullname" . }}-bootnode-deployment
   labels:
-    app: {{ template "private-ethereum.name" . }}-bootnode-deployment
+    app: {{ template "geth.name" . }}-bootnode-deployment
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -11,40 +11,50 @@ spec:
   replicas: {{ .Values.bootnode.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "private-ethereum.name" . }}-bootnode
+      app: {{ template "geth.name" . }}-bootnode
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ template "private-ethereum.name" . }}-bootnode
+        app: {{ template "geth.name" . }}-bootnode
         release: {{ .Release.Name }}
     spec:
+      initContainers:
+        - name: genkey
+          image: {{ .Values.bootnode.image.repository }}:{{ .Values.bootnode.image.tag }}
+          command: ["/bin/sh", "-c", "bootnode --genkey=/data/boot.key"]
+          volumeMounts:
+            - name: datadir
+              mountPath: /data
       containers:
         - name: bootnode
           image: {{ .Values.bootnode.image.repository }}:{{ .Values.bootnode.image.tag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["/bin/sh", "-c", "bootnode --nodekey=/data/boot.key"]
+          volumeMounts:
+            - name: datadir
+              mountPath: /data
+          ports:
+            - name: bootnode
+              containerPort: 30301
+              protocol: UDP
+        - name: bootnode-broadcast
+          image: {{ .Values.bootnode.image.repository }}:{{ .Values.bootnode.image.tag }}
           command: ["/bin/sh"]
           args:
             - "-c"
-            - "bootnode --nodekey=/etc/bootnode/node.key --verbosity=4"
+            - "while [ 1 ]; \
+            do echo -e \"HTTP/1.1 200 OK\n\nenode://$(bootnode -writeaddress --nodekey=/data/boot.key)@$(POD_IP):30301\" \
+            | nc -l -v -p 80 || break; done;"
           volumeMounts:
-            - name: data
-              mountPath: /etc/bootnode
+            - name: datadir
+              mountPath: /data
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           ports:
-            - name: discovery
-              containerPort: 30301
-              protocol: UDP
-        initContainers:
-          - name: genkey
-            image: {{ .Values.bootnode.image.repository }}:{{ .Values.bootnode.image.tag }}
-            imagePullPolicy: {{ .Values.imagePullPolicy }}
-            command: ["/bin/sh"]
-            args:
-              - "-c"
-              - "bootnode --genkey=/etc/bootnode/node.key"
-            volumeMounts:
-              - name: data
-                mountPath: /etc/bootnode
+            - containerPort: 80
       volumes:
-        - name: data
+        - name: datadir
           emptyDir: {}

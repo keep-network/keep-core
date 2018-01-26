@@ -1,31 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "private-ethereum.fullname" . }}
+  name: {{ template "geth.fullname" . }}-config
   labels:
-    app: {{ template "private-ethereum.name" . }}
+    app: {{ template "geth.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
-  networkid: "{{ .Values.genesis.networkId }}"
-  genesis.json: |-
-    {
-      "config": {
-        "chainId": {{ .Values.genesis.networkId }},
-        "homesteadBlock": 0,
-        "eip150Block": 0,
-        "eip155Block": 0,
-        "eip158Block": 0
-      },
-      "difficulty": "0x400",
-      "gasLimit" : "0x47e7c5",
-      "nonce" : "0x0000000000000042",
-      "alloc": {
-        {{- range .Values.genesis.initialAccounts }}
-        {{ . | quote }}: {
-          "balance": "999000000000000000000"
-        }
-        {{- end }}
-      }
-    }
+  genesis.json: |
+{{ .Files.Get "genesis.json" | indent 4 }}
