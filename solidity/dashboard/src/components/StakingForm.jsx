@@ -4,6 +4,7 @@ import { Button, Form, FormGroup,
   FormControl } from 'react-bootstrap';
 import { getKeepToken, getTokenStaking } from '../contracts'
 import Network from '../network'
+import { formatAmount } from '../utils';
 
 const ERRORS = {
   INVALID_AMOUNT: `INVALID_AMOUNT`,
@@ -65,10 +66,10 @@ class StakingForm extends Component {
     const stakingContract = await getTokenStaking(stakingContractAddress);
 
     if (action === 'stake') {
-      token.approve(stakingContractAddress, amount, {from: accounts[0], gas: 60000});
-      stakingContract.stake(amount, {from: accounts[0], gas: 60000});
+      token.approve(stakingContractAddress, formatAmount(amount, 18), {from: accounts[0], gas: 60000});
+      stakingContract.stake(formatAmount(amount, 18), {from: accounts[0], gas: 60000});
     } else if (action === 'unstake') {
-      stakingContract.initiateUnstake(amount, {from: accounts[0], gas: 60000});
+      stakingContract.initiateUnstake(amount, {from: accounts[0], gas: 90000});
     }
 
   }

@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Table, Col, Grid, Row } from 'react-bootstrap';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import moment from 'moment'
+import moment from 'moment';
+import BigNumber from "bignumber.js";
 import { displayAmount } from './utils';
 import Network from './network';
 import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
@@ -33,7 +34,7 @@ class Main extends Component {
   }
 
   render() {
-    const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, chartData, withdrawals, withdrawalsTotal } = this.state;
+    const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, chartOptions, chartData, withdrawals, withdrawalsTotal } = this.state;
 
     return (
       <div className="main">
@@ -41,7 +42,7 @@ class Main extends Component {
         <Grid>
           <Row>
             <Col xs={12} md={6}>
-              <Pie dataKey="name" data={ chartData } />
+              <Pie dataKey="name" data={ chartData } options={ chartOptions } />
             </Col>
             <Col xs={12} md={6}>
               
@@ -102,10 +103,11 @@ class Main extends Component {
     const accounts = await Network.getAccounts();
     const yourAddress  = accounts[0];
     const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
-    const tokenBalance =  displayAmount(await token.balanceOf(yourAddress), 0);
+
+    const tokenBalance =  displayAmount(await token.balanceOf(yourAddress), 18, 3);
 
     const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
-    const stakeBalance  = displayAmount(await stakingContract.balanceOf(yourAddress), 0);
+    const stakeBalance  = displayAmount(await stakingContract.balanceOf(yourAddress), 18, 3);
     const withdrawalDelay  = (await stakingContract.withdrawalDelay()).toNumber()
 
     const withdrawalIndexes  = await stakingContract.getWithdrawals(yourAddress);
@@ -125,9 +127,14 @@ class Main extends Component {
     }
 
     const grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS);
-    const grantBalance  = displayAmount(await grantContract.balanceOf(yourAddress), 0);
-    const grantStakeBalance  = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 0);
+    const grantBalance  = displayAmount(await grantContract.balanceOf(yourAddress), 18, 3);
+    const grantStakeBalance  = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 18, 3);
 
+    const chartOptions = {
+      legend: {
+        position: 'right'
+      }
+    }
     const chartData = {
       labels: [
         'Tokens',
@@ -152,6 +159,7 @@ class Main extends Component {
       stakeBalance,
       grantBalance,
       grantStakeBalance,
+      chartOptions,
       chartData,
       withdrawals,
       withdrawalsTotal

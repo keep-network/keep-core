@@ -12,8 +12,14 @@ const Header = () =>  {
         </NavbarBrand>
       </Navbar.Header>
       <div className="pull-right">
-        <strong>KEEP Token: </strong> 
-        <span className="txt-primary">{ process.env.REACT_APP_TOKEN_ADDRESS }</span>
+        <div>
+          <strong>KEEP Token: </strong> 
+          <span className="txt-primary">{ process.env.REACT_APP_TOKEN_ADDRESS }</span>
+        </div>
+        <div>
+          <strong>Network: </strong> 
+          <span className="txt-primary"></span>
+        </div>
       </div> 
     </Navbar>
   )

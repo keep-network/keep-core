@@ -1,6 +1,12 @@
-export function displayAmount(amount, decimals) {
-  amount = amount / (10 ** decimals)
-  return Math.round(amount * 10000) / 10000
+import BigNumber from "bignumber.js";
+
+export function displayAmount(amount, decimals, precision) {
+  amount = new BigNumber(amount)
+  return amount.dividedBy(10**decimals).toFixed(precision)
+}
+
+export function formatAmount(amount, decimals) {
+  return amount * (10 ** decimals)
 }
 
 export function sleep(ms) {
