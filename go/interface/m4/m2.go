@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("Failed to connect to the Ethereum client: %v at address: %s", err, addr)
 	}
 
-	fmt.Printf("Connected - V8\n")
+	fmt.Printf("Connected - v9\n")
 	// Instantiate the contract and display its name
 	// token, err := common.NewToken(common.HexToAddress("0x21e6fc92f93c8a1bb41e2be64b4e1f88a54d3576"), conn)
 	// token, err := NewTokenRecipientType(common.HexToAddress("0x627306090abab3a6e1400e9345bc60c78a8bef57"), conn)

@@ -7,10 +7,10 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind" // "www.2c-why.com/job/ethrpc/ethABI/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"www.2c-why.com/job/ethrpc/ethABI/bind"
-	"www.2c-why.com/job/m4/KStart"
+	"github.com/keep.network/keep-core/go/interface/m4/KStart" // "www.2c-why.com/job/m4/KStart"
 )
 
 // "www.2c-why.com/job/m4/KStart"

@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"www.2c-why.com/job/ethrpc/ethABI/bind"
 )
 
 // TokenRecipientTypeABI is the input ABI used to generate the binding from.
@@ -20,6 +20,7 @@ const TokenRecipientTypeABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_fro
 type TokenRecipientType struct {
 	TokenRecipientTypeCaller     // Read-only binding to the contract
 	TokenRecipientTypeTransactor // Write-only binding to the contract
+	TokenRecipientTypeFilterer   // Log filterer for contract events
 }
 
 // TokenRecipientTypeCaller is an auto generated read-only Go binding around an Ethereum contract.
@@ -29,6 +30,11 @@ type TokenRecipientTypeCaller struct {
 
 // TokenRecipientTypeTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type TokenRecipientTypeTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// TokenRecipientTypeFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type TokenRecipientTypeFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
@@ -71,16 +77,16 @@ type TokenRecipientTypeTransactorRaw struct {
 
 // NewTokenRecipientType creates a new instance of TokenRecipientType, bound to a specific deployed contract.
 func NewTokenRecipientType(address common.Address, backend bind.ContractBackend) (*TokenRecipientType, error) {
-	contract, err := bindTokenRecipientType(address, backend, backend)
+	contract, err := bindTokenRecipientType(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &TokenRecipientType{TokenRecipientTypeCaller: TokenRecipientTypeCaller{contract: contract}, TokenRecipientTypeTransactor: TokenRecipientTypeTransactor{contract: contract}}, nil
+	return &TokenRecipientType{TokenRecipientTypeCaller: TokenRecipientTypeCaller{contract: contract}, TokenRecipientTypeTransactor: TokenRecipientTypeTransactor{contract: contract}, TokenRecipientTypeFilterer: TokenRecipientTypeFilterer{contract: contract}}, nil
 }
 
 // NewTokenRecipientTypeCaller creates a new read-only instance of TokenRecipientType, bound to a specific deployed contract.
 func NewTokenRecipientTypeCaller(address common.Address, caller bind.ContractCaller) (*TokenRecipientTypeCaller, error) {
-	contract, err := bindTokenRecipientType(address, caller, nil)
+	contract, err := bindTokenRecipientType(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,20 +95,29 @@ func NewTokenRecipientTypeCaller(address common.Address, caller bind.ContractCal
 
 // NewTokenRecipientTypeTransactor creates a new write-only instance of TokenRecipientType, bound to a specific deployed contract.
 func NewTokenRecipientTypeTransactor(address common.Address, transactor bind.ContractTransactor) (*TokenRecipientTypeTransactor, error) {
-	contract, err := bindTokenRecipientType(address, nil, transactor)
+	contract, err := bindTokenRecipientType(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
 	return &TokenRecipientTypeTransactor{contract: contract}, nil
 }
 
+// NewTokenRecipientTypeFilterer creates a new log filterer instance of TokenRecipientType, bound to a specific deployed contract.
+func NewTokenRecipientTypeFilterer(address common.Address, filterer bind.ContractFilterer) (*TokenRecipientTypeFilterer, error) {
+	contract, err := bindTokenRecipientType(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &TokenRecipientTypeFilterer{contract: contract}, nil
+}
+
 // bindTokenRecipientType binds a generic wrapper to an already deployed contract.
-func bindTokenRecipientType(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor) (*bind.BoundContract, error) {
+func bindTokenRecipientType(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(TokenRecipientTypeABI))
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor), nil
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and

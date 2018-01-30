@@ -7,10 +7,12 @@ import (
 	"math/big"
 	"strings"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"www.2c-why.com/job/ethrpc/ethABI/bind"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // TokenTypeABI is the input ABI used to generate the binding from.
@@ -20,6 +22,7 @@ const TokenTypeABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outp
 type TokenType struct {
 	TokenTypeCaller     // Read-only binding to the contract
 	TokenTypeTransactor // Write-only binding to the contract
+	TokenTypeFilterer   // Log filterer for contract events
 }
 
 // TokenTypeCaller is an auto generated read-only Go binding around an Ethereum contract.
@@ -29,6 +32,11 @@ type TokenTypeCaller struct {
 
 // TokenTypeTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type TokenTypeTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// TokenTypeFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type TokenTypeFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
@@ -71,16 +79,16 @@ type TokenTypeTransactorRaw struct {
 
 // NewTokenType creates a new instance of TokenType, bound to a specific deployed contract.
 func NewTokenType(address common.Address, backend bind.ContractBackend) (*TokenType, error) {
-	contract, err := bindTokenType(address, backend, backend)
+	contract, err := bindTokenType(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &TokenType{TokenTypeCaller: TokenTypeCaller{contract: contract}, TokenTypeTransactor: TokenTypeTransactor{contract: contract}}, nil
+	return &TokenType{TokenTypeCaller: TokenTypeCaller{contract: contract}, TokenTypeTransactor: TokenTypeTransactor{contract: contract}, TokenTypeFilterer: TokenTypeFilterer{contract: contract}}, nil
 }
 
 // NewTokenTypeCaller creates a new read-only instance of TokenType, bound to a specific deployed contract.
 func NewTokenTypeCaller(address common.Address, caller bind.ContractCaller) (*TokenTypeCaller, error) {
-	contract, err := bindTokenType(address, caller, nil)
+	contract, err := bindTokenType(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,20 +97,29 @@ func NewTokenTypeCaller(address common.Address, caller bind.ContractCaller) (*To
 
 // NewTokenTypeTransactor creates a new write-only instance of TokenType, bound to a specific deployed contract.
 func NewTokenTypeTransactor(address common.Address, transactor bind.ContractTransactor) (*TokenTypeTransactor, error) {
-	contract, err := bindTokenType(address, nil, transactor)
+	contract, err := bindTokenType(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
 	return &TokenTypeTransactor{contract: contract}, nil
 }
 
+// NewTokenTypeFilterer creates a new log filterer instance of TokenType, bound to a specific deployed contract.
+func NewTokenTypeFilterer(address common.Address, filterer bind.ContractFilterer) (*TokenTypeFilterer, error) {
+	contract, err := bindTokenType(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &TokenTypeFilterer{contract: contract}, nil
+}
+
 // bindTokenType binds a generic wrapper to an already deployed contract.
-func bindTokenType(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor) (*bind.BoundContract, error) {
+func bindTokenType(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(TokenTypeABI))
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor), nil
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -360,4 +377,146 @@ func (_TokenType *TokenTypeSession) TransferFrom(_from common.Address, _to commo
 // Solidity: function transferFrom(_from address, _to address, _value uint256) returns(success bool)
 func (_TokenType *TokenTypeTransactorSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
 	return _TokenType.Contract.TransferFrom(&_TokenType.TransactOpts, _from, _to, _value)
+}
+
+// TokenTypeTransferIterator is returned from FilterTransfer and is used to iterate over the raw logs and unpacked data for Transfer events raised by the TokenType contract.
+type TokenTypeTransferIterator struct {
+	Event *TokenTypeTransfer // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *TokenTypeTransferIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(TokenTypeTransfer)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(TokenTypeTransfer)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *TokenTypeTransferIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *TokenTypeTransferIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// TokenTypeTransfer represents a Transfer event raised by the TokenType contract.
+type TokenTypeTransfer struct {
+	From  common.Address
+	To    common.Address
+	Value *big.Int
+	Raw   types.Log // Blockchain specific contextual infos
+}
+
+// FilterTransfer is a free log retrieval operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
+//
+// Solidity: event Transfer(from indexed address, to indexed address, value uint256)
+func (_TokenType *TokenTypeFilterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address) (*TokenTypeTransferIterator, error) {
+
+	var fromRule []interface{}
+	for _, fromItem := range from {
+		fromRule = append(fromRule, fromItem)
+	}
+	var toRule []interface{}
+	for _, toItem := range to {
+		toRule = append(toRule, toItem)
+	}
+
+	logs, sub, err := _TokenType.contract.FilterLogs(opts, "Transfer", fromRule, toRule)
+	if err != nil {
+		return nil, err
+	}
+	return &TokenTypeTransferIterator{contract: _TokenType.contract, event: "Transfer", logs: logs, sub: sub}, nil
+}
+
+// WatchTransfer is a free log subscription operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
+//
+// Solidity: event Transfer(from indexed address, to indexed address, value uint256)
+func (_TokenType *TokenTypeFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *TokenTypeTransfer, from []common.Address, to []common.Address) (event.Subscription, error) {
+
+	var fromRule []interface{}
+	for _, fromItem := range from {
+		fromRule = append(fromRule, fromItem)
+	}
+	var toRule []interface{}
+	for _, toItem := range to {
+		toRule = append(toRule, toItem)
+	}
+
+	logs, sub, err := _TokenType.contract.WatchLogs(opts, "Transfer", fromRule, toRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(TokenTypeTransfer)
+				if err := _TokenType.contract.UnpackLog(event, "Transfer", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
 }
