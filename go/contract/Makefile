@@ -19,10 +19,3 @@ t1:
 
 # contracts/token_sol_MyToken.abi  contracts/token_sol_tokenRecipient.abi
 
-t2: 
-	( cd contracts ; solc --abi token.sol )
-	abigen --abi contracts/token_sol_Token.abi --type TokenType --pkg main --out test_t2_a.go
-	abigen --abi contracts/token_sol_tokenRecipient.abi --type TokenRecipientType --pkg main --out test_t2_b.go
-	cp test_t2_?.go /Users/corwin/go/src/www.2c-why.com/job/m4
-
-
