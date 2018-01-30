@@ -7,10 +7,12 @@ import (
 	"math/big"
 	"strings"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"www.2c-why.com/job/ethrpc/ethABI/bind"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // KStartABI is the input ABI used to generate the binding from.
@@ -20,6 +22,7 @@ const KStartABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"add
 type KStart struct {
 	KStartCaller     // Read-only binding to the contract
 	KStartTransactor // Write-only binding to the contract
+	KStartFilterer   // Log filterer for contract events
 }
 
 // KStartCaller is an auto generated read-only Go binding around an Ethereum contract.
@@ -29,6 +32,11 @@ type KStartCaller struct {
 
 // KStartTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type KStartTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// KStartFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type KStartFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
@@ -71,16 +79,16 @@ type KStartTransactorRaw struct {
 
 // NewKStart creates a new instance of KStart, bound to a specific deployed contract.
 func NewKStart(address common.Address, backend bind.ContractBackend) (*KStart, error) {
-	contract, err := bindKStart(address, backend, backend)
+	contract, err := bindKStart(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &KStart{KStartCaller: KStartCaller{contract: contract}, KStartTransactor: KStartTransactor{contract: contract}}, nil
+	return &KStart{KStartCaller: KStartCaller{contract: contract}, KStartTransactor: KStartTransactor{contract: contract}, KStartFilterer: KStartFilterer{contract: contract}}, nil
 }
 
 // NewKStartCaller creates a new read-only instance of KStart, bound to a specific deployed contract.
 func NewKStartCaller(address common.Address, caller bind.ContractCaller) (*KStartCaller, error) {
-	contract, err := bindKStart(address, caller, nil)
+	contract, err := bindKStart(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,20 +97,29 @@ func NewKStartCaller(address common.Address, caller bind.ContractCaller) (*KStar
 
 // NewKStartTransactor creates a new write-only instance of KStart, bound to a specific deployed contract.
 func NewKStartTransactor(address common.Address, transactor bind.ContractTransactor) (*KStartTransactor, error) {
-	contract, err := bindKStart(address, nil, transactor)
+	contract, err := bindKStart(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
 	return &KStartTransactor{contract: contract}, nil
 }
 
+// NewKStartFilterer creates a new log filterer instance of KStart, bound to a specific deployed contract.
+func NewKStartFilterer(address common.Address, filterer bind.ContractFilterer) (*KStartFilterer, error) {
+	contract, err := bindKStart(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &KStartFilterer{contract: contract}, nil
+}
+
 // bindKStart binds a generic wrapper to an already deployed contract.
-func bindKStart(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor) (*bind.BoundContract, error) {
+func bindKStart(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(KStartABI))
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor), nil
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -292,4 +309,129 @@ func (_KStart *KStartSession) RequestRandomNumber(_RequestID *big.Int, _payment 
 // Solidity: function requestRandomNumber(_RequestID uint256, _payment uint256, _blockReward uint256, _seed uint256) returns()
 func (_KStart *KStartTransactorSession) RequestRandomNumber(_RequestID *big.Int, _payment *big.Int, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
 	return _KStart.Contract.RequestRandomNumber(&_KStart.TransactOpts, _RequestID, _payment, _blockReward, _seed)
+}
+
+// KStartRelayRequestReadyIterator is returned from FilterRelayRequestReady and is used to iterate over the raw logs and unpacked data for RelayRequestReady events raised by the KStart contract.
+type KStartRelayRequestReadyIterator struct {
+	Event *KStartRelayRequestReady // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *KStartRelayRequestReadyIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(KStartRelayRequestReady)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(KStartRelayRequestReady)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *KStartRelayRequestReadyIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *KStartRelayRequestReadyIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// KStartRelayRequestReady represents a RelayRequestReady event raised by the KStart contract.
+type KStartRelayRequestReady struct {
+	RequestID   *big.Int
+	Payment     *big.Int
+	BlockReward *big.Int
+	Seed        *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterRelayRequestReady is a free log retrieval operation binding the contract event 0x74416580a5d574042861c6b2b7affa9581f905de2e358b973ef26eb550ab7a95.
+//
+// Solidity: event RelayRequestReady(RequestID uint256, payment uint256, blockReward uint256, seed uint256)
+func (_KStart *KStartFilterer) FilterRelayRequestReady(opts *bind.FilterOpts) (*KStartRelayRequestReadyIterator, error) {
+
+	logs, sub, err := _KStart.contract.FilterLogs(opts, "RelayRequestReady")
+	if err != nil {
+		return nil, err
+	}
+	return &KStartRelayRequestReadyIterator{contract: _KStart.contract, event: "RelayRequestReady", logs: logs, sub: sub}, nil
+}
+
+// WatchRelayRequestReady is a free log subscription operation binding the contract event 0x74416580a5d574042861c6b2b7affa9581f905de2e358b973ef26eb550ab7a95.
+//
+// Solidity: event RelayRequestReady(RequestID uint256, payment uint256, blockReward uint256, seed uint256)
+func (_KStart *KStartFilterer) WatchRelayRequestReady(opts *bind.WatchOpts, sink chan<- *KStartRelayRequestReady) (event.Subscription, error) {
+
+	logs, sub, err := _KStart.contract.WatchLogs(opts, "RelayRequestReady")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(KStartRelayRequestReady)
+				if err := _KStart.contract.UnpackLog(event, "RelayRequestReady", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
 }
