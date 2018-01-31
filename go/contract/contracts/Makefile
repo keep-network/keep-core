@@ -21,6 +21,7 @@ build_go_01:
 KStart_sol_KStart.abi: KStart.sol
 	solc --abi KStart.sol
 	abigen --abi KStart_sol_KStart.abi --pkg KStart --out KStart.go
+	cp KStart.go ../../interface/m4/KStart
 
 t2: 
 	solc --abi token.sol 
