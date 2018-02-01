@@ -26,9 +26,9 @@ type KeepGenNumber struct {
 }
 
 type RelayRequest struct {
-	RequestID   int    //
-	Payment     int    // Eth to run (gas?)
-	BlockReward int    // Keep tokens as payment
+	RequestID   int64  //
+	Payment     int64  // Eth to run (gas?)
+	BlockReward int64  // Keep tokens as payment
 	Seed        []byte //
 }
 
@@ -37,6 +37,22 @@ type RelayEntry struct {
 	RandomNumber   []byte // generated output, the Signature, the Public Key for this, the Output
 	GroupPublicKey []byte //
 	PrivateEntry   string //	???
+}
+
+func TstCall() {
+	ethNode := "http://127.0.0.1:9545"
+	caddr := "0xaa588d3737b611bafd7bd713445b314bd453a5c8"
+	// ethNode = "http://192.168.0.139:8545"
+
+	// keyFile := "/Users/corwin/go/src/www.2c-why.com/job/m4/UTC--2018-01-03T02-17-58.695623282Z--9980ecddef53089390136fde20feb7e03125c441"
+	keyFile := "./UTC--2018-01-03T02-17-58.695623282Z--9980ecddef53089390136fde20feb7e03125c441"
+	keyFilePassword := "password"
+	kc, err := NewGenNumber(ethNode, caddr, keyFile, keyFilePassword)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	} else {
+		fmt.Printf("Success: %+v\n", kc)
+	}
 }
 
 // NewKeepConnection creates the connection to a contract
@@ -102,19 +118,45 @@ func (kc *KeepGenNumber) CreateRelayRequest(rq *RelayRequest, seed []byte) (err 
 	// 2. Call ETH to put request on chain?
 	// 3. Lots of stuff at this point like check for valid inputs, convert data etc.
 	//    This just compiles now.
-	var _RequestID *big.Int
-	var _payment *big.Int
-	var _blockReward *big.Int
-	var _seed *big.Int
+	// var _RequestID *big.Int
+	_RequestID := big.NewInt(rq.RequestID) // I am REALLY (did I say REALLY!) not fond of Eth's style with _ in front of parameters.
+	_payment := big.NewInt(rq.Payment)
+	_blockReward := big.NewInt(rq.BlockReward)
+	_seed := big.NewInt(0).SetBytes(seed)
 	// var opts *bind.TransactOpts
 	// func (_KStart *KStartTransactor) RequestRandomNumber(opts *bind.TransactOpts, _RequestID *big.Int, _payment *big.Int, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
 	tx, err := kc.contract.RequestRandomNumber(kc.opts, _RequestID, _payment, _blockReward, _seed)
 	_, _ = tx, err
+	// xyzzy - what am I supposed to do with the output at this point?  Log the transaction? hm...
 	return
 }
 
 // ReqlayRequestReturn -> RelayRequest (An Event?)
 
 func (kc *KeepGenNumber) RelayEntryPublished(re RelayEntry, tipBowl string) (err error) {
+	return
+}
+
+// func (_KStart *KStartFilterer) WatchRandomNumberReady(opts *bind.WatchOpts, sink chan<- *KStartRandomNumberReady) (event.Subscription, error) {
+func (kc *KeepGenNumber) ProcessRandomNumbers() (err error) {
+	var _KStart *KStart.KStartFilterer // xyzzy
+	var opts *bind.WatchOpts           // xyzzy
+	var sink chan *KStart.KStartRandomNumberReady
+	event, err := _KStart.WatchRandomNumberReady(opts, sink)
+	if err != nil {
+		fmt.Printf("Error creating watch: %s\n", err)
+	} else {
+		_ = event // xyzzy - don't we need to do "go event()"???
+		// Event is an event.Subscription - that is a chanel and the "Unsubscribe" -- So, Unsubscribe will get called,
+		// do we need a "quit" event in this, do we need to catch/report errors from the err chanel?
+		select {
+		case rn := <-sink:
+			fmt.Printf("Got a random number! Yea!, %+v\n", rn)
+
+			//		case ee := <-event.Err()
+			//			fmt.Printf ( "Got an error: %s\n", ee )
+		}
+	}
+
 	return
 }
