@@ -2,21 +2,32 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"os"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/dfinity/go-dfinity-crypto/groupsig"
 )
 
 type GroupMember struct {
-	ID             bls.ID            // globally shared
-	Commitments    [][]bls.PublicKey // globally shared
-	GroupPublicKey bls.PublicKey     // globally computed once sharing is complete
-	// created locally, shared only with
-	// corresponding member unless justifying
-	// an accusation
-	shares              []bls.SecretKey
-	receivedShares      []bls.SecretKey // received privately, stored locally
-	groupSecretKeyShare bls.SecretKey   // computed from receivedShares, stored locally
+	ID             bls.ID                     // globally shared
+	Commitments    map[bls.ID][]bls.PublicKey // globally shared
+	GroupPublicKey bls.PublicKey              // globally computed once sharing is complete
+	// Created locally, shared only with corresponding member unless justifying
+	// an accusation.
+	Shares map[bls.ID]bls.SecretKey
+	// Created locally, used to generate Shares, never shared.
+	commitmentSecrets   []bls.SecretKey
+	receivedShares      map[bls.ID]bls.SecretKey // received privately, stored locally
+	GroupSecretKeyShare *bls.SecretKey           // computed from receivedShares, stored locally
+	// Received via broadcast, tracks all accused IDs from this member's
+	// perspective.
+	accuserIDs []bls.ID
+	// Received via broadcast, tracks IDs of all members who accused this
+	// member.
+	accusedIDs          map[bls.ID]bool
+	disqualifiedPlayers map[bls.ID]bool // all players disqualified during justification
+	qualifiedPlayers    []bls.ID        // a list of ids of all qualified players
 }
 
 func idsFromGroupMembers(members []GroupMember) []*bls.ID {
@@ -84,10 +95,9 @@ func idsFromGroupMembers(members []GroupMember) []*bls.ID {
 // Note that there are t verifications, where t is the threshold of honest
 // players. However, there are n contributions, where n is the total number of
 // players.
-func generateCommitmentsAndShares(memberIDs []*bls.ID, threshold int) ([]bls.SecretKey, []bls.PublicKey, []*bls.SecretKey) {
+func (member *GroupMember) generateCommitmentsAndShares(memberIDs []bls.ID, threshold int) []bls.PublicKey {
 	commitments := make([]bls.PublicKey, threshold)
-	dealerShares := make([]bls.SecretKey, len(memberIDs))
-	memberShares := make([]*bls.SecretKey, 0)
+	member.commitmentSecrets = make([]bls.SecretKey, threshold)
 
 	// Note: bls.SecretKey, before we call some sort of Set on it, can be
 	// considered a zeroed *container* for a secret key.
@@ -97,6 +107,14 @@ func generateCommitmentsAndShares(memberIDs []*bls.ID, threshold int) ([]bls.Sec
 	// Set instead initializes a key from an existing set of shares and a member
 	// id.
 	//
+	// Commitmnent to s is E_0 = E(s, t) = g^s·h^t.
+	// E_i = E(F_i, G_i)
+	// F_i = coefficient i in F(x) = s + F_1·x + F_2·x^2 + ... + F_{k-1}·x^{k-1}
+	// s_i = F(i)
+	// G_i = coefficient i in G(x) = t + G_1·x + G_2·x^2 + ... + G_{k-1}·x^{k-1}
+	// t_i = G(i)
+	// Broadcast commitment is E_i = E(F_i, G_i) for i = 1, ..., k - 1
+	//
 	// [GJKR 99], Fig 2, 1(a).
 	// For this dealer, i, we generate t secret keys, which are equivalent to t
 	// coefficients a_ik and b_ik, k in [0,t], in two polynomials a and b (?),
@@ -105,8 +123,8 @@ func generateCommitmentsAndShares(memberIDs []*bls.ID, threshold int) ([]bls.Sec
 	// vector. Note that g and h are the generators for the unique subgroups
 	// chosen by the group via distributed coin flipping protocol (?)
 	for i := 0; i < threshold; i++ {
-		dealerShares[i].SetByCSPRNG()
-		commitments[i] = *dealerShares[i].GetPublicKey()
+		member.commitmentSecrets[i].SetByCSPRNG()
+		commitments[i] = *member.commitmentSecrets[i].GetPublicKey()
 	}
 
 	// The public keys for each share of the member's secret key represent a
@@ -115,8 +133,7 @@ func generateCommitmentsAndShares(memberIDs []*bls.ID, threshold int) ([]bls.Sec
 	// use them to verify that the shares of the group secret key sent from this
 	// member are valid against that underlying secret key.
 
-	// Shamir secret sharing vs Pedersen VSS? Shamir's isn't verifiable,
-	// perhaps?
+	// Shamir secret sharing vs Pedersen VSS? Shamir's isn't verifiable.
 
 	// Create a share of the group secret
 	// For each member (including the caller!), we create a share from our set
@@ -124,15 +141,15 @@ func generateCommitmentsAndShares(memberIDs []*bls.ID, threshold int) ([]bls.Sec
 	// carried in the envelope of the secret key (similar to (a_ik, b_ik)).
 	for _, memberID := range memberIDs {
 		memberShare := bls.SecretKey{}
-		memberShare.Set(dealerShares, memberID)
-		memberShares = append(memberShares, &memberShare)
+		memberShare.Set(member.commitmentSecrets, &memberID)
+		member.Shares[memberID] = memberShare
 	}
 
-	return dealerShares, commitments, memberShares
+	return commitments
 }
 
-func (member GroupMember) isValidShare(shareHolderIndex int, share bls.SecretKey) bool {
-	commitments := member.Commitments[shareHolderIndex]
+func (member GroupMember) isValidShare(shareHolderID bls.ID, share bls.SecretKey) bool {
+	commitments := member.Commitments[shareHolderID]
 
 	combinedCommitment := bls.PublicKey{}
 	combinedCommitment.Set(commitments, &member.ID)
@@ -142,10 +159,10 @@ func (member GroupMember) isValidShare(shareHolderIndex int, share bls.SecretKey
 	return combinedCommitment.IsEqual(comparisonShare)
 }
 
-func (member GroupMember) invalidShares() []int {
-	invalidShares := make([]int, 0)
-	for j, share := range member.receivedShares {
-		commitments := member.Commitments[j]
+func (member GroupMember) buildAccusations() []bls.ID {
+	accusedIDs := make([]bls.ID, 0)
+	for id, share := range member.receivedShares {
+		commitments := member.Commitments[id]
 
 		combinedCommitment := bls.PublicKey{}
 		combinedCommitment.Set(commitments, &member.ID)
@@ -153,35 +170,94 @@ func (member GroupMember) invalidShares() []int {
 		comparisonShare := share.GetPublicKey()
 
 		if !combinedCommitment.IsEqual(comparisonShare) {
-			invalidShares = append(invalidShares, j)
+			accusedIDs = append(accusedIDs, id)
 		}
 	}
 
-	return invalidShares
+	return accusedIDs
 }
 
-func (member GroupMember) computeGroupKeyShares() {
+func (member *GroupMember) recordAccusations(from bls.ID, accusedIDs []bls.ID) {
+	for _, id := range accusedIDs {
+		if member.ID.IsEqual(&id) {
+			member.accuserIDs = append(member.accuserIDs, member.ID)
+		} else {
+			member.accusedIDs[id] = true
+		}
+	}
+}
+
+func (member GroupMember) needsJustification() bool {
+	return len(member.accuserIDs) > 0
+}
+
+func (member GroupMember) buildJustifications() map[bls.ID]bls.SecretKey {
+	justifications := map[bls.ID]bls.SecretKey{}
+	for _, accuserID := range member.accuserIDs {
+		justifications[accuserID] = member.Shares[accuserID]
+	}
+
+	return justifications
+}
+
+func (member *GroupMember) considerJustification(justifyingID bls.ID, justification bls.SecretKey) {
+	if !member.isValidShare(justifyingID, justification) {
+		member.disqualifiedPlayers[justifyingID] = true
+	}
+}
+
+// [GJKR 99], Fig 2, 2
+func (member GroupMember) qualifiedShares() []bls.SecretKey {
+	shares := make([]bls.SecretKey, 0)
+	for id, share := range member.receivedShares {
+		if !member.disqualifiedPlayers[id] {
+			shares = append(shares, share)
+		}
+	}
+
+	return shares
+}
+
+func (member *GroupMember) computeGroupKeyShares() {
 	// [GJKR 99], Fig 2, 3
-	member.groupSecretKeyShare = bls.SecretKey{}
-	member.groupSecretKeyShare.Set(member.receivedShares, &member.ID)
+	initialShare := member.receivedShares[member.ID]
+	member.GroupSecretKeyShare = &initialShare
+	for id, share := range member.receivedShares {
+		if !id.IsEqual(&member.ID) {
+			member.GroupSecretKeyShare.Add(&share)
+		}
+	}
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
 	//            			   computation as well...
-	combinedCommitments := make([]bls.PublicKey, len(member.Commitments[0]))
-	for i, commitment := range member.Commitments[0] {
-		combinedCommitments[i].Deserialize(commitment.Serialize())
+	combinedCommitments := make([]bls.PublicKey, len(member.Commitments[member.ID]))
+	for i, commitment := range member.Commitments[member.ID] {
+		combinedCommitments[i] = commitment
 	}
-	for _, commitmentSet := range member.Commitments[1:] {
-		for i, commitment := range commitmentSet {
-			combinedCommitments[i].Add(&commitment)
+	for id, commitmentSet := range member.Commitments {
+		if !id.IsEqual(&member.ID) { // we handled this above
+			for i, commitment := range commitmentSet {
+				combinedCommitments[i].Add(&commitment)
+			}
 		}
 	}
 
 	member.GroupPublicKey = combinedCommitments[0]
 }
 
+func createGroupMember() GroupMember {
+	return GroupMember{
+		Commitments:         map[bls.ID][]bls.PublicKey{},
+		Shares:              map[bls.ID]bls.SecretKey{},
+		receivedShares:      map[bls.ID]bls.SecretKey{},
+		accuserIDs:          make([]bls.ID, 0),
+		accusedIDs:          map[bls.ID]bool{},
+		disqualifiedPlayers: map[bls.ID]bool{},
+	}
+}
+
 func main() {
-	fmt.Printf("Starting!")
+	fmt.Println("Starting!")
 	groupsig.Init(bls.CurveFp382_1)
 
 	// Network substrate: need to be able to:
@@ -200,43 +276,89 @@ func main() {
 
 	threshold := 4
 
-	memberNumbers := []int{0, 1, 2, 3, 4, 5, 6}
-	members := []GroupMember{}
+	memberNumbers := []int{1, 2, 3, 4, 5, 6, 7}
+	memberIDs := make([]bls.ID, 0)
+	membersByID := map[bls.ID]*GroupMember{}
 	for _, number := range memberNumbers {
-		member := GroupMember{}
-		member.ID.SetDecString(string(number))
-		members = append(members, member)
+		member := createGroupMember()
+		member.ID.SetDecString(fmt.Sprintf("%v", number))
+		membersByID[member.ID] = &member
+		memberIDs = append(memberIDs, member.ID)
 	}
 
-	for dealerI, dealer := range members { // inner loop is per client
-		ownShares, memberCommitments, memberShares :=
-			generateCommitmentsAndShares(idsFromGroupMembers(members), threshold)
+	type MemberCommitments struct {
+		commitments []bls.PublicKey
+	}
+	type PrivateShare struct {
+		encrypted  bool
+		receiverID bls.ID
+		share      bls.SecretKey
+	}
+	type Accusations struct {
+		accusedIDs []bls.ID
+	}
+	type Justifications struct {
+		// For one sender, justifications for each accusing member.
+		justifications map[bls.ID]bls.SecretKey
+	}
 
-		dealer.shares = ownShares
+	encryptShare := func(share PrivateShare) PrivateShare {
+		// Actually we just want to encrypt the share itself, not the whole
+		// envelope, since we still need the receiver to know they're receiving
+		// it.
+		share.encrypted = true // 🙈🙉🙊
 
-		// Broadcast commitments to all members and send them each their share
-		// of this member's secret.
-		for playerJ, member := range members {
-			member.Commitments = append(member.Commitments, memberCommitments)
-			// In network comms, this needs to be encrypted so it's only visible
-			// by `member`.
-			member.receivedShares[dealerI] = *memberShares[playerJ]
+		return share
+	}
+
+	broadcast := func(senderID bls.ID, msg interface{}) {
+		switch message := msg.(type) {
+		case MemberCommitments:
+			for _, member := range membersByID {
+				member.Commitments[senderID] = message.commitments
+			}
+
+		case PrivateShare:
+			membersByID[message.receiverID].receivedShares[senderID] = message.share
+
+		case Accusations:
+			for _, member := range membersByID {
+				member.recordAccusations(senderID, message.accusedIDs)
+			}
+
+		case Justifications:
+			// [GJKR 99], Fig 2, 1(d)
+			// Validate justifications, build disqualified list. This should be happening
+			// on each client, based on the same view of all accusations and
+			// justifications.
+			for accuserID, justification := range message.justifications {
+				accused := membersByID[accuserID]
+				accused.considerJustification(senderID, justification)
+			}
+		}
+	}
+
+	fmt.Println("Generating and broadcasting commitments and shares...")
+	for _, dealer := range membersByID { // inner loop is in each client
+		memberCommitments := dealer.generateCommitmentsAndShares(memberIDs, threshold)
+
+		broadcast(dealer.ID, MemberCommitments{memberCommitments})
+		for memberID, share := range dealer.Shares {
+			// Timing attack-wise, we may want to encrypt all shares and then
+			// ship them?
+			broadcast(dealer.ID, encryptShare(PrivateShare{false, memberID, share}))
 		}
 	}
 
 	// In network comms, wait until all commitments and shares are received.
 
+	fmt.Println("Handling accusations...")
 	// Validate and accuse: each member broadcasts accusations against a member
 	// whose share they failed to validate.
 	// [GJKR 99], Fig 2, 1(b)
-	allAccusationIndices := make([][]int, 0)  // "broadcast channel"
-	for _, validatorMember := range members { // inner loop is per client
-		accusationIndices := make([]int, 0)
-		for _, invalidShareIndex := range validatorMember.invalidShares() {
-			accusationIndices = append(accusationIndices, invalidShareIndex)
-		}
-
-		allAccusationIndices = append(allAccusationIndices, accusationIndices)
+	for _, member := range membersByID {
+		accusations := member.buildAccusations()
+		broadcast(member.ID, Accusations{accusations})
 	}
 
 	type justification struct {
@@ -244,61 +366,57 @@ func main() {
 		proof bls.SecretKey
 	}
 
-	// [GJKR 99], Fig 2, 1(c)
-	// Justify against accusations; optional, can also just immediately fail if
-	// there are any accusations.
-	// Justifications: for each accused index, for each accuser index, we
-	// broadcast the accused's secret key share.
-	allJustifications := make([][]justification, 0) // "broadcast channel"
-	// Handle accusations. This should be happening on each client, based on the
-	// same view of all accusations.
-	for accuserI, allAccused := range allAccusationIndices {
-		accuserJustifications := make([]justification, len(allAccused))
-		for accusedJ, accusedIndex := range allAccused {
-			accused := members[accusedIndex]
-			accuserJustifications[accusedJ] = justification{accusedIndex, accused.shares[accuserI]}
-		}
-		allJustifications = append(allJustifications, accuserJustifications)
-	}
-
-	// [GJKR 99], Fig 2, 1(d)
-	// Validate justifications, build disqualified list. This should be happening
-	// on each client, based on the same view of all accusations and
-	// justifications.
-	disqualifiedMemberIndices := make([]int, 0)
-	for accuserI, justifications := range allJustifications {
-		memberView := members[accuserI] // this client's view of member i
-		for justificationI, justification := range justifications {
-			if !memberView.isValidShare(justificationI, justification.proof) {
-				disqualifiedMemberIndices = append(disqualifiedMemberIndices, justification.index)
-			}
+	fmt.Println("Handling justifications...")
+	for _, member := range membersByID {
+		if member.needsJustification() {
+			// [GJKR 99], Fig 2, 1(c)
+			// Justify against accusations; optional, can also just immediately
+			// fail if there are any accusations.
+			// Justifications: for each accused ID, we broadcast the accused's
+			// secret key share.
+			broadcast(member.ID, Justifications{member.buildJustifications()})
 		}
 	}
 
-	// [GJKR 99], Fig 2, 2
-	// Build qualified list.
-	qualifiedMembers := make([]GroupMember, len(members)-len(disqualifiedMemberIndices))
-	for i, member := range members {
-		disqualified := false
-		for index := range disqualifiedMemberIndices {
-			if index == i {
-				disqualified = true
-				break
-			}
-		}
-
-		if !disqualified {
-			qualifiedMembers = append(qualifiedMembers, member)
-		}
-	}
-
+	fmt.Println("Computing key shares...")
 	// [GJKR 99], Fig 2, 3
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
 	//            			   computation as well...
 	// Key computation.
-	for _, member := range qualifiedMembers {
+	for _, member := range membersByID {
 		// NOTE: We now have a group public key based on these shares.
 		member.computeGroupKeyShares()
+	}
+
+	fmt.Println("Validating group public keys...")
+	var key *bls.PublicKey
+	for _, member := range membersByID {
+		if key == nil {
+			key = &member.GroupPublicKey
+		} else if !key.IsEqual(&member.GroupPublicKey) {
+			panic(fmt.Sprintf("Public key for %v is bad.", key))
+		}
+	}
+
+	fmt.Println("Generating signatures...")
+	messageToSign := "This is a test message!"
+	randomizedMemberIndices := rand.Perm(len(memberIDs))
+	thresholdSignatures := make([]bls.Sign, threshold)
+	signerIDs := make([]bls.ID, threshold)
+	for i := 0; i < threshold; i++ {
+		memberID := memberIDs[randomizedMemberIndices[i]]
+		signerIDs[i] = memberID
+		thresholdSignatures[i] = *membersByID[memberID].GroupSecretKeyShare.Sign(messageToSign)
+	}
+
+	finalSignature := &bls.Sign{}
+	finalSignature.Recover(thresholdSignatures, signerIDs)
+	if finalSignature.Verify(key, messageToSign) {
+		fmt.Println("Verified!")
+		os.Exit(0)
+	} else {
+		fmt.Println("Verification failed :(")
+		os.Exit(1)
 	}
 
 	// Public key submission: what happens if a bad key is submitted?
@@ -313,45 +431,4 @@ func main() {
 	//     -> Key publishing publishes key + group aggregated signature of key.
 
 	// =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=
-
-	message := []byte("Booyan booyanescu")
-	seckeys := []groupsig.Seckey{
-		*groupsig.NewSeckeyFromInt(1),
-		*groupsig.NewSeckeyFromInt(2),
-		*groupsig.NewSeckeyFromInt(3),
-		*groupsig.NewSeckeyFromInt(4),
-		*groupsig.NewSeckeyFromInt(5),
-	}
-	pubkeys := []groupsig.Pubkey{
-		*groupsig.NewPubkeyFromSeckey(seckeys[0]),
-		*groupsig.NewPubkeyFromSeckey(seckeys[1]),
-		*groupsig.NewPubkeyFromSeckey(seckeys[2]),
-		*groupsig.NewPubkeyFromSeckey(seckeys[3]),
-		*groupsig.NewPubkeyFromSeckey(seckeys[4]),
-	}
-	signatures := []groupsig.Signature{
-		groupsig.Sign(seckeys[0], message),
-		groupsig.Sign(seckeys[1], message),
-		groupsig.Sign(seckeys[2], message),
-		groupsig.Sign(seckeys[3], message),
-		groupsig.Sign(seckeys[4], message),
-	}
-
-	master := groupsig.AggregateSeckeys(seckeys)
-	masterPub := groupsig.NewPubkeyFromSeckey(*master)
-	signature := groupsig.Sign(*master, message)
-	aggregatedSig := groupsig.AggregateSigs(signatures)
-
-	verification := groupsig.VerifySig(*masterPub, message, signature) == groupsig.VerifySig(*masterPub, message, aggregatedSig)
-	aggregateVerification := groupsig.VerifyAggregateSig(pubkeys, message, signature)
-	batchVerification := groupsig.BatchVerify(pubkeys, message, signatures)
-
-	fmt.Printf(
-		"%v = %v\nVerified: %v\nVerified in aggregate: %v\nVerified by batch: %v\n",
-		signature.GetHexString(),
-		aggregatedSig.GetHexString(),
-		verification,
-		aggregateVerification,
-		batchVerification,
-	)
 }
