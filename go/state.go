@@ -35,6 +35,7 @@ var NodeState *State
 func init() {
 	// Welcome to Keep!
 	// TODO: pull in environment variables ie. staking address
+	// TODO: add cli!
 	_ = mustGetenv("KEEP_STAKING_ADDR")
 
 	var err error
@@ -45,7 +46,7 @@ func init() {
 
 	// TODO: sync with network, by calling abi to see if:
 	// a) user is staked
-	// b)
+	// b) a user is known about in libp2p (dht/peerstore/peerlist?)
 }
 
 // called only on init
