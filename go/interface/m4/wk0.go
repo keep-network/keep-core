@@ -139,8 +139,14 @@ func (kc *KeepGenNumber) RelayEntryPublished(re RelayEntry, tipBowl string) (err
 
 // func (_KStart *KStartFilterer) WatchRandomNumberReady(opts *bind.WatchOpts, sink chan<- *KStartRandomNumberReady) (event.Subscription, error) {
 func (kc *KeepGenNumber) ProcessRandomNumbers() (err error) {
+	// func NewKStartFilterer(address common.Address, filterer bind.ContractFilterer) (*KStartFilterer, error) {
+	// bind.ContractFiltered is interface{...} in /Users/corwin/go/src/github.com/ethereum/go-ethereum/accounts/abi/bind/backend.go
 	var _KStart *KStart.KStartFilterer // xyzzy
-	var opts *bind.WatchOpts           // xyzzy
+	caddr := "0x0"                     // xyzzy - placeholder
+	var filterer bind.ContractFilterer // xyzzy - have to create this!
+	_KStart, err = KStart.NewKStartFilterer(common.HexToAddress(caddr), filterer)
+	_ = err
+	var opts *bind.WatchOpts // xyzzy
 	var sink chan *KStart.KStartRandomNumberReady
 	event, err := _KStart.WatchRandomNumberReady(opts, sink)
 	if err != nil {

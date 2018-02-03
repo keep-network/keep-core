@@ -45,3 +45,185 @@ Eth Events
 	https://www.npmjs.com/package/ethereum-listener
 	https://coursetro.com/posts/code/100/Solidity-Events-Tutorial---Using-Web3.js-to-Listen-for-Smart-Contract-Events
 	https://ethereum.stackexchange.com/questions/15353/how-to-listen-for-contract-events-in-javascript-tests
+
+Events PR doc
+https://github.com/ethereum/go-ethereum/pull/15832
+
+https://vincentserpoul.github.io/post/binding-ethereum-golang/ -- Sample of use of abigen
+
+https://decentralize.today/introducing-perigord-golang-tools-for-ethereum-dapp-development-60556c2d9fd
+
+https://ethereum.stackexchange.com/questions/36706/subscribefilterlogs-cannot-unmarshal-array-into-go-value-of-type-types-log -- Good question - shows creation of context
+
+https://ethereum.stackexchange.com/questions/23103/how-to-access-public-contract-storage-with-go -- Shows how to access a MAP from GO using abigen
+
+convert from uint64 to big 256 bit integers for Eth: https://ethereum.stackexchange.com/questions/20859/how-generate-number-type-uint256-in-go
+
+https://ethereum.stackexchange.com/questions/19261/how-to-access-the-event-log-by-knowing-the-contract-address-golang -- Shows exampel of JSON RPC call to get logs and some setup on how to do filters
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Typically you would first create a new filter (eth_newFilter + eth_getFilterLogs) and reuse that filter to perform the
+same query many times as well as listen for changes. However, you can also install an ad-hoc filter with eth_getLogs,
+referencing the topics you wish to search over.
+
+A topic is a piece of data you are searching. For example, if you have the following event:
+
+Transfer(address to, address from)
+The following filter would search for all logs going to 0xb3904758c0d3bfc25746c47caa45b01da8930e19:
+
+[0x000000000000000000000000b3904758c0d3bfc25746c47caa45b01da8930e19, null]
+This filter would search for all logs coming from 0xb3904758c0d3bfc25746c47caa45b01da8930e19:
+
+[null, 0x000000000000000000000000b3904758c0d3bfc25746c47caa45b01da8930e19]
+And this filter would search for all logs going to 0xb3904758c0d3bfc25746c47caa45b01da8930e19 from 0x8cc19c7b50857abbfbeeed31c302319a075d4a9b:
+
+[0x000000000000000000000000b3904758c0d3bfc25746c47caa45b01da8930e19, 0x0000000000000000000000008cc19c7b50857abbfbeeed31c302319a075d4a9b
+A full golang wrapper for RPC requests would look something like this:
+
+// This needs to be instantiated
+type EthereumClient struct {
+  URL string
+}
+
+// Basic RPC repsonse format
+type JSONRPCRequest struct {
+  JSONRPC string        `json:"jsonrpc"`
+  Method  string        `json:"method"`
+  ID      int64         `json:"id"`
+  Params  []interface{} `json:"params"`
+}
+
+// Base struct
+type ResponseBase struct {
+  JSONRPC string `json:"jsonrpc"`
+  ID      int64  `json:"id"`
+}
+
+// Response struct based on below RPC methods
+type Response struct {
+  ResponseBase
+  Result string `json:"result"`
+}
+
+// ToJSON marshals a JSONRPCRequest into JSON
+func (req *JSONRPCRequest) ToJSON() ([]byte, error) {
+  s, err := json.Marshal(req)
+  if err != nil {
+    return nil, err
+  }
+  return s, nil
+}
+
+// Get logs given an array of topics
+func (client *EthereumClient) Eth_getLogs(topics string[]) (string, error) {
+  reqBody := JSONRPCRequest{
+    JSONRPC: "2.0",
+    ID:      1,
+    Method:  "eth_sendRawTransaction",
+    Params:  []interface{}{topics},
+  }
+  res, err := client.issueRequest(&reqBody)
+  if err != nil {
+    return "", err
+  }
+
+  var clientResp Response
+  err = json.Unmarshal(res, &clientResp)
+  if err != nil {
+    return "", err
+  }
+  return clientResp.Result, nil
+}
+The EthereumClient can be instantiated in a different package by something like this:
+
+// Global client connection
+var client = EthereumClient{}
+
+// provider = e.g. 'localhost:8545'
+func ConnectToRPC(provider string) {
+  client = EthereumClient{provider}
+}
+This client can now be used to start a new filter and get the logs from that filter.
+
+I don't have a specific example for (this)[https://github.com/GridPlus/client/blob/master/src/rpc/eth.go] use case, but please see this for some examples of making RPC requests in Go.
+
+
+
+https://github.com/GridPlus/client/blob/master/src/rpc/eth.go -- Has good example of JSON RPC form Go - that performs lots of stuff.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+https://ethereum.stackexchange.com/questions/13341/ethereum-go-how-to-get-the-latest-block -- Get the last block example
+
+https://ethereum.stackexchange.com/questions/16472/signing-a-raw-transaction-in-go
+
+https://ethereum.stackexchange.com/questions/6933/whats-the-best-way-currently-to-get-events-to-a-go-app-that-uses-go-ethereum/26624#26624
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+> truffle develop log
+Truffle Develop started at http://localhost:9545/
+
+Accounts:
+(0) 0x627306090abab3a6e1400e9345bc60c78a8bef57
+(1) 0xf17f52151ebef6c7334fad080c5704d77216b732
+(2) 0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef
+(3) 0x821aea9a577a9b44299b9c15c88cf3087f3b5544
+(4) 0x0d1d4e623d10f9fba5db95830f7d3839406c6af2
+(5) 0x2932b7a2355d6fecc4b5c0b6bd44cc31df247a2e
+(6) 0x2191ef87e392377ec08e7c08eb105ef5448eced5
+(7) 0x0f4f2ac550a1b4e2280d04c21cea7ebd822934b5
+(8) 0x6330a553fc93768f612722bb8c2ec78ac90b3bbc
+(9) 0x5aeda56215b167893e80b4fe645ba6d5bab767de
+
+Private Keys:
+(0) c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
+(1) ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
+(2) 0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1
+(3) c88b703fb08cbea894b6aeff5a544fb92e78a18e19814cd85da83b71f772aa6c
+(4) 388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418
+(5) 659cbb0e2411a44db63778987b1e22153c086a95eb6b18bdf89de078917abc63
+(6) 82d052c865f5763aad42add438569276c00d3d88a2d062d36b2bae914d58b8c8
+(7) aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7
+(8) 0f62d96d6675f32685bbdb8ac13cda7c23436f63efbb9d07700d8669ff12b7c4
+(9) 8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5
+
+Mnemonic: candy maple cake sugar pudding cream honey rich smooth crumble sweet treat
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+> truffle migrate --reset
+Using network 'development'.
+
+Running migration: 1_initial_migration.js
+  Deploying Migrations...
+  ... 0xce5641ee0358772a4bb48caefeeae28f7720bc6e2a2dd1b3a76a708115e49313
+  Migrations: 0x8cdaf0cd259887258bc13a92c0a6da92698644c0
+  Deploying Storage...
+  ... 0x520a2b9e369f65c3bbb6bbabaa726ceb05c1612a0a4c80aa9aa711bae242ed84
+  Storage: 0xf12b5dd4ead5f743c6baa640b0216200e89b60da
+Saving successful migration to network...
+  ... 0x26d72494b54c8f4649c1b0a6b8660aae0d2c34bb12489a25d06f3ded54e8e244
+Saving artifacts...
+Running migration: 2_initial_migration.js
+  Deploying ProofOfExistence1...
+  ... 0xb97ead907e871de6279fce2efccd7a45f3e0bcc3e515a2223e4583681bd03f47
+  ProofOfExistence1: 0xf25186b5081ff5ce73482ad761db0eb0d25abfbf
+  Deploying Token...
+  ... 0x92edeae4c8ac2d59915825322117eeea8268bc7dd9cbb4f40fc6a878054dd638
+  Token: 0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f
+  Deploying Greeter...
+  ... 0xcefa61a0cb4774b6465b524223d6e0112f14ac6cd1bb3a38f497ed4e6ea86a76
+  Greeter: 0x9fbda871d559710256a2502a2517b794b482db40
+Saving successful migration to network...
+  ... 0xba3887bec7c1cd7b2a2cda2a84509e49b715b1ff815432681ca91c1764b35b79
+Saving artifacts...
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+> truffle console
+truffle(development)>
+
