@@ -36,11 +36,11 @@ spec:
         - path: /
           backend:
             serviceName: token-dashboard-svc
-            servicePort: 3002
+            servicePort: 8080
     - host: testnet-multisig.keep.network
       http:
         paths:
         - path: /
           backend:
             serviceName: multisig-svc
-            servicePort: 3003
+            servicePort: 8080
