@@ -163,13 +163,105 @@ There is a great [HELM package](https://github.com/kubernetes/charts/tree/master
 
 >The chart will automatically configure dns to use kube-dns and route all network traffic to kubernetes pods and services through the vpn. By connecting to this vpn a host is effectively inside a cluster's network.
 
-Installation
+####Installation
 
 ```
 helm repo add stable http://storage.googleapis.com/kubernetes-charts
 helm install stable/openvpn
 ```
 
+####Create client
+
+As seen on [https://github.com/kubernetes/charts/tree/master/stable/openvpn](https://github.com/kubernetes/charts/tree/master/stable/openvpn)
+
+```bash
+#!/bin/bash
+
+if [ $# -ne 1 ]
+then
+  echo "Usage: $0 <CLIENT_KEY_NAME>"
+  exit
+fi
+
+KEY_NAME=$1
+NAMESPACE=$(kubectl get pods --all-namespaces -l type=openvpn -o jsonpath='{.items[0].metadata.namespace}')
+POD_NAME=$(kubectl get pods -n $NAMESPACE -l type=openvpn -o jsonpath='{.items[0].metadata.name}')
+SERVICE_NAME=$(kubectl get svc -n $NAMESPACE -l type=openvpn  -o jsonpath='{.items[0].metadata.name}')
+SERVICE_IP=$(kubectl get svc -n $NAMESPACE $SERVICE_NAME -o go-template='{{range $k, $v := (index .status.loadBalancer.ingress 0)}}{{$v}}{{end}}')
+kubectl -n $NAMESPACE exec -it $POD_NAME /etc/openvpn/setup/newClientCert.sh $KEY_NAME $SERVICE_IP
+kubectl -n $NAMESPACE exec -it $POD_NAME cat /etc/openvpn/certs/pki/$KEY_NAME.ovpn > $KEY_NAME.ovpn
+
+
+```
+Example usage: ``` the_script_above.sh <CLIENT_KEY_NAME>```
+
+####Usage
+Use the generated config file with VPN client of your choice, i.e. [Tunnelblick](https://tunnelblick.net/downloads.html). Once connected, you should be able to access your cluster services via internal IPs.
+
+## Deployment: Nginx Ingress controller (Optional)
+This will allow you to have useful features such as virtual hosts, TLS, whitelisted source IP range 
+
+#### Install ingress-nginx
+Install kubernetes [ingress-nginx](https://github.com/kubernetes/ingress-nginx) via [this HELM package](https://github.com/kubernetes/charts/tree/master/stable/nginx-ingress)  with the following command:
+	
+```console
+helm install stable/nginx-ingress --name <RELEASE_NAME>
+```
+
+Example with limiting connection only from specific IP range:
+	
+```console
+helm install stable/nginx-ingress --name <RELEASE_NAME> \ 
+--set controller.service.loadBalancerSourceRanges={<IP_ADDRESS>/32}
+```
+
+#### Create self-signed TLS certificate
+
+Notice: make sure to provide the name of your host when asked for *Common Name*. You can use wildcard for common name as well ***.example.com**
+
+
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls-key.key -out tls-testnet.crt
+
+kubectl create secret tls keep-tls-testnet --key tls-key.key --cert tls-testnet.crt
+```
+
+#### Create ingress resource
+
+Example of multi host ingress usinf TLS certificate: 
+
+```
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ssl-redirect: "true"
+  name: testnet-ingress
+spec:
+  tls:
+  - hosts:
+    - app1.example.com
+    - app2.example.com
+    secretName: tls-testnet
+  rules:
+    - host: app1.example.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: app1-svc
+            servicePort: 8545
+    - host: app2.example.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: app2-svc
+            servicePort: 3001
+
+```
 
 ## Credits
 Big thanks to the following github contributors
