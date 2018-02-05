@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: token-dashboard-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: token-dashboard-deployment
+      labels:
+        name: token-dashboard
+    spec:
+      containers:
+        - name: token-dashboard
+          image: us.gcr.io/cfc-production/token-dashboard
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: token-dashboard-svc
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 80
+  selector:
+    name: token-dashboard
+  type: NodePort
