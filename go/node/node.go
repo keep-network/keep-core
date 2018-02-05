@@ -1,4 +1,4 @@
-package main
+package Node
 
 import (
 	"context"
@@ -54,9 +54,9 @@ func NewNode() *Node {
 	ctx := context.Background()
 
 	// TODO: redo how we connect to libp2p
-	listen, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", ":8080"))
+	listen, _ := ma.NewMultiaddr(fmt.Sprint("/ip4/127.0.0.1/tcp/80"))
 	n, _ := swarm.NewNetwork(ctx, []ma.Multiaddr{listen}, pid, ps, nil)
-	// XXX: HACK
+	// FIXME: Easypath
 	h := bhost.NewHost(ctx, n, nil)
 
 	return &Node{Host: h}
