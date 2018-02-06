@@ -17,8 +17,8 @@ jobs:
     steps:
         - checkout
         - run: |
-            cd solidity/dashboard && npm install
-            npm run build
+            cd solidity && npm install && truffle build
+            cd dashboard && npm install && npm run build
             docker build --rm=false -t "keepnetwork/token-dashboard:$CIRCLE_BUILD_NUM" .
             docker login -e "$DOCKER_EMAIL" -u "$DOCKER_USER" -p "$DOCKER_PASS"
             docker push "keepnetwork/token-dashboard:$CIRCLE_BUILD_NUM"
