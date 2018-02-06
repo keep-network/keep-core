@@ -11,6 +11,17 @@ jobs:
             command: testrpc
             background: true  
         - run: cd solidity && npm install && npm run test
+  build_dashboard:
+    docker:
+      - image: circleci/node:latest
+    steps:
+        - checkout
+        - run: |
+            cd solidity/dashboard && npm install
+            npm run build
+            docker build --rm=false -t "keepnetwork/token-dashboard:$CIRCLE_BUILD_NUM" .
+            docker login -e "$DOCKER_EMAIL" -u "$DOCKER_USER" -p "$DOCKER_PASS"
+            docker push "keepnetwork/token-dashboard:$CIRCLE_BUILD_NUM"
   build_client:
     docker:
       - image: docker:17.05.0-ce-git
@@ -39,6 +50,7 @@ workflows:
   solidity:
     jobs:
       - test_solidity
+      - build_dashboard
   docs:
     jobs:
       - generate_docs
