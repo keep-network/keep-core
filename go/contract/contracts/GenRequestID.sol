@@ -2,6 +2,9 @@ pragma solidity ^0.4.18;
 
 /// @title Generate the RequestID 
 /// @author Philip Schlump
+/// @notice this contract should have a fixed address and never get reloaded.
+//    If it is reloaded then the constant in the constructor should be updated to a number
+//	  larger than the largest RequestID that has ever been generated.
 
 contract GenRequestID { 
 	// The current id
@@ -19,7 +22,7 @@ contract GenRequestID {
 		return (RequestID);
 	}
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
+    /// @notice This unnamed function is called whenever someone tries to send ether to it.
     function () public {
         revert(); // Prevents accidental sending of ether
     }        
