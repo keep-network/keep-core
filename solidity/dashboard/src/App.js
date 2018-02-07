@@ -11,8 +11,6 @@ import Header from './components/Header';
 import StakingForm from './components/StakingForm';
 import WithdrawalsTable from './components/WithdrawalsTable';
 
-import './App.css';
-
 const App = () => (
   <Router>
     <Switch>
@@ -46,7 +44,7 @@ class Main extends Component {
             </Col>
             <Col xs={12} md={6}>
               
-              <Table className="small" striped bordered condensed>
+              <Table className="small table-sm" striped bordered condensed>
                 <tbody>
                   <TableRow title="Your wallet address">
                     { yourAddress }
@@ -82,7 +80,7 @@ class Main extends Component {
             </Col>  
             <Col xs={12} md={4}>
               <h4>Token grants</h4>
-              <Table className="small" condensed>
+              <Table className="small table-sm" condensed>
                 <thead>
                   <tr>
                     <th><strong>Amount</strong></th>

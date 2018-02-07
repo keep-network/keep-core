@@ -14,7 +14,7 @@ class WithdrawalsTable extends Component {
       });
     }
     return (
-      <Table className="small" condensed>
+      <Table className="small table-sm" condensed>
         <thead>
           <tr>
             <th><strong>Amount</strong></th>
