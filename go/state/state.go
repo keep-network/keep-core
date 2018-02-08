@@ -49,6 +49,7 @@ func init() {
 
 // called only on init
 func NewState(ctx context.Context) (*State, error) {
+	// TODO: add the node to the state
 	st := &State{}
 	go st.eventLoop(ctx)
 	return st, nil
