@@ -3,6 +3,7 @@ package Node
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 
 	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
@@ -10,6 +11,7 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	swarm "github.com/libp2p/go-libp2p-swarm"
+	bhost "github.com/libp2p/go-libp2p/p2p/host/basic"
 )
 
 // A node is the initialized Keep client waiting to join a group
@@ -53,7 +55,7 @@ func generatePKI() (ci.PrivKey, ci.PubKey, error) {
 }
 
 // Only call once on init
-func NewNode() *Node {
+func NewNode(ctx context.Context) *Node {
 	var n *Node
 	//TODO: allow the user to supply
 	priv, pub, err := generatePKI()
@@ -69,7 +71,9 @@ func NewNode() *Node {
 
 	n.Identity.PeerID, n.Identity.PrivKey = pid, priv
 	// Ensure that other members in our broadcast channel can identify us
-	n.PeerStore, n.ctx = addToPeerStore(pid, priv, pub), context.Background()
+	n.PeerStore = addToPeerStore(pid, priv, pub)
+	// The context governs the lifetime of the libp2p node
+	n.ctx = context.Background()
 
 	if err := n.Start(); err != nil {
 		panic("Failed to start Node process")
@@ -78,20 +82,33 @@ func NewNode() *Node {
 	return n
 }
 
-func (n *Node) Start() error {
-	// TODO: redo how we connect to libp2p
+func (n *Node) Start(ctx context.Context) error {
+	// TODO: flesh out how we connect to libp2p
 	// listen, _ := ma.NewMultiaddr(fmt.Sprint("/ip4/127.0.0.1/tcp/80"))
-	// n, _ := swarm.NewNetwork(ctx, []ma.Multiaddr{listen}, pid, ps, nil)
-	// // FIXME: Easypath
-	// h := bhost.NewHost(ctx, n, nil)
+	if n.PeerHost != nil {
+		return fmt.Errorf("already online")
+	}
+	// TODO: init a new transport - asap
+	// TODO: attach a muxer to a connection asap
+	// TODO: figure out go-libp2p-interface-pnet.Protector and go-libp2p-pnet.NewProtector - later
+
 	return nil
 }
 
-func buildPeerHost(ctx context.Context, pid peer.ID, ps pstore.Peerstore) {
+func buildPeerHost(ctx context.Context, pid peer.ID, ps pstore.Peerstore) (host.Host, error) {
 	// TODO: use NewSwarmWithProtector
 	// Start without any addresses...
 	swrm, err := swarm.NewNetwork(ctx, nil, pid, ps, nil)
 	if err != nil {
-
+		return nil, err
 	}
+	// network := (*swarm.Network)(swrm)
+	h, err := bhost.NewHost(ctx, swrm, nil)
+	if err != nil {
+		h.Close()
+		return nil, err
+	}
+	// TODO: do I need a circuit relay?
+	return h, nil
+
 }

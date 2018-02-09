@@ -9,6 +9,9 @@ import (
 func main() {
 	r := rand.NewRand()
 	fmt.Printf("%v\n", r)
+	// TODO: n := NewNode()
+	// TODO: defer func() { node.GracefulShutdown() }()
+	// TODO:
 	// 1. initialize a node
 	// 2. start a node
 	// 3. create a gatewayListener
