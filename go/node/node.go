@@ -28,8 +28,7 @@ type Node struct {
 
 	Floodsub *floodsub.PubSub
 
-	// Need a method of detecting shutdowns
-	// Maybe use ctx.Cancel() and ctx.Done() until then...
+	// Use to detect node shutdowns
 	ctx context.Context
 }
 
