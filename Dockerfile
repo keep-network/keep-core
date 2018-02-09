@@ -12,8 +12,10 @@ RUN make && make install
 
 WORKDIR /go/src/keep-network/
 RUN go get -u github.com/golang/dep/cmd/dep
+COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
+RUN dep ensure --vendor-only
+
 COPY ./go/ ./
-RUN dep ensure
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o keep-client .
 
 ENV LD_LIBRARY_PATH=/usr/local/lib/
