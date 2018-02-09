@@ -1,15 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 
 	"github.com/dfinity/go-dfinity-crypto/rand"
+	node "github.com/keep-network/keep-core/go/node"
 )
 
 func main() {
 	r := rand.NewRand()
 	fmt.Printf("%v\n", r)
-	// TODO: n := NewNode()
+	n := node.NewNode(context.Background())
+	log.Printf("New node: %+v", n)
+
+	select {}
 	// TODO: defer func() { node.GracefulShutdown() }()
 	// TODO:
 	// 1. initialize a node
