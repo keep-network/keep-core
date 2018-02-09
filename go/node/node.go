@@ -127,7 +127,7 @@ func buildPeerHost(ctx context.Context, pid peer.ID, ps pstore.Peerstore) (host.
 		return nil, err
 	}
 	network := (*swarm.Network)(swrm)
-	// TODO: use our own host, basic is used in projects and example, but outdated
+	// TODO: use our own host, basic is used in projects and examples, but outdated
 	opts := &bhost.HostOpts{}
 	h, err := bhost.NewHost(ctx, network, opts)
 	if err != nil {
