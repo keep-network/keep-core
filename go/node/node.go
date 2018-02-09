@@ -91,6 +91,11 @@ func (n *Node) Start(ctx context.Context) error {
 	// TODO: init a new transport - asap
 	// TODO: attach a muxer to a connection asap
 	// TODO: figure out go-libp2p-interface-pnet.Protector and go-libp2p-pnet.NewProtector - later
+	peerhost, err := buildPeerHost(ctx, n.Identity.PeerID, n.PeerStore)
+	if err != nil {
+		return err
+	}
+	// Ok, now we're ready to listen
 
 	return nil
 }
