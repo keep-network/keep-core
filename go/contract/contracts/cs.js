@@ -1,3 +1,17 @@
+#!/usr/local/bin/node
+
+// Code to generate a checksumed address for a contract - required for using
+// a contant address for a contract in solidity.  Runs in node.js.
+
+//
+// to test
+//
+// $ ./cs.js test
+//
+// to run with data
+//
+// $ ./cs.js 0xfb6916095ca1df60bb79ce92ce3ea74c37c5d359
+//
 
 //
 // Cut/pasete from some webpage on EIP-55 encoding.
@@ -43,9 +57,19 @@ function toChecksumAddress (address) {
 
 // -------------------------------------------------------------------- test --------------------------------------------------------------------------------
 
+var argv = process.argv;
+// console.log ( argv );
 
-if ( toChecksumAddress('0xfb6916095ca1df60bb79ce92ce3ea74c37c5d359') === '0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359' ) {
-	console.log ( "PASS\n" );
-} else {
-	console.log ( "FAIL\n" );
+if ( argv.length > 2 && argv[2] === "test" ) {
+
+    if ( toChecksumAddress('0xfb6916095ca1df60bb79ce92ce3ea74c37c5d359') === '0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359' ) {
+        console.log ( "PASS\n" );
+    } else {
+        console.log ( "FAIL\n" );
+    }
+
+} else if ( argv.length > 2 ) {
+    var output = toChecksumAddress(argv[2]);
+    console.log ( output );
 }
+
