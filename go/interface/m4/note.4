@@ -1,3 +1,34 @@
+1. Read @Nik's document on how to use testnet
+2. Create a 2nd account on testnet
+3. Load contracts
+	1. Get a working truffle.js for testnet
+	2. Figure out "node.js" of web3.js so can use node to call stuff
+		https://github.com/ethereum/web3.js/
+		- installed - decent examples in it
+	3. 
+4. Figure out your own "geth" test net - and load a contract
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 https://www.codeooze.com/blockchain/ethereum-wallet-private-chain-setup/
 
 https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition -- Key file format
@@ -226,4 +257,170 @@ Saving artifacts...
 
 > truffle console
 truffle(development)>
+
+
+2/2/2018 – call with Matt Luongo from Keep
+In attendance: Jason; Robbie; Sina; Matt @ Keep; Zack @ 1protocol
+
+Keep: porting Dfinity’s threshold relay to create random number.
+
+Dfinity says a hard-fork is ok if an AWS region goes down.
+
+BLS threshold signing groups.
+
+Randomness generated via delay functions?
+
+Bram had a call about this at BPASE?
+
+Randherd and Randhound – similar approaches that aren’t delay functions
+
+What is the strength of the distributed RNG?
+
+Can’t hand-wave away miner threats.
+
+Big difference between Keep & Dfinity:
+
+Keep is not trying to build a consensus mechanism off of the randomness; they simply want to have a distributed source of randomness.
+
+DKG: distributed key generation
+
+Need a bootstrap random number to kick things off.
+
+Keep’s token model:
+
+Need Sybil resistance –
+
+Can do either “Proof of Something” on their chain OR have their own token and do Sybil resistance based on staking.
+
+If you have an existing token’s whale stepping in, they can crush the network.
+
+By requiring participants have larger stake – they suffer from hurting the overall system; they injure themselves in the process.
+
+Can still short the currency, while hurting the system – seems like the best we can do is maximize the damage someone takes within the system.
+
+People cannot unstake quickly – need to stay around for the game to playout – need to have some kind of a delay.
+
+The amount of work you can do in parallel scales with the size of your stake.
+
+Token allows slashing as well.
+
+Main purpose of the token is: Sybil Resistance + Staking + Slashing. They have removed all other uses for the token. E.g. payment in the token – it lowers market cap and costs more gas than standard ETH payments.
+
+Slashing conditions:
+
+Two-tier bond model:
+
+Token 1 KEEP: Stake by the provider. Can be leveraged. Multiple work amounts can be backed by the same stake. But you CANNOT have multiple attempts at the same Keep.
+
+Token 2 ETH: people put in ETH bonds for each KEEP.
+
+ETH bonds cannot be leveraged; Keep can be leveraged.
+
+ETH is slashed if you don’t host your Keep.
+
+KEEP gets slashed only in fundamental cases; e.g. you messed up the random beacon generation.
+
+In an efficient market: wouldn’t income by providers equal their Keep stake? I.e. there is no gain?
+
+No. As system scales, since you can “leverage” your KEEP, you can actually gain more money.
+
+There is a serious centralization pressure. But doesn’t see a way to avoid that.
+
+Since KEEP stake is parallelizable – your participation in tasks increases as network grows, and you make more money.
+
+Leader election is the group that’s signing the next entry.
+
+Then that same entry is used to do sortition to pick which groups can provide for each tasks.
+
+ETH BOND the skin-in-the-game that people have.
+
+Payments are happening in ETH.
+
+There is a one-sided pricing function
+
+Pricing function is per Keep: here is your price / block.
+
+Until a Keep has an orderly shut-down, you don’t get the payment.
+
+Have to protect against the client DoSing the provider.
+
+What if you don’t have a separate KEEP token?
+
+Is someone gets access to secrets (by breaking BLS or the MPC), they’d be incentivized to use the secrets immediately for maximum money.
+
+The security gets more complicated if you have long-lived keys –– ones that outlive a Keep ––
+
+MPC relies on SPDZ (a zero-knowledge setup phase)
+
+Ideally if I got access to your share, I’d immediately share it and take your stake.
+
+All SPDZ and secret sharing happens in a way that the origin key creator doesn’t see the shares.
+
+The protection mechanism: reporting; if you supply someone else’s secret.
+
+Negative externality argument
+
+If you, as an outsider, want to come in and buy 25% of tokens to Sybil – the price of those tokens goes up in the process – making it harder for you to pull off your attack.
+
+This breaks down if your pre-sale whale holders do OTC.
+
+The value of the network token vs. the value of the underlying blockchain token matters – but haven’t quantified this yet.
+
+What about bribery attacks (via a cartel contract)?
+
+The cost is forgone profits for the provider – this is payed out in exchange for the secret data.
+
+Solution: recursive counter-contracts which pays for outing the bribery.
+
+In a fully mature market – the price for privacy is commoditized.
+
+Your incentive is to have your Keep tokens staked forever
+
+Idea: the more you have staked, the longer it should take you to unbond.
+
+Centralization pressure:
+
+This is fine – it means better operation. You get lower latency if the providers are all colocated.
+
+But you don’t want to providers to become rich.
+
+The “goodness metric” in this network is: network latency. I.e. it’s not electricity.
+
+Their solution
+
+Having some kind of shuffle – 1) after a certain level of network latency, make it not matter anymore – 2) add network anonymization – this comes at the expense of performance.
+
+Upgradability: get to production with an MVP.
+
+If provider doesn’t provide their share:
+
+they lose all payouts so far + your ETH bond for that Keep.
+
+What about a he-said/she-said scenario: if provider says they have the secret; the user says they don’t have the secret –– how do you adjudicate?
+
+SPDZ gives you attributable abort.
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+104.197.153.166 -- default backend 404
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Testnet Account - with password set
+
+> geth account new http://10.51.244.207:8545
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {93d3299712e81aeb05feb28d8571ca0ed5c08c56}
+
+
+https://blog.zeppelin.solutions/the-hitchhikers-guide-to-smart-contracts-in-ethereum-848f08001f05
+	-- shows how to get the address of contract in truffle
 
