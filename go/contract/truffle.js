@@ -1,27 +1,21 @@
-//module.exports = {
-  // See <http://truffleframework.com/docs/advanced/configuration>
-  // to customize your Truffle configuration!
-//};
-//module.exports = {
-//  networks: {
-//    development: {
-//      host: "192.168.0.139",
-//      port: 8545,
-//      network_id: "58342" // "*" to match any network id
-//, from: "0x9980ecddef53089390136fde20feb7e03125c441"
-//, gas: 4700000 
-//, gasPrice: 12000
-//    }
-//  }
-//};
+require('babel-register');
+require('babel-polyfill');
+
 module.exports = {
   networks: {
     development: {
       host: "127.0.0.1",
       port: 9545,
-      network_id: "*" // "*" to match any network id
+      network_id: "*", // Match any network id
+      gas: 6000000
 , from: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
-, gas: 4700000 
+    },
+    testnet: {
+      host: "10.51.244.207",
+      port: 8545,
+      network_id: "*",
+      gas: 4712388
+, from: "0x93d3299712e81aeb05feb28d8571ca0ed5c08c56"
     }
   }
 };
