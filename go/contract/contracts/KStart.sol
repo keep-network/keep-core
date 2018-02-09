@@ -92,7 +92,7 @@ contract KStart {
 	}
 
     function submitGroupPublicKey (uint256 _PK_G_i, uint256 _id) public {
-		uint256 ActivationBlockHeight;
+		uint256 ActivationBlockHeight = block.number;
 		// xyzzy  / TODO
 		if ( 0 == 1 ) {
 			SubmitGroupPublicKeyEvent(_PK_G_i, _id, ActivationBlockHeight);
