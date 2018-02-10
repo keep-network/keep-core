@@ -12,12 +12,15 @@ pragma solidity ^0.4.18;
 // https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
 
 // Contract Interface for GenRequestID contract from ./GenRequestID.sol
-contract GenRequestID { 
-    function GenerateNextRequestID() public returns(uint256 RequestID);
-    function () public;
-} 
+//contract GenRequestID { 
+//    function GenerateNextRequestID() public returns(uint256 RequestID);
+//    function () public;
+//} 
 
 contract KStart { 
+	uint256 versionKStart;
+	uint256 requestIDSeq;
+
     /* creates arrays with all relevant data */
     mapping (uint256 => uint256) public payment;
     mapping (uint256 => uint256) public blockReward;
@@ -25,7 +28,7 @@ contract KStart {
     mapping (uint256 => uint256) public signature;		// The randomly generated number
     mapping (uint256 => uint256) public groupID;		// What gorup generated the signatre
 
-	GenRequestID public GenRequestIDSequence;
+	// GenRequestID public GenRequestIDSequence;
 
     /* This generates a public event on the blockchain that will notify clients */
     event RequestRelayEvent(uint256 RequestID, uint256 Payment, uint256 BlockReward, uint256 Seed);
@@ -37,8 +40,15 @@ contract KStart {
     function KStart() public {
 		// GenRequestIDSequence = GenRequestID(GEN_REQUEST_ID_ADDR);
 		// GenRequestIDSequence = GenRequestID(0x9fbda871d559710256a2502a2517b794b482db40);
-		GenRequestIDSequence = GenRequestID(0x9FBDa871d559710256a2502A2517b794B482Db40);		// EIP-55 checksum encoded address, see cs.js
+		// GenRequestIDSequence = GenRequestID(0x9FBDa871d559710256a2502A2517b794B482Db40);		// EIP-55 checksum encoded address, see cs.js
+		requestIDSeq = 1;
+		versionKStart = uint256(0x0000010010010000000000000000000000000000);		
     }
+
+    function nextID() private returns(uint256) {
+		requestIDSeq++;
+		return ( requestIDSeq | versionKStart );
+	}
 
 	/// @notice checks that the specified user has an appropriately large stake.   Returns true if staked.
 	/// @param _UserPublicKey specifies the user.
@@ -58,7 +68,8 @@ contract KStart {
 	// 	RequestID Monotonically Increasing 
 	// This will down-streem from event result in a SignatureShareBroadcast on the KEEP p2p network.
     function requestRelay(uint256 _payment, uint256 _blockReward, uint256 _seed) public returns ( uint256 RequestID ) {
-		RequestID = GenRequestIDSequence.GenerateNextRequestID();
+		// RequestID = GenRequestIDSequence.GenerateNextRequestID();
+		RequestID = nextID();
 
         payment[RequestID] = _payment ;				// TODO - validation on these values?
         blockReward[RequestID] = _blockReward ;		// TODO - validation on these values?
