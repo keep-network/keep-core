@@ -270,7 +270,7 @@ func (member SharingMember) isValidShare(shareSenderID bls.ID, share bls.SecretK
 // public commitments.
 func (member SharingMember) AccusedIDs() []bls.ID {
 	accusedIDs := make([]bls.ID, 0, len(member.memberIDs)-len(member.receivedShares))
-	for _, memberID := range member.memberIDs {
+	for _, memberID := range member.OtherMemberIDs() {
 		if _, found := member.receivedShares[memberID]; !found {
 			accusedIDs = append(accusedIDs, memberID)
 		}
