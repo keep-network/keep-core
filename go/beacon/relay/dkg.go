@@ -1,4 +1,4 @@
-package dkg
+package relay
 
 import (
 	"fmt"
@@ -50,7 +50,7 @@ type JustificationsMessage struct {
 // channel to mediate it and a group size and threshold. It returns a threshold
 // group member who is participating in the group if the generation was
 // successful, and an error representing what went wrong if not.
-func Execute(blockCounter chain.BlockCounter, channel broadcast.Channel, groupSize int, threshold int) (*thresholdgroup.Member, error) {
+func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, groupSize int, threshold int) (*thresholdgroup.Member, error) {
 	// FIXME Probably pass in a way to ask for a receiver's public key?
 	// FIXME Need a way to time out in a given stage, especially the waiting
 	//       ones.
