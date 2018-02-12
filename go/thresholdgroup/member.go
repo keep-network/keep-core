@@ -122,7 +122,7 @@ type Member struct {
 // at which time it will be promoted to an `InitializedMember`.
 func NewMember(id string, threshold int) LocalMember {
 	blsID := bls.ID{}
-	blsID.SetDecString(id)
+	blsID.SetHexString(id)
 
 	// Note: bls.SecretKey, before we call some sort of `Set` on it, can be
 	// considered a zeroed *container* for a secret key.
