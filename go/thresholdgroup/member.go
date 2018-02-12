@@ -348,15 +348,13 @@ func (member JustifyingMember) FinalizeMember() Member {
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
 	//            			   computation as well...
-	combinedCommitments := make([]bls.PublicKey, len(member.commitments[member.blsID]))
-	for i, commitment := range member.commitments[member.blsID] {
+	combinedCommitments := make([]bls.PublicKey, member.threshold)
+	for i, commitment := range member.shareCommitments {
 		combinedCommitments[i] = commitment
 	}
-	for id, commitmentSet := range member.commitments {
-		if !id.IsEqual(&member.blsID) { // we handled this above
-			for i, commitment := range commitmentSet {
-				combinedCommitments[i].Add(&commitment)
-			}
+	for _, commitmentSet := range member.commitments {
+		for i, commitment := range commitmentSet {
+			combinedCommitments[i].Add(&commitment)
 		}
 	}
 
