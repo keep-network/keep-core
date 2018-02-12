@@ -229,6 +229,12 @@ func (member *SharingMember) AddCommitmentsFromID(memberID bls.ID, commitments [
 	member.commitments[memberID] = commitments
 }
 
+// CommitmentsComplete returns true if all commitments expected by this member
+// have been seen, false otherwise.
+func (member SharingMember) CommitmentsComplete() bool {
+	return len(member.commitments) == len(member.memberIDs)-1
+}
+
 // AddShareFromID associates the given secret share with the given `senderID`,
 // if and only if the share is valid with respect to the public commitments the
 // sharing member gave.
@@ -236,6 +242,13 @@ func (member *SharingMember) AddShareFromID(senderID bls.ID, share bls.SecretKey
 	if member.isValidShare(senderID, share) {
 		member.receivedShares[senderID] = share
 	}
+}
+
+// SharesComplete returns true if all shares expected by this member have been
+// seen, false otherwise.
+func (member SharingMember) SharesComplete() bool {
+	// FIXME If a member sent an invalid share, we'll never hit the right len.
+	return len(member.receivedShares) == len(member.memberIDs)-1
 }
 
 // Check whether the given share is valid with respect to the sender's public
