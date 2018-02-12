@@ -205,6 +205,17 @@ func (member LocalMember) Commitments() []bls.PublicKey {
 	return member.shareCommitments
 }
 
+func (member SharingMember) OtherMemberIDs() []bls.ID {
+	otherIDs := make([]bls.ID, 0, len(member.memberIDs)-1)
+	for _, memberID := range member.memberIDs {
+		if !memberID.IsEqual(&member.BlsID) {
+			otherIDs = append(otherIDs, memberID)
+		}
+	}
+
+	return otherIDs
+}
+
 // SecretShareForID returns the secret share this member has generated for the
 // given `memberID`.
 func (member *SharingMember) SecretShareForID(memberID bls.ID) bls.SecretKey {
