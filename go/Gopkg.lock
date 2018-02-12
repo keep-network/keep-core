@@ -2,20 +2,20 @@
 
 
 [[projects]]
-  name = "github.com/dfinity/go-dfinity-crypto"
-  packages = ["bls","groupsig","rand"]
+  name = "github.com/keep-network/go-dfinity-crypto"
+  packages = ["bls","rand"]
   revision = "1db358303499a9879dd640c71f831897e06e9ddf"
-  source = "https://github.com/dfinity/go-dfinity-crypto.git"
+  source = "https://github.com/keep-network/go-dfinity-crypto.git"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["sha3"]
-  revision = "1875d0a70c90e57f11972aefd42276df65e895b9"
+  revision = "9de5f2eaf759b4c4550b3db39fed2e9e5f86f45c"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "797cc928ced587014ee74f4edbbdc9a0f1c996b397b2f86a1a32f132843c7b4e"
+  inputs-digest = "a2e69900e7239f497694c59feb5922e6b2e086e41a4834ccceddba8098f3b3b3"
   solver-name = "gps-cdcl"
   solver-version = 1
