@@ -163,6 +163,7 @@ func NewMember(id string, threshold int) LocalMember {
 	return LocalMember{
 		ID:               id,
 		BlsID:            blsID,
+		threshold:        threshold,
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
 	}
