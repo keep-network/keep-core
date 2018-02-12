@@ -16,7 +16,7 @@ type LocalMember struct {
 	// ID of this group member.
 	ID string
 	// The BLS ID of this group member, computed from the ID.
-	blsID bls.ID
+	BlsID bls.ID
 	// The threshold of group members who must be honest in order for the
 	// generated key to be uncompromised. Corresponds to the number of secret
 	// shares and public commitments of this group member.
@@ -162,7 +162,7 @@ func NewMember(id string, threshold int) LocalMember {
 
 	return LocalMember{
 		ID:               id,
-		blsID:            blsID,
+		BlsID:            blsID,
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
 	}
@@ -176,7 +176,7 @@ func NewMember(id string, threshold int) LocalMember {
 // all members in the threshold group it is operating in, producing a
 // SharingMember ready to participate in secret sharing.
 func (member *LocalMember) InitializeSharing(otherMemberIDs []bls.ID) SharingMember {
-	memberIDs := append(otherMemberIDs, member.blsID)
+	memberIDs := append(otherMemberIDs, member.BlsID)
 
 	// [GJKR 99], Fig 2, 1(a).
 	// For each member (including the caller!), we create a share from our set
@@ -232,7 +232,7 @@ func (member SharingMember) isValidShare(shareSenderID bls.ID, share bls.SecretK
 	commitments := member.commitments[shareSenderID]
 
 	combinedCommitment := bls.PublicKey{}
-	combinedCommitment.Set(commitments, &member.blsID)
+	combinedCommitment.Set(commitments, &member.BlsID)
 
 	comparisonShare := share.GetPublicKey()
 
@@ -268,7 +268,7 @@ func (member SharingMember) InitializeJustification() JustifyingMember {
 // `senderID` against the member with id `accusedID`, claiming the accused sent
 // an invalid share to the sender.
 func (member *JustifyingMember) AddAccusationFromID(senderID bls.ID, accusedID bls.ID) {
-	if accusedID.IsEqual(&member.blsID) {
+	if accusedID.IsEqual(&member.BlsID) {
 		member.accuserIDs = append(member.accuserIDs, senderID)
 	} else {
 		member.pendingJustificationIDs[senderID] = true
@@ -300,7 +300,7 @@ func (member *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accu
 	} else {
 		delete(member.pendingJustificationIDs, accusedID)
 
-		if accuserID.IsEqual(&member.blsID) {
+		if accuserID.IsEqual(&member.BlsID) {
 			// If we originally accused, and the justification is valid, then we can
 			// add the valid entry to our received shares.
 			member.receivedShares[accuserID] = secretShare
@@ -313,10 +313,10 @@ func (member *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accu
 // with a share of the private key.
 func (member JustifyingMember) FinalizeMember() Member {
 	// [GJKR 99], Fig 2, 3
-	initialShare := member.receivedShares[member.blsID]
+	initialShare := member.receivedShares[member.BlsID]
 	groupSecretKeyShare := &initialShare
 	for id, share := range member.receivedShares {
-		if !id.IsEqual(&member.blsID) {
+		if !id.IsEqual(&member.BlsID) {
 			groupSecretKeyShare.Add(&share)
 		}
 	}
