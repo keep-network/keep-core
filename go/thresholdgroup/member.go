@@ -92,10 +92,8 @@ type JustifyingMember struct {
 	// A list of ids of other group members who have accused this group member
 	// of sending them an invalid share.
 	accuserIDs []bls.ID
-	// A list of ids we are expecting justifications from.
-	// TODO This needs to track each accusation pair (accuser, accused) so that
-	// TODO we can make sure at the end we've gone through all of them.
-	pendingJustificationIDs map[bls.ID]bool
+	// A map of accuser IDs to a "set" of the IDs they accused.
+	pendingJustificationIDs map[bls.ID]map[bls.ID]bool
 }
 
 // Member represents a fully initialized threshold group member that is ready to
@@ -285,7 +283,7 @@ func (member SharingMember) InitializeJustification() JustifyingMember {
 	return JustifyingMember{
 		member,
 		make([]bls.ID, 0),
-		make(map[bls.ID]bool),
+		make(map[bls.ID]map[bls.ID]bool),
 	}
 }
 
@@ -296,7 +294,12 @@ func (member *JustifyingMember) AddAccusationFromID(senderID bls.ID, accusedID b
 	if accusedID.IsEqual(&member.BlsID) {
 		member.accuserIDs = append(member.accuserIDs, senderID)
 	} else {
-		member.pendingJustificationIDs[senderID] = true
+		existingAccusedIDs, found := member.pendingJustificationIDs[senderID]
+		if !found {
+			existingAccusedIDs = make(map[bls.ID]bool)
+			member.pendingJustificationIDs[senderID] = existingAccusedIDs
+		}
+		existingAccusedIDs[accusedID] = true
 	}
 }
 
@@ -323,12 +326,30 @@ func (member *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accu
 		// remove them from our shares as they have proven dishonest.
 		delete(member.receivedShares, accusedID)
 	} else {
-		delete(member.pendingJustificationIDs, accusedID)
+		if pendingAccusedIDs, found := member.pendingJustificationIDs[accuserID]; found {
+			delete(pendingAccusedIDs, accusedID)
+			if len(pendingAccusedIDs) == 0 {
+				delete(member.pendingJustificationIDs, accuserID)
+			}
+		}
 
 		if accuserID.IsEqual(&member.BlsID) {
-			// If we originally accused, and the justification is valid, then we can
-			// add the valid entry to our received shares.
+			// If we originally accused, and the justification is valid, then we
+			// can add the valid entry to our received shares.
 			member.receivedShares[accuserID] = secretShare
+		}
+	}
+}
+
+func (member *JustifyingMember) deleteUnjustifiedShares() {
+	// At this point any entry in pendingJustificationIDs is a member who was
+	// accused but whose justification we did not see. Those members are invalid
+	// from our perspective. For each accuser that remains, go through the IDs
+	// they accused. For each of those IDs, clear out their received shares, as
+	// their failure to justify means they are not eligible players.
+	for _, accusedIDs := range member.pendingJustificationIDs {
+		for accusedID := range accusedIDs {
+			delete(member.receivedShares, accusedID)
 		}
 	}
 }
@@ -368,6 +389,8 @@ func (member Member) VerifySignature(signatureShares map[bls.ID][]byte, message 
 // into a fully functioning Member that knows the group public key and can sign
 // with a share of the private key.
 func (member JustifyingMember) FinalizeMember() Member {
+	member.deleteUnjustifiedShares()
+
 	// [GJKR 99], Fig 2, 3
 	initialShare := member.SecretShareForID(member.BlsID)
 	groupSecretKeyShare := &initialShare
@@ -390,8 +413,6 @@ func (member JustifyingMember) FinalizeMember() Member {
 
 	// Qualified players are the players who ended up with entries in
 	// receivedShares; other players were removed.
-	// TODO Take into account players who failed to justify against an
-	// TODO observed accusation.
 	qualifiedMembers := make([]bls.ID, 0, len(member.receivedShares))
 	for memberID := range member.receivedShares {
 		qualifiedMembers = append(qualifiedMembers, memberID)
