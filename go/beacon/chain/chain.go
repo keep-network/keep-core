@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+// BlockCounter is an interface that provides the ability to wait for a certain
+// number of abstract blocks. It provides for two ways to wait, one blocking and
+// one chan-based. Block height is expected to increase monotonically, though
+// the time between blocks will depend on the underlying implementation. See
+// LocalBlockCounter() for a local implementation.
 type BlockCounter interface {
 	// WaitForBlocks blocks at the caller until numBlocks new blocks have been
 	// seen.
@@ -65,6 +70,9 @@ func (counter *localBlockCounter) count() {
 	}
 }
 
+// LocalBlockCounter creates a BlockCounter that runs completely locally. It is
+// designed to simply increase block height at a set time interval in the
+// background.
 func LocalBlockCounter() BlockCounter {
 	counter := localBlockCounter{blockHeight: 0, waiters: make(map[int][]chan int)}
 
@@ -73,11 +81,15 @@ func LocalBlockCounter() BlockCounter {
 	return &counter
 }
 
+// BeaconConfig contains configuration for the threshold relay beacon, typically
+// from the underlying blockchain.
 type BeaconConfig struct {
 	GroupSize int
 	Threshold int
 }
 
+// GetBeaconConfig Get the latest threshold relay beacon configuration.
+// TODO Make this actually look up/update from chain information.
 func GetBeaconConfig() BeaconConfig {
 	return BeaconConfig{10, 4}
 }
