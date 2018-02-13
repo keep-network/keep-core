@@ -338,12 +338,10 @@ func (member *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accu
 // with a share of the private key.
 func (member JustifyingMember) FinalizeMember() Member {
 	// [GJKR 99], Fig 2, 3
-	initialShare := member.receivedShares[member.BlsID]
+	initialShare := member.SecretShareForID(member.BlsID)
 	groupSecretKeyShare := &initialShare
-	for id, share := range member.receivedShares {
-		if !id.IsEqual(&member.BlsID) {
-			groupSecretKeyShare.Add(&share)
-		}
+	for _, share := range member.receivedShares {
+		groupSecretKeyShare.Add(&share)
 	}
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
