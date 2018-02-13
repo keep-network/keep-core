@@ -8,15 +8,23 @@ bootnode:
     repository: ethereum/client-go
     tag: alltools-v1.7.3
 
-miner:
+# config for geth nodes (tx node or a miner node)
+node:
   image:
     repository: ethereum/client-go
     tag: v1.7.3
-  replicaCount: 2
+
+# list of geth nodes
+nodes:
+  - nodeName: good.miner
+    nodeType: miner
+  #- nodeName: unfriendly-miner
+  #  nodeType: miner
+  #- nodeName: tx
+  #  nodeType: tx
 
 monitor:
   replicaCount: 1
   image:
     repository: ethereumex/eth-stats-dashboard
     tag: latest
-  secret: websocket-access-secret

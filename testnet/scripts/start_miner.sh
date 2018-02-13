@@ -1,0 +1,1 @@
+geth --datadir /data --mine --verbosity=5 --etherbase=${ETHERBASE} --networkid=${NETWORK_ID} --bootnodes=`cat /data/bootnodes` --ethstats=${HOSTNAME}:${MONITOR_SECRET}@${MONITOR_SERVICE}

@@ -27,4 +27,4 @@ spec:
           containerPort: 3000
         env:
           - name: WS_SECRET
-            value: {{ .Values.monitor.secret }}
+            value: "websocket-access-secret"
