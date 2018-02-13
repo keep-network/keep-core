@@ -14,6 +14,7 @@ import (
 	"time"
 
 	dstore "github.com/ipfs/go-datastore"
+	dssync "github.com/ipfs/go-datastore/sync"
 	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
@@ -23,6 +24,7 @@ import (
 	routing "github.com/libp2p/go-libp2p-routing"
 	swarm "github.com/libp2p/go-libp2p-swarm"
 	bhost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
 	msmux "github.com/whyrusleeping/go-smux-multistream"
@@ -108,7 +110,9 @@ func NewNode(ctx context.Context, port int, randseed int64) *Node {
 		panic(fmt.Sprintf("Failed to start Node process with err: %v", err))
 	}
 
-	n.Routing = dht.NewDHT(n.ctx, n.PeerHost, dstore.NewMapDatastore())
+	dhtRouting := dht.NewDHTClient(n.ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+	n.Routing = dhtRouting
+	n.PeerHost = rhost.Wrap(n.PeerHost, dhtRouting)
 
 	if err := n.bootstrap(); err != nil {
 		panic(fmt.Sprintf("Failed to bootstrap nodes with err: %v", err))
@@ -178,7 +182,7 @@ func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID,
 	}
 
 	network := (*swarm.Network)(swrm)
-	// TODO: use our own host, basic is used in projects and examples, but outdated
+	// TODO: use our own host, I'm unsure about the utility of basic
 	opts := &bhost.HostOpts{NATManager: bhost.NewNATManager(network)}
 	h, err := bhost.NewHost(ctx, network, opts)
 	if err != nil {
@@ -191,7 +195,6 @@ func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID,
 }
 
 func (n *Node) bootstrap() error {
-	// lastly kick off routing bootstrap
 	if n.Routing != nil {
 		if err := n.Routing.Bootstrap(n.ctx); err != nil {
 			return err
