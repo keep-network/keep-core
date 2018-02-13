@@ -1,0 +1,122 @@
+https://www.youtube.com/watch?v=9FYGSYZSJYg
+
+Fri Feb  9 14:40:44 MST 2018
+
+> truffle migrate --reset
+Using network 'development'.
+
+Running migration: 1_initial_migration.js
+  Replacing Migrations...
+  ... 0xf9485a0eb838b32bd464ee2415ff5aecd0413215e4db5005dfdcd18e765421f5
+  Migrations: 0x8cdaf0cd259887258bc13a92c0a6da92698644c0
+  Replacing Storage...
+  ... 0x5f21de0eea6e2f0d58336cc2b1e358534caeaceab262ab0fa351bdedb6831079
+  Storage: 0xf12b5dd4ead5f743c6baa640b0216200e89b60da
+Saving successful migration to network...
+  ... 0x1e4aac9cc34e3287f61397a7b79a582f8cdc1380e6d1aaa7a547a0e49dccb7c5
+Saving artifacts...
+Running migration: 2_initial_migration.js
+  Replacing ProofOfExistence1...
+  ... 0x380c5b0df7f58a2a49a89768e6509b9c4ccbdb5f54c96b60c723225ffcf8e573
+  ProofOfExistence1: 0xf25186b5081ff5ce73482ad761db0eb0d25abfbf
+  Replacing Token...
+  ... 0x2d5690241b25d76d9dea44f3950756c675d0c0216432017e08bc2237e318e4d8
+  Token: 0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f
+  Replacing Greeter...
+  ... 0xaa1859d38eb144f97b7fea18e3f38cdff73f2686103b8f36ded0b8ed19bfa022
+  Greeter: 0x9fbda871d559710256a2502a2517b794b482db40
+  Replacing GenRequestID...
+  ... 0x1343c0098381f9cd1f405c2e115890dc49b2b5d42a5f0b34297b3482a0f5266d
+  GenRequestID: 0x2c2b9c9a4a25e24b174f26114e8926a9f2128fe4
+Saving successful migration to network...
+  ... 0x99b16755aff837430033ec03f2a32fb26aa65719b8631bdd92cb7b759e03ca57
+Saving artifacts...
+
+
+GenRequestID: 0x2c2b9c9a4a25e24b174f26114e8926a9f2128fe4
+Gas Estimate : 26916
+
+
+
+
+var x = GenRequestID.at("0x2C2B9C9a4a25e24B174f26114e8926a9f2128FE4");
+
+GenRequestID.deployed().then(function(instance) {return instance.GenerateNextRequestID();}).then(function(value) {console.log(value);});
+
+GenRequestID.deployed().then(function(instance) {return instance.GenerateNextRequestID.call();}).then(function(value) {console.log(value);});
+
+
+Results:
+
+truffle(develop)> GenRequestID.deployed().then(function(instance) {return instance.GenerateNextRequestID();}).then(function(value) {console.log(value);});
+{ tx: '0x0d97fc111e8aa4e2ab92ed7990a4d9b4623b26e41f6e2c2cc485578f4a3caa29',
+  receipt:
+   { transactionHash: '0x0d97fc111e8aa4e2ab92ed7990a4d9b4623b26e41f6e2c2cc485578f4a3caa29',
+     transactionIndex: 0,
+     blockHash: '0x356513181105d446c01edd6dcd3b28e186d2b610d8f8a2a94a673ae2c8e0ae8a',
+     blockNumber: 16,
+     gasUsed: 26916,
+     cumulativeGasUsed: 26916,
+     contractAddress: null,
+     logs: [],
+     status: 1 },
+  logs: [] }
+undefined
+truffle(develop)> GenRequestID.deployed().then(function(instance) {return instance.GenerateNextRequestID.call();}).then(function(value) {console.log(value);});
+BigNumber { s: 1, e: 0, c: [ 9 ] }
+undefined
+
+
+From: https://ethereum.stackexchange.com/questions/16796/truffle-console-how-can-i-get-and-print-the-value-returned-by-a-contract-funct
+
+
+
+///////////////// contract KStart { 
+
+
+var x2 = KStart.at("");
+
+KStart.deployed().then(function(instance) {return instance.requestRelay(12,22,32);}).then(function(value) {console.log(value);});
+
+
+
+// get address of contract in contract, ```this```: https://ethereum.stackexchange.com/questions/2806/how-do-you-refer-to-a-contract-own-address-inside-it
+
+
+
+
+
+truffle(develop)> KStart.deployed().then(function(instance) {return instance.requestRelay();}).then(function(value) {console.log(value);});
+Error: Invalid number of arguments to Solidity function
+    at Object.InvalidNumberOfSolidityArgs (/usr/local/lib/node_modules/truffle/build/cli.bundled.js:41471:16)
+    at SolidityFunction.validateArgs (/usr/local/lib/node_modules/truffle/build/cli.bundled.js:327892:22)
+    at SolidityFunction.toPayload (/usr/local/lib/node_modules/truffle/build/cli.bundled.js:327908:10)
+    at SolidityFunction.sendTransaction (/usr/local/lib/node_modules/truffle/build/cli.bundled.js:327981:24)
+    at SolidityFunction.execute (/usr/local/lib/node_modules/truffle/build/cli.bundled.js:328074:37)
+    at /usr/local/lib/node_modules/truffle/build/cli.bundled.js:316875:16
+    at new Promise (<anonymous>)
+    at /usr/local/lib/node_modules/truffle/build/cli.bundled.js:316841:18
+    at <anonymous>
+    at process._tickDomainCallback (internal/process/next_tick.js:228:7)
+truffle(develop)> KStart.deployed().then(function(instance) {return instance.requestRelay(12,22,32);}).then(function(value) {console.log(value);});
+{ tx: '0xb7ad86b330018fc4876e2b0e6495fa1ec04ce5f0f887bea93413bc198062e49c',
+  receipt:
+   { transactionHash: '0xb7ad86b330018fc4876e2b0e6495fa1ec04ce5f0f887bea93413bc198062e49c',
+     transactionIndex: 0,
+     blockHash: '0x20ef1d7f37eab7bae227081375a697ab24ff15a1c011dbff280e889bfd6de698',
+     blockNumber: 45,
+     gasUsed: 89943,
+     cumulativeGasUsed: 89943,
+     contractAddress: null,
+     logs: [ [Object] ],
+     status: 1 },
+  logs:
+   [ { logIndex: 0,
+       transactionIndex: 0,
+       transactionHash: '0xb7ad86b330018fc4876e2b0e6495fa1ec04ce5f0f887bea93413bc198062e49c',
+       blockHash: '0x20ef1d7f37eab7bae227081375a697ab24ff15a1c011dbff280e889bfd6de698',
+       blockNumber: 45,
+       address: '0x855d1c79ad3fb086d516554dc7187e3fdfc1c79a',
+       type: 'mined',
+       event: 'RequestRelayEvent',
+       args: [Object] } ] }
