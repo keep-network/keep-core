@@ -6,31 +6,32 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
+	mrand "math/rand"
 	"strings"
-	"sync"
+	"time"
 
-	iaddr "github.com/ipfs/go-ipfs-addr"
+	dstore "github.com/ipfs/go-datastore"
 	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	routing "github.com/libp2p/go-libp2p-routing"
 	swarm "github.com/libp2p/go-libp2p-swarm"
 	bhost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
+	msmux "github.com/whyrusleeping/go-smux-multistream"
+	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
 // ErrNotEnoughBootstrapPeers signals that we do not have enough bootstrap
 // peers to bootstrap correctly.
 var ErrNotEnoughBootstrapPeers = errors.New("not enough bootstrap peers to bootstrap")
-
-// for safety, publish this list to ipfs
-var DefaultBootstrapAddresses = []string{
-	"/ip4/127.0.0.1/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQVS8iBuUUgDrMbMY17Cck2gKrqeX",
-	"/ip4/127.0.0.1/tcp/2702/ipfs/Qmd3wzD2HWA95ZAs214VxnckwkwM4GHJyC6whKUCNQhNvW",
-}
 
 // A node is the initialized Keep client waiting to join a group
 type Node struct {
@@ -61,9 +62,16 @@ func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) pstore.Peerstor
 	return ps
 }
 
-func generatePKI() (ci.PrivKey, ci.PubKey, error) {
-	// TODO: deterministic randomness for tests
-	r := rand.Reader
+func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
+	// If the seed is zero, use real cryptographic randomness. Otherwise, use a
+	// deterministic randomness source to make generated keys stay the same
+	// across multiple runs
+	var r io.Reader
+	if randseed == 0 {
+		r = rand.Reader
+	} else {
+		r = mrand.New(mrand.NewSource(randseed))
+	}
 
 	priv, pub, err := ci.GenerateKeyPairWithReader(ci.Ed25519, 2048, r)
 	if err != nil {
@@ -73,13 +81,13 @@ func generatePKI() (ci.PrivKey, ci.PubKey, error) {
 }
 
 // Only call once on init
-func NewNode(ctx context.Context) *Node {
+func NewNode(ctx context.Context, port int, randseed int64) *Node {
 	// var n *Node
 	n := &Node{
 		Identity: &Identity{},
 	}
 	//TODO: allow the user to supply
-	priv, pub, err := generatePKI()
+	priv, pub, err := generatePKI(randseed)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate valid key material with err: %v", err))
 	}
@@ -95,24 +103,28 @@ func NewNode(ctx context.Context) *Node {
 	n.PeerStore = addToPeerStore(pid, priv, pub)
 	// The context governs the lifetime of the libp2p node
 	n.ctx = ctx
-	// Our temp routing option
-	n.Routing = NewNilRouter()
 
-	if err := n.Start(); err != nil {
+	if err := n.start(port); err != nil {
 		panic(fmt.Sprintf("Failed to start Node process with err: %v", err))
+	}
+
+	n.Routing = dht.NewDHT(n.ctx, n.PeerHost, dstore.NewMapDatastore())
+
+	if err := n.bootstrap(); err != nil {
+		panic(fmt.Sprintf("Failed to bootstrap nodes with err: %v", err))
 	}
 
 	return n
 }
 
-func (n *Node) Start() error {
+func (n *Node) start(port int) error {
 	// TODO: flesh out how we connect to libp2p
 	if n.PeerHost != nil {
 		return fmt.Errorf("already online")
 	}
 	// TODO: attach a muxer to a connection
 	// TODO: figure out go-libp2p-interface-pnet.Protector and go-libp2p-pnet.NewProtector - later
-	listen, err := ma.NewMultiaddr(fmt.Sprint("/ip4/127.0.0.1/tcp/8080"))
+	listen, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port))
 	if err != nil {
 		return err
 	}
@@ -136,24 +148,38 @@ func (n *Node) Start() error {
 	}
 	n.Floodsub = ps
 
-	if err := n.bootstrap(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
+func makeSmuxTransport() smux.Transport {
+	mstpt := msmux.NewBlankTransport()
+
+	ymxtpt := &yamux.Transport{
+		AcceptBacklog:          512,
+		ConnectionWriteTimeout: time.Second * 10,
+		KeepAliveInterval:      time.Second * 30,
+		EnableKeepAlive:        true,
+		MaxStreamWindowSize:    uint32(1024 * 512),
+		LogOutput:              ioutil.Discard,
+	}
+
+	mstpt.AddTransport("/yamux/1.0.0", ymxtpt)
+	return mstpt
+}
+
 func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID, ps pstore.Peerstore) (host.Host, error) {
+	// Set up stream multiplexer
+	tpt := makeSmuxTransport()
+
 	// TODO: use NewSwarmWithProtector
-	// TODO: customize transport with config, for now use default in go-libp2p-swarm
-	// Start without any addresses...
-	swrm, err := swarm.NewSwarm(ctx, listenAddrs, pid, ps, nil)
+	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, ps, nil, tpt, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	network := (*swarm.Network)(swrm)
 	// TODO: use our own host, basic is used in projects and examples, but outdated
-	opts := &bhost.HostOpts{}
+	opts := &bhost.HostOpts{NATManager: bhost.NewNATManager(network)}
 	h, err := bhost.NewHost(ctx, network, opts)
 	if err != nil {
 		h.Close()
@@ -165,17 +191,6 @@ func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID,
 }
 
 func (n *Node) bootstrap() error {
-	// first we get our list of bootstrap peers
-	peers, err := getBootstrapPeers()
-	if err != nil {
-		return err
-	}
-
-	// next we connect to all known peers
-	if err := bootstrapConnect(n.ctx, n.PeerHost, peers); err != nil {
-		return err
-	}
-
 	// lastly kick off routing bootstrap
 	if n.Routing != nil {
 		if err := n.Routing.Bootstrap(n.ctx); err != nil {
@@ -185,94 +200,13 @@ func (n *Node) bootstrap() error {
 	return nil
 }
 
-// copied (altered) from github.com/go-ipfs/core/bootstrap.go
-func bootstrapConnect(ctx context.Context, ph host.Host, peers []pstore.PeerInfo) error {
-	if len(peers) < 1 {
-		return ErrNotEnoughBootstrapPeers
-	}
-
-	errs := make(chan error, len(peers))
-	var wg sync.WaitGroup
-	for _, p := range peers {
-
-		// performed asynchronously because when performed synchronously, if
-		// one `Connect` call hangs, subsequent calls are more likely to
-		// fail/abort due to an expiring context.
-		// Also, performed asynchronously for dial speed.
-
-		wg.Add(1)
-		go func(p pstore.PeerInfo) {
-			defer wg.Done()
-			log.Printf("%s bootstrapping to %s\n", ph.ID(), p.ID)
-
-			ph.Peerstore().AddAddrs(p.ID, p.Addrs, pstore.PermanentAddrTTL)
-			if err := ph.Connect(ctx, p); err != nil {
-				log.Printf("failed to bootstrap with %v: %s\n", p.ID, err)
-				errs <- err
-				return
-			}
-			log.Printf("bootstrapDialSuccess %s", p.ID)
-			log.Printf("bootstrapped with %v", p.ID)
-		}(p)
-	}
-	wg.Wait()
-
-	// our failure condition is when no connection attempt succeeded.
-	// So drain the errs channel, counting the results.
-	close(errs)
-	count := 0
-	var err error
-	for err = range errs {
-		if err != nil {
-			count++
-		}
-	}
-	if count == len(peers) {
-		return fmt.Errorf("failed to bootstrap. %s", err)
-	}
-	return nil
-}
-
-func getBootstrapPeers() ([]pstore.PeerInfo, error) {
-	peers := make([]iaddr.IPFSAddr, 0)
-	for _, addr := range DefaultBootstrapAddresses {
-		ia, err := iaddr.ParseString(addr)
-		if err != nil {
-			return nil, err
-		}
-		peers = append(peers, ia)
-	}
-	return toPeerInfos(peers), nil
-}
-
-// copied (altered) from github.com/go-ipfs/core/bootstrap.go
-func toPeerInfos(bpeers []iaddr.IPFSAddr) []pstore.PeerInfo {
-	pinfos := make(map[peer.ID]*pstore.PeerInfo)
-	for _, bootstrap := range bpeers {
-		pinfo, ok := pinfos[bootstrap.ID()]
-		if !ok {
-			pinfo = new(pstore.PeerInfo)
-			pinfos[bootstrap.ID()] = pinfo
-			pinfo.ID = bootstrap.ID()
-		}
-
-		pinfo.Addrs = append(pinfo.Addrs, bootstrap.Transport())
-	}
-
-	var peers []pstore.PeerInfo
-	for _, pinfo := range pinfos {
-		peers = append(peers, *pinfo)
-	}
-
-	return peers
-}
-
 func getPeers(ha host.Host) []peer.ID {
 	return ha.Peerstore().Peers()
 }
 
 // Modified version from github.com/keep-network/go-experiments
-func addPeers(ha host.Host, peers []peer.ID) {
+func (n *Node) addPeers(peers []peer.ID) {
+	ha := n.PeerHost
 	for _, p := range peers {
 		if ha.ID().String() != p.String() {
 			stream, err := ha.NewStream(context.Background(), p, "/add/1.0.0")
@@ -318,6 +252,3 @@ func addPeers(ha host.Host, peers []peer.ID) {
 		}
 	}
 }
-
-// func buildRoutingService(ctx context.Context, h host.Host) error {
-// }

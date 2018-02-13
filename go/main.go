@@ -2,29 +2,29 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 
 	"github.com/dfinity/go-dfinity-crypto/rand"
-	node "github.com/keep-network/keep-core/go/node"
+	"github.com/keep-network/keep-core/go/node"
 )
 
 func main() {
+	// Parse options from the command line
+	listenF := flag.Int("l", 0, "wait for incoming connections")
+	seed := flag.Int64("seed", 0, "set random seed for id generation")
+	flag.Parse()
+
 	r := rand.NewRand()
 	fmt.Printf("%v\n", r)
-	n := node.NewNode(context.Background())
+
+	n := node.NewNode(context.Background(), *listenF, *seed)
 	log.Printf("New node: %+v", n)
 
 	log.Printf("Node is operational.")
 	select {}
 	// TODO: defer func() { node.GracefulShutdown() }()
-	// TODO:
-	// 1. initialize a node
-	// 2. start a node
-	// 3. create a gatewayListener
-	// 4. block with waitgroups and channels
-	// 5. if we get an error, shutdown
-	// extra: go routine that listens for a sigint of somesort
 }
 
 // func gatewayListener(ctx context.Context) (<-chan error, error) {
