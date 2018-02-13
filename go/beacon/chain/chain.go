@@ -65,7 +65,7 @@ func (counter *localBlockCounter) count() {
 
 		if exists {
 			for _, waiter := range waiters {
-				waiter <- counter.blockHeight
+				go func(w chan int) { w <- height }(waiter)
 			}
 		}
 	}
