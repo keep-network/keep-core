@@ -355,6 +355,7 @@ func (member JustifyingMember) FinalizeMember() Member {
 			combinedCommitments[i].Add(&commitment)
 		}
 	}
+	groupPublicKey := combinedCommitments[0]
 
 	// Qualified players are the players who ended up with entries in
 	// receivedShares; other players were removed.
@@ -368,7 +369,7 @@ func (member JustifyingMember) FinalizeMember() Member {
 	return Member{
 		JustifyingMember:    member,
 		groupSecretKeyShare: groupSecretKeyShare,
-		groupPublicKey:      &combinedCommitments[0],
+		groupPublicKey:      &groupPublicKey,
 		qualifiedMembers:    qualifiedMembers,
 	}
 }
