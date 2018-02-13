@@ -15,6 +15,7 @@ func main() {
 	n := node.NewNode(context.Background())
 	log.Printf("New node: %+v", n)
 
+	log.Printf("Node is operational.")
 	select {}
 	// TODO: defer func() { node.GracefulShutdown() }()
 	// TODO:

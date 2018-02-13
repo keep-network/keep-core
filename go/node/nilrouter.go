@@ -1,4 +1,4 @@
-package Node
+package node
 
 import (
 	"context"
@@ -52,4 +52,8 @@ func (nr *nilRouter) Bootstrap(_ context.Context) error {
 // satisfy routing.PubKeyFetcher interface
 func (nr *nilRouter) GetPublicKey(context.Context, peer.ID) (ci.PubKey, error) {
 	return nil, nil
+}
+
+func NewNilRouter() *nilRouter {
+	return &nilRouter{}
 }
