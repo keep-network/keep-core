@@ -50,9 +50,11 @@ func (channel *localChannel) Name() string {
 }
 
 func (channel *localChannel) Send(message Message) bool {
-	for _, recvChan := range channel.recvChans {
-		go func(c chan Message) { c <- message }(recvChan)
-	}
+	go func(recvChans []chan Message) {
+		for _, recvChan := range recvChans {
+			recvChan <- message
+		}
+	}(channel.recvChans)
 
 	return true
 }

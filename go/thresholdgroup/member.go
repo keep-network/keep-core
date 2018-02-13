@@ -165,10 +165,6 @@ func NewMember(id string, threshold int) LocalMember {
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
 	}
-	// 	receivedShares:      map[bls.ID]bls.SecretKey{},
-	// 	accusedIDs:          map[bls.ID]bool{},
-	// 	disqualifiedPlayers: map[bls.ID]bool{},
-	// }
 }
 
 // InitializeSharing initializes a LocalMember with a list of the memberIDs of
