@@ -38,7 +38,7 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	defer counter.structMutex.Unlock()
 	notifyBlockHeight := counter.blockHeight + numBlocks
 
-	if notifyBlockHeight == counter.blockHeight {
+	if notifyBlockHeight <= counter.blockHeight {
 		newWaiter <- notifyBlockHeight
 	} else {
 		waiterList, exists := counter.waiters[notifyBlockHeight]
