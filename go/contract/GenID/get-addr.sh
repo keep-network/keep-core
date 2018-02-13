@@ -17,7 +17,7 @@ m4_comment([[[
 	@title This is the address of the RequestID generation contract.   This file is generated in ./gen-addr.sh.  Do not edit.
 	@author Philip Schlump
 ]]])m4_dnl
-m4_define([[[GEN_REQUEST_ID_ADDR]]],[[["$addr"]]])m4_dnl
+m4_define([[[GEN_REQUEST_ID_ADDR]]],[[[$addr]]])m4_dnl
 XXxx
 
 

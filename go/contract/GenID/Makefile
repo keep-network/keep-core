@@ -4,7 +4,7 @@ all:
 migrate:
 	truffle migrate --reset	>most-recent.out
 	grep GenRequestID: most-recent.out >/dev/null
-	./get-addr.sh >most-recent.addr
+	./get-addr.sh most-recent.out >most-recent.addr
 
 t_dev:
 	truffle develop log
