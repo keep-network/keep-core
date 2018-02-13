@@ -58,14 +58,16 @@ func (counter *localBlockCounter) count() {
 	for _ = range ticker.C {
 		counter.structMutex.Lock()
 		counter.blockHeight++
-		waiters, exists := counter.waiters[counter.blockHeight]
+		height := counter.blockHeight
+		waiters, exists := counter.waiters[height]
+		delete(counter.waiters, height)
+		counter.structMutex.Unlock()
+
 		if exists {
 			for _, waiter := range waiters {
 				waiter <- counter.blockHeight
 			}
-			delete(counter.waiters, counter.blockHeight)
 		}
-		counter.structMutex.Unlock()
 	}
 }
 
