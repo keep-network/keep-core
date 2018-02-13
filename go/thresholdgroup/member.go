@@ -333,6 +333,37 @@ func (member *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accu
 	}
 }
 
+// SignatureShare returns this member's serialized share of the threshold
+// signature for the given message. It can be combined with `threshold` other
+// signatures to produce a valid group signature (that is the same no matter
+// which other members participate).
+func (member Member) SignatureShare(message string) []byte {
+	return member.groupSecretKeyShare.Sign(message).Serialize()
+}
+
+// VerifySignature takes a message and a set of serialized signature shares by
+// member ID, and verifies that the signature shares combine to a group
+// signature that is valid for the given message. Returns true if so, false if
+// not.
+func (member Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) bool {
+	availableIDs := make([]bls.ID, 0, len(signatureShares))
+	deserializedShares := make([]bls.Sign, 0, len(signatureShares))
+	for _, memberID := range member.memberIDs {
+		if serializedShare, found := signatureShares[memberID]; found {
+			share := bls.Sign{}
+			share.Deserialize(serializedShare)
+
+			availableIDs = append(availableIDs, memberID)
+			deserializedShares = append(deserializedShares, share)
+		}
+	}
+
+	fullSignature := bls.Sign{}
+	fullSignature.Recover(deserializedShares, availableIDs)
+
+	return fullSignature.Verify(member.groupPublicKey, message)
+}
+
 // FinalizeMember initializes a member that has finished the justification phase
 // into a fully functioning Member that knows the group public key and can sign
 // with a share of the private key.
