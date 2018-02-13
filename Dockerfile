@@ -10,13 +10,13 @@ WORKDIR /bn/
 RUN git reset --hard $BN_VERSION
 RUN make && make install
 
-WORKDIR /go/src/keep-network/
+WORKDIR /go/src/github.com/keep-network/keep-core
 RUN go get -u github.com/golang/dep/cmd/dep
 COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
 RUN dep ensure --vendor-only
 
-COPY ./go/ ./
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o keep-client .
+COPY ./ ./
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o keep-client ./go
 
 ENV LD_LIBRARY_PATH=/usr/local/lib/
 ENTRYPOINT ["./keep-client"]
