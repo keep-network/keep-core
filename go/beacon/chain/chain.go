@@ -44,7 +44,6 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 		waiterList, exists := counter.waiters[notifyBlockHeight]
 		if !exists {
 			waiterList = make([]chan int, 0)
-			counter.waiters[notifyBlockHeight] = waiterList
 		}
 
 		counter.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
