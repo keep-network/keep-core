@@ -7,7 +7,7 @@ import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/go/beacon/broadcast"
 	"github.com/keep-network/keep-core/go/beacon/chain"
-	"github.com/keep-network/keep-core/go/beacon/dkg"
+	"github.com/keep-network/keep-core/go/beacon/relay"
 	"github.com/keep-network/keep-core/go/thresholdgroup"
 )
 
@@ -23,7 +23,7 @@ func main() {
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
 		go func() {
-			member, err := dkg.Execute(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
+			member, err := relay.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to run DKG for member %v: [%s].", i, err)
 				memberChannel <- nil
