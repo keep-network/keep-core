@@ -20,8 +20,8 @@ type BlockCounter interface {
 }
 
 type localBlockCounter struct {
+	structMutex sync.Mutex
 	blockHeight int
-	heightMutex sync.Mutex
 	waiters     map[int][]chan int
 }
 
@@ -34,8 +34,8 @@ func (counter *localBlockCounter) WaitForBlocks(numBlocks int) {
 func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	newWaiter := make(chan int)
 
-	counter.heightMutex.Lock()
-	defer counter.heightMutex.Unlock()
+	counter.structMutex.Lock()
+	defer counter.structMutex.Unlock()
 	notifyBlockHeight := counter.blockHeight + numBlocks
 
 	if notifyBlockHeight == counter.blockHeight {
@@ -57,7 +57,7 @@ func (counter *localBlockCounter) count() {
 	ticker := time.NewTicker(time.Duration(time.Second / 2))
 
 	for _ = range ticker.C {
-		counter.heightMutex.Lock()
+		counter.structMutex.Lock()
 		counter.blockHeight++
 		waiters, exists := counter.waiters[counter.blockHeight]
 		if exists {
@@ -66,7 +66,7 @@ func (counter *localBlockCounter) count() {
 			}
 			delete(counter.waiters, counter.blockHeight)
 		}
-		counter.heightMutex.Unlock()
+		counter.structMutex.Unlock()
 	}
 }
 
