@@ -1,5 +1,4 @@
 # Private Ethereum on Kubernetes cluster
-
 ## Introduction
 According to the official docs ([go-ethereum/wiki](https://github.com/ethereum/go-ethereum/wiki/Private-network), [ethdocs.org](http://ethdocs.org/en/latest/network/test-networks.html)) in order to set up a Private Ethereum Network we need to configure the following:
 
@@ -95,15 +94,15 @@ It make take some time (20-30min) for the miner node to generate DAG file before
 ## Deployment step-by-step guide
 ### 1. Bootnode
 
-To [setup a bootnode](https://github.com/ethereum/go-ethereum/wiki/Private-network#network-connectivity) we need to:
+To [setup a bootnode](https://github.com/ethereum/go-ethereum/wiki/Private-network#network-connectivity) containers in this deployment will make sure to:
 
 * Run bootnode once to generate a key `bootnode --genkey=boot.key`
 * Start bootnode with this key `bootnode --nodekey=boot.key`
 * Grab the returned **enode URL** and make sure other nodes use that URL
 
-####bootnode.deployment.yaml 
+#### bootnode.deployment.yaml 
 
-######Initial variables (values.yaml)
+###### Initial variables (values.yaml)
 
 | Parameter                  | Description                        | Default                                                    |
 | -----------------------    | ---------------------------------- | ---------------------------------------------------------- |
@@ -112,7 +111,7 @@ To [setup a bootnode](https://github.com/ethereum/go-ethereum/wiki/Private-netwo
 | `image.tag` | `geth` image tag | alltools-v1.7.3 (Geth + Tools)
 
 
-######List of containers created by this deployment:
+###### List of containers created by this deployment:
 
 * [init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to generate bootnode key in advance
 * Bootnode main container
@@ -123,7 +122,7 @@ To [setup a bootnode](https://github.com/ethereum/go-ethereum/wiki/Private-netwo
 >i.e. using daemonSet or StatefulSet. Please share your knowledge if you think
 >of a better solution.
 
-####bootnode.service.yaml
+#### bootnode.service.yaml
 
 Making bootnode available at port 30301 and netcat broadcasting bootnode enode
 URL at port 80
@@ -140,7 +139,7 @@ For a subsequent [miner setup](https://github.com/ethereum/go-ethereum/wiki/Priv
 * Network ID
 * Path to a data folder
 
-####genesis.json
+#### genesis.json
 [Genesis block](https://github.com/ethereum/go-ethereum/wiki/Private-network#creating-the-genesis-block) contains your network settings, 
 initial accounts and allocated funds.
 
@@ -162,8 +161,8 @@ initial accounts and allocated funds.
 }
 ```
 
-####miner.deployment.yaml 
-######Initial variables (values.yaml)
+#### miner.deployment.yaml 
+###### Initial variables (values.yaml)
 
 | Parameter                  | Description                        | Default                                                    |
 | -----------------------    | ---------------------------------- | ---------------------------------------------------------- |
@@ -173,22 +172,22 @@ initial accounts and allocated funds.
 | `networkId`    | Network ID  | 1101
 | `initialAccounts` | Initial accounts |   
 
-######List of containers created by this deployment:
+###### List of containers created by this deployment:
 
 * [init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to setup genesis block.
 * [init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to fetch bootnode enode URL.
 * Miner main container
 
-####miner.service.yaml 
+#### miner.service.yaml 
 Making jsonrpc an ipc ports available.
 
 ### 3. Monitor
 
-####monitor.deployment.yaml 
+#### monitor.deployment.yaml 
 This is a straightforward setup using [docker image](https://hub.docker.com/r/ethereumex/eth-stats-dashboard/) of the popular 
 Ethereum Network Stats dashboard https://github.com/cubedro/eth-netstats
 
-####monitor.service.yaml
+#### monitor.service.yaml
 Making dashboard available at port 80
 
 
@@ -200,14 +199,14 @@ There is a great [HELM package](https://github.com/kubernetes/charts/tree/master
 >network traffic to kubernetes pods and services through the vpn. By connecting
 >to this vpn a host is effectively inside a cluster's network.
 
-####Installation
+#### Installation
 
 ```
 helm repo add stable http://storage.googleapis.com/kubernetes-charts
 helm install stable/openvpn
 ```
 
-####Create client
+#### Create client
 
 As seen on [https://github.com/kubernetes/charts/tree/master/stable/openvpn](https://github.com/kubernetes/charts/tree/master/stable/openvpn)
 
@@ -232,7 +231,7 @@ kubectl -n $NAMESPACE exec -it $POD_NAME cat /etc/openvpn/certs/pki/$KEY_NAME.ov
 ```
 Example usage: ``` the_script_above.sh <CLIENT_KEY_NAME>```
 
-####Usage
+#### Usage
 Use the generated config file with VPN client of your choice, i.e. [Tunnelblick](https://tunnelblick.net/downloads.html). 
 Once connected, you should be able to access your cluster services via internal IPs.
 
