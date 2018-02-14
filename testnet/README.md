@@ -88,8 +88,14 @@ helm install --name my-testnet-v1 .
 Install private ethereum network with one miner node.
 
 ### Notice
-It make take some time (20-30min) for the miner node to generate DAG file before it starts mining.
+It can take some time (20-30min) for the miner node to generate DAG file before
+it starts mining. You can check the progress with the following command:
 
+```
+kubectl logs <pod_name_with_miner> | grep "DAG"
+
+> INFO [...] Generating DAG in progress epoch=0 percentage=28 elapsed=7m46.574s
+```
 
 ## Deployment step-by-step guide
 ### 1. Bootnode
