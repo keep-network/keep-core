@@ -2,7 +2,7 @@ FROM golang:1.9.4-alpine3.7
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
-    APP_REPO_DIR=/go/src/keep-network/keep-client \
+	APP_REPO_DIR=/go/src/keep-network/keep-client \
 	APP_NAME=keep-client
 
 RUN apk add --update --no-cache \
@@ -35,7 +35,7 @@ WORKDIR $APP_REPO_DIR
 
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME . && \
 	mv $APP_NAME /usr/local/bin && \
-   	rm -rf $APP_REPO_DIR
+	rm -rf $APP_REPO_DIR
 
 ENTRYPOINT ["keep-client"]
 
