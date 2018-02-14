@@ -2,7 +2,8 @@
 
 IMG=keep-client
 DOCKERFILE=Dockerfile
+CMD=keep-client
 
 docker run --rm --name keep-client_$(date +%Y%m%d-%H%M%S) \
 	--detach \
-	"$IMG" "$cmd"
+	"$IMG" "$CMD"
