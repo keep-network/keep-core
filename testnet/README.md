@@ -1,4 +1,3 @@
-
 # Private Ethereum on Kubernetes cluster
 
 ## Introduction
@@ -103,13 +102,15 @@ To [setup a bootnode](https://github.com/ethereum/go-ethereum/wiki/Private-netwo
 * Grab the returned **enode URL** and make sure other nodes use that URL
 
 ####bootnode.deployment.yaml 
+
 ######Initial variables (values.yaml)
 
 | Parameter                  | Description                        | Default                                                    |
 | -----------------------    | ---------------------------------- | ---------------------------------------------------------- |
 | `replicaCount`    | Number of replicas  | 1
 | `image.repository` | `geth` image   | ethereum/client-go
-| `image.tag` | `geth` image tag | alltools-v1.7.3 (Geth + Tools)                                       
+| `image.tag` | `geth` image tag | alltools-v1.7.3 (Geth + Tools)
+
 
 ######List of containers created by this deployment:
 

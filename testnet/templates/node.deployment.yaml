@@ -85,7 +85,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .nodeName }}-storage
-  # Uncomment if you prefer to keep miner storage (chaindata) when deleting release via HELM
+  # Uncomment if you prefer to keep node storage (chaindata) when deleting release via HELM
   # annotations:
   #  "helm.sh/resource-policy": keep
 spec:
