@@ -71,7 +71,6 @@ contract KStart {
 	// 	RequestID Monotonically Increasing 
 	// This will down-streem from event result in a SignatureShareBroadcast on the KEEP p2p network.
     function requestRelay(uint256 _payment, uint256 _blockReward, uint256 _seed) public returns ( uint256 RequestID ) {
-		// RequestID = GenRequestIDSequence.GenerateNextRequestID();
 		RequestID = nextID();
 
         payment[RequestID] = _payment ;				// TODO - validation on these values?

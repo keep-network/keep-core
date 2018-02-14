@@ -11,6 +11,9 @@ contract TestKStart {
 		uint256 rid = ks.requestRelay(12,12,12);
 		rid = rid;
 		// Assert.equal(id0, id1, "should have generated a unique id, did not.");
+		//ks.requestRelay.call(12,12,12).then(function(result){
+		//	console.log ( result );
+		//});
 	}
 
 }
