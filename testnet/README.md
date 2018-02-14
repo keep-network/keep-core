@@ -1,23 +1,39 @@
 
-#Private Ethereum on Kubernetes cluster
+# Private Ethereum on Kubernetes cluster
 
 ## Introduction
-According to the [official docs](https://github.com/ethereum/go-ethereum/wiki/Private-network) to set up a Private Ethereum Network we need to configure the following:
+According to the official docs ([go-ethereum/wiki](https://github.com/ethereum/go-ethereum/wiki/Private-network), [ethdocs.org](http://ethdocs.org/en/latest/network/test-networks.html)) in order to set up a Private Ethereum Network we need to configure the following:
 
 #### Bootnode
-You need to start a bootstrap node that others can use to find each other in your network. `go-ethereum` offers a bootnode implementation that can be configured and run in your private network.
+You need to start a bootstrap node that others can use to find each other in
+your network. `go-ethereum` offers a bootnode implementation that can be
+configured and run in your private network.
 
 #### Miner
-A single CPU miner instance is more than enough for practical purposes as it can produce a stable stream of blocks at the correct intervals without needing heavy resources (consider running on a single thread, no need for multiple ones either)
+A single CPU miner instance is more than enough for practical purposes as it can
+produce a stable stream of blocks at the correct intervals without needing heavy
+resources (consider running on a single thread, no need for multiple ones
+either)
 
 #### Non default Network ID
-The main Ethereum network has id 1 (the default). So if you supply your own custom network ID which is different than the main network your nodes will not connect to other nodes and form a private network.
+The main Ethereum network has id 1 (the default). So if you supply your own
+custom network ID which is different than the main network your nodes will not
+connect to other nodes and form a private network.
 
-#### Genesis Block
-JSON file where you setup Network ID (chainID), configure network settings and allocate pre-funds accounts.
+#### Custom genesis block
+JSON file where you setup Network ID (chainID), configure network settings and
+allocate pre-funds accounts. You need custom genesis block because if someone
+accidentally connects to your testnet using the real chain, your local copy will
+be considered a stale fork and updated to the "real" one.
+
+#### Custom Data Directory
+Choose a location that is separate from your public Ethereum chain folder,
+otherwise, in order to successfully mine a block, you would need to mine against
+the difficulty of the last block present in your local copy of the blockchain -
+which may take several hours.
 
 ## Kubernetes checklist
-Make sure you authenticated to use your cluster and the right context is set
+Make sure you authenticated to use your cluster and the right context is set:
 
 ```
 kubectl config get-contexts
@@ -25,19 +41,17 @@ kubectl config get-contexts
 ... list of contexts
 
 kubectl config use-context name_of_your_cluster
-
 ```
-To swich namespace, use the following
 
+To swich namespace, use the following:
 ```
 kubectl config set-context $(kubectl config current-context) --namespace=<namespace_name>
-
 ```
-
 
 ## Intro to HELM
 
-Rather than creating YAML files with hardcoded values we're gonna use [Helm](https://helm.sh/) package manager that can generate them based on the provided variables.
+Rather than creating YAML files with hardcoded values we are using [Helm](https://helm.sh/)
+package manager that can generate them based on the provided variables.
 
 ### Installation
 ```
@@ -47,25 +61,40 @@ brew install kubernetes-helm
 ```
 cd /project_folder
 
-# deploy project
-helm install --name project .
+# deploy project release
+helm install --name <release_name> .
+
+# list all releases
+helm list
 
 # check status
-helm status project
+helm status <release_name>
 
-# update project
-helm upgrade project .
+# update release
+helm upgrade <release_name> .
 
-# delete project
-helm del --purge project
+# delete release
+helm del --purge <release_name>
 ```
 
 ### Variables
 The variables are set in **values.yaml**
 
 
+## Deployment
+### TL;DR
 
-## Deployment: Bootnode
+```
+helm install --name my-testnet-v1 .
+```
+Install private ethereum network with one miner node.
+
+### Notice
+It make take some time (20-30min) for the miner node to generate DAG file before it starts mining.
+
+
+## Deployment step-by-step guide
+### 1. Bootnode
 
 To [setup a bootnode](https://github.com/ethereum/go-ethereum/wiki/Private-network#network-connectivity) we need to:
 
@@ -73,29 +102,32 @@ To [setup a bootnode](https://github.com/ethereum/go-ethereum/wiki/Private-netwo
 * Start bootnode with this key `bootnode --nodekey=boot.key`
 * Grab the returned **enode URL** and make sure other nodes use that URL
 
-###bootnode.deployment.yaml 
+####bootnode.deployment.yaml 
 ######Initial variables (values.yaml)
+
 | Parameter                  | Description                        | Default                                                    |
 | -----------------------    | ---------------------------------- | ---------------------------------------------------------- |
 | `replicaCount`    | Number of replicas  | 1
 | `image.repository` | `geth` image   | ethereum/client-go
 | `image.tag` | `geth` image tag | alltools-v1.7.3 (Geth + Tools)                                       
 
-######Containers
+######List of containers created by this deployment:
 
 * [init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to generate bootnode key in advance
 * Bootnode main container
-* Contaner to broadcast enode URL via netcast. So it's available accross all the pods in the cluster.
+* Contaner to broadcast enode URL via netcast. So it's available accross all the
+  pods in the cluster.
 
->Note on broadcasting enode URL. There are other possible ways of doing this i.e. using daemonSet or StatefulSet. Please share your knowledge if you think of a better solution.
+>Note on broadcasting enode URL. There are other possible ways of doing this
+>i.e. using daemonSet or StatefulSet. Please share your knowledge if you think
+>of a better solution.
 
-###bootnode.service.yaml
+####bootnode.service.yaml
 
-Making bootnode available at port 30301 and netcat broadcasting bootnode enode URL at port 80
+Making bootnode available at port 30301 and netcat broadcasting bootnode enode
+URL at port 80
 
-
-
-## Deployment: Miner
+### 2. Node 
 For the [initial setup](https://github.com/ethereum/go-ethereum/wiki/Private-network#creating-the-genesis-block) of the network we need to provide:
 
 * Genesis block
@@ -107,8 +139,9 @@ For a subsequent [miner setup](https://github.com/ethereum/go-ethereum/wiki/Priv
 * Network ID
 * Path to a data folder
 
-###genesis.json
-[Genesis block](https://github.com/ethereum/go-ethereum/wiki/Private-network#creating-the-genesis-block) contains your network settings, initial accounts and allocated funds.
+####genesis.json
+[Genesis block](https://github.com/ethereum/go-ethereum/wiki/Private-network#creating-the-genesis-block) contains your network settings, 
+initial accounts and allocated funds.
 
 ```javascript
 {
@@ -128,7 +161,7 @@ For a subsequent [miner setup](https://github.com/ethereum/go-ethereum/wiki/Priv
 }
 ```
 
-###miner.deployment.yaml 
+####miner.deployment.yaml 
 ######Initial variables (values.yaml)
 
 | Parameter                  | Description                        | Default                                                    |
@@ -139,29 +172,32 @@ For a subsequent [miner setup](https://github.com/ethereum/go-ethereum/wiki/Priv
 | `networkId`    | Network ID  | 1101
 | `initialAccounts` | Initial accounts |   
 
-######Containers
+######List of containers created by this deployment:
 
 * [init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to setup genesis block.
 * [init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to fetch bootnode enode URL.
 * Miner main container
 
-###miner.service.yaml 
+####miner.service.yaml 
 Making jsonrpc an ipc ports available.
 
-## Deployment: Monitor
+### 3. Monitor
 
-###monitor.deployment.yaml 
-This is a straightforward setup using [docker image](https://hub.docker.com/r/ethereumex/eth-stats-dashboard/) of the popular Ethereum Network Stats dashboard https://github.com/cubedro/eth-netstats
+####monitor.deployment.yaml 
+This is a straightforward setup using [docker image](https://hub.docker.com/r/ethereumex/eth-stats-dashboard/) of the popular 
+Ethereum Network Stats dashboard https://github.com/cubedro/eth-netstats
 
-###monitor.service.yaml
+####monitor.service.yaml
 Making dashboard available at port 80
 
 
-## Deployment: VPN  (optional)
+### 4. VPN  (optional)
 There is a great [HELM package](https://github.com/kubernetes/charts/tree/master/stable/openvpn
 )  that will install openVPN on your cluster. 
 
->The chart will automatically configure dns to use kube-dns and route all network traffic to kubernetes pods and services through the vpn. By connecting to this vpn a host is effectively inside a cluster's network.
+>The chart will automatically configure dns to use kube-dns and route all
+>network traffic to kubernetes pods and services through the vpn. By connecting
+>to this vpn a host is effectively inside a cluster's network.
 
 ####Installation
 
@@ -196,13 +232,15 @@ kubectl -n $NAMESPACE exec -it $POD_NAME cat /etc/openvpn/certs/pki/$KEY_NAME.ov
 Example usage: ``` the_script_above.sh <CLIENT_KEY_NAME>```
 
 ####Usage
-Use the generated config file with VPN client of your choice, i.e. [Tunnelblick](https://tunnelblick.net/downloads.html). Once connected, you should be able to access your cluster services via internal IPs.
+Use the generated config file with VPN client of your choice, i.e. [Tunnelblick](https://tunnelblick.net/downloads.html). 
+Once connected, you should be able to access your cluster services via internal IPs.
 
-## Deployment: Nginx Ingress controller (Optional)
-This will allow you to have useful features such as virtual hosts, TLS, whitelisted source IP range 
+### 5. Nginx Ingress controller (Optional)
+This will allow you to have useful features such as virtual hosts, TLS,
+whitelisted source IP range 
 
 #### Install ingress-nginx
-Install kubernetes [ingress-nginx](https://github.com/kubernetes/ingress-nginx) via [this HELM package](https://github.com/kubernetes/charts/tree/master/stable/nginx-ingress)  with the following command:
+Install kubernetes [ingress-nginx](https://github.com/kubernetes/ingress-nginx) via [this HELM package](https://github.com/kubernetes/charts/tree/master/stable/nginx-ingress) with the following command:
 	
 ```console
 helm install stable/nginx-ingress --name <RELEASE_NAME>
@@ -217,7 +255,8 @@ helm install stable/nginx-ingress --name <RELEASE_NAME> \
 
 #### Create self-signed TLS certificate
 
-Notice: make sure to provide the name of your host when asked for *Common Name*. You can use wildcard for common name as well ***.example.com**
+Notice: make sure to provide the name of your host when asked for *Common Name*.
+You can use wildcard for common name as well ***.example.com**
 
 
 ```
@@ -264,7 +303,7 @@ spec:
 ```
 
 ## Credits
-Big thanks to the following github contributors
+Big thanks to the following github contributors for tips and inspiration:
 
 * [https://github.com/kuberstack/charts/tree/master/incubator/geth](https://github.com/kuberstack/charts/tree/master/incubator/geth)
 * [https://github.com/jpoon/kubernetes-ethereum-chart](https://github.com/jpoon/kubernetes-ethereum-chart)

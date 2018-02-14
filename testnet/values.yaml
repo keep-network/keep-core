@@ -16,11 +16,11 @@ node:
 
 # list of geth nodes
 nodes:
-  - nodeName: good.miner
+  - nodeName: good.miner.node
     nodeType: miner
-  #- nodeName: unfriendly-miner
+  #- nodeName: unfriendly.miner.node
   #  nodeType: miner
-  #- nodeName: tx
+  #- nodeName: tx.node
   #  nodeType: tx
 
 monitor:
