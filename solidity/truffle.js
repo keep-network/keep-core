@@ -10,8 +10,8 @@ module.exports = {
       gas: 6000000
     },
     testnet: {
-      host: "10.51.244.207",
-      port: 8545,
+      host: "https://testnet.keep.network",
+      port: 443,
       network_id: "*",
       gas: 4712388
     }
