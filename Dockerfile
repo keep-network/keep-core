@@ -48,7 +48,7 @@ RUN apk add --update --no-cache \
 	rm -rf /usr/share/man && \
 	apk del git make clang llvm
 
-COPY --from=0 /usr/local/bin/keep-client .
+COPY --from=0 /usr/local/bin/keep-client /usr/local/bin/
 
 ENV LD_LIBRARY_PATH=/usr/local/lib/
 
