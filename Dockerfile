@@ -5,14 +5,14 @@ ENV GOPATH=/go \
 	APP_REPO_DIR=/go/src/keep-network/keep-client \
 	APP_NAME=keep-client
 
-COPY ./go $APP_REPO_DIR
-WORKDIR $APP_REPO_DIR
-
 RUN apk add --update --no-cache \
 	git && \
 	mkdir -p /go/src && \
 	rm -rf /var/cache/apk && mkdir /var/cache/apk && \
 	rm -rf /usr/share/man
+
+COPY ./go $APP_REPO_DIR
+WORKDIR $APP_REPO_DIR
 
 RUN go get -u github.com/golang/dep/cmd/dep
 COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
@@ -48,7 +48,7 @@ RUN apk add --update --no-cache \
 	rm -rf /usr/share/man && \
 	apk del git make clang llvm
 
-COPY --from=0 /usr/local/bin/keep-client .
+COPY --from=0 /usr/local/bin/keep-client /usr/local/bin/
 
 ENV LD_LIBRARY_PATH=/usr/local/lib/
 
