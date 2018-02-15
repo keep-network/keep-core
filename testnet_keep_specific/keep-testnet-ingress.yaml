@@ -21,15 +21,15 @@ spec:
         paths:
         - path: /
           backend:
-            serviceName: miner-svc
+            serviceName: keep-v1-testnet-tx-node-service
             servicePort: 8545
     - host: testnet-monitor.keep.network
       http:
         paths:
         - path: /
           backend:
-            serviceName: monitor-svc
-            servicePort: 3001
+            serviceName: keep-v1-testnet-monitor-service
+            servicePort: 80
     - host: testnet-token-dashboard.keep.network
       http:
         paths:
