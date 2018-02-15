@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep.network/keep-core/go/interface/m4/KStart" // "www.2c-why.com/job/m4/KStart"
+	"github.com/pschlump/godebug"
 )
 
 // "www.2c-why.com/job/m4/KStart"
@@ -26,7 +27,6 @@ type KeepGenNumber struct {
 }
 
 type RelayRequest struct {
-	RequestID   int64  //
 	Payment     int64  // Eth to run (gas?)
 	BlockReward int64  // Keep tokens as payment
 	Seed        []byte //
@@ -112,57 +112,53 @@ func NewGenNumber(ethNode, caddr, keyFile, keyFilePassword string) (kc *KeepGenN
 	return
 }
 
-func (kc *KeepGenNumber) CreateRelayRequest(rq *RelayRequest, seed []byte) (err error) {
-	// TODO:
-	// 1. Create the RequestID (Based on? as a TXid from ETH?)
-	// 2. Call ETH to put request on chain?
-	// 3. Lots of stuff at this point like check for valid inputs, convert data etc.
-	//    This just compiles now.
-	// var _RequestID *big.Int
-	_RequestID := big.NewInt(rq.RequestID) // I am REALLY (did I say REALLY!) not fond of Eth's style with _ in front of parameters.
+func (kc *KeepGenNumber) RequestRelay(rq *RelayRequest, seed []byte) (err error) {
 	_payment := big.NewInt(rq.Payment)
 	_blockReward := big.NewInt(rq.BlockReward)
 	_seed := big.NewInt(0).SetBytes(seed)
 	// var opts *bind.TransactOpts
 	// func (_KStart *KStartTransactor) RequestRandomNumber(opts *bind.TransactOpts, _RequestID *big.Int, _payment *big.Int, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
-	tx, err := kc.contract.RequestRandomNumber(kc.opts, _RequestID, _payment, _blockReward, _seed)
-	_, _ = tx, err
-	// xyzzy - what am I supposed to do with the output at this point?  Log the transaction? hm...
-	return
-}
-
-// ReqlayRequestReturn -> RelayRequest (An Event?)
-
-func (kc *KeepGenNumber) RelayEntryPublished(re RelayEntry, tipBowl string) (err error) {
-	return
-}
-
-// func (_KStart *KStartFilterer) WatchRandomNumberReady(opts *bind.WatchOpts, sink chan<- *KStartRandomNumberReady) (event.Subscription, error) {
-func (kc *KeepGenNumber) ProcessRandomNumbers() (err error) {
-	// func NewKStartFilterer(address common.Address, filterer bind.ContractFilterer) (*KStartFilterer, error) {
-	// bind.ContractFiltered is interface{...} in /Users/corwin/go/src/github.com/ethereum/go-ethereum/accounts/abi/bind/backend.go
-	var _KStart *KStart.KStartFilterer // xyzzy
-	caddr := "0x0"                     // xyzzy - placeholder
-	var filterer bind.ContractFilterer // xyzzy - have to create this!
-	_KStart, err = KStart.NewKStartFilterer(common.HexToAddress(caddr), filterer)
-	_ = err
-	var opts *bind.WatchOpts // xyzzy
-	var sink chan *KStart.KStartRandomNumberReady
-	event, err := _KStart.WatchRandomNumberReady(opts, sink)
+	tx, err := kc.contract.RequestRelay(kc.opts, _payment, _blockReward, _seed)
 	if err != nil {
-		fmt.Printf("Error creating watch: %s\n", err)
+		fmt.Printf("Error on contract.RequestRelay: %s\n", err)
 	} else {
-		_ = event // xyzzy - don't we need to do "go event()"???
-		// Event is an event.Subscription - that is a chanel and the "Unsubscribe" -- So, Unsubscribe will get called,
-		// do we need a "quit" event in this, do we need to catch/report errors from the err chanel?
-		select {
-		case rn := <-sink:
-			fmt.Printf("Got a random number! Yea!, %+v\n", rn)
-
-			//		case ee := <-event.Err()
-			//			fmt.Printf ( "Got an error: %s\n", ee )
-		}
+		// Event should be created at this point.  Take a look at the log?
+		fmt.Printf("Success: %s\n", godebug.SVarI(tx))
 	}
-
 	return
 }
+
+func (kc *KeepGenNumber) RelayEntry(re RelayEntry, tipBowl string) (err error) {
+	// function relayEntry(uint256 _RequestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
+	return
+}
+
+//// func (_KStart *KStartFilterer) WatchRandomNumberReady(opts *bind.WatchOpts, sink chan<- *KStartRandomNumberReady) (event.Subscription, error) {
+//func (kc *KeepGenNumber) ProcessRandomNumbers() (err error) {
+//	// func NewKStartFilterer(address common.Address, filterer bind.ContractFilterer) (*KStartFilterer, error) {
+//	// bind.ContractFiltered is interface{...} in /Users/corwin/go/src/github.com/ethereum/go-ethereum/accounts/abi/bind/backend.go
+//	var _KStart *KStart.KStartFilterer // xyzzy
+//	caddr := "0x0"                     // xyzzy - placeholder
+//	var filterer bind.ContractFilterer // xyzzy - have to create this!
+//	_KStart, err = KStart.NewKStartFilterer(common.HexToAddress(caddr), filterer)
+//	_ = err
+//	var opts *bind.WatchOpts // xyzzy
+//	var sink chan *KStart.KStartRandomNumberReady
+//	event, err := _KStart.WatchRandomNumberReady(opts, sink)
+//	if err != nil {
+//		fmt.Printf("Error creating watch: %s\n", err)
+//	} else {
+//		_ = event // xyzzy - don't we need to do "go event()"???
+//		// Event is an event.Subscription - that is a chanel and the "Unsubscribe" -- So, Unsubscribe will get called,
+//		// do we need a "quit" event in this, do we need to catch/report errors from the err chanel?
+//		select {
+//		case rn := <-sink:
+//			fmt.Printf("Got a random number! Yea!, %+v\n", rn)
+//
+//			//		case ee := <-event.Err()
+//			//			fmt.Printf ( "Got an error: %s\n", ee )
+//		}
+//	}
+//
+//	return
+//}
