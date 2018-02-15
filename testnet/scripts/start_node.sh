@@ -1,1 +1,1 @@
-geth --datadir /data --verbosity=5 --networkid=${NETWORK_ID} --bootnodes=`cat /data/bootnodes` --ethstats=${HOSTNAME}:${MONITOR_SECRET}@${MONITOR_SERVICE}
+geth --datadir /data --verbosity=6 --rpc --rpcapi='admin,personal,web3,eth,net' --rpcaddr='0.0.0.0' --rpccorsdomain='*' --networkid=${NETWORK_ID} --bootnodes=`cat /bootnode/bootnodes` --ethstats=${HOSTNAME}:${MONITOR_SECRET}@${MONITOR_SERVICE}

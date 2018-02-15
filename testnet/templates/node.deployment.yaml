@@ -39,8 +39,8 @@ spec:
             - name: BOOTNODE_SERVICE
               value: {{ template "geth.fullname" $ }}-bootnode-service.{{ $.Release.Namespace }}
           volumeMounts:
-            - name: datadir
-              mountPath: /data
+            - name: bootnode
+              mountPath: /bootnode
       containers:
         - name: node
           image: {{ $.Values.node.image.repository }}:{{ $.Values.node.image.tag }}
@@ -65,6 +65,10 @@ spec:
                   name: {{ template "geth.fullname" $ }}-config
                   key: chainId
           ports:
+            - name: rpc
+              containerPort: 8545
+            - name: ws
+              containerPort: 8546
             - name: discovery-udp
               containerPort: 30303
               protocol: UDP
@@ -73,10 +77,14 @@ spec:
           volumeMounts:
             - name: datadir
               mountPath: /data
+            - name: bootnode
+              mountPath: /bootnode
       volumes:
         - name: datadir
           persistentVolumeClaim:
             claimName: {{ .nodeName }}-storage
+        - name: bootnode
+          emptyDir: {}
         - name: config 
           configMap:
             name: {{ template "geth.fullname" $ }}-config
