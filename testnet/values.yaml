@@ -8,20 +8,20 @@ bootnode:
     repository: ethereum/client-go
     tag: alltools-v1.7.3
 
-# config for geth nodes (tx node or a miner node)
+# Config for geth nodes (tx node or a miner node).
 node:
   image:
     repository: ethereum/client-go
     tag: v1.7.3
 
-# list of geth nodes
+# List of geth nodes.
 nodes:
-  - nodeName: good.miner.node
+  - nodeName: good-miner-node
     nodeType: miner
-  #- nodeName: unfriendly.miner.node
-  #  nodeType: miner
-  #- nodeName: tx.node
-  #  nodeType: tx
+  - nodeName: unfriendly-miner-node
+    nodeType: miner
+  - nodeName: tx-node
+    nodeType: tx
 
 monitor:
   replicaCount: 1
