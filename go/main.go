@@ -14,10 +14,12 @@ func main() {
 	seed := flag.Int64("seed", 0, "set random seed for id generation")
 	flag.Parse()
 
-	n := node.NewNode(context.Background(), *listenF, *seed)
-	log.Printf("New node: %+v", n)
+	n, err := node.NewNode(context.Background(), *listenF, *seed)
+	if err != nil {
+		log.Fatalf("Failed to initialize relay node with: ", err)
+	}
 
+	log.Printf("New node: %+v", n)
 	log.Printf("Node is operational.")
 	select {}
-	// TODO: defer func() { node.GracefulShutdown() }()
 }

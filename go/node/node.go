@@ -1,16 +1,13 @@
 package node
 
 import (
-	"bufio"
 	"context"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	mrand "math/rand"
-	"strings"
 	"time"
 
 	dstore "github.com/ipfs/go-datastore"
@@ -31,22 +28,17 @@ import (
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
-// ErrNotEnoughBootstrapPeers signals that we do not have enough bootstrap
-// peers to bootstrap correctly.
-var ErrNotEnoughBootstrapPeers = errors.New("not enough bootstrap peers to bootstrap")
-
-// A node is the initialized Keep client waiting to join a group
+// A node is the initialized relay client waiting to join a group
 type Node struct {
 	// Self
 	Identity *Identity
 
-	PeerHost  host.Host
-	Bootstrap []string // bootstrap peer addrs
+	PeerHost host.Host
 
 	PeerStore pstore.Peerstore
 
 	Floodsub *floodsub.PubSub
-	Routing  routing.IpfsRouting // ugh does this have to be ipfsrouting?
+	Routing  routing.IpfsRouting
 
 	// Use to detect node shutdowns
 	ctx context.Context
@@ -57,11 +49,40 @@ type Identity struct {
 	PrivKey ci.PrivKey
 }
 
-func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) pstore.Peerstore {
-	ps := pstore.NewPeerstore()
-	ps.AddPrivKey(pid, priv)
-	ps.AddPubKey(pid, pub)
-	return ps
+// Only call once on init
+func NewNode(ctx context.Context, port int, randseed int64) (*Node, error) {
+	n := &Node{
+		Identity: &Identity{},
+	}
+
+	//TODO: allow the user to supply
+	priv, pub, err := generatePKI(randseed)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate valid key material with err: %v", err)
+	}
+
+	// From go-libp2p-peer: PKI-based identities for libp2p
+	pid, err := peer.IDFromEd25519PublicKey(pub)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate valid libp2p identity with err: %v", err)
+	}
+
+	n.Identity.PeerID, n.Identity.PrivKey = pid, priv
+	// Ensure that other members in our broadcast channel can identify us
+	n.PeerStore = addToPeerStore(pid, priv, pub)
+	// The context governs the lifetime of the libp2p node
+	n.ctx = ctx
+
+	if err := n.start(port); err != nil {
+		return nil, fmt.Errorf("Failed to start Node process with err: %v", err)
+	}
+
+	// configure routing for our node
+	dhtRouting := dht.NewDHTClient(n.ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+	n.Routing = dhtRouting
+	n.PeerHost = rhost.Wrap(n.PeerHost, dhtRouting)
+
+	return n, nil
 }
 
 func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
@@ -82,43 +103,11 @@ func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
 	return priv, pub, nil
 }
 
-// Only call once on init
-func NewNode(ctx context.Context, port int, randseed int64) *Node {
-	// var n *Node
-	n := &Node{
-		Identity: &Identity{},
-	}
-	//TODO: allow the user to supply
-	priv, pub, err := generatePKI(randseed)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to generate valid key material with err: %v", err))
-	}
-
-	// From go-libp2p-peer: PKI-based identities for libp2p
-	pid, err := peer.IDFromEd25519PublicKey(pub)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
-	}
-
-	n.Identity.PeerID, n.Identity.PrivKey = pid, priv
-	// Ensure that other members in our broadcast channel can identify us
-	n.PeerStore = addToPeerStore(pid, priv, pub)
-	// The context governs the lifetime of the libp2p node
-	n.ctx = ctx
-
-	if err := n.start(port); err != nil {
-		panic(fmt.Sprintf("Failed to start Node process with err: %v", err))
-	}
-
-	dhtRouting := dht.NewDHTClient(n.ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
-	n.Routing = dhtRouting
-	n.PeerHost = rhost.Wrap(n.PeerHost, dhtRouting)
-
-	if err := n.bootstrap(); err != nil {
-		panic(fmt.Sprintf("Failed to bootstrap nodes with err: %v", err))
-	}
-
-	return n
+func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) pstore.Peerstore {
+	ps := pstore.NewPeerstore()
+	ps.AddPrivKey(pid, priv)
+	ps.AddPubKey(pid, pub)
+	return ps
 }
 
 func (n *Node) start(port int) error {
@@ -192,66 +181,4 @@ func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID,
 	// TODO: do we need to enable the circuit relay? if so, do it here
 	return h, nil
 
-}
-
-func (n *Node) bootstrap() error {
-	if n.Routing != nil {
-		if err := n.Routing.Bootstrap(n.ctx); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func getPeers(ha host.Host) []peer.ID {
-	return ha.Peerstore().Peers()
-}
-
-// Modified version from github.com/keep-network/go-experiments
-func (n *Node) addPeers(peers []peer.ID) {
-	ha := n.PeerHost
-	for _, p := range peers {
-		if ha.ID().String() != p.String() {
-			stream, err := ha.NewStream(context.Background(), p, "/add/1.0.0")
-			if err != nil {
-				continue
-			}
-
-			for _, addr := range ha.Addrs() {
-				if addr.String() != "" {
-					_, err = stream.Write([]byte(addr.String() + "/ipfs/" + ha.ID().Pretty() + "\n"))
-					if err != nil {
-						log.Println(err)
-					}
-				}
-			}
-			buf := bufio.NewReader(stream)
-			str, err := buf.ReadString('\n')
-			// The following code extracts target's the peer ID from the
-			// given multiaddress
-			t := strings.TrimSpace(str)
-			addresses := strings.Split(t, ",")
-			for _, address := range addresses {
-				ipfsaddr, err := ma.NewMultiaddr(address)
-				if err != nil {
-					log.Println(err)
-				}
-
-				// TODO: do we need any of this ipfsaddr stuff?
-				pid, err := ipfsaddr.ValueForProtocol(ma.P_IPFS)
-				if err != nil {
-					log.Println(err)
-				}
-
-				peerid, err := peer.IDB58Decode(pid)
-				if err != nil {
-					log.Println(err)
-				}
-				// Decapsulate the /ipfs/<peerID> part from the target
-				// /ip4/<a.b.c.d>/ipfs/<peer> becomes /ip4/<a.b.c.d>
-				targetAddr := ipfsaddr.Decapsulate(ipfsaddr)
-				ha.Peerstore().AddAddr(peerid, targetAddr, pstore.PermanentAddrTTL)
-			}
-		}
-	}
 }
