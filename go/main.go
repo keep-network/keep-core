@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"time"
@@ -10,8 +9,10 @@ import (
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	"github.com/dfinity/go-dfinity-crypto/rand"
 	"github.com/ipfs/go-datastore"
+	"github.com/libp2p/go-libp2p-host"
 	"github.com/keep-network/keep-core/go/node"
-	"github.com/libp2p/go-libp2p-host")
+	. "github.com/keep-network/keep-core/go/config"
+)
 
 var (
 	store = datastore.NewMapDatastore()
@@ -24,23 +25,18 @@ func ConfigHostHandlers(host host.Host) {
 	node.InitAddHandler(host)
 }
 
+func init() {
+	GetOptions()
+}
+
 func main() {
 
 	// LibP2P code uses golog to log messages. They log with different string IDs (i.e. "swarm").
 	// We can control the verbosity level for all loggers with:
 	golog.SetAllLoggers(gologging.INFO) // Change to DEBUG for extra info
 
-	// Parse options from the command line
-	p2pListenPort := flag.Int("p2pListenPort", 0, "Port that listens for incoming connections")
-	p2pEncryption := flag.Bool("p2pEncryption", false, "Enable secure IO")
-	idGenerationSeed := flag.Int64("idGenerationSeed", 0, "Set random seed for ID generation")
-	flag.Parse()
-
-	if p2pListenPort == nil {
-		log.Fatal("Please provide a port to bind on with --port")
-	}
 	// Make a host that listens on the given multiaddress
-	host, err := node.MakeBasicHost(ps, *p2pListenPort, *p2pEncryption, *idGenerationSeed)
+	host, err := node.MakeBasicHost(ps, Config.P2pListenPort, Config.EnableP2pEncryption, Config.IdGenerationSeed)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,7 +53,7 @@ func main() {
 		}
 	}()
 
-	//sleep long enough for peerlists to get built.
+	// Sleep long enough for peerlists to get built.
 	time.Sleep(time.Duration(6) * time.Second)
 	node.Test(host)
 	select {}
