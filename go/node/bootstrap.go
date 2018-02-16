@@ -9,16 +9,13 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
-)
-
-var (
-	bootstrapPeers = []string{"/ip4/192.168.0.2/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQVS8iBuUUgDrMbMY17Cck2gKrqeX", "/ip4/192.168.0.3/tcp/2701/ipfs/Qmd3wzD2HWA95ZAs214VxnckwkwM4GHJyC6whKUCNQhNvW"}
+	. "github.com/keep-network/keep-core/go/config"
 )
 
 //BootstrapConnect connects to a predefined list of peers to "bootstrap" the cluster.
 func BootstrapConnect(ha host.Host) {
 	log.Println("Bootstrapping peers...")
-	for _, p := range bootstrapPeers {
+	for _, p := range Config.Bootstrap.Nodes {
 		// The following code extracts target's the peer ID from the given multiaddress
 		ipfsaddr, err := ma.NewMultiaddr(p)
 		if err != nil {
