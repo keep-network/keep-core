@@ -18,9 +18,8 @@ contract TestStakeNoDelay {
   function testCanStake() {
     uint balance = token.balanceOf(address(this));
 
-    token.approve(address(stakingContract), 100);
-    stakingContract.stake(100);
-    
+    token.approveAndCall(address(stakingContract), 100, "");
+
     Assert.equal(token.balanceOf(address(this)), balance - 100, "Stake amount should be taken out from token holder's main balance.");
     Assert.equal(stakingContract.balanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance.");
   }

@@ -16,6 +16,7 @@ contract TokenStaking {
 
   StandardToken public token;
 
+  event ReceivedApproval(uint256 _value);
   event Staked(address indexed from, uint256 value);
   event InitiatedUnstake(uint256 id);
   event FinishedUnstake();
@@ -45,21 +46,29 @@ contract TokenStaking {
     withdrawalDelay = _delay;
   }
 
-  /**
-   * @notice Stakes provided token amount to this contract. You must approve the amount 
-   * on the token first by calling `approve()`on the token contract.
-   * @dev Transfers tokens from sender balance to this staking contract balance.
-   * @param _value The amount to be staked.
-   */
-  function stake(uint256 _value) public {
-    // Make sure sender has enough tokens.
-    require(_value <= token.balanceOf(msg.sender));
+  /** 
+   * @notice Receives approval of token transfer and stakes the approved ammount.
+   * @dev Makes sure provided token contract is the same one linked to this contract. 
+   * @param _from The owner of the tokens who approved them to transfer.
+   * @param _value Approved amount for the transfer and stake.
+   * @param _token Token contract address.
+   * @param _extraData Any extra data.
+  */
+  function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) {
+    ReceivedApproval(_value);
 
-    token.transferFrom(msg.sender, this, _value);
+    // Make sure provided token contract is the same one linked to this contract.
+    require(StandardToken(_token) == token);
+
+    // Make sure sender has enough tokens.
+    require(_value <= token.balanceOf(_from));
+
+    // Transfer tokens to this contract.
+    token.transferFrom(_from, this, _value);
 
     // Maintain a record of the stake amount by the sender.
-    balances[msg.sender] = balances[msg.sender].add(_value);
-    Staked(msg.sender, _value);
+    balances[_from] = balances[_from].add(_value);
+    Staked(_from, _value);
   }
 
   /**

@@ -25,8 +25,7 @@ contract TestStake {
   function testCanStake() {
     uint balance = token.balanceOf(address(this));
 
-    token.approve(address(stakingContract), 100);
-    stakingContract.stake(100);
+    token.approveAndCall(address(stakingContract), 100, "");
     
     Assert.equal(token.balanceOf(address(this)), balance - 100, "Stake amount should be taken out from token holder's main balance.");
     Assert.equal(stakingContract.balanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance.");
@@ -65,14 +64,14 @@ contract TestStake {
     Assert.equal(stakingContract.balanceOf(address(this)), 0, "Stake balance should stay unchanged.");
   }
 
-  // Token holder should not be able to stake without calling approve on the token first
-  function testCanNotStakeWithoutApprove() {
+  // Token holder should not be able to stake without providing correct stakingContract address.
+  function testCanNotStakeWithWrongRecipient() {
     
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-    ThrowProxy throwProxy = new ThrowProxy(address(stakingContract));
+    ThrowProxy throwProxy = new ThrowProxy(address(token));
 
     // Prime the proxy
-    TokenStaking(address(throwProxy)).stake(100);
+    KeepToken(address(throwProxy)).approveAndCall(0, 100, "");
 
     // Execute the call that is supposed to throw.
     // r will be false if it threw and true if it didn't.

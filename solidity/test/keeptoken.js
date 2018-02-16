@@ -43,10 +43,9 @@ contract('KeepToken', function(accounts) {
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
 
-    // Stake tokens
-    await token.approve(stakingContract.address, stakingAmount, {from: account_one});
-    await stakingContract.stake(stakingAmount);
-    
+    // Stake tokens using approveAndCall pattern
+    await token.approveAndCall(stakingContract.address, stakingAmount, "", {from: account_one});
+
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_one_stake_balance = await stakingContract.balanceOf.call(account_one);
