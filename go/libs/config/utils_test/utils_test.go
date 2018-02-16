@@ -1,4 +1,5 @@
-package config_test
+// Copyright 2018 The Keep Authors.  See LICENSE.md for details.
+package config
 
 import (
 	"testing"

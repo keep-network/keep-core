@@ -11,7 +11,7 @@ import (
 	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p-host"
 	"github.com/keep-network/keep-core/go/node"
-	. "github.com/keep-network/keep-core/go/config"
+	. "github.com/keep-network/keep-core/go/libs/config"
 )
 
 var (
