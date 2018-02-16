@@ -1,6 +1,6 @@
 _vendor*
-src/
+src
 vendors/
 vendor/
-Gopk_*
+Gopkg_*
 _lex/
