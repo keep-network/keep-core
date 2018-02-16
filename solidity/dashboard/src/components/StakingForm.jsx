@@ -66,12 +66,10 @@ class StakingForm extends Component {
     const stakingContract = await getTokenStaking(stakingContractAddress);
 
     if (action === 'stake') {
-      token.approve(stakingContractAddress, formatAmount(amount, 18), {from: accounts[0], gas: 60000});
-      stakingContract.stake(formatAmount(amount, 18), {from: accounts[0], gas: 60000});
+      token.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: accounts[0], gas: 90000})
     } else if (action === 'unstake') {
-      stakingContract.initiateUnstake(amount, {from: accounts[0], gas: 90000});
+      stakingContract.initiateUnstake(amount, {from: accounts[0], gas: 130000});
     }
-
   }
 
   render() {
