@@ -28,6 +28,10 @@ import (
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
+var (
+	bootstrapPeers = []string{"/ip4/127.0.0.1/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQVS8iBuUUgDrMbMY17Cck2gKrqeX", "/ip4/127.0.0.1/tcp/2702/ipfs/Qmd3wzD2HWA95ZAs214VxnckwkwM4GHJyC6whKUCNQhNvW"}
+)
+
 // A node is the initialized relay client waiting to join a group
 type Node struct {
 	// Self
@@ -77,12 +81,22 @@ func NewNode(ctx context.Context, port int, randseed int64) (*Node, error) {
 		return nil, fmt.Errorf("Failed to start Node process with err: %v", err)
 	}
 
-	// configure routing for our node
 	dhtRouting := dht.NewDHTClient(n.ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
 	n.Routing = dhtRouting
 	n.PeerHost = rhost.Wrap(n.PeerHost, dhtRouting)
 
+	if err := n.bootstrap(); err != nil {
+		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
+	}
+
 	return n, nil
+}
+
+func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) pstore.Peerstore {
+	ps := pstore.NewPeerstore()
+	ps.AddPrivKey(pid, priv)
+	ps.AddPubKey(pid, pub)
+	return ps
 }
 
 func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
@@ -101,13 +115,6 @@ func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
 		return nil, nil, err
 	}
 	return priv, pub, nil
-}
-
-func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) pstore.Peerstore {
-	ps := pstore.NewPeerstore()
-	ps.AddPrivKey(pid, priv)
-	ps.AddPubKey(pid, pub)
-	return ps
 }
 
 func (n *Node) start(port int) error {
@@ -181,4 +188,39 @@ func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID,
 	// TODO: do we need to enable the circuit relay? if so, do it here
 	return h, nil
 
+}
+
+// lifted from github.com/keep-network/go-experiments
+func (n *Node) bootstrap() error {
+	log.Println("Bootstrapping peers...")
+	for _, p := range bootstrapPeers {
+		// The following code extracts target's the peer ID from the
+		// given multiaddress
+		ipfsaddr, err := ma.NewMultiaddr(p)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		pid, err := ipfsaddr.ValueForProtocol(ma.P_IPFS)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		peerid, err := peer.IDB58Decode(pid)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// Decapsulate the /ipfs/<peerID> part from the target
+		// /ip4/<a.b.c.d>/ipfs/<peer> becomes /ip4/<a.b.c.d>
+		targetPeerAddr, _ := ma.NewMultiaddr(fmt.Sprintf("/ipfs/%s", peer.IDB58Encode(peerid)))
+		targetAddr := ipfsaddr.Decapsulate(targetPeerAddr)
+		if n.PeerHost.ID().String() != peerid.String() {
+			// We have a peer ID and a targetAddr so we add it to the peerstore
+			// so LibP2P knows how to contact it
+			n.PeerHost.Peerstore().AddAddr(peerid, targetAddr, pstore.PermanentAddrTTL)
+			n.PeerHost.Connect(n.ctx, pstore.PeerInfo{ID: peerid})
+		}
+	}
+	return nil
 }
