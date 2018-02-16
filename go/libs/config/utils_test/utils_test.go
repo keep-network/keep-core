@@ -5,7 +5,7 @@ import (
 	"testing"
 	"os"
 	"github.com/pkg/errors"
-	"github.com/keep-network/keep-core/go/libs/config"
+	"github.com/keep-network/keep-core/libs/config"
 )
 
 func TestPanic(t *testing.T) {

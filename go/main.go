@@ -10,8 +10,8 @@ import (
 	"github.com/dfinity/go-dfinity-crypto/rand"
 	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p-host"
-	"github.com/keep-network/keep-core/go/node"
-	. "github.com/keep-network/keep-core/go/libs/config"
+	"github.com/keep-network/keep-core/node"
+	. "github.com/keep-network/keep-core/libs/config"
 )
 
 var (
