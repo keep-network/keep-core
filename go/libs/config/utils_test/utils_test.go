@@ -1,11 +1,11 @@
 // Copyright 2018 The Keep Authors.  See LICENSE.md for details.
-package config
+package config_test
 
 import (
 	"testing"
-	"config"
-	"github.com/pkg/errors"
 	"os"
+	"github.com/pkg/errors"
+	"github.com/keep-network/keep-core/go/libs/config"
 )
 
 func TestPanic(t *testing.T) {
