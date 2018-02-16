@@ -25,14 +25,35 @@ jobs:
       - image: thomasweise/texlive
     steps:
       - checkout
-      - run: |
-          cd docs
-          make clean
-          mkdir -p /tmp/docs
-          make relay-states.pdf
-          cp relay-states.pdf /tmp/docs
-      - store_artifacts:
-          path: /tmp/docs
+      - run:
+          name: Generate Document Files
+          command: |
+            cd docs
+            make clean
+            mkdir -p /tmp/docs/img
+            make docs
+            cp relay-states.pdf /tmp/docs
+            cp -r img/generated /tmp/docs/img/generated
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - ./*.pdf
+            - img/generated/*.png
+  upload_docs:
+    docker:
+      - image: google/cloud-sdk:slim
+    steps:
+      - attach_workspace:
+          at: /tmp/docs
+      - run:
+          name: Upload Document Files to docs.keep.network
+          command: |
+            echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+            gcloud config set project cfc-production
+            cd /tmp/docs
+            export DIR=$(test $CIRCLE_BRANCH != master && echo $CIRCLE_BRANCH/)
+            gsutil -m cp -r * gs://docs.keep.network/$DIR
 
 workflows:
   version: 2
@@ -42,6 +63,9 @@ workflows:
   docs:
     jobs:
       - generate_docs
+      - upload_docs:
+          requires:
+            - generate_docs
   go:
     jobs:
       - build_client
