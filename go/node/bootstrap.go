@@ -9,7 +9,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
-	. "github.com/keep-network/keep-core/libs/config"
+	. "github.com/keep-network/keep-client/libs/config"
 )
 
 //BootstrapConnect connects to a predefined list of peers to "bootstrap" the cluster.
