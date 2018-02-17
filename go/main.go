@@ -29,19 +29,19 @@ func main() {
 		for {
 			select {
 			case <-t.C:
-				n.Routing.PrintRoutingTable()
+				n.Network.Routing.PrintRoutingTable()
 				t.Reset(1 * time.Second)
 			}
 		}
 	}(n)
 
 	// Subscribe all peers to topic
-	subch, err := n.Floodsub.Subscribe("x")
+	subch, err := n.Network.Floodsub.Subscribe("x")
 	if err != nil {
 		log.Fatalf("Failed to subscribe to channel with err: ", err)
 	}
 	msg := []byte(fmt.Sprintf("keep group message from %s", n.Identity.PeerID))
-	n.Floodsub.Publish("x", msg)
+	n.Network.Floodsub.Publish("x", msg)
 	got, err := subch.Next(context.Background())
 	if err != nil {
 		log.Fatalf("Failed to get message with err: ", err)
