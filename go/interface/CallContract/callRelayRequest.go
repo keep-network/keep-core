@@ -12,7 +12,7 @@ import (
 	// "github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/keep.network/keep-core/go/interface/m4/KStart" // "github.com/keep.network/keep-core/go/interface/m4/KStart"
+	"github.com/keep.network/keep-core/go/interface/lib/KStart" // "github.com/keep.network/keep-core/go/interface/m4/KStart"
 )
 
 func main() {

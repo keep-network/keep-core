@@ -7,7 +7,7 @@ import (
 	// "www.2c-why.com/job/ethrpc/ethABI/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/keep.network/keep-core/go/interface/m4/KStart" // "github.com/keep.network/keep-core/go/interface/m4/KStart"
+	"github.com/keep.network/keep-core/go/interface/lib/KStart" // "github.com/keep.network/keep-core/go/interface/m4/KStart"
 	"github.com/pschlump/MiscLib"
 	"github.com/pschlump/godebug"
 )
