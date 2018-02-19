@@ -3,7 +3,7 @@ package node
 
 import (
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"fmt"
 	"io"
 	mrand "math/rand"
@@ -60,7 +60,7 @@ func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
 	// across multiple runs
 	var r io.Reader
 	if randseed == 0 {
-		r = rand.Reader
+		r = crand.Reader
 	} else {
 		r = mrand.New(mrand.NewSource(randseed))
 	}
