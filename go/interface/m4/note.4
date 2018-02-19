@@ -10,9 +10,13 @@
 
 
 
+https://ethereum.stackexchange.com/questions/1381/how-do-i-parse-the-transaction-receipt-log-with-web3-js
+	-- shows how to get tranaction log (including events) in web3 - 
 
+https://zupzup.org/eth-smart-contracts-go/
+	sim.Commit() - to mine again
 
-
+https://media.consensys.net/technical-introduction-to-events-and-logs-in-ethereum-a074d65dd61e
 
 
 
@@ -443,3 +447,62 @@ Protect your site from Cryptojacking with CSP + SRI
 	https://scotthelme.co.uk/protect-site-from-cyrptojacking-csp-sri/
 	https://scotthelme.co.uk/protect-site-from-cyrptojacking-csp-sri/
 	<script src="//www.browsealoud.com/plus/scripts/ba.js" integrity="sha256-Abhisa/nS9WMne/YX+dqiFINl+JiE15MCWvASJvVtIk=" crossorigin="anonymous"></script>
+
+
+client
+nobind
+dev tun
+route-nopull
+route 10.51.244.207 255.255.255.255
+route 104.197.153.166 255.255.255.255
+route 10.51.251.221 255.255.255.255
+route 10.51.245.75 255.255.255.255
+route 10.51.248.217 255.255.255.255
+<key>
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://github.com/ethereum/go-ethereum/issues/14341 -- Setup of ws://
+
+
+
+
+
+https://github.com/ethereum/go-ethereum/wiki/RPC-PUB-SUB
+
+
+Q: Can I get my ethereum node to send push notifications? self.ethereum
+
+	Does Ethereum have a configuration option that is similar to Bitcoin's walletnotify configuration option that allows it to send a push notification every time I receive ether?
+
+	If it helps, I want the push notification to be sent to rabbitmq
+
+	[–]karalabeEthereum - Péter Szilágyi 3 points 2 years ago 
+
+	In the current stable release there isn't any support for push notifications of event subscriptions. You need to poll Geth to get the necessary data.
+
+	In the current develop version we've almost fully revamped the RPC to support push notifications. Two caveats: you can
+	only subscribe to filterable events (i.e. contract logs) as far as I know; and we won't be supporting pushing into any
+	form of custom message queuing system, but if should be easy enough to run your own small wrapper that proxies messages
+	from geth into rabbitmq.
+
+	permalinkembedsavegive goldkeybase chat reply
+
+https://web3j.readthedocs.io/en/latest/filters.html
+
+https://ethereum.stackexchange.com/questions/10740/watching-all-the-events-of-a-contract-geth-cannot-find-event-for-log-undefin/10741#10741
+
+https://coursetro.com/posts/code/100/Solidity-Events-Tutorial---Using-Web3.js-to-Listen-for-Smart-Contract-Events
+
+https://github.com/ethereum/go-ethereum/issues/14341 -- WebSockets or .ipc!
+
