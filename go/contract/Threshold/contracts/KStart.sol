@@ -5,13 +5,6 @@ pragma solidity ^0.4.18;
 /// @title Interface contract for accessing random threshold number generation.
 /// @author Philip Schlump
 
-// https://ethereum.stackexchange.com/questions/20750/error-calling-a-function-from-another-contract-member-not-found-or-not-visi
-// https://ethereum.stackexchange.com/questions/730/attaching-an-address-for-a-contract-to-call-another-contract
-// https://github.com/pipermerriam/ethereum-uuid
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md
-// https://github.com/ethereum/EIPs/issues/55
-
-// https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
 
 // Contract Interface for GenRequestID contract from ./GenRequestID.sol
 contract GenRequestID { 
@@ -40,15 +33,11 @@ contract KStart {
 
     /* Constructor */
     function KStart() public {
-		GenRequestIDSequence = GenRequestID(0xB529f14AA8096f943177c09Ca294Ad66d2E08b1f);
-		// requestIDSeq = 1;
-		// versionKStart = uint256(0x0000010010010000000000000000000000000000);		
+		GenRequestIDSequence = GenRequestID(0x1CEdd10a7D1CBeC5D807B81aB24e542cc0F6BE31);
     }
 
 	// get the next id from the generator contract
     function nextID() private returns(uint256 RequestID) {
-		// requestIDSeq++;
-		// return ( requestIDSeq | versionKStart );
 		RequestID = GenRequestIDSequence.GenerateNextRequestID();
 		return ( RequestID );
 	}
@@ -90,6 +79,7 @@ contract KStart {
     function relayEntry(uint256 _RequestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
 		signature[_RequestID] = _groupSignature;
 		groupID[_RequestID] = _groupID;
+
     	RelayEntryEvent(_RequestID, _groupSignature, _groupID, _previousEntry);
 	}
 

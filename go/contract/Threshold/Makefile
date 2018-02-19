@@ -4,6 +4,9 @@ all: contracts/KStart.sol contracts/KStart_sol_KStart.abi
 migrate: contracts/KStart.sol
 	truffle migrate --reset
 
+migrate_testnet: contracts/KStart.sol
+	truffle migrate --reset --network testnet
+
 contracts/KStart.sol: src/KStart.raw.sol ../GenID/addr.m4
 	m4 -P src/KStart.raw.sol >contracts/KStart.sol
 

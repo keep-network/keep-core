@@ -1,8 +1,7 @@
 m4_changequote([[[,]]])m4_dnl
 m4_define([[[m4_comment]]],[[[]]])m4_dnl
 m4_comment([[[
-	@title This is the address of the RequestID generation contract. 
+	@title This is the address of the RequestID generation contract.   This file is generated in ./gen-addr.sh.  Do not edit.
 	@author Philip Schlump
-	@notice Set for internal development test environment in geth
 ]]])m4_dnl
-m4_define([[[GEN_REQUEST_ID_ADDR]]],[[[0xB529f14AA8096f943177c09Ca294Ad66d2E08b1f]]])m4_dnl
+m4_define([[[GEN_REQUEST_ID_ADDR]]],[[[0x1CEdd10a7D1CBeC5D807B81aB24e542cc0F6BE31]]])m4_dnl
