@@ -1,5 +1,8 @@
 
-all: gen_abi  gen_go
+all:
+	go build
+
+all_old: gen_abi  gen_go
 
 gen_abi:
 	solc --abi greeter.sol
