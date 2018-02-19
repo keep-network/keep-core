@@ -13,7 +13,7 @@ contracts/KStart.sol: src/KStart.raw.sol ../GenID/addr.m4
 contracts/KStart_sol_KStart.abi: contracts/KStart.sol
 	( cd contracts ; solc --abi KStart.sol )
 	( cd contracts ; abigen --abi KStart_sol_KStart.abi --pkg KStart --out KStart.go )
-	cp ./contracts/KStart.go ../../interface/m4/KStart
+	cp ./contracts/KStart.go ../../interface/lib/KStart
 
 t_dev:
 	truffle develop log
