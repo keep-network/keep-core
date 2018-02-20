@@ -37,7 +37,7 @@ var bootstrapPeers = []string{"/ip4/127.0.0.1/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQV
 type NetworkManager struct {
 	PeerStore pstore.Peerstore
 	PeerHost  host.Host
-	Floodsub  *floodsub.PubSub
+	Sub       *floodsub.PubSub
 	Routing   routing.IpfsRouting
 }
 
@@ -71,7 +71,8 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 	// TODO: implement a standard and functional logger
 	log.Printf("Listening at: %#v\n", addrs)
 
-	n.Floodsub, err = floodsub.NewFloodSub(ctx, n.PeerHost)
+	// n.Sub, err = floodsub.NewFloodSub(ctx, n.PeerHost)
+	n.Sub, err = floodsub.NewGossipSub(ctx, n.PeerHost)
 	if err != nil {
 		return nil, err
 	}

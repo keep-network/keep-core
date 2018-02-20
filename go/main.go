@@ -26,7 +26,7 @@ func main() {
 	log.Printf("Node is operational.")
 
 	// Subscribe all peers to topic
-	subch, err := n.Network.Floodsub.Subscribe("x")
+	subch, err := n.Network.Sub.Subscribe("x")
 	if err != nil {
 		log.Fatalf("Failed to subscribe to channel with err: ", err)
 	}
@@ -37,7 +37,7 @@ func main() {
 		for {
 			select {
 			case <-t.C:
-				peers := n.Network.Floodsub.ListPeers("x")
+				peers := n.Network.Sub.ListPeers("x")
 				for _, peer := range peers {
 					log.Printf("Connected to peer: %s\n", peer)
 				}
@@ -54,7 +54,7 @@ func main() {
 			case <-t.C:
 				r := rand.Intn(100-1) + 1
 				msg := []byte(fmt.Sprintf("keep group message %d from %s", r, n.Identity.PeerID))
-				n.Network.Floodsub.Publish("x", msg)
+				n.Network.Sub.Publish("x", msg)
 				got, err := subch.Next(context.Background())
 				if err != nil {
 					log.Fatalf("Failed to get message with err: ", err)
