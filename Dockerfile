@@ -23,6 +23,7 @@ RUN apk add --update --no-cache \
 	openssl-dev && \
 	git clone https://github.com/dfinity/bn /bn && \
 	cd /bn && \
+	git reset --hard $BN_VERSION && \
 	make install && make && \
 	rm -rf /bn && \
 	mkdir -p /go/src && \
