@@ -1,3 +1,49 @@
+Having a intermediate, convenience AddressBook structure that contains the state of the valid groups peers sounds like a great idea.
+Here’s my understanding of the flow and where the AddressBook fits in:
+
+	* KeepMiner calls our server with its public key, gets groupChannel reference (i.e, this is the group you're assigned to).
+	* KeepMiner via libp2p has its DHT updated with other members in group.
+	* KeepMiner can call Geth_IsPubkeyStaked with the key of each member in its DHT
+	* KeepMiner listens on that groupChannel until it gets the "Your Group has been formed" message.
+	* KeepMiner validates each member (can add that member to convenence AddressBook structure)
+	* KeepMiner can challenge a member's validity
+	* KeepMiner (that has been challenged) proves validity by sending its group privateKey
+	* KeepMiner receives GroupIsReady (on groupChannel) i.e, saying everybody has validated everybody else
+	* KeepMiner can now do its ramdom # dance (sending it's part to the groupChannel)
+	* KeepMiner takes other miner's parts and validates it
+	* KeepMiner can accuse another of lying
+	* KeepMiner can recuse itself
+	* If a KeepMiner is found to by lying then group is dissolved
+	* If ??? timeout occurs before the random # is returned then group is dissolved
+	* KeepMiner that comes up with the Random# can call Geth_GroupCompletedRandomNumber
+	* KeepMiner can call gethNodeChallengesRandomNumber (assuming it has good reason to doubt) to verify its correctness
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 1. Read @Nik's document on how to use testnet
 2. Create a 2nd account on testnet
 3. Load contracts
