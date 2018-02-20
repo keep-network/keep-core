@@ -42,14 +42,6 @@ RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./go &&
 	mv $APP_NAME $BIN_PATH && \
 	rm -rf $APP_REPO_DIR
 
-
-#FROM alpine:3.7
-
-#ENV	BIN_PATH=/usr/local/bin
-
-#COPY --from=build $LIB_PATH $LIB_PATH
-#COPY --from=build $BIN_PATH/keep-client $BIN_PATH
-
 # ENTRYPOINT cant handle ENV variables.
 ENTRYPOINT ["keep-client", "-config",  "/keepclient/config.toml"]
 
