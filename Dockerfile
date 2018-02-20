@@ -2,7 +2,7 @@ FROM golang:1.9.4-alpine3.7
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
-	APP_REPO_DIR=/go/src/keep-network/keep-client \
+	APP_REPO_DIR=/go/src/github.com/keep-network/keep-core/go \
 	APP_NAME=keep-client
 
 RUN apk add --update --no-cache \

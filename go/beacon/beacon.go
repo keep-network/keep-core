@@ -3,9 +3,9 @@ package beacon
 import (
 	"fmt"
 
-	"keep-network/beacon/entry"
-	"keep-network/beacon/membership"
-	"keep-network/beacon/relay"
+	"github.com/keep-network/keep-core/go/beacon/entry"
+	"github.com/keep-network/keep-core/go/beacon/membership"
+	"github.com/keep-network/keep-core/go/beacon/relay"
 )
 
 type participantState int
