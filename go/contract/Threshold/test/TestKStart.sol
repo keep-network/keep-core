@@ -1,11 +1,11 @@
 pragma solidity ^0.4.18;
 
 import "truffle/Assert.sol";
-import "../contracts/KStart.sol";
+import "../contracts/KeepRelayBeacon.sol";
 
-contract TestKStart {	
+contract TestKeepRelayBeacon {	
 	
-	KStart ks = new KStart();
+	KeepRelayBeacon ks = new KeepRelayBeacon();
 
 	function testRequestRelay() public {
 		uint256 rid = ks.requestRelay(12,12,12);
