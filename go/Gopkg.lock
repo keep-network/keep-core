@@ -5,11 +5,6 @@
   name = "github.com/dfinity/go-dfinity-crypto"
   packages = ["rand"]
   revision = "1db358303499a9879dd640c71f831897e06e9ddf"
-
-[[projects]]
-  name = "github.com/keep-network/go-dfinity-crypto"
-  packages = ["bls"]
-  revision = "1db358303499a9879dd640c71f831897e06e9ddf"
   source = "https://github.com/keep-network/go-dfinity-crypto.git"
 
 [[projects]]
@@ -21,6 +16,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "20dfc90a8ed05905b41c3126eefc674b4c86918ba0192fff4ce1e99b6a0d08db"
+  inputs-digest = "70bb7494b440b113186ecf479de4af67c971a97b57bd73deb937262bc9926216"
   solver-name = "gps-cdcl"
   solver-version = 1
