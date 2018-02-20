@@ -9,20 +9,23 @@ import (
 	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
-	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 // Only to be used in the core process loop
 type GroupManager struct {
 	Groups   map[string]*Group
-	mu       sync.Mutex // guards Grouop
-	floodsub *floodsub.PubSub
+	mu       sync.Mutex       // guards Group
+	floodsub *floodsub.PubSub // pub/sub for group communication
 	host     host.Host
 }
 
 type Group struct {
-	name string
-	sub  *floodsub.Subscription
+	name             string
+	sub              *floodsub.Subscription
+	incomingMessages chan *Message
+}
+
+type Message struct {
 }
 
 func NewGroupManager() *GroupManager {
@@ -69,11 +72,18 @@ func (gm *GroupManager) RemoveGroup(g *Group) error {
 	return nil
 }
 
+// GroupDissolution is called when we get the DISSOVE_GROUP message in a our event loop.
+// This function is responsible for unsubscribing us from our floodsub subscription, cancelling
+// outbound connections to peers, deleting references and other teardown tasks.
+func (gm *GroupManager) GroupDissolution(ctx context.Context) error {
+	return nil
+}
+
 // TODO: this will fail as we need to rendezvous with providers by ensuring peers
 // are linked before hand.
 func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey) error {
 	// we need the peer id
-	id, err := peer.IDFromPrivateKey(pk)
+	// id, err := peer.IDFromPrivateKey(pk)
 
 	// TODO: Create secret material, sign secret material, get and increment a seq?
 	// TODO: get some sort of protobuf structure from our datastore for the above?
@@ -132,12 +142,6 @@ func (g *Group) handleMessage(msg *floodsub.Message, pub ci.PubKey) error {
 	// verify that the message is coming from a valid group member
 	// per the bradfield class, if these messages have a ttl, we need to check that?
 	// where am I storing these messages? Are messages ordered? Might I have recv this before?
-	return nil
-}
-
-// GroupDissolution is called when we get the DISSOVE_GROUP message in a our event loop.
-// This function is responsible for unsubscribing us from our floodsub subscription, cancelling
-// outbound connections to peers, deleting references and other teardown tasks.
-func (g *GroupManager) GroupDissolution(ctx context.Context) error {
+	// slap these messages onto a channel
 	return nil
 }

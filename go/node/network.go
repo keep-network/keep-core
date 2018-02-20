@@ -47,8 +47,12 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 	n := &NetworkManager{}
 
 	// Ensure that other members in our broadcast channel can identify us
-	n.PeerStore = addToPeerStore(pid, priv, pub)
+	n.PeerStore, err = addToPeerStore(pid, priv, pub)
+	if err != nil {
+		return nil, err
+	}
 
+	// Convert available network ifaces to listen on into multiaddrs
 	addrs, err := getListenAdresses(port)
 	if err != nil {
 		return nil, err
@@ -61,17 +65,16 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 	}
 
 	// Ok, now we're ready to listen
-	// TODO: listen to more addresses, flesh this out
 	if err := n.PeerHost.Network().Listen(addrs...); err != nil {
 		return nil, err
 	}
 	// TODO: implement a standard and functional logger
 	log.Printf("Listening at: %#v\n", addrs)
+
 	n.Floodsub, err = floodsub.NewFloodSub(ctx, n.PeerHost)
 	if err != nil {
 		return nil, err
 	}
-
 	// https: //github.com/libp2p/go-floodsub/issues/65#issuecomment-365680860
 	n.Routing = dht.NewDHT(ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
 	n.PeerHost = rhost.Wrap(n.PeerHost, n.Routing)
@@ -83,17 +86,24 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 	return n, nil
 }
 
-func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) pstore.Peerstore {
+func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) (pstore.Peerstore, error) {
 	ps := pstore.NewPeerstore()
-	ps.AddPrivKey(pid, priv)
-	ps.AddPubKey(pid, pub)
-	return ps
+	// FIXME: I made a hack to go-libp2p-peer to get this work
+	if err := ps.AddPrivKey(pid, priv); err != nil {
+		fmt.Println("private key mishap")
+		return nil, err
+	}
+	if err := ps.AddPubKey(pid, pub); err != nil {
+		fmt.Println("pub key mishap")
+		return nil, err
+	}
+	return ps, nil
 }
 
+// TODO: Allow for user-scoped listeners to either override this or union with this.
 func getListenAdresses(port int) ([]ma.Multiaddr, error) {
 	// TODO: attach a muxer to a connection
 	// TODO: figure out go-libp2p-interface-pnet.Protector and go-libp2p-pnet.NewProtector - later
-	// listen, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port))
 	ia, err := addrutil.InterfaceAddresses()
 	if err != nil {
 		return nil, err
@@ -113,7 +123,7 @@ func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID,
 	// Set up stream multiplexer
 	tpt := makeSmuxTransport()
 
-	// TODO: use NewSwarmWithProtector
+	// TODO: Pass in protec and metrics reporter
 	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, ps, nil, tpt, nil)
 	if err != nil {
 		return nil, err
@@ -122,6 +132,7 @@ func buildPeerHost(ctx context.Context, listenAddrs []ma.Multiaddr, pid peer.ID,
 	network := (*swarm.Network)(swrm)
 	// TODO: use our own host, I'm unsure about the utility of basic
 	opts := &bhost.HostOpts{NATManager: bhost.NewNATManager(network)}
+	// TODO: does host leak?
 	h, err := bhost.NewHost(ctx, network, opts)
 	if err != nil {
 		h.Close()
