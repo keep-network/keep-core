@@ -1,5 +1,5 @@
-var KStart = artifacts.require("./KStart.sol");
+var KeepRelayBeacon = artifacts.require("./KeepRelayBeacon.sol");
 
 module.exports = function(deployer) {
-    deployer.deploy(KStart);
+    deployer.deploy(KeepRelayBeacon);
 };

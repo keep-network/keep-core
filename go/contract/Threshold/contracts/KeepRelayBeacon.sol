@@ -12,9 +12,7 @@ contract GenRequestID {
     function () public;
 } 
 
-contract KStart { 
-	uint256 versionKStart;
-	uint256 requestIDSeq;
+contract KeepRelayBeacon { 
 
     /* creates arrays with all relevant data */
     mapping (uint256 => uint256) public payment;
@@ -26,8 +24,8 @@ contract KStart {
 	GenRequestID public GenRequestIDSequence;
 
     /* This generates a public event on the blockchain that will notify clients */
-    event RequestRelayEvent(uint256 RequestID, uint256 Payment, uint256 BlockReward, uint256 Seed);
-    event RelayEntryEvent(uint256 RequestID, uint256 Signature, uint256 GroupID, uint256 PreviousEntry );
+    event RelayEntryRequested(uint256 RequestID, uint256 Payment, uint256 BlockReward, uint256 Seed); 
+    event RelayEntryGenerated(uint256 RequestID, uint256 Signature, uint256 GroupID, uint256 PreviousEntry ); // xyzzy - RelayEntryGenerated.
     event RelayResetEvent(uint256 LastValidRelayEntry, uint256 LastValidRelayTxHash, uint256 LastValidRelayBlock);	// xyzzy - data types on TxHash, Block
     event SubmitGroupPublicKeyEvent(uint256 _PK_G_i, uint256 _id, uint256 _activationBlockHeight);
 
@@ -67,7 +65,7 @@ contract KStart {
         seed[RequestID] = _seed ;
 
 		// generate an event at this point, just return instead, RandomNumberRequest
-    	RequestRelayEvent( RequestID, _payment, _blockReward, _seed);
+     	RelayEntryRequested( RequestID, _payment, _blockReward, _seed);
     }
 
 	/// @dev Must include "group" that is responable:  ATL
@@ -80,7 +78,7 @@ contract KStart {
 		signature[_RequestID] = _groupSignature;
 		groupID[_RequestID] = _groupID;
 
-    	RelayEntryEvent(_RequestID, _groupSignature, _groupID, _previousEntry);
+     	RelayEntryGenerated(_RequestID, _groupSignature, _groupID, _previousEntry);
 	}
 
     function relayEntryAcustation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {

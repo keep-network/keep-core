@@ -8,7 +8,7 @@
 	cd contracts
 	solc --abi ContractName.sol
 	# this creates ContractName_sol_ContractName.abi
-	abigen
+	abigen --abi ContractName_sol_ContractName.abi --pkg ContractName --out ContractName.go 
 ```
 
 
