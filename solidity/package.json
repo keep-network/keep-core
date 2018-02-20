@@ -20,6 +20,7 @@
     "zeppelin-solidity": "^1.6.0"
   },
   "devDependencies": {
+    "@digix/doxity": "^0.5.2",
     "ethereumjs-testrpc": "^6.0.2",
     "truffle": "^4.0.1",
     "babel-polyfill": "^6.26.0",
