@@ -1,0 +1,6 @@
+_vendor*
+src
+vendors/
+vendor/
+Gopkg_*
+_lex/

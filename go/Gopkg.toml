@@ -20,9 +20,59 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-required = ["github.com/keep-network/go-dfinity-crypto/bls"]
 
 [[constraint]]
-  name = "github.com/keep-network/go-dfinity-crypto"
-  revision = "1db358303499a9879dd640c71f831897e06e9ddf"
-  source = "https://github.com/keep-network/go-dfinity-crypto.git"
+  branch = "master"
+  name = "github.com/ipfs/go-datastore"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/ipfs/go-log"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-crypto"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-host"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-net"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-peer"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-peerstore"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-swarm"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/multiformats/go-multiaddr"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/whyrusleeping/go-logging"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/whyrusleeping/go-smux-multistream"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/whyrusleeping/go-smux-yamux"
+
+[[constraint]]
+  revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
+  name = "github.com/satori/go.uuid"

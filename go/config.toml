@@ -1,0 +1,20 @@
+#@IgnoreInspection BashAddShebang
+
+# Runtime environment. Determines whether to run semver scripts or expect env vars
+app_env = "development"
+
+[p2p]
+# Port that listens for incoming p2p connections
+p2p_listen_port = 0
+
+# Enable secure IO
+enable_p2p_encryption = false
+
+# Set random seed for ID generation
+id_generation_seed = 0
+
+[bootstrap]
+nodes = [
+  "/ip4/192.168.0.2/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQVS8iBuUUgDrMbMY17Cck2gKrqeX",
+  "/ip4/192.168.0.3/tcp/2701/ipfs/Qmd3wzD2HWA95ZAs214VxnckwkwM4GHJyC6whKUCNQhNvW"
+]
