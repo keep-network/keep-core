@@ -1,29 +1,12 @@
-FROM golang:1.9.4-alpine3.7
+FROM golang:1.9.4-alpine3.7 AS build
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
-	APP_REPO_DIR=/go/src/github.com/keep-network/keep-core/go \
-	APP_NAME=keep-client
-
-RUN apk add --update --no-cache \
-	git && \
-	mkdir -p /go/src && \
-	rm -rf /var/cache/apk && mkdir /var/cache/apk && \
-	rm -rf /usr/share/man
-
-COPY ./go $APP_REPO_DIR
-WORKDIR $APP_REPO_DIR
-
-RUN go get -u github.com/golang/dep/cmd/dep
-COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
-RUN dep ensure --vendor-only
-
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME . && \
-	mv $APP_NAME /usr/local/bin/
-
-FROM alpine:3.7
-
-ENV BN_VERSION=d1a44d2f242692601b3e150b59044ab82f265b65
+	APP_NAME=keep-client \
+	APP_REPO_DIR=/go/src/github.com/keep-network/keep-client \
+	BIN_PATH=/usr/local/bin \
+	LD_PATH=/usr/local/lib \
+	BN_VERSION=d1a44d2f242692601b3e150b59044ab82f265b65
 
 RUN apk add --update --no-cache \
 	bash \
@@ -38,21 +21,37 @@ RUN apk add --update --no-cache \
 	make \
 	openssl \
 	openssl-dev && \
-	mkdir -p /go/src && \
-    git clone https://github.com/dfinity/bn /bn && \
+	git clone https://github.com/dfinity/bn /bn && \
 	cd /bn && \
-    git reset --hard $BN_VERSION && \
 	make install && make && \
 	rm -rf /bn && \
+	mkdir -p /go/src && \
 	rm -rf /var/cache/apk && mkdir /var/cache/apk && \
-	rm -rf /usr/share/man && \
-	apk del git make clang llvm
+	rm -rf /usr/share/man
 
-COPY --from=0 /usr/local/bin/keep-client /usr/local/bin/
+RUN mkdir -p $APP_REPO_DIR
 
-ENV LD_LIBRARY_PATH=/usr/local/lib/
+WORKDIR $APP_REPO_DIR
 
-ENTRYPOINT ["keep-client"]
+RUN go get -u github.com/golang/dep/cmd/dep
+COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
+RUN dep ensure --vendor-only
+
+COPY . $APP_REPO_DIR
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./go && \
+	mv $APP_NAME $BIN_PATH && \
+	rm -rf $APP_REPO_DIR
+
+
+FROM alpine:3.7
+
+ENV	BIN_PATH=/usr/local/bin
+
+COPY --from=build $LIB_PATH $LIB_PATH
+COPY --from=build $BIN_PATH/keep-client $BIN_PATH
+
+# ENTRYPOINT cant handle ENV variables.
+ENTRYPOINT ["keep-client", "-config",  "/keepclient/config.toml"]
 
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
