@@ -55,7 +55,9 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	// FIXME Need a way to time out in a given stage, especially the waiting
 	//       ones.
 
-	memberID := rand.NewRand().String()
+	memberID := "0"
+	for memberID = rand.NewRand().String(); memberID == "0"; {
+	}
 	fmt.Printf("[member:%v] Initializing member.\n", memberID)
 	localMember := thresholdgroup.NewMember(memberID, threshold)
 
