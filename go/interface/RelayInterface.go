@@ -1,17 +1,15 @@
 package RelayContract
 
-// ++ xyzzy - Calls to contract functions -- finish											1hr
 // ++ xyzzy - Event captures -- finish														1hr
 
-// ++ xyzzy - Run auto tests (truffle test --network testnet)								1hr
 // ++ xyzzy - Run test of events with ./* files.											1hr
 
 // ++ xyzzy - Create a set of tests for this												2hrs
 
-// ++ xyzzy - go lint																		15min
 // ++ xyzzy - go doc																		1hr
+// ++ xyzzy - go doc - getting better.
 
-// ++ xyzzy - Add in "logging"
+// TODO - Add in "logging"
 
 import (
 	"bufio"
@@ -32,10 +30,15 @@ type KeepRelayBeaconContract struct {
 	kstart          *KeepRelayBeacon.KeepRelayBeaconTransactor
 	kstartCaller    *KeepRelayBeacon.KeepRelayBeaconCaller
 	opts            *bind.TransactOpts
+	optsCall        *bind.CallOpts
 	ContractAddress string
 	GethServer      string
 }
 
+// NewKeepRelayBeaconContract connects to a "geth" server and sets up for calls into the KeepRelayBeacon contract.
+// The 'GethServer' can be a "http://", "ws://" or an IPC file path to geth.
+// The 'ContractAddress' needs to be the hex address of the KeepRelayBeacon contrct. 0x in front of the address is required.
+// A full path to, and the password for, an account file is required.  The account private key file is "UTC--" a date/time and the hash of the account number.
 func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractAddress, KeyFile, KeyFilePassword string) (ri *KeepRelayBeaconContract, err error) {
 
 	ri = &KeepRelayBeaconContract{
@@ -107,71 +110,21 @@ func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractA
 
 	ri.opts = opts
 
+	ri.optsCall = new(bind.CallOpts)
+
 	return
 }
 
-//
-//	var tx *types.Transaction
-//	switch *Name {
-//	case "RequestRelay":
-//		// function requestRelay(uint256 _payment, uint256 _blockReward, uint256 _seed) public returns ( uint256 RequestID ) {
-//		rawseed := []byte("abcdef") // TODO - variable data - data for this call
-//		payment := big.NewInt(12)
-//		blockReward := big.NewInt(12)
-//		seed := big.NewInt(0).SetBytes(rawseed)
-//		tx, err = kstart.RequestRelay(opts, payment, blockReward, seed)
-//
-//	case "IsStaked":
-//		// function isStaked(uint256 _UserPublicKey) pure public returns(bool) {
-//		var isStakedNow bool
-//		userPublicKey := big.NewInt(12)
-//		isStakedNow, err = kstartCaller.IsStaked(nil, userPublicKey)
-//
-//		if err == nil {
-//			fmt.Printf("----------------------------------------------------------------------------------\n")
-//			fmt.Printf("%sKeepRelayBeacon.%s called%s Results Are=%v\n", MiscLib.ColorGreen, Name, isStakedNow, MiscLib.ColorReset, tx)
-//			fmt.Printf("----------------------------------------------------------------------------------\n")
-//		}
-//
-//	case "RelayEntry":
-//		// function relayEntry(uint256 _RequestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
-//		requestID := big.NewInt(12)
-//		groupSignature := big.NewInt(12)
-//		groupID := big.NewInt(12)
-//		previousEntry := big.NewInt(12)
-//		tx, err = kstart.RelayEntry(opts, requestID, groupSignature, groupID, previousEntry)
-//
-//	case "RelayEntryAcustation":
-//		// function relayEntryAcustation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {
-//		fmt.Printf("TODO 0001\n")
-//
-//	case "SubmitGroupPublicKey":
-//		// function submitGroupPublicKey (uint256 _PK_G_i, uint256 _id) public {
-//		fmt.Printf("TODO 0002\n")
-//	}
-//
-//	if err != nil {
-//		fmt.Fprintf(os.Stderr, "----------------------------------------------------------------------------------\n")
-//		fmt.Fprintf(os.Stderr, "%sFailed to call KeepRelayBeacon.%s: %s%s\n", MiscLib.ColorRed, Name, err, MiscLib.ColorReset)
-//		fmt.Fprintf(os.Stderr, "----------------------------------------------------------------------------------\n")
-//		os.Exit(1)
-//	}
-//
-//	if tx != nil {
-//		fmt.Printf("----------------------------------------------------------------------------------\n")
-//		fmt.Printf("%sKeepRelayBeacon.%s called%s tx=%s\n", MiscLib.ColorGreen, Name, MiscLib.ColorReset, tx)
-//		fmt.Printf("----------------------------------------------------------------------------------\n")
-//	}
-//
-//}
-
+// RequestRelay calls into the KeepRelayBeacon.requestRelay - parameters are converted from 64 bit to 256 bit integers.
+// The contract generates an event, RelayEntryRequested with the generated RequestID in it.
 func (ri *KeepRelayBeaconContract) RequestRelay(ctx *RelayContractContext, payment, blockReward int64, seed []byte) (tx *types.Transaction, err error) {
 	pPayment := big.NewInt(payment)
 	pBlockReward := big.NewInt(blockReward)
 	pSeed := big.NewInt(0).SetBytes(seed)
+	// Contract: function requestRelay(uint256 _payment, uint256 _blockReward, uint256 _seed) public returns ( uint256 RequestID ) {
 	tx, err = ri.kstart.RequestRelay(ri.opts, pPayment, pBlockReward, pSeed)
 	if err != nil {
-		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).RequestRelay(%d,%d,%x)\n", err, ri.GethServer, ri.ContractAddress, payment, blockReward, seed)
+		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).requestRelay(%d,%d,%x)\n", err, ri.GethServer, ri.ContractAddress, payment, blockReward, seed)
 		// LOG at this point
 		return
 	}
@@ -182,9 +135,80 @@ func (ri *KeepRelayBeaconContract) RequestRelay(ctx *RelayContractContext, payme
 	return
 }
 
-// TODO
-//  	function isStaked(uint256 _UserPublicKey) pure public returns(bool) {
-//		function getRandomNumber( uint256 _RequestID ) view public returns ( uint256 theRandomNumber ) {
-//  	function relayEntryAcustation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {
-//  	function submitGroupPublicKey(uint256 _PK_G_i, uint256 _id) public {
-//		function getRandomNumber( uint256 _RequestID ) view public returns ( uint256 theRandomNumber ) {
+// IsStaked returns true if the publicKey is associated with a sufficiently large stake in the registry.  KeepRelayBeacon.isStaked is called.
+// No gas is required to call this.
+func (ri *KeepRelayBeaconContract) IsStacked(ctx *RelayContractContext, publicKey []byte) (memberIsStaked bool) {
+	pPubKey := big.NewInt(0).SetBytes(publicKey)
+	// Contract: function isStaked(uint256 _UserPublicKey) pure public returns(bool) {
+	memberIsStaked, err := ri.kstartCaller.IsStaked(ri.optsCall, pPubKey)
+	if err != nil {
+		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).isStaked(%x)\n", err, ri.GethServer, ri.ContractAddress, publicKey)
+		// LOG at this point
+		return false
+	}
+	if ctx.dbOn() {
+		fmt.Printf("KeepRelayBeacon.isStaked called pubKey=%x isStaked()=%v, from=%s\n", publicKey, memberIsStaked, godebug.LF())
+		// TODO: log the success and tx that it is in
+	}
+	return
+}
+
+// RelayEntry saves the signature to the blockchain on completion threshold signature generation.
+// KeepRelayBeacon.relayEntry is called.
+// An event, RelayEntryGenerated, is generated in the contract.
+func (ri *KeepRelayBeaconContract) RelayEntry(ctx *RelayContractContext, requestID int64, groupSignature, groupID, previousEntry []byte) (tx *types.Transaction, err error) {
+	pRequestID := big.NewInt(requestID)
+	pGroupSignature := big.NewInt(0).SetBytes(groupSignature)
+	pGroupID := big.NewInt(0).SetBytes(groupID)
+	pPreviousEntry := big.NewInt(0).SetBytes(previousEntry)
+	// Contract: function relayEntry(uint256 _RequestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
+	tx, err = ri.kstart.RelayEntry(ri.opts, pRequestID, pGroupSignature, pGroupID, pPreviousEntry)
+	if err != nil {
+		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).relayEntry(%d,%x,%x,%x)\n", err, ri.GethServer, ri.ContractAddress, requestID, groupSignature, groupID, previousEntry)
+		// LOG at this point
+		return
+	}
+	if ctx.dbOn() {
+		fmt.Printf("KeepRelayBeacon.relayEntry called tx=%s from=%s\n", godebug.SVar(tx), godebug.LF())
+		// TODO: log the success and tx that it is in
+	}
+	return
+}
+
+// RelayEntryAccusation calls KeepRelayBeacon.relayEntryAccusation to make the claim that the generated signature is deceptive.
+// The underlying contract code has not been implemented yet.
+func (ri *KeepRelayBeaconContract) RelayEntryAccusation(ctx *RelayContractContext, lastValidRelayTxHash, lastValidRelayBlock []byte) (tx *types.Transaction, err error) {
+	pLastValidRelayTxHash := big.NewInt(0).SetBytes(lastValidRelayTxHash)
+	pLastValidRelayBlock := big.NewInt(0).SetBytes(lastValidRelayBlock)
+	// Contrct: function relayEntryAccusation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {
+	tx, err = ri.kstart.RelayEntryAccusation(ri.opts, pLastValidRelayTxHash, pLastValidRelayBlock)
+	if err != nil {
+		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).relayEntryAccusation(%x,%x)\n", err, ri.GethServer, ri.ContractAddress, pLastValidRelayTxHash, pLastValidRelayBlock)
+		// LOG at this point
+		return
+	}
+	if ctx.dbOn() {
+		fmt.Printf("KeepRelayBeacon.relayEntryAccusation called tx=%s from=%s\n", godebug.SVar(tx), godebug.LF())
+		// TODO: log the success and tx that it is in
+	}
+	return
+}
+
+// SubmitGroupPublicKey calls KeepRelayBeacon.submitGroupPublicKey
+// The contract generates an event, RelayEntryRequested with the generated RequestID in it.
+func (ri *KeepRelayBeaconContract) SubmitGroupPublicKey(ctx *RelayContractContext, PK_G_i, id []byte) (tx *types.Transaction, err error) {
+	pPK_G_i := big.NewInt(0).SetBytes(PK_G_i)
+	pId := big.NewInt(0).SetBytes(id)
+	// Contract: function submitGroupPublicKey(uint256 _PK_G_i, uint256 _id) public {
+	tx, err = ri.kstart.SubmitGroupPublicKey(ri.opts, pPK_G_i, pId)
+	if err != nil {
+		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).submitGroupPublicKey(%x,%x)\n", err, ri.GethServer, ri.ContractAddress, PK_G_i, id)
+		// LOG at this point
+		return
+	}
+	if ctx.dbOn() {
+		fmt.Printf("KeepRelayBeacon.RequestRelay called tx=%s from=%s\n", godebug.SVar(tx), godebug.LF())
+		// TODO: log the success and tx that it is in
+	}
+	return
+}
