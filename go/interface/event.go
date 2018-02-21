@@ -3,6 +3,7 @@ package RelayContract
 // TODO
 //    event RelayResetEvent(uint256 LastValidRelayEntry, uint256 LastValidRelayTxHash, uint256 LastValidRelayBlock);	// xyzzy - data types on TxHash, Block
 //    event SubmitGroupPublicKeyEvent(uint256 _PK_G_i, uint256 _id, uint256 _activationBlockHeight);
+
 import (
 	"fmt"
 	"log"
@@ -22,7 +23,7 @@ type KeepRelayBeaconEvents struct {
 }
 
 // NewKeepRelayBeaconEvents performs the necessary setup to watch/capture events from the KeepRelayBeacon contract.
-// NOTE! GethServer must be a "ws://" or IPC connection to the geth server.  A http connection will not support "push" events.
+// NOTE! GethServer must be a "ws://" or IPC connection to the geth server.  A "http://" connection will not support "push" events.
 func NewKeepRelayBeaconEvents(ctx *RelayContractContext, GethServer, ContractAddress string) (ev *KeepRelayBeaconEvents, err error) {
 
 	ev = &KeepRelayBeaconEvents{

@@ -1,7 +1,5 @@
 package RelayContract
 
-// ++ xyzzy - Event captures -- finish														1hr
-
 // ++ xyzzy - Run test of events with ./* files.											1hr
 
 // ++ xyzzy - Create a set of tests for this												2hrs
