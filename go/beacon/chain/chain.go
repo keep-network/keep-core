@@ -53,7 +53,7 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 }
 
 func (counter *localBlockCounter) count() {
-	ticker := time.NewTicker(time.Duration(time.Second / 2))
+	ticker := time.NewTicker(time.Duration(500 * time.Millisecond))
 
 	for _ = range ticker.C {
 		counter.structMutex.Lock()
