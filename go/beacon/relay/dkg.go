@@ -80,6 +80,8 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	fmt.Printf("[member:%v] Waiting for member join timeout...\n", memberID)
 	<-waiter
 
+	fmt.Printf("[member:%v] Saw IDs: %v\n", memberID, len(memberIDs))
+
 	waiter = blockCounter.BlockWaiter(15)
 	fmt.Printf("[member:%v] Initiating commitment broadcast phase.\n", memberID)
 	sharingMember := localMember.InitializeSharing(memberIDs)
@@ -199,11 +201,12 @@ done:
 }
 
 func sendShares(channel broadcast.Channel, member *thresholdgroup.SharingMember) error {
+	fmt.Printf("[member:%v] Despatching shares!\n", member.ID)
 	for _, receiverID := range member.OtherMemberIDs() {
 		share := member.SecretShareForID(receiverID)
-		fmt.Printf("[member:%v] Despatching a share!\n", member.ID)
 		channel.Send(broadcast.NewPrivateMessage(member.BlsID, receiverID, MemberShareMessage{share}))
 	}
+	fmt.Printf("[member:%v] Shares despatched!\n", member.ID)
 
 	return nil
 }
@@ -214,7 +217,6 @@ done:
 		switch shareMsg := msg.Data.(type) {
 		case MemberShareMessage:
 			if msg.Receiver.IsEqual(myID) {
-				fmt.Printf("[member:%v] Received one id from [%v].\n", myID.GetHexString(), msg.Sender.GetHexString())
 				sharingMember.AddShareFromID(msg.Sender, shareMsg.Share)
 
 				if sharingMember.SharesComplete() {
