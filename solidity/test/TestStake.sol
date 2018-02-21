@@ -38,11 +38,10 @@ contract TestStake {
     withdrawalId = stakingContract.initiateUnstake(100);
 
     // Inspect created withdrawal request
-    var (owner, amount, start, released) = stakingContract.withdrawals(withdrawalId);
+    var (owner, amount, start) = stakingContract.withdrawals(withdrawalId);
     Assert.equal(owner, address(this), "Withdrawal request should maintain a record of the owner.");
     Assert.equal(amount, 100, "Withdrawal request should maintain a record of the amount.");
     Assert.equal(start, now, "Withdrawal request should maintain a record of when it was initiated.");
-    Assert.equal(released, false, "Withdrawal request should not be marked as released.");
 
     Assert.equal(stakingContract.balanceOf(address(this)), 0, "Unstake amount should be taken out from token holder's stake balance."); 
     Assert.equal(token.balanceOf(address(this)), balance, "Unstake amount should not be added to token holder main balance.");

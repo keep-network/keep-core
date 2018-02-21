@@ -25,7 +25,6 @@ contract TokenStaking {
     address staker;
     uint256 amount;
     uint256 createdAt;
-    bool released;
   }
 
   uint256 public withdrawalDelay;
@@ -83,7 +82,7 @@ contract TokenStaking {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     
     id = numWithdrawals++;
-    withdrawals[id] = Withdrawal(msg.sender, _value, now, false);
+    withdrawals[id] = Withdrawal(msg.sender, _value, now);
     withdrawalIndices[msg.sender].push(id);
     InitiatedUnstake(id);
     return id;
@@ -96,12 +95,13 @@ contract TokenStaking {
    * @param _id Withdrawal ID.
    */
   function finishUnstake(uint256 _id) public {
-    require(!withdrawals[_id].released);
     require(now >= withdrawals[_id].createdAt.add(withdrawalDelay));
-    withdrawals[_id].released = true;
-    
+
     // No need to call approve since msg.sender will be this staking contract.
     token.safeTransfer(withdrawals[_id].staker, withdrawals[_id].amount);
+
+    // Cleanup.
+    delete withdrawals[_id];
 
     FinishedUnstake();
   }
@@ -118,10 +118,10 @@ contract TokenStaking {
   /**
    * @dev Gets withdrawal request by ID.
    * @param _id ID of withdrawal request.
-   * @return staker, amount, createdAt, released.
+   * @return staker, amount, createdAt.
    */
-  function getWithdrawal(uint256 _id) public constant returns (address, uint256, uint256, bool) {
-    return (withdrawals[_id].staker, withdrawals[_id].amount, withdrawals[_id].createdAt, withdrawals[_id].released);
+  function getWithdrawal(uint256 _id) public constant returns (address, uint256, uint256) {
+    return (withdrawals[_id].staker, withdrawals[_id].amount, withdrawals[_id].createdAt);
   }
 
   /**
