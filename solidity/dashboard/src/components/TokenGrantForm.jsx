@@ -1,3 +1,5 @@
+import moment from 'moment';
+import Web3 from 'web3';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form, FormGroup,
@@ -21,11 +23,59 @@ class TokenGrantForm extends Component {
 
   getInitialState() {
     return {
+      amount: 0,
+      beneficiary: "0x0",
+      duration: 1,
+      start: moment().unix(),
+      cliff: 1,
+      revocable: false,
+      formErrors: {
+        beneficiary: '',
+        amount: ''
+      },
       hasError: false,
       requestSent: false,
       requestSuccess: false,
-      errorMsg: ERRORS.INVALID_AMOUNT,
+      errorMsg: ERRORS.INVALID_AMOUNT
     };
+  }
+
+  onChange(e) {
+    const name = e.target.name;
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    this.setState({[name]: value}, () => { this.validateField(name, value) });
+  }
+
+  validateBeneficiary() {
+    if (Web3.utils.isAddress(this.state.beneficiary)) return 'success';
+    else return 'error';
+    return null;
+  }
+
+  validateField(fieldName, value) {
+    let fieldValidationErrors = this.state.formErrors;
+    let beneficiaryValid = this.state.beneficiaryValid;
+    let amountValid = this.state.amountValid;
+
+    // switch(fieldName) {
+    //   case 'beneficiary':
+    //     fieldValidationErrors.beneficiary = beneficiaryValid ? '' : ' is invalid address';
+    //     break;
+    //   case 'amount':
+    //     // amountValid = value <= user balance;
+    //     // fieldValidationErrors.amount = amountValid ? '': ' is too big';
+    //     break;
+    //   default:
+    //     break;
+    // }
+    this.setState({formErrors: fieldValidationErrors,
+      beneficiaryValid: beneficiaryValid,
+      amountValid: amountValid
+    }, this.validateForm);
+  }
+
+  validateForm() {
+    this.setState({formValid: this.state.emailValid && this.state.passwordValid});
   }
 
   onRequestSuccess() {
@@ -62,15 +112,18 @@ class TokenGrantForm extends Component {
     return (
       <div className="token-grant-form">
         <Form horizontal onSubmit={(e) => { e.preventDefault(); }}>
-          <FormGroup>
+          <FormGroup validationState={this.validateBeneficiary()}>
             <Col componentClass={ControlLabel} sm={2}>
               Beneficiary:
             </Col>
             <Col sm={8}>
               <FormControl
                 type="text"
-                value={beneficiary}
+                name="beneficiary"
+                value={this.state.beneficiary}
+                onChange={this.onChange.bind(this)}
               />
+              <FormControl.Feedback />
               <HelpBlock className="small">Address to which granted tokens are going to be released.</HelpBlock>
             </Col>
           </FormGroup>
@@ -82,8 +135,11 @@ class TokenGrantForm extends Component {
             <Col sm={8}>
               <FormControl
                 type="text"
+                name="amount"
                 value={amount}
+                onChange={this.onChange.bind(this)}
               />
+              <FormControl.Feedback />
               <HelpBlock className="small">Amount to be granted.</HelpBlock>
             </Col>
           </FormGroup>
@@ -95,8 +151,11 @@ class TokenGrantForm extends Component {
             <Col sm={8}>
               <FormControl
                 type="text"
+                name="duration"
                 value={duration}
+                onChange={this.onChange.bind(this)}
               />
+              <FormControl.Feedback />
               <HelpBlock className="small">Duration in seconds of the period in which the tokens will vest.</HelpBlock>
             </Col>
           </FormGroup>
@@ -108,8 +167,11 @@ class TokenGrantForm extends Component {
             <Col sm={8}>
               <FormControl
                 type="text"
+                name="start"
                 value={start}
+                onChange={this.onChange.bind(this)}
               />
+              <FormControl.Feedback />
               <HelpBlock className="small">Timestamp at which vesting will start.</HelpBlock>
             </Col>
           </FormGroup>
@@ -121,8 +183,11 @@ class TokenGrantForm extends Component {
             <Col sm={8}>
               <FormControl
                 type="text"
+                name="cliff"
                 value={cliff}
+                onChange={this.onChange.bind(this)}
               />
+              <FormControl.Feedback />
               <HelpBlock className="small">Duration in seconds of the cliff after which tokens will begin to vest.</HelpBlock>
             </Col>
           </FormGroup>
@@ -132,7 +197,10 @@ class TokenGrantForm extends Component {
               Revocable:
             </Col>
             <Col sm={8}>
-              <Checkbox validationState="success"></Checkbox>
+              <Checkbox
+                name="revocable"
+                checked={revocable}
+                onChange={this.onChange.bind(this)}></Checkbox>
               <HelpBlock className="small">Whether the token grant is revocable or not.</HelpBlock>
             </Col>
           </FormGroup>
