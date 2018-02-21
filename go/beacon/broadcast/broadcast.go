@@ -1,6 +1,8 @@
 package broadcast
 
 import (
+	"sync"
+
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
@@ -41,8 +43,9 @@ type Channel interface {
 }
 
 type localChannel struct {
-	name      string
-	recvChans []chan Message
+	name           string
+	recvChansMutex sync.Mutex
+	recvChans      []chan Message
 }
 
 func (channel *localChannel) Name() string {
@@ -50,11 +53,13 @@ func (channel *localChannel) Name() string {
 }
 
 func (channel *localChannel) Send(message Message) bool {
+	channel.recvChansMutex.Lock()
 	go func(recvChans []chan Message) {
 		for _, recvChan := range recvChans {
 			recvChan <- message
 		}
 	}(channel.recvChans)
+	channel.recvChansMutex.Unlock()
 
 	return true
 }
@@ -62,7 +67,9 @@ func (channel *localChannel) Send(message Message) bool {
 func (channel *localChannel) RecvChan() <-chan Message {
 	newChan := make(chan Message)
 
+	channel.recvChansMutex.Lock()
 	channel.recvChans = append(channel.recvChans, newChan)
+	channel.recvChansMutex.Unlock()
 
 	return newChan
 }
@@ -73,5 +80,5 @@ func (channel *localChannel) RecvChan() <-chan Message {
 // that is returned to the caller, so that all receive channels can receive
 // the message.
 func LocalChannel(name string) Channel {
-	return &localChannel{name, make([]chan Message, 0)}
+	return &localChannel{name, sync.Mutex{}, make([]chan Message, 0)}
 }
