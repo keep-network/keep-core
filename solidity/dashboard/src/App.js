@@ -9,6 +9,7 @@ import Network from './network';
 import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
 import Header from './components/Header';
 import StakingForm from './components/StakingForm';
+import TokenGrantForm from './components/TokenGrantForm';
 import WithdrawalsTable from './components/WithdrawalsTable';
 
 const App = () => (
@@ -66,12 +67,9 @@ class Main extends Component {
                   </TableRow>
                 </tbody>
               </Table>
-
               <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
               <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
-
-            </Col>  
-            
+            </Col>
           </Row>
           <Row>
           <Col xs={12} md={4}>
@@ -90,7 +88,14 @@ class Main extends Component {
                 </tbody>
               </Table>
             </Col>
-            
+          </Row>
+          <hr/>
+          <Row>
+            <Col xs={12} md={8}>
+              <h1>Grant tokens</h1>
+              <p>You can grant tokens with a vesting schedule where balance released to the beneficiary gradually in a linear fashion until start + duration. By then all of the balance will have vested. You must approve the amount you want to grant by calling approve() method of the token contract first</p>
+              <TokenGrantForm tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+            </Col>
           </Row>
         </Grid>
       </div>
