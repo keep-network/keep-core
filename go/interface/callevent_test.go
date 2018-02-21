@@ -4,7 +4,6 @@ package RelayContract
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -31,8 +30,8 @@ func Test_CallEvent(t *testing.T) {
 
 		ev, err := NewKeepRelayBeaconEvents(ctx, cfg.GethServer, cfg.ContractAddress)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error connecing to contract: %s\n", err)
-			os.Exit(1)
+			t.Errorf("Error connecing to contract: %s\n", err)
+			return
 		}
 
 		sink := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated, 10)
@@ -47,7 +46,9 @@ func Test_CallEvent(t *testing.T) {
 			case ee := <-event.Err():
 				err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryRequested: %s", ee)
 				// process the error - note - an EOF error will not wait - so you need to exit loop on an error
+				t.Errorf("%s", err)
 				return
+
 			case <-quit:
 				return
 			}
@@ -59,20 +60,20 @@ func Test_CallEvent(t *testing.T) {
 
 		ev, err := NewKeepRelayBeaconEvents(ctx, cfg.GethServer, cfg.ContractAddress)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error connecing to contract: %s\n", err)
-			os.Exit(1)
+			t.Errorf("Error connecing to contract: %s\n", err)
+			return
 		}
 
 		err = ev.CallbackKeepRelayBeaconRelayEntryGenerated(ctx, func(data *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated, errIn error) (err error) {
 			if errIn != nil {
-				fmt.Printf("Error: %s\n", errIn)
+				t.Errorf("Error: %s\n", errIn)
 			} else {
 				fmt.Printf("Success Event Data: %s\n", godebug.SVarI(data))
 			}
 			return
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error on event callback: %s\n", err)
+			t.Errorf("Error on event callback: %s\n", err)
 		}
 
 	}()
@@ -83,14 +84,14 @@ func Test_CallEvent(t *testing.T) {
 
 	ri, err := NewKeepRelayBeaconContract(ctx, cfg.GethServer, cfg.ContractAddress, cfg.KeyFile, cfg.KeyFilePassword)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error connecing to contract: %s\n", err)
-		os.Exit(1)
+		t.Errorf("Error connecing to contract: %s\n", err)
+		return
 	}
 
 	tx, err := ri.RequestRelay(ctx, 21, 42, []byte("aabbccddee"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error call contract: %s\n", err)
-		os.Exit(1)
+		t.Errorf("Error call contract: %s\n", err)
+		return
 	}
 
 	fmt.Printf("KeepRelayBeacon.RequestRelay called: Tx = %s\n", godebug.SVarI(tx))
@@ -101,8 +102,8 @@ func Test_CallEvent(t *testing.T) {
 	// generate/call for 2nd event
 	tx, err = ri.RelayEntry(ctx, requestID, []byte("aabbccddee"), []byte("aabcdefghi"), []byte("xxuuvv"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error call contract: %s\n", err)
-		os.Exit(1)
+		t.Errorf("Error call contract: %s\n", err)
+		return
 	}
 
 	time.Sleep(14 * time.Second)
@@ -110,6 +111,6 @@ func Test_CallEvent(t *testing.T) {
 	// send event on "quit" channel to end test.
 	quit <- struct{}{}
 	quit <- struct{}{}
-	os.Exit(0)
+	return
 
 }
