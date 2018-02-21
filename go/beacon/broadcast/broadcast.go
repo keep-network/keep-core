@@ -65,7 +65,7 @@ func (channel *localChannel) Send(message Message) bool {
 }
 
 func (channel *localChannel) RecvChan() <-chan Message {
-	newChan := make(chan Message)
+	newChan := make(chan Message, 62500)
 
 	channel.recvChansMutex.Lock()
 	channel.recvChans = append(channel.recvChans, newChan)
