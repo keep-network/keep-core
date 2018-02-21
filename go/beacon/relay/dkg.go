@@ -125,7 +125,7 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	}
 
 	fmt.Printf("[member:%v] Waiting for other accusations...\n", memberID)
-	err = waitForAccusations(recvChan, &justifyingMember)
+	err = waitForAccusations(&justifyingMember.BlsID, recvChan, &justifyingMember)
 	if err != nil {
 		return nil, fmt.Errorf("failed to receive all accusations: [%v]", err)
 	}
@@ -140,7 +140,7 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	}
 
 	fmt.Printf("[member:%v] Waiting for other justifications...\n", memberID)
-	err = waitForJustifications(recvChan, &justifyingMember)
+	err = waitForJustifications(&justifyingMember.BlsID, recvChan, &justifyingMember)
 	if err != nil {
 		return nil, fmt.Errorf("failed to receive all justifications: [%v]", err)
 	}
@@ -233,13 +233,17 @@ func sendAccusations(channel broadcast.Channel, member *thresholdgroup.Justifyin
 	return nil
 }
 
-func waitForAccusations(recvChan <-chan broadcast.Message, justifyingMember *thresholdgroup.JustifyingMember) error {
+func waitForAccusations(myID *bls.ID, recvChan <-chan broadcast.Message, justifyingMember *thresholdgroup.JustifyingMember) error {
 	memberIDs := justifyingMember.OtherMemberIDs()
 	seenAccusations := make(map[bls.ID]bool, len(memberIDs))
 done:
 	for msg := range recvChan {
 		switch accusationMsg := msg.Data.(type) {
 		case AccusationsMessage:
+			if msg.Sender.IsEqual(myID) {
+				continue
+			}
+
 			for _, accusedID := range accusationMsg.accusedIDs {
 				justifyingMember.AddAccusationFromID(msg.Sender, accusedID)
 			}
@@ -263,13 +267,17 @@ func sendJustifications(channel broadcast.Channel, justifyingMember *thresholdgr
 	return nil
 }
 
-func waitForJustifications(recvChan <-chan broadcast.Message, justifyingMember *thresholdgroup.JustifyingMember) error {
+func waitForJustifications(myID *bls.ID, recvChan <-chan broadcast.Message, justifyingMember *thresholdgroup.JustifyingMember) error {
 	memberIDs := justifyingMember.OtherMemberIDs()
 	seenJustifications := make(map[bls.ID]bool, len(memberIDs))
 done:
 	for msg := range recvChan {
 		switch justificationsMsg := msg.Data.(type) {
 		case JustificationsMessage:
+			if msg.Sender.IsEqual(myID) {
+				continue
+			}
+
 			for accuserID, justification := range justificationsMsg.justifications {
 				justifyingMember.RecordJustificationFromID(msg.Sender, accuserID, justification)
 			}
