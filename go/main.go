@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	bls.Init(bls.CurveFp254BNb)
+	bls.Init(bls.CurveFp382_1)
 
 	beaconConfig := chain.GetBeaconConfig()
 
