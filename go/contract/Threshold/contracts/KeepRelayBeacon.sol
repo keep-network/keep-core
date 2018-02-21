@@ -81,7 +81,7 @@ contract KeepRelayBeacon {
      	RelayEntryGenerated(_RequestID, _groupSignature, _groupID, _previousEntry);
 	}
 
-    function relayEntryAcustation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {
+    function relayEntryAccusation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {
 		uint256 LastValidRelayEntry;
 		// xyzzy  / TODO
 		// validate acusation by performaing the checks in this code (slow/expensive)
