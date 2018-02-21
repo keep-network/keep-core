@@ -36,8 +36,12 @@ RUN git clone https://github.com/dfinity/bn /bn && \
 
 FROM runtime AS gobuild
 
-ENV GOBIN=/go/bin \
-	APP_DIR=/go/src/github.com/keep-network/keep-client
+ENV GOPATH=/go \
+	GOBIN=/go/bin \
+	APP_NAME=keep-client \
+	APP_DIR=/go/src/github.com/keep-network/keep-core \
+	BIN_PATH=/usr/local/bin \
+	LD_LIBRARY_PATH=/usr/local/lib/
 
 RUN apk add --update --no-cache \
 	g++ \
@@ -45,10 +49,9 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-RUN mkdir -p $APP_DIR
+RUN mkdir -p $APP_DIR/go
 
-COPY . $APP_DIR
-WORKDIR $APP_DIR
+WORKDIR $APP_DIR/go
 
 RUN go get -u github.com/golang/dep/cmd/dep
 COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
@@ -57,7 +60,9 @@ RUN dep ensure --vendor-only
 COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./go && \
+COPY ./go/ $APP_DIR/go/
+
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH && \
 	rm -rf $APP_DIR
 
