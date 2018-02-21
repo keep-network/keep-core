@@ -64,13 +64,13 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	recvChan := channel.RecvChan()
 
 	fmt.Printf("[member:%v] Waiting for join timeout...\n", memberID)
-	blockCounter.WaitForBlocks(5)
+	blockCounter.WaitForBlocks(15)
 
 	fmt.Printf("[member:%v] Broadcasting join.\n", memberID)
 	channel.Send(broadcast.NewBroadcastMessage(localMember.BlsID, JoinMessage{}))
 
 	// Wait for all members.
-	waiter := blockCounter.BlockWaiter(3)
+	waiter := blockCounter.BlockWaiter(10)
 	fmt.Printf("[member:%v] Waiting for other members...\n", memberID)
 	memberIDs, err := waitForMemberIDs(&localMember.BlsID, recvChan, groupSize)
 	if err != nil {
@@ -80,7 +80,7 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	fmt.Printf("[member:%v] Waiting for member join timeout...\n", memberID)
 	<-waiter
 
-	waiter = blockCounter.BlockWaiter(3)
+	waiter = blockCounter.BlockWaiter(15)
 	fmt.Printf("[member:%v] Initiating commitment broadcast phase.\n", memberID)
 	sharingMember := localMember.InitializeSharing(memberIDs)
 
@@ -99,7 +99,7 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	fmt.Printf("[member:%v] Waiting for commitment timeout...\n", memberID)
 	<-waiter
 
-	waiter = blockCounter.BlockWaiter(5)
+	waiter = blockCounter.BlockWaiter(20)
 	fmt.Printf("[member:%v] Sending private shares.\n", memberID)
 	err = sendShares(channel, &sharingMember)
 	if err != nil {
@@ -115,7 +115,7 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	fmt.Printf("[member:%v] Waiting for share exchange timeout...\n", memberID)
 	<-waiter
 
-	waiter = blockCounter.BlockWaiter(3)
+	waiter = blockCounter.BlockWaiter(15)
 	fmt.Printf("[member:%v] Initiating accusation/justification phase.\n", memberID)
 	justifyingMember := sharingMember.InitializeJustification()
 	fmt.Printf("[member:%v] Broadcasting accusations.\n", memberID)
