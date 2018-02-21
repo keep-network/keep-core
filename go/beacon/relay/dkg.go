@@ -46,10 +46,10 @@ type JustificationsMessage struct {
 	justifications map[bls.ID]bls.SecretKey
 }
 
-// Execute runs the full distributed key generation lifecycle, given a broadcast
-// channel to mediate it and a group size and threshold. It returns a threshold
-// group member who is participating in the group if the generation was
-// successful, and an error representing what went wrong if not.
+// ExecuteDKG runs the full distributed key generation lifecycle, given a
+// broadcast channel to mediate it and a group size and threshold. It returns a
+// threshold group member who is participating in the group if the generation
+// was successful, and an error representing what went wrong if not.
 func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, groupSize int, threshold int) (*thresholdgroup.Member, error) {
 	// FIXME Probably pass in a way to ask for a receiver's public key?
 	// FIXME Need a way to time out in a given stage, especially the waiting
