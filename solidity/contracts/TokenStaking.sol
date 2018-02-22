@@ -19,7 +19,7 @@ contract TokenStaking {
   event ReceivedApproval(uint256 _value);
   event Staked(address indexed from, uint256 value);
   event InitiatedUnstake(uint256 id);
-  event FinishedUnstake();
+  event FinishedUnstake(uint256 id);
 
   struct Withdrawal {
     address staker;
@@ -97,13 +97,28 @@ contract TokenStaking {
   function finishUnstake(uint256 _id) public {
     require(now >= withdrawals[_id].createdAt.add(withdrawalDelay));
 
-    // No need to call approve since msg.sender will be this staking contract.
-    token.safeTransfer(withdrawals[_id].staker, withdrawals[_id].amount);
+    address staker = withdrawals[_id].staker;
 
-    // Cleanup.
+    // No need to call approve since msg.sender will be this staking contract.
+    token.safeTransfer(staker, withdrawals[_id].amount);
+
+    // Cleanup withdrawal index.
+    for (uint i = 0; i < withdrawalIndices[staker].length; i++) {
+      // If id is found in array.
+      if (_id == withdrawalIndices[staker][i]) {
+        // Delete element at index and shift array.
+        for (uint j = i; j < withdrawalIndices[staker].length-1; j++) {
+          withdrawalIndices[staker][j] = withdrawalIndices[staker][j+1];
+        }
+        delete withdrawalIndices[staker][withdrawalIndices[staker].length-1];
+        withdrawalIndices[staker].length--;
+      }
+    }
+
+    // Cleanup withdrawal record.
     delete withdrawals[_id];
 
-    FinishedUnstake();
+    FinishedUnstake(_id);
   }
 
   /**

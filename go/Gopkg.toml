@@ -20,9 +20,7 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-required = ["github.com/keep-network/go-dfinity-crypto/bls"]
-
 [[constraint]]
-  name = "github.com/keep-network/go-dfinity-crypto"
+  name = "github.com/dfinity/go-dfinity-crypto"
   revision = "1db358303499a9879dd640c71f831897e06e9ddf"
   source = "https://github.com/keep-network/go-dfinity-crypto.git"
