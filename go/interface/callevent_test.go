@@ -34,14 +34,15 @@ func Test_CallEvent(t *testing.T) {
 			return
 		}
 
-		sink := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated, 10)
-		event, err := ev.WatchKeepRelayBeaconRelayEntryGenerated(ctx, sink)
+		sink := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested, 10) // xyzzy - should be Requested!
+		event, err := ev.WatchKeepRelayBeaconRelayEntryRequested(ctx, sink)
 
 		for {
 			select {
 			case rn := <-sink:
 				fmt.Printf("Success Event Data: %s\n", godebug.SVarI(rn))
 				requestID = rn.RequestID.Int64()
+				// SignatureGenerated, err := host.GenerateANumber( rn.RequestID, rn.Seed )
 
 			case ee := <-event.Err():
 				err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryRequested: %s", ee)
