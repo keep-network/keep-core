@@ -26,7 +26,11 @@ func main() {
 	log.Printf("Node is operational.")
 
 	// Subscribe all peers to topic
-	subch, err := n.Network.Sub.Subscribe("x")
+	log.Printf("Current Group state: %+v\n", n.Groups.GetActiveGroups())
+
+	ctx := context.Background()
+	topic := "x"
+	err = n.Groups.JoinGroup(ctx, topic)
 	if err != nil {
 		log.Fatalf("Failed to subscribe to channel with err: ", err)
 	}
@@ -34,7 +38,7 @@ func main() {
 	// wait for heartbeats to build mesh
 	time.Sleep(time.Second * 2)
 
-	go func(n *node.Node) {
+	go func(ctx context.Context, n *node.Node, topic string) {
 		// first tick happens immediately
 		t := time.NewTimer(1)
 		defer t.Stop()
@@ -42,21 +46,17 @@ func main() {
 			select {
 			case <-t.C:
 				r := rand.Intn(100-1) + 1
-				msg := []byte(fmt.Sprintf("keep group message %d from %s", r, n.Identity.PeerID))
-				n.Network.Sub.Publish("x", msg)
-				got, err := subch.Next(context.Background())
+				msg := fmt.Sprintf("keep group message %d from %s", r, n.Identity.PeerID)
+				// n.Network.Sub.Publish("x", msg)
+				err := n.Groups.BroadcastGroupMessage(ctx, nil, topic, msg)
 				if err != nil {
 					log.Fatalf("Failed to get message with err: ", err)
 				}
-				log.Printf("GOT: %+v", got)
-				log.Printf("GOT FROM: %+v", got.GetFrom())
-				log.Printf("GOT Data: %s", got.GetData())
-				log.Printf("GOT Seqno: %d", got.GetSeqno())
-				log.Printf("GOT TopicIDs: %d", got.GetTopicIDs())
 				t.Reset(5 * time.Second)
+				log.Printf("Current Group state: %+v\n", n.Groups.GetActiveGroups())
 			}
 		}
-	}(n)
+	}(ctx, n, topic)
 
 	go func(n *node.Node) {
 		t := time.NewTimer(1)

@@ -38,12 +38,20 @@ type Message struct {
 	msg    string
 }
 
-func NewGroupManager() *GroupManager {
-	return &GroupManager{}
+func NewGroupManager(fs *floodsub.PubSub, h host.Host) *GroupManager {
+	return &GroupManager{Groups: make(map[string]*Group), floodsub: fs, host: h}
+}
+
+// TODO:
+func (gm *GroupManager) SyncActiveGroups() []*Group {
+	// FIXME: make a network call to ethereum, get group registry, unmarshal it,
+	// make our updates to gm.Groups
+	return nil
 }
 
 // GetActiveGroups allows us to identify which and how many groups
-// a given staker belongs to.
+// a given staker belongs to. This is our local cache. SyncActiveGroups
+// is responsible for getting new groups and memeberships.
 func (gm *GroupManager) GetActiveGroups() []*Group {
 	gm.mu.Lock()
 	defer gm.mu.Unlock()
@@ -84,13 +92,13 @@ func (gm *GroupManager) GroupDissolution(ctx context.Context, name string) error
 
 // TODO: Will this fail as we need (?) to rendezvous with providers by ensuring peers
 // are linked before hand?
-func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey, topic string) error {
+func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey, topic string, msg string) error {
 	// TODO: sign message + get and increment a seq?
 	// TODO: get some sort of protobuf structure from our datastore for the above?
 	// TODO: how do I protocol?
 
 	gm.mu.Lock()
-	if _, ok := gm.Groups[topic]; !ok {
+	if _, ok := gm.Groups[topic]; ok {
 		// no group of topic exsists; create the group
 		gm.mu.Unlock()
 		err := gm.JoinGroup(ctx, topic)
@@ -98,11 +106,11 @@ func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey
 			return err
 		}
 		// TODO: publish an actual message
-		return gm.floodsub.Publish(topic, []byte(""))
+		return gm.floodsub.Publish(topic, []byte(msg))
 		// callers should wait some time for our messages to propogate
 	}
 	gm.mu.Unlock()
-	return gm.floodsub.Publish(topic, []byte(""))
+	return gm.floodsub.Publish(topic, []byte(msg))
 }
 
 // JoinGroup
@@ -143,7 +151,7 @@ func (g *Group) handleGroupMessages(ctx context.Context, ps pstore.Peerstore) {
 	}
 }
 
-func (g *Group) handleMessage(msg *floodsub.Message, ps pstore.Peerstore) error {
+func (g *Group) handleMessage(got *floodsub.Message, ps pstore.Peerstore) error {
 	// TODO:
 	// Step one, given the message, see who the from is
 	// sender := msg.GetFrom()
@@ -173,6 +181,11 @@ func (g *Group) handleMessage(msg *floodsub.Message, ps pstore.Peerstore) error 
 	// where am I storing these messages? Are messages ordered? Might I have recv this before?
 
 	// TODO: step 6, slap these messages onto our event loop or...?
+	log.Printf("GOT: %+v", got)
+	log.Printf("GOT FROM: %+v", got.GetFrom())
+	log.Printf("GOT Data: %s", got.GetData())
+	log.Printf("GOT Seqno: %d", got.GetSeqno())
+	log.Printf("GOT TopicIDs: %d", got.GetTopicIDs())
 	return nil
 }
 

@@ -51,6 +51,8 @@ func NewNode(ctx context.Context, port int, randseed int64) (*Node, error) {
 		return nil, err
 	}
 
+	n.Groups = NewGroupManager(n.Network.Sub, n.Network.PeerHost)
+
 	return n, nil
 }
 
