@@ -1,9 +1,5 @@
 package RelayContract
 
-// TODO
-//    event RelayResetEvent(uint256 LastValidRelayEntry, uint256 LastValidRelayTxHash, uint256 LastValidRelayBlock);	// xyzzy - data types on TxHash, Block
-//    event SubmitGroupPublicKeyEvent(uint256 _PK_G_i, uint256 _id, uint256 _activationBlockHeight);
-
 import (
 	"fmt"
 	"log"
@@ -14,6 +10,37 @@ import (
 	"github.com/keep.network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/godebug"
 )
+
+//
+// Setup:
+//
+//	ctx := &RelayContractContext{}
+// 	ev, err :=  NewKeepRelayBeaconEvents(ctx, "ws://127.0.0.1:8546", // Based on running a local "geth"
+// 		 "0xe705ab560794cf4912960e5069d23ad6420acde7" )
+//
+// To Create 'sink':
+//
+//	sink  := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested, 10)
+//
+// You may nee to increates the size of the chanel from 10 to 128 - that is the size used inside bind in the
+// go-ethereum code.
+//
+// Then:
+//
+// 	event, err := ev.WatchKeepRelayBeaconRelayEntryRequested(ctx, sink)
+//
+//	for {
+//		select {
+//		case rn := <-sink:
+//			// 'rn' has the data in it from the event
+//
+//		case ee := <-event.Err():
+//			err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryRequested: %s", ee)
+//			// process the error - note - an EOF error will not wait - so you need to exit loop on an error
+//			return
+//		}
+//	}
+//
 
 type KeepRelayBeaconEvents struct {
 	ks              *KeepRelayBeacon.KeepRelayBeacon
@@ -67,37 +94,7 @@ func NewKeepRelayBeaconEvents(ctx *RelayContractContext, GethServer, ContractAdd
 	return
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//
-// Setup:
-//
-//	ctx := &RelayContractContext{}
-// 	ev, err :=  NewKeepRelayBeaconEvents(ctx, "ws://127.0.0.1:8546", // Based on running a local "geth"
-// 		 "0xe705ab560794cf4912960e5069d23ad6420acde7" )
-//
-// To Create 'sink':
-//
-//	sink  := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested, 10)
-//
-// You may nee to increates the size of the chanel from 10 to 128 - that is the size used inside bind in the
-// go-ethereum code.
-//
-// Then:
-//
-// 	event, err := ev.WatchKeepRelayBeaconRelayEntryRequested(ctx, sink)
-//
-//	for {
-//		select {
-//		case rn := <-sink:
-//			// 'rn' has the data in it from the event
-//
-//		case ee := <-event.Err():
-//			err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryRequested: %s", ee)
-//			// process the error - note - an EOF error will not wait - so you need to exit loop on an error
-//			return
-//		}
-//	}
-//
+// ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 // WatchKeepRelayBeaconRelayEntryRequested is a wrapper around the abigen WatchRelayEntryRequested
 func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryRequested(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested) (es event.Subscription, err error) {
@@ -126,7 +123,7 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryRequested(ctx 
 	// the 'nil' in the next line is really really imporant!
 	event, err := ev.ks.WatchRelayEntryRequested(nil, sink)
 	if err != nil {
-		err = fmt.Errorf("Error creating watch for relay events: %s\n", err)
+		err = fmt.Errorf("Error creating watch for relay events: %s, from=%s\n", err, godebug.LF())
 		// LOG at this point
 		err = fx(nil, err)
 		if err != nil {
@@ -149,7 +146,7 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryRequested(ctx 
 			}
 
 		case ee := <-event.Err():
-			err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryRequested: %s", ee)
+			err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryRequested: %s, from=%s", ee, godebug.LF())
 			// LOG at this point
 			err = fx(nil, err)
 			if err != nil {
@@ -159,6 +156,8 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryRequested(ctx 
 		}
 	}
 }
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 // WatchKeepRelayBeaconRelayEntryRequested is a wrapper around the abigen WatchRelayEntryGenerated
 func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryGenerated(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated) (es event.Subscription, err error) {
@@ -187,7 +186,7 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryGenerated(ctx 
 	// the 'nil' in the next line is really really imporant!
 	event, err := ev.ks.WatchRelayEntryGenerated(nil, sink)
 	if err != nil {
-		err = fmt.Errorf("Error creating watch for relay events: %s\n", err)
+		err = fmt.Errorf("Error creating watch for relay events: %s, from=%s\n", err, godebug.LF())
 		// LOG at this point
 		err = fx(nil, err)
 		if err != nil {
@@ -210,7 +209,133 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryGenerated(ctx 
 			}
 
 		case ee := <-event.Err():
-			err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryGenerated: %s", ee)
+			err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryGenerated: %s, from=%s", ee, godebug.LF())
+			// LOG at this point
+			err = fx(nil, err)
+			if err != nil {
+				return
+			}
+			return
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+// WatchKeepRelayBeaconRelayResetEvent is a wrapper around the abigen WatchRelayResetEvent
+func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayResetEvent(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayResetEvent) (es event.Subscription, err error) {
+
+	// the 'nil' in the next line is really really imporant!
+	es, err = ev.ks.WatchRelayResetEvent(nil, sink)
+	if err != nil {
+		err = fmt.Errorf("Error creating watch for relay events: %s\n", err)
+		// LOG at this point
+		return
+	}
+	return
+
+}
+
+// Type of callback function
+type RelayResetEventCallback func(data *KeepRelayBeacon.KeepRelayBeaconRelayResetEvent, errIn error) error
+
+// CallbackKeepRelayBeaconRelayResetEvent watches for RelayResetEvent event from the contract and calls 'fx' when the event occures.
+func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayResetEvent(ctx *RelayContractContext, fx RelayResetEventCallback) (err error) {
+
+	sink := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayResetEvent, 10)
+	if ctx.dbOn() {
+		fmt.Printf("Calling Watch for KeepRelayBeacon.RelayResetEvent, from=%s\n", godebug.LF())
+	}
+	// the 'nil' in the next line is really really imporant!
+	event, err := ev.ks.WatchRelayResetEvent(nil, sink)
+	if err != nil {
+		err = fmt.Errorf("Error creating watch for relay events: %s, from=%s\n", err, godebug.LF())
+		// LOG at this point
+		err = fx(nil, err)
+		if err != nil {
+			return
+		}
+		return
+	}
+
+	for {
+		select {
+		case rn := <-sink:
+			if ctx.dbOn() {
+				fmt.Printf("Got a relay request event! %+v from=%s\n", rn, godebug.LF())
+				fmt.Printf("           In JSON format! %s\n", godebug.SVarI(rn))
+			}
+			// do some processing (Callback) or have the chanel exposed?
+			err = fx(rn, nil)
+			if err != nil {
+				return
+			}
+
+		case ee := <-event.Err():
+			err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayResetEvent: %s, from=%s", ee, godebug.LF())
+			// LOG at this point
+			err = fx(nil, err)
+			if err != nil {
+				return
+			}
+			return
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+// WatchKeepRelayBeaconSubmitGroupPublicKeyEvent is a wrapper around the abigen WatchSubmitGroupPublicKeyEvent
+func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconSubmitGroupPublicKeyEvent(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent) (es event.Subscription, err error) {
+
+	// the 'nil' in the next line is really really imporant!
+	es, err = ev.ks.WatchSubmitGroupPublicKeyEvent(nil, sink)
+	if err != nil {
+		err = fmt.Errorf("Error creating watch for relay events: %s\n", err)
+		// LOG at this point
+		return
+	}
+	return
+
+}
+
+// Type of callback function
+type SubmitGroupPublicKeyEventCallback func(data *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent, errIn error) error
+
+// CallbackKeepRelayBeaconSubmitGroupPublicKeyEvent watches for SubmitGroupPublicKeyEvent event from the contract and calls 'fx' when the event occures.
+func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconSubmitGroupPublicKeyEvent(ctx *RelayContractContext, fx SubmitGroupPublicKeyEventCallback) (err error) {
+
+	sink := make(chan *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent, 10)
+	if ctx.dbOn() {
+		fmt.Printf("Calling Watch for KeepRelayBeacon.SubmitGroupPublicKeyEvent, from=%s\n", godebug.LF())
+	}
+	// the 'nil' in the next line is really really imporant!
+	event, err := ev.ks.WatchSubmitGroupPublicKeyEvent(nil, sink)
+	if err != nil {
+		err = fmt.Errorf("Error creating watch for relay events: %s, from=%s\n", err, godebug.LF())
+		// LOG at this point
+		err = fx(nil, err)
+		if err != nil {
+			return
+		}
+		return
+	}
+
+	for {
+		select {
+		case rn := <-sink:
+			if ctx.dbOn() {
+				fmt.Printf("Got a relay request event! %+v from=%s\n", rn, godebug.LF())
+				fmt.Printf("           In JSON format! %s\n", godebug.SVarI(rn))
+			}
+			// do some processing (Callback) or have the chanel exposed?
+			err = fx(rn, nil)
+			if err != nil {
+				return
+			}
+
+		case ee := <-event.Err():
+			err = fmt.Errorf("Error watching for KeepRelayBeacon.SubmitGroupPublicKeyEvent: %s, from=%s", ee, godebug.LF())
 			// LOG at this point
 			err = fx(nil, err)
 			if err != nil {

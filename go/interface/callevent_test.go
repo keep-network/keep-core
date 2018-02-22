@@ -2,6 +2,8 @@ package RelayContract
 
 // Note: setup ./exampels/setup.json first
 
+// TODO: figure out how this should be automated - in a reasonable auto-test fashion.
+
 import (
 	"fmt"
 	"testing"
@@ -25,6 +27,7 @@ func Test_CallEvent(t *testing.T) {
 
 	// ----------------------------------------------------------------------------
 	// First Call - Setup to watch for events!
+	// This is essentially the client top level code.
 	// ----------------------------------------------------------------------------
 	go func() {
 
@@ -42,7 +45,9 @@ func Test_CallEvent(t *testing.T) {
 			case rn := <-sink:
 				fmt.Printf("Success Event Data: %s\n", godebug.SVarI(rn))
 				requestID = rn.RequestID.Int64()
+				// This is the place where the **signature** genration should start.
 				// SignatureGenerated, err := host.GenerateANumber( rn.RequestID, rn.Seed )
+				// After the **signature** is generated call (See AAA_444) below.
 
 			case ee := <-event.Err():
 				err = fmt.Errorf("Error watching for KeepRelayBeacon.RelayEntryRequested: %s", ee)
@@ -56,6 +61,10 @@ func Test_CallEvent(t *testing.T) {
 		}
 
 	}()
+
+	// ----------------------------------------------------------------------------
+	// Catch 2nd event **signature** complete.
+	// ----------------------------------------------------------------------------
 
 	go func() {
 
@@ -80,7 +89,8 @@ func Test_CallEvent(t *testing.T) {
 	}()
 
 	// ----------------------------------------------------------------------------
-	// Now Call - to KeepRelayBeacon.RelayRequest
+	// Now Call - to KeepRelayBeacon.RelayRequest to simulate a user making a
+	// request for a **signature**.
 	// ----------------------------------------------------------------------------
 
 	ri, err := NewKeepRelayBeaconContract(ctx, cfg.GethServer, cfg.ContractAddress, cfg.KeyFile, cfg.KeyFilePassword)
@@ -100,7 +110,13 @@ func Test_CallEvent(t *testing.T) {
 	// sleep for 14 sec, give it time to process the block
 	time.Sleep(14 * time.Second)
 
-	// generate/call for 2nd event
+	// ----------------------------------------------------------------------------
+	// This is the section of code that simulates the generated **signature**
+	// has been successfully competed (Note: AAA_444 mentioned above)
+	// ----------------------------------------------------------------------------
+
+	// generate/call to generate 2nd event - register **signature** complete.  The
+	// dummy number tha is used is 'aabbccddee'.
 	tx, err = ri.RelayEntry(ctx, requestID, []byte("aabbccddee"), []byte("aabcdefghi"), []byte("xxuuvv"))
 	if err != nil {
 		t.Errorf("Error call contract: %s\n", err)

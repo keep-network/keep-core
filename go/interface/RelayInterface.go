@@ -1,13 +1,10 @@
 package RelayContract
 
-// ++ xyzzy - Run test of events with ./* files.											1hr
-
-// ++ xyzzy - Create a set of tests for this												2hrs
-
 // ++ xyzzy - go doc																		1hr
 // ++ xyzzy - go doc - getting better.
+// ++ xyzzy - go doc - working on this.
 
-// TODO - Add in "logging"
+// TODO - Add in "logging" - how - where - what system are we going to use?
 
 import (
 	"bufio"
