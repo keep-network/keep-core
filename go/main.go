@@ -31,22 +31,11 @@ func main() {
 		log.Fatalf("Failed to subscribe to channel with err: ", err)
 	}
 
-	go func(n *node.Node) {
-		t := time.NewTimer(1)
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				peers := n.Network.Sub.ListPeers("x")
-				for _, peer := range peers {
-					log.Printf("Connected to peer: %s\n", peer)
-				}
-				t.Reset(1 * time.Second)
-			}
-		}
-	}(n)
+	// wait for heartbeats to build mesh
+	time.Sleep(time.Second * 2)
 
 	go func(n *node.Node) {
+		// first tick happens immediately
 		t := time.NewTimer(1)
 		defer t.Stop()
 		for {
@@ -59,7 +48,26 @@ func main() {
 				if err != nil {
 					log.Fatalf("Failed to get message with err: ", err)
 				}
-				log.Println(got)
+				log.Printf("GOT: %+v", got)
+				log.Printf("GOT FROM: %+v", got.GetFrom())
+				log.Printf("GOT Data: %s", got.GetData())
+				log.Printf("GOT Seqno: %d", got.GetSeqno())
+				log.Printf("GOT TopicIDs: %d", got.GetTopicIDs())
+				t.Reset(5 * time.Second)
+			}
+		}
+	}(n)
+
+	go func(n *node.Node) {
+		t := time.NewTimer(1)
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				peers := n.Network.Sub.ListPeers("")
+				for _, peer := range peers {
+					log.Printf("Connected to peer: %s\n", peer)
+				}
 				t.Reset(5 * time.Second)
 			}
 		}
