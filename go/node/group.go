@@ -22,9 +22,12 @@ type GroupManager struct {
 	host     host.Host
 }
 
+// Group
 type Group struct {
 	name             string
 	sub              *floodsub.Subscription
+	members          []ci.PubKey // value from on-chain
+	mu               sync.Mutex  // guards members
 	incomingMessages chan *Message
 }
 
@@ -33,6 +36,7 @@ type Message struct {
 	seqno  int
 	data   string
 	topics string
+	msg    string
 }
 
 func NewGroupManager() *GroupManager {
@@ -104,6 +108,9 @@ func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey
 
 // JoinGroup
 func (gm *GroupManager) JoinGroup(ctx context.Context, name string) error {
+	// TODO: add all members to the group via either AddPeers or
+	// TODO: constructing a new connection via swarm.NewStreamToPeer
+
 	gm.mu.Lock()
 	defer gm.mu.Unlock()
 	if _, ok := gm.Groups[name]; !ok {
@@ -142,38 +149,42 @@ func (g *Group) handleMessage(msg *floodsub.Message, ps pstore.Peerstore) error 
 	// Step one, given the message, see who the from is
 	// sender := msg.GetFrom()
 
-	// look up that person in your peerstore
+	// TODO:
+	// step two, look up that person in your peerstore
 	// pinfo := ps.PeerInfo(sender)
 
-	// don't know them? add the peer
+	// TODO: step 3, are they a group member
+
+	// TODO: step 4, don't know them? add the peer
 	// if pinfo.Addrs == nil {
 	// 	pub, err := sender.ExtractEd25519PublicKey()
 	// 	if err != nil {
 	// 		return err
 	// 	}
 	// }
-	// TODO: swarm.NewStreamToPeer
+	// TODO: do we need to construct a new connection via swarm.NewStreamToPeer
 	// TODO: How can I measure Peer grafting?
 
-	// verify that the message is coming from a valid group member
+	// TODO: step 5, verify that the message is coming from a valid group member
 	//  - now check that the peer's public key is part of the group
+	// isSignedByGroupMember(pub, msg.data)
 
 	// per the bradfield class, if these messages have a ttl, we need to check that?
 	// where am I storing these messages? Are messages ordered? Might I have recv this before?
 
-	// slap these messages onto our event loop
+	// TODO: step 6, slap these messages onto our event loop or...?
 	return nil
 }
 
-func (g *Group) messageListener(ctx context.Context) {
-	for {
+func isSignedByGroupMember(ci.PubKey, string) {}
 
-		select {
-		case <-ctx.Done():
-			log.Println("group untethered, shuttingdown")
-			return
-
+func (g *Group) assertGroupMembership(pub ci.PubKey) bool {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	for _, m := range g.members {
+		if pub.Equals(m) {
+			return true
 		}
 	}
-
+	return false
 }
