@@ -22,7 +22,6 @@ type GroupManager struct {
 	host     host.Host
 }
 
-// Group
 type Group struct {
 	name             string
 	sub              *floodsub.Subscription
@@ -85,10 +84,10 @@ func (gm *GroupManager) GroupDissolution(ctx context.Context, name string) error
 
 // TODO: Will this fail as we need (?) to rendezvous with providers by ensuring peers
 // are linked before hand?
-func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey) error {
-	// TODO: Create secret material, sign secret material, get and increment a seq?
+func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey, topic string) error {
+	// TODO: sign message + get and increment a seq?
 	// TODO: get some sort of protobuf structure from our datastore for the above?
-	topic := "relay/group/"
+	// TODO: how do I protocol?
 
 	gm.mu.Lock()
 	if _, ok := gm.Groups[topic]; !ok {
@@ -112,7 +111,7 @@ func (gm *GroupManager) JoinGroup(ctx context.Context, name string) error {
 	// TODO: constructing a new connection via swarm.NewStreamToPeer
 
 	gm.mu.Lock()
-	defer gm.mu.Unlock()
+	defer gm.mu.Unlock() // FIXME: say no to fat locks
 	if _, ok := gm.Groups[name]; !ok {
 		g := &Group{name: name, incomingMessages: make(chan *Message, 250)}
 
@@ -162,6 +161,7 @@ func (g *Group) handleMessage(msg *floodsub.Message, ps pstore.Peerstore) error 
 	// 		return err
 	// 	}
 	// }
+	// n.Sub.AddPeer(peerid, floodsub.GossipSubID)
 	// TODO: do we need to construct a new connection via swarm.NewStreamToPeer
 	// TODO: How can I measure Peer grafting?
 

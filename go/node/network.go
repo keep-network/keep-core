@@ -32,6 +32,7 @@ import (
 var Protocol = protocol.ID("/keep/relay_client/0.0.1")
 
 // hardcoded peers that will make this prototype work
+// taken from go-experiments
 var bootstrapPeers = []string{"/ip4/127.0.0.1/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQVS8iBuUUgDrMbMY17Cck2gKrqeX", "/ip4/127.0.0.1/tcp/2702/ipfs/Qmd3wzD2HWA95ZAs214VxnckwkwM4GHJyC6whKUCNQhNvW"}
 
 type NetworkManager struct {
@@ -71,7 +72,6 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 	// TODO: implement a standard and functional logger
 	log.Printf("Listening at: %#v\n", addrs)
 
-	// n.Sub, err = floodsub.NewFloodSub(ctx, n.PeerHost)
 	n.Sub, err = floodsub.NewGossipSub(ctx, n.PeerHost)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 
 func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) (pstore.Peerstore, error) {
 	ps := pstore.NewPeerstore()
-	// FIXME: I made a hack to go-libp2p-peer to get this work
+	// HACK: see github.com/rargulati/go-libp2p-crypto for fix
 	if err := ps.AddPrivKey(pid, priv); err != nil {
 		fmt.Println("private key mishap")
 		return nil, err
