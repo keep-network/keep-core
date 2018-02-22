@@ -1,0 +1,6 @@
+_vendor*
+src/
+vendors/
+vendor/
+Gopk_*
+_lex/
