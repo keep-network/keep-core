@@ -56,7 +56,7 @@ class Main extends Component {
                   <TableRow title="Staked">
                     { stakeBalance } 
                   </TableRow>
-                  <TableRow title="Pending withdrawals">
+                  <TableRow title="Pending unstake">
                     { withdrawalsTotal } 
                   </TableRow>
                   <TableRow title="Token Grants">
@@ -73,7 +73,7 @@ class Main extends Component {
           </Row>
           <Row>
           <Col xs={12} md={4}>
-              <h4>Pending withdrawals</h4>
+              <h4>Pending unstake</h4>
               <WithdrawalsTable data={withdrawals}/>
             </Col>  
             <Col xs={12} md={4}>
@@ -109,6 +109,7 @@ class Main extends Component {
 
     const tokenBalance =  displayAmount(await token.balanceOf(yourAddress), 18, 3);
 
+    // Staked tokens and unstake withdrawals
     const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
     const stakeBalance  = displayAmount(await stakingContract.balanceOf(yourAddress), 18, 3);
     const withdrawalDelay  = (await stakingContract.withdrawalDelay()).toNumber()
@@ -129,6 +130,7 @@ class Main extends Component {
       withdrawalsTotal += withdrawal[1].toNumber();
     }
 
+    // Token Grants
     const grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS);
     const grantBalance  = displayAmount(await grantContract.balanceOf(yourAddress), 18, 3);
     const grantStakeBalance  = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 18, 3);
@@ -142,7 +144,7 @@ class Main extends Component {
       labels: [
         'Tokens',
         'Staked',
-        'Pending withdrawals',
+        'Pending unstake',
         'Token grants'
       ],
       datasets: [{

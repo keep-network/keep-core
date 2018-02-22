@@ -43,50 +43,13 @@ class TokenGrantForm extends Component {
   onChange(e) {
     const name = e.target.name;
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    this.setState({[name]: value}, () => { this.validateField(name, value) });
+    this.setState({[name]: value});
   }
 
   validateBeneficiary() {
     if (Web3.utils.isAddress(this.state.beneficiary)) return 'success';
     else return 'error';
     return null;
-  }
-
-  validateField(fieldName, value) {
-    let fieldValidationErrors = this.state.formErrors;
-    let beneficiaryValid = this.state.beneficiaryValid;
-    let amountValid = this.state.amountValid;
-
-    // switch(fieldName) {
-    //   case 'beneficiary':
-    //     fieldValidationErrors.beneficiary = beneficiaryValid ? '' : ' is invalid address';
-    //     break;
-    //   case 'amount':
-    //     // amountValid = value <= user balance;
-    //     // fieldValidationErrors.amount = amountValid ? '': ' is too big';
-    //     break;
-    //   default:
-    //     break;
-    // }
-    this.setState({formErrors: fieldValidationErrors,
-      beneficiaryValid: beneficiaryValid,
-      amountValid: amountValid
-    }, this.validateForm);
-  }
-
-  validateForm() {
-    this.setState({formValid: this.state.emailValid && this.state.passwordValid});
-  }
-
-  onRequestSuccess() {
-    this.setState({
-      hasError: false,
-      requestSent: true,
-      requestSuccess: true
-    });
-    window.setTimeout(() => {
-      this.setState(this.getInitialState());
-    }, RESET_DELAY);
   }
 
   onClick(e) {
@@ -101,7 +64,9 @@ class TokenGrantForm extends Component {
     const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
     const tokenGrantContract = await getTokenGrant(tokenGrantContractAddress);
 
-    tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: accounts[0], gas: 90000});
+    token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: accounts[0], gas: 60000});
+    tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: accounts[0], gas: 300000});
+
   }
 
   render() {
