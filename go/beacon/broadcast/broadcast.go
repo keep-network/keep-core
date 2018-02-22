@@ -54,12 +54,14 @@ func (channel *localChannel) Name() string {
 
 func (channel *localChannel) Send(message Message) bool {
 	channel.recvChansMutex.Lock()
-	go func(recvChans []chan Message) {
-		for _, recvChan := range recvChans {
+	snapshot := make([]chan Message, len(channel.recvChans))
+	copy(snapshot, channel.recvChans)
+	channel.recvChansMutex.Unlock()
+	go func() {
+		for _, recvChan := range snapshot {
 			recvChan <- message
 		}
-	}(channel.recvChans)
-	channel.recvChansMutex.Unlock()
+	}()
 
 	return true
 }
