@@ -22,16 +22,21 @@ func main() {
 	members := make([]*thresholdgroup.Member, 0, beaconConfig.GroupSize)
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
-		go func() {
+		go func(i int) {
 			member, err := relay.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to run DKG for member %v: [%s].", i, err)
+				fmt.Fprintf(
+					os.Stderr,
+					"[member:%v] Failed to run DKG: [%s] (index %d).",
+					member.BlsID.GetHexString(),
+					err,
+					i)
 				memberChannel <- nil
 				return
 			}
 
 			memberChannel <- member
-		}()
+		}(i)
 	}
 
 	seenMembers := 0
