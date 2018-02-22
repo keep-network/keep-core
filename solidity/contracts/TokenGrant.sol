@@ -41,6 +41,9 @@ contract TokenGrant {
 
   // Token grants.
   mapping(uint256 => Grant) public grants;
+
+  // Mapping of token grant IDs per particular address 
+  // involved in a grant as a beneficiary or as a creator.
   mapping(address => uint256[]) public grantIndices;
 
   // Token grants balances. Sum of all granted tokens to a beneficiary.
@@ -116,11 +119,11 @@ contract TokenGrant {
 
   /**
    * @dev Gets grant ids of the specified address.
-   * @param _beneficiary The address to query.
+   * @param _beneficiaryOrCreator The address to query.
    * @return An uint256 array of grant IDs.
    */
-  function getGrants(address _beneficiary) public constant returns (uint256[]) {
-    return grantIndices[_beneficiary];
+  function getGrants(address _beneficiaryOrCreator) public constant returns (uint256[]) {
+    return grantIndices[_beneficiaryOrCreator];
   }
 
   /**
@@ -141,10 +144,16 @@ contract TokenGrant {
     require(_beneficiary != address(0));
     require(_cliff <= _duration);
     require(_amount <= token.balanceOf(msg.sender));
-    
+
     uint256 id = numGrants++;
     grants[id] = Grant(msg.sender, _beneficiary, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
+    
+    // Maintain a record to make it easier to query grants by creator.
     grantIndices[msg.sender].push(id);
+
+    // Maintain a record to make it easier to query grants by beneficiary.
+    grantIndices[_beneficiary].push(id);
+
     token.transferFrom(msg.sender, this, _amount);
 
     // Maintain a record of the vested amount 
