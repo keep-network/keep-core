@@ -1,1 +1,1 @@
-## KEEP Network smart contracts
+## Keep Network smart contracts

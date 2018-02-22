@@ -19,7 +19,7 @@ contract TokenStaking {
   event ReceivedApproval(uint256 _value);
   event Staked(address indexed from, uint256 value);
   event InitiatedUnstake(uint256 id);
-  event FinishedUnstake();
+  event FinishedUnstake(uint256 id);
 
   struct Withdrawal {
     address staker;
@@ -118,7 +118,7 @@ contract TokenStaking {
     // Cleanup withdrawal record.
     delete withdrawals[_id];
 
-    FinishedUnstake();
+    FinishedUnstake(_id);
   }
 
   /**
