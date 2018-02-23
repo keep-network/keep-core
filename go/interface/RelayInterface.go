@@ -145,7 +145,7 @@ func (ri *KeepRelayBeaconContract) RequestRelay(ctx *RelayContractContext, payme
 // IsStaked returns true if the publicKey is associated with a sufficiently large
 // stake in the registry.  KeepRelayBeacon.isStaked is called.
 // No gas is required to call this.
-func (ri *KeepRelayBeaconContract) IsStacked(ctx *RelayContractContext, publicKey []byte) (memberIsStaked bool) {
+func (ri *KeepRelayBeaconContract) IsStaked(ctx *RelayContractContext, publicKey []byte) (memberIsStaked bool) {
 	pPubKey := big.NewInt(0).SetBytes(publicKey)
 	// Contract: function isStaked(uint256 _UserPublicKey) pure public returns(bool) {
 	memberIsStaked, err := ri.kstartCaller.IsStaked(ri.optsCall, pPubKey)
