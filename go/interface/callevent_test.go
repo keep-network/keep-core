@@ -74,14 +74,15 @@ func Test_CallEvent(t *testing.T) {
 			return
 		}
 
-		err = ev.CallbackKeepRelayBeaconRelayEntryGenerated(ctx, func(data *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated, errIn error) (err error) {
-			if errIn != nil {
-				t.Errorf("Error: %s\n", errIn)
-			} else {
-				fmt.Printf("Success Event Data: %s\n", godebug.SVarI(data))
-			}
-			return
-		})
+		err = ev.CallbackKeepRelayBeaconRelayEntryGenerated(ctx,
+			func(data *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated, errIn error) (err error) {
+				if errIn != nil {
+					t.Errorf("Error: %s\n", errIn)
+				} else {
+					fmt.Printf("Success Event Data: %s\n", godebug.SVarI(data))
+				}
+				return
+			})
 		if err != nil {
 			t.Errorf("Error on event callback: %s\n", err)
 		}

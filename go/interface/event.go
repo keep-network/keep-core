@@ -12,7 +12,7 @@ import (
 )
 
 //
-// Setup:
+// Overview:
 //
 //	ctx := &RelayContractContext{}
 // 	ev, err :=  NewKeepRelayBeaconEvents(ctx, "ws://127.0.0.1:8546", // Based on running a local "geth"
@@ -42,6 +42,9 @@ import (
 //	}
 //
 
+// KeepRelayBeaconEvents contains the connection information to receive
+// events from the contract.  Call NewKeepRelayBeaconEvents to build
+// this.
 type KeepRelayBeaconEvents struct {
 	ks              *KeepRelayBeacon.KeepRelayBeacon
 	conn            *ethclient.Client
@@ -49,9 +52,12 @@ type KeepRelayBeaconEvents struct {
 	GethServer      string
 }
 
-// NewKeepRelayBeaconEvents performs the necessary setup to watch/capture events from the KeepRelayBeacon contract.
-// NOTE! GethServer must be a "ws://" or IPC connection to the geth server.  A "http://" connection will not support "push" events.
-func NewKeepRelayBeaconEvents(ctx *RelayContractContext, GethServer, ContractAddress string) (ev *KeepRelayBeaconEvents, err error) {
+// NewKeepRelayBeaconEvents performs the necessary setup to watch/capture events from the KeepRelayBeacon
+// contract.
+// NOTE! GethServer must be a "ws://" or IPC connection to the geth server.  A "http://" connection will not
+// support "push" events.
+func NewKeepRelayBeaconEvents(ctx *RelayContractContext, GethServer,
+	ContractAddress string) (ev *KeepRelayBeaconEvents, err error) {
 
 	ev = &KeepRelayBeaconEvents{
 		GethServer:      GethServer,
@@ -94,10 +100,11 @@ func NewKeepRelayBeaconEvents(ctx *RelayContractContext, GethServer, ContractAdd
 	return
 }
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // WatchKeepRelayBeaconRelayEntryRequested is a wrapper around the abigen WatchRelayEntryRequested
-func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryRequested(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested) (es event.Subscription, err error) {
+func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryRequested(ctx *RelayContractContext,
+	sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested) (es event.Subscription, err error) {
 
 	// the 'nil' in the next line is really really imporant!
 	es, err = ev.ks.WatchRelayEntryRequested(nil, sink)
@@ -111,10 +118,13 @@ func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryRequested(ctx *Re
 }
 
 // Type of callback function
-type RelayEntryRequestedCallback func(data *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested, errIn error) error
+type RelayEntryRequestedCallback func(data *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested,
+	errIn error) error
 
-// CallbackKeepRelayBeaconRelayEntryRequested watches for RelayEntryRequested event from the contract and calls 'fx' when the event occures.
-func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryRequested(ctx *RelayContractContext, fx RelayEntryRequestedCallback) (err error) {
+// CallbackKeepRelayBeaconRelayEntryRequested watches for
+// RelayEntryRequested event from the contract and calls 'fx' when the event occures.
+func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryRequested(ctx *RelayContractContext,
+	fx RelayEntryRequestedCallback) (err error) {
 
 	sink := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayEntryRequested, 10)
 	if ctx.dbOn() {
@@ -157,10 +167,11 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryRequested(ctx 
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------
 
 // WatchKeepRelayBeaconRelayEntryRequested is a wrapper around the abigen WatchRelayEntryGenerated
-func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryGenerated(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated) (es event.Subscription, err error) {
+func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryGenerated(ctx *RelayContractContext,
+	sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated) (es event.Subscription, err error) {
 
 	// the 'nil' in the next line is really really imporant!
 	es, err = ev.ks.WatchRelayEntryGenerated(nil, sink)
@@ -176,8 +187,10 @@ func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayEntryGenerated(ctx *Re
 // Type of callback function
 type RelayEntryGeneratedCallback func(data *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated, errIn error) error
 
-// CallbackKeepRelayBeaconRelayEntryGenerated watches for RelayEntryGenerated event from the contract and calls 'fx' when the event occures.
-func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryGenerated(ctx *RelayContractContext, fx RelayEntryGeneratedCallback) (err error) {
+// CallbackKeepRelayBeaconRelayEntryGenerated watches for
+// RelayEntryGenerated event from the contract and calls 'fx' when the event occures.
+func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryGenerated(ctx *RelayContractContext,
+	fx RelayEntryGeneratedCallback) (err error) {
 
 	sink := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayEntryGenerated, 10)
 	if ctx.dbOn() {
@@ -220,10 +233,11 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayEntryGenerated(ctx 
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // WatchKeepRelayBeaconRelayResetEvent is a wrapper around the abigen WatchRelayResetEvent
-func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayResetEvent(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayResetEvent) (es event.Subscription, err error) {
+func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayResetEvent(ctx *RelayContractContext,
+	sink chan<- *KeepRelayBeacon.KeepRelayBeaconRelayResetEvent) (es event.Subscription, err error) {
 
 	// the 'nil' in the next line is really really imporant!
 	es, err = ev.ks.WatchRelayResetEvent(nil, sink)
@@ -239,8 +253,10 @@ func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconRelayResetEvent(ctx *RelayC
 // Type of callback function
 type RelayResetEventCallback func(data *KeepRelayBeacon.KeepRelayBeaconRelayResetEvent, errIn error) error
 
-// CallbackKeepRelayBeaconRelayResetEvent watches for RelayResetEvent event from the contract and calls 'fx' when the event occures.
-func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayResetEvent(ctx *RelayContractContext, fx RelayResetEventCallback) (err error) {
+// CallbackKeepRelayBeaconRelayResetEvent watches for
+// RelayResetEvent event from the contract and calls 'fx' when the event occures.
+func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayResetEvent(ctx *RelayContractContext,
+	fx RelayResetEventCallback) (err error) {
 
 	sink := make(chan *KeepRelayBeacon.KeepRelayBeaconRelayResetEvent, 10)
 	if ctx.dbOn() {
@@ -283,10 +299,11 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconRelayResetEvent(ctx *Rel
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // WatchKeepRelayBeaconSubmitGroupPublicKeyEvent is a wrapper around the abigen WatchSubmitGroupPublicKeyEvent
-func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconSubmitGroupPublicKeyEvent(ctx *RelayContractContext, sink chan<- *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent) (es event.Subscription, err error) {
+func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconSubmitGroupPublicKeyEvent(ctx *RelayContractContext,
+	sink chan<- *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent) (es event.Subscription, err error) {
 
 	// the 'nil' in the next line is really really imporant!
 	es, err = ev.ks.WatchSubmitGroupPublicKeyEvent(nil, sink)
@@ -300,10 +317,13 @@ func (ev *KeepRelayBeaconEvents) WatchKeepRelayBeaconSubmitGroupPublicKeyEvent(c
 }
 
 // Type of callback function
-type SubmitGroupPublicKeyEventCallback func(data *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent, errIn error) error
+type SubmitGroupPublicKeyEventCallback func(data *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent,
+	errIn error) error
 
-// CallbackKeepRelayBeaconSubmitGroupPublicKeyEvent watches for SubmitGroupPublicKeyEvent event from the contract and calls 'fx' when the event occures.
-func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconSubmitGroupPublicKeyEvent(ctx *RelayContractContext, fx SubmitGroupPublicKeyEventCallback) (err error) {
+// CallbackKeepRelayBeaconSubmitGroupPublicKeyEvent watches for
+// SubmitGroupPublicKeyEvent event from the contract and calls 'fx' when the event occures.
+func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconSubmitGroupPublicKeyEvent(ctx *RelayContractContext,
+	fx SubmitGroupPublicKeyEventCallback) (err error) {
 
 	sink := make(chan *KeepRelayBeacon.KeepRelayBeaconSubmitGroupPublicKeyEvent, 10)
 	if ctx.dbOn() {
@@ -345,3 +365,6 @@ func (ev *KeepRelayBeaconEvents) CallbackKeepRelayBeaconSubmitGroupPublicKeyEven
 		}
 	}
 }
+
+/*
+ */
