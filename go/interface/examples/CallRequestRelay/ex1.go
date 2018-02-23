@@ -16,7 +16,8 @@ func main() {
 	ctx := &RelayContract.RelayContractContext{}
 	ctx.SetDebug(true)
 
-	ri, err := RelayContract.NewKeepRelayBeaconContract(ctx, cfg.GethServer, cfg.ContractAddress, cfg.KeyFile, cfg.KeyFilePassword)
+	ri, err := RelayContract.NewKeepRelayBeaconContract(ctx, cfg.GethServer, cfg.ContractAddress,
+		cfg.KeyFile, cfg.KeyFilePassword)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error connecing to contract: %s\n", err)
 		os.Exit(1)
