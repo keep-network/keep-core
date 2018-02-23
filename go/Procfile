@@ -3,7 +3,3 @@ node2: go run main.go -l 2702 --seed 2
 node3: go run main.go -l 2703 --seed 3
 node4: go run main.go -l 2704
 node5: go run main.go -l 2705
-#node6: go run main.go -l 2706 --secio
-#node7: go run main.go -l 2707 --secio
-#node8: go run main.go -l 2708 --secio
-#node9: go run main.go -l 2709 --secio

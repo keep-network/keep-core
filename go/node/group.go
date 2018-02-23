@@ -25,9 +25,14 @@ type GroupManager struct {
 type Group struct {
 	name             string
 	sub              *floodsub.Subscription
-	members          []ci.PubKey // value from on-chain
-	mu               sync.Mutex  // guards members
+	members          []*Member  // value from on-chain
+	mu               sync.Mutex // guards members
 	incomingMessages chan *Message
+}
+
+type Member struct {
+	id peer.ID
+	pk ci.PubKey
 }
 
 type Message struct {
@@ -93,9 +98,14 @@ func (gm *GroupManager) GroupDissolution(ctx context.Context, name string) error
 // TODO: Will this fail as we need (?) to rendezvous with providers by ensuring peers
 // are linked before hand?
 func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey, topic string, msg string) error {
-	// TODO: sign message + get and increment a seq?
+	// TODO: get and increment a seq?
 	// TODO: get some sort of protobuf structure from our datastore for the above?
 	// TODO: how do I protocol?
+	// TODO: sign message:
+	signed, err := signBroadcastMessage(pk, []byte(msg))
+	if err != nil {
+		return err
+	}
 
 	gm.mu.Lock()
 	if _, ok := gm.Groups[topic]; ok {
@@ -106,11 +116,11 @@ func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey
 			return err
 		}
 		// TODO: publish an actual message
-		return gm.floodsub.Publish(topic, []byte(msg))
+		return gm.floodsub.Publish(topic, signed)
 		// callers should wait some time for our messages to propogate
 	}
 	gm.mu.Unlock()
-	return gm.floodsub.Publish(topic, []byte(msg))
+	return gm.floodsub.Publish(topic, signed)
 }
 
 // JoinGroup
@@ -151,14 +161,16 @@ func (g *Group) handleGroupMessages(ctx context.Context, ps pstore.Peerstore) {
 	}
 }
 
-func (g *Group) handleMessage(got *floodsub.Message, ps pstore.Peerstore) error {
+func (g *Group) handleMessage(msg *floodsub.Message, ps pstore.Peerstore) error {
 	// TODO:
 	// Step one, given the message, see who the from is
 	// sender := msg.GetFrom()
+	// fmt.Println("SENDER: ", sender)
 
 	// TODO:
 	// step two, look up that person in your peerstore
 	// pinfo := ps.PeerInfo(sender)
+	// fmt.Println("PINFO: ", pinfo)
 
 	// TODO: step 3, are they a group member
 
@@ -181,12 +193,16 @@ func (g *Group) handleMessage(got *floodsub.Message, ps pstore.Peerstore) error 
 	// where am I storing these messages? Are messages ordered? Might I have recv this before?
 
 	// TODO: step 6, slap these messages onto our event loop or...?
-	log.Printf("GOT: %+v", got)
-	log.Printf("GOT FROM: %+v", got.GetFrom())
-	log.Printf("GOT Data: %s", got.GetData())
-	log.Printf("GOT Seqno: %d", got.GetSeqno())
-	log.Printf("GOT TopicIDs: %d", got.GetTopicIDs())
+	log.Printf("GOT: %+v", msg)
+	log.Printf("GOT FROM: %+v", msg.GetFrom())
+	log.Printf("GOT Data: %s", msg.GetData())
+	log.Printf("GOT Seqno: %d", msg.GetSeqno())
+	log.Printf("GOT TopicIDs: %d", msg.GetTopicIDs())
 	return nil
+}
+
+func signBroadcastMessage(pk ci.PrivKey, msg []byte) ([]byte, error) {
+	return pk.Sign(msg)
 }
 
 func isSignedByGroupMember(ci.PubKey, string) {}
@@ -195,7 +211,7 @@ func (g *Group) assertGroupMembership(pub ci.PubKey) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	for _, m := range g.members {
-		if pub.Equals(m) {
+		if pub.Equals(m.pk) {
 			return true
 		}
 	}

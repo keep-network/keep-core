@@ -45,15 +45,13 @@ func main() {
 		for {
 			select {
 			case <-t.C:
-				r := rand.Intn(100-1) + 1
+				r := rand.Intn(100 + 1)
 				msg := fmt.Sprintf("keep group message %d from %s", r, n.Identity.PeerID)
-				// n.Network.Sub.Publish("x", msg)
-				err := n.Groups.BroadcastGroupMessage(ctx, nil, topic, msg)
+				err := n.Groups.BroadcastGroupMessage(ctx, n.Identity.PrivKey, topic, msg)
 				if err != nil {
 					log.Fatalf("Failed to get message with err: ", err)
 				}
 				t.Reset(5 * time.Second)
-				log.Printf("Current Group state: %+v\n", n.Groups.GetActiveGroups())
 			}
 		}
 	}(ctx, n, topic)
@@ -64,11 +62,13 @@ func main() {
 		for {
 			select {
 			case <-t.C:
-				peers := n.Network.Sub.ListPeers("")
-				for _, peer := range peers {
-					log.Printf("Connected to peer: %s\n", peer)
+				for _, group := range n.Groups.GetActiveGroups() {
+					log.Printf("Current Group state: %#v\n", group)
 				}
-				t.Reset(5 * time.Second)
+				for _, peer := range n.Network.Debug.Peers() {
+					log.Printf("Current Debug state: %#v\n", peer)
+				}
+				t.Reset(3 * time.Second)
 			}
 		}
 	}(n)
