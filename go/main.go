@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/go/thresholdgroup"
 )
 
+
 func main() {
 	bls.Init(bls.CurveFp382_1)
 
@@ -20,7 +21,9 @@ func main() {
 	chainCounter := chain.LocalBlockCounter()
 
 	members := make([]*thresholdgroup.Member, 0, beaconConfig.GroupSize)
-	memberChannel := make(chan *thresholdgroup.Member)
+	memberChannel := make(chan *thresholdgroup.Member, beaconConfig.GroupSize)
+	type empty struct{}
+	groupSemaphore := make(chan empty, beaconConfig.GroupSize);
 	for i := 0; i < beaconConfig.GroupSize; i++ {
 		go func(i int) {
 			member, err := relay.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
@@ -36,25 +39,19 @@ func main() {
 			}
 
 			memberChannel <- member
+			groupSemaphore <- empty{};
 		}(i)
 	}
-
-	seenMembers := 0
+	// Wait for goroutines to finish
+	for i := 0; i < beaconConfig.GroupSize; i++ { <-groupSemaphore }
+	/// Populate members list
 	for member := range memberChannel {
-		seenMembers++
-		if member != nil {
-			members = append(members, member)
-			if len(members) == beaconConfig.GroupSize {
-				break
-			}
-		}
-
-		if seenMembers == beaconConfig.GroupSize {
-			break
-		}
+		members = append(members, member)
+		if len(members) == beaconConfig.GroupSize { close(memberChannel) }
 	}
 
 	if len(members) < beaconConfig.GroupSize {
+		fmt.Println("len(members)", len(members), "beaconConfig.GroupSize", beaconConfig.GroupSize)
 		panic("Failed to reach group size during DKG, aborting.")
 	}
 
