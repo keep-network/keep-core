@@ -12,14 +12,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/keep.network/keep-core/go/interface/lib/KeepRelayBeacon"
+	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/MiscLib"
 )
 
 // "github.com/ethereum/go-ethereum/ethclient"
 
 /*
-/Users/corwin/go/src/github.com/keep.network/keep-core/go/interface/CallContract
+/Users/corwin/go/src/github.com/keep-network/keep-core/go/interface/CallContract
 	1. Add in CLI
 	2. 	-c Name - call this item method in the contract -
 		-d Data - with this set of data -

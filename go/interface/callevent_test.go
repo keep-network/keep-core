@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep.network/keep-core/go/interface/examples/excfg"
-	"github.com/keep.network/keep-core/go/interface/lib/KeepRelayBeacon"
+	"github.com/keep-network/keep-core/go/interface/examples/excfg"
+	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/godebug"
 )
 

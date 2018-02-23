@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	RelayContract "github.com/keep.network/keep-core/go/interface"
-	"github.com/keep.network/keep-core/go/interface/examples/excfg"
+	RelayContract "github.com/keep-network/keep-core/go/interface"
+	"github.com/keep-network/keep-core/go/interface/examples/excfg"
 	"github.com/pschlump/godebug"
 )
 

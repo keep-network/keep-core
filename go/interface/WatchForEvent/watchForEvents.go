@@ -8,14 +8,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/keep.network/keep-core/go/interface/lib/KeepRelayBeacon"
+	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/MiscLib"
 	"github.com/pschlump/godebug"
 )
 
 /*
 // TODO
-/Users/corwin/go/src/github.com/keep.network/keep-core/go/interface/WatchForEvent/watchForEvents.go
+/Users/corwin/go/src/github.com/keep-network/keep-core/go/interface/WatchForEvent/watchForEvents.go
 	1. Add in CLI
 	2. 	-w Name - watch for this event
 		-s Server - mac default: "/Users/corwin/Projects/eth/data/geth.ipc"		-> $HOME/... -- Normal geth ipc

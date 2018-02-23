@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	RelayContract "github.com/keep.network/keep-core/go/interface"
-	"github.com/keep.network/keep-core/go/interface/examples/excfg"
-	"github.com/keep.network/keep-core/go/interface/lib/KeepRelayBeacon"
+	RelayContract "github.com/keep-network/keep-core/go/interface"
+	"github.com/keep-network/keep-core/go/interface/examples/excfg"
+	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/godebug"
 )
 

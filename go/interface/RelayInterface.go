@@ -20,7 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/keep.network/keep-core/go/interface/lib/KeepRelayBeacon"
+	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/godebug"
 )
 
