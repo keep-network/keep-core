@@ -19,6 +19,11 @@ type Node struct {
 
 	Network *NetworkManager
 	Groups  *GroupManager
+
+	// onChain    chan *pb.ChainMessage
+	// groupDKG   chan *pb.DKGMessage
+	// groupRelay chan *pb.RelayMessage
+
 	// Use to detect node shutdowns
 	ctx context.Context
 }
@@ -74,13 +79,18 @@ func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
 	return priv, pub, nil
 }
 
-// EventLoop is a pull-based worker that is set up to listen to on-chain events that correspond to group actions
-func (n *Node) EventLoop(ctx context.Context) {
-	for {
-		switch {
-		// on-chain messages:
-		// you're in a group, awaiting a relay entry
-		// you're waiting for a group, and elligble for a group
-		}
-	}
-}
+// EventLoop handles all inputs arriving on channels
+// func EventLoop(ctx context.Context) {
+// 	for {
+// 		select {
+// 		case cMsg <- onChain:
+// 			return
+// 		case dkgMsg <- groupDKGChannel:
+// 			return
+// 		case relayMsg <- groupRelayChain:
+// 			return
+// 		case <-ctx.Done():
+// 			return
+// 		}
+// 	}
+// }

@@ -29,6 +29,7 @@ import (
 )
 
 // Identifier to write protocol headers in streams.
+// TODO: actually enforce this
 var Protocol = protocol.ID("/keep/relay_client/0.0.1")
 
 // hardcoded peers that will make this prototype work
@@ -49,6 +50,7 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 	n := &NetworkManager{}
 
 	// Ensure that other members in our broadcast channel can identify us
+	// TODO: just pass in the Identity struct - maybe
 	n.PeerStore, err = addToPeerStore(pid, priv, pub)
 	if err != nil {
 		return nil, err
@@ -79,8 +81,14 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 	}
 	// https: //github.com/libp2p/go-floodsub/issues/65#issuecomment-365680860
 	dht := dht.NewDHT(ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+
+	// TODO: add comments
 	n.Routing = dht
+
+	// TODO: add comments
 	n.DHT = dht
+
+	// TODO: add comments
 	n.PeerHost = rhost.Wrap(n.PeerHost, n.Routing)
 
 	if err := n.bootstrap(ctx); err != nil {

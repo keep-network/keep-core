@@ -37,15 +37,15 @@ type Group struct {
 }
 
 type Member struct {
-	id peer.ID
-	pk ci.PubKey
+	id peer.ID   // libp2p concept
+	pk ci.PubKey // on-chain identifying information
 }
 
 type Message struct {
 	from   peer.ID
 	seqno  int
 	data   string
-	topics string
+	topics string // clarification needed here
 	msg    string
 }
 
@@ -112,6 +112,7 @@ func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey
 	if err != nil {
 		return err
 	}
+	// TODO: misnamed - maybe call hand over proofs?
 	bmsg := signAndHash(signed, msg)
 
 	gm.mu.Lock()
