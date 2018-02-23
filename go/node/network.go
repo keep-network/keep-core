@@ -40,6 +40,7 @@ type NetworkManager struct {
 	PeerHost  host.Host
 	Sub       *floodsub.PubSub
 	Routing   routing.IpfsRouting
+	DHT       *dht.IpfsDHT
 }
 
 func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivKey,
@@ -77,7 +78,9 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 		return nil, err
 	}
 	// https: //github.com/libp2p/go-floodsub/issues/65#issuecomment-365680860
-	n.Routing = dht.NewDHT(ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+	dht := dht.NewDHT(ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+	n.Routing = dht
+	n.DHT = dht
 	n.PeerHost = rhost.Wrap(n.PeerHost, n.Routing)
 
 	if err := n.bootstrap(ctx); err != nil {
@@ -168,16 +171,19 @@ func (n *NetworkManager) bootstrap(ctx context.Context) error {
 		ipfsaddr, err := ma.NewMultiaddr(p)
 		if err != nil {
 			log.Fatalln(err)
+			return err
 		}
 
 		pid, err := ipfsaddr.ValueForProtocol(ma.P_IPFS)
 		if err != nil {
 			log.Fatalln(err)
+			return err
 		}
 
 		peerid, err := peer.IDB58Decode(pid)
 		if err != nil {
 			log.Fatalln(err)
+			return err
 		}
 
 		// Decapsulate the /ipfs/<peerID> part from the target
@@ -189,7 +195,20 @@ func (n *NetworkManager) bootstrap(ctx context.Context) error {
 			// so LibP2P knows how to contact it
 			n.PeerHost.Peerstore().AddAddr(peerid, targetAddr, pstore.PermanentAddrTTL)
 			n.PeerHost.Connect(ctx, pstore.PeerInfo{ID: peerid})
+			// implement handling errors for connect after you have retries
+			// if err != nil {
+			// 	log.Fatalln(err)
+			// 	// return err
+			// }
 		}
 	}
+
+	// Bootstrap the host
+	err := n.Routing.Bootstrap(ctx)
+	if err != nil {
+		log.Fatalln(err)
+		return err
+	}
+
 	return nil
 }

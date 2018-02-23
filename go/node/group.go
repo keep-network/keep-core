@@ -2,15 +2,19 @@ package node
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
+	routing "github.com/libp2p/go-libp2p-routing"
 )
 
 // Only to be used in the core process loop
@@ -18,6 +22,8 @@ type GroupManager struct {
 	Groups   map[string]*Group
 	mu       sync.Mutex       // guards Group
 	floodsub *floodsub.PubSub // pub/sub for group communication
+	dht      *dht.IpfsDHT
+	router   routing.IpfsRouting
 	ps       pstore.Peerstore
 	host     host.Host
 }
@@ -43,8 +49,8 @@ type Message struct {
 	msg    string
 }
 
-func NewGroupManager(fs *floodsub.PubSub, h host.Host) *GroupManager {
-	return &GroupManager{Groups: make(map[string]*Group), floodsub: fs, host: h}
+func NewGroupManager(fs *floodsub.PubSub, h host.Host, r routing.IpfsRouting, d *dht.IpfsDHT) *GroupManager {
+	return &GroupManager{Groups: make(map[string]*Group), floodsub: fs, host: h, router: r, dht: d}
 }
 
 // TODO:
@@ -97,15 +103,16 @@ func (gm *GroupManager) GroupDissolution(ctx context.Context, name string) error
 
 // TODO: Will this fail as we need (?) to rendezvous with providers by ensuring peers
 // are linked before hand?
-func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey, topic string, msg string) error {
+func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey, topic string, msg []byte) error {
 	// TODO: get and increment a seq?
 	// TODO: get some sort of protobuf structure from our datastore for the above?
 	// TODO: how do I protocol?
 	// TODO: sign message:
-	signed, err := signBroadcastMessage(pk, []byte(msg))
+	signed, err := signBroadcastMessage(pk, msg)
 	if err != nil {
 		return err
 	}
+	bmsg := signAndHash(signed, msg)
 
 	gm.mu.Lock()
 	if _, ok := gm.Groups[topic]; ok {
@@ -116,11 +123,16 @@ func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey
 			return err
 		}
 		// TODO: publish an actual message
-		return gm.floodsub.Publish(topic, signed)
+		return gm.floodsub.Publish(topic, bmsg)
 		// callers should wait some time for our messages to propogate
 	}
 	gm.mu.Unlock()
 	return gm.floodsub.Publish(topic, signed)
+}
+
+func signAndHash(sign []byte, data []byte) []byte {
+	concat := fmt.Sprintf("%s||%s", sign, data)
+	return []byte(fmt.Sprintf("%x", concat))
 }
 
 // JoinGroup
@@ -141,12 +153,12 @@ func (gm *GroupManager) JoinGroup(ctx context.Context, name string) error {
 		gm.Groups[name] = g
 
 		// TODO: if we're dumping messages on to a channel, read them in another goroutine
-		go g.handleGroupMessages(ctx, gm.ps)
+		go g.handleGroupMessages(ctx, gm.dht)
 	}
 	return nil
 }
 
-func (g *Group) handleGroupMessages(ctx context.Context, ps pstore.Peerstore) {
+func (g *Group) handleGroupMessages(ctx context.Context, r *dht.IpfsDHT) {
 	defer g.sub.Cancel()
 	// TODO: obey ctx.Done()
 	for {
@@ -155,39 +167,38 @@ func (g *Group) handleGroupMessages(ctx context.Context, ps pstore.Peerstore) {
 			log.Println(err)
 			return
 		}
-		if err := g.handleMessage(msg, ps); err != nil {
+		if err := g.handleMessage(ctx, msg, r); err != nil {
 			log.Println(err)
 		}
 	}
 }
 
-func (g *Group) handleMessage(msg *floodsub.Message, ps pstore.Peerstore) error {
+func (g *Group) handleMessage(ctx context.Context, msg *floodsub.Message, r *dht.IpfsDHT) error {
 	// TODO:
 	// Step one, given the message, see who the from is
-	// sender := msg.GetFrom()
-	// fmt.Println("SENDER: ", sender)
+	sender := msg.GetFrom()
+	fmt.Printf("SENDER: %s\n", sender)
 
-	// TODO:
-	// step two, look up that person in your peerstore
-	// pinfo := ps.PeerInfo(sender)
-	// fmt.Println("PINFO: ", pinfo)
+	// step two, look up that peer in the dht
+	pub, err := r.GetPublicKey(ctx, sender)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("WE HAVE PUBKEY: %s\n", pub)
 
-	// TODO: step 3, are they a group member
+	raw := msg.GetData()
+	// TODO: step 3, verify that the message is coming from a valid group member
+	//  - now check that the peer's public key is part of the group
+	data := isSignedByGroupMember(pub, raw)
+	fmt.Println("WE HAVE DATA: %s", data)
 
 	// TODO: step 4, don't know them? add the peer
-	// if pinfo.Addrs == nil {
-	// 	pub, err := sender.ExtractEd25519PublicKey()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	// n.Sub.AddPeer(peerid, floodsub.GossipSubID)
+	// we added them in our magic GetPublicKey function above
+	// of note, if they fail step 3, I guess we should remove them from the peerstore?
+
+	// TODO: do this as well? n.Sub.AddPeer(peerid, floodsub.GossipSubID)
 	// TODO: do we need to construct a new connection via swarm.NewStreamToPeer
 	// TODO: How can I measure Peer grafting?
-
-	// TODO: step 5, verify that the message is coming from a valid group member
-	//  - now check that the peer's public key is part of the group
-	// isSignedByGroupMember(pub, msg.data)
 
 	// per the bradfield class, if these messages have a ttl, we need to check that?
 	// where am I storing these messages? Are messages ordered? Might I have recv this before?
@@ -205,7 +216,22 @@ func signBroadcastMessage(pk ci.PrivKey, msg []byte) ([]byte, error) {
 	return pk.Sign(msg)
 }
 
-func isSignedByGroupMember(ci.PubKey, string) {}
+func isSignedByGroupMember(pub ci.PubKey, msg []byte) string {
+	dst := make([]byte, hex.DecodedLen(len(msg)))
+	n, err := hex.Decode(dst, msg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pieces := strings.Split(fmt.Sprintf("%s", dst[:n]), "||")
+	ok, err := pub.Verify([]byte(pieces[1]), []byte(pieces[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !ok {
+		fmt.Errorf("Failed to validate signature\n")
+	}
+	return string(pieces[1])
+}
 
 func (g *Group) assertGroupMembership(pub ci.PubKey) bool {
 	g.mu.Lock()
