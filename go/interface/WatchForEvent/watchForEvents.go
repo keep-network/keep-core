@@ -20,7 +20,8 @@ import (
 	2. 	-w Name - watch for this event
 		-s Server - mac default: "/Users/corwin/Projects/eth/data/geth.ipc"		-> $HOME/... -- Normal geth ipc
 				  - mac default: "ws://192.168.0.157:8546"						-> 127.0.0.1:8546			ws
-		-f contractAddress - The address of the contract to call				-> for testnet: *ContractAddress := "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
+		-f contractAddress - The address of the contract to call
+			-> for testnet: *ContractAddress := "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
 */
 var Name = flag.String("watch", "RequetRelayEvent", "Name of contract method to call")                         // 0
 var GethServer = flag.String("server", "ws://127.0.0.1:8546", "Geth server to talk to")                        // 2
@@ -81,7 +82,8 @@ func main() {
 		if err != nil {
 			fmt.Printf("%sError creating watch for relay events: %s%s\n", MiscLib.ColorRed, err, MiscLib.ColorReset)
 		} else {
-			// Event is an event.Subscription - that is a chanel and the "Unsubscribe" -- So, Unsubscribe will get called automatically.
+			// Event is an event.Subscription - that is a chanel and the "Unsubscribe"
+			//    So, Unsubscribe will get called automatically.
 			for {
 				// TODO/Question? do we need a "quit" event in this?
 				select {
