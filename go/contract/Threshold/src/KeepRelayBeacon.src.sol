@@ -25,8 +25,8 @@ contract KeepRelayBeacon {
 
     /* This generates a public event on the blockchain that will notify clients */
     event RelayEntryRequested(uint256 RequestID, uint256 Payment, uint256 BlockReward, uint256 Seed); 
-    event RelayEntryGenerated(uint256 RequestID, uint256 Signature, uint256 GroupID, uint256 PreviousEntry ); // xyzzy - RelayEntryGenerated.
-    event RelayResetEvent(uint256 LastValidRelayEntry, uint256 LastValidRelayTxHash, uint256 LastValidRelayBlock);	// xyzzy - data types on TxHash, Block
+    event RelayEntryGenerated(uint256 RequestID, uint256 Signature, uint256 GroupID, uint256 PreviousEntry ); 
+    event RelayResetEvent(uint256 LastValidRelayEntry, uint256 LastValidRelayTxHash, uint256 LastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(uint256 _PK_G_i, uint256 _id, uint256 _activationBlockHeight);
 
     /* Constructor */
