@@ -5,6 +5,9 @@ You will need to have  a version of geth running locally to support IPC or
 running with websocket enabled.  The regular testnet lacks web sockets.  Therefore
 you will not be able to directly connect to it.
 
+You will have to build from source because of a breaking change in the Application Binary Interface
+(ABI) in geth.  You need version 1.8.1 or newer (1.8.1 was release Feb 16, 2018).
+
 For example, init geth:
 
 ```bash
