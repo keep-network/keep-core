@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 import { Table } from 'react-bootstrap';
 
-class TokenGrantsTable extends Component {
+class TokenGrantsOwnerTable extends Component {
   render() {
     if (this.props.data) {
       var rows = this.props.data.map(function(item, i){
         return (
           <tr key={i}>
             <td>{item.formatted.amount}</td>
-            <td><a href="">{item.owner}</a></td>
+            <td><a href="">{item.beneficiary}</a></td>
+            <td><button>Revoke</button></td>
           </tr>
         );
       });
@@ -18,7 +19,8 @@ class TokenGrantsTable extends Component {
         <thead>
           <tr>
             <th><strong>Amount</strong></th>
-            <th><strong>From</strong></th>
+            <th><strong>To</strong></th>
+            <th><strong>Action</strong></th>
           </tr>
         </thead>
         <tbody>
@@ -29,4 +31,4 @@ class TokenGrantsTable extends Component {
   }
 }
 
-export default TokenGrantsTable;
+export default TokenGrantsOwnerTable;

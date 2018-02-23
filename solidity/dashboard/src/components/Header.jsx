@@ -18,7 +18,7 @@ const Header = () =>  {
         </div>
         <div>
           <strong>Network: </strong> 
-          <span className="txt-primary"></span>
+          <span className="txt-primary">{ process.env.REACT_APP_NETWORK }</span>
         </div>
       </div> 
     </Navbar>
