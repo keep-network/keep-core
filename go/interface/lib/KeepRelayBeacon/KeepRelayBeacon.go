@@ -16,7 +16,7 @@ import (
 )
 
 // KeepRelayBeaconABI is the input ABI used to generate the binding from.
-const KeepRelayBeaconABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"groupID\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_payment\",\"type\":\"uint256\"},{\"name\":\"_blockReward\",\"type\":\"uint256\"},{\"name\":\"_seed\",\"type\":\"uint256\"}],\"name\":\"requestRelay\",\"outputs\":[{\"name\":\"RequestID\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"KStart\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_LastValidRelayTxHash\",\"type\":\"uint256\"},{\"name\":\"_LastValidRelayBlock\",\"type\":\"uint256\"}],\"name\":\"relayEntryAccusation\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"blockReward\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_RequestID\",\"type\":\"uint256\"},{\"name\":\"_groupSignature\",\"type\":\"uint256\"},{\"name\":\"_groupID\",\"type\":\"uint256\"},{\"name\":\"_previousEntry\",\"type\":\"uint256\"}],\"name\":\"relayEntry\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_PK_G_i\",\"type\":\"uint256\"},{\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"submitGroupPublicKey\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"signature\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"payment\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"seed\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_RequestID\",\"type\":\"uint256\"}],\"name\":\"getRandomNumber\",\"outputs\":[{\"name\":\"theRandomNumber\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_UserPublicKey\",\"type\":\"uint256\"}],\"name\":\"isStaked\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"GenRequestIDSequence\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"RequestID\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"Payment\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"BlockReward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"Seed\",\"type\":\"uint256\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"RequestID\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"Signature\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"GroupID\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"PreviousEntry\",\"type\":\"uint256\"}],\"name\":\"RelayEntryGenerated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"LastValidRelayEntry\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"LastValidRelayTxHash\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"LastValidRelayBlock\",\"type\":\"uint256\"}],\"name\":\"RelayResetEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_PK_G_i\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_id\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_activationBlockHeight\",\"type\":\"uint256\"}],\"name\":\"SubmitGroupPublicKeyEvent\",\"type\":\"event\"}]"
+const KeepRelayBeaconABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"payment_amount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"transferPaymetntsToOwner\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"groupID\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"KStart\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_LastValidRelayTxHash\",\"type\":\"uint256\"},{\"name\":\"_LastValidRelayBlock\",\"type\":\"uint256\"}],\"name\":\"relayEntryAccusation\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"blockReward\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_RequestID\",\"type\":\"uint256\"},{\"name\":\"_groupSignature\",\"type\":\"uint256\"},{\"name\":\"_groupID\",\"type\":\"uint256\"},{\"name\":\"_previousEntry\",\"type\":\"uint256\"}],\"name\":\"relayEntry\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_blockReward\",\"type\":\"uint256\"},{\"name\":\"_seed\",\"type\":\"uint256\"}],\"name\":\"requestRelay\",\"outputs\":[{\"name\":\"RequestID\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_PK_G_i\",\"type\":\"uint256\"},{\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"submitGroupPublicKey\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"payment_from\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"signature\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_minPayment\",\"type\":\"uint256\"}],\"name\":\"setMinimumPayment\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"seed\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_RequestID\",\"type\":\"uint256\"}],\"name\":\"getRandomNumber\",\"outputs\":[{\"name\":\"theRandomNumber\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_UserPublicKey\",\"type\":\"uint256\"}],\"name\":\"isStaked\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"contractOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"GenRequestIDSequence\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"RequestID\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"Payment\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"BlockReward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"Seed\",\"type\":\"uint256\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"RequestID\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"Signature\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"GroupID\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"PreviousEntry\",\"type\":\"uint256\"}],\"name\":\"RelayEntryGenerated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"LastValidRelayEntry\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"LastValidRelayTxHash\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"LastValidRelayBlock\",\"type\":\"uint256\"}],\"name\":\"RelayResetEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_PK_G_i\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_id\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_activationBlockHeight\",\"type\":\"uint256\"}],\"name\":\"SubmitGroupPublicKeyEvent\",\"type\":\"event\"}]"
 
 // KeepRelayBeacon is an auto generated Go binding around an Ethereum contract.
 type KeepRelayBeacon struct {
@@ -212,6 +212,32 @@ func (_KeepRelayBeacon *KeepRelayBeaconCallerSession) BlockReward(arg0 *big.Int)
 	return _KeepRelayBeacon.Contract.BlockReward(&_KeepRelayBeacon.CallOpts, arg0)
 }
 
+// ContractOwner is a free data retrieval call binding the contract method 0xce606ee0.
+//
+// Solidity: function contractOwner() constant returns(address)
+func (_KeepRelayBeacon *KeepRelayBeaconCaller) ContractOwner(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _KeepRelayBeacon.contract.Call(opts, out, "contractOwner")
+	return *ret0, err
+}
+
+// ContractOwner is a free data retrieval call binding the contract method 0xce606ee0.
+//
+// Solidity: function contractOwner() constant returns(address)
+func (_KeepRelayBeacon *KeepRelayBeaconSession) ContractOwner() (common.Address, error) {
+	return _KeepRelayBeacon.Contract.ContractOwner(&_KeepRelayBeacon.CallOpts)
+}
+
+// ContractOwner is a free data retrieval call binding the contract method 0xce606ee0.
+//
+// Solidity: function contractOwner() constant returns(address)
+func (_KeepRelayBeacon *KeepRelayBeaconCallerSession) ContractOwner() (common.Address, error) {
+	return _KeepRelayBeacon.Contract.ContractOwner(&_KeepRelayBeacon.CallOpts)
+}
+
 // GetRandomNumber is a free data retrieval call binding the contract method 0xb37217a4.
 //
 // Solidity: function getRandomNumber(_RequestID uint256) constant returns(theRandomNumber uint256)
@@ -290,30 +316,56 @@ func (_KeepRelayBeacon *KeepRelayBeaconCallerSession) IsStaked(_UserPublicKey *b
 	return _KeepRelayBeacon.Contract.IsStaked(&_KeepRelayBeacon.CallOpts, _UserPublicKey)
 }
 
-// Payment is a free data retrieval call binding the contract method 0x8b3c99e3.
+// Payment_amount is a free data retrieval call binding the contract method 0x07e29ac7.
 //
-// Solidity: function payment( uint256) constant returns(uint256)
-func (_KeepRelayBeacon *KeepRelayBeaconCaller) Payment(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
+// Solidity: function payment_amount( uint256) constant returns(uint256)
+func (_KeepRelayBeacon *KeepRelayBeaconCaller) Payment_amount(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _KeepRelayBeacon.contract.Call(opts, out, "payment", arg0)
+	err := _KeepRelayBeacon.contract.Call(opts, out, "payment_amount", arg0)
 	return *ret0, err
 }
 
-// Payment is a free data retrieval call binding the contract method 0x8b3c99e3.
+// Payment_amount is a free data retrieval call binding the contract method 0x07e29ac7.
 //
-// Solidity: function payment( uint256) constant returns(uint256)
-func (_KeepRelayBeacon *KeepRelayBeaconSession) Payment(arg0 *big.Int) (*big.Int, error) {
-	return _KeepRelayBeacon.Contract.Payment(&_KeepRelayBeacon.CallOpts, arg0)
+// Solidity: function payment_amount( uint256) constant returns(uint256)
+func (_KeepRelayBeacon *KeepRelayBeaconSession) Payment_amount(arg0 *big.Int) (*big.Int, error) {
+	return _KeepRelayBeacon.Contract.Payment_amount(&_KeepRelayBeacon.CallOpts, arg0)
 }
 
-// Payment is a free data retrieval call binding the contract method 0x8b3c99e3.
+// Payment_amount is a free data retrieval call binding the contract method 0x07e29ac7.
 //
-// Solidity: function payment( uint256) constant returns(uint256)
-func (_KeepRelayBeacon *KeepRelayBeaconCallerSession) Payment(arg0 *big.Int) (*big.Int, error) {
-	return _KeepRelayBeacon.Contract.Payment(&_KeepRelayBeacon.CallOpts, arg0)
+// Solidity: function payment_amount( uint256) constant returns(uint256)
+func (_KeepRelayBeacon *KeepRelayBeaconCallerSession) Payment_amount(arg0 *big.Int) (*big.Int, error) {
+	return _KeepRelayBeacon.Contract.Payment_amount(&_KeepRelayBeacon.CallOpts, arg0)
+}
+
+// Payment_from is a free data retrieval call binding the contract method 0x69ac2abf.
+//
+// Solidity: function payment_from( uint256) constant returns(address)
+func (_KeepRelayBeacon *KeepRelayBeaconCaller) Payment_from(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _KeepRelayBeacon.contract.Call(opts, out, "payment_from", arg0)
+	return *ret0, err
+}
+
+// Payment_from is a free data retrieval call binding the contract method 0x69ac2abf.
+//
+// Solidity: function payment_from( uint256) constant returns(address)
+func (_KeepRelayBeacon *KeepRelayBeaconSession) Payment_from(arg0 *big.Int) (common.Address, error) {
+	return _KeepRelayBeacon.Contract.Payment_from(&_KeepRelayBeacon.CallOpts, arg0)
+}
+
+// Payment_from is a free data retrieval call binding the contract method 0x69ac2abf.
+//
+// Solidity: function payment_from( uint256) constant returns(address)
+func (_KeepRelayBeacon *KeepRelayBeaconCallerSession) Payment_from(arg0 *big.Int) (common.Address, error) {
+	return _KeepRelayBeacon.Contract.Payment_from(&_KeepRelayBeacon.CallOpts, arg0)
 }
 
 // Seed is a free data retrieval call binding the contract method 0x95564837.
@@ -431,25 +483,46 @@ func (_KeepRelayBeacon *KeepRelayBeaconTransactorSession) RelayEntryAccusation(_
 	return _KeepRelayBeacon.Contract.RelayEntryAccusation(&_KeepRelayBeacon.TransactOpts, _LastValidRelayTxHash, _LastValidRelayBlock)
 }
 
-// RequestRelay is a paid mutator transaction binding the contract method 0x13df0019.
+// RequestRelay is a paid mutator transaction binding the contract method 0x3372d44f.
 //
-// Solidity: function requestRelay(_payment uint256, _blockReward uint256, _seed uint256) returns(RequestID uint256)
-func (_KeepRelayBeacon *KeepRelayBeaconTransactor) RequestRelay(opts *bind.TransactOpts, _payment *big.Int, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
-	return _KeepRelayBeacon.contract.Transact(opts, "requestRelay", _payment, _blockReward, _seed)
+// Solidity: function requestRelay(_blockReward uint256, _seed uint256) returns(RequestID uint256)
+func (_KeepRelayBeacon *KeepRelayBeaconTransactor) RequestRelay(opts *bind.TransactOpts, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
+	return _KeepRelayBeacon.contract.Transact(opts, "requestRelay", _blockReward, _seed)
 }
 
-// RequestRelay is a paid mutator transaction binding the contract method 0x13df0019.
+// RequestRelay is a paid mutator transaction binding the contract method 0x3372d44f.
 //
-// Solidity: function requestRelay(_payment uint256, _blockReward uint256, _seed uint256) returns(RequestID uint256)
-func (_KeepRelayBeacon *KeepRelayBeaconSession) RequestRelay(_payment *big.Int, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
-	return _KeepRelayBeacon.Contract.RequestRelay(&_KeepRelayBeacon.TransactOpts, _payment, _blockReward, _seed)
+// Solidity: function requestRelay(_blockReward uint256, _seed uint256) returns(RequestID uint256)
+func (_KeepRelayBeacon *KeepRelayBeaconSession) RequestRelay(_blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
+	return _KeepRelayBeacon.Contract.RequestRelay(&_KeepRelayBeacon.TransactOpts, _blockReward, _seed)
 }
 
-// RequestRelay is a paid mutator transaction binding the contract method 0x13df0019.
+// RequestRelay is a paid mutator transaction binding the contract method 0x3372d44f.
 //
-// Solidity: function requestRelay(_payment uint256, _blockReward uint256, _seed uint256) returns(RequestID uint256)
-func (_KeepRelayBeacon *KeepRelayBeaconTransactorSession) RequestRelay(_payment *big.Int, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
-	return _KeepRelayBeacon.Contract.RequestRelay(&_KeepRelayBeacon.TransactOpts, _payment, _blockReward, _seed)
+// Solidity: function requestRelay(_blockReward uint256, _seed uint256) returns(RequestID uint256)
+func (_KeepRelayBeacon *KeepRelayBeaconTransactorSession) RequestRelay(_blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
+	return _KeepRelayBeacon.Contract.RequestRelay(&_KeepRelayBeacon.TransactOpts, _blockReward, _seed)
+}
+
+// SetMinimumPayment is a paid mutator transaction binding the contract method 0x7f83bf7d.
+//
+// Solidity: function setMinimumPayment(_minPayment uint256) returns()
+func (_KeepRelayBeacon *KeepRelayBeaconTransactor) SetMinimumPayment(opts *bind.TransactOpts, _minPayment *big.Int) (*types.Transaction, error) {
+	return _KeepRelayBeacon.contract.Transact(opts, "setMinimumPayment", _minPayment)
+}
+
+// SetMinimumPayment is a paid mutator transaction binding the contract method 0x7f83bf7d.
+//
+// Solidity: function setMinimumPayment(_minPayment uint256) returns()
+func (_KeepRelayBeacon *KeepRelayBeaconSession) SetMinimumPayment(_minPayment *big.Int) (*types.Transaction, error) {
+	return _KeepRelayBeacon.Contract.SetMinimumPayment(&_KeepRelayBeacon.TransactOpts, _minPayment)
+}
+
+// SetMinimumPayment is a paid mutator transaction binding the contract method 0x7f83bf7d.
+//
+// Solidity: function setMinimumPayment(_minPayment uint256) returns()
+func (_KeepRelayBeacon *KeepRelayBeaconTransactorSession) SetMinimumPayment(_minPayment *big.Int) (*types.Transaction, error) {
+	return _KeepRelayBeacon.Contract.SetMinimumPayment(&_KeepRelayBeacon.TransactOpts, _minPayment)
 }
 
 // SubmitGroupPublicKey is a paid mutator transaction binding the contract method 0x598b70ac.
@@ -471,6 +544,27 @@ func (_KeepRelayBeacon *KeepRelayBeaconSession) SubmitGroupPublicKey(_PK_G_i *bi
 // Solidity: function submitGroupPublicKey(_PK_G_i uint256, _id uint256) returns()
 func (_KeepRelayBeacon *KeepRelayBeaconTransactorSession) SubmitGroupPublicKey(_PK_G_i *big.Int, _id *big.Int) (*types.Transaction, error) {
 	return _KeepRelayBeacon.Contract.SubmitGroupPublicKey(&_KeepRelayBeacon.TransactOpts, _PK_G_i, _id)
+}
+
+// TransferPaymetntsToOwner is a paid mutator transaction binding the contract method 0x08c3e92d.
+//
+// Solidity: function transferPaymetntsToOwner() returns()
+func (_KeepRelayBeacon *KeepRelayBeaconTransactor) TransferPaymetntsToOwner(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _KeepRelayBeacon.contract.Transact(opts, "transferPaymetntsToOwner")
+}
+
+// TransferPaymetntsToOwner is a paid mutator transaction binding the contract method 0x08c3e92d.
+//
+// Solidity: function transferPaymetntsToOwner() returns()
+func (_KeepRelayBeacon *KeepRelayBeaconSession) TransferPaymetntsToOwner() (*types.Transaction, error) {
+	return _KeepRelayBeacon.Contract.TransferPaymetntsToOwner(&_KeepRelayBeacon.TransactOpts)
+}
+
+// TransferPaymetntsToOwner is a paid mutator transaction binding the contract method 0x08c3e92d.
+//
+// Solidity: function transferPaymetntsToOwner() returns()
+func (_KeepRelayBeacon *KeepRelayBeaconTransactorSession) TransferPaymetntsToOwner() (*types.Transaction, error) {
+	return _KeepRelayBeacon.Contract.TransferPaymetntsToOwner(&_KeepRelayBeacon.TransactOpts)
 }
 
 // KeepRelayBeaconRelayEntryGeneratedIterator is returned from FilterRelayEntryGenerated and is used to iterate over the raw logs and unpacked data for RelayEntryGenerated events raised by the KeepRelayBeacon contract.
