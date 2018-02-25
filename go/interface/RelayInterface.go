@@ -12,6 +12,7 @@ package RelayContract
 
 import (
 	"bufio"
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"os"
@@ -30,7 +31,7 @@ type KeepRelayBeaconContract struct {
 	conn            *ethclient.Client
 	kstart          *KeepRelayBeacon.KeepRelayBeaconTransactor
 	kstartCaller    *KeepRelayBeacon.KeepRelayBeaconCaller
-	opts            *bind.TransactOpts
+	optsTransact    *bind.TransactOpts
 	optsCall        *bind.CallOpts
 	ContractAddress string
 	GethServer      string
@@ -106,13 +107,13 @@ func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractA
 	}
 
 	// Create a new trasaction call (will mine) for the contract.
-	opts, err := bind.NewTransactor(bufio.NewReader(file), KeyFilePassword)
+	optsTransact, err := bind.NewTransactor(bufio.NewReader(file), KeyFilePassword)
 	if err != nil {
 		err = fmt.Errorf("Failed to read keyfile: %s, %s", err, KeyFile)
 		return
 	}
 
-	ri.opts = opts
+	ri.optsTransact = optsTransact
 
 	ri.optsCall = new(bind.CallOpts)
 
@@ -121,14 +122,52 @@ func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractA
 
 // RequestRelay calls into the KeepRelayBeacon.requestRelay - parameters are converted from 64 bit to 256 bit integers.
 // The contract generates an event, RelayEntryRequested with the generated RequestID in it.
-func (ri *KeepRelayBeaconContract) RequestRelay(ctx *RelayContractContext, payment, blockReward int64,
+func (ri *KeepRelayBeaconContract) RequestRelay(ctx *RelayContractContext, requestFrom common.Address, payment, blockReward int64,
 	seed []byte) (tx *types.Transaction, err error) {
-	pPayment := big.NewInt(payment)
 	pBlockReward := big.NewInt(blockReward)
+	pPayment := big.NewInt(payment)
 	pSeed := big.NewInt(0).SetBytes(seed)
 	// Contract: function requestRelay(uint256 _payment, uint256 _blockReward,
 	// uint256 _seed) public returns ( uint256 RequestID ) {
-	tx, err = ri.kstart.RequestRelay(ri.opts, pPayment, pBlockReward, pSeed)
+
+	/*
+		// CallOpts is the collection of options to fine tune a contract call request.
+		type CallOpts struct {
+			Pending bool           // Whether to operate on the pending state or the last known one
+			From    common.Address // Optional the sender address, otherwise the first account is used
+
+			Context context.Context // Network context to support cancellation and timeouts (nil = no timeout)
+		}
+
+		// TransactOpts is the collection of authorization data required to create a
+		// valid Ethereum transaction.
+		type TransactOpts struct {
+			From   common.Address // Ethereum account to send the transaction from
+			Nonce  *big.Int       // Nonce to use for the transaction execution (nil = use pending state)
+			Signer SignerFn       // Method to use for signing the transaction (mandatory)
+
+			Value    *big.Int // Funds to transfer along along the transaction (nil = 0 = no funds)
+			GasPrice *big.Int // Gas price to use for the transaction execution (nil = gas price oracle)
+			GasLimit uint64   // Gas limit to set for the transaction execution (0 = estimate)
+
+			Context context.Context // Network context to support cancellation and timeouts (nil = no timeout)
+		}
+	*/
+
+	// payment needs to be sent as "msg.value" - as a part of the standard message
+	ri.optsTransact.From = requestFrom
+	ri.optsTransact.Value = pPayment
+	cRand, err := GenerateRandomBytes(32)
+	if err != nil {
+		err = fmt.Errorf("Error: %s on call to generate random Nonce (geth=%s) KeepRelayBeacon.at(0x%s).requestRelay(%d,%d,%x)\n",
+			err, ri.GethServer, ri.ContractAddress, payment, blockReward, seed)
+		// LOG at this point
+		return
+	}
+	ri.optsTransact.Nonce = big.NewInt(0).SetBytes(cRand)
+
+	// func (_KeepRelayBeacon *KeepRelayBeaconTransactor) RequestRelay(opts *bind.TransactOpts, _blockReward *big.Int, _seed *big.Int) (*types.Transaction, error) {
+	tx, err = ri.kstart.RequestRelay(ri.optsTransact, pBlockReward, pSeed)
 	if err != nil {
 		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).requestRelay(%d,%d,%x)\n",
 			err, ri.GethServer, ri.ContractAddress, payment, blockReward, seed)
@@ -175,7 +214,7 @@ func (ri *KeepRelayBeaconContract) RelayEntry(ctx *RelayContractContext,
 	pPreviousEntry := big.NewInt(0).SetBytes(previousEntry)
 	// Contract: function relayEntry(uint256 _RequestID, uint256 _groupSignature,
 	// uint256 _groupID, uint256 _previousEntry) public {
-	tx, err = ri.kstart.RelayEntry(ri.opts, pRequestID, pGroupSignature, pGroupID, pPreviousEntry)
+	tx, err = ri.kstart.RelayEntry(ri.optsTransact, pRequestID, pGroupSignature, pGroupID, pPreviousEntry)
 	if err != nil {
 		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).relayEntry(%d,%x,%x,%x)\n",
 			err, ri.GethServer, ri.ContractAddress, requestID, groupSignature,
@@ -198,7 +237,7 @@ func (ri *KeepRelayBeaconContract) RelayEntryAccusation(ctx *RelayContractContex
 	pLastValidRelayTxHash := big.NewInt(0).SetBytes(lastValidRelayTxHash)
 	pLastValidRelayBlock := big.NewInt(0).SetBytes(lastValidRelayBlock)
 	// Contrct: function relayEntryAccusation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {
-	tx, err = ri.kstart.RelayEntryAccusation(ri.opts, pLastValidRelayTxHash, pLastValidRelayBlock)
+	tx, err = ri.kstart.RelayEntryAccusation(ri.optsTransact, pLastValidRelayTxHash, pLastValidRelayBlock)
 	if err != nil {
 		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).relayEntryAccusation(%x,%x)\n",
 			err, ri.GethServer, ri.ContractAddress, pLastValidRelayTxHash, pLastValidRelayBlock)
@@ -219,7 +258,7 @@ func (ri *KeepRelayBeaconContract) SubmitGroupPublicKey(ctx *RelayContractContex
 	pPK_G_i := big.NewInt(0).SetBytes(PK_G_i)
 	pId := big.NewInt(0).SetBytes(id)
 	// Contract: function submitGroupPublicKey(uint256 _PK_G_i, uint256 _id) public {
-	tx, err = ri.kstart.SubmitGroupPublicKey(ri.opts, pPK_G_i, pId)
+	tx, err = ri.kstart.SubmitGroupPublicKey(ri.optsTransact, pPK_G_i, pId)
 	if err != nil {
 		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).submitGroupPublicKey(%x,%x)\n",
 			err, ri.GethServer, ri.ContractAddress, PK_G_i, id)
@@ -231,6 +270,21 @@ func (ri *KeepRelayBeaconContract) SubmitGroupPublicKey(ctx *RelayContractContex
 		// TODO: log the success and tx that it is in
 	}
 	return
+}
+
+// GenerateRandomBytes returns securely generated random bytes.
+// It will return an error if the system's secure random
+// number generator fails to function correctly, in which
+// case the caller should not continue.
+func GenerateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 /*

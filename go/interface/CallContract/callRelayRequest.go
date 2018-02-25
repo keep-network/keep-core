@@ -120,9 +120,10 @@ func main() {
 		// public returns ( uint256 RequestID ) {
 		rawseed := []byte("abcdef") // TODO - variable data - data for this call
 		payment := big.NewInt(12)
+		_ = payment // TODO
 		blockReward := big.NewInt(12)
 		seed := big.NewInt(0).SetBytes(rawseed)
-		tx, err = kstart.RequestRelay(opts, payment, blockReward, seed)
+		tx, err = kstart.RequestRelay(opts, blockReward, seed)
 
 	case "IsStaked":
 		// function isStaked(uint256 _UserPublicKey) pure public returns(bool) {
