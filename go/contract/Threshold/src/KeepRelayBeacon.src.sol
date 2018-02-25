@@ -14,8 +14,12 @@ contract GenRequestID {
 
 contract KeepRelayBeacon { 
 
+	address public contractOwner = msg.sender;
+	uint256 minPayment;
+
     /* creates arrays with all relevant data */
-    mapping (uint256 => uint256) public payment;
+    mapping (uint256 => address) public payment_from;		// Payment from
+    mapping (uint256 => uint256) public payment_amount;		// Payment amount to generate *signature*
     mapping (uint256 => uint256) public blockReward;
     mapping (uint256 => uint256) public seed;			// Input Seed
     mapping (uint256 => uint256) public signature;		// The randomly generated number
@@ -32,6 +36,7 @@ contract KeepRelayBeacon {
     /* Constructor */
     function KStart() public {
 		GenRequestIDSequence = GenRequestID(GEN_REQUEST_ID_ADDR);
+		minPayment = 1;	// TODO: just a guess - what unit is used?
     }
 
 	// get the next id from the generator contract
@@ -57,16 +62,42 @@ contract KeepRelayBeacon {
 	// 	RequestID is definitely an output 
 	// 	RequestID Monotonically Increasing 
 	// This will down-streem from event result in a SignatureShareBroadcast on the KEEP p2p network.
-    function requestRelay(uint256 _payment, uint256 _blockReward, uint256 _seed) public returns ( uint256 RequestID ) {
+    function requestRelay(uint256 _blockReward, uint256 _seed) public payable returns ( uint256 RequestID ) {
+
+		require( msg.value >= minPayment ); // Prevents payments that are too small in ether
+
 		RequestID = nextID();
 
-        payment[RequestID] = _payment ;				// TODO - validation on these values?
-        blockReward[RequestID] = _blockReward ;		// TODO - validation on these values?
-        seed[RequestID] = _seed ;
+		// Payment must be via standard interface.
+		// amount = msg.value;	// note "payable" on function declaration
+		// see: https://ethereum.stackexchange.com/questions/30145/how-to-write-a-contract-that-can-only-accept-a-payment-of-fixed-amount?rq=1
+		//		https://ethereum.stackexchange.com/questions/20874/payable-function-in-solidity
+		payment_from[RequestID] = msg.sender;
+		payment_amount[RequestID] = msg.value;
+		// TODO - is there a minimum on the amoutn of msg.value to generate a *signature* ?   Must the msg.value include enough for the "gas" on contract?
+
+        blockReward[RequestID] = _blockReward ;		// TODO - who decides the block reward?  is it in KEEP?
+        seed[RequestID] = _seed ;					// TODO - is it a security risk to save the "seed" as a public value?
 
 		// generate an event at this point, just return instead, RandomNumberRequest
-     	RelayEntryRequested( RequestID, _payment, _blockReward, _seed);
+     	RelayEntryRequested( RequestID, msg.value, _blockReward, _seed);
     }
+
+	// To be able to move payments from this contract back to Keep multiwallet
+	// function withdraw() {
+	//	require(owner == msg.sender);
+	//	owner.transfer(this.balance);
+	// }
+
+	// Better Implementation - Transfer 'msg.value' of funds directly from this contract to owner.
+	function transferPaymetntsToOwner() public payable {
+		contractOwner.transfer(msg.value);
+	}
+
+	function setMinimumPayment( uint256 _minPayment ) public {
+		require(contractOwner == msg.sender);
+		minPayment = _minPayment;
+	}
 
 	/// @dev Must include "group" that is responable:  ATL
 	/// 		threshold relay has a number, or failed and passes _Valid as false
@@ -106,7 +137,11 @@ contract KeepRelayBeacon {
 	}
 
     // This unnamed function is called whenever someone tries to send ether to it.
-    function () public {
-        revert(); // Prevents accidental sending of ether
-    }        
+    // function () public {
+    //     revert(); // Prevents accidental sending of ether
+    // }        
+
+	function () public payable {
+		// saveAmount(msg.sender);
+	}
 } 
