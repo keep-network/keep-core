@@ -66,6 +66,8 @@ func (cli *CLI) Run(args ...string) {
 
 func usage() {
 	fmt.Printf(`usage: %s <command> <options>
+	cli version
+		Print out the current version of this command
 `)
 	os.Exit(1)
 }

@@ -12,6 +12,7 @@ type Cfg struct {
 	KeyFilePassword string `json:"keyFilePassword"`
 	GethServer      string `json:"gethServer"`
 	ContractAddress string `json:"contractAddress"`
+	DebugFlag       bool   `json:"debug_on"`
 }
 
 func ReadCfg(fn string) (rv Cfg) {

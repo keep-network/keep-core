@@ -22,6 +22,7 @@ type ContrctSetup struct {
 	ctx RelayContract.RelayContractContext
 	cfg excfg.Cfg
 	ev  *RelayContract.KeepRelayBeaconEvents
+	ri  *RelayContract.KeepRelayBeaconContract
 }
 
 /* Based on:
@@ -42,21 +43,25 @@ type RelayReady struct {
 
 type SignatureReady struct {
 	RequestID     *big.Int
-	Signature     *big.Int
-	GroupID       *big.Int
-	PreviousEntry *big.Int
+	Signature     *big.Int // maybee should be []byte type
+	GroupID       *big.Int // maybee should be []byte type
+	PreviousEntry *big.Int // maybee should be []byte type
 }
 
+// Send a P2P message
 type P2PSendBroadcast struct {
 	From string
 	Msg  string
 }
+
+// Send a P2P message
 type P2PSendTo struct {
 	To   string
 	From string
 	Msg  string
 }
 
+// Receive a P2P message
 type P2PMessage struct {
 	Msg string
 }
@@ -79,7 +84,8 @@ func MainEventLoop() {
 	eth := initializeContract()
 
 	_ = p2p
-	_ = eth
+
+	// TODO: do we need a go routine that serves up current "status" on some port at this point?
 
 	for {
 		select {
@@ -89,31 +95,53 @@ func MainEventLoop() {
 			_ = rd
 
 		case sig := <-SignatureReadyChannel:
-			// Got a signature - do something
-			_ = sig
+			// Got a signature - Write it to the blockchain
+
+			// Call contrct to save data
+			tx, err := eth.ri.RelayEntryBI(&eth.ctx, sig.RequestID, sig.Signature, sig.GroupID, sig.PreviousEntry)
+
+			_, _ = tx, err
+			// TODO report status - log stuff ???
 
 		case msg := <-P2PMessageChannel:
 			// got a broadcast or a one-on-one message
 			_ = msg
+
+			// Other Chanels for Sending Messages across P2P
+
+			// Other Chanels for responding to accusation of invalid *signature*
+
 		}
 	}
 
 }
 
 func initializeP2P() (rv P2PSetup) {
-	// do a bunch of stuff to set up P2P communication
+	// TODO: do a bunch of stuff to set up P2P communication
 	return
 }
 
 func initializeContract() (rv ContrctSetup) {
-	// Setup to talk to contract
-	rv.ctx.SetDebug(false)
+
+	// Pull in a little bit of configuration stuff
 	rv.cfg = excfg.ReadCfg("./user_setup.json")
+	rv.ctx.SetDebug(rv.cfg.DebugFlag)
+
+	// Setup to talk to contract
 	ev, err := RelayContract.NewKeepRelayBeaconEvents(&rv.ctx, rv.cfg.GethServer, rv.cfg.ContractAddress)
 	if err != nil {
 		fmt.Printf("Error connecing to contract: %s\n", err)
 		return
 	}
 	rv.ev = ev
+
+	ri, err := RelayContract.NewKeepRelayBeaconContract(&rv.ctx, rv.cfg.GethServer,
+		rv.cfg.ContractAddress, rv.cfg.KeyFile, rv.cfg.KeyFilePassword)
+	if err != nil {
+		fmt.Printf("Error connecing to contract: %s\n", err)
+		return
+	}
+	rv.ri = ri
+
 	return
 }

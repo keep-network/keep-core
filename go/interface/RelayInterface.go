@@ -202,12 +202,13 @@ func (ri *KeepRelayBeaconContract) IsStaked(ctx *RelayContractContext, publicKey
 	return
 }
 
-// RelayEntry saves the signature to the blockchain on completion threshold signature generation.
-// KeepRelayBeacon.relayEntry is called.
+// RelayEntry saves the signature to the blockchain on completion threshold
+// signature generation.  KeepRelayBeacon.relayEntry is called.
 // An event, RelayEntryGenerated, is generated in the contract.
 func (ri *KeepRelayBeaconContract) RelayEntry(ctx *RelayContractContext,
 	requestID int64, groupSignature, groupID,
 	previousEntry []byte) (tx *types.Transaction, err error) {
+
 	pRequestID := big.NewInt(requestID)
 	pGroupSignature := big.NewInt(0).SetBytes(groupSignature)
 	pGroupID := big.NewInt(0).SetBytes(groupID)
@@ -219,6 +220,25 @@ func (ri *KeepRelayBeaconContract) RelayEntry(ctx *RelayContractContext,
 		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).relayEntry(%d,%x,%x,%x)\n",
 			err, ri.GethServer, ri.ContractAddress, requestID, groupSignature,
 			groupID, previousEntry)
+		// LOG at this point
+		return
+	}
+	if ctx.dbOn() {
+		fmt.Printf("KeepRelayBeacon.relayEntry called tx=%s from=%s\n", godebug.SVar(tx), godebug.LF())
+		// TODO: log the success and tx that it is in
+	}
+	return
+}
+
+func (ri *KeepRelayBeaconContract) RelayEntryBI(ctx *RelayContractContext,
+	RequestID, GroupSignature, GroupID, PreviousEntry *big.Int) (tx *types.Transaction, err error) {
+
+	// Contract: function relayEntry(uint256 _RequestID, uint256 _groupSignature,
+	// uint256 _groupID, uint256 _previousEntry) public {
+	tx, err = ri.kstart.RelayEntry(ri.optsTransact, RequestID, GroupSignature, GroupID, PreviousEntry)
+	if err != nil {
+		err = fmt.Errorf("Error: %s on call to (geth=%s) KeepRelayBeacon.at(0x%s).relayEntry(%d,%s,%s,%s)\n",
+			err, ri.GethServer, ri.ContractAddress, RequestID, GroupSignature, GroupID, PreviousEntry)
 		// LOG at this point
 		return
 	}
