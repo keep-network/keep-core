@@ -8,6 +8,7 @@ import (
 	"io"
 	mrand "math/rand"
 
+	"github.com/dfinity/go-dfinity-crypto/bls"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 )
@@ -28,10 +29,13 @@ type Node struct {
 	ctx context.Context
 }
 
+// An Identity contains all libp2p and secret identifying information
 type Identity struct {
-	PeerID  peer.ID
-	PubKey  ci.PubKey
-	PrivKey ci.PrivKey
+	PeerID peer.ID
+	PubKey ci.PubKey
+	BLS    bls.ID
+
+	privKey ci.PrivKey
 }
 
 // Only call once on init
@@ -56,7 +60,7 @@ func NewNode(ctx context.Context, port int, randseed int64) (*Node, error) {
 		return nil, err
 	}
 
-	n.Groups = NewGroupManager(n.Network.Sub, n.Network.PeerHost, n.Network.Routing, n.Network.DHT)
+	n.Groups = NewGroupManager(n.Network.Sub, n.Network.PeerHost, n.Network.DHT)
 
 	return n, nil
 }
@@ -78,19 +82,3 @@ func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
 	}
 	return priv, pub, nil
 }
-
-// EventLoop handles all inputs arriving on channels
-// func EventLoop(ctx context.Context) {
-// 	for {
-// 		select {
-// 		case cMsg <- onChain:
-// 			return
-// 		case dkgMsg <- groupDKGChannel:
-// 			return
-// 		case relayMsg <- groupRelayChain:
-// 			return
-// 		case <-ctx.Done():
-// 			return
-// 		}
-// 	}
-// }

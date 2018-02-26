@@ -39,9 +39,10 @@ var bootstrapPeers = []string{"/ip4/127.0.0.1/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQV
 type NetworkManager struct {
 	PeerStore pstore.Peerstore
 	PeerHost  host.Host
-	Sub       *floodsub.PubSub
-	Routing   routing.IpfsRouting
-	DHT       *dht.IpfsDHT
+
+	Routing routing.IpfsRouting
+	DHT     *dht.IpfsDHT
+	Sub     *floodsub.PubSub
 }
 
 func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivKey,

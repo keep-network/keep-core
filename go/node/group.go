@@ -8,49 +8,50 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/dfinity/go-dfinity-crypto/bls"
 	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
-	routing "github.com/libp2p/go-libp2p-routing"
 )
 
 // Only to be used in the core process loop
 type GroupManager struct {
-	Groups   map[string]*Group
-	mu       sync.Mutex       // guards Group
-	floodsub *floodsub.PubSub // pub/sub for group communication
-	dht      *dht.IpfsDHT
-	router   routing.IpfsRouting
-	ps       pstore.Peerstore
-	host     host.Host
+	Groups map[string]*Group
+	mu     sync.Mutex // guards Group
+
+	pubsub *floodsub.PubSub // pub/sub for group communication
+	dht    *dht.IpfsDHT
+	host   host.Host
 }
 
 type Group struct {
-	name             string
+	name string
+
+	members []*Member  // value from on-chain
+	mu      sync.Mutex // guards members
+
 	sub              *floodsub.Subscription
-	members          []*Member  // value from on-chain
-	mu               sync.Mutex // guards members
 	incomingMessages chan *Message
 }
 
 type Member struct {
-	id peer.ID   // libp2p concept
-	pk ci.PubKey // on-chain identifying information
+	ID  peer.ID   // libp2p concept
+	PK  ci.PubKey // on-chain identifying information
+	BLS bls.ID
 }
 
 type Message struct {
-	from   peer.ID
-	seqno  int
-	data   string
-	topics string // clarification needed here
-	msg    string
+	From     *Member
+	Receiver *Member
+	Data     string
+
+	seqno int
 }
 
-func NewGroupManager(fs *floodsub.PubSub, h host.Host, r routing.IpfsRouting, d *dht.IpfsDHT) *GroupManager {
-	return &GroupManager{Groups: make(map[string]*Group), floodsub: fs, host: h, router: r, dht: d}
+func NewGroupManager(fs *floodsub.PubSub, h host.Host, d *dht.IpfsDHT) *GroupManager {
+	return &GroupManager{Groups: make(map[string]*Group), pubsub: fs, host: h, dht: d}
 }
 
 // TODO:
@@ -124,11 +125,11 @@ func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey
 			return err
 		}
 		// TODO: publish an actual message
-		return gm.floodsub.Publish(topic, bmsg)
+		return gm.pubsub.Publish(topic, bmsg)
 		// callers should wait some time for our messages to propogate
 	}
 	gm.mu.Unlock()
-	return gm.floodsub.Publish(topic, signed)
+	return gm.pubsub.Publish(topic, signed)
 }
 
 func signAndHash(sign []byte, data []byte) []byte {
@@ -146,7 +147,7 @@ func (gm *GroupManager) JoinGroup(ctx context.Context, name string) error {
 	if _, ok := gm.Groups[name]; !ok {
 		g := &Group{name: name, incomingMessages: make(chan *Message, 250)}
 
-		sub, err := gm.floodsub.Subscribe(name)
+		sub, err := gm.pubsub.Subscribe(name)
 		if err != nil {
 			return err
 		}
