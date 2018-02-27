@@ -22,7 +22,8 @@ func initLibP2P() {
 
 	flag.Parse()
 
-	n, err := relay.NewRelayClient(context.Background(), *listenF, *seed)
+	ctx := context.Background()
+	n, err := relay.NewRelayClient(ctx, *listenF, *seed)
 	if err != nil {
 		log.Fatalf("Failed to initialize relay node with: ", err)
 	}
@@ -33,8 +34,9 @@ func initLibP2P() {
 	// Subscribe all peers to topic
 	log.Printf("Current Group state: %+v\n", n.Groups.GetActiveGroups())
 
-	ctx := context.Background()
 	topic := "x"
+
+	// Join the Group "x"
 	err = n.Groups.JoinGroup(ctx, topic)
 	if err != nil {
 		log.Fatalf("Failed to subscribe to channel with err: ", err)
@@ -50,33 +52,49 @@ func initLibP2P() {
 		for {
 			select {
 			case <-t.C:
+				// Make a message to send
 				r := rand.Intn(100 + 1)
 				msg := fmt.Sprintf("keep group message %d from %s", r, n.Identity.PeerID)
 				m := &relay.Message{
 					Data: msg,
 				}
-				err := n.Groups.BroadcastGroupMessage(ctx, topic, m)
+				// Get the group we care about
+				g, err := n.Groups.GetGroup(ctx, topic)
 				if err != nil {
-					log.Fatalf("Failed to get message with err: ", err)
+					log.Fatalf("Failed to group with err: ", err)
 				}
+				// Send a message to the group...
+				if ok := g.Send(m); !ok {
+					log.Fatalf("Failed to send message: %#v\n", m)
+				}
+				// ...every 5 seconds
 				t.Reset(5 * time.Second)
+			case <-ctx.Done():
+				return
 			}
 		}
 	}(ctx, n, topic)
 
-	go func(n *relay.RelayClient) {
-		t := time.NewTimer(1)
-		defer t.Stop()
+	go func(ctx context.Context, n *relay.RelayClient, topic string) {
+		// t := time.NewTimer(1)
+		// defer t.Stop()
+
+		// Get the group we care about
+		g, err := n.Groups.GetGroup(ctx, topic)
+		if err != nil {
+			log.Fatalf("Failed to group with err: ", err)
+		}
+
 		for {
 			select {
-			case <-t.C:
-				for _, group := range n.Groups.GetActiveGroups() {
-					log.Printf("Current Group state: %#v\n", group)
-				}
-				t.Reset(3 * time.Second)
+			// Get a message from the group...
+			case msg := <-g.RecvChan():
+				log.Printf("Group msg: %#v\n", msg)
+			case <-ctx.Done():
+				return
 			}
 		}
-	}(n)
+	}(ctx, n, topic)
 
 	select {}
 }

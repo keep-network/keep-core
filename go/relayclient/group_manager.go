@@ -73,28 +73,6 @@ func (gm *GroupManager) GroupDissolution(ctx context.Context, name string) error
 	return gm.RemoveGroup(name)
 }
 
-// TODO: just for demo, remove this
-func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, topic string, msg *Message) error {
-	signed, err := signBroadcastMessage(gm.id.privKey, msg)
-	if err != nil {
-		return err
-	}
-	gm.mu.Lock()
-	if _, ok := gm.Groups[topic]; ok {
-		// no group of topic exsists; create the group
-		gm.mu.Unlock()
-		err := gm.JoinGroup(ctx, topic)
-		if err != nil {
-			return err
-		}
-		// TODO: publish an actual message
-		return gm.pubsub.Publish(topic, []byte(signed.Data))
-		// callers should wait some time for our messages to propogate
-	}
-	gm.mu.Unlock()
-	return gm.pubsub.Publish(topic, []byte(signed.Data))
-}
-
 func (gm *GroupManager) GetGroup(ctx context.Context, name string) (*Group, error) {
 	gm.mu.Lock()
 	defer gm.mu.Unlock()
@@ -117,7 +95,7 @@ func (gm *GroupManager) JoinGroup(ctx context.Context, name string) error {
 	// TODO: add all members to the group via either AddPeers or
 	// TODO: constructing a new connection via swarm.NewStreamToPeer
 	if _, ok := gm.Groups[name]; !ok {
-		g := &Group{name: name, incomingMessages: make(chan *Message, 250)}
+		g := &Group{ctx: ctx, name: name, id: gm.id, incomingMessages: make(chan *Message, 1000), outgoingMessages: make(chan *Message, 1000)}
 
 		sub, err := gm.pubsub.Subscribe(name)
 		if err != nil {

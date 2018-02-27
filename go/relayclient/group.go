@@ -93,6 +93,7 @@ func (g *Group) handleGroupMessages(ctx context.Context, r *dht.IpfsDHT) {
 		}
 		if err := g.handleMessage(ctx, msg, r); err != nil {
 			log.Println(err)
+			return
 		}
 	}
 }
