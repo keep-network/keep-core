@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/go/BeaconConfig"
 )
 
 func (eth *EthBlockCounter) testStop() {
@@ -23,7 +25,12 @@ func Test_EthBlockCounter(t *testing.T) {
 	GethServer := "ws://192.168.0.157:8546" // TODO - input data
 	GethServer = "http://192.168.0.157:8545"
 
-	bc := NewEthBlockCounter(GethServer, 100)
+	client, err := BeaconConfig.NewWthConnection(GethServer)
+	if err != nil {
+		t.Errorf("Failed to connect to geth at %s\n", GethServer)
+	}
+
+	bc := NewEthBlockCounter(client, 100)
 
 	// To turn on debuging print statements
 	// eth := (bc).(*EthBlockCounter)

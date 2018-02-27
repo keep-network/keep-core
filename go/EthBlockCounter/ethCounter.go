@@ -8,10 +8,13 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/keep-network/keep-core/go/BeaconConfig"
 	"github.com/keep-network/keep-core/go/beacon/chain"
 	"github.com/pschlump/MiscLib"
 	"github.com/pschlump/godebug"
 )
+
+// "github.com/keep-network/keep-core/go/BeaconConfig"
 
 type EthBlockCounter struct {
 	structMutex sync.Mutex         //
@@ -162,26 +165,24 @@ func (eth *EthBlockCounter) getBlockNumber() (n int64, err error) {
 // EthBlockCounter creates a BlockCounter that pols the Ethereum chain. It hadles
 // weird stuff like missing block numbers.   You should specify a timeout in
 // seconds as a backup so if this is run on "testrpc"/"truffle" where no
-// mining occures it will still timeout.
-func NewEthBlockCounter(GethServer string, timeout int) chain.BlockCounter {
+// mining occures it will still timeout.   Call BeaconConfig.NewEthConnection,
+// or BeaconConfig.OpenConnection to get the "client".
+func NewEthBlockCounter(client *rpc.Client, cfg BeaconConfig.BeaconConfig) chain.BlockCounter {
+
+	// OLD: func NewEthBlockCounter(GethServer string, timeout int) chain.BlockCounter {
+
 	eth := EthBlockCounter{
 		blockHeight: 0,
 		waiters:     make(map[int][]chan int),
-		gethServer:  GethServer,
-		timeout:     timeout,
+		gethServer:  cfg.GethServer,
+		timeout:     cfg.BlockTimeout,
 		debugFlag:   false,
+		client:      client,
 	}
-
-	// HTTP/ws:/ipc - setup connection to Geth
-	client, err := rpc.Dial(GethServer)
-	if err != nil {
-		log.Fatalf("could not create %s client: %v", GethServer, err)
-	}
-	eth.client = client
 
 	curNumber, err := eth.getBlockNumber()
 	if err != nil {
-		log.Fatalf("could not setup initial block number for server %s client: %v", GethServer, err)
+		log.Fatalf("could not setup initial block number for server %s client: %v", cfg.GethServer, err)
 		return &eth
 	}
 	eth.blockHeight = int(curNumber)

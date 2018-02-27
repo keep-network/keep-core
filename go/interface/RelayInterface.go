@@ -21,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/keep-network/keep-core/go/BeaconConfig"
 	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/godebug"
 )
@@ -37,19 +38,7 @@ type KeepRelayBeaconContract struct {
 	GethServer      string
 }
 
-// NewKeepRelayBeaconContract connects to a "geth" server and sets up for calls into the
-// KeepRelayBeacon contract.  The 'GethServer' can be a "http://", "ws://" or an IPC file
-// path to geth.  The 'ContractAddress' needs to be the hex address of the KeepRelayBeacon
-// contrct. 0x in front of the address is required.  A full path to, and the password for, an
-// account file is required.  The account private key file is "UTC--" a date/time and the hash
-// of the account number.
-func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractAddress, KeyFile,
-	KeyFilePassword string) (ri *KeepRelayBeaconContract, err error) {
-
-	ri = &KeepRelayBeaconContract{
-		GethServer:      GethServer,
-		ContractAddress: ContractAddress,
-	}
+func OpenConnection(gcfg BeaconConfig.BeaconConfig) (conn *ethclient.Client, err error) {
 
 	// Create JSON RPC connection to a remote node
 	//
@@ -57,23 +46,38 @@ func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractA
 	// connections for this.
 	//
 	// GethServer := "http://10.51.245.75:8545"
-	// GethServer := "http://10.51.245.75:8546" // WebSocket connect
+	// GethServer := "ws://10.51.245.75:8546" // WebSocket connect
 	// GethServer := "/Users/corwin/Projects/eth/data/geth.ipc" // IPC local connection
-	conn, err := ethclient.Dial(GethServer)
+	// GethServer := "ws://192.168.0.157:8546" // Based on running a local "geth"
+	conn, err = ethclient.Dial(gcfg.GethServer)
 	if err != nil {
-		err = fmt.Errorf("Failed to connect to the Ethereum client: %s at address: %s", err, GethServer)
+		err = fmt.Errorf("Failed to connect to the Ethereum client: %s at address: %s", err, gcfg.GethServer)
 		return
 	}
+	return
+}
 
-	ri.conn = conn
+// NewKeepRelayBeaconContract uses a connection to a "geth" server and sets up for calls into the
+// KeepRelayBeacon contract.  The 'GethServer' can be a "http://", "ws://" or an IPC file
+// path to geth.  The 'ContractAddress' needs to be the hex address of the KeepRelayBeacon
+// contrct. 0x in front of the address is required.  A full path to, and the password for, an
+// account file is required.  The account private key file is "UTC--" a date/time and the hash
+// of the account number.
+func NewKeepRelayBeaconContract(ctx *RelayContractContext, conn *ethclient.Client,
+	gcfg BeaconConfig.BeaconConfig) (ri *KeepRelayBeaconContract, err error) {
 
-	if ctx.dbOn() {
-		fmt.Printf("Connected - v16 - on net(%s)\n", GethServer)
+	// OLD: func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractAddress, KeyFile,
+	//	KeyFilePassword string) (ri *KeepRelayBeaconContract, err error) {
+
+	ri = &KeepRelayBeaconContract{
+		GethServer:      gcfg.GethServer,
+		ContractAddress: gcfg.BeaconRelayContractAddress,
+		conn:            conn,
 	}
 
 	// Address of the contract - extracted from the output from "truffle migrate --reset --network testnet"
 	// ContractAddress := "0xe705ab560794cf4912960e5069d23ad6420acde7"
-	hexAddr := common.HexToAddress(ContractAddress)
+	hexAddr := common.HexToAddress(gcfg.BeaconRelayContractAddress)
 
 	// Instantiate the contract and call a method
 	kstart, err := KeepRelayBeacon.NewKeepRelayBeaconTransactor(hexAddr, conn)
@@ -100,16 +104,16 @@ func NewKeepRelayBeaconContract(ctx *RelayContractContext, GethServer, ContractA
 	// Account with "gas" to spend so that you can call the contract.
 	// KeyFile := "./UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
 	// KeyFilePassword := "password"
-	file, err := os.Open(KeyFile) // Read in file
+	file, err := os.Open(gcfg.KeyFile) // Read in file
 	if err != nil {
-		err = fmt.Errorf("Failed to open keyfile: %s, %s", err, KeyFile)
+		err = fmt.Errorf("Failed to open keyfile: %s, %s", err, gcfg.KeyFile)
 		return
 	}
 
 	// Create a new trasaction call (will mine) for the contract.
-	optsTransact, err := bind.NewTransactor(bufio.NewReader(file), KeyFilePassword)
+	optsTransact, err := bind.NewTransactor(bufio.NewReader(file), gcfg.KeyFilePassword)
 	if err != nil {
-		err = fmt.Errorf("Failed to read keyfile: %s, %s", err, KeyFile)
+		err = fmt.Errorf("Failed to read keyfile: %s, %s", err, gcfg.KeyFile)
 		return
 	}
 

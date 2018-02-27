@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/keep-network/keep-core/go/BeaconConfig"
 	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/godebug"
 )
@@ -56,43 +57,21 @@ type KeepRelayBeaconEvents struct {
 // contract.
 // NOTE! GethServer must be a "ws://" or IPC connection to the geth server.  A "http://" connection will not
 // support "push" events.
-func NewKeepRelayBeaconEvents(ctx *RelayContractContext, GethServer,
-	ContractAddress string) (ev *KeepRelayBeaconEvents, err error) {
+func NewKeepRelayBeaconEvents(ctx *RelayContractContext, conn *ethclient.Client,
+	gcfg BeaconConfig.BeaconConfig) (ev *KeepRelayBeaconEvents, err error) {
 
 	ev = &KeepRelayBeaconEvents{
-		GethServer:      GethServer,
-		ContractAddress: ContractAddress,
+		GethServer:      gcfg.GethServer,
+		ContractAddress: gcfg.BeaconRelayContractAddress,
+		conn:            conn,
 	}
 
-	// Create RPC connection to a remote node
-	//
-	// Examples of connection strings - note - this must be an `.ipc` or a websocket "ws://" connection.
-	// A HTTP/HTTPS connection will not work.
-	//
-	// GethServer := "http://10.51.245.75:8545"	// will not work - since this is "push" from server data.
-	// GethServer := "http://10.51.245.75:8546" 	// WebSocket connect
-	// GethServer := "/Users/corwin/Projects/eth/data/geth.ipc"
-	// GethServer := "ws://192.168.0.157:8546" // Based on running a local "geth"
-	conn, err := ethclient.Dial(GethServer)
-	if err != nil {
-		err = fmt.Errorf("Failed to connect to the Ethereum client: %s at address: %s", err, GethServer)
-		return
-	}
-
-	ev.conn = conn
-
-	if ctx.dbOn() {
-		// Address of the contract - extracted from the output from "truffle migrate --reset --network testnet"
-		// ContractAddress := "0xe705ab560794cf4912960e5069d23ad6420acde7"
-		fmt.Printf("Connected - v16 (watch for events) - on net(%s)\n", GethServer)
-	}
-
-	hexAddr := common.HexToAddress(ContractAddress)
+	hexAddr := common.HexToAddress(gcfg.BeaconRelayContractAddress)
 
 	// Create a object to talk to the contract.
 	ks, err := KeepRelayBeacon.NewKeepRelayBeacon(hexAddr, conn)
 	if err != nil {
-		log.Fatalf("Failed to instantiate contract object: %v at address: %s", err, GethServer)
+		log.Fatalf("Failed to instantiate contract object: %v at address: %s", err, ev.GethServer)
 	}
 
 	ev.ks = ks
