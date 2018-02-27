@@ -93,6 +93,7 @@ func MainEventLoop() {
 			// Generate *signature*
 			// send message on channel that signature is ready
 			_ = rd
+			// TODO call the generator at this point
 
 		case sig := <-SignatureReadyChannel:
 			// Got a signature - Write it to the blockchain
