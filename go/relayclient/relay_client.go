@@ -39,7 +39,7 @@ var Protocol = protocol.ID("/keep/relay_client/0.0.1")
 var bootstrapPeers = []string{"/ip4/127.0.0.1/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQVS8iBuUUgDrMbMY17Cck2gKrqeX", "/ip4/127.0.0.1/tcp/2702/ipfs/Qmd3wzD2HWA95ZAs214VxnckwkwM4GHJyC6whKUCNQhNvW"}
 
 // A node is the initialized relay client waiting to join a group
-type Node struct {
+type RelayClient struct {
 	// Self
 	Identity *Identity
 
@@ -64,8 +64,8 @@ type Identity struct {
 	privKey ci.PrivKey
 }
 
-// NewNode should only be called once, on init
-func NewNode(ctx context.Context, port int, randseed int64) (*Node, error) {
+// NewRelayClient should only be called once, on init
+func NewRelayClient(ctx context.Context, port int, randseed int64) (*RelayClient, error) {
 	//TODO: allow the user to supply
 	priv, pub, err := generatePKI(randseed)
 	if err != nil {
@@ -77,7 +77,7 @@ func NewNode(ctx context.Context, port int, randseed int64) (*Node, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to generate valid libp2p identity with err: %v", err)
 	}
-	n := &Node{Identity: &Identity{PeerID: pid, privKey: priv, PubKey: pub}}
+	n := &RelayClient{Identity: &Identity{PeerID: pid, privKey: priv, PubKey: pub}}
 
 	// The context governs the lifetime of the libp2p node
 	n.ctx = ctx
@@ -126,7 +126,7 @@ func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
 	return priv, pub, nil
 }
 
-func (n *Node) discoverAndConnect(ctx context.Context, port int, id *Identity) error {
+func (n *RelayClient) discoverAndConnect(ctx context.Context, port int, id *Identity) error {
 	var err error
 
 	// Ensure that other members in our broadcast channel can identify us
@@ -231,7 +231,7 @@ func makeSmuxTransport() smux.Transport {
 }
 
 // lifted and modified from github.com/keep-network/go-experiments
-func (n *Node) bootstrap(ctx context.Context) error {
+func (n *RelayClient) bootstrap(ctx context.Context) error {
 	log.Println("Bootstrapping peers...")
 	for _, p := range bootstrapPeers {
 		// The following code extracts target's the peer ID from the

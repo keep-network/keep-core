@@ -22,7 +22,7 @@ func initLibP2P() {
 
 	flag.Parse()
 
-	n, err := relay.NewNode(context.Background(), *listenF, *seed)
+	n, err := relay.NewRelayClient(context.Background(), *listenF, *seed)
 	if err != nil {
 		log.Fatalf("Failed to initialize relay node with: ", err)
 	}
@@ -43,7 +43,7 @@ func initLibP2P() {
 	// wait for heartbeats to build mesh
 	time.Sleep(time.Second * 2)
 
-	go func(ctx context.Context, n *relay.Node, topic string) {
+	go func(ctx context.Context, n *relay.RelayClient, topic string) {
 		// first tick happens immediately
 		t := time.NewTimer(1)
 		defer t.Stop()
@@ -64,7 +64,7 @@ func initLibP2P() {
 		}
 	}(ctx, n, topic)
 
-	go func(n *relay.Node) {
+	go func(n *relay.RelayClient) {
 		t := time.NewTimer(1)
 		defer t.Stop()
 		for {
