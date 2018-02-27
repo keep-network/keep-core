@@ -22,19 +22,22 @@ func Test_EthBlockCounter(t *testing.T) {
 
 	fmt.Printf("This test takes about 1.5 min to run if it is failing and betwen 20 and 40 seconds if it is working.\n")
 
-	GethServer := "ws://192.168.0.157:8546" // TODO - input data
-	GethServer = "http://192.168.0.157:8545"
-
-	client, err := BeaconConfig.NewWthConnection(GethServer)
+	cfg := BeaconConfig.GetBeaconConfig("./test/config2.json")
+	client, err := BeaconConfig.OpenRpcConnection(cfg)
 	if err != nil {
-		t.Errorf("Failed to connect to geth at %s\n", GethServer)
+		t.Errorf("Failed to read config file")
 	}
 
-	bc := NewEthBlockCounter(client, 100)
+	//	client, err := BeaconConfig.NewWthConnection(GethServer)
+	//	if err != nil {
+	//		t.Errorf("Failed to connect to geth at %s\n", GethServer)
+	//	}
+
+	bc := NewEthBlockCounter(client, cfg)
 
 	// To turn on debuging print statements
-	// eth := (bc).(*EthBlockCounter)
-	// eth.debugFlag = true
+	eth := (bc).(*EthBlockCounter)
+	eth.debugFlag = true
 
 	go func() {
 		time.Sleep(time.Millisecond * 92500)

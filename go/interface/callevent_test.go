@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/go/interface/examples/excfg"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/go/BeaconConfig"
 	"github.com/keep-network/keep-core/go/interface/lib/KeepRelayBeacon"
 	"github.com/pschlump/godebug"
 )
@@ -22,8 +23,14 @@ func Test_CallEvent(t *testing.T) {
 	quit := make(chan struct{}, 2)
 	ctx := &RelayContractContext{}
 	ctx.SetDebug(false)
-	cfg := excfg.ReadCfg("./test_setup.json")
+	// cfg := excfg.ReadCfg("./test_setup.json")
 	requestID := int64(-1)
+
+	gcfg := BeaconConfig.GetBeaconConfig("./test/config2.json")
+	conn, err := BeaconConfig.OpenEthConnection(gcfg) // xyzzy RPC or ETH?
+	if err != nil {
+		t.Errorf("Failed to read config file")
+	}
 
 	// ----------------------------------------------------------------------------
 	// First Call - Setup to watch for events!
@@ -31,7 +38,8 @@ func Test_CallEvent(t *testing.T) {
 	// ----------------------------------------------------------------------------
 	go func() {
 
-		ev, err := NewKeepRelayBeaconEvents(ctx, cfg.GethServer, cfg.ContractAddress)
+		// ev, err := NewKeepRelayBeaconEvents(ctx, cfg.GethServer, cfg.ContractAddress)
+		ev, err := NewKeepRelayBeaconEvents(ctx, conn, gcfg)
 		if err != nil {
 			t.Errorf("Error connecing to contract: %s\n", err)
 			return
@@ -68,7 +76,10 @@ func Test_CallEvent(t *testing.T) {
 
 	go func() {
 
-		ev, err := NewKeepRelayBeaconEvents(ctx, cfg.GethServer, cfg.ContractAddress)
+		//func NewKeepRelayBeaconEvents(ctx *RelayContractContext, conn *ethclient.Client,
+		//	gcfg BeaconConfig.BeaconConfig) (ev *KeepRelayBeaconEvents, err error) {
+		// ev, err := NewKeepRelayBeaconEvents(ctx, cfg.GethServer, cfg.ContractAddress)
+		ev, err := NewKeepRelayBeaconEvents(ctx, conn, gcfg)
 		if err != nil {
 			t.Errorf("Error connecing to contract: %s\n", err)
 			return
@@ -94,13 +105,17 @@ func Test_CallEvent(t *testing.T) {
 	// request for a **signature**.
 	// ----------------------------------------------------------------------------
 
-	ri, err := NewKeepRelayBeaconContract(ctx, cfg.GethServer, cfg.ContractAddress, cfg.KeyFile, cfg.KeyFilePassword)
+	// OLD: ri, err := NewKeepRelayBeaconContract(ctx, cfg.GethServer, cfg.ContractAddress, cfg.KeyFile, cfg.KeyFilePassword)
+	ri, err := NewKeepRelayBeaconContract(ctx, conn, gcfg)
 	if err != nil {
 		t.Errorf("Error connecing to contract: %s\n", err)
 		return
 	}
 
-	tx, err := ri.RequestRelay(ctx, 21, 42, []byte("aabbccddee"))
+	// from := common.Address{}
+	from := common.HexToAddress(gcfg.FromAddress)
+
+	tx, err := ri.RequestRelay(ctx, from, 21, 42, []byte("aabbccddee"))
 	if err != nil {
 		t.Errorf("Error call contract: %s\n", err)
 		return

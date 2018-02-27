@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
@@ -29,6 +30,7 @@ type BeaconConfig struct {
 	KeyFile                    string `json:"key_file"`
 	KeyFilePassword            string `json:"key_file_password"` // See above.
 	BeaconRelayContractAddress string `json:"beacon_relay_contract_address"`
+	FromAddress                string `json:"from_address"` // Address in KeyFile
 	GethServer                 string `json:"geth_server"`
 	// more stuff for p2p config to be put at this location
 }
@@ -68,7 +70,7 @@ func GetBeaconConfig(fn string) BeaconConfig {
 // NewEthConnection creates a websocket (ws://) or IPC connection to the geth client.
 // This can also create a HTTP connection - but most of what we are working on will
 // require the websocket/ipc type connections.
-func NewEthConnection(GethServer string, timeout int) (client *rpc.Client, err error) {
+func NewRpcConnection(GethServer string, timeout int) (client *rpc.Client, err error) {
 	// HTTP/ws:/ipc - setup connection to Geth
 	client, err = rpc.Dial(GethServer)
 	if err != nil {
@@ -77,7 +79,26 @@ func NewEthConnection(GethServer string, timeout int) (client *rpc.Client, err e
 	return
 }
 
-func OpenConnection(cfgData BeaconConfig) (client *rpc.Client, err error) {
-	client, err = NewEthConnection(cfgData.GethServer, cfgData.BlockTimeout)
+func OpenRpcConnection(cfgData BeaconConfig) (client *rpc.Client, err error) {
+	client, err = NewRpcConnection(cfgData.GethServer, cfgData.BlockTimeout)
+	return
+}
+
+func NewEthConnection(GethServer string, timeout int) (conn *ethclient.Client, err error) {
+	// HTTP/ws:/ipc - setup connection to Geth
+
+	//	conn, err := ethclient.Dial(*GethServer)
+	//	if err != nil {
+	//		log.Fatalf("Failed to connect to the Ethereum client: %v at address: %s", err, *GethServer)
+	//	}
+	conn, err = ethclient.Dial(GethServer)
+	if err != nil {
+		log.Fatalf("could not create %s client: %v", GethServer, err)
+	}
+	return
+}
+
+func OpenEthConnection(cfgData BeaconConfig) (conn *ethclient.Client, err error) {
+	conn, err = NewEthConnection(cfgData.GethServer, cfgData.BlockTimeout)
 	return
 }
