@@ -1,17 +1,19 @@
-// network contains our bridge to libp2p
-package node
+// node is the base relay client initalized on startup
+package relayclient
 
 import (
 	"context"
+	crand "crypto/rand"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	mrand "math/rand"
 	"time"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
-	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -28,7 +30,7 @@ import (
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
-// Identifier to write protocol headers in streams.
+// Protocol is an identifier to write protocol headers in streams.
 // TODO: actually enforce this
 var Protocol = protocol.ID("/keep/relay_client/0.0.1")
 
@@ -36,58 +38,60 @@ var Protocol = protocol.ID("/keep/relay_client/0.0.1")
 // taken from go-experiments
 var bootstrapPeers = []string{"/ip4/127.0.0.1/tcp/2701/ipfs/QmexAnfpHrhMmAC5UNQVS8iBuUUgDrMbMY17Cck2gKrqeX", "/ip4/127.0.0.1/tcp/2702/ipfs/Qmd3wzD2HWA95ZAs214VxnckwkwM4GHJyC6whKUCNQhNvW"}
 
-type NetworkManager struct {
+// A node is the initialized relay client waiting to join a group
+type Node struct {
+	// Self
+	Identity *Identity
+
 	PeerStore pstore.Peerstore
 	PeerHost  host.Host
 
 	Routing routing.IpfsRouting
-	DHT     *dht.IpfsDHT
-	Sub     *floodsub.PubSub
+
+	Groups *GroupManager
+
+	// groupDKG   chan *pb.DKGMessage
+	// groupRelay chan *pb.RelayMessage
+
+	// Use to detect node shutdowns
+	ctx context.Context
 }
 
-func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivKey,
-	pub ci.PubKey) (*NetworkManager, error) {
-	var err error
-	n := &NetworkManager{}
+// An Identity contains all libp2p and secret identifying information
+type Identity struct {
+	PeerID  peer.ID
+	PubKey  ci.PubKey
+	privKey ci.PrivKey
+}
 
-	// Ensure that other members in our broadcast channel can identify us
-	// TODO: just pass in the Identity struct - maybe
-	n.PeerStore, err = addToPeerStore(pid, priv, pub)
+// NewNode should only be called once, on init
+func NewNode(ctx context.Context, port int, randseed int64) (*Node, error) {
+	//TODO: allow the user to supply
+	priv, pub, err := generatePKI(randseed)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate valid key material with err: %v", err)
+	}
+
+	// From go-libp2p-peer: PKI-based identities for libp2p
+	pid, err := peer.IDFromEd25519PublicKey(pub)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate valid libp2p identity with err: %v", err)
+	}
+	n := &Node{Identity: &Identity{PeerID: pid, privKey: priv, PubKey: pub}}
+
+	// The context governs the lifetime of the libp2p node
+	n.ctx = ctx
+
+	err = n.discoverAndConnect(n.ctx, port, n.Identity)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert available network ifaces to listen on into multiaddrs
-	addrs, err := getListenAdresses(port)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: flesh out how we connect to libp2p
-	n.PeerHost, err = buildPeerHost(ctx, addrs, pid, n.PeerStore)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ok, now we're ready to listen
-	if err := n.PeerHost.Network().Listen(addrs...); err != nil {
-		return nil, err
-	}
-	// TODO: implement a standard and functional logger
-	log.Printf("Listening at: %#v\n", addrs)
-
-	n.Sub, err = floodsub.NewGossipSub(ctx, n.PeerHost)
-	if err != nil {
-		return nil, err
-	}
 	// https: //github.com/libp2p/go-floodsub/issues/65#issuecomment-365680860
-	dht := dht.NewDHT(ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+	dht := dht.NewDHT(n.ctx, n.PeerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
 
 	// TODO: add comments
 	n.Routing = dht
-
-	// TODO: add comments
-	n.DHT = dht
 
 	// TODO: add comments
 	n.PeerHost = rhost.Wrap(n.PeerHost, n.Routing)
@@ -96,17 +100,72 @@ func NewNetworkManager(ctx context.Context, port int, pid peer.ID, priv ci.PrivK
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
 
+	n.Groups, err = NewGroupManager(ctx, n.Identity, n.PeerHost, dht)
+	if err != nil {
+		return nil, err
+	}
+
 	return n, nil
 }
 
-func addToPeerStore(pid peer.ID, priv ci.PrivKey, pub ci.PubKey) (pstore.Peerstore, error) {
+// generatePKI generates a public/private-key pair
+// (using the libp2p/crypto wrapper for golang/crypto) provided a reader.
+// Use randseed for deterministic IDs, otherwise we'll use cryptographically secure psuedorandomness.
+func generatePKI(randseed int64) (ci.PrivKey, ci.PubKey, error) {
+	var r io.Reader
+	if randseed == 0 {
+		r = crand.Reader
+	} else {
+		r = mrand.New(mrand.NewSource(randseed))
+	}
+	// TODO: explore if we use PublicKeyToCurve25519 (converts an Ed25519 public key into the curve25519)
+	priv, pub, err := ci.GenerateKeyPairWithReader(ci.Ed25519, 2048, r)
+	if err != nil {
+		return nil, nil, err
+	}
+	return priv, pub, nil
+}
+
+func (n *Node) discoverAndConnect(ctx context.Context, port int, id *Identity) error {
+	var err error
+
+	// Ensure that other members in our broadcast channel can identify us
+	// TODO: just pass in the Identity struct - maybe
+	n.PeerStore, err = addToPeerStore(id)
+	if err != nil {
+		return err
+	}
+
+	// Convert available network ifaces to listen on into multiaddrs
+	addrs, err := getListenAdresses(port)
+	if err != nil {
+		return err
+	}
+
+	// TODO: flesh out how we connect to libp2p
+	n.PeerHost, err = buildPeerHost(ctx, addrs, id.PeerID, n.PeerStore)
+	if err != nil {
+		return err
+	}
+
+	// Ok, now we're ready to listen
+	if err := n.PeerHost.Network().Listen(addrs...); err != nil {
+		return err
+	}
+	// TODO: implement a standard and functional logger
+	log.Printf("Listening at: %#v\n", addrs)
+
+	return nil
+}
+
+func addToPeerStore(id *Identity) (pstore.Peerstore, error) {
 	ps := pstore.NewPeerstore()
 	// HACK: see github.com/rargulati/go-libp2p-crypto for fix
-	if err := ps.AddPrivKey(pid, priv); err != nil {
+	if err := ps.AddPrivKey(id.PeerID, id.privKey); err != nil {
 		fmt.Println("private key mishap")
 		return nil, err
 	}
-	if err := ps.AddPubKey(pid, pub); err != nil {
+	if err := ps.AddPubKey(id.PeerID, id.PubKey); err != nil {
 		fmt.Println("pub key mishap")
 		return nil, err
 	}
@@ -172,7 +231,7 @@ func makeSmuxTransport() smux.Transport {
 }
 
 // lifted and modified from github.com/keep-network/go-experiments
-func (n *NetworkManager) bootstrap(ctx context.Context) error {
+func (n *Node) bootstrap(ctx context.Context) error {
 	log.Println("Bootstrapping peers...")
 	for _, p := range bootstrapPeers {
 		// The following code extracts target's the peer ID from the

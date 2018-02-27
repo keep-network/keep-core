@@ -1,14 +1,11 @@
-package node
+package relayclient
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 
-	"github.com/dfinity/go-dfinity-crypto/bls"
 	floodsub "github.com/libp2p/go-floodsub"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
@@ -16,49 +13,61 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
-// Only to be used in the core process loop
 type GroupManager struct {
 	Groups map[string]*Group
-	mu     sync.Mutex // guards Group
+	mu     sync.Mutex // guards Groups
 
 	pubsub *floodsub.PubSub // pub/sub for group communication
 	dht    *dht.IpfsDHT
 	host   host.Host
+
+	id  *Identity
+	ctx context.Context
 }
 
+// Group is the concrete type implementing the broadcast.Channel
+// interface as well as containing the client's identity, a list of
+// Group members, and a pubsub subscription along with corresponding
+// buffer channels for messages going in and out of our Subscription
 type Group struct {
+	// implements the broadcast.Channel interface
+	ctx  context.Context
 	name string
+	id   *Identity
+
+	sub              *floodsub.Subscription
+	incomingMessages chan *Message
+	outgoingMessages chan *Message
 
 	members []*Member  // value from on-chain
 	mu      sync.Mutex // guards members
 
-	sub              *floodsub.Subscription
-	incomingMessages chan *Message
 }
 
+// Members are other staked clients that are in our group gossipsub mesh
 type Member struct {
-	ID  peer.ID   // libp2p concept
-	PK  ci.PubKey // on-chain identifying information
-	BLS bls.ID
+	ID peer.ID   // libp2p concept
+	PK ci.PubKey // on-chain identifying information
 }
 
+// Message is the information we send over the wire,
+// with the raw data and signed message (Member's private key)
 type Message struct {
-	From     *Member
-	Receiver *Member
-	Data     string
+	Sender    *Member
+	Data      string
+	Signature string
 
 	seqno int
 }
 
-func NewGroupManager(fs *floodsub.PubSub, h host.Host, d *dht.IpfsDHT) *GroupManager {
-	return &GroupManager{Groups: make(map[string]*Group), pubsub: fs, host: h, dht: d}
-}
-
-// TODO:
-func (gm *GroupManager) SyncActiveGroups() []*Group {
-	// FIXME: make a network call to ethereum, get group registry, unmarshal it,
-	// make our updates to gm.Groups
-	return nil
+// NewGroupManager gives us the client's GroupManager with a new floodsub
+func NewGroupManager(ctx context.Context, id *Identity, h host.Host, d *dht.IpfsDHT) (*GroupManager, error) {
+	gs, err := floodsub.NewGossipSub(ctx, h)
+	if err != nil {
+		return nil, err
+	}
+	gm := &GroupManager{Groups: make(map[string]*Group), pubsub: gs, host: h, dht: d, id: id, ctx: ctx}
+	return gm, nil
 }
 
 // GetActiveGroups allows us to identify which and how many groups
@@ -102,20 +111,12 @@ func (gm *GroupManager) GroupDissolution(ctx context.Context, name string) error
 	return gm.RemoveGroup(name)
 }
 
-// TODO: Will this fail as we need (?) to rendezvous with providers by ensuring peers
-// are linked before hand?
-func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey, topic string, msg []byte) error {
-	// TODO: get and increment a seq?
-	// TODO: get some sort of protobuf structure from our datastore for the above?
-	// TODO: how do I protocol?
-	// TODO: sign message:
-	signed, err := signBroadcastMessage(pk, msg)
+// TODO: just for demo, remove this
+func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, topic string, msg *Message) error {
+	signed, err := signBroadcastMessage(gm.id.privKey, msg)
 	if err != nil {
 		return err
 	}
-	// TODO: misnamed - maybe call hand over proofs?
-	bmsg := signAndHash(signed, msg)
-
 	gm.mu.Lock()
 	if _, ok := gm.Groups[topic]; ok {
 		// no group of topic exsists; create the group
@@ -125,25 +126,34 @@ func (gm *GroupManager) BroadcastGroupMessage(ctx context.Context, pk ci.PrivKey
 			return err
 		}
 		// TODO: publish an actual message
-		return gm.pubsub.Publish(topic, bmsg)
+		return gm.pubsub.Publish(topic, []byte(signed.Data))
 		// callers should wait some time for our messages to propogate
 	}
 	gm.mu.Unlock()
-	return gm.pubsub.Publish(topic, signed)
+	return gm.pubsub.Publish(topic, []byte(signed.Data))
 }
 
-func signAndHash(sign []byte, data []byte) []byte {
-	concat := fmt.Sprintf("%s||%s", sign, data)
-	return []byte(fmt.Sprintf("%x", concat))
+func (gm *GroupManager) GetGroup(ctx context.Context, name string) (*Group, error) {
+	gm.mu.Lock()
+	defer gm.mu.Unlock()
+
+	group, ok := gm.Groups[name]
+	if !ok {
+		// no group of topic exsists; create the group
+		err := gm.JoinGroup(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		// callers should wait some time for our messages to propogate
+		return gm.Groups[name], nil
+	}
+	return group, nil
 }
 
-// JoinGroup
+// JoinGroup is not threadsafe - ensure it's called with a lock!
 func (gm *GroupManager) JoinGroup(ctx context.Context, name string) error {
 	// TODO: add all members to the group via either AddPeers or
 	// TODO: constructing a new connection via swarm.NewStreamToPeer
-
-	gm.mu.Lock()
-	defer gm.mu.Unlock() // FIXME: say no to fat locks
 	if _, ok := gm.Groups[name]; !ok {
 		g := &Group{name: name, incomingMessages: make(chan *Message, 250)}
 
@@ -154,10 +164,42 @@ func (gm *GroupManager) JoinGroup(ctx context.Context, name string) error {
 		g.sub = sub
 		gm.Groups[name] = g
 
-		// TODO: if we're dumping messages on to a channel, read them in another goroutine
 		go g.handleGroupMessages(ctx, gm.dht)
+		go g.flushMessages(ctx, gm.pubsub)
 	}
 	return nil
+}
+
+// Name returns the name of the group, also referenced to as the
+// floodsub topic, and the hashed concatenation of all public keys
+// listed in the on-chain group registry
+func (g *Group) Name() string {
+	return g.name
+}
+
+// TODO: get and increment a seq, use the Protocol, sign entire message
+// Send handles signing a message and ensuring that it's put on the queue
+// to be flushed and broadcasted to all members of the group.
+func (g *Group) Send(message *Message) bool {
+	msg, err := signBroadcastMessage(g.id.privKey, message)
+	if err != nil {
+		log.Println("Failed signing message with err: %s", err)
+		return false
+	}
+	g.outgoingMessages <- msg
+
+	return true
+}
+
+// func (g *Group) RecvChan() <-chan *Message
+
+func signBroadcastMessage(pk ci.PrivKey, message *Message) (*Message, error) {
+	signed, err := pk.Sign([]byte(message.Data))
+	if err != nil {
+		return nil, err
+	}
+	message.Signature = string(signed)
+	return message, nil
 }
 
 func (g *Group) handleGroupMessages(ctx context.Context, r *dht.IpfsDHT) {
@@ -175,6 +217,20 @@ func (g *Group) handleGroupMessages(ctx context.Context, r *dht.IpfsDHT) {
 	}
 }
 
+func (g *Group) flushMessages(ctx context.Context, fs *floodsub.PubSub) {
+	for {
+		select {
+		case msg := <-g.outgoingMessages:
+			// TODO: send whole message, not just signature
+			if err := fs.Publish(g.name, []byte(msg.Signature)); err != nil {
+				log.Println("Error publishing message %#v to group %s", msg, g.name)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func (g *Group) handleMessage(ctx context.Context, msg *floodsub.Message, r *dht.IpfsDHT) error {
 	// TODO:
 	// Step one, given the message, see who the from is
@@ -188,11 +244,9 @@ func (g *Group) handleMessage(ctx context.Context, msg *floodsub.Message, r *dht
 	}
 	fmt.Printf("WE HAVE PUBKEY: %s\n", pub)
 
-	raw := msg.GetData()
 	// TODO: step 3, verify that the message is coming from a valid group member
 	//  - now check that the peer's public key is part of the group
-	data := isSignedByGroupMember(pub, raw)
-	fmt.Println("WE HAVE DATA: %s", data)
+	// data := isSignedByGroupMember(pub, raw)
 
 	// TODO: step 4, don't know them? add the peer
 	// we added them in our magic GetPublicKey function above
@@ -211,35 +265,35 @@ func (g *Group) handleMessage(ctx context.Context, msg *floodsub.Message, r *dht
 	log.Printf("GOT Data: %s", msg.GetData())
 	log.Printf("GOT Seqno: %d", msg.GetSeqno())
 	log.Printf("GOT TopicIDs: %d", msg.GetTopicIDs())
+
+	m := &Message{}
+	g.incomingMessages <- m
+
 	return nil
 }
 
-func signBroadcastMessage(pk ci.PrivKey, msg []byte) ([]byte, error) {
-	return pk.Sign(msg)
-}
-
-func isSignedByGroupMember(pub ci.PubKey, msg []byte) string {
-	dst := make([]byte, hex.DecodedLen(len(msg)))
-	n, err := hex.Decode(dst, msg)
-	if err != nil {
-		log.Fatal(err)
-	}
-	pieces := strings.Split(fmt.Sprintf("%s", dst[:n]), "||")
-	ok, err := pub.Verify([]byte(pieces[1]), []byte(pieces[0]))
-	if err != nil {
-		log.Fatal(err)
-	}
-	if !ok {
-		fmt.Errorf("Failed to validate signature\n")
-	}
-	return string(pieces[1])
-}
+// func isSignedByGroupMember(pub ci.PubKey, msg []byte) string {
+// 	dst := make([]byte, hex.DecodedLen(len(msg)))
+// 	n, err := hex.Decode(dst, msg)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	pieces := strings.Split(fmt.Sprintf("%s", dst[:n]), "||")
+// 	ok, err := pub.Verify([]byte(pieces[1]), []byte(pieces[0]))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	if !ok {
+// 		fmt.Errorf("Failed to validate signature\n")
+// 	}
+// 	return string(pieces[1])
+// }
 
 func (g *Group) assertGroupMembership(pub ci.PubKey) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	for _, m := range g.members {
-		if pub.Equals(m.pk) {
+		if pub.Equals(m.PK) {
 			return true
 		}
 	}
