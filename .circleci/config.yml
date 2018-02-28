@@ -5,7 +5,12 @@ jobs:
       - image: circleci/node:latest
     steps:
         - checkout
-        - run: echo "test"
+        - run: sudo npm install -g ethereumjs-testrpc
+        - run:
+            name: Running testrpc
+            command: testrpc
+            background: true  
+        - run: cd solidity && npm install && npm run test
   build_client:
     docker:
       - image: docker:17.05.0-ce-git
