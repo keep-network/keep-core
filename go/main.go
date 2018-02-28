@@ -59,15 +59,19 @@ func main() {
 	}
 
 	message := "This is a message!"
-	shares := make(map[bls.ID][]byte, 0)
-	for _, member := range members {
-		shares[member.BlsID] = member.SignatureShare(message)
-	}
+	// shares := make(map[bls.ID][]byte, 0)
+	// for _, member := range members {
+	// 	shares[member.BlsID] = member.SignatureShare(message)
+	// }
+
+	// for _, member := range members {
+	// 	fmt.Printf(
+	// 		"[member:%v] Did we get it? %v\n",
+	// 		member.BlsID.GetHexString(),
+	// 		member.VerifySignature(shares, message))
+	// }
 
 	for _, member := range members {
-		fmt.Printf(
-			"[member:%v] Did we get it? %v\n",
-			member.BlsID.GetHexString(),
-			member.VerifySignature(shares, message))
+		relay.ExecuteGroupSignature(message, chainCounter, channel, member)
 	}
 }
