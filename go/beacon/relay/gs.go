@@ -16,7 +16,10 @@ type GroupSignatureShareMessage struct {
 
 // ExecuteGroupSignature triggers group signature process for the given message
 func ExecuteGroupSignature(message string, blockCounter chain.BlockCounter, channel broadcast.Channel, member *thresholdgroup.Member) error {
+
 	recvChan := channel.RecvChan()
+
+	blockCounter.WaitForBlocks(15)
 
 	sendGroupSignatureShare(message, channel, member)
 

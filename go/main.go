@@ -72,6 +72,18 @@ func main() {
 	// }
 
 	for _, member := range members {
-		relay.ExecuteGroupSignature(message, chainCounter, channel, member)
+		go func() {
+			err := relay.ExecuteGroupSignature(message, chainCounter, channel, member)
+
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"[member:%v] Failed to run ExecuteGroupSignature: [%s].",
+					member.BlsID.GetHexString(),
+					err)
+				return
+			}
+
+		}()
 	}
 }
