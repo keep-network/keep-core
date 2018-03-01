@@ -72,7 +72,7 @@ func main() {
 	// }
 
 	for _, member := range members {
-		go func() {
+		go func(message string, chainCounter chain.BlockCounter, channel broadcast.Channel, member *thresholdgroup.Member) {
 			err := relay.ExecuteGroupSignature(message, chainCounter, channel, member)
 
 			if err != nil {
@@ -84,6 +84,6 @@ func main() {
 				return
 			}
 
-		}()
+		}(message, chainCounter, channel, member)
 	}
 }
