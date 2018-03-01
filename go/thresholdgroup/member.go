@@ -108,6 +108,8 @@ type Member struct {
 	groupSecretKeyShare *bls.SecretKey
 	// The final list of qualified group members; empty if not yet computed.
 	qualifiedMembers []bls.ID
+	// A map of group member ids and their group signature share
+	receivedGroupSignatureShares map[bls.ID][]byte
 }
 
 // NewMember creates a new member with the given id for a threshold group with
@@ -383,11 +385,14 @@ func (member JustifyingMember) FinalizeMember() Member {
 		qualifiedMembers = append(qualifiedMembers, memberID)
 	}
 
+	receivedGroupSignatureShares := make(map[bls.ID][]byte, len(qualifiedMembers))
+
 	return Member{
-		JustifyingMember:    member,
-		groupSecretKeyShare: groupSecretKeyShare,
-		groupPublicKey:      &groupPublicKey,
-		qualifiedMembers:    qualifiedMembers,
+		JustifyingMember:             member,
+		groupSecretKeyShare:          groupSecretKeyShare,
+		groupPublicKey:               &groupPublicKey,
+		qualifiedMembers:             qualifiedMembers,
+		receivedGroupSignatureShares: receivedGroupSignatureShares,
 	}
 }
 
@@ -420,4 +425,15 @@ func (member Member) VerifySignature(signatureShares map[bls.ID][]byte, message 
 	fullSignature.Recover(deserializedShares, availableIDs)
 
 	return fullSignature.Verify(member.groupPublicKey, message)
+}
+
+// AddGroupSignatureShareFromID associates the given group signature share with the given `senderID`
+func (member Member) AddGroupSignatureShareFromID(senderID bls.ID, share []byte) {
+	member.receivedGroupSignatureShares[senderID] = share
+}
+
+// GroupSignatureSharesComplete returns true if all group signature shares expected by this
+// member have been seen, false otherwise.
+func (member Member) GroupSignatureSharesComplete() bool {
+	return len(member.receivedGroupSignatureShares) == len(member.memberIDs)-1
 }

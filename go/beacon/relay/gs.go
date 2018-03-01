@@ -16,10 +16,10 @@ type GroupSignatureShareMessage struct {
 
 // ExecuteGroupSignature triggers group signature process for the given message
 func ExecuteGroupSignature(message string, blockCounter chain.BlockCounter, channel broadcast.Channel, member *thresholdgroup.Member) error {
+	recvChan := channel.RecvChan()
 
 	sendGroupSignatureShare(message, channel, member)
 
-	recvChan := channel.RecvChan()
 	waiter := blockCounter.BlockWaiter(10)
 	fmt.Printf("[member:%v] Waiting for other group signature share...\n", member.ID)
 	waitForGroupSignatureShares(&member.BlsID, recvChan, member)
@@ -39,14 +39,23 @@ func sendGroupSignatureShare(message string, channel broadcast.Channel, member *
 }
 
 func waitForGroupSignatureShares(myID *bls.ID, recvChan <-chan broadcast.Message, member *thresholdgroup.Member) error {
-	// done:
+done:
 	for msg := range recvChan {
-		fmt.Printf("[msg:%v]\n", msg)
-		// switch shareMsg := msg.Data.(type) {
-		// case GroupSignatureShareMessage:
-		// 	// do things
-		// 	fmt.Printf("[msg:%v]\n", shareMsg)
-		// }
+		switch shareMsg := msg.Data.(type) {
+		case GroupSignatureShareMessage:
+
+			if msg.Sender.IsEqual(myID) {
+				fmt.Printf("msg.Sender == myID, continue?")
+				continue
+			}
+
+			member.AddGroupSignatureShareFromID(msg.Sender, shareMsg.Share)
+
+			if member.GroupSignatureSharesComplete() {
+				fmt.Printf("[member:%v] GroupSignatureSharesComplete\n", member.ID)
+				break done
+			}
+		}
 	}
 
 	return nil
