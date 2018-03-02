@@ -67,9 +67,13 @@ func main() {
 	}
 
 	// go through the channel so we can see whats going on running relay.ExecuteGroupSignature via goroutine
+	i := 0
 	for gs := range gsTestChannel {
 		if gs == nil {
-			fmt.Printf("Exit\n")
+			fmt.Printf("[member:%v] Exit ExecuteGroupSignature \n", members[i].ID)
+		}
+		i++
+		if i == beaconConfig.GroupSize {
 			break
 		}
 	}
