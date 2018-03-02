@@ -24,9 +24,8 @@ func ExecuteGroupSignature(message string, blockCounter chain.BlockCounter, chan
 	sendGroupSignatureShare(message, channel, member)
 
 	waiter := blockCounter.BlockWaiter(10)
-	fmt.Printf("[member:%v] Waiting for other group signature share...\n", member.ID)
 	waitForGroupSignatureShares(&member.BlsID, recvChan, member)
-	fmt.Printf("[member:%v] Waiting ...\n", member.ID)
+	fmt.Printf("[member:%v] Waiting for other group signature share...\n", member.ID)
 	<-waiter
 
 	return nil
@@ -48,14 +47,13 @@ done:
 		case GroupSignatureShareMessage:
 
 			if msg.Sender.IsEqual(myID) {
-				fmt.Printf("msg.Sender == myID, continue?")
 				continue
 			}
 
 			member.AddGroupSignatureShareFromID(msg.Sender, shareMsg.Share)
 
 			if member.GroupSignatureSharesComplete() {
-				fmt.Printf("[member:%v] GroupSignatureSharesComplete\n", member.ID)
+				fmt.Printf("[member:%v] Group signature process is complete\n", member.ID)
 				break done
 			}
 		}

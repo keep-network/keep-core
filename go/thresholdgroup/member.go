@@ -437,3 +437,8 @@ func (member Member) AddGroupSignatureShareFromID(senderID bls.ID, share []byte)
 func (member Member) GroupSignatureSharesComplete() bool {
 	return len(member.receivedGroupSignatureShares) == len(member.memberIDs)-1
 }
+
+// GetReceivedGroupSignatureShares returns a map of group member ids and their group signature share
+func (member Member) GetReceivedGroupSignatureShares() map[bls.ID][]byte {
+	return member.receivedGroupSignatureShares
+}

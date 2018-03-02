@@ -59,31 +59,26 @@ func main() {
 	}
 
 	message := "This is a message!"
-	// shares := make(map[bls.ID][]byte, 0)
-	// for _, member := range members {
-	// 	shares[member.BlsID] = member.SignatureShare(message)
-	// }
+	gsTestChannel := make(chan error)
+	for i := 0; i < len(members); i++ {
+		go func(i int) {
+			gsTestChannel <- relay.ExecuteGroupSignature(message, chainCounter, channel, members[i])
+		}(i)
+	}
 
-	// for _, member := range members {
-	// 	fmt.Printf(
-	// 		"[member:%v] Did we get it? %v\n",
-	// 		member.BlsID.GetHexString(),
-	// 		member.VerifySignature(shares, message))
-	// }
+	// go through the channel so we can see whats going on running relay.ExecuteGroupSignature via goroutine
+	for gs := range gsTestChannel {
+		if gs == nil {
+			fmt.Printf("Exit\n")
+			break
+		}
+	}
 
+	// Verify group signature
 	for _, member := range members {
-		go func(message string, chainCounter chain.BlockCounter, channel broadcast.Channel, member *thresholdgroup.Member) {
-			err := relay.ExecuteGroupSignature(message, chainCounter, channel, member)
-
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"[member:%v] Failed to run ExecuteGroupSignature: [%s].",
-					member.BlsID.GetHexString(),
-					err)
-				return
-			}
-
-		}(message, chainCounter, channel, member)
+		fmt.Printf(
+			"[member:%v] Verifying signature with all received group signature shares: %v\n",
+			member.ID,
+			member.VerifySignature(member.GetReceivedGroupSignatureShares(), message))
 	}
 }
