@@ -68,3 +68,9 @@ pre {
     background: rgba(255,255,255,.7);
   }
 }
+
+.scrollable {
+  overflow-y: scroll;
+  min-height: calc(100vh);
+  height: calc(100vh);
+}

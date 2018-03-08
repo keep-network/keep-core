@@ -84,7 +84,7 @@ export default class Method extends Component {
     }
     const color = colors[method.type]
     return (
-      <Segment color={color}>
+      <Segment id={`${contract.name}${method.name}`} color={color}>
         <Label ribbon="right" color={color}>
           {method.type}
           {method.payable && ', payable'}
