@@ -1,0 +1,8 @@
+buildTime = 2018-03-07T15:24:01.867Z
+target = "doxity"
+src = "contracts/*"
+dir = "pages/docs"
+out = "output"
+linkPrefix = ""
+
+[interaction]
