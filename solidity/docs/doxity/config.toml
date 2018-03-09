@@ -1,8 +1,10 @@
-buildTime = 2018-03-07T15:24:01.867Z
+buildTime = 2018-03-09T13:29:00.429Z
 target = "doxity"
 src = "contracts/*"
 dir = "pages/docs"
 out = "output"
 linkPrefix = ""
+author = "Keep Network"
+license = "MIT"
 
 [interaction]
