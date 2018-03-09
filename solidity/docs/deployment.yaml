@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: contracts-docs-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: contracts-docs-deployment
+      labels:
+        name: contracts-docs
+    spec:
+      containers:
+        - name: contracts-docs
+          image: us.gcr.io/cfc-production/contracts-docs
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: contracts-docs-svc
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 80
+  selector:
+    name: contracts-docs
+  type: NodePort

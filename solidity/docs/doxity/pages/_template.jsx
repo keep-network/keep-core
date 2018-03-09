@@ -29,7 +29,7 @@ export default class Index extends Component {
           <Menu text vertical key={child.page.data.name}>
             {child.page.data.abiDocs.sort(sortBy('type', 'name')).map(method => {
               if (method.name) return (
-                <Menu.Item name={method.name} key={`${child.page.data.name}${method.name}`}>
+                <Menu.Item as={'a'} name={method.name} key={`${child.page.data.name}${method.name}`}>
                   <Link
                     to={`${child.page.data.name}${method.name}`}
                     isDynamic={false}
