@@ -1,0 +1,101 @@
+:toc: macro
+
+= The Keep Random Beacon: An Implementation of a Threshold Relay
+
+toc::[]
+
+[abstract]
+.Abstract
+--
+The Keep Network requires a trusted source of randomness for the process of Keep
+selection. While the network requires that randomness to function correctly, the
+source of randomness is itself broadly applicable. This trusted source of
+randomness takes the form of a BLS Threshold Relay. We discuss implementation of
+this random beacon, including assumptions and mitigations for bad actors and
+poor network connectivity.
+--
+
+
+== Overview
+
+- Goals
+- Organization (core tech, state flow, incentives, ...)
+- Assumptions
+- 
+
+== Prior Work
+
+Dfinity has described their implementation of a random beacon backed by a
+threshold relay similar to the one described here in their consensus whitepaper
+footnote:[https://dfinity.org/pdf-viewer/library/dfinity-consensus.pdf]. The key
+distinction between the Dfinity implementation and the Keep implementation is
+that Keep has to contend with blockchains that do not implement the same
+primitives as the in-house Dfinity chain targeted in their paper. Concerns such
+as transaction costs and payment for beacon entries are therefore a core part of
+the incentive system built around the Keep random beacon.
+
+- DKG paper (also linked from Dfinity)
+- BLS
+
+== Core Technologies
+
+=== Dependency Management?
+
+- Repo pinning
+- Commit-hash-based dependencies
+
+=== Networking
+
+- libp2p
+- multiaddr
+- floodsub?
+
+=== Messaging
+
+- protobuf
+- sig/encryption libs for messages
+
+=== Ethereum
+
+- JSON-RPC
+
+=== BLS Implementation
+
+- bn
+- go-dfinity-crypto
+
+== System States
+
+- State diagrams
+- Details of node state, system state, chain state
+
+== Incentive Structures
+
+- Request/response instead of continuous generation to offset and reduce chain
+  network impact
+- Relay entry rewards: submitter reward, group reward, block reward
+- Staking and punishment
+
+== Upgrade Management
+
+- Upgrading nodes
+- Upgrading relay configuration
+- Upgrading relay contracts
+- Upgrade coordination/process
+
+== System Details
+
+- DKG process + messages exchanged (specific format in an appendix?)
+- Threshold signature process + messages exchanged (specific format in an appendix?)
+- On-chain call structure (appendix?)
+- On-chain event structure (appendix?)
+
+== Anticipated Updates
+
+- Tweaking incentives based on real-world observations
+- Community governance of relay contracts and configuration
+
+== Acknowledgements
+
+- Dfinity
+- Advisors
