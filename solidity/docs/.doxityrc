@@ -2,5 +2,7 @@
   "target": "doxity",
   "src": "contracts/*",
   "dir": "pages/docs",
-  "out": "output"
+  "out": "output",
+  "license": "MIT",
+  "author": "Keep Network"
 }

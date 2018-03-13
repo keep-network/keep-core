@@ -21,7 +21,7 @@
     "zeppelin-solidity": "^1.6.0"
   },
   "devDependencies": {
-    "@digix/doxity": "^0.5.2",
+    "@digix/doxity": "github:ngrinkevich/doxity#master",
     "ethereumjs-testrpc": "^6.0.2",
     "solc": "^0.4.20",
     "truffle": "^4.1.0",

@@ -1,4 +1,4 @@
-buildTime = 2018-03-09T13:29:00.429Z
+buildTime = 2018-03-13T20:11:51.338Z
 target = "doxity"
 src = "contracts/*"
 dir = "pages/docs"
