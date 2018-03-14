@@ -23,21 +23,21 @@ export default class Index extends Component {
     const onIndex = prefixLink('/') === this.props.location.pathname
     const childRoutes = this.props.route && this.props.route.childRoutes
     const docsPath = childRoutes && childRoutes[0] && childRoutes[0].path
-    const menuItems = childRoutes.map((child) => {
+    const menu = childRoutes.map((child) => {
       if (prefixLink(child.path) === this.props.location.pathname) {
         return (
-          <Menu text vertical key={child.page.data.name}>
+          <Menu text vertical key={child.page.data.name} className="sidebarMenu">
             {child.page.data.abiDocs.sort(sortBy('type', 'name')).map(method => {
               if (method.name) return (
-                <Menu.Item as={'a'} name={method.name} key={`${child.page.data.name}${method.name}`}>
-                  <Link
-                    to={`${child.page.data.name}${method.name}`}
-                    isDynamic={false}
-                    duration={500}
-                    smooth={true}
-                    containerId="mainscroll">
-                    {method.name}
-                  </Link>
+                <Menu.Item as={Link} 
+                  name={method.name}
+                  key={`${child.page.data.name}${method.name}`}
+                  to={`${child.page.data.name}${method.name}`}
+                  isDynamic={false}
+                  duration={500}
+                  smooth={true}
+                  containerId="mainscroll">
+                  {method.name}
                 </Menu.Item>
               )
             })}
@@ -49,16 +49,16 @@ export default class Index extends Component {
       <div style={{ paddingTop: '120px' }} className="pusher">
         <Menu borderless fixed="top" className="navbar">
           <Container>
-            <Menu.Item header as={Link} to={prefixLink('/')}>
+            <Menu.Item as={'a'} href="/" className="brand">
               <div>
-                <Icons.Keep width="160px" height="auto" />
+                <Icons.Keep width="160px" height="42px" />
                 <p>Contracts Documentation</p>
               </div>
             </Menu.Item>
-            <Menu.Menu position="right">
+            <Menu.Menu position="right" className="">
               {childRoutes.map((child) => {
                 return (
-                  <Menu.Item as={'a'} href={prefixLink(child.path)}>
+                  <Menu.Item key={child.page.data.name} as={'a'} href={prefixLink(child.path)}>
                     {child.page.data.name}
                   </Menu.Item>
                 )
@@ -69,9 +69,7 @@ export default class Index extends Component {
         <Container>
           <Grid>
             <Grid.Row>
-              <Grid.Column width={3}>
-                <div className="scrollable">{menuItems}</div>
-              </Grid.Column>
+              {!onIndex && <Grid.Column width={3}><div className="scrollable">{menu}</div></Grid.Column>}
               <Grid.Column width={13}>
                 <div className="scrollable" id="mainscroll">{this.props.children}</div>
               </Grid.Column>
