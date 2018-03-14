@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+message ChainMessage {
+	bytes from = 1;
+}
+
+message RelayMessage {
+	bytes from = 1;
+}
+
+message DKGMessage {
+	bytes from = 1;
+}
+
+message P2PMessage {
+	bytes from = 1;
+}
