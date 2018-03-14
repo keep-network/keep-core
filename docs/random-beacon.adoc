@@ -18,10 +18,35 @@ poor network connectivity.
 
 == Overview
 
-- Goals
-- Organization (core tech, state flow, incentives, ...)
-- Assumptions
-- 
+ - Goals
+ - Organization (core tech, state flow, incentives, ...)
+ - Assumptions
+ - High-level description
+
+The threshold relay described in this paper is a way of generating verifiable
+randomness that is resistant to bad players both in the relay network and on the
+anchoring blockchain, assumed here to be Ethereum. The basic functioning of the
+relay (further details are in the section on <<System Details>>) is:
+
+ - Some number of groups exist in the relay.
+ - An arbitrary seed value `v_s` counts as the first entry in the relay.footnote:[The
+   importance, from a security perspective, of the seed value goes away almost
+   immediately in a functioning network.]
+ - A request `r_i` is dispatched to the chain for a new entry.
+ - Information about the request is combined with the previous entry to produce
+   a new seed value `v_r`.
+ - `v_r` is used to choose a group to produce the response to the request.
+ - `v_r` is signed by at least a subset of the chosen group members, and the
+   resulting signature is the entry generated in response to the request. It is
+   published to the anchoring blockchain as the entry `v_i`.
+
+The following sections will detail how this basic function is implemented in
+practice, including notes on <<Prior Work>> that motivated this design,
+the <<Incentive Structures>> used to economically incentivize good behavior by
+network participants, <<Core Technologies>> used in the network, and finally the
+<<System Details>> that outline the implementation itself. <<Upgrade Management>>
+is also discussed, along with <<Anticipated Updates>> to the network in the near
+term.
 
 == Prior Work
 
