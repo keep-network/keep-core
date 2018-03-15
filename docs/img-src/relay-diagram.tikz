@@ -21,19 +21,23 @@
                (post-request) edge (post-request-elided)
                (post-request-elided) edge (relay-entry-block);
 
-    \node[plain] (seed-entry) [right=7cm of relay-request.two east] {$v_s$ - seed entry};
+    \node[plain] (seed-entry) [right=7.5cm of relay-request.two east] {$v_s$ - seed entry};
     \node[heading] (relay) [above=0.25cm of seed-entry] {Relay};
-    \node[plain] (relay-entry) [right=7cm of relay-entry-block.three east] {$v_i$ - relay entry};
+    \node[plain] (relay-entry) [right=7.5cm of relay-entry-block.three east] {$v_i$ - relay entry};
 
     \path [<-,dashed] (seed-entry) edge (relay-entry);
 
     \node[op] (relay-entry-seed-generation) [right=4cm of relay-request.two east] {$\times$};
     \node[plain] (relay-entry-seed) [below=of relay-entry-seed-generation] {$v_r$};
+    \node[plain] (relay-entry-seed-label) [left=0 of relay-entry-seed] {``relay entry seed''};
     \node[op] (group-combiner) [below=of relay-entry-seed] {\texttt{mod}};
     \node[draw,rectangle split,rectangle split horizontal,rectangle split parts=2]
         (group-signature-fn) [below right=1cm and -0.7cm of group-combiner]
         {$G_i$ \nodepart{two} $S_{G_i}$};
+    \node[plain] (signing-group-label) [left=0 of group-signature-fn] {``signing group"};
+    \node[plain] (groupsig-function-label) [below right=-0.1cm and 0 of group-signature-fn.north east,text width=2.6cm,align=center] {``group signature\\function"};
     \node[plain] (group-signature) [right=4.75cm of relay-entry-block.three east] {$\sigma_{G_i}$};
+    \node[plain] (groupsig-label) [below=-0.3cm and 0 of group-signature,minimum height=2ex] {``group signature''};
 
     \node[draw,circle,minimum width=2cm,minimum height=2cm] (groups) [left=of group-combiner]  {Groups};
 
@@ -43,8 +47,8 @@
                (relay-entry-seed) edge (group-combiner)
                (groups) edge (group-combiner)
                (group-combiner) edge (group-signature-fn.one north)
-               (relay-entry-seed) edge [bend left=15] (group-signature-fn.two north)
                (group-signature-fn.two south) edge (group-signature);
+    \draw [->] (relay-entry-seed) .. controls +($([yscale=0]group-signature-fn.two north) - ([yscale=0]relay-entry-seed)$) .. (group-signature-fn.two north);
 
     \path [->] (group-signature) edge (relay-entry)
                (group-signature) edge (relay-entry-block.three east)
