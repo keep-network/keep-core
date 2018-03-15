@@ -5,5 +5,6 @@
   "out": "output",
   "license": "MIT",
   "author": "Keep Network",
-  "name": "Keep Network Contracts Documentation"
+  "name": "Keep Network Contracts Documentation",
+  "linkPrefix": ""
 }

@@ -9,8 +9,26 @@ jobs:
         - run:
             name: Running testrpc
             command: testrpc
-            background: true  
+            background: true
         - run: cd solidity && npm install && npm run test
+  generate_docs_solidity:
+    docker:
+      - image: ngrinkevich/nodejs-python-solc:latest
+    steps:
+      - checkout
+      - run:
+          name: Generate solidity docs
+          command: |
+            cd solidity/docs/doxity
+            npm install
+            cd ../../
+            npm run docs
+            mkdir -p /tmp/docs
+            cp -r docs/output /tmp/docs/solidity
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - solidity/*
   build_client:
     docker:
       - image: docker:17.05.0-ce-git
@@ -63,9 +81,11 @@ workflows:
   docs:
     jobs:
       - generate_docs
+      - generate_docs_solidity
       - upload_docs:
           requires:
             - generate_docs
+            - generate_docs_solidity
   go:
     jobs:
       - build_client
