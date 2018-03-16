@@ -20,8 +20,8 @@ jobs:
           name: Generate solidity docs
           command: |
             cd solidity && npm install
-            cd solidity/docs/doxity && npm install
-            cd ../ && make clean
+            cd docs/doxity && npm install
+            cd ../../ && make clean
             mkdir -p /tmp/docs && make docs
             cp -r docs/output /tmp/docs/solidity
       - persist_to_workspace:
