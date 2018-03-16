@@ -112,15 +112,98 @@ occurs between nodes.
 
 == System States
 
-- State diagrams
-- Details of node state, system state, chain state
+ - State diagrams
+ - Details of node state, system state, chain state
 
-== Incentive Structures
+== Attack Mitigations
 
-- Request/response instead of continuous generation to offset and reduce chain
-  network impact
-- Relay entry rewards: submitter reward, group reward, block reward
-- Staking and punishment
+The Keep threshold relay is designed to mitigate as many instances of malicious
+behavior as possible, as well as to encourage stakers to employ well-networked
+and highly available systems for their clients. This is done in two parts:
+choosing robust technical implementations (like threshold signatures) that are
+resilient to high degrees of misbehavior and network failure, and calibrating
+the incentive structure to ensure strong punishments for malicious actions. We
+discuss several potential attacks and their mitigations here.
+
+=== Miner, Requestor, and Relay Influence
+
+Let us remember that the most basic construction of a request-based threshold
+relay uses the previous value mod the number of active groups to determine the
+next group. This next group then signs the previous value to produce the next
+value. This happens every time a relay entry (that is, a random number) is
+requested. There are a few key problems that manifest in this simple
+construction:
+
+ - The relay can collude to know random numbers an infinite number of steps
+   ahead of the requests.
+ - Miners who have compromised a group can collude to censor a request until the
+   previous entry would select a group they control.
+ - Miners who have compromised a group can collude to censor a request that
+   would select the group they control if they know the outcome would not be to
+   their advantage.
+ - A requestor who has compromised a group can wait to put a request in until
+   the previous entry would select a group they control.
+ - A requestor who has comporomised a group can wait to put a request in if it
+   would select the group they control and the outcome would not be to their
+   advantage.
+
+We address each of these below. We assume here that controlling one group is
+expensive, and controlling all groups is prohibitively so; see the section on
+<<Incentives>> for more on what that requires.
+
+==== Relay Frontrunning
+
+One of the disadvantages of the simple construction above is that future entries
+can be computed in advance of their use. For example, if it were known that a
+lottery was being held in _N_ blocks, the relay could collude to run ahead that
+number of entries so as to have the relay's value before the entry came due. The
+Keep implementation of the relay mitigates this by using information about the
+request to adjust the previous entry before signing it. In particular, the relay
+provides the requestor the ability to specify a _seed_, which is XORed with the
+previous entry to allow the requestor to add entropy to the final result.
+
+NOTE: The seed itself must be unpredictable to the relay, or the relay could
+still frontrun with the above mitigation; however, the mitigation for miner
+censorship below further limits the ability to frontrun.
+
+==== Miner Censorship
+
+Miners can choose not to include a transaction that does not benefit them. For
+example, if a given relay request comes in for a lottery the miner is also
+participating in, and the group that will be selected is not under their
+control, or the group _is_ under their control and they can determine the next
+entry would not be favorable to them, the miner could censor the transaction
+and effectively get a second chance at winning the lottery. The Keep
+implementation of the relay mitigates this by using information from the block
+to affect the choice of the group.
+
+A simple implementation here could use the block hash of the request block XORed
+with the previous entry, then mod against the number of groups to change the
+result. However, miners have some control over block hashes as well. Instead,
+the Keep relay waits 2 blocks after the request is seen, and uses these two
+block hashes to decide the group. This elevates the requirement to having miners
+frontrun by at least 2 blocks before being able to decide to censor a request.
+
+==== Requestor Cheating
+
+The last player in the set of actors involved in a relay interaction is the
+requestor. The requestor is given the ability to add entropy to their request by
+providing a seed to make the signing value less predictable. However, this also
+gives the requestor the potential to influence the final outcome. By mixing in
+the miner censorship mitigation, which makes the signing group unpredictable
+until after the request is made, we also reduce the requestor's ability to know
+who the signing group will be at request time.
+
+=== Denial of Service
+
+Denial of service attacks are a problem in two phases of the relay's operation:
+group formation and relay response generation. We address each of these below,
+but they share the requirement that either a player outside or inside the relay
+be able to know enough about the clients in a group to launch DoS attacks
+against them.
+
+ - DoS of the signing group
+ - DoS during group creation
 
 == Upgrade Management
 
