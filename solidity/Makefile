@@ -4,6 +4,7 @@ SHELL = /bin/bash
 
 clean:
 	rm -rf docs/output
+	rm -rf docs/doxity/pages/docs
 
 docs: 
 	bash scripts/docs.sh
