@@ -1,3 +1,4 @@
+#!/bin/sh
 alias flatten="solidity_flattener --solc-paths zeppelin-solidity=$(pwd)/node_modules/zeppelin-solidity"
 
 flatten contracts/KeepToken.sol --output docs/contracts/KeepToken.sol

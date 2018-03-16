@@ -8,8 +8,7 @@
   },
   "scripts": {
     "truffle": "truffle",
-    "test": "truffle test",
-    "docs": "scripts/docs.sh"
+    "test": "truffle test"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
   "license": "MIT",
@@ -18,10 +17,10 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "zeppelin-solidity": "^1.6.0"
+    "zeppelin-solidity": "^1.7.0"
   },
   "devDependencies": {
-    "@digix/doxity": "github:ngrinkevich/doxity#master",
+    "@digix/doxity": "github:keep-network/doxity#master",
     "ethereumjs-testrpc": "^6.0.2",
     "solc": "^0.4.20",
     "truffle": "^4.1.0",

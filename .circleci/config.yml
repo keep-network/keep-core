@@ -19,11 +19,10 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            cd solidity/docs/doxity
-            npm install
-            cd ../../
-            npm run docs
-            mkdir -p /tmp/docs
+            cd solidity && npm install
+            cd solidity/docs/doxity && npm install
+            cd ../ && make clean
+            mkdir -p /tmp/docs && make docs
             cp -r docs/output /tmp/docs/solidity
       - persist_to_workspace:
           root: /tmp/docs
