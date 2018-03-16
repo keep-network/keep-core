@@ -59,8 +59,29 @@ primitives as the in-house Dfinity chain targeted in their paper. Concerns such
 as transaction costs and payment for beacon entries are therefore a core part of
 the incentive system built around the Keep random beacon.
 
-- DKG paper (also linked from Dfinity)
-- BLS
+As described in the above paper, at the heart of the relay beacon is the
+signature scheme described by Dan Boneh, Ben Lynn, and Hovav Shacham in
+footnote:[D. Boneh, B. Lynn and H. Shacham, “Short signatures from the Weil
+pairing”, Advances in Cryptology – ASIACRYPT 2001, Lecture Notes in Computer
+Science, 2248 (2001), 514–532. Full version: Journal of Cryptology, 17 (2004),
+297–319.], termed BLS. Three properties of the scheme are of particular use in
+this case: BLS signatures can be used in _threshold_ mode, where _k_ of _n_
+participants are sufficient to produce a combined signature; BLS threshold
+signatures produce the same final signature irrespective of the participants;
+and BLS signatures are typically shorter than those of many other schemes.
+
+Finally, underpinning the process of generating new groups for BLS threshold
+signatures in the system is a distributed key generation algorithm based on work
+by Gennaro, Jarecki, Krawczyk, and Rabin footnote:[R. Gennaro, S. Jarecki, H.
+Krawczyk, and T. Rabin. Advances in Cryptology — EUROCRYPT ’99: International
+Conference on the Theory and Application of Cryptographic Techniques Prague,
+Czech Republic, May 2–6, 1999 Proceedings, chapter Secure Distributed Key
+Generation for Discrete-Log Based Cryptosystems, pages 295–310. Springer Berlin
+Heidelberg, Berlin, Heidelberg, 1999 ;
+http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz], as also described in the
+Dfinity paper above. The Keep relay beacon publishes group public keys to the
+anchoring blockchain and does member selection on-chain, but key generation
+occurs between nodes.
 
 == Core Technologies
 
