@@ -1,9 +1,11 @@
 #!/bin/sh
 shopt -s expand_aliases
+
 alias flatten="solidity_flattener --solc-paths zeppelin-solidity=$(pwd)/node_modules/zeppelin-solidity"
 
 mkdir -p docs/contracts docs/output docs/doxity/pages/docs
 
+source ~/venv/bin/activate
 flatten contracts/KeepToken.sol --output docs/contracts/KeepToken.sol
 flatten contracts/TokenStaking.sol --output docs/contracts/TokenStaking.sol
 flatten contracts/TokenGrant.sol --output docs/contracts/TokenGrant.sol
