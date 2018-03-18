@@ -6,5 +6,5 @@
   "license": "MIT",
   "author": "Keep Network",
   "name": "Keep Network Contracts Documentation",
-  "linkPrefix": ""
+  "linkPrefix": "/doxity/solidity"
 }
