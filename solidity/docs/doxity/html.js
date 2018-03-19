@@ -26,11 +26,12 @@ export default class Html extends Component {
           />
           <title>{title}</title>
           <link href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.4/semantic.min.css" rel="stylesheet" />
+          <base href="http://docs.keep.network/doxity/solidity/"/>
           {css}
         </head>
         <body>
           <div id="react-mount" dangerouslySetInnerHTML={{ __html: this.props.body }} />
-          <script src={prefixLink(`/bundle.js?t=${BUILD_TIME}`)} />
+          <script src={`./bundle.js?t=${BUILD_TIME}`} />
         </body>
       </html>
     )
