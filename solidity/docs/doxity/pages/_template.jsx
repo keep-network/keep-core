@@ -58,7 +58,7 @@ export default class Index extends Component {
             <Menu.Menu position="right" className="">
               {childRoutes.map((child) => {
                 return (
-                  <Menu.Item key={child.page.data.name} as={'a'} href={'./docs/'+child.page.data.name}>
+                  <Menu.Item key={child.page.data.name} as={'a'} href={'./docs/'+child.page.data.name+'/'}>
                     {child.page.data.name}
                   </Menu.Item>
                 )
