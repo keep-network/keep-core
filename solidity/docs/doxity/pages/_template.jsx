@@ -24,7 +24,7 @@ export default class Index extends Component {
     const childRoutes = this.props.route && this.props.route.childRoutes
     const docsPath = childRoutes && childRoutes[0] && childRoutes[0].path
     const menu = childRoutes.map((child) => {
-      if (prefixLink(child.path) === this.props.location.pathname) {
+      if (child.path === this.props.location.pathname) {
         return (
           <Menu text vertical key={child.page.data.name} className="sidebarMenu">
             {child.page.data.abiDocs.sort(sortBy('type', 'name')).map(method => {
@@ -58,7 +58,7 @@ export default class Index extends Component {
             <Menu.Menu position="right" className="">
               {childRoutes.map((child) => {
                 return (
-                  <Menu.Item key={child.page.data.name} as={'a'} href={'.'+child.path}>
+                  <Menu.Item key={child.page.data.name} as={'a'} href={'./docs/'+child.page.data.name}>
                     {child.page.data.name}
                   </Menu.Item>
                 )
