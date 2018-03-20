@@ -19,6 +19,8 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
+            echo "Add baseUrl http://docs.keep.network/$CIRCLE_BRANCH/solidity/ to solidity/docs/.doxityrc"
+            sed -i '2i "baseUrl": "http://docs.keep.network/'$CIRCLE_BRANCH'/solidity/",' solidity/docs/.doxityrc
             cd solidity && npm install
             cd docs/doxity && npm install
             cd ../../ && make clean
