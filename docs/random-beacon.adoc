@@ -48,13 +48,18 @@ network participants, <<Core Technologies>> used in the network, and finally the
 is also discussed, along with <<Anticipated Updates>> to the network in the near
 term.
 
+.Keep Threshold Relay
+image::img/generated/relay-diagram.png[Diagram of the Keep threshold relay]
+
 == Prior Work
 
 Dfinity has described their implementation of a random beacon backed by a
-threshold relay similar to the one described here in their consensus whitepaper
-footnote:[https://dfinity.org/pdf-viewer/library/dfinity-consensus.pdf]. The key
-distinction between the Dfinity implementation and the Keep implementation is
-that Keep has to contend with blockchains that do not implement the same
+threshold relay in their consensus whitepaper
+footnote:[https://dfinity.org/pdf-viewer/library/dfinity-consensus.pdf]. The
+relay described in this paper is heavily based on the one devised by the Dfinity
+team, with certain adjustments for implementation on an existing blockchain. The
+key distinction between the Dfinity implementation and the Keep implementation
+is that Keep has to contend with blockchains that do not implement the same
 primitives as the in-house Dfinity chain targeted in their paper. Concerns such
 as transaction costs and payment for beacon entries are therefore a core part of
 the incentive system built around the Keep random beacon.
@@ -68,7 +73,8 @@ Science, 2248 (2001), 514–532. Full version: Journal of Cryptology, 17 (2004),
 this case: BLS signatures can be used in _threshold_ mode, where _k_ of _n_
 participants are sufficient to produce a combined signature; BLS threshold
 signatures produce the same final signature irrespective of the participants;
-and BLS signatures are typically shorter than those of many other schemes.
+and BLS signatures are typically shorter than those of many other threshold
+signature schemes.
 
 Finally, underpinning the process of generating new groups for BLS threshold
 signatures in the system is a distributed key generation algorithm based on work
