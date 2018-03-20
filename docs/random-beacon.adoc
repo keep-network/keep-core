@@ -196,10 +196,17 @@ frontrun by at least 2 blocks before being able to decide to censor a request.
 The last player in the set of actors involved in a relay interaction is the
 requestor. The requestor is given the ability to add entropy to their request by
 providing a seed to make the signing value less predictable. However, this also
-gives the requestor the potential to influence the final outcome. By mixing in
-the miner censorship mitigation, which makes the signing group unpredictable
-until after the request is made, we also reduce the requestor's ability to know
-who the signing group will be at request time.
+gives the requestor the potential to influence the final outcome.
+
+So why go forward 2 blocks for group selection instead of looking at a previous
+block? If the group selection were based on a prior block, a requestor would
+always be able to know which group their request would go to. Since the
+requestor specifies a seed that influences the value signed by the selected
+group, the requestor could wait to submit a request until they knew the signing
+group would be the group the requestor controls. Thus, by mixing in the miner
+censorship mitigation, which makes the signing group unpredictable until after
+the request is made, we also reduce the requestor's ability to know who the
+signing group will be at request time.
 
 === Denial of Service
 
