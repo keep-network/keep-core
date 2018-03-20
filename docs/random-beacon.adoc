@@ -134,12 +134,12 @@ mechanics of the system here.
 
 === Miner, Requestor, and Relay Influence
 
-Let us remember that the most basic construction of a request-based threshold
-relay uses the previous value mod the number of active groups to determine the
-next group. This next group then signs the previous value to produce the next
-value. This happens every time a relay entry (that is, a random number) is
-requested. There are a few key problems that manifest in this simple
-construction:
+Let us remember that the most basic construction (discussed in the <<Overview>>)
+of a request-based threshold relay uses the previous value mod the number of
+active groups to determine the next group. This next group then signs the
+previous value to produce the next value. This happens every time a relay entry
+(that is, a random number) is requested. There are a few key problems that
+manifest in this simple construction:
 
  - The relay can collude to know random numbers an infinite number of steps
    ahead of the requests.
