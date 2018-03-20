@@ -49,7 +49,7 @@ export default class Index extends Component {
       <div style={{ paddingTop: '120px' }} className="pusher">
         <Menu borderless fixed="top" className="navbar">
           <Container>
-            <Menu.Item as={'a'} href="/" className="brand">
+            <Menu.Item as={'a'} href={`${config.baseUrl}`} className="brand">
               <div>
                 <Icons.Keep width="160px" height="42px" />
                 <p>Contracts Documentation</p>
