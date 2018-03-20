@@ -211,13 +211,14 @@ signing group will be at request time.
 === Denial of Service
 
 Denial of service attacks are a problem in two phases of the relay's operation:
-group formation and relay response generation. We address each of these below,
-but they share the requirement that either a player outside or inside the relay
-be able to know enough about the clients in a group to launch DoS attacks
-against them.
+group formation and relay response generation. The relay itself can also be
+DoSed by too many requests. The first two in particular share the requirement
+that either a player outside or inside the relay be able to know enough about
+the clients in a group to launch DoS attacks against them.
 
  - DoS of the signing group
  - DoS during group creation
+ - DoS of the relay
 
 == Incentives
 
