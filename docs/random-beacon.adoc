@@ -121,7 +121,7 @@ occurs between nodes.
  - State diagrams
  - Details of node state, system state, chain state
 
-== Attack Mitigations
+== Mechanical Attack Mitigations
 
 The Keep threshold relay is designed to mitigate as many instances of malicious
 behavior as possible, as well as to encourage stakers to employ well-networked
@@ -129,7 +129,8 @@ and highly available systems for their clients. This is done in two parts:
 choosing robust technical implementations (like threshold signatures) that are
 resilient to high degrees of misbehavior and network failure, and calibrating
 the incentive structure to ensure strong punishments for malicious actions. We
-discuss several potential attacks and their mitigations here.
+discuss several potential attacks that are mitigated via adjustments to the
+mechanics of the system here.
 
 === Miner, Requestor, and Relay Influence
 
@@ -210,6 +211,12 @@ against them.
 
  - DoS of the signing group
  - DoS during group creation
+
+== Incentives
+
+ - Mitigations to attacks based on incentives
+ - Cost of owning a group
+ - Cost of owning a majority of groups
 
 == Upgrade Management
 
