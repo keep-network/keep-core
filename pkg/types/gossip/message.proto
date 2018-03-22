@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+// Envelope contains a marshalled Message as the payload
+// and a signature over the payload as signature.
+message Envelope {
+  bytes payload = 1;
+  bytes signature = 2;
+}
