@@ -18,5 +18,8 @@ contracts/KeepRelayBeacon_sol_KeepRelayBeacon.abi: contracts/KeepRelayBeacon.sol
 	( cd ./lib/KeepRelayBeacon ; go build )
 
 local_migrate:
-	truffle migrate --reset	--network local
+	truffle migrate --reset --network local
+
+local_test:
+	truffle test --network local
 

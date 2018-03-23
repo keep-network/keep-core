@@ -1,0 +1,5 @@
+contracts/*.go
+contracts/*.abi
+contracts/zeppelin-solidity/
+lib/
+local.migrate.out
