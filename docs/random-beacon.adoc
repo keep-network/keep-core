@@ -222,6 +222,45 @@ the clients in a group to launch DoS attacks against them.
 
 == Incentives
 
+The Keep threshold relay is designed to minimize the amount of trust that needs
+to be placed in any individual node in the system. As much as possible, the
+mechanics of the relay themselves prevent inappropriate manipulation of the
+system, but this can only take us so far, since the individual nodes are run by
+unvetted participants. To deal with this, the staking, rewards, and punishment
+systems must make honest participation the most lucrative behavior, and make
+dishonest behavior as undesirable as possible.
+
+=== Stakes
+
+To participatein the relay, a node must be associated with an account that has
+staked a minimum amount of its KEEP. footnote:[The mechanics of discovering and
+updating minimum stakes are discussed in the <<System Details>> section.] Note
+also that unstaking KEEP intentionally takes an extended period of time (on the
+order of weeks). This discourages attacks that will reduce the value of the KEEP
+token, since such attacks will also cost a staker at least the minimum stake's
+value.
+
+The minimum stake is carefully calibrated to be accessible for early network
+participants, while still being sufficiently large to present a meaningful
+punishment if it is slashed for a misbehaving node.
+
+ - How do we set the minimum stake?
+
+=== Punishments
+
+When designing incentives, we have to consider the distinction between wilfful
+misbehavior and accidental misbehavior. In particular, the system should be
+structured so as to tolerate some amount of network jitter for a given node,
+while not allowing for a group to fail to produce a signature when it is
+requested. The key observation here is that what matters is that the network be
+able to respond to any request for a random number in a timely fashion. This
+means, given the threshold nature of the signature mechanism, that we must
+ensure at least half of a given group's nodes are available at any given moment.
+
+Moreover, we must ensure that freeloaders are penalized. This means that a node
+should not be capable of joining a relay group and then never do the work to
+sign a request.
+
  - Mitigations to attacks based on incentives
  - Cost of owning a group
  - Cost of owning a majority of groups
@@ -234,6 +273,13 @@ the clients in a group to launch DoS attacks against them.
 - Upgrade coordination/process
 
 == System Details
+
+The minimum stake required for participation in the relay is configured on
+chain, and can be discovered by querying the `KeepRelayBeacon` contract for the
+`minimumStake()`. Changes to the minimum stake are broadcast as
+`MinimumStakeChanged(uint256 old, uint256 new)` events from the same contract.
+ The frequency with which the minimum stake will be updated is currently
+ unspecified but is expected to be low.
 
 - DKG process + messages exchanged (specific format in an appendix?)
 - Threshold signature process + messages exchanged (specific format in an appendix?)
