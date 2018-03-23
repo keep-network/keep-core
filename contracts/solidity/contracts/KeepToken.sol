@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
+import './zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 
 /**
  @dev Interface of recipient contract for approveAndCall pattern.
@@ -20,7 +20,7 @@ contract KeepToken is StandardToken {
   /**
    * @dev Gives msg.sender all of existing tokens.
    */
-  function KeepToken() {
+  function KeepToken() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }

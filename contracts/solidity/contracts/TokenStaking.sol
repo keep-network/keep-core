@@ -1,8 +1,8 @@
 pragma solidity ^0.4.18;
 
-import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
-import 'zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol';
-import 'zeppelin-solidity/contracts/math/SafeMath.sol';
+import './zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
+import './zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol';
+import './zeppelin-solidity/contracts/math/SafeMath.sol';
 
 /**
  * @title TokenStaking
@@ -18,6 +18,7 @@ contract TokenStaking {
 
   event ReceivedApproval(uint256 _value);
   event Staked(address indexed from, uint256 value);
+  event AnyStaked(address from, uint256 value);
   event InitiatedUnstake(uint256 id);
   event FinishedUnstake(uint256 id);
 
@@ -39,7 +40,7 @@ contract TokenStaking {
    * @param _tokenAddress Address of a token that will be linked to this contract.
    * @param _delay Withdrawal delay for unstake.
    */
-  function TokenStaking(address _tokenAddress, uint256 _delay) {
+  function TokenStaking(address _tokenAddress, uint256 _delay) public {
     require(_tokenAddress != address(0x0));
     token = StandardToken(_tokenAddress);
     withdrawalDelay = _delay;
@@ -53,7 +54,9 @@ contract TokenStaking {
    * @param _token Token contract address.
    * @param _extraData Any extra data.
   */
-  function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) {
+  function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public {
+	_extraData = _extraData;	// Make parameter used.
+
     ReceivedApproval(_value);
 
     // Make sure provided token contract is the same one linked to this contract.
@@ -68,6 +71,7 @@ contract TokenStaking {
     // Maintain a record of the stake amount by the sender.
     balances[_from] = balances[_from].add(_value);
     Staked(_from, _value);
+    AnyStaked(_from, _value);
   }
 
   /**

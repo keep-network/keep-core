@@ -1,8 +1,8 @@
 pragma solidity ^0.4.18;
 
-import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
-import 'zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol';
-import 'zeppelin-solidity/contracts/math/SafeMath.sol';
+import './zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
+import './zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol';
+import './zeppelin-solidity/contracts/math/SafeMath.sol';
 
 /**
  * @title TokenGrant
@@ -62,7 +62,7 @@ contract TokenGrant {
    * @param _tokenAddress address of a token that will be linked to this contract.
    * @param _delay withdrawal delay for unstake.
    */
-  function TokenGrant(address _tokenAddress, uint256 _delay) {
+  function TokenGrant(address _tokenAddress, uint256 _delay) public {
     require(_tokenAddress != address(0x0));
     token = StandardToken(_tokenAddress);
     stakeWithdrawalDelay = _delay;
