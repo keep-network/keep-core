@@ -1,4 +1,5 @@
 contracts/*.go
+,*
 contracts/*.abi
 contracts/zeppelin-solidity/
 lib/
