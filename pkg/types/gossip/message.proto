@@ -5,25 +5,26 @@ package gossip;
 
 // Envelope contains a marshalled Message as the payload
 // and a signature over the payload as signature.
-// It also contains the Identities of the sender and receiver.
+// It also contains the (optional) Identities of the sender and receiver.
 // Optionally may contain an encrypted Envelope (in which case the payload will be empty).
 message Envelope {
-  // A Marshaled GossipMessage
-  bytes payload = 1;
-
   // The PublicKey and BLS ID of the sender and receiver
-  Identity sender = 2;
-  Identity receiver = 3;
+  Identity sender = 1;
+  Identity receiver = 2;
+
+  // A Marshaled GossipMessage
+  bytes payload = 3;
 
   // Signature of the message
   bytes signature = 4;
 
+  // A marshalled, encrypted message; if this exists, payload is empty
   EncryptedEnvelope encrypted_envelope = 5;
 
   // TODO: this envelope needs an enum detailing which type of GossipMesssage it is.
 }
 
-// EncryptedEnvelope is a marshalled encrypted message.
+// EncryptedEnvelope is a marshalled, encrypted message.
 message EncryptedEnvelope {
   bytes payload = 1;
   bytes signature = 4;
