@@ -27,7 +27,7 @@
 
 [[constraint]]
   name = "github.com/gogo/protobuf"
-  version = "1.0.0"
+  revision = "49944b4a4b085da44c43d4b233ea40787396371f"
 
 [prune]
   go-tests = true
