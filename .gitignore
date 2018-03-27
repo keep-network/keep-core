@@ -1,5 +1,7 @@
 node_modules/
 build/
+vendor/
+_local/
 *.swp
 *.swo
 *.DS_Store
