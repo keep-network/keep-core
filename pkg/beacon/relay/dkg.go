@@ -5,9 +5,9 @@ import (
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/dfinity/go-dfinity-crypto/rand"
-	"github.com/keep-network/keep-core/go/beacon/broadcast"
-	"github.com/keep-network/keep-core/go/beacon/chain"
-	"github.com/keep-network/keep-core/go/thresholdgroup"
+	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
+	"github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 // JoinMessage is an empty message payload indicating a member has joined. The

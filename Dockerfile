@@ -50,33 +50,22 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-RUN mkdir -p $APP_DIR/go
-
-WORKDIR $APP_DIR/go
-
-RUN go get github.com/gogo/protobuf/proto
-RUN go get github.com/gogo/protobuf/jsonpb
-RUN go get github.com/gogo/protobuf/protoc-gen-gogoslick
-RUN go get github.com/gogo/protobuf/gogoproto
-
-RUN go get -u github.com/golang/dep/cmd/dep
-COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
-RUN dep ensure --vendor-only
-
 COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
-COPY ./go/ $APP_DIR/go/
-COPY ./pkg/ $APP_DIR/pkg/
+RUN mkdir -p $APP_DIR
 
-WORKDIR $APP_DIR/pkg/types
-RUN go generate
+WORKDIR $APP_DIR
 
-WORKDIR $APP_DIR/pkg/
-RUN dep init
-RUN dep ensure --vendor-only
+RUN go get -u github.com/gogo/protobuf/protoc-gen-gogoslick github.com/golang/dep/cmd/dep
 
-WORKDIR $APP_DIR/go/
+COPY ./Gopkg.toml ./Gopkg.lock ./
+RUN dep ensure -v --vendor-only
+
+COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
+RUN go generate ./.../gen
+
+COPY ./ $APP_DIR/
 
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH && \
