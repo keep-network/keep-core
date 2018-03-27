@@ -50,6 +50,9 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
+COPY --from=cbuild $LIB_DIR $LIB_DIR
+COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
+
 RUN mkdir -p $APP_DIR/go
 
 WORKDIR $APP_DIR/go
@@ -62,9 +65,6 @@ RUN go get github.com/gogo/protobuf/gogoproto
 RUN go get -u github.com/golang/dep/cmd/dep
 COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
 RUN dep ensure --vendor-only
-
-COPY --from=cbuild $LIB_DIR $LIB_DIR
-COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
 COPY ./go/ $APP_DIR/go/
 COPY ./pkg/ $APP_DIR/pkg/
