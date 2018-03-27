@@ -5,7 +5,7 @@ package gossip;
 
 // Envelope contains a marshalled Message as the payload
 // and a signature over the payload as signature.
-// It also contains the (optional) Identities of the sender and receiver.
+// It also contains the Identities of the sender and receiver (optional).
 // Optionally may contain an encrypted Envelope (in which case the payload will be empty).
 message Envelope {
   // The PublicKey and BLS ID of the sender and receiver
