@@ -358,3 +358,6 @@ chain, and can be discovered by querying the `KeepRelayBeacon` contract for the
 
 - Dfinity
 - Advisors
+
+[glossary]
+include::glossary.adoc[]
