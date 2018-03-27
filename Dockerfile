@@ -60,7 +60,7 @@ WORKDIR $APP_DIR
 RUN go get -u github.com/gogo/protobuf/protoc-gen-gogoslick github.com/golang/dep/cmd/dep
 
 COPY ./Gopkg.toml ./Gopkg.lock ./
-RUN dep ensure --vendor-only
+RUN dep ensure -v --vendor-only
 
 COPY ./ $APP_DIR/
 
