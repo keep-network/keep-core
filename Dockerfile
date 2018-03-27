@@ -62,16 +62,10 @@ RUN go get -u github.com/gogo/protobuf/protoc-gen-gogoslick github.com/golang/de
 COPY ./Gopkg.toml ./Gopkg.lock ./
 RUN dep ensure -v --vendor-only
 
+COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
+RUN go generate ./.../gen
+
 COPY ./ $APP_DIR/
-
-WORKDIR $APP_DIR/pkg/types
-RUN go generate
-
-WORKDIR $APP_DIR/pkg/
-RUN dep init
-RUN dep ensure --vendor-only
-
-WORKDIR $APP_DIR/
 
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH && \
