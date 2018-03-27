@@ -57,10 +57,7 @@ RUN mkdir -p $APP_DIR/go
 
 WORKDIR $APP_DIR/go
 
-RUN go get github.com/gogo/protobuf/proto
-RUN go get github.com/gogo/protobuf/jsonpb
 RUN go get github.com/gogo/protobuf/protoc-gen-gogoslick
-RUN go get github.com/gogo/protobuf/gogoproto
 
 RUN go get -u github.com/golang/dep/cmd/dep
 COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
