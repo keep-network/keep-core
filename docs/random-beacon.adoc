@@ -7,12 +7,12 @@ toc::[]
 [abstract]
 .Abstract
 --
-The Keep Network requires a trusted source of randomness for the process of Keep
-selection. While the network requires that randomness to function correctly, the
-source of randomness is itself broadly applicable. This trusted source of
-randomness takes the form of a BLS Threshold Relay. We discuss implementation of
-this random beacon, including assumptions and mitigations for bad actors and
-poor network connectivity.
+The Keep Network requires a trusted source of randomness for the process of
+trustless group election. While the network requires that randomness to function
+correctly, the source of randomness is itself broadly applicable. This trusted
+source of randomness takes the form of a BLS Threshold Relay. We discuss
+implementation of this random beacon, including assumptions and mitigations for
+bad actors and poor network connectivity.
 --
 
 
