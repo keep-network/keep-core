@@ -5,10 +5,10 @@ import (
 	"os"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
-	"github.com/keep-network/keep-core/go/beacon/broadcast"
-	"github.com/keep-network/keep-core/go/beacon/chain"
-	"github.com/keep-network/keep-core/go/beacon/relay"
-	"github.com/keep-network/keep-core/go/thresholdgroup"
+	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
+	"github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 func main() {
