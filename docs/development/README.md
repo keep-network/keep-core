@@ -15,6 +15,20 @@ work that the formula will explain when you install it.
 Once you've installed `bn`, you can run `dep ensure` in the `go/` directory of
 this repository and then you are ready to build.
 
+#### Protobufs
+
+In addition to installing `bn` and `dep`, you'll also need to install the protobuf compiler.
+On OSX, this will be `brew install protobuf` (requirement: need `homebrew installed first`).
+
+Lastly, you'll need to get the protoc-gen-gogo toolchain:
+
+    ```
+    go get github.com/gogo/protobuf/proto
+    go get github.com/gogo/protobuf/jsonpb
+    go get github.com/gogo/protobuf/protoc-gen-gogo
+    go get github.com/gogo/protobuf/gogoproto
+    ```
+
 ### Relay States
 
 There is a set of threshold relay state diagrams auto-generated from this
