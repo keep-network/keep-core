@@ -8,11 +8,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
 	"github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/net/gen/gossip"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 func main() {
 	bls.Init(bls.CurveFp382_1)
+
+	_ = gossip.GossipMessage{}
 
 	beaconConfig := chain.GetBeaconConfig()
 
