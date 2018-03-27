@@ -45,6 +45,7 @@ ENV GOPATH=/go \
 
 RUN apk add --update --no-cache \
 	g++ \
+	protobuf \
 	git && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
@@ -52,6 +53,11 @@ RUN apk add --update --no-cache \
 RUN mkdir -p $APP_DIR/go
 
 WORKDIR $APP_DIR/go
+
+RUN go get github.com/gogo/protobuf/proto
+RUN go get github.com/gogo/protobuf/jsonpb
+RUN go get github.com/gogo/protobuf/protoc-gen-gogoslick
+RUN go get github.com/gogo/protobuf/gogoproto
 
 RUN go get -u github.com/golang/dep/cmd/dep
 COPY ./go/Gopkg.toml ./go/Gopkg.lock ./
@@ -61,6 +67,16 @@ COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
 COPY ./go/ $APP_DIR/go/
+COPY ./pkg/ $APP_DIR/pkg/
+
+WORKDIR $APP_DIR/pkg/types
+RUN go generate
+
+WORKDIR $APP_DIR/pkg/
+RUN dep init
+RUN dep ensure --vendor-only
+
+WORKDIR $APP_DIR/go/
 
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH && \
