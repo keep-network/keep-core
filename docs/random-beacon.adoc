@@ -45,8 +45,7 @@ practice, including notes on <<Prior Work>> that motivated this design,
 the <<Incentive Structures>> used to economically incentivize good behavior by
 network participants, <<Core Technologies>> used in the network, and finally the
 <<System Details>> that outline the implementation itself. <<Upgrade Management>>
-is also discussed, along with <<Anticipated Updates>> to the network in the near
-term.
+is also discussed.
 
 .Keep Threshold Relay
 image::img/generated/relay-diagram.png[Diagram of the Keep threshold relay]
@@ -348,11 +347,6 @@ chain, and can be discovered by querying the `KeepRelayBeacon` contract for the
 - Threshold signature process + messages exchanged (specific format in an appendix?)
 - On-chain call structure (appendix?)
 - On-chain event structure (appendix?)
-
-== Anticipated Updates
-
-- Tweaking incentives based on real-world observations
-- Community governance of relay contracts and configuration
 
 == Acknowledgements
 
