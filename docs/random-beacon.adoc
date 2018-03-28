@@ -238,8 +238,9 @@ staked a minimum amount of its KEEP. footnote:[The mechanics of discovering and
 updating minimum stakes are discussed in the <<System Details>> section.] Note
 also that unstaking KEEP intentionally takes an extended period of time (on the
 order of weeks). This discourages attacks that will reduce the value of the KEEP
-token, since such attacks will also cost a staker at least the minimum stake's
-value.
+token by leaving the attacker at greater risk of exposure and therefore slashing
+of their stake, as well ensuring the staker would themselves incur the reduction
+in value of their stake.
 
 The minimum stake is carefully calibrated to be accessible for early network
 participants, while still being sufficiently large to present a meaningful
