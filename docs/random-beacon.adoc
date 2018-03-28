@@ -297,16 +297,21 @@ following table:
 | `(1 / C)^t x N`
 // ``
 
+| An entity controlling `D` stakers having all `D` chosen for a new group
+| `(D / C)^t`
+// ``
+
+| An entity controlling `D` stakers while `N` new groups are created, ending up
+  with control over one group
+| `(D / c)^t x N`
+// `` Unclear: how do we generalize to probability of controlling >1 group?
+
 | A given group being chosen to create the next relay entry
 | `1 / G`
 
-| An entity controlling `d` stakers having a group they control over `N` new groups
-| `(D / C)^t x N`
-// ``
-
-| An entity controlling `d` stakers having their group chosen to create the next
-  relay entry
-| `((D / C)^t x N) / G`
+| An entity controlling `D` stakers while `N` new groups are created, ending up
+  with their group chosen to create the next relay entry
+| `((D / c)^t x N) / G`
 // `` Check me plz
 |=========
 
