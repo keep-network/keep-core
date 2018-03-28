@@ -347,8 +347,9 @@ The minimum stake required for participation in the relay is configured on
 chain, and can be discovered by querying the `KeepRelayBeacon` contract for the
 `minimumStake()`. Changes to the minimum stake are broadcast as
 `MinimumStakeChanged(uint256 old, uint256 new)` events from the same contract.
- The frequency with which the minimum stake will be updated is currently
- unspecified but is expected to be low.
+The frequency with which the minimum stake will be updated is currently
+unspecified, but we expect such a change to be equivalent to a hard-fork in
+terms of importance.
 
 - DKG process + messages exchanged (specific format in an appendix?)
 - Threshold signature process + messages exchanged (specific format in an appendix?)
