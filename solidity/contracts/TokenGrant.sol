@@ -3,14 +3,15 @@ pragma solidity ^0.4.18;
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./StakingProxy.sol";
 
 
 /**
  * @title TokenGrant
- * @dev A token grant contract for a specified standard ERC20 token.
+ * @dev A token grant contract for a specified standard ERC20 token.  
  * Has additional functionality to stake/unstake token grants.
  * Tokens are granted to the beneficiary via vesting scheme and can be
- * released gradually based on the vesting schedule cliff and vesting duration.
+ * released gradually based on the vesting schedule cliff and vesting duration. 
  * Optionally grant can be revoked by the token grant creator.
  */
 contract TokenGrant {
@@ -23,6 +24,7 @@ contract TokenGrant {
     event RevokedTokenGrant(uint256 id);
 
     StandardToken public token;
+    StakingProxy public stakingProxy;
 
     struct Grant {
         address owner; // Creator of token grant.
@@ -43,12 +45,12 @@ contract TokenGrant {
     // Token grants.
     mapping(uint256 => Grant) public grants;
 
-    // Mapping of token grant IDs per particular address
+    // Mapping of token grant IDs per particular address 
     // involved in a grant as a beneficiary or as a creator.
     mapping(address => uint256[]) public grantIndices;
 
     // Token grants balances. Sum of all granted tokens to a beneficiary.
-    // This includes granted tokens that are already vested and
+    // This includes granted tokens that are already vested and 
     // available to be released to the beneficiary
     mapping(address => uint256) public balances;
 
@@ -61,11 +63,13 @@ contract TokenGrant {
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
      * @param _tokenAddress address of a token that will be linked to this contract.
+     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay withdrawal delay for unstake.
      */
-    function TokenGrant(address _tokenAddress, uint256 _delay) {
+    function TokenGrant(address _tokenAddress, address _stakingProxy, uint256 _delay) {
         require(_tokenAddress != address(0x0));
         token = StandardToken(_tokenAddress);
+        stakingProxy = StakingProxy(_stakingProxy);
         stakeWithdrawalDelay = _delay;
     }
 
@@ -237,6 +241,8 @@ contract TokenGrant {
     
         // Transfer tokens to beneficiary's grants stake balance.
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].add(available);
+
+        stakingProxy.emitStakedEvent(msg.sender, available);
     }
 
     /**
@@ -258,7 +264,15 @@ contract TokenGrant {
         // Set token grant stake withdrawal start.
         stakeWithdrawalStart[_id] = now;
 
+        // Calculate granted amount that was staked.
+        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        require(available > 0);
+
+        // Remove tokens from granted stake balance.
+        stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].sub(available);
+
         InitiatedTokenGrantUnstake(_id);
+        stakingProxy.emitUnstakedEvent(msg.sender, available);
     }
 
     /**
@@ -277,13 +291,6 @@ contract TokenGrant {
         // Grant withdrawal delay should be over.
         require(now >= stakeWithdrawalStart[_id].add(stakeWithdrawalDelay));
 
-        // Calculate granted amount that was staked.
-        uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0);
-
-        // Remove tokens from granted stake balance.
-        stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].sub(available);
-        
         // Unlock grant.
         grants[_id].locked = false;
 
