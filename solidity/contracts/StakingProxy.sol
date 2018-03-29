@@ -24,6 +24,7 @@ contract StakingProxy is Ownable {
     }
 
     address[] public authorizedContracts;
+    address[] public deauthorizedContracts;
 
     event Staked(address indexed user, uint256 amount);
     event Unstaked(address indexed user, uint256 amount);
@@ -56,6 +57,31 @@ contract StakingProxy is Ownable {
         require(_contract != address(0));
         require(!isAuthorized(_contract));
         authorizedContracts.push(_contract);
+    }
+
+    /**
+     * @dev Deauthorize contract.
+     * @param _contract The address of a staking contract.
+     */
+    function deauthorizeContract(address _contract) 
+        public
+        onlyOwner
+    {
+        require(_contract != address(0));
+
+        // Find and remove contract address from authorizedContracts array.
+        for (uint i = 0; i < authorizedContracts.length; i++) {
+            // If contract is found in array.
+            if (_contract == authorizedContracts[i]) {
+                // Delete element at index and shift array.
+                for (uint j = i; j < authorizedContracts.length-1; j++) {
+                    authorizedContracts[j] = authorizedContracts[j+1];
+                }
+                delete authorizedContracts[authorizedContracts.length-1];
+                authorizedContracts.length--;
+                deauthorizedContracts.push(_contract);
+            }
+        }
     }
 
     /**
