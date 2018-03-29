@@ -39,7 +39,7 @@ contract StakingProxy is Ownable {
     function balanceOf(address _staker)
         public
         constant
-        returns (uint256 balance)
+        returns (uint256)
     {
         uint256 balance = 0;
         for (uint i = 0; i < authorizedContracts.length; i++) {
@@ -119,10 +119,11 @@ contract StakingProxy is Ownable {
      */
     function isAuthorized(address _address) 
         public
+        constant
         returns (bool) 
     {
-        for (uint i = 0; i < contracts.length; i++) {
-            if (contracts[i] == _address) {
+        for (uint i = 0; i < authorizedContracts.length; i++) {
+            if (authorizedContracts[i] == _address) {
                 return true;
             }
         }
