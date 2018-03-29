@@ -9,8 +9,14 @@ import (
 type GroupState int
 
 const (
-	JoinGroup GroupState = iota
-	WaitForGroup
+	// Null state; does not apply if you're already in a group
+	WaitingForGroup GroupState = iota
+	// The process of setting up a group
+	JoiningGroup
+	// The group has successfully formed and is elligeble to handle a relay request
+	ProcessingRequests
+	// The group is in the process of disolving or has been dissolved
+	GroupDissolved
 )
 
 type Network interface {
