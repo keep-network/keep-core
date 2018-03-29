@@ -3,11 +3,12 @@ pragma solidity ^0.4.18;
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./StakingProxy.sol";
 
 
 /**
  * @title TokenStaking
- * @dev A token staking contract for a specified standard ERC20 token.
+ * @dev A token staking contract for a specified standard ERC20 token. 
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
@@ -16,6 +17,7 @@ contract TokenStaking {
     using SafeERC20 for StandardToken;
 
     StandardToken public token;
+    StakingProxy public stakingProxy;
 
     event ReceivedApproval(uint256 _value);
     event Staked(address indexed from, uint256 value);
@@ -38,17 +40,19 @@ contract TokenStaking {
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
+     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    function TokenStaking(address _tokenAddress, uint256 _delay) {
+    function TokenStaking(address _tokenAddress, address _stakingProxy, uint256 _delay) {
         require(_tokenAddress != address(0x0));
         token = StandardToken(_tokenAddress);
+        stakingProxy = StakingProxy(_stakingProxy);
         withdrawalDelay = _delay;
     }
 
-    /**
+    /** 
      * @notice Receives approval of token transfer and stakes the approved ammount.
-     * @dev Makes sure provided token contract is the same one linked to this contract.
+     * @dev Makes sure provided token contract is the same one linked to this contract. 
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
@@ -69,12 +73,13 @@ contract TokenStaking {
         // Maintain a record of the stake amount by the sender.
         balances[_from] = balances[_from].add(_value);
         Staked(_from, _value);
+        stakingProxy.emitStakedEvent(_from, _value);
     }
 
     /**
      * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
-     * You will be able to call `finishUnstake()` with this ID and finish
-     * unstake once withdrawal delay is over.
+     * You will be able to call `finishUnstake()` with this ID and finish 
+     * unstake once withdrawal delay is over. 
      * @param _value The amount to be unstaked.
      */
     function initiateUnstake(uint256 _value) public returns (uint256 id) {
@@ -86,12 +91,13 @@ contract TokenStaking {
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
         withdrawalIndices[msg.sender].push(id);
         InitiatedUnstake(id);
+        stakingProxy.emitUnstakedEvent(msg.sender, _value);
         return id;
     }
 
     /**
-     * @notice Finishes unstake of the tokens of provided withdrawal request.
-     * You can only finish unstake once withdrawal delay is over for the request,
+     * @notice Finishes unstake of the tokens of provided withdrawal request. 
+     * You can only finish unstake once withdrawal delay is over for the request, 
      * otherwise the function will fail and remaining gas is returned.
      * @param _id Withdrawal ID.
      */
@@ -127,7 +133,7 @@ contract TokenStaking {
      * @param _staker The address to query the balance of.
      * @return An uint256 representing the amount owned by the passed address.
      */
-    function balanceOf(address _staker) public constant returns (uint256 balance) {
+    function stakeBalanceOf(address _staker) public constant returns (uint256 balance) {
         return balances[_staker];
     }
 
