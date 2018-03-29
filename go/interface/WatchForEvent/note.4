@@ -1,0 +1,554 @@
+Having a intermediate, convenience AddressBook structure that contains the state of the valid groups peers sounds like a great idea.
+Here’s my understanding of the flow and where the AddressBook fits in:
+
+	* KeepMiner calls our server with its public key, gets groupChannel reference (i.e, this is the group you're assigned to).
+	* KeepMiner via libp2p has its DHT updated with other members in group.
+	* KeepMiner can call Geth_IsPubkeyStaked with the key of each member in its DHT
+	* KeepMiner listens on that groupChannel until it gets the "Your Group has been formed" message.
+	* KeepMiner validates each member (can add that member to convenence AddressBook structure)
+	* KeepMiner can challenge a member's validity
+	* KeepMiner (that has been challenged) proves validity by sending its group privateKey
+	* KeepMiner receives GroupIsReady (on groupChannel) i.e, saying everybody has validated everybody else
+	* KeepMiner can now do its ramdom # dance (sending it's part to the groupChannel)
+	* KeepMiner takes other miner's parts and validates it
+	* KeepMiner can accuse another of lying
+	* KeepMiner can recuse itself
+	* If a KeepMiner is found to by lying then group is dissolved
+	* If ??? timeout occurs before the random # is returned then group is dissolved
+	* KeepMiner that comes up with the Random# can call Geth_GroupCompletedRandomNumber
+	* KeepMiner can call gethNodeChallengesRandomNumber (assuming it has good reason to doubt) to verify its correctness
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. Read @Nik's document on how to use testnet
+2. Create a 2nd account on testnet
+3. Load contracts
+	1. Get a working truffle.js for testnet
+	2. Figure out "node.js" of web3.js so can use node to call stuff
+		https://github.com/ethereum/web3.js/
+		- installed - decent examples in it
+	3. 
+4. Figure out your own "geth" test net - and load a contract
+
+
+
+https://ethereum.stackexchange.com/questions/1381/how-do-i-parse-the-transaction-receipt-log-with-web3-js
+	-- shows how to get tranaction log (including events) in web3 - 
+
+https://zupzup.org/eth-smart-contracts-go/
+	sim.Commit() - to mine again
+
+https://media.consensys.net/technical-introduction-to-events-and-logs-in-ethereum-a074d65dd61e
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://www.codeooze.com/blockchain/ethereum-wallet-private-chain-setup/
+
+https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition -- Key file format
+
+https://ethereum.stackexchange.com/questions/11166/how-to-generate-a-keystore-utc-file-from-the-raw-private-key
+
+https://github.com/ethereumjs/ethereumjs-wallet
+
+https://github.com/ethereumjs/keythereum
+
+> web3.fromWei(eth.getBalance(eth.coinbase), "ether")
+
+https://github.com/makevoid/vanieth -- Vanity Address Generator
+
+https://github.com/vkobel/ethereum-generate-wallet
+
+From local machine
+
+geth --rinkeby account new
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {aeddca15bd7be81beff8c8677d580907b023c11a}
+
+
+geth --rinkeby account new http://127.0.0.1:9545
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {112f9c5cd91adc2a1ca038b12937d1b1716cadab}
+
+
+ls -l ~/Library/Ethereum/geth/chaindata
+
+List keys:
+
+ls ~/Library/Ethereum/rinkeby/keystore
+
+
+(5 part on dApp dev)
+https://citywebconsultants.co.uk/blog/blockchain/introducing-ethereum-development-part-3-testrpc-and-truffle
+
+
+Eth Events
+	https://www.npmjs.com/package/ethereum-listener
+	https://coursetro.com/posts/code/100/Solidity-Events-Tutorial---Using-Web3.js-to-Listen-for-Smart-Contract-Events
+	https://ethereum.stackexchange.com/questions/15353/how-to-listen-for-contract-events-in-javascript-tests
+
+Events PR doc
+https://github.com/ethereum/go-ethereum/pull/15832
+
+https://vincentserpoul.github.io/post/binding-ethereum-golang/ -- Sample of use of abigen
+
+https://decentralize.today/introducing-perigord-golang-tools-for-ethereum-dapp-development-60556c2d9fd
+
+https://ethereum.stackexchange.com/questions/36706/subscribefilterlogs-cannot-unmarshal-array-into-go-value-of-type-types-log -- Good question - shows creation of context
+
+https://ethereum.stackexchange.com/questions/23103/how-to-access-public-contract-storage-with-go -- Shows how to access a MAP from GO using abigen
+
+convert from uint64 to big 256 bit integers for Eth: https://ethereum.stackexchange.com/questions/20859/how-generate-number-type-uint256-in-go
+
+https://ethereum.stackexchange.com/questions/19261/how-to-access-the-event-log-by-knowing-the-contract-address-golang -- Shows exampel of JSON RPC call to get logs and some setup on how to do filters
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Typically you would first create a new filter (eth_newFilter + eth_getFilterLogs) and reuse that filter to perform the
+same query many times as well as listen for changes. However, you can also install an ad-hoc filter with eth_getLogs,
+referencing the topics you wish to search over.
+
+A topic is a piece of data you are searching. For example, if you have the following event:
+
+Transfer(address to, address from)
+The following filter would search for all logs going to 0xb3904758c0d3bfc25746c47caa45b01da8930e19:
+
+[0x000000000000000000000000b3904758c0d3bfc25746c47caa45b01da8930e19, null]
+This filter would search for all logs coming from 0xb3904758c0d3bfc25746c47caa45b01da8930e19:
+
+[null, 0x000000000000000000000000b3904758c0d3bfc25746c47caa45b01da8930e19]
+And this filter would search for all logs going to 0xb3904758c0d3bfc25746c47caa45b01da8930e19 from 0x8cc19c7b50857abbfbeeed31c302319a075d4a9b:
+
+[0x000000000000000000000000b3904758c0d3bfc25746c47caa45b01da8930e19, 0x0000000000000000000000008cc19c7b50857abbfbeeed31c302319a075d4a9b
+A full golang wrapper for RPC requests would look something like this:
+
+// This needs to be instantiated
+type EthereumClient struct {
+  URL string
+}
+
+// Basic RPC repsonse format
+type JSONRPCRequest struct {
+  JSONRPC string        `json:"jsonrpc"`
+  Method  string        `json:"method"`
+  ID      int64         `json:"id"`
+  Params  []interface{} `json:"params"`
+}
+
+// Base struct
+type ResponseBase struct {
+  JSONRPC string `json:"jsonrpc"`
+  ID      int64  `json:"id"`
+}
+
+// Response struct based on below RPC methods
+type Response struct {
+  ResponseBase
+  Result string `json:"result"`
+}
+
+// ToJSON marshals a JSONRPCRequest into JSON
+func (req *JSONRPCRequest) ToJSON() ([]byte, error) {
+  s, err := json.Marshal(req)
+  if err != nil {
+    return nil, err
+  }
+  return s, nil
+}
+
+// Get logs given an array of topics
+func (client *EthereumClient) Eth_getLogs(topics string[]) (string, error) {
+  reqBody := JSONRPCRequest{
+    JSONRPC: "2.0",
+    ID:      1,
+    Method:  "eth_sendRawTransaction",
+    Params:  []interface{}{topics},
+  }
+  res, err := client.issueRequest(&reqBody)
+  if err != nil {
+    return "", err
+  }
+
+  var clientResp Response
+  err = json.Unmarshal(res, &clientResp)
+  if err != nil {
+    return "", err
+  }
+  return clientResp.Result, nil
+}
+The EthereumClient can be instantiated in a different package by something like this:
+
+// Global client connection
+var client = EthereumClient{}
+
+// provider = e.g. 'localhost:8545'
+func ConnectToRPC(provider string) {
+  client = EthereumClient{provider}
+}
+This client can now be used to start a new filter and get the logs from that filter.
+
+I don't have a specific example for (this)[https://github.com/GridPlus/client/blob/master/src/rpc/eth.go] use case, but please see this for some examples of making RPC requests in Go.
+
+
+
+https://github.com/GridPlus/client/blob/master/src/rpc/eth.go -- Has good example of JSON RPC form Go - that performs lots of stuff.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+https://ethereum.stackexchange.com/questions/13341/ethereum-go-how-to-get-the-latest-block -- Get the last block example
+
+https://ethereum.stackexchange.com/questions/16472/signing-a-raw-transaction-in-go
+
+https://ethereum.stackexchange.com/questions/6933/whats-the-best-way-currently-to-get-events-to-a-go-app-that-uses-go-ethereum/26624#26624
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+> truffle develop log
+Truffle Develop started at http://localhost:9545/
+
+Accounts:
+(0) 0x627306090abab3a6e1400e9345bc60c78a8bef57
+(1) 0xf17f52151ebef6c7334fad080c5704d77216b732
+(2) 0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef
+(3) 0x821aea9a577a9b44299b9c15c88cf3087f3b5544
+(4) 0x0d1d4e623d10f9fba5db95830f7d3839406c6af2
+(5) 0x2932b7a2355d6fecc4b5c0b6bd44cc31df247a2e
+(6) 0x2191ef87e392377ec08e7c08eb105ef5448eced5
+(7) 0x0f4f2ac550a1b4e2280d04c21cea7ebd822934b5
+(8) 0x6330a553fc93768f612722bb8c2ec78ac90b3bbc
+(9) 0x5aeda56215b167893e80b4fe645ba6d5bab767de
+
+Private Keys:
+(0) c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
+(1) ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
+(2) 0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1
+(3) c88b703fb08cbea894b6aeff5a544fb92e78a18e19814cd85da83b71f772aa6c
+(4) 388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418
+(5) 659cbb0e2411a44db63778987b1e22153c086a95eb6b18bdf89de078917abc63
+(6) 82d052c865f5763aad42add438569276c00d3d88a2d062d36b2bae914d58b8c8
+(7) aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7
+(8) 0f62d96d6675f32685bbdb8ac13cda7c23436f63efbb9d07700d8669ff12b7c4
+(9) 8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5
+
+Mnemonic: candy maple cake sugar pudding cream honey rich smooth crumble sweet treat
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+> truffle migrate --reset
+Using network 'development'.
+
+Running migration: 1_initial_migration.js
+  Deploying Migrations...
+  ... 0xce5641ee0358772a4bb48caefeeae28f7720bc6e2a2dd1b3a76a708115e49313
+  Migrations: 0x8cdaf0cd259887258bc13a92c0a6da92698644c0
+  Deploying Storage...
+  ... 0x520a2b9e369f65c3bbb6bbabaa726ceb05c1612a0a4c80aa9aa711bae242ed84
+  Storage: 0xf12b5dd4ead5f743c6baa640b0216200e89b60da
+Saving successful migration to network...
+  ... 0x26d72494b54c8f4649c1b0a6b8660aae0d2c34bb12489a25d06f3ded54e8e244
+Saving artifacts...
+Running migration: 2_initial_migration.js
+  Deploying ProofOfExistence1...
+  ... 0xb97ead907e871de6279fce2efccd7a45f3e0bcc3e515a2223e4583681bd03f47
+  ProofOfExistence1: 0xf25186b5081ff5ce73482ad761db0eb0d25abfbf
+  Deploying Token...
+  ... 0x92edeae4c8ac2d59915825322117eeea8268bc7dd9cbb4f40fc6a878054dd638
+  Token: 0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f
+  Deploying Greeter...
+  ... 0xcefa61a0cb4774b6465b524223d6e0112f14ac6cd1bb3a38f497ed4e6ea86a76
+  Greeter: 0x9fbda871d559710256a2502a2517b794b482db40
+Saving successful migration to network...
+  ... 0xba3887bec7c1cd7b2a2cda2a84509e49b715b1ff815432681ca91c1764b35b79
+Saving artifacts...
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+> truffle console
+truffle(development)>
+
+
+2/2/2018 – call with Matt Luongo from Keep
+In attendance: Jason; Robbie; Sina; Matt @ Keep; Zack @ 1protocol
+
+Keep: porting Dfinity’s threshold relay to create random number.
+
+Dfinity says a hard-fork is ok if an AWS region goes down.
+
+BLS threshold signing groups.
+
+Randomness generated via delay functions?
+
+Bram had a call about this at BPASE?
+
+Randherd and Randhound – similar approaches that aren’t delay functions
+
+What is the strength of the distributed RNG?
+
+Can’t hand-wave away miner threats.
+
+Big difference between Keep & Dfinity:
+
+Keep is not trying to build a consensus mechanism off of the randomness; they simply want to have a distributed source of randomness.
+
+DKG: distributed key generation
+
+Need a bootstrap random number to kick things off.
+
+Keep’s token model:
+
+Need Sybil resistance –
+
+Can do either “Proof of Something” on their chain OR have their own token and do Sybil resistance based on staking.
+
+If you have an existing token’s whale stepping in, they can crush the network.
+
+By requiring participants have larger stake – they suffer from hurting the overall system; they injure themselves in the process.
+
+Can still short the currency, while hurting the system – seems like the best we can do is maximize the damage someone takes within the system.
+
+People cannot unstake quickly – need to stay around for the game to playout – need to have some kind of a delay.
+
+The amount of work you can do in parallel scales with the size of your stake.
+
+Token allows slashing as well.
+
+Main purpose of the token is: Sybil Resistance + Staking + Slashing. They have removed all other uses for the token. E.g. payment in the token – it lowers market cap and costs more gas than standard ETH payments.
+
+Slashing conditions:
+
+Two-tier bond model:
+
+Token 1 KEEP: Stake by the provider. Can be leveraged. Multiple work amounts can be backed by the same stake. But you CANNOT have multiple attempts at the same Keep.
+
+Token 2 ETH: people put in ETH bonds for each KEEP.
+
+ETH bonds cannot be leveraged; Keep can be leveraged.
+
+ETH is slashed if you don’t host your Keep.
+
+KEEP gets slashed only in fundamental cases; e.g. you messed up the random beacon generation.
+
+In an efficient market: wouldn’t income by providers equal their Keep stake? I.e. there is no gain?
+
+No. As system scales, since you can “leverage” your KEEP, you can actually gain more money.
+
+There is a serious centralization pressure. But doesn’t see a way to avoid that.
+
+Since KEEP stake is parallelizable – your participation in tasks increases as network grows, and you make more money.
+
+Leader election is the group that’s signing the next entry.
+
+Then that same entry is used to do sortition to pick which groups can provide for each tasks.
+
+ETH BOND the skin-in-the-game that people have.
+
+Payments are happening in ETH.
+
+There is a one-sided pricing function
+
+Pricing function is per Keep: here is your price / block.
+
+Until a Keep has an orderly shut-down, you don’t get the payment.
+
+Have to protect against the client DoSing the provider.
+
+What if you don’t have a separate KEEP token?
+
+Is someone gets access to secrets (by breaking BLS or the MPC), they’d be incentivized to use the secrets immediately for maximum money.
+
+The security gets more complicated if you have long-lived keys –– ones that outlive a Keep ––
+
+MPC relies on SPDZ (a zero-knowledge setup phase)
+
+Ideally if I got access to your share, I’d immediately share it and take your stake.
+
+All SPDZ and secret sharing happens in a way that the origin key creator doesn’t see the shares.
+
+The protection mechanism: reporting; if you supply someone else’s secret.
+
+Negative externality argument
+
+If you, as an outsider, want to come in and buy 25% of tokens to Sybil – the price of those tokens goes up in the process – making it harder for you to pull off your attack.
+
+This breaks down if your pre-sale whale holders do OTC.
+
+The value of the network token vs. the value of the underlying blockchain token matters – but haven’t quantified this yet.
+
+What about bribery attacks (via a cartel contract)?
+
+The cost is forgone profits for the provider – this is payed out in exchange for the secret data.
+
+Solution: recursive counter-contracts which pays for outing the bribery.
+
+In a fully mature market – the price for privacy is commoditized.
+
+Your incentive is to have your Keep tokens staked forever
+
+Idea: the more you have staked, the longer it should take you to unbond.
+
+Centralization pressure:
+
+This is fine – it means better operation. You get lower latency if the providers are all colocated.
+
+But you don’t want to providers to become rich.
+
+The “goodness metric” in this network is: network latency. I.e. it’s not electricity.
+
+Their solution
+
+Having some kind of shuffle – 1) after a certain level of network latency, make it not matter anymore – 2) add network anonymization – this comes at the expense of performance.
+
+Upgradability: get to production with an MVP.
+
+If provider doesn’t provide their share:
+
+they lose all payouts so far + your ETH bond for that Keep.
+
+What about a he-said/she-said scenario: if provider says they have the secret; the user says they don’t have the secret –– how do you adjudicate?
+
+SPDZ gives you attributable abort.
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+104.197.153.166 -- default backend 404
+
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Testnet Account - with password set
+
+> geth account new http://10.51.244.207:8545
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {93d3299712e81aeb05feb28d8571ca0ed5c08c56}
+
+
+https://blog.zeppelin.solutions/the-hitchhikers-guide-to-smart-contracts-in-ethereum-848f08001f05
+	-- shows how to get the address of contract in truffle
+
+
+
+
+
+
+
+
+
+
+
+
+https://medium.com/@codetractio/try-out-ethereum-using-only-nodejs-and-npm-eabaaaf97c80
+https://tokenmarket.net/blog/creating-ethereum-smart-contract-transactions-in-client-side-javascript/
+
+
+Protect your site from Cryptojacking with CSP + SRI
+	https://scotthelme.co.uk/protect-site-from-cyrptojacking-csp-sri/
+	https://scotthelme.co.uk/protect-site-from-cyrptojacking-csp-sri/
+	<script src="//www.browsealoud.com/plus/scripts/ba.js" integrity="sha256-Abhisa/nS9WMne/YX+dqiFINl+JiE15MCWvASJvVtIk=" crossorigin="anonymous"></script>
+
+
+client
+nobind
+dev tun
+route-nopull
+route 10.51.244.207 255.255.255.255
+route 104.197.153.166 255.255.255.255
+route 10.51.251.221 255.255.255.255
+route 10.51.245.75 255.255.255.255
+route 10.51.248.217 255.255.255.255
+<key>
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://github.com/ethereum/go-ethereum/issues/14341 -- Setup of ws://
+
+
+
+
+
+https://github.com/ethereum/go-ethereum/wiki/RPC-PUB-SUB
+
+
+Q: Can I get my ethereum node to send push notifications? self.ethereum
+
+	Does Ethereum have a configuration option that is similar to Bitcoin's walletnotify configuration option that allows it to send a push notification every time I receive ether?
+
+	If it helps, I want the push notification to be sent to rabbitmq
+
+	[–]karalabeEthereum - Péter Szilágyi 3 points 2 years ago 
+
+	In the current stable release there isn't any support for push notifications of event subscriptions. You need to poll Geth to get the necessary data.
+
+	In the current develop version we've almost fully revamped the RPC to support push notifications. Two caveats: you can
+	only subscribe to filterable events (i.e. contract logs) as far as I know; and we won't be supporting pushing into any
+	form of custom message queuing system, but if should be easy enough to run your own small wrapper that proxies messages
+	from geth into rabbitmq.
+
+	permalinkembedsavegive goldkeybase chat reply
+
+https://web3j.readthedocs.io/en/latest/filters.html
+
+https://ethereum.stackexchange.com/questions/10740/watching-all-the-events-of-a-contract-geth-cannot-find-event-for-log-undefin/10741#10741
+
+https://coursetro.com/posts/code/100/Solidity-Events-Tutorial---Using-Web3.js-to-Listen-for-Smart-Contract-Events
+
+https://github.com/ethereum/go-ethereum/issues/14341 -- WebSockets or .ipc!
+

@@ -1,0 +1,147 @@
+pragma solidity ^0.4.18;
+
+m4_include(../GenID/addr.m4)
+
+/// @title Interface contract for accessing random threshold number generation.
+/// @author Philip Schlump
+
+
+// Contract Interface for GenRequestID contract from ./GenRequestID.sol
+contract GenRequestID { 
+    function GenerateNextRequestID() public returns(uint256 RequestID);
+    function () public;
+} 
+
+contract KeepRelayBeacon { 
+
+	address public contractOwner = msg.sender;
+	uint256 minPayment;
+
+    /* creates arrays with all relevant data */
+    mapping (uint256 => address) public payment_from;		// Payment from
+    mapping (uint256 => uint256) public payment_amount;		// Payment amount to generate *signature*
+    mapping (uint256 => uint256) public blockReward;
+    mapping (uint256 => uint256) public seed;			// Input Seed
+    mapping (uint256 => uint256) public signature;		// The randomly generated number
+    mapping (uint256 => uint256) public groupID;		// What gorup generated the signatre
+
+	GenRequestID public GenRequestIDSequence;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event RelayEntryRequested(uint256 RequestID, uint256 Payment, uint256 BlockReward, uint256 Seed); 
+    event RelayEntryGenerated(uint256 RequestID, uint256 Signature, uint256 GroupID, uint256 PreviousEntry ); 
+    event RelayResetEvent(uint256 LastValidRelayEntry, uint256 LastValidRelayTxHash, uint256 LastValidRelayBlock);
+    event SubmitGroupPublicKeyEvent(uint256 _PK_G_i, uint256 _id, uint256 _activationBlockHeight);
+
+    /* Constructor */
+    function KStart() public {
+		GenRequestIDSequence = GenRequestID(GEN_REQUEST_ID_ADDR);
+		minPayment = 1;	// TODO: just a guess - what unit is used?
+    }
+
+	// get the next id from the generator contract
+    function nextID() private returns(uint256 RequestID) {
+		RequestID = GenRequestIDSequence.GenerateNextRequestID();
+		return ( RequestID );
+	}
+
+	/// @notice checks that the specified user has an appropriately large stake.   Returns true if staked.
+	/// @param _UserPublicKey specifies the user.
+	/// @dev check in the staking registry for this user.   Must be able to look up user based on Pub-Key.
+	///   Q: If user is trying to run 3 nodes but only has a stake for 2 nodes how is this determined?
+	///   Q: If how is the amount of :keep: specified per-node - where?
+	///   TODO: Find the contract that we are supposed to call - call it.
+	/// For the moment just return true so we can test with this.
+    function isStaked(uint256 _UserPublicKey) pure public returns(bool) {
+		_UserPublicKey = _UserPublicKey;	// to make it used so Solidity will not complain - temporary
+		return true;
+	}
+
+    // Inputs: payment(eth), blockReward(keep), seed(number) 
+	// The "RequestID" is generated sequence number and returned.
+	// 	RequestID is definitely an output 
+	// 	RequestID Monotonically Increasing 
+	// This will down-streem from event result in a SignatureShareBroadcast on the KEEP p2p network.
+    function requestRelay(uint256 _blockReward, uint256 _seed) public payable returns ( uint256 RequestID ) {
+
+		require( msg.value >= minPayment ); // Prevents payments that are too small in ether
+
+		RequestID = nextID();
+
+		// Payment must be via standard interface.
+		// amount = msg.value;	// note "payable" on function declaration
+		// see: https://ethereum.stackexchange.com/questions/30145/how-to-write-a-contract-that-can-only-accept-a-payment-of-fixed-amount?rq=1
+		//		https://ethereum.stackexchange.com/questions/20874/payable-function-in-solidity
+		payment_from[RequestID] = msg.sender;
+		payment_amount[RequestID] = msg.value;
+		// TODO - is there a minimum on the amoutn of msg.value to generate a *signature* ?   Must the msg.value include enough for the "gas" on contract?
+
+        blockReward[RequestID] = _blockReward ;		// TODO - who decides the block reward?  is it in KEEP?
+        seed[RequestID] = _seed ;					// TODO - is it a security risk to save the "seed" as a public value?
+
+		// generate an event at this point, just return instead, RandomNumberRequest
+     	RelayEntryRequested( RequestID, msg.value, _blockReward, _seed);
+    }
+
+	// To be able to move payments from this contract back to Keep multiwallet
+	// function withdraw() {
+	//	require(owner == msg.sender);
+	//	owner.transfer(this.balance);
+	// }
+
+	// Better Implementation - Transfer 'msg.value' of funds directly from this contract to owner.
+	function transferPaymetntsToOwner() public payable {
+		contractOwner.transfer(msg.value);
+	}
+
+	function setMinimumPayment( uint256 _minPayment ) public {
+		require(contractOwner == msg.sender);
+		minPayment = _minPayment;
+	}
+
+	/// @dev Must include "group" that is responable:  ATL
+	/// 		threshold relay has a number, or failed and passes _Valid as false
+	///
+	/// @param _RequestID the request that started this generation - to tie the results back to the request.
+	/// @param _groupSignature is the generated random number
+	/// @param _groupID is the public key of the gorup that generated the threshold signature
+    function relayEntry(uint256 _RequestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
+		signature[_RequestID] = _groupSignature;
+		groupID[_RequestID] = _groupID;
+
+     	RelayEntryGenerated(_RequestID, _groupSignature, _groupID, _previousEntry);
+	}
+
+    function relayEntryAccusation( uint256 _LastValidRelayTxHash, uint256 _LastValidRelayBlock) public {
+		uint256 LastValidRelayEntry;
+		// xyzzy  / TODO
+		// validate acusation by performaing the checks in this code (slow/expensive)
+		// raise event if acusation is shown to be true
+		// penalty for false acusations - msg.sender? gets docked/rewareded?
+		if ( 0 == 1 ) {
+			RelayResetEvent(LastValidRelayEntry, _LastValidRelayTxHash, _LastValidRelayBlock);	
+		}
+	}
+
+    function submitGroupPublicKey (uint256 _PK_G_i, uint256 _id) public {
+		uint256 ActivationBlockHeight = block.number;
+		// xyzzy  / TODO
+		if ( 0 == 1 ) {
+			SubmitGroupPublicKeyEvent(_PK_G_i, _id, ActivationBlockHeight);
+		}
+	}
+	
+	// Function that can be called to get your random number
+	function getRandomNumber( uint256 _RequestID ) view public returns ( uint256 theRandomNumber ) {
+		theRandomNumber = signature[_RequestID];
+	}
+
+    // This unnamed function is called whenever someone tries to send ether to it.
+    // function () public {
+    //     revert(); // Prevents accidental sending of ether
+    // }        
+
+	function () public payable {
+		// saveAmount(msg.sender);
+	}
+} 

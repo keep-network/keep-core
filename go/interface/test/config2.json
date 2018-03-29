@@ -1,0 +1,7 @@
+{
+	"key_file": "./CallContract/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
+	"key_file_password": "password",
+	"beacon_relay_contract_address": "0xe705ab560794cf4912960e5069d23ad6420acde7",
+	"geth_server": "ws://192.168.0.157:8546",
+	"from_address": "0x6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
+}
