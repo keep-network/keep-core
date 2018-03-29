@@ -28,6 +28,8 @@ contract StakingProxy is Ownable {
 
     event Staked(address indexed user, uint256 amount);
     event Unstaked(address indexed user, uint256 amount);
+    event AuthorizedContractAdded(address indexed contractAddress);
+    event AuthorizedContractRemoved(address indexed contractAddress);
 
     /**
      * @dev Gets the sum of all staking balances of the specified staker address.
@@ -57,6 +59,7 @@ contract StakingProxy is Ownable {
         require(_contract != address(0));
         require(!isAuthorized(_contract));
         authorizedContracts.push(_contract);
+        AuthorizedContractAdded(_contract);
     }
 
     /**
@@ -80,6 +83,7 @@ contract StakingProxy is Ownable {
                 delete authorizedContracts[authorizedContracts.length-1];
                 authorizedContracts.length--;
                 deauthorizedContracts.push(_contract);
+                AuthorizedContractRemoved(_contract);
             }
         }
     }
