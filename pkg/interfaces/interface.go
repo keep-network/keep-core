@@ -19,9 +19,11 @@ const (
 	GroupDissolved
 )
 
+// Network is our interface to the underlying p2p network that the client leverages
+// TODO: Consider renaming to P2PNetwork
 type Network interface {
 	// Given a name for a Group, return the channel the group communicates over
-	GetChannel(name string) Channel
+	GetChannel(name string) BroadcastChannel
 	// Given a name for a Group, return the state of the group as defined by an enum
 	GroupStatus(name string) GroupState
 	// For initialization; call Bootstap() to initiate a handshake and connection to
@@ -41,17 +43,20 @@ type GroupIdentity struct {
 
 type Message struct{}
 
-type Channel interface {
+// HandleMessageFunc is the type of function called for each Message m furnished by
+// the BroadcastChannel. If there is a problem handling the Message, the incoming error will
+// describe the problem and the function can decide how to handle that error. If an error is returned,
+// processing stops.
+type HandleMessageFunc func(m Message) error
+
+// BroadcastChannel represents a named pubsub channel. It allows Group Members
+// to send messages on the channel (via Send), and to access a low-level receive chan
+// that furnishes messages sent onto the BroadcastChannel.
+type BroadcastChannel interface {
+	// Return the member list and identifiying information for the Group
 	GroupIdentity(name string) *GroupIdentity
+	// Given a Message m, broadcast m to members of the Group through the BroadcastChannel
 	Send(m Message) error
-	Recv() Message
-}
-
-type Group struct{}
-
-type GroupManager interface {
-	GetGroup(name string) (*Group, error)
-	JoinGroup(name string) error
-	GetActiveGroups() []*Group
-	DissolveGroup(name string) error
+	// Recv takes a HandleMessageFunc and returns an error. This function should be retried.
+	Recv(h HandleMessageFunc) error
 }
