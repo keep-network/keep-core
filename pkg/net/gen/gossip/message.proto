@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option go_package = "gossip";
+package gossip;
+
+// Envelope contains a marshalled Message as the payload
+// and a signature over the payload as signature.
+// It also contains the Identities of the sender and receiver (optional).
+// Optionally may contain an encrypted Envelope (in which case the payload will be empty).
+message Envelope {
+  // The PublicKey and BLS ID of the sender and receiver
+  Identity sender = 1;
+  Identity receiver = 2;
+
+  // A Marshaled GossipMessage
+  bytes payload = 3;
+
+  // Signature of the message
+  bytes signature = 4;
+
+  // A marshalled, encrypted message; if this exists, payload is empty
+  EncryptedEnvelope encrypted_envelope = 5;
+
+  // TODO: this envelope needs an enum detailing which type of GossipMesssage it is.
+}
+
+// EncryptedEnvelope is a marshalled, encrypted message.
+message EncryptedEnvelope {
+  bytes payload = 1;
+  bytes signature = 4;
+}
+
+message Identity {
+  // TODO: consolidate and remove redundant
+  bytes public_key = 1;
+  bytes bls_id = 2;
+  bytes peer_id = 3;
+}
+
+message GossipMessage {
+  // Channel is isomorphic to the group name as well as the pubsub channel
+  // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
+  // all valid group members.
+  bytes channel = 1;
+
+  // Proof that the peer that sent this message knows the channel's name.
+  bytes channel_MAC = 2;
+
+  // TODO: define various messages this GossipMessage can be. Use oneof.
+}

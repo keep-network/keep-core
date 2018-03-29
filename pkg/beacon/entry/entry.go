@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keep-network/keep-core/go/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 )
 
 // Request represents a request for an entry in the threshold relay.
