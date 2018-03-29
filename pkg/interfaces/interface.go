@@ -31,16 +31,20 @@ type Network interface {
 	Bootstrap() error
 }
 
-// TODO: move to a more appropriate package
+// GroupIdentity contains the Group's public key as created by the dkg process
+// and a list of Members that belong to the group.
+// TODO: move to a more appropriate package; revise which fields we need
 type GroupIdentity struct {
-	// Public key for the group
+	Name string
+	// Public key for the group; created through DKG.
+	// Verified from the on-chain Group Registry
 	GroupPublicKey *bls.PublicKey
 	// The final list of qualified Group Members; empty if not yet computed
-	qualifiedMembers []bls.ID
-	// A map of group member ids and their group signature share
-	receivedGroupSignatureShares map[bls.ID][]byte
+	// Verified from the on-chain Group Registry
+	Members []bls.PublicKey
 }
 
+// Message corresponds with our proto Envelope type.
 type Message struct{}
 
 // HandleMessageFunc is the type of function called for each Message m furnished by
