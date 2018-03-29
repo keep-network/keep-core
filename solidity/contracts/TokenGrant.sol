@@ -8,10 +8,10 @@ import "./StakingProxy.sol";
 
 /**
  * @title TokenGrant
- * @dev A token grant contract for a specified standard ERC20 token.  
+ * @dev A token grant contract for a specified standard ERC20 token.
  * Has additional functionality to stake/unstake token grants.
  * Tokens are granted to the beneficiary via vesting scheme and can be
- * released gradually based on the vesting schedule cliff and vesting duration. 
+ * released gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant creator.
  */
 contract TokenGrant {
@@ -45,12 +45,12 @@ contract TokenGrant {
     // Token grants.
     mapping(uint256 => Grant) public grants;
 
-    // Mapping of token grant IDs per particular address 
+    // Mapping of token grant IDs per particular address
     // involved in a grant as a beneficiary or as a creator.
     mapping(address => uint256[]) public grantIndices;
 
     // Token grants balances. Sum of all granted tokens to a beneficiary.
-    // This includes granted tokens that are already vested and 
+    // This includes granted tokens that are already vested and
     // available to be released to the beneficiary
     mapping(address => uint256) public balances;
 
@@ -134,7 +134,7 @@ contract TokenGrant {
     /**
      * @notice Creates a token grant with a vesting schedule where balance released to the
      * beneficiary gradually in a linear fashion until start + duration. By then all
-     * of the balance will have vested. You must approve the amount you want to grant 
+     * of the balance will have vested. You must approve the amount you want to grant
      * by calling approve() method of the token contract first.
      * @dev Transfers token amount from sender to this token grant contract
      * Sender should approve the amount first by calling approve() on the token contract.

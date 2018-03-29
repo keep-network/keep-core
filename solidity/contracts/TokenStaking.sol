@@ -8,7 +8,7 @@ import "./StakingProxy.sol";
 
 /**
  * @title TokenStaking
- * @dev A token staking contract for a specified standard ERC20 token. 
+ * @dev A token staking contract for a specified standard ERC20 token.
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
@@ -50,9 +50,9 @@ contract TokenStaking {
         withdrawalDelay = _delay;
     }
 
-    /** 
+    /**
      * @notice Receives approval of token transfer and stakes the approved ammount.
-     * @dev Makes sure provided token contract is the same one linked to this contract. 
+     * @dev Makes sure provided token contract is the same one linked to this contract.
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
@@ -78,8 +78,8 @@ contract TokenStaking {
 
     /**
      * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
-     * You will be able to call `finishUnstake()` with this ID and finish 
-     * unstake once withdrawal delay is over. 
+     * You will be able to call `finishUnstake()` with this ID and finish
+     * unstake once withdrawal delay is over.
      * @param _value The amount to be unstaked.
      */
     function initiateUnstake(uint256 _value) public returns (uint256 id) {
@@ -96,8 +96,8 @@ contract TokenStaking {
     }
 
     /**
-     * @notice Finishes unstake of the tokens of provided withdrawal request. 
-     * You can only finish unstake once withdrawal delay is over for the request, 
+     * @notice Finishes unstake of the tokens of provided withdrawal request.
+     * You can only finish unstake once withdrawal delay is over for the request,
      * otherwise the function will fail and remaining gas is returned.
      * @param _id Withdrawal ID.
      */
