@@ -279,41 +279,38 @@ random selection of available stakers.
 |=========
 
 From this information, we can start deriving the probabilities that any given
-scenario may occur. The probabilities we're most interested in are in the
-following table:
+scenario may occur. Many of these probabilities require the hypergeometric
+distribution, which we'll refer to as ``hgeo(k, n, K, N)``footnote:[
+`hgeo(N, K, n, k) = choose(K, k) * choose(N - K, n - k) / choose(N, n)`
+represents the probability of choosing `k` items with a particular property from
+a set of `N` items where `K` of them have that property, after `n` attempts,
+where `choose` is the binomial coefficient function,.]. The probabilities we're
+most interested in are in the following table:
 
 .System Probabilities
-[table,header,cols=2]
+[.probabilities,table,header,cols="h,l"]
 |=========
 | Aspect | Probability
 
 | A given staker being chosen for a new group
-| `1 / C`
+| hgeo(C, 1, g, 1)
 
-| `t` specific stakers being chosen for a new group
-| `(1 / C)^t`
-// ``
 
-| `t` specific stakers being chosen for a new group over `N` new groups
-| `(1 / C)^t x N`
-// ``
-
-| An entity controlling `D` stakers having all `D` chosen for a new group
-| `(D / C)^t`
-// ``
+| An entity controlling `D` stakers having `t` of those chosen for a new group
+| hgeo(C, D, g, t)
 
 | An entity controlling `D` stakers while `N` new groups are created, ending up
   with control over one group
-| `(D / c)^t x N`
-// `` Unclear: how do we generalize to probability of controlling >1 group?
+| 1 - (1-hgeo(C, D, g, t)) ** N
+// ** Unclear: how do we generalize to probability of controlling >1 group?
 
 | A given group being chosen to create the next relay entry
-| `1 / G`
+| 1 / G
 
 | An entity controlling `D` stakers while `N` new groups are created, ending up
   with their group chosen to create the next relay entry
-| `((D / c)^t x N) / G`
-// `` Check me plz
+| (1 - (1-hgeo(C, D, g, t)) ** N) / G
+// **
 |=========
 
 === Punishments
