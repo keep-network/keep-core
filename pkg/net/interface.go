@@ -8,6 +8,9 @@ import (
 // and a list of Members that belong to the group.
 // TODO: move to a more appropriate package; revise which fields we need
 type GroupIdentity struct {
+	// Group names are isomorphic to channel names
+	// Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
+	// all valid group members.
 	Name string
 	// Public key for the group; created through DKG.
 	// Verified from the on-chain Group Registry
