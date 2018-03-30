@@ -261,26 +261,28 @@ stakers is not enough to control a group, since new groups are formed from a
 random selection of available stakers.
 
 .Variables
-[table,header,cols=2,sidebar]
+[.variables,table,header,cols="l,n"]
 |=========
 | Variable | Meaning
-| `C`      | Number of stakers in the network
-| `G`      | Number of groups in the threshold relay
-| `g`      | Number of stakers in a single group
-| `M`      | Minimum stake amount (in KEEP)
+
+| C        | Number of stakers in the network
+| G        | Number of groups in the threshold relay
+| g        | Number of stakers in a single group
+| M        | Minimum stake amount (in KEEP)
 |=========
 
 .Derived Variables
-[table,header,cols=3]
+[.derived-variables,table,header,cols="l,l,n"]
 |=========
 | Variable | Defined Value | Meaning
-| `t`      | `g / 2 - 1`   | Number of stakers needed to control a single group
-| `o`      | `t x M`       | Amount at stake if one entity owns a single group
+
+| t        | g / 2 - 1     | Number of stakers needed to control a single group
+| o        | t x M         | Amount at stake if one entity owns a single group
 |=========
 
 From this information, we can start deriving the probabilities that any given
 scenario may occur. Many of these probabilities require the hypergeometric
-distribution, which we'll refer to as ``hgeo(k, n, K, N)``footnote:[
+distribution, which we'll refer to as ``hgeo(N, K, n, k)``footnote:[
 `hgeo(N, K, n, k) = choose(K, k) * choose(N - K, n - k) / choose(N, n)`
 represents the probability of choosing `k` items with a particular property from
 a set of `N` items where `K` of them have that property, after `n` attempts,
@@ -295,13 +297,12 @@ most interested in are in the following table:
 | A given staker being chosen for a new group
 | hgeo(C, 1, g, 1)
 
-
 | An entity controlling `D` stakers having `t` of those chosen for a new group
 | hgeo(C, D, g, t)
 
 | An entity controlling `D` stakers while `N` new groups are created, ending up
   with control over one group
-| 1 - (1-hgeo(C, D, g, t)) ** N
+| 1 - ((1 - hgeo(C, D, g, t)) ** N)
 // ** Unclear: how do we generalize to probability of controlling >1 group?
 
 | A given group being chosen to create the next relay entry
@@ -359,5 +360,4 @@ terms of importance.
 - Dfinity
 - Advisors
 
-[glossary]
 include::glossary.adoc[]
