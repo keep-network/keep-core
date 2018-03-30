@@ -310,8 +310,8 @@ most interested in are in the following table:
 
 | An entity controlling `D` stakers while `N` new groups are created, ending up
   with their group chosen to create the next relay entry
-| (1 - (1-hgeo(C, D, g, t)) ** N) / G
-// **
+| (1 - ((1 - hgeo(C, D, g, t)) ** N)) / (G + N)
+// ** This doesn't take into account over time yet, it's just at the end of N.
 |=========
 
 === Punishments
