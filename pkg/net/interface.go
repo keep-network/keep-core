@@ -4,33 +4,6 @@ import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
-// GroupState captures on of the many states a client may be in while
-// in a peer-to-peer network on Keep.
-type GroupState int
-
-const (
-	// Null state; does not apply if you're already in a group
-	WaitingForGroup GroupState = iota
-	// The process of setting up a group
-	JoiningGroup
-	// The group has successfully formed and is elligeble to handle a relay request
-	ProcessingRequests
-	// The group is in the process of disolving or has been dissolved
-	GroupDissolved
-)
-
-// Network is our interface to the underlying p2p network that the client leverages
-// TODO: Consider renaming to P2PNetwork
-type Network interface {
-	// Given a name for a Group, return the channel the group communicates over
-	GetChannel(name string) BroadcastChannel
-	// Given a name for a Group, return the state of the group as defined by an enum
-	GroupStatus(name string) GroupState
-	// For initialization; call Bootstap() to initiate a handshake and connection to
-	// predefined bootstrap nodes
-	Bootstrap() error
-}
-
 // GroupIdentity contains the Group's public key as created by the dkg process
 // and a list of Members that belong to the group.
 // TODO: move to a more appropriate package; revise which fields we need
