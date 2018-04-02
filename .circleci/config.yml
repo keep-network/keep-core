@@ -10,7 +10,7 @@ jobs:
             name: Running testrpc
             command: ganache-cli
             background: true  
-        - run: cd solidity && npm install && npm run test
+        - run: cd contracts/solidity && npm install && npm run test
   build_client:
     docker:
       - image: docker:17.05.0-ce-git
