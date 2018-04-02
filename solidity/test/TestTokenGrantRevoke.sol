@@ -4,7 +4,6 @@ import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/KeepToken.sol";
 import "../contracts/TokenGrant.sol";
-import "./helpers/ThrowProxy.sol";
 
 contract TestTokenGrantRevoke {  
   
@@ -52,24 +51,4 @@ contract TestTokenGrantRevoke {
     Assert.equal(c.balanceOf(beneficiary), 100, "Amount should stay at beneficiary's grant balance.");
   }
 
-  // Test can not revoke token grant.
-  function testCanNotRevokeGrant() {
-
-    // Approve amount on the token.
-    t.approve(address(c), 100);
-
-    // Create non revocable token grant.
-    id = c.grant(100, beneficiary, 10 days, now, 0, false);
-
-    // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-    ThrowProxy throwProxy = new ThrowProxy(address(c));
-
-    // Prime the proxy.
-    TokenGrant(address(throwProxy)).revoke(id);
-
-    // Execute the call that is supposed to throw.
-    // r will be false if it threw and true if it didn't.
-    bool r = throwProxy.execute.gas(200000)();
-    Assert.isFalse(r, "Should throw when trying to revoke token grant.");
-  }
 }
