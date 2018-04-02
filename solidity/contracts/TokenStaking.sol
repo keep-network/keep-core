@@ -73,7 +73,9 @@ contract TokenStaking {
         // Maintain a record of the stake amount by the sender.
         balances[_from] = balances[_from].add(_value);
         Staked(_from, _value);
-        stakingProxy.emitStakedEvent(_from, _value);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitStakedEvent(_from, _value);
+        }
     }
 
     /**
@@ -91,7 +93,9 @@ contract TokenStaking {
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
         withdrawalIndices[msg.sender].push(id);
         InitiatedUnstake(id);
-        stakingProxy.emitUnstakedEvent(msg.sender, _value);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitUnstakedEvent(msg.sender, _value);
+        }
         return id;
     }
 

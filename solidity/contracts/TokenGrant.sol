@@ -242,7 +242,9 @@ contract TokenGrant {
         // Transfer tokens to beneficiary's grants stake balance.
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].add(available);
 
-        stakingProxy.emitStakedEvent(msg.sender, available);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitStakedEvent(msg.sender, available);
+        }
     }
 
     /**
@@ -272,7 +274,9 @@ contract TokenGrant {
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].sub(available);
 
         InitiatedTokenGrantUnstake(_id);
-        stakingProxy.emitUnstakedEvent(msg.sender, available);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitUnstakedEvent(msg.sender, available);
+        }
     }
 
     /**

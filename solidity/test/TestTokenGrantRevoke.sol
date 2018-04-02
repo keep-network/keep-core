@@ -12,7 +12,7 @@ contract TestTokenGrantRevoke {
   KeepToken t = new KeepToken();
 
   // Create token grant contract with 30 days withdrawal delay.
-  TokenGrant c = new TokenGrant(t, 30 days);
+  TokenGrant c = new TokenGrant(t, 0, 30 days);
 
   uint id;
   address beneficiary = 0xf17f52151EbEF6C7334FAD080c5704D77216b732;

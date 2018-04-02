@@ -12,7 +12,7 @@ contract TestTokenGrantStake {
   KeepToken t = new KeepToken();
 
   // Create token grant contract with 30 days withdrawal delay.
-  TokenGrant c = new TokenGrant(t, 30 days);
+  TokenGrant c = new TokenGrant(t, 0, 30 days);
 
   uint id;
   address beneficiary = address(this); // For test simplicity set beneficiary the same as sender.
@@ -40,7 +40,7 @@ contract TestTokenGrantStake {
   function testCanInitiateUnstakeTokenGrant() {
     c.initiateUnstake(id);
     Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
-    Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
+    Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should change immediately after unstake initiation.");
   }
 
   // Token grant beneficiary can not finish unstake of the grant until delay is over
@@ -56,6 +56,6 @@ contract TestTokenGrantStake {
     // r will be false if it threw and true if it didn't.
     bool r = throwProxy.execute.gas(200000)();
     Assert.isFalse(r, "Should throw when trying to unstake when delay is not over.");
-    Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
+    Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
   }
 }
