@@ -5,10 +5,10 @@ jobs:
       - image: circleci/node:latest
     steps:
         - checkout
-        - run: sudo npm install -g ethereumjs-testrpc
+        - run: sudo npm install -g ganache-cli
         - run:
             name: Running testrpc
-            command: testrpc
+            command: ganache-cli
             background: true  
         - run: cd solidity && npm install && npm run test
   build_client:
