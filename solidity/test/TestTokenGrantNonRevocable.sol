@@ -18,7 +18,7 @@ contract TestTokenGrantNonRevocable {
   address beneficiary = 0xf17f52151EbEF6C7334FAD080c5704D77216b732;
 
   // Test can not revoke token grant.
-  function testCanNotRevokeGrant() {
+  function testCanNotRevokeGrant() public {
 
     // Approve amount on the token.
     t.approve(address(c), 100);

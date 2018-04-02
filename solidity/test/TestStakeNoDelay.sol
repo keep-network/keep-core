@@ -15,7 +15,7 @@ contract TestStakeNoDelay {
   uint withdrawalId;
 
   // Token holder should be able to stake it's tokens
-  function testCanStake() {
+  function testCanStake() public {
     uint balance = token.balanceOf(address(this));
 
     token.approveAndCall(address(stakingContract), 100, "");
@@ -26,7 +26,7 @@ contract TestStakeNoDelay {
 
 
   // Token holder should be able to initiate unstake of it's tokens
-  function testCanInitiateUnstake() {
+  function testCanInitiateUnstake() public {
     uint balance = token.balanceOf(address(this));
 
     withdrawalId = stakingContract.initiateUnstake(100);
@@ -42,7 +42,7 @@ contract TestStakeNoDelay {
   }
 
   // Should be able to finish unstake of it's tokens when withdrawal delay is over
-  function testCanFinishUnstake() {
+  function testCanFinishUnstake() public {
     uint balance = token.balanceOf(address(this));
 
     stakingContract.finishUnstake(withdrawalId);

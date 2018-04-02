@@ -16,13 +16,13 @@ contract TestStake {
 
   uint withdrawalId;
 
-  function testTotalSupply() {
+  function testTotalSupply() public {
     uint expected = token.INITIAL_SUPPLY();
     Assert.equal(token.balanceOf(address(this)), expected, "Owner should have all tokens initially.");
   }
 
   // Token holder should be able to stake it's tokens
-  function testCanStake() {
+  function testCanStake() public {
     uint balance = token.balanceOf(address(this));
 
     token.approveAndCall(address(stakingContract), 100, "");
@@ -32,7 +32,7 @@ contract TestStake {
   }
 
   // Token holder should be able to initiate unstake of it's tokens
-  function testCanInitiateUnstake() {
+  function testCanInitiateUnstake() public {
     uint balance = token.balanceOf(address(this));
 
     withdrawalId = stakingContract.initiateUnstake(100);
@@ -48,7 +48,7 @@ contract TestStake {
   }
 
   // Should not be able to finish unstake when withdrawal delay is not over
-  function testCannotFinishUnstake() {
+  function testCannotFinishUnstake() public {
 
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
     ThrowProxy throwProxy = new ThrowProxy(address(stakingContract));
@@ -64,7 +64,7 @@ contract TestStake {
   }
 
   // Token holder should not be able to stake without providing correct stakingContract address.
-  function testCanNotStakeWithWrongRecipient() {
+  function testCanNotStakeWithWrongRecipient() public {
     
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
     ThrowProxy throwProxy = new ThrowProxy(address(token));

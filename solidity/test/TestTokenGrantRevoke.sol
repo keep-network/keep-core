@@ -17,7 +17,7 @@ contract TestTokenGrantRevoke {
   address beneficiary = 0xf17f52151EbEF6C7334FAD080c5704D77216b732;
 
   // Grant owner can revoke revocable token grant.
-  function testCanFullyRevokeGrant() {
+  function testCanFullyRevokeGrant() public {
     uint balance = t.balanceOf(address(this));
   
     // Create revocable token grant.
@@ -35,7 +35,7 @@ contract TestTokenGrantRevoke {
 
   // Token grant creator can revoke the grant but no amount 
   // is refunded since duration of the vesting is over.
-  function testCanZeroRevokeGrant() {
+  function testCanZeroRevokeGrant() public {
     uint balance = t.balanceOf(address(this));
   
     // Create revocable token grant with 0 duration.
