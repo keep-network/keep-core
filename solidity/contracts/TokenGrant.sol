@@ -66,7 +66,7 @@ contract TokenGrant {
      * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay withdrawal delay for unstake.
      */
-    function TokenGrant(address _tokenAddress, address _stakingProxy, uint256 _delay) {
+    function TokenGrant(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0));
         token = StandardToken(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);

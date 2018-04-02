@@ -43,7 +43,7 @@ contract TokenStaking {
      * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    function TokenStaking(address _tokenAddress, address _stakingProxy, uint256 _delay) {
+    function TokenStaking(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0));
         token = StandardToken(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
@@ -56,9 +56,10 @@ contract TokenStaking {
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
-     * @param _extraData Any extra data.
+     * @param extraData_ Any extra data.
      */
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes extraData_) public {
+        extraData_;
         ReceivedApproval(_value);
 
         // Make sure provided token contract is the same one linked to this contract.
