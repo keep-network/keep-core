@@ -30,7 +30,7 @@ contract('TestStakeViaProxy', function(accounts) {
     await exceptThrow(stakingProxy.authorizeContract(stakingContract.address, {from: account_two}));
 
     // Owner of stakingProxy should be able to authorize a staking contract
-    stakingProxy.authorizeContract(stakingContract.address, {from: account_one})
+    await stakingProxy.authorizeContract(stakingContract.address, {from: account_one})
     stakingProxy.isAuthorized(stakingContract.address).then(function(result){
       assert.equal(result, true, "StakingProxy owner should be able to authorize a staking contract.");
     })
@@ -48,7 +48,7 @@ contract('TestStakeViaProxy', function(accounts) {
     });
 
     // Owner of stakingProxy should be able to deauthorize a staking contract
-    stakingProxy.deauthorizeContract(stakingContract.address, {from: account_one})
+    await stakingProxy.deauthorizeContract(stakingContract.address, {from: account_one})
     stakingProxy.isAuthorized(stakingContract.address).then(function(result){
       assert.equal(result, false, "StakingProxy owner should be able to deauthorize a staking contract.");
     })

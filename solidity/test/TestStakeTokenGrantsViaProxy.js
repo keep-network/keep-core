@@ -66,7 +66,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
     });
 
     // Owner of stakingProxy should be able to deauthorize a token grant contract
-    stakingProxy.deauthorizeContract(grantContract.address, {from: account_one})
+    await stakingProxy.deauthorizeContract(grantContract.address, {from: account_one})
     stakingProxy.isAuthorized(grantContract.address).then(function(result){
       assert.equal(result, false, "StakingProxy owner should be able to deauthorize a token grant contract.");
     });
