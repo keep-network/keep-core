@@ -4,6 +4,7 @@ import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
+import "./Utils/ArrayUtils.sol";
 
 
 /**
@@ -15,6 +16,7 @@ import "./StakingProxy.sol";
 contract TokenStaking {
     using SafeMath for uint256;
     using SafeERC20 for StandardToken;
+    using ArrayUtils for uint256[];
 
     StandardToken public token;
     StakingProxy public stakingProxy;
@@ -115,17 +117,7 @@ contract TokenStaking {
         token.safeTransfer(staker, withdrawals[_id].amount);
 
         // Cleanup withdrawal index.
-        for (uint i = 0; i < withdrawalIndices[staker].length; i++) {
-            // If id is found in array.
-            if (_id == withdrawalIndices[staker][i]) {
-                // Delete element at index and shift array.
-                for (uint j = i; j < withdrawalIndices[staker].length-1; j++) {
-                    withdrawalIndices[staker][j] = withdrawalIndices[staker][j+1];
-                }
-                delete withdrawalIndices[staker][withdrawalIndices[staker].length-1];
-                withdrawalIndices[staker].length--;
-            }
-        }
+        withdrawalIndices[staker].removeValue(_id);
 
         // Cleanup withdrawal record.
         delete withdrawals[_id];
