@@ -64,6 +64,9 @@ contract('KeepToken', function(accounts) {
       }
     })
 
+    let withdrawals = await stakingContract.getWithdrawals(account_one);
+    assert.equal(withdrawals.length, 1, "Withdrawal record must present for the staker");
+
     // should not be able to finish unstake
     await exceptThrow(stakingContract.finishUnstake(stakeWithdrawalId));
     
@@ -72,6 +75,9 @@ contract('KeepToken', function(accounts) {
 
     // should be able to finish unstake
     await stakingContract.finishUnstake(stakeWithdrawalId);
+
+    withdrawals = await stakingContract.getWithdrawals(account_one);
+    assert.equal(withdrawals.length, 0, "Withdrawal record must be cleared for the staker");
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);

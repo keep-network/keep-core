@@ -4,7 +4,7 @@ import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
-import "./Utils/ArrayUtils.sol";
+import "./Utils/UintArrayUtils.sol";
 
 
 /**
@@ -16,7 +16,7 @@ import "./Utils/ArrayUtils.sol";
 contract TokenStaking {
     using SafeMath for uint256;
     using SafeERC20 for StandardToken;
-    using ArrayUtils for uint256[];
+    using UintArrayUtils for uint256[];
 
     StandardToken public token;
     StakingProxy public stakingProxy;

@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 
-library ArrayUtils {
+library UintArrayUtils {
 
     function removeValue(uint256[] storage self, uint256 _value) 
         internal

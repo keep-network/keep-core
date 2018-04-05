@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./Utils/AddressArrayUtils.sol";
 
 interface authorizedStakingContract {
     function stakeBalanceOf(address addr) public constant returns (uint256);
@@ -14,6 +15,8 @@ interface authorizedStakingContract {
  * The staking contracts must call emit events on this contract.
  */
 contract StakingProxy is Ownable {
+
+    using AddressArrayUtils for address[];
 
     /**
      * @dev Only authorized contracts can invoke functions with this modifier.
@@ -57,7 +60,13 @@ contract StakingProxy is Ownable {
         onlyOwner
     {
         require(_contract != address(0));
+
+        // Must not be already authorized
         require(!isAuthorized(_contract));
+
+        // Must not be deauthorized
+        require(!isDeauthorized(_contract));
+
         authorizedContracts.push(_contract);
         AuthorizedContractAdded(_contract);
     }
@@ -72,20 +81,17 @@ contract StakingProxy is Ownable {
     {
         require(_contract != address(0));
 
+        // Must be authorized previously
+        require(isAuthorized(_contract));
+
+        // Must not be already deauthorized
+        require(!isDeauthorized(_contract));
+
         // Find and remove contract address from authorizedContracts array.
-        for (uint i = 0; i < authorizedContracts.length; i++) {
-            // If contract is found in array.
-            if (_contract == authorizedContracts[i]) {
-                // Delete element at index and shift array.
-                for (uint j = i; j < authorizedContracts.length-1; j++) {
-                    authorizedContracts[j] = authorizedContracts[j+1];
-                }
-                delete authorizedContracts[authorizedContracts.length-1];
-                authorizedContracts.length--;
-                deauthorizedContracts.push(_contract);
-                AuthorizedContractRemoved(_contract);
-            }
-        }
+        authorizedContracts.removeAddress(_contract);
+
+        AuthorizedContractRemoved(_contract);
+        deauthorizedContracts.push(_contract);
     }
 
     /**
@@ -115,18 +121,26 @@ contract StakingProxy is Ownable {
     /**
      * @dev Check if a staking contract is authorized to work with this contract.
      * @param _address The address of a staking contract.
-     * @return A bool wether it's authorized.
+     * @return A bool whether it's authorized.
      */
     function isAuthorized(address _address) 
         public
         constant
         returns (bool) 
     {
-        for (uint i = 0; i < authorizedContracts.length; i++) {
-            if (authorizedContracts[i] == _address) {
-                return true;
-            }
-        }
-        return false;
+        return authorizedContracts.isFound(_address);
+    }
+
+    /**
+     * @dev Check if a staking contract is deauthorized.
+     * @param _address The address of a staking contract.
+     * @return A bool whether it's deauthorized.
+     */
+    function isDeauthorized(address _address) 
+        public
+        constant
+        returns (bool) 
+    {
+        return deauthorizedContracts.isFound(_address);
     }
 }
