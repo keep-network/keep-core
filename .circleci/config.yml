@@ -9,8 +9,32 @@ jobs:
         - run:
             name: Running testrpc
             command: testrpc
-            background: true  
+            background: true
         - run: cd contracts/solidity && npm install && npm run test
+  generate_docs_solidity:
+    docker:
+      - image: ngrinkevich/nodejs-python-solc:latest
+    steps:
+      - checkout
+      - run:
+          name: Generate solidity docs
+          command: |
+            echo "Add baseUrl http://docs.keep.network/$CIRCLE_BRANCH/solidity/ to .doxityrc"
+            sed -i '2i "baseUrl": "http://docs.keep.network/'$CIRCLE_BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
+            echo "Add link prefix /$CIRCLE_BRANCH/solidity to .doxityrc"
+            find='"linkPrefix": ""'
+            replace='"linkPrefix": "\/'$CIRCLE_BRANCH'\/solidity"'
+            sed -e "s/${find}/${replace}/g" contracts/solidity/docs/.doxityrc > contracts/solidity/docs/.doxityrc.new
+            mv contracts/solidity/docs/.doxityrc.new contracts/solidity/docs/.doxityrc
+            cd contracts/solidity && npm install
+            cd docs/doxity && npm install
+            cd ../../ && make clean
+            mkdir -p /tmp/docs && make docs
+            cp -r docs/output /tmp/docs/solidity
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - solidity/*
   build_client:
     docker:
       - image: docker:17.05.0-ce-git
@@ -63,9 +87,11 @@ workflows:
   docs:
     jobs:
       - generate_docs
+      - generate_docs_solidity
       - upload_docs:
           requires:
             - generate_docs
+            - generate_docs_solidity
   go:
     jobs:
       - build_client
