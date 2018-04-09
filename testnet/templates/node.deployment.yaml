@@ -64,6 +64,8 @@ spec:
                 configMapKeyRef:
                   name: {{ template "geth.fullname" $ }}-config
                   key: chainId
+            - name: NETRESTRICT
+              value: {{ $.Values.node.netrestrict }}
           ports:
             - name: rpc
               containerPort: 8545
@@ -82,7 +84,7 @@ spec:
       volumes:
         - name: datadir
           persistentVolumeClaim:
-            claimName: {{ .nodeName }}-storage
+            claimName: {{ template "geth.fullname" $ }}-{{ .nodeName }}-storage
         - name: bootnode
           emptyDir: {}
         - name: config 
@@ -92,10 +94,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .nodeName }}-storage
+  name: {{ template "geth.fullname" $ }}-{{ .nodeName }}-storage
   # Uncomment if you prefer to keep node storage (chaindata) when deleting release via HELM
-  # annotations:
-  #  "helm.sh/resource-policy": keep
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   storageClassName: standard
   accessModes:
