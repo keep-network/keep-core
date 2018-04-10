@@ -32,16 +32,16 @@ contract TestTokenGrantStake {
 
     Assert.equal(c.stakeBalances(beneficiary), 100, "Token grant balance should be added to beneficiary grant stake balance.");
 
-    var (_owner, _beneficiary, _locked, _revoked, _revocable, _amount, _duration, _start, _cliff, _released) = c.grants(id);
-    _owner;
-    _beneficiary;
-    _revoked;
-    _revocable;
-    _amount;
-    _duration;
-    _start;
-    _cliff;
-    _released;
+    var (owner_, beneficiary_, _locked, revoked_, revocable_, amount_, duration_, start_, cliff_, released_) = c.grants(id);
+    owner_;
+    beneficiary_;
+    revoked_;
+    revocable_;
+    amount_;
+    duration_;
+    start_;
+    cliff_;
+    released_;
     Assert.equal(_locked, true, "Token grant should become locked.");
   }
 

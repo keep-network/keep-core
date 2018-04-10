@@ -75,7 +75,7 @@ contract StakingProxy is Ownable {
      * contract from the authorized list and removed staking contract will be
      * excluded from the total staker's balance and corresponding stake/unstake
      * events are not going to be broadcasted. Removed contract is also added to
-     * the deathorized list for easier tracking of legacy contracts and
+     * the deauthorized list for easier tracking of legacy contracts and
      * to prevent repeated authorization of a legacy contract.
      * @param _contract The address of a staking contract.
      */
