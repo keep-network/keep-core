@@ -11,8 +11,9 @@ interface authorizedStakingContract {
 /**
  * @title Staking Proxy Contract
  * @dev An ownable staking proxy contract to provide upgradable staking.
- * Upgraded contracts are added to authorizedContracts list.
- * The staking contracts must call emit events on this contract.
+ * Upgraded contracts are added to authorizedContracts list. The staking
+ * contracts must call "emitStakedEvent" and "emitUnstakedEvent" functions on
+ * this contract.
  */
 contract StakingProxy is Ownable {
 
@@ -29,8 +30,8 @@ contract StakingProxy is Ownable {
     address[] public authorizedContracts;
     address[] public deauthorizedContracts;
 
-    event Staked(address indexed user, uint256 amount);
-    event Unstaked(address indexed user, uint256 amount);
+    event Staked(address indexed staker, uint256 amount);
+    event Unstaked(address indexed staker, uint256 amount);
     event AuthorizedContractAdded(address indexed contractAddress);
     event AuthorizedContractRemoved(address indexed contractAddress);
 
@@ -52,7 +53,9 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Authorize contract.
+     * @dev Authorize contract. Owner of this proxy can add a staking contract
+     * into the authorized list and added staking contract will be accounted
+     * for the total staker's balance and corresponding stake/unstake events.
      * @param _contract The address of a staking contract.
      */
     function authorizeContract(address _contract) 
@@ -60,11 +63,7 @@ contract StakingProxy is Ownable {
         onlyOwner
     {
         require(_contract != address(0));
-
-        // Must not be already authorized
         require(!isAuthorized(_contract));
-
-        // Must not be deauthorized
         require(!isDeauthorized(_contract));
 
         authorizedContracts.push(_contract);
@@ -72,7 +71,12 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Deauthorize contract.
+     * @dev Deauthorize contract. Owner of this proxy can remove a staking
+     * contract from the authorized list and removed staking contract will be
+     * excluded from the total staker's balance and corresponding stake/unstake
+     * events are not going to be broadcasted. Removed contract is also added to
+     * the deathorized list for easier tracking of legacy contracts and
+     * to prevent repeated authorization of a legacy contract.
      * @param _contract The address of a staking contract.
      */
     function deauthorizeContract(address _contract) 
@@ -80,22 +84,19 @@ contract StakingProxy is Ownable {
         onlyOwner
     {
         require(_contract != address(0));
-
-        // Must be authorized previously
         require(isAuthorized(_contract));
-
-        // Must not be already deauthorized
         require(!isDeauthorized(_contract));
 
-        // Find and remove contract address from authorizedContracts array.
         authorizedContracts.removeAddress(_contract);
+        deauthorizedContracts.push(_contract);
 
         AuthorizedContractRemoved(_contract);
-        deauthorizedContracts.push(_contract);
     }
 
     /**
-     * @dev Emit staked event.
+     * @dev Emit staked event. This function is called by every authorized
+     * staking contract where staking occurs so the network clients can have
+     * a single point to listen to the events across multiple staking contracts.
      * @param _staker The address of the staker.
      * @param _amount The staked amount.
      */
@@ -107,7 +108,9 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Emit unstaked event.
+     * @dev Emit unstaked event. This function is called by every authorized
+     * staking contract where unstaking occurs so the network clients can have
+     * a single point to listen to the events across multiple staking contracts.
      * @param _staker The address of the staker.
      * @param _amount The unstaked amount.
      */
@@ -119,27 +122,32 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Check if a staking contract is authorized to work with this contract.
+     * @dev Check if a staking contract is authorized to work with this
+     * contract otherwise it's not allowed to call "emit events" methods on this
+     * contract and it's balance is not inlcuded into the total staking balance.
      * @param _address The address of a staking contract.
-     * @return A bool whether it's authorized.
+     * @return True if staking contract is authorized, false otherwise.
      */
-    function isAuthorized(address _address) 
+    function isAuthorized(address _address)
         public
         constant
-        returns (bool) 
+        returns (bool)
     {
         return authorizedContracts.isFound(_address);
     }
 
     /**
-     * @dev Check if a staking contract is deauthorized.
+     * @dev Check if a staking contract is deauthorized. If it's deauthorized
+     * it won't be possible to authorize it again and as a non authorized
+     * contract it's not allowed to call "emit events" methods on this contract
+     * and it's balance is not inlcuded into the total staking balance.
      * @param _address The address of a staking contract.
-     * @return A bool whether it's deauthorized.
+     * @return True if staking contract is deauthorized, false otherwise.
      */
-    function isDeauthorized(address _address) 
+    function isDeauthorized(address _address)
         public
         constant
-        returns (bool) 
+        returns (bool)
     {
         return deauthorizedContracts.isFound(_address);
     }
