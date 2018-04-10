@@ -4,7 +4,7 @@ import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
-import "./Utils/UintArrayUtils.sol";
+import "./utils/UintArrayUtils.sol";
 
 
 /**

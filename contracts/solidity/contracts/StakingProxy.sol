@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./Utils/AddressArrayUtils.sol";
+import "./utils/AddressArrayUtils.sol";
 
 interface authorizedStakingContract {
     function stakeBalanceOf(address addr) public constant returns (uint256);
