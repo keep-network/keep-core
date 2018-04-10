@@ -211,15 +211,49 @@ signing group will be at request time.
 
 === Denial of Service
 
-Denial of service attacks are a problem in two phases of the relay's operation:
-group formation and relay response generation. The relay itself can also be
-DoSed by too many requests. The first two in particular share the requirement
-that either a player outside or inside the relay be able to know enough about
-the clients in a group to launch DoS attacks against them.
+Denial of service attacks can occur at the network level or specific to the
+protocol that governs the relay's operation. The network and signing protocol
+are resilient to griefing from malicious nodes put to t <= n - f.
+Something, something:
 
- - DoS of the signing group
- - DoS during group creation
- - DoS of the relay
+ - Network
+
+ Specific to this section, we will refer to “relay clients”, “group members” as peers.
+
+The relay beacon leverages libp2p and the associated gossip sub implementation in go-floodsub. Through using these implementations, the relay is susceptible to the following network-level attacks:
+
+Traffic Amplification
+
+  1. Without Topic level authentication
+  2. 
+
+Traffic Replay
+
+Astute readers may point out that an attacker could attempt to silence messages from an honest actor (by crafting messages with conflicting ids on behalf of an honest actor), but the relay combats message silencing through 1) being threshold-based where t of n shares are required to provide a successful result (the argument here being that the probability of silencing the threshold t is equivalent to a malicious owner owning [some value]), but more importantly 2) messages are signed by their authors and addressed by their hashes. 
+
+At a network level, we ensure that ingress and egress are limited to the ports required to communicate over libp2p, sync with ethereum, and optionally, to exchange debug information with us. 
+
+Slowloris: We configure clients such that we limit the number of connections a single IP address is allowed to make, impose restrictions on the minimum transfer speed a connection is allowed to have, and restricting the length of time a client is allowed to stay connected
+
+ - Relay
+
+Denial of service attacks are a problem in two phases of the relay's operation:
+group formation and relay response generation (signing group). The relay itself
+can also be DoSed by too many requests. The first two in particular share the
+requirement that either a player outside or inside the relay be able to know
+enough about the clients in a group to launch DoS attacks against them.
+
+  - group creation
+
+  Currently an attributable Distributed Key Generation does not exist. Keep is exploring the possibilities here. For example, consider the a potential attack where a lazy/malicious actor fails to provide shares or provides malformed shares to the group. In this case, group members 
+
+Simply, a malicious actor with approximately [malicious_node_distribution] nodes distributed amongst all potential groups can abort the Distributed Key Generation process which would DoS not only new group creation, but also prevent new relay entries from being formed, causing relay operation to increasingly become delayed (missing the block wait time), approaching the limit. 	
+
+Another issue with aborting group creation is that a malicious actor intro.
+
+  - signing group
+Aborts which are attributable will be slashed. 
+
 
 == Incentives
 
