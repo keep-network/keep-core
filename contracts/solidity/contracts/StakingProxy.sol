@@ -133,7 +133,7 @@ contract StakingProxy is Ownable {
         constant
         returns (bool)
     {
-        return authorizedContracts.isFound(_address);
+        return authorizedContracts.contains(_address);
     }
 
     /**
@@ -149,6 +149,6 @@ contract StakingProxy is Ownable {
         constant
         returns (bool)
     {
-        return deauthorizedContracts.isFound(_address);
+        return deauthorizedContracts.contains(_address);
     }
 }
