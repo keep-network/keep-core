@@ -38,7 +38,7 @@ contract StakingProxy is Ownable {
     /**
      * @dev Gets the sum of all staking balances of the specified staker address.
      * @param _staker The address to query the balance of.
-     * @return balance An uint256 representing the amount staked by the passed address.
+     * @return An uint256 representing the amount staked by the passed address.
      */
     function balanceOf(address _staker)
         public
