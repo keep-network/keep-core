@@ -248,11 +248,13 @@ stalling progress, causing members to potentially abort the protocol.
 
 Mitigations:
 
- - Topic names (refered to as broadcast channels) are hashed and concatenated
- public keys, specifically the public keys of all valid group members. Each
- valid message is then signed with the associated private key of a group member.
- This can be trivially verified with the supplied proofs.
- All other messages are dropped.
+  - Topic names (refered to as broadcast channels) are hashed and concatenated
+  public keys, specifically the public keys of all valid group members. Each
+  valid message is then signed with the associated private key of a group member.
+  This can be trivially verified with the supplied proofs (through the
+  destructuring of the broadcast channel name, identifying the public key
+  associated with the message, verifying the message against the signature).
+  All other messages are dropped.
 
   - Valid group members that are attempting traffic amplification attacks will be
   identified by their proofs. Malformed messages, or failing to provide valid
