@@ -294,8 +294,8 @@ client is allowed to stay connected. Concretely, this is done through:
 
   1.Setting http://golang.org/pkg/net/http/#Server[Server.ReadTimeout]. These are
   deadlines that apply to each request.
-  2. Configuring the max number of connections per host, overall, and other
-  ConnState configurations.
+  2. Configuring the transport's max number of idle connections / per host
+  3. Configuring the underlying ConnState.
 
 At a network level, we advise that ingress and egress are limited to the ports
 required to communicate over libp2p, sync with ethereum, and optionally, to
@@ -338,6 +338,7 @@ enough about the clients in a group to launch DoS attacks against them.
 | f        | Function that executes punishment for aborting group sig
 |=========
 
+TODO:
 G/N is the share of the group reward any member receives
 Δf ∈ [-1, 1] is a real number between -1 and 1, representing a multiplicitive facto
 
@@ -359,11 +360,11 @@ process which would DoS not only new group creation, but also prevent new relay
 entries from being formed, causing relay operation to increasingly become delayed
 (missing the block wait time), approaching the limit.
 
-Another issue with aborting group creation is that a malicious actor intro.
+TODO: Another issue with aborting group creation is that a malicious actor intro.
 
 ===== Signing Group
 
-Aborts which are attributable will be slashed. 
+TODO: Aborts which are attributable will be slashed. 
 
 
 == Incentives
