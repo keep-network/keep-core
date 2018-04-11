@@ -265,24 +265,17 @@ Mitigations:
   group member. A valid accusation results in the malicious group member's stake
   being slashed.
   
-===== Traffic Replay
-
-Hmmm...todo: you can still have this happen under authenticated streams.
-
-
-
 ===== Message Silencing
 
 Astute readers may point out that an attacker could attempt to silence messages
 from an honest actor (by crafting messages with conflicting ids on behalf of an
-honest actor), but the relay combats message silencing through
+honest actor, or simply dropping messages from an honest actor), but the relay
+combats message silencing through:
 
-  1. being threshold-based where t of n shares are required to provide a
-  successful result (the argument here being that the probability of silencing
-  the threshold t is equivalent to a malicious owner owning [some value]), but
-  more importantly
-  2. messages are signed by their authors and addressed by their hashes.
-  This means that content (for example, group shares) is hashed. (TODO: wait, does this actually work for dkg lol)
+  1. being threshold-based, where t of n shares are required to provide a
+  successful result.
+  2. we enforce that messages are signed by their authors so a malicious actor
+  should have no means to construct a message with a conflicting id/version.
 
 
 ===== Slow Down (slowloris), resource exchaustion, etc.
