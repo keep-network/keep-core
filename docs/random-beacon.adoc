@@ -327,11 +327,16 @@ enough about the clients in a group to launch DoS attacks against them.
 
 | R        | tx submitter reward
 | G        | group reward
+| N        | members in a group
 | E        | Invalid signature punishment for the submitter
 | K        | Minimum stake amount (in KEEP)
 | P        | Aborted group sig punishment
 | f        | Function that executes punishment for aborting group sig
 |=========
+
+G/N is the share of the group reward any member receives
+Δf ∈ [-1, 1] is a real number between -1 and 1, representing a multiplicitive facto
+
 
 tx rewards should grow as blockheight grows, group rewards should shrink until
 an abort is identified (when they go negative)
