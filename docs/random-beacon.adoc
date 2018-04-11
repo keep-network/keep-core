@@ -219,7 +219,9 @@ griefing from malicious nodes (m) if, given a threshold (t) and group (n),
 m ≤ n - t and t ∈ [m+1, n-m]
 ===
 
-Hence our mitigations are focused on ensuring the above properties hold for all groups.
+Hence our mitigations are focused on ensuring the above properties hold for all
+groups through proper implementation and advisory at the network level along with
+decisions and incentives as the protocol (reay operation) level.
 
 ==== Network
 
@@ -290,8 +292,10 @@ single IP address is allowed to make, impose restrictions on the minimum transfe
 speed a connection is allowed to have, and restricting the length of time a
 client is allowed to stay connected. Concretely, this is done through:
 
-  1.Setting http://golang.org/pkg/net/http/#Server[Server.ReadTimeout]. These are deadlines that apply to each request.
-  2. Setting 
+  1.Setting http://golang.org/pkg/net/http/#Server[Server.ReadTimeout]. These are
+  deadlines that apply to each request.
+  2. Configuring the max number of connections per host, overall, and other
+  ConnState configurations.
 
 At a network level, we advise that ingress and egress are limited to the ports
 required to communicate over libp2p, sync with ethereum, and optionally, to
