@@ -301,11 +301,11 @@ At a macro level, we defend against attacks on the network through the following
 incentive structure, which was originally mentioned in the whitepaper:
 
 ====
-Keep  providers  will  be  required  to
+Keep providers will be required to
 prove their holdings in a token native to the
-system.  Significant disruption of the network
+system. Significant disruption of the network
 should lead to a drop in the value of the to-
-ken,  incentivizing  provider  honesty,  lest  they
+ken, incentivizing provider honesty, lest they
 devalue their holdings.
 ====
 
@@ -322,18 +322,21 @@ enough about the clients in a group to launch DoS attacks against them.
 |=========
 | Variable | Meaning
 
-| R        | tx submitter reward
-| G        | group reward
-| N        | members in a group
+| r_t      | tx submitter reward
+| r_g      | group reward
+| g        | members in a group
 | E        | Invalid signature punishment for the submitter
-| K        | Minimum stake amount (in KEEP)
+| M        | Minimum stake amount (in KEEP)
 | P        | Aborted group sig punishment
 | f        | Function that executes punishment for aborting group sig
 |=========
 
 TODO:
-G/N is the share of the group reward any member receives
-Δf ∈ [-1, 1] is a real number between -1 and 1, representing a multiplicitive facto
+r_g/g is the share of the group reward any member receives
+
+p ∈ [-1, 1] is a real number between -1 and 1, representing a multiplicitive
+factor of loss to be applied to r_g as time passes between the relay request and
+next block, such that f = p * r_g, where f is the realized group reward.
 
 
 tx rewards should grow as blockheight grows, group rewards should shrink until
@@ -345,7 +348,8 @@ an abort is identified (when they go negative)
 Currently an attributable Distributed Key Generation does not exist. Keep is
 exploring the possibilities here. For example, consider the a potential attack
 where a lazy/malicious actor fails to provide shares or provides malformed
-shares to the group. In this case, group members
+shares to the group. In this case, group members would provide proofs of
+maliciousness during the accusation phase of DKG.
 
 Simply, a malicious actor with approximately [malicious_node_distribution] nodes
 distributed amongst all potential groups can abort the Distributed Key Generation
@@ -353,7 +357,7 @@ process which would DoS not only new group creation, but also prevent new relay
 entries from being formed, causing relay operation to increasingly become delayed
 (missing the block wait time), approaching the limit.
 
-TODO: Another issue with aborting group creation is that a malicious actor intro.
+TODO: flesh out more
 
 ===== Signing Group
 
