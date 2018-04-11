@@ -61,7 +61,7 @@ contract TokenStaking {
      * @param extraData_ Any extra data.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes extraData_) public {
-        extraData_;
+        extraData_; // Suppress unused variable warning.
         ReceivedApproval(_value);
 
         // Make sure provided token contract is the same one linked to this contract.
