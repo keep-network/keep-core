@@ -45,6 +45,7 @@ contract StakingProxy is Ownable {
         constant
         returns (uint256)
     {
+        require(_staker != address(0));
         uint256 balance = 0;
         for (uint i = 0; i < authorizedContracts.length; i++) {
             balance = balance + authorizedStakingContract(authorizedContracts[i]).stakeBalanceOf(_staker);
