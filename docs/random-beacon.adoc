@@ -228,6 +228,12 @@ peers.
 
 The relay beacon leverages https://github.com/libp2p[libp2p] and the associated
 gossip sub implementation in https://github.com/libp2p/go-floodsub[go-floodsub].
+
+Of note, we rely on the pubsub implementation to handle the case where a message
+gets lost (through retrying). At the implementtation layer, we ensure to
+differentiate between a lost/missed message and a non-participating group member
+through setting deadlines and retries.
+
 Furthermore, the relay is reliant on the Golang standard library (ie. net/http).
 Through using these implementations, we discuss the possible network-level attacks:
 
