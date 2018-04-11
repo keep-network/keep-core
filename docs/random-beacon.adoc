@@ -213,8 +213,13 @@ signing group will be at request time.
 
 Denial of service attacks can occur at both the network and/or at the protocol
 level. The network and specifically the signing protocol are resilient to
-griefing from malicious nodes (m) if, given a threshold (t), the mali is atleast t ∈ [m+1, n-m]
-m ≤ t - 1
+griefing from malicious nodes (m) if, given a threshold (t) and group (n),
+
+===
+m ≤ n - t and t ∈ [m+1, n-m]
+===
+
+Hence our mitigations are focused on ensuring the above properties hold for all groups.
 
 ==== Network
 
@@ -224,36 +229,66 @@ peers.
 The relay beacon leverages https://github.com/libp2p[libp2p] and the associated
 gossip sub implementation in https://github.com/libp2p/go-floodsub[go-floodsub].
 Furthermore, the relay is reliant on the Golang standard library (ie. net/http).
-Through using these implementations, the relay is susceptible to the following
-network-level attacks:
+Through using these implementations, we discuss the possible network-level attacks:
 
 ===== Traffic Amplification
 
-  1. Without Topic level authentication
-  2. 
+Without Topic-level authentication it's trivial for a given malicious actor
+to enter a given group (by identifying it from the group registry on chain),
+and to target and flood an indiviudal in the group with large and useless
+messages. This results in the peer rebroadcasting these messages to their
+peers, and their peers, etc. This results in flooding the network, eventually
+stalling progress, causing members to potentially abort the protocol.
+
+Mitigations:
+
+ - Topic names (refered to as broadcast channels) are hashed and concatenated
+ public keys, specifically the public keys of all valid group members. Each
+ valid message is then signed with the associated private key of a group member.
+ This can be trivially verified with the supplied proofs.
+ All other messages are dropped.
+
+  - Valid group members that are attempting traffic amplification attacks will be
+  identified by their proofs. Malformed messages, or failing to provide valid
+  values, for a phase of either distributed key generation (group creation) or
+  the signing phase will result in an honest group member accusing the malicious
+  group member. A valid accusation results in the malicious group member's stake
+  being slashed.
   
 ===== Traffic Replay
+
+Hmmm...todo: you can still have this happen under authenticated streams.
+
+
+
+===== Message Silencing
 
 Astute readers may point out that an attacker could attempt to silence messages
 from an honest actor (by crafting messages with conflicting ids on behalf of an
 honest actor), but the relay combats message silencing through
-  1) being threshold-based where t of n shares are required to provide a
+
+  1. being threshold-based where t of n shares are required to provide a
   successful result (the argument here being that the probability of silencing
   the threshold t is equivalent to a malicious owner owning [some value]), but
   more importantly
-  2) messages are signed by their authors and addressed by their hashes.
-
-At a network level, we ensure that ingress and egress are limited to the ports
-required to communicate over libp2p, sync with ethereum, and optionally, to
-exchange debug information with us.
+  2. messages are signed by their authors and addressed by their hashes.
+  This means that content (for example, group shares) is hashed. (TODO: wait, does this actually work for dkg lol)
 
 
 ===== Slow Down (slowloris), resource exchaustion, etc.
 
-Slowloris: We configure clients such that we limit the number of connections a
+We configure clients such that we limit the number of connections a
 single IP address is allowed to make, impose restrictions on the minimum transfer
 speed a connection is allowed to have, and restricting the length of time a
-client is allowed to stay connected
+client is allowed to stay connected. Concretely, this is done through:
+
+  1.Setting http://golang.org/pkg/net/http/#Server[Server.ReadTimeout]. These are deadlines that apply to each request.
+  2. Setting 
+
+At a network level, we advise that ingress and egress are limited to the ports
+required to communicate over libp2p, sync with ethereum, and optionally, to
+exchange debug information with us. On release, Keep will provide advised
+settings for operators.
 
 ===== Bot net, macro network attacks
 
@@ -261,7 +296,7 @@ At a macro level, we defend against attacks on the network through the following
 incentive structure, which was originally mentioned in the whitepaper:
 
 ====
-keep  providers  will  be  required  to
+Keep  providers  will  be  required  to
 prove their holdings in a token native to the
 system.  Significant disruption of the network
 should lead to a drop in the value of the to-
@@ -288,15 +323,6 @@ enough about the clients in a group to launch DoS attacks against them.
 | K        | Minimum stake amount (in KEEP)
 | P        | Aborted group sig punishment
 | f        | Function that executes punishment for aborting group sig
-|=========
-
-.Derived Variables
-[.derived-variables,table,header,cols="l,l,n"]
-|=========
-| Variable | Defined Value | Meaning
-
-| t        | g / 2 - 1     | Number of stakers needed to control a single group
-| o        | t x M         | Amount at stake if one entity owns a single group
 |=========
 
 tx rewards should grow as blockheight grows, group rewards should shrink until
