@@ -5,7 +5,7 @@ import (
 	"io"
 
 	ci "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
+	peer "github.com/rargulati/go-libp2p-peer"
 )
 
 type Identity interface {
