@@ -221,7 +221,7 @@ m ≤ n - t and t ∈ [m+1, n-m]
 
 Hence our mitigations are focused on ensuring the above properties hold for all
 groups through proper implementation and advisory at the network level along with
-decisions and incentives as the protocol (reay operation) level.
+decisions and incentives at the protocol (relay operation) level.
 
 ==== Network
 
@@ -232,12 +232,13 @@ The relay beacon leverages https://github.com/libp2p[libp2p] and the associated
 gossip sub implementation in https://github.com/libp2p/go-floodsub[go-floodsub].
 
 Of note, we rely on the pubsub implementation to handle the case where a message
-gets lost (through retrying). At the implementtation layer, we ensure to
+gets lost (through retrying). At the implementation layer, we take care to
 differentiate between a lost/missed message and a non-participating group member
-through setting deadlines and retries.
+through deadlines and a capped number of retries.
 
-Furthermore, the relay is reliant on the Golang standard library (ie. net/http).
-Through using these implementations, we discuss the possible network-level attacks:
+Furthermore, the relay implementation relies on the Go standard library
+(ie.https://golang.org/pkg/net/http/[net/http]). Through using these
+implementations, we discuss the possible network-level attacks:
 
 ===== Traffic Amplification
 
@@ -256,75 +257,72 @@ Mitigations:
   This can be trivially verified with the supplied proofs (through the
   destructuring of the broadcast channel name, identifying the public key
   associated with the message, verifying the message against the signature).
-  All other messages are dropped.
+  All other messages are dropped by the members of the broadcast channel.
 
   - Valid group members that are attempting traffic amplification attacks will be
   identified by their proofs. Malformed messages, or failing to provide valid
   values, for a phase of either distributed key generation (group creation) or
   the signing phase will result in an honest group member accusing the malicious
   group member. A valid accusation results in the malicious group member's stake
-  being slashed.
+  being slashed. See the section on <<Accusations>> for more.
   
 ===== Message Silencing
 
-Astute readers may point out that an attacker could attempt to silence messages
-from an honest actor (by crafting messages with conflicting ids on behalf of an
-honest actor, or simply dropping messages from an honest actor), but the relay
-combats message silencing through:
+Another possible attack involves silencing messages from an honest actor (by
+crafting messages with conflicting ids on behalf of an honest actor, or simply
+dropping messages from an honest actor), but the relay combats message silencing
+through:
 
   1. being threshold-based, where t of n shares are required to provide a
   successful result.
   2. we enforce that messages are signed by their authors so a malicious actor
   should have no means to construct a message with a conflicting id/version.
 
+  TODO: revisit this scheme, we potentially need more here.
 
-===== Slow Down (slowloris), resource exchaustion, etc.
+
+===== Slow Down (slowloris), resource exhaustion, etc.
 
 We configure clients such that we limit the number of connections a
 single IP address is allowed to make, impose restrictions on the minimum transfer
-speed a connection is allowed to have, and restricting the length of time a
+speed a connection is allowed to have, and restrict the length of time a
 client is allowed to stay connected. Concretely, this is done through:
 
   1.Setting http://golang.org/pkg/net/http/#Server[Server.ReadTimeout]. These are
   deadlines that apply to each request.
   2. Configuring the transport's max number of idle connections / per host
   3. Configuring the underlying ConnState.
+  TODO: address https://github.com/keep-network/keep-core/pull/68#discussion_r181217303
 
-At a network level, we advise that ingress and egress are limited to the ports
+At a network level, we recommend that ingress and egress are limited to the ports
 required to communicate over libp2p, sync with ethereum, and optionally, to
 exchange debug information with us. On release, Keep will provide advised
 settings for operators.
 
 ===== Bot net, macro network attacks
 
-At a macro level, we defend against attacks on the network through the following
-incentive structure, which was originally mentioned in the whitepaper:
-
-====
-Keep providers will be required to
-prove their holdings in a token native to the
-system. Significant disruption of the network
-should lead to a drop in the value of the to-
-ken, incentivizing provider honesty, lest they
-devalue their holdings.
-====
+At a macro level, we defend against attacks on the network through enforcing Keep
+providers to prove their holdings by staking KEEP. Significant disruption of the
+network should lead to a drop in the value of the token, incentivizing provider
+honesty, lest they devalue their holdings. It's in the providers best interests
+to ensure the network is stable and to report malicious or poor performing actors.
 
 ==== Relay Aborts
 
 Denial of service attacks are a problem in two phases of the relay's operation:
-group formation and relay response generation (signing group). The relay itself
-can also be DoSed by too many requests. The first two in particular share the
-requirement that either a player outside or inside the relay be able to know
-enough about the clients in a group to launch DoS attacks against them.
+group formation and relay response generation. The relay itself can also be DoSed
+by too many requests. The first two in particular share the requirement that
+either a player outside or inside the relay be able to know enough about the
+clients in a group to launch DoS attacks against them.
 
 .Variables
 [.variables,table,header,cols="l,n"]
 |=========
 | Variable | Meaning
 
-| r_t      | tx submitter reward
-| r_g      | group reward
-| g        | members in a group
+| r_t      | Transaction submitter reward
+| r_g      | Relay group submission reward
+| g        | Members in a group
 | E        | Invalid signature punishment for the submitter
 | M        | Minimum stake amount (in KEEP)
 | P        | Aborted group sig punishment
@@ -345,13 +343,12 @@ an abort is identified (when they go negative)
 
 ===== Group Creation
 
-Currently an attributable Distributed Key Generation does not exist. Keep is
-exploring the possibilities here. For example, consider the a potential attack
-where a lazy/malicious actor fails to provide shares or provides malformed
-shares to the group. In this case, group members would provide proofs of
-maliciousness during the accusation phase of DKG.
+Currently an attributable Distributed Key Generation algorithm does not exist.
+For example, consider the a potential attack where a lazy/malicious actor fails
+to provide shares or provides malformed shares to the group. In this case, group
+members would provide proofs of maliciousness during the accusation phase of DKG.
 
-Simply, a malicious actor with approximately [malicious_node_distribution] nodes
+A malicious actor with approximately [malicious_node_distribution] nodes
 distributed amongst all potential groups can abort the Distributed Key Generation
 process which would DoS not only new group creation, but also prevent new relay
 entries from being formed, causing relay operation to increasingly become delayed
