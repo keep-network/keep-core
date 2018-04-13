@@ -211,15 +211,155 @@ signing group will be at request time.
 
 === Denial of Service
 
-Denial of service attacks are a problem in two phases of the relay's operation:
-group formation and relay response generation. The relay itself can also be
-DoSed by too many requests. The first two in particular share the requirement
-that either a player outside or inside the relay be able to know enough about
-the clients in a group to launch DoS attacks against them.
+Denial of service attacks can occur at both the network and/or at the protocol
+level. The network and specifically the signing protocol are resilient to
+griefing from malicious nodes (m) if, given a threshold (t) and group (n),
 
- - DoS of the signing group
- - DoS during group creation
- - DoS of the relay
+===
+m ≤ n - t and t ∈ [m+1, n-m]
+===
+
+Hence our mitigations are focused on ensuring the above properties hold for all
+groups through proper implementation and advisory at the network level along with
+decisions and incentives at the protocol (relay operation) level.
+
+==== Network
+
+Specific to this section, we will refer to “relay clients”, “group members” as
+peers.
+
+The relay beacon leverages https://github.com/libp2p[libp2p] and the associated
+gossip sub implementation in https://github.com/libp2p/go-floodsub[go-floodsub].
+
+Of note, we rely on the pubsub implementation to handle the case where a message
+gets lost (through retrying). At the implementation layer, we take care to
+differentiate between a lost/missed message and a non-participating group member
+through deadlines and a capped number of retries.
+
+Furthermore, the relay implementation relies on the Go standard library
+(ie.https://golang.org/pkg/net/http/[net/http]). Through using these
+implementations, we discuss the possible network-level attacks:
+
+===== Traffic Amplification
+
+Without Topic-level authentication it's trivial for a given malicious actor
+to enter a given group (by identifying it from the group registry on chain),
+and to target and flood an indiviudal in the group with large and useless
+messages. This results in the peer rebroadcasting these messages to their
+peers, and their peers, etc. This results in flooding the network, eventually
+stalling progress, causing members to potentially abort the protocol.
+
+Mitigations:
+
+  - Topic names (refered to as broadcast channels) are hashed and concatenated
+  public keys, specifically the public keys of all valid group members. Each
+  valid message is then signed with the associated private key of a group member.
+  This can be trivially verified with the supplied proofs (through the
+  destructuring of the broadcast channel name, identifying the public key
+  associated with the message, verifying the message against the signature).
+  All other messages are dropped by the members of the broadcast channel.
+
+  - Valid group members that are attempting traffic amplification attacks will be
+  identified by their proofs. Malformed messages, or failing to provide valid
+  values, for a phase of either distributed key generation (group creation) or
+  the signing phase will result in an honest group member accusing the malicious
+  group member. A valid accusation results in the malicious group member's stake
+  being slashed. See the section on <<Accusations>> for more.
+  
+===== Message Silencing
+
+Another possible attack involves silencing messages from an honest actor (by
+crafting messages with conflicting ids on behalf of an honest actor, or simply
+dropping messages from an honest actor), but the relay combats message silencing
+through:
+
+  1. being threshold-based, where t of n shares are required to provide a
+  successful result.
+  2. we enforce that messages are signed by their authors so a malicious actor
+  should have no means to construct a message with a conflicting id/version.
+
+  TODO: revisit this scheme, we potentially need more here.
+
+
+===== Slow Down (slowloris), resource exhaustion, etc.
+
+We configure clients such that we limit the number of connections a
+single IP address is allowed to make, impose restrictions on the minimum transfer
+speed a connection is allowed to have, and restrict the length of time a
+client is allowed to stay connected. Concretely, this is done through:
+
+  1.Setting http://golang.org/pkg/net/http/#Server[Server.ReadTimeout]. These are
+  deadlines that apply to each request.
+  2. Configuring the transport's max number of idle connections / per host
+  3. Configuring the underlying ConnState.
+  TODO: address https://github.com/keep-network/keep-core/pull/68#discussion_r181217303
+
+At a network level, we recommend that ingress and egress are limited to the ports
+required to communicate over libp2p, sync with ethereum, and optionally, to
+exchange debug information with us. On release, Keep will provide advised
+settings for operators.
+
+===== Bot net, macro network attacks
+
+At a macro level, we defend against attacks on the network through enforcing Keep
+providers to prove their holdings by staking KEEP. Significant disruption of the
+network should lead to a drop in the value of the token, incentivizing provider
+honesty, lest they devalue their holdings. It's in the providers best interests
+to ensure the network is stable and to report malicious or poor performing actors.
+
+==== Relay Aborts
+
+Denial of service attacks are a problem in two phases of the relay's operation:
+group formation and relay response generation. The relay itself can also be DoSed
+by too many requests. The first two in particular share the requirement that
+either a player outside or inside the relay be able to know enough about the
+clients in a group to launch DoS attacks against them.
+
+.Variables
+[.variables,table,header,cols="l,n"]
+|=========
+| Variable | Meaning
+
+| r_t      | Transaction submitter reward
+| r_g      | Relay group submission reward
+| g        | Members in a group
+| E        | Invalid signature punishment for the submitter
+| M        | Minimum stake amount (in KEEP)
+| P        | Aborted group sig punishment
+| f        | Function that executes punishment for aborting group sig
+|=========
+
+TODO:
+r_g/g is the share of the group reward any member receives
+
+p ∈ [-1, 1] is a real number between -1 and 1, representing a multiplicitive
+factor of loss to be applied to r_g as time passes between the relay request and
+next block, such that f = p * r_g, where f is the realized group reward.
+
+
+tx rewards should grow as blockheight grows, group rewards should shrink until
+an abort is identified (when they go negative)
+
+
+===== Group Creation
+
+Currently an attributable Distributed Key Generation algorithm does not exist.
+For example, consider the a potential attack where a lazy/malicious actor fails
+to provide shares or provides malformed shares to the group. In this case, group
+members would provide proofs of maliciousness during the accusation phase of DKG.
+
+A malicious actor with approximately [malicious_node_distribution] nodes
+distributed amongst all potential groups can abort the Distributed Key Generation
+process which would DoS not only new group creation, but also prevent new relay
+entries from being formed, causing relay operation to increasingly become delayed
+(missing the block wait time), approaching the limit.
+
+TODO: flesh out more
+
+===== Signing Group
+
+TODO: Aborts which are attributable will be slashed. 
+
 
 == Incentives
 
