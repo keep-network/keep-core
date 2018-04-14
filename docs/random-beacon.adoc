@@ -166,12 +166,12 @@ number of entries so as to have the relay's value before the entry came due. The
 Keep implementation of the relay mitigates this by using information about the
 request to adjust the previous entry before signing it, effectively anchoring
 the relay to the request and therefore to the parent chain. In particular, the
-relay provides the requestor the ability to specify a _seed_, which is XORed
-with the previous entry to allow the requestor to mitigate against miner
-misbehavior.
+relay provides the requestor the ability to specify a _seed_, which is
+concatenated with the previous entry to allow the requestor to mitigate against
+miner misbehavior.
 
 NOTE: The seed itself must be unpredictable to the relay, or the relay could
-still frontrun with the above mitigation; however, the mitigation for miner
+still frontrun with the above mitigation; however, the mitigations for miner
 censorship below further limits the ability to frontrun.
 
 ==== Miner Censorship
