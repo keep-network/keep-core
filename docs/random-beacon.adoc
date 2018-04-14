@@ -178,19 +178,31 @@ censorship below further limits the ability to frontrun.
 
 Miners can choose not to include a transaction that does not benefit them. For
 example, if a given relay request comes in for a lottery the miner is also
-participating in, and the group that will be selected is not under their
-control, or the group _is_ under their control and they can determine the next
-entry would not be favorable to them, the miner could censor the transaction
-and effectively get a second chance at winning the lottery. The Keep
-implementation of the relay mitigates this by using information from the block
-to affect the choice of the group.
+participating in, and the group that will be selected is under their control and
+they can determine the next entry would not be favorable to them, the miner
+could censor the transaction and effectively get a second chance at winning the
+lottery.
 
-A simple implementation here could use the block hash of the request block XORed
-with the previous entry, then mod against the number of groups to change the
-result. However, miners have some control over block hashes as well. Instead,
-the Keep relay waits 2 blocks after the request is seen, and uses these two
-block hashes to decide the group. This elevates the requirement to having miners
-frontrun by at least 2 blocks before being able to decide to censor a request.
+The frontrunning mitigation in the previous section in particular has a
+potential miner censorship downside. Say a requester submits a request with
+seed `A`. The miner who mines the block with that request will, while mining the
+block, be able to know the relay input. If the miner can know that the selected
+group will be one the miner controls, and with relay input in hand, the miner
+could decide to not minethe transaction because they know their group's output
+for the input will not be beneficial to them.
+
+To mitigate this, the seed is provided in commit-reveal fashion. The original
+request contains a hash of the (seed value + hash of requester account pubkey).
+This block decides which group is chosen. The requester then submits a second
+transaction within 2 blocks that reveals the seed value. This reveal (assuming
+it verifies against the commited value) triggers the relay group's signature
+process.
+
+NOTE: A miner could still choose to censor any transaction if the previous relay
+entry would select a group that they don't control. However, this approach does
+not have a provable upside, since you are giving up potential transactions
+blindly, without knowing if choosing your group would have been beneficial
+anyway.
 
 ==== Requestor Cheating
 
