@@ -9,23 +9,23 @@ import './TokenStaking.sol';
 contract KeepRelayBeacon is Ownable { 
 
     uint256 minPayment;         // value in wei
-    uint256 minStakingBalance;    // Minimum amount in KEEP that is allowed for a client to participate in a group
+    uint256 minStake;    // Minimum amount in KEEP that is allowed for a client to participate in a group
     uint256 public groupCountSequence;
     uint256 seq = 1;
     TokenStaking public staking;
 
-    mapping (uint256 => address) public payment_from;        // Payment from
-    mapping (uint256 => uint256) public payment_amount;        // Payment amount to generate *signature*
+    mapping (uint256 => address) public requestPayer;        // Payment from
+    mapping (uint256 => uint256) public requestPayment;        // Payment amount to generate *signature*
     mapping (uint256 => uint256) public blockReward;        // 
     mapping (uint256 => uint256) public seed;                // Input Seed
-    mapping (uint256 => uint256) public signature;            // The randomly generated number
-    mapping (uint256 => uint256) public groupID;            // What gorup generated the signatre
+    mapping (uint256 => uint256) public requestResponse;            // The randomly generated number
+    mapping (uint256 => uint256) public requestGroupID;            // What gorup generated the signatre
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 signature, uint256 groupID, uint256 previousEntry, uint blockNumber); 
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber); 
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
-    event SubmitGroupPublicKeyEvent(byte[] _PK_G_i, uint256 requestID, uint256 groupCount, uint256 activationBlockHeight);
+    event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 groupCount, uint256 activationBlockHeight);
 
     // Constructor 
     function KeepRelayBeacon(address _stakingAddress, uint256 _minKeep) public {
@@ -33,7 +33,7 @@ contract KeepRelayBeacon is Ownable {
         staking = TokenStaking(_stakingAddress);
         minpayment = 1;
         groupCountSequence = 0;
-        minStakingBalance = _minKeep;    // Minimum amount in KEEP that is allowed for a client to participate in a group
+        minStake = _minKeep;    // Minimum amount in KEEP that is allowed for a client to participate in a group
     }
 
     /// @dev get the next RequestID 
@@ -48,7 +48,7 @@ contract KeepRelayBeacon is Ownable {
     function isStaked(address _staker) view public returns(bool) {
         uint256 balance;
         balance = staking.balanceOf(_staker);
-        return ( balance >= minStakingBalance );
+        return ( balance >= minStake );
     }
 
     /// @dev make a request to generate a signature (random number)
@@ -60,8 +60,8 @@ contract KeepRelayBeacon is Ownable {
 
         requestID = nextID();
 
-        payment_from[requestID] = msg.sender;
-        payment_amount[requestID] = msg.value;
+        requestPayer[requestID] = msg.sender;
+        requestPayment[requestID] = msg.value;
 
         blockReward[requestID] = _blockReward ;        // TODO - who decides the block reward?  is it in KEEP?
         seed[requestID] = _seed ;                    // TODO - is it a security risk to save the "seed" as a public value?
@@ -86,8 +86,8 @@ contract KeepRelayBeacon is Ownable {
     /// @param _groupSignature is the generated random number
     /// @param _groupID is the public key of the gorup that generated the threshold signature
     function relayEntry(uint256 _requestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
-         signature[_requestID] = _groupSignature;
-         groupID[_requestID] = _groupID;
+         requestResponse[_requestID] = _groupSignature;
+         requestGroupID[_requestID] = _groupID;
 
          RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
     }
@@ -104,13 +104,13 @@ contract KeepRelayBeacon is Ownable {
     }
 
     /// @dev take a generated key and place it on the blockchain.  Create an event.
-    function submitGroupPublicKey (byte[] _PK_G_i, uint256 _requestID) public {
+    function submitGroupPublicKey (byte[] groupPublicKey, uint256 _requestID) public {
         uint256 activationBlockHeight = block.number;
         // uint256 public groupCountSequence;
         groupCountSequence = groupCountSequence + 1;
 
         // TODO -- lots of stuff - don't know yet.
-        SubmitGroupPublicKeyEvent(_PK_G_i, _requestID, groupCountSequence, activationBlockHeight);
+        SubmitGroupPublicKeyEvent(groupPublicKey, _requestID, groupCountSequence, activationBlockHeight);
     }
 
     /// @dev resets the group count to 0.  Can only be called by the owner of the contract.
