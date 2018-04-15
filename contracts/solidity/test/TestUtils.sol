@@ -16,7 +16,7 @@ contract TestUtils {
 
     function testCanHandleEmptyArray() public {
         addresses.removeAddress(0x2222222222222222222222222222222222222222);
-        Assert.equal(addresses.length, 0, "Should handle attempt to remove address from an empty array.");
+        Assert.equal(addresses.length, 0, "Empty array should stay unchanged on attempt to remove address from it.");
     }
 
     function testCanRemoveAddressFromSingleElementArray() public {
@@ -55,7 +55,7 @@ contract TestUtils {
 
     function testCanHandleEmptyValueArray() public {
         values.removeValue(2);
-        Assert.equal(values.length, 0, "Should handle attempt to remove value from an empty array.");
+        Assert.equal(values.length, 0, "Empty array should stay unchanged on attempt to remove value from it.");
     }
 
     function testCanRemoveValueFromSingleElementArray() public {

@@ -29,7 +29,7 @@ library AddressArrayUtils {
                 }
                 delete self[self.length-1];
                 self.length--;
-                removeAddress(self, _addressToRemove);
+                i--;
             }
         }
         return self;

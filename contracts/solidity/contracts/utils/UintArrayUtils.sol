@@ -16,7 +16,7 @@ library UintArrayUtils {
                 }
                 delete self[self.length-1];
                 self.length--;
-                removeValue(self, _value);
+                i--;
             }
         }
         return self;
