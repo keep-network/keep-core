@@ -36,19 +36,16 @@ contract KeepRelayBeacon is Ownable {
         minStake = _minKeep;    // Minimum amount in KEEP that is allowed for a client to participate in a group
     }
 
-    /// @dev get the next RequestID 
-    function nextID() private returns(uint256 requestID) {
-        requestID = ( block.timestamp ^ uint256(msg.sender) ) + seq;
-        seq = seq + 1;
-        return ( requestID );
+    /// @dev Accept payments
+    function () public payable {
     }
 
     /// @dev checks that the specified user has an appropriately large stake.   Returns true if staked.
     /// @param _staker specifies the identity of the random beacon client.
-    function isStaked(address _staker) view public returns(bool) {
+    function isStaked(address _staker) public view returns(bool) {
         uint256 balance;
         balance = staking.balanceOf(_staker);
-        return ( balance >= minStake );
+        return (balance >= minStake);
     }
 
     /// @dev make a request to generate a signature (random number)
@@ -56,28 +53,28 @@ contract KeepRelayBeacon is Ownable {
     /// @param _seed is an initial seed random value from the client.  It should be a cryptographically generated random value.
     /// @dev The "RequestID" is generated unique ID. It is returned and part of the event.
     function requestRelay(uint256 _blockReward, uint256 _seed) public payable returns ( uint256 requestID ) {
-        require( msg.value >= minPayment ); // Prevents payments that are too small in wei
+        require(msg.value >= minPayment); // Prevents payments that are too small in wei
 
         requestID = nextID();
 
         requestPayer[requestID] = msg.sender;
         requestPayment[requestID] = msg.value;
 
-        blockReward[requestID] = _blockReward ;        // TODO - who decides the block reward?  is it in KEEP?
-        seed[requestID] = _seed ;                    // TODO - is it a security risk to save the "seed" as a public value?
+        blockReward[requestID] = _blockReward;        // TODO - who decides the block reward?  is it in KEEP?
+        seed[requestID] = _seed;                    // TODO - is it a security risk to save the "seed" as a public value?
 
         // generate an event at this point, just return instead, RandomNumberRequest
-         RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
+        RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
     }
 
     // @dev Transfer 'msg.value' of funds directly from this contract to Keep multiwallet
-    function widthdrawAmount() onlyOwner public payable {
+    function widthdrawAmount() public payable onlyOwner {
         owner.transfer(msg.value);
     }
 
     /// @dev Set the minimum payment that is required before a relay entry occurs.
     /// @param _minPayment is the value in wei that is required to be payed for the process to start.
-    function setMinimumPayment( uint256 _minPayment ) onlyOwner public {
+    function setMinimumPayment( uint256 _minPayment ) public onlyOwner {
         minPayment = _minPayment;
     }
 
@@ -86,10 +83,10 @@ contract KeepRelayBeacon is Ownable {
     /// @param _groupSignature is the generated random number
     /// @param _groupID is the public key of the gorup that generated the threshold signature
     function relayEntry(uint256 _requestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
-         requestResponse[_requestID] = _groupSignature;
-         requestGroupID[_requestID] = _groupID;
+        requestResponse[_requestID] = _groupSignature;
+        requestGroupID[_requestID] = _groupID;
 
-         RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
+        RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
     }
 
     /// @dev make an accusation that the relay entry has been falsified. 
@@ -114,12 +111,14 @@ contract KeepRelayBeacon is Ownable {
     }
 
     /// @dev resets the group count to 0.  Can only be called by the owner of the contract.
-    function resetGroupCount() onlyOwner public {
+    function resetGroupCount() public onlyOwner {
         groupCountSequence = 0;
     }
-    
-    /// @dev Accept payments
-    function () public payable {
-    }
-} 
 
+    /// @dev get the next RequestID 
+    function nextID() private returns(uint256 requestID) {
+        requestID = (block.timestamp ^ uint256(msg.sender)) + seq;
+        seq = seq + 1;
+        return (requestID);
+    }
+}
