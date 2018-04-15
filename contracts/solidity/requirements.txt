@@ -1,0 +1,1 @@
+solidity-flattener==0.2.2
