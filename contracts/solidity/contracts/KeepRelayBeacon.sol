@@ -3,11 +3,11 @@ pragma solidity ^0.4.18;
 /// @title Interface contract for accessing random threshold number generation.
 /// @author Philip Schlump
 
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import './TokenStaking.sol';
 
-contract KeepRelayBeacon { 
+contract KeepRelayBeacon is Ownable { 
 
-    address public contractOwner = msg.sender;
     uint256 minPayment;         // value in wei
     uint256 minStakingBalance;    // Minimum amount in KEEP that is allowed for a client to participate in a group
     uint256 public GroupCountSequence;
@@ -70,15 +70,9 @@ contract KeepRelayBeacon {
          RelayEntryRequested( RequestID, msg.value, _blockReward, _seed, block.number);
     }
 
-    /// @dev validates that a call to the function will only succeed if the owner of the contract made the call.
-    modifier onlyOwner() {
-        require(msg.sender == contractOwner);
-        _;
-    }
-
     // @dev Transfer 'msg.value' of funds directly from this contract to Keep multiwallet
     function widthdrawAmount() onlyOwner public payable {
-        contractOwner.transfer(msg.value);
+        owner.transfer(msg.value);
     }
 
     /// @dev Set the minimum payment that is required before a relay entry occurs.
