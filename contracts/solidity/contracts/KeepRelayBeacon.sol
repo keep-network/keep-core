@@ -1,25 +1,27 @@
 pragma solidity ^0.4.18;
 
-/// @title Interface contract for accessing random threshold number generation.
-/// @author Philip Schlump
-
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import './TokenStaking.sol';
+import "./TokenStaking.sol";
 
-contract KeepRelayBeacon is Ownable { 
 
-    uint256 minPayment;         // value in wei
-    uint256 minStake;    // Minimum amount in KEEP that is allowed for a client to participate in a group
+/**
+ * @title KeepRandomBeaconImpl
+ * @dev Implementation contract that works under Keep Random Beacon proxy to
+ * allow upgradability. The purpose of the contract is to have up-to-date logic
+ * for random threshold number generation.
+ */
+contract KeepRandomBeaconImpl is Ownable {
+
+    uint256 public minPayment;
+    uint256 public minStake;
     uint256 public groupCountSequence;
-    uint256 seq = 1;
-    TokenStaking public staking;
+    uint256 internal seq = 1;
+    TokenStaking public stakingContract; // Staking contract that is used to check stake balances against.
 
-    mapping (uint256 => address) public requestPayer;        // Payment from
-    mapping (uint256 => uint256) public requestPayment;        // Payment amount to generate *signature*
-    mapping (uint256 => uint256) public blockReward;        // 
-    mapping (uint256 => uint256) public seed;                // Input Seed
-    mapping (uint256 => uint256) public requestResponse;            // The randomly generated number
-    mapping (uint256 => uint256) public requestGroupID;            // What gorup generated the signatre
+    mapping (uint256 => address) public requestPayer; // Payment from
+    mapping (uint256 => uint256) public requestPayment; // Payment amount to generate *signature*
+    mapping (uint256 => uint256) public blockReward;
+    mapping (uint256 => uint256) public requestGroupID; // What group generated the signatre
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
@@ -27,31 +29,41 @@ contract KeepRelayBeacon is Ownable {
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 groupCount, uint256 activationBlockHeight);
 
-    // Constructor 
-    function KeepRelayBeacon(address _stakingAddress, uint256 _minKeep) public {
+    /**
+     * @dev Creates Keep Random Beacon implementaion contract with a linked staking contract.
+     * @param _stakingAddress Address of a staking contract that will be linked to this contract.
+     * @param _minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
+     * @param _minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
+     */
+    function KeepRandomBeaconImpl(address _stakingAddress, uint256 _minPayment, uint256 _minStake) public {
         require(_stakingAddress != address(0x0));
-        staking = TokenStaking(_stakingAddress);
-        minpayment = 1;
+        stakingContract = TokenStaking(_stakingAddress);
+        minStake = _minStake;
+        minPayment = _minPayment;
         groupCountSequence = 0;
-        minStake = _minKeep;    // Minimum amount in KEEP that is allowed for a client to participate in a group
     }
 
     /// @dev Accept payments
     function () public payable {
     }
 
-    /// @dev checks that the specified user has an appropriately large stake.   Returns true if staked.
-    /// @param _staker specifies the identity of the random beacon client.
+    /**
+     * @dev Checks that the specified user has an appropriately large stake. 
+     * @param _staker Specifies the identity of the random beacon client.
+     * @return True if staked enough to participate in the group, false otherwise.
+     */
     function isStaked(address _staker) public view returns(bool) {
         uint256 balance;
-        balance = staking.balanceOf(_staker);
+        balance = stakingContract.balanceOf(_staker);
         return (balance >= minStake);
     }
 
-    /// @dev make a request to generate a signature (random number)
-    /// @param _blockReward is the value in keep??? for generating the signature.
-    /// @param _seed is an initial seed random value from the client.  It should be a cryptographically generated random value.
-    /// @dev The "RequestID" is generated unique ID. It is returned and part of the event.
+    /**
+     * @dev Creates a request to generate a signature (random number)
+     * @param _blockReward The value in keep for generating the signature.
+     * @param _seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
+     */
     function requestRelay(uint256 _blockReward, uint256 _seed) public payable returns ( uint256 requestID ) {
         require(msg.value >= minPayment); // Prevents payments that are too small in wei
 
@@ -60,36 +72,44 @@ contract KeepRelayBeacon is Ownable {
         requestPayer[requestID] = msg.sender;
         requestPayment[requestID] = msg.value;
 
-        blockReward[requestID] = _blockReward;        // TODO - who decides the block reward?  is it in KEEP?
-        seed[requestID] = _seed;                    // TODO - is it a security risk to save the "seed" as a public value?
+        blockReward[requestID] = _blockReward;        // TODO - who decides the block reward? is it in KEEP?
 
-        // generate an event at this point, just return instead, RandomNumberRequest
+        // Generate an event at this point, just return instead, RandomNumberRequest.
         RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
     }
 
-    // @dev Transfer 'msg.value' of funds directly from this contract to Keep multiwallet
+    /**
+     * @dev Transfer 'msg.value' of funds directly from this contract to Keep multiwallet
+     */
     function widthdrawAmount() public payable onlyOwner {
         owner.transfer(msg.value);
     }
 
-    /// @dev Set the minimum payment that is required before a relay entry occurs.
-    /// @param _minPayment is the value in wei that is required to be payed for the process to start.
+    /**
+     * @dev Set the minimum payment that is required before a relay entry occurs.
+     * @param _minPayment is the value in wei that is required to be payed for the process to start.
+     */
     function setMinimumPayment( uint256 _minPayment ) public onlyOwner {
         minPayment = _minPayment;
     }
 
-    /// @dev take the resulting signature and put it onto the chain.
-    /// @param _requestID the request that started this generation - to tie the results back to the request.
-    /// @param _groupSignature is the generated random number
-    /// @param _groupID is the public key of the gorup that generated the threshold signature
+    /**
+     * @dev Takes the resulting signature and puts it onto the chain.
+     * @param _requestID The request that started this generation - to tie the results back to the request.
+     * @param _groupSignature The generated random number.
+     * @param _groupID Public key of the group that generated the threshold signature.
+     */
     function relayEntry(uint256 _requestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
-        requestResponse[_requestID] = _groupSignature;
         requestGroupID[_requestID] = _groupID;
 
         RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
     }
 
-    /// @dev make an accusation that the relay entry has been falsified. 
+    /**
+     * @dev Makes an accusation that the relay entry has been falsified.
+     * @param _lastValidRelayTxHash
+     * @param _lastValidRelayBlock
+     */
     function relayEntryAccusation( uint256 _lastValidRelayTxHash, uint256 _lastValidRelayBlock) public {
         uint256 lastValidRelayEntry;
         lastValidRelayEntry = 1010101010;     // Some arbitrary number for testing.
@@ -97,10 +117,14 @@ contract KeepRelayBeacon is Ownable {
         // validate accusation by performing the checks in this code (slow/expensive)
         // raise event if accusation is shown to be true
         // penalty for false accusations - msg.sender? gets docked/rewarded?
-        RelayResetEvent(lastValidRelayEntry, _lastValidRelayTxHash, _lastValidRelayBlock);    
+        RelayResetEvent(lastValidRelayEntry, _lastValidRelayTxHash, _lastValidRelayBlock);
     }
 
-    /// @dev take a generated key and place it on the blockchain.  Create an event.
+    /**
+     * @dev Takes a generated key and place it on the blockchain. Creates an event.
+     * @param _groupPublicKey
+     * @param _requestID
+     */
     function submitGroupPublicKey (byte[] groupPublicKey, uint256 _requestID) public {
         uint256 activationBlockHeight = block.number;
         // uint256 public groupCountSequence;
@@ -110,12 +134,17 @@ contract KeepRelayBeacon is Ownable {
         SubmitGroupPublicKeyEvent(groupPublicKey, _requestID, groupCountSequence, activationBlockHeight);
     }
 
-    /// @dev resets the group count to 0.  Can only be called by the owner of the contract.
+    /**
+     * @dev Resets the group count to 0. Can only be called by the owner of the contract.
+     */
     function resetGroupCount() public onlyOwner {
         groupCountSequence = 0;
     }
-
-    /// @dev get the next RequestID 
+    
+    /**
+     * @dev Generates a unique ID
+     * @return An uint256 representing uniquely generated ID.
+     */
     function nextID() private returns(uint256 requestID) {
         requestID = (block.timestamp ^ uint256(msg.sender)) + seq;
         seq = seq + 1;
