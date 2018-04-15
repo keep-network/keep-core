@@ -21,7 +21,7 @@ contract TestTokenGrantStake {
   uint cliff = 0;
 
   // Token grant beneficiary should be able to stake unreleased granted balance.
-  function testCanStakeTokenGrant() {
+  function testCanStakeTokenGrant() public {
 
     // Approve transfer of tokens to the token grant contract.
     t.approve(address(c), 100);
@@ -37,14 +37,14 @@ contract TestTokenGrantStake {
   }
 
   // Token grant beneficiary should be able to initiate unstake of the token grant
-  function testCanInitiateUnstakeTokenGrant() {
+  function testCanInitiateUnstakeTokenGrant() public {
     c.initiateUnstake(id);
     Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
     Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
   }
 
   // Token grant beneficiary can not finish unstake of the grant until delay is over
-  function testCannotFinishUnstake() {
+  function testCannotFinishUnstake() public {
   
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
     ThrowProxy throwProxy = new ThrowProxy(address(c));
