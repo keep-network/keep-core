@@ -21,6 +21,7 @@ contract KeepRandomBeacon is Ownable {
     event Upgraded(string version, address indexed implementation);
 
     function KeepRandomBeacon(string _version, address _implementation) {
+        require(_implementation != address(0));
         version = _version;
         implementation = _implementation;
     }
@@ -51,6 +52,7 @@ contract KeepRandomBeacon is Ownable {
         public
         onlyOwner
     {
+        require(_implementation != address(0));
         require(_implementation != implementation);
         require(_version != version);
         version = _version;
