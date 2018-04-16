@@ -27,7 +27,6 @@ library AddressArrayUtils {
                 for (uint j = i; j < self.length-1; j++) {
                     self[j] = self[j+1];
                 }
-                delete self[self.length-1];
                 self.length--;
                 i--;
             }
