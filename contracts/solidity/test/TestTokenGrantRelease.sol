@@ -12,7 +12,7 @@ contract TestTokenGrantRelease {
   KeepToken t = new KeepToken();
 
   // Create token grant contract with 30 days withdrawal delay.
-  TokenGrant c = new TokenGrant(t, 30 days);
+  TokenGrant c = new TokenGrant(t, 0, 30 days);
 
   uint id;
   address beneficiary = 0xf17f52151EbEF6C7334FAD080c5704D77216b732;
@@ -21,7 +21,7 @@ contract TestTokenGrantRelease {
   uint cliff = 0;
 
   // Token holder should be able to grant it's tokens to a beneficiary.
-  function testCanGrant() {
+  function testCanGrant() public {
     uint balance = t.balanceOf(address(this));
 
     t.approve(address(c), 100);
@@ -30,7 +30,7 @@ contract TestTokenGrantRelease {
     Assert.equal(c.balanceOf(beneficiary), 100, "Amount should be added to beneficiary's granted balance.");
   }
 
-  function testCannotReleaseGrantedAmmount() {
+  function testCannotReleaseGrantedAmmount() public {
     Assert.equal(c.unreleasedAmount(id), 0, "Unreleased token grant amount should be 0.");
 
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
@@ -48,7 +48,7 @@ contract TestTokenGrantRelease {
   }
 
   // Token grant with 0 duration, release available immediately.
-  function testCanReleaseGrantedAmount() {
+  function testCanReleaseGrantedAmount() public {
     
     t.approve(address(c), 100);
     id = c.grant(100, beneficiary, 0, now, 0, false);

@@ -12,7 +12,7 @@ contract TestTokenGrantStake {
   KeepToken t = new KeepToken();
 
   // Create token grant contract with 30 days withdrawal delay.
-  TokenGrant c = new TokenGrant(t, 30 days);
+  TokenGrant c = new TokenGrant(t, 0, 30 days);
 
   uint id;
   address beneficiary = address(this); // For test simplicity set beneficiary the same as sender.
@@ -21,7 +21,7 @@ contract TestTokenGrantStake {
   uint cliff = 0;
 
   // Token grant beneficiary should be able to stake unreleased granted balance.
-  function testCanStakeTokenGrant() {
+  function testCanStakeTokenGrant() public {
 
     // Approve transfer of tokens to the token grant contract.
     t.approve(address(c), 100);
@@ -32,19 +32,19 @@ contract TestTokenGrantStake {
 
     Assert.equal(c.stakeBalances(beneficiary), 100, "Token grant balance should be added to beneficiary grant stake balance.");
 
-    var (_owner, _beneficiary, _locked, _revoked, _revocable, _amount, _duration, _start, _cliff, _released) = c.grants(id);
+    var (, , _locked, , , , , , ,) = c.grants(id);
     Assert.equal(_locked, true, "Token grant should become locked.");
   }
 
   // Token grant beneficiary should be able to initiate unstake of the token grant
-  function testCanInitiateUnstakeTokenGrant() {
+  function testCanInitiateUnstakeTokenGrant() public {
     c.initiateUnstake(id);
     Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
-    Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
+    Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should change immediately after unstake initiation.");
   }
 
   // Token grant beneficiary can not finish unstake of the grant until delay is over
-  function testCannotFinishUnstake() {
+  function testCannotFinishUnstake() public {
   
     // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
     ThrowProxy throwProxy = new ThrowProxy(address(c));
@@ -56,6 +56,6 @@ contract TestTokenGrantStake {
     // r will be false if it threw and true if it didn't.
     bool r = throwProxy.execute.gas(200000)();
     Assert.isFalse(r, "Should throw when trying to unstake when delay is not over.");
-    Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
+    Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
   }
 }
