@@ -89,7 +89,7 @@ contract KeepRandomBeaconImpl is Ownable {
      * @dev Set the minimum payment that is required before a relay entry occurs.
      * @param _minPayment is the value in wei that is required to be payed for the process to start.
      */
-    function setMinimumPayment( uint256 _minPayment ) public onlyOwner {
+    function setMinimumPayment(uint256 _minPayment) public onlyOwner {
         minPayment = _minPayment;
     }
 
@@ -107,10 +107,10 @@ contract KeepRandomBeaconImpl is Ownable {
 
     /**
      * @dev Makes an accusation that the relay entry has been falsified.
-     * @param _lastValidRelayTxHash
-     * @param _lastValidRelayBlock
+     * @param _lastValidRelayTxHash Last valid relay TX hash.
+     * @param _lastValidRelayBlock Last valid relay block.
      */
-    function relayEntryAccusation( uint256 _lastValidRelayTxHash, uint256 _lastValidRelayBlock) public {
+    function relayEntryAccusation(uint256 _lastValidRelayTxHash, uint256 _lastValidRelayBlock) public {
         uint256 lastValidRelayEntry;
         lastValidRelayEntry = 1010101010;     // Some arbitrary number for testing.
         // TODO -- really need to understand what is needed at this point.
@@ -122,16 +122,16 @@ contract KeepRandomBeaconImpl is Ownable {
 
     /**
      * @dev Takes a generated key and place it on the blockchain. Creates an event.
-     * @param _groupPublicKey
-     * @param _requestID
+     * @param _groupPublicKey Group public key.
+     * @param _requestID Request ID.
      */
-    function submitGroupPublicKey (byte[] groupPublicKey, uint256 _requestID) public {
+    function submitGroupPublicKey(byte[] _groupPublicKey, uint256 _requestID) public {
         uint256 activationBlockHeight = block.number;
         // uint256 public groupCountSequence;
         groupCountSequence = groupCountSequence + 1;
 
         // TODO -- lots of stuff - don't know yet.
-        SubmitGroupPublicKeyEvent(groupPublicKey, _requestID, groupCountSequence, activationBlockHeight);
+        SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, groupCountSequence, activationBlockHeight);
     }
 
     /**
