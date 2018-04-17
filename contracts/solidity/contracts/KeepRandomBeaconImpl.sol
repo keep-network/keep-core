@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./TokenStaking.sol";
+import "./StakingProxy.sol";
 
 
 /**
@@ -16,7 +16,7 @@ contract KeepRandomBeaconImpl is Ownable {
     uint256 public minStake;
     uint256 public groupCountSequence;
     uint256 internal seq = 1;
-    TokenStaking public stakingContract; // Staking contract that is used to check stake balances against.
+    StakingProxy public stakingProxy; // Staking proxy contract that is used to check stake balances against.
 
     mapping (uint256 => address) public requestPayer; // Payment from
     mapping (uint256 => uint256) public requestPayment; // Payment amount to generate *signature*
@@ -30,14 +30,14 @@ contract KeepRandomBeaconImpl is Ownable {
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 groupCount, uint256 activationBlockHeight);
 
     /**
-     * @dev Creates Keep Random Beacon implementaion contract with a linked staking contract.
-     * @param _stakingAddress Address of a staking contract that will be linked to this contract.
+     * @dev Creates Keep Random Beacon implementaion contract with a linked staking proxy contract.
+     * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param _minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param _minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      */
-    function KeepRandomBeaconImpl(address _stakingAddress, uint256 _minPayment, uint256 _minStake) public {
-        require(_stakingAddress != address(0x0));
-        stakingContract = TokenStaking(_stakingAddress);
+    function KeepRandomBeaconImpl(address _stakingProxy, uint256 _minPayment, uint256 _minStake) public {
+        require(_stakingProxy != address(0x0));
+        stakingProxy = StakingProxy(_stakingProxy);
         minStake = _minStake;
         minPayment = _minPayment;
         groupCountSequence = 0;
@@ -54,7 +54,7 @@ contract KeepRandomBeaconImpl is Ownable {
      */
     function isStaked(address _staker) public view returns(bool) {
         uint256 balance;
-        balance = stakingContract.balanceOf(_staker);
+        balance = stakingProxy.balanceOf(_staker);
         return (balance >= minStake);
     }
 
