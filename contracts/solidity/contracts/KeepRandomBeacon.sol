@@ -55,7 +55,7 @@ contract KeepRandomBeacon is Ownable {
     {
         require(_implementation != address(0));
         require(_implementation != implementation);
-        require(_version != version);
+        require(keccak256(_version) != keccak256(version));
         version = _version;
         implementation = _implementation;
         Upgraded(version, implementation);
