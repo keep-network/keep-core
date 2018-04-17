@@ -5,29 +5,30 @@
 Currently the easiest way to build is using the `Dockerfile` at the root of the
 repository. A simple `docker build` should get you a functioning container.
 
-If you want to build natively, you'll need to clone `keep-network/bn` from
-GitHub and run `make install`. To successfully build `bn`, you'll need to have
-libgmp (with headers) and openssl (also with headers) installed, as well as
-the LLVM developer tools. On macOS, you can `brew install gmp openssl llvm` to
-install all of these. Note that `llvm` requires some additional env variable
-work that the formula will explain when you install it.
+If you want to build natively, there are a few prereqs you'll need to go through.
+First, you'll need to clone `keep-network/bn` from GitHub and run `make
+install`. To successfully build `bn`, you'll need to have `libgmp` (with
+headers) and `openssl` (also with headers) installed, as well as the LLVM
+developer tools. On macOS, you can `brew install gmp openssl llvm` to install
+all of these. Note that `llvm` requires some additional env variable work that
+the formula will explain when you install it.
 
-Once you've installed `bn`, you can run `dep ensure` in the `go/` directory of
-this repository and then you are ready to build.
+You'll also need [`dep`](https://github.com/golang/dep#installation), the Go
+dependency manager we use.
 
-#### Protobufs
+Lastly, you'll need the [protobuf compiler](https://developers.google.com/protocol-buffers/docs/downloads).
+You'll also need to install the `protoc-gen-gogo` toolchain, which you can
+install using `go get`:
 
-In addition to installing `bn` and `dep`, you'll also need to install the protobuf compiler.
-On OSX, this will be `brew install protobuf` (requirement: need `homebrew installed first`).
+```
+go get github.com/gogo/protobuf/proto
+go get github.com/gogo/protobuf/jsonpb
+go get github.com/gogo/protobuf/protoc-gen-gogo
+go get github.com/gogo/protobuf/gogoproto
+```
 
-Lastly, you'll need to get the protoc-gen-gogo toolchain:
-
-    ```
-    go get github.com/gogo/protobuf/proto
-    go get github.com/gogo/protobuf/jsonpb
-    go get github.com/gogo/protobuf/protoc-gen-gogo
-    go get github.com/gogo/protobuf/gogoproto
-    ```
+Finally, you can run `dep ensure` in the root directory of this repository and
+you'll be ready to build!
 
 ### Relay States
 
