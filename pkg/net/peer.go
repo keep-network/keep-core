@@ -8,9 +8,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/identity"
 	addrutil "github.com/libp2p/go-addr-util"
 	host "github.com/libp2p/go-libp2p-host"
+	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	ma "github.com/multiformats/go-multiaddr"
 )
+
+type Authenticator interface {
+	Sign(data []byte) ([]byte, error)
+	Sign(data interface{}) ([]byte, error)
+	Verify(data []byte, sig []byte, peerID peer.ID, pubKey []byte) bool
+}
 
 type Peer struct {
 	ID    identity.Identity
@@ -86,3 +93,7 @@ func getListenAdresses(port int) ([]ma.Multiaddr, error) {
 }
 
 func (p *Peer) buildPeerHost(listenAddrs []ma.Multiaddr) (host.Host, error)
+
+func (p *Peer) Sign(data []byte) ([]byte, error)
+func (p *Peer) Sign(data interface{}) ([]byte, error)
+func (p *Peer) Verify(data []byte, sig []byte, peerID peer.ID, pubkey []byte) bool
