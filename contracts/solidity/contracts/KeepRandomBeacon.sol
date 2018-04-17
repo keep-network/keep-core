@@ -30,10 +30,11 @@ contract KeepRandomBeacon is Ownable {
      * @dev Delegate call to the current implementation contract.
      */
     function() payable {
+        address _impl = implementation;
         assembly {
             let ptr := mload(0x40)
             calldatacopy(ptr, 0, calldatasize)
-            let result := delegatecall(gas, implementation, ptr, calldatasize, 0, 0)
+            let result := delegatecall(gas, _impl, ptr, calldatasize, 0, 0)
             let size := returndatasize
             returndatacopy(ptr, 0, size)
 
