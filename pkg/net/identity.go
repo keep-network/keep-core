@@ -11,6 +11,7 @@ import (
 
 type Identity interface {
 	ID() peer.ID
+	AddIdentityToStore() (pstore.Peerstore, error)
 	PubKey() (ci.PubKey, error)
 	PubKey(peer.ID) (ci.PubKey, error)
 }
@@ -55,7 +56,7 @@ func (pi *PeerIdentity) PubKey(peer.ID) (ci.PubKey, error) {
 	return pi.ID().ExtractEd25519PublicKey()
 }
 
-func LoadOrGenerateIdentity(randseed int64, filePath string) (*PeerIdentity, error) {
+func LoadOrGenerateIdentity(randseed int64, filePath string) (*Identity, error) {
 	if filePath != "" {
 		// TODO: unmarshal and build out PKI
 		// TODO: ensure this is associated with some staking address
