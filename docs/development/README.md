@@ -23,14 +23,11 @@ You'll also need [`dep`](https://github.com/golang/dep#installation), the Go
 dependency manager we use.
 
 Lastly, you'll need the [protobuf compiler](https://developers.google.com/protocol-buffers/docs/downloads).
-You'll also need to install the `protoc-gen-gogo` toolchain, which you can
+You'll also need to install the `protoc-gen-gogoslick` toolchain, which you can
 install using `go get`:
 
 ```
-go get github.com/gogo/protobuf/proto
-go get github.com/gogo/protobuf/jsonpb
-go get github.com/gogo/protobuf/protoc-gen-gogo
-go get github.com/gogo/protobuf/gogoproto
+go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 ```
 
 Finally, you can run `dep ensure` in the root directory of this repository and

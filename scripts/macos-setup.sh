@@ -12,10 +12,7 @@ brew list geth &>/dev/null || brew install geth
 echo "Installing protobuf requirements..."
 # Protobuf
 brew list protobuf &>/dev/null || brew install protobuf
-go get -u github.com/gogo/protobuf/proto
-go get -u github.com/gogo/protobuf/jsonpb
-go get -u github.com/gogo/protobuf/protoc-gen-gogo
-go get -u github.com/gogo/protobuf/gogoproto
+go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 
 echo "Installing precommit requirements..."
 brew list pre-commit &>/dev/null || brew install pre-commit
