@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./StakingProxy.sol";
+import "./EternalStorage.sol";
 
 
 /**
@@ -10,18 +11,9 @@ import "./StakingProxy.sol";
  * allow upgradability. The purpose of the contract is to have up-to-date logic
  * for random threshold number generation.
  */
-contract KeepRandomBeaconImpl is Ownable {
+contract KeepRandomBeaconImpl is Ownable, EternalStorage {
 
-    uint256 public minPayment;
-    uint256 public minStake;
-    uint256 public groupCountSequence;
-    uint256 internal seq = 1;
     StakingProxy public stakingProxy; // Staking proxy contract that is used to check stake balances against.
-
-    mapping (uint256 => address) public requestPayer; // Payment from
-    mapping (uint256 => uint256) public requestPayment; // Payment amount to generate *signature*
-    mapping (uint256 => uint256) public blockReward;
-    mapping (uint256 => uint256) public requestGroupID; // What group generated the signatre
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
@@ -38,9 +30,9 @@ contract KeepRandomBeaconImpl is Ownable {
     function KeepRandomBeaconImpl(address _stakingProxy, uint256 _minPayment, uint256 _minStake) public {
         require(_stakingProxy != address(0x0));
         stakingProxy = StakingProxy(_stakingProxy);
-        minStake = _minStake;
-        minPayment = _minPayment;
-        groupCountSequence = 0;
+        uintStorage[keccak256("minStake")] = _minStake;
+        uintStorage[keccak256("minPayment")] = _minPayment;
+        uintStorage[keccak256("groupCountSequence")] = 0;
     }
 
     /// @dev Accept payments
@@ -55,7 +47,7 @@ contract KeepRandomBeaconImpl is Ownable {
     function isStaked(address _staker) public view returns(bool) {
         uint256 balance;
         balance = stakingProxy.balanceOf(_staker);
-        return (balance >= minStake);
+        return (balance >= uintStorage[keccak256("minStake")]);
     }
 
     /**
@@ -65,14 +57,13 @@ contract KeepRandomBeaconImpl is Ownable {
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
     function requestRelay(uint256 _blockReward, uint256 _seed) public payable returns ( uint256 requestID ) {
-        require(msg.value >= minPayment); // Prevents payments that are too small in wei
+        require(msg.value >= uintStorage[keccak256("minPayment")]); // Prevents payments that are too small in wei
 
         requestID = nextID();
 
-        requestPayer[requestID] = msg.sender;
-        requestPayment[requestID] = msg.value;
-
-        blockReward[requestID] = _blockReward;        // TODO - who decides the block reward? is it in KEEP?
+        addressStorage[keccak256("requestPayer", requestID)] = msg.sender;
+        uintStorage[keccak256("requestPayment", requestID)] = msg.value;
+        uintStorage[keccak256("blockReward", requestID)] = _blockReward; // TODO - who decides the block reward? is it in KEEP?
 
         // Generate an event at this point, just return instead, RandomNumberRequest.
         RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
@@ -90,7 +81,7 @@ contract KeepRandomBeaconImpl is Ownable {
      * @param _minPayment is the value in wei that is required to be payed for the process to start.
      */
     function setMinimumPayment(uint256 _minPayment) public onlyOwner {
-        minPayment = _minPayment;
+        uintStorage[keccak256("minPayment")] = _minPayment;
     }
 
     /**
@@ -100,7 +91,7 @@ contract KeepRandomBeaconImpl is Ownable {
      * @param _groupID Public key of the group that generated the threshold signature.
      */
     function relayEntry(uint256 _requestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
-        requestGroupID[_requestID] = _groupID;
+        uintStorage[keccak256("requestGroupID", _requestID)] = _groupID;
 
         RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
     }
@@ -127,27 +118,26 @@ contract KeepRandomBeaconImpl is Ownable {
      */
     function submitGroupPublicKey(byte[] _groupPublicKey, uint256 _requestID) public {
         uint256 activationBlockHeight = block.number;
-        // uint256 public groupCountSequence;
-        groupCountSequence = groupCountSequence + 1;
+        uintStorage[keccak256("groupCountSequence")]++;
 
         // TODO -- lots of stuff - don't know yet.
-        SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, groupCountSequence, activationBlockHeight);
+        SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, uintStorage[keccak256("groupCountSequence")], activationBlockHeight);
     }
 
     /**
      * @dev Resets the group count to 0. Can only be called by the owner of the contract.
      */
     function resetGroupCount() public onlyOwner {
-        groupCountSequence = 0;
+        uintStorage[keccak256("groupCountSequence")] = 0;
     }
-    
+
     /**
      * @dev Generates a unique ID
      * @return An uint256 representing uniquely generated ID.
      */
     function nextID() private returns(uint256 requestID) {
-        requestID = (block.timestamp ^ uint256(msg.sender)) + seq;
-        seq = seq + 1;
+        requestID = (block.timestamp ^ uint256(msg.sender)) + uintStorage[keccak256("seq")];
+        uintStorage[keccak256("seq")]++;
         return (requestID);
     }
 }
