@@ -1,5 +1,11 @@
 ## Keep developer documentation
 
+### Getting Set Up
+
+If you're on macOS, install Homebrew and run `scripts/macos-setup.sh`. Note
+that if you don't have Homebrew or you're not on macOS, the below information
+details what you'll need. The script additionally sets up pre-commit hooks.
+
 ### Building
 
 Currently the easiest way to build is using the `Dockerfile` at the root of the
