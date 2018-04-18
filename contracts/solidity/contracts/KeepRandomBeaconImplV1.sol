@@ -6,12 +6,13 @@ import "./EternalStorage.sol";
 
 
 /**
- * @title KeepRandomBeaconImpl
- * @dev Implementation contract that works under Keep Random Beacon proxy to
- * allow upgradability. The purpose of the contract is to have up-to-date logic
- * for random threshold number generation.
+ * @title KeepRandomBeaconImplV1
+ * @dev Initial version of implementation contract that works under Keep Random 
+ * Beacon proxy and allows upgradability. The purpose of the contract is to have 
+ * up-to-date logic for random threshold number generation. Updated contracts
+ * must inherit from this contract and have to be initialized under updated version name
  */
-contract KeepRandomBeaconImpl is Ownable, EternalStorage {
+contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
 
     StakingProxy public stakingProxy; // Staking proxy contract that is used to check stake balances against.
 
@@ -22,17 +23,26 @@ contract KeepRandomBeaconImpl is Ownable, EternalStorage {
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 groupCount, uint256 activationBlockHeight);
 
     /**
-     * @dev Creates Keep Random Beacon implementaion contract with a linked staking proxy contract.
+     * @dev Initialize Keep Random Beacon implementaion contract with a linked staking proxy contract.
      * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param _minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param _minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      */
-    function KeepRandomBeaconImpl(address _stakingProxy, uint256 _minPayment, uint256 _minStake) public {
+    function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake) public {
+        require(!initialized());
         require(_stakingProxy != address(0x0));
-        stakingProxy = StakingProxy(_stakingProxy);
+        addressStorage[keccak256("stakingProxy")] = _stakingProxy;
         uintStorage[keccak256("minStake")] = _minStake;
         uintStorage[keccak256("minPayment")] = _minPayment;
         uintStorage[keccak256("groupCountSequence")] = 0;
+        boolStorage[keccak256("KeepRandomBeaconImplV1")] = true;
+    }
+
+    /**
+     * @dev Checks if this contract is initialized.
+     */
+    function initialized() public view returns (bool) {
+        return boolStorage[keccak256("KeepRandomBeaconImplV1")];
     }
 
     /// @dev Accept payments
@@ -46,6 +56,7 @@ contract KeepRandomBeaconImpl is Ownable, EternalStorage {
      */
     function isStaked(address _staker) public view returns(bool) {
         uint256 balance;
+        stakingProxy = StakingProxy(addressStorage[keccak256("stakingProxy")]);
         balance = stakingProxy.balanceOf(_staker);
         return (balance >= uintStorage[keccak256("minStake")]);
     }
