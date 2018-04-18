@@ -3,18 +3,19 @@ package net
 import (
 	"fmt"
 
+	"github.com/keep-network/keep-core/pkg/net/identity"
 	host "github.com/libp2p/go-libp2p-host"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 type Peer struct {
-	ID    Identity
+	ID    identity.Identity
 	Store pstore.Peerstore
 	ph    host.Host
 }
 
 func NewPeer(randseed int64, filepath string) *Peer {
-	pi, err := LoadOrGenerateIdentity(randseed, filepath)
+	pi, err := identity.LoadOrGenerateIdentity(randseed, filepath)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate Identity with error %s", err))
 	}
