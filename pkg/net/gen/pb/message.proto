@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-option go_package = "gossip";
-package gossip;
+option go_package = "net.pb";
+package pb;
 
 // Envelope contains a marshalled Message as the payload
 // and a signature over the payload as signature.
