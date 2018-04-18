@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"io"
 
+	crand "crypto/rand"
+	mrand "math/rand"
+
 	ci "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
-	peer "github.com/rargulati/go-libp2p-peer"
 )
 
 type Identity interface {
 	ID() peer.ID
 	AddIdentityToStore() (pstore.Peerstore, error)
-	PubKey() (ci.PubKey, error)
-	PubKey(peer.ID) (ci.PubKey, error)
+	PubKey() ci.PubKey
+	PubKeyFromID(peer.ID) (ci.PubKey, error)
 }
 
 type PeerIdentity struct {
@@ -24,19 +27,20 @@ func (pi *PeerIdentity) ID() peer.ID {
 	return pubKeyToID(pi.privKey.GetPublic())
 }
 
-func pubKeyToID(pk ci.PubKey) peer.ID {
+func pubKeyToID(pub ci.PubKey) peer.ID {
 	// From go-libp2p-peer: PKI-based identities for libp2p
-	pid, err := peer.IDFromEd25519PublicKey(pub)
+	pid, err := peer.IDFromPublicKey(pub)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to generate valid libp2p identity with err: %v", err)
+		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
 	}
+	return pid
 }
 
 func (pi *PeerIdentity) KeyPair() (ci.PrivKey, ci.PubKey) {
-	return pi.privkey, pi.privKey.GetPublic()
+	return pi.privKey, pi.privKey.GetPublic()
 }
 
-func (pi *PeerIdentity) AddIdentityToStore() (*pstore.Peerstore, error) {
+func (pi *PeerIdentity) AddIdentityToStore() (pstore.Peerstore, error) {
 	ps := pstore.NewPeerstore()
 	// HACK: see github.com/rargulati/go-libp2p-crypto for fix
 	if err := ps.AddPrivKey(pi.ID(), pi.privKey); err != nil {
@@ -48,29 +52,29 @@ func (pi *PeerIdentity) AddIdentityToStore() (*pstore.Peerstore, error) {
 	return ps, nil
 }
 
-func (pi *PeerIdentity) PubKey(peer.ID) (ci.PubKey, error) {
+func (pi *PeerIdentity) PubKey() ci.PubKey {
 	return pi.privKey.GetPublic()
 }
 
-func (pi *PeerIdentity) PubKey(peer.ID) (ci.PubKey, error) {
-	return pi.ID().ExtractEd25519PublicKey()
+func (pi *PeerIdentity) PubKeyFromID(peer.ID) (ci.PubKey, error) {
+	return pi.ID().ExtractPublicKey()
 }
 
-func LoadOrGenerateIdentity(randseed int64, filePath string) (*Identity, error) {
+func LoadOrGenerateIdentity(randseed int64, filePath string) (Identity, error) {
 	if filePath != "" {
 		// TODO: unmarshal and build out PKI
 		// TODO: ensure this is associated with some staking address
 	}
 	if randseed != 0 {
-		return generateDeterministicKeypair(randseed)
+		return generateDeterministicIdentity(randseed)
 	}
-	return generateKeypair()
+	return generateIdentity()
 }
 
 // generateIdentity generates a public/private-key pair
 // (using the libp2p/crypto wrapper for golang/crypto) provided a reader.
 // Use randseed for deterministic IDs, otherwise we'll use cryptographically secure psuedorandomness.
-func generateIdentity() (*PeerIdentity, error) {
+func generateIdentity() (Identity, error) {
 	var r io.Reader
 	r = crand.Reader
 
@@ -82,7 +86,7 @@ func generateIdentity() (*PeerIdentity, error) {
 	return &PeerIdentity{privKey: priv}, nil
 }
 
-func generateDeterministicIdentity(randseed int64) (*PeerIdentity, error) {
+func generateDeterministicIdentity(randseed int64) (Identity, error) {
 	var r io.Reader
 	r = mrand.New(mrand.NewSource(randseed))
 
