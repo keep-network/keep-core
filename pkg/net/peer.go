@@ -15,20 +15,14 @@ import (
 
 type Authenticator interface {
 	Sign(data []byte) ([]byte, error)
-	Sign(data interface{}) ([]byte, error)
 	Verify(data []byte, sig []byte, peerID peer.ID, pubKey []byte) bool
 }
 
 type Peer struct {
+	Authenticator
 	ID    identity.Identity
 	Store pstore.Peerstore
 	ph    host.Host
-}
-
-type Connector interface {
-	Connect(ctx context.Context, port int) error
-	Bootstrap(ctx context.Context) error
-	Close() error
 }
 
 func NewPeer(randseed int64, filepath string) *Peer {
@@ -40,10 +34,8 @@ func NewPeer(randseed int64, filepath string) *Peer {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to add Identity to PeerStore with error %s", err))
 	}
-
 	return &Peer{ID: pi, Store: ps}
 }
-
 func (p *Peer) Connect(ctx context.Context, port int) error {
 	// Convert available network ifaces to listen on into multiaddrs
 	addrs, err := getListenAdresses(port)
@@ -95,5 +87,5 @@ func getListenAdresses(port int) ([]ma.Multiaddr, error) {
 func (p *Peer) buildPeerHost(listenAddrs []ma.Multiaddr) (host.Host, error)
 
 func (p *Peer) Sign(data []byte) ([]byte, error)
-func (p *Peer) Sign(data interface{}) ([]byte, error)
+
 func (p *Peer) Verify(data []byte, sig []byte, peerID peer.ID, pubkey []byte) bool
