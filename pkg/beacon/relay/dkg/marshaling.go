@@ -11,8 +11,7 @@ func (m *JoinMessage) Marshal() ([]byte, error) {
 	return (&pb.Join{Id: m.id.GetLittleEndian()}).Marshal()
 }
 
-// Unmarshal converts a (potentially network) byte array produced by Marshal to
-// a JoinMessage.
+// Unmarshal converts a byte array produced by Marshal to a JoinMessage.
 func (m *JoinMessage) Unmarshal(bytes []byte) error {
 	pbJoin := pb.Join{}
 	err := pbJoin.Unmarshal(bytes)
@@ -45,8 +44,8 @@ func (m *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	return pbCommitments.Marshal()
 }
 
-// Unmarshal converts a (potentially network) byte array produced by Marshal to
-// a MemberCommitmentsMessage.
+// Unmarshal converts a  byte array produced by Marshal to a
+// MemberCommitmentsMessage.
 func (m *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	pbCommitments := pb.Commitments{}
 	err := pbCommitments.Unmarshal(bytes)
@@ -85,8 +84,7 @@ func (m *MemberShareMessage) Marshal() ([]byte, error) {
 	return pbShare.Marshal()
 }
 
-// Unmarshal converts a (potentially network) byte array produced by Marshal to
-// a MemberShareMessage.
+// Unmarshal converts a byte array produced by Marshal to a MemberShareMessage.
 func (m *MemberShareMessage) Unmarshal(bytes []byte) error {
 	pbShare := pb.Share{}
 	err := pbShare.Unmarshal(bytes)
@@ -131,8 +129,8 @@ func (m *AccusationsMessage) Marshal() ([]byte, error) {
 	return pbAccusations.Marshal()
 }
 
-// Unmarshal converts a (potentially network) byte array produced by Marshal to
-// an AccusationsMessage.
+// Unmarshal converts a  byte array produced by Marshal to an
+// AccusationsMessage.
 func (m *AccusationsMessage) Unmarshal(bytes []byte) error {
 	pbAccusations := pb.Accusations{}
 	err := pbAccusations.Unmarshal(bytes)
@@ -175,8 +173,8 @@ func (m *JustificationsMessage) Marshal() ([]byte, error) {
 	return pbJustifications.Marshal()
 }
 
-// Unmarshal converts a (potentially network) byte array produced by Marshal to
-// a JustificationsMessage.
+// Unmarshal converts a byte array produced by Marshal to a
+// JustificationsMessage.
 func (m *JustificationsMessage) Unmarshal(bytes []byte) error {
 	pbJustifications := pb.Justifications{}
 	err := pbJustifications.Unmarshal(bytes)
