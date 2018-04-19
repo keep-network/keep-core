@@ -28,7 +28,10 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @param _minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param _minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      */
-    function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake) public {
+    function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake) 
+        public
+        onlyOwner
+    {
         require(!initialized());
         require(_stakingProxy != address(0x0));
         addressStorage[keccak256("stakingProxy")] = _stakingProxy;
