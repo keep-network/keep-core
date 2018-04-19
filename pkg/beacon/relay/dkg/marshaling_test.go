@@ -23,8 +23,7 @@ func TestJoinMessageRoundTrip(t *testing.T) {
 	unmarshaled := &JoinMessage{}
 	err := roundTrip(msg, unmarshaled)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	assertIDRoundTrip(t, msg.id, unmarshaled.id)
@@ -42,8 +41,7 @@ func TestMemberCommitmentsMessageRoundTrip(t *testing.T) {
 	unmarshaled := &MemberCommitmentsMessage{}
 	err := roundTrip(msg, unmarshaled)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	assertIDRoundTrip(t, msg.id, unmarshaled.id)
@@ -67,8 +65,7 @@ func TestMemberShareMessageRoundTrip(t *testing.T) {
 	unmarshaled := &MemberShareMessage{}
 	err := roundTrip(msg, unmarshaled)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	assertIDRoundTrip(t, msg.id, unmarshaled.id)
@@ -87,8 +84,7 @@ func TestAccusationsMessageRoundTrip(t *testing.T) {
 	unmarshaled := &AccusationsMessage{}
 	err := roundTrip(msg, unmarshaled)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	assertIDRoundTrip(t, msg.id, unmarshaled.id)
@@ -115,8 +111,7 @@ func TestJustificationsMessageRoundTrip(t *testing.T) {
 	unmarshaled := &JustificationsMessage{}
 	err := roundTrip(msg, unmarshaled)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	assertIDRoundTrip(t, msg.id, unmarshaled.id)
