@@ -15,7 +15,7 @@ import (
 type Identity interface {
 	ID() peer.ID
 	AddIdentityToStore() (pstore.Peerstore, error)
-	PubKey() ci.PubKey
+	PubKey() ci.PubKey // TODO: keep or not?
 	PubKeyFromID(peer.ID) (ci.PubKey, error)
 }
 
@@ -23,7 +23,7 @@ type PeerIdentity struct {
 	privKey ci.PrivKey
 }
 
-func (pi *PeerIdentity) ID() peer.ID {
+func (pi PeerIdentity) ID() peer.ID {
 	return pubKeyToID(pi.privKey.GetPublic())
 }
 
@@ -36,11 +36,7 @@ func pubKeyToID(pub ci.PubKey) peer.ID {
 	return pid
 }
 
-func (pi *PeerIdentity) KeyPair() (ci.PrivKey, ci.PubKey) {
-	return pi.privKey, pi.privKey.GetPublic()
-}
-
-func (pi *PeerIdentity) AddIdentityToStore() (pstore.Peerstore, error) {
+func (pi PeerIdentity) AddIdentityToStore() (pstore.Peerstore, error) {
 	ps := pstore.NewPeerstore()
 	// HACK: see github.com/rargulati/go-libp2p-crypto for fix
 	if err := ps.AddPrivKey(pi.ID(), pi.privKey); err != nil {
@@ -52,11 +48,11 @@ func (pi *PeerIdentity) AddIdentityToStore() (pstore.Peerstore, error) {
 	return ps, nil
 }
 
-func (pi *PeerIdentity) PubKey() ci.PubKey {
+func (pi PeerIdentity) PubKey() ci.PubKey {
 	return pi.privKey.GetPublic()
 }
 
-func (pi *PeerIdentity) PubKeyFromID(peer.ID) (ci.PubKey, error) {
+func (pi PeerIdentity) PubKeyFromID(peer.ID) (ci.PubKey, error) {
 	return pi.ID().ExtractPublicKey()
 }
 
@@ -83,7 +79,7 @@ func generateIdentity() (Identity, error) {
 		return nil, err
 	}
 
-	return &PeerIdentity{privKey: priv}, nil
+	return PeerIdentity{privKey: priv}, nil
 }
 
 func generateDeterministicIdentity(randseed int64) (Identity, error) {
@@ -95,5 +91,5 @@ func generateDeterministicIdentity(randseed int64) (Identity, error) {
 		return nil, err
 	}
 
-	return &PeerIdentity{privKey: priv}, nil
+	return PeerIdentity{privKey: priv}, nil
 }
