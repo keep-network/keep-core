@@ -3,15 +3,25 @@ package beacon
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 )
 
 type participantState int
 
 // FIXME To become something more real...
 type libp2pHandle int
+
+// Config contains the config data needed for the beacon to operate.
+type Config struct {
+	GroupSize int
+	Threshold int
+}
+
+// ChainInterface represents the interface that the beacon expects to interact
+// with the anchoring blockchain on.
+type ChainInterface interface {
+	GetConfig() Config
+}
 
 const (
 	unstaked participantState = iota
@@ -72,7 +82,7 @@ func libp2pConnected(handle libp2pHandle) {
 			membership.ActivateMembership()
 		case inActiveGroup:
 			// FIXME We should have a non-empty state at this point ;)
-			entry.ServeRequests(relay.EmptyState())
+			//entry.ServeRequests(relay.EmptyState())
 		default:
 			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
 		}
