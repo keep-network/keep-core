@@ -20,7 +20,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber); 
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
-    event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 groupCount, uint256 activationBlockHeight);
+    event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
     /**
      * @dev Initialize Keep Random Beacon implementaion contract with a linked staking proxy contract.
@@ -37,7 +37,6 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         addressStorage[keccak256("stakingProxy")] = _stakingProxy;
         uintStorage[keccak256("minStake")] = _minStake;
         uintStorage[keccak256("minPayment")] = _minPayment;
-        uintStorage[keccak256("groupCountSequence")] = 0;
         boolStorage[keccak256("KeepRandomBeaconImplV1")] = true;
     }
 
@@ -132,17 +131,9 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      */
     function submitGroupPublicKey(byte[] _groupPublicKey, uint256 _requestID) public {
         uint256 activationBlockHeight = block.number;
-        uintStorage[keccak256("groupCountSequence")]++;
 
         // TODO -- lots of stuff - don't know yet.
-        SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, uintStorage[keccak256("groupCountSequence")], activationBlockHeight);
-    }
-
-    /**
-     * @dev Resets the group count to 0. Can only be called by the owner of the contract.
-     */
-    function resetGroupCount() public onlyOwner {
-        uintStorage[keccak256("groupCountSequence")] = 0;
+        SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, activationBlockHeight);
     }
 
     /**
