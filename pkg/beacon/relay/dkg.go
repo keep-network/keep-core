@@ -6,7 +6,7 @@ import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/dfinity/go-dfinity-crypto/rand"
 	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
-	"github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
