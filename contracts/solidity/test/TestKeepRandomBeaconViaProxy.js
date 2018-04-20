@@ -1,6 +1,7 @@
 import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
+import encodeCall from './helpers/encodeCall';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -45,4 +46,29 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
   });
 
+  it("should fail to request relay entry with not enough ether", async function() {
+    await exceptThrow(impl2ViaProxy.requestRelay(0, 0, {from: account_two, value: 99}));
+  });
+
+  it("should be able to request relay entry via implementation contract with enough ether", async function() {
+    const relayEntryRequestedEvent = impl2ViaProxy.RelayEntryRequested();
+    await impl2ViaProxy.requestRelay(0, 0, {from: account_two, value: 100})
+
+    relayEntryRequestedEvent.get(function(error, result){
+      assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
+    });
+  });
+
+  it("should be able to request relay entry via proxy contract with enough ether", async function() {
+    const relayEntryRequestedEvent = proxy.RelayEntryRequested();
+
+    await web3.eth.sendTransaction({
+      from: account_two, value: 100, gas: 200000, to: proxy.address,
+      data: encodeCall('requestRelay', ['uint256', 'uint256'], [0,0])
+    });
+
+    relayEntryRequestedEvent.get(function(error, result){
+      assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
+    });
+  });
 });
