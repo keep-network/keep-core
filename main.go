@@ -5,28 +5,31 @@ import (
 	"os"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
-	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
+	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 func main() {
 	bls.Init(bls.CurveFp382_1)
 
-	_ = pb.GossipMessage{}
 	chainHandle := local.InitLocal()
 	chainCounter := chainHandle.BlockCounter()
+	channel := netlocal.Channel("test")
 
-	channel := broadcast.LocalChannel("test")
+	dkg.Init(channel)
+
+	_ = pb.GossipMessage{}
+
 	beaconConfig := chainHandle.RandomBeacon().GetConfig()
 
 	members := make([]*thresholdgroup.Member, 0, beaconConfig.GroupSize)
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
 		go func(i int) {
-			member, err := relay.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
+			member, err := dkg.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
