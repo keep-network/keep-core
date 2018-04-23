@@ -13,14 +13,20 @@ type localBlockCounter struct {
 	waiters     map[int][]chan int
 }
 
+// WaitForBlocks waits for a minimum of 1 block before returing.
 func (counter *localBlockCounter) WaitForBlocks(numBlocks int) {
 	waiter := counter.BlockWaiter(numBlocks)
 	<-waiter
 	return
 }
 
+// BlockWaiter returns the block number as a chanel with a minimum of 1 block wait. 0 and negative numBlocks are converted to 1.
 func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	newWaiter := make(chan int)
+
+	if numBlocks < 1 {
+		numBlocks = 1
+	}
 
 	counter.structMutex.Lock()
 	defer counter.structMutex.Unlock()
