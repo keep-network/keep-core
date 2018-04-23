@@ -16,8 +16,8 @@
 [[projects]]
   name = "github.com/ethereum/go-ethereum"
   packages = [".","common","common/hexutil","common/math","core/types","crypto","crypto/secp256k1","crypto/sha3","ethclient","ethdb","log","metrics","params","rlp","rpc","trie"]
-  revision = "329ac18ef617d0238f71637bffe78f028b0f13f7"
-  version = "v1.8.3"
+  revision = "12683feca7483f0b0bf425c3c520e2724f69f2aa"
+  version = "v1.8.6"
 
 [[projects]]
   name = "github.com/go-stack/stack"
