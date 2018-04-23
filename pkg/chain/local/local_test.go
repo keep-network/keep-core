@@ -1,14 +1,12 @@
-package local_test
+package local
 
 import (
 	"testing"
 	"time"
-
-	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 func Test_Chain01(t *testing.T) {
-	countWait := local.BlockCounter()
+	countWait := BlockCounter()
 
 	t.Log("Before Wait")
 	start := time.Now()
