@@ -14,8 +14,6 @@ import (
 
 type Identity interface {
 	ID() peer.ID
-	AddIdentityToStore() (pstore.Peerstore, error)
-	PubKey() ci.PubKey // TODO: keep or not?
 	PubKeyFromID(peer.ID) (ci.PubKey, error)
 }
 
@@ -36,24 +34,24 @@ func pubKeyToID(pub ci.PubKey) peer.ID {
 	return pid
 }
 
-func (pi PeerIdentity) AddIdentityToStore() (pstore.Peerstore, error) {
+func (pi PeerIdentity) PubKeyFromID(peer.ID) (ci.PubKey, error) {
+	return pi.ID().ExtractPublicKey()
+}
+
+func (pi PeerIdentity) addIdentityToStore() (pstore.Peerstore, error) {
 	ps := pstore.NewPeerstore()
 	// HACK: see github.com/rargulati/go-libp2p-crypto for fix
 	if err := ps.AddPrivKey(pi.ID(), pi.privKey); err != nil {
 		return nil, fmt.Errorf("failed to add PrivateKey with error %s", err)
 	}
-	if err := ps.AddPubKey(pi.ID(), pi.PubKey()); err != nil {
+	if err := ps.AddPubKey(pi.ID(), pi.privKey.GetPublic()); err != nil {
 		return nil, fmt.Errorf("failed to add PubKey with error %s", err)
 	}
 	return ps, nil
 }
 
-func (pi PeerIdentity) PubKey() ci.PubKey {
+func (pi PeerIdentity) pubKey() ci.PubKey {
 	return pi.privKey.GetPublic()
-}
-
-func (pi PeerIdentity) PubKeyFromID(peer.ID) (ci.PubKey, error) {
-	return pi.ID().ExtractPublicKey()
 }
 
 func LoadOrGenerateIdentity(randseed int64, filePath string) (Identity, error) {
