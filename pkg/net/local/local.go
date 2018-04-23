@@ -37,7 +37,8 @@ func (channel *localChannel) Name() string {
 func doSend(
 	channel *localChannel,
 	recipient *net.ClientIdentifier,
-	message net.TaggedMarshaler) error {
+	message net.TaggedMarshaler,
+) error {
 	channel.messageHandlersMutex.Lock()
 	snapshot := make([]net.HandleMessageFunc, len(channel.messageHandlers))
 	copy(snapshot, channel.messageHandlers)
@@ -88,7 +89,8 @@ func (channel *localChannel) Recv(handler net.HandleMessageFunc) error {
 
 func (channel *localChannel) RegisterUnmarshaler(
 	tpe string,
-	unmarshaler func() proto.Unmarshaler) (err error) {
+	unmarshaler func() proto.Unmarshaler,
+) (err error) {
 	channel.unmarshalersMutex.Lock()
 	_, exists := channel.unmarshalersByType[tpe]
 	if exists {
