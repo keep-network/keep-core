@@ -13,6 +13,9 @@ type localBlockCounter struct {
 	waiters     map[int][]chan int
 }
 
+// compile time test - at compile time to verify that the local satisfies the interface.
+var _ chain.BlockCounter = (*localBlockCounter)(nil)
+
 // WaitForBlocks waits for a minimum of 1 block before returing.
 func (counter *localBlockCounter) WaitForBlocks(numBlocks int) {
 	waiter := counter.BlockWaiter(numBlocks)
@@ -42,6 +45,7 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	return newWaiter
 }
 
+// count is an internal function that counts up time to simulate the generation of blocks.
 func (counter *localBlockCounter) count() {
 	ticker := time.NewTicker(time.Duration(500 * time.Millisecond))
 
