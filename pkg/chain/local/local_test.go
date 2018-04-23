@@ -1,7 +1,6 @@
 package local_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -10,8 +9,8 @@ import (
 
 func Test_Chain01(t *testing.T) {
 	countWait := local.BlockCounter()
-	if db01 {
-		fmt.Printf("Before Wait\n")
+	if testing.Verbose() {
+		t.Logf("Before Wait\n")
 	}
 	start := time.Now()
 	countWait.WaitForBlocks(3)
@@ -20,8 +19,8 @@ func Test_Chain01(t *testing.T) {
 	if elapsed < 1400000000 {
 		t.Fatalf("Did not wait\n")
 	}
-	if db01 {
-		fmt.Printf("After Wait, %d\n", elapsed)
+	if testing.Verbose() {
+		t.Logf("After Wait, %d\n", elapsed)
 	}
 
 	start = time.Now()
@@ -32,8 +31,8 @@ func Test_Chain01(t *testing.T) {
 		t.Fatalf("Did not wait\n")
 	}
 
-	if db01 {
-		fmt.Printf("Before test #3 , %d\n", elapsed)
+	if testing.Verbose() {
+		t.Logf("Before test #3 , %d\n", elapsed)
 	}
 	start = time.Now()
 	countWait.WaitForBlocks(0)
@@ -43,5 +42,3 @@ func Test_Chain01(t *testing.T) {
 		t.Fatalf("Did not wait\n")
 	}
 }
-
-const db01 = false
