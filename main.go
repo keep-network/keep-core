@@ -6,8 +6,8 @@ import (
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
-	"github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/gossip"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
@@ -16,11 +16,11 @@ func main() {
 	bls.Init(bls.CurveFp382_1)
 
 	_ = gossip.GossipMessage{}
-
-	beaconConfig := chain.GetBeaconConfig()
+	chainHandle := local.InitLocal()
+	chainCounter := chainHandle.BlockCounter()
 
 	channel := broadcast.LocalChannel("test")
-	chainCounter := chain.LocalBlockCounter()
+	beaconConfig := chainHandle.RandomBeacon().GetConfig()
 
 	members := make([]*thresholdgroup.Member, 0, beaconConfig.GroupSize)
 	memberChannel := make(chan *thresholdgroup.Member)
