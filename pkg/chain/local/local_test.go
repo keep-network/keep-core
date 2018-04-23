@@ -9,9 +9,8 @@ import (
 
 func Test_Chain01(t *testing.T) {
 	countWait := local.BlockCounter()
-	if testing.Verbose() {
-		t.Log("Before Wait")
-	}
+
+	t.Log("Before Wait")
 	start := time.Now()
 	countWait.WaitForBlocks(3)
 	tm := time.Now()
@@ -19,9 +18,8 @@ func Test_Chain01(t *testing.T) {
 	if elapsed < 1400000000 {
 		t.Fatalf("Did not wait\n")
 	}
-	if testing.Verbose() {
-		t.Logf("After Wait, %d\n", elapsed)
-	}
+
+	t.Logf("After Wait, %d\n", elapsed)
 
 	start = time.Now()
 	countWait.WaitForBlocks(5)
@@ -31,9 +29,7 @@ func Test_Chain01(t *testing.T) {
 		t.Fatalf("Did not wait\n")
 	}
 
-	if testing.Verbose() {
-		t.Logf("Before test #3 , %d\n", elapsed)
-	}
+	t.Logf("Before test #3 , %d\n", elapsed)
 	start = time.Now()
 	countWait.WaitForBlocks(0)
 	tm = time.Now()
