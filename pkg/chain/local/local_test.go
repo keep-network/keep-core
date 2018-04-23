@@ -10,7 +10,7 @@ import (
 func Test_Chain01(t *testing.T) {
 	countWait := local.BlockCounter()
 	if testing.Verbose() {
-		t.Logf("Before Wait\n")
+		t.Log("Before Wait")
 	}
 	start := time.Now()
 	countWait.WaitForBlocks(3)
