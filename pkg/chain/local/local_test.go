@@ -6,7 +6,6 @@ import (
 )
 
 func TestLocalBlockWaiter(t *testing.T) {
-
 	t.Parallel()
 
 	var tests = map[string]struct {
@@ -17,17 +16,17 @@ func TestLocalBlockWaiter(t *testing.T) {
 		"does wait for a block": {
 			wait:         1,
 			want:         time.Duration(100000000),
-			errorMessage: "failed to wait for a single block",
+			errorMessage: "Failed to wait for a single block",
 		},
 		"waited for a longer time": {
 			wait:         2,
 			want:         time.Duration(200000000),
-			errorMessage: "failed to wait for 2 blocks",
+			errorMessage: "Failed to wait for 2 blocks",
 		},
 		"doesn't wait if 0 blocks": {
 			wait:         0,
 			want:         time.Duration(1000),
-			errorMessage: "some errror message here...not understanding this case",
+			errorMessage: "Failed for a 0 block wait",
 		},
 		"invalid value": {
 			wait:         -1,
@@ -52,7 +51,6 @@ func TestLocalBlockWaiter(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-
 			start := time.Now().UTC()
 			countWait.WaitForBlocks(test.wait)
 			end := time.Now().UTC()
@@ -63,6 +61,4 @@ func TestLocalBlockWaiter(t *testing.T) {
 			}
 		})
 	}
-	tick.Stop()
-
 }
