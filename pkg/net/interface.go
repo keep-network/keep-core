@@ -2,6 +2,7 @@ package net
 
 import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
+	"github.com/gogo/protobuf/proto"
 )
 
 // GroupIdentity contains the Group's public key as created by the dkg process
@@ -20,23 +21,44 @@ type GroupIdentity struct {
 	Members []bls.PublicKey
 }
 
-// Message corresponds with our proto Envelope type.
-type Message struct{}
+// ClientIdentifier represents the identity of a recipient for a message.
+type ClientIdentifier string
 
-// HandleMessageFunc is the type of function called for each Message m furnished by
-// the BroadcastChannel. If there is a problem handling the Message, the incoming error will
-// describe the problem and the function can decide how to handle that error. If an error is returned,
-// processing stops.
-type HandleMessageFunc func(m Message) error
+// HandleMessageFunc is the type of function called for each Message m furnished
+// by the BroadcastChannel. If there is a problem handling the Message, the
+// incoming error will describe the problem and the function can decide how to
+// handle that error. If an error is returned, processing stops.
+type HandleMessageFunc func(m interface{}) error
+
+// TaggedMarshaler is an interface that includes the proto.Marshaler interface,
+// but also provides a string type for the marshalable object.
+type TaggedMarshaler interface {
+	proto.Marshaler
+	Type() string
+}
 
 // BroadcastChannel represents a named pubsub channel. It allows Group Members
 // to send messages on the channel (via Send), and to access a low-level receive chan
 // that furnishes messages sent onto the BroadcastChannel.
 type BroadcastChannel interface {
-	// Return the member list and identifiying information for the Group
-	GroupIdentity(name string) *GroupIdentity
-	// Given a Message m, broadcast m to members of the Group through the BroadcastChannel
-	Send(m Message) error
-	// Recv takes a HandleMessageFunc and returns an error. This function should be retried.
+	// Name returns the name of this broadcast channel.
+	Name() string
+
+	// Given a message m that can marshal itself to protobuf, broadcast m to
+	// members of the Group through the BroadcastChannel.
+	Send(m TaggedMarshaler) error
+	// Given a recipient and a message m that can marshal itself to protobouf,
+	// send the message to the recipient over the broadcast channel such that
+	// only the recipient can understand it.
+	SendTo(recipient ClientIdentifier, m TaggedMarshaler) error
+
+	// Recv takes a HandleMessageFunc and returns an error. This function should
+	// be retried.
 	Recv(h HandleMessageFunc) error
+	// RegisterUnmarshaler registers, for a given type, an unmarshaler that will
+	// unmarshal it to a concrete object that can be passed to and understood by
+	// any registered message handling functions. The unmarshaler should be a
+	// function that returns a fresh object of type proto.Unmarshaler, ready to
+	// read in the bytes for an object marked as tpe.
+	RegisterUnmarshaler(tpe string, unmarshaler func() proto.Unmarshaler) error
 }
