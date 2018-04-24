@@ -98,6 +98,28 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
+     * @dev Set the minimum amount in KEEP that allows KEEP network client to participate in a group.
+     * @param _minStake Amount in KEEP.
+     */
+    function setMinimumStake(uint256 _minStake) public onlyOwner {
+        uintStorage[keccak256("minStake")] = _minStake;
+    }
+
+    /**
+     * @dev Get the minimum payment that is required before a relay entry occurs.
+     */
+    function minimumPayment() public view returns(uint256) {
+        return uintStorage[keccak256("minPayment")];
+    }
+
+    /**
+     * @dev Get the minimum amount in KEEP that allows KEEP network client to participate in a group.
+     */
+    function minimumStake() public view returns(uint256) {
+        return uintStorage[keccak256("minStake")];
+    }
+
+    /**
      * @dev Takes the resulting signature and puts it onto the chain.
      * @param _requestID The request that started this generation - to tie the results back to the request.
      * @param _groupSignature The generated random number.

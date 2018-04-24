@@ -71,4 +71,19 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
       assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
     });
   });
+
+  it("should fail to update minimum stake and minimum payments by non owner", async function() {
+    await exceptThrow(impl2ViaProxy.setMinimumPayment(123, {from: account_two}));
+    await exceptThrow(impl2ViaProxy.setMinimumStake(123, {from: account_two}));
+  });
+
+  it("should be able to update minimum stake and minimum payments by the owner", async function() {
+    await impl2ViaProxy.setMinimumPayment(123);
+    let newMinPayment = await impl2ViaProxy.minimumPayment();
+    assert.equal(newMinPayment, 123, "Should be able to get updated minimum payment.");
+
+    await impl2ViaProxy.setMinimumStake(123);
+    let newMinStake = await impl2ViaProxy.minimumStake();
+    assert.equal(newMinStake, 123, "Should be able to get updated minimum stake.");
+  });
 });
