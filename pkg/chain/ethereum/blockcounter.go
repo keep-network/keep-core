@@ -1,4 +1,4 @@
-package ethereumblock
+package ethereum
 
 import (
 	"context"

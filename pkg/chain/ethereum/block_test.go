@@ -1,4 +1,4 @@
-package ethereumblock_test
+package ethereum_test
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"github.com/pschlump/MiscLib"
 	"github.com/pschlump/godebug"
 
-	"github.com/keep-network/keep-core/pkg/chain/ethereumblock" // /Users/corwin/go/src/github.com/keep-network/keep-core/pkg/chain/ethereumblock
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
 type CfgType struct {
@@ -38,7 +38,7 @@ func Test_BlockTest01(t *testing.T) {
 	godebug.Printf(db02, "AT: %s\n", godebug.LF())
 
 	// func BlockCounter(client *rpc.Client) chain.BlockCounter {
-	countWait := ethereumblock.BlockCounter(client)
+	countWait := ethereum.BlockCounter(client)
 	if db01 {
 		fmt.Printf("Before Wait\n")
 	}
