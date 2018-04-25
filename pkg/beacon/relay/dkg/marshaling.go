@@ -164,14 +164,14 @@ func (m *AccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	m.accusedIDs = make([]bls.ID, 0, len(pbAccusations.AccusedIDs))
+	m.accusedIDs = make([]*bls.ID, 0, len(pbAccusations.AccusedIDs))
 	for _, accusedIDBytes := range pbAccusations.AccusedIDs {
 		id := bls.ID{}
 		err = id.SetLittleEndian(accusedIDBytes)
 		if err != nil {
 			return err
 		}
-		m.accusedIDs = append(m.accusedIDs, id)
+		m.accusedIDs = append(m.accusedIDs, &id)
 	}
 
 	return nil

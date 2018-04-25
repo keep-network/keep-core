@@ -35,7 +35,7 @@ type MemberShareMessage struct {
 // broadcast.
 type AccusationsMessage struct {
 	id         *bls.ID
-	accusedIDs []bls.ID
+	accusedIDs []*bls.ID
 }
 
 // JustificationsMessage is a message payload that carries all of the sender's
