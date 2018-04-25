@@ -73,7 +73,13 @@ type BroadcastChannel interface {
 	// Given a recipient and a message m that can marshal itself to protobouf,
 	// send the message to the recipient over the broadcast channel such that
 	// only the recipient can understand it.
-	SendTo(recipient ClientIdentifier, m TaggedMarshaler) error
+	//
+	// The recipient should be a ProtocolIdentifier registered using
+	// RegisterIdentifier, or a ClientIdentifier used by the network layer.
+	//
+	// Returns an error if the recipient identifier is a ProtocolIdentifier that
+	// does not have an associated ClientIdentifier,
+	SendTo(recipientIdentifier interface{}, m TaggedMarshaler) error
 
 	// RegisterIdentifier associates the given network identifier with a
 	// protocol-specific identifier that will be passed to the receiving code
