@@ -117,6 +117,7 @@ type BroadcastChannel interface {
 // An ID corresponds to the identification of a member in a peer-to-peer network.
 type ID peer.ID
 
+// PubKey is a type alias for the underlying PublicKey implementation we choose.
 type PubKey = ci.PubKey
 
 // Identity represents a group member's network level identity. A valid group
