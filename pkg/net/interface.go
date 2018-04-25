@@ -42,7 +42,7 @@ type Message interface {
 // by the BroadcastChannel. If there is a problem handling the Message, the
 // incoming error will describe the problem and the function can decide how to
 // handle that error. If an error is returned, processing stops.
-type HandleMessageFunc func(m interface{}) error
+type HandleMessageFunc func(m Message) error
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
 // but also provides a string type for the marshalable object.
