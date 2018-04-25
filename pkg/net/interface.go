@@ -3,6 +3,9 @@ package net
 import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/gogo/protobuf/proto"
+
+	ci "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 // GroupIdentity contains the Group's public key as created by the dkg process
@@ -109,4 +112,18 @@ type BroadcastChannel interface {
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
+}
+
+// An ID corresponds to the identification of a member in a peer-to-peer network.
+type ID peer.ID
+
+type PubKey = ci.PubKey
+
+// Identity represents a group member's network level identity. A valid group
+// member will generate or provide a keypair, which will correspond to a network
+// ID. Consumers of the net package require an ID to register with protocol level
+// ID's, as well as a public key for authentication.
+type Identity interface {
+	ID() ID
+	PubKeyFromID(ID) (PubKey, error)
 }
