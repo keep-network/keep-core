@@ -1,6 +1,11 @@
 package identity
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/keep-network/keep-core/pkg/net"
+	peer "github.com/libp2p/go-libp2p-peer"
+)
 
 func TestAddIdentityToStore(t *testing.T) {
 	identity, err := LoadOrGenerateIdentity(0, "")
@@ -13,46 +18,60 @@ func TestAddIdentityToStore(t *testing.T) {
 		t.Fatalf("Failed to add Identity to store with err: %s", err)
 	}
 
-	// TODO: get you some peer from the store
+	var match bool
+	for _, p := range ps.Peers() {
+		if p == toPeerID(pi.ID()) {
+			match = true
+		}
+	}
+	if !match {
+		t.Fatalf("Failed to add Identity with ID %+v to the PeerStore", toPeerID(pi.ID()))
+	}
 }
 
-// func TestGetPublicKeyFromID(t *testing.T) {
+func TestPublicKeyFunctions(t *testing.T) {
+	identity, err := LoadOrGenerateIdentity(0, "")
+	if err != nil {
+		t.Fatalf("Failed to generate valid PeerIdentity with err: %s", err)
+	}
+	pi := identity.(*peerIdentity)
+	ps, err := AddIdentityToStore(pi)
+	if err != nil {
+		t.Fatalf("Failed to add Identity to store with err: %s", err)
+	}
 
-// }
+	peerID := toPeerID(pi.ID())
+	msg := []byte("so random you can't fake it.")
 
-// func TestPublicKeyFunctions(t *testing.T) {
-// 	pi, err := LoadOrGenerateIdentity(0, "")
-// 	if err != nil {
-// 		t.Fatalf("Failed to generate valid PeerIdentity with err: %s", err)
-// 	}
-// 	ps, err := pi.AddIdentityToStore()
-// 	if err != nil {
-// 		t.Fatalf("Failed to add Identity to store with err: %s", err)
-// 	}
+	privKey := ps.PrivKey(peerID)
+	sig, err := privKey.Sign(msg)
+	if err != nil {
+		t.Fatalf("Failed to sign msg with err: %s", err)
+	}
 
-// 	msg := []byte("so random you can't fake it.")
-// 	privKey := ps.PrivKey(pi.ID())
+	pubKey, err := pi.PubKeyFromID(pi.ID())
+	if err != nil {
+		t.Fatalf("Failed to generate public key from id with err %s", err)
+	}
 
-// 	sig, err := privKey.Sign(msg)
-// 	if err != nil {
-// 		t.Fatalf("Failed to sign msg with err: %s", err)
-// 	}
+	ok, err := pubKey.Verify(msg, sig)
+	if err != nil {
+		t.Fatalf("Failed to verify msg with err: %s", err)
+	}
+	if !ok {
+		t.Fatal("Failed to verify signature")
+	}
 
-// 	ok, err := pi.PubKey().Verify(msg, sig)
-// 	if err != nil {
-// 		t.Fatalf("Failed to verify msg with err: %s", err)
-// 	}
-// 	if !ok {
-// 		t.Fatal("Failed to verify signature")
-// 	}
+	msg[0] = ^msg[0]
+	ok, err = pubKey.Verify(msg, sig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Fatal("Signature should not have matched with mutated data")
+	}
+}
 
-// 	msg[0] = ^msg[0]
-// 	ok, err = pi.PubKey().Verify(msg, sig)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if ok {
-// 		t.Fatal("Signature should not have matched with mutated data")
-// 	}
-
-// }
+func toPeerID(pi net.ID) peer.ID {
+	return peer.ID(pi)
+}
