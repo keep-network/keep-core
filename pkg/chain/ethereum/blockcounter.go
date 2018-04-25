@@ -41,6 +41,7 @@ func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 
 	blockWait.structMutex.Lock()
 	defer blockWait.structMutex.Unlock()
+
 	notifyBlockHeight := blockWait.blockHeight + numBlocks
 
 	if notifyBlockHeight <= blockWait.blockHeight {
@@ -63,7 +64,7 @@ func (blockWait *ethereumBlockCounter) receiveBlocks() {
 
 	for block := range blockWait.subch {
 		if top, err := strconv.ParseInt(block.Number, 0, 64); err == nil {
-			for i := blockWait.blockHeight; i <= int(top); i++ {
+			for ii := blockWait.blockHeight; ii <= int(top); ii++ {
 				blockWait.structMutex.Lock()
 				height := blockWait.blockHeight
 				blockWait.blockHeight++
@@ -90,7 +91,6 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	blockWait.structMutex.Lock()
 	defer blockWait.structMutex.Unlock()
 
-	// From: https://github.com/ethereum/go-ethereum/wiki/RPC-PUB-SUB
 	blockSubscription, err := blockWait.conn.EthSubscribe(ctx, blockWait.subch, "newHeads")
 	if err != nil {
 		if blockWait.Debug01 {
