@@ -1,3 +1,3 @@
 {
-	"server": "ws://192.168.0.158:8546"
+	"GethConnectionString" : "ws://192.168.0.158:8546"
 }
