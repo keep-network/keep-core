@@ -1,4 +1,4 @@
-package ethereum_test
+package ethereum
 
 import (
 	"encoding/json"
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
 type CfgType struct {
@@ -21,45 +20,69 @@ var (
 	client *rpc.Client
 )
 
-func Test_BlockTest(t *testing.T) {
+func TestEthereumBlockTest(t *testing.T) {
+	t.Parallel()
 
-	// ----------------------------------------------------------------------------------------------------
-	// Test code that needs to do a timeout!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// ----------------------------------------------------------------------------------------------------
-
-	// func BlockCounter(client *rpc.Client) chain.BlockCounter {
-	countWait := ethereum.BlockCounter(client)
-	start := time.Now()
-	countWait.WaitForBlocks(1)
-	tm := time.Now()
-	elapsed := tm.Sub(start)
-	if elapsed < 1000000000 {
-		t.Errorf("Did not wait\n")
+	var tests = map[string]struct {
+		wait         int
+		want         time.Duration
+		errorMessage string
+	}{
+		"does wait for a block": {
+			wait:         1,
+			want:         time.Duration(100000000),
+			errorMessage: "Failed to wait for a single block",
+		},
+		"waited for a longer time": {
+			wait:         2,
+			want:         time.Duration(200000000),
+			errorMessage: "Failed to wait for 2 blocks",
+		},
+		"doesn't wait if 0 blocks": {
+			wait:         0,
+			want:         time.Duration(1000),
+			errorMessage: "Failed for a 0 block wait",
+		},
+		"invalid value": {
+			wait:         -1,
+			want:         time.Duration(0),
+			errorMessage: "Waiting for a time when it should have errored",
+		},
 	}
 
-	start = time.Now()
-	countWait.WaitForBlocks(2)
-	tm = time.Now()
-	elapsed = tm.Sub(start)
-	if elapsed < 2000000000 {
-		t.Errorf("Did not wait\n")
-	}
+	var e chan interface{}
 
-	start = time.Now()
-	countWait.WaitForBlocks(0)
-	tm = time.Now()
-	elapsed = tm.Sub(start)
-	if elapsed < 1000 {
-		t.Errorf("Did not wait\n")
+	tim := 240 // Force test to fail if not completed in 4 minutes
+	tick := time.NewTimer(time.Duration(tim) * time.Second)
+
+	go func() {
+		select {
+		case e <- tick:
+			t.Fatal("Test ran too long - it failed")
+		}
+	}()
+
+	waitForBlock := BlockCounter(client)
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			start := time.Now().UTC()
+			waitForBlock.WaitForBlocks(test.wait)
+			end := time.Now().UTC()
+
+			elapsed := end.Sub(start)
+			if elapsed < test.want {
+				t.Error(test.errorMessage)
+			}
+		})
 	}
 }
 
 func TestMain(m *testing.M) {
 
-	var buf []byte
-	fn := "cfg.json"
+	fn := "cfg.json" // TODO - pick this up from the environment.
 
-	buf, err = ioutil.ReadFile(fn)
+	buf, err := ioutil.ReadFile(fn)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: Setup incorrect - unable to read %s: Error: %s", fn, err)
 		return
