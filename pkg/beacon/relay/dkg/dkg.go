@@ -140,20 +140,6 @@ func ExecuteDKG(
 	return member, err
 }
 
-// Network layer:
-//  id map:
-//  {"badfwe" -> Bls{"blah"}}
-
-// JoinMessage{Id: Bls{"blah"}}
-//   Network layer identifier: "badfwe"
-//   Message callback: ("badfwe", JoinMessage{Id: Bls{"blah"}})
-// Commitments{...}
-//   Network layer identifier: "badfwe"
-//   Message callback: (Bls{"blah"}, Commitment{...})
-// Commitments{...}
-//   Network layer identifier: "hullo"
-//   Message callback: ("hullo", Commitment{...})
-
 func registerMemberID(
 	member *thresholdgroup.LocalMember,
 	msg net.Message,
