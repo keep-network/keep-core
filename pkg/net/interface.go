@@ -22,7 +22,21 @@ type GroupIdentity struct {
 }
 
 // ClientIdentifier represents the identity of a recipient for a message.
-type ClientIdentifier string
+type ClientIdentifier interface {
+	// Returns a string name of the network provider. Expected to be purely
+	// informational.
+	ProviderName() string
+}
+
+// ProtocolIdentifier represents a protocol-level identifier. It is an opaque
+// type to the network layer.
+type ProtocolIdentifier interface{}
+
+type Message interface {
+	NetworkSenderID() ClientIdentifier
+	ProtocolSenderID() ProtocolIdentifier
+	Payload() interface{}
+}
 
 // HandleMessageFunc is the type of function called for each Message m furnished
 // by the BroadcastChannel. If there is a problem handling the Message, the
@@ -60,6 +74,17 @@ type BroadcastChannel interface {
 	// send the message to the recipient over the broadcast channel such that
 	// only the recipient can understand it.
 	SendTo(recipient ClientIdentifier, m TaggedMarshaler) error
+
+	// RegisterIdentifier associates the given network identifier with a
+	// protocol-specific identifier that will be passed to the receiving code
+	// in HandleMessageFunc.
+	//
+	// Returns an error if either identifier already has an association for
+	// this channel.
+	RegisterIdentifier(
+		networkIdentifier ClientIdentifier,
+		protocolIdentifier ProtocolIdentifier,
+	) error
 
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
