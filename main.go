@@ -17,9 +17,6 @@ func main() {
 
 	chainHandle := local.InitLocal()
 	chainCounter := chainHandle.BlockCounter()
-	channel := netlocal.Channel("test")
-
-	dkg.Init(channel)
 
 	_ = pb.GossipMessage{}
 
@@ -28,15 +25,17 @@ func main() {
 	members := make([]*thresholdgroup.Member, 0, beaconConfig.GroupSize)
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
+		channel := netlocal.Channel("test")
+		dkg.Init(channel)
+
 		go func(i int) {
 			member, err := dkg.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"[member:%v] Failed to run DKG: [%s] (index %d).",
-					member.BlsID.GetHexString(),
-					err,
-					i)
+					"[member:index %d] Failed to run DKG: [%s].\n",
+					i,
+					err)
 				memberChannel <- nil
 				return
 			}
