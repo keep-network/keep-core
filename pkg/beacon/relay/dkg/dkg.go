@@ -5,7 +5,6 @@ import (
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/dfinity/go-dfinity-crypto/rand"
-	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
@@ -15,20 +14,15 @@ import (
 // key generation interactions.
 func Init(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(
-		"dkg/join",
-		func() proto.Unmarshaler { return &JoinMessage{} })
+		func() net.TaggedUnmarshaler { return &JoinMessage{} })
 	channel.RegisterUnmarshaler(
-		"dkg/commitments",
-		func() proto.Unmarshaler { return &MemberCommitmentsMessage{} })
+		func() net.TaggedUnmarshaler { return &MemberCommitmentsMessage{} })
 	channel.RegisterUnmarshaler(
-		"dkg/share",
-		func() proto.Unmarshaler { return &MemberShareMessage{} })
+		func() net.TaggedUnmarshaler { return &MemberShareMessage{} })
 	channel.RegisterUnmarshaler(
-		"dkg/accusations",
-		func() proto.Unmarshaler { return &AccusationsMessage{} })
+		func() net.TaggedUnmarshaler { return &AccusationsMessage{} })
 	channel.RegisterUnmarshaler(
-		"dkg/justifications",
-		func() proto.Unmarshaler { return &JustificationsMessage{} })
+		func() net.TaggedUnmarshaler { return &JustificationsMessage{} })
 }
 
 // ExecuteDKG runs the full distributed key generation lifecycle, given a

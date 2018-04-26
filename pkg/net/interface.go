@@ -37,6 +37,15 @@ type TaggedMarshaler interface {
 	Type() string
 }
 
+// TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
+// interface, but also provides a string type for the unmarshalable object. The
+// Type() method is expected to be invokable on a just-initialized instance of
+// the unmarshaler (i.e., before unmarshaling is completed).
+type TaggedUnmarshaler interface {
+	proto.Unmarshaler
+	Type() string
+}
+
 // BroadcastChannel represents a named pubsub channel. It allows Group Members
 // to send messages on the channel (via Send), and to access a low-level receive chan
 // that furnishes messages sent onto the BroadcastChannel.
@@ -55,10 +64,13 @@ type BroadcastChannel interface {
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error
-	// RegisterUnmarshaler registers, for a given type, an unmarshaler that will
-	// unmarshal it to a concrete object that can be passed to and understood by
-	// any registered message handling functions. The unmarshaler should be a
-	// function that returns a fresh object of type proto.Unmarshaler, ready to
-	// read in the bytes for an object marked as tpe.
-	RegisterUnmarshaler(tpe string, unmarshaler func() proto.Unmarshaler) error
+	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
+	// type to a concrete object that can be passed to and understood by any
+	// registered message handling functions. The unmarshaler should be a
+	// function that returns a fresh object of type proto.TaggedUnmarshaler,
+	// ready to read in the bytes for an object marked as tpe.
+	//
+	// The string type associated with the unmarshaler is the result of calling
+	// Type() on a raw unmarshaler.
+	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
 }
