@@ -8,14 +8,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/net/gen/gossip"
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 func main() {
 	bls.Init(bls.CurveFp382_1)
 
-	_ = gossip.GossipMessage{}
+	_ = pb.GossipMessage{}
 	chainHandle := local.InitLocal()
 	chainCounter := chainHandle.BlockCounter()
 
