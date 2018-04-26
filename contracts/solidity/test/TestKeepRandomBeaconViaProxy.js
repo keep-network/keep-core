@@ -40,6 +40,13 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     relayEntryRequestedEvent.get(function(error, result){
       assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
     });
+
+    let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
+    assert.equal(contractBalance, 100, "Keep Random Beacon contract should receive ether.");
+
+    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address).toNumber();
+    assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon contract new balance should be visible via proxy.");
+
   });
 
   it("should be able to request relay entry via proxy contract with enough ether", async function() {
@@ -53,6 +60,12 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     relayEntryRequestedEvent.get(function(error, result){
       assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
     });
+
+    let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
+    assert.equal(contractBalance, 100, "Keep Random Beacon contract should receive ether.");
+
+    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address).toNumber();
+    assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon contract new balance should be visible via proxy.");
   });
 
   it("should fail to update minimum stake and minimum payments by non owner", async function() {
