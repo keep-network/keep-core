@@ -3,6 +3,12 @@ package relay
 import "time"
 import "encoding/binary"
 
+// ChainInterface represents the interface that the relay expects to interact
+// with the anchoring blockchain on.
+type ChainInterface interface {
+	SubmitGroupPublicKey(groupID string, key [96]byte) error
+}
+
 // NodeState represents the current state of a relay node.
 type NodeState struct {
 	// groupCount is the total number of groups in the relay.
