@@ -49,7 +49,8 @@ func (m *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	pbCommitments :=
 		pb.Commitments{
 			Id:          m.id.GetLittleEndian(),
-			Commitments: commitmentBytes}
+			Commitments: commitmentBytes,
+		}
 
 	return pbCommitments.Marshal()
 }
@@ -94,7 +95,8 @@ func (m *MemberShareMessage) Marshal() ([]byte, error) {
 		pb.Share{
 			Id:         m.id.GetLittleEndian(),
 			ReceiverID: m.receiverID.GetLittleEndian(),
-			Share:      m.Share.GetLittleEndian()}
+			Share:      m.Share.GetLittleEndian(),
+		}
 
 	return pbShare.Marshal()
 }
@@ -144,7 +146,8 @@ func (m *AccusationsMessage) Marshal() ([]byte, error) {
 	pbAccusations :=
 		pb.Accusations{
 			Id:         m.id.GetLittleEndian(),
-			AccusedIDs: accusedIDBytes}
+			AccusedIDs: accusedIDBytes,
+		}
 
 	return pbAccusations.Marshal()
 }
@@ -193,7 +196,8 @@ func (m *JustificationsMessage) Marshal() ([]byte, error) {
 	pbJustifications :=
 		pb.Justifications{
 			Id:                 m.id.GetLittleEndian(),
-			JustificationsByID: justificationsMap}
+			JustificationsByID: justificationsMap,
+		}
 
 	return pbJustifications.Marshal()
 }

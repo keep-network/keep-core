@@ -46,7 +46,8 @@ func Channel(name string) net.BroadcastChannel {
 		unmarshalersByType:    make(map[string]func() net.TaggedUnmarshaler, 0),
 		identifiersMutex:      sync.Mutex{},
 		netToProtoIdentifiers: make(map[net.ClientIdentifier]net.ProtocolIdentifier),
-		protoToNetIdentifiers: make(map[net.ProtocolIdentifier]net.ClientIdentifier)}
+		protoToNetIdentifiers: make(map[net.ProtocolIdentifier]net.ClientIdentifier),
+	}
 	channels[name] = append(channels[name], channel)
 
 	return channel
@@ -149,7 +150,8 @@ func (channel *localChannel) deliver(senderIdentifier net.ClientIdentifier, payl
 		internal.BasicMessage(
 			senderIdentifier,
 			protocolIdentifier,
-			payload)
+			payload,
+		)
 
 	go func() {
 		for _, handler := range snapshot {
