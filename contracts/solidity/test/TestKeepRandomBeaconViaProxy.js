@@ -7,12 +7,10 @@ const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const Proxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
-const Upgrade = artifacts.require('./examples/KeepRandomBeaconUpgradeExample.sol');
-
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
-  let token, stakingProxy, stakingContract, implV1, implV2, proxy, implViaProxy, impl2ViaProxy,
+  let token, stakingProxy, stakingContract, implV1, proxy, implViaProxy,
     account_one = accounts[0],
     account_two = accounts[1];
 
@@ -31,28 +29,13 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     assert.equal(result, true, "Implementation contract should be initialized.");
   });
 
-  it("should be able to upgrade implementation and initialize it with new data", async function() {
-
-    implV2 = await Upgrade.new();
-    await proxy.upgradeTo('v2', implV2.address);
-    
-    impl2ViaProxy = await Upgrade.at(proxy.address);
-    await impl2ViaProxy.initialize(stakingProxy.address, 100, 200);
-
-    let result = await impl2ViaProxy.initialized();
-    assert.equal(result, true, "Implementation contract should be initialized.");
-
-    let newVar = await impl2ViaProxy.getNewVar();
-    assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
-  });
-
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(impl2ViaProxy.requestRelay(0, 0, {from: account_two, value: 99}));
+    await exceptThrow(implViaProxy.requestRelay(0, 0, {from: account_two, value: 99}));
   });
 
   it("should be able to request relay entry via implementation contract with enough ether", async function() {
-    const relayEntryRequestedEvent = impl2ViaProxy.RelayEntryRequested();
-    await impl2ViaProxy.requestRelay(0, 0, {from: account_two, value: 100})
+    const relayEntryRequestedEvent = implViaProxy.RelayEntryRequested();
+    await implViaProxy.requestRelay(0, 0, {from: account_two, value: 100})
 
     relayEntryRequestedEvent.get(function(error, result){
       assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
@@ -73,17 +56,17 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should fail to update minimum stake and minimum payments by non owner", async function() {
-    await exceptThrow(impl2ViaProxy.setMinimumPayment(123, {from: account_two}));
-    await exceptThrow(impl2ViaProxy.setMinimumStake(123, {from: account_two}));
+    await exceptThrow(implViaProxy.setMinimumPayment(123, {from: account_two}));
+    await exceptThrow(implViaProxy.setMinimumStake(123, {from: account_two}));
   });
 
   it("should be able to update minimum stake and minimum payments by the owner", async function() {
-    await impl2ViaProxy.setMinimumPayment(123);
-    let newMinPayment = await impl2ViaProxy.minimumPayment();
+    await implViaProxy.setMinimumPayment(123);
+    let newMinPayment = await implViaProxy.minimumPayment();
     assert.equal(newMinPayment, 123, "Should be able to get updated minimum payment.");
 
-    await impl2ViaProxy.setMinimumStake(123);
-    let newMinStake = await impl2ViaProxy.minimumStake();
+    await implViaProxy.setMinimumStake(123);
+    let newMinStake = await implViaProxy.minimumStake();
     assert.equal(newMinStake, 123, "Should be able to get updated minimum stake.");
   });
 });
