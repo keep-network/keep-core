@@ -83,10 +83,10 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Transfer 'msg.value' of funds directly from this contract to Keep multiwallet
+     * @dev Withdraw this contract balance to the owner
      */
-    function widthdrawAmount() public payable onlyOwner {
-        owner.transfer(msg.value);
+    function widthdraw() public onlyOwner {
+        owner.transfer(this.balance);
     }
 
     /**

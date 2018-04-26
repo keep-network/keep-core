@@ -68,6 +68,29 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon contract new balance should be visible via proxy.");
   });
 
+  it("owner should be able to withdraw ether from random beacon contract", async function() {
+
+    await web3.eth.sendTransaction({
+      from: account_two, value: web3.toWei(1, 'ether'), gas: 200000, to: proxy.address,
+      data: encodeCall('requestRelay', ['uint256', 'uint256'], [0,0])
+    });
+
+    let ownerStartBalance = web3.fromWei(await web3.eth.getBalance(account_one).toNumber(), 'ether');
+
+    // should fail to withdraw if not owner
+    await exceptThrow(implViaProxy.widthdraw({from: account_two}));
+
+    await implViaProxy.widthdraw({from: account_one});
+
+    let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
+    assert.equal(contractBalance, 0, "Keep Random Beacon contract should send all ether.");
+    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address).toNumber();
+    assert.equal(contractBalanceViaProxy, 0, "Keep Random Beacon contract updated balance should be visible via proxy.");
+
+    let ownerEndBalance = web3.fromWei(await web3.eth.getBalance(account_one).toNumber(), 'ether');
+    assert(ownerEndBalance > ownerStartBalance, "Owner updated balance should include received ether.");
+  });
+
   it("should fail to update minimum stake and minimum payments by non owner", async function() {
     await exceptThrow(implViaProxy.setMinimumPayment(123, {from: account_two}));
     await exceptThrow(implViaProxy.setMinimumStake(123, {from: account_two}));
