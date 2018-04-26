@@ -1,56 +1,35 @@
-package relay
+package dkg
 
 import (
 	"fmt"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/dfinity/go-dfinity-crypto/rand"
-	"github.com/keep-network/keep-core/pkg/beacon/broadcast"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
-// JoinMessage is an empty message payload indicating a member has joined. The
-// sender is the joining member. It is expected to be broadcast.
-type JoinMessage struct{}
-
-// MemberCommitmentsMessage is a message payload that carries the sender's
-// public commitments during distributed key generation. It is expected to be
-// broadcast.
-type MemberCommitmentsMessage struct {
-	Commitments []bls.PublicKey
-}
-
-// MemberShareMessage is a message payload that carries the sender's private
-// share for the recipient during distributed key generation. It is expected to
-// be communicated in encrypted fashion to the recipient over a broadcast
-// channel.
-type MemberShareMessage struct {
-	Share bls.SecretKey
-}
-
-// AccusationsMessage is a message payload that carries all of the sender's
-// accusations against other members of the threshold group. If all other
-// members behaved honestly from the sender's point of view, this message should
-// be broadcast but with an empty slice of `accusedIDs`. It is expected to be
-// broadcast.
-type AccusationsMessage struct {
-	accusedIDs []bls.ID
-}
-
-// JustificationsMessage is a message payload that carries all of the sender's
-// justifications in response to other threshold group members' accusations. If
-// no other member accused the sender, this message should be broadcast but with
-// an empty map of `justifications`. It is expected to be broadcast.
-type JustificationsMessage struct {
-	justifications map[bls.ID]bls.SecretKey
+// Init initializes a given broadcast channel to be able to perform distributed
+// key generation interactions.
+func Init(channel net.BroadcastChannel) {
+	channel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &JoinMessage{} })
+	channel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &MemberCommitmentsMessage{} })
+	channel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &MemberShareMessage{} })
+	channel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &AccusationsMessage{} })
+	channel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &JustificationsMessage{} })
 }
 
 // ExecuteDKG runs the full distributed key generation lifecycle, given a
 // broadcast channel to mediate it and a group size and threshold. It returns a
 // threshold group member who is participating in the group if the generation
 // was successful, and an error representing what went wrong if not.
-func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, groupSize int, threshold int) (*thresholdgroup.Member, error) {
+func ExecuteDKG(blockCounter chain.BlockCounter, channel net.BroadcastChannel, groupSize int, threshold int) (*thresholdgroup.Member, error) {
 	// FIXME Probably pass in a way to ask for a receiver's public key?
 	// FIXME Need a way to time out in a given stage, especially the waiting
 	//       ones.
@@ -63,13 +42,17 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	fmt.Printf("[member:%v] Initializing member.\n", memberID)
 	localMember := thresholdgroup.NewMember(memberID, threshold)
 
-	recvChan := channel.RecvChan()
+	recvChan := make(chan interface{})
+	channel.Recv(func(msg interface{}) error {
+		recvChan <- msg
+		return nil
+	})
 
 	fmt.Printf("[member:%v] Waiting for join timeout...\n", memberID)
 	blockCounter.WaitForBlocks(15)
 
 	fmt.Printf("[member:%v] Broadcasting join.\n", memberID)
-	channel.Send(broadcast.NewBroadcastMessage(localMember.BlsID, JoinMessage{}))
+	channel.Send(&JoinMessage{&localMember.BlsID})
 
 	// Wait for all members.
 	waiter := blockCounter.BlockWaiter(10)
@@ -154,18 +137,18 @@ func ExecuteDKG(blockCounter chain.BlockCounter, channel broadcast.Channel, grou
 	return &member, nil
 }
 
-func waitForMemberIDs(myID *bls.ID, recvChan <-chan broadcast.Message, groupSize int) ([]bls.ID, error) {
+func waitForMemberIDs(myID *bls.ID, recvChan <-chan interface{}, groupSize int) ([]bls.ID, error) {
 	memberIDs := make([]bls.ID, 0, groupSize)
 
 done:
 	for msg := range recvChan {
-		switch msg.Data.(type) {
+		switch joinMsg := msg.(type) {
 		case JoinMessage:
-			if msg.Sender.IsEqual(myID) {
+			if joinMsg.id.IsEqual(myID) {
 				continue
 			}
 
-			memberIDs = append(memberIDs, msg.Sender)
+			memberIDs = append(memberIDs, *joinMsg.id)
 
 			if len(memberIDs) == groupSize-1 {
 				break done
@@ -176,22 +159,22 @@ done:
 	return memberIDs, nil
 }
 
-func sendCommitments(channel broadcast.Channel, member *thresholdgroup.SharingMember) error {
-	channel.Send(broadcast.NewBroadcastMessage(member.BlsID, MemberCommitmentsMessage{member.Commitments()}))
+func sendCommitments(channel net.BroadcastChannel, member *thresholdgroup.SharingMember) error {
+	channel.Send(&MemberCommitmentsMessage{&member.BlsID, member.Commitments()})
 
 	return nil
 }
 
-func waitForCommitments(myID *bls.ID, recvChan <-chan broadcast.Message, sharingMember *thresholdgroup.SharingMember) error {
+func waitForCommitments(myID *bls.ID, recvChan <-chan interface{}, sharingMember *thresholdgroup.SharingMember) error {
 done:
 	for msg := range recvChan {
-		switch commitmentMsg := msg.Data.(type) {
+		switch commitmentMsg := msg.(type) {
 		case MemberCommitmentsMessage:
-			if msg.Sender.IsEqual(myID) {
+			if commitmentMsg.id.IsEqual(myID) {
 				continue
 			}
 
-			sharingMember.AddCommitmentsFromID(msg.Sender, commitmentMsg.Commitments)
+			sharingMember.AddCommitmentsFromID(*commitmentMsg.id, commitmentMsg.Commitments)
 
 			if sharingMember.CommitmentsComplete() {
 				break done
@@ -202,24 +185,26 @@ done:
 	return nil
 }
 
-func sendShares(channel broadcast.Channel, member *thresholdgroup.SharingMember) error {
+func sendShares(channel net.BroadcastChannel, member *thresholdgroup.SharingMember) error {
 	fmt.Printf("[member:%v] Despatching shares!\n", member.ID)
 	for _, receiverID := range member.OtherMemberIDs() {
 		share := member.SecretShareForID(receiverID)
-		channel.Send(broadcast.NewPrivateMessage(member.BlsID, receiverID, MemberShareMessage{share}))
+		channel.SendTo(
+			net.ClientIdentifier(receiverID.GetHexString()),
+			&MemberShareMessage{&member.BlsID, &receiverID, &share})
 	}
 	fmt.Printf("[member:%v] Shares despatched!\n", member.ID)
 
 	return nil
 }
 
-func waitForShares(myID *bls.ID, recvChan <-chan broadcast.Message, sharingMember *thresholdgroup.SharingMember) error {
+func waitForShares(myID *bls.ID, recvChan <-chan interface{}, sharingMember *thresholdgroup.SharingMember) error {
 done:
 	for msg := range recvChan {
-		switch shareMsg := msg.Data.(type) {
+		switch shareMsg := msg.(type) {
 		case MemberShareMessage:
-			if msg.Receiver.IsEqual(myID) {
-				sharingMember.AddShareFromID(msg.Sender, shareMsg.Share)
+			if shareMsg.receiverID.IsEqual(myID) {
+				sharingMember.AddShareFromID(*shareMsg.id, *shareMsg.Share)
 
 				if sharingMember.SharesComplete() {
 					break done
@@ -231,28 +216,28 @@ done:
 	return nil
 }
 
-func sendAccusations(channel broadcast.Channel, member *thresholdgroup.JustifyingMember) error {
-	channel.Send(broadcast.NewBroadcastMessage(member.BlsID, AccusationsMessage{member.AccusedIDs()}))
+func sendAccusations(channel net.BroadcastChannel, member *thresholdgroup.JustifyingMember) error {
+	channel.Send(&AccusationsMessage{&member.BlsID, member.AccusedIDs()})
 
 	return nil
 }
 
-func waitForAccusations(myID *bls.ID, recvChan <-chan broadcast.Message, justifyingMember *thresholdgroup.JustifyingMember) error {
+func waitForAccusations(myID *bls.ID, recvChan <-chan interface{}, justifyingMember *thresholdgroup.JustifyingMember) error {
 	memberIDs := justifyingMember.OtherMemberIDs()
 	seenAccusations := make(map[bls.ID]bool, len(memberIDs))
 done:
 	for msg := range recvChan {
-		switch accusationMsg := msg.Data.(type) {
+		switch accusationMsg := msg.(type) {
 		case AccusationsMessage:
-			if msg.Sender.IsEqual(myID) {
+			if accusationMsg.id.IsEqual(myID) {
 				continue
 			}
 
 			for _, accusedID := range accusationMsg.accusedIDs {
-				justifyingMember.AddAccusationFromID(msg.Sender, accusedID)
+				justifyingMember.AddAccusationFromID(*accusationMsg.id, accusedID)
 			}
 
-			seenAccusations[msg.Sender] = true
+			seenAccusations[*accusationMsg.id] = true
 			if len(seenAccusations) == len(memberIDs) {
 				break done
 			}
@@ -262,31 +247,34 @@ done:
 	return nil
 }
 
-func sendJustifications(channel broadcast.Channel, justifyingMember *thresholdgroup.JustifyingMember) error {
+func sendJustifications(channel net.BroadcastChannel, justifyingMember *thresholdgroup.JustifyingMember) error {
 	channel.Send(
-		broadcast.NewBroadcastMessage(
-			justifyingMember.BlsID,
-			JustificationsMessage{justifyingMember.Justifications()}))
+		&JustificationsMessage{
+			&justifyingMember.BlsID,
+			justifyingMember.Justifications()})
 
 	return nil
 }
 
-func waitForJustifications(myID *bls.ID, recvChan <-chan broadcast.Message, justifyingMember *thresholdgroup.JustifyingMember) error {
+func waitForJustifications(myID *bls.ID, recvChan <-chan interface{}, justifyingMember *thresholdgroup.JustifyingMember) error {
 	memberIDs := justifyingMember.OtherMemberIDs()
 	seenJustifications := make(map[bls.ID]bool, len(memberIDs))
 done:
 	for msg := range recvChan {
-		switch justificationsMsg := msg.Data.(type) {
+		switch justificationsMsg := msg.(type) {
 		case JustificationsMessage:
-			if msg.Sender.IsEqual(myID) {
+			if justificationsMsg.id.IsEqual(myID) {
 				continue
 			}
 
 			for accuserID, justification := range justificationsMsg.justifications {
-				justifyingMember.RecordJustificationFromID(msg.Sender, accuserID, justification)
+				justifyingMember.RecordJustificationFromID(
+					*justificationsMsg.id,
+					accuserID,
+					justification)
 			}
 
-			seenJustifications[msg.Sender] = true
+			seenJustifications[*justificationsMsg.id] = true
 			if len(seenJustifications) == len(memberIDs) {
 				break done
 			}
