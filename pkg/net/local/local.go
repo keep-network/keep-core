@@ -38,15 +38,15 @@ func Channel(name string) net.BroadcastChannel {
 
 	identifier := localIdentifier(randomIdentifier())
 	channel := &localChannel{
-		name,
-		&identifier,
-		sync.Mutex{},
-		make([]net.HandleMessageFunc, 0),
-		sync.Mutex{},
-		make(map[string]func() net.TaggedUnmarshaler, 0),
-		sync.Mutex{},
-		make(map[net.ClientIdentifier]net.ProtocolIdentifier),
-		make(map[net.ProtocolIdentifier]net.ClientIdentifier)}
+		name:                  name,
+		identifier:            &identifier,
+		messageHandlersMutex:  sync.Mutex{},
+		messageHandlers:       make([]net.HandleMessageFunc, 0),
+		unmarshalersMutex:     sync.Mutex{},
+		unmarshalersByType:    make(map[string]func() net.TaggedUnmarshaler, 0),
+		identifiersMutex:      sync.Mutex{},
+		netToProtoIdentifiers: make(map[net.ClientIdentifier]net.ProtocolIdentifier),
+		protoToNetIdentifiers: make(map[net.ProtocolIdentifier]net.ClientIdentifier)}
 	channels[name] = append(channels[name], channel)
 
 	return channel
