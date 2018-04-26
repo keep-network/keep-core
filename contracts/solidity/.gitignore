@@ -1,8 +1,2 @@
 ,*
-.KeepRelayBeacon.2.out
-.KeepRelayBeacon.3.out
-.KeepRelayBeacon.out
-.TokenGrant.2.out
-.TokenGrant.out
-.TokenStaking.2.out
-.TokenStaking.out
+*.out
