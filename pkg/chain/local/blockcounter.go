@@ -59,10 +59,10 @@ func (counter *localBlockCounter) count() {
 	}
 }
 
-// BlockCounter creates a BlockCounter that runs completely locally. It is
+// blockCounter creates a BlockCounter that runs completely locally. It is
 // designed to simply increase block height at a set time interval in the
 // background.
-func BlockCounter() chain.BlockCounter {
+func blockCounter() chain.BlockCounter {
 	counter := localBlockCounter{blockHeight: 0, waiters: make(map[int][]chan int)}
 
 	go counter.count()

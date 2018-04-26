@@ -15,7 +15,7 @@ import (
 func main() {
 	bls.Init(bls.CurveFp382_1)
 
-	chainHandle := local.InitLocal()
+	chainHandle := local.Connect()
 	chainCounter := chainHandle.BlockCounter()
 	channel := netlocal.Channel("test")
 
