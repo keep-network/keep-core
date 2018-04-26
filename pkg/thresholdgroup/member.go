@@ -391,6 +391,15 @@ func (member JustifyingMember) FinalizeMember() Member {
 	}
 }
 
+// GroupPublicKeyBytes returns a fixed-length 96-byte array containing the value
+// of the group public key.
+func (member *Member) GroupPublicKeyBytes() [96]byte {
+	keyBytes := [96]byte{}
+	copy(keyBytes[:], member.groupPublicKey.Serialize())
+
+	return keyBytes
+}
+
 // SignatureShare returns this member's serialized share of the threshold
 // signature for the given message. It can be combined with `threshold` other
 // signatures to produce a valid group signature (that is the same no matter

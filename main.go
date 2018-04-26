@@ -41,6 +41,21 @@ func main() {
 				return
 			}
 
+			err = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
+				"test",
+				member.GroupPublicKeyBytes(),
+			)
+
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"[member:%s] Failed to submit group public key: [%s]\n",
+					member.BlsID.GetHexString(),
+					err)
+				memberChannel <- nil
+				return
+			}
+
 			memberChannel <- member
 		}(i)
 	}
