@@ -404,7 +404,7 @@ func (member *Member) GroupPublicKeyBytes() [96]byte {
 // signature for the given message. It can be combined with `threshold` other
 // signatures to produce a valid group signature (that is the same no matter
 // which other members participate).
-func (member Member) SignatureShare(message string) []byte {
+func (member *Member) SignatureShare(message string) []byte {
 	return member.groupSecretKeyShare.Sign(message).Serialize()
 }
 
@@ -412,7 +412,7 @@ func (member Member) SignatureShare(message string) []byte {
 // member ID, and verifies that the signature shares combine to a group
 // signature that is valid for the given message. Returns true if so, false if
 // not.
-func (member Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) bool {
+func (member *Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) bool {
 	availableIDs := make([]bls.ID, 0, len(signatureShares))
 	deserializedShares := make([]bls.Sign, 0, len(signatureShares))
 	for _, memberID := range member.memberIDs {
