@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/big"
 	"os"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
@@ -36,27 +37,35 @@ func main() {
 					"[member:%v] Failed to run DKG: [%s] (index %d).",
 					member.BlsID.GetHexString(),
 					err,
-					i)
+					i,
+				)
 				memberChannel <- nil
 				return
 			}
+
+			chainHandle.ThresholdRelay().OnGroupPublicKeySubmitted(
+				func(groupID string, activationBlock *big.Int) {
+					if groupID == "test" {
+						memberChannel <- member
+					}
+				})
+			chainHandle.ThresholdRelay().OnGroupPublicKeySubmissionFailed(
+				func(groupID string, errorMsg string) {
+					if groupID == "test" {
+						fmt.Fprintf(
+							os.Stderr,
+							"[member:%s] Failed to submit group public key: [%s]\n",
+							member.BlsID.GetHexString(),
+							err,
+						)
+						memberChannel <- nil
+					}
+				})
 
 			err = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
 				"test",
 				member.GroupPublicKeyBytes(),
 			)
-
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"[member:%s] Failed to submit group public key: [%s]\n",
-					member.BlsID.GetHexString(),
-					err)
-				memberChannel <- nil
-				return
-			}
-
-			memberChannel <- member
 		}(i)
 	}
 

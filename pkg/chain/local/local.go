@@ -2,6 +2,7 @@ package local
 
 import (
 	"fmt"
+	"math/big"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/beacon"
@@ -10,10 +11,13 @@ import (
 )
 
 type localChain struct {
-	beaconConfig         beacon.Config
-	groupPublicKeysMutex sync.Mutex
-	groupPublicKeys      map[string][96]byte
-	blockCounter         chain.BlockCounter
+	beaconConfig                     beacon.Config
+	groupPublicKeysMutex             sync.Mutex
+	groupPublicKeys                  map[string][96]byte
+	handlerMutex                     sync.Mutex
+	groupPublicKeyFailureHandlers    []func(string, string)
+	groupPublicKeySubmissionHandlers []func(string, *big.Int)
+	blockCounter                     chain.BlockCounter
 }
 
 func (c *localChain) BlockCounter() chain.BlockCounter {
@@ -28,14 +32,44 @@ func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
 	c.groupPublicKeysMutex.Lock()
 	defer c.groupPublicKeysMutex.Unlock()
 	if existing, exists := c.groupPublicKeys[groupID]; exists && existing != key {
-		return fmt.Errorf(
+		errorMsg := fmt.Sprintf(
 			"mismatched public key for [%s], submission failed; \n"+
-				"[%v] vs [%v]",
+				"[%v] vs [%v]\n",
 			groupID,
 			existing,
 			key)
+
+		c.handlerMutex.Lock()
+		for _, handler := range c.groupPublicKeyFailureHandlers {
+			handler(groupID, errorMsg)
+		}
+		c.handlerMutex.Unlock()
+
+		return nil
 	}
 	c.groupPublicKeys[groupID] = key
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.groupPublicKeySubmissionHandlers {
+		handler(groupID, &big.Int{})
+	}
+	c.handlerMutex.Unlock()
+
+	return nil
+}
+
+func (c *localChain) OnGroupPublicKeySubmissionFailed(handler func(string, string)) error {
+	c.handlerMutex.Lock()
+	c.groupPublicKeyFailureHandlers = append(c.groupPublicKeyFailureHandlers, handler)
+	c.handlerMutex.Unlock()
+
+	return nil
+}
+
+func (c *localChain) OnGroupPublicKeySubmitted(handler func(groupID string, activationBlock *big.Int)) error {
+	c.handlerMutex.Lock()
+	c.groupPublicKeySubmissionHandlers = append(c.groupPublicKeySubmissionHandlers, handler)
+	c.handlerMutex.Unlock()
 
 	return nil
 }
