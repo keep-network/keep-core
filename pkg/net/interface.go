@@ -32,6 +32,9 @@ type ClientIdentifier interface {
 // type to the network layer.
 type ProtocolIdentifier interface{}
 
+// Message represents a message exchanged within the network layer. It carries
+// a sender id for the transport layer and, if available, for the protocol
+// layer. It also carries an unmarshaled payload.
 type Message interface {
 	NetworkSenderID() ClientIdentifier
 	ProtocolSenderID() ProtocolIdentifier
