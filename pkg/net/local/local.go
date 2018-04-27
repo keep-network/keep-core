@@ -38,15 +38,15 @@ func Channel(name string) net.BroadcastChannel {
 
 	identifier := localIdentifier(randomIdentifier())
 	channel := &localChannel{
-		name:                  name,
-		identifier:            &identifier,
-		messageHandlersMutex:  sync.Mutex{},
-		messageHandlers:       make([]net.HandleMessageFunc, 0),
-		unmarshalersMutex:     sync.Mutex{},
-		unmarshalersByType:    make(map[string]func() net.TaggedUnmarshaler, 0),
-		identifiersMutex:      sync.Mutex{},
-		netToProtoIdentifiers: make(map[net.ClientIdentifier]net.ProtocolIdentifier),
-		protoToNetIdentifiers: make(map[net.ProtocolIdentifier]net.ClientIdentifier),
+		name:                        name,
+		identifier:                  &identifier,
+		messageHandlersMutex:        sync.Mutex{},
+		messageHandlers:             make([]net.HandleMessageFunc, 0),
+		unmarshalersMutex:           sync.Mutex{},
+		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler, 0),
+		identifiersMutex:            sync.Mutex{},
+		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
+		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
 	}
 	channels[name] = append(channels[name], channel)
 
@@ -68,15 +68,15 @@ func randomIdentifier() string {
 }
 
 type localChannel struct {
-	name                  string
-	identifier            net.ClientIdentifier
-	messageHandlersMutex  sync.Mutex
-	messageHandlers       []net.HandleMessageFunc
-	unmarshalersMutex     sync.Mutex
-	unmarshalersByType    map[string]func() net.TaggedUnmarshaler
-	identifiersMutex      sync.Mutex
-	netToProtoIdentifiers map[net.ClientIdentifier]net.ProtocolIdentifier
-	protoToNetIdentifiers map[net.ProtocolIdentifier]net.ClientIdentifier
+	name                        string
+	identifier                  net.TransportIdentifier
+	messageHandlersMutex        sync.Mutex
+	messageHandlers             []net.HandleMessageFunc
+	unmarshalersMutex           sync.Mutex
+	unmarshalersByType          map[string]func() net.TaggedUnmarshaler
+	identifiersMutex            sync.Mutex
+	transportToProtoIdentifiers map[net.TransportIdentifier]net.ProtocolIdentifier
+	protoToTransportIdentifiers map[net.ProtocolIdentifier]net.TransportIdentifier
 }
 
 func (channel *localChannel) Name() string {
@@ -91,22 +91,22 @@ func doSend(
 	targetChannels := channels[channel.name]
 
 	// If we have a recipient, filter `targetChannels` down to only the targeted
-	// recipient (the recipient network identifier is the same as the local
+	// recipient (the recipient transport identifier is the same as the local
 	// channel's identifier).
-	var networkRecipient net.ClientIdentifier
+	var transportRecipient net.TransportIdentifier
 	channel.identifiersMutex.Lock()
-	if netID, ok := recipient.(*localIdentifier); ok {
-		networkRecipient = netID
-	} else if netID, ok := channel.protoToNetIdentifiers[recipient]; ok {
-		networkRecipient = netID
+	if transportID, ok := recipient.(*localIdentifier); ok {
+		transportRecipient = transportID
+	} else if transportID, ok := channel.protoToTransportIdentifiers[recipient]; ok {
+		transportRecipient = transportID
 	}
 	channel.identifiersMutex.Unlock()
 
-	if networkRecipient != nil {
+	if transportRecipient != nil {
 		potentialTargets := targetChannels
 		targetChannels = make([]*localChannel, 0, 1)
 		for _, targetChannel := range potentialTargets {
-			if networkRecipient == targetChannel.identifier {
+			if transportRecipient == targetChannel.identifier {
 				targetChannels = append(targetChannels, targetChannel)
 				break
 			}
@@ -136,14 +136,14 @@ func doSend(
 	return nil
 }
 
-func (channel *localChannel) deliver(senderIdentifier net.ClientIdentifier, payload interface{}) {
+func (channel *localChannel) deliver(senderIdentifier net.TransportIdentifier, payload interface{}) {
 	channel.messageHandlersMutex.Lock()
 	snapshot := make([]net.HandleMessageFunc, len(channel.messageHandlers))
 	copy(snapshot, channel.messageHandlers)
 	channel.messageHandlersMutex.Unlock()
 
 	channel.identifiersMutex.Lock()
-	protocolIdentifier := channel.netToProtoIdentifiers[senderIdentifier]
+	protocolIdentifier := channel.transportToProtoIdentifiers[senderIdentifier]
 	channel.identifiersMutex.Unlock()
 
 	message :=
@@ -179,25 +179,25 @@ func (channel *localChannel) Recv(handler net.HandleMessageFunc) error {
 }
 
 func (channel *localChannel) RegisterIdentifier(
-	networkIdentifier net.ClientIdentifier,
+	transportIdentifier net.TransportIdentifier,
 	protocolIdentifier net.ProtocolIdentifier,
 ) error {
 	channel.identifiersMutex.Lock()
 	defer channel.identifiersMutex.Unlock()
 
-	if _, exists := channel.netToProtoIdentifiers[networkIdentifier]; exists {
+	if _, exists := channel.transportToProtoIdentifiers[transportIdentifier]; exists {
 		return fmt.Errorf(
 			"already have a protocol identifier associated with [%v]",
-			networkIdentifier)
+			transportIdentifier)
 	}
-	if _, exists := channel.protoToNetIdentifiers[protocolIdentifier]; exists {
+	if _, exists := channel.protoToTransportIdentifiers[protocolIdentifier]; exists {
 		return fmt.Errorf(
-			"already have a network identifier associated with [%v]",
+			"already have a transport identifier associated with [%v]",
 			protocolIdentifier)
 	}
 
-	channel.netToProtoIdentifiers[networkIdentifier] = protocolIdentifier
-	channel.protoToNetIdentifiers[protocolIdentifier] = networkIdentifier
+	channel.transportToProtoIdentifiers[transportIdentifier] = protocolIdentifier
+	channel.protoToTransportIdentifiers[protocolIdentifier] = transportIdentifier
 
 	return nil
 }

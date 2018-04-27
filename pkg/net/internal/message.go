@@ -5,7 +5,7 @@ import "github.com/keep-network/keep-core/pkg/net"
 // BasicMessage returns a struct-based trivial implementation of the net.Message
 // interface for use by packages that don't need any frills.
 func BasicMessage(
-	networkSenderID net.ClientIdentifier,
+	networkSenderID net.TransportIdentifier,
 	protocolSenderID net.ProtocolIdentifier,
 	payload interface{},
 ) net.Message {
@@ -17,12 +17,12 @@ func BasicMessage(
 // basicMessage is a struct-based trivial implementation of the net.Message
 // interface for use by packages that don't need any frills.
 type basicMessage struct {
-	networkSenderID  net.ClientIdentifier
+	networkSenderID  net.TransportIdentifier
 	protocolSenderID net.ProtocolIdentifier
 	payload          interface{}
 }
 
-func (m *basicMessage) NetworkSenderID() net.ClientIdentifier {
+func (m *basicMessage) TransportSenderID() net.TransportIdentifier {
 	return m.networkSenderID
 }
 

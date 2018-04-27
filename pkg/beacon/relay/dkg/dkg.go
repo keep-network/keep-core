@@ -147,7 +147,7 @@ func registerMemberID(
 ) error {
 	switch joinMsg := msg.Payload().(type) {
 	case *JoinMessage:
-		err := broadcastChannel.RegisterIdentifier(msg.NetworkSenderID(), joinMsg.id)
+		err := broadcastChannel.RegisterIdentifier(msg.TransportSenderID(), joinMsg.id)
 		if err != nil {
 			return err
 		}
@@ -208,7 +208,7 @@ done:
 				return fmt.Errorf(
 					"unknown protocol sender id type [%v] for network id [%v]",
 					reflect.TypeOf(msg.ProtocolSenderID()),
-					msg.NetworkSenderID())
+					msg.TransportSenderID())
 			}
 		}
 	}
@@ -281,7 +281,7 @@ done:
 			} else {
 				return fmt.Errorf(
 					"unknown protocol sender id for network id [%v]",
-					msg.NetworkSenderID())
+					msg.TransportSenderID())
 			}
 		}
 	}
@@ -324,7 +324,7 @@ func waitForJustifications(
 			} else {
 				return nil, fmt.Errorf(
 					"unknown protocol sender id for network id [%v]",
-					msg.NetworkSenderID())
+					msg.TransportSenderID())
 			}
 		}
 	}

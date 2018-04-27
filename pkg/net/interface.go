@@ -21,8 +21,9 @@ type GroupIdentity struct {
 	Members []bls.PublicKey
 }
 
-// ClientIdentifier represents the identity of a recipient for a message.
-type ClientIdentifier interface {
+// TransportIdentifier represents the identity of a participant at the transport
+// layer (e.g., libp2p).
+type TransportIdentifier interface {
 	// Returns a string name of the network provider. Expected to be purely
 	// informational.
 	ProviderName() string
@@ -36,7 +37,7 @@ type ProtocolIdentifier interface{}
 // a sender id for the transport layer and, if available, for the protocol
 // layer. It also carries an unmarshaled payload.
 type Message interface {
-	NetworkSenderID() ClientIdentifier
+	TransportSenderID() TransportIdentifier
 	ProtocolSenderID() ProtocolIdentifier
 	Payload() interface{}
 }
@@ -92,7 +93,7 @@ type BroadcastChannel interface {
 	// Returns an error if either identifier already has an association for
 	// this channel.
 	RegisterIdentifier(
-		networkIdentifier ClientIdentifier,
+		networkIdentifier TransportIdentifier,
 		protocolIdentifier ProtocolIdentifier,
 	) error
 
