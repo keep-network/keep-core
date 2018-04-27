@@ -27,8 +27,9 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param _minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param _minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
+     * @param _withdrawalDelay Delay before the owner can withdraw ether from this contract.
      */
-    function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake) 
+    function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake, uint256 _withdrawalDelay)
         public
         onlyOwner
     {
@@ -38,6 +39,8 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         uintStorage[keccak256("minStake")] = _minStake;
         uintStorage[keccak256("minPayment")] = _minPayment;
         boolStorage[keccak256("KeepRandomBeaconImplV1")] = true;
+        uintStorage[keccak256("withdrawalDelay")] = _withdrawalDelay;
+        uintStorage[keccak256("pendingWithdrawal")] = 0;
     }
 
     /**
@@ -83,9 +86,24 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Withdraw this contract balance to the owner
+     * @dev Initiate withdraw of this contract balance to the owner.
      */
-    function widthdraw() public onlyOwner {
+    function initiateWithdraw() public onlyOwner {
+        uint256 withdrawalDelay = uintStorage[keccak256("withdrawalDelay")];
+        uintStorage[keccak256("pendingWithdrawal")] = block.timestamp + withdrawalDelay;
+    }
+
+    /**
+     * @dev Finish withdraw of this contract balance to the owner.
+     */
+    function finishWithdraw() public onlyOwner {
+        uint pendingWithdrawal = uintStorage[keccak256("pendingWithdrawal")];
+
+        require(pendingWithdrawal > 0);
+        require(block.timestamp >= pendingWithdrawal);
+
+        // Reset pending withdrawal before sending to prevent re-entrancy attacks
+        uintStorage[keccak256("pendingWithdrawal")] = 0;
         owner.transfer(this.balance);
     }
 

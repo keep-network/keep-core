@@ -21,7 +21,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     implV1 = await KeepRandomBeaconImplV1.new();
     proxy = await Proxy.new('v1', implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
-    await implViaProxy.initialize(stakingProxy.address, 100, 200);
+    await implViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(30));
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
@@ -78,9 +78,15 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let ownerStartBalance = web3.fromWei(await web3.eth.getBalance(account_one).toNumber(), 'ether');
 
     // should fail to withdraw if not owner
-    await exceptThrow(implViaProxy.widthdraw({from: account_two}));
+    await exceptThrow(implViaProxy.initiateWithdraw({from: account_two}));
+    await exceptThrow(implViaProxy.finishWithdraw({from: account_two}));
 
-    await implViaProxy.widthdraw({from: account_one});
+    await implViaProxy.initiateWithdraw({from: account_one});
+    await exceptThrow(implViaProxy.finishWithdraw({from: account_one}));
+
+    // jump in time, full withdrawal delay
+    await increaseTimeTo(latestTime()+duration.days(30));
+    await implViaProxy.finishWithdraw({from: account_one});
 
     let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
     assert.equal(contractBalance, 0, "Keep Random Beacon contract should send all ether.");

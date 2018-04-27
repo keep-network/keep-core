@@ -22,7 +22,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     implV2 = await Upgrade.new();
     proxy = await Proxy.new('v1', implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
-    await implViaProxy.initialize(stakingProxy.address, 100, 200);
+    await implViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(0));
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
@@ -38,7 +38,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     await proxy.upgradeTo('v2', implV2.address);
     
     impl2ViaProxy = await Upgrade.at(proxy.address);
-    await impl2ViaProxy.initialize(stakingProxy.address, 100, 200);
+    await impl2ViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(0));
 
     let result = await impl2ViaProxy.initialized();
     assert.equal(result, true, "Implementation contract should be initialized.");
