@@ -6,6 +6,10 @@ import "encoding/binary"
 // ChainInterface represents the interface that the relay expects to interact
 // with the anchoring blockchain on.
 type ChainInterface interface {
+	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
+	// associated with a string groupID. An error is generally only returned in
+	// case of connectivity issues; on-chain errors are reported through event
+	// callbacks.
 	SubmitGroupPublicKey(groupID string, key [96]byte) error
 }
 
