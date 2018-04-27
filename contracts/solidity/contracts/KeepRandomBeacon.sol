@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./EternalStorage.sol";
@@ -64,6 +64,6 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
         require(keccak256(_version) != keccak256(version));
         version = _version;
         implementation = _implementation;
-        Upgraded(version, implementation);
+        emit Upgraded(version, implementation);
     }
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -33,7 +33,8 @@ contract TestTokenGrantStakeNoDelay {
 
     Assert.equal(c.stakeBalances(beneficiary), 100, "Token grant balance should be added to beneficiary grant stake balance.");
 
-    var (, , _locked, , , , , , ,) = c.grants(id);
+    bool _locked;
+    (, , _locked, , , , , , ,) = c.grants(id);
     Assert.equal(_locked, true, "Token grant should become locked.");
   }
 
@@ -48,7 +49,8 @@ contract TestTokenGrantStakeNoDelay {
   function testCanFinishUnstakeTokenGrant() public {
     c.finishUnstake(id);
     Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
-    var (, , _locked, , , , , , ,) = c.grants(id);
+    bool _locked;
+    (, , _locked, , , , , , ,) = c.grants(id);
     Assert.equal(_locked, false, "Grant should become unlocked.");
   }
 }

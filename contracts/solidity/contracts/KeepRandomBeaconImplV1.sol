@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./StakingProxy.sol";
@@ -7,8 +7,8 @@ import "./EternalStorage.sol";
 
 /**
  * @title KeepRandomBeaconImplV1
- * @dev Initial version of implementation contract that works under Keep Random 
- * Beacon proxy and allows upgradability. The purpose of the contract is to have 
+ * @dev Initial version of implementation contract that works under Keep Random
+ * Beacon proxy and allows upgradability. The purpose of the contract is to have
  * up-to-date logic for random threshold number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
  */
@@ -18,7 +18,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber); 
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber);
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
@@ -52,7 +52,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Checks that the specified user has an appropriately large stake. 
+     * @dev Checks that the specified user has an appropriately large stake.
      * @param _staker Specifies the identity of the random beacon client.
      * @return True if staked enough to participate in the group, false otherwise.
      */
@@ -79,7 +79,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         uintStorage[keccak256("blockReward", requestID)] = _blockReward; // TODO - who decides the block reward? is it in KEEP?
 
         // Generate an event at this point, just return instead, RandomNumberRequest.
-        RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
+        emit RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
     }
 
     /**
@@ -128,7 +128,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     function relayEntry(uint256 _requestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
         uintStorage[keccak256("requestGroupID", _requestID)] = _groupID;
 
-        RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
+        emit RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
     }
 
     /**
@@ -143,7 +143,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         // validate accusation by performing the checks in this code (slow/expensive)
         // raise event if accusation is shown to be true
         // penalty for false accusations - msg.sender? gets docked/rewarded?
-        RelayResetEvent(lastValidRelayEntry, _lastValidRelayTxHash, _lastValidRelayBlock);
+        emit RelayResetEvent(lastValidRelayEntry, _lastValidRelayTxHash, _lastValidRelayBlock);
     }
 
     /**
@@ -155,7 +155,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         uint256 activationBlockHeight = block.number;
 
         // TODO -- lots of stuff - don't know yet.
-        SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, activationBlockHeight);
+        emit SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, activationBlockHeight);
     }
 
     /**
