@@ -5,6 +5,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg/gen/pb"
 )
 
+// Type returns a string describing a JoinMessage's type.
+func (m *JoinMessage) Type() string {
+	return "dkg/join"
+}
+
 // Marshal converts this JoinMessage to a byte array suitable for network
 // communication.
 func (m *JoinMessage) Marshal() ([]byte, error) {
@@ -26,6 +31,11 @@ func (m *JoinMessage) Unmarshal(bytes []byte) error {
 	}
 
 	return nil
+}
+
+// Type returns a string describing a MemberCommitmentsMessage's type.
+func (m *MemberCommitmentsMessage) Type() string {
+	return "dkg/commitments"
 }
 
 // Marshal converts this MemberCommitmentsMessage to a byte array suitable for network
@@ -72,6 +82,11 @@ func (m *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing a MemberShareMessage's type.
+func (m *MemberShareMessage) Type() string {
+	return "dkg/share"
+}
+
 // Marshal converts this MemberShareMessage to a byte array suitable for network
 // communication.
 func (m *MemberShareMessage) Marshal() ([]byte, error) {
@@ -111,6 +126,11 @@ func (m *MemberShareMessage) Unmarshal(bytes []byte) error {
 	}
 
 	return nil
+}
+
+// Type returns a string describing a AccusationsMessage's type.
+func (m *AccusationsMessage) Type() string {
+	return "dkg/accusations"
 }
 
 // Marshal converts this AccusationsMessage to a byte array suitable for network
@@ -155,6 +175,11 @@ func (m *AccusationsMessage) Unmarshal(bytes []byte) error {
 	}
 
 	return nil
+}
+
+// Type returns a string describing a JustificationsMessage's type.
+func (m *JustificationsMessage) Type() string {
+	return "dkg/justifications"
 }
 
 // Marshal converts this JustificationsMessage to a byte array suitable for

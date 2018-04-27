@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -19,7 +18,7 @@ func Channel(name string) net.BroadcastChannel {
 		sync.Mutex{},
 		make([]net.HandleMessageFunc, 0),
 		sync.Mutex{},
-		make(map[string]func() proto.Unmarshaler, 0)}
+		make(map[string]func() net.TaggedUnmarshaler, 0)}
 }
 
 type localChannel struct {
@@ -27,7 +26,7 @@ type localChannel struct {
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
 	unmarshalersMutex    sync.Mutex
-	unmarshalersByType   map[string]func() proto.Unmarshaler
+	unmarshalersByType   map[string]func() net.TaggedUnmarshaler
 }
 
 func (channel *localChannel) Name() string {
@@ -88,9 +87,10 @@ func (channel *localChannel) Recv(handler net.HandleMessageFunc) error {
 }
 
 func (channel *localChannel) RegisterUnmarshaler(
-	tpe string,
-	unmarshaler func() proto.Unmarshaler,
+	unmarshaler func() net.TaggedUnmarshaler,
 ) (err error) {
+	tpe := unmarshaler().Type()
+
 	channel.unmarshalersMutex.Lock()
 	_, exists := channel.unmarshalersByType[tpe]
 	if exists {
