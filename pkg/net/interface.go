@@ -3,7 +3,6 @@ package net
 import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/gogo/protobuf/proto"
-	"github.com/keep-network/keep-core/pkg/net/p2p"
 )
 
 // GroupIdentity contains the Group's public key as created by the dkg process
@@ -117,6 +116,6 @@ type BroadcastChannel interface {
 // ID. Consumers of the net package require an ID to register with protocol level
 // ID's, as well as a public key for authentication.
 type Identity interface {
-	ID() p2p.ID
-	PubKeyFromID(p2p.ID) (p2p.PubKey, error)
+	ID() string
+	PubKeyFromID(string) ([]byte, error)
 }

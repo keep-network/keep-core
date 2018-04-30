@@ -4,47 +4,42 @@ import (
 	"fmt"
 	"io"
 
-	ci "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
-
 	crand "crypto/rand"
 	mrand "math/rand"
 
-	"github.com/keep-network/keep-core/pkg/net"
 	ci "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
+
+	"github.com/keep-network/keep-core/pkg/net"
 )
-
-// An ID corresponds to the identification of a member in a peer-to-peer network.
-// It implements the net.TransportIdentifier interface.
-type ID peer.ID
-
-// PubKey is a type alias for the underlying PublicKey implementation we choose.
-type PubKey = ci.PubKey
-
-func (i ID) ProviderName() string {
-	return "libp2p"
-}
 
 type peerIdentity struct {
 	privKey ci.PrivKey
 }
 
-func (pi *peerIdentity) ID() ID {
+func (pi *peerIdentity) ProviderName() string {
+	return "libp2p"
+}
+
+func (pi *peerIdentity) ID() string {
 	return pubKeyToID(pi.privKey.GetPublic())
 }
 
-func pubKeyToID(pub ci.PubKey) ID {
+func pubKeyToID(pub ci.PubKey) string {
 	pid, err := peer.IDFromPublicKey(pub)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
 	}
-	return ID(pid)
+	return string(pid)
 }
 
-func (pi *peerIdentity) PubKeyFromID(id ID) (ci.PubKey, error) {
-	return peer.ID(id).ExtractPublicKey()
+func (pi *peerIdentity) PubKeyFromID(id string) ([]byte, error) {
+	key, err := peer.ID(id).ExtractPublicKey()
+	if err != nil {
+		return nil, err
+	}
+	return key.Bytes()
 }
 
 // AddIdentityToStore takes a peerIdentity and notifies the addressbook of the
