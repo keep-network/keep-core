@@ -24,7 +24,6 @@ type GroupIdentity struct {
 // TransportIdentifier represents the identity of a participant at the transport
 // layer (e.g., libp2p).
 type TransportIdentifier interface {
-	ID() string
 	// Returns a string name of the network provider. Expected to be purely
 	// informational.
 	ProviderName() string

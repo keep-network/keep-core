@@ -1,19 +1,17 @@
-package p2p
+package net
 
 import (
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/net"
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 func TestAddIdentityToStore(t *testing.T) {
-	identity, err := LoadOrGenerateIdentity(0, "")
+	pi, err := loadOrGenerateIdentity(0, "")
 	if err != nil {
 		t.Fatalf("Failed to generate valid PeerIdentity with err: %s", err)
 	}
-	pi := identity.(*peerIdentity)
-	ps, err := AddIdentityToStore(pi)
+	ps, err := addIdentityToStore(pi)
 	if err != nil {
 		t.Fatalf("Failed to add Identity to store with err: %s", err)
 	}
@@ -30,12 +28,11 @@ func TestAddIdentityToStore(t *testing.T) {
 }
 
 func TestPublicKeyFunctions(t *testing.T) {
-	identity, err := LoadOrGenerateIdentity(0, "")
+	pi, err := loadOrGenerateIdentity(0, "")
 	if err != nil {
 		t.Fatalf("Failed to generate valid PeerIdentity with err: %s", err)
 	}
-	pi := identity.(*peerIdentity)
-	ps, err := AddIdentityToStore(pi)
+	ps, err := addIdentityToStore(pi)
 	if err != nil {
 		t.Fatalf("Failed to add Identity to store with err: %s", err)
 	}
@@ -49,7 +46,8 @@ func TestPublicKeyFunctions(t *testing.T) {
 		t.Fatalf("Failed to sign msg with err: %s", err)
 	}
 
-	pubKey, err := pi.PubKeyFromID(pi.ID())
+	ti := pi.ID().(TransportIdentifier)
+	pubKey, err := pi.PubKeyFromID(ti)
 	if err != nil {
 		t.Fatalf("Failed to generate public key from id with err %s", err)
 	}
@@ -72,6 +70,6 @@ func TestPublicKeyFunctions(t *testing.T) {
 	}
 }
 
-func toPeerID(pi net.ID) peer.ID {
-	return peer.ID(pi)
+func toPeerID(ti TransportIdentifier) peer.ID {
+	return peer.ID(ti.(networkID))
 }
