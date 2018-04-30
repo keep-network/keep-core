@@ -24,6 +24,7 @@ type GroupIdentity struct {
 // TransportIdentifier represents the identity of a participant at the transport
 // layer (e.g., libp2p).
 type TransportIdentifier interface {
+	ID() string
 	// Returns a string name of the network provider. Expected to be purely
 	// informational.
 	ProviderName() string
@@ -109,13 +110,4 @@ type BroadcastChannel interface {
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
-}
-
-// Identity represents a group member's network level identity. A valid group
-// member will generate or provide a keypair, which will correspond to a network
-// ID. Consumers of the net package require an ID to register with protocol level
-// ID's, as well as a public key for authentication.
-type Identity interface {
-	ID() string
-	PubKeyFromID(string) ([]byte, error)
 }
