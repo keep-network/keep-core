@@ -1,8 +1,11 @@
-package identity
+package p2p
 
 import (
 	"fmt"
 	"io"
+
+	ci "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
 
 	crand "crypto/rand"
 	mrand "math/rand"
@@ -13,28 +16,39 @@ import (
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
+// An ID corresponds to the identification of a member in a peer-to-peer network.
+// It implements the net.TransportIdentifier interface.
+type ID peer.ID
+
+// PubKey is a type alias for the underlying PublicKey implementation we choose.
+type PubKey = ci.PubKey
+
+func (i ID) ProviderName() string {
+	return "libp2p"
+}
+
 type peerIdentity struct {
 	privKey ci.PrivKey
 }
 
-func (pi *peerIdentity) ID() net.ID {
-	return net.ID(pubKeyToID(pi.privKey.GetPublic()))
+func (pi *peerIdentity) ID() ID {
+	return pubKeyToID(pi.privKey.GetPublic())
 }
 
-func pubKeyToID(pub ci.PubKey) peer.ID {
+func pubKeyToID(pub ci.PubKey) ID {
 	pid, err := peer.IDFromPublicKey(pub)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
 	}
-	return pid
+	return ID(pid)
 }
 
-func (pi *peerIdentity) PubKeyFromID(id net.ID) (ci.PubKey, error) {
+func (pi *peerIdentity) PubKeyFromID(id ID) (ci.PubKey, error) {
 	return peer.ID(id).ExtractPublicKey()
 }
 
-// AddIdentityToStore takes a net.Identity and notifies the addressbook of the existance
-// of a new client joining the network.
+// AddIdentityToStore takes a peerIdentity and notifies the addressbook of the
+// existance of a new client joining the network.
 func AddIdentityToStore(pi *peerIdentity) (pstore.Peerstore, error) {
 	// TODO: investigate a generic store interface that gives us a unified interface
 	// to our address book (peerstore in libp2p) from secure storage (dht)
