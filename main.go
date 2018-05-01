@@ -6,6 +6,7 @@ import (
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	"github.com/keep-network/keep-core/pkg/chain/gen"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -76,4 +77,14 @@ func main() {
 			member.BlsID.GetHexString(),
 			member.VerifySignature(shares, message))
 	}
+}
+
+// verifyCompilationOfGeneraedCode is a compile time check that verfies all of the
+// abigen generated code for contracts.
+func verifyCompilationOfGeneraedCode() {
+	_ = gen.KeepRandomBeaconImplV1{}
+	_ = gen.KeepToken{}
+	_ = gen.StakingProxy{}
+	_ = gen.TokenGrant{}
+	_ = gen.TokenStaking{}
 }
