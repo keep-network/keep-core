@@ -3,7 +3,7 @@
 SOL_DIR=../../../contracts/solidity/contracts
 
 # relative directory where the Go code nees to go.
-OP_DIR=../../../pkg/chain/gen
+OP_DIR=../../../pkg/chain/ethereum
 
 all:
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
