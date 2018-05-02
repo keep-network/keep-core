@@ -18,7 +18,7 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
     // Current implementation version.
     string public version;
 
-    event Upgraded(string version, address indexed implementation);
+    event Upgraded(string version, address implementation);
 
     // Mirror events from the implementation contract
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
