@@ -59,7 +59,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @param _staker Specifies the identity of the random beacon client.
      * @return True if staked enough to participate in the group, false otherwise.
      */
-    function isStaked(address _staker) public view returns(bool) {
+    function hasMinimumStake(address _staker) public view returns(bool) {
         uint256 balance;
         stakingProxy = StakingProxy(addressStorage[keccak256("stakingProxy")]);
         balance = stakingProxy.balanceOf(_staker);
