@@ -150,21 +150,6 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Makes an accusation that the relay entry has been falsified.
-     * @param _lastValidRelayTxHash Last valid relay TX hash.
-     * @param _lastValidRelayBlock Last valid relay block.
-     */
-    function relayEntryAccusation(uint256 _lastValidRelayTxHash, uint256 _lastValidRelayBlock) public {
-        uint256 lastValidRelayEntry;
-        lastValidRelayEntry = 1010101010;     // Some arbitrary number for testing.
-        // TODO -- really need to understand what is needed at this point.
-        // validate accusation by performing the checks in this code (slow/expensive)
-        // raise event if accusation is shown to be true
-        // penalty for false accusations - msg.sender? gets docked/rewarded?
-        emit RelayResetEvent(lastValidRelayEntry, _lastValidRelayTxHash, _lastValidRelayBlock);
-    }
-
-    /**
      * @dev Takes a generated key and place it on the blockchain. Creates an event.
      * @param _groupPublicKey Group public key.
      * @param _requestID Request ID.
