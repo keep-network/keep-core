@@ -64,6 +64,16 @@ type TaggedUnmarshaler interface {
 	Type() string
 }
 
+// Provider represents an entity that can provide network access.
+//
+// Currently only two methods are exposed by providers: the ability to get a
+// named BroadcastChannel, and the ability to return a provider type, which is
+// an informational string indicating what type of provider this is.
+type Provider interface {
+	ChannelFor(name string) BroadcastChannel
+	Type() string
+}
+
 // BroadcastChannel represents a named pubsub channel. It allows Group Members
 // to send messages on the channel (via Send), and to access a low-level receive chan
 // that furnishes messages sent onto the BroadcastChannel.
