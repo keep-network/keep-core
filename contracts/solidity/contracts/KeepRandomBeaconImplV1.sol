@@ -9,7 +9,7 @@ import "./EternalStorage.sol";
  * @title KeepRandomBeaconImplV1
  * @dev Initial version of implementation contract that works under Keep Random
  * Beacon proxy and allows upgradability. The purpose of the contract is to have
- * up-to-date logic for random threshold number generation. Updated contracts
+ * up-to-date logic for threshold random number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
  */
 contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
