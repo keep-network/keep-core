@@ -1,0 +1,33 @@
+{
+  "name": "keep-contracts",
+  "version": "0.1.0",
+  "description": "Smart Contracts for the Keep Network",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keep-network/contracts.git"
+  },
+  "scripts": {
+    "truffle": "truffle",
+    "test": "truffle test",
+    "build": "truffle build"
+  },
+  "author": "Matt Luongo <mhluongo@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keep-network/contracts/issues"
+  },
+  "homepage": "https://github.com/keep-network/contracts",
+  "dependencies": {
+    "zeppelin-solidity": "^1.8.0"
+  },
+  "devDependencies": {
+    "@digix/doxity": "github:keep-network/doxity#master",
+    "solc": "^0.4.20",
+    "truffle": "^4.1.5",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-stage-2": "^6.18.0",
+    "babel-preset-stage-3": "^6.17.0"
+  }
+}

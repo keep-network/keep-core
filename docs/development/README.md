@@ -1,19 +1,37 @@
 ## Keep developer documentation
 
+### Getting Set Up
+
+If you're on macOS, install Homebrew and run `scripts/macos-setup.sh`. Note
+that if you don't have Homebrew or you're not on macOS, the below information
+details what you'll need. The script additionally sets up pre-commit hooks.
+
 ### Building
 
 Currently the easiest way to build is using the `Dockerfile` at the root of the
 repository. A simple `docker build` should get you a functioning container.
 
-If you want to build natively, you'll need to clone `keep-network/bn` from
-GitHub and run `make install`. To successfully build `bn`, you'll need to have
-libgmp (with headers) and openssl (also with headers) installed, as well as
-the LLVM developer tools. On macOS, you can `brew install gmp openssl llvm` to
-install all of these. Note that `llvm` requires some additional env variable
-work that the formula will explain when you install it.
+If you want to build natively, there are a few prereqs you'll need to go through.
+First, you'll need to clone `keep-network/bn` from GitHub and run `make
+install`. To successfully build `bn`, you'll need to have `libgmp` (with
+headers) and `openssl` (also with headers) installed, as well as the LLVM
+developer tools. On macOS, you can `brew install gmp openssl llvm` to install
+all of these. Note that `llvm` requires some additional env variable work that
+the formula will explain when you install it.
 
-Once you've installed `bn`, you can run `dep ensure` in the `go/` directory of
-this repository and then you are ready to build.
+You'll also need [`dep`](https://github.com/golang/dep#installation), the Go
+dependency manager we use.
+
+Lastly, you'll need the [protobuf compiler](https://developers.google.com/protocol-buffers/docs/downloads).
+You'll also need to install the `protoc-gen-gogoslick` toolchain, which you can
+install using `go get`:
+
+```
+go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
+```
+
+Finally, you can run `dep ensure` in the root directory of this repository and
+you'll be ready to build!
 
 ### Relay States
 

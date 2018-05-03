@@ -6,13 +6,14 @@ bootnode:
   replicaCount: 1
   image:
     repository: ethereum/client-go
-    tag: alltools-v1.7.3
+    tag: alltools-v1.8.2
 
 # Config for geth nodes (tx node or a miner node).
 node:
   image:
     repository: ethereum/client-go
-    tag: v1.7.3
+    tag: v1.8.2
+  netrestrict: 10.0.0.0/8
 
 # List of geth nodes.
 nodes:
