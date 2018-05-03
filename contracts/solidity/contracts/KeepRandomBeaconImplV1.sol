@@ -90,17 +90,17 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Initiate withdraw of this contract balance to the owner.
+     * @dev Initiate withdrawal of this contract balance to the owner.
      */
-    function initiateWithdraw() public onlyOwner {
+    function initiateWithdrawal() public onlyOwner {
         uint256 withdrawalDelay = uintStorage[keccak256("withdrawalDelay")];
         uintStorage[keccak256("pendingWithdrawal")] = block.timestamp + withdrawalDelay;
     }
 
     /**
-     * @dev Finish withdraw of this contract balance to the owner.
+     * @dev Finish withdrawal of this contract balance to the owner.
      */
-    function finishWithdraw() public onlyOwner {
+    function finishWithdrawal() public onlyOwner {
         uint pendingWithdrawal = uintStorage[keccak256("pendingWithdrawal")];
 
         require(pendingWithdrawal > 0);
