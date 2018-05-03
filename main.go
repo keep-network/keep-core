@@ -82,9 +82,9 @@ func main() {
 // verifyCompilationOfGeneraedCode is a compile time check that verifies all of the
 // abigen generated code for contracts.
 func verifyCompilationOfGeneraedCode() {
-	_ = gen.KeepRandomBeaconImplV1{}
-	_ = gen.KeepToken{}
-	_ = gen.StakingProxy{}
-	_ = gen.TokenGrant{}
-	_ = gen.TokenStaking{}
+	_ = ethereum.KeepRandomBeaconImplV1{}
+	_ = ethereum.KeepToken{}
+	_ = ethereum.StakingProxy{}
+	_ = ethereum.TokenGrant{}
+	_ = ethereum.TokenStaking{}
 }
