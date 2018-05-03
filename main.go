@@ -79,7 +79,7 @@ func main() {
 	}
 }
 
-// verifyCompilationOfGeneraedCode is a compile time check that verfies all of the
+// verifyCompilationOfGeneraedCode is a compile time check that verifies all of the
 // abigen generated code for contracts.
 func verifyCompilationOfGeneraedCode() {
 	_ = gen.KeepRandomBeaconImplV1{}
