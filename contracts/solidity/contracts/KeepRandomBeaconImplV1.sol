@@ -76,17 +76,17 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @param _seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
-    function requestRelay(uint256 _blockReward, uint256 _seed) public payable returns ( uint256 requestID ) {
+    function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
         require(msg.value >= uintStorage[keccak256("minPayment")]); // Prevents payments that are too small in wei
 
-        requestID = nextID();
+        requestID = uintStorage[keccak256("seq")]++;
 
         addressStorage[keccak256("requestPayer", requestID)] = msg.sender;
         uintStorage[keccak256("requestPayment", requestID)] = msg.value;
         uintStorage[keccak256("blockReward", requestID)] = _blockReward; // TODO - who decides the block reward? is it in KEEP?
 
-        // Generate an event at this point, just return instead, RandomNumberRequest.
         emit RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
+        return requestID;
     }
 
     /**
@@ -163,15 +163,5 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
 
         // TODO -- lots of stuff - don't know yet.
         emit SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, activationBlockHeight);
-    }
-
-    /**
-     * @dev Generates a unique ID
-     * @return An uint256 representing uniquely generated ID.
-     */
-    function nextID() private returns(uint256 requestID) {
-        requestID = (block.timestamp ^ uint256(msg.sender)) + uintStorage[keccak256("seq")];
-        uintStorage[keccak256("seq")]++;
-        return (requestID);
     }
 }
