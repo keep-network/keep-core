@@ -1,3 +1,3 @@
 package gen
 
-//go:generate make
+//go:generate make generate_solidity_go
