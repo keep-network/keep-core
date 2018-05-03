@@ -67,8 +67,9 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Creates a request to generate a signature (random number)
-     * @param _blockReward The value in keep for generating the signature.
+     * @dev Creates a request to generate a new relay entry, which will include a
+     * random number (by signing the previous entry's random number).
+     * @param _blockReward The value in KEEP for generating the signature.
      * @param _seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
@@ -116,7 +117,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Set the minimum amount in KEEP that allows KEEP network client to participate in a group.
+     * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
      * @param _minStake Amount in KEEP.
      */
     function setMinimumStake(uint256 _minStake) public onlyOwner {
@@ -138,7 +139,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Takes the resulting signature and puts it onto the chain.
+     * @dev Creates a new relay entry and stores the associated data on the chain.
      * @param _requestID The request that started this generation - to tie the results back to the request.
      * @param _groupSignature The generated random number.
      * @param _groupID Public key of the group that generated the threshold signature.
