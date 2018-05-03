@@ -23,6 +23,13 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
     /**
+     * @dev Prevent receiving ether without explicitly calling a function.
+     */
+    function() public payable {
+        revert();
+    }
+
+    /**
      * @dev Initialize Keep Random Beacon implementaion contract with a linked staking proxy contract.
      * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param _minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
@@ -48,10 +55,6 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      */
     function initialized() public view returns (bool) {
         return boolStorage[keccak256("KeepRandomBeaconImplV1")];
-    }
-
-    /// @dev Accept payments
-    function () public payable {
     }
 
     /**

@@ -52,6 +52,8 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   it("should be able to request relay entry via proxy contract with enough ether", async function() {
     const relayEntryRequestedEvent = proxy.RelayEntryRequested();
 
+    await exceptThrow(proxy.sendTransaction({from: account_two, value: 1000}));
+
     await web3.eth.sendTransaction({
       from: account_two, value: 100, gas: 200000, to: proxy.address,
       data: encodeCall('requestRelay', ['uint256', 'uint256'], [0,0])
