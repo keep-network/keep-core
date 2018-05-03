@@ -6,7 +6,7 @@ import (
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/chain/gen"
+	"github.com/keep-network/keep-core/pkg/chain/gen/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
