@@ -89,7 +89,7 @@ COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
 # ENTRYPOINT cant handle ENV variables.
-ENTRYPOINT ["keep-client", "-config",  "/keepclient/config.toml"]
+ENTRYPOINT ["keep-client", "-config", "/keepclient/config.toml"]
 
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
