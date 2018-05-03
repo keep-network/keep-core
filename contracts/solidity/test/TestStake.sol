@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -38,7 +38,10 @@ contract TestStake {
     withdrawalId = stakingContract.initiateUnstake(100);
 
     // Inspect created withdrawal request
-    var (owner, amount, start) = stakingContract.withdrawals(withdrawalId);
+    address owner;
+    uint amount;
+    uint start;
+    (owner, amount, start) = stakingContract.withdrawals(withdrawalId);
     Assert.equal(owner, address(this), "Withdrawal request should maintain a record of the owner.");
     Assert.equal(amount, 100, "Withdrawal request should maintain a record of the amount.");
     Assert.equal(start, now, "Withdrawal request should maintain a record of when it was initiated.");
