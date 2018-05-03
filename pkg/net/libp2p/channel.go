@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/keep-network/keep-core-dkg-branch/go/beacon/broadcast"
 	"github.com/keep-network/keep-core/pkg/net"
 	floodsub "github.com/libp2p/go-floodsub"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -18,7 +17,6 @@ func (n peerIdentifier) ProviderName() string {
 }
 
 type channel struct {
-	broadcast.Channel
 	name string
 	sub  *floodsub.Subscription
 
