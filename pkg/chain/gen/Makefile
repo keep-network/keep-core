@@ -20,6 +20,6 @@ gen_go:
 
 %.go : %.sol
 	( cd ${SOL_DIR} ; solc zeppelin-solidity/=../node_modules/zeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
-	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg gen --type $* --out $@ )
+	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg ethereum --type $* --out $@ )
 	mv $@ ${OP_DIR}/$@
 
