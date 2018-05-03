@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
@@ -163,7 +163,7 @@ contract TokenGrant {
 
         // Maintain a record of the vested amount 
         balances[_beneficiary] = balances[_beneficiary].add(_amount);
-        CreatedTokenGrant(id);
+        emit CreatedTokenGrant(id);
         return id;
     }
 
@@ -186,7 +186,7 @@ contract TokenGrant {
         // Transfer tokens from this contract balance to the beneficiary token balance.
         token.safeTransfer(grants[_id].beneficiary, unreleased);
 
-        ReleasedTokenGrant(unreleased);
+        emit ReleasedTokenGrant(unreleased);
     }
     
     /**
@@ -217,7 +217,6 @@ contract TokenGrant {
         uint256 released = grants[_id].released;
         return grantedAmount(_id).sub(released);
     }
-
 
     /**
      * @notice Stake token grant.
@@ -273,7 +272,7 @@ contract TokenGrant {
         // Remove tokens from granted stake balance.
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].sub(available);
 
-        InitiatedTokenGrantUnstake(_id);
+        emit InitiatedTokenGrantUnstake(_id);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitUnstakedEvent(msg.sender, available);
         }
@@ -331,6 +330,6 @@ contract TokenGrant {
 
         // Transfer tokens from this contract balance to the creator of the token grant.
         token.safeTransfer(grants[_id].owner, refund);
-        RevokedTokenGrant(_id);
+        emit RevokedTokenGrant(_id);
     }
 }

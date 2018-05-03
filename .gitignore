@@ -6,3 +6,5 @@ _local/
 *.swo
 *.DS_Store
 *.pb.go
+,*
+*.out
