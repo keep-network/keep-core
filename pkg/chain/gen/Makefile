@@ -1,9 +1,13 @@
 
-# direcotry where the solidity contracts are
+# Direcotry where the solidity contracts are.
 SOL_DIR=../../../contracts/solidity/contracts
 
-# relative directory where the Go code nees to go.
+# Relative directory where the Go code needs to go.  This is relative to the
+# ${SOL_DIR} directory.
 OP_DIR=../../../pkg/chain/gen
+
+generate_solidity_go:
+	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
 
 all:
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
