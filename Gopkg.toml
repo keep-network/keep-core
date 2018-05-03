@@ -24,3 +24,19 @@
   name = "github.com/dfinity/go-dfinity-crypto"
   revision = "1db358303499a9879dd640c71f831897e06e9ddf"
   source = "https://github.com/keep-network/go-dfinity-crypto.git"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/aristanetworks/goarista"
+
+[[constraint]]
+  name = "github.com/pborman/uuid"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/rjeczalik/notify"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/tools"
