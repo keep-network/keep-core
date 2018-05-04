@@ -17,7 +17,7 @@ type channelManager struct {
 }
 
 // Called from net.Connect
-func NewChannelManager(
+func newChannelManager(
 	ctx context.Context,
 	h host.Host,
 ) (*channelManager, error) {
@@ -33,7 +33,7 @@ func NewChannelManager(
 	return cm, nil
 }
 
-func (cm *channelManager) GetChannel(name string) *channel {
+func (cm *channelManager) getChannel(name string) *channel {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
