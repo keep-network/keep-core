@@ -36,3 +36,7 @@
 [[override]]
   name = "github.com/multiformats/go-multiaddr"
   revision = "123a717755e0559ec8fda308019cd24e0a37bb07"
+
+[[override]]
+  name = "github.com/satori/go.uuid"
+  revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
