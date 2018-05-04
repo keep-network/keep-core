@@ -9,7 +9,8 @@
   "scripts": {
     "truffle": "truffle",
     "test": "truffle test",
-    "build": "truffle build"
+    "build": "truffle build",
+    "demo": "truffle exec scripts/demo.js"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
   "license": "MIT",
