@@ -23,6 +23,12 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     proxy = await Proxy.new('v1', implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
     await implViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(0));
+
+    // Add a few calls that modify state so we can test later that eternal storage works as expected after upgrade
+    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100});
+    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100});
+    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100});
+
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
@@ -45,6 +51,14 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
 
     let newVar = await impl2ViaProxy.getNewVar();
     assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
+
+    const relayEntryRequestedEvent = impl2ViaProxy.RelayEntryRequested();
+    await impl2ViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100})
+
+    relayEntryRequestedEvent.get(function(error, result){
+      assert.equal(result[0].args.requestID.toNumber(), 3, "requestID should not be reset and should continue to increment where it was left in previous implementation.");
+    });
+
   });
 
 });

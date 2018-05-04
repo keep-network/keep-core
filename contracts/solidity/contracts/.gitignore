@@ -1,5 +1,0 @@
-*.abi
-*.bin
-*.bin-runtime
-*.go
-./zeppelin-solidity

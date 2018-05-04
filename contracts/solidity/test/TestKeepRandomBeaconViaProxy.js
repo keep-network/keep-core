@@ -30,12 +30,12 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(implViaProxy.requestRelay(0, 0, {from: account_two, value: 99}));
+    await exceptThrow(implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 99}));
   });
 
   it("should be able to request relay entry via implementation contract with enough ether", async function() {
     const relayEntryRequestedEvent = implViaProxy.RelayEntryRequested();
-    await implViaProxy.requestRelay(0, 0, {from: account_two, value: 100})
+    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100})
 
     relayEntryRequestedEvent.get(function(error, result){
       assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
@@ -52,9 +52,11 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   it("should be able to request relay entry via proxy contract with enough ether", async function() {
     const relayEntryRequestedEvent = proxy.RelayEntryRequested();
 
+    await exceptThrow(proxy.sendTransaction({from: account_two, value: 1000}));
+
     await web3.eth.sendTransaction({
       from: account_two, value: 100, gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelay', ['uint256', 'uint256'], [0,0])
+      data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
     });
 
     relayEntryRequestedEvent.get(function(error, result){
@@ -72,21 +74,21 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
     await web3.eth.sendTransaction({
       from: account_two, value: web3.toWei(1, 'ether'), gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelay', ['uint256', 'uint256'], [0,0])
+      data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
     });
 
     let ownerStartBalance = web3.fromWei(await web3.eth.getBalance(account_one).toNumber(), 'ether');
 
     // should fail to withdraw if not owner
-    await exceptThrow(implViaProxy.initiateWithdraw({from: account_two}));
-    await exceptThrow(implViaProxy.finishWithdraw({from: account_two}));
+    await exceptThrow(implViaProxy.initiateWithdrawal({from: account_two}));
+    await exceptThrow(implViaProxy.finishWithdrawal({from: account_two}));
 
-    await implViaProxy.initiateWithdraw({from: account_one});
-    await exceptThrow(implViaProxy.finishWithdraw({from: account_one}));
+    await implViaProxy.initiateWithdrawal({from: account_one});
+    await exceptThrow(implViaProxy.finishWithdrawal({from: account_one}));
 
     // jump in time, full withdrawal delay
     await increaseTimeTo(latestTime()+duration.days(30));
-    await implViaProxy.finishWithdraw({from: account_one});
+    await implViaProxy.finishWithdrawal({from: account_one});
 
     let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
     assert.equal(contractBalance, 0, "Keep Random Beacon contract should send all ether.");
