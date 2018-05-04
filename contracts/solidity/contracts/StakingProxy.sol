@@ -1,10 +1,10 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./utils/AddressArrayUtils.sol";
 
 interface authorizedStakingContract {
-    function stakeBalanceOf(address addr) public constant returns (uint256);
+    function stakeBalanceOf(address addr) external constant returns (uint256);
 }
 
 
@@ -68,7 +68,7 @@ contract StakingProxy is Ownable {
         require(!isDeauthorized(_contract));
 
         authorizedContracts.push(_contract);
-        AuthorizedContractAdded(_contract);
+        emit AuthorizedContractAdded(_contract);
     }
 
     /**
@@ -91,7 +91,7 @@ contract StakingProxy is Ownable {
         authorizedContracts.removeAddress(_contract);
         deauthorizedContracts.push(_contract);
 
-        AuthorizedContractRemoved(_contract);
+        emit AuthorizedContractRemoved(_contract);
     }
 
     /**
@@ -105,7 +105,7 @@ contract StakingProxy is Ownable {
         public
         onlyAuthorized
     {
-        Staked(_staker, _amount);
+        emit Staked(_staker, _amount);
     }
 
     /**
@@ -119,7 +119,7 @@ contract StakingProxy is Ownable {
         public
         onlyAuthorized
     {
-        Unstaked(_staker, _amount);
+        emit Unstaked(_staker, _amount);
     }
 
     /**
