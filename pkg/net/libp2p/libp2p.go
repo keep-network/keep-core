@@ -46,14 +46,12 @@ func Connect(ctx context.Context, port int) (net.Provider, error) {
 	}
 
 	p := &Peer{cm: cm}
-
 	host, addrs, err := discv(ctx, port)
 	if err != nil {
 		return nil, err
 	}
 	p.host = host
 
-	// Ok, now we're ready to listen
 	if err := p.host.Network().Listen(addrs...); err != nil {
 		return nil, err
 	}
