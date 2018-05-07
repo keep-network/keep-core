@@ -33,6 +33,22 @@ go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 Finally, you can run `dep ensure` in the root directory of this repository and
 you'll be ready to build!
 
+### Code Style
+
+Go code generally follows common community style. We try to track with core Go
+practices for the most part, including formatting using `go-imports` and
+linting using `go-vet` and `go-lint`. Two major deviations worth calling out:
+
+ - We do *not* prefix commit messages with the packages touched by the commit.
+   The commit includes diffs, diffs include paths, paths imply packages. We
+   consider this unnecessary and noisy.
+ - We *discourage* single-letter variable names and related extra-shortness,
+   with an exception for external packages and the `err` variable, and
+   iteration indices. Short variable names produce diffs that are more
+   difficult to analyze quickly, and generally result in lower clarity for
+   less experienced developers. We consider this an antipattern, and the
+   additional typed characters to be comparatively very cheap.
+
 ### Relay States
 
 There is a set of threshold relay state diagrams auto-generated from this
