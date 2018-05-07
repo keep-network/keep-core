@@ -29,9 +29,9 @@ func TestRegisterIdentifier(t *testing.T) {
 	defer cancel()
 
 	var (
-		ch        = &channel{}
+		ch        = &channel{name: "test"}
 		peerId    = peerIdentifier(peer.ID(""))
-		testProto = &testProtocolIdentifier{}
+		testProto = testProtocolIdentifier(struct{}{})
 	)
 
 	tests := map[string]struct {
@@ -55,34 +55,36 @@ func TestRegisterIdentifier(t *testing.T) {
 				&testTransportIdentifier{}: testProto,
 			},
 			pMap:        nil,
-			errorString: fmt.Sprintf("already have a protocol identifier in channel [%v] associated with [%v]", ch, peerId),
+			errorString: fmt.Sprintf("already have a protocol identifier in channel [%s] associated with [%v]", ch.name, peerId),
 		},
 		"transport identifier already exists": {
 			transportIdentifier: peerId,
 			protocolIdentifier:  testProto,
 			tMap:                nil,
 			pMap: map[net.ProtocolIdentifier]net.TransportIdentifier{
-				testProto: &testTransportIdentifier{},
+				testProto: peerId,
 			},
-			errorString: fmt.Sprintf("already have a transport identifier in channel [%v] associated with [%v]", ch, testProto),
+			errorString: fmt.Sprintf("already have a transport identifier in channel [%s] associated with [%v]", ch.name, testProto),
 		},
 	}
 
 	for name, tt := range tests {
-		if tt.tMap != nil {
-			ch.transportToProtoIdentifiers = tt.tMap
-		} else {
-			ch.transportToProtoIdentifiers = make(map[net.TransportIdentifier]net.ProtocolIdentifier)
-		}
-		if tt.pMap != nil {
-			ch.protoToTransportIdentifiers = tt.pMap
-		} else {
-			ch.protoToTransportIdentifiers = make(map[net.ProtocolIdentifier]net.TransportIdentifier)
-		}
-		err := ch.RegisterIdentifier(tt.transportIdentifier, tt.protocolIdentifier)
-		if err != nil && tt.errorString != err.Error() {
-			t.Errorf("test case: %s\n unexpected error: %v\n expected: %v", name, err, tt.errorString)
-		}
+		t.Run(name, func(t *testing.T) {
+			if tt.tMap != nil {
+				ch.transportToProtoIdentifiers = tt.tMap
+			} else {
+				ch.transportToProtoIdentifiers = make(map[net.TransportIdentifier]net.ProtocolIdentifier)
+			}
+			if tt.pMap != nil {
+				ch.protoToTransportIdentifiers = tt.pMap
+			} else {
+				ch.protoToTransportIdentifiers = make(map[net.ProtocolIdentifier]net.TransportIdentifier)
+			}
+			err := ch.RegisterIdentifier(tt.transportIdentifier, tt.protocolIdentifier)
+			if err != nil && tt.errorString != err.Error() {
+				t.Errorf("\ngot: %v\nwant: %v", err, tt.errorString)
+			}
+		})
 	}
 }
 
