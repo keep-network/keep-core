@@ -3,10 +3,8 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	addrutil "github.com/libp2p/go-addr-util"
@@ -15,38 +13,38 @@ import (
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	swarm "github.com/libp2p/go-libp2p-swarm"
 
-	bhost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	"github.com/libp2p/go-libp2p/p2p/host/basic"
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
 	msmux "github.com/whyrusleeping/go-smux-multistream"
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
-type Peer struct {
-	cm *channelManager
-	mu sync.Mutex // guards channel manager
+type proxy struct {
+	cm                  *channelManager
+	channelManagerMutex sync.Mutex
 
 	host host.Host
 }
 
-func (p *Peer) ChannelFor(name string) net.BroadcastChannel {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+func (p *proxy) ChannelFor(name string) net.BroadcastChannel {
+	p.channelManagerMutex.Lock()
+	defer p.channelManagerMutex.Unlock()
 	return p.cm.getChannel(name)
 }
 
-func (p *Peer) Type() string {
+func (p *proxy) Type() string {
 	return "libp2p"
 }
 
-func Connect(ctx context.Context, port int) (net.Provider, error) {
+func Connect(ctx context.Context, c *net.Config) (net.Provider, error) {
 	cm, err := newChannelManager(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	p := &Peer{cm: cm}
-	host, addrs, err := discv(ctx, port)
+	p := &proxy{cm: cm}
+	host, addrs, err := discover(ctx, c.Port)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +57,7 @@ func Connect(ctx context.Context, port int) (net.Provider, error) {
 	return p, nil
 }
 
-func discv(
+func discover(
 	ctx context.Context,
 	port int,
 ) (host.Host, []ma.Multiaddr, error) {
@@ -119,8 +117,8 @@ func buildPeerHost(
 
 	network := (*swarm.Network)(swrm)
 	// TODO: use our own host
-	opts := &bhost.HostOpts{NATManager: bhost.NewNATManager(network)}
-	h, err := bhost.NewHost(ctx, network, opts)
+	opts := &basichost.HostOpts{NATManager: basichost.NewNATManager(network)}
+	h, err := basichost.NewHost(ctx, network, opts)
 	if err != nil {
 		if cerr := h.Close(); cerr != nil {
 			return nil, cerr
@@ -133,16 +131,7 @@ func buildPeerHost(
 
 func makeSmuxTransport() smux.Transport {
 	mstpt := msmux.NewBlankTransport()
-
-	ymxtpt := &yamux.Transport{
-		AcceptBacklog:          512,
-		ConnectionWriteTimeout: time.Second * 10,
-		KeepAliveInterval:      time.Second * 30,
-		EnableKeepAlive:        true,
-		MaxStreamWindowSize:    uint32(1024 * 512),
-		LogOutput:              ioutil.Discard,
-	}
-
+	ymxtpt := yamux.DefaultTransport
 	mstpt.AddTransport("/yamux/1.0.0", ymxtpt)
 	// TODO: compile error, return correct type
 	return nil

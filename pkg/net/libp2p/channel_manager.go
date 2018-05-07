@@ -9,8 +9,8 @@ import (
 )
 
 type channelManager struct {
-	channels map[string]*channel
-	mu       sync.Mutex // guards channels
+	channels     map[string]*channel
+	channelMutex sync.Mutex
 
 	pubsub *floodsub.PubSub
 	host   host.Host
@@ -34,8 +34,8 @@ func newChannelManager(
 }
 
 func (cm *channelManager) getChannel(name string) *channel {
-	cm.mu.Lock()
-	defer cm.mu.Unlock()
+	cm.channelMutex.Lock()
+	defer cm.channelMutex.Unlock()
 
 	channel, ok := cm.channels[name]
 	if !ok {
