@@ -14,8 +14,6 @@ import "./EternalStorage.sol";
  */
 contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
 
-    StakingProxy public stakingProxy; // Staking proxy contract that is used to check stake balances against.
-
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber);
@@ -58,14 +56,62 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
+     * @dev Delegates your stake balance to a specific address.
+     * @param _operator Address to where you you want to delegate your balance.
+     */
+    function delegateStakeTo(address _operator) public {
+        require(_operator != address(0));
+
+        // Operator must not be a staker.
+        require(getStakeBalance(_operator) == 0);
+
+        // Revert if operator address was already used.
+        address previousDelegator = addressStorage[keccak256("delegatorFor", _operator)];
+        require(previousDelegator == address(0));
+
+        // Release previous operator address when you delegate stake to a new one.
+        address previousOperator = addressStorage[keccak256("operatorFor", msg.sender)];
+        if (previousOperator != address(0)) {
+            delete addressStorage[keccak256("delegatorFor", previousOperator)];
+        }
+
+        addressStorage[keccak256("operatorFor", msg.sender)] = _operator;
+        addressStorage[keccak256("delegatorFor", _operator)] = msg.sender;
+    }
+
+    /**
+     * @dev Remove delegate for your stake balance.
+     */
+    function removeDelegate() public {
+        address operator = addressStorage[keccak256("operatorFor", msg.sender)];
+        delete addressStorage[keccak256("delegatorFor", operator)];
+        delete addressStorage[keccak256("operatorFor", msg.sender)];
+    }
+
+    /**
      * @dev Checks that the specified user has an appropriately large stake.
-     * @param _staker Specifies the identity of the random beacon client.
+     * @param _address Specifies the identity of the random beacon client.
+     * This can be a staker or an 'operator' address to which staker delegated
+     * his/her stake balance.
      * @return True if staked enough to participate in the group, false otherwise.
      */
-    function hasMinimumStake(address _staker) public view returns(bool) {
-        uint256 balance;
-        stakingProxy = StakingProxy(addressStorage[keccak256("stakingProxy")]);
-        balance = stakingProxy.balanceOf(_staker);
+    function hasMinimumStake(address _address) public view returns(bool) {
+
+        // Get actuall stake balance for the address.
+        uint256 balance = getStakeBalance(_address);
+
+        // If the provided address is an operator then get it's delegator stake balance.
+        address delegator = addressStorage[keccak256("delegatorFor", _address)];
+        if (balance == 0 && delegator != address(0)) {
+            balance = getStakeBalance(delegator);
+        }
+
+        // If the provided address is a delegator we assume it has no stake balance.
+        address operator = addressStorage[keccak256("operatorFor", _address)];
+        if (operator != address(0)) {
+            return false;
+        }
+
         return (balance >= uintStorage[keccak256("minStake")]);
     }
 
@@ -163,5 +209,10 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
 
         // TODO -- lots of stuff - don't know yet.
         emit SubmitGroupPublicKeyEvent(_groupPublicKey, _requestID, activationBlockHeight);
+    }
+
+    function getStakeBalance(address _staker) internal returns(uint) {
+        StakingProxy stakingProxy = StakingProxy(addressStorage[keccak256("stakingProxy")]);
+        return stakingProxy.balanceOf(_staker);
     }
 }
