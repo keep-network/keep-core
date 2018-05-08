@@ -45,11 +45,12 @@ Two major deviations worth calling out:
    The commit includes diffs, diffs include paths, paths imply packages. We
    consider this unnecessary and noisy.
  - We *discourage* single-letter variable names and related extra-shortness,
-   with an exception for external packages and the `err` variable, and
-   iteration indices. Short variable names produce diffs that are more
-   difficult to analyze quickly, and generally result in lower clarity for
-   less experienced developers. We consider this an antipattern, and the
-   additional typed characters to be comparatively very cheap.
+   with exceptions for external packages (we use the package name irrespective
+   of our own practices, for the most part), the `err` variable, and iteration
+   indices. Short variable names produce diffs that are more difficult to
+   analyze quickly, and generally result in lower clarity for less experienced
+   developers. We consider this an antipattern, and the additional typed
+   characters to be comparatively very cheap.
 
 ### Relay States
 
