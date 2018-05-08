@@ -37,7 +37,9 @@ you'll be ready to build!
 
 Go code generally follows common community style. We try to track with core Go
 practices for the most part, including formatting using `go-imports` and
-linting using `go-vet` and `go-lint`. Two major deviations worth calling out:
+linting using `go-vet` and `go-lint` and keeping an eye on the collection of
+[Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments).
+Two major deviations worth calling out:
 
  - We do *not* prefix commit messages with the packages touched by the commit.
    The commit includes diffs, diffs include paths, paths imply packages. We
