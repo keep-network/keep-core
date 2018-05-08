@@ -43,28 +43,22 @@ func Connect(ctx context.Context, c *net.Config) (net.Provider, error) {
 		return nil, err
 	}
 
-	p := &proxy{cm: cm}
-	host, addrs, err := discover(ctx, c.Port)
+	host, err := discoverAndListen(ctx, c.Port)
 	if err != nil {
 		return nil, err
 	}
-	p.host = host
 
-	if err := p.host.Network().Listen(addrs...); err != nil {
-		return nil, err
-	}
-
-	return p, nil
+	return &proxy{cm: cm, host: host}, nil
 }
 
-func discover(
+func discoverAndListen(
 	ctx context.Context,
 	port int,
-) (host.Host, []ma.Multiaddr, error) {
+) (host.Host, error) {
 	// Convert available network ifaces to listen on into multiaddrs
 	addrs, err := getListenAdresses(port)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	nonLocalAddrs := make([]ma.Multiaddr, 0)
@@ -77,9 +71,14 @@ func discover(
 
 	h, err := buildPeerHost(ctx, nonLocalAddrs, peer.ID(""), nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return h, addrs, nil
+
+	if err := h.Network().Listen(addrs...); err != nil {
+		return nil, err
+	}
+
+	return h, nil
 }
 
 // TODO: Allow for user-scoped listeners to either override this or union with this.
