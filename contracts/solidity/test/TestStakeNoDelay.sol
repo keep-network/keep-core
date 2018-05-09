@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -32,7 +32,10 @@ contract TestStakeNoDelay {
     withdrawalId = stakingContract.initiateUnstake(100);
 
     // Inspect created withdrawal request
-    var (owner, amount, start) = stakingContract.withdrawals(withdrawalId);
+    address owner;
+    uint amount;
+    uint start;
+    (owner, amount, start) = stakingContract.withdrawals(withdrawalId);
     Assert.equal(owner, address(this), "Withdrawal request should maintain a record of the owner.");
     Assert.equal(amount, 100, "Withdrawal request should maintain a record of the amount.");
     Assert.equal(start, now, "Withdrawal request should maintain a record of when it was initiated.");
@@ -50,7 +53,10 @@ contract TestStakeNoDelay {
     Assert.equal(stakingContract.stakeBalanceOf(address(this)), 0, "Stake balance should be empty.");
 
     // Inspect changes in withdrawal request
-    var (owner, amount, start) = stakingContract.withdrawals(withdrawalId);
+    address owner;
+    uint amount;
+    uint start;
+    (owner, amount, start) = stakingContract.withdrawals(withdrawalId);
     Assert.isZero(owner, "Withdrawal request should be cleared.");
     Assert.isZero(amount, "Withdrawal request should be cleared.");
     Assert.isZero(start, "Withdrawal request should be cleared.");

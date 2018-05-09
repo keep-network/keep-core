@@ -1,8 +1,6 @@
 package broadcast
 
 import (
-	"sync"
-
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
@@ -29,58 +27,4 @@ func NewPrivateMessage(sender bls.ID, receiver bls.ID, data interface{}) Message
 	// FIXME Actually encrypt here... Will require a key, best taken from
 	// FIXME chain...
 	return Message{sender, &receiver, data}
-}
-
-// Channel represents a named broadcast channel. It allows consumers to send
-// messages to the channel (via Send) and to access a low-level receive chan
-// that furnishes messages sent onto the broadcast channel.
-type Channel interface {
-	Name() string
-
-	Send(message Message) bool
-
-	RecvChan() <-chan Message
-}
-
-type localChannel struct {
-	name           string
-	recvChansMutex sync.Mutex
-	recvChans      []chan Message
-}
-
-func (channel *localChannel) Name() string {
-	return channel.name
-}
-
-func (channel *localChannel) Send(message Message) bool {
-	channel.recvChansMutex.Lock()
-	snapshot := make([]chan Message, len(channel.recvChans))
-	copy(snapshot, channel.recvChans)
-	channel.recvChansMutex.Unlock()
-	go func() {
-		for _, recvChan := range snapshot {
-			recvChan <- message
-		}
-	}()
-
-	return true
-}
-
-func (channel *localChannel) RecvChan() <-chan Message {
-	newChan := make(chan Message, 62500)
-
-	channel.recvChansMutex.Lock()
-	channel.recvChans = append(channel.recvChans, newChan)
-	channel.recvChansMutex.Unlock()
-
-	return newChan
-}
-
-// LocalChannel returns a Channel designed to mediate between local
-// participants. It delivers all messages sent to the channel through its
-// receive channels. RecvChan on a LocalChannel creates a new receive channel
-// that is returned to the caller, so that all receive channels can receive
-// the message.
-func LocalChannel(name string) Channel {
-	return &localChannel{name, sync.Mutex{}, make([]chan Message, 0)}
 }

@@ -5,6 +5,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg/gen/pb"
 )
 
+// Type returns a string describing a JoinMessage's type.
+func (m *JoinMessage) Type() string {
+	return "dkg/join"
+}
+
 // Marshal converts this JoinMessage to a byte array suitable for network
 // communication.
 func (m *JoinMessage) Marshal() ([]byte, error) {
@@ -28,6 +33,11 @@ func (m *JoinMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing a MemberCommitmentsMessage's type.
+func (m *MemberCommitmentsMessage) Type() string {
+	return "dkg/commitments"
+}
+
 // Marshal converts this MemberCommitmentsMessage to a byte array suitable for network
 // communication.
 func (m *MemberCommitmentsMessage) Marshal() ([]byte, error) {
@@ -39,7 +49,8 @@ func (m *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	pbCommitments :=
 		pb.Commitments{
 			Id:          m.id.GetLittleEndian(),
-			Commitments: commitmentBytes}
+			Commitments: commitmentBytes,
+		}
 
 	return pbCommitments.Marshal()
 }
@@ -72,6 +83,11 @@ func (m *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing a MemberShareMessage's type.
+func (m *MemberShareMessage) Type() string {
+	return "dkg/share"
+}
+
 // Marshal converts this MemberShareMessage to a byte array suitable for network
 // communication.
 func (m *MemberShareMessage) Marshal() ([]byte, error) {
@@ -79,7 +95,8 @@ func (m *MemberShareMessage) Marshal() ([]byte, error) {
 		pb.Share{
 			Id:         m.id.GetLittleEndian(),
 			ReceiverID: m.receiverID.GetLittleEndian(),
-			Share:      m.Share.GetLittleEndian()}
+			Share:      m.Share.GetLittleEndian(),
+		}
 
 	return pbShare.Marshal()
 }
@@ -113,6 +130,11 @@ func (m *MemberShareMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing a AccusationsMessage's type.
+func (m *AccusationsMessage) Type() string {
+	return "dkg/accusations"
+}
+
 // Marshal converts this AccusationsMessage to a byte array suitable for network
 // communication.
 func (m *AccusationsMessage) Marshal() ([]byte, error) {
@@ -124,7 +146,8 @@ func (m *AccusationsMessage) Marshal() ([]byte, error) {
 	pbAccusations :=
 		pb.Accusations{
 			Id:         m.id.GetLittleEndian(),
-			AccusedIDs: accusedIDBytes}
+			AccusedIDs: accusedIDBytes,
+		}
 
 	return pbAccusations.Marshal()
 }
@@ -144,17 +167,22 @@ func (m *AccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	m.accusedIDs = make([]bls.ID, 0, len(pbAccusations.AccusedIDs))
+	m.accusedIDs = make([]*bls.ID, 0, len(pbAccusations.AccusedIDs))
 	for _, accusedIDBytes := range pbAccusations.AccusedIDs {
 		id := bls.ID{}
 		err = id.SetLittleEndian(accusedIDBytes)
 		if err != nil {
 			return err
 		}
-		m.accusedIDs = append(m.accusedIDs, id)
+		m.accusedIDs = append(m.accusedIDs, &id)
 	}
 
 	return nil
+}
+
+// Type returns a string describing a JustificationsMessage's type.
+func (m *JustificationsMessage) Type() string {
+	return "dkg/justifications"
 }
 
 // Marshal converts this JustificationsMessage to a byte array suitable for
@@ -168,7 +196,8 @@ func (m *JustificationsMessage) Marshal() ([]byte, error) {
 	pbJustifications :=
 		pb.Justifications{
 			Id:                 m.id.GetLittleEndian(),
-			JustificationsByID: justificationsMap}
+			JustificationsByID: justificationsMap,
+		}
 
 	return pbJustifications.Marshal()
 }
