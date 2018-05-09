@@ -4,6 +4,12 @@ import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
+// BaseMember is a common interface implemented by all stages of threshold group
+// members.
+type BaseMember interface {
+	MemberID() string
+}
+
 // [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
 //     Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
 //     Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
@@ -37,6 +43,11 @@ type LocalMember struct {
 	// itself. Initially empty, populated as each other member announces its
 	// presence.
 	memberIDs []*bls.ID
+}
+
+// MemberID provides access to this member's member ID as a string.
+func (lm *LocalMember) MemberID() string {
+	return lm.ID
 }
 
 // SharingMember represents one member in a threshold key sharing group, after
