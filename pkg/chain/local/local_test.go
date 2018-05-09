@@ -35,18 +35,6 @@ func TestLocalBlockWaiter(t *testing.T) {
 		},
 	}
 
-	var e chan interface{}
-
-	tim := 15 // Force test to fail if not completed in 15 seconds.
-	tick := time.NewTimer(time.Duration(tim) * time.Second)
-
-	go func() {
-		select {
-		case e <- tick:
-			t.Fatal("Test ran too long - it failed")
-		}
-	}()
-
 	countWait := BlockCounter()
 
 	for testName, test := range tests {
