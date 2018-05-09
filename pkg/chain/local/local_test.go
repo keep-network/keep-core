@@ -44,7 +44,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 			end := time.Now().UTC()
 
 			elapsed := end.Sub(start)
-			if elapsed < test.expectation {
+			if test.expectation < elapsed {
 				t.Errorf(test.errorMessage, test.expectation, elapsed)
 			}
 		})
