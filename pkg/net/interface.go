@@ -5,11 +5,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// Config is the synced representation
-type Config struct {
-	Port int
-}
-
 // GroupIdentity contains the Group's public key as created by the dkg process
 // and a list of Members that belong to the group.
 // TODO: move to a more appropriate package; revise which fields we need
