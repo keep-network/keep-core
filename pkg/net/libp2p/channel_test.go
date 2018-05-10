@@ -21,7 +21,7 @@ func TestRegisterIdentifier(t *testing.T) {
 
 	var (
 		ch        = &channel{name: "test"}
-		peerId    = peerIdentifier{id: peer.ID("")}
+		peerID    = peerIdentifier{id: peer.ID("")}
 		testProto = testProtocolIdentifier(struct{}{})
 	)
 
@@ -40,20 +40,20 @@ func TestRegisterIdentifier(t *testing.T) {
 			errorString:         fmt.Sprintf("incorrect type for transportIdentifier: [%v]", &testTransportIdentifier{}),
 		},
 		"protocol identifier already exists": {
-			transportIdentifier: peerId,
+			transportIdentifier: peerID,
 			protocolIdentifier:  testProto,
 			tMap: map[net.TransportIdentifier]net.ProtocolIdentifier{
 				&testTransportIdentifier{}: testProto,
 			},
 			pMap:        nil,
-			errorString: fmt.Sprintf("already have a protocol identifier in channel [%s] associated with [%v]", ch.name, peerId),
+			errorString: fmt.Sprintf("already have a protocol identifier in channel [%s] associated with [%v]", ch.name, peerID),
 		},
 		"transport identifier already exists": {
-			transportIdentifier: peerId,
+			transportIdentifier: peerID,
 			protocolIdentifier:  testProto,
 			tMap:                nil,
 			pMap: map[net.ProtocolIdentifier]net.TransportIdentifier{
-				testProto: peerId,
+				testProto: peerID,
 			},
 			errorString: fmt.Sprintf("already have a transport identifier in channel [%s] associated with [%v]", ch.name, testProto),
 		},
