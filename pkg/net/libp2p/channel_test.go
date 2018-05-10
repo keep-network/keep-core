@@ -1,11 +1,9 @@
 package libp2p
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -18,19 +16,12 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func newTestContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), 3*time.Second)
-}
-
 func TestRegisterIdentifier(t *testing.T) {
 	t.Parallel()
 
-	_, cancel := newTestContext()
-	defer cancel()
-
 	var (
 		ch        = &channel{name: "test"}
-		peerId    = peerIdentifier(peer.ID(""))
+		peerId    = peerIdentifier{id: peer.ID("")}
 		testProto = testProtocolIdentifier(struct{}{})
 	)
 

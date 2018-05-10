@@ -249,7 +249,10 @@
 [[projects]]
   branch = "master"
   name = "github.com/libp2p/go-libp2p-peer"
-  packages = ["."]
+  packages = [
+    ".",
+    "test"
+  ]
   revision = "aa0e03e559bde9d4749ad8e38595e15a6fe808fa"
 
 [[projects]]
@@ -336,6 +339,12 @@
   name = "github.com/libp2p/go-tcp-transport"
   packages = ["."]
   revision = "2852032418949429c7d683502e7ea9bff2e951e7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-testutil"
+  packages = ["."]
+  revision = "51c69c669440bdbaeb3bedd55e76c4f8a3079492"
 
 [[projects]]
   branch = "master"
@@ -533,6 +542,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6b010d8c9cf09c7d48ad33a0ba98f654af1943b70837aa088bc9baeacdccfc68"
+  inputs-digest = "32c1e3584b436d89375e2fce37e3bf15e09fdf81d63f64ececa4f837c225d927"
   solver-name = "gps-cdcl"
   solver-version = 1
