@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -12,7 +12,7 @@ contract TestTokenGrantStake {
   KeepToken t = new KeepToken();
 
   // Create token grant contract with 30 days withdrawal delay.
-  TokenGrant c = new TokenGrant(t, 30 days);
+  TokenGrant c = new TokenGrant(t, 0, 30 days);
 
   uint id;
   address beneficiary = address(this); // For test simplicity set beneficiary the same as sender.
@@ -32,7 +32,8 @@ contract TestTokenGrantStake {
 
     Assert.equal(c.stakeBalances(beneficiary), 100, "Token grant balance should be added to beneficiary grant stake balance.");
 
-    var (_owner, _beneficiary, _locked, _revoked, _revocable, _amount, _duration, _start, _cliff, _released) = c.grants(id);
+    bool _locked;
+    (, , _locked, , , , , , ,) = c.grants(id);
     Assert.equal(_locked, true, "Token grant should become locked.");
   }
 
@@ -40,7 +41,7 @@ contract TestTokenGrantStake {
   function testCanInitiateUnstakeTokenGrant() public {
     c.initiateUnstake(id);
     Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
-    Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
+    Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should change immediately after unstake initiation.");
   }
 
   // Token grant beneficiary can not finish unstake of the grant until delay is over
@@ -56,6 +57,6 @@ contract TestTokenGrantStake {
     // r will be false if it threw and true if it didn't.
     bool r = throwProxy.execute.gas(200000)();
     Assert.isFalse(r, "Should throw when trying to unstake when delay is not over.");
-    Assert.equal(c.stakeBalances(beneficiary), 100, "Stake balance should stay unchanged.");
+    Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
   }
 }

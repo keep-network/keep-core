@@ -63,6 +63,7 @@ COPY ./Gopkg.toml ./Gopkg.lock ./
 RUN dep ensure -v --vendor-only
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
+COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
 RUN go generate ./.../gen
 
 COPY ./ $APP_DIR/

@@ -13,8 +13,8 @@ contract('KeepToken', function(accounts) {
 
   beforeEach(async () => {
     token = await KeepToken.new();
-    stakingContract  = await TokenStaking.new(token.address, duration.days(30));
-    grantContract  = await TokenGrant.new(token.address, duration.days(30));
+    stakingContract  = await TokenStaking.new(token.address, 0, duration.days(30));
+    grantContract  = await TokenGrant.new(token.address, 0, duration.days(30));
   });
 
   it("should send tokens correctly", async function() {
@@ -48,7 +48,7 @@ contract('KeepToken', function(accounts) {
 
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_stake_balance = await stakingContract.balanceOf.call(account_one);
+    let account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber() - stakingAmount, "Staking amount should be transfered from sender balance");
     assert.equal(account_one_stake_balance.toNumber(), stakingAmount, "Staking amount should be added to the sender staking balance");
@@ -64,6 +64,9 @@ contract('KeepToken', function(accounts) {
       }
     })
 
+    let withdrawals = await stakingContract.getWithdrawals(account_one);
+    assert.equal(withdrawals.length, 1, "Withdrawal record must present for the staker");
+
     // should not be able to finish unstake
     await exceptThrow(stakingContract.finishUnstake(stakeWithdrawalId));
     
@@ -73,9 +76,12 @@ contract('KeepToken', function(accounts) {
     // should be able to finish unstake
     await stakingContract.finishUnstake(stakeWithdrawalId);
 
+    withdrawals = await stakingContract.getWithdrawals(account_one);
+    assert.equal(withdrawals.length, 0, "Withdrawal record must be cleared for the staker");
+
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_stake_balance = await stakingContract.balanceOf.call(account_one);
+    account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber(), "Staking amount should be transfered to sender balance");
     assert.equal(account_one_stake_balance.toNumber(), 0, "Staking amount should be removed from sender staking balance");

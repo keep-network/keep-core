@@ -1,8 +1,10 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./StakingProxy.sol";
+import "./utils/UintArrayUtils.sol";
 
 
 /**
@@ -14,8 +16,10 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 contract TokenStaking {
     using SafeMath for uint256;
     using SafeERC20 for StandardToken;
+    using UintArrayUtils for uint256[];
 
     StandardToken public token;
+    StakingProxy public stakingProxy;
 
     event ReceivedApproval(uint256 _value);
     event Staked(address indexed from, uint256 value);
@@ -38,11 +42,13 @@ contract TokenStaking {
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
+     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    function TokenStaking(address _tokenAddress, uint256 _delay) {
+    function TokenStaking(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0));
         token = StandardToken(_tokenAddress);
+        stakingProxy = StakingProxy(_stakingProxy);
         withdrawalDelay = _delay;
     }
 
@@ -52,10 +58,11 @@ contract TokenStaking {
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
-     * @param _extraData Any extra data.
+     * @param extraData_ Any extra data.
      */
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) {
-        ReceivedApproval(_value);
+    function receiveApproval(address _from, uint256 _value, address _token, bytes extraData_) public {
+        extraData_; // Suppress unused variable warning.
+        emit ReceivedApproval(_value);
 
         // Make sure provided token contract is the same one linked to this contract.
         require(StandardToken(_token) == token);
@@ -68,7 +75,10 @@ contract TokenStaking {
 
         // Maintain a record of the stake amount by the sender.
         balances[_from] = balances[_from].add(_value);
-        Staked(_from, _value);
+        emit Staked(_from, _value);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitStakedEvent(_from, _value);
+        }
     }
 
     /**
@@ -85,7 +95,10 @@ contract TokenStaking {
         id = numWithdrawals++;
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
         withdrawalIndices[msg.sender].push(id);
-        InitiatedUnstake(id);
+        emit InitiatedUnstake(id);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitUnstakedEvent(msg.sender, _value);
+        }
         return id;
     }
 
@@ -104,22 +117,12 @@ contract TokenStaking {
         token.safeTransfer(staker, withdrawals[_id].amount);
 
         // Cleanup withdrawal index.
-        for (uint i = 0; i < withdrawalIndices[staker].length; i++) {
-            // If id is found in array.
-            if (_id == withdrawalIndices[staker][i]) {
-                // Delete element at index and shift array.
-                for (uint j = i; j < withdrawalIndices[staker].length-1; j++) {
-                    withdrawalIndices[staker][j] = withdrawalIndices[staker][j+1];
-                }
-                delete withdrawalIndices[staker][withdrawalIndices[staker].length-1];
-                withdrawalIndices[staker].length--;
-            }
-        }
+        withdrawalIndices[staker].removeValue(_id);
 
         // Cleanup withdrawal record.
         delete withdrawals[_id];
 
-        FinishedUnstake(_id);
+        emit FinishedUnstake(_id);
     }
 
     /**
@@ -127,7 +130,7 @@ contract TokenStaking {
      * @param _staker The address to query the balance of.
      * @return An uint256 representing the amount owned by the passed address.
      */
-    function balanceOf(address _staker) public constant returns (uint256 balance) {
+    function stakeBalanceOf(address _staker) public constant returns (uint256 balance) {
         return balances[_staker];
     }
 

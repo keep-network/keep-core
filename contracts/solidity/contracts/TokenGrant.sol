@@ -1,8 +1,9 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./StakingProxy.sol";
 
 
 /**
@@ -23,6 +24,7 @@ contract TokenGrant {
     event RevokedTokenGrant(uint256 id);
 
     StandardToken public token;
+    StakingProxy public stakingProxy;
 
     struct Grant {
         address owner; // Creator of token grant.
@@ -61,11 +63,13 @@ contract TokenGrant {
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
      * @param _tokenAddress address of a token that will be linked to this contract.
+     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay withdrawal delay for unstake.
      */
-    function TokenGrant(address _tokenAddress, uint256 _delay) {
+    function TokenGrant(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0));
         token = StandardToken(_tokenAddress);
+        stakingProxy = StakingProxy(_stakingProxy);
         stakeWithdrawalDelay = _delay;
     }
 
@@ -130,7 +134,7 @@ contract TokenGrant {
     /**
      * @notice Creates a token grant with a vesting schedule where balance released to the
      * beneficiary gradually in a linear fashion until start + duration. By then all
-     * of the balance will have vested. You must approve the amount you want to grant 
+     * of the balance will have vested. You must approve the amount you want to grant
      * by calling approve() method of the token contract first.
      * @dev Transfers token amount from sender to this token grant contract
      * Sender should approve the amount first by calling approve() on the token contract.
@@ -159,7 +163,7 @@ contract TokenGrant {
 
         // Maintain a record of the vested amount 
         balances[_beneficiary] = balances[_beneficiary].add(_amount);
-        CreatedTokenGrant(id);
+        emit CreatedTokenGrant(id);
         return id;
     }
 
@@ -182,7 +186,7 @@ contract TokenGrant {
         // Transfer tokens from this contract balance to the beneficiary token balance.
         token.safeTransfer(grants[_id].beneficiary, unreleased);
 
-        ReleasedTokenGrant(unreleased);
+        emit ReleasedTokenGrant(unreleased);
     }
     
     /**
@@ -214,7 +218,6 @@ contract TokenGrant {
         return grantedAmount(_id).sub(released);
     }
 
-
     /**
      * @notice Stake token grant.
      * @dev Stakable token grant amount is the amount of vested tokens minus what user already released from the grant
@@ -237,6 +240,10 @@ contract TokenGrant {
     
         // Transfer tokens to beneficiary's grants stake balance.
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].add(available);
+
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitStakedEvent(msg.sender, available);
+        }
     }
 
     /**
@@ -258,7 +265,17 @@ contract TokenGrant {
         // Set token grant stake withdrawal start.
         stakeWithdrawalStart[_id] = now;
 
-        InitiatedTokenGrantUnstake(_id);
+        // Calculate granted amount that was staked.
+        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        require(available > 0);
+
+        // Remove tokens from granted stake balance.
+        stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].sub(available);
+
+        emit InitiatedTokenGrantUnstake(_id);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitUnstakedEvent(msg.sender, available);
+        }
     }
 
     /**
@@ -277,13 +294,6 @@ contract TokenGrant {
         // Grant withdrawal delay should be over.
         require(now >= stakeWithdrawalStart[_id].add(stakeWithdrawalDelay));
 
-        // Calculate granted amount that was staked.
-        uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0);
-
-        // Remove tokens from granted stake balance.
-        stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].sub(available);
-        
         // Unlock grant.
         grants[_id].locked = false;
 
@@ -320,6 +330,6 @@ contract TokenGrant {
 
         // Transfer tokens from this contract balance to the creator of the token grant.
         token.safeTransfer(grants[_id].owner, refund);
-        RevokedTokenGrant(_id);
+        emit RevokedTokenGrant(_id);
     }
 }
