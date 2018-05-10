@@ -38,7 +38,12 @@ func (p *proxy) Type() string {
 	return "libp2p"
 }
 
-func Connect(ctx context.Context, c *net.Config) (net.Provider, error) {
+type Config struct {
+	port        int
+	listenAddrs []ma.Multiaddr
+}
+
+func Connect(ctx context.Context, c *Config) (net.Provider, error) {
 	host, err := discoverAndListen(ctx, c)
 	if err != nil {
 		return nil, err
@@ -54,12 +59,16 @@ func Connect(ctx context.Context, c *net.Config) (net.Provider, error) {
 
 func discoverAndListen(
 	ctx context.Context,
-	c *net.Config,
+	c *Config,
 ) (host.Host, error) {
-	// Get available network ifaces to listen on into multiaddrs
-	addrs, err := getListenAdresses(c.Port)
-	if err != nil {
-		return nil, err
+	var err error
+	addrs := c.listenAddrs
+	if addrs == nil {
+		// Get available network ifaces to listen on into multiaddrs
+		addrs, err = getListenAdresses(c.port)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	nonLocalAddrs := make([]ma.Multiaddr, 0)
