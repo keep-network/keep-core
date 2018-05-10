@@ -21,7 +21,7 @@ func TestRegisterIdentifier(t *testing.T) {
 
 	var (
 		ch        = &channel{name: "test"}
-		peerID    = peerIdentifier{id: peer.ID("")}
+		peerID    = &peerIdentifier{id: peer.ID("")}
 		testProto = testProtocolIdentifier(struct{}{})
 	)
 

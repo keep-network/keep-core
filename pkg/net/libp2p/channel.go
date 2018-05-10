@@ -47,7 +47,7 @@ func (c *channel) RegisterIdentifier(
 	c.identifiersMutex.Lock()
 	defer c.identifiersMutex.Unlock()
 
-	if _, ok := transportIdentifier.(peerIdentifier); !ok {
+	if _, ok := transportIdentifier.(*peerIdentifier); !ok {
 		return fmt.Errorf(
 			"incorrect type for transportIdentifier: [%v]",
 			transportIdentifier,

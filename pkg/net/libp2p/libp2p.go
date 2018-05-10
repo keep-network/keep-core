@@ -41,9 +41,14 @@ func (p *proxy) Type() string {
 type Config struct {
 	port        int
 	listenAddrs []ma.Multiaddr
+	identity    *peerIdentifier
 }
 
 func Connect(ctx context.Context, c *Config) (net.Provider, error) {
+	return newProxy(ctx, c)
+}
+
+func newProxy(ctx context.Context, c *Config) (*proxy, error) {
 	host, err := discoverAndListen(ctx, c)
 	if err != nil {
 		return nil, err
@@ -62,6 +67,7 @@ func discoverAndListen(
 	c *Config,
 ) (host.Host, error) {
 	var err error
+
 	addrs := c.listenAddrs
 	if addrs == nil {
 		// Get available network ifaces to listen on into multiaddrs
@@ -79,8 +85,21 @@ func discoverAndListen(
 		}
 	}
 
-	// TODO: pass in actual peer ID and peerstore
-	h, err := buildPeerHost(ctx, nonLocalAddrs, peer.ID(""), nil)
+	pi := c.identity
+	if pi == nil {
+		// Fallback when not provided an identity
+		pi, err = generateIdentity()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ps, err := addIdentityToStore(pi)
+	if err != nil {
+		return nil, err
+	}
+
+	h, err := buildPeerHost(ctx, nonLocalAddrs, pi.id, ps)
 	if err != nil {
 		return nil, err
 	}

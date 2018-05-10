@@ -19,26 +19,26 @@ type peerIdentifier struct {
 	sk ci.PrivKey
 }
 
-func (p peerIdentifier) ProviderName() string {
+func (p *peerIdentifier) ProviderName() string {
 	return "libp2p"
 }
 
-func pubKeyFromIdentifier(pi peerIdentifier) (ci.PubKey, error) {
+func pubKeyFromIdentifier(pi *peerIdentifier) (ci.PubKey, error) {
 	pid := peer.ID(pi.id)
 	return pid.ExtractPublicKey()
 }
 
-func pubKeyToIdentifier(pub ci.PubKey) peerIdentifier {
+func pubKeyToIdentifier(pub ci.PubKey) *peerIdentifier {
 	pid, err := peer.IDFromPublicKey(pub)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
 	}
-	return peerIdentifier{id: pid}
+	return &peerIdentifier{id: pid}
 }
 
 // AddIdentityToStore takes a peerIdentifier and notifies the addressbook of the
 // existance of a new client joining the network.
-func addIdentityToStore(pi peerIdentifier) (pstore.Peerstore, error) {
+func addIdentityToStore(pi *peerIdentifier) (pstore.Peerstore, error) {
 	// TODO: investigate a generic store interface that gives us a unified interface
 	// to our address book (peerstore in libp2p) from secure storage (dht)
 	ps := pstore.NewPeerstore()
