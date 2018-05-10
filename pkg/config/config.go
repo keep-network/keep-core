@@ -22,7 +22,6 @@ type Config struct {
 const EnvPasswordName = "KEEP_ETHERUM_PASSWORD"
 
 type EthereumAccount struct {
-
 	// Example: "0x6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
 	Address string
 
@@ -36,7 +35,6 @@ type EthereumAccount struct {
 
 // This is the information that is read in from the .toml file
 type EthereumConfig struct {
-
 	// Example: "ws://192.168.0.157:8546"
 	URL string
 
@@ -58,17 +56,18 @@ func ReadConfig(filePath string) (config Config, err error) {
 		return config, fmt.Errorf("Unable to decode .toml file [%s] error [%s]\n", filePath, err)
 	}
 
-	var pw string
-	envPw := os.Getenv(EnvPasswordName)
-	if envPw == "prompt" {
-		if pw, err = ReadPassword("Enter Account Password: "); err != nil {
+	var password string
+	envPassword := os.Getenv(EnvPasswordName)
+	if envPassword == "prompt" {
+		if password, err = ReadPassword("Enter Account Password: "); err != nil {
 			return config, err
 		}
-		config.Ethereum.Account.KeyFilePassword = pw
-	} else if envPw != "" {
-		config.Ethereum.Account.KeyFilePassword = envPw
-	} else if config.Ethereum.Account.KeyFilePassword != "" {
+		config.Ethereum.Account.KeyFilePassword = password
 	} else {
+		config.Ethereum.Account.KeyFilePassword = envPassword
+	}
+
+	if config.Ethereum.Account.KeyFilePassword == "" {
 		return config, fmt.Errorf("Password is required.  Set " + EnvPasswordName + " environment variable to password or 'prompt'")
 	}
 
