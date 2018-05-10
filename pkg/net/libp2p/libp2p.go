@@ -7,13 +7,14 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
+
 	addrutil "github.com/libp2p/go-addr-util"
 	host "github.com/libp2p/go-libp2p-host"
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	swarm "github.com/libp2p/go-libp2p-swarm"
+	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
 
-	"github.com/libp2p/go-libp2p/p2p/host/basic"
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
 	msmux "github.com/whyrusleeping/go-smux-multistream"
@@ -38,12 +39,12 @@ func (p *proxy) Type() string {
 }
 
 func Connect(ctx context.Context, c *net.Config) (net.Provider, error) {
-	cm, err := newChannelManager(ctx, nil)
+	host, err := discoverAndListen(ctx, c)
 	if err != nil {
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, c.Port)
+	cm, err := newChannelManager(ctx, host)
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +54,10 @@ func Connect(ctx context.Context, c *net.Config) (net.Provider, error) {
 
 func discoverAndListen(
 	ctx context.Context,
-	port int,
+	c *net.Config,
 ) (host.Host, error) {
-	// Convert available network ifaces to listen on into multiaddrs
-	addrs, err := getListenAdresses(port)
+	// Get available network ifaces to listen on into multiaddrs
+	addrs, err := getListenAdresses(c.Port)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +70,7 @@ func discoverAndListen(
 		}
 	}
 
+	// TODO: pass in actual peer ID and peerstore
 	h, err := buildPeerHost(ctx, nonLocalAddrs, peer.ID(""), nil)
 	if err != nil {
 		return nil, err
@@ -105,11 +107,10 @@ func buildPeerHost(
 	pid peer.ID,
 	ps pstore.Peerstore,
 ) (host.Host, error) {
-	// Set up stream multiplexer
-	tpt := makeSmuxTransport()
+	smuxTransport := makeSmuxTransport()
 
 	// TODO: Pass in protec and metrics reporter
-	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, ps, nil, tpt, nil)
+	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, ps, nil, smuxTransport, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -129,9 +130,9 @@ func buildPeerHost(
 }
 
 func makeSmuxTransport() smux.Transport {
-	mstpt := msmux.NewBlankTransport()
-	ymxtpt := yamux.DefaultTransport
-	mstpt.AddTransport("/yamux/1.0.0", ymxtpt)
-	// TODO: compile error, return correct type
-	return nil
+	multiStreamTransport := msmux.NewBlankTransport()
+	yamuxTransport := yamux.DefaultTransport
+
+	multiStreamTransport.AddTransport("/yamux/1.0.0", yamuxTransport)
+	return multiStreamTransport
 }
