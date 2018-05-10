@@ -2,6 +2,7 @@ package bls
 
 import (
 	"crypto/sha256"
+	"github.com/ethereum/go-ethereum/common/number/int"
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare/bn256"
 	"math/big"
 )
@@ -30,7 +31,7 @@ func modSqrt(i, m *big.Int) *big.Int {
 	return new(big.Int).ModSqrt(i, m)
 }
 
-func G1HashToPoint(m []byte) (*big.Int, *big.Int) {
+func G1HashToPoint(m []byte) (*bn256.G1) {
 
 	one, three := big.NewInt(1), big.NewInt(3)
 
@@ -42,7 +43,16 @@ func G1HashToPoint(m []byte) (*big.Int, *big.Int) {
 		x3 = product(x, x, x)
 		y := modSqrt(sum(x3, three), p)
 		if y != nil {
-			return x, y
+			xNum := number.Uint256(0)
+			xNum.num = x
+			yNum := number.Uint256(0)
+			yNum.num = y
+			return &bn256.G1{
+				p: struct {
+					x: xNum,
+					y: yNum
+				}
+			}
 		}
 
 		x.Add(x, one)
