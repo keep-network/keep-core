@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 // Proxy contract for testing throws
 // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
 
