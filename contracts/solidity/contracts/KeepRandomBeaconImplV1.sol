@@ -8,7 +8,7 @@ import "./EternalStorage.sol";
 /**
  * @title KeepRandomBeaconImplV1
  * @dev Initial version of implementation contract that works under Keep Random
- * Beacon proxy and allows upgradability. The purpose of the contract is to have
+ * Beacon proxy and allows upgradeability. The purpose of the contract is to have
  * up-to-date logic for threshold random number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
  */
@@ -28,7 +28,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Initialize Keep Random Beacon implementaion contract with a linked staking proxy contract.
+     * @dev Initialize Keep Random Beacon implementation contract with a linked staking proxy contract.
      * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param _minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param _minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
