@@ -9,14 +9,13 @@ import (
 )
 
 type channelManager struct {
-	channels     map[string]*channel
 	channelMutex sync.Mutex
+	channels     map[string]*channel
 
 	pubsub *floodsub.PubSub
 	host   host.Host
 }
 
-// Called from net.Connect
 func newChannelManager(
 	ctx context.Context,
 	h host.Host,
@@ -37,8 +36,8 @@ func (cm *channelManager) getChannel(name string) *channel {
 	cm.channelMutex.Lock()
 	defer cm.channelMutex.Unlock()
 
-	channel, ok := cm.channels[name]
-	if !ok {
+	channel, exists := cm.channels[name]
+	if !exists {
 		// TODO: no topic exists; create the broadcast channel
 		// TODO: return something informative ie. return cm.JoinChannel(name)
 		return nil

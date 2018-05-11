@@ -10,11 +10,8 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
-// peerIdentifier represents a group member's network level identity. It
-// implements the net.TransportIdentifier interface. A valid group member will
-// generate or provide a keypair, which will correspond to a network ID.
-// Consumers of the net package require an ID to register with protocol level
-// IDs, as well as a public key for authentication.
+// peerIdentifier represents a network level identity. It implements the
+// net.TransportIdentifier interface. Keypairs correspond to network IDs.
 type peerIdentifier struct {
 	id peer.ID
 	sk ci.PrivKey
@@ -37,7 +34,6 @@ type channel struct {
 }
 
 func (c *channel) Name() string {
-	// TODO: lock this if being updated by an external party
 	return c.name
 }
 
