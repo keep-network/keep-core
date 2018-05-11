@@ -119,6 +119,8 @@ contract StakingProxy is Ownable {
      * @dev Emit staked event. This function is called by every authorized
      * staking contract where staking occurs so the network clients can have
      * a single point to listen to the events across multiple staking contracts.
+     * If staker delegated balance to an operator then the event will emit for
+     * that operator.
      * @param _staker The address of the staker.
      * @param _amount The staked amount.
      */
@@ -126,13 +128,15 @@ contract StakingProxy is Ownable {
         public
         onlyAuthorized
     {
-        emit Staked(_staker, _amount);
+        emit Staked(_getOperator(_staker), _amount);
     }
 
     /**
      * @dev Emit unstaked event. This function is called by every authorized
      * staking contract where unstaking occurs so the network clients can have
      * a single point to listen to the events across multiple staking contracts.
+     * If staker delegated balance to an operator then the event will emit for
+     * that operator.
      * @param _staker The address of the staker.
      * @param _amount The unstaked amount.
      */
@@ -140,7 +144,8 @@ contract StakingProxy is Ownable {
         public
         onlyAuthorized
     {
-        emit Unstaked(_staker, _amount);
+        emit Unstaked(_getOperator(_staker), _amount);
+
     }
 
     /**
@@ -213,5 +218,22 @@ contract StakingProxy is Ownable {
             balance = balance + StakingContract(authorizedContracts[i]).stakeBalanceOf(_staker);
         }
         return balance;
+    }
+
+    /**
+     * @dev Check if staker address works via operator.
+     * @param _staker Staker address.
+     * @return Address of the staker or operator.
+     */
+    function _getOperator(address _staker)
+        internal
+    {
+        if (stakingDelegateContract != address(0)) {
+            address operator = StakingDelegateContract(stakingDelegateContract).getOperatorFor(_staker);
+            if (operator != address(0)) {
+                return operator;
+            }
+        }
+        return _staker;
     }
 }

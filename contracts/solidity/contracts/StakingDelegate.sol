@@ -33,6 +33,19 @@ contract StakingDelegate {
     }
 
     /**
+     * @dev Get operator for a staker.
+     * @param _staker Address of a staker.
+     */
+    function getOperatorFor(address _staker)
+        public
+        view
+        onlyAuthorized
+        returns (address)
+    {
+        return operatorFor[_staker];
+    }
+
+    /**
      * @dev Gets delegated staking balance of address.
      * @param _address The address to query the delegated staking balance of.
      */
