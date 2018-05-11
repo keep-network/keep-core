@@ -55,6 +55,16 @@ type TaggedMarshaler interface {
 	Type() string
 }
 
+// Provider represents an entity that can provide network access.
+//
+// Currently only two methods are exposed by providers: the ability to get a
+// named BroadcastChannel, and the ability to return a provider type, which is
+// an informational string indicating what type of provider this is.
+type Provider interface {
+	ChannelFor(name string) BroadcastChannel
+	Type() string
+}
+
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
 // interface, but also provides a string type for the unmarshalable object. The
 // Type() method is expected to be invokable on a just-initialized instance of
