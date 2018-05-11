@@ -66,7 +66,7 @@ func TestRegisterIdentifier(t *testing.T) {
 
 			err := ch.RegisterIdentifier(test.transportIdentifier, test.protocolIdentifier)
 			if err != nil && test.expectedError != err.Error() {
-				t.Errorf("\ngot: %v\nwant: %v", err, test.expectedError)
+				t.Errorf("\ngot error: %v\nwant error: %v", err, test.expectedError)
 			}
 		})
 	}
