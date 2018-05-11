@@ -37,7 +37,8 @@ func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
 				"[%v] vs [%v]\n",
 			groupID,
 			existing,
-			key)
+			key,
+		)
 
 		c.handlerMutex.Lock()
 		for _, handler := range c.groupPublicKeyFailureHandlers {
