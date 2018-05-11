@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
@@ -62,7 +62,7 @@ contract TokenStaking {
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes extraData_) public {
         extraData_; // Suppress unused variable warning.
-        ReceivedApproval(_value);
+        emit ReceivedApproval(_value);
 
         // Make sure provided token contract is the same one linked to this contract.
         require(StandardToken(_token) == token);
@@ -75,7 +75,7 @@ contract TokenStaking {
 
         // Maintain a record of the stake amount by the sender.
         balances[_from] = balances[_from].add(_value);
-        Staked(_from, _value);
+        emit Staked(_from, _value);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitStakedEvent(_from, _value);
         }
@@ -95,7 +95,7 @@ contract TokenStaking {
         id = numWithdrawals++;
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
         withdrawalIndices[msg.sender].push(id);
-        InitiatedUnstake(id);
+        emit InitiatedUnstake(id);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitUnstakedEvent(msg.sender, _value);
         }
@@ -122,7 +122,7 @@ contract TokenStaking {
         // Cleanup withdrawal record.
         delete withdrawals[_id];
 
-        FinishedUnstake(_id);
+        emit FinishedUnstake(_id);
     }
 
     /**

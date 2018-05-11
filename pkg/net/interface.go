@@ -21,14 +21,32 @@ type GroupIdentity struct {
 	Members []bls.PublicKey
 }
 
-// ClientIdentifier represents the identity of a recipient for a message.
-type ClientIdentifier string
+// TransportIdentifier represents the identity of a participant at the transport
+// layer (e.g., libp2p).
+type TransportIdentifier interface {
+	// Returns a string name of the network provider. Expected to be purely
+	// informational.
+	ProviderName() string
+}
+
+// ProtocolIdentifier represents a protocol-level identifier. It is an opaque
+// type to the network layer.
+type ProtocolIdentifier interface{}
+
+// Message represents a message exchanged within the network layer. It carries
+// a sender id for the transport layer and, if available, for the protocol
+// layer. It also carries an unmarshaled payload.
+type Message interface {
+	TransportSenderID() TransportIdentifier
+	ProtocolSenderID() ProtocolIdentifier
+	Payload() interface{}
+}
 
 // HandleMessageFunc is the type of function called for each Message m furnished
 // by the BroadcastChannel. If there is a problem handling the Message, the
 // incoming error will describe the problem and the function can decide how to
 // handle that error. If an error is returned, processing stops.
-type HandleMessageFunc func(m interface{}) error
+type HandleMessageFunc func(m Message) error
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
 // but also provides a string type for the marshalable object.
@@ -59,7 +77,25 @@ type BroadcastChannel interface {
 	// Given a recipient and a message m that can marshal itself to protobouf,
 	// send the message to the recipient over the broadcast channel such that
 	// only the recipient can understand it.
-	SendTo(recipient ClientIdentifier, m TaggedMarshaler) error
+	//
+	// The recipient should be a ProtocolIdentifier registered using
+	// RegisterIdentifier, or a ClientIdentifier used by the network layer.
+	//
+	// Returns an error if the recipient identifier is a ProtocolIdentifier that
+	// does not have an associated ClientIdentifier, or if it is neither a
+	// ProtocolIdentifier nor a ClientIdentifier.
+	SendTo(recipientIdentifier interface{}, m TaggedMarshaler) error
+
+	// RegisterIdentifier associates the given network identifier with a
+	// protocol-specific identifier that will be passed to the receiving code
+	// in HandleMessageFunc.
+	//
+	// Returns an error if either identifier already has an association for
+	// this channel.
+	RegisterIdentifier(
+		networkIdentifier TransportIdentifier,
+		protocolIdentifier ProtocolIdentifier,
+	) error
 
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.

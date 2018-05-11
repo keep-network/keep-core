@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -31,7 +31,11 @@ contract TestTokenGrant {
   }
 
   function testCanGetGrantByID() public {
-    var (_amount, _released, _locked, _revoked) = c.getGrant(id);
+    uint _amount;
+    uint _released;
+    bool _locked;
+    bool _revoked;
+    (_amount, _released, _locked, _revoked) = c.getGrant(id);
     Assert.equal(_amount, 100, "Grant should maintain a record of the granted amount.");
     Assert.equal(_released, 0, "Grant should have 0 amount released initially.");
     Assert.equal(_locked, false, "Grant should initially be unlocked.");
@@ -39,7 +43,11 @@ contract TestTokenGrant {
   }
 
   function testCanGetGrantVestingScheduleByGrantID() public {
-    var (_owner, _duration, _start, _cliff) = c.getGrantVestingSchedule(id);
+    address _owner;
+    uint _duration;
+    uint _start;
+    uint _cliff;
+    (_owner, _duration, _start, _cliff) = c.getGrantVestingSchedule(id);
     Assert.equal(_owner, address(this), "Grant should maintain a record of the creator.");
     Assert.equal(_duration, duration, "Grant should have vesting schedule duration.");
     Assert.equal(_start, start, "Grant should have start time.");

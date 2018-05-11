@@ -13,12 +13,14 @@ type localBlockCounter struct {
 	waiters     map[int][]chan int
 }
 
+// WaitForBlocks waits for a minimum of 1 block before returing.
 func (counter *localBlockCounter) WaitForBlocks(numBlocks int) {
 	waiter := counter.BlockWaiter(numBlocks)
 	<-waiter
 	return
 }
 
+// BlockWaiter returns the block number as a chanel with a minimum of 1 block wait. 0 and negative numBlocks are converted to 1.
 func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	newWaiter := make(chan int)
 
@@ -27,7 +29,7 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	notifyBlockHeight := counter.blockHeight + numBlocks
 
 	if notifyBlockHeight <= counter.blockHeight {
-		newWaiter <- notifyBlockHeight
+		go func() { newWaiter <- notifyBlockHeight }()
 	} else {
 		waiterList, exists := counter.waiters[notifyBlockHeight]
 		if !exists {
@@ -40,6 +42,7 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	return newWaiter
 }
 
+// count is an internal function that counts up time to simulate the generation of blocks.
 func (counter *localBlockCounter) count() {
 	ticker := time.NewTicker(time.Duration(500 * time.Millisecond))
 

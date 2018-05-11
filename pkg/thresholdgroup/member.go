@@ -17,6 +17,8 @@ type LocalMember struct {
 	ID string
 	// The BLS ID of this group member, computed from the ID.
 	BlsID bls.ID
+	// The number of members in the complete group.
+	groupSize int
 	// The threshold of group members who must be honest in order for the
 	// generated key to be uncompromised. Corresponds to the number of secret
 	// shares and public commitments of this group member.
@@ -31,6 +33,10 @@ type LocalMember struct {
 	// commitments to this group member's secret shares, which are broadcast to
 	// all other members.
 	shareCommitments []bls.PublicKey
+	// The BLS IDs of all members of this member's group, including the member
+	// itself. Initially empty, populated as each other member announces its
+	// presence.
+	memberIDs []*bls.ID
 }
 
 // SharingMember represents one member in a threshold key sharing group, after
@@ -50,10 +56,6 @@ type LocalMember struct {
 // the justification phase using `InitializeJustification()`.
 type SharingMember struct {
 	LocalMember
-
-	// A list of the ids of all members in the threshold group, including this
-	// one.
-	memberIDs []bls.ID
 
 	// Shares of this group member's secret, one per member of the overall
 	// group. The group member generates a share of its own secret as well! Note
@@ -118,7 +120,7 @@ type Member struct {
 // Note that the returned member is not initialized; you will need to call
 // `Initialize` on it once the full list of member IDs for the group is available,
 // at which time it will be promoted to an `InitializedMember`.
-func NewMember(id string, threshold int) LocalMember {
+func NewMember(id string, threshold int, groupSize int) LocalMember {
 	blsID := bls.ID{}
 	blsID.SetHexString(id)
 
@@ -161,32 +163,43 @@ func NewMember(id string, threshold int) LocalMember {
 	return LocalMember{
 		ID:               id,
 		BlsID:            blsID,
+		groupSize:        groupSize,
 		threshold:        threshold,
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
+		memberIDs:        make([]*bls.ID, 0, groupSize),
 	}
+}
+
+// RegisterMemberID adds a member to the list of group members the local member
+// knows about.
+func (member *LocalMember) RegisterMemberID(id *bls.ID) {
+	member.memberIDs = append(member.memberIDs, id)
+}
+
+// ReadyForSharing returns true if the member is ready to go into the sharing
+// state (via InitializeSharing), false otherwise.
+func (member *LocalMember) ReadyForSharing() bool {
+	return len(member.memberIDs) >= member.groupSize
 }
 
 // InitializeSharing initializes a LocalMember with a list of the memberIDs of
 // all members in the threshold group it is operating in, producing a
 // SharingMember ready to participate in secret sharing.
-func (member *LocalMember) InitializeSharing(otherMemberIDs []bls.ID) SharingMember {
-	memberIDs := append(otherMemberIDs, member.BlsID)
-
+func (member *LocalMember) InitializeSharing() *SharingMember {
 	// [GJKR 99], Fig 2, 1(a).
 	// For each member (including the caller!), we create a share from our set
 	// of secret shares (that is, our polynomials). Equivalent to (s_ij, s'_ij),
 	// but carried in the envelope of a bls.SecretKey (similar to (a_ik, b_ik)).
 	shares := make(map[bls.ID]bls.SecretKey)
-	for _, memberID := range memberIDs {
+	for _, memberID := range member.memberIDs {
 		memberShare := bls.SecretKey{}
-		memberShare.Set(member.secretShares, &memberID)
-		shares[memberID] = memberShare
+		memberShare.Set(member.secretShares, memberID)
+		shares[*memberID] = memberShare
 	}
 
-	return SharingMember{
+	return &SharingMember{
 		LocalMember:    *member,
-		memberIDs:      memberIDs,
 		memberShares:   shares,
 		commitments:    make(map[bls.ID][]bls.PublicKey),
 		receivedShares: make(map[bls.ID]bls.SecretKey),
@@ -199,8 +212,10 @@ func (member LocalMember) Commitments() []bls.PublicKey {
 	return member.shareCommitments
 }
 
-func (member SharingMember) OtherMemberIDs() []bls.ID {
-	otherIDs := make([]bls.ID, 0, len(member.memberIDs)-1)
+// OtherMemberIDs returns the BLS IDs of all members in the group except this
+// one.
+func (member SharingMember) OtherMemberIDs() []*bls.ID {
+	otherIDs := make([]*bls.ID, 0, len(member.memberIDs)-1)
 	for _, memberID := range member.memberIDs {
 		if !memberID.IsEqual(&member.BlsID) {
 			otherIDs = append(otherIDs, memberID)
@@ -212,8 +227,8 @@ func (member SharingMember) OtherMemberIDs() []bls.ID {
 
 // SecretShareForID returns the secret share this member has generated for the
 // given `memberID`.
-func (member *SharingMember) SecretShareForID(memberID bls.ID) bls.SecretKey {
-	return member.memberShares[memberID]
+func (member *SharingMember) SecretShareForID(memberID *bls.ID) bls.SecretKey {
+	return member.memberShares[*memberID]
 }
 
 // AddCommitmentsFromID associates the given commitments with the given
@@ -226,7 +241,7 @@ func (member *SharingMember) AddCommitmentsFromID(memberID bls.ID, commitments [
 // CommitmentsComplete returns true if all commitments expected by this member
 // have been seen, false otherwise.
 func (member SharingMember) CommitmentsComplete() bool {
-	return len(member.commitments) == len(member.memberIDs)-1
+	return len(member.commitments) == member.groupSize-1
 }
 
 // AddShareFromID associates the given secret share with the given `senderID`,
@@ -262,10 +277,10 @@ func (member SharingMember) isValidShare(shareSenderID bls.ID, share bls.SecretK
 // are the members who have either not sent their shares to this group member,
 // or who sent their shares but the shares were invalid with respect to their
 // public commitments.
-func (member SharingMember) AccusedIDs() []bls.ID {
-	accusedIDs := make([]bls.ID, 0, len(member.memberIDs)-len(member.receivedShares))
+func (member *SharingMember) AccusedIDs() []*bls.ID {
+	accusedIDs := make([]*bls.ID, 0, len(member.memberIDs)-len(member.receivedShares))
 	for _, memberID := range member.OtherMemberIDs() {
-		if _, found := member.receivedShares[memberID]; !found {
+		if _, found := member.receivedShares[*memberID]; !found {
 			accusedIDs = append(accusedIDs, memberID)
 		}
 	}
@@ -275,8 +290,8 @@ func (member SharingMember) AccusedIDs() []bls.ID {
 
 // InitializeJustification switches a member from sharing mode to justifying
 // mode.
-func (member SharingMember) InitializeJustification() JustifyingMember {
-	return JustifyingMember{
+func (member SharingMember) InitializeJustification() *JustifyingMember {
+	return &JustifyingMember{
 		member,
 		make([]bls.ID, 0),
 		make(map[bls.ID]map[bls.ID]bool),
@@ -286,16 +301,16 @@ func (member SharingMember) InitializeJustification() JustifyingMember {
 // AddAccusationFromID registers an accusation sent by the member with the given
 // `senderID` against the member with id `accusedID`, claiming the accused sent
 // an invalid share to the sender.
-func (member *JustifyingMember) AddAccusationFromID(senderID bls.ID, accusedID bls.ID) {
+func (member *JustifyingMember) AddAccusationFromID(senderID *bls.ID, accusedID *bls.ID) {
 	if accusedID.IsEqual(&member.BlsID) {
-		member.accuserIDs = append(member.accuserIDs, senderID)
+		member.accuserIDs = append(member.accuserIDs, *senderID)
 	} else {
-		existingAccusedIDs, found := member.pendingJustificationIDs[senderID]
+		existingAccusedIDs, found := member.pendingJustificationIDs[*senderID]
 		if !found {
 			existingAccusedIDs = make(map[bls.ID]bool)
-			member.pendingJustificationIDs[senderID] = existingAccusedIDs
+			member.pendingJustificationIDs[*senderID] = existingAccusedIDs
 		}
-		existingAccusedIDs[accusedID] = true
+		existingAccusedIDs[*accusedID] = true
 	}
 }
 
@@ -353,11 +368,11 @@ func (member *JustifyingMember) deleteUnjustifiedShares() {
 // FinalizeMember initializes a member that has finished the justification phase
 // into a fully functioning Member that knows the group public key and can sign
 // with a share of the private key.
-func (member JustifyingMember) FinalizeMember() Member {
+func (member JustifyingMember) FinalizeMember() *Member {
 	member.deleteUnjustifiedShares()
 
 	// [GJKR 99], Fig 2, 3
-	initialShare := member.SecretShareForID(member.BlsID)
+	initialShare := member.SecretShareForID(&member.BlsID)
 	groupSecretKeyShare := &initialShare
 	for _, share := range member.receivedShares {
 		groupSecretKeyShare.Add(&share)
@@ -383,7 +398,7 @@ func (member JustifyingMember) FinalizeMember() Member {
 		qualifiedMembers = append(qualifiedMembers, memberID)
 	}
 
-	return Member{
+	return &Member{
 		JustifyingMember:    member,
 		groupSecretKeyShare: groupSecretKeyShare,
 		groupPublicKey:      &groupPublicKey,
@@ -416,11 +431,11 @@ func (member *Member) VerifySignature(signatureShares map[bls.ID][]byte, message
 	availableIDs := make([]bls.ID, 0, len(signatureShares))
 	deserializedShares := make([]bls.Sign, 0, len(signatureShares))
 	for _, memberID := range member.memberIDs {
-		if serializedShare, found := signatureShares[memberID]; found {
+		if serializedShare, found := signatureShares[*memberID]; found {
 			share := bls.Sign{}
 			share.Deserialize(serializedShare)
 
-			availableIDs = append(availableIDs, memberID)
+			availableIDs = append(availableIDs, *memberID)
 			deserializedShares = append(deserializedShares, share)
 		}
 	}
