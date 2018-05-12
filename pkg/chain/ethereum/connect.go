@@ -17,7 +17,7 @@ type provider struct {
 func Connect(cfg Config) (*provider, error) {
 	client, err := rpc.Dial(cfg.URL)
 	if err != nil {
-		return nil, fmt.Errorf("FAIL: Error Connecting to Geth Server: %s server %s\n",
+		return nil, fmt.Errorf("error Connecting to Geth Server: %s server %s",
 			err, cfg.URL)
 	}
 

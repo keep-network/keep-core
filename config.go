@@ -23,7 +23,7 @@ type config struct {
 func readConfig(filePath string) (cfg config, err error) {
 
 	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
-		return cfg, fmt.Errorf("Unable to decode .toml file [%s] error [%s]\n", filePath, err)
+		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
 
 	var password string
