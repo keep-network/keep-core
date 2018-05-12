@@ -6,21 +6,22 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-type EthereumConnection struct {
-	Config EthereumConfig
+type provider struct {
+	Config Config
 	Client *rpc.Client
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for other things
-// to work correctly this will need to be a websocket "ws://" or a local IPC connection.
-func Connect(cfg EthereumConfig) (*EthereumConnection, error) {
+// to work correctly the configuration will need to reference a websocket, "ws://", or
+// local IPC connection.
+func Connect(cfg Config) (*provider, error) {
 	client, err := rpc.Dial(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("FAIL: Error Connecting to Geth Server: %s server %s\n",
 			err, cfg.URL)
 	}
 
-	return &EthereumConnection{
+	return &provider{
 		Config: cfg,
 		Client: client,
 	}, nil

@@ -1,6 +1,6 @@
 
-# example of setting the environment variable for testing
+# Example of setting the environment variable for testing.
 
-# export KEEP_ETHERUM_PASSWORD=prompt
-export KEEP_ETHERUM_PASSWORD=not-my-password
+# export KEEP_ETHEREUM_PASSWORD=prompt
+export KEEP_ETHEREUM_PASSWORD=not-my-password
 

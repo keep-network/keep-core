@@ -11,14 +11,12 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-// environment varialbe with 'prompt' for prompting for password or the password
-const envPasswordName = "KEEP_ETHERUM_PASSWORD"
+// Environment variable with 'prompt' for prompting for password or the password.
+const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
-// Top level initialization structure - the data that is read in from the .toml
-// file with the `--config <file>` flag.
+// Top level config structure from the config file specified on the command line.
 type config struct {
-	Ethereum ethereum.EthereumConfig
-	// TODO: add this when it is known: P2pNetwork LibP2PConfig
+	Ethereum ethereum.Config
 }
 
 // ReadConfig reads in the configuration file in .toml format.
@@ -29,7 +27,7 @@ func readConfig(filePath string) (cfg config, err error) {
 	}
 
 	var password string
-	envPassword := os.Getenv(envPasswordName)
+	envPassword := os.Getenv(passwordEnvVariable)
 	if envPassword == "prompt" {
 		if password, err = readPassword("Enter Account Password: "); err != nil {
 			return cfg, err
@@ -40,7 +38,7 @@ func readConfig(filePath string) (cfg config, err error) {
 	}
 
 	if cfg.Ethereum.Account.KeyFilePassword == "" {
-		return cfg, fmt.Errorf("Password is required.  Set " + envPasswordName + " environment variable to password or 'prompt'")
+		return cfg, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
 	}
 
 	return cfg, nil

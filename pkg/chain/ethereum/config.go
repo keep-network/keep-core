@@ -1,26 +1,33 @@
 package ethereum
 
-type EthereumAccount struct {
-	// Example: "0x6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
+// Account is a struct that contains the configuration for accessing an
+// Ethereum network and a contrct on the network.
+type Account struct {
+	// Address is the address of this Ethereum account, from which transactions
+	// will be sent when interacting with the Ethereum network.
+	// Example: "0x6ffba2d0f4c8fd7263f546afaaf25fe2d56f6044".
 	Address string
 
-	// Full path to a file like
-	// "UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
+	// Keyfile is a full path to a key file.  Normally this file is one of the
+	// imported keys in your local Ethereum server.  It can normally be found in
+	// a directory <some-path>/data/keystore/ and starts with its creation date
+	// "UTC--.*".  In the case of Geth the path can be chagned with the
+	// `--keystore` command line option.
 	KeyFile string
 
-	// Password for accessing the account (you can't read this in from the .toml
-	// file.  You have to use the enviroment variable or set the environment
-	// variable to 'prompt' for it to interactivly prompt for a password)
+	// KeyFilePassword is the password used to unlock the account specifed in
+	// KeyFile.
 	KeyFilePassword string
 }
 
-// This is the information that is read in from the .toml file
-type EthereumConfig struct {
-	// Example: "ws://192.168.0.157:8546"
+// Config is a struct that contains the configuration needed to connect to an
+// Ethereum node.   This information will give acces to an Ethereum network.
+type Config struct {
+	// Example: "ws://192.168.0.157:8546".
 	URL string
 
 	// Names and addresses for contracts that can be called or for events received.
 	ContractAddresses map[string]string
 
-	Account EthereumAccount
+	Account Account
 }
