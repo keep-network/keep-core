@@ -1,4 +1,5 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
+const ModUtils = artifacts.require("./utils/ModUtils.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
@@ -12,6 +13,8 @@ module.exports = function(deployer) {
   deployer.deploy(KeepToken)
     .then(function() {
       return deployer.deploy(StakingProxy);
+    }).then(function() {
+      return deployer.deploy(ModUtils);
     }).then(function() {
       return deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
     }).then(function() {

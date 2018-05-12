@@ -1,4 +1,5 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
+pragma experimental ABIEncoderV2;
 
 import "./utils/ModUtils.sol";
 
@@ -16,8 +17,8 @@ library AltBn128 {
     uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     struct G1 {
-        uint256 x
-        uint256 y
+        uint256 x;
+        uint256 y;
     }
 
     /**
