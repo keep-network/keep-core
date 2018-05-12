@@ -1,12 +1,12 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 library ModUtils {
 
-    function modExp(uint256 a, uint256 exp, uint256 p)
+    function modExp(uint256 a, uint256 exponent, uint256 p)
         public
         constant returns(uint256 raised)
     {
-        uint256[6] memory args = [32, 32, 32, a, exp, p];
+        uint256[6] memory args = [32, 32, 32, a, exponent, p];
         uint256[1] memory output;
         assembly {
             // 0x05 is the modular exponent contract address
@@ -21,7 +21,7 @@ library ModUtils {
         public
         constant returns(uint256)
     {
-        require(p % 2 == 1)
+        require(p % 2 == 1);
 
         if (a == 0) {
             return 0;
@@ -55,16 +55,17 @@ library ModUtils {
 		uint256 r = e;
         uint256 gs = 0;
         uint256 m = 0;
+        uint256 t = b;
 
 		while (true) {
 			t = b;
 			m = 0;
 
-            for (uint256 m = 0; m < r; m++) {
+            for (m = 0; m < r; m++) {
                 if (t == 1) {
                     break;
                 }
-				t = modExp(t, 2, p)
+				t = modExp(t, 2, p);
             }
 
             if (m == 0) {
@@ -82,15 +83,18 @@ library ModUtils {
 
     function legendre(uint256 a, uint256 p)
         internal
-        constant returns(uint256)
+        constant returns(int)
     {
-        require(p > 0)
-        require(p % 2 == 0)
+        require(p > 0);
+        require(p % 2 == 0);
 
-        uint256 raised = modExp(a, (p - 1) / 2, p);
-        if (raised == p - 1) {
-            return -1;
+        uint256 raised = modExp(a, (p - 1) / uint256(2), p);
+        if (raised == 0 || raised == 1) {
+            return int(raised);
         }
-        return raised;
+        if (raised == p - 1) {
+            return int(-1);
+        }
+        require(false);
     }
 }
