@@ -75,9 +75,9 @@ func TestMemberShareMessageRoundTrip(t *testing.T) {
 
 func TestAccusationsMessageRoundTrip(t *testing.T) {
 	id := generateBlsID()
-	accusedIDs := make([]bls.ID, 0)
+	accusedIDs := make([]*bls.ID, 0)
 	for i := 0; i < 10; i++ {
-		accusedIDs = append(accusedIDs, *generateBlsID())
+		accusedIDs = append(accusedIDs, generateBlsID())
 	}
 
 	msg := &AccusationsMessage{id, accusedIDs}
@@ -94,7 +94,7 @@ func TestAccusationsMessageRoundTrip(t *testing.T) {
 		len(unmarshaled.accusedIDs),
 		"Expected accused IDs length to be equal pre- and post-round-trip")
 	for i, id := range msg.accusedIDs {
-		assertIDRoundTrip(t, &id, &unmarshaled.accusedIDs[i])
+		assertIDRoundTrip(t, id, unmarshaled.accusedIDs[i])
 	}
 }
 
