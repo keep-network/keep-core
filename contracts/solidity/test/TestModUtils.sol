@@ -23,6 +23,17 @@ contract TestModUtils {
         );
     }
 
+    function testLegendre() public {
+        uint256 i;
+        uint256 j;
+        int leg;
+        for(i = 0; i < smallOddPrimes.length; i++) {
+            for(j = 0; j < 200; j++) {
+                leg = ModUtils.legendre(j, smallOddPrimes[i]);
+                Assert.isTrue(leg == 0 || leg == 1 || leg == -1, "legendre() should only return [-1, 1]");
+            }
+        }
+    }
 
     function testModSqrtOf0() public {
         uint256 p;
