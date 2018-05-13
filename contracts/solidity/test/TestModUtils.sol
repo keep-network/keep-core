@@ -8,6 +8,8 @@ contract TestModUtils {
 
     using ModUtils for uint256;
 
+    uint8[10] smallOddPrimes = [1, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+
     function testModExponent() public {
         uint256 a = 21;
         // a simple test
@@ -22,13 +24,9 @@ contract TestModUtils {
     }
 
 
-
-    function testModSqrt() public {
-        uint8[10] memory smallOddPrimes = [1, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+    function testModSqrtOf0() public {
         uint256 p;
-        uint256 square;
         uint256 i;
-        uint256 a;
         uint256 zero = 0;
 
         // a = 0 mod p
@@ -36,6 +34,31 @@ contract TestModUtils {
             p = smallOddPrimes[i];
             Assert.equal(zero, zero.modSqrt(p), "0 mod p should always equal 0");
         }
+    }
+
+    function testModSqrtMultipleOfP() public {
+        uint256 p;
+        uint256 pMult;
+        uint256 i;
+        uint256 j;
+        uint256 zero = 0;
+
+        // a = 0 mod p
+        for(i = 0; i < smallOddPrimes.length; i++) {
+            p = smallOddPrimes[i];
+            for (j=0; j<100; j++) {
+                pMult = p * i;
+                Assert.equal(zero, pMult.modSqrt(p), "(n * p) mod p should always equal 0");
+            }
+        }
+    }
+
+    function testModSqrtALessThanP() public {
+        uint256 p;
+        uint256 square;
+        uint256 i;
+        uint256 a;
+        uint256 zero = 0;
 
         // a < p for small p
         for(i = 0; i < smallOddPrimes.length; i++) {
@@ -45,6 +68,14 @@ contract TestModUtils {
                 Assert.equal(a, square.modSqrt(p), "Invalid modular square root for a < p");
             }
         }
+    }
+
+    function testModSqrtAGreaterThanP() public {
+        uint256 p;
+        uint256 square;
+        uint256 i;
+        uint256 a;
+        uint256 zero = 0;
 
         // a > p for small p
         for(i = 0; i < smallOddPrimes.length; i++) {
@@ -54,8 +85,8 @@ contract TestModUtils {
                 Assert.equal(a, square.modSqrt(p), "Invalid modular square root for a > p");
             }
         }
-
-        // TODO tests with larger p
-        // TODO test throws with non-odd prime p
     }
+
+    // TODO tests with larger p
+    // TODO test throws with non-odd prime p
 }
