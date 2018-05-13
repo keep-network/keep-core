@@ -83,9 +83,6 @@ library ModUtils {
         public
         constant returns(int)
     {
-        require(p > 0);
-        require(p % 2 == 0);
-
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
 
         if (raised == 0 || raised == 1) {
