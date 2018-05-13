@@ -21,8 +21,6 @@ library ModUtils {
         public
         constant returns(uint256)
     {
-        require(p % 2 == 1);
-
         if (a == 0) {
             return 0;
         }
@@ -82,19 +80,21 @@ library ModUtils {
 
 
     function legendre(uint256 a, uint256 p)
-        internal
+        public
         constant returns(int)
     {
         require(p > 0);
         require(p % 2 == 0);
 
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
+
         if (raised == 0 || raised == 1) {
             return int(raised);
         }
-        if (raised == p - 1) {
-            return int(-1);
+        else if (raised == p - 1) {
+            return -1;
         }
+
         require(false);
     }
 }
