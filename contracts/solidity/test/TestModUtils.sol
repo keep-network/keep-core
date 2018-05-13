@@ -21,18 +21,15 @@ contract TestModUtils {
         );
     }
 
+
+
     function testModSqrt() public {
-        // only work with odd primes p
-        uint256 one = 1;
-        uint256 zero = 0;
-
-        Assert.equal(zero, one.modSqrt(2), "Non-zero return value for even p");
-
         uint8[10] memory smallOddPrimes = [1, 3, 5, 7, 11, 13, 17, 19, 23, 29];
         uint256 p;
         uint256 square;
         uint256 i;
         uint256 a;
+        uint256 zero = 0;
 
         // a = 0 mod p
         for(i = 0; i < smallOddPrimes.length; i++) {
@@ -59,5 +56,6 @@ contract TestModUtils {
         }
 
         // TODO tests with larger p
+        // TODO test throws with non-odd prime p
     }
 }
