@@ -10,7 +10,8 @@ interface StakingContract {
 
 
 interface StakingDelegateContract {
-    function delegatedBalanceOf(address addr) external constant returns (uint256);
+    function delegatedBalanceOf(address addr) external view returns (uint256);
+    function getOperatorFor(address addr) external view returns (address);
 }
 
 
@@ -44,11 +45,11 @@ contract StakingProxy is Ownable {
     event AuthorizedContractRemoved(address indexed contractAddress);
 
     /**
-     * @dev Update staking delegate contract address. Owner can also
-     * unset staking delegate contract by providing 0 address.
+     * @dev Authorize staking delegate contract address. Owner can also
+     * deauthorize staking delegate contract by providing 0 address.
      * @param _contract The address of the staking delegate contract.
      */
-    function updateStakingDelegateContract(address _contract)
+    function authorizeStakingDelegateContract(address _contract)
         public
         onlyOwner
     {

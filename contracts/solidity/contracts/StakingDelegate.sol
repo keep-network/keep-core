@@ -14,7 +14,7 @@ contract StakingDelegate {
      * @dev Only authorized contract can invoke functions with this modifier.
      */
     modifier onlyAuthorized {
-        require(msg.sender == stakingProxy);
+        require(msg.sender == address(stakingProxy));
         _;
     }
 
