@@ -181,7 +181,7 @@ contract StakingProxy is Ownable {
      */
     function isDeauthorized(address _address)
         public
-        constant
+        view
         returns (bool)
     {
         return deauthorizedContracts.contains(_address);
@@ -227,6 +227,8 @@ contract StakingProxy is Ownable {
      */
     function _getOperator(address _staker)
         internal
+        view
+        returns (address)
     {
         if (stakingDelegateContract != address(0)) {
             address operator = StakingDelegateContract(stakingDelegateContract).getOperatorFor(_staker);
