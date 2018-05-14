@@ -20,6 +20,6 @@ func TestReadConfig(t *testing.T) {
 	if vv, ok := cfg.Ethereum.ContractAddresses["KeepRandomBeacon"]; !ok {
 		t.Errorf("failed read of test/config.toml, expected key in map [KeepRandomBeacon].  Key missing.\n")
 	} else if vv != expectedAddress {
-		t.Errorf("in test/config.toml\ngot address: %s\nwant address: %s\n", expectedAddress, vv)
+		t.Errorf("in test/config.toml\ngot address: %s\nwant address: %s\n", vv, expectedAddress)
 	}
 }
