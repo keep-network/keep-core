@@ -38,6 +38,9 @@ We've been observing some issues with locating `protoc-gen-gogoslick` when runni
 Finally, you can run `dep ensure` in the root directory of this repository and
 you'll be ready to build!
 
+Run `go generate ./.../` from `keep-core` and if everything is fine, start the Keep
+with `go run main.go`.
+
 ### Relay States
 
 There is a set of threshold relay state diagrams auto-generated from this
