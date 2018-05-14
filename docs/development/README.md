@@ -17,7 +17,8 @@ install`. To successfully build `bn`, you'll need to have `libgmp` (with
 headers) and `openssl` (also with headers) installed, as well as the LLVM
 developer tools. On macOS, you can `brew install gmp openssl llvm` to install
 all of these. Note that `llvm` requires some additional env variable work that
-the formula will explain when you install it.
+the formula will explain when you install it. It may be also required to run
+`xcode-select --install` in order to let `openssl` be located by the compiler.
 
 You'll also need [`dep`](https://github.com/golang/dep#installation), the Go
 dependency manager we use.
