@@ -88,11 +88,22 @@ contract StakingDelegate {
         address previousDelegator = delegatorFor[_operator];
         require(previousDelegator == address(0));
 
+        uint256 delegatedBalance = stakingProxy.totalBalanceOf(msg.sender);
+
         // Release previous operator address when you delegate stake to a new one.
         address previousOperator = operatorFor[msg.sender];
         if (previousOperator != address(0)) {
             delete delegatorFor[previousOperator];
+
+            // Inform the network that previous operator doesn't have stake anymore.
+            stakingProxy.emitUnstakedEvent(previousOperator, delegatedBalance);
+        } else {
+            // Inform the network that delegator doesn't have stake anymore.
+            stakingProxy.emitUnstakedEvent(msg.sender, delegatedBalance);
         }
+
+        // Inform the network about a new staker.
+        stakingProxy.emitStakedEvent(_operator, delegatedBalance);
 
         operatorFor[msg.sender] = _operator;
         delegatorFor[_operator] = msg.sender;
@@ -105,5 +116,13 @@ contract StakingDelegate {
         address operator = operatorFor[msg.sender];
         delete delegatorFor[operator];
         delete operatorFor[msg.sender];
+
+        uint256 delegatedBalance = stakingProxy.totalBalanceOf(msg.sender);
+
+        // Inform the network that previous operator doesn't have stake anymore.
+        stakingProxy.emitUnstakedEvent(operator, delegatedBalance);
+
+        // Inform the network about a new staker.
+        stakingProxy.emitStakedEvent(msg.sender, delegatedBalance);
     }
 }
