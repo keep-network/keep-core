@@ -6,7 +6,7 @@ import "./StakingProxy.sol";
 /**
  * @title Staking Delegate Contract.
  * @dev An optional contract for staking proxy to allow staker
- * to delegate it's balance to an arbitrary operator address.
+ * to delegate its balance to an arbitrary operator address.
  */
 contract StakingDelegate {
 
@@ -47,7 +47,7 @@ contract StakingDelegate {
 
     /**
      * @dev Gets delegated staking balance of address.
-     * @param _address The address to query the delegated staking balance of.
+     * @param _address The address whose delegated staking balance should be returned.
      */
     function delegatedBalanceOf(address _address)
         public
@@ -59,7 +59,7 @@ contract StakingDelegate {
         // Get actual stake balance for the address.
         uint256 balance = stakingProxy.totalBalanceOf(_address);
 
-        // If the provided address is an operator then get it's delegator stake balance.
+        // If the provided address is an operator then get its delegator stake balance.
         address delegator = delegatorFor[_address];
         if (balance == 0 && delegator != address(0)) {
             balance = stakingProxy.totalBalanceOf(delegator);
