@@ -35,7 +35,7 @@ jobs:
           root: /tmp/docs
           paths:
             - solidity/*
-  build_client:
+  build_client_and_test_go:
     docker:
       - image: docker:17.05.0-ce-git
     steps:
@@ -60,6 +60,10 @@ jobs:
             docker build --cache-from build_env --target build_env -t build_env .
             docker build --cache-from build_env --cache-from client -t client .
       - run:
+          name: Run Go tests
+          command: |
+            docker run -w /go/src/github.com/keep-network/keep-core build_env go test ./.../
+      - run:
           name: Save Docker image layer cache
           command: |
             mkdir -p /caches
@@ -70,27 +74,6 @@ jobs:
           paths:
             - /caches/build_env.tar
             - /caches/client.tar
-  test_go:
-    docker:
-      - image: docker:17.05.0-ce-git
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - restore_cache:
-          keys:
-            - v1-{{ .Branch }}
-          paths:
-            - /caches/build_env.tar
-      - run:
-          name: Load Docker image layer cache for build environment
-          command: |
-            set +o pipefail
-            docker load -i /caches/build_env.tar | true
-      - run:
-          name: Run Go tests
-          command: |
-            docker run -w /go/src/github.com/keep-network/keep-core build_env go test ./.../
   generate_docs:
     docker:
       - image: thomasweise/texlive
@@ -133,10 +116,7 @@ workflows:
       - test_solidity
   go:
     jobs:
-      - build_client
-      - test_go:
-          requires:
-            - build_client
+      - build_client_and_test_go
   docs:
     jobs:
       - generate_docs
