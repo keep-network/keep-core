@@ -125,6 +125,12 @@ workflows:
   solidity:
     jobs:
       - test_solidity
+  go:
+    jobs:
+      - build_client
+      - test_go:
+          requires:
+            - build_client
   docs:
     jobs:
       - generate_docs
@@ -133,9 +139,3 @@ workflows:
           requires:
             - generate_docs
             - generate_docs_solidity
-  go:
-    jobs:
-      - build_client
-      - test_go:
-          requires:
-            - build_client
