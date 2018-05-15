@@ -34,7 +34,7 @@ Finally, you can run `dep ensure` in the root directory of this repository and
 you'll be ready to build!
 
 Run `go generate ./.../` from `keep-core` and if everything is fine, start the Keep
-with `go run main.go`.
+client with `go run main.go`.
 
 ### Relay States
 
@@ -59,5 +59,6 @@ to provide some familiarity with how Ethereum works under the covers.
 ### Common problems
 
 Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
-We've been observing some issues with locating `protoc-gen-gogoslick` when running
-`go generate` and `$GOBIN` contained `~`.
+We've been observing [some issues](https://github.com/google/protobuf/issues/3355) 
+with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN` 
+contained `~`.
