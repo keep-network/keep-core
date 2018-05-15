@@ -27,4 +27,7 @@ for pkg in gmp openssl llvm; do
   brew list $pkg &> /dev/null || brew install $pkg
 done
 
+echo "Installing command line developer tools..."
+xcode-select --install || true
+
 echo "Ready to rock! See above for any extra environment-related instructions."
