@@ -35,7 +35,8 @@ func TestLocalBlockWaiter(t *testing.T) {
 		},
 	}
 
-	countWait := BlockCounter()
+	c := Connect()
+	countWait := c.BlockCounter()
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {

@@ -46,7 +46,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["sha3"]
+  packages = ["sha3","ssh/terminal"]
   revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
 
 [[projects]]
@@ -72,6 +72,18 @@
   name = "gopkg.in/natefinch/npipe.v2"
   packages = ["."]
   revision = "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
+
+[[projects]]
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
+  version = "v0.3.0"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix","windows"]
+  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
 
 [solve-meta]
   analyzer-name = "dep"
