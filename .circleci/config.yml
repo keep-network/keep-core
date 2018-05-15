@@ -84,7 +84,7 @@ jobs:
       - run:
           name: Run Go tests
           command: |
-            docker run build_env go test ./.../
+            docker run -w /go/src/github.com/keep-network/keep-core build_env go test ./.../
   generate_docs:
     docker:
       - image: thomasweise/texlive
