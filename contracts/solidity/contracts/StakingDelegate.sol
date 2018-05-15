@@ -76,7 +76,7 @@ contract StakingDelegate {
 
     /**
      * @dev Delegates your stake balance to a specified address.
-     * @param _operator Address to where you you want to delegate your balance.
+     * @param _operator Address to where you want to delegate your balance.
      */
     function delegateStakeTo(address _operator) public {
         require(_operator != address(0));
@@ -124,5 +124,18 @@ contract StakingDelegate {
 
         // Inform the network about a new staker.
         stakingProxy.emitStakedEvent(msg.sender, delegatedBalance);
+    }
+
+    /**
+     * @dev Remove delegate for the specified address.
+     * @param _address Operator address whose delegation should be removed.
+     */
+    function removeDelegateFor(address _address)
+        public
+        onlyAuthorized
+    {
+        address delegator = delegatorFor[_address];
+        delete operatorFor[delegator];
+        delete delegatorFor[_address];
     }
 }

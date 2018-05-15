@@ -10,6 +10,7 @@ interface StakingContract {
 
 
 interface StakingDelegateContract {
+    function removeDelegateFor(address addr) external;
     function delegatedBalanceOf(address addr) external view returns (uint256);
     function getOperatorFor(address addr) external view returns (address);
 }
@@ -228,13 +229,21 @@ contract StakingProxy is Ownable {
      */
     function _getOperator(address _staker)
         internal
-        view
         returns (address)
     {
         if (stakingDelegateContract != address(0)) {
-            address operator = StakingDelegateContract(stakingDelegateContract).getOperatorFor(_staker);
-            if (operator != address(0)) {
-                return operator;
+
+            StakingDelegateContract delegateContract = StakingDelegateContract(stakingDelegateContract);
+            address operator = delegateContract.getOperatorFor(_staker);
+            
+            if (operator == address(0)) {
+                return _staker;
+            }
+
+            // Edge case: if operator address decides to stake, remove its delegation.
+            if (_totalBalanceOf(operator) > 0) {
+                delegateContract.removeDelegateFor(_staker);
+                return _staker;
             }
         }
         return _staker;
