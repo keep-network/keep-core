@@ -44,13 +44,19 @@ Two major deviations worth calling out:
  - We do *not* prefix commit messages with the packages touched by the commit.
    The commit includes diffs, diffs include paths, paths imply packages. We
    consider this unnecessary and noisy.
- - We *discourage* single-letter variable names and related extra-shortness,
-   with exceptions for external packages (we use the package name irrespective
-   of our own practices, for the most part), the `err` variable, and iteration
-   indices. Short variable names produce diffs that are more difficult to
-   analyze quickly, and generally result in lower clarity for less experienced
+ - We *discourage* single-letter variable names and related extra-shortness.
+   Short variable names produce diffs that are more difficult to analyze
+   quickly, and generally result in lower clarity for less experienced
    developers. We consider this an antipattern, and the additional typed
-   characters to be comparatively very cheap.
+   characters to be comparatively very cheap. We make a few exceptions:
+   - **external packages**: We use the package name irrespective of our own
+     practices, assuming it doesn't introduce ambiguity.
+   - **the `err` variable**: We use `err` as is common in Go.
+   - **iteration indices**: `i`, `j`, etc are well-understood and not
+     domain-specific.
+   - **method receivers**: Since Go does not have a standard `this`, we do use
+     the first letter of each word as the variable name of a method receiver
+     (e.g., for a type MyCoolType, the method receiver would be named mct).
 
 ### Relay States
 
