@@ -52,7 +52,7 @@ jobs:
           name: Run Docker build
           command: |
             docker build --cache-from build_env --target build_env -t build_env .
-            docker build --cache-from=client -t client .
+            docker build --cache-from build_env --cache-from client -t client .
       - run:
           name: Save Docker image layer cache
           command: |
