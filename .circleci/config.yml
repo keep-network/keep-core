@@ -42,8 +42,49 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - run: |
-          docker build .
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/build_env.tar | true
+            docker load -i /caches/client.tar | true
+      - run:
+          name: Run Docker build
+          command: |
+            docker build --cache-from build_env --target build_env -t build_env .
+            docker build --cache-from=client -t client .
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/build_env.tar build_env
+            docker save -o /caches/client.tar client
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/build_env.tar
+            - /caches/client.tar
+  test_go:
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/build_env.tar
+      - run:
+          name: Load Docker image layer cache for build environment
+          command: |
+            set +o pipefail
+            docker load -i /caches/build_env.tar | true
+      - run:
+          name: Run Go tests
+          command: |
+            docker run build_env go test ./.../
   generate_docs:
     docker:
       - image: thomasweise/texlive
@@ -95,3 +136,6 @@ workflows:
   go:
     jobs:
       - build_client
+      - test_go:
+          requires:
+            - build_client

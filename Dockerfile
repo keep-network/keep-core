@@ -68,8 +68,6 @@ RUN go generate ./.../gen
 
 COPY ./ $APP_DIR/
 
-RUN go test ./.../
-
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH && \
 	rm -rf $APP_DIR
