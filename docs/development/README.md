@@ -33,8 +33,33 @@ go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 Finally, you can run `dep ensure` in the root directory of this repository and
 you'll be ready to build!
 
-Run `go generate ./.../` from `keep-core` and if everything is fine, start the Keep
-client with `go run main.go`.
+Run `go generate ./.../` from `keep-core` and if everything is fine, start the
+Keep client with `go run main.go`.
+
+### Code Style
+
+Go code generally follows common community style. We try to track with core Go
+practices for the most part, including formatting using `go-imports` and
+linting using `go-vet` and `go-lint` and keeping an eye on the collection of
+[Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments).
+Two major deviations worth calling out:
+
+ - We do *not* prefix commit messages with the packages touched by the commit.
+   The commit includes diffs, diffs include paths, paths imply packages. We
+   consider this unnecessary and noisy.
+ - We *discourage* single-letter variable names and related extra-shortness.
+   Short variable names produce diffs that are more difficult to analyze
+   quickly, and generally result in lower clarity for less experienced
+   developers. We consider this an antipattern, and the additional typed
+   characters to be comparatively very cheap. We make a few exceptions:
+   - **external packages**: We use the package name irrespective of our own
+     practices, assuming it doesn't introduce ambiguity.
+   - **the `err` variable**: We use `err` as is common in Go.
+   - **iteration indices**: `i`, `j`, etc are well-understood and not
+     domain-specific.
+   - **method receivers**: Since Go does not have a standard `this`, we do use
+     the first letter of each word as the variable name of a method receiver
+     (e.g., for a type MyCoolType, the method receiver would be named mct).
 
 ### Relay States
 
