@@ -7,4 +7,6 @@ _local/
 *.DS_Store
 *.pb.go
 ,*
+config.toml
+*.config.toml
 *.out

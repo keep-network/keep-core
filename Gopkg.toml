@@ -24,3 +24,12 @@
   name = "github.com/dfinity/go-dfinity-crypto"
   revision = "1db358303499a9879dd640c71f831897e06e9ddf"
   source = "https://github.com/keep-network/go-dfinity-crypto.git"
+
+[[constraint]]
+  name = "github.com/BurntSushi/toml"
+  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
+  source = "https://github.com/keep-network/toml.git"
+
+[[constraint]]
+  name = "golang.org/x/sys"
+  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"

@@ -33,6 +33,9 @@ go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 Finally, you can run `dep ensure` in the root directory of this repository and
 you'll be ready to build!
 
+Run `go generate ./.../` from `keep-core` and if everything is fine, start the
+Keep client with `go run main.go`.
+
 ### Code Style
 
 Go code generally follows common community style. We try to track with core Go
@@ -78,3 +81,9 @@ interacting with the JSON-RPC API. Also covers some basic solidity, compiling
 it, and using JSON-RPC to install a contract and call it. Relatively low-level,
 to provide some familiarity with how Ethereum works under the covers.
 
+### Common problems
+
+Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
+We've been observing [some issues](https://github.com/google/protobuf/issues/3355) 
+with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN` 
+contained `~`.

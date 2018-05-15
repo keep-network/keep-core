@@ -1,0 +1,15 @@
+# This is a TOML configuration file for DKG, P2P networking and connction to Ethereum
+
+# Provider Initialization Example
+
+[ethereum]
+	URL                = "ws://127.0.0.1:8546"
+
+[ethereum.account]
+	Account            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+
+[ethereum.ContractAddresses]
+	KeepRandomBeacon = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
+	GroupContract = "0x139deb0dd975af8e4cc91fe9053a37e4faf37649"
+
