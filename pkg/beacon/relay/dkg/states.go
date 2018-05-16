@@ -79,6 +79,7 @@ func (js *joinState) nextState() keyGenerationState {
 		sharingMember := js.member.InitializeSharing()
 		return &commitmentState{js.channel, sharingMember}
 	}
+
 	return js
 }
 
@@ -237,6 +238,7 @@ func (as *accusingState) nextState() keyGenerationState {
 			as.expectedAccusationCount,
 		}
 	}
+
 	return as
 }
 
@@ -288,6 +290,7 @@ func (js *justifyingState) nextState() keyGenerationState {
 	if len(js.seenJustifications) == js.expectedJustificationCount {
 		return &keyedState{js.member.FinalizeMember()}
 	}
+
 	return js
 }
 
