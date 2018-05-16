@@ -34,7 +34,7 @@ RUN git clone https://github.com/dfinity/bn /bn && \
 	make install && make && \
 	rm -rf /bn
 
-FROM runtime AS build_env
+FROM runtime AS gobuild
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -73,7 +73,7 @@ RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 
 FROM runtime
 
-COPY --from=build_env $BIN_PATH/$APP_NAME $BIN_PATH
+COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
