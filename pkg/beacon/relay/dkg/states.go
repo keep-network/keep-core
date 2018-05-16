@@ -193,7 +193,6 @@ func (as *accusingState) groupMember() thresholdgroup.BaseMember { return as.mem
 func (as *accusingState) activePeriod() int                      { return 15 }
 
 func (as *accusingState) initiate() error {
-	fmt.Println(as.member.AccusedIDs())
 	return as.channel.Send(&AccusationsMessage{
 		&as.member.BlsID,
 		as.member.AccusedIDs(),
