@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	bls.Init(bls.CurveFp382_1)
+	bls.Init(bls.CurveSNARK1)
 
 	chainHandle := local.Connect()
 	chainCounter := chainHandle.BlockCounter()
