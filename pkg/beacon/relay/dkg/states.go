@@ -75,7 +75,7 @@ func (js *joinState) receive(msg net.Message) error {
 }
 
 func (js *joinState) nextState() keyGenerationState {
-	if js.member.ReadyForSharing() {
+	if js.member.MemberListComplete() {
 		sharingMember := js.member.InitializeSharing()
 		return &commitmentState{js.channel, sharingMember}
 	}

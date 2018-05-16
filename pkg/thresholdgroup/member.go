@@ -188,9 +188,10 @@ func (member *LocalMember) RegisterMemberID(id *bls.ID) {
 	member.memberIDs = append(member.memberIDs, id)
 }
 
-// ReadyForSharing returns true if the member is ready to go into the sharing
-// state (via InitializeSharing), false otherwise.
-func (member *LocalMember) ReadyForSharing() bool {
+// MemberListComplete returns true if the member has a complete local member
+// list and is ready to move into sharing (via InitializeSharing), false
+// otherwise.
+func (member *LocalMember) MemberListComplete() bool {
 	return len(member.memberIDs) >= member.groupSize
 }
 
