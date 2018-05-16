@@ -34,10 +34,6 @@ func ExecuteDKG(
 	groupSize int,
 	threshold int,
 ) (*thresholdgroup.Member, error) {
-	// FIXME Probably pass in a way to ask for a receiver's public key?
-	// FIXME Need a way to time out in a given stage, especially the waiting
-	//       ones.
-
 	// Generate a nonzero memberID; loop until rand.NewRand returns something
 	// other than 0, hopefully no more than once :)
 	memberID := "0"
