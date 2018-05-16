@@ -9,10 +9,11 @@ import (
 )
 
 type keyGenerationState interface {
-	initiate() error
 	groupMember() thresholdgroup.BaseMember
-	// activePeriod is the period during which this state is active, in blocks.
-	activePeriod() int
+	// activeBlocks is the period during which this state is active, in blocks.
+	activeBlocks() int
+
+	initiate() error
 	receive(msg net.Message) error
 	nextState() keyGenerationState
 }
@@ -28,7 +29,7 @@ func (is *initializationState) groupMember() thresholdgroup.BaseMember {
 	return is.member
 }
 
-func (is *initializationState) activePeriod() int { return 15 }
+func (is *initializationState) activeBlocks() int { return 15 }
 
 func (is *initializationState) initiate() error {
 	return nil
@@ -52,7 +53,7 @@ type joinState struct {
 }
 
 func (js *joinState) groupMember() thresholdgroup.BaseMember { return js.member }
-func (js *joinState) activePeriod() int                      { return 15 }
+func (js *joinState) activeBlocks() int                      { return 15 }
 
 func (js *joinState) initiate() error {
 	return js.channel.Send(&JoinMessage{&js.member.BlsID})
@@ -89,7 +90,7 @@ type commitmentState struct {
 }
 
 func (cs *commitmentState) groupMember() thresholdgroup.BaseMember { return cs.member }
-func (cs *commitmentState) activePeriod() int                      { return 15 }
+func (cs *commitmentState) activeBlocks() int                      { return 15 }
 
 func (cs *commitmentState) initiate() error {
 	return cs.channel.Send(&MemberCommitmentsMessage{
@@ -138,7 +139,7 @@ type sharingState struct {
 }
 
 func (ss *sharingState) groupMember() thresholdgroup.BaseMember { return ss.member }
-func (ss *sharingState) activePeriod() int                      { return 15 }
+func (ss *sharingState) activeBlocks() int                      { return 15 }
 
 func (ss *sharingState) initiate() error {
 	for _, receiverID := range ss.member.OtherMemberIDs() {
@@ -190,7 +191,7 @@ type accusingState struct {
 }
 
 func (as *accusingState) groupMember() thresholdgroup.BaseMember { return as.member }
-func (as *accusingState) activePeriod() int                      { return 15 }
+func (as *accusingState) activeBlocks() int                      { return 15 }
 
 func (as *accusingState) initiate() error {
 	return as.channel.Send(&AccusationsMessage{
@@ -249,7 +250,7 @@ type justifyingState struct {
 }
 
 func (js *justifyingState) groupMember() thresholdgroup.BaseMember { return js.member }
-func (js *justifyingState) activePeriod() int                      { return 15 }
+func (js *justifyingState) activeBlocks() int                      { return 15 }
 
 func (js *justifyingState) initiate() error {
 	return js.channel.Send(
@@ -298,7 +299,7 @@ type keyedState struct {
 }
 
 func (ks *keyedState) groupMember() thresholdgroup.BaseMember { return ks.member }
-func (ks *keyedState) activePeriod() int                      { return 0 }
+func (ks *keyedState) activeBlocks() int                      { return 0 }
 
 func (ks *keyedState) initiate() error {
 	return nil

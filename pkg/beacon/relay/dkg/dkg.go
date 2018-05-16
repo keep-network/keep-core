@@ -76,7 +76,7 @@ func ExecuteDKG(
 		currentState = pendingState
 		pendingState = nil
 
-		blockWaiter = blockCounter.BlockWaiter(currentState.activePeriod())
+		blockWaiter = blockCounter.BlockWaiter(currentState.activeBlocks())
 
 		fmt.Printf(
 			"[member:%v, state:%T] Transitioned to new state.\n",
@@ -139,7 +139,7 @@ func ExecuteDKG(
 				fmt.Errorf(
 					"failed to complete state [%T] inside active period [%v]",
 					currentState,
-					currentState.activePeriod(),
+					currentState.activeBlocks(),
 				)
 
 			return nil, err
