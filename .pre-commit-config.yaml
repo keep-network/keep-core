@@ -1,6 +1,6 @@
 repos:
  - repo: https://github.com/keep-network/pre-commit-golang.git
-   rev: 124552e
+   rev: f31102b
    hooks:
     - id: go-imports
     - id: go-vet
