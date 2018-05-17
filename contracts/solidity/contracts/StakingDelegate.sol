@@ -33,16 +33,29 @@ contract StakingDelegate {
     }
 
     /**
-     * @dev Get operator for a staker.
-     * @param _staker Address of a staker.
+     * @dev Gets operator for the specified address.
+     * @param _address Address to get the operator for.
      */
-    function getOperatorFor(address _staker)
+    function getOperatorFor(address _address)
         public
         view
         onlyAuthorized
         returns (address)
     {
-        return operatorFor[_staker];
+        return operatorFor[_address];
+    }
+
+    /**
+     * @dev Gets delegator for the specified address.
+     * @param _address Address to get the delegator for.
+     */
+    function getDelegatorFor(address _address)
+        public
+        view
+        onlyAuthorized
+        returns (address)
+    {
+        return delegatorFor[_address];
     }
 
     /**
@@ -127,15 +140,20 @@ contract StakingDelegate {
     }
 
     /**
-     * @dev Remove delegate for the specified address.
-     * @param _address Operator address whose delegation should be removed.
+     * @dev Removes delegate for the specified operator address.
+     * @param _operator Operator address whose delegation should be removed.
      */
-    function removeDelegateFor(address _address)
+    function removeOperator(address _operator)
         public
         onlyAuthorized
     {
-        address delegator = delegatorFor[_address];
+        address delegator = delegatorFor[_operator];
         delete operatorFor[delegator];
-        delete delegatorFor[_address];
+        delete delegatorFor[_operator];
+
+        uint256 delegatedBalance = stakingProxy.totalBalanceOf(delegator);
+
+        // Inform the network that delegator has its staking balance back.
+        stakingProxy.stakedCallback(delegator, delegatedBalance);
     }
 }

@@ -10,9 +10,10 @@ interface StakingContract {
 
 
 interface StakingDelegateContract {
-    function removeDelegateFor(address addr) external;
+    function removeOperator(address addr) external;
     function delegatedBalanceOf(address addr) external view returns (uint256);
     function getOperatorFor(address addr) external view returns (address);
+    function getDelegatorFor(address addr) external view returns (address);
 }
 
 
@@ -130,7 +131,19 @@ contract StakingProxy is Ownable {
         public
         onlyAuthorized
     {
-        emit Staked(_getOperator(_staker), _amount);
+
+        // If staker is an operator and just staked, remove its delegation.
+        if (_isOperator(_staker) && _totalBalanceOf(_staker) > 0) {
+            _removeOperator(_staker);
+        }
+
+        // If staker delegated balance to an operator
+        if (_isDelegator(_staker)) {
+            emit Staked(_getOperatorFor(_staker), _amount);
+        } else {
+            emit Staked(_staker, _amount);
+        }
+
     }
 
     /**
@@ -146,8 +159,12 @@ contract StakingProxy is Ownable {
         public
         onlyAuthorized
     {
-        emit Unstaked(_getOperator(_staker), _amount);
-
+        // If staker delegated balance to an operator
+        if (_isDelegator(_staker)) {
+            emit Unstaked(_getOperatorFor(_staker), _amount);
+        } else {
+            emit Unstaked(_staker, _amount);
+        }
     }
 
     /**
@@ -223,53 +240,61 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Check if staker address works via operator.
-     * @param _staker Staker address.
-     * @return Address of the staker or operator.
+     * @dev Checks if address is an operator.
+     * @param _address Address to check.
      */
-    function _getOperator(address _staker)
+    function _isOperator(address _address)
         internal
-        returns (address)
+        view
+        returns (bool)
     {
         if (stakingDelegateContract != address(0)) {
-
-            StakingDelegateContract delegateContract = StakingDelegateContract(stakingDelegateContract);
-            address operator = delegateContract.getOperatorFor(_staker);
-            
-            if (operator == address(0)) {
-                return _staker;
-            }
-
-            // Edge case: if operator address decides to stake, remove its delegation.
-            if (_totalBalanceOf(operator) > 0) {
-                delegateContract.removeDelegateFor(_staker);
-                return _staker;
-            }
+            return (StakingDelegateContract(stakingDelegateContract).getOperatorFor(_address) != address(0));
         }
-        return _staker;
+        return false;
     }
 
-
-    function _checkOperatorStake(address _staker)
+    /**
+     * @dev Checks if address is a delegator.
+     * @param _address Address to check.
+     */
+    function _isDelegator(address _address)
+        internal
+        view
+        returns (bool)
+    {
+        if (stakingDelegateContract != address(0)) {
+            return (StakingDelegateContract(stakingDelegateContract).getDelegatorFor(_address) != address(0));
+        }
+        return false;
+    }
+    
+    /**
+     * @dev Gets operator address that works for the staker.
+     * @param _staker Staker address.
+     * @return Address of the operator or zero address.
+     */
+    function _getOperatorFor(address _staker)
         internal
         returns (address)
     {
         if (stakingDelegateContract != address(0)) {
-
-            StakingDelegateContract delegateContract = StakingDelegateContract(stakingDelegateContract);
-            address operator = delegateContract.getOperatorFor(_staker);
-            
-            if (operator == address(0)) {
-                return _staker;
-            }
-
-            // Edge case: if operator address decides to stake, remove its delegation.
-            if (_totalBalanceOf(operator) > 0) {
-                delegateContract.removeDelegateFor(_staker);
-                return _staker;
-            }
+            return StakingDelegateContract(stakingDelegateContract).getOperatorFor(_staker);
         }
-        return _staker;
+        return address(0);
+    }
+
+    /**
+     * @dev Removes delegate for the specified operator address.
+     * @param _operator Operator address.
+     */
+    function _removeOperator(address _operator)
+        internal
+    {
+        if (stakingDelegateContract != address(0)) {
+            StakingDelegateContract delegateContract = StakingDelegateContract(stakingDelegateContract);
+            delegateContract.removeOperator(_operator);
+        }
     }
 
 }
