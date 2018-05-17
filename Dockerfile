@@ -17,7 +17,7 @@ RUN apk add --update --no-cache \
 
 FROM runtime AS cbuild
 
-ENV BN_VERSION=d1a44d2f242692601b3e150b59044ab82f265b65
+ENV BN_VERSION=1c96f7053ea1ebcdbe9f59ce46c79023ef6f8ba0
 
 RUN apk add --update --no-cache \
 	clang \
