@@ -40,7 +40,10 @@ func ExecuteDKG(
 	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
 	}
 	fmt.Printf("[member:%v] Initializing member.\n", memberID)
-	localMember := thresholdgroup.NewMember(memberID, threshold, groupSize)
+	localMember, err := thresholdgroup.NewMember(memberID, threshold, groupSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize member: [%v]", err)
+	}
 
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)

@@ -124,16 +124,17 @@ type Member struct {
 }
 
 // NewMember creates a new member with the given id for a threshold group with
-// the given threshold. The id should be a base-10 string and is encoded into a
+// the given threshold. The id should be a base-16 string and is encoded into a
 // bls.ID for use with the built-in secret sharing. The id should be unique per
 // group member.
 //
-// Note that the returned member is not initialized; you will need to call
-// `Initialize` on it once the full list of member IDs for the group is available,
-// at which time it will be promoted to an `InitializedMember`.
-func NewMember(id string, threshold int, groupSize int) LocalMember {
+// Returns an error if the id fails to be read as a valid hex string.
+func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
 	blsID := bls.ID{}
-	blsID.SetHexString(id)
+	err := blsID.SetHexString(id)
+	if err != nil {
+		return LocalMember{}, err
+	}
 
 	// Note: bls.SecretKey, before we call some sort of `Set` on it, can be
 	// considered a zeroed *container* for a secret key.
@@ -179,7 +180,7 @@ func NewMember(id string, threshold int, groupSize int) LocalMember {
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
 		memberIDs:        make([]*bls.ID, 0, groupSize),
-	}
+	}, nil
 }
 
 // RegisterMemberID adds a member to the list of group members the local member
