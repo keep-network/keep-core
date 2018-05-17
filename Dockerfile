@@ -28,7 +28,7 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk && mkdir /var/cache/apk && \
 	rm -rf /usr/share/man
 
-RUN git clone https://github.com/dfinity/bn /bn && \
+RUN git clone https://github.com/keep-network/bn /bn && \
 	cd /bn && \
 	git reset --hard $BN_VERSION && \
 	make install && make && \
