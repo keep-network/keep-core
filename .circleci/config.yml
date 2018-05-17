@@ -35,15 +35,45 @@ jobs:
           root: /tmp/docs
           paths:
             - solidity/*
-  build_client:
+  build_client_and_test_go:
     docker:
       - image: docker:17.05.0-ce-git
     steps:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - run: |
-          docker build .
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/client.tar
+            - /caches/go_build_env.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/go_build_env.tar | true
+            docker load -i /caches/client.tar | true
+      - run:
+          name: Run Docker build
+          command: |
+            docker build --cache-from go_build_env --target gobuild -t go_build_env .
+            docker build --cache-from go_build_env --cache-from client -t client .
+      - run:
+          name: Run Go tests
+          command: |
+            docker run -w /go/src/github.com/keep-network/keep-core go_build_env go test ./.../
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/go_build_env.tar go_build_env
+            docker save -o /caches/client.tar client
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/go_build_env.tar
+            - /caches/client.tar
   generate_docs:
     docker:
       - image: thomasweise/texlive
@@ -84,6 +114,9 @@ workflows:
   solidity:
     jobs:
       - test_solidity
+  go:
+    jobs:
+      - build_client_and_test_go
   docs:
     jobs:
       - generate_docs
@@ -92,6 +125,3 @@ workflows:
           requires:
             - generate_docs
             - generate_docs_solidity
-  go:
-    jobs:
-      - build_client
