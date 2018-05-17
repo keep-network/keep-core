@@ -77,7 +77,7 @@ contract TokenStaking {
         balances[_from] = balances[_from].add(_value);
         emit Staked(_from, _value);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(_from, _value);
+            stakingProxy.stakedCallback(_from, _value);
         }
     }
 
@@ -97,7 +97,7 @@ contract TokenStaking {
         withdrawalIndices[msg.sender].push(id);
         emit InitiatedUnstake(id);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(msg.sender, _value);
+            stakingProxy.unstakedCallback(msg.sender, _value);
         }
         return id;
     }

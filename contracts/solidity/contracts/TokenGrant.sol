@@ -242,7 +242,7 @@ contract TokenGrant {
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].add(available);
 
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(msg.sender, available);
+            stakingProxy.stakedCallback(msg.sender, available);
         }
     }
 
@@ -274,7 +274,7 @@ contract TokenGrant {
 
         emit InitiatedTokenGrantUnstake(_id);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(msg.sender, available);
+            stakingProxy.unstakedCallback(msg.sender, available);
         }
     }
 

@@ -96,14 +96,14 @@ contract StakingDelegate {
             delete delegatorFor[previousOperator];
 
             // Inform the network that previous operator doesn't have stake anymore.
-            stakingProxy.emitUnstakedEvent(previousOperator, delegatedBalance);
+            stakingProxy.unstakedCallback(previousOperator, delegatedBalance);
         } else {
             // Inform the network that delegator doesn't have stake anymore.
-            stakingProxy.emitUnstakedEvent(msg.sender, delegatedBalance);
+            stakingProxy.unstakedCallback(msg.sender, delegatedBalance);
         }
 
         // Inform the network about a new staker.
-        stakingProxy.emitStakedEvent(_operator, delegatedBalance);
+        stakingProxy.stakedCallback(_operator, delegatedBalance);
 
         operatorFor[msg.sender] = _operator;
         delegatorFor[_operator] = msg.sender;
@@ -120,10 +120,10 @@ contract StakingDelegate {
         uint256 delegatedBalance = stakingProxy.totalBalanceOf(msg.sender);
 
         // Inform the network that previous operator doesn't have stake anymore.
-        stakingProxy.emitUnstakedEvent(operator, delegatedBalance);
+        stakingProxy.unstakedCallback(operator, delegatedBalance);
 
         // Inform the network about a new staker.
-        stakingProxy.emitStakedEvent(msg.sender, delegatedBalance);
+        stakingProxy.stakedCallback(msg.sender, delegatedBalance);
     }
 
     /**

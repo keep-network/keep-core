@@ -20,7 +20,7 @@ interface StakingDelegateContract {
  * @title Staking Proxy Contract
  * @dev An ownable staking proxy contract to provide upgradable staking.
  * Upgraded contracts are added to authorizedContracts list. The staking
- * contracts must call "emitStakedEvent" and "emitUnstakedEvent" functions on
+ * contracts must call "stakedCallback" and "unstakedCallback" functions on
  * this contract. If staking delegate contract is set then balances are checked
  * through the method of staking delegate contract.
  */
@@ -118,7 +118,7 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Emit staked event. This function is called by every authorized
+     * @dev Staked callback. This function is called by every authorized
      * staking contract where staking occurs so the network clients can have
      * a single point to listen to the events across multiple staking contracts.
      * If staker delegated balance to an operator then the event will emit for
@@ -126,7 +126,7 @@ contract StakingProxy is Ownable {
      * @param _staker The address of the staker.
      * @param _amount The staked amount.
      */
-    function emitStakedEvent(address _staker, uint256 _amount)
+    function stakedCallback(address _staker, uint256 _amount)
         public
         onlyAuthorized
     {
@@ -134,7 +134,7 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Emit unstaked event. This function is called by every authorized
+     * @dev Unstaked callback. This function is called by every authorized
      * staking contract where unstaking occurs so the network clients can have
      * a single point to listen to the events across multiple staking contracts.
      * If staker delegated balance to an operator then the event will emit for
@@ -142,7 +142,7 @@ contract StakingProxy is Ownable {
      * @param _staker The address of the staker.
      * @param _amount The unstaked amount.
      */
-    function emitUnstakedEvent(address _staker, uint256 _amount)
+    function unstakedCallback(address _staker, uint256 _amount)
         public
         onlyAuthorized
     {
@@ -248,4 +248,28 @@ contract StakingProxy is Ownable {
         }
         return _staker;
     }
+
+
+    function _checkOperatorStake(address _staker)
+        internal
+        returns (address)
+    {
+        if (stakingDelegateContract != address(0)) {
+
+            StakingDelegateContract delegateContract = StakingDelegateContract(stakingDelegateContract);
+            address operator = delegateContract.getOperatorFor(_staker);
+            
+            if (operator == address(0)) {
+                return _staker;
+            }
+
+            // Edge case: if operator address decides to stake, remove its delegation.
+            if (_totalBalanceOf(operator) > 0) {
+                delegateContract.removeDelegateFor(_staker);
+                return _staker;
+            }
+        }
+        return _staker;
+    }
+
 }
