@@ -25,12 +25,12 @@ func TestLocalBlockWaiter(t *testing.T) {
 		},
 		"doesn't wait if 0 blocks": {
 			blockWait:    0,
-			expectation:  time.Duration(10) * time.Microsecond,
+			expectation:  time.Duration(20) * time.Microsecond,
 			errorMessage: "Failed for a 0 block wait; expected %s but took %s.",
 		},
 		"invalid value": {
 			blockWait:    -1,
-			expectation:  time.Duration(10) * time.Microsecond,
+			expectation:  time.Duration(20) * time.Microsecond,
 			errorMessage: "Waiting for a time when it should have errored; expected %s but took %s.",
 		},
 	}
