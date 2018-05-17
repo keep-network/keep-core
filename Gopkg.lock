@@ -2,20 +2,24 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/btcsuite/btcd"
-  packages = ["btcec"]
-  revision = "2be2f12b358dc57d70b8f501b00be450192efbc3"
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
+  source = "https://github.com/keep-network/toml.git"
 
 [[projects]]
   name = "github.com/dfinity/go-dfinity-crypto"
-  packages = ["bls","rand"]
-  revision = "1db358303499a9879dd640c71f831897e06e9ddf"
+  packages = ["bls"]
+  revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
   source = "https://github.com/keep-network/go-dfinity-crypto.git"
 
 [[projects]]
   name = "github.com/ethereum/go-ethereum"
-  packages = [".","common","common/hexutil","common/math","core/types","crypto","crypto/secp256k1","crypto/sha3","ethclient","ethdb","log","metrics","params","rlp","rpc","trie"]
+  packages = [
+    "common/hexutil",
+    "log",
+    "rpc"
+  ]
   revision = "329ac18ef617d0238f71637bffe78f028b0f13f7"
   version = "v1.8.3"
 
@@ -26,10 +30,13 @@
   version = "v1.7.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/golang/snappy"
-  packages = ["."]
-  revision = "553a641470496b2327abcac10b36396bd98e45c9"
+  name = "github.com/gogo/protobuf"
+  packages = [
+    "proto",
+    "sortkeys"
+  ]
+  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/rs/cors"
@@ -39,14 +46,8 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/syndtr/goleveldb"
-  packages = ["leveldb","leveldb/cache","leveldb/comparer","leveldb/errors","leveldb/filter","leveldb/iterator","leveldb/journal","leveldb/memdb","leveldb/opt","leveldb/storage","leveldb/table","leveldb/util"]
-  revision = "169b1b37be738edb2813dab48c97a549bcf99bb5"
-
-[[projects]]
-  branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["sha3","ssh/terminal"]
+  packages = ["ssh/terminal"]
   revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
 
 [[projects]]
@@ -56,6 +57,15 @@
   revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = [
+    "unix",
+    "windows"
+  ]
+  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
+
+[[projects]]
   name = "gopkg.in/fatih/set.v0"
   packages = ["."]
   revision = "57907de300222151a123d29255ed17f5ed43fad3"
@@ -63,31 +73,13 @@
 
 [[projects]]
   branch = "v2"
-  name = "gopkg.in/karalabe/cookiejar.v2"
-  packages = ["collections/prque"]
-  revision = "8dcd6a7f4951f6ff3ee9cbb919a06d8925822e57"
-
-[[projects]]
-  branch = "v2"
   name = "gopkg.in/natefinch/npipe.v2"
   packages = ["."]
   revision = "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
 
-[[projects]]
-  name = "github.com/BurntSushi/toml"
-  packages = ["."]
-  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
-  version = "v0.3.0"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/sys"
-  packages = ["unix","windows"]
-  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c2cea4ef7f7abb16c77e6334fe14b30790dd6c2886f04b2e4c7df0ad6f210c90"
+  inputs-digest = "33ca75c35059e946c00ab0b8f3bfd9bc6676572b65245b8c90ded77b29770df8"
   solver-name = "gps-cdcl"
   solver-version = 1
