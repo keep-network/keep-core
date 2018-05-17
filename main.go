@@ -66,17 +66,14 @@ func main() {
 		}(i)
 	}
 
-	seenMembers := 0
+	seenMembers := make(map[*bls.ID]struct{})
 	for member := range memberChannel {
-		seenMembers++
-		if member != nil {
+		if _, alreadySeen := seenMembers[&member.BlsID]; !alreadySeen {
+			seenMembers[&member.BlsID] = struct{}{}
 			members = append(members, member)
-			if len(members) == beaconConfig.GroupSize {
-				break
-			}
 		}
 
-		if seenMembers == beaconConfig.GroupSize {
+		if len(members) == beaconConfig.GroupSize {
 			break
 		}
 	}
