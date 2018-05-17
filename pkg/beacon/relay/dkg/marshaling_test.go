@@ -11,7 +11,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	bls.Init(bls.CurveFp382_1)
+	bls.Init(bls.CurveSNARK1)
 
 	os.Exit(m.Run())
 }

@@ -2,8 +2,8 @@ package dkg
 
 import (
 	"fmt"
+	"math/rand"
 
-	"github.com/dfinity/go-dfinity-crypto/rand"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
@@ -34,10 +34,10 @@ func ExecuteDKG(
 	groupSize int,
 	threshold int,
 ) (*thresholdgroup.Member, error) {
-	// Generate a nonzero memberID; loop until rand.NewRand returns something
+	// Generate a nonzero memberID; loop until rand.Int31 returns something
 	// other than 0, hopefully no more than once :)
 	memberID := "0"
-	for memberID = rand.NewRand().String(); memberID == "0"; {
+	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
 	}
 	fmt.Printf("[member:%v] Initializing member.\n", memberID)
 	localMember := thresholdgroup.NewMember(memberID, threshold, groupSize)
