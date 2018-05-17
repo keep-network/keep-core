@@ -31,16 +31,13 @@ func main() {
 
 		go func(i int) {
 			member, err := dkg.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
+
 			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"[member:%v] Failed to run DKG: [%s] (index %d).",
-					member.BlsID.GetHexString(),
-					err,
-					i,
-				)
-				memberChannel <- nil
-				return
+				blsID := "(no BLS id)"
+				if member != nil {
+					blsID = member.BlsID.GetHexString()
+				}
+				panic(fmt.Sprintf("[member:%v]Could not execute DKG [%v]", blsID, err))
 			}
 
 			chainHandle.ThresholdRelay().OnGroupPublicKeySubmitted(
