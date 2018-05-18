@@ -23,7 +23,6 @@ func main() {
 
 	beaconConfig := chainHandle.RandomBeacon().GetConfig()
 
-	members := make([]*thresholdgroup.Member, 0, beaconConfig.GroupSize)
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
 		channel := netlocal.Channel("test")
@@ -61,29 +60,28 @@ func main() {
 		}(i)
 	}
 
-	seenMembers := make(map[*bls.ID]struct{})
+	seenMembers := make(map[*bls.ID]*thresholdgroup.Member)
 	for member := range memberChannel {
 		if _, alreadySeen := seenMembers[&member.BlsID]; !alreadySeen {
-			seenMembers[&member.BlsID] = struct{}{}
-			members = append(members, member)
+			seenMembers[&member.BlsID] = member
 		}
 
-		if len(members) == beaconConfig.GroupSize {
+		if len(seenMembers) == beaconConfig.GroupSize {
 			break
 		}
 	}
 
-	if len(members) < beaconConfig.GroupSize {
+	if len(seenMembers) < beaconConfig.GroupSize {
 		panic("Failed to reach group size during DKG, aborting.")
 	}
 
 	message := "This is a message!"
 	shares := make(map[bls.ID][]byte, 0)
-	for _, member := range members {
+	for _, member := range seenMembers {
 		shares[member.BlsID] = member.SignatureShare(message)
 	}
 
-	for _, member := range members {
+	for _, member := range seenMembers {
 		fmt.Printf(
 			"[member:%v] Did we get it? %v\n",
 			member.BlsID.GetHexString(),
