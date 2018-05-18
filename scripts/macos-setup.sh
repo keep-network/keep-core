@@ -30,4 +30,7 @@ done
 echo "Installing command line developer tools..."
 xcode-select --install || true
 
+echo "Installing build versioning utility..."
+go get -u https://github.com/stretchr/version
+
 echo "Ready to rock! See above for any extra environment-related instructions."
