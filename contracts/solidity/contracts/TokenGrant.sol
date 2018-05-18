@@ -4,6 +4,7 @@ import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
+import "./StakeDelegatable.sol";
 
 
 /**
@@ -14,7 +15,7 @@ import "./StakingProxy.sol";
  * released gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant creator.
  */
-contract TokenGrant {
+contract TokenGrant is StakeDelegatable {
     using SafeMath for uint256;
     using SafeERC20 for StandardToken;
 
@@ -54,9 +55,6 @@ contract TokenGrant {
     // available to be released to the beneficiary
     mapping(address => uint256) public balances;
 
-    // Token grants stake balances.
-    mapping(address => uint256) public stakeBalances;
-
     // Token grants stake withdrawals.
     mapping(uint256 => uint256) public stakeWithdrawalStart;
 
@@ -80,15 +78,6 @@ contract TokenGrant {
      */
     function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
-    }
-
-    /**
-     * @dev Gets the grants stake balance of the specified address.
-     * @param _owner The address to query the grants balance of.
-     * @return An uint256 representing the grants stake balance owned by the passed address.
-     */
-    function stakeBalanceOf(address _owner) public constant returns (uint256 balance) {
-        return stakeBalances[_owner];
     }
 
     /**
@@ -234,6 +223,8 @@ contract TokenGrant {
         // Calculate available amount. Amount of vested tokens minus what user already released.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
         require(available > 0);
+
+        removeDelegateIfStakedAsOperator(msg.sender);
 
         // Lock grant from releasing its balance.
         grants[_id].locked = true;

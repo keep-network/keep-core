@@ -5,6 +5,7 @@ import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
 import "./utils/UintArrayUtils.sol";
+import "./StakeDelegatable.sol";
 
 
 /**
@@ -13,7 +14,7 @@ import "./utils/UintArrayUtils.sol";
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
-contract TokenStaking {
+contract TokenStaking is StakeDelegatable {
     using SafeMath for uint256;
     using SafeERC20 for StandardToken;
     using UintArrayUtils for uint256[];
@@ -35,7 +36,6 @@ contract TokenStaking {
     uint256 public withdrawalDelay;
     uint256 public numWithdrawals;
 
-    mapping(address => uint256) public balances;
     mapping(address => uint256[]) public withdrawalIndices;
     mapping(uint256 => Withdrawal) public withdrawals;
 
@@ -70,11 +70,13 @@ contract TokenStaking {
         // Make sure sender has enough tokens.
         require(_value <= token.balanceOf(_from));
 
+        removeDelegateIfStakedAsOperator(_from);
+
         // Transfer tokens to this contract.
         token.transferFrom(_from, this, _value);
 
         // Maintain a record of the stake amount by the sender.
-        balances[_from] = balances[_from].add(_value);
+        stakeBalances[_from] = stakeBalances[_from].add(_value);
         emit Staked(_from, _value);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitStakedEvent(_from, _value);
@@ -88,9 +90,9 @@ contract TokenStaking {
      * @param _value The amount to be unstaked.
      */
     function initiateUnstake(uint256 _value) public returns (uint256 id) {
-        require(_value <= balances[msg.sender]);
+        require(_value <= stakeBalances[msg.sender]);
 
-        balances[msg.sender] = balances[msg.sender].sub(_value);
+        stakeBalances[msg.sender] = stakeBalances[msg.sender].sub(_value);
 
         id = numWithdrawals++;
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
@@ -123,15 +125,6 @@ contract TokenStaking {
         delete withdrawals[_id];
 
         emit FinishedUnstake(_id);
-    }
-
-    /**
-     * @dev Gets the stake balance of the specified address.
-     * @param _staker The address to query the balance of.
-     * @return An uint256 representing the amount owned by the passed address.
-     */
-    function stakeBalanceOf(address _staker) public constant returns (uint256 balance) {
-        return balances[_staker];
     }
 
     /**
