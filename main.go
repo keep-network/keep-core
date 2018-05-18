@@ -31,7 +31,7 @@ func main() {
 		go func(i int) {
 			member, err := dkg.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
 			if err != nil {
-				panic(err)
+				panic(fmt.Sprintf("Failed to run DKG [%v].", err))
 			}
 
 			chainHandle.ThresholdRelay().OnGroupPublicKeySubmitted(
