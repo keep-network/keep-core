@@ -30,23 +30,6 @@ contract TestTokenGrantRelease {
     Assert.equal(c.balanceOf(beneficiary), 100, "Amount should be added to beneficiary's granted balance.");
   }
 
-  function testCannotReleaseGrantedAmmount() public {
-    Assert.equal(c.unreleasedAmount(id), 0, "Unreleased token grant amount should be 0.");
-
-    // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-    ThrowProxy throwProxy = new ThrowProxy(address(c));
-
-    // Prime the proxy
-    TokenGrant(address(throwProxy)).release(id);
-
-    // Execute the call that is supposed to throw.
-    // r will be false if it threw and true if it didn't.
-    bool r = throwProxy.execute.gas(200000)();
-    Assert.isFalse(r, "Should throw when trying to release token grant.");
-
-    Assert.equal(t.balanceOf(beneficiary), 0, "Released balance should not be added to beneficiary main balance.");
-  }
-
   // Token grant with 0 duration, release available immediately.
   function testCanReleaseGrantedAmount() public {
     
