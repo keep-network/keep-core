@@ -106,8 +106,8 @@ func ExecuteDKG(
 
 			err := currentState.receive(msg)
 			if err != nil {
-				fmt.Printf(
-					"[member:%v, state: %T] Error: [%v].\n",
+				err := fmt.Errorf(
+					"[member:%v, state: %T] failed to receive message [%v]",
 					currentState.groupMember().MemberID(),
 					currentState,
 					err,
@@ -140,7 +140,8 @@ func ExecuteDKG(
 
 			err :=
 				fmt.Errorf(
-					"failed to complete state [%T] inside active period [%v]",
+					"[member:%v, state: %T] failed to complete state inside active period [%v]",
+					currentState.groupMember().MemberID(),
 					currentState,
 					currentState.activeBlocks(),
 				)
