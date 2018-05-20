@@ -28,7 +28,7 @@ contract TestModUtils {
         uint256 j;
         int leg;
         for(i = 0; i < smallOddPrimes.length; i++) {
-            for(j = 0; j < 200; j++) {
+            for(j = 0; j < 100; j++) {
                 leg = ModUtils.legendre(j, smallOddPrimes[i]);
                 Assert.isTrue(leg == 0 || leg == 1 || leg == -1, "legendre() should only return [-1, 1]");
             }
@@ -57,7 +57,7 @@ contract TestModUtils {
         // a = 0 mod p
         for(i = 0; i < smallOddPrimes.length; i++) {
             p = smallOddPrimes[i];
-            for (j=0; j<100; j++) {
+            for (j=0; j<20; j++) {
                 pMult = p * i;
                 Assert.equal(zero, pMult.modSqrt(p), "(n * p) mod p should always equal 0");
             }
