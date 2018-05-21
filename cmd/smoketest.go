@@ -24,7 +24,6 @@ func SmokeTest(c *cli.Context) {
 
 	beaconConfig := chainHandle.RandomBeacon().GetConfig()
 
-	members := make([]*thresholdgroup.Member, 0, beaconConfig.GroupSize)
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
 		channel := netlocal.Channel("test")
@@ -33,15 +32,7 @@ func SmokeTest(c *cli.Context) {
 		go func(i int) {
 			member, err := dkg.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
 			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"[member:%v] Failed to run DKG: [%s] (index %d).",
-					member.BlsID.GetHexString(),
-					err,
-					i,
-				)
-				memberChannel <- nil
-				return
+				panic(fmt.Sprintf("Failed to run DKG [%v].", err))
 			}
 
 			chainHandle.ThresholdRelay().OnGroupPublicKeySubmitted(
@@ -70,32 +61,28 @@ func SmokeTest(c *cli.Context) {
 		}(i)
 	}
 
-	seenMembers := 0
+	seenMembers := make(map[*bls.ID]*thresholdgroup.Member)
 	for member := range memberChannel {
-		seenMembers++
-		if member != nil {
-			members = append(members, member)
-			if len(members) == beaconConfig.GroupSize {
-				break
-			}
+		if _, alreadySeen := seenMembers[&member.BlsID]; !alreadySeen {
+			seenMembers[&member.BlsID] = member
 		}
 
-		if seenMembers == beaconConfig.GroupSize {
+		if len(seenMembers) == beaconConfig.GroupSize {
 			break
 		}
 	}
 
-	if len(members) < beaconConfig.GroupSize {
+	if len(seenMembers) < beaconConfig.GroupSize {
 		panic("Failed to reach group size during DKG, aborting.")
 	}
 
 	message := "This is a message!"
 	shares := make(map[bls.ID][]byte, 0)
-	for _, member := range members {
+	for _, member := range seenMembers {
 		shares[member.BlsID] = member.SignatureShare(message)
 	}
 
-	for _, member := range members {
+	for _, member := range seenMembers {
 		fmt.Printf(
 			"[member:%v] Did we get it? %v\n",
 			member.BlsID.GetHexString(),
