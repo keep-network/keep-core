@@ -8,8 +8,9 @@ import (
 // KeepCommands is the set of actions that the Keep client application can perform
 var KeepCommands = []cli.Command{
 	{
-		Name:   "smoke-test",
-		Usage:  "smoke-test",
-		Action: cmd.SmokeTestAction,
+		Name:        "smoke-test",
+		Usage:       "smoke-test",
+		Description: "Simulate DKG (10 members, threshold 4) and verify group's threshold signature",
+		Action:      cmd.SmokeTest,
 	},
 }
