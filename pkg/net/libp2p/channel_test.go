@@ -2,19 +2,11 @@ package libp2p
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	peer "github.com/libp2p/go-libp2p-peer"
 )
-
-func TestMain(m *testing.M) {
-	// TODO: Invoke code that builds up state
-	code := m.Run()
-	// TODO: close open conns
-	os.Exit(code)
-}
 
 func TestRegisterIdentifier(t *testing.T) {
 	t.Parallel()
@@ -37,7 +29,10 @@ func TestRegisterIdentifier(t *testing.T) {
 			protocolIdentifier:  nil,
 			transportMap:        make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 			protocolMap:         make(map[net.ProtocolIdentifier]net.TransportIdentifier),
-			expectedError:       fmt.Sprintf("incorrect type for transportIdentifier: [%v]", &testTransportIdentifier{}),
+			expectedError: fmt.Sprintf(
+				"incorrect type for transportIdentifier: [%v]",
+				&testTransportIdentifier{},
+			),
 		},
 		"protocol identifier already exists": {
 			transportIdentifier: peerID,
@@ -45,8 +40,12 @@ func TestRegisterIdentifier(t *testing.T) {
 			transportMap: map[net.TransportIdentifier]net.ProtocolIdentifier{
 				&testTransportIdentifier{}: testProto,
 			},
-			protocolMap:   make(map[net.ProtocolIdentifier]net.TransportIdentifier),
-			expectedError: fmt.Sprintf("already have a protocol identifier in channel [%s] associated with [%v]", ch.name, peerID),
+			protocolMap: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
+			expectedError: fmt.Sprintf(
+				"protocol identifier in channel [%s] already associated with [%v]",
+				ch.name,
+				peerID,
+			),
 		},
 		"transport identifier already exists": {
 			transportIdentifier: peerID,
@@ -55,7 +54,11 @@ func TestRegisterIdentifier(t *testing.T) {
 			protocolMap: map[net.ProtocolIdentifier]net.TransportIdentifier{
 				testProto: peerID,
 			},
-			expectedError: fmt.Sprintf("already have a transport identifier in channel [%s] associated with [%v]", ch.name, testProto),
+			expectedError: fmt.Sprintf(
+				"transport identifier in channel [%s] already associated with [%v]",
+				ch.name,
+				testProto,
+			),
 		},
 	}
 
@@ -78,4 +81,4 @@ type testTransportIdentifier struct{}
 var _ net.TransportIdentifier = (*testTransportIdentifier)(nil)
 var _ net.ProtocolIdentifier = (*testProtocolIdentifier)(nil)
 
-func (t *testTransportIdentifier) ProviderName() string { return "" }
+func (t *testTransportIdentifier) ProviderName() string { return "test" }
