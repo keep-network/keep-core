@@ -35,15 +35,18 @@ func TestPublicKeyFunctions(t *testing.T) {
 
 	msg := []byte("so random you can't fake it.")
 
+	// test our peerstore has the correct privkey
 	privKey := ps.PrivKey(pi.id)
+	if privKey != pi.privKey {
+		t.Fatal("private key in peerstore doesn't match the one we generated")
+	}
+
 	sig, err := privKey.Sign(msg)
 	if err != nil {
 		t.Fatalf("Failed to sign msg with err: %s", err)
 	}
 
-	pubKey := pubKeyFromIdentifier(pi)
-
-	ok, err := pubKey.Verify(msg, sig)
+	ok, err := pi.pubKey.Verify(msg, sig)
 	if err != nil {
 		t.Fatalf("Failed to verify msg with err: %s", err)
 	}
@@ -52,7 +55,7 @@ func TestPublicKeyFunctions(t *testing.T) {
 	}
 
 	msg[0] = ^msg[0]
-	ok, err = pubKey.Verify(msg, sig)
+	ok, err = pi.pubKey.Verify(msg, sig)
 	if err == nil {
 		t.Fatal(err)
 	}
@@ -61,7 +64,7 @@ func TestPublicKeyFunctions(t *testing.T) {
 	}
 }
 
-func generateDeterministicIdentity(t *testing.T) *peerIdentifier {
+func generateDeterministicIdentity(t *testing.T) *identity {
 	p := testutils.RandPeerNetParamsOrFatal(t)
-	return &peerIdentifier{id: p.ID, sk: p.PrivKey}
+	return &identity{id: p.ID, privKey: p.PrivKey, pubKey: p.PubKey}
 }

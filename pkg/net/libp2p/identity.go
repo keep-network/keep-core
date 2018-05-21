@@ -3,65 +3,59 @@ package libp2p
 import (
 	"crypto/rand"
 	"fmt"
-	"io"
 
-	ci "github.com/libp2p/go-libp2p-crypto"
+	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
-// peerIdentifier represents a group member's network level identity. It
+// identity represents a group member's network level identity. It
 // implements the net.TransportIdentifier interface. A valid group member will
 // generate or provide a keypair, which will correspond to a network ID.
-// Consumers of the net package require an ID to register with protocol level IDs, as well as a public key for authentication.
-type peerIdentifier struct {
-	id peer.ID
-	sk ci.PrivKey
+
+// Consumers of the net package require an ID to register with protocol level
+// IDs, as well as a public key for authentication.
+type identity struct {
+	id      peer.ID
+	pubKey  libp2pcrypto.PubKey
+	privKey libp2pcrypto.PrivKey
 }
 
-func (p *peerIdentifier) ProviderName() string {
+func (i *identity) ProviderName() string {
 	return "libp2p"
 }
 
-func pubKeyFromIdentifier(pi *peerIdentifier) ci.PubKey {
-	return pi.sk.GetPublic()
-}
-
-func pubKeyToIdentifier(pub ci.PubKey) *peerIdentifier {
+func pubKeyToIdentifier(pub libp2pcrypto.PubKey) *identity {
 	pid, err := peer.IDFromPublicKey(pub)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
 	}
-	return &peerIdentifier{id: pid}
+	return &identity{id: pid}
 }
 
-// AddIdentityToStore takes a peerIdentifier and notifies the addressbook of the
+// AddIdentityToStore takes an identity and notifies the addressbook of the
 // existance of a new client joining the network.
-func addIdentityToStore(pi *peerIdentifier) (pstore.Peerstore, error) {
+func addIdentityToStore(i *identity) (pstore.Peerstore, error) {
 	// TODO: investigate a generic store interface that gives us a unified interface
 	// to our address book (peerstore in libp2p) from secure storage (dht)
-	ps := pstore.NewPeerstore()
+	peerstore := pstore.NewPeerstore()
 
-	if err := ps.AddPrivKey(pi.id, pi.sk); err != nil {
+	if err := peerstore.AddPrivKey(i.id, i.privKey); err != nil {
 		return nil, fmt.Errorf("failed to add PrivateKey to store with error %s", err)
 	}
-	if err := ps.AddPubKey(pi.id, pi.sk.GetPublic()); err != nil {
+	if err := peerstore.AddPubKey(i.id, i.pubKey); err != nil {
 		return nil, fmt.Errorf("failed to add PubKey to store with error %s", err)
 	}
-	return ps, nil
+	return peerstore, nil
 }
 
-// generateIdentity generates a public/private-key pair
-// (using the libp2p/crypto wrapper for golang/crypto) provided a reader.
-// Use randseed for deterministic IDs, otherwise we'll use cryptographically secure psuedorandomness.
-func generateIdentity() (*peerIdentifier, error) {
-	var r io.Reader
-	r = rand.Reader
-
-	priv, _, err := ci.GenerateKeyPairWithReader(ci.Ed25519, 2048, r)
+// generateIdentity generates a public/private-key pair (using the libp2p/crypto
+// wrapper for golang/crypto).
+func generateIdentity() (*identity, error) {
+	privKey, pubKey, err := libp2pcrypto.GenerateKeyPairWithReader(libp2pcrypto.Ed25519, 2048, rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	return &peerIdentifier{sk: priv}, nil
+	return &identity{privKey: privKey, pubKey: pubKey}, nil
 }
