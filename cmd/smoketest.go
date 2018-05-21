@@ -14,8 +14,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-// SmokeTestAction simulates a DKG with a GroupSize of 10 and Threshold of 4
-func SmokeTestAction(c *cli.Context) {
+// SmokeTest simulates a DKG with a GroupSize of 10 and Threshold of 4
+func SmokeTest(c *cli.Context) {
 
 	chainHandle := local.Connect()
 	chainCounter := chainHandle.BlockCounter()
