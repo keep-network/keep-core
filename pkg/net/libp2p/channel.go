@@ -6,20 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	floodsub "github.com/libp2p/go-floodsub"
-	ci "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
 )
-
-// peerIdentifier represents a network level identity. It implements the
-// net.TransportIdentifier interface. Keypairs correspond to network IDs.
-type peerIdentifier struct {
-	id peer.ID
-	sk ci.PrivKey
-}
-
-func (p *peerIdentifier) ProviderName() string {
-	return "libp2p"
-}
 
 type channel struct {
 	name string
@@ -59,7 +46,7 @@ func (c *channel) RegisterIdentifier(
 	c.identifiersMutex.Lock()
 	defer c.identifiersMutex.Unlock()
 
-	if _, ok := transportIdentifier.(*peerIdentifier); !ok {
+	if _, ok := transportIdentifier.(*identity); !ok {
 		return fmt.Errorf(
 			"incorrect type for transportIdentifier: [%v]",
 			transportIdentifier,
