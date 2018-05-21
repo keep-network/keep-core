@@ -30,10 +30,6 @@
   revision = "b26d9c308763d68093482582cea63d69be07a0f0"
   source = "https://github.com/keep-network/toml.git"
 
-[[constraint]]
-  name = "golang.org/x/sys"
-  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
-
 [[override]]
   name = "github.com/libp2p/go-floodsub"
   revision = "10eaec55ad0fe58b2fb77cbaf01a3760eb8c211b"
