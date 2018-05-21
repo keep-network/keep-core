@@ -43,8 +43,7 @@ func TestRegisterIdentifier(t *testing.T) {
 			protocolMap: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
 			expectedError: fmt.Sprintf(
 				"protocol identifier in channel [%s] already associated with [%v]",
-				ch.name,
-				peerID,
+				ch.name, peerID,
 			),
 		},
 		"transport identifier already exists": {
@@ -56,8 +55,7 @@ func TestRegisterIdentifier(t *testing.T) {
 			},
 			expectedError: fmt.Sprintf(
 				"transport identifier in channel [%s] already associated with [%v]",
-				ch.name,
-				testProto,
+				ch.name, testProto,
 			),
 		},
 	}

@@ -55,13 +55,13 @@ func (c *channel) RegisterIdentifier(
 
 	if _, exists := c.transportToProtoIdentifiers[transportIdentifier]; exists {
 		return fmt.Errorf(
-			"already have a protocol identifier in channel [%s] associated with [%v]",
+			"protocol identifier in channel [%s] already associated with [%v]",
 			c.name, transportIdentifier,
 		)
 	}
 	if _, exists := c.protoToTransportIdentifiers[protocolIdentifier]; exists {
 		return fmt.Errorf(
-			"already have a transport identifier in channel [%s] associated with [%v]",
+			"transport identifier in channel [%s] already associated with [%v]",
 			c.name, protocolIdentifier,
 		)
 	}
