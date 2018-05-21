@@ -18,10 +18,11 @@
   packages = [
     "common/hexutil",
     "log",
+    "p2p/netutil",
     "rpc"
   ]
-  revision = "329ac18ef617d0238f71637bffe78f028b0f13f7"
-  version = "v1.8.3"
+  revision = "2688dab48c9b8ae71b8d95c7678817eaa17f2b53"
+  version = "v1.8.8"
 
 [[projects]]
   name = "github.com/go-stack/stack"
@@ -39,6 +40,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/keep-network/cli"
+  packages = ["."]
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
+
+[[projects]]
   name = "github.com/rs/cors"
   packages = ["."]
   revision = "feef513b9575b32f84bafa580aad89b011259019"
@@ -50,20 +57,20 @@
     ".",
     "altsrc"
   ]
-  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
-  version = "v1.20.0"
+  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+  source = "https://github.com/keep-network/cli.git"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
+  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["websocket"]
-  revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
+  revision = "57065200b4b034a1c8ad54ff77069408c2218ae6"
 
 [[projects]]
   branch = "master"
@@ -72,7 +79,7 @@
     "unix",
     "windows"
   ]
-  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
+  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
 
 [[projects]]
   name = "gopkg.in/fatih/set.v0"
@@ -101,6 +108,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4c499182c2109d2e9b16948078246fd2c7b0c630eb47d24b31f128e2bc2b9fe7"
+  inputs-digest = "6a0f765a3a338b0a17471feb8ff5820d838e66354806792112e9911d0adab99f"
   solver-name = "gps-cdcl"
   solver-version = 1

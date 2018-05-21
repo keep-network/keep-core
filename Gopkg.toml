@@ -33,3 +33,8 @@
 [[constraint]]
   name = "golang.org/x/sys"
   revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
+
+[[constraint]]
+  name = "github.com/urfave/cli"
+  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+  source = "https://github.com/keep-network/cli.git"
