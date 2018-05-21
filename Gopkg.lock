@@ -70,7 +70,6 @@
   revision = "b9df188d0fae32d69c1a519fa81741668a12f55a"
 
 [[projects]]
-  branch = "master"
   name = "github.com/libp2p/go-libp2p-crypto"
   packages = [
     ".",
@@ -79,7 +78,6 @@
   revision = "18915b5467c77ad8c07a35328c2cab468667a4e8"
 
 [[projects]]
-  branch = "master"
   name = "github.com/libp2p/go-libp2p-peer"
   packages = [
     ".",
@@ -88,7 +86,6 @@
   revision = "aa0e03e559bde9d4749ad8e38595e15a6fe808fa"
 
 [[projects]]
-  branch = "master"
   name = "github.com/libp2p/go-libp2p-peerstore"
   packages = [
     ".",
@@ -226,6 +223,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "37600dbe91b1125c800e07779ef882a2ec6d224801078cc5fa7671c1c450eb91"
+  inputs-digest = "5af8ac97841cfcbb4f06eb9b50c7d032016e3e1ea10dac41ab76e01a5586d5be"
   solver-name = "gps-cdcl"
   solver-version = 1

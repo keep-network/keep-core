@@ -44,3 +44,16 @@
 
 [[override]]
   name = "github.com/satori/go.uuid"
+  revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-peer"
+  revision = "aa0e03e559bde9d4749ad8e38595e15a6fe808fa"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-peerstore"
+  revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-crypto"
+  revision = "18915b5467c77ad8c07a35328c2cab468667a4e8"
