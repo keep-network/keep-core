@@ -181,12 +181,16 @@ func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
 	secretShares := make([]bls.SecretKey, threshold)
 	shareCommitments := make([]bls.PublicKey, threshold)
 
-	// Commitmnent to s is E_0 = E(s, t) = g^s·h^t.
-	// E_i = E(F_i, G_i)
+	// Alternate description from original Pedersen VSS paper, [Ped91b]
+	// reference in [GJKR 99]:
+	// F(x) and G(x) are polynomials of degree k with F_i/G_i being random
+	// coefficients in those polynomials, i ∈ [1,k-1]. 0 coefficient for F is
+	// s, for G is t. s is the secret, t here is a random value chosen by the
+	// current player (used to mask s). k is the threshold.
 	// F_i = coefficient i in F(x) = s + F_1·x + F_2·x^2 + ... + F_{k-1}·x^{k-1}
-	// s_i = F(i)
 	// G_i = coefficient i in G(x) = t + G_1·x + G_2·x^2 + ... + G_{k-1}·x^{k-1}
-	// t_i = G(i)
+	// E_i = E(F_i, G_i)
+	// Commitmnent to s is E_0 = E(s, t) = g^s·h^t.
 	// Broadcast commitment is E_i = E(F_i, G_i) for i = 1, ..., k - 1
 	//
 	// [GJKR 99], Fig 2, 1(a).
