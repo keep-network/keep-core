@@ -90,8 +90,8 @@ func ExecuteDKG(
 		return nil
 	}
 
-	currentState = &initializationState{channel, &localMember}
-	pendingState = &initializationState{channel, &localMember}
+	currentState = &initializationState{channel, localMember}
+	pendingState = &initializationState{channel, localMember}
 	stateTransition()
 	pendingState, err = currentState.nextState()
 	if err != nil {
