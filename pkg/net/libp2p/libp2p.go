@@ -21,34 +21,34 @@ import (
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
-type proxy struct {
+type Proxy struct {
 	cm                  *channelManager
 	channelManagerMutex sync.Mutex
 
 	host host.Host
 }
 
-func (p *proxy) ChannelFor(name string) net.BroadcastChannel {
+func (p *Proxy) ChannelFor(name string) net.BroadcastChannel {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
 	return p.cm.getChannel(name)
 }
 
-func (p *proxy) Type() string {
+func (p *Proxy) Type() string {
 	return "libp2p"
 }
 
 type Config struct {
 	port        int
 	listenAddrs []ma.Multiaddr
-	identity    *peerIdentifier
+	identity    *identity
 }
 
 func Connect(ctx context.Context, c *Config) (net.Provider, error) {
 	return newProxy(ctx, c)
 }
 
-func newProxy(ctx context.Context, c *Config) (*proxy, error) {
+func newProxy(ctx context.Context, c *Config) (*Proxy, error) {
 	host, err := discoverAndListen(ctx, c)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func newProxy(ctx context.Context, c *Config) (*proxy, error) {
 		return nil, err
 	}
 
-	return &proxy{cm: cm, host: host}, nil
+	return &Proxy{cm: cm, host: host}, nil
 }
 
 func discoverAndListen(
