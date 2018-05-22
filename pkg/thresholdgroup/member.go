@@ -78,6 +78,8 @@ type LocalMember struct {
 // return a full list of members who sent invalid private shares. These can then
 // be broadcast to the group, and the member can be transitioned to
 // the justification phase using `InitializeJustification()`.
+//
+// See [GJKR 99], Fig. 2, 1(a) and 1(b).
 type SharingMember struct {
 	LocalMember
 
@@ -110,8 +112,9 @@ type SharingMember struct {
 // `Justifications()`, which should be broadcast to all members. Finally, as
 // justifications are received they can be recorded using
 // `RecordJustificationFromID`. Once all justifications have been received and
-// recorded, call `FinalizeMember()` to get the final `Member`. See [GJKR 99],
-// Fig. 2 (c).
+// recorded, call `FinalizeMember()` to get the final `Member`.
+//
+// See [GJKR 99], Fig. 2, 1(c).
 type JustifyingMember struct {
 	SharingMember
 
@@ -124,6 +127,8 @@ type JustifyingMember struct {
 
 // Member represents a fully initialized threshold group member that is ready to
 // participate in group threshold signatures and signature validation.
+//
+// See [GJKR 99], Fig. 2 (3).
 type Member struct {
 	JustifyingMember
 
