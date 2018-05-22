@@ -25,6 +25,8 @@
 package thresholdgroup
 
 import (
+	"fmt"
+
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
@@ -453,17 +455,26 @@ func (m *Member) GroupPublicKeyBytes() [96]byte {
 
 // SignatureShare returns this member's serialized share of the threshold
 // signature for the given message. It can be combined with `threshold` other
-// signatures to produce a valid group signature (that is the same no matter
-// which other members participate).
+// signatures to produce a valid group signature. This group signature will be
+// the same no matter which other group members' signatures are combined, as
+// long as there are at least `threshold` of them.
 func (m *Member) SignatureShare(message string) []byte {
 	return m.groupSecretKeyShare.Sign(message).Serialize()
 }
 
-// VerifySignature takes a message and a set of serialized signature shares by
-// member ID, and verifies that the signature shares combine to a group
-// signature that is valid for the given message. Returns true if so, false if
-// not.
-func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) bool {
+// CompleteSignature takes a set of signature shares, bls.IDs associated with
+// the bytes of each member's signature, and combines them into one complete
+// signature. Returns an error if the number of signature shares is less than
+// the group threshold.
+func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign, error) {
+	if len(signatureShares) < m.threshold {
+		return nil, fmt.Errorf(
+			"%v shares are insufficient for a complete signature; need %v",
+			len(signatureShares),
+			m.threshold,
+		)
+	}
+
 	availableIDs := make([]bls.ID, 0, len(signatureShares))
 	deserializedShares := make([]bls.Sign, 0, len(signatureShares))
 	for _, memberID := range m.memberIDs {
@@ -478,6 +489,19 @@ func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message stri
 
 	fullSignature := bls.Sign{}
 	fullSignature.Recover(deserializedShares, availableIDs)
+
+	return &fullSignature, nil
+}
+
+// VerifySignature takes a message and a set of serialized signature shares by
+// member ID, and verifies that the signature shares combine to a group
+// signature that is valid for the given message. Returns true if so, false if
+// not.
+func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) bool {
+	fullSignature, err := m.CompleteSignature(signatureShares)
+	if err != nil {
+		return false
+	}
 
 	return fullSignature.Verify(m.groupPublicKey, message)
 }
