@@ -37,7 +37,7 @@ func main() {
 			Email: "noreply@example.com",
 		},
 	}
-	app.Copyright = "(c) 2018 Thesis, Inc."
+	app.Copyright = ""
 	app.HelpName = "keep-client"
 	app.Usage = "The Keep Client Application"
 	app.Commands = keep.KeepCommands
