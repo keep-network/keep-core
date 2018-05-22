@@ -93,7 +93,14 @@ func ExecuteDKG(
 	currentState = &initializationState{channel, &localMember}
 	pendingState = &initializationState{channel, &localMember}
 	stateTransition()
-	pendingState = currentState.nextState()
+	pendingState, err = currentState.nextState()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"[member:%v] failed to start distributed key generation [%v]",
+			currentState.groupMember().MemberID(),
+			err,
+		)
+	}
 
 	for {
 		select {
@@ -115,7 +122,17 @@ func ExecuteDKG(
 				return nil, err
 			}
 
-			nextState := currentState.nextState()
+			nextState, err := currentState.nextState()
+			if err != nil {
+				err := fmt.Errorf(
+					"[member:%v, state: %T] failed to move to next state [%v]",
+					currentState.groupMember().MemberID(),
+					currentState,
+					err,
+				)
+				return nil, err
+			}
+
 			if nextState != currentState {
 				pendingState = nextState
 

@@ -15,7 +15,7 @@ type keyGenerationState interface {
 
 	initiate() error
 	receive(msg net.Message) error
-	nextState() keyGenerationState
+	nextState() (keyGenerationState, error)
 }
 
 // initializationState is the starting state of key generation; it waits for
@@ -39,8 +39,8 @@ func (is *initializationState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for initialization state: [%#v]", msg)
 }
 
-func (is *initializationState) nextState() keyGenerationState {
-	return &joinState{is.channel, is.member}
+func (is *initializationState) nextState() (keyGenerationState, error) {
+	return &joinState{is.channel, is.member}, nil
 }
 
 // joinState is the state during which a member announces itself to the key
@@ -75,13 +75,13 @@ func (js *joinState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for join state: [%#v]", msg)
 }
 
-func (js *joinState) nextState() keyGenerationState {
+func (js *joinState) nextState() (keyGenerationState, error) {
 	if js.member.MemberListComplete() {
 		sharingMember := js.member.InitializeSharing()
-		return &commitmentState{js.channel, sharingMember}
+		return &commitmentState{js.channel, sharingMember}, nil
 	}
 
-	return js
+	return js, nil
 }
 
 type commitmentState struct {
@@ -125,12 +125,12 @@ func (cs *commitmentState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for committing state: [%#v]", msg)
 }
 
-func (cs *commitmentState) nextState() keyGenerationState {
+func (cs *commitmentState) nextState() (keyGenerationState, error) {
 	if cs.member.CommitmentsComplete() {
-		return &sharingState{cs.channel, cs.member}
+		return &sharingState{cs.channel, cs.member}, nil
 	}
 
-	return cs
+	return cs, nil
 }
 
 type sharingState struct {
@@ -169,7 +169,7 @@ func (ss *sharingState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for sharing state: [%#v]", msg)
 }
 
-func (ss *sharingState) nextState() keyGenerationState {
+func (ss *sharingState) nextState() (keyGenerationState, error) {
 	if ss.member.SharesComplete() {
 		justifyingMember := ss.member.InitializeJustification()
 		return &accusingState{
@@ -177,10 +177,10 @@ func (ss *sharingState) nextState() keyGenerationState {
 			justifyingMember,
 			make(map[bls.ID]struct{}),
 			len(justifyingMember.OtherMemberIDs()),
-		}
+		}, nil
 	}
 
-	return ss
+	return ss, nil
 }
 
 type accusingState struct {
@@ -229,17 +229,17 @@ func (as *accusingState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for justifying state: [%#v]", msg)
 }
 
-func (as *accusingState) nextState() keyGenerationState {
+func (as *accusingState) nextState() (keyGenerationState, error) {
 	if len(as.seenAccusations) == as.expectedAccusationCount {
 		return &justifyingState{
 			as.channel,
 			as.member,
 			make(map[bls.ID]struct{}),
 			as.expectedAccusationCount,
-		}
+		}, nil
 	}
 
-	return as
+	return as, nil
 }
 
 type justifyingState struct {
@@ -286,12 +286,17 @@ func (js *justifyingState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for justifying state: [%#v]", msg)
 }
 
-func (js *justifyingState) nextState() keyGenerationState {
+func (js *justifyingState) nextState() (keyGenerationState, error) {
 	if len(js.seenJustifications) == js.expectedJustificationCount {
-		return &keyedState{js.member.FinalizeMember()}
+		member, err := js.member.FinalizeMember()
+		if err != nil {
+			return nil, err
+		}
+
+		return &keyedState{member}, nil
 	}
 
-	return js
+	return js, nil
 }
 
 type keyedState struct {
@@ -309,6 +314,6 @@ func (ks *keyedState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for keyed state: [%#v]", msg)
 }
 
-func (ks *keyedState) nextState() keyGenerationState {
-	return nil
+func (ks *keyedState) nextState() (keyGenerationState, error) {
+	return nil, nil
 }

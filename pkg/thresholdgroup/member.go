@@ -411,8 +411,19 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 // FinalizeMember initializes a member that has finished the justification phase
 // into a fully functioning Member that knows the group public key and can sign
 // with a share of the private key.
-func (jm *JustifyingMember) FinalizeMember() *Member {
+//
+// Returns an error if, during finalization, the final set of qualified members
+// is less than the `threshold`.
+func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
+
+	if len(jm.receivedShares) < jm.threshold {
+		return nil, fmt.Errorf(
+			"required %v qualified members but only had %v",
+			jm.threshold,
+			len(jm.receivedShares),
+		)
+	}
 
 	// [GJKR 99], Fig 2, 3
 	initialShare := jm.SecretShareForID(&jm.BlsID)
@@ -446,7 +457,7 @@ func (jm *JustifyingMember) FinalizeMember() *Member {
 		groupSecretKeyShare: groupSecretKeyShare,
 		groupPublicKey:      &groupPublicKey,
 		qualifiedMembers:    qualifiedMembers,
-	}
+	}, nil
 }
 
 // GroupPublicKeyBytes returns a fixed-length 96-byte array containing the value
