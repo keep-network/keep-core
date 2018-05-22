@@ -1,3 +1,27 @@
+// Package thresholdgroup contains the code that implements threshold key
+// generation and signing using BLS for members of groups of arbitrary size. It
+// consists of a series of structs that represent the various states of a member
+// of a threshold group, from an uninitialized member to a member that has a
+// valid private share of a group key and can perform threshold signatures.
+//
+// thresholdgroup.NewMember creates a new LocalMember with a given id, which
+// will participate in a group of a set size with a specified threshold. Each
+// following struct (SharingMember, JustifyingMember, and Member) represents a
+// following phase of distributed key generation.
+//
+// This package does not implement any synchronization or network operations;
+// instead, it is meant to be the core implementation of distributed key
+// generation and threshold signing, and can be plugged into separate sync
+// and/or networking setups.
+//
+// The distributed key generation approach is based on [GJKR 99]. References
+// throughout the code are to this paper.
+//
+//     [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
+//         Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
+//         Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
+//         Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
+//         http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
 package thresholdgroup
 
 import (
@@ -9,12 +33,6 @@ import (
 type BaseMember interface {
 	MemberID() string
 }
-
-// [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
-//     Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
-//     Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
-//     Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
-//     http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
 
 // LocalMember represents one member in a threshold key sharing group, prior to
 // any sharing or key generation process.
