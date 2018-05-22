@@ -31,15 +31,16 @@ import (
 )
 
 // BaseMember is a common interface implemented by all stages of threshold group
-// members.
+// members. It provides access to the member ID as a string irrespective of
+// current DKG phase.
 type BaseMember interface {
 	MemberID() string
 }
 
-// LocalMember represents one member in a threshold key sharing group, prior to
-// any sharing or key generation process.
+// LocalMember represents one member in a threshold group, prior to the
+// initiation of the distributed key generation process.
 type LocalMember struct {
-	// ID of this group member.
+	// ID of this group member. Hex number in string form.
 	ID string
 	// The BLS ID of this group member, computed from the ID.
 	BlsID bls.ID
@@ -67,19 +68,20 @@ type LocalMember struct {
 
 // SharingMember represents one member in a threshold key sharing group, after
 // it has a full list of `memberIDs` that belong to its threshold group. A
-// member in this state has a set of `memberShares`, one for each member of the
+// member in this state has a map of `memberShares`, one for each member of the
 // group, which can be accessed per member using `SecretShareForID()`. A member
-// in this state also has a set of public commitments, accessible via
+// in this state also has a slice of public commitments, accessible via
 // `Commitments()`.
 //
 // As public commitments come in from other members, they can be added using
 // `AddCommitmentsFromID`. Similarly, as private shares come in from other
 // members, they can be added using `AddShareFromID`.
 //
-// Once all commitments and shares have been received, `Accusations()` will
-// return a full list of members who sent invalid private shares. These can then
-// be broadcast to the group, and the member can be transitioned to
-// the justification phase using `InitializeJustification()`.
+// Once all commitments and shares have been received, `SharesComplete()` will
+// return true, and `Accusations()` will return a full list of members who sent
+// invalid private shares. These can then be broadcast to the group, and the
+// member can be transitioned to the justification phase using
+// `InitializeJustification()`.
 //
 // See [GJKR 99], Fig. 2, 1(a) and 1(b).
 type SharingMember struct {
@@ -87,32 +89,34 @@ type SharingMember struct {
 
 	// Shares of this group member's secret, one per member of the overall
 	// group. The group member generates a share of its own secret as well! Note
-	// that a share for a given member m is shared privately with that member in
-	// the secret sharing phase. It is only shared publicly this member receives
-	// an accusation from m in the accusation phase; this public sharing takes
-	// place in the justification phase.
+	// that a share for a given member m is shared *privately* with that member
+	// in the secret sharing phase. It is only shared publicly if this member
+	// receives an accusation from m in the accusation phase; in this case, the
+	// public sharing takes place during the justification phase.
 	memberShares map[bls.ID]bls.SecretKey
 
 	// The public commitments received from each other group member. For each
 	// other group member, we track their list of public commitments to their
-	// private secrets. This allows us to verify the share of their private
-	// secret that they send us.
+	// private secrets. This allows this group member to verify the share of
+	// each other member's private secret that is shared secretly with this
+	// member.
 	commitments map[bls.ID][]bls.PublicKey
-	// For each other group member m, the share of that member's secret that m
-	// sent this group member. A share is only added if it is valid; a member
-	// with no entry for their received share has either not sent their share
-	// or has sent an invalid share; they are therefore subject to an accusation
-	// requiring them to reveal their share to all group members.
+	// For each other group member m, the share of m's secret that they sent
+	// this group member. A share is only added if it is valid; a member with no
+	// entry for their received share has either not sent their share or has
+	// sent an invalid share. As such, they are subject to an accusation
+	// requiring them to publicly reveal their private share for this member to
+	// all group members.
 	receivedShares map[bls.ID]bls.SecretKey
 }
 
 // JustifyingMember represents a threshold group member that has entered the
 // justification phase. In this phase, the member will receive a set of
-// accusations broadcast to the group from other members via
+// accusations broadcast to the group from each other member via
 // `AddAccusationFromID`. Once all accuations have been received, the member
-// provides access to a set of justifications for those accusers via
-// `Justifications()`, which should be broadcast to all members. Finally, as
-// justifications are received they can be recorded using
+// provides access to a map of all justifications for seen accusers via
+// `Justifications()`, which should be broadcast publicly to all members.
+// Finally, as justifications are received they can be recorded using
 // `RecordJustificationFromID`. Once all justifications have been received and
 // recorded, call `FinalizeMember()` to get the final `Member`.
 //
@@ -123,7 +127,8 @@ type JustifyingMember struct {
 	// A list of ids of other group members who have accused this group member
 	// of sending them an invalid share.
 	accuserIDs []bls.ID
-	// A map of accuser IDs to a "set" of the IDs they accused.
+	// A map of accuser IDs to a "set" of the other member IDs they accused
+	// (excluding this member).
 	pendingJustificationIDs map[bls.ID]map[bls.ID]bool
 }
 
@@ -144,9 +149,9 @@ type Member struct {
 }
 
 // NewMember creates a new member with the given id for a threshold group with
-// the given threshold. The id should be a base-16 string and is encoded into a
-// bls.ID for use with the built-in secret sharing. The id should be unique per
-// group member.
+// the given threshold and group size. The id should be a base-16 string and is
+// encoded into a bls.ID for use with the built-in secret sharing. The id should
+// be unique per group member.
 //
 // Returns an error if the id fails to be read as a valid hex string.
 func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
