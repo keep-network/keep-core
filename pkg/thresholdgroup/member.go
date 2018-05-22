@@ -37,9 +37,7 @@ type BaseMember interface {
 	MemberID() string
 }
 
-// LocalMember represents one member in a threshold group, prior to the
-// initiation of the distributed key generation process.
-type LocalMember struct {
+type memberCore struct {
 	// ID of this group member. Hex number in string form.
 	ID string
 	// The BLS ID of this group member, computed from the ID.
@@ -50,6 +48,16 @@ type LocalMember struct {
 	// generated key to be uncompromised. Corresponds to the number of secret
 	// shares and public commitments of this group member.
 	threshold int
+	// The BLS IDs of all members of this member's group, including the member
+	// itself. Initially empty, populated as each other member announces its
+	// presence.
+	memberIDs []*bls.ID
+}
+
+// LocalMember represents one member in a threshold group, prior to the
+// initiation of the distributed key generation process.
+type LocalMember struct {
+	memberCore
 	// Created locally, these are the `threshold` secret components that,
 	// combined, represent this group member's share of the group secret key.
 	// They are used to generate shares of this member's group secret key share
@@ -60,10 +68,6 @@ type LocalMember struct {
 	// commitments to this group member's secret shares, which are broadcast to
 	// all other members.
 	shareCommitments []bls.PublicKey
-	// The BLS IDs of all members of this member's group, including the member
-	// itself. Initially empty, populated as each other member announces its
-	// presence.
-	memberIDs []*bls.ID
 }
 
 // SharingMember represents one member in a threshold key sharing group, after
@@ -137,7 +141,7 @@ type JustifyingMember struct {
 //
 // See [GJKR 99], Fig. 2 (3).
 type Member struct {
-	JustifyingMember
+	memberCore
 
 	// Public key for the group; nil if not yet computed.
 	groupPublicKey *bls.PublicKey
@@ -146,6 +150,10 @@ type Member struct {
 	groupSecretKeyShare *bls.SecretKey
 	// The final list of qualified group members; empty if not yet computed.
 	qualifiedMembers []bls.ID
+}
+
+func (mc *memberCore) MemberID() string {
+	return mc.ID
 }
 
 // NewMember creates a new member with the given id for a threshold group with
@@ -212,19 +220,16 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 	}
 
 	return &LocalMember{
-		ID:               id,
-		BlsID:            blsID,
-		groupSize:        groupSize,
-		threshold:        threshold,
+		memberCore: memberCore{
+			ID:        id,
+			BlsID:     blsID,
+			groupSize: groupSize,
+			threshold: threshold,
+			memberIDs: make([]*bls.ID, 0, groupSize),
+		},
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
-		memberIDs:        make([]*bls.ID, 0, groupSize),
 	}, nil
-}
-
-// MemberID provides access to this member's member ID as a string.
-func (lm *LocalMember) MemberID() string {
-	return lm.ID
 }
 
 // RegisterMemberID adds a member to the list of group members the local member
@@ -467,7 +472,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	}
 
 	return &Member{
-		JustifyingMember:    *jm,
+		memberCore:          jm.memberCore,
 		groupSecretKeyShare: groupSecretKeyShare,
 		groupPublicKey:      &groupPublicKey,
 		qualifiedMembers:    qualifiedMembers,
