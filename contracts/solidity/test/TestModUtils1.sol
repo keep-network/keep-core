@@ -4,11 +4,11 @@ import "truffle/Assert.sol";
 import "../contracts/utils/ModUtils.sol";
 
 
-contract TestModUtils {
+contract TestModUtils1 {
 
     using ModUtils for uint256;
 
-    uint8[10] smallOddPrimes = [1, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+    uint8[16] smallOddPrimes = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59];
 
     function testModExponent() public {
         uint256 a = 21;
@@ -28,7 +28,7 @@ contract TestModUtils {
         uint256 j;
         int leg;
         for(i = 0; i < smallOddPrimes.length; i++) {
-            for(j = 0; j < 100; j++) {
+            for(j = 0; j < 50; j++) {
                 leg = ModUtils.legendre(j, smallOddPrimes[i]);
                 Assert.isTrue(leg == 0 || leg == 1 || leg == -1, "legendre() should only return [-1, 1]");
             }
@@ -63,41 +63,4 @@ contract TestModUtils {
             }
         }
     }
-
-    function testModSqrtALessThanP() public {
-        uint256 p;
-        uint256 square;
-        uint256 i;
-        uint256 a;
-        uint256 zero = 0;
-
-        // a < p for small p
-        for(i = 0; i < smallOddPrimes.length; i++) {
-            p = smallOddPrimes[i];
-            for(a = 1; a < p; a++) {
-                square = (a * a) % p;
-                Assert.equal(a, square.modSqrt(p), "Invalid modular square root for a < p");
-            }
-        }
-    }
-
-    function testModSqrtAGreaterThanP() public {
-        uint256 p;
-        uint256 square;
-        uint256 i;
-        uint256 a;
-        uint256 zero = 0;
-
-        // a > p for small p
-        for(i = 0; i < smallOddPrimes.length; i++) {
-            p = smallOddPrimes[i];
-            for(a = p + 1; a < p + 10; a++) {
-                square = (a * a) % p;
-                Assert.equal(a, square.modSqrt(p), "Invalid modular square root for a > p");
-            }
-        }
-    }
-
-    // TODO tests with larger p
-    // TODO test throws with non-odd prime p
 }
