@@ -39,7 +39,7 @@ func ExecuteDKG(
 	memberID := "0"
 	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
 	}
-	fmt.Printf("[member:%v] Initializing member.\n", memberID)
+	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
 	localMember, err := thresholdgroup.NewMember(memberID, threshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize member: [%v]", err)

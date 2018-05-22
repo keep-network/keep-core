@@ -221,7 +221,7 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 
 	return &LocalMember{
 		memberCore: memberCore{
-			ID:        id,
+			ID:        fmt.Sprintf("0x%010s", id),
 			BlsID:     blsID,
 			groupSize: groupSize,
 			threshold: threshold,
