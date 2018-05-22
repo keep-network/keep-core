@@ -13,30 +13,24 @@ func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
 
-func genNetworkConfig(t *testing.T, ctx context.Context) *Config {
+func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	p := testutils.RandPeerNetParamsOrFatal(t)
-	pi := &peerIdentifier{id: p.ID, sk: p.PrivKey}
-	// n, err := NewNetwork(ctx, []ma.Multiaddr{p.Addr}, p.ID, ps, nil)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// ps, err := addIdentityToStore(pi)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	testConfig := &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
-	return testConfig
+	pi := &identity{id: p.ID, privKey: p.PrivKey, pubKey: p.PubKey}
+	return &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
 }
 
 func TestConnect(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	testConfig := genNetworkConfig(t, ctx)
-	_, err := Connect(ctx, testConfig)
+	testConfig := generateDeterministicNetworkConfig(t)
+	provider, err := Connect(ctx, testConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
+	// provider
 	// ps.AddAddrs(p.ID, n.ListenAddresses(), pstore.PermanentAddrTTL)
 	// fmt.Printf("%+v", provider)
 }
