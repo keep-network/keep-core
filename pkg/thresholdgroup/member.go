@@ -153,8 +153,18 @@ type Member struct {
 // encoded into a bls.ID for use with the built-in secret sharing. The id should
 // be unique per group member.
 //
-// Returns an error if the id fails to be read as a valid hex string.
+// Returns an error if the id fails to be read as a valid hex string, or if the
+// threshold >= groupSize / 2, as the distributed key generation and threshold
+// signature algorithm security breaks down past that point.
 func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
+	if threshold >= groupSize/2 {
+		return LocalMember{}, fmt.Errorf(
+			"threshold %v >= %v / 2, so group security cannot be guaranteed",
+			threshold,
+			groupSize,
+		)
+	}
+
 	blsID := bls.ID{}
 	err := blsID.SetHexString(id)
 	if err != nil {
