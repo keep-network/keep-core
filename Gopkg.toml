@@ -57,3 +57,12 @@
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-crypto"
   revision = "18915b5467c77ad8c07a35328c2cab468667a4e8"
+
+[[constraint]]
+  name = "golang.org/x/sys"
+  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
+
+[[constraint]]
+  name = "github.com/urfave/cli"
+  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+  source = "https://github.com/keep-network/cli.git"

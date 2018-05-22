@@ -24,6 +24,12 @@
   revision = "1432d294a5b055c297457c25434efbf13384cc46"
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/dfinity/go-dfinity-crypto"
   packages = ["bls"]
   revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
@@ -48,7 +54,10 @@
 
 [[projects]]
   name = "github.com/gogo/protobuf"
-  packages = ["proto"]
+  packages = [
+    "proto",
+    "sortkeys"
+  ]
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
   version = "v1.0.0"
 
@@ -68,6 +77,12 @@
     "writer"
   ]
   revision = "b9df188d0fae32d69c1a519fa81741668a12f55a"
+
+[[projects]]
+  name = "github.com/keep-network/cli"
+  packages = ["."]
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
 
 [[projects]]
   name = "github.com/libp2p/go-libp2p-crypto"
@@ -156,6 +171,12 @@
   version = "v1.0.2"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/rs/cors"
   packages = ["."]
   revision = "feef513b9575b32f84bafa580aad89b011259019"
@@ -166,6 +187,25 @@
   packages = ["."]
   revision = "9f5d223c60793748f04a9d5b4b4eacddfc1f755d"
   version = "v1.1"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = [
+    "assert",
+    "require",
+    "suite"
+  ]
+  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
+  version = "v1.2.1"
+
+[[projects]]
+  name = "github.com/urfave/cli"
+  packages = [
+    ".",
+    "altsrc"
+  ]
+  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+  source = "https://github.com/keep-network/cli.git"
 
 [[projects]]
   branch = "master"
@@ -196,7 +236,7 @@
     "context",
     "websocket"
   ]
-  revision = "57065200b4b034a1c8ad54ff77069408c2218ae6"
+  revision = "8e0cdda24ed423affc8f35c241e5e9b16180338e"
 
 [[projects]]
   branch = "master"
@@ -206,7 +246,7 @@
     "unix",
     "windows"
   ]
-  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
+  revision = "7f59abf37be6a6007f075af1bc7f16f137bc176b"
 
 [[projects]]
   name = "gopkg.in/fatih/set.v0"
@@ -220,9 +260,21 @@
   packages = ["."]
   revision = "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
 
+[[projects]]
+  name = "gopkg.in/urfave/cli.v1"
+  packages = ["."]
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
+
+[[projects]]
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5af8ac97841cfcbb4f06eb9b50c7d032016e3e1ea10dac41ab76e01a5586d5be"
+  inputs-digest = "eab296c2b7db9aeb055300f0f8e766d6729f3beaba1d685c33a63dee2897218d"
   solver-name = "gps-cdcl"
   solver-version = 1
