@@ -63,11 +63,6 @@ type LocalMember struct {
 	memberIDs []*bls.ID
 }
 
-// MemberID provides access to this member's member ID as a string.
-func (lm *LocalMember) MemberID() string {
-	return lm.ID
-}
-
 // SharingMember represents one member in a threshold key sharing group, after
 // it has a full list of `memberIDs` that belong to its threshold group. A
 // member in this state has a set of `memberShares`, one for each member of the
@@ -201,6 +196,11 @@ func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
 	}, nil
 }
 
+// MemberID provides access to this member's member ID as a string.
+func (lm *LocalMember) MemberID() string {
+	return lm.ID
+}
+
 // RegisterMemberID adds a member to the list of group members the local member
 // knows about.
 func (lm *LocalMember) RegisterMemberID(id *bls.ID) {
@@ -212,6 +212,12 @@ func (lm *LocalMember) RegisterMemberID(id *bls.ID) {
 // otherwise.
 func (lm *LocalMember) MemberListComplete() bool {
 	return len(lm.memberIDs) >= lm.groupSize
+}
+
+// Commitments returns the `threshold` public commitments this group member has
+// generated corresponding to the `threshold` shares of its secret key.
+func (lm *LocalMember) Commitments() []bls.PublicKey {
+	return lm.shareCommitments
 }
 
 // InitializeSharing initializes a LocalMember with a list of the memberIDs of
@@ -235,12 +241,6 @@ func (lm *LocalMember) InitializeSharing() *SharingMember {
 		commitments:    make(map[bls.ID][]bls.PublicKey),
 		receivedShares: make(map[bls.ID]bls.SecretKey),
 	}
-}
-
-// Commitments returns the `threshold` public commitments this group member has
-// generated corresponding to the `threshold` shares of its secret key.
-func (lm LocalMember) Commitments() []bls.PublicKey {
-	return lm.shareCommitments
 }
 
 // OtherMemberIDs returns the BLS IDs of all members in the group except this
