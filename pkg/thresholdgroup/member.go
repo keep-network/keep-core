@@ -14,14 +14,19 @@
 // generation and threshold signing, and can be plugged into separate sync
 // and/or networking setups.
 //
-// The distributed key generation approach is based on [GJKR 99]. References
-// throughout the code are to this paper.
+// The distributed key generation approach is based on [GJKR 99], which in turn
+// relies partially on the verifiable secret sharing approach in [Ped91b].
+// References throughout the code are to these papers.
 //
 //     [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
 //         Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
 //         Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
 //         Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
 //         http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
+//     [Ped91b]: T. Pedersen. Non-interactive and information-theoretic secure
+//         verifiable secret sharing. In: Advances in Cryptology — Crypto '91,
+//         pages 129-140. LNCS No. 576.
+//         https://www.cs.cornell.edu/courses/cs754/2001fa/129.PDF
 package thresholdgroup
 
 import (
