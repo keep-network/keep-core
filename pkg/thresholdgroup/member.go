@@ -433,6 +433,14 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 			delete(jm.receivedShares, accusedID)
 		}
 	}
+
+	// Also clear nil shares, which are shares that were invalid and never
+	// justified.
+	for id, share := range jm.receivedShares {
+		if share == nil {
+			delete(jm.receivedShares, id)
+		}
+	}
 }
 
 // FinalizeMember initializes a member that has finished the justification phase
@@ -456,9 +464,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	initialShare := jm.SecretShareForID(&jm.BlsID)
 	groupSecretKeyShare := &initialShare
 	for _, share := range jm.receivedShares {
-		if share != nil {
-			groupSecretKeyShare.Add(share)
-		}
+		groupSecretKeyShare.Add(share)
 	}
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
