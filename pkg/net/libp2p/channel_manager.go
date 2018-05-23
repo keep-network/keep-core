@@ -9,8 +9,8 @@ import (
 )
 
 type channelManager struct {
-	channelMutex sync.Mutex
-	channels     map[string]*channel
+	channeslMutex sync.Mutex
+	channels      map[string]*channel
 
 	pubsub *floodsub.PubSub
 	host   host.Host
@@ -18,23 +18,22 @@ type channelManager struct {
 
 func newChannelManager(
 	ctx context.Context,
-	h host.Host,
+	p2phost host.Host,
 ) (*channelManager, error) {
-	gs, err := floodsub.NewGossipSub(ctx, h)
+	gossipsub, err := floodsub.NewGossipSub(ctx, p2phost)
 	if err != nil {
 		return nil, err
 	}
-	cm := &channelManager{
+	return &channelManager{
 		channels: make(map[string]*channel),
-		pubsub:   gs,
-		host:     h,
-	}
-	return cm, nil
+		pubsub:   gossipsub,
+		host:     p2phost,
+	}, nil
 }
 
 func (cm *channelManager) getChannel(name string) *channel {
-	cm.channelMutex.Lock()
-	defer cm.channelMutex.Unlock()
+	cm.channeslMutex.Lock()
+	defer cm.channeslMutex.Unlock()
 
 	channel, exists := cm.channels[name]
 	if !exists {
