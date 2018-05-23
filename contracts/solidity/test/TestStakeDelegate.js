@@ -33,7 +33,7 @@ contract('TestStakeDelegate', function(accounts) {
     await exceptThrow(stakingContract.delegateStakeTo(account_two));
   });
 
-  it("should be able to delegate stake to an 'operator' address to represet your stake balance", async function() {
+  it("should be able to delegate stake to an 'operator' address to represent your stake balance", async function() {
     await stakingContract.delegateStakeTo(account_three, {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
   });
@@ -52,7 +52,7 @@ contract('TestStakeDelegate', function(accounts) {
     assert.equal(await stakingProxy.balanceOf(account_four), 200, "Updated operator account should represent delegator's stake balance.");
   });
 
-  it("should be able to remove delagated operator address that represent your stake balance", async function() {
+  it("should be able to remove delegated operator address that represents your stake balance", async function() {
     await stakingContract.delegateStakeTo(account_three);
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
     await stakingContract.removeDelegate();
