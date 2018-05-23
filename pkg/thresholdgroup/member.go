@@ -448,11 +448,11 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 // with a share of the private key.
 //
 // Returns an error if, during finalization, the final set of qualified members
-// is less than the `threshold`.
+// (including this member) is less than the `threshold`.
 func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
 
-	if len(jm.receivedShares) < jm.threshold {
+	if len(jm.receivedShares) < jm.threshold-1 {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
 			jm.threshold,
