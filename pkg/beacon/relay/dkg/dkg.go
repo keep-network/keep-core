@@ -39,7 +39,7 @@ func ExecuteDKG(
 	memberID := "0"
 	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
 	}
-	fmt.Printf("[member:%v] Initializing member.\n", memberID)
+	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
 	localMember, err := thresholdgroup.NewMember(memberID, threshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize member: [%v]", err)
@@ -66,14 +66,11 @@ func ExecuteDKG(
 		)
 		err := pendingState.initiate()
 		if err != nil {
-			err :=
-				fmt.Errorf(
-					"failed to initialize state [%T]: [%v]",
-					pendingState,
-					err,
-				)
-
-			return err
+			return fmt.Errorf(
+				"failed to initialize state [%T]: [%v]",
+				pendingState,
+				err,
+			)
 		}
 
 		currentState = pendingState
@@ -90,10 +87,17 @@ func ExecuteDKG(
 		return nil
 	}
 
-	currentState = &initializationState{channel, &localMember}
-	pendingState = &initializationState{channel, &localMember}
+	currentState = &initializationState{channel, localMember}
+	pendingState = &initializationState{channel, localMember}
 	stateTransition()
-	pendingState = currentState.nextState()
+	pendingState, err = currentState.nextState()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"[member:%v] failed to start distributed key generation [%v]",
+			currentState.groupMember().MemberID(),
+			err,
+		)
+	}
 
 	for {
 		select {
@@ -106,16 +110,24 @@ func ExecuteDKG(
 
 			err := currentState.receive(msg)
 			if err != nil {
-				err := fmt.Errorf(
+				return nil, fmt.Errorf(
 					"[member:%v, state: %T] failed to receive message [%v]",
 					currentState.groupMember().MemberID(),
 					currentState,
 					err,
 				)
-				return nil, err
 			}
 
-			nextState := currentState.nextState()
+			nextState, err := currentState.nextState()
+			if err != nil {
+				return nil, fmt.Errorf(
+					"[member:%v, state: %T] failed to move to next state [%v]",
+					currentState.groupMember().MemberID(),
+					currentState,
+					err,
+				)
+			}
+
 			if nextState != currentState {
 				pendingState = nextState
 
@@ -138,15 +150,12 @@ func ExecuteDKG(
 				return finalized, nil
 			}
 
-			err :=
-				fmt.Errorf(
-					"[member:%v, state: %T] failed to complete state inside active period [%v]",
-					currentState.groupMember().MemberID(),
-					currentState,
-					currentState.activeBlocks(),
-				)
-
-			return nil, err
+			return nil, fmt.Errorf(
+				"[member:%v, state: %T] failed to complete state inside active period [%v]",
+				currentState.groupMember().MemberID(),
+				currentState,
+				currentState.activeBlocks(),
+			)
 		}
 	}
 }

@@ -1,25 +1,49 @@
+// Package thresholdgroup contains the code that implements threshold key
+// generation and signing using BLS for members of groups of arbitrary size. It
+// consists of a series of structs that represent the various states of a member
+// of a threshold group, from an uninitialized member to a member that has a
+// valid private share of a group key and can perform threshold signatures.
+//
+// thresholdgroup.NewMember creates a new LocalMember with a given id, which
+// will participate in a group of a set size with a specified threshold. Each
+// following struct (SharingMember, JustifyingMember, and Member) represents a
+// following phase of distributed key generation.
+//
+// This package does not implement any synchronization or network operations;
+// instead, it is meant to be the core implementation of distributed key
+// generation and threshold signing, and can be plugged into separate sync
+// and/or networking setups.
+//
+// The distributed key generation approach is based on [GJKR 99], which in turn
+// relies partially on the verifiable secret sharing approach in [Ped91b].
+// References throughout the code are to these papers.
+//
+//     [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
+//         Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
+//         Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
+//         Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
+//         http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
+//     [Ped91b]: T. Pedersen. Non-interactive and information-theoretic secure
+//         verifiable secret sharing. In: Advances in Cryptology — Crypto '91,
+//         pages 129-140. LNCS No. 576.
+//         https://www.cs.cornell.edu/courses/cs754/2001fa/129.PDF
 package thresholdgroup
 
 import (
+	"fmt"
+
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
 // BaseMember is a common interface implemented by all stages of threshold group
-// members.
+// members. It provides access to the member ID as a string irrespective of
+// current DKG phase.
 type BaseMember interface {
 	MemberID() string
 }
 
-// [GJKR 99]: Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999) Secure
-//     Distributed Key Generation for Discrete-Log Based Cryptosystems. In:
-//     Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
-//     Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
-//     http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
-
-// LocalMember represents one member in a threshold key sharing group, prior to
-// any sharing or key generation process.
-type LocalMember struct {
-	// ID of this group member.
+type memberCore struct {
+	// ID of this group member. Hex number in string form.
 	ID string
 	// The BLS ID of this group member, computed from the ID.
 	BlsID bls.ID
@@ -29,6 +53,16 @@ type LocalMember struct {
 	// generated key to be uncompromised. Corresponds to the number of secret
 	// shares and public commitments of this group member.
 	threshold int
+	// The BLS IDs of all members of this member's group, including the member
+	// itself. Initially empty, populated as each other member announces its
+	// presence.
+	memberIDs []*bls.ID
+}
+
+// LocalMember represents one member in a threshold group, prior to the
+// initiation of the distributed key generation process.
+type LocalMember struct {
+	memberCore
 	// Created locally, these are the `threshold` secret components that,
 	// combined, represent this group member's share of the group secret key.
 	// They are used to generate shares of this member's group secret key share
@@ -39,80 +73,80 @@ type LocalMember struct {
 	// commitments to this group member's secret shares, which are broadcast to
 	// all other members.
 	shareCommitments []bls.PublicKey
-	// The BLS IDs of all members of this member's group, including the member
-	// itself. Initially empty, populated as each other member announces its
-	// presence.
-	memberIDs []*bls.ID
-}
-
-// MemberID provides access to this member's member ID as a string.
-func (lm *LocalMember) MemberID() string {
-	return lm.ID
 }
 
 // SharingMember represents one member in a threshold key sharing group, after
 // it has a full list of `memberIDs` that belong to its threshold group. A
-// member in this state has a set of `memberShares`, one for each member of the
+// member in this state has a map of `memberShares`, one for each member of the
 // group, which can be accessed per member using `SecretShareForID()`. A member
-// in this state also has a set of public commitments, accessible via
+// in this state also has a slice of public commitments, accessible via
 // `Commitments()`.
 //
 // As public commitments come in from other members, they can be added using
 // `AddCommitmentsFromID`. Similarly, as private shares come in from other
 // members, they can be added using `AddShareFromID`.
 //
-// Once all commitments and shares have been received, `Accusations()` will
-// return a full list of members who sent invalid private shares. These can then
-// be broadcast to the group, and the member can be transitioned to
-// the justification phase using `InitializeJustification()`.
+// Once all commitments and shares have been received, `SharesComplete()` will
+// return true, and `Accusations()` will return a full list of members who sent
+// invalid private shares. These can then be broadcast to the group, and the
+// member can be transitioned to the justification phase using
+// `InitializeJustification()`.
+//
+// See [GJKR 99], Fig. 2, 1(a) and 1(b).
 type SharingMember struct {
 	LocalMember
 
 	// Shares of this group member's secret, one per member of the overall
 	// group. The group member generates a share of its own secret as well! Note
-	// that a share for a given member m is shared privately with that member in
-	// the secret sharing phase. It is only shared publicly this member receives
-	// an accusation from m in the accusation phase; this public sharing takes
-	// place in the justification phase.
+	// that a share for a given member m is shared *privately* with that member
+	// in the secret sharing phase. It is only shared publicly if this member
+	// receives an accusation from m in the accusation phase; in this case, the
+	// public sharing takes place during the justification phase.
 	memberShares map[bls.ID]bls.SecretKey
 
 	// The public commitments received from each other group member. For each
 	// other group member, we track their list of public commitments to their
-	// private secrets. This allows us to verify the share of their private
-	// secret that they send us.
+	// private secrets. This allows this group member to verify the share of
+	// each other member's private secret that is shared secretly with this
+	// member.
 	commitments map[bls.ID][]bls.PublicKey
-	// For each other group member m, the share of that member's secret that m
-	// sent this group member. A share is only added if it is valid; a member
-	// with no entry for their received share has either not sent their share
-	// or has sent an invalid share; they are therefore subject to an accusation
-	// requiring them to reveal their share to all group members.
-	receivedShares map[bls.ID]bls.SecretKey
+	// For each other group member m, the share of m's secret that they sent
+	// this group member. A share is only added if it is valid; a member with no
+	// entry for their received share has not sent their share, while a member
+	// with a nil entry has sent an invalid share. As such, they are subject to
+	// an accusation requiring them to publicly reveal their private share for
+	// this member to all group members.
+	receivedShares map[bls.ID]*bls.SecretKey
 }
 
 // JustifyingMember represents a threshold group member that has entered the
 // justification phase. In this phase, the member will receive a set of
-// accusations broadcast to the group from other members via
+// accusations broadcast to the group from each other member via
 // `AddAccusationFromID`. Once all accuations have been received, the member
-// provides access to a set of justifications for those accusers via
-// `Justifications()`, which should be broadcast to all members. Finally, as
-// justifications are received they can be recorded using
+// provides access to a map of all justifications for seen accusers via
+// `Justifications()`, which should be broadcast publicly to all members.
+// Finally, as justifications are received they can be recorded using
 // `RecordJustificationFromID`. Once all justifications have been received and
-// recorded, call `FinalizeMember()` to get the final `Member`. See [GJKR 99],
-// Fig. 2 (c).
+// recorded, call `FinalizeMember()` to get the final `Member`.
+//
+// See [GJKR 99], Fig. 2, 1(c).
 type JustifyingMember struct {
 	SharingMember
 
 	// A list of ids of other group members who have accused this group member
 	// of sending them an invalid share.
 	accuserIDs []bls.ID
-	// A map of accuser IDs to a "set" of the IDs they accused.
+	// A map of accuser IDs to a "set" of the other member IDs they accused
+	// (excluding this member).
 	pendingJustificationIDs map[bls.ID]map[bls.ID]bool
 }
 
 // Member represents a fully initialized threshold group member that is ready to
 // participate in group threshold signatures and signature validation.
+//
+// See [GJKR 99], Fig. 2 (3).
 type Member struct {
-	JustifyingMember
+	memberCore
 
 	// Public key for the group; nil if not yet computed.
 	groupPublicKey *bls.PublicKey
@@ -123,17 +157,31 @@ type Member struct {
 	qualifiedMembers []bls.ID
 }
 
+func (mc *memberCore) MemberID() string {
+	return mc.ID
+}
+
 // NewMember creates a new member with the given id for a threshold group with
-// the given threshold. The id should be a base-16 string and is encoded into a
-// bls.ID for use with the built-in secret sharing. The id should be unique per
-// group member.
+// the given threshold and group size. The id should be a base-16 string and is
+// encoded into a bls.ID for use with the built-in secret sharing. The id should
+// be unique per group member.
 //
-// Returns an error if the id fails to be read as a valid hex string.
-func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
+// Returns an error if the id fails to be read as a valid hex string, or if the
+// threshold >= groupSize / 2, as the distributed key generation and threshold
+// signature algorithm security breaks down past that point.
+func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
+	if threshold >= groupSize/2 {
+		return nil, fmt.Errorf(
+			"threshold %v >= %v / 2, so group security cannot be guaranteed",
+			threshold,
+			groupSize,
+		)
+	}
+
 	blsID := bls.ID{}
 	err := blsID.SetHexString(id)
 	if err != nil {
-		return LocalMember{}, err
+		return nil, err
 	}
 
 	// Note: bls.SecretKey, before we call some sort of `Set` on it, can be
@@ -146,12 +194,18 @@ func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
 	secretShares := make([]bls.SecretKey, threshold)
 	shareCommitments := make([]bls.PublicKey, threshold)
 
-	// Commitmnent to s is E_0 = E(s, t) = g^s·h^t.
-	// E_i = E(F_i, G_i)
+	// Alternate description from original Pedersen VSS paper, [Ped91b]
+	// reference in [GJKR 99]:
+	// F(x) and G(x) are polynomials of degree k with F_i/G_i being random
+	// coefficients in those polynomials, i ∈ [1,k-1]. 0 coefficient for F is
+	// s, for G is t. s is the secret, t here is a random value chosen by the
+	// current player (used to mask s). k is the threshold.
 	// F_i = coefficient i in F(x) = s + F_1·x + F_2·x^2 + ... + F_{k-1}·x^{k-1}
-	// s_i = F(i)
 	// G_i = coefficient i in G(x) = t + G_1·x + G_2·x^2 + ... + G_{k-1}·x^{k-1}
-	// t_i = G(i)
+	// E_i = E(F_i, G_i) = g^{F_i}·h^{G_i}
+	// g is a generator of the group G_q, h is another element in G_q, such that
+	// no one knows log_g(h)
+	// Commitmnent to s is E_0 = E(s, t) = g^s·h^t.
 	// Broadcast commitment is E_i = E(F_i, G_i) for i = 1, ..., k - 1
 	//
 	// [GJKR 99], Fig 2, 1(a).
@@ -172,14 +226,16 @@ func NewMember(id string, threshold int, groupSize int) (LocalMember, error) {
 		shareCommitments[i] = *secretShares[i].GetPublicKey()
 	}
 
-	return LocalMember{
-		ID:               id,
-		BlsID:            blsID,
-		groupSize:        groupSize,
-		threshold:        threshold,
+	return &LocalMember{
+		memberCore: memberCore{
+			ID:        fmt.Sprintf("0x%010s", id),
+			BlsID:     blsID,
+			groupSize: groupSize,
+			threshold: threshold,
+			memberIDs: make([]*bls.ID, 0, groupSize),
+		},
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
-		memberIDs:        make([]*bls.ID, 0, groupSize),
 	}, nil
 }
 
@@ -194,6 +250,12 @@ func (lm *LocalMember) RegisterMemberID(id *bls.ID) {
 // otherwise.
 func (lm *LocalMember) MemberListComplete() bool {
 	return len(lm.memberIDs) >= lm.groupSize
+}
+
+// Commitments returns the `threshold` public commitments this group member has
+// generated corresponding to the `threshold` shares of its secret key.
+func (lm *LocalMember) Commitments() []bls.PublicKey {
+	return lm.shareCommitments
 }
 
 // InitializeSharing initializes a LocalMember with a list of the memberIDs of
@@ -215,14 +277,8 @@ func (lm *LocalMember) InitializeSharing() *SharingMember {
 		LocalMember:    *lm,
 		memberShares:   shares,
 		commitments:    make(map[bls.ID][]bls.PublicKey),
-		receivedShares: make(map[bls.ID]bls.SecretKey),
+		receivedShares: make(map[bls.ID]*bls.SecretKey),
 	}
-}
-
-// Commitments returns the `threshold` public commitments this group member has
-// generated corresponding to the `threshold` shares of its secret key.
-func (lm LocalMember) Commitments() []bls.PublicKey {
-	return lm.shareCommitments
 }
 
 // OtherMemberIDs returns the BLS IDs of all members in the group except this
@@ -262,14 +318,15 @@ func (sm SharingMember) CommitmentsComplete() bool {
 // sharing member gave.
 func (sm *SharingMember) AddShareFromID(senderID bls.ID, share bls.SecretKey) {
 	if sm.isValidShare(senderID, share) {
-		sm.receivedShares[senderID] = share
+		sm.receivedShares[senderID] = &share
+	} else {
+		sm.receivedShares[senderID] = nil
 	}
 }
 
 // SharesComplete returns true if all shares expected by this member have been
 // seen, false otherwise.
 func (sm *SharingMember) SharesComplete() bool {
-	// FIXME If a member sent an invalid share, we'll never hit the right len.
 	return len(sm.receivedShares) == len(sm.memberIDs)-1
 }
 
@@ -291,9 +348,9 @@ func (sm *SharingMember) isValidShare(shareSenderID bls.ID, share bls.SecretKey)
 // or who sent their shares but the shares were invalid with respect to their
 // public commitments.
 func (sm *SharingMember) AccusedIDs() []*bls.ID {
-	accusedIDs := make([]*bls.ID, 0, len(sm.memberIDs)-len(sm.receivedShares))
+	accusedIDs := make([]*bls.ID, 0)
 	for _, memberID := range sm.OtherMemberIDs() {
-		if _, found := sm.receivedShares[*memberID]; !found {
+		if share, found := sm.receivedShares[*memberID]; !found || share == nil {
 			accusedIDs = append(accusedIDs, memberID)
 		}
 	}
@@ -348,7 +405,7 @@ func (jm *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accuserI
 	if !jm.isValidShare(accusedID, secretShare) {
 		// If the member broadcast an invalid justification, we immediately
 		// remove them from our shares as they have proven dishonest.
-		delete(jm.receivedShares, accusedID)
+		jm.receivedShares[accusedID] = nil
 	} else {
 		if pendingAccusedIDs, found := jm.pendingJustificationIDs[accuserID]; found {
 			delete(pendingAccusedIDs, accusedID)
@@ -360,7 +417,7 @@ func (jm *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accuserI
 		if accuserID.IsEqual(&jm.BlsID) {
 			// If we originally accused, and the justification is valid, then we
 			// can add the valid entry to our received shares.
-			jm.receivedShares[accuserID] = secretShare
+			jm.receivedShares[accuserID] = &secretShare
 		}
 	}
 }
@@ -376,19 +433,38 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 			delete(jm.receivedShares, accusedID)
 		}
 	}
+
+	// Also clear nil shares, which are shares that were invalid and never
+	// justified.
+	for id, share := range jm.receivedShares {
+		if share == nil {
+			delete(jm.receivedShares, id)
+		}
+	}
 }
 
 // FinalizeMember initializes a member that has finished the justification phase
 // into a fully functioning Member that knows the group public key and can sign
 // with a share of the private key.
-func (jm *JustifyingMember) FinalizeMember() *Member {
+//
+// Returns an error if, during finalization, the final set of qualified members
+// (including this member) is less than the `threshold`.
+func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
+
+	if len(jm.receivedShares) < jm.threshold-1 {
+		return nil, fmt.Errorf(
+			"required %v qualified members but only had %v",
+			jm.threshold,
+			len(jm.receivedShares),
+		)
+	}
 
 	// [GJKR 99], Fig 2, 3
 	initialShare := jm.SecretShareForID(&jm.BlsID)
 	groupSecretKeyShare := &initialShare
 	for _, share := range jm.receivedShares {
-		groupSecretKeyShare.Add(&share)
+		groupSecretKeyShare.Add(share)
 	}
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
@@ -412,11 +488,11 @@ func (jm *JustifyingMember) FinalizeMember() *Member {
 	}
 
 	return &Member{
-		JustifyingMember:    *jm,
+		memberCore:          jm.memberCore,
 		groupSecretKeyShare: groupSecretKeyShare,
 		groupPublicKey:      &groupPublicKey,
 		qualifiedMembers:    qualifiedMembers,
-	}
+	}, nil
 }
 
 // GroupPublicKeyBytes returns a fixed-length 96-byte array containing the value
@@ -430,17 +506,26 @@ func (m *Member) GroupPublicKeyBytes() [96]byte {
 
 // SignatureShare returns this member's serialized share of the threshold
 // signature for the given message. It can be combined with `threshold` other
-// signatures to produce a valid group signature (that is the same no matter
-// which other members participate).
+// signatures to produce a valid group signature. This group signature will be
+// the same no matter which other group members' signatures are combined, as
+// long as there are at least `threshold` of them.
 func (m *Member) SignatureShare(message string) []byte {
 	return m.groupSecretKeyShare.Sign(message).Serialize()
 }
 
-// VerifySignature takes a message and a set of serialized signature shares by
-// member ID, and verifies that the signature shares combine to a group
-// signature that is valid for the given message. Returns true if so, false if
-// not.
-func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) bool {
+// CompleteSignature takes a set of signature shares, bls.IDs associated with
+// the bytes of each member's signature, and combines them into one complete
+// signature. Returns an error if the number of signature shares is less than
+// the group threshold.
+func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign, error) {
+	if len(signatureShares) < m.threshold {
+		return nil, fmt.Errorf(
+			"%v shares are insufficient for a complete signature; need %v",
+			len(signatureShares),
+			m.threshold,
+		)
+	}
+
 	availableIDs := make([]bls.ID, 0, len(signatureShares))
 	deserializedShares := make([]bls.Sign, 0, len(signatureShares))
 	for _, memberID := range m.memberIDs {
@@ -456,5 +541,18 @@ func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message stri
 	fullSignature := bls.Sign{}
 	fullSignature.Recover(deserializedShares, availableIDs)
 
-	return fullSignature.Verify(m.groupPublicKey, message)
+	return &fullSignature, nil
+}
+
+// VerifySignature takes a message and a set of serialized signature shares by
+// member ID, and verifies that the signature shares combine to a group
+// signature that is valid for the given message. Returns true if so, false if
+// not.
+func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) (bool, error) {
+	fullSignature, err := m.CompleteSignature(signatureShares)
+	if err != nil {
+		return false, err
+	}
+
+	return fullSignature.Verify(m.groupPublicKey, message), nil
 }
