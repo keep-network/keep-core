@@ -66,14 +66,11 @@ func ExecuteDKG(
 		)
 		err := pendingState.initiate()
 		if err != nil {
-			err :=
-				fmt.Errorf(
-					"failed to initialize state [%T]: [%v]",
-					pendingState,
-					err,
-				)
-
-			return err
+			return fmt.Errorf(
+				"failed to initialize state [%T]: [%v]",
+				pendingState,
+				err,
+			)
 		}
 
 		currentState = pendingState
@@ -113,24 +110,22 @@ func ExecuteDKG(
 
 			err := currentState.receive(msg)
 			if err != nil {
-				err := fmt.Errorf(
+				return nil, fmt.Errorf(
 					"[member:%v, state: %T] failed to receive message [%v]",
 					currentState.groupMember().MemberID(),
 					currentState,
 					err,
 				)
-				return nil, err
 			}
 
 			nextState, err := currentState.nextState()
 			if err != nil {
-				err := fmt.Errorf(
+				return nil, fmt.Errorf(
 					"[member:%v, state: %T] failed to move to next state [%v]",
 					currentState.groupMember().MemberID(),
 					currentState,
 					err,
 				)
-				return nil, err
 			}
 
 			if nextState != currentState {
@@ -155,15 +150,12 @@ func ExecuteDKG(
 				return finalized, nil
 			}
 
-			err :=
-				fmt.Errorf(
-					"[member:%v, state: %T] failed to complete state inside active period [%v]",
-					currentState.groupMember().MemberID(),
-					currentState,
-					currentState.activeBlocks(),
-				)
-
-			return nil, err
+			return nil, fmt.Errorf(
+				"[member:%v, state: %T] failed to complete state inside active period [%v]",
+				currentState.groupMember().MemberID(),
+				currentState,
+				currentState.activeBlocks(),
+			)
 		}
 	}
 }
