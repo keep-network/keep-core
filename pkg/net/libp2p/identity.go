@@ -12,7 +12,7 @@ import (
 // identity represents a group member's network level identity. It
 // implements the net.TransportIdentifier interface. A valid group member will
 // generate or provide a keypair, which will correspond to a network ID.
-
+//
 // Consumers of the net package require an ID to register with protocol level
 // IDs, as well as a public key for authentication.
 type identity struct {
