@@ -133,3 +133,67 @@ func TestLocalMemberRegistration(t *testing.T) {
 		)
 	}
 }
+
+func TestSharingOtherMemberIDs(t *testing.T) {
+	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+
+	member.RegisterMemberID(&member.BlsID)
+	for i := 0; i < defaultGroupSize-1; i++ {
+		id := bls.ID{}
+		id.SetDecString(fmt.Sprintf("%v", i))
+		member.RegisterMemberID(&id)
+	}
+
+	sharingMember := member.InitializeSharing()
+	otherMemberIDs := sharingMember.OtherMemberIDs()
+	if len(otherMemberIDs) != defaultGroupSize-1 {
+		t.Errorf(
+			"\nexpected: %v other member ids\nactual:   %v other member ids",
+			defaultGroupSize-1,
+			len(otherMemberIDs),
+		)
+	}
+	for i, id := range otherMemberIDs {
+		if id.GetDecString() != fmt.Sprintf("%v", i) {
+			t.Errorf(
+				"at index %v\nexpected id: %v\nactual id:   %v",
+				i+1,
+				fmt.Sprintf("%v", i),
+				id.GetDecString(),
+			)
+		}
+	}
+}
+
+func TestSharingMemberSecretShares(t *testing.T) {
+	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+
+	member.RegisterMemberID(&member.BlsID)
+	for i := 0; i < defaultGroupSize-1; i++ {
+		id := bls.ID{}
+		id.SetDecString(fmt.Sprintf("%v", i))
+		member.RegisterMemberID(&id)
+	}
+
+	sharingMember := member.InitializeSharing()
+	memberIDs := sharingMember.OtherMemberIDs()
+	memberIDs = append(memberIDs, &sharingMember.BlsID)
+	uninitializedShare := bls.SecretKey{}
+	previousShare := uninitializedShare
+	for _, id := range memberIDs {
+		share := sharingMember.SecretShareForID(id)
+		if share.IsEqual(&uninitializedShare) {
+			t.Fatalf(
+				"for id %v\nexpected: initialized share\nactual:   uninitialized share",
+				id.GetHexString(),
+			)
+		} else if share.IsEqual(&previousShare) {
+			t.Errorf(
+				"for id %v\nexpected: different share\nactual:   same as previous share",
+				id.GetHexString(),
+			)
+		}
+
+		previousShare = share
+	}
+}
