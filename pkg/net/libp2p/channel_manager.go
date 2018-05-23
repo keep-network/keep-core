@@ -13,7 +13,6 @@ type channelManager struct {
 	channels      map[string]*channel
 
 	pubsub *floodsub.PubSub
-	host   host.Host
 }
 
 func newChannelManager(
@@ -27,7 +26,6 @@ func newChannelManager(
 	return &channelManager{
 		channels: make(map[string]*channel),
 		pubsub:   gossipsub,
-		host:     p2phost,
 	}, nil
 }
 
