@@ -398,7 +398,7 @@ func (jm *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accuserI
 	if !jm.isValidShare(accusedID, secretShare) {
 		// If the member broadcast an invalid justification, we immediately
 		// remove them from our shares as they have proven dishonest.
-		delete(jm.receivedShares, accusedID)
+		jm.receivedShares[accusedID] = nil
 	} else {
 		if pendingAccusedIDs, found := jm.pendingJustificationIDs[accuserID]; found {
 			delete(pendingAccusedIDs, accusedID)
