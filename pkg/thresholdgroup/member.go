@@ -202,7 +202,9 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 	// current player (used to mask s). k is the threshold.
 	// F_i = coefficient i in F(x) = s + F_1·x + F_2·x^2 + ... + F_{k-1}·x^{k-1}
 	// G_i = coefficient i in G(x) = t + G_1·x + G_2·x^2 + ... + G_{k-1}·x^{k-1}
-	// E_i = E(F_i, G_i)
+	// E_i = E(F_i, G_i) = g^{F_i}·h^{G_i}
+	// g is a generator of the group G_q, h is another element in G_q, such that
+	// no one knows log_g(h)
 	// Commitmnent to s is E_0 = E(s, t) = g^s·h^t.
 	// Broadcast commitment is E_i = E(F_i, G_i) for i = 1, ..., k - 1
 	//
