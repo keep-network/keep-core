@@ -48,8 +48,8 @@ func (c *channel) RegisterIdentifier(
 
 	if _, ok := transportIdentifier.(*identity); !ok {
 		return fmt.Errorf(
-			"incorrect type for transportIdentifier: [%v]",
-			transportIdentifier,
+			"incorrect type for transportIdentifier: [%v] in channel [%s]",
+			transportIdentifier, c.name,
 		)
 	}
 

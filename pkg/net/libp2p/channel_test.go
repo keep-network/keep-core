@@ -12,7 +12,6 @@ func TestRegisterIdentifier(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ch        = &channel{name: "test"}
 		peerID    = &identity{id: peer.ID("")}
 		testProto = testProtocolIdentifier(struct{}{})
 	)
@@ -22,17 +21,19 @@ func TestRegisterIdentifier(t *testing.T) {
 		protocolIdentifier  net.ProtocolIdentifier
 		transportMap        map[net.TransportIdentifier]net.ProtocolIdentifier
 		protocolMap         map[net.ProtocolIdentifier]net.TransportIdentifier
-		expectedError       string
+		expectedError       func(string) string
 	}{
 		"invalid transport identifier": {
 			transportIdentifier: &testTransportIdentifier{},
 			protocolIdentifier:  nil,
 			transportMap:        make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 			protocolMap:         make(map[net.ProtocolIdentifier]net.TransportIdentifier),
-			expectedError: fmt.Sprintf(
-				"incorrect type for transportIdentifier: [%v]",
-				&testTransportIdentifier{},
-			),
+			expectedError: func(name string) string {
+				return fmt.Sprintf(
+					"incorrect type for transportIdentifier: [%v] in channel [%s]",
+					&testTransportIdentifier{}, name,
+				)
+			},
 		},
 		"protocol identifier already exists": {
 			transportIdentifier: peerID,
@@ -41,10 +42,12 @@ func TestRegisterIdentifier(t *testing.T) {
 				&testTransportIdentifier{}: testProto,
 			},
 			protocolMap: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
-			expectedError: fmt.Sprintf(
-				"protocol identifier in channel [%s] already associated with [%v]",
-				ch.name, peerID,
-			),
+			expectedError: func(name string) string {
+				return fmt.Sprintf(
+					"protocol identifier in channel [%s] already associated with [%v]",
+					name, peerID,
+				)
+			},
 		},
 		"transport identifier already exists": {
 			transportIdentifier: peerID,
@@ -53,21 +56,26 @@ func TestRegisterIdentifier(t *testing.T) {
 			protocolMap: map[net.ProtocolIdentifier]net.TransportIdentifier{
 				testProto: peerID,
 			},
-			expectedError: fmt.Sprintf(
-				"transport identifier in channel [%s] already associated with [%v]",
-				ch.name, testProto,
-			),
+			expectedError: func(name string) string {
+				return fmt.Sprintf(
+					"transport identifier in channel [%s] already associated with [%v]",
+					name, testProto,
+				)
+			},
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			ch.transportToProtoIdentifiers = test.transportMap
-			ch.protoToTransportIdentifiers = test.protocolMap
+			testChannel := &channel{
+				name: "test",
+				transportToProtoIdentifiers: test.transportMap,
+				protoToTransportIdentifiers: test.protocolMap,
+			}
 
-			err := ch.RegisterIdentifier(test.transportIdentifier, test.protocolIdentifier)
-			if err != nil && test.expectedError != err.Error() {
-				t.Errorf("\ngot error: %v\nwant error: %v", err, test.expectedError)
+			err := testChannel.RegisterIdentifier(test.transportIdentifier, test.protocolIdentifier)
+			if err != nil && test.expectedError(testChannel.name) != err.Error() {
+				t.Errorf("\ngot error: %v\nwant error: %v", err, test.expectedError(testChannel.name))
 			}
 		})
 	}
