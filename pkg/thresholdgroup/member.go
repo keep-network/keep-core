@@ -107,11 +107,11 @@ type SharingMember struct {
 	commitments map[bls.ID][]bls.PublicKey
 	// For each other group member m, the share of m's secret that they sent
 	// this group member. A share is only added if it is valid; a member with no
-	// entry for their received share has either not sent their share or has
-	// sent an invalid share. As such, they are subject to an accusation
-	// requiring them to publicly reveal their private share for this member to
-	// all group members.
-	receivedShares map[bls.ID]bls.SecretKey
+	// entry for their received share has not sent their share, while a member
+	// with a nil entry has sent an invalid share. As such, they are subject to
+	// an accusation requiring them to publicly reveal their private share for
+	// this member to all group members.
+	receivedShares map[bls.ID]*bls.SecretKey
 }
 
 // JustifyingMember represents a threshold group member that has entered the
@@ -270,7 +270,7 @@ func (lm *LocalMember) InitializeSharing() *SharingMember {
 		LocalMember:    *lm,
 		memberShares:   shares,
 		commitments:    make(map[bls.ID][]bls.PublicKey),
-		receivedShares: make(map[bls.ID]bls.SecretKey),
+		receivedShares: make(map[bls.ID]*bls.SecretKey),
 	}
 }
 
@@ -311,14 +311,15 @@ func (sm SharingMember) CommitmentsComplete() bool {
 // sharing member gave.
 func (sm *SharingMember) AddShareFromID(senderID bls.ID, share bls.SecretKey) {
 	if sm.isValidShare(senderID, share) {
-		sm.receivedShares[senderID] = share
+		sm.receivedShares[senderID] = &share
+	} else {
+		sm.receivedShares[senderID] = nil
 	}
 }
 
 // SharesComplete returns true if all shares expected by this member have been
 // seen, false otherwise.
 func (sm *SharingMember) SharesComplete() bool {
-	// FIXME If a member sent an invalid share, we'll never hit the right len.
 	return len(sm.receivedShares) == len(sm.memberIDs)-1
 }
 
@@ -340,9 +341,9 @@ func (sm *SharingMember) isValidShare(shareSenderID bls.ID, share bls.SecretKey)
 // or who sent their shares but the shares were invalid with respect to their
 // public commitments.
 func (sm *SharingMember) AccusedIDs() []*bls.ID {
-	accusedIDs := make([]*bls.ID, 0, len(sm.memberIDs)-len(sm.receivedShares))
+	accusedIDs := make([]*bls.ID, 0)
 	for _, memberID := range sm.OtherMemberIDs() {
-		if _, found := sm.receivedShares[*memberID]; !found {
+		if share, found := sm.receivedShares[*memberID]; !found || share == nil {
 			accusedIDs = append(accusedIDs, memberID)
 		}
 	}
@@ -409,7 +410,7 @@ func (jm *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accuserI
 		if accuserID.IsEqual(&jm.BlsID) {
 			// If we originally accused, and the justification is valid, then we
 			// can add the valid entry to our received shares.
-			jm.receivedShares[accuserID] = secretShare
+			jm.receivedShares[accuserID] = &secretShare
 		}
 	}
 }
@@ -448,7 +449,9 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	initialShare := jm.SecretShareForID(&jm.BlsID)
 	groupSecretKeyShare := &initialShare
 	for _, share := range jm.receivedShares {
-		groupSecretKeyShare.Add(&share)
+		if share != nil {
+			groupSecretKeyShare.Add(share)
+		}
 	}
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
