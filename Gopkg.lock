@@ -24,10 +24,10 @@
   revision = "1432d294a5b055c297457c25434efbf13384cc46"
 
 [[projects]]
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  name = "github.com/coreos/go-semver"
+  packages = ["semver"]
+  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
+  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/dfinity/go-dfinity-crypto"
@@ -55,8 +55,8 @@
 [[projects]]
   name = "github.com/gogo/protobuf"
   packages = [
-    "proto",
-    "sortkeys"
+    "io",
+    "proto"
   ]
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
   version = "v1.0.0"
@@ -66,6 +66,12 @@
   name = "github.com/gxed/hashland"
   packages = ["keccakpg"]
   revision = "d9f6b97f8db22dd1e090fd0bbbe98f09cc7dd0a8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/ipfs/go-ipfs-util"
+  packages = ["."]
+  revision = "9ed527918c2f20abdf0adfab0553cd87db34f656"
 
 [[projects]]
   branch = "master"
@@ -79,10 +85,18 @@
   revision = "b9df188d0fae32d69c1a519fa81741668a12f55a"
 
 [[projects]]
-  name = "github.com/keep-network/cli"
+  branch = "master"
+  name = "github.com/jbenet/goprocess"
   packages = ["."]
-  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
-  version = "v1.20.0"
+  revision = "b497e2f366b8624394fb2e89c10ab607bebdde0b"
+
+[[projects]]
+  name = "github.com/libp2p/go-floodsub"
+  packages = [
+    ".",
+    "pb"
+  ]
+  revision = "10eaec55ad0fe58b2fb77cbaf01a3760eb8c211b"
 
 [[projects]]
   name = "github.com/libp2p/go-libp2p-crypto"
@@ -91,6 +105,30 @@
     "pb"
   ]
   revision = "18915b5467c77ad8c07a35328c2cab468667a4e8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-host"
+  packages = ["."]
+  revision = "acf01b322989cf731f66ce70b1ed7c41fe007798"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-interface-conn"
+  packages = ["."]
+  revision = "47718f905cc3ccd621b65fc106c521555c4040d3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-interface-connmgr"
+  packages = ["."]
+  revision = "d00fbee4d35c7b5fdbd12499f673a236c6303865"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-net"
+  packages = ["."]
+  revision = "70a8d93f2d8c33b5c1a5f6cc4d2aea21663a264c"
 
 [[projects]]
   name = "github.com/libp2p/go-libp2p-peer"
@@ -107,6 +145,30 @@
     "addr"
   ]
   revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-protocol"
+  packages = ["."]
+  revision = "b29f3d97e3a2fb8b29c5d04290e6cb5c5018004b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-libp2p-transport"
+  packages = ["."]
+  revision = "49533464477a869fee537c8cc3fcee286aa8bdcd"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-maddr-filter"
+  packages = ["."]
+  revision = "3c9947befbb92277cc5f85057d387097debc4139"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-stream-muxer"
+  packages = ["."]
+  revision = "6ebe3f58af097068454b167a89442050b023b571"
 
 [[projects]]
   branch = "master"
@@ -161,6 +223,12 @@
   revision = "468a1b73e980e5aff011d308623e43e28c582b16"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/multiformats/go-multistream"
+  packages = ["."]
+  revision = "612ce31c03aebe1d5adbd3c850ee89e05a82b16d"
+
+[[projects]]
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
@@ -169,12 +237,6 @@
   ]
   revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
   version = "v1.0.2"
-
-[[projects]]
-  name = "github.com/pmezard/go-difflib"
-  packages = ["difflib"]
-  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
-  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/rs/cors"
@@ -189,21 +251,8 @@
   version = "v1.1"
 
 [[projects]]
-  name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require",
-    "suite"
-  ]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
-
-[[projects]]
   name = "github.com/urfave/cli"
-  packages = [
-    ".",
-    "altsrc"
-  ]
+  packages = ["."]
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
   source = "https://github.com/keep-network/cli.git"
 
@@ -218,6 +267,12 @@
   name = "github.com/whyrusleeping/mafmt"
   packages = ["."]
   revision = "ab6a47300c1df531e468771e7d08fcd6d33f032e"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/whyrusleeping/timecache"
+  packages = ["."]
+  revision = "cfcb2f1abfee846c430233aef0b630a946e0a5a6"
 
 [[projects]]
   branch = "master"
@@ -236,7 +291,7 @@
     "context",
     "websocket"
   ]
-  revision = "8e0cdda24ed423affc8f35c241e5e9b16180338e"
+  revision = "9ef9f5bb98a1fdc41f8cf6c250a4404b4085e389"
 
 [[projects]]
   branch = "master"
@@ -246,7 +301,7 @@
     "unix",
     "windows"
   ]
-  revision = "7f59abf37be6a6007f075af1bc7f16f137bc176b"
+  revision = "88eb85aaee56831ad49eaf7aa80d73de9814cde2"
 
 [[projects]]
   name = "gopkg.in/fatih/set.v0"
@@ -260,21 +315,9 @@
   packages = ["."]
   revision = "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
 
-[[projects]]
-  name = "gopkg.in/urfave/cli.v1"
-  packages = ["."]
-  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
-  version = "v1.20.0"
-
-[[projects]]
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "eab296c2b7db9aeb055300f0f8e766d6729f3beaba1d685c33a63dee2897218d"
+  inputs-digest = "ffd73a7eb2ad4796d6119b66af73997db4b7f77b791b8c8a93d997efb0c1187c"
   solver-name = "gps-cdcl"
   solver-version = 1
