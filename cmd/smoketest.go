@@ -83,10 +83,20 @@ func SmokeTest(c *cli.Context) {
 	}
 
 	for _, member := range seenMembers {
+		validSignature, err := member.VerifySignature(shares, message)
+		if err != nil {
+			fmt.Printf(
+				"[member:0x%010s] Error verifying signature: [%v].\n",
+				member.BlsID.GetHexString(),
+				err,
+			)
+		}
+
 		fmt.Printf(
-			"[member:%v] Did we get it? %v\n",
+			"[member:0x%010s] Did we get it? %v\n",
 			member.BlsID.GetHexString(),
-			member.VerifySignature(shares, message))
+			validSignature,
+		)
 	}
 
 }

@@ -532,11 +532,11 @@ func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign
 // member ID, and verifies that the signature shares combine to a group
 // signature that is valid for the given message. Returns true if so, false if
 // not.
-func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) bool {
+func (m *Member) VerifySignature(signatureShares map[bls.ID][]byte, message string) (bool, error) {
 	fullSignature, err := m.CompleteSignature(signatureShares)
 	if err != nil {
-		return false
+		return false, err
 	}
 
-	return fullSignature.Verify(m.groupPublicKey, message)
+	return fullSignature.Verify(m.groupPublicKey, message), nil
 }
