@@ -16,6 +16,7 @@ func TestMain(m *testing.M) {
 }
 
 var (
+	defaultID        = "12345"
 	defaultThreshold = 4
 	defaultGroupSize = 12
 )
@@ -65,7 +66,7 @@ func TestLocalMemberCreation(t *testing.T) {
 }
 
 func TestLocalMemberFailsForHighThreshold(t *testing.T) {
-	member, err := NewMember("12345", defaultGroupSize/2, defaultGroupSize)
+	member, err := NewMember(defaultID, defaultGroupSize/2, defaultGroupSize)
 	if err == nil {
 		t.Fatal("\nexpected error but got nil")
 	}
@@ -75,7 +76,7 @@ func TestLocalMemberFailsForHighThreshold(t *testing.T) {
 }
 
 func TestLocalMemberCommitments(t *testing.T) {
-	member, _ := NewMember("12345", defaultThreshold, defaultGroupSize)
+	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
 
 	if len(member.Commitments()) != defaultThreshold {
 		t.Errorf(
@@ -107,7 +108,7 @@ func TestLocalMemberCommitments(t *testing.T) {
 }
 
 func TestLocalMemberRegistration(t *testing.T) {
-	member, _ := NewMember("12345", defaultThreshold, defaultGroupSize)
+	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
 	completeMemberCount := defaultGroupSize - 1
 
 	member.RegisterMemberID(&member.BlsID)
