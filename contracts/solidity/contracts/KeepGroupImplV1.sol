@@ -25,27 +25,6 @@ import "./KeepRandomBeaconImplV1.sol";
 
 contract KeepGroupImplV1 is Ownable {
 
-    uint256 public groupSize;
-    address public keepRandomBeaconAddress; // address of contract for determining if isStaked.
-
-    struct GroupMemberStruct {
-        uint8 memberExists;
-        bytes32 pubKey;
-    }
-
-    struct GroupStruct {
-        uint8 groupExists;
-        bool groupComplete;
-        bytes32 groupPubKey;
-        mapping (bytes32 => GroupMemberStruct) groupMembers;
-        uint32 nMembers;
-        bytes32[] listOfMembers; // list of hashes in group
-    }
-
-    mapping (bytes32 => GroupStruct) public groupIdMap;
-    uint256 public nGroups;
-    bytes32[] listOfGroupIDs; // array of keys into groupIdMap - so can get back a list of groups
-
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
     event GroupStartedEvent(bytes32 groupPubKey);
     event GroupCompleteEvent(bytes32 groupPubKey);
@@ -68,72 +47,50 @@ contract KeepGroupImplV1 is Ownable {
      * @param _keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
      * @param _initialGroupSize Initial group size.
      */
-    function initialize(uint256 _initialGroupSize, address _keepRandomBeaconAddress) public {
-        keepRandomBeaconAddress = _keepRandomBeaconAddress;
-        groupSize = _initialGroupSize;
-        nGroups = 0;
+    function initialize(uint256 _groupThreshold, address _keepRandomBeaconAddress) public {
+        addressStorage[keccak256("keepRandomBeaconAddress")] = _keepRandomBeaconAddress;
+        uintStorage[keccak256("groupThreshold")] = _groupThreshold;
+        uintStorage[keccak256("groupsCount")] = 0;
     }
 
-    /// @dev set size of groups 
-    function setGroupSize(uint256 _groupSize) public onlyOwner {
-        groupSize = _groupSize;
+    /// @dev set size of groups
+    function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
+        uintStorage[keccak256("groupThreshold")] = _groupThreshold;
         /// TODO: determine if size decreased, then partially complete groups may now be complete.  Iterate over groups. Find
     }
 
     /// @dev return number of groups.
-    function getNGroups() public view returns(uint256) {
-        return nGroups;
+    function getNumberOfGroups() public view returns(uint256) {
+        return uintStorage[keccak256("groupsCount")];
     }
 
     /// @dev fetch back the number of members in a group.
-    function getGroupNMembers(uint256 _no) public view returns(uint256) {
-        bytes32 gID;
-        if (_no >= 0 && _no < listOfGroupIDs.length && _no < nGroups) {
-            gID = listOfGroupIDs[_no];
-            GroupStruct storage ag = groupIdMap[gID];
-            if (ag.groupExists == 1) {
-                return (ag.nMembers);
-            }
-        }
-        revert();
+    function getGroupNMembers(uint256 _i) public view returns(uint256) {
+        return uintStorage[keccak256("membersCount", getGroupPubKey(_i)];
     }
 
     /// @dev fetch back the group pubkey.
-    function getGroupPubKey(uint256 _no) public view returns(bytes32) {
-        bytes32 gID;
-        if (_no >= 0 && _no < listOfGroupIDs.length && _no < nGroups) {
-            gID = listOfGroupIDs[_no];
-            GroupStruct storage ag = groupIdMap[gID];
-            if (ag.groupExists == 1) {
-                return (ag.groupPubKey);
+    function getGroupPubKey(uint256 _i) public view returns(bytes32) {
+        return byteStorage[keccak256("groupToIndex", _i)];
+    }
+
+    function getGroupNumber(bytes32 _groupPubKey) public view returns(uint) {
+        for (uint i = 0; i < uintStorage[keccak256("groupsCount")]; i++) {
+            if (bytesStorage[keccak256("groupToIndex", i)] == _groupPubKey) {
+                return i;
             }
         }
         revert();
     }
 
     /// @dev get the public key for the _no gorup and the member _memberNo
-    function getGroupMemberPubKey(uint256 _no, uint256 _memberNo) public view returns(bytes32) {
-        bytes32 gID;
-        if (_no >= 0 && _no < listOfGroupIDs.length && _no < nGroups) {
-            gID = listOfGroupIDs[_no];
-            GroupStruct storage ag = groupIdMap[gID];
-            if (ag.groupExists == 1) {
-                if (_memberNo >= 0 && _memberNo < ag.listOfMembers.length && _memberNo < ag.nMembers) {
-                    bytes32 mKey = ag.listOfMembers[_memberNo];
-                    GroupMemberStruct storage gm = ag.groupMembers[mKey];
-                    if (gm.memberExists == 1) {
-                        return (gm.pubKey);
-                    }
-                }
-            }
-        }
-        revert();
+    function getGroupMemberPubKey(uint256 _i, uint256 _j) public view returns(bytes32) {
+        return bytesStorage[keccak256("memberToIndex", _j, getGroupPubKey(_i)]
     }
 
     /// @dev find out if a group already exists generating an event.
     function groupExists(bytes32 _groupPubKey) public {
-        GroupStruct storage ag = groupIdMap[_groupPubKey];
-        if (ag.groupExists == 1) {
+        if (boolStorage[keccak256("groupExists", _groupPubKey)]) {
             GroupExistsEvent(_groupPubKey, true);
         } else {
             GroupExistsEvent(_groupPubKey, false);
@@ -142,91 +99,100 @@ contract KeepGroupImplV1 is Ownable {
 
     /// @dev return true if group is complete (has sufficient members)
     function groupIsComplete(bytes32 _groupPubKey) public view returns(bool) {
-        GroupStruct storage ag = groupIdMap[_groupPubKey];
-        return (ag.groupComplete);
+        return boolStorage[keccak256("groupComplete", _groupPubKey)]
     }
 
     /// @dev function to check if group exists in a contract. Returns true if group exits.
     function groupExistsView(bytes32 _groupPubKey) public view returns(bool) {
-        GroupStruct storage ag = groupIdMap[_groupPubKey];
-        if (ag.groupExists == 1) {
-            return(true);
-        } 
-        return(false);
+        return boolStorage[keccak256("groupExists", _groupPubKey)];
     }
 
     /// @dev start a new group, save the group bublic key.
     function createGroup(bytes32 _groupPubKey) public returns(bool) {
-        GroupStruct storage ag = groupIdMap[_groupPubKey];
-        if (ag.groupExists != 1) {
-            ag.groupExists = 1; // marker for later so we can see if in map
-            ag.groupComplete = false;
-            ag.groupPubKey = _groupPubKey; // save the groups public key
-            groupIdMap[_groupPubKey] = ag;
-            nGroups++;
-            listOfGroupIDs.push(_groupPubKey);
-            GroupStartedEvent(_groupPubKey);
-            return (true);
+
+        if (boolStorage[keccak256("groupExists", _groupPubKey)] == true) {
+            GroupErrorCode(20);
+            return false
         }
-        GroupErrorCode(20);
-        return (false);
+
+        boolStorage[keccak256("groupExists", _groupPubKey)] = true;
+        boolStorage[keccak256("groupComplete", _groupPubKey)] = false;
+        uintStorage[keccak256("membersCount", _groupPubKey)] = 0;
+
+        uintStorage[keccak256("groupsCount")]++;
+        uint256 lastIndex = uintStorage[keccak256("groupsCount")];
+        byteStorage[keccak256("groupToIndex", lastIndex)] == _groupPubKey;
+
+        GroupStartedEvent(_groupPubKey);
+        return true;
     }
 
     /// @dev discard/delete a group if it exists.
     /// @param _groupPubKey is the public key that identifies the group.
     function disolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
-        GroupStruct storage ag = groupIdMap[_groupPubKey];	
-        if (ag.groupExists == 1) {
-            delete groupIdMap[_groupPubKey];
-            bool done = false;
-            for (uint index = 0; !done && index < nGroups; index++) {
-                if (listOfGroupIDs[index] == _groupPubKey) {
-                    done = true;
-                    for (uint i = index; i < listOfGroupIDs.length-1; i++) {
-                        listOfGroupIDs[i] = listOfGroupIDs[i+1];
-                    }
-                    delete listOfGroupIDs[listOfGroupIDs.length-1];
-                    listOfGroupIDs.length--;
-                }
+
+        if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
+            GroupErrorCode(10);
+            return false
+        }
+
+        for (uint256 index = 0; index < uintStorage[keccak256("membersCount", _groupPubKey)]; index++) {
+            delete bytesStorage[keccak256("memberToIndex", index, _groupPubKey)];
+        }
+
+        delete uintStorage[keccak256("membersCount", _groupPubKey)];
+        delete boolStorage[keccak256("groupExists", _groupPubKey)];
+        delete boolStorage[keccak256("groupComplete", _groupPubKey)];
+
+        uint i = getGroupNumber(_groupPubKey);
+        delete bytesStorage[keccak256("groupToIndex", i);
+
+        // Get last group _groupPubKey and move it into released index
+        uint groupsCount = uintStorage[keccak256("groupsCount")];
+        byte32 lastGroup = byteStorage[keccak256("groupToIndex", groupsCount)];
+        bytesStorage[keccak256("group", i)] = lastGroup;
+        uintStorage[keccak256("groupsCount")]--;
+    }
+
+    // Chek if member is part of a group
+    function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
+        for (uint i = 0; i < uintStorage[keccak256("membersCount", _groupPubKey)]; i++) {
+            if (bytesStorage[keccak256("memberToIndex", i, _groupPubKey)] == _memberPubKey) {
+                return true;
             }
-            nGroups--;
-            return (true);
-        } 
-        GroupErrorCode(10);
-        return (false);
+        }
+        return false;
     }
 
     /// @dev add the transaction sender to the group specified by _groupPubKey using the public key for the member of _memberPubKey.
     function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey) public isStaked returns(bool) {
-        uint8 rejectedReasonCode = 0;
-        GroupStruct storage ag = groupIdMap[_groupPubKey];	// fetch back the gorup.
-        if (ag.groupExists == 1) {
-            if (!ag.groupComplete) {	// if the group is still accepting new members
-                // check for unique entry in group?
-                GroupMemberStruct storage gm = ag.groupMembers[_memberPubKey];
-                if (gm.memberExists == 0) { // if the MemberPubKey is not in the group
-                    gm.memberExists = 1; // Mark the MemberPubKey to be a part of the group
-                    gm.pubKey = _memberPubKey; // Save the MemberPubKey in the gorup
-                    ag.nMembers++;
-                    ag.listOfMembers.push(_memberPubKey);
-                    if (ag.nMembers >= groupSize) { // if the group has passed the threshold size, it is formed.
-                        ag.groupComplete = true;
-                        GroupCompleteEvent(_groupPubKey);
-                    }
-                } else {
-                    rejectedReasonCode = 1;
-                }
-            } else {
-                rejectedReasonCode = 2;
-            }
-            // groupIdMap[gID] = ag; // xyzzy - is this necessary??
-        } else {
-            rejectedReasonCode = 3;
+
+        // Group does not exist.
+        if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
+            GroupErrorCode(3);
+            return false;
         }
-        if (rejectedReasonCode != 0) {
-            GroupErrorCode(rejectedReasonCode);
-            return(false);
+
+        // Group is not accepting new members.
+        if (boolStorage[keccak256("groupComplete", _groupPubKey)] != true) {
+            GroupErrorCode(2);
+            return false;
         }
-        return(true);
+
+        // Member already exists in the group.
+        if (isMember(_groupPubKey, _memberPubKey) {
+            GroupErrorCode(1);
+            return false;
+        }
+
+        uintStorage[keccak256("membersCount", _groupPubKey)]++;
+        uint256 lastIndex = uintStorage[keccak256("membersCount", _groupPubKey)];
+        addressStorage[keccak256("memberToIndex", lastIndex, _groupPubKey)] == _memberPubKey;
+
+        // If the group has passed the threshold size, it is formed.
+        if (membersCount >= uintStorage[keccak256("groupThreshold")]) {
+            boolStorage[keccak256("groupComplete", _groupPubKey)] = true;
+            GroupCompleteEvent(_groupPubKey);
+        }
     }
 }
