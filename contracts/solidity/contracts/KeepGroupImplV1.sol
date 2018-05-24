@@ -18,14 +18,14 @@ pragma solidity ^0.4.18;
 //     function isStaked(address _staker) view public returns(bool);
 // }
 
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./EternalStorage.sol";
 import "./KeepRandomBeaconImplV1.sol";
 
 
-contract KeepGroupImplV1 {
+contract KeepGroupImplV1 is Ownable {
 
     uint256 public groupSize;
-    address public contractOwner = msg.sender;
     address public keepRandomBeaconAddress; // address of contract for determining if isStaked.
 
     struct GroupMemberStruct {
@@ -50,12 +50,6 @@ contract KeepGroupImplV1 {
     event GroupStartedEvent(bytes32 groupID);
     event GroupCompleteEvent(bytes32 groupID);
     event GroupErrorCode(uint8 code);
-
-    /// @dev validates that a call to the function will only succeed if the owner of the contract made the call.
-    modifier onlyOwner() {
-        require(msg.sender == contractOwner);
-        _;
-    }
 
     modifier isStaked() {
         // -- testing - commented out -- //  require(KeepRelayBeacon(keepRandomBeaconAddress).isStaked(msg.sender));
