@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/net"
 	floodsub "github.com/libp2p/go-floodsub"
 	host "github.com/libp2p/go-libp2p-host"
 )
@@ -40,4 +41,25 @@ func (cm *channelManager) getChannel(name string) *channel {
 		return nil
 	}
 	return channel
+}
+
+func (cm *channelManager) newChannel(name string) (*channel, error) {
+	sub, err := cm.pubsub.Subscribe(name)
+	if err != nil {
+		return nil, err
+	}
+
+	channel := &channel{
+		name:                        name,
+		sub:                         sub,
+		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler, 0),
+		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
+		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
+	}
+
+	return channel, cm.joinChannel(name)
+}
+
+func (cm *channelManager) joinChannel(name string) error {
+	return nil
 }
