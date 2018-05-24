@@ -57,6 +57,13 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Prevent receiving ether without explicitly calling a function.
+     */
+    function() public payable {
+        revert();
+    }
+
+    /**
      * @dev Initialize Keep Keep Group implementaion contract with a linked Keep Random Beacon contract.
      * @param _keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
      * @param _initialGroupSize Initial group size.
@@ -222,9 +229,4 @@ contract KeepGroupImplV1 is Ownable {
         }
         return(true);
     }
-
-    /// @dev Accept payments
-    function () public payable {
-    }
 }
-
