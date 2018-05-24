@@ -90,7 +90,7 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	blockWait.structMutex.Lock()
 	defer blockWait.structMutex.Unlock()
 
-	blockSubscription, err := blockWait.config.Client.EthSubscribe(ctx, blockWait.subch, "newHeads")
+	blockSubscription, err := blockWait.config.ClientRPC.EthSubscribe(ctx, blockWait.subch, "newHeads")
 	if err != nil {
 		if blockWait.Debug01 {
 			fmt.Println("Subscription Failed => ", err)
@@ -99,7 +99,7 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	}
 
 	var lastBlock Block
-	err = blockWait.config.Client.Call(&lastBlock, "eth_getBlockByNumber", "latest", true)
+	err = blockWait.config.ClientRPC.Call(&lastBlock, "eth_getBlockByNumber", "latest", true)
 	if err != nil {
 		if blockWait.Debug01 {
 			fmt.Println("can't get latest block:", err)
@@ -115,7 +115,7 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
-// func BlockCounter(client *rpc.Client) chain.BlockCounter {
+// func BlockCounter(clientrpc *rpc.Client) chain.BlockCounter {
 func BlockCounter(config *provider) chain.BlockCounter {
 	blockWait := ethereumBlockCounter{
 		blockHeight: 0,
@@ -125,7 +125,7 @@ func BlockCounter(config *provider) chain.BlockCounter {
 
 	// -----------------------------------------------------------------------------------------------------------------------------
 	var lastBlock Block
-	err := blockWait.config.Client.Call(&lastBlock, "eth_getBlockByNumber", "latest", true)
+	err := blockWait.config.ClientRPC.Call(&lastBlock, "eth_getBlockByNumber", "latest", true)
 	if err != nil {
 		if blockWait.Debug01 {
 			fmt.Println("can't get latest block:", err)
