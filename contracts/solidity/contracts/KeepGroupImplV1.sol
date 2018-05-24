@@ -75,18 +75,18 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /// @dev set size of groups 
-    function setGroupSize (uint256 _groupSize) public onlyOwner {
+    function setGroupSize(uint256 _groupSize) public onlyOwner {
         groupSize = _groupSize;
         /// TODO: determine if size decreased, then partially complete groups may now be complete.  Iterate over groups. Find
     }
 
     /// @dev return number of groups.
-    function getNGroups () public view returns(uint256) {
+    function getNGroups() public view returns(uint256) {
         return nGroups;
     }
 
     /// @dev fetch back the number of members in a group.
-    function getGroupNMembers (uint256 _no) public view returns(uint256) {
+    function getGroupNMembers(uint256 _no) public view returns(uint256) {
         bytes32 gID;
         if (_no >= 0 && _no < listOfGroupIDs.length && _no < nGroups) {
             gID = listOfGroupIDs[_no];
@@ -131,7 +131,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /// @dev find out if a group already exists generating an event.
-    function groupExists (bytes32 _gID) public {
+    function groupExists(bytes32 _gID) public {
         GroupStruct storage ag = groupIdMap[_gID];
         if (ag.groupExists == 1) {
             GroupExistsEvent(_gID, true);
@@ -141,13 +141,13 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /// @dev return true if group is complete (has sufficient members)
-    function groupIsComplete (bytes32 _gID) public view returns(bool) {
+    function groupIsComplete(bytes32 _gID) public view returns(bool) {
         GroupStruct storage ag = groupIdMap[_gID];
         return (ag.groupComplete);
     }
 
     /// @dev function to check if group exists in a contract. Returns true if group exits.
-    function groupExistsView (bytes32 _gID) public view returns(bool) {
+    function groupExistsView(bytes32 _gID) public view returns(bool) {
         GroupStruct storage ag = groupIdMap[_gID];
         if (ag.groupExists == 1) {
             return(true);
@@ -156,7 +156,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /// @dev start a new group, save the group bublic key.
-    function createGroup (bytes32 _gID) public returns(bool) {
+    function createGroup(bytes32 _gID) public returns(bool) {
         GroupStruct storage ag = groupIdMap[_gID];
         if (ag.groupExists != 1) {
             ag.groupExists = 1; // marker for later so we can see if in map
@@ -174,7 +174,7 @@ contract KeepGroupImplV1 is Ownable {
 
     /// @dev discard/delete a group if it exists.
     /// @param _gID is the public key that identifies the group.
-    function disolveGroup (bytes32 _gID) public onlyOwner returns(bool) {
+    function disolveGroup(bytes32 _gID) public onlyOwner returns(bool) {
         GroupStruct storage ag = groupIdMap[_gID];	
         if (ag.groupExists == 1) {
             delete groupIdMap[_gID];
@@ -197,7 +197,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /// @dev add the transaction sender to the group specified by _gID using the public key for the member of _memberPubKey.
-    function addMemberToGroup (bytes32 _gID, bytes32 _memberPubKey) public isStaked returns(bool) {
+    function addMemberToGroup(bytes32 _gID, bytes32 _memberPubKey) public isStaked returns(bool) {
         uint8 rejectedReasonCode = 0;
         GroupStruct storage ag = groupIdMap[_gID];	// fetch back the gorup.
         if (ag.groupExists == 1) {
