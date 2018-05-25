@@ -105,9 +105,9 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function emitEventGroupExists(bytes32 _groupPubKey) public {
         if (boolStorage[keccak256("groupExists", _groupPubKey)]) {
-            GroupExistsEvent(_groupPubKey, true);
+            emit GroupExistsEvent(_groupPubKey, true);
         } else {
-            GroupExistsEvent(_groupPubKey, false);
+            emit GroupExistsEvent(_groupPubKey, false);
         }
     }
 
@@ -135,7 +135,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     function createGroup(bytes32 _groupPubKey) public returns(bool) {
 
         if (boolStorage[keccak256("groupExists", _groupPubKey)] == true) {
-            GroupErrorCode(20);
+            emit GroupErrorCode(20);
             return false;
         }
 
@@ -147,7 +147,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         uint256 lastIndex = uintStorage[keccak256("groupsCount")];
         byteStorage[keccak256("groupToIndex", lastIndex)] == _groupPubKey;
 
-        GroupStartedEvent(_groupPubKey);
+        emit GroupStartedEvent(_groupPubKey);
         return true;
     }
 
@@ -161,7 +161,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     function disolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
 
         if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
-            GroupErrorCode(10);
+            emit GroupErrorCode(10);
             return false
         }
 
@@ -209,19 +209,19 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
         // Group does not exist.
         if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
-            GroupErrorCode(3);
+            emit GroupErrorCode(3);
             return false;
         }
 
         // Group is not accepting new members.
         if (boolStorage[keccak256("groupComplete", _groupPubKey)] != true) {
-            GroupErrorCode(2);
+            emit GroupErrorCode(2);
             return false;
         }
 
         // Member already exists in the group.
         if (isMember(_groupPubKey, _memberPubKey) {
-            GroupErrorCode(1);
+            emit GroupErrorCode(1);
             return false;
         }
 
@@ -232,7 +232,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         // If the group has passed the threshold size, it is formed.
         if (lastIndex >= uintStorage[keccak256("groupThreshold")]) {
             boolStorage[keccak256("groupComplete", _groupPubKey)] = true;
-            GroupCompleteEvent(_groupPubKey);
+            emit GroupCompleteEvent(_groupPubKey);
         }
     }
 }
