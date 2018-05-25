@@ -1,29 +1,11 @@
-pragma solidity ^0.4.18;
-// pragma experimental ABIEncoderV2;
-
-
-// Test Plan
-//  1. Create it , pass it in the KeepRelayBeacon
-//	2. Greate Group
-//		a. Verify Event
-//	3. Add to it
-//		a. Check that member got added
-//		b. 
-// 
-
-/// @title Group Management
-/// @author Philip Schlump
-
-// interface KeepRelayBeacon { 
-//     function isStaked(address _staker) view public returns(bool);
-// }
+pragma solidity ^0.4.21;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./EternalStorage.sol";
 import "./KeepRandomBeaconImplV1.sol";
 
 
-contract KeepGroupImplV1 is Ownable {
+contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
     event GroupStartedEvent(bytes32 groupPubKey);
@@ -48,9 +30,19 @@ contract KeepGroupImplV1 is Ownable {
      * @param _groupThreshold Number of members at which group becomes formed.
      */
     function initialize(uint256 _groupThreshold, address _keepRandomBeaconAddress) public onlyOwner {
+        require(!initialized());
+        require(_keepRandomBeaconAddress != address(0x0));
+        boolStorage[keccak256("KeepGroupImplV1")] = true;
         addressStorage[keccak256("keepRandomBeaconAddress")] = _keepRandomBeaconAddress;
         uintStorage[keccak256("groupThreshold")] = _groupThreshold;
         uintStorage[keccak256("groupsCount")] = 0;
+    }
+
+    /**
+     * @dev Checks if this contract is initialized.
+     */
+    function initialized() public view returns (bool) {
+        return boolStorage[keccak256("KeepGroupImplV1")];
     }
 
     /**
