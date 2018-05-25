@@ -14,8 +14,6 @@ import (
 )
 
 func TestProviderReturnsType(t *testing.T) {
-	t.Parallel()
-
 	ctx, cancel := newTestContext()
 	defer cancel()
 
@@ -33,8 +31,6 @@ func TestProviderReturnsType(t *testing.T) {
 }
 
 func TestProviderReturnsChannel(t *testing.T) {
-	t.Parallel()
-
 	ctx, cancel := newTestContext()
 	defer cancel()
 
