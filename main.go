@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path"
 	"time"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
@@ -25,46 +27,77 @@ var (
 	Threshold int
 	// Version is the semantic version (added at compile time)  See scripts/version.sh
 	Version string
-
 	// Revision is the git commit id (added at compile time)
 	Revision string
-
-	keepCommands = []cli.Command{
-		{
-			Name:        "smoke-test",
-			Usage:       "smoke-test",
-			Description: "Simulate DKG (10 members, threshold 4) and verify group's threshold signature",
-			Action:      cmd.SmokeTest,
-		},
-	}
 )
 
-//TODO: Remove init when build process is ready to populate Version and Revision
 func init() {
+	//TODO: Remove Version and Revision when build process auto-populates these values
 	Version = "0.0.1"
 	Revision = "deadbeef"
+
+	cmds = []cli.Command{
+		{
+			Name:        "validate-config",
+			Usage:       fmt.Sprintf("Example: %s validate-config", path.Base(os.Args[0])),
+			Description: "Validates config file",
+			Action:      cmd.ValidateConfig,
+		},
+		{
+			Name:        "smoke-test",
+			Usage:       fmt.Sprintf("Usage:   %s smoke-test -g <GROUP_SIZE> -t <THRESHOLD>", path.Base(os.Args[0])),
+			Description: "Simulate DKG and verify group's threshold signature",
+			Action:      cmd.SmokeTest,
+			Flags: []cli.Flag{
+				&cli.IntFlag{
+					Name:        "group-size,g",
+					Value:       defaultGroupSize,
+					Destination: &GroupSize,
+					EnvVar:      "GROUP_SIZE",
+					Usage:       "optionally, specify the `GROUP_SIZE` environment variable",
+				},
+				&cli.IntFlag{
+					Name:        "threshold,t",
+					Value:       defaultThreshold,
+					Destination: &Threshold,
+					EnvVar:      "THRESHOLD",
+					Usage:       "optionally, specify the `THRESHOLD` environment variable",
+				},
+			},
+		},
+	}
 }
 
 func main() {
-	bls.Init(bls.CurveSNARK1)
+	err := bls.Init(bls.CurveSNARK1)
+	if err != nil {
+		log.Fatal("Failed to initialize BLS.", err)
+	}
 
-	app := cli.NewApp()
-	app.Name = "keep-client"
-	app.Version = fmt.Sprintf("%s (revision %s)", Version, Revision)
-	app.Compiled = time.Now()
-	app.Authors = []cli.Author{
-		cli.Author{
-			Name:  "Keep Network",
-			Email: "info@keep.network",
+	cliApp := &cli.App{
+		Name:        path.Base(os.Args[0]),
+		Usage:       "CLI for The Keep Network",
+		Version:     fmt.Sprintf("%s (revision %s)", Version, Revision),
+		Description: "Command line interface (CLI) for running a Keep provider",
+		Compiled:    time.Now(),
+		Authors: []cli.Author{
+			cli.Author{
+				Name:  "Keep Network",
+				Email: "info@keep.network",
+			},
 		},
+		Copyright: "",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "config,c",
+				Value:       defaultConfigPath,
+				Destination: &configPath,
+				EnvVar:      "CONFIG_PATH",
+				Usage:       "optionally, specify the `CONFIG_PATH` environment variable",
+			},
+		},
+		Commands: cmds,
 	}
-	app.Copyright = ""
-	app.HelpName = "keep-client"
-	app.Usage = "The Keep Client Application"
-	app.Commands = keepCommands
-	app.Action = func(c *cli.Context) error {
-		return nil
 
-	}
-	app.Run(os.Args)
+	cliApp.Run(os.Args)
 }

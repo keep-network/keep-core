@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
@@ -14,9 +16,20 @@ import (
 	"github.com/urfave/cli"
 )
 
-// SmokeTest simulates a DKG with a GroupSize of 10 and Threshold of 4
-func SmokeTest(c *cli.Context) {
+// SmokeTest performs a simulated distributed key generation and verifyies that the members can do a threshold signature
+func SmokeTest(c *cli.Context) error {
 
+	groupSize, err := strconv.Atoi(c.String("group-size"))
+	if err == nil {
+		local.GroupSize = groupSize
+	}
+
+	threshold, err := strconv.Atoi(c.String("threshold"))
+	if err == nil {
+		local.Threshold = threshold
+	}
+
+	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", local.GroupSize, local.Threshold))
 	chainHandle := local.Connect()
 	chainCounter := chainHandle.BlockCounter()
 
@@ -99,4 +112,14 @@ func SmokeTest(c *cli.Context) {
 		)
 	}
 
+	return nil
+}
+
+//-------------------------------------------------------------------------------
+// Helpers
+//-------------------------------------------------------------------------------
+
+func header(header string) {
+	dashes := strings.Repeat("-", len(header))
+	fmt.Printf("\n%s\n%s\n%s\n", dashes, header, dashes)
 }
