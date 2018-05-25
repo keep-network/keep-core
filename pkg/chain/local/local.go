@@ -20,6 +20,13 @@ type localChain struct {
 	blockCounter                     chain.BlockCounter
 }
 
+var (
+	// GroupSize is number of members in relay group
+	GroupSize = 10
+	// Threshold is the number of members required to validate the threshold signature
+	Threshold = 4
+)
+
 func (c *localChain) BlockCounter() chain.BlockCounter {
 	return c.blockCounter
 }
@@ -87,7 +94,7 @@ func (c *localChain) ThresholdRelay() relay.ChainInterface {
 // testing.
 func Connect() chain.Handle {
 	return &localChain{
-		beaconConfig:         beacon.Config{GroupSize: 10, Threshold: 4},
+		beaconConfig:         beacon.Config{GroupSize: GroupSize, Threshold: Threshold},
 		groupPublicKeysMutex: sync.Mutex{},
 		groupPublicKeys:      make(map[string][96]byte),
 		blockCounter:         blockCounter()}

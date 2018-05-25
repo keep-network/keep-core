@@ -10,7 +10,19 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	defaultConfigPath string = "./config.toml"
+	defaultGroupSize  int    = 10
+	defaultThreshold  int    = 4
+)
+
 var (
+	cmds       []cli.Command
+	configPath string
+	// GroupSize ...
+	GroupSize int
+	// Threshold ...
+	Threshold int
 	// Version is the semantic version (added at compile time)  See scripts/version.sh
 	Version string
 
