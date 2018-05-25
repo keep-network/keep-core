@@ -43,37 +43,52 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Initialize Keep Keep Group implementaion contract with a linked Keep Random Beacon contract.
+     * @dev Initialize Keep Group implementaion contract with a linked Keep Random Beacon contract.
      * @param _keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
-     * @param _initialGroupSize Initial group size.
+     * @param _groupThreshold Number of members at which group becomes formed.
      */
-    function initialize(uint256 _groupThreshold, address _keepRandomBeaconAddress) public {
+    function initialize(uint256 _groupThreshold, address _keepRandomBeaconAddress) public onlyOwner {
         addressStorage[keccak256("keepRandomBeaconAddress")] = _keepRandomBeaconAddress;
         uintStorage[keccak256("groupThreshold")] = _groupThreshold;
         uintStorage[keccak256("groupsCount")] = 0;
     }
 
-    /// @dev set size of groups
+    /**
+     * @dev Sets new threshold size for groups.
+     * @param _groupThreshold Number of members at which group becomes formed.
+     */
     function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
         uintStorage[keccak256("groupThreshold")] = _groupThreshold;
         /// TODO: determine if size decreased, then partially complete groups may now be complete.  Iterate over groups. Find
     }
 
-    /// @dev return number of groups.
+    /**
+     * @dev Gets number of active groups.
+     */
     function getNumberOfGroups() public view returns(uint256) {
         return uintStorage[keccak256("groupsCount")];
     }
 
-    /// @dev fetch back the number of members in a group.
+    /**
+     * @dev Gets number of members in a group.
+     * @param _i Index number of a group.
+     */
     function getGroupNMembers(uint256 _i) public view returns(uint256) {
         return uintStorage[keccak256("membersCount", getGroupPubKey(_i)];
     }
 
-    /// @dev fetch back the group pubkey.
+    /**
+     * @dev Gets public key of a group.
+     * @param _i Index number of a group.
+     */
     function getGroupPubKey(uint256 _i) public view returns(bytes32) {
         return byteStorage[keccak256("groupToIndex", _i)];
     }
 
+    /**
+     * @dev Gets group index number.
+     * @param _groupPubKey Group public key.
+     */
     function getGroupNumber(bytes32 _groupPubKey) public view returns(uint) {
         for (uint i = 0; i < uintStorage[keccak256("groupsCount")]; i++) {
             if (bytesStorage[keccak256("groupToIndex", i)] == _groupPubKey) {
@@ -83,13 +98,20 @@ contract KeepGroupImplV1 is Ownable {
         revert();
     }
 
-    /// @dev get the public key for the _no gorup and the member _memberNo
+    /**
+     * @dev Gets member public key with group and member index numbers.
+     * @param _i Index number of a group.
+     * @param _j Index number of a member.
+     */
     function getGroupMemberPubKey(uint256 _i, uint256 _j) public view returns(bytes32) {
         return bytesStorage[keccak256("memberToIndex", _j, getGroupPubKey(_i)]
     }
 
-    /// @dev find out if a group already exists generating an event.
-    function groupExists(bytes32 _groupPubKey) public {
+    /**
+     * @dev Emits events with group status, whether it exists or not.
+     * @param _groupPubKey Group public key.
+     */
+    function emitEventGroupExists(bytes32 _groupPubKey) public {
         if (boolStorage[keccak256("groupExists", _groupPubKey)]) {
             GroupExistsEvent(_groupPubKey, true);
         } else {
@@ -97,22 +119,32 @@ contract KeepGroupImplV1 is Ownable {
         }
     }
 
-    /// @dev return true if group is complete (has sufficient members)
+    /**
+     * @dev Checks if group is complete.
+     * @param _groupPubKey Group public key.
+     */
     function groupIsComplete(bytes32 _groupPubKey) public view returns(bool) {
         return boolStorage[keccak256("groupComplete", _groupPubKey)]
     }
 
-    /// @dev function to check if group exists in a contract. Returns true if group exits.
+    /**
+     * @dev Checks if group exists.
+     * @param _groupPubKey Group public key.
+     */
     function groupExistsView(bytes32 _groupPubKey) public view returns(bool) {
         return boolStorage[keccak256("groupExists", _groupPubKey)];
     }
 
-    /// @dev start a new group, save the group bublic key.
+    /**
+     * @dev Creates a new group with provided public key.
+     * @param _groupPubKey Group public key.
+     * @return True if group was created, false otherwise.
+     */
     function createGroup(bytes32 _groupPubKey) public returns(bool) {
 
         if (boolStorage[keccak256("groupExists", _groupPubKey)] == true) {
             GroupErrorCode(20);
-            return false
+            return false;
         }
 
         boolStorage[keccak256("groupExists", _groupPubKey)] = true;
@@ -127,8 +159,13 @@ contract KeepGroupImplV1 is Ownable {
         return true;
     }
 
-    /// @dev discard/delete a group if it exists.
-    /// @param _groupPubKey is the public key that identifies the group.
+    /**
+     * @dev Removes a group and the list of its members. Last group public
+     * key is moved into the released index and the total group list count
+     * is reduced accordingly.
+     * @param _groupPubKey Group public key.
+     * @return True if group was removed, false otherwise.
+     */
     function disolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
 
         if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
@@ -154,7 +191,12 @@ contract KeepGroupImplV1 is Ownable {
         uintStorage[keccak256("groupsCount")]--;
     }
 
-    // Chek if member is part of a group
+    /**
+     * @dev Checks if member is part of the group.
+     * @param _groupPubKey Group public key.
+     * @param _memberPubKey Member public key.
+     * @return True if member is part of the group, false otherwise.
+     */
     function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
         for (uint i = 0; i < uintStorage[keccak256("membersCount", _groupPubKey)]; i++) {
             if (bytesStorage[keccak256("memberToIndex", i, _groupPubKey)] == _memberPubKey) {
@@ -164,7 +206,13 @@ contract KeepGroupImplV1 is Ownable {
         return false;
     }
 
-    /// @dev add the transaction sender to the group specified by _groupPubKey using the public key for the member of _memberPubKey.
+    /**
+     * @dev Adds member to the group.
+     * @param _groupPubKey Group public key.
+     * @param _memberPubKey Member public key.
+     * @return True if member was added to the group, false otherwise
+     * along with emitting corresponding error code.
+     */
     function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey) public isStaked returns(bool) {
 
         // Group does not exist.
