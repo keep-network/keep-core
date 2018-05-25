@@ -10,7 +10,7 @@ import (
 )
 
 type channelManager struct {
-	channeslMutex sync.Mutex
+	channelsMutex sync.Mutex
 	channels      map[string]*channel
 
 	pubsub *floodsub.PubSub
@@ -31,8 +31,8 @@ func newChannelManager(
 }
 
 func (cm *channelManager) getChannel(name string) *channel {
-	cm.channeslMutex.Lock()
-	defer cm.channeslMutex.Unlock()
+	cm.channelsMutex.Lock()
+	defer cm.channelsMutex.Unlock()
 
 	channel, exists := cm.channels[name]
 	if !exists {
