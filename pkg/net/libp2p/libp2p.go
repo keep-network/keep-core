@@ -28,7 +28,7 @@ type proxy struct {
 	host host.Host
 }
 
-func (p *proxy) ChannelFor(name string) net.BroadcastChannel {
+func (p *proxy) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
 	return p.cm.getChannel(name)

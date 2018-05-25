@@ -3,6 +3,7 @@ package libp2p
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -38,13 +39,20 @@ func TestProviderReturnsChannel(t *testing.T) {
 	defer cancel()
 
 	tests := map[string]struct {
-		name string
+		name          string
+		expectedError func(string) error
 	}{
 		"channel for name does not exist": {
 			name: "",
+			expectedError: func(name string) error {
+				return fmt.Errorf("invalid channel name")
+			},
 		},
 		"channel for name does exist": {
 			name: "testchannel",
+			expectedError: func(name string) error {
+				return nil
+			},
 		},
 	}
 
@@ -54,10 +62,15 @@ func TestProviderReturnsChannel(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			broadcastChannel := provider.ChannelFor(test.name)
-			// if broadcastChannel == net.BroadcastChannel {
-			// 	t.Fatalf("failed to return a valid broadcast channel")
-			// }
+			broadcastChannel, err := provider.ChannelFor(test.name)
+			if !reflect.DeepEqual(test.expectedError(test.name), err) {
+				t.Fatalf("expected test to fail with [%v] instead failed with [%v]",
+					test.expectedError(test.name), err,
+				)
+			}
+			if err == nil {
+				// TODO: Test that broadcastChannel does things
+			}
 			fmt.Println(broadcastChannel)
 		})
 	}
@@ -71,7 +84,10 @@ func TestNetworkConnect(t *testing.T) {
 	defer cancel()
 
 	proxies := buildTestProxies(ctx, t, 2)
+	// TODO: fix this
 	connectNetworks(ctx, t, proxies)
+
+	// TODO: have proxies send messages to each other
 }
 
 func newTestContext() (context.Context, context.CancelFunc) {
