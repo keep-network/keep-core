@@ -21,20 +21,20 @@ import (
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
-type proxy struct {
+type provider struct {
 	cm                  *channelManager
 	channelManagerMutex sync.Mutex
 
 	host host.Host
 }
 
-func (p *proxy) ChannelFor(name string) (net.BroadcastChannel, error) {
+func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
 	return p.cm.getChannel(name)
 }
 
-func (p *proxy) Type() string {
+func (p *provider) Type() string {
 	return "libp2p"
 }
 
@@ -44,12 +44,8 @@ type Config struct {
 	identity    *identity
 }
 
-func Connect(ctx context.Context, c *Config) (net.Provider, error) {
-	return newProxy(ctx, c)
-}
-
-func newProxy(ctx context.Context, c *Config) (*proxy, error) {
-	host, err := discoverAndListen(ctx, c)
+func Connect(ctx context.Context, config *Config) (net.Provider, error) {
+	host, err := discoverAndListen(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -59,19 +55,19 @@ func newProxy(ctx context.Context, c *Config) (*proxy, error) {
 		return nil, err
 	}
 
-	return &proxy{cm: cm, host: host}, nil
+	return &provider{cm: cm, host: host}, nil
 }
 
 func discoverAndListen(
 	ctx context.Context,
-	c *Config,
+	config *Config,
 ) (host.Host, error) {
 	var err error
 
-	addrs := c.listenAddrs
+	addrs := config.listenAddrs
 	if addrs == nil {
 		// Get available network ifaces to listen on into multiaddrs
-		addrs, err = getListenAdresses(c.port)
+		addrs, err = getListenAddrs(config.port)
 		if err != nil {
 			return nil, err
 		}
@@ -85,34 +81,35 @@ func discoverAndListen(
 		}
 	}
 
-	pi := c.identity
-	if pi == nil {
-		// Fallback when not provided an identity
-		pi, err = generateIdentity()
+	peerIdentity := config.identity
+	if peerIdentity == nil {
+		// FIXME: revisit this fallback decision. We run into the case
+		// where the user's config isn't right and then they're in the
+		// network as an identity they aren't familiar with.
+		peerIdentity, err = generateIdentity()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	ps, err := addIdentityToStore(pi)
+	peerStore, err := addIdentityToStore(peerIdentity)
 	if err != nil {
 		return nil, err
 	}
 
-	h, err := buildPeerHost(ctx, nonLocalAddrs, pi.id, ps)
+	peerHost, err := buildPeerHost(ctx, nonLocalAddrs, peerIdentity.id, peerStore)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := h.Network().Listen(addrs...); err != nil {
+	if err := peerHost.Network().Listen(addrs...); err != nil {
 		return nil, err
 	}
 
-	return h, nil
+	return peerHost, nil
 }
 
-// TODO: Allow for user-scoped listeners to either override this or union with this.
-func getListenAdresses(port int) ([]ma.Multiaddr, error) {
+func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 	ia, err := addrutil.InterfaceAddresses()
 	if err != nil {
 		return nil, err
@@ -133,12 +130,12 @@ func buildPeerHost(
 	ctx context.Context,
 	listenAddrs []ma.Multiaddr,
 	pid peer.ID,
-	ps pstore.Peerstore,
+	peerStore pstore.Peerstore,
 ) (host.Host, error) {
 	smuxTransport := makeSmuxTransport()
 
 	// TODO: Pass in protec and metrics reporter
-	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, ps, nil, smuxTransport, nil)
+	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, peerStore, nil, smuxTransport, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -26,7 +26,9 @@ func TestProviderReturnsType(t *testing.T) {
 	}
 
 	if provider.Type() != expectedType {
-		t.Fatalf("%s %s", provider.Type(), expectedType)
+		t.Fatalf("Received a provider with type [%s] expected provider type [%s]",
+			provider.Type(), expectedType,
+		)
 	}
 }
 
@@ -58,6 +60,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+
 			broadcastChannel, err := provider.ChannelFor(test.name)
 			if !reflect.DeepEqual(test.expectedError(test.name), err) {
 				t.Fatalf("expected test to fail with [%v] instead failed with [%v]",
@@ -83,7 +86,7 @@ func TestNetworkConnect(t *testing.T) {
 	// TODO: fix this
 	connectNetworks(ctx, t, proxies)
 
-	// TODO: have proxies send messages to each other
+	// TODO: have providers send messages to each other
 }
 
 func newTestContext() (context.Context, context.CancelFunc) {
@@ -96,17 +99,24 @@ func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	return &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
 }
 
-func testProxy(ctx context.Context, t *testing.T) *proxy {
+func testProxy(ctx context.Context, t *testing.T) *provider {
 	testConfig := generateDeterministicNetworkConfig(t)
-	proxy, err := newProxy(ctx, testConfig)
+
+	host, err := discoverAndListen(ctx, testConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return proxy
+
+	cm, err := newChannelManager(ctx, host)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return &provider{cm: cm, host: host}
 }
 
-func buildTestProxies(ctx context.Context, t *testing.T, num int) []*proxy {
-	proxies := make([]*proxy, num)
+func buildTestProxies(ctx context.Context, t *testing.T, num int) []*provider {
+	proxies := make([]*provider, num)
 	for i := 0; i < num; i++ {
 		proxy := testProxy(ctx, t)
 		proxies = append(proxies, proxy)
@@ -114,13 +124,13 @@ func buildTestProxies(ctx context.Context, t *testing.T, num int) []*proxy {
 	return proxies
 }
 
-func connectNetworks(ctx context.Context, t *testing.T, proxies []*proxy) {
-	var wg sync.WaitGroup
+func connectNetworks(ctx context.Context, t *testing.T, proxies []*provider) {
+	var waitGroup sync.WaitGroup
 
 	for i, proxy := range proxies {
 		// connect to all other peers, proxies after i+1, for good connectivity
 		for _, peer := range proxies[i+1:] {
-			wg.Add(1)
+			waitGroup.Add(1)
 			proxy.host.Peerstore().AddAddr(
 				peer.host.ID(),
 				peer.host.Network().ListenAddresses()[0],
@@ -130,8 +140,8 @@ func connectNetworks(ctx context.Context, t *testing.T, proxies []*proxy) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			wg.Done()
+			waitGroup.Done()
 		}
 	}
-	wg.Wait()
+	waitGroup.Wait()
 }
