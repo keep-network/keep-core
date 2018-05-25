@@ -1,9 +1,7 @@
 package libp2p
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -39,20 +37,6 @@ func (c *channel) SendTo(
 
 func (c *channel) Recv(h net.HandleMessageFunc) error {
 	return nil
-}
-
-func (ch *channel) handleSubscription(ctx context.Context, cancel func()) {
-	defer ch.sub.Cancel()
-	defer cancel()
-
-	for {
-		_, err := ch.sub.Next(ctx)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		// handle message
-	}
 }
 
 func (c *channel) RegisterIdentifier(
