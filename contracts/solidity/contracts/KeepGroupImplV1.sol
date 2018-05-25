@@ -91,7 +91,7 @@ contract KeepGroupImplV1 is Ownable {
      */
     function getGroupNumber(bytes32 _groupPubKey) public view returns(uint) {
         for (uint i = 0; i < uintStorage[keccak256("groupsCount")]; i++) {
-            if (bytesStorage[keccak256("groupToIndex", i)] == _groupPubKey) {
+            if (bytes32Storage[keccak256("groupToIndex", i)] == _groupPubKey) {
                 return i;
             }
         }
@@ -104,7 +104,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param _j Index number of a member.
      */
     function getGroupMemberPubKey(uint256 _i, uint256 _j) public view returns(bytes32) {
-        return bytesStorage[keccak256("memberToIndex", _j, getGroupPubKey(_i)]
+        return bytes32Storage[keccak256("memberToIndex", _j, getGroupPubKey(_i)]
     }
 
     /**
@@ -174,7 +174,7 @@ contract KeepGroupImplV1 is Ownable {
         }
 
         for (uint256 index = 0; index < uintStorage[keccak256("membersCount", _groupPubKey)]; index++) {
-            delete bytesStorage[keccak256("memberToIndex", index, _groupPubKey)];
+            delete bytes32Storage[keccak256("memberToIndex", index, _groupPubKey)];
         }
 
         delete uintStorage[keccak256("membersCount", _groupPubKey)];
@@ -182,12 +182,12 @@ contract KeepGroupImplV1 is Ownable {
         delete boolStorage[keccak256("groupComplete", _groupPubKey)];
 
         uint i = getGroupNumber(_groupPubKey);
-        delete bytesStorage[keccak256("groupToIndex", i);
+        delete bytes32Storage[keccak256("groupToIndex", i);
 
         // Get last group _groupPubKey and move it into released index
         uint groupsCount = uintStorage[keccak256("groupsCount")];
         byte32 lastGroup = byteStorage[keccak256("groupToIndex", groupsCount)];
-        bytesStorage[keccak256("group", i)] = lastGroup;
+        bytes32Storage[keccak256("group", i)] = lastGroup;
         uintStorage[keccak256("groupsCount")]--;
     }
 
@@ -199,7 +199,7 @@ contract KeepGroupImplV1 is Ownable {
      */
     function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
         for (uint i = 0; i < uintStorage[keccak256("membersCount", _groupPubKey)]; i++) {
-            if (bytesStorage[keccak256("memberToIndex", i, _groupPubKey)] == _memberPubKey) {
+            if (bytes32Storage[keccak256("memberToIndex", i, _groupPubKey)] == _memberPubKey) {
                 return true;
             }
         }
@@ -235,10 +235,10 @@ contract KeepGroupImplV1 is Ownable {
 
         uintStorage[keccak256("membersCount", _groupPubKey)]++;
         uint256 lastIndex = uintStorage[keccak256("membersCount", _groupPubKey)];
-        addressStorage[keccak256("memberToIndex", lastIndex, _groupPubKey)] == _memberPubKey;
+        bytes32Storage[keccak256("memberToIndex", lastIndex, _groupPubKey)] == _memberPubKey;
 
         // If the group has passed the threshold size, it is formed.
-        if (membersCount >= uintStorage[keccak256("groupThreshold")]) {
+        if (lastIndex >= uintStorage[keccak256("groupThreshold")]) {
             boolStorage[keccak256("groupComplete", _groupPubKey)] = true;
             GroupCompleteEvent(_groupPubKey);
         }
