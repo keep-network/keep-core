@@ -16,6 +16,10 @@ library AltBn128 {
 
     uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
+    function getP() public constant returns (uint256) {
+        return p;
+    }
+
     /**
      * @dev Hash a byte array message, m, and map it deterministically to a
      * point on G1. Note that this approach was chosen for its simplicity /
@@ -28,10 +32,10 @@ library AltBn128 {
     {
         bytes32 h = sha256(m);
         uint256 x = uint256(h) % p;
-        uint256 y = 0;
+        uint256 y;
 
         while (true) {
-            y = (x ** 3 + 3).modSqrt(p);
+            y = ((x.modExp(3, p) + 3) % p).modSqrt(p);
             if (y > 0) {
                 return (x, y);
             }
