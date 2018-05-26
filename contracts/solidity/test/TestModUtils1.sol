@@ -23,15 +23,77 @@ contract TestModUtils1 {
         );
     }
 
-    function testLegendre() public {
-        uint256 i;
-        uint256 j;
-        int leg;
+    int[][] smallOddPrimesLegendre = [
+        [int(3), int(0), int(0)],
+        [int(3), int(1), int(1)],
+        [int(3), int(2), int(-1)],
+        [int(5), int(0), int(0)],
+        [int(5), int(1), int(1)],
+        [int(5), int(2), int(-1)],
+        [int(5), int(3), int(-1)],
+        [int(5), int(4), int(1)],
+        [int(7), int(0), int(0)],
+        [int(7), int(1), int(1)],
+        [int(7), int(2), int(1)],
+        [int(7), int(3), int(-1)],
+        [int(7), int(4), int(1)],
+        [int(7), int(5), int(-1)],
+        [int(7), int(6), int(-1)],
+        [int(11), int(0), int(0)],
+        [int(11), int(1), int(1)],
+        [int(11), int(2), int(-1)],
+        [int(11), int(3), int(1)],
+        [int(11), int(4), int(1)],
+        [int(11), int(5), int(1)],
+        [int(11), int(6), int(-1)],
+        [int(11), int(7), int(-1)],
+        [int(11), int(8), int(-1)],
+        [int(11), int(9), int(1)],
+        [int(11), int(10),int( -1)],
+        [int(13), int(0), int(0)],
+        [int(13), int(1), int(1)],
+        [int(13), int(2), int(-1)],
+        [int(13), int(3), int(1)],
+        [int(13), int(4), int(1)],
+        [int(13), int(5), int(-1)],
+        [int(13), int(6), int(-1)],
+        [int(13), int(7), int(-1)],
+        [int(13), int(8), int(-1)],
+        [int(13), int(9), int(1)],
+        [int(13), int(10), int(1)],
+        [int(13), int(11), int(-1)],
+        [int(13), int(12), int(1)],
+        [int(17), int(0), int(0)],
+        [int(17), int(1), int(1)],
+        [int(17), int(2), int(1)],
+        [int(17), int(3), int(-1)],
+        [int(17), int(4), int(1)],
+        [int(17), int(5), int(-1)],
+        [int(17), int(6), int(-1)],
+        [int(17), int(7), int(-1)],
+        [int(17), int(8), int(1)],
+        [int(17), int(9), int(1)]
+    ];
+
+    function testLegendreRange() public {
+        uint8 i;
+        uint8 j;
+        int8 leg;
         for(i = 0; i < smallOddPrimes.length; i++) {
             for(j = 0; j < 50; j++) {
                 leg = ModUtils.legendre(j, smallOddPrimes[i]);
-                Assert.isTrue(leg == 0 || leg == 1 || leg == -1, "legendre() should only return [-1, 1]");
+                Assert.isTrue(leg == 0 || leg == 1 || leg == -1, "legendre() should only return [-1, 0, 1]");
             }
+        }
+    }
+
+    function testLegendreList() public {
+        uint8 i;
+        int8 leg;
+
+        for(i = 0; i < smallOddPrimesLegendre.length; i++) {
+            leg = ModUtils.legendre(uint8(smallOddPrimesLegendre[i][1]), uint8(smallOddPrimesLegendre[i][0]));
+            Assert.equal(leg, smallOddPrimesLegendre[i][2], "legendre() result differed from list");
         }
     }
 
