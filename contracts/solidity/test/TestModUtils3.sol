@@ -34,7 +34,7 @@ contract TestModUtils3 {
     ];
 
     function testModSqrtAgainstNonSquares() public {
-        uint256 i;
+        uint8 i;
         uint256 a;
         uint256 p;
         uint256 root;

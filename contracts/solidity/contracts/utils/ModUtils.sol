@@ -35,14 +35,17 @@ library ModUtils {
         }
 
         uint256 s = p - 1;
-        uint256 e = 0;
+        // log_2(256) = 8 => uint8
+        uint8 e = 0;
 
         while (s % 2 == 0) {
-            s = s / 2; // TODO check operator rounds like Python
+            s = s / 2;
             e = e + 1;
         }
 
-        uint256 n = 2;
+		// Note the smaller int- finding n with Legendre symbol or -1
+        // should be quick
+        uint32 n = 2;
         while (legendre(n, p) != -1) {
             n = n + 1;
         }
@@ -50,9 +53,9 @@ library ModUtils {
 		uint256 x = modExp(a, (s + 1) / 2, p);
 		uint256 b = modExp(a, s, p);
 		uint256 g = modExp(n, s, p);
-		uint256 r = e;
+		uint8 r = e;
         uint256 gs = 0;
-        uint256 m = 0;
+        uint8 m = 0;
         uint256 t = b;
 
 		while (true) {
@@ -70,7 +73,7 @@ library ModUtils {
                 return x;
             }
 
-			gs = modExp(g, 2 ** (r - m - 1), p);
+			gs = modExp(g, uint256(2) ** (r - m - 1), p);
 			g = (gs * gs) % p;
 			x = (x * gs) % p;
 			b = (b * g) % p;
@@ -81,12 +84,12 @@ library ModUtils {
 
     function legendre(uint256 a, uint256 p)
         public
-        constant returns(int)
+        constant returns(int8)
     {
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
 
         if (raised == 0 || raised == 1) {
-            return int(raised);
+            return int8(raised);
         }
         else if (raised == p - 1) {
             return -1;
