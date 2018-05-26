@@ -21,17 +21,21 @@ library ModUtils {
         public
         constant returns(uint256)
     {
+
+        if (legendre(a, p) != 1) {
+            return 0;
+        }
+
         if (a == 0) {
             return 0;
         }
-        else if (p == 2) {
+
+        if (p == 2) {
             return p;
         }
-        else if (p % 4 == 3) {
+
+        if (p % 4 == 3) {
             return modExp(a, (p + 1) / 4, p);
-        }
-        else if (legendre(a, p) != 1) {
-            return 0;
         }
 
         uint256 s = p - 1;
