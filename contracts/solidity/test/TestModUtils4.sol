@@ -14,7 +14,6 @@ contract TestModUtils4 {
         uint256 root;
         uint256 i;
         uint256 a;
-        uint256 zero = 0;
 
         // a < p for small p
         for(i = 0; i < smallOddPrimes.length; i++) {
@@ -22,7 +21,7 @@ contract TestModUtils4 {
             for(a = 1; a < p; a++) {
                 root = a.modSqrt(p);
                 if (root != 0) {
-                    Assert.equal(a, (root * root) % p, "Invalid modular square root for a < p");
+                    Assert.equal(a % p, (root * root) % p, "Invalid modular square root for a < p");
                 }
             }
         }
@@ -30,17 +29,18 @@ contract TestModUtils4 {
 
     function testModSqrtAGreaterThanP() public {
         uint256 p;
-        uint256 square;
-        uint256 i;
+        uint256 root;
+        uint8 i;
         uint256 a;
-        uint256 zero = 0;
 
         // a > p for small p
         for(i = 0; i < smallOddPrimes.length; i++) {
             p = smallOddPrimes[i];
             for(a = p + 1; a < p + 10; a++) {
-                square = (a * a) % p;
-                Assert.equal(a, square.modSqrt(p), "Invalid modular square root for a > p");
+                root = a.modSqrt(p);
+                if (root != 0) {
+                    Assert.equal(a % p, (root * root) % p, "Invalid modular square root for a > p");
+                }
             }
         }
     }
