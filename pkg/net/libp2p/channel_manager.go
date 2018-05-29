@@ -4,16 +4,16 @@ import (
 	"context"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/net"
 	floodsub "github.com/libp2p/go-floodsub"
 	host "github.com/libp2p/go-libp2p-host"
 )
 
 type channelManager struct {
-	channeslMutex sync.Mutex
+	channelsMutex sync.Mutex
 	channels      map[string]*channel
 
 	pubsub *floodsub.PubSub
-	host   host.Host
 }
 
 func newChannelManager(
@@ -27,19 +27,50 @@ func newChannelManager(
 	return &channelManager{
 		channels: make(map[string]*channel),
 		pubsub:   gossipsub,
-		host:     p2phost,
 	}, nil
 }
 
-func (cm *channelManager) getChannel(name string) *channel {
-	cm.channeslMutex.Lock()
-	defer cm.channeslMutex.Unlock()
+func (cm *channelManager) getChannel(name string) (*channel, error) {
+	var (
+		channel *channel
+		exists  bool
+		err     error
+	)
 
-	channel, exists := cm.channels[name]
+	cm.channelsMutex.Lock()
+	channel, exists = cm.channels[name]
+	cm.channelsMutex.Unlock()
+
 	if !exists {
-		// TODO: no topic exists; create the broadcast channel
-		// TODO: return something informative ie. return cm.JoinChannel(name)
-		return nil
+		channel, err = cm.newChannel(name)
+		if err != nil {
+			return nil, err
+		}
+
+		// Ensure we update our cache of known channels
+		cm.channelsMutex.Lock()
+		cm.channels[name] = channel
+		cm.channelsMutex.Unlock()
 	}
-	return channel
+
+	return channel, nil
+}
+
+func (cm *channelManager) newChannel(name string) (*channel, error) {
+	sub, err := cm.pubsub.Subscribe(name)
+	if err != nil {
+		return nil, err
+	}
+
+	channel := &channel{
+		name:                        name,
+		subscription:                sub,
+		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler),
+		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
+		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
+	}
+
+	go channel.handleMessages()
+
+	return channel, nil
 }
