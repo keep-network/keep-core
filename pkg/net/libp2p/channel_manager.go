@@ -14,8 +14,7 @@ type channelManager struct {
 	channelsMutex sync.Mutex
 	channels      map[string]*channel
 
-	pubsubMutex sync.Mutex
-	pubsub      *floodsub.PubSub
+	pubsub *floodsub.PubSub
 }
 
 func newChannelManager(
@@ -57,12 +56,10 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		return nil, err
 	}
 
-	cm.pubsubMutex.Lock()
 	sub, err := cm.pubsub.Subscribe(name)
 	if err != nil {
 		return nil, err
 	}
-	cm.pubsubMutex.Unlock()
 
 	channel := &channel{
 		name:                        name,
