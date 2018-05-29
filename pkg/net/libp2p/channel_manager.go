@@ -51,8 +51,6 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 		cm.channelsMutex.Lock()
 		cm.channels[name] = channel
 		cm.channelsMutex.Unlock()
-
-		return channel, nil
 	}
 
 	return channel, nil
