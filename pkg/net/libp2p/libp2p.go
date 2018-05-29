@@ -116,7 +116,6 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 	return addrs, nil
 }
 
-// TODO: encrypted connections
 func buildPeerHost(
 	ctx context.Context,
 	listenAddrs []ma.Multiaddr,
@@ -125,14 +124,12 @@ func buildPeerHost(
 ) (host.Host, error) {
 	smuxTransport := makeSmuxTransport()
 
-	// TODO: Pass in protec and metrics reporter
 	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, peerStore, nil, smuxTransport, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	network := (*swarm.Network)(swrm)
-	// TODO: use our own host
 	opts := &basichost.HostOpts{NATManager: basichost.NewNATManager(network)}
 	h, err := basichost.NewHost(ctx, network, opts)
 	if err != nil {
