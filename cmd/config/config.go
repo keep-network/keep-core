@@ -1,4 +1,4 @@
-package conf
+package config
 
 import (
 	"fmt"
@@ -19,10 +19,8 @@ type Config struct {
 }
 
 var (
-	// Config contains global application settings
+	// KeepOpts contains global application settings
 	KeepOpts Config
-	// CurrentDir ...
-	CurrentDir string
 )
 
 // ReadConfig reads in the configuration file in .toml format.

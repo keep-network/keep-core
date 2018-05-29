@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"unicode"
 
-	"github.com/keep-network/keep-core/pkg/conf"
+	"github.com/keep-network/keep-core/cmd/config"
 	"github.com/urfave/cli"
 )
 
@@ -58,22 +58,22 @@ func ValidateConfig(c *cli.Context) (err error) {
 	configPath := c.String("config")
 	configPath, err = GetConfigFilePath(configPath)
 	if err != nil {
-		fmt.Printf("error with conf file path:%s\n", err)
+		fmt.Printf("error with config file path:%s\n", err)
 	}
 
-	conf.KeepOpts, err = conf.ReadConfig(configPath)
+	config.KeepOpts, err = config.ReadConfig(configPath)
 	if err != nil {
-		fmt.Printf("error reading conf file:%s\n", err)
+		fmt.Printf("error reading config file:%s\n", err)
 	}
 
 	warnings := warningsType{}
-	url := conf.KeepOpts.Ethereum.URL
+	url := config.KeepOpts.Ethereum.URL
 
-	accountAddress := conf.KeepOpts.Ethereum.Account.Address
-	accountKeyFile := conf.KeepOpts.Ethereum.Account.KeyFile
-	accountKeyFilePassword := conf.KeepOpts.Ethereum.Account.KeyFilePassword
-	contractKeepRandomBeaconAddress := conf.KeepOpts.Ethereum.ContractAddresses["KeepRandomBeacon"]
-	contractGroupContractAddress := conf.KeepOpts.Ethereum.ContractAddresses["GroupContract"]
+	accountAddress := config.KeepOpts.Ethereum.Account.Address
+	accountKeyFile := config.KeepOpts.Ethereum.Account.KeyFile
+	accountKeyFilePassword := config.KeepOpts.Ethereum.Account.KeyFilePassword
+	contractKeepRandomBeaconAddress := config.KeepOpts.Ethereum.ContractAddresses["KeepRandomBeacon"]
+	contractGroupContractAddress := config.KeepOpts.Ethereum.ContractAddresses["GroupContract"]
 
 	if valid, urlWarning := isURL(url); !valid {
 		warnings = append(warnings, urlWarning)
