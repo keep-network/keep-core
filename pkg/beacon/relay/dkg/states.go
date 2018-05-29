@@ -108,7 +108,7 @@ func (cs *commitmentState) receive(msg net.Message) error {
 			}
 
 			cs.member.AddCommitmentsFromID(
-				*commitmentMsg.id,
+				commitmentMsg.id,
 				commitmentMsg.Commitments,
 			)
 
@@ -147,7 +147,7 @@ func (ss *sharingState) initiate() error {
 
 		err := ss.channel.SendTo(
 			net.ProtocolIdentifier(receiverID),
-			&MemberShareMessage{&ss.member.BlsID, receiverID, &share})
+			&MemberShareMessage{&ss.member.BlsID, receiverID, share})
 
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func (ss *sharingState) receive(msg net.Message) error {
 	switch shareMsg := msg.Payload().(type) {
 	case *MemberShareMessage:
 		if shareMsg.receiverID.IsEqual(&ss.member.BlsID) {
-			ss.member.AddShareFromID(*shareMsg.id, *shareMsg.Share)
+			ss.member.AddShareFromID(shareMsg.id, shareMsg.Share)
 		}
 		return nil
 	}
@@ -267,9 +267,10 @@ func (js *justifyingState) receive(msg net.Message) error {
 
 			for accuserID, justification := range justificationsMsg.justifications {
 				js.member.RecordJustificationFromID(
-					*justificationsMsg.id,
-					accuserID,
-					justification)
+					justificationsMsg.id,
+					&accuserID,
+					justification,
+				)
 			}
 
 			js.seenJustifications[*justificationsMsg.id] = struct{}{}

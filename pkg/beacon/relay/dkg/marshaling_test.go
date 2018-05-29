@@ -100,11 +100,11 @@ func TestAccusationsMessageRoundTrip(t *testing.T) {
 
 func TestJustificationsMessageRoundTrip(t *testing.T) {
 	id := generateBlsID()
-	justifications := make(map[bls.ID]bls.SecretKey)
+	justifications := make(map[bls.ID]*bls.SecretKey)
 	for i := 0; i < 10; i++ {
 		id := generateBlsID()
 		sk := generateBlsSecretKey()
-		justifications[*id] = *sk
+		justifications[*id] = sk
 	}
 
 	msg := &JustificationsMessage{id, justifications}
@@ -126,7 +126,7 @@ func TestJustificationsMessageRoundTrip(t *testing.T) {
 				"Expected starting id [%v] to exist in round-trip justifications",
 				id.GetHexString())
 		} else {
-			assertSecretKeyRoundTrip(t, &sk, &unmarshaledSk)
+			assertSecretKeyRoundTrip(t, sk, unmarshaledSk)
 		}
 	}
 }

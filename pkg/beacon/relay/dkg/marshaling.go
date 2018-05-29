@@ -217,7 +217,7 @@ func (m *JustificationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	m.justifications = make(map[bls.ID]bls.SecretKey, len(pbJustifications.JustificationsByID))
+	m.justifications = make(map[bls.ID]*bls.SecretKey, len(pbJustifications.JustificationsByID))
 	for hexID, skBytes := range pbJustifications.JustificationsByID {
 		id := bls.ID{}
 		err = id.SetHexString(hexID)
@@ -230,7 +230,7 @@ func (m *JustificationsMessage) Unmarshal(bytes []byte) error {
 			return err
 		}
 
-		m.justifications[id] = sk
+		m.justifications[id] = &sk
 	}
 
 	return nil
