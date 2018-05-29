@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -41,11 +42,44 @@ func TestProviderReturnsChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = provider.ChannelFor(testName)
-	if err != nil {
+	if _, err = provider.ChannelFor(testName); err != nil {
 		t.Fatalf("expected: test to fail with [%v]\nactual:   failed with [%v]",
 			nil, err,
 		)
+	}
+}
+
+func TestBroadcastChannel(t *testing.T) {
+	t.Skip()
+
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	tests := map[string]struct {
+		name          string
+		expectedError func(string) error
+	}{
+		"Send succeeds": {
+			name: "testchannel",
+			expectedError: func(name string) error {
+				return nil
+			},
+		},
+	}
+
+	provider, err := Connect(ctx, generateDeterministicNetworkConfig(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			_, err := provider.ChannelFor(test.name)
+			if !reflect.DeepEqual(test.expectedError(test.name), err) {
+				t.Fatalf("expected test to fail with [%v] instead failed with [%v]",
+					test.expectedError(test.name), err,
+				)
+			}
+		})
 	}
 }
 
