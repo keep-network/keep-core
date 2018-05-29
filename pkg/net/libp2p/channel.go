@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -84,4 +85,20 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 	c.unmarshalersByType[tpe] = unmarshaler
 	return nil
+}
+
+func (c *channel) handleMessages() {
+	defer c.sub.Cancel()
+	for {
+		// TODO: thread in a context with cancel
+		msg, err := c.sub.Next(context.Background())
+		if err != nil {
+			// TODO: handle error - different error types
+			// result in different outcomes
+			fmt.Println(err)
+			return
+		}
+		// TODO: handle message
+		fmt.Println(msg)
+	}
 }

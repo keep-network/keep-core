@@ -74,9 +74,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	cm.channels[name] = channel
 	cm.channelsMutex.Unlock()
 
-	return channel, cm.joinChannel(name)
-}
+	go channel.handleMessages()
 
-func (cm *channelManager) joinChannel(name string) error {
-	return nil
+	return channel, nil
 }
