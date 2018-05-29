@@ -99,7 +99,7 @@ func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	return &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
 }
 
-func testProxy(ctx context.Context, t *testing.T) *provider {
+func testProvider(ctx context.Context, t *testing.T) *provider {
 	testConfig := generateDeterministicNetworkConfig(t)
 
 	host, err := discoverAndListen(ctx, testConfig)
@@ -118,7 +118,7 @@ func testProxy(ctx context.Context, t *testing.T) *provider {
 func buildTestProxies(ctx context.Context, t *testing.T, num int) []*provider {
 	proxies := make([]*provider, num)
 	for i := 0; i < num; i++ {
-		proxy := testProxy(ctx, t)
+		proxy := testProvider(ctx, t)
 		proxies = append(proxies, proxy)
 	}
 	return proxies
