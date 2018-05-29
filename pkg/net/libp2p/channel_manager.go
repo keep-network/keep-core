@@ -31,12 +31,28 @@ func newChannelManager(
 }
 
 func (cm *channelManager) getChannel(name string) (*channel, error) {
+	var (
+		channel *channel
+		exists  bool
+		err     error
+	)
+
 	cm.channelsMutex.Lock()
-	channel, exists := cm.channels[name]
+	channel, exists = cm.channels[name]
 	cm.channelsMutex.Unlock()
 
 	if !exists {
-		return cm.newChannel(name)
+		channel, err = cm.newChannel(name)
+		if err != nil {
+			return nil, err
+		}
+
+		// Ensure we update our cache of known channels
+		cm.channelsMutex.Lock()
+		cm.channels[name] = channel
+		cm.channelsMutex.Unlock()
+
+		return channel, nil
 	}
 
 	return channel, nil
@@ -50,16 +66,11 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 
 	channel := &channel{
 		name:                        name,
-		sub:                         sub,
+		subscription:                sub,
 		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler),
 		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
 	}
-
-	// Ensure we update our cache of known channels
-	cm.channelsMutex.Lock()
-	cm.channels[name] = channel
-	cm.channelsMutex.Unlock()
 
 	go channel.handleMessages()
 
