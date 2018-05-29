@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 
+	"path/filepath"
+
 	"github.com/urfave/cli"
 )
 
@@ -24,7 +26,7 @@ var (
 	Threshold int
 
 	// DefaultConfigPath is a config.toml file in the root directory
-	DefaultConfigPath = fmt.Sprintf("%s/%s", ".", DefaultConfigFileName)
+	DefaultConfigPath = filepath.Join("./", DefaultConfigFileName)
 
 	// Commands contains the list of keep client commands
 	Commands = []cli.Command{
