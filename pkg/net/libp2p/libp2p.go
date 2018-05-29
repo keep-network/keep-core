@@ -3,7 +3,6 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -73,14 +72,6 @@ func discoverAndListen(
 		}
 	}
 
-	nonLocalAddrs := make([]ma.Multiaddr, 0)
-	for _, addr := range addrs {
-		stringily := fmt.Sprintf("%v", addr)
-		if strings.Contains(stringily, "10.240") {
-			nonLocalAddrs = append(nonLocalAddrs, addr)
-		}
-	}
-
 	peerIdentity := config.identity
 	if peerIdentity == nil {
 		// FIXME: revisit this fallback decision. We run into the case
@@ -97,7 +88,7 @@ func discoverAndListen(
 		return nil, err
 	}
 
-	peerHost, err := buildPeerHost(ctx, nonLocalAddrs, peerIdentity.id, peerStore)
+	peerHost, err := buildPeerHost(ctx, addrs, peerIdentity.id, peerStore)
 	if err != nil {
 		return nil, err
 	}
