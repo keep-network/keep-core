@@ -47,9 +47,9 @@ func (warnings *warningsType) delete(selector string) {
 }
 
 const (
-	cryptoRegexPattern  = "([13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-fA-F0-9]{40}|\\w+\\.eth(\\W|$)|(?i:iban:)?XE[0-9]{2}[a-zA-Z]{16})|^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$"
-	wsURLRegexPattern   = "ws:\\/\\/.+:.+"
-	invalidPasswordRule = "invalid password, failed (%s) rule"
+	cryptoRegexPattern          = "([13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-fA-F0-9]{40}|\\w+\\.eth(\\W|$)|(?i:iban:)?XE[0-9]{2}[a-zA-Z]{16})|^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$"
+	ethereumNodeURLRegexPattern = "ws:\\/\\/.+:.+|\\S.ipc"
+	invalidPasswordRule         = "invalid password, failed (%s) rule"
 )
 
 // ValidateConfig validates the contents of the config file
@@ -75,7 +75,7 @@ func ValidateConfig(c *cli.Context) (err error) {
 	contractKeepRandomBeaconAddress := config.KeepOpts.Ethereum.ContractAddresses["KeepRandomBeacon"]
 	contractGroupContractAddress := config.KeepOpts.Ethereum.ContractAddresses["GroupContract"]
 
-	if valid, urlWarning := isURL(url); !valid {
+	if valid, urlWarning := isEthereumNodeURL(url); !valid {
 		warnings = append(warnings, urlWarning)
 	}
 	if valid, accountAddressWarning := isAddress(accountAddress, "accountAddress"); !valid {
@@ -117,9 +117,9 @@ func ValidateConfig(c *cli.Context) (err error) {
 	return nil
 }
 
-func isURL(url string) (matched bool, warning string) {
+func isEthereumNodeURL(url string) (matched bool, warning string) {
 	// returns true if this is a valid URL
-	matched, err := regexp.MatchString(wsURLRegexPattern, url)
+	matched, err := regexp.MatchString(ethereumNodeURLRegexPattern, url)
 	if err != nil || !matched {
 		warning = fmt.Sprintf("error matching URL (%s) - %v", url, err)
 		return
