@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -36,17 +35,32 @@ func TestProviderReturnsChannel(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
+	testName := "testname"
+
+	provider, err := Connect(ctx, generateDeterministicNetworkConfig(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = provider.ChannelFor(testName)
+	if !reflect.DeepEqual(nil, err) {
+		t.Fatalf("expected test to fail with [%v] instead failed with [%v]",
+			nil, err,
+		)
+	}
+}
+
+func TestBroadcastChannel(t *testing.T) {
+	t.Skip()
+
+	ctx, cancel := newTestContext()
+	defer cancel()
+
 	tests := map[string]struct {
 		name          string
 		expectedError func(string) error
 	}{
-		"channel for name does not exist": {
-			name: "",
-			expectedError: func(name string) error {
-				return fmt.Errorf("invalid channel name")
-			},
-		},
-		"channel for name does exist": {
+		"Send succeeds": {
 			name: "testchannel",
 			expectedError: func(name string) error {
 				return nil
@@ -60,24 +74,18 @@ func TestProviderReturnsChannel(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-
-			broadcastChannel, err := provider.ChannelFor(test.name)
+			_, err := provider.ChannelFor(test.name)
 			if !reflect.DeepEqual(test.expectedError(test.name), err) {
 				t.Fatalf("expected test to fail with [%v] instead failed with [%v]",
 					test.expectedError(test.name), err,
 				)
 			}
-			if err == nil {
-				// TODO: Test that broadcastChannel does things
-			}
-			fmt.Println(broadcastChannel)
 		})
 	}
 }
 
 func TestNetworkConnect(t *testing.T) {
 	t.Skip()
-	t.Parallel()
 
 	ctx, cancel := newTestContext()
 	defer cancel()

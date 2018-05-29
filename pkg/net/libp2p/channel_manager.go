@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -43,19 +42,7 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 	return channel, nil
 }
 
-func verifyGroupName(name string) error {
-	if name == "" {
-		return fmt.Errorf("invalid channel name")
-	}
-	// TODO: some other conditions
-	return nil
-}
-
 func (cm *channelManager) newChannel(name string) (*channel, error) {
-	if err := verifyGroupName(name); err != nil {
-		return nil, err
-	}
-
 	sub, err := cm.pubsub.Subscribe(name)
 	if err != nil {
 		return nil, err
