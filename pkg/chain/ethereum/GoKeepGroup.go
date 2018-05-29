@@ -91,40 +91,35 @@ func NewKeepGroup(pv *provider) (rv *KeepGroup, err error) {
 	}, nil
 }
 
-func (kg *KeepGroup) Initialized() (isInitialize bool, err error) {
-	isInitialize, err = kg.Caller.Initialized(kg.CallerOpts)
-	return
+func (kg *KeepGroup) Initialized() (bool, error) {
+	return kg.Caller.Initialized(kg.CallerOpts)
 }
 
 func (kg *KeepGroup) SetGroupThreshold(groupThreshold int) (tx *types.Transaction, err error) {
-	thr := big.NewInt(0).SetInt64(int64(groupThreshold))
+	thr := big.NewInt(int64(groupThreshold))
 	// function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
 	tx, err = kg.Transactor.SetGroupThreshold(kg.TransactorOpts, thr)
 	return
 }
 
-func (kg *KeepGroup) GroupExists(groupPubKey []byte) (tx *types.Transaction, err error) {
+func (kg *KeepGroup) GroupExists(groupPubKey []byte) (*types.Transaction, error) {
 	//    function groupExists(bytes32 _groupPubKey) public {
-	tx, err = kg.Transactor.GroupExists(kg.TransactorOpts, ToByte32(groupPubKey))
-	return
+	return kg.Transactor.GroupExists(kg.TransactorOpts, ToByte32(groupPubKey))
 }
 
-func (kg *KeepGroup) AddMemberToGroup(groupPubKey, memberPubKey []byte) (tx *types.Transaction, err error) {
+func (kg *KeepGroup) AddMemberToGroup(groupPubKey, memberPubKey []byte) (*types.Transaction, error) {
 	// function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey) public isStaked returns(bool) {
-	tx, err = kg.Transactor.AddMemberToGroup(kg.TransactorOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
-	return
+	return kg.Transactor.AddMemberToGroup(kg.TransactorOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
 }
 
-func (kg *KeepGroup) DisolveGroup(groupPubKey []byte) (tx *types.Transaction, err error) {
+func (kg *KeepGroup) DissolveGroup(groupPubKey []byte) (*types.Transaction, error) {
 	// function disolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
-	tx, err = kg.Transactor.DisolveGroup(kg.TransactorOpts, ToByte32(groupPubKey))
-	return
+	return kg.Transactor.DisolveGroup(kg.TransactorOpts, ToByte32(groupPubKey))
 }
 
-func (kg *KeepGroup) CreateGroup(groupPubKey []byte) (tx *types.Transaction, err error) {
+func (kg *KeepGroup) CreateGroup(groupPubKey []byte) (*types.Transaction, error) {
 	// function createGroup(bytes32 _groupPubKey) public returns(bool) {
-	tx, err = kg.Transactor.CreateGroup(kg.TransactorOpts, ToByte32(groupPubKey))
-	return
+	return kg.Transactor.CreateGroup(kg.TransactorOpts, ToByte32(groupPubKey))
 }
 
 func (kg *KeepGroup) GetNumberOfGroups() (ng int, err error) {
@@ -136,20 +131,20 @@ func (kg *KeepGroup) GetNumberOfGroups() (ng int, err error) {
 	return
 }
 
-func (kg *KeepGroup) GetGroupNMembers(i int) (nm int, err error) {
-	iBig := big.NewInt(0).SetInt64(int64(i))
+func (kg *KeepGroup) GetGroupNMembers(groupNumber int) (nm int, err error) {
+	iBigGroupNumber := big.NewInt(int64(groupNumber))
 	// function getGroupNMembers(uint256 _i) public view returns(uint256) {
-	ngBig, err := kg.Caller.GetGroupNMembers(kg.CallerOpts, iBig)
+	ngBig, err := kg.Caller.GetGroupNMembers(kg.CallerOpts, iBigGroupNumber)
 	if err == nil {
 		nm = int(ngBig.Int64())
 	}
 	return
 }
 
-func (kg *KeepGroup) GetGroupPubKey(i int) (pub []byte, err error) {
-	iBig := big.NewInt(0).SetInt64(int64(i))
+func (kg *KeepGroup) GetGroupPubKey(groupNumber int) (pub []byte, err error) {
+	iBigGroupNumber := big.NewInt(int64(groupNumber))
 	// function getGroupPubKey(uint256 _i) public view returns(bytes32) {
-	tmp, err := kg.Caller.GetGroupPubKey(kg.CallerOpts, iBig)
+	tmp, err := kg.Caller.GetGroupPubKey(kg.CallerOpts, iBigGroupNumber)
 	if err == nil {
 		pub = tmp[:]
 	}
@@ -165,9 +160,30 @@ func (kg *KeepGroup) GetGroupNumber(groupPubKey []byte) (nm int, err error) {
 	return
 }
 
+func (kg *KeepGroup) GetAllGroupMembers(groupPubKey []byte) (keySet [][]byte, err error) {
+	groupNumber, err := kg.GetGroupNumber(groupPubKey)
+	if err != nil {
+		return
+	}
+	nm, err := kg.GetGroupNMembers(groupNumber)
+	if err != nil {
+		return
+	}
+	keySet = make([][]byte, 0, nm)
+	for i := 0; i < nm; i++ {
+		memberKey, err0 := kg.GetGroupPubKey(i)
+		if err0 != nil {
+			err = err0
+			return
+		}
+		keySet = append(keySet, memberKey)
+	}
+	return
+}
+
 func (kg *KeepGroup) GetGroupMemberPubKey(i, j int) (pub []byte, err error) {
-	iBig := big.NewInt(0).SetInt64(int64(i))
-	jBig := big.NewInt(0).SetInt64(int64(j))
+	iBig := big.NewInt(int64(i))
+	jBig := big.NewInt(int64(j))
 	// function getGroupMemberPubKey(uint256 _i, uint256 _j) public view returns(bytes32) {
 	tmp, err := kg.Caller.GetGroupMemberPubKey(kg.CallerOpts, iBig, jBig)
 	if err == nil {

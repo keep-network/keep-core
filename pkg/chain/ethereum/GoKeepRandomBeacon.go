@@ -91,31 +91,26 @@ func NewKeepRandomBeacon(pv *provider) (rv *KeepRandomBeacon, err error) {
 	}, nil
 }
 
-func (krb *KeepRandomBeacon) Initialized() (isInitialize bool, err error) {
-	isInitialize, err = krb.Caller.Initialized(krb.CallerOpts)
-	return
+func (krb *KeepRandomBeacon) Initialized() (bool, error) {
+	return krb.Caller.Initialized(krb.CallerOpts)
 }
 
-func (krb *KeepRandomBeacon) HasMinimumStake(address common.Address) (hasMinimum bool, err error) {
-	hasMinimum, err = krb.Caller.HasMinimumStake(krb.CallerOpts, address)
-	return
+func (krb *KeepRandomBeacon) HasMinimumStake(address common.Address) (bool, error) {
+	return krb.Caller.HasMinimumStake(krb.CallerOpts, address)
 }
 
-func (krb *KeepRandomBeacon) RequestRelayEntry(blockReward *big.Int, rawseed []byte) (tx *types.Transaction, err error) {
+func (krb *KeepRandomBeacon) RequestRelayEntry(blockReward *big.Int, rawseed []byte) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
-	tx, err = krb.Transactor.RequestRelayEntry(krb.TransactorOpts, blockReward, seed)
-	return
+	return krb.Transactor.RequestRelayEntry(krb.TransactorOpts, blockReward, seed)
 }
 
-func (krb *KeepRandomBeacon) RelayEntry(requestID *big.Int, groupSignature *big.Int, groupID *big.Int, previousEntry *big.Int) (tx *types.Transaction, err error) {
-	tx, err = krb.Transactor.RelayEntry(krb.TransactorOpts, requestID, groupSignature, groupID, previousEntry)
-	return
+func (krb *KeepRandomBeacon) RelayEntry(requestID *big.Int, groupSignature *big.Int, groupID *big.Int, previousEntry *big.Int) (*types.Transaction, error) {
+	return krb.Transactor.RelayEntry(krb.TransactorOpts, requestID, groupSignature, groupID, previousEntry)
 }
 
-func (krb *KeepRandomBeacon) SubmitGroupPublicKey(groupPublicKey []byte, requestID *big.Int) (tx *types.Transaction, err error) {
+func (krb *KeepRandomBeacon) SubmitGroupPublicKey(groupPublicKey []byte, requestID *big.Int) (*types.Transaction, error) {
 	gpk := ByteSliceToSliceOf1Byte(groupPublicKey)
-	tx, err = krb.Transactor.SubmitGroupPublicKey(krb.TransactorOpts, gpk, requestID)
-	return
+	return krb.Transactor.SubmitGroupPublicKey(krb.TransactorOpts, gpk, requestID)
 }
 
 type FxRelayEntryRequested func(requestID *big.Int, payment *big.Int, blockReward *big.Int, seed *big.Int, blockNumber *big.Int)
