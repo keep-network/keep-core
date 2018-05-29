@@ -1,41 +1,25 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-
-	"github.com/keep-network/keep-core/pkg/conf"
 )
 
-// DefaultConfigFileName sets default file name; can be changed with --config CLI flag
-const DefaultConfigFileName = "config.toml"
-
-// GetConfigFilePath ...
+// GetConfigFilePath returns the full path to the project confiuration file
 func GetConfigFilePath(configPath string) (string, error) {
 	if configPath == "" {
-		configPath = filepath.Join(conf.CurrentDir, DefaultConfigFileName)
+		configPath = DefaultConfigPath
 	}
-	if exist, err := FileExists(configPath); err != nil {
-		return "", err
-	} else if !exist {
+	if exists := FileExists(configPath); !exists {
 		return "", fmt.Errorf("config file (%s) not found", configPath)
 	}
 	return configPath, nil
 }
 
-// FileExists ...
-func FileExists(path string) (ok bool, err error) {
-	if path == "" {
-		return false, errors.New("no path provided")
+// FileExists returns true if a file at the given path exists
+func FileExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
 	}
-	_, err = os.Lstat(path)
-	if err != nil {
-		return false, err
-	}
-	if os.IsNotExist(err) {
-		return false, err
-	}
-	return true, nil
+	return true
 }

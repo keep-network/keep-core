@@ -139,9 +139,7 @@ func isAddress(address, name string) (matched bool, warning string) {
 
 func isFile(path string) (found bool, warning string) {
 	// returns true if this file exists
-	if exist, err := FileExists(path); err != nil {
-		warning = fmt.Sprintf("unable to read file - error: %v", err)
-	} else if !exist {
+	if exists := FileExists(path); !exists {
 		warning = fmt.Sprintf("file does not exist: %s", path)
 	}
 	return (len(warning) == 0), warning
