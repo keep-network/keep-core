@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
@@ -19,15 +18,13 @@ import (
 // SmokeTest performs a simulated distributed key generation and verifyies that the members can do a threshold signature
 func SmokeTest(c *cli.Context) error {
 
-	groupSize, err := strconv.Atoi(c.String("group-size"))
-	if err == nil {
-		local.GroupSize = groupSize
+	if len(os.Args)%2 != 0 {
+		// Flags passed to smoke-test command should come in pairs, e.g., -g 12 -t 4.  Passing 12 alone should fail.
+		return cli.NewExitError(fmt.Sprintf("Invalid argument(s) %+v passed to command: %s", os.Args[2:], os.Args[1]), 1)
 	}
 
-	threshold, err := strconv.Atoi(c.String("threshold"))
-	if err == nil {
-		local.Threshold = threshold
-	}
+	local.GroupSize = c.Int("group-size")
+	local.Threshold = c.Int("threshold")
 
 	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", local.GroupSize, local.Threshold))
 	chainHandle := local.Connect()
