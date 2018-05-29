@@ -14,7 +14,8 @@ type channelManager struct {
 	channelsMutex sync.Mutex
 	channels      map[string]*channel
 
-	pubsub *floodsub.PubSub
+	pubsubMutex sync.Mutex
+	pubsub      *floodsub.PubSub
 }
 
 func newChannelManager(
@@ -33,12 +34,13 @@ func newChannelManager(
 
 func (cm *channelManager) getChannel(name string) (*channel, error) {
 	cm.channelsMutex.Lock()
-	defer cm.channelsMutex.Unlock()
-
 	channel, exists := cm.channels[name]
+	cm.channelsMutex.Unlock()
+
 	if !exists {
 		return cm.newChannel(name)
 	}
+
 	return channel, nil
 }
 
@@ -55,18 +57,25 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		return nil, err
 	}
 
+	cm.pubsubMutex.Lock()
 	sub, err := cm.pubsub.Subscribe(name)
 	if err != nil {
 		return nil, err
 	}
+	cm.pubsubMutex.Unlock()
 
 	channel := &channel{
 		name:                        name,
 		sub:                         sub,
-		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler, 0),
+		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler),
 		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
 	}
+
+	// Ensure we update our cache of known channels
+	cm.channelsMutex.Lock()
+	cm.channels[name] = channel
+	cm.channelsMutex.Unlock()
 
 	return channel, cm.joinChannel(name)
 }
