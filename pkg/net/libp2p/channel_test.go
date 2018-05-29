@@ -9,8 +9,6 @@ import (
 )
 
 func TestRegisterIdentifier(t *testing.T) {
-	t.Parallel()
-
 	var (
 		peerID    = &identity{id: peer.ID("")}
 		testProto = testProtocolIdentifier(struct{}{})

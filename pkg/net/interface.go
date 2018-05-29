@@ -44,7 +44,7 @@ type TaggedMarshaler interface {
 // named BroadcastChannel, and the ability to return a provider type, which is
 // an informational string indicating what type of provider this is.
 type Provider interface {
-	ChannelFor(name string) BroadcastChannel
+	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 }
 

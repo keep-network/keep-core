@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -9,8 +10,8 @@ import (
 )
 
 type channel struct {
-	name string
-	sub  *floodsub.Subscription
+	name         string
+	subscription *floodsub.Subscription
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
@@ -84,4 +85,20 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 	c.unmarshalersByType[tpe] = unmarshaler
 	return nil
+}
+
+func (c *channel) handleMessages() {
+	defer c.subscription.Cancel()
+	for {
+		// TODO: thread in a context with cancel
+		msg, err := c.subscription.Next(context.Background())
+		if err != nil {
+			// TODO: handle error - different error types
+			// result in different outcomes
+			fmt.Println(err)
+			return
+		}
+		// TODO: handle message
+		fmt.Println(msg)
+	}
 }
