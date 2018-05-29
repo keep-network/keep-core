@@ -13,6 +13,8 @@ type channel struct {
 	name         string
 	subscription *floodsub.Subscription
 
+	messageBus chan net.Message
+
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
 
@@ -37,6 +39,11 @@ func (c *channel) SendTo(
 }
 
 func (c *channel) Recv(h net.HandleMessageFunc) error {
+	for message := range c.messageBus {
+		if err := h(message); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -98,7 +105,53 @@ func (c *channel) handleMessages() {
 			fmt.Println(err)
 			return
 		}
+		if err := c.processMessage(msg); err != nil {
+			fmt.Println(err)
+		}
 		// TODO: handle message
 		fmt.Println(msg)
 	}
+}
+
+func (c *channel) processMessage(message *floodsub.Message) error {
+	senderIdentifier := &identity{id: message.GetFrom()}
+
+	c.identifiersMutex.Lock()
+	protocolIdentifier := c.transportToProtoIdentifiers[senderIdentifier]
+	c.identifiersMutex.Unlock()
+
+	data := message.GetData()
+	// 1. Unmarshall the message in to the Envelope
+	// 2. Do the whole receiver thing -> senderIdentifier
+	// 3. payload is a gossip message
+	// 4. Unmarshall again to get the underlying gossip message
+	// 5. Since the protocol type is on the gossip message, let's
+	//    have an enum on the gossip message that keys us to the type of message that this is.
+	// 6. Construct an internal.BasicMessage to fire back to the protocol
+	// var payload interface{}
+
+	// if err := proto.Unmarshal(data, payload); err != nil {
+	// 	return err
+	// }
+
+	// unmarshaler, found := c.unmarshalersByType[payload.Type()]
+	// if !found {
+	// 	return fmt.Errorf("Couldn't find unmarshaler for type %s", payload.Type())
+	// }
+
+	// unmarshaled := unmarshaler()
+	// if err := unmarshaled.Unmarshal(bytes); err != nil {
+	// 	return err
+	// }
+
+	// protocolMessage :=
+	// 	internal.BasicMessage(
+	// 		senderIdentifier,
+	// 		protocolIdentifier,
+	// 		interface{},
+	// 	)
+
+	// c.messageBus <- data
+	fmt.Println(protocolIdentifier, data)
+	return nil
 }

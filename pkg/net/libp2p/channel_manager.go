@@ -65,6 +65,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	channel := &channel{
 		name:                        name,
 		subscription:                sub,
+		messageBus:                  make(chan net.Message),
 		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler),
 		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
