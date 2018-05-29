@@ -26,7 +26,7 @@ func TestProviderReturnsType(t *testing.T) {
 	}
 
 	if provider.Type() != expectedType {
-		t.Fatalf("Received a provider with type [%s] expected provider type [%s]",
+		t.Fatalf("expected: provider type [%s]\nactual: provider type [%s]",
 			provider.Type(), expectedType,
 		)
 	}
