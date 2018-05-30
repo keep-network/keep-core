@@ -13,8 +13,6 @@ import (
 var client *ethereum.Provider
 
 func TestConnectToServer(t *testing.T) {
-	// do some testing using the client connection
-	// xyzzy - use JSON rpc to pull back version
 }
 
 var (
