@@ -12,7 +12,8 @@
 // This package does not implement any synchronization or network operations;
 // instead, it is meant to be the core implementation of distributed key
 // generation and threshold signing, and can be plugged into separate sync
-// and/or networking setups.
+// and/or networking setups. This also means that none of the underlying
+// implementation in this package is thread-safe.
 //
 // The distributed key generation approach is based on [GJKR 99], which in turn
 // relies partially on the verifiable secret sharing approach in [Ped91b].
@@ -370,7 +371,7 @@ func (sm *SharingMember) InitializeJustification() *JustifyingMember {
 
 // AddAccusationFromID registers an accusation sent by the member with the given
 // `senderID` against the member with id `accusedID`, claiming the accused sent
-// an invalid share to the sender.
+// an invalid share to the sender. The accusation may be against this member.
 func (jm *JustifyingMember) AddAccusationFromID(senderID *bls.ID, accusedID *bls.ID) {
 	if accusedID.IsEqual(&jm.BlsID) {
 		jm.accuserIDs = append(jm.accuserIDs, *senderID)
@@ -452,6 +453,7 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
 
+	// Note: this member is counted as a qualified member.
 	if len(jm.receivedShares) < jm.threshold-1 {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
