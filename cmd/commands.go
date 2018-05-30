@@ -26,7 +26,7 @@ var (
 	Threshold int
 
 	// DefaultConfigPath is a config.toml file in the root directory
-	DefaultConfigPath = filepath.Join("../", DefaultConfigFileName)
+	DefaultConfigPath = filepath.Join("test", DefaultConfigFileName)
 
 	// Commands contains the list of keep client commands
 	Commands = []cli.Command{
