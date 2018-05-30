@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultCLIBinaryName  = "../keep-core"
+	defaultCLIBinaryName  = "../keep-client" // Can use CLI_BINARY env variable
 	defaultVerboseLogging = false
 	testFileMode          = os.FileMode(0640)
 )
