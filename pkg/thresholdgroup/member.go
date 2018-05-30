@@ -468,7 +468,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
 			jm.threshold,
-			len(jm.receivedShares),
+			len(jm.receivedShares)+1,
 		)
 	}
 
