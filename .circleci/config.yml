@@ -62,7 +62,7 @@ jobs:
       - run:
           name: Run Go tests
           command: |
-            docker run -w /go/src/github.com/keep-network/keep-core go_build_env go test -timeout=60s ./.../
+            docker run -w /go/src/github.com/keep-network/keep-core go_build_env go test -race -count=2 -timeout=60s ./.../
       - run:
           name: Save Docker image layer cache
           command: |
