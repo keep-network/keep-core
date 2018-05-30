@@ -10,7 +10,8 @@ func TestReadConfig(t *testing.T) {
 
 	cfg, err := ReadConfig("./test/config.toml")
 	if err != nil {
-		t.Errorf("Error:%s\n", err)
+		dir, _ = os.Getwd()
+		t.Errorf("Error: %s, in %s, fn=./test/config.toml\n", err, dir)
 	}
 	expectedURL := "ws://192.168.0.157:8546"
 	if cfg.Ethereum.URL != expectedURL {
