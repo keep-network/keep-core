@@ -6,11 +6,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/config"
 )
 
-var client *ethereum.Provider
+var client chain.Provider
 
 func TestConnectToServer(t *testing.T) {
 }

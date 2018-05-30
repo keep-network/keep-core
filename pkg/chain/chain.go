@@ -26,3 +26,6 @@ type Handle interface {
 	RandomBeacon() beacon.ChainInterface
 	ThresholdRelay() relay.ChainInterface
 }
+
+type Provider interface {
+}
