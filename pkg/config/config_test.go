@@ -10,7 +10,7 @@ func TestReadConfig(t *testing.T) {
 
 	cfg, err := ReadConfig("./test/config.toml")
 	if err != nil {
-		dir, _ = os.Getwd()
+		dir, _ := os.Getwd()
 		t.Errorf("Error: %s, in %s, fn=./test/config.toml\n", err, dir)
 	}
 	expectedURL := "ws://192.168.0.157:8546"
