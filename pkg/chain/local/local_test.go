@@ -23,22 +23,22 @@ func TestLocalBlockWaiter(t *testing.T) {
 		},
 		"doesn't wait if 0 blocks": {
 			blockWait:    0,
-			expectation:  time.Duration(20) * time.Microsecond,
+			expectation:  time.Duration(600) * time.Millisecond,
 			errorMessage: "Failed for a 0 block wait; expected %s but took %s.",
 		},
 		"invalid value": {
 			blockWait:    -1,
-			expectation:  time.Duration(20) * time.Microsecond,
+			expectation:  time.Duration(20) * time.Millisecond,
 			errorMessage: "Waiting for a time when it should have errored; expected %s but took %s.",
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
 			c := Connect()
 			countWait := c.BlockCounter()
-
-			t.Parallel()
 
 			start := time.Now().UTC()
 			countWait.WaitForBlocks(test.blockWait)
