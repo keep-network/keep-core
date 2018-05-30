@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultCLIBinaryName  = "../keep-client" // Can use CLI_BINARY env variable
+	defaultCLIBinaryName  = "../keep-core" // Can use CLI_BINARY env variable
 	defaultVerboseLogging = false
 	testFileMode          = os.FileMode(0640)
 )
@@ -73,6 +73,15 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
+	//TODO: Remove after testing on circleci
+	cmd := exec.Command("sh", "-c", "find ../../.. -name \"keep-*\"")
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Error running command: %v\n", err)
+	} else {
+		fmt.Printf("%s\n", stdoutStderr)
+	}
+
 	cliBinaryName = os.Getenv("CLI_BINARY")
 	if len(cliBinaryName) == 0 {
 		cliBinaryName = defaultCLIBinaryName
