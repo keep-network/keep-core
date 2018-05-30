@@ -33,12 +33,12 @@ contract StakeDelegatable {
 
     /**
      * @dev Delegates your stake balance to a specified address.
-     * @param _operator Address to where you want to delegate your
-     * balance. An address can only have one operator address. You can
-     * delegate stake to any ethereum address as long as it's not an
-     * actual staker or is being used as an operator by someone already.
-     * In the current implementation delegating stake doesn't hide the
-     * stake balance on your main stake address.
+     * An address can only have one operator address. You can delegate
+     * stake to any ethereum address as long as it isn't currently staking
+     * or operating someone else's stake. In the current implementation
+     * delegating stake doesn't hide the stake balance on your main stake
+     * address.
+     * @param _operator Address to where you want to delegate your balance.
      */
     function delegateStakeTo(address _operator) public {
         require(_operator != address(0));
