@@ -122,7 +122,7 @@ func TestLocalMemberRegistration(t *testing.T) {
 		}
 
 		id := bls.ID{}
-		id.SetDecString(fmt.Sprintf("%v", i))
+		id.SetDecString(fmt.Sprintf("%v", i+1))
 		member.RegisterMemberID(&id)
 	}
 
@@ -134,17 +134,86 @@ func TestLocalMemberRegistration(t *testing.T) {
 	}
 }
 
-func TestSharingOtherMemberIDs(t *testing.T) {
-	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+func buildSharingMember(id string) *SharingMember {
+	if id == "" {
+		id = defaultID
+	}
+	member, _ := NewMember(id, defaultThreshold, defaultGroupSize)
 
-	member.RegisterMemberID(&member.BlsID)
-	for i := 0; i < defaultGroupSize-1; i++ {
+	defaultBlsID := &bls.ID{}
+	defaultBlsID.SetHexString(defaultID)
+	member.RegisterMemberID(defaultBlsID)
+	for i := 1; i < defaultGroupSize; i++ {
 		id := bls.ID{}
 		id.SetDecString(fmt.Sprintf("%v", i))
 		member.RegisterMemberID(&id)
 	}
 
-	sharingMember := member.InitializeSharing()
+	return member.InitializeSharing()
+}
+
+func randomShares() []bls.SecretKey {
+	secretKeys := make([]bls.SecretKey, 0)
+	for i := 0; i < defaultThreshold; i++ {
+		sk := bls.SecretKey{}
+		sk.SetByCSPRNG()
+		secretKeys = append(secretKeys, sk)
+	}
+
+	return secretKeys
+}
+
+func commitmentsFromShares(sks []bls.SecretKey) []bls.PublicKey {
+	shares := randomShares()
+	commitments := make([]bls.PublicKey, 0)
+	for _, share := range shares {
+		commitments = append(commitments, *share.GetPublicKey())
+	}
+
+	return commitments
+}
+
+func randomCommitments() []bls.PublicKey {
+	return commitmentsFromShares(randomShares())
+}
+
+func buildCommittedSharingMember(id string) *SharingMember {
+	sharingMember := buildSharingMember(id)
+
+	for _, memberID := range sharingMember.OtherMemberIDs() {
+		commitments := randomCommitments()
+		sharingMember.AddCommitmentsFromID(memberID, commitments)
+	}
+
+	return sharingMember
+}
+
+func buildJustifyingMember(
+	id string,
+	accusationCount int,
+) (*JustifyingMember, []*SharingMember) {
+	sharingMember := buildCommittedSharingMember(id)
+	otherMembers := make([]*SharingMember, 0)
+
+	for i, memberID := range sharingMember.OtherMemberIDs() {
+		// Until we get to accusationCount, add invalid shares.
+		if i < accusationCount {
+			sharingMember.AddShareFromID(memberID, &bls.SecretKey{})
+		} else {
+			otherMember := buildCommittedSharingMember(memberID.GetHexString())
+			otherMembers = append(otherMembers, otherMember)
+			sharingMember.AddCommitmentsFromID(memberID, otherMember.Commitments())
+			memberShare := otherMember.SecretShareForID(&sharingMember.BlsID)
+			sharingMember.AddShareFromID(memberID, memberShare)
+		}
+	}
+
+	return sharingMember.InitializeJustification(), otherMembers
+}
+
+func TestSharingOtherMemberIDs(t *testing.T) {
+	sharingMember := buildSharingMember("")
+
 	otherMemberIDs := sharingMember.OtherMemberIDs()
 	if len(otherMemberIDs) != defaultGroupSize-1 {
 		t.Errorf(
@@ -154,11 +223,11 @@ func TestSharingOtherMemberIDs(t *testing.T) {
 		)
 	}
 	for i, id := range otherMemberIDs {
-		if id.GetDecString() != fmt.Sprintf("%v", i) {
+		if id.GetDecString() != fmt.Sprintf("%v", i+1) {
 			t.Errorf(
 				"at index %v\nexpected id: %v\nactual id:   %v",
-				i+1,
-				fmt.Sprintf("%v", i),
+				i,
+				fmt.Sprintf("%v", i+1),
 				id.GetDecString(),
 			)
 		}
@@ -166,28 +235,20 @@ func TestSharingOtherMemberIDs(t *testing.T) {
 }
 
 func TestSharingMemberSecretShares(t *testing.T) {
-	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+	sharingMember := buildSharingMember("")
 
-	member.RegisterMemberID(&member.BlsID)
-	for i := 0; i < defaultGroupSize-1; i++ {
-		id := bls.ID{}
-		id.SetDecString(fmt.Sprintf("%v", i))
-		member.RegisterMemberID(&id)
-	}
-
-	sharingMember := member.InitializeSharing()
 	memberIDs := sharingMember.OtherMemberIDs()
 	memberIDs = append(memberIDs, &sharingMember.BlsID)
-	uninitializedShare := bls.SecretKey{}
+	uninitializedShare := &bls.SecretKey{}
 	previousShare := uninitializedShare
 	for _, id := range memberIDs {
 		share := sharingMember.SecretShareForID(id)
-		if share.IsEqual(&uninitializedShare) {
+		if share.IsEqual(uninitializedShare) {
 			t.Fatalf(
 				"for id %v\nexpected: initialized share\nactual:   uninitialized share",
 				id.GetHexString(),
 			)
-		} else if share.IsEqual(&previousShare) {
+		} else if share.IsEqual(previousShare) {
 			t.Errorf(
 				"for id %v\nexpected: different share\nactual:   same as previous share",
 				id.GetHexString(),
