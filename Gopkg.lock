@@ -457,7 +457,10 @@
 
 [[projects]]
   name = "github.com/urfave/cli"
-  packages = ["."]
+  packages = [
+    ".",
+    "altsrc"
+  ]
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
   source = "https://github.com/keep-network/cli.git"
 
@@ -584,9 +587,21 @@
   packages = ["."]
   revision = "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
 
+[[projects]]
+  name = "gopkg.in/urfave/cli.v1"
+  packages = ["."]
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
+
+[[projects]]
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8d752f71cc5b3c74461018e85cdb8917091163d3fe0e86457a47b6b32cbb7ee5"
+  inputs-digest = "769ed80fdaa3180988c9e45137be3b9ae54226a2b720b99b2745ab78124ec24e"
   solver-name = "gps-cdcl"
   solver-version = 1
