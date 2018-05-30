@@ -330,15 +330,25 @@ func (sm *SharingMember) SharesComplete() bool {
 	return len(sm.receivedShares) == len(sm.memberIDs)-1
 }
 
-// Check whether the given share is valid with respect to the sender's public
-// commitments as seen by this member.
+// Check whether the given share from the sender to this member is valid with
+// respect to the sender's public commitments as seen by this member.
 func (sm *SharingMember) isValidShare(shareSenderID *bls.ID, share *bls.SecretKey) bool {
+	return sm.isValidShareFor(shareSenderID, &sm.BlsID, share)
+}
+
+// Check whether the given share from the sender to the receiver is valid with
+// respect to the sender's public commitments as seen by this member.
+func (sm *SharingMember) isValidShareFor(
+	shareSenderID *bls.ID,
+	shareReceiverID *bls.ID,
+	share *bls.SecretKey,
+) bool {
 	commitments := sm.commitments[*shareSenderID]
 
 	combinedCommitment := bls.PublicKey{}
 	// FIXME This can panic, let's rescue it and return false since it means a
 	// FIXME completely broken share.
-	combinedCommitment.Set(commitments, &sm.BlsID)
+	combinedCommitment.Set(commitments, shareReceiverID)
 
 	comparisonShare := share.GetPublicKey()
 
@@ -404,7 +414,7 @@ func (jm *JustifyingMember) Justifications() map[bls.ID]*bls.SecretKey {
 // form of the secretShare that was privately exchanged between accusedID and
 // accuserID.
 func (jm *JustifyingMember) RecordJustificationFromID(accusedID *bls.ID, accuserID *bls.ID, secretShare *bls.SecretKey) {
-	if !jm.isValidShare(accusedID, secretShare) {
+	if !jm.isValidShareFor(accusedID, accuserID, secretShare) {
 		// If the member broadcast an invalid justification, we immediately
 		// remove them from our shares as they have proven dishonest.
 		jm.receivedShares[*accusedID] = nil
