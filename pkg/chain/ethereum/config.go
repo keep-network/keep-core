@@ -25,6 +25,10 @@ type Config struct {
 	// Example: "ws://192.168.0.157:8546".
 	URL string
 
+	// Example: "http://192.168.0.157:8545".
+	URLRPC string
+
+	// Names and addresses for contracts that can be called or for events received.
 	// Names and addresses for contracts that can be called or for events received.
 	ContractAddresses map[string]string
 

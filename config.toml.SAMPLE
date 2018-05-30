@@ -4,6 +4,7 @@
 
 [ethereum]
 	URL                = "ws://127.0.0.1:8546"
+	URLRPC             = "http://127.0.0.1:8545"
 
 [ethereum.account]
 	Account            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"

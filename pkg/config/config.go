@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -14,13 +14,13 @@ import (
 // Environment variable with 'prompt' for prompting for password or the password.
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
-// Top level config structure from the config file specified on the command line.
-type config struct {
+// Config structure from the file specified to ReadConfig()
+type Config struct {
 	Ethereum ethereum.Config
 }
 
 // ReadConfig reads in the configuration file in .toml format.
-func readConfig(filePath string) (cfg config, err error) {
+func ReadConfig(filePath string) (cfg Config, err error) {
 
 	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
 		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
@@ -44,7 +44,7 @@ func readConfig(filePath string) (cfg config, err error) {
 	return cfg, nil
 }
 
-// ReadPassword prompts a user to enter a password.   The read password uses
+// readPassword prompts a user to enter a password.   The read password uses
 // the system password reading call that helps to prevent key loggers from
 // capturing the password.
 func readPassword(prompt string) (string, error) {
