@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	defaultGroupSize int = 10
-	defaultThreshold int = 4
+	defaultGroupSize int = 6
+	defaultThreshold int = 2
 
 	// DefaultConfigFileName sets default file name; can be changed with --config CLI flag
 	DefaultConfigFileName = "config.toml"
