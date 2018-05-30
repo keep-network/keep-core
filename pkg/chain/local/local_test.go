@@ -6,8 +6,6 @@ import (
 )
 
 func TestLocalBlockWaiter(t *testing.T) {
-	t.Parallel()
-
 	var tests = map[string]struct {
 		blockWait    int
 		expectation  time.Duration
@@ -35,11 +33,13 @@ func TestLocalBlockWaiter(t *testing.T) {
 		},
 	}
 
-	c := Connect()
-	countWait := c.BlockCounter()
-
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			c := Connect()
+			countWait := c.BlockCounter()
+
+			t.Parallel()
+
 			start := time.Now().UTC()
 			countWait.WaitForBlocks(test.blockWait)
 			end := time.Now().UTC()
