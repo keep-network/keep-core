@@ -1,4 +1,4 @@
-= Glossary
+== Glossary
 
 Stake:: An amount of KEEP that is bonded in order to participate in the
   threshold relay and, optionally, the Keep network. Part or all of this can be
@@ -61,7 +61,7 @@ KEEP:: Token used to stake. Can be represented as a K with a vertical bar
 
 Keep Owner, Delegate, Requester are described in the whitepaper.
 
-== Verbs
+=== Verbs
 
 The network *assigns* one *seat* of one *keep* to a *keep provider*.
 
@@ -77,7 +77,7 @@ number of stakers assigned to it equal to the *signing group size*),
 *initialized* (meaning, the stakers have generated their key shares and the
 group has a public key registered), and the *activation delay* has elapsed.
 
-== Relationships
+=== Relationships
 
 A greater *stake amount* leads to a greater probability of being *assigned* a
 *keep*.
@@ -91,7 +91,7 @@ entries.
 The pending *relay entry candidates* are finalized on the chain into *relay
 entries*.
 
-== Paying
+=== Paying
 
 The Threshold Relay needs to be sustainable on its own.
 
