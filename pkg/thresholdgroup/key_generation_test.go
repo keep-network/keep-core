@@ -19,7 +19,7 @@ func TestLocalMemberCreation(t *testing.T) {
 	}
 
 	if member == nil {
-		t.Fatal("expected: non-nil\nactual: nil")
+		t.Fatal("\nexpected: non-nil\nactual: nil")
 	}
 
 	var propertyTests = map[string]struct {
