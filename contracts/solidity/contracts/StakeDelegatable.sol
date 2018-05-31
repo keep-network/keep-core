@@ -32,6 +32,22 @@ contract StakeDelegatable {
     }
 
     /**
+     * @dev Returns address of an operator if it exists for the
+     * provided staker address or the provided staker address otherwise.
+     * @param _address The address to check.
+     * @return Operator address or provided staker address.
+     */
+    function getStakerOrOperator(address _address) public view returns (address) {
+        require(_address != address(0));
+
+        address operator = operatorToStaker[_address];
+        if (operator != address(0)) {
+            return operator;
+        }
+        return _address;
+    }
+
+    /**
      * @dev Delegates your stake balance to a specified address.
      * An address can only have one operator address. You can delegate
      * stake to any ethereum address as long as it isn't currently staking

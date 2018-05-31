@@ -77,9 +77,12 @@ contract TokenStaking is StakeDelegatable {
 
         // Maintain a record of the stake amount by the sender.
         stakeBalances[_from] = stakeBalances[_from].add(_value);
-        emit Staked(_from, _value);
+
+        // Emit staked event. Check if staker works via operator first.
+        address stakerOrOperator = getStakerOrOperator(_from);
+        emit Staked(stakerOrOperator, _value);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(_from, _value);
+            stakingProxy.emitStakedEvent(stakerOrOperator, _value);
         }
     }
 
@@ -98,8 +101,11 @@ contract TokenStaking is StakeDelegatable {
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
         withdrawalIndices[msg.sender].push(id);
         emit InitiatedUnstake(id);
+
+        // Emit unstaked event. Check if staker works via operator first.
+        address stakerOrOperator = getStakerOrOperator(msg.sender);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(msg.sender, _value);
+            stakingProxy.emitUnstakedEvent(stakerOrOperator, _value);
         }
         return id;
     }
