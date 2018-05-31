@@ -52,7 +52,8 @@ import (
 // 2: [g^{a_20}, g^{a_22}, g^{a_22}]
 // 3: [g^{a_30}, g^{a_32}, g^{a_32}]
 //
-// Each player i then sends a private share s_ij to each other player j, f_i(j):
+// Each player i then sends a private share s_ij to each other player j,
+// s_ij = f_i(j):
 //
 //        |             1                |             2                |             3                |
 //    1   | a_10 + a_11 (1) + a_12 (1)^2 | a_10 + a_11 (2) + a_12 (2)^2 | a_10 + a_11 (3) + a_12 (3)^2 |
