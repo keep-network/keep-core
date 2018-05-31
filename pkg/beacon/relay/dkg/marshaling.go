@@ -224,13 +224,13 @@ func (m *JustificationsMessage) Unmarshal(bytes []byte) error {
 		if err != nil {
 			return err
 		}
-		sk := bls.SecretKey{}
+		sk := &bls.SecretKey{}
 		err = sk.SetLittleEndian(skBytes)
 		if err != nil {
 			return err
 		}
 
-		m.justifications[id] = &sk
+		m.justifications[id] = sk
 	}
 
 	return nil
