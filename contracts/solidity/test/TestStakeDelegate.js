@@ -58,4 +58,17 @@ contract('TestStakeDelegate', function(accounts) {
     await stakingContract.removeDelegate();
     assert.equal(await stakingProxy.balanceOf(account_three), 0, "Operator account should stop representing delegator's stake balance.");
   });
+
+  it("should be able to change stake and get operator to reflect updated balance", async function() {
+    await stakingContract.delegateStakeTo(account_three);
+    assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
+
+    // Stake more tokens
+    await token.approveAndCall(stakingContract.address, 100, "", {from: account_one});
+    assert.equal(await stakingProxy.balanceOf(account_three), 300, "Operator account should reflect delegator's updated stake balance.");
+
+    // Unstake everything
+    await stakingContract.initiateUnstake(300);
+    assert.equal(await stakingProxy.balanceOf(account_three), 0, "Operator account should reflect delegator's updated stake balance.");
+  });
 });
