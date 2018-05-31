@@ -217,14 +217,14 @@ func (m *JustificationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	m.justifications = make(map[bls.ID]bls.SecretKey, len(pbJustifications.JustificationsByID))
+	m.justifications = make(map[bls.ID]*bls.SecretKey, len(pbJustifications.JustificationsByID))
 	for hexID, skBytes := range pbJustifications.JustificationsByID {
 		id := bls.ID{}
 		err = id.SetHexString(hexID)
 		if err != nil {
 			return err
 		}
-		sk := bls.SecretKey{}
+		sk := &bls.SecretKey{}
 		err = sk.SetLittleEndian(skBytes)
 		if err != nil {
 			return err

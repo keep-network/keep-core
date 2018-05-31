@@ -44,5 +44,5 @@ type AccusationsMessage struct {
 // an empty map of `justifications`. It is expected to be broadcast.
 type JustificationsMessage struct {
 	id             *bls.ID
-	justifications map[bls.ID]bls.SecretKey
+	justifications map[bls.ID]*bls.SecretKey
 }
