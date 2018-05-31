@@ -6,9 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"strings"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -18,42 +16,40 @@ import (
 )
 
 type KeepRandomBeacon struct {
-	Provider        *provider
-	Caller          *gen.KeepRandomBeaconImplV1Caller
-	CallerOpts      *bind.CallOpts
-	Transactor      *gen.KeepRandomBeaconImplV1Transactor
-	TransactorOpts  *bind.TransactOpts
-	Contract        *gen.KeepRandomBeaconImplV1
-	ABI             string
-	ABIparsed       abi.ABI
-	ContractAddress common.Address
-	Name            string
+	provider        *ethereumChain
+	caller          *gen.KeepRandomBeaconImplV1Caller
+	callerOpts      *bind.CallOpts
+	transactor      *gen.KeepRandomBeaconImplV1Transactor
+	transactorOpts  *bind.TransactOpts
+	contract        *gen.KeepRandomBeaconImplV1
+	contractAddress common.Address
+	name            string
 }
 
-func NewKeepRandomBeacon(pv *provider) (rv *KeepRandomBeacon, err error) {
+func NewKeepRandomBeacon(pv *ethereumChain) (rv *KeepRandomBeacon, err error) {
 
-	ContractAddressHex := pv.Config.ContractAddresses["KeepRandomBeacon"] // Proxy Address
-	ContractAddress := common.HexToAddress(ContractAddressHex)
+	ContractAddressHex := pv.config.ContractAddresses["KeepRandomBeacon"] // Proxy Address
+	contractAddress := common.HexToAddress(ContractAddressHex)
 
-	krbTransactor, err := gen.NewKeepRandomBeaconImplV1Transactor(ContractAddress, pv.Client)
+	krbTransactor, err := gen.NewKeepRandomBeaconImplV1Transactor(contractAddress, pv.client)
 	if err != nil {
 		log.Printf("Failed to instantiate a KeepRelayBeaconTranactor contract: %s", err)
 		return
 	}
 
-	file, err := os.Open(pv.Config.Account.KeyFile)
+	file, err := os.Open(pv.config.Account.KeyFile)
 	if err != nil {
-		log.Printf("Failed to open keyfile: %v, %s", err, pv.Config.Account.KeyFile)
+		log.Printf("Failed to open keyfile: %v, %s", err, pv.config.Account.KeyFile)
 		return
 	}
 
-	optsTransactor, err := bind.NewTransactor(bufio.NewReader(file), pv.Config.Account.KeyFilePassword)
+	optsTransactor, err := bind.NewTransactor(bufio.NewReader(file), pv.config.Account.KeyFilePassword)
 	if err != nil {
-		log.Printf("Failed to read keyfile: %v, %s", err, pv.Config.Account.KeyFile)
+		log.Printf("Failed to read keyfile: %v, %s", err, pv.config.Account.KeyFile)
 		return
 	}
 
-	krbCaller, err := gen.NewKeepRandomBeaconImplV1Caller(ContractAddress, pv.Client)
+	krbCaller, err := gen.NewKeepRandomBeaconImplV1Caller(contractAddress, pv.client)
 	if err != nil {
 		log.Printf("Failed to instantiate a KeepRelayBeaconCaller contract: %s", err)
 		return
@@ -61,56 +57,48 @@ func NewKeepRandomBeacon(pv *provider) (rv *KeepRandomBeacon, err error) {
 
 	optsCaller := &bind.CallOpts{
 		Pending: false,
-		From:    ContractAddress,
+		From:    contractAddress,
 		Context: nil,
 	}
 
-	parsed, err := abi.JSON(strings.NewReader(gen.KeepRandomBeaconImplV1ABI))
-	if err != nil {
-		log.Printf("Failed to parse ABI, error:%s", err)
-		return
-	}
-
-	krbContract, err := gen.NewKeepRandomBeaconImplV1(ContractAddress, pv.Client)
+	krbContract, err := gen.NewKeepRandomBeaconImplV1(contractAddress, pv.client)
 	if err != nil {
 		log.Printf("Failed to instantiate contract object: %v at address: %s", err, ContractAddressHex)
 		return
 	}
 
 	return &KeepRandomBeacon{
-		Name:            "KeepRandomBeacon", // "KeepRandomBeaconImplV1",
-		Provider:        pv,
-		Transactor:      krbTransactor,
-		TransactorOpts:  optsTransactor,
-		Caller:          krbCaller,
-		CallerOpts:      optsCaller,
-		Contract:        krbContract,
-		ABI:             gen.KeepRandomBeaconImplV1ABI,
-		ABIparsed:       parsed,
-		ContractAddress: ContractAddress,
+		name:            "KeepRandomBeacon", // "KeepRandomBeaconImplV1",
+		provider:        pv,
+		transactor:      krbTransactor,
+		transactorOpts:  optsTransactor,
+		caller:          krbCaller,
+		callerOpts:      optsCaller,
+		contract:        krbContract,
+		contractAddress: contractAddress,
 	}, nil
 }
 
 func (krb *KeepRandomBeacon) Initialized() (bool, error) {
-	return krb.Caller.Initialized(krb.CallerOpts)
+	return krb.caller.Initialized(krb.callerOpts)
 }
 
 func (krb *KeepRandomBeacon) HasMinimumStake(address common.Address) (bool, error) {
-	return krb.Caller.HasMinimumStake(krb.CallerOpts, address)
+	return krb.caller.HasMinimumStake(krb.callerOpts, address)
 }
 
 func (krb *KeepRandomBeacon) RequestRelayEntry(blockReward *big.Int, rawseed []byte) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
-	return krb.Transactor.RequestRelayEntry(krb.TransactorOpts, blockReward, seed)
+	return krb.transactor.RequestRelayEntry(krb.transactorOpts, blockReward, seed)
 }
 
 func (krb *KeepRandomBeacon) RelayEntry(requestID *big.Int, groupSignature *big.Int, groupID *big.Int, previousEntry *big.Int) (*types.Transaction, error) {
-	return krb.Transactor.RelayEntry(krb.TransactorOpts, requestID, groupSignature, groupID, previousEntry)
+	return krb.transactor.RelayEntry(krb.transactorOpts, requestID, groupSignature, groupID, previousEntry)
 }
 
 func (krb *KeepRandomBeacon) SubmitGroupPublicKey(groupPublicKey []byte, requestID *big.Int) (*types.Transaction, error) {
 	gpk := ByteSliceToSliceOf1Byte(groupPublicKey)
-	return krb.Transactor.SubmitGroupPublicKey(krb.TransactorOpts, gpk, requestID)
+	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
 }
 
 type FxRelayEntryRequested func(requestID *big.Int, payment *big.Int, blockReward *big.Int, seed *big.Int, blockNumber *big.Int)
@@ -121,7 +109,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(success FxRelayEntryReques
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := krb.Contract.WatchRelayEntryRequested(nil, sink)
+	event, err := krb.contract.WatchRelayEntryRequested(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s events: %s", name, err)
 		return
@@ -155,7 +143,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(success FxRelayEntryGenera
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := krb.Contract.WatchRelayEntryGenerated(nil, sink)
+	event, err := krb.contract.WatchRelayEntryGenerated(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s event: %s", name, err)
 		return
@@ -189,7 +177,7 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(success FxRelayResetEvent, fai
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := krb.Contract.WatchRelayResetEvent(nil, sink)
+	event, err := krb.contract.WatchRelayResetEvent(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s event: %s", name, err)
 		return
@@ -223,7 +211,7 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(success FxSubmitGrou
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := krb.Contract.WatchSubmitGroupPublicKeyEvent(nil, sink)
+	event, err := krb.contract.WatchSubmitGroupPublicKeyEvent(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s event: %s", name, err)
 		return
@@ -249,3 +237,21 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(success FxSubmitGrou
 	}()
 	return
 }
+
+/*
+GoKeepRandomBeacon.go:20:6: exported type KeepRandomBeacon should have comment or be unexported
+GoKeepRandomBeacon.go:33:1: exported function NewKeepRandomBeacon should have comment or be unexported
+GoKeepRandomBeacon.go:94:1: exported method KeepRandomBeacon.Initialized should have comment or be unexported
+GoKeepRandomBeacon.go:98:1: exported method KeepRandomBeacon.HasMinimumStake should have comment or be unexported
+GoKeepRandomBeacon.go:102:1: exported method KeepRandomBeacon.RequestRelayEntry should have comment or be unexported
+GoKeepRandomBeacon.go:107:1: exported method KeepRandomBeacon.RelayEntry should have comment or be unexported
+GoKeepRandomBeacon.go:111:1: exported method KeepRandomBeacon.SubmitGroupPublicKey should have comment or be unexported
+GoKeepRandomBeacon.go:116:6: exported type FxRelayEntryRequested should have comment or be unexported
+GoKeepRandomBeacon.go:118:1: exported method KeepRandomBeacon.WatchRelayEntryRequested should have comment or be unexported
+GoKeepRandomBeacon.go:150:6: exported type FxRelayEntryGenerated should have comment or be unexported
+GoKeepRandomBeacon.go:152:1: exported method KeepRandomBeacon.WatchRelayEntryGenerated should have comment or be unexported
+GoKeepRandomBeacon.go:184:6: exported type FxRelayResetEvent should have comment or be unexported
+GoKeepRandomBeacon.go:186:1: exported method KeepRandomBeacon.WatchRelayResetEvent should have comment or be unexported
+GoKeepRandomBeacon.go:218:6: exported type FxSubmitGroupPublicKeyEvent should have comment or be unexported
+GoKeepRandomBeacon.go:220:1: exported method KeepRandomBeacon.WatchSubmitGroupPublicKeyEvent should have comment or be unexported
+*/

@@ -6,9 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"strings"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -18,42 +16,40 @@ import (
 )
 
 type KeepGroup struct {
-	Provider        *provider
-	Caller          *gen.KeepGroupImplV1Caller
-	CallerOpts      *bind.CallOpts
-	Transactor      *gen.KeepGroupImplV1Transactor
-	TransactorOpts  *bind.TransactOpts
-	Contract        *gen.KeepGroupImplV1
-	ABI             string
-	ABIparsed       abi.ABI
-	ContractAddress common.Address
-	Name            string
+	provider        *ethereumChain
+	caller          *gen.KeepGroupImplV1Caller
+	callerOpts      *bind.CallOpts
+	transactor      *gen.KeepGroupImplV1Transactor
+	transactorOpts  *bind.TransactOpts
+	contract        *gen.KeepGroupImplV1
+	contractAddress common.Address
+	name            string
 }
 
-func NewKeepGroup(pv *provider) (rv *KeepGroup, err error) {
+func NewKeepGroup(pv *ethereumChain) (rv *KeepGroup, err error) {
 
-	ContractAddressHex := pv.Config.ContractAddresses["KeepGroup"] // Proxy Address
-	ContractAddress := common.HexToAddress(ContractAddressHex)
+	ContractAddressHex := pv.config.ContractAddresses["KeepGroup"] // Proxy Address
+	contractAddress := common.HexToAddress(ContractAddressHex)
 
-	krbTransactor, err := gen.NewKeepGroupImplV1Transactor(ContractAddress, pv.Client)
+	krbTransactor, err := gen.NewKeepGroupImplV1Transactor(contractAddress, pv.client)
 	if err != nil {
 		log.Printf("Failed to instantiate a KeepRelayBeaconTranactor contract: %s", err)
 		return
 	}
 
-	file, err := os.Open(pv.Config.Account.KeyFile)
+	file, err := os.Open(pv.config.Account.KeyFile)
 	if err != nil {
-		log.Printf("Failed to open keyfile: %v, %s", err, pv.Config.Account.KeyFile)
+		log.Printf("Failed to open keyfile: %v, %s", err, pv.config.Account.KeyFile)
 		return
 	}
 
-	optsTransactor, err := bind.NewTransactor(bufio.NewReader(file), pv.Config.Account.KeyFilePassword)
+	optsTransactor, err := bind.NewTransactor(bufio.NewReader(file), pv.config.Account.KeyFilePassword)
 	if err != nil {
-		log.Printf("Failed to read keyfile: %v, %s", err, pv.Config.Account.KeyFile)
+		log.Printf("Failed to read keyfile: %v, %s", err, pv.config.Account.KeyFile)
 		return
 	}
 
-	krbCaller, err := gen.NewKeepGroupImplV1Caller(ContractAddress, pv.Client)
+	krbCaller, err := gen.NewKeepGroupImplV1Caller(contractAddress, pv.client)
 	if err != nil {
 		log.Printf("Failed to instantiate a KeepRelayBeaconCaller contract: %s", err)
 		return
@@ -61,69 +57,61 @@ func NewKeepGroup(pv *provider) (rv *KeepGroup, err error) {
 
 	optsCaller := &bind.CallOpts{
 		Pending: false,
-		From:    ContractAddress,
+		From:    contractAddress,
 		Context: nil,
 	}
 
-	parsed, err := abi.JSON(strings.NewReader(gen.KeepGroupImplV1ABI))
-	if err != nil {
-		log.Printf("Failed to parse ABI, error:%s", err)
-		return
-	}
-
-	krbContract, err := gen.NewKeepGroupImplV1(ContractAddress, pv.Client)
+	krbContract, err := gen.NewKeepGroupImplV1(contractAddress, pv.client)
 	if err != nil {
 		log.Printf("Failed to instantiate contract object: %v at address: %s", err, ContractAddressHex)
 		return
 	}
 
 	return &KeepGroup{
-		Name:            "KeepGroup", // "KeepGroupImplV1",
-		Provider:        pv,
-		Transactor:      krbTransactor,
-		TransactorOpts:  optsTransactor,
-		Caller:          krbCaller,
-		CallerOpts:      optsCaller,
-		Contract:        krbContract,
-		ABI:             gen.KeepGroupImplV1ABI,
-		ABIparsed:       parsed,
-		ContractAddress: ContractAddress,
+		name:            "KeepGroup", // "KeepGroupImplV1",
+		provider:        pv,
+		transactor:      krbTransactor,
+		transactorOpts:  optsTransactor,
+		caller:          krbCaller,
+		callerOpts:      optsCaller,
+		contract:        krbContract,
+		contractAddress: contractAddress,
 	}, nil
 }
 
 func (kg *KeepGroup) Initialized() (bool, error) {
-	return kg.Caller.Initialized(kg.CallerOpts)
+	return kg.caller.Initialized(kg.callerOpts)
 }
 
 func (kg *KeepGroup) SetGroupThreshold(groupThreshold int) (tx *types.Transaction, err error) {
 	thr := big.NewInt(int64(groupThreshold))
 	// function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
-	tx, err = kg.Transactor.SetGroupThreshold(kg.TransactorOpts, thr)
+	tx, err = kg.transactor.SetGroupThreshold(kg.transactorOpts, thr)
 	return
 }
 
 func (kg *KeepGroup) GroupExists(groupPubKey []byte) (*types.Transaction, error) {
 	//    function groupExists(bytes32 _groupPubKey) public {
-	return kg.Transactor.GroupExists(kg.TransactorOpts, ToByte32(groupPubKey))
+	return kg.transactor.GroupExists(kg.transactorOpts, ToByte32(groupPubKey))
 }
 
 func (kg *KeepGroup) AddMemberToGroup(groupPubKey, memberPubKey []byte) (*types.Transaction, error) {
 	// function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey) public isStaked returns(bool) {
-	return kg.Transactor.AddMemberToGroup(kg.TransactorOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
+	return kg.transactor.AddMemberToGroup(kg.transactorOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
 }
 
 func (kg *KeepGroup) DissolveGroup(groupPubKey []byte) (*types.Transaction, error) {
 	// function disolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
-	return kg.Transactor.DisolveGroup(kg.TransactorOpts, ToByte32(groupPubKey))
+	return kg.transactor.DisolveGroup(kg.transactorOpts, ToByte32(groupPubKey))
 }
 
 func (kg *KeepGroup) CreateGroup(groupPubKey []byte) (*types.Transaction, error) {
 	// function createGroup(bytes32 _groupPubKey) public returns(bool) {
-	return kg.Transactor.CreateGroup(kg.TransactorOpts, ToByte32(groupPubKey))
+	return kg.transactor.CreateGroup(kg.transactorOpts, ToByte32(groupPubKey))
 }
 
 func (kg *KeepGroup) GetNumberOfGroups() (ng int, err error) {
-	ngBig, err := kg.Caller.GetNumberOfGroups(kg.CallerOpts)
+	ngBig, err := kg.caller.GetNumberOfGroups(kg.callerOpts)
 	// function getNumberOfGroups() public view returns(uint256) {
 	if err == nil {
 		ng = int(ngBig.Int64())
@@ -134,7 +122,7 @@ func (kg *KeepGroup) GetNumberOfGroups() (ng int, err error) {
 func (kg *KeepGroup) GetGroupNMembers(groupNumber int) (nm int, err error) {
 	iBigGroupNumber := big.NewInt(int64(groupNumber))
 	// function getGroupNMembers(uint256 _i) public view returns(uint256) {
-	ngBig, err := kg.Caller.GetGroupNMembers(kg.CallerOpts, iBigGroupNumber)
+	ngBig, err := kg.caller.GetGroupNMembers(kg.callerOpts, iBigGroupNumber)
 	if err == nil {
 		nm = int(ngBig.Int64())
 	}
@@ -144,7 +132,7 @@ func (kg *KeepGroup) GetGroupNMembers(groupNumber int) (nm int, err error) {
 func (kg *KeepGroup) GetGroupPubKey(groupNumber int) (pub []byte, err error) {
 	iBigGroupNumber := big.NewInt(int64(groupNumber))
 	// function getGroupPubKey(uint256 _i) public view returns(bytes32) {
-	tmp, err := kg.Caller.GetGroupPubKey(kg.CallerOpts, iBigGroupNumber)
+	tmp, err := kg.caller.GetGroupPubKey(kg.callerOpts, iBigGroupNumber)
 	if err == nil {
 		pub = tmp[:]
 	}
@@ -153,7 +141,7 @@ func (kg *KeepGroup) GetGroupPubKey(groupNumber int) (pub []byte, err error) {
 
 func (kg *KeepGroup) GetGroupNumber(groupPubKey []byte) (nm int, err error) {
 	//    function getGroupNumber(bytes32 _groupPubKey) public view returns(uint256) {
-	nmBig, err := kg.Caller.GetGroupNumber(kg.CallerOpts, ToByte32(groupPubKey))
+	nmBig, err := kg.caller.GetGroupNumber(kg.callerOpts, ToByte32(groupPubKey))
 	if err == nil {
 		nm = int(nmBig.Int64())
 	}
@@ -185,7 +173,7 @@ func (kg *KeepGroup) GetGroupMemberPubKey(i, j int) (pub []byte, err error) {
 	iBig := big.NewInt(int64(i))
 	jBig := big.NewInt(int64(j))
 	// function getGroupMemberPubKey(uint256 _i, uint256 _j) public view returns(bytes32) {
-	tmp, err := kg.Caller.GetGroupMemberPubKey(kg.CallerOpts, iBig, jBig)
+	tmp, err := kg.caller.GetGroupMemberPubKey(kg.callerOpts, iBig, jBig)
 	if err == nil {
 		pub = tmp[:]
 	}
@@ -194,19 +182,19 @@ func (kg *KeepGroup) GetGroupMemberPubKey(i, j int) (pub []byte, err error) {
 
 func (kg *KeepGroup) GroupIsComplete(groupPubKey []byte) (rv bool, err error) {
 	// function groupIsComplete(bytes32 _groupPubKey) public view returns(bool) {
-	rv, err = kg.Caller.GroupIsComplete(kg.CallerOpts, ToByte32(groupPubKey))
+	rv, err = kg.caller.GroupIsComplete(kg.callerOpts, ToByte32(groupPubKey))
 	return
 }
 
 func (kg *KeepGroup) GroupExistsView(groupPubKey []byte) (rv bool, err error) {
 	// function groupExistsView(bytes32 _groupPubKey) public view returns(bool) {
-	rv, err = kg.Caller.GroupExistsView(kg.CallerOpts, ToByte32(groupPubKey))
+	rv, err = kg.caller.GroupExistsView(kg.callerOpts, ToByte32(groupPubKey))
 	return
 }
 
 func (kg *KeepGroup) IsMember(groupPubKey, memberPubKey []byte) (rv bool, err error) {
 	// function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
-	rv, err = kg.Caller.IsMember(kg.CallerOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
+	rv, err = kg.caller.IsMember(kg.callerOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
 	return
 }
 
@@ -218,7 +206,7 @@ func (kg *KeepGroup) WatchGroupCompleteEvent(success FxGroupCompleteEvent, fail 
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := kg.Contract.WatchGroupCompleteEvent(nil, sink)
+	event, err := kg.contract.WatchGroupCompleteEvent(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s events: %s", name, err)
 		return
@@ -252,7 +240,7 @@ func (kg *KeepGroup) WatchGroupErrorCode(success FxGroupErrorCode, fail FxError)
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := kg.Contract.WatchGroupErrorCode(nil, sink)
+	event, err := kg.contract.WatchGroupErrorCode(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s events: %s", name, err)
 		return
@@ -286,7 +274,7 @@ func (kg *KeepGroup) WatchGroupExistsEvent(success FxGroupExistsEvent, fail FxEr
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := kg.Contract.WatchGroupExistsEvent(nil, sink)
+	event, err := kg.contract.WatchGroupExistsEvent(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s events: %s", name, err)
 		return
@@ -320,7 +308,7 @@ func (kg *KeepGroup) WatchGroupStartedEvent(success FxGroupStartedEvent, fail Fx
 	if db1 {
 		fmt.Printf("Calling Watch for %s, %s\n", name, godebug.LF())
 	}
-	event, err := kg.Contract.WatchGroupStartedEvent(nil, sink)
+	event, err := kg.contract.WatchGroupStartedEvent(nil, sink)
 	if err != nil {
 		log.Printf("Error creating watch for %s events: %s", name, err)
 		return
@@ -345,3 +333,31 @@ func (kg *KeepGroup) WatchGroupStartedEvent(success FxGroupStartedEvent, fail Fx
 	}()
 	return
 }
+
+/*
+GoKeepGroup.go:20:6: exported type KeepGroup should have comment or be unexported
+GoKeepGroup.go:33:1: exported function NewKeepGroup should have comment or be unexported
+GoKeepGroup.go:94:1: exported method KeepGroup.Initialized should have comment or be unexported
+GoKeepGroup.go:98:1: exported method KeepGroup.SetGroupThreshold should have comment or be unexported
+GoKeepGroup.go:105:1: exported method KeepGroup.GroupExists should have comment or be unexported
+GoKeepGroup.go:110:1: exported method KeepGroup.AddMemberToGroup should have comment or be unexported
+GoKeepGroup.go:115:1: exported method KeepGroup.DissolveGroup should have comment or be unexported
+GoKeepGroup.go:120:1: exported method KeepGroup.CreateGroup should have comment or be unexported
+GoKeepGroup.go:125:1: exported method KeepGroup.GetNumberOfGroups should have comment or be unexported
+GoKeepGroup.go:134:1: exported method KeepGroup.GetGroupNMembers should have comment or be unexported
+GoKeepGroup.go:144:1: exported method KeepGroup.GetGroupPubKey should have comment or be unexported
+GoKeepGroup.go:154:1: exported method KeepGroup.GetGroupNumber should have comment or be unexported
+GoKeepGroup.go:163:1: exported method KeepGroup.GetAllGroupMembers should have comment or be unexported
+GoKeepGroup.go:184:1: exported method KeepGroup.GetGroupMemberPubKey should have comment or be unexported
+GoKeepGroup.go:195:1: exported method KeepGroup.GroupIsComplete should have comment or be unexported
+GoKeepGroup.go:201:1: exported method KeepGroup.GroupExistsView should have comment or be unexported
+GoKeepGroup.go:207:1: exported method KeepGroup.IsMember should have comment or be unexported
+GoKeepGroup.go:213:6: exported type FxGroupCompleteEvent should have comment or be unexported
+GoKeepGroup.go:215:1: exported method KeepGroup.WatchGroupCompleteEvent should have comment or be unexported
+GoKeepGroup.go:247:6: exported type FxGroupErrorCode should have comment or be unexported
+GoKeepGroup.go:249:1: exported method KeepGroup.WatchGroupErrorCode should have comment or be unexported
+GoKeepGroup.go:281:6: exported type FxGroupExistsEvent should have comment or be unexported
+GoKeepGroup.go:283:1: exported method KeepGroup.WatchGroupExistsEvent should have comment or be unexported
+GoKeepGroup.go:315:6: exported type FxGroupStartedEvent should have comment or be unexported
+GoKeepGroup.go:317:1: exported method KeepGroup.WatchGroupStartedEvent should have comment or be unexported
+*/
