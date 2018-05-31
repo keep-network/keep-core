@@ -22,5 +22,43 @@
 
 [[constraint]]
   name = "github.com/dfinity/go-dfinity-crypto"
-  revision = "1db358303499a9879dd640c71f831897e06e9ddf"
+  revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
   source = "https://github.com/keep-network/go-dfinity-crypto.git"
+
+[[constraint]]
+  name = "github.com/BurntSushi/toml"
+  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
+  source = "https://github.com/keep-network/toml.git"
+
+[[override]]
+  name = "github.com/libp2p/go-floodsub"
+  revision = "10eaec55ad0fe58b2fb77cbaf01a3760eb8c211b"
+
+[[override]]
+  name = "github.com/multiformats/go-multihash"
+  revision = "468a1b73e980e5aff011d308623e43e28c582b16"
+
+[[override]]
+  name = "github.com/multiformats/go-multiaddr"
+  revision = "123a717755e0559ec8fda308019cd24e0a37bb07"
+
+[[override]]
+  name = "github.com/satori/go.uuid"
+  revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-peer"
+  revision = "aa0e03e559bde9d4749ad8e38595e15a6fe808fa"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-peerstore"
+  revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-crypto"
+  revision = "18915b5467c77ad8c07a35328c2cab468667a4e8"
+
+[[constraint]]
+  name = "github.com/urfave/cli"
+  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+  source = "https://github.com/keep-network/cli.git"
