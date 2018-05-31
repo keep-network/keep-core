@@ -61,7 +61,7 @@ import (
 //    3   | a_30 + a_31 (1) + a_32 (1)^2 | a_30 + a_31 (2) + a_32 (2)^2 | a_30 + a_31 (3) + a_32 (3)^2 |
 //
 // Each player can verify their private share against the commitments by raising
-// the private share s_ij to the g and checking that:
+// the g to the private share s_ij and checking that:
 //
 //   g^{s_ij} = (g^{a_i0})^j^0 · (g^{a_i1})^j^1 · (g^{a_i2})^j^2
 //
