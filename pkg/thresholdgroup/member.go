@@ -12,7 +12,8 @@
 // This package does not implement any synchronization or network operations;
 // instead, it is meant to be the core implementation of distributed key
 // generation and threshold signing, and can be plugged into separate sync
-// and/or networking setups.
+// and/or networking setups. This also means that none of the underlying
+// implementation in this package is thread-safe.
 //
 // The distributed key generation approach is based on [GJKR 99], which in turn
 // relies partially on the verifiable secret sharing approach in [Ped91b].
@@ -34,6 +35,61 @@ import (
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
+
+// High-level description with 3 players. Note that in practice 3 players would
+// mean our threshold could be at most 1, so we would only operate with 1
+// coefficient. We do 3 players and 3 coefficients for explanatory purposes:
+//
+// Take 3 players. Each generates a random polynomial:
+//
+// f_1(x) = a_10 + a_11 x + a_12 x^2
+// f_2(x) = a_20 + a_21 x + a_22 x^2
+// f_3(x) = a_30 + a_31 x + a_32 x^2
+//
+// Each player broadcasts an array of commitments `g^<coefficient>` to all players:
+//
+// 1: [g^{a_10}, g^{a_11}, g^{a_12}]
+// 2: [g^{a_20}, g^{a_22}, g^{a_22}]
+// 3: [g^{a_30}, g^{a_32}, g^{a_32}]
+//
+// Each player i then sends a private share s_ij to each other player j,
+// s_ij = f_i(j):
+//
+//        |             1                |             2                |             3                |
+//    1   | a_10 + a_11 (1) + a_12 (1)^2 | a_10 + a_11 (2) + a_12 (2)^2 | a_10 + a_11 (3) + a_12 (3)^2 |
+//    2   | a_20 + a_21 (1) + a_22 (1)^2 | a_20 + a_21 (2) + a_22 (2)^2 | a_20 + a_21 (3) + a_22 (3)^2 |
+//    3   | a_30 + a_31 (1) + a_32 (1)^2 | a_30 + a_31 (2) + a_32 (2)^2 | a_30 + a_31 (3) + a_32 (3)^2 |
+//
+// Each player can verify their private share against the commitments by raising
+// the g to the private share s_ij and checking that:
+//
+//   g^{s_ij} = (g^{a_i0})^j^0 · (g^{a_i1})^j^1 · (g^{a_i2})^j^2
+//
+// This is because:
+//
+//   g^{s_ij} = g^{a_i0 + a_i1 j + a_i2 j^2}
+//            = g^{a_i0} · g^{a_i1 j} · g^{a_i2 j^2}
+//
+// Unverified shares are accused, and the players in question have the
+// opportunity to justify themselves. All players with valid shares at the end
+// are part of the qualified set, and are the only players considered after this
+// point.
+//
+// With each share `g^{s_ij}`, each player can now recover g raised to the power
+// of the zero coefficient of every other player, `g^{a_i0}`. These are the
+// shares of the group public key, and can be combined by multiplying all of
+// them into the complete group public key.
+//
+// Each player i's final share of the group private key is then the sum of the
+// private shares they received from other players. For player 1, for example,
+// this is s_11 + s_12 + s_13 = f_1(1) + f_2(1) + f_3(1). Note that the group
+// private key is the sum of all of the players' zero coefficients, `a_i0`, but
+// we don't have enough information at this stage for any given player to be
+// able to recover this group private key, so only by collaborating can the
+// players make use of it.
+//
+// PS: All of this is mod math. Private shares and keys are done mod q, public
+// shares and keys are done mod p.
 
 // BaseMember is a common interface implemented by all stages of threshold group
 // members. It provides access to the member ID as a string irrespective of
@@ -382,7 +438,7 @@ func (sm *SharingMember) InitializeJustification() *JustifyingMember {
 
 // AddAccusationFromID registers an accusation sent by the member with the given
 // `senderID` against the member with id `accusedID`, claiming the accused sent
-// an invalid share to the sender.
+// an invalid share to the sender. The accusation may be against this member.
 func (jm *JustifyingMember) AddAccusationFromID(senderID *bls.ID, accusedID *bls.ID) {
 	if accusedID.IsEqual(&jm.BlsID) {
 		jm.accuserIDs = append(jm.accuserIDs, *senderID)
@@ -464,6 +520,7 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
 
+	// Note: this member is counted as a qualified member.
 	if len(jm.receivedShares) < jm.threshold-1 {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
