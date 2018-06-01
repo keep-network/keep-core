@@ -146,7 +146,7 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 	protocolIdentifier, found := c.transportToProtoIdentifiers[senderIdentifier]
 	if !found {
 		return fmt.Errorf(
-			"Couldn't find protocol identifier for sender identifier %s",
+			"Couldn't find protocol identifier for sender identifier %v",
 			senderIdentifier,
 		)
 	}

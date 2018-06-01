@@ -20,7 +20,7 @@ func SmokeTest(c *cli.Context) {
 	chainHandle := local.Connect()
 	chainCounter := chainHandle.BlockCounter()
 
-	_ = pb.GossipMessage{}
+	_ = pb.Envelope{}
 
 	beaconConfig := chainHandle.RandomBeacon().GetConfig()
 
