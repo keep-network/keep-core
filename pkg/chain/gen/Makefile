@@ -16,7 +16,11 @@ all:
 	pwd
 	ls
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
+	goimports -w *.go
 	go build
+	echo all 
+	pwd
+	ls
 
 SOL=$(shell ls *.sol | sed -e 's/.sol/.go/' )
 
