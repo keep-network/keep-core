@@ -20,6 +20,14 @@ contract StakeDelegatable {
         _;
     }
 
+    /**
+     * @dev Only non staker addresses can be passed to the functions with this modifier.
+     */
+    modifier notStaker(address _address) {
+        require(stakeBalances[_address] == 0);
+        _;
+    }
+
     mapping(address => uint256) public stakeBalances;
     mapping(address => address) public stakerToOperator;
     mapping(address => address) public operatorToStaker;
@@ -70,13 +78,11 @@ contract StakeDelegatable {
      * address.
      * @param _address Address to where you want to delegate your balance.
      */
-    function delegateStakeTo(address _address) 
+    function delegateStakeTo(address _address)
         public
         notNull
+        notStaker
     {
-        // Operator must not be a staker.
-        require(stakeBalances[_address] == 0);
-
         // Revert if operator address was already used.
         address previousDelegator = stakerToOperator[_address];
         require(previousDelegator == address(0));
