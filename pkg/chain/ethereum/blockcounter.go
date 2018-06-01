@@ -20,9 +20,6 @@ type ethereumBlockCounter struct {
 	Debug01     bool
 }
 
-// compile time test - at compile time to verify that the local satisfies the interface.
-var _ chain.BlockCounter = (*ethereumBlockCounter)(nil)
-
 type block struct {
 	Number string
 }

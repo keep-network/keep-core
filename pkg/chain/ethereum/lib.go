@@ -1,5 +1,7 @@
 package ethereum
 
+import "golang.org/x/crypto/sha3"
+
 // ByteSliceToSliceOf1Byte convert from slice to slice of arrays of 1 long bytes.
 func ByteSliceToSliceOf1Byte(in []byte) (rv [][1]byte) {
 	if len(in) == 0 {
@@ -41,4 +43,10 @@ func ToByte32(in []byte) (tmp [32]byte) {
 // FxError is the function that is call when an error occures in a callback
 type FxError func(err error) (eout error)
 
-const db1 = true
+// Sum256 returns the SHA3-256 digest of the data.
+func Sum256(data []byte) (digest [32]byte) {
+	h := sha3.New256()
+	h.Write(data)
+	h.Sum(digest[:0])
+	return
+}

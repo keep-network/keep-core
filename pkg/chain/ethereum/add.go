@@ -9,22 +9,40 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 )
 
+// RandomBeacon converts from ethereumChain to beacon.ChainInterface.
+// This class supports the necessary interface.
 func (ec *ethereumChain) RandomBeacon() beacon.ChainInterface {
 	return ec
 }
 
+// ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
+// This class supports the necessary interface.
 func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
 	return ec
 }
 
+// GetConfig get the GroupSize and Threshold for groups and returns it
+// in a becaon.Config struct.
 func (ec *ethereumChain) GetConfig() beacon.Config {
-	// TODO - how to pull config from ETH
-	return ec.GetBeaconConfig()
+	size, err := ec.kg.GetGroupSize()
+	if err != nil {
+	}
+
+	threshold, err := ec.kg.GetGroupThreshold()
+	if err != nil {
+	}
+
+	rv := beacon.Config{
+		GroupSize: size,      // Formerly 10,
+		Threshold: threshold, // Formerly 4,
+	}
+	return rv
 }
 
+// SubmitGroupPublicKey sets up the callback functions for the submission of a
+// public key for the group.
+// I am still not understanding something about this function!!!!!!!!!!!!!!!!
 func (ec *ethereumChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
-	// TODO - translate groupID into a request id
-	// TODO - how will requestID get set - on request?
 
 	applyError := func(msg string) {
 		ec.handlerMutex.Lock()
@@ -53,6 +71,9 @@ func (ec *ethereumChain) SubmitGroupPublicKey(groupID string, key [96]byte) erro
 		return err
 	}
 
+	requestID := Sum256([]byte(groupID))
+	ec.requestID = big.NewInt(0).SetBytes(requestID[:])
+
 	tx, err := ec.krb.SubmitGroupPublicKey(key[:], ec.requestID)
 	ec.tx = tx
 	if err != nil {
@@ -61,6 +82,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(groupID string, key [96]byte) erro
 	return err
 }
 
+// OnGroupPublicKeySubmissionFailed associates a handler for a error event
 func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(handler func(groupID string, errorMessage string)) error {
 	ec.handlerMutex.Lock()
 	ec.groupPublicKeyFailureHandlers = append(ec.groupPublicKeyFailureHandlers, handler)
@@ -68,6 +90,7 @@ func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(handler func(groupID s
 	return nil
 }
 
+// OnGroupPublicKeySubmitted associates a handler for a success event
 func (ec *ethereumChain) OnGroupPublicKeySubmitted(handler func(groupID string, activationBlock *big.Int)) error {
 	ec.handlerMutex.Lock()
 	ec.groupPublicKeySubmissionHandlers = append(ec.groupPublicKeySubmissionHandlers, handler)
@@ -77,4 +100,8 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(handler func(groupID string, 
 
 func (ec *ethereumChain) GetLastTx() *types.Transaction {
 	return ec.tx
+}
+
+func (ec *ethereumChain) GetLastRequestID() *big.Int {
+	return ec.requestID
 }
