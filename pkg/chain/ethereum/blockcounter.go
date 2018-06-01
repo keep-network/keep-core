@@ -112,15 +112,13 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	}
 }
 
-// func (c *localChain) BlockCounter() chain.BlockCounter {
-
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
 // func BlockCounter(config chain.Provider) chain.BlockCounter {
-func (ec ethereumChain) BlockCounter() chain.BlockCounter {
+func (ec *ethereumChain) BlockCounter() chain.BlockCounter {
 	blockWait := ethereumBlockCounter{
 		blockHeight: 0,
 		waiters:     make(map[int][]chan int),
-		config:      &ec,
+		config:      ec,
 		Debug01:     false,
 	}
 
