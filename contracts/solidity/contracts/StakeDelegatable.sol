@@ -44,7 +44,7 @@ contract StakeDelegatable {
         returns (uint256)
     {
         address delegator = stakerToOperator[_address];
-        if (delegator != address(0)) {
+        if (delegator != address(0) && operatorToStaker[delegator] == _address) {
             return stakeBalances[delegator];
         }
         return stakeBalances[_address];
@@ -63,38 +63,37 @@ contract StakeDelegatable {
         returns (address)
     {
         address operator = operatorToStaker[_address];
-        if (operator != address(0)) {
+        if (operator != address(0) && stakerToOperator[operator] == _address) {
             return operator;
         }
         return _address;
     }
 
     /**
-     * @dev Delegates your stake balance to a specified address.
-     * An address can only have one operator address. You can delegate
-     * stake to any ethereum address as long as it isn't currently staking
-     * or operating someone else's stake. In the current implementation
-     * delegating stake doesn't hide the stake balance on your main stake
-     * address.
+     * @dev Approves address to operate your stake balance. You can only
+     * have one operator address. Operator must also request to operate
+     * your stake by calling requestOperateFor() method.
      * @param _address Address to where you want to delegate your balance.
      */
-    function delegateStakeTo(address _address)
+    function approveOperatorAt(address _address)
         public
         notNull
         notStaker
     {
-        // Revert if operator address was already used.
-        address previousDelegator = stakerToOperator[_address];
-        require(previousDelegator == address(0));
-
-        // Release previous operator address when you delegate stake to a new one.
-        address previousOperator = operatorToStaker[msg.sender];
-        if (previousOperator != address(0)) {
-            delete stakerToOperator[previousOperator];
-        }
-
         operatorToStaker[msg.sender] = _address;
-        stakerToOperator[_address] = msg.sender;
+    }
+
+    /**
+     * @dev Requests to operate stake for a specified address.
+     * Staker address must approve you to operate by calling
+     * approveOperatorAt() method.
+     * @param _address Address for which you request to operate.
+     */
+    function requestOperateFor(address _address)
+        public
+        notNull
+    {
+        stakerToOperator[msg.sender] = _address;
     }
 
     /**
