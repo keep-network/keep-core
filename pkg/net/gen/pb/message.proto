@@ -9,7 +9,7 @@ package net;
 // Optionally may contain an encrypted Envelope (in which case the payload will be empty).
 message Envelope {
   // The PublicKey and peerID of the sender and receiver
-  Identity sender = 1;
+  bytes sender = 1;
   Identity receiver = 2;
 
   // A Marshaled Protocol Message
@@ -40,6 +40,7 @@ message EncryptedEnvelope {
 }
 
 message Identity {
-  bytes public_key = 1;
-  bytes peer_id = 2;
+  bytes pub_key = 1;
+  bytes priv_key = 2;
+  bytes peer_id = 3;
 }

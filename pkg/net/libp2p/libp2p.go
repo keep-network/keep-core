@@ -21,8 +21,8 @@ import (
 )
 
 type provider struct {
-	cm                  *channelManager
 	channelManagerMutex sync.Mutex
+	cm                  *channelManager
 
 	host host.Host
 }
@@ -44,12 +44,12 @@ type Config struct {
 }
 
 func Connect(ctx context.Context, config *Config) (net.Provider, error) {
-	host, err := discoverAndListen(ctx, config)
+	host, identity, err := discoverAndListen(ctx, config)
 	if err != nil {
 		return nil, err
 	}
 
-	cm, err := newChannelManager(ctx, host)
+	cm, err := newChannelManager(ctx, identity, host)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 func discoverAndListen(
 	ctx context.Context,
 	config *Config,
-) (host.Host, error) {
+) (host.Host, *identity, error) {
 	var err error
 
 	addrs := config.listenAddrs
@@ -68,7 +68,7 @@ func discoverAndListen(
 		// Get available network ifaces to listen on into multiaddrs
 		addrs, err = getListenAddrs(config.port)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -79,25 +79,25 @@ func discoverAndListen(
 		// network as an identity they aren't familiar with.
 		peerIdentity, err = generateIdentity()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	peerStore, err := addIdentityToStore(peerIdentity)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	peerHost, err := buildPeerHost(ctx, addrs, peerIdentity.id, peerStore)
+	peerHost, err := buildPeerHost(ctx, addrs, peerIdentity.id.ID, peerStore)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := peerHost.Network().Listen(addrs...); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return peerHost, nil
+	return peerHost, peerIdentity, nil
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {

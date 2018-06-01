@@ -7,9 +7,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	floodsub "github.com/libp2p/go-floodsub"
 	host "github.com/libp2p/go-libp2p-host"
+	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 type channelManager struct {
+	ctx context.Context
+
+	identity  *identity
+	peerstore pstore.Peerstore
+
 	channelsMutex sync.Mutex
 	channels      map[string]*channel
 
@@ -18,6 +24,7 @@ type channelManager struct {
 
 func newChannelManager(
 	ctx context.Context,
+	identity *identity,
 	p2phost host.Host,
 ) (*channelManager, error) {
 	gossipsub, err := floodsub.NewGossipSub(ctx, p2phost)
@@ -25,8 +32,11 @@ func newChannelManager(
 		return nil, err
 	}
 	return &channelManager{
-		channels: make(map[string]*channel),
-		pubsub:   gossipsub,
+		channels:  make(map[string]*channel),
+		pubsub:    gossipsub,
+		peerstore: p2phost.Peerstore(),
+		identity:  identity,
+		ctx:       ctx,
 	}, nil
 }
 
@@ -64,14 +74,17 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 
 	channel := &channel{
 		name:                        name,
+		identity:                    cm.identity,
+		store:                       cm.peerstore,
+		pubsub:                      cm.pubsub,
 		subscription:                sub,
-		messageBus:                  make(chan net.Message),
+		messageBus:                  make([]net.Message, 0),
 		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler),
 		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
 	}
 
-	go channel.handleMessages()
+	go channel.handleMessages(cm.ctx)
 
 	return channel, nil
 }

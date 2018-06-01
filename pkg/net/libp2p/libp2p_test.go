@@ -2,11 +2,14 @@ package libp2p
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/net"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	testutils "github.com/libp2p/go-testutil"
 	ma "github.com/multiformats/go-multiaddr"
@@ -50,37 +53,112 @@ func TestProviderReturnsChannel(t *testing.T) {
 }
 
 func TestBroadcastChannel(t *testing.T) {
-	t.Skip()
-
 	ctx, cancel := newTestContext()
 	defer cancel()
+	// ctx := context.Background()
+
+	config := generateDeterministicNetworkConfig(t)
 
 	tests := map[string]struct {
-		name          string
-		expectedError func(string) error
+		name                    string
+		testIdentity            *identity
+		protocolIdentifier      *protocolIdentifier
+		expectedChannelForError func(string) error
 	}{
 		"Send succeeds": {
 			name: "testchannel",
-			expectedError: func(name string) error {
+			expectedChannelForError: func(name string) error {
 				return nil
 			},
+			testIdentity:       config.identity,
+			protocolIdentifier: &protocolIdentifier{id: "testProtocolIdentifier"},
 		},
 	}
 
-	provider, err := Connect(ctx, generateDeterministicNetworkConfig(t))
+	provider, err := Connect(ctx, config)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			_, err := provider.ChannelFor(test.name)
-			if !reflect.DeepEqual(test.expectedError(test.name), err) {
+			broadcastChannel, err := provider.ChannelFor(test.name)
+			if !reflect.DeepEqual(test.expectedChannelForError(test.name), err) {
 				t.Fatalf("expected test to fail with [%v] instead failed with [%v]",
-					test.expectedError(test.name), err,
+					test.expectedChannelForError(test.name), err,
 				)
+			}
+
+			if err := broadcastChannel.RegisterUnmarshaler(
+				func() net.TaggedUnmarshaler { return &TestMessage{} },
+			); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := broadcastChannel.RegisterIdentifier(
+				test.testIdentity.id,
+				test.protocolIdentifier,
+			); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := broadcastChannel.Send(
+				&TestMessage{ID: test.testIdentity, Payload: "some text"},
+			); err != nil {
+				t.Fatal(err)
+			}
+
+			recvChan := make(chan net.Message, 1)
+			if err := broadcastChannel.Recv(func(msg net.Message) error {
+				// slap something onto a channel and move on?
+				recvChan <- msg
+
+				// if msg.Payload() != test.ExpectedPayload {
+				// 	t.Fatal("expected message payload %s, got payload %s", msg.Payload(), test.ExpectedPayload)
+				// }
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			select {
+			case msg := <-recvChan:
+				fmt.Printf("Message: %+v\n", msg)
+				return
+			case <-ctx.Done():
+				return
 			}
 		})
 	}
+}
+
+type protocolIdentifier struct {
+	id string
+}
+
+type TestMessage struct {
+	ID      *identity
+	Payload string
+}
+
+// Type returns a string describing a TestMessage's type.
+func (m *TestMessage) Type() string {
+	return "test/unmarshaler"
+}
+
+// Marshal converts this TestMessage to a byte array suitable for network
+// communication.
+func (m *TestMessage) Marshal() ([]byte, error) {
+	return json.Marshal(m)
+}
+
+// Unmarshal converts a byte array produced by Marshal to a JoinMessage.
+func (m *TestMessage) Unmarshal(bytes []byte) error {
+	var message TestMessage
+	if err := json.Unmarshal(bytes, &message); err != nil {
+		fmt.Println("hit this error")
+		return err
+	}
+	m.ID = message.ID
+	return nil
 }
 
 func TestNetworkConnect(t *testing.T) {
@@ -105,19 +183,19 @@ func newTestContext() (context.Context, context.CancelFunc) {
 
 func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	p := testutils.RandPeerNetParamsOrFatal(t)
-	pi := &identity{id: p.ID, privKey: p.PrivKey, pubKey: p.PubKey}
+	pi := &identity{id: networkIdentity{p.ID}, privKey: p.PrivKey, pubKey: p.PubKey}
 	return &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
 }
 
 func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 	testConfig := generateDeterministicNetworkConfig(t)
 
-	host, err := discoverAndListen(ctx, testConfig)
+	host, identity, err := discoverAndListen(ctx, testConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	cm, err := newChannelManager(ctx, host)
+	cm, err := newChannelManager(ctx, identity, host)
 	if err != nil {
 		return nil, err
 	}
