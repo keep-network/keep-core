@@ -1,5 +1,7 @@
 
-# Direcotry where the solidity contracts are.
+# In .../github.com/keep-network/keep-core/pkg/chain/gen
+
+# Directory where the solidity contracts are.
 SOL_DIR=../../../contracts/solidity/contracts
 
 # Relative directory where the Go code needs to go.  This is relative to the
