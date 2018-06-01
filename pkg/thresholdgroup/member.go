@@ -158,7 +158,7 @@ type SharingMember struct {
 	// in the secret sharing phase. It is only shared publicly if this member
 	// receives an accusation from m in the accusation phase; in this case, the
 	// public sharing takes place during the justification phase.
-	memberShares map[bls.ID]bls.SecretKey
+	memberShares map[bls.ID]*bls.SecretKey
 
 	// The public commitments received from each other group member. For each
 	// other group member, we track their list of public commitments to their
@@ -322,9 +322,9 @@ func (lm *LocalMember) InitializeSharing() *SharingMember {
 	// For each member (including the caller!), we create a share from our set
 	// of secret shares (that is, our polynomials). Equivalent to (s_ij, s'_ij),
 	// but carried in the envelope of a bls.SecretKey (similar to (a_ik, b_ik)).
-	shares := make(map[bls.ID]bls.SecretKey)
+	shares := make(map[bls.ID]*bls.SecretKey)
 	for _, memberID := range lm.memberIDs {
-		memberShare := bls.SecretKey{}
+		memberShare := &bls.SecretKey{}
 		memberShare.Set(lm.secretShares, memberID)
 		shares[*memberID] = memberShare
 	}
@@ -352,31 +352,31 @@ func (sm *SharingMember) OtherMemberIDs() []*bls.ID {
 
 // SecretShareForID returns the secret share this member has generated for the
 // given `memberID`.
-func (sm *SharingMember) SecretShareForID(memberID *bls.ID) bls.SecretKey {
+func (sm *SharingMember) SecretShareForID(memberID *bls.ID) *bls.SecretKey {
 	return sm.memberShares[*memberID]
 }
 
 // AddCommitmentsFromID associates the given commitments with the given
 // memberID. These will later be used to verify the validity of the member
 // shares sent by the member with that id.
-func (sm *SharingMember) AddCommitmentsFromID(memberID bls.ID, commitments []bls.PublicKey) {
-	sm.commitments[memberID] = commitments
+func (sm *SharingMember) AddCommitmentsFromID(memberID *bls.ID, commitments []bls.PublicKey) {
+	sm.commitments[*memberID] = commitments
 }
 
 // CommitmentsComplete returns true if all commitments expected by this member
 // have been seen, false otherwise.
-func (sm SharingMember) CommitmentsComplete() bool {
+func (sm *SharingMember) CommitmentsComplete() bool {
 	return len(sm.commitments) == sm.groupSize-1
 }
 
 // AddShareFromID associates the given secret share with the given `senderID`,
 // if and only if the share is valid with respect to the public commitments the
 // sharing member gave.
-func (sm *SharingMember) AddShareFromID(senderID bls.ID, share bls.SecretKey) {
-	if sm.isValidShare(senderID, share) {
-		sm.receivedShares[senderID] = &share
+func (sm *SharingMember) AddShareFromID(senderID *bls.ID, share *bls.SecretKey) {
+	if share != nil && sm.isValidShare(senderID, share) {
+		sm.receivedShares[*senderID] = share
 	} else {
-		sm.receivedShares[senderID] = nil
+		sm.receivedShares[*senderID] = nil
 	}
 }
 
@@ -386,13 +386,25 @@ func (sm *SharingMember) SharesComplete() bool {
 	return len(sm.receivedShares) == len(sm.memberIDs)-1
 }
 
-// Check whether the given share is valid with respect to the sender's public
-// commitvments as seen by this member.
-func (sm *SharingMember) isValidShare(shareSenderID bls.ID, share bls.SecretKey) bool {
-	commitments := sm.commitments[shareSenderID]
+// Check whether the given share from the sender to this member is valid with
+// respect to the sender's public commitments as seen by this member.
+func (sm *SharingMember) isValidShare(shareSenderID *bls.ID, share *bls.SecretKey) bool {
+	return sm.isValidShareFor(shareSenderID, &sm.BlsID, share)
+}
+
+// Check whether the given share from the sender to the receiver is valid with
+// respect to the sender's public commitments as seen by this member.
+func (sm *SharingMember) isValidShareFor(
+	shareSenderID *bls.ID,
+	shareReceiverID *bls.ID,
+	share *bls.SecretKey,
+) bool {
+	commitments := sm.commitments[*shareSenderID]
 
 	combinedCommitment := bls.PublicKey{}
-	combinedCommitment.Set(commitments, &sm.BlsID)
+	// FIXME This can panic, let's rescue it and return false since it means a
+	// FIXME completely broken share.
+	combinedCommitment.Set(commitments, shareReceiverID)
 
 	comparisonShare := share.GetPublicKey()
 
@@ -445,8 +457,8 @@ func (jm *JustifyingMember) AddAccusationFromID(senderID *bls.ID, accusedID *bls
 // accused this member of providing an invalid secret share with respect to this
 // member's public commitments, and this justification publishes that share for
 // all other members to verify against the same public commitments.
-func (jm *JustifyingMember) Justifications() map[bls.ID]bls.SecretKey {
-	justifications := make(map[bls.ID]bls.SecretKey, len(jm.accuserIDs))
+func (jm *JustifyingMember) Justifications() map[bls.ID]*bls.SecretKey {
+	justifications := make(map[bls.ID]*bls.SecretKey, len(jm.accuserIDs))
 	for _, accuserID := range jm.accuserIDs {
 		justifications[accuserID] = jm.memberShares[accuserID]
 	}
@@ -457,23 +469,23 @@ func (jm *JustifyingMember) Justifications() map[bls.ID]bls.SecretKey {
 // justification from accusedID regarding an accusation from accuserID, in the
 // form of the secretShare that was privately exchanged between accusedID and
 // accuserID.
-func (jm *JustifyingMember) RecordJustificationFromID(accusedID bls.ID, accuserID bls.ID, secretShare bls.SecretKey) {
-	if !jm.isValidShare(accusedID, secretShare) {
+func (jm *JustifyingMember) RecordJustificationFromID(accusedID *bls.ID, accuserID *bls.ID, secretShare *bls.SecretKey) {
+	if !jm.isValidShareFor(accusedID, accuserID, secretShare) {
 		// If the member broadcast an invalid justification, we immediately
 		// remove them from our shares as they have proven dishonest.
-		jm.receivedShares[accusedID] = nil
+		jm.receivedShares[*accusedID] = nil
 	} else {
-		if pendingAccusedIDs, found := jm.pendingJustificationIDs[accuserID]; found {
-			delete(pendingAccusedIDs, accusedID)
+		if pendingAccusedIDs, found := jm.pendingJustificationIDs[*accuserID]; found {
+			delete(pendingAccusedIDs, *accusedID)
 			if len(pendingAccusedIDs) == 0 {
-				delete(jm.pendingJustificationIDs, accuserID)
+				delete(jm.pendingJustificationIDs, *accuserID)
 			}
 		}
 
 		if accuserID.IsEqual(&jm.BlsID) {
 			// If we originally accused, and the justification is valid, then we
 			// can add the valid entry to our received shares.
-			jm.receivedShares[accuserID] = &secretShare
+			jm.receivedShares[*accuserID] = secretShare
 		}
 	}
 }
@@ -513,13 +525,12 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
 			jm.threshold,
-			len(jm.receivedShares),
+			len(jm.receivedShares)+1,
 		)
 	}
 
 	// [GJKR 99], Fig 2, 3
-	initialShare := jm.SecretShareForID(&jm.BlsID)
-	groupSecretKeyShare := &initialShare
+	groupSecretKeyShare := jm.SecretShareForID(&jm.BlsID)
 	for _, share := range jm.receivedShares {
 		groupSecretKeyShare.Add(share)
 	}
