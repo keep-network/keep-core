@@ -21,7 +21,7 @@
   branch = "master"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
-  revision = "bc0944904505aab55e089371a892be2f87883161"
+  revision = "86fed781132ac890ee03e906e4ecd5d6fa180c64"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -52,8 +52,8 @@
     "p2p/netutil",
     "rpc"
   ]
-  revision = "ff9b14617e73c07dfa028bc477fe86c1e04d80c5"
-  version = "v1.8.9"
+  revision = "eae63c511ceafab14b92e274c1b18bf1700e2d3d"
+  version = "v1.8.10"
 
 [[projects]]
   name = "github.com/fd/go-nat"
@@ -189,7 +189,7 @@
     "p2p/protocol/identify",
     "p2p/protocol/identify/pb"
   ]
-  revision = "7e05c65d1ca4c7ec48a76aeae799d5fa26a94ba7"
+  revision = "df9099969cf0ea33d3e0696d9e348f0894872f95"
 
 [[projects]]
   branch = "master"
@@ -524,7 +524,7 @@
     "sha3",
     "ssh/terminal"
   ]
-  revision = "ab813273cd59e1333f7ae7bff5d027d4aadf528c"
+  revision = "5ba7f63082460102a45837dbd1827e10f9479ac0"
 
 [[projects]]
   branch = "master"
@@ -536,7 +536,7 @@
     "html/charset",
     "websocket"
   ]
-  revision = "dfa909b99c79129e1100513e5cd36307665e5723"
+  revision = "1e491301e022f8f977054da4c2d852decd59571f"
 
 [[projects]]
   branch = "master"
