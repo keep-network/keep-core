@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
+	"github.com/keep-network/keep-core/pkg/net/internal"
 	floodsub "github.com/libp2p/go-floodsub"
 )
 
@@ -105,53 +108,57 @@ func (c *channel) handleMessages() {
 			fmt.Println(err)
 			return
 		}
+
 		if err := c.processMessage(msg); err != nil {
 			fmt.Println(err)
 		}
-		// TODO: handle message
-		fmt.Println(msg)
 	}
 }
 
 func (c *channel) processMessage(message *floodsub.Message) error {
+	// 1. Unmarshall the message in to the Envelope
+	var envelope pb.Envelope
+	if err := proto.Unmarshal(message.GetData(), &envelope); err != nil {
+		return err
+	}
+	// TODO: 2. the whole is the receiver the senderIdentifier thing
+
+	// 3. Since the protocol type is on the envelope, let's
+	//    pull that type from our map of unmarshallers.
+	unmarshaler, found := c.unmarshalersByType[string(envelope.Type)]
+	if !found {
+		return fmt.Errorf(
+			"Couldn't find unmarshaler for type %s",
+			string(envelope.Type),
+		)
+	}
+
+	unmarshaled := unmarshaler()
+	if err := unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
+		return err
+	}
+
+	// 4. Construct an identifier from the sender (on the message)
 	senderIdentifier := &identity{id: message.GetFrom()}
 
+	// 5. Get the associated protocol identifier from an association map
 	c.identifiersMutex.Lock()
-	protocolIdentifier := c.transportToProtoIdentifiers[senderIdentifier]
+	protocolIdentifier, found := c.transportToProtoIdentifiers[senderIdentifier]
+	if !found {
+		return fmt.Errorf(
+			"Couldn't find protocol identifier for sender identifier %s",
+			senderIdentifier,
+		)
+	}
 	c.identifiersMutex.Unlock()
 
-	data := message.GetData()
-	// 1. Unmarshall the message in to the Envelope
-	// 2. Do the whole receiver thing -> senderIdentifier
-	// 3. payload is a gossip message
-	// 4. Unmarshall again to get the underlying gossip message
-	// 5. Since the protocol type is on the gossip message, let's
-	//    have an enum on the gossip message that keys us to the type of message that this is.
 	// 6. Construct an internal.BasicMessage to fire back to the protocol
-	// var payload interface{}
+	protocolMessage := internal.BasicMessage(senderIdentifier,
+		protocolIdentifier, unmarshaled,
+	)
 
-	// if err := proto.Unmarshal(data, payload); err != nil {
-	// 	return err
-	// }
-
-	// unmarshaler, found := c.unmarshalersByType[payload.Type()]
-	// if !found {
-	// 	return fmt.Errorf("Couldn't find unmarshaler for type %s", payload.Type())
-	// }
-
-	// unmarshaled := unmarshaler()
-	// if err := unmarshaled.Unmarshal(bytes); err != nil {
-	// 	return err
-	// }
-
-	// protocolMessage :=
-	// 	internal.BasicMessage(
-	// 		senderIdentifier,
-	// 		protocolIdentifier,
-	// 		interface{},
-	// 	)
-
-	// c.messageBus <- data
-	fmt.Println(protocolIdentifier, data)
+	// 7. Slap our internal message onto a channel from which we can
+	//    pull off later.
+	c.messageBus <- protocolMessage
 	return nil
 }
