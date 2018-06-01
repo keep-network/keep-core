@@ -40,7 +40,7 @@ contract StakeDelegatable {
     function stakeBalanceOf(address _address)
         public
         view
-        notNull
+        notNull(_address)
         returns (uint256)
     {
         address delegator = stakerToOperator[_address];
@@ -59,7 +59,7 @@ contract StakeDelegatable {
     function getStakerOrOperator(address _address)
         public
         view
-        notNull
+        notNull(_address)
         returns (address)
     {
         address operator = operatorToStaker[_address];
@@ -77,8 +77,8 @@ contract StakeDelegatable {
      */
     function approveOperatorAt(address _address)
         public
-        notNull
-        notStaker
+        notNull(_address)
+        notStaker(_address)
     {
         operatorToStaker[msg.sender] = _address;
     }
@@ -91,7 +91,7 @@ contract StakeDelegatable {
      */
     function requestOperateFor(address _address)
         public
-        notNull
+        notNull(_address)
     {
         stakerToOperator[msg.sender] = _address;
     }
