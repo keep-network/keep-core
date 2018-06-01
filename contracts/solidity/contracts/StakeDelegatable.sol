@@ -12,6 +12,14 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
  */
 contract StakeDelegatable {
 
+    /**
+     * @dev Only not null addresses can be passed to the functions with this modifier.
+     */
+    modifier notNull(address _address) {
+        require(_address != address(0));
+        _;
+    }
+
     mapping(address => uint256) public stakeBalances;
     mapping(address => address) public stakerToOperator;
     mapping(address => address) public operatorToStaker;
@@ -21,9 +29,12 @@ contract StakeDelegatable {
      * @param _address The address to query the balance of.
      * @return The amount staked by the passed address.
      */
-    function stakeBalanceOf(address _address) public view returns (uint256) {
-        require(_address != address(0));
-
+    function stakeBalanceOf(address _address)
+        public
+        view
+        notNull
+        returns (uint256)
+    {
         address delegator = stakerToOperator[_address];
         if (delegator != address(0)) {
             return stakeBalances[delegator];
@@ -37,9 +48,12 @@ contract StakeDelegatable {
      * @param _address The address to check.
      * @return Operator address or provided staker address.
      */
-    function getStakerOrOperator(address _address) public view returns (address) {
-        require(_address != address(0));
-
+    function getStakerOrOperator(address _address)
+        public
+        view
+        notNull
+        returns (address)
+    {
         address operator = operatorToStaker[_address];
         if (operator != address(0)) {
             return operator;
@@ -54,16 +68,17 @@ contract StakeDelegatable {
      * or operating someone else's stake. In the current implementation
      * delegating stake doesn't hide the stake balance on your main stake
      * address.
-     * @param _operator Address to where you want to delegate your balance.
+     * @param _address Address to where you want to delegate your balance.
      */
-    function delegateStakeTo(address _operator) public {
-        require(_operator != address(0));
-
+    function delegateStakeTo(address _address) 
+        public
+        notNull
+    {
         // Operator must not be a staker.
-        require(stakeBalances[_operator] == 0);
+        require(stakeBalances[_address] == 0);
 
         // Revert if operator address was already used.
-        address previousDelegator = stakerToOperator[_operator];
+        address previousDelegator = stakerToOperator[_address];
         require(previousDelegator == address(0));
 
         // Release previous operator address when you delegate stake to a new one.
@@ -72,8 +87,8 @@ contract StakeDelegatable {
             delete stakerToOperator[previousOperator];
         }
 
-        operatorToStaker[msg.sender] = _operator;
-        stakerToOperator[_operator] = msg.sender;
+        operatorToStaker[msg.sender] = _address;
+        stakerToOperator[_address] = msg.sender;
     }
 
     /**
