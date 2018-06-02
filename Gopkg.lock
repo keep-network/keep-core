@@ -61,7 +61,7 @@
     "metrics",
     "params",
     "p2p/netutil",
-    "rlp"
+    "rlp",
     "rpc",
     "trie"
   ]
