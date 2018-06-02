@@ -1,25 +1,8 @@
 package net
 
 import (
-	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/gogo/protobuf/proto"
 )
-
-// GroupIdentity contains the Group's public key as created by the dkg process
-// and a list of Members that belong to the group.
-// TODO: move to a more appropriate package; revise which fields we need
-type GroupIdentity struct {
-	// Group names are isomorphic to channel names
-	// Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
-	// all valid group members.
-	Name string
-	// Public key for the group; created through DKG.
-	// Verified from the on-chain Group Registry
-	GroupPublicKey *bls.PublicKey
-	// The final list of qualified Group Members; empty if not yet computed
-	// Verified from the on-chain Group Registry
-	Members []bls.PublicKey
-}
 
 // TransportIdentifier represents the identity of a participant at the transport
 // layer (e.g., libp2p).
@@ -61,7 +44,7 @@ type TaggedMarshaler interface {
 // named BroadcastChannel, and the ability to return a provider type, which is
 // an informational string indicating what type of provider this is.
 type Provider interface {
-	ChannelFor(name string) BroadcastChannel
+	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 }
 
