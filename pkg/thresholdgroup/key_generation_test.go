@@ -111,15 +111,15 @@ func TestLocalMemberCommitments(t *testing.T) {
 
 func TestLocalMemberRegistration(t *testing.T) {
 	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
-	completeMemberCount := defaultGroupSize - 1
-
 	member.RegisterMemberID(&member.BlsID)
-	for i := 0; i < completeMemberCount; i++ {
+
+	otherMemberCount := defaultGroupSize - 1
+	for i := 0; i < otherMemberCount; i++ {
 		if member.MemberListComplete() {
 			t.Fatalf(
-				"\nmember list complete after %v instead of %v members",
+				"\nmember list complete after %v instead of %v additional members",
 				i+1,
-				completeMemberCount,
+				otherMemberCount,
 			)
 		}
 
@@ -130,8 +130,9 @@ func TestLocalMemberRegistration(t *testing.T) {
 
 	if !member.MemberListComplete() {
 		t.Errorf(
-			"\nexpected: member list complete after %v members\nactual:   member list incomplete",
-			completeMemberCount,
+			"\nexpected: member list complete after %v additional members\n"+
+				"actual:   member list incomplete",
+			otherMemberCount,
 		)
 	}
 }
