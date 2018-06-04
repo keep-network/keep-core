@@ -166,8 +166,7 @@ func randomShares() []bls.SecretKey {
 	return secretKeys
 }
 
-func commitmentsFromShares(sks []bls.SecretKey) []bls.PublicKey {
-	shares := randomShares()
+func commitmentsFromShares(shares []bls.SecretKey) []bls.PublicKey {
 	commitments := make([]bls.PublicKey, 0)
 	for _, share := range shares {
 		commitments = append(commitments, *share.GetPublicKey())
