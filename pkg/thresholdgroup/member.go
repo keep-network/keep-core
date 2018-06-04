@@ -530,7 +530,8 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	}
 
 	// [GJKR 99], Fig 2, 3
-	groupSecretKeyShare := jm.SecretShareForID(&jm.BlsID)
+	groupSecretKeyShare := &bls.SecretKey{}
+	groupSecretKeyShare.SetLittleEndian(jm.SecretShareForID(&jm.BlsID).GetLittleEndian())
 	for _, share := range jm.receivedShares {
 		groupSecretKeyShare.Add(share)
 	}
