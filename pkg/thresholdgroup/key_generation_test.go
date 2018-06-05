@@ -204,6 +204,16 @@ func TestSharingMemberPrivateShareReception(t *testing.T) {
 		memberShareFunc     func(*SharingMember, *bls.ID) *bls.SecretKey
 		expectedAccusations int
 	}{
+		"empty member commitments": {
+			memberShareFunc: func(sharingMember *SharingMember, otherMemberID *bls.ID) *bls.SecretKey {
+				sharingMember.AddCommitmentsFromID(
+					otherMemberID,
+					make([]bls.PublicKey, 0),
+				)
+				return &bls.SecretKey{}
+			},
+			expectedAccusations: 11,
+		},
 		"valid shares": {
 			memberShareFunc: func(sharingMember *SharingMember, otherMemberID *bls.ID) *bls.SecretKey {
 				otherMember := buildCommittedSharingMember(otherMemberID.GetHexString())
