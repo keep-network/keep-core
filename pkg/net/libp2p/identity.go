@@ -16,16 +16,13 @@ import (
 //
 // Consumers of the net package require an ID to register with protocol level
 // IDs, as well as a public key for authentication.
-
-type networkIdentity struct {
-	peer.ID
-}
-
 type identity struct {
 	id      networkIdentity
 	pubKey  libp2pcrypto.PubKey
 	privKey libp2pcrypto.PrivKey
 }
+
+type networkIdentity peer.ID
 
 func (n networkIdentity) ProviderName() string {
 	return "libp2p"
@@ -36,7 +33,7 @@ func (i *identity) Marshal() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	peerIDBytes := []byte(i.id.ID)
+	peerIDBytes := []byte(peer.ID(i.id))
 	return (&pb.Identity{PubKey: pubKeyBytes, PeerId: peerIDBytes}).Marshal()
 }
 
@@ -56,7 +53,7 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	i.id = networkIdentity{pid}
+	i.id = networkIdentity(pid)
 
 	return nil
 }
@@ -66,7 +63,7 @@ func pubKeyToIdentifier(pub libp2pcrypto.PubKey) *identity {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
 	}
-	return &identity{id: networkIdentity{pid}}
+	return &identity{id: networkIdentity(pid)}
 }
 
 // AddIdentityToStore takes an identity and notifies the addressbook of the
@@ -76,10 +73,10 @@ func addIdentityToStore(i *identity) (pstore.Peerstore, error) {
 	// to our address book (peerstore in libp2p) from secure storage (dht)
 	peerstore := pstore.NewPeerstore()
 
-	if err := peerstore.AddPrivKey(i.id.ID, i.privKey); err != nil {
+	if err := peerstore.AddPrivKey(peer.ID(i.id), i.privKey); err != nil {
 		return nil, fmt.Errorf("failed to add PrivateKey to store with error %s", err)
 	}
-	if err := peerstore.AddPubKey(i.id.ID, i.pubKey); err != nil {
+	if err := peerstore.AddPubKey(peer.ID(i.id), i.pubKey); err != nil {
 		return nil, fmt.Errorf("failed to add PubKey to store with error %s", err)
 	}
 	return peerstore, nil

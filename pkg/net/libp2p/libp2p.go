@@ -88,7 +88,7 @@ func discoverAndListen(
 		return nil, nil, err
 	}
 
-	peerHost, err := buildPeerHost(ctx, addrs, peerIdentity.id.ID, peerStore)
+	peerHost, err := buildPeerHost(ctx, addrs, peer.ID(peerIdentity.id), peerStore)
 	if err != nil {
 		return nil, nil, err
 	}
