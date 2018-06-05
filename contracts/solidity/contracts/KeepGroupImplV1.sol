@@ -27,14 +27,17 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     /**
      * @dev Initialize Keep Group implementaion contract with a linked Keep Random Beacon contract.
      * @param _keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
-     * @param _groupThreshold Number of members at which group becomes formed.
+     * @param _groupThreshold Max number of bad members in a group that we can detect as well as “number
+     * of good members needed to produce a relay entry”.
+     * @param _groupSize Minimum number of members in a group - to form a group.
      */
-    function initialize(uint256 _groupThreshold, address _keepRandomBeaconAddress) public onlyOwner {
+    function initialize(uint256 _groupThreshold, uint256 _groupSize, address _keepRandomBeaconAddress) public onlyOwner {
         require(!initialized());
         require(_keepRandomBeaconAddress != address(0x0));
         boolStorage[keccak256("KeepGroupImplV1")] = true;
         addressStorage[keccak256("keepRandomBeaconAddress")] = _keepRandomBeaconAddress;
         uintStorage[keccak256("groupThreshold")] = _groupThreshold;
+        uintStorage[keccak256("groupSize")] = _groupSize;
         uintStorage[keccak256("groupsCount")] = 0;
     }
 
@@ -47,11 +50,31 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     /**
      * @dev Sets new threshold size for groups.
-     * @param _groupThreshold Number of members at which group becomes formed.
      */
     function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
         uintStorage[keccak256("groupThreshold")] = _groupThreshold;
         /// TODO: determine if size decreased, then partially complete groups may now be complete.  Iterate over groups. Find
+    }
+
+    /**
+     * @dev Gets the threshold size for groups.
+     */
+    function getGroupThreshold() public view returns(uint256) {
+        return uintStorage[keccak256("groupThreshold")];
+    }
+
+    /**
+     * @dev Sets the minimum number of members in a group.
+     */
+    function setGroupSize(uint256 _groupSize) public onlyOwner {
+        uintStorage[keccak256("groupSize")] = _groupSize;
+    }
+
+    /**
+     * @dev Gets the minimum number of members in a group.
+     */
+    function getGroupSize() public view returns(uint256) {
+        return uintStorage[keccak256("groupSize")];
     }
 
     /**
