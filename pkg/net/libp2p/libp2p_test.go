@@ -55,23 +55,24 @@ func TestProviderReturnsChannel(t *testing.T) {
 func TestBroadcastChannel(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
-	// ctx := context.Background()
 
 	config := generateDeterministicNetworkConfig(t)
 
 	tests := map[string]struct {
 		name                    string
-		testIdentity            *identity
+		identity                *identity
+		payload                 string
 		protocolIdentifier      *protocolIdentifier
 		expectedChannelForError func(string) error
 	}{
 		"Send succeeds": {
-			name: "testchannel",
+			name:               "testchannel",
+			identity:           config.identity,
+			payload:            "some text",
+			protocolIdentifier: &protocolIdentifier{id: "testProtocolIdentifier"},
 			expectedChannelForError: func(name string) error {
 				return nil
 			},
-			testIdentity:       config.identity,
-			protocolIdentifier: &protocolIdentifier{id: "testProtocolIdentifier"},
 		},
 	}
 
@@ -95,26 +96,26 @@ func TestBroadcastChannel(t *testing.T) {
 			}
 
 			if err := broadcastChannel.RegisterIdentifier(
-				test.testIdentity.id,
+				test.identity.id,
 				test.protocolIdentifier,
 			); err != nil {
 				t.Fatal(err)
 			}
 
 			if err := broadcastChannel.Send(
-				&TestMessage{ID: test.testIdentity, Payload: "some text"},
+				&TestMessage{ID: test.identity, Payload: test.payload},
 			); err != nil {
 				t.Fatal(err)
 			}
 
 			recvChan := make(chan net.Message, 1)
 			if err := broadcastChannel.Recv(func(msg net.Message) error {
-				// slap something onto a channel and move on?
-				recvChan <- msg
+				if msg.Payload().(string) != test.payload {
+					t.Fatalf("expected message payload %s, got payload %s", msg.Payload().(string), test.payload)
+				}
 
-				// if msg.Payload() != test.ExpectedPayload {
-				// 	t.Fatal("expected message payload %s, got payload %s", msg.Payload(), test.ExpectedPayload)
-				// }
+				// slap something onto a channel and move on
+				recvChan <- msg
 				return nil
 			}); err != nil {
 				t.Fatal(err)
