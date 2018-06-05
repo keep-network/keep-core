@@ -85,9 +85,8 @@ func (c *channel) Recv(h net.HandleMessageFunc) error {
 	c.messagesLock.RLock()
 	snapshot := make([]net.Message, len(c.messages))
 	copy(snapshot, c.messages)
-	// drain messages from buffer
 	// FIXME: this will be a GC hotspot; use pools
-	c.messages = make([]net.Message, 0)
+	c.messages = make([]net.Message, 0) // drain messages from buffer
 	c.messagesLock.RUnlock()
 
 	for _, message := range snapshot {
@@ -157,16 +156,16 @@ func (c *channel) handleMessages(ctx context.Context) {
 		msg, err := c.subscription.Next(ctx)
 		if err != nil {
 			// TODO: handle error - different error types
-			// result in different outcomes
+			// result in different outcomes. Print err is very noisy.
 			fmt.Println(err)
-			return
+			continue
 		}
 
 		if err := c.processMessage(msg); err != nil {
 			// TODO: handle error - different error types
-			// result in different outcomes
+			// result in different outcomes. Print err is very noisy.
 			fmt.Println(err)
-			return
+			continue
 		}
 
 		select {
