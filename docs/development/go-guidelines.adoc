@@ -10,7 +10,7 @@ as well as unified organization of imports.
 
 === Max line length
 
-Go code is wrapped at 80 charactersper line as a general rule, though some
+Go code is wrapped at 80 characters per line as a general rule, though some
 lines may be left longer at the discretion of the developers for clarity. No
 line should exceed 120 characters in length. When wrapping function calls,
 each parameter should be on its own line.
