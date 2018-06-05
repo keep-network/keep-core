@@ -5,7 +5,7 @@
 toc::[]
 
 Go code generally adheres to the best practices of the Go community. All Go code
-is formatted using `goimports` to ensure both adherence with `gofmt`'s output,
+is formatted using `goimports` to ensure both adherence with ``gofmt``'s output,
 as well as unified organization of imports. 
 
 === Max line length
