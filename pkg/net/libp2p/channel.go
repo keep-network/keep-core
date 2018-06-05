@@ -23,8 +23,8 @@ type channel struct {
 	pubsub       *floodsub.PubSub
 	subscription *floodsub.Subscription
 
-	messageLock sync.RWMutex
-	messageBus  []net.Message
+	messagesLock sync.RWMutex
+	messages     []net.Message
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
@@ -53,30 +53,25 @@ func envelopeProto(message net.TaggedMarshaler, sender *identity) ([]byte, error
 		return nil, err
 	}
 
-	env := &pb.Envelope{
+	return (&pb.Envelope{
 		Payload: payloadBytes,
 		Sender:  identityBytes,
 		Type:    []byte(message.Type()),
-	}
-
-	return env.Marshal()
+	}).Marshal()
 }
 
 func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
-	// 1. Change a net.TaggedMarshaler to a protobuf message
+	// Transform net.TaggedMarshaler to a protobuf message
 	envelopeBytes, err := envelopeProto(message, sender)
 	if err != nil {
 		return err
 	}
 
-	// 2. get that representation and put it onto the publish
 	c.pubsubLock.Lock()
-	if err := c.pubsub.Publish(c.name, envelopeBytes); err != nil {
-		return err
-	}
-	c.pubsubLock.Unlock()
+	defer c.pubsubLock.Unlock()
 
-	return nil
+	// Publish the proto to the network
+	return c.pubsub.Publish(c.name, envelopeBytes)
 }
 
 func (c *channel) SendTo(
@@ -87,16 +82,21 @@ func (c *channel) SendTo(
 }
 
 func (c *channel) Recv(h net.HandleMessageFunc) error {
-	c.messageLock.RLock()
-	snapshot := make([]net.Message, len(c.messageBus))
-	copy(snapshot, c.messageBus)
-	c.messageLock.RUnlock()
+	c.messagesLock.RLock()
+	snapshot := make([]net.Message, len(c.messages))
+	copy(snapshot, c.messages)
+	// drain messages from buffer
+	// FIXME: this will be a GC hotspot; use pools
+	c.messages = make([]net.Message, 0)
+	c.messagesLock.RUnlock()
 
 	for _, message := range snapshot {
 		if err := h(message); err != nil {
 			return err
 		}
 	}
+
+	snapshot = nil // release copy to the gc
 
 	return nil
 }
@@ -177,58 +177,73 @@ func (c *channel) handleMessages(ctx context.Context) {
 }
 
 func (c *channel) processMessage(message *floodsub.Message) error {
-	// 1. Unmarshall the message in to the Envelope
 	var envelope pb.Envelope
 	if err := proto.Unmarshal(message.Data, &envelope); err != nil {
 		return err
 	}
 
-	// TODO: 2. the whole is the receiver the senderIdentifier thing
+	// TODO: handle receivers, authentication, etc
 
-	// 3. Since the protocol type is on the envelope, let's
-	//    pull that type from our map of unmarshallers.
-	c.unmarshalersMutex.Lock()
-	unmarshaler, found := c.unmarshalersByType[string(envelope.Type)]
-	if !found {
-		return fmt.Errorf(
-			"Couldn't find unmarshaler for type %s",
-			string(envelope.Type),
-		)
+	// The protocol type is on the envelope; let's pull that type
+	// from our map of unmarshallers.
+	unmarshaled, err := c.getUnmarshalerByType(string(envelope.Type))
+	if err != nil {
+		return err
 	}
-	c.unmarshalersMutex.Unlock()
 
-	unmarshaled := unmarshaler()
 	if err := unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
 		return err
 	}
 
-	// 4. Construct an identifier from the sender (on the message)
+	// Construct an identifier from the sender (on the message)
 	senderIdentifier := &identity{}
 	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
 		return err
 	}
 
-	// 5. Get the associated protocol identifier from an association map
-	c.identifiersMutex.Lock()
-	protocolIdentifier, found := c.transportToProtoIdentifiers[senderIdentifier.id]
-	if !found {
-		return fmt.Errorf(
-			"Couldn't find protocol identifier for sender identifier %+v",
-			senderIdentifier,
-		)
+	// Get the associated protocol identifier from an association map
+	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
+	if err != nil {
+		return err
 	}
-	c.identifiersMutex.Unlock()
 
-	// 6. Construct an internal.BasicMessage to fire back to the protocol
+	// Fire a message back to the protocol
 	protocolMessage := internal.BasicMessage(senderIdentifier.id,
 		protocolIdentifier, unmarshaled,
 	)
 
-	// 7. Slap our internal message onto a channel from which we can
-	//    pull off later.
-	c.messageLock.Lock()
-	c.messageBus = append(c.messageBus, protocolMessage)
-	c.messageLock.Unlock()
+	// We'll drain the list of messages when called
+	c.messagesLock.Lock()
+	c.messages = append(c.messages, protocolMessage)
+	c.messagesLock.Unlock()
 
 	return nil
+}
+
+func (c *channel) getUnmarshalerByType(envelopeType string) (net.TaggedUnmarshaler, error) {
+	c.unmarshalersMutex.Lock()
+	defer c.unmarshalersMutex.Unlock()
+
+	unmarshaler, found := c.unmarshalersByType[envelopeType]
+	if !found {
+		return nil, fmt.Errorf(
+			"Couldn't find unmarshaler for type %s", envelopeType,
+		)
+	}
+
+	return unmarshaler(), nil
+}
+
+func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.ProtocolIdentifier, error) {
+	c.identifiersMutex.Lock()
+	defer c.identifiersMutex.Unlock()
+
+	protocolIdentifier, found := c.transportToProtoIdentifiers[senderIdentifier.id]
+	if !found {
+		return nil, fmt.Errorf(
+			"Couldn't find protocol identifier for sender identifier %v",
+			senderIdentifier,
+		)
+	}
+	return protocolIdentifier, nil
 }
