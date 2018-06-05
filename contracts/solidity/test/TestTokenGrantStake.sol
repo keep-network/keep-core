@@ -43,20 +43,4 @@ contract TestTokenGrantStake {
     Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
     Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should change immediately after unstake initiation.");
   }
-
-  // Token grant beneficiary can not finish unstake of the grant until delay is over
-  function testCannotFinishUnstake() public {
-  
-    // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-    ThrowProxy throwProxy = new ThrowProxy(address(c));
-
-    // Prime the proxy.
-    TokenGrant(address(throwProxy)).finishUnstake(id);
-
-    // Execute the call that is supposed to throw.
-    // r will be false if it threw and true if it didn't.
-    bool r = throwProxy.execute.gas(200000)();
-    Assert.isFalse(r, "Should throw when trying to unstake when delay is not over.");
-    Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
-  }
 }
