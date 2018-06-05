@@ -12,7 +12,7 @@ func TestReadConfig(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error:%s\n", err)
 	}
-	expectedURL := "ws://192.168.0.157:8546"
+	expectedURL := "ws://192.168.0.158:8546"
 	if cfg.Ethereum.URL != expectedURL {
 		t.Errorf("Error: Did not correctly read in ./test/config.toml, Expected [%s] Got [%s]\n", expectedURL, cfg.Ethereum.URL)
 	}
