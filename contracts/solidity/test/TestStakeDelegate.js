@@ -30,37 +30,44 @@ contract('TestStakeDelegate', function(accounts) {
   });
 
   it("should not be able to delegate stake to an 'operator' address that is a staker", async function() {
-    await exceptThrow(stakingContract.delegateStakeTo(account_two));
+    await stakingContract.requestOperateFor(account_one, {from: account_two});
+    await exceptThrow(stakingContract.approveOperatorAt(account_two));
   });
 
   it("should be able to delegate stake to an 'operator' address to represent your stake balance", async function() {
-    await stakingContract.delegateStakeTo(account_three, {from: account_one});
+    await stakingContract.requestOperateFor(account_one, {from: account_three});
+    await stakingContract.approveOperatorAt(account_three, {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
   });
 
-  it("should not be able to delegate stake to an 'operator' address that is already in use", async function() {
-    await stakingContract.delegateStakeTo(account_three, {from: account_one});
-    await exceptThrow(stakingContract.delegateStakeTo(account_three, {from: account_two}));
+  it("should not be able to delegate stake to an 'operator' address that is not approved", async function() {
+    await stakingContract.requestOperateFor(account_two, {from: account_three});
+    await stakingContract.approveOperatorAt(account_three, {from: account_one});
+    assert.equal(await stakingProxy.balanceOf(account_three), 0, "Operator account should be zero since there were no handshake with delegator.");
   });
 
-  it("should be able to update 'operator' address", async function() {
-    await stakingContract.delegateStakeTo(account_three, {from: account_one});
+  it("should be able to update 'operator' address if new operator request eist", async function() {
+    await stakingContract.requestOperateFor(account_one, {from: account_three});
+    await stakingContract.approveOperatorAt(account_three, {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
 
-    await stakingContract.delegateStakeTo(account_four, {from: account_one});
+    await stakingContract.approveOperatorAt(account_four, {from: account_one});
+    await stakingContract.requestOperateFor(account_one, {from: account_four});
     assert.equal(await stakingProxy.balanceOf(account_three), 0, "Previous operator account should stop representing delegator's stake balance.");
     assert.equal(await stakingProxy.balanceOf(account_four), 200, "Updated operator account should represent delegator's stake balance.");
   });
 
   it("should be able to remove delegated operator address that represents your stake balance", async function() {
-    await stakingContract.delegateStakeTo(account_three);
+    await stakingContract.requestOperateFor(account_one, {from: account_three});
+    await stakingContract.approveOperatorAt(account_three, {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
     await stakingContract.removeDelegate();
     assert.equal(await stakingProxy.balanceOf(account_three), 0, "Operator account should stop representing delegator's stake balance.");
   });
 
   it("should be able to change stake and get operator to reflect updated balance", async function() {
-    await stakingContract.delegateStakeTo(account_three);
+    await stakingContract.requestOperateFor(account_one, {from: account_three});
+    await stakingContract.approveOperatorAt(account_three, {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
 
     // Stake more tokens
