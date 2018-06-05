@@ -36,12 +36,8 @@ func (i *identity) Marshal() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	privKeyBytes, err := i.privKey.Bytes()
-	if err != nil {
-		return nil, err
-	}
 	peerIDBytes := []byte(i.id.ID)
-	return (&pb.Identity{PubKey: pubKeyBytes, PeerId: peerIDBytes, PrivKey: privKeyBytes}).Marshal()
+	return (&pb.Identity{PubKey: pubKeyBytes, PeerId: peerIDBytes}).Marshal()
 }
 
 func (i *identity) Unmarshal(bytes []byte) error {
@@ -53,10 +49,6 @@ func (i *identity) Unmarshal(bytes []byte) error {
 		return err
 	}
 	i.pubKey, err = libp2pcrypto.UnmarshalPublicKey(pbIdentity.PubKey)
-	if err != nil {
-		return err
-	}
-	i.privKey, err = libp2pcrypto.UnmarshalPrivateKey(pbIdentity.PrivKey)
 	if err != nil {
 		return err
 	}
