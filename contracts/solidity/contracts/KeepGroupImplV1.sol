@@ -5,6 +5,14 @@ import "./EternalStorage.sol";
 import "./KeepRandomBeaconImplV1.sol";
 
 
+/**
+ * @dev Interface for checking minimum stake balance.
+ */
+// interface keepRandomBeacon {
+//     function hasMinimumStake(address _staker) external view returns(bool);
+// }
+
+
 contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
@@ -12,10 +20,12 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-    modifier isStaked() {
-        // -- testing - commented out -- //  require(KeepRelayBeacon(keepRandomBeaconAddress).isStaked(msg.sender));
-        _;
-    }
+    // TODO: make sure we know staker eth address so we can check its minimum stake
+    // modifier hasMinimumStake(bytes32 _staker) {
+    //     //keepRandomBeacon beacon = keepRandomBeacon(addressStorage[keccak256("keepRandomBeaconAddress")]);
+    //     //require(beacon.hasMinimumStake(_staker));
+    //     _;
+    // }
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -228,8 +238,11 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @return True if member was added to the group, false otherwise
      * along with emitting corresponding error code.
      */
-    function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey) public isStaked returns(bool) {
-
+    function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey)
+        public
+        // hasMinimumStake(_memberPubKey)
+        returns(bool)
+    {
         // Group does not exist.
         if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
             emit GroupErrorCode(3);
