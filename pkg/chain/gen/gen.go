@@ -1,3 +1,3 @@
-package GeneratedCode
+package gen
 
 //go:generate make
