@@ -97,7 +97,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _i Index number of a group.
      */
     function getGroupPubKey(uint256 _i) public view returns(bytes32) {
-        return byteStorage[keccak256("groupToIndex", _i)];
+        return bytes32Storage[keccak256("groupToIndex", _i)];
     }
 
     /**
@@ -168,7 +168,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
         uintStorage[keccak256("groupsCount")]++;
         uint256 lastIndex = uintStorage[keccak256("groupsCount")];
-        byteStorage[keccak256("groupToIndex", lastIndex)] == _groupPubKey;
+        bytes32Storage[keccak256("groupToIndex", lastIndex)] == _groupPubKey;
 
         emit GroupStartedEvent(_groupPubKey);
         return true;
@@ -201,7 +201,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
         // Get last group _groupPubKey and move it into released index
         uint groupsCount = uintStorage[keccak256("groupsCount")];
-        byte32 lastGroup = byteStorage[keccak256("groupToIndex", groupsCount)];
+        bytes32 lastGroup = bytes32Storage[keccak256("groupToIndex", groupsCount)];
         bytes32Storage[keccak256("group", i)] = lastGroup;
         uintStorage[keccak256("groupsCount")]--;
     }
