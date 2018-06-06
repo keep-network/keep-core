@@ -19,15 +19,15 @@ type ethereumChain struct {
 	krb                              *KeepRandomBeacon
 	kg                               *KeepGroup
 	requestID                        *big.Int
-	tx                               *types.Transaction // Save most recent traxaction
+	tx                               *types.Transaction
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(groupID string, errorMessage string)
 	groupPublicKeySubmissionHandlers []func(groupID string, activationBlock *big.Int)
 }
 
-// Connect makes the network connection to the Ethereum network.  Note: for other things
-// to work correctly the configuration will need to reference a websocket, "ws://", or
-// local IPC connection.
+// Connect makes the network connection to the Ethereum network.  Note: for
+// other things to work correctly the configuration will need to reference a
+// websocket, "ws://", or local IPC connection.
 func Connect(cfg Config) (chain.Handle, error) {
 	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
@@ -56,7 +56,8 @@ func Connect(cfg Config) (chain.Handle, error) {
 
 	krb, err := NewKeepRandomBeacon(pv)
 	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepRandomBeacon contract: %s", err)
+		return nil, fmt.Errorf("error attaching to KeepRandomBeacon contract: %s",
+			err)
 	}
 	pv.krb = krb
 

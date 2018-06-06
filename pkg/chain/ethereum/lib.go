@@ -2,7 +2,8 @@ package ethereum
 
 import "golang.org/x/crypto/sha3"
 
-// ByteSliceToSliceOf1Byte convert from slice to slice of arrays of 1 long bytes.
+// ByteSliceToSliceOf1Byte convert from slice to slice of arrays of 1
+// long bytes.
 func ByteSliceToSliceOf1Byte(in []byte) (rv [][1]byte) {
 	if len(in) == 0 {
 		rv = make([][1]byte, 0, 1)
@@ -15,7 +16,8 @@ func ByteSliceToSliceOf1Byte(in []byte) (rv [][1]byte) {
 	return
 }
 
-// SliceOf1ByteToByteSlice convert form solidity type, slice of 1 long array of bytes to byte slice.
+// SliceOf1ByteToByteSlice convert form solidity type, slice of 1 long
+// array of bytes to byte slice.
 func SliceOf1ByteToByteSlice(in [][1]byte) (rv []byte) {
 	if len(in) == 0 {
 		rv = make([]byte, 0, 1)

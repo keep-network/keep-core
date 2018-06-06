@@ -24,15 +24,19 @@ type KeepGroup struct {
 	name            string
 }
 
-// NewKeepGroup creates the necessary connections and configurations for accessing the KeepGroup contract.
+// NewKeepGroup creates the necessary connections and configurations
+// for accessing the KeepGroup contract.
 func NewKeepGroup(pv *ethereumChain) (rv *KeepGroup, err error) {
 
-	ContractAddressHex := pv.config.ContractAddresses["KeepGroup"] // Proxy Address
+	// Proxy Address
+	ContractAddressHex := pv.config.ContractAddresses["KeepGroup"]
 	contractAddress := common.HexToAddress(ContractAddressHex)
 
-	krbTransactor, err := gen.NewKeepGroupImplV1Transactor(contractAddress, pv.client)
+	krbTransactor, err := gen.NewKeepGroupImplV1Transactor(contractAddress,
+		pv.client)
 	if err != nil {
-		log.Printf("Failed to instantiate a KeepRelayBeaconTranactor contract: %s", err)
+		log.Printf("Failed to instantiate a KeepRelayBeaconTranactor contract: %s",
+			err)
 		return
 	}
 
@@ -42,7 +46,8 @@ func NewKeepGroup(pv *ethereumChain) (rv *KeepGroup, err error) {
 		return
 	}
 
-	optsTransactor, err := bind.NewTransactor(bufio.NewReader(file), pv.config.Account.KeyFilePassword)
+	optsTransactor, err := bind.NewTransactor(bufio.NewReader(file),
+		pv.config.Account.KeyFilePassword)
 	if err != nil {
 		log.Printf("Failed to read keyfile: %v, %s", err, pv.config.Account.KeyFile)
 		return
@@ -62,7 +67,8 @@ func NewKeepGroup(pv *ethereumChain) (rv *KeepGroup, err error) {
 
 	krbContract, err := gen.NewKeepGroupImplV1(contractAddress, pv.client)
 	if err != nil {
-		log.Printf("Failed to instantiate contract object: %v at address: %s", err, ContractAddressHex)
+		log.Printf("Failed to instantiate contract object: %v at address: %s",
+			err, ContractAddressHex)
 		return
 	}
 
@@ -78,14 +84,16 @@ func NewKeepGroup(pv *ethereumChain) (rv *KeepGroup, err error) {
 	}, nil
 }
 
-// Initialized calls the contract and returns true if the contract has had its Initialize method called.
+// Initialized calls the contract and returns true if the contract
+// has had its Initialize method called.
 func (kg *KeepGroup) Initialized() (bool, error) {
 	return kg.caller.Initialized(kg.callerOpts)
 }
 
-// SetGroupThreshold sets the group threshold - this is the number of members reporting a generated
-// value out of the group size.
-func (kg *KeepGroup) SetGroupThreshold(groupThreshold int) (tx *types.Transaction, err error) {
+// SetGroupThreshold sets the group threshold - this is the number
+// of members reporting a generated value out of the group size.
+func (kg *KeepGroup) SetGroupThreshold(groupThreshold int) (
+	tx *types.Transaction, err error) {
 	thr := big.NewInt(int64(groupThreshold))
 	// function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
 	tx, err = kg.transactor.SetGroupThreshold(kg.transactorOpts, thr)
@@ -93,25 +101,32 @@ func (kg *KeepGroup) SetGroupThreshold(groupThreshold int) (tx *types.Transactio
 }
 
 // GroupExists TODO
-func (kg *KeepGroup) GroupExists(groupPubKey []byte) (*types.Transaction, error) {
+func (kg *KeepGroup) GroupExists(groupPubKey []byte) (*types.Transaction,
+	error) {
 	//    function groupExists(bytes32 _groupPubKey) public {
 	return kg.transactor.GroupExists(kg.transactorOpts, ToByte32(groupPubKey))
 }
 
 // AddMemberToGroup adds a new member to at group.
-func (kg *KeepGroup) AddMemberToGroup(groupPubKey, memberPubKey []byte) (*types.Transaction, error) {
-	// function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey) public isStaked returns(bool) {
-	return kg.transactor.AddMemberToGroup(kg.transactorOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
+func (kg *KeepGroup) AddMemberToGroup(groupPubKey,
+	memberPubKey []byte) (*types.Transaction, error) {
+	// function addMemberToGroup(bytes32 _groupPubKey, bytes32
+	// _memberPubKey) public isStaked returns(bool) {
+	return kg.transactor.AddMemberToGroup(kg.transactorOpts,
+		ToByte32(groupPubKey), ToByte32(memberPubKey))
 }
 
 // DissolveGroup breaks up the group that is associated with the public key.
-func (kg *KeepGroup) DissolveGroup(groupPubKey []byte) (*types.Transaction, error) {
-	// function disolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
+func (kg *KeepGroup) DissolveGroup(groupPubKey []byte) (*types.Transaction,
+	error) {
+	// function disolveGroup(bytes32 _groupPubKey) public onlyOwner
+	// returns(bool) {
 	return kg.transactor.DisolveGroup(kg.transactorOpts, ToByte32(groupPubKey))
 }
 
 // CreateGroup starts a new group with the specified public key.
-func (kg *KeepGroup) CreateGroup(groupPubKey []byte) (*types.Transaction, error) {
+func (kg *KeepGroup) CreateGroup(groupPubKey []byte) (*types.Transaction,
+	error) {
 	// function createGroup(bytes32 _groupPubKey) public returns(bool) {
 	return kg.transactor.CreateGroup(kg.transactorOpts, ToByte32(groupPubKey))
 }
@@ -126,7 +141,8 @@ func (kg *KeepGroup) GetNumberOfGroups() (ng int, err error) {
 	return
 }
 
-// GetGroupNMembers returns the Nth member of a group.  This is the number of the member.
+// GetGroupNMembers returns the Nth member of a group.  This is the number
+// of the member.
 func (kg *KeepGroup) GetGroupNMembers(groupNumber int) (nm int, err error) {
 	iBigGroupNumber := big.NewInt(int64(groupNumber))
 	// function getGroupNMembers(uint256 _i) public view returns(uint256) {
@@ -137,8 +153,10 @@ func (kg *KeepGroup) GetGroupNMembers(groupNumber int) (nm int, err error) {
 	return
 }
 
-// GetGroupPubKey take the number of the group and returns that groups public key.
-func (kg *KeepGroup) GetGroupPubKey(groupNumber int) (pub []byte, err error) {
+// GetGroupPubKey take the number of the group and returns that groups
+// public key.
+func (kg *KeepGroup) GetGroupPubKey(groupNumber int) (pub []byte,
+	err error) {
 	iBigGroupNumber := big.NewInt(int64(groupNumber))
 	// function getGroupPubKey(uint256 _i) public view returns(bytes32) {
 	tmp, err := kg.caller.GetGroupPubKey(kg.callerOpts, iBigGroupNumber)
@@ -149,15 +167,16 @@ func (kg *KeepGroup) GetGroupPubKey(groupNumber int) (pub []byte, err error) {
 }
 
 // SetGroupSize sets the number of members that is needed to form a group.
-func (kg *KeepGroup) SetGroupSize(groupSize int) (tx *types.Transaction, err error) {
+func (kg *KeepGroup) SetGroupSize(groupSize int) (tx *types.Transaction,
+	err error) {
 	thr := big.NewInt(int64(groupSize))
 	// function setGroupSize(uint256 _groupSize) public onlyOwner {
 	tx, err = kg.transactor.SetGroupSize(kg.transactorOpts, thr)
 	return
 }
 
-// GetGroupThreshold returns the group threshold.  This is the number of members that
-// have to report a value to create a new signature.
+// GetGroupThreshold returns the group threshold.  This is the number
+// of members that have to report a value to create a new signature.
 func (kg *KeepGroup) GetGroupThreshold() (thr int, err error) {
 	// function getGroupThreshold() public view returns(uint256) {
 	thrBig, err := kg.caller.GetGroupThreshold(kg.callerOpts)
@@ -167,7 +186,8 @@ func (kg *KeepGroup) GetGroupThreshold() (thr int, err error) {
 	return
 }
 
-// GetGroupSize returns the number of members that are required to form a group.
+// GetGroupSize returns the number of members that are required
+// to form a group.
 func (kg *KeepGroup) GetGroupSize() (thr int, err error) {
 	// function getGroupSize() public view returns(uint256) {
 	thrBig, err := kg.caller.GetGroupSize(kg.callerOpts)
@@ -177,9 +197,11 @@ func (kg *KeepGroup) GetGroupSize() (thr int, err error) {
 	return
 }
 
-// GetGroupNumber returns the number of a group given the public key of the group.
+// GetGroupNumber returns the number of a group given the public key of the
+// group.
 func (kg *KeepGroup) GetGroupNumber(groupPubKey []byte) (nm int, err error) {
-	//    function getGroupNumber(bytes32 _groupPubKey) public view returns(uint256) {
+	//    function getGroupNumber(bytes32 _groupPubKey) public view
+	// returns(uint256) {
 	nmBig, err := kg.caller.GetGroupNumber(kg.callerOpts, ToByte32(groupPubKey))
 	if err == nil {
 		nm = int(nmBig.Int64())
@@ -188,7 +210,8 @@ func (kg *KeepGroup) GetGroupNumber(groupPubKey []byte) (nm int, err error) {
 }
 
 // GetAllGroupMembers returns a set of public keys for each member of a group.
-func (kg *KeepGroup) GetAllGroupMembers(groupPubKey []byte) (keySet [][]byte, err error) {
+func (kg *KeepGroup) GetAllGroupMembers(groupPubKey []byte) (keySet [][]byte,
+	err error) {
 	groupNumber, err := kg.GetGroupNumber(groupPubKey)
 	if err != nil {
 		return
@@ -209,11 +232,13 @@ func (kg *KeepGroup) GetAllGroupMembers(groupPubKey []byte) (keySet [][]byte, er
 	return
 }
 
-// GetGroupMemberPubKey returns the public key for group number i at location in group j
+// GetGroupMemberPubKey returns the public key for group number i at location
+// in group j
 func (kg *KeepGroup) GetGroupMemberPubKey(i, j int) (pub []byte, err error) {
 	iBig := big.NewInt(int64(i))
 	jBig := big.NewInt(int64(j))
-	// function getGroupMemberPubKey(uint256 _i, uint256 _j) public view returns(bytes32) {
+	// function getGroupMemberPubKey(uint256 _i, uint256 _j) public view
+	// returns(bytes32) {
 	tmp, err := kg.caller.GetGroupMemberPubKey(kg.callerOpts, iBig, jBig)
 	if err == nil {
 		pub = tmp[:]
@@ -229,17 +254,22 @@ func (kg *KeepGroup) GroupIsComplete(groupPubKey []byte) (rv bool, err error) {
 }
 
 // IsMember returns true if the member is a part of the specified group
-func (kg *KeepGroup) IsMember(groupPubKey, memberPubKey []byte) (rv bool, err error) {
-	// function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
-	rv, err = kg.caller.IsMember(kg.callerOpts, ToByte32(groupPubKey), ToByte32(memberPubKey))
+func (kg *KeepGroup) IsMember(groupPubKey, memberPubKey []byte) (rv bool,
+	err error) {
+	// function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey)
+	// public view returns(bool) {
+	rv, err = kg.caller.IsMember(kg.callerOpts, ToByte32(groupPubKey),
+		ToByte32(memberPubKey))
 	return
 }
 
-// FxGroupCompleteEvent defines the function that is called upon group completion
+// FxGroupCompleteEvent defines the function that is called upon
+// group completion
 type FxGroupCompleteEvent func(GroupPubKey []byte)
 
 // WatchGroupCompleteEvent create a watch for the group completion event
-func (kg *KeepGroup) WatchGroupCompleteEvent(success FxGroupCompleteEvent, fail FxError) (err error) {
+func (kg *KeepGroup) WatchGroupCompleteEvent(success FxGroupCompleteEvent,
+	fail FxError) (err error) {
 	name := "GroupCompleteEvent"
 	sink := make(chan *gen.KeepGroupImplV1GroupCompleteEvent, 10)
 	event, err := kg.contract.WatchGroupCompleteEvent(nil, sink)
@@ -265,7 +295,8 @@ func (kg *KeepGroup) WatchGroupCompleteEvent(success FxGroupCompleteEvent, fail 
 type FxGroupErrorCode func(Code uint8)
 
 // WatchGroupErrorCode creates a watch for the GroupErrorCode event
-func (kg *KeepGroup) WatchGroupErrorCode(success FxGroupErrorCode, fail FxError) (err error) {
+func (kg *KeepGroup) WatchGroupErrorCode(success FxGroupErrorCode,
+	fail FxError) (err error) {
 	name := "GroupErrorCode"
 	sink := make(chan *gen.KeepGroupImplV1GroupErrorCode, 10)
 	event, err := kg.contract.WatchGroupErrorCode(nil, sink)
@@ -287,12 +318,13 @@ func (kg *KeepGroup) WatchGroupErrorCode(success FxGroupErrorCode, fail FxError)
 	return
 }
 
-// FxGroupExistsEvent defines the function that is called when creating a group.  Exists is
-// true when the group already exists.
+// FxGroupExistsEvent defines the function that is called when creating
+// a group.  Exists is true when the group already exists.
 type FxGroupExistsEvent func(GroupPubKey []byte, Exists bool)
 
 // WatchGroupExistsEvent watches for the GroupExists event.
-func (kg *KeepGroup) WatchGroupExistsEvent(success FxGroupExistsEvent, fail FxError) (err error) {
+func (kg *KeepGroup) WatchGroupExistsEvent(success FxGroupExistsEvent,
+	fail FxError) (err error) {
 	name := "GroupExistsEvent"
 	sink := make(chan *gen.KeepGroupImplV1GroupExistsEvent, 10)
 	event, err := kg.contract.WatchGroupExistsEvent(nil, sink)
@@ -314,11 +346,13 @@ func (kg *KeepGroup) WatchGroupExistsEvent(success FxGroupExistsEvent, fail FxEr
 	return
 }
 
-// FxGroupStartedEvent defiens the function that is called when watching for started groups.
+// FxGroupStartedEvent defiens the function that is called when
+// watching for started groups.
 type FxGroupStartedEvent func(GroupPubKey []byte)
 
 // WatchGroupStartedEvent watch for GroupStartedEvent
-func (kg *KeepGroup) WatchGroupStartedEvent(success FxGroupStartedEvent, fail FxError) (err error) {
+func (kg *KeepGroup) WatchGroupStartedEvent(success FxGroupStartedEvent,
+	fail FxError) (err error) {
 	name := "GroupStartedEvent"
 	sink := make(chan *gen.KeepGroupImplV1GroupStartedEvent, 10)
 	event, err := kg.contract.WatchGroupStartedEvent(nil, sink)

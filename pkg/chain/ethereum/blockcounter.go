@@ -31,7 +31,8 @@ func (blockWait *ethereumBlockCounter) WaitForBlocks(numBlocks int) {
 	return
 }
 
-// BlockWaiter returns the block number as a chanel with a minimum of 1 block wait. 0 and negative numBlocks are converted to 1.
+// BlockWaiter returns the block number as a chanel with a minimum of 1 block
+// wait. 0 and negative numBlocks are converted to 1.
 func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	newWaiter := make(chan int)
 
@@ -54,8 +55,9 @@ func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 	return newWaiter
 }
 
-// receiveBlocks gets each new block back from Geth and extracts the block height (top) form it.
-// For each block height that is being weighted on a message will be sent.
+// receiveBlocks gets each new block back from Geth and extracts the
+// block height (top) form it.  For each block height that is being
+// weighted on a message will be sent.
 func (blockWait *ethereumBlockCounter) receiveBlocks() {
 
 	for block := range blockWait.subch {
@@ -88,7 +90,8 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	blockSubscription, err := blockWait.config.clientWS.EthSubscribe(ctx, blockWait.subch, "newHeads")
+	blockSubscription, err := blockWait.config.clientWS.EthSubscribe(ctx,
+		blockWait.subch, "newHeads")
 	if err != nil {
 		if blockWait.Debug01 {
 			fmt.Println("Subscription Failed => ", err)
@@ -97,7 +100,8 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	}
 
 	var lastBlock block
-	err = blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber", "latest", true)
+	err = blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber",
+		"latest", true)
 	if err != nil {
 		if blockWait.Debug01 {
 			fmt.Println("can't get latest block:", err)
@@ -123,7 +127,8 @@ func (ec *ethereumChain) BlockCounter() chain.BlockCounter {
 	}
 
 	var lastBlock block
-	err := blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber", "latest", true)
+	err := blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber",
+		"latest", true)
 	if err != nil {
 		if blockWait.Debug01 {
 			fmt.Println("can't get latest block:", err)
