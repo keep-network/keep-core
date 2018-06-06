@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -52,82 +51,52 @@ func TestProviderReturnsChannel(t *testing.T) {
 	}
 }
 
-func TestBroadcastChannel(t *testing.T) {
+func TestSendReceive(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	config := generateDeterministicNetworkConfig(t)
-
-	tests := map[string]struct {
-		name                    string
-		identity                *identity
-		payload                 string
-		protocolIdentifier      *protocolIdentifier
-		expectedChannelForError func(string) error
-	}{
-		"Send succeeds": {
-			name:               "testchannel",
-			identity:           config.identity,
-			payload:            "some text",
-			protocolIdentifier: &protocolIdentifier{id: "testProtocolIdentifier"},
-			expectedChannelForError: func(name string) error {
-				return nil
-			},
-		},
-	}
+	var (
+		config             = generateDeterministicNetworkConfig(t)
+		name               = "testchannel"
+		payload            = "some text"
+		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
+	)
 
 	provider, err := Connect(ctx, config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			broadcastChannel, err := provider.ChannelFor(test.name)
-			if !reflect.DeepEqual(test.expectedChannelForError(test.name), err) {
-				t.Fatalf("expected test to fail with [%v] instead failed with [%v]",
-					test.expectedChannelForError(test.name), err,
-				)
-			}
+	broadcastChannel, err := provider.ChannelFor(name)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-			if err := broadcastChannel.RegisterUnmarshaler(
-				func() net.TaggedUnmarshaler { return &TestMessage{} },
-			); err != nil {
-				t.Fatal(err)
-			}
+	if err := broadcastChannel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &TestMessage{} },
+	); err != nil {
+		t.Fatal(err)
+	}
 
-			if err := broadcastChannel.RegisterIdentifier(
-				test.identity.id,
-				test.protocolIdentifier,
-			); err != nil {
-				t.Fatal(err)
-			}
+	if err := broadcastChannel.RegisterIdentifier(
+		config.identity.id,
+		protocolIdentifier,
+	); err != nil {
+		t.Fatal(err)
+	}
 
-			if err := broadcastChannel.Send(
-				&TestMessage{ID: test.identity, Payload: test.payload},
-			); err != nil {
-				t.Fatal(err)
-			}
+	if err := broadcastChannel.Send(
+		&TestMessage{ID: config.identity, Payload: payload},
+	); err != nil {
+		t.Fatal(err)
+	}
 
-			recvChan := make(chan net.Message, 1)
-			if err := broadcastChannel.Recv(func(msg net.Message) error {
-				if msg.Payload().(string) != test.payload {
-					t.Fatalf("expected message payload %s, got payload %s", msg.Payload().(string), test.payload)
-				}
-
-				// slap something onto a channel and move on
-				recvChan <- msg
-				return nil
-			}); err != nil {
-				t.Fatal(err)
-			}
-			select {
-			case msg := <-recvChan:
-				fmt.Printf("Message: %+v\n", msg)
-				return
-			case <-ctx.Done():
-				return
-			}
-		})
+	if err := broadcastChannel.Recv(func(msg net.Message) error {
+		if msg.Payload().(string) != payload {
+			t.Fatalf("expected message payload %s, got payload %s", msg.Payload().(string), payload)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
 	}
 }
 
