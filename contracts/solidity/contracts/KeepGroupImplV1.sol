@@ -89,7 +89,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _i Index number of a group.
      */
     function getGroupNMembers(uint256 _i) public view returns(uint256) {
-        return uintStorage[keccak256("membersCount", getGroupPubKey(_i)];
+        return uintStorage[keccak256("membersCount", getGroupPubKey(_i))];
     }
 
     /**
@@ -119,7 +119,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _j Index number of a member.
      */
     function getGroupMemberPubKey(uint256 _i, uint256 _j) public view returns(bytes32) {
-        return bytes32Storage[keccak256("memberToIndex", _j, getGroupPubKey(_i)]
+        return bytes32Storage[keccak256("memberToIndex", _j, getGroupPubKey(_i))];
     }
 
     /**
@@ -139,7 +139,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupPubKey Group public key.
      */
     function groupIsComplete(bytes32 _groupPubKey) public view returns(bool) {
-        return boolStorage[keccak256("groupComplete", _groupPubKey)]
+        return boolStorage[keccak256("groupComplete", _groupPubKey)];
     }
 
     /**
@@ -185,7 +185,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
         if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
             emit GroupErrorCode(10);
-            return false
+            return false;
         }
 
         for (uint256 index = 0; index < uintStorage[keccak256("membersCount", _groupPubKey)]; index++) {
@@ -197,7 +197,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         delete boolStorage[keccak256("groupComplete", _groupPubKey)];
 
         uint i = getGroupNumber(_groupPubKey);
-        delete bytes32Storage[keccak256("groupToIndex", i);
+        delete bytes32Storage[keccak256("groupToIndex", i)];
 
         // Get last group _groupPubKey and move it into released index
         uint groupsCount = uintStorage[keccak256("groupsCount")];
@@ -243,7 +243,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         }
 
         // Member already exists in the group.
-        if (isMember(_groupPubKey, _memberPubKey) {
+        if (isMember(_groupPubKey, _memberPubKey)) {
             emit GroupErrorCode(1);
             return false;
         }
