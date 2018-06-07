@@ -82,7 +82,7 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 		expectedError        error
 	}{
 		"with all members participating": {
-			participatingMembers: len(otherMembers) + 1,
+			participatingMembers: len(allMembers),
 			expectedVerification: true,
 			expectedError:        nil,
 		},
@@ -156,7 +156,7 @@ func TestMemberVerifiesSignatureFromShares(t *testing.T) {
 		expectedError        error
 	}{
 		"with all members participating": {
-			participatingMembers: len(otherMembers) + 1,
+			participatingMembers: len(allMembers),
 			expectedVerification: true,
 			expectedError:        nil,
 		},
