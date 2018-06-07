@@ -62,12 +62,12 @@ contract('TestKeepGroupViaProxy', function(accounts) {
   });
 
   it("should be able to get a group index number with provided group public key", async function() {
-    assert.equal(await keepGroupImplViaProxy.getGroupNumber(groupOnePubKey), 1, "Should get correct group index number for group one.");
-    assert.equal(await keepGroupImplViaProxy.getGroupNumber(groupTwoPubKey), 2, "Should get correct group index number for group two.");
+    assert.equal(await keepGroupImplViaProxy.getGroupNumber(groupOnePubKey), 0, "Should get correct group index number for group one.");
+    assert.equal(await keepGroupImplViaProxy.getGroupNumber(groupTwoPubKey), 1, "Should get correct group index number for group two.");
   });
 
   it("should be able to get group public key by group index number", async function() {
-    assert.equal(await keepGroupImplViaProxy.getGroupPubKey(1), groupOnePubKey, "Should get group public key.");
+    assert.equal(await keepGroupImplViaProxy.getGroupPubKey(0), groupOnePubKey, "Should get group public key.");
   });
 
   it("should be able to add a member to specified group", async function() {
