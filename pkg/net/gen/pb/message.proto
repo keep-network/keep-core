@@ -3,8 +3,8 @@ syntax = "proto3";
 option go_package = "pb";
 package net;
 
-// Envelope contains a marshalled Message as the payload, as well as a signature
-// over the payload. It also contains the Identities of the sender and receiver.
+// Envelope contains a marshalled payload, as well as a signature over the
+// payload. It also contains the Identities of the sender and receiver.
 // Optionally, an Envelope may contain an encrypted Envelope field for messages
 // which need to be secret (in which case the payload will be empty).
 message Envelope {

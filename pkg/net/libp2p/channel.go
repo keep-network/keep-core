@@ -20,8 +20,8 @@ type channel struct {
 	clientIdentity *identity
 	peerStore      peerstore.Peerstore
 
-	pubsubLock sync.Mutex
-	pubsub     *floodsub.PubSub
+	pubsubMutex sync.Mutex
+	pubsub      *floodsub.PubSub
 
 	subscription *floodsub.Subscription
 
@@ -69,8 +69,8 @@ func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
 		return err
 	}
 
-	c.pubsubLock.Lock()
-	defer c.pubsubLock.Unlock()
+	c.pubsubMutex.Lock()
+	defer c.pubsubMutex.Unlock()
 
 	// Publish the proto to the network
 	return c.pubsub.Publish(c.name, envelopeBytes)
@@ -180,12 +180,12 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
-	unmarshaler, err := c.getUnmarshalerByType(string(envelope.Type))
+	unmarshaled, err := c.getUnmarshalingContainerByType(string(envelope.Type))
 	if err != nil {
 		return err
 	}
 
-	if err := unmarshaler.Unmarshal(envelope.GetPayload()); err != nil {
+	if err := unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
 		return err
 	}
 
@@ -203,13 +203,13 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 
 	// Fire a message back to the protocol
 	protocolMessage := internal.BasicMessage(senderIdentifier.id,
-		protocolIdentifier, unmarshaler,
+		protocolIdentifier, unmarshaled,
 	)
 
 	return c.deliver(protocolMessage)
 }
 
-func (c *channel) getUnmarshalerByType(envelopeType string) (net.TaggedUnmarshaler, error) {
+func (c *channel) getUnmarshalingContainerByType(envelopeType string) (net.TaggedUnmarshaler, error) {
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
 
@@ -232,10 +232,9 @@ func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.Protoco
 
 func (c *channel) deliver(message net.Message) error {
 	c.messageHandlersMutex.Lock()
-	defer c.messageHandlersMutex.Unlock()
-
 	snapshot := make([]net.HandleMessageFunc, len(c.messageHandlers))
 	copy(snapshot, c.messageHandlers)
+	c.messageHandlersMutex.Unlock()
 
 	go func(message net.Message, snapshot []net.HandleMessageFunc) {
 		for _, handler := range snapshot {
