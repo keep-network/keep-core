@@ -144,7 +144,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     /**
      * @dev Gets the threshold size for groups.
      */
-    function getGroupThreshold() public view returns(uint256) {
+    function groupThreshold() public view returns(uint256) {
         return uintStorage[keccak256("groupThreshold")];
     }
 
