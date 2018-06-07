@@ -44,25 +44,10 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Sets new threshold size for groups.
-     */
-    function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
-        uintStorage[keccak256("groupThreshold")] = _groupThreshold;
-        /// TODO: determine if size decreased, then partially complete groups may now be complete.  Iterate over groups. Find
-    }
-
-    /**
      * @dev Gets the threshold size for groups.
      */
     function groupThreshold() public view returns(uint256) {
         return uintStorage[keccak256("groupThreshold")];
-    }
-
-    /**
-     * @dev Sets the minimum number of members in a group.
-     */
-    function setGroupSize(uint256 _groupSize) public onlyOwner {
-        uintStorage[keccak256("groupSize")] = _groupSize;
     }
 
     /**
