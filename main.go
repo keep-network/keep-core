@@ -4,36 +4,83 @@ import (
 	"log"
 	"os"
 
+	"fmt"
+	"path"
+	"time"
+
 	"github.com/dfinity/go-dfinity-crypto/bls"
-	"github.com/keep-network/keep-core/cli"
+	"github.com/urfave/cli"
 )
 
 var (
-	// Version is the semantic version (added at compile time)  See scripts/version.sh
+	// Version is the CLI semver version
 	Version string
 
-	// Revision is the git commit id (added at compile time)
+	// Revision is the git commit (revision) hash
 	Revision string
+
+	configPath string
 )
 
 func init() {
-	//TODO: Remove Version and Revision when build process auto-populates these values
-	Version = "0.0.1"
-	Revision = "deadbeef"
+	// Version and Revision should be set by go linker.
+	if Version == "" {
+		Version = "unknown"
+	}
+	if Revision == "" {
+		Revision = "unknown"
+	}
 }
 
 func main() {
-
-	// Initialize BLS library
-	err := bls.Init(bls.CurveSNARK1)
+	err := NewApp(Version, Revision).Run(os.Args)
 	if err != nil {
-		log.Fatal("Failed to initialize BLS.", err)
+		log.Fatal(err)
 	}
+}
 
-	cliErr := cli.RunCLI(os.Args, Version, Revision)
-	if cliErr != nil {
-		log.Println("CLI error encountered:")
-		log.Fatal(cliErr)
+// NewApp creates a new keep cli application with the respective commands and metainfo.
+func NewApp(version, revision string) *cli.App {
+	Version = version
+	Revision = revision
+
+	app := cli.NewApp()
+	app.Name = path.Base(os.Args[0])
+	app.Usage = "CLI for The Keep Network"
+	app.Description = "Command line interface (CLI) for running a Keep provider"
+	app.Copyright = "" //TODO: Insert copyright info later
+	app.Compiled = time.Now()
+	app.Authors = []cli.Author{
+		{
+			Name:  "Keep Network",
+			Email: "info@keep.network",
+		},
 	}
+	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "config,c",
+			Value:       "",
+			Destination: &configPath,
+			EnvVar:      "KEEP_CONFIG_PATH",
+			Usage:       "optionally, specify the environment variable",
+		},
+	}
+	app.Before = func(c *cli.Context) error {
+		err := bls.Init(bls.CurveSNARK1)
+		if err != nil {
+			log.Fatal("Failed to initialize BLS.", err)
+		}
+		return nil
+	}
+	app.Commands = []cli.Command{}
 
+	cli.AppHelpTemplate = fmt.Sprintf(`%s
+ENVIRONMENT VARIABLES:
+   KEEP_CONFIG_PATH          path to .toml config file (optional)
+   KEEP_ETHEREUM_PASSWORD    keep client password
+
+`, cli.AppHelpTemplate)
+
+	return app
 }
