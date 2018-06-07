@@ -252,8 +252,8 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         bytes32Storage[keccak256("memberIndexToMemberPubKey", lastIndex, _groupPubKey)] = _memberPubKey;
         uintStorage[keccak256("membersCount", _groupPubKey)]++;
 
-        // If the group has passed the threshold size, it is formed.
-        if (lastIndex >= uintStorage[keccak256("groupThreshold")]) {
+        // If the group has passed default group size, it is formed.
+        if (uintStorage[keccak256("membersCount", _groupPubKey)] >= uintStorage[keccak256("groupSize")]) {
             boolStorage[keccak256("groupComplete", _groupPubKey)] = true;
             emit GroupCompleteEvent(_groupPubKey);
         }
