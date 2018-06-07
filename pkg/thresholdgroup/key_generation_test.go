@@ -80,10 +80,15 @@ func TestLocalMemberFailsForHighThreshold(t *testing.T) {
 func TestLocalMemberCommitments(t *testing.T) {
 	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
 
-	if len(member.Commitments()) != member.secretSharesCount {
+	// According to [GJKR 99] the polynomial is of degree `threshold`,
+	// it means that we have `threshold + 1` coefficients in the polynomial,
+	// which is also the number of `secretShares` and `shareCommitments`
+	expectedShareCommitmentsCount := defaultThreshold + 1
+
+	if len(member.Commitments()) != expectedShareCommitmentsCount {
 		t.Errorf(
 			"\nexpected: %v commitments\nactual:   %v commitments",
-			member.secretSharesCount,
+			expectedShareCommitmentsCount,
 			len(member.Commitments()),
 		)
 	}

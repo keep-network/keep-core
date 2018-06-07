@@ -105,13 +105,9 @@ type memberCore struct {
 	BlsID bls.ID
 	// The number of members in the complete group.
 	groupSize int
-	// The threshold of group members who might be dishonest in order for the
+	// The maximum number of group members who could be dishonest in order for the
 	// generated key to be uncompromised.
 	threshold int
-	// The number of secret shares and public commitments of each group member.
-	// Based on [GJKR 99] the polynomial degree equals to `threshold` and the
-	// secret shares are polynomial coefficients.
-	secretSharesCount int
 	// The BLS IDs of all members of this member's group, including the member
 	// itself. Initially empty, populated as each other member announces its
 	// presence.
@@ -292,12 +288,11 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 
 	return &LocalMember{
 		memberCore: memberCore{
-			ID:                fmt.Sprintf("0x%010s", id),
-			BlsID:             blsID,
-			groupSize:         groupSize,
-			threshold:         threshold,
-			memberIDs:         make([]*bls.ID, 0, groupSize),
-			secretSharesCount: secretSharesCount,
+			ID:        fmt.Sprintf("0x%010s", id),
+			BlsID:     blsID,
+			groupSize: groupSize,
+			threshold: threshold,
+			memberIDs: make([]*bls.ID, 0, groupSize),
 		},
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
@@ -547,7 +542,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
 	//            			   computation as well...
-	combinedCommitments := make([]bls.PublicKey, jm.secretSharesCount)
+	combinedCommitments := make([]bls.PublicKey, len(jm.shareCommitments))
 	for i, commitment := range jm.shareCommitments {
 		combinedCommitments[i] = commitment
 	}
