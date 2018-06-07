@@ -3,15 +3,18 @@ syntax = "proto3";
 option go_package = "pb";
 package net;
 
-// Envelope contains a marshalled Message as the payload
-// and a signature over the payload as signature.
-// It also contains the Identities of the sender and receiver (optional).
-// Optionally may contain an encrypted Envelope (in which case the payload will be empty).
+// Envelope contains a marshalled Message as the payload, as well as a signature
+// over the payload. It also contains the Identities of the sender and receiver.
+// Optionally, an Envelope may contain an encrypted Envelope field for messages
+// which need to be secret (in which case the payload will be empty).
 message Envelope {
-  // The PublicKey and peerID of the sender
+  // The PublicKey of the sender
   bytes sender = 1;
 
-  // A Marshaled Protocol Message
+  // The PublicKey of the receiver
+  bytes receiver = 2;
+
+  // A marshaled Protocol Message
   bytes payload = 3;
 
   // Signature of the message
@@ -20,7 +23,7 @@ message Envelope {
   // A marshalled, encrypted message; if this exists, payload is empty
   EncryptedEnvelope encrypted_envelope = 5;
 
-  // Channel is isomorphic to the group name as well as the pubsub channel
+  // Channel is the group name as well as the pubsub channel
   // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
   // all valid group members.
   bytes channel = 6;
