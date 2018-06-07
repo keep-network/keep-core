@@ -90,25 +90,6 @@ func (kg *KeepGroup) Initialized() (bool, error) {
 	return kg.caller.Initialized(kg.callerOpts)
 }
 
-// SetGroupThreshold sets the group threshold - this is the number
-// of members reporting a generated value out of the group size.
-func (kg *KeepGroup) SetGroupThreshold(groupThreshold int) (
-	tx *types.Transaction, err error) {
-	thr := big.NewInt(int64(groupThreshold))
-	// function setGroupThreshold(uint256 _groupThreshold) public onlyOwner {
-	tx, err = kg.transactor.SetGroupThreshold(kg.transactorOpts, thr)
-	return
-}
-
-// AddMemberToGroup adds a new member to at group.
-func (kg *KeepGroup) AddMemberToGroup(groupPubKey,
-	memberPubKey []byte) (*types.Transaction, error) {
-	// function addMemberToGroup(bytes32 _groupPubKey, bytes32
-	// _memberPubKey) public isStaked returns(bool) {
-	return kg.transactor.AddMemberToGroup(kg.transactorOpts,
-		ToByte32(groupPubKey), ToByte32(memberPubKey))
-}
-
 // DissolveGroup breaks up the group that is associated with the public key.
 func (kg *KeepGroup) DissolveGroup(groupPubKey []byte) (*types.Transaction,
 	error) {
@@ -147,15 +128,6 @@ func (kg *KeepGroup) GetGroupPubKey(groupIndex int) (pub []byte,
 	return
 }
 
-// SetGroupSize sets the number of members that is needed to form a group.
-func (kg *KeepGroup) SetGroupSize(groupSize int) (tx *types.Transaction,
-	err error) {
-	thr := big.NewInt(int64(groupSize))
-	// function setGroupSize(uint256 _groupSize) public onlyOwner {
-	tx, err = kg.transactor.SetGroupSize(kg.transactorOpts, thr)
-	return
-}
-
 // GroupThreshold returns the group threshold.  This is the number
 // of members that have to report a value to create a new signature.
 func (kg *KeepGroup) GroupThreshold() (thr int, err error) {
@@ -189,13 +161,6 @@ func (kg *KeepGroup) GetGroupMemberPubKey(i, j int) (pub []byte, err error) {
 	if err == nil {
 		pub = tmp[:]
 	}
-	return
-}
-
-// GroupIsComplete return true if the group is complete
-func (kg *KeepGroup) GroupIsComplete(groupPubKey []byte) (rv bool, err error) {
-	// function groupIsComplete(bytes32 _groupPubKey) public view returns(bool) {
-	rv, err = kg.caller.GroupIsComplete(kg.callerOpts, ToByte32(groupPubKey))
 	return
 }
 
