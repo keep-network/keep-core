@@ -58,7 +58,7 @@ func TestSendReceive(t *testing.T) {
 	var (
 		config             = generateDeterministicNetworkConfig(t)
 		name               = "testchannel"
-		payload            = "some text"
+		expectedPayload    = "some text"
 		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
 	)
 
@@ -72,7 +72,7 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.RegisterUnmarshaler(
-		func() net.TaggedUnmarshaler { return &TestMessage{} },
+		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -85,15 +85,19 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.Send(
-		&TestMessage{ID: config.identity, Payload: payload},
+		&testMessage{ID: config.identity, Payload: expectedPayload},
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		if msg.Payload().(string) != payload {
-			t.Fatalf("expected message payload %s, got payload %s", msg.Payload().(string), payload)
+		testPayload, ok := msg.Payload().(*testMessage)
+		if !ok {
+			t.Fatalf("Expected message payload to be of type string, got type %v", testPayload)
 		}
+		// if testPayload.Payload != expectedPayload {
+		// 	t.Fatalf("expected message payload %s, got payload %s", testPayload.Payload, expectedPayload)
+		// }
 		return nil
 	}); err != nil {
 		t.Fatal(err)
@@ -104,25 +108,21 @@ type protocolIdentifier struct {
 	id string
 }
 
-type TestMessage struct {
+type testMessage struct {
 	ID      *identity
 	Payload string
 }
 
-// Type returns a string describing a TestMessage's type.
-func (m *TestMessage) Type() string {
+func (m *testMessage) Type() string {
 	return "test/unmarshaler"
 }
 
-// Marshal converts this TestMessage to a byte array suitable for network
-// communication.
-func (m *TestMessage) Marshal() ([]byte, error) {
+func (m *testMessage) Marshal() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// Unmarshal converts a byte array produced by Marshal to a JoinMessage.
-func (m *TestMessage) Unmarshal(bytes []byte) error {
-	var message TestMessage
+func (m *testMessage) Unmarshal(bytes []byte) error {
+	var message testMessage
 	if err := json.Unmarshal(bytes, &message); err != nil {
 		fmt.Println("hit this error")
 		return err
