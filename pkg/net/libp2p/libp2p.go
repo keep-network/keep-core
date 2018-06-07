@@ -10,7 +10,7 @@ import (
 	addrutil "github.com/libp2p/go-addr-util"
 	host "github.com/libp2p/go-libp2p-host"
 	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-peerstore"
 	swarm "github.com/libp2p/go-libp2p-swarm"
 	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
 
@@ -120,7 +120,7 @@ func buildPeerHost(
 	ctx context.Context,
 	listenAddrs []ma.Multiaddr,
 	pid peer.ID,
-	peerStore pstore.Peerstore,
+	peerStore peerstore.Peerstore,
 ) (host.Host, error) {
 	smuxTransport := makeSmuxTransport()
 

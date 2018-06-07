@@ -33,8 +33,7 @@ func (i *identity) Marshal() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	peerIDBytes := []byte(peer.ID(i.id))
-	return (&pb.Identity{PubKey: pubKeyBytes, PeerId: peerIDBytes}).Marshal()
+	return (&pb.Identity{PubKey: pubKeyBytes}).Marshal()
 }
 
 func (i *identity) Unmarshal(bytes []byte) error {
@@ -49,7 +48,7 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	pid, err := peer.IDFromBytes(pbIdentity.PeerId)
+	pid, err := peer.IDFromPublicKey(i.pubKey)
 	if err != nil {
 		return err
 	}

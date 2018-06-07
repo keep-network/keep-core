@@ -7,19 +7,20 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	floodsub "github.com/libp2p/go-floodsub"
 	host "github.com/libp2p/go-libp2p-host"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-peerstore"
 )
 
 type channelManager struct {
 	ctx context.Context
 
 	identity  *identity
-	peerstore pstore.Peerstore
+	peerStore peerstore.Peerstore
 
 	channelsMutex sync.Mutex
 	channels      map[string]*channel
 
-	pubsub *floodsub.PubSub
+	pubsubLock sync.Mutex
+	pubsub     *floodsub.PubSub
 }
 
 func newChannelManager(
@@ -34,7 +35,7 @@ func newChannelManager(
 	return &channelManager{
 		channels:  make(map[string]*channel),
 		pubsub:    gossipsub,
-		peerstore: p2phost.Peerstore(),
+		peerStore: p2phost.Peerstore(),
 		identity:  identity,
 		ctx:       ctx,
 	}, nil
@@ -67,6 +68,9 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 }
 
 func (cm *channelManager) newChannel(name string) (*channel, error) {
+	cm.pubsubLock.Lock()
+	defer cm.pubsubLock.Unlock()
+
 	sub, err := cm.pubsub.Subscribe(name)
 	if err != nil {
 		return nil, err
@@ -74,8 +78,8 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 
 	channel := &channel{
 		name:                        name,
-		identity:                    cm.identity,
-		store:                       cm.peerstore,
+		clientIdentity:              cm.identity,
+		peerStore:                   cm.peerStore,
 		pubsub:                      cm.pubsub,
 		subscription:                sub,
 		messages:                    make([]net.Message, 0),

@@ -10,17 +10,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	floodsub "github.com/libp2p/go-floodsub"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-peerstore"
 )
 
 type channel struct {
 	name string
 
-	identity *identity
-	store    pstore.Peerstore
+	clientIdentity *identity
+	peerStore      peerstore.Peerstore
 
-	pubsubLock   sync.Mutex
-	pubsub       *floodsub.PubSub
+	pubsubLock sync.Mutex
+	pubsub     *floodsub.PubSub
+
 	subscription *floodsub.Subscription
 
 	messagesLock sync.RWMutex
@@ -39,7 +40,7 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	return c.doSend(message, c.identity)
+	return c.doSend(message, c.clientIdentity)
 }
 
 func envelopeProto(message net.TaggedMarshaler, sender *identity) ([]byte, error) {

@@ -42,6 +42,5 @@ message EncryptedEnvelope {
 }
 
 message Identity {
-  bytes peer_id = 1;
-  bytes pub_key = 2;
+  bytes pub_key = 1;
 }
