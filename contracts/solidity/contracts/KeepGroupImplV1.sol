@@ -95,14 +95,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Gets number of members in a group.
-     * @param _i Index number of a group.
-     */
-    function getGroupNMembers(uint256 _i) public view returns(uint256) {
-        return uintStorage[keccak256("membersCount", getGroupPubKey(_i))];
-    }
-
-    /**
      * @dev Gets public key of a group.
      * @param _i Index number of a group.
      */
@@ -150,14 +142,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function groupIsComplete(bytes32 _groupPubKey) public view returns(bool) {
         return boolStorage[keccak256("groupComplete", _groupPubKey)];
-    }
-
-    /**
-     * @dev Checks if group exists.
-     * @param _groupPubKey Group public key.
-     */
-    function groupExistsView(bytes32 _groupPubKey) public view returns(bool) {
-        return boolStorage[keccak256("groupExists", _groupPubKey)];
     }
 
     /**

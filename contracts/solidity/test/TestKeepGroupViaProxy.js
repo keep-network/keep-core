@@ -57,10 +57,6 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     assert.equal(await keepGroupImplViaProxy.initialized(), true, "Implementation contract should be initialized.");
   });
 
-  it("should be able to create a group with provided group public key", async function() {
-    assert.equal(await keepGroupImplViaProxy.groupExistsView(groupOnePubKey), true, "Created group should exist.");
-  });
-
   it("should be able to return a total number of created group", async function() {
     assert.equal(await keepGroupImplViaProxy.getNumberOfGroups(), 2, "Should get correct total group count.");
   });
@@ -76,11 +72,6 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   it("should be able to add a member to specified group", async function() {
     assert.equal(await keepGroupImplViaProxy.isMember(groupOnePubKey, account_one), true, "Member should be added to the group.");
-  });
-
-  it("should be able to get number of members in a group by providing a group index number", async function() {
-    assert.equal(await keepGroupImplViaProxy.getGroupNMembers(1), 1, "Group one should have 1 member.");
-    assert.equal(await keepGroupImplViaProxy.getGroupNMembers(2), 0, "Group two should have 0 members.");
   });
 
   // it("should not be able to add a member to specified group if member has no minimum stake", async function() {
