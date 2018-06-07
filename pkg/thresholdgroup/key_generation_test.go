@@ -3,24 +3,11 @@ package thresholdgroup
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"reflect"
 	"strconv"
 	"testing"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
-)
-
-func TestMain(m *testing.M) {
-	bls.Init(bls.CurveSNARK1)
-
-	os.Exit(m.Run())
-}
-
-var (
-	defaultID        = "12345"
-	defaultThreshold = 4
-	defaultGroupSize = 12
 )
 
 func TestLocalMemberCreation(t *testing.T) {
@@ -32,7 +19,7 @@ func TestLocalMemberCreation(t *testing.T) {
 	}
 
 	if member == nil {
-		t.Fatal("expected: non-nil\nactual: nil")
+		t.Fatal("\nexpected: non-nil\nactual: nil")
 	}
 
 	var propertyTests = map[string]struct {
@@ -137,82 +124,6 @@ func TestLocalMemberRegistration(t *testing.T) {
 	}
 }
 
-func buildSharingMember(id string) *SharingMember {
-	if id == "" {
-		id = defaultID
-	}
-	member, _ := NewMember(id, defaultThreshold, defaultGroupSize)
-
-	defaultBlsID := &bls.ID{}
-	defaultBlsID.SetHexString(defaultID)
-	member.RegisterMemberID(defaultBlsID)
-	for i := 1; i < defaultGroupSize; i++ {
-		id := bls.ID{}
-		id.SetDecString(fmt.Sprintf("%v", i))
-		member.RegisterMemberID(&id)
-	}
-
-	return member.InitializeSharing()
-}
-
-func randomShares() []bls.SecretKey {
-	secretKeys := make([]bls.SecretKey, 0)
-	for i := 0; i < defaultThreshold; i++ {
-		sk := bls.SecretKey{}
-		sk.SetByCSPRNG()
-		secretKeys = append(secretKeys, sk)
-	}
-
-	return secretKeys
-}
-
-func commitmentsFromShares(shares []bls.SecretKey) []bls.PublicKey {
-	commitments := make([]bls.PublicKey, 0)
-	for _, share := range shares {
-		commitments = append(commitments, *share.GetPublicKey())
-	}
-
-	return commitments
-}
-
-func randomCommitments() []bls.PublicKey {
-	return commitmentsFromShares(randomShares())
-}
-
-func buildCommittedSharingMember(id string) *SharingMember {
-	sharingMember := buildSharingMember(id)
-
-	for _, memberID := range sharingMember.OtherMemberIDs() {
-		commitments := randomCommitments()
-		sharingMember.AddCommitmentsFromID(memberID, commitments)
-	}
-
-	return sharingMember
-}
-
-func buildJustifyingMember(
-	id string,
-	accusationCount int,
-) (*JustifyingMember, []*SharingMember) {
-	sharingMember := buildCommittedSharingMember(id)
-	otherMembers := make([]*SharingMember, 0)
-
-	for i, memberID := range sharingMember.OtherMemberIDs() {
-		// Until we get to accusationCount, add invalid shares.
-		if i < accusationCount {
-			sharingMember.AddShareFromID(memberID, &bls.SecretKey{})
-		} else {
-			otherMember := buildCommittedSharingMember(memberID.GetHexString())
-			otherMembers = append(otherMembers, otherMember)
-			sharingMember.AddCommitmentsFromID(memberID, otherMember.Commitments())
-			memberShare := otherMember.SecretShareForID(&sharingMember.BlsID)
-			sharingMember.AddShareFromID(memberID, memberShare)
-		}
-	}
-
-	return sharingMember.InitializeJustification(), otherMembers
-}
-
 func TestSharingOtherMemberIDs(t *testing.T) {
 	sharingMember := buildSharingMember("")
 
@@ -293,6 +204,16 @@ func TestSharingMemberPrivateShareReception(t *testing.T) {
 		memberShareFunc     func(*SharingMember, *bls.ID) *bls.SecretKey
 		expectedAccusations int
 	}{
+		"empty member commitments": {
+			memberShareFunc: func(sharingMember *SharingMember, otherMemberID *bls.ID) *bls.SecretKey {
+				sharingMember.AddCommitmentsFromID(
+					otherMemberID,
+					make([]bls.PublicKey, 0),
+				)
+				return &bls.SecretKey{}
+			},
+			expectedAccusations: 11,
+		},
 		"valid shares": {
 			memberShareFunc: func(sharingMember *SharingMember, otherMemberID *bls.ID) *bls.SecretKey {
 				otherMember := buildCommittedSharingMember(otherMemberID.GetHexString())
@@ -462,160 +383,130 @@ func TestJustifyingMemberSelfAccusationRecording(t *testing.T) {
 }
 
 func TestJustifyingMemberFinalization(t *testing.T) {
+	accuse := func(count int) func(*JustifyingMember, []*SharingMember, []*bls.ID) {
+		return func(
+			justifyingMember *JustifyingMember,
+			otherMembers []*SharingMember,
+			randomMemberIDs []*bls.ID,
+		) {
+			for i, otherMember := range otherMembers[0:count] {
+				justifyingMember.AddAccusationFromID(
+					randomMemberIDs[i],
+					&otherMember.BlsID,
+				)
+			}
+		}
+	}
+	accuseAll := accuse(defaultGroupSize - 1)
+
+	justify := func(goodCount int, badCount int) func(*JustifyingMember, []*SharingMember, []*bls.ID) {
+		return func(
+			justifyingMember *JustifyingMember,
+			otherMembers []*SharingMember,
+			randomMemberIDs []*bls.ID,
+		) {
+			if goodCount > 0 {
+				for i, otherMember := range otherMembers[0:goodCount] {
+					justifyingMember.RecordJustificationFromID(
+						&otherMember.BlsID,
+						randomMemberIDs[i],
+						otherMember.SecretShareForID(randomMemberIDs[i]),
+					)
+				}
+			}
+
+			if badCount > 0 {
+				for i, otherMember := range otherMembers[goodCount:badCount] {
+					justifyingMember.RecordJustificationFromID(
+						&otherMember.BlsID,
+						randomMemberIDs[i+2],
+						&bls.SecretKey{},
+					)
+				}
+			}
+		}
+	}
+
 	var tests = map[string]struct {
+		badShares     int
 		accuseFunc    func(*JustifyingMember, []*SharingMember, []*bls.ID)
 		justifyFunc   func(*JustifyingMember, []*SharingMember, []*bls.ID)
 		expectedError error
 	}{
-		"accused without justification": {
-			accuseFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers {
-					justifyingMember.AddAccusationFromID(
-						randomMemberIDs[i],
-						&otherMember.BlsID,
-					)
-				}
-			},
-			justifyFunc:   func(*JustifyingMember, []*SharingMember, []*bls.ID) {},
+		"all accused without justification": {
+			accuseFunc:    accuseAll,
+			justifyFunc:   justify(0, 0),
 			expectedError: fmt.Errorf("required 4 qualified members but only had 1"),
 		},
 		"all accused with less than threshold justifications": {
-			accuseFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers {
-					justifyingMember.AddAccusationFromID(
-						randomMemberIDs[i],
-						&otherMember.BlsID,
-					)
-				}
-			},
-			justifyFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers[0:2] {
-					justifyingMember.RecordJustificationFromID(
-						&otherMember.BlsID,
-						randomMemberIDs[i],
-						otherMember.SecretShareForID(randomMemberIDs[i]),
-					)
-				}
-			},
+			accuseFunc:    accuseAll,
+			justifyFunc:   justify(2, 0),
 			expectedError: fmt.Errorf("required 4 qualified members but only had 3"),
 		},
-		"threshold accused with no justifications": {
-			accuseFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers[0:9] {
-					justifyingMember.AddAccusationFromID(
-						randomMemberIDs[i],
-						&otherMember.BlsID,
-					)
-				}
-			},
-			justifyFunc:   func(*JustifyingMember, []*SharingMember, []*bls.ID) {},
+		"all accused with bad justifications and less than threshold good justifications": {
+			accuseFunc:    accuseAll,
+			justifyFunc:   justify(2, defaultGroupSize-2),
 			expectedError: fmt.Errorf("required 4 qualified members but only had 3"),
 		},
-		"all accused with threshold justifications": {
-			accuseFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers {
-					justifyingMember.AddAccusationFromID(
-						randomMemberIDs[i],
-						&otherMember.BlsID,
-					)
-				}
-			},
-			justifyFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers[0:3] {
-					justifyingMember.RecordJustificationFromID(
-						&otherMember.BlsID,
-						randomMemberIDs[i],
-						otherMember.SecretShareForID(randomMemberIDs[i]),
-					)
-				}
-			},
-			expectedError: nil,
+		"all accused with threshold-1 justifications": {
+			accuseFunc:  accuseAll,
+			justifyFunc: justify(defaultThreshold-1, 0),
 		},
 		"all accused with all justifications": {
-			accuseFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers {
-					justifyingMember.AddAccusationFromID(
-						randomMemberIDs[i],
-						&otherMember.BlsID,
-					)
-				}
-			},
-			justifyFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers {
-					justifyingMember.RecordJustificationFromID(
-						&otherMember.BlsID,
-						randomMemberIDs[i],
-						otherMember.SecretShareForID(randomMemberIDs[i]),
-					)
-				}
-			},
-			expectedError: nil,
+			accuseFunc:  accuseAll,
+			justifyFunc: justify(defaultGroupSize-1, 0),
 		},
-		"threshold accused with threshold justifications": {
-			accuseFunc: func(
-				justifyingMember *JustifyingMember,
-				otherMembers []*SharingMember,
-				randomMemberIDs []*bls.ID,
-			) {
-				for i, otherMember := range otherMembers {
-					justifyingMember.AddAccusationFromID(
-						randomMemberIDs[i],
-						&otherMember.BlsID,
-					)
-				}
-			},
+		"threshold-1 honest with no justifications": {
+			accuseFunc:    accuse(defaultGroupSize - defaultThreshold + 1),
+			justifyFunc:   justify(0, 0),
+			expectedError: fmt.Errorf("required 4 qualified members but only had 3"),
+		},
+		"threshold accused with threshold-1 justifications": {
+			accuseFunc:  accuse(defaultThreshold),
+			justifyFunc: justify(defaultThreshold-1, 0),
+		},
+		"bad shares without justification": {
+			badShares:  1,
+			accuseFunc: accuseAll,
 			justifyFunc: func(
 				justifyingMember *JustifyingMember,
 				otherMembers []*SharingMember,
 				randomMemberIDs []*bls.ID,
 			) {
-				for i, otherMember := range otherMembers {
+				for _, otherMember := range otherMembers[0:1] {
 					justifyingMember.RecordJustificationFromID(
 						&otherMember.BlsID,
-						randomMemberIDs[i],
-						otherMember.SecretShareForID(randomMemberIDs[i]),
+						&justifyingMember.BlsID,
+						&bls.SecretKey{},
 					)
 				}
 			},
-			expectedError: nil,
+			expectedError: fmt.Errorf("required 4 qualified members but only had 1"),
+		},
+		"bad shares with justification": {
+			badShares:  5,
+			accuseFunc: accuse(0),
+			justifyFunc: func(
+				justifyingMember *JustifyingMember,
+				otherMembers []*SharingMember,
+				randomMemberIDs []*bls.ID,
+			) {
+				for _, otherMember := range otherMembers[0:5] {
+					// FIXME Can we make this happen automatically?
+					justifyingMember.AddCommitmentsFromID(&otherMember.BlsID, otherMember.Commitments())
+					justifyingMember.RecordJustificationFromID(
+						&otherMember.BlsID,
+						&justifyingMember.BlsID,
+						otherMember.SecretShareForID(&justifyingMember.BlsID),
+					)
+				}
+			},
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			justifyingMember, otherMembers := buildJustifyingMember("", 0)
+			justifyingMember, otherMembers := buildJustifyingMember("", test.badShares)
 
 			randomMemberIDs := make([]*bls.ID, 0)
 			for _, i := range rand.Perm(len(otherMembers)) {
