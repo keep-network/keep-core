@@ -24,11 +24,11 @@ func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
 // GetConfig get the GroupSize and Threshold for groups and returns it
 // in a becaon.Config struct.
 func (ec *ethereumChain) GetConfig() beacon.Config {
-	size, err := ec.kg.GetGroupSize()
+	size, err := ec.kg.GroupSize()
 	if err != nil {
 	}
 
-	threshold, err := ec.kg.GetGroupThreshold()
+	threshold, err := ec.kg.GroupThreshold()
 	if err != nil {
 	}
 

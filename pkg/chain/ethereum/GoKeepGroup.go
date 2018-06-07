@@ -100,13 +100,6 @@ func (kg *KeepGroup) SetGroupThreshold(groupThreshold int) (
 	return
 }
 
-// GroupExists TODO
-func (kg *KeepGroup) GroupExists(groupPubKey []byte) (*types.Transaction,
-	error) {
-	//    function groupExists(bytes32 _groupPubKey) public {
-	return kg.transactor.GroupExists(kg.transactorOpts, ToByte32(groupPubKey))
-}
-
 // AddMemberToGroup adds a new member to at group.
 func (kg *KeepGroup) AddMemberToGroup(groupPubKey,
 	memberPubKey []byte) (*types.Transaction, error) {
@@ -119,9 +112,9 @@ func (kg *KeepGroup) AddMemberToGroup(groupPubKey,
 // DissolveGroup breaks up the group that is associated with the public key.
 func (kg *KeepGroup) DissolveGroup(groupPubKey []byte) (*types.Transaction,
 	error) {
-	// function disolveGroup(bytes32 _groupPubKey) public onlyOwner
+	// function dissolveGroup(bytes32 _groupPubKey) public onlyOwner
 	// returns(bool) {
-	return kg.transactor.DisolveGroup(kg.transactorOpts, ToByte32(groupPubKey))
+	return kg.transactor.DissolveGroup(kg.transactorOpts, ToByte32(groupPubKey))
 }
 
 // CreateGroup starts a new group with the specified public key.
@@ -131,34 +124,22 @@ func (kg *KeepGroup) CreateGroup(groupPubKey []byte) (*types.Transaction,
 	return kg.transactor.CreateGroup(kg.transactorOpts, ToByte32(groupPubKey))
 }
 
-// GetNumberOfGroups returns the number of groups.
-func (kg *KeepGroup) GetNumberOfGroups() (ng int, err error) {
-	ngBig, err := kg.caller.GetNumberOfGroups(kg.callerOpts)
-	// function getNumberOfGroups() public view returns(uint256) {
+// NumberOfGroups returns the number of groups.
+func (kg *KeepGroup) NumberOfGroups() (ng int, err error) {
+	ngBig, err := kg.caller.NumberOfGroups(kg.callerOpts)
+	// function numberOfGroups() public view returns(uint256) {
 	if err == nil {
 		ng = int(ngBig.Int64())
 	}
 	return
 }
 
-// GetGroupNMembers returns the Nth member of a group.  This is the number
-// of the member.
-func (kg *KeepGroup) GetGroupNMembers(groupNumber int) (nm int, err error) {
-	iBigGroupNumber := big.NewInt(int64(groupNumber))
-	// function getGroupNMembers(uint256 _i) public view returns(uint256) {
-	ngBig, err := kg.caller.GetGroupNMembers(kg.callerOpts, iBigGroupNumber)
-	if err == nil {
-		nm = int(ngBig.Int64())
-	}
-	return
-}
-
 // GetGroupPubKey take the number of the group and returns that groups
 // public key.
-func (kg *KeepGroup) GetGroupPubKey(groupNumber int) (pub []byte,
+func (kg *KeepGroup) GetGroupPubKey(groupIndex int) (pub []byte,
 	err error) {
-	iBigGroupNumber := big.NewInt(int64(groupNumber))
-	// function getGroupPubKey(uint256 _i) public view returns(bytes32) {
+	iBigGroupNumber := big.NewInt(int64(groupIndex))
+	// function getGroupPubKey(uint256 _groupIndex) public view returns(bytes32) {
 	tmp, err := kg.caller.GetGroupPubKey(kg.callerOpts, iBigGroupNumber)
 	if err == nil {
 		pub = tmp[:]
@@ -175,59 +156,24 @@ func (kg *KeepGroup) SetGroupSize(groupSize int) (tx *types.Transaction,
 	return
 }
 
-// GetGroupThreshold returns the group threshold.  This is the number
+// GroupThreshold returns the group threshold.  This is the number
 // of members that have to report a value to create a new signature.
-func (kg *KeepGroup) GetGroupThreshold() (thr int, err error) {
-	// function getGroupThreshold() public view returns(uint256) {
-	thrBig, err := kg.caller.GetGroupThreshold(kg.callerOpts)
+func (kg *KeepGroup) GroupThreshold() (thr int, err error) {
+	// function groupThreshold() public view returns(uint256) {
+	thrBig, err := kg.caller.GroupThreshold(kg.callerOpts)
 	if err == nil {
 		thr = int(thrBig.Int64())
 	}
 	return
 }
 
-// GetGroupSize returns the number of members that are required
+// GroupSize returns the number of members that are required
 // to form a group.
-func (kg *KeepGroup) GetGroupSize() (thr int, err error) {
-	// function getGroupSize() public view returns(uint256) {
-	thrBig, err := kg.caller.GetGroupSize(kg.callerOpts)
+func (kg *KeepGroup) GroupSize() (thr int, err error) {
+	// function groupSize() public view returns(uint256) {
+	thrBig, err := kg.caller.GroupSize(kg.callerOpts)
 	if err == nil {
 		thr = int(thrBig.Int64())
-	}
-	return
-}
-
-// GetGroupNumber returns the number of a group given the public key of the
-// group.
-func (kg *KeepGroup) GetGroupNumber(groupPubKey []byte) (nm int, err error) {
-	//    function getGroupNumber(bytes32 _groupPubKey) public view
-	// returns(uint256) {
-	nmBig, err := kg.caller.GetGroupNumber(kg.callerOpts, ToByte32(groupPubKey))
-	if err == nil {
-		nm = int(nmBig.Int64())
-	}
-	return
-}
-
-// GetAllGroupMembers returns a set of public keys for each member of a group.
-func (kg *KeepGroup) GetAllGroupMembers(groupPubKey []byte) (keySet [][]byte,
-	err error) {
-	groupNumber, err := kg.GetGroupNumber(groupPubKey)
-	if err != nil {
-		return
-	}
-	nm, err := kg.GetGroupNMembers(groupNumber)
-	if err != nil {
-		return
-	}
-	keySet = make([][]byte, 0, nm)
-	for i := 0; i < nm; i++ {
-		memberKey, err0 := kg.GetGroupPubKey(i)
-		if err0 != nil {
-			err = err0
-			return
-		}
-		keySet = append(keySet, memberKey)
 	}
 	return
 }
