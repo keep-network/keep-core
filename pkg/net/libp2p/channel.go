@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -152,24 +153,28 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 func (c *channel) handleMessages(ctx context.Context) {
 	defer c.subscription.Cancel()
 
+	t := time.NewTimer(1) // first tick is immediate
+	defer t.Stop()
+
 	for {
-		// TODO: thread in a context with cancel
-		msg, err := c.subscription.Next(ctx)
-		if err != nil {
-			// TODO: handle error - different error types
-			// result in different outcomes. Print err is very noisy.
-			fmt.Println(err)
-			continue
-		}
-
-		if err := c.processMessage(msg); err != nil {
-			// TODO: handle error - different error types
-			// result in different outcomes. Print err is very noisy.
-			fmt.Println(err)
-			continue
-		}
-
 		select {
+		case <-t.C:
+			msg, err := c.subscription.Next(ctx)
+			if err != nil {
+				// TODO: handle error - different error types
+				// result in different outcomes. Print err is very noisy.
+				fmt.Println(err)
+				continue
+			}
+
+			if err := c.processMessage(msg); err != nil {
+				// TODO: handle error - different error types
+				// result in different outcomes. Print err is very noisy.
+				fmt.Println(err)
+				continue
+			}
+
+			t.Reset(1 * time.Second)
 		case <-ctx.Done():
 			return
 		}
