@@ -22,7 +22,7 @@ import (
 
 type provider struct {
 	channelManagerMutex sync.Mutex
-	cm                  *channelManager
+	channelManagr       *channelManager
 
 	host host.Host
 }
@@ -30,7 +30,7 @@ type provider struct {
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
-	return p.cm.getChannel(name)
+	return p.channelManagr.getChannel(name)
 }
 
 func (p *provider) Type() string {
@@ -54,7 +54,7 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 		return nil, err
 	}
 
-	return &provider{cm: cm, host: host}, nil
+	return &provider{channelManagr: cm, host: host}, nil
 }
 
 func discoverAndListen(

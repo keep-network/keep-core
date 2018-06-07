@@ -170,7 +170,7 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 		return nil, err
 	}
 
-	return &provider{cm: cm, host: host}, nil
+	return &provider{channelManagr: cm, host: host}, nil
 }
 
 func buildTestProxies(ctx context.Context, t *testing.T, num int) ([]*provider, error) {
