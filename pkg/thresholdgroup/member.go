@@ -243,6 +243,10 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 		return nil, err
 	}
 
+	// According to [GJKR 99] the polynomial is of degree `threshold`,
+	// it means that we have `threshold + 1` coefficients in the polynomial,
+	// which is also the number of `secretShares` and `shareCommitments`
+	//
 	// Note: bls.SecretKey, before we call some sort of `Set` on it, can be
 	// considered a zeroed *container* for a secret key.
 	//
