@@ -38,9 +38,9 @@ import (
 
 // High-level description with 3 players. Note that in practice 3 players would
 // mean our threshold could be at most 1, so we would only operate with 1
-// coefficient. We do 3 players and 3 coefficients for explanatory purposes:
+// coefficient. We do 3 players and threshold equals 2 for explanatory purposes:
 //
-// Take 3 players. Each generates a random polynomial:
+// Take 3 players. Each generates a random polynomial of `threshold` degree:
 //
 // f_1(x) = a_10 + a_11 x + a_12 x^2
 // f_2(x) = a_20 + a_21 x + a_22 x^2
@@ -105,10 +105,13 @@ type memberCore struct {
 	BlsID bls.ID
 	// The number of members in the complete group.
 	groupSize int
-	// The threshold of group members who must be honest in order for the
-	// generated key to be uncompromised. Corresponds to the number of secret
-	// shares and public commitments of this group member.
+	// The threshold of group members who might be dishonest in order for the
+	// generated key to be uncompromised.
 	threshold int
+	// The number of secret shares and public commitments of each group member.
+	// Based on [GJKR 99] the polynomial degree equals to `threshold` and the
+	// secret shares are polynomial coefficients.
+	secretSharesCount int
 	// The BLS IDs of all members of this member's group, including the member
 	// itself. Initially empty, populated as each other member announces its
 	// presence.
@@ -247,8 +250,9 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 	//    cryptographically secure pseudo-random number generator.
 	//  - `Set` instead initializes a key from an existing set of shares and a
 	//    group member bls.ID.
-	secretShares := make([]bls.SecretKey, threshold)
-	shareCommitments := make([]bls.PublicKey, threshold)
+	secretSharesCount := threshold + 1
+	secretShares := make([]bls.SecretKey, secretSharesCount)
+	shareCommitments := make([]bls.PublicKey, secretSharesCount)
 
 	// Alternate description from original Pedersen VSS paper, [Ped91b]
 	// reference in [GJKR 99]:
@@ -270,7 +274,7 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 	// and store them in secretShares. We also generate the equivalent public
 	// keys, C_ik = g^{a_ik}·h^{b_ik} mod p, which are stored as the commitments
 	// to those shares.
-	for i := 0; i < threshold; i++ {
+	for i := 0; i < secretSharesCount; i++ {
 		secretShares[i].SetByCSPRNG()
 
 		// The public keys for each share of this group member's secret key
@@ -284,11 +288,12 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 
 	return &LocalMember{
 		memberCore: memberCore{
-			ID:        fmt.Sprintf("0x%010s", id),
-			BlsID:     blsID,
-			groupSize: groupSize,
-			threshold: threshold,
-			memberIDs: make([]*bls.ID, 0, groupSize),
+			ID:                fmt.Sprintf("0x%010s", id),
+			BlsID:             blsID,
+			groupSize:         groupSize,
+			threshold:         threshold,
+			memberIDs:         make([]*bls.ID, 0, groupSize),
+			secretSharesCount: secretSharesCount,
 		},
 		secretShares:     secretShares,
 		shareCommitments: shareCommitments,
@@ -538,7 +543,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
 	//            			   computation as well...
-	combinedCommitments := make([]bls.PublicKey, jm.threshold)
+	combinedCommitments := make([]bls.PublicKey, jm.secretSharesCount)
 	for i, commitment := range jm.shareCommitments {
 		combinedCommitments[i] = commitment
 	}

@@ -80,10 +80,10 @@ func TestLocalMemberFailsForHighThreshold(t *testing.T) {
 func TestLocalMemberCommitments(t *testing.T) {
 	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
 
-	if len(member.Commitments()) != defaultThreshold {
+	if len(member.Commitments()) != member.secretSharesCount {
 		t.Errorf(
 			"\nexpected: %v commitments\nactual:   %v commitments",
-			defaultThreshold,
+			member.secretSharesCount,
 			len(member.Commitments()),
 		)
 	}
