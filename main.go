@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
+	"github.com/keep-network/keep-core/cmd"
 	"github.com/urfave/cli"
 )
 
@@ -19,7 +20,18 @@ var (
 	// Revision is the git commit (revision) hash
 	Revision string
 
+	// GroupSize indicates the number of members in this relay group
+	GroupSize int
+
+	// Threshold indicates the threshold number of members required to perform signature verification
+	Threshold int
+
 	configPath string
+)
+
+const (
+	defaultGroupSize int = 10
+	defaultThreshold int = 4
 )
 
 func init() {
@@ -84,6 +96,28 @@ func NewApp(version, revision string) *cli.App {
 				return nil
 			},
 		},
+		{
+			Name:        "smoke-test",
+			Usage:       "Simulates DKG and signature verification",
+			Description: "Simulate Distributed Key Generation (DKG) and verify group's threshold signature",
+			Action:      cmd.SmokeTest,
+			Flags: []cli.Flag{
+				&cli.IntFlag{
+					Name:        "group-size,g",
+					Value:       defaultGroupSize,
+					Destination: &GroupSize,
+					EnvVar:      "GROUP_SIZE",
+					Usage:       "optionally, specify the `GROUP_SIZE` environment variable",
+				},
+				&cli.IntFlag{
+					Name:        "threshold,t",
+					Value:       defaultThreshold,
+					Destination: &Threshold,
+					EnvVar:      "THRESHOLD",
+					Usage:       "optionally, specify the `THRESHOLD` environment variable",
+				},
+			},
+		},
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
@@ -95,6 +129,10 @@ ENVIRONMENT VARIABLES:
 
 	return app
 }
+
+//-------------------------------------------------------------------------------
+// Helpers
+//-------------------------------------------------------------------------------
 
 func getInfo(c *cli.Context) {
 	fmt.Printf("Keep client: %s\n\n"+
