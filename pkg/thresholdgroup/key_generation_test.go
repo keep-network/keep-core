@@ -428,10 +428,10 @@ func TestJustifyingMemberFinalization(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		outgoingAccusations int
-		accuseFunc          func(*JustifyingMember, []*SharingMember, []*bls.ID)
-		justifyFunc         func(*JustifyingMember, []*SharingMember, []*bls.ID)
-		expectedError       error
+		badShares     int
+		accuseFunc    func(*JustifyingMember, []*SharingMember, []*bls.ID)
+		justifyFunc   func(*JustifyingMember, []*SharingMember, []*bls.ID)
+		expectedError error
 	}{
 		"all accused without justification": {
 			accuseFunc:    accuseAll,
@@ -465,9 +465,9 @@ func TestJustifyingMemberFinalization(t *testing.T) {
 			accuseFunc:  accuse(defaultThreshold),
 			justifyFunc: justify(defaultThreshold-1, 0),
 		},
-		"outgoing accusation without justification": {
-			outgoingAccusations: 1,
-			accuseFunc:          accuseAll,
+		"bad shares without justification": {
+			badShares:  1,
+			accuseFunc: accuseAll,
 			justifyFunc: func(
 				justifyingMember *JustifyingMember,
 				otherMembers []*SharingMember,
@@ -483,9 +483,9 @@ func TestJustifyingMemberFinalization(t *testing.T) {
 			},
 			expectedError: fmt.Errorf("required 4 qualified members but only had 1"),
 		},
-		"outgoing accusations with justification": {
-			outgoingAccusations: 5,
-			accuseFunc:          accuse(0),
+		"bad shares with justification": {
+			badShares:  5,
+			accuseFunc: accuse(0),
 			justifyFunc: func(
 				justifyingMember *JustifyingMember,
 				otherMembers []*SharingMember,
@@ -506,7 +506,7 @@ func TestJustifyingMemberFinalization(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			justifyingMember, otherMembers := buildJustifyingMember("", test.outgoingAccusations)
+			justifyingMember, otherMembers := buildJustifyingMember("", test.badShares)
 
 			randomMemberIDs := make([]*bls.ID, 0)
 			for _, i := range rand.Perm(len(otherMembers)) {
