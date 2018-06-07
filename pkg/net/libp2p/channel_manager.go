@@ -82,7 +82,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		peerStore:                   cm.peerStore,
 		pubsub:                      cm.pubsub,
 		subscription:                sub,
-		messages:                    make([]net.Message, 0),
+		messageHandlers:             make([]net.HandleMessageFunc, 0),
 		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler),
 		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),

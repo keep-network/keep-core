@@ -25,8 +25,8 @@ type channel struct {
 
 	subscription *floodsub.Subscription
 
-	messagesLock sync.RWMutex
-	messages     []net.Message
+	messageHandlersMutex sync.Mutex
+	messageHandlers      []net.HandleMessageFunc
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
@@ -83,21 +83,10 @@ func (c *channel) SendTo(
 	return nil
 }
 
-func (c *channel) Recv(h net.HandleMessageFunc) error {
-	c.messagesLock.RLock()
-	snapshot := make([]net.Message, len(c.messages))
-	copy(snapshot, c.messages)
-	// FIXME: this will be a GC hotspot; use pools
-	c.messages = make([]net.Message, 0) // drain messages from buffer
-	c.messagesLock.RUnlock()
-
-	for _, message := range snapshot {
-		if err := h(message); err != nil {
-			return err
-		}
-	}
-
-	snapshot = nil // release copy to the gc
+func (c *channel) Recv(handler net.HandleMessageFunc) error {
+	c.messageHandlersMutex.Lock()
+	c.messageHandlers = append(c.messageHandlers, handler)
+	c.messageHandlersMutex.Unlock()
 
 	return nil
 }
@@ -191,12 +180,12 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
-	unmarshaled, err := c.getUnmarshalerByType(string(envelope.Type))
+	unmarshaler, err := c.getUnmarshalerByType(string(envelope.Type))
 	if err != nil {
 		return err
 	}
 
-	if err := unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
+	if err := unmarshaler.Unmarshal(envelope.GetPayload()); err != nil {
 		return err
 	}
 
@@ -214,15 +203,10 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 
 	// Fire a message back to the protocol
 	protocolMessage := internal.BasicMessage(senderIdentifier.id,
-		protocolIdentifier, unmarshaled,
+		protocolIdentifier, unmarshaler,
 	)
 
-	// We'll drain the list of messages when called
-	c.messagesLock.Lock()
-	c.messages = append(c.messages, protocolMessage)
-	c.messagesLock.Unlock()
-
-	return nil
+	return c.deliver(protocolMessage)
 }
 
 func (c *channel) getUnmarshalerByType(envelopeType string) (net.TaggedUnmarshaler, error) {
@@ -243,12 +227,24 @@ func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.Protoco
 	c.identifiersMutex.Lock()
 	defer c.identifiersMutex.Unlock()
 
-	protocolIdentifier, found := c.transportToProtoIdentifiers[senderIdentifier.id]
-	if !found {
-		return nil, fmt.Errorf(
-			"Couldn't find protocol identifier for sender identifier %v",
-			senderIdentifier,
-		)
-	}
-	return protocolIdentifier, nil
+	return c.transportToProtoIdentifiers[senderIdentifier.id], nil
+}
+
+func (c *channel) deliver(message net.Message) error {
+	c.messageHandlersMutex.Lock()
+	defer c.messageHandlersMutex.Unlock()
+
+	snapshot := make([]net.HandleMessageFunc, len(c.messageHandlers))
+	copy(snapshot, c.messageHandlers)
+
+	go func(message net.Message, snapshot []net.HandleMessageFunc) {
+		for _, handler := range snapshot {
+			if err := handler(message); err != nil {
+				fmt.Println(err)
+			}
+		}
+		snapshot = nil // release copy to the gc
+	}(message, snapshot)
+
+	return nil
 }
