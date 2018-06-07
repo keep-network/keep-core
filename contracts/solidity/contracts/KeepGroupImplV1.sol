@@ -69,7 +69,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     /**
      * @dev Gets the threshold size for groups.
      */
-    function getGroupThreshold() public view returns(uint256) {
+    function groupThreshold() public view returns(uint256) {
         return uintStorage[keccak256("groupThreshold")];
     }
 
@@ -83,14 +83,14 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     /**
      * @dev Gets the minimum number of members in a group.
      */
-    function getGroupSize() public view returns(uint256) {
+    function groupSize() public view returns(uint256) {
         return uintStorage[keccak256("groupSize")];
     }
 
     /**
      * @dev Gets number of active groups.
      */
-    function getNumberOfGroups() public view returns(uint256) {
+    function numberOfGroups() public view returns(uint256) {
         return uintStorage[keccak256("groupsCount")];
     }
 
@@ -190,13 +190,13 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         delete boolStorage[keccak256("groupExists", _groupPubKey)];
         delete boolStorage[keccak256("groupComplete", _groupPubKey)];
 
-        uint groupIndex = getGroupIndex(_groupPubKey);
-        delete bytes32Storage[keccak256("groupIndexToGroupPubKey", groupIndex)];
+        uint _groupIndex = getGroupIndex(_groupPubKey);
+        delete bytes32Storage[keccak256("groupIndexToGroupPubKey", _groupIndex)];
 
         // Get last group _groupPubKey and move it into released index
         uint lastIndex = uintStorage[keccak256("groupsCount")];
         bytes32 lastGroup = bytes32Storage[keccak256("groupIndexToGroupPubKey", lastIndex)];
-        bytes32Storage[keccak256("group", groupIndex)] = lastGroup;
+        bytes32Storage[keccak256("group", _groupIndex)] = lastGroup;
         uintStorage[keccak256("groupsCount")]--;
     }
 

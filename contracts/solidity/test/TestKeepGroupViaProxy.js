@@ -58,7 +58,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
   });
 
   it("should be able to return a total number of created group", async function() {
-    assert.equal(await keepGroupImplViaProxy.getNumberOfGroups(), 2, "Should get correct total group count.");
+    assert.equal(await keepGroupImplViaProxy.numberOfGroups(), 2, "Should get correct total group count.");
   });
 
   it("should be able to get a group index number with provided group public key", async function() {
