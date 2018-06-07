@@ -20,13 +20,15 @@ type channel struct {
 	clientIdentity *identity
 	peerStore      peerstore.Peerstore
 
-	pubsubMutex sync.Mutex
-	pubsub      *floodsub.PubSub
-
+	pubsubMutex  sync.Mutex
+	pubsub       *floodsub.PubSub
 	subscription *floodsub.Subscription
 
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
+
+	tempBufferLock sync.Mutex
+	tempBuffer     []net.Message
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
@@ -232,18 +234,48 @@ func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.Protoco
 
 func (c *channel) deliver(message net.Message) error {
 	c.messageHandlersMutex.Lock()
-	snapshot := make([]net.HandleMessageFunc, len(c.messageHandlers))
-	copy(snapshot, c.messageHandlers)
-	c.messageHandlersMutex.Unlock()
+	defer c.messageHandlersMutex.Unlock()
 
-	go func(message net.Message, snapshot []net.HandleMessageFunc) {
+	// If we haven't registered a callback, buffer the message
+	if len(c.messageHandlers) == 0 {
+		c.tempBufferLock.Lock()
+		c.tempBuffer = append(c.tempBuffer, message)
+		c.tempBufferLock.Unlock()
+		return nil
+	}
+
+	handlerSnapshot := make([]net.HandleMessageFunc, len(c.messageHandlers))
+	copy(handlerSnapshot, c.messageHandlers)
+
+	// Once we've registered a callback, drain the buffer
+	if c.tempBuffer != nil {
+		c.tempBufferLock.Lock()
+		bufferSnapshot := make([]net.Message, len(c.tempBuffer))
+		copy(bufferSnapshot, c.tempBuffer)
+		c.tempBufferLock.Unlock()
+
+		// Block so that we can clear the temporary buffer
+		c.executeHandler(bufferSnapshot, handlerSnapshot)
+		c.tempBuffer = nil
+
+		return nil
+	}
+
+	// The usual case: for each message, execute against registered handlers
+	go c.executeHandler([]net.Message{message}, handlerSnapshot)
+
+	return nil
+}
+
+func (c *channel) executeHandler(messages []net.Message, snapshot []net.HandleMessageFunc) {
+	for _, message := range messages {
 		for _, handler := range snapshot {
 			if err := handler(message); err != nil {
 				fmt.Println(err)
 			}
 		}
-		snapshot = nil // release copy to the gc
-	}(message, snapshot)
+	}
 
-	return nil
+	// release copy to the gc
+	snapshot = nil
 }
