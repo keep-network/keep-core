@@ -20,6 +20,12 @@ contract KeepGroup is Ownable, EternalStorage {
 
     event Upgraded(string version, address implementation);
 
+    // Mirror events from the implementation contract
+    event GroupExistsEvent(bytes32 groupPubKey, bool exists);
+    event GroupStartedEvent(bytes32 groupPubKey);
+    event GroupCompleteEvent(bytes32 groupPubKey);
+    event GroupErrorCode(uint8 code);
+
     function KeepGroup(string _version, address _implementation) {
         require(_implementation != address(0));
         version = _version;
