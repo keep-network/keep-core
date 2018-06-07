@@ -175,7 +175,10 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupPubKey Group public key.
      * @return True if group was removed, false otherwise.
      */
-    function disolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
+    function dissolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
+
+        // TODO: refine the logic to dissolve a group automaticaly after a certain point
+        // More info at https://github.com/keep-network/keep-core/issues/140
 
         if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
             emit GroupErrorCode(10);
