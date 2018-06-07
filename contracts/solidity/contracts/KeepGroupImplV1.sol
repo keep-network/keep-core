@@ -5,27 +5,12 @@ import "./EternalStorage.sol";
 import "./KeepRandomBeaconImplV1.sol";
 
 
-/**
- * @dev Interface for checking minimum stake balance.
- */
-// interface keepRandomBeacon {
-//     function hasMinimumStake(address _staker) external view returns(bool);
-// }
-
-
 contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
     event GroupStartedEvent(bytes32 groupPubKey);
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
-
-    // TODO: make sure we know staker eth address so we can check its minimum stake
-    // modifier hasMinimumStake(bytes32 _staker) {
-    //     //keepRandomBeacon beacon = keepRandomBeacon(addressStorage[keccak256("keepRandomBeaconAddress")]);
-    //     //require(beacon.hasMinimumStake(_staker));
-    //     _;
-    // }
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -137,14 +122,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Checks if group is complete.
-     * @param _groupPubKey Group public key.
-     */
-    function groupIsComplete(bytes32 _groupPubKey) public view returns(bool) {
-        return boolStorage[keccak256("groupComplete", _groupPubKey)];
-    }
-
-    /**
      * @dev Creates a new group with provided public key.
      * @param _groupPubKey Group public key.
      * @return True if group was created, false otherwise.
@@ -213,46 +190,5 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
             }
         }
         return false;
-    }
-
-    /**
-     * @dev Adds member to the group.
-     * @param _groupPubKey Group public key.
-     * @param _memberPubKey Member public key.
-     * @return True if member was added to the group, false otherwise
-     * along with emitting corresponding error code.
-     */
-    function addMemberToGroup(bytes32 _groupPubKey, bytes32 _memberPubKey)
-        public
-        // hasMinimumStake(_memberPubKey)
-        returns(bool)
-    {
-        // Group does not exist.
-        if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
-            emit GroupErrorCode(3);
-            return false;
-        }
-
-        // Group is not accepting new members.
-        if (boolStorage[keccak256("groupComplete", _groupPubKey)] == true) {
-            emit GroupErrorCode(2);
-            return false;
-        }
-
-        // Member already exists in the group.
-        if (isMember(_groupPubKey, _memberPubKey)) {
-            emit GroupErrorCode(1);
-            return false;
-        }
-
-        uint256 lastIndex = uintStorage[keccak256("membersCount", _groupPubKey)];
-        bytes32Storage[keccak256("memberIndexToMemberPubKey", lastIndex, _groupPubKey)] = _memberPubKey;
-        uintStorage[keccak256("membersCount", _groupPubKey)]++;
-
-        // If the group has passed default group size, it is formed.
-        if (uintStorage[keccak256("membersCount", _groupPubKey)] >= uintStorage[keccak256("groupSize")]) {
-            boolStorage[keccak256("groupComplete", _groupPubKey)] = true;
-            emit GroupCompleteEvent(_groupPubKey);
-        }
     }
 }

@@ -48,9 +48,6 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake, "", {from: account_one});
 
-    // Add member to the first group. 
-    await keepGroupImplViaProxy.addMemberToGroup(groupOnePubKey, account_one);
-  
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
@@ -69,13 +66,4 @@ contract('TestKeepGroupViaProxy', function(accounts) {
   it("should be able to get group public key by group index number", async function() {
     assert.equal(await keepGroupImplViaProxy.getGroupPubKey(0), groupOnePubKey, "Should get group public key.");
   });
-
-  it("should be able to add a member to specified group", async function() {
-    assert.equal(await keepGroupImplViaProxy.isMember(groupOnePubKey, account_one), true, "Member should be added to the group.");
-  });
-
-  // it("should not be able to add a member to specified group if member has no minimum stake", async function() {
-  //   await exceptThrow(keepGroupImplViaProxy.addMemberToGroup(groupOnePubKey, account_two));
-  // });
-
 });
