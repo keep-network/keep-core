@@ -90,17 +90,29 @@ func TestSendReceive(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	recvChan := make(chan net.Message)
 	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		testPayload, ok := msg.Payload().(*testMessage)
-		if !ok {
-			t.Fatalf("Expected message payload to be of type string, got type %v", testPayload)
-		}
-		// if testPayload.Payload != expectedPayload {
-		// 	t.Fatalf("expected message payload %s, got payload %s", testPayload.Payload, expectedPayload)
-		// }
+		recvChan <- msg
 		return nil
 	}); err != nil {
 		t.Fatal(err)
+	}
+
+	for {
+		select {
+		case msg := <-recvChan:
+			testPayload, ok := msg.Payload().(*testMessage)
+			if !ok {
+				t.Fatalf("Expected message payload to be of type string, got type %v", testPayload)
+			}
+
+			if expectedPayload != testPayload.Payload {
+				t.Fatalf("expected message payload %s, got payload %s", expectedPayload, testPayload.Payload)
+			}
+			return
+		case <-ctx.Done():
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -128,6 +140,8 @@ func (m *testMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 	m.ID = message.ID
+	m.Payload = message.Payload
+
 	return nil
 }
 
