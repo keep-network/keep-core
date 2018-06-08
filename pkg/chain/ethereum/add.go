@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/beacon"
@@ -26,15 +27,19 @@ func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
 func (ec *ethereumChain) GetConfig() beacon.Config {
 	size, err := ec.kg.GroupSize()
 	if err != nil {
+		fmt.Printf("error calling GroupSize: %s\n", err)
+		os.Exit(1)
 	}
 
 	threshold, err := ec.kg.GroupThreshold()
 	if err != nil {
+		fmt.Printf("error calling GroupThreshold: %s\n", err)
+		os.Exit(1)
 	}
 
 	rv := beacon.Config{
-		GroupSize: size,      // Formerly 10,
-		Threshold: threshold, // Formerly 4,
+		GroupSize: size,
+		Threshold: threshold,
 	}
 	return rv
 }

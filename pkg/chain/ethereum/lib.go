@@ -42,8 +42,8 @@ func ToByte32(in []byte) (tmp [32]byte) {
 	return
 }
 
-// FxError is the function that is call when an error occures in a callback
-type FxError func(err error) (eout error)
+// errorCallback is the function that is call when an error occures in a callback
+type errorCallback func(err error) (eout error)
 
 // Sum256 returns the SHA3-256 digest of the data.
 func Sum256(data []byte) (digest [32]byte) {

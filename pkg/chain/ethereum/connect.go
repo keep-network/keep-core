@@ -54,14 +54,14 @@ func Connect(cfg Config) (chain.Handle, error) {
 		clientWS:  clientws,
 	}
 
-	krb, err := NewKeepRandomBeacon(pv)
+	krb, err := newKeepRandomBeacon(pv)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepRandomBeacon contract: %s",
 			err)
 	}
 	pv.krb = krb
 
-	kg, err := NewKeepGroup(pv)
+	kg, err := newKeepGroup(pv)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepGroup contract: %s", err)
 	}
