@@ -14,7 +14,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-var (
+const (
 	defaultID        = "12345"
 	defaultThreshold = 4
 	defaultGroupSize = 12
