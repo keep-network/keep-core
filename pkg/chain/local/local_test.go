@@ -38,7 +38,10 @@ func TestLocalBlockWaiter(t *testing.T) {
 			t.Parallel()
 
 			c := Connect()
-			countWait := c.BlockCounter()
+			countWait, err := c.BlockCounter()
+			if err != nil {
+				t.Errorf("failed to setup test")
+			}
 
 			start := time.Now().UTC()
 			countWait.WaitForBlocks(test.blockWait)
