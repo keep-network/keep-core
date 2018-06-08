@@ -47,8 +47,10 @@ func (ec *ethereumChain) GetConfig() beacon.Config {
 // SubmitGroupPublicKey sets up the callback functions for the submission of a
 // public key for the group.
 // I am still not understanding something about this function!!!!!!!!!!!!!!!!
-func (ec *ethereumChain) SubmitGroupPublicKey(groupID string,
-	key [96]byte) error {
+func (ec *ethereumChain) SubmitGroupPublicKey(
+	groupID string,
+	key [96]byte,
+) error {
 
 	applyError := func(msg string) {
 		ec.handlerMutex.Lock()
@@ -91,7 +93,8 @@ func (ec *ethereumChain) SubmitGroupPublicKey(groupID string,
 
 // OnGroupPublicKeySubmissionFailed associates a handler for a error event
 func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
-	handler func(groupID string, errorMessage string)) error {
+	handler func(groupID string, errorMessage string),
+) error {
 	ec.handlerMutex.Lock()
 	ec.groupPublicKeyFailureHandlers = append(ec.groupPublicKeyFailureHandlers,
 		handler)
@@ -100,8 +103,9 @@ func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
 }
 
 // OnGroupPublicKeySubmitted associates a handler for a success event
-func (ec *ethereumChain) OnGroupPublicKeySubmitted(handler func(groupID string,
-	activationBlock *big.Int)) error {
+func (ec *ethereumChain) OnGroupPublicKeySubmitted(
+	handler func(groupID string, activationBlock *big.Int),
+) error {
 	ec.handlerMutex.Lock()
 	ec.groupPublicKeySubmissionHandlers = append(
 		ec.groupPublicKeySubmissionHandlers, handler)

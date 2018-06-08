@@ -12,12 +12,11 @@ import (
 )
 
 type ethereumBlockCounter struct {
-	structMutex sync.Mutex
-	blockHeight int
-	subch       chan block
-	config      *ethereumChain
-	waiters     map[int][]chan int
-	Debug01     bool
+	structMutex         sync.Mutex
+	blockHeight         int
+	subscriptionChannel chan block
+	config              *ethereumChain
+	waiters             map[int][]chan int
 }
 
 type block struct {
@@ -59,8 +58,7 @@ func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 // block height (top) form it.  For each block height that is being
 // weighted on a message will be sent.
 func (blockWait *ethereumBlockCounter) receiveBlocks() {
-
-	for block := range blockWait.subch {
+	for block := range blockWait.subscriptionChannel {
 		if top, err := strconv.ParseInt(block.Number, 0, 64); err == nil {
 			if err != nil {
 				fmt.Printf("Error: %s\n", err)
@@ -90,12 +88,12 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	blockSubscription, err := blockWait.config.clientWS.EthSubscribe(ctx,
-		blockWait.subch, "newHeads")
+	_, err := blockWait.config.clientWS.EthSubscribe(
+		ctx,
+		blockWait.subscriptionChannel,
+		"newHeads",
+	)
 	if err != nil {
-		if blockWait.Debug01 {
-			fmt.Println("Subscription Failed => ", err)
-		}
 		return
 	}
 
@@ -103,17 +101,11 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	err = blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber",
 		"latest", true)
 	if err != nil {
-		if blockWait.Debug01 {
-			fmt.Println("can't get latest block:", err)
-		}
 		return
 	}
 
-	blockWait.subch <- lastBlock
+	blockWait.subscriptionChannel <- lastBlock
 
-	if blockWait.Debug01 {
-		fmt.Println("connection lost", <-blockSubscription.Err())
-	}
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
@@ -123,16 +115,12 @@ func (ec *ethereumChain) BlockCounter() chain.BlockCounter {
 		blockHeight: 0,
 		waiters:     make(map[int][]chan int),
 		config:      ec,
-		Debug01:     false,
 	}
 
 	var lastBlock block
 	err := blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber",
 		"latest", true)
 	if err != nil {
-		if blockWait.Debug01 {
-			fmt.Println("can't get latest block:", err)
-		}
 		log.Fatal("Failed to get initial number of blocks from the chain")
 	}
 
@@ -142,7 +130,7 @@ func (ec *ethereumChain) BlockCounter() chain.BlockCounter {
 		log.Fatal("Failed to get initial number of blocks from the chain")
 	}
 
-	blockWait.subch = make(chan block)
+	blockWait.subscriptionChannel = make(chan block)
 
 	go func() {
 		for i := 0; ; i++ {
