@@ -13,11 +13,11 @@ import (
 	"github.com/urfave/cli"
 )
 
-const defaultConfigPath = "/opt/keep/config.toml"
+const defaultConfigPath = "./config.toml"
 
 var (
-	// Pass to go linker: go run -ldflags "-w -s -X main.version=1.1.1 -X main.revision=deadbeef" main.go
-	version, revision string
+	version  string
+	revision string
 
 	configPath string
 )
@@ -78,7 +78,7 @@ func NewApp(version, revision string) *cli.App {
 		{
 			Name:        "smoke-test",
 			Usage:       "Simulates DKG and signature verification",
-			Description: "Simulate Distributed Key Generation (DKG) and verify group's threshold signature",
+			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
 			Action:      cmd.SmokeTest,
 			Flags:       cmd.SmokeTestFlags,
 		},
