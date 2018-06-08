@@ -31,6 +31,10 @@ func main() {
 		revision = "unknown"
 	}
 
+	if err := bls.Init(bls.CurveSNARK1); err != nil {
+		log.Fatal("Failed to initialize BLS.", err)
+	}
+
 	err := NewApp(version, revision).Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
@@ -60,12 +64,6 @@ func NewApp(version, revision string) *cli.App {
 			Destination: &configPath,
 			Usage:       "full path to the configuration file",
 		},
-	}
-	app.Before = func(c *cli.Context) error {
-		if err := bls.Init(bls.CurveSNARK1); err != nil {
-			log.Fatal("Failed to initialize BLS.", err)
-		}
-		return nil
 	}
 	app.Commands = []cli.Command{
 		{
