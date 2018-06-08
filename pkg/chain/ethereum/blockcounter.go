@@ -113,15 +113,8 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
 // func BlockCounter(config chain.Provider) chain.BlockCounter {
 func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
-	blockWait := ethereumBlockCounter{
-		blockHeight: 0,
-		waiters:     make(map[int][]chan int),
-		config:      ec,
-	}
-
 	var lastBlock block
-	err := blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber",
-		"latest", true)
+	err := ec.clientRPC.Call(&lastBlock, "eth_getBlockByNumber", "latest", true)
 	if err != nil {
 		return nil,
 			fmt.Errorf("Failed to get initial number of blocks from the chain: %s",
@@ -135,8 +128,12 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 				err)
 	}
 
-	blockWait.blockHeight = int(ii)
-	blockWait.subscriptionChannel = make(chan block)
+	blockWait := ethereumBlockCounter{
+		blockHeight:         int(ii),
+		waiters:             make(map[int][]chan int),
+		config:              ec,
+		subscriptionChannel: make(chan block),
+	}
 
 	go func() {
 		for i := 0; ; i++ {
