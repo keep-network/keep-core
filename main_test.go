@@ -42,7 +42,7 @@ func TestFlags(t *testing.T) {
 
 	for _, c := range cases {
 
-		app := NewApp(Version, Revision)
+		app := NewApp(version, revision)
 		app.Writer = ioutil.Discard
 		set := flag.NewFlagSet("test", 0)
 		set.StringVar(&configPath, "config", "", "")
@@ -71,7 +71,7 @@ func TestGetInfo(t *testing.T) {
 
 	for _, c := range cases {
 
-		app := NewApp(Version, Revision)
+		app := NewApp(version, revision)
 		app.Writer = ioutil.Discard
 		set := flag.NewFlagSet("test", 0)
 		set.StringVar(&configPath, "config", "", "")
@@ -88,11 +88,11 @@ func TestGetInfo(t *testing.T) {
 		text := `Keep client: %s
 
 Description: %s
-Version:     %s
-Revision:    %s
+version:     %s
+revision:    %s
 Config Path: %s
 `
-		expectedOutput := fmt.Sprintf(text, app.Name, app.Description, Version, Revision, context.GlobalString("config"))
+		expectedOutput := fmt.Sprintf(text, app.Name, app.Description, version, revision, context.GlobalString("config"))
 		expectEqual(t, expectedOutput, output)
 	}
 }

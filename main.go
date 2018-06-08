@@ -13,39 +13,25 @@ import (
 	"github.com/urfave/cli"
 )
 
+const defaultConfigPath = "/opt/keep/config.toml"
+
 var (
-	// Version is the CLI semver version
-	Version string
-
-	// Revision is the git commit (revision) hash
-	Revision string
-
-	// GroupSize indicates the number of members in this relay group
-	GroupSize int
-
-	// Threshold indicates the threshold number of members required to perform signature verification
-	Threshold int
+	// Pass to go linker: go run -ldflags "-w -s -X main.version=1.1.1 -X main.revision=deadbeef" main.go
+	version, revision string
 
 	configPath string
 )
 
-const (
-	defaultGroupSize int = 10
-	defaultThreshold int = 4
-)
-
-func init() {
-	// Version and Revision should be set by go linker.
-	if Version == "" {
-		Version = "unknown"
-	}
-	if Revision == "" {
-		Revision = "unknown"
-	}
-}
-
 func main() {
-	err := NewApp(Version, Revision).Run(os.Args)
+
+	if version == "" {
+		version = "unknown"
+	}
+	if revision == "" {
+		revision = "unknown"
+	}
+
+	err := NewApp(version, revision).Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,8 +39,6 @@ func main() {
 
 // NewApp creates a new keep cli application with the respective commands and metainfo.
 func NewApp(version, revision string) *cli.App {
-	Version = version
-	Revision = revision
 
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
@@ -72,15 +56,13 @@ func NewApp(version, revision string) *cli.App {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config,c",
-			Value:       "",
+			Value:       defaultConfigPath,
 			Destination: &configPath,
-			EnvVar:      "KEEP_CONFIG_PATH",
-			Usage:       "optionally, specify the environment variable",
+			Usage:       "full path to the configuration file",
 		},
 	}
 	app.Before = func(c *cli.Context) error {
-		err := bls.Init(bls.CurveSNARK1)
-		if err != nil {
+		if err := bls.Init(bls.CurveSNARK1); err != nil {
 			log.Fatal("Failed to initialize BLS.", err)
 		}
 		return nil
@@ -121,8 +103,8 @@ ENVIRONMENT VARIABLES:
 func getInfo(c *cli.Context) {
 	fmt.Printf("Keep client: %s\n\n"+
 		"Description: %s\n"+
-		"Version:     %s\n"+
-		"Revision:    %s\n"+
+		"version:     %s\n"+
+		"revision:    %s\n"+
 		"Config Path: %s\n",
-		c.App.Name, c.App.Description, Version, Revision, c.GlobalString("config"))
+		c.App.Name, c.App.Description, version, revision, c.GlobalString("config"))
 }
