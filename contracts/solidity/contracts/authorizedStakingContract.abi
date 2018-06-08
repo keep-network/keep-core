@@ -1,1 +1,0 @@
-[{"constant":true,"inputs":[{"name":"addr","type":"address"}],"name":"stakeBalanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}]
