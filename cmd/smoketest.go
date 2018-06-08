@@ -18,7 +18,10 @@ import (
 func SmokeTest(c *cli.Context) {
 
 	chainHandle := local.Connect()
-	chainCounter := chainHandle.BlockCounter()
+	chainCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to run setup chainHandle.BlockCounter [%v].", err))
+	}
 
 	_ = pb.GossipMessage{}
 
