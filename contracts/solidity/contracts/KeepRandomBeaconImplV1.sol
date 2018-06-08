@@ -142,6 +142,13 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     }
 
     /**
+     * @dev Gets the threshold size for groups.
+     */
+    function groupThreshold() public view returns(uint256) {
+        return uintStorage[keccak256("groupThreshold")];
+    }
+
+    /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
      * @param _requestID The request that started this generation - to tie the results back to the request.
      * @param _groupSignature The generated random number.
