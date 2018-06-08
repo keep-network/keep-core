@@ -20,6 +20,7 @@ const (
 	defaultThreshold int = 4
 )
 
+// SmokeTestFlags for group size and threshold settings
 var SmokeTestFlags []cli.Flag
 
 func init() {
@@ -38,11 +39,11 @@ func init() {
 // SmokeTest performs a simulated distributed key generation and verifyies that the members can do a threshold signature
 func SmokeTest(c *cli.Context) error {
 
-	local.GroupSize = c.Int("group-size")
-	local.Threshold = c.Int("threshold")
+	groupSize := c.Int("group-size")
+	threshold := c.Int("threshold")
+	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", groupSize, threshold))
 
-	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", local.GroupSize, local.Threshold))
-	chainHandle := local.Connect()
+	chainHandle := local.Connect(local.RelayOptions{GroupSize: groupSize, Threshold: threshold})
 	chainCounter := chainHandle.BlockCounter()
 
 	_ = pb.GossipMessage{}

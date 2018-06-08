@@ -23,7 +23,7 @@ type localChain struct {
 var (
 	// GroupSize is number of members in relay group
 	GroupSize = 10
-	// Threshold is the number of members required to validate the threshold signature
+	// Threshold is the number of members required to validate the Threshold signature
 	Threshold = 4
 )
 
@@ -90,9 +90,19 @@ func (c *localChain) ThresholdRelay() relay.ChainInterface {
 	return relay.ChainInterface(c)
 }
 
+// RelayOptions allow group size and threshold to be set at connect time
+type RelayOptions struct {
+	GroupSize int
+	Threshold int
+}
+
 // Connect initializes a local stub implementation of the chain interfaces for
 // testing.
-func Connect() chain.Handle {
+func Connect(opts ...RelayOptions) chain.Handle {
+	if len(opts) == 1 {
+		GroupSize = opts[0].GroupSize
+		Threshold = opts[0].Threshold
+	}
 	return &localChain{
 		beaconConfig:         beacon.Config{GroupSize: GroupSize, Threshold: Threshold},
 		groupPublicKeysMutex: sync.Mutex{},
