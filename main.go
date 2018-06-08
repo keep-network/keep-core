@@ -67,12 +67,11 @@ func NewApp(version, revision string) *cli.App {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:      "get-info",
-			Usage:     "prints keep client information",
-			ArgsUsage: " ", // no args
-			Category:  "keep client information",
+			Name:     "info",
+			Usage:    "prints keep client information",
+			Category: "keep client information",
 			Action: func(c *cli.Context) error {
-				getInfo(c)
+				info(c)
 				return nil
 			},
 		},
@@ -98,7 +97,7 @@ ENVIRONMENT VARIABLES:
 // Helpers
 //-------------------------------------------------------------------------------
 
-func getInfo(c *cli.Context) {
+func info(c *cli.Context) {
 	fmt.Printf("Keep client: %s\n\n"+
 		"Description: %s\n"+
 		"version:     %s\n"+
