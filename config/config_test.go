@@ -14,7 +14,7 @@ func TestReadConfig(t *testing.T) {
 	}
 	expectedURL := "ws://192.168.0.157:8546"
 	if cfg.Ethereum.URL != expectedURL {
-		t.Errorf("Error: Did not correctly read in ./test/Config.toml, Expected [%s] Got [%s]\n", expectedURL, cfg.Ethereum.URL)
+		t.Errorf("Error: Did not correctly read in ./test/config.toml, Expected [%s] Got [%s]\n", expectedURL, cfg.Ethereum.URL)
 	}
 	expectedEthereumAccountAddress := "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"
 	if vv := cfg.Ethereum.Account.Address; vv != expectedEthereumAccountAddress {
