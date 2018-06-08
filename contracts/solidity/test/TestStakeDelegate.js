@@ -22,9 +22,10 @@ contract('TestStakeDelegate', function(accounts) {
     // Stake tokens as account one
     await token.approveAndCall(stakingContract.address, 200, "", {from: account_one});
 
-    // Send tokens to account two
+    // Send tokens to the accounts
     await token.transfer(account_two, 200, {from: account_one});
-
+    await token.transfer(account_three, 500, {from: account_one});
+  
     // Stake tokens as account two
     await token.approveAndCall(stakingContract.address, 200, "", {from: account_two});
   });
@@ -77,5 +78,15 @@ contract('TestStakeDelegate', function(accounts) {
     // Unstake everything
     await stakingContract.initiateUnstake(300);
     assert.equal(await stakingProxy.balanceOf(account_three), 0, "Operator account should reflect delegator's updated stake balance.");
+  });
+
+  it("should remove delegate if operator stakes and becomes a staker", async function() {
+    await stakingContract.requestOperateFor(account_one, {from: account_three});
+    await stakingContract.approveOperatorAt(account_three, {from: account_one});
+    assert.equal(await stakingProxy.balanceOf(account_three), 200, "Operator account should represent delegator's stake balance.");
+
+    // Stake tokens as account three
+    await token.approveAndCall(stakingContract.address, 500, "", {from: account_three});
+    assert.equal(await stakingProxy.balanceOf(account_three), 500, "Operator account should start representing its own stake balance.");
   });
 });
