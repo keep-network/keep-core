@@ -93,10 +93,6 @@ ENVIRONMENT VARIABLES:
 	return app
 }
 
-//-------------------------------------------------------------------------------
-// Helpers
-//-------------------------------------------------------------------------------
-
 func info(c *cli.Context) {
 	fmt.Printf("Keep client: %s\n\n"+
 		"Description: %s\n"+
