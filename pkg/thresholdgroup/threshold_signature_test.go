@@ -73,16 +73,13 @@ func TestMembersProduceSignatureShare(t *testing.T) {
 }
 
 func TestMemberProducesSignatureFromShares(t *testing.T) {
-	member, otherMembers := buildMembers("")
-	allMembers := append(otherMembers, member)
-
 	var tests = map[string]struct {
 		participatingMembers int
 		expectedVerification bool
 		expectedError        error
 	}{
 		"with all members participating": {
-			participatingMembers: len(allMembers),
+			participatingMembers: defaultGroupSize,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
@@ -104,6 +101,9 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			member, otherMembers := buildMembers("")
+			allMembers := append(otherMembers, member)
+
 			message := fmt.Sprintf("%v", rand.Int63())
 
 			shares := make(map[bls.ID][]byte)
@@ -147,16 +147,13 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 }
 
 func TestMemberVerifiesSignatureFromShares(t *testing.T) {
-	member, otherMembers := buildMembers("")
-	allMembers := append(otherMembers, member)
-
 	var tests = map[string]struct {
 		participatingMembers int
 		expectedVerification bool
 		expectedError        error
 	}{
 		"with all members participating": {
-			participatingMembers: len(allMembers),
+			participatingMembers: defaultGroupSize,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
@@ -178,6 +175,9 @@ func TestMemberVerifiesSignatureFromShares(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			member, otherMembers := buildMembers("")
+			allMembers := append(otherMembers, member)
+
 			message := fmt.Sprintf("%v", rand.Int63())
 
 			shares := make(map[bls.ID][]byte)
