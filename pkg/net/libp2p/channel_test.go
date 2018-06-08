@@ -10,7 +10,7 @@ import (
 
 func TestRegisterIdentifier(t *testing.T) {
 	var (
-		peerID    = &identity{id: peer.ID("")}
+		peerID    = networkIdentity(peer.ID(""))
 		testProto = testProtocolIdentifier(struct{}{})
 	)
 
