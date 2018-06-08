@@ -56,19 +56,11 @@ func TestReadConfig(t *testing.T) {
 
 	for testName, test := range configReadTests {
 		t.Run(testName, func(t *testing.T) {
+			expected := test.expectedValue
 			actual := test.readValueFunc(&cfg)
-			switch expected := test.expectedValue.(type) {
-			case string:
-				if expected != actual {
-					t.Errorf("\nexpected: %s\nactual:   %s", expected, actual)
-				}
-			default:
-				// This type is map[string]string. All others are of type string.
-				if !reflect.DeepEqual(expected, actual) {
-					t.Errorf("\nexpected: %s\nactual:   %s", expected, actual)
-				}
+			if !reflect.DeepEqual(expected, actual) {
+				t.Errorf("\nexpected: %s\nactual:   %s", expected, actual)
 			}
-
 		})
 	}
 
