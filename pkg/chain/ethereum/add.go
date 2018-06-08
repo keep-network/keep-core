@@ -46,7 +46,6 @@ func (ec *ethereumChain) GetConfig() beacon.Config {
 
 // SubmitGroupPublicKey sets up the callback functions for the submission of a
 // public key for the group.
-// I am still not understanding something about this function!!!!!!!!!!!!!!!!
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
