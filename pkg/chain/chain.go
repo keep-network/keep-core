@@ -13,16 +13,16 @@ import (
 type BlockCounter interface {
 	// WaitForBlocks blocks at the caller until numBlocks new blocks have been
 	// seen.
-	WaitForBlocks(numBlocks int)
+	WaitForBlocks(numBlocks int) error
 	// BlockWaiter returns a channel that will emit the current block height
 	// after the given number of blocks has elapsed and then immediately close.
-	BlockWaiter(numBlocks int) <-chan int
+	BlockWaiter(numBlocks int) (<-chan int, error)
 }
 
 // Handle represents a handle to a blockchain that provides access to the core
 // functionality needed for Keep network interactions.
 type Handle interface {
-	BlockCounter() BlockCounter
+	BlockCounter() (BlockCounter, error)
 	RandomBeacon() beacon.ChainInterface
 	ThresholdRelay() relay.ChainInterface
 }

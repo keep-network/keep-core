@@ -3,7 +3,6 @@ package ethereum
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -24,15 +23,18 @@ type block struct {
 }
 
 // WaitForBlocks waits for a minimum of 1 block before returing.
-func (blockWait *ethereumBlockCounter) WaitForBlocks(numBlocks int) {
-	waiter := blockWait.BlockWaiter(numBlocks)
+func (blockWait *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
+	waiter, err := blockWait.BlockWaiter(numBlocks)
+	if err != nil {
+		return err
+	}
 	<-waiter
-	return
+	return nil
 }
 
 // BlockWaiter returns the block number as a chanel with a minimum of 1 block
 // wait. 0 and negative numBlocks are converted to 1.
-func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) <-chan int {
+func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
 	newWaiter := make(chan int)
 
 	blockWait.structMutex.Lock()
@@ -51,7 +53,7 @@ func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 		blockWait.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
 	}
 
-	return newWaiter
+	return newWaiter, nil
 }
 
 // receiveBlocks gets each new block back from Geth and extracts the
@@ -110,7 +112,7 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
 // func BlockCounter(config chain.Provider) chain.BlockCounter {
-func (ec *ethereumChain) BlockCounter() chain.BlockCounter {
+func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	blockWait := ethereumBlockCounter{
 		blockHeight: 0,
 		waiters:     make(map[int][]chan int),
@@ -121,15 +123,19 @@ func (ec *ethereumChain) BlockCounter() chain.BlockCounter {
 	err := blockWait.config.clientRPC.Call(&lastBlock, "eth_getBlockByNumber",
 		"latest", true)
 	if err != nil {
-		log.Fatal("Failed to get initial number of blocks from the chain")
+		return nil,
+			fmt.Errorf("Failed to get initial number of blocks from the chain: %s",
+				err)
 	}
 
-	if ii, err := strconv.ParseInt(lastBlock.Number, 0, 64); err == nil {
-		blockWait.blockHeight = int(ii)
-	} else {
-		log.Fatal("Failed to get initial number of blocks from the chain")
+	var ii int64
+	if ii, err = strconv.ParseInt(lastBlock.Number, 0, 64); err != nil {
+		return nil,
+			fmt.Errorf("Failed to get initial number of blocks from the chain, %s",
+				err)
 	}
 
+	blockWait.blockHeight = int(ii)
 	blockWait.subscriptionChannel = make(chan block)
 
 	go func() {
@@ -143,5 +149,5 @@ func (ec *ethereumChain) BlockCounter() chain.BlockCounter {
 
 	go blockWait.receiveBlocks()
 
-	return &blockWait
+	return &blockWait, nil
 }
