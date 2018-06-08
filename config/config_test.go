@@ -8,7 +8,7 @@ import (
 func TestReadConfig(t *testing.T) {
 	os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
 
-	cfg, err := ReadConfig("../../test/config.toml")
+	cfg, err := ReadConfig("../test/config.toml")
 	if err != nil {
 		t.Errorf("Error:%s\n", err)
 	}
