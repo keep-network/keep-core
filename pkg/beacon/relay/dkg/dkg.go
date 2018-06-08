@@ -76,7 +76,14 @@ func ExecuteDKG(
 		currentState = pendingState
 		pendingState = nil
 
-		blockWaiter = blockCounter.BlockWaiter(currentState.activeBlocks())
+		blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
+		if err != nil {
+			return fmt.Errorf(
+				"failed to initialize blockCounter.BlockWaiter [%T]: [%v]",
+				pendingState,
+				err,
+			)
+		}
 
 		fmt.Printf(
 			"[member:%v, state:%T] Transitioned to new state.\n",
