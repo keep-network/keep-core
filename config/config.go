@@ -13,7 +13,7 @@ import (
 
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
-// Config is the Top level Config structure from the Config file
+// Config is the top level config structure.
 type Config struct {
 	Ethereum ethereum.Config
 }
