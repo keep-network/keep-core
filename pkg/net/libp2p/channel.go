@@ -142,19 +142,24 @@ func (c *channel) handleMessages(ctx context.Context) {
 	defer c.subscription.Cancel()
 
 	for {
-		msg, err := c.subscription.Next(ctx)
-		if err != nil {
-			// TODO: handle error - different error types
-			// result in different outcomes. Print err is very noisy.
-			fmt.Println(err)
-			continue
-		}
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			msg, err := c.subscription.Next(ctx)
+			if err != nil {
+				// TODO: handle error - different error types
+				// result in different outcomes. Print err is very noisy.
+				fmt.Println(err)
+				continue
+			}
 
-		if err := c.processMessage(msg); err != nil {
-			// TODO: handle error - different error types
-			// result in different outcomes. Print err is very noisy.
-			fmt.Println(err)
-			continue
+			if err := c.processMessage(msg); err != nil {
+				// TODO: handle error - different error types
+				// result in different outcomes. Print err is very noisy.
+				fmt.Println(err)
+				continue
+			}
 		}
 	}
 }
