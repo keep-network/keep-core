@@ -101,28 +101,12 @@ func NewApp(version, revision string) *cli.App {
 			Usage:       "Simulates DKG and signature verification",
 			Description: "Simulate Distributed Key Generation (DKG) and verify group's threshold signature",
 			Action:      cmd.SmokeTest,
-			Flags: []cli.Flag{
-				&cli.IntFlag{
-					Name:        "group-size,g",
-					Value:       defaultGroupSize,
-					Destination: &GroupSize,
-					EnvVar:      "GROUP_SIZE",
-					Usage:       "optionally, specify the `GROUP_SIZE` environment variable",
-				},
-				&cli.IntFlag{
-					Name:        "threshold,t",
-					Value:       defaultThreshold,
-					Destination: &Threshold,
-					EnvVar:      "THRESHOLD",
-					Usage:       "optionally, specify the `THRESHOLD` environment variable",
-				},
-			},
+			Flags:       cmd.SmokeTestFlags,
 		},
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
 ENVIRONMENT VARIABLES:
-   KEEP_CONFIG_PATH          path to .toml config file (optional)
    KEEP_ETHEREUM_PASSWORD    keep client password
 
 `, cli.AppHelpTemplate)

@@ -15,6 +15,26 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	defaultGroupSize int = 10
+	defaultThreshold int = 4
+)
+
+var SmokeTestFlags []cli.Flag
+
+func init() {
+	SmokeTestFlags = []cli.Flag{
+		&cli.IntFlag{
+			Name:  "group-size,g",
+			Value: defaultGroupSize,
+		},
+		&cli.IntFlag{
+			Name:  "threshold,t",
+			Value: defaultThreshold,
+		},
+	}
+}
+
 // SmokeTest performs a simulated distributed key generation and verifyies that the members can do a threshold signature
 func SmokeTest(c *cli.Context) error {
 
