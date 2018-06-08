@@ -48,12 +48,12 @@ func NewApp(version, revision string) *cli.App {
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
 	app.Description = "Command line interface (CLI) for running a Keep provider"
-	app.Copyright = "" //TODO: Insert copyright info later
+	app.Copyright = "" //TODO: Insert copyright printInfo later
 	app.Compiled = time.Now()
 	app.Authors = []cli.Author{
 		{
 			Name:  "Keep Network",
-			Email: "info@keep.network",
+			Email: "printInfo@keep.network",
 		},
 	}
 	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
@@ -67,11 +67,11 @@ func NewApp(version, revision string) *cli.App {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:     "info",
+			Name:     "print-info",
 			Usage:    "prints keep client information",
 			Category: "keep client information",
 			Action: func(c *cli.Context) error {
-				info(c)
+				printInfo(c)
 				return nil
 			},
 		},
@@ -93,7 +93,7 @@ ENVIRONMENT VARIABLES:
 	return app
 }
 
-func info(c *cli.Context) {
+func printInfo(c *cli.Context) {
 	fmt.Printf("Keep client: %s\n\n"+
 		"Description: %s\n"+
 		"version:     %s\n"+
