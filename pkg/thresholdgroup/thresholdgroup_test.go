@@ -15,9 +15,10 @@ func TestMain(m *testing.M) {
 }
 
 const (
-	defaultID        = "12345"
-	defaultThreshold = 4
-	defaultGroupSize = 12
+	defaultID            = "12345"
+	defaultThreshold     = 4
+	defaultGroupSize     = 12
+	defaultSignThreshold = defaultThreshold + 1
 )
 
 func buildSharingMember(id string) *SharingMember {

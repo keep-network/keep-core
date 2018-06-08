@@ -590,14 +590,14 @@ func (m *Member) SignatureShare(message string) []byte {
 
 // CompleteSignature takes a set of signature shares, bls.IDs associated with
 // the bytes of each member's signature, and combines them into one complete
-// signature. Returns an error if the number of signature shares is less than
-// the group threshold.
+// signature. Returns an error if the number of signature shares is not greater
+// than the group threshold.
 func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign, error) {
-	if len(signatureShares) < m.threshold {
+	if len(signatureShares) <= m.threshold {
 		return nil, fmt.Errorf(
 			"%v shares are insufficient for a complete signature; need %v",
 			len(signatureShares),
-			m.threshold,
+			m.threshold+1,
 		)
 	}
 

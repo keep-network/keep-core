@@ -83,18 +83,23 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with a threshold participating": {
-			participatingMembers: defaultThreshold,
+		"with more than a sign threshold participating": {
+			participatingMembers: defaultSignThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with less than a threshold participating": {
-			participatingMembers: defaultThreshold - 1,
+		"with a sign threshold participating": {
+			participatingMembers: defaultSignThreshold,
+			expectedVerification: true,
+			expectedError:        nil,
+		},
+		"with less than a sign threshold participating": {
+			participatingMembers: defaultSignThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultThreshold-1,
-				defaultThreshold,
+				defaultSignThreshold-1,
+				defaultSignThreshold,
 			),
 		},
 	}
@@ -157,18 +162,23 @@ func TestMemberVerifiesSignatureFromShares(t *testing.T) {
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with a threshold participating": {
-			participatingMembers: defaultThreshold,
+		"with more than a sign threshold participating": {
+			participatingMembers: defaultSignThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with less than a threshold participating": {
-			participatingMembers: defaultThreshold - 1,
+		"with a sign threshold participating": {
+			participatingMembers: defaultSignThreshold,
+			expectedVerification: true,
+			expectedError:        nil,
+		},
+		"with less than a sign threshold participating": {
+			participatingMembers: defaultSignThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultThreshold-1,
-				defaultThreshold,
+				defaultSignThreshold-1,
+				defaultSignThreshold,
 			),
 		},
 	}
