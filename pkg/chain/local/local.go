@@ -83,12 +83,6 @@ func (c *localChain) ThresholdRelay() relay.ChainInterface {
 	return relay.ChainInterface(c)
 }
 
-// RelayOptions allow group size and threshold to be set at connect time
-type RelayOptions struct {
-	GroupSize int
-	Threshold int
-}
-
 // Connect initializes a local stub implementation of the chain interfaces for
 // testing.
 func Connect(groupSize int, threshold int) chain.Handle {
