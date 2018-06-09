@@ -14,7 +14,7 @@ func TestReadConfig(t *testing.T) {
 
 	cfg, err := ReadConfig("../test/config.toml")
 	if err != nil {
-		t.Fatalf("unexpected error [%v]", err)
+		t.Fatal(err)
 	}
 
 	expectedURL := "ws://192.168.0.157:8546"
