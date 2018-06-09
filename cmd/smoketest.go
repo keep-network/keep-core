@@ -46,7 +46,7 @@ func SmokeTest(c *cli.Context) error {
 	chainHandle := local.Connect(groupSize, threshold)
 	chainCounter := chainHandle.BlockCounter()
 
-	_ = pb.GossipMessage{}
+	_ = pb.Envelope{}
 
 	beaconConfig := chainHandle.RandomBeacon().GetConfig()
 
