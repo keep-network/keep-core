@@ -1,8 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
+
+	"fmt"
+	"path"
 	"time"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
@@ -10,49 +13,90 @@ import (
 	"github.com/urfave/cli"
 )
 
+const defaultConfigPath = "./config.toml"
+
 var (
-	// Version is the semantic version (added at compile time)  See scripts/version.sh
-	Version string
+	version  string
+	revision string
 
-	// Revision is the git commit id (added at compile time)
-	Revision string
-
-	keepCommands = []cli.Command{
-		{
-			Name:        "smoke-test",
-			Usage:       "smoke-test",
-			Description: "Simulate DKG (10 members, threshold 4) and verify group's threshold signature",
-			Action:      cmd.SmokeTest,
-		},
-	}
+	configPath string
 )
 
-//TODO: Remove init when build process is ready to populate Version and Revision
-func init() {
-	Version = "0.0.1"
-	Revision = "deadbeef"
+func main() {
+
+	if version == "" {
+		version = "unknown"
+	}
+	if revision == "" {
+		revision = "unknown"
+	}
+
+	if err := bls.Init(bls.CurveSNARK1); err != nil {
+		log.Fatal("Failed to initialize BLS.", err)
+	}
+
+	err := newApp(version, revision).Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
-func main() {
-	bls.Init(bls.CurveSNARK1)
+func newApp(version, revision string) *cli.App {
 
 	app := cli.NewApp()
-	app.Name = "keep-client"
-	app.Version = fmt.Sprintf("%s (revision %s)", Version, Revision)
+	app.Name = path.Base(os.Args[0])
+	app.Usage = "CLI for The Keep Network"
+	app.Description = "Command line interface (CLI) for running a Keep provider"
+	app.Copyright = "" //TODO: Insert copyright printInfo later
 	app.Compiled = time.Now()
 	app.Authors = []cli.Author{
-		cli.Author{
+		{
 			Name:  "Keep Network",
-			Email: "info@keep.network",
+			Email: "printInfo@keep.network",
 		},
 	}
-	app.Copyright = ""
-	app.HelpName = "keep-client"
-	app.Usage = "The Keep Client Application"
-	app.Commands = keepCommands
-	app.Action = func(c *cli.Context) error {
-		return nil
-
+	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "config,c",
+			Value:       defaultConfigPath,
+			Destination: &configPath,
+			Usage:       "full path to the configuration file",
+		},
 	}
-	app.Run(os.Args)
+	app.Commands = []cli.Command{
+		{
+			Name:     "print-info",
+			Usage:    "prints keep client information",
+			Category: "keep client information",
+			Action: func(c *cli.Context) error {
+				printInfo(c)
+				return nil
+			},
+		},
+		{
+			Name:        "smoke-test",
+			Usage:       "Simulates DKG and signature verification",
+			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
+			Action:      cmd.SmokeTest,
+			Flags:       cmd.SmokeTestFlags,
+		},
+	}
+
+	cli.AppHelpTemplate = fmt.Sprintf(`%s
+ENVIRONMENT VARIABLES:
+   KEEP_ETHEREUM_PASSWORD    keep client password
+
+`, cli.AppHelpTemplate)
+
+	return app
+}
+
+func printInfo(c *cli.Context) {
+	fmt.Printf("Keep client: %s\n\n"+
+		"Description: %s\n"+
+		"version:     %s\n"+
+		"revision:    %s\n"+
+		"Config Path: %s\n",
+		c.App.Name, c.App.Description, version, revision, c.GlobalString("config"))
 }
