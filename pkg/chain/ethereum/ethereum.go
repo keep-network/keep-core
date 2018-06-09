@@ -11,13 +11,11 @@ import (
 )
 
 // RandomBeacon converts from ethereumChain to beacon.ChainInterface.
-// This class supports the necessary interface.
 func (ec *ethereumChain) RandomBeacon() beacon.ChainInterface {
 	return ec
 }
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
-// This class supports the necessary interface.
 func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
 	return ec
 }
@@ -37,11 +35,10 @@ func (ec *ethereumChain) GetConfig() beacon.Config {
 		os.Exit(1)
 	}
 
-	rv := beacon.Config{
+	return beacon.Config{
 		GroupSize: size,
 		Threshold: threshold,
 	}
-	return rv
 }
 
 // SubmitGroupPublicKey sets up the callback functions for the submission of a
@@ -59,8 +56,11 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		ec.handlerMutex.Unlock()
 	}
 
-	success := func(GroupPublicKey []byte, RequestID *big.Int,
-		ActivationBlockHeight *big.Int) {
+	success := func(
+		GroupPublicKey []byte,
+		RequestID *big.Int,
+		ActivationBlockHeight *big.Int,
+	) {
 		ec.handlerMutex.Lock()
 		for _, handler := range ec.groupPublicKeySubmissionHandlers {
 			handler(groupID, ActivationBlockHeight)
@@ -95,8 +95,10 @@ func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
 	handler func(groupID string, errorMessage string),
 ) error {
 	ec.handlerMutex.Lock()
-	ec.groupPublicKeyFailureHandlers = append(ec.groupPublicKeyFailureHandlers,
-		handler)
+	ec.groupPublicKeyFailureHandlers = append(
+		ec.groupPublicKeyFailureHandlers,
+		handler,
+	)
 	ec.handlerMutex.Unlock()
 	return nil
 }
@@ -107,7 +109,9 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 ) error {
 	ec.handlerMutex.Lock()
 	ec.groupPublicKeySubmissionHandlers = append(
-		ec.groupPublicKeySubmissionHandlers, handler)
+		ec.groupPublicKeySubmissionHandlers,
+		handler,
+	)
 	ec.handlerMutex.Unlock()
 	return nil
 }
