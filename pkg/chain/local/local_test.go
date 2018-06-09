@@ -37,7 +37,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			c := Connect(GroupSize, Threshold)
+			c := Connect(10, 4)
 			countWait := c.BlockCounter()
 
 			start := time.Now().UTC()

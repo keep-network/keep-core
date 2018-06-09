@@ -20,13 +20,6 @@ type localChain struct {
 	blockCounter                     chain.BlockCounter
 }
 
-var (
-	// GroupSize is number of members in relay group
-	GroupSize = 10
-	// Threshold is the number of members required to validate the Threshold signature
-	Threshold = 4
-)
-
 func (c *localChain) BlockCounter() chain.BlockCounter {
 	return c.blockCounter
 }
