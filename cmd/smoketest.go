@@ -54,7 +54,13 @@ func SmokeTest(c *cli.Context) error {
 
 	_ = pb.Envelope{}
 
-	beaconConfig := chainHandle.RandomBeacon().GetConfig()
+	beaconConfig, err := chainHandle.RandomBeacon().GetConfig()
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to run get configuration: [%v].",
+			err,
+		))
+	}
 
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
