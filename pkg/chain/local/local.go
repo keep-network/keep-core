@@ -98,13 +98,9 @@ type RelayOptions struct {
 
 // Connect initializes a local stub implementation of the chain interfaces for
 // testing.
-func Connect(opts ...RelayOptions) chain.Handle {
-	if len(opts) == 1 {
-		GroupSize = opts[0].GroupSize
-		Threshold = opts[0].Threshold
-	}
+func Connect(groupSize int, threshold int) chain.Handle {
 	return &localChain{
-		beaconConfig:         beacon.Config{GroupSize: GroupSize, Threshold: Threshold},
+		beaconConfig:         beacon.Config{GroupSize: groupSize, Threshold: threshold},
 		groupPublicKeysMutex: sync.Mutex{},
 		groupPublicKeys:      make(map[string][96]byte),
 		blockCounter:         blockCounter()}

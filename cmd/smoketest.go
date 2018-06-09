@@ -43,7 +43,7 @@ func SmokeTest(c *cli.Context) error {
 	threshold := c.Int("threshold")
 	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", groupSize, threshold))
 
-	chainHandle := local.Connect(local.RelayOptions{GroupSize: groupSize, Threshold: threshold})
+	chainHandle := local.Connect(groupSize, threshold)
 	chainCounter := chainHandle.BlockCounter()
 
 	_ = pb.GossipMessage{}
