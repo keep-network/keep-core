@@ -49,15 +49,10 @@ func TestReadConfig(t *testing.T) {
 		expectedValue interface{}
 	}{
 		"Ethereum.URL (ws)": {
-			readValueFunc: func(c *Config) interface{} { return c.Ethereum.URL },
-			expectedValue: "ws://192.168.0.157:8546",
-		},
-		"Ethereum.URL (ipc)": {
 			readValueFunc: func(c *Config) interface{} {
-				c.Ethereum.URL = "ipc:/var/folders/ts/7xznj_p13xb7_5th3w6yjmjm0000gn/T/ethereum_dev_mode/geth.ipc"
 				return c.Ethereum.URL
 			},
-			expectedValue: "ipc:/var/folders/ts/7xznj_p13xb7_5th3w6yjmjm0000gn/T/ethereum_dev_mode/geth.ipc",
+			expectedValue: "ws://192.168.0.157:8546",
 		},
 		"Ethereum.Account.Address": {
 			readValueFunc: func(c *Config) interface{} {
