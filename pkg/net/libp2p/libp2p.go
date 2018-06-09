@@ -10,7 +10,7 @@ import (
 	addrutil "github.com/libp2p/go-addr-util"
 	host "github.com/libp2p/go-libp2p-host"
 	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-peerstore"
 	swarm "github.com/libp2p/go-libp2p-swarm"
 	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
 
@@ -21,8 +21,8 @@ import (
 )
 
 type provider struct {
-	cm                  *channelManager
 	channelManagerMutex sync.Mutex
+	channelManagr       *channelManager
 
 	host host.Host
 }
@@ -30,7 +30,7 @@ type provider struct {
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
-	return p.cm.getChannel(name)
+	return p.channelManagr.getChannel(name)
 }
 
 func (p *provider) Type() string {
@@ -44,23 +44,23 @@ type Config struct {
 }
 
 func Connect(ctx context.Context, config *Config) (net.Provider, error) {
-	host, err := discoverAndListen(ctx, config)
+	host, identity, err := discoverAndListen(ctx, config)
 	if err != nil {
 		return nil, err
 	}
 
-	cm, err := newChannelManager(ctx, host)
+	cm, err := newChannelManager(ctx, identity, host)
 	if err != nil {
 		return nil, err
 	}
 
-	return &provider{cm: cm, host: host}, nil
+	return &provider{channelManagr: cm, host: host}, nil
 }
 
 func discoverAndListen(
 	ctx context.Context,
 	config *Config,
-) (host.Host, error) {
+) (host.Host, *identity, error) {
 	var err error
 
 	addrs := config.listenAddrs
@@ -68,7 +68,7 @@ func discoverAndListen(
 		// Get available network ifaces to listen on into multiaddrs
 		addrs, err = getListenAddrs(config.port)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -79,25 +79,25 @@ func discoverAndListen(
 		// network as an identity they aren't familiar with.
 		peerIdentity, err = generateIdentity()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	peerStore, err := addIdentityToStore(peerIdentity)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	peerHost, err := buildPeerHost(ctx, addrs, peerIdentity.id, peerStore)
+	peerHost, err := buildPeerHost(ctx, addrs, peer.ID(peerIdentity.id), peerStore)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := peerHost.Network().Listen(addrs...); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return peerHost, nil
+	return peerHost, peerIdentity, nil
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {
@@ -120,7 +120,7 @@ func buildPeerHost(
 	ctx context.Context,
 	listenAddrs []ma.Multiaddr,
 	pid peer.ID,
-	peerStore pstore.Peerstore,
+	peerStore peerstore.Peerstore,
 ) (host.Host, error) {
 	smuxTransport := makeSmuxTransport()
 

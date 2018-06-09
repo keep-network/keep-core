@@ -85,10 +85,11 @@ func (c *localChain) ThresholdRelay() relay.ChainInterface {
 
 // Connect initializes a local stub implementation of the chain interfaces for
 // testing.
-func Connect() chain.Handle {
+func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
+
 	return &localChain{
-		beaconConfig:         beacon.Config{GroupSize: 10, Threshold: 4},
+		beaconConfig:         beacon.Config{GroupSize: groupSize, Threshold: threshold},
 		groupPublicKeysMutex: sync.Mutex{},
 		groupPublicKeys:      make(map[string][96]byte),
 		blockCounter:         bc,
