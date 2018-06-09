@@ -35,14 +35,13 @@ func main() {
 		log.Fatal("Failed to initialize BLS.", err)
 	}
 
-	err := NewApp(version, revision).Run(os.Args)
+	err := newApp(version, revision).Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-// NewApp creates a new keep cli application with the respective commands and metainfo.
-func NewApp(version, revision string) *cli.App {
+func newApp(version, revision string) *cli.App {
 
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
