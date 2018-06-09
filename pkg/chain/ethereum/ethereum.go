@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/beacon"
@@ -22,23 +21,21 @@ func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
 
 // GetConfig get the GroupSize and Threshold for groups and returns it
 // in a becaon.Config struct.
-func (ec *ethereumChain) GetConfig() beacon.Config {
+func (ec *ethereumChain) GetConfig() (beacon.Config, error) {
 	size, err := ec.kg.GroupSize()
 	if err != nil {
-		fmt.Printf("error calling GroupSize: %s\n", err)
-		os.Exit(1)
+		return beacon.Config{}, fmt.Errorf("error calling GroupSize: %s\n", err)
 	}
 
 	threshold, err := ec.kg.GroupThreshold()
 	if err != nil {
-		fmt.Printf("error calling GroupThreshold: %s\n", err)
-		os.Exit(1)
+		return beacon.Config{}, fmt.Errorf("error calling GroupThreshold: %s\n", err)
 	}
 
 	return beacon.Config{
 		GroupSize: size,
 		Threshold: threshold,
-	}
+	}, nil
 }
 
 // SubmitGroupPublicKey sets up the callback functions for the submission of a

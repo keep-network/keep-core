@@ -24,8 +24,8 @@ func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
 }
 
-func (c *localChain) GetConfig() beacon.Config {
-	return c.beaconConfig
+func (c *localChain) GetConfig() (beacon.Config, error) {
+	return c.beaconConfig, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
