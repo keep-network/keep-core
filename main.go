@@ -23,7 +23,6 @@ var (
 )
 
 func main() {
-
 	if version == "" {
 		version = "unknown"
 	}
@@ -42,7 +41,6 @@ func main() {
 }
 
 func newApp(version, revision string) *cli.App {
-
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
@@ -75,11 +73,12 @@ func newApp(version, revision string) *cli.App {
 			},
 		},
 		{
-			Name:        "smoke-test",
-			Usage:       "Simulates DKG and signature verification",
-			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
-			Action:      cmd.SmokeTest,
-			Flags:       cmd.SmokeTestFlags,
+			Name:  "smoke-test",
+			Usage: "Simulates DKG and signature verification",
+			Description: `simulate Distributed Key Generation (DKG)
+				      and verify group's threshold signature`,
+			Action: cmd.SmokeTest,
+			Flags:  cmd.SmokeTestFlags,
 		},
 	}
 
@@ -98,5 +97,10 @@ func printInfo(c *cli.Context) {
 		"version:     %s\n"+
 		"revision:    %s\n"+
 		"Config Path: %s\n",
-		c.App.Name, c.App.Description, version, revision, c.GlobalString("config"))
+		c.App.Name,
+		c.App.Description,
+		version,
+		revision,
+		c.GlobalString("config"),
+	)
 }

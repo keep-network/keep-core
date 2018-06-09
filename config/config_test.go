@@ -16,17 +16,29 @@ func TestReadConfig(t *testing.T) {
 
 	expectedURL := "ws://192.168.0.157:8546"
 	if cfg.Ethereum.URL != expectedURL {
-		t.Errorf("Error: Did not correctly read in ./test/config.toml, Expected [%s] Got [%s]\n", expectedURL, cfg.Ethereum.URL)
+		t.Errorf(
+			`did not correctly read in ./test/config.toml,
+			expected [%s] got [%s]\n`,
+			expectedURL, cfg.Ethereum.URL,
+		)
 	}
+
 	expected := "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"
 	if actual := cfg.Ethereum.Account.Address; expected != actual {
 		t.Errorf("\nexpected: %s\nactual:   %s", expected, actual)
 	}
+
 	expectedAddress := "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
 	if vv, ok := cfg.Ethereum.ContractAddresses["KeepRandomBeacon"]; !ok {
-		t.Errorf("failed read of test/Config.toml, expected key in map [KeepRandomBeacon].  Key missing.\n")
+		t.Errorf(
+			`failed read of test/Config.toml, expected key in map [KeepRandomBeacon].
+			 Key missing.\n`,
+		)
 	} else if vv != expectedAddress {
-		t.Errorf("in test/Config.toml\ngot address: %s\nwant address: %s\n", vv, expectedAddress)
+		t.Errorf(
+			"in test/Config.toml\ngot address: %s\nwant address: %s\n",
+			vv, expectedAddress,
+		)
 	}
 
 	var configReadTests = map[string]struct {
@@ -45,12 +57,19 @@ func TestReadConfig(t *testing.T) {
 			expectedValue: "ipc:/var/folders/ts/7xznj_p13xb7_5th3w6yjmjm0000gn/T/ethereum_dev_mode/geth.ipc",
 		},
 		"Ethereum.Account.Address": {
-			readValueFunc: func(c *Config) interface{} { return c.Ethereum.Account.Address },
+			readValueFunc: func(c *Config) interface{} {
+				return c.Ethereum.Account.Address
+			},
 			expectedValue: "0xc2a56884538778bacd91aa5bf343bf882c5fb18b",
 		},
 		"Ethereum.ContractAddresses": {
-			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
-			expectedValue: map[string]string{"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37649", "GroupContract": "0x139deb0dd975af8e4cc91fe9053a37e4faf37649"},
+			readValueFunc: func(c *Config) interface{} {
+				return c.Ethereum.ContractAddresses
+			},
+			expectedValue: map[string]string{
+				"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37649",
+				"GroupContract":    "0x139deb0dd975af8e4cc91fe9053a37e4faf37649",
+			},
 		},
 	}
 
