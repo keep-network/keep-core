@@ -40,6 +40,12 @@ func ExecuteDKG(
 	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
 	}
 	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
+
+	var (
+		currentState, pendingState keyGenerationState
+		blockWaiter                <-chan int
+	)
+
 	localMember, err := thresholdgroup.NewMember(memberID, threshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -55,11 +61,6 @@ func ExecuteDKG(
 		recvChan <- msg
 		return nil
 	})
-
-	var (
-		currentState, pendingState keyGenerationState
-		blockWaiter                <-chan int
-	)
 
 	stateTransition := func() error {
 		fmt.Printf(
