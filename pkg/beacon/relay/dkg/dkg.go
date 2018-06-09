@@ -42,7 +42,11 @@ func ExecuteDKG(
 	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
 	localMember, err := thresholdgroup.NewMember(memberID, threshold, groupSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize member: [%v]", err)
+		return nil, fmt.Errorf(
+			"in state [%T], failed to initialize block wait: [%v]",
+			currentState,
+			err,
+		)
 	}
 
 	// Use an unbuffered channel to serialize message processing.
@@ -79,8 +83,8 @@ func ExecuteDKG(
 		blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
 		if err != nil {
 			return fmt.Errorf(
-				"failed to initialize blockCounter.BlockWaiter [%T]: [%v]",
-				pendingState,
+				"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
+				currentState,
 				err,
 			)
 		}
