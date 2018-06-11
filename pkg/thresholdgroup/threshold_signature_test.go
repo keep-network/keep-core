@@ -9,6 +9,10 @@ import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
+const (
+	defaultSigningThreshold = defaultDishonestThreshold + 1
+)
+
 func hasNonZeroBytes(bytes []byte) bool {
 	hasNonZeroBytes := false
 	for _, bte := range bytes {
@@ -19,10 +23,6 @@ func hasNonZeroBytes(bytes []byte) bool {
 	}
 
 	return hasNonZeroBytes
-}
-
-func defaultSigningThreshold() int {
-	return defaultDishonestThreshold + 1
 }
 
 func TestMemberExposesGroupPublicKey(t *testing.T) {
@@ -88,22 +88,22 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 			expectedError:        nil,
 		},
 		"with more than a sign threshold participating": {
-			participatingMembers: defaultSigningThreshold() + 1,
+			participatingMembers: defaultSigningThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with a sign threshold participating": {
-			participatingMembers: defaultSigningThreshold(),
+			participatingMembers: defaultSigningThreshold,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with less than a sign threshold participating": {
-			participatingMembers: defaultSigningThreshold() - 1,
+			participatingMembers: defaultSigningThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultSigningThreshold()-1,
-				defaultSigningThreshold(),
+				defaultSigningThreshold-1,
+				defaultSigningThreshold,
 			),
 		},
 	}
@@ -167,22 +167,22 @@ func TestMemberVerifiesSignatureFromShares(t *testing.T) {
 			expectedError:        nil,
 		},
 		"with more than a sign threshold participating": {
-			participatingMembers: defaultSigningThreshold() + 1,
+			participatingMembers: defaultSigningThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with a sign threshold participating": {
-			participatingMembers: defaultSigningThreshold(),
+			participatingMembers: defaultSigningThreshold,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with less than a sign threshold participating": {
-			participatingMembers: defaultSigningThreshold() - 1,
+			participatingMembers: defaultSigningThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultSigningThreshold()-1,
-				defaultSigningThreshold(),
+				defaultSigningThreshold-1,
+				defaultSigningThreshold,
 			),
 		},
 	}
