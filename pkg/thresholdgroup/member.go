@@ -224,7 +224,7 @@ func (mc *memberCore) MemberID() string {
 // be unique per group member.
 //
 // Returns an error if the id fails to be read as a valid hex string, or if the
-// threshold >= groupSize / 2, as the distributed key generation and threshold
+// `dishonestThreshold` >= `groupSize` / 2, as the distributed key generation and threshold
 // signature algorithm security breaks down past that point.
 func NewMember(id string, dishonestThreshold int, groupSize int) (*LocalMember, error) {
 	if dishonestThreshold >= groupSize/2 {
