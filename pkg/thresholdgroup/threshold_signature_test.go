@@ -21,6 +21,10 @@ func hasNonZeroBytes(bytes []byte) bool {
 	return hasNonZeroBytes
 }
 
+func defaultSigningThreshold() int {
+	return defaultDishonestThreshold + 1
+}
+
 func TestMemberExposesGroupPublicKey(t *testing.T) {
 	member, _ := buildMembers("")
 
@@ -84,22 +88,22 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 			expectedError:        nil,
 		},
 		"with more than a sign threshold participating": {
-			participatingMembers: defaultSignThreshold + 1,
+			participatingMembers: defaultSigningThreshold() + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with a sign threshold participating": {
-			participatingMembers: defaultSignThreshold,
+			participatingMembers: defaultSigningThreshold(),
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with less than a sign threshold participating": {
-			participatingMembers: defaultSignThreshold - 1,
+			participatingMembers: defaultSigningThreshold() - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultSignThreshold-1,
-				defaultSignThreshold,
+				defaultSigningThreshold()-1,
+				defaultSigningThreshold(),
 			),
 		},
 	}
@@ -163,22 +167,22 @@ func TestMemberVerifiesSignatureFromShares(t *testing.T) {
 			expectedError:        nil,
 		},
 		"with more than a sign threshold participating": {
-			participatingMembers: defaultSignThreshold + 1,
+			participatingMembers: defaultSigningThreshold() + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with a sign threshold participating": {
-			participatingMembers: defaultSignThreshold,
+			participatingMembers: defaultSigningThreshold(),
 			expectedVerification: true,
 			expectedError:        nil,
 		},
 		"with less than a sign threshold participating": {
-			participatingMembers: defaultSignThreshold - 1,
+			participatingMembers: defaultSigningThreshold() - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultSignThreshold-1,
-				defaultSignThreshold,
+				defaultSigningThreshold()-1,
+				defaultSigningThreshold(),
 			),
 		},
 	}

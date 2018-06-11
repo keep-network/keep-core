@@ -105,9 +105,6 @@ type memberCore struct {
 	BlsID bls.ID
 	// The number of members in the complete group.
 	groupSize int
-	// The maximum number of group members who could be dishonest in order for the
-	// generated key to be uncompromised.
-	threshold int
 	// The BLS IDs of all members of this member's group, including the member
 	// itself. Initially empty, populated as each other member announces its
 	// presence.
@@ -118,7 +115,10 @@ type memberCore struct {
 // initiation of the distributed key generation process.
 type LocalMember struct {
 	memberCore
-	// Created locally, these are the `threshold` secret components that,
+	// The maximum number of group members who could be dishonest in order for the
+	// generated key to be uncompromised.
+	dishonestThreshold int
+	// Created locally, these are the `dishonestThreshold` secret components that,
 	// combined, represent this group member's share of the group secret key.
 	// They are used to generate shares of this member's group secret key share
 	// for other members, which can be verified against the public commitments
@@ -208,6 +208,8 @@ type Member struct {
 	// This group member's share of the group secret key; nil if not yet
 	// computed.
 	groupSecretKeyShare *bls.SecretKey
+	// The minimum number of participants to produce a valid signature
+	signingThreshold int
 	// The final list of qualified group members; empty if not yet computed.
 	qualifiedMembers []bls.ID
 }
@@ -224,11 +226,11 @@ func (mc *memberCore) MemberID() string {
 // Returns an error if the id fails to be read as a valid hex string, or if the
 // threshold >= groupSize / 2, as the distributed key generation and threshold
 // signature algorithm security breaks down past that point.
-func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
-	if threshold >= groupSize/2 {
+func NewMember(id string, dishonestThreshold int, groupSize int) (*LocalMember, error) {
+	if dishonestThreshold >= groupSize/2 {
 		return nil, fmt.Errorf(
 			"threshold %v >= %v / 2, so group security cannot be guaranteed",
-			threshold,
+			dishonestThreshold,
 			groupSize,
 		)
 	}
@@ -250,7 +252,7 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 	//    cryptographically secure pseudo-random number generator.
 	//  - `Set` instead initializes a key from an existing set of shares and a
 	//    group member bls.ID.
-	secretSharesCount := threshold + 1
+	secretSharesCount := dishonestThreshold + 1
 	secretShares := make([]bls.SecretKey, secretSharesCount)
 	shareCommitments := make([]bls.PublicKey, secretSharesCount)
 
@@ -291,11 +293,11 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 			ID:        fmt.Sprintf("0x%010s", id),
 			BlsID:     blsID,
 			groupSize: groupSize,
-			threshold: threshold,
 			memberIDs: make([]*bls.ID, 0, groupSize),
 		},
-		secretShares:     secretShares,
-		shareCommitments: shareCommitments,
+		dishonestThreshold: dishonestThreshold,
+		secretShares:       secretShares,
+		shareCommitments:   shareCommitments,
 	}, nil
 }
 
@@ -527,10 +529,10 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
 
 	// Note: this member is counted as a qualified member.
-	if len(jm.receivedShares) < jm.threshold-1 {
+	if len(jm.receivedShares) < jm.dishonestThreshold-1 {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
-			jm.threshold,
+			jm.dishonestThreshold,
 			len(jm.receivedShares)+1,
 		)
 	}
@@ -566,6 +568,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 		memberCore:          jm.memberCore,
 		groupSecretKeyShare: groupSecretKeyShare,
 		groupPublicKey:      &groupPublicKey,
+		signingThreshold:    jm.dishonestThreshold + 1,
 		qualifiedMembers:    qualifiedMembers,
 	}, nil
 }
@@ -593,11 +596,11 @@ func (m *Member) SignatureShare(message string) []byte {
 // signature. Returns an error if the number of signature shares is not greater
 // than the group threshold.
 func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign, error) {
-	if len(signatureShares) <= m.threshold {
+	if len(signatureShares) < m.signingThreshold {
 		return nil, fmt.Errorf(
 			"%v shares are insufficient for a complete signature; need %v",
 			len(signatureShares),
-			m.threshold+1,
+			m.signingThreshold,
 		)
 	}
 

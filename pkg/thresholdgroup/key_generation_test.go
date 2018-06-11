@@ -13,7 +13,7 @@ import (
 func TestLocalMemberCreation(t *testing.T) {
 	id := fmt.Sprintf("%x", rand.Int31())
 
-	member, err := NewMember(id, defaultThreshold, defaultGroupSize)
+	member, err := NewMember(id, defaultDishonestThreshold, defaultGroupSize)
 	if err != nil {
 		t.Fatalf("unexpected error [%v]", err)
 	}
@@ -35,8 +35,8 @@ func TestLocalMemberCreation(t *testing.T) {
 			expected:     id,
 		},
 		"threshold": {
-			propertyFunc: func(lm *LocalMember) string { return fmt.Sprintf("%v", lm.threshold) },
-			expected:     fmt.Sprintf("%v", defaultThreshold),
+			propertyFunc: func(lm *LocalMember) string { return fmt.Sprintf("%v", lm.dishonestThreshold) },
+			expected:     fmt.Sprintf("%v", defaultDishonestThreshold),
 		},
 		"group size": {
 			propertyFunc: func(lm *LocalMember) string { return fmt.Sprintf("%v", lm.groupSize) },
@@ -65,12 +65,12 @@ func TestLocalMemberFailsForHighThreshold(t *testing.T) {
 }
 
 func TestLocalMemberCommitments(t *testing.T) {
-	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+	member, _ := NewMember(defaultID, defaultDishonestThreshold, defaultGroupSize)
 
 	// According to [GJKR 99] the polynomial is of degree `threshold`,
 	// it means that we have `threshold + 1` coefficients in the polynomial,
 	// which is also the number of `secretShares` and `shareCommitments`
-	expectedShareCommitmentsCount := defaultThreshold + 1
+	expectedShareCommitmentsCount := defaultDishonestThreshold + 1
 
 	if len(member.Commitments()) != expectedShareCommitmentsCount {
 		t.Errorf(
@@ -102,7 +102,7 @@ func TestLocalMemberCommitments(t *testing.T) {
 }
 
 func TestLocalMemberRegistration(t *testing.T) {
-	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+	member, _ := NewMember(defaultID, defaultDishonestThreshold, defaultGroupSize)
 	member.RegisterMemberID(&member.BlsID)
 
 	otherMemberCount := defaultGroupSize - 1
@@ -455,20 +455,20 @@ func TestJustifyingMemberFinalization(t *testing.T) {
 		},
 		"all accused with threshold-1 justifications": {
 			accuseFunc:  accuseAll,
-			justifyFunc: justify(defaultThreshold-1, 0),
+			justifyFunc: justify(defaultDishonestThreshold-1, 0),
 		},
 		"all accused with all justifications": {
 			accuseFunc:  accuseAll,
 			justifyFunc: justify(defaultGroupSize-1, 0),
 		},
 		"threshold-1 honest with no justifications": {
-			accuseFunc:    accuse(defaultGroupSize - defaultThreshold + 1),
+			accuseFunc:    accuse(defaultGroupSize - defaultDishonestThreshold + 1),
 			justifyFunc:   justify(0, 0),
 			expectedError: fmt.Errorf("required 4 qualified members but only had 3"),
 		},
 		"threshold accused with threshold-1 justifications": {
-			accuseFunc:  accuse(defaultThreshold),
-			justifyFunc: justify(defaultThreshold-1, 0),
+			accuseFunc:  accuse(defaultDishonestThreshold),
+			justifyFunc: justify(defaultDishonestThreshold-1, 0),
 		},
 		"bad shares without justification": {
 			badShares:  1,

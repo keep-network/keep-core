@@ -15,17 +15,16 @@ func TestMain(m *testing.M) {
 }
 
 const (
-	defaultID            = "12345"
-	defaultThreshold     = 4
-	defaultGroupSize     = 12
-	defaultSignThreshold = defaultThreshold + 1
+	defaultID                 = "12345"
+	defaultDishonestThreshold = 4
+	defaultGroupSize          = 12
 )
 
 func buildSharingMember(id string) *SharingMember {
 	if id == "" {
 		id = defaultID
 	}
-	member, _ := NewMember(id, defaultThreshold, defaultGroupSize)
+	member, _ := NewMember(id, defaultDishonestThreshold, defaultGroupSize)
 
 	defaultBlsID := &bls.ID{}
 	defaultBlsID.SetHexString(defaultID)
@@ -41,7 +40,7 @@ func buildSharingMember(id string) *SharingMember {
 
 func randomShares() []bls.SecretKey {
 	secretKeys := make([]bls.SecretKey, 0)
-	for i := 0; i < defaultThreshold; i++ {
+	for i := 0; i < defaultDishonestThreshold; i++ {
 		sk := bls.SecretKey{}
 		sk.SetByCSPRNG()
 		secretKeys = append(secretKeys, sk)
