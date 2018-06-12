@@ -76,7 +76,7 @@ func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
 }
 
 func (c *channel) SendTo(
-	recipientIdentifier interface{},
+	recipientIdentifier net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) error {
 	return nil
