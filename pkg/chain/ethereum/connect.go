@@ -5,6 +5,10 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
+
+	"github.com/keep-network/keep-core/pkg/beacon"
+
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -16,13 +20,19 @@ type ethereumChain struct {
 	client                           *ethclient.Client
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
-	krb                              *KeepRandomBeacon
-	kg                               *KeepGroup
 	requestID                        *big.Int
 	tx                               *types.Transaction
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(groupID string, errorMessage string)
 	groupPublicKeySubmissionHandlers []func(groupID string, activationBlock *big.Int)
+}
+
+func (ec *ethereumChain) RandomBeacon() beacon.ChainInterface {
+	return nil
+}
+
+func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
+	return nil
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
@@ -53,19 +63,6 @@ func Connect(cfg Config) (chain.Handle, error) {
 		clientRPC: clientrpc,
 		clientWS:  clientws,
 	}
-
-	krb, err := newKeepRandomBeacon(pv)
-	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepRandomBeacon contract: %s",
-			err)
-	}
-	pv.krb = krb
-
-	kg, err := newKeepGroup(pv)
-	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepGroup contract: %s", err)
-	}
-	pv.kg = kg
 
 	return pv, nil
 }
