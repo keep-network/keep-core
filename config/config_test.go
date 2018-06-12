@@ -46,7 +46,6 @@ func TestReadConfig(t *testing.T) {
 
 	for testName, test := range configReadTests {
 		t.Run(testName, func(t *testing.T) {
-			t.Parallel()
 			expected := test.expectedValue
 			actual := test.readValueFunc(&cfg)
 			if !reflect.DeepEqual(expected, actual) {

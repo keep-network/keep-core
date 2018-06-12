@@ -66,12 +66,11 @@ func main() {
 			},
 		},
 		{
-			Name:  "smoke-test",
-			Usage: "Simulates DKG and signature verification",
-			Description: `simulate Distributed Key Generation (DKG)
-				      and verify group's threshold signature`,
-			Action: cmd.SmokeTest,
-			Flags:  cmd.SmokeTestFlags,
+			Name:        "smoke-test",
+			Usage:       "Simulates DKG and signature verification",
+			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
+			Action:      cmd.SmokeTest,
+			Flags:       cmd.SmokeTestFlags,
 		},
 	}
 
