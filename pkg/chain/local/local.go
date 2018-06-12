@@ -59,7 +59,9 @@ func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
 	return nil
 }
 
-func (c *localChain) OnGroupPublicKeySubmissionFailed(handler func(string, string)) error {
+func (c *localChain) OnGroupPublicKeySubmissionFailed(
+	handler func(string, string),
+) error {
 	c.handlerMutex.Lock()
 	c.groupPublicKeyFailureHandlers = append(c.groupPublicKeyFailureHandlers, handler)
 	c.handlerMutex.Unlock()
@@ -67,9 +69,14 @@ func (c *localChain) OnGroupPublicKeySubmissionFailed(handler func(string, strin
 	return nil
 }
 
-func (c *localChain) OnGroupPublicKeySubmitted(handler func(groupID string, activationBlock *big.Int)) error {
+func (c *localChain) OnGroupPublicKeySubmitted(
+	handler func(groupID string, activationBlock *big.Int),
+) error {
 	c.handlerMutex.Lock()
-	c.groupPublicKeySubmissionHandlers = append(c.groupPublicKeySubmissionHandlers, handler)
+	c.groupPublicKeySubmissionHandlers = append(
+		c.groupPublicKeySubmissionHandlers,
+		handler,
+	)
 	c.handlerMutex.Unlock()
 
 	return nil
@@ -87,7 +94,10 @@ func (c *localChain) ThresholdRelay() relay.ChainInterface {
 // testing.
 func Connect(groupSize int, threshold int) chain.Handle {
 	return &localChain{
-		beaconConfig:         beacon.Config{GroupSize: groupSize, Threshold: threshold},
+		beaconConfig: beacon.Config{
+			GroupSize: groupSize,
+			Threshold: threshold,
+		},
 		groupPublicKeysMutex: sync.Mutex{},
 		groupPublicKeys:      make(map[string][96]byte),
 		blockCounter:         blockCounter()}

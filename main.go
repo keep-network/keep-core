@@ -23,7 +23,6 @@ var (
 )
 
 func main() {
-
 	if version == "" {
 		version = "unknown"
 	}
@@ -93,5 +92,10 @@ func printInfo(c *cli.Context) {
 		"version:     %s\n"+
 		"revision:    %s\n"+
 		"Config Path: %s\n",
-		c.App.Name, c.App.Description, version, revision, c.GlobalString("config"))
+		c.App.Name,
+		c.App.Description,
+		version,
+		revision,
+		c.GlobalString("config"),
+	)
 }
