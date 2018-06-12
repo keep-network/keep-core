@@ -85,7 +85,7 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.Send(
-		&testMessage{ID: config.identity, Payload: expectedPayload},
+		&testMessage{Sender: config.identity, Payload: expectedPayload},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -103,11 +103,18 @@ func TestSendReceive(t *testing.T) {
 		case msg := <-recvChan:
 			testPayload, ok := msg.Payload().(*testMessage)
 			if !ok {
-				t.Fatalf("Expected message payload to be of type string, got type %v", testPayload)
+				t.Fatalf(
+					"Expected message payload to be of type string, got type %v",
+					testPayload,
+				)
 			}
 
 			if expectedPayload != testPayload.Payload {
-				t.Fatalf("expected message payload %s, got payload %s", expectedPayload, testPayload.Payload)
+				t.Fatalf(
+					"expected message payload %s, got payload %s",
+					expectedPayload,
+					testPayload.Payload,
+				)
 			}
 			return
 		case <-ctx.Done():
@@ -121,7 +128,7 @@ type protocolIdentifier struct {
 }
 
 type testMessage struct {
-	ID      *identity
+	Sender  *identity
 	Payload string
 }
 
@@ -139,7 +146,7 @@ func (m *testMessage) Unmarshal(bytes []byte) error {
 		fmt.Println("hit this error")
 		return err
 	}
-	m.ID = message.ID
+	m.Sender = message.Sender
 	m.Payload = message.Payload
 
 	return nil
@@ -199,19 +206,19 @@ func buildTestProxies(ctx context.Context, t *testing.T, num int) ([]*provider, 
 	return proxies, nil
 }
 
-func connectNetworks(ctx context.Context, t *testing.T, proxies []*provider) {
+func connectNetworks(ctx context.Context, t *testing.T, providers []*provider) {
 	var waitGroup sync.WaitGroup
 
-	for i, proxy := range proxies {
+	for i, provider := range providers {
 		// connect to all other peers, proxies after i+1, for good connectivity
-		for _, peer := range proxies[i+1:] {
+		for _, peer := range providers[i+1:] {
 			waitGroup.Add(1)
-			proxy.host.Peerstore().AddAddr(
+			provider.host.Peerstore().AddAddr(
 				peer.host.ID(),
 				peer.host.Network().ListenAddresses()[0],
 				peerstore.PermanentAddrTTL,
 			)
-			_, err := proxy.host.Network().DialPeer(ctx, peer.host.ID())
+			_, err := provider.host.Network().DialPeer(ctx, peer.host.ID())
 			if err != nil {
 				t.Fatal(err)
 			}
