@@ -89,16 +89,16 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 
 // subscribeBlocks creates a subscription to Geth to get each block.
 func (ebc *ethereumBlockCounter) subscribeBlocks() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	subscribeContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	_, err := ebc.config.clientWS.EthSubscribe(
-		ctx,
+		subscribeContext,
 		ebc.subscriptionChannel,
 		"newHeads",
 	)
 	if err != nil {
-		return
+		return err
 	}
 
 	var lastBlock block
@@ -127,17 +127,20 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 		true,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"Failed to get initial number of blocks from the chain: %s",
-			err,
-		)
+		return nil,
+			fmt.Errorf(
+				"failed to get initial block from the chain: [%s]",
+				err,
+			)
 	}
 
 	startupBlockNumber, err := strconv.ParseInt(startupBlock.Number, 0, 32)
 	if err != nil {
 		return nil,
-			fmt.Errorf("Failed to get initial number of blocks from the chain, %s",
-				err)
+			fmt.Errorf(
+				"failed to get initial number of blocks from the chain, %s",
+				err,
+			)
 	}
 
 	blockCounter := &ethereumBlockCounter{
