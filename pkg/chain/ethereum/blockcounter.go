@@ -74,14 +74,12 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 				ebc.structMutex.Lock()
 				height := ebc.latestBlockHeight
 				ebc.latestBlockHeight++
-				waiters, exists := ebc.waiters[height]
+				waiters := ebc.waiters[height]
 				delete(ebc.waiters, height)
 				ebc.structMutex.Unlock()
 
-				if exists {
-					for _, waiter := range waiters {
-						go func(w chan int) { w <- height }(waiter)
-					}
+				for _, waiter := range waiters {
+					go func(w chan int) { w <- height }(waiter)
 				}
 			}
 		}
