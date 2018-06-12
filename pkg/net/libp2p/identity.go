@@ -33,6 +33,19 @@ func (n networkIdentity) String() string {
 }
 
 func (i *identity) Marshal() ([]byte, error) {
+	var (
+		err error
+	)
+
+	if i.pubKey == nil {
+		i.pubKey, err = peer.ID(i.id).ExtractPublicKey()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if i.pubKey == nil {
+		return nil, fmt.Errorf("Failed to generate public key with peer id %+v", peer.ID(i.id))
+	}
 	pubKeyBytes, err := i.pubKey.Bytes()
 	if err != nil {
 		return nil, err
@@ -43,30 +56,24 @@ func (i *identity) Marshal() ([]byte, error) {
 func (i *identity) Unmarshal(bytes []byte) error {
 	var (
 		err        error
+		pid        peer.ID
 		pbIdentity pb.Identity
 	)
-	if err := pbIdentity.Unmarshal(bytes); err != nil {
+
+	if err = pbIdentity.Unmarshal(bytes); err != nil {
 		return err
 	}
 	i.pubKey, err = libp2pcrypto.UnmarshalPublicKey(pbIdentity.PubKey)
 	if err != nil {
 		return err
 	}
-	pid, err := peer.IDFromPublicKey(i.pubKey)
+	pid, err = peer.IDFromPublicKey(i.pubKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to generate valid libp2p identity with err: %s", err)
 	}
 	i.id = networkIdentity(pid)
 
 	return nil
-}
-
-func pubKeyToIdentifier(pub libp2pcrypto.PubKey) *identity {
-	pid, err := peer.IDFromPublicKey(pub)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to generate valid libp2p identity with err: %v", err))
-	}
-	return &identity{id: networkIdentity(pid)}
 }
 
 // AddIdentityToStore takes an identity and notifies the addressbook of the
