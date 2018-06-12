@@ -87,17 +87,17 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with more than a sign threshold participating": {
+		"with more than a signing threshold participating": {
 			participatingMembers: defaultSigningThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with a sign threshold participating": {
+		"with a signing threshold participating": {
 			participatingMembers: defaultSigningThreshold,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with less than a sign threshold participating": {
+		"with less than a signing threshold participating": {
 			participatingMembers: defaultSigningThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
@@ -166,17 +166,17 @@ func TestMemberVerifiesSignatureFromShares(t *testing.T) {
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with more than a sign threshold participating": {
+		"with more than a signing threshold participating": {
 			participatingMembers: defaultSigningThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with a sign threshold participating": {
+		"with a signing threshold participating": {
 			participatingMembers: defaultSigningThreshold,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with less than a sign threshold participating": {
+		"with less than a signing threshold participating": {
 			participatingMembers: defaultSigningThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(

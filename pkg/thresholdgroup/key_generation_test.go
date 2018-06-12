@@ -67,9 +67,6 @@ func TestLocalMemberFailsForHighThreshold(t *testing.T) {
 func TestLocalMemberCommitments(t *testing.T) {
 	member, _ := NewMember(defaultID, defaultDishonestThreshold, defaultGroupSize)
 
-	// According to [GJKR 99] the polynomial is of degree `threshold`,
-	// it means that we have `threshold + 1` coefficients in the polynomial,
-	// which is also the number of `secretShares` and `shareCommitments`
 	expectedShareCommitmentsCount := defaultDishonestThreshold + 1
 
 	if len(member.Commitments()) != expectedShareCommitmentsCount {
