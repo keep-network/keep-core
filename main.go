@@ -34,13 +34,6 @@ func main() {
 		log.Fatal("Failed to initialize BLS.", err)
 	}
 
-	err := newApp(version, revision).Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func newApp(version, revision string) *cli.App {
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
@@ -88,7 +81,10 @@ ENVIRONMENT VARIABLES:
 
 `, cli.AppHelpTemplate)
 
-	return app
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func printInfo(c *cli.Context) {
