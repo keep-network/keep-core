@@ -196,7 +196,7 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
-	// TODO: handle receivers, authentication, etc
+	// TODO: handle authentication, etc
 
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
@@ -209,7 +209,22 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
-	// Construct an identifier from the sender (on the message)
+	if envelope.Recipient != nil {
+		// Construct an identifier from the Recipient
+		recipientIdentifier := &identity{}
+		if err := recipientIdentifier.Unmarshal(envelope.Recipient); err != nil {
+			return err
+		}
+
+		if recipientIdentifier.id.String() != c.clientIdentity.id.String() {
+			return fmt.Errorf(
+				"message not for intended recipient %s",
+				recipientIdentifier.id.String(),
+			)
+		}
+	}
+
+	// Construct an identifier from the sender
 	senderIdentifier := &identity{}
 	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
 		return err
@@ -261,6 +276,7 @@ func (c *channel) deliver(message net.Message) error {
 	go func(message net.Message, snapshot []net.HandleMessageFunc) {
 		for _, handler := range snapshot {
 			if err := handler(message); err != nil {
+				// TODO: handle error
 				fmt.Println(err)
 			}
 		}

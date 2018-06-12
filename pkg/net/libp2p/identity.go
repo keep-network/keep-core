@@ -28,6 +28,10 @@ func (n networkIdentity) ProviderName() string {
 	return "libp2p"
 }
 
+func (n networkIdentity) String() string {
+	return peer.ID(n).String()
+}
+
 func (i *identity) Marshal() ([]byte, error) {
 	pubKeyBytes, err := i.pubKey.Bytes()
 	if err != nil {
