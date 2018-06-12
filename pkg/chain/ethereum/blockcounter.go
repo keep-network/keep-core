@@ -88,7 +88,7 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 }
 
 // subscribeBlocks creates a subscription to Geth to get each block.
-func (ebc *ethereumBlockCounter) subscribeBlocks() {
+func (ebc *ethereumBlockCounter) subscribeBlocks() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -109,11 +109,12 @@ func (ebc *ethereumBlockCounter) subscribeBlocks() {
 		true,
 	)
 	if err != nil {
-		return
+		return err
 	}
 
 	ebc.subscriptionChannel <- lastBlock
 
+	return nil
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
