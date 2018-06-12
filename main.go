@@ -23,7 +23,6 @@ var (
 )
 
 func main() {
-
 	if version == "" {
 		version = "unknown"
 	}
@@ -34,14 +33,6 @@ func main() {
 	if err := bls.Init(bls.CurveSNARK1); err != nil {
 		log.Fatal("Failed to initialize BLS.", err)
 	}
-
-	err := newApp(version, revision).Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func newApp(version, revision string) *cli.App {
 
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
@@ -89,7 +80,10 @@ ENVIRONMENT VARIABLES:
 
 `, cli.AppHelpTemplate)
 
-	return app
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func printInfo(c *cli.Context) {
@@ -98,5 +92,10 @@ func printInfo(c *cli.Context) {
 		"version:     %s\n"+
 		"revision:    %s\n"+
 		"Config Path: %s\n",
-		c.App.Name, c.App.Description, version, revision, c.GlobalString("config"))
+		c.App.Name,
+		c.App.Description,
+		version,
+		revision,
+		c.GlobalString("config"),
+	)
 }

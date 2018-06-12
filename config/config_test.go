@@ -7,11 +7,19 @@ import (
 )
 
 func TestReadConfig(t *testing.T) {
-	os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
-
-	cfg, err := ReadConfig("../test/config.toml")
+	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
 	if err != nil {
-		t.Fatalf("unexpected error [%v]", err)
+		t.Fatal(err)
+	}
+
+	filepath := "../test/config.toml"
+	cfg, err := ReadConfig(filepath)
+	if err != nil {
+		t.Fatalf(
+			"failed to read test config: [%v]",
+			err,
+		)
+
 	}
 
 	var configReadTests = map[string]struct {
@@ -27,7 +35,9 @@ func TestReadConfig(t *testing.T) {
 			expectedValue: "http://192.168.0.158:8545",
 		},
 		"Ethereum.Account.Address": {
-			readValueFunc: func(c *Config) interface{} { return c.Ethereum.Account.Address },
+			readValueFunc: func(c *Config) interface{} {
+				return c.Ethereum.Account.Address
+			},
 			expectedValue: "0xc2a56884538778bacd91aa5bf343bf882c5fb18b",
 		},
 		"Ethereum.ContractAddresses": {
