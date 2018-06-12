@@ -56,7 +56,7 @@ func (c *channel) doSend(
 	message net.TaggedMarshaler,
 ) error {
 	// Transform net.TaggedMarshaler to a protobuf message
-	envelopeBytes, err := envelopeProto(message, sender)
+	envelopeBytes, err := envelopeProto(nil, sender, message)
 	if err != nil {
 		return err
 	}
@@ -76,21 +76,35 @@ func (c *channel) Recv(handler net.HandleMessageFunc) error {
 	return nil
 }
 
-func envelopeProto(message net.TaggedMarshaler, sender *identity) ([]byte, error) {
+func envelopeProto(
+	recipient net.TransportIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
+) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	identityBytes, err := sender.Marshal()
+	senderIdentityBytes, err := sender.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
+	var recipientIdentityBytes []byte
+	if recipient != nil {
+		recipientIdentity := &identity{id: recipient.(networkIdentity)}
+		recipientIdentityBytes, err = recipientIdentity.Marshal()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return (&pb.Envelope{
-		Payload: payloadBytes,
-		Sender:  identityBytes,
-		Type:    []byte(message.Type()),
+		Payload:   payloadBytes,
+		Sender:    senderIdentityBytes,
+		Recipient: recipientIdentityBytes,
+		Type:      []byte(message.Type()),
 	}).Marshal()
 }
 
