@@ -43,22 +43,11 @@ func (c *channel) Send(message net.TaggedMarshaler) error {
 	return c.doSend(message, c.clientIdentity)
 }
 
-func envelopeProto(message net.TaggedMarshaler, sender *identity) ([]byte, error) {
-	payloadBytes, err := message.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	identityBytes, err := sender.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	return (&pb.Envelope{
-		Payload: payloadBytes,
-		Sender:  identityBytes,
-		Type:    []byte(message.Type()),
-	}).Marshal()
+func (c *channel) SendTo(
+	recipientIdentifier net.ProtocolIdentifier,
+	message net.TaggedMarshaler,
+) error {
+	return nil
 }
 
 func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
@@ -75,19 +64,30 @@ func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
 	return c.pubsub.Publish(c.name, envelopeBytes)
 }
 
-func (c *channel) SendTo(
-	recipientIdentifier net.ProtocolIdentifier,
-	message net.TaggedMarshaler,
-) error {
-	return nil
-}
-
 func (c *channel) Recv(handler net.HandleMessageFunc) error {
 	c.messageHandlersMutex.Lock()
 	c.messageHandlers = append(c.messageHandlers, handler)
 	c.messageHandlersMutex.Unlock()
 
 	return nil
+}
+
+func envelopeProto(message net.TaggedMarshaler, sender *identity) ([]byte, error) {
+	payloadBytes, err := message.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	identityBytes, err := sender.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	return (&pb.Envelope{
+		Payload: payloadBytes,
+		Sender:  identityBytes,
+		Type:    []byte(message.Type()),
+	}).Marshal()
 }
 
 func (c *channel) RegisterIdentifier(
