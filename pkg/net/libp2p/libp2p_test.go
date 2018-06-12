@@ -124,13 +124,101 @@ func TestSendReceive(t *testing.T) {
 	}
 }
 
+func TestSendToReceiveFrom(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	var (
+		config1                  = generateDeterministicNetworkConfig(t)
+		senderProtocolIdentifier = &protocolIdentifier{id: "sender"}
+
+		config2                     = generateDeterministicNetworkConfig(t)
+		recipientprotocolIdentifier = &protocolIdentifier{id: "recipient"}
+
+		name            = "testchannel"
+		expectedPayload = "some text"
+	)
+
+	provider, err := Connect(ctx, config1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broadcastChannel, err := provider.ChannelFor(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := broadcastChannel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &testMessage{} },
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := broadcastChannel.RegisterIdentifier(
+		config1.identity.id,
+		senderProtocolIdentifier,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := broadcastChannel.RegisterIdentifier(
+		config2.identity.id,
+		recipientprotocolIdentifier,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	err = broadcastChannel.SendTo(
+		config2.identity.id,
+		&testMessage{
+			Sender:  config1.identity,
+			Payload: expectedPayload,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recvChan := make(chan net.Message)
+	if err := broadcastChannel.Recv(func(msg net.Message) error {
+		recvChan <- msg
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	for {
+		select {
+		case msg := <-recvChan:
+			testPayload, ok := msg.Payload().(*testMessage)
+			if !ok {
+				t.Fatalf(
+					"Expected message payload to be of type string, got type %v",
+					testPayload,
+				)
+			}
+
+			if expectedPayload != testPayload.Payload {
+				t.Fatalf(
+					"expected message payload %s, got payload %s",
+					expectedPayload, testPayload.Payload,
+				)
+			}
+			return
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
+		}
+	}
+}
+
 type protocolIdentifier struct {
 	id string
 }
 
 type testMessage struct {
-	Sender  *identity
-	Payload string
+	Sender    *identity
+	Recipient *identity
+	Payload   string
 }
 
 func (m *testMessage) Type() string {
@@ -148,6 +236,7 @@ func (m *testMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 	m.Sender = message.Sender
+	m.Recipient = message.Recipient
 	m.Payload = message.Payload
 
 	return nil
