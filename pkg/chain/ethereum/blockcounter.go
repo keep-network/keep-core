@@ -150,16 +150,8 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 		subscriptionChannel: make(chan block),
 	}
 
-	go func() {
-		for i := 0; ; i++ {
-			if i > 0 {
-				time.Sleep(2 * time.Second)
-			}
-			blockCounter.subscribeBlocks()
-		}
-	}()
-
 	go blockCounter.receiveBlocks()
+	blockCounter.subscribeBlocks()
 
 	return blockCounter, nil
 }
