@@ -23,8 +23,8 @@ type block struct {
 }
 
 // WaitForBlocks waits for a minimum of 1 block before returing.
-func (blockWait *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
-	waiter, err := blockWait.BlockWaiter(numBlocks)
+func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
+	waiter, err := ebc.BlockWaiter(numBlocks)
 	if err != nil {
 		return err
 	}
@@ -34,23 +34,23 @@ func (blockWait *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 
 // BlockWaiter returns the block number as a channel with a minimum of 1 block
 // wait. 0 and negative numBlocks are converted to 1.
-func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
+func (ebc *ethereumBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
 	newWaiter := make(chan int)
 
-	blockWait.structMutex.Lock()
-	defer blockWait.structMutex.Unlock()
+	ebc.structMutex.Lock()
+	defer ebc.structMutex.Unlock()
 
-	notifyBlockHeight := blockWait.latestBlockHeight + numBlocks
+	notifyBlockHeight := ebc.latestBlockHeight + numBlocks
 
-	if notifyBlockHeight <= blockWait.latestBlockHeight {
+	if notifyBlockHeight <= ebc.latestBlockHeight {
 		go func() { newWaiter <- notifyBlockHeight }()
 	} else {
-		waiterList, exists := blockWait.waiters[notifyBlockHeight]
+		waiterList, exists := ebc.waiters[notifyBlockHeight]
 		if !exists {
 			waiterList = make([]chan int, 0)
 		}
 
-		blockWait.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
+		ebc.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
 	}
 
 	return newWaiter, nil
@@ -59,20 +59,20 @@ func (blockWait *ethereumBlockCounter) BlockWaiter(numBlocks int) (<-chan int, e
 // receiveBlocks gets each new block back from Geth and extracts the
 // block height (topBlockNumber) form it.  For each block height that is being
 // waited on a message will be sent.
-func (blockWait *ethereumBlockCounter) receiveBlocks() {
-	for block := range blockWait.subscriptionChannel {
+func (ebc *ethereumBlockCounter) receiveBlocks() {
+	for block := range ebc.subscriptionChannel {
 		if topBlockNumber, err := strconv.ParseInt(block.Number, 0, 64); err == nil {
 			if err != nil {
 				fmt.Printf("Error: %s\n", err)
 			}
-			for unseenBlockNumber := int64(blockWait.latestBlockHeight); unseenBlockNumber <= topBlockNumber; unseenBlockNumber++ {
+			for unseenBlockNumber := int64(ebc.latestBlockHeight); unseenBlockNumber <= topBlockNumber; unseenBlockNumber++ {
 
-				blockWait.structMutex.Lock()
-				height := blockWait.latestBlockHeight
-				blockWait.latestBlockHeight++
-				waiters, exists := blockWait.waiters[height]
-				delete(blockWait.waiters, height)
-				blockWait.structMutex.Unlock()
+				ebc.structMutex.Lock()
+				height := ebc.latestBlockHeight
+				ebc.latestBlockHeight++
+				waiters, exists := ebc.waiters[height]
+				delete(ebc.waiters, height)
+				ebc.structMutex.Unlock()
 
 				if exists {
 					for _, waiter := range waiters {
@@ -86,13 +86,13 @@ func (blockWait *ethereumBlockCounter) receiveBlocks() {
 }
 
 // subscribeBlocks creates a subscription to Geth to get each block.
-func (blockWait *ethereumBlockCounter) subscribeBlocks() {
+func (ebc *ethereumBlockCounter) subscribeBlocks() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err := blockWait.config.clientWS.EthSubscribe(
+	_, err := ebc.config.clientWS.EthSubscribe(
 		ctx,
-		blockWait.subscriptionChannel,
+		ebc.subscriptionChannel,
 		"newHeads",
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 	}
 
 	var lastBlock block
-	err = blockWait.config.clientRPC.Call(
+	err = ebc.config.clientRPC.Call(
 		&lastBlock,
 		"eth_getBlockByNumber",
 		"latest",
@@ -110,7 +110,7 @@ func (blockWait *ethereumBlockCounter) subscribeBlocks() {
 		return
 	}
 
-	blockWait.subscriptionChannel <- lastBlock
+	ebc.subscriptionChannel <- lastBlock
 
 }
 
