@@ -51,12 +51,20 @@ func (c *channel) SendTo(
 }
 
 func (c *channel) doSend(
-	recipientIdentifier net.ProtocolIdentifier,
+	recipient net.ProtocolIdentifier,
 	sender *identity,
 	message net.TaggedMarshaler,
 ) error {
+	var transportRecipient net.TransportIdentifier
+	if recipient != nil {
+		c.identifiersMutex.Lock()
+		if transportID, ok := c.protoToTransportIdentifiers[recipient]; ok {
+			transportRecipient = transportID
+		}
+		c.identifiersMutex.Unlock()
+	}
 	// Transform net.TaggedMarshaler to a protobuf message
-	envelopeBytes, err := envelopeProto(nil, sender, message)
+	envelopeBytes, err := envelopeProto(transportRecipient, sender, message)
 	if err != nil {
 		return err
 	}
