@@ -17,38 +17,11 @@ func TestReadConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedURL := "ws://192.168.0.157:8546"
-	if cfg.Ethereum.URL != expectedURL {
-		t.Errorf(
-			`did not correctly read in ./test/config.toml,
-			expected [%s] got [%s]\n`,
-			expectedURL, cfg.Ethereum.URL,
-		)
-	}
-
-	expected := "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"
-	if actual := cfg.Ethereum.Account.Address; expected != actual {
-		t.Errorf("\nexpected: %s\nactual:   %s", expected, actual)
-	}
-
-	expectedAddress := "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
-	if vv, ok := cfg.Ethereum.ContractAddresses["KeepRandomBeacon"]; !ok {
-		t.Errorf(
-			`failed read of test/Config.toml, expected key in map [KeepRandomBeacon].
-			 Key missing.\n`,
-		)
-	} else if vv != expectedAddress {
-		t.Errorf(
-			"in test/Config.toml\ngot address: %s\nwant address: %s\n",
-			vv, expectedAddress,
-		)
-	}
-
 	var configReadTests = map[string]struct {
 		readValueFunc func(*Config) interface{}
 		expectedValue interface{}
 	}{
-		"Ethereum.URL (ws)": {
+		"Ethereum.URL": {
 			readValueFunc: func(c *Config) interface{} {
 				return c.Ethereum.URL
 			},

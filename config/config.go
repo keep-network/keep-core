@@ -25,7 +25,6 @@ var (
 
 // ReadConfig reads in the configuration file in .toml format.
 func ReadConfig(filePath string) (cfg Config, err error) {
-
 	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
 		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
