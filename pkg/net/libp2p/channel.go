@@ -40,17 +40,21 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	return c.doSend(message, c.clientIdentity)
+	return c.doSend(nil, c.clientIdentity, message)
 }
 
 func (c *channel) SendTo(
 	recipientIdentifier net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) error {
-	return nil
+	return c.doSend(recipientIdentifier, c.clientIdentity, message)
 }
 
-func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
+func (c *channel) doSend(
+	recipientIdentifier net.ProtocolIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
+) error {
 	// Transform net.TaggedMarshaler to a protobuf message
 	envelopeBytes, err := envelopeProto(message, sender)
 	if err != nil {
