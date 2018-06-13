@@ -2,67 +2,93 @@ package promise
 
 import (
 	"fmt"
+	"sync"
 )
 
-// Promise represents the eventual completion (or failure) of an a
-// synchronous operation, and its resulting value
+// Promise represents the eventual completion or failure of an
+// ansynchronous operation and its resulting value. Promise can
+// be either fulfilled or failed and it can happen only one time.
+// All Promise operations are thread-safe, guarded by a mutex.
 type Promise struct {
+	mutex     sync.Mutex
 	successFn func(interface{})
 	failureFn func(error)
 
-	isCompleted bool
+	isComplete bool
 }
 
-func newPromise() *Promise {
+// NewPromise creates a new, uncompleted Promise instance with
+// no success or failure callback configured.
+func NewPromise() *Promise {
 	return &Promise{
-		isCompleted: false,
+		isComplete: false,
 	}
 }
 
-// onSuccess registers an onComplete callback that is called when the Promise
-// execution has completed successfuly. In case of a failure, onSuccess
-// callback is not called at all. onSuccess is a non-blocking operation.
-func (p *Promise) onSuccess(onSuccess func(interface{})) *Promise {
+// OnSuccess registers a function to be called when the Promise
+// has been fulfilled. In case of a failed Promise, function is not
+// called at all. OnSuccess is a non-blocking operation. Only one on success
+// function can be registered for a Promise.
+func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
 	p.successFn = onSuccess
 	return p
 }
 
-// onFailure registers an onFailure callback that is called when the Promise
-// execution failed at any point. In case of a successful Promise execution
-// onFailure callback is not called at all. onFailure is a non-blocking operation.
-func (p *Promise) onFailure(onFailure func(error)) *Promise {
+// OnFailure registers a function to be called when the Promise
+// execution failed. In case of a fulfilled Promise, function is not
+// called at all. OnFailure is a non-blocking operation. Only one on failure
+// function can be registered for a Promise.
+func (p *Promise) OnFailure(onFailure func(error)) *Promise {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
 	p.failureFn = onFailure
 	return p
 }
 
-func (p *Promise) fulfill(value interface{}) error {
-	if p.isCompleted {
+// Fulfill can happen only once for a Promise and it results in calling
+// the OnSuccess callback, if registered. If Promise has been already
+// completed by either fulfilling or failing, this function reports
+// an error.
+func (p *Promise) Fulfill(value interface{}) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
 
-	if p.successFn == nil {
-		return fmt.Errorf("success callback not registered")
+	p.isComplete = true
+	if p.successFn != nil {
+		go func() {
+			p.successFn(value)
+		}()
 	}
 
-	p.isCompleted = true
-	go func() {
-		p.successFn(value)
-	}()
 	return nil
 }
 
-func (p *Promise) fail(err error) error {
-	if p.isCompleted {
+// Fail can happen only once for a Promise and it results in calling
+// the OnFailure callback, if registered. If Promise has been already
+// completed by either fulfilling or failing, this function reports
+// an error.
+func (p *Promise) Fail(err error) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
 
-	if p.failureFn == nil {
-		return fmt.Errorf("failure callback not registered")
+	p.isComplete = true
+	if p.failureFn != nil {
+		go func() {
+			p.failureFn(err)
+		}()
 	}
 
-	p.isCompleted = true
-	go func() {
-		p.failureFn(err)
-	}()
 	return nil
 }

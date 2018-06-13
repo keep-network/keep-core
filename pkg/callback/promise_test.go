@@ -11,13 +11,13 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 
 	expectedResult := "batman"
 
-	promise := newPromise()
+	promise := NewPromise()
 
-	promise.onSuccess(func(in interface{}) {
+	promise.OnSuccess(func(in interface{}) {
 		done <- in
 	})
 
-	err := promise.fulfill(expectedResult)
+	err := promise.Fulfill(expectedResult)
 
 	if err != nil {
 		t.Fatal(err)
@@ -38,17 +38,17 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 	}{
 		"Fulfill with result `promise already completed`": {
 			function: func() error {
-				promise := newPromise().onSuccess(func(in interface{}) { done <- true })
-				promise.fulfill(nil)
-				return promise.fulfill(nil)
+				promise := NewPromise().OnSuccess(func(in interface{}) { done <- true })
+				promise.Fulfill(nil)
+				return promise.Fulfill(nil)
 			},
 			expectedError: fmt.Errorf("promise already completed"),
 		},
 		"Fail with result `promise already completed`": {
 			function: func() error {
-				promise := newPromise().onFailure(func(error) { done <- true })
-				promise.fail(nil)
-				return promise.fail(nil)
+				promise := NewPromise().OnFailure(func(error) { done <- true })
+				promise.Fail(nil)
+				return promise.Fail(nil)
 			},
 			expectedError: fmt.Errorf("promise already completed"),
 		},
