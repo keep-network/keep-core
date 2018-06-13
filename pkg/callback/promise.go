@@ -23,19 +23,19 @@ func NewPromise() *Promise {
 	}
 }
 
-// OnSuccess registers an onSuccess callback that is called when the Promise
-// has been fulfilled. In case of a failed Promise, onSucess callback is not
-// called at all. OnSuccess is a non-blocking operation. Only one onSuccess
-// callback can be registered for a Promise.
+// OnSuccess registers a function to be called when the Promise
+// has been fulfilled. In case of a failed Promise, function is not
+// called at all. OnSuccess is a non-blocking operation. Only one on success
+// function can be registered for a Promise.
 func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
 	p.successFn = onSuccess
 	return p
 }
 
-// OnFailure registers an onFailure callback that is called when the Promise
-// execution failed. In case of a fulfilled Promise, onFailure callback is not
-// called at all. OnFailure is a non-blocking operation. Only one onFailure
-// callback can be registered for a Promise.
+// OnFailure registers a function to be called when the Promise
+// execution failed. In case of a fulfilled Promise, function is not
+// called at all. OnFailure is a non-blocking operation. Only one on failure
+// function can be registered for a Promise.
 func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 	p.failureFn = onFailure
 	return p
