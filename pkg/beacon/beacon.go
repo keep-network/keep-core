@@ -3,6 +3,7 @@ package beacon
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -67,7 +68,31 @@ func Initialize(
 			return err
 		}
 
-		fmt.Printf(member.MemberID())
+		err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
+		if err != nil {
+			return err
+		}
+
+		relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
+			fmt.Printf(
+				"Failed submission of public key %s: [%s].\n",
+				id,
+				errorMessage,
+			)
+		})
+		relayChain.OnGroupPublicKeySubmitted(func(id string, activationBlock *big.Int) {
+			fmt.Printf(
+				"Public key submitted for %s; activating at block %v.\n",
+				id,
+				activationBlock,
+			)
+		})
+
+		fmt.Printf(
+			"Submitting public key for member %s, group %s\n",
+			member.MemberID(),
+			"test",
+		)
 	}
 
 	<-ctx.Done()
