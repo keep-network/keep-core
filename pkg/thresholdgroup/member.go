@@ -524,15 +524,15 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 // with a share of the private key.
 //
 // Returns an error if, during finalization, the final set of qualified members
-// (including this member) is less than the `dishonestThreshold`.
+// (including this member) is less than the `dishonestThreshold+1`.
 func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
 
 	// Note: this member is counted as a qualified member.
-	if len(jm.receivedShares) < jm.dishonestThreshold-1 {
+	if len(jm.receivedShares) < jm.dishonestThreshold {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
-			jm.dishonestThreshold,
+			jm.dishonestThreshold+1,
 			len(jm.receivedShares)+1,
 		)
 	}
