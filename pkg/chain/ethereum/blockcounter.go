@@ -71,26 +71,27 @@ func (ebc *ethereumBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) 
 // waited on a message will be sent.
 func (ebc *ethereumBlockCounter) receiveBlocks() {
 	for block := range ebc.subscriptionChannel {
-		if topBlockNumber, err := strconv.ParseInt(block.Number, 0, 64); err == nil {
-			if err != nil {
-				fmt.Printf("Error: %s\n", err)
-			}
-			latestBlockNumber := int(topBlockNumber)
-			if latestBlockNumber == ebc.latestBlockHeight {
-				continue
-			}
+		topBlockNumber, err := strconv.ParseInt(block.Number, 0, 32)
+		if err != nil {
+			// FIXME Consider the right thing to do here.
+			fmt.Printf("Error receiving a new block: %v", err)
+		}
 
-			for unseenBlockNumber := ebc.latestBlockHeight; unseenBlockNumber <= latestBlockNumber; unseenBlockNumber++ {
-				ebc.structMutex.Lock()
-				height := ebc.latestBlockHeight
-				ebc.latestBlockHeight++
-				waiters := ebc.waiters[height]
-				delete(ebc.waiters, height)
-				ebc.structMutex.Unlock()
+		latestBlockNumber := int(topBlockNumber)
+		if latestBlockNumber == ebc.latestBlockHeight {
+			continue
+		}
 
-				for _, waiter := range waiters {
-					go func(w chan int) { w <- height }(waiter)
-				}
+		for unseenBlockNumber := ebc.latestBlockHeight; unseenBlockNumber <= latestBlockNumber; unseenBlockNumber++ {
+			ebc.structMutex.Lock()
+			height := ebc.latestBlockHeight
+			ebc.latestBlockHeight++
+			waiters := ebc.waiters[height]
+			delete(ebc.waiters, height)
+			ebc.structMutex.Unlock()
+
+			for _, waiter := range waiters {
+				go func(w chan int) { w <- height }(waiter)
 			}
 		}
 	}
