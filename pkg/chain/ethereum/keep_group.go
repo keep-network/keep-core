@@ -28,7 +28,9 @@ type keepGroup struct {
 func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	contractAddressHex, exists := pv.config.ContractAddresses["KeepGroupImplV1"]
 	if !exists {
-		return nil, fmt.Errorf("no address information for 'KeepGroup' in configuration")
+		return nil, fmt.Errorf(
+			"no address information for 'KeepGroup' in configuration",
+		)
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
 
@@ -148,10 +150,17 @@ func (kg *keepGroup) GroupSize() (int, error) {
 
 // GetGroupMemberPubKey returns the public key for group number i at location
 // in group j.
-func (kg *keepGroup) GetGroupMemberPubKey(groupIndex, memberIndex int) ([]byte, error) {
+func (kg *keepGroup) GetGroupMemberPubKey(
+	groupIndex,
+	memberIndex int,
+) ([]byte, error) {
 	groupIndexBig := big.NewInt(int64(groupIndex))
 	memberIndexBig := big.NewInt(int64(memberIndex))
-	groupMemberKey, err := kg.caller.GetGroupMemberPubKey(kg.callerOpts, groupIndexBig, memberIndexBig)
+	groupMemberKey, err := kg.caller.GetGroupMemberPubKey(
+		kg.callerOpts,
+		groupIndexBig,
+		memberIndexBig,
+	)
 	if err != nil {
 		return nil, err
 	}

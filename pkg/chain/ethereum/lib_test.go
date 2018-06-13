@@ -38,12 +38,18 @@ func TestToByte32(t *testing.T) {
 			expectedError: nil,
 		},
 		"test too short, only 12 long": {
-			nOfBytes:      12,
-			expectedError: fmt.Errorf("cannot convert slice of length %d to [32]byte, must be of length 32", 12),
+			nOfBytes: 12,
+			expectedError: fmt.Errorf(
+				"cannot convert slice of length %d to [32]byte, must be of length 32",
+				12,
+			),
 		},
 		"test too long, more than 32 length": {
-			nOfBytes:      42,
-			expectedError: fmt.Errorf("cannot convert slice of length %d to [32]byte, must be of length 32", 42),
+			nOfBytes: 42,
+			expectedError: fmt.Errorf(
+				"cannot convert slice of length %d to [32]byte, must be of length 32",
+				42,
+			),
 		},
 	}
 	var b []byte
@@ -51,7 +57,10 @@ func TestToByte32(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			if test.nOfBytes < 3 {
-				t.Fatalf("Test data incorrect, must be length 3 or more, have %d", test.nOfBytes)
+				t.Fatalf(
+					"Test data incorrect, must be length 3 or more, have %d",
+					test.nOfBytes,
+				)
 			}
 			b = make([]byte, test.nOfBytes, test.nOfBytes)
 			b[0] = 'a'
