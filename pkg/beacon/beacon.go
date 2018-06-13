@@ -22,7 +22,7 @@ type Config struct {
 // ChainInterface represents the interface that the beacon expects to interact
 // with the anchoring blockchain on.
 type ChainInterface interface {
-	GetConfig() Config
+	GetConfig() (Config, error)
 }
 
 const (

@@ -15,16 +15,19 @@ type localBlockCounter struct {
 
 // WaitForBlocks waits for the specified number of blocks before returning. If
 // the number of blocks is zero or negative, it should return immediately.
-func (counter *localBlockCounter) WaitForBlocks(numBlocks int) {
-	waiter := counter.BlockWaiter(numBlocks)
+func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
+	waiter, err := counter.BlockWaiter(numBlocks)
+	if err != nil {
+		return err
+	}
 	<-waiter
-	return
+	return nil
 }
 
 // BlockWaiter immediately returns a channel that will receive the block number
 // after the specified number of blocks. Reading from the returned channel
 // immediately will effectively behave the same way as calling WaitForBlocks.
-func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
+func (counter *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
 	newWaiter := make(chan int)
 
 	counter.structMutex.Lock()
@@ -42,7 +45,7 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) <-chan int {
 		counter.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
 	}
 
-	return newWaiter
+	return newWaiter, nil
 }
 
 // count is an internal function that counts up time to simulate the generation
@@ -69,10 +72,10 @@ func (counter *localBlockCounter) count() {
 // blockCounter creates a BlockCounter that runs completely locally. It is
 // designed to simply increase block height at a set time interval in the
 // background.
-func blockCounter() chain.BlockCounter {
+func blockCounter() (chain.BlockCounter, error) {
 	counter := localBlockCounter{blockHeight: 0, waiters: make(map[int][]chan int)}
 
 	go counter.count()
 
-	return &counter
+	return &counter, nil
 }

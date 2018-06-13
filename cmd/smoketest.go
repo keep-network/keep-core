@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strings"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
@@ -14,15 +15,52 @@ import (
 	"github.com/urfave/cli"
 )
 
-// SmokeTest simulates a DKG with a GroupSize of 10 and Threshold of 4
-func SmokeTest(c *cli.Context) {
+const (
+	defaultGroupSize int = 10
+	defaultThreshold int = 4
+)
 
-	chainHandle := local.Connect()
-	chainCounter := chainHandle.BlockCounter()
+// SmokeTestFlags for group size and threshold settings
+var SmokeTestFlags []cli.Flag
 
-	_ = pb.GossipMessage{}
+func init() {
+	SmokeTestFlags = []cli.Flag{
+		&cli.IntFlag{
+			Name:  "group-size,g",
+			Value: defaultGroupSize,
+		},
+		&cli.IntFlag{
+			Name:  "threshold,t",
+			Value: defaultThreshold,
+		},
+	}
+}
 
-	beaconConfig := chainHandle.RandomBeacon().GetConfig()
+// SmokeTest performs a simulated distributed key generation and verifyies that the members can do a threshold signature
+func SmokeTest(c *cli.Context) error {
+
+	groupSize := c.Int("group-size")
+	threshold := c.Int("threshold")
+	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", groupSize, threshold))
+
+	chainHandle := local.Connect(groupSize, threshold)
+	chainCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to run setup chainHandle.BlockCounter: [%v].",
+			err,
+		))
+	}
+
+	_ = pb.Envelope{}
+
+	beaconConfig, err := chainHandle.RandomBeacon().GetConfig()
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to run get configuration: [%v].",
+			err,
+		))
+	}
 
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
@@ -99,4 +137,10 @@ func SmokeTest(c *cli.Context) {
 		)
 	}
 
+	return nil
+}
+
+func header(header string) {
+	dashes := strings.Repeat("-", len(header))
+	fmt.Printf("\n%s\n%s\n%s\n", dashes, header, dashes)
 }

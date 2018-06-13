@@ -37,6 +37,7 @@
 [[override]]
   name = "github.com/libp2p/go-floodsub"
   revision = "10eaec55ad0fe58b2fb77cbaf01a3760eb8c211b"
+  source = "https://github.com/keep-network/go-floodsub.git"
 
 [[override]]
   name = "github.com/multiformats/go-multihash"

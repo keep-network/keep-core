@@ -400,10 +400,12 @@ func (sm *SharingMember) isValidShareFor(
 	share *bls.SecretKey,
 ) bool {
 	commitments := sm.commitments[*shareSenderID]
+	// Empty commitments cause `Set` below to panic, so quit early.
+	if len(commitments) <= 0 {
+		return false
+	}
 
 	combinedCommitment := bls.PublicKey{}
-	// FIXME This can panic, let's rescue it and return false since it means a
-	// FIXME completely broken share.
 	combinedCommitment.Set(commitments, shareReceiverID)
 
 	comparisonShare := share.GetPublicKey()
@@ -530,7 +532,8 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	}
 
 	// [GJKR 99], Fig 2, 3
-	groupSecretKeyShare := jm.SecretShareForID(&jm.BlsID)
+	groupSecretKeyShare := &bls.SecretKey{}
+	groupSecretKeyShare.SetLittleEndian(jm.SecretShareForID(&jm.BlsID).GetLittleEndian())
 	for _, share := range jm.receivedShares {
 		groupSecretKeyShare.Add(share)
 	}

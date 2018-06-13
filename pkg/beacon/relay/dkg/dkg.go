@@ -40,9 +40,19 @@ func ExecuteDKG(
 	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
 	}
 	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
+
+	var (
+		currentState, pendingState keyGenerationState
+		blockWaiter                <-chan int
+	)
+
 	localMember, err := thresholdgroup.NewMember(memberID, threshold, groupSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize member: [%v]", err)
+		return nil, fmt.Errorf(
+			"in state [%T], failed to initialize block wait: [%v]",
+			currentState,
+			err,
+		)
 	}
 
 	// Use an unbuffered channel to serialize message processing.
@@ -51,11 +61,6 @@ func ExecuteDKG(
 		recvChan <- msg
 		return nil
 	})
-
-	var (
-		currentState, pendingState keyGenerationState
-		blockWaiter                <-chan int
-	)
 
 	stateTransition := func() error {
 		fmt.Printf(
@@ -76,7 +81,14 @@ func ExecuteDKG(
 		currentState = pendingState
 		pendingState = nil
 
-		blockWaiter = blockCounter.BlockWaiter(currentState.activeBlocks())
+		blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
+		if err != nil {
+			return fmt.Errorf(
+				"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
+				currentState,
+				err,
+			)
+		}
 
 		fmt.Printf(
 			"[member:%v, state:%T] Transitioned to new state.\n",

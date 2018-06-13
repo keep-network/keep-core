@@ -46,12 +46,16 @@ ENV GOPATH=/go \
 RUN apk add --update --no-cache \
 	g++ \
 	protobuf \
-	git && \
+	git \
+	make \
+	nodejs \
+	python && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
 COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
+COPY --from=ethereum/solc:0.4.21 /usr/bin/solc /usr/bin/solc
 
 RUN mkdir -p $APP_DIR
 
@@ -62,7 +66,14 @@ RUN go get -u github.com/gogo/protobuf/protoc-gen-gogoslick github.com/golang/de
 COPY ./Gopkg.toml ./Gopkg.lock ./
 RUN dep ensure -v --vendor-only
 
+RUN go get github.com/ethereum/go-ethereum/cmd/abigen
+RUN go install github.com/ethereum/go-ethereum/cmd/abigen
+
+COPY ./contracts/solidity $APP_DIR/contracts/solidity
+RUN cd $APP_DIR/contracts/solidity && npm install
+
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
+COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
 RUN go generate ./.../gen
 
@@ -78,7 +89,7 @@ COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
 # ENTRYPOINT cant handle ENV variables.
-ENTRYPOINT ["keep-client", "-config",  "/keepclient/config.toml"]
+ENTRYPOINT ["keep-client", "-config", "/keepclient/config.toml"]
 
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
