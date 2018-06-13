@@ -8,19 +8,19 @@ import (
 func TestPromise2(t *testing.T) {
 	done := make(chan bool)
 
-	promise := newPromise()
+	promise := NewPromise()
 
-	promise.onSuccess(func(in interface{}) {
+	promise.OnSuccess(func(in interface{}) {
 		fmt.Printf("Got %v\n", in)
 		done <- true
 	})
 
-	promise.onFailure(func(err error) {
+	promise.OnFailure(func(err error) {
 		fmt.Printf("Got error %v\n", err)
 		done <- true
 	})
 
-	err := promise.fulfill("dupa")
+	err := promise.Fulfill("dupa")
 	if err != nil {
 		t.Fatal(err)
 	}
