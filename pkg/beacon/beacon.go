@@ -1,17 +1,19 @@
 package beacon
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/net"
 )
 
 type participantState int
-
-// FIXME To become something more real...
-type libp2pHandle int
 
 const (
 	unstaked participantState = iota
@@ -25,34 +27,69 @@ const (
 	inActiveGroup
 )
 
-func initialize() {
-	if curParticipantState, err := checkParticipantState(); err != nil {
-		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
-	} else {
-		switch curParticipantState {
-		case unstaked:
-			// check for stake command-line parameter to initialize staking?
-		default:
-			// connect to libp2p
-		}
+// Initialize kicks off the random beacon by initializing internal state,
+// ensuring preconditions like staking are met, and then kicking off the
+// internal random beacon implementation. Returns an error if this failed,
+// otherwise enters a blocked loop.
+func Initialize(
+	ctx context.Context,
+	relayChain relay.ChainInterface,
+	blockCounter chain.BlockCounter,
+	netProvider net.Provider,
+) error {
+	chainConfig, err := relayChain.GetConfig()
+	if err != nil {
+		return err
 	}
+
+	channel, err := netProvider.ChannelFor("test")
+	if err != nil {
+		return err
+	}
+
+	curParticipantState, err := checkParticipantState()
+	if err != nil {
+		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
+	}
+
+	switch curParticipantState {
+	case unstaked:
+		// check for stake command-line parameter to initialize staking?
+		return fmt.Errorf("account is unstaked")
+	default:
+		member, err := dkg.ExecuteDKG(
+			blockCounter,
+			channel,
+			chainConfig.GroupSize,
+			chainConfig.Threshold,
+		)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf(member.MemberID())
+	}
+
+	<-ctx.Done()
+
+	return nil
 }
 
 func checkParticipantState() (participantState, error) {
+	return staked, nil
+}
+
+func checkChainParticipantState(relayChain relay.ChainInterface) (participantState, error) {
+	// FIXME Zero in on the participant's current state per the chain.
+	fmt.Println(relayChain)
+
+	// FIXME This will return a real chain-based state: are we staked? What
+	// FIXME groups are we in already, if any?
 	return unstaked, nil
 }
 
-func checkNetworkParticipantState(handle libp2pHandle) (participantState, error) {
-	// FIXME This will be a real handle, and we will do something real with it.
-	fmt.Println(handle)
-
-	// FIXME This will return a real libp2p-based state: are we waiting for a
-	// group, in an incomplete one, in a complete one, etc.
-	return unstaked, nil
-}
-
-func libp2pConnected(handle libp2pHandle) {
-	if participantState, err := checkNetworkParticipantState(handle); err != nil {
+func libp2pConnected(relayChain relay.ChainInterface, handle chain.Handle) {
+	if participantState, err := checkChainParticipantState(relayChain); err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
 	} else {
 		switch participantState {
