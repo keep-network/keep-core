@@ -148,10 +148,10 @@ func (kg *keepGroup) GroupSize() (int, error) {
 
 // GetGroupMemberPubKey returns the public key for group number i at location
 // in group j.
-func (kg *keepGroup) GetGroupMemberPubKey(i, j int) ([]byte, error) {
-	iBig := big.NewInt(int64(i))
-	jBig := big.NewInt(int64(j))
-	groupMemberKey, err := kg.caller.GetGroupMemberPubKey(kg.callerOpts, iBig, jBig)
+func (kg *keepGroup) GetGroupMemberPubKey(groupIndex, memberIndex int) ([]byte, error) {
+	groupIndexBig := big.NewInt(int64(groupIndex))
+	memberIndexBig := big.NewInt(int64(memberIndex))
+	groupMemberKey, err := kg.caller.GetGroupMemberPubKey(kg.callerOpts, groupIndexBig, memberIndexBig)
 	if err != nil {
 		return nil, err
 	}
