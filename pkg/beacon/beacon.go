@@ -13,18 +13,6 @@ type participantState int
 // FIXME To become something more real...
 type libp2pHandle int
 
-// Config contains the config data needed for the beacon to operate.
-type Config struct {
-	GroupSize int
-	Threshold int
-}
-
-// ChainInterface represents the interface that the beacon expects to interact
-// with the anchoring blockchain on.
-type ChainInterface interface {
-	GetConfig() (Config, error)
-}
-
 const (
 	unstaked participantState = iota
 	staked
