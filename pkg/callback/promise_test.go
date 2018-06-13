@@ -5,12 +5,25 @@ import (
 	"testing"
 )
 
-func TestPromise(t *testing.T) {
-	Execute(func() (interface{}, error) {
-		return "a", nil
-	}).Then(func(in interface{}) (interface{}, error) {
-		return in.(string) + "b", nil
-	}).OnSuccess(func(in interface{}) {
+func TestPromise2(t *testing.T) {
+	done := make(chan bool)
+
+	promise := newPromise()
+
+	promise.onSuccess(func(in interface{}) {
 		fmt.Printf("Got %v\n", in)
+		done <- true
 	})
+
+	promise.onFailure(func(err error) {
+		fmt.Printf("Got error %v\n", err)
+		done <- true
+	})
+
+	err := promise.fulfill("dupa")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	<-done
 }
