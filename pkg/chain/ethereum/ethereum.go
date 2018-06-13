@@ -22,12 +22,12 @@ func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
 func (ec *ethereumChain) GetConfig() (beacon.Config, error) {
 	size, err := ec.keepGroupContract.GroupSize()
 	if err != nil {
-		return beacon.Config{}, fmt.Errorf("error calling GroupSize: %s\n", err)
+		return beacon.Config{}, fmt.Errorf("error calling GroupSize: [%v]", err)
 	}
 
 	threshold, err := ec.keepGroupContract.GroupThreshold()
 	if err != nil {
-		return beacon.Config{}, fmt.Errorf("error calling GroupThreshold: %s\n", err)
+		return beacon.Config{}, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
 	return beacon.Config{

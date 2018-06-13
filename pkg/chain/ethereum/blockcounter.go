@@ -140,7 +140,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	if err != nil {
 		return nil,
 			fmt.Errorf(
-				"failed to get initial block from the chain: [%s]",
+				"failed to get initial block from the chain: [%v]",
 				err,
 			)
 	}
@@ -149,7 +149,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	if err != nil {
 		return nil,
 			fmt.Errorf(
-				"failed to get initial number of blocks from the chain, %s",
+				"failed to get initial number of blocks from the chain [%v]",
 				err,
 			)
 	}

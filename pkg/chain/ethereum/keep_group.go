@@ -27,17 +27,19 @@ type keepGroup struct {
 // for accessing the KeepGroup contract.
 func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	// Proxy Address
-	contractAddressHex, ok := pv.config.ContractAddresses["KeepGroupImplV1"]
-	if !ok {
-		return nil, fmt.Errorf("Error: no address information for 'KeepGroup' in configuration\n")
+	contractAddressHex, exists := pv.config.ContractAddresses["KeepGroupImplV1"]
+	if !exists {
+		return nil, fmt.Errorf("no address information for 'KeepGroup' in configuration")
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
 
-	groupTransactor, err := gen.NewKeepGroupImplV1Transactor(contractAddress,
-		pv.client)
+	groupTransactor, err := gen.NewKeepGroupImplV1Transactor(
+		contractAddress,
+		pv.client,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to instantiate a KeepRelayBeaconTranactor contract: %s",
+			"failed to instantiate a KeepRelayBeaconTranactor contract: [%v]",
 			err,
 		)
 	}
@@ -45,9 +47,9 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	file, err := os.Open(pv.config.Account.KeyFile)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to open keyfile: %s, %s",
-			err,
+			"failed to open keyfile %s: [%v]",
 			pv.config.Account.KeyFile,
+			err,
 		)
 	}
 
@@ -57,16 +59,16 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to read keyfile: %s, %s",
-			err,
+			"failed to read keyfile: %s: [%v]",
 			pv.config.Account.KeyFile,
+			err,
 		)
 	}
 
 	groupCaller, err := gen.NewKeepGroupImplV1Caller(contractAddress, pv.client)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to instantiate a KeepRelayBeaconCaller contract: %s",
+			"failed to instantiate a KeepRelayBeaconCaller contract: [%v]",
 			err,
 		)
 	}
@@ -77,10 +79,10 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 		Context: nil,
 	}
 
-	krbContract, err := gen.NewKeepGroupImplV1(contractAddress, pv.client)
+	groupContract, err := gen.NewKeepGroupImplV1(contractAddress, pv.client)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to instantiate contract object: %s at address: %s",
+			"failed to instantiate contract object: %s at address: [%v]",
 			err,
 			contractAddressHex,
 		)
@@ -92,7 +94,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 		transactorOpts:  optsTransactor,
 		caller:          groupCaller,
 		callerOpts:      optsCaller,
-		contract:        krbContract,
+		contract:        groupContract,
 		contractAddress: contractAddress,
 	}, nil
 }
@@ -176,115 +178,115 @@ func (kg *keepGroup) IsMember(
 	)
 }
 
-// groupCompleteEvent defines the function that is called upon
+// groupCompleteEventFunc defines the function that is called upon
 // group completion
-type groupCompleteEvent func(groupPubKey []byte)
+type groupCompleteEventFunc func(groupPubKey []byte)
 
 // WatchGroupCompleteEvent create a watch for the group completion event
 func (kg *keepGroup) WatchGroupCompleteEvent(
-	success groupCompleteEvent,
+	success groupCompleteEventFunc,
 	fail errorCallback,
 ) error {
 	name := "GroupCompleteEvent"
-	sink := make(chan *gen.KeepGroupImplV1GroupCompleteEvent, 10)
-	event, err := kg.contract.WatchGroupCompleteEvent(nil, sink)
+	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
+	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for [%s] events [%s]", name, err)
+		return fmt.Errorf("error creating watch for %s events [%v]", name, err)
 	}
 	go func() {
 		for {
 			select {
-			case rn := <-sink:
-				success(rn.GroupPubKey[:])
+			case event := <-eventChan:
+				success(event.GroupPubKey[:])
 
-			case ee := <-event.Err():
-				fail(ee)
+			case err := <-eventSubscription.Err():
+				fail(err)
 			}
 		}
 	}()
 	return nil
 }
 
-// groupErrorCode defines a function to watch for errors
-type groupErrorCode func(Code uint8)
+// groupErrorCodeFunc defines a function to watch for errors
+type groupErrorCodeFunc func(Code uint8)
 
 // WatchGroupErrorCode creates a watch for the GroupErrorCode event
 func (kg *keepGroup) WatchGroupErrorCode(
-	success groupErrorCode,
+	success groupErrorCodeFunc,
 	fail errorCallback,
 ) error {
 	name := "GroupErrorCode"
-	sink := make(chan *gen.KeepGroupImplV1GroupErrorCode, 10)
-	event, err := kg.contract.WatchGroupErrorCode(nil, sink)
+	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
+	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("Error creating watch for %s events: %s", name, err)
+		return fmt.Errorf("failed go create watch for %s events: [%v]", name, err)
 	}
 	go func() {
 		for {
 			select {
-			case rn := <-sink:
-				success(rn.Code)
+			case event := <-eventChan:
+				success(event.Code)
 
-			case ee := <-event.Err():
-				fail(ee)
+			case err := <-eventSubscription.Err():
+				fail(err)
 			}
 		}
 	}()
 	return nil
 }
 
-// groupExistsEvent defines the function that is called when creating
+// groupExistsEventFunc defines the function that is called when creating
 // a group.  Exists is true when the group already exists.
-type groupExistsEvent func(groupPubKey []byte, Exists bool)
+type groupExistsEventFunc func(groupPubKey []byte, Exists bool)
 
 // WatchGroupExistsEvent watches for the GroupExists event.
 func (kg *keepGroup) WatchGroupExistsEvent(
-	success groupExistsEvent,
+	success groupExistsEventFunc,
 	fail errorCallback,
 ) error {
 	name := "GroupExistsEvent"
-	sink := make(chan *gen.KeepGroupImplV1GroupExistsEvent, 10)
-	event, err := kg.contract.WatchGroupExistsEvent(nil, sink)
+	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
+	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for [%s] events [%s]", name, err)
+		return fmt.Errorf("error creating watch for %s events [%v]", name, err)
 	}
 	go func() {
 		for {
 			select {
-			case rn := <-sink:
-				success(rn.GroupPubKey[:], rn.Exists)
+			case event := <-eventChan:
+				success(event.GroupPubKey[:], event.Exists)
 
-			case ee := <-event.Err():
-				fail(ee)
+			case err := <-eventSubscription.Err():
+				fail(err)
 			}
 		}
 	}()
 	return nil
 }
 
-// groupStartedEvent defiens the function that is called when
+// groupStartedEventFunc defiens the function that is called when
 // watching for started groups.
-type groupStartedEvent func(groupPubKey []byte)
+type groupStartedEventFunc func(groupPubKey []byte)
 
 // WatchGroupStartedEvent watch for GroupStartedEvent
 func (kg *keepGroup) WatchGroupStartedEvent(
-	success groupStartedEvent,
+	success groupStartedEventFunc,
 	fail errorCallback,
 ) error {
 	name := "GroupStartedEvent"
-	sink := make(chan *gen.KeepGroupImplV1GroupStartedEvent, 10)
-	event, err := kg.contract.WatchGroupStartedEvent(nil, sink)
+	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
+	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for [%s] events [%s]", name, err)
+		return fmt.Errorf("error creating watch for %s events [%v]", name, err)
 	}
 	go func() {
 		for {
 			select {
-			case rn := <-sink:
-				success(rn.GroupPubKey[:])
+			case event := <-eventChan:
+				success(event.GroupPubKey[:])
 
-			case ee := <-event.Err():
-				fail(ee)
+			case err := <-eventSubscription.Err():
+				fail(err)
 			}
 		}
 	}()

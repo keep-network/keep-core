@@ -37,7 +37,7 @@ func SliceOf1ByteToByteSlice(in [][1]byte) (rv []byte) {
 // ToByte32 convert from byte slice to fixed length array of 32 long
 func ToByte32(in []byte) (tmp [32]byte, err error) {
 	if len(in) != 32 {
-		return tmp, fmt.Errorf("Invalid length slice, must be 32 long")
+		return tmp, fmt.Errorf("invalid length slice, must be 32 long")
 	}
 	for i := 0; i < len(in); i++ {
 		tmp[i] = in[i]

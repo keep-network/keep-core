@@ -36,6 +36,6 @@ func TestToByte32(t *testing.T) {
 	rv, err := ToByte32(b)
 	_ = err
 	if len(rv) != 32 {
-		t.Errorf("Expected length of 32 got %d\n", len(rv))
+		t.Errorf("expected length of 32 got %d\n", len(rv))
 	}
 }

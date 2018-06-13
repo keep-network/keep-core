@@ -30,22 +30,28 @@ type ethereumChain struct {
 func Connect(cfg Config) (chain.Handle, error) {
 	client, err := ethclient.Dial(cfg.URL)
 	if err != nil {
-		return nil, fmt.Errorf("error Connecting to Geth Server: %s server %s",
-			err, cfg.URL)
+		return nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			cfg.URL,
+			err,
+		)
 	}
 
 	clientws, err := rpc.Dial(cfg.URL)
 	if err != nil {
-		return nil, fmt.Errorf("error Connecting to Geth Server: %s server %s",
-			err, cfg.URL)
+		return nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			cfg.URL,
+			err,
+		)
 	}
 
 	clientrpc, err := rpc.Dial(cfg.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s server %s",
-			err,
+			"error Connecting to Geth Server: %s [%v]",
 			cfg.URL,
+			err,
 		)
 	}
 
