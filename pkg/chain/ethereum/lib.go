@@ -6,9 +6,9 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-// byteSliceToSliceoF1Byte convert from slice to slice of arrays of 1
+// byteSliceToSliceOf1Byte convert from slice to slice of arrays of 1
 // long bytes.
-func byteSliceToSliceoF1Byte(in []byte) (rv [][1]byte) {
+func byteSliceToSliceOf1Byte(in []byte) (rv [][1]byte) {
 	if len(in) == 0 {
 		rv = make([][1]byte, 0, 1)
 		return
@@ -20,7 +20,7 @@ func byteSliceToSliceoF1Byte(in []byte) (rv [][1]byte) {
 	return
 }
 
-// sliceOf1ByteToByteSlice convert form solidity type, slice of 1 long
+// sliceOf1ByteToByteSlice convert from solidity type, slice of 1 long
 // array of bytes to byte slice.
 func sliceOf1ByteToByteSlice(in [][1]byte) (rv []byte) {
 	if len(in) == 0 {
@@ -48,8 +48,8 @@ func toByte32(in []byte) (tmp [32]byte, err error) {
 	return
 }
 
-// errorCallback is the function that is call when an error occures in a
-// callback.
+// errorCallback is the function that is called when an error occurs
+// in a callback.
 type errorCallback func(err error) (eout error)
 
 // sum256 returns the SHA3-256 digest of the data.
