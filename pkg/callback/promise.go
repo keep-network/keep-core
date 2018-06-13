@@ -15,8 +15,7 @@ type Promise struct {
 }
 
 // NewPromise creates a new, uncompleted Promise instance with
-// no success or failure callback configured. You need to install
-// those callbacks before you fail or fulfill the Promise.
+// no success or failure callback configured.
 func NewPromise() *Promise {
 	return &Promise{
 		isComplete: false,
@@ -42,41 +41,39 @@ func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 }
 
 // Fulfill can happen only once for a Promise and it results in calling
-// the OnSuccess callback. If Promise has been already completed by either
-// fulfilling or failing, this function reports an error. If no OnSuccess
-// callback has been registered for a Promise, error is reported as well.
+// the OnSuccess callback, if registered. If Promise has been already
+// completed by either fulfilling or failing, this function reports
+// an error.
 func (p *Promise) Fulfill(value interface{}) error {
 	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
 
-	if p.successFn == nil {
-		return fmt.Errorf("success callback not registered")
+	p.isComplete = true
+	if p.successFn != nil {
+		go func() {
+			p.successFn(value)
+		}()
 	}
 
-	p.isComplete = true
-	go func() {
-		p.successFn(value)
-	}()
 	return nil
 }
 
 // Fail can happen only once for a Promise and it results in calling
-// the OnFailure callback. If Promise has been already completed by either
-// fulfilling or failing, this function reports an error. If no OnFailure
-// callback has been registered for a Promise, error is reported as well.
+// the OnFailure callback, if registered. If Promise has been already
+// completed by either fulfilling or failing, this function reports
+// an error.
 func (p *Promise) Fail(err error) error {
 	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
 
-	if p.failureFn == nil {
-		return fmt.Errorf("failure callback not registered")
+	p.isComplete = true
+	if p.failureFn != nil {
+		go func() {
+			p.failureFn(err)
+		}()
 	}
 
-	p.isComplete = true
-	go func() {
-		p.failureFn(err)
-	}()
 	return nil
 }
