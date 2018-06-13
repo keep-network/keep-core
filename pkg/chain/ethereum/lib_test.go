@@ -37,7 +37,7 @@ func TestToByte32(t *testing.T) {
 			nOfBytes:      32,
 			expectedError: nil,
 		},
-		"test to short, only 12 long": {
+		"test too short, only 12 long": {
 			nOfBytes:      12,
 			expectedError: fmt.Errorf("cannot convert slice of length %d to [32]byte, must be of length 32", 12),
 		},
@@ -46,7 +46,6 @@ func TestToByte32(t *testing.T) {
 			expectedError: fmt.Errorf("cannot convert slice of length %d to [32]byte, must be of length 32", 42),
 		},
 	}
-
 	var b []byte
 
 	for testName, test := range tests {
@@ -62,17 +61,19 @@ func TestToByte32(t *testing.T) {
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf("\nexpected: %v\nactual:   %v", test.expectedError, err)
 			}
-			if len(rv) != 32 {
-				t.Errorf("\nexpected: 32 \nactual:   %d", len(rv))
-			}
-			if rv[0] != 'a' {
-				t.Errorf("\nexpected: 'a' \nactual:   %v", rv[0])
-			}
-			if rv[1] != 'b' {
-				t.Errorf("\nexpected: 'b' \nactual:   %v", rv[1])
-			}
-			if rv[2] != 'c' {
-				t.Errorf("\nexpected: 'c' \nactual:   %v", rv[2])
+			if test.expectedError == nil {
+				if len(rv) != 32 {
+					t.Errorf("\nexpected: 32 \nactual:   %d", len(rv))
+				}
+				if rv[0] != 'a' {
+					t.Errorf("\nexpected: 'a' \nactual:   %v", rv[0])
+				}
+				if rv[1] != 'b' {
+					t.Errorf("\nexpected: 'b' \nactual:   %v", rv[1])
+				}
+				if rv[2] != 'c' {
+					t.Errorf("\nexpected: 'c' \nactual:   %v", rv[2])
+				}
 			}
 		})
 	}
