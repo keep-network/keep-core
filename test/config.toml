@@ -3,7 +3,8 @@
 # Provider Initialization Example
 
 [ethereum]
-	URL                = "ws://192.168.0.157:8546"
+	URL                = "ws://192.168.0.158:8546"
+	URLRPC             = "http://192.168.0.158:8545"
 
 [ethereum.account]
 	Address            = "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"

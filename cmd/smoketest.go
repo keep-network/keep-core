@@ -44,11 +44,23 @@ func SmokeTest(c *cli.Context) error {
 	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", groupSize, threshold))
 
 	chainHandle := local.Connect(groupSize, threshold)
-	chainCounter := chainHandle.BlockCounter()
+	chainCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to run setup chainHandle.BlockCounter: [%v].",
+			err,
+		))
+	}
 
 	_ = pb.Envelope{}
 
-	beaconConfig := chainHandle.RandomBeacon().GetConfig()
+	beaconConfig, err := chainHandle.RandomBeacon().GetConfig()
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to run get configuration: [%v].",
+			err,
+		))
+	}
 
 	memberChannel := make(chan *thresholdgroup.Member)
 	for i := 0; i < beaconConfig.GroupSize; i++ {
