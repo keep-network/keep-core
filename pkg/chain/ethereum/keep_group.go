@@ -26,7 +26,6 @@ type keepGroup struct {
 // NewKeepGroup creates the necessary connections and configurations
 // for accessing the KeepGroup contract.
 func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
-	// Proxy Address
 	contractAddressHex, exists := pv.config.ContractAddresses["KeepGroupImplV1"]
 	if !exists {
 		return nil, fmt.Errorf("no address information for 'KeepGroup' in configuration")
@@ -109,7 +108,7 @@ func (kg *keepGroup) Initialized() (bool, error) {
 func (kg *keepGroup) DissolveGroup(
 	groupPubKey []byte,
 ) (*types.Transaction, error) {
-	groupPubKeyArray, err := ToByte32(groupPubKey)
+	groupPubKeyArray, err := toByte32(groupPubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +119,7 @@ func (kg *keepGroup) DissolveGroup(
 func (kg *keepGroup) CreateGroup(
 	groupPubKey []byte,
 ) (*types.Transaction, error) {
-	groupPubKeyArray, err := ToByte32(groupPubKey)
+	groupPubKeyArray, err := toByte32(groupPubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -163,11 +162,11 @@ func (kg *keepGroup) GetGroupMemberPubKey(i, j int) ([]byte, error) {
 func (kg *keepGroup) IsMember(
 	groupPubKey, memberPubKey []byte,
 ) (bool, error) {
-	groupPubKeyArray, err := ToByte32(groupPubKey)
+	groupPubKeyArray, err := toByte32(groupPubKey)
 	if err != nil {
 		return false, err
 	}
-	memberPubKeyArray, err := ToByte32(memberPubKey)
+	memberPubKeyArray, err := toByte32(memberPubKey)
 	if err != nil {
 		return false, err
 	}
