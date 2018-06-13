@@ -10,21 +10,21 @@ type Promise struct {
 	failure error
 }
 
-// OnComplete registers an onComplete callback that is called when the Promise
-// execution has completed successfuly. In case of a failure, OnComplete
-// callback is not called at all. OnComplete is a non-blocking operation.
-func (p *Promise) OnComplete(onComplete func(interface{})) {
-	p.successFn = onComplete
+// OnSuccess registers an onComplete callback that is called when the Promise
+// execution has completed successfuly. In case of a failure, onSuccess
+// callback is not called at all. OnSuccess is a non-blocking operation.
+func (p *Promise) OnSuccess(onSuccess func(interface{})) {
+	p.successFn = onSuccess
 
 	// TODO: Dirty hack, just for now; if result is ready, call the function
 	if p.result != nil {
-		onComplete(p.result)
+		onSuccess(p.result)
 	}
 }
 
 // OnFailure registers an onFailure callback that is called when the Promise
 // execution failed at any point. In case of a successful Promise execution
-// OnFailure callback is not called at all. OnFailure is a non-blocking operation.
+// onFailure callback is not called at all. OnFailure is a non-blocking operation.
 func (p *Promise) OnFailure(onFailure func(interface{})) {
 	p.failureFn = onFailure
 
