@@ -162,7 +162,10 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	}
 
 	go blockCounter.receiveBlocks()
-	blockCounter.subscribeBlocks()
+	err = blockCounter.subscribeBlocks()
+	if err != nil {
+		return nil, fmt.Errorf("failed to subscribe to new blocks: [%v]", err)
+	}
 
 	return blockCounter, nil
 }
