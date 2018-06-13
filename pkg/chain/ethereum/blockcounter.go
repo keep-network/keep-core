@@ -10,6 +10,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+const (
+	// Subscription identifier to receive blocks as they are mined.
+	newHeadsSubscription = "newHeads"
+	// RPC call identifier to get a block's information given its number.
+	getBlockByNumber = "eth_getBlockByNumber"
+	// RPC call parameter to reference the latest block rather than a particular
+	// number.
+	latestBlock = "latest"
+)
+
 type ethereumBlockCounter struct {
 	structMutex         sync.Mutex
 	latestBlockHeight   int
@@ -95,7 +105,7 @@ func (ebc *ethereumBlockCounter) subscribeBlocks() error {
 	_, err := ebc.config.clientWS.EthSubscribe(
 		subscribeContext,
 		ebc.subscriptionChannel,
-		"newHeads",
+		newHeadsSubscription,
 	)
 	if err != nil {
 		return err
@@ -104,8 +114,8 @@ func (ebc *ethereumBlockCounter) subscribeBlocks() error {
 	var lastBlock block
 	err = ebc.config.clientRPC.Call(
 		&lastBlock,
-		"eth_getBlockByNumber",
-		"latest",
+		getBlockByNumber,
+		latestBlock,
 		true,
 	)
 	if err != nil {
@@ -122,8 +132,8 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	var startupBlock block
 	err := ec.clientRPC.Call(
 		&startupBlock,
-		"eth_getBlockByNumber",
-		"latest",
+		getBlockByNumber,
+		latestBlock,
 		true,
 	)
 	if err != nil {
