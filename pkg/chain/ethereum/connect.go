@@ -17,20 +17,12 @@ type ethereumChain struct {
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
 	requestID                        *big.Int
-	kg                               *KeepGroup
+	keepGroupContract                *keepGroup
 	tx                               *types.Transaction
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(groupID string, errorMessage string)
 	groupPublicKeySubmissionHandlers []func(groupID string, activationBlock *big.Int)
 }
-
-//func (ec *ethereumChain) RandomBeacon() beacon.ChainInterface {
-//	return nil
-//}
-
-//func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
-//	return nil
-//}
 
 // Connect makes the network connection to the Ethereum network.  Note: for
 // other things to work correctly the configuration will need to reference a
