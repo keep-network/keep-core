@@ -174,8 +174,7 @@ class Main extends Component {
       const withdrawal = await stakingContract.getWithdrawal(withdrawalId);
       const withdrawalAmount = displayAmount(withdrawal[1], 18, 3);
       withdrawalsTotal += withdrawal[1].toNumber();
-      const availableAt = moment(withdrawalDelay+withdrawal[2].toNumber()*1000);
-
+      const availableAt = moment(withdrawal[2].toNumber()*1000).add(withdrawalDelay, 'seconds');
       let available = false;
       let now = moment();
       if (now > availableAt) {
