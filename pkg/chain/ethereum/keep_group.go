@@ -12,7 +12,7 @@ import (
 	gen "github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
-// keepGroup connection information for interface to KeepGroup contract
+// keepGroup connection information for interface to KeepGroup contract.
 type keepGroup struct {
 	caller          *gen.KeepGroupImplV1Caller
 	callerOpts      *bind.CallOpts
@@ -148,7 +148,7 @@ func (kg *keepGroup) GroupSize() (int, error) {
 }
 
 // GetGroupMemberPubKey returns the public key for group number i at location
-// in group j
+// in group j.
 func (kg *keepGroup) GetGroupMemberPubKey(i, j int) ([]byte, error) {
 	iBig := big.NewInt(int64(i))
 	jBig := big.NewInt(int64(j))
@@ -159,7 +159,7 @@ func (kg *keepGroup) GetGroupMemberPubKey(i, j int) ([]byte, error) {
 	return groupMemberKey[:], nil
 }
 
-// IsMember returns true if the member is a part of the specified group
+// IsMember returns true if the member is a part of the specified group.
 func (kg *keepGroup) IsMember(
 	groupPubKey, memberPubKey []byte,
 ) (bool, error) {
@@ -179,10 +179,10 @@ func (kg *keepGroup) IsMember(
 }
 
 // groupCompleteEventFunc defines the function that is called upon
-// group completion
+// group completion.
 type groupCompleteEventFunc func(groupPubKey []byte)
 
-// WatchGroupCompleteEvent create a watch for the group completion event
+// WatchGroupCompleteEvent create a watch for the group completion event.
 func (kg *keepGroup) WatchGroupCompleteEvent(
 	success groupCompleteEventFunc,
 	fail errorCallback,
@@ -207,10 +207,10 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 	return nil
 }
 
-// groupErrorCodeFunc defines a function to watch for errors
+// groupErrorCodeFunc defines a function to watch for errors.
 type groupErrorCodeFunc func(Code uint8)
 
-// WatchGroupErrorCode creates a watch for the GroupErrorCode event
+// WatchGroupErrorCode creates a watch for the GroupErrorCode event.
 func (kg *keepGroup) WatchGroupErrorCode(
 	success groupErrorCodeFunc,
 	fail errorCallback,

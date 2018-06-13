@@ -34,7 +34,7 @@ func SliceOf1ByteToByteSlice(in [][1]byte) (rv []byte) {
 	return
 }
 
-// ToByte32 convert from byte slice to fixed length array of 32 long
+// ToByte32 convert from byte slice to fixed length array of 32 long.
 func ToByte32(in []byte) (tmp [32]byte, err error) {
 	if len(in) != 32 {
 		return tmp, fmt.Errorf("invalid length slice, must be 32 long")
@@ -45,7 +45,8 @@ func ToByte32(in []byte) (tmp [32]byte, err error) {
 	return
 }
 
-// errorCallback is the function that is call when an error occures in a callback
+// errorCallback is the function that is call when an error occures in a
+// callback.
 type errorCallback func(err error) (eout error)
 
 // Sum256 returns the SHA3-256 digest of the data.
