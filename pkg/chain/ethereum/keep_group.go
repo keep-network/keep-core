@@ -53,7 +53,8 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 
 	optsTransactor, err := bind.NewTransactor(
 		bufio.NewReader(file),
-		pv.config.Account.KeyFilePassword)
+		pv.config.Account.KeyFilePassword,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"Failed to read keyfile: %s, %s",
@@ -106,14 +107,22 @@ func (kg *keepGroup) Initialized() (bool, error) {
 func (kg *keepGroup) DissolveGroup(
 	groupPubKey []byte,
 ) (*types.Transaction, error) {
-	return kg.transactor.DissolveGroup(kg.transactorOpts, ToByte32(groupPubKey))
+	groupPubKeyArray, err := ToByte32(groupPubKey)
+	if err != nil {
+		return nil, err
+	}
+	return kg.transactor.DissolveGroup(kg.transactorOpts, groupPubKeyArray)
 }
 
 // CreateGroup starts a new group with the specified public key.
 func (kg *keepGroup) CreateGroup(
 	groupPubKey []byte,
 ) (*types.Transaction, error) {
-	return kg.transactor.CreateGroup(kg.transactorOpts, ToByte32(groupPubKey))
+	groupPubKeyArray, err := ToByte32(groupPubKey)
+	if err != nil {
+		return nil, err
+	}
+	return kg.transactor.CreateGroup(kg.transactorOpts, groupPubKeyArray)
 }
 
 // GroupThreshold returns the group threshold.  This is the number
@@ -152,14 +161,24 @@ func (kg *keepGroup) GetGroupMemberPubKey(i, j int) ([]byte, error) {
 func (kg *keepGroup) IsMember(
 	groupPubKey, memberPubKey []byte,
 ) (bool, error) {
-	return kg.caller.IsMember(kg.callerOpts, ToByte32(groupPubKey),
-		ToByte32(memberPubKey),
+	groupPubKeyArray, err := ToByte32(groupPubKey)
+	if err != nil {
+		return false, err
+	}
+	memberPubKeyArray, err := ToByte32(memberPubKey)
+	if err != nil {
+		return false, err
+	}
+	return kg.caller.IsMember(
+		kg.callerOpts,
+		groupPubKeyArray,
+		memberPubKeyArray,
 	)
 }
 
 // groupCompleteEvent defines the function that is called upon
 // group completion
-type groupCompleteEvent func(GroupPubKey []byte)
+type groupCompleteEvent func(groupPubKey []byte)
 
 // WatchGroupCompleteEvent create a watch for the group completion event
 func (kg *keepGroup) WatchGroupCompleteEvent(

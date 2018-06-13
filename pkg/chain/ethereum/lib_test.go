@@ -28,12 +28,13 @@ func TestByteSliceToSliceOf1Byte(t *testing.T) {
 
 func TestToByte32(t *testing.T) {
 	var b []byte
-	b = make([]byte, 3, 3)
+	b = make([]byte, 32, 32)
 	b[0] = 'a'
 	b[1] = 'b'
 	b[2] = 'c'
 	// func ToByte32(in []byte) (tmp [32]byte) {
-	rv := ToByte32(b)
+	rv, err := ToByte32(b)
+	_ = err
 	if len(rv) != 32 {
 		t.Errorf("Expected length of 32 got %d\n", len(rv))
 	}

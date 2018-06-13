@@ -1,6 +1,10 @@
 package ethereum
 
-import "golang.org/x/crypto/sha3"
+import (
+	"fmt"
+
+	"golang.org/x/crypto/sha3"
+)
 
 // ByteSliceToSliceOf1Byte convert from slice to slice of arrays of 1
 // long bytes.
@@ -31,13 +35,12 @@ func SliceOf1ByteToByteSlice(in [][1]byte) (rv []byte) {
 }
 
 // ToByte32 convert from byte slice to fixed length array of 32 long
-func ToByte32(in []byte) (tmp [32]byte) {
-	var i int
-	for ; i < len(in); i++ {
-		tmp[i] = in[i]
+func ToByte32(in []byte) (tmp [32]byte, err error) {
+	if len(in) != 32 {
+		return tmp, fmt.Errorf("Invalid length slice, must be 32 long")
 	}
-	for ; i < 32; i++ {
-		tmp[i] = byte(0)
+	for i := 0; i < len(in); i++ {
+		tmp[i] = in[i]
 	}
 	return
 }
