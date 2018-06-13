@@ -155,7 +155,7 @@ class Main extends Component {
 
     // Balances
     const tokenBalance = displayAmount(await token.balanceOf(yourAddress), 18, 3);
-    const stakeBalance = displayAmount(await stakingContract.balanceOf(yourAddress), 18, 3);
+    const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(yourAddress), 18, 3);
     const grantBalance = displayAmount(await grantContract.balanceOf(yourAddress), 18, 3);
     const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 18, 3);
     const totalAvailableToStake = parseInt(tokenBalance)+parseInt(grantBalance);
