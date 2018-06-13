@@ -11,7 +11,7 @@ type Promise struct {
 	successFn func(interface{})
 	failureFn func(error)
 
-	isCompleted bool
+	isComplete bool
 }
 
 // NewPromise creates a new, uncompleted Promise instance with
@@ -19,7 +19,7 @@ type Promise struct {
 // those callbacks before you fail or fulfill the Promise.
 func NewPromise() *Promise {
 	return &Promise{
-		isCompleted: false,
+		isComplete: false,
 	}
 }
 
@@ -46,7 +46,7 @@ func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 // fulfilling or failing, this function reports an error. If no OnSuccess
 // callback has been registered for a Promise, error is reported as well.
 func (p *Promise) Fulfill(value interface{}) error {
-	if p.isCompleted {
+	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
 
@@ -54,7 +54,7 @@ func (p *Promise) Fulfill(value interface{}) error {
 		return fmt.Errorf("success callback not registered")
 	}
 
-	p.isCompleted = true
+	p.isComplete = true
 	go func() {
 		p.successFn(value)
 	}()
@@ -66,7 +66,7 @@ func (p *Promise) Fulfill(value interface{}) error {
 // fulfilling or failing, this function reports an error. If no OnFailure
 // callback has been registered for a Promise, error is reported as well.
 func (p *Promise) Fail(err error) error {
-	if p.isCompleted {
+	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
 
@@ -74,7 +74,7 @@ func (p *Promise) Fail(err error) error {
 		return fmt.Errorf("failure callback not registered")
 	}
 
-	p.isCompleted = true
+	p.isComplete = true
 	go func() {
 		p.failureFn(err)
 	}()
