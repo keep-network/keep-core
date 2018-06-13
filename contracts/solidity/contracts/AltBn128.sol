@@ -20,6 +20,13 @@ library AltBn128 {
         return p;
     }
 
+    function yFromX(uint256 x)
+        private
+        constant returns(uint256)
+    {
+        return ((x.modExp(3, p) + 3) % p).modSqrt(p);
+    }
+
     /**
      * @dev Hash a byte array message, m, and map it deterministically to a
      * point on G1. Note that this approach was chosen for its simplicity /
@@ -35,12 +42,57 @@ library AltBn128 {
         uint256 y;
 
         while (true) {
-            y = ((x.modExp(3, p) + 3) % p).modSqrt(p);
+            y = yFromX(x);
             if (y > 0) {
                 return (x, y);
             }
             x += 1;
         }
+    }
+
+    /**
+     * @dev Compress a point on G1 to a single uint256 for serialization.
+     */
+    function g1Compress(uint256 x, uint256 y)
+        public
+        constant returns(bytes32)
+    {
+        bytes32 m = bytes32(x);
+
+        byte leadM = m[0] | ((bytes32(y)[31] & byte(1)) << 7);
+
+        assembly {
+            mstore(add(m, 1), leadM)
+        }
+
+        return m;
+    }
+
+    /**
+     * @dev Decompress a point on G1 from a single uint256.
+     */
+    function g1Decompress(bytes32 m)
+        public
+        constant returns(uint256, uint256)
+    {
+        byte ySign = (m[0] ^ byte(0x10000000)) >> 7;
+        bytes32 mX = bytes32(0);
+        byte leadX = mX[0] & byte(0x01111111);
+
+        assembly {
+            mstore(add(mX, 32), m)
+            mstore(add(mX, 1), leadX)
+        }
+
+        uint256 x = uint256(mX);
+        uint256 y = yFromX(x);
+
+        if (ySign != (bytes32(y)[0] ^ byte(0x10000000)) >> 7) {
+            y = p - y;
+        }
+
+        return (x, y);
+
     }
 
     /**
