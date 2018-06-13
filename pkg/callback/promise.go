@@ -2,6 +2,7 @@ package promise
 
 import (
 	"fmt"
+	"sync"
 )
 
 // Promise represents the eventual completion or failure of an
@@ -11,7 +12,8 @@ type Promise struct {
 	successFn func(interface{})
 	failureFn func(error)
 
-	isComplete bool
+	isComplete      bool
+	completionMutex sync.Mutex
 }
 
 // NewPromise creates a new, uncompleted Promise instance with
@@ -45,6 +47,9 @@ func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 // completed by either fulfilling or failing, this function reports
 // an error.
 func (p *Promise) Fulfill(value interface{}) error {
+	p.completionMutex.Lock()
+	defer p.completionMutex.Unlock()
+
 	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
@@ -64,6 +69,9 @@ func (p *Promise) Fulfill(value interface{}) error {
 // completed by either fulfilling or failing, this function reports
 // an error.
 func (p *Promise) Fail(err error) error {
+	p.completionMutex.Lock()
+	defer p.completionMutex.Unlock()
+
 	if p.isComplete {
 		return fmt.Errorf("promise already completed")
 	}
