@@ -3,6 +3,8 @@ package libp2p
 import (
 	"crypto/rand"
 	"fmt"
+	"io"
+	mrand "math/rand"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
@@ -83,11 +85,24 @@ func addIdentityToStore(i *identity) (pstore.Peerstore, error) {
 
 // generateIdentity generates a public/private-key pair (using the libp2p/crypto
 // wrapper for golang/crypto).
-func generateIdentity() (*identity, error) {
-	privKey, pubKey, err := libp2pcrypto.GenerateKeyPairWithReader(libp2pcrypto.Ed25519, 2048, rand.Reader)
+func generateIdentity(randseed int) (*identity, error) {
+	// FIXME: rather than a seed, read in pub/pk from config
+	var r io.Reader
+	if randseed != 0 {
+		r = mrand.New(mrand.NewSource(int64(randseed)))
+	} else {
+		r = rand.Reader
+	}
+
+	privKey, pubKey, err := libp2pcrypto.GenerateKeyPairWithReader(libp2pcrypto.Ed25519, 2048, r)
 	if err != nil {
 		return nil, err
 	}
 
-	return &identity{privKey: privKey, pubKey: pubKey}, nil
+	pid, err := peer.IDFromPublicKey(pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &identity{privKey: privKey, pubKey: pubKey, id: networkIdentity(pid)}, nil
 }
