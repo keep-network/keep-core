@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -11,17 +11,20 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-// Environment variable with 'prompt' for prompting for password or the password.
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
-// Top level config structure from the config file specified on the command line.
-type config struct {
+// Config is the top level config structure.
+type Config struct {
 	Ethereum ethereum.Config
 }
 
-// ReadConfig reads in the configuration file in .toml format.
-func readConfig(filePath string) (cfg config, err error) {
+var (
+	// KeepOpts contains global application settings
+	KeepOpts Config
+)
 
+// ReadConfig reads in the configuration file in .toml format.
+func ReadConfig(filePath string) (cfg Config, err error) {
 	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
 		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
