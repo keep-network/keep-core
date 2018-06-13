@@ -32,19 +32,23 @@ class Main extends Component {
     super()
     this.state = {};
     this.state.chartData = {};
+    this.selectTokenGrant = this.selectTokenGrant.bind(this);
   }
 
   componentDidMount() {
     this.getData();
   }
 
-  selectTokenGrant(id) {
+  selectTokenGrant(i) {
+    this.setState(
+      { selectedGrant: this.state.grantedToYou[i] }
+    );
   }
 
   render() {
     const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
       chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
-      selectedGrant,totalAvailableToStake, totalAvailableToUnstake } = this.state;
+      selectedGrant, totalAvailableToStake, totalAvailableToUnstake } = this.state;
 
     return (
       <div className="main">
@@ -111,10 +115,8 @@ class Main extends Component {
                     </Col>
                   </Row>
                   <Row>
-                    <TokenGrants data={grantedToYou}/>
+                    <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
                   </Row>
-                  {/* <Button bsSize="small" bsStyle="primary" onClick={()=>this.selectTokenGrant(0)}>selectTokenGrant</Button> */}
-
                 </Tab>
                 <Tab eventKey={3} title="Create Token Grant">
                   <h3>Grant tokens</h3>
@@ -229,8 +231,7 @@ class Main extends Component {
       }
     }
     
-    let selectedGrant = grantedToYou[3];
-
+    let selectedGrant = grantedToYou[0];
 
     const chartOptions = {
       legend: {

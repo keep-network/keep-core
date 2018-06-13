@@ -5,9 +5,9 @@ class TokenGrants extends Component {
 
   render() {
     if (this.props.data) {
-      var rows = this.props.data.map(function(item, i){
+      var rows = this.props.data.map((item, i) => {
         return (
-          <tr key={i}>
+          <tr key={i} onClick={() => this.props.selectTokenGrant(i)}>
             <td>{item.formatted.amount}</td>
             <td><a href="">{item.owner}</a></td>
             <td>{item.formatted.start}</td>
@@ -19,7 +19,7 @@ class TokenGrants extends Component {
       });
     }
     return (
-      <Table className="small table-sm" condensed>
+      <Table className="small table-sm" condensed hover>
         <thead>
           <tr>
             <th><strong>Amount</strong></th>
