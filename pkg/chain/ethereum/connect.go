@@ -53,8 +53,11 @@ func Connect(cfg Config) (chain.Handle, error) {
 
 	clientrpc, err := rpc.Dial(cfg.URLRPC)
 	if err != nil {
-		return nil, fmt.Errorf("error Connecting to Geth Server: %s server %s",
-			err, cfg.URL)
+		return nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s server %s",
+			err,
+			cfg.URL,
+		)
 	}
 
 	pv := &ethereumChain{
