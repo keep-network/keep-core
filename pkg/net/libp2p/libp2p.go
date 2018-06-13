@@ -149,3 +149,46 @@ func makeSmuxTransport() smux.Transport {
 	multiStreamTransport.AddTransport("/yamux/1.0.0", yamuxTransport)
 	return multiStreamTransport
 }
+
+func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
+	var (
+		peers []*peerstore.PeerInfo
+		wg    sync.WaitGroup
+		e     error
+	)
+	for _, bp := range bootstrapPeers {
+		// The following code extracts target's the peer ID from the
+		// given multiaddress
+		ipfsaddr, err := ma.NewMultiaddr(bp)
+		if err != nil {
+			return err
+		}
+
+		peerInfo, err := peerstore.InfoFromP2pAddr(ipfsaddr)
+		if err != nil {
+			return err
+		}
+
+		peers = append(peers, peerInfo)
+	}
+
+	for _, pi := range peers {
+		// We shouldn't bootstrap to ourself
+		// if we're the bootstrap node
+		if p.host.ID() == pi.ID {
+			continue
+		}
+		wg.Add(1)
+		go func(pi *peerstore.PeerInfo) {
+			defer wg.Done()
+			if err := p.host.Connect(ctx, *pi); err != nil {
+				fmt.Println(err)
+				e = err
+				return
+			}
+		}(pi)
+	}
+
+	wg.Wait()
+	return e
+}
