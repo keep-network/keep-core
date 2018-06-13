@@ -1,6 +1,10 @@
 package ethereum
 
-import "testing"
+import (
+	"fmt"
+	"reflect"
+	"testing"
+)
 
 func TestByteSliceToSliceOf1Byte(t *testing.T) {
 	var b []byte
@@ -25,43 +29,62 @@ func TestByteSliceToSliceOf1Byte(t *testing.T) {
 }
 
 func TestToByte32(t *testing.T) {
-	tests := []struct {
+	tests := map[string]struct {
 		nOfBytes    int
 		expectError bool
+		errorFormat string
 	}{
-		{
+		"test expected length of 32 bytes": {
 			nOfBytes:    32,
 			expectError: false,
+			errorFormat: "",
 		},
-		{
+		"test to short, only 12 long": {
 			nOfBytes:    12,
 			expectError: true,
+			errorFormat: "cannot convert slice of length %d to [32]byte, must be of length 32",
 		},
-		{
+		"test too long, more than 32 length": {
 			nOfBytes:    42,
 			expectError: true,
+			errorFormat: "cannot convert slice of length %d to [32]byte, must be of length 32",
 		},
 	}
 
 	var b []byte
+	var expectedError error
 
-	for testIndex, test := range tests {
-		b = make([]byte, test.nOfBytes, test.nOfBytes)
-		b[0] = 'a'
-		b[1] = 'b'
-		b[2] = 'c'
-		rv, err := toByte32(b)
-		if test.expectError {
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			if test.nOfBytes < 3 {
+				t.Fatalf("Test data incorrect, must be length 3 or more, have %d", test.nOfBytes)
+			}
+			b = make([]byte, test.nOfBytes, test.nOfBytes)
+			b[0] = 'a'
+			b[1] = 'b'
+			b[2] = 'c'
+			rv, err := toByte32(b)
+			expectedError = nil
+			if test.errorFormat != "" {
+				expectedError = fmt.Errorf(test.errorFormat, test.nOfBytes)
+			}
+			if !reflect.DeepEqual(err, expectedError) {
+				t.Fatalf("\nexpected: %v\nactual:   %v", expectedError, err)
+			}
 			if err == nil {
-				t.Errorf("function toByte32 failed to report an error, test %d", testIndex)
+				if len(rv) != 32 {
+					t.Errorf("\nexpected: 32 \nactual:   %d", len(rv))
+				}
+				if rv[0] != 'a' {
+					t.Errorf("\nexpected: 'a' \nactual:   %v", rv[0])
+				}
+				if rv[1] != 'b' {
+					t.Errorf("\nexpected: 'b' \nactual:   %v", rv[1])
+				}
+				if rv[2] != 'c' {
+					t.Errorf("\nexpected: 'c' \nactual:   %v", rv[2])
+				}
 			}
-		} else {
-			if err != nil {
-				t.Errorf("function toByte32 reported an error [%v], test %d", err, testIndex)
-			}
-			if len(rv) != 32 {
-				t.Errorf("expected length of 32 got %d, test %d", len(rv), testIndex)
-			}
-		}
+		})
 	}
 }
