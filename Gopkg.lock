@@ -64,6 +64,7 @@
     "common/mclock",
     "core/types",
     "crypto",
+    "crypto/bn256/cloudflare",
     "crypto/randentropy",
     "crypto/secp256k1",
     "crypto/sha3",
