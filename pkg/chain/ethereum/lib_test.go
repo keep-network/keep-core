@@ -30,29 +30,24 @@ func TestByteSliceToSliceOf1Byte(t *testing.T) {
 
 func TestToByte32(t *testing.T) {
 	tests := map[string]struct {
-		nOfBytes    int
-		expectError bool
-		errorFormat string
+		nOfBytes      int
+		expectedError error
 	}{
 		"test expected length of 32 bytes": {
-			nOfBytes:    32,
-			expectError: false,
-			errorFormat: "",
+			nOfBytes:      32,
+			expectedError: nil,
 		},
 		"test to short, only 12 long": {
-			nOfBytes:    12,
-			expectError: true,
-			errorFormat: "cannot convert slice of length %d to [32]byte, must be of length 32",
+			nOfBytes:      12,
+			expectedError: fmt.Errorf("cannot convert slice of length %d to [32]byte, must be of length 32", 12),
 		},
 		"test too long, more than 32 length": {
-			nOfBytes:    42,
-			expectError: true,
-			errorFormat: "cannot convert slice of length %d to [32]byte, must be of length 32",
+			nOfBytes:      42,
+			expectedError: fmt.Errorf("cannot convert slice of length %d to [32]byte, must be of length 32", 42),
 		},
 	}
 
 	var b []byte
-	var expectedError error
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
@@ -64,26 +59,20 @@ func TestToByte32(t *testing.T) {
 			b[1] = 'b'
 			b[2] = 'c'
 			rv, err := toByte32(b)
-			expectedError = nil
-			if test.errorFormat != "" {
-				expectedError = fmt.Errorf(test.errorFormat, test.nOfBytes)
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Fatalf("\nexpected: %v\nactual:   %v", test.expectedError, err)
 			}
-			if !reflect.DeepEqual(err, expectedError) {
-				t.Fatalf("\nexpected: %v\nactual:   %v", expectedError, err)
+			if len(rv) != 32 {
+				t.Errorf("\nexpected: 32 \nactual:   %d", len(rv))
 			}
-			if err == nil {
-				if len(rv) != 32 {
-					t.Errorf("\nexpected: 32 \nactual:   %d", len(rv))
-				}
-				if rv[0] != 'a' {
-					t.Errorf("\nexpected: 'a' \nactual:   %v", rv[0])
-				}
-				if rv[1] != 'b' {
-					t.Errorf("\nexpected: 'b' \nactual:   %v", rv[1])
-				}
-				if rv[2] != 'c' {
-					t.Errorf("\nexpected: 'c' \nactual:   %v", rv[2])
-				}
+			if rv[0] != 'a' {
+				t.Errorf("\nexpected: 'a' \nactual:   %v", rv[0])
+			}
+			if rv[1] != 'b' {
+				t.Errorf("\nexpected: 'b' \nactual:   %v", rv[1])
+			}
+			if rv[2] != 'c' {
+				t.Errorf("\nexpected: 'c' \nactual:   %v", rv[2])
 			}
 		})
 	}
