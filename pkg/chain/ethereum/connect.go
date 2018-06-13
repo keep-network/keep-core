@@ -7,8 +7,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 
-	"github.com/keep-network/keep-core/pkg/beacon"
-
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -25,10 +23,6 @@ type ethereumChain struct {
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(groupID string, errorMessage string)
 	groupPublicKeySubmissionHandlers []func(groupID string, activationBlock *big.Int)
-}
-
-func (ec *ethereumChain) RandomBeacon() beacon.ChainInterface {
-	return nil
 }
 
 func (ec *ethereumChain) ThresholdRelay() relay.ChainInterface {
