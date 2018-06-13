@@ -8,12 +8,13 @@ import (
 // Promise represents the eventual completion or failure of an
 // ansynchronous operation and its resulting value. Promise can
 // be either fulfilled or failed and it can happen only one time.
+// All Promise operations are thread-safe, guarded by a mutex.
 type Promise struct {
+	mutex     sync.Mutex
 	successFn func(interface{})
 	failureFn func(error)
 
-	isComplete      bool
-	completionMutex sync.Mutex
+	isComplete bool
 }
 
 // NewPromise creates a new, uncompleted Promise instance with
@@ -29,6 +30,9 @@ func NewPromise() *Promise {
 // called at all. OnSuccess is a non-blocking operation. Only one on success
 // function can be registered for a Promise.
 func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
 	p.successFn = onSuccess
 	return p
 }
@@ -38,6 +42,9 @@ func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
 // called at all. OnFailure is a non-blocking operation. Only one on failure
 // function can be registered for a Promise.
 func (p *Promise) OnFailure(onFailure func(error)) *Promise {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
 	p.failureFn = onFailure
 	return p
 }
@@ -47,8 +54,8 @@ func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 // completed by either fulfilling or failing, this function reports
 // an error.
 func (p *Promise) Fulfill(value interface{}) error {
-	p.completionMutex.Lock()
-	defer p.completionMutex.Unlock()
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
 	if p.isComplete {
 		return fmt.Errorf("promise already completed")
@@ -69,8 +76,8 @@ func (p *Promise) Fulfill(value interface{}) error {
 // completed by either fulfilling or failing, this function reports
 // an error.
 func (p *Promise) Fail(err error) error {
-	p.completionMutex.Lock()
-	defer p.completionMutex.Unlock()
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
 	if p.isComplete {
 		return fmt.Errorf("promise already completed")
