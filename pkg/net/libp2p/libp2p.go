@@ -7,12 +7,17 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 
+	dstore "github.com/ipfs/go-datastore"
+	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
 	host "github.com/libp2p/go-libp2p-host"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/libp2p/go-libp2p-peerstore"
+	routing "github.com/libp2p/go-libp2p-routing"
 	swarm "github.com/libp2p/go-libp2p-swarm"
 	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
@@ -24,7 +29,8 @@ type provider struct {
 	channelManagerMutex sync.Mutex
 	channelManagr       *channelManager
 
-	host host.Host
+	host    host.Host
+	routing routing.IpfsRouting
 }
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
@@ -38,6 +44,7 @@ func (p *provider) Type() string {
 }
 
 type Config struct {
+	Peers       []string
 	port        int
 	listenAddrs []ma.Multiaddr
 	identity    *identity
@@ -54,7 +61,26 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 		return nil, err
 	}
 
-	return &provider{channelManagr: cm, host: host}, nil
+	provider := &provider{channelManagr: cm, host: host}
+
+	// https: //github.com/libp2p/go-floodsub/issues/65#issuecomment-365680860
+	dht := dht.NewDHT(ctx, provider.host, dssync.MutexWrap(dstore.NewMapDatastore()))
+
+	// TODO: add comments
+	provider.routing = dht
+
+	// TODO: add comments
+	provider.host = rhost.Wrap(provider.host, provider.routing)
+
+	// TODO: panic if we don't provide bootstrap peers
+	if config.Peers != nil {
+		fmt.Println("The config does indeed have peers")
+		if err := provider.bootstrap(ctx, config.Peers); err != nil {
+			return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
+		}
+	}
+
+	return provider, nil
 }
 
 func discoverAndListen(
