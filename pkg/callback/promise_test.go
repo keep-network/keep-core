@@ -32,7 +32,8 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 		t.Errorf(
 			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
 			expectedResult,
-			result)
+			result,
+		)
 	}
 }
 
@@ -93,7 +94,8 @@ func TestPromiseOnFailureFail(t *testing.T) {
 		t.Errorf(
 			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
 			expectedResult,
-			result)
+			result,
+		)
 	}
 }
 
