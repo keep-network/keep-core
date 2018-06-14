@@ -27,7 +27,6 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 	})
 
 	err := promise.Fulfill(expectedResult)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +64,6 @@ func TestPromiseOnCompleteFulfill(t *testing.T) {
 	})
 
 	err := promise.Fulfill(expectedResult)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +101,6 @@ func TestPromiseOnFailureFail(t *testing.T) {
 	})
 
 	err := promise.Fail(expectedResult)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +138,6 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 	})
 
 	err := promise.Fail(expectedFailure)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +164,6 @@ func TestPromiseFulfill(t *testing.T) {
 	}
 
 	err := promise.Fulfill(nil)
-
 	if err != nil {
 		t.Errorf("Fulfill returned an error: %v", err)
 	}
@@ -186,7 +181,6 @@ func TestPromiseFail(t *testing.T) {
 	}
 
 	err := promise.Fail(nil)
-
 	if err != nil {
 		t.Errorf("Fail returned an error: %v", err)
 	}
@@ -234,7 +228,8 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 					t.Errorf(
 						"Errors don't match\nExpected: %v\nActual: %v\n",
 						test.expectedError,
-						error)
+						error,
+					)
 				}
 			case <-ctx.Done():
 				t.Fatal(ctx.Err())
