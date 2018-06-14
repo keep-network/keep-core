@@ -66,15 +66,15 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	// https: //github.com/libp2p/go-floodsub/issues/65#issuecomment-365680860
 	dht := dht.NewDHT(ctx, provider.host, dssync.MutexWrap(dstore.NewMapDatastore()))
 
-	// TODO: add comments
+	// Set our router to be the dht
 	provider.routing = dht
 
-	// TODO: add comments
+	// Wrap our host and router together into the routed host.
+	// This helps us find addresses for identities we encounter in the network
 	provider.host = rhost.Wrap(provider.host, provider.routing)
 
 	// TODO: panic if we don't provide bootstrap peers
 	if config.Peers != nil {
-		fmt.Println("The config does indeed have peers")
 		if err := provider.bootstrap(ctx, config.Peers); err != nil {
 			return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 		}
@@ -199,16 +199,14 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	}
 
 	for _, pi := range peers {
-		// We shouldn't bootstrap to ourself
-		// if we're the bootstrap node
 		if p.host.ID() == pi.ID {
+			// We shouldn't bootstrap to ourself if we're the bootstrap node
 			continue
 		}
 		wg.Add(1)
 		go func(pi *peerstore.PeerInfo) {
 			defer wg.Done()
 			if err := p.host.Connect(ctx, *pi); err != nil {
-				fmt.Println(err)
 				e = err
 				return
 			}
