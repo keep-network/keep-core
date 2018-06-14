@@ -10,3 +10,5 @@ _local/
 config.toml
 *.config.toml
 *.out
+.vscode/
+debug.test
