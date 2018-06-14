@@ -168,7 +168,7 @@ func newTestContext() (context.Context, context.CancelFunc) {
 func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	p := testutils.RandPeerNetParamsOrFatal(t)
 	pi := &identity{id: networkIdentity(p.ID), privKey: p.PrivKey, pubKey: p.PubKey}
-	return &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
+	return &Config{Port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
 }
 
 func testProvider(ctx context.Context, t *testing.T) (*provider, error) {

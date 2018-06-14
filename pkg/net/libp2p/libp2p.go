@@ -45,7 +45,7 @@ func (p *provider) Type() string {
 
 type Config struct {
 	Peers       []string
-	port        int
+	Port        int
 	listenAddrs []ma.Multiaddr
 	identity    *identity
 }
@@ -92,7 +92,7 @@ func discoverAndListen(
 	addrs := config.listenAddrs
 	if addrs == nil {
 		// Get available network ifaces to listen on into multiaddrs
-		addrs, err = getListenAddrs(config.port)
+		addrs, err = getListenAddrs(config.Port)
 		if err != nil {
 			return nil, nil, err
 		}
