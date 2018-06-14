@@ -188,7 +188,7 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 		internalError error
 	)
 	for _, bp := range bootstrapPeers {
-		// The following code extracts target's the peer ID from the
+		// The following code extracts target's peer ID from the
 		// given multiaddress
 		ipfsaddr, err := ma.NewMultiaddr(bp)
 		if err != nil {
