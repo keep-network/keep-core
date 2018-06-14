@@ -72,6 +72,13 @@ func main() {
 			Action:      cmd.SmokeTest,
 			Flags:       cmd.SmokeTestFlags,
 		},
+		{
+			Name:        "pubsub-test",
+			Usage:       "Connects n nodes to the libp2p network",
+			Description: "simulate libp2p pubsub communication",
+			Action:      cmd.PubSubTest,
+			Flags:       cmd.PubSubTestFlags,
+		},
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
