@@ -70,7 +70,10 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return err
 	}
 
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(success, fail)
+	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+		success,
+		fail,
+	)
 	if err != nil {
 		applyError(fmt.Sprintf("error creating event watch for request: [%v]", err))
 		return err
@@ -79,7 +82,10 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	requestID := sum256([]byte(groupID))
 	ec.requestID = big.NewInt(0).SetBytes(requestID[:])
 
-	tx, err := ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], ec.requestID)
+	tx, err := ec.keepRandomBeaconContract.SubmitGroupPublicKey(
+		key[:],
+		ec.requestID,
+	)
 	ec.tx = tx
 	if err != nil {
 		applyError(fmt.Sprintf("error submitting request: [%v]", err))

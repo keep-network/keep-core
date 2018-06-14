@@ -84,7 +84,10 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 		Context: nil,
 	}
 
-	randomBeaconContract, err := gen.NewKeepRandomBeaconImplV1(contractAddress, pv.client)
+	randomBeaconContract, err := gen.NewKeepRandomBeaconImplV1(
+		contractAddress,
+		pv.client,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate contract at address: %s [%v]",
@@ -137,7 +140,8 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
 }
 
-// relayEntryRequestedFunc type of function called for RelayEntryRequested event.
+// relayEntryRequestedFunc type of function called for
+// RelayEntryRequested event.
 type relayEntryRequestedFunc func(
 	requestID *big.Int,
 	payment *big.Int,
@@ -177,7 +181,8 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	return nil
 }
 
-// relayEntryGeneratedFunc type of function called for RelayEntryGenerated event.
+// relayEntryGeneratedFunc type of function called for
+// RelayEntryGenerated event.
 type relayEntryGeneratedFunc func(
 	requestID *big.Int,
 	RequestResponse *big.Int,
