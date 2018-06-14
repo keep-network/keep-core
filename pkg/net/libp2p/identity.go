@@ -31,7 +31,7 @@ func (n networkIdentity) ProviderName() string {
 }
 
 func (n networkIdentity) String() string {
-	return peer.ID(n).String()
+	return peer.ID(n).Pretty()
 }
 
 func (i *identity) Marshal() ([]byte, error) {
@@ -47,7 +47,10 @@ func (i *identity) Marshal() ([]byte, error) {
 		}
 	}
 	if pubKey == nil {
-		return nil, fmt.Errorf("failed to generate public key with peerid %v", peer.ID(i.id))
+		return nil, fmt.Errorf(
+			"failed to generate public key with peerid %v",
+			peer.ID(i.id).Pretty(),
+		)
 	}
 	pubKeyBytes, err := pubKey.Bytes()
 	if err != nil {
