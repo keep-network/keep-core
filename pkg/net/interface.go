@@ -75,9 +75,9 @@ type BroadcastChannel interface {
 	// RegisterIdentifier, or a ClientIdentifier used by the network layer.
 	//
 	// Returns an error if the recipient identifier is a ProtocolIdentifier that
-	// does not have an associated ClientIdentifier, or if it is neither a
-	// ProtocolIdentifier nor a ClientIdentifier.
-	SendTo(recipientIdentifier interface{}, m TaggedMarshaler) error
+	// does not have an associated ClientIdentifier, or if it is not a
+	// ProtocolIdentifier.
+	SendTo(recipientIdentifier ProtocolIdentifier, m TaggedMarshaler) error
 
 	// RegisterIdentifier associates the given network identifier with a
 	// protocol-specific identifier that will be passed to the receiving code
