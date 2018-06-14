@@ -44,10 +44,11 @@ func (p *provider) Type() string {
 }
 
 type Config struct {
-	Peers       []string
-	Port        int
+	Peers []string
+	Port  int
+	Seed  int
+
 	listenAddrs []ma.Multiaddr
-	Seed        int
 	identity    *identity
 }
 
