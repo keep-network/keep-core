@@ -17,6 +17,10 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 		done <- in
 	})
 
+	promise.OnFailure(func(err error) {
+		t.Fatal("`OnFailure` was called for `Fulfill`")
+	})
+
 	err := promise.Fulfill(expectedResult)
 
 	if err != nil {
@@ -25,7 +29,10 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 
 	result := <-done
 	if result != expectedResult {
-		t.Errorf("Unexpected value passed to callback\nExpected: %v\nActual:%v\n", expectedResult, result)
+		t.Errorf(
+			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
+			expectedResult,
+			result)
 	}
 }
 
@@ -60,6 +67,36 @@ func TestPromiseOnCompleteFulfill(t *testing.T) {
 	}
 }
 
+func TestPromiseOnFailureFail(t *testing.T) {
+	done := make(chan interface{})
+
+	expectedResult := fmt.Errorf("it's not working")
+
+	promise := NewPromise()
+
+	promise.OnFailure(func(err error) {
+		done <- err
+	})
+
+	promise.OnSuccess(func(in interface{}) {
+		t.Fatal("`OnSuccess` was called for `Fail`")
+	})
+
+	err := promise.Fail(expectedResult)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := <-done
+	if result != expectedResult {
+		t.Errorf(
+			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
+			expectedResult,
+			result)
+	}
+}
+
 func TestPromiseOnCompleteFail(t *testing.T) {
 	done := make(chan interface{})
 
@@ -88,6 +125,42 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 			expectedFailure,
 			result,
 		)
+	}
+}
+
+func TestPromiseFulfill(t *testing.T) {
+	promise := NewPromise()
+
+	if promise.isComplete {
+		t.Error("Promise is completed")
+	}
+
+	err := promise.Fulfill(nil)
+
+	if err != nil {
+		t.Errorf("Fulfill returned an error: %v", err)
+	}
+
+	if !promise.isComplete {
+		t.Error("Promise is not completed")
+	}
+}
+
+func TestPromiseFail(t *testing.T) {
+	promise := NewPromise()
+
+	if promise.isComplete {
+		t.Error("Promise is completed")
+	}
+
+	err := promise.Fail(nil)
+
+	if err != nil {
+		t.Errorf("Fail returned an error: %v", err)
+	}
+
+	if !promise.isComplete {
+		t.Error("Promise is not completed")
 	}
 }
 
@@ -121,7 +194,10 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 
 			error := test.function()
 			if !reflect.DeepEqual(test.expectedError, error) {
-				t.Fatalf("Errors don't match\nExpected: %v\nActual: %v\n", test.expectedError, error)
+				t.Errorf(
+					"Errors don't match\nExpected: %v\nActual: %v\n",
+					test.expectedError,
+					error)
 			}
 
 		})
