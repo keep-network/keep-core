@@ -6,6 +6,8 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	promise "github.com/keep-network/keep-core/pkg/callback"
+	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
 // RandomBeacon converts from ethereumChain to beacon.ChainInterface.
@@ -44,43 +46,45 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	key [96]byte,
 ) error {
 
-	applyError := func(msg string) {
+	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+		promise.NewPromise().OnSuccess(func(data interface{}) {
+			data2, ok := data.(gen.KeepRandomBeaconSubmitGroupPublicKeyEvent)
+			if !ok {
+				panic("flame out crash and burn!")
+			}
+			ec.handlerMutex.Lock()
+			for _, handler := range ec.groupPublicKeySubmissionHandlers {
+				handler(groupID, data2.ActivationBlockHeight)
+			}
+			ec.handlerMutex.Unlock()
+		}).OnFailure(func(err error) {
+			msg := fmt.Sprintf("error: [%v]", err)
+			ec.handlerMutex.Lock()
+			for _, handler := range ec.groupPublicKeyFailureHandlers {
+				handler(groupID, msg)
+			}
+			ec.handlerMutex.Unlock()
+			return
+		}),
+	)
+	if err != nil {
+		msg := fmt.Sprintf("error creating event watch for request: [%v]", err)
 		ec.handlerMutex.Lock()
 		for _, handler := range ec.groupPublicKeyFailureHandlers {
 			handler(groupID, msg)
 		}
 		ec.handlerMutex.Unlock()
-	}
-
-	success := func(
-		GroupPublicKey []byte,
-		RequestID *big.Int,
-		ActivationBlockHeight *big.Int,
-	) {
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeySubmissionHandlers {
-			handler(groupID, ActivationBlockHeight)
-		}
-		ec.handlerMutex.Unlock()
-	}
-
-	fail := func(err error) error {
-		applyError(fmt.Sprintf("error: [%v]", err))
-		return err
-	}
-
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-		success,
-		fail,
-	)
-	if err != nil {
-		applyError(fmt.Sprintf("error creating event watch for request: [%v]", err))
 		return err
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
-		applyError(fmt.Sprintf("error submitting request: [%v]", err))
+		msg := fmt.Sprintf("error submitting request: [%v]", err)
+		ec.handlerMutex.Lock()
+		for _, handler := range ec.groupPublicKeyFailureHandlers {
+			handler(groupID, msg)
+		}
+		ec.handlerMutex.Unlock()
 	}
 	return err
 }

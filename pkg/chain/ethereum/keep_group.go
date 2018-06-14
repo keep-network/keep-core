@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	promise "github.com/keep-network/keep-core/pkg/callback"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
@@ -184,111 +185,116 @@ func (kg *keepGroup) IsMember(
 	)
 }
 
-// groupCompleteEventFunc defines the function that is called upon
-// group completion.
-type groupCompleteEventFunc func(groupPubKey []byte)
-
 // WatchGroupCompleteEvent create a watch for the group completion event.
 func (kg *keepGroup) WatchGroupCompleteEvent(
-	success groupCompleteEventFunc,
-	fail errorCallback,
+	aPromise *promise.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
 	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
 	if err != nil {
 		return fmt.Errorf("error creating watch for GroupCompleteEvent events [%v]", err)
 	}
-	go func() {
+	go func() error {
 		for {
 			select {
 			case event := <-eventChan:
-				success(event.GroupPubKey[:])
+				err := aPromise.Fulfill(event)
+				if err != nil {
+					return err
+				}
 
 			case err := <-eventSubscription.Err():
-				fail(err)
+				err = aPromise.Fail(err)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}()
 	return nil
 }
 
-// groupErrorCodeFunc defines a function to watch for errors.
-type groupErrorCodeFunc func(Code uint8)
-
 // WatchGroupErrorCode creates a watch for the GroupErrorCode event.
 func (kg *keepGroup) WatchGroupErrorCode(
-	success groupErrorCodeFunc,
-	fail errorCallback,
+	aPromise *promise.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
 	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
 	if err != nil {
 		return fmt.Errorf("failed go create watch for GroupErrorCode events: [%v]", err)
 	}
-	go func() {
+	go func() error {
 		for {
 			select {
 			case event := <-eventChan:
-				success(event.Code)
+				err := aPromise.Fulfill(event)
+				if err != nil {
+					return err
+				}
 
 			case err := <-eventSubscription.Err():
-				fail(err)
+				err = aPromise.Fail(err)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}()
 	return nil
 }
 
-// groupExistsEventFunc defines the function that is called when creating
-// a group.  Exists is true when the group already exists.
-type groupExistsEventFunc func(groupPubKey []byte, Exists bool)
-
 // WatchGroupExistsEvent watches for the GroupExists event.
 func (kg *keepGroup) WatchGroupExistsEvent(
-	success groupExistsEventFunc,
-	fail errorCallback,
+	aPromise *promise.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
 	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
 	if err != nil {
 		return fmt.Errorf("error creating watch for GropExistsEvent events [%v]", err)
 	}
-	go func() {
+	go func() error {
 		for {
 			select {
 			case event := <-eventChan:
-				success(event.GroupPubKey[:], event.Exists)
+				err := aPromise.Fulfill(event)
+				if err != nil {
+					return err
+				}
 
 			case err := <-eventSubscription.Err():
-				fail(err)
+				err = aPromise.Fail(err)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}()
 	return nil
 }
 
-// groupStartedEventFunc defiens the function that is called when
-// watching for started groups.
-type groupStartedEventFunc func(groupPubKey []byte)
-
 // WatchGroupStartedEvent watch for GroupStartedEvent
 func (kg *keepGroup) WatchGroupStartedEvent(
-	success groupStartedEventFunc,
-	fail errorCallback,
+	aPromise *promise.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
 	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
 	if err != nil {
 		return fmt.Errorf("error creating watch for GorupStartedEvent events [%v]", err)
 	}
-	go func() {
+	go func() error {
 		for {
 			select {
 			case event := <-eventChan:
-				success(event.GroupPubKey[:])
+				err := aPromise.Fulfill(event)
+				if err != nil {
+					return err
+				}
 
 			case err := <-eventSubscription.Err():
-				fail(err)
+				err = aPromise.Fail(err)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}()
