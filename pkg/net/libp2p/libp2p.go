@@ -76,7 +76,10 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	provider.host = rhost.Wrap(provider.host, provider.routing)
 
 	// TODO: panic if we don't provide bootstrap peers
-	if config.Peers != nil {
+	if config.Peers == nil {
+		return provider, nil
+	}
+	if len(config.Peers) > 0 {
 		if err := provider.bootstrap(ctx, config.Peers); err != nil {
 			return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 		}
