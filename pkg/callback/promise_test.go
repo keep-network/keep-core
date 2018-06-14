@@ -29,6 +29,68 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 	}
 }
 
+func TestPromiseOnCompleteFulfill(t *testing.T) {
+	done := make(chan interface{})
+
+	expectedResult := "robin"
+
+	promise := NewPromise()
+
+	promise.OnComplete(func(in interface{}, err error) {
+		if err != nil {
+			t.Fatal("Error should be nil")
+		}
+
+		done <- in
+	})
+
+	err := promise.Fulfill(expectedResult)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := <-done
+	if result != expectedResult {
+		t.Errorf(
+			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
+			expectedResult,
+			result,
+		)
+	}
+}
+
+func TestPromiseOnCompleteFail(t *testing.T) {
+	done := make(chan interface{})
+
+	expectedFailure := fmt.Errorf("catwoman")
+
+	promise := NewPromise()
+
+	promise.OnComplete(func(in interface{}, err error) {
+		if in != nil {
+			t.Fatal("Evaluated value should be nil")
+		}
+
+		done <- err
+	})
+
+	err := promise.Fail(expectedFailure)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := <-done
+	if result != expectedFailure {
+		t.Errorf(
+			"Unexpected failure passed to callback\nExpected: %v\nActual:%v\n",
+			expectedFailure,
+			result,
+		)
+	}
+}
+
 func TestPromiseAlreadyCompleted(t *testing.T) {
 	done := make(chan bool)
 

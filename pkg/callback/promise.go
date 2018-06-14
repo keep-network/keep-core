@@ -5,20 +5,20 @@ import (
 	"sync"
 )
 
-// Promise represents the eventual completion or failure of an
-// ansynchronous operation and its resulting value. Promise can
-// be either fulfilled or failed and it can happen only one time.
-// All Promise operations are thread-safe.
+// Promise represents an eventual completion of an ansynchronous operation
+// and its resulting value. Promise can be either fulfilled or failed and
+// it can happen only one time. All Promise operations are thread-safe.
 type Promise struct {
-	mutex     sync.Mutex
-	successFn func(interface{})
-	failureFn func(error)
+	mutex      sync.Mutex
+	successFn  func(interface{})
+	failureFn  func(error)
+	completeFn func(interface{}, error)
 
 	isComplete bool
 }
 
 // NewPromise creates a new, uncompleted Promise instance with
-// no success or failure callback configured.
+// no success, complete or failure callback configured.
 func NewPromise() *Promise {
 	return &Promise{
 		isComplete: false,
@@ -49,6 +49,21 @@ func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 	return p
 }
 
+// OnComplete registers a function to be called when the Promise
+// execution completed no matter if it succeded or failed.
+// In case of a successful execution, error passed to the callback
+// function is nil. In case of a failed execution, there is no
+// value evaluated so the value parameter is nil. OnComplete is
+// a non-blocking operation. Only one on complete function can be
+// registered for a Promise.
+func (p *Promise) OnComplete(onComplete func(interface{}, error)) *Promise {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	p.completeFn = onComplete
+	return p
+}
+
 // Fulfill can happen only once for a Promise and it results in calling
 // the OnSuccess callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
@@ -65,6 +80,11 @@ func (p *Promise) Fulfill(value interface{}) error {
 	if p.successFn != nil {
 		go func() {
 			p.successFn(value)
+		}()
+	}
+	if p.completeFn != nil {
+		go func() {
+			p.completeFn(value, nil)
 		}()
 	}
 
@@ -87,6 +107,11 @@ func (p *Promise) Fail(err error) error {
 	if p.failureFn != nil {
 		go func() {
 			p.failureFn(err)
+		}()
+	}
+	if p.completeFn != nil {
+		go func() {
+			p.completeFn(nil, err)
 		}()
 	}
 
