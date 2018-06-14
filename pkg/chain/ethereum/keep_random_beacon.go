@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	gen "github.com/keep-network/keep-core/pkg/chain/gen"
+	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
-// KeepRandomBeacon connection information for interface to the contract
+// KeepRandomBeacon connection information for interface to the contract.
 type KeepRandomBeacon struct {
 	caller          *gen.KeepRandomBeaconImplV1Caller
 	callerOpts      *bind.CallOpts
@@ -20,20 +20,18 @@ type KeepRandomBeacon struct {
 	transactorOpts  *bind.TransactOpts
 	contract        *gen.KeepRandomBeaconImplV1
 	contractAddress common.Address
-	name            string
 }
 
 // NewKeepRandomBeacon creates the necessary connections and configurations for
 // accessing the contract.
 func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
-	// Proxy Address
-	ContractAddressHex, exists := pv.config.ContractAddresses["KeepRandomBeaconImplV1"]
+	contractAddressHex, exists := pv.config.ContractAddresses["KeepRandomBeaconImplV1"]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for 'KeepRandomBeacon' in configuration",
 		)
 	}
-	contractAddress := common.HexToAddress(ContractAddressHex)
+	contractAddress := common.HexToAddress(contractAddressHex)
 
 	beaconTransactor, err := gen.NewKeepRandomBeaconImplV1Transactor(
 		contractAddress,
@@ -91,13 +89,12 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate contract at address: %s [%v]",
-			ContractAddressHex,
+			contractAddressHex,
 			err,
 		)
 	}
 
 	return &KeepRandomBeacon{
-		name:            "KeepRandomBeacon", // "KeepRandomBeaconImplV1",
 		transactor:      beaconTransactor,
 		transactorOpts:  optsTransactor,
 		caller:          beaconCaller,
@@ -155,16 +152,15 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
 ) error {
-	name := "RelayEntryRequested"
-	evenChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
-	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, evenChan)
+	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
+	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for %s events: [%v]", name, err)
+		return fmt.Errorf("error creating watch for RelayEntryRequested events: [%v]", err)
 	}
 	go func() {
 		for {
 			select {
-			case event := <-evenChan:
+			case event := <-eventChan:
 				success(
 					event.RequestID,
 					event.Payment,
@@ -191,21 +187,20 @@ type relayEntryGeneratedFunc func(
 	blockNumber *big.Int,
 )
 
-// WatchRelayEntryGenerated watches for event
+// WatchRelayEntryGenerated watches for event.
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
 ) error {
-	name := "RelayEntryGenerated"
-	evenChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
-	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, evenChan)
+	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
+	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for %s event: [%v]", name, err)
+		return fmt.Errorf("error creating watch for RelayEntryGenerated event: [%v]", err)
 	}
 	go func() {
 		for {
 			select {
-			case event := <-evenChan:
+			case event := <-eventChan:
 				success(
 					event.RequestID,
 					event.RequestResponse,
@@ -229,21 +224,20 @@ type relayResetEventFunc func(
 	LastValidRelayBlock *big.Int,
 )
 
-// WatchRelayResetEvent watches for event WatchRelayResetEvent
+// WatchRelayResetEvent watches for event WatchRelayResetEvent.
 func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 	success relayResetEventFunc,
 	fail errorCallback,
 ) error {
-	name := "RelayResetEvent"
-	evenChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
-	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, evenChan)
+	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
+	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for %s event: [%v]", name, err)
+		return fmt.Errorf("error creating watch for RelayResetEvent event: [%v]", err)
 	}
 	go func() {
 		for {
 			select {
-			case event := <-evenChan:
+			case event := <-eventChan:
 				success(
 					event.LastValidRelayEntry,
 					event.LastValidRelayTxHash,
@@ -266,24 +260,23 @@ type submitGroupPublicKeyEventFunc func(
 	ActivationBlockHeight *big.Int,
 )
 
-// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent
+// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
 func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 	success submitGroupPublicKeyEventFunc,
 	fail errorCallback,
 ) error {
-	name := "SubmitGroupPublicKeyEvent"
-	evenChan := make(chan *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
+	eventChan := make(chan *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
 	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
 		nil,
-		evenChan,
+		eventChan,
 	)
 	if err != nil {
-		return fmt.Errorf("error creating watch for %s event: [%v]", name, err)
+		return fmt.Errorf("error creating watch for SubmitGroupPublicKeyEvent event: [%v]", err)
 	}
 	go func() {
 		for {
 			select {
-			case event := <-evenChan:
+			case event := <-eventChan:
 				gpk := sliceOf1ByteToByteSlice(event.GroupPublicKey)
 				success(gpk, event.RequestID, event.ActivationBlockHeight)
 

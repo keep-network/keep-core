@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 )
@@ -93,7 +92,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return err
 }
 
-// OnGroupPublicKeySubmissionFailed associates a handler for a error event
+// OnGroupPublicKeySubmissionFailed associates a handler for a error event.
 func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
 	handler func(groupID string, errorMessage string),
 ) error {
@@ -106,7 +105,7 @@ func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
 	return nil
 }
 
-// OnGroupPublicKeySubmitted associates a handler for a success event
+// OnGroupPublicKeySubmitted associates a handler for a success event.
 func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	handler func(groupID string, activationBlock *big.Int),
 ) error {
@@ -117,12 +116,4 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	)
 	ec.handlerMutex.Unlock()
 	return nil
-}
-
-func (ec *ethereumChain) GetLastTx() *types.Transaction {
-	return ec.tx
-}
-
-func (ec *ethereumChain) GetLastRequestID() *big.Int {
-	return ec.requestID
 }
