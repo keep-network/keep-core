@@ -47,6 +47,7 @@ type Config struct {
 	Peers       []string
 	Port        int
 	listenAddrs []ma.Multiaddr
+	Seed        int
 	identity    *identity
 }
 
@@ -103,7 +104,7 @@ func discoverAndListen(
 		// FIXME: revisit this fallback decision. We run into the case
 		// where the user's config isn't right and then they're in the
 		// network as an identity they aren't familiar with.
-		peerIdentity, err = generateIdentity()
+		peerIdentity, err = generateIdentity(config.Seed)
 		if err != nil {
 			return nil, nil, err
 		}
