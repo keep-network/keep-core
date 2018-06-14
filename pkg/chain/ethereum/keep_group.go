@@ -23,7 +23,7 @@ type keepGroup struct {
 }
 
 // NewKeepGroup creates the necessary connections and configurations
-// for accessing the KeepGroup contract.
+// for accessing the KeepGroup  contract.
 func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	contractAddressHex, exists := pv.config.ContractAddresses["KeepGroupImplV1"]
 	if !exists {
