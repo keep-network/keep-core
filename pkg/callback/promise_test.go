@@ -1,12 +1,17 @@
 package promise
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestPromiseOnSuccessFulfill(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
 	done := make(chan interface{})
 
 	expectedResult := "batman"
@@ -27,17 +32,24 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result := <-done
-	if result != expectedResult {
-		t.Errorf(
-			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
-			expectedResult,
-			result,
-		)
+	select {
+	case result := <-done:
+		if result != expectedResult {
+			t.Errorf(
+				"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
+				expectedResult,
+				result,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
 	}
 }
 
 func TestPromiseOnCompleteFulfill(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
 	done := make(chan interface{})
 
 	expectedResult := "robin"
@@ -58,17 +70,24 @@ func TestPromiseOnCompleteFulfill(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result := <-done
-	if result != expectedResult {
-		t.Errorf(
-			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
-			expectedResult,
-			result,
-		)
+	select {
+	case result := <-done:
+		if result != expectedResult {
+			t.Errorf(
+				"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
+				expectedResult,
+				result,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
 	}
 }
 
 func TestPromiseOnFailureFail(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
 	done := make(chan interface{})
 
 	expectedResult := fmt.Errorf("it's not working")
@@ -89,17 +108,24 @@ func TestPromiseOnFailureFail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result := <-done
-	if result != expectedResult {
-		t.Errorf(
-			"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
-			expectedResult,
-			result,
-		)
+	select {
+	case result := <-done:
+		if result != expectedResult {
+			t.Errorf(
+				"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
+				expectedResult,
+				result,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
 	}
 }
 
 func TestPromiseOnCompleteFail(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
 	done := make(chan interface{})
 
 	expectedFailure := fmt.Errorf("catwoman")
@@ -120,13 +146,17 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result := <-done
-	if result != expectedFailure {
-		t.Errorf(
-			"Unexpected failure passed to callback\nExpected: %v\nActual:%v\n",
-			expectedFailure,
-			result,
-		)
+	select {
+	case result := <-done:
+		if result != expectedFailure {
+			t.Errorf(
+				"Unexpected failure passed to callback\nExpected: %v\nActual:%v\n",
+				expectedFailure,
+				result,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
 	}
 }
 
@@ -167,6 +197,9 @@ func TestPromiseFail(t *testing.T) {
 }
 
 func TestPromiseAlreadyCompleted(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
 	done := make(chan bool)
 
 	var tests = map[string]struct {
@@ -193,16 +226,23 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-
 			error := test.function()
-			if !reflect.DeepEqual(test.expectedError, error) {
-				t.Errorf(
-					"Errors don't match\nExpected: %v\nActual: %v\n",
-					test.expectedError,
-					error)
-			}
 
+			select {
+			case <-done:
+				if !reflect.DeepEqual(test.expectedError, error) {
+					t.Errorf(
+						"Errors don't match\nExpected: %v\nActual: %v\n",
+						test.expectedError,
+						error)
+				}
+			case <-ctx.Done():
+				t.Fatal(ctx.Err())
+			}
 		})
 	}
-	<-done
+}
+
+func newTestContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 3*time.Second)
 }
