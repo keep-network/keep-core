@@ -3,7 +3,6 @@ package libp2p
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -29,7 +28,8 @@ func TestProviderReturnsType(t *testing.T) {
 
 	if provider.Type() != expectedType {
 		t.Fatalf("expected: provider type [%s]\nactual:   provider type [%s]",
-			provider.Type(), expectedType,
+			provider.Type(),
+			expectedType,
 		)
 	}
 }
@@ -47,7 +47,8 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	if _, err = provider.ChannelFor(testName); err != nil {
 		t.Fatalf("expected: test to fail with [%v]\nactual:   failed with [%v]",
-			nil, err,
+			nil,
+			err,
 		)
 	}
 }
@@ -105,14 +106,14 @@ func TestSendReceive(t *testing.T) {
 			testPayload, ok := msg.Payload().(*testMessage)
 			if !ok {
 				t.Fatalf(
-					"Expected message payload to be of type string, got type %v",
+					"expected: payload type string\nactual:   payload type [%v]",
 					testPayload,
 				)
 			}
 
 			if expectedPayload != testPayload.Payload {
 				t.Fatalf(
-					"expected message payload %s, got payload %s",
+					"expected: message payload [%s]\ngot:   payload [%s]",
 					expectedPayload,
 					testPayload.Payload,
 				)
@@ -193,15 +194,16 @@ func TestSendToReceiveFrom(t *testing.T) {
 			testPayload, ok := msg.Payload().(*testMessage)
 			if !ok {
 				t.Fatalf(
-					"Expected message payload to be of type string, got type %v",
+					"expected: payload type string\ngot:   payload type [%v]",
 					testPayload,
 				)
 			}
 
 			if expectedPayload != testPayload.Payload {
 				t.Fatalf(
-					"expected message payload %s, got payload %s",
-					expectedPayload, testPayload.Payload,
+					"expected: message payload [%s]\ngot:   payload [%s]",
+					expectedPayload,
+					testPayload.Payload,
 				)
 			}
 			return
@@ -232,7 +234,6 @@ func (m *testMessage) Marshal() ([]byte, error) {
 func (m *testMessage) Unmarshal(bytes []byte) error {
 	var message testMessage
 	if err := json.Unmarshal(bytes, &message); err != nil {
-		fmt.Println("hit this error")
 		return err
 	}
 	m.Sender = message.Sender
@@ -266,11 +267,11 @@ func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	p := testutils.RandPeerNetParamsOrFatal(t)
 	identity, err := generateIdentity()
 	if err != nil {
-		t.Fatalf("Failed to generate valid libp2p identity with err: %v", err)
+		t.Fatalf("failed to generate valid libp2p identity with err: [%v]", err)
 	}
 	pid, err := peer.IDFromPublicKey(identity.pubKey)
 	if err != nil {
-		t.Fatalf("Failed to generate valid libp2p identity with err: %v", err)
+		t.Fatalf("failed to generate valid libp2p identity with err: [%v]", err)
 	}
 	identity.id = networkIdentity(pid)
 	return &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: identity}
