@@ -20,12 +20,12 @@ type localChain struct {
 	blockCounter                     chain.BlockCounter
 }
 
-func (c *localChain) BlockCounter() chain.BlockCounter {
-	return c.blockCounter
+func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
+	return c.blockCounter, nil
 }
 
-func (c *localChain) GetConfig() beacon.Config {
-	return c.beaconConfig
+func (c *localChain) GetConfig() (beacon.Config, error) {
+	return c.beaconConfig, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
@@ -59,7 +59,9 @@ func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
 	return nil
 }
 
-func (c *localChain) OnGroupPublicKeySubmissionFailed(handler func(string, string)) error {
+func (c *localChain) OnGroupPublicKeySubmissionFailed(
+	handler func(string, string),
+) error {
 	c.handlerMutex.Lock()
 	c.groupPublicKeyFailureHandlers = append(c.groupPublicKeyFailureHandlers, handler)
 	c.handlerMutex.Unlock()
@@ -67,9 +69,14 @@ func (c *localChain) OnGroupPublicKeySubmissionFailed(handler func(string, strin
 	return nil
 }
 
-func (c *localChain) OnGroupPublicKeySubmitted(handler func(groupID string, activationBlock *big.Int)) error {
+func (c *localChain) OnGroupPublicKeySubmitted(
+	handler func(groupID string, activationBlock *big.Int),
+) error {
 	c.handlerMutex.Lock()
-	c.groupPublicKeySubmissionHandlers = append(c.groupPublicKeySubmissionHandlers, handler)
+	c.groupPublicKeySubmissionHandlers = append(
+		c.groupPublicKeySubmissionHandlers,
+		handler,
+	)
 	c.handlerMutex.Unlock()
 
 	return nil
@@ -86,9 +93,15 @@ func (c *localChain) ThresholdRelay() relay.ChainInterface {
 // Connect initializes a local stub implementation of the chain interfaces for
 // testing.
 func Connect(groupSize int, threshold int) chain.Handle {
+	bc, _ := blockCounter()
+
 	return &localChain{
-		beaconConfig:         beacon.Config{GroupSize: groupSize, Threshold: threshold},
+		beaconConfig: beacon.Config{
+			GroupSize: groupSize,
+			Threshold: threshold,
+		},
 		groupPublicKeysMutex: sync.Mutex{},
 		groupPublicKeys:      make(map[string][96]byte),
-		blockCounter:         blockCounter()}
+		blockCounter:         bc,
+	}
 }

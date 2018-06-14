@@ -3,12 +3,12 @@
 # Provider Initialization Example
 
 [ethereum]
-	URL                = "ws://192.168.0.157:8546"
+	URL                = "ws://192.168.0.158:8546"
+	URLRPC             = "http://192.168.0.158:8545"
 
 [ethereum.account]
 	Address            = "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"
 	KeyFile            = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
-	KeyFilePassword    = "Not-really-my-password9"
 
 [ethereum.ContractAddresses]
 	KeepRandomBeacon = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
