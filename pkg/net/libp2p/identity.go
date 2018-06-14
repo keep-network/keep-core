@@ -37,16 +37,17 @@ func (i *identity) Marshal() ([]byte, error) {
 		err error
 	)
 
-	if i.pubKey == nil {
-		i.pubKey, err = peer.ID(i.id).ExtractPublicKey()
+	pubKey := i.pubKey
+	if pubKey == nil {
+		pubKey, err = peer.ID(i.id).ExtractPublicKey()
 		if err != nil {
 			return nil, err
 		}
 	}
-	if i.pubKey == nil {
-		return nil, fmt.Errorf("Failed to generate public key with peer id %+v", peer.ID(i.id))
+	if pubKey == nil {
+		return nil, fmt.Errorf("failed to generate public key with peerid %v", peer.ID(i.id))
 	}
-	pubKeyBytes, err := i.pubKey.Bytes()
+	pubKeyBytes, err := pubKey.Bytes()
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	)
 
 	if err = pbIdentity.Unmarshal(bytes); err != nil {
-		return err
+		return fmt.Errorf("unmarshalling failed with error %s", err)
 	}
 	i.pubKey, err = libp2pcrypto.UnmarshalPublicKey(pbIdentity.PubKey)
 	if err != nil {
