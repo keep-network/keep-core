@@ -183,9 +183,9 @@ func makeSmuxTransport() smux.Transport {
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
 	var (
-		peers []*peerstore.PeerInfo
-		wg    sync.WaitGroup
-		e     error
+		peers         []*peerstore.PeerInfo
+		waitGroup     sync.WaitGroup
+		internalError error
 	)
 	for _, bp := range bootstrapPeers {
 		// The following code extracts target's the peer ID from the
@@ -208,16 +208,16 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 			// We shouldn't bootstrap to ourself if we're the bootstrap node
 			continue
 		}
-		wg.Add(1)
-		go func(pi *peerstore.PeerInfo) {
-			defer wg.Done()
-			if err := p.host.Connect(ctx, *pi); err != nil {
-				e = err
+		waitGroup.Add(1)
+		go func(peerInfo *peerstore.PeerInfo) {
+			defer waitGroup.Done()
+			if err := p.host.Connect(ctx, *peerInfo); err != nil {
+				internalError = err
 				return
 			}
 		}(pi)
 	}
 
-	wg.Wait()
-	return e
+	waitGroup.Wait()
+	return internalError
 }
