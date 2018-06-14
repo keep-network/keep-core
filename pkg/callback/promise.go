@@ -8,7 +8,7 @@ import (
 // Promise represents the eventual completion or failure of an
 // ansynchronous operation and its resulting value. Promise can
 // be either fulfilled or failed and it can happen only one time.
-// All Promise operations are thread-safe, guarded by a mutex.
+// All Promise operations are thread-safe.
 type Promise struct {
 	mutex     sync.Mutex
 	successFn func(interface{})
