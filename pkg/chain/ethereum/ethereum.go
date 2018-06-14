@@ -78,7 +78,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return err
 	}
 
-	_, err := ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
+	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
 		applyError(fmt.Sprintf("error submitting request: [%v]", err))
 	}
