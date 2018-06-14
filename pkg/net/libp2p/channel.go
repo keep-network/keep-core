@@ -50,6 +50,11 @@ func (c *channel) SendTo(
 	return c.doSend(recipientIdentifier, c.clientIdentity, message)
 }
 
+// doSend attempts to send a message, from a sender, to all members of a
+// broadcastChannel, or optionally to a specific recipient. If recipient
+// is nil (the typical case), then all messages of the broadcast channel
+// should receive the message. Otherwise, given a valid recipient, we will
+// address the message specifically to them.
 func (c *channel) doSend(
 	recipient net.ProtocolIdentifier,
 	sender *identity,
