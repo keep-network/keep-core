@@ -265,7 +265,7 @@ func newTestContext() (context.Context, context.CancelFunc) {
 
 func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	p := testutils.RandPeerNetParamsOrFatal(t)
-	identity, err := generateIdentity()
+	identity, err := generateIdentity(0)
 	if err != nil {
 		t.Fatalf("failed to generate valid libp2p identity with err: [%v]", err)
 	}
