@@ -7,7 +7,7 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
  * @title Stake Delegatable
  * @dev A contract that allows delegate your stake balance to any address
  * that is not already a staker. Delegator refers to a staker who has
- * delegated their stake to another address, while operator refers to an
+ * delegated their stake to another address, while delegate refers to an
  * address that has had a stake delegated to it.
  */
 contract StakeDelegatable {
@@ -29,8 +29,8 @@ contract StakeDelegatable {
     }
 
     mapping(address => uint256) public stakeBalances;
-    mapping(address => address) public stakerToOperator;
-    mapping(address => address) public operatorToStaker;
+    mapping(address => address) public delegatorToDelegate;
+    mapping(address => address) public delegateToDelegator;
 
     /**
      * @dev Gets the stake balance of the specified address.
@@ -43,74 +43,74 @@ contract StakeDelegatable {
         notNull(_address)
         returns (uint256)
     {
-        address delegator = stakerToOperator[_address];
-        if (delegator != address(0) && operatorToStaker[delegator] == _address) {
+        address delegator = delegatorToDelegate[_address];
+        if (delegator != address(0) && delegateToDelegator[delegator] == _address) {
             return stakeBalances[delegator];
         }
         return stakeBalances[_address];
     }
 
     /**
-     * @dev Returns address of an operator if it exists for the
-     * provided staker address or the provided staker address otherwise.
+     * @dev Returns address of a delegate if it exists for the
+     * provided address or the provided address otherwise.
      * @param _address The address to check.
-     * @return Operator address or provided staker address.
+     * @return Delegate address or provided address.
      */
-    function getStakerOrOperator(address _address)
+    function getDelegatorOrDelegate(address _address)
         public
         view
         notNull(_address)
         returns (address)
     {
-        address operator = operatorToStaker[_address];
-        if (operator != address(0) && stakerToOperator[operator] == _address) {
-            return operator;
+        address delegate = delegateToDelegator[_address];
+        if (delegate != address(0) && delegatorToDelegate[delegate] == _address) {
+            return delegate;
         }
         return _address;
     }
 
     /**
-     * @dev Approves address to operate your stake balance. You can only
-     * have one operator address. Operator must also request to operate
-     * your stake by calling requestOperateFor() method.
+     * @dev Approves address to delegate your stake balance. You can only
+     * have one delegate address. Delegate must also request to operate
+     * your stake by calling requestDelegateFor() method.
      * @param _address Address to where you want to delegate your balance.
      */
-    function approveOperatorAt(address _address)
+    function approveDelegateAt(address _address)
         public
         notNull(_address)
         notStaker(_address)
     {
-        operatorToStaker[msg.sender] = _address;
+        delegateToDelegator[msg.sender] = _address;
     }
 
     /**
-     * @dev Requests to operate stake for a specified address.
-     * Staker address must approve you to operate by calling
-     * approveOperatorAt() method.
-     * @param _address Address for which you request to operate.
+     * @dev Requests to delegate stake for a specified address.
+     * An address must approve you first to delegate by calling
+     * requestDelegateFor() method.
+     * @param _address Address for which you request to delegate.
      */
-    function requestOperateFor(address _address)
+    function requestDelegateFor(address _address)
         public
         notNull(_address)
     {
-        stakerToOperator[msg.sender] = _address;
+        delegatorToDelegate[msg.sender] = _address;
     }
 
     /**
      * @dev Removes delegate for your stake balance.
      */
     function removeDelegate() public {
-        address operator = operatorToStaker[msg.sender];
-        delete stakerToOperator[operator];
-        delete operatorToStaker[msg.sender];
+        address delegate = delegateToDelegator[msg.sender];
+        delete delegatorToDelegate[delegate];
+        delete delegateToDelegator[msg.sender];
     }
 
     /**
-     * @dev Revert if an operator try to stake.
+     * @dev Revert if a delegate try to stake.
      * @param _address The address to check.
      */
-    function revertIfOperatorStakes(address _address) internal {
-        address delegator = stakerToOperator[_address];
+    function revertIfDelegateStakes(address _address) internal {
+        address delegator = delegatorToDelegate[_address];
         if (delegator != address(0)) {
             revert();
         }

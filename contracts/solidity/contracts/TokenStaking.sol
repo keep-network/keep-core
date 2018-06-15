@@ -70,7 +70,7 @@ contract TokenStaking is StakeDelegatable {
         // Make sure sender has enough tokens.
         require(_value <= token.balanceOf(_from));
 
-        revertIfOperatorStakes(_from);
+        revertIfDelegateStakes(_from);
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, this, _value);
@@ -79,10 +79,10 @@ contract TokenStaking is StakeDelegatable {
         stakeBalances[_from] = stakeBalances[_from].add(_value);
 
         // Emit staked event. Check if staker works via operator first.
-        address stakerOrOperator = getStakerOrOperator(_from);
-        emit Staked(stakerOrOperator, _value);
+        address delegatorOrDelegate = getDelegatorOrDelegate(_from);
+        emit Staked(delegatorOrDelegate, _value);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(stakerOrOperator, _value);
+            stakingProxy.emitStakedEvent(delegatorOrDelegate, _value);
         }
     }
 
@@ -102,10 +102,10 @@ contract TokenStaking is StakeDelegatable {
         withdrawalIndices[msg.sender].push(id);
         emit InitiatedUnstake(id);
 
-        // Emit unstaked event. Check if staker works via operator first.
-        address stakerOrOperator = getStakerOrOperator(msg.sender);
+        // Emit unstaked event. Check if staker delegated its balance first.
+        address delegatorOrDelegate = getDelegatorOrDelegate(msg.sender);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(stakerOrOperator, _value);
+            stakingProxy.emitUnstakedEvent(delegatorOrDelegate, _value);
         }
         return id;
     }

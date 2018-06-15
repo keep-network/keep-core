@@ -224,7 +224,7 @@ contract TokenGrant is StakeDelegatable {
         uint256 available = grants[_id].amount.sub(grants[_id].released);
         require(available > 0);
 
-        revertIfOperatorStakes(msg.sender);
+        revertIfDelegateStakes(msg.sender);
 
         // Lock grant from releasing its balance.
         grants[_id].locked = true;
