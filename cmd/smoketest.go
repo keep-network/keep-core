@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"strings"
-
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain/local"
@@ -138,9 +136,4 @@ func SmokeTest(c *cli.Context) error {
 	}
 
 	return nil
-}
-
-func header(header string) {
-	dashes := strings.Repeat("-", len(header))
-	fmt.Printf("\n%s\n%s\n%s\n", dashes, header, dashes)
 }

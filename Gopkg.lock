@@ -19,12 +19,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/aristanetworks/goarista"
-  packages = ["monotime"]
-  revision = "4b9133d8ba77cab2812e147080198080b65b19b2"
-
-[[projects]]
-  branch = "master"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
   revision = "86fed781132ac890ee03e906e4ecd5d6fa180c64"
@@ -54,22 +48,15 @@
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
-    "accounts",
-    "accounts/abi",
-    "accounts/abi/bind",
-    "accounts/keystore",
     "common",
     "common/hexutil",
     "common/math",
-    "common/mclock",
     "core/types",
     "crypto",
-    "crypto/randentropy",
     "crypto/secp256k1",
     "crypto/sha3",
     "ethclient",
     "ethdb",
-    "event",
     "log",
     "metrics",
     "p2p/netutil",
@@ -97,8 +84,7 @@
   name = "github.com/gogo/protobuf"
   packages = [
     "io",
-    "proto",
-    "sortkeys"
+    "proto"
   ]
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
   version = "v1.0.0"
@@ -135,15 +121,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/hashicorp/golang-lru"
-  packages = [
-    ".",
-    "simplelru"
-  ]
-  revision = "0fb14efe8c47ae851c0034ed7a448854d3d34cf3"
-
-[[projects]]
-  branch = "master"
   name = "github.com/huin/goupnp"
   packages = [
     ".",
@@ -155,22 +132,6 @@
     "ssdp"
   ]
   revision = "1395d1447324cbea88d249fbfcfd70ea878fdfca"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/ipfs/go-cid"
-  packages = ["."]
-  revision = "5b04f3043387b02aeeee6a35899f0e767bae3b33"
-
-[[projects]]
-  name = "github.com/ipfs/go-datastore"
-  packages = [
-    ".",
-    "autobatch",
-    "query",
-    "sync"
-  ]
-  revision = "f2426c09e56ae390fc416f21b224c7d7ad13418c"
 
 [[projects]]
   branch = "master"
@@ -190,12 +151,6 @@
   revision = "b9df188d0fae32d69c1a519fa81741668a12f55a"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/ipfs/go-todocounter"
-  packages = ["."]
-  revision = "1e832b829506383050e6eebd12e05ea41a451532"
-
-[[projects]]
   name = "github.com/jackpal/gateway"
   packages = ["."]
   revision = "3e333950771011fed13be63e62b9f473c5e0d9bf"
@@ -206,12 +161,6 @@
   packages = ["."]
   revision = "c9cfead9f2a36ddf3daa40ba269aa7f4bbba6b62"
   version = "v1.0.1"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/jbenet/go-context"
-  packages = ["io"]
-  revision = "d14ea06fba99483203c19d92cfcd13ebe73135f4"
 
 [[projects]]
   branch = "master"
@@ -256,7 +205,6 @@
   name = "github.com/libp2p/go-libp2p"
   packages = [
     "p2p/host/basic",
-    "p2p/host/routed",
     "p2p/protocol/identify",
     "p2p/protocol/identify/pb"
   ]
@@ -310,25 +258,6 @@
   revision = "c6acc383ec0b7b98112971df590d6702885ca821"
 
 [[projects]]
-  name = "github.com/libp2p/go-libp2p-kad-dht"
-  packages = [
-    ".",
-    "opts",
-    "pb",
-    "providers"
-  ]
-  revision = "240a27a66982945ba87967a08a6e04b74b228c45"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/libp2p/go-libp2p-kbucket"
-  packages = [
-    ".",
-    "keyspace"
-  ]
-  revision = "a88e1b7030c460c8bb9f09cab9bb3f4bc727edb2"
-
-[[projects]]
   branch = "master"
   name = "github.com/libp2p/go-libp2p-loggables"
   packages = ["."]
@@ -360,17 +289,15 @@
   name = "github.com/libp2p/go-libp2p-peer"
   packages = [
     ".",
-    "peerset",
     "test"
   ]
-  revision = "e8858116ad7f0a54dfc2bb6af554f2024221d19c"
+  revision = "aa0e03e559bde9d4749ad8e38595e15a6fe808fa"
 
 [[projects]]
   name = "github.com/libp2p/go-libp2p-peerstore"
   packages = [
     ".",
-    "addr",
-    "queue"
+    "addr"
   ]
   revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
 
@@ -379,25 +306,6 @@
   name = "github.com/libp2p/go-libp2p-protocol"
   packages = ["."]
   revision = "b29f3d97e3a2fb8b29c5d04290e6cb5c5018004b"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/libp2p/go-libp2p-record"
-  packages = [
-    ".",
-    "pb"
-  ]
-  revision = "e1ffee3ceea9ca1e583965bea51bd7b35b543518"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/libp2p/go-libp2p-routing"
-  packages = [
-    ".",
-    "notifications",
-    "options"
-  ]
-  revision = "d2bd3b71dacda2bcb7bd666816abe4e0685bda01"
 
 [[projects]]
   branch = "master"
@@ -529,12 +437,6 @@
   revision = "97d80565f68c5df715e6ba59c2f6a03d1fc33aaf"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/multiformats/go-multibase"
-  packages = ["."]
-  revision = "dfd5076869faca5aed2886dcba60b44a0d0e9c01"
-
-[[projects]]
   name = "github.com/multiformats/go-multihash"
   packages = ["."]
   revision = "468a1b73e980e5aff011d308623e43e28c582b16"
@@ -554,18 +456,6 @@
   ]
   revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
   version = "v1.0.2"
-
-[[projects]]
-  name = "github.com/pborman/uuid"
-  packages = ["."]
-  revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
-  version = "v1.1"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/rjeczalik/notify"
-  packages = ["."]
-  revision = "d152f3ce359a5464dc41e84a8919fc67e55bbbf0"
 
 [[projects]]
   name = "github.com/rs/cors"
@@ -608,18 +498,6 @@
   packages = ["."]
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
   source = "https://github.com/keep-network/cli.git"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/whyrusleeping/base32"
-  packages = ["."]
-  revision = "c30ac30633ccdabefe87eb12465113f06f1bab75"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/whyrusleeping/go-keyspace"
-  packages = ["."]
-  revision = "5b898ac5add1da7178a4a98e69cb7b9205c085ee"
 
 [[projects]]
   branch = "master"
@@ -681,8 +559,6 @@
   packages = [
     "blake2s",
     "blowfish",
-    "pbkdf2",
-    "scrypt",
     "sha3",
     "ssh/terminal"
   ]
@@ -735,16 +611,6 @@
   version = "v0.3.0"
 
 [[projects]]
-  branch = "master"
-  name = "golang.org/x/tools"
-  packages = [
-    "go/ast/astutil",
-    "imports",
-    "internal/fastwalk"
-  ]
-  revision = "a5b4c53f6e8bdcafa95a94671bf2d1203365858b"
-
-[[projects]]
   name = "gopkg.in/fatih/set.v0"
   packages = ["."]
   revision = "57907de300222151a123d29255ed17f5ed43fad3"
@@ -765,6 +631,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "48cf662e7273d4cb586c694085a55dcd508f52836f871b20b10bf3aec8d0f04a"
+  inputs-digest = "6b85550bdde31ca0507e5f3c91295a67bacf87f72a398efba61713d0cdb1e6d4"
   solver-name = "gps-cdcl"
   solver-version = 1
