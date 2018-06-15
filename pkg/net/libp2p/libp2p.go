@@ -206,6 +206,13 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	}
 
 	waitGroup.Wait()
+
+	// Bootstrap the host
+	err = p.routing.Bootstrap(ctx)
+	if err != nil {
+		return err
+	}
+
 	return internalError
 }
 
