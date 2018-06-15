@@ -1,35 +1,35 @@
-package promise
+{{/* This is a template for Promises */ -}}
+
+// This is auto generated code!
+
+package callback
 
 import (
 	"fmt"
 	"sync"
+    {{if .PackagedType -}}"github.com/keep-network/keep-core/{{.PackagedType}}"
+{{end -}}
 )
 
 // Promise represents an eventual completion of an ansynchronous operation
 // and its resulting value. Promise can be either fulfilled or failed and
 // it can happen only one time. All Promise operations are thread-safe.
-type Promise struct {
+//
+// To create a promise use: `&{{ .Type }}Promise{}`
+type {{ .Prefix }}Promise struct {
 	mutex      sync.Mutex
-	successFn  func(interface{})
+	successFn  func({{ .Type }})
 	failureFn  func(error)
-	completeFn func(interface{}, error)
+	completeFn func({{ .Type }}, error)
 
 	isComplete bool
-}
-
-// NewPromise creates a new, uncompleted Promise instance with
-// no success, complete or failure callback configured.
-func NewPromise() *Promise {
-	return &Promise{
-		isComplete: false,
-	}
 }
 
 // OnSuccess registers a function to be called when the Promise
 // has been fulfilled. In case of a failed Promise, function is not
 // called at all. OnSuccess is a non-blocking operation. Only one on success
 // function can be registered for a Promise.
-func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
+func (p *{{ .Prefix }}Promise) OnSuccess(onSuccess func({{ .Type }})) *{{ .Prefix }}Promise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -41,7 +41,7 @@ func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
 // execution failed. In case of a fulfilled Promise, function is not
 // called at all. OnFailure is a non-blocking operation. Only one on failure
 // function can be registered for a Promise.
-func (p *Promise) OnFailure(onFailure func(error)) *Promise {
+func (p *{{ .Prefix }}Promise) OnFailure(onFailure func(error)) *{{ .Prefix }}Promise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -56,7 +56,7 @@ func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 // value evaluated so the value parameter is nil. OnComplete is
 // a non-blocking operation. Only one on complete function can be
 // registered for a Promise.
-func (p *Promise) OnComplete(onComplete func(interface{}, error)) *Promise {
+func (p *{{ .Prefix }}Promise) OnComplete(onComplete func({{ .Type }}, error)) *{{ .Prefix }}Promise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -68,7 +68,7 @@ func (p *Promise) OnComplete(onComplete func(interface{}, error)) *Promise {
 // the OnSuccess callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
 // an error.
-func (p *Promise) Fulfill(value interface{}) error {
+func (p *{{ .Prefix }}Promise) Fulfill(value {{ .Prefix }}) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -95,7 +95,7 @@ func (p *Promise) Fulfill(value interface{}) error {
 // the OnFailure callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
 // an error.
-func (p *Promise) Fail(err error) error {
+func (p *{{ .Prefix }}Promise) Fail(err error) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
