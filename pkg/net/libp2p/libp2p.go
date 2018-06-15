@@ -63,14 +63,12 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 		return nil, err
 	}
 
-	// The dht is our router. It helps us find addresses for identities we
-	// encounter in the network.
-	dht := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
+	router := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
 
 	provider := &provider{
 		channelManagr: cm,
-		host:          rhost.Wrap(host, dht),
-		routing:       dht,
+		host:          rhost.Wrap(host, router),
+		routing:       router,
 	}
 
 	// FIXME: return an error if we don't provide bootstrap peers
