@@ -43,10 +43,19 @@ contract StakeDelegatable {
         notNull(_address)
         returns (uint256)
     {
+        // If provided address is a delegate return its delegator balance.
         address delegator = delegatorToDelegate[_address];
         if (delegator != address(0) && delegateToDelegator[delegator] == _address) {
             return stakeBalances[delegator];
         }
+
+        // If provided address is a delegator return zero balance since the 
+        // balance is delegated to a delegate.
+        address delegate = delegateToDelegator[_address];
+        if (delegate != address(0) && delegatorToDelegate[delegate] == _address) {
+            return 0;
+        }
+
         return stakeBalances[_address];
     }
 

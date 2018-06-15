@@ -39,6 +39,7 @@ contract('TestStakeDelegate', function(accounts) {
     await stakingContract.requestDelegateFor(account_one, {from: account_three});
     await stakingContract.approveDelegateAt(account_three, {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Delegate account should represent delegator's stake balance.");
+    assert.equal(await stakingProxy.balanceOf(account_one), 0, "Delegator account stake balance should become zero.");
   });
 
   it("should not be able to delegate stake to a delegate address that is not approved", async function() {
@@ -51,6 +52,7 @@ contract('TestStakeDelegate', function(accounts) {
     await stakingContract.requestDelegateFor(account_one, {from: account_three});
     await stakingContract.approveDelegateAt(account_three, {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Delegate account should represent delegator's stake balance.");
+    assert.equal(await stakingProxy.balanceOf(account_one), 0, "Delegator account stake balance should become zero.");
 
     await stakingContract.approveDelegateAt(account_four, {from: account_one});
     await stakingContract.requestDelegateFor(account_one, {from: account_four});
@@ -64,6 +66,7 @@ contract('TestStakeDelegate', function(accounts) {
     assert.equal(await stakingProxy.balanceOf(account_three), 200, "Delegate account should represent delegator's stake balance.");
     await stakingContract.removeDelegate();
     assert.equal(await stakingProxy.balanceOf(account_three), 0, "Delegate account should stop representing delegator's stake balance.");
+    assert.equal(await stakingProxy.balanceOf(account_one), 200, "Delegator account should get its balance back.");
   });
 
   it("should be able to change stake and get delegate to reflect updated balance", async function() {
@@ -74,6 +77,7 @@ contract('TestStakeDelegate', function(accounts) {
     // Stake more tokens
     await token.approveAndCall(stakingContract.address, 100, "", {from: account_one});
     assert.equal(await stakingProxy.balanceOf(account_three), 300, "Delegate account should reflect delegator's updated stake balance.");
+    assert.equal(await stakingProxy.balanceOf(account_one), 0, "Delegator account stake balance should be zero.");
 
     // Unstake everything
     await stakingContract.initiateUnstake(300);
