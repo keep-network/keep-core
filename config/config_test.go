@@ -47,6 +47,14 @@ func TestReadConfig(t *testing.T) {
 				"GroupContract":    "0x139deb0dd975af8e4cc91fe9053a37e4faf37649",
 			},
 		},
+		"Bootstrap.URL": {
+			readValueFunc: func(c *Config) interface{} { return c.Bootstrap.URL },
+			expectedValue: []string{"/ip4/127.0.0.1/tcp/8080/ipfs/12D3KooWHHzSeKaY8xuZVzkLbKFfvNgPPeKhFBGrMbNzbm5akpqu"},
+		},
+		"Bootstrap.Seed": {
+			readValueFunc: func(c *Config) interface{} { return c.Bootstrap.Seed },
+			expectedValue: 2,
+		},
 	}
 
 	for testName, test := range configReadTests {

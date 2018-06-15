@@ -15,7 +15,13 @@ const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum ethereum.Config
+	Ethereum  ethereum.Config
+	Bootstrap bootstrap
+}
+
+type bootstrap struct {
+	URL        string
+	Seed        int
 }
 
 var (
@@ -25,6 +31,7 @@ var (
 
 // ReadConfig reads in the configuration file in .toml format.
 func ReadConfig(filePath string) (cfg Config, err error) {
+
 	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
 		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
@@ -42,6 +49,14 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 
 	if cfg.Ethereum.Account.KeyFilePassword == "" {
 		return cfg, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
+	}
+
+	if len(cfg.Bootstrap.URL) == 0 {
+		return cfg, fmt.Errorf("Bootstrap URL missing")
+	}
+
+	if cfg.Bootstrap.Seed == 0 {
+		return cfg, fmt.Errorf("Bootstrap seed missing")
 	}
 
 	return cfg, nil
