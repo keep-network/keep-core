@@ -179,10 +179,7 @@ func makeSmuxTransport() smux.Transport {
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
-	var (
-		waitGroup     sync.WaitGroup
-		internalError error
-	)
+	var waitGroup sync.WaitGroup
 
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
 	if err != nil {
@@ -199,21 +196,15 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 		go func(pi *peerstore.PeerInfo) {
 			defer waitGroup.Done()
 			if err := p.host.Connect(ctx, *pi); err != nil {
-				internalError = err
+				fmt.Println(err)
 				return
 			}
 		}(peerInfo)
 	}
-
 	waitGroup.Wait()
 
 	// Bootstrap the host
-	err = p.routing.Bootstrap(ctx)
-	if err != nil {
-		return err
-	}
-
-	return internalError
+	return p.routing.Bootstrap(ctx)
 }
 
 func extractMultiAddrFromPeers(peers []string) ([]*peerstore.PeerInfo, error) {
