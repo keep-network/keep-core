@@ -18,6 +18,7 @@ type ethereumChain struct {
 	clientWS                         *rpc.Client
 	requestID                        *big.Int
 	keepGroupContract                *keepGroup
+	keepRandomBeaconContract         *KeepRandomBeacon
 	tx                               *types.Transaction
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(groupID string, errorMessage string)
@@ -61,6 +62,21 @@ func Connect(cfg Config) (chain.Handle, error) {
 		clientRPC: clientrpc,
 		clientWS:  clientws,
 	}
+
+	keepRandomBeaconContract, err := newKeepRandomBeacon(pv)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error attaching to KeepRandomBeacon contract: [%v]",
+			err,
+		)
+	}
+	pv.keepRandomBeaconContract = keepRandomBeaconContract
+
+	keepGroupContract, err := newKeepGroup(pv)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
+	}
+	pv.keepGroupContract = keepGroupContract
 
 	return pv, nil
 }

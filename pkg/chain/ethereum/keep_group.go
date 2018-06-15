@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	gen "github.com/keep-network/keep-core/pkg/chain/gen"
+	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
 // keepGroup connection information for interface to KeepGroup contract.
@@ -20,8 +20,24 @@ type keepGroup struct {
 	transactorOpts  *bind.TransactOpts
 	contract        *gen.KeepGroupImplV1
 	contractAddress common.Address
-	name            string
 }
+
+// Important note on watching for Ethereum contract events in Go.
+//
+// In calls to an abigen generated watch, the first parameter is a filter.
+// In example code, to see all events, one must pass in an empty filter.
+// In geth, this doesn't work. An empty filter will result in an incorrect
+// bloom filter to be selected for the Ethereum search code.
+// Rather, to watch for events requires a 'nil' as the first parameter.
+//
+// For example:
+//  	filter := nil
+//  	eventSubscription, err := kg.contract.SomeContractSomeEvent(filter, eventChan)
+//
+// Will exhibit our desired behavior of selecting an empty filter.
+//
+// This is different from node.js/web3 code where a 'nil' is treated the same
+// as an empty filter.
 
 // NewKeepGroup creates the necessary connections and configurations
 // for accessing the KeepGroup contract.
@@ -75,9 +91,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	}
 
 	optsCaller := &bind.CallOpts{
-		Pending: false,
-		From:    contractAddress,
-		Context: nil,
+		From: contractAddress,
 	}
 
 	groupContract, err := gen.NewKeepGroupImplV1(contractAddress, pv.client)
@@ -90,7 +104,6 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	}
 
 	return &keepGroup{
-		name:            "KeepGroup", // "KeepGroupImplV1",
 		transactor:      groupTransactor,
 		transactorOpts:  optsTransactor,
 		caller:          groupCaller,
@@ -195,11 +208,10 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 	success groupCompleteEventFunc,
 	fail errorCallback,
 ) error {
-	name := "GroupCompleteEvent"
 	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
 	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for %s events [%v]", name, err)
+		return fmt.Errorf("error creating watch for GroupCompleteEvent events [%v]", err)
 	}
 	go func() {
 		for {
@@ -223,11 +235,10 @@ func (kg *keepGroup) WatchGroupErrorCode(
 	success groupErrorCodeFunc,
 	fail errorCallback,
 ) error {
-	name := "GroupErrorCode"
 	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
 	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("failed go create watch for %s events: [%v]", name, err)
+		return fmt.Errorf("failed go create watch for GroupErrorCode events: [%v]", err)
 	}
 	go func() {
 		for {
@@ -252,11 +263,10 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 	success groupExistsEventFunc,
 	fail errorCallback,
 ) error {
-	name := "GroupExistsEvent"
 	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
 	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for %s events [%v]", name, err)
+		return fmt.Errorf("error creating watch for GropExistsEvent events [%v]", err)
 	}
 	go func() {
 		for {
@@ -281,11 +291,10 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 	success groupStartedEventFunc,
 	fail errorCallback,
 ) error {
-	name := "GroupStartedEvent"
 	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
 	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for %s events [%v]", name, err)
+		return fmt.Errorf("error creating watch for GorupStartedEvent events [%v]", err)
 	}
 	go func() {
 		for {
