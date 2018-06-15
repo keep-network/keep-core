@@ -106,14 +106,13 @@ contract StakeDelegatable {
     }
 
     /**
-     * @dev Removes delegate for the address if it's an operator and staked.
+     * @dev Revert if an operator try to stake.
      * @param _address The address to check.
      */
-    function removeDelegateIfStakedAsOperator(address _address) internal {
+    function revertIfOperatorStakes(address _address) internal {
         address delegator = stakerToOperator[_address];
         if (delegator != address(0)) {
-            delete stakerToOperator[_address];
-            delete operatorToStaker[delegator];
+            revert();
         }
     }
 }

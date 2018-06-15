@@ -70,7 +70,7 @@ contract TokenStaking is StakeDelegatable {
         // Make sure sender has enough tokens.
         require(_value <= token.balanceOf(_from));
 
-        removeDelegateIfStakedAsOperator(_from);
+        revertIfOperatorStakes(_from);
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, this, _value);
