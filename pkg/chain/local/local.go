@@ -28,7 +28,7 @@ func (c *localChain) GetConfig() (beacon.Config, error) {
 	return c.beaconConfig, nil
 }
 
-func (ec *ethereumChain) SubmitGroupPublicKey(
+func (ec *localChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
 ) *callback.Promise {
