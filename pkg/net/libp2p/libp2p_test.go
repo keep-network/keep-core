@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	testutils "github.com/libp2p/go-testutil"
 	ma "github.com/multiformats/go-multiaddr"
@@ -269,11 +268,6 @@ func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	if err != nil {
 		t.Fatalf("failed to generate valid libp2p identity with err: [%v]", err)
 	}
-	pid, err := peer.IDFromPublicKey(identity.pubKey)
-	if err != nil {
-		t.Fatalf("failed to generate valid libp2p identity with err: [%v]", err)
-	}
-	identity.id = networkIdentity(pid)
 	return &Config{Port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: identity}
 }
 
