@@ -17,10 +17,15 @@ const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 type Config struct {
 	Ethereum  ethereum.Config
 	Bootstrap bootstrap
+	Node  node
+}
+
+type node struct {
+	Port        int
 }
 
 type bootstrap struct {
-	URL        string
+	URLs        []string
 	Seed        int
 }
 
@@ -51,12 +56,12 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 		return cfg, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
 	}
 
-	if len(cfg.Bootstrap.URL) == 0 {
-		return cfg, fmt.Errorf("Bootstrap URL missing")
+	if len(cfg.Bootstrap.URLs) == 0 {
+		return cfg, fmt.Errorf("Bootstrap URLs missing")
 	}
 
-	if cfg.Bootstrap.Seed == 0 {
-		return cfg, fmt.Errorf("Bootstrap seed missing")
+	if cfg.Node.Port == 0 {
+		return cfg, fmt.Errorf("Node Port seed missing")
 	}
 
 	return cfg, nil

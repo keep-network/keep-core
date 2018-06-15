@@ -14,6 +14,8 @@
 	KeepRandomBeacon = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
 	GroupContract = "0x139deb0dd975af8e4cc91fe9053a37e4faf37649"
 
+[node]
+    Port = 27001
+
 [bootstrap]
-	URL =  "/ip4/127.0.0.1/tcp/8080/ipfs/12D3KooWHHzSeKaY8xuZVzkLbKFfvNgPPeKhFBGrMbNzbm5akpqu"
-	Seed  = 2
+	URLs = ["/ip4/172.16.90.26/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain/local"
