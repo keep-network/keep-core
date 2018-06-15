@@ -72,7 +72,7 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	}
 
 	// FIXME: return an error if we don't provide bootstrap peers
-	if len(config.Peers) > 0 {
+	if len(config.Peers) == 0 {
 		return provider, nil
 	}
 
