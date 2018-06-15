@@ -180,41 +180,49 @@ func makeSmuxTransport() smux.Transport {
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
 	var (
-		peers         []*peerstore.PeerInfo
 		waitGroup     sync.WaitGroup
 		internalError error
 	)
-	for _, bp := range bootstrapPeers {
-		// The following code extracts target's peer ID from the
-		// given multiaddress
-		ipfsaddr, err := ma.NewMultiaddr(bp)
-		if err != nil {
-			return err
-		}
 
-		peerInfo, err := peerstore.InfoFromP2pAddr(ipfsaddr)
-		if err != nil {
-			return err
-		}
-
-		peers = append(peers, peerInfo)
+	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
+	if err != nil {
+		return err
 	}
 
-	for _, pi := range peers {
-		if p.host.ID() == pi.ID {
-			// We shouldn't bootstrap to ourself if we're the bootstrap node
+	for _, peerInfo := range peerInfos {
+		if p.host.ID() == peerInfo.ID {
+			// We shouldn't bootstrap to ourself if we're the
+			// bootstrap node.
 			continue
 		}
 		waitGroup.Add(1)
-		go func(peerInfo *peerstore.PeerInfo) {
+		go func(pi *peerstore.PeerInfo) {
 			defer waitGroup.Done()
-			if err := p.host.Connect(ctx, *peerInfo); err != nil {
+			if err := p.host.Connect(ctx, *pi); err != nil {
 				internalError = err
 				return
 			}
-		}(pi)
+		}(peerInfo)
 	}
 
 	waitGroup.Wait()
 	return internalError
+}
+
+func extractMultiAddrFromPeers(peers []string) ([]*peerstore.PeerInfo, error) {
+	var peerInfos []*peerstore.PeerInfo
+	for _, peer := range peers {
+		ipfsaddr, err := ma.NewMultiaddr(peer)
+		if err != nil {
+			return nil, err
+		}
+
+		peerInfo, err := peerstore.InfoFromP2pAddr(ipfsaddr)
+		if err != nil {
+			return nil, err
+		}
+
+		peerInfos = append(peerInfos, peerInfo)
+	}
+	return peerInfos, nil
 }
