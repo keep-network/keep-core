@@ -22,21 +22,22 @@ type keepGroup struct {
 	contractAddress common.Address
 }
 
+// Important note on watching for Ethereum contract events in Go.
 //
-// Important Note on watching for events in Go.
+// In calls to an abigen generated watch, the first parameter is a filter.
+// In example code, to see all events, one must pass in an empty filter.
+// In geth, this doesn't work. An empty filter will result in an incorrect
+// bloom filter to be selected for the Ethereum search code.
+// Rather, to watch for events requires a 'nil' as the first parameter.
 //
-// In calls to an abigen generated watch on a contract, `SomeContract` for an
-// event, `SomeEvent` the first parameter is a filter.   To see all of `SomeEvent`
-// examples show the use of a null filter.  In Go this is not working.   A null
-// filter will result in an incorrect bloom filter in the Ethereum search code.
-//	filter := nil
-//	eventSubscription, err := kg.contract.SomeContractSomeEvent(filter, eventChan)
-// to watch for events require a 'nil' as the first parameter.  In Go code (this
-// is different from the web3/node coe) the Ethereum Geth code produces a bloom
-// filter that has the corret value for an empty fillter.  This is differnt
-// than in node.js/web3 code where a 'nil' is treated the same as an empty
-// filter.
+// For example:
+//  	filter := nil
+//  	eventSubscription, err := kg.contract.SomeContractSomeEvent(filter, eventChan)
 //
+// Will exhibit our desired behavior of selecting an empty filter.
+//
+// This is different from node.js/web3 code where a 'nil' is treated the same
+// as an empty filter.
 
 // NewKeepGroup creates the necessary connections and configurations
 // for accessing the KeepGroup contract.
