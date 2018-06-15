@@ -1,4 +1,4 @@
-package promise
+package callback
 
 import (
 	"fmt"
