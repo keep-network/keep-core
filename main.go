@@ -58,8 +58,8 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:        "smoke-test",
-			Usage:       `Simulates Distributed Key Generation (DKG) and signature verification.
+			Name: "smoke-test",
+			Usage: `Simulates Distributed Key Generation (DKG) and signature verification.
      --group 9:       Threshold relay group size; default: 10
      --threshold 9:   Minimun number of group members required to process requests; default 4
 `,
@@ -68,22 +68,20 @@ func main() {
 			Flags:       cmd.StartFlags,
 		},
 		{
-			Name:        "start",
-			Usage:       `Starts the Keep client in the foreground. Currently this consists of the
+			Name: "start",
+			Usage: `Starts the Keep client in the foreground. Currently this consists of the
             threshold relay client for the Keep random beacon and the validator client.
             for the Keep random beacon.
-     --disable-relay:    Disables the relay client; default false
+     --bootstrap         Indicates that this node is a bootstrap server
      --disable-provider: Disables the Keep provider client; default false
-     --node-count 9:  Number of nodes to test; default: 5
 `,
 			Description: "starts the Keep client in the foreground",
-			Action:      cmd.StartRelay,
+			Action:      cmd.StartNode,
 			Flags:       cmd.StartFlags,
 		},
 		{
-			Name:     "print-info",
-			Usage:    "Prints keep client information",
-			//Category: "keep client information",
+			Name:  "print-info",
+			Usage: "Prints keep client information",
 			Action: func(c *cli.Context) error {
 				printInfo(c)
 				return nil
@@ -95,13 +93,6 @@ func main() {
 			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
 			Action:      cmd.SmokeTest,
 			Flags:       cmd.SmokeTestFlags,
-		},
-		{
-			Name:        "pubsub-test",
-			Usage:       "Connects n nodes to the libp2p network",
-			Description: "simulate libp2p pubsub communication",
-			Action:      cmd.PubSubTest,
-			Flags:       cmd.PubSubTestFlags,
 		},
 	}
 
