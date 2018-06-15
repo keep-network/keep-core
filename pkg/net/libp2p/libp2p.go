@@ -73,11 +73,13 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 		routing:       dht,
 	}
 
-	// TODO: panic if we don't provide bootstrap peers
+	// FIXME: return an error if we don't provide bootstrap peers
 	if len(config.Peers) > 0 {
-		if err := provider.bootstrap(ctx, config.Peers); err != nil {
-			return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
-		}
+		return provider, nil
+	}
+
+	if err := provider.bootstrap(ctx, config.Peers); err != nil {
+		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
 
 	return provider, nil
