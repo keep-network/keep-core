@@ -1,12 +1,12 @@
 package local
 
 import (
-	"fmt"
 	"math/big"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	callback "github.com/keep-network/keep-core/pkg/callback"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -28,58 +28,11 @@ func (c *localChain) GetConfig() (beacon.Config, error) {
 	return c.beaconConfig, nil
 }
 
-func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
-	c.groupPublicKeysMutex.Lock()
-	defer c.groupPublicKeysMutex.Unlock()
-	if existing, exists := c.groupPublicKeys[groupID]; exists && existing != key {
-		errorMsg := fmt.Sprintf(
-			"mismatched public key for [%s], submission failed; \n"+
-				"[%v] vs [%v]\n",
-			groupID,
-			existing,
-			key,
-		)
-
-		c.handlerMutex.Lock()
-		for _, handler := range c.groupPublicKeyFailureHandlers {
-			handler(groupID, errorMsg)
-		}
-		c.handlerMutex.Unlock()
-
-		return nil
-	}
-	c.groupPublicKeys[groupID] = key
-
-	c.handlerMutex.Lock()
-	for _, handler := range c.groupPublicKeySubmissionHandlers {
-		handler(groupID, &big.Int{})
-	}
-	c.handlerMutex.Unlock()
-
-	return nil
-}
-
-func (c *localChain) OnGroupPublicKeySubmissionFailed(
-	handler func(string, string),
-) error {
-	c.handlerMutex.Lock()
-	c.groupPublicKeyFailureHandlers = append(c.groupPublicKeyFailureHandlers, handler)
-	c.handlerMutex.Unlock()
-
-	return nil
-}
-
-func (c *localChain) OnGroupPublicKeySubmitted(
-	handler func(groupID string, activationBlock *big.Int),
-) error {
-	c.handlerMutex.Lock()
-	c.groupPublicKeySubmissionHandlers = append(
-		c.groupPublicKeySubmissionHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
-
-	return nil
+func (ec *ethereumChain) SubmitGroupPublicKey(
+	groupID string,
+	key [96]byte,
+) *callback.Promise {
+	return callback.NewPromise()
 }
 
 func (c *localChain) RandomBeacon() beacon.ChainInterface {

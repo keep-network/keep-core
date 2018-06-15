@@ -6,8 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	promise "github.com/keep-network/keep-core/pkg/callback"
-	"github.com/keep-network/keep-core/pkg/chain/gen"
+	callback "github.com/keep-network/keep-core/pkg/callback"
 )
 
 // RandomBeacon converts from ethereumChain to beacon.ChainInterface.
@@ -44,73 +43,18 @@ func (ec *ethereumChain) GetConfig() (beacon.Config, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) error {
+) *callback.Promise {
 
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-		promise.NewPromise().OnSuccess(func(data interface{}) {
-			data2, ok := data.(gen.KeepRandomBeaconSubmitGroupPublicKeyEvent)
-			if !ok {
-				panic("flame out crash and burn!")
-			}
-			ec.handlerMutex.Lock()
-			for _, handler := range ec.groupPublicKeySubmissionHandlers {
-				handler(groupID, data2.ActivationBlockHeight)
-			}
-			ec.handlerMutex.Unlock()
-		}).OnFailure(func(err error) {
-			msg := fmt.Sprintf("error: [%v]", err)
-			ec.handlerMutex.Lock()
-			for _, handler := range ec.groupPublicKeyFailureHandlers {
-				handler(groupID, msg)
-			}
-			ec.handlerMutex.Unlock()
-			return
-		}),
-	)
+	aPromise := callback.NewPromise()
+	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(aPromise)
 	if err != nil {
-		msg := fmt.Sprintf("error creating event watch for request: [%v]", err)
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeyFailureHandlers {
-			handler(groupID, msg)
-		}
-		ec.handlerMutex.Unlock()
-		return err
+		aPromise.Fail(err)
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
-		msg := fmt.Sprintf("error submitting request: [%v]", err)
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeyFailureHandlers {
-			handler(groupID, msg)
-		}
-		ec.handlerMutex.Unlock()
+		aPromise.Fail(err)
 	}
-	return err
-}
 
-// OnGroupPublicKeySubmissionFailed associates a handler for a error event.
-func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
-	handler func(groupID string, errorMessage string),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeyFailureHandlers = append(
-		ec.groupPublicKeyFailureHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
-}
-
-// OnGroupPublicKeySubmitted associates a handler for a success event.
-func (ec *ethereumChain) OnGroupPublicKeySubmitted(
-	handler func(groupID string, activationBlock *big.Int),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeySubmissionHandlers = append(
-		ec.groupPublicKeySubmissionHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
+	return aPromise
 }

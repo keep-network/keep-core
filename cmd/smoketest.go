@@ -92,10 +92,11 @@ func SmokeTest(c *cli.Context) error {
 					}
 				})
 
-			err = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
+			promise = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
 				"test",
 				member.GroupPublicKeyBytes(),
 			)
+			_ = promise // Need to add handlers: TODO
 		}(i)
 	}
 
