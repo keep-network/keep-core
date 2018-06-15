@@ -43,7 +43,6 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
 ) error {
-
 	applyError := func(msg string) {
 		ec.handlerMutex.Lock()
 		for _, handler := range ec.groupPublicKeyFailureHandlers {

@@ -74,9 +74,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	}
 
 	optsCaller := &bind.CallOpts{
-		Pending: false,
-		From:    contractAddress,
-		Context: nil,
+		From: contractAddress,
 	}
 
 	groupContract, err := gen.NewKeepGroupImplV1(contractAddress, pv.client)
