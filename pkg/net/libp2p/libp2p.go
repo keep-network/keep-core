@@ -65,10 +65,8 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 
 	provider := &provider{channelManagr: cm, host: host}
 
-	// https: //github.com/libp2p/go-floodsub/issues/65#issuecomment-365680860
 	dht := dht.NewDHT(ctx, provider.host, dssync.MutexWrap(dstore.NewMapDatastore()))
 
-	// Set our router to be the dht
 	provider.routing = dht
 
 	// Wrap our host and router together into the routed host.
@@ -76,9 +74,6 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	provider.host = rhost.Wrap(provider.host, provider.routing)
 
 	// TODO: panic if we don't provide bootstrap peers
-	if config.Peers == nil {
-		return provider, nil
-	}
 	if len(config.Peers) > 0 {
 		if err := provider.bootstrap(ctx, config.Peers); err != nil {
 			return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
