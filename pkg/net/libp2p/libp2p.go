@@ -63,15 +63,15 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 		return nil, err
 	}
 
-	provider := &provider{channelManagr: cm, host: host}
+	// The dht is our router. It helps us find addresses for identities we
+	// encounter in the network.
+	dht := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
 
-	dht := dht.NewDHT(ctx, provider.host, dssync.MutexWrap(dstore.NewMapDatastore()))
-
-	provider.routing = dht
-
-	// Wrap our host and router together into the routed host.
-	// This helps us find addresses for identities we encounter in the network
-	provider.host = rhost.Wrap(provider.host, provider.routing)
+	provider := &provider{
+		channelManagr: cm,
+		host:          rhost.Wrap(host, dht),
+		routing:       dht,
+	}
 
 	// TODO: panic if we don't provide bootstrap peers
 	if len(config.Peers) > 0 {
