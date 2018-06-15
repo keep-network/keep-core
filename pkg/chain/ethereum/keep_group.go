@@ -34,7 +34,7 @@ type keepGroup struct {
 // to watch for events require a 'nil' as the first parameter.  In Go code (this
 // is different from the web3/node coe) the Ethereum Geth code produces a bloom
 // filter that has the corret value for an empty fillter.  This is differnt
-// than in node.js/web3 code where a 'null' is treated the same as an empty
+// than in node.js/web3 code where a 'nil' is treated the same as an empty
 // filter.
 //
 
