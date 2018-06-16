@@ -20,9 +20,9 @@ func byteSliceToSliceOf1Byte(in []byte) (rv [][1]byte) {
 	return
 }
 
-// sliceOf1ByteToByteSlice convert from solidity type, slice of 1 long
+// SliceOf1ByteToByteSlice convert from solidity type, slice of 1 long
 // array of bytes to byte slice.
-func sliceOf1ByteToByteSlice(in [][1]byte) (rv []byte) {
+func SliceOf1ByteToByteSlice(in [][1]byte) (rv []byte) {
 	if len(in) == 0 {
 		rv = make([]byte, 0, 1)
 		return

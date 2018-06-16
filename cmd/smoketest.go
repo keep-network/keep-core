@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"os"
 	"strings"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/chain/gen"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -73,30 +74,31 @@ func SmokeTest(c *cli.Context) error {
 				panic(fmt.Sprintf("Failed to run DKG [%v].", err))
 			}
 
-			chainHandle.ThresholdRelay().OnGroupPublicKeySubmitted(
-				func(groupID string, activationBlock *big.Int) {
-					if groupID == "test" {
-						memberChannel <- member
-					}
-				})
-			chainHandle.ThresholdRelay().OnGroupPublicKeySubmissionFailed(
-				func(groupID string, errorMsg string) {
-					if groupID == "test" {
-						fmt.Fprintf(
-							os.Stderr,
-							"[member:%s] Failed to submit group public key: [%s]\n",
-							member.BlsID.GetHexString(),
-							err,
-						)
-						memberChannel <- nil
-					}
-				})
-
-			promise = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
+			promise := chainHandle.ThresholdRelay().SubmitGroupPublicKey(
 				"test",
 				member.GroupPublicKeyBytes(),
 			)
-			_ = promise // Need to add handlers: TODO
+			promise.OnSuccess(func(data interface{}) {
+				data2, ok := data.(gen.KeepRandomBeaconSubmitGroupPublicKeyEvent)
+				if !ok {
+					fmt.Fprintf(
+						os.Stderr,
+						"[member:%s] Failed type conversion\n",
+						member.BlsID.GetHexString(),
+					)
+					memberChannel <- nil
+				} else if string(ethereum.SliceOf1ByteToByteSlice(data2.GroupPubKey)) == "test" {
+					memberChannel <- member
+				}
+			}).OnFailure(func(err error) {
+				fmt.Fprintf(
+					os.Stderr,
+					"[member:%s] Failed to submit group public key: [%s]\n",
+					member.BlsID.GetHexString(),
+					err,
+				)
+				memberChannel <- nil
+			})
 		}(i)
 	}
 
