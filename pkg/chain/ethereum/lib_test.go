@@ -21,7 +21,7 @@ func TestByteSliceToSliceOf1Byte(t *testing.T) {
 	}
 
 	// test the converstion back to to byte slice.
-	n := sliceOf1ByteToByteSlice(rv)
+	n := SliceOf1ByteToByteSlice(rv)
 
 	if string(n) != string(b) {
 		t.Errorf("Expected original [%s] to match with converted [%s]", b, n)

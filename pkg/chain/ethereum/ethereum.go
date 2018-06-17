@@ -45,7 +45,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	key [96]byte,
 ) *callback.Promise {
 
-	aPromise := callback.NewPromise()
+	aPromise := &callback.Promise{}
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(aPromise)
 	if err != nil {
 		aPromise.Fail(err)
