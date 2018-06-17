@@ -16,7 +16,7 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 
 	expectedResult := "batman"
 
-	promise := NewPromise()
+	promise := Promise{}
 
 	promise.OnSuccess(func(in interface{}) {
 		done <- in
@@ -53,7 +53,7 @@ func TestPromiseOnCompleteFulfill(t *testing.T) {
 
 	expectedResult := "robin"
 
-	promise := NewPromise()
+	promise := Promise{}
 
 	promise.OnComplete(func(in interface{}, err error) {
 		if err != nil {
@@ -90,7 +90,7 @@ func TestPromiseOnFailureFail(t *testing.T) {
 
 	expectedResult := fmt.Errorf("it's not working")
 
-	promise := NewPromise()
+	promise := Promise{}
 
 	promise.OnFailure(func(err error) {
 		done <- err
@@ -127,7 +127,7 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 
 	expectedFailure := fmt.Errorf("catwoman")
 
-	promise := NewPromise()
+	promise := Promise{}
 
 	promise.OnComplete(func(in interface{}, err error) {
 		if in != nil {
@@ -157,7 +157,7 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 }
 
 func TestPromiseFulfill(t *testing.T) {
-	promise := NewPromise()
+	promise := Promise{}
 
 	if promise.isComplete {
 		t.Error("Promise is completed")
@@ -174,7 +174,7 @@ func TestPromiseFulfill(t *testing.T) {
 }
 
 func TestPromiseFail(t *testing.T) {
-	promise := NewPromise()
+	promise := Promise{}
 
 	if promise.isComplete {
 		t.Error("Promise is completed")
@@ -202,7 +202,7 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 	}{
 		"Fulfill with result `promise already completed`": {
 			function: func() error {
-				promise := NewPromise().OnSuccess(func(in interface{}) { done <- true })
+				promise := (&Promise{}).OnSuccess(func(in interface{}) { done <- true })
 				promise.Fulfill(nil)
 				return promise.Fulfill(nil)
 			},
@@ -210,7 +210,7 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 		},
 		"Fail with result `promise already completed`": {
 			function: func() error {
-				promise := NewPromise().OnFailure(func(error) { done <- true })
+				promise := (&Promise{}).OnFailure(func(error) { done <- true })
 				promise.Fail(nil)
 				return promise.Fail(nil)
 			},

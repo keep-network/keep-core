@@ -165,7 +165,7 @@ func (channel *localChannel) Send(message net.TaggedMarshaler) error {
 }
 
 func (channel *localChannel) SendTo(
-	recipient interface{},
+	recipient net.ProtocolIdentifier,
 	message net.TaggedMarshaler) error {
 	return doSend(channel, recipient, message)
 }

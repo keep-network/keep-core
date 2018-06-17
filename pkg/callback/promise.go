@@ -17,14 +17,6 @@ type Promise struct {
 	isComplete bool
 }
 
-// NewPromise creates a new, uncompleted Promise instance with
-// no success, complete or failure callback configured.
-func NewPromise() *Promise {
-	return &Promise{
-		isComplete: false,
-	}
-}
-
 // OnSuccess registers a function to be called when the Promise
 // has been fulfilled. In case of a failed Promise, function is not
 // called at all. OnSuccess is a non-blocking operation. Only one on success

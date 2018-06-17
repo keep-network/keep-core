@@ -11,8 +11,8 @@ message Envelope {
   // The PublicKey of the sender
   bytes sender = 1;
 
-  // The PublicKey of the receiver
-  bytes receiver = 2;
+  // The PublicKey of the recipient
+  bytes recipient = 2;
 
   // A marshaled Protocol Message
   bytes payload = 3;

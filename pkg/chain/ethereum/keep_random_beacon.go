@@ -78,9 +78,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 	}
 
 	optsCaller := &bind.CallOpts{
-		Pending: false,
-		From:    contractAddress,
-		Context: nil,
+		From: contractAddress,
 	}
 
 	randomBeaconContract, err := gen.NewKeepRandomBeaconImplV1(
