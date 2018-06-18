@@ -215,6 +215,9 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
+					// FIXME: this error is not really caught and handled.
+					// We nee to figure out how errors like this (and in
+					// similar places in the code) will be processed.
 					return err
 				}
 
