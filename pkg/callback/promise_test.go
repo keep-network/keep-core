@@ -1,4 +1,4 @@
-package promise
+package callback
 
 import (
 	"context"
@@ -30,6 +30,40 @@ func TestPromiseOnSuccessFulfill(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	select {
+	case result := <-done:
+		if result != expectedResult {
+			t.Errorf(
+				"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
+				expectedResult,
+				result,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestPromiseOnSuccessAlreadyFulfilled(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	done := make(chan interface{})
+
+	expectedResult := "conan the barbarian"
+
+	promise := Promise{}
+
+	// first fulfill, then install callback
+	err := promise.Fulfill(expectedResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	promise.OnSuccess(func(in interface{}) {
+		done <- in
+	})
 
 	select {
 	case result := <-done:
@@ -82,6 +116,44 @@ func TestPromiseOnCompleteFulfill(t *testing.T) {
 	}
 }
 
+func TestPromiseOnCompleteAlreadyFulfilled(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	done := make(chan interface{})
+
+	expectedResult := "conan the conqueror"
+
+	promise := Promise{}
+
+	// first fulfill, then install callback
+	err := promise.Fulfill(expectedResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	promise.OnComplete(func(in interface{}, err error) {
+		if err != nil {
+			t.Fatal("Error should be nil")
+		}
+
+		done <- in
+	})
+
+	select {
+	case actualResult := <-done:
+		if expectedResult != actualResult {
+			t.Errorf(
+				"Unexpected value passed to callback\nExpected: %v\nActual %v\n",
+				expectedResult,
+				actualResult,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
 func TestPromiseOnFailureFail(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
@@ -112,6 +184,40 @@ func TestPromiseOnFailureFail(t *testing.T) {
 				"Unexpected value passed to callback\nExpected: %v\nActual:%v\n",
 				expectedResult,
 				result,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestPromiseOnFailureAlreadyFailed(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	done := make(chan interface{})
+
+	expectedError := fmt.Errorf("i just can't")
+
+	promise := Promise{}
+
+	// first fail, then install callback
+	err := promise.Fail(expectedError)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	promise.OnFailure(func(err error) {
+		done <- err
+	})
+
+	select {
+	case actualError := <-done:
+		if !reflect.DeepEqual(expectedError, actualError) {
+			t.Errorf(
+				"Unexpected error passed to callback\nExpected: %v\nActual %v\n",
+				expectedError,
+				actualError,
 			)
 		}
 	case <-ctx.Done():
@@ -156,7 +262,45 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 	}
 }
 
-func TestPromiseFulfill(t *testing.T) {
+func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	done := make(chan interface{})
+
+	expectedError := fmt.Errorf("nope nope nope")
+
+	promise := Promise{}
+
+	// first fail, then install callback
+	err := promise.Fail(expectedError)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	promise.OnComplete(func(in interface{}, err error) {
+		if in != nil {
+			t.Fatal("Promise's value should be nil")
+		}
+
+		done <- err
+	})
+
+	select {
+	case actualError := <-done:
+		if !reflect.DeepEqual(expectedError, actualError) {
+			t.Errorf(
+				"Unexpected error passed to callback\nExpected: %v\nActual %v\n",
+				expectedError,
+				actualError,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestPromiseFulfilledAndComplete(t *testing.T) {
 	promise := Promise{}
 
 	if promise.isComplete {
@@ -173,7 +317,7 @@ func TestPromiseFulfill(t *testing.T) {
 	}
 }
 
-func TestPromiseFail(t *testing.T) {
+func TestPromiseFailedAndComplete(t *testing.T) {
 	promise := Promise{}
 
 	if promise.isComplete {
