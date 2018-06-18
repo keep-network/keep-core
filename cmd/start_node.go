@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
+	"time"
 )
 
 const (
@@ -49,18 +50,21 @@ func StartNode(c *cli.Context) error {
 	}
 
 	myIPAddress := GetOutboundIP()
-	nodeName := ""
-	bootstrapURLs := []string{}
-	if c.Bool("bootstrap") {
-		nodeName = " bootstrap"
-	} else {
-		bootstrapURLs = cfg.Bootstrap.URLs
-	}
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
 	} else {
 		port = cfg.Node.Port
+	}
+
+	var seed int
+	nodeName := ""
+	bootstrapURLs := []string{}
+	if c.Bool("bootstrap") {
+		nodeName = " bootstrap"
+		seed = cfg.Bootstrap.Seed
+	} else {
+		bootstrapURLs = cfg.Bootstrap.URLs
 	}
 
 	header(fmt.Sprintf("starting%s node, connnecting to network and listening at %s port %d", nodeName, myIPAddress, port))
@@ -69,6 +73,7 @@ func StartNode(c *cli.Context) error {
 	provider, err := libp2p.Connect(ctx, &libp2p.Config{
 		Port:  port,
 		Peers: bootstrapURLs,
+		Seed:  seed,
 	})
 	if err != nil {
 		return err
@@ -84,14 +89,36 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	payload := fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)
-	if err := broadcastChannel.Send(
-		&testMessage{Payload: payload},
-	); err != nil {
-		return err
-	}
+	//payload := fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)
+	//if err := broadcastChannel.Send(
+	//	&testMessage{Payload: payload},
+	//); err != nil {
+	//	return err
+	//}
+
+
+	go func() {
+		t := time.NewTimer(1) // first tick is immediate
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				payload := fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)
+				if err := broadcastChannel.Send(
+					&testMessage{Payload: payload},
+				); err != nil {
+					return
+				}
+				t.Reset(5 * time.Second)
+			case <-ctx.Done():
+				return
+			}
+
+		}
+	}()
 
 	recvChan := make(chan net.Message)
+
 	if err := broadcastChannel.Recv(func(msg net.Message) error {
 		fmt.Printf("Got %s\n", msg.Payload())
 		recvChan <- msg
