@@ -44,7 +44,9 @@ func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 
 // BlockWaiter returns the block number as a channel with a minimum of 1 block
 // wait. 0 and negative numBlocks are converted to 1.
-func (ebc *ethereumBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
+func (ebc *ethereumBlockCounter) BlockWaiter(
+	numBlocks int,
+) (<-chan int, error) {
 	newWaiter := make(chan int)
 
 	ebc.structMutex.Lock()
@@ -100,7 +102,10 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 
 // subscribeBlocks creates a subscription to Geth to get each block.
 func (ebc *ethereumBlockCounter) subscribeBlocks() error {
-	subscribeContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	subscribeContext, cancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
 	defer cancel()
 
 	_, err := ebc.config.clientWS.EthSubscribe(
@@ -140,7 +145,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	if err != nil {
 		return nil,
 			fmt.Errorf(
-				"failed to get initial block from the chain: [%s]",
+				"failed to get initial block from the chain: [%v]",
 				err,
 			)
 	}
@@ -149,7 +154,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	if err != nil {
 		return nil,
 			fmt.Errorf(
-				"failed to get initial number of blocks from the chain, %s",
+				"failed to get initial number of blocks from the chain [%v]",
 				err,
 			)
 	}
