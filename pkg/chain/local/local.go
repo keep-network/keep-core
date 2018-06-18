@@ -32,7 +32,7 @@ func (ec *localChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
 ) *callback.Promise {
-	return callback.NewPromise()
+	return &callback.Promise{}
 }
 
 func (c *localChain) RandomBeacon() beacon.ChainInterface {
