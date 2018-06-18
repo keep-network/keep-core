@@ -6,7 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	callback "github.com/keep-network/keep-core/pkg/callback"
+	"github.com/keep-network/keep-core/pkg/callback"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 

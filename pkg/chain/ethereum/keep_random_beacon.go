@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	promise "github.com/keep-network/keep-core/pkg/callback"
+	"github.com/keep-network/keep-core/pkg/callback"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
@@ -138,7 +138,7 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 
 // WatchRelayEntryRequested watches for event RelayEntryRequested.
 func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
 	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
@@ -167,7 +167,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 
 // WatchRelayEntryGenerated watches for event.
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
@@ -196,7 +196,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 
 // WatchRelayResetEvent watches for event WatchRelayResetEvent.
 func (krb *KeepRandomBeacon) WatchRelayResetEvent(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
 	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
@@ -225,7 +225,7 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
 func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
 	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(

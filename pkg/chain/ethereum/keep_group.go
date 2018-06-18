@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	promise "github.com/keep-network/keep-core/pkg/callback"
+	"github.com/keep-network/keep-core/pkg/callback"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
@@ -202,7 +202,7 @@ func (kg *keepGroup) IsMember(
 
 // WatchGroupCompleteEvent create a watch for the group completion event.
 func (kg *keepGroup) WatchGroupCompleteEvent(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
 	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
@@ -231,7 +231,7 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 
 // WatchGroupErrorCode creates a watch for the GroupErrorCode event.
 func (kg *keepGroup) WatchGroupErrorCode(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
 	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
@@ -260,7 +260,7 @@ func (kg *keepGroup) WatchGroupErrorCode(
 
 // WatchGroupExistsEvent watches for the GroupExists event.
 func (kg *keepGroup) WatchGroupExistsEvent(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
 	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
@@ -289,7 +289,7 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 
 // WatchGroupStartedEvent watch for GroupStartedEvent
 func (kg *keepGroup) WatchGroupStartedEvent(
-	aPromise *promise.Promise,
+	aPromise *callback.Promise,
 ) error {
 	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
 	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
