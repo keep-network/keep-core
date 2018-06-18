@@ -11,9 +11,8 @@ import (
 // with the anchoring blockchain on.
 type ChainInterface interface {
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
-	// associated with a string groupID. An error is generally only returned in
-	// case of connectivity issues; on-chain errors are reported through event
-	// callbacks.
+	// associated with a string groupID. A promise is returned that will resolve
+	// with success/error callbacks.
 	SubmitGroupPublicKey(groupID string, key [96]byte) *callback.Promise
 }
 
