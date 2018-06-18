@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -20,7 +19,6 @@ type ethereumChain struct {
 	keepGroupContract        *keepGroup
 	keepRandomBeaconContract *KeepRandomBeacon
 	tx                       *types.Transaction
-	handlerMutex             sync.Mutex
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
