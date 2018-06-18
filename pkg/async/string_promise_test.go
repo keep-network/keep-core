@@ -1,4 +1,4 @@
-package callback
+package async
 
 import (
 	"context"
