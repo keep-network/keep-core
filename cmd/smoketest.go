@@ -86,7 +86,7 @@ func SmokeTest(c *cli.Context) error {
 						member.BlsID.GetHexString(),
 					)
 					memberChannel <- nil
-				} else if string(ethereum.SliceOf1ByteToByteSlice(data2.GroupPubKey)) == "test" {
+				} else if string(ethereum.SliceOf1ByteToByteSlice(data2.GroupPublicKey)) == "test" {
 					memberChannel <- member
 				}
 			}).OnFailure(func(err error) {
