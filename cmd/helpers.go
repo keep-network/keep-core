@@ -79,18 +79,6 @@ type PeerNetParams struct {
 	Addr    ma.Multiaddr
 }
 
-//// ZeroLocalTCPAddress is the "zero" tcp local multiaddr. This means: /ip4/127.0.0.1/tcp/0
-//var ZeroLocalTCPAddress ma.Multiaddr
-//
-//func init() {
-//	// initialize ZeroLocalTCPAddress
-//	maddr, err := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/0")
-//	if err != nil {
-//		panic(err)
-//	}
-//	ZeroLocalTCPAddress = maddr
-//}
-
 // GetOutboundIP gets the preferred outbound ip
 func GetOutboundIP() net.IP {
 	conn, err := net.Dial("udp", "9.9.9.9:9999")
