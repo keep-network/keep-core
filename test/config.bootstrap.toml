@@ -18,5 +18,4 @@
     Port = 27001
 
 [bootstrap]
-	URLs = ["/ip4/172.16.90.26/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
     Seed = 2

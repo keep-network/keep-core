@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 
+	"time"
+
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
-	"time"
 )
 
 const (
@@ -88,14 +89,6 @@ func StartNode(c *cli.Context) error {
 	); err != nil {
 		return err
 	}
-
-	//payload := fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)
-	//if err := broadcastChannel.Send(
-	//	&testMessage{Payload: payload},
-	//); err != nil {
-	//	return err
-	//}
-
 
 	go func() {
 		t := time.NewTimer(1) // first tick is immediate
