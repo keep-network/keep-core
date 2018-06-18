@@ -40,30 +40,36 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	return c.doSend(message, c.clientIdentity)
+	return c.doSend(nil, c.clientIdentity, message)
 }
 
-func envelopeProto(message net.TaggedMarshaler, sender *identity) ([]byte, error) {
-	payloadBytes, err := message.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	identityBytes, err := sender.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	return (&pb.Envelope{
-		Payload: payloadBytes,
-		Sender:  identityBytes,
-		Type:    []byte(message.Type()),
-	}).Marshal()
+func (c *channel) SendTo(
+	recipientIdentifier net.ProtocolIdentifier,
+	message net.TaggedMarshaler,
+) error {
+	return c.doSend(recipientIdentifier, c.clientIdentity, message)
 }
 
-func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
+// doSend attempts to send a message, from a sender, to all members of a
+// broadcastChannel, or optionally to a specific recipient. If recipient
+// is nil (the typical case), then all messages of the broadcast channel
+// should receive the message. Otherwise, given a valid recipient, we will
+// address the message specifically to them.
+func (c *channel) doSend(
+	recipient net.ProtocolIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
+) error {
+	var transportRecipient net.TransportIdentifier
+	if recipient != nil {
+		c.identifiersMutex.Lock()
+		if transportID, ok := c.protoToTransportIdentifiers[recipient]; ok {
+			transportRecipient = transportID
+		}
+		c.identifiersMutex.Unlock()
+	}
 	// Transform net.TaggedMarshaler to a protobuf message
-	envelopeBytes, err := envelopeProto(message, sender)
+	envelopeBytes, err := envelopeProto(transportRecipient, sender, message)
 	if err != nil {
 		return err
 	}
@@ -75,19 +81,44 @@ func (c *channel) doSend(message net.TaggedMarshaler, sender *identity) error {
 	return c.pubsub.Publish(c.name, envelopeBytes)
 }
 
-func (c *channel) SendTo(
-	recipientIdentifier interface{},
-	message net.TaggedMarshaler,
-) error {
-	return nil
-}
-
 func (c *channel) Recv(handler net.HandleMessageFunc) error {
 	c.messageHandlersMutex.Lock()
 	c.messageHandlers = append(c.messageHandlers, handler)
 	c.messageHandlersMutex.Unlock()
 
 	return nil
+}
+
+func envelopeProto(
+	recipient net.TransportIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
+) ([]byte, error) {
+	payloadBytes, err := message.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	senderIdentityBytes, err := sender.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var recipientIdentityBytes []byte
+	if recipient != nil {
+		recipientIdentity := &identity{id: recipient.(networkIdentity)}
+		recipientIdentityBytes, err = recipientIdentity.Marshal()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return (&pb.Envelope{
+		Payload:   payloadBytes,
+		Sender:    senderIdentityBytes,
+		Recipient: recipientIdentityBytes,
+		Type:      []byte(message.Type()),
+	}).Marshal()
 }
 
 func (c *channel) RegisterIdentifier(
@@ -170,7 +201,7 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
-	// TODO: handle receivers, authentication, etc
+	// TODO: handle authentication, etc
 
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
@@ -183,7 +214,22 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
-	// Construct an identifier from the sender (on the message)
+	if envelope.Recipient != nil {
+		// Construct an identifier from the Recipient
+		recipientIdentifier := &identity{}
+		if err := recipientIdentifier.Unmarshal(envelope.Recipient); err != nil {
+			return err
+		}
+
+		if recipientIdentifier.id.String() != c.clientIdentity.id.String() {
+			return fmt.Errorf(
+				"message not for intended recipient %s",
+				recipientIdentifier.id.String(),
+			)
+		}
+	}
+
+	// Construct an identifier from the sender
 	senderIdentifier := &identity{}
 	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
 		return err
@@ -235,6 +281,7 @@ func (c *channel) deliver(message net.Message) error {
 	go func(message net.Message, snapshot []net.HandleMessageFunc) {
 		for _, handler := range snapshot {
 			if err := handler(message); err != nil {
+				// TODO: handle error
 				fmt.Println(err)
 			}
 		}

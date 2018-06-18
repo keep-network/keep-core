@@ -49,8 +49,8 @@
 
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-peer"
-  revision = "aa0e03e559bde9d4749ad8e38595e15a6fe808fa"
-
+  revision = "e8858116ad7f0a54dfc2bb6af554f2024221d19c"
+  
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-peerstore"
   revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
@@ -63,3 +63,11 @@
   name = "github.com/urfave/cli"
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
   source = "https://github.com/keep-network/cli.git"
+
+[[override]]
+  name = "github.com/ipfs/go-datastore"
+  revision = "f2426c09e56ae390fc416f21b224c7d7ad13418c"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-kad-dht"
+  revision = "240a27a66982945ba87967a08a6e04b74b228c45"
