@@ -1,7 +1,5 @@
 {{/* This is a template for Promises */ -}}
-
-// This is auto generated code!
-
+// This is auto generated code
 package callback
 
 import (
@@ -68,7 +66,7 @@ func (p *{{ .Prefix }}Promise) OnComplete(onComplete func({{ .Type }}, error)) *
 // the OnSuccess callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
 // an error.
-func (p *{{ .Prefix }}Promise) Fulfill(value {{ .Prefix }}) error {
+func (p *{{ .Prefix }}Promise) Fulfill(value {{ .Type }}) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -111,7 +109,11 @@ func (p *{{ .Prefix }}Promise) Fail(err error) error {
 	}
 	if p.completeFn != nil {
 		go func() {
-			p.completeFn(nil, err)
+			p.completeFn(
+				{{- if .NotDefinedValue -}}{{ .NotDefinedValue }}
+				{{- else -}}""
+				{{- end -}}
+				, err)
 		}()
 	}
 
