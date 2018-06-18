@@ -44,7 +44,7 @@ func main() {
 	app.Authors = []cli.Author{
 		{
 			Name:  "Keep Network",
-			Email: "printInfo@keep.network",
+			Email: "info@keep.network",
 		},
 	}
 	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
@@ -59,9 +59,9 @@ func main() {
 	app.Commands = []cli.Command{
 		{
 			Name: "smoke-test",
-			Usage: `Simulates Distributed Key Generation (DKG) and signature verification.
-     --group-size 9:  Threshold relay group size; default: 10
-     --threshold 9:   Minimun number of group members required to process requests; default 4
+			Usage: `Simulates Distributed Key Generation (DKG) and signature verification
+       --group-size 9:  Threshold relay group size; default: 10
+       --threshold 9:   Minimun number of group members required to process requests; default 4
 `,
 			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
 			Action:      cmd.SmokeTest,
@@ -70,10 +70,10 @@ func main() {
 		{
 			Name: "start",
 			Usage: `Starts the Keep client in the foreground. Currently this consists of the
-            threshold relay client for the Keep random beacon and the validator client.
+            threshold relay client for the Keep random beacon and the validator client
             for the Keep random beacon.
-     --bootstrap         Indicates that this node is a bootstrap server
-     --disable-provider: Disables the Keep provider client; default false
+       --bootstrap         Indicates that this node is a bootstrap server
+       --disable-provider: Disables the Keep provider client; default false
 `,
 			Description: "starts the Keep client in the foreground",
 			Action:      cmd.StartNode,
