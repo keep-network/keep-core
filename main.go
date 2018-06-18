@@ -60,12 +60,12 @@ func main() {
 		{
 			Name: "smoke-test",
 			Usage: `Simulates Distributed Key Generation (DKG) and signature verification.
-     --group 9:       Threshold relay group size; default: 10
+     --group-size 9:  Threshold relay group size; default: 10
      --threshold 9:   Minimun number of group members required to process requests; default 4
 `,
 			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
 			Action:      cmd.SmokeTest,
-			Flags:       cmd.StartFlags,
+			Flags:       cmd.SmokeTestFlags,
 		},
 		{
 			Name: "start",
@@ -86,13 +86,6 @@ func main() {
 				printInfo(c)
 				return nil
 			},
-		},
-		{
-			Name:        "smoke-test",
-			Usage:       "Simulates DKG and signature verification",
-			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
-			Action:      cmd.SmokeTest,
-			Flags:       cmd.SmokeTestFlags,
 		},
 	}
 
