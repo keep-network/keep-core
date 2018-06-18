@@ -300,7 +300,7 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 	}
 }
 
-func TestPromiseFulfill(t *testing.T) {
+func TestPromiseFulfilledAndComplete(t *testing.T) {
 	promise := StringPromise{}
 
 	if promise.isComplete {
@@ -318,7 +318,7 @@ func TestPromiseFulfill(t *testing.T) {
 	}
 }
 
-func TestPromiseFail(t *testing.T) {
+func TestPromiseFailedAndComplete(t *testing.T) {
 	promise := StringPromise{}
 
 	if promise.isComplete {

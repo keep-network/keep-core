@@ -5,7 +5,7 @@ package async
 import (
 	"fmt"
 	"sync"
-    {{if .PackagedType -}}"github.com/keep-network/keep-core/{{.PackagedType}}"
+    {{if .PackagedType -}}"{{.PackagedType}}"
 {{end -}}
 )
 
@@ -13,7 +13,7 @@ import (
 // and its resulting value. Promise can be either fulfilled or failed and
 // it can happen only one time. All Promise operations are thread-safe.
 //
-// To create a promise use: `&{{ .Type }}Promise{}`
+// To create a promise use: `&{{ .Prefix }}Promise{}`
 type {{ .Prefix }}Promise struct {
 	mutex      sync.Mutex
 	successFn  func({{ .Type }})

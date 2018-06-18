@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"os"
@@ -14,82 +13,62 @@ import (
 // Do not remove next comment!
 //go:generate go run gen.go
 
+// Name of the promises template file
 const promiseTemplate string = "promise.go.tmpl"
 
+// Directory to which generated code will be exported
 const outDir string = "../"
-
-// Data to be replaced in the `promises template`
-type Data struct {
-	// Type
-	Type string
-	// Package of the `Type`
-	PackagedType string
-	// Prefix for naming the premises
-	Prefix string
-	// Empty value for given `Type`
-	NotDefinedValue string
-}
 
 // Configuration for the generator
 type config struct {
-	// Name of the promises template file
-	templateFile string
-	// Values to replace in the template file
-	data Data
-	// Directory to which generated code will be exported
-	outputDir string
+	// Type which Promise will handle
+	Type string
+	// Package of the `Type`
+	PackagedType string
+	// Prefix for naming the promises
+	Prefix string
 	// Name of the generated file
 	outputFile string
 }
 
-//TODO move this executor to `main.go`
 func main() {
-	err := GeneratePromises()
-
-	if err != nil {
-		log.Fatalf("Error when generating promises\n%v", err)
-	}
-}
-
-func GeneratePromises() error {
 	configs := []config{
-		// Promise for `string` type. There is a test for this promise `string_promise_test.go`. We need test to validate correctness of promises.
+		// Promise for `string` type. There is a test for this promise named `string_promise_test.go`.
+		// We need a test to validate correctness of generated promises.
 		{
-			data: Data{
-				PackagedType:    "",
-				Type:            "string",
-				Prefix:          "String",
-				NotDefinedValue: ""},
-			outputFile: "string_promise.go",
+			Type:         "string",
+			PackagedType: "",
+			Prefix:       "String",
+			outputFile:   "string_promise.go",
 		},
-		// This is just an example which should be replaced with types of needed promises
-		{
-			data: Data{
-				PackagedType:    "pkg/beacon/chain",
-				Type:            "chain.BeaconConfig",
-				Prefix:          "BeaconConfig",
-				NotDefinedValue: "chain.BeaconConfig{}"},
-			outputFile: "beacon_config_promise.go",
-		},
+		// Example for types from packages which need to be imported:
+		// {
+		// 	Type:         "ethereum.KeepRandomBeacon",
+		// 	PackagedType: "github.com/keep-network/keep-core/pkg/chain/ethereum",
+		// 	Prefix:       "KeepRandomBeacon",
+		// 	outputFile:   "keep_random_beacon_promise.go",
+		// },
 	}
 
 	for _, c := range configs {
 		// Read template
 		t, err := template.New(promiseTemplate).ParseFiles(promiseTemplate)
 		if err != nil {
-			return fmt.Errorf("template creation failed: %v", err)
+			log.Fatalf("template creation failed [%v]", err)
 		}
 
 		// Create output file
 		outputPath := path.Join(outDir, c.outputFile)
 		f, err := os.Create(outputPath)
 		defer f.Close()
+		if err != nil {
+			log.Fatalf("output file creation failed [%v]", err)
+		}
 
 		// Generate files
-		err = t.Execute(f, c.data)
+		err = t.Execute(f, c)
 		if err != nil {
-			return fmt.Errorf("generation failed: %v", err)
+			log.Fatalf("generation failed [%v]", err)
 		}
 	}
-	return nil
 }
