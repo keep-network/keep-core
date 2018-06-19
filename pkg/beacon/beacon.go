@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -34,7 +35,7 @@ const (
 // otherwise enters a blocked loop.
 func Initialize(
 	ctx context.Context,
-	relayChain relay.ChainInterface,
+	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 	netProvider net.Provider,
 ) error {
@@ -104,7 +105,7 @@ func checkParticipantState() (participantState, error) {
 	return staked, nil
 }
 
-func checkChainParticipantState(relayChain relay.ChainInterface) (participantState, error) {
+func checkChainParticipantState(relayChain relaychain.Interface) (participantState, error) {
 	// FIXME Zero in on the participant's current state per the chain.
 	fmt.Println(relayChain)
 
@@ -113,7 +114,7 @@ func checkChainParticipantState(relayChain relay.ChainInterface) (participantSta
 	return unstaked, nil
 }
 
-func libp2pConnected(relayChain relay.ChainInterface, handle chain.Handle) {
+func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
 	if participantState, err := checkChainParticipantState(relayChain); err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
 	} else {
