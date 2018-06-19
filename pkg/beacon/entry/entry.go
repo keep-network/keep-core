@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
 // Request represents a request for an entry in the threshold relay.
@@ -35,7 +36,7 @@ const (
 )
 
 // ServeRequests kicks off the relay request monitoring/response publishing loop.
-func ServeRequests(currentState relay.NodeState) {
+func ServeRequests(currentState relay.NodeState, relayChain relaychain.Interface) {
 	processingState := waitingForRequest
 	// FIXME Probably best passed in from outside.
 	thinger := make(chan Request)
@@ -66,7 +67,7 @@ func ServeRequests(currentState relay.NodeState) {
 
 			processingState = submittingSig
 			currentEntry := partialEntry{nextShare, finalShares}
-			err = submitEntry(currentEntry)
+			err = submitEntry(currentEntry, relayChain)
 			if err != nil {
 				// FIXME Failing to submit an entry should probably be okay but
 				// log a diagnostic message, but that remains to be decided.
@@ -116,19 +117,18 @@ func verifyIncomingGroupShares(request Request, groupShares chan signatureShare)
 	return verifiedShares
 }
 
-func submitEntry(entry partialEntry) error {
+func submitEntry(entry partialEntry, relayChain relaychain.Interface) error {
 	allShares := make([]signatureShare, len(entry.verifiedOtherShares)+1 /* my share */)
 	copy(allShares, entry.verifiedOtherShares)
 	allShares[len(entry.verifiedOtherShares)] = entry.myShare
 	finalSignature := blsFinalSignatureFromShares(allShares)
 
 	finalEntry := relay.Entry{Value: finalSignature, Timestamp: time.Now()}
-	fmt.Println(fmt.Sprintf("fake-submitting entry [%v]", finalEntry))
+	fmt.Println(fmt.Sprintf("attempting to submit entry [%v]", finalEntry))
 
-	// FIXME Magically submit error to the chain.
 	// FIXME Also probably want to return more than just error (e.g., were we
 	//       the accepted entry?).
-	return nil
+	return relayChain.SubmitRelayEntryCandidate(finalEntry)
 }
 
 // FIXME Actually sign instead of doubling all bytes...
