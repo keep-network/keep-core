@@ -103,9 +103,8 @@ func StartNode(c *cli.Context) error {
 		for {
 			select {
 			case <-t.C:
-				payload := fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)
 				if err := broadcastChannel.Send(
-					&testMessage{Payload: payload},
+					&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)},
 				); err != nil {
 					return
 				}
