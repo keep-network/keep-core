@@ -19,9 +19,7 @@ const (
 )
 
 // StartFlags for bootstrap, port and disable-provider
-var (
-	StartFlags []cli.Flag
-)
+var	StartFlags []cli.Flag
 
 func init() {
 	StartFlags = []cli.Flag{
@@ -65,9 +63,11 @@ func StartNode(c *cli.Context) error {
 		port = cfg.Node.Port
 	}
 
-	var seed int
-	nodeName := ""
-	bootstrapURLs := []string{}
+	var (
+		seed int
+		nodeName string
+		bootstrapURLs []string
+	)
 	if c.Bool("bootstrap") {
 		nodeName = " bootstrap"
 		seed = cfg.Bootstrap.Seed

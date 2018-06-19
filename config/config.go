@@ -37,7 +37,6 @@ var (
 
 // ReadConfig reads in the configuration file in .toml format.
 func ReadConfig(filePath string) (cfg Config, err error) {
-
 	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
 		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
@@ -58,7 +57,7 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 	}
 
 	if cfg.Node.Port == 0 {
-		return cfg, fmt.Errorf("node Port missing")
+		return cfg, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
 	}
 
 	if cfg.Bootstrap.Seed == 0 && len(cfg.Bootstrap.URLs) == 0 {

@@ -23,7 +23,6 @@ var (
 )
 
 func main() {
-
 	if version == "" {
 		version = "unknown"
 	}
