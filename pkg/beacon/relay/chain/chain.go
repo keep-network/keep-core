@@ -3,12 +3,15 @@ package chain
 import (
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 )
 
 // Interface represents the interface that the relay expects to interact
 // with the anchoring blockchain on.
 type Interface interface {
+	// GetConfig returns the expected configuration of the threshold relay.
+	GetConfig() (config.Chain, error)
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
 	// associated with a string groupID. An error is generally only returned in
 	// case of connectivity issues; on-chain errors are reported through event
@@ -27,7 +30,9 @@ type Interface interface {
 	//
 	// TODO activation delay may be unnecessary, we'll see.
 	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
-
-	// GetConfig returns the expected configuration of the threshold relay.
-	GetConfig() (config.Chain, error)
+	// SubmitRelayEntryCandidate takes an entry (a group signature and
+	// timestamp), constructs a relay response from the elements,
+	// and attempts to submit the relay reponse to the chain for consideration.
+	// If the chain accepts the response as valid...
+	SubmitRelayEntryCandidate(relay.Entry) error
 }
