@@ -55,7 +55,7 @@ func SmokeTest(c *cli.Context) error {
 
 	_ = pb.Envelope{}
 
-	beaconConfig, err := chainHandle.RandomBeacon().GetConfig()
+	beaconConfig, err := chainHandle.ThresholdRelay().GetConfig()
 	if err != nil {
 		panic(fmt.Sprintf(
 			"Failed to run get configuration: [%v].",
