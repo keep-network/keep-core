@@ -16,6 +16,7 @@
 
 [node]
     Port = 27001
+#    MyPreferredOutboundIP = "192.168.10.103"
 
 [bootstrap]
     Seed = 2

@@ -72,8 +72,10 @@ func main() {
 			Usage: `Starts the Keep client in the foreground. Currently this consists of the
             threshold relay client for the Keep random beacon and the validator client
             for the Keep random beacon.
-       --bootstrap         Indicates that this node is a bootstrap server
-       --disable-provider: Disables the Keep provider client; default false
+       --bootstrap             Indicates that this node is a bootstrap server
+       --port                  Port this node will be listening on
+       --preferred-ip-address  Preferred outbound IPv4 IP Address
+       --disable-provider:     Disables the Keep provider client; default false
 `,
 			Description: "starts the Keep client in the foreground",
 			Action:      cmd.StartNode,

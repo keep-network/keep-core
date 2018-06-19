@@ -31,6 +31,9 @@ func init() {
 		&cli.IntFlag{
 			Name: "port",
 		},
+		&cli.StringFlag{
+			Name: "preferred-ip-address",
+		},
 		&cli.BoolFlag{
 			Name: "disable-provider",
 		},
@@ -39,7 +42,6 @@ func init() {
 
 // StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
 func StartNode(c *cli.Context) error {
-
 	disableProvider := c.Bool("disable-provider")
 	if disableProvider {
 		return errors.New("Keep provider has not yet been implemented.  Try back later!")
@@ -50,7 +52,12 @@ func StartNode(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	myIPAddress := GetOutboundIP()
+	preferredIPAddress := c.String("preferred-ip-address")
+	if len(preferredIPAddress) == 0 {
+		preferredIPAddress = cfg.Node.MyPreferredOutboundIP
+	}
+
+	myIPAddress := GetMyIPv4Address(preferredIPAddress)
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
