@@ -1,6 +1,6 @@
 :toc: macro
 
-== Trapdoor Commitments
+= Trapdoor Commitments
 
 toc::[]
 
@@ -24,7 +24,7 @@ We send a commitment to verifier, that can happen at any time, and in future,
 we send a "trapdoor" value that lets to verify the commitment. 
 
 In the first approach, the only thing needed for verification is the plaintext 
-and commitment. In trapdoor scheme we need plaintext, commitment and trapdoor. 
+and commitment. In trapdoor scheme we need the plaintext, commitment and trapdoor. 
 Trapdoor scheme separates what we are committing to and the key allowing for 
 a verification of the commitment.
 
@@ -36,8 +36,6 @@ locking the message in a steel box and passing it to receiver. A trapdoor
 commitment is a box with a tiny secret door. If someone knows the secret door, 
 then this person is still able to change the committed message in the box, even 
 after the commitment phase. 
-
-For now, we are not interested in the "backdoor" property of commitment schemes.
 
 == Pedersen commitment
 
@@ -83,16 +81,16 @@ return commitment == expectedCommitment
 If `g` and `h` are computed and distributed by a trusted third party such that
 the discrete logarithm between `g` and `h` is unkown, we obtain unconditionally
 hiding commitments. That is, even an unbounded adversary not knowing `g` and `h` 
-will not be able to figure our plaintext message.
+will not be able to figure out plaintext message.
 
 Sender knowing `g` and `h` can change the message he committed to
 even after commitment has been published (but before `r` has been published) 
 since it's possible to find another pair of `(r', secret')` evaluating to the 
 same commitment. 
 
-If `g` and `h` are publicly known, we obtain computional hiding commitments with 
-a trapdoor property an unbounded adversary can simply try all possible `r` and 
-`secret` till they evalute to the expected commitment.
+If `g` and `h` are publicly known, we obtain computional hiding and an unbounded 
+adversary can simply try all possible `r` and `secret` till they evalute to the 
+expected commitment.
 
 == Elliptic Curve VSS
 
@@ -106,13 +104,14 @@ as a group of points on an elliptic curve of cardinality `q`. In this case the
 multiplication operation in `G` is the group operation over the curve. 
 `g` is the randomly selected point on the curve.
 
-Curve described by `G` and `q` as well as `g` are public parameters.
+Curve described by `G` and `q` as well as `g` can be public parameters for 
+a computional binding scheme.
 
 === Generating commitment
 `INPUT: secret`
 
 ```
-pkey = (randomFromZn[0,  q - 1])
+pkey = (randomFromZn[0, q - 1])
 r = (randomFromZn[0, q - 1])
 
 digest = sha256(secret) mod q
