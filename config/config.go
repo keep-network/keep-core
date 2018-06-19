@@ -21,7 +21,8 @@ type Config struct {
 }
 
 type node struct {
-	Port int
+	Port                  int
+	MyPreferredOutboundIP string
 }
 
 type bootstrap struct {
