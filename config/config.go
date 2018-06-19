@@ -61,11 +61,7 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 	}
 
 	if cfg.Bootstrap.Seed == 0 && len(cfg.Bootstrap.URLs) == 0 {
-		return cfg, fmt.Errorf("either supply a bootstrap seed or valid bootstrap URLs")
-	}
-
-	if cfg.Bootstrap.Seed != 2 && len(cfg.Bootstrap.URLs) == 0 {
-		return cfg, fmt.Errorf("bootstrap seed value invalid (expected 2)")
+		return cfg, fmt.Errorf("either supply a valid bootstrap seed or valid bootstrap URLs")
 	}
 
 	if cfg.Bootstrap.Seed != 0 && len(cfg.Bootstrap.URLs) > 0 {
