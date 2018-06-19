@@ -41,10 +41,10 @@ func GetMyIPv4Address(myPreferredOutboundIP string) string {
 			}
 		}
 	}
-	if len(myIPs) > 0 {
+	if len(myIPs) > 1 {
 		myIPAddress = GetPreferredOutboundIP()
 	}
-	if len(myPreferredOutboundIP) > 0 && myIPAddress != myPreferredOutboundIP {
+	if len(myPreferredOutboundIP) > 0 {
 		fmt.Printf("preferred-ip-address (%s) not valid - using %s instead\n", myPreferredOutboundIP, myIPAddress)
 	}
 	return myIPAddress
