@@ -126,6 +126,12 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
+	receiveMessage(ctx, port, recvChan, myIPAddress)
+
+	select {}
+}
+
+func receiveMessage(ctx context.Context, port int, recvChan <-chan net.Message, myIPAddress string) {
 	go func(port int) {
 		for {
 			select {
@@ -137,6 +143,4 @@ func StartNode(c *cli.Context) error {
 			}
 		}
 	}(port)
-
-	select {}
 }
