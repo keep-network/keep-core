@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"time"
@@ -19,7 +18,7 @@ const (
 	resetBroadcastTimerSec = 5
 )
 
-// StartFlags for bootstrap, port and disable-provider
+// StartFlags for bootstrap and port
 var StartFlags []cli.Flag
 
 func init() {
@@ -30,33 +29,17 @@ func init() {
 		&cli.IntFlag{
 			Name: "port",
 		},
-		&cli.StringFlag{
-			Name: "preferred-ip-address",
-		},
-		&cli.BoolFlag{
-			Name: "disable-provider",
-		},
 	}
 }
 
 // StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
 func StartNode(c *cli.Context) error {
-	disableProvider := c.Bool("disable-provider")
-	if disableProvider {
-		return errors.New("Keep provider has not yet been implemented.  Try back later!")
-	}
-
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	preferredIPAddress := c.String("preferred-ip-address")
-	if len(preferredIPAddress) == 0 {
-		preferredIPAddress = cfg.Node.MyPreferredOutboundIP
-	}
-
-	myIPAddress := GetMyIPv4Address(preferredIPAddress)
+	myIPAddress := GetMyIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")

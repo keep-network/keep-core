@@ -8,18 +8,16 @@ import (
 	"strings"
 )
 
-const HomeIPv4Address = "127.0.0.1"
-
 // GetMyIPv4Address returns this node's IPv4 IP Address
 // If myPreferredOutboundIP (from config file) is valid, return that
 // If more than one IP address found, call GetPreferredOutboundIP
 // 127.0.0.1 will be returned if no other IPv4 addresses are found
 // Assumes node has at least one interface (and the 127.0.0.1 address)
-func GetMyIPv4Address(myPreferredOutboundIP string) string {
-	myIPAddress := HomeIPv4Address
+func GetMyIPv4Address() string {
+	myIPAddress := "127.0.0.1"
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return HomeIPv4Address
+		return "127.0.0.1"
 	}
 	var myIPs []string
 	for _, iface := range ifaces {
@@ -31,10 +29,7 @@ func GetMyIPv4Address(myPreferredOutboundIP string) string {
 				myIPBytes := ip.To4()
 				if myIPBytes != nil {
 					myIPAddress = myIPBytes.String()
-					if myIPAddress == myPreferredOutboundIP {
-						return myIPAddress // myPreferredOutboundIP is valid
-					}
-					if myIPAddress != HomeIPv4Address {
+					if myIPAddress != "127.0.0.1" {
 						myIPs = append(myIPs, myIPAddress)
 					}
 				}
@@ -43,9 +38,6 @@ func GetMyIPv4Address(myPreferredOutboundIP string) string {
 	}
 	if len(myIPs) > 1 {
 		myIPAddress = GetPreferredOutboundIP()
-	}
-	if len(myPreferredOutboundIP) > 0 {
-		fmt.Printf("preferred-ip-address (%s) not valid - using %s instead\n", myPreferredOutboundIP, myIPAddress)
 	}
 	return myIPAddress
 }
