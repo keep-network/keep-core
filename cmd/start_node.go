@@ -97,6 +97,24 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
+	broadcastMessages(ctx, broadcastChannel, myIPAddress, port)
+
+	recvChan := make(chan net.Message)
+
+	if err := broadcastChannel.Recv(func(msg net.Message) error {
+		fmt.Printf("Got %s\n", msg.Payload())
+		recvChan <- msg
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	receiveMessages(ctx, recvChan, myIPAddress, port)
+
+	select {}
+}
+
+func broadcastMessages(ctx context.Context, broadcastChannel net.BroadcastChannel, myIPAddress string, port int) {
 	go func() {
 		t := time.NewTimer(1) // first tick is immediate
 		defer t.Stop()
@@ -115,23 +133,9 @@ func StartNode(c *cli.Context) error {
 
 		}
 	}()
-
-	recvChan := make(chan net.Message)
-
-	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		fmt.Printf("Got %s\n", msg.Payload())
-		recvChan <- msg
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	receiveMessage(ctx, port, recvChan, myIPAddress)
-
-	select {}
 }
 
-func receiveMessage(ctx context.Context, port int, recvChan <-chan net.Message, myIPAddress string) {
+func receiveMessages(ctx context.Context, recvChan <-chan net.Message, myIPAddress string, port int) {
 	go func(port int) {
 		for {
 			select {
