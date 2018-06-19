@@ -14,12 +14,13 @@ import (
 )
 
 const (
-	broadcastChannelName = "test"
-	sampleText           = "sample text"
+	sampleText             = "sample text"
+	broadcastChannelName   = "test"
+	resetBroadcastTimerSec = 5
 )
 
 // StartFlags for bootstrap, port and disable-provider
-var	StartFlags []cli.Flag
+var StartFlags []cli.Flag
 
 func init() {
 	StartFlags = []cli.Flag{
@@ -64,8 +65,8 @@ func StartNode(c *cli.Context) error {
 	}
 
 	var (
-		seed int
-		nodeName string
+		seed          int
+		nodeName      string
 		bootstrapURLs []string
 	)
 	if c.Bool("bootstrap") {
@@ -126,7 +127,7 @@ func broadcastMessages(ctx context.Context, broadcastChannel net.BroadcastChanne
 				); err != nil {
 					return
 				}
-				t.Reset(5 * time.Second)
+				t.Reset(resetBroadcastTimerSec * time.Second)
 			case <-ctx.Done():
 				return
 			}
