@@ -16,7 +16,6 @@
 
 [node]
     Port = 27001
-#    MyPreferredOutboundIP = "192.168.10.103"
 
 [bootstrap]
-    URLs = ["/ip4/127.0.0.1/tcp/8080/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
+    URLs = ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
