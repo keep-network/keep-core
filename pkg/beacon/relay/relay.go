@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+// Config contains the config data needed for the relay to operate.
+type Config struct {
+	// GroupSize is the size of a group in the threshold relay.
+	GroupSize int
+	// Threshold is the minimum number of interacting group members needed to
+	// produce a relay entry.
+	Threshold int
+}
+
 // ChainInterface represents the interface that the relay expects to interact
 // with the anchoring blockchain on.
 type ChainInterface interface {
@@ -27,6 +36,9 @@ type ChainInterface interface {
 	//
 	// TODO activation delay may be unnecessary, we'll see.
 	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
+
+	// GetConfig returns the expected configuration of the threshold relay.
+	GetConfig() (Config, error)
 }
 
 // NodeState represents the current state of a relay node.
