@@ -22,6 +22,7 @@ import (
 
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr-net"
 	msmux "github.com/whyrusleeping/go-smux-multistream"
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
@@ -40,20 +41,19 @@ func (p *provider) ChannelFor(name string) (knet.BroadcastChannel, error) {
 	return p.channelManagr.getChannel(name)
 }
 
-// ListenIPAddresses returns the IP addresses that listen on this port
-func (p *provider) ListenIPAddresses(port int) ([]string, error) {
-	// Get available network ifaces to listen on into multiaddrs
-	addrs, err := getListenAddrs(port)
-	if err != nil {
-		return []string{}, err
-	}
-	ipAddresses := []string{}
-	for _, addr := range addrs {
-		if addr != nil {
-			ipAddresses = append(ipAddresses, addr.String())
+// ListenIPAddresses returns the IP addresses that listen for this host
+func (p *provider) ListenIPAddresses() ([]net.Addr, error) {
+	ipAddrs := make([]net.Addr, len(p.host.Addrs()))
+	for _, maddr := range p.host.Addrs() {
+		if manet.IsThinWaist(maddr) {
+			addr, err := manet.ToNetAddr(maddr)
+			if err != nil {
+				return nil, err
+			}
+			ipAddrs = append(ipAddrs, addr)
 		}
 	}
-	return ipAddresses, nil
+	return ipAddrs, nil
 }
 
 func (p *provider) Type() string {

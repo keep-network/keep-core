@@ -33,14 +33,14 @@ func init() {
 	}
 }
 
-// StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
+// StartNode starts a node; if it's not a bootstrap node it will get the
+// Node.URLs from the config file
 func StartNode(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	//myIPv4Address := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
@@ -70,14 +70,18 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	var myIPv4Address string
-	myIPs, err := provider.ListenIPAddresses(port)
+	ips, err := provider.ListenIPAddresses()
 	if err != nil {
-		myIPv4Address = "127.0.0.1"
+		return err
 	}
-	myIPv4Address = GetIPv4Address(myIPs)
+	listenIPv4 := getIPv4FromAddr(ips)
 
-	header(fmt.Sprintf("starting%s node, connnecting to network and listening at %s port %d", nodeName, myIPv4Address, port))
+	header(fmt.Sprintf(
+		"starting%s node, connnecting to network and listening at %s port %d",
+		nodeName,
+		listenIPv4,
+		port,
+	))
 
 	broadcastChannel, err := provider.ChannelFor(broadcastChannelName)
 	if err != nil {
