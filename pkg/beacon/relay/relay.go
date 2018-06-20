@@ -24,6 +24,9 @@ type ChainInterface interface {
 	// associated with a string groupID. A promise is returned that will resolve
 	// with success/error callbacks.
 	SubmitGroupPublicKey(groupID string, key [96]byte) *callback.Promise
+
+	// GetConfig returns the expected configuration of the threshold relay.
+	GetConfig() (Config, error)
 }
 
 // NodeState represents the current state of a relay node.

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
@@ -56,16 +55,12 @@ func SmokeTest(c *cli.Context) error {
 
 	_ = pb.Envelope{}
 
-	//beaconConfig, err := chainHandle.ThresholdRelay().GetConfig()
-	//if err != nil {
-	//	panic(fmt.Sprintf(
-	//		"Failed to run get configuration: [%v].",
-	//		err,
-	//	))
-	//}
-	beaconConfig := relay.Config{
-		GroupSize: groupSize,
-		Threshold: threshold,
+	beaconConfig, err := chainHandle.ThresholdRelay().GetConfig()
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to run get configuration: [%v].",
+			err,
+		))
 	}
 
 	memberChannel := make(chan *thresholdgroup.Member)
