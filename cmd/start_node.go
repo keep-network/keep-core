@@ -3,12 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"time"
 
 	"github.com/keep-network/keep-core/config"
-	knet "github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
 )
@@ -70,16 +69,9 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	ips, err := provider.ListenIPAddresses()
-	if err != nil {
-		return err
-	}
-	listenIPv4 := getIPv4FromAddr(ips)
-
 	header(fmt.Sprintf(
-		"starting%s node, connnecting to network and listening at %s port %d",
+		"starting%s node, connnecting to network at port %d",
 		nodeName,
-		listenIPv4,
 		port,
 	))
 
@@ -89,13 +81,13 @@ func StartNode(c *cli.Context) error {
 	}
 
 	if err := broadcastChannel.RegisterUnmarshaler(
-		func() knet.TaggedUnmarshaler { return &testMessage{} },
+		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		return err
 	}
 
-	recvChan := make(chan knet.Message)
-	if err := broadcastChannel.Recv(func(msg knet.Message) error {
+	recvChan := make(chan net.Message)
+	if err := broadcastChannel.Recv(func(msg net.Message) error {
 		fmt.Printf("Got %s\n", msg.Payload())
 		recvChan <- msg
 		return nil
@@ -103,16 +95,15 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	go broadcastMessages(ctx, broadcastChannel, listenIPv4, port)
-	go receiveMessages(ctx, recvChan, listenIPv4, port)
+	go broadcastMessages(ctx, broadcastChannel, port)
+	go receiveMessages(ctx, recvChan, port)
 
 	select {}
 }
 
 func broadcastMessages(
 	ctx context.Context,
-	broadcastChannel knet.BroadcastChannel,
-	listenIP net.IP,
+	broadcastChannel net.BroadcastChannel,
 	port int,
 ) {
 	t := time.NewTimer(1) // first tick is immediate
@@ -123,9 +114,8 @@ func broadcastMessages(
 			if err := broadcastChannel.Send(
 				&testMessage{
 					Payload: fmt.Sprintf(
-						"%s from %s on port %d",
+						"%s on port %d",
 						sampleText,
-						listenIP,
 						port,
 					),
 				},
@@ -142,15 +132,14 @@ func broadcastMessages(
 
 func receiveMessages(
 	ctx context.Context,
-	recvChan <-chan knet.Message,
-	listenIP net.IP,
+	recvChan <-chan net.Message,
 	port int,
 ) {
 	for {
 		select {
 		case msg := <-recvChan:
 			testPayload := msg.Payload().(*testMessage)
-			fmt.Printf("%s:%d read message: %+v\n", listenIP, port, testPayload)
+			fmt.Printf("%d read message: %+v\n", port, testPayload)
 		case <-ctx.Done():
 			return
 		}
