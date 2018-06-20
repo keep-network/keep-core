@@ -47,7 +47,6 @@ type TaggedMarshaler interface {
 type Provider interface {
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
-	ListenIPAddresses(port int) ([]string, error)
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

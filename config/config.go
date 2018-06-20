@@ -64,10 +64,6 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 		return cfg, fmt.Errorf("either supply a valid bootstrap seed or valid bootstrap URLs")
 	}
 
-	if cfg.Bootstrap.Seed != 0 && len(cfg.Bootstrap.URLs) > 0 {
-		return cfg, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
-	}
-
 	return cfg, nil
 }
 

@@ -39,22 +39,6 @@ func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	return p.channelManagr.getChannel(name)
 }
 
-// ListenIPAddresses returns the IP addresses that listen on this port
-func (p *provider) ListenIPAddresses(port int) ([]string, error) {
-	// Get available network ifaces to listen on into multiaddrs
-	addrs, err := getListenAddrs(port)
-	if err != nil {
-		return []string{}, err
-	}
-	ipAddresses := []string{}
-	for _, addr := range addrs {
-		if addr != nil {
-			ipAddresses = append(ipAddresses, addr.String())
-		}
-	}
-	return ipAddresses, nil
-}
-
 func (p *provider) Type() string {
 	return "libp2p"
 }

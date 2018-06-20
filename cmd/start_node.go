@@ -32,14 +32,14 @@ func init() {
 	}
 }
 
-// StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
+// StartNode starts a node; if it's not a bootstrap node it will get the
+// Node.URLs from the config file
 func StartNode(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	//myIPv4Address := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
@@ -69,14 +69,11 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	var myIPv4Address string
-	myIPs, err := provider.ListenIPAddresses(port)
-	if err != nil {
-		myIPv4Address = "127.0.0.1"
-	}
-	myIPv4Address = GetIPv4Address(myIPs)
-
-	header(fmt.Sprintf("starting%s node, connnecting to network and listening at %s port %d", nodeName, myIPv4Address, port))
+	header(fmt.Sprintf(
+		"starting%s node, connnecting to network at port %d",
+		nodeName,
+		port,
+	))
 
 	broadcastChannel, err := provider.ChannelFor(broadcastChannelName)
 	if err != nil {
@@ -89,10 +86,7 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	broadcastMessages(ctx, broadcastChannel, myIPv4Address, port)
-
 	recvChan := make(chan net.Message)
-
 	if err := broadcastChannel.Recv(func(msg net.Message) error {
 		fmt.Printf("Got %s\n", msg.Payload())
 		recvChan <- msg
@@ -101,42 +95,53 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	receiveMessages(ctx, recvChan, myIPv4Address, port)
+	go broadcastMessages(ctx, port, broadcastChannel)
+	go receiveMessages(ctx, port, recvChan)
 
 	select {}
 }
 
-func broadcastMessages(ctx context.Context, broadcastChannel net.BroadcastChannel, myIPAddress string, port int) {
-	go func() {
-		t := time.NewTimer(1) // first tick is immediate
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				if err := broadcastChannel.Send(
-					&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)},
-				); err != nil {
-					return
-				}
-				t.Reset(resetBroadcastTimerSec * time.Second)
-			case <-ctx.Done():
+func broadcastMessages(
+	ctx context.Context,
+	port int,
+	broadcastChannel net.BroadcastChannel,
+) {
+	t := time.NewTimer(1) // first tick is immediate
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			if err := broadcastChannel.Send(
+				&testMessage{
+					Payload: fmt.Sprintf(
+						"%s on port %d",
+						sampleText,
+						port,
+					),
+				},
+			); err != nil {
 				return
 			}
-
+			t.Reset(resetBroadcastTimerSec * time.Second)
+		case <-ctx.Done():
+			return
 		}
-	}()
+
+	}
 }
 
-func receiveMessages(ctx context.Context, recvChan <-chan net.Message, myIPAddress string, port int) {
-	go func(port int) {
-		for {
-			select {
-			case msg := <-recvChan:
-				testPayload := msg.Payload().(*testMessage)
-				fmt.Printf("%s:%d read message: %+v\n", myIPAddress, port, testPayload)
-			case <-ctx.Done():
-				return
-			}
+func receiveMessages(
+	ctx context.Context,
+	port int,
+	recvChan <-chan net.Message,
+) {
+	for {
+		select {
+		case msg := <-recvChan:
+			testPayload := msg.Payload().(*testMessage)
+			fmt.Printf("%d read message: %+v\n", port, testPayload)
+		case <-ctx.Done():
+			return
 		}
-	}(port)
+	}
 }
