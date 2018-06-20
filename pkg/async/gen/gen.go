@@ -33,19 +33,14 @@ type promiseConfig struct {
 
 func main() {
 	configs := []promiseConfig{
-		// Promise for `string` type. There is a test for this promise named `string_promise_test.go`.
+		// Promise for `*big.Int` type.
+		// There is a test for this promise named `big_int_promise_test.go`.
 		// We need a test to validate correctness of generated promises.
 		{
-			Type:       "string",
-			Prefix:     "String",
-			outputFile: "string_promise.go",
+			Type:       "*big.Int",
+			Prefix:     "BigInt",
+			outputFile: "big_int_promise.go",
 		},
-		// Example for types from packages which need to be imported.
-		// {
-		// 	Type: "ethereum.KeepRandomBeacon",
-		// 	Prefix:     "KeepRandomBeacon",
-		// 	outputFile: "keep_random_beacon_promise.go",
-		// },
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
