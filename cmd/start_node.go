@@ -69,12 +69,8 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	var myIPv4Address string
-	myIPs, err := provider.ListenIPAddresses(port)
-	if err != nil {
-		myIPv4Address = "127.0.0.1"
-	}
-	myIPv4Address = GetIPv4Address(myIPs)
+
+	myIPv4Address := GetIPv4Address(libp2p.ListenAddrs)
 
 	header(fmt.Sprintf("starting%s node, connnecting to network and listening at %s port %d", nodeName, myIPv4Address, port))
 

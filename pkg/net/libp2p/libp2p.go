@@ -33,26 +33,13 @@ type provider struct {
 	routing routing.IpfsRouting
 }
 
+var ListenAddrs []ma.Multiaddr
+
+
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
 	return p.channelManagr.getChannel(name)
-}
-
-// ListenIPAddresses returns the IP addresses that listen on this port
-func (p *provider) ListenIPAddresses(port int) ([]string, error) {
-	// Get available network ifaces to listen on into multiaddrs
-	addrs, err := getListenAddrs(port)
-	if err != nil {
-		return []string{}, err
-	}
-	ipAddresses := []string{}
-	for _, addr := range addrs {
-		if addr != nil {
-			ipAddresses = append(ipAddresses, addr.String())
-		}
-	}
-	return ipAddresses, nil
 }
 
 func (p *provider) Type() string {
@@ -180,6 +167,9 @@ func buildPeerHost(
 		}
 		return nil, err
 	}
+
+	// ListenAddrs used in start command to identity the IP address for this peer
+	ListenAddrs = h.Addrs()
 
 	return h, nil
 }
