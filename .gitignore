@@ -11,3 +11,5 @@ config.toml
 *.config.toml
 *.out
 *.abi
+keep-core
+
