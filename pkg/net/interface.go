@@ -1,8 +1,6 @@
 package net
 
 import (
-	"net"
-
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -49,7 +47,6 @@ type TaggedMarshaler interface {
 type Provider interface {
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
-	ListenIPAddresses() ([]net.Addr, error)
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

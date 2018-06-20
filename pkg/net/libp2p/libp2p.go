@@ -3,10 +3,9 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"net"
 	"sync"
 
-	knet "github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -22,7 +21,6 @@ import (
 
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr-net"
 	msmux "github.com/whyrusleeping/go-smux-multistream"
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
@@ -35,25 +33,10 @@ type provider struct {
 	routing routing.IpfsRouting
 }
 
-func (p *provider) ChannelFor(name string) (knet.BroadcastChannel, error) {
+func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
 	return p.channelManagr.getChannel(name)
-}
-
-// ListenIPAddresses returns the IP addresses that listen for this host
-func (p *provider) ListenIPAddresses() ([]net.Addr, error) {
-	ipAddrs := make([]net.Addr, len(p.host.Addrs()))
-	for _, maddr := range p.host.Addrs() {
-		if manet.IsThinWaist(maddr) {
-			addr, err := manet.ToNetAddr(maddr)
-			if err != nil {
-				return nil, err
-			}
-			ipAddrs = append(ipAddrs, addr)
-		}
-	}
-	return ipAddrs, nil
 }
 
 func (p *provider) Type() string {
@@ -69,7 +52,7 @@ type Config struct {
 	identity    *identity
 }
 
-func Connect(ctx context.Context, config *Config) (knet.Provider, error) {
+func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	host, identity, err := discoverAndListen(ctx, config)
 	if err != nil {
 		return nil, err
