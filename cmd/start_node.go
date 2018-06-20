@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-
 	"time"
 
 	"github.com/keep-network/keep-core/config"
@@ -20,6 +19,18 @@ const (
 
 // StartFlags for bootstrap and port
 var StartFlags []cli.Flag
+
+type recvParams struct {
+	port     int
+	ipaddr   string
+	recvChan chan net.Message
+}
+
+type broadcastParams struct {
+	port      int
+	ipaddr    string
+	bcastChan net.BroadcastChannel
+}
 
 func init() {
 	StartFlags = []cli.Flag{
@@ -67,7 +78,6 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-
 	myIPv4Address := GetIPv4Address(libp2p.ListenAddrs)
 
 	nodeHeader(c.Bool("bootstrap"), myIPv4Address, port)
@@ -83,54 +93,50 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	broadcastMessages(ctx, broadcastChannel, myIPv4Address, port)
+	go broadcastMessages(ctx, broadcastParams{port:port, ipaddr: myIPv4Address, bcastChan:broadcastChannel})
 
 	recvChan := make(chan net.Message)
 
 	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		fmt.Printf("Got %s\n", msg.Payload())
+		fmt.Printf("got %s\n", msg.Payload())
 		recvChan <- msg
 		return nil
 	}); err != nil {
 		return err
 	}
 
-	receiveMessages(ctx, recvChan, myIPv4Address, port)
+	go receiveMessage(ctx, recvParams{port: port, ipaddr: myIPv4Address, recvChan: recvChan})
 
 	select {}
 }
 
-func broadcastMessages(ctx context.Context, broadcastChannel net.BroadcastChannel, myIPAddress string, port int) {
-	go func() {
-		t := time.NewTimer(1) // first tick is immediate
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				if err := broadcastChannel.Send(
-					&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)},
-				); err != nil {
-					return
-				}
-				t.Reset(resetBroadcastTimerSec * time.Second)
-			case <-ctx.Done():
+
+func broadcastMessages(ctx context.Context, params broadcastParams)  {
+	t := time.NewTimer(1) // first tick is immediate
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			if err := params.bcastChan.Send(
+				&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, params.ipaddr, params.port)},
+			); err != nil {
 				return
 			}
-
+			t.Reset(resetBroadcastTimerSec * time.Second)
+		case <-ctx.Done():
+			return
 		}
-	}()
+	}
 }
 
-func receiveMessages(ctx context.Context, recvChan <-chan net.Message, myIPAddress string, port int) {
-	go func(port int) {
-		for {
-			select {
-			case msg := <-recvChan:
-				testPayload := msg.Payload().(*testMessage)
-				fmt.Printf("%s:%d read message: %+v\n", myIPAddress, port, testPayload)
-			case <-ctx.Done():
-				return
-			}
+func receiveMessage(ctx context.Context, params recvParams) {
+	for {
+		select {
+		case msg := <-params.recvChan:
+			testPayload := msg.Payload().(*testMessage)
+			fmt.Printf("%s:%d read message: %+v\n", params.ipaddr, params.port, testPayload)
+		case <-ctx.Done():
+			return
 		}
-	}(port)
+	}
 }
