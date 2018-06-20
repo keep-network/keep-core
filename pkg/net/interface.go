@@ -40,12 +40,14 @@ type TaggedMarshaler interface {
 
 // Provider represents an entity that can provide network access.
 //
-// Currently only two methods are exposed by providers: the ability to get a
-// named BroadcastChannel, and the ability to return a provider type, which is
-// an informational string indicating what type of provider this is.
+// Currently only 3 methods are exposed by providers: the ability to get a
+// named BroadcastChannel, the ability to return a provider type, which is
+// an informational string indicating what type of provider this is, and
+// ListenIPAddresses for this node.
 type Provider interface {
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
+	ListenIPAddresses(port int) ([]string, error)
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

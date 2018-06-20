@@ -39,7 +39,7 @@ func StartNode(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	myIPAddress := GetIPv4Address()
+	//myIPv4Address := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
@@ -59,8 +59,6 @@ func StartNode(c *cli.Context) error {
 		bootstrapURLs = cfg.Bootstrap.URLs
 	}
 
-	header(fmt.Sprintf("starting%s node, connnecting to network and listening at %s port %d", nodeName, myIPAddress, port))
-
 	ctx := context.Background()
 	provider, err := libp2p.Connect(ctx, &libp2p.Config{
 		Port:  port,
@@ -70,6 +68,16 @@ func StartNode(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	var myIPv4Address string
+	myIPs, err := provider.ListenIPAddresses(port)
+	if err != nil {
+		myIPv4Address = "127.0.0.1"
+	}
+	myIPv4Address = GetIPv4Address(myIPs)
+
+	header(fmt.Sprintf("starting%s node, connnecting to network and listening at %s port %d", nodeName, myIPv4Address, port))
+
 	broadcastChannel, err := provider.ChannelFor(broadcastChannelName)
 	if err != nil {
 		return err
@@ -81,7 +89,7 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	broadcastMessages(ctx, broadcastChannel, myIPAddress, port)
+	broadcastMessages(ctx, broadcastChannel, myIPv4Address, port)
 
 	recvChan := make(chan net.Message)
 
@@ -93,7 +101,7 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	receiveMessages(ctx, recvChan, myIPAddress, port)
+	receiveMessages(ctx, recvChan, myIPv4Address, port)
 
 	select {}
 }

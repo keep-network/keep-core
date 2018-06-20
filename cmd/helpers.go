@@ -13,46 +13,37 @@ import (
 // 127.0.0.1 will be returned if no other IPv4 addresses are found;
 // otherwise, the non 127.0.0.1 address will be returned
 // Assumes node has at least one interface (and the 127.0.0.1 address)
-func GetIPv4Address() string {
+func GetIPv4Address(ips []string) string {
 	myIPAddress := "127.0.0.1"
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return "127.0.0.1"
-	}
-	var myIPs []string
-	for _, iface := range ifaces {
-		addrs, _ := iface.Addrs()
-		for _, addr := range addrs {
-			addrString := addr.String()
-			ip, _, err := net.ParseCIDR(addrString)
-			if err == nil {
-				myIPBytes := ip.To4()
-				if myIPBytes != nil {
-					myIPAddress = myIPBytes.String()
-					if myIPAddress != "127.0.0.1" {
-						myIPs = append(myIPs, myIPAddress)
-					}
-				}
-			}
+	var ipv4s []string
+	for _, ip := range ips {
+		if strings.Contains(ip, ".") && !strings.Contains(ip, "127.0.0.1") {
+			// Ex: ip = "/ip4/192.168.10.103/tcp/27001"
+			ipv4s = append(ipv4s, strings.Split(ip, "/")[2])
 		}
 	}
-	if len(myIPs) > 1 {
-		myIPAddress = GetPreferredOutboundIP()
+	if len(ipv4s) == 1 {
+		myIPAddress = ipv4s[0]
+	} else if len(ipv4s) > 1 {
+		preferredIPAddress, err := GetPreferredOutboundIP()
+		if err != nil {
+			myIPAddress = preferredIPAddress
+		}
 	}
 	return myIPAddress
 }
 
 // GetPreferredOutboundIP gets the preferred outbound ip address
-func GetPreferredOutboundIP() string {
+func GetPreferredOutboundIP() (string, error) {
 	conn, err := net.Dial("udp", "9.9.9.9:9999")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	defer closeConn(conn)
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
-	return localAddr.IP.String()
+	return localAddr.IP.String(), nil
 }
 
 func header(header string) {
