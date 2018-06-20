@@ -101,42 +101,56 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	receiveMessages(ctx, recvChan, myIPv4Address, port)
+	go broadcastMessages(ctx, broadcastChannel, listenIPv4, port)
+	go receiveMessages(ctx, recvChan, listenIPv4, port)
 
 	select {}
 }
 
-func broadcastMessages(ctx context.Context, broadcastChannel net.BroadcastChannel, myIPAddress string, port int) {
-	go func() {
-		t := time.NewTimer(1) // first tick is immediate
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				if err := broadcastChannel.Send(
-					&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, myIPAddress, port)},
-				); err != nil {
-					return
-				}
-				t.Reset(resetBroadcastTimerSec * time.Second)
-			case <-ctx.Done():
+func broadcastMessages(
+	ctx context.Context,
+	broadcastChannel knet.BroadcastChannel,
+	listenIP net.IP,
+	port int,
+) {
+	t := time.NewTimer(1) // first tick is immediate
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			if err := broadcastChannel.Send(
+				&testMessage{
+					Payload: fmt.Sprintf(
+						"%s from %s on port %d",
+						sampleText,
+						listenIP,
+						port,
+					),
+				},
+			); err != nil {
 				return
 			}
-
+			t.Reset(resetBroadcastTimerSec * time.Second)
+		case <-ctx.Done():
+			return
 		}
-	}()
+
+	}
 }
 
-func receiveMessages(ctx context.Context, recvChan <-chan net.Message, myIPAddress string, port int) {
-	go func(port int) {
-		for {
-			select {
-			case msg := <-recvChan:
-				testPayload := msg.Payload().(*testMessage)
-				fmt.Printf("%s:%d read message: %+v\n", myIPAddress, port, testPayload)
-			case <-ctx.Done():
-				return
-			}
+func receiveMessages(
+	ctx context.Context,
+	recvChan <-chan knet.Message,
+	listenIP net.IP,
+	port int,
+) {
+	for {
+		select {
+		case msg := <-recvChan:
+			testPayload := msg.Payload().(*testMessage)
+			fmt.Printf("%s:%d read message: %+v\n", listenIP, port, testPayload)
+		case <-ctx.Done():
+			return
 		}
-	}(port)
+	}
 }
