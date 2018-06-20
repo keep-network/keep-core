@@ -24,7 +24,7 @@ func GetIPv4Address(ips []ma.Multiaddr) string {
 		if strings.Contains(ipAddr, "ip4") &&
 			!strings.Contains(ipAddr, "127.0.0.1") &&
 			len(regexp.MustCompile("/").FindAllStringIndex(ipAddr, -1)) > 2 {
-			// Ex: ip = "/ip4/192.168.10.103/tcp/27001"
+			// Ex: ipAddr = "/ip4/192.168.10.103/tcp/27001"
 			ipv4s = append(ipv4s, strings.Split(ipAddr, "/")[2])
 		}
 	}
