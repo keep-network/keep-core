@@ -143,22 +143,21 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
 	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for RelayEntryRequested events: [%v]", err)
+		return aPromise.Fail(fmt.Errorf("error creating watch for RelayEntryRequested events: [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				// error return indicates promise already resolved.
+				// Can safely discard error.
+				aPromise.Fail(err)
 			}
 		}
 	}()
@@ -172,22 +171,19 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for RelayEntryGenerated event: [%v]", err)
+		return aPromise.Fail(fmt.Errorf("error creating watch for RelayEntryGenerated event: [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				aPromise.Fail(err)
 			}
 		}
 	}()
@@ -201,22 +197,19 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
 	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for RelayResetEvent event: [%v]", err)
+		return aPromise.Fail(fmt.Errorf("error creating watch for RelayResetEvent event: [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				aPromise.Fail(err)
 			}
 		}
 	}()
@@ -233,22 +226,19 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 		eventChan,
 	)
 	if err != nil {
-		return fmt.Errorf("error creating watch for SubmitGroupPublicKeyEvent event: [%v]", err)
+		return aPromise.Fail(fmt.Errorf("error creating watch for SubmitGroupPublicKeyEvent event: [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				aPromise.Fail(err)
 			}
 		}
 	}()

@@ -207,25 +207,21 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
 	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for GroupCompleteEvent events [%v]", err)
+		return aPromise.Fail(fmt.Errorf("error creating watch for GroupCompleteEvent events [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					// FIXME: this error is not really caught and handled.
-					// We nee to figure out how errors like this (and in
-					// similar places in the code) will be processed.
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				// error return indicates promise already resolved.
+				// Can safely discard error.
+				aPromise.Fail(err)
 			}
 		}
 	}()
@@ -239,22 +235,19 @@ func (kg *keepGroup) WatchGroupErrorCode(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
 	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("failed go create watch for GroupErrorCode events: [%v]", err)
+		return aPromise.Fail(fmt.Errorf("failed go create watch for GroupErrorCode events: [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				aPromise.Fail(err)
 			}
 		}
 	}()
@@ -268,22 +261,19 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
 	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for GropExistsEvent events [%v]", err)
+		return aPromise.Fail(fmt.Errorf("failed go create watch for GroupErrorCode events: [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				aPromise.Fail(err)
 			}
 		}
 	}()
@@ -297,22 +287,19 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
 	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for GorupStartedEvent events [%v]", err)
+		return aPromise.Fail(fmt.Errorf("error creating watch for GorupStartedEvent events [%v]", err))
 	}
-	go func() error {
+	go func() {
 		for {
 			select {
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					return err
+					aPromise.Fail(err)
 				}
 
 			case err := <-eventSubscription.Err():
-				err = aPromise.Fail(err)
-				if err != nil {
-					return err
-				}
+				aPromise.Fail(err)
 			}
 		}
 	}()
