@@ -25,9 +25,6 @@ const outDir string = "../"
 type promiseConfig struct {
 	// Type which promise will handle.
 	Type string
-	// Package of the `Type`.
-	// Need to be provided only if package cannot be resolved by the `organizeImports` function.
-	PackagedType string
 	// Prefix for naming the promises.
 	Prefix string
 	// Name of the generated file.
@@ -44,10 +41,8 @@ func main() {
 			outputFile: "string_promise.go",
 		},
 		// Example for types from packages which need to be imported.
-		// Provide `PackagedType` only if package cannot be resolved by the `organizeImports` function.
 		// {
 		// 	Type: "ethereum.KeepRandomBeacon",
-		// 	PackagedType: "github.com/keep-network/keep-core/pkg/chain/ethereum",
 		// 	Prefix:     "KeepRandomBeacon",
 		// 	outputFile: "keep_random_beacon_promise.go",
 		// },
