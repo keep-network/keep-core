@@ -83,11 +83,11 @@ func generateCode(tmpl *template.Template, config *promiseConfig) (*bytes.Buffer
 	var buf bytes.Buffer
 
 	if err := tmpl.Execute(&buf, config); err != nil {
-		return &buf, fmt.Errorf("generating code from template failed [%v]\nTemplate: %v\nConfig: %v", err, tmpl, config)
+		return nil, fmt.Errorf("generating code for type %s failed [%v]", config.Type, err)
 	}
 
 	if err := organizeImports(&buf); err != nil {
-		return &buf, err
+		return nil, err
 	}
 
 	return &buf, nil
@@ -98,13 +98,13 @@ func organizeImports(buf *bytes.Buffer) error {
 	// Resolve imports
 	code, err := imports.Process(outDir, buf.Bytes(), nil)
 	if err != nil {
-		return fmt.Errorf("failed to find/resove imports [%v]\nBuffer: %s", err, buf.String())
+		return fmt.Errorf("failed to find/resove imports [%v]", err)
 	}
 
 	// Write organized code to the buffer.
 	buf.Reset()
-	if length, err := buf.Write(code); err != nil {
-		return fmt.Errorf("cannot write code to buffer [%v]\nCode length: %d\nCode: %s", err, length, buf.String())
+	if _, err := buf.Write(code); err != nil {
+		return fmt.Errorf("cannot write code to buffer [%v]", err)
 	}
 
 	return nil
