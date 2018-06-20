@@ -1,3 +1,4 @@
+//go:generate go run gen.go
 package main
 
 import (
@@ -13,9 +14,6 @@ import (
 
 // Promises code generator.
 // Execute `go generate` command in current directory to generate Promises code.
-
-// Do not remove next comment!
-//go:generate go run gen.go
 
 // Name of the promise template file.
 const promiseTemplateFile string = "promise.go.tmpl"
