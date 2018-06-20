@@ -49,11 +49,9 @@ func StartNode(c *cli.Context) error {
 
 	var (
 		seed          int
-		nodeName      string
 		bootstrapURLs []string
 	)
 	if c.Bool("bootstrap") {
-		nodeName = " bootstrap"
 		seed = cfg.Bootstrap.Seed
 	} else {
 		bootstrapURLs = cfg.Bootstrap.URLs
@@ -72,7 +70,7 @@ func StartNode(c *cli.Context) error {
 
 	myIPv4Address := GetIPv4Address(libp2p.ListenAddrs)
 
-	header(fmt.Sprintf("starting%s node, connnecting to network and listening at %s port %d", nodeName, myIPv4Address, port))
+	nodeHeader(c.Bool("bootstrap"), myIPv4Address, port)
 
 	broadcastChannel, err := provider.ChannelFor(broadcastChannelName)
 	if err != nil {
