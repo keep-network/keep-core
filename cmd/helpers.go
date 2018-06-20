@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // GetIPv4Address returns this node's IPv4 IP Address
@@ -13,13 +14,14 @@ import (
 // 127.0.0.1 will be returned if no other IPv4 addresses are found;
 // otherwise, the non 127.0.0.1 address will be returned
 // Assumes node has at least one interface (and the 127.0.0.1 address)
-func GetIPv4Address(ips []string) string {
+func GetIPv4Address(ips []ma.Multiaddr) string {
 	myIPAddress := "127.0.0.1"
 	var ipv4s []string
 	for _, ip := range ips {
-		if strings.Contains(ip, ".") && !strings.Contains(ip, "127.0.0.1") {
+		ipAddr := ip.String()
+		if strings.Contains(ipAddr, ".") && !strings.Contains(ipAddr, "127.0.0.1") {
 			// Ex: ip = "/ip4/192.168.10.103/tcp/27001"
-			ipv4s = append(ipv4s, strings.Split(ip, "/")[2])
+			ipv4s = append(ipv4s, strings.Split(ipAddr, "/")[2])
 		}
 	}
 	if len(ipv4s) == 1 {
