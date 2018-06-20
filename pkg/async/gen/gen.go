@@ -55,13 +55,13 @@ func main() {
 
 // Generates promises based on a given `promiseConfig`
 func generatePromisesCode(promisesConfig []promiseConfig) error {
-	for _, promiseConfig := range promisesConfig {
-		// Read a promise's template.
-		promiseTemplate, err := template.New(promiseTemplateFile).ParseFiles(promiseTemplateFile)
-		if err != nil {
-			return fmt.Errorf("template creation failed [%v]", err)
-		}
+	// Read a promise's template.
+	promiseTemplate, err := template.New(promiseTemplateFile).ParseFiles(promiseTemplateFile)
+	if err != nil {
+		return fmt.Errorf("template creation failed [%v]", err)
+	}
 
+	for _, promiseConfig := range promisesConfig {
 		// Generate a promise code.
 		buf, err := generateCode(promiseTemplate, &promiseConfig)
 		if err != nil {
