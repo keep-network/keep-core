@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"log"
 	"os"
@@ -10,33 +11,33 @@ import (
 	"golang.org/x/tools/imports"
 )
 
-// Promises code config.
+// Promises code generator.
 // Execute `go generate` command in current directory to generate Promises code.
 
 // Do not remove next comment!
 //go:generate go run gen.go
 
-// Name of the promises template file
-const promiseTemplate string = "promise.go.tmpl"
+// Name of the promise template file.
+const promiseTemplateFile string = "promise.go.tmpl"
 
-// Directory to which generated code will be exported
+// Directory to which generated code will be exported.
 const outDir string = "../"
 
 // Configuration for the generator
-type config struct {
-	// Type which Promise will handle
+type promiseConfig struct {
+	// Type which promise will handle.
 	Type string
-	// Package of the `Type`
-	// Need to be provided only if package cannot be resolved by `imports.Process` function
+	// Package of the `Type`.
+	// Need to be provided only if package cannot be resolved by the `organizeImports` function.
 	PackagedType string
-	// Prefix for naming the promises
+	// Prefix for naming the promises.
 	Prefix string
-	// Name of the generated file
+	// Name of the generated file.
 	outputFile string
 }
 
 func main() {
-	configs := []config{
+	configs := []promiseConfig{
 		// Promise for `string` type. There is a test for this promise named `string_promise_test.go`.
 		// We need a test to validate correctness of generated promises.
 		{
@@ -45,52 +46,88 @@ func main() {
 			outputFile: "string_promise.go",
 		},
 		// Example for types from packages which need to be imported.
-		// Provide `PackagedType` only if package cannot be resolved by the `imports.Process`
+		// Provide `PackagedType` only if package cannot be resolved by the `organizeImports` function.
 		// {
-		// 	Type:         "ethereum.KeepRandomBeacon",
+		// 	Type: "ethereum.KeepRandomBeacon",
 		// 	PackagedType: "github.com/keep-network/keep-core/pkg/chain/ethereum",
-		// 	Prefix:       "KeepRandomBeacon",
-		// 	outputFile:   "keep_random_beacon_promise.go",
+		// 	Prefix:     "KeepRandomBeacon",
+		// 	outputFile: "keep_random_beacon_promise.go",
 		// },
 	}
 
-	for _, c := range configs {
-		// Read a Promise's Template
-		t, err := template.New(promiseTemplate).ParseFiles(promiseTemplate)
-		if err != nil {
-			log.Fatalf("template creation failed [%v]", err)
-		}
-
-		// Generate a Promise
-		var buf bytes.Buffer
-		err = t.Execute(&buf, c)
-		if err != nil {
-			log.Fatalf("generation failed [%v]", err)
-		}
-
-		organizeImports(&buf)
-
-		// Store the Promise in a file
-		f, err := os.Create(path.Join(outDir, c.outputFile))
-		defer f.Close()
-		if err != nil {
-			log.Fatalf("output file creation failed [%v]", err)
-		}
-		buf.WriteTo(f)
+	if err := generatePromisesCode(configs); err != nil {
+		log.Fatalf("promises generation failed [%v]", err)
 	}
 }
 
-// Resolves imports in a code stored in a Buffer
-func organizeImports(buf *bytes.Buffer) {
-	code, err := imports.Process(outDir, buf.Bytes(), nil)
-	if err != nil {
-		log.Fatalf("failed to find/resove imports [%v]\nCode: %s", err, code)
+// Generates promises based on a given `promiseConfig`
+func generatePromisesCode(promisesConfig []promiseConfig) error {
+	for _, promiseConfig := range promisesConfig {
+		// Read a promise's template.
+		promiseTemplate, err := template.New(promiseTemplateFile).ParseFiles(promiseTemplateFile)
+		if err != nil {
+			return fmt.Errorf("template creation failed [%v]", err)
+		}
+
+		// Generate a promise code.
+		buf, err := generateCode(promiseTemplate, &promiseConfig)
+		if err != nil {
+			return fmt.Errorf("generation failed [%v]", err)
+		}
+
+		// Save the promise code to a file.
+
+		if err := saveBufferToFile(buf, path.Join(outDir, promiseConfig.outputFile)); err != nil {
+			return fmt.Errorf("saving promise code to file failed [%v]", err)
+		}
+	}
+	return nil
+}
+
+// Generates a code from template and configuration.
+// Returns a buffered code.
+func generateCode(tmpl *template.Template, config *promiseConfig) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+
+	if err := tmpl.Execute(&buf, config); err != nil {
+		return &buf, fmt.Errorf("generating code from template failed [%v]\nTemplate: %v\nConfig: %v", err, tmpl, config)
 	}
 
-	// Write organized code to the buffer
-	buf.Reset()
-	length, err := buf.Write(code)
-	if err != nil {
-		log.Fatalf("cannot write code to buffer [%v]\nCode length: %d\nCode: %s", err, length, code)
+	if err := organizeImports(&buf); err != nil {
+		return &buf, err
 	}
+
+	return &buf, nil
+}
+
+// Resolves imports in a code stored in a Buffer.
+func organizeImports(buf *bytes.Buffer) error {
+	// Resolve imports
+	code, err := imports.Process(outDir, buf.Bytes(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to find/resove imports [%v]\nBuffer: %s", err, buf.String())
+	}
+
+	// Write organized code to the buffer.
+	buf.Reset()
+	if length, err := buf.Write(code); err != nil {
+		return fmt.Errorf("cannot write code to buffer [%v]\nCode length: %d\nCode: %s", err, length, buf.String())
+	}
+
+	return nil
+}
+
+// Stores the Buffer `buf` content to a file in `filePath`
+func saveBufferToFile(buf *bytes.Buffer, filePath string) error {
+	file, err := os.Create(filePath)
+	defer file.Close()
+	if err != nil {
+		return fmt.Errorf("output file %s creation failed [%v]", filePath, err)
+	}
+
+	if _, err := buf.WriteTo(file); err != nil {
+		return fmt.Errorf("writing to output file %s failed [%v]", filePath, err)
+	}
+
+	return nil
 }
