@@ -95,16 +95,16 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	go broadcastMessages(ctx, broadcastChannel, port)
-	go receiveMessages(ctx, recvChan, port)
+	go broadcastMessages(ctx, port, broadcastChannel)
+	go receiveMessages(ctx, port, recvChan)
 
 	select {}
 }
 
 func broadcastMessages(
 	ctx context.Context,
-	broadcastChannel net.BroadcastChannel,
 	port int,
+	broadcastChannel net.BroadcastChannel,
 ) {
 	t := time.NewTimer(1) // first tick is immediate
 	defer t.Stop()
@@ -132,8 +132,8 @@ func broadcastMessages(
 
 func receiveMessages(
 	ctx context.Context,
-	recvChan <-chan net.Message,
 	port int,
+	recvChan <-chan net.Message,
 ) {
 	for {
 		select {
