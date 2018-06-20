@@ -64,7 +64,6 @@ func generatePromisesCode(promisesConfig []promiseConfig) error {
 		}
 
 		// Save the promise code to a file.
-
 		if err := saveBufferToFile(buf, path.Join(outDir, promiseConfig.outputFile)); err != nil {
 			return fmt.Errorf("saving promise code to file failed [%v]", err)
 		}

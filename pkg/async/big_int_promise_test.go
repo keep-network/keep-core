@@ -309,7 +309,6 @@ func TestPromiseFulfilledAndComplete(t *testing.T) {
 	}
 
 	err := promise.Fulfill(nil)
-
 	if err != nil {
 		t.Errorf("Fulfill returned an error: %v", err)
 	}
