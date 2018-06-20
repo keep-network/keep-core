@@ -3,11 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net"
 
 	"time"
 
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/net"
+	knet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
 )
@@ -84,16 +85,13 @@ func StartNode(c *cli.Context) error {
 	}
 
 	if err := broadcastChannel.RegisterUnmarshaler(
-		func() net.TaggedUnmarshaler { return &testMessage{} },
+		func() knet.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		return err
 	}
 
-	broadcastMessages(ctx, broadcastChannel, myIPv4Address, port)
-
-	recvChan := make(chan net.Message)
-
-	if err := broadcastChannel.Recv(func(msg net.Message) error {
+	recvChan := make(chan knet.Message)
+	if err := broadcastChannel.Recv(func(msg knet.Message) error {
 		fmt.Printf("Got %s\n", msg.Payload())
 		recvChan <- msg
 		return nil
