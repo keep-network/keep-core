@@ -8,12 +8,12 @@ import (
 	"strings"
 )
 
-// GetMyIPv4Address returns this node's IPv4 IP Address
-// If myPreferredOutboundIP (from config file) is valid, return that
+// GetIPv4Address returns this node's IPv4 IP Address
 // If more than one IP address found, call GetPreferredOutboundIP
-// 127.0.0.1 will be returned if no other IPv4 addresses are found
+// 127.0.0.1 will be returned if no other IPv4 addresses are found;
+// otherwise, the non 127.0.0.1 address will be returned
 // Assumes node has at least one interface (and the 127.0.0.1 address)
-func GetMyIPv4Address() string {
+func GetIPv4Address() string {
 	myIPAddress := "127.0.0.1"
 	ifaces, err := net.Interfaces()
 	if err != nil {

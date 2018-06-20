@@ -39,7 +39,7 @@ func StartNode(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	myIPAddress := GetMyIPv4Address()
+	myIPAddress := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
