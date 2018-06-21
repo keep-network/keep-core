@@ -7,8 +7,9 @@ import (
 	"net"
 	"strings"
 
-	ma "github.com/multiformats/go-multiaddr"
 	"regexp"
+
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // AppendIfUnique appends unique values to a string slice
@@ -20,7 +21,6 @@ func AppendIfUnique(slice []string, val string) []string {
 	}
 	return append(slice, val)
 }
-
 
 // GetIPv4Address returns the IPv4 IP Address over which p2p communication travels
 // If more than one IP address found, call GetPreferredOutboundIP
@@ -73,7 +73,7 @@ func header(header string) {
 func nodeHeader(isBootstrapNode bool, myIPv4Address string, port int) {
 	nodeName := "node"
 	if isBootstrapNode {
-		nodeName =  "BOOTSTRAP node"
+		nodeName = "BOOTSTRAP node"
 	}
 	header(fmt.Sprintf("starting %s, connnecting to network and listening at %s Port %d", nodeName, myIPv4Address, port))
 }
