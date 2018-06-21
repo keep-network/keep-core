@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"time"
 
-	callback "github.com/keep-network/keep-core/pkg/callback"
+	"github.com/keep-network/keep-core/pkg/async"
 )
 
 // Config contains the config data needed for the relay to operate.
@@ -23,7 +23,7 @@ type ChainInterface interface {
 
 	// associated with a string groupID. A promise is returned that will resolve
 	// with success/error callbacks.
-	SubmitGroupPublicKey(groupID string, key [96]byte) *callback.Promise
+	SubmitGroupPublicKey(groupID string, key [96]byte) *async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise
 
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (Config, error)

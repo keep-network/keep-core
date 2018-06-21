@@ -4,8 +4,8 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	"github.com/keep-network/keep-core/pkg/callback"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -30,8 +30,8 @@ func (c *localChain) GetConfig() (relay.Config, error) {
 func (ec *localChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) *callback.Promise {
-	return &callback.Promise{}
+) *async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise {
+	return &async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise{}
 }
 
 func (c *localChain) ThresholdRelay() relay.ChainInterface {

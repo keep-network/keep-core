@@ -9,7 +9,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/callback"
+	// PJS "github.com/keep-network/keep-core/pkg/callback"
+	// PJS "github.com/keep-network/keep-core/pkg/async"
+	"github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
@@ -136,6 +138,9 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
 }
 
+/*
+
+
 // WatchRelayEntryRequested watches for event RelayEntryRequested.
 func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	aPromise *callback.Promise,
@@ -216,17 +221,20 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 	return nil
 }
 
+*/
+
+// aPromise := &async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise{}
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
-func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
-	aPromise *callback.Promise,
-) error {
+func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent() (*async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise, error) {
+	aPromise := &async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise{}
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
 	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
 		nil,
 		eventChan,
 	)
 	if err != nil {
-		return aPromise.Fail(fmt.Errorf("error creating watch for SubmitGroupPublicKeyEvent event: [%v]", err))
+		aPromise.Fail(fmt.Errorf("error creating watch for SubmitGroupPublicKeyEvent event: [%v]", err))
+		return nil, err
 	}
 	go func() {
 		for {
@@ -242,5 +250,12 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 			}
 		}
 	}()
-	return nil
+	return aPromise, nil
 }
+
+/*
+ go build
+# github.com/keep-network/keep-core/pkg/chain/ethereum
+./keep_random_beacon.go:243:28: cannot use event (type *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent) as type *gen.KeepRandomBeaconSubmitGroupPublicKeyEvent in argument to aPromise.Fulfill
+./keep_random_beacon.go:253:9: undefined: aPromice
+*/

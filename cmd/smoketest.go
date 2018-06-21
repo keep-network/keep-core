@@ -77,16 +77,8 @@ func SmokeTest(c *cli.Context) error {
 			_ = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
 				"test",
 				member.GroupPublicKeyBytes(),
-			).OnSuccess(func(data interface{}) {
-				data2, ok := data.(gen.KeepRandomBeaconSubmitGroupPublicKeyEvent)
-				if !ok {
-					fmt.Fprintf(
-						os.Stderr,
-						"[member:%s] Failed type conversion\n",
-						member.BlsID.GetHexString(),
-					)
-					memberChannel <- nil
-				} else if s := string(ethereum.SliceOf1ByteToByteSlice(data2.GroupPublicKey)); s == "test" {
+			).OnSuccess(func(data *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent) {
+				if s := string(ethereum.SliceOf1ByteToByteSlice(data.GroupPublicKey)); s == "test" {
 					memberChannel <- member
 				} else {
 					fmt.Fprintf(
@@ -95,6 +87,7 @@ func SmokeTest(c *cli.Context) error {
 						member.BlsID.GetHexString(),
 						s,
 					)
+					memberChannel <- nil
 				}
 			}).OnFailure(func(err error) {
 				fmt.Fprintf(
@@ -105,6 +98,7 @@ func SmokeTest(c *cli.Context) error {
 				)
 				memberChannel <- nil
 			})
+
 		}(i)
 	}
 

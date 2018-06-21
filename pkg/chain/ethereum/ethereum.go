@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	"github.com/keep-network/keep-core/pkg/callback"
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
@@ -37,10 +37,9 @@ func (ec *ethereumChain) GetConfig() (relay.Config, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) *callback.Promise {
+) *async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise {
 
-	aPromise := &callback.Promise{}
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(aPromise)
+	aPromise, err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent()
 	if err != nil {
 		aPromise.Fail(err)
 	}

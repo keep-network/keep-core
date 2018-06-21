@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/callback"
+	// "github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
@@ -200,6 +200,7 @@ func (kg *keepGroup) IsMember(
 	)
 }
 
+/*
 // WatchGroupCompleteEvent create a watch for the group completion event.
 func (kg *keepGroup) WatchGroupCompleteEvent(
 	aPromise *callback.Promise,
@@ -305,3 +306,4 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 	}()
 	return nil
 }
+*/

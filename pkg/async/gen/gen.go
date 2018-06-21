@@ -41,6 +41,11 @@ func main() {
 			Prefix:     "BigInt",
 			outputFile: "big_int_promise.go",
 		},
+		{
+			Type:       "*gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent",
+			Prefix:     "KeepRandomBeaconSubmitGroupPublicKeyEvent",
+			outputFile: "krbsgpke_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
