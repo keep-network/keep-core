@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	ma "github.com/multiformats/go-multiaddr"
-	"testing"
 	"fmt"
-)
+	"testing"
 
+	ma "github.com/multiformats/go-multiaddr"
+)
 
 func stringsToMultiAddr(t *testing.T, s []string) []ma.Multiaddr {
 	multiAddrs := make([]ma.Multiaddr, len(s))
@@ -51,27 +51,27 @@ func TestMultiAddrIPs(t *testing.T) {
 	empty := []string{}
 
 	tests := map[string]struct {
-		maIPs []ma.Multiaddr
-		expectedString   string
+		maIPs          []ma.Multiaddr
+		expectedString string
 	}{
 		"typical multi address set": {
-			maIPs: stringsToMultiAddr(t, typical),
+			maIPs:          stringsToMultiAddr(t, typical),
 			expectedString: "192.168.10.103",
 		},
 		"duplicate address set": {
-			maIPs: stringsToMultiAddr(t, duplicate),
+			maIPs:          stringsToMultiAddr(t, duplicate),
 			expectedString: myIPAddress,
 		},
 		"only home address": {
-			maIPs: stringsToMultiAddr(t, only_home),
+			maIPs:          stringsToMultiAddr(t, only_home),
 			expectedString: "127.0.0.1",
 		},
 		"only ipv6 address": {
-			maIPs: stringsToMultiAddr(t, only_ipv6),
+			maIPs:          stringsToMultiAddr(t, only_ipv6),
 			expectedString: "127.0.0.1",
 		},
 		"empty address": {
-			maIPs: stringsToMultiAddr(t, empty),
+			maIPs:          stringsToMultiAddr(t, empty),
 			expectedString: "127.0.0.1",
 		},
 	}
@@ -83,9 +83,8 @@ func TestMultiAddrIPs(t *testing.T) {
 			ipAddr := GetIPv4Address(test.maIPs)
 
 			if ipAddr != test.expectedString {
-				t.Errorf("\ngot: %v\nwant: %v", ipAddr,test.expectedString)
+				t.Errorf("\ngot: %v\nwant: %v", ipAddr, test.expectedString)
 			}
 		})
 	}
 }
-
