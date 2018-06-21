@@ -34,4 +34,10 @@ brew list solidity &>/dev/null || brew install solidity
 echo "Installing command line developer tools..."
 xcode-select --install || true
 
+if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
+  echo 'WARNING: protoc-gen-gogoslick command is not available'
+  echo 'WARNING: please check whether $GOPATH/bin is added to your $PATH'
+  exit 1
+fi
+
 echo "Ready to rock! See above for any extra environment-related instructions."
