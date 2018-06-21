@@ -4,6 +4,8 @@ import BigNumber from "bignumber.js";
 import { displayAmount } from './utils';
 import Network from './network';
 import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
 const App = () => (
   <Router>
@@ -23,6 +25,8 @@ class Main extends Component {
   render() {
     return (
       <div className="main">
+      <Header />
+      <Footer />
       </div>
     )
   }
