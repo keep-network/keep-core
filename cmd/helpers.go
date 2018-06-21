@@ -11,7 +11,18 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-// GetIPv4Address returns this node's IPv4 IP Address
+// AppendIfUnique appends unique values to a string slice
+func AppendIfUnique(slice []string, val string) []string {
+	for _, ele := range slice {
+		if ele == val {
+			return slice
+		}
+	}
+	return append(slice, val)
+}
+
+
+// GetIPv4Address returns the IPv4 IP Address over which p2p communication travels
 // If more than one IP address found, call GetPreferredOutboundIP
 // 127.0.0.1 will be returned if no other IPv4 addresses are found;
 // otherwise, the non 127.0.0.1 address will be returned
@@ -25,14 +36,14 @@ func GetIPv4Address(ips []ma.Multiaddr) string {
 			!strings.Contains(ipAddr, "127.0.0.1") &&
 			len(regexp.MustCompile("/").FindAllStringIndex(ipAddr, -1)) > 2 {
 			// Ex: ipAddr = "/ip4/192.168.10.103/tcp/27001"
-			ipv4s = append(ipv4s, strings.Split(ipAddr, "/")[2])
+			ipv4s = AppendIfUnique(ipv4s, strings.Split(ipAddr, "/")[2])
 		}
 	}
 	if len(ipv4s) == 1 {
 		myIPAddress = ipv4s[0]
 	} else if len(ipv4s) > 1 {
 		preferredIPAddress, err := GetPreferredOutboundIP()
-		if err != nil {
+		if err == nil {
 			myIPAddress = preferredIPAddress
 		}
 	}
