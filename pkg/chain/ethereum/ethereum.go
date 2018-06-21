@@ -9,7 +9,7 @@ import (
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
-func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
+func (ec *ethereumChain) ThresholdRelay() relaychain.ChainInterface {
 	return ec
 }
 

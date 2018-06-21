@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain"
 
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -94,6 +93,10 @@ func Initialize(
 			member.MemberID(),
 			"test",
 		)
+
+		// FIXME: check we have a successful submission
+
+		go beaconLoop(relayChain, blockCounter, channel)
 	}
 
 	<-ctx.Done()
@@ -114,7 +117,7 @@ func checkChainParticipantState(relayChain relaychain.Interface) (participantSta
 	return unstaked, nil
 }
 
-func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
+func resolveState(relayChain relaychain.Interface) {
 	if participantState, err := checkChainParticipantState(relayChain); err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
 	} else {
@@ -135,9 +138,19 @@ func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
 			membership.ActivateMembership()
 		case inActiveGroup:
 			// FIXME We should have a non-empty state at this point ;)
-			entry.ServeRequests(relay.EmptyState())
+			relay.ServeRequests(relayChain, relay.EmptyState())
 		default:
 			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
 		}
+	}
+}
+
+func beaconLoop(
+	relayChain relaychain.Interface,
+	blockCounter chain.BlockCounter,
+	channel net.BroadcastChannel,
+) {
+	for {
+		resolveState(relayChain)
 	}
 }
