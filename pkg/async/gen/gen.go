@@ -56,6 +56,11 @@ func generatePromisesCode(promisesConfig []promiseConfig) error {
 		return fmt.Errorf("template creation failed [%v]", err)
 	}
 
+	// Create output directory
+	if err := os.MkdirAll(outDir, os.ModePerm); err != nil {
+		return fmt.Errorf("output directory %v creation failed [%v]", outDir, err)
+	}
+
 	for _, promiseConfig := range promisesConfig {
 		// Generate a promise code.
 		buf, err := generateCode(promiseTemplate, &promiseConfig)
