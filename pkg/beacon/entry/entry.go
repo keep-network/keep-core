@@ -39,14 +39,14 @@ const (
 func ServeRequests(currentState relay.NodeState, relayChain relaychain.Interface) {
 	processingState := waitingForRequest
 	// FIXME Probably best passed in from outside.
-	thinger := make(chan Request)
+	requestChan := make(chan Request)
 	// FIXME Best passed in from the outside; channel for broadcasting a
 	//       generated share.
 	broadcastShare := func(share signatureShare) error { return nil }
 	// FIXME Best passed in from the outside; channel for receiving other group
 	//       members' generated shares.
 	groupShares := make(chan signatureShare)
-	for request := range thinger {
+	for request := range requestChan {
 		if isNodeResponsible(currentState) {
 			processingState = generatingSigShare
 

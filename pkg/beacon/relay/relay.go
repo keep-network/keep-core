@@ -32,6 +32,14 @@ func (state NodeState) IsNextGroup() bool {
 
 // EmptyState returns an empty NodeState with no group, zero group count, and
 // a nil last seen entry.
-func EmptyState() NodeState {
-	return NodeState{groupCount: 0, group: 0, GroupID: 0, lastSeenEntry: Entry{[8]byte{}, time.Unix(0, 0)}}
+func EmptyState() *NodeState {
+	return &NodeState{
+		groupCount: 0,
+		group:      0,
+		GroupID:    0,
+		lastSeenEntry: Entry{
+			[8]byte{},
+			time.Unix(0, 0),
+		},
+	}
 }
