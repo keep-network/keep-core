@@ -12,3 +12,4 @@ config.toml
 *.out
 .vscode/
 debug.test
+pkg/gen/*/*.go

@@ -1,4 +1,5 @@
-//go:generate go run gen.go
+// Code generation execution command requires the package to be set to `main`.
+//go:generate go run async.go
 package main
 
 import (
@@ -19,7 +20,7 @@ import (
 const promiseTemplateFile string = "promise.go.tmpl"
 
 // Directory to which generated code will be exported.
-const outDir string = "./promises"
+const outDir string = "./async"
 
 // Configuration for the generator
 type promiseConfig struct {
