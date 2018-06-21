@@ -36,7 +36,7 @@ const (
 )
 
 // ServeRequests kicks off the relay request monitoring/response publishing loop.
-func ServeRequests(currentState relay.NodeState, relayChain relaychain.Interface) {
+func ServeRequests(relayChain relaychain.Interface, currentState *relay.NodeState) {
 	processingState := waitingForRequest
 	// FIXME Probably best passed in from outside.
 	requestChan := make(chan Request)
@@ -78,11 +78,11 @@ func ServeRequests(currentState relay.NodeState, relayChain relaychain.Interface
 	}
 }
 
-func isNodeResponsible(currentState relay.NodeState) bool {
+func isNodeResponsible(currentState *relay.NodeState) bool {
 	return currentState.IsNextGroup()
 }
 
-func generateSigShare(currentState relay.NodeState, request Request) signatureShare {
+func generateSigShare(currentState *relay.NodeState, request Request) signatureShare {
 	mySigShare := blsSign(request.previousEntry.Value[:])
 
 	return signatureShare{currentState.GroupID, mySigShare}

@@ -26,7 +26,7 @@ type Entry struct {
 
 // IsNextGroup returns true if the next group expected to generate a threshold
 // signature is the same as the group the NodeState belongs to.
-func (state NodeState) IsNextGroup() bool {
+func (state *NodeState) IsNextGroup() bool {
 	return binary.BigEndian.Uint32(state.lastSeenEntry.Value[:])%state.groupCount == state.group
 }
 
