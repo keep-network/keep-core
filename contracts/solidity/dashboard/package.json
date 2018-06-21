@@ -4,7 +4,13 @@
   "private": true,
   "dependencies": {
     "bignumber": "^1.1.0",
+    "bootstrap": "^3.3.7",
+    "less": "^2.7.3",
+    "less-plugin-clean-css": "^1.5.1",
+    "less-watch-compiler": "^1.10.0",
+    "npm-run-all": "^4.1.2",
     "react": "^16.2.0",
+    "react-bootstrap": "^0.31.5",
     "react-dom": "^16.2.0",
     "react-scripts": "1.0.17",
     "require-symlink": "^0.2.0",
@@ -14,8 +20,11 @@
   },
   "scripts": {
     "env": "truffle exec ./scripts/env.js",
+    "build-css": "lessc --clean-css src/css/app.less src/app.css",
+    "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
     "start-js": "require-link && react-scripts start",
-    "build": "require-link && react-scripts build",
+    "start": "npm run env && npm-run-all -p watch-css start-js",
+    "build": "require-link && npm run build-css && react-scripts build",
     "test": "require-link && react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
