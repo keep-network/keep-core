@@ -19,7 +19,7 @@ import (
 const promiseTemplateFile string = "promise.go.tmpl"
 
 // Directory to which generated code will be exported.
-const outDir string = "../"
+const outDir string = "./promises"
 
 // Configuration for the generator
 type promiseConfig struct {
