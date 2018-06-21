@@ -5,13 +5,12 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 type localChain struct {
-	beaconConfig                     beacon.Config
+	relayConfig                      relay.Config
 	groupPublicKeysMutex             sync.Mutex
 	groupPublicKeys                  map[string][96]byte
 	handlerMutex                     sync.Mutex
@@ -24,8 +23,8 @@ func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
 }
 
-func (c *localChain) GetConfig() (beacon.Config, error) {
-	return c.beaconConfig, nil
+func (c *localChain) GetConfig() (relay.Config, error) {
+	return c.relayConfig, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
@@ -82,10 +81,6 @@ func (c *localChain) OnGroupPublicKeySubmitted(
 	return nil
 }
 
-func (c *localChain) RandomBeacon() beacon.ChainInterface {
-	return beacon.ChainInterface(c)
-}
-
 func (c *localChain) ThresholdRelay() relay.ChainInterface {
 	return relay.ChainInterface(c)
 }
@@ -96,7 +91,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
 
 	return &localChain{
-		beaconConfig: beacon.Config{
+		relayConfig: relay.Config{
 			GroupSize: groupSize,
 			Threshold: threshold,
 		},
