@@ -6,6 +6,7 @@ import Network from './network';
 import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import WithdrawalsTable from './components/WithdrawalsTable';
 
 const App = () => (
   <Router>
@@ -33,6 +34,46 @@ class Main extends Component {
     return (
       <div className="main">
       <Header />
+      <Grid>
+        <Row>
+          <Col xs={12}>
+            <Tabs defaultActiveKey={1} id="dashboard-tabs">
+              <Tab eventKey={1} title="Overview">
+                <Row className="overview">
+                  <Col xs={12} md={6}>
+                    <Table className="small table-sm" striped bordered condensed>
+                      <tbody>
+                        <TableRow title="Your wallet address">
+                          { yourAddress }
+                        </TableRow>
+                        <TableRow title="Tokens">
+                          { tokenBalance }
+                        </TableRow>
+                        <TableRow title="Staked">
+                          { stakeBalance }
+                        </TableRow>
+                        <TableRow title="Pending unstake">
+                          { withdrawalsTotal }
+                        </TableRow>
+                      </tbody>
+                    </Table>
+                    <h6>You can stake up to { totalAvailableToStake } KEEP</h6>
+                    <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+                    <h6>You can unstake up to { totalAvailableToUnstake } KEEP</h6>
+                    <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+                  </Col>
+                </Row>
+                <Row>
+                    <Col xs={12} md={6}>
+                      <h4>Pending unstake</h4>
+                      <WithdrawalsTable data={withdrawals}/>
+                    </Col>
+                  </Row>
+              </Tab>
+            </Tabs>
+          </Col>
+        </Row>
+      </Grid>
       <Footer />
       </div>
     )
