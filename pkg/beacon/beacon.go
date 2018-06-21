@@ -94,6 +94,10 @@ func Initialize(
 			member.MemberID(),
 			"test",
 		)
+
+		// FIXME: check we have a successful submission
+
+		go beaconLoop(relayChain, blockCounter, channel)
 	}
 
 	<-ctx.Done()
@@ -135,9 +139,19 @@ func resolveState(relayChain relaychain.Interface) {
 			membership.ActivateMembership()
 		case inActiveGroup:
 			// FIXME We should have a non-empty state at this point ;)
-			entry.ServeRequests(relay.EmptyState())
+			entry.ServeRequests(relayChain, relay.EmptyState())
 		default:
 			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
 		}
+	}
+}
+
+func beaconLoop(
+	relayChain relaychain.Interface,
+	blockCounter chain.BlockCounter,
+	channel net.BroadcastChannel,
+) {
+	for {
+		resolveState(relayChain)
 	}
 }
