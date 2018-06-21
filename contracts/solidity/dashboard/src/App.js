@@ -25,6 +25,7 @@ class Main extends Component {
   constructor() {
     super()
     this.state = {};
+    this.state.chartData = {};
   }
 
   componentDidMount() {
@@ -33,7 +34,7 @@ class Main extends Component {
 
   render() {
     const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance,
-      withdrawals, withdrawalsTotal, grantedToYou,
+      chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou,
       totalAvailableToStake, totalAvailableToUnstake } = this.state;
 
     return (
@@ -45,6 +46,9 @@ class Main extends Component {
             <Tabs defaultActiveKey={1} id="dashboard-tabs">
               <Tab eventKey={1} title="Overview">
                 <Row className="overview">
+                  <Col xs={12} md={6}>
+                    <Pie dataKey="name" data={ chartData } options={ chartOptions } />
+                  </Col>
                   <Col xs={12} md={6}>
                     <Table className="small table-sm" striped bordered condensed>
                       <tbody>
@@ -197,12 +201,37 @@ class Main extends Component {
     
     let selectedGrant = grantedToYou[0];
 
+    const chartOptions = {
+      legend: {
+        position: 'right'
+      }
+    }
+    const chartData = {
+      labels: [
+        'Tokens',
+        'Staked',
+        'Pending unstake',
+        'Token grants'
+      ],
+      datasets: [{
+        data: [tokenBalance, stakeBalance, withdrawalsTotal, grantBalance],
+        backgroundColor: [
+        '#505e5b',
+        '#48dbb4',
+        '#2f9278',
+        '#FFCE56'
+        ]
+      }]
+    };
+
     this.setState({
       yourAddress,
       tokenBalance,
       stakeBalance,
       grantBalance,
       grantStakeBalance,
+      chartOptions,
+      chartData,
       withdrawals,
       withdrawalsTotal,
       grantedToYou,
