@@ -31,6 +31,7 @@ type provider struct {
 
 	host    host.Host
 	routing routing.IpfsRouting
+	addrs []ma.Multiaddr
 }
 
 var ListenAddrs []ma.Multiaddr
@@ -44,6 +45,10 @@ func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 
 func (p *provider) Type() string {
 	return "libp2p"
+}
+
+func (p *provider) Addrs() []ma.Multiaddr {
+	return p.addrs
 }
 
 type Config struct {
@@ -72,6 +77,7 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 		channelManagr: cm,
 		host:          rhost.Wrap(host, router),
 		routing:       router,
+		addrs:         host.Addrs(),
 	}
 
 	// FIXME: return an error if we don't provide bootstrap peers
@@ -167,9 +173,6 @@ func buildPeerHost(
 		}
 		return nil, err
 	}
-
-	// ListenAddrs used in start command to identity the IP address for this peer
-	ListenAddrs = h.Addrs()
 
 	return h, nil
 }

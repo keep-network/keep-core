@@ -78,7 +78,7 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	myIPv4Address := GetIPv4Address(libp2p.ListenAddrs)
+	myIPv4Address := GetIPv4Address(provider.Addrs())
 
 	nodeHeader(c.Bool("bootstrap"), myIPv4Address, port)
 
@@ -87,7 +87,7 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler(
+	if err := broadcastChannel.RegisterUnmarshaler  (
 		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		return err
