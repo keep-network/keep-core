@@ -6,6 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/gen"
 
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
@@ -70,7 +71,7 @@ func Initialize(
 		_ = relayChain.SubmitGroupPublicKey(
 			"test",
 			member.GroupPublicKeyBytes(),
-		).OnSuccess(func(data interface{}) {
+		).OnSuccess(func(data *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent) {
 			fmt.Printf(
 				"Submission of public key: [%s].\n",
 				data,
