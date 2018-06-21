@@ -3,6 +3,7 @@ package ethereum
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 
@@ -138,91 +139,6 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
 }
 
-/*
-
-
-// WatchRelayEntryRequested watches for event RelayEntryRequested.
-func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
-	aPromise *callback.Promise,
-) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
-	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
-	if err != nil {
-		return aPromise.Fail(fmt.Errorf("error creating watch for RelayEntryRequested events: [%v]", err))
-	}
-	go func() {
-		for {
-			select {
-			case event := <-eventChan:
-				err := aPromise.Fulfill(event)
-				if err != nil {
-					aPromise.Fail(err)
-				}
-
-			case err := <-eventSubscription.Err():
-				// error return indicates promise already resolved.
-				// Can safely discard error.
-				aPromise.Fail(err)
-			}
-		}
-	}()
-	return nil
-}
-
-// WatchRelayEntryGenerated watches for event.
-func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
-	aPromise *callback.Promise,
-) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
-	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
-	if err != nil {
-		return aPromise.Fail(fmt.Errorf("error creating watch for RelayEntryGenerated event: [%v]", err))
-	}
-	go func() {
-		for {
-			select {
-			case event := <-eventChan:
-				err := aPromise.Fulfill(event)
-				if err != nil {
-					aPromise.Fail(err)
-				}
-
-			case err := <-eventSubscription.Err():
-				aPromise.Fail(err)
-			}
-		}
-	}()
-	return nil
-}
-
-// WatchRelayResetEvent watches for event WatchRelayResetEvent.
-func (krb *KeepRandomBeacon) WatchRelayResetEvent(
-	aPromise *callback.Promise,
-) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
-	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
-	if err != nil {
-		return aPromise.Fail(fmt.Errorf("error creating watch for RelayResetEvent event: [%v]", err))
-	}
-	go func() {
-		for {
-			select {
-			case event := <-eventChan:
-				err := aPromise.Fulfill(event)
-				if err != nil {
-					aPromise.Fail(err)
-				}
-
-			case err := <-eventSubscription.Err():
-				aPromise.Fail(err)
-			}
-		}
-	}()
-	return nil
-}
-
-*/
-
 // aPromise := &async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise{}
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
 func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent() (*async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise, error) {
@@ -242,20 +158,16 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent() (*async.KeepRandom
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					aPromise.Fail(err)
+					log.Printf("Error in promices: %s\n", err)
 				}
 
 			case err := <-eventSubscription.Err():
-				aPromise.Fail(err)
+				err = aPromise.Fail(err)
+				if err != nil {
+					log.Printf("Error in promices: %s\n", err)
+				}
 			}
 		}
 	}()
 	return aPromise, nil
 }
-
-/*
- go build
-# github.com/keep-network/keep-core/pkg/chain/ethereum
-./keep_random_beacon.go:243:28: cannot use event (type *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent) as type *gen.KeepRandomBeaconSubmitGroupPublicKeyEvent in argument to aPromise.Fulfill
-./keep_random_beacon.go:253:9: undefined: aPromice
-*/
