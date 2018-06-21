@@ -1,6 +1,7 @@
 import Web3 from 'web3';
 import React, { Component } from 'react';
 import { Pie } from 'react-chartjs-2';
+import { Table, Col, Grid, Row, Tabs, Tab } from 'react-bootstrap';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import moment from 'moment';
 import { displayAmount } from './utils';
@@ -8,6 +9,7 @@ import Network from './network';
 import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import StakingForm from './components/StakingForm';
 import WithdrawalsTable from './components/WithdrawalsTable';
 import TokenGrantsTable from './components/TokenGrantsTable';
 import TokenGrantForm from './components/TokenGrantForm';
@@ -272,4 +274,16 @@ class Main extends Component {
     })
   }
 }
+
+function TableRow({ title, children }) {
+  return (
+    <tr>
+      <th><strong>{ title }</strong></th>
+      <td>
+        { children }
+      </td>
+    </tr>
+  )
+}
+
 export default App;
