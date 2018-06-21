@@ -1,5 +1,9 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import BigNumber from "bignumber.js";
+import { displayAmount } from './utils';
+import Network from './network';
+import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
 
 const App = () => (
   <Router>
