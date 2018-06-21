@@ -8,6 +8,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import WithdrawalsTable from './components/WithdrawalsTable';
 import TokenGrantsTable from './components/TokenGrantsTable';
+import TokenGrantForm from './components/TokenGrantForm';
+import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable';
 
 const App = () => (
   <Router>
@@ -79,6 +81,24 @@ class Main extends Component {
                   <Col xs={12} md={6}>
                     <h4>Tokens granted to you</h4>
                     <TokenGrantsTable data={ grantedToYou }/>
+                  </Col>
+                </Row>
+              </Tab>
+              <Tab eventKey={2} title="Create Token Grant">
+                <h3>Grant tokens</h3>
+                <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
+                  gradually in a linear fashion until start + duration. By then all of the balance will have vested.
+                  You must approve the amount you want to grant by calling approve() method of the token contract first
+                </p>
+                <Row>
+                  <Col xs={12} md={8}>
+                    <TokenGrantForm tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                  </Col>
+                </Row>
+                <Row>
+                  <h3>Granted by you</h3>
+                  <Col xs={12}>
+                    <TokenGrantsOwnerTable data={ grantedByYou }/>
                   </Col>
                 </Row>
               </Tab>
