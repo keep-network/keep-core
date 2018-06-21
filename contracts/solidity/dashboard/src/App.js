@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Pie } from 'react-chartjs-2';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import moment from 'moment';
 import { displayAmount } from './utils';
