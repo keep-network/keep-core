@@ -76,7 +76,7 @@ COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
 COPY ./pkg/gen/async $APP_DIR/pkg/gen/async
-RUN go generate ./.../gen
+RUN go generate ./.../gen/...
 
 COPY ./ $APP_DIR/
 
