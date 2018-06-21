@@ -258,7 +258,7 @@ func (c *channel) getUnmarshalingContainerByType(envelopeType string) (net.Tagge
 	unmarshaler, found := c.unmarshalersByType[envelopeType]
 	if !found {
 		return nil, fmt.Errorf(
-			"Couldn't find unmarshaler for type %s", envelopeType,
+			"couldn't find unmarshaler for type %s", envelopeType,
 		)
 	}
 
