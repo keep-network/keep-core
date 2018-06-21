@@ -1,4 +1,6 @@
-package callback
+{{/* This is a template for Promises */ -}}
+// This is auto generated code
+package async
 
 import (
 	"fmt"
@@ -8,14 +10,16 @@ import (
 // Promise represents an eventual completion of an ansynchronous operation
 // and its resulting value. Promise can be either fulfilled or failed and
 // it can happen only one time. All Promise operations are thread-safe.
-type Promise struct {
+//
+// To create a promise use: `&{{ .Prefix }}Promise{}`
+type {{ .Prefix }}Promise struct {
 	mutex      sync.Mutex
-	successFn  func(interface{})
+	successFn  func({{ .Type }})
 	failureFn  func(error)
-	completeFn func(interface{}, error)
+	completeFn func({{ .Type }}, error)
 
 	isComplete bool
-	value      interface{}
+	value      {{ .Type }}
 	err        error
 }
 
@@ -24,7 +28,7 @@ type Promise struct {
 // called at all. OnSuccess is a non-blocking operation. Only one on success
 // function can be registered for a Promise. If the Promise has been already
 // fulfilled, the function is called immediatelly.
-func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
+func (p *{{ .Prefix }}Promise) OnSuccess(onSuccess func({{ .Type }})) *{{ .Prefix }}Promise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -42,7 +46,7 @@ func (p *Promise) OnSuccess(onSuccess func(interface{})) *Promise {
 // called at all. OnFailure is a non-blocking operation. Only one on failure
 // function can be registered for a Promise. If the Promise has already failed,
 // the function is called immediatelly.
-func (p *Promise) OnFailure(onFailure func(error)) *Promise {
+func (p *{{ .Prefix }}Promise) OnFailure(onFailure func(error)) *{{ .Prefix }}Promise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -63,7 +67,7 @@ func (p *Promise) OnFailure(onFailure func(error)) *Promise {
 // a non-blocking operation. Only one on complete function can be
 // registered for a Promise. If the Promise has already completed,
 // the function is called immediatelly.
-func (p *Promise) OnComplete(onComplete func(interface{}, error)) *Promise {
+func (p *{{ .Prefix }}Promise) OnComplete(onComplete func({{ .Type }}, error)) *{{ .Prefix }}Promise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -80,7 +84,7 @@ func (p *Promise) OnComplete(onComplete func(interface{}, error)) *Promise {
 // the OnSuccess callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
 // an error.
-func (p *Promise) Fulfill(value interface{}) error {
+func (p *{{ .Prefix }}Promise) Fulfill(value {{ .Type }}) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -101,7 +105,7 @@ func (p *Promise) Fulfill(value interface{}) error {
 // the OnFailure callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
 // an error.
-func (p *Promise) Fail(err error) error {
+func (p *{{ .Prefix }}Promise) Fail(err error) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -118,7 +122,7 @@ func (p *Promise) Fail(err error) error {
 	return nil
 }
 
-func (p *Promise) callCompleteFn() {
+func (p *{{ .Prefix }}Promise) callCompleteFn() {
 	if p.completeFn != nil {
 		go func() {
 			p.completeFn(p.value, p.err)
@@ -126,7 +130,7 @@ func (p *Promise) callCompleteFn() {
 	}
 }
 
-func (p *Promise) callSuccessFn() {
+func (p *{{ .Prefix }}Promise) callSuccessFn() {
 	if p.successFn != nil {
 		go func() {
 			p.successFn(p.value)
@@ -134,7 +138,7 @@ func (p *Promise) callSuccessFn() {
 	}
 }
 
-func (p *Promise) callFailureFn() {
+func (p *{{ .Prefix }}Promise) callFailureFn() {
 	if p.failureFn != nil {
 		go func() {
 			p.failureFn(p.err)
