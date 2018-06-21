@@ -1,3 +1,4 @@
+import Web3 from 'web3';
 import React, { Component } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
@@ -11,6 +12,9 @@ import WithdrawalsTable from './components/WithdrawalsTable';
 import TokenGrantsTable from './components/TokenGrantsTable';
 import TokenGrantForm from './components/TokenGrantForm';
 import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable';
+import TokenGrants from './components/TokenGrants';
+import VestingChart from './components/VestingChart';
+import VestingDetails from './components/VestingDetails';
 
 const App = () => (
   <Router>
@@ -26,16 +30,23 @@ class Main extends Component {
     super()
     this.state = {};
     this.state.chartData = {};
+    this.selectTokenGrant = this.selectTokenGrant.bind(this);
   }
 
   componentDidMount() {
     this.getData();
   }
 
+  selectTokenGrant(i) {
+    this.setState(
+      { selectedGrant: this.state.grantedToYou[i] }
+    );
+  }
+
   render() {
-    const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance,
-      chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou,
-      totalAvailableToStake, totalAvailableToUnstake } = this.state;
+    const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
+      chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
+      selectedGrant, totalAvailableToStake, totalAvailableToUnstake } = this.state;
 
     return (
       <div className="main">
@@ -89,7 +100,23 @@ class Main extends Component {
                   </Col>
                 </Row>
               </Tab>
-              <Tab eventKey={2} title="Create Token Grant">
+              <Tab eventKey={2} title="Token Grants">
+                <h3>Tokens granted to you</h3>
+                <Row>
+                  <Col xs={12} md={6}>
+                    <VestingDetails
+                      details={selectedGrant}
+                    />
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <VestingChart details={selectedGrant}/>
+                  </Col>
+                </Row>
+                <Row>
+                  <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
+                </Row>
+              </Tab>
+              <Tab eventKey={3} title="Create Token Grant">
                 <h3>Grant tokens</h3>
                 <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
                   gradually in a linear fashion until start + duration. By then all of the balance will have vested.
@@ -125,10 +152,13 @@ class Main extends Component {
     // Contracts
     const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
     const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
+    const grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS);
 
     // Balances
     const tokenBalance = displayAmount(await token.balanceOf(yourAddress), 18, 3);
     const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(yourAddress), 18, 3);
+    const grantBalance = displayAmount(await grantContract.balanceOf(yourAddress), 18, 3);
+    const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 18, 3);
     const totalAvailableToStake = parseInt(tokenBalance)+parseInt(grantBalance);
     const totalAvailableToUnstake = parseInt(stakeBalance)+parseInt(grantStakeBalance);
 
@@ -198,7 +228,7 @@ class Main extends Component {
         grantedToYou.push(data);
       }
     }
-    
+
     let selectedGrant = grantedToYou[0];
 
     const chartOptions = {
