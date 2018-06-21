@@ -1,24 +1,25 @@
-package callback
+package async
 
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 	"time"
 )
 
-func TestPromiseOnSuccessFulfill(t *testing.T) {
+func TestBigIntPromiseOnSuccessFulfill(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	done := make(chan interface{})
+	done := make(chan *big.Int)
 
-	expectedResult := "batman"
+	expectedResult := big.NewInt(8)
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
-	promise.OnSuccess(func(in interface{}) {
+	promise.OnSuccess(func(in *big.Int) {
 		done <- in
 	})
 
@@ -51,9 +52,9 @@ func TestPromiseOnSuccessAlreadyFulfilled(t *testing.T) {
 
 	done := make(chan interface{})
 
-	expectedResult := "conan the barbarian"
+	expectedResult := big.NewInt(18)
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
 	// first fulfill, then install callback
 	err := promise.Fulfill(expectedResult)
@@ -61,7 +62,7 @@ func TestPromiseOnSuccessAlreadyFulfilled(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	promise.OnSuccess(func(in interface{}) {
+	promise.OnSuccess(func(in *big.Int) {
 		done <- in
 	})
 
@@ -85,11 +86,11 @@ func TestPromiseOnCompleteFulfill(t *testing.T) {
 
 	done := make(chan interface{})
 
-	expectedResult := "robin"
+	expectedResult := big.NewInt(128)
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
-	promise.OnComplete(func(in interface{}, err error) {
+	promise.OnComplete(func(in *big.Int, err error) {
 		if err != nil {
 			t.Fatal("Error should be nil")
 		}
@@ -122,9 +123,9 @@ func TestPromiseOnCompleteAlreadyFulfilled(t *testing.T) {
 
 	done := make(chan interface{})
 
-	expectedResult := "conan the conqueror"
+	expectedResult := big.NewInt(1238)
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
 	// first fulfill, then install callback
 	err := promise.Fulfill(expectedResult)
@@ -132,7 +133,7 @@ func TestPromiseOnCompleteAlreadyFulfilled(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	promise.OnComplete(func(in interface{}, err error) {
+	promise.OnComplete(func(in *big.Int, err error) {
 		if err != nil {
 			t.Fatal("Error should be nil")
 		}
@@ -162,13 +163,13 @@ func TestPromiseOnFailureFail(t *testing.T) {
 
 	expectedResult := fmt.Errorf("it's not working")
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
 	promise.OnFailure(func(err error) {
 		done <- err
 	})
 
-	promise.OnSuccess(func(in interface{}) {
+	promise.OnSuccess(func(in *big.Int) {
 		t.Fatal("`OnSuccess` was called for `Fail`")
 	})
 
@@ -199,7 +200,7 @@ func TestPromiseOnFailureAlreadyFailed(t *testing.T) {
 
 	expectedError := fmt.Errorf("i just can't")
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
 	// first fail, then install callback
 	err := promise.Fail(expectedError)
@@ -233,9 +234,9 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 
 	expectedFailure := fmt.Errorf("catwoman")
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
-	promise.OnComplete(func(in interface{}, err error) {
+	promise.OnComplete(func(in *big.Int, err error) {
 		if in != nil {
 			t.Fatal("Evaluated value should be nil")
 		}
@@ -270,7 +271,7 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 
 	expectedError := fmt.Errorf("nope nope nope")
 
-	promise := Promise{}
+	promise := BigIntPromise{}
 
 	// first fail, then install callback
 	err := promise.Fail(expectedError)
@@ -278,7 +279,7 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	promise.OnComplete(func(in interface{}, err error) {
+	promise.OnComplete(func(in *big.Int, err error) {
 		if in != nil {
 			t.Fatal("Promise's value should be nil")
 		}
@@ -301,7 +302,7 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 }
 
 func TestPromiseFulfilledAndComplete(t *testing.T) {
-	promise := Promise{}
+	promise := BigIntPromise{}
 
 	if promise.isComplete {
 		t.Error("Promise is completed")
@@ -318,7 +319,7 @@ func TestPromiseFulfilledAndComplete(t *testing.T) {
 }
 
 func TestPromiseFailedAndComplete(t *testing.T) {
-	promise := Promise{}
+	promise := BigIntPromise{}
 
 	if promise.isComplete {
 		t.Error("Promise is completed")
@@ -346,7 +347,8 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 	}{
 		"Fulfill with result `promise already completed`": {
 			function: func() error {
-				promise := (&Promise{}).OnSuccess(func(in interface{}) { done <- true })
+				promise := BigIntPromise{}
+				promise.OnSuccess(func(in *big.Int) { done <- true })
 				promise.Fulfill(nil)
 				return promise.Fulfill(nil)
 			},
@@ -354,7 +356,8 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 		},
 		"Fail with result `promise already completed`": {
 			function: func() error {
-				promise := (&Promise{}).OnFailure(func(error) { done <- true })
+				promise := BigIntPromise{}
+				promise.OnFailure(func(error) { done <- true })
 				promise.Fail(nil)
 				return promise.Fail(nil)
 			},
