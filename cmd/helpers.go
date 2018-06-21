@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"regexp"
 	"strings"
 
 	ma "github.com/multiformats/go-multiaddr"
+	"regexp"
 )
 
 // AppendIfUnique appends unique values to a string slice
@@ -31,12 +31,14 @@ func GetIPv4Address(ips []ma.Multiaddr) string {
 	myIPAddress := "127.0.0.1"
 	var ipv4s []string
 	for _, ip := range ips {
-		ipAddr := ip.String()
-		if strings.Contains(ipAddr, "ip4") &&
-			!strings.Contains(ipAddr, "127.0.0.1") &&
-			len(regexp.MustCompile("/").FindAllStringIndex(ipAddr, -1)) > 2 {
-			// Ex: ipAddr = "/ip4/192.168.10.103/tcp/27001"
-			ipv4s = AppendIfUnique(ipv4s, strings.Split(ipAddr, "/")[2])
+		if ip != nil {
+			ipAddr := ip.String()
+			if strings.Contains(ipAddr, "ip4") &&
+				!strings.Contains(ipAddr, "127.0.0.1") &&
+				len(regexp.MustCompile("/").FindAllStringIndex(ipAddr, -1)) > 2 {
+				// Ex: ipAddr = "/ip4/192.168.10.103/tcp/27001"
+				ipv4s = AppendIfUnique(ipv4s, strings.Split(ipAddr, "/")[2])
+			}
 		}
 	}
 	if len(ipv4s) == 1 {
