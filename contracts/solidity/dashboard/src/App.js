@@ -7,6 +7,7 @@ import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WithdrawalsTable from './components/WithdrawalsTable';
+import TokenGrantsTable from './components/TokenGrantsTable';
 
 const App = () => (
   <Router>
@@ -28,7 +29,8 @@ class Main extends Component {
   }
 
   render() {
-    const { yourAddress, tokenBalance, stakeBalance, withdrawals, withdrawalsTotal,
+    const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance,
+      withdrawals, withdrawalsTotal, grantedToYou,
       totalAvailableToStake, totalAvailableToUnstake } = this.state;
 
     return (
@@ -55,6 +57,12 @@ class Main extends Component {
                         <TableRow title="Pending unstake">
                           { withdrawalsTotal }
                         </TableRow>
+                        <TableRow title="Token Grants">
+                          { grantBalance }
+                        </TableRow>
+                        <TableRow title="Staked Token Grants">
+                          { grantStakeBalance }
+                        </TableRow>
                       </tbody>
                     </Table>
                     <h6>You can stake up to { totalAvailableToStake } KEEP</h6>
@@ -64,11 +72,15 @@ class Main extends Component {
                   </Col>
                 </Row>
                 <Row>
-                    <Col xs={12} md={6}>
-                      <h4>Pending unstake</h4>
-                      <WithdrawalsTable data={withdrawals}/>
-                    </Col>
-                  </Row>
+                  <Col xs={12} md={6}>
+                    <h4>Pending unstake</h4>
+                    <WithdrawalsTable data={withdrawals}/>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <h4>Tokens granted to you</h4>
+                    <TokenGrantsTable data={ grantedToYou }/>
+                  </Col>
+                </Row>
               </Tab>
             </Tabs>
           </Col>
@@ -124,12 +136,57 @@ class Main extends Component {
 
     withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3);
 
+    // Token Grants
+    const grantIndexes = await grantContract.getGrants(yourAddress);
+    let grantedToYou = [];
+    let grantedByYou = [];
+
+    for(let i=0; i < grantIndexes.length; i++) {
+      const grant = await grantContract.grants(grantIndexes[i].toNumber());
+      const grantedAmount = await grantContract.grantedAmount(grantIndexes[i].toNumber());
+      const data = {
+        'owner': Web3.utils.toChecksumAddress(grant[0]),
+        'beneficiary': Web3.utils.toChecksumAddress(grant[1]),
+        'locked': grant[2],
+        'revoked': grant[3],
+        'revocable': grant[4],
+        'amount': grant[5],
+        'grantedAmount': grantedAmount,
+        'end': grant[6].plus(grant[7]),
+        'start': grant[7],
+        'cliff': grant[8],
+        'released': grant[9],
+        'decimals': 18,
+        'symbol': 'KEEP',
+        'formatted': {
+          'amount': displayAmount(grant[5].toNumber(), 18, 3),
+          'end': moment(((grant[6].plus(grant[7])).toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'start': moment((grant[7].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'cliff': moment((grant[8].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'released': grant[9].toNumber()
+        }
+      };
+
+      if (yourAddress === data['owner']) {
+        grantedByYou.push(data);
+      } else if (yourAddress === data['beneficiary']) {
+        grantedToYou.push(data);
+      }
+    }
+    
+    let selectedGrant = grantedToYou[0];
+
     this.setState({
       yourAddress,
       tokenBalance,
       stakeBalance,
+      grantBalance,
+      grantStakeBalance,
       withdrawals,
       withdrawalsTotal,
+      grantedToYou,
+      grantedByYou,
+      selectedGrant,
       totalAvailableToStake,
       totalAvailableToUnstake
     })
