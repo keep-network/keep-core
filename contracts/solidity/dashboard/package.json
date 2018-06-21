@@ -8,6 +8,7 @@
     "less": "^2.7.3",
     "less-plugin-clean-css": "^1.5.1",
     "less-watch-compiler": "^1.10.0",
+    "moment": "^2.20.1",
     "npm-run-all": "^4.1.2",
     "react": "^16.2.0",
     "react-bootstrap": "^0.31.5",
