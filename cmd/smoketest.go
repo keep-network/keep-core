@@ -83,9 +83,10 @@ func SmokeTest(c *cli.Context) error {
 				} else {
 					fmt.Fprintf(
 						os.Stderr,
-						"[member:%s] incorrect data, expected 'test' got '%s'\n",
+						"[member:%s] incorrect data, expected 'test' got '%s', activation block: %s\n",
 						member.BlsID.GetHexString(),
 						s,
+						data.ActivationBlockHeight,
 					)
 					memberChannel <- nil
 				}
