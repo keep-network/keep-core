@@ -1,35 +1,36 @@
 :toc: macro
 
-= Trapdoor Commitments
+= Commitment Schemes
 
 toc::[]
 
-A trapdoor commitment scheme allows a sender to commit to a message with 
+A commitment scheme allows a sender to commit to a message with 
 information-theoretic privacy. i.e., given the transcript of the commitment
 phase, the receiver, even with infinite computing power, cannot guess the 
 committed message better than at random. On the other hand, when it comes to
 opening the message, the sender is only computionally bound to the committed
 message. 
 
-Let's say the message is "Hello" and for whatever reason, it should be kept 
-private. However, we want to prove we have decided on that message and that 
-we have it "in mind". We can just publish a hash of that message as a proof.
-Whenever we want, we can reveal the "Hello" message and prove we had decided
-on that message in the past when the hash was published. 
+Let's discuss how the simple commitment scheme works. Say the message is "Hello" 
+and for whatever reason, it should be kept private. However, we want to commit
+to this message, prove that we have it "in mind". We can just publish a hash of 
+that message as a proof, known also as a commitment. Whenever we want, we can 
+reveal the "Hello" message and prove we had decided on that message in the past 
+when the hash was published. 
 
-The trapdoor scheme is indistinguishable from randomness and it means it is
-resistant to brute force attacks. It uses the "trapdoor" value that the 
+In this approach, the only thing needed for verification is the plaintext message
+and commitment. In trapdoor commitment scheme, for verification, we need the 
+plaintext message, commitment and trapdoor. Trapdoor scheme separates what we 
+are committing to and the key allowing for a verification of the commitment.
+
+A trapdoor commiement scheme is indistinguishable from randomness and it means 
+it is resistant to brute force attacks. It uses the "trapdoor" value that the 
 committing party can send a verifier to make the verification possible.
 We send a commitment to verifier, that can happen at any time, and in future, 
 we send a "trapdoor" value that lets to verify the commitment. 
 
-In the first approach, the only thing needed for verification is the plaintext 
-and commitment. In trapdoor scheme we need the plaintext, commitment and trapdoor. 
-Trapdoor scheme separates what we are committing to and the key allowing for 
-a verification of the commitment.
-
-Another interesting property of trapdoor schemes is that knowledge of trapdoor 
-allows to open a message in any possible way. 
+Another interesting property of trapdoor commitment schemes is that knowledge of 
+trapdoor allows to open a message in any possible way. 
 
 Using an analogy of lockable boxes, commitment scheme can be described as 
 locking the message in a steel box and passing it to receiver. A trapdoor 
