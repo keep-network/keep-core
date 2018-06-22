@@ -3,15 +3,12 @@ package ethereum
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	// PJS "github.com/keep-network/keep-core/pkg/callback"
-	// PJS "github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
@@ -139,7 +136,6 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
 }
 
-// aPromise := &async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise{}
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
 func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent() (*async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise, error) {
 	aPromise := &async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise{}
@@ -158,13 +154,13 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent() (*async.KeepRandom
 			case event := <-eventChan:
 				err := aPromise.Fulfill(event)
 				if err != nil {
-					log.Printf("Error in promices: %s\n", err)
+					fmt.Fprintf(os.Stderr, "Error in promices: %s\n", err)
 				}
 
 			case err := <-eventSubscription.Err():
 				err = aPromise.Fail(err)
 				if err != nil {
-					log.Printf("Error in promices: %s\n", err)
+					fmt.Fprintf(os.Stderr, "Error in promices: %s\n", err)
 				}
 			}
 		}

@@ -3,6 +3,7 @@ package beacon
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -77,7 +78,8 @@ func Initialize(
 				data,
 			)
 		}).OnFailure(func(err error) {
-			fmt.Printf(
+			fmt.Fprintf(
+				os.Stderr,
 				"Failed submission of public key: [%v].\n",
 				err,
 			)

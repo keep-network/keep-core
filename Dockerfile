@@ -77,10 +77,7 @@ COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
 COPY ./pkg/async/gen $APP_DIR/pkg/async/gen
 RUN go generate ./.../gen && \
-	go generate ./.../gen && \
-	ls ./pkg/chain/gen && \
-	cat ./pkg/async/krbsgpke_promise.go
-	
+	go generate ./.../gen 
 
 COPY ./ $APP_DIR/
 
