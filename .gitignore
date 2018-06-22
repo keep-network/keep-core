@@ -10,5 +10,11 @@ _local/
 config.toml
 *.config.toml
 *.out
-.vscode/
+*.abi
+
+# Executables
+debug
 debug.test
+keep-core
+main
+main.test
