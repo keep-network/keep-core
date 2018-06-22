@@ -19,3 +19,7 @@ debug.test
 keep-core
 main
 main.test
+
+# IDEs
+.vscode/
+.idea/
