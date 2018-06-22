@@ -9,6 +9,10 @@ import (
 	"github.com/dfinity/go-dfinity-crypto/bls"
 )
 
+const (
+	defaultSigningThreshold = defaultDishonestThreshold + 1
+)
+
 func hasNonZeroBytes(bytes []byte) bool {
 	hasNonZeroBytes := false
 	for _, bte := range bytes {
@@ -73,37 +77,42 @@ func TestMembersProduceSignatureShare(t *testing.T) {
 }
 
 func TestMemberProducesSignatureFromShares(t *testing.T) {
-	member, otherMembers := buildMembers("")
-	allMembers := append(otherMembers, member)
-
 	var tests = map[string]struct {
 		participatingMembers int
 		expectedVerification bool
 		expectedError        error
 	}{
 		"with all members participating": {
-			participatingMembers: len(allMembers),
+			participatingMembers: defaultGroupSize,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with a threshold participating": {
-			participatingMembers: defaultThreshold,
+		"with more than a signing threshold participating": {
+			participatingMembers: defaultSigningThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with less than a threshold participating": {
-			participatingMembers: defaultThreshold - 1,
+		"with a signing threshold participating": {
+			participatingMembers: defaultSigningThreshold,
+			expectedVerification: true,
+			expectedError:        nil,
+		},
+		"with less than a signing threshold participating": {
+			participatingMembers: defaultSigningThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultThreshold-1,
-				defaultThreshold,
+				defaultSigningThreshold-1,
+				defaultSigningThreshold,
 			),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			member, otherMembers := buildMembers("")
+			allMembers := append(otherMembers, member)
+
 			message := fmt.Sprintf("%v", rand.Int63())
 
 			shares := make(map[bls.ID][]byte)
@@ -147,37 +156,42 @@ func TestMemberProducesSignatureFromShares(t *testing.T) {
 }
 
 func TestMemberVerifiesSignatureFromShares(t *testing.T) {
-	member, otherMembers := buildMembers("")
-	allMembers := append(otherMembers, member)
-
 	var tests = map[string]struct {
 		participatingMembers int
 		expectedVerification bool
 		expectedError        error
 	}{
 		"with all members participating": {
-			participatingMembers: len(allMembers),
+			participatingMembers: defaultGroupSize,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with a threshold participating": {
-			participatingMembers: defaultThreshold,
+		"with more than a signing threshold participating": {
+			participatingMembers: defaultSigningThreshold + 1,
 			expectedVerification: true,
 			expectedError:        nil,
 		},
-		"with less than a threshold participating": {
-			participatingMembers: defaultThreshold - 1,
+		"with a signing threshold participating": {
+			participatingMembers: defaultSigningThreshold,
+			expectedVerification: true,
+			expectedError:        nil,
+		},
+		"with less than a signing threshold participating": {
+			participatingMembers: defaultSigningThreshold - 1,
 			expectedVerification: false,
 			expectedError: fmt.Errorf(
 				"%v shares are insufficient for a complete signature; need %v",
-				defaultThreshold-1,
-				defaultThreshold,
+				defaultSigningThreshold-1,
+				defaultSigningThreshold,
 			),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			member, otherMembers := buildMembers("")
+			allMembers := append(otherMembers, member)
+
 			message := fmt.Sprintf("%v", rand.Int63())
 
 			shares := make(map[bls.ID][]byte)
