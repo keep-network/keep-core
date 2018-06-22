@@ -10,7 +10,9 @@ _local/
 config.toml
 *.config.toml
 *.out
+*.abi
+pkg/gen/*/*.go
+
+#Visual Studio Code
 .vscode/
 debug.test
-pkg/gen/*/*.go
-*.abi
