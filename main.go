@@ -43,7 +43,7 @@ func main() {
 	app.Authors = []cli.Author{
 		{
 			Name:  "Keep Network",
-			Email: "printInfo@keep.network",
+			Email: "info@keep.network",
 		},
 	}
 	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
@@ -57,20 +57,34 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:     "print-info",
-			Usage:    "prints keep client information",
-			Category: "keep client information",
+			Name: "smoke-test",
+			Usage: `Simulates Distributed Key Generation (DKG) and signature verification
+       --group-size 9:  Threshold relay group size; default: 10
+       --threshold 9:   Minimun number of group members required to process requests; default 4
+`,
+			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
+			Action:      cmd.SmokeTest,
+			Flags:       cmd.SmokeTestFlags,
+		},
+		{
+			Name: "start",
+			Usage: `Starts the Keep client in the foreground. Currently this consists of the
+            threshold relay client for the Keep random beacon and the validator client
+            for the Keep random beacon.
+       --bootstrap             Indicates that this node is a bootstrap server
+       --port                  Port this node will be listening on
+`,
+			Description: "starts the Keep client in the foreground",
+			Action:      cmd.StartNode,
+			Flags:       cmd.StartFlags,
+		},
+		{
+			Name:  "print-info",
+			Usage: "Prints keep client information",
 			Action: func(c *cli.Context) error {
 				printInfo(c)
 				return nil
 			},
-		},
-		{
-			Name:        "smoke-test",
-			Usage:       "Simulates DKG and signature verification",
-			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
-			Action:      cmd.SmokeTest,
-			Flags:       cmd.SmokeTestFlags,
 		},
 	}
 

@@ -1,7 +1,6 @@
 package chain
 
 import (
-	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 )
 
@@ -23,6 +22,5 @@ type BlockCounter interface {
 // functionality needed for Keep network interactions.
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
-	RandomBeacon() beacon.ChainInterface
 	ThresholdRelay() relay.ChainInterface
 }
