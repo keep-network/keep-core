@@ -53,25 +53,23 @@ func Initialize(
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
 
-	switch curParticipantState {
-	case unstaked:
-		// check for stake command-line parameter to initialize staking?
+	if curParticipantState == unstaked {
 		return fmt.Errorf("account is unstaked")
-	default:
-		member, err := dkg.ExecuteDKG(
-			blockCounter,
-			channel,
-			chainConfig.GroupSize,
-			chainConfig.Threshold,
-		)
-		if err != nil {
-			return err
-		}
+	}
+	member, err := dkg.ExecuteDKG(
+		blockCounter,
+		channel,
+		chainConfig.GroupSize,
+		chainConfig.Threshold,
+	)
+	if err != nil {
+		return err
+	}
 
-		err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
-		if err != nil {
-			return err
-		}
+	err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
+	if err != nil {
+		return err
+	}
 
 		relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
 			fmt.Printf(
