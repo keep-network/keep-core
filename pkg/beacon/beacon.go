@@ -111,7 +111,7 @@ func checkChainParticipantState(relayChain relaychain.Interface) (participantSta
 	return unstaked, nil
 }
 
-func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
+func resolveState(relayChain relaychain.Interface) {
 	if participantState, err := checkChainParticipantState(relayChain); err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
 	} else {
