@@ -103,7 +103,22 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	go receiveMessage(ctx, recvParams{port: port, ipaddr: myIPv4Address, recvChan: recvChan})
+	go broadcastMessages(
+		ctx,
+		broadcastParams{
+			port:      port,
+			ipaddr:    myIPv4Address,
+			bcastChan: broadcastChannel,
+		},
+	)
+	go receiveMessage(
+		ctx,
+		recvParams{
+			port:     port,
+			ipaddr:   myIPv4Address,
+			recvChan: recvChan,
+		},
+	)
 
 	select {}
 }
