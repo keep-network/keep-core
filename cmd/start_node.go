@@ -123,15 +123,21 @@ func StartNode(c *cli.Context) error {
 	select {}
 }
 
-
-func broadcastMessages(ctx context.Context, params broadcastParams)  {
+func broadcastMessages(ctx context.Context, params broadcastParams) {
 	t := time.NewTimer(1) // first tick is immediate
 	defer t.Stop()
 	for {
 		select {
 		case <-t.C:
 			if err := params.bcastChan.Send(
-				&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, params.ipaddr, params.port)},
+				&testMessage{
+					Payload: fmt.Sprintf(
+						"%s from %s on port %d",
+						sampleText,
+						params.ipaddr,
+						params.port,
+					),
+				},
 			); err != nil {
 				return
 			}
@@ -147,7 +153,12 @@ func receiveMessage(ctx context.Context, params recvParams) {
 		select {
 		case msg := <-params.recvChan:
 			testPayload := msg.Payload().(*testMessage)
-			fmt.Printf("%s:%d read message: %+v\n", params.ipaddr, params.port, testPayload)
+			fmt.Printf(
+				"%s:%d read message: %+v\n",
+				params.ipaddr,
+				params.port,
+				testPayload,
+			)
 		case <-ctx.Done():
 			return
 		}
