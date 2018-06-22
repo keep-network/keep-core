@@ -31,11 +31,8 @@ type provider struct {
 
 	host    host.Host
 	routing routing.IpfsRouting
-	addrs []ma.Multiaddr
+	addrs   []ma.Multiaddr
 }
-
-var ListenAddrs []ma.Multiaddr
-
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
