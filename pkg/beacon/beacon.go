@@ -138,3 +138,13 @@ func resolveState(relayChain relaychain.Interface) {
 		}
 	}
 }
+
+func beaconLoop(
+	relayChain relaychain.Interface,
+	blockCounter chain.BlockCounter,
+	channel net.BroadcastChannel,
+) {
+	for {
+		resolveState(relayChain)
+	}
+}
