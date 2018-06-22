@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 )
 
@@ -36,70 +37,17 @@ func (ec *ethereumChain) GetConfig() (relay.Config, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) error {
-	applyError := func(msg string) {
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeyFailureHandlers {
-			handler(groupID, msg)
-		}
-		ec.handlerMutex.Unlock()
-	}
+) *async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise {
 
-	success := func(
-		GroupPublicKey []byte,
-		RequestID *big.Int,
-		ActivationBlockHeight *big.Int,
-	) {
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeySubmissionHandlers {
-			handler(groupID, ActivationBlockHeight)
-		}
-		ec.handlerMutex.Unlock()
-	}
-
-	fail := func(err error) error {
-		applyError(fmt.Sprintf("error: [%v]", err))
-		return err
-	}
-
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-		success,
-		fail,
-	)
+	aPromise, err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent()
 	if err != nil {
-		applyError(fmt.Sprintf("error creating event watch for request: [%v]", err))
-		return err
+		aPromise.Fail(err)
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
-		applyError(fmt.Sprintf("error submitting request: [%v]", err))
+		aPromise.Fail(err)
 	}
-	return err
-}
 
-// OnGroupPublicKeySubmissionFailed associates a handler for a error event.
-func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
-	handler func(groupID string, errorMessage string),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeyFailureHandlers = append(
-		ec.groupPublicKeyFailureHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
-}
-
-// OnGroupPublicKeySubmitted associates a handler for a success event.
-func (ec *ethereumChain) OnGroupPublicKeySubmitted(
-	handler func(groupID string, activationBlock *big.Int),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeySubmissionHandlers = append(
-		ec.groupPublicKeySubmissionHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
+	return aPromise
 }

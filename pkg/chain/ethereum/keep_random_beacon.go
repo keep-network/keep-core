@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/keep-network/keep-core/pkg/async"
 	"github.com/keep-network/keep-core/pkg/chain/gen"
 )
 
@@ -135,153 +136,34 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
 }
 
-// relayEntryRequestedFunc type of function called for
-// RelayEntryRequested event.
-type relayEntryRequestedFunc func(
-	requestID *big.Int,
-	payment *big.Int,
-	blockReward *big.Int,
-	seed *big.Int,
-	blockNumber *big.Int,
-)
-
-// WatchRelayEntryRequested watches for event RelayEntryRequested.
-func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
-	success relayEntryRequestedFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
-	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
-	if err != nil {
-		return fmt.Errorf("error creating watch for RelayEntryRequested events: [%v]", err)
-	}
-	go func() {
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.RequestID,
-					event.Payment,
-					event.BlockReward,
-					event.Seed,
-					event.BlockNumber,
-				)
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-			}
-		}
-	}()
-	return nil
-}
-
-// relayEntryGeneratedFunc type of function called for
-// RelayEntryGenerated event.
-type relayEntryGeneratedFunc func(
-	requestID *big.Int,
-	RequestResponse *big.Int,
-	RequestGroupID *big.Int,
-	PreviousEntry *big.Int,
-	blockNumber *big.Int,
-)
-
-// WatchRelayEntryGenerated watches for event.
-func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
-	success relayEntryGeneratedFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
-	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
-	if err != nil {
-		return fmt.Errorf("error creating watch for RelayEntryGenerated event: [%v]", err)
-	}
-	go func() {
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.RequestID,
-					event.RequestResponse,
-					event.RequestGroupID,
-					event.PreviousEntry,
-					event.BlockNumber,
-				)
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-			}
-		}
-	}()
-	return nil
-}
-
-// relayResetEventFunc type of function called for ResetEvent event.
-type relayResetEventFunc func(
-	LastValidRelayEntry *big.Int,
-	LastValidRelayTxHash *big.Int,
-	LastValidRelayBlock *big.Int,
-)
-
-// WatchRelayResetEvent watches for event WatchRelayResetEvent.
-func (krb *KeepRandomBeacon) WatchRelayResetEvent(
-	success relayResetEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
-	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
-	if err != nil {
-		return fmt.Errorf("error creating watch for RelayResetEvent event: [%v]", err)
-	}
-	go func() {
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.LastValidRelayEntry,
-					event.LastValidRelayTxHash,
-					event.LastValidRelayBlock,
-				)
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-			}
-		}
-	}()
-	return nil
-}
-
-// submitGroupPublicKeyEventFunc type of function called for
-// SubmitGroupPublicKeyEvent event.
-type submitGroupPublicKeyEventFunc func(
-	GroupPublicKey []byte,
-	RequestID *big.Int,
-	ActivationBlockHeight *big.Int,
-)
-
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
-func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
-	success submitGroupPublicKeyEventFunc,
-	fail errorCallback,
-) error {
+func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent() (*async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise, error) {
+	aPromise := &async.KeepRandomBeaconSubmitGroupPublicKeyEventPromise{}
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
 	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
 		nil,
 		eventChan,
 	)
 	if err != nil {
-		return fmt.Errorf("error creating watch for SubmitGroupPublicKeyEvent event: [%v]", err)
+		aPromise.Fail(fmt.Errorf("error creating watch for SubmitGroupPublicKeyEvent event: [%v]", err))
+		return nil, err
 	}
 	go func() {
 		for {
 			select {
 			case event := <-eventChan:
-				gpk := sliceOf1ByteToByteSlice(event.GroupPublicKey)
-				success(gpk, event.RequestID, event.ActivationBlockHeight)
+				err := aPromise.Fulfill(event)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error in promices: %s\n", err)
+				}
 
-			case ee := <-eventSubscription.Err():
-				fail(ee)
+			case err := <-eventSubscription.Err():
+				err = aPromise.Fail(err)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error in promices: %s\n", err)
+				}
 			}
 		}
 	}()
-	return nil
+	return aPromise, nil
 }
