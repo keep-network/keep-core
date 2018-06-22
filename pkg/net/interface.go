@@ -2,6 +2,7 @@ package net
 
 import (
 	"github.com/gogo/protobuf/proto"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // TransportIdentifier represents the identity of a participant at the transport
@@ -40,12 +41,13 @@ type TaggedMarshaler interface {
 
 // Provider represents an entity that can provide network access.
 //
-// Currently only two methods are exposed by providers: the ability to get a
-// named BroadcastChannel, and the ability to return a provider type, which is
-// an informational string indicating what type of provider this is.
+// Providers expose the ability to get a amed BroadcastChannel, the ability to
+// return a provider type, which is an informational string indicating what type
+// of provider this is, and the list of IP addresses on which it can listen.
 type Provider interface {
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
+	Addrs() []ma.Multiaddr
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
@@ -75,9 +77,9 @@ type BroadcastChannel interface {
 	// RegisterIdentifier, or a ClientIdentifier used by the network layer.
 	//
 	// Returns an error if the recipient identifier is a ProtocolIdentifier that
-	// does not have an associated ClientIdentifier, or if it is neither a
-	// ProtocolIdentifier nor a ClientIdentifier.
-	SendTo(recipientIdentifier interface{}, m TaggedMarshaler) error
+	// does not have an associated ClientIdentifier, or if it is not a
+	// ProtocolIdentifier.
+	SendTo(recipientIdentifier ProtocolIdentifier, m TaggedMarshaler) error
 
 	// RegisterIdentifier associates the given network identifier with a
 	// protocol-specific identifier that will be passed to the receiving code

@@ -10,3 +10,16 @@ _local/
 config.toml
 *.config.toml
 *.out
+*.abi
+pkg/gen/*/*.go
+
+# Executables
+debug
+debug.test
+keep-core
+main
+main.test
+
+# IDEs
+.vscode/
+.idea/
