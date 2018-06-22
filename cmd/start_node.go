@@ -43,14 +43,14 @@ func init() {
 	}
 }
 
-// StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
+// StartNode starts a node; if it's not a bootstrap node it will get the
+// Node.URLs from the config file
 func StartNode(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	//myIPv4Address := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
@@ -87,13 +87,11 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler  (
+	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		return err
 	}
-
-	go broadcastMessages(ctx, broadcastParams{port:port, ipaddr: myIPv4Address, bcastChan:broadcastChannel})
 
 	recvChan := make(chan net.Message)
 
@@ -105,20 +103,42 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	go receiveMessage(ctx, recvParams{port: port, ipaddr: myIPv4Address, recvChan: recvChan})
+	go broadcastMessages(
+		ctx,
+		broadcastParams{
+			port:      port,
+			ipaddr:    myIPv4Address,
+			bcastChan: broadcastChannel,
+		},
+	)
+	go receiveMessage(
+		ctx,
+		recvParams{
+			port:     port,
+			ipaddr:   myIPv4Address,
+			recvChan: recvChan,
+		},
+	)
 
 	select {}
 }
 
-
-func broadcastMessages(ctx context.Context, params broadcastParams)  {
+func broadcastMessages(ctx context.Context, params broadcastParams) {
 	t := time.NewTimer(1) // first tick is immediate
 	defer t.Stop()
+
 	for {
 		select {
 		case <-t.C:
 			if err := params.bcastChan.Send(
-				&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, params.ipaddr, params.port)},
+				&testMessage{
+					Payload: fmt.Sprintf(
+						"%s from %s on port %d",
+						sampleText,
+						params.ipaddr,
+						params.port,
+					),
+				},
 			); err != nil {
 				return
 			}
@@ -134,7 +154,12 @@ func receiveMessage(ctx context.Context, params recvParams) {
 		select {
 		case msg := <-params.recvChan:
 			testPayload := msg.Payload().(*testMessage)
-			fmt.Printf("%s:%d read message: %+v\n", params.ipaddr, params.port, testPayload)
+			fmt.Printf(
+				"%s:%d read message: %+v\n",
+				params.ipaddr,
+				params.port,
+				testPayload,
+			)
 		case <-ctx.Done():
 			return
 		}

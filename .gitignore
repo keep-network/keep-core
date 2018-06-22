@@ -15,4 +15,4 @@ pkg/gen/*/*.go
 
 #Visual Studio Code
 .vscode/
-debug.test
+keep-core
