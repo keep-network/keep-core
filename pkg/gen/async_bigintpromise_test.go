@@ -1,4 +1,4 @@
-package async
+package main
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 func TestBigIntPromiseOnSuccessFulfill(t *testing.T) {
@@ -17,7 +19,7 @@ func TestBigIntPromiseOnSuccessFulfill(t *testing.T) {
 
 	expectedResult := big.NewInt(8)
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	promise.OnSuccess(func(in *big.Int) {
 		done <- in
@@ -54,7 +56,7 @@ func TestPromiseOnSuccessAlreadyFulfilled(t *testing.T) {
 
 	expectedResult := big.NewInt(18)
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	// first fulfill, then install callback
 	err := promise.Fulfill(expectedResult)
@@ -88,7 +90,7 @@ func TestPromiseOnCompleteFulfill(t *testing.T) {
 
 	expectedResult := big.NewInt(128)
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	promise.OnComplete(func(in *big.Int, err error) {
 		if err != nil {
@@ -125,7 +127,7 @@ func TestPromiseOnCompleteAlreadyFulfilled(t *testing.T) {
 
 	expectedResult := big.NewInt(1238)
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	// first fulfill, then install callback
 	err := promise.Fulfill(expectedResult)
@@ -163,7 +165,7 @@ func TestPromiseOnFailureFail(t *testing.T) {
 
 	expectedResult := fmt.Errorf("it's not working")
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	promise.OnFailure(func(err error) {
 		done <- err
@@ -200,7 +202,7 @@ func TestPromiseOnFailureAlreadyFailed(t *testing.T) {
 
 	expectedError := fmt.Errorf("i just can't")
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	// first fail, then install callback
 	err := promise.Fail(expectedError)
@@ -234,7 +236,7 @@ func TestPromiseOnCompleteFail(t *testing.T) {
 
 	expectedFailure := fmt.Errorf("catwoman")
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	promise.OnComplete(func(in *big.Int, err error) {
 		if in != nil {
@@ -271,7 +273,7 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 
 	expectedError := fmt.Errorf("nope nope nope")
 
-	promise := BigIntPromise{}
+	promise := &async.BigIntPromise{}
 
 	// first fail, then install callback
 	err := promise.Fail(expectedError)
@@ -301,40 +303,6 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 	}
 }
 
-func TestPromiseFulfilledAndComplete(t *testing.T) {
-	promise := BigIntPromise{}
-
-	if promise.isComplete {
-		t.Error("Promise is completed")
-	}
-
-	err := promise.Fulfill(nil)
-	if err != nil {
-		t.Errorf("Fulfill returned an error: %v", err)
-	}
-
-	if !promise.isComplete {
-		t.Error("Promise is not completed")
-	}
-}
-
-func TestPromiseFailedAndComplete(t *testing.T) {
-	promise := BigIntPromise{}
-
-	if promise.isComplete {
-		t.Error("Promise is completed")
-	}
-
-	err := promise.Fail(nil)
-	if err != nil {
-		t.Errorf("Fail returned an error: %v", err)
-	}
-
-	if !promise.isComplete {
-		t.Error("Promise is not completed")
-	}
-}
-
 func TestPromiseAlreadyCompleted(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
@@ -347,7 +315,7 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 	}{
 		"Fulfill with result `promise already completed`": {
 			function: func() error {
-				promise := BigIntPromise{}
+				promise := &async.BigIntPromise{}
 				promise.OnSuccess(func(in *big.Int) { done <- true })
 				promise.Fulfill(nil)
 				return promise.Fulfill(nil)
@@ -356,7 +324,7 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 		},
 		"Fail with result `promise already completed`": {
 			function: func() error {
-				promise := BigIntPromise{}
+				promise := &async.BigIntPromise{}
 				promise.OnFailure(func(error) { done <- true })
 				promise.Fail(nil)
 				return promise.Fail(nil)
