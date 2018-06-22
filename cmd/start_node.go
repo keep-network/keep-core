@@ -87,13 +87,11 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler  (
+	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		return err
 	}
-
-	go broadcastMessages(ctx, broadcastParams{port:port, ipaddr: myIPv4Address, bcastChan:broadcastChannel})
 
 	recvChan := make(chan net.Message)
 
