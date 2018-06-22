@@ -43,14 +43,14 @@ func init() {
 	}
 }
 
-// StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
+// StartNode starts a node; if it's not a bootstrap node it will get the
+// Node.URLs from the config file
 func StartNode(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	//myIPv4Address := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
@@ -126,6 +126,7 @@ func StartNode(c *cli.Context) error {
 func broadcastMessages(ctx context.Context, params broadcastParams) {
 	t := time.NewTimer(1) // first tick is immediate
 	defer t.Stop()
+
 	for {
 		select {
 		case <-t.C:

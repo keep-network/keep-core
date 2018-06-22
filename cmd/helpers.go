@@ -75,7 +75,14 @@ func nodeHeader(isBootstrapNode bool, myIPv4Address string, port int) {
 	if isBootstrapNode {
 		nodeName = "BOOTSTRAP node"
 	}
-	header(fmt.Sprintf("starting %s, connnecting to network and listening at %s Port %d", nodeName, myIPv4Address, port))
+	header(
+		fmt.Sprintf(
+			"starting %s, connnecting to network and listening at %s Port %d",
+			nodeName,
+			myIPv4Address,
+			port,
+		),
+	)
 }
 
 type testMessage struct {
