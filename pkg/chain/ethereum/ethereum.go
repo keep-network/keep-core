@@ -113,3 +113,17 @@ func (ec *ethereumChain) RequestRelayEntry(blockReward *big.Int, seed []byte) er
 	_, err := ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed)
 	return err
 }
+
+func (ec *ethereumChain) SubmitRelayEntryCandidate(
+	requestID *big.Int,
+	groupSignature *big.Int,
+	groupID *big.Int,
+	previousEntry *big.Int,
+) error {
+	if err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(nil, nil); err != nil {
+		return err
+	}
+
+	_, err := ec.keepRandomBeaconContract.SubmitRelayEntryCandidate(requestID, groupSignature, groupID, previousEntry)
+	return err
+}

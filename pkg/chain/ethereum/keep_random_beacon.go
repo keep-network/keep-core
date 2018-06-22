@@ -125,6 +125,22 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 	return krb.transactor.RequestRelayEntry(krb.transactorOpts, blockReward, seed)
 }
 
+// SubmitRelayEntryCandidate submits a group signature for consideration.
+func (krb *KeepRandomBeacon) SubmitRelayEntryCandidate(
+	requestID *big.Int,
+	groupSignature *big.Int,
+	groupID *big.Int,
+	previousEntry *big.Int,
+) (*types.Transaction, error) {
+	return krb.transactor.RelayEntry(
+		krb.transactorOpts,
+		requestID,
+		groupSignature,
+		groupID,
+		previousEntry,
+	)
+}
+
 // SubmitGroupPublicKey upon completion of a sgiagure make the contract
 // call to put it on chain.
 func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
