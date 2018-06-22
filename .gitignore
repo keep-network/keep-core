@@ -13,3 +13,4 @@ config.toml
 .vscode/
 debug.test
 pkg/gen/*/*.go
+*.abi
