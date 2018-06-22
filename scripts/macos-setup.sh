@@ -7,7 +7,9 @@ for pkg in golang dep; do
 done
 
 echo "Installing ethereum requirements..."
+brew tap ethereum/ethereum
 brew list geth &>/dev/null || brew install geth
+brew list solidity &>/dev/null || brew install solidity
 
 echo "Installing protobuf requirements..."
 # Protobuf
@@ -26,10 +28,6 @@ echo "Installing bn requirements..."
 for pkg in gmp openssl llvm; do
   brew list $pkg &> /dev/null || brew install $pkg
 done
-
-echo "Installing solidity..."
-brew tap ethereum/ethereum
-brew list solidity &>/dev/null || brew install solidity
 
 echo "Installing command line developer tools..."
 xcode-select --install || true
