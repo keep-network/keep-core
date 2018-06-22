@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 )
-
-type entryProcessingState int
 
 const (
 	waitingForRequest entryProcessingState = iota
@@ -17,6 +15,8 @@ const (
 	verifyingSigShares
 	submittingSig
 )
+
+type entryProcessingState int
 
 type partialEntry struct {
 	myShare             signatureShare
@@ -52,7 +52,15 @@ func (state NodeState) IsNextGroup() bool {
 // EmptyState returns an empty NodeState with no group, zero group count, and
 // a nil last seen entry.
 func EmptyState() NodeState {
-	return NodeState{groupCount: 0, group: 0, GroupID: 0, lastSeenEntry: entry.Entry{Value: [8]byte{}, Timestamp: time.Unix(0, 0)}}
+	return NodeState{
+		groupCount: 0,
+		group:      0,
+		GroupID:    0,
+		lastSeenEntry: entry.Entry{
+			Value:     [8]byte{},
+			Timestamp: time.Unix(0, 0),
+		},
+	}
 }
 
 // ServeRequests kicks off the relay request monitoring/response publishing loop.
