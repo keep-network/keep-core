@@ -82,3 +82,19 @@ Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
 We've been observing https://github.com/google/protobuf/issues/3355[some issues] 
 with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN` 
 contained `~`.
+
+== Working with Solidity contracts
+
+The fastest and easiest way to have local Ethereum testent is to use Ganache app.
+https://truffleframework.com/ganache/
+
+You can also use a demo script to help you deploy contracts to your local testnet
+and to have demo balances (token, staking and token grants) allocated between first
+two accounts.
+
+Go to `contracts/solidity` directory and run:
+
+```
+npm install
+npm run demo
+```
