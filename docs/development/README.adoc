@@ -78,8 +78,6 @@ to provide some familiarity with how Ethereum works under the covers.
 
 == Common problems
 
-Make sure `$GOBIN` is located on your `$PATH`. 
-
 Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
 We've been observing https://github.com/google/protobuf/issues/3355[some issues] 
 with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN` 
