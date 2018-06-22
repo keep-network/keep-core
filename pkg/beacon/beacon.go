@@ -71,29 +71,44 @@ func Initialize(
 		return err
 	}
 
-		relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
-			fmt.Printf(
-				"Failed submission of public key %s: [%s].\n",
-				id,
-				errorMessage,
-			)
-		})
-		relayChain.OnGroupPublicKeySubmitted(func(id string, activationBlock *big.Int) {
-			fmt.Printf(
-				"Public key submitted for %s; activating at block %v.\n",
-				id,
-				activationBlock,
-			)
-		})
+	var (
+		done  = make(chan struct{})
+		errCh = make(chan error)
+	)
 
-		fmt.Printf(
-			"Submitting public key for member %s, group %s\n",
-			member.MemberID(),
-			"test",
+	relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
+		errCh <- fmt.Errorf(
+			"failed submission of public key %s: [%s].\n",
+			id,
+			errorMessage,
 		)
-	}
+	})
+	relayChain.OnGroupPublicKeySubmitted(func(id string, activationBlock *big.Int) {
+		fmt.Printf(
+			"Public key submitted for %s; activating at block %v.\n",
+			id,
+			activationBlock,
+		)
+		done <- struct{}{}
+	})
 
-	<-ctx.Done()
+	fmt.Printf(
+		"Submitting public key for member %s, group %s\n",
+		member.MemberID(),
+		"test",
+	)
+
+	for {
+		select {
+		case <-done:
+			go beaconLoop(relayChain, blockCounter, channel)
+			return nil
+		case err := <-errCh:
+			return fmt.Errorf("Initialized failed with %v", err)
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 
 	return nil
 }
