@@ -11,3 +11,8 @@ config.toml
 *.config.toml
 *.out
 *.abi
+pkg/gen/*/*.go
+
+#Visual Studio Code
+.vscode/
+debug.test
