@@ -40,13 +40,14 @@ after the commitment phase.
 
 == Pedersen commitment
 
-We generate an order `q` cyclic group. To do this, we find a large Sophie 
-Germain prime and use that as `q`. `p`, the modulus, is set to `2q+1`.
+We generate an order `q` https://en.wikipedia.org/wiki/Cyclic_group[cyclic group]. 
+To do this, we find a large https://en.wikipedia.org/wiki/Sophie_Germain_prime[Sophie 
+Germain prime] and use that as `q`. `p`, the modulus, is set to `2q+1`.
 
-The order `q` subgroup of quadratic residues is cyclic and of prime order 
-and every element in it is a generator. To get a generator of this subgroup, 
-we choose any element `Z^p` and then square it, thus, ensuring that we have an 
-element in the order `q` subgroup.
+The order `q` subgroup of https://en.wikipedia.org/wiki/Quadratic_residue[quadratic 
+residues] is cyclic and of prime order and every element in it is a generator. 
+To get a generator of this subgroup, we choose any element `Z^p` and then square it, 
+thus, ensuring that we have an element in the order `q` subgroup.
 
 ```
 q <- Sophie Germain prime
