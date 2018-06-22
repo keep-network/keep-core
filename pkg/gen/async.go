@@ -17,7 +17,7 @@ import (
 // Execute `go generate` command in current directory to generate Promises code.
 
 // Name of the promise template file.
-const promiseTemplateFile string = "promise.go.tmpl"
+const promiseTemplateFile string = "async_promise.go.tmpl"
 
 // Directory to which generated code will be exported.
 const outDir string = "./async"
