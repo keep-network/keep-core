@@ -104,3 +104,12 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	ec.handlerMutex.Unlock()
 	return nil
 }
+
+func (ec *ethereumChain) RequestRelayEntry(blockReward *big.Int, seed []byte) error {
+	if err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(nil, nil); err != nil {
+		return err
+	}
+
+	_, err := ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed)
+	return err
+}

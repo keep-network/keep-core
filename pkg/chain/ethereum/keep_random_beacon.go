@@ -116,7 +116,7 @@ func (krb *KeepRandomBeacon) HasMinimumStake(
 	return krb.caller.HasMinimumStake(krb.callerOpts, address)
 }
 
-// RequestRelayEntry start the process of generating a signature.
+// RequestRelayEntry requests a group signature.
 func (krb *KeepRandomBeacon) RequestRelayEntry(
 	blockReward *big.Int,
 	rawseed []byte,
