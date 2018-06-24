@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
@@ -37,30 +39,25 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) error {
-	applyError := func(msg string) {
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeyFailureHandlers {
-			handler(groupID, msg)
-		}
-		ec.handlerMutex.Unlock()
-	}
+) *async.GroupPublicKeyPromise {
+
+	aPromise := &async.GroupPublicKeyPromise{}
 
 	success := func(
 		GroupPublicKey []byte,
 		RequestID *big.Int,
 		ActivationBlockHeight *big.Int,
 	) {
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeySubmissionHandlers {
-			handler(groupID, ActivationBlockHeight)
-		}
-		ec.handlerMutex.Unlock()
+		aPromise.Fulfill(&chaintype.GroupPublicKey{
+			GroupPublicKey:        GroupPublicKey,
+			RequestID:             RequestID,
+			ActivationBlockHeight: ActivationBlockHeight,
+		})
 	}
 
 	fail := func(err error) error {
-		applyError(fmt.Sprintf("error: [%v]", err))
-		return err
+		aPromise.Fail(err)
+		return nil
 	}
 
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
@@ -68,39 +65,15 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		fail,
 	)
 	if err != nil {
-		applyError(fmt.Sprintf("error creating event watch for request: [%v]", err))
-		return err
+		aPromise.Fail(fmt.Errorf("error creating event watch for request: [%v]", err))
+		return nil
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
-		applyError(fmt.Sprintf("error submitting request: [%v]", err))
+		aPromise.Fail(err)
+		return nil
 	}
-	return err
-}
 
-// OnGroupPublicKeySubmissionFailed associates a handler for a error event.
-func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
-	handler func(groupID string, errorMessage string),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeyFailureHandlers = append(
-		ec.groupPublicKeyFailureHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
-}
-
-// OnGroupPublicKeySubmitted associates a handler for a success event.
-func (ec *ethereumChain) OnGroupPublicKeySubmitted(
-	handler func(groupID string, activationBlock *big.Int),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeySubmissionHandlers = append(
-		ec.groupPublicKeySubmissionHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
+	return aPromise
 }

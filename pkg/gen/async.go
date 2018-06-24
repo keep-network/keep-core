@@ -42,6 +42,11 @@ func main() {
 			Prefix:     "BigInt",
 			outputFile: "big_int_promise.go",
 		},
+		{
+			Type:       "*chaintype.GroupPublicKey",
+			Prefix:     "GroupPublicKey",
+			outputFile: "group_pub_key_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
