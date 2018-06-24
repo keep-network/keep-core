@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
+	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -72,29 +72,32 @@ func SmokeTest(c *cli.Context) error {
 				panic(fmt.Sprintf("Failed to run DKG [%v].", err))
 			}
 
-			chainHandle.ThresholdRelay().OnGroupPublicKeySubmitted(
-				func(groupID string, activationBlock *big.Int) {
-					if groupID == "test" {
-						memberChannel <- member
-					}
-				})
-			chainHandle.ThresholdRelay().OnGroupPublicKeySubmissionFailed(
-				func(groupID string, errorMsg string) {
-					if groupID == "test" {
-						fmt.Fprintf(
-							os.Stderr,
-							"[member:%s] Failed to submit group public key: [%s]\n",
-							member.BlsID.GetHexString(),
-							err,
-						)
-						memberChannel <- nil
-					}
-				})
-
-			err = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
+			_ = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
 				"test",
 				member.GroupPublicKeyBytes(),
-			)
+			).OnSuccess(func(data *chaintype.GroupPublicKey) {
+				if string(data.GroupPublicKey) == "test" {
+					memberChannel <- member
+				} else {
+					fmt.Fprintf(
+						os.Stderr,
+						"[member:%s] incorrect data, expected 'test' got '%s', activation block: %s\n",
+						member.BlsID.GetHexString(),
+						string(data.GroupPublicKey),
+						data.ActivationBlockHeight,
+					)
+					memberChannel <- nil
+				}
+			}).OnFailure(func(err error) {
+				fmt.Fprintf(
+					os.Stderr,
+					"[member:%s] Failed to submit group public key: [%s]\n",
+					member.BlsID.GetHexString(),
+					err,
+				)
+				memberChannel <- nil
+			})
+
 		}(i)
 	}
 
