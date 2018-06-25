@@ -3,15 +3,15 @@ package beacon
 import (
 	"context"
 	"fmt"
-	"math/big"
+	"os"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/chain"
-
+	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -68,7 +68,7 @@ func Initialize(
 		if err != nil {
 			return err
 		}
-
+		/* xyzzy -
 		err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
 		if err != nil {
 			return err
@@ -86,6 +86,22 @@ func Initialize(
 				"Public key submitted for %s; activating at block %v.\n",
 				id,
 				activationBlock,
+			)
+		})
+		*/
+		_ = relayChain.SubmitGroupPublicKey(
+			"test",
+			member.GroupPublicKeyBytes(),
+		).OnSuccess(func(data *chaintype.GroupPublicKey) {
+			fmt.Printf(
+				"Submission of public key: [%s].\n",
+				data,
+			)
+		}).OnFailure(func(err error) {
+			fmt.Fprintf(
+				os.Stderr,
+				"Failed submission of public key: [%v].\n",
+				err,
 			)
 		})
 
