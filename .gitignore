@@ -11,3 +11,10 @@ config.toml
 *.config.toml
 *.out
 *.abi
+
+# Executables
+debug
+debug.test
+keep-core
+main
+main.test
