@@ -116,10 +116,10 @@ When we want to work with EC-based encryption (and this is the case for
 e.g. EC-DSA), we need to adjust the protocol. This is obtained by choosing `G` 
 as a group of points on an elliptic curve of cardinality `q`. In this case the 
 multiplication operation in `G` is the group operation over the curve. 
-`g` is the randomly selected point on the curve.
+`g` is the elliptic curve base point and `h` is the randomly selected point on 
+the curve.
 
-Curve described by `G` and `q` as well as `g` can be public parameters for 
-a computional binding scheme.
+`G`, `q`, `g` and `h` can be public parameters for a computational binding scheme.
 
 === Generating commitment
 `INPUT: secret`
