@@ -154,6 +154,14 @@ pairing(a, b) == pairing(g, c)
 
 References
 
+* Gennaro R. (2004) Multi-trapdoor Commitments and Their Applications to Proofs 
+of Knowledge Secure Under Concurrent Man-in-the-Middle Attacks. In: Franklin M. 
+(eds) Advances in Cryptology – CRYPTO 2004. CRYPTO 2004. Lecture Notes in 
+Computer Science, vol 3152. Springer, Berlin, Heidelberg
+
+* Delfs H., Knebl H. Introduction to Cryptography Principles and Applications
+(2015) Springer
+
 * Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal DSA/ECDSA 
 Signatures and an Application to Bitcoin Wallet Security. In: Manulis M., 
 Sadeghi AR., Schneider S. (eds) Applied Cryptography and Network Security. 
