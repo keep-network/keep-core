@@ -68,27 +68,7 @@ func Initialize(
 		if err != nil {
 			return err
 		}
-		/* xyzzy -
-		err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
-		if err != nil {
-			return err
-		}
 
-		relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
-			fmt.Printf(
-				"Failed submission of public key %s: [%s].\n",
-				id,
-				errorMessage,
-			)
-		})
-		relayChain.OnGroupPublicKeySubmitted(func(id string, activationBlock *big.Int) {
-			fmt.Printf(
-				"Public key submitted for %s; activating at block %v.\n",
-				id,
-				activationBlock,
-			)
-		})
-		*/
 		_ = relayChain.SubmitGroupPublicKey(
 			"test",
 			member.GroupPublicKeyBytes(),
