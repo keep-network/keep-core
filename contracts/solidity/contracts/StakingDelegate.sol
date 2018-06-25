@@ -1,0 +1,159 @@
+pragma solidity ^0.4.21;
+
+import "./StakingProxy.sol";
+
+
+/**
+ * @title Staking Delegate Contract.
+ * @dev An optional contract for staking proxy to allow staker
+ * to delegate its balance to an arbitrary operator address.
+ */
+contract StakingDelegate {
+
+    /**
+     * @dev Only authorized contract can invoke functions with this modifier.
+     */
+    modifier onlyAuthorized {
+        require(msg.sender == address(stakingProxy));
+        _;
+    }
+
+    StakingProxy public stakingProxy;
+
+    mapping(address => address) internal delegatorFor;
+    mapping(address => address) internal operatorFor;
+
+    /**
+     * @dev Creates a staking delegate contract.
+     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
+     */
+    function StakingDelegate(address _stakingProxy) public {
+        require(_stakingProxy != address(0x0));
+        stakingProxy = StakingProxy(_stakingProxy);
+    }
+
+    /**
+     * @dev Gets operator for the specified address.
+     * @param _address Address to get the operator for.
+     */
+    function getOperatorFor(address _address)
+        public
+        view
+        onlyAuthorized
+        returns (address)
+    {
+        return operatorFor[_address];
+    }
+
+    /**
+     * @dev Gets delegator for the specified address.
+     * @param _address Address to get the delegator for.
+     */
+    function getDelegatorFor(address _address)
+        public
+        view
+        onlyAuthorized
+        returns (address)
+    {
+        return delegatorFor[_address];
+    }
+
+    /**
+     * @dev Gets delegated staking balance of address.
+     * @param _address The address whose delegated staking balance should be returned.
+     */
+    function delegatedBalanceOf(address _address)
+        public
+        view
+        onlyAuthorized
+        returns (uint256)
+    {
+
+        // Get actual stake balance for the address.
+        uint256 balance = stakingProxy.totalBalanceOf(_address);
+
+        // If the provided address is an operator then get its delegator stake balance.
+        address delegator = delegatorFor[_address];
+        if (balance == 0 && delegator != address(0)) {
+            balance = stakingProxy.totalBalanceOf(delegator);
+        }
+
+        // If the provided address is a delegator we assume it has no stake balance.
+        address operator = operatorFor[_address];
+        if (operator != address(0)) {
+            return 0;
+        }
+
+        return balance;
+    }
+
+    /**
+     * @dev Delegates your stake balance to a specified address.
+     * @param _operator Address to where you want to delegate your balance.
+     */
+    function delegateStakeTo(address _operator) public {
+        require(_operator != address(0));
+
+        // Operator must not be a staker.
+        require(stakingProxy.totalBalanceOf(_operator) == 0);
+
+        // Revert if operator address was already used.
+        address previousDelegator = delegatorFor[_operator];
+        require(previousDelegator == address(0));
+
+        uint256 delegatedBalance = stakingProxy.totalBalanceOf(msg.sender);
+
+        // Release previous operator address when you delegate stake to a new one.
+        address previousOperator = operatorFor[msg.sender];
+        if (previousOperator != address(0)) {
+            delete delegatorFor[previousOperator];
+
+            // Inform the network that previous operator doesn't have stake anymore.
+            stakingProxy.unstakedCallback(previousOperator, delegatedBalance);
+        } else {
+            // Inform the network that delegator doesn't have stake anymore.
+            stakingProxy.unstakedCallback(msg.sender, delegatedBalance);
+        }
+
+        // Inform the network about a new staker.
+        stakingProxy.stakedCallback(_operator, delegatedBalance);
+
+        operatorFor[msg.sender] = _operator;
+        delegatorFor[_operator] = msg.sender;
+    }
+
+    /**
+     * @dev Remove delegate for your stake balance.
+     */
+    function removeDelegate() public {
+        address operator = operatorFor[msg.sender];
+        delete delegatorFor[operator];
+        delete operatorFor[msg.sender];
+
+        uint256 delegatedBalance = stakingProxy.totalBalanceOf(msg.sender);
+
+        // Inform the network that previous operator doesn't have stake anymore.
+        stakingProxy.unstakedCallback(operator, delegatedBalance);
+
+        // Inform the network about a new staker.
+        stakingProxy.stakedCallback(msg.sender, delegatedBalance);
+    }
+
+    /**
+     * @dev Removes delegate for the specified operator address.
+     * @param _operator Operator address whose delegation should be removed.
+     */
+    function removeOperator(address _operator)
+        public
+        onlyAuthorized
+    {
+        address delegator = delegatorFor[_operator];
+        delete operatorFor[delegator];
+        delete delegatorFor[_operator];
+
+        uint256 delegatedBalance = stakingProxy.totalBalanceOf(delegator);
+
+        // Inform the network that delegator has its staking balance back.
+        stakingProxy.stakedCallback(delegator, delegatedBalance);
+    }
+}

@@ -3,8 +3,17 @@ pragma solidity ^0.4.21;
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./utils/AddressArrayUtils.sol";
 
-interface authorizedStakingContract {
+
+interface StakingContract {
     function stakeBalanceOf(address addr) external constant returns (uint256);
+}
+
+
+interface StakingDelegateContract {
+    function removeOperator(address addr) external;
+    function delegatedBalanceOf(address addr) external view returns (uint256);
+    function getOperatorFor(address addr) external view returns (address);
+    function getDelegatorFor(address addr) external view returns (address);
 }
 
 
@@ -12,8 +21,9 @@ interface authorizedStakingContract {
  * @title Staking Proxy Contract
  * @dev An ownable staking proxy contract to provide upgradable staking.
  * Upgraded contracts are added to authorizedContracts list. The staking
- * contracts must call "emitStakedEvent" and "emitUnstakedEvent" functions on
- * this contract.
+ * contracts must call "stakedCallback" and "unstakedCallback" functions on
+ * this contract. If staking delegate contract is set then balances are checked
+ * through the method of staking delegate contract.
  */
 contract StakingProxy is Ownable {
 
@@ -29,6 +39,7 @@ contract StakingProxy is Ownable {
 
     address[] public authorizedContracts;
     address[] public deauthorizedContracts;
+    address public stakingDelegateContract;
 
     event Staked(address indexed staker, uint256 amount);
     event Unstaked(address indexed staker, uint256 amount);
@@ -36,21 +47,34 @@ contract StakingProxy is Ownable {
     event AuthorizedContractRemoved(address indexed contractAddress);
 
     /**
-     * @dev Gets the sum of all staking balances of the specified staker address.
+     * @dev Authorize staking delegate contract address. Owner can also
+     * deauthorize staking delegate contract by providing 0 address.
+     * @param _contract The address of the staking delegate contract.
+     */
+    function authorizeStakingDelegateContract(address _contract)
+        public
+        onlyOwner
+    {
+        stakingDelegateContract = _contract;
+    }
+
+    /**
+     * @dev Gets stake balance for the specified staker address.
+     * If staking delegate contract is present it will first check delegated
+     * stake balance for the address.
      * @param _staker The address to query the balance of.
      * @return An uint256 representing the amount staked by the passed address.
      */
     function balanceOf(address _staker)
         public
-        constant
+        view
         returns (uint256)
     {
-        require(_staker != address(0));
-        uint256 balance = 0;
-        for (uint i = 0; i < authorizedContracts.length; i++) {
-            balance = balance + authorizedStakingContract(authorizedContracts[i]).stakeBalanceOf(_staker);
+        if (stakingDelegateContract != address(0)) {
+            return StakingDelegateContract(stakingDelegateContract).delegatedBalanceOf(_staker);
+        } else {
+            return _totalBalanceOf(_staker);
         }
-        return balance;
     }
 
     /**
@@ -95,31 +119,52 @@ contract StakingProxy is Ownable {
     }
 
     /**
-     * @dev Emit staked event. This function is called by every authorized
+     * @dev Staked callback. This function is called by every authorized
      * staking contract where staking occurs so the network clients can have
      * a single point to listen to the events across multiple staking contracts.
+     * If staker delegated balance to an operator then the event will emit for
+     * that operator.
      * @param _staker The address of the staker.
      * @param _amount The staked amount.
      */
-    function emitStakedEvent(address _staker, uint256 _amount)
+    function stakedCallback(address _staker, uint256 _amount)
         public
         onlyAuthorized
     {
-        emit Staked(_staker, _amount);
+
+        // If staker is an operator and just staked, remove its delegation.
+        if (_isOperator(_staker) && _totalBalanceOf(_staker) > 0) {
+            _removeOperator(_staker);
+        }
+
+        // If staker delegated balance to an operator
+        if (_isDelegator(_staker)) {
+            emit Staked(_getOperatorFor(_staker), _amount);
+        } else {
+            emit Staked(_staker, _amount);
+        }
+
     }
 
     /**
-     * @dev Emit unstaked event. This function is called by every authorized
+     * @dev Unstaked callback. This function is called by every authorized
      * staking contract where unstaking occurs so the network clients can have
      * a single point to listen to the events across multiple staking contracts.
+     * If staker delegated balance to an operator then the event will emit for
+     * that operator.
      * @param _staker The address of the staker.
      * @param _amount The unstaked amount.
      */
-    function emitUnstakedEvent(address _staker, uint256 _amount)
+    function unstakedCallback(address _staker, uint256 _amount)
         public
         onlyAuthorized
     {
-        emit Unstaked(_staker, _amount);
+        // If staker delegated balance to an operator
+        if (_isDelegator(_staker)) {
+            emit Unstaked(_getOperatorFor(_staker), _amount);
+        } else {
+            emit Unstaked(_staker, _amount);
+        }
     }
 
     /**
@@ -131,10 +176,18 @@ contract StakingProxy is Ownable {
      */
     function isAuthorized(address _address)
         public
-        constant
+        view
         returns (bool)
     {
-        return authorizedContracts.contains(_address);
+        if (authorizedContracts.contains(_address)) {
+            return true;
+        }
+
+        if (_address == stakingDelegateContract) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -147,9 +200,101 @@ contract StakingProxy is Ownable {
      */
     function isDeauthorized(address _address)
         public
-        constant
+        view
         returns (bool)
     {
         return deauthorizedContracts.contains(_address);
     }
+
+    /**
+     * @dev Restricted only to authorized contracts method to get staking
+     * balance for the specified staker address.
+     * @param _staker The address to query the balance of.
+     * @return An uint256 representing the amount staked by the passed address.
+     */
+    function totalBalanceOf(address _staker)
+        public
+        view
+        onlyAuthorized
+        returns (uint256)
+    {
+        return _totalBalanceOf(_staker);
+    }
+
+    /**
+     * @dev Gets the sum of all staking balances of the specified staker address.
+     * @param _staker The address to query the balance of.
+     * @return An uint256 representing the amount staked by the passed address.
+     */
+    function _totalBalanceOf(address _staker)
+        internal
+        view
+        returns (uint256)
+    {
+        require(_staker != address(0));
+        uint256 balance = 0;
+        for (uint i = 0; i < authorizedContracts.length; i++) {
+            balance = balance + StakingContract(authorizedContracts[i]).stakeBalanceOf(_staker);
+        }
+        return balance;
+    }
+
+    /**
+     * @dev Checks if address is an operator.
+     * @param _address Address to check.
+     */
+    function _isOperator(address _address)
+        internal
+        view
+        returns (bool)
+    {
+        if (stakingDelegateContract != address(0)) {
+            return (StakingDelegateContract(stakingDelegateContract).getOperatorFor(_address) != address(0));
+        }
+        return false;
+    }
+
+    /**
+     * @dev Checks if address is a delegator.
+     * @param _address Address to check.
+     */
+    function _isDelegator(address _address)
+        internal
+        view
+        returns (bool)
+    {
+        if (stakingDelegateContract != address(0)) {
+            return (StakingDelegateContract(stakingDelegateContract).getDelegatorFor(_address) != address(0));
+        }
+        return false;
+    }
+    
+    /**
+     * @dev Gets operator address that works for the staker.
+     * @param _staker Staker address.
+     * @return Address of the operator or zero address.
+     */
+    function _getOperatorFor(address _staker)
+        internal
+        returns (address)
+    {
+        if (stakingDelegateContract != address(0)) {
+            return StakingDelegateContract(stakingDelegateContract).getOperatorFor(_staker);
+        }
+        return address(0);
+    }
+
+    /**
+     * @dev Removes delegate for the specified operator address.
+     * @param _operator Operator address.
+     */
+    function _removeOperator(address _operator)
+        internal
+    {
+        if (stakingDelegateContract != address(0)) {
+            StakingDelegateContract delegateContract = StakingDelegateContract(stakingDelegateContract);
+            delegateContract.removeOperator(_operator);
+        }
+    }
+
 }
