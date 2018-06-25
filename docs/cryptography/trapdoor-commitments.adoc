@@ -20,14 +20,14 @@ when the hash was published.
 
 In this approach, the only thing needed for verification is the plaintext message
 and commitment. In trapdoor commitment scheme, for verification, we need the 
-plaintext message, commitment and trapdoor. Trapdoor scheme separates what we 
-are committing to and the key allowing for a verification of the commitment.
+plaintext message, commitment and decommitment key. Trapdoor scheme separates 
+what we are committing to and the key allowing for a verification of the commitment.
 
-A trapdoor commiement scheme is indistinguishable from randomness and it means 
-it is resistant to brute force attacks. It uses the "trapdoor" value that the 
+A trapdoor commitment scheme is indistinguishable from randomness and it means 
+it is resistant to brute force attacks. It uses the decommitment key that the 
 committing party can send a verifier to make the verification possible.
 We send a commitment to verifier, that can happen at any time, and in future, 
-we send a "trapdoor" value that lets to verify the commitment. 
+we send a decommitment key that lets to verify the commitment. 
 
 Another interesting property of trapdoor commitment schemes is that knowledge of 
 trapdoor allows to open a message in any possible way. 
@@ -37,6 +37,12 @@ locking the message in a steel box and passing it to receiver. A trapdoor
 commitment is a box with a tiny secret door. If someone knows the secret door, 
 then this person is still able to change the committed message in the box, even 
 after the commitment phase. 
+
+There are three requirements for commitment schemes:
+
+* Hiding property - in the commit step, the receiver does not learn anything about the committed value. He cannot distinguish a commitment to `0` from a commitment to `1`.
+* Binding property - the sender cannot change the committed value after the commit step. This requirement has to be satisfied, even if the sender tries to cheat.
+* Viability - if both the sender and the receiver follow the protocol, the receiver will always recover the committed value.
 
 == Pedersen commitment
 
@@ -80,19 +86,25 @@ expectedCommitment  = [ (g ^ digest) % p ] * [ (h ^ r) % p ]
 return commitment == expectedCommitment
 ```
 
-If `g` and `h` are computed and distributed by a trusted third party such that
-the discrete logarithm between `g` and `h` is unkown, we obtain unconditionally
-hiding commitments. That is, even an unbounded adversary not knowing `g` and `h` 
-will not be able to figure out plaintext message.
+Pedersen commitment scheme has an unconditional hiding property, whereas the 
+binding property depends on the difficulty of computing discrete logarithms.
+
+There is an arbitrary number of `(m', r')` pairs mapping to the same `commitment` 
+value as the original pair `(m, r)`. So even if `log_g(h)` is known to the
+adversary, brute-forcing giving an arbitrary number of results and no way to 
+distinguish between them is what makes the scheme unconditionally hiding.
 
 Sender knowing `g` and `h` can change the message he committed to
 even after commitment has been published (but before `r` has been published) 
 since it's possible to find another pair of `(r', secret')` evaluating to the 
 same commitment. 
 
-If `g` and `h` are publicly known, we obtain computional hiding and an unbounded 
-adversary can simply try all possible `r` and `secret` till they evalute to the 
-expected commitment.
+`log_g(h)` is the trapdoor (our secret door) allowing to change the committed
+message. If one has committed to message `m` with `(m, r)`, then in order to 
+change `m -> m'` knowing `log_g(h)`, she can compute:
+```
+r' = r + (m - m') / log_g(h)
+```
 
 == Elliptic Curve VSS
 
