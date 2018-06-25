@@ -107,12 +107,16 @@ func SmokeTest(c *cli.Context) error {
 
 	seenMembers := make(map[*bls.ID]*thresholdgroup.Member)
 	for member := range memberChannel {
-		if _, alreadySeen := seenMembers[&member.BlsID]; !alreadySeen {
-			seenMembers[&member.BlsID] = member
-		}
+		if member != nil {
+			if _, alreadySeen := seenMembers[&member.BlsID]; !alreadySeen {
+				seenMembers[&member.BlsID] = member
+			}
 
-		if len(seenMembers) == beaconConfig.GroupSize {
-			break
+			if len(seenMembers) == beaconConfig.GroupSize {
+				break
+			}
+		} else {
+			fmt.Printf("nil member\n")
 		}
 	}
 
