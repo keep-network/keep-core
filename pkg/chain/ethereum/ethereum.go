@@ -39,16 +39,16 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) *async.GroupPublicKeyPromise {
+) (*async.GroupPublicKeyPromise, error) {
 
-	aPromise := &async.GroupPublicKeyPromise{}
+	groupKeyPromise := &async.GroupPublicKeyPromise{}
 
 	success := func(
 		GroupPublicKey []byte,
 		RequestID *big.Int,
 		ActivationBlockHeight *big.Int,
 	) {
-		aPromise.Fulfill(&chaintype.GroupPublicKey{
+		groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
 			GroupPublicKey:        GroupPublicKey,
 			RequestID:             RequestID,
 			ActivationBlockHeight: ActivationBlockHeight,
@@ -56,8 +56,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	}
 
 	fail := func(err error) error {
-		aPromise.Fail(err)
-		return nil
+		return groupKeyPromise.Fail(err)
 	}
 
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
@@ -65,15 +64,13 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		fail,
 	)
 	if err != nil {
-		aPromise.Fail(fmt.Errorf("error creating event watch for request: [%v]", err))
-		return nil
+		return nil, groupKeyPromise.Fail(fmt.Errorf("error creating event watch for request: [%v]", err))
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
-		aPromise.Fail(err)
-		return nil
+		return nil, groupKeyPromise.Fail(err)
 	}
 
-	return aPromise
+	return groupKeyPromise, nil
 }

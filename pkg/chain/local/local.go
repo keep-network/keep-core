@@ -31,8 +31,8 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 func (c *localChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) *async.GroupPublicKeyPromise {
-	aPromise := &async.GroupPublicKeyPromise{}
+) (*async.GroupPublicKeyPromise, error) {
+	groupKeyPromise := &async.GroupPublicKeyPromise{}
 	c.groupPublicKeysMutex.Lock()
 	defer c.groupPublicKeysMutex.Unlock()
 	if existing, exists := c.groupPublicKeys[groupID]; exists && existing != key {
@@ -44,19 +44,18 @@ func (c *localChain) SubmitGroupPublicKey(
 			key,
 		)
 
-		aPromise.Fail(err)
-		return nil
+		return nil, groupKeyPromise.Fail(err)
 	}
 	c.groupPublicKeys[groupID] = key
 	c.simulatedHeight++
 
-	aPromise.Fulfill(&chaintype.GroupPublicKey{
+	groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
 		GroupPublicKey:        []byte(groupID),
 		RequestID:             big.NewInt(c.simulatedHeight),
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
 	})
 
-	return nil
+	return groupKeyPromise, nil
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {

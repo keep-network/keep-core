@@ -72,10 +72,14 @@ func SmokeTest(c *cli.Context) error {
 				panic(fmt.Sprintf("Failed to run DKG [%v].", err))
 			}
 
-			_ = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
+			promise, err := chainHandle.ThresholdRelay().SubmitGroupPublicKey(
 				"test",
 				member.GroupPublicKeyBytes(),
-			).OnSuccess(func(data *chaintype.GroupPublicKey) {
+			)
+			if err != nil {
+				panic(fmt.Sprintf("Failed promise [%v].", err))
+			}
+			promise.OnSuccess(func(data *chaintype.GroupPublicKey) {
 				if string(data.GroupPublicKey) == "test" {
 					memberChannel <- member
 				} else {
