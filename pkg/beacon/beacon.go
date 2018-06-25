@@ -69,10 +69,14 @@ func Initialize(
 			return err
 		}
 
-		_ = relayChain.SubmitGroupPublicKey(
+		promise, err = relayChain.SubmitGroupPublicKey(
 			"test",
 			member.GroupPublicKeyBytes(),
-		).OnSuccess(func(data *chaintype.GroupPublicKey) {
+		)
+		if err != nil {
+			return err
+		}
+		promise.OnSuccess(func(data *chaintype.GroupPublicKey) {
 			fmt.Printf(
 				"Submission of public key: [%s].\n",
 				data,
