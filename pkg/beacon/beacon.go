@@ -69,7 +69,7 @@ func Initialize(
 			return err
 		}
 
-		promise, err = relayChain.SubmitGroupPublicKey(
+		promise, err := relayChain.SubmitGroupPublicKey(
 			"test",
 			member.GroupPublicKeyBytes(),
 		)
