@@ -40,9 +40,12 @@ after the commitment phase.
 
 There are three requirements for commitment schemes:
 
-* Hiding property - in the commit step, the receiver does not learn anything about the committed value. He cannot distinguish a commitment to `0` from a commitment to `1`.
-* Binding property - the sender cannot change the committed value after the commit step. This requirement has to be satisfied, even if the sender tries to cheat.
-* Viability - if both the sender and the receiver follow the protocol, the receiver will always recover the committed value.
+* Hiding property - in the commit step, the receiver does not learn anything about 
+the committed value. He cannot distinguish a commitment to `0` from a commitment to `1`.
+* Binding property - the sender cannot change the committed value after the commit step. 
+This requirement has to be satisfied, even if the sender tries to cheat.
+* Viability - if both the sender and the receiver follow the protocol, the receiver 
+will always recover the committed value.
 
 == Pedersen commitment
 
