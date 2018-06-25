@@ -11,6 +11,17 @@ jobs:
             command: ganache-cli
             background: true
         - run: cd contracts/solidity && npm install && npm run test
+  build_dashboard:
+    docker:
+      - image: circleci/node:latest
+    steps:
+        - checkout
+        - run: |
+            cd contracts/solidity && npm install && npm run build
+            cd dashboard && npm install && npm run build
+            docker build --rm=false -t "keepnetwork/token-dashboard:$CIRCLE_BUILD_NUM" .
+            docker login -e "$DOCKER_EMAIL" -u "$DOCKER_USER" -p "$DOCKER_PASS"
+            docker push "keepnetwork/token-dashboard:$CIRCLE_BUILD_NUM"
   generate_docs_solidity:
     docker:
       - image: ngrinkevich/nodejs-python-solc:latest
