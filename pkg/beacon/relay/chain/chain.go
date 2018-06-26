@@ -4,11 +4,14 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // Interface represents the interface that the relay expects to interact
 // with the anchoring blockchain on.
 type Interface interface {
+	// GetConfig returns the expected configuration of the threshold relay.
+	GetConfig() (config.Chain, error)
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
 	// associated with a string groupID. An error is generally only returned in
 	// case of connectivity issues; on-chain errors are reported through event
@@ -27,6 +30,15 @@ type Interface interface {
 	//
 	// TODO activation delay may be unnecessary, we'll see.
 	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
+	//
+	RequestRelayEntry(blockReward *big.Int, seed []byte) error
+	SubmitRelayEntry(
+		groupID string,
+		requestID *big.Int,
+		previousEntry *big.Int,
+		groupSignature *big.Int,
+	) *async.RelayEntryPromise
+}
 
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (config.Chain, error)
