@@ -43,7 +43,7 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Stub method to simulate succesfull request to generate a new relay entry,
+     * @dev Stub method to simulate succesful request to generate a new relay entry,
      * which will include a random number (by signing the previous entry's random number).
      * @param _blockReward The value in KEEP for generating the signature.
      * @param _seed Initial seed random value from the client. It should be a cryptographically generated random value.
@@ -53,12 +53,13 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
         requestID = uintStorage[keccak256("seq")]++;
         emit RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
 
-        // Don't wait for DKG and return mocked data
-        uint256 _groupSignature = uint256(keccak256(block.timestamp, _seed));
+        // Return mocked data instead of interacting with relay.
+        uint256 _previousEntry = uintStorage[keccak256("previousEntry")];
+        uint256 _groupSignature = uint256(keccak256(_previousEntry, block.timestamp, _seed));
         uint256 _groupID = uint256(keccak256(block.timestamp, 1));
-        uint256 _previousEntry = uint256(keccak256(block.timestamp, 2));
         emit RelayEntryGenerated(requestID, _groupSignature, _groupID, _previousEntry, block.number);
 
+        uintStorage[keccak256("previousEntry")] = _groupSignature;
         return requestID;
     }
 }
