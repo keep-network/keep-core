@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
@@ -114,16 +116,44 @@ func (ec *ethereumChain) RequestRelayEntry(blockReward *big.Int, seed []byte) er
 	return err
 }
 
-func (ec *ethereumChain) SubmitRelayEntryCandidate(
-	requestID *big.Int,
-	groupSignature *big.Int,
+func (ec *ethereumChain) SubmitRelayEntry(
 	groupID *big.Int,
+	requestID *big.Int,
 	previousEntry *big.Int,
-) error {
-	if err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(nil, nil); err != nil {
-		return err
+	groupSignature *big.Int,
+) *async.RelayEntryPromise {
+	var (
+		relayEntryPromise = &async.RelayEntryPromise{}
+
+		success = func(
+			requestID *big.Int,
+			RequestResponse *big.Int,
+			RequestGroupID *big.Int,
+			PreviousEntry *big.Int,
+			blockNumber *big.Int,
+		) {
+			relayEntryPromise.Fulfill(&relay.Entry{})
+		}
+
+		fail = func(err error) error { return relayEntryPromise.Fail(err) }
+	)
+
+	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(success, fail)
+	if err != nil {
+		relayEntryPromise.Fail(err)
+		return nil
 	}
 
-	_, err := ec.keepRandomBeaconContract.SubmitRelayEntryCandidate(requestID, groupSignature, groupID, previousEntry)
-	return err
+	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
+		requestID,
+		groupSignature,
+		groupID,
+		previousEntry,
+	)
+	if err != nil {
+		relayEntryPromise.Fail(err)
+		return nil
+	}
+
+	return relayEntryPromise
 }
