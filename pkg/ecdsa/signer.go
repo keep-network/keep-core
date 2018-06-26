@@ -1,9 +1,10 @@
 package ecdsa
 
 import (
-	"crypto/rand"
+	crand "crypto/rand"
 	"fmt"
 	"math/big"
+	mrand "math/rand"
 
 	"github.com/keep-network/paillier"
 )
@@ -22,11 +23,13 @@ type PublicParameters struct {
 // Signer represents T-ECDSA group member in a fully initialized state,
 // ready for signing.
 type Signer struct {
+	LocalSigner
 }
 
 // LocalSigner represents T-ECDSA group member prior to the initialisation
 // phase.
 type LocalSigner struct {
+	ID         string
 	paillerKey *paillier.ThresholdPrivateKey
 }
 
@@ -35,7 +38,7 @@ func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 		paillierModulusBitLength,
 		parameters.groupSize,
 		parameters.dishonestThreshold,
-		rand.Reader,
+		crand.Reader,
 	)
 
 	paillierKeys, err := paillierKeyGen.Generate()
@@ -48,9 +51,17 @@ func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 	members := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(members); i++ {
 		members[i] = &LocalSigner{
+			ID:         generateMemberID(),
 			paillerKey: paillierKeys[i],
 		}
 	}
 
 	return members, nil
+}
+
+func generateMemberID() string {
+	memberID := "0"
+	for memberID = fmt.Sprintf("%v", mrand.Int31()); memberID == "0"; {
+	}
+	return memberID
 }
