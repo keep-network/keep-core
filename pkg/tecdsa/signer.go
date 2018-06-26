@@ -1,4 +1,12 @@
-package ecdsa
+// Package tecdsa contains the code that implements threshold ECDSA signatures.
+// The approach is based on [GGN 16].
+//
+//     [GGN 16]: Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal
+//          DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security.
+//          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
+//          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
+//          vol 9696. Springer, Cham
+package tecdsa
 
 import (
 	"crypto/elliptic"

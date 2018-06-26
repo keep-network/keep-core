@@ -1,4 +1,4 @@
-package ecdsa
+package tecdsa
 
 import "math/big"
 
