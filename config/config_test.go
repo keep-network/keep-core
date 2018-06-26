@@ -2,25 +2,16 @@ package config
 
 import (
 	"os"
-	"reflect"
 	"testing"
+	"github.com/keep-network/keep-core/util"
 )
 
 func TestReadConfig(t *testing.T) {
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
-	if err != nil {
-		t.Fatal(err)
-	}
+	util.Ok(t, err)
 
-	filepath := "../test/config.toml"
-	cfg, err := ReadConfig(filepath)
-	if err != nil {
-		t.Fatalf(
-			"failed to read test config: [%v]",
-			err,
-		)
-
-	}
+	cfg, err := ReadConfig("../test/config.toml")
+	util.Ok(t, err)
 
 	var configReadTests = map[string]struct {
 		readValueFunc func(*Config) interface{}
@@ -53,9 +44,7 @@ func TestReadConfig(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			expected := test.expectedValue
 			actual := test.readValueFunc(&cfg)
-			if !reflect.DeepEqual(expected, actual) {
-				t.Errorf("\nexpected: %s\nactual:   %s", expected, actual)
-			}
+			util.Equals(t, expected, actual)
 		})
 	}
 
