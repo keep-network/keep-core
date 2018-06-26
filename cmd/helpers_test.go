@@ -1,9 +1,10 @@
-package cmd
+package cmd_test
 
 import (
 	"fmt"
 	"testing"
 
+	"github.com/keep-network/keep-core/cmd"
 	"github.com/keep-network/keep-core/util"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -13,13 +14,14 @@ func stringsToMultiAddr(t *testing.T, s []string) []ma.Multiaddr {
 	for _, addr := range s {
 		ma, err := ma.NewMultiaddr(addr)
 		util.Ok(t, err)
+
 		multiAddrs = append(multiAddrs, ma)
 	}
 	return multiAddrs
 }
 
 func TestMultiAddrIPs(t *testing.T) {
-	myIPAddress, err := GetPreferredOutboundIP()
+	myIPAddress, err := cmd.GetPreferredOutboundIP()
 	util.Ok(t, err)
 	myIPv4MultiAddr := fmt.Sprintf("/ip4/%s/tcp/27001", myIPAddress)
 	typical := []string{
@@ -70,8 +72,8 @@ func TestMultiAddrIPs(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			acutal := GetIPv4Address(test.maIPs)
-			util.Equals(t, test.expectedString, acutal)
+			actual := cmd.GetIPv4Address(test.maIPs)
+			util.Equals(t, test.expectedString, actual)
 		})
 	}
 }
