@@ -130,27 +130,27 @@ the curve.
 `INPUT: secret`
 
 ```
-pkey = (randomZ[0, q - 1])
+pubKey = (randomZ[0, q - 1])
 r = (randomZ[0, q - 1])
 
 digest = sha256(secret) mod q
 
 // + and * are operations on the selected curve
-he = h + g * pkey
+he = h + g * pubKey
 commitment = g * digest + he * r
 
-return (r, pkey, commitment)
+return (r, pubKey, commitment)
 ```
 
 === Commitment verification
-`INPUT: secret, r, pkey, commitment`
+`INPUT: secret, r, pubKey, commitment`
 
 ```
 digest = sha256(secret) mod q
 
 // + and * are operations on the selected curve
 a = g * r 
-b = h + g * pkey 
+b = h + g * pubKey 
 c = commitment + g * (-digest) 
 
 pairing(a, b) == pairing(g, c)
