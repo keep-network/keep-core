@@ -19,18 +19,18 @@ type PublicParameters struct {
 	q *big.Int // EC cardinality
 }
 
-// InitializedSigner represents T-ECDSA group member in a fully initialized
-// state, ready for signing.
-type InitializedSigner struct {
+// Signer represents T-ECDSA group member in a fully initialized state,
+// ready for signing.
+type Signer struct {
 }
 
-// InitializingSigner represents T-ECDSA group member in the initialisation
+// LocalSigner represents T-ECDSA group member prior to the initialisation
 // phase.
-type InitializingSigner struct {
+type LocalSigner struct {
 	paillerKey *paillier.ThresholdPrivateKey
 }
 
-func newGroup(parameters *PublicParameters) ([]*InitializingSigner, error) {
+func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 	paillierKeyGen := paillier.GetThresholdKeyGenerator(
 		paillierModulusBitLength,
 		parameters.groupSize,
@@ -45,9 +45,9 @@ func newGroup(parameters *PublicParameters) ([]*InitializingSigner, error) {
 		)
 	}
 
-	members := make([]*InitializingSigner, len(paillierKeys))
+	members := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(members); i++ {
-		members[i] = &InitializingSigner{
+		members[i] = &LocalSigner{
 			paillerKey: paillierKeys[i],
 		}
 	}
