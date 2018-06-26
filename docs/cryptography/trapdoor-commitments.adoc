@@ -62,21 +62,23 @@ thus, ensuring that we have an element in the order `q` subgroup.
 q <- Sophie Germain prime
 p = 2q + 1
 
-g = (randomFromZn[0, 2^p - 1]) ^2
-h = (randomFromZn[0, 2^p - 1]) ^2
+g = (randomZ[0, 2^p - 1]) ^2
+h = (randomZ[0, 2^p - 1]) ^2
 ```
 
 === Generating commitment
 `INPUT: secret`
 
 ```
-r = randomFromZn[0, 2^q - 1]
+r = randomZ[0, 2^q - 1] 
 digest = sha256(secret) % q
 
 commitment = [ (g ^  digest) % p ] * [ (h ^ r) % p ]
 
 return (commitment, r)
 ```
+
+`r` is a decommitment key needed for commitment verification.
 
 === Commitment verification
 `INPUT: secret, commitment, r`
@@ -128,8 +130,8 @@ the curve.
 `INPUT: secret`
 
 ```
-pkey = (randomFromZn[0, q - 1])
-r = (randomFromZn[0, q - 1])
+pkey = (randomZ[0, q - 1])
+r = (randomZ[0, q - 1])
 
 digest = sha256(secret) mod q
 
