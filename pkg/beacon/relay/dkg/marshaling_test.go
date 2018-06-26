@@ -1,13 +1,12 @@
 package dkg
 
 import (
-	"fmt"
-	"math/rand"
 	"os"
 	"testing"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
-	"github.com/gogo/protobuf/proto"
+	"github.com/keep-network/keep-core/pkg/internal/blsutils"
+	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 )
 
 func TestMain(m *testing.M) {
@@ -17,34 +16,34 @@ func TestMain(m *testing.M) {
 }
 
 func TestJoinMessageRoundTrip(t *testing.T) {
-	id := generateBlsID()
+	id := blsutils.GenerateID()
 
 	msg := &JoinMessage{id}
 	unmarshaled := &JoinMessage{}
-	err := roundTrip(msg, unmarshaled)
+	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertIDRoundTrip(t, msg.id, unmarshaled.id)
+	blsutils.AssertIDsEqual(t, msg.id, unmarshaled.id)
 }
 
 func TestMemberCommitmentsMessageRoundTrip(t *testing.T) {
-	id := generateBlsID()
+	id := blsutils.GenerateID()
 	commitments := make([]bls.PublicKey, 0)
 	for i := 0; i < 10; i++ {
-		pk := generateBlsPublicKey()
+		pk := blsutils.GeneratePublicKey()
 		commitments = append(commitments, *pk)
 	}
 
 	msg := &MemberCommitmentsMessage{id, commitments}
 	unmarshaled := &MemberCommitmentsMessage{}
-	err := roundTrip(msg, unmarshaled)
+	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertIDRoundTrip(t, msg.id, unmarshaled.id)
+	blsutils.AssertIDsEqual(t, msg.id, unmarshaled.id)
 	assertEqual(
 		t,
 		len(msg.Commitments),
@@ -57,63 +56,63 @@ func TestMemberCommitmentsMessageRoundTrip(t *testing.T) {
 }
 
 func TestMemberShareMessageRoundTrip(t *testing.T) {
-	id := generateBlsID()
-	receiverID := generateBlsID()
-	share := generateBlsSecretKey()
+	id := blsutils.GenerateID()
+	receiverID := blsutils.GenerateID()
+	share := blsutils.GenerateSecretKey()
 
 	msg := &MemberShareMessage{id, receiverID, share}
 	unmarshaled := &MemberShareMessage{}
-	err := roundTrip(msg, unmarshaled)
+	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertIDRoundTrip(t, msg.id, unmarshaled.id)
-	assertIDRoundTrip(t, msg.receiverID, unmarshaled.receiverID)
+	blsutils.AssertIDsEqual(t, msg.id, unmarshaled.id)
+	blsutils.AssertIDsEqual(t, msg.receiverID, unmarshaled.receiverID)
 	assertSecretKeyRoundTrip(t, msg.Share, unmarshaled.Share)
 }
 
 func TestAccusationsMessageRoundTrip(t *testing.T) {
-	id := generateBlsID()
+	id := blsutils.GenerateID()
 	accusedIDs := make([]*bls.ID, 0)
 	for i := 0; i < 10; i++ {
-		accusedIDs = append(accusedIDs, generateBlsID())
+		accusedIDs = append(accusedIDs, blsutils.GenerateID())
 	}
 
 	msg := &AccusationsMessage{id, accusedIDs}
 	unmarshaled := &AccusationsMessage{}
-	err := roundTrip(msg, unmarshaled)
+	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertIDRoundTrip(t, msg.id, unmarshaled.id)
+	blsutils.AssertIDsEqual(t, msg.id, unmarshaled.id)
 	assertEqual(
 		t,
 		len(msg.accusedIDs),
 		len(unmarshaled.accusedIDs),
 		"Expected accused IDs length to be equal pre- and post-round-trip")
 	for i, id := range msg.accusedIDs {
-		assertIDRoundTrip(t, id, unmarshaled.accusedIDs[i])
+		blsutils.AssertIDsEqual(t, id, unmarshaled.accusedIDs[i])
 	}
 }
 
 func TestJustificationsMessageRoundTrip(t *testing.T) {
 	justifications := make(map[bls.ID]*bls.SecretKey)
 	for i := 0; i < 10; i++ {
-		justificationID := generateBlsID()
-		sk := generateBlsSecretKey()
+		justificationID := blsutils.GenerateID()
+		sk := blsutils.GenerateSecretKey()
 		justifications[*justificationID] = sk
 	}
 
-	msg := &JustificationsMessage{generateBlsID(), justifications}
+	msg := &JustificationsMessage{blsutils.GenerateID(), justifications}
 	unmarshaled := &JustificationsMessage{}
-	err := roundTrip(msg, unmarshaled)
+	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertIDRoundTrip(t, msg.id, unmarshaled.id)
+	blsutils.AssertIDsEqual(t, msg.id, unmarshaled.id)
 	assertEqual(
 		t,
 		len(msg.justifications),
@@ -127,15 +126,6 @@ func TestJustificationsMessageRoundTrip(t *testing.T) {
 		} else {
 			assertSecretKeyRoundTrip(t, sk, unmarshaledSk)
 		}
-	}
-}
-
-func assertIDRoundTrip(t *testing.T, id *bls.ID, roundTripID *bls.ID) {
-	if !id.IsEqual(roundTripID) {
-		t.Errorf(
-			"ID failed to round-trip: [%s] != [%s]",
-			id.GetHexString(),
-			roundTripID.GetHexString())
 	}
 }
 
@@ -161,49 +151,4 @@ func assertSecretKeyRoundTrip(t *testing.T, sk1 *bls.SecretKey, sk2 *bls.SecretK
 			sk1.GetHexString(),
 			sk2.GetHexString())
 	}
-}
-
-func roundTrip(
-	marshaler proto.Marshaler,
-	unmarshaler proto.Unmarshaler) error {
-	bytes, err := marshaler.Marshal()
-	if err != nil {
-		return err
-	}
-
-	err = unmarshaler.Unmarshal(bytes)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func generateBlsID() *bls.ID {
-	id := bls.ID{}
-	idValue := fmt.Sprintf("%v", rand.Int31())
-	err := id.SetDecString(idValue)
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Failed to generate id from random number %v: [%v]",
-			idValue,
-			err))
-	}
-
-	return &id
-}
-
-func generateBlsPublicKey() *bls.PublicKey {
-	sk := bls.SecretKey{}
-	sk.SetByCSPRNG()
-	pk := sk.GetPublicKey()
-
-	return pk
-}
-
-func generateBlsSecretKey() *bls.SecretKey {
-	sk := bls.SecretKey{}
-	sk.SetByCSPRNG()
-
-	return &sk
 }
