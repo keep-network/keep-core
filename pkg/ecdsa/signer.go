@@ -1,23 +1,23 @@
 package ecdsa
 
 import (
+	"crypto/elliptic"
 	crand "crypto/rand"
 	"fmt"
-	"math/big"
 	mrand "math/rand"
 
 	"github.com/keep-network/paillier"
 )
 
 // N is of length 2048, making the operations mod N^2 of length 4096
-const paillierModulusBitLength = 2048
+const paillierModulusBitLength = 2048 // TODO: must be larger than q^8?
 
 // PublicParameters for T-ECDSA
 type PublicParameters struct {
 	groupSize          int
 	dishonestThreshold int
 
-	q *big.Int // EC cardinality
+	curve elliptic.Curve
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
@@ -29,8 +29,29 @@ type Signer struct {
 // LocalSigner represents T-ECDSA group member prior to the initialisation
 // phase.
 type LocalSigner struct {
-	ID         string
-	paillerKey *paillier.ThresholdPrivateKey
+	ID               string
+	publicParameters *PublicParameters
+	paillerKey       *paillier.ThresholdPrivateKey
+}
+
+func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
+	curveParams := s.publicParameters.curve.Params()
+
+	xi, err := crand.Int(crand.Reader, curveParams.N)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate DSA key share [%v]", err)
+	}
+
+	yxi, yyi := s.publicParameters.curve.ScalarBaseMult(xi.Bytes())
+
+	return &dsaKeyShare{
+		xi: xi,
+		yi: &CurvePoint{
+			x: yxi,
+			y: yyi,
+		},
+	}, nil
+
 }
 
 func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
@@ -44,7 +65,7 @@ func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 	paillierKeys, err := paillierKeyGen.Generate()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Could not generate threshold Paillier keys [%v]", err,
+			"could not generate threshold Paillier keys [%v]", err,
 		)
 	}
 
