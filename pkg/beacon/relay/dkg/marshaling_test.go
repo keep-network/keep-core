@@ -48,7 +48,8 @@ func TestMemberCommitmentsMessageRoundTrip(t *testing.T) {
 		t,
 		len(msg.Commitments),
 		len(unmarshaled.Commitments),
-		"Expected commitment length to be equal pre- and post-round-trip")
+		"Expected commitment length to be equal pre- and post-round-trip",
+	)
 
 	for i, commitment := range msg.Commitments {
 		assertPublicKeyRoundTrip(t, &commitment, &unmarshaled.Commitments[i])
@@ -91,7 +92,8 @@ func TestAccusationsMessageRoundTrip(t *testing.T) {
 		t,
 		len(msg.accusedIDs),
 		len(unmarshaled.accusedIDs),
-		"Expected accused IDs length to be equal pre- and post-round-trip")
+		"Expected accused IDs length to be equal pre- and post-round-trip",
+	)
 	for i, id := range msg.accusedIDs {
 		blsutils.AssertIDsEqual(t, id, unmarshaled.accusedIDs[i])
 	}
@@ -117,12 +119,14 @@ func TestJustificationsMessageRoundTrip(t *testing.T) {
 		t,
 		len(msg.justifications),
 		len(unmarshaled.justifications),
-		"Expected justifications length to be equal pre- and post-round-trip")
+		"Expected justifications length to be equal pre- and post-round-trip",
+	)
 	for id, sk := range msg.justifications {
 		if unmarshaledSk, ok := unmarshaled.justifications[id]; !ok {
 			t.Errorf(
 				"Expected starting id [%v] to exist in round-trip justifications",
-				id.GetHexString())
+				id.GetHexString(),
+			)
 		} else {
 			assertSecretKeyRoundTrip(t, sk, unmarshaledSk)
 		}
@@ -140,7 +144,8 @@ func assertPublicKeyRoundTrip(t *testing.T, pk1 *bls.PublicKey, pk2 *bls.PublicK
 		t.Errorf(
 			"bls.PublicKey failed to round-trip: [%s] != [%s]",
 			pk1.GetHexString(),
-			pk2.GetHexString())
+			pk2.GetHexString(),
+		)
 	}
 }
 
@@ -149,6 +154,7 @@ func assertSecretKeyRoundTrip(t *testing.T, sk1 *bls.SecretKey, sk2 *bls.SecretK
 		t.Errorf(
 			"bls.SecretKey failed to round-trip: [%s] != [%s]",
 			sk1.GetHexString(),
-			sk2.GetHexString())
+			sk2.GetHexString(),
+		)
 	}
 }
