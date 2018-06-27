@@ -19,6 +19,7 @@ type {{ .Prefix }}Promise struct {
 	completeFn func({{ .Type }}, error)
 
 	isComplete bool
+	succeeded  bool
 	value      {{ .Type }}
 	err        error
 }
@@ -34,7 +35,7 @@ func (p *{{ .Prefix }}Promise) OnSuccess(onSuccess func({{ .Type }})) *{{ .Prefi
 
 	p.successFn = onSuccess
 
-	if p.isComplete {
+	if p.isComplete && p.succeeded {
 		p.callSuccessFn()
 	}
 
@@ -52,7 +53,7 @@ func (p *{{ .Prefix }}Promise) OnFailure(onFailure func(error)) *{{ .Prefix }}Pr
 
 	p.failureFn = onFailure
 
-	if p.isComplete {
+	if p.isComplete && !p.succeeded {
 		p.callFailureFn()
 	}
 
@@ -93,6 +94,7 @@ func (p *{{ .Prefix }}Promise) Fulfill(value {{ .Type }}) error {
 	}
 
 	p.isComplete = true
+	p.succeeded = true
 	p.value = value
 
 	p.callSuccessFn()
@@ -114,6 +116,7 @@ func (p *{{ .Prefix }}Promise) Fail(err error) error {
 	}
 
 	p.isComplete = true
+	p.succeeded = false
 	p.err = err
 
 	p.callFailureFn()
