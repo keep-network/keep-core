@@ -38,6 +38,8 @@ func (e Err) Error() string {
 	EthereumContractGroupContractAddressErrNo
 	// NodePortErrNo is the error code for an invalid NodePort.
 	NodePortErrNo
+	// BootstrapSeedAndURLsErrNo is the error code for an invalid BootstrapSeedAndURLs.
+	BootstrapSeedAndURLsErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -140,8 +142,9 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 		return cfg, util.ErrWrap{ErrNo: NodePortErrNo, Err: err}
 	}
 
-	if cfg.Bootstrap.Seed == 0 && len(cfg.Bootstrap.URLs) == 0 {
-		return cfg, fmt.Errorf("either supply a valid bootstrap seed or valid bootstrap URLs")
+	if len(cfg.Bootstrap.URLs) == 0 && cfg.Bootstrap.Seed <= 0 {
+		err := errors.New("either supply a valid bootstrap seed or valid bootstrap URLs")
+		return cfg, util.ErrWrap{ErrNo: BootstrapSeedAndURLsErrNo, Err: err}
 	}
 
 	if cfg.Bootstrap.Seed != 0 && len(cfg.Bootstrap.URLs) > 0 {
