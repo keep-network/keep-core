@@ -204,6 +204,11 @@ func TestReadInvalidNodePortConfig(t *testing.T) {
 	util.NotOk(t, err, config.NodePortErrNo, "unexpected error: missing value for port; see node section in config file or use --port flag")
 }
 
+func TestReadInvalidBootstrapSeedConfig(t *testing.T) {
+	setup(t)
+	cfg, err := config.ReadConfig("./testdata/config.invalid.bootstrap.seed.toml")
+	util.NotOk(t, err, config.BootstrapSeedAndURLsErrNo, "bootstrap.Seed: %v", cfg.Bootstrap.Seed)
+}
 
 func setup(t *testing.T) {
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
