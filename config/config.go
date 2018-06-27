@@ -44,6 +44,8 @@ func (e Err) Error() string {
 	PeerURLsAndSeedErrNo
 	// FileDecodeErrNo is the error code for an invalid FileDecode.
 	FileDecodeErrNo
+	// ReadPasswordErrNo is the error code for an invalid ReadPassword.
+	ReadPasswordErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -160,9 +162,8 @@ func ReadConfig(filePath string) (Config, util.ErrWrap) {
 	return cfg, nil
 }
 
-// ReadPassword prompts a user to enter a password.   The read password uses
-// the system password reading call that helps to prevent key loggers from
-// capturing the password.
+// ReadPassword prompts a user to enter a password.   The read password uses the system
+// password reading call that helps to prevent key loggers from capturing the password.
 func readPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
