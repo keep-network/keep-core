@@ -3,6 +3,7 @@ package chain
 import (
 	"math/big"
 
+	"github.com/keep-network/keep-core-dkg-branch/go/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -30,16 +31,6 @@ type Interface interface {
 	//
 	// TODO activation delay may be unnecessary, we'll see.
 	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
-	//
-	RequestRelayEntry(blockReward *big.Int, seed []byte) error
-	SubmitRelayEntry(
-		groupID string,
-		requestID *big.Int,
-		previousEntry *big.Int,
-		groupSignature *big.Int,
-	) *async.RelayEntryPromise
-}
-
-	// GetConfig returns the expected configuration of the threshold relay.
-	GetConfig() (config.Chain, error)
+	// SubmitRelayEntry does something useful, I hope
+	SubmitRelayEntry(relay.Entry) *async.RelayEntryPromise
 }
