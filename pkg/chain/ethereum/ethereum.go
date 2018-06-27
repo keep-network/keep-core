@@ -107,15 +107,6 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	return nil
 }
 
-func (ec *ethereumChain) RequestRelayEntry(blockReward *big.Int, seed []byte) error {
-	if err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(nil, nil); err != nil {
-		return err
-	}
-
-	_, err := ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed)
-	return err
-}
-
 func (ec *ethereumChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPromise {
 	var (
 		relayEntryPromise = &async.RelayEntryPromise{}
