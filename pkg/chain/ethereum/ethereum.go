@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -111,20 +112,27 @@ func (ec *ethereumChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPr
 	var (
 		relayEntryPromise = &async.RelayEntryPromise{}
 
-		success = func(
-			requestID *big.Int,
+	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+		func(
+			RequestID *big.Int,
 			RequestResponse *big.Int,
 			RequestGroupID *big.Int,
 			PreviousEntry *big.Int,
 			blockNumber *big.Int,
 		) {
-			relayEntryPromise.Fulfill(&relay.Entry{})
-		}
-
-		fail = func(err error) error { return relayEntryPromise.Fail(err) }
+			err := relayEntryPromise.Fulfill(&relay.Entry{
+				RequestID:     RequestID,
+				Value:         RequestResponse.Bytes(),
+				GroupID:       RequestGroupID,
+				PreviousEntry: PreviousEntry,
+				Timestamp:     time.Now().UTC(),
+			})
+			if err != nil {
+				fmt.Println(err)
+			}
+		},
+		func(err error) error { return relayEntryPromise.Fail(err) },
 	)
-
-	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(success, fail)
 	if err != nil {
 		relayEntryPromise.Fail(err)
 		return nil

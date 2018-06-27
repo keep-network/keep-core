@@ -194,7 +194,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 // relayEntryGeneratedFunc type of function called for
 // RelayEntryGenerated event.
 type relayEntryGeneratedFunc func(
-	requestID *big.Int,
+	RequestID *big.Int,
 	RequestResponse *big.Int,
 	RequestGroupID *big.Int,
 	PreviousEntry *big.Int,
