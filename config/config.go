@@ -42,6 +42,8 @@ func (e Err) Error() string {
 	BootstrapSeedAndURLsErrNo
 	// PeerURLsAndSeedErrNo is the error code for an invalid PeerURLsAndSeed.
 	PeerURLsAndSeedErrNo
+	// FileDecodeErrNo is the error code for an invalid FileDecode.
+	FileDecodeErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -79,9 +81,10 @@ var (
 )
 
 // ReadConfig reads in the configuration file in .toml format.
-func ReadConfig(filePath string) (cfg Config, err error) {
-	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
-		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
+func ReadConfig(filePath string) (Config, util.ErrWrap) {
+	var cfg Config
+	if _, err := toml.DecodeFile(filePath, &cfg); err != nil {
+		return cfg, util.ErrWrap{ErrNo: FileDecodeErrNo, Err: err}
 	}
 
 	var password string
