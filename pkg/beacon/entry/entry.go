@@ -82,7 +82,7 @@ func isNodeResponsible(currentState relay.NodeState) bool {
 }
 
 func generateSigShare(currentState relay.NodeState, request Request) signatureShare {
-	mySigShare := blsSign(request.previousEntry.Value[:])
+	mySigShare := blsSign(request.previousEntry.Value)
 
 	return signatureShare{currentState.GroupID, mySigShare}
 }
@@ -92,7 +92,7 @@ func generateSigShare(currentState relay.NodeState, request Request) signatureSh
 const groupThreshold = 5
 
 func verifyIncomingGroupShares(request Request, groupShares chan signatureShare) []signatureShare {
-	previousValue := request.previousEntry.Value[:]
+	previousValue := request.previousEntry.Value
 	verifiedShares := make([]signatureShare, groupThreshold-1 /* we already have our share */)
 	currentShare := 0
 	for share := range groupShares {

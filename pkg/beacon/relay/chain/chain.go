@@ -3,7 +3,7 @@ package chain
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core-dkg-branch/go/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
