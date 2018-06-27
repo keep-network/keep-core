@@ -60,9 +60,13 @@ func TestReadPeerConfig(t *testing.T) {
 	}
 }
 
+func TestReadBootstrapConfig(t *testing.T) {
+	setup(t)
+
+	cfg, err := config.ReadConfig("./testdata/config.bootstrap.toml")
 	util.Ok(t, err)
 
-	var configReadTests = map[string]struct {
+	configReadTests := map[string]struct {
 		readValueFunc func(*config.Config) interface{}
 		expectedValue interface{}
 	}{
@@ -87,6 +91,14 @@ func TestReadPeerConfig(t *testing.T) {
 				"GroupContract":    "0x139deb0dd975af8e4cc91fe9053a37e4faf37649",
 			},
 		},
+		"Node.Port": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Node.Port },
+			expectedValue: 27001,
+		},
+		"Bootstrap.Seed": {
+			readValueFunc: func(c *config.Config) interface{} { return c.Bootstrap.Seed },
+			expectedValue: 2,
+		},
 	}
 
 	for testName, test := range configReadTests {
@@ -96,6 +108,8 @@ func TestReadPeerConfig(t *testing.T) {
 			util.Equals(t, expected, actual)
 		})
 	}
+}
+
 
 func setup(t *testing.T) {
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
