@@ -28,6 +28,8 @@ func (e Err) Error() string {
 	EthereumURLErrNo
 	// EthereumURLRPCErrNo is the error code for an invalid EthereumURLRPC.
 	EthereumURLRPCErrNo
+	// EthereumAccountAddressErrNo is the error code for an invalid EthereumAccountAddress.
+	EthereumAccountAddressErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -95,6 +97,13 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 			cfg.Ethereum.URLRPC, ethereumURLRPCPattern)
 
 		return cfg, util.ErrWrap{ErrNo: EthereumURLRPCErrNo, Err: err}
+	}
+
+	if !util.MatchFound(ethAddressRegex, cfg.Ethereum.Account.Address) {
+		err := fmt.Errorf("Ethereum.Account.Address (%s) invalid; format expected:%s",
+			cfg.Ethereum.Account.Address, ethereumAddressPattern)
+
+		return cfg, util.ErrWrap{ErrNo: EthereumAccountAddressErrNo, Err: err}
 	}
 
 	}
