@@ -34,6 +34,8 @@ func (e Err) Error() string {
 	EthereumAccountKeyfileErrNo
 	// EthereumContractKeepRandomBeaconAddressErrNo is the error code for an invalid EthereumContractKeepRandomBeaconAddress.
 	EthereumContractKeepRandomBeaconAddressErrNo
+	// EthereumContractGroupContractAddressErrNo is the error code for an invalid EthereumContractGroupContractAddress.
+	EthereumContractGroupContractAddressErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -124,6 +126,11 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 		return cfg, util.ErrWrap{ErrNo: EthereumContractKeepRandomBeaconAddressErrNo, Err: err}
 	}
 
+	if !util.MatchFound(ethAddressRegex, cfg.Ethereum.ContractAddresses["GroupContract"]) {
+		err := fmt.Errorf("Ethereum.ContractAddresses[GroupContract] (%s) invalid; format expected:%s",
+			cfg.Ethereum.ContractAddresses["GroupContract"], ethereumAddressPattern)
+
+		return cfg, util.ErrWrap{ErrNo: EthereumContractGroupContractAddressErrNo, Err: err}
 	}
 
 	if cfg.Node.Port == 0 {
