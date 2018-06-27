@@ -1,7 +1,11 @@
 = Distributed Key Generation
 
-The DKG scheme proposal is based on GJKR
-and modified to make protocol violations objectively attributable
+The DKG scheme proposal is based on a protocol by
+Gennaro, Jarecki, Krawczyk and Rabin <<GJKR>>.
+GJKR is further based on Pedersen-VSS (verifiable secret sharing) <<Ped>>.
+
+For this implementation, GJKR has been modified
+to make protocol violations objectively attributable
 and remove the need for one-to-one messaging channels.
 The protocol uses ephemeral ECDH keys
 to encrypt one-to-one communication on the broadcast channel.
@@ -713,3 +717,16 @@ receiveSubmission(s) =
       memberVotes[P_s] = hs
       submissionVotes[hs] += 1
 ----
+
+[bibliography]
+== References
+
+- [[[GJKR]]] Gennaro R., Jarecki S., Krawczyk H., Rabin T. (1999)
+Secure Distributed Key Generation for Discrete-Log Based Cryptosystems.
+In: Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
+Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
+
+- [[[Ped]]] Pedersen T.P. (1992)
+Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing.
+In: Feigenbaum J. (eds) Advances in Cryptology — CRYPTO ’91. CRYPTO 1991.
+Lecture Notes in Computer Science, vol 576. Springer, Berlin, Heidelberg
