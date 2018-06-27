@@ -35,6 +35,7 @@ contract('TestKeepRandomBeaconStub', function(accounts) {
     await implViaProxy.requestRelayEntry(10, 123456789, {from: account_one, value: 100});
 
     relayEntryGeneratedEvent.get(function(error, result){
+      assert.equal(result[0].args['previousEntry'].toNumber(), previousRandomNumber, "Previous entry should be present in the event.");
       assert.notEqual(result[0].args['requestResponse'].toNumber(), previousRandomNumber, "New number should be different from previous.");
     });
 
