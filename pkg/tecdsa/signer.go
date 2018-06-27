@@ -10,20 +10,20 @@ package tecdsa
 
 import (
 	"crypto/elliptic"
-	crand "crypto/rand"
+	"crypto/rand"
 	"fmt"
-	mrand "math/rand"
+
+	mathrand "math/rand"
 
 	"github.com/keep-network/paillier"
 )
 
-// N is of length 2048, making the operations mod N^2 of length 4096
-const paillierModulusBitLength = 2048 // TODO: must be larger than q^8?
+const paillierModulusBitLength = 128 // TODO: must be larger than q^8?
 
 // PublicParameters for T-ECDSA
 type PublicParameters struct {
-	groupSize          int
-	dishonestThreshold int
+	groupSize int
+	threshold int
 
 	curve elliptic.Curve
 }
@@ -45,7 +45,7 @@ type LocalSigner struct {
 func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	curveParams := s.publicParameters.curve.Params()
 
-	xi, err := crand.Int(crand.Reader, curveParams.N)
+	xi, err := rand.Int(rand.Reader, curveParams.N)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate DSA key share [%v]", err)
 	}
@@ -59,15 +59,14 @@ func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 			y: yyi,
 		},
 	}, nil
-
 }
 
 func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 	paillierKeyGen := paillier.GetThresholdKeyGenerator(
 		paillierModulusBitLength,
 		parameters.groupSize,
-		parameters.dishonestThreshold,
-		crand.Reader,
+		parameters.threshold,
+		rand.Reader,
 	)
 
 	paillierKeys, err := paillierKeyGen.Generate()
@@ -80,8 +79,9 @@ func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 	members := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(members); i++ {
 		members[i] = &LocalSigner{
-			ID:         generateMemberID(),
-			paillerKey: paillierKeys[i],
+			ID:               generateMemberID(),
+			paillerKey:       paillierKeys[i],
+			publicParameters: parameters,
 		}
 	}
 
@@ -90,7 +90,7 @@ func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 
 func generateMemberID() string {
 	memberID := "0"
-	for memberID = fmt.Sprintf("%v", mrand.Int31()); memberID == "0"; {
+	for memberID = fmt.Sprintf("%v", mathrand.Int31()); memberID == "0"; {
 	}
 	return memberID
 }
