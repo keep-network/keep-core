@@ -46,9 +46,18 @@ type bootstrap struct {
 	Seed int
 }
 
+	ethereumURLPattern     = `ws://.+|\w.ipc`
+	ethereumURLRPCPattern  = `^https?:\/\/(.+)\.(.+)`
+	ethereumAddressPattern = `([13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-fA-F0-9]{40}|\\w+\\.eth(\\W|$)|(?i:iban:)?XE[0-9]{2}[a-zA-Z]{16})|^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$`
+	ethereumKeyfilePattern = `\/.+`
+)
+
 var (
 	// KeepOpts contains global application settings
 	KeepOpts Config
+	ethURLRegex     = util.CompileRegex(ethereumURLPattern)
+	ethURLRPCRegex  = util.CompileRegex(ethereumURLRPCPattern)
+	ethAddressRegex = util.CompileRegex(ethereumAddressPattern)
 )
 
 // ReadConfig reads in the configuration file in .toml format.
