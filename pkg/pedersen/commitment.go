@@ -37,14 +37,14 @@ type Point struct {
 func GenerateCommitment(msg *[]byte) (*big.Int, *big.Int, []byte, error) {
 	// Generate Randoms - another way of random generation is used in elliptic.GenerateKey
 	// [TC]: `pkey = (randomFromZn[0, q - 1])`
-	publicKey, err := RandomBigInt()
+	publicKey, err := rand.Int(rand.Reader, cardinality)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	// decommitmentKey - used to commitment validation. `r` in [TC]
 	// [TC]: `r = (randomFromZn[0, q - 1])`
-	decommitmentKey, err := RandomBigInt()
+	decommitmentKey, err := rand.Int(rand.Reader, cardinality)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -94,11 +94,4 @@ func curveAdd(point1, point2 *Point) *Point {
 	var result *Point
 	result.x, result.y = Curve.Add(point1.x, point1.y, point2.x, point2.y)
 	return result
-}
-
-// RandomBigInt returns random `big.Int` value from `[0,q)`.
-// It is required by [TC] to return a value from `[0, q-1]`, although
-// `rand.Int` function operates in a half-open interval `[0,q)`.
-func RandomBigInt() (*big.Int, error) {
-	return rand.Int(rand.Reader, cardinality)
 }
