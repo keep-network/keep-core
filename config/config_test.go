@@ -198,6 +198,12 @@ func TestReadInvalidEthereumContractGroupContractAddress(t *testing.T) {
 	util.NotOk(t, err, config.EthereumContractGroupContractAddressErrNo, "ethereum.ContractAddresses.GroupContract: %v", cfg.Ethereum.ContractAddresses["GroupContract"])
 }
 
+func TestReadInvalidNodePortConfig(t *testing.T) {
+	setup(t)
+	_, err := config.ReadConfig("./testdata/config.invalid.node.port.toml")
+	util.NotOk(t, err, config.NodePortErrNo, "unexpected error: missing value for port; see node section in config file or use --port flag")
+}
+
 
 func setup(t *testing.T) {
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
