@@ -192,6 +192,12 @@ func TestReadInvalidEthereumContractKeepRandomBeaconAddress(t *testing.T) {
 	util.NotOk(t, err, config.EthereumContractKeepRandomBeaconAddressErrNo, "ethereum.ContractAddresses.KeepRandomBeacon: %v", cfg.Ethereum.ContractAddresses["KeepRandomBeacon"])
 }
 
+func TestReadInvalidEthereumContractGroupContractAddress(t *testing.T) {
+	setup(t)
+	cfg, err := config.ReadConfig("./testdata/config.invalid.group.contract.address.toml")
+	util.NotOk(t, err, config.EthereumContractGroupContractAddressErrNo, "ethereum.ContractAddresses.GroupContract: %v", cfg.Ethereum.ContractAddresses["GroupContract"])
+}
+
 
 func setup(t *testing.T) {
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
