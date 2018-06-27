@@ -174,6 +174,12 @@ func TestReadInvalidEthereumURLRPCConfig(t *testing.T) {
 	util.NotOk(t, err, config.EthereumURLRPCErrNo, "ethereum.URLRPC: %v", cfg.Ethereum.URLRPC)
 }
 
+func TestReadInvalidEthereumAccountAddress(t *testing.T) {
+	setup(t)
+	cfg, err := config.ReadConfig("./testdata/config.invalid.ethereum.account.address.toml")
+	util.NotOk(t, err, config.EthereumAccountAddressErrNo, "ethereum.account.Address: %v", cfg.Ethereum.Account.Address)
+}
+
 
 func setup(t *testing.T) {
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
