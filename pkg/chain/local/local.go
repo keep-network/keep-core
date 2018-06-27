@@ -20,7 +20,7 @@ type localChain struct {
 	groupPublicKeys      map[string][96]byte
 
 	groupRelayEntriesMutex sync.Mutex
-	groupRelayEntries      map[*big.Int][32]byte
+	groupRelayEntries      map[int64][32]byte
 
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(string, string)
@@ -97,7 +97,8 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	c.groupRelayEntriesMutex.Lock()
 	defer c.groupRelayEntriesMutex.Unlock()
 
-	if existing, exists := c.groupRelayEntries[entry.GroupID]; exists && existing != entry.Value {
+	existing, exists := c.groupRelayEntries[entry.GroupID.Int64()]
+	if exists && existing != entry.Value {
 		err := fmt.Errorf(
 			"mismatched signature for [%v], submission failed; \n"+
 				"[%v] vs [%v]\n",
@@ -110,13 +111,13 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 
 		return relayEntryPromise
 	}
-	c.groupRelayEntries[entry.GroupID] = entry.Value
+	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
 
 	relayEntryPromise.Fulfill(&relay.Entry{
-		RequestID:     big.NewInt(int64(0)),
+		RequestID:     entry.RequestID,
 		Value:         entry.Value,
 		GroupID:       entry.GroupID,
-		PreviousEntry: big.NewInt(int64(0)),
+		PreviousEntry: entry.PreviousEntry,
 		Timestamp:     time.Now().UTC(),
 	})
 
@@ -138,7 +139,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			Threshold: threshold,
 		},
 		groupPublicKeysMutex: sync.Mutex{},
-		groupRelayEntries:    make(map[*big.Int][32]byte),
+		groupRelayEntries:    make(map[int64][32]byte),
 		groupPublicKeys:      make(map[string][96]byte),
 		blockCounter:         bc,
 	}

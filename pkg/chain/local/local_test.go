@@ -17,26 +17,28 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&relay.Entry{
 			RequestID: big.NewInt(int64(19)),
+			GroupID:   big.NewInt(int64(1)),
 		},
 	)
+
 	done := make(chan *relay.Entry)
-	errChan := make(chan error)
 	relayEntryPromise.OnSuccess(func(entry *relay.Entry) {
 		done <- entry
 	}).OnFailure(func(err error) {
-		errChan <- err
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 
 	select {
 	case entry := <-done:
-		expected := big.NewInt(int64(19))
-		if entry.RequestID != expected {
-			t.Fatalf("expected [%v], got [%v]", expected, entry.RequestID)
-		}
-		return
-	case err := <-errChan:
-		if err != nil {
-			t.Fatal(err)
+		expected := int64(19)
+		if entry.RequestID.Int64() != expected {
+			t.Fatalf(
+				"expected [%v], got [%v]",
+				expected,
+				entry.RequestID.Int64(),
+			)
 		}
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
