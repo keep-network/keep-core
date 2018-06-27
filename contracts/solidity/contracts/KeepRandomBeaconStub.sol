@@ -25,7 +25,7 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Initialize Keep Random Beacon implementaion contract.
+     * @dev Initialize Keep Random Beacon implementation contract.
      */
     function initialize()
         public
@@ -43,7 +43,7 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Stub method to simulate succesful request to generate a new relay entry,
+     * @dev Stub method to simulate successful request to generate a new relay entry,
      * which will include a random number (by signing the previous entry's random number).
      * @param _blockReward The value in KEEP for generating the signature.
      * @param _seed Initial seed random value from the client. It should be a cryptographically generated random value.
