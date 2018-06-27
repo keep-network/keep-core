@@ -21,8 +21,6 @@ var (
 	randomPoint *Point
 	// basePoint - elliptic curve base point. `basePoint` in [TC]
 	basePoint = &Point{x: Curve.Params().Gx, y: Curve.Params().Gy}
-	// decommitmentKey - used to commitment validation. `r` in [TC]
-	decommitmentKey *big.Int
 )
 
 // Point is a structure of `x` and `y` coordinates
@@ -43,6 +41,8 @@ func GenerateCommitment(msg *[]byte) (*big.Int, *big.Int, []byte, error) {
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
+	// decommitmentKey - used to commitment validation. `r` in [TC]
 	// [TC]: `r = (randomFromZn[0, q - 1])`
 	decommitmentKey, err := RandomBigInt()
 	if err != nil {
