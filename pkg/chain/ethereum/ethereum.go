@@ -109,8 +109,7 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPromise {
-	var (
-		relayEntryPromise = &async.RelayEntryPromise{}
+	relayEntryPromise := &async.RelayEntryPromise{}
 
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
@@ -138,13 +137,12 @@ func (ec *ethereumChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPr
 		return nil
 	}
 
-	groupSignature := &big.Int{}
-	groupSignature.SetBytes(entry.Value)
+	groupSignature := big.NewInt(int64(0)).SetBytes(entry.Value)
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
 		entry.RequestID,
-		groupSignature,
 		entry.GroupID,
 		entry.PreviousEntry,
+		groupSignature,
 	)
 	if err != nil {
 		relayEntryPromise.Fail(err)
