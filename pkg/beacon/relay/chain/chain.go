@@ -31,6 +31,11 @@ type Interface interface {
 	//
 	// TODO activation delay may be unnecessary, we'll see.
 	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
-	// SubmitRelayEntry does something useful, I hope
+	// SubmitRelayEntry submits an entry, which consists of a 32-byte
+	// signature to a blockchain, the associated request identifier
+	// (to which the signature is in response to), a group identifier (which
+	// group fulfilled this request), the previous entry, and a timestamp.
+	// We return a promise, which returns the fulfilled value on success,
+	// or reports on-chain errors in the event of a failure.
 	SubmitRelayEntry(relay.Entry) *async.RelayEntryPromise
 }
