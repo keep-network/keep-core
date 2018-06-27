@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"math/big"
 	"testing"
 	"time"
 
@@ -13,20 +14,30 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	defer cancel()
 
 	chainHandle := Connect(10, 4).ThresholdRelay()
-	relayEntryPromise := chainHandle.SubmitRelayEntry(&relay.Entry{})
-	done := make(chan struct{})
+	relayEntryPromise := chainHandle.SubmitRelayEntry(
+		&relay.Entry{
+			RequestID: big.NewInt(int64(19)),
+		},
+	)
+	done := make(chan *relay.Entry)
 	errChan := make(chan error)
 	relayEntryPromise.OnSuccess(func(entry *relay.Entry) {
-		done <- struct{}{}
+		done <- entry
 	}).OnFailure(func(err error) {
 		errChan <- err
 	})
 
 	select {
-	case <-done:
+	case entry := <-done:
+		expected := big.NewInt(int64(19))
+		if entry.RequestID != expected {
+			t.Fatalf("expected [%v], got [%v]", expected, entry.RequestID)
+		}
 		return
 	case err := <-errChan:
-		t.Fatal(err)
+		if err != nil {
+			t.Fatal(err)
+		}
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
