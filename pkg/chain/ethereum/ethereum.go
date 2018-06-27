@@ -130,15 +130,33 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 				Timestamp:     time.Now().UTC(),
 			})
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf(
+					"execution of fulfilling promise failed with: [%v]",
+					err,
+				)
 			}
 		},
-		func(err error) error { return relayEntryPromise.Fail(err) },
+		func(err error) error {
+			return relayEntryPromise.Fail(
+				fmt.Errorf(
+					"entry of relay submission failed with: [%v]",
+					err,
+				),
+			)
+		},
 	)
 	if err != nil {
-		promiseErr := relayEntryPromise.Fail(err)
+		promiseErr := relayEntryPromise.Fail(
+			fmt.Errorf(
+				"watch relay entry failed with: [%v]",
+				err,
+			),
+		)
 		if promiseErr != nil {
-			fmt.Println(promiseErr)
+			fmt.Printf(
+				"execution of failing promise failed with: [%v]",
+				promiseErr,
+			)
 		}
 		return nil
 	}
@@ -151,9 +169,17 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 		groupSignature,
 	)
 	if err != nil {
-		promiseErr := relayEntryPromise.Fail(err)
+		promiseErr := relayEntryPromise.Fail(
+			fmt.Errorf(
+				"submitting relay entry to chain failed with: [%v]",
+				err,
+			),
+		)
 		if promiseErr != nil {
-			fmt.Println(promiseErr)
+			fmt.Printf(
+				"execution of failing promise failed with: [%v]",
+				promiseErr,
+			)
 		}
 		return nil
 	}
