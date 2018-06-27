@@ -24,6 +24,9 @@ func (e Err) Error() string {
 	return fmt.Sprintf("[%d] %s", e.ErrorNumber(), e.Err.Error())
 }
 
+const (
+	// InvalidErrNo represents an error that should never occur.
+	InvalidErrNo = iota
 	// EthereumURLErrNo is the error code for an invalid EthereumURL.
 	EthereumURLErrNo
 	// EthereumURLRPCErrNo is the error code for an invalid EthereumURLRPC.
@@ -46,6 +49,9 @@ func (e Err) Error() string {
 	FileDecodeErrNo
 	// ReadPasswordErrNo is the error code for an invalid ReadPassword.
 	ReadPasswordErrNo
+	// PasswordRequiredErrNo is the error code for an invalid PasswordRequired.
+	PasswordRequiredErrNo
+)
 
 // Config is the top level config structure.
 type Config struct {
@@ -68,6 +74,8 @@ type bootstrap struct {
 	Seed int
 }
 
+const (
+	passwordEnvVariable    = "KEEP_ETHEREUM_PASSWORD"
 	ethereumURLPattern     = `ws://.+|\w.ipc`
 	ethereumURLRPCPattern  = `^https?:\/\/(.+)\.(.+)`
 	ethereumAddressPattern = `([13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-fA-F0-9]{40}|\\w+\\.eth(\\W|$)|(?i:iban:)?XE[0-9]{2}[a-zA-Z]{16})|^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$`
@@ -75,8 +83,8 @@ type bootstrap struct {
 )
 
 var (
-	// KeepOpts contains global application settings
-	KeepOpts Config
+	// Opts contains global application settings.
+	Opts            Config
 	ethURLRegex     = util.CompileRegex(ethereumURLPattern)
 	ethURLRPCRegex  = util.CompileRegex(ethereumURLRPCPattern)
 	ethAddressRegex = util.CompileRegex(ethereumAddressPattern)
@@ -89,11 +97,11 @@ func ReadConfig(filePath string) (Config, util.ErrWrap) {
 		return cfg, util.ErrWrap{ErrNo: FileDecodeErrNo, Err: err}
 	}
 
-	var password string
 	envPassword := os.Getenv(passwordEnvVariable)
 	if envPassword == "prompt" {
-		if password, err = readPassword("Enter Account Password: "); err != nil {
-			return cfg, err
+		password, err := readPassword("Enter Account Password: ")
+		if err != nil {
+			return cfg, util.ErrWrap{ErrNo: ReadPasswordErrNo, Err: err}
 		}
 		cfg.Ethereum.Account.KeyFilePassword = password
 	} else {
@@ -101,7 +109,10 @@ func ReadConfig(filePath string) (Config, util.ErrWrap) {
 	}
 
 	if cfg.Ethereum.Account.KeyFilePassword == "" {
-		return cfg, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
+		err := fmt.Errorf("password is required;  set " + passwordEnvVariable + " environment variable to password or 'prompt'")
+		return cfg, util.ErrWrap{ErrNo: PasswordRequiredErrNo, Err: err}
+	}
+
 	if !util.MatchFound(ethURLRegex, cfg.Ethereum.URL) {
 		err := fmt.Errorf("Ethereum.URL (%s) invalid; format expected:%s",
 			cfg.Ethereum.URL, ethereumURLPattern)
@@ -159,7 +170,7 @@ func ReadConfig(filePath string) (Config, util.ErrWrap) {
 		return cfg, util.ErrWrap{ErrNo: PeerURLsAndSeedErrNo, Err: err}
 	}
 
-	return cfg, nil
+	return cfg, util.ErrWrap{}
 }
 
 // ReadPassword prompts a user to enter a password.   The read password uses the system
