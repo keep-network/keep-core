@@ -108,7 +108,7 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	return nil
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPromise {
+func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(

@@ -91,7 +91,7 @@ func (c *localChain) OnGroupPublicKeySubmitted(
 	return nil
 }
 
-func (c *localChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPromise {
+func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	c.groupRelayEntriesMutex.Lock()
@@ -138,6 +138,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			Threshold: threshold,
 		},
 		groupPublicKeysMutex: sync.Mutex{},
+		groupRelayEntries:    make(map[*big.Int][32]byte),
 		groupPublicKeys:      make(map[string][96]byte),
 		blockCounter:         bc,
 	}

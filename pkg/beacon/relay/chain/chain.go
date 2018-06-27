@@ -37,5 +37,5 @@ type Interface interface {
 	// group fulfilled this request), the previous entry, and a timestamp.
 	// We return a promise, which returns the fulfilled value on success,
 	// or reports on-chain errors in the event of a failure.
-	SubmitRelayEntry(relay.Entry) *async.RelayEntryPromise
+	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
 }
