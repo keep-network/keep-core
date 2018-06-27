@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+func TestLocalSubmitRelayEntry(t *testing.T) {}
+
 func TestLocalBlockWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockWait    int

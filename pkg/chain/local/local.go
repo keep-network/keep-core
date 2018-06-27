@@ -5,9 +5,11 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 type localChain struct {
@@ -78,6 +80,11 @@ func (c *localChain) OnGroupPublicKeySubmitted(
 		handler,
 	)
 	c.handlerMutex.Unlock()
+
+	return nil
+}
+
+func (c *localChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPromise {
 
 	return nil
 }
