@@ -8,8 +8,8 @@ import (
 	"github.com/keep-network/keep-core/util"
 )
 
-func TestReadConfig(t *testing.T) {
-	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
+func TestReadPeerConfig(t *testing.T) {
+	setup(t)
 	util.Ok(t, err)
 
 	cfg, err := config.ReadConfig("../test/config.toml")
@@ -50,4 +50,7 @@ func TestReadConfig(t *testing.T) {
 		})
 	}
 
+func setup(t *testing.T) {
+	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
+	util.Ok(t, util.ErrWrap{ErrNo: config.InvalidErrNo, Err: err})
 }
