@@ -36,6 +36,8 @@ func (e Err) Error() string {
 	EthereumContractKeepRandomBeaconAddressErrNo
 	// EthereumContractGroupContractAddressErrNo is the error code for an invalid EthereumContractGroupContractAddress.
 	EthereumContractGroupContractAddressErrNo
+	// NodePortErrNo is the error code for an invalid NodePort.
+	NodePortErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -134,7 +136,8 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 	}
 
 	if cfg.Node.Port == 0 {
-		return cfg, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
+		err := errors.New("missing value for port; see node section in config file or use --port flag")
+		return cfg, util.ErrWrap{ErrNo: NodePortErrNo, Err: err}
 	}
 
 	if cfg.Bootstrap.Seed == 0 && len(cfg.Bootstrap.URLs) == 0 {
