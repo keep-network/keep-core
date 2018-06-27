@@ -40,6 +40,8 @@ func (e Err) Error() string {
 	NodePortErrNo
 	// BootstrapSeedAndURLsErrNo is the error code for an invalid BootstrapSeedAndURLs.
 	BootstrapSeedAndURLsErrNo
+	// PeerURLsAndSeedErrNo is the error code for an invalid PeerURLsAndSeed.
+	PeerURLsAndSeedErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -147,8 +149,9 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 		return cfg, util.ErrWrap{ErrNo: BootstrapSeedAndURLsErrNo, Err: err}
 	}
 
-	if cfg.Bootstrap.Seed != 0 && len(cfg.Bootstrap.URLs) > 0 {
-		return cfg, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
+	if len(cfg.Bootstrap.URLs) > 0 && cfg.Bootstrap.Seed != 0 {
+		err := errors.New("non-bootstrap node should have bootstrap URLs and a seed of 0")
+		return cfg, util.ErrWrap{ErrNo: PeerURLsAndSeedErrNo, Err: err}
 	}
 
 	return cfg, nil
