@@ -1,17 +1,25 @@
 = Distributed Key Generation
 
+:toc: macro
+:toclevels: 4
+
 The DKG scheme proposal is based on a protocol by
 Gennaro, Jarecki, Krawczyk and Rabin <<GJKR>>.
 GJKR is further based on Pedersen-VSS (verifiable secret sharing) <<Ped>>.
-
 For this implementation, GJKR has been modified
 to make protocol violations objectively attributable
 and remove the need for one-to-one messaging channels.
+
 The protocol uses ephemeral ECDH keys
 to encrypt one-to-one communication on the broadcast channel.
 This ensures that participants can neither
 make baseless complaints nor
 cause a minor nuisance with subtle misbehavior.
+
+Additionally, the threshold relay public key submission protocol
+is defined.
+
+toc::[]
 
 == Tech
 
