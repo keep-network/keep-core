@@ -133,7 +133,10 @@ func (ec *ethereumChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPr
 		func(err error) error { return relayEntryPromise.Fail(err) },
 	)
 	if err != nil {
-		relayEntryPromise.Fail(err)
+		promiseErr := relayEntryPromise.Fail(err)
+		if promiseErr != nil {
+			fmt.Println(promiseErr)
+		}
 		return nil
 	}
 
@@ -145,7 +148,10 @@ func (ec *ethereumChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPr
 		groupSignature,
 	)
 	if err != nil {
-		relayEntryPromise.Fail(err)
+		promiseErr := relayEntryPromise.Fail(err)
+		if promiseErr != nil {
+			fmt.Println(promiseErr)
+		}
 		return nil
 	}
 
