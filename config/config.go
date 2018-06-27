@@ -30,6 +30,8 @@ func (e Err) Error() string {
 	EthereumURLRPCErrNo
 	// EthereumAccountAddressErrNo is the error code for an invalid EthereumAccountAddress.
 	EthereumAccountAddressErrNo
+	// EthereumAccountKeyfileErrNo is the error code for an invalid EthereumAccountKeyfile.
+	EthereumAccountKeyfileErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -104,6 +106,13 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 			cfg.Ethereum.Account.Address, ethereumAddressPattern)
 
 		return cfg, util.ErrWrap{ErrNo: EthereumAccountAddressErrNo, Err: err}
+	}
+
+	if !util.MatchFound(ethAddressRegex, cfg.Ethereum.Account.KeyFile) {
+		err := fmt.Errorf("Ethereum.Account.KeyFile (%s) invalid; format expected:%s",
+			cfg.Ethereum.Account.KeyFile, ethereumKeyfilePattern)
+
+		return cfg, util.ErrWrap{ErrNo: EthereumAccountKeyfileErrNo, Err: err}
 	}
 
 	}
