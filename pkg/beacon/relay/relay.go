@@ -22,7 +22,7 @@ type NodeState struct {
 // Entry represents one entry in the threshold relay.
 type Entry struct {
 	RequestID     *big.Int
-	Value         []byte
+	Value         [32]byte
 	GroupID       *big.Int
 	PreviousEntry *big.Int
 	Timestamp     time.Time
@@ -43,7 +43,7 @@ func EmptyState() NodeState {
 		GroupID:    0,
 		lastSeenEntry: Entry{
 			RequestID:     &big.Int{},
-			Value:         make([]byte, 0),
+			Value:         [32]byte{},
 			GroupID:       &big.Int{},
 			PreviousEntry: &big.Int{},
 		},

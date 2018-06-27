@@ -82,7 +82,7 @@ func isNodeResponsible(currentState relay.NodeState) bool {
 }
 
 func generateSigShare(currentState relay.NodeState, request Request) signatureShare {
-	mySigShare := blsSign(request.previousEntry.Value)
+	mySigShare := blsSign(request.previousEntry.Value[:])
 
 	return signatureShare{currentState.GroupID, mySigShare}
 }
@@ -92,7 +92,7 @@ func generateSigShare(currentState relay.NodeState, request Request) signatureSh
 const groupThreshold = 5
 
 func verifyIncomingGroupShares(request Request, groupShares chan signatureShare) []signatureShare {
-	previousValue := request.previousEntry.Value
+	previousValue := request.previousEntry.Value[:]
 	verifiedShares := make([]signatureShare, groupThreshold-1 /* we already have our share */)
 	currentShare := 0
 	for share := range groupShares {
@@ -147,14 +147,14 @@ func blsVerifyShare(previousValue []byte, share signatureShare) bool {
 }
 
 // FIXME Actually build final signature instead of concatenating all the shares.
-func blsFinalSignatureFromShares(shares []signatureShare) [8]byte {
+func blsFinalSignatureFromShares(shares []signatureShare) [32]byte {
 	fullSignature := make([]byte, 0)
 	for _, share := range shares {
 		fullSignature = append(fullSignature, share.shareBytes...)
 	}
 
 	// truncate to fit into return size
-	rightLengthSignature := [8]byte{}
+	rightLengthSignature := [32]byte{}
 	copy(rightLengthSignature[:], fullSignature)
 	return rightLengthSignature
 }
