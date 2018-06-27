@@ -24,6 +24,8 @@ func (e Err) Error() string {
 	return fmt.Sprintf("[%d] %s", e.ErrorNumber(), e.Err.Error())
 }
 
+	// EthereumURLErrNo is the error code for an invalid EthereumURL.
+	EthereumURLErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -79,6 +81,13 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 
 	if cfg.Ethereum.Account.KeyFilePassword == "" {
 		return cfg, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
+	if !util.MatchFound(ethURLRegex, cfg.Ethereum.URL) {
+		err := fmt.Errorf("Ethereum.URL (%s) invalid; format expected:%s",
+			cfg.Ethereum.URL, ethereumURLPattern)
+
+		return cfg, util.ErrWrap{ErrNo: EthereumURLErrNo, Err: err}
+	}
+
 	}
 
 	if cfg.Node.Port == 0 {
