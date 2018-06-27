@@ -6,18 +6,34 @@ import (
 	"strings"
 	"syscall"
 
+	"errors"
+
 	"github.com/BurntSushi/toml"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/util"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+// Err embeds a wrapped error type for using an error number for error type comparisons.
+type Err struct {
+	util.ErrWrap
+}
+
+// Error is a behavior only available for the Err type.
+func (e Err) Error() string {
+	return fmt.Sprintf("[%d] %s", e.ErrorNumber(), e.Err.Error())
+}
+
 
 // Config is the top level config structure.
 type Config struct {
 	Ethereum  ethereum.Config
 	Bootstrap bootstrap
 	Node      node
+}
+
+func (c *Config) Error() string {
+	return fmt.Sprintf("invalid Ethereum.Account.Address: %s", c.Ethereum.Account.Address)
 }
 
 type node struct {
