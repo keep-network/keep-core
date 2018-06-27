@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -13,13 +14,19 @@ import (
 )
 
 type localChain struct {
-	relayConfig                      relayconfig.Chain
-	groupPublicKeysMutex             sync.Mutex
-	groupPublicKeys                  map[string][96]byte
+	relayConfig relayconfig.Chain
+
+	groupPublicKeysMutex sync.Mutex
+	groupPublicKeys      map[string][96]byte
+
+	groupRelayEntriesMutex sync.Mutex
+	groupRelayEntries      map[*big.Int][32]byte
+
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(string, string)
 	groupPublicKeySubmissionHandlers []func(string, *big.Int)
-	blockCounter                     chain.BlockCounter
+
+	blockCounter chain.BlockCounter
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -85,8 +92,35 @@ func (c *localChain) OnGroupPublicKeySubmitted(
 }
 
 func (c *localChain) SubmitRelayEntry(entry relay.Entry) *async.RelayEntryPromise {
+	relayEntryPromise := &async.RelayEntryPromise{}
 
-	return nil
+	c.groupRelayEntriesMutex.Lock()
+	defer c.groupRelayEntriesMutex.Unlock()
+
+	if existing, exists := c.groupRelayEntries[entry.GroupID]; exists && existing != entry.Value {
+		err := fmt.Errorf(
+			"mismatched signature for [%v], submission failed; \n"+
+				"[%v] vs [%v]\n",
+			entry.GroupID,
+			existing,
+			entry.Value,
+		)
+
+		relayEntryPromise.Fail(err)
+
+		return relayEntryPromise
+	}
+	c.groupRelayEntries[entry.GroupID] = entry.Value
+
+	relayEntryPromise.Fulfill(&relay.Entry{
+		RequestID:     big.NewInt(int64(0)),
+		Value:         entry.Value,
+		GroupID:       entry.GroupID,
+		PreviousEntry: big.NewInt(int64(0)),
+		Timestamp:     time.Now().UTC(),
+	})
+
+	return relayEntryPromise
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {
