@@ -180,6 +180,12 @@ func TestReadInvalidEthereumAccountAddress(t *testing.T) {
 	util.NotOk(t, err, config.EthereumAccountAddressErrNo, "ethereum.account.Address: %v", cfg.Ethereum.Account.Address)
 }
 
+func TestReadInvalidEthereumAccountKeyfile(t *testing.T) {
+	setup(t)
+	cfg, err := config.ReadConfig("./testdata/config.invalid.ethereum.account.keyfile.toml")
+	util.NotOk(t, err, config.EthereumAccountKeyfileErrNo, "ethereum.account.KeyFile: %v", cfg.Ethereum.Account.KeyFile)
+}
+
 
 func setup(t *testing.T) {
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
