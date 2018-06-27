@@ -26,6 +26,8 @@ func (e Err) Error() string {
 
 	// EthereumURLErrNo is the error code for an invalid EthereumURL.
 	EthereumURLErrNo
+	// EthereumURLRPCErrNo is the error code for an invalid EthereumURLRPC.
+	EthereumURLRPCErrNo
 
 // Config is the top level config structure.
 type Config struct {
@@ -86,6 +88,13 @@ func ReadConfig(filePath string) (cfg Config, err error) {
 			cfg.Ethereum.URL, ethereumURLPattern)
 
 		return cfg, util.ErrWrap{ErrNo: EthereumURLErrNo, Err: err}
+	}
+
+	if !util.MatchFound(ethURLRPCRegex, cfg.Ethereum.URLRPC) {
+		err := fmt.Errorf("Ethereum.URLRPC (%s) invalid; format expected:%s",
+			cfg.Ethereum.URLRPC, ethereumURLRPCPattern)
+
+		return cfg, util.ErrWrap{ErrNo: EthereumURLRPCErrNo, Err: err}
 	}
 
 	}
