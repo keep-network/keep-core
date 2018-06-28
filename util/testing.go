@@ -15,25 +15,23 @@ func Assert(tb testing.TB, condition bool, message string, got ...interface{}) {
 }
 
 // Ok fails when err is not nil
-func Ok(tb testing.TB, errWrap ErrWrap) {
+func Ok(tb testing.TB, err error) {
 	tb.Helper()
-	if errWrap.Err != nil {
-		tb.Fatalf(redMsg("unexpected error: %v"), errWrap)
+	if err != nil {
+		tb.Fatalf(redMsg("unexpected error: %v"), err)
 	}
 }
 
 // NotOk fails when err is nil
-// util.NotOk(t, err, "input=%v", test.input)
-func NotOk(tb testing.TB, errWrap ErrWrap, errType int, msgFormat string, msgArgs ...interface{}) {
+func NotOk(tb testing.TB, err error, msgFormat string, msgArgs ...interface{}) {
 	tb.Helper()
 
-	if errWrap.Err == nil {
+	if err == nil {
 		if len(msgArgs) != 0 {
 			tb.Fatalf(redMsg("expected error where: "+msgFormat+", got none"), msgArgs...)
+		} else {
+			tb.Fatalf(redMsg("expected error, got none"))
 		}
-		tb.Fatalf(redMsg("expected error, got none"))
-	} else if errWrap.ErrNo != errType {
-		tb.Fatalf(redMsg(fmt.Sprintf("expected error (%d) got (%d): %v", errType, errWrap.ErrorNumber(), errWrap.Err.Error())))
 	}
 }
 
