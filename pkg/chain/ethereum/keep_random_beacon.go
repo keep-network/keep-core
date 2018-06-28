@@ -217,13 +217,14 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		for {
 			select {
 			case event := <-eventChan:
-				success(&relayEntryGeneratedParams{
-					requestID:       event.RequestID,
-					requestResponse: event.RequestResponse,
-					requestGroupID:  event.RequestGroupID,
-					previousEntry:   event.PreviousEntry,
-					blockNumber:     event.BlockNumber,
-				},
+				success(
+					&relayEntryGeneratedParams{
+						requestID:       event.RequestID,
+						requestResponse: event.RequestResponse,
+						requestGroupID:  event.RequestGroupID,
+						previousEntry:   event.PreviousEntry,
+						blockNumber:     event.BlockNumber,
+					},
 				)
 
 			case ee := <-eventSubscription.Err():
