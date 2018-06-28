@@ -214,12 +214,12 @@ func (f relayEntryGeneratedFunc) Type() string {
 	return "relay-entry-generated"
 }
 
-func (krb *KeepRandomBeacon) RegisterSuccessCallback(success SuccessFunc) error {
+func (krb *KeepRandomBeacon) RegisterSuccessCallback(success SuccessFunc) (string, error) {
 	krb.successCallbacksMapMutex.Lock()
 	krb.successCallbacksMap[success.Type()] = success
 	krb.successCallbacksMapMutex.Unlock()
 
-	return nil
+	return success.Type(), nil
 }
 
 func (krb *KeepRandomBeacon) RegisterFailureCallback(name string, fail func(err error) error) error {
