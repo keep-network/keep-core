@@ -31,11 +31,9 @@ type Interface interface {
 	//
 	// TODO activation delay may be unnecessary, we'll see.
 	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
-	// SubmitRelayEntry submits an entry, which consists of a 32-byte
-	// signature to a blockchain, the associated request identifier
-	// (to which the signature is in response to), a group identifier (which
-	// group fulfilled this request), the previous entry, and a timestamp.
-	// We return a promise, which returns the fulfilled value on success,
-	// or reports on-chain errors in the event of a failure.
+	// SubmitRelayEntry submits an entry in the threshold relay and returns a
+	// promise to track the submission result. The promise is fulfilled with
+	// the entry as seen on-chain, or failed if there is an error submitting
+	// the entry.
 	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
 }

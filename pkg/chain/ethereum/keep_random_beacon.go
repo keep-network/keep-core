@@ -116,7 +116,7 @@ func (krb *KeepRandomBeacon) HasMinimumStake(
 	return krb.caller.HasMinimumStake(krb.callerOpts, address)
 }
 
-// RequestRelayEntry requests a new entry in the threshold relay
+// RequestRelayEntry requests a new entry in the threshold relay.
 func (krb *KeepRandomBeacon) RequestRelayEntry(
 	blockReward *big.Int,
 	rawseed []byte,
