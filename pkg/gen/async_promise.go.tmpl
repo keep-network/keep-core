@@ -106,10 +106,15 @@ func (p *{{ .Prefix }}Promise) Fulfill(value {{ .Type }}) error {
 // Fail can happen only once for a Promise and it results in calling
 // the OnFailure callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
-// an error.
+// an error. Also, this function reports an error if `err` parameter
+// is `nil`.
 func (p *{{ .Prefix }}Promise) Fail(err error) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+    if err == nil {
+		return fmt.Errorf("error cannot be nil")
+	}
 
 	if p.isComplete {
 		return fmt.Errorf("promise already completed")

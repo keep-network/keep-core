@@ -345,6 +345,21 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 	}
 }
 
+func TestFailPromiseWithNilError(t *testing.T) {
+	promise := &async.BigIntPromise{}
+	actualError := promise.Fail(nil)
+
+	expectedError := fmt.Errorf("error cannot be nil")
+
+	if !reflect.DeepEqual(actualError, expectedError) {
+		t.Fatalf(
+			"Unexpected error.\nExpected: %v\nActual: %v\n",
+			expectedError,
+			actualError,
+		)
+	}
+}
+
 func TestPromiseAlreadyCompleted(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
@@ -368,8 +383,9 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 			function: func() error {
 				promise := &async.BigIntPromise{}
 				promise.OnFailure(func(error) { done <- true })
-				promise.Fail(nil)
-				return promise.Fail(nil)
+				err := fmt.Errorf("i failed you master wayne")
+				promise.Fail(err)
+				return promise.Fail(err)
 			},
 			expectedError: fmt.Errorf("promise already completed"),
 		},
