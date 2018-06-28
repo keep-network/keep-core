@@ -108,8 +108,7 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	return nil
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
-	relayEntryPromise := &async.RelayEntryPromise{}
+func (ec *ethereumChain) registerSubmitRelayEntrySuccess() error {
 	success := relayEntryGeneratedFunc(
 		func(params *relayEntryGeneratedParams) {
 			var value [32]byte
@@ -131,12 +130,17 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 		},
 	)
 
+	return ec.keepRandomBeaconContract.RegisterSuccessCallback(success)
+}
+
+func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+	relayEntryPromise := &async.RelayEntryPromise{}
+
 	err := ec.keepRandomBeaconContract.RegisterSuccessCallback(success)
 	if err != nil {
 		fmt.Printf("registering success callback failed with: [%v]", err)
 		return relayEntryPromise
 	}
-
 	err = ec.keepRandomBeaconContract.RegisterFailureCallback(
 		success.Type(),
 		func(err error) error {
