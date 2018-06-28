@@ -24,8 +24,11 @@ type localChain struct {
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[int64][32]byte
 
-	blockCounter    chain.BlockCounter
+	handlerMutex         sync.Mutex
+	relayRequestHandlers []func(request relay.Request)
+
 	simulatedHeight int64
+	blockCounter    chain.BlockCounter
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -97,6 +100,15 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	})
 
 	return relayEntryPromise
+}
+
+func (ec *localChain) OnRelayEntryRequested(handler func(request relay.Request)) {
+	c.handlerMutex.Lock()
+	c.relayRequestHandlers = append(
+		c.relayRequestHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {

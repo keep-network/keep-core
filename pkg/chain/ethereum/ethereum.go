@@ -164,3 +164,11 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 
 	return relayEntryPromise
 }
+
+func (ec *ethereumChain) OnRelayEntryRequested(func(request relay.Request)) {
+	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(nil, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// TODO: fill out a request for consumers
+}
