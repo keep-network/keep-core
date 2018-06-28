@@ -16,8 +16,8 @@ import (
 // Config is the top level config structure.
 type Config struct {
 	Ethereum  ethereum.Config
-	Bootstrap bootstrap
-	Node      node
+	Bootstrap Bootstrap
+	Node      Node
 }
 
 // ValidationError returns validation errors for all config values
@@ -88,12 +88,14 @@ func (c *Config) ValidationError() error {
 	return err
 }
 
-type node struct {
+// Node structure with port and preferred ip address
+type Node struct {
 	Port                  int
 	MyPreferredOutboundIP string
 }
 
-type bootstrap struct {
+// Bootstrap structure with URLs and seed
+type Bootstrap struct {
 	URLs []string
 	Seed int
 }
