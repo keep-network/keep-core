@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +21,12 @@ type KeepRandomBeacon struct {
 	transactorOpts  *bind.TransactOpts
 	contract        *gen.KeepRandomBeaconImplV1
 	contractAddress common.Address
+
+	successCallbacksMap      map[string]SuccessFunc
+	successCallbacksMapMutex sync.Mutex
+
+	failureCallbacksMap      map[string]func(error) error
+	failureCallbacksMapMutex sync.Mutex
 }
 
 // NewKeepRandomBeacon creates the necessary connections and configurations for
@@ -203,11 +210,36 @@ type relayEntryGeneratedParams struct {
 	blockNumber     *big.Int
 }
 
+func (f relayEntryGeneratedFunc) Type() string {
+	return "relay-entry-generated"
+}
+
+func (krb *KeepRandomBeacon) RegisterSuccessCallback(success SuccessFunc) (string, error) {
+	krb.successCallbacksMapMutex.Lock()
+	krb.successCallbacksMap[success.Type()] = success
+	krb.successCallbacksMapMutex.Unlock()
+
+	return success.Type(), nil
+}
+
+func (krb *KeepRandomBeacon) RegisterFailureCallback(name string, fail func(err error) error) error {
+	krb.failureCallbacksMapMutex.Lock()
+	krb.failureCallbacksMap[name] = fail
+	krb.failureCallbacksMapMutex.Unlock()
+
+	return nil
+}
+
 // WatchRelayEntryGenerated watches for event.
-func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
-	success relayEntryGeneratedFunc,
-	fail errorCallback,
-) error {
+func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(event string) error {
+	krb.successCallbacksMapMutex.Lock()
+	success := krb.successCallbacksMap[event]
+	krb.successCallbacksMapMutex.Unlock()
+
+	krb.failureCallbacksMapMutex.Lock()
+	fail := krb.failureCallbacksMap[event]
+	krb.failureCallbacksMapMutex.Unlock()
+
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
 	if err != nil {
@@ -217,13 +249,14 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		for {
 			select {
 			case event := <-eventChan:
-				success(&relayEntryGeneratedParams{
-					requestID:       event.RequestID,
-					requestResponse: event.RequestResponse,
-					requestGroupID:  event.RequestGroupID,
-					previousEntry:   event.PreviousEntry,
-					blockNumber:     event.BlockNumber,
-				},
+				success.(relayEntryGeneratedFunc)(
+					&relayEntryGeneratedParams{
+						requestID:       event.RequestID,
+						requestResponse: event.RequestResponse,
+						requestGroupID:  event.RequestGroupID,
+						previousEntry:   event.PreviousEntry,
+						blockNumber:     event.BlockNumber,
+					},
 				)
 
 			case ee := <-eventSubscription.Err():

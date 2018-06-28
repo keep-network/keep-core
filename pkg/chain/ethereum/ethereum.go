@@ -108,15 +108,15 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	return nil
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
-	relayEntryPromise := &async.RelayEntryPromise{}
-
-	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+func (ec *ethereumChain) registerSubmitRelayEntrySuccess(
+	promise *async.RelayEntryPromise,
+) (string, error) {
+	success := relayEntryGeneratedFunc(
 		func(params *relayEntryGeneratedParams) {
 			var value [32]byte
 			copy(value[:], params.requestResponse.Bytes()[:32])
 
-			err := relayEntryPromise.Fulfill(&relay.Entry{
+			err := promise.Fulfill(&relay.Entry{
 				RequestID:     params.requestID,
 				Value:         value,
 				GroupID:       params.requestGroupID,
@@ -130,15 +130,42 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 				)
 			}
 		},
-		func(err error) error {
-			return relayEntryPromise.Fail(
-				fmt.Errorf(
-					"entry of relay submission failed with: [%v]",
-					err,
-				),
-			)
-		},
 	)
+
+	return ec.keepRandomBeaconContract.RegisterSuccessCallback(success)
+}
+
+func (ec *ethereumChain) registerSubmitRelayEntryFailure(
+	name string,
+	promise *async.RelayEntryPromise,
+) error {
+	fail := func(err error) error {
+		return promise.Fail(
+			fmt.Errorf(
+				"entry of relay submission failed with: [%v]",
+				err,
+			),
+		)
+	}
+	return ec.keepRandomBeaconContract.RegisterFailureCallback(name, fail)
+}
+
+func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+	relayEntryPromise := &async.RelayEntryPromise{}
+
+	successType, err := ec.registerSubmitRelayEntrySuccess(relayEntryPromise)
+	if err != nil {
+		fmt.Printf("registering success callback failed with: [%v]", err)
+		return relayEntryPromise
+	}
+
+	err = ec.registerSubmitRelayEntryFailure(successType, relayEntryPromise)
+	if err != nil {
+		fmt.Printf("registering failure callback failed with: [%v]", err)
+		return relayEntryPromise
+	}
+
+	err = ec.keepRandomBeaconContract.WatchRelayEntryGenerated(successType)
 	if err != nil {
 		promiseErr := relayEntryPromise.Fail(
 			fmt.Errorf(
