@@ -193,13 +193,15 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 
 // relayEntryGeneratedFunc type of function called for
 // RelayEntryGenerated event.
-type relayEntryGeneratedFunc func(
-	RequestID *big.Int,
-	RequestResponse *big.Int,
-	RequestGroupID *big.Int,
-	PreviousEntry *big.Int,
-	blockNumber *big.Int,
-)
+type relayEntryGeneratedFunc func(params *relayEntryGeneratedParams)
+
+type relayEntryGeneratedParams struct {
+	requestID       *big.Int
+	requestResponse *big.Int
+	requestGroupID  *big.Int
+	previousEntry   *big.Int
+	blockNumber     *big.Int
+}
 
 // WatchRelayEntryGenerated watches for event.
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
@@ -215,12 +217,13 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		for {
 			select {
 			case event := <-eventChan:
-				success(
-					event.RequestID,
-					event.RequestResponse,
-					event.RequestGroupID,
-					event.PreviousEntry,
-					event.BlockNumber,
+				success(&relayEntryGeneratedParams{
+					requestID:       event.RequestID,
+					requestResponse: event.RequestResponse,
+					requestGroupID:  event.RequestGroupID,
+					previousEntry:   event.PreviousEntry,
+					blockNumber:     event.BlockNumber,
+				},
 				)
 
 			case ee := <-eventSubscription.Err():
