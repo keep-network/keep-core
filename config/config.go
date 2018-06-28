@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -19,8 +20,72 @@ type Config struct {
 	Node      node
 }
 
-func (c *Config) Error() string {
-	return fmt.Sprintf("invalid Ethereum.Account.Address: %s", c.Ethereum.Account.Address)
+// ValidationError returns validation errors for all config values
+func (c *Config) ValidationError() error {
+	var errMsgs []string
+	if c.Ethereum.Account.KeyFilePassword == "" {
+		errMsgs = append(errMsgs,
+			fmt.Sprintf("password is required;  set environment variable (%s) to password or pass 'prompt'",
+				passwordEnvVariable))
+	}
+	if !util.MatchFound(ethURLRegex, c.Ethereum.URL) {
+		errMsgs = append(errMsgs, fmt.Sprintf("Ethereum.URL (%s) invalid; format expected: %s",
+			c.Ethereum.URL,
+			ethereumURLPattern))
+	}
+	if !util.MatchFound(ethURLRPCRegex, c.Ethereum.URLRPC) {
+		errMsgs = append(errMsgs, fmt.Sprintf("Ethereum.URLRPC (%s) invalid; format expected: %s",
+			c.Ethereum.URLRPC,
+			ethereumURLRPCPattern))
+	}
+	if !util.MatchFound(ethAddressRegex, c.Ethereum.Account.Address) {
+		errMsgs = append(errMsgs, fmt.Sprintf("Ethereum.Account.Address (%s) invalid; format expected: %s",
+			c.Ethereum.Account.Address,
+			ethereumAddressPattern))
+	}
+	if !util.MatchFound(ethAddressRegex, c.Ethereum.Account.KeyFile) {
+		errMsgs = append(errMsgs, fmt.Sprintf("Ethereum.Account.KeyFile (%s) invalid; format expected: %s",
+			c.Ethereum.Account.KeyFile,
+			ethereumKeyfilePattern))
+	}
+	if !util.MatchFound(ethAddressRegex, c.Ethereum.ContractAddresses["KeepRandomBeacon"]) {
+		errMsgs = append(errMsgs,
+			fmt.Sprintf("Ethereum.ContractAddresses[KeepRandomBeacon] (%s) invalid; format expected: %s",
+				c.Ethereum.ContractAddresses["KeepRandomBeacon"],
+				ethereumAddressPattern))
+	}
+	if !util.MatchFound(ethAddressRegex, c.Ethereum.ContractAddresses["GroupContract"]) {
+		errMsgs = append(errMsgs,
+			fmt.Sprintf("Ethereum.ContractAddresses[GroupContract] (%s) invalid; format expected: %s",
+				c.Ethereum.ContractAddresses["GroupContract"],
+				ethereumAddressPattern))
+	}
+	if c.Node.Port <= 0 {
+		errMsgs = append(errMsgs,
+			fmt.Sprintf("Node.Port (%d) invalid; see node section in config file or use --port flag",
+				c.Node.Port))
+	}
+	if len(c.Bootstrap.URLs) == 0 && c.Bootstrap.Seed <= 0 {
+		errMsgs = append(errMsgs, fmt.Sprintf("either supply valid Bootstrap.URLs or a Bootstrap.Seed"))
+	}
+	if len(c.Bootstrap.URLs) > 0 && c.Bootstrap.Seed != 0 {
+		errMsgs = append(errMsgs, fmt.Sprintf("non-bootstrap node should have Bootstrap.URL and a Bootstrap.Seed of 0"))
+	}
+	if len(c.Bootstrap.URLs) > 0 {
+		for _, ipfsURL := range c.Bootstrap.URLs {
+			if !util.MatchFound(ifpsURLRegex, ipfsURL) {
+				errMsgs = append(errMsgs,
+					fmt.Sprintf("Bootstrap.URL (%s) invalid; format expected: %s",
+						ipfsURL,
+						ipfsURLPattern))
+			}
+		}
+	}
+	var err error
+	if len(errMsgs) > 0 {
+		err = errors.New(strings.Join(errMsgs[:], "\n"))
+	}
+	return err
 }
 
 type node struct {
@@ -65,6 +130,7 @@ func ReadConfig(filePath string) (Config, error) {
 	} else {
 		cfg.Ethereum.Account.KeyFilePassword = envPassword
 	}
+	return cfg, cfg.ValidationError()
 }
 
 // ReadPassword prompts a user to enter a password.   The read password uses the system
