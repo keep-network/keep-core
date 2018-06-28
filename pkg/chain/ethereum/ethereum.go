@@ -152,7 +152,7 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 				promiseErr,
 			)
 		}
-		return nil
+		return relayEntryPromise
 	}
 
 	groupSignature := big.NewInt(int64(0)).SetBytes(entry.Value[:])
@@ -175,7 +175,7 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 				promiseErr,
 			)
 		}
-		return nil
+		return relayEntryPromise
 	}
 
 	return relayEntryPromise
