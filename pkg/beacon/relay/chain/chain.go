@@ -21,4 +21,9 @@ type Interface interface {
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
+	// OnRelayEntryRequested is a callback that is only invoked when a chain
+	// notifies clients of a new, valid relay entry. On invocation, the
+	// client determines if they are responsible for generating a signature
+	// for the next relay entry.
+	OnRelayEntryRequested(func(request relay.Request))
 }
