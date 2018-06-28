@@ -2,7 +2,9 @@ package util
 
 import (
 	"fmt"
+	"os"
 	"reflect"
+	"syscall"
 	"testing"
 )
 
@@ -31,6 +33,20 @@ func NotOk(tb testing.TB, err error, msgFormat string, msgArgs ...interface{}) {
 			tb.Fatalf(redMsg("expected error where: "+msgFormat+", got none"), msgArgs...)
 		} else {
 			tb.Fatalf(redMsg("expected error, got none"))
+		}
+	} else {
+		// Report unexpected error if caused by failure to read a file
+		if perr, ok := err.(*os.PathError); ok {
+			switch perr.Err.(syscall.Errno) {
+			case syscall.ENOENT:
+				var errMsg string
+				if err, ok := err.(*os.PathError); ok {
+					errMsg = fmt.Sprintf("file at path (%s) failed to open", err.Path)
+				}
+				tb.Fatalf(redMsg(errMsg))
+			default:
+				tb.Fatalf(redMsg(fmt.Sprintf("got unknown error: %v", err)))
+			}
 		}
 	}
 }
