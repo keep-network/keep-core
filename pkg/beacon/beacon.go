@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain"
 
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -54,49 +53,62 @@ func Initialize(
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
 
-	switch curParticipantState {
-	case unstaked:
-		// check for stake command-line parameter to initialize staking?
+	if curParticipantState == unstaked {
 		return fmt.Errorf("account is unstaked")
-	default:
-		member, err := dkg.ExecuteDKG(
-			blockCounter,
-			channel,
-			chainConfig.GroupSize,
-			chainConfig.Threshold,
-		)
-		if err != nil {
-			return err
-		}
-
-		err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
-		if err != nil {
-			return err
-		}
-
-		relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
-			fmt.Printf(
-				"Failed submission of public key %s: [%s].\n",
-				id,
-				errorMessage,
-			)
-		})
-		relayChain.OnGroupPublicKeySubmitted(func(id string, activationBlock *big.Int) {
-			fmt.Printf(
-				"Public key submitted for %s; activating at block %v.\n",
-				id,
-				activationBlock,
-			)
-		})
-
-		fmt.Printf(
-			"Submitting public key for member %s, group %s\n",
-			member.MemberID(),
-			"test",
-		)
+	}
+	member, err := dkg.ExecuteDKG(
+		blockCounter,
+		channel,
+		chainConfig.GroupSize,
+		chainConfig.Threshold,
+	)
+	if err != nil {
+		return err
 	}
 
-	<-ctx.Done()
+	err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
+	if err != nil {
+		return err
+	}
+
+	var (
+		done  = make(chan struct{})
+		errCh = make(chan error)
+	)
+
+	relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
+		errCh <- fmt.Errorf(
+			"failed submission of public key %s: [%s].\n",
+			id,
+			errorMessage,
+		)
+	})
+	relayChain.OnGroupPublicKeySubmitted(func(id string, activationBlock *big.Int) {
+		fmt.Printf(
+			"Public key submitted for %s; activating at block %v.\n",
+			id,
+			activationBlock,
+		)
+		done <- struct{}{}
+	})
+
+	fmt.Printf(
+		"Submitting public key for member %s, group %s\n",
+		member.MemberID(),
+		"test",
+	)
+
+	for {
+		select {
+		case <-done:
+			go beaconLoop(relayChain, blockCounter, channel)
+			return nil
+		case err := <-errCh:
+			return fmt.Errorf("Initialized failed with %v", err)
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 
 	return nil
 }
@@ -114,7 +126,7 @@ func checkChainParticipantState(relayChain relaychain.Interface) (participantSta
 	return unstaked, nil
 }
 
-func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
+func resolveState(relayChain relaychain.Interface) {
 	if participantState, err := checkChainParticipantState(relayChain); err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
 	} else {
@@ -135,9 +147,19 @@ func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
 			membership.ActivateMembership()
 		case inActiveGroup:
 			// FIXME We should have a non-empty state at this point ;)
-			entry.ServeRequests(relay.EmptyState())
+			relay.ServeRequests(relay.EmptyState())
 		default:
 			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
 		}
+	}
+}
+
+func beaconLoop(
+	relayChain relaychain.Interface,
+	blockCounter chain.BlockCounter,
+	channel net.BroadcastChannel,
+) {
+	for {
+		resolveState(relayChain)
 	}
 }
