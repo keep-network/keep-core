@@ -10,7 +10,7 @@ import (
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	PreviousEntry relay.Entry
+	previousEntry relay.Entry
 	RequestID     *big.Int
 	Payment       *big.Int
 	BlockReward   *big.Int

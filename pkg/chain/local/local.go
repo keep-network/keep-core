@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
+	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -25,7 +26,7 @@ type localChain struct {
 	groupRelayEntries      map[int64][32]byte
 
 	handlerMutex         sync.Mutex
-	relayRequestHandlers []func(request relay.Request)
+	relayRequestHandlers []func(request entry.Request)
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
@@ -102,7 +103,7 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	return relayEntryPromise
 }
 
-func (ec *localChain) OnRelayEntryRequested(handler func(request relay.Request)) {
+func (c *localChain) OnRelayEntryRequested(handler func(request entry.Request)) {
 	c.handlerMutex.Lock()
 	c.relayRequestHandlers = append(
 		c.relayRequestHandlers,

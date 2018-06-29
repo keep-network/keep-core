@@ -182,8 +182,8 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 			})
 		},
 		func(err error) error {
-			handle(nil)
-			return nil
+			handle(entry.Request{})
+			return fmt.Errorf("failed with %v", err)
 		},
 	)
 	if err != nil {
