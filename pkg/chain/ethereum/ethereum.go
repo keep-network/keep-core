@@ -55,14 +55,14 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 			ActivationBlockHeight: ActivationBlockHeight,
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promice Fulfill failed [%v].\n", err)
+			fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
 		}
 	}
 
 	fail := func(err error) error {
 		err = groupKeyPromise.Fail(err)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promice Fail failed [%v].\n", err)
+			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
 		}
 		return nil
 	}
