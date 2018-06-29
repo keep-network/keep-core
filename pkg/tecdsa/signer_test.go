@@ -1,6 +1,7 @@
 package tecdsa
 
 import (
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -103,4 +104,30 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	if !reflect.DeepEqual(yy, dsaKey.y.y) {
 		t.Errorf("Unexpected y.y decoded\nActual %v\nExpected %v", yy, dsaKey.y.y)
 	}
+}
+
+func TestCombineNotEnoughInitMessages(t *testing.T) {
+	group, err := newGroup(publicParameters)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	message, err := group[1].InitializeDsaKeyGen()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedError := fmt.Errorf(
+		"InitMessages required from all group members; Got 1, expected 10",
+	)
+
+	shares := []*InitMessage{message}
+	_, err = group[0].CombineDsaKeyShares(shares)
+	if err == nil {
+		t.Fatal("Error was expected")
+	}
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf("Unexpected error\nActual %v\nExpected %v", expectedError, err)
+	}
+
 }
