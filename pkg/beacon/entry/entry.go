@@ -2,6 +2,7 @@ package entry
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
@@ -9,7 +10,10 @@ import (
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	previousEntry relay.Entry
+	PreviousEntry relay.Entry
+	RequestID     *big.Int
+	Payment       *big.Int
+	BlockReward   *big.Int
 }
 
 type partialEntry struct {
