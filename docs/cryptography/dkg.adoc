@@ -615,9 +615,11 @@ Let _IA = IA~1~ + IA~2~ + ... + IA~10~_
 Let _DQ = DQ~1~ + DQ~2~ + ... + DQ~10~_
 
 Player _P~1~_ is the participant designated to submit the result on-chain.
-However, if _P~1~_ does not submit a transaction within _t~dkg~_ blocks, _P~2~_
-becomes eligible to submit the public key. After _t~dkg~ + t~step~_ blocks,
-_P~3~_ becomes eligible, after _t~dkg~ + 2 * t~step~_ blocks _P~4~_, and so on.
+However, if _P~1~_ does not submit a transaction
+within _t~dkg~_ blocks of starting the key generation protocol,
+_P~2~_ becomes eligible to submit the public key.
+After _t~dkg~ + t~step~_ blocks, _P~3~_ becomes eligible,
+after _t~dkg~ + 2 * t~step~_ blocks _P~4~_, and so on.
 
 When _P~j~_ submits the result, players _P~k~ | k < j_ will face a small
 penalty for being late, while _P~j~_ will receive the submission reward.
