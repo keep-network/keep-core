@@ -660,8 +660,8 @@ while !resultPublished:
 
 ==== Phase 14: Result conflict resolution
 
-Because of the honest majority assumption, we can expect the result at least
-_T + 1_ participants support to be correct.
+Because of the honest majority assumption, we can expect
+a result supported by at least _f~max~ + 1_ participants to be correct.
 
 If any participant disputes a result submitted on-chain, they can submit a
 different one.
@@ -681,7 +681,7 @@ acquired its maximum number of signatures it would be able to receive, and
 thus the result receiving the plurality of support is the correct one.
 
 An exception to this is if the total number of signatures supporting all other
-submitted results is higher than _T_, in which case the result is declared a
+submitted results is higher than _f~max~_, in which case the result is declared a
 failure without disqualifications.
 
 [source]
@@ -693,7 +693,7 @@ while resultPublished && !finished:
   t_now = getCurrentBlockHeight()
   t_first = allResults.earliest.submitTime
 
-  if t_now > t_first + t_conflict || leadResult.votes > T:
+  if t_now > t_first + t_conflict || leadResult.votes > f_max:
     finished = True
 
   elif correctResult = leadResult || alreadySubmitted:
