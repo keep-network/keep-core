@@ -43,6 +43,11 @@ func main() {
 			outputFile: "big_int_promise.go",
 		},
 		{
+			Type:       "*relay.Entry",
+			Prefix:     "RelayEntry",
+			outputFile: "relay_entry_promise.go",
+		},
+		{
 			Type:       "*chaintype.GroupPublicKey",
 			Prefix:     "GroupPublicKey",
 			outputFile: "group_pub_key_promise.go",

@@ -2,6 +2,7 @@ package relay
 
 import (
 	"encoding/binary"
+	"math/big"
 	"time"
 )
 
@@ -20,8 +21,11 @@ type NodeState struct {
 
 // Entry represents one entry in the threshold relay.
 type Entry struct {
-	Value     [8]byte
-	Timestamp time.Time
+	RequestID     *big.Int
+	Value         [32]byte
+	GroupID       *big.Int
+	PreviousEntry *big.Int
+	Timestamp     time.Time
 }
 
 // IsNextGroup returns true if the next group expected to generate a threshold
@@ -33,5 +37,15 @@ func (state NodeState) IsNextGroup() bool {
 // EmptyState returns an empty NodeState with no group, zero group count, and
 // a nil last seen entry.
 func EmptyState() NodeState {
-	return NodeState{groupCount: 0, group: 0, GroupID: 0, lastSeenEntry: Entry{[8]byte{}, time.Unix(0, 0)}}
+	return NodeState{
+		groupCount: 0,
+		group:      0,
+		GroupID:    0,
+		lastSeenEntry: Entry{
+			RequestID:     &big.Int{},
+			Value:         [32]byte{},
+			GroupID:       &big.Int{},
+			PreviousEntry: &big.Int{},
+		},
+	}
 }

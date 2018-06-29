@@ -116,13 +116,29 @@ func (krb *KeepRandomBeacon) HasMinimumStake(
 	return krb.caller.HasMinimumStake(krb.callerOpts, address)
 }
 
-// RequestRelayEntry start the process of generating a signature.
+// RequestRelayEntry requests a new entry in the threshold relay.
 func (krb *KeepRandomBeacon) RequestRelayEntry(
 	blockReward *big.Int,
 	rawseed []byte,
 ) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
 	return krb.transactor.RequestRelayEntry(krb.transactorOpts, blockReward, seed)
+}
+
+// SubmitRelayEntry submits a group signature for consideration.
+func (krb *KeepRandomBeacon) SubmitRelayEntry(
+	requestID *big.Int,
+	groupID *big.Int,
+	previousEntry *big.Int,
+	groupSignature *big.Int,
+) (*types.Transaction, error) {
+	return krb.transactor.RelayEntry(
+		krb.transactorOpts,
+		requestID,
+		groupSignature,
+		groupID,
+		previousEntry,
+	)
 }
 
 // SubmitGroupPublicKey upon completion of a sgiagure make the contract
@@ -179,9 +195,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 // RelayEntryGenerated event.
 type relayEntryGeneratedFunc func(
 	requestID *big.Int,
-	RequestResponse *big.Int,
-	RequestGroupID *big.Int,
-	PreviousEntry *big.Int,
+	requestResponse *big.Int,
+	requestGroupID *big.Int,
+	previousEntry *big.Int,
 	blockNumber *big.Int,
 )
 
