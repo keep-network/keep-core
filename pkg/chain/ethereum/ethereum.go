@@ -166,3 +166,40 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 
 	return relayEntryPromise
 }
+
+// OnRelayEntryGenerated registers a callback function for a new relay entry on
+// chain.
+func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
+	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+		func(
+			requestID *big.Int,
+			requestResponse *big.Int,
+			requestGroupID *big.Int,
+			previousEntry *big.Int,
+			blockNumber *big.Int,
+		) {
+			var value [32]byte
+			copy(value[:], requestResponse.Bytes()[:32])
+
+			handle(relay.Entry{
+				RequestID:     requestID,
+				Value:         value,
+				GroupID:       requestGroupID,
+				PreviousEntry: previousEntry,
+				Timestamp:     time.Now().UTC(),
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf(
+				"watch relay entry failed with: [%v]",
+				err,
+			)
+		},
+	)
+	if err != nil {
+		fmt.Printf(
+			"watch relay entry failed with: [%v]",
+			err,
+		)
+	}
+}
