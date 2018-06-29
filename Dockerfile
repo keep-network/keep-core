@@ -79,6 +79,7 @@ COPY ./pkg/gen $APP_DIR/pkg/gen
 RUN go generate ./.../gen 
 
 COPY ./ $APP_DIR/
+RUN go generate ./pkg/gen
 
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH

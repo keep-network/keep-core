@@ -1,0 +1,181 @@
+:toc: macro
+
+= Commitment Schemes
+
+toc::[]
+
+A commitment scheme allows a sender to commit to a message with 
+information-theoretic privacy. i.e., given the transcript of the commitment
+phase, the receiver, even with infinite computing power, cannot guess the 
+committed message better than at random. On the other hand, when it comes to
+opening the message, the sender is only computionally bound to the committed
+message. 
+
+Let's discuss how the simple commitment scheme works. Say the message is "Hello" 
+and for whatever reason, it should be kept private. However, we want to commit
+to this message, prove that we have it "in mind". We can just publish a hash of 
+that message as a proof, known also as a commitment. Whenever we want, we can 
+reveal the "Hello" message and prove we had decided on that message in the past 
+when the hash was published. 
+
+In this approach, the only thing needed for verification is the plaintext message
+and commitment. In trapdoor commitment scheme, for verification, we need the 
+plaintext message, commitment and decommitment key. Trapdoor scheme separates 
+what we are committing to and the key allowing for a verification of the commitment.
+
+A trapdoor commitment scheme is indistinguishable from randomness and it means 
+it is resistant to brute force attacks. It uses the decommitment key that the 
+committing party can send a verifier to make the verification possible.
+We send a commitment to verifier, that can happen at any time, and in future, 
+we send a decommitment key that lets to verify the commitment. 
+
+Another interesting property of trapdoor commitment schemes is that knowledge of 
+trapdoor allows to open a message in any possible way. 
+
+Using an analogy of lockable boxes, commitment scheme can be described as 
+locking the message in a steel box and passing it to receiver. A trapdoor 
+commitment is a box with a tiny secret door. If someone knows the secret door, 
+then this person is still able to change the committed message in the box, even 
+after the commitment phase. 
+
+There are three requirements for commitment schemes:
+
+* Hiding property - in the commit step, the receiver does not learn anything about 
+the committed value. He cannot distinguish a commitment to `0` from a commitment to `1`.
+* Binding property - the sender cannot change the committed value after the commit step. 
+This requirement has to be satisfied, even if the sender tries to cheat.
+* Viability - if both the sender and the receiver follow the protocol, the receiver 
+will always recover the committed value.
+
+== Pedersen commitment
+
+We generate an order `q` https://en.wikipedia.org/wiki/Cyclic_group[cyclic group]. 
+To do this, we find a large https://en.wikipedia.org/wiki/Sophie_Germain_prime[Sophie 
+Germain prime] and use that as `q`. `p`, the modulus, is set to `2q+1`.
+
+The order `q` subgroup of https://en.wikipedia.org/wiki/Quadratic_residue[quadratic 
+residues] is cyclic and of prime order and every element in it is a generator. 
+To get a generator of this subgroup, we choose any element `Z^p` and then square it, 
+thus, ensuring that we have an element in the order `q` subgroup.
+
+```
+q <- Sophie Germain prime
+p = 2q + 1
+
+g = (randomZ[0, 2^p - 1]) ^2
+h = (randomZ[0, 2^p - 1]) ^2
+```
+
+=== Generating commitment
+`INPUT: secret`
+
+```
+r = randomZ[0, 2^q - 1] 
+digest = sha256(secret) % q
+
+commitment = [ (g ^  digest) % p ] * [ (h ^ r) % p ]
+
+return (commitment, r)
+```
+
+`r` is a decommitment key needed for commitment verification.
+
+=== Commitment verification
+`INPUT: secret, commitment, r`
+
+```
+digest = sha256(secret) % q
+
+expectedCommitment  = [ (g ^ digest) % p ] * [ (h ^ r) % p ]
+
+return commitment == expectedCommitment
+```
+
+Pedersen commitment scheme has an unconditional hiding property, whereas the 
+binding property depends on the difficulty of computing discrete logarithms.
+
+There is an arbitrary number of `(m', r')` pairs mapping to the same `commitment` 
+value as the original pair `(m, r)`. So even if `log_g(h)` is known to the
+adversary, brute-forcing giving an arbitrary number of results and no way to 
+distinguish between them is what makes the scheme unconditionally hiding.
+
+Sender knowing `g` and `h` can change the message he committed to
+even after commitment has been published (but before `r` has been published) 
+since it's possible to find another pair of `(r', secret')` evaluating to the 
+same commitment. 
+
+`log_g(h)` is the trapdoor (our secret door) allowing to change the committed
+message. If one has committed to message `m` with `(m, r)`, then in order to 
+change `m -> m'` knowing `log_g(h)`, she can compute:
+```
+r' = r + (m - m') / log_g(h)
+```
+
+== Elliptic Curve VSS
+
+Traditional Pedersen algorithm, as described before, is based on large primes 
+`p` and `q` and setting `G` to be the subgroup of `Z^p` of order `q`. 
+In this case the multiplication operation in `G` is multiplication modulo `p`. 
+
+When we want to work with EC-based encryption (and this is the case for 
+e.g. EC-DSA), we need to adjust the protocol. This is obtained by choosing `G` 
+as a group of points on an elliptic curve of cardinality `q`. In this case the 
+multiplication operation in `G` is the group operation over the curve. 
+`g` is the elliptic curve base point and `h` is the randomly selected point on 
+the curve.
+
+`G`, `q`, `g` and `h` can be public parameters for a computational binding scheme.
+
+=== Generating commitment
+`INPUT: secret`
+
+```
+pubKey = (randomZ[0, q - 1])
+r = (randomZ[0, q - 1])
+
+digest = sha256(secret) mod q
+
+// + and * are operations on the selected curve
+he = h + g * pubKey
+commitment = g * digest + he * r
+
+return (r, pubKey, commitment)
+```
+
+=== Commitment verification
+`INPUT: secret, r, pubKey, commitment`
+
+```
+digest = sha256(secret) mod q
+
+// + and * are operations on the selected curve
+a = g * r 
+b = h + g * pubKey 
+c = commitment + g * (-digest) 
+
+pairing(a, b) == pairing(g, c)
+```
+
+
+References
+
+* Gennaro R. (2004) Multi-trapdoor Commitments and Their Applications to Proofs 
+of Knowledge Secure Under Concurrent Man-in-the-Middle Attacks. In: Franklin M. 
+(eds) Advances in Cryptology – CRYPTO 2004. CRYPTO 2004. Lecture Notes in 
+Computer Science, vol 3152. Springer, Berlin, Heidelberg
+
+* Delfs H., Knebl H. Introduction to Cryptography Principles and Applications
+(2015) Springer
+
+* Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal DSA/ECDSA 
+Signatures and an Application to Bitcoin Wallet Security. In: Manulis M., 
+Sadeghi AR., Schneider S. (eds) Applied Cryptography and Network Security. 
+ACNS 2016. Lecture Notes in Computer Science, vol 9696. Springer, Cham
+
+* Pedersen T.P. (1992) Non-Interactive and Information-Theoretic Secure 
+Verifiable Secret Sharing. In: Feigenbaum J. (eds) Advances in 
+Cryptology — CRYPTO ’91. CRYPTO 1991. Lecture Notes in Computer Science, 
+vol 576. Springer, Berlin, Heidelberg
+
+* Vitalik Buterin, Exploring Elliptic Curve Pairings 
+https://medium.com/@VitalikButerin/exploring-elliptic-curve-pairings-c73c1864e627
