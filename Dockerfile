@@ -76,7 +76,7 @@ COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
 COPY ./pkg/beacon/relay/thresholdsignature/gen $APP_DIR/pkg/beacon/relay/thresholdsignature/gen
-RUN go generate ./.../gen
+RUN go generate ./.../gen 
 
 COPY ./ $APP_DIR/
 RUN go generate ./pkg/gen

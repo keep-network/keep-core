@@ -1,8 +1,6 @@
 package chain
 
 import (
-	"math/big"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -14,23 +12,10 @@ type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (config.Chain, error)
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
-	// associated with a string groupID. An error is generally only returned in
-	// case of connectivity issues; on-chain errors are reported through event
-	// callbacks.
-	SubmitGroupPublicKey(groupID string, key [96]byte) error
-	// OnGroupPublicKeySubmissionFailed takes a callback that is invoked when
-	// an attempted group public key submission has failed. The provided groupID
-	// is the id of the group for which the public key submission was attempted,
-	// while the errorMsg is the on-chain error message indicating what went
-	// wrong.
-	OnGroupPublicKeySubmissionFailed(func(groupID string, errorMsg string)) error
-	// OnGroupPublicKeySubmitted takes a callback that is invoked when a group
-	// public key is submitted successfully. The provided groupID is the id of
-	// the group for which the public key was submitted, and the activationBlock
-	// is the block at which the group will be considered active in the relay.
-	//
-	// TODO activation delay may be unnecessary, we'll see.
-	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
+	// associated with a string groupID. On-chain errors are
+	// are reported through the promise.
+	SubmitGroupPublicKey(groupID string, key [96]byte) *async.GroupPublicKeyPromise
+
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting

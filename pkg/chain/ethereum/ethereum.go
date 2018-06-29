@@ -3,8 +3,10 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -40,30 +42,30 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) error {
-	applyError := func(msg string) {
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeyFailureHandlers {
-			handler(groupID, msg)
-		}
-		ec.handlerMutex.Unlock()
-	}
+) *async.GroupPublicKeyPromise {
+	groupKeyPromise := &async.GroupPublicKeyPromise{}
 
 	success := func(
 		GroupPublicKey []byte,
 		RequestID *big.Int,
 		ActivationBlockHeight *big.Int,
 	) {
-		ec.handlerMutex.Lock()
-		for _, handler := range ec.groupPublicKeySubmissionHandlers {
-			handler(groupID, ActivationBlockHeight)
+		err := groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
+			GroupPublicKey:        GroupPublicKey,
+			RequestID:             RequestID,
+			ActivationBlockHeight: ActivationBlockHeight,
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
 		}
-		ec.handlerMutex.Unlock()
 	}
 
 	fail := func(err error) error {
-		applyError(fmt.Sprintf("error: [%v]", err))
-		return err
+		err = groupKeyPromise.Fail(err)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
+		}
+		return nil
 	}
 
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
@@ -71,41 +73,17 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		fail,
 	)
 	if err != nil {
-		applyError(fmt.Sprintf("error creating event watch for request: [%v]", err))
-		return err
+		fmt.Fprintf(os.Stderr, "failed to watch GroupPublicKeyEvent [%v].\n", err)
+		return groupKeyPromise
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
-		applyError(fmt.Sprintf("error submitting request: [%v]", err))
+		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
+		return groupKeyPromise
 	}
-	return err
-}
 
-// OnGroupPublicKeySubmissionFailed associates a handler for a error event.
-func (ec *ethereumChain) OnGroupPublicKeySubmissionFailed(
-	handler func(groupID string, errorMessage string),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeyFailureHandlers = append(
-		ec.groupPublicKeyFailureHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
-}
-
-// OnGroupPublicKeySubmitted associates a handler for a success event.
-func (ec *ethereumChain) OnGroupPublicKeySubmitted(
-	handler func(groupID string, activationBlock *big.Int),
-) error {
-	ec.handlerMutex.Lock()
-	ec.groupPublicKeySubmissionHandlers = append(
-		ec.groupPublicKeySubmissionHandlers,
-		handler,
-	)
-	ec.handlerMutex.Unlock()
-	return nil
+	return groupKeyPromise
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {

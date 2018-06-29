@@ -3,9 +3,11 @@ package local
 import (
 	"fmt"
 	"math/big"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -22,11 +24,8 @@ type localChain struct {
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[int64][32]byte
 
-	handlerMutex                     sync.Mutex
-	groupPublicKeyFailureHandlers    []func(string, string)
-	groupPublicKeySubmissionHandlers []func(string, *big.Int)
-
-	blockCounter chain.BlockCounter
+	blockCounter    chain.BlockCounter
+	simulatedHeight int64
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -37,58 +36,34 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
+func (c *localChain) SubmitGroupPublicKey(
+	groupID string,
+	key [96]byte,
+) *async.GroupPublicKeyPromise {
+	groupKeyPromise := &async.GroupPublicKeyPromise{}
 	c.groupPublicKeysMutex.Lock()
 	defer c.groupPublicKeysMutex.Unlock()
 	if existing, exists := c.groupPublicKeys[groupID]; exists && existing != key {
-		errorMsg := fmt.Sprintf(
+		fmt.Fprintf(
+			os.Stderr,
 			"mismatched public key for [%s], submission failed; \n"+
 				"[%v] vs [%v]\n",
 			groupID,
 			existing,
 			key,
 		)
-
-		c.handlerMutex.Lock()
-		for _, handler := range c.groupPublicKeyFailureHandlers {
-			handler(groupID, errorMsg)
-		}
-		c.handlerMutex.Unlock()
-
-		return nil
+		return groupKeyPromise
 	}
 	c.groupPublicKeys[groupID] = key
+	c.simulatedHeight++
 
-	c.handlerMutex.Lock()
-	for _, handler := range c.groupPublicKeySubmissionHandlers {
-		handler(groupID, &big.Int{})
-	}
-	c.handlerMutex.Unlock()
+	groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
+		GroupPublicKey:        []byte(groupID),
+		RequestID:             big.NewInt(c.simulatedHeight),
+		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
+	})
 
-	return nil
-}
-
-func (c *localChain) OnGroupPublicKeySubmissionFailed(
-	handler func(string, string),
-) error {
-	c.handlerMutex.Lock()
-	c.groupPublicKeyFailureHandlers = append(c.groupPublicKeyFailureHandlers, handler)
-	c.handlerMutex.Unlock()
-
-	return nil
-}
-
-func (c *localChain) OnGroupPublicKeySubmitted(
-	handler func(groupID string, activationBlock *big.Int),
-) error {
-	c.handlerMutex.Lock()
-	c.groupPublicKeySubmissionHandlers = append(
-		c.groupPublicKeySubmissionHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
-
-	return nil
+	return groupKeyPromise
 }
 
 func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
@@ -128,8 +103,8 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
 
-// Connect initializes a local stub implementation of the chain interfaces for
-// testing.
+// Connect initializes a local stub implementation of the chain interfaces
+// for testing.
 func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
 
