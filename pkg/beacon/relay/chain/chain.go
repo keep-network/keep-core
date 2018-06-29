@@ -22,7 +22,7 @@ type Interface interface {
 	// the entry.
 	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
 	// OnRelayEntryRequested is a callback that is only invoked when a chain
-	// notifies clients of a new, valid relay entry. On invocation, the
+	// receives a request for a new relay entry. On invocation, the
 	// client determines if they are responsible for generating a signature
 	// for the next relay entry.
 	OnRelayEntryRequested(func(request entry.Request))

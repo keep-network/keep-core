@@ -166,6 +166,8 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 	return relayEntryPromise
 }
 
+// OnRelayEntryRequested registers a callback function for a new relay request on
+// chain.
 func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
@@ -186,6 +188,9 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 		},
 	)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf(
+			"watch relay request failed with: [%v]",
+			err,
+		)
 	}
 }
