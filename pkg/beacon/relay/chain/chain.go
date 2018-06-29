@@ -15,10 +15,14 @@ type Interface interface {
 	// associated with a string groupID. On-chain errors are
 	// are reported through the promise.
 	SubmitGroupPublicKey(groupID string, key [96]byte) *async.GroupPublicKeyPromise
-
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
+	// OnRelayEntryGenerated is a callback that is only invoked when a chain
+	// notifies clients of a new, valid relay entry. On invocation, the
+	// client determines if they are responsible for generating a signature
+	// for the next relay entry.
+	OnRelayEntryGenerated(handle func(entry relay.Entry))
 }
