@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
+	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -165,10 +166,27 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnRelayEntryRequested(func(request relay.Request)) {
-	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(nil, nil)
+func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request)) {
+	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+		func(
+			requestID *big.Int,
+			payment *big.Int,
+			blockReward *big.Int,
+			seed *big.Int,
+			blockNumber *big.Int,
+		) {
+			handle(entry.Request{
+				RequestID:   requestID,
+				Payment:     payment,
+				BlockReward: blockReward,
+			})
+		},
+		func(err error) error {
+			handle(nil)
+			return nil
+		},
+	)
 	if err != nil {
 		fmt.Println(err)
 	}
-	// TODO: fill out a request for consumers
 }

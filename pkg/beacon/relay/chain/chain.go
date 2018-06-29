@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -15,7 +16,6 @@ type Interface interface {
 	// associated with a string groupID. On-chain errors are
 	// are reported through the promise.
 	SubmitGroupPublicKey(groupID string, key [96]byte) *async.GroupPublicKeyPromise
-
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
@@ -25,5 +25,5 @@ type Interface interface {
 	// notifies clients of a new, valid relay entry. On invocation, the
 	// client determines if they are responsible for generating a signature
 	// for the next relay entry.
-	OnRelayEntryRequested(func(request relay.Request))
+	OnRelayEntryRequested(func(request entry.Request))
 }
