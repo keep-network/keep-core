@@ -74,6 +74,7 @@ func Initialize(
 			member.GroupPublicKeyBytes(),
 		)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed promise [%v].", err)
 			return err
 		}
 		promise.OnSuccess(func(data *chaintype.GroupPublicKey) {

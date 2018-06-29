@@ -77,30 +77,31 @@ func SmokeTest(c *cli.Context) error {
 				member.GroupPublicKeyBytes(),
 			)
 			if err != nil {
-				panic(fmt.Sprintf("Failed promise [%v].", err))
-			}
-			promise.OnSuccess(func(data *chaintype.GroupPublicKey) {
-				if string(data.GroupPublicKey) == "test" {
-					memberChannel <- member
-				} else {
+				fmt.Fprintf(os.Stderr, "Failed promise [%v].", err)
+			} else {
+				promise.OnSuccess(func(data *chaintype.GroupPublicKey) {
+					if string(data.GroupPublicKey) == "test" {
+						memberChannel <- member
+					} else {
+						fmt.Fprintf(
+							os.Stderr,
+							"[member:%s] incorrect data, expected 'test' got '%s', activation block: %s\n",
+							member.BlsID.GetHexString(),
+							string(data.GroupPublicKey),
+							data.ActivationBlockHeight,
+						)
+						memberChannel <- nil
+					}
+				}).OnFailure(func(err error) {
 					fmt.Fprintf(
 						os.Stderr,
-						"[member:%s] incorrect data, expected 'test' got '%s', activation block: %s\n",
+						"[member:%s] Failed to submit group public key: [%s]\n",
 						member.BlsID.GetHexString(),
-						string(data.GroupPublicKey),
-						data.ActivationBlockHeight,
+						err,
 					)
 					memberChannel <- nil
-				}
-			}).OnFailure(func(err error) {
-				fmt.Fprintf(
-					os.Stderr,
-					"[member:%s] Failed to submit group public key: [%s]\n",
-					member.BlsID.GetHexString(),
-					err,
-				)
-				memberChannel <- nil
-			})
+				})
+			}
 
 		}(i)
 	}
