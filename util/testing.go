@@ -8,14 +8,6 @@ import (
 	"testing"
 )
 
-// Assert fails when condition is false
-func Assert(tb testing.TB, condition bool, message string, got ...interface{}) {
-	tb.Helper()
-	if !condition {
-		tb.Fatalf(redMsg(message), got...)
-	}
-}
-
 // Ok fails when err is not nil
 func Ok(tb testing.TB, err error) {
 	tb.Helper()
@@ -26,6 +18,19 @@ func Ok(tb testing.TB, err error) {
 
 // NotOk fails when err is nil
 func NotOk(tb testing.TB, err error, msgFormat string, msgArgs ...interface{}) {
+	tb.Helper()
+
+	if err == nil {
+		if len(msgArgs) != 0 {
+			tb.Fatalf(redMsg("expected error where: "+msgFormat+", got none"), msgArgs...)
+		} else {
+			tb.Fatalf(redMsg("expected error, got none"))
+		}
+	}
+}
+
+// NotOkRead fails when err is nil or when the error is an runtime error due to file not found
+func NotOkRead(tb testing.TB, err error, msgFormat string, msgArgs ...interface{}) {
 	tb.Helper()
 
 	if err == nil {
@@ -48,6 +53,14 @@ func NotOk(tb testing.TB, err error, msgFormat string, msgArgs ...interface{}) {
 				tb.Fatalf(redMsg(fmt.Sprintf("got unknown error: %v", err)))
 			}
 		}
+	}
+}
+
+// Assert fails when condition is false
+func Assert(tb testing.TB, condition bool, message string, got ...interface{}) {
+	tb.Helper()
+	if !condition {
+		tb.Fatalf(redMsg(message), got...)
 	}
 }
 
