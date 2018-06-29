@@ -106,7 +106,7 @@ attributably violating the protocol
 
 |_G~p~ = G~p-1~ - IA~p-1~ - DQ~p-1~_
 |The set of nodes in _G_ that were active and well-behaved at the
-beginning of phase _p_ (_G~0~ = G_)
+beginning of phase _p_ (_G~1~ = G_)
 
 |_G' = G - IA - DQ_
 |The successfully created group after removal of inactive
@@ -250,11 +250,15 @@ _P~i~_ will perform ECDH with every _P~j~_ in _G_ to create _K~ij~_.
 
 # Calculate:
 
-for P_j in G:
+(G_2, IA_1, DQ_1) = checkBroadcast(1, G_1) # <<2>>
+
+for P_j in G_2:
    K_ij = ecdh(X_ij, Y_ji)
 ----
 
 <1> Public keys of all other participants in _G_
+<2> A validation function which determines which nodes
+have broadcast the correct message for phase _p_
 
 ==== Phase 3. Polynomial generation
 
@@ -275,6 +279,8 @@ Commitments and encrypted shares are broadcast to other players.
 [source]
 ----
 # Calculate:
+
+G_3 = G_2
 
 for j in [0..T]:
   a_ij = random(Z_q)
@@ -327,6 +333,8 @@ ephemeral private key so others can validate the result.
 
 # Calculate:
 
+(G_4, IA_3, DQ_3) = checkBroadcast(3, G_3)
+
 complaints_Ai = []
 
 for j in G_4:
@@ -338,12 +346,15 @@ for j in G_4:
   ) mod p
 
   if g^s_ji * h^s'_ji /= C_prod:
-    complaints_i += X_ij
+    complaints_i += X_ij # <<1>>
 
 # Broadcast:
 
 complaints_Ai
 ----
+
+<<1>> Publish the private key _P~i~_ created for communicating with _P~j~_,
+so anyone can decrypt and verify the shares _P~i~_ received from _P~j~_.
 
 ==== Phase 5: First complaint resolution
 
@@ -358,6 +369,8 @@ party can be proven to be at fault and thus disqualified.
 [complaints_A1, complaints_A2, ... ]
 
 # Calculate:
+
+(G_5, IA_4, DQ_4) = checkBroadcast(4, G_4)
 
 DQ_5 = []
 
@@ -389,14 +402,14 @@ complaint against a player that delivered valid shares.
 
 ==== Phase 6: Share calculation
 
-Let _G~6~ = G~5~ - DQ~5~_
-
 Each player sets their share _x~i~_ of the secret _X_ to equal the sum of all
 shares _s~ji~_ as per GJKR. _X_ equals the sum of shares _s~j0~_.
 
 [source]
 ----
 # Calculate:
+
+G_6 = G_5 - DQ_5
 
 x_i = sum(
   for j in G_6:
@@ -418,6 +431,8 @@ Each player broadcasts their _A~ik~_ values.
 ----
 # Calculate:
 
+G_7 = G_6
+
 for k in [0..T]:
   A_ik = g^a_ik mod p
 
@@ -438,6 +453,8 @@ Each player validates the values received in the previous step.
 
 # Calculate:
 
+(G_8, IA_7, DQ_7) = checkBroadcast(7, G_7)
+
 complaints_Bi = []
 
 for j in G_8:
@@ -447,15 +464,12 @@ for j in G_8:
   ) mod p
 
   if g^s_ji /= A_prod:
-    complaints_B += X_ij # <<1>>
+    complaints_B += X_ij
 
 # Broadcast:
 
 complaints_Bi
 ----
-
-<<1>> Publish the private key _P~i~_ created for communicating with _P~j~_,
-so anyone can decrypt and verify the shares _P~i~_ received from _P~j~_.
 
 ==== Phase 9: Second complaint resolution
 
@@ -477,6 +491,8 @@ the impact of this is reduced to a manageable level.
 [complaints_B1, complaints_B2, ...]
 
 # Calculate:
+
+(G_9, IA_8, DQ_8) = checkBroadcast(8, G_8)
 
 DQ_9 = []
 
@@ -504,8 +520,6 @@ for c in complaints_B:
 
 ==== Phase 10: Disqualified share opening
 
-Let _G~10~ = G~9~ - DQ~9~_
-
 All non-disqualified players in _QUAL_ broadcast the keys they share with
 players in _DISQUAL_, so the reconstruction of Pedersen-VSS can be done
 offline.
@@ -513,6 +527,8 @@ offline.
 [source]
 ----
 # Calculate:
+
+G_10 = G_9 - DQ_9
 
 keys_i = []
 
@@ -538,7 +554,9 @@ valid shares in _phase 4_ but whose public key shares in _phase 7_ were invalid.
 
 # Calculate:
 
-for m in DISQUAL:
+(G_11, IA_10, DQ_10) = checkBroadcast(10, G_10)
+
+for m in (G_6 - G_11): # <<1>>
   for j in G':
     X_jm = keys_j[m]
 
@@ -559,7 +577,8 @@ for m in DISQUAL:
       s_mk * a_mk
   )
 ----
-
+<<1>> Reconstruct the shares of participants that became inactive
+or were disqualified since _phase 6_
 
 ==== Phase 12: Public key reconstruction
 
@@ -684,9 +703,11 @@ From the perspective of the chain:
 
 [source]
 ----
-eligibleSubmitter(i) =
+eligibleSubmitter(P_i) =
   t_now = getCurrentBlockHeight()
   t_elapsed = t_now - t_init
+
+  i = P_i.index
 
   if i == 1:
     True
@@ -705,7 +726,7 @@ receiveSubmission(s) =
 
   # when the submission is the first one
   if receivedSubmissions == {}:
-    if eligibleSubmitter(i):
+    if eligibleSubmitter(P_s):
       receivedSubmissions[hs] = s
       memberVotes[P_s] = hs
       submissionVotes[hs] = 1
