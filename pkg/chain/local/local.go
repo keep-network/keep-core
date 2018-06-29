@@ -4,20 +4,29 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 type localChain struct {
-	relayConfig                      relayconfig.Chain
-	groupPublicKeysMutex             sync.Mutex
-	groupPublicKeys                  map[string][96]byte
+	relayConfig relayconfig.Chain
+
+	groupPublicKeysMutex sync.Mutex
+	groupPublicKeys      map[string][96]byte
+
+	groupRelayEntriesMutex sync.Mutex
+	groupRelayEntries      map[int64][32]byte
+
 	handlerMutex                     sync.Mutex
 	groupPublicKeyFailureHandlers    []func(string, string)
 	groupPublicKeySubmissionHandlers []func(string, *big.Int)
-	blockCounter                     chain.BlockCounter
+
+	blockCounter chain.BlockCounter
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -82,6 +91,39 @@ func (c *localChain) OnGroupPublicKeySubmitted(
 	return nil
 }
 
+func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+	relayEntryPromise := &async.RelayEntryPromise{}
+
+	c.groupRelayEntriesMutex.Lock()
+	defer c.groupRelayEntriesMutex.Unlock()
+
+	existing, exists := c.groupRelayEntries[entry.GroupID.Int64()]
+	if exists && existing != entry.Value {
+		err := fmt.Errorf(
+			"mismatched signature for [%v], submission failed; \n"+
+				"[%v] vs [%v]\n",
+			entry.GroupID,
+			existing,
+			entry.Value,
+		)
+
+		relayEntryPromise.Fail(err)
+
+		return relayEntryPromise
+	}
+	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
+
+	relayEntryPromise.Fulfill(&relay.Entry{
+		RequestID:     entry.RequestID,
+		Value:         entry.Value,
+		GroupID:       entry.GroupID,
+		PreviousEntry: entry.PreviousEntry,
+		Timestamp:     time.Now().UTC(),
+	})
+
+	return relayEntryPromise
+}
+
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
@@ -97,6 +139,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			Threshold: threshold,
 		},
 		groupPublicKeysMutex: sync.Mutex{},
+		groupRelayEntries:    make(map[int64][32]byte),
 		groupPublicKeys:      make(map[string][96]byte),
 		blockCounter:         bc,
 	}

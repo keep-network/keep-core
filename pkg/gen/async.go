@@ -42,6 +42,11 @@ func main() {
 			Prefix:     "BigInt",
 			outputFile: "big_int_promise.go",
 		},
+		{
+			Type:       "*relay.Entry",
+			Prefix:     "RelayEntry",
+			outputFile: "relay_entry_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {

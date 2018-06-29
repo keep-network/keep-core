@@ -147,14 +147,14 @@ func blsVerifyShare(previousValue []byte, share signatureShare) bool {
 }
 
 // FIXME Actually build final signature instead of concatenating all the shares.
-func blsFinalSignatureFromShares(shares []signatureShare) [8]byte {
+func blsFinalSignatureFromShares(shares []signatureShare) [32]byte {
 	fullSignature := make([]byte, 0)
 	for _, share := range shares {
 		fullSignature = append(fullSignature, share.shareBytes...)
 	}
 
 	// truncate to fit into return size
-	rightLengthSignature := [8]byte{}
+	rightLengthSignature := [32]byte{}
 	copy(rightLengthSignature[:], fullSignature)
 	return rightLengthSignature
 }

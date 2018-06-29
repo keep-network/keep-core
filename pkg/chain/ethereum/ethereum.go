@@ -3,9 +3,12 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
@@ -103,4 +106,83 @@ func (ec *ethereumChain) OnGroupPublicKeySubmitted(
 	)
 	ec.handlerMutex.Unlock()
 	return nil
+}
+
+func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+	relayEntryPromise := &async.RelayEntryPromise{}
+
+	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+		func(
+			requestID *big.Int,
+			requestResponse *big.Int,
+			requestGroupID *big.Int,
+			previousEntry *big.Int,
+			blockNumber *big.Int,
+		) {
+			var value [32]byte
+			copy(value[:], requestResponse.Bytes()[:32])
+
+			err := relayEntryPromise.Fulfill(&relay.Entry{
+				RequestID:     requestID,
+				Value:         value,
+				GroupID:       requestGroupID,
+				PreviousEntry: previousEntry,
+				Timestamp:     time.Now().UTC(),
+			})
+			if err != nil {
+				fmt.Printf(
+					"execution of fulfilling promise failed with: [%v]",
+					err,
+				)
+			}
+		},
+		func(err error) error {
+			return relayEntryPromise.Fail(
+				fmt.Errorf(
+					"entry of relay submission failed with: [%v]",
+					err,
+				),
+			)
+		},
+	)
+	if err != nil {
+		promiseErr := relayEntryPromise.Fail(
+			fmt.Errorf(
+				"watch relay entry failed with: [%v]",
+				err,
+			),
+		)
+		if promiseErr != nil {
+			fmt.Printf(
+				"execution of failing promise failed with: [%v]",
+				promiseErr,
+			)
+		}
+		return relayEntryPromise
+	}
+
+	groupSignature := big.NewInt(int64(0)).SetBytes(entry.Value[:])
+	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
+		entry.RequestID,
+		entry.GroupID,
+		entry.PreviousEntry,
+		groupSignature,
+	)
+	if err != nil {
+		promiseErr := relayEntryPromise.Fail(
+			fmt.Errorf(
+				"submitting relay entry to chain failed with: [%v]",
+				err,
+			),
+		)
+		if promiseErr != nil {
+			fmt.Printf(
+				"execution of failing promise failed with: [%v]",
+				promiseErr,
+			)
+		}
+		return relayEntryPromise
+	}
+
+	return relayEntryPromise
 }
