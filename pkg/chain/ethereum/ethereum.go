@@ -37,7 +37,7 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 	}, nil
 }
 
-// SubmitGroupPublicKey sets up the callback functions for the submission of a
+// SubmitGroupPublicKey builds and returns a promise for the submission of a
 // public key for the group.
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
@@ -86,6 +86,8 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupKeyPromise
 }
 
+// SubmitRelayEntry builds and returns a promise for the submission of a
+// relay entry for the group.
 func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
