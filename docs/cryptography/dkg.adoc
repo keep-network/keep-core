@@ -361,9 +361,13 @@ so anyone can decrypt and verify the shares _P~i~_ received from _P~j~_.
 
 ==== Phase 5: First complaint resolution
 
-If anyone has complaints about another player, use the published privkeys
-to decrypt transmitted messages and determine fault. With every complaint, one
-party can be proven to be at fault and thus disqualified.
+If anyone has complaints about another player,
+use the published privkeys to decrypt transmitted messages and determine fault.
+As every message in the broadcast channel is signed,
+decrypting previous messages makes misbehavior attributable.
+For every complaint, one party will be disqualified:
+either the accused sent invalid shares,
+or the accuser made a false complaint.
 
 [source]
 ----
@@ -393,14 +397,14 @@ for c in complaints_A:
       C_jk ^ (m^k)
   ) mod p
 
-  if g^s_mj * h^s'_mj = C_prod:
+  if g^s_mj * h^s'_mj = C_prod: # <<1>>
     DQ_5 += P_j
   else:
     DQ_5 += P_m
 ----
 
-Disqualify players that either delivered invalid shares, or made a false
-complaint against a player that delivered valid shares.
+<<1>> If the shares are inconsistent with commitments,
+disqualify the accused _P~m~_; if consistent, disqualify the accuser _P~j~_.
 
 
 ==== Phase 6: Share calculation
