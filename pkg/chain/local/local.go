@@ -3,6 +3,7 @@ package local
 import (
 	"fmt"
 	"math/big"
+	"os"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
@@ -31,20 +32,20 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 func (c *localChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) (*async.GroupPublicKeyPromise, error) {
+) *async.GroupPublicKeyPromise {
 	groupKeyPromise := &async.GroupPublicKeyPromise{}
 	c.groupPublicKeysMutex.Lock()
 	defer c.groupPublicKeysMutex.Unlock()
 	if existing, exists := c.groupPublicKeys[groupID]; exists && existing != key {
-		err := fmt.Errorf(
+		fmt.Fprintf(
+			os.Stderr,
 			"mismatched public key for [%s], submission failed; \n"+
 				"[%v] vs [%v]\n",
 			groupID,
 			existing,
 			key,
 		)
-
-		return nil, groupKeyPromise.Fail(err)
+		return groupKeyPromise
 	}
 	c.groupPublicKeys[groupID] = key
 	c.simulatedHeight++
@@ -55,7 +56,7 @@ func (c *localChain) SubmitGroupPublicKey(
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
 	})
 
-	return groupKeyPromise, nil
+	return groupKeyPromise
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {

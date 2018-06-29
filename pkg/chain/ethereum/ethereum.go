@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"os"
 
 	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -39,7 +40,7 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) (*async.GroupPublicKeyPromise, error) {
+) *async.GroupPublicKeyPromise {
 
 	groupKeyPromise := &async.GroupPublicKeyPromise{}
 
@@ -48,15 +49,22 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		RequestID *big.Int,
 		ActivationBlockHeight *big.Int,
 	) {
-		groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
+		err := groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
 			GroupPublicKey:        GroupPublicKey,
 			RequestID:             RequestID,
 			ActivationBlockHeight: ActivationBlockHeight,
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promice Fulfill failed [%v].\n", err)
+		}
 	}
 
 	fail := func(err error) error {
-		return groupKeyPromise.Fail(err)
+		err = groupKeyPromise.Fail(err)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promice Fail failed [%v].\n", err)
+		}
+		return nil
 	}
 
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
@@ -64,13 +72,15 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		fail,
 	)
 	if err != nil {
-		return nil, groupKeyPromise.Fail(fmt.Errorf("error creating event watch for request: [%v]", err))
+		fmt.Fprintf(os.Stderr, "failed to watch GroupPublicKeyEvent [%v].\n", err)
+		return groupKeyPromise
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
-		return nil, groupKeyPromise.Fail(err)
+		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
+		return groupKeyPromise
 	}
 
-	return groupKeyPromise, nil
+	return groupKeyPromise
 }
