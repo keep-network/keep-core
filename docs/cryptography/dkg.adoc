@@ -111,10 +111,6 @@ beginning of phase _p_ (_G~1~ = G_)
 |_G' = G - IA - DQ_
 |The successfully created group after removal of inactive
 and misbehaving nodes
-
-|_QUAL = G~6~_
-|A special name for the set of participants whose input is included
-in the final outputs of the DKG protocol
 |===
 
 .Keys
@@ -527,8 +523,8 @@ for c in complaints_B:
 
 ==== Phase 10: Disqualified share opening
 
-All non-disqualified players in _QUAL_ broadcast the keys they share with
-players in _DISQUAL_, so the reconstruction of Pedersen-VSS can be done
+All active players in _G~10~_ broadcast the keys they share with
+players in _DQ~9~_, so the reconstruction of Pedersen-VSS can be done
 offline.
 
 [source]
@@ -591,18 +587,18 @@ or were disqualified since _phase 6_
 
 Let _G~12~ = G~11~_
 
-Combine _y~j~_ for all participants in _QUAL_ to reconstruct the public key for
+Combine _y~j~_ for all participants in _G~6~_ to reconstruct the public key for
 the group.
 
 [source]
 ----
 # Calculate:
 
-for j in QUAL:
+for j in G_6:
   y_j = A_j0 = g^z_j mod p
 
 Y = product(
-  for j in QUAL:
+  for j in G_6:
     y_j
 ) mod p
 ----
