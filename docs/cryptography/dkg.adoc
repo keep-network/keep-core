@@ -298,19 +298,20 @@ f'_i(z) = sum(
 
 z_i = a_i0 = f_i(0) # <1>
 
-for k in [0..T]:
-  C_ik = g^a_ik * h^b_ik mod p # <2>
+commitments_i =
+  for k in [0..T]:
+    C_ik = g^a_ik * h^b_ik mod p # <2>
 
-for j in G_3:
-  s_ij = f_i(j) mod q
-  s'_ij = f'_i(j) mod q
+encryptedShares_i =
+  for j in G_3:
+    s_ij = f_i(j) mod q
+    s'_ij = f'_i(j) mod q
 
-  E_ij = encrypt(K_ij, (s_ij, s'_ij)) # <3>
+    E_ij = encrypt(K_ij, (s_ij, s'_ij)) # <3>
 
 # Broadcast:
 
-([E_i1, E_i2, ... E_iN],
- [C_i0, C_i1, ... C_iT])
+(encryptedShares_i, commitments_i)
 ----
 
 <1> _P~i~_'s share of the shared secret key
@@ -327,9 +328,9 @@ ephemeral private key so others can validate the result.
 ----
 # Receive:
 
-[([E_12, ... E_1N], [C_10, ... C_1T]),
+[(encryptedShares_1, commitments_1),
  ...
- ([E_N1, ... E_N(N-1)], [C_N0, ... C_NT])]
+ (encryptedShares_N, commitments_N)]
 
 # Calculate:
 
@@ -338,11 +339,13 @@ ephemeral private key so others can validate the result.
 complaints_Ai = []
 
 for j in G_4:
+  E_ji = encryptedShares_j[i]
+
   (s_ji, s'_ji) = decrypt(K_ij, E_ji)
 
   C_prod = product(
     for k in [0..T]:
-      C_jk ^ (i^k)
+      commitments_j[k] ^ (i^k)
   ) mod p
 
   if g^s_ji * h^s'_ji /= C_prod:
