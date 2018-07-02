@@ -110,7 +110,7 @@ func TestNodePeers(t *testing.T) {
 
 func TestReadPeerConfig(t *testing.T) {
 	setup(t)
-
+	// This config file has a value for every setting for a non-bootstrap peer.
 	cfg, err := config.ReadConfig("./testdata/config.toml")
 	util.Ok(t, err)
 
@@ -143,11 +143,11 @@ func TestReadPeerConfig(t *testing.T) {
 			expectedValue: 27001,
 			readValueFunc: func(c *config.Config) interface{} { return c.Node.Port },
 		},
-		"Bootstrap.URLs": {
+		"Node.Peers": {
 			expectedValue: []string{
 				"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			},
-			readValueFunc: func(c *config.Config) interface{} { return c.Bootstrap.URLs },
+			readValueFunc: func(c *config.Config) interface{} { return c.Node.Peers },
 		},
 	}
 	for testName, test := range configReadTests {
@@ -161,7 +161,7 @@ func TestReadPeerConfig(t *testing.T) {
 
 func TestReadBootstrapConfig(t *testing.T) {
 	setup(t)
-
+	// This config file has a value for every setting for a bootstrap peer.
 	cfg, err := config.ReadConfig("./testdata/config.bootstrap.toml")
 	util.Ok(t, err)
 
@@ -195,8 +195,8 @@ func TestReadBootstrapConfig(t *testing.T) {
 			readValueFunc: func(c *config.Config) interface{} { return c.Node.Port },
 		},
 		"Bootstrap.Seed": {
-			expectedValue: 2,
-			readValueFunc: func(c *config.Config) interface{} { return c.Bootstrap.Seed },
+			expectedValue: 0,
+			readValueFunc: func(c *config.Config) interface{} { return c.Node.Seed },
 		},
 	}
 	for testName, test := range configReadTests {
@@ -210,7 +210,7 @@ func TestReadBootstrapConfig(t *testing.T) {
 
 func TestReadIpcConfig(t *testing.T) {
 	setup(t)
-
+	// This config file has a value for every setting and uses an .ipc address for the ethereum url.
 	cfg, err := config.ReadConfig("./testdata/config.ipc.toml")
 	util.Ok(t, err)
 
@@ -243,11 +243,11 @@ func TestReadIpcConfig(t *testing.T) {
 			expectedValue: 27001,
 			readValueFunc: func(c *config.Config) interface{} { return c.Node.Port },
 		},
-		"Bootstrap.URLs": {
+		"Node.Peers": {
 			expectedValue: []string{
 				"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			},
-			readValueFunc: func(c *config.Config) interface{} { return c.Bootstrap.URLs },
+			readValueFunc: func(c *config.Config) interface{} { return c.Node.Peers },
 		},
 	}
 	for testName, test := range configReadTests {

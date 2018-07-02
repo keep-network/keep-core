@@ -17,7 +17,7 @@ const (
 	resetBroadcastTimerSec = 5
 )
 
-// StartFlags for bootstrap and port
+// StartFlags for bootstrap and port.
 var StartFlags []cli.Flag
 
 type recvParams struct {
@@ -43,14 +43,13 @@ func init() {
 	}
 }
 
-// StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
+// StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file.
 func StartNode(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	//myIPv4Address := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
@@ -59,20 +58,22 @@ func StartNode(c *cli.Context) error {
 	}
 
 	var (
-		seed          int
-		bootstrapURLs []string
+		seed  int
+		peers []string
 	)
 	if c.Bool("bootstrap") {
-		seed = cfg.Bootstrap.Seed
+		seed = cfg.Node.Seed
 	} else {
-		bootstrapURLs = cfg.Bootstrap.URLs
+		peers = cfg.Node.Peers
 	}
 
 	ctx := context.Background()
 	provider, err := libp2p.Connect(ctx, &libp2p.Config{
-		Port:  port,
-		Peers: bootstrapURLs,
-		Seed:  seed,
+		NodeConfig: libp2p.NodeConfig{
+			Port:  port,
+			Peers: peers,
+			Seed:  seed,
+		},
 	})
 	if err != nil {
 		return err
@@ -87,13 +88,13 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler  (
+	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		return err
 	}
 
-	go broadcastMessages(ctx, broadcastParams{port:port, ipaddr: myIPv4Address, bcastChan:broadcastChannel})
+	go broadcastMessages(ctx, broadcastParams{port: port, ipaddr: myIPv4Address, bcastChan: broadcastChannel})
 
 	recvChan := make(chan net.Message)
 
@@ -110,8 +111,7 @@ func StartNode(c *cli.Context) error {
 	select {}
 }
 
-
-func broadcastMessages(ctx context.Context, params broadcastParams)  {
+func broadcastMessages(ctx context.Context, params broadcastParams) {
 	t := time.NewTimer(1) // first tick is immediate
 	defer t.Stop()
 	for {
