@@ -42,32 +42,28 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 ) *async.GroupPublicKeyPromise {
 	groupKeyPromise := &async.GroupPublicKeyPromise{}
 
-	success := func(
-		GroupPublicKey []byte,
-		RequestID *big.Int,
-		ActivationBlockHeight *big.Int,
-	) {
-		err := groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
-			GroupPublicKey:        GroupPublicKey,
-			RequestID:             RequestID,
-			ActivationBlockHeight: ActivationBlockHeight,
-		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
-		}
-	}
-
-	fail := func(err error) error {
-		err = groupKeyPromise.Fail(err)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
-		}
-		return nil
-	}
-
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-		success,
-		fail,
+		func(
+			GroupPublicKey []byte,
+			RequestID *big.Int,
+			ActivationBlockHeight *big.Int,
+		) {
+			err := groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
+				GroupPublicKey:        GroupPublicKey,
+				RequestID:             RequestID,
+				ActivationBlockHeight: ActivationBlockHeight,
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
+			}
+		},
+		func(err error) error {
+			err = groupKeyPromise.Fail(err)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
+			}
+			return nil
+		},
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to watch GroupPublicKeyEvent [%v].\n", err)
