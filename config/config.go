@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strings"
 	"syscall"
@@ -10,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/util"
+	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -109,4 +112,24 @@ func readPassword(prompt string) (string, error) {
 		return "", fmt.Errorf("unable to read password, error: %v", err)
 	}
 	return strings.TrimSpace(string(bytePassword)), nil
+}
+
+// PrintConfig prints the config values resulting from overwriting default values with contents of config file.
+func PrintConfig(c *cli.Context) error {
+	configPath := c.GlobalString("config")
+	cfg, err := NewConfig(configPath)
+	if err != nil {
+		log.Fatalf("error calling NewConfig: %v\n", err)
+	}
+	_, err = io.WriteString(os.Stdout,
+		"config values from overwriting default values with contents of: "+configPath+"\n\n")
+	if err != nil {
+		return fmt.Errorf("unable to write configuration file (%s), error: %v", configPath, err)
+	}
+	err = toml.NewEncoder(os.Stdout).Encode(cfg)
+	if err != nil {
+		return fmt.Errorf("unable to encode configuration file (%s) contents, error: %v", configPath, err)
+	}
+	fmt.Fprint(os.Stdout, "\n")
+	return nil
 }
