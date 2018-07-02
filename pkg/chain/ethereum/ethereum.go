@@ -54,19 +54,28 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 				ActivationBlockHeight: ActivationBlockHeight,
 			})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
+				fmt.Fprintf(
+					os.Stderr,
+					"fulfilling promise failed with: [%v].\n",
+					err,
+				)
 			}
 		},
 		func(err error) error {
-			err = groupKeyPromise.Fail(err)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
-			}
-			return nil
+			return groupKeyPromise.Fail(
+				fmt.Errorf(
+					"entry of group key failed with: [%v]",
+					err,
+				),
+			)
 		},
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to watch GroupPublicKeyEvent [%v].\n", err)
+		fmt.Fprintf(
+			os.Stderr,
+			"watch group public key event failed with: [%v].\n",
+			err,
+		)
 		return groupKeyPromise
 	}
 
@@ -101,7 +110,8 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 				Timestamp:     time.Now().UTC(),
 			})
 			if err != nil {
-				fmt.Printf(
+				fmt.Fprintf(
+					os.Stderr,
 					"execution of fulfilling promise failed with: [%v]",
 					err,
 				)
@@ -124,7 +134,8 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 			),
 		)
 		if promiseErr != nil {
-			fmt.Printf(
+			fmt.Fprintf(
+				os.Stderr,
 				"execution of failing promise failed with: [%v]",
 				promiseErr,
 			)
