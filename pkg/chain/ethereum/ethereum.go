@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
+	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -163,4 +164,34 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 	}
 
 	return relayEntryPromise
+}
+
+// OnRelayEntryRequested registers a callback function for a new relay request on
+// chain.
+func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request)) {
+	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+		func(
+			requestID *big.Int,
+			payment *big.Int,
+			blockReward *big.Int,
+			seed *big.Int,
+			blockNumber *big.Int,
+		) {
+			handle(entry.Request{
+				RequestID:   requestID,
+				Payment:     payment,
+				BlockReward: blockReward,
+				Seed:        seed,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("relay request event failed with %v", err)
+		},
+	)
+	if err != nil {
+		fmt.Printf(
+			"watch relay request failed with: [%v]",
+			err,
+		)
+	}
 }
