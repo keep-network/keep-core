@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -27,4 +28,7 @@ type Interface interface {
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(func(request entry.Request))
+	// OnGroupRegistered is a callback that is invoked when an on-chain
+	// notification of a new, valid group being registered is seen.
+	OnGroupRegistered(handle func(key *chaintype.GroupPublicKey))
 }
