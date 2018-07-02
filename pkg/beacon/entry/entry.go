@@ -14,6 +14,7 @@ type Request struct {
 	RequestID     *big.Int
 	Payment       *big.Int
 	BlockReward   *big.Int
+	Seed          *big.Int
 }
 
 type partialEntry struct {

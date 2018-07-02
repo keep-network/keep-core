@@ -181,6 +181,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 				RequestID:   requestID,
 				Payment:     payment,
 				BlockReward: blockReward,
+				Seed:        seed,
 			})
 		},
 		func(err error) error {
