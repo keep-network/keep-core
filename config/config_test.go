@@ -5,90 +5,104 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/util"
 )
 
-const invalidBootstrapURLPattern = `Bootstrap.URL \(.+\) invalid`
+const invalidBootstrapURLPattern = `Node\.Peers.+invalid.+`
 
 var bootstrapURLRegex = util.CompileRegex(invalidBootstrapURLPattern)
 
-// Assumes bootstrap URLs are MultiAddr; see https://github.com/multiformats/multiaddr
-func TestBootstrapURLs(t *testing.T) {
+// Assumes peer bootstrap URLs are MultiAddr; see https://github.com/multiformats/multiaddr
+func TestNodePeers(t *testing.T) {
+	setup(t)
+
 	for _, c := range []struct {
 		cfg      *config.Config
 		hasError bool
 	}{
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{"/data/testnet/geth.ipc"}}},
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{"/data/testnet/geth.ipc"}}},
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			}}},
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
+				"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
+				"/ip4/127.0.0.1/tcp/27002/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
+				"/ip4/127.0.0.1/tcp/27003/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
+			}}},
+		},
+		{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 				"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 				"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			}}},
+			hasError: true,
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"/ip6/1.2.3.4/tcp/443/tls/sni/example.com/http/example.com/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			}}},
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"/dns4/example.com/tcp/443/tls/sni/example.com/http/example.com/index.html",
 			}}},
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"/tls/sni/example.com/http/example.com/index.html",
 			}}},
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"example.com/index.html",
 			}}},
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"eth:",
 			}}},
 			hasError: true,
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA@",
 			}}},
 			hasError: true,
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				":12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			}}},
 			hasError: true,
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			}}},
 			hasError: true,
 		},
 		{
-			cfg: &config.Config{Bootstrap: config.Bootstrap{URLs: []string{
+			cfg: &config.Config{Node: libp2p.NodeConfig{Peers: []string{
 				"\\12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA",
 			}}},
 			hasError: true,
 		},
 	} {
-		err := c.cfg.ValidationError()
+		cfg := config.DefaultConfig()
+		cfg.Node.Peers = c.cfg.Node.Peers
+
+		err := cfg.ValidationError()
 		if c.hasError && !util.MatchFound(bootstrapURLRegex, err.Error()) {
 			t.Errorf("expected error pattern (%s), got %q", invalidBootstrapURLPattern, err)
 		}
-		if !c.hasError && util.MatchFound(bootstrapURLRegex, err.Error()) {
+		if !c.hasError && err != nil && util.MatchFound(bootstrapURLRegex, err.Error()) {
 			t.Errorf("unexpected error %q", err)
 		}
 	}

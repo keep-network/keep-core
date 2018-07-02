@@ -1,21 +1,4 @@
-# This is a TOML configuration file for DKG, P2P networking and connction to Ethereum
-
-# Provider Initialization Example
+# Provide invalid test data; other config values will be populated by default values by NewConfig.
 
 [ethereum]
 	URL                = "xxx"
-	URLRPC             = "http://192.168.0.158:8545"
-
-[ethereum.account]
-	Address            = "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"
-	KeyFile            = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
-
-[ethereum.ContractAddresses]
-	KeepRandomBeacon = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
-	GroupContract = "0x139deb0dd975af8e4cc91fe9053a37e4faf37649"
-
-[node]
-    Port = 27001
-
-[bootstrap]
-    URLs = ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
