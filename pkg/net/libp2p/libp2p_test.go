@@ -268,7 +268,7 @@ func generateDeterministicNetworkConfig(t *testing.T) *Config {
 	if err != nil {
 		t.Fatalf("failed to generate valid libp2p identity with err: [%v]", err)
 	}
-	return &Config{Port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: identity}
+	return &Config{NodeConfig: NodeConfig{Port: 8080}, listenAddrs: []ma.Multiaddr{p.Addr}, identity: identity}
 }
 
 func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
