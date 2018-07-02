@@ -11,6 +11,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     event GroupStartedEvent(bytes32 groupPubKey);
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
+    event OnStakerAdded(uint32 index, bytes32 groupMemberID);
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -176,4 +177,16 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         }
         return false;
     }
+
+    /**
+     * @dev Testing for M1 - create a staker.
+     * @param _index Index where to add the member.
+     * @param _groupMemberID the ID of the member that is being added.
+     */
+    function addStaker(uint32 _index, bytes32 _groupMemberID) public {
+		// TODO save some info at this point - this is only for use in Milestone 1 and will
+		// not need to be added to the "forever" storage.
+    	emit OnStakerAdded(_index, _groupMemberID);
+	}
+
 }
