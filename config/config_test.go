@@ -261,50 +261,50 @@ func TestReadIpcConfig(t *testing.T) {
 
 func TestReadInvalidEthereumURLConfig(t *testing.T) {
 	setup(t)
-	cfg, err := config.ReadConfig("./testdata/config.invalid.ethereum.url.toml")
+	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.url.toml")
 	util.NotOkRead(t, err, "ethereum.URL: %v", cfg.Ethereum.URL)
 }
 
 func TestReadInvalidEthereumURLRPCConfig(t *testing.T) {
 	setup(t)
-	cfg, err := config.ReadConfig("./testdata/config.invalid.ethereum.url.rpc.toml")
+	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.url.rpc.toml")
 	util.NotOkRead(t, err, "ethereum.URLRPC: %v", cfg.Ethereum.URLRPC)
 }
 
 func TestReadInvalidEthereumAccountAddress(t *testing.T) {
 	setup(t)
-	cfg, err := config.ReadConfig("./testdata/config.invalid.ethereum.account.address.toml")
+	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.account.address.toml")
 	util.NotOkRead(t, err, "ethereum.account.Address: %v", cfg.Ethereum.Account.Address)
 }
 
 func TestReadInvalidEthereumAccountKeyfile(t *testing.T) {
 	setup(t)
-	cfg, err := config.ReadConfig("./testdata/config.invalid.ethereum.account.keyfile.toml")
+	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.account.keyfile.toml")
 	util.NotOkRead(t, err, "ethereum.account.KeyFile: %v", cfg.Ethereum.Account.KeyFile)
 }
 
 func TestReadInvalidEthereumContractKeepRandomBeaconAddress(t *testing.T) {
 	setup(t)
-	cfg, err := config.ReadConfig("./testdata/config.invalid.random.beacon.address.toml")
+	cfg, err := config.NewConfig("./testdata/config.invalid.random.beacon.address.toml")
 	util.NotOkRead(t, err, "ethereum.ContractAddresses.KeepRandomBeacon: %v", cfg.Ethereum.ContractAddresses["KeepRandomBeacon"])
 }
 
 func TestReadInvalidEthereumContractGroupContractAddress(t *testing.T) {
 	setup(t)
-	cfg, err := config.ReadConfig("./testdata/config.invalid.group.contract.address.toml")
+	cfg, err := config.NewConfig("./testdata/config.invalid.group.contract.address.toml")
 	util.NotOkRead(t, err, "ethereum.ContractAddresses.GroupContract: %v", cfg.Ethereum.ContractAddresses["GroupContract"])
 }
 
 func TestReadInvalidNodePortConfig(t *testing.T) {
 	setup(t)
-	_, err := config.ReadConfig("./testdata/config.invalid.node.port.toml")
+	_, err := config.NewConfig("./testdata/config.invalid.node.port.toml")
 	util.NotOkRead(t, err, "unexpected error: missing value for port; see node section in config file or use --port flag")
 }
 
 func TestReadInvalidBootstrapSeedConfig(t *testing.T) {
 	setup(t)
-	cfg, err := config.ReadConfig("./testdata/config.invalid.bootstrap.seed.toml")
-	util.NotOkRead(t, err, "bootstrap.Seed: %v", cfg.Bootstrap.Seed)
+	cfg, err := config.NewConfig("./testdata/config.invalid.bootstrap.seed.toml")
+	util.NotOkRead(t, err, "bootstrap.Seed: %v", cfg.Node.Seed)
 }
 
 func setup(t *testing.T) {
