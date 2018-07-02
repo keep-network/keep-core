@@ -234,3 +234,29 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 		)
 	}
 }
+
+func (ec *ethereumChain) OnGroupRegistered(handle func(key *chaintype.GroupPublicKey)) {
+	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+		func(
+			groupPublicKey []byte,
+			requestID *big.Int,
+			activationBlockHeight *big.Int,
+		) {
+			handle(&chaintype.GroupPublicKey{
+				GroupPublicKey:        groupPublicKey,
+				RequestID:             requestID,
+				ActivationBlockHeight: activationBlockHeight,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("entry of group key failed with: [%v]", err)
+		},
+	)
+	if err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"watch group public key event failed with: [%v].\n",
+			err,
+		)
+	}
+}
