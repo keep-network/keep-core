@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -23,4 +24,7 @@ type Interface interface {
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntryGenerated(handle func(entry relay.Entry))
+	// OnRelayEntryRequested is a callback that is invoked when an on-chain
+	// notification of a new, valid relay request is seen.
+	OnRelayEntryRequested(func(request entry.Request))
 }
