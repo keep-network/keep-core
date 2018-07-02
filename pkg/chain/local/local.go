@@ -26,8 +26,8 @@ type localChain struct {
 	groupRelayEntries      map[int64][32]byte
 
 	handlerMutex            sync.Mutex
-	relayEntryHandlers      []func(entry relay.Entry)
-	relayRequestHandlers    []func(request entry.Request)
+	relayEntryHandlers      []func(entry *relay.Entry)
+	relayRequestHandlers    []func(request *entry.Request)
 	groupRegisteredHandlers []func(key *chaintype.GroupPublicKey)
 
 	simulatedHeight int64
@@ -105,7 +105,7 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	return relayEntryPromise
 }
 
-func (c *localChain) OnRelayEntryGenerated(handler func(entry relay.Entry)) {
+func (c *localChain) OnRelayEntryGenerated(handler func(entry *relay.Entry)) {
 	c.handlerMutex.Lock()
 	c.relayEntryHandlers = append(
 		c.relayEntryHandlers,
@@ -114,7 +114,7 @@ func (c *localChain) OnRelayEntryGenerated(handler func(entry relay.Entry)) {
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnRelayEntryRequested(handler func(request entry.Request)) {
+func (c *localChain) OnRelayEntryRequested(handler func(request *entry.Request)) {
 	c.handlerMutex.Lock()
 	c.relayRequestHandlers = append(
 		c.relayRequestHandlers,

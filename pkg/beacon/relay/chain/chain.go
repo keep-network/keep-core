@@ -24,10 +24,10 @@ type Interface interface {
 	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(handle func(entry relay.Entry))
+	OnRelayEntryGenerated(handle func(entry *relay.Entry))
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(func(request entry.Request))
+	OnRelayEntryRequested(func(request *entry.Request))
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
 	OnGroupRegistered(handle func(key *chaintype.GroupPublicKey))

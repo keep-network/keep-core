@@ -169,7 +169,7 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
+func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *relay.Entry)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
@@ -181,7 +181,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
 			var value [32]byte
 			copy(value[:], requestResponse.Bytes()[:32])
 
-			handle(relay.Entry{
+			handle(&relay.Entry{
 				RequestID:     requestID,
 				Value:         value,
 				GroupID:       requestGroupID,
@@ -206,7 +206,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
 
 // OnRelayEntryRequested registers a callback function for a new relay request on
 // chain.
-func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request)) {
+func (ec *ethereumChain) OnRelayEntryRequested(handle func(request *entry.Request)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
@@ -215,7 +215,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 			seed *big.Int,
 			blockNumber *big.Int,
 		) {
-			handle(entry.Request{
+			handle(&entry.Request{
 				RequestID:   requestID,
 				Payment:     payment,
 				BlockReward: blockReward,
