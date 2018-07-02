@@ -18,8 +18,6 @@ func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
 	return ec
 }
 
-// GetConfig get the GroupSize and Threshold for groups and returns it
-// in a becaon.Config struct.
 func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 	size, err := ec.keepGroupContract.GroupSize()
 	if err != nil {
@@ -37,8 +35,6 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 	}, nil
 }
 
-// SubmitGroupPublicKey builds and returns a promise for the submission of a
-// public key for the group.
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
@@ -86,8 +82,6 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupKeyPromise
 }
 
-// SubmitRelayEntry builds and returns a promise for the submission of a
-// relay entry for the group.
 func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
@@ -167,8 +161,6 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 	return relayEntryPromise
 }
 
-// OnRelayEntryGenerated registers a callback function for a new relay entry on
-// chain.
 func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
