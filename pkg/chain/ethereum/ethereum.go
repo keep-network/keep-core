@@ -44,14 +44,14 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
-			GroupPublicKey []byte,
-			RequestID *big.Int,
-			ActivationBlockHeight *big.Int,
+			groupPublicKey []byte,
+			requestID *big.Int,
+			activationBlockHeight *big.Int,
 		) {
 			err := groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
-				GroupPublicKey:        GroupPublicKey,
-				RequestID:             RequestID,
-				ActivationBlockHeight: ActivationBlockHeight,
+				GroupPublicKey:        groupPublicKey,
+				RequestID:             requestID,
+				ActivationBlockHeight: activationBlockHeight,
 			})
 			if err != nil {
 				fmt.Fprintf(
@@ -227,7 +227,8 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 		},
 	)
 	if err != nil {
-		fmt.Printf(
+		fmt.Fprintf(
+			os.Stderr,
 			"watch relay request failed with: [%v]",
 			err,
 		)
