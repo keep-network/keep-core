@@ -21,6 +21,9 @@ type Interface interface {
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
+	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
+	// notification of a new, valid relay entry is seen.
+	OnRelayEntryGenerated(handle func(entry relay.Entry))
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(func(request entry.Request))
