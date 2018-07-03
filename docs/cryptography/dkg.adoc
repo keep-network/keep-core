@@ -263,10 +263,10 @@ Every node in _G~3~_ has, for every other node in _G~3~_, a symmetric key that
 can be used for encrypted and attributable communications over the broadcast
 channel. The Pedersen-VSS phase of the GJKR DKG algorithm can commence.
 
-Create two polynomials _f~i~(z)_ and _f'~i~(z)_ of degree _T_ and calculate
-other players' shares as points on these polynomials. Additionally, calculate
+Create two polynomials _f~i~(z)_ and _g~i~(z)_ of degree _T_ and calculate
+other playersg shares as points on these polynomials. Additionally, calculate
 Pedersen commitments to the coefficients of _f~i~(z)_ using the coefficients
-of _f'~i~(z)_.
+of _g~i~(z)_.
 
 Shares to _P~j~_ are encrypted with the symmetric key _K~ij~ = K~ji~_
 shared by _P~i~_ and _P~j~_.
@@ -288,7 +288,7 @@ f_i(z) = sum(
     a_ij * z^j
 )
 
-f'_i(z) = sum(
+g_i(z) = sum(
   for j in [0..T]:
     b_ij * z^j
 )
@@ -302,9 +302,9 @@ commitments_i =
 encryptedShares_i =
   for j in G_3:
     s_ij = f_i(j) mod q
-    s'_ij = f'_i(j) mod q
+    sg_ij = g_i(j) mod q
 
-    E_ij = encrypt(K_ij, (s_ij, s'_ij)) # <3>
+    E_ij = encrypt(K_ij, (s_ij, sg_ij)) # <3>
 
 # Broadcast:
 
@@ -338,14 +338,14 @@ complaints_Ai = []
 for j in G_4:
   E_ji = encryptedShares_j[i]
 
-  (s_ji, s'_ji) = decrypt(K_ij, E_ji)
+  (s_ji, sg_ji) = decrypt(K_ij, E_ji)
 
   C_prod = product(
     for k in [0..T]:
       commitments_j[k] ^ (i^k)
   ) mod p
 
-  if g^s_ji * h^s'_ji /= C_prod:
+  if g^s_ji * h^sg_ji /= C_prod:
     complaints_i += X_ij # <<1>>
 
 # Broadcast:
@@ -387,14 +387,14 @@ for c in complaints_A:
 
   K_jm = ecdh(X_jm, Y_mj)
 
-  (s_mj, s'_mj) = decrypt(K_jm, E_mj)
+  (s_mj, sg_mj) = decrypt(K_jm, E_mj)
 
   C_prod = product(
     for k in [0..T]:
       C_jk ^ (m^k)
   ) mod p
 
-  if g^s_mj * h^s'_mj = C_prod: # <<1>>
+  if g^s_mj * h^sg_mj = C_prod: # <<1>>
     DQ_5 += P_j
   else:
     DQ_5 += P_m
@@ -422,7 +422,7 @@ x_i = sum(
 
 x'_i = sum(
   for j in G_6:
-    s'_ji
+    sg_ji
 ) mod q
 ----
 
@@ -482,7 +482,7 @@ As in Phase 5, but with the validation formula from Phase 8.
 It should be noted that the symmetric nature of the encryption
 allows the parties to also decrypt _E~jm~_ and not just _E~mj~_.
 This is not very significant though,
-as even the publication of only the misbehaving participants' shares
+as even the publication of only the misbehaving participantsg shares
 would reduce the security margin excessively
 if a large fraction of _G_ were to misbehave.
 By setting the threshold for group creation failure at _f~max~/2_
@@ -509,7 +509,7 @@ for c in complaints_B:
 
   K_jm = ecdh(X_jm, Y_mj)
 
-  (s_mj, s'_mj) = decrypt(K_jm, E_mj)
+  (s_mj, sg_mj) = decrypt(K_jm, E_mj)
 
   A_prod = product(
     for k in [0..T]:
@@ -566,7 +566,7 @@ for m in (G_6 - G_11): # <<1>>
 
     K_jm = ecdh(X_jm, Y_mj)
 
-    (s_mj, s'_mj) = decrypt(K_jm, E_mj)
+    (s_mj, sg_mj) = decrypt(K_jm, E_mj)
 
   ss_m = take(T + 1, [s_m1, ... , s_mN])
 
