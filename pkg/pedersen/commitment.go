@@ -3,6 +3,7 @@ package pedersen
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -62,9 +63,34 @@ func GenerateCommitment(secret *[]byte) (*big.Int, *bn256.G2, *bn256.G2, *bn256.
 	return r, pubKey, h, commitment, nil
 }
 
-// ValidateCommitment TODO
-func ValidateCommitment(commitment *[]byte, r *big.Int) bool {
-	return false
+// ValidateCommitment validates received commitment against revealed secret.
+func ValidateCommitment(secret *[]byte, r *big.Int, commitment *bn256.G2, pubKey *bn256.G2, randomPoint *bn256.G2) (bool, error) {
+	// Hash `secret` and calculate `digest`.
+	// [TC]: `digest = sha256(secret) mod q`
+	hash := hash256BigInt(secret)
+	digest := new(big.Int).Mod(hash, cardinality)
+
+	// Calculate `a`
+	// [TC]: `a = g * r`
+	a := new(bn256.G1).ScalarBaseMult(r)
+
+	// Calculate `b`
+	// [TC]: `b = h + g * privKey`
+	b := new(bn256.G2).Add(randomPoint, pubKey)
+
+	// Calculate `c`
+	// [TC]: `c = commitment - g * digest)`
+	c := new(bn256.G2).Add(commitment, new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)))
+
+	// Get base point `g`
+	g := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
+
+	// Compare pairings
+	// [TC]: pairing(a, b) == pairing(g, c)
+	if bn256.Pair(a, b).String() != bn256.Pair(g, c).String() {
+		return false, fmt.Errorf("pairings doesn't match")
+	}
+	return true, nil
 }
 
 // hash256BigInt - calculates 256-bit hash for passed `secret` and converts it
