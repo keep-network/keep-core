@@ -7,10 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -25,9 +24,9 @@ type localChain struct {
 	groupRelayEntries      map[int64][32]byte
 
 	handlerMutex            sync.Mutex
-	relayEntryHandlers      []func(entry *entry.Entry)
-	relayRequestHandlers    []func(request *entry.Request)
-	groupRegisteredHandlers []func(key *relay.GroupRegistration)
+	relayEntryHandlers      []func(entry *event.Entry)
+	relayRequestHandlers    []func(request *event.Request)
+	groupRegisteredHandlers []func(key *event.GroupRegistration)
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
@@ -62,7 +61,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	c.groupRegistrations[groupID] = key
 	c.simulatedHeight++
 
-	groupRegistrationPromise.Fulfill(&relay.GroupRegistration{
+	groupRegistrationPromise.Fulfill(&event.GroupRegistration{
 		GroupPublicKey:        []byte(groupID),
 		RequestID:             big.NewInt(c.simulatedHeight),
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
@@ -71,40 +70,40 @@ func (c *localChain) SubmitGroupPublicKey(
 	return groupRegistrationPromise
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry *entry.Entry) *async.RelayEntryPromise {
+func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	c.groupRelayEntriesMutex.Lock()
 	defer c.groupRelayEntriesMutex.Unlock()
 
-	existing, exists := c.groupRelayEntries[newEntry.GroupID.Int64()]
-	if exists && existing != newEntry.Value {
+	existing, exists := c.groupRelayEntries[entry.GroupID.Int64()]
+	if exists && existing != entry.Value {
 		err := fmt.Errorf(
 			"mismatched signature for [%v], submission failed; \n"+
 				"[%v] vs [%v]\n",
-			newEntry.GroupID,
+			entry.GroupID,
 			existing,
-			newEntry.Value,
+			entry.Value,
 		)
 
 		relayEntryPromise.Fail(err)
 
 		return relayEntryPromise
 	}
-	c.groupRelayEntries[newEntry.GroupID.Int64()] = newEntry.Value
+	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
 
-	relayEntryPromise.Fulfill(&entry.Entry{
-		RequestID:     newEntry.RequestID,
-		Value:         newEntry.Value,
-		GroupID:       newEntry.GroupID,
-		PreviousEntry: newEntry.PreviousEntry,
+	relayEntryPromise.Fulfill(&event.Entry{
+		RequestID:     entry.RequestID,
+		Value:         entry.Value,
+		GroupID:       entry.GroupID,
+		PreviousEntry: entry.PreviousEntry,
 		Timestamp:     time.Now().UTC(),
 	})
 
 	return relayEntryPromise
 }
 
-func (c *localChain) OnRelayEntryGenerated(handler func(entry *entry.Entry)) {
+func (c *localChain) OnRelayEntryGenerated(handler func(entry *event.Entry)) {
 	c.handlerMutex.Lock()
 	c.relayEntryHandlers = append(
 		c.relayEntryHandlers,
@@ -113,7 +112,7 @@ func (c *localChain) OnRelayEntryGenerated(handler func(entry *entry.Entry)) {
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnRelayEntryRequested(handler func(request *entry.Request)) {
+func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request)) {
 	c.handlerMutex.Lock()
 	c.relayRequestHandlers = append(
 		c.relayRequestHandlers,
@@ -122,7 +121,7 @@ func (c *localChain) OnRelayEntryRequested(handler func(request *entry.Request))
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnGroupRegistered(handler func(key *relay.GroupRegistration)) {
+func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
 	c.handlerMutex.Lock()
 	c.groupRegisteredHandlers = append(
 		c.groupRegisteredHandlers,
