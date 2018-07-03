@@ -1,6 +1,6 @@
 # This is a TOML configuration file for DKG, P2P networking and connction to Ethereum
 
-# Provider Initialization Example
+# Provider Initialization Example - for bootstrap server
 
 [ethereum]
 	URL                = "ws://192.168.0.158:8546"

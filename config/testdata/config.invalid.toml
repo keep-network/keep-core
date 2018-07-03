@@ -1,0 +1,20 @@
+# This is a TOML configuration file for DKG, P2P networking and connction to Ethereum
+
+# Provider Initialization Example - will invalid data
+
+[ethereum]
+	URL                = "xxx"
+	URLRPC             = "xxx"
+
+[ethereum.account]
+	Address            = "xxx"
+	KeyFile            = "xxx"
+
+[ethereum.ContractAddresses]
+	KeepRandomBeacon = "xxx"
+	GroupContract = "xxx"
+
+[node]
+    Port = 0
+    Seed = -1
+    Peers = ["xxx"]

@@ -2,83 +2,134 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strings"
 	"syscall"
 
 	"github.com/BurntSushi/toml"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/util"
+	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
-
 // Config is the top level config structure.
 type Config struct {
-	Ethereum  ethereum.Config
-	Bootstrap bootstrap
-	Node      node
+	Ethereum ethereum.Config
+	Node     libp2p.NodeConfig
 }
 
-type node struct {
-	Port                  int
-	MyPreferredOutboundIP string
+// DefaultConfig populates the config struc with default values.
+func DefaultConfig() *Config {
+	cfg := Config{
+		Ethereum: ethereum.DefaultConfig,
+		Node:     libp2p.DefaultNodeConfig,
+	}
+	return &cfg
 }
 
-type bootstrap struct {
-	URLs []string
-	Seed int
+// NewConfig returns a struct that has been populated with default values and any values overwritten by the config file.
+func NewConfig(filePath string) (Config, error) {
+	cfg := DefaultConfig()
+	var err error
+	*cfg, err = ReadConfig(filePath)
+	if err != nil {
+		return Config{}, fmt.Errorf("error reading config file: %v", err)
+	}
+	return *cfg, nil
 }
 
-var (
-	// KeepOpts contains global application settings
-	KeepOpts Config
-)
-
-// ReadConfig reads in the configuration file in .toml format.
-func ReadConfig(filePath string) (cfg Config, err error) {
-	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
-		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
+// ValidationError returns validation errors for all config values.
+func (c *Config) ValidationError() error {
+	var errMsgs []string
+	if c.Ethereum.Account.KeyFilePassword == "" {
+		errMsgs = append(errMsgs,
+			fmt.Sprintf("password is required;  set environment variable (%s) to password or pass 'prompt'",
+				passwordEnvVariable))
 	}
 
-	var password string
+	var ethCfg = &ethereum.Config{
+		URL:               c.Ethereum.URL,
+		URLRPC:            c.Ethereum.URLRPC,
+		ContractAddresses: c.Ethereum.ContractAddresses,
+		Account:           c.Ethereum.Account,
+	}
+	errMsgs = util.AppendErrMsgs(errMsgs, ethCfg.ValidationError())
+
+	var libp2pCfg = &libp2p.Config{
+		NodeConfig: libp2p.NodeConfig{
+			Port:  c.Node.Port,
+			Seed:  c.Node.Seed,
+			Peers: c.Node.Peers,
+		},
+	}
+	errMsgs = util.AppendErrMsgs(errMsgs, libp2pCfg.ValidationError())
+
+	return util.Err(errMsgs)
+}
+
+const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+
+// Opts contains global application settings.
+var Opts Config
+
+// ReadConfig reads in the configuration file in .toml format.
+//func ReadConfig(filePath string, cfg *Config) error {
+// ReadConfig reads in the configuration file in .toml format.
+func ReadConfig(filePath string) (Config, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return Config{}, err
+	}
+	defer f.Close()
+
+	cfg := DefaultConfig()
+	if _, err := toml.DecodeFile(filePath, &cfg); err != nil {
+		return Config{}, err
+	}
 	envPassword := os.Getenv(passwordEnvVariable)
 	if envPassword == "prompt" {
-		if password, err = readPassword("Enter Account Password: "); err != nil {
-			return cfg, err
+		password, err := readPassword("Enter Account Password: ")
+		if err != nil {
+			return Config{}, err
 		}
 		cfg.Ethereum.Account.KeyFilePassword = password
 	} else {
 		cfg.Ethereum.Account.KeyFilePassword = envPassword
 	}
-
-	if cfg.Ethereum.Account.KeyFilePassword == "" {
-		return cfg, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
-	}
-
-	if cfg.Node.Port == 0 {
-		return cfg, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
-	}
-
-	if cfg.Bootstrap.Seed == 0 && len(cfg.Bootstrap.URLs) == 0 {
-		return cfg, fmt.Errorf("either supply a valid bootstrap seed or valid bootstrap URLs")
-	}
-
-	if cfg.Bootstrap.Seed != 0 && len(cfg.Bootstrap.URLs) > 0 {
-		return cfg, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
-	}
-
-	return cfg, nil
+	return *cfg, cfg.ValidationError()
 }
 
-// ReadPassword prompts a user to enter a password.   The read password uses
-// the system password reading call that helps to prevent key loggers from
-// capturing the password.
+// ReadPassword prompts a user to enter a password.   The read password uses the system
+// password reading call that helps to prevent key loggers from capturing the password.
 func readPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		return "", fmt.Errorf("Unable to read password, error [%s]", err)
+		return "", fmt.Errorf("unable to read password, error: %v", err)
 	}
 	return strings.TrimSpace(string(bytePassword)), nil
+}
+
+// PrintConfig prints the config values resulting from overwriting default values with contents of config file.
+func PrintConfig(c *cli.Context) error {
+	configPath := c.GlobalString("config")
+	cfg, err := NewConfig(configPath)
+	if err != nil {
+		log.Fatalf("error calling NewConfig: %v\n", err)
+	}
+	_, err = io.WriteString(os.Stdout,
+		"config values from overwriting default values with contents of: "+configPath+"\n\n")
+	if err != nil {
+		return fmt.Errorf("unable to write configuration file (%s), error: %v", configPath, err)
+	}
+	err = toml.NewEncoder(os.Stdout).Encode(cfg)
+	if err != nil {
+		return fmt.Errorf("unable to encode configuration file (%s) contents, error: %v", configPath, err)
+	}
+	fmt.Fprint(os.Stdout, "\n")
+	return nil
 }

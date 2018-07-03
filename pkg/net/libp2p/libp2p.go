@@ -9,16 +9,19 @@ import (
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
-	addrutil "github.com/libp2p/go-addr-util"
-	host "github.com/libp2p/go-libp2p-host"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
-	peer "github.com/libp2p/go-libp2p-peer"
+	"github.com/libp2p/go-addr-util"
+	"github.com/libp2p/go-libp2p-host"
+	"github.com/libp2p/go-libp2p-kad-dht"
+	"github.com/libp2p/go-libp2p-peer"
 	"github.com/libp2p/go-libp2p-peerstore"
-	routing "github.com/libp2p/go-libp2p-routing"
-	swarm "github.com/libp2p/go-libp2p-swarm"
-	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	"github.com/libp2p/go-libp2p-routing"
+	"github.com/libp2p/go-libp2p-swarm"
+	"github.com/libp2p/go-libp2p/p2p/host/basic"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
+	"regexp"
+
+	"github.com/keep-network/keep-core/util"
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
 	msmux "github.com/whyrusleeping/go-smux-multistream"
@@ -31,11 +34,11 @@ type provider struct {
 
 	host    host.Host
 	routing routing.IpfsRouting
-	addrs []ma.Multiaddr
+	addrs   []ma.Multiaddr
 }
 
+// ListenAddrs for this host.
 var ListenAddrs []ma.Multiaddr
-
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
@@ -51,15 +54,73 @@ func (p *provider) Addrs() []ma.Multiaddr {
 	return p.addrs
 }
 
-type Config struct {
-	Peers []string
+//const ipfsURLPattern = `.+\/.*`
+
+//var ifpsURLRegex = util.CompileRegex(ipfsURLPattern)
+
+// NodeConfig contains the config values for this node.
+type NodeConfig struct {
 	Port  int
 	Seed  int
+	Peers []string
+}
+
+// DefaultNodeConfig is a non-bootrap node.
+var DefaultNodeConfig = NodeConfig{
+	Port:  27001,
+	Seed:  0,
+	Peers: []string{"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"},
+}
+
+// Config contains the data needed to configure lib2p resources for this provider.
+type Config struct {
+	NodeConfig
 
 	listenAddrs []ma.Multiaddr
 	identity    *identity
 }
 
+// ValidationError returns validation errors for all config values.
+func (c *Config) ValidationError() error {
+	var errMsgs []string
+	if c.Port <= 0 {
+		errMsgs = append(errMsgs,
+			fmt.Sprintf("Node.Port (%d) invalid; see node section in config file or use --port flag",
+				c.Port))
+	}
+	if len(c.Peers) == 0 && c.Seed <= 0 {
+		errMsgs = append(errMsgs, fmt.Sprintf("either supply valid Node.Peers or a valid Bootstrap.Seed"))
+	}
+	if len(c.Peers) > 0 && c.Seed != 0 {
+		errMsgs = append(errMsgs, fmt.Sprintf("non-bootstrap node should have Bootstrap.URL and a Bootstrap.Seed of 0"))
+	}
+
+	const ipfsURLPattern = `.+\/.*`
+	ifpsURLRegex, err := regexp.Compile(ipfsURLPattern)
+	if err != nil {
+		panic(fmt.Sprintf("Error compiling regex: [%s]", ipfsURLPattern))
+	}
+
+	if len(c.Peers) > 0 {
+		for _, ipfsURL := range c.Peers {
+
+			if ifpsURLRegex.FindString(ipfsURL) == "" {
+				errMsgs = append(errMsgs,
+					fmt.Sprintf("Node.Peers (%s) invalid; format expected: %s",
+						ipfsURL,
+						ipfsURLPattern))
+			}
+		}
+		if util.DuplicatesExist(c.Peers) {
+			errMsgs = append(errMsgs,
+				fmt.Sprintf("Node.Peers invalid; duplicates found: %s",
+					util.Join(util.Duplicates(c.Peers), " ")))
+		}
+	}
+	return util.Err(errMsgs)
+}
+
+// Connect returns the host provider with channel manager, router and listen addresses.
 func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	host, identity, err := discoverAndListen(ctx, config)
 	if err != nil {
@@ -100,7 +161,7 @@ func discoverAndListen(
 
 	addrs := config.listenAddrs
 	if addrs == nil {
-		// Get available network ifaces to listen on into multiaddrs
+		// Get available network ifaces to listen on into multiaddrs.
 		addrs, err = getListenAddrs(config.Port)
 		if err != nil {
 			return nil, nil, err
@@ -195,8 +256,7 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 
 	for _, peerInfo := range peerInfos {
 		if p.host.ID() == peerInfo.ID {
-			// We shouldn't bootstrap to ourself if we're the
-			// bootstrap node.
+			// We shouldn't bootstrap to ourself if we're the bootstrap node.
 			continue
 		}
 		waitGroup.Add(1)
@@ -210,7 +270,7 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	}
 	waitGroup.Wait()
 
-	// Bootstrap the host
+	// Bootstrap the host.
 	return p.routing.Bootstrap(ctx)
 }
 

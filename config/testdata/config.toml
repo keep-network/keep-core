@@ -1,6 +1,6 @@
 # This is a TOML configuration file for DKG, P2P networking and connction to Ethereum
 
-# Provider Initialization Example
+# Provider Initialization Example - for non-bootstrap peer
 
 [ethereum]
 	URL                = "ws://192.168.0.158:8546"
@@ -16,6 +16,5 @@
 
 [node]
     Port = 27001
-
-[bootstrap]
-    URLs = ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
+    Seed = 0
+    Peers = ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]

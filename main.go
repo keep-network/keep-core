@@ -10,6 +10,7 @@ import (
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/cmd"
+	"github.com/keep-network/keep-core/config"
 	"github.com/urfave/cli"
 )
 
@@ -38,7 +39,7 @@ func main() {
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
 	app.Description = "Command line interface (CLI) for running a Keep provider"
-	app.Copyright = "" //TODO: Insert copyright printInfo later
+	app.Copyright = "" //TODO: Insert copyright for print-info later
 	app.Compiled = time.Now()
 	app.Authors = []cli.Author{
 		{
@@ -86,6 +87,14 @@ func main() {
 				return nil
 			},
 		},
+		{
+			Name:  "print-config",
+			Usage: "Prints config values from .toml file",
+			Action: func(c *cli.Context) error {
+				printConfig(c)
+				return nil
+			},
+		},
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
@@ -112,4 +121,8 @@ func printInfo(c *cli.Context) {
 		revision,
 		c.GlobalString("config"),
 	)
+}
+
+func printConfig(c *cli.Context) {
+	config.PrintConfig(c)
 }

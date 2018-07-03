@@ -1,9 +1,11 @@
-package cmd
+package cmd_test
 
 import (
 	"fmt"
 	"testing"
 
+	"github.com/keep-network/keep-core/cmd"
+	"github.com/keep-network/keep-core/util"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -11,26 +13,22 @@ func stringsToMultiAddr(t *testing.T, s []string) []ma.Multiaddr {
 	multiAddrs := make([]ma.Multiaddr, len(s))
 	for _, addr := range s {
 		ma, err := ma.NewMultiaddr(addr)
-		if err != nil {
-			t.Fatalf("failed to construct Multiaddr: %s", addr)
-		}
+		util.Ok(t, err)
+
 		multiAddrs = append(multiAddrs, ma)
 	}
 	return multiAddrs
 }
 
 func TestMultiAddrIPs(t *testing.T) {
-	myIPAddress, err := GetPreferredOutboundIP()
-	if err != nil {
-		t.Fatal("failed to GetPreferredOutboundIP")
-	}
+	myIPAddress, err := cmd.GetPreferredOutboundIP()
+	util.Ok(t, err)
 	myIPv4MultiAddr := fmt.Sprintf("/ip4/%s/tcp/27001", myIPAddress)
 	typical := []string{
 		"/ip4/127.0.0.1/tcp/27001",
 		"/ip6/::1/tcp/27001",
 		"/ip4/192.168.10.103/tcp/27001",
 	}
-
 	duplicate := []string{
 		"/ip4/127.0.0.1/tcp/27001",
 		"/ip6/::1/tcp/27001",
@@ -39,17 +37,13 @@ func TestMultiAddrIPs(t *testing.T) {
 		myIPv4MultiAddr,
 		myIPv4MultiAddr,
 	}
-
 	only_home := []string{
 		"/ip4/127.0.0.1/tcp/27001",
 	}
-
 	only_ipv6 := []string{
 		"/ip6/::1/tcp/27001",
 	}
-
 	empty := []string{}
-
 	tests := map[string]struct {
 		maIPs          []ma.Multiaddr
 		expectedString string
@@ -77,14 +71,9 @@ func TestMultiAddrIPs(t *testing.T) {
 	}
 
 	for testName, test := range tests {
-
 		t.Run(testName, func(t *testing.T) {
-
-			ipAddr := GetIPv4Address(test.maIPs)
-
-			if ipAddr != test.expectedString {
-				t.Errorf("\ngot: %v\nwant: %v", ipAddr, test.expectedString)
-			}
+			actual := cmd.GetIPv4Address(test.maIPs)
+			util.Equals(t, test.expectedString, actual)
 		})
 	}
 }
