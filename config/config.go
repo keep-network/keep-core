@@ -84,7 +84,7 @@ func ReadConfig(filePath string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	defer util.CloseReadOnlyFile(f)
+	defer f.Close()
 
 	cfg := DefaultConfig()
 	if _, err := toml.DecodeFile(filePath, &cfg); err != nil {
