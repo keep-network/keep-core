@@ -27,10 +27,9 @@ type Interface interface {
 
 	// AddStaker is a temporary function for Milestone 1 that
 	// adds a staker to the group contract.
-	AddStaker(index int, groupMemberID string) *async.OnStakerAddedPromise
+	AddStaker(groupMemberID string) *async.OnStakerAddedPromise
+
 	// GetStakerList is a temporary function for Milestone 1 that
 	// gets back the list of stakers.
 	GetStakerList() ([]string, error)
-
-	// xyzzy - PJS -- TODO -- add the callback for the event!
 }
