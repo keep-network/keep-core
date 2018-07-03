@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
