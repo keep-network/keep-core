@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
@@ -72,7 +71,7 @@ func Initialize(
 		relayChain.SubmitGroupPublicKey(
 			"test",
 			member.GroupPublicKeyBytes(),
-		).OnSuccess(func(data *chaintype.GroupPublicKey) {
+		).OnSuccess(func(data *relay.GroupRegistration) {
 			fmt.Printf(
 				"Submission of public key: [%s].\n",
 				data,

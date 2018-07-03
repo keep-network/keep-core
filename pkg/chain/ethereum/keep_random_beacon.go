@@ -278,9 +278,9 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 // submitGroupPublicKeyEventFunc type of function called for
 // SubmitGroupPublicKeyEvent event.
 type submitGroupPublicKeyEventFunc func(
-	GroupPublicKey []byte,
-	RequestID *big.Int,
-	ActivationBlockHeight *big.Int,
+	groupPublicKey []byte,
+	requestID *big.Int,
+	activationBlockHeight *big.Int,
 )
 
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
