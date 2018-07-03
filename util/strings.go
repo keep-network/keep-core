@@ -1,15 +1,16 @@
 package util
 
 import (
-	"fmt"
-	"regexp"
 	"strings"
 )
 
 const (
+	// MaxUint is the maximum unsigned integer value.
 	MaxUint = ^uint(0)
-	MaxInt  = int(MaxUint >> 1)
-	MinInt  = -MaxInt - 1
+	// MaxInt is the maximum integer value.
+	MaxInt = int(MaxUint >> 1)
+	// MinInt is the minimum integer value.
+	MinInt = -MaxInt - 1
 )
 
 // maxMapVal returns the maximum value found in the map or MinInt for an empty map.
@@ -29,7 +30,7 @@ func frequencyMap(list []string) map[string]int {
 	for _, item := range list {
 		_, exist := frequencyMap[item]
 		if exist {
-			frequencyMap[item] += 1
+			frequencyMap[item]++
 		} else {
 			frequencyMap[item] = 1
 		}
@@ -56,20 +57,6 @@ func duplicatesInMap(freqMap map[string]int) []string {
 		}
 	}
 	return dups
-}
-
-// CompileRegex compiles the regex pattern for later use.
-func CompileRegex(pattern string) *regexp.Regexp {
-	r, err := regexp.Compile(pattern)
-	if err != nil {
-		panic(fmt.Sprintf("Error compiling regex: [%s]", pattern))
-	}
-	return r
-}
-
-// MatchFound returns true if the search term matches the pattern.
-func MatchFound(regexPattern *regexp.Regexp, term string) bool {
-	return regexPattern.FindString(term) != ""
 }
 
 // Join concatenate the items in a list with the delimiter.

@@ -4,18 +4,23 @@ import (
 	"os"
 	"testing"
 
+	"fmt"
+	"regexp"
+
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/util"
 )
 
-const invalidBootstrapURLPattern = `Node\.Peers.+invalid.+`
-
-var bootstrapURLRegex = util.CompileRegex(invalidBootstrapURLPattern)
-
 // Assumes peer bootstrap URLs are MultiAddr; see https://github.com/multiformats/multiaddr
 func TestNodePeers(t *testing.T) {
 	setup(t)
+
+	const invalidBootstrapURLPattern = `Node\.Peers.+invalid.+`
+	bootstrapURLRegex, err := regexp.Compile(invalidBootstrapURLPattern)
+	if err != nil {
+		panic(fmt.Sprintf("Error compiling regex: [%s]", invalidBootstrapURLPattern))
+	}
 
 	for _, c := range []struct {
 		cfg      *config.Config
@@ -99,10 +104,10 @@ func TestNodePeers(t *testing.T) {
 		cfg.Node.Peers = c.cfg.Node.Peers
 
 		err := cfg.ValidationError()
-		if c.hasError && !util.MatchFound(bootstrapURLRegex, err.Error()) {
+		if c.hasError && bootstrapURLRegex.FindString(err.Error()) == "" {
 			t.Errorf("expected error pattern (%s), got %q", invalidBootstrapURLPattern, err)
 		}
-		if !c.hasError && err != nil && util.MatchFound(bootstrapURLRegex, err.Error()) {
+		if !c.hasError && err != nil && bootstrapURLRegex.FindString(err.Error()) != "" {
 			t.Errorf("unexpected error %q", err)
 		}
 	}

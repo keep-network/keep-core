@@ -19,6 +19,8 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/host/basic"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
+	"regexp"
+
 	"github.com/keep-network/keep-core/util"
 	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
@@ -52,9 +54,9 @@ func (p *provider) Addrs() []ma.Multiaddr {
 	return p.addrs
 }
 
-const ipfsURLPattern = `.+\/.*`
+//const ipfsURLPattern = `.+\/.*`
 
-var ifpsURLRegex = util.CompileRegex(ipfsURLPattern)
+//var ifpsURLRegex = util.CompileRegex(ipfsURLPattern)
 
 // NodeConfig contains the config values for this node.
 type NodeConfig struct {
@@ -94,9 +96,17 @@ func (c *Config) ValidationError() error {
 	if len(c.Peers) > 0 && c.Seed != 0 {
 		errMsgs = append(errMsgs, fmt.Sprintf("non-bootstrap node should have Bootstrap.URL and a Bootstrap.Seed of 0"))
 	}
+
+	const ipfsURLPattern = `.+\/.*`
+	ifpsURLRegex, err := regexp.Compile(ipfsURLPattern)
+	if err != nil {
+		panic(fmt.Sprintf("Error compiling regex: [%s]", ipfsURLPattern))
+	}
+
 	if len(c.Peers) > 0 {
 		for _, ipfsURL := range c.Peers {
-			if !util.MatchFound(ifpsURLRegex, ipfsURL) {
+
+			if ifpsURLRegex.FindString(ipfsURL) == "" {
 				errMsgs = append(errMsgs,
 					fmt.Sprintf("Node.Peers (%s) invalid; format expected: %s",
 						ipfsURL,
