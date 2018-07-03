@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 )
 
 func TestLocalSubmitRelayEntry(t *testing.T) {
@@ -15,14 +15,14 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4).ThresholdRelay()
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
-		&relay.Entry{
+		&event.Entry{
 			RequestID: big.NewInt(int64(19)),
 			GroupID:   big.NewInt(int64(1)),
 		},
 	)
 
-	done := make(chan *relay.Entry)
-	relayEntryPromise.OnSuccess(func(entry *relay.Entry) {
+	done := make(chan *event.Entry)
+	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
 		done <- entry
 	}).OnFailure(func(err error) {
 		if err != nil {

@@ -6,11 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -48,7 +46,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 			requestID *big.Int,
 			activationBlockHeight *big.Int,
 		) {
-			err := groupRegistrationPromise.Fulfill(&relay.GroupRegistration{
+			err := groupRegistrationPromise.Fulfill(&event.GroupRegistration{
 				GroupPublicKey:        groupPublicKey,
 				RequestID:             requestID,
 				ActivationBlockHeight: activationBlockHeight,
@@ -89,7 +87,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
-	entry *relay.Entry,
+	newEntry *event.Entry,
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
@@ -104,7 +102,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 			var value [32]byte
 			copy(value[:], requestResponse.Bytes()[:32])
 
-			err := relayEntryPromise.Fulfill(&relay.Entry{
+			err := relayEntryPromise.Fulfill(&event.Entry{
 				RequestID:     requestID,
 				Value:         value,
 				GroupID:       requestGroupID,
@@ -145,11 +143,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		return relayEntryPromise
 	}
 
-	groupSignature := big.NewInt(int64(0)).SetBytes(entry.Value[:])
+	groupSignature := big.NewInt(int64(0)).SetBytes(newEntry.Value[:])
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
-		entry.RequestID,
-		entry.GroupID,
-		entry.PreviousEntry,
+		newEntry.RequestID,
+		newEntry.GroupID,
+		newEntry.PreviousEntry,
 		groupSignature,
 	)
 	if err != nil {
@@ -171,7 +169,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *relay.Entry)) {
+func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
@@ -183,7 +181,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *relay.Entry)) 
 			var value [32]byte
 			copy(value[:], requestResponse.Bytes()[:32])
 
-			handle(&relay.Entry{
+			handle(&event.Entry{
 				RequestID:     requestID,
 				Value:         value,
 				GroupID:       requestGroupID,
@@ -209,7 +207,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *relay.Entry)) 
 // OnRelayEntryRequested registers a callback function for a new
 // relay request on chain.
 func (ec *ethereumChain) OnRelayEntryRequested(
-	handle func(request *entry.Request),
+	handle func(request *event.Request),
 ) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
@@ -219,7 +217,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			seed *big.Int,
 			blockNumber *big.Int,
 		) {
-			handle(&entry.Request{
+			handle(&event.Request{
 				RequestID:   requestID,
 				Payment:     payment,
 				BlockReward: blockReward,
@@ -263,7 +261,7 @@ func (ec *ethereumChain) AddStaker(
 		Index int,
 		GroupMemberID []byte,
 	) {
-		err := onStakerAddedPromise.Fulfill(&chaintype.StakerRegistration{
+		err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
 			Index:         Index,
 			GroupMemberID: string(GroupMemberID),
 		})
@@ -335,7 +333,7 @@ func (ec *ethereumChain) GetStakerList() ([]string, error) {
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
-	handle func(key *relay.GroupRegistration),
+	handle func(key *event.GroupRegistration),
 ) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
@@ -343,7 +341,7 @@ func (ec *ethereumChain) OnGroupRegistered(
 			requestID *big.Int,
 			activationBlockHeight *big.Int,
 		) {
-			handle(&relay.GroupRegistration{
+			handle(&event.GroupRegistration{
 				GroupPublicKey:        groupPublicKey,
 				RequestID:             requestID,
 				ActivationBlockHeight: activationBlockHeight,
