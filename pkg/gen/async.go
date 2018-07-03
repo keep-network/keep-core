@@ -43,7 +43,7 @@ func main() {
 			outputFile: "big_int_promise.go",
 		},
 		{
-			Type:       "*relay.Entry",
+			Type:       "*entry.Entry",
 			Prefix:     "RelayEntry",
 			outputFile: "relay_entry_promise.go",
 		},

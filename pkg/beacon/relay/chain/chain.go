@@ -1,9 +1,8 @@
 package chain
 
 import (
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -20,10 +19,10 @@ type Interface interface {
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
-	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
+	SubmitRelayEntry(entry *entry.Entry) *async.RelayEntryPromise
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(handle func(entry relay.Entry))
+	OnRelayEntryGenerated(handle func(entry entry.Entry))
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(func(request entry.Request))

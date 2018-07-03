@@ -8,10 +8,9 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -26,7 +25,7 @@ type localChain struct {
 	groupRelayEntries      map[int64][32]byte
 
 	handlerMutex         sync.Mutex
-	relayEntryHandlers   []func(entry relay.Entry)
+	relayEntryHandlers   []func(entry entry.Entry)
 	relayRequestHandlers []func(request entry.Request)
 
 	simulatedHeight int64
@@ -71,7 +70,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	return groupKeyPromise
 }
 
-func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+func (c *localChain) SubmitRelayEntry(entry *entry.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	c.groupRelayEntriesMutex.Lock()
@@ -93,7 +92,7 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	}
 	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
 
-	relayEntryPromise.Fulfill(&relay.Entry{
+	relayEntryPromise.Fulfill(&entry.Entry{
 		RequestID:     entry.RequestID,
 		Value:         entry.Value,
 		GroupID:       entry.GroupID,
@@ -104,7 +103,7 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	return relayEntryPromise
 }
 
-func (c *localChain) OnRelayEntryGenerated(handler func(entry relay.Entry)) {
+func (c *localChain) OnRelayEntryGenerated(handler func(entry entry.Entry)) {
 	c.handlerMutex.Lock()
 	c.relayEntryHandlers = append(
 		c.relayEntryHandlers,

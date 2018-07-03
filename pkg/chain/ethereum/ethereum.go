@@ -7,10 +7,9 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -83,7 +82,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupKeyPromise
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+func (ec *ethereumChain) SubmitRelayEntry(newEntry *entry.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
@@ -97,7 +96,7 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 			var value [32]byte
 			copy(value[:], requestResponse.Bytes()[:32])
 
-			err := relayEntryPromise.Fulfill(&relay.Entry{
+			err := relayEntryPromise.Fulfill(&entry.Entry{
 				RequestID:     requestID,
 				Value:         value,
 				GroupID:       requestGroupID,
@@ -136,11 +135,11 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 		return relayEntryPromise
 	}
 
-	groupSignature := big.NewInt(int64(0)).SetBytes(entry.Value[:])
+	groupSignature := big.NewInt(int64(0)).SetBytes(newEntry.Value[:])
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
-		entry.RequestID,
-		entry.GroupID,
-		entry.PreviousEntry,
+		newEntry.RequestID,
+		newEntry.GroupID,
+		newEntry.PreviousEntry,
 		groupSignature,
 	)
 	if err != nil {
@@ -162,7 +161,7 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
+func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry entry.Entry)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
@@ -174,7 +173,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
 			var value [32]byte
 			copy(value[:], requestResponse.Bytes()[:32])
 
-			handle(relay.Entry{
+			handle(entry.Entry{
 				RequestID:     requestID,
 				Value:         value,
 				GroupID:       requestGroupID,
