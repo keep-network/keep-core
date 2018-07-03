@@ -7,7 +7,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/keep-network/keep-core-dkg-branch/go/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -26,7 +25,7 @@ type NodeState struct {
 
 	// lastSeenEntry is the last relay entry this node is aware of.
 	lastSeenEntryLock sync.RWMutex
-	lastSeenEntry     event.Entry
+	lastSeenEntry     *event.Entry
 }
 
 // IsNextGroup returns true if the next group expected to generate a threshold
@@ -46,7 +45,7 @@ func (ns *NodeState) AddGroup() {
 	// add group pubkey associated with group index
 }
 
-func (state *NodeState) GenerateRelayEntryIfEligible(req entry.Request) {
+func (state *NodeState) GenerateRelayEntryIfEligible(req event.Request) {
 	thresholdMember, groupChannel := state.memberAndGroupForRequest(req)
 	if thresholdMember != nil {
 		go func() {
@@ -61,7 +60,7 @@ func (state *NodeState) GenerateRelayEntryIfEligible(req entry.Request) {
 }
 
 func (state *NodeState) memberAndGroupForRequest(
-	req entry.Request,
+	req event.Request,
 ) (*thresholdgroup.Member, *net.BroadcastChannel) {
 	// Use request to choose group.
 	// See if we're in the group.
@@ -78,7 +77,7 @@ func EmptyState() *NodeState {
 		groupCount: 0,
 		group:      0,
 		GroupID:    0,
-		lastSeenEntry: event.Entry{
+		lastSeenEntry: &event.Entry{
 			RequestID:     &big.Int{},
 			Value:         [32]byte{},
 			GroupID:       &big.Int{},
