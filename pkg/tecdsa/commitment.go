@@ -1,4 +1,4 @@
-package pedersen
+package tecdsa
 
 import (
 	"crypto/rand"
@@ -10,10 +10,11 @@ import (
 )
 
 // Generates commitment based on [TC]
+// Utilizes group of points on bn256 elliptic curve for calculations.
 
 // [TC] https://github.com/keep-network/keep-core/blob/master/docs/cryptography/trapdoor-commitments.adoc
 
-// cardinality - cardinality of groups G1, G2, GT. `q` in [TC]
+// cardinality - number of points in each of groups G1 and G2. `q` in [TC]
 var cardinality = bn256.Order
 
 // GenerateCommitment generates a Commitment for passed `secret` message.

@@ -1,4 +1,4 @@
-package pedersen
+package tecdsa
 
 import (
 	"encoding/base64"
