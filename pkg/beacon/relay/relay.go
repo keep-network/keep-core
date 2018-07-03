@@ -7,7 +7,11 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/keep-network/keep-core-dkg-branch/go/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
+	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 // NodeState represents the current state of a relay node.
@@ -40,6 +44,31 @@ func (ns *NodeState) AddGroup() {
 	// increment internal group counter for modding
 	atomic.AddUint32(&ns.groupCount, 1)
 	// add group pubkey associated with group index
+}
+
+func (state *NodeState) GenerateRelayEntryIfEligible(req entry.Request) {
+	thresholdMember, groupChannel := state.memberAndGroupForRequest(req)
+	if thresholdMember != nil {
+		go func() {
+			thresholdsignature.Execute(
+				nil,
+				nil,
+				groupChannel,
+				thresholdMember,
+			)
+		}()
+	}
+}
+
+func (state *NodeState) memberAndGroupForRequest(
+	req entry.Request,
+) (*thresholdgroup.Member, *net.BroadcastChannel) {
+	// Use request to choose group.
+	// See if we're in the group.
+	// If we are, look up our member entry and our broadcast channel entry.
+	// Return these.
+	// Otherwise return nil, nil.
+	return nil, nil
 }
 
 // EmptyState returns an empty NodeState with no group, zero group count, and
