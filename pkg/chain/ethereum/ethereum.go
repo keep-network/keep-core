@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -39,8 +38,8 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) *async.GroupPublicKeyPromise {
-	groupKeyPromise := &async.GroupPublicKeyPromise{}
+) *async.GroupRegistrationPromise {
+	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
@@ -48,7 +47,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 			requestID *big.Int,
 			activationBlockHeight *big.Int,
 		) {
-			err := groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
+			err := groupRegistrationPromise.Fulfill(&relay.GroupRegistration{
 				GroupPublicKey:        groupPublicKey,
 				RequestID:             requestID,
 				ActivationBlockHeight: activationBlockHeight,
@@ -62,7 +61,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 			}
 		},
 		func(err error) error {
-			return groupKeyPromise.Fail(
+			return groupRegistrationPromise.Fail(
 				fmt.Errorf(
 					"entry of group key failed with: [%v]",
 					err,
@@ -76,16 +75,16 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 			"watch group public key event failed with: [%v].\n",
 			err,
 		)
-		return groupKeyPromise
+		return groupRegistrationPromise
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
-		return groupKeyPromise
+		return groupRegistrationPromise
 	}
 
-	return groupKeyPromise
+	return groupRegistrationPromise
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
@@ -235,14 +234,14 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request *entry.Reques
 	}
 }
 
-func (ec *ethereumChain) OnGroupRegistered(handle func(key *chaintype.GroupPublicKey)) {
+func (ec *ethereumChain) OnGroupRegistered(handle func(key *relay.GroupRegistration)) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
 			groupPublicKey []byte,
 			requestID *big.Int,
 			activationBlockHeight *big.Int,
 		) {
-			handle(&chaintype.GroupPublicKey{
+			handle(&relay.GroupRegistration{
 				GroupPublicKey:        groupPublicKey,
 				RequestID:             requestID,
 				ActivationBlockHeight: activationBlockHeight,
