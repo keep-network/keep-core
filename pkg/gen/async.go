@@ -52,6 +52,11 @@ func main() {
 			Prefix:     "GroupPublicKey",
 			outputFile: "group_pub_key_promise.go",
 		},
+		{
+			Type:       "*chaintype.OnStakerAdded",
+			Prefix:     "OnStakerAdded",
+			outputFile: "on_staker_added_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {

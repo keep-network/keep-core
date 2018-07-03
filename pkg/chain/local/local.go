@@ -132,3 +132,23 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		blockCounter:         bc,
 	}
 }
+
+// AddStaker is a temporary function for Milestone 1 that
+// adds a staker to the group contract.
+func (ec *localChain) AddStaker(
+	index int,
+	groupMemberID string,
+) *async.OnStakerAddedPromise {
+	onStakerAddedPromise := &async.OnStakerAddedPromise{}
+	// xyzzy - TODO - work to do
+	panic("not implemented yet")
+	return onStakerAddedPromise
+}
+
+// GetStakerList is a temporary function for Milestone 1 that
+// gets back the list of stakers.
+func (ec *localChain) GetStakerList() ([]string, error) {
+	// xyzzy - TODO - work to do
+	panic("not implemented yet")
+	return []string{}, nil
+}

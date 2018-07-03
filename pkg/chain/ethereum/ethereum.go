@@ -87,7 +87,9 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupKeyPromise
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+func (ec *ethereumChain) SubmitRelayEntry(
+	entry *relay.Entry,
+) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
@@ -194,4 +196,108 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 			err,
 		)
 	}
+}
+
+// AddStaker is a temporary function for Milestone 1 that
+// adds a staker to the group contract.
+func (ec *ethereumChain) AddStaker(
+	index int,
+	groupMemberID string,
+) *async.OnStakerAddedPromise {
+	onStakerAddedPromise := &async.OnStakerAddedPromise{}
+
+	if len(groupMemberID) != 32 {
+		err := onStakerAddedPromise.Fail(
+			fmt.Errorf(
+				"groupMemberID wrong length, need 32, got %d\n",
+				len(groupMemberID),
+			),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
+		}
+		return onStakerAddedPromise
+	}
+
+	success := func(
+		Index int,
+		GroupMemberID []byte,
+	) {
+		err := onStakerAddedPromise.Fulfill(&chaintype.OnStakerAdded{
+			Index:         Index,
+			GroupMemberID: string(GroupMemberID),
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
+		}
+	}
+
+	fail := func(err error) error {
+		err = onStakerAddedPromise.Fail(err)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
+		}
+		return nil
+	}
+
+	err := ec.keepGroupContract.WatchOnStakerAdded(
+		success,
+		fail,
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to watch OnStakerAdded [%v].\n", err)
+		return onStakerAddedPromise
+	}
+
+	max, err := ec.keepGroupContract.GetNStaker()
+	if err != nil {
+		fmt.Printf("Error: failed on call to GetNStaker: [%v]\n", err)
+		return onStakerAddedPromise
+	}
+
+	// Check that index is in range.  if index == max then this will
+	// append to the end of the array, if > index then it will error,
+	// so test and report for that.
+	if index < 0 || index > max {
+		fmt.Printf("Error: index is out of range, must be between 0 and %d, have %d\n", max, index)
+		return onStakerAddedPromise
+	}
+
+	tx, err := ec.keepGroupContract.AddStaker(index, groupMemberID)
+	if err != nil {
+		fmt.Printf(
+			"on staker added failed with: [%v]",
+			err,
+		)
+	}
+
+	ec.tx = tx
+
+	return onStakerAddedPromise
+}
+
+// GetStakerList is a temporary function for Milestone 1 that
+// gets back the list of stakers.
+func (ec *ethereumChain) GetStakerList() ([]string, error) {
+
+	max, err := ec.keepGroupContract.GetNStaker()
+	if err != nil {
+		err = fmt.Errorf("failed on call to GetNStaker: [%v]\n", err)
+		return []string{}, err
+	}
+
+	if max == 0 {
+		return []string{}, nil
+	}
+
+	listOfStakers := make([]string, 0, max)
+	for ii := 0; ii < max; ii++ {
+		aStaker, err := ec.keepGroupContract.GetStaker(ii)
+		if err != nil {
+			return []string{}, fmt.Errorf("at postion %d out of %d error: [%v]", ii, max, err)
+		}
+		listOfStakers = append(listOfStakers, string(aStaker))
+	}
+
+	return listOfStakers, nil
 }
