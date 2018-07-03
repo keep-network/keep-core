@@ -753,8 +753,8 @@ def addSubmission(submitter, result):
 def alreadySubmitted(resultHash):
     receivedSubmissions.hasKey(resultHash)
 
-# data Submission = NewSubmission Result PlayerID
-#                 | SupportVote (HashOf Result) PlayerID
+# data Submission = Submission Result PlayerID
+# data Vote = Vote (HashOf Result) PlayerID
 
 def receiveSubmission(s):
     P_s = s.submitter
