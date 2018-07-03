@@ -168,9 +168,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
-// OnRelayEntryRequested registers a callback function for a new relay request on
-// chain.
-func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request)) {
+// OnRelayEntryRequested registers a callback function for a new
+// relay request on chain.
+func (ec *ethereumChain) OnRelayEntryRequested(
+	handle func(request entry.Request),
+) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
@@ -208,7 +210,7 @@ func (ec *ethereumChain) AddStaker(
 	if len(groupMemberID) != 32 {
 		err := onStakerAddedPromise.Fail(
 			fmt.Errorf(
-				"groupMemberID wrong length, need 32, got %d\n",
+				"groupMemberID wrong length, need 32, got %d",
 				len(groupMemberID),
 			),
 		)
@@ -273,7 +275,7 @@ func (ec *ethereumChain) GetStakerList() ([]string, error) {
 
 	max, err := ec.keepGroupContract.GetNStaker()
 	if err != nil {
-		err = fmt.Errorf("failed on call to GetNStaker: [%v]\n", err)
+		err = fmt.Errorf("failed on call to GetNStaker: [%v]", err)
 		return []string{}, err
 	}
 
@@ -285,7 +287,8 @@ func (ec *ethereumChain) GetStakerList() ([]string, error) {
 	for ii := 0; ii < max; ii++ {
 		aStaker, err := ec.keepGroupContract.GetStaker(ii)
 		if err != nil {
-			return []string{}, fmt.Errorf("at postion %d out of %d error: [%v]", ii, max, err)
+			return []string{},
+				fmt.Errorf("at postion %d out of %d error: [%v]", ii, max, err)
 		}
 		listOfStakers = append(listOfStakers, string(aStaker))
 	}

@@ -32,7 +32,10 @@ type keepGroup struct {
 //
 // For example:
 //  	filter := nil
-//  	eventSubscription, err := kg.contract.SomeContractSomeEvent(filter, eventChan)
+//  	eventSubscription, err := kg.contract.SomeContractSomeEvent(
+//			filter,
+//			eventChan,
+//		)
 //
 // Will exhibit our desired behavior of selecting an empty filter.
 //
@@ -181,7 +184,9 @@ func (kg *keepGroup) AddStaker(
 	if err != nil {
 		return nil, err
 	}
-	return kg.transactor.AddStaker(kg.transactorOpts, uint32(idx), groupMemberIDb32)
+	return kg.transactor.AddStaker(kg.transactorOpts, uint32(idx),
+		groupMemberIDb32,
+	)
 }
 
 // function getStaker(uint32 _index) public view returns ( bytes32 ) {
@@ -243,7 +248,10 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
 	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for GroupCompleteEvent events [%v]", err)
+		return fmt.Errorf(
+			"error creating watch for GroupCompleteEvent events [%v]",
+			err,
+		)
 	}
 	go func() {
 		for {
@@ -270,7 +278,10 @@ func (kg *keepGroup) WatchGroupErrorCode(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
 	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("failed go create watch for GroupErrorCode events: [%v]", err)
+		return fmt.Errorf(
+			"failed go create watch for GroupErrorCode events: [%v]",
+			err,
+		)
 	}
 	go func() {
 		for {
@@ -298,7 +309,10 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
 	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for GropExistsEvent events [%v]", err)
+		return fmt.Errorf(
+			"error creating watch for GropExistsEvent events [%v]",
+			err,
+		)
 	}
 	go func() {
 		for {
@@ -326,7 +340,10 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
 	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
 	if err != nil {
-		return fmt.Errorf("error creating watch for GorupStartedEvent events [%v]", err)
+		return fmt.Errorf(
+			"error creating watch for GorupStartedEvent events [%v]",
+			err,
+		)
 	}
 	go func() {
 		for {
