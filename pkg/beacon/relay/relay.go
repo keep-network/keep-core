@@ -61,12 +61,10 @@ func (state *NodeState) GenerateRelayEntryIfEligible(req event.Request) {
 
 func (state *NodeState) memberAndGroupForRequest(
 	req event.Request,
-) (*thresholdgroup.Member, *net.BroadcastChannel) {
+) (*thresholdgroup.Member, net.BroadcastChannel) {
 	// Use request to choose group.
 	// See if we're in the group.
-	// If we are, look up our member entry and our broadcast channel entry.
-	// Return these.
-	// Otherwise return nil, nil.
+	// If we are, look up and return our member entry and our broadcast channel entry.
 	return nil, nil
 }
 
