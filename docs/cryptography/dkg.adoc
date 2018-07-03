@@ -205,7 +205,7 @@ we will require every _P~i~_ to generate
 an ephemeral ECDH keypair _(X~ij~, Y~ij~)_ for every other member _P~j~_ in _G_.
 These will be broadcast in _phase 1_.
 
-[source]
+[source, python]
 ----
 # Receive:
 
@@ -236,7 +236,7 @@ for P_j in G, P_j /= P_i:
 Every node in _G_ has now published a valid list of ephemeral ECDH pubkeys.
 _P~i~_ will perform ECDH with every _P~j~_ in _G_ to create _K~ij~_.
 
-[source]
+[source, python]
 ----
 # Receive:
 
@@ -273,7 +273,7 @@ shared by _P~i~_ and _P~j~_.
 Commitments and encrypted shares are broadcast to other players.
 
 
-[source]
+[source, python]
 ----
 # Calculate:
 
@@ -321,7 +321,7 @@ Receive, decrypt and validate shares from other participants. If any share
 fails to pass validation, broadcast a complaint by publishing the corresponding
 ephemeral private key so others can validate the result.
 
-[source]
+[source, python]
 ----
 # Receive:
 
@@ -366,7 +366,7 @@ For every complaint, one party will be disqualified:
 either the accused sent invalid shares,
 or the accuser made a false complaint.
 
-[source]
+[source, python]
 ----
 # Receive:
 
@@ -409,7 +409,7 @@ disqualify the accused _P~m~_; if consistent, disqualify the accuser _P~j~_.
 Each player sets their share _x~i~_ of the secret _X_ to equal the sum of all
 shares _s~ji~_ as per GJKR. _X_ equals the sum of shares _s~j0~_.
 
-[source]
+[source, python]
 ----
 # Calculate:
 
@@ -431,7 +431,7 @@ x'_i = sum(
 
 Each player broadcasts their _A~ik~_ values.
 
-[source]
+[source, python]
 ----
 # Calculate:
 
@@ -449,7 +449,7 @@ for k in [0..T]:
 
 Each player validates the values received in the previous step.
 
-[source]
+[source, python]
 ----
 # Receive:
 
@@ -488,7 +488,7 @@ if a large fraction of _G_ were to misbehave.
 By setting the threshold for group creation failure at _f~max~/2_
 the impact of this is reduced to a manageable level.
 
-[source]
+[source, python]
 ----
 # Receive:
 
@@ -528,7 +528,7 @@ All active players in _G~10~_ broadcast the keys they share with
 players in _DQ~9~_, so the reconstruction of Pedersen-VSS can be done
 offline.
 
-[source]
+[source, python]
 ----
 # Calculate:
 
@@ -550,7 +550,7 @@ if keys_i /= []:
 Decrypt and reconstruct _z~m~_ for every participant _P~m~_ that presented
 valid shares in _phase 4_ but whose public key shares in _phase 7_ were invalid.
 
-[source]
+[source, python]
 ----
 # Receive:
 
@@ -591,7 +591,7 @@ Let _G~12~ = G~11~_
 Combine _y~j~_ for all participants in _G~6~_ to reconstruct the public key for
 the group.
 
-[source]
+[source, python]
 ----
 # Calculate:
 
@@ -621,7 +621,7 @@ after _t~dkg~ + 2 * t~step~_ blocks _P~4~_, and so on.
 When _P~j~_ submits the result, players _P~k~ | k < j_ will face a small
 penalty for being late, while _P~j~_ will receive the submission reward.
 
-[source]
+[source, python]
 ----
 if nPlayers(IA + DQ) > T/2:
   correctResult = Result.failure(disqualified = DQ)
@@ -634,7 +634,7 @@ alreadySubmitted = False
 resultPublished = False
 finished = False
 
-while !resultPublished:
+while not resultPublished:
   t_now = getCurrentBlockHeight()
 
   # using t_init from phase 1
@@ -683,17 +683,17 @@ failure without disqualifications.
 
 [source, python]
 ----
-while resultPublished && !finished:
+while resultPublished and not finished:
   allResults = getSubmissions()
   leadResult = allResults.mostVotes
 
   t_now = getCurrentBlockHeight()
   t_first = allResults.earliest.submitTime
 
-  if t_now > t_first + t_conflict || leadResult.votes > f_max:
+  if t_now > t_first + t_conflict or leadResult.votes > f_max:
     finished = True
 
-  elif correctResult = leadResult || alreadySubmitted:
+  elif correctResult = leadResult or alreadySubmitted:
     wait()
 
   elif correctResult in allResults:
@@ -718,7 +718,6 @@ receivedSubmissions = Map.empty()
 
 # submissionVotes :: Map (HashOf Result) Int
 submissionVotes = Map.empty()
-
 
 
 def eligibleSubmitter(P_i):
