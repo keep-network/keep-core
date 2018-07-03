@@ -28,33 +28,29 @@ import (
 	yamux "github.com/whyrusleeping/go-smux-yamux"
 )
 
-// Provider provides the ChannelManagr and the Host along with its IpfsRouting and listening addrs.
-type Provider struct {
+type provider struct {
 	channelManagerMutex sync.Mutex
-	ChannelManagr       *ChannelManager
+	channelManagr       *channelManager
 
-	Host    host.Host
+	host    host.Host
 	routing routing.IpfsRouting
 	addrs   []ma.Multiaddr
 }
 
-// ListenAddrs for this Host.
+// ListenAddrs for this host.
 var ListenAddrs []ma.Multiaddr
 
-// ChannelFor returns the broadcast channel for the given channel name.
-func (p *Provider) ChannelFor(name string) (net.BroadcastChannel, error) {
+func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
-	return p.ChannelManagr.getChannel(name)
+	return p.channelManagr.getChannel(name)
 }
 
-// Type returns this provider's type.
-func (p *Provider) Type() string {
+func (p *provider) Type() string {
 	return "libp2p"
 }
 
-// Addrs returns the list of nettwork interfaces on which this provider listens.
-func (p *Provider) Addrs() []ma.Multiaddr {
+func (p *provider) Addrs() []ma.Multiaddr {
 	return p.addrs
 }
 
@@ -76,12 +72,12 @@ var DefaultNodeConfig = NodeConfig{
 	Peers: []string{"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"},
 }
 
-// Config contains the data needed to configure lib2p resources for this Provider.
+// Config contains the data needed to configure lib2p resources for this provider.
 type Config struct {
 	NodeConfig
 
-	ListenAddrs []ma.Multiaddr
-	Identity    *Identity
+	listenAddrs []ma.Multiaddr
+	identity    *identity
 }
 
 // ValidationError returns validation errors for all config values.
@@ -124,23 +120,23 @@ func (c *Config) ValidationError() error {
 	return util.Err(errMsgs)
 }
 
-// Connect returns the Host Provider with channel manager, router and listen addresses.
+// Connect returns the host provider with channel manager, router and listen addresses.
 func Connect(ctx context.Context, config *Config) (net.Provider, error) {
-	host, identity, err := DiscoverAndListen(ctx, config)
+	host, identity, err := discoverAndListen(ctx, config)
 	if err != nil {
 		return nil, err
 	}
 
-	cm, err := NewChannelManager(ctx, identity, host)
+	cm, err := newChannelManager(ctx, identity, host)
 	if err != nil {
 		return nil, err
 	}
 
 	router := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
 
-	provider := &Provider{
-		ChannelManagr: cm,
-		Host:          rhost.Wrap(host, router),
+	provider := &provider{
+		channelManagr: cm,
+		host:          rhost.Wrap(host, router),
 		routing:       router,
 		addrs:         host.Addrs(),
 	}
@@ -157,15 +153,13 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	return provider, nil
 }
 
-// DiscoverAndListen sets this host's Identity and network interfaces on which it listens,
-// and connects it with its peer network.
-func DiscoverAndListen(
+func discoverAndListen(
 	ctx context.Context,
 	config *Config,
-) (host.Host, *Identity, error) {
+) (host.Host, *identity, error) {
 	var err error
 
-	addrs := config.ListenAddrs
+	addrs := config.listenAddrs
 	if addrs == nil {
 		// Get available network ifaces to listen on into multiaddrs.
 		addrs, err = getListenAddrs(config.Port)
@@ -174,12 +168,12 @@ func DiscoverAndListen(
 		}
 	}
 
-	peerIdentity := config.Identity
+	peerIdentity := config.identity
 	if peerIdentity == nil {
 		// FIXME: revisit this fallback decision. We run into the case
 		// where the user's config isn't right and then they're in the
-		// network as an Identity they aren't familiar with.
-		peerIdentity, err = GenerateIdentity(config.Seed)
+		// network as an identity they aren't familiar with.
+		peerIdentity, err = generateIdentity(config.Seed)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -190,7 +184,7 @@ func DiscoverAndListen(
 		return nil, nil, err
 	}
 
-	peerHost, err := buildPeerHost(ctx, addrs, peer.ID(peerIdentity.ID), peerStore)
+	peerHost, err := buildPeerHost(ctx, addrs, peer.ID(peerIdentity.id), peerStore)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -252,7 +246,7 @@ func makeSmuxTransport() smux.Transport {
 	return multiStreamTransport
 }
 
-func (p *Provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
+func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
 	var waitGroup sync.WaitGroup
 
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
@@ -261,14 +255,14 @@ func (p *Provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	}
 
 	for _, peerInfo := range peerInfos {
-		if p.Host.ID() == peerInfo.ID {
+		if p.host.ID() == peerInfo.ID {
 			// We shouldn't bootstrap to ourself if we're the bootstrap node.
 			continue
 		}
 		waitGroup.Add(1)
 		go func(pi *peerstore.PeerInfo) {
 			defer waitGroup.Done()
-			if err := p.Host.Connect(ctx, *pi); err != nil {
+			if err := p.host.Connect(ctx, *pi); err != nil {
 				fmt.Println(err)
 				return
 			}
@@ -276,7 +270,7 @@ func (p *Provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	}
 	waitGroup.Wait()
 
-	// Bootstrap the Host.
+	// Bootstrap the host.
 	return p.routing.Bootstrap(ctx)
 }
 

@@ -17,12 +17,12 @@ func TestAddIdentityToStore(t *testing.T) {
 
 	var match bool
 	for _, p := range ps.Peers() {
-		if p == peer.ID(pi.ID) {
+		if p == peer.ID(pi.id) {
 			match = true
 		}
 	}
 	if !match {
-		t.Fatalf("Failed to add Identity with ID %+v to the PeerStore", pi.ID)
+		t.Fatalf("Failed to add Identity with ID %+v to the PeerStore", pi.id)
 	}
 }
 
@@ -37,7 +37,7 @@ func TestPublicKeyFunctions(t *testing.T) {
 	msg := []byte("so random you can't fake it.")
 
 	// test our peerstore has the correct privkey
-	privKey := ps.PrivKey(peer.ID(pi.ID))
+	privKey := ps.PrivKey(peer.ID(pi.id))
 	if privKey != pi.privKey {
 		t.Fatal("private key in peerstore doesn't match the one we generated")
 	}
@@ -65,7 +65,7 @@ func TestPublicKeyFunctions(t *testing.T) {
 	}
 }
 
-func generateDeterministicIdentity(t *testing.T) *Identity {
+func generateDeterministicIdentity(t *testing.T) *identity {
 	p := testutils.RandPeerNetParamsOrFatal(t)
-	return &Identity{ID: networkIdentity(p.ID), privKey: p.PrivKey, pubKey: p.PubKey}
+	return &identity{id: networkIdentity(p.ID), privKey: p.PrivKey, pubKey: p.PubKey}
 }
