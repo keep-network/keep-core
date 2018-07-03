@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -72,7 +70,7 @@ func Initialize(
 		relayChain.SubmitGroupPublicKey(
 			"test",
 			member.GroupPublicKeyBytes(),
-		).OnSuccess(func(data *chaintype.GroupPublicKey) {
+		).OnSuccess(func(data *relay.GroupRegistration) {
 			fmt.Printf(
 				"Submission of public key: [%s].\n",
 				data,
@@ -131,7 +129,7 @@ func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
 			membership.ActivateMembership()
 		case inActiveGroup:
 			// FIXME We should have a non-empty state at this point ;)
-			entry.ServeRequests(relay.EmptyState())
+			//entry.ServeRequests(relay.EmptyState())
 		default:
 			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
 		}
