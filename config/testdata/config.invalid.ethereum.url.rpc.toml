@@ -1,4 +1,0 @@
-# Provide invalid test data; other config values will be populated by default values by NewConfig.
-
-[ethereum]
-	URLRPC             = "xxx"

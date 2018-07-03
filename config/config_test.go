@@ -159,52 +159,24 @@ func TestReadIpcConfig(t *testing.T) {
 	}
 }
 
-func TestReadInvalidEthereumURLConfig(t *testing.T) {
+func TestReadInvalidConfig(t *testing.T) {
 	setup(t)
-	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.url.toml")
-	util.NotOkRead(t, err, "ethereum.URL: %v", cfg.Ethereum.URL)
-}
+	// This config file has an invalid value for every setting.
+	_, err := config.ReadConfig("./testdata/config.invalid.toml")
 
-func TestReadInvalidEthereumURLRPCConfig(t *testing.T) {
-	setup(t)
-	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.url.rpc.toml")
-	util.NotOkRead(t, err, "ethereum.URLRPC: %v", cfg.Ethereum.URLRPC)
-}
+	expectedErrMsg := `Ethereum.URL (xxx) invalid; format expected: ws://.+|\w.ipc
+Ethereum.URLRPC (xxx) invalid; format expected: ^https?:\/\/(.+)\.(.+)
+Ethereum.Account.Address (xxx) invalid; format expected: ([13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-fA-F0-9]{40}|\\w+\\.eth(\\W|$)|(?i:iban:)?XE[0-9]{2}[a-zA-Z]{16})|^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$
+Ethereum.Account.KeyFile (xxx) invalid; format expected: \/.+
+Ethereum.ContractAddresses[KeepRandomBeacon] (xxx) invalid; format expected: ws://.+|\w.ipc
+Ethereum.ContractAddresses[GroupContract](xxx) invalid; format expected: ws://.+|\w.ipc
+Node.Port (0) invalid; see node section in config file or use --port flag
+non-bootstrap node should have Bootstrap.URL and a Bootstrap.Seed of 0
+Node.Peers (xxx) invalid; format expected: .+\/.*`
 
-func TestReadInvalidEthereumAccountAddress(t *testing.T) {
-	setup(t)
-	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.account.address.toml")
-	util.NotOkRead(t, err, "ethereum.account.Address: %v", cfg.Ethereum.Account.Address)
-}
-
-func TestReadInvalidEthereumAccountKeyfile(t *testing.T) {
-	setup(t)
-	cfg, err := config.NewConfig("./testdata/config.invalid.ethereum.account.keyfile.toml")
-	util.NotOkRead(t, err, "ethereum.account.KeyFile: %v", cfg.Ethereum.Account.KeyFile)
-}
-
-func TestReadInvalidEthereumContractKeepRandomBeaconAddress(t *testing.T) {
-	setup(t)
-	cfg, err := config.NewConfig("./testdata/config.invalid.random.beacon.address.toml")
-	util.NotOkRead(t, err, "ethereum.ContractAddresses.KeepRandomBeacon: %v", cfg.Ethereum.ContractAddresses["KeepRandomBeacon"])
-}
-
-func TestReadInvalidEthereumContractGroupContractAddress(t *testing.T) {
-	setup(t)
-	cfg, err := config.NewConfig("./testdata/config.invalid.group.contract.address.toml")
-	util.NotOkRead(t, err, "ethereum.ContractAddresses.GroupContract: %v", cfg.Ethereum.ContractAddresses["GroupContract"])
-}
-
-func TestReadInvalidNodePortConfig(t *testing.T) {
-	setup(t)
-	_, err := config.NewConfig("./testdata/config.invalid.node.port.toml")
-	util.NotOkRead(t, err, "unexpected error: missing value for port; see node section in config file or use --port flag")
-}
-
-func TestReadInvalidBootstrapSeedConfig(t *testing.T) {
-	setup(t)
-	cfg, err := config.NewConfig("./testdata/config.invalid.bootstrap.seed.toml")
-	util.NotOkRead(t, err, "bootstrap.Seed: %v", cfg.Node.Seed)
+	if err.Error() != expectedErrMsg {
+		t.Fatalf("expected this error: \n%s\ngot this error:\n%s", expectedErrMsg, err.Error())
+	}
 }
 
 func setup(t *testing.T) {
