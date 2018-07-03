@@ -758,34 +758,31 @@ def alreadySubmitted(resultHash):
 #                 | SupportVote (HashOf Result) PlayerID
 
 def receiveSubmission(s):
-    P_s = s.sender
+    P_s = s.submitter
+    result = s.result
+    resultHash = hash(result)
+
     if receivedSubmissions == {}:
-        if eligibleSubmitter(P_s) and s.type == 'NewSubmission': # <<1>>
+        if eligibleSubmitter(P_s): # <<1>>
             addSubmission(P_s, s)
         else:
             reject(s)
-
-# case s of
-#   NewSubmission result sender ->
-    elif s.type == 'NewSubmission':
-        result = s.result
-        resultHash = hash(result)
-
+    else:
         if alreadyVoted(P_s):
             reject(s)
         elif alreadySubmitted(resultHash): # <<2>>
             addVote(P_s, resultHash)
         else:
-            addSubmission(P_s, s)
+            addSubmission(P_s, result)
 
-#   SupportVote resultHash sender ->
-    elif s.type == 'SupportVote':
-        resultHash = s.resultHash
+def receiveVote(v):
+    P_v = v.submitter
+    resultHash = hash(v.result)
 
-        if alreadyVoted(P_s) or not alreadySubmitted(resultHash):
-            reject(s)
-        else:
-            addVote(P_s, resultHash)
+    if alreadyVoted(P_v) or not alreadySubmitted(resultHash):
+        reject(v)
+    else:
+        addVote(P_v, resultHash)
 
 
 def getFinalResult():
