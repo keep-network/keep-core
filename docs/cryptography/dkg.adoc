@@ -1,6 +1,7 @@
+:toc: macro
+
 = Distributed Key Generation
 
-:toc: macro
 :toclevels: 4
 
 The DKG scheme proposal is based on a protocol by
@@ -623,9 +624,9 @@ penalty for being late, while _P~j~_ will receive the submission reward.
 [source]
 ----
 if nPlayers(IA + DQ) > T/2:
-  correctResult = makeFailure(DQ)
+  correctResult = Result.failure(disqualified = DQ)
 else:
-  correctResult = makeSuccess(Y, IA, DQ)
+  correctResult = Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
 
 resultHash = hash(correctResult)
 
@@ -680,7 +681,7 @@ An exception to this is if the total number of signatures supporting all other
 submitted results is higher than _f~max~_, in which case the result is declared a
 failure without disqualifications.
 
-[source]
+[source, python]
 ----
 while resultPublished && !finished:
   allResults = getSubmissions()
@@ -706,56 +707,107 @@ while resultPublished && !finished:
 
 From the perspective of the chain:
 
-[source]
+
+[source, python]
 ----
-eligibleSubmitter(P_i) =
-  t_now = getCurrentBlockHeight()
-  t_elapsed = t_now - t_init
+# memberVotes :: Set PlayerID
+memberVotes = Set.empty()
 
-  i = P_i.index
+# receivedSubmissions :: Map (HashOf Result) Result
+receivedSubmissions = Map.empty()
 
-  if i == 1:
-    True
-  elif t_elapsed >= t_dkg + (i-2) * t_step:
-    True
-  else:
-    False
+# submissionVotes :: Map (HashOf Result) Int
+submissionVotes = Map.empty()
 
-receivedSubmissions = {}
-memberVotes = {}
-submissionVotes = {}
 
-receiveSubmission(s) =
-  P_s = s.sender
-  hs = hash(s)
 
-  # when the submission is the first one
-  if receivedSubmissions == {}:
-    if eligibleSubmitter(P_s):
-      receivedSubmissions[hs] = s
-      memberVotes[P_s] = hs
-      submissionVotes[hs] = 1
+def eligibleSubmitter(P_i):
+    t_now = getCurrentBlockHeight()
+    t_elapsed = t_now - t_init
+
+    i = P_i.index
+
+    if i == 1:
+        True
+    elif t_elapsed >= t_dkg + (i-2) * t_step:
+        True
     else:
-      reject(s)
+        False
 
-  # when the submission is challenging another one
-  else:
 
-    # don't allow double voting
-    if memberVotes[P_s]:
-      reject(s)
+def addVote(player, resultHash):
+    memberVotes.add(player)
+    submissionVotes[resultHash] += 1
 
-    # new submission
-    elif !receivedSubmissions[hs]:
-      receivedSubmissions[hs] = s
-      memberVotes[P_s] = hs
-      submissionVotes[hs] = 1
 
-    # existing submission
+def alreadyVoted(player):
+    memberVotes.contains(player)
+
+
+def addSubmission(submitter, result):
+    resultHash = hash(result)
+    receivedSubmissions[resultHash] = result
+    memberVotes.add(submitter)
+    submissionVotes[resultHash] = 1
+
+
+def alreadySubmitted(resultHash):
+    receivedSubmissions.hasKey(resultHash)
+
+# data Submission = NewSubmission Result PlayerID
+#                 | SupportVote (HashOf Result) PlayerID
+
+def receiveSubmission(s):
+    P_s = s.sender
+    if receivedSubmissions == {}:
+        if eligibleSubmitter(P_s) and s.type == 'NewSubmission': # <<1>>
+            addSubmission(P_s, s)
+        else:
+            reject(s)
+
+# case s of
+#   NewSubmission result sender ->
+    elif s.type == 'NewSubmission':
+        result = s.result
+        resultHash = hash(result)
+
+        if alreadyVoted(P_s):
+            reject(s)
+        elif alreadySubmitted(resultHash): # <<2>>
+            addVote(P_s, resultHash)
+        else:
+            addSubmission(P_s, s)
+
+#   SupportVote resultHash sender ->
+    elif s.type == 'SupportVote':
+        resultHash = s.resultHash
+
+        if alreadyVoted(P_s) or not alreadySubmitted(resultHash):
+            reject(s)
+        else:
+            addVote(P_s, resultHash)
+
+
+def getFinalResult():
+    (leadingResult, highestVoteN) = submissionVotes.maxByValue()
+    totalVotes = sum(submissionVotes.values())
+
+    if totalVotes - highestVoteN >= f_max: # <<3>>
+        return Result.failure(disqualified = [])
     else:
-      memberVotes[P_s] = hs
-      submissionVotes[hs] += 1
+        return leadingResult
 ----
+
+<<1>> Eligibility gets tested on the first submission only;
+after one valid submission it's a free for all.
+
+<<2>> When the same result gets "initially" submitted,
+such as when a different result was previously submitted and two
+participants submit theirs in the same block
+
+<<3>> If more than _f~max~_ participants vote for a non-leading result,
+our honest majority assumption has failed
+and we cannot determine the correct outcome.
 
 [bibliography]
 == References
