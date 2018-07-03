@@ -187,7 +187,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _index Index where to add the member.
      * @param _groupMemberID the ID of the member that is being added.
      */
-    function addStaker(uint32 _index, bytes32 _groupMemberID) public {
+    function addStaker(uint32 _index, bytes32 _groupMemberID) public onlyOwner {
 		// TODO save some info at this point - this is only for use in Milestone 1 and will
 		// not need to be added to the "forever" storage.
 		listOfGroupMemberIDs[_index] = _groupMemberID;
@@ -218,6 +218,13 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function getNStaker() public view returns ( uint256 ) {
 		return ( listOfGroupMemberIDs.length );
+	}
+
+    /**
+     * @dev Testing for M1 - for testing - reset the array to 0 length.
+	 */
+    function resetStaker() public onlyOwner {
+		delete(listOfGroupMemberIDs);
 	}
 
 }
