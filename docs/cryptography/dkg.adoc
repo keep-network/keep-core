@@ -247,7 +247,7 @@ _P~i~_ will perform ECDH with every _P~j~_ in _G_ to create _K~ij~_.
 
 # Calculate:
 
-(G_2, IA_1, DQ_1) = checkBroadcast(1, G_1) # <<2>>
+(G_2, IA_1, DQ_1) = checkBroadcast(1, G_1) # <2>
 
 for P_j in G_2:
    K_ij = ecdh(X_ij, Y_ji)
@@ -394,7 +394,7 @@ for c in complaints_A:
       C_jk ^ (m^k)
   ) mod p
 
-  if g^s_mj * h^sg_mj = C_prod: # <<1>>
+  if g^s_mj * h^sg_mj = C_prod: # <1>
     DQ_5 += P_j
   else:
     DQ_5 += P_m
@@ -560,7 +560,7 @@ valid shares in _phase 4_ but whose public key shares in _phase 7_ were invalid.
 
 (G_11, IA_10, DQ_10) = checkBroadcast(10, G_10)
 
-for m in (G_6 - G_11): # <<1>>
+for m in (G_6 - G_11): # <1>
   for j in G':
     X_jm = keys_j[m]
 
@@ -762,14 +762,14 @@ def receiveSubmission(s):
     resultHash = hash(result)
 
     if receivedSubmissions == {}:
-        if eligibleSubmitter(P_s): # <<1>>
+        if eligibleSubmitter(P_s): # <1>
             addSubmission(P_s, s)
         else:
             reject(s)
     else:
         if alreadyVoted(P_s):
             reject(s)
-        elif alreadySubmitted(resultHash): # <<2>>
+        elif alreadySubmitted(resultHash): # <2>
             addVote(P_s, resultHash)
         else:
             addSubmission(P_s, result)
@@ -788,7 +788,7 @@ def getFinalResult():
     (leadingResult, highestVoteN) = submissionVotes.maxByValue()
     totalVotes = sum(submissionVotes.values())
 
-    if totalVotes - highestVoteN >= f_max: # <<3>>
+    if totalVotes - highestVoteN >= f_max: # <3>
         return Result.failure(disqualified = [])
     else:
         return leadingResult
