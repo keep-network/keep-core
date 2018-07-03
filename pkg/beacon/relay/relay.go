@@ -44,8 +44,8 @@ func (ns *NodeState) AddGroup() {
 
 // EmptyState returns an empty NodeState with no group, zero group count, and
 // a nil last seen entry.
-func EmptyState() NodeState {
-	return NodeState{
+func EmptyState() *NodeState {
+	return &NodeState{
 		groupCount: 0,
 		group:      0,
 		GroupID:    0,
