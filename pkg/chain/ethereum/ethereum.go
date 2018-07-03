@@ -201,7 +201,6 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 // AddStaker is a temporary function for Milestone 1 that
 // adds a staker to the group contract.
 func (ec *ethereumChain) AddStaker(
-	index int,
 	groupMemberID string,
 ) *async.OnStakerAddedPromise {
 	onStakerAddedPromise := &async.OnStakerAddedPromise{}
@@ -249,17 +248,9 @@ func (ec *ethereumChain) AddStaker(
 		return onStakerAddedPromise
 	}
 
-	max, err := ec.keepGroupContract.GetNStaker()
+	index, err := ec.keepGroupContract.GetNStaker()
 	if err != nil {
 		fmt.Printf("Error: failed on call to GetNStaker: [%v]\n", err)
-		return onStakerAddedPromise
-	}
-
-	// Check that index is in range.  if index == max then this will
-	// append to the end of the array, if > index then it will error,
-	// so test and report for that.
-	if index < 0 || index > max {
-		fmt.Printf("Error: index is out of range, must be between 0 and %d, have %d\n", max, index)
 		return onStakerAddedPromise
 	}
 
