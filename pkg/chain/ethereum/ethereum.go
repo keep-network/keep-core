@@ -272,7 +272,6 @@ func (ec *ethereumChain) AddStaker(
 // GetStakerList is a temporary function for Milestone 1 that
 // gets back the list of stakers.
 func (ec *ethereumChain) GetStakerList() ([]string, error) {
-
 	max, err := ec.keepGroupContract.GetNStaker()
 	if err != nil {
 		err = fmt.Errorf("failed on call to GetNStaker: [%v]", err)
