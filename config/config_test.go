@@ -8,8 +8,16 @@ import (
 	"github.com/keep-network/keep-core/util"
 )
 
+func TestMain(m *testing.M) {
+	// Every test calls config.ReadConfig which requires the KEEP_ETHEREUM_PASSWORD environment variable.
+	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
+	if err != nil {
+		return
+	}
+	os.Exit(m.Run())
+}
+
 func TestReadPeerConfig(t *testing.T) {
-	setup(t)
 	// This config file has a value for every setting for a non-bootstrap peer.
 	cfg, err := config.ReadConfig("./testdata/config.toml")
 	util.Ok(t, err)
@@ -60,7 +68,6 @@ func TestReadPeerConfig(t *testing.T) {
 }
 
 func TestReadBootstrapConfig(t *testing.T) {
-	setup(t)
 	// This config file has a value for every setting for a bootstrap peer.
 	cfg, err := config.ReadConfig("./testdata/config.bootstrap.toml")
 	util.Ok(t, err)
@@ -109,7 +116,6 @@ func TestReadBootstrapConfig(t *testing.T) {
 }
 
 func TestReadIpcConfig(t *testing.T) {
-	setup(t)
 	// This config file has a value for every setting and uses an .ipc address for the ethereum url.
 	cfg, err := config.ReadConfig("./testdata/config.ipc.toml")
 	util.Ok(t, err)
@@ -160,7 +166,6 @@ func TestReadIpcConfig(t *testing.T) {
 }
 
 func TestReadInvalidConfig(t *testing.T) {
-	setup(t)
 	// This config file has an invalid value for every setting.
 	_, err := config.ReadConfig("./testdata/config.invalid.toml")
 
@@ -175,11 +180,6 @@ non-bootstrap node should have Bootstrap.URL and a Bootstrap.Seed of 0
 Node.Peers (xxx) invalid; format expected: .+\/.*`
 
 	if err.Error() != expectedErrMsg {
-		t.Fatalf("expected this error: \n%s\ngot this error:\n%s", expectedErrMsg, err.Error())
+		t.Fatalf("EXPECTED: \n%s\nGOT:\n%s", expectedErrMsg, err.Error())
 	}
-}
-
-func setup(t *testing.T) {
-	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
-	util.Ok(t, err)
 }
