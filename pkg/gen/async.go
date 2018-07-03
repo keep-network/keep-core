@@ -43,12 +43,12 @@ func main() {
 			outputFile: "big_int_promise.go",
 		},
 		{
-			Type:       "*relay.Entry",
+			Type:       "*event.Entry",
 			Prefix:     "RelayEntry",
 			outputFile: "relay_entry_promise.go",
 		},
 		{
-			Type:       "*relay.GroupRegistration",
+			Type:       "*event.GroupRegistration",
 			Prefix:     "GroupRegistration",
 			outputFile: "group_registration_promise.go",
 		},

@@ -7,10 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -25,9 +24,9 @@ type localChain struct {
 	groupRelayEntries      map[int64][32]byte
 
 	handlerMutex            sync.Mutex
-	relayEntryHandlers      []func(entry *relay.Entry)
-	relayRequestHandlers    []func(request *entry.Request)
-	groupRegisteredHandlers []func(key *relay.GroupRegistration)
+	relayEntryHandlers      []func(entry *event.Entry)
+	relayRequestHandlers    []func(request *event.Request)
+	groupRegisteredHandlers []func(key *event.GroupRegistration)
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
@@ -62,7 +61,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	c.groupRegistrations[groupID] = key
 	c.simulatedHeight++
 
-	groupRegistrationPromise.Fulfill(&relay.GroupRegistration{
+	groupRegistrationPromise.Fulfill(&event.GroupRegistration{
 		GroupPublicKey:        []byte(groupID),
 		RequestID:             big.NewInt(c.simulatedHeight),
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
@@ -71,7 +70,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	return groupRegistrationPromise
 }
 
-func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
+func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	c.groupRelayEntriesMutex.Lock()
@@ -93,7 +92,7 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	}
 	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
 
-	relayEntryPromise.Fulfill(&relay.Entry{
+	relayEntryPromise.Fulfill(&event.Entry{
 		RequestID:     entry.RequestID,
 		Value:         entry.Value,
 		GroupID:       entry.GroupID,
@@ -104,7 +103,7 @@ func (c *localChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromi
 	return relayEntryPromise
 }
 
-func (c *localChain) OnRelayEntryGenerated(handler func(entry *relay.Entry)) {
+func (c *localChain) OnRelayEntryGenerated(handler func(entry *event.Entry)) {
 	c.handlerMutex.Lock()
 	c.relayEntryHandlers = append(
 		c.relayEntryHandlers,
@@ -113,7 +112,7 @@ func (c *localChain) OnRelayEntryGenerated(handler func(entry *relay.Entry)) {
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnRelayEntryRequested(handler func(request *entry.Request)) {
+func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request)) {
 	c.handlerMutex.Lock()
 	c.relayRequestHandlers = append(
 		c.relayRequestHandlers,
@@ -122,7 +121,7 @@ func (c *localChain) OnRelayEntryRequested(handler func(request *entry.Request))
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnGroupRegistered(handler func(key *relay.GroupRegistration)) {
+func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
 	c.handlerMutex.Lock()
 	c.groupRegisteredHandlers = append(
 		c.groupRegisteredHandlers,
