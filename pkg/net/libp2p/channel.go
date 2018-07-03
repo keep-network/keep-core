@@ -16,7 +16,7 @@ import (
 type channel struct {
 	name string
 
-	clientIdentity *identity
+	clientIdentity *Identity
 	peerStore      peerstore.Peerstore
 
 	pubsubMutex sync.Mutex
@@ -57,7 +57,7 @@ func (c *channel) SendTo(
 // address the message specifically to them.
 func (c *channel) doSend(
 	recipient net.ProtocolIdentifier,
-	sender *identity,
+	sender *Identity,
 	message net.TaggedMarshaler,
 ) error {
 	var transportRecipient net.TransportIdentifier
@@ -91,7 +91,7 @@ func (c *channel) Recv(handler net.HandleMessageFunc) error {
 
 func envelopeProto(
 	recipient net.TransportIdentifier,
-	sender *identity,
+	sender *Identity,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
@@ -106,7 +106,7 @@ func envelopeProto(
 
 	var recipientIdentityBytes []byte
 	if recipient != nil {
-		recipientIdentity := &identity{id: recipient.(networkIdentity)}
+		recipientIdentity := &Identity{ID: recipient.(networkIdentity)}
 		recipientIdentityBytes, err = recipientIdentity.Marshal()
 		if err != nil {
 			return nil, err
@@ -210,28 +210,28 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
-	if err := unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
+	if err = unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
 		return err
 	}
 
 	if envelope.Recipient != nil {
 		// Construct an identifier from the Recipient
-		recipientIdentifier := &identity{}
-		if err := recipientIdentifier.Unmarshal(envelope.Recipient); err != nil {
+		recipientIdentifier := &Identity{}
+		if err = recipientIdentifier.Unmarshal(envelope.Recipient); err != nil {
 			return err
 		}
 
-		if recipientIdentifier.id.String() != c.clientIdentity.id.String() {
+		if recipientIdentifier.ID.String() != c.clientIdentity.ID.String() {
 			return fmt.Errorf(
 				"message not for intended recipient %s",
-				recipientIdentifier.id.String(),
+				recipientIdentifier.ID.String(),
 			)
 		}
 	}
 
 	// Construct an identifier from the sender
-	senderIdentifier := &identity{}
-	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
+	senderIdentifier := &Identity{}
+	if err = senderIdentifier.Unmarshal(envelope.Sender); err != nil {
 		return err
 	}
 
@@ -243,7 +243,7 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 
 	// Fire a message back to the protocol
 	protocolMessage := internal.BasicMessage(
-		senderIdentifier.id,
+		senderIdentifier.ID,
 		protocolIdentifier,
 		unmarshaled,
 	)
@@ -265,11 +265,11 @@ func (c *channel) getUnmarshalingContainerByType(envelopeType string) (net.Tagge
 	return unmarshaler(), nil
 }
 
-func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.ProtocolIdentifier, error) {
+func (c *channel) getProtocolIdentifier(senderIdentifier *Identity) (net.ProtocolIdentifier, error) {
 	c.identifiersMutex.Lock()
 	defer c.identifiersMutex.Unlock()
 
-	return c.transportToProtoIdentifiers[senderIdentifier.id], nil
+	return c.transportToProtoIdentifiers[senderIdentifier.ID], nil
 }
 
 func (c *channel) deliver(message net.Message) error {

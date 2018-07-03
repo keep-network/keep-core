@@ -12,14 +12,14 @@ import (
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
-// identity represents a group member's network level identity. It
+// Identity represents a group member's network level identity. It
 // implements the net.TransportIdentifier interface. A valid group member will
 // generate or provide a keypair, which will correspond to a network ID.
 //
 // Consumers of the net package require an ID to register with protocol level
 // IDs, as well as a public key for authentication.
-type identity struct {
-	id      networkIdentity
+type Identity struct {
+	ID      networkIdentity
 	pubKey  libp2pcrypto.PubKey
 	privKey libp2pcrypto.PrivKey
 }
@@ -34,14 +34,15 @@ func (n networkIdentity) String() string {
 	return peer.ID(n).Pretty()
 }
 
-func (i *identity) Marshal() ([]byte, error) {
+// Marshal returns a stream of bytes representing this peer Identity.
+func (i *Identity) Marshal() ([]byte, error) {
 	var (
 		err error
 	)
 
 	pubKey := i.pubKey
 	if pubKey == nil {
-		pubKey, err = peer.ID(i.id).ExtractPublicKey()
+		pubKey, err = peer.ID(i.ID).ExtractPublicKey()
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +50,7 @@ func (i *identity) Marshal() ([]byte, error) {
 	if pubKey == nil {
 		return nil, fmt.Errorf(
 			"failed to generate public key with peerid %v",
-			peer.ID(i.id).Pretty(),
+			peer.ID(i.ID).Pretty(),
 		)
 	}
 	pubKeyBytes, err := pubKey.Bytes()
@@ -59,7 +60,8 @@ func (i *identity) Marshal() ([]byte, error) {
 	return (&pb.Identity{PubKey: pubKeyBytes}).Marshal()
 }
 
-func (i *identity) Unmarshal(bytes []byte) error {
+// Unmarshal populates this peer Identity with a given stream of bytes.
+func (i *Identity) Unmarshal(bytes []byte) error {
 	var (
 		err        error
 		pid        peer.ID
@@ -77,33 +79,33 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	if err != nil {
 		return fmt.Errorf("Failed to generate valid libp2p identity with err: %s", err)
 	}
-	i.id = networkIdentity(pid)
+	i.ID = networkIdentity(pid)
 
 	return nil
 }
 
 // AddIdentityToStore takes an identity and notifies the addressbook of the
 // existance of a new client joining the network.
-func addIdentityToStore(i *identity) (pstore.Peerstore, error) {
+func addIdentityToStore(i *Identity) (pstore.Peerstore, error) {
 	// TODO: investigate a generic store interface that gives us a unified interface
 	// to our address book (peerstore in libp2p) from secure storage (dht)
 	peerstore := pstore.NewPeerstore()
 
-	if err := peerstore.AddPrivKey(peer.ID(i.id), i.privKey); err != nil {
+	if err := peerstore.AddPrivKey(peer.ID(i.ID), i.privKey); err != nil {
 		return nil, fmt.Errorf("failed to add PrivateKey to store with error %s", err)
 	}
-	if err := peerstore.AddPubKey(peer.ID(i.id), i.pubKey); err != nil {
+	if err := peerstore.AddPubKey(peer.ID(i.ID), i.pubKey); err != nil {
 		return nil, fmt.Errorf("failed to add PubKey to store with error %s", err)
 	}
 	return peerstore, nil
 }
 
-// generateIdentity generates a public/private-key pair (using the libp2p/crypto
+// GenerateIdentity generates a public/private-key pair (using the libp2p/crypto
 // wrapper for golang/crypto). A randseed value of 0, the default for ints in Go,
 // will result in a cryptographically strong source of psuedorandomness,
 // whereas providing a randseed value (anything but 0), will result in using
 // the seed and math/rand, a deterministic, weak source of psuedorandomness.
-func generateIdentity(randseed int) (*identity, error) {
+func GenerateIdentity(randseed int) (*Identity, error) {
 	// FIXME: rather than a seed, read in pub/pk from config
 	var r io.Reader
 	if randseed != 0 {
@@ -122,5 +124,5 @@ func generateIdentity(randseed int) (*identity, error) {
 		return nil, err
 	}
 
-	return &identity{privKey: privKey, pubKey: pubKey, id: networkIdentity(pid)}, nil
+	return &Identity{privKey: privKey, pubKey: pubKey, ID: networkIdentity(pid)}, nil
 }

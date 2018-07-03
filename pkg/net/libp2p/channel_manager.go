@@ -10,10 +10,11 @@ import (
 	"github.com/libp2p/go-libp2p-peerstore"
 )
 
-type channelManager struct {
+// ChannelManager providing peer identity, peerStore, and messaging.
+type ChannelManager struct {
 	ctx context.Context
 
-	identity  *identity
+	identity  *Identity
 	peerStore peerstore.Peerstore
 
 	channelsMutex sync.Mutex
@@ -22,16 +23,17 @@ type channelManager struct {
 	pubsub *floodsub.PubSub
 }
 
-func newChannelManager(
+// NewChannelManager returns a new ChannelManager
+func NewChannelManager(
 	ctx context.Context,
-	identity *identity,
+	identity *Identity,
 	p2phost host.Host,
-) (*channelManager, error) {
+) (*ChannelManager, error) {
 	gossipsub, err := floodsub.NewGossipSub(ctx, p2phost)
 	if err != nil {
 		return nil, err
 	}
-	return &channelManager{
+	return &ChannelManager{
 		channels:  make(map[string]*channel),
 		pubsub:    gossipsub,
 		peerStore: p2phost.Peerstore(),
@@ -40,7 +42,7 @@ func newChannelManager(
 	}, nil
 }
 
-func (cm *channelManager) getChannel(name string) (*channel, error) {
+func (cm *ChannelManager) getChannel(name string) (*channel, error) {
 	var (
 		channel *channel
 		exists  bool
@@ -66,7 +68,7 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 	return channel, nil
 }
 
-func (cm *channelManager) newChannel(name string) (*channel, error) {
+func (cm *ChannelManager) newChannel(name string) (*channel, error) {
 	sub, err := cm.pubsub.Subscribe(name)
 	if err != nil {
 		return nil, err
