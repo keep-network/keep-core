@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
-	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -75,7 +75,7 @@ func SmokeTest(c *cli.Context) error {
 			chainHandle.ThresholdRelay().SubmitGroupPublicKey(
 				"test",
 				member.GroupPublicKeyBytes(),
-			).OnSuccess(func(data *chaintype.GroupPublicKey) {
+			).OnSuccess(func(data *relay.GroupRegistration) {
 				if string(data.GroupPublicKey) == "test" {
 					memberChannel <- member
 				} else {

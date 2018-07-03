@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/chaintype"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -39,48 +38,53 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	groupID string,
 	key [96]byte,
-) *async.GroupPublicKeyPromise {
-	groupKeyPromise := &async.GroupPublicKeyPromise{}
-
-	success := func(
-		GroupPublicKey []byte,
-		RequestID *big.Int,
-		ActivationBlockHeight *big.Int,
-	) {
-		err := groupKeyPromise.Fulfill(&chaintype.GroupPublicKey{
-			GroupPublicKey:        GroupPublicKey,
-			RequestID:             RequestID,
-			ActivationBlockHeight: ActivationBlockHeight,
-		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
-		}
-	}
-
-	fail := func(err error) error {
-		err = groupKeyPromise.Fail(err)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
-		}
-		return nil
-	}
+) *async.GroupRegistrationPromise {
+	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-		success,
-		fail,
+		func(
+			groupPublicKey []byte,
+			requestID *big.Int,
+			activationBlockHeight *big.Int,
+		) {
+			err := groupRegistrationPromise.Fulfill(&relay.GroupRegistration{
+				GroupPublicKey:        groupPublicKey,
+				RequestID:             requestID,
+				ActivationBlockHeight: activationBlockHeight,
+			})
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"fulfilling promise failed with: [%v].\n",
+					err,
+				)
+			}
+		},
+		func(err error) error {
+			return groupRegistrationPromise.Fail(
+				fmt.Errorf(
+					"entry of group key failed with: [%v]",
+					err,
+				),
+			)
+		},
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to watch GroupPublicKeyEvent [%v].\n", err)
-		return groupKeyPromise
+		fmt.Fprintf(
+			os.Stderr,
+			"watch group public key event failed with: [%v].\n",
+			err,
+		)
+		return groupRegistrationPromise
 	}
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
-		return groupKeyPromise
+		return groupRegistrationPromise
 	}
 
-	return groupKeyPromise
+	return groupRegistrationPromise
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise {
@@ -105,7 +109,8 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 				Timestamp:     time.Now().UTC(),
 			})
 			if err != nil {
-				fmt.Printf(
+				fmt.Fprintf(
+					os.Stderr,
 					"execution of fulfilling promise failed with: [%v]",
 					err,
 				)
@@ -128,7 +133,8 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 			),
 		)
 		if promiseErr != nil {
-			fmt.Printf(
+			fmt.Fprintf(
+				os.Stderr,
 				"execution of failing promise failed with: [%v]",
 				promiseErr,
 			)
@@ -162,7 +168,7 @@ func (ec *ethereumChain) SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryP
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
+func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *relay.Entry)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
@@ -174,7 +180,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
 			var value [32]byte
 			copy(value[:], requestResponse.Bytes()[:32])
 
-			handle(relay.Entry{
+			handle(&relay.Entry{
 				RequestID:     requestID,
 				Value:         value,
 				GroupID:       requestGroupID,
@@ -199,7 +205,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry relay.Entry)) {
 
 // OnRelayEntryRequested registers a callback function for a new relay request on
 // chain.
-func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request)) {
+func (ec *ethereumChain) OnRelayEntryRequested(handle func(request *entry.Request)) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
@@ -208,7 +214,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 			seed *big.Int,
 			blockNumber *big.Int,
 		) {
-			handle(entry.Request{
+			handle(&entry.Request{
 				RequestID:   requestID,
 				Payment:     payment,
 				BlockReward: blockReward,
@@ -220,8 +226,35 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request entry.Request
 		},
 	)
 	if err != nil {
-		fmt.Printf(
+		fmt.Fprintf(
+			os.Stderr,
 			"watch relay request failed with: [%v]",
+			err,
+		)
+	}
+}
+
+func (ec *ethereumChain) OnGroupRegistered(handle func(key *relay.GroupRegistration)) {
+	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+		func(
+			groupPublicKey []byte,
+			requestID *big.Int,
+			activationBlockHeight *big.Int,
+		) {
+			handle(&relay.GroupRegistration{
+				GroupPublicKey:        groupPublicKey,
+				RequestID:             requestID,
+				ActivationBlockHeight: activationBlockHeight,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("entry of group key failed with: [%v]", err)
+		},
+	)
+	if err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"watch group public key event failed with: [%v].\n",
 			err,
 		)
 	}

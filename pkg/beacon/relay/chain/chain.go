@@ -15,7 +15,7 @@ type Interface interface {
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
 	// associated with a string groupID. On-chain errors are
 	// are reported through the promise.
-	SubmitGroupPublicKey(groupID string, key [96]byte) *async.GroupPublicKeyPromise
+	SubmitGroupPublicKey(groupID string, key [96]byte) *async.GroupRegistrationPromise
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
@@ -23,8 +23,11 @@ type Interface interface {
 	SubmitRelayEntry(entry *relay.Entry) *async.RelayEntryPromise
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(handle func(entry relay.Entry))
+	OnRelayEntryGenerated(handle func(entry *relay.Entry))
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(func(request entry.Request))
+	OnRelayEntryRequested(func(request *entry.Request))
+	// OnGroupRegistered is a callback that is invoked when an on-chain
+	// notification of a new, valid group being registered is seen.
+	OnGroupRegistered(handle func(key *relay.GroupRegistration))
 }
