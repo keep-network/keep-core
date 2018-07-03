@@ -235,8 +235,8 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 // adds a staker to the group contract.
 func (ec *ethereumChain) AddStaker(
 	groupMemberID string,
-) *async.OnStakerAddedPromise {
-	onStakerAddedPromise := &async.OnStakerAddedPromise{}
+) *async.StakerRegistrationPromise {
+	onStakerAddedPromise := &async.StakerRegistrationPromise{}
 
 	if len(groupMemberID) != 32 {
 		err := onStakerAddedPromise.Fail(
@@ -255,7 +255,7 @@ func (ec *ethereumChain) AddStaker(
 		Index int,
 		GroupMemberID []byte,
 	) {
-		err := onStakerAddedPromise.Fulfill(&chaintype.OnStakerAdded{
+		err := onStakerAddedPromise.Fulfill(&chaintype.StakerRegistration{
 			Index:         Index,
 			GroupMemberID: string(GroupMemberID),
 		})

@@ -149,11 +149,11 @@ func Connect(groupSize int, threshold int) chain.Handle {
 // adds a staker to the group contract.
 func (c *localChain) AddStaker(
 	groupMemberID string,
-) *async.OnStakerAddedPromise {
-	onStakerAddedPromise := &async.OnStakerAddedPromise{}
+) *async.StakerRegistrationPromise {
+	onStakerAddedPromise := &async.StakerRegistrationPromise{}
 	Index := len(c.stakerList)
 	c.stakerList = append(c.stakerList, groupMemberID)
-	err := onStakerAddedPromise.Fulfill(&chaintype.OnStakerAdded{
+	err := onStakerAddedPromise.Fulfill(&chaintype.StakerRegistration{
 		Index:         Index,
 		GroupMemberID: string(groupMemberID),
 	})

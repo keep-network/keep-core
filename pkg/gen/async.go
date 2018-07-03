@@ -53,9 +53,9 @@ func main() {
 			outputFile: "group_pub_key_promise.go",
 		},
 		{
-			Type:       "*chaintype.OnStakerAdded",
-			Prefix:     "OnStakerAdded",
-			outputFile: "on_staker_added_promise.go",
+			Type:       "*chaintype.StakerRegistration",
+			Prefix:     "StakerRegistration",
+			outputFile: "staker_registration_promise.go",
 		},
 	}
 
