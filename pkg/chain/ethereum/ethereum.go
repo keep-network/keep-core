@@ -287,15 +287,13 @@ func (ec *ethereumChain) AddStaker(
 		return onStakerAddedPromise
 	}
 
-	tx, err := ec.keepGroupContract.AddStaker(index, groupMemberID)
+	_, err = ec.keepGroupContract.AddStaker(index, groupMemberID)
 	if err != nil {
 		fmt.Printf(
 			"on staker added failed with: [%v]",
 			err,
 		)
 	}
-
-	ec.tx = tx
 
 	return onStakerAddedPromise
 }

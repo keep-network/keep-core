@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -18,7 +17,6 @@ type ethereumChain struct {
 	requestID                *big.Int
 	keepGroupContract        *keepGroup
 	keepRandomBeaconContract *KeepRandomBeacon
-	tx                       *types.Transaction
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
