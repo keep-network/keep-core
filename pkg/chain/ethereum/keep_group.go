@@ -167,11 +167,11 @@ func (kg *keepGroup) GroupSize() (int, error) {
 // GetNStaker - temporary code for Milestone 1 - will return
 // the number of stackers that have been added to the contract.
 func (kg *keepGroup) GetNStaker() (int, error) {
-	nStaker, err := kg.caller.GetNStaker(kg.callerOpts)
+	stakerCount, err := kg.caller.GetNStaker(kg.callerOpts)
 	if err != nil {
 		return 0, err
 	}
-	return int(nStaker.Int64()), nil
+	return int(stakerCount.Int64()), nil
 }
 
 // AddStaker - temporary code for Milestone 1 - will add a
@@ -180,22 +180,24 @@ func (kg *keepGroup) AddStaker(
 	idx int,
 	groupMemberID string,
 ) (*types.Transaction, error) {
-	groupMemberIDb32, err := toByte32([]byte(groupMemberID))
+	groupMemberIDByte32, err := toByte32([]byte(groupMemberID))
 	if err != nil {
 		return nil, err
 	}
-	return kg.transactor.AddStaker(kg.transactorOpts, uint32(idx),
-		groupMemberIDb32,
+	return kg.transactor.AddStaker(
+		kg.transactorOpts,
+		uint32(idx),
+		groupMemberIDByte32,
 	)
 }
 
 // function getStaker(uint32 _index) public view returns ( bytes32 ) {
 func (kg *keepGroup) GetStaker(index int) ([]byte, error) {
-	aStaker, err := kg.caller.GetStaker(kg.callerOpts, uint32(index))
+	staker, err := kg.caller.GetStaker(kg.callerOpts, uint32(index))
 	if err != nil {
 		return []byte{}, err
 	}
-	return aStaker[:], nil
+	return staker[:], nil
 }
 
 // GetGroupMemberPubKey returns the public key for group number i at location
@@ -359,8 +361,8 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 	return nil
 }
 
-// onStakerAddedFunc defiens the function that is called when
-// watching for the event OnStakerAdded.
+// onStakerAddedFunc is the type of function called when an OnStakerAdded event
+// is observed on-chain and reported to a watching handler.
 type onStakerAddedFunc func(index int, groupMemberID []byte)
 
 // WatchGroupStartedEvent watch for GroupStartedEvent
