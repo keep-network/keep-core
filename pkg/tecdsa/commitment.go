@@ -3,7 +3,6 @@ package tecdsa
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -82,7 +81,7 @@ func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
 }
 
 // ValidateCommitment validates received commitment against revealed secret.
-func ValidateCommitment(commitment *Commitment, secret *Secret) (bool, error) {
+func ValidateCommitment(commitment *Commitment, secret *Secret) bool {
 	// Hash `secret` and calculate `digest`.
 	// [TC]: `digest = sha256(secret) mod q`
 	hash := hash256BigInt(secret.secret)
@@ -106,9 +105,9 @@ func ValidateCommitment(commitment *Commitment, secret *Secret) (bool, error) {
 	// Compare pairings
 	// [TC]: pairing(a, b) == pairing(g, c)
 	if bn256.Pair(a, b).String() != bn256.Pair(g, c).String() {
-		return false, fmt.Errorf("pairings doesn't match")
+		return false
 	}
-	return true, nil
+	return true
 }
 
 // hash256BigInt - calculates 256-bit hash for passed `secret` and converts it

@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
-	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256"
@@ -15,13 +14,12 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 
 	// Generate Commitment
 	commitment, secret, err := GenerateCommitment(&msg)
+	if err != nil {
+		t.Fatalf("generation error [%v]", err)
+	}
 
 	// Validate Commitment
-	result, err := ValidateCommitment(commitment, secret)
-
-	if err != nil {
-		t.Fatalf("validation error [%v]", err)
-	}
+	result := ValidateCommitment(commitment, secret)
 
 	if !result {
 		t.Fatalf("validation result: [%v]", result)
@@ -34,13 +32,13 @@ func TestGenerateTwoCommitmentsCheckUniqueResults(t *testing.T) {
 	// Generate Commitment 1
 	commitment1, secret1, err := GenerateCommitment(&msg)
 	if err != nil {
-		t.Fatalf("validation error [%v]", err)
+		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Generate Commitment 2
 	commitment2, secret2, err := GenerateCommitment(&msg)
 	if err != nil {
-		t.Fatalf("validation error [%v]", err)
+		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Check decommitments are unique
@@ -90,7 +88,6 @@ func TestValidate(t *testing.T) {
 				h:          h,
 			},
 			expectedResult: true,
-			expectedError:  nil,
 		},
 		"negative validation - incorrect `secret`": {
 			secret: &Secret{
@@ -103,7 +100,6 @@ func TestValidate(t *testing.T) {
 				h:          new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
 			},
 			expectedResult: false,
-			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `r`": {
 			secret: &Secret{
@@ -117,7 +113,6 @@ func TestValidate(t *testing.T) {
 				h:          new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
 			},
 			expectedResult: false,
-			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `commitment`": {
 			secret: &Secret{
@@ -131,7 +126,6 @@ func TestValidate(t *testing.T) {
 				h:          h,
 			},
 			expectedResult: false,
-			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `pubKey`": {
 			secret: &Secret{
@@ -145,7 +139,6 @@ func TestValidate(t *testing.T) {
 				h:          h,
 			},
 			expectedResult: false,
-			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `h`": {
 			secret: &Secret{
@@ -165,14 +158,10 @@ func TestValidate(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			result, err := ValidateCommitment(test.commitment, test.secret)
+			result := ValidateCommitment(test.commitment, test.secret)
 
 			if result != test.expectedResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v", test.expectedResult, result)
-			}
-
-			if !reflect.DeepEqual(err, test.expectedError) {
-				t.Fatalf("\nexpected: %v\nactual:   %v", test.expectedError, err)
 			}
 		})
 	}
