@@ -257,30 +257,24 @@ func (ec *ethereumChain) AddStaker(
 		return onStakerAddedPromise
 	}
 
-	success := func(
-		Index int,
-		GroupMemberID []byte,
-	) {
-		err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
-			Index:         Index,
-			GroupMemberID: string(GroupMemberID),
-		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
-		}
-	}
-
-	fail := func(err error) error {
-		err = onStakerAddedPromise.Fail(err)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
-		}
-		return nil
-	}
-
 	err := ec.keepGroupContract.WatchOnStakerAdded(
-		success,
-		fail,
+		func(index int, groupMemberID []byte) {
+			err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
+				Index:         index,
+				GroupMemberID: string(groupMemberID),
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
+			}
+		},
+		func(err error) error {
+			return onStakerAddedPromise.Fail(
+				fmt.Errorf(
+					"adding new staker failed with: [%v]",
+					err,
+				),
+			)
+		},
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to watch OnStakerAdded [%v].\n", err)
