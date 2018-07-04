@@ -68,7 +68,7 @@ func TestValidate(t *testing.T) {
 	msg := []byte("top secret message")
 	h := new(bn256.G2).ScalarBaseMult(big.NewInt(5))
 	r := big.NewInt(2)
-	pubKey := new(bn256.G2).ScalarBaseMult(big.NewInt(4))
+	pubKey := big.NewInt(4)
 	commitment := convertBase64StringToCommitment("DZv5bcjEHmVfO+ukZUq7uLUKQhXTbE8mBkG4CTpt6bAiKnOXf2v6E3reMnW9qV0B5hjT9NPxaux6OQW5/vnw3iHJ2Gu8/icq3T7sKvoD+CXFDi8uYZv7pln7zyAI32OiGhjPPvBtZ/jtaIx0WTF58f1HVrQj1vWeQO43zFJCi38=")
 
 	msgInvalid := []byte("top secret message2")
@@ -141,7 +141,7 @@ func TestValidate(t *testing.T) {
 			},
 			commitment: &Commitment{
 				commitment: commitment,
-				pubKey:     new(bn256.G2).ScalarBaseMult(big.NewInt(3)),
+				pubKey:     big.NewInt(3),
 				h:          h,
 			},
 			expectedResult: false,

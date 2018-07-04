@@ -25,7 +25,7 @@ type Secret struct {
 // Commitment - parameters which can be revealed
 type Commitment struct {
 	// Public key for a specific commitment.
-	pubKey *bn256.G2
+	pubKey *big.Int
 	// Master public key for the commitment family.
 	h *bn256.G2
 	// Calculated commitment.
@@ -38,9 +38,8 @@ type Commitment struct {
 // `error` - If generation failed
 func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
 	// Generate random private and public keys.
-	// [TC]: `privKey = (randomFromZ[0, q - 1])`
-	// [TC]: `pubKey = g * privKey`
-	_, pubKey, err := bn256.RandomG2(rand.Reader)
+	// [TC]: `pubKey = (randomFromZ[0, q - 1])`
+	pubKey, _, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -65,7 +64,7 @@ func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
 
 	// Calculate `he`
 	// [TC]: `he = h + g * privKey`
-	he := new(bn256.G2).Add(h, pubKey)
+	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(pubKey))
 
 	// Calculate `commitment`
 	// [TC]: `commitment = g * digest + he * r`
@@ -95,7 +94,7 @@ func ValidateCommitment(commitment *Commitment, secret *Secret) (bool, error) {
 
 	// Calculate `b`
 	// [TC]: `b = h + g * privKey`
-	b := new(bn256.G2).Add(commitment.h, commitment.pubKey)
+	b := new(bn256.G2).Add(commitment.h, new(bn256.G2).ScalarBaseMult(commitment.pubKey))
 
 	// Calculate `c`
 	// [TC]: `c = commitment - g * digest`
