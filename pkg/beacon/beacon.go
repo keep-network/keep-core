@@ -3,11 +3,10 @@ package beacon
 import (
 	"context"
 	"fmt"
-	"os"
+	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -42,11 +41,6 @@ func Initialize(
 		return err
 	}
 
-	channel, err := netProvider.ChannelFor("test")
-	if err != nil {
-		return err
-	}
-
 	curParticipantState, err := checkParticipantState()
 	if err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
@@ -57,43 +51,22 @@ func Initialize(
 		// check for stake command-line parameter to initialize staking?
 		return fmt.Errorf("account is unstaked")
 	default:
-		_ = relay.NewNode(
+		node := relay.NewNode(
 			netProvider,
 			blockCounter,
 			chainConfig,
 		)
 
-		member, err := dkg.ExecuteDKG(
-			blockCounter,
-			channel,
-			chainConfig.GroupSize,
-			chainConfig.Threshold,
-		)
-		if err != nil {
-			return err
-		}
-
-		relayChain.SubmitGroupPublicKey(
-			"test",
-			member.GroupPublicKeyBytes(),
-		).OnSuccess(func(data *event.GroupRegistration) {
-			fmt.Printf(
-				"Submission of public key: [%s].\n",
-				data,
-			)
-		}).OnFailure(func(err error) {
-			fmt.Fprintf(
-				os.Stderr,
-				"Failed submission of public key: [%v].\n",
-				err,
-			)
+		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
+			entryBigInt := &big.Int{}
+			entryBigInt.SetBytes(entry.Value[:])
+			node.JoinGroupIfEligible(relayChain, entry.RequestID, entryBigInt)
 		})
 
-		fmt.Printf(
-			"Submitting public key for member %s, group %s\n",
-			member.MemberID(),
-			"test",
-		)
+		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+			node.RegisterGroup(registration.RequestID, registration.GroupPublicKey)
+		})
+
 	}
 
 	<-ctx.Done()
