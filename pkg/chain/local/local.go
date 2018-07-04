@@ -30,6 +30,8 @@ type localChain struct {
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
+
+	stakerList []string
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -149,4 +151,28 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		groupRegistrations:      make(map[string][96]byte),
 		blockCounter:            bc,
 	}
+}
+
+// AddStaker is a temporary function for Milestone 1 that
+// adds a staker to the group contract.
+func (c *localChain) AddStaker(
+	groupMemberID string,
+) *async.StakerRegistrationPromise {
+	onStakerAddedPromise := &async.StakerRegistrationPromise{}
+	Index := len(c.stakerList)
+	c.stakerList = append(c.stakerList, groupMemberID)
+	err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
+		Index:         Index,
+		GroupMemberID: string(groupMemberID),
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
+	}
+	return onStakerAddedPromise
+}
+
+// GetStakerList is a temporary function for Milestone 1 that
+// gets back the list of stakers.
+func (c *localChain) GetStakerList() ([]string, error) {
+	return c.stakerList, nil
 }

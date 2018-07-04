@@ -176,4 +176,55 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         }
         return false;
     }
+
+	// Temporary Code for Milestone 1 follows
+
+    event OnStakerAdded(uint32 index, bytes32 groupMemberID);
+	bytes32[] listOfGroupMemberIDs; 
+
+    /**
+     * @dev Testing for M1 - create a staker.
+     * @param _index Index where to add the member.
+     * @param _groupMemberID the ID of the member that is being added.
+     */
+    function addStaker(uint32 _index, bytes32 _groupMemberID) public onlyOwner {
+		// TODO save some info at this point - this is only for use in Milestone 1 and will
+		// not need to be added to the "forever" storage.
+		listOfGroupMemberIDs[_index] = _groupMemberID;
+    	emit OnStakerAdded(_index, _groupMemberID);
+	}
+
+    /**
+     * @dev Testing for M1 - return true if the staker at _index is _groupMemberID
+     * @param _index Index where to find the member.
+     * @param _groupMemberID the ID of the member that is being tested for.
+     */
+    function isGroupMemberStaker(uint32 _index, bytes32 _groupMemberID) public view returns (bool) {
+        require( _index >= 0 && _index < listOfGroupMemberIDs.length );
+		return ( listOfGroupMemberIDs[_index] == _groupMemberID );
+	}
+
+    /**
+     * @dev Testing for M1 - return the groupMemberID for the _index staker.
+     * @param _index Index where to add the member.
+     */
+    function getStaker(uint32 _index) public view returns ( bytes32 ) {
+        require( _index >= 0 && _index < listOfGroupMemberIDs.length );
+		return ( listOfGroupMemberIDs[_index] );
+	}
+
+    /**
+     * @dev Testing for M1 - return the number of stakers
+     */
+    function getNStaker() public view returns ( uint256 ) {
+		return ( listOfGroupMemberIDs.length );
+	}
+
+    /**
+     * @dev Testing for M1 - for testing - reset the array to 0 length.
+	 */
+    function resetStaker() public onlyOwner {
+		delete(listOfGroupMemberIDs);
+	}
+
 }

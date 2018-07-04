@@ -86,7 +86,9 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupRegistrationPromise
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(newEntry *event.Entry) *async.RelayEntryPromise {
+func (ec *ethereumChain) SubmitRelayEntry(
+	newEntry *event.Entry,
+) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
@@ -202,9 +204,11 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 	}
 }
 
-// OnRelayEntryRequested registers a callback function for a new relay request on
-// chain.
-func (ec *ethereumChain) OnRelayEntryRequested(handle func(request *event.Request)) {
+// OnRelayEntryRequested registers a callback function for a new
+// relay request on chain.
+func (ec *ethereumChain) OnRelayEntryRequested(
+	handle func(request *event.Request),
+) {
 	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
@@ -233,7 +237,92 @@ func (ec *ethereumChain) OnRelayEntryRequested(handle func(request *event.Reques
 	}
 }
 
-func (ec *ethereumChain) OnGroupRegistered(handle func(key *event.GroupRegistration)) {
+// AddStaker is a temporary function for Milestone 1 that adds a
+// staker to the group contract.
+func (ec *ethereumChain) AddStaker(
+	groupMemberID string,
+) *async.StakerRegistrationPromise {
+	onStakerAddedPromise := &async.StakerRegistrationPromise{}
+
+	if len(groupMemberID) != 32 {
+		err := onStakerAddedPromise.Fail(
+			fmt.Errorf(
+				"groupMemberID wrong length, need 32, got %d",
+				len(groupMemberID),
+			),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
+		}
+		return onStakerAddedPromise
+	}
+
+	err := ec.keepGroupContract.WatchOnStakerAdded(
+		func(index int, groupMemberID []byte) {
+			err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
+				Index:         index,
+				GroupMemberID: string(groupMemberID),
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
+			}
+		},
+		func(err error) error {
+			return onStakerAddedPromise.Fail(
+				fmt.Errorf(
+					"adding new staker failed with: [%v]",
+					err,
+				),
+			)
+		},
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to watch OnStakerAdded [%v].\n", err)
+		return onStakerAddedPromise
+	}
+
+	index, err := ec.keepGroupContract.GetNStaker()
+	if err != nil {
+		fmt.Printf("Error: failed on call to GetNStaker: [%v]\n", err)
+		return onStakerAddedPromise
+	}
+
+	_, err = ec.keepGroupContract.AddStaker(index, groupMemberID)
+	if err != nil {
+		fmt.Printf(
+			"on staker added failed with: [%v]",
+			err,
+		)
+	}
+
+	return onStakerAddedPromise
+}
+
+// GetStakerList is a temporary function for Milestone 1 that
+// gets back the list of stakers.
+func (ec *ethereumChain) GetStakerList() ([]string, error) {
+	count, err := ec.keepGroupContract.GetNStaker()
+	if err != nil {
+		err = fmt.Errorf("failed on call to GetNStaker: [%v]", err)
+		return nil, err
+	}
+
+	listOfStakers := make([]string, 0, count)
+	for i := 0; i < count; i++ {
+		staker, err := ec.keepGroupContract.GetStaker(i)
+		if err != nil {
+			return nil,
+				fmt.Errorf("at postion %d out of %d error: [%v]", i, count, err)
+		}
+		listOfStakers = append(listOfStakers, string(staker))
+	}
+
+	return listOfStakers, nil
+}
+
+func (ec *ethereumChain) OnGroupRegistered(
+	handle func(key *event.GroupRegistration),
+) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
 			groupPublicKey []byte,

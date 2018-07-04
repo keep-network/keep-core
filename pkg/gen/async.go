@@ -52,6 +52,11 @@ func main() {
 			Prefix:     "GroupRegistration",
 			outputFile: "group_registration_promise.go",
 		},
+		{
+			Type:       "*event.StakerRegistration",
+			Prefix:     "StakerRegistration",
+			outputFile: "staker_registration_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
