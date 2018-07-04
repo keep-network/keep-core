@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"math/big"
 )
 
@@ -21,32 +22,36 @@ type PIi struct {
 	s3 *big.Int
 }
 
-// Commit to y and w
-func (zkp *PIi) Commit(y, w, eta, r *big.Int, params *PublicParameters) error {
+// CommitPIi to y and w
+func CommitPIi(
+	y, w, eta, r *big.Int,
+	params *PublicParameters,
+	random io.Reader,
+) (*PIi, error) {
 	g := new(big.Int).Add(params.N, big.NewInt(1))
 
 	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil) // q^3
 	qNTilde := new(big.Int).Mul(params.q, params.NTilde) // q * NTilde
 	q3NTilde := new(big.Int).Mul(q3, params.NTilde)      // q^3 * nTilde
 
-	alpha, err := rand.Int(rand.Reader, q3)
+	alpha, err := rand.Int(random, q3)
 	if err != nil {
-		return fmt.Errorf("could not construct ZKPi [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKPi [%v]", err)
 	}
 
-	beta, err := rand.Int(rand.Reader, params.N)
+	beta, err := rand.Int(random, params.N)
 	if err != nil {
-		return fmt.Errorf("could not construct ZKPi [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKPi [%v]", err)
 	}
 
-	rho, err := rand.Int(rand.Reader, qNTilde)
+	rho, err := rand.Int(random, qNTilde)
 	if err != nil {
-		return fmt.Errorf("could not construct ZKPi [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKPi [%v]", err)
 	}
 
-	gamma, err := rand.Int(rand.Reader, q3NTilde)
+	gamma, err := rand.Int(random, q3NTilde)
 	if err != nil {
-		return fmt.Errorf("could not construct ZKPi [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKPi [%v]", err)
 	}
 
 	z := new(big.Int).Mod(
@@ -57,7 +62,9 @@ func (zkp *PIi) Commit(y, w, eta, r *big.Int, params *PublicParameters) error {
 		params.NTilde,
 	)
 
-	u1x, u1y := params.curve.ScalarBaseMult(alpha.Bytes())
+	u1x, u1y := params.curve.ScalarBaseMult(
+		new(big.Int).Mod(alpha, params.q).Bytes(),
+	)
 
 	NPow2 := new(big.Int).Exp(params.N, big.NewInt(2), nil)
 	u2 := new(big.Int).Mod(
@@ -76,30 +83,23 @@ func (zkp *PIi) Commit(y, w, eta, r *big.Int, params *PublicParameters) error {
 		params.NTilde,
 	)
 
-	digest := sum256(
-		g.Bytes(),
-		y.Bytes(),
-		w.Bytes(),
-		z.Bytes(),
-		u1x.Bytes(),
-		u1y.Bytes(),
-		u2.Bytes(),
-		u3.Bytes(),
+	digest := sum256(g.Bytes(), y.Bytes(), w.Bytes(), z.Bytes(), u1x.Bytes(),
+		u1y.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 
-	zkp.e = new(big.Int).SetBytes(digest[:])
+	e := new(big.Int).SetBytes(digest[:])
 
-	zkp.s1 = new(big.Int).Add(new(big.Int).Mul(zkp.e, eta), alpha)
-	zkp.s2 = new(big.Int).Mod(
+	s1 := new(big.Int).Add(new(big.Int).Mul(e, eta), alpha)
+	s2 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(r, zkp.e, params.N),
+			new(big.Int).Exp(r, e, params.N),
 			beta,
 		),
 		params.N,
 	)
-	zkp.s3 = new(big.Int).Add(new(big.Int).Mul(zkp.e, rho), gamma)
+	s3 := new(big.Int).Add(new(big.Int).Mul(e, rho), gamma)
 
-	return nil
+	return &PIi{z, u1x, u1y, u2, u3, e, s1, s2, s3}, nil
 }
 
 // Verify y and w commitment.
