@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -56,6 +57,12 @@ func Initialize(
 		// check for stake command-line parameter to initialize staking?
 		return fmt.Errorf("account is unstaked")
 	default:
+		_ = relay.NewNode(
+			netProvider,
+			blockCounter,
+			chainConfig,
+		)
+
 		member, err := dkg.ExecuteDKG(
 			blockCounter,
 			channel,
