@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/keep-network/keep-core/pkg/beacon/membership"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -97,41 +96,4 @@ func Initialize(
 
 func checkParticipantState() (participantState, error) {
 	return staked, nil
-}
-
-func checkChainParticipantState(relayChain relaychain.Interface) (participantState, error) {
-	// FIXME Zero in on the participant's current state per the chain.
-	fmt.Println(relayChain)
-
-	// FIXME This will return a real chain-based state: are we staked? What
-	// FIXME groups are we in already, if any?
-	return unstaked, nil
-}
-
-func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
-	if participantState, err := checkChainParticipantState(relayChain); err != nil {
-		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
-	} else {
-		switch participantState {
-		case staked:
-			membership.WaitForGroup()
-		case waitingForGroup:
-			membership.WaitForGroup()
-		case inIncompleteGroup:
-			membership.WaitForGroupCompletion()
-		case inCompleteGroup:
-			membership.InitializeMembership()
-		case inInitializingGroup:
-			membership.InitializeMembership()
-		case inInitializedGroup:
-			membership.ActivateMembership()
-		case inActivatingGroup:
-			membership.ActivateMembership()
-		case inActiveGroup:
-			// FIXME We should have a non-empty state at this point ;)
-			//entry.ServeRequests(relay.EmptyState())
-		default:
-			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
-		}
-	}
 }
