@@ -36,15 +36,15 @@ type Commitment struct {
 // `commitmentParams` - Commitment generation process parameters
 // `error` - If generation failed
 func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
-	// Generate random private and public keys.
-	// [TC]: `pubKey = (randomFromZ[0, q - 1])`
+	// Generate random public key.
+	// pubKey = (randomFromZ[0, q - 1])
 	pubKey, _, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Generate decommitment key.
-	// [TC]: `r = (randomFromZ[0, q - 1])`
+	// r = (randomFromZ[0, q - 1])
 	r, _, err := bn256.RandomG1(rand.Reader)
 	if err != nil {
 		return nil, nil, err
@@ -57,19 +57,16 @@ func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
 	}
 
 	// Calculate `secret`'s hash and it's `digest`.
-	// [TC]: `digest = sha256(secret) mod q`
+	// digest = sha256(secret) mod q
 	hash := hash256BigInt(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
-	// Calculate `he`
-	// [TC]: `he = h + g * privKey`
+	// he = h + g * privKey
 	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(pubKey))
 
-	// Calculate `commitment`
-	// [TC]: `commitment = g * digest + he * r`
+	// commitment = g * digest + he * r
 	commitment := new(bn256.G2).Add(new(bn256.G2).ScalarBaseMult(digest), new(bn256.G2).ScalarMult(he, r))
 
-	// [TC]: `return (r, pubKey, h, commitment)`
 	return &Commitment{
 			pubKey:     pubKey,
 			h:          h,
@@ -82,28 +79,25 @@ func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
 
 // ValidateCommitment validates received commitment against revealed secret.
 func ValidateCommitment(commitment *Commitment, secret *Secret) bool {
-	// Hash `secret` and calculate `digest`.
-	// [TC]: `digest = sha256(secret) mod q`
+	// Calculate `secret`'s hash and it's `digest`.
+	// digest = sha256(secret) mod q
 	hash := hash256BigInt(secret.secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
-	// Calculate `a`
-	// [TC]: `a = g * r`
+	// a = g * r
 	a := new(bn256.G1).ScalarBaseMult(secret.r)
 
-	// Calculate `b`
-	// [TC]: `b = h + g * privKey`
+	// b = h + g * privKey
 	b := new(bn256.G2).Add(commitment.h, new(bn256.G2).ScalarBaseMult(commitment.pubKey))
 
-	// Calculate `c`
-	// [TC]: `c = commitment - g * digest`
+	// c = commitment - g * digest
 	c := new(bn256.G2).Add(commitment.commitment, new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)))
 
 	// Get base point `g`
 	g := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
 
 	// Compare pairings
-	// [TC]: pairing(a, b) == pairing(g, c)
+	// pairing(a, b) == pairing(g, c)
 	if bn256.Pair(a, b).String() != bn256.Pair(g, c).String() {
 		return false
 	}

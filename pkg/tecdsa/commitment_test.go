@@ -51,9 +51,9 @@ func TestGenerateTwoCommitmentsCheckUniqueResults(t *testing.T) {
 		t.Fatal("both public keys `pubKey` are equal")
 	}
 
-	// Check random points are unique
+	// Check master public keys are unique
 	if commitment1.h.String() == commitment2.h.String() {
-		t.Fatal("both random points `h` are equal")
+		t.Fatal("both master public keys `h` are equal")
 	}
 
 	// Check commitments are unique
