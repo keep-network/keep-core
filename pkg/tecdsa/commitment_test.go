@@ -11,13 +11,13 @@ import (
 )
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
-	secret := []byte("top secret message")
+	msg := []byte("top secret message")
 
 	// Generate Commitment
-	params, err := GenerateCommitment(&secret)
+	commitment, secret, err := GenerateCommitment(&msg)
 
 	// Validate Commitment
-	result, err := ValidateCommitment(params)
+	result, err := ValidateCommitment(commitment, secret)
 
 	if err != nil {
 		t.Fatalf("validation error [%v]", err)
@@ -29,129 +29,134 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 }
 
 func TestGenerateTwoCommitmentsCheckUniqueResults(t *testing.T) {
-	secret := []byte("top secret message")
+	msg := []byte("top secret message")
 
 	// Generate Commitment 1
-	params1, err := GenerateCommitment(&secret)
+	commitment1, secret1, err := GenerateCommitment(&msg)
 	if err != nil {
 		t.Fatalf("validation error [%v]", err)
 	}
 
 	// Generate Commitment 2
-	params2, err := GenerateCommitment(&secret)
+	commitment2, secret2, err := GenerateCommitment(&msg)
 	if err != nil {
 		t.Fatalf("validation error [%v]", err)
 	}
 
 	// Check decommitments are unique
-	if params1.r.Cmp(params2.r) == 0 {
+	if secret1.r.Cmp(secret2.r) == 0 {
 		t.Fatal("both decommitment keys `r` are equal")
 	}
 
 	// Check public keys are unique
-	if params1.pubKey.String() == params2.pubKey.String() {
+	if commitment1.pubKey.String() == commitment2.pubKey.String() {
 		t.Fatal("both public keys `pubKey` are equal")
 	}
 
 	// Check random points are unique
-	if params1.h.String() == params2.h.String() {
+	if commitment1.h.String() == commitment2.h.String() {
 		t.Fatal("both random points `h` are equal")
 	}
 
 	// Check commitments are unique
-	if params1.commitment.String() == params2.commitment.String() {
+	if commitment1.commitment.String() == commitment2.commitment.String() {
 		t.Fatal("both commitments are equal")
 	}
 }
 
 func TestValidate(t *testing.T) {
-	secret := []byte("top secret message")
+	msg := []byte("top secret message")
 	h := new(bn256.G2).ScalarBaseMult(big.NewInt(5))
 	r := big.NewInt(2)
 	pubKey := new(bn256.G2).ScalarBaseMult(big.NewInt(4))
 	commitment := convertBase64StringToCommitment("DZv5bcjEHmVfO+ukZUq7uLUKQhXTbE8mBkG4CTpt6bAiKnOXf2v6E3reMnW9qV0B5hjT9NPxaux6OQW5/vnw3iHJ2Gu8/icq3T7sKvoD+CXFDi8uYZv7pln7zyAI32OiGhjPPvBtZ/jtaIx0WTF58f1HVrQj1vWeQO43zFJCi38=")
 
-	secretInvalid := []byte("top secret message2")
+	msgInvalid := []byte("top secret message2")
 
 	var tests = map[string]struct {
-		params         *commitmentParams
+		secret         *Secret
+		commitment     *Commitment
 		expectedResult bool
 		expectedError  error
 	}{
 		"positive validation - pass values used for generation": {
-			params: &commitmentParams{
-				publicParams: publicParams{
-					commitment: commitment,
-					pubKey:     pubKey,
-					h:          h,
-				},
-				secret: &secret,
+			secret: &Secret{
+				secret: &msg,
 				r:      r,
+			},
+			commitment: &Commitment{
+				commitment: commitment,
+				pubKey:     pubKey,
+				h:          h,
 			},
 			expectedResult: true,
 			expectedError:  nil,
 		},
 		"negative validation - incorrect `secret`": {
-			params: &commitmentParams{
-				publicParams: publicParams{
-					commitment: commitment,
-					pubKey:     pubKey,
-					h:          new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
-				},
-				secret: &secretInvalid,
+			secret: &Secret{
+				secret: &msgInvalid,
 				r:      r,
+			},
+			commitment: &Commitment{
+				commitment: commitment,
+				pubKey:     pubKey,
+				h:          new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
 			},
 			expectedResult: false,
 			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `r`": {
-			params: &commitmentParams{
-				publicParams: publicParams{
-					commitment: commitment,
-					pubKey:     pubKey,
-					h:          new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
-				},
-				secret: &secret,
+			secret: &Secret{
+
+				secret: &msg,
 				r:      big.NewInt(3),
+			},
+			commitment: &Commitment{
+				commitment: commitment,
+				pubKey:     pubKey,
+				h:          new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
 			},
 			expectedResult: false,
 			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `commitment`": {
-			params: &commitmentParams{
-				publicParams: publicParams{
-					commitment: new(bn256.G2).ScalarBaseMult(big.NewInt(3)),
-					pubKey:     pubKey,
-					h:          h,
-				},
-				secret: &secret,
+			secret: &Secret{
+
+				secret: &msg,
 				r:      r,
+			},
+			commitment: &Commitment{
+				commitment: new(bn256.G2).ScalarBaseMult(big.NewInt(3)),
+				pubKey:     pubKey,
+				h:          h,
 			},
 			expectedResult: false,
 			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `pubKey`": {
-			params: &commitmentParams{
-				publicParams: publicParams{
-					commitment: commitment,
-					pubKey:     new(bn256.G2).ScalarBaseMult(big.NewInt(3)),
-					h:          h,
-				},
-				secret: &secret,
+			secret: &Secret{
+
+				secret: &msg,
 				r:      r,
+			},
+			commitment: &Commitment{
+				commitment: commitment,
+				pubKey:     new(bn256.G2).ScalarBaseMult(big.NewInt(3)),
+				h:          h,
 			},
 			expectedResult: false,
 			expectedError:  fmt.Errorf("pairings doesn't match"),
 		},
 		"negative validation - incorrect `h`": {
-			params: &commitmentParams{
-				publicParams: publicParams{
-					commitment: commitment,
-					pubKey:     pubKey,
-					h:          new(bn256.G2).ScalarBaseMult(big.NewInt(6)),
-				},
-				secret: &secret,
+			secret: &Secret{
+
+				secret: &msg,
 				r:      r,
+			},
+			commitment: &Commitment{
+				commitment: commitment,
+				pubKey:     pubKey,
+				h:          new(bn256.G2).ScalarBaseMult(big.NewInt(6)),
 			},
 			expectedResult: false,
 			expectedError:  fmt.Errorf("pairings doesn't match"),
@@ -160,7 +165,7 @@ func TestValidate(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			result, err := ValidateCommitment(test.params)
+			result, err := ValidateCommitment(test.commitment, test.secret)
 
 			if result != test.expectedResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v", test.expectedResult, result)
