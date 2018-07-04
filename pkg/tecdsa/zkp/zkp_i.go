@@ -22,7 +22,7 @@ type PIi struct {
 }
 
 // Commit to y and w
-func (zkp *PIi) Commit(y, w, eta, r *big.Int, params *ZKPPublicParameters) error {
+func (zkp *PIi) Commit(y, w, eta, r *big.Int, params *PublicParameters) error {
 	g := new(big.Int).Add(params.N, big.NewInt(1))
 
 	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil) // q^3
@@ -103,7 +103,7 @@ func (zkp *PIi) Commit(y, w, eta, r *big.Int, params *ZKPPublicParameters) error
 }
 
 // Verify y and w commitment.
-func (zkp *PIi) Verify(y, w *big.Int, params *ZKPPublicParameters) bool {
+func (zkp *PIi) Verify(y, w *big.Int, params *PublicParameters) bool {
 	u1x, u1y := zkp.u1Verification(y, params)
 	u2 := zkp.u2Verification(w, params)
 	u3 := zkp.u3Verification(params)
@@ -115,13 +115,13 @@ func (zkp *PIi) Verify(y, w *big.Int, params *ZKPPublicParameters) bool {
 		zkp.u3 == u3
 }
 
-func (zkp *PIi) u1Verification(y *big.Int, params *ZKPPublicParameters) (*big.Int, *big.Int) {
+func (zkp *PIi) u1Verification(y *big.Int, params *PublicParameters) (*big.Int, *big.Int) {
 	gs1x, gs1y := params.curve.ScalarBaseMult(zkp.s1.Bytes())
 	ye := new(big.Int).Exp(y, new(big.Int).Neg(zkp.e), nil)
 	return params.curve.ScalarMult(gs1x, gs1y, ye.Bytes())
 }
 
-func (zkp *PIi) u2Verification(w *big.Int, params *ZKPPublicParameters) *big.Int {
+func (zkp *PIi) u2Verification(w *big.Int, params *PublicParameters) *big.Int {
 	g := new(big.Int).Add(params.N, big.NewInt(1))
 	nSquare := new(big.Int).Exp(params.N, big.NewInt(2), nil)
 
@@ -135,7 +135,7 @@ func (zkp *PIi) u2Verification(w *big.Int, params *ZKPPublicParameters) *big.Int
 	)
 }
 
-func (zkp *PIi) u3Verification(params *ZKPPublicParameters) *big.Int {
+func (zkp *PIi) u3Verification(params *PublicParameters) *big.Int {
 	h1s1 := discreteExp(params.h1, zkp.s1, params.NTilde)
 	h2s3 := discreteExp(params.h2, zkp.s3, params.NTilde)
 	ze := discreteExp(zkp.z, new(big.Int).Neg(zkp.e), params.NTilde)
