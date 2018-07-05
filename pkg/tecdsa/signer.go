@@ -84,14 +84,11 @@ func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 		return nil, fmt.Errorf("could not generate DSA key share [%v]", err)
 	}
 
-	yxi, yyi := s.publicParameters.curve.ScalarBaseMult(xi.Bytes())
+	yi := NewCurvePoint(s.publicParameters.curve.ScalarBaseMult(xi.Bytes()))
 
 	return &dsaKeyShare{
 		xi: xi,
-		yi: &CurvePoint{
-			x: yxi,
-			y: yyi,
-		},
+		yi: yi,
 	}, nil
 }
 

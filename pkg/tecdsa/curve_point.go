@@ -10,3 +10,7 @@ import "math/big"
 type CurvePoint struct {
 	x, y *big.Int
 }
+
+func NewCurvePoint(x, y *big.Int) *CurvePoint {
+	return &CurvePoint{x, y}
+}
