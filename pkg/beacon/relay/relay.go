@@ -2,7 +2,9 @@ package relay
 
 import (
 	"fmt"
+	"math/big"
 	"os"
+	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -61,6 +63,36 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				)
 				return
 			}
+
+			var (
+				rightSizeSignature [32]byte
+				previousEntry      *big.Int
+			)
+			for i := 0; i < 32; i++ {
+				rightSizeSignature[i] = signature[i]
+			}
+			newEntry := &event.Entry{
+				RequestID:     req.RequestID,
+				Value:         rightSizeSignature,
+				GroupID:       nil,
+				PreviousEntry: nil,
+				Timestamp:     time.Now().UTC(),
+			}
+
+			relayChain.SubmitRelayEntry(
+				newEntry,
+			).OnComplete(func(entry *event.Event, err error) {
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"Failed submission of relay entry: [%v].\n",
+						err,
+					)
+					return
+				}
+
+				// n.RegisterGroup(registration.RequestID, registration.GroupPublicKey)
+			})
 		}()
 	}
 }
