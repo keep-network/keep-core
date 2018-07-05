@@ -52,6 +52,7 @@ func Initialize(
 		return fmt.Errorf("account is unstaked")
 	default:
 		node := relay.NewNode(
+			netProvider.ID().String(),
 			netProvider,
 			blockCounter,
 			chainConfig,
