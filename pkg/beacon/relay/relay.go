@@ -50,53 +50,52 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	if err != nil {
 		return err
 	}
-	if thresholdMember != nil {
-		go func() {
-			signature, err := thresholdsignature.Execute(
-				combinedEntryToSign,
-				n.blockCounter,
-				groupChannel,
-				thresholdMember,
+
+	go func() {
+		signature, err := thresholdsignature.Execute(
+			combinedEntryToSign,
+			n.blockCounter,
+			groupChannel,
+			thresholdMember,
+		)
+		if err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"error creating threshold signature: [%v]",
+				err,
 			)
+			return
+		}
+
+		var (
+			rightSizeSignature [32]byte
+			previousEntry      *big.Int
+		)
+		previousEntry.SetBytes(request.PreviousEntry())
+		for i := 0; i < 32; i++ {
+			rightSizeSignature[i] = signature[i]
+		}
+
+		newEntry := &event.Entry{
+			RequestID:     request.RequestID,
+			Value:         rightSizeSignature,
+			PreviousEntry: previousEntry,
+			Timestamp:     time.Now().UTC(),
+		}
+
+		relayChain.SubmitRelayEntry(
+			newEntry,
+		).OnFailure(func(err error) {
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"error creating threshold signature: [%v]",
+					"Failed submission of relay entry: [%v].\n",
 					err,
 				)
 				return
 			}
-
-			var (
-				rightSizeSignature [32]byte
-				previousEntry      *big.Int
-			)
-			previousEntry.SetBytes(request.PreviousEntry())
-			for i := 0; i < 32; i++ {
-				rightSizeSignature[i] = signature[i]
-			}
-
-			newEntry := &event.Entry{
-				RequestID:     request.RequestID,
-				Value:         rightSizeSignature,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-			}
-
-			relayChain.SubmitRelayEntry(
-				newEntry,
-			).OnFailure(func(err error) {
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"Failed submission of relay entry: [%v].\n",
-						err,
-					)
-					return
-				}
-			})
-		}()
-	}
+		})
+	}()
 
 	return nil
 }
@@ -123,6 +122,14 @@ func (n *Node) memberAndGroupForRequest(
 		}
 		memberOfGroup = pendingGroup
 	}
+
+	if memberOfGroup == nil {
+		return nil, nil, fmt.Errorf(
+			"nonexistant membership for requested group [%s]",
+			request.RequestID.String(),
+		)
+	}
+
 	// We have a valid member entry, find the broadcast channel entry.
 	groupChannel, err := n.netProvider.ChannelFor(request.RequestID.String())
 	if err != nil {
