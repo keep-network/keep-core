@@ -107,6 +107,22 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 	return combinedEntryToSign
 }
 
+func (n *Node) indexForNextGroup(request event.Request) *big.Int {
+	var (
+		entry     *big.Int
+		nextGroup *big.Int
+	)
+	entry = entry.SetBytes(request.PreviousEntry())
+	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
+
+	if numberOfGroups.Int64() == 0 {
+		return nextGroup
+	}
+
+	nextGroup.Mod(entry, numberOfGroups)
+	return nextGroup
+}
+
 func (n *Node) memberAndGroupForRequest(
 	request event.Request,
 ) (*membership, error) {
@@ -117,6 +133,8 @@ func (n *Node) memberAndGroupForRequest(
 		found      bool
 		membership *membership
 	)
+
+	nextGroup := n.indexForNextGroup(request).Int64()
 	// Search our list of memberships to see if we have a member entry.
 	if membership, found = n.myGroups[request.RequestID.String()]; !found {
 		// We don't have an entry - maybe in the pending groups?
