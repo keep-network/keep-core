@@ -14,7 +14,7 @@ import (
 
 type localIdentifier string
 
-func (s *localIdentifier) ProviderName() string {
+func (s localIdentifier) ProviderName() string {
 	return "local"
 }
 
