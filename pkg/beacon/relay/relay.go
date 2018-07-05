@@ -104,8 +104,33 @@ func (n *Node) GenerateRelayEntryIfEligible(
 func (n *Node) memberAndGroupForRequest(
 	req event.Request,
 ) (*thresholdgroup.Member, net.BroadcastChannel, error) {
-	// Use request to choose group.
-	// See if we're in the group.
-	// If we are, look up and return our member entry and our broadcast channel entry.
-	return nil, nil, nil
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+
+	var (
+		found         bool
+		memberOfGroup *thresholdgroup.Member
+	)
+	// Search our list of memberships to see if we have a member entry.
+	if memberOfGroup, found = n.myGroups[req.RequestID.String()]; !found {
+		// We don't have an entry - maybe in the pending groups?
+		pendingGroup, found := n.pendingGroups[req.RequestID.String()]
+		if !found {
+			return nil, nil, fmt.Errorf(
+				"nonexistant membership for requested group [%s]",
+				req.RequestID.String(),
+			)
+		}
+		memberOfGroup = pendingGroup
+	}
+	// We have a valid member entry, find the broadcast channel entry.
+	groupChannel, err := n.netProvider.ChannelFor(req.RequestID.String())
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"Error joining group channel for request group [%s]: [%v]",
+			req.RequestID.String(),
+			err,
+		)
+	}
+	return memberOfGroup, groupChannel, nil
 }
