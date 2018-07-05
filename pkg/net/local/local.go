@@ -14,8 +14,12 @@ import (
 
 type localIdentifier string
 
-func (s localIdentifier) ProviderName() string {
+func (localIdentifier) ProviderName() string {
 	return "local"
+}
+
+func (li localIdentifier) String() string {
+	return string(li)
 }
 
 var channels map[string][]*localChannel

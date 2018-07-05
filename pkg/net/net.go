@@ -11,6 +11,9 @@ type TransportIdentifier interface {
 	// Returns a string name of the network provider. Expected to be purely
 	// informational.
 	ProviderName() string
+
+	// Returns a string representation of the transport identifier.
+	String() string
 }
 
 // ProtocolIdentifier represents a protocol-level identifier. It is an opaque

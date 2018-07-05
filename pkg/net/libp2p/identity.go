@@ -26,12 +26,12 @@ type identity struct {
 
 type networkIdentity peer.ID
 
-func (n networkIdentity) ProviderName() string {
+func (networkIdentity) ProviderName() string {
 	return "libp2p"
 }
 
-func (n networkIdentity) String() string {
-	return peer.ID(n).Pretty()
+func (ni networkIdentity) String() string {
+	return peer.ID(ni).Pretty()
 }
 
 func (i *identity) Marshal() ([]byte, error) {
