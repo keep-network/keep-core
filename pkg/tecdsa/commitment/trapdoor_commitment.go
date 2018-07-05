@@ -58,7 +58,7 @@ func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, *TrapdoorSecret, e
 
 	// Calculate `secret`'s hash and it's `digest`.
 	// digest = sha256(secret) mod q
-	hash := hash256BigInt(secret)
+	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
 	// he = h + g * privKey
@@ -81,7 +81,7 @@ func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, *TrapdoorSecret, e
 func ValidateCommitment(commitment *TrapdoorCommitment, secret *TrapdoorSecret) bool {
 	// Calculate `secret`'s hash and it's `digest`.
 	// digest = sha256(secret) mod q
-	hash := hash256BigInt(secret.secret)
+	hash := sha256Sum(secret.secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
 	// a = g * r
@@ -104,9 +104,9 @@ func ValidateCommitment(commitment *TrapdoorCommitment, secret *TrapdoorSecret) 
 	return true
 }
 
-// hash256BigInt - calculates 256-bit hash for passed `secret` and converts it
-// to `big.Int`.
-func hash256BigInt(secret *[]byte) *big.Int {
+// sha256Sum calculates sha256 hash for the passed `secret`
+// and converts it to `big.Int`.
+func sha256Sum(secret *[]byte) *big.Int {
 	hash := sha256.Sum256(*secret)
 
 	return new(big.Int).SetBytes(hash[:])
