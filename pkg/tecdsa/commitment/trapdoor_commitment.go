@@ -13,8 +13,8 @@ import (
 
 // [TC] https://github.com/keep-network/keep-core/blob/master/docs/cryptography/trapdoor-commitments.adoc
 
-// TrapdoorSecret - parameters of commitment generation process
-type TrapdoorSecret struct {
+// Secret - parameters of commitment generation process
+type Secret struct {
 	// Secret message
 	secret *[]byte
 	// Decommitment key; used to commitment validation.
@@ -23,6 +23,7 @@ type TrapdoorSecret struct {
 
 // TrapdoorCommitment - parameters which can be revealed
 type TrapdoorCommitment struct {
+	secret Secret
 	// Public key for a specific trapdoor commitment.
 	pubKey *big.Int
 	// Master public key for the trapdoor commitment family.
@@ -35,25 +36,25 @@ type TrapdoorCommitment struct {
 // Returns:
 // `commitmentParams` - Commitment generation process parameters
 // `error` - If generation failed
-func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, *TrapdoorSecret, error) {
+func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, error) {
 	// Generate random public key.
 	// pubKey = (randomFromZ[0, q - 1])
 	pubKey, _, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Generate decommitment key.
 	// r = (randomFromZ[0, q - 1])
 	r, _, err := bn256.RandomG1(rand.Reader)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Generate random point.
 	_, h, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Calculate `secret`'s hash and it's `digest`.
@@ -68,17 +69,18 @@ func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, *TrapdoorSecret, e
 	commitment := new(bn256.G2).Add(new(bn256.G2).ScalarBaseMult(digest), new(bn256.G2).ScalarMult(he, r))
 
 	return &TrapdoorCommitment{
-			pubKey:     pubKey,
-			h:          h,
-			commitment: commitment,
-		}, &TrapdoorSecret{
+		secret: Secret{
 			secret: secret,
 			r:      r,
-		}, nil
+		},
+		pubKey:     pubKey,
+		h:          h,
+		commitment: commitment,
+	}, nil
 }
 
 // ValidateCommitment validates received commitment against revealed secret.
-func ValidateCommitment(commitment *TrapdoorCommitment, secret *TrapdoorSecret) bool {
+func (tc *TrapdoorCommitment) ValidateCommitment(secret *Secret) bool {
 	// Calculate `secret`'s hash and it's `digest`.
 	// digest = sha256(secret) mod q
 	hash := sha256Sum(secret.secret)
@@ -88,10 +90,10 @@ func ValidateCommitment(commitment *TrapdoorCommitment, secret *TrapdoorSecret) 
 	a := new(bn256.G1).ScalarBaseMult(secret.r)
 
 	// b = h + g * privKey
-	b := new(bn256.G2).Add(commitment.h, new(bn256.G2).ScalarBaseMult(commitment.pubKey))
+	b := new(bn256.G2).Add(tc.h, new(bn256.G2).ScalarBaseMult(tc.pubKey))
 
 	// c = commitment - g * digest
-	c := new(bn256.G2).Add(commitment.commitment, new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)))
+	c := new(bn256.G2).Add(tc.commitment, new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)))
 
 	// Get base point `g`
 	g := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
