@@ -39,14 +39,14 @@ func NewNode(
 // determining whether the node is or is not is a member of the requested group, and
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
-	req event.Request,
+	request event.Request,
 	relayChain relaychain.Interface,
 ) error {
 	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, req.PreviousEntry()...)
-	combinedEntryToSign = append(combinedEntryToSign, req.Seed.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, request.PreviousEntry()...)
+	combinedEntryToSign = append(combinedEntryToSign, request.Seed.Bytes()...)
 
-	thresholdMember, groupChannel, err := n.memberAndGroupForRequest(req)
+	thresholdMember, groupChannel, err := n.memberAndGroupForRequest(request)
 	if err != nil {
 		return err
 	}
@@ -71,13 +71,13 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				rightSizeSignature [32]byte
 				previousEntry      *big.Int
 			)
-			previousEntry.SetBytes(req.PreviousEntry())
+			previousEntry.SetBytes(request.PreviousEntry())
 			for i := 0; i < 32; i++ {
 				rightSizeSignature[i] = signature[i]
 			}
 
 			newEntry := &event.Entry{
-				RequestID:     req.RequestID,
+				RequestID:     request.RequestID,
 				Value:         rightSizeSignature,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
@@ -102,7 +102,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 }
 
 func (n *Node) memberAndGroupForRequest(
-	req event.Request,
+	request event.Request,
 ) (*thresholdgroup.Member, net.BroadcastChannel, error) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
@@ -112,23 +112,23 @@ func (n *Node) memberAndGroupForRequest(
 		memberOfGroup *thresholdgroup.Member
 	)
 	// Search our list of memberships to see if we have a member entry.
-	if memberOfGroup, found = n.myGroups[req.RequestID.String()]; !found {
+	if memberOfGroup, found = n.myGroups[request.RequestID.String()]; !found {
 		// We don't have an entry - maybe in the pending groups?
-		pendingGroup, found := n.pendingGroups[req.RequestID.String()]
+		pendingGroup, found := n.pendingGroups[request.RequestID.String()]
 		if !found {
 			return nil, nil, fmt.Errorf(
 				"nonexistant membership for requested group [%s]",
-				req.RequestID.String(),
+				request.RequestID.String(),
 			)
 		}
 		memberOfGroup = pendingGroup
 	}
 	// We have a valid member entry, find the broadcast channel entry.
-	groupChannel, err := n.netProvider.ChannelFor(req.RequestID.String())
+	groupChannel, err := n.netProvider.ChannelFor(request.RequestID.String())
 	if err != nil {
 		return nil, nil, fmt.Errorf(
 			"Error joining group channel for request group [%s]: [%v]",
-			req.RequestID.String(),
+			request.RequestID.String(),
 			err,
 		)
 	}
