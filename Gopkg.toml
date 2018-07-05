@@ -21,6 +21,11 @@
 #  version = "2.4.0"
 
 [[constraint]]
+  name = "github.com/keep-network/paillier"
+  revision = "715a2097b7232d6a5e62ae76d3ccb69b63e7d781"
+  source = "https://github.com/keep-network/paillier"
+
+[[constraint]]
   name = "github.com/dfinity/go-dfinity-crypto"
   revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
   source = "https://github.com/keep-network/go-dfinity-crypto.git"

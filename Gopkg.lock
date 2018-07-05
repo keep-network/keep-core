@@ -231,6 +231,12 @@
   revision = "b497e2f366b8624394fb2e89c10ab607bebdde0b"
 
 [[projects]]
+  name = "github.com/keep-network/paillier"
+  packages = ["."]
+  revision = "715a2097b7232d6a5e62ae76d3ccb69b63e7d781"
+  source = "https://github.com/keep-network/paillier"
+
+[[projects]]
   branch = "master"
   name = "github.com/libp2p/go-addr-util"
   packages = ["."]
@@ -765,6 +771,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "48cf662e7273d4cb586c694085a55dcd508f52836f871b20b10bf3aec8d0f04a"
+  inputs-digest = "9169b9e2a54c8ac6bc512cb080d1fbe8eec990d248dff4342915ef8bf45a8f72"
   solver-name = "gps-cdcl"
   solver-version = 1
