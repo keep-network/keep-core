@@ -2,7 +2,6 @@ package dkg
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -25,20 +24,25 @@ func Init(channel net.BroadcastChannel) {
 }
 
 // ExecuteDKG runs the full distributed key generation lifecycle, given a
-// broadcast channel to mediate it and a group size and threshold. It returns a
-// threshold group member who is participating in the group if the generation
-// was successful, and an error representing what went wrong if not.
+// broadcast channel to mediate it, a player index to use in the group, and a
+// group size and threshold. If generation is successful, it returns a threshold
+// group member who can participate in the group; if generation fails, it
+// returns an error representing what went wrong.
 func ExecuteDKG(
+	playerIndex int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	groupSize int,
 	threshold int,
 ) (*thresholdgroup.Member, error) {
-	// Generate a nonzero memberID; loop until rand.Int31 returns something
-	// other than 0, hopefully no more than once :)
-	memberID := "0"
-	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
+	if playerIndex < 0 {
+		return nil, fmt.Errorf(
+			"playerIndex must be >= 0, got [%v]",
+			playerIndex,
+		)
 	}
+	memberID := fmt.Sprintf("%v", playerIndex+1)
+
 	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
 
 	var (

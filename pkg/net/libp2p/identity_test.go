@@ -67,5 +67,5 @@ func TestPublicKeyFunctions(t *testing.T) {
 
 func generateDeterministicIdentity(t *testing.T) *identity {
 	p := testutils.RandPeerNetParamsOrFatal(t)
-	return &identity{id: networkIdentity(p.ID), privKey: p.PrivKey, pubKey: p.PubKey}
+	return &identity{id: p.ID, privKey: p.PrivKey, pubKey: p.PubKey}
 }

@@ -3,11 +3,12 @@ package beacon
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
+	"sync"
 
-	"github.com/keep-network/keep-core/pkg/beacon/membership"
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -42,52 +43,53 @@ func Initialize(
 		return err
 	}
 
-	channel, err := netProvider.ChannelFor("test")
-	if err != nil {
-		return err
-	}
-
 	curParticipantState, err := checkParticipantState()
 	if err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
+
+	// FIXME Nuke post-M1 when we plug in real staking stuff.
+	proceed := &sync.WaitGroup{}
+	proceed.Add(1)
+	relayChain.AddStaker(netProvider.ID().String()).
+		OnComplete(func(_ *event.StakerRegistration, err error) {
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed to register staker with id [%v].",
+					netProvider.ID().String(),
+				)
+				curParticipantState = unstaked
+				proceed.Done()
+				return
+			}
+
+			proceed.Done()
+		})
+	proceed.Wait()
 
 	switch curParticipantState {
 	case unstaked:
 		// check for stake command-line parameter to initialize staking?
 		return fmt.Errorf("account is unstaked")
 	default:
-		member, err := dkg.ExecuteDKG(
+		node := relay.NewNode(
+			netProvider.ID().String(),
+			netProvider,
 			blockCounter,
-			channel,
-			chainConfig.GroupSize,
-			chainConfig.Threshold,
+			chainConfig,
 		)
-		if err != nil {
-			return err
-		}
 
-		relayChain.SubmitGroupPublicKey(
-			"test",
-			member.GroupPublicKeyBytes(),
-		).OnSuccess(func(data *event.GroupRegistration) {
-			fmt.Printf(
-				"Submission of public key: [%s].\n",
-				data,
-			)
-		}).OnFailure(func(err error) {
-			fmt.Fprintf(
-				os.Stderr,
-				"Failed submission of public key: [%v].\n",
-				err,
-			)
+		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
+			entryBigInt := &big.Int{}
+			entryBigInt.SetBytes(entry.Value[:])
+			node.JoinGroupIfEligible(relayChain, entry.RequestID, entryBigInt)
 		})
 
-		fmt.Printf(
-			"Submitting public key for member %s, group %s\n",
-			member.MemberID(),
-			"test",
-		)
+		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+			node.RegisterGroup(registration.RequestID, registration.GroupPublicKey)
+		})
+
 	}
 
 	<-ctx.Done()
@@ -97,41 +99,4 @@ func Initialize(
 
 func checkParticipantState() (participantState, error) {
 	return staked, nil
-}
-
-func checkChainParticipantState(relayChain relaychain.Interface) (participantState, error) {
-	// FIXME Zero in on the participant's current state per the chain.
-	fmt.Println(relayChain)
-
-	// FIXME This will return a real chain-based state: are we staked? What
-	// FIXME groups are we in already, if any?
-	return unstaked, nil
-}
-
-func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
-	if participantState, err := checkChainParticipantState(relayChain); err != nil {
-		panic(fmt.Sprintf("Could not resolve current relay state from libp2p, aborting: [%s]", err))
-	} else {
-		switch participantState {
-		case staked:
-			membership.WaitForGroup()
-		case waitingForGroup:
-			membership.WaitForGroup()
-		case inIncompleteGroup:
-			membership.WaitForGroupCompletion()
-		case inCompleteGroup:
-			membership.InitializeMembership()
-		case inInitializingGroup:
-			membership.InitializeMembership()
-		case inInitializedGroup:
-			membership.ActivateMembership()
-		case inActivatingGroup:
-			membership.ActivateMembership()
-		case inActiveGroup:
-			// FIXME We should have a non-empty state at this point ;)
-			//entry.ServeRequests(relay.EmptyState())
-		default:
-			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
-		}
-	}
 }

@@ -86,3 +86,4 @@ var _ net.TransportIdentifier = (*testTransportIdentifier)(nil)
 var _ net.ProtocolIdentifier = (*testProtocolIdentifier)(nil)
 
 func (t *testTransportIdentifier) ProviderName() string { return "test" }
+func (t *testTransportIdentifier) String() string       { return "testTransportIdentifier" }

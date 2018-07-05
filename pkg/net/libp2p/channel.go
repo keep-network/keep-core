@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	floodsub "github.com/libp2p/go-floodsub"
+	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/libp2p/go-libp2p-peerstore"
 )
 
@@ -106,7 +107,7 @@ func envelopeProto(
 
 	var recipientIdentityBytes []byte
 	if recipient != nil {
-		recipientIdentity := &identity{id: recipient.(networkIdentity)}
+		recipientIdentity := &identity{id: peer.ID(recipient.(networkIdentity))}
 		recipientIdentityBytes, err = recipientIdentity.Marshal()
 		if err != nil {
 			return nil, err
@@ -243,7 +244,7 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 
 	// Fire a message back to the protocol
 	protocolMessage := internal.BasicMessage(
-		senderIdentifier.id,
+		networkIdentity(senderIdentifier.id),
 		protocolIdentifier,
 		unmarshaled,
 	)
@@ -269,7 +270,7 @@ func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.Protoco
 	c.identifiersMutex.Lock()
 	defer c.identifiersMutex.Unlock()
 
-	return c.transportToProtoIdentifiers[senderIdentifier.id], nil
+	return c.transportToProtoIdentifiers[networkIdentity(senderIdentifier.id)], nil
 }
 
 func (c *channel) deliver(message net.Message) error {

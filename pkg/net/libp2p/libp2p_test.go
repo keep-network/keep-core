@@ -79,7 +79,7 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.RegisterIdentifier(
-		config.identity.id,
+		networkIdentity(config.identity.id),
 		protocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
@@ -155,14 +155,14 @@ func TestSendToReceiveFrom(t *testing.T) {
 	}
 
 	if err := broadcastChannel.RegisterIdentifier(
-		config1.identity.id,
+		networkIdentity(config1.identity.id),
 		senderProtocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := broadcastChannel.RegisterIdentifier(
-		config2.identity.id,
+		networkIdentity(config2.identity.id),
 		recipientprotocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
