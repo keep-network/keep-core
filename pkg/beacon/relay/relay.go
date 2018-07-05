@@ -81,7 +81,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 
 			relayChain.SubmitRelayEntry(
 				newEntry,
-			).OnComplete(func(entry *event.Event, err error) {
+			).OnFailure(func(err error) {
 				if err != nil {
 					fmt.Fprintf(
 						os.Stderr,
@@ -90,8 +90,6 @@ func (n *Node) GenerateRelayEntryIfEligible(
 					)
 					return
 				}
-
-				// n.RegisterGroup(registration.RequestID, registration.GroupPublicKey)
 			})
 		}()
 	}
