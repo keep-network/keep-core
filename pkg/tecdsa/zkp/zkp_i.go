@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
 // PIi is an implementation of Gennaro's ZKP PIi proof.
 type PIi struct {
-	z        *big.Int
-	u1x, u1y *big.Int
-	u2       *big.Int
-	u3       *big.Int
+	z  *big.Int
+	u1 *tecdsa.CurvePoint
+	u2 *big.Int
+	u3 *big.Int
 
 	e *big.Int
 
@@ -62,9 +64,9 @@ func CommitPIi(
 		params.NTilde,
 	)
 
-	u1x, u1y := params.curve.ScalarBaseMult(
+	u1 := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(
 		new(big.Int).Mod(alpha, params.q).Bytes(),
-	)
+	))
 
 	NPow2 := new(big.Int).Exp(params.N, big.NewInt(2), nil)
 	u2 := new(big.Int).Mod(
@@ -83,8 +85,8 @@ func CommitPIi(
 		params.NTilde,
 	)
 
-	digest := sum256(g.Bytes(), y.Bytes(), w.Bytes(), z.Bytes(), u1x.Bytes(),
-		u1y.Bytes(), u2.Bytes(), u3.Bytes(),
+	digest := sum256(g.Bytes(), y.Bytes(), w.Bytes(), z.Bytes(), u1.X.Bytes(),
+		u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 
 	e := new(big.Int).SetBytes(digest[:])
@@ -99,26 +101,26 @@ func CommitPIi(
 	)
 	s3 := new(big.Int).Add(new(big.Int).Mul(e, rho), gamma)
 
-	return &PIi{z, u1x, u1y, u2, u3, e, s1, s2, s3}, nil
+	return &PIi{z, u1, u2, u3, e, s1, s2, s3}, nil
 }
 
 // Verify y and w commitment.
-func (zkp *PIi) Verify(y, w *big.Int, params *PublicParameters) bool {
-	u1x, u1y := zkp.u1Verification(y, params)
+func (zkp *PIi) Verify(w *big.Int, y *tecdsa.CurvePoint, params *PublicParameters) bool {
+	u1 := zkp.u1Verification(y, params)
 	u2 := zkp.u2Verification(w, params)
 	u3 := zkp.u3Verification(params)
 
 	// TODO: add hash verification
-	return zkp.u1x == u1x &&
-		zkp.u1y == u1y &&
+	return zkp.u1 == u1 &&
 		zkp.u2 == u2 &&
 		zkp.u3 == u3
 }
 
-func (zkp *PIi) u1Verification(y *big.Int, params *PublicParameters) (*big.Int, *big.Int) {
+func (zkp *PIi) u1Verification(y *tecdsa.CurvePoint, params *PublicParameters) *tecdsa.CurvePoint {
 	gs1x, gs1y := params.curve.ScalarBaseMult(zkp.s1.Bytes())
-	ye := new(big.Int).Exp(y, new(big.Int).Neg(zkp.e), nil)
-	return params.curve.ScalarMult(gs1x, gs1y, ye.Bytes())
+	yx, yy := params.curve.ScalarMult(y.X, y.Y, new(big.Int).Neg(zkp.e).Bytes())
+
+	return tecdsa.NewCurvePoint(params.curve.Add(gs1x, gs1y, yx, yy))
 }
 
 func (zkp *PIi) u2Verification(w *big.Int, params *PublicParameters) *big.Int {
