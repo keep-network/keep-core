@@ -1,4 +1,4 @@
-package tecdsa
+package commitment
 
 import (
 	"crypto/rand"
@@ -13,21 +13,21 @@ import (
 
 // [TC] https://github.com/keep-network/keep-core/blob/master/docs/cryptography/trapdoor-commitments.adoc
 
-// Secret - parameters of commitment generation process
-type Secret struct {
+// TrapdoorSecret - parameters of commitment generation process
+type TrapdoorSecret struct {
 	// Secret message
 	secret *[]byte
 	// Decommitment key; used to commitment validation.
 	r *big.Int
 }
 
-// Commitment - parameters which can be revealed
-type Commitment struct {
-	// Public key for a specific commitment.
+// TrapdoorCommitment - parameters which can be revealed
+type TrapdoorCommitment struct {
+	// Public key for a specific trapdoor commitment.
 	pubKey *big.Int
-	// Master public key for the commitment family.
+	// Master public key for the trapdoor commitment family.
 	h *bn256.G2
-	// Calculated commitment.
+	// Calculated trapdoor commitment.
 	commitment *bn256.G2
 }
 
@@ -35,7 +35,7 @@ type Commitment struct {
 // Returns:
 // `commitmentParams` - Commitment generation process parameters
 // `error` - If generation failed
-func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
+func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, *TrapdoorSecret, error) {
 	// Generate random public key.
 	// pubKey = (randomFromZ[0, q - 1])
 	pubKey, _, err := bn256.RandomG2(rand.Reader)
@@ -67,18 +67,18 @@ func GenerateCommitment(secret *[]byte) (*Commitment, *Secret, error) {
 	// commitment = g * digest + he * r
 	commitment := new(bn256.G2).Add(new(bn256.G2).ScalarBaseMult(digest), new(bn256.G2).ScalarMult(he, r))
 
-	return &Commitment{
+	return &TrapdoorCommitment{
 			pubKey:     pubKey,
 			h:          h,
 			commitment: commitment,
-		}, &Secret{
+		}, &TrapdoorSecret{
 			secret: secret,
 			r:      r,
 		}, nil
 }
 
 // ValidateCommitment validates received commitment against revealed secret.
-func ValidateCommitment(commitment *Commitment, secret *Secret) bool {
+func ValidateCommitment(commitment *TrapdoorCommitment, secret *TrapdoorSecret) bool {
 	// Calculate `secret`'s hash and it's `digest`.
 	// digest = sha256(secret) mod q
 	hash := hash256BigInt(secret.secret)

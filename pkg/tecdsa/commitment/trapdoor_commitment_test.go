@@ -1,4 +1,4 @@
-package tecdsa
+package commitment
 
 import (
 	"math/big"
@@ -9,45 +9,45 @@ import (
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
 	var tests = map[string]struct {
-		modifySecret     func(secret *Secret)
-		modifyCommitment func(commitment *Commitment)
+		modifySecret     func(secret *TrapdoorSecret)
+		modifyCommitment func(commitment *TrapdoorCommitment)
 		expectedResult   bool
 	}{
 		"positive validation - pass values used for generation": {
-			modifySecret:     func(secret *Secret) {},
-			modifyCommitment: func(commitment *Commitment) {},
+			modifySecret:     func(secret *TrapdoorSecret) {},
+			modifyCommitment: func(commitment *TrapdoorCommitment) {},
 			expectedResult:   true,
 		},
 		"negative validation - incorrect `secret`": {
-			modifySecret: func(secret *Secret) {
+			modifySecret: func(secret *TrapdoorSecret) {
 				msg := []byte("top secret message2")
 				secret.secret = &msg
 			},
-			modifyCommitment: func(commitment *Commitment) {},
+			modifyCommitment: func(commitment *TrapdoorCommitment) {},
 			expectedResult:   false,
 		},
 		"negative validation - incorrect `r`": {
-			modifySecret: func(secret *Secret) {
+			modifySecret: func(secret *TrapdoorSecret) {
 				secret.r = big.NewInt(3)
 			},
-			modifyCommitment: func(commitment *Commitment) {},
+			modifyCommitment: func(commitment *TrapdoorCommitment) {},
 			expectedResult:   false,
 		},
 		"negative validation - incorrect `commitment`": {
-			modifySecret: func(secret *Secret) {},
-			modifyCommitment: func(commitment *Commitment) {
+			modifySecret: func(secret *TrapdoorSecret) {},
+			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.commitment = new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `pubKey`": {
-			modifySecret:     func(secret *Secret) {},
-			modifyCommitment: func(commitment *Commitment) { commitment.pubKey = big.NewInt(3) },
+			modifySecret:     func(secret *TrapdoorSecret) {},
+			modifyCommitment: func(commitment *TrapdoorCommitment) { commitment.pubKey = big.NewInt(3) },
 			expectedResult:   false,
 		},
 		"negative validation - incorrect `h`": {
-			modifySecret: func(secret *Secret) {},
-			modifyCommitment: func(commitment *Commitment) {
+			modifySecret: func(secret *TrapdoorSecret) {},
+			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
 			},
 			expectedResult: false,
