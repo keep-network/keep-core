@@ -35,8 +35,6 @@ type provider struct {
 	addrs    []ma.Multiaddr
 }
 
-var ListenAddrs []ma.Multiaddr
-
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
