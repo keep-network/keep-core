@@ -82,9 +82,9 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	// 2. Deconstruct x from E(x)
 	xShares := make([]*paillier.PartialDecryption, publicParameters.groupSize)
 	for i, signer := range group {
-		xShares[i] = signer.paillerKey.Decrypt(dsaKey.x.C)
+		xShares[i] = signer.paillierKey.Decrypt(dsaKey.x.C)
 	}
-	x, err := group[0].paillerKey.CombinePartialDecryptions(xShares)
+	x, err := group[0].paillierKey.CombinePartialDecryptions(xShares)
 	if err != nil {
 		t.Fatal(err)
 	}
