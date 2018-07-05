@@ -42,6 +42,7 @@ type Node struct {
 type membership struct {
 	member  *thresholdgroup.Member
 	channel net.BroadcastChannel
+	index   int
 }
 
 // JoinGroupIfEligible takes a request id and the resulting entry value and
@@ -114,6 +115,7 @@ func (n *Node) RegisterGroup(requestID *big.Int, groupPublicKey []byte) {
 	}
 
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
+	n.myGroups[requestIDString].index = len(n.groupPublicKeys) - 1
 }
 
 func (n *Node) registerPendingGroup(
