@@ -1,3 +1,5 @@
+// Package commitment generates and validates trapdoor commitments using
+// bn256 elliptic curve pairings as described in docs/cryptography/trapdoor-commitments.adoc
 package commitment
 
 import (
@@ -8,12 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
-// Generates and validates commitments based on [TC]
-// Utilizes group of points on bn256 elliptic curve for calculations.
-
-// [TC] https://github.com/keep-network/keep-core/blob/master/docs/cryptography/trapdoor-commitments.adoc
-
-// Secret - parameters of commitment generation process
+// Secret is what we have committed to. Secret is usually kept private until
+// the receiving party receives the message and wants to validate the commitment.
+// Along with the message we have committed to, Secret contains
+// a decommitment key r needed for the commitment verification.
 type Secret struct {
 	// Secret message
 	secret *[]byte
@@ -21,31 +21,36 @@ type Secret struct {
 	r *big.Int
 }
 
-// TrapdoorCommitment - parameters which can be revealed
+// TrapdoorCommitment is produced for each message we have committed to.
+// It is usually revealed to the receiver immediately after it has been produced.
+// Commitment lets to verify if the message revealed later by the sending party
+// is really what that party has committed to.
+// However, the Commitment itself is not enough for a verification.
+// In order to perform verification, the interested party must receive
+// the Secret too.
+// Usually the process happens in two phases:
+// first Commitment is evaluated and sent to receiver and then, after some time,
+// secret is revealed and the receiver can check the secret message against
+// the Commitment received earlier.
 type TrapdoorCommitment struct {
 	secret Secret
 	// Public key for a specific trapdoor commitment.
 	pubKey *big.Int
-	// Master public key for the trapdoor commitment family.
+	// Master trapdoor public key for the commitment family.
 	h *bn256.G2
 	// Calculated trapdoor commitment.
 	commitment *bn256.G2
 }
 
 // GenerateCommitment generates a Commitment for passed `secret` message.
-// Returns:
-// `commitmentParams` - Commitment generation process parameters
-// `error` - If generation failed
 func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, error) {
-	// Generate random public key.
-	// pubKey = (randomFromZ[0, q - 1])
+	// Generate a random public key.
 	pubKey, _, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate decommitment key.
-	// r = (randomFromZ[0, q - 1])
+	// Generate a decommitment key.
 	r, _, err := bn256.RandomG1(rand.Reader)
 	if err != nil {
 		return nil, err
@@ -57,12 +62,10 @@ func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, error) {
 		return nil, err
 	}
 
-	// Calculate `secret`'s hash and it's `digest`.
-	// digest = sha256(secret) mod q
 	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
-	// he = h + g * privKey
+	// he = h + g * pubKey
 	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(pubKey))
 
 	// commitment = g * digest + he * r
@@ -81,15 +84,13 @@ func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, error) {
 
 // ValidateCommitment validates received commitment against revealed secret.
 func (tc *TrapdoorCommitment) ValidateCommitment(secret *Secret) bool {
-	// Calculate `secret`'s hash and it's `digest`.
-	// digest = sha256(secret) mod q
 	hash := sha256Sum(secret.secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
 	// a = g * r
 	a := new(bn256.G1).ScalarBaseMult(secret.r)
 
-	// b = h + g * privKey
+	// b = h + g * pubKey
 	b := new(bn256.G2).Add(tc.h, new(bn256.G2).ScalarBaseMult(tc.pubKey))
 
 	// c = commitment - g * digest
@@ -98,8 +99,6 @@ func (tc *TrapdoorCommitment) ValidateCommitment(secret *Secret) bool {
 	// Get base point `g`
 	g := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
 
-	// Compare pairings
-	// pairing(a, b) == pairing(g, c)
 	if bn256.Pair(a, b).String() != bn256.Pair(g, c).String() {
 		return false
 	}
