@@ -34,16 +34,15 @@ func NewNode(
 func (n *Node) GenerateRelayEntryIfEligible(
 	req event.Request,
 	relayChain relaychain.Interface,
-) {
+) error {
 	combinedEntryToSign := make([]byte, 0)
 	combinedEntryToSign = append(combinedEntryToSign, req.PreviousEntry()...)
 	combinedEntryToSign = append(combinedEntryToSign, req.Seed.Bytes()...)
 
 	thresholdMember, groupChannel, err := n.memberAndGroupForRequest(req)
 	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"Error joining group channel for request group [%s]: [%v]",
+		return fmt.Errorf(
+			"error joining group channel for request group [%s]: [%v]",
 			req.RequestID.String(),
 			err,
 		)
@@ -57,7 +56,8 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				thresholdMember,
 			)
 			if err != nil {
-				fmt.Printf(
+				fmt.Fprintf(
+					os.Stderr,
 					"error creating threshold signature: [%v]",
 					err,
 				)
@@ -93,6 +93,8 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			})
 		}()
 	}
+
+	return nil
 }
 
 func (n *Node) memberAndGroupForRequest(
