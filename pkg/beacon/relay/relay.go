@@ -42,9 +42,10 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	request event.Request,
 	relayChain relaychain.Interface,
 ) error {
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, request.PreviousEntry()...)
-	combinedEntryToSign = append(combinedEntryToSign, request.Seed.Bytes()...)
+	combinedEntryToSign := combineEntryToSign(
+		request.PreviousEntry(),
+		request.Seed.Bytes(),
+	)
 
 	thresholdMember, groupChannel, err := n.memberAndGroupForRequest(request)
 	if err != nil {
@@ -98,6 +99,13 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	}()
 
 	return nil
+}
+
+func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntry...)
+	combinedEntryToSign = append(combinedEntryToSign, seed...)
+	return combinedEntryToSign
 }
 
 func (n *Node) memberAndGroupForRequest(
