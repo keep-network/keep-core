@@ -48,6 +48,8 @@ type TaggedMarshaler interface {
 // return a provider type, which is an informational string indicating what type
 // of provider this is, and the list of IP addresses on which it can listen.
 type Provider interface {
+	ID() TransportIdentifier
+
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 	Addrs() []ma.Multiaddr

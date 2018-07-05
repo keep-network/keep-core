@@ -29,13 +29,13 @@ type provider struct {
 	channelManagerMutex sync.Mutex
 	channelManagr       *channelManager
 
-	host    host.Host
-	routing routing.IpfsRouting
-	addrs []ma.Multiaddr
+	identity *identity
+	host     host.Host
+	routing  routing.IpfsRouting
+	addrs    []ma.Multiaddr
 }
 
 var ListenAddrs []ma.Multiaddr
-
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
@@ -45,6 +45,10 @@ func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 
 func (p *provider) Type() string {
 	return "libp2p"
+}
+
+func (p *provider) ID() net.TransportIdentifier {
+	return networkIdentity(p.identity.id)
 }
 
 func (p *provider) Addrs() []ma.Multiaddr {
@@ -75,6 +79,7 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 
 	provider := &provider{
 		channelManagr: cm,
+		identity:      identity,
 		host:          rhost.Wrap(host, router),
 		routing:       router,
 		addrs:         host.Addrs(),
