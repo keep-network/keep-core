@@ -136,7 +136,7 @@ func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
 		shuffledStakeIDs[i], shuffledStakeIDs[j] = shuffledStakeIDs[j], shuffledStakeIDs[i]
 	})
 
-	for i, id := range shuffledStakeIDs {
+	for i, id := range shuffledStakeIDs[:n.chainConfig.GroupSize] {
 		if id == n.StakeID {
 			return i
 		}
