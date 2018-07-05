@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 // NewNode returns an empty Node with no group, zero group count, and a nil last
@@ -47,7 +46,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		request.Seed.Bytes(),
 	)
 
-	thresholdMember, groupChannel, err := n.memberAndGroupForRequest(request)
+	membership, err := n.memberAndGroupForRequest(request)
 	if err != nil {
 		return err
 	}
@@ -56,8 +55,8 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		signature, err := thresholdsignature.Execute(
 			combinedEntryToSign,
 			n.blockCounter,
-			groupChannel,
-			thresholdMember,
+			membership.channel,
+			membership.member,
 		)
 		if err != nil {
 			fmt.Fprintf(
@@ -110,42 +109,26 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 
 func (n *Node) memberAndGroupForRequest(
 	request event.Request,
-) (*thresholdgroup.Member, net.BroadcastChannel, error) {
+) (*membership, error) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	var (
-		found         bool
-		memberOfGroup *thresholdgroup.Member
+		found      bool
+		membership *membership
 	)
 	// Search our list of memberships to see if we have a member entry.
-	if memberOfGroup, found = n.myGroups[request.RequestID.String()]; !found {
+	if membership, found = n.myGroups[request.RequestID.String()]; !found {
 		// We don't have an entry - maybe in the pending groups?
 		pendingGroup, found := n.pendingGroups[request.RequestID.String()]
 		if !found {
-			return nil, nil, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"nonexistant membership for requested group [%s]",
 				request.RequestID.String(),
 			)
 		}
-		memberOfGroup = pendingGroup
+		membership = pendingGroup
 	}
 
-	if memberOfGroup == nil {
-		return nil, nil, fmt.Errorf(
-			"nonexistant membership for requested group [%s]",
-			request.RequestID.String(),
-		)
-	}
-
-	// We have a valid member entry, find the broadcast channel entry.
-	groupChannel, err := n.netProvider.ChannelFor(request.RequestID.String())
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"Error joining group channel for request group [%s]: [%v]",
-			request.RequestID.String(),
-			err,
-		)
-	}
-	return memberOfGroup, groupChannel, nil
+	return membership, nil
 }
