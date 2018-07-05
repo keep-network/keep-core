@@ -3,21 +3,35 @@ package local
 import (
 	"fmt"
 	"math/big"
+	"os"
 	"sync"
+	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 type localChain struct {
-	relayConfig                      relayconfig.Chain
-	groupPublicKeysMutex             sync.Mutex
-	groupPublicKeys                  map[string][96]byte
-	handlerMutex                     sync.Mutex
-	groupPublicKeyFailureHandlers    []func(string, string)
-	groupPublicKeySubmissionHandlers []func(string, *big.Int)
-	blockCounter                     chain.BlockCounter
+	relayConfig relayconfig.Chain
+
+	groupRegistrationsMutex sync.Mutex
+	groupRegistrations      map[string][96]byte
+
+	groupRelayEntriesMutex sync.Mutex
+	groupRelayEntries      map[int64][32]byte
+
+	handlerMutex            sync.Mutex
+	relayEntryHandlers      []func(entry *event.Entry)
+	relayRequestHandlers    []func(request *event.Request)
+	groupRegisteredHandlers []func(key *event.GroupRegistration)
+
+	simulatedHeight int64
+	blockCounter    chain.BlockCounter
+
+	stakerList []string
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -28,66 +42,102 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-func (c *localChain) SubmitGroupPublicKey(groupID string, key [96]byte) error {
-	c.groupPublicKeysMutex.Lock()
-	defer c.groupPublicKeysMutex.Unlock()
-	if existing, exists := c.groupPublicKeys[groupID]; exists && existing != key {
-		errorMsg := fmt.Sprintf(
+func (c *localChain) SubmitGroupPublicKey(
+	groupID string,
+	key [96]byte,
+) *async.GroupRegistrationPromise {
+	groupRegistrationPromise := &async.GroupRegistrationPromise{}
+	c.groupRegistrationsMutex.Lock()
+	defer c.groupRegistrationsMutex.Unlock()
+	if existing, exists := c.groupRegistrations[groupID]; exists && existing != key {
+		fmt.Fprintf(
+			os.Stderr,
 			"mismatched public key for [%s], submission failed; \n"+
 				"[%v] vs [%v]\n",
 			groupID,
 			existing,
 			key,
 		)
-
-		c.handlerMutex.Lock()
-		for _, handler := range c.groupPublicKeyFailureHandlers {
-			handler(groupID, errorMsg)
-		}
-		c.handlerMutex.Unlock()
-
-		return nil
+		return groupRegistrationPromise
 	}
-	c.groupPublicKeys[groupID] = key
+	c.groupRegistrations[groupID] = key
+	c.simulatedHeight++
 
-	c.handlerMutex.Lock()
-	for _, handler := range c.groupPublicKeySubmissionHandlers {
-		handler(groupID, &big.Int{})
-	}
-	c.handlerMutex.Unlock()
+	groupRegistrationPromise.Fulfill(&event.GroupRegistration{
+		GroupPublicKey:        []byte(groupID),
+		RequestID:             big.NewInt(c.simulatedHeight),
+		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
+	})
 
-	return nil
+	return groupRegistrationPromise
 }
 
-func (c *localChain) OnGroupPublicKeySubmissionFailed(
-	handler func(string, string),
-) error {
-	c.handlerMutex.Lock()
-	c.groupPublicKeyFailureHandlers = append(c.groupPublicKeyFailureHandlers, handler)
-	c.handlerMutex.Unlock()
+func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
+	relayEntryPromise := &async.RelayEntryPromise{}
 
-	return nil
+	c.groupRelayEntriesMutex.Lock()
+	defer c.groupRelayEntriesMutex.Unlock()
+
+	existing, exists := c.groupRelayEntries[entry.GroupID.Int64()]
+	if exists && existing != entry.Value {
+		err := fmt.Errorf(
+			"mismatched signature for [%v], submission failed; \n"+
+				"[%v] vs [%v]\n",
+			entry.GroupID,
+			existing,
+			entry.Value,
+		)
+
+		relayEntryPromise.Fail(err)
+
+		return relayEntryPromise
+	}
+	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
+
+	relayEntryPromise.Fulfill(&event.Entry{
+		RequestID:     entry.RequestID,
+		Value:         entry.Value,
+		GroupID:       entry.GroupID,
+		PreviousEntry: entry.PreviousEntry,
+		Timestamp:     time.Now().UTC(),
+	})
+
+	return relayEntryPromise
 }
 
-func (c *localChain) OnGroupPublicKeySubmitted(
-	handler func(groupID string, activationBlock *big.Int),
-) error {
+func (c *localChain) OnRelayEntryGenerated(handler func(entry *event.Entry)) {
 	c.handlerMutex.Lock()
-	c.groupPublicKeySubmissionHandlers = append(
-		c.groupPublicKeySubmissionHandlers,
+	c.relayEntryHandlers = append(
+		c.relayEntryHandlers,
 		handler,
 	)
 	c.handlerMutex.Unlock()
+}
 
-	return nil
+func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request)) {
+	c.handlerMutex.Lock()
+	c.relayRequestHandlers = append(
+		c.relayRequestHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
+}
+
+func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
+	c.handlerMutex.Lock()
+	c.groupRegisteredHandlers = append(
+		c.groupRegisteredHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
 
-// Connect initializes a local stub implementation of the chain interfaces for
-// testing.
+// Connect initializes a local stub implementation of the chain interfaces
+// for testing.
 func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
 
@@ -96,8 +146,33 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			GroupSize: groupSize,
 			Threshold: threshold,
 		},
-		groupPublicKeysMutex: sync.Mutex{},
-		groupPublicKeys:      make(map[string][96]byte),
-		blockCounter:         bc,
+		groupRegistrationsMutex: sync.Mutex{},
+		groupRelayEntries:       make(map[int64][32]byte),
+		groupRegistrations:      make(map[string][96]byte),
+		blockCounter:            bc,
 	}
+}
+
+// AddStaker is a temporary function for Milestone 1 that
+// adds a staker to the group contract.
+func (c *localChain) AddStaker(
+	groupMemberID string,
+) *async.StakerRegistrationPromise {
+	onStakerAddedPromise := &async.StakerRegistrationPromise{}
+	Index := len(c.stakerList)
+	c.stakerList = append(c.stakerList, groupMemberID)
+	err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
+		Index:         Index,
+		GroupMemberID: string(groupMemberID),
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
+	}
+	return onStakerAddedPromise
+}
+
+// GetStakerList is a temporary function for Milestone 1 that
+// gets back the list of stakers.
+func (c *localChain) GetStakerList() ([]string, error) {
+	return c.stakerList, nil
 }

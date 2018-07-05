@@ -2,7 +2,9 @@ package relay
 
 import (
 	"encoding/binary"
-	"time"
+	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 )
 
 // NodeState represents the current state of a relay node.
@@ -15,13 +17,7 @@ type NodeState struct {
 	// groupId is the id of this node within its relay group. 0 if none.
 	GroupID uint16
 	// lastSeenEntry is the last relay entry this node is aware of.
-	lastSeenEntry Entry
-}
-
-// Entry represents one entry in the threshold relay.
-type Entry struct {
-	Value     [8]byte
-	Timestamp time.Time
+	lastSeenEntry event.Entry
 }
 
 // IsNextGroup returns true if the next group expected to generate a threshold
@@ -33,5 +29,15 @@ func (state NodeState) IsNextGroup() bool {
 // EmptyState returns an empty NodeState with no group, zero group count, and
 // a nil last seen entry.
 func EmptyState() NodeState {
-	return NodeState{groupCount: 0, group: 0, GroupID: 0, lastSeenEntry: Entry{[8]byte{}, time.Unix(0, 0)}}
+	return NodeState{
+		groupCount: 0,
+		group:      0,
+		GroupID:    0,
+		lastSeenEntry: event.Entry{
+			RequestID:     &big.Int{},
+			Value:         [32]byte{},
+			GroupID:       &big.Int{},
+			PreviousEntry: &big.Int{},
+		},
+	}
 }

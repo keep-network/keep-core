@@ -3,15 +3,13 @@ package beacon
 import (
 	"context"
 	"fmt"
-	"math/big"
+	"os"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/chain"
-
-	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/membership"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -69,23 +67,19 @@ func Initialize(
 			return err
 		}
 
-		err = relayChain.SubmitGroupPublicKey("test", member.GroupPublicKeyBytes())
-		if err != nil {
-			return err
-		}
-
-		relayChain.OnGroupPublicKeySubmissionFailed(func(id string, errorMessage string) {
+		relayChain.SubmitGroupPublicKey(
+			"test",
+			member.GroupPublicKeyBytes(),
+		).OnSuccess(func(data *event.GroupRegistration) {
 			fmt.Printf(
-				"Failed submission of public key %s: [%s].\n",
-				id,
-				errorMessage,
+				"Submission of public key: [%s].\n",
+				data,
 			)
-		})
-		relayChain.OnGroupPublicKeySubmitted(func(id string, activationBlock *big.Int) {
-			fmt.Printf(
-				"Public key submitted for %s; activating at block %v.\n",
-				id,
-				activationBlock,
+		}).OnFailure(func(err error) {
+			fmt.Fprintf(
+				os.Stderr,
+				"Failed submission of public key: [%v].\n",
+				err,
 			)
 		})
 
@@ -135,7 +129,7 @@ func libp2pConnected(relayChain relaychain.Interface, handle chain.Handle) {
 			membership.ActivateMembership()
 		case inActiveGroup:
 			// FIXME We should have a non-empty state at this point ;)
-			entry.ServeRequests(relay.EmptyState())
+			//entry.ServeRequests(relay.EmptyState())
 		default:
 			panic(fmt.Sprintf("Unexpected participant state [%d].", participantState))
 		}

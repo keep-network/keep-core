@@ -1,9 +1,50 @@
 package local
 
 import (
+	"context"
+	"math/big"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 )
+
+func TestLocalSubmitRelayEntry(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4).ThresholdRelay()
+	relayEntryPromise := chainHandle.SubmitRelayEntry(
+		&event.Entry{
+			RequestID: big.NewInt(int64(19)),
+			GroupID:   big.NewInt(int64(1)),
+		},
+	)
+
+	done := make(chan *event.Entry)
+	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
+		done <- entry
+	}).OnFailure(func(err error) {
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	select {
+	case entry := <-done:
+		expected := int64(19)
+		if entry.RequestID.Int64() != expected {
+			t.Fatalf(
+				"expected [%v], got [%v]",
+				expected,
+				entry.RequestID.Int64(),
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+
+}
 
 func TestLocalBlockWaiter(t *testing.T) {
 	var tests = map[string]struct {
