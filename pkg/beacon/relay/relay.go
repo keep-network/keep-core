@@ -114,6 +114,7 @@ func (n *Node) indexForNextGroup(request event.Request) *big.Int {
 	)
 	entry = entry.SetBytes(request.PreviousEntry())
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
+	_ = big.NewInt(0).SetBytes([]byte{})
 
 	if numberOfGroups.Int64() == 0 {
 		return nextGroup
@@ -129,24 +130,22 @@ func (n *Node) memberAndGroupForRequest(
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	var (
-		found      bool
-		membership *membership
-	)
-
 	nextGroup := n.indexForNextGroup(request).Int64()
 	// Search our list of memberships to see if we have a member entry.
-	if membership, found = n.myGroups[request.RequestID.String()]; !found {
-		// We don't have an entry - maybe in the pending groups?
-		pendingGroup, found := n.pendingGroups[request.RequestID.String()]
-		if !found {
-			return nil, fmt.Errorf(
-				"nonexistant membership for requested group [%s]",
-				request.RequestID.String(),
-			)
+	for _, membership := range n.myGroups {
+		if membership.index == int(nextGroup) {
+			return membership, nil
 		}
-		membership = pendingGroup
+	}
+	// We don't have an entry - maybe in the pending groups?
+	for _, membership := range n.pendingGroups {
+		if membership.index == int(nextGroup) {
+			return membership, nil
+		}
 	}
 
-	return membership, nil
+	return nil, fmt.Errorf(
+		"nonexistant membership for requested group [%d]",
+		nextGroup,
+	)
 }
