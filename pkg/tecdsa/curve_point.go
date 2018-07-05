@@ -8,7 +8,7 @@ import "math/big"
 // and makes the code a bit clumsy. CurvePoint does not keep any logic
 // and was created just to improve code readability.
 type CurvePoint struct {
-	x, y *big.Int
+	X, Y *big.Int
 }
 
 func NewCurvePoint(x, y *big.Int) *CurvePoint {

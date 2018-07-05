@@ -34,7 +34,7 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 		t.Errorf("DSA secret key share must be less than Curve's cardinality")
 	}
 
-	if !publicParameters.curve.IsOnCurve(dsaKeyShare.publicKeyShare.x, dsaKeyShare.publicKeyShare.y) {
+	if !publicParameters.curve.IsOnCurve(dsaKeyShare.publicKeyShare.X, dsaKeyShare.publicKeyShare.Y) {
 		t.Errorf("DSA public key share must be a point on Curve")
 	}
 }
@@ -77,7 +77,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	//    constructed
 
 	// 1. Check if publicKey is a point on curve
-	if !publicParameters.curve.IsOnCurve(dsaKey.publicKey.x, dsaKey.publicKey.y) {
+	if !publicParameters.curve.IsOnCurve(dsaKey.publicKey.X, dsaKey.publicKey.Y) {
 		t.Fatal("ThresholdDsaKey.y must be a point on Curve")
 	}
 
@@ -102,18 +102,18 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	//    value stored in ThresholdDsaKey.
 	publicKeyX, publicKeyY := publicParameters.curve.ScalarBaseMult(secretKey.Bytes())
 
-	if !reflect.DeepEqual(publicKeyX, dsaKey.publicKey.x) {
+	if !reflect.DeepEqual(publicKeyX, dsaKey.publicKey.X) {
 		t.Errorf(
 			"Unexpected publicKey.x decoded\nActual %v\nExpected %v",
 			publicKeyX,
-			dsaKey.publicKey.x,
+			dsaKey.publicKey.X,
 		)
 	}
-	if !reflect.DeepEqual(publicKeyY, dsaKey.publicKey.y) {
+	if !reflect.DeepEqual(publicKeyY, dsaKey.publicKey.Y) {
 		t.Errorf(
 			"Unexpected publicKey.y decoded\nActual %v\nExpected %v",
 			publicKeyY,
-			dsaKey.publicKey.y,
+			dsaKey.publicKey.Y,
 		)
 	}
 }

@@ -155,20 +155,20 @@ func (s *LocalSigner) CombineDsaKeyShares(
 	}
 	secretKey := s.paillierKey.Add(secretKeyShares...)
 
-	publicKeyShareX := shares[0].publicKeyShare.x
-	publicKeyShareY := shares[0].publicKeyShare.y
+	publicKeyShareX := shares[0].publicKeyShare.X
+	publicKeyShareY := shares[0].publicKeyShare.Y
 	for _, share := range shares[1:] {
 		publicKeyShareX, publicKeyShareY = s.publicParameters.curve.Add(
 			publicKeyShareX, publicKeyShareY,
-			share.publicKeyShare.x, share.publicKeyShare.y,
+			share.publicKeyShare.X, share.publicKeyShare.Y,
 		)
 	}
 
 	return &ThresholdDsaKey{
 		secretKey: secretKey,
 		publicKey: &CurvePoint{
-			x: publicKeyShareX,
-			y: publicKeyShareY,
+			X: publicKeyShareX,
+			Y: publicKeyShareY,
 		},
 	}, nil
 }
