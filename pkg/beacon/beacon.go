@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"os"
+	"sync"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -45,6 +47,26 @@ func Initialize(
 	if err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
+
+	// FIXME Nuke post-M1 when we plug in real staking stuff.
+	proceed := &sync.WaitGroup{}
+	proceed.Add(1)
+	relayChain.AddStaker(netProvider.ID().String()).
+		OnComplete(func(_ *event.StakerRegistration, err error) {
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed to register staker with id [%v].",
+					netProvider.ID().String(),
+				)
+				curParticipantState = unstaked
+				proceed.Done()
+				return
+			}
+
+			proceed.Done()
+		})
+	proceed.Wait()
 
 	switch curParticipantState {
 	case unstaked:
