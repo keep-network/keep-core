@@ -30,11 +30,11 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 	}
 
 	curveCardinality := publicParameters.curve.Params().N
-	if curveCardinality.Cmp(dsaKeyShare.xi) != 1 {
+	if curveCardinality.Cmp(dsaKeyShare.secretKeyShare) != 1 {
 		t.Errorf("xi DSA key share must be less than Curve's cardinality")
 	}
 
-	if !publicParameters.curve.IsOnCurve(dsaKeyShare.yi.x, dsaKeyShare.yi.y) {
+	if !publicParameters.curve.IsOnCurve(dsaKeyShare.publicKeyShare.x, dsaKeyShare.publicKeyShare.y) {
 		t.Errorf("yi DSA key share must be a point on Curve")
 	}
 }
@@ -46,10 +46,11 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	}
 
 	// Let each signer initialize the DSA key share and create InitMessage.
-	// Each signer picks randomly xi from Z_q and computes yi = g^xi.
-	// xi and yi are shares of a DSA key (x, y).
+	// Each signer picks randomly secretKeyShare from Z_q and computes
+	// publicKeyShare = g^secretKeyShare.
 	//
-	// E(xi) and yi are published by signer in a broadcast InitMessage.
+	// E(secretKeyShare) and publicKeyShare are published by signer in a
+	// broadcast InitMessage.
 	// E is an additively homomorphic encryption scheme. For our implementation
 	// we use Paillier.
 	initMessages := make([]*InitMessage, publicParameters.groupSize)
@@ -66,25 +67,26 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Now we have ThresholdDsaKey with E(x) and y where E(x) is a threshold
-	// sharing of x.
+	// Now we have ThresholdDsaKey with E(secretKey) and public key where
+	// E(secretKey) is a threshold sharing of secretKey.
 	//
-	// We may check the correctness of E(x) and y:
-	// 1. y should be a point on the elliptic curve
-	// 2. x can be decomposed by a group of Signers (just for test)
-	// 3. y = g^x should hold, according to how DSA key is constructed
+	// We may check the correctness of E(secretKey) and publicKey:
+	// 1. publicKey should be a point on the elliptic curve
+	// 2. secretKey can be decrypted by a group of Signers (just for test)
+	// 3. publicKey = g^secretKey should hold, according to how DSA key is
+	//    constructed
 
-	// 1. Check if y is a point on curve
-	if !publicParameters.curve.IsOnCurve(dsaKey.y.x, dsaKey.y.y) {
+	// 1. Check if publicKey is a point on curve
+	if !publicParameters.curve.IsOnCurve(dsaKey.publicKey.x, dsaKey.publicKey.y) {
 		t.Fatal("ThresholdDsaKey.y must be a point on Curve")
 	}
 
-	// 2. Deconstruct x from E(x)
+	// 2. Decrypt secretKey from E(secretKey)
 	xShares := make([]*paillier.PartialDecryption, publicParameters.groupSize)
 	for i, signer := range group {
-		xShares[i] = signer.paillierKey.Decrypt(dsaKey.x.C)
+		xShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
 	}
-	x, err := group[0].paillierKey.CombinePartialDecryptions(xShares)
+	secretKey, err := group[0].paillierKey.CombinePartialDecryptions(xShares)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,16 +95,26 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	// xi shares we may produce number greater than q and exceed curve's
 	// cardinality. specs256k1 can't handle scalars > 256 bits, so we need to
 	// mod N here to stay in the curve's field.
-	x = new(big.Int).Mod(x, publicParameters.curve.Params().N)
+	secretKey = new(big.Int).Mod(secretKey, publicParameters.curve.Params().N)
 
-	// 3. Having x, we can evaluate y from y = g^x and compare with the actual
+	// 3. Having secretKey, we can evaluate publicKey from
+	//    publicKey = g^secretKey and compare with the actual
 	//    value stored in ThresholdDsaKey.
-	yx, yy := publicParameters.curve.ScalarBaseMult(x.Bytes())
-	if !reflect.DeepEqual(yx, dsaKey.y.x) {
-		t.Errorf("Unexpected y.x decoded\nActual %v\nExpected %v", yx, dsaKey.y.x)
+	publicKeyX, publicKeyY := publicParameters.curve.ScalarBaseMult(secretKey.Bytes())
+
+	if !reflect.DeepEqual(publicKeyX, dsaKey.publicKey.x) {
+		t.Errorf(
+			"Unexpected publicKey.x decoded\nActual %v\nExpected %v",
+			publicKeyX,
+			dsaKey.publicKey.x,
+		)
 	}
-	if !reflect.DeepEqual(yy, dsaKey.y.y) {
-		t.Errorf("Unexpected y.y decoded\nActual %v\nExpected %v", yy, dsaKey.y.y)
+	if !reflect.DeepEqual(publicKeyY, dsaKey.publicKey.y) {
+		t.Errorf(
+			"Unexpected publicKey.y decoded\nActual %v\nExpected %v",
+			publicKeyY,
+			dsaKey.publicKey.y,
+		)
 	}
 }
 

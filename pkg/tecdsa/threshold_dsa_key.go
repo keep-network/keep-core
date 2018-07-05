@@ -8,26 +8,28 @@ import (
 
 // ThresholdDsaKey represents DSA key for a fully initialized Signer.
 //
-// For (x, y = g^x) DSA key pair, y and E(x) are made public, where E is an
-// additively homomorphic encryption scheme. This is an implicit (t, n) secret
-// sharing of x since the decryption key of E is shared among the Signers.
+// For (secretKey, publicKey = g^secretKey) DSA key pair, publicKey
+// and E(secretKey) are made public, where E is an additively homomorphic
+// encryption scheme. This is an implicit (t, n) secret sharing of secretKey
+// since the decryption key of E is shared among the n Signers.
 type ThresholdDsaKey struct {
-	x *paillier.Cypher
-	y *CurvePoint
+	secretKey *paillier.Cypher
+	publicKey *CurvePoint
 }
 
 // dsaKeyShare represents a share of DSA key owned by LocalSigner before
 // it's fully initialized into Signer.
 //
-// Each LocalSigner i generates a share of x and y DSA key, xi and yi.
-// yi is broadcasted to other signers along with E(xi) where E is an additively
-// homomorphic encryption scheme. It lets to compute
+// Each `LocalSigner` generates a share of secret and public DSA key.
+// `publicKeyShare` is broadcasted to other signers along with
+// `E(secretKeyShare)` where E is an additively homomorphic encryption scheme.
+// It lets to compute:
 //
-// E(x) = E(x1) + E(x2) + ... E(xn)
-// y = y1 + y2 + ... + yn
+// E(secretKey) = E(secretKeyShare_1) + E(secretKeyShare_2) + ... + E(secretKeyShare_n)
+// publicKey = publicKeyShare_1 + publicKeyShare_2 + ... + publicKeyShare_n
 //
-// to create a ThresholdDsaKey.
+// to create a `ThresholdDsaKey`.
 type dsaKeyShare struct {
-	xi *big.Int
-	yi *CurvePoint
+	secretKeyShare *big.Int
+	publicKeyShare *CurvePoint
 }

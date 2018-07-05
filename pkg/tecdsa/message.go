@@ -9,8 +9,8 @@ import (
 // proofs of correctness for the shares. Sender's share is encrypted with (t, n)
 // Paillier threshold key. The message is expected to be broadcast publicly.
 type InitMessage struct {
-	xi *paillier.Cypher
-	yi *CurvePoint
+	secretKeyShare *paillier.Cypher
+	publicKeyShare *CurvePoint
 
 	// TODO: add all the required ZKPs
 }
