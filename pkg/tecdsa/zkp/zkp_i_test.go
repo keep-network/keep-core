@@ -5,10 +5,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/tecdsa"
+
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-func TestCommitPIi(t *testing.T) {
+func TestPIiCommitValues(t *testing.T) {
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
 	}
@@ -45,10 +47,10 @@ func TestCommitPIi(t *testing.T) {
 	expectedU1x, expectedU1y := secp256k1.S256().ScalarBaseMult(
 		big.NewInt(10).Bytes(),
 	)
-	if !reflect.DeepEqual(commitment.u1x, expectedU1x) {
+	if !reflect.DeepEqual(commitment.u1.X, expectedU1x) {
 		t.Errorf("Unexpected u1 x coordinate")
 	}
-	if !reflect.DeepEqual(commitment.u1y, expectedU1y) {
+	if !reflect.DeepEqual(commitment.u1.Y, expectedU1y) {
 		t.Errorf("Unexpected u1 y coordinate")
 	}
 
@@ -104,6 +106,65 @@ func TestCommitPIi(t *testing.T) {
 		t.Errorf("Unexpected s3\nActual: %v\nExpected: %v",
 			commitment.s3,
 			expectedS3,
+		)
+	}
+}
+
+func TestPIiVerificationValues(t *testing.T) {
+	zkp := &PIi{
+		s1: big.NewInt(22),
+		s2: big.NewInt(17),
+		s3: big.NewInt(63),
+		e:  big.NewInt(881),
+		z:  big.NewInt(191),
+	}
+
+	params := &PublicParameters{
+		N:      big.NewInt(1081), // 23 * 47
+		NTilde: big.NewInt(253),  // 23 * 11
+		h1:     big.NewInt(11),
+		h2:     big.NewInt(27),
+		curve:  secp256k1.S256(),
+	}
+
+	w := big.NewInt(674)
+
+	y := tecdsa.NewCurvePoint(
+		secp256k1.S256().ScalarBaseMult(big.NewInt(10).Bytes()),
+	)
+
+	// u1 = g^s1 * y^-e = g^22 * (g^10)^-881 = g^-8832
+	expectedU1 := tecdsa.NewCurvePoint(
+		secp256k1.S256().ScalarBaseMult(big.NewInt(-8832).Bytes()),
+	)
+	actualU1 := zkp.u1Verification(y, params)
+	if !reflect.DeepEqual(expectedU1, actualU1) {
+		t.Errorf(
+			"Unexpected u1\nActual: %v\nExpected: %v",
+			actualU1,
+			expectedU1,
+		)
+	}
+
+	// u2 = ((1081+1)^22 * 17^1081 * 674^-881) mod 1081^2
+	expectedU2 := big.NewInt(227035)
+	actualU2 := zkp.u2Verification(w, params)
+	if !reflect.DeepEqual(expectedU2, actualU2) {
+		t.Errorf(
+			"Unexpected u2\nActual: %v\nExpected: %v",
+			actualU2,
+			expectedU2,
+		)
+	}
+
+	// u3 = (11^22 * 27^63 * 191^-881) mod 253
+	expectedU3 := big.NewInt(44)
+	actualU3 := zkp.u3Verification(params)
+	if !reflect.DeepEqual(expectedU3, actualU3) {
+		t.Errorf(
+			"Unexpected u3\nActual: %v\nExpected: %v",
+			actualU3,
+			expectedU3,
 		)
 	}
 }
