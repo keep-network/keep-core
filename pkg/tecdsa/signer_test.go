@@ -31,11 +31,11 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 
 	curveCardinality := publicParameters.curve.Params().N
 	if curveCardinality.Cmp(dsaKeyShare.secretKeyShare) != 1 {
-		t.Errorf("xi DSA key share must be less than Curve's cardinality")
+		t.Errorf("DSA secret key share must be less than Curve's cardinality")
 	}
 
 	if !publicParameters.curve.IsOnCurve(dsaKeyShare.publicKeyShare.x, dsaKeyShare.publicKeyShare.y) {
-		t.Errorf("yi DSA key share must be a point on Curve")
+		t.Errorf("DSA public key share must be a point on Curve")
 	}
 }
 
