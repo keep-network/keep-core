@@ -42,3 +42,17 @@ type StakerRegistration struct {
 	Index         int
 	GroupMemberID string
 }
+
+// RelayEntryRequested returns the data from calling requestRelayEntry.
+type RelayEntryRequested struct {
+	RequestID   *big.Int
+	Payment     *big.Int
+	BlockReward *big.Int
+	Seed        *big.Int
+	BlockNumber *big.Int
+}
+
+// RandomBeaconInitalized allows use of promices in the call to initialized
+// the random beacon contract.
+type RandomBeaconInitalized struct {
+}

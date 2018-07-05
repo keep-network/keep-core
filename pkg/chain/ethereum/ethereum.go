@@ -347,3 +347,76 @@ func (ec *ethereumChain) OnGroupRegistered(
 		)
 	}
 }
+
+// Preliminary - the interface for creating a relay request.
+
+// Will call .../contracts/solidity/contracts/KeepRandomBeaconImplV1.sol;
+// function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
+// through the proxy.
+// Note: using 'seed' as a big.Int will loose/drop any leading 0's in the seed.
+// Note: Having a return value `returns (uint256 requestID) {` will not return this value through the
+//       transaction.  The requestID can be found in the event:
+//       RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
+func (ec *ethereumChain) RequestRelayEntry(
+	blockReward, seed *big.Int,
+) *async.RelayEntryRequestedPromise {
+	promise := &async.RelayEntryRequestedPromise{}
+	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+		func(
+			requestID *big.Int,
+			payment *big.Int,
+			blockReward *big.Int,
+			seed *big.Int,
+			blockNumber *big.Int,
+		) {
+			promise.Fulfill(&event.RelayEntryRequested{
+				RequestID:   requestID,
+				Payment:     payment,
+				BlockReward: blockReward,
+				Seed:        seed,
+				BlockNumber: blockNumber,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("relay request failed with %v", err)
+		},
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "relay request failed with: [%v]", err)
+		return promise
+	}
+	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed.Bytes())
+	if err != nil {
+		promise.Fail(fmt.Errorf("failure to request a relay entry: [%v]", err))
+		return promise
+	}
+	return promise
+}
+
+// Need to call .../contracts/solidity/contracts/KeepRandomBeaconImplV1.sol;
+// function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake, uint256 _withdrawalDelay)
+// This call only needs to happen once for each contract load.
+// through the proxy once - to setup the contract.   This is not happening in the JS setup as not all this
+// data is available and contract build time.
+// You can actualy call this multiple times - it will check if the contract is already initialized.
+func (ec *ethereumChain) InitializeKeepRandomBeacon(
+	stakingProxy string,
+	minPayment, minStake, withdrawalDelay *big.Int,
+) *async.RandomBeaconInitalizedPromise {
+	promise := &async.RandomBeaconInitalizedPromise{}
+	// err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+	if isInitialized, err := ec.keepRandomBeaconContract.Initialized(); err != nil {
+		promise.Fail(fmt.Errorf("failure to check if contract is initialized: [%v]", err))
+		return promise
+	} else if isInitialized {
+		promise.Fulfill(&event.RandomBeaconInitalized{})
+		return promise
+	}
+	_, err := ec.keepRandomBeaconContract.Initialize(stakingProxy, minPayment, minStake, withdrawalDelay)
+	if err != nil {
+		promise.Fail(fmt.Errorf("failure to initialized contract: [%v]", err))
+		return promise
+	}
+	promise.Fulfill(&event.RandomBeaconInitalized{})
+	return promise
+}

@@ -57,6 +57,16 @@ func main() {
 			Prefix:     "StakerRegistration",
 			outputFile: "staker_registration_promise.go",
 		},
+		{
+			Type:       "*event.RelayEntryRequested",
+			Prefix:     "RelayEntryRequested",
+			outputFile: "relay_entry_requested_promise.go",
+		},
+		{
+			Type:       "*event.RandomBeaconInitalized",
+			Prefix:     "RandomBeaconInitalized",
+			outputFile: "random_beacon_initalized_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
