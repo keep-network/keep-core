@@ -31,6 +31,13 @@ func NewNode(
 	}
 }
 
+// GenerateRelayEntryIfEligible takes a relay request and checks if this client
+// is one of the nodes elected by that request to create a new relay entry.
+// If it is, this client enters the threshold signature creation process and,
+// upon successfully completing it, submits the signature as a new relay entry
+// to the passed in relayChain. Note that this function returns immediately after
+// determining whether the node is or is not is a member of the requested group, and
+// signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
 	req event.Request,
 	relayChain relaychain.Interface,
@@ -41,11 +48,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 
 	thresholdMember, groupChannel, err := n.memberAndGroupForRequest(req)
 	if err != nil {
-		return fmt.Errorf(
-			"error joining group channel for request group [%s]: [%v]",
-			req.RequestID.String(),
-			err,
-		)
+		return err
 	}
 	if thresholdMember != nil {
 		go func() {
