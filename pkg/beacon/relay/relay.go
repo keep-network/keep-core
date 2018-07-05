@@ -68,14 +68,15 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				rightSizeSignature [32]byte
 				previousEntry      *big.Int
 			)
+			previousEntry.SetBytes(req.PreviousEntry())
 			for i := 0; i < 32; i++ {
 				rightSizeSignature[i] = signature[i]
 			}
+
 			newEntry := &event.Entry{
 				RequestID:     req.RequestID,
 				Value:         rightSizeSignature,
-				GroupID:       nil,
-				PreviousEntry: nil,
+				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
 			}
 
