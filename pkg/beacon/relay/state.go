@@ -64,13 +64,12 @@ func (n *Node) JoinGroupIfEligible(
 			}
 
 			member, err := dkg.ExecuteDKG(
-				index+1, // nodeID > 0, so add 1 to the index
+				index,
 				n.blockCounter,
 				groupChannel,
 				n.chainConfig.GroupSize,
 				n.chainConfig.Threshold,
 			)
-
 			if err != nil {
 				fmt.Printf("Error joining group: [%v]", err)
 				return

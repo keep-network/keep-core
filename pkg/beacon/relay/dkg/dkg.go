@@ -24,21 +24,24 @@ func Init(channel net.BroadcastChannel) {
 }
 
 // ExecuteDKG runs the full distributed key generation lifecycle, given a
-// broadcast channel to mediate it, an id to use in the group, and a group size
-// and threshold. If generation is successful, it returns a threshold group
-// member who can participate in the group; if generation fails, it returns an
-// error representing what went wrong.
+// broadcast channel to mediate it, a player index to use in the group, and a
+// group size and threshold. If generation is successful, it returns a threshold
+// group member who can participate in the group; if generation fails, it
+// returns an error representing what went wrong.
 func ExecuteDKG(
-	nodeID int,
+	playerIndex int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	groupSize int,
 	threshold int,
 ) (*thresholdgroup.Member, error) {
-	if nodeID <= 0 {
-		return nil, fmt.Errorf("nodeID must be a positive integer, got [%v]", nodeID)
+	if playerIndex < 0 {
+		return nil, fmt.Errorf(
+			"playerIndex must be >= 0, got [%v]",
+			playerIndex,
+		)
 	}
-	memberID := fmt.Sprintf("%v", nodeID)
+	memberID := fmt.Sprintf("%v", playerIndex+1)
 
 	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
 
