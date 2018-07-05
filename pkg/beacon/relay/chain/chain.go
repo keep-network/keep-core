@@ -35,4 +35,24 @@ type Interface interface {
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
 	OnGroupRegistered(handle func(key *event.GroupRegistration))
+
+	/* Preliminary - the interface for creating a relay request.
+
+		// Will call .../contracts/solidity/contracts/KeepRandomBeaconImplV1.sol;
+	    // function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
+		// through the proxy.
+		// Note: using 'seed' as a big.Int will loose/drop any leading 0's in the seed.
+		// Note: Having a return value `returns (uint256 requestID) {` will not return this value through the
+		//       transaction.  The requestID can be found in the event:
+		//       RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
+		RequestRelayEntry(blockReward, seed *big.Int) *async.RelayEntryRequestedPromise
+
+		// Need to call .../contracts/solidity/contracts/KeepRandomBeaconImplV1.sol;
+	    // function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake, uint256 _withdrawalDelay)
+		// This call only needs to happen once for each contract load.
+		// through the proxy once - to setup the contract.   This is not happening in the JS setup as not all this
+		// data is available and contract build time.
+		InitializeKeepRandomBeacon(stakingProxy string, minPayment, minStake, withdrawalDelay *big.Int) *async.RandomBeaconInitialized
+
+	*/
 }
