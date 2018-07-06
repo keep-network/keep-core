@@ -135,12 +135,6 @@ func (n *Node) membershipForRequest(
 			return membership, nil
 		}
 	}
-	// We don't have an entry - maybe in the pending groups?
-	for _, membership := range n.pendingGroups {
-		if membership.index == int(nextGroup) {
-			return membership, nil
-		}
-	}
 
 	return nil, fmt.Errorf(
 		"nonexistant membership for requested group [%d]",
