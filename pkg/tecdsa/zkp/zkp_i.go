@@ -26,7 +26,8 @@ type PIi struct {
 
 // CommitPIi to y and w
 func CommitPIi(
-	y, w, eta, r *big.Int,
+	w, eta, r *big.Int,
+	y *tecdsa.CurvePoint,
 	params *PublicParameters,
 	random io.Reader,
 ) (*PIi, error) {
@@ -41,7 +42,7 @@ func CommitPIi(
 		return nil, fmt.Errorf("could not construct ZKPi [%v]", err)
 	}
 
-	beta, err := rand.Int(random, params.N)
+	beta, err := randomFromMultiplicativeGroup(random, params.N)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKPi [%v]", err)
 	}
@@ -85,8 +86,9 @@ func CommitPIi(
 		params.NTilde,
 	)
 
-	digest := sum256(g.Bytes(), y.Bytes(), w.Bytes(), z.Bytes(), u1.X.Bytes(),
-		u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
+	digest := sum256(
+		g.Bytes(), y.X.Bytes(), y.Y.Bytes(), w.Bytes(), z.Bytes(),
+		u1.X.Bytes(), u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 
 	e := new(big.Int).SetBytes(digest[:])
@@ -105,7 +107,11 @@ func CommitPIi(
 }
 
 // Verify y and w commitment.
-func (zkp *PIi) Verify(w *big.Int, y *tecdsa.CurvePoint, params *PublicParameters) bool {
+func (zkp *PIi) Verify(
+	w *big.Int,
+	y *tecdsa.CurvePoint,
+	params *PublicParameters,
+) bool {
 	u1 := zkp.u1Verification(y, params)
 	u2 := zkp.u2Verification(w, params)
 	u3 := zkp.u3Verification(params)
@@ -146,6 +152,20 @@ func (zkp *PIi) u3Verification(params *PublicParameters) *big.Int {
 		new(big.Int).Mul(new(big.Int).Mul(h1s1, h2s3), ze),
 		params.NTilde,
 	)
+}
+
+func randomFromMultiplicativeGroup(random io.Reader, n *big.Int) (*big.Int, error) {
+	for {
+		r, err := rand.Int(random, n)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if new(big.Int).GCD(nil, nil, r, n).Cmp(big.NewInt(1)) == 0 {
+			return r, nil
+		}
+	}
 }
 
 func sum256(data ...[]byte) [sha256.Size]byte {
