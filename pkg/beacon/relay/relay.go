@@ -40,15 +40,15 @@ func NewNode(
 func (n *Node) GenerateRelayEntryIfEligible(
 	request event.Request,
 	relayChain relaychain.Interface,
-) error {
+) {
 	combinedEntryToSign := combineEntryToSign(
 		request.PreviousEntry(),
 		request.Seed.Bytes(),
 	)
 
-	membership, err := n.membershipForRequest(request)
-	if err != nil {
-		return err
+	membership := n.membershipForRequest(request)
+	if membership == nil {
+		return
 	}
 
 	go func() {
@@ -96,8 +96,6 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			}
 		})
 	}()
-
-	return nil
 }
 
 func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
@@ -124,7 +122,7 @@ func (n *Node) indexForNextGroup(request event.Request) *big.Int {
 
 func (n *Node) membershipForRequest(
 	request event.Request,
-) (*membership, error) {
+) *membership {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
@@ -132,12 +130,9 @@ func (n *Node) membershipForRequest(
 	// Search our list of memberships to see if we have a member entry.
 	for _, membership := range n.myGroups {
 		if membership.index == int(nextGroup) {
-			return membership, nil
+			return membership
 		}
 	}
 
-	return nil, fmt.Errorf(
-		"nonexistant membership for requested group [%d]",
-		nextGroup,
-	)
+	return nil
 }
