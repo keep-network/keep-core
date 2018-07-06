@@ -115,12 +115,11 @@ func (n *Node) indexForNextGroup(request event.Request) *big.Int {
 	entry = entry.SetBytes(request.PreviousEntry())
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
-	if numberOfGroups.Int64() == 0 {
+	if numberOfGroups.Cmp(&big.Int{}) == 0 {
 		return nextGroup
 	}
 
-	nextGroup.Mod(entry, numberOfGroups)
-	return nextGroup
+	return nextGroup.Mod(entry, numberOfGroups)
 }
 
 func (n *Node) membershipForRequest(
