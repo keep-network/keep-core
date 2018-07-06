@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256"
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
@@ -13,9 +13,9 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		modifyCommitment func(commitment *TrapdoorCommitment)
 		expectedResult   bool
 	}{
-		"positive validation - pass values used for generation": {
-			modifySecret:     func(secret *Secret) {},
-			modifyCommitment: func(commitment *TrapdoorCommitment) {},
+		"positive validation": {
+			modifySecret:     nil,
+			modifyCommitment: nil,
 			expectedResult:   true,
 		},
 		"negative validation - incorrect `secret`": {
@@ -23,30 +23,30 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				msg := []byte("top secret message2")
 				secret.secret = &msg
 			},
-			modifyCommitment: func(commitment *TrapdoorCommitment) {},
+			modifyCommitment: nil,
 			expectedResult:   false,
 		},
 		"negative validation - incorrect `r`": {
 			modifySecret: func(secret *Secret) {
 				secret.r = big.NewInt(3)
 			},
-			modifyCommitment: func(commitment *TrapdoorCommitment) {},
+			modifyCommitment: nil,
 			expectedResult:   false,
 		},
 		"negative validation - incorrect `commitment`": {
-			modifySecret: func(secret *Secret) {},
+			modifySecret: nil,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.commitment = new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `pubKey`": {
-			modifySecret:     func(secret *Secret) {},
+			modifySecret:     nil,
 			modifyCommitment: func(commitment *TrapdoorCommitment) { commitment.pubKey = big.NewInt(3) },
 			expectedResult:   false,
 		},
 		"negative validation - incorrect `h`": {
-			modifySecret: func(secret *Secret) {},
+			modifySecret: nil,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
 			},
@@ -65,10 +65,14 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			}
 
 			// Invoke modification functions defined in test
-			test.modifyCommitment(commitment)
+			if test.modifyCommitment != nil {
+				test.modifyCommitment(commitment)
+			}
 
 			newSecret := commitment.secret
-			test.modifySecret(&newSecret)
+			if test.modifySecret != nil {
+				test.modifySecret(&newSecret)
+			}
 
 			// Validate Commitment
 			result := commitment.ValidateCommitment(&newSecret)
@@ -81,7 +85,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 	}
 }
 
-func TestGenerateTwoCommitmentsCheckUniqueResults(t *testing.T) {
+func TestCommitmentRandomness(t *testing.T) {
 	msg := []byte("top secret message")
 
 	// Generate Commitment 1
