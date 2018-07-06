@@ -43,7 +43,7 @@ func NewNode(
 // determining whether the node is or is not is a member of the requested group, and
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
-	request event.Request,
+	request *event.Request,
 	relayChain relaychain.Interface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
@@ -111,7 +111,7 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 	return combinedEntryToSign
 }
 
-func (n *Node) indexForNextGroup(request event.Request) *big.Int {
+func (n *Node) indexForNextGroup(request *event.Request) *big.Int {
 	entry := (&big.Int{}).SetBytes(request.PreviousValue[:])
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
@@ -127,7 +127,7 @@ func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
 }
 
 func (n *Node) membershipForRequest(
-	request event.Request,
+	request *event.Request,
 ) *membership {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
