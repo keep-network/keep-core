@@ -32,11 +32,17 @@ type Node struct {
 	stakeIDs []string
 
 	groupPublicKeys [][]byte
-	myGroups        map[string]*thresholdgroup.Member
-	pendingGroups   map[string]*thresholdgroup.Member
+	myGroups        map[string]*membership
+	pendingGroups   map[string]*membership
 
 	// lastSeenEntry is the last relay entry this node is aware of.
 	lastSeenEntry event.Entry
+}
+
+type membership struct {
+	member  *thresholdgroup.Member
+	channel net.BroadcastChannel
+	index   int
 }
 
 // JoinGroupIfEligible takes a request id and the resulting entry value and
@@ -75,7 +81,7 @@ func (n *Node) JoinGroupIfEligible(
 				return
 			}
 
-			n.registerPendingGroup(member, requestID)
+			n.registerPendingGroup(member, groupChannel, requestID)
 
 			relayChain.SubmitGroupPublicKey(
 				requestID.String(),
@@ -103,19 +109,27 @@ func (n *Node) RegisterGroup(requestID *big.Int, groupPublicKey []byte) {
 	defer n.mutex.Unlock()
 
 	requestIDString := requestID.String()
-	if member, found := n.pendingGroups[requestIDString]; found {
-		n.myGroups[requestIDString] = member
+	if membership, found := n.pendingGroups[requestIDString]; found {
+		n.myGroups[requestIDString] = membership
 		delete(n.pendingGroups, requestIDString)
 	}
 
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
+	n.myGroups[requestIDString].index = len(n.groupPublicKeys) - 1
 }
 
-func (n *Node) registerPendingGroup(member *thresholdgroup.Member, requestID *big.Int) {
+func (n *Node) registerPendingGroup(
+	member *thresholdgroup.Member,
+	channel net.BroadcastChannel,
+	requestID *big.Int,
+) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	n.pendingGroups[requestID.String()] = member
+	n.pendingGroups[requestID.String()] = &membership{
+		member:  member,
+		channel: channel,
+	}
 }
 
 // Returns the 0-based index of this node in the group that will be spawned by
