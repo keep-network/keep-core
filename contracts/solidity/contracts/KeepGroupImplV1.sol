@@ -184,14 +184,14 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     /**
      * @dev Testing for M1 - create a staker.
-     * @param _index Index where to add the member.
      * @param _groupMemberID the ID of the member that is being added.
      */
-    function addStaker(uint32 _index, bytes32 _groupMemberID) public onlyOwner {
+    function addStaker(bytes32 _groupMemberID) public onlyOwner {
 		// TODO save some info at this point - this is only for use in Milestone 1 and will
 		// not need to be added to the "forever" storage.
-		listOfGroupMemberIDs[_index] = _groupMemberID;
-    	emit OnStakerAdded(_index, _groupMemberID);
+		listOfGroupMemberIDs.push( _groupMemberID );
+		uint32 index = uint32(listOfGroupMemberIDs.length - 1);
+    	emit OnStakerAdded( index, _groupMemberID);
 	}
 
     /**
