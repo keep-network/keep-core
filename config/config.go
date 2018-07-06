@@ -73,11 +73,6 @@ func (c *Config) ValidationError() error {
 
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
-// Opts contains global application settings.
-var Opts Config
-
-// ReadConfig reads in the configuration file in .toml format.
-//func ReadConfig(filePath string, cfg *Config) error {
 // ReadConfig reads in the configuration file in .toml format.
 func ReadConfig(filePath string) (Config, error) {
 	f, err := os.Open(filePath)
@@ -122,7 +117,7 @@ func PrintConfig(c *cli.Context) error {
 		log.Fatalf("error calling NewConfig: %v\n", err)
 	}
 	_, err = io.WriteString(os.Stdout,
-		"config values from overwriting default values with contents of: "+configPath+"\n\n")
+		"current config values from: "+configPath+"\n\n")
 	if err != nil {
 		return fmt.Errorf("unable to write configuration file (%s), error: %v", configPath, err)
 	}

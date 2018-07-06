@@ -77,7 +77,7 @@ func TestSendReceive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = broadcastChannel.RegisterUnmarshaler(
+	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		t.Fatal(err)
@@ -153,7 +153,7 @@ func TestSendToReceiveFrom(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = broadcastChannel.RegisterUnmarshaler(
+	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
 	); err != nil {
 		t.Fatal(err)

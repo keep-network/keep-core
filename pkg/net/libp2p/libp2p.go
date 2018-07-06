@@ -54,10 +54,6 @@ func (p *provider) Addrs() []ma.Multiaddr {
 	return p.addrs
 }
 
-//const ipfsURLPattern = `.+\/.*`
-
-//var ifpsURLRegex = util.CompileRegex(ipfsURLPattern)
-
 // NodeConfig contains the config values for this node.
 type NodeConfig struct {
 	Port  int
