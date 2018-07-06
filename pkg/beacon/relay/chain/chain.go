@@ -40,7 +40,4 @@ type Interface interface {
 	// RequestRelayEntry makes an on-chain request to start generation of a
 	// random signature.  An event is generated.
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayEntryRequestedPromise
-	// InitializeKeepRandomBeacon makes a one-time call to initialize the underlying
-	// keepRandomBeacon contract.
-	InitializeKeepRandomBeacon(stakingProxy string, minPayment, minStake, withdrawalDelay *big.Int) *async.RandomBeaconInitalizedPromise
 }

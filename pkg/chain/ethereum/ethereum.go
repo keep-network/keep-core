@@ -392,31 +392,3 @@ func (ec *ethereumChain) RequestRelayEntry(
 	}
 	return promise
 }
-
-// Need to call .../contracts/solidity/contracts/KeepRandomBeaconImplV1.sol;
-// function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake, uint256 _withdrawalDelay)
-// This call only needs to happen once for each contract load.
-// through the proxy once - to setup the contract.   This is not happening in the JS setup as not all this
-// data is available and contract build time.
-// You can actualy call this multiple times - it will check if the contract is already initialized.
-func (ec *ethereumChain) InitializeKeepRandomBeacon(
-	stakingProxy string,
-	minPayment, minStake, withdrawalDelay *big.Int,
-) *async.RandomBeaconInitalizedPromise {
-	promise := &async.RandomBeaconInitalizedPromise{}
-	// err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-	if isInitialized, err := ec.keepRandomBeaconContract.Initialized(); err != nil {
-		promise.Fail(fmt.Errorf("failure to check if contract is initialized: [%v]", err))
-		return promise
-	} else if isInitialized {
-		promise.Fulfill(&event.RandomBeaconInitalized{})
-		return promise
-	}
-	_, err := ec.keepRandomBeaconContract.Initialize(stakingProxy, minPayment, minStake, withdrawalDelay)
-	if err != nil {
-		promise.Fail(fmt.Errorf("failure to initialized contract: [%v]", err))
-		return promise
-	}
-	promise.Fulfill(&event.RandomBeaconInitalized{})
-	return promise
-}

@@ -191,14 +191,3 @@ func (c *localChain) RequestRelayEntry(
 	})
 	return promise
 }
-
-// InitializeKeepRandomBeacon simulates initializing the
-// unerlying contract.
-func (c *localChain) InitializeKeepRandomBeacon(
-	stakingProxy string,
-	minPayment, minStake, withdrawalDelay *big.Int,
-) *async.RandomBeaconInitalizedPromise {
-	promise := &async.RandomBeaconInitalizedPromise{}
-	promise.Fulfill(&event.RandomBeaconInitalized{})
-	return promise
-}
