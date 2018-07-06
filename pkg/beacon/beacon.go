@@ -91,6 +91,10 @@ func Initialize(
 		// Retry until we can sync our staking list
 		syncStakingListWithRetry(&node, relayChain)
 
+		relayChain.OnRelayEntryRequested(func(request *event.Request) {
+			node.GenerateRelayEntryIfEligible(request, relayChain)
+		})
+
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 			entryBigInt := (&big.Int{}).SetBytes(entry.Value[:])
 			node.JoinGroupIfEligible(relayChain, entry.RequestID, entryBigInt)
