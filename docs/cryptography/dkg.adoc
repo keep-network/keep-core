@@ -22,9 +22,11 @@ is defined.
 
 toc::[]
 
-== Tech
+== Details+Rationale
 
-=== Broadcast channel
+=== Message delivery
+
+==== Broadcast channel
 
 Every group member in phase _p_ can safely assume
 every non-inactive group member has seen
@@ -34,6 +36,108 @@ All messages broadcast by _P~i~_ are assumed to be signed with _X~i~_.
 
 A message is malformed if it cannot be parsed and validated
 as the message required in a particular phase of the protocol.
+
+===== Assumptions and implications
+
+The broadcast channel is assumed to give all participants
+the same view of the world,
+and deliver all messages from non-inactive participants
+within a time that is less than the applicable time limit for each phase.
+
+If these assumptions don't hold, certain attacks become possible.
+For example, if a message from _P~i~_
+reaches honest participant _P~j~_ but not _P~k~_,
+their sets of inactive participants _IA~Pj~_ and _IA~Pk~_ will differ.
+This will make them vote for different results,
+which will prevent quorum from being reached on _full verification_,
+while on _escalating votes_ a coordinating adversary
+could make its preferred incorrect result win the vote.
+To protect against the latter,
+_escalating votes_ assumes a null result when any single result is opposed
+by _f~max~ + 1_ participants as it means that the honest votes are split.
+
+=== Dispute resolution
+
+Given that the protocol is performed off-chain,
+participants may submit incorrect results
+in an attempt to gain advantage.
+By relying on the honest majority assumption,
+this can be mitigated by having participants vote on results.
+
+There are two main ways this voting can be performed:
+either by members signing valid results, which are then verified on-chain,
+or by designated members being eligible to submit a result
+which may be challenged by others if they consider it incorrect.
+
+==== Full verification
+
+The _full verification_ technique of voting is simple.
+The designated eligible submitter _P~sub~_ publishes the correct result
+which is then checked by the contract to contain at least _f~max~ + 1_
+valid signatures from unique members of _G_.
+
+This technique requires fewer transactions and is less complex to implement,
+but bears a constant cost as _O(n)_ signatures must be validated on-chain
+upon every group creation.
+Assuming for the sake of example _n = 201_ and _f~max~ = 100_,
+and that `ecrecover = 3000 gas` dominates the transaction fees,
+the cost of full verification would be constant on the order of 325,000 gas.
+
+This also sets a hard limit on the group size of _n < gasLimit / 3000_,
+but in practice this would only happen with impractically large groups
+(currently more than 2,000 participants).
+
+It is easy to see why _full verification_ would be correct:
+if _f~max~_ is the largest number of malicious participants,
+requiring _f~max~ + 1_ signatures means that any result accepted by the system
+must have at least one honest participant supporting it.
+
+==== Escalating votes
+
+As an alternative to the above,
+_escalating votes_ is a protocol where a result is submitted,
+and accepted if it is not challenged within a specified time limit.
+If multiple results are presented,
+the participants will proceed to submit votes on the results
+iff their preferred result is not in the lead,
+or their vote would break a tie.
+After a certain time limit has elapsed since the last vote,
+a confirmation request transaction may be presented by anybody,
+and the result with the highest number of supporting votes is accepted.
+
+The security of this scheme is less obvious,
+but follows from the honest majority assumption:
+since at least _f~max~ + 1_ honest players are online at the voting stage,
+for any amount of adversary votes _0 < V~m~<= f~max~_
+there will be _V~m~ + 1_ honest participants
+who will outvote the malicious players
+(proof by induction).
+
+This scheme is only suitable for situations where _n >= 2 * f~max~ + 1_,
+due to the reliance on the honest majority assumption.
+If the majority of participants is dishonest,
+the plurality result may be incorrect.
+
+In the worst-case scenario escalating votes will cost
+_(f~max~ + 2) * 21000_ gas to the honest participants,
+or around 2.15 million gas.
+However, the practical cost of using escalating votes would be variable
+and would be expected to be significantly lower most of the time.
+
+Given that a rational adversary who cannot break the honest majority assumption
+will expect to inevitably lose the escalating vote,
+and the cost of the voting is symmetrical
+(submitting one vote costs approximately 21,000 gas,
+so the malicious players will pay _V~m~ * 21000_ gas
+while honest players will pay _(V~m~ + 2) * 21000_ gas in total;
+this means the honest players will always pay exactly
+42,000 gas more than the malicious players regardless of the value of _V~m~_),
+one would expect the escalating votes to usually go unchallenged.
+
+In the example scenario, escalating votes is cheaper than full verification
+if the average number of votes supporting the highest-voted incorrect result
+is less than 13 out of 200 participants,
+or alternatively if the worst-case scenario occurs at most 1/8 the time.
 
 == Terms
 
