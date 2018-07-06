@@ -20,7 +20,8 @@ var (
 	version  string
 	revision string
 
-	configPath string
+	configPath  string
+	printConfig bool
 )
 
 func main() {
@@ -39,7 +40,7 @@ func main() {
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
 	app.Description = "Command line interface (CLI) for running a Keep provider"
-	app.Copyright = "" //TODO: Insert copyright for print-info later
+	app.Copyright = ""
 	app.Compiled = time.Now()
 	app.Authors = []cli.Author{
 		{
@@ -54,6 +55,11 @@ func main() {
 			Value:       defaultConfigPath,
 			Destination: &configPath,
 			Usage:       "full path to the configuration file",
+		},
+		cli.BoolFlag{
+			Name:        "print-config,p",
+			Destination: &printConfig,
+			Usage:       "print application configuration information",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -87,14 +93,14 @@ func main() {
 				return nil
 			},
 		},
-		{
-			Name:  "print-config",
-			Usage: "Prints config values from .toml file",
-			Action: func(c *cli.Context) error {
-				printConfig(c)
-				return nil
-			},
-		},
+	}
+	app.Before = func(c *cli.Context) error {
+		if c.GlobalBool("print-config") && !c.Bool("help") {
+			if err := config.PrintConfig(c); err != nil {
+				log.Fatal(err)
+			}
+		}
+		return nil
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
@@ -121,8 +127,4 @@ func printInfo(c *cli.Context) {
 		revision,
 		c.GlobalString("config"),
 	)
-}
-
-func printConfig(c *cli.Context) {
-	config.PrintConfig(c)
 }
