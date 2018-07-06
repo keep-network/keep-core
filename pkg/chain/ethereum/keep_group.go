@@ -177,7 +177,6 @@ func (kg *keepGroup) GetNStaker() (int, error) {
 // AddStaker - temporary code for Milestone 1 - will add a
 // staker to the contract.
 func (kg *keepGroup) AddStaker(
-	idx int,
 	groupMemberID string,
 ) (*types.Transaction, error) {
 	groupMemberIDByte32, err := toByte32([]byte(groupMemberID))
@@ -186,7 +185,6 @@ func (kg *keepGroup) AddStaker(
 	}
 	return kg.transactor.AddStaker(
 		kg.transactorOpts,
-		uint32(idx),
 		groupMemberIDByte32,
 	)
 }

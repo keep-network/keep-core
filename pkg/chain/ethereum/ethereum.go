@@ -281,13 +281,7 @@ func (ec *ethereumChain) AddStaker(
 		return onStakerAddedPromise
 	}
 
-	index, err := ec.keepGroupContract.GetNStaker()
-	if err != nil {
-		fmt.Printf("Error: failed on call to GetNStaker: [%v]\n", err)
-		return onStakerAddedPromise
-	}
-
-	_, err = ec.keepGroupContract.AddStaker(index, groupMemberID)
+	_, err = ec.keepGroupContract.AddStaker(groupMemberID)
 	if err != nil {
 		fmt.Printf(
 			"on staker added failed with: [%v]",

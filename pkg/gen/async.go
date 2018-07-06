@@ -62,11 +62,6 @@ func main() {
 			Prefix:     "RelayEntryRequested",
 			outputFile: "relay_entry_requested_promise.go",
 		},
-		{
-			Type:       "*event.RandomBeaconInitalized",
-			Prefix:     "RandomBeaconInitalized",
-			outputFile: "random_beacon_initalized_promise.go",
-		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
