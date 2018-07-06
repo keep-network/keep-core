@@ -1,11 +1,11 @@
 :toc: macro
 
-= Distributed Key Generation
+= Random Beacon Distributed Key Generation
 
 :toclevels: 4
 
-The DKG scheme proposal is based on a protocol by
-Gennaro, Jarecki, Krawczyk and Rabin <<GJKR>>.
+This proposal for Distributed Key Generation for the threshold relay
+is based on a protocol by Gennaro, Jarecki, Krawczyk and Rabin <<GJKR>>.
 GJKR is further based on Pedersen-VSS (verifiable secret sharing) <<Ped>>.
 For this implementation, GJKR has been modified
 to make protocol violations objectively attributable
