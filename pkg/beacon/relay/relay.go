@@ -46,7 +46,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		request.Seed.Bytes(),
 	)
 
-	membership, err := n.memberAndGroupForRequest(request)
+	membership, err := n.membershipForRequest(request)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,6 @@ func (n *Node) indexForNextGroup(request event.Request) *big.Int {
 	)
 	entry = entry.SetBytes(request.PreviousEntry())
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
-	_ = big.NewInt(0).SetBytes([]byte{})
 
 	if numberOfGroups.Int64() == 0 {
 		return nextGroup
@@ -124,7 +123,7 @@ func (n *Node) indexForNextGroup(request event.Request) *big.Int {
 	return nextGroup
 }
 
-func (n *Node) memberAndGroupForRequest(
+func (n *Node) membershipForRequest(
 	request event.Request,
 ) (*membership, error) {
 	n.mutex.Lock()
