@@ -37,6 +37,9 @@ All messages broadcast by _P~i~_ are assumed to be signed with _X~i~_.
 A message is malformed if it cannot be parsed and validated
 as the message required in a particular phase of the protocol.
 
+The implementation details of the broadcast channel
+are currently out of scope for this document.
+
 ===== Assumptions and implications
 
 The broadcast channel is assumed to give all participants
@@ -56,6 +59,65 @@ To protect against the latter,
 _escalating votes_ assumes a null result when any single result is opposed
 by _f~max~ + 1_ participants as it means that the honest votes are split.
 
+=== Result format
+
+The result of the DKG protocol can be either a success or a failure.
+
+Success means the DKG protocol finished with at most _f~fail~_ participants
+misbehaving or dropping offline during the execution of the protocol,
+and the group of the remaining honest participants _G~final~_
+should be added to the signing groups for the threshold relay.
+
+Failure means that the group creation could not finish, due to either
+the number of (inactive + disqualified) participants exceeding _f~fail~_,
+or the presented results being disputed
+in a way where the correct outcome cannot be ascertained.
+
+[source, haskell]
+----
+data Result = NoFaultFailure
+            | FailureDQ { disqualified :: Array Bool }
+            | PerfectSuccess { pubkey :: BeaconPubkey }
+            | SuccessIA { pubkey :: BeaconPubkey
+                        , inactive :: Array Bool }
+            | SuccessDQ { pubkey :: BeaconPubkey
+                        , disqualified :: Array Bool }
+            | MixedSuccess { pubkey :: BeaconPubkey
+                           , inactive :: Array Bool
+                           , disqualified :: Array Bool }
+----
+
+For a reasonably compact representation,
+we can use the first byte of the result to encode not only success/failure,
+but also whether there were inactive or disqualified participants.
+
+The inactive and disqualified participants are listed
+in one-indexed bit arrays where the __i__th bit being set means
+_P~i~_ is in the corresponding set.
+
+WARNING: One-indexing is a risk factor for off-by-one errors in the code.
+Using zero-indexed arrays with the first bit unset
+would instead move the risk into the length calculations.
+
+If the __i__th bit is set in both `inactive` and `disqualified`,
+the result message can either be deemed invalid
+or have disqualification take precedence.
+
+The maximum length of a result message is _1 + |BeaconPubkey| + n/4_ bytes.
+
+(For an unreasonably compact representation we could use ternary in trees
+to represent only the indexes of participants who were in _IA_ or _DQ_.
+In theory this would save space almost every time,
+as the longest message (_MixedSuccess_) may only contain
+1/4 of participants in either of them.
+A less ridiculous ternary encoding would be squeezing 5 trits into 1 byte
+between 0-242, using 8 bytes where binary encoding would use 10.
+These trytes could be further compressed by prefixing them with bytes
+encoding which trytes of the entire array contain any nonzero values,
+saving a small amount of space in most cases.
+In practice there is no way it would be worth it,
+especially given the reputation of ternary in this industry.)
+
 === Dispute resolution
 
 Given that the protocol is performed off-chain,
@@ -63,6 +125,13 @@ participants may submit incorrect results
 in an attempt to gain advantage.
 By relying on the honest majority assumption,
 this can be mitigated by having participants vote on results.
+
+Voting on results means that only votes need to be counted on-chain;
+validating everything else can be offloaded onto the honest majority.
+This has significant cost advantages as _O(n^2^)_ blockchain operations,
+including _O(n)_ transactions and up to _O(n^2^)_ elliptic curve operations,
+can be replaced with simply _O(n)_ transactions of mostly constant size,
+or a single transaction with _O(n)_ elliptic curve operations.
 
 There are two main ways this voting can be performed:
 either by members signing valid results, which are then verified on-chain,
@@ -138,6 +207,10 @@ In the example scenario, escalating votes is cheaper than full verification
 if the average number of votes supporting the highest-voted incorrect result
 is less than 13 out of 200 participants,
 or alternatively if the worst-case scenario occurs at most 1/8 the time.
+
+=== Misbehavior penalties
+
+TBD
 
 == Terms
 
@@ -308,6 +381,11 @@ To ensure integrity in later parts of the DKG protocol,
 we will require every _P~i~_ to generate
 an ephemeral ECDH keypair _(X~ij~, Y~ij~)_ for every other member _P~j~_ in _G_.
 These will be broadcast in _phase 1_.
+
+Registering the ephemeral keys on-chain is not required
+if the broadcast channel assumption holds,
+and all honest participants agree on the keys
+published by each participant in _phase 1_.
 
 [source, python]
 ----
