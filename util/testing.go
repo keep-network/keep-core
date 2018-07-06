@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strings"
 	"syscall"
 	"testing"
 )
@@ -13,37 +12,19 @@ import (
 func Ok(tb testing.TB, err error) {
 	tb.Helper()
 	if err != nil {
-		if strings.Count(err.Error(), "\n") > 0 {
-			tb.Fatalf("unexpected errors:\n%v", err)
-
-		} else {
-			tb.Fatalf("unexpected error: %v", err)
-		}
+		tb.Errorf("expected: no errors\nactual: %v", err)
 	}
 }
 
-// NotOk fails when err is nil.
+// NotOk fails when err is nil or when the error is an runtime error due to file not found.
 func NotOk(tb testing.TB, err error, msgFormat string, msgArgs ...interface{}) {
 	tb.Helper()
 
 	if err == nil {
 		if len(msgArgs) != 0 {
-			tb.Fatalf("expected error where: "+msgFormat+", got none", msgArgs...)
+			tb.Errorf("expected an error where: "+msgFormat+", actual: no errors", msgArgs...)
 		} else {
-			tb.Fatalf("expected error, got none")
-		}
-	}
-}
-
-// NotOkRead fails when err is nil or when the error is an runtime error due to file not found.
-func NotOkRead(tb testing.TB, err error, msgFormat string, msgArgs ...interface{}) {
-	tb.Helper()
-
-	if err == nil {
-		if len(msgArgs) != 0 {
-			tb.Fatalf("expected error where: "+msgFormat+", got none", msgArgs...)
-		} else {
-			tb.Fatalf("expected error, got none")
+			tb.Errorf("expected an error, actual: no errors")
 		}
 	} else {
 		// Report unexpected error if caused by failure to read a file
@@ -54,26 +35,18 @@ func NotOkRead(tb testing.TB, err error, msgFormat string, msgArgs ...interface{
 				if err, ok := err.(*os.PathError); ok {
 					errMsg = fmt.Sprintf("file at path (%s) failed to open", err.Path)
 				}
-				tb.Fatalf(errMsg)
+				tb.Errorf(errMsg)
 			default:
-				tb.Fatalf(fmt.Sprintf("got unknown error: %v", err))
+				tb.Errorf(fmt.Sprintf("actual, unexpected error: %v", err))
 			}
 		}
 	}
 }
 
-// Assert fails when condition is false.
-func Assert(tb testing.TB, condition bool, message string, got ...interface{}) {
+// Equals fails when expected value is not equal to the actual value.
+func Equals(tb testing.TB, expected, actual interface{}) {
 	tb.Helper()
-	if !condition {
-		tb.Fatalf(message, got...)
-	}
-}
-
-// Equals fails when expected value is not equal to the got value.
-func Equals(tb testing.TB, expected, got interface{}) {
-	tb.Helper()
-	if !reflect.DeepEqual(expected, got) {
-		tb.Fatalf("expected: %#v\n\ngot: %#v", expected, got)
+	if !reflect.DeepEqual(expected, actual) {
+		tb.Errorf("expected: %#v\nactual: %#v", expected, actual)
 	}
 }
