@@ -28,12 +28,15 @@ func TestPIiCommitValues(t *testing.T) {
 		curve:  secp256k1.S256(),
 	}
 
-	y := big.NewInt(11)
 	w := big.NewInt(12)
 	eta := big.NewInt(13)
 	r := big.NewInt(14)
 
-	commitment, err := CommitPIi(y, w, eta, r, parameters, mockRandom)
+	y := tecdsa.NewCurvePoint(
+		secp256k1.S256().ScalarBaseMult(big.NewInt(11).Bytes()),
+	)
+
+	commitment, err := CommitPIi(w, eta, r, y, parameters, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,10 +68,10 @@ func TestPIiCommitValues(t *testing.T) {
 	}
 
 	// e = hash(g, y, w, z, u1, u2, u3) =
-	//     hash(1082, 11, 12, 55, g^10.x, g^10.y, 289613, 176)
+	//     hash(1082, g^11.X, g^11.Y, 12, 55, g^10.X, g^10.Y, 289613, 176)
 	expectedHash := new(big.Int)
 	expectedHash.SetString(
-		"59167403082436634448058111708361841704129646999348477739812569953930856100700",
+		"81822229321106383602295376592630176588170716578659102639657033234501511942844",
 		10,
 	)
 	if !reflect.DeepEqual(commitment.e, expectedHash) {
@@ -81,7 +84,7 @@ func TestPIiCommitValues(t *testing.T) {
 	// e*13 + 10
 	expectedS1 := new(big.Int)
 	expectedS1.SetString(
-		"769176240071676247824755452208703942153685410991530210617563409401101129309110",
+		"1063688981174382986829839895704192295646219315522568334315541432048519655256982",
 		10,
 	)
 	if !reflect.DeepEqual(commitment.s1, expectedS1) {
@@ -91,15 +94,15 @@ func TestPIiCommitValues(t *testing.T) {
 		)
 	}
 
-	// 14^e * 11 mod 1081 = 267
-	if !reflect.DeepEqual(commitment.s2, big.NewInt(287)) {
+	// 14^e * 11 mod 1081 = 605
+	if !reflect.DeepEqual(commitment.s2, big.NewInt(605)) {
 		t.Errorf("Unexpected s2\nActual: %v\nExpected: 287", commitment.s2)
 	}
 
 	// e*12 + 13
 	expectedS3 := new(big.Int)
 	expectedS3.SetString(
-		"710008836989239613376697340500342100449555763992181732877750839447170273208413",
+		"981866751853276603227544519111562119058048598943909231675884398814018143314141",
 		10,
 	)
 	if !reflect.DeepEqual(commitment.s3, expectedS3) {
