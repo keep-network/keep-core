@@ -87,6 +87,10 @@ func Initialize(
 		// Add our registration to our internal state
 		node.AddStaker(selfStake.Index, selfStake.GroupMemberID)
 
+		if err := node.SyncStakingList(relayChain); err != nil {
+			fmt.Println("failed to sync staking list: [%v]", err)
+		}
+
 		relayChain.OnStakerAdded(func(staker *event.StakerRegistration) {
 			node.AddStaker(staker.Index, staker.GroupMemberID)
 		})

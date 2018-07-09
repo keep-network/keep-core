@@ -117,6 +117,20 @@ func (n *Node) AddStaker(index int, staker string) error {
 	return nil
 }
 
+func (n *Node) SyncStakingList(relayChain relaychain.Interface) error {
+	list, err := relayChain.GetStakerList()
+	if err != nil {
+		return err
+	}
+
+	for index, value := range list {
+		if err := n.AddStaker(index, value); err != nil {
+			return err
+		}
+	}
+
+}
+
 // RegisterGroup registers that a group was successfully created by the given
 // requestID, and its group public key is groupPublicKey.
 func (n *Node) RegisterGroup(requestID *big.Int, groupPublicKey []byte) {
