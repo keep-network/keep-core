@@ -193,7 +193,7 @@ func TestPICommitAndVerify(t *testing.T) {
 	}
 
 	eta := big.NewInt(1410)
-	w, err := paillierKey.Encrypt(eta, rand.Reader)
+	w, err := paillierKey.EncryptWithR(eta, r)
 	if err != nil {
 		t.Fatal(err)
 	}
