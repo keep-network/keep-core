@@ -49,10 +49,13 @@ func Initialize(
 	}
 
 	// FIXME Nuke post-M1 when we plug in real staking stuff.
-	proceed := &sync.WaitGroup{}
+	var (
+		proceed   sync.WaitGroup
+		selfStake *event.StakerRegistration
+	)
 	proceed.Add(1)
 	relayChain.AddStaker(netProvider.ID().String()).
-		OnComplete(func(_ *event.StakerRegistration, err error) {
+		OnComplete(func(stake *event.StakerRegistration, err error) {
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
@@ -60,6 +63,7 @@ func Initialize(
 					netProvider.ID().String(),
 				)
 				curParticipantState = unstaked
+				selfStake = stake
 				proceed.Done()
 				return
 			}
@@ -79,6 +83,10 @@ func Initialize(
 			blockCounter,
 			chainConfig,
 		)
+
+		relayChain.OnStakerAdded(func(staker *event.StakerRegistration) {
+
+		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 			entryBigInt := &big.Int{}
