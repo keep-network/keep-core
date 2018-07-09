@@ -130,6 +130,7 @@ func TestPIiVerificationValues(t *testing.T) {
 		h1:     big.NewInt(11),
 		h2:     big.NewInt(27),
 		curve:  secp256k1.S256(),
+		q:      secp256k1.S256().Params().N,
 	}
 
 	w := big.NewInt(674)
@@ -138,10 +139,10 @@ func TestPIiVerificationValues(t *testing.T) {
 		secp256k1.S256().ScalarBaseMult(big.NewInt(10).Bytes()),
 	)
 
-	// u1 = g^s1 * y^-e = g^22 * (g^10)^-881 = g^-8832
-	expectedU1 := tecdsa.NewCurvePoint(
-		secp256k1.S256().ScalarBaseMult(big.NewInt(-8832).Bytes()),
-	)
+	// u1 = g^s1 * y^-e = g^22 * (g^10)^-881 = g^{q-8810}
+	expectedU1 := tecdsa.NewCurvePoint(secp256k1.S256().ScalarBaseMult(
+		new(big.Int).Sub(params.q, big.NewInt(8788)).Bytes(),
+	))
 	actualU1 := zkp.u1Verification(y, params)
 	if !reflect.DeepEqual(expectedU1, actualU1) {
 		t.Errorf(
