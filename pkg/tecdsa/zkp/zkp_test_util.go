@@ -7,6 +7,9 @@ import "math/big"
 // by 1 from the previous one starting from counter seed provided when
 // constructing mockRandReader.
 //
+// We use `mockRandomReader` to test commitment phase of ZKPs defined in this
+// package where we need predictable values instead of random ones.
+//
 // mockRandom := &mockRandReader{ counter: big.NewInt(1) }
 // r1, _ := rand.Int(mockRandom, big.NewInt(10000)) // r1=1
 // r2, _ := rand.Int(mockRandom, big.NewInt(10000)) // r2=2

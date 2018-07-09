@@ -12,6 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
+// TestDsaPaillierKeyRangeProofCommitValues creates a commitment and checks all
+// commitment values against expected ones. This is not a full roundtrip test.
+// We test the private commitment phase interface to make sure if anything goes
+// wrong in future (e.g. curve implementation changes), we can isolate the
+// problem easily. All expected values has been manually calculated basis on
+// the [GGN16] paper.
 func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
@@ -123,7 +129,13 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	}
 }
 
-func TestPIiVerificationValues(t *testing.T) {
+// TestDsaPaillierKeyRangeProofVerification runs over the verification phase
+// using supplied, hardcoded commitment values. This is not a full roundtrip
+// test. We test the private verification phase interface to make sure if
+// anything goes wrong in future (e.g. curve implementation changes), we can
+// isolate the problem easily. All expected values has been manually calculated
+// basis on the [GGN16] paper.
+func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 	zkp := &DsaPaillierKeyRangeProof{
 		s1: big.NewInt(22),
 		s2: big.NewInt(17),
@@ -183,7 +195,9 @@ func TestPIiVerificationValues(t *testing.T) {
 	}
 }
 
-func TestPICommitAndVerify(t *testing.T) {
+// TestDsaPaillierKeyRangeProofCommitAndVerify is a full happy path roundtrip
+// test of the ZKP, including generating public parameters.
+func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 	curve := secp256k1.S256()
 
 	p, _ := new(big.Int).SetString("104479735358598948369258156463683391052543755432914893102752306517616376250927", 10)

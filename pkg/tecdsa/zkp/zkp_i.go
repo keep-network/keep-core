@@ -166,18 +166,18 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 }
 
 // We verify whether u1 = g^s1 * y^-e
-// is equal to u1 = g^alpha
+// is equal to u1 = g^α
 // we evaluated in the commitment phase.
 //
 // Since:
-// s1 = e * eta + alpha
-// y = g^eta
+// s1 = e * η + α
+// y = g^η
 //
 // We can do:
 // g^s1 * y^-e =
-// g^{e * eta + alpha} * (g^{-e})^eta =
-// g^{e * eta + alpha} * g^{-e * eta} =
-// g^alpha
+// g^{e * η + α} * (g^{-e})^η =
+// g^{e * η + α} * g^{-e * η} =
+// g^α
 //
 // which is exactly how u1 is evaluated during the commitment phase.
 func (zkp *DsaPaillierKeyRangeProof) u1Verification(
@@ -199,19 +199,19 @@ func (zkp *DsaPaillierKeyRangeProof) u1Verification(
 }
 
 // We verify whether u2 = G^s1 * (s2)^N * (w)^-e
-// is equal to u2 = G^alpha * beta^N
+// is equal to u2 = G^α * β^N
 // we evaluated in the commitment phase.
 //
 // Since:
-// s1 = eη + alpha
-// s2 = r^e * beta
+// s1 = eη + α
+// s2 = r^e * β
 // w = E(η) = G^η * r^N
 //
 // We can do:
 // G^s1 * (s2)^N * (w)^-e =
-// G^{eη + alpha} * (r^e * beta)^N * (G^η * r^N)^-e =
-// G^{eη + alpha} * G^{-eη} * beta^N * r^{eN} * r^{-eN} =
-// G^alpha * beta^N
+// G^{eη + α} * (r^e * β)^N * (G^η * r^N)^-e =
+// G^{eη + α} * G^{-eη} * β^N * r^{eN} * r^{-eN} =
+// G^α * β^N
 //
 // which is exactly how u2 is evaluated during the commitment phase.
 func (zkp *DsaPaillierKeyRangeProof) u2Verification(
@@ -235,19 +235,19 @@ func (zkp *DsaPaillierKeyRangeProof) u2Verification(
 }
 
 // We verify whether u3 = (h1)^{s1} * (h2)^{s3} * (z)^-e
-// is equal to u3 = (h1)^alpha * (h2)^gamma
+// is equal to u3 = (h1)^alpha * (h2)^γ
 // we evaluated in the commitment phase.
 //
 // Since:
-// s1 = eη + alpha
-// s3 = e*rho + gamma
-// z = (h1)^η * (h2)^rho
+// s1 = eη + α
+// s3 = e*ρ + γ
+// z = (h1)^η * (h2)^ρ
 //
 // We can do:
 // (h1)^{s1} * (h2)^{s3} * (z)^-e =
-// (h1)^{e^η + alpha} * h2^{e*rho + gamma} * [(h1)^η * (h2)^rho]^-e =
-// (h1)^{eη} * (h1)^{alpha} * (h2)^{e*rho} * (h2)^{gamma} * (h1)^{-eη} * (h2)^{-e * rho} =
-// (h1)^alpha * (h2)^gamma
+// (h1)^{e^η + α} * h2^{e*ρ + γ} * [(h1)^η * (h2)^ρ]^-e =
+// (h1)^{eη} * (h1)^{α} * (h2)^{e*ρ} * (h2)^{γ} * (h1)^{-eη} * (h2)^{-e * ρ} =
+// (h1)^α * (h2)^γ
 //
 // which is exactly how u3 is evaluated during the commitment phase.
 func (zkp *DsaPaillierKeyRangeProof) u3Verification(
