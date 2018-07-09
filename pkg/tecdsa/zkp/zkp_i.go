@@ -136,10 +136,20 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 	u2 := zkp.u2Verification(w, params)
 	u3 := zkp.u3Verification(params)
 
-	// TODO: add hash verification
-	return zkp.u1 == u1 &&
-		zkp.u2 == u2 &&
-		zkp.u3 == u3
+	g := new(big.Int).Add(params.N, big.NewInt(1))
+
+	digest := sum256(
+		g.Bytes(), y.X.Bytes(), y.Y.Bytes(), w.Bytes(), zkp.z.Bytes(),
+		u1.X.Bytes(), u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
+	)
+
+	e := new(big.Int).SetBytes(digest[:])
+
+	return zkp.e.Cmp(e) == 0 &&
+		zkp.u1.X.Cmp(u1.X) == 0 &&
+		zkp.u1.Y.Cmp(u1.Y) == 0 &&
+		zkp.u2.Cmp(u2) == 0 &&
+		zkp.u3.Cmp(u3) == 0
 }
 
 // We verify whether u1 = g^s1 * y^-e
