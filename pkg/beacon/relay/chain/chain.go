@@ -28,6 +28,9 @@ type Interface interface {
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(func(request *event.Request))
+	// OnStakerAdded is a callback that is invoked when an on-chain
+	// notification of a new, valid staker is seen.
+	OnStakerAdded(func(staker *event.StakerRegistration))
 	// AddStaker is a temporary function for Milestone 1 that
 	// adds a staker to the group contract.
 	AddStaker(groupMemberID string) *async.StakerRegistrationPromise
