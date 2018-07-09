@@ -14,8 +14,6 @@ import (
 	"github.com/BruntSushi/toml"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/pschlump/MiscLib"
-	"github.com/pschlump/godebug"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -62,13 +60,6 @@ func main() {
 		cfg.ContractAddresses[key] = val
 	}
 
-	if godebug.SVar(rcfg.Ethereum) != godebug.SVar(cfg) {
-		fmt.Printf("rcfg: %s\n", godebug.SVarI(rcfg.Ethereum))
-		fmt.Printf("cfg: %s\n", godebug.SVarI(cfg))
-		fmt.Fprintf(os.Stderr, "Failed to read configuration\n")
-		os.Exit(1)
-	}
-
 	hdl, err := ethereum.Connect(cfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to connect: %s\n", err)
@@ -84,15 +75,13 @@ func main() {
 		big.NewInt(aRun.blockReward),
 		big.NewInt(aRun.seed),
 	).OnSuccess(func(data *event.RelayEntryRequested) {
-		fmt.Printf("%ssuccess: %s\n%s", MiscLib.ColorGreen, godebug.SVarI(data), MiscLib.ColorReset)
+		fmt.Printf("success: %+v\n", data)
 		wg.Done()
 	}).OnFailure(func(err error) {
-		fmt.Printf("%serror: %s\n%s", MiscLib.ColorRed, err, MiscLib.ColorReset)
+		fmt.Printf("error: %s\n", err)
 		wg.Done()
 	})
 
-	// fmt.Fprintf(os.Stderr, "Waiting for transaction to run (2 minute sleep, sorry...)...\n")
-	// time.Sleep(120 * time.Second)
 	wg.Wait()
 }
 
