@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-func TestPIiCommitValues(t *testing.T) {
+func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
 	}
@@ -30,15 +30,22 @@ func TestPIiCommitValues(t *testing.T) {
 		curve:  secp256k1.S256(),
 	}
 
-	w := big.NewInt(12)
-	eta := big.NewInt(13)
-	r := big.NewInt(14)
-
-	y := tecdsa.NewCurvePoint(
+	secretDsaKeyShare := big.NewInt(13)
+	publicDsaKeyShare := tecdsa.NewCurvePoint(
 		secp256k1.S256().ScalarBaseMult(big.NewInt(11).Bytes()),
 	)
 
-	commitment, err := CommitDsaPaillierKeyRange(w, eta, r, y, parameters, mockRandom)
+	encryptedSecretDsaKeyShare := &paillier.Cypher{C: big.NewInt(12)}
+	r := big.NewInt(14)
+
+	commitment, err := CommitDsaPaillierKeyRange(
+		secretDsaKeyShare,
+		publicDsaKeyShare,
+		encryptedSecretDsaKeyShare,
+		r,
+		parameters,
+		mockRandom,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,9 +140,8 @@ func TestPIiVerificationValues(t *testing.T) {
 		q:      secp256k1.S256().Params().N,
 	}
 
-	w := big.NewInt(674)
-
-	y := tecdsa.NewCurvePoint(
+	encryptedSecretDsaKeyShare := big.NewInt(674)
+	publicDsaKeyShare := tecdsa.NewCurvePoint(
 		secp256k1.S256().ScalarBaseMult(big.NewInt(10).Bytes()),
 	)
 
@@ -143,7 +149,7 @@ func TestPIiVerificationValues(t *testing.T) {
 	expectedU1 := tecdsa.NewCurvePoint(secp256k1.S256().ScalarBaseMult(
 		new(big.Int).Sub(params.q, big.NewInt(8788)).Bytes(),
 	))
-	actualU1 := zkp.u1Verification(y, params)
+	actualU1 := zkp.u1Verification(publicDsaKeyShare, params)
 	if !reflect.DeepEqual(expectedU1, actualU1) {
 		t.Errorf(
 			"Unexpected u1\nActual: %v\nExpected: %v",
@@ -154,7 +160,7 @@ func TestPIiVerificationValues(t *testing.T) {
 
 	// u2 = ((1081+1)^22 * 17^1081 * 674^-881) mod 1081^2
 	expectedU2 := big.NewInt(227035)
-	actualU2 := zkp.u2Verification(w, params)
+	actualU2 := zkp.u2Verification(encryptedSecretDsaKeyShare, params)
 	if !reflect.DeepEqual(expectedU2, actualU2) {
 		t.Errorf(
 			"Unexpected u2\nActual: %v\nExpected: %v",
@@ -192,19 +198,35 @@ func TestPICommitAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	eta := big.NewInt(1410)
-	w, err := paillierKey.EncryptWithR(eta, r)
+	secretDsaKeyShare := big.NewInt(1410)
+	encryptedSecretDsaKeyShare, err := paillierKey.EncryptWithR(
+		secretDsaKeyShare,
+		r,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	y := tecdsa.NewCurvePoint(curve.ScalarBaseMult(eta.Bytes()))
+	publicDsaKeyShare := tecdsa.NewCurvePoint(
+		curve.ScalarBaseMult(secretDsaKeyShare.Bytes()),
+	)
 
-	commitment, err := CommitDsaPaillierKeyRange(w.C, eta, r, y, parameters, rand.Reader)
+	commitment, err := CommitDsaPaillierKeyRange(
+		secretDsaKeyShare,
+		publicDsaKeyShare,
+		encryptedSecretDsaKeyShare,
+		r,
+		parameters,
+		rand.Reader,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !commitment.Verify(w.C, y, parameters) {
+	if !commitment.Verify(
+		encryptedSecretDsaKeyShare,
+		publicDsaKeyShare,
+		parameters,
+	) {
 		t.Fatal("Expected positive commitment verification")
 	}
 }
