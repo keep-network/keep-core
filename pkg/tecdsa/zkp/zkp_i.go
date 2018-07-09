@@ -10,8 +10,28 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa"
 )
 
-// PIi is an implementation of Gennaro's ZKP PIi proof.
-type PIi struct {
+// DsaPaillierKeyRangeProof is an implementation of Gennaro's PI_i proof for the
+// Paillier encryption scheme, as described in [GGN16], section 4.4.
+// Because of the complexity of the proof, we use the same naming for values
+// as in the paper.
+//
+// The proof states that:
+// ∃ η ∈ [-q^3, g^3] such that
+// g^η = y
+// D(w) = η
+//
+// In other words, for the Elliptic Curve of cardinality `q`, private DSA key
+// η, public DSA key y = g^η (`g` is the generator of the Elliptic Curve),
+// Paillier encryption scheme used to encrypt DSA private key `w = E(η)`, we
+// state that the private DSA key η is in range [-q^3, g^3] without revealing
+// it. We also state that `w` is Paillier-encrypted private DSA key `η`.
+//
+//     [GGN 16]: Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal
+//          DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security.
+//          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
+//          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
+//          vol 9696. Springer, Cham
+type DsaPaillierKeyRangeProof struct {
 	z  *big.Int
 	u1 *tecdsa.CurvePoint
 	u2 *big.Int
@@ -24,13 +44,13 @@ type PIi struct {
 	s3 *big.Int
 }
 
-// CommitPIi to y and w
-func CommitPIi(
+// CommitDsaPaillierKeyRange to y and w
+func CommitDsaPaillierKeyRange(
 	w, eta, r *big.Int, // TODO: w should be probably paillier.Cypher?
 	y *tecdsa.CurvePoint,
 	params *PublicParameters,
 	random io.Reader,
-) (*PIi, error) {
+) (*DsaPaillierKeyRangeProof, error) {
 	g := new(big.Int).Add(params.N, big.NewInt(1))
 
 	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil) // q^3
@@ -103,11 +123,11 @@ func CommitPIi(
 	)
 	s3 := new(big.Int).Add(new(big.Int).Mul(e, rho), gamma)
 
-	return &PIi{z, u1, u2, u3, e, s1, s2, s3}, nil
+	return &DsaPaillierKeyRangeProof{z, u1, u2, u3, e, s1, s2, s3}, nil
 }
 
 // Verify y and w commitment.
-func (zkp *PIi) Verify(
+func (zkp *DsaPaillierKeyRangeProof) Verify(
 	w *big.Int,
 	y *tecdsa.CurvePoint,
 	params *PublicParameters,
@@ -135,7 +155,7 @@ func (zkp *PIi) Verify(
 // g^alpha
 //
 // which is exactly how u1 is evaluated during the commitment phase
-func (zkp *PIi) u1Verification(
+func (zkp *DsaPaillierKeyRangeProof) u1Verification(
 	y *tecdsa.CurvePoint,
 	params *PublicParameters,
 ) *tecdsa.CurvePoint {
@@ -151,7 +171,7 @@ func (zkp *PIi) u1Verification(
 	))
 }
 
-func (zkp *PIi) u2Verification(w *big.Int, params *PublicParameters) *big.Int {
+func (zkp *DsaPaillierKeyRangeProof) u2Verification(w *big.Int, params *PublicParameters) *big.Int {
 	g := new(big.Int).Add(params.N, big.NewInt(1))
 	nSquare := new(big.Int).Exp(params.N, big.NewInt(2), nil)
 
@@ -165,7 +185,7 @@ func (zkp *PIi) u2Verification(w *big.Int, params *PublicParameters) *big.Int {
 	)
 }
 
-func (zkp *PIi) u3Verification(params *PublicParameters) *big.Int {
+func (zkp *DsaPaillierKeyRangeProof) u3Verification(params *PublicParameters) *big.Int {
 	h1s1 := discreteExp(params.h1, zkp.s1, params.NTilde)
 	h2s3 := discreteExp(params.h2, zkp.s3, params.NTilde)
 	ze := discreteExp(zkp.z, new(big.Int).Neg(zkp.e), params.NTilde)

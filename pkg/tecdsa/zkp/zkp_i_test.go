@@ -38,7 +38,7 @@ func TestPIiCommitValues(t *testing.T) {
 		secp256k1.S256().ScalarBaseMult(big.NewInt(11).Bytes()),
 	)
 
-	commitment, err := CommitPIi(w, eta, r, y, parameters, mockRandom)
+	commitment, err := CommitDsaPaillierKeyRange(w, eta, r, y, parameters, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +116,7 @@ func TestPIiCommitValues(t *testing.T) {
 }
 
 func TestPIiVerificationValues(t *testing.T) {
-	zkp := &PIi{
+	zkp := &DsaPaillierKeyRangeProof{
 		s1: big.NewInt(22),
 		s2: big.NewInt(17),
 		s3: big.NewInt(63),
@@ -198,7 +198,7 @@ func TestPICommitAndVerify(t *testing.T) {
 	}
 	y := tecdsa.NewCurvePoint(curve.ScalarBaseMult(eta.Bytes()))
 
-	commitment, err := CommitPIi(w.C, eta, r, y, parameters, rand.Reader)
+	commitment, err := CommitDsaPaillierKeyRange(w.C, eta, r, y, parameters, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
