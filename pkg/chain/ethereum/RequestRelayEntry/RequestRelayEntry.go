@@ -3,12 +3,13 @@ package main
 // Test that we call the contract and get back a value.
 
 import (
+	"flag"
 	"fmt"
 	"math/big"
 	"os"
 	"strings"
+	"sync"
 	"syscall"
-	"time"
 
 	"github.com/BruntSushi/toml"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -18,18 +19,29 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+var fn = flag.String("cfg", "testnet.toml", "Path to configuration file") // 0
+var blockReward = flag.Int("blockReward", 1, "Block Reward Value")
+var seed = flag.Int("seed", 4, "Random seed value")
+
 func main() {
+	flag.Parse()
+
+	fns := flag.Args()
+	if len(fns) != 0 {
+		fmt.Fprintf(os.Stderr, "Usage: ./RequestRelayEntry [--cfg testnet.toml] [--blockReward 1] [--seed 4]\n")
+
+		os.Exit(1)
+	}
+
 	aRun := struct {
 		blockReward int64
 		seed        int64
 	}{
-		blockReward: 1,
-		seed:        4,
+		blockReward: int64(*blockReward),
+		seed:        int64(*seed),
 	}
 
-	// FIXME - make this a command line argument.
-	fn := "./testnet.toml"
-	rcfg, err := ReadConfig(fn)
+	rcfg, err := ReadConfig(*fn)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read %s: %s\n", fn, err)
 		os.Exit(1)
@@ -65,17 +77,23 @@ func main() {
 
 	ec := hdl.ThresholdRelay() // convert to Interface interface
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	_ = ec.RequestRelayEntry(
 		big.NewInt(aRun.blockReward),
 		big.NewInt(aRun.seed),
 	).OnSuccess(func(data *event.RelayEntryRequested) {
 		fmt.Printf("%ssuccess: %s\n%s", MiscLib.ColorGreen, godebug.SVarI(data), MiscLib.ColorReset)
+		wg.Done()
 	}).OnFailure(func(err error) {
 		fmt.Printf("%serror: %s\n%s", MiscLib.ColorRed, err, MiscLib.ColorReset)
+		wg.Done()
 	})
 
-	fmt.Fprintf(os.Stderr, "Waiting for transaction to run (2 minute sleep, sorry...)...\n")
-	time.Sleep(120 * time.Second)
+	// fmt.Fprintf(os.Stderr, "Waiting for transaction to run (2 minute sleep, sorry...)...\n")
+	// time.Sleep(120 * time.Second)
+	wg.Wait()
 }
 
 // This super ugly code is because of a Go dependency loop that I have not had time to resolve.

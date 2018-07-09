@@ -189,6 +189,11 @@ func (kg *keepGroup) AddStaker(
 	)
 }
 
+// Just Do It
+func (kg *keepGroup) ResetStaker() (*types.Transaction, error) {
+	return kg.transactor.ResetStaker(kg.transactorOpts)
+}
+
 // function getStaker(uint32 _index) public view returns ( bytes32 ) {
 func (kg *keepGroup) GetStaker(index int) ([]byte, error) {
 	staker, err := kg.caller.GetStaker(kg.callerOpts, uint32(index))
