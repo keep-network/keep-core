@@ -102,6 +102,18 @@ func (n *Node) JoinGroupIfEligible(
 	}
 }
 
+func (n *Node) AddStaker(index int, staker string) error {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+
+	if len(n.stakeIDs)-1 < index {
+		// grow the array
+
+	}
+
+	return nil
+}
+
 // RegisterGroup registers that a group was successfully created by the given
 // requestID, and its group public key is groupPublicKey.
 func (n *Node) RegisterGroup(requestID *big.Int, groupPublicKey []byte) {
