@@ -66,9 +66,6 @@ func CommitDsaPaillierKeyRange(
 	params *PublicParameters,
 	random io.Reader,
 ) (*DsaPaillierKeyRangeProof, error) {
-	// TODO: move g to PublicParameters
-	g := new(big.Int).Add(params.N, big.NewInt(1))
-
 	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil)    // q^3
 	qNTilde := new(big.Int).Mul(params.q, params.NTilde)    // q * NTilde
 	q3NTilde := new(big.Int).Mul(q3, params.NTilde)         // q^3 * nTilde
@@ -107,7 +104,7 @@ func CommitDsaPaillierKeyRange(
 	))
 	u2 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(g, alpha, NPow2),
+			new(big.Int).Exp(params.G, alpha, NPow2),
 			new(big.Int).Exp(beta, params.N, NPow2),
 		),
 		NPow2,
@@ -121,9 +118,9 @@ func CommitDsaPaillierKeyRange(
 	)
 
 	digest := sum256(
-		g.Bytes(), publicDsaKeyShare.X.Bytes(), publicDsaKeyShare.Y.Bytes(),
-		encryptedSecretDsaKeyShare.C.Bytes(), z.Bytes(),
-		u1.X.Bytes(), u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
+		params.G.Bytes(), publicDsaKeyShare.X.Bytes(),
+		publicDsaKeyShare.Y.Bytes(), encryptedSecretDsaKeyShare.C.Bytes(),
+		z.Bytes(), u1.X.Bytes(), u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 	e := new(big.Int).SetBytes(digest[:])
 
@@ -204,10 +201,9 @@ func (zkp *DsaPaillierKeyRangeProof) u2Verification(
 	encryptedSecretDsaKeyShare *big.Int,
 	params *PublicParameters,
 ) *big.Int {
-	g := new(big.Int).Add(params.N, big.NewInt(1)) // TODO: move to PublicParameters
 	nSquare := new(big.Int).Exp(params.N, big.NewInt(2), nil)
 
-	gs1 := new(big.Int).Exp(g, zkp.s1, nSquare)
+	gs1 := new(big.Int).Exp(params.G, zkp.s1, nSquare)
 	s2N := new(big.Int).Exp(zkp.s2, params.N, nSquare)
 	we := discreteExp(
 		encryptedSecretDsaKeyShare,

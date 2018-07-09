@@ -25,6 +25,10 @@ type PublicParameters struct {
 	// Paillier modulus used for generating T-ECDSA key and signing.
 	N *big.Int
 
+	// Paillier base for plaintext message used during encryption.
+	// We always set it to N+1 to be compatible with `keep-network/paillier`.
+	G *big.Int
+
 	// Auxilliary RSA modulus which is the product of two safe primes.
 	// It's uniquely generated for each new instance of `PublicParameters`.
 	NTilde *big.Int
@@ -52,6 +56,8 @@ func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
+	G := new(big.Int).Add(paillierModulus, big.NewInt(1))
+
 	pTilde, qTilde, err := paillier.GenerateSafePrimes(
 		safePrimeBitLength, rand.Reader,
 	)
@@ -74,6 +80,7 @@ func GeneratePublicParameters(
 
 	return &PublicParameters{
 		N:      paillierModulus,
+		G:      G,
 		NTilde: NTilde,
 		h1:     h1,
 		h2:     h2,
