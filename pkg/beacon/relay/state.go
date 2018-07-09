@@ -109,8 +109,16 @@ func (n *Node) AddStaker(index int, staker string) error {
 	if cap(n.stakeIDs) < index {
 		// need something larger
 		newSlice := make([]string, index*2)
-		copy(newSlice, n.stakeIDs)
+
+		// copy everything that will fit before the new index
+		copy(newSlice, n.stakeIDs[:index])
+		n.stakeIDs[index] = staker
+
+		// copy the rest of the elements over
+		copy(newSlice[index+1:], n.stakeIDs[index:])
+
 		n.stakeIDs = newSlice
+		return nil
 	}
 
 	n.stakeIDs[index] = staker
