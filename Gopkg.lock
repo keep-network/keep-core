@@ -233,7 +233,7 @@
 [[projects]]
   name = "github.com/keep-network/paillier"
   packages = ["."]
-  revision = "715a2097b7232d6a5e62ae76d3ccb69b63e7d781"
+  revision = "c9c5d2df026b807d99b63f1d1518ad186e27e233"
   source = "https://github.com/keep-network/paillier"
 
 [[projects]]
@@ -771,6 +771,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9169b9e2a54c8ac6bc512cb080d1fbe8eec990d248dff4342915ef8bf45a8f72"
+  inputs-digest = "348b5331e828b80cfda4ad91d2519c466f7db3974fa020b847b215d37ee3a8df"
   solver-name = "gps-cdcl"
   solver-version = 1
