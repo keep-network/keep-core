@@ -23,7 +23,7 @@ func main() {
 
 	fns := flag.Args()
 	if len(fns) != 0 {
-		fmt.Fprintf(os.Stderr, "Usage: ./RequestRelayEntry [--cfg testnet.toml] [--blockReward 1] [--seed 4]\n")
+		fmt.Fprintf(os.Stderr, "Usage: ./GetStakerList [--cfg testnet.toml]\n")
 
 		os.Exit(1)
 	}
