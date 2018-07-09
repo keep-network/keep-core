@@ -1,11 +1,13 @@
 package zkp
 
 import (
+	"crypto/rand"
 	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/paillier"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
@@ -169,5 +171,39 @@ func TestPIiVerificationValues(t *testing.T) {
 			actualU3,
 			expectedU3,
 		)
+	}
+}
+
+func TestPICommitAndVerify(t *testing.T) {
+	curve := secp256k1.S256()
+
+	p, _ := new(big.Int).SetString("104479735358598948369258156463683391052543755432914893102752306517616376250927", 10)
+	q, _ := new(big.Int).SetString("110280671641689691092051226222060939019447720119674706500089479951904142152567", 10)
+	paillierKey := paillier.CreatePrivateKey(p, q)
+
+	parameters, err := GeneratePublicParameters(paillierKey.PublicKey.N, curve)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r, err := randomFromMultiplicativeGroup(rand.Reader, parameters.N)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	eta := big.NewInt(1410)
+	w, err := paillierKey.Encrypt(eta, rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	y := tecdsa.NewCurvePoint(curve.ScalarBaseMult(eta.Bytes()))
+
+	commitment, err := CommitPIi(w.C, eta, r, y, parameters, rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !commitment.Verify(w.C, y, parameters) {
+		t.Fatal("Expected positive commitment verification")
 	}
 }
