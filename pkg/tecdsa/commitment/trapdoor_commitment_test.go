@@ -21,7 +21,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		"negative validation - incorrect `secret`": {
 			modifySecret: func(secret *Secret) {
 				msg := []byte("top secret message2")
-				secret.secret = &msg
+				secret.message = &msg
 			},
 			modifyCommitment: nil,
 			expectedResult:   false,
@@ -59,7 +59,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			msg := []byte("top secret message")
 
 			// Generate Commitment
-			commitment, err := GenerateCommitment(&msg)
+			commitment, secret, err := GenerateCommitment(&msg)
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
@@ -69,13 +69,13 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				test.modifyCommitment(commitment)
 			}
 
-			newSecret := commitment.secret
+			newSecret := secret
 			if test.modifySecret != nil {
-				test.modifySecret(&newSecret)
+				test.modifySecret(newSecret)
 			}
 
 			// Validate Commitment
-			result := commitment.ValidateCommitment(&newSecret)
+			result := commitment.ValidateCommitment(newSecret)
 
 			// Check result
 			if result != test.expectedResult {
@@ -89,19 +89,19 @@ func TestCommitmentRandomness(t *testing.T) {
 	msg := []byte("top secret message")
 
 	// Generate Commitment 1
-	commitment1, err := GenerateCommitment(&msg)
+	commitment1, secret1, err := GenerateCommitment(&msg)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Generate Commitment 2
-	commitment2, err := GenerateCommitment(&msg)
+	commitment2, secret2, err := GenerateCommitment(&msg)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Check decommitments are unique
-	if commitment1.secret.r.Cmp(commitment2.secret.r) == 0 {
+	if secret1.r.Cmp(secret2.r) == 0 {
 		t.Fatal("both decommitment keys `r` are equal")
 	}
 

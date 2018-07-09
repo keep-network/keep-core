@@ -16,7 +16,7 @@ import (
 // a decommitment key r needed for the commitment verification.
 type Secret struct {
 	// Secret message
-	secret *[]byte
+	message *[]byte
 	// Decommitment key; used to commitment validation.
 	r *big.Int
 }
@@ -33,7 +33,6 @@ type Secret struct {
 // secret is revealed and the receiver can check the secret message against
 // the Commitment received earlier.
 type TrapdoorCommitment struct {
-	secret Secret
 	// Public key for a specific trapdoor commitment.
 	pubKey *big.Int
 	// Master trapdoor public key for the commitment family.
@@ -43,23 +42,23 @@ type TrapdoorCommitment struct {
 }
 
 // GenerateCommitment generates a Commitment for passed `secret` message.
-func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, error) {
+func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, *Secret, error) {
 	// Generate a random public key.
 	pubKey, _, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Generate a decommitment key.
 	r, _, err := bn256.RandomG1(rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Generate random point.
 	_, h, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	hash := sha256Sum(secret)
@@ -72,19 +71,20 @@ func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, error) {
 	commitment := new(bn256.G2).Add(new(bn256.G2).ScalarBaseMult(digest), new(bn256.G2).ScalarMult(he, r))
 
 	return &TrapdoorCommitment{
-		secret: Secret{
-			secret: secret,
-			r:      r,
+			pubKey:     pubKey,
+			h:          h,
+			commitment: commitment,
 		},
-		pubKey:     pubKey,
-		h:          h,
-		commitment: commitment,
-	}, nil
+		&Secret{
+			message: secret,
+			r:       r,
+		},
+		nil
 }
 
 // ValidateCommitment validates received commitment against revealed secret.
 func (tc *TrapdoorCommitment) ValidateCommitment(secret *Secret) bool {
-	hash := sha256Sum(secret.secret)
+	hash := sha256Sum(secret.message)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
 	// a = g * r
