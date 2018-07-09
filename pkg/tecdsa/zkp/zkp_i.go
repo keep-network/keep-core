@@ -26,7 +26,7 @@ type PIi struct {
 
 // CommitPIi to y and w
 func CommitPIi(
-	w, eta, r *big.Int,
+	w, eta, r *big.Int, // TODO: w should be probably paillier.Cypher?
 	y *tecdsa.CurvePoint,
 	params *PublicParameters,
 	random io.Reader,
@@ -122,11 +122,33 @@ func (zkp *PIi) Verify(
 		zkp.u3 == u3
 }
 
-func (zkp *PIi) u1Verification(y *tecdsa.CurvePoint, params *PublicParameters) *tecdsa.CurvePoint {
-	gs1x, gs1y := params.curve.ScalarBaseMult(zkp.s1.Bytes())
-	yx, yy := params.curve.ScalarMult(y.X, y.Y, new(big.Int).Neg(zkp.e).Bytes())
+// We verify whether u1 = g^s1 * y^-e
+//
+// Since:
+// s1 = e * eta + alpha
+// y = g^eta
+//
+// We can do:
+// g^s1 * y^-e =
+// g^{e * eta + alpha} * (g^{-e})^eta =
+// g^{e * eta + alpha} * g^{-e * eta} =
+// g^alpha
+//
+// which is exactly how u1 is evaluated during the commitment phase
+func (zkp *PIi) u1Verification(
+	y *tecdsa.CurvePoint,
+	params *PublicParameters,
+) *tecdsa.CurvePoint {
+	gs1x, gs1y := params.curve.ScalarBaseMult(
+		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
+	)
+	yx, yy := params.curve.ScalarMult(y.X, y.Y, zkp.e.Bytes())
 
-	return tecdsa.NewCurvePoint(params.curve.Add(gs1x, gs1y, yx, yy))
+	// For a Weierstrass elliptic curve form, the additive inverse of
+	// (x, y) is (x, -y)
+	return tecdsa.NewCurvePoint(params.curve.Add(
+		gs1x, gs1y, yx, new(big.Int).Neg(yy),
+	))
 }
 
 func (zkp *PIi) u2Verification(w *big.Int, params *PublicParameters) *big.Int {
