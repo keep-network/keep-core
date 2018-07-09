@@ -1,3 +1,5 @@
+// +build integration
+
 package main
 
 // Test that we call the contract and get back a value.

@@ -1,0 +1,9 @@
+// +build !integration
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("placeholder")
+}
