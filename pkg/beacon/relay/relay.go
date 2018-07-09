@@ -27,6 +27,7 @@ func NewNode(
 		netProvider:  netProvider,
 		blockCounter: blockCounter,
 		chainConfig:  chainConfig,
+		stakeIDs:     make([]string, 100),
 	}
 }
 

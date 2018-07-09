@@ -106,11 +106,14 @@ func (n *Node) AddStaker(index int, staker string) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	if len(n.stakeIDs)-1 < index {
-		// grow the array
-
+	if cap(n.stakeIDs) < index {
+		// need something larger
+		newSlice := make([]string, index*2)
+		copy(newSlice, n.stakeIDs)
+		n.stakeIDs = newSlice
 	}
 
+	n.stakeIDs[index] = staker
 	return nil
 }
 
