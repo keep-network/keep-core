@@ -84,8 +84,11 @@ func Initialize(
 			chainConfig,
 		)
 
-		relayChain.OnStakerAdded(func(staker *event.StakerRegistration) {
+		// Add our registration to our internal state
+		node.AddStaker(selfStake.Index, selfStake.GroupMemberID)
 
+		relayChain.OnStakerAdded(func(staker *event.StakerRegistration) {
+			node.AddStaker(staker.Index, staker.GroupMemberID)
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
