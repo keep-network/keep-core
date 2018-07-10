@@ -26,7 +26,7 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	params := &ZKPPublicParameters{
+	params := &PublicParameters{
 		N:      privateKey.N,
 		N2:     privateKey.GetNSquare(),
 		NTilde: NTilde,
@@ -39,7 +39,7 @@ func TestRoundTrip(t *testing.T) {
 		curve: secp256k1.S256(),
 	}
 
-	eta, err := rand.Int(rand.Reader, params.q)
+	secretKeyShare, err := rand.Int(rand.Reader, params.q)
 	if err != nil {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
@@ -49,29 +49,31 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c2, err := privateKey.EncryptWithR(secret, r)
+	encryptedMessageShare, err := privateKey.EncryptWithR(message, r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	c1 := new(big.Int).Exp(c2.C, eta, params.N2)
+	c1 := new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.N2)
 
 	// c3, err := params.privateKey.EncryptWithR(eta, r)
 	// if err != nil {
 	// 	t.Fatal(err)
 	// }
 
-	// c3 = (Γ^η)*(r^N) mod N2
-	c3 := new(big.Int).Mul(new(big.Int).Exp(params.G, eta, params.N2), new(big.Int).Exp(r, params.N, params.N2))
+	encryptedSecretKeyShare, err := privateKey.EncryptWithR(secretKeyShare, r)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	zkp := new(PI1)
 	// if params.N.Cmp(new(big.Int).Exp(params.q, big.NewInt(8), nil)) < 1 {
 	// 	t.Fatalf("N is not bigger than q^8")
 	// }
 
-	zkp.Commit(eta, r, c1, c2.C, c3, params)
+	zkp.Commit(secretKeyShare, c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, r, params)
 
-	if !zkp.Verify(c1, c2.C, c3, params) {
+	if !zkp.Verify(c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, params) {
 		t.Fatalf("ERROR")
 	}
 }

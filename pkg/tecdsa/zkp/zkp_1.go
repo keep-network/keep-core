@@ -49,7 +49,13 @@ type PI1 struct {
 //
 // Then the prover computes u1, u2, z, v, e, s1, s2,s3. This values will be sent
 // by the prover to the verifier.
-func (zkp *PI1) Commit(eta, r, c1, c2, c3 *big.Int, params *ZKPPublicParameters) error {
+func (zkp *PI1) Commit(secretKeyShare,
+	c1,
+	encryptedMessageShare,
+	encryptedSecretKeyShare,
+	r *big.Int,
+	params *PublicParameters,
+) error {
 	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil) // q^3
 
 	alpha, err := rand.Int(rand.Reader, q3)
@@ -75,7 +81,7 @@ func (zkp *PI1) Commit(eta, r, c1, c2, c3 *big.Int, params *ZKPPublicParameters)
 	// u_1 = ((h1)^η)*((h2)^ρ) mod N ̃
 	zkp.u1 = new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.h1, eta, params.NTilde),
+			new(big.Int).Exp(params.h1, secretKeyShare, params.NTilde),
 			new(big.Int).Exp(params.h2, rho, params.NTilde),
 		),
 		params.NTilde,
@@ -100,13 +106,13 @@ func (zkp *PI1) Commit(eta, r, c1, c2, c3 *big.Int, params *ZKPPublicParameters)
 	)
 
 	// v = (c2)^α mod N^2
-	zkp.v = new(big.Int).Exp(c2, alpha, params.N2)
+	zkp.v = new(big.Int).Exp(encryptedMessageShare, alpha, params.N2)
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
 		c1.Bytes(),
-		c2.Bytes(),
-		c3.Bytes(),
+		encryptedMessageShare.Bytes(),
+		encryptedSecretKeyShare.Bytes(),
 		zkp.z.Bytes(),
 		zkp.u1.Bytes(),
 		zkp.u2.Bytes(),
@@ -116,7 +122,7 @@ func (zkp *PI1) Commit(eta, r, c1, c2, c3 *big.Int, params *ZKPPublicParameters)
 
 	// s1 = e*η+α
 	zkp.s1 = new(big.Int).Add(
-		new(big.Int).Mul(zkp.e, eta),
+		new(big.Int).Mul(zkp.e, secretKeyShare),
 		alpha,
 	)
 
@@ -139,7 +145,11 @@ func (zkp *PI1) Commit(eta, r, c1, c2, c3 *big.Int, params *ZKPPublicParameters)
 }
 
 // Verify c1, c2, c3 commitment.
-func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
+func (zkp *PI1) Verify(c1,
+	encryptedMessageShare,
+	encryptedSecretKeyShare *big.Int,
+	params *PublicParameters,
+) bool {
 	// Check that all the values are in the correct ranges
 	if zkp.u1.CmpAbs(params.NTilde) >= 0 ||
 		zkp.u2.CmpAbs(params.NTilde) >= 0 ||
@@ -156,7 +166,7 @@ func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
 				new(big.Int).Exp(params.G, zkp.s1, params.N2),
 				new(big.Int).Exp(zkp.s2, params.N, params.N2),
 			),
-			discreteExp(c3, new(big.Int).Neg(zkp.e), params.N2),
+			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(zkp.e), params.N2),
 		),
 		params.N2,
 	)
@@ -164,7 +174,7 @@ func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
 	// v = (c2^s1)*(c1^(−e)) mod N^2
 	v := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(c2, zkp.s1, params.N2),
+			new(big.Int).Exp(encryptedMessageShare, zkp.s1, params.N2),
 			discreteExp(c1, new(big.Int).Neg(zkp.e), params.N2),
 		),
 		params.N2,
@@ -188,8 +198,8 @@ func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
 	// e = hash(c1,c2,c3,z,u1,u2,v)
 	digest := sum256(
 		c1.Bytes(),
-		c2.Bytes(),
-		c3.Bytes(),
+		encryptedMessageShare.Bytes(),
+		encryptedSecretKeyShare.Bytes(),
 		z.Bytes(),
 		u1.Bytes(),
 		u2.Bytes(),
