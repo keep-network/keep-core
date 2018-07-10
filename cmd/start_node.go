@@ -78,9 +78,7 @@ func StartNode(c *cli.Context) error {
 		return err
 	}
 
-	myIPv4Address := GetIPv4Address(provider.Addrs())
-
-	nodeHeader(c.Bool("bootstrap"), myIPv4Address, port)
+	nodeHeader(c.Bool("bootstrap"), netProvider.Addrs(), port)
 
 	chainProvider, err := ethereum.Connect(cfg.Ethereum)
 	if err != nil {
