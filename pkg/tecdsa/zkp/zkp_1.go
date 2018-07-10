@@ -7,11 +7,13 @@ import (
 )
 
 // PI1 is an implementation of Gennaro's ZKP PI_1,i proof.
+// This struct contains values computed by the prover.
 type PI1 struct {
-	z        *big.Int
-	u1x, u1y *big.Int
-	u2       *big.Int
-	u3       *big.Int
+	z *big.Int
+	v *big.Int
+
+	u1 *big.Int
+	u2 *big.Int
 
 	e *big.Int
 
