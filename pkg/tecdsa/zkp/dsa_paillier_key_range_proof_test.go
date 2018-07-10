@@ -195,8 +195,9 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 	}
 }
 
-// TestDsaPaillierKeyRangeProofCommitAndVerify is a full happy path roundtrip
-// test of the ZKP, including generating public parameters.
+// TestDsaPaillierKeyRangeProofCommitAndVerify is a full roundtrip
+// test of the ZKP, including generating public parameters, positive
+// and negative validation scenarios.
 func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 	curve := secp256k1.S256()
 
@@ -238,11 +239,61 @@ func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !commitment.Verify(
-		encryptedSecretDsaKeyShare,
-		publicDsaKeyShare,
-		parameters,
-	) {
-		t.Fatal("Expected positive commitment verification")
+	var tests = map[string]struct {
+		verify         func() bool
+		expectedResult bool
+	}{
+		"positive validation": {
+			verify: func() bool {
+				return commitment.Verify(
+					encryptedSecretDsaKeyShare,
+					publicDsaKeyShare,
+					parameters,
+				)
+			},
+			expectedResult: true,
+		},
+		"negative validation - wrong encrypted secret DSA key share": {
+			verify: func() bool {
+				wrongEncryptedSecretDsaKeyShare := &paillier.Cypher{
+					C: big.NewInt(1411),
+				}
+				return commitment.Verify(
+					wrongEncryptedSecretDsaKeyShare,
+					publicDsaKeyShare,
+					parameters,
+				)
+			},
+			expectedResult: false,
+		},
+		"negative validation - wrong public DSA key share": {
+			verify: func() bool {
+				wrongPublicDsaKeyShare := &tecdsa.CurvePoint{
+					X: big.NewInt(997),
+					Y: big.NewInt(998),
+				}
+				return commitment.Verify(
+					encryptedSecretDsaKeyShare,
+					wrongPublicDsaKeyShare,
+					parameters,
+				)
+			},
+			expectedResult: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			expectedResult := test.expectedResult
+			actualResult := test.verify()
+			if actualResult != expectedResult {
+				t.Fatalf(
+					"Expected %v from commitment validation. Got %v",
+					expectedResult,
+					actualResult,
+				)
+			}
+
+		})
 	}
 }
