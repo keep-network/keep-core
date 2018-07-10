@@ -6,7 +6,14 @@ import (
 	"math/big"
 )
 
-// PI1 is an implementation of Gennaro's ZKP PI_1,i proof.
+// PI1 is an implementation of Gennaro's PI_1,i proof for the
+// Paillier encryption scheme, as described in [GGN16], section 4.4.
+//
+// The proof states that:
+// η (eta) ∈ [−q3, q3] such that:
+//   D(c1) = η*D(c2)
+//   D(c3) = η
+//
 // This struct contains values computed by the prover.
 type PI1 struct {
 	z *big.Int
@@ -22,10 +29,14 @@ type PI1 struct {
 	s3 *big.Int
 }
 
-// Commit to the Proof PI_1,i, which states that there exists
-// η (eta) ∈ [−q3, q3] such that:
-//   D(c1) = η*D(c2)
-//   D(c3) = η
+// Commit  to the Proof PI_1,i
+//
+// Because of the complexity of the proof, we use the same naming for values
+// as in the paper in most cases. We do an exception for function parameters:
+// - `η` in the paper represents DSA secret key share,
+// - `c1` in the paper represents ...... (`c2 = η ×E E(xi) = E(η*x)`), TODO Check name for this one
+// - `c2` in the paper represents encrypted secret message share,
+// - `c3` in the paper represents encrypted DSA secret key share (`c3 = E(η)`),
 //
 // We assume the Prover knows the value r ∈ Z_N∗ used to encrypt η (eta)
 // such that c3 = (Γ^η)*(r^N) mod N2.
