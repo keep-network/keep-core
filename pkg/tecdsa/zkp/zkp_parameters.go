@@ -25,6 +25,9 @@ type PublicParameters struct {
 	// Paillier modulus used for generating T-ECDSA key and signing.
 	N *big.Int
 
+	// Square of paillier modulus
+	NSquare *big.Int
+
 	// Paillier base for plaintext message used during encryption.
 	// We always set it to N+1 to be compatible with `keep-network/paillier`.
 	G *big.Int
@@ -79,12 +82,13 @@ func GeneratePublicParameters(
 	}
 
 	return &PublicParameters{
-		N:      paillierModulus,
-		G:      G,
-		NTilde: NTilde,
-		h1:     h1,
-		h2:     h2,
-		q:      curve.Params().N,
-		curve:  curve,
+		N:       paillierModulus,
+		NSquare: new(big.Int).Exp(paillierModulus, big.NewInt(2), nil),
+		G:       G,
+		NTilde:  NTilde,
+		h1:      h1,
+		h2:      h2,
+		q:       curve.Params().N,
+		curve:   curve,
 	}, nil
 }

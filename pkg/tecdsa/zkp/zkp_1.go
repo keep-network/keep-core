@@ -99,14 +99,14 @@ func (zkp *PI1) Commit(secretKeyShare,
 	// z = ((Γ)^α)*((β)^N) mod N^2
 	zkp.z = new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.G, alpha, params.N2),
-			new(big.Int).Exp(beta, params.N, params.N2),
+			new(big.Int).Exp(params.G, alpha, params.NSquare),
+			new(big.Int).Exp(beta, params.N, params.NSquare),
 		),
-		params.N2,
+		params.NSquare,
 	)
 
 	// v = (c2)^α mod N^2
-	zkp.v = new(big.Int).Exp(encryptedMessageShare, alpha, params.N2)
+	zkp.v = new(big.Int).Exp(encryptedMessageShare, alpha, params.NSquare)
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
@@ -153,8 +153,8 @@ func (zkp *PI1) Verify(c1,
 	// Check that all the values are in the correct ranges
 	if zkp.u1.CmpAbs(params.NTilde) >= 0 ||
 		zkp.u2.CmpAbs(params.NTilde) >= 0 ||
-		zkp.z.CmpAbs(params.N2) >= 0 ||
-		zkp.v.CmpAbs(params.N2) >= 0 ||
+		zkp.z.CmpAbs(params.NSquare) >= 0 ||
+		zkp.v.CmpAbs(params.NSquare) >= 0 ||
 		zkp.s2.CmpAbs(params.N) >= 0 {
 		return false
 	}
@@ -163,21 +163,21 @@ func (zkp *PI1) Verify(c1,
 	z := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(params.G, zkp.s1, params.N2),
-				new(big.Int).Exp(zkp.s2, params.N, params.N2),
+				new(big.Int).Exp(params.G, zkp.s1, params.NSquare),
+				new(big.Int).Exp(zkp.s2, params.N, params.NSquare),
 			),
-			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(zkp.e), params.N2),
+			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(zkp.e), params.NSquare),
 		),
-		params.N2,
+		params.NSquare,
 	)
 
 	// v = (c2^s1)*(c1^(−e)) mod N^2
 	v := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(encryptedMessageShare, zkp.s1, params.N2),
-			discreteExp(c1, new(big.Int).Neg(zkp.e), params.N2),
+			new(big.Int).Exp(encryptedMessageShare, zkp.s1, params.NSquare),
+			discreteExp(c1, new(big.Int).Neg(zkp.e), params.NSquare),
 		),
-		params.N2,
+		params.NSquare,
 	)
 
 	// u1 was calculated by the prover

@@ -27,10 +27,10 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	params := &PublicParameters{
-		N:      privateKey.N,
-		N2:     privateKey.GetNSquare(),
-		NTilde: NTilde,
-		G:      new(big.Int).Add(privateKey.N, big.NewInt(1)),
+		N:       privateKey.N,
+		NSquare: privateKey.GetNSquare(),
+		NTilde:  NTilde,
+		G:       new(big.Int).Add(privateKey.N, big.NewInt(1)),
 
 		h1: h1,
 		h2: h2,
@@ -54,7 +54,7 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c1 := new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.N2)
+	c1 := new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.NSquare)
 
 	// c3, err := params.privateKey.EncryptWithR(eta, r)
 	// if err != nil {
