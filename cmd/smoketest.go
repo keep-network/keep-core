@@ -67,7 +67,13 @@ func SmokeTest(c *cli.Context) error {
 		dkg.Init(channel)
 
 		go func(i int) {
-			member, err := dkg.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
+			member, err := dkg.ExecuteDKG(
+				i+1,
+				chainCounter,
+				channel,
+				beaconConfig.GroupSize,
+				beaconConfig.Threshold,
+			)
 			if err != nil {
 				panic(fmt.Sprintf("Failed to run DKG [%v].", err))
 			}

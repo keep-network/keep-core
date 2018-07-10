@@ -29,13 +29,11 @@ type provider struct {
 	channelManagerMutex sync.Mutex
 	channelManagr       *channelManager
 
-	host    host.Host
-	routing routing.IpfsRouting
-	addrs []ma.Multiaddr
+	identity *identity
+	host     host.Host
+	routing  routing.IpfsRouting
+	addrs    []ma.Multiaddr
 }
-
-var ListenAddrs []ma.Multiaddr
-
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
@@ -47,10 +45,15 @@ func (p *provider) Type() string {
 	return "libp2p"
 }
 
+func (p *provider) ID() net.TransportIdentifier {
+	return networkIdentity(p.identity.id)
+}
+
 func (p *provider) Addrs() []ma.Multiaddr {
 	return p.addrs
 }
 
+// Config defines the configuration for the libp2p network provider.
 type Config struct {
 	Peers []string
 	Port  int
@@ -60,6 +63,12 @@ type Config struct {
 	identity    *identity
 }
 
+// Connect connects to a libp2p network based on the provided config. The
+// connection is managed in part by the passed context, and provides access to
+// the functionality specified in the net.Provider interface.
+//
+// An error is returned if any part of the connection or bootstrap process
+// fails.
 func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 	host, identity, err := discoverAndListen(ctx, config)
 	if err != nil {
@@ -75,6 +84,7 @@ func Connect(ctx context.Context, config *Config) (net.Provider, error) {
 
 	provider := &provider{
 		channelManagr: cm,
+		identity:      identity,
 		host:          rhost.Wrap(host, router),
 		routing:       router,
 		addrs:         host.Addrs(),

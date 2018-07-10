@@ -27,6 +27,10 @@ type Request struct {
 	Seed        *big.Int
 }
 
+func (r Request) PreviousEntry() []byte {
+	return r.previousEntry.Value[:]
+}
+
 // GroupRegistration represents a registered group in the threshold relay with a
 // public key, that is considered active at ActivationBlockHeight, and was
 // spawned by the relay request with id, RequestID.
