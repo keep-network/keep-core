@@ -185,7 +185,7 @@ func (zkp *DsaPaillierKeyRangeProof) u1Verification(
 	params *PublicParameters,
 ) *tecdsa.CurvePoint {
 	gs1x, gs1y := params.curve.ScalarBaseMult(
-		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
+		new(big.Int).Mod(zkp.s1, params.curve.Params().N).Bytes(),
 	)
 	yx, yy := params.curve.ScalarMult(
 		publicDsaKeyShare.X, publicDsaKeyShare.Y, zkp.e.Bytes(),
