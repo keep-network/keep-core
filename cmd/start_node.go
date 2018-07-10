@@ -3,9 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/beacon"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
@@ -50,7 +51,6 @@ func StartNode(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	//myIPv4Address := GetIPv4Address()
 	var port int
 	if c.Int("port") > 0 {
 		port = c.Int("port")
@@ -69,7 +69,7 @@ func StartNode(c *cli.Context) error {
 	}
 
 	ctx := context.Background()
-	provider, err := libp2p.Connect(ctx, &libp2p.Config{
+	netProvider, err := libp2p.Connect(ctx, &libp2p.Config{
 		Port:  port,
 		Peers: bootstrapURLs,
 		Seed:  seed,
@@ -82,61 +82,32 @@ func StartNode(c *cli.Context) error {
 
 	nodeHeader(c.Bool("bootstrap"), myIPv4Address, port)
 
-	broadcastChannel, err := provider.ChannelFor(broadcastChannelName)
+	chainProvider, err := ethereum.Connect(cfg.Ethereum)
 	if err != nil {
-		return err
+		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler  (
-		func() net.TaggedUnmarshaler { return &testMessage{} },
-	); err != nil {
-		return err
+	blockCounter, err := chainProvider.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("error initializing blockcounter: [%v]", err)
 	}
 
-	go broadcastMessages(ctx, broadcastParams{port:port, ipaddr: myIPv4Address, bcastChan:broadcastChannel})
-
-	recvChan := make(chan net.Message)
-
-	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		fmt.Printf("got %s\n", msg.Payload())
-		recvChan <- msg
-		return nil
-	}); err != nil {
-		return err
+	err = beacon.Initialize(
+		ctx,
+		chainProvider.ThresholdRelay(),
+		blockCounter,
+		netProvider,
+	)
+	if err != nil {
+		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	go receiveMessage(ctx, recvParams{port: port, ipaddr: myIPv4Address, recvChan: recvChan})
-
-	select {}
-}
-
-
-func broadcastMessages(ctx context.Context, params broadcastParams)  {
-	t := time.NewTimer(1) // first tick is immediate
-	defer t.Stop()
-	for {
-		select {
-		case <-t.C:
-			if err := params.bcastChan.Send(
-				&testMessage{Payload: fmt.Sprintf("%s from %s on port %d", sampleText, params.ipaddr, params.port)},
-			); err != nil {
-				return
-			}
-			t.Reset(resetBroadcastTimerSec * time.Second)
-		case <-ctx.Done():
-			return
+	select {
+	case <-ctx.Done():
+		if err != nil {
+			return err
 		}
-	}
-}
 
-func receiveMessage(ctx context.Context, params recvParams) {
-	for {
-		select {
-		case msg := <-params.recvChan:
-			testPayload := msg.Payload().(*testMessage)
-			fmt.Printf("%s:%d read message: %+v\n", params.ipaddr, params.port, testPayload)
-		case <-ctx.Done():
-			return
-		}
+		return fmt.Errorf("uh-oh, we went boom boom for no reason")
 	}
 }
