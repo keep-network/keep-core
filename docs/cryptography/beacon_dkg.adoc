@@ -22,334 +22,41 @@ is defined.
 
 toc::[]
 
-== Details+Rationale
+include::beacon_dkg_terms.adoc[]
 
-=== Message delivery
-
-==== Broadcast channel
-
-Every group member in phase _p_ can safely assume
-every non-inactive group member has seen
-all messages broadcast within _t~p~_ after the beginning of phase _p_.
-
-All messages broadcast by _P~i~_ are assumed to be signed with _X~i~_.
-
-A message is malformed if it cannot be parsed and validated
-as the message required in a particular phase of the protocol.
-
-The implementation details of the broadcast channel
-are currently out of scope for this document.
-
-===== Assumptions and implications
-
-The broadcast channel is assumed to give all participants
-the same view of the world,
-and deliver all messages from non-inactive participants
-within a time that is less than the applicable time limit for each phase.
-
-If these assumptions don't hold, certain attacks become possible.
-For example, if a message from _P~i~_
-reaches honest participant _P~j~_ but not _P~k~_,
-their sets of inactive participants _IA~Pj~_ and _IA~Pk~_ will differ.
-This will make them vote for different results,
-which will prevent quorum from being reached on _full verification_,
-while on _escalating votes_ a coordinating adversary
-could make its preferred incorrect result win the vote.
-To protect against the latter,
-_escalating votes_ assumes a null result when any single result is opposed
-by _f~max~ + 1_ participants as it means that the honest votes are split.
-
-=== Result format
-
-The result of the DKG protocol can be either a success or a failure.
-
-Success means the DKG protocol finished with at most _f~fail~_ participants
-misbehaving or dropping offline during the execution of the protocol,
-and the group of the remaining honest participants _G~final~_
-should be added to the signing groups for the threshold relay.
-
-Failure means that the group creation could not finish, due to either
-the number of (inactive + disqualified) participants exceeding _f~fail~_,
-or the presented results being disputed
-in a way where the correct outcome cannot be ascertained.
-
-[source, haskell]
-----
-data Result = NoFaultFailure
-            | FailureDQ { disqualified :: Array Bool }
-            | PerfectSuccess { pubkey :: BeaconPubkey }
-            | SuccessIA { pubkey :: BeaconPubkey
-                        , inactive :: Array Bool }
-            | SuccessDQ { pubkey :: BeaconPubkey
-                        , disqualified :: Array Bool }
-            | MixedSuccess { pubkey :: BeaconPubkey
-                           , inactive :: Array Bool
-                           , disqualified :: Array Bool }
-----
-
-For a reasonably compact representation,
-we can use the first byte of the result to encode not only success/failure,
-but also whether there were inactive or disqualified participants.
-
-The inactive and disqualified participants are listed
-in one-indexed bit arrays where the __i__th bit being set means
-_P~i~_ is in the corresponding set.
-
-WARNING: One-indexing is a risk factor for off-by-one errors in the code.
-Using zero-indexed arrays with the first bit unset
-would instead move the risk into the length calculations.
-
-If the __i__th bit is set in both `inactive` and `disqualified`,
-the result message can either be deemed invalid
-or have disqualification take precedence.
-
-The maximum length of a result message is _1 + |BeaconPubkey| + n/4_ bytes.
-
-(For an unreasonably compact representation we could use ternary in trees
-to represent only the indexes of participants who were in _IA_ or _DQ_.
-In theory this would save space almost every time,
-as the longest message (_MixedSuccess_) may only contain
-1/4 of participants in either of them.
-A less ridiculous ternary encoding would be squeezing 5 trits into 1 byte
-between 0-242, using 8 bytes where binary encoding would use 10.
-These trytes could be further compressed by prefixing them with bytes
-encoding which trytes of the entire array contain any nonzero values,
-saving a small amount of space in most cases.
-In practice there is no way it would be worth it,
-especially given the reputation of ternary in this industry.)
-
-=== Dispute resolution
-
-Given that the protocol is performed off-chain,
-participants may submit incorrect results
-in an attempt to gain advantage.
-By relying on the honest majority assumption,
-this can be mitigated by having participants vote on results.
-
-Voting on results means that only votes need to be counted on-chain;
-validating everything else can be offloaded onto the honest majority.
-This has significant cost advantages as _O(n^2^)_ blockchain operations,
-including _O(n)_ transactions and up to _O(n^2^)_ elliptic curve operations,
-can be replaced with simply _O(n)_ transactions of mostly constant size,
-or a single transaction with _O(n)_ elliptic curve operations.
-
-There are two main ways this voting can be performed:
-either by members signing valid results, which are then verified on-chain,
-or by designated members being eligible to submit a result
-which may be challenged by others if they consider it incorrect.
-
-==== Full verification
-
-The _full verification_ technique of voting is simple.
-The designated eligible submitter _P~sub~_ publishes the correct result
-which is then checked by the contract to contain at least _f~max~ + 1_
-valid signatures from unique members of _G_.
-
-This technique requires fewer transactions and is less complex to implement,
-but bears a constant cost as _O(n)_ signatures must be validated on-chain
-upon every group creation.
-Assuming for the sake of example _n = 201_ and _f~max~ = 100_,
-and that `ecrecover = 3000 gas` dominates the transaction fees,
-the cost of full verification would be constant on the order of 325,000 gas.
-
-This also sets a hard limit on the group size of _n < gasLimit / 3000_,
-but in practice this would only happen with impractically large groups
-(currently more than 2,000 participants).
-
-It is easy to see why _full verification_ would be correct:
-if _f~max~_ is the largest number of malicious participants,
-requiring _f~max~ + 1_ signatures means that any result accepted by the system
-must have at least one honest participant supporting it.
-
-==== Escalating votes
-
-As an alternative to the above,
-_escalating votes_ is a protocol where a result is submitted,
-and accepted if it is not challenged within a specified time limit.
-If multiple results are presented,
-the participants will proceed to submit votes on the results
-iff their preferred result is not in the lead,
-or their vote would break a tie.
-After a certain time limit has elapsed since the last vote,
-a confirmation request transaction may be presented by anybody,
-and the result with the highest number of supporting votes is accepted.
-
-The security of this scheme is less obvious,
-but follows from the honest majority assumption:
-since at least _f~max~ + 1_ honest players are online at the voting stage,
-for any amount of adversary votes _0 < V~m~<= f~max~_
-there will be _V~m~ + 1_ honest participants
-who will outvote the malicious players
-(proof by induction).
-
-This scheme is only suitable for situations where _n >= 2 * f~max~ + 1_,
-due to the reliance on the honest majority assumption.
-If the majority of participants is dishonest,
-the plurality result may be incorrect.
-
-In the worst-case scenario escalating votes will cost
-_(f~max~ + 2) * 21000_ gas to the honest participants,
-or around 2.15 million gas.
-However, the practical cost of using escalating votes would be variable
-and would be expected to be significantly lower most of the time.
-
-Given that a rational adversary who cannot break the honest majority assumption
-will expect to inevitably lose the escalating vote,
-and the cost of the voting is symmetrical
-(submitting one vote costs approximately 21,000 gas,
-so the malicious players will pay _V~m~ * 21000_ gas
-while honest players will pay _(V~m~ + 2) * 21000_ gas in total;
-this means the honest players will always pay exactly
-42,000 gas more than the malicious players regardless of the value of _V~m~_),
-one would expect the escalating votes to usually go unchallenged.
-
-In the example scenario, escalating votes is cheaper than full verification
-if the average number of votes supporting the highest-voted incorrect result
-is less than 13 out of 200 participants,
-or alternatively if the worst-case scenario occurs at most 1/8 the time.
-
-=== Misbehavior penalties
-
-TBD
-
-== Terms
-
-.Global constants
-|===
-|Variable |Meaning
-
-|_n = 2f~max~ + 1 = 4f~fail~ + 1_
-|Number of nodes in a group
-
-|_f~max~ = (n - 1)/2_
-|Threshold of maximum malicious nodes in a group
-
-|_f~fail~ = f~max~/2 = (n - 1)/4_
-|Threshold of inactive or misbehaving nodes
-beyond which the DKG does not finish
-|===
-
-.Time limits
-|===
-|Variable |Meaning
-|_t~dkg~_
-|Time limit for the distributed key generation to finish
-and _P~1~_ to submit the result
-
-|_t~step~_
-|Time limit after which
-the next participant in line
-becomes eligible to submit the result
-
-|_t~conflict~_
-|Time limit after which
-any disputes over the correct result are assumed to be resolved,
-with the plurality being honest
-|===
-
-.Values at the time of group creation
-|===
-|Variable |Meaning
-|_V~i~_
-|__i__th output of the random beacon
-
-|_N_
-|The set of all stakers at the time of _V~i~_
-
-|_G_
-|The candidate group generated from _V~i~_ and _N_
-
-|_P~i~_
-|__i__th node in _G_ based on the group candidate selection algorithm
-|===
-
-.Values in the DKG protocol
-|===
-|Variable |Meaning
-|_IA~p~_
-|The set of nodes in _G_ that first failed to broadcast a required message within
-a specified time limit in phase _p_ and were thus added to the set of inactive
-nodes after that phase
-
-|_IA = IA~1~ + IA~2~ + ..._
-|The set of inactive nodes in _G_ (nodes that failed to broadcast a required
-message within a specified time limit during the DKG)
-
-|_DQ~p~_
-|The set of nodes in _G_ that were disqualified in phase _p_ for provably and
-attributably violating the protocol
-
-|_DQ = DQ~1~ + DQ~2~ + ..._
-|The set of all disqualified nodes in _G_
-
-|_G~p~ = G~p-1~ - IA~p-1~ - DQ~p-1~_
-|The set of nodes in _G_ that were active and well-behaved at the
-beginning of phase _p_ (_G~1~ = G_)
-
-|_G' = G - IA - DQ_
-|The successfully created group after removal of inactive
-and misbehaving nodes
-|===
-
-.Keys
-|===
-|Variable |Meaning
-|_X~i~_
-|Long-term ECDSA private key of _P~i~_
-
-|_Y~i~_
-|Long-term ECDSA public key of _P~i~_
-
-|_X~ij~_
-|Ephemeral ECDH private key of _P~i~_ for the purpose of encrypted communication
-with _P~j~_
-
-|_Y~ij~_
-|Ephemeral ECDH public key of _P~i~_ for the purpose of encrypted communication
-with _P~j~_
-
-|_K~ij~ = K~ji~ = ECDH(X~ij~, Y~ji~)_
-|Symmetric key generated by _P~i~_ for encrypting and decrypting communications
-with _P~j~_
-
-|_X_
-|The (virtual) private key corresponding to the group _G'_
-
-|_Y_
-|The public key corresponding to the group _G'_
-|===
+include::beacon_dkg_concepts.adoc[]
 
 
 == Protocol
 
-Input: _V~i~, N_
+Input: _V~i~, S_
 
 Output: one of
 
-* Successfully generated group _G'_ including
-** public key _Y_ of _G'_
+* Successfully generated group _G_ including
+** public key _Y_ of _G_
 ** lists of absent and disqualified nodes _IA_ and _DQ_
 * Failure to generate a valid group including
 ** list of disqualified nodes _DQ_
 
-The group generation protocol selects a new candidate group _G_ from _N_
+The group generation protocol selects a new candidate group _P_ from _S_
 and runs a distributed key generation (DKG) protocol
 to create a threshold signature public key _Y_ for the group,
 to be used in the random beacon.
 
 After a successful execution of the protocol,
-_G'_ will be the group of nodes
+_G_ will be the group of nodes
 that may participate in the random beacon signing,
 having been neither inactive or misbehaving during the DKG.
 
-Inactive nodes will be removed from _G'_
+Inactive nodes will be removed from _G_
 and not be eligible for the rewards
 from participating in the random beacon
-by contributing to the signature _v~j~_
-should _G'_ be chosen as the group to produce
+by contributing to the signature _V~j~_
+should _G_ be chosen as the group to produce
 the __j__th random number from the beacon.
 
-Disqualified nodes will be removed from _G'_
+Disqualified nodes will be removed from _G_
 and their stake will be slashed in punishment
 for provably and attributably acting in breach of the DKG protocol.
 
@@ -379,13 +86,13 @@ Nodes that broadcast a malformed message may be added to _IA~p~_ or _DQ~p~_.
 
 To ensure integrity in later parts of the DKG protocol,
 we will require every _P~i~_ to generate
-an ephemeral ECDH keypair _(X~ij~, Y~ij~)_ for every other member _P~j~_ in _G_.
-These will be broadcast in _phase 1_.
+an ephemeral ECDH keypair _(x~ij~, y~ij~)_ for every other member _P~j~_ in _G_.
+These will be broadcast in phase 1.
 
 Registering the ephemeral keys on-chain is not required
 if the broadcast channel assumption holds,
 and all honest participants agree on the keys
-published by each participant in _phase 1_.
+published by each participant in phase 1.
 
 [source, python]
 ----
@@ -397,7 +104,7 @@ published by each participant in _phase 1_.
 
 t_init = getCurrentBlockHeight()
 
-for P_j in G, P_j /= P_i:
+for P_j in P, P_j /= P_i:
   (X_ij, Y_ij) = genEcdhKeypair()
 
 [X_i1, X_i2, ... X_iN] # <2>
@@ -409,14 +116,14 @@ for P_j in G, P_j /= P_i:
 [Y_i1, Y_i2, ... Y_iN]
 ----
 
-<1> Identifiers of participants in candidate group _G_
-<2> Private keys for communicating with other participants in _G_
-<3> Public keys for communicating with other participants in _G_
+<1> Identifiers of participants in candidate group _P_
+<2> Private keys for communicating with other participants in _P_
+<3> Public keys for communicating with other participants in _P_
 
 ==== Phase 2. Ephemeral ECDH
 
-Every node in _G_ has now published a valid list of ephemeral ECDH pubkeys.
-_P~i~_ will perform ECDH with every _P~j~_ in _G_ to create _K~ij~_.
+Every node in _P_ has now published a valid list of ephemeral ECDH pubkeys.
+_P~i~_ will perform ECDH with every _P~j~_ in _P_ to create _k~ij~_.
 
 [source, python]
 ----
@@ -432,7 +139,7 @@ _P~i~_ will perform ECDH with every _P~j~_ in _G_ to create _K~ij~_.
 (G_2, IA_1, DQ_1) = checkBroadcast(1, G_1) # <2>
 
 for P_j in G_2:
-   K_ij = ecdh(X_ij, Y_ji)
+   k_ij = ecdh(X_ij, Y_ji)
 ----
 
 <1> Public keys of all other participants in _G_
@@ -446,7 +153,7 @@ can be used for encrypted and attributable communications over the broadcast
 channel. The Pedersen-VSS phase of the GJKR DKG algorithm can commence.
 
 Create two polynomials _f~i~(z)_ and _g~i~(z)_ of degree _T_ and calculate
-other playersg shares as points on these polynomials. Additionally, calculate
+other players' shares as points on these polynomials. Additionally, calculate
 Pedersen commitments to the coefficients of _f~i~(z)_ using the coefficients
 of _g~i~(z)_.
 
@@ -484,9 +191,9 @@ commitments_i =
 encryptedShares_i =
   for j in G_3:
     s_ij = f_i(j) mod q
-    sg_ij = g_i(j) mod q
+    t_ij = g_i(j) mod q
 
-    E_ij = encrypt(K_ij, (s_ij, sg_ij)) # <3>
+    E_ij = encrypt(K_ij, (s_ij, t_ij)) # <3>
 
 # Broadcast:
 
@@ -520,14 +227,14 @@ complaints_Ai = []
 for j in G_4:
   E_ji = encryptedShares_j[i]
 
-  (s_ji, sg_ji) = decrypt(K_ij, E_ji)
+  (s_ji, t_ji) = decrypt(K_ij, E_ji)
 
   C_prod = product(
     for k in [0..T]:
       commitments_j[k] ^ (i^k)
   ) mod p
 
-  if g^s_ji * h^sg_ji /= C_prod:
+  if g^s_ji * h^t_ji /= C_prod:
     complaints_i += X_ij # <<1>>
 
 # Broadcast:
@@ -569,14 +276,14 @@ for c in complaints_A:
 
   K_jm = ecdh(X_jm, Y_mj)
 
-  (s_mj, sg_mj) = decrypt(K_jm, E_mj)
+  (s_mj, t_mj) = decrypt(K_jm, E_mj)
 
   C_prod = product(
     for k in [0..T]:
       C_jk ^ (m^k)
   ) mod p
 
-  if g^s_mj * h^sg_mj = C_prod: # <1>
+  if g^s_mj * h^t_mj = C_prod: # <1>
     DQ_5 += P_j
   else:
     DQ_5 += P_m
@@ -604,7 +311,7 @@ x_i = sum(
 
 x'_i = sum(
   for j in G_6:
-    sg_ji
+    t_ji
 ) mod q
 ----
 
@@ -664,7 +371,7 @@ As in Phase 5, but with the validation formula from Phase 8.
 It should be noted that the symmetric nature of the encryption
 allows the parties to also decrypt _E~jm~_ and not just _E~mj~_.
 This is not very significant though,
-as even the publication of only the misbehaving participantsg shares
+as even the publication of only the misbehaving participants' shares
 would reduce the security margin excessively
 if a large fraction of _G_ were to misbehave.
 By setting the threshold for group creation failure at _f~max~/2_
@@ -691,7 +398,7 @@ for c in complaints_B:
 
   K_jm = ecdh(X_jm, Y_mj)
 
-  (s_mj, sg_mj) = decrypt(K_jm, E_mj)
+  (s_mj, t_mj) = decrypt(K_jm, E_mj)
 
   A_prod = product(
     for k in [0..T]:
@@ -748,7 +455,7 @@ for m in (G_6 - G_11): # <1>
 
     K_jm = ecdh(X_jm, Y_mj)
 
-    (s_mj, sg_mj) = decrypt(K_jm, E_mj)
+    (s_mj, t_mj) = decrypt(K_jm, E_mj)
 
   ss_m = take(T + 1, [s_m1, ... , s_mN])
 
@@ -795,10 +502,10 @@ Let _DQ = DQ~1~ + DQ~2~ + ... + DQ~10~_
 
 Player _P~1~_ is the participant designated to submit the result on-chain.
 However, if _P~1~_ does not submit a transaction
-within _t~dkg~_ blocks of starting the key generation protocol,
+within _T~dkg~_ blocks of starting the key generation protocol,
 _P~2~_ becomes eligible to submit the public key.
-After _t~dkg~ + t~step~_ blocks, _P~3~_ becomes eligible,
-after _t~dkg~ + 2 * t~step~_ blocks _P~4~_, and so on.
+After _T~dkg~ + T~step~_ blocks, _P~3~_ becomes eligible,
+after _T~dkg~ + 2 * T~step~_ blocks _P~4~_, and so on.
 
 When _P~j~_ submits the result, players _P~k~ | k < j_ will face a small
 penalty for being late, while _P~j~_ will receive the submission reward.
@@ -817,17 +524,17 @@ resultPublished = False
 finished = False
 
 while not resultPublished:
-  t_now = getCurrentBlockHeight()
+  T_now = getCurrentBlockHeight()
 
-  # using t_init from phase 1
-  t_elapsed = t_now - t_init
+  # using T_init from phase 1
+  T_elapsed = T_now - T_init
 
   # determine highest index j eligible to submit
-  if t_elapsed <= t_dkg:
+  if T_elapsed <= T_dkg:
     j = 1
   else:
-    t_over = t_elapsed - t_dkg
-    j = 1 + ceiling(t_over / t_step)
+    T_over = T_elapsed - T_dkg
+    j = 1 + ceiling(T_over / T_step)
 
   if j >= i:
     broadcast(correctResult)
@@ -840,7 +547,7 @@ while not resultPublished:
 ==== Phase 14: Result conflict resolution
 
 Because of the honest majority assumption, we can expect
-a result supported by at least _f~max~ + 1_ participants to be correct.
+a result supported by at least _H_ participants to be correct.
 
 If any participant disputes a result submitted on-chain, they can submit a
 different one.
@@ -855,12 +562,12 @@ Any participant can only vote for one submitted result, by submitting it or
 publishing a support message for it.
 
 Because of the available honest majority assumption, we can expect that any
-result that is not at the lead after _t~conflict~_ time has elapsed has
+result that is not at the lead after _T~conflict~_ time has elapsed has
 acquired its maximum number of signatures it would be able to receive, and
 thus the result receiving the plurality of support is the correct one.
 
 An exception to this is if the total number of signatures supporting all other
-submitted results is higher than _f~max~_, in which case the result is declared a
+submitted results is higher than _M~max~_, in which case the result is declared a
 failure without disqualifications.
 
 [source, python]
@@ -869,10 +576,10 @@ while resultPublished and not finished:
   allResults = getSubmissions()
   leadResult = allResults.mostVotes
 
-  t_now = getCurrentBlockHeight()
-  t_first = allResults.earliest.submitTime
+  T_now = getCurrentBlockHeight()
+  T_first = allResults.earliest.submitTime
 
-  if t_now > t_first + t_conflict or leadResult.votes > f_max:
+  if T_now > T_first + T_conflict or leadResult.votes > M_max:
     finished = True
 
   elif correctResult = leadResult or alreadySubmitted:
@@ -903,14 +610,14 @@ submissionVotes = Map.empty()
 
 
 def eligibleSubmitter(P_i):
-    t_now = getCurrentBlockHeight()
-    t_elapsed = t_now - t_init
+    T_now = getCurrentBlockHeight()
+    T_elapsed = T_now - T_init
 
     i = P_i.index
 
     if i == 1:
         True
-    elif t_elapsed >= t_dkg + (i-2) * t_step:
+    elif T_elapsed >= T_dkg + (i-2) * T_step:
         True
     else:
         False
