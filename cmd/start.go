@@ -44,8 +44,9 @@ func init() {
 	}
 }
 
-// StartNode starts a node; if it's not a bootstrap node it will get the Node.URLs from the config file
-func StartNode(c *cli.Context) error {
+// Start starts a node; if it's not a bootstrap node it will get the Node.URLs
+// from the config file
+func Start(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)

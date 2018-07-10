@@ -75,7 +75,7 @@ func main() {
        --port                  Port this node will be listening on
 `,
 			Description: "starts the Keep client in the foreground",
-			Action:      cmd.StartNode,
+			Action:      cmd.Start,
 			Flags:       cmd.StartFlags,
 		},
 		{
