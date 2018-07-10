@@ -145,13 +145,7 @@ func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
 				new(big.Int).Exp(params.G, zkp.s1, params.N2),
 				new(big.Int).Exp(zkp.s2, params.N, params.N2),
 			),
-			// Exp function doesn't support negative exponential
-			// for y < 0: x**y mod m == (x**(-1))**|y| mod m
-			new(big.Int).Exp(
-				new(big.Int).ModInverse(c3, params.N2),
-				new(big.Int).Abs(zkp.e),
-				params.N2,
-			),
+			discreteExp(c3, new(big.Int).Neg(zkp.e), params.N2),
 		),
 		params.N2,
 	)
@@ -160,13 +154,7 @@ func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
 	v := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(c2, zkp.s1, params.N2),
-			// Exp function doesn't support negative exponential
-			// for y < 0: x**y mod m == (x**(-1))**|y| mod m
-			new(big.Int).Exp(
-				new(big.Int).ModInverse(c1, params.N2),
-				new(big.Int).Abs(zkp.e),
-				params.N2,
-			),
+			discreteExp(c1, new(big.Int).Neg(zkp.e), params.N2),
 		),
 		params.N2,
 	)
@@ -181,13 +169,7 @@ func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
 				new(big.Int).Exp(params.h1, zkp.s1, params.NTilde),
 				new(big.Int).Exp(params.h2, zkp.s3, params.NTilde),
 			),
-			// Exp function doesn't support negative exponential
-			// for y < 0: x**y mod m == (x**(-1))**|y| mod m
-			new(big.Int).Exp(
-				new(big.Int).ModInverse(u1, params.NTilde),
-				new(big.Int).Abs(zkp.e),
-				params.NTilde,
-			),
+			discreteExp(u1, new(big.Int).Neg(zkp.e), params.NTilde),
 		),
 		params.NTilde,
 	)
