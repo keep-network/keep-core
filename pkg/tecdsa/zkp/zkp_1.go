@@ -129,5 +129,83 @@ func (zkp *PI1) Commit(eta, r, c1, c2, c3 *big.Int, params *ZKPPublicParameters)
 
 // Verify c1, c2, c3 commitment.
 func (zkp *PI1) Verify(c1, c2, c3 *big.Int, params *ZKPPublicParameters) bool {
-	return false
+	// Check that all the values are in the correct ranges
+	if zkp.u1.CmpAbs(params.NTilde) >= 0 ||
+		zkp.u2.CmpAbs(params.NTilde) >= 0 ||
+		zkp.z.CmpAbs(params.N2) >= 0 ||
+		zkp.v.CmpAbs(params.N2) >= 0 ||
+		zkp.s2.CmpAbs(params.N) >= 0 {
+		return false
+	}
+
+	// z = (Γ^s1)*(s2^N)*(c3^(−e)) mod N^2
+	z := new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).Mul(
+				new(big.Int).Exp(params.G, zkp.s1, params.N2),
+				new(big.Int).Exp(zkp.s2, params.N, params.N2),
+			),
+			// Exp function doesn't support negative exponential
+			// for y < 0: x**y mod m == (x**(-1))**|y| mod m
+			new(big.Int).Exp(
+				new(big.Int).ModInverse(c3, params.N2),
+				new(big.Int).Abs(zkp.e),
+				params.N2,
+			),
+		),
+		params.N2,
+	)
+
+	// v = (c2^s1)*(c1^(−e)) mod N^2
+	v := new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).Exp(c2, zkp.s1, params.N2),
+			// Exp function doesn't support negative exponential
+			// for y < 0: x**y mod m == (x**(-1))**|y| mod m
+			new(big.Int).Exp(
+				new(big.Int).ModInverse(c1, params.N2),
+				new(big.Int).Abs(zkp.e),
+				params.N2,
+			),
+		),
+		params.N2,
+	)
+
+	// u1 was calculated by the prover
+	u1 := zkp.u1
+
+	// u2 =(h1^s1)*(h2^s3)*(u1^(−e)) mod N ̃
+	u2 := new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).Mul(
+				new(big.Int).Exp(params.h1, zkp.s1, params.NTilde),
+				new(big.Int).Exp(params.h2, zkp.s3, params.NTilde),
+			),
+			// Exp function doesn't support negative exponential
+			// for y < 0: x**y mod m == (x**(-1))**|y| mod m
+			new(big.Int).Exp(
+				new(big.Int).ModInverse(u1, params.NTilde),
+				new(big.Int).Abs(zkp.e),
+				params.NTilde,
+			),
+		),
+		params.NTilde,
+	)
+
+	// e = hash(c1,c2,c3,z,u1,u2,v)
+	digest := sum256(
+		c1.Bytes(),
+		c2.Bytes(),
+		c3.Bytes(),
+		z.Bytes(),
+		u1.Bytes(),
+		u2.Bytes(),
+		v.Bytes(),
+	)
+	e := new(big.Int).SetBytes(digest[:])
+
+	return zkp.u2.Cmp(u2) == 0 &&
+		zkp.v.Cmp(v) == 0 &&
+		zkp.z.Cmp(z) == 0 &&
+		zkp.e.Cmp(e) == 0
 }
