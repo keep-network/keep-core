@@ -22,6 +22,9 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
 	}
+	// Following values are assigned to ZKP parameters as a result of
+	// calling mockRandom:
+	//
 	// alpha=10
 	// beta=11
 	// rho=12
