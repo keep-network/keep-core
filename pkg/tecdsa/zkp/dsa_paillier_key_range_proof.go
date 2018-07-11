@@ -117,9 +117,9 @@ func CommitDsaPaillierKeyRange(
 	)
 
 	digest := sum256(
-		params.G.Bytes(), publicDsaKeyShare.X.Bytes(),
-		publicDsaKeyShare.Y.Bytes(), encryptedSecretDsaKeyShare.C.Bytes(),
-		z.Bytes(), u1.X.Bytes(), u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
+		params.G.Bytes(), publicDsaKeyShare.Bytes(),
+		encryptedSecretDsaKeyShare.C.Bytes(), z.Bytes(),
+		u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 	e := new(big.Int).SetBytes(digest[:])
 
@@ -151,9 +151,9 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 	g := new(big.Int).Add(params.N, big.NewInt(1))
 
 	digest := sum256(
-		g.Bytes(), publicDsaKeyShare.X.Bytes(), publicDsaKeyShare.Y.Bytes(),
+		g.Bytes(), publicDsaKeyShare.Bytes(),
 		encryptedSecretDsaKeyShare.C.Bytes(), zkp.z.Bytes(),
-		u1.X.Bytes(), u1.Y.Bytes(), u2.Bytes(), u3.Bytes(),
+		u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 
 	e := new(big.Int).SetBytes(digest[:])
