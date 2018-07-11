@@ -161,41 +161,10 @@ func (zkp *PI1) Verify(c1,
 		return false
 	}
 
-	// z = (Γ^s1)*(s2^N)*(c3^(−e)) mod N^2
-	z := new(big.Int).Mod(
-		new(big.Int).Mul(
-			new(big.Int).Mul(
-				new(big.Int).Exp(params.G, zkp.s1, params.NSquare),
-				new(big.Int).Exp(zkp.s2, params.N, params.NSquare),
-			),
-			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(zkp.e), params.NSquare),
-		),
-		params.NSquare,
-	)
-
-	// v = (c2^s1)*(c1^(−e)) mod N^2
-	v := new(big.Int).Mod(
-		new(big.Int).Mul(
-			new(big.Int).Exp(encryptedMessageShare, zkp.s1, params.NSquare),
-			discreteExp(c1, new(big.Int).Neg(zkp.e), params.NSquare),
-		),
-		params.NSquare,
-	)
-
-	// u1 was calculated by the prover
-	u1 := zkp.u1
-
-	// u2 =(h1^s1)*(h2^s3)*(u1^(−e)) mod N ̃
-	u2 := new(big.Int).Mod(
-		new(big.Int).Mul(
-			new(big.Int).Mul(
-				new(big.Int).Exp(params.h1, zkp.s1, params.NTilde),
-				new(big.Int).Exp(params.h2, zkp.s3, params.NTilde),
-			),
-			discreteExp(u1, new(big.Int).Neg(zkp.e), params.NTilde),
-		),
-		params.NTilde,
-	)
+	z := computeVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
+	v := computeVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
+	u1 := zkp.u1 // u1 was calculated by the prover
+	u2 := computeVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 
 	// e = hash(c1,c2,c3,z,u1,u2,v)
 	digest := sum256(
@@ -213,4 +182,43 @@ func (zkp *PI1) Verify(c1,
 		zkp.v.Cmp(v) == 0 &&
 		zkp.z.Cmp(z) == 0 &&
 		zkp.e.Cmp(e) == 0
+}
+
+// z = (Γ^s1)*(s2^N)*(c3^(−e)) mod N^2
+func computeVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *PublicParameters) *big.Int {
+	return new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).Mul(
+				new(big.Int).Exp(params.G, s1, params.NSquare),
+				new(big.Int).Exp(s2, params.N, params.NSquare),
+			),
+			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(e), params.NSquare),
+		),
+		params.NSquare,
+	)
+}
+
+// v = (c2^s1)*(c1^(−e)) mod N^2
+func computeVerificationV(c1, encryptedMessageShare, s1, e *big.Int, params *PublicParameters) *big.Int {
+	return new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).Exp(encryptedMessageShare, s1, params.NSquare),
+			discreteExp(c1, new(big.Int).Neg(e), params.NSquare),
+		),
+		params.NSquare,
+	)
+}
+
+// u2 =(h1^s1)*(h2^s3)*(u1^(−e)) mod N ̃
+func computeVerificationU2(u1, s1, s3, e *big.Int, params *PublicParameters) *big.Int {
+	return new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).Mul(
+				new(big.Int).Exp(params.h1, s1, params.NTilde),
+				new(big.Int).Exp(params.h2, s3, params.NTilde),
+			),
+			discreteExp(u1, new(big.Int).Neg(e), params.NTilde),
+		),
+		params.NTilde,
+	)
 }
