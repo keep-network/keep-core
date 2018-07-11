@@ -141,6 +141,10 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 	publicDsaKeyShare *tecdsa.CurvePoint,
 	params *PublicParameters,
 ) bool {
+	if !zkp.allParametersInRange(params) {
+		return false
+	}
+
 	u1 := zkp.evaluateU1Verification(publicDsaKeyShare, params)
 	u2 := zkp.evaluateU2Verification(encryptedSecretDsaKeyShare.C, params)
 	u3 := zkp.evaluateU3Verification(params)
@@ -157,6 +161,19 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 		zkp.u1.Y.Cmp(u1.Y) == 0 &&
 		zkp.u2.Cmp(u2) == 0 &&
 		zkp.u3.Cmp(u3) == 0
+}
+
+// Checks whether parameters are in the expected range.
+// It's a preliminary step to check if proof is not corrupted.
+func (zkp *DsaPaillierKeyRangeProof) allParametersInRange(
+	params *PublicParameters,
+) bool {
+	zero := big.NewInt(0)
+
+	return isInRange(zkp.z, zero, params.NTilde) &&
+		isInRange(zkp.u2, zero, params.NSquare()) &&
+		isInRange(zkp.u3, zero, params.NTilde) &&
+		isInRange(zkp.s2, zero, params.N)
 }
 
 // evaluateU1Verification computes u1 verification value and returns it for

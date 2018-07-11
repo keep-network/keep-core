@@ -51,3 +51,9 @@ func discreteExp(a, b, c *big.Int) *big.Int {
 	}
 	return new(big.Int).Exp(a, b, c)
 }
+
+// Returns true if number ∈ [start, end).
+// Returns false otherwise.
+func isInRange(number, start, end *big.Int) bool {
+	return number.Cmp(start) != -1 && number.Cmp(end) == -1
+}

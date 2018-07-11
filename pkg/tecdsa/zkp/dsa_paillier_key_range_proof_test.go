@@ -298,3 +298,124 @@ func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 		})
 	}
 }
+
+// TestDsaPaillierKeyRangeProofParamsInRange runs a test of preliminary
+// commitment validation parameters check. The check is a preliminary step to
+// test if commitment is not corrupted (MiM attack).
+func TestDsaPaillierKeyRangeProofParamsInRange(t *testing.T) {
+	params := &PublicParameters{
+		N:      big.NewInt(1081), // 23 * 47
+		NTilde: big.NewInt(253),  // 23 * 11
+		h1:     big.NewInt(11),
+		h2:     big.NewInt(27),
+		curve:  secp256k1.S256(),
+		q:      secp256k1.S256().Params().N,
+	}
+
+	var tests = map[string]struct {
+		modifyProof    func(zkp *DsaPaillierKeyRangeProof)
+		expectedResult bool
+	}{
+		"positive parameters range validation": {
+			modifyProof:    nil,
+			expectedResult: true,
+		},
+		"negative validation - z less than 0": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.z = big.NewInt(-1)
+			},
+			expectedResult: false,
+		},
+		"negative validation - z equal NTilde": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.z = params.NTilde
+			},
+			expectedResult: false,
+		},
+		"negative validation - z greater than NTilde": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.z = new(big.Int).Add(params.NTilde, big.NewInt(1))
+			},
+			expectedResult: false,
+		},
+		"negative validation - u2 less than 0": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u2 = big.NewInt(-1)
+			},
+			expectedResult: false,
+		},
+		"negative validation - u2 equal NSquare": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u2 = params.NSquare()
+			},
+			expectedResult: false,
+		},
+		"negative validation - u2 greater than NSquare": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u2 = new(big.Int).Add(params.NSquare(), big.NewInt(1))
+			},
+			expectedResult: false,
+		},
+		"negative validation - u3 less than 0": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u3 = big.NewInt(-1)
+			},
+			expectedResult: false,
+		},
+		"negative validation - u3 equal NTilde": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u3 = params.NTilde
+			},
+			expectedResult: false,
+		},
+		"negative validation - u3 greater than NTilde": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u3 = new(big.Int).Add(params.NTilde, big.NewInt(1))
+			},
+			expectedResult: false,
+		},
+		"negative validation - s2 less than 0": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u3 = big.NewInt(-1)
+			},
+			expectedResult: false,
+		},
+		"negative validation - s2 equal N": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u3 = params.N
+			},
+			expectedResult: false,
+		},
+		"negative validation - s2 greater than N": {
+			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+				zkp.u3 = new(big.Int).Add(params.N, big.NewInt(1))
+			},
+			expectedResult: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			zkp := &DsaPaillierKeyRangeProof{
+				z:  big.NewInt(250),
+				u2: big.NewInt(224),
+				u3: big.NewInt(123),
+				s2: big.NewInt(17),
+			}
+
+			if test.modifyProof != nil {
+				test.modifyProof(zkp)
+			}
+
+			actualResult := zkp.allParametersInRange(params)
+
+			if actualResult != test.expectedResult {
+				t.Fatalf(
+					"expected: %v\nactual: %v",
+					test.expectedResult,
+					actualResult,
+				)
+			}
+		})
+	}
+}
