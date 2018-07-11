@@ -1,4 +1,4 @@
-//go:generate go run async.go
+//go:generate sh -c "rm -f ./async/*_promise.go; go run async.go"
 // Code generation execution command requires the package to be set to `main`.
 package main
 
