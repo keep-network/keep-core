@@ -144,9 +144,9 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 	publicDsaKeyShare *tecdsa.CurvePoint,
 	params *PublicParameters,
 ) bool {
-	u1 := zkp.u1Verification(publicDsaKeyShare, params)
-	u2 := zkp.u2Verification(encryptedSecretDsaKeyShare.C, params)
-	u3 := zkp.u3Verification(params)
+	u1 := zkp.evaluateU1Verification(publicDsaKeyShare, params)
+	u2 := zkp.evaluateU2Verification(encryptedSecretDsaKeyShare.C, params)
+	u3 := zkp.evaluateU3Verification(params)
 
 	g := new(big.Int).Add(params.N, big.NewInt(1))
 
@@ -165,7 +165,11 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 		zkp.u3.Cmp(u3) == 0
 }
 
-// We verify whether u1 = g^s1 * y^-e
+// evaluateU1Verification computes u1 verification value and returns it for
+// further comparison with the expected one, evaluated during the commitment
+// phase.
+//
+// We want to verify whether u1 = g^s1 * y^-e
 // is equal to u1 = g^α
 // we evaluated in the commitment phase.
 //
@@ -180,7 +184,7 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 // g^α
 //
 // which is exactly how u1 is evaluated during the commitment phase.
-func (zkp *DsaPaillierKeyRangeProof) u1Verification(
+func (zkp *DsaPaillierKeyRangeProof) evaluateU1Verification(
 	publicDsaKeyShare *tecdsa.CurvePoint,
 	params *PublicParameters,
 ) *tecdsa.CurvePoint {
@@ -198,7 +202,11 @@ func (zkp *DsaPaillierKeyRangeProof) u1Verification(
 	))
 }
 
-// We verify whether u2 = G^s1 * (s2)^N * (w)^-e
+// evaluateU2Verification computes u2 verification value and returns it for
+// further comparison with the expected one, evaluated during the commitment
+// phase.
+//
+// We want to verify whether u2 = G^s1 * (s2)^N * (w)^-e
 // is equal to u2 = G^α * β^N
 // we evaluated in the commitment phase.
 //
@@ -214,7 +222,7 @@ func (zkp *DsaPaillierKeyRangeProof) u1Verification(
 // G^α * β^N
 //
 // which is exactly how u2 is evaluated during the commitment phase.
-func (zkp *DsaPaillierKeyRangeProof) u2Verification(
+func (zkp *DsaPaillierKeyRangeProof) evaluateU2Verification(
 	encryptedSecretDsaKeyShare *big.Int,
 	params *PublicParameters,
 ) *big.Int {
@@ -234,7 +242,11 @@ func (zkp *DsaPaillierKeyRangeProof) u2Verification(
 	)
 }
 
-// We verify whether u3 = (h1)^{s1} * (h2)^{s3} * (z)^-e
+// evaluateU3Verification computes u3 verification value and returns it for
+// further comparison with the expected one, evaluated during the commitment
+// phase.
+//
+// We want to verify whether u3 = (h1)^{s1} * (h2)^{s3} * (z)^-e
 // is equal to u3 = (h1)^alpha * (h2)^γ
 // we evaluated in the commitment phase.
 //
@@ -250,7 +262,7 @@ func (zkp *DsaPaillierKeyRangeProof) u2Verification(
 // (h1)^α * (h2)^γ
 //
 // which is exactly how u3 is evaluated during the commitment phase.
-func (zkp *DsaPaillierKeyRangeProof) u3Verification(
+func (zkp *DsaPaillierKeyRangeProof) evaluateU3Verification(
 	params *PublicParameters,
 ) *big.Int {
 	h1s1 := discreteExp(params.h1, zkp.s1, params.NTilde)

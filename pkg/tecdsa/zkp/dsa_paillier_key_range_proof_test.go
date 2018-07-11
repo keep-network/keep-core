@@ -163,7 +163,7 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 	expectedU1 := tecdsa.NewCurvePoint(secp256k1.S256().ScalarBaseMult(
 		new(big.Int).Sub(params.q, big.NewInt(8788)).Bytes(),
 	))
-	actualU1 := zkp.u1Verification(publicDsaKeyShare, params)
+	actualU1 := zkp.evaluateU1Verification(publicDsaKeyShare, params)
 	if !reflect.DeepEqual(expectedU1, actualU1) {
 		t.Errorf(
 			"Unexpected u1\nActual: %v\nExpected: %v",
@@ -174,7 +174,7 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 
 	// u2 = ((1081+1)^22 * 17^1081 * 674^-881) mod 1081^2
 	expectedU2 := big.NewInt(227035)
-	actualU2 := zkp.u2Verification(encryptedSecretDsaKeyShare, params)
+	actualU2 := zkp.evaluateU2Verification(encryptedSecretDsaKeyShare, params)
 	if !reflect.DeepEqual(expectedU2, actualU2) {
 		t.Errorf(
 			"Unexpected u2\nActual: %v\nExpected: %v",
@@ -185,7 +185,7 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 
 	// u3 = (11^22 * 27^63 * 191^-881) mod 253
 	expectedU3 := big.NewInt(44)
-	actualU3 := zkp.u3Verification(params)
+	actualU3 := zkp.evaluateU3Verification(params)
 	if !reflect.DeepEqual(expectedU3, actualU3) {
 		t.Errorf(
 			"Unexpected u3\nActual: %v\nExpected: %v",
