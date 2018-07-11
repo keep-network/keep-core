@@ -65,10 +65,10 @@ func CommitDsaPaillierKeyRange(
 	params *PublicParameters,
 	random io.Reader,
 ) (*DsaPaillierKeyRangeProof, error) {
-	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil)    // q^3
-	qNTilde := new(big.Int).Mul(params.q, params.NTilde)    // q * NTilde
-	q3NTilde := new(big.Int).Mul(q3, params.NTilde)         // q^3 * nTilde
-	NPow2 := new(big.Int).Exp(params.N, big.NewInt(2), nil) // N^2
+	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil)      // q^3
+	qNTilde := new(big.Int).Mul(params.q, params.NTilde)      // q * NTilde
+	q3NTilde := new(big.Int).Mul(q3, params.NTilde)           // q^3 * nTilde
+	NSquare := new(big.Int).Exp(params.N, big.NewInt(2), nil) // N^2
 
 	alpha, err := rand.Int(random, q3)
 	if err != nil {
@@ -103,10 +103,10 @@ func CommitDsaPaillierKeyRange(
 	))
 	u2 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.G, alpha, NPow2),
-			new(big.Int).Exp(beta, params.N, NPow2),
+			new(big.Int).Exp(params.G, alpha, NSquare),
+			new(big.Int).Exp(beta, params.N, NSquare),
 		),
-		NPow2,
+		NSquare,
 	)
 	u3 := new(big.Int).Mod(
 		new(big.Int).Mul(
