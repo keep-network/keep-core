@@ -3,6 +3,7 @@ package zkp
 import (
 	"crypto/rand"
 	"fmt"
+	"io"
 	"math/big"
 )
 
@@ -29,7 +30,7 @@ type PI1 struct {
 	s3 *big.Int
 }
 
-// Commit  to the Proof PI_1,i
+// CommitZkpPi1 to the Proof PI_1,i
 //
 // Because of the complexity of the proof, we use the same naming for values
 // as in the paper in most cases. We do an exception for function parameters:
@@ -55,25 +56,26 @@ func CommitZkpPi1(secretKeyShare,
 	encryptedSecretKeyShare,
 	r *big.Int,
 	params *PublicParameters,
+	random io.Reader,
 ) (*PI1, error) {
 	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil) // q^3
 
-	alpha, err := rand.Int(rand.Reader, q3)
+	alpha, err := rand.Int(random, q3)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
-	beta, err := randomFromMultiplicativeGroup(rand.Reader, params.N)
+	beta, err := randomFromMultiplicativeGroup(random, params.N)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
-	rho, err := rand.Int(rand.Reader, new(big.Int).Mul(params.q, params.NTilde))
+	rho, err := rand.Int(random, new(big.Int).Mul(params.q, params.NTilde))
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
-	gamma, err := rand.Int(rand.Reader, new(big.Int).Mul(q3, params.NTilde))
+	gamma, err := rand.Int(random, new(big.Int).Mul(q3, params.NTilde))
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
