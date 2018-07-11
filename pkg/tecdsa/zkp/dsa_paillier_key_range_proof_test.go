@@ -60,7 +60,7 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	}
 
 	// 49^13 * 22^12 mod 253 = 55
-	if !reflect.DeepEqual(commitment.z, big.NewInt(55)) {
+	if commitment.z.Cmp(big.NewInt(55)) != 0 {
 		t.Errorf("Unexpected z\nActual: %v\nExpected: 55", commitment.z)
 	}
 
@@ -68,20 +68,20 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	expectedU1x, expectedU1y := secp256k1.S256().ScalarBaseMult(
 		big.NewInt(10).Bytes(),
 	)
-	if !reflect.DeepEqual(commitment.u1.X, expectedU1x) {
+	if commitment.u1.X.Cmp(expectedU1x) != 0 {
 		t.Errorf("Unexpected u1 x coordinate")
 	}
-	if !reflect.DeepEqual(commitment.u1.Y, expectedU1y) {
+	if commitment.u1.Y.Cmp(expectedU1y) != 0 {
 		t.Errorf("Unexpected u1 y coordinate")
 	}
 
 	// (1081+1)^10 * 11^1081 mod 1081^2 = 289613
-	if !reflect.DeepEqual(commitment.u2, big.NewInt(289613)) {
+	if commitment.u2.Cmp(big.NewInt(289613)) != 0 {
 		t.Errorf("Unexpected u2\nActual: %v\nExpected: 289613", commitment.u2)
 	}
 
 	// 49^10 * 22^13 mod 253 = 176
-	if !reflect.DeepEqual(commitment.u3, big.NewInt(176)) {
+	if commitment.u3.Cmp(big.NewInt(176)) != 0 {
 		t.Errorf("Unexpected u3\nActual: %v\nExpected: 176", commitment.u3)
 	}
 
@@ -92,7 +92,7 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 		"51984478426836913558864603258469889500681512521977850701426158002380794165890",
 		10,
 	)
-	if !reflect.DeepEqual(commitment.e, expectedHash) {
+	if commitment.e.Cmp(expectedHash) != 0 {
 		t.Errorf("Unexpected e\nActual: %v\nExpected: %v",
 			commitment.e,
 			expectedHash,
@@ -105,7 +105,7 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 		"675798219548879876265239842360108563508859662785712059118540054030950324156580",
 		10,
 	)
-	if !reflect.DeepEqual(commitment.s1, expectedS1) {
+	if commitment.s1.Cmp(expectedS1) != 0 {
 		t.Errorf("Unexpected s1\nActual: %v\nExpected: %v",
 			commitment.s1,
 			expectedS1,
@@ -113,7 +113,7 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	}
 
 	// 14^e * 11 mod 1081 = 605
-	if !reflect.DeepEqual(commitment.s2, big.NewInt(91)) {
+	if commitment.s2.Cmp(big.NewInt(91)) != 0 {
 		t.Errorf("Unexpected s2\nActual: %v\nExpected: 91", commitment.s2)
 	}
 
@@ -123,7 +123,7 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 		"623813741122042962706375239101638674008178150263734208417113896028569529990693",
 		10,
 	)
-	if !reflect.DeepEqual(commitment.s3, expectedS3) {
+	if commitment.s3.Cmp(expectedS3) != 0 {
 		t.Errorf("Unexpected s3\nActual: %v\nExpected: %v",
 			commitment.s3,
 			expectedS3,
@@ -176,7 +176,7 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 	// u2 = ((1081+1)^22 * 17^1081 * 674^-881) mod 1081^2
 	expectedU2 := big.NewInt(227035)
 	actualU2 := zkp.evaluateU2Verification(encryptedSecretDsaKeyShare, params)
-	if !reflect.DeepEqual(expectedU2, actualU2) {
+	if expectedU2.Cmp(actualU2) != 0 {
 		t.Errorf(
 			"Unexpected u2\nActual: %v\nExpected: %v",
 			actualU2,
@@ -187,7 +187,7 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 	// u3 = (11^22 * 27^63 * 191^-881) mod 253
 	expectedU3 := big.NewInt(44)
 	actualU3 := zkp.evaluateU3Verification(params)
-	if !reflect.DeepEqual(expectedU3, actualU3) {
+	if expectedU3.Cmp(actualU3) != 0 {
 		t.Errorf(
 			"Unexpected u3\nActual: %v\nExpected: %v",
 			actualU3,
