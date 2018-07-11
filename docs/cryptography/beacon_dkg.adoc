@@ -33,8 +33,8 @@ Input: _V~i~, S_
 
 Output: one of
 
-* Successfully generated group _G_ including
-** public key _Y_ of _G_
+* Successfully generated group _P_ including
+** public key _Y_ of _P_
 ** lists of absent and disqualified nodes _IA_ and _DQ_
 * Failure to generate a valid group including
 ** list of disqualified nodes _DQ_
@@ -45,18 +45,18 @@ to create a threshold signature public key _Y_ for the group,
 to be used in the random beacon.
 
 After a successful execution of the protocol,
-_G_ will be the group of nodes
+_P_ will be the group of nodes
 that may participate in the random beacon signing,
 having been neither inactive or misbehaving during the DKG.
 
-Inactive nodes will be removed from _G_
+Inactive nodes will be removed from _P_
 and not be eligible for the rewards
 from participating in the random beacon
 by contributing to the signature _V~j~_
-should _G_ be chosen as the group to produce
+should _P_ be chosen as the group to produce
 the __j__th random number from the beacon.
 
-Disqualified nodes will be removed from _G_
+Disqualified nodes will be removed from _P_
 and their stake will be slashed in punishment
 for provably and attributably acting in breach of the DKG protocol.
 
@@ -86,7 +86,7 @@ Nodes that broadcast a malformed message may be added to _IA~p~_ or _DQ~p~_.
 
 To ensure integrity in later parts of the DKG protocol,
 we will require every _P~i~_ to generate
-an ephemeral ECDH keypair _(x~ij~, y~ij~)_ for every other member _P~j~_ in _G_.
+an ephemeral ECDH keypair _(x~ij~, y~ij~)_ for every other member _P~j~_ in _P_.
 These will be broadcast in phase 1.
 
 Registering the ephemeral keys on-chain is not required
@@ -142,7 +142,7 @@ for P_j in G_2:
    k_ij = ecdh(X_ij, Y_ji)
 ----
 
-<1> Public keys of all other participants in _G_
+<1> Public keys of all other participants in _P_
 <2> A validation function which determines which nodes
 have broadcast the correct message for phase _p_
 
@@ -373,7 +373,7 @@ allows the parties to also decrypt _E~jm~_ and not just _E~mj~_.
 This is not very significant though,
 as even the publication of only the misbehaving participants' shares
 would reduce the security margin excessively
-if a large fraction of _G_ were to misbehave.
+if a large fraction of _P_ were to misbehave.
 By setting the threshold for group creation failure at _f~max~/2_
 the impact of this is reduced to a manageable level.
 
@@ -450,7 +450,7 @@ valid shares in _phase 4_ but whose public key shares in _phase 7_ were invalid.
 (G_11, IA_10, DQ_10) = checkBroadcast(10, G_10)
 
 for m in (G_6 - G_11): # <1>
-  for j in G':
+  for j in G:
     X_jm = keys_j[m]
 
     K_jm = ecdh(X_jm, Y_mj)
