@@ -21,6 +21,10 @@ import (
 //          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
 //          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
 //          vol 9696. Springer, Cham
+//     [FO 97]: Fujisaki E., Okamoto T. (1997) Statistical zero knowledge
+//          protocols to prove modular polynomial relations. In: Kaliski B.S.
+//          (eds) Advances in Cryptology — CRYPTO '97. CRYPTO 1997. Lecture
+//          Notes in Computer Science, vol 1294. Springer, Berlin, Heidelberg
 type PublicParameters struct {
 	// Paillier modulus used for generating T-ECDSA key and signing.
 	N *big.Int
@@ -33,9 +37,10 @@ type PublicParameters struct {
 	// It's uniquely generated for each new instance of `PublicParameters`.
 	NTilde *big.Int
 
-	// Two random numbers from `(0, Z_NTilde)` used to construct range
+	// Two numbers from `(0, Z_NTilde*)` used to construct range
 	// commitments. They are uniquely generated for each new instance of
-	// `PublicParameters`.
+	// `PublicParameters` according to the algorithm presented in [FO 97],
+	// section 3.1.
 	h1 *big.Int
 	h2 *big.Int
 
@@ -56,9 +61,20 @@ func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
+	//TODO: make G a function
 	G := new(big.Int).Add(paillierModulus, big.NewInt(1))
 
-	pTilde, qTilde, err := paillier.GenerateSafePrimes(
+	pTilde, pTildePrime, err := paillier.GenerateSafePrimes(
+		safePrimeBitLength, rand.Reader,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate ZKP PublicParameters [%v]",
+			err,
+		)
+	}
+
+	qTilde, qTildePrime, err := paillier.GenerateSafePrimes(
 		safePrimeBitLength, rand.Reader,
 	)
 	if err != nil {
@@ -69,14 +85,18 @@ func GeneratePublicParameters(
 	}
 
 	NTilde := new(big.Int).Mul(pTilde, qTilde)
+	h2, err := randomFromMultiplicativeGroup(rand.Reader, NTilde)
 
-	h1 := big.NewInt(0)
-	for h1, _ = rand.Int(rand.Reader, NTilde); h1.Cmp(big.NewInt(0)) == 0; {
+	NTildePrime := new(big.Int).Mul(pTildePrime, qTildePrime)
+	x, err := rand.Int(rand.Reader, NTildePrime)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate ZKP PublicParameters [%v]",
+			err,
+		)
 	}
 
-	h2 := big.NewInt(0)
-	for h2, _ = rand.Int(rand.Reader, NTilde); h2.Cmp(big.NewInt(0)) == 0; {
-	}
+	h1 := new(big.Int).Exp(h2, x, NTilde)
 
 	return &PublicParameters{
 		N:      paillierModulus,
