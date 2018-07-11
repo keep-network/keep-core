@@ -49,37 +49,37 @@ type PI1 struct {
 //
 // Then the prover computes u1, u2, z, v, e, s1, s2,s3. This values will be sent
 // by the prover to the verifier.
-func (zkp *PI1) Commit(secretKeyShare,
+func CommitZkpPi1(secretKeyShare,
 	c1,
 	encryptedMessageShare,
 	encryptedSecretKeyShare,
 	r *big.Int,
 	params *PublicParameters,
-) error {
+) (*PI1, error) {
 	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil) // q^3
 
 	alpha, err := rand.Int(rand.Reader, q3)
 	if err != nil {
-		return fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
 	beta, err := randomFromMultiplicativeGroup(rand.Reader, params.N)
 	if err != nil {
-		return fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
 	rho, err := rand.Int(rand.Reader, new(big.Int).Mul(params.q, params.NTilde))
 	if err != nil {
-		return fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
 	gamma, err := rand.Int(rand.Reader, new(big.Int).Mul(q3, params.NTilde))
 	if err != nil {
-		return fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
 	// u_1 = ((h1)^η)*((h2)^ρ) mod N ̃
-	zkp.u1 = new(big.Int).Mod(
+	u1 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(params.h1, secretKeyShare, params.NTilde),
 			new(big.Int).Exp(params.h2, rho, params.NTilde),
@@ -88,7 +88,7 @@ func (zkp *PI1) Commit(secretKeyShare,
 	)
 
 	// u_2 = ((h1)^α)*((h2)^γ) mod N ̃
-	zkp.u2 = new(big.Int).Mod(
+	u2 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(params.h1, alpha, params.NTilde),
 			new(big.Int).Exp(params.h2, gamma, params.NTilde),
@@ -97,7 +97,7 @@ func (zkp *PI1) Commit(secretKeyShare,
 	)
 
 	// z = ((Γ)^α)*((β)^N) mod N^2
-	zkp.z = new(big.Int).Mod(
+	z := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(params.G, alpha, params.NSquare),
 			new(big.Int).Exp(beta, params.N, params.NSquare),
@@ -106,42 +106,42 @@ func (zkp *PI1) Commit(secretKeyShare,
 	)
 
 	// v = (c2)^α mod N^2
-	zkp.v = new(big.Int).Exp(encryptedMessageShare, alpha, params.NSquare)
+	v := new(big.Int).Exp(encryptedMessageShare, alpha, params.NSquare)
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
 		c1.Bytes(),
 		encryptedMessageShare.Bytes(),
 		encryptedSecretKeyShare.Bytes(),
-		zkp.z.Bytes(),
-		zkp.u1.Bytes(),
-		zkp.u2.Bytes(),
-		zkp.v.Bytes(),
+		z.Bytes(),
+		u1.Bytes(),
+		u2.Bytes(),
+		v.Bytes(),
 	)
-	zkp.e = new(big.Int).Abs(new(big.Int).SetBytes(digest[:]))
+	e := new(big.Int).Abs(new(big.Int).SetBytes(digest[:]))
 
 	// s1 = e*η+α
-	zkp.s1 = new(big.Int).Add(
-		new(big.Int).Mul(zkp.e, secretKeyShare),
+	s1 := new(big.Int).Add(
+		new(big.Int).Mul(e, secretKeyShare),
 		alpha,
 	)
 
 	// s2 = (r^e)*β mod N
-	zkp.s2 = new(big.Int).Mod(
+	s2 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(r, zkp.e, params.N),
+			new(big.Int).Exp(r, e, params.N),
 			beta,
 		),
 		params.N,
 	)
 
 	// s3 = e*ρ+γ
-	zkp.s3 = new(big.Int).Add(
-		new(big.Int).Mul(zkp.e, rho),
+	s3 := new(big.Int).Add(
+		new(big.Int).Mul(e, rho),
 		gamma,
 	)
 
-	return nil
+	return &PI1{z, v, u1, u2, e, s1, s2, s3}, nil
 }
 
 // Verify c1, c2, c3 commitment.

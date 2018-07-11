@@ -66,12 +66,10 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	zkp := new(PI1)
-	// if params.N.Cmp(new(big.Int).Exp(params.q, big.NewInt(8), nil)) < 1 {
-	// 	t.Fatalf("N is not bigger than q^8")
-	// }
-
-	zkp.Commit(secretKeyShare, c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, r, params)
+	zkp, err := CommitZkpPi1(secretKeyShare, c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, r, params)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if !zkp.Verify(c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, params) {
 		t.Fatalf("ERROR")
