@@ -29,10 +29,6 @@ type PublicParameters struct {
 	// Paillier modulus used for generating T-ECDSA key and signing.
 	N *big.Int
 
-	// Paillier base for plaintext message used during encryption.
-	// We always set it to N+1 to be compatible with `keep-network/paillier`.
-	G *big.Int
-
 	// Auxilliary RSA modulus which is the product of two safe primes.
 	// It's uniquely generated for each new instance of `PublicParameters`.
 	NTilde *big.Int
@@ -61,9 +57,6 @@ func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
-	//TODO: make G a function
-	G := new(big.Int).Add(paillierModulus, big.NewInt(1))
-
 	pTilde, pTildePrime, err := paillier.GenerateSafePrimes(
 		safePrimeBitLength, rand.Reader,
 	)
@@ -100,11 +93,42 @@ func GeneratePublicParameters(
 
 	return &PublicParameters{
 		N:      paillierModulus,
-		G:      G,
 		NTilde: NTilde,
 		h1:     h1,
 		h2:     h2,
 		q:      curve.Params().N,
 		curve:  curve,
 	}, nil
+}
+
+// G is an auxiliary function returning Paillier base for plaintext message used
+// during encryption. We always set it to N+1 to be compatible with
+// `keep-network/paillier`.
+// G is needed to generate and validate internal commitment parameters.
+func (p *PublicParameters) G() *big.Int {
+	return new(big.Int).Add(p.N, big.NewInt(1))
+}
+
+// NSquare is an auxiliary function returning N^2 which is needed to generate
+// and validate internal commitment parameters.
+func (p *PublicParameters) NSquare() *big.Int {
+	return new(big.Int).Exp(p.N, big.NewInt(2), nil)
+}
+
+// QCube is an auxiliary function returning q^3 which is needed to generate
+// and validate internal commitment parameters.
+func (p *PublicParameters) QCube() *big.Int {
+	return new(big.Int).Exp(p.q, big.NewInt(3), nil)
+}
+
+// QNTilde is an auxiliary function returning q * NTilde which is needed to
+// generate and validate internal commitment parameters.
+func (p *PublicParameters) QNTilde() *big.Int {
+	return new(big.Int).Mul(p.q, p.NTilde)
+}
+
+// QCubeNTilde is an auxiliary function returning q^3 * NTilde which is needed
+// to generate and validate internal commitment parameters.
+func (p *PublicParameters) QCubeNTilde() *big.Int {
+	return new(big.Int).Mul(p.QCube(), p.NTilde)
 }

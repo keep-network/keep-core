@@ -32,7 +32,6 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 
 	parameters := &PublicParameters{
 		N:      big.NewInt(1081), // 23 * 47
-		G:      big.NewInt(1082), // N + 1
 		NTilde: big.NewInt(253),  // 23 * 11
 		h1:     big.NewInt(49),
 		h2:     big.NewInt(22),
@@ -149,7 +148,6 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 
 	params := &PublicParameters{
 		N:      big.NewInt(1081), // 23 * 47
-		G:      big.NewInt(1082), // N + 1
 		NTilde: big.NewInt(253),  // 23 * 11
 		h1:     big.NewInt(11),
 		h2:     big.NewInt(27),

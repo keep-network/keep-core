@@ -65,12 +65,7 @@ func CommitDsaPaillierKeyRange(
 	params *PublicParameters,
 	random io.Reader,
 ) (*DsaPaillierKeyRangeProof, error) {
-	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil)      // q^3
-	qNTilde := new(big.Int).Mul(params.q, params.NTilde)      // q * NTilde
-	q3NTilde := new(big.Int).Mul(q3, params.NTilde)           // q^3 * nTilde
-	NSquare := new(big.Int).Exp(params.N, big.NewInt(2), nil) // N^2
-
-	alpha, err := rand.Int(random, q3)
+	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
@@ -80,12 +75,12 @@ func CommitDsaPaillierKeyRange(
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
-	rho, err := rand.Int(random, qNTilde)
+	rho, err := rand.Int(random, params.QNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
-	gamma, err := rand.Int(random, q3NTilde)
+	gamma, err := rand.Int(random, params.QCubeNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
@@ -103,10 +98,10 @@ func CommitDsaPaillierKeyRange(
 	))
 	u2 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.G, alpha, NSquare),
-			new(big.Int).Exp(beta, params.N, NSquare),
+			new(big.Int).Exp(params.G(), alpha, params.NSquare()),
+			new(big.Int).Exp(beta, params.N, params.NSquare()),
 		),
-		NSquare,
+		params.NSquare(),
 	)
 	u3 := new(big.Int).Mod(
 		new(big.Int).Mul(
@@ -227,7 +222,7 @@ func (zkp *DsaPaillierKeyRangeProof) evaluateU2Verification(
 ) *big.Int {
 	NSquare := new(big.Int).Exp(params.N, big.NewInt(2), nil)
 
-	gs1 := new(big.Int).Exp(params.G, zkp.s1, NSquare)
+	gs1 := new(big.Int).Exp(params.G(), zkp.s1, NSquare)
 	s2N := new(big.Int).Exp(zkp.s2, params.N, NSquare)
 	we := discreteExp(
 		encryptedSecretDsaKeyShare,
