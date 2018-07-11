@@ -191,14 +191,14 @@ func (zkp *DsaPaillierKeyRangeProof) evaluateU1Verification(
 	gs1x, gs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.curve.Params().N).Bytes(),
 	)
-	yx, yy := params.curve.ScalarMult(
+	yex, yey := params.curve.ScalarMult(
 		publicDsaKeyShare.X, publicDsaKeyShare.Y, zkp.e.Bytes(),
 	)
 
 	// For a Weierstrass elliptic curve form, the additive inverse of
 	// (x, y) is (x, -y)
 	return tecdsa.NewCurvePoint(params.curve.Add(
-		gs1x, gs1y, yx, new(big.Int).Neg(yy),
+		gs1x, gs1y, yex, new(big.Int).Neg(yey),
 	))
 }
 
