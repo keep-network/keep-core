@@ -83,11 +83,11 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 		t.Errorf("Unexpected u3\nActual: %v\nExpected: 176", commitment.u3)
 	}
 
-	// e = hash(g, y, w, z, u1, u2, u3) =
-	//     hash(1082, g^11.X, g^11.Y, 12, 55, g^10.X, g^10.Y, 289613, 176)
+	// e = hash(y, w, z, u1, u2, u3) =
+	//     hash(g^11.X, g^11.Y, 12, 55, g^10.X, g^10.Y, 289613, 176)
 	expectedHash := new(big.Int)
 	expectedHash.SetString(
-		"81822229321106383602295376592630176588170716578659102639657033234501511942844",
+		"51984478426836913558864603258469889500681512521977850701426158002380794165890",
 		10,
 	)
 	if !reflect.DeepEqual(commitment.e, expectedHash) {
@@ -100,7 +100,7 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	// e*13 + 10
 	expectedS1 := new(big.Int)
 	expectedS1.SetString(
-		"1063688981174382986829839895704192295646219315522568334315541432048519655256982",
+		"675798219548879876265239842360108563508859662785712059118540054030950324156580",
 		10,
 	)
 	if !reflect.DeepEqual(commitment.s1, expectedS1) {
@@ -111,14 +111,14 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	}
 
 	// 14^e * 11 mod 1081 = 605
-	if !reflect.DeepEqual(commitment.s2, big.NewInt(605)) {
-		t.Errorf("Unexpected s2\nActual: %v\nExpected: 287", commitment.s2)
+	if !reflect.DeepEqual(commitment.s2, big.NewInt(91)) {
+		t.Errorf("Unexpected s2\nActual: %v\nExpected: 91", commitment.s2)
 	}
 
 	// e*12 + 13
 	expectedS3 := new(big.Int)
 	expectedS3.SetString(
-		"981866751853276603227544519111562119058048598943909231675884398814018143314141",
+		"623813741122042962706375239101638674008178150263734208417113896028569529990693",
 		10,
 	)
 	if !reflect.DeepEqual(commitment.s3, expectedS3) {

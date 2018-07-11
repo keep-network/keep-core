@@ -116,10 +116,12 @@ func CommitDsaPaillierKeyRange(
 		params.NTilde,
 	)
 
+	// In the original paper, elliptic curve generator point is also hashed.
+	// However, since g is a constant in go-ethereum, we don't include it in
+	// the sum256.
 	digest := sum256(
-		params.G.Bytes(), publicDsaKeyShare.Bytes(),
-		encryptedSecretDsaKeyShare.C.Bytes(), z.Bytes(),
-		u1.Bytes(), u2.Bytes(), u3.Bytes(),
+		publicDsaKeyShare.Bytes(), encryptedSecretDsaKeyShare.C.Bytes(),
+		z.Bytes(), u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 	e := new(big.Int).SetBytes(digest[:])
 
@@ -148,12 +150,9 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 	u2 := zkp.evaluateU2Verification(encryptedSecretDsaKeyShare.C, params)
 	u3 := zkp.evaluateU3Verification(params)
 
-	g := new(big.Int).Add(params.N, big.NewInt(1))
-
 	digest := sum256(
-		g.Bytes(), publicDsaKeyShare.Bytes(),
-		encryptedSecretDsaKeyShare.C.Bytes(), zkp.z.Bytes(),
-		u1.Bytes(), u2.Bytes(), u3.Bytes(),
+		publicDsaKeyShare.Bytes(), encryptedSecretDsaKeyShare.C.Bytes(),
+		zkp.z.Bytes(), u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 
 	e := new(big.Int).SetBytes(digest[:])
