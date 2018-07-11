@@ -178,10 +178,7 @@ Without cost reductions, this is `570,000` for _H = 101_
 
 .costs
 |===
-|Operation
-|Cost at status quo
-|Cost with EIP-1108
-|Cost with Vitalik's proposal
+|Operation |Cost at status quo |Cost with EIP-1108 |Cost with Vitalik's proposal
 
 |`GPAIRINGBASE`
 |100,000
