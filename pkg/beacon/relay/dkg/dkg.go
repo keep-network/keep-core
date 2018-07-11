@@ -105,7 +105,9 @@ func ExecuteDKG(
 
 	currentState = &initializationState{channel, localMember}
 	pendingState = &initializationState{channel, localMember}
-	stateTransition()
+	if err := stateTransition(); err != nil {
+		return nil, err
+	}
 	pendingState, err = currentState.nextState()
 	if err != nil {
 		return nil, fmt.Errorf(
