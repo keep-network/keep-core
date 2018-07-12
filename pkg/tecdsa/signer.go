@@ -16,6 +16,7 @@ import (
 	mathrand "math/rand"
 
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
+	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
 	"github.com/keep-network/paillier"
 )
 
@@ -49,9 +50,10 @@ type PublicParameters struct {
 // DSA key shares. Each LocalSigner has a reference to a threshold Paillier
 // key used for encrypting part of the InitMessage.
 type LocalSigner struct {
-	ID               string
-	publicParameters *PublicParameters
-	paillierKey      *paillier.ThresholdPrivateKey
+	ID              string
+	groupParameters *PublicParameters
+	zkpParameters   *zkp.PublicParameters
+	paillierKey     *paillier.ThresholdPrivateKey
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
@@ -79,7 +81,7 @@ const paillierModulusBitLength = 256
 // `q` is the cardinality of Elliptic Curve and public key share is a point
 // on the Curve g^secretKeyShare.
 func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
-	curveParams := s.publicParameters.curve.Params()
+	curveParams := s.groupParameters.curve.Params()
 
 	secretKeyShare, err := rand.Int(rand.Reader, curveParams.N)
 	if err != nil {
@@ -87,7 +89,7 @@ func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	}
 
 	publicKeyShare := curve.NewPoint(
-		s.publicParameters.curve.ScalarBaseMult(secretKeyShare.Bytes()),
+		s.groupParameters.curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
 	return &dsaKeyShare{
@@ -103,6 +105,9 @@ func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 // Secret key share is encrypted with an additively homomorphic encryption
 // scheme and sent to all other Signers in the group along with the public key
 // share.
+//
+// Along with secret and public key share, we ship a zero knowledge argument
+// allowing to validate received shares.
 func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 	keyShare, err := s.generateDsaKeyShare()
 	if err != nil {
@@ -111,8 +116,8 @@ func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 		)
 	}
 
-	encryptedSecretKeyShare, err := s.paillierKey.Encrypt(
-		keyShare.secretKeyShare, rand.Reader,
+	paillierRandomness, err := paillier.GetRandomNumberInMultiplicativeGroup(
+		s.paillierKey.N, rand.Reader,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -120,9 +125,28 @@ func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 		)
 	}
 
+	encryptedSecretKeyShare, err := s.paillierKey.EncryptWithR(
+		keyShare.secretKeyShare, paillierRandomness,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not initialize DSA key generation [%v]", err,
+		)
+	}
+
+	rangeProof, err := zkp.CommitDsaPaillierKeyRange(
+		keyShare.secretKeyShare,
+		keyShare.publicKeyShare,
+		encryptedSecretKeyShare,
+		paillierRandomness,
+		s.zkpParameters,
+		rand.Reader,
+	)
+
 	return &InitMessage{
 		secretKeyShare: encryptedSecretKeyShare,
 		publicKeyShare: keyShare.publicKeyShare,
+		rangeProof:     rangeProof,
 	}, nil
 }
 
@@ -140,11 +164,11 @@ func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 func (s *LocalSigner) CombineDsaKeyShares(
 	shares []*InitMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shares) != s.publicParameters.groupSize {
+	if len(shares) != s.groupParameters.groupSize {
 		return nil, fmt.Errorf(
 			"InitMessages required from all group members; Got %v, expected %v",
 			len(shares),
-			s.publicParameters.groupSize,
+			s.groupParameters.groupSize,
 		)
 	}
 
@@ -159,7 +183,7 @@ func (s *LocalSigner) CombineDsaKeyShares(
 	publicKeyShareX := shares[0].publicKeyShare.X
 	publicKeyShareY := shares[0].publicKeyShare.Y
 	for _, share := range shares[1:] {
-		publicKeyShareX, publicKeyShareY = s.publicParameters.curve.Add(
+		publicKeyShareX, publicKeyShareY = s.groupParameters.curve.Add(
 			publicKeyShareX, publicKeyShareY,
 			share.publicKeyShare.X, share.publicKeyShare.Y,
 		)
@@ -174,7 +198,8 @@ func (s *LocalSigner) CombineDsaKeyShares(
 	}, nil
 }
 
-// newGroup generates a new signing group backed by a threshold Paillier key.
+// newGroup generates a new signing group backed by a threshold Paillier key
+// and ZKP public parameters build from the generated Paillier key.
 // This implementation works in an oracle mode - one party is responsible for
 // generating Paillier keys and distributing them. Be careful please.
 func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
@@ -192,12 +217,23 @@ func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 		)
 	}
 
+	zkpParameters, err := zkp.GeneratePublicParameters(
+		paillierKeys[0].N,
+		parameters.curve,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate public ZKP parameters [%v]", err,
+		)
+	}
+
 	members := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(members); i++ {
 		members[i] = &LocalSigner{
-			ID:               generateMemberID(),
-			paillierKey:      paillierKeys[i],
-			publicParameters: parameters,
+			ID:              generateMemberID(),
+			paillierKey:     paillierKeys[i],
+			groupParameters: parameters,
+			zkpParameters:   zkpParameters,
 		}
 	}
 

@@ -2,6 +2,7 @@ package tecdsa
 
 import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
+	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
 	"github.com/keep-network/paillier"
 )
 
@@ -13,5 +14,5 @@ type InitMessage struct {
 	secretKeyShare *paillier.Cypher
 	publicKeyShare *curve.Point
 
-	// TODO: add all the required ZKPs
+	rangeProof *zkp.DsaPaillierKeyRangeProof
 }
