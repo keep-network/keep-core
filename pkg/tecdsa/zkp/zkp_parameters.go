@@ -67,9 +67,11 @@ func GeneratePublicParameters(
 		)
 	}
 
-	qTilde, qTildePrime, err := paillier.GenerateSafePrimes(
+	qTilde, qTildePrime := big.NewInt(0), big.NewInt(0)
+	for qTilde, qTildePrime, err = paillier.GenerateSafePrimes(
 		safePrimeBitLength, rand.Reader,
-	)
+	); err == nil && pTilde.Cmp(qTilde) == 0; {
+	}
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not generate ZKP PublicParameters [%v]",
