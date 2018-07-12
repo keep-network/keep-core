@@ -7,41 +7,38 @@ import (
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
-	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
 )
 
+// StartCommand contains the definition of the start command-line subcommand.
+var StartCommand cli.Command
+
 const (
-	sampleText             = "sample text"
-	broadcastChannelName   = "test"
-	resetBroadcastTimerSec = 5
+	bootstrapFlag = "bootstrap"
+	portFlag      = "port"
+	portShort     = "p"
 )
 
-// StartFlags for bootstrap and port
-var StartFlags []cli.Flag
-
-type recvParams struct {
-	port     int
-	ipaddr   string
-	recvChan chan net.Message
-}
-
-type broadcastParams struct {
-	port      int
-	ipaddr    string
-	bcastChan net.BroadcastChannel
-}
+const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
+   threshold relay client for the Keep random beacon.`
 
 func init() {
-	StartFlags = []cli.Flag{
-		&cli.BoolFlag{
-			Name: "bootstrap",
-		},
-		&cli.IntFlag{
-			Name: "port",
-		},
-	}
+	StartCommand =
+		cli.Command{
+			Name:        "start",
+			Usage:       `Starts the Keep client in the foreground`,
+			Description: startDescription,
+			Action:      Start,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name: bootstrapFlag,
+				},
+				&cli.IntFlag{
+					Name: portFlag + "," + portShort,
+				},
+			},
+		}
 }
 
 // Start starts a node; if it's not a bootstrap node it will get the Node.URLs
@@ -53,8 +50,8 @@ func Start(c *cli.Context) error {
 	}
 
 	var port int
-	if c.Int("port") > 0 {
-		port = c.Int("port")
+	if c.Int(portFlag) > 0 {
+		port = c.Int(portFlag)
 	} else {
 		port = cfg.Node.Port
 	}
@@ -63,7 +60,7 @@ func Start(c *cli.Context) error {
 		seed          int
 		bootstrapURLs []string
 	)
-	if c.Bool("bootstrap") {
+	if c.Bool(bootstrapFlag) {
 		seed = cfg.Bootstrap.Seed
 	} else {
 		bootstrapURLs = cfg.Bootstrap.URLs
@@ -79,7 +76,7 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	nodeHeader(c.Bool("bootstrap"), netProvider.Addrs(), port)
+	nodeHeader(c.Bool(bootstrapFlag), netProvider.Addrs(), port)
 
 	chainProvider, err := ethereum.Connect(cfg.Ethereum)
 	if err != nil {

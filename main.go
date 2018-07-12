@@ -38,7 +38,6 @@ func main() {
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
 	app.Description = "Command line interface (CLI) for running a Keep provider"
-	app.Copyright = "" //TODO: Insert copyright printInfo later
 	app.Compiled = time.Now()
 	app.Authors = []cli.Author{
 		{
@@ -56,28 +55,8 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
-		{
-			Name: "smoke-test",
-			Usage: `Simulates Distributed Key Generation (DKG) and signature verification
-       --group-size 9:  Threshold relay group size; default: 10
-       --threshold 9:   Minimun number of group members required to process requests; default 4
-`,
-			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
-			Action:      cmd.SmokeTest,
-			Flags:       cmd.SmokeTestFlags,
-		},
-		{
-			Name: "start",
-			Usage: `Starts the Keep client in the foreground. Currently this consists of the
-            threshold relay client for the Keep random beacon and the validator client
-            for the Keep random beacon.
-       --bootstrap             Indicates that this node is a bootstrap server
-       --port                  Port this node will be listening on
-`,
-			Description: "starts the Keep client in the foreground",
-			Action:      cmd.Start,
-			Flags:       cmd.StartFlags,
-		},
+		cmd.SmokeTestCommand,
+		cmd.StartCommand,
 		{
 			Name:  "print-info",
 			Usage: "Prints keep client information",
