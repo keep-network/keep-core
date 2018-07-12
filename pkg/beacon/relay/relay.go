@@ -23,10 +23,14 @@ func NewNode(
 	chainConfig config.Chain,
 ) Node {
 	return Node{
-		StakeID:      stakeID,
-		netProvider:  netProvider,
-		blockCounter: blockCounter,
-		chainConfig:  chainConfig,
+		StakeID:         stakeID,
+		netProvider:     netProvider,
+		blockCounter:    blockCounter,
+		chainConfig:     chainConfig,
+		stakeIDs:        make([]string, 100),
+		groupPublicKeys: make([][]byte, 0),
+		myGroups:        make(map[string]*membership),
+		pendingGroups:   make(map[string]*membership),
 	}
 }
 
