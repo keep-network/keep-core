@@ -57,33 +57,11 @@ func buildLine(lineLength int, prefix, suffix string, internalContent string) st
 }
 
 func buildMultiLine(lineLength int, prefix, suffix, startPrefix string, lines []string) string {
-	firstLine := lines[0]
-	contentLength := len(prefix) + len(startPrefix) + len(suffix) + len(firstLine)
-	endPadding := strings.Repeat(" ", lineLength-contentLength)
-	combinedLines :=
-		fmt.Sprintf(
-			"%s%s%s%s%s\n",
-			prefix,
-			startPrefix,
-			firstLine,
-			endPadding,
-			suffix,
-		)
+	combinedLines := buildLine(lineLength, prefix+startPrefix, suffix, lines[0]) + "\n"
 
 	startPadding := strings.Repeat(" ", len(startPrefix))
 	for _, line := range lines[1:] {
-		contentLength = len(prefix) + len(startPadding) + len(suffix) + len(line)
-		endPadding = strings.Repeat(" ", lineLength-contentLength)
-
-		combinedLines +=
-			fmt.Sprintf(
-				"%s%s%s%s%s\n",
-				prefix,
-				startPadding,
-				line,
-				endPadding,
-				suffix,
-			)
+		combinedLines += buildLine(lineLength, prefix+startPadding, suffix, line) + "\n"
 	}
 
 	return combinedLines
