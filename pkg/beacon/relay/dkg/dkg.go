@@ -73,7 +73,19 @@ func ExecuteDKG(
 			currentState,
 			pendingState,
 		)
-		err := pendingState.initiate()
+		currentState = pendingState
+		pendingState = nil
+
+		err := blockCounter.WaitForBlocks(1)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to wait 1 block entering state [%T]: [%v]",
+				currentState,
+				err,
+			)
+		}
+
+		err = currentState.initiate()
 		if err != nil {
 			return fmt.Errorf(
 				"failed to initialize state [%T]: [%v]",
@@ -81,9 +93,6 @@ func ExecuteDKG(
 				err,
 			)
 		}
-
-		currentState = pendingState
-		pendingState = nil
 
 		blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
 		if err != nil {
