@@ -99,19 +99,19 @@ func TestZKP1Verification(t *testing.T) {
 	zkp := generateTestZkpPI1()
 
 	expectedZ := big.NewInt(289613)
-	actualZ := computeVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
+	actualZ := evaluateVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
 	if expectedZ.Cmp(actualZ) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualZ, expectedZ)
 	}
 
 	expectedV := big.NewInt(285526)
-	actualV := computeVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
+	actualV := evaluateVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
 	if expectedV.Cmp(actualV) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualV, expectedV)
 	}
 
 	expectedU2 := big.NewInt(1102)
-	actualU2 := computeVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
+	actualU2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 	if expectedU2.Cmp(actualU2) != 0 {
 		t.Errorf("Unexpected U2\nActual: %v\nExpected: %v", actualU2, expectedU2)
 	}

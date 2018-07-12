@@ -156,10 +156,10 @@ func (zkp *PI1) Verify(c1,
 		return false
 	}
 
-	z := computeVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
-	v := computeVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
+	z := evaluateVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
+	v := evaluateVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
 	u1 := zkp.u1 // u1 was calculated by the prover
-	u2 := computeVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
+	u2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 
 	// e = hash(c1,c2,c3,z,u1,u2,v)
 	digest := sum256(
@@ -191,8 +191,12 @@ func (zkp *PI1) allParametersInRange(params *PublicParameters) bool {
 		isInRange(zkp.s2, zero, params.N)
 }
 
+// evaluateVerificationZ computes z verification value and returns it for
+// further comparison with the expected one, evaluated during the commitment
+// phase.
+//
 // z = (Γ^s1)*(s2^N)*(c3^(−e)) mod N^2
-func computeVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *PublicParameters) *big.Int {
+func evaluateVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
@@ -205,8 +209,12 @@ func computeVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *P
 	)
 }
 
+// evaluateVerificationV computes v verification value and returns it for
+// further comparison with the expected one, evaluated during the commitment
+// phase.
+//
 // v = (c2^s1)*(c1^(−e)) mod N^2
-func computeVerificationV(c1, encryptedMessageShare, s1, e *big.Int, params *PublicParameters) *big.Int {
+func evaluateVerificationV(c1, encryptedMessageShare, s1, e *big.Int, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(encryptedMessageShare, s1, params.NSquare()),
@@ -216,8 +224,12 @@ func computeVerificationV(c1, encryptedMessageShare, s1, e *big.Int, params *Pub
 	)
 }
 
+// evaluateVerificationU2 computes u2 verification value and returns it for
+// further comparison with the expected one, evaluated during the commitment
+// phase.
+//
 // u2 =(h1^s1)*(h2^s3)*(u1^(−e)) mod N ̃
-func computeVerificationU2(u1, s1, s3, e *big.Int, params *PublicParameters) *big.Int {
+func evaluateVerificationU2(u1, s1, s3, e *big.Int, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
