@@ -237,19 +237,17 @@ func (zkp *DsaPaillierKeyRangeProof) evaluateU2Verification(
 	encryptedSecretDsaKeyShare *big.Int,
 	params *PublicParameters,
 ) *big.Int {
-	NSquare := new(big.Int).Exp(params.N, big.NewInt(2), nil)
-
-	gs1 := new(big.Int).Exp(params.G(), zkp.s1, NSquare)
-	s2N := new(big.Int).Exp(zkp.s2, params.N, NSquare)
+	gs1 := new(big.Int).Exp(params.G(), zkp.s1, params.NSquare())
+	s2N := new(big.Int).Exp(zkp.s2, params.N, params.NSquare())
 	we := discreteExp(
 		encryptedSecretDsaKeyShare,
 		new(big.Int).Neg(zkp.e),
-		NSquare,
+		params.NSquare(),
 	)
 
 	return new(big.Int).Mod(
 		new(big.Int).Mul(new(big.Int).Mul(gs1, s2N), we),
-		NSquare,
+		params.NSquare(),
 	)
 }
 
