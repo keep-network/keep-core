@@ -152,12 +152,7 @@ func (zkp *PI1) Verify(c1,
 	encryptedSecretKeyShare *big.Int,
 	params *PublicParameters,
 ) bool {
-	// Check that all the values are in the correct ranges
-	if zkp.u1.CmpAbs(params.NTilde) >= 0 ||
-		zkp.u2.CmpAbs(params.NTilde) >= 0 ||
-		zkp.z.CmpAbs(params.NSquare) >= 0 ||
-		zkp.v.CmpAbs(params.NSquare) >= 0 ||
-		zkp.s2.CmpAbs(params.N) >= 0 {
+	if !zkp.allParametersInRange(params) {
 		return false
 	}
 
@@ -182,6 +177,18 @@ func (zkp *PI1) Verify(c1,
 		zkp.v.Cmp(v) == 0 &&
 		zkp.z.Cmp(z) == 0 &&
 		zkp.e.Cmp(e) == 0
+}
+
+// Checks whether parameters are in the expected range.
+// It's a preliminary step to check if proof is not corrupted.
+func (zkp *PI1) allParametersInRange(params *PublicParameters) bool {
+	zero := big.NewInt(0)
+
+	return isInRange(zkp.z, zero, params.NSquare()) &&
+		isInRange(zkp.v, zero, params.NSquare()) &&
+		isInRange(zkp.u1, zero, params.NTilde) &&
+		isInRange(zkp.u2, zero, params.NTilde) &&
+		isInRange(zkp.s2, zero, params.N)
 }
 
 // z = (Γ^s1)*(s2^N)*(c3^(−e)) mod N^2
