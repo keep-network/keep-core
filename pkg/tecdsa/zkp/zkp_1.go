@@ -58,9 +58,7 @@ func CommitZkpPi1(secretKeyShare,
 	params *PublicParameters,
 	random io.Reader,
 ) (*PI1, error) {
-	q3 := new(big.Int).Exp(params.q, big.NewInt(3), nil) // q^3
-
-	alpha, err := rand.Int(random, q3)
+	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
@@ -70,12 +68,12 @@ func CommitZkpPi1(secretKeyShare,
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
-	rho, err := rand.Int(random, new(big.Int).Mul(params.q, params.NTilde))
+	rho, err := rand.Int(random, params.QNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
 
-	gamma, err := rand.Int(random, new(big.Int).Mul(q3, params.NTilde))
+	gamma, err := rand.Int(random, params.QCubeNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
 	}
