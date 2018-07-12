@@ -101,14 +101,14 @@ func CommitZkpPi1(secretKeyShare,
 	// z = ((Γ)^α)*((β)^N) mod N^2
 	z := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.G, alpha, params.NSquare),
-			new(big.Int).Exp(beta, params.N, params.NSquare),
+			new(big.Int).Exp(params.G(), alpha, params.NSquare()),
+			new(big.Int).Exp(beta, params.N, params.NSquare()),
 		),
-		params.NSquare,
+		params.NSquare(),
 	)
 
 	// v = (c2)^α mod N^2
-	v := new(big.Int).Exp(encryptedMessageShare, alpha, params.NSquare)
+	v := new(big.Int).Exp(encryptedMessageShare, alpha, params.NSquare())
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
@@ -189,12 +189,12 @@ func computeVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *P
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(params.G, s1, params.NSquare),
-				new(big.Int).Exp(s2, params.N, params.NSquare),
+				new(big.Int).Exp(params.G(), s1, params.NSquare()),
+				new(big.Int).Exp(s2, params.N, params.NSquare()),
 			),
-			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(e), params.NSquare),
+			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(e), params.NSquare()),
 		),
-		params.NSquare,
+		params.NSquare(),
 	)
 }
 
@@ -202,10 +202,10 @@ func computeVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *P
 func computeVerificationV(c1, encryptedMessageShare, s1, e *big.Int, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(encryptedMessageShare, s1, params.NSquare),
-			discreteExp(c1, new(big.Int).Neg(e), params.NSquare),
+			new(big.Int).Exp(encryptedMessageShare, s1, params.NSquare()),
+			discreteExp(c1, new(big.Int).Neg(e), params.NSquare()),
 		),
-		params.NSquare,
+		params.NSquare(),
 	)
 }
 

@@ -151,7 +151,7 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
-	c1 := new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.NSquare)
+	c1 := new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.NSquare())
 
 	encryptedSecretKeyShare, err := privateKey.EncryptWithR(secretKeyShare, r)
 	t.Logf("encryptedSecretKeyShare: %s", encryptedSecretKeyShare.C)
@@ -255,10 +255,8 @@ func generateTestZkpPI1() *PI1 {
 
 func generateTestPublicParams() *PublicParameters {
 	return &PublicParameters{
-		N:       big.NewInt(1081),    // 23 * 47
-		NSquare: big.NewInt(1168561), // N^2
-		G:       big.NewInt(1082),    // N + 1
-		NTilde:  big.NewInt(25651),   // 23 * 11
+		N:      big.NewInt(1081),  // 23 * 47
+		NTilde: big.NewInt(25651), // 23 * 11
 
 		h1: big.NewInt(20535),
 		h2: big.NewInt(20919),
