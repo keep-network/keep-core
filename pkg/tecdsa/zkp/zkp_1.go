@@ -7,6 +7,8 @@ import (
 	"math/big"
 )
 
+// TODO Find better name for this ZKP
+
 // PI1 is an implementation of Gennaro's PI_1,i proof for the
 // Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
@@ -16,6 +18,13 @@ import (
 //   D(c3) = η
 //
 // This struct contains values computed by the prover.
+//
+//
+//     [GGN 16]: Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal
+//          DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security.
+//          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
+//          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
+//          vol 9696. Springer, Cham
 type PI1 struct {
 	z *big.Int
 	v *big.Int
@@ -144,7 +153,10 @@ func CommitZkpPi1(secretKeyShare,
 	return &PI1{z, v, u1, u2, e, s1, s2, s3}, nil
 }
 
-// Verify c1, c2, c3 commitment.
+// Verify checks the `PI1` against the provided secret message and secret key
+// shares.
+// If they match values used to generate the proof, function returns `true`.
+// Otherwise, `false` is returned.
 func (zkp *PI1) Verify(c1,
 	encryptedMessageShare,
 	encryptedSecretKeyShare *big.Int,
