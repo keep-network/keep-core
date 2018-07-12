@@ -165,9 +165,72 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// THEN
-	if !zkp.Verify(c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, params) {
-		t.Fatalf("ERROR")
+	var tests = map[string]struct {
+		verify         func() bool
+		expectedResult bool
+	}{
+		"positive validation": {
+			verify: func() bool {
+				return zkp.Verify(
+					c1,
+					encryptedMessageShare.C,
+					encryptedSecretKeyShare.C,
+					params,
+				)
+			},
+			expectedResult: true,
+		},
+		"negative validation - wrong c1": {
+			verify: func() bool {
+				wrongC1 := big.NewInt(1411)
+				return zkp.Verify(
+					wrongC1,
+					encryptedMessageShare.C,
+					encryptedSecretKeyShare.C,
+					params,
+				)
+			},
+			expectedResult: false,
+		},
+		"negative validation - wrong encrypted message share": {
+			verify: func() bool {
+				wrongEncryptedMessageShare := big.NewInt(856)
+				return zkp.Verify(
+					c1,
+					wrongEncryptedMessageShare,
+					encryptedSecretKeyShare.C,
+					params,
+				)
+			},
+			expectedResult: false,
+		},
+		"negative validation - wrong encrypted secret key share": {
+			verify: func() bool {
+				wrongEncryptedSecretKeyShare := big.NewInt(798)
+				return zkp.Verify(
+					c1,
+					encryptedMessageShare.C,
+					wrongEncryptedSecretKeyShare,
+					params,
+				)
+			},
+			expectedResult: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			expectedResult := test.expectedResult
+			actualResult := test.verify()
+			if actualResult != expectedResult {
+				t.Fatalf(
+					"Expected %v from commitment validation. Got %v",
+					expectedResult,
+					actualResult,
+				)
+			}
+
+		})
 	}
 }
 
