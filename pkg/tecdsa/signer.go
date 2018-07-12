@@ -15,6 +15,7 @@ import (
 
 	mathrand "math/rand"
 
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 )
 
@@ -85,7 +86,7 @@ func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 		return nil, fmt.Errorf("could not generate DSA key share [%v]", err)
 	}
 
-	publicKeyShare := NewCurvePoint(
+	publicKeyShare := curve.NewPoint(
 		s.publicParameters.curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
@@ -166,7 +167,7 @@ func (s *LocalSigner) CombineDsaKeyShares(
 
 	return &ThresholdDsaKey{
 		secretKey: secretKey,
-		publicKey: &CurvePoint{
+		publicKey: &curve.Point{
 			X: publicKeyShareX,
 			Y: publicKeyShareY,
 		},

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
@@ -40,7 +40,7 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	}
 
 	secretDsaKeyShare := big.NewInt(13)
-	publicDsaKeyShare := tecdsa.NewCurvePoint(
+	publicDsaKeyShare := curve.NewPoint(
 		secp256k1.S256().ScalarBaseMult(big.NewInt(11).Bytes()),
 	)
 
@@ -156,12 +156,12 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 	}
 
 	encryptedSecretDsaKeyShare := big.NewInt(674)
-	publicDsaKeyShare := tecdsa.NewCurvePoint(
+	publicDsaKeyShare := curve.NewPoint(
 		secp256k1.S256().ScalarBaseMult(big.NewInt(10).Bytes()),
 	)
 
 	// u1 = g^s1 * y^-e = g^22 * (g^10)^-881 = g^{q-8810}
-	expectedU1 := tecdsa.NewCurvePoint(secp256k1.S256().ScalarBaseMult(
+	expectedU1 := curve.NewPoint(secp256k1.S256().ScalarBaseMult(
 		new(big.Int).Sub(params.q, big.NewInt(8788)).Bytes(),
 	))
 	actualU1 := zkp.evaluateU1Verification(publicDsaKeyShare, params)
@@ -200,13 +200,15 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 // test of the ZKP, including generating public parameters, positive
 // and negative validation scenarios.
 func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
-	curve := secp256k1.S256()
+	ellipticCurve := secp256k1.S256()
 
 	p, _ := new(big.Int).SetString("104479735358598948369258156463683391052543755432914893102752306517616376250927", 10)
 	q, _ := new(big.Int).SetString("110280671641689691092051226222060939019447720119674706500089479951904142152567", 10)
 	paillierKey := paillier.CreatePrivateKey(p, q)
 
-	parameters, err := GeneratePublicParameters(paillierKey.PublicKey.N, curve)
+	parameters, err := GeneratePublicParameters(
+		paillierKey.PublicKey.N, ellipticCurve,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,8 +226,8 @@ func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	publicDsaKeyShare := tecdsa.NewCurvePoint(
-		curve.ScalarBaseMult(secretDsaKeyShare.Bytes()),
+	publicDsaKeyShare := curve.NewPoint(
+		ellipticCurve.ScalarBaseMult(secretDsaKeyShare.Bytes()),
 	)
 
 	commitment, err := CommitDsaPaillierKeyRange(
@@ -269,7 +271,7 @@ func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 		},
 		"negative validation - wrong public DSA key share": {
 			verify: func() bool {
-				wrongPublicDsaKeyShare := &tecdsa.CurvePoint{
+				wrongPublicDsaKeyShare := &curve.Point{
 					X: big.NewInt(997),
 					Y: big.NewInt(998),
 				}

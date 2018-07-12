@@ -3,6 +3,7 @@ package tecdsa
 import (
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 )
 
@@ -14,7 +15,7 @@ import (
 // since the decryption key of E is shared among the n Signers.
 type ThresholdDsaKey struct {
 	secretKey *paillier.Cypher
-	publicKey *CurvePoint
+	publicKey *curve.Point
 }
 
 // dsaKeyShare represents a share of DSA key owned by LocalSigner before
@@ -31,5 +32,5 @@ type ThresholdDsaKey struct {
 // to create a `ThresholdDsaKey`.
 type dsaKeyShare struct {
 	secretKeyShare *big.Int
-	publicKeyShare *CurvePoint
+	publicKeyShare *curve.Point
 }

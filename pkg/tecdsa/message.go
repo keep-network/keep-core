@@ -1,6 +1,7 @@
 package tecdsa
 
 import (
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 )
 
@@ -10,7 +11,7 @@ import (
 // Paillier threshold key. The message is expected to be broadcast publicly.
 type InitMessage struct {
 	secretKeyShare *paillier.Cypher
-	publicKeyShare *CurvePoint
+	publicKeyShare *curve.Point
 
 	// TODO: add all the required ZKPs
 }
