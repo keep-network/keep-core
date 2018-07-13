@@ -81,8 +81,8 @@ const paillierModulusBitLength = 256
 // them into `dsaKeyShare`. Secret key share is a random integer from Z_q where
 // `q` is the cardinality of Elliptic Curve and public key share is a point
 // on the Curve g^secretKeyShare.
-func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
-	curveParams := s.groupParameters.curve.Params()
+func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
+	curveParams := ls.groupParameters.curve.Params()
 
 	secretKeyShare, err := rand.Int(rand.Reader, curveParams.N)
 	if err != nil {
@@ -90,7 +90,7 @@ func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	}
 
 	publicKeyShare := curve.NewPoint(
-		s.groupParameters.curve.ScalarBaseMult(secretKeyShare.Bytes()),
+		ls.groupParameters.curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
 	return &dsaKeyShare{
@@ -109,8 +109,8 @@ func (s *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 //
 // Along with secret and public key share, we ship a zero knowledge argument
 // allowing to validate received shares.
-func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
-	keyShare, err := s.generateDsaKeyShare()
+func (ls *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
+	keyShare, err := ls.generateDsaKeyShare()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not initialize DSA key generation [%v]", err,
@@ -118,7 +118,7 @@ func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 	}
 
 	paillierRandomness, err := paillier.GetRandomNumberInMultiplicativeGroup(
-		s.paillierKey.N, rand.Reader,
+		ls.paillierKey.N, rand.Reader,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -126,7 +126,7 @@ func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 		)
 	}
 
-	encryptedSecretKeyShare, err := s.paillierKey.EncryptWithR(
+	encryptedSecretKeyShare, err := ls.paillierKey.EncryptWithR(
 		keyShare.secretKeyShare, paillierRandomness,
 	)
 	if err != nil {
@@ -140,7 +140,7 @@ func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 		keyShare.publicKeyShare,
 		encryptedSecretKeyShare,
 		paillierRandomness,
-		s.zkpParameters,
+		ls.zkpParameters,
 		rand.Reader,
 	)
 
@@ -162,19 +162,19 @@ func (s *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 // E is an additively homomorphic encryption scheme, hence `+` operation is
 // possible. `Each E(secretKeyShare_i)` share comes from `InitMessage` that was
 // created by each `LocalSigner` of the signing group.
-func (s *LocalSigner) CombineDsaKeyShares(
+func (ls *LocalSigner) CombineDsaKeyShares(
 	shares []*InitMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shares) != s.groupParameters.groupSize {
+	if len(shares) != ls.groupParameters.groupSize {
 		return nil, fmt.Errorf(
 			"InitMessages required from all group members; Got %v, expected %v",
 			len(shares),
-			s.groupParameters.groupSize,
+			ls.groupParameters.groupSize,
 		)
 	}
 
 	for _, share := range shares {
-		if !share.IsValid(s.zkpParameters) {
+		if !share.IsValid(ls.zkpParameters) {
 			return nil, errors.New("Invalid InitMessage - ZKP rejected")
 		}
 	}
@@ -183,12 +183,12 @@ func (s *LocalSigner) CombineDsaKeyShares(
 	for i, share := range shares {
 		secretKeyShares[i] = share.secretKeyShare
 	}
-	secretKey := s.paillierKey.Add(secretKeyShares...)
+	secretKey := ls.paillierKey.Add(secretKeyShares...)
 
 	publicKeyShareX := shares[0].publicKeyShare.X
 	publicKeyShareY := shares[0].publicKeyShare.Y
 	for _, share := range shares[1:] {
-		publicKeyShareX, publicKeyShareY = s.groupParameters.curve.Add(
+		publicKeyShareX, publicKeyShareY = ls.groupParameters.curve.Add(
 			publicKeyShareX, publicKeyShareY,
 			share.publicKeyShare.X, share.publicKeyShare.Y,
 		)
