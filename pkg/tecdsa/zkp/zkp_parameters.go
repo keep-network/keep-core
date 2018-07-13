@@ -123,6 +123,18 @@ func (p *PublicParameters) QCube() *big.Int {
 	return new(big.Int).Exp(p.q, big.NewInt(3), nil)
 }
 
+// QSix is an auxiliary function returning q^8 which is needed to generate
+// and validate internal commitment parameters.
+func (p *PublicParameters) QSix() *big.Int {
+	return new(big.Int).Exp(p.q, big.NewInt(6), nil)
+}
+
+// QEight is an auxiliary function returning q^8 which is needed to generate
+// and validate internal commitment parameters.
+func (p *PublicParameters) QEight() *big.Int {
+	return new(big.Int).Exp(p.q, big.NewInt(8), nil)
+}
+
 // QNTilde is an auxiliary function returning q * NTilde which is needed to
 // generate and validate internal commitment parameters.
 func (p *PublicParameters) QNTilde() *big.Int {
@@ -133,4 +145,16 @@ func (p *PublicParameters) QNTilde() *big.Int {
 // to generate and validate internal commitment parameters.
 func (p *PublicParameters) QCubeNTilde() *big.Int {
 	return new(big.Int).Mul(p.QCube(), p.NTilde)
+}
+
+// QSixNTilde is an auxiliary function returning q^8 * NTilde which is needed
+// to generate and validate internal commitment parameters.
+func (p *PublicParameters) QSixNTilde() *big.Int {
+	return new(big.Int).Mul(p.QSix(), p.NTilde)
+}
+
+// QEightNTilde is an auxiliary function returning q^8 * NTilde which is needed
+// to generate and validate internal commitment parameters.
+func (p *PublicParameters) QEightNTilde() *big.Int {
+	return new(big.Int).Mul(p.QEight(), p.NTilde)
 }
