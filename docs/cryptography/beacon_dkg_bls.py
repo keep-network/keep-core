@@ -200,8 +200,8 @@ def validate(submission, candidateGroup):
         )
 
 
-# eligible :: Staker -> BlockHeight -> [Staker] -> Bool
-def eligible(sender, t_diff, participants):
+# isEligible :: Staker -> BlockHeight -> [Staker] -> Bool
+def isEligible(sender, t_diff, participants):
     i = participants.index(sender)
     maxEligible = 1 + max(0, (t_diff - t_dkg) / t_step)
 
