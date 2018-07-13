@@ -6,7 +6,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 )
 
@@ -42,7 +42,7 @@ import (
 //          vol 9696. Springer, Cham
 type DsaPaillierKeyRangeProof struct {
 	z  *big.Int
-	u1 *tecdsa.CurvePoint
+	u1 *curve.Point
 	u2 *big.Int
 	u3 *big.Int
 
@@ -59,7 +59,7 @@ type DsaPaillierKeyRangeProof struct {
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
 func CommitDsaPaillierKeyRange(
 	secretDsaKeyShare *big.Int,
-	publicDsaKeyShare *tecdsa.CurvePoint,
+	publicDsaKeyShare *curve.Point,
 	encryptedSecretDsaKeyShare *paillier.Cypher,
 	r *big.Int,
 	params *PublicParameters,
@@ -93,7 +93,7 @@ func CommitDsaPaillierKeyRange(
 		params.NTilde,
 	)
 
-	u1 := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(
+	u1 := curve.NewPoint(params.curve.ScalarBaseMult(
 		new(big.Int).Mod(alpha, params.q).Bytes(),
 	))
 	u2 := new(big.Int).Mod(
@@ -138,7 +138,7 @@ func CommitDsaPaillierKeyRange(
 // `true`. Otherwise, `false` is returned.
 func (zkp *DsaPaillierKeyRangeProof) Verify(
 	encryptedSecretDsaKeyShare *paillier.Cypher,
-	publicDsaKeyShare *tecdsa.CurvePoint,
+	publicDsaKeyShare *curve.Point,
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
@@ -196,9 +196,9 @@ func (zkp *DsaPaillierKeyRangeProof) allParametersInRange(
 //
 // which is exactly how u1 is evaluated during the commitment phase.
 func (zkp *DsaPaillierKeyRangeProof) evaluateU1Verification(
-	publicDsaKeyShare *tecdsa.CurvePoint,
+	publicDsaKeyShare *curve.Point,
 	params *PublicParameters,
-) *tecdsa.CurvePoint {
+) *curve.Point {
 	gs1x, gs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
 	)
@@ -208,7 +208,7 @@ func (zkp *DsaPaillierKeyRangeProof) evaluateU1Verification(
 
 	// For a Weierstrass elliptic curve form, the additive inverse of
 	// (x, y) is (x, -y)
-	return tecdsa.NewCurvePoint(params.curve.Add(
+	return curve.NewPoint(params.curve.Add(
 		gs1x, gs1y, yex, new(big.Int).Neg(yey),
 	))
 }
