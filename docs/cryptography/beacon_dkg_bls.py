@@ -1,55 +1,40 @@
-# data CandidateGroup = CandidateGroup
-#   { members   :: [Staker]
-#   , createdAt :: Int    -- blockheight
-#   , minH      :: Int    -- minimum number of honest parties required
-#   , maxM      :: Int }  -- maximum number of misbehavers before failure
-CandidateGroup = namedtuple(
-    'CandidateGroup',
-    ['members', 'createdAt', 'minH', 'maxM']
-)
+BitArray = List[bool]
+StakerSignature = Tuple[Staker, BlsSignature]
+
+BlockHeight = NewType('BlockHeight', int)
+
+class CandidateGroup(NamedTuple):
+    members:   List[Staker]
+    createdAt: Blockheight
+    minH:      int # minimum number of honest parties required
+    maxM:      int # maximum number of misbehaving parties before failure
 
 
-# data Staker = Staker
-#   { ecdsaPubkey  :: EcdsaPubkey
-#   , blsPubkey    :: BlsPubkey
-#   , stakedTokens :: TokenAmount }
-Staker = namedtuple(
-    'Staker',
-    ['ecdsaPubkey', 'blsPubkey', 'stakedTokens']
-)
+class Staker(NamedTuple):
+    ecdsaPubkey:  EcdsaPubkey
+    blsPubkey:    BlsPubkey
+    stakedTokens: TokenAmount
 
 
-# data Result = Result
-#   { groupPubkey  :: Maybe BeaconPubkey
-#   , disqualified :: [Bool]
-#   , inactive     :: [Bool] }
-Result = namedtuple(
-    'Result',
-    ['groupPubkey', 'disqualified', 'inactive']
-)
+class Result(NamedTuple):
+    groupPubkey:  Optional[BeaconPubkey]
+    disqualified: Optional[BitArray]
+    inactive:     Optional[BitArray]
 
 
-# data SignedResult = SignedResult
-#   { result    :: Result
-#   , signature :: BlsSignature }
-SignedResult = namedtuple(
-    'SignedResult',
-    ['result', 'signature']
-)
+class SignedResult(NamedTuple):
+    result:    Result
+    signature: BlsSignature
 
 
-# data ResultSubmission = ResultSubmission
-#   { result    :: Result
-#   , signature :: BlsSignature
-#   , signers   :: [Bool] }
-ResultSubmission = namedtuple(
-    'ResultSubmission',
-    ['result', 'signature', 'signers']
-)
+class ResultSubmission(NamedTuple):
+    result:    Result
+    signature: BlsSignature
+    signers:   BitArray
 
 
-def Failure(disqualified = [False] * groupN):
-    return Result(False, disqualified, [False] * groupN)
+def Failure(disqualified = None):
+    return Result(False, disqualified, None)
 
 
 def Success(pubkey, disqualified, inactive):
@@ -78,44 +63,51 @@ def isSuccess(result):
 # -- calculate the pairing of two curve points
 # pairing :: G1 -> G2 -> GT
 
-# type BlsPrivkey   = Bn256.Scalar
-# type BlsPubkey    = Bn256.G2
-# type BlsSignature = Bn256.G1
+
+BlsPrivkey   = Bn256.Scalar
+BlsPubkey    = Bn256.G2
+BlsSignature = Bn256.G1
 
 
-# blsPubkey :: Bn256.Scalar -> Bn256.G2
-def blsPubkey(privkey):
+def blsPubkey(
+        privkey: BlsPrivkey
+) -> BlsPubkey:
     return Bn256.ecmul(Bn256.generator, privkey)
 
 
-# blsSign :: Bytes -> Bn256.Scalar -> Bn256.G1
-def blsSign(message, privkey):
-    # h :: G1
+def blsSign(
+        message: Bytes,
+        privkey: BlsPrivkey
+) -> BlsSignature:
     h = Bn256.asPoint(sha3(message))
     return Bn256.ecmul(h, privkey)
 
 
-# blsVerify :: Bn256.G1 -> Bytes -> Bn256.G2 -> Bool
-def blsVerify(signature, message, pubkey):
+def blsVerify(
+        signature: BlsSignature,
+        message:   Bytes,
+        pubkey:    BlsPubkey
+) -> bool:
     h = Bn256.asPoint(sha3(message))
     sigPairing = Bn256.pairing(signature, Bn256.generator)
     keyPairing = Bn256.pairing(h, pubkey)
     return sigPairing == keyPairing
 
 
-# blsCombinePubkeys :: [BlsPubkey] -> BlsPubkey
-def blsCombinePubkeys(pubkeys):
+def blsCombinePubkeys(
+        pubkeys: List[BlsPubkey]
+) -> BlsPubkey:
     return reduce(Bn256.ecadd, pubkeys)
 
 
-# getResult :: Dict Staker SignedResult
-#           -> CandidateGroup
-#           -> Maybe ResultSubmission
-def getResult(signedResults, groupInfo):
+def getResult(
+        signedResults: Dict[Staker, SignedResult],
+        groupInfo:     CandidateGroup
+) -> Optional[ResultSubmission]:
 
-    # preferredResults :: Dict Result [(Staker, BlsSignature)]
-    # -- for each result, list its supporters and their signatures
-    preferredResults = {}
+    # for each result, list its supporters and their signatures
+    preferredResults: Dict[Result, StakerSignature] = {}
+
     for (staker, signedResult) in signedResults:
         result = signedResult.result
         signature = signedResult.signature
@@ -125,9 +117,9 @@ def getResult(signedResults, groupInfo):
         else:
             preferredResults[result] = [(staker, signature)]
 
-    # orderedResults :: Dict Result Int
-    # -- for each result, counts how many members support it
-    orderedResults = {}
+    # for each result, counts how many members support it
+    orderedResults: Dict[Result int] = {}
+
     for (result, supporters) in preferredResults:
         orderedResults[result] = len(supporters)
 
@@ -136,12 +128,11 @@ def getResult(signedResults, groupInfo):
     participantPlurality = preferredResults[leadingResult]
 
     if len(participantPlurality) < groupInfo.minH:
-        return False
+        return None
     else:
         participants = groupInfo.members
 
-        # submissionSigners :: [Bool]
-        # -- set up the bit array showing who signed the result
+        # set up the bit array showing who signed the result
         submissionSigners = [False] * len(participants)
 
         submissionSignatures = []
@@ -152,7 +143,6 @@ def getResult(signedResults, groupInfo):
             submissionSigners[participants.index(signer)] = True
             submissionSignatures.append(signature)
 
-        # groupSignature :: BlsSignature
         groupSignature = reduce(Bn256.ecadd, submissionSignatures)
 
         return ResultSubmission(
@@ -162,20 +152,19 @@ def getResult(signedResults, groupInfo):
         )
 
 
-# validate :: ResultSubmission -> CandidateGroup -> Bool
-def validate(submission, candidateGroup):
+def validate(
+        submission:     ResultSubmission,
+        candidateGroup: CandidateGroup
+) -> bool:
 
-    # signature :: BlsSignature
     # a group signature for the result
     signature = submission.signature
 
-    # signers :: [Bool]
     # A one-indexed array whose length is N,
     # signers[i] = does the group signature include
     # the signature of the i-th member
     signers = submission.signers
 
-    # result :: Result
     result = submission.result
 
     # require at least the honest majority number of signers
@@ -200,17 +189,20 @@ def validate(submission, candidateGroup):
         )
 
 
-# isEligible :: Staker -> BlockHeight -> [Staker] -> Bool
-def isEligible(sender, t_diff, participants):
+def isEligible(
+        sender:       Staker,
+        t_diff:       BlockHeight,
+        participants: List[Staker]
+) -> bool:
     i = participants.index(sender)
     maxEligible = 1 + max(0, (t_diff - t_dkg) / t_step)
 
     return i <= maxEligible
 
 
-
-# receiveResult :: CandidateGroup -> IO Result
-def receiveResult(candidateGroup):
+def receiveResult(
+        candidateGroup: CandidateGroup
+) -> Result:
     finalized = False
     validResult = False
 
@@ -218,7 +210,7 @@ def receiveResult(candidateGroup):
 
     while not finalized:
         t_now = currentBlockHeight()
-        t_diff = t_now - t_init
+        t_diff = BlockHeight(t_now - t_init)
 
         # has the timeout been reached?
         if t_diff > t_timeout:
