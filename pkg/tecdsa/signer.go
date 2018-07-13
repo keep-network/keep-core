@@ -11,6 +11,7 @@ package tecdsa
 import (
 	"crypto/elliptic"
 	"crypto/rand"
+	"errors"
 	"fmt"
 
 	mathrand "math/rand"
@@ -172,7 +173,11 @@ func (s *LocalSigner) CombineDsaKeyShares(
 		)
 	}
 
-	// TODO: check ZKPs
+	for _, share := range shares {
+		if !share.IsValid(s.zkpParameters) {
+			return nil, errors.New("Invalid InitMessage - ZKP rejected")
+		}
+	}
 
 	secretKeyShares := make([]*paillier.Cypher, len(shares))
 	for i, share := range shares {
@@ -199,9 +204,9 @@ func (s *LocalSigner) CombineDsaKeyShares(
 }
 
 // newGroup generates a new signing group backed by a threshold Paillier key
-// and ZKP public parameters build from the generated Paillier key.
+// and ZKP public parameters built from the generated Paillier key.
 // This implementation works in an oracle mode - one party is responsible for
-// generating Paillier keys and distributing them. Be careful please.
+// generating Paillier keys and distributing them. Be careful, please.
 func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 	paillierKeyGen := paillier.GetThresholdKeyGenerator(
 		paillierModulusBitLength,

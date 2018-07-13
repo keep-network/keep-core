@@ -16,3 +16,10 @@ type InitMessage struct {
 
 	rangeProof *zkp.DsaPaillierKeyRangeProof
 }
+
+// IsValid checks secret and public key share against zero knowledge range proof
+// shipped alongside them. This function should be called for each received
+// InitMessage before it's combined to a final key.
+func (im *InitMessage) IsValid(zkpParams *zkp.PublicParameters) bool {
+	return im.rangeProof.Verify(im.secretKeyShare, im.publicKeyShare, zkpParams)
+}
