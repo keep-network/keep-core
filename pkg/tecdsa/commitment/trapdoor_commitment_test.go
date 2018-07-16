@@ -73,7 +73,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				test.modifySecret(secret)
 			}
 
-			result := commitment.ValidateCommitment(secret, decommitmentKey)
+			result := commitment.Verify(secret, decommitmentKey)
 
 			if result != test.expectedResult {
 				t.Fatalf(

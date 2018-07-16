@@ -78,8 +78,8 @@ func GenerateCommitment(secret []byte) (*TrapdoorCommitment, *DecommitmentKey, e
 		nil
 }
 
-// ValidateCommitment validates received commitment against the revealed secret.
-func (tc *TrapdoorCommitment) ValidateCommitment(
+// Verify checks received commitment against the revealed secret.
+func (tc *TrapdoorCommitment) Verify(
 	secret []byte,
 	decommitmentKey *DecommitmentKey,
 ) bool {

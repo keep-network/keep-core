@@ -41,7 +41,7 @@ func (msg *KeyShareRevealMessage) IsValid(
 	commitment *commitment.TrapdoorCommitment,
 	zkpParams *zkp.PublicParameters,
 ) bool {
-	if !commitment.ValidateCommitment(
+	if !commitment.Verify(
 		msg.publicKeyShare.Bytes(),
 		msg.publicKeyDecommitmentKey,
 	) {
