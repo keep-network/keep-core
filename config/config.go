@@ -35,14 +35,6 @@ var (
 	KeepOpts Config
 )
 
-// ValidationErrors returns a list of errors due to invalid data in this config
-// object.
-/*func (c *Config) ValidationErrors() []error {
-	ethereumErrors := c.Ethereum.ValidationErrors()
-	bootstrapErrors := c.Bootstrap.ValidationErrors()
-	nodeErrors := c.Node.ValidationErrors()
-}*/
-
 // ReadConfig reads in the configuration file in .toml format.
 func ReadConfig(filePath string) (*Config, error) {
 	config := &Config{}

@@ -20,5 +20,5 @@
 
 # Bootstrap node creating a new network.
 # [LibP2P]
-#   Seed = 2
+# 	Seed = 2
 # 	Port = 3919
