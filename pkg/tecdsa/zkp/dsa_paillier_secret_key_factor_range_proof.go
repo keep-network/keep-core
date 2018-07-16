@@ -209,7 +209,23 @@ func (zkp *DsaPaillierSecretKeyFactorRangeProof) allParametersInRange(params *Pu
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// z = (Γ^s1)*(s2^N)*(c3^(−e)) mod N^2
+// We want to verify whether z = (Γ^s1)*(s2^N)*(c3^(−e))
+// is equal to z = Γ^α * β^N mod N^2
+// we evaluated in the commitment phase.
+//
+// Since:
+// s1 = eη + α
+// s2 = r^e * β
+//
+// and since we know from Paillier that:
+// c3 = E(η) = Γ^η * r^N
+//
+// We can do:
+// z = (Γ^s1)*(s2^N)*(c3^(−e)) =
+// Γ^{eη + α} * r^eN * β^N * Γ^{-eη} * r^{-eN} =
+// Γ^α * β^N
+//
+// which is exactly how z is evaluated during the commitment phase.
 func evaluateVerificationZ(encryptedFactor *paillier.Cypher, s1, s2, e *big.Int,
 	params *PublicParameters,
 ) *big.Int {
@@ -229,7 +245,24 @@ func evaluateVerificationZ(encryptedFactor *paillier.Cypher, s1, s2, e *big.Int,
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// v = (c2^s1)*(c1^(−e)) mod N^2
+// We want to verify whether  v = (c2^s1)*(c1^(−e))
+// is equal to v = (c2)^α
+// we evaluated in the commitment phase.
+//
+// Since:
+// s1 = eη + α
+//
+// and since we know from Paillier that:
+// c1 = E(ηx) = Γ^{ηx} * r^{ηN}
+// c2 = E(x) = Γ^x * r^N
+//
+// We can do:
+// v = (c2^s1)*(c1^(−e)) =
+// (c2)^{eη} * (c2)^α * (c1)^{-e} =
+// (c2)^α * Γ^{eηx} * r^{eηN} * Γ^{-eηx} * r^{-eηN} =
+// (c2)^α
+//
+// which is exactly how v is evaluated during the commitment phase.
 func evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey *paillier.Cypher,
 	s1, e *big.Int, params *PublicParameters,
 ) *big.Int {
@@ -246,7 +279,22 @@ func evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey 
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// u2 =(h1^s1)*(h2^s3)*(u1^(−e)) mod N ̃
+// We want to verify whether u2 = (h1)^{s1} * (h2)^{s3} * (u1)^-e
+// is equal to u2 = (h1)^alpha * (h2)^γ
+// we evaluated in the commitment phase.
+//
+// Since:
+// s1 = eη + α
+// s3 = e*ρ + γ
+// u1 = (h1)^η * (h2)^ρ
+//
+// We can do:
+// u2 = (h1)^{s1} * (h2)^{s3} * (u1)^-e =
+// (h1)^{e^η + α} * h2^{e*ρ + γ} * [(h1)^η * (h2)^ρ]^-e =
+// (h1)^{eη} * (h1)^{α} * (h2)^{e*ρ} * (h2)^{γ} * (h1)^{-eη} * (h2)^{-e * ρ} =
+// (h1)^α * (h2)^γ
+//
+// which is exactly how u2 is evaluated during the commitment phase.
 func evaluateVerificationU2(u1, s1, s3, e *big.Int, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
