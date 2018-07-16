@@ -9,18 +9,21 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// TestZKP1CommitValues creates a commitment and checks all
+// TestDsaPaillierSecretKeyFactorRangeProofCommitValues creates a commitment and checks all
 // commitment values against expected ones.
 //
 // This is not a full roundtrip test. We test the private commitment phase
 // interface to make sure if anything goes wrong in future (e.g. curve
 // implementation changes), we can isolate the problem easily.
 // All expected values has been manually calculated based on the [GGN16] paper.
-func TestZKP1CommitValues(t *testing.T) {
+func TestDsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	// GIVEN
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
 	}
+	// Following values are assigned to ZKP parameters as a result of
+	// calling mockRandom:
+	//
 	// alpha=10
 	// beta=11
 	// rho=12
@@ -89,7 +92,7 @@ func TestZKP1CommitValues(t *testing.T) {
 	}
 }
 
-func TestZKP1Verification(t *testing.T) {
+func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
@@ -101,7 +104,7 @@ func TestZKP1Verification(t *testing.T) {
 	expectedV := big.NewInt(285526)
 	expectedU2 := big.NewInt(1102)
 
-	zkp := generateTestZkpPI1()
+	zkp := generateTestDsaPaillierSecretKeyFactorRangeProof()
 
 	//WHEN
 	actualZ := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
@@ -125,7 +128,7 @@ func TestZKP1Verification(t *testing.T) {
 	}
 }
 
-func TestRoundTrip(t *testing.T) {
+func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	// GIVEN
 	message := big.NewInt(430)
 
@@ -238,7 +241,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
-func generateTestZkpPI1() *DsaPaillierSecretKeyFactorRangeProof {
+func generateTestDsaPaillierSecretKeyFactorRangeProof() *DsaPaillierSecretKeyFactorRangeProof {
 	e, _ := new(big.Int).SetString("28665131959061509990138847422722847282246667596979352654045645230544684705784", 10)
 	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
 	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
