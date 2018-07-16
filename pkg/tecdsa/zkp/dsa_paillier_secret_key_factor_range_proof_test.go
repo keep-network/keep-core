@@ -37,7 +37,7 @@ func TestZKP1CommitValues(t *testing.T) {
 	r := big.NewInt(7)
 
 	// WHEN
-	zkp, err := CommitZkpPi1(secretKeyShare, c1, encryptedMessageShare, encryptedSecretKeyShare, r, params, mockRandom)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretKeyShare, c1, encryptedMessageShare, encryptedSecretKeyShare, r, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	// WHEN
-	zkp, err := CommitZkpPi1(secretKeyShare, c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, r, params, rand.Reader)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretKeyShare, c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,12 +234,12 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
-func generateTestZkpPI1() *PI1 {
+func generateTestZkpPI1() *DsaPaillierSecretKeyFactorRangeProof {
 	e, _ := new(big.Int).SetString("28665131959061509990138847422722847282246667596979352654045645230544684705784", 10)
 	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
 	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
 
-	return &PI1{
+	return &DsaPaillierSecretKeyFactorRangeProof{
 		z:  big.NewInt(289613),
 		v:  big.NewInt(285526),
 		u1: big.NewInt(10797),

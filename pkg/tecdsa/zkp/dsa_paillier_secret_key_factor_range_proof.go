@@ -7,17 +7,32 @@ import (
 	"math/big"
 )
 
-// TODO Find better name for this ZKP
-
-// PI1 is an implementation of Gennaro's PI_1,i proof for the
-// Paillier encryption scheme, as described in [GGN16], section 4.4.
+// DsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's PI_1,i
+// proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
+//
+// The proof is used in the first and second round of the T-ECDSA signing algorithm
+// and operates on DSA secret key encrypted with an additively homomorphic
+// encryption scheme.
+//
+// Because of the complexity of the proof, we use the same naming for values
+// as in the paper in most cases. We do an exception for function parameters:
+// - `c1` in the paper represents encrypted DSA secret key multiplied by a factor η,
+// - `c2` in the paper represents encrypted DSA secret key,
+// - `c3` represents encrypted factor η
 //
 // The proof states that:
-// η (eta) ∈ [−q3, q3] such that:
-//   D(c1) = η*D(c2)
-//   D(c3) = η
+// ∃ η ∈ [-q^3, g^3] such that
+// D(c3) = η
+// D(c1) = η * D(c2)
 //
-// This struct contains values computed by the prover.
+// In other words, for the Elliptic Curve of cardinality `q`, random integer
+// `η ∈ Z_q`, an additively homomorphic encryption scheme `E`, `u`
+// representing encrypted random η `u = E(η)` and the value `v` which is
+// a multiplication of the encoded secret ECDSA key `E(x)` by `η`,
+// `v = η (*) E(x) = E(ηx)`,
+// exists such η ∈ [-q^3, g^3] that:
+// D(u) = D(E(η)) = η
+// D(v) = η * D(E(x)) = ηx
 //
 //
 //     [GGN 16]: Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal
@@ -25,7 +40,7 @@ import (
 //          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
 //          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
 //          vol 9696. Springer, Cham
-type PI1 struct {
+type DsaPaillierSecretKeyFactorRangeProof struct {
 	z *big.Int
 	v *big.Int
 
@@ -39,34 +54,20 @@ type PI1 struct {
 	s3 *big.Int
 }
 
-// CommitZkpPi1 to the Proof PI_1,i
-//
-// Because of the complexity of the proof, we use the same naming for values
-// as in the paper in most cases. We do an exception for function parameters:
-// - `η` in the paper represents DSA secret key share,
-// - `c1` in the paper represents ...... (`c2 = η ×E E(xi) = E(η*x)`), TODO Check name for this one
-// - `c2` in the paper represents encrypted secret message share,
-// - `c3` in the paper represents encrypted DSA secret key share (`c3 = E(η)`),
-//
-// We assume the Prover knows the value r ∈ Z_N∗ used to encrypt η (eta)
-// such that c3 = (Γ^η)*(r^N) mod N2.
-//
-// First the prover chooses uniformly at random four values:
-// * α(alpha) ∈ Z_q^3,
-// * β(beta) ∈ Z_N∗,
-// * ρ(rho) ∈ Z_q^N ̃,
-// * γ(gamma) ∈ Z_((q^3)*N ̃).
-//
-// Then the prover computes u1, u2, z, v, e, s1, s2,s3. This values will be sent
-// by the prover to the verifier.
-func CommitZkpPi1(secretKeyShare,
-	c1,
-	encryptedMessageShare,
-	encryptedSecretKeyShare,
+// CommitDsaPaillierSecretKeyFactorRange generates
+// `DsaPaillierSecretKeyFactorRangeProof ` for the specified DSA secret
+// key and multiplication factor. It's required to use the same randomness
+// `r` to generate this proof as the one used for Paillier encryption of
+// `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
+func CommitDsaPaillierSecretKeyFactorRange(
+	factor, // = η
+	encryptedSecretDsaKeyMultiple, // = c1 = E(ηx)
+	encryptedSecretDsaKey, // = c2 = E(x)
+	encryptedFactor, // = c3 = E(η)
 	r *big.Int,
 	params *PublicParameters,
 	random io.Reader,
-) (*PI1, error) {
+) (*DsaPaillierSecretKeyFactorRangeProof, error) {
 	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
@@ -90,7 +91,7 @@ func CommitZkpPi1(secretKeyShare,
 	// u_1 = ((h1)^η)*((h2)^ρ) mod N ̃
 	u1 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.h1, secretKeyShare, params.NTilde),
+			new(big.Int).Exp(params.h1, factor, params.NTilde),
 			new(big.Int).Exp(params.h2, rho, params.NTilde),
 		),
 		params.NTilde,
@@ -115,13 +116,13 @@ func CommitZkpPi1(secretKeyShare,
 	)
 
 	// v = (c2)^α mod N^2
-	v := new(big.Int).Exp(encryptedMessageShare, alpha, params.NSquare())
+	v := new(big.Int).Exp(encryptedSecretDsaKey, alpha, params.NSquare())
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
-		c1.Bytes(),
-		encryptedMessageShare.Bytes(),
-		encryptedSecretKeyShare.Bytes(),
+		encryptedSecretDsaKeyMultiple.Bytes(),
+		encryptedSecretDsaKey.Bytes(),
+		encryptedFactor.Bytes(),
 		z.Bytes(),
 		u1.Bytes(),
 		u2.Bytes(),
@@ -131,7 +132,7 @@ func CommitZkpPi1(secretKeyShare,
 
 	// s1 = e*η+α
 	s1 := new(big.Int).Add(
-		new(big.Int).Mul(e, secretKeyShare),
+		new(big.Int).Mul(e, factor),
 		alpha,
 	)
 
@@ -150,32 +151,33 @@ func CommitZkpPi1(secretKeyShare,
 		gamma,
 	)
 
-	return &PI1{z, v, u1, u2, e, s1, s2, s3}, nil
+	return &DsaPaillierSecretKeyFactorRangeProof{z, v, u1, u2, e, s1, s2, s3}, nil
 }
 
 // Verify checks the `PI1` against the provided secret message and secret key
 // shares.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
-func (zkp *PI1) Verify(c1,
-	encryptedMessageShare,
-	encryptedSecretKeyShare *big.Int,
+func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
+	encryptedSecretDsaKeyMultiple,
+	encryptedSecretDsaKey,
+	encryptedFactor *big.Int,
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
 		return false
 	}
 
-	z := evaluateVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
-	v := evaluateVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
+	z := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
+	v := evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, zkp.s1, zkp.e, params)
 	u1 := zkp.u1 // u1 was calculated by the prover
 	u2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 
 	// e = hash(c1,c2,c3,z,u1,u2,v)
 	digest := sum256(
-		c1.Bytes(),
-		encryptedMessageShare.Bytes(),
-		encryptedSecretKeyShare.Bytes(),
+		encryptedSecretDsaKeyMultiple.Bytes(),
+		encryptedSecretDsaKey.Bytes(),
+		encryptedFactor.Bytes(),
 		z.Bytes(),
 		u1.Bytes(),
 		u2.Bytes(),
@@ -191,7 +193,7 @@ func (zkp *PI1) Verify(c1,
 
 // Checks whether parameters are in the expected range.
 // It's a preliminary step to check if proof is not corrupted.
-func (zkp *PI1) allParametersInRange(params *PublicParameters) bool {
+func (zkp *DsaPaillierSecretKeyFactorRangeProof) allParametersInRange(params *PublicParameters) bool {
 	zero := big.NewInt(0)
 
 	return isInRange(zkp.z, zero, params.NSquare()) &&
