@@ -161,9 +161,9 @@ func CommitDsaPaillierSecretKeyFactorRange(
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
-	encryptedSecretDsaKeyMultiple,
-	encryptedSecretDsaKey,
-	encryptedFactor *big.Int,
+	encryptedSecretDsaKeyMultiple *paillier.Cypher,
+	encryptedSecretDsaKey *paillier.Cypher,
+	encryptedFactor *paillier.Cypher,
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
@@ -177,9 +177,9 @@ func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
 
 	// e = hash(c1,c2,c3,z,u1,u2,v)
 	digest := sum256(
-		encryptedSecretDsaKeyMultiple.Bytes(),
-		encryptedSecretDsaKey.Bytes(),
-		encryptedFactor.Bytes(),
+		encryptedSecretDsaKeyMultiple.C.Bytes(),
+		encryptedSecretDsaKey.C.Bytes(),
+		encryptedFactor.C.Bytes(),
 		z.Bytes(),
 		u1.Bytes(),
 		u2.Bytes(),
@@ -210,14 +210,16 @@ func (zkp *DsaPaillierSecretKeyFactorRangeProof) allParametersInRange(params *Pu
 // phase.
 //
 // z = (Γ^s1)*(s2^N)*(c3^(−e)) mod N^2
-func evaluateVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *PublicParameters) *big.Int {
+func evaluateVerificationZ(encryptedFactor *paillier.Cypher, s1, s2, e *big.Int,
+	params *PublicParameters,
+) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
 				new(big.Int).Exp(params.G(), s1, params.NSquare()),
 				new(big.Int).Exp(s2, params.N, params.NSquare()),
 			),
-			discreteExp(encryptedSecretKeyShare, new(big.Int).Neg(e), params.NSquare()),
+			discreteExp(encryptedFactor.C, new(big.Int).Neg(e), params.NSquare()),
 		),
 		params.NSquare(),
 	)
@@ -228,11 +230,13 @@ func evaluateVerificationZ(encryptedSecretKeyShare, s1, s2, e *big.Int, params *
 // phase.
 //
 // v = (c2^s1)*(c1^(−e)) mod N^2
-func evaluateVerificationV(c1, encryptedMessageShare, s1, e *big.Int, params *PublicParameters) *big.Int {
+func evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey *paillier.Cypher,
+	s1, e *big.Int, params *PublicParameters,
+) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(encryptedMessageShare, s1, params.NSquare()),
-			discreteExp(c1, new(big.Int).Neg(e), params.NSquare()),
+			new(big.Int).Exp(encryptedSecretDsaKey.C, s1, params.NSquare()),
+			discreteExp(encryptedSecretDsaKeyMultiple.C, new(big.Int).Neg(e), params.NSquare()),
 		),
 		params.NSquare(),
 	)

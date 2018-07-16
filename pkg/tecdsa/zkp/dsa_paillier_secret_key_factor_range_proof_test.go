@@ -92,9 +92,9 @@ func TestZKP1Verification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
-	encryptedMessageShare := big.NewInt(133808)
-	c1 := big.NewInt(729674)
-	encryptedSecretKeyShare := big.NewInt(688361)
+	encryptedMessageShare := &paillier.Cypher{C: big.NewInt(133808)}
+	c1 := &paillier.Cypher{C: big.NewInt(729674)}
+	encryptedSecretKeyShare := &paillier.Cypher{C: big.NewInt(688361)}
 
 	zkp := generateTestZkpPI1()
 
@@ -164,7 +164,9 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	// 	encryptedSecretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
+	// encryptedSecretDsaKey *paillier.Cypher, // = c2 = E(x)
+	// encryptedFactor *paillier.Cypher, // = c3 = E(η)
 	var tests = map[string]struct {
 		verify         func() bool
 		expectedResult bool
@@ -172,9 +174,9 @@ func TestRoundTrip(t *testing.T) {
 		"positive validation": {
 			verify: func() bool {
 				return zkp.Verify(
-					c1.C,
-					encryptedMessageShare.C,
-					encryptedSecretKeyShare.C,
+					c1,
+					encryptedMessageShare,
+					encryptedSecretKeyShare,
 					params,
 				)
 			},
@@ -182,11 +184,11 @@ func TestRoundTrip(t *testing.T) {
 		},
 		"negative validation - wrong c1": {
 			verify: func() bool {
-				wrongC1 := big.NewInt(1411)
+				wrongC1 := &paillier.Cypher{C: big.NewInt(1411)}
 				return zkp.Verify(
 					wrongC1,
-					encryptedMessageShare.C,
-					encryptedSecretKeyShare.C,
+					encryptedMessageShare,
+					encryptedSecretKeyShare,
 					params,
 				)
 			},
@@ -194,11 +196,11 @@ func TestRoundTrip(t *testing.T) {
 		},
 		"negative validation - wrong encrypted message share": {
 			verify: func() bool {
-				wrongEncryptedMessageShare := big.NewInt(856)
+				wrongEncryptedMessageShare := &paillier.Cypher{C: big.NewInt(856)}
 				return zkp.Verify(
-					c1.C,
+					c1,
 					wrongEncryptedMessageShare,
-					encryptedSecretKeyShare.C,
+					encryptedSecretKeyShare,
 					params,
 				)
 			},
@@ -206,10 +208,10 @@ func TestRoundTrip(t *testing.T) {
 		},
 		"negative validation - wrong encrypted secret key share": {
 			verify: func() bool {
-				wrongEncryptedSecretKeyShare := big.NewInt(798)
+				wrongEncryptedSecretKeyShare := &paillier.Cypher{C: big.NewInt(798)}
 				return zkp.Verify(
-					c1.C,
-					encryptedMessageShare.C,
+					c1,
+					encryptedMessageShare,
 					wrongEncryptedSecretKeyShare,
 					params,
 				)
