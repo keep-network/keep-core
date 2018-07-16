@@ -28,16 +28,17 @@ func TestZKP1CommitValues(t *testing.T) {
 
 	params := generateTestPublicParams()
 
-	secretKeyShare := big.NewInt(8)
+	factor := big.NewInt(8)
 
-	encryptedMessageShare := &paillier.Cypher{C: big.NewInt(7)}
-	c1 := &paillier.Cypher{C: big.NewInt(9)}
-	encryptedSecretKeyShare := &paillier.Cypher{C: big.NewInt(9)}
+	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(9)}
+	encryptedSecretDsaKey := &paillier.Cypher{C: big.NewInt(7)}
+	encryptedFactor := &paillier.Cypher{C: big.NewInt(9)}
 
 	r := big.NewInt(7)
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(c1, encryptedMessageShare, encryptedSecretKeyShare, secretKeyShare, r, params, mockRandom)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(encryptedSecretDsaKeyMultiple,
+		encryptedSecretDsaKey, encryptedFactor, factor, r, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,20 +93,21 @@ func TestZKP1Verification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
-	encryptedMessageShare := &paillier.Cypher{C: big.NewInt(133808)}
-	c1 := &paillier.Cypher{C: big.NewInt(729674)}
-	encryptedSecretKeyShare := &paillier.Cypher{C: big.NewInt(688361)}
+	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(729674)}
+	encryptedSecretDsaKey := &paillier.Cypher{C: big.NewInt(133808)}
+	encryptedFactor := &paillier.Cypher{C: big.NewInt(688361)}
 
 	zkp := generateTestZkpPI1()
 
 	expectedZ := big.NewInt(289613)
-	actualZ := evaluateVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
+	actualZ := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
 	if expectedZ.Cmp(actualZ) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualZ, expectedZ)
 	}
 
 	expectedV := big.NewInt(285526)
-	actualV := evaluateVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
+	actualV := evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey,
+		zkp.s1, zkp.e, params)
 	if expectedV.Cmp(actualV) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualV, expectedV)
 	}
@@ -116,7 +118,7 @@ func TestZKP1Verification(t *testing.T) {
 		t.Errorf("Unexpected U2\nActual: %v\nExpected: %v", actualU2, expectedU2)
 	}
 
-	result := zkp.Verify(c1, encryptedMessageShare, encryptedSecretKeyShare, params)
+	result := zkp.Verify(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, encryptedFactor, params)
 	if !result {
 		t.Errorf("Verification failed")
 	}
@@ -141,32 +143,30 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encryptedMessageShare, err := privateKey.EncryptWithR(message, r)
+	encryptedSecretDsaKey, err := privateKey.EncryptWithR(message, r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	secretKeyShare, err := rand.Int(rand.Reader, params.q)
+	factor, err := rand.Int(rand.Reader, params.q)
 	if err != nil {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
-	c1 := &paillier.Cypher{C: new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.NSquare())}
+	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: new(big.Int).Exp(encryptedSecretDsaKey.C, factor, params.NSquare())}
 
-	encryptedSecretKeyShare, err := privateKey.EncryptWithR(secretKeyShare, r)
-	t.Logf("encryptedSecretKeyShare: %s", encryptedSecretKeyShare.C)
+	encryptedFactor, err := privateKey.EncryptWithR(factor, r)
+	t.Logf("encryptedfactor: %s", encryptedFactor.C)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(c1, encryptedMessageShare, encryptedSecretKeyShare, secretKeyShare, r, params, rand.Reader)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, encryptedFactor, factor, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// 	encryptedSecretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
-	// encryptedSecretDsaKey *paillier.Cypher, // = c2 = E(x)
-	// encryptedFactor *paillier.Cypher, // = c3 = E(η)
+
 	var tests = map[string]struct {
 		verify         func() bool
 		expectedResult bool
@@ -174,45 +174,45 @@ func TestRoundTrip(t *testing.T) {
 		"positive validation": {
 			verify: func() bool {
 				return zkp.Verify(
-					c1,
-					encryptedMessageShare,
-					encryptedSecretKeyShare,
+					encryptedSecretDsaKeyMultiple,
+					encryptedSecretDsaKey,
+					encryptedFactor,
 					params,
 				)
 			},
 			expectedResult: true,
 		},
-		"negative validation - wrong c1": {
+		"negative validation - wrong encrypted secret dsa key multiple": {
 			verify: func() bool {
-				wrongC1 := &paillier.Cypher{C: big.NewInt(1411)}
+				wrongEncryptedSecretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(1411)}
 				return zkp.Verify(
-					wrongC1,
-					encryptedMessageShare,
-					encryptedSecretKeyShare,
+					wrongEncryptedSecretDsaKeyMultiple,
+					encryptedSecretDsaKey,
+					encryptedFactor,
 					params,
 				)
 			},
 			expectedResult: false,
 		},
-		"negative validation - wrong encrypted message share": {
+		"negative validation - wrong encrypted secret dsa key": {
 			verify: func() bool {
-				wrongEncryptedMessageShare := &paillier.Cypher{C: big.NewInt(856)}
+				wrongEncryptedSecretDsaKey := &paillier.Cypher{C: big.NewInt(856)}
 				return zkp.Verify(
-					c1,
-					wrongEncryptedMessageShare,
-					encryptedSecretKeyShare,
+					encryptedSecretDsaKeyMultiple,
+					wrongEncryptedSecretDsaKey,
+					encryptedFactor,
 					params,
 				)
 			},
 			expectedResult: false,
 		},
-		"negative validation - wrong encrypted secret key share": {
+		"negative validation - wrong encrypted factor": {
 			verify: func() bool {
-				wrongEncryptedSecretKeyShare := &paillier.Cypher{C: big.NewInt(798)}
+				wrongEncryptedFactor := &paillier.Cypher{C: big.NewInt(798)}
 				return zkp.Verify(
-					c1,
-					encryptedMessageShare,
-					wrongEncryptedSecretKeyShare,
+					encryptedSecretDsaKeyMultiple,
+					encryptedSecretDsaKey,
+					wrongEncryptedFactor,
 					params,
 				)
 			},
