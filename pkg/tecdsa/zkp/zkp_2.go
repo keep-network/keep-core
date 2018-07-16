@@ -28,7 +28,7 @@ import (
 //          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
 //          vol 9696. Springer, Cham
 type PI2 struct {
-	g *big.Int
+	g *tecdsa.CurvePoint
 	r *tecdsa.CurvePoint
 	w *big.Int
 	u *big.Int
@@ -80,8 +80,8 @@ type PI2 struct {
 //
 // Then the prover computes u1, u2, z, v, e, s1, s2,s3. This values will be sent
 // by the prover to the verifier.
-func CommitZkpPi2(r *tecdsa.CurvePoint,
-	g,
+func CommitZkpPi2(r,
+	g *tecdsa.CurvePoint,
 	w,
 	u,
 	eta1,
@@ -261,11 +261,7 @@ func CommitZkpPi2(r *tecdsa.CurvePoint,
 // shares.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
-func (zkp *PI2) Verify(c1,
-	encryptedMessageShare,
-	encryptedSecretKeyShare *big.Int,
-	params *PublicParameters,
-) bool {
+func (zkp *PI2) Verify(params *PublicParameters) bool {
 	// if !zkp.allParametersInRange(params) {
 	// 	return false
 	// }
