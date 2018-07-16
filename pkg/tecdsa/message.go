@@ -1,10 +1,19 @@
 package tecdsa
 
 import (
+	"github.com/keep-network/keep-core/pkg/tecdsa/commitment"
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
 	"github.com/keep-network/paillier"
 )
+
+// KeyShareCommitmentMessage is a message payload that carries signer's
+// commitment for secret and public DSA key share the signer generated.
+// It's the very first message exchanged between signers during the T-ECDSA
+// T-ECDSA distributed key generation process.
+type KeyShareCommitmentMessage struct {
+	keyCommitment commitment.TrapdoorCommitment
+}
 
 // InitMessage is a message payload that carries the sender's share of
 // `dsaKeyShare` during T-ECDSA distributed DSA key generation as well as
