@@ -16,7 +16,7 @@ import (
 // a decommitment key r needed for the commitment verification.
 type Secret struct {
 	// Secret message
-	message *[]byte
+	message []byte
 	// Decommitment key; used to commitment validation.
 	r *big.Int
 }
@@ -42,7 +42,7 @@ type TrapdoorCommitment struct {
 }
 
 // GenerateCommitment generates a Commitment for passed `secret` message.
-func GenerateCommitment(secret *[]byte) (*TrapdoorCommitment, *Secret, error) {
+func GenerateCommitment(secret []byte) (*TrapdoorCommitment, *Secret, error) {
 	// Generate a random public key.
 	pubKey, _, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
@@ -107,8 +107,8 @@ func (tc *TrapdoorCommitment) ValidateCommitment(secret *Secret) bool {
 
 // sha256Sum calculates sha256 hash for the passed `secret`
 // and converts it to `big.Int`.
-func sha256Sum(secret *[]byte) *big.Int {
-	hash := sha256.Sum256(*secret)
+func sha256Sum(secret []byte) *big.Int {
+	hash := sha256.Sum256(secret)
 
 	return new(big.Int).SetBytes(hash[:])
 }

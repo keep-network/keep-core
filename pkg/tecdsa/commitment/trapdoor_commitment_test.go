@@ -21,7 +21,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		"negative validation - incorrect `secret`": {
 			modifySecret: func(secret *Secret) {
 				msg := []byte("top secret message2")
-				secret.message = &msg
+				secret.message = msg
 			},
 			modifyCommitment: nil,
 			expectedResult:   false,
@@ -59,7 +59,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			msg := []byte("top secret message")
 
 			// Generate Commitment
-			commitment, secret, err := GenerateCommitment(&msg)
+			commitment, secret, err := GenerateCommitment(msg)
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
@@ -89,13 +89,13 @@ func TestCommitmentRandomness(t *testing.T) {
 	msg := []byte("top secret message")
 
 	// Generate Commitment 1
-	commitment1, secret1, err := GenerateCommitment(&msg)
+	commitment1, secret1, err := GenerateCommitment(msg)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Generate Commitment 2
-	commitment2, secret2, err := GenerateCommitment(&msg)
+	commitment2, secret2, err := GenerateCommitment(msg)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
