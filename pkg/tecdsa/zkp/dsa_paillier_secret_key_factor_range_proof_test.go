@@ -97,29 +97,30 @@ func TestZKP1Verification(t *testing.T) {
 	encryptedSecretDsaKey := &paillier.Cypher{C: big.NewInt(133808)}
 	encryptedFactor := &paillier.Cypher{C: big.NewInt(688361)}
 
+	expectedZ := big.NewInt(289613)
+	expectedV := big.NewInt(285526)
+	expectedU2 := big.NewInt(1102)
+
 	zkp := generateTestZkpPI1()
 
-	expectedZ := big.NewInt(289613)
+	//WHEN
 	actualZ := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
+	actualV := evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey,
+		zkp.s1, zkp.e, params)
+	actualU2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
+	verificationResult := zkp.Verify(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, encryptedFactor, params)
+
+	//THEN
 	if expectedZ.Cmp(actualZ) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualZ, expectedZ)
 	}
-
-	expectedV := big.NewInt(285526)
-	actualV := evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey,
-		zkp.s1, zkp.e, params)
 	if expectedV.Cmp(actualV) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualV, expectedV)
 	}
-
-	expectedU2 := big.NewInt(1102)
-	actualU2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 	if expectedU2.Cmp(actualU2) != 0 {
 		t.Errorf("Unexpected U2\nActual: %v\nExpected: %v", actualU2, expectedU2)
 	}
-
-	result := zkp.Verify(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, encryptedFactor, params)
-	if !result {
+	if !verificationResult {
 		t.Errorf("Verification failed")
 	}
 }
@@ -167,6 +168,7 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// THEN
 	var tests = map[string]struct {
 		verify         func() bool
 		expectedResult bool
