@@ -130,7 +130,7 @@ func CommitDsaPaillierSecretKeyFactorRange(
 		u2.Bytes(),
 		v.Bytes(),
 	)
-	e := new(big.Int).Abs(new(big.Int).SetBytes(digest[:]))
+	e := new(big.Int).SetBytes(digest[:])
 
 	// s1 = e*η+α
 	s1 := new(big.Int).Add(
