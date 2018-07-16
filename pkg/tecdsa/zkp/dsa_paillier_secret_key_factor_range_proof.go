@@ -141,7 +141,7 @@ func CommitDsaPaillierSecretKeyFactorRange(
 	// s2 = (r^e)*β mod N
 	s2 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(r, e, params.N),
+			discreteExp(r, e, params.N),
 			beta,
 		),
 		params.N,
@@ -156,14 +156,15 @@ func CommitDsaPaillierSecretKeyFactorRange(
 	return &DsaPaillierSecretKeyFactorRangeProof{z, v, u1, u2, e, s1, s2, s3}, nil
 }
 
-// Verify checks the `PI1` against the provided secret message and secret key
+// Verify checks the `DsaPaillierSecretKeyFactorRangeProof` against the provided
+// DSA secret key and the multiplication factor
 // shares.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
-	encryptedSecretDsaKeyMultiple *paillier.Cypher,
-	encryptedSecretDsaKey *paillier.Cypher,
-	encryptedFactor *paillier.Cypher,
+	encryptedSecretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
+	encryptedSecretDsaKey *paillier.Cypher, // = c2 = E(x)
+	encryptedFactor *paillier.Cypher, // = c3 = E(η)
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
@@ -172,7 +173,6 @@ func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
 
 	z := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
 	v := evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, zkp.s1, zkp.e, params)
-	u1 := zkp.u1 // u1 was calculated by the prover
 	u2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 
 	// e = hash(c1,c2,c3,z,u1,u2,v)
@@ -181,7 +181,7 @@ func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
 		encryptedSecretDsaKey.C.Bytes(),
 		encryptedFactor.C.Bytes(),
 		z.Bytes(),
-		u1.Bytes(),
+		zkp.u1.Bytes(),
 		u2.Bytes(),
 		v.Bytes(),
 	)
@@ -216,7 +216,7 @@ func evaluateVerificationZ(encryptedFactor *paillier.Cypher, s1, s2, e *big.Int,
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(params.G(), s1, params.NSquare()),
+				discreteExp(params.G(), s1, params.NSquare()),
 				new(big.Int).Exp(s2, params.N, params.NSquare()),
 			),
 			discreteExp(encryptedFactor.C, new(big.Int).Neg(e), params.NSquare()),
@@ -235,7 +235,7 @@ func evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey 
 ) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(encryptedSecretDsaKey.C, s1, params.NSquare()),
+			discreteExp(encryptedSecretDsaKey.C, s1, params.NSquare()),
 			discreteExp(encryptedSecretDsaKeyMultiple.C, new(big.Int).Neg(e), params.NSquare()),
 		),
 		params.NSquare(),
@@ -251,8 +251,8 @@ func evaluateVerificationU2(u1, s1, s3, e *big.Int, params *PublicParameters) *b
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(params.h1, s1, params.NTilde),
-				new(big.Int).Exp(params.h2, s3, params.NTilde),
+				discreteExp(params.h1, s1, params.NTilde),
+				discreteExp(params.h2, s3, params.NTilde),
 			),
 			discreteExp(u1, new(big.Int).Neg(e), params.NTilde),
 		),
