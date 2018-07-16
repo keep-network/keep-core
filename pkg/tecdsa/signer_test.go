@@ -58,7 +58,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	// broadcast InitMessage.
 	// E is an additively homomorphic encryption scheme. For our implementation
 	// we use Paillier.
-	initMessages := make([]*InitMessage, publicParameters.groupSize)
+	initMessages := make([]*KeyShareRevealMessage, publicParameters.groupSize)
 	for i, signer := range group {
 		initMessages[i], err = signer.InitializeDsaKeyGen()
 		if err != nil {
@@ -138,7 +138,7 @@ func TestCombineNotEnoughInitMessages(t *testing.T) {
 		"InitMessages required from all group members; Got 1, expected 10",
 	)
 
-	shares := []*InitMessage{message}
+	shares := []*KeyShareRevealMessage{message}
 	_, err = group[0].CombineDsaKeyShares(shares)
 	if err == nil {
 		t.Fatal("Error was expected")
@@ -156,7 +156,7 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	}
 
 	// Let each signer initialize a DSA key share and create a valid InitMessage
-	initMessages := make([]*InitMessage, publicParameters.groupSize)
+	initMessages := make([]*KeyShareRevealMessage, publicParameters.groupSize)
 	for i, signer := range group {
 		initMessages[i], err = signer.InitializeDsaKeyGen()
 		if err != nil {

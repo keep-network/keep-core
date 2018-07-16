@@ -109,7 +109,7 @@ func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 //
 // Along with secret and public key share, we ship a zero knowledge argument
 // allowing to validate received shares.
-func (ls *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
+func (ls *LocalSigner) InitializeDsaKeyGen() (*KeyShareRevealMessage, error) {
 	keyShare, err := ls.generateDsaKeyShare()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -144,7 +144,7 @@ func (ls *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 		rand.Reader,
 	)
 
-	return &InitMessage{
+	return &KeyShareRevealMessage{
 		secretKeyShare: encryptedSecretKeyShare,
 		publicKeyShare: keyShare.publicKeyShare,
 		rangeProof:     rangeProof,
@@ -163,8 +163,7 @@ func (ls *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
 // possible. `Each E(secretKeyShare_i)` share comes from `InitMessage` that was
 // created by each `LocalSigner` of the signing group.
 func (ls *LocalSigner) CombineDsaKeyShares(
-	shares []*InitMessage,
-) (*ThresholdDsaKey, error) {
+	shares []*KeyShareRevealMessage) (*ThresholdDsaKey, error) {
 	if len(shares) != ls.groupParameters.groupSize {
 		return nil, fmt.Errorf(
 			"InitMessages required from all group members; Got %v, expected %v",
