@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -15,9 +16,8 @@ const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum  ethereum.Config
-	Bootstrap bootstrap
-	Node      node
+	Ethereum ethereum.Config
+	LibP2P   libp2p.Config
 }
 
 type node struct {
@@ -35,40 +35,52 @@ var (
 	KeepOpts Config
 )
 
+// ValidationErrors returns a list of errors due to invalid data in this config
+// object.
+/*func (c *Config) ValidationErrors() []error {
+	ethereumErrors := c.Ethereum.ValidationErrors()
+	bootstrapErrors := c.Bootstrap.ValidationErrors()
+	nodeErrors := c.Node.ValidationErrors()
+}*/
+
 // ReadConfig reads in the configuration file in .toml format.
-func ReadConfig(filePath string) (cfg Config, err error) {
-	if _, err = toml.DecodeFile(filePath, &cfg); err != nil {
-		return cfg, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
+func ReadConfig(filePath string) (*Config, error) {
+	config := &Config{}
+	if _, err := toml.DecodeFile(filePath, config); err != nil {
+		return nil, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
 
-	var password string
 	envPassword := os.Getenv(passwordEnvVariable)
 	if envPassword == "prompt" {
+		var (
+			password string
+			err      error
+		)
 		if password, err = readPassword("Enter Account Password: "); err != nil {
-			return cfg, err
+			return nil, err
 		}
-		cfg.Ethereum.Account.KeyFilePassword = password
+		config.Ethereum.Account.KeyFilePassword = password
 	} else {
-		cfg.Ethereum.Account.KeyFilePassword = envPassword
+		config.Ethereum.Account.KeyFilePassword = envPassword
 	}
 
-	if cfg.Ethereum.Account.KeyFilePassword == "" {
-		return cfg, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
+	if config.Ethereum.Account.KeyFilePassword == "" {
+		return nil, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
 	}
 
-	if cfg.Node.Port == 0 {
-		return cfg, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
+	if config.LibP2P.Port == 0 {
+		return nil, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
 	}
 
-	if cfg.Bootstrap.Seed == 0 && len(cfg.Bootstrap.URLs) == 0 {
-		return cfg, fmt.Errorf("either supply a valid bootstrap seed or valid bootstrap URLs")
+	if config.LibP2P.Seed == 0 && len(config.LibP2P.Peers) == 0 {
+		return nil, fmt.Errorf("either supply a valid bootstrap seed or valid bootstrap URLs")
 	}
 
-	if cfg.Bootstrap.Seed != 0 && len(cfg.Bootstrap.URLs) > 0 {
-		return cfg, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
+	if config.LibP2P.Seed != 0 && len(config.LibP2P.Peers) > 0 {
+		return nil, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
 	}
 
-	return cfg, nil
+	return config, nil
 }
 
 // ReadPassword prompts a user to enter a password.   The read password uses

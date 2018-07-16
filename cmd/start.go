@@ -31,9 +31,6 @@ func init() {
 			Description: startDescription,
 			Action:      Start,
 			Flags: []cli.Flag{
-				&cli.BoolFlag{
-					Name: bootstrapFlag,
-				},
 				&cli.IntFlag{
 					Name: portFlag + "," + portShort,
 				},
@@ -44,41 +41,26 @@ func init() {
 // Start starts a node; if it's not a bootstrap node it will get the Node.URLs
 // from the config file
 func Start(c *cli.Context) error {
-	cfg, err := config.ReadConfig(c.GlobalString("config"))
+	config, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
 	var port int
 	if c.Int(portFlag) > 0 {
-		port = c.Int(portFlag)
-	} else {
-		port = cfg.Node.Port
-	}
-
-	var (
-		seed          int
-		bootstrapURLs []string
-	)
-	if c.Bool(bootstrapFlag) {
-		seed = cfg.Bootstrap.Seed
-	} else {
-		bootstrapURLs = cfg.Bootstrap.URLs
+		config.LibP2P.Port = c.Int(portFlag)
 	}
 
 	ctx := context.Background()
-	netProvider, err := libp2p.Connect(ctx, &libp2p.Config{
-		Port:  port,
-		Peers: bootstrapURLs,
-		Seed:  seed,
-	})
+	netProvider, err := libp2p.Connect(ctx, config.LibP2P)
 	if err != nil {
 		return err
 	}
 
-	nodeHeader(c.Bool(bootstrapFlag), netProvider.Addrs(), port)
+	isBootstrapNode := config.LibP2P.Seed != 0
+	nodeHeader(isBootstrapNode, netProvider.Addrs(), port)
 
-	chainProvider, err := ethereum.Connect(cfg.Ethereum)
+	chainProvider, err := ethereum.Connect(config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}

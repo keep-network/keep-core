@@ -66,7 +66,7 @@ func (p *provider) Addrs() []ma.Multiaddr {
 //
 // An error is returned if any part of the connection or bootstrap process
 // fails.
-func Connect(ctx context.Context, config *Config) (net.Provider, error) {
+func Connect(ctx context.Context, config Config) (net.Provider, error) {
 	identity, err := generateIdentity(config.Seed)
 	if err != nil {
 		return nil, err
