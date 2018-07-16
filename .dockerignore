@@ -1,0 +1,14 @@
+# Top-level directories unrelated to the build.
+Dockerfile
+.*
+docs
+.circleci
+scripts
+testnet*
+
+# NPM stuff.
+**/node_modules/*
+
+# Go stuff.
+vendor
+**/gen/*/**/*.go
