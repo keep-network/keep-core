@@ -108,6 +108,7 @@ library AltBn128 {
         arg[3] = b[1];
         uint256[2] memory c;
         assembly {
+            // 0x60 is the ECADD precompile address
             if iszero(call(not(0), 0x06, 0, arg, 0x80, c, 0x40)) {
                 revert(0, 0)
             }
@@ -128,6 +129,7 @@ library AltBn128 {
         arg[2] = scalar;
         uint256[2] memory p_2;
         assembly {
+            // 0x70 is the ECMUL precompile address
             if iszero(call(not(0), 0x07, 0, arg, 0x60, p_2, 0x40)) {
                 revert(0, 0)
             }
