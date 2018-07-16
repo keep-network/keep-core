@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+
+	"github.com/keep-network/paillier"
 )
 
 // DsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's PI_1,i
@@ -60,10 +62,10 @@ type DsaPaillierSecretKeyFactorRangeProof struct {
 // `r` to generate this proof as the one used for Paillier encryption of
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
 func CommitDsaPaillierSecretKeyFactorRange(
-	factor, // = η
-	encryptedSecretDsaKeyMultiple, // = c1 = E(ηx)
-	encryptedSecretDsaKey, // = c2 = E(x)
-	encryptedFactor, // = c3 = E(η)
+	encryptedSecretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
+	encryptedSecretDsaKey *paillier.Cypher, // = c2 = E(x)
+	encryptedFactor *paillier.Cypher, // = c3 = E(η)
+	factor *big.Int, // = η
 	r *big.Int,
 	params *PublicParameters,
 	random io.Reader,
@@ -116,13 +118,13 @@ func CommitDsaPaillierSecretKeyFactorRange(
 	)
 
 	// v = (c2)^α mod N^2
-	v := new(big.Int).Exp(encryptedSecretDsaKey, alpha, params.NSquare())
+	v := new(big.Int).Exp(encryptedSecretDsaKey.C, alpha, params.NSquare())
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
-		encryptedSecretDsaKeyMultiple.Bytes(),
-		encryptedSecretDsaKey.Bytes(),
-		encryptedFactor.Bytes(),
+		encryptedSecretDsaKeyMultiple.C.Bytes(),
+		encryptedSecretDsaKey.C.Bytes(),
+		encryptedFactor.C.Bytes(),
 		z.Bytes(),
 		u1.Bytes(),
 		u2.Bytes(),

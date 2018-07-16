@@ -30,14 +30,14 @@ func TestZKP1CommitValues(t *testing.T) {
 
 	secretKeyShare := big.NewInt(8)
 
-	encryptedMessageShare := big.NewInt(7)
-	c1 := big.NewInt(9)
-	encryptedSecretKeyShare := big.NewInt(9)
+	encryptedMessageShare := &paillier.Cypher{C: big.NewInt(7)}
+	c1 := &paillier.Cypher{C: big.NewInt(9)}
+	encryptedSecretKeyShare := &paillier.Cypher{C: big.NewInt(9)}
 
 	r := big.NewInt(7)
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretKeyShare, c1, encryptedMessageShare, encryptedSecretKeyShare, r, params, mockRandom)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(c1, encryptedMessageShare, encryptedSecretKeyShare, secretKeyShare, r, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,7 +151,7 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
-	c1 := new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.NSquare())
+	c1 := &paillier.Cypher{C: new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.NSquare())}
 
 	encryptedSecretKeyShare, err := privateKey.EncryptWithR(secretKeyShare, r)
 	t.Logf("encryptedSecretKeyShare: %s", encryptedSecretKeyShare.C)
@@ -160,7 +160,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretKeyShare, c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, r, params, rand.Reader)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(c1, encryptedMessageShare, encryptedSecretKeyShare, secretKeyShare, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,7 +172,7 @@ func TestRoundTrip(t *testing.T) {
 		"positive validation": {
 			verify: func() bool {
 				return zkp.Verify(
-					c1,
+					c1.C,
 					encryptedMessageShare.C,
 					encryptedSecretKeyShare.C,
 					params,
@@ -196,7 +196,7 @@ func TestRoundTrip(t *testing.T) {
 			verify: func() bool {
 				wrongEncryptedMessageShare := big.NewInt(856)
 				return zkp.Verify(
-					c1,
+					c1.C,
 					wrongEncryptedMessageShare,
 					encryptedSecretKeyShare.C,
 					params,
@@ -208,7 +208,7 @@ func TestRoundTrip(t *testing.T) {
 			verify: func() bool {
 				wrongEncryptedSecretKeyShare := big.NewInt(798)
 				return zkp.Verify(
-					c1,
+					c1.C,
 					encryptedMessageShare.C,
 					wrongEncryptedSecretKeyShare,
 					params,
