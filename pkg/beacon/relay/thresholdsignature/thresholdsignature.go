@@ -49,13 +49,27 @@ func Execute(
 		"[member:%v, state:signing] Waiting for other group members to enter signing state...\n",
 		member.MemberID(),
 	)
-	blockCounter.WaitForBlocks(15)
+
+	err := blockCounter.WaitForBlocks(setupBlocks)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to wait %d blocks entering threshold setup: [%v]",
+			setupBlocks,
+			err,
+		)
+	}
 
 	fmt.Printf(
 		"[member:%v] Sending signature share...\n",
 		member.MemberID(),
 	)
-	err := sendSignatureShare(bytes, channel, member)
+
+	err = blockCounter.WaitForBlocks(1)
+	if err != nil {
+		return nil, fmt.Errorf("failed to wait 1 block: [%v]", err)
+	}
+
+	err = sendSignatureShare(bytes, channel, member)
 	if err != nil {
 		return nil, err
 	}
