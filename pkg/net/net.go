@@ -27,6 +27,7 @@ type Message interface {
 	TransportSenderID() TransportIdentifier
 	ProtocolSenderID() ProtocolIdentifier
 	Payload() interface{}
+	Type() string
 }
 
 // HandleMessageFunc is the type of function called for each Message m furnished
@@ -100,6 +101,9 @@ type BroadcastChannel interface {
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error
+	// UnregisterRecv takes the type of HandleMessageFunc and returns an error. This function should
+	// be defered.
+	UnregisterRecv(handlerType string) error
 
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any

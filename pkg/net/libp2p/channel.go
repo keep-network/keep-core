@@ -90,6 +90,20 @@ func (c *channel) Recv(handler net.HandleMessageFunc) error {
 	return nil
 }
 
+func (c *channel) UnregisterRecv(handlerType string) error {
+	c.messageHandlersMutex.Lock()
+	defer c.messageHandlersMutex.Unlock()
+	for i, mh := range c.messageHandlers {
+		if mh.Type == handlerType {
+			fmt.Println("Found handler, removing")
+			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
+			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
+		}
+	}
+
+	return nil
+}
+
 func envelopeProto(
 	recipient net.TransportIdentifier,
 	sender *identity,
@@ -247,6 +261,7 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		networkIdentity(senderIdentifier.id),
 		protocolIdentifier,
 		unmarshaled,
+		string(envelope.Type),
 	)
 
 	return c.deliver(protocolMessage)
@@ -279,15 +294,16 @@ func (c *channel) deliver(message net.Message) error {
 	copy(snapshot, c.messageHandlers)
 	c.messageHandlersMutex.Unlock()
 
-	go func(message net.Message, snapshot []net.HandleMessageFunc) {
-		for _, handler := range snapshot {
-			if err := handler(message); err != nil {
+	for _, handler := range snapshot {
+		go func(msg net.Message, handler net.HandleMessageFunc) {
+			if err := handler.Handler(msg); err != nil {
 				// TODO: handle error
 				fmt.Println(err)
 			}
-		}
-		snapshot = nil // release copy to the gc
-	}(message, snapshot)
+			return
+		}(message, handler)
+	}
+	snapshot = nil // release copy to the gc
 
 	return nil
 }
