@@ -74,7 +74,7 @@ func Execute(
 		return nil, err
 	}
 
-	blockWaiter, err := blockCounter.BlockWaiter(10)
+	blockWaiter, err := blockCounter.BlockWaiter(signatureBlocks)
 	if err != nil {
 		return nil, err
 	}
@@ -92,10 +92,6 @@ func Execute(
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
 				if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
-					if senderID.IsEqual(&member.BlsID) {
-						continue
-					}
-
 					seenShares[*senderID] = signatureShareMsg.ShareBytes
 				}
 			}
