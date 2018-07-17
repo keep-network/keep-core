@@ -57,7 +57,7 @@ type DsaPaillierSecretKeyFactorRangeProof struct {
 }
 
 // CommitDsaPaillierSecretKeyFactorRange generates
-// `DsaPaillierSecretKeyFactorRangeProof ` for the specified DSA secret
+// `DsaPaillierSecretKeyFactorRangeProof` for the specified DSA secret
 // key and multiplication factor. It's required to use the same randomness
 // `r` to generate this proof as the one used for Paillier encryption of
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
@@ -72,22 +72,22 @@ func CommitDsaPaillierSecretKeyFactorRange(
 ) (*DsaPaillierSecretKeyFactorRangeProof, error) {
 	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
-		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
 	beta, err := randomFromMultiplicativeGroup(random, params.N)
 	if err != nil {
-		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
 	rho, err := rand.Int(random, params.QNTilde())
 	if err != nil {
-		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
 	gamma, err := rand.Int(random, params.QCubeNTilde())
 	if err != nil {
-		return nil, fmt.Errorf("could not construct ZKP1i [%v]", err)
+		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
 	// u_1 = ((h1)^η)*((h2)^ρ) mod N ̃
@@ -157,8 +157,7 @@ func CommitDsaPaillierSecretKeyFactorRange(
 }
 
 // Verify checks the `DsaPaillierSecretKeyFactorRangeProof` against the provided
-// DSA secret key and the multiplication factor
-// shares.
+// DSA secret key and the multiplication factor.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
@@ -210,7 +209,7 @@ func (zkp *DsaPaillierSecretKeyFactorRangeProof) allParametersInRange(params *Pu
 // phase.
 //
 // We want to verify whether z = (Γ^s1)*(s2^N)*(c3^(−e))
-// is equal to z = Γ^α * β^N mod N^2
+// is equal to z = Γ^α * β^N
 // we evaluated in the commitment phase.
 //
 // Since:

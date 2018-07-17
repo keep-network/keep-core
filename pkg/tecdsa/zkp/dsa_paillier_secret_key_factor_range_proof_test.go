@@ -147,10 +147,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	// GIVEN
 	message := big.NewInt(430)
 
-	p, _ := new(big.Int).SetString("23", 10)
-	q, _ := new(big.Int).SetString("47", 10)
-
-	privateKey := paillier.CreatePrivateKey(p, q)
+	privateKey := paillier.CreatePrivateKey(big.NewInt(23), big.NewInt(47))
 
 	params, err := GeneratePublicParameters(privateKey.N, secp256k1.S256())
 	if err != nil {
@@ -172,6 +169,9 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
+	// An encrypted plaintext raised to the power of another plaintext will
+	// decrypt to the product of the two plaintexts:
+	// (E(c2))^η = E(c2 * η)
 	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: new(big.Int).Exp(encryptedSecretDsaKey.C, factor, params.NSquare())}
 
 	encryptedFactor, err := privateKey.EncryptWithR(factor, r)
@@ -181,7 +181,8 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	}
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, encryptedFactor, factor, r, params, rand.Reader)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(encryptedSecretDsaKeyMultiple,
+		encryptedSecretDsaKey, encryptedFactor, factor, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
