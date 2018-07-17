@@ -32,10 +32,16 @@ func Execute(
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
-	channel.Recv(func(msg net.Message) error {
-		recvChan <- msg
-		return nil
-	})
+	handler := net.HandleMessageFunc{
+		Type: "relay/signature",
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
+	}
+
+	channel.Recv(handler)
+	defer channel.UnregisterRecv(handler.Type)
 
 	seenShares := make(map[bls.ID][]byte)
 

@@ -61,10 +61,16 @@ func ExecuteDKG(
 
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
-	channel.Recv(func(msg net.Message) error {
-		recvChan <- msg
-		return nil
-	})
+	handler := net.HandleMessageFunc{
+		Type: "dkg",
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
+	}
+
+	channel.Recv(handler)
+	defer channel.UnregisterRecv(handler.Type)
 
 	stateTransition := func() error {
 		fmt.Printf(
