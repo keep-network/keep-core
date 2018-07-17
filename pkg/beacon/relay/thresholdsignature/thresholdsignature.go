@@ -99,14 +99,15 @@ func Execute(
 		case <-blockWaiter:
 			signature, err := member.CompleteSignature(seenShares)
 			if err != nil {
-				return signature.Serialize(), nil
+				return nil, fmt.Errorf(
+					"[member:%v] failed to complete signature inside active period [%v]",
+					member.MemberID(),
+					signatureBlocks,
+				)
 			}
 
-			return nil, fmt.Errorf(
-				"[member:%v] failed to complete signature inside active period [%v]",
-				member.MemberID(),
-				signatureBlocks,
-			)
+			return signature.Serialize(), nil
+
 		}
 	}
 }
