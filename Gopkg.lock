@@ -58,12 +58,15 @@
     "accounts/abi",
     "accounts/abi/bind",
     "accounts/keystore",
+    "cmd/abigen",
     "common",
+    "common/compiler",
     "common/hexutil",
     "common/math",
     "common/mclock",
     "core/types",
     "crypto",
+    "crypto/bn256/cloudflare",
     "crypto/randentropy",
     "crypto/secp256k1",
     "crypto/sha3",
@@ -96,12 +99,36 @@
 [[projects]]
   name = "github.com/gogo/protobuf"
   packages = [
+    "gogoproto",
     "io",
+    "plugin/compare",
+    "plugin/defaultcheck",
+    "plugin/description",
+    "plugin/embedcheck",
+    "plugin/enumstringer",
+    "plugin/equal",
+    "plugin/face",
+    "plugin/gostring",
+    "plugin/marshalto",
+    "plugin/oneofcheck",
+    "plugin/populate",
+    "plugin/size",
+    "plugin/stringer",
+    "plugin/testgen",
+    "plugin/union",
+    "plugin/unmarshal",
     "proto",
-    "sortkeys"
+    "protoc-gen-gogo/descriptor",
+    "protoc-gen-gogo/generator",
+    "protoc-gen-gogo/grpc",
+    "protoc-gen-gogo/plugin",
+    "protoc-gen-gogoslick",
+    "sortkeys",
+    "vanity",
+    "vanity/command"
   ]
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
-  version = "v1.0.0"
+  source = "https://github.com/keep-network/protobuf.git"
 
 [[projects]]
   branch = "master"
@@ -233,7 +260,7 @@
 [[projects]]
   name = "github.com/keep-network/paillier"
   packages = ["."]
-  revision = "c9c5d2df026b807d99b63f1d1518ad186e27e233"
+  revision = "3eb21f405c6012a319b14ab5b4f6c3d982596ba5"
   source = "https://github.com/keep-network/paillier"
 
 [[projects]]
@@ -771,6 +798,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "348b5331e828b80cfda4ad91d2519c466f7db3974fa020b847b215d37ee3a8df"
+  inputs-digest = "ccfedd66f8b4635d6bb8e912b0d657916981d7acdf444b11fe31678db62a6171"
   solver-name = "gps-cdcl"
   solver-version = 1
