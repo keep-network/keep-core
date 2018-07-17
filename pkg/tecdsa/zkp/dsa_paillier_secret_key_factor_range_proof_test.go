@@ -104,7 +104,22 @@ func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	expectedV := big.NewInt(285526)
 	expectedU2 := big.NewInt(1102)
 
-	zkp := generateTestDsaPaillierSecretKeyFactorRangeProof()
+	e, _ := new(big.Int).SetString("28665131959061509990138847422722847282246667596979352654045645230544684705784", 10)
+	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
+	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
+
+	zkp := &DsaPaillierSecretKeyFactorRangeProof{
+		z:  big.NewInt(289613),
+		v:  big.NewInt(285526),
+		u1: big.NewInt(10797),
+		u2: big.NewInt(1102),
+
+		e: e,
+
+		s1: s1,
+		s2: big.NewInt(986),
+		s3: s3,
+	}
 
 	//WHEN
 	actualZ := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
@@ -238,25 +253,6 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 			}
 
 		})
-	}
-}
-
-func generateTestDsaPaillierSecretKeyFactorRangeProof() *DsaPaillierSecretKeyFactorRangeProof {
-	e, _ := new(big.Int).SetString("28665131959061509990138847422722847282246667596979352654045645230544684705784", 10)
-	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
-	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
-
-	return &DsaPaillierSecretKeyFactorRangeProof{
-		z:  big.NewInt(289613),
-		v:  big.NewInt(285526),
-		u1: big.NewInt(10797),
-		u2: big.NewInt(1102),
-
-		e: e,
-
-		s1: s1,
-		s2: big.NewInt(986),
-		s3: s3,
 	}
 }
 
