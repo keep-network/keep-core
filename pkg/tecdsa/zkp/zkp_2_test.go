@@ -13,23 +13,18 @@ import (
 
 func TestRoundTripZKP2(t *testing.T) {
 	// GIVEN
-	message := big.NewInt(5)
-
-	p, _ := new(big.Int).SetString("23", 10)
-	q, _ := new(big.Int).SetString("47", 10)
-
-	privateKey := paillier.CreatePrivateKey(p, q)
+	privateKey := paillier.CreatePrivateKey(big.NewInt(23), big.NewInt(47))
 
 	params, err := GeneratePublicParameters(privateKey.N, secp256k1.S256())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	eta1, err := rand.Int(rand.Reader, params.q)
+	eta1, err := rand.Int(rand.Reader, params.q) // factor from ZKP PI2,1
 	if err != nil {
 		t.Fatal(err)
 	}
-	eta2, err := rand.Int(rand.Reader, params.QSix())
+	eta2, err := rand.Int(rand.Reader, params.QSix()) // factor from ZKP PI2,1
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,22 +34,26 @@ func TestRoundTripZKP2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	g := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(big.NewInt(1).Bytes()))
+	g := params.CurveBasePoint()                                         // curveBasePoint
+	r := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(eta1.Bytes())) // eta1CurvePoint
+	u, _ := privateKey.EncryptWithR(big.NewInt(5), rc)                   // encryptedFactor1 (rho from round 1), u = E(ρ)
 
-	u := message
+	// D(w) = η1*D(u) + q*η2 = η1*ρ + q*η2
+	// w = E(D(w)) = E(η1*ρ + q*η2) = E(η1*D(u) + E(q*η2) = E(η1*u) + E(q*η2)
+	// E(η1*u)
+	encryptedUEta1 := privateKey.PublicKey.Mul(u, eta1)
 
+	// E(q*η2)
 	qEta2 := new(big.Int).Mod(new(big.Int).Mul(params.q, eta2), params.N)
-	mask, err := privateKey.EncryptWithR(qEta2, rc)
+	encryptedQEta2, err := privateKey.EncryptWithR(qEta2, rc)
 	if err != nil {
 		t.Fatal(err)
 	}
-	uEta1 := new(big.Int).Exp(u, eta1, params.NSquare())
-	w := new(big.Int).Mod(new(big.Int).Mul(uEta1, mask.C), params.NSquare())
 
-	r := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(eta1.Bytes()))
+	w := privateKey.PublicKey.Add(encryptedUEta1, encryptedQEta2) // encryptedMaskedFactor
 
 	// WHEN
-	zkp, err := CommitZkpPi2(r, g, w, u, eta1, eta2, rc, params, rand.Reader)
+	zkp, err := CommitZkpPi2(g, r, w.C, u.C, eta1, eta2, rc, params, rand.Reader)
 
 	if err != nil {
 		t.Fatal(err)
@@ -66,9 +65,37 @@ func TestRoundTripZKP2(t *testing.T) {
 	}{
 		"positive validation": {
 			verify: func() bool {
-				return zkp.Verify(params)
+				return zkp.Verify(g, r, w.C, u.C, params)
 			},
 			expectedResult: true,
+		},
+		"negative validation - wrong g": {
+			verify: func() bool {
+				wrongG := tecdsa.NewCurvePoint(big.NewInt(1), big.NewInt(2))
+				return zkp.Verify(wrongG, r, w.C, u.C, params)
+			},
+			expectedResult: false,
+		},
+		"negative validation - wrong r": {
+			verify: func() bool {
+				wrongR := tecdsa.NewCurvePoint(big.NewInt(3), big.NewInt(4))
+				return zkp.Verify(g, wrongR, w.C, u.C, params)
+			},
+			expectedResult: false,
+		},
+		"negative validation - wrong w": {
+			verify: func() bool {
+				wrongW := new(big.Int).Add(w.C, big.NewInt(1))
+				return zkp.Verify(g, r, wrongW, u.C, params)
+			},
+			expectedResult: false,
+		},
+		"negative validation - wrong u": {
+			verify: func() bool {
+				wrongU := new(big.Int).Add(w.C, big.NewInt(1))
+				return zkp.Verify(g, r, w.C, wrongU, params)
+			},
+			expectedResult: false,
 		},
 	}
 
