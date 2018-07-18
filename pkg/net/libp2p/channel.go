@@ -155,18 +155,22 @@ func (c *channel) RegisterIdentifier(
 		)
 	}
 
-	if _, exists := c.transportToProtoIdentifiers[transportIdentifier]; exists {
-		return fmt.Errorf(
-			"protocol identifier in channel [%s] already associated with [%v]",
-			c.name, transportIdentifier,
-		)
+	if existingProtocolIdentifier, exists := c.transportToProtoIdentifiers[transportIdentifier]; exists {
+		if existingProtocolIdentifier != protocolIdentifier {
+			return fmt.Errorf(
+				"protocol identifier in channel [%s] already associated with [%v]",
+				c.name, transportIdentifier,
+			)
+		}
 	}
 
-	if _, exists := c.protoToTransportIdentifiers[protocolIdentifier]; exists {
-		return fmt.Errorf(
-			"transport identifier in channel [%s] already associated with [%v]",
-			c.name, protocolIdentifier,
-		)
+	if existingTransportIdentifier, exists := c.protoToTransportIdentifiers[protocolIdentifier]; exists {
+		if existingTransportIdentifier != transportIdentifier {
+			return fmt.Errorf(
+				"transport identifier in channel [%s] already associated with [%v]",
+				c.name, protocolIdentifier,
+			)
+		}
 	}
 
 	c.transportToProtoIdentifiers[transportIdentifier] = protocolIdentifier
