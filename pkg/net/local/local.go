@@ -218,12 +218,14 @@ func (lc *localChannel) Recv(handler net.HandleMessageFunc) error {
 func (lc *localChannel) UnregisterRecv(handlerType string) error {
 	lc.messageHandlersMutex.Lock()
 	defer lc.messageHandlersMutex.Unlock()
+	removedCount := 0
 	for i, mh := range lc.messageHandlers {
 		if mh.Type == handlerType {
-			lc.messageHandlers[i] = lc.messageHandlers[len(lc.messageHandlers)-1]
-			lc.messageHandlers = lc.messageHandlers[:len(lc.messageHandlers)-1]
+			removedCount++
+			lc.messageHandlers[i] = lc.messageHandlers[len(lc.messageHandlers)-removedCount]
 		}
 	}
+	lc.messageHandlers = lc.messageHandlers[:len(lc.messageHandlers)-removedCount]
 
 	return nil
 }
