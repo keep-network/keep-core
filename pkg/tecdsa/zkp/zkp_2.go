@@ -263,9 +263,9 @@ func (zkp *PI2) Verify(
 	u *big.Int,
 	params *PublicParameters,
 ) bool {
-	// if !zkp.allParametersInRange(params) {
-	// 	return false
-	// }
+	if !zkp.allParametersInRange(params) {
+		return false
+	}
 
 	u1 := zkp.evaluateVerificationU1(r, params)
 	u3 := zkp.evaluateVerificationU3(params)
@@ -301,9 +301,14 @@ func (zkp *PI2) Verify(
 func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
 	zero := big.NewInt(0)
 
-	return isInRange(zkp.u3, zero, params.NTilde) &&
+	return isInRange(zkp.z1, zero, params.NTilde) &&
+		isInRange(zkp.z2, zero, params.NTilde) &&
+		isInRange(zkp.u2, zero, params.NSquare()) &&
+		isInRange(zkp.u3, zero, params.NTilde) &&
 		isInRange(zkp.v1, zero, params.NSquare()) &&
+		isInRange(zkp.v2, zero, params.NTilde) &&
 		isInRange(zkp.v3, zero, params.NTilde) &&
+		isInRange(zkp.t1, zero, params.N) &&
 		params.curve.IsOnCurve(zkp.u1.X, zkp.u1.Y)
 }
 
