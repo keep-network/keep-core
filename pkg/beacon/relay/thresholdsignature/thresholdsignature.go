@@ -2,6 +2,7 @@ package thresholdsignature
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -33,7 +34,7 @@ func Execute(
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
 	handler := net.HandleMessageFunc{
-		Type: "relay/signature",
+		Type: fmt.Sprintf("relay/signature/%s", string(time.Now().UTC().UnixNano())),
 		Handler: func(msg net.Message) error {
 			recvChan <- msg
 			return nil

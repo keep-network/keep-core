@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -62,7 +63,7 @@ func ExecuteDKG(
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
 	handler := net.HandleMessageFunc{
-		Type: "dkg",
+		Type: fmt.Sprintf("dkg/%s", string(time.Now().UTC().UnixNano())),
 		Handler: func(msg net.Message) error {
 			recvChan <- msg
 			return nil

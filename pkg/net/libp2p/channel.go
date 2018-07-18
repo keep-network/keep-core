@@ -93,11 +93,12 @@ func (c *channel) Recv(handler net.HandleMessageFunc) error {
 func (c *channel) UnregisterRecv(handlerType string) error {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
+
 	for i, mh := range c.messageHandlers {
 		if mh.Type == handlerType {
-			fmt.Println("Found handler, removing")
-			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
-			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
+			fmt.Printf("Found handler %s, removing\n", handlerType)
+			// If the underlying type changes to a pointer, this is a memory leak
+			c.messageHandlers = append(c.messageHandlers[:i], c.messageHandlers[i+1:]...)
 		}
 	}
 

@@ -72,11 +72,10 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			return
 		}
 
-		var (
-			rightSizeSignature [32]byte
-			previousEntry      *big.Int
-		)
+		rightSizeSignature := [32]byte{}
+		previousEntry := &big.Int{}
 		previousEntry.SetBytes(request.PreviousEntry())
+
 		for i := 0; i < 32; i++ {
 			rightSizeSignature[i] = signature[i]
 		}
@@ -86,6 +85,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			Value:         rightSizeSignature,
 			PreviousEntry: previousEntry,
 			Timestamp:     time.Now().UTC(),
+			GroupID:       &big.Int{},
 		}
 
 		relayChain.SubmitRelayEntry(
