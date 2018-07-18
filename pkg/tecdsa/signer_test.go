@@ -1,13 +1,18 @@
 package tecdsa
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
+	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
+
 	"github.com/keep-network/paillier"
+
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 var publicParameters = &PublicParameters{
@@ -142,4 +147,44 @@ func TestCombineNotEnoughInitMessages(t *testing.T) {
 		t.Errorf("Unexpected error\nActual %v\nExpected %v", expectedError, err)
 	}
 
+}
+
+func TestCombineWithInvalidZKP(t *testing.T) {
+	group, err := newGroup(publicParameters)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Let each signer initialize a DSA key share and create a valid InitMessage
+	initMessages := make([]*InitMessage, publicParameters.groupSize)
+	for i, signer := range group {
+		initMessages[i], err = signer.InitializeDsaKeyGen()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Let's modify one of InitMessage's ZKPs to make it fail
+	invalidRangeProof, err := zkp.CommitDsaPaillierKeyRange(
+		big.NewInt(1),
+		&curve.Point{X: big.NewInt(1), Y: big.NewInt(2)},
+		&paillier.Cypher{C: big.NewInt(3)},
+		big.NewInt(1),
+		group[0].zkpParameters,
+		rand.Reader,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	initMessages[len(initMessages)-1].rangeProof = invalidRangeProof
+
+	expectedError := fmt.Errorf("Invalid InitMessage - ZKP rejected")
+
+	_, err = group[0].CombineDsaKeyShares(initMessages)
+	if err == nil {
+		t.Fatal("Error was expected")
+	}
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf("Unexpected error\nActual %v\nExpected %v", expectedError, err)
+	}
 }

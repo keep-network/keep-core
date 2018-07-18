@@ -1,6 +1,8 @@
 package tecdsa
 
 import (
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
+	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
 	"github.com/keep-network/paillier"
 )
 
@@ -10,7 +12,14 @@ import (
 // Paillier threshold key. The message is expected to be broadcast publicly.
 type InitMessage struct {
 	secretKeyShare *paillier.Cypher
-	publicKeyShare *CurvePoint
+	publicKeyShare *curve.Point
 
-	// TODO: add all the required ZKPs
+	rangeProof *zkp.DsaPaillierKeyRangeProof
+}
+
+// IsValid checks secret and public key share against zero knowledge range proof
+// shipped alongside them. This function should be called for each received
+// InitMessage before it's combined to a final key.
+func (im *InitMessage) IsValid(zkpParams *zkp.PublicParameters) bool {
+	return im.rangeProof.Verify(im.secretKeyShare, im.publicKeyShare, zkpParams)
 }

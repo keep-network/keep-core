@@ -19,28 +19,48 @@ const (
 	defaultThreshold int = 4
 )
 
-// SmokeTestFlags for group size and threshold settings
-var SmokeTestFlags []cli.Flag
+// SmokeTestCommand contains the definition of the smoke-test command-line
+// subcommand.
+var SmokeTestCommand cli.Command
+
+const (
+	groupSizeFlag  = "group-size"
+	groupSizeShort = "g"
+	thresholdFlag  = "threshold"
+	thresholdShort = "t"
+)
+
+const smokeTestDescription = `The smoke-test command creates a local threshold group of the
+   specified size and with the specified threshold and simulates a
+   distributed key generation process with an in-process broadcast
+   channel and chain implementation. Once the process is complete,
+   a threshold signature is executed, once again with an in-process
+   broadcast channel and chain, and the final signature is verified
+   by each member of the group.`
 
 func init() {
-	SmokeTestFlags = []cli.Flag{
-		&cli.IntFlag{
-			Name:  "group-size,g",
-			Value: defaultGroupSize,
-		},
-		&cli.IntFlag{
-			Name:  "threshold,t",
-			Value: defaultThreshold,
+	SmokeTestCommand = cli.Command{
+		Name:        "smoke-test",
+		Usage:       "Simulates Distributed Key Generation (DKG) and signature generation locally",
+		Description: smokeTestDescription,
+		Action:      SmokeTest,
+		Flags: []cli.Flag{
+			&cli.IntFlag{
+				Name:  groupSizeFlag + "," + groupSizeShort,
+				Value: defaultGroupSize,
+			},
+			&cli.IntFlag{
+				Name:  thresholdFlag + "," + thresholdShort,
+				Value: defaultThreshold,
+			},
 		},
 	}
 }
 
 // SmokeTest performs a simulated distributed key generation and verifyies that the members can do a threshold signature
 func SmokeTest(c *cli.Context) error {
-
-	groupSize := c.Int("group-size")
-	threshold := c.Int("threshold")
-	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", groupSize, threshold))
+	groupSize := c.Int(groupSizeFlag)
+	threshold := c.Int(thresholdFlag)
 
 	chainHandle := local.Connect(groupSize, threshold)
 	chainCounter, err := chainHandle.BlockCounter()

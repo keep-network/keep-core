@@ -9,18 +9,21 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// TestZKP1CommitValues creates a commitment and checks all
+// TestDsaPaillierSecretKeyFactorRangeProofCommitValues creates a commitment and checks all
 // commitment values against expected ones.
 //
 // This is not a full roundtrip test. We test the private commitment phase
 // interface to make sure if anything goes wrong in future (e.g. curve
 // implementation changes), we can isolate the problem easily.
 // All expected values has been manually calculated based on the [GGN16] paper.
-func TestZKP1CommitValues(t *testing.T) {
+func TestDsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	// GIVEN
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
 	}
+	// Following values are assigned to ZKP parameters as a result of
+	// calling mockRandom:
+	//
 	// alpha=10
 	// beta=11
 	// rho=12
@@ -28,16 +31,17 @@ func TestZKP1CommitValues(t *testing.T) {
 
 	params := generateTestPublicParams()
 
-	secretKeyShare := big.NewInt(8)
+	factor := big.NewInt(8)
 
-	encryptedMessageShare := big.NewInt(7)
-	c1 := big.NewInt(9)
-	encryptedSecretKeyShare := big.NewInt(9)
+	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(9)}
+	encryptedSecretDsaKey := &paillier.Cypher{C: big.NewInt(7)}
+	encryptedFactor := &paillier.Cypher{C: big.NewInt(9)}
 
 	r := big.NewInt(7)
 
 	// WHEN
-	zkp, err := CommitZkpPi1(secretKeyShare, c1, encryptedMessageShare, encryptedSecretKeyShare, r, params, mockRandom)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(encryptedSecretDsaKeyMultiple,
+		encryptedSecretDsaKey, encryptedFactor, factor, r, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,48 +92,62 @@ func TestZKP1CommitValues(t *testing.T) {
 	}
 }
 
-func TestZKP1Verification(t *testing.T) {
+func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
-	encryptedMessageShare := big.NewInt(133808)
-	c1 := big.NewInt(729674)
-	encryptedSecretKeyShare := big.NewInt(688361)
-
-	zkp := generateTestZkpPI1()
+	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(729674)}
+	encryptedSecretDsaKey := &paillier.Cypher{C: big.NewInt(133808)}
+	encryptedFactor := &paillier.Cypher{C: big.NewInt(688361)}
 
 	expectedZ := big.NewInt(289613)
-	actualZ := evaluateVerificationZ(encryptedSecretKeyShare, zkp.s1, zkp.s2, zkp.e, params)
+	expectedV := big.NewInt(285526)
+	expectedU2 := big.NewInt(1102)
+
+	e, _ := new(big.Int).SetString("28665131959061509990138847422722847282246667596979352654045645230544684705784", 10)
+	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
+	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
+
+	zkp := &DsaPaillierSecretKeyFactorRangeProof{
+		z:  big.NewInt(289613),
+		v:  big.NewInt(285526),
+		u1: big.NewInt(10797),
+		u2: big.NewInt(1102),
+
+		e: e,
+
+		s1: s1,
+		s2: big.NewInt(986),
+		s3: s3,
+	}
+
+	//WHEN
+	actualZ := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
+	actualV := evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey,
+		zkp.s1, zkp.e, params)
+	actualU2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
+	verificationResult := zkp.Verify(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, encryptedFactor, params)
+
+	//THEN
 	if expectedZ.Cmp(actualZ) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualZ, expectedZ)
 	}
-
-	expectedV := big.NewInt(285526)
-	actualV := evaluateVerificationV(c1, encryptedMessageShare, zkp.s1, zkp.e, params)
 	if expectedV.Cmp(actualV) != 0 {
 		t.Errorf("Unexpected Z\nActual: %v\nExpected: %v", actualV, expectedV)
 	}
-
-	expectedU2 := big.NewInt(1102)
-	actualU2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 	if expectedU2.Cmp(actualU2) != 0 {
 		t.Errorf("Unexpected U2\nActual: %v\nExpected: %v", actualU2, expectedU2)
 	}
-
-	result := zkp.Verify(c1, encryptedMessageShare, encryptedSecretKeyShare, params)
-	if !result {
+	if !verificationResult {
 		t.Errorf("Verification failed")
 	}
 }
 
-func TestRoundTrip(t *testing.T) {
+func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	// GIVEN
 	message := big.NewInt(430)
 
-	p, _ := new(big.Int).SetString("23", 10)
-	q, _ := new(big.Int).SetString("47", 10)
-
-	privateKey := paillier.CreatePrivateKey(p, q)
+	privateKey := paillier.CreatePrivateKey(big.NewInt(23), big.NewInt(47))
 
 	params, err := GeneratePublicParameters(privateKey.N, secp256k1.S256())
 	if err != nil {
@@ -141,30 +159,35 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encryptedMessageShare, err := privateKey.EncryptWithR(message, r)
+	encryptedSecretDsaKey, err := privateKey.EncryptWithR(message, r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	secretKeyShare, err := rand.Int(rand.Reader, params.q)
+	factor, err := rand.Int(rand.Reader, params.q)
 	if err != nil {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
-	c1 := new(big.Int).Exp(encryptedMessageShare.C, secretKeyShare, params.NSquare())
+	// An encrypted plaintext raised to the power of another plaintext will
+	// decrypt to the product of the two plaintexts:
+	// (E(c2))^η = E(c2 * η)
+	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: new(big.Int).Exp(encryptedSecretDsaKey.C, factor, params.NSquare())}
 
-	encryptedSecretKeyShare, err := privateKey.EncryptWithR(secretKeyShare, r)
-	t.Logf("encryptedSecretKeyShare: %s", encryptedSecretKeyShare.C)
+	encryptedFactor, err := privateKey.EncryptWithR(factor, r)
+	t.Logf("encryptedfactor: %s", encryptedFactor.C)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// WHEN
-	zkp, err := CommitZkpPi1(secretKeyShare, c1, encryptedMessageShare.C, encryptedSecretKeyShare.C, r, params, rand.Reader)
+	zkp, err := CommitDsaPaillierSecretKeyFactorRange(encryptedSecretDsaKeyMultiple,
+		encryptedSecretDsaKey, encryptedFactor, factor, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	// THEN
 	var tests = map[string]struct {
 		verify         func() bool
 		expectedResult bool
@@ -172,45 +195,45 @@ func TestRoundTrip(t *testing.T) {
 		"positive validation": {
 			verify: func() bool {
 				return zkp.Verify(
-					c1,
-					encryptedMessageShare.C,
-					encryptedSecretKeyShare.C,
+					encryptedSecretDsaKeyMultiple,
+					encryptedSecretDsaKey,
+					encryptedFactor,
 					params,
 				)
 			},
 			expectedResult: true,
 		},
-		"negative validation - wrong c1": {
+		"negative validation - wrong encrypted secret dsa key multiple": {
 			verify: func() bool {
-				wrongC1 := big.NewInt(1411)
+				wrongEncryptedSecretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(1411)}
 				return zkp.Verify(
-					wrongC1,
-					encryptedMessageShare.C,
-					encryptedSecretKeyShare.C,
+					wrongEncryptedSecretDsaKeyMultiple,
+					encryptedSecretDsaKey,
+					encryptedFactor,
 					params,
 				)
 			},
 			expectedResult: false,
 		},
-		"negative validation - wrong encrypted message share": {
+		"negative validation - wrong encrypted secret dsa key": {
 			verify: func() bool {
-				wrongEncryptedMessageShare := big.NewInt(856)
+				wrongEncryptedSecretDsaKey := &paillier.Cypher{C: big.NewInt(856)}
 				return zkp.Verify(
-					c1,
-					wrongEncryptedMessageShare,
-					encryptedSecretKeyShare.C,
+					encryptedSecretDsaKeyMultiple,
+					wrongEncryptedSecretDsaKey,
+					encryptedFactor,
 					params,
 				)
 			},
 			expectedResult: false,
 		},
-		"negative validation - wrong encrypted secret key share": {
+		"negative validation - wrong encrypted factor": {
 			verify: func() bool {
-				wrongEncryptedSecretKeyShare := big.NewInt(798)
+				wrongEncryptedFactor := &paillier.Cypher{C: big.NewInt(798)}
 				return zkp.Verify(
-					c1,
-					encryptedMessageShare.C,
-					wrongEncryptedSecretKeyShare,
+					encryptedSecretDsaKeyMultiple,
+					encryptedSecretDsaKey,
+					wrongEncryptedFactor,
 					params,
 				)
 			},
@@ -231,25 +254,6 @@ func TestRoundTrip(t *testing.T) {
 			}
 
 		})
-	}
-}
-
-func generateTestZkpPI1() *PI1 {
-	e, _ := new(big.Int).SetString("28665131959061509990138847422722847282246667596979352654045645230544684705784", 10)
-	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
-	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
-
-	return &PI1{
-		z:  big.NewInt(289613),
-		v:  big.NewInt(285526),
-		u1: big.NewInt(10797),
-		u2: big.NewInt(1102),
-
-		e: e,
-
-		s1: s1,
-		s2: big.NewInt(986),
-		s3: s3,
 	}
 }
 
