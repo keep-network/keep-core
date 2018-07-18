@@ -21,7 +21,7 @@ type localChain struct {
 	groupRegistrations      map[string][96]byte
 
 	groupRelayEntriesMutex sync.Mutex
-	groupRelayEntries      map[int64][32]byte
+	groupRelayEntries      map[string][32]byte
 
 	handlerMutex               sync.Mutex
 	relayEntryHandlers         []func(entry *event.Entry)
@@ -61,15 +61,22 @@ func (c *localChain) SubmitGroupPublicKey(
 
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
-	if existing, exists := c.groupRegistrations[groupID]; exists && existing != key {
-		fmt.Fprintf(
-			os.Stderr,
-			"mismatched public key for [%s], submission failed; \n"+
-				"[%v] vs [%v]\n",
-			groupID,
-			existing,
-			key,
-		)
+	if existing, exists := c.groupRegistrations[groupID]; exists {
+		if existing != key {
+			err := fmt.Errorf(
+				"mismatched public key for [%s], submission failed; \n"+
+					"[%v] vs [%v]",
+				groupID,
+				existing,
+				key,
+			)
+			fmt.Fprintf(os.Stderr, err.Error())
+
+			groupRegistrationPromise.Fail(err)
+		} else {
+			groupRegistrationPromise.Fulfill(registration)
+		}
+
 		return groupRegistrationPromise
 	}
 	c.groupRegistrations[groupID] = key
@@ -95,21 +102,25 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	c.groupRelayEntriesMutex.Lock()
 	defer c.groupRelayEntriesMutex.Unlock()
 
-	existing, exists := c.groupRelayEntries[entry.GroupID.Int64()]
-	if exists && existing != entry.Value {
-		err := fmt.Errorf(
-			"mismatched signature for [%v], submission failed; \n"+
-				"[%v] vs [%v]\n",
-			entry.GroupID,
-			existing,
-			entry.Value,
-		)
+	existing, exists := c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()]
+	if exists {
+		if existing != entry.Value {
+			err := fmt.Errorf(
+				"mismatched signature for [%v], submission failed; \n"+
+					"[%v] vs [%v]\n",
+				entry.GroupID,
+				existing,
+				entry.Value,
+			)
 
-		relayEntryPromise.Fail(err)
+			relayEntryPromise.Fail(err)
+		} else {
+			relayEntryPromise.Fulfill(entry)
+		}
 
 		return relayEntryPromise
 	}
-	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
+	c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()] = entry.Value
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayEntryHandlers {
@@ -176,7 +187,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			Threshold: threshold,
 		},
 		groupRegistrationsMutex: sync.Mutex{},
-		groupRelayEntries:       make(map[int64][32]byte),
+		groupRelayEntries:       make(map[string][32]byte),
 		groupRegistrations:      make(map[string][96]byte),
 		blockCounter:            bc,
 	}
