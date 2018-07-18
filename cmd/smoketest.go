@@ -82,6 +82,8 @@ func SmokeTest(c *cli.Context) error {
 
 	chainHandle.ThresholdRelay().
 		OnGroupRegistered(func(registration *event.GroupRegistration) {
+			// Give the nodes a sec to all get registered.
+			<-time.NewTimer(time.Second).C
 			chainHandle.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
 		})
 
