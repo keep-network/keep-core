@@ -132,6 +132,88 @@ func TestZKP2CommitValues(t *testing.T) {
 		t.Errorf("Unexpected t3\nActual: %v\nExpected: %v", zkp.t3, expectedT3)
 	}
 }
+
+func TestZKP2Verification(t *testing.T) {
+	//GIVEN
+	params := &PublicParameters{
+		N:      big.NewInt(1081),  // 23 * 47
+		NTilde: big.NewInt(25651), // 23 * 11
+
+		h1: big.NewInt(20535),
+		h2: big.NewInt(20919),
+
+		q:     secp256k1.S256().Params().N,
+		curve: secp256k1.S256(),
+	}
+
+	eta1 := big.NewInt(3)
+	r := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(eta1.Bytes()))
+	u := big.NewInt(7)
+	// `w` is calculated from:
+	// w = u^η1 * Γ^qη2 * rc^N mod N^2
+	//
+	// With following values:
+	// u = 7
+	// η1 = 3
+	// Γ = params.G()
+	// q = params.q
+	// η2 = 5
+	// rc = 7
+	// N = params.N
+	w := big.NewInt(1005955)
+
+	e, _ := new(big.Int).SetString("5409986892274499674842741357332043231522465088980131051275882178073046897869", 10)
+	s1, _ := new(big.Int).SetString("16229960676823499024528224071996129694567395266940393153827646534219140693617", 10)
+	s2, _ := new(big.Int).SetString("97379764060940994147169344431976778167404371601642358922965879205314844161654", 10)
+	t2, _ := new(big.Int).SetString("27049934461372498374213706786660216157612325444900655256379410890365234489361", 10)
+	t3, _ := new(big.Int).SetString("102789750953215493822012085789308821398926836690622489974241761383387891059528", 10)
+
+	zkp := &PI2{
+		z1: big.NewInt(19261),
+		z2: big.NewInt(17194),
+
+		u1: tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes())),
+		u2: big.NewInt(289613),
+		u3: big.NewInt(19547),
+
+		v1: big.NewInt(583302),
+		v2: big.NewInt(5738),
+		v3: big.NewInt(21032),
+
+		e:  e,
+		s1: s1,
+		s2: s2,
+
+		t1: big.NewInt(213),
+		t2: t2,
+		t3: t3,
+	}
+
+	expectedU1 := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes()))
+	actualU1 := zkp.evaluateVerificationU1(r, params)
+	if !reflect.DeepEqual(expectedU1, actualU1) {
+		t.Errorf("Unexpected u1\nActual: %v\nExpected: %v", actualU1, expectedU1)
+	}
+
+	expectedU3 := big.NewInt(19547)
+	actualU3 := zkp.evaluateVerificationU3(params)
+	if actualU3.Cmp(expectedU3) != 0 {
+		t.Errorf("Unexpected u3\nActual: %v\nExpected: %v", actualU3, expectedU3)
+	}
+
+	expectedV1 := big.NewInt(583302)
+	actualV1 := zkp.evaluateVerificationV1(w, u, params)
+	if actualV1.Cmp(expectedV1) != 0 {
+		t.Errorf("Unexpected v1\nActual: %v\nExpected: %v", actualV1, expectedV1)
+	}
+
+	expectedV3 := big.NewInt(21032)
+	actualV3 := zkp.evaluateVerificationV3(params)
+	if actualV3.Cmp(expectedV3) != 0 {
+		t.Errorf("Unexpected v3\nActual: %v\nExpected: %v", actualV3, expectedV3)
+	}
+}
+
 func TestRoundTripZKP2(t *testing.T) {
 	// GIVEN
 	privateKey := paillier.CreatePrivateKey(big.NewInt(23), big.NewInt(47))
