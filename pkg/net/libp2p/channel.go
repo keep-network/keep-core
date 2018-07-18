@@ -96,7 +96,11 @@ func (c *channel) UnregisterRecv(handlerType string) error {
 
 	for i, mh := range c.messageHandlers {
 		if mh.Type == handlerType {
-			fmt.Printf("Found handler %s, removing\n", handlerType)
+			if len(c.messageHandlers) == 1 {
+				c.messageHandlers = c.messageHandlers[:i]
+				return nil
+			}
+
 			// If the underlying type changes to a pointer, this is a memory leak
 			c.messageHandlers = append(c.messageHandlers[:i], c.messageHandlers[i+1:]...)
 		}
