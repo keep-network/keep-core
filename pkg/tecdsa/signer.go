@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 
+	"math/big"
 	mathrand "math/rand"
 
 	"github.com/keep-network/keep-core/pkg/tecdsa/commitment"
@@ -86,6 +87,10 @@ type Signer struct {
 // 2048 bit Paillier modulus.
 // TODO: Boost prime generator performance and switch to 2048
 const paillierModulusBitLength = 256
+
+func (pp *PublicParameters) curveCardinality() *big.Int {
+	return pp.curve.Params().N
+}
 
 // generateDsaKeyShare generates a DSA public and secret key shares and puts
 // them into `dsaKeyShare`. Secret key share is a random integer from Z_q where
@@ -317,4 +322,42 @@ func generateMemberID() string {
 	for memberID = fmt.Sprintf("%v", mathrand.Int31()); memberID == "0"; {
 	}
 	return memberID
+}
+
+// SignRound1 executes the first round of T-ECDSA signing as described in
+// [GGN 16], section 4.3.
+//
+// In the first round, each signer generates a random factor `ρ`, encodes it
+// with Paillier key `u = E(ρ)`, multiplies it with secret ECDSA key `v = E(ρx)`
+// and publishes commitment for both those values `Com(u, v)`.
+func (s *Signer) SignRound1() (*SignRound1Message, error) {
+	randomFactor, err := rand.Int(
+		rand.Reader,
+		s.groupParameters.curveCardinality(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute round 1 of signing [%v]", err)
+	}
+
+	encryptedRandomFactor, err := s.paillierKey.Encrypt(
+		randomFactor,
+		rand.Reader,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute round 1 of signing [%v]", err)
+	}
+
+	secretKeyMultiple := s.paillierKey.Mul(s.dsaKey.secretKey, randomFactor)
+
+	commitment, _, err := commitment.Generate(
+		encryptedRandomFactor.C.Bytes(),
+		secretKeyMultiple.C.Bytes(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute round 1 of signing [%v]", err)
+	}
+
+	return &SignRound1Message{
+		randomFactorCommitment: commitment,
+	}, nil
 }

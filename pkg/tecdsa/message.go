@@ -54,3 +54,9 @@ func (msg *KeyShareRevealMessage) IsValid(
 		zkpParams,
 	)
 }
+
+// SignRound1Message is a message produced by each `Signer` as a result of
+// executing the first round of T-ECDSA signing algorithm.
+type SignRound1Message struct {
+	randomFactorCommitment *commitment.TrapdoorCommitment
+}
