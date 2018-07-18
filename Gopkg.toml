@@ -22,7 +22,7 @@
 
 [[constraint]]
   name = "github.com/keep-network/paillier"
-  revision = "c9c5d2df026b807d99b63f1d1518ad186e27e233"
+  revision = "3eb21f405c6012a319b14ab5b4f6c3d982596ba5"
   source = "https://github.com/keep-network/paillier"
 
 [[constraint]]
