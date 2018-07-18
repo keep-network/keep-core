@@ -24,6 +24,34 @@ func (li localIdentifier) String() string {
 
 var channels map[string][]*localChannel
 
+type localProvider struct {
+	id localIdentifier
+}
+
+func (lp *localProvider) ID() net.TransportIdentifier {
+	return lp.id
+}
+
+func (lp *localProvider) ChannelFor(name string) (net.BroadcastChannel, error) {
+	return Channel(name), nil
+}
+
+func (lp *localProvider) Type() string {
+	return "local"
+}
+
+func (lp *localProvider) AddrStrings() []string {
+	return make([]string, 0)
+}
+
+// Connect returns a local instance of a net provider that does not go over the
+// network.
+func Connect() net.Provider {
+	return &localProvider{
+		id: localIdentifier(randomIdentifier()),
+	}
+}
+
 // Channel returns a BroadcastChannel designed to mediate between local
 // participants. It delivers all messages sent to the channel through its
 // receive channels. RecvChan on a LocalChannel creates a new receive channel
