@@ -124,7 +124,7 @@ func (ls *LocalSigner) InitializeDsaKeyShares() (
 		)
 	}
 
-	commitment, decommitmentKey, err := commitment.GenerateCommitment(
+	commitment, decommitmentKey, err := commitment.Generate(
 		keyShare.publicKeyShare.Bytes(),
 	)
 	if err != nil {

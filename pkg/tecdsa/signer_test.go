@@ -162,7 +162,7 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	invalidCommitment, _, err := commitment.GenerateCommitment(
+	invalidCommitment, _, err := commitment.Generate(
 		big.NewInt(1).Bytes(),
 	)
 	if err != nil {
