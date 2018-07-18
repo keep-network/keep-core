@@ -28,11 +28,6 @@ import (
 //          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
 //          vol 9696. Springer, Cham
 type PI2 struct {
-	g *tecdsa.CurvePoint
-	r *tecdsa.CurvePoint
-	w *big.Int
-	u *big.Int
-
 	z1 *big.Int
 	z2 *big.Int
 
@@ -254,28 +249,34 @@ func CommitZkpPi2(r,
 		tau,
 	)
 
-	return &PI2{g, r, w, u, z1, z2, u1, u2, u3, v1, v2, v3, e, s1, s2, t1, t2, t3}, nil
+	return &PI2{z1, z2, u1, u2, u3, v1, v2, v3, e, s1, s2, t1, t2, t3}, nil
 }
 
 // Verify checks the `PI2` against the provided secret message and secret key
 // shares.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
-func (zkp *PI2) Verify(params *PublicParameters) bool {
+func (zkp *PI2) Verify(
+	g *tecdsa.CurvePoint,
+	r *tecdsa.CurvePoint,
+	w *big.Int,
+	u *big.Int,
+	params *PublicParameters,
+) bool {
 	// if !zkp.allParametersInRange(params) {
 	// 	return false
 	// }
 
-	u1 := zkp.evaluateVerificationU1(params)
+	u1 := zkp.evaluateVerificationU1(r, params)
 	u3 := zkp.evaluateVerificationU3(params)
-	v1 := zkp.evaluateVerificationV1(params)
+	v1 := zkp.evaluateVerificationV1(w, u, params)
 	v3 := zkp.evaluateVerificationV3(params)
 
 	// e = hash(g,w,u,z1,z2,u1,u2,u3,v1,v2,v3)
 	digest := sum256(
-		zkp.g.Bytes(),
-		zkp.w.Bytes(),
-		zkp.u.Bytes(),
+		g.Bytes(),
+		w.Bytes(),
+		u.Bytes(),
 		zkp.z1.Bytes(),
 		zkp.z2.Bytes(),
 		u1.Bytes(),
@@ -311,12 +312,12 @@ func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
 // phase.
 //
 // u1 = (c)s1 (r)−e in G
-func (zkp *PI2) evaluateVerificationU1(params *PublicParameters) *tecdsa.CurvePoint {
+func (zkp *PI2) evaluateVerificationU1(r *tecdsa.CurvePoint, params *PublicParameters) *tecdsa.CurvePoint {
 	cs1x, cs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
 	)
 	rex, rey := params.curve.ScalarMult(
-		zkp.r.X, zkp.r.Y, zkp.e.Bytes(),
+		r.X, r.Y, zkp.e.Bytes(),
 	)
 
 	// For a Weierstrass elliptic curve form, the additive inverse of
@@ -349,18 +350,18 @@ func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 // phase.
 //
 // v1 = (u^s1) * (Γ^(q*t2)) * (t1^N) * (w^(−e)) mod N2
-func (zkp *PI2) evaluateVerificationV1(params *PublicParameters) *big.Int {
+func (zkp *PI2) evaluateVerificationV1(w, u *big.Int, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(zkp.u, zkp.s1, params.NSquare()),
+				new(big.Int).Exp(u, zkp.s1, params.NSquare()),
 				new(big.Int).Exp(
 					params.G(),
 					new(big.Int).Mul(params.q, zkp.t2), params.NSquare()),
 			),
 			new(big.Int).Mul(
 				new(big.Int).Exp(zkp.t1, params.N, params.NSquare()),
-				discreteExp(zkp.w, new(big.Int).Neg(zkp.e), params.NSquare()),
+				discreteExp(w, new(big.Int).Neg(zkp.e), params.NSquare()),
 			),
 		),
 		params.NSquare(),
