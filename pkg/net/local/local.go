@@ -83,7 +83,7 @@ type localChannel struct {
 	protoToTransportIdentifiers map[net.ProtocolIdentifier]net.TransportIdentifier
 }
 
-func (channel *localChannel) Name() string {
+func (lc *localChannel) Name() string {
 	return channel.name
 }
 
@@ -140,7 +140,7 @@ func doSend(
 	return nil
 }
 
-func (channel *localChannel) deliver(senderIdentifier net.TransportIdentifier, payload interface{}) {
+func (lc *localChannel) deliver(senderIdentifier net.TransportIdentifier, payload interface{}) {
 	channel.messageHandlersMutex.Lock()
 	snapshot := make([]net.HandleMessageFunc, len(channel.messageHandlers))
 	copy(snapshot, channel.messageHandlers)
@@ -164,17 +164,17 @@ func (channel *localChannel) deliver(senderIdentifier net.TransportIdentifier, p
 	}()
 }
 
-func (channel *localChannel) Send(message net.TaggedMarshaler) error {
+func (lc *localChannel) Send(message net.TaggedMarshaler) error {
 	return doSend(channel, nil, message)
 }
 
-func (channel *localChannel) SendTo(
+func (lc *localChannel) SendTo(
 	recipient net.ProtocolIdentifier,
 	message net.TaggedMarshaler) error {
 	return doSend(channel, recipient, message)
 }
 
-func (channel *localChannel) Recv(handler net.HandleMessageFunc) error {
+func (lc *localChannel) Recv(handler net.HandleMessageFunc) error {
 	channel.messageHandlersMutex.Lock()
 	channel.messageHandlers = append(channel.messageHandlers, handler)
 	channel.messageHandlersMutex.Unlock()
@@ -182,7 +182,20 @@ func (channel *localChannel) Recv(handler net.HandleMessageFunc) error {
 	return nil
 }
 
-func (channel *localChannel) RegisterIdentifier(
+func (lc *localChannel) UnregisterRecv(handlerType string) error {
+	c.messageHandlersMutex.Lock()
+	defer c.messageHandlersMutex.Unlock()
+	for i, mh := range c.messageHandlers {
+		if mh.Type == handlerType {
+			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
+			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
+		}
+	}
+
+	return nil
+}
+
+func (lc *localChannel) RegisterIdentifier(
 	transportIdentifier net.TransportIdentifier,
 	protocolIdentifier net.ProtocolIdentifier,
 ) error {
@@ -206,7 +219,7 @@ func (channel *localChannel) RegisterIdentifier(
 	return nil
 }
 
-func (channel *localChannel) RegisterUnmarshaler(
+func (lc *localChannel) RegisterUnmarshaler(
 	unmarshaler func() net.TaggedUnmarshaler,
 ) (err error) {
 	tpe := unmarshaler().Type()
