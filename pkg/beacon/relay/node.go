@@ -85,7 +85,7 @@ func (n *Node) JoinGroupIfEligible(
 			n.registerPendingGroup(member, groupChannel, requestID)
 
 			relayChain.SubmitGroupPublicKey(
-				requestID.String(),
+				requestID,
 				member.GroupPublicKeyBytes(),
 			).OnComplete(func(registration *event.GroupRegistration, err error) {
 				if err != nil {

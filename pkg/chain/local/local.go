@@ -29,6 +29,8 @@ type localChain struct {
 	groupRegisteredHandlers    []func(key *event.GroupRegistration)
 	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
 
+	requestID int64
+
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
 
@@ -44,10 +46,18 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 }
 
 func (c *localChain) SubmitGroupPublicKey(
-	groupID string,
+	requestID *big.Int,
 	key [96]byte,
 ) *async.GroupRegistrationPromise {
+	groupID := requestID.String()
+
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
+	registration := &event.GroupRegistration{
+		GroupPublicKey:        key[:],
+		RequestID:             requestID,
+		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
+	}
+
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
 	if existing, exists := c.groupRegistrations[groupID]; exists && existing != key {
@@ -63,11 +73,6 @@ func (c *localChain) SubmitGroupPublicKey(
 	}
 	c.groupRegistrations[groupID] = key
 
-	registration := &event.GroupRegistration{
-		GroupPublicKey:        []byte(groupID),
-		RequestID:             big.NewInt(c.simulatedHeight),
-		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
-	}
 	groupRegistrationPromise.Fulfill(registration)
 
 	c.handlerMutex.Lock()
@@ -219,12 +224,13 @@ func (c *localChain) RequestRelayEntry(
 	promise := &async.RelayRequestPromise{}
 
 	request := &event.Request{
-		RequestID:   big.NewInt(c.simulatedHeight),
+		RequestID:   big.NewInt(c.requestID),
 		Payment:     big.NewInt(1),
 		BlockReward: blockReward,
 		Seed:        seed,
 	}
 	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddInt64(&c.requestID, 1)
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayRequestHandlers {
