@@ -33,7 +33,7 @@ func (lp *localProvider) ID() net.TransportIdentifier {
 }
 
 func (lp *localProvider) ChannelFor(name string) (net.BroadcastChannel, error) {
-	return Channel(name), nil
+	return channel(name), nil
 }
 
 func (lp *localProvider) Type() string {
@@ -52,12 +52,12 @@ func Connect() net.Provider {
 	}
 }
 
-// Channel returns a BroadcastChannel designed to mediate between local
+// channel returns a BroadcastChannel designed to mediate between local
 // participants. It delivers all messages sent to the channel through its
 // receive channels. RecvChan on a LocalChannel creates a new receive channel
 // that is returned to the caller, so that all receive channels can receive
 // the message.
-func Channel(name string) net.BroadcastChannel {
+func channel(name string) net.BroadcastChannel {
 	if channels == nil {
 		channels = make(map[string][]*localChannel)
 	}
