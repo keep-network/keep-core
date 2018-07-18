@@ -22,6 +22,7 @@ func (li localIdentifier) String() string {
 	return string(li)
 }
 
+var channelsMutex sync.Mutex
 var channels map[string][]*localChannel
 
 type localProvider struct {
@@ -58,6 +59,8 @@ func Connect() net.Provider {
 // that is returned to the caller, so that all receive channels can receive
 // the message.
 func channel(name string) net.BroadcastChannel {
+	channelsMutex.Lock()
+	defer channelsMutex.Unlock()
 	if channels == nil {
 		channels = make(map[string][]*localChannel)
 	}
@@ -120,7 +123,9 @@ func doSend(
 	recipient interface{},
 	payload net.TaggedMarshaler,
 ) error {
+	channelsMutex.Lock()
 	targetChannels := channels[channel.name]
+	channelsMutex.Unlock()
 
 	// If we have a recipient, filter `targetChannels` down to only the targeted
 	// recipient (the recipient transport identifier is the same as the local
