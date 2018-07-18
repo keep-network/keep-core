@@ -42,8 +42,8 @@ func (msg *KeyShareRevealMessage) IsValid(
 	zkpParams *zkp.PublicParameters,
 ) bool {
 	if !commitment.Verify(
-		msg.publicKeyShare.Bytes(),
 		msg.publicKeyDecommitmentKey,
+		msg.publicKeyShare.Bytes(),
 	) {
 		return false
 	}

@@ -56,7 +56,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			secret := []byte("top secret message")
 
-			commitment, decommitmentKey, err := GenerateCommitment(secret)
+			commitment, decommitmentKey, err := Generate(secret)
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
@@ -73,7 +73,72 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				test.modifySecret(secret)
 			}
 
-			result := commitment.Verify(secret, decommitmentKey)
+			result := commitment.Verify(decommitmentKey, secret)
+
+			if result != test.expectedResult {
+				t.Fatalf(
+					"expected: %v\nactual: %v\n",
+					test.expectedResult,
+					result,
+				)
+			}
+		})
+	}
+}
+
+func TestGenerateAndValidateCommitmentForMultipleValues(t *testing.T) {
+	var tests = map[string]struct {
+		committedValue1    string
+		committedValue2    string
+		verificationValue1 string
+		verificationValue2 string
+		expectedResult     bool
+	}{
+		"positive validation": {
+			committedValue1:    "eeyore",
+			committedValue2:    "rabbit",
+			verificationValue1: "eeyore",
+			verificationValue2: "rabbit",
+			expectedResult:     true,
+		},
+		"negative validation - first verification value is not the committed one": {
+			committedValue1:    "eeyore",
+			committedValue2:    "rabbit",
+			verificationValue1: "pooh",
+			verificationValue2: "rabbit",
+			expectedResult:     false,
+		},
+		"negative validation - second verification value is not the committed one": {
+			committedValue1:    "eeyore",
+			committedValue2:    "rabbit",
+			verificationValue1: "eeyore",
+			verificationValue2: "pooh",
+			expectedResult:     false,
+		},
+		"negative validation - verification values in different order": {
+			committedValue1:    "eeyore",
+			committedValue2:    "rabbit",
+			verificationValue1: "rabbit",
+			verificationValue2: "eeyore",
+			expectedResult:     false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			commitment, decommitmentKey, err := Generate(
+				[]byte(test.committedValue1),
+				[]byte(test.committedValue2),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			result := commitment.Verify(
+				decommitmentKey,
+				[]byte(test.verificationValue1),
+				[]byte(test.verificationValue2),
+			)
 
 			if result != test.expectedResult {
 				t.Fatalf(
@@ -90,13 +155,13 @@ func TestCommitmentRandomness(t *testing.T) {
 	secret := []byte("top secret message")
 
 	// Generate Commitment 1
-	commitment1, decommitmentKey1, err := GenerateCommitment(secret)
+	commitment1, decommitmentKey1, err := Generate(secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Generate Commitment 2
-	commitment2, decommitmentKey2, err := GenerateCommitment(secret)
+	commitment2, decommitmentKey2, err := Generate(secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}

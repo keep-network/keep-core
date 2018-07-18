@@ -38,8 +38,11 @@ type TrapdoorCommitment struct {
 	commitment *bn256.G2
 }
 
-// GenerateCommitment generates a Commitment for the passed `secret` message.
-func GenerateCommitment(secret []byte) (*TrapdoorCommitment, *DecommitmentKey, error) {
+// Generate evaluates a commitment and decommitment key for the secret
+// messages provided as an argument.
+func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) {
+	secret := combineSecrets(secrets...)
+
 	// Generate a random public key.
 	pubKey, _, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
@@ -65,7 +68,10 @@ func GenerateCommitment(secret []byte) (*TrapdoorCommitment, *DecommitmentKey, e
 	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(pubKey))
 
 	// commitment = g * digest + he * r
-	commitment := new(bn256.G2).Add(new(bn256.G2).ScalarBaseMult(digest), new(bn256.G2).ScalarMult(he, r))
+	commitment := new(bn256.G2).Add(
+		new(bn256.G2).ScalarBaseMult(digest),
+		new(bn256.G2).ScalarMult(he, r),
+	)
 
 	return &TrapdoorCommitment{
 			pubKey:     pubKey,
@@ -78,11 +84,13 @@ func GenerateCommitment(secret []byte) (*TrapdoorCommitment, *DecommitmentKey, e
 		nil
 }
 
-// Verify checks received commitment against the revealed secret.
+// Verify checks received commitment against the revealed secret messages.
 func (tc *TrapdoorCommitment) Verify(
-	secret []byte,
 	decommitmentKey *DecommitmentKey,
+	secrets ...[]byte,
 ) bool {
+	secret := combineSecrets(secrets...)
+
 	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
@@ -93,7 +101,10 @@ func (tc *TrapdoorCommitment) Verify(
 	b := new(bn256.G2).Add(tc.h, new(bn256.G2).ScalarBaseMult(tc.pubKey))
 
 	// c = commitment - g * digest
-	c := new(bn256.G2).Add(tc.commitment, new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)))
+	c := new(bn256.G2).Add(
+		tc.commitment,
+		new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)),
+	)
 
 	// Get base point `g`
 	g := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
@@ -110,4 +121,12 @@ func sha256Sum(secret []byte) *big.Int {
 	hash := sha256.Sum256(secret)
 
 	return new(big.Int).SetBytes(hash[:])
+}
+
+func combineSecrets(secrets ...[]byte) []byte {
+	var combined []byte
+	for _, secret := range secrets {
+		combined = append(combined, secret...)
+	}
+	return combined
 }
