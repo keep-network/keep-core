@@ -82,7 +82,7 @@ func SmokeTest(c *cli.Context) error {
 
 	chainHandle.ThresholdRelay().
 		OnGroupRegistered(func(registration *event.GroupRegistration) {
-			//chainHandle.ThresholdRelay().SubmitRelayRequest()
+			chainHandle.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
 		})
 
 	select {
