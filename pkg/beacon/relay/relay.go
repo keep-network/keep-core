@@ -46,7 +46,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	relayChain relaychain.Interface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
-		request.PreviousEntry(),
+		request.PreviousValue[:],
 		request.Seed.Bytes(),
 	)
 
@@ -72,11 +72,10 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			return
 		}
 
-		var (
-			rightSizeSignature [32]byte
-			previousEntry      *big.Int
-		)
-		previousEntry.SetBytes(request.PreviousEntry())
+		rightSizeSignature := [32]byte{}
+		previousValue := &big.Int{}
+		previousValue.SetBytes(request.PreviousValue[:])
+
 		for i := 0; i < 32; i++ {
 			rightSizeSignature[i] = signature[i]
 		}
@@ -84,7 +83,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		newEntry := &event.Entry{
 			RequestID:     request.RequestID,
 			Value:         rightSizeSignature,
-			PreviousEntry: previousEntry,
+			PreviousEntry: previousValue,
 			Timestamp:     time.Now().UTC(),
 		}
 
@@ -112,6 +111,7 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 
 func (n *Node) indexForNextGroup(request event.Request) *big.Int {
 	entry := (&big.Int{}).SetBytes(request.PreviousEntry())
+	entry := (&big.Int{}).SetBytes(request.PreviousValue[:])
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
 	return nextGroupIndex(entry, numberOfGroups)

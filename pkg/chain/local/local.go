@@ -29,7 +29,8 @@ type localChain struct {
 	groupRegisteredHandlers    []func(key *event.GroupRegistration)
 	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
 
-	requestID int64
+	requestID   int64
+	latestValue [32]byte
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
@@ -118,6 +119,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	}
 	c.handlerMutex.Unlock()
 
+	c.latestValue = entry.Value
 	relayEntryPromise.Fulfill(entry)
 
 	return relayEntryPromise
@@ -224,10 +226,11 @@ func (c *localChain) RequestRelayEntry(
 	promise := &async.RelayRequestPromise{}
 
 	request := &event.Request{
-		RequestID:   big.NewInt(c.requestID),
-		Payment:     big.NewInt(1),
-		BlockReward: blockReward,
-		Seed:        seed,
+		PreviousValue: c.latestValue,
+		RequestID:     big.NewInt(c.requestID),
+		Payment:       big.NewInt(1),
+		BlockReward:   blockReward,
+		Seed:          seed,
 	}
 	atomic.AddInt64(&c.simulatedHeight, 1)
 	atomic.AddInt64(&c.requestID, 1)
