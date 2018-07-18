@@ -23,7 +23,7 @@ var publicParameters = &PublicParameters{
 }
 
 func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
-	group, err := newGroup(publicParameters)
+	group, err := createNewLocalTestGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -218,7 +218,7 @@ func initializeNewGroup() (
 	[]*KeyShareRevealMessage,
 	error,
 ) {
-	group, err := newGroup(publicParameters)
+	group, err := createNewLocalTestGroup()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -259,4 +259,20 @@ func initializeNewGroup() (
 	}
 
 	return group, publicKeyCommitmentMessages, keyShareRevealMessages, nil
+}
+
+func createNewLocalTestGroup() ([]*LocalSigner, error) {
+	coreGroup, err := newCoreGroup(publicParameters)
+	if err != nil {
+		return nil, err
+	}
+
+	localSigners := make([]*LocalSigner, len(coreGroup))
+	for i := 0; i < len(localSigners); i++ {
+		localSigners[i] = &LocalSigner{
+			signerCore: *coreGroup[i],
+		}
+	}
+
+	return localSigners, nil
 }

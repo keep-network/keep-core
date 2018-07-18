@@ -48,19 +48,8 @@ type PublicParameters struct {
 	curve elliptic.Curve
 }
 
-// LocalSigner represents T-ECDSA group member during the initialization
-// phase. It is responsible for constructing a broadcast
-// PublicKeyShareCommitmentMessage containing public DSA key share commitment
-// and a KeyShareRevealMessage revealing in a Paillier-encrypted way generated
-// secret DSA key share and an unencrypted public key share.
-// Each LocalSigner has a reference to a threshold Paillier key used for
-// encrypting secret key share.
-type LocalSigner struct {
+type signerCore struct {
 	ID string
-
-	dsaKeyShare *dsaKeyShare
-
-	publicDsaKeyShareDecommitmentKey *commitment.DecommitmentKey
 
 	paillierKey *paillier.ThresholdPrivateKey
 
@@ -68,12 +57,25 @@ type LocalSigner struct {
 	zkpParameters   *zkp.PublicParameters
 }
 
+// LocalSigner represents T-ECDSA group member during the initialization
+// phase. It is responsible for constructing a broadcast
+// PublicKeyShareCommitmentMessage containing public DSA key share commitment
+// and a KeyShareRevealMessage revealing in a Paillier-encrypted way generated
+// secret DSA key share and an unencrypted public key share.
+type LocalSigner struct {
+	signerCore
+
+	dsaKeyShare *dsaKeyShare
+
+	publicDsaKeyShareDecommitmentKey *commitment.DecommitmentKey
+}
+
 // Signer represents T-ECDSA group member in a fully initialized state,
 // ready for signing. Each Signer has a reference to a ThresholdDsaKey used
 // in a signing process. It represents a (t, n) threshold sharing of the
 // underlying DSA key.
 type Signer struct {
-	LocalSigner
+	signerCore
 
 	dsaKey *ThresholdDsaKey
 }
@@ -275,11 +277,12 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	return &ThresholdDsaKey{secretKey, publicKey}, nil
 }
 
-// newGroup generates a new signing group backed by a threshold Paillier key
-// and ZKP public parameters built from the generated Paillier key.
+// newCoreGroup generates a new group of `signerCore`s backed by a threshold
+// Paillier key and ZKP public parameters built from the generated Paillier key.
 // This implementation works in an oracle mode - one party is responsible for
-// generating Paillier keys and distributing them. Be careful, please.
-func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
+// generating Paillier keys and distributing them and should be used only for
+// integration testing. Be careful, please.
+func newCoreGroup(parameters *PublicParameters) ([]*signerCore, error) {
 	paillierKeyGen := paillier.GetThresholdKeyGenerator(
 		paillierModulusBitLength,
 		parameters.groupSize,
@@ -304,9 +307,9 @@ func newGroup(parameters *PublicParameters) ([]*LocalSigner, error) {
 		)
 	}
 
-	members := make([]*LocalSigner, len(paillierKeys))
+	members := make([]*signerCore, len(paillierKeys))
 	for i := 0; i < len(members); i++ {
-		members[i] = &LocalSigner{
+		members[i] = &signerCore{
 			ID:              generateMemberID(),
 			paillierKey:     paillierKeys[i],
 			groupParameters: parameters,
