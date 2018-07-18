@@ -33,6 +33,7 @@ type Node struct {
 	stakeIDs []string
 
 	groupPublicKeys [][]byte
+	seenPublicKeys  map[string]struct{}
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
 
@@ -144,6 +145,12 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
+	// If we've already registered a group for this request ID, return early.
+	if _, exists := n.seenPublicKeys[requestID]; exists {
+		return
+	}
+
+	n.seenPublicKeys[requestID] = struct{}{}
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	index := len(n.groupPublicKeys) - 1
 
