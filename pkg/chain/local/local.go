@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"os"
 	"sync"
-	"time"
+	"sync/atomic"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -62,13 +62,23 @@ func (c *localChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 	c.groupRegistrations[groupID] = key
-	c.simulatedHeight++
 
-	groupRegistrationPromise.Fulfill(&event.GroupRegistration{
+	registration := &event.GroupRegistration{
 		GroupPublicKey:        []byte(groupID),
 		RequestID:             big.NewInt(c.simulatedHeight),
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
-	})
+	}
+	groupRegistrationPromise.Fulfill(registration)
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.groupRegisteredHandlers {
+		go func(handler func(registration *event.GroupRegistration), registration *event.GroupRegistration) {
+			handler(registration)
+		}(handler, registration)
+	}
+	c.handlerMutex.Unlock()
+
+	atomic.AddInt64(&c.simulatedHeight, 1)
 
 	return groupRegistrationPromise
 }
@@ -95,13 +105,15 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	}
 	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
 
-	relayEntryPromise.Fulfill(&event.Entry{
-		RequestID:     entry.RequestID,
-		Value:         entry.Value,
-		GroupID:       entry.GroupID,
-		PreviousEntry: entry.PreviousEntry,
-		Timestamp:     time.Now().UTC(),
-	})
+	c.handlerMutex.Lock()
+	for _, handler := range c.relayEntryHandlers {
+		go func(handler func(entry *event.Entry), entry *event.Entry) {
+			handler(entry)
+		}(handler, entry)
+	}
+	c.handlerMutex.Unlock()
+
+	relayEntryPromise.Fulfill(entry)
 
 	return relayEntryPromise
 }
@@ -121,7 +133,7 @@ func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request))
 		c.relayRequestHandlers,
 		handler,
 	)
-
+	c.handlerMutex.Unlock()
 }
 
 func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
@@ -169,15 +181,28 @@ func (c *localChain) AddStaker(
 	groupMemberID string,
 ) *async.StakerRegistrationPromise {
 	onStakerAddedPromise := &async.StakerRegistrationPromise{}
-	Index := len(c.stakerList)
+	index := len(c.stakerList)
 	c.stakerList = append(c.stakerList, groupMemberID)
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.stakerRegistrationHandlers {
+		go func(handler func(staker *event.StakerRegistration), groupMemberID string, index int) {
+			handler(&event.StakerRegistration{
+				GroupMemberID: groupMemberID,
+				Index:         index,
+			})
+		}(handler, groupMemberID, index)
+	}
+	c.handlerMutex.Unlock()
+
 	err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
-		Index:         Index,
+		Index:         index,
 		GroupMemberID: string(groupMemberID),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
 	}
+
 	return onStakerAddedPromise
 }
 
@@ -192,11 +217,24 @@ func (c *localChain) RequestRelayEntry(
 	blockReward, seed *big.Int,
 ) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
-	promise.Fulfill(&event.Request{
+
+	request := &event.Request{
 		RequestID:   big.NewInt(c.simulatedHeight),
 		Payment:     big.NewInt(1),
 		BlockReward: blockReward,
 		Seed:        seed,
-	})
+	}
+	atomic.AddInt64(&c.simulatedHeight, 1)
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.relayRequestHandlers {
+		go func(handler func(*event.Request), request *event.Request) {
+			handler(request)
+		}(handler, request)
+	}
+	c.handlerMutex.Unlock()
+
+	promise.Fulfill(request)
+
 	return promise
 }
