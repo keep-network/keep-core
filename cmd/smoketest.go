@@ -74,9 +74,9 @@ func SmokeTest(c *cli.Context) error {
 	<-time.NewTimer(time.Second).C
 
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     &big.Int{},
+		RequestID:     big.NewInt(int64(135)),
 		Value:         [32]byte{},
-		GroupID:       &big.Int{},
+		GroupID:       big.NewInt(int64(168)),
 		PreviousEntry: &big.Int{},
 	})
 
