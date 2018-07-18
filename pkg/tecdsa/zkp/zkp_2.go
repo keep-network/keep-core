@@ -233,7 +233,7 @@ func CommitZkpPi2(r,
 	// t1 = (rc^e) * μ mod N
 	t1 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(rc, e, params.N),
+			discreteExp(rc, e, params.N),
 			mu,
 		),
 		params.N,
@@ -341,8 +341,8 @@ func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(params.h1, zkp.s1, params.NTilde),
-				new(big.Int).Exp(params.h2, zkp.s2, params.NTilde),
+				discreteExp(params.h1, zkp.s1, params.NTilde),
+				discreteExp(params.h2, zkp.s2, params.NTilde),
 			),
 			discreteExp(zkp.z1, new(big.Int).Neg(zkp.e), params.NTilde),
 		),
@@ -359,10 +359,12 @@ func (zkp *PI2) evaluateVerificationV1(w, u *big.Int, params *PublicParameters) 
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(u, zkp.s1, params.NSquare()),
-				new(big.Int).Exp(
+				discreteExp(u, zkp.s1, params.NSquare()),
+				discreteExp(
 					params.G(),
-					new(big.Int).Mul(params.q, zkp.t2), params.NSquare()),
+					new(big.Int).Mul(params.q, zkp.t2),
+					params.NSquare(),
+				),
 			),
 			new(big.Int).Mul(
 				new(big.Int).Exp(zkp.t1, params.N, params.NSquare()),
@@ -382,8 +384,8 @@ func (zkp *PI2) evaluateVerificationV3(params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(params.h1, zkp.t2, params.NTilde),
-				new(big.Int).Exp(params.h2, zkp.t3, params.NTilde),
+				discreteExp(params.h1, zkp.t2, params.NTilde),
+				discreteExp(params.h2, zkp.t3, params.NTilde),
 			),
 			discreteExp(zkp.z2, new(big.Int).Neg(zkp.e), params.NTilde),
 		),
