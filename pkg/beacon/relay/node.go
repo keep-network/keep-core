@@ -165,9 +165,9 @@ func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
 	shuffler := rand.New(rand.NewSource(entryValue.Int64()))
 
 	n.mutex.Lock()
-	shuffledStakeIDs := make([]string, 0, len(n.stakeIDs))
+	shuffledStakeIDs := make([]string, len(n.stakeIDs))
 	copy(shuffledStakeIDs, n.stakeIDs)
-	n.mutex.Unlock()
+	defer n.mutex.Unlock()
 
 	shuffler.Shuffle(len(shuffledStakeIDs), func(i, j int) {
 		shuffledStakeIDs[i], shuffledStakeIDs[j] = shuffledStakeIDs[j], shuffledStakeIDs[i]
