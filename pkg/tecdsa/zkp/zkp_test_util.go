@@ -1,6 +1,10 @@
 package zkp
 
-import "math/big"
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+)
 
 // mockRandReader is an implementation of `io.Reader` allowing to get
 // predictable random numbers in your tests. Each new generated number is larger
@@ -33,4 +37,17 @@ func (r *mockRandReader) Read(b []byte) (int, error) {
 
 	r.counter = new(big.Int).Add(r.counter, big.NewInt(1))
 	return len(b), nil
+}
+
+func generateTestPublicParams() *PublicParameters {
+	return &PublicParameters{
+		N:      big.NewInt(1081),  // 23 * 47
+		NTilde: big.NewInt(25651), // 23 * 11
+
+		h1: big.NewInt(20535),
+		h2: big.NewInt(20919),
+
+		q:     secp256k1.S256().Params().N,
+		curve: secp256k1.S256(),
+	}
 }
