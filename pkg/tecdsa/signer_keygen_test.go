@@ -40,22 +40,12 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 }
 
 func TestInitializeAndCombineDsaKey(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
+	group, dsaKey, err := initializeNewLocalGroupWithFullKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Combine all PublicKeyShareCommitmentMessages and KeyShareRevealMessages
-	// from signers in order to create a ThresholdDsaKey.
-	dsaKey, err := group[0].CombineDsaKeyShares(
-		commitmentMessages,
-		revealMessages,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Now we have ThresholdDsaKey with E(secretKey) and public key where
+	// We have ThresholdDsaKey with E(secretKey) and public key where
 	// E(secretKey) is a threshold sharing of secretKey.
 	//
 	// We may check the correctness of E(secretKey) and publicKey:
@@ -328,4 +318,30 @@ func initializeNewLocalGroupWithKeyShares() (
 	}
 
 	return group, publicKeyCommitmentMessages, keyShareRevealMessages, nil
+}
+
+// initializeNewLocalGroupWithFullKey creates and initializes a new group of
+// `LocalSigner`s simulating a real initialization process just like the
+// `initializeNewLocalGroupWithKeyShares` except that it also calls
+// `ConbineDsaKeyShares` in order to produce a full `ThresholdDsaKey`.
+func initializeNewLocalGroupWithFullKey() (
+	[]*LocalSigner, *ThresholdDsaKey, error,
+) {
+	group, commitmentMessages, revealMessages, err :=
+		initializeNewLocalGroupWithKeyShares()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Combine all PublicKeyShareCommitmentMessages and KeyShareRevealMessages
+	// from signers in order to create a ThresholdDsaKey.
+	dsaKey, err := group[0].CombineDsaKeyShares(
+		commitmentMessages,
+		revealMessages,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return group, dsaKey, nil
 }
