@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"sync"
+	"sync/atomic"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -37,6 +38,8 @@ type Node struct {
 
 	// lastSeenEntry is the last relay entry this node is aware of.
 	lastSeenEntry event.Entry
+
+	dkgInProgress int64
 }
 
 type membership struct {
@@ -59,6 +62,15 @@ func (n *Node) JoinGroupIfEligible(
 ) {
 	if index := n.indexInEntryGroup(entryValue); index >= 0 {
 		go func() {
+			// Is DKG in progress?
+			requestInProgress := atomic.LoadInt64(&n.dkgInProgress)
+			if requestInProgress == 1 {
+				return
+			}
+			atomic.AddInt64(&n.dkgInProgress, 1)
+			// safe to run dkg again
+			defer atomic.AddInt64(&n.dkgInProgress, -1)
+
 			groupChannel, err := n.netProvider.ChannelFor(requestID.String())
 			if err != nil {
 				fmt.Fprintf(
