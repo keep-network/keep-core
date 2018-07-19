@@ -6,6 +6,8 @@ import (
 	"io"
 	"math/big"
 
+	"github.com/keep-network/paillier"
+
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 )
 
@@ -62,8 +64,8 @@ type PI2 struct {
 func CommitZkpPi2(
 	g *curve.Point, // curveBasePoint
 	r *curve.Point, // eta1CurvePoint - r = g^η1
-	w *big.Int, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
-	u *big.Int, // encryptedFactor1 - u = E(ρ)
+	w *paillier.Cypher, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
+	u *paillier.Cypher, // encryptedFactor1 - u = E(ρ)
 	eta1 *big.Int, // η1
 	eta2 *big.Int, // η2
 	rc *big.Int, // randomness
@@ -153,7 +155,7 @@ func CommitZkpPi2(
 	v1 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(u, alpha, params.NSquare()),
+				new(big.Int).Exp(u.C, alpha, params.NSquare()),
 				new(big.Int).Exp(params.G(),
 					new(big.Int).Mul(params.q, theta),
 					params.NSquare()),
@@ -182,8 +184,8 @@ func CommitZkpPi2(
 	// e = hash(g, w, u, z1, z2, u1, u2, u3, v1, v2, v3)
 	digest := sum256(
 		g.Bytes(),
-		w.Bytes(),
-		u.Bytes(),
+		w.C.Bytes(),
+		u.C.Bytes(),
 		z1.Bytes(),
 		z2.Bytes(),
 		u1.Bytes(),
@@ -234,8 +236,8 @@ func CommitZkpPi2(
 func (zkp *PI2) Verify(
 	g *curve.Point, // curveBasePoint
 	r *curve.Point, // eta1CurvePoint - r = g^η1
-	w *big.Int, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
-	u *big.Int, // encryptedFactor1 - u = E(ρ)
+	w *paillier.Cypher, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
+	u *paillier.Cypher, // encryptedFactor1 - u = E(ρ)
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
@@ -250,8 +252,8 @@ func (zkp *PI2) Verify(
 	// e = hash(g,w,u,z1,z2,u1,u2,u3,v1,v2,v3)
 	digest := sum256(
 		g.Bytes(),
-		w.Bytes(),
-		u.Bytes(),
+		w.C.Bytes(),
+		u.C.Bytes(),
 		zkp.z1.Bytes(),
 		zkp.z2.Bytes(),
 		u1.Bytes(),
@@ -373,11 +375,11 @@ func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 // u^α * Γ^(q*θ) * μ^N
 //
 // which is exactly how v1 is evaluated during the commitment phase.
-func (zkp *PI2) evaluateVerificationV1(w, u *big.Int, params *PublicParameters) *big.Int {
+func (zkp *PI2) evaluateVerificationV1(w, u *paillier.Cypher, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				discreteExp(u, zkp.s1, params.NSquare()),
+				discreteExp(u.C, zkp.s1, params.NSquare()),
 				discreteExp(
 					params.G(),
 					new(big.Int).Mul(params.q, zkp.t2),
@@ -386,7 +388,7 @@ func (zkp *PI2) evaluateVerificationV1(w, u *big.Int, params *PublicParameters) 
 			),
 			new(big.Int).Mul(
 				new(big.Int).Exp(zkp.t1, params.N, params.NSquare()),
-				discreteExp(w, new(big.Int).Neg(zkp.e), params.NSquare()),
+				discreteExp(w.C, new(big.Int).Neg(zkp.e), params.NSquare()),
 			),
 		),
 		params.NSquare(),

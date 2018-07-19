@@ -46,8 +46,8 @@ func TestZKP2CommitValues(t *testing.T) {
 
 	g := params.CurveBasePoint()
 	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes()))
-	u := big.NewInt(7)
-	w := big.NewInt(9)
+	u := &paillier.Cypher{C: big.NewInt(7)}
+	w := &paillier.Cypher{C: big.NewInt(9)}
 
 	// WHEN
 	zkp, err := CommitZkpPi2(g, r, w, u, eta1, eta2, rc, params, mockRandom)
@@ -129,7 +129,7 @@ func TestZKP2Verification(t *testing.T) {
 
 	eta1 := big.NewInt(3)
 	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes()))
-	u := big.NewInt(7)
+	u := &paillier.Cypher{C: big.NewInt(7)}
 	// `w` is calculated from:
 	// w = u^η1 * Γ^qη2 * rc^N mod N^2
 	//
@@ -141,7 +141,7 @@ func TestZKP2Verification(t *testing.T) {
 	// η2 = 5
 	// rc = 7
 	// N = params.N
-	w := big.NewInt(1005955)
+	w := &paillier.Cypher{C: big.NewInt(1005955)}
 
 	e, _ := new(big.Int).SetString("5409986892274499674842741357332043231522465088980131051275882178073046897869", 10)
 	s1, _ := new(big.Int).SetString("16229960676823499024528224071996129694567395266940393153827646534219140693617", 10)
@@ -238,7 +238,7 @@ func TestRoundTripZKP2(t *testing.T) {
 	w := privateKey.PublicKey.Add(encryptedUEta1, encryptedQEta2) // encryptedMaskedFactor
 
 	// WHEN
-	zkp, err := CommitZkpPi2(g, r, w.C, u.C, eta1, eta2, rc, params, rand.Reader)
+	zkp, err := CommitZkpPi2(g, r, w, u, eta1, eta2, rc, params, rand.Reader)
 
 	if err != nil {
 		t.Fatal(err)
@@ -251,35 +251,35 @@ func TestRoundTripZKP2(t *testing.T) {
 	}{
 		"positive validation": {
 			verify: func() bool {
-				return zkp.Verify(g, r, w.C, u.C, params)
+				return zkp.Verify(g, r, w, u, params)
 			},
 			expectedResult: true,
 		},
 		"negative validation - wrong g": {
 			verify: func() bool {
 				wrongG := curve.NewPoint(big.NewInt(1), big.NewInt(2))
-				return zkp.Verify(wrongG, r, w.C, u.C, params)
+				return zkp.Verify(wrongG, r, w, u, params)
 			},
 			expectedResult: false,
 		},
 		"negative validation - wrong r": {
 			verify: func() bool {
 				wrongR := curve.NewPoint(big.NewInt(3), big.NewInt(4))
-				return zkp.Verify(g, wrongR, w.C, u.C, params)
+				return zkp.Verify(g, wrongR, w, u, params)
 			},
 			expectedResult: false,
 		},
 		"negative validation - wrong w": {
 			verify: func() bool {
-				wrongW := new(big.Int).Add(w.C, big.NewInt(1))
-				return zkp.Verify(g, r, wrongW, u.C, params)
+				wrongW := &paillier.Cypher{C: new(big.Int).Add(w.C, big.NewInt(1))}
+				return zkp.Verify(g, r, wrongW, u, params)
 			},
 			expectedResult: false,
 		},
 		"negative validation - wrong u": {
 			verify: func() bool {
-				wrongU := new(big.Int).Add(w.C, big.NewInt(1))
-				return zkp.Verify(g, r, w.C, wrongU, params)
+				wrongU := &paillier.Cypher{C: new(big.Int).Add(w.C, big.NewInt(1))}
+				return zkp.Verify(g, r, w, wrongU, params)
 			},
 			expectedResult: false,
 		},
