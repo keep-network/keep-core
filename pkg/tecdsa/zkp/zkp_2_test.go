@@ -171,25 +171,26 @@ func TestZKP2Verification(t *testing.T) {
 	}
 
 	expectedU1 := curve.NewPoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes()))
+	expectedU3 := big.NewInt(19547)
+	expectedV1 := big.NewInt(583302)
+	expectedV3 := big.NewInt(21032)
+
+	// WHEN
 	actualU1 := zkp.evaluateVerificationU1(r, params)
+	actualU3 := zkp.evaluateVerificationU3(params)
+	actualV1 := zkp.evaluateVerificationV1(w, u, params)
+	actualV3 := zkp.evaluateVerificationV3(params)
+
+	// THEN
 	if !reflect.DeepEqual(expectedU1, actualU1) {
 		t.Errorf("Unexpected u1\nActual: %v\nExpected: %v", actualU1, expectedU1)
 	}
-
-	expectedU3 := big.NewInt(19547)
-	actualU3 := zkp.evaluateVerificationU3(params)
 	if actualU3.Cmp(expectedU3) != 0 {
 		t.Errorf("Unexpected u3\nActual: %v\nExpected: %v", actualU3, expectedU3)
 	}
-
-	expectedV1 := big.NewInt(583302)
-	actualV1 := zkp.evaluateVerificationV1(w, u, params)
 	if actualV1.Cmp(expectedV1) != 0 {
 		t.Errorf("Unexpected v1\nActual: %v\nExpected: %v", actualV1, expectedV1)
 	}
-
-	expectedV3 := big.NewInt(21032)
-	actualV3 := zkp.evaluateVerificationV3(params)
 	if actualV3.Cmp(expectedV3) != 0 {
 		t.Errorf("Unexpected v3\nActual: %v\nExpected: %v", actualV3, expectedV3)
 	}
@@ -243,6 +244,7 @@ func TestRoundTripZKP2(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// THEN
 	var tests = map[string]struct {
 		verify         func() bool
 		expectedResult bool
