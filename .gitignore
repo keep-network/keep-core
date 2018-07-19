@@ -8,9 +8,12 @@ _local/
 *.pb.go
 ,*
 config.toml
+config.bootstrap.toml
 *.config.toml
+*.config.bootstrap.toml
 *.out
 *.abi
+*.account
 pkg/gen/*/*.go
 
 # Executables
