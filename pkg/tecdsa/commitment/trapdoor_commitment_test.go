@@ -15,10 +15,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		expectedResult        bool
 	}{
 		"positive validation": {
-			modifySecret:          nil,
-			modifyCommitment:      nil,
-			modifyDecommitmentKey: nil,
-			expectedResult:        true,
+			expectedResult: true,
 		},
 		"negative validation - incorrect secret value": {
 			modifySecret: func(secret []byte) {
