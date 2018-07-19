@@ -8,60 +8,53 @@ import (
 )
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
+	committedValues := []string{"eeyore", "rabbit"}
+
 	var tests = map[string]struct {
-		committedValues       []string
 		verificationValues    []string
 		modifyDecommitmentKey func(key *DecommitmentKey)
 		modifyCommitment      func(commitment *TrapdoorCommitment)
 		expectedResult        bool
 	}{
 		"positive validation": {
-			committedValues:    []string{"eeyore", "rabbit"},
-			verificationValues: []string{"eeyore", "rabbit"},
+			verificationValues: committedValues,
 			expectedResult:     true,
 		},
 		"negative validation - first verification value is not the committed one": {
-			committedValues:    []string{"eeyore", "rabbit"},
 			verificationValues: []string{"pooh", "rabbit"},
 			expectedResult:     false,
 		},
 		"negative validation - second verification value is not the committed one": {
-			committedValues:    []string{"eeyore", "rabbit"},
 			verificationValues: []string{"eeyore", "pooh"},
 			expectedResult:     false,
 		},
 		"negative validation - verification values in wrong order": {
-			committedValues:    []string{"eeyore", "rabbit"},
 			verificationValues: []string{"rabbit", "eeyore"},
 			expectedResult:     false,
 		},
 		"negative validation - incorrect decommitment key `r`": {
-			committedValues:    []string{"eeyore", "rabbit"},
-			verificationValues: []string{"eeyore", "rabbit"},
+			verificationValues: committedValues,
 			modifyDecommitmentKey: func(key *DecommitmentKey) {
 				key.r = big.NewInt(3)
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `commitment`": {
-			committedValues:    []string{"eeyore", "rabbit"},
-			verificationValues: []string{"eeyore", "rabbit"},
+			verificationValues: committedValues,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.commitment = new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `pubKey`": {
-			committedValues:    []string{"eeyore", "rabbit"},
-			verificationValues: []string{"eeyore", "rabbit"},
+			verificationValues: committedValues,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.pubKey = big.NewInt(3)
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `h`": {
-			committedValues:    []string{"eeyore", "rabbit"},
-			verificationValues: []string{"eeyore", "rabbit"},
+			verificationValues: committedValues,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
 			},
@@ -71,15 +64,8 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			commitmentBytes := make([][]byte, len(test.committedValues))
-			for i, committedValue := range test.committedValues {
-				commitmentBytes[i] = []byte(committedValue)
-			}
-
-			verificationBytes := make([][]byte, len(test.verificationValues))
-			for i, verificationValue := range test.verificationValues {
-				verificationBytes[i] = []byte(verificationValue)
-			}
+			commitmentBytes := toBytes(committedValues)
+			verificationBytes := toBytes(test.verificationValues)
 
 			commitment, decommitmentKey, err := Generate(commitmentBytes...)
 			if err != nil {
@@ -105,6 +91,14 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			}
 		})
 	}
+}
+
+func toBytes(strings []string) [][]byte {
+	bytes := make([][]byte, len(strings))
+	for i, s := range strings {
+		bytes[i] = []byte(s)
+	}
+	return bytes
 }
 
 func TestCommitmentRandomness(t *testing.T) {
