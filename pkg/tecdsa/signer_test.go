@@ -7,9 +7,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/tecdsa/commitment"
+
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
-
 	"github.com/keep-network/paillier"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
@@ -45,29 +46,17 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 }
 
 func TestInitializeAndCombineDsaKey(t *testing.T) {
-	group, err := newGroup(publicParameters)
+	group, commitmentMessages, revealMessages, err := initializeNewGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Let each signer initialize the DSA key share and create InitMessage.
-	// Each signer picks randomly secretKeyShare from Z_q and computes
-	// publicKeyShare = g^secretKeyShare.
-	//
-	// E(secretKeyShare) and publicKeyShare are published by signer in a
-	// broadcast InitMessage.
-	// E is an additively homomorphic encryption scheme. For our implementation
-	// we use Paillier.
-	initMessages := make([]*InitMessage, publicParameters.groupSize)
-	for i, signer := range group {
-		initMessages[i], err = signer.InitializeDsaKeyGen()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	// Combine all InitMessages from signers in order to create ThresholdDsaKey.
-	dsaKey, err := group[0].CombineDsaKeyShares(initMessages)
+	// Combine all PublicKeyShareCommitmentMessages and KeyShareRevealMessages
+	// from signers in order to create a ThresholdDsaKey.
+	dsaKey, err := group[0].CombineDsaKeyShares(
+		commitmentMessages,
+		revealMessages,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,49 +112,83 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	}
 }
 
-func TestCombineNotEnoughInitMessages(t *testing.T) {
-	group, err := newGroup(publicParameters)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	message, err := group[1].InitializeDsaKeyGen()
+func TestCombineWithNotEnoughCommitMessages(t *testing.T) {
+	group, commitmentMessages, revealMessages, err := initializeNewGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expectedError := fmt.Errorf(
-		"InitMessages required from all group members; Got 1, expected 10",
+		"commitments required from all group members; got 1, expected 10",
 	)
 
-	shares := []*InitMessage{message}
-	_, err = group[0].CombineDsaKeyShares(shares)
+	_, err = group[0].CombineDsaKeyShares(
+		[]*PublicKeyShareCommitmentMessage{commitmentMessages[0]},
+		revealMessages,
+	)
 	if err == nil {
 		t.Fatal("Error was expected")
 	}
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf("Unexpected error\nActual %v\nExpected %v", expectedError, err)
 	}
-
 }
 
-func TestCombineWithInvalidZKP(t *testing.T) {
-	group, err := newGroup(publicParameters)
+func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
+	group, commitmentMessages, revealMessages, err := initializeNewGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Let each signer initialize a DSA key share and create a valid InitMessage
-	initMessages := make([]*InitMessage, publicParameters.groupSize)
-	for i, signer := range group {
-		initMessages[i], err = signer.InitializeDsaKeyGen()
-		if err != nil {
-			t.Fatal(err)
-		}
+	expectedError := fmt.Errorf(
+		"all group members should reveal shares; Got 1, expected 10",
+	)
+
+	_, err = group[0].CombineDsaKeyShares(
+		commitmentMessages,
+		[]*KeyShareRevealMessage{revealMessages[0]},
+	)
+	if err == nil {
+		t.Fatal("Error was expected")
+	}
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf("Unexpected error\nActual %v\nExpected %v", expectedError, err)
+	}
+}
+
+func TestCombineWithInvalidCommitment(t *testing.T) {
+	group, commitmentMessages, revealMessages, err := initializeNewGroup()
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	// Let's modify one of InitMessage's ZKPs to make it fail
-	invalidRangeProof, err := zkp.CommitDsaPaillierKeyRange(
+	invalidCommitment, _, err := commitment.GenerateCommitment(
+		big.NewInt(1).Bytes(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commitmentMessages[len(commitmentMessages)-1].commitment = invalidCommitment
+
+	expectedError := fmt.Errorf("KeyShareRevealMessage rejected")
+
+	_, err = group[0].CombineDsaKeyShares(commitmentMessages, revealMessages)
+	if err == nil {
+		t.Fatal("Error was expected")
+	}
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf("Unexpected error\nActual %v\nExpected %v", expectedError, err)
+	}
+}
+
+func TestCombineWithInvalidZKP(t *testing.T) {
+	group, commitmentMessages, revealMessages, err := initializeNewGroup()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Let's modify one of reveal message ZKPs to make it fail
+	invalidProof, err := zkp.CommitDsaPaillierKeyRange(
 		big.NewInt(1),
 		&curve.Point{X: big.NewInt(1), Y: big.NewInt(2)},
 		&paillier.Cypher{C: big.NewInt(3)},
@@ -176,15 +199,64 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	initMessages[len(initMessages)-1].rangeProof = invalidRangeProof
+	revealMessages[len(revealMessages)-1].secretKeyProof = invalidProof
 
-	expectedError := fmt.Errorf("Invalid InitMessage - ZKP rejected")
+	expectedError := fmt.Errorf("KeyShareRevealMessage rejected")
 
-	_, err = group[0].CombineDsaKeyShares(initMessages)
+	_, err = group[0].CombineDsaKeyShares(commitmentMessages, revealMessages)
 	if err == nil {
 		t.Fatal("Error was expected")
 	}
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf("Unexpected error\nActual %v\nExpected %v", expectedError, err)
 	}
+}
+
+func initializeNewGroup() (
+	[]*LocalSigner,
+	[]*PublicKeyShareCommitmentMessage,
+	[]*KeyShareRevealMessage,
+	error,
+) {
+	group, err := newGroup(publicParameters)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Let each signer initialize the DSA key share and create
+	// PublicKeyShareCommitmentMessage. Each signer picks randomly
+	// secretKeyShare from Z_q and computes publicKeyShare = g^secretKeyShare.
+	// Generated key shares are saved internally by each Signer. Each Signer
+	// generates commitment for the public key share. Commitment is broadcasted
+	// in the PublicKeyShareCommitmentMessage.
+	publicKeyCommitmentMessages := make(
+		[]*PublicKeyShareCommitmentMessage,
+		publicParameters.groupSize,
+	)
+	for i, signer := range group {
+		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	}
+
+	// In the next phase, each Signer publishes KeyShareRevealMessage with:
+	// - E(secretKeyShare)
+	// - decommitment for the public key share
+	// - ZKP for the secret key
+	//
+	// E is an additively homomorphic encryption scheme. For our implementation
+	// we use Paillier.
+	keyShareRevealMessages := make(
+		[]*KeyShareRevealMessage,
+		publicParameters.groupSize,
+	)
+	for i, signer := range group {
+		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	}
+
+	return group, publicKeyCommitmentMessages, keyShareRevealMessages, nil
 }

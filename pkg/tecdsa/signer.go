@@ -16,6 +16,7 @@ import (
 
 	mathrand "math/rand"
 
+	"github.com/keep-network/keep-core/pkg/tecdsa/commitment"
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
 	"github.com/keep-network/paillier"
@@ -46,20 +47,29 @@ type PublicParameters struct {
 	curve elliptic.Curve
 }
 
-// LocalSigner represents T-ECDSA group member prior to the initialization
-// phase. It is responsible for constructing a broadcast InitMessage containing
-// DSA key shares. Each LocalSigner has a reference to a threshold Paillier
-// key used for encrypting part of the InitMessage.
+// LocalSigner represents T-ECDSA group member during the initialization
+// phase. It is responsible for constructing a broadcast
+// PublicKeyShareCommitmentMessage containing public DSA key share commitment
+// and a KeyShareRevealMessage revealing in a Paillier-encrypted way generated
+// secret DSA key share and an unencrypted public key share.
+// Each LocalSigner has a reference to a threshold Paillier key used for
+// encrypting secret key share.
 type LocalSigner struct {
-	ID              string
+	ID string
+
+	dsaKeyShare *dsaKeyShare
+
+	publicDsaKeyShareDecommitmentKey *commitment.DecommitmentKey
+
+	paillierKey *paillier.ThresholdPrivateKey
+
 	groupParameters *PublicParameters
 	zkpParameters   *zkp.PublicParameters
-	paillierKey     *paillier.ThresholdPrivateKey
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
 // ready for signing. Each Signer has a reference to a ThresholdDsaKey used
-// for a signing process. It represents a (t, n) threshold sharing of the
+// in a signing process. It represents a (t, n) threshold sharing of the
 // underlying DSA key.
 type Signer struct {
 	LocalSigner
@@ -99,108 +109,165 @@ func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	}, nil
 }
 
-// InitializeDsaKeyGen initializes key generation process by generating DSA key
-// shares and putting them into the `InitMessage` which is broadcasted to all
-// other `Signer`s in the group.
+// InitializeDsaKeyShares initializes key generation process by generating DSA
+// key shares and publishing PublicKeyShareCommitmentMessage which is
+// broadcasted to all other `Signer`s in the group and contains signer's public
+// DSA key share commitment.
+func (ls *LocalSigner) InitializeDsaKeyShares() (
+	*PublicKeyShareCommitmentMessage,
+	error,
+) {
+	keyShare, err := ls.generateDsaKeyShare()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate DSA key shares [%v]", err,
+		)
+	}
+
+	commitment, decommitmentKey, err := commitment.GenerateCommitment(
+		keyShare.publicKeyShare.Bytes(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate DSA public key commitment [%v]", err,
+		)
+	}
+
+	ls.dsaKeyShare = keyShare
+	ls.publicDsaKeyShareDecommitmentKey = decommitmentKey
+
+	return &PublicKeyShareCommitmentMessage{
+		signerID:   ls.ID,
+		commitment: commitment,
+	}, nil
+}
+
+// RevealDsaKeyShares produces a KeyShareRevealMessage and should be called
+// when `PublicKeyShareCommitmentMessage`s from all group members are gathered.
+//
+// `KeyShareRevealMessage` contains signer's public DSA key share, decommitment
+// key for this share (used to validate the commitment published in the previous
+// `PublicKeyShareCommitmentMessage` message), encrypted secret DSA key share
+// and ZKP for the secret key share correctness.
 //
 // Secret key share is encrypted with an additively homomorphic encryption
 // scheme and sent to all other Signers in the group along with the public key
 // share.
-//
-// Along with secret and public key share, we ship a zero knowledge argument
-// allowing to validate received shares.
-func (ls *LocalSigner) InitializeDsaKeyGen() (*InitMessage, error) {
-	keyShare, err := ls.generateDsaKeyShare()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not initialize DSA key generation [%v]", err,
-		)
-	}
-
+func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 	paillierRandomness, err := paillier.GetRandomNumberInMultiplicativeGroup(
 		ls.paillierKey.N, rand.Reader,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not initialize DSA key generation [%v]", err,
+			"could not generate random r for Paillier [%v]", err,
 		)
 	}
 
 	encryptedSecretKeyShare, err := ls.paillierKey.EncryptWithR(
-		keyShare.secretKeyShare, paillierRandomness,
+		ls.dsaKeyShare.secretKeyShare, paillierRandomness,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not initialize DSA key generation [%v]", err,
+			"could not encrypt secret key share [%v]", err,
 		)
 	}
 
 	rangeProof, err := zkp.CommitDsaPaillierKeyRange(
-		keyShare.secretKeyShare,
-		keyShare.publicKeyShare,
+		ls.dsaKeyShare.secretKeyShare,
+		ls.dsaKeyShare.publicKeyShare,
 		encryptedSecretKeyShare,
 		paillierRandomness,
 		ls.zkpParameters,
 		rand.Reader,
 	)
 
-	return &InitMessage{
-		secretKeyShare: encryptedSecretKeyShare,
-		publicKeyShare: keyShare.publicKeyShare,
-		rangeProof:     rangeProof,
+	return &KeyShareRevealMessage{
+		signerID:                 ls.ID,
+		secretKeyShare:           encryptedSecretKeyShare,
+		publicKeyShare:           ls.dsaKeyShare.publicKeyShare,
+		publicKeyDecommitmentKey: ls.publicDsaKeyShareDecommitmentKey,
+		secretKeyProof:           rangeProof,
 	}, nil
 }
 
-// CombineDsaKeyShares combines all group `InitMessages` into a
-// `ThresholdDsaKey` which is a (t, n) threshold sharing of an underlying secret
-// and public DSA key shares. Secret and public DSA key shares are combined in
-// the following way:
+// CombineDsaKeyShares combines all group `PublicKeyShareCommitmentMessage`s and
+// `KeyShareRevealMessage`s into a `ThresholdDsaKey` which is a (t, n) threshold
+// sharing of an underlying secret DSA key. Secret and public
+// DSA key shares are combined in the following way:
 //
 // E(secretKey) = E(secretKeyShare_1) + E(secretKeyShare_2) + ... + E(secretKeyShare_n)
 // publicKey = publicKeyShare_1 + publicKeyShare_2 + ... + publicKeyShare_n
 //
 // E is an additively homomorphic encryption scheme, hence `+` operation is
-// possible. `Each E(secretKeyShare_i)` share comes from `InitMessage` that was
-// created by each `LocalSigner` of the signing group.
+// possible. Each key share share comes from the `KeyShareRevealMessage` that
+// was sent by each `LocalSigner` of the signing group.
+//
+// Before shares are combined, messages are validated - we check whether
+// the published public key share is what the signer originally committed to
+// as well as we check validity of the secret key share using the provided ZKP.
+//
+// Every `PublicKeyShareCommitmentMessage` should have a corresponding
+// `KeyShareRevealMessage`. They are matched by a signer ID contained in
+// each of the messages.
 func (ls *LocalSigner) CombineDsaKeyShares(
-	shares []*InitMessage,
+	shareCommitments []*PublicKeyShareCommitmentMessage,
+	revealedShares []*KeyShareRevealMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shares) != ls.groupParameters.groupSize {
+	if len(shareCommitments) != ls.groupParameters.groupSize {
 		return nil, fmt.Errorf(
-			"InitMessages required from all group members; Got %v, expected %v",
-			len(shares),
+			"commitments required from all group members; got %v, expected %v",
+			len(shareCommitments),
 			ls.groupParameters.groupSize,
 		)
 	}
 
-	for _, share := range shares {
-		if !share.IsValid(ls.zkpParameters) {
-			return nil, errors.New("Invalid InitMessage - ZKP rejected")
-		}
-	}
-
-	secretKeyShares := make([]*paillier.Cypher, len(shares))
-	for i, share := range shares {
-		secretKeyShares[i] = share.secretKeyShare
-	}
-	secretKey := ls.paillierKey.Add(secretKeyShares...)
-
-	publicKeyShareX := shares[0].publicKeyShare.X
-	publicKeyShareY := shares[0].publicKeyShare.Y
-	for _, share := range shares[1:] {
-		publicKeyShareX, publicKeyShareY = ls.groupParameters.curve.Add(
-			publicKeyShareX, publicKeyShareY,
-			share.publicKeyShare.X, share.publicKeyShare.Y,
+	if len(revealedShares) != ls.groupParameters.groupSize {
+		return nil, fmt.Errorf(
+			"all group members should reveal shares; Got %v, expected %v",
+			len(revealedShares),
+			ls.groupParameters.groupSize,
 		)
 	}
 
-	return &ThresholdDsaKey{
-		secretKey: secretKey,
-		publicKey: &curve.Point{
-			X: publicKeyShareX,
-			Y: publicKeyShareY,
-		},
-	}, nil
+	secretKeyShares := make([]*paillier.Cypher, ls.groupParameters.groupSize)
+	publicKeyShares := make([]*curve.Point, ls.groupParameters.groupSize)
+
+	for i, commitmentMsg := range shareCommitments {
+		foundMatchingRevealMessage := false
+
+		for _, revealedSharesMsg := range revealedShares {
+
+			if commitmentMsg.signerID == revealedSharesMsg.signerID {
+				foundMatchingRevealMessage = true
+
+				if revealedSharesMsg.IsValid(
+					commitmentMsg.commitment, ls.zkpParameters,
+				) {
+					secretKeyShares[i] = revealedSharesMsg.secretKeyShare
+					publicKeyShares[i] = revealedSharesMsg.publicKeyShare
+				} else {
+					return nil, errors.New("KeyShareRevealMessage rejected")
+				}
+			}
+		}
+
+		if !foundMatchingRevealMessage {
+			return nil, fmt.Errorf(
+				"No matching share reveal message for signer with ID=%v",
+				commitmentMsg.signerID,
+			)
+		}
+	}
+
+	secretKey := ls.paillierKey.Add(secretKeyShares...)
+	publicKey := publicKeyShares[0]
+	for _, share := range publicKeyShares[1:] {
+		publicKey = curve.NewPoint(ls.groupParameters.curve.Add(
+			publicKey.X, publicKey.Y, share.X, share.Y,
+		))
+	}
+
+	return &ThresholdDsaKey{secretKey, publicKey}, nil
 }
 
 // newGroup generates a new signing group backed by a threshold Paillier key

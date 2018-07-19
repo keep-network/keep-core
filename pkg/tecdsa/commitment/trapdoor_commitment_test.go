@@ -9,44 +9,42 @@ import (
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
 	var tests = map[string]struct {
-		modifySecret     func(secret *Secret)
-		modifyCommitment func(commitment *TrapdoorCommitment)
-		expectedResult   bool
+		modifySecret          func(secret []byte)
+		modifyDecommitmentKey func(key *DecommitmentKey)
+		modifyCommitment      func(commitment *TrapdoorCommitment)
+		expectedResult        bool
 	}{
 		"positive validation": {
-			modifySecret:     nil,
-			modifyCommitment: nil,
-			expectedResult:   true,
+			modifySecret:          nil,
+			modifyCommitment:      nil,
+			modifyDecommitmentKey: nil,
+			expectedResult:        true,
 		},
-		"negative validation - incorrect `secret`": {
-			modifySecret: func(secret *Secret) {
-				msg := []byte("top secret message2")
-				secret.message = &msg
+		"negative validation - incorrect secret value": {
+			modifySecret: func(secret []byte) {
+				secret[0] = 0xff
 			},
-			modifyCommitment: nil,
-			expectedResult:   false,
+			expectedResult: false,
 		},
-		"negative validation - incorrect `r`": {
-			modifySecret: func(secret *Secret) {
-				secret.r = big.NewInt(3)
+		"negative validation - incorrect decommitment key `r`": {
+			modifyDecommitmentKey: func(key *DecommitmentKey) {
+				key.r = big.NewInt(3)
 			},
-			modifyCommitment: nil,
-			expectedResult:   false,
+			expectedResult: false,
 		},
 		"negative validation - incorrect `commitment`": {
-			modifySecret: nil,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.commitment = new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `pubKey`": {
-			modifySecret:     nil,
-			modifyCommitment: func(commitment *TrapdoorCommitment) { commitment.pubKey = big.NewInt(3) },
-			expectedResult:   false,
+			modifyCommitment: func(commitment *TrapdoorCommitment) {
+				commitment.pubKey = big.NewInt(3)
+			},
+			expectedResult: false,
 		},
 		"negative validation - incorrect `h`": {
-			modifySecret: nil,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
 			},
@@ -56,52 +54,55 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			msg := []byte("top secret message")
+			secret := []byte("top secret message")
 
-			// Generate Commitment
-			commitment, secret, err := GenerateCommitment(&msg)
+			commitment, decommitmentKey, err := GenerateCommitment(secret)
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
 
-			// Invoke modification functions defined in test
 			if test.modifyCommitment != nil {
 				test.modifyCommitment(commitment)
 			}
 
-			newSecret := secret
-			if test.modifySecret != nil {
-				test.modifySecret(newSecret)
+			if test.modifyDecommitmentKey != nil {
+				test.modifyDecommitmentKey(decommitmentKey)
 			}
 
-			// Validate Commitment
-			result := commitment.ValidateCommitment(newSecret)
+			if test.modifySecret != nil {
+				test.modifySecret(secret)
+			}
 
-			// Check result
+			result := commitment.Verify(secret, decommitmentKey)
+
 			if result != test.expectedResult {
-				t.Fatalf("\nexpected: %v\nactual:   %v", test.expectedResult, result)
+				t.Fatalf(
+					"expected: %v\nactual: %v\n",
+					test.expectedResult,
+					result,
+				)
 			}
 		})
 	}
 }
 
 func TestCommitmentRandomness(t *testing.T) {
-	msg := []byte("top secret message")
+	secret := []byte("top secret message")
 
 	// Generate Commitment 1
-	commitment1, secret1, err := GenerateCommitment(&msg)
+	commitment1, decommitmentKey1, err := GenerateCommitment(secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Generate Commitment 2
-	commitment2, secret2, err := GenerateCommitment(&msg)
+	commitment2, decommitmentKey2, err := GenerateCommitment(secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
-	// Check decommitments are unique
-	if secret1.r.Cmp(secret2.r) == 0 {
+	// Check decommitment keys are unique
+	if decommitmentKey1.r.Cmp(decommitmentKey2.r) == 0 {
 		t.Fatal("both decommitment keys `r` are equal")
 	}
 
