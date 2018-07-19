@@ -1,5 +1,3 @@
-// +build integration
-
 package main
 
 // Test addStaker and get back list of staked (steaked)
