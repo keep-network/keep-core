@@ -16,14 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-var publicParameters = &PublicParameters{
-	groupSize: 10,
-	threshold: 6,
-	curve:     secp256k1.S256(),
-}
-
 func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
-	group, err := createNewLocalTestGroup()
+	group, err := createNewLocalGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +40,7 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 }
 
 func TestInitializeAndCombineDsaKey(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewGroup()
+	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +107,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 }
 
 func TestCombineWithNotEnoughCommitMessages(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewGroup()
+	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +129,7 @@ func TestCombineWithNotEnoughCommitMessages(t *testing.T) {
 }
 
 func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewGroup()
+	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +151,7 @@ func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
 }
 
 func TestCombineWithInvalidCommitment(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewGroup()
+	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +176,7 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 }
 
 func TestCombineWithInvalidZKP(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewGroup()
+	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,13 +206,88 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	}
 }
 
-func initializeNewGroup() (
+// Test group public parameters used to construct and validate groups for tests
+var publicParameters = &PublicParameters{
+	groupSize: 10,
+	threshold: 6,
+	curve:     secp256k1.S256(),
+}
+
+// createNewCoreGroup generates a group of `signerCore`s backed by a threshold
+// Paillier key and ZKP public parameters built from the generated Paillier key.
+// This approach works in an oracle mode - one party is responsible for
+// generating Paillier keys and distributing them and should be used only for
+// testing.
+func createNewCoreGroup() ([]*signerCore, error) {
+	paillierKeyGen := paillier.GetThresholdKeyGenerator(
+		paillierModulusBitLength,
+		publicParameters.groupSize,
+		publicParameters.threshold,
+		rand.Reader,
+	)
+
+	paillierKeys, err := paillierKeyGen.Generate()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate threshold Paillier keys [%v]", err,
+		)
+	}
+
+	zkpParameters, err := zkp.GeneratePublicParameters(
+		paillierKeys[0].N,
+		publicParameters.curve,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate public ZKP parameters [%v]", err,
+		)
+	}
+
+	members := make([]*signerCore, len(paillierKeys))
+	for i := 0; i < len(members); i++ {
+		members[i] = &signerCore{
+			ID:              generateMemberID(),
+			paillierKey:     paillierKeys[i],
+			groupParameters: publicParameters,
+			zkpParameters:   zkpParameters,
+		}
+	}
+
+	return members, nil
+}
+
+// createNewLocalGroup creates a new group of `LocalSigner`s that did not
+// started initialization process yet.
+func createNewLocalGroup() ([]*LocalSigner, error) {
+	coreGroup, err := createNewCoreGroup()
+	if err != nil {
+		return nil, err
+	}
+
+	localSigners := make([]*LocalSigner, len(coreGroup))
+	for i := 0; i < len(localSigners); i++ {
+		localSigners[i] = &LocalSigner{
+			signerCore: *coreGroup[i],
+		}
+	}
+
+	return localSigners, nil
+}
+
+// initializeNewLocalGroupWithKeyShares creates and initializes a new group of
+// `LocalSigner`s. It simulates a real initialization process by first calling
+// `InitializeDsaKeyShares` and then `RevealDsaKeyShares`. Messages produced by
+// those functions are returned along with all `LocalSigner`s created.
+// It's responsibility of code calling this function to execute
+// `CombineDsaKeyShares`, in order to produce signers with a fully initialized
+// threshold ECDSA key, if needed.
+func initializeNewLocalGroupWithKeyShares() (
 	[]*LocalSigner,
 	[]*PublicKeyShareCommitmentMessage,
 	[]*KeyShareRevealMessage,
 	error,
 ) {
-	group, err := createNewLocalTestGroup()
+	group, err := createNewLocalGroup()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -259,20 +328,4 @@ func initializeNewGroup() (
 	}
 
 	return group, publicKeyCommitmentMessages, keyShareRevealMessages, nil
-}
-
-func createNewLocalTestGroup() ([]*LocalSigner, error) {
-	coreGroup, err := newCoreGroup(publicParameters)
-	if err != nil {
-		return nil, err
-	}
-
-	localSigners := make([]*LocalSigner, len(coreGroup))
-	for i := 0; i < len(localSigners); i++ {
-		localSigners[i] = &LocalSigner{
-			signerCore: *coreGroup[i],
-		}
-	}
-
-	return localSigners, nil
 }

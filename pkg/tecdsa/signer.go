@@ -277,49 +277,6 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	return &ThresholdDsaKey{secretKey, publicKey}, nil
 }
 
-// newCoreGroup generates a new group of `signerCore`s backed by a threshold
-// Paillier key and ZKP public parameters built from the generated Paillier key.
-// This implementation works in an oracle mode - one party is responsible for
-// generating Paillier keys and distributing them and should be used only for
-// integration testing. Be careful, please.
-func newCoreGroup(parameters *PublicParameters) ([]*signerCore, error) {
-	paillierKeyGen := paillier.GetThresholdKeyGenerator(
-		paillierModulusBitLength,
-		parameters.groupSize,
-		parameters.threshold,
-		rand.Reader,
-	)
-
-	paillierKeys, err := paillierKeyGen.Generate()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not generate threshold Paillier keys [%v]", err,
-		)
-	}
-
-	zkpParameters, err := zkp.GeneratePublicParameters(
-		paillierKeys[0].N,
-		parameters.curve,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not generate public ZKP parameters [%v]", err,
-		)
-	}
-
-	members := make([]*signerCore, len(paillierKeys))
-	for i := 0; i < len(members); i++ {
-		members[i] = &signerCore{
-			ID:              generateMemberID(),
-			paillierKey:     paillierKeys[i],
-			groupParameters: parameters,
-			zkpParameters:   zkpParameters,
-		}
-	}
-
-	return members, nil
-}
-
 func generateMemberID() string {
 	memberID := "0"
 	for memberID = fmt.Sprintf("%v", mathrand.Int31()); memberID == "0"; {
