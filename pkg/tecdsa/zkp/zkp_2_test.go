@@ -241,7 +241,7 @@ func TestRoundTripZKP2(t *testing.T) {
 	u, _ := privateKey.EncryptWithR(big.NewInt(5), rc)             // encryptedFactor1 (rho from round 1), u = E(ρ)
 
 	// D(w) = η1*D(u) + q*η2 = η1*ρ + q*η2
-	// w = E(D(w)) = E(η1*ρ + q*η2) = E(η1*D(u) + E(q*η2) = E(η1*u) + E(q*η2)
+	// w = E(D(w)) = E(η1*D(u) + q*η2) = E(η1*D(u) + E(q*η2) = E(η1*u) + E(q*η2)
 	// E(η1*u)
 	encryptedUEta1 := privateKey.PublicKey.Mul(u, eta1)
 

@@ -9,18 +9,24 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 )
 
-// TODO Find better name for this ZKP
-
-// PI2 is an implementation of Gennaro's PI_2,i proof for the
-// Paillier encryption scheme, as described in [GGN16], section 4.4.
+// PI2 is an implementation of Gennaro's PI_2,i
+// proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
+//
+// The proof is used in the fourth round of the T-ECDSA signing algorithm
+// and operates on factor encrypted with an additively homomorphic
+// encryption scheme.
+//
+// Because of the complexity of the proof, we use the same naming for values
+// as in the paper in most cases. We do an exception for function parameters:
+// - `g` in the paper represents elliptic curve base point,
+// - `r` in the paper represents point on an elliptic curve,
+// - `w` in the paper represents masked encrypted factor
+// - `u` in the paper represents encrypted factor ρ from round 1
 //
 // The proof states that:
-// η1 (eta1) ∈ [−q3, q3], η1 (eta1) ∈ [−q8, q8] such that:
-//   g^η1 = r
-//   D(w) = η1*D(u) + q*η2
-//
-// This struct contains values computed by the prover.
-//
+// ∃ η1 ∈ [-q^3, q^3], η2 ∈ [-q^8, q^8] such that
+// g^η1 = r
+// D(w) = η1*D(u) + q*η2
 //
 //     [GGN 16]: Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal
 //          DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security.
@@ -49,88 +55,57 @@ type PI2 struct {
 	t3 *big.Int
 }
 
-// CommitZkpPi2 to the Proof PI_1,i
-//
-// Because of the complexity of the proof, we use the same naming for values
-// as in the paper in most cases. We do an exception for function parameters:
-// - `η` in the paper represents DSA secret key share,
-// - `c1` in the paper represents ...... (`c2 = η ×E E(xi) = E(η*x)`), TODO Check name for this one
-// - `c2` in the paper represents encrypted secret message share,
-// - `c3` in the paper represents encrypted DSA secret key share (`c3 = E(η)`),
-//
-// We assume the Prover knows the value r ∈ Z_N∗ used to encrypt η (eta)
-// such that c3 = (Γ^η)*(r^N) mod N2.
-//
-// First the prover chooses uniformly at random four values:
-// * α(alpha) ∈ Z_q^3,
-// * β(beta) ∈ Z_N∗,
-// * γ(gamma) ∈ Z_((q^3)*N ̃),
-// * δ(delta) ∈ Z_q^3,
-// * μ(mu) ∈ Z_N∗,
-// * ν(nu) ∈ Z_((q^3)*N ̃),
-// * θ(theta) ∈ Z_q^8,
-// * τ(tau) ∈ Z_((q^8)*N ̃),
-// * ρ1(rho1) ∈ Z_q^N ̃,
-// * ρ2(rho2) ∈ Z_((q^6)*N ̃).
-//
-// Then the prover computes u1, u2, z, v, e, s1, s2,s3. This values will be sent
-// by the prover to the verifier.
-func CommitZkpPi2(r,
-	g *curve.Point,
-	w,
-	u,
-	eta1,
-	eta2,
-	rc *big.Int,
+// CommitZkpPi2 generates `PI2` for the specified encrytped DSA factor and
+// masked factor.
+// It's required to use the same randomness `rc` to generate this proof as
+// the one used for Paillier encryption of `factor1` into `encryptedFactor1`.
+func CommitZkpPi2(
+	g *curve.Point, // curveBasePoint
+	r *curve.Point, // eta1CurvePoint - r = g^η1
+	w *big.Int, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
+	u *big.Int, // encryptedFactor1 - u = E(ρ)
+	eta1 *big.Int, // η1
+	eta2 *big.Int, // η2
+	rc *big.Int, // randomness
 	params *PublicParameters,
 	random io.Reader,
 ) (*PI2, error) {
-	// α(alpha) ∈ Z_q^3
 	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// β(beta) ∈ Z_N∗
 	beta, err := randomFromMultiplicativeGroup(random, params.N)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// γ(gamma) ∈ Z_((q^3)*N ̃)
 	gamma, err := rand.Int(random, params.QCubeNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// δ(delta) ∈ Z_q^3
 	delta, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// μ(mu) ∈ Z_N∗
 	mu, err := randomFromMultiplicativeGroup(random, params.N)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// ν(nu) ∈ Z_((q^3)*N ̃)
 	nu, err := rand.Int(random, params.QCubeNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// θ(theta) ∈ Z_q^8
 	theta, err := rand.Int(random, params.QEight())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// τ(tau) ∈ Z_((q^8)*N ̃)
 	tau, err := rand.Int(random, params.QEightNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// ρ1(rho1) ∈ Z_q^N ̃
 	rho1, err := rand.Int(random, params.QNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	// ρ2(rho2) ∈ Z_((q^6)*N ̃)
 	rho2, err := rand.Int(random, params.QSixNTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
@@ -257,10 +232,10 @@ func CommitZkpPi2(r,
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *PI2) Verify(
-	g *curve.Point,
-	r *curve.Point,
-	w *big.Int,
-	u *big.Int,
+	g *curve.Point, // curveBasePoint
+	r *curve.Point, // eta1CurvePoint - r = g^η1
+	w *big.Int, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
+	u *big.Int, // encryptedFactor1 - u = E(ρ)
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
@@ -312,11 +287,11 @@ func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
 		params.curve.IsOnCurve(zkp.u1.X, zkp.u1.Y)
 }
 
-// evaluateVerificationU1 computes z verification value and returns it for
+// evaluateVerificationU1 computes u1 verification value and returns it for
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// u1 = (c)s1 (r)−e in G
+// u1 = (c^s1) * (r^(−e)) in G
 func (zkp *PI2) evaluateVerificationU1(r *curve.Point, params *PublicParameters) *curve.Point {
 	cs1x, cs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
@@ -336,7 +311,7 @@ func (zkp *PI2) evaluateVerificationU1(r *curve.Point, params *PublicParameters)
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// u2 = (h1^s1( * (h2^s2) (z1^(−e)) mod N ̃
+// u3 = (h1^s1) * (h2^s2) * (z1^(−e)) mod N ̃
 func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
