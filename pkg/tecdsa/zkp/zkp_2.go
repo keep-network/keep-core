@@ -291,7 +291,20 @@ func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// u1 = (c^s1) * (r^(−e)) in G
+// We want to verify whether u1 = (c^s1) * (r^(−e)) in G
+// is equal to u1 = g^α in G
+// we evaluated in the commitment phase.
+//
+// Since:
+// s1 = e*η1+α
+// r = g^η1
+// c = g
+//
+// We can do:
+// u1 = (c^s1) * (r^(−e)) = g^{e*η1+α} * (g^η1)^(-e) =
+// g^{e*η1+α} * g^{-e*η1} = g^α
+//
+// which is exactly how u1 is evaluated during the commitment phase.
 func (zkp *PI2) evaluateVerificationU1(r *curve.Point, params *PublicParameters) *curve.Point {
 	cs1x, cs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
@@ -311,7 +324,22 @@ func (zkp *PI2) evaluateVerificationU1(r *curve.Point, params *PublicParameters)
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// u3 = (h1^s1) * (h2^s2) * (z1^(−e)) mod N ̃
+// We want to verify whether u3 = (h1^s1) * (h2^s2) * (z1^(−e)) mod N ̃
+// is equal to u3 = (h1^α) * (h2^γ) mod N ̃
+// we evaluated in the commitment phase.
+//
+// Since:
+// s1 = e*η1+α
+// s2 = e*ρ1 + γ
+// z1 = (h1^η1) * (h2^ρ1) mod N ̃
+//
+// We can do:
+// u3 = (h1^s1) * (h2^s2) * (z1^(−e)) =
+// h1^{e*η1+α} * h2^{e*ρ1 + γ} * [(h1^η1) * (h2^ρ1)]^(-e) =
+// h1^{e*η1+α} * h2^{e*ρ1 + γ} * h1^{-e*η1} * h2^{-e*ρ1} =
+// h1^η1 * h2^ρ1
+//
+// which is exactly how u3 is evaluated during the commitment phase.
 func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
@@ -329,7 +357,22 @@ func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// v1 = (u^s1) * (Γ^(q*t2)) * (t1^N) * (w^(−e)) mod N2
+// We want to verify whether v1 = (u^s1) * (Γ^(q*t2)) * (t1^N) * (w^(−e)) mod N2
+// is equal to v1 = (u^α) * (Γ^(q*θ) * (μ^N) mod N2
+// we evaluated in the commitment phase.
+//
+// Since:
+// s1 = e*η1+α
+// t1 = (rc^e) * μ mod N
+// t2 = e*η2 + θ
+// w = u^η1 * Γ^(q*η2) * rc^N mod N2
+//
+// We can do:
+// v1 = (u^s1) * (Γ^(q*t2)) * (t1^N) * (w^(−e)) =
+// u^{e*η1+α} * Γ^{q*e*η2 + q*θ} * rc^{e*N} * μ^N * u^{-e*η1} * Γ^{-e*q*η2} * rc^{-e*N} =
+// u^α * Γ^(q*θ) * μ^N
+//
+// which is exactly how v1 is evaluated during the commitment phase.
 func (zkp *PI2) evaluateVerificationV1(w, u *big.Int, params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
@@ -354,7 +397,22 @@ func (zkp *PI2) evaluateVerificationV1(w, u *big.Int, params *PublicParameters) 
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// v3 = (h1^t2) * (h2^t3) * (z2^(−e)) mod N ̃
+//
+// We want to verify whether v3 = (h1^t2) * (h2^t3) * (z2^(−e)) mod N ̃
+// is equal to v3 = (h1^θ) * (h2^τ) mod N ̃
+// we evaluated in the commitment phase.
+//
+// Since:
+// t2 = e*η2 + θ
+// t3 = e*ρ2 + τ
+// z2 = (h1^η2) * (h2^ρ2) mod N ̃
+//
+// We can do:
+// v3 = (h1^t2) * (h2^t3) * (z2^(−e)) = h1^{e*η2 + θ} * h2^{e*ρ2 + τ} * [(h1^η2) * (h2^ρ2)]^{-e} =
+// h1^{e*η2 + θ} * h2^{e*ρ2 + τ} * h1^{-e*η2} * h2^{-e*ρ2} =
+// h1^θ * h2^τ
+//
+// which is exactly how v3 is evaluated during the commitment phase.
 func (zkp *PI2) evaluateVerificationV3(params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
