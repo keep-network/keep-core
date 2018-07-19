@@ -58,5 +58,15 @@ func (msg *KeyShareRevealMessage) IsValid(
 // SignRound1Message is a message produced by each `Signer` as a result of
 // executing the first round of T-ECDSA signing algorithm.
 type SignRound1Message struct {
-	randomFactorCommitment *commitment.TrapdoorCommitment
+	randomFactorCommitment *commitment.TrapdoorCommitment // C_1i
+}
+
+// SignRound2Message is a message produced by each `Signer` as a result of
+// executing the second round of T-ECDSA signing algorithm.
+type SignRound2Message struct {
+	randomFactorShare           *paillier.Cypher            // u_i = E(ρ_i)
+	secretKeyMultiple           *paillier.Cypher            // v_i = E(ρ_i * x)
+	randomFactorDecommitmentKey *commitment.DecommitmentKey // D_1i
+
+	secretKeyFactorProof *zkp.DsaPaillierSecretKeyFactorRangeProof // PI_1i
 }

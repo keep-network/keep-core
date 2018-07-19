@@ -67,6 +67,10 @@ type LocalSigner struct {
 
 	dsaKeyShare *dsaKeyShare
 
+	// Intermediate value stored between first and second round of
+	// key generation. In the first round, `LocalSigner` commits to the chosen
+	// public key share. In the second round, it reveals the public key share
+	// along with the decommitment key.
 	publicDsaKeyShareDecommitmentKey *commitment.DecommitmentKey
 }
 
@@ -284,40 +288,125 @@ func generateMemberID() string {
 	return memberID
 }
 
+// Round1Signer represents state of `Signer` after executing the first round
+// of signing algorithm.
+type Round1Signer struct {
+	Signer
+
+	// Intermediate values stored between the first and second round of signing.
+	randomFactorShare           *big.Int                    // ρ_i
+	encryptedRandomFactorShare  *paillier.Cypher            // u_i = E(ρ_i)
+	secretKeyMultiple           *paillier.Cypher            // v_i = E(ρ_i * x)
+	randomFactorDecommitmentKey *commitment.DecommitmentKey // D_1i
+	paillierRandomness          *big.Int
+}
+
 // SignRound1 executes the first round of T-ECDSA signing as described in
 // [GGN 16], section 4.3.
 //
-// In the first round, each signer generates a random factor `ρ`, encodes it
-// with Paillier key `u = E(ρ)`, multiplies it with secret ECDSA key `v = E(ρx)`
-// and publishes commitment for both those values `Com(u, v)`.
-func (s *Signer) SignRound1() (*SignRound1Message, error) {
-	randomFactor, err := rand.Int(
+// In the first round, each signer generates a random factor share `ρ_i`,
+// encodes it with Paillier key `u_i = E(ρ_i)`, multiplies it with secret ECDSA
+// key `v_i = E(ρ_i * x)` and publishes commitment for both those values
+// `Com(u_i, v_i)`.
+func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
+	// Choosing random ρ_i from Z_q
+	randomFactorShare, err := rand.Int(
 		rand.Reader,
 		s.groupParameters.curveCardinality(),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute round 1 of signing [%v]", err)
+		return nil, nil, fmt.Errorf(
+			"could not execute round 1 of signing [%v]", err,
+		)
 	}
 
-	encryptedRandomFactor, err := s.paillierKey.Encrypt(
-		randomFactor,
-		rand.Reader,
+	paillierRandomness, err := paillier.GetRandomNumberInMultiplicativeGroup(
+		s.paillierKey.N, rand.Reader,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute round 1 of signing [%v]", err)
+		return nil, nil, fmt.Errorf(
+			"could not execute round 1 of signing [%v]", err,
+		)
 	}
 
-	secretKeyMultiple := s.paillierKey.Mul(s.dsaKey.secretKey, randomFactor)
+	// u_i = E(ρ_i)
+	encryptedRandomFactorShare, err := s.paillierKey.EncryptWithR(
+		randomFactorShare, paillierRandomness,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 1 of signing [%v]", err,
+		)
+	}
 
-	commitment, _, err := commitment.Generate(
-		encryptedRandomFactor.C.Bytes(),
+	// v_i = E(ρ_i * x)
+	secretKeyMultiple := s.paillierKey.Mul(
+		s.dsaKey.secretKey,
+		randomFactorShare,
+	)
+
+	// [C_1i, D_1i] = Com([u_i, v_i])
+	commitment, decommitmentKey, err := commitment.Generate(
+		encryptedRandomFactorShare.C.Bytes(),
 		secretKeyMultiple.C.Bytes(),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute round 1 of signing [%v]", err)
+		return nil, nil, fmt.Errorf(
+			"could not execute round 1 of signing [%v]", err,
+		)
 	}
 
-	return &SignRound1Message{
-		randomFactorCommitment: commitment,
-	}, nil
+	round1Signer := &Round1Signer{
+		*s,
+		randomFactorShare,
+		encryptedRandomFactorShare,
+		secretKeyMultiple,
+		decommitmentKey,
+		paillierRandomness,
+	}
+
+	round1Message := &SignRound1Message{commitment}
+
+	return round1Signer, round1Message, nil
+}
+
+// Round2Signer represents state of `Signer` after executing the second round
+// of signing algorithm.
+type Round2Signer struct {
+	Signer
+}
+
+// SignRound2 executes the second round of T-ECDSA signing as described in
+// [GGN 16], section 4.3.
+//
+// In the second round, encrypted secret factor share `u_i = E(ρ_i)` and
+// secret DSA key multiple `v_i = E(ρ_i * x)` is revealed along with
+// a decommitment key `D_1i` allowing to check revealed values against the
+// commitment published in the first round.
+// Moreover, message produced in the second round contains a ZKP allowing to
+// verify correctness of revealed values.
+func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
+	zkp, err := zkp.CommitDsaPaillierSecretKeyFactorRange(
+		s.secretKeyMultiple,
+		s.dsaKey.secretKey,
+		s.encryptedRandomFactorShare,
+		s.randomFactorShare,
+		s.paillierRandomness,
+		s.zkpParameters,
+		rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	signer := &Round2Signer{}
+
+	round2Message := &SignRound2Message{
+		s.encryptedRandomFactorShare,
+		s.secretKeyMultiple,
+		s.randomFactorDecommitmentKey,
+		zkp,
+	}
+
+	return signer, round2Message, nil
 }
