@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/tecdsa"
-
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 )
 
@@ -162,6 +161,6 @@ func (p *PublicParameters) QEightNTilde() *big.Int {
 }
 
 // CurveBasePoint returns base point of the Elliptic Curve used in `curve` reference
-func (p *PublicParameters) CurveBasePoint() *tecdsa.CurvePoint {
-	return tecdsa.NewCurvePoint(p.curve.Params().Gx, p.curve.Params().Gy)
+func (p *PublicParameters) CurveBasePoint() *curve.Point {
+	return curve.NewPoint(p.curve.Params().Gx, p.curve.Params().Gy)
 }

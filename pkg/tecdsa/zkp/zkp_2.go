@@ -6,7 +6,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/tecdsa"
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 )
 
 // TODO Find better name for this ZKP
@@ -31,7 +31,7 @@ type PI2 struct {
 	z1 *big.Int
 	z2 *big.Int
 
-	u1 *tecdsa.CurvePoint
+	u1 *curve.Point
 	u2 *big.Int
 	u3 *big.Int
 
@@ -76,7 +76,7 @@ type PI2 struct {
 // Then the prover computes u1, u2, z, v, e, s1, s2,s3. This values will be sent
 // by the prover to the verifier.
 func CommitZkpPi2(r,
-	g *tecdsa.CurvePoint,
+	g *curve.Point,
 	w,
 	u,
 	eta1,
@@ -155,7 +155,7 @@ func CommitZkpPi2(r,
 		params.NTilde,
 	)
 	// u1 = g^α in G
-	u1 := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(
+	u1 := curve.NewPoint(params.curve.ScalarBaseMult(
 		new(big.Int).Mod(alpha, params.q).Bytes(),
 	))
 	// u2 = (Γ^α) * (β^N) mod N2
@@ -257,8 +257,8 @@ func CommitZkpPi2(r,
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *PI2) Verify(
-	g *tecdsa.CurvePoint,
-	r *tecdsa.CurvePoint,
+	g *curve.Point,
+	r *curve.Point,
 	w *big.Int,
 	u *big.Int,
 	params *PublicParameters,
@@ -317,7 +317,7 @@ func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
 // phase.
 //
 // u1 = (c)s1 (r)−e in G
-func (zkp *PI2) evaluateVerificationU1(r *tecdsa.CurvePoint, params *PublicParameters) *tecdsa.CurvePoint {
+func (zkp *PI2) evaluateVerificationU1(r *curve.Point, params *PublicParameters) *curve.Point {
 	cs1x, cs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
 	)
@@ -327,7 +327,7 @@ func (zkp *PI2) evaluateVerificationU1(r *tecdsa.CurvePoint, params *PublicParam
 
 	// For a Weierstrass elliptic curve form, the additive inverse of
 	// (x, y) is (x, -y)
-	return tecdsa.NewCurvePoint(params.curve.Add(
+	return curve.NewPoint(params.curve.Add(
 		cs1x, cs1y, rex, new(big.Int).Neg(rey),
 	))
 }

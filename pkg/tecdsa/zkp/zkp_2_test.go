@@ -6,9 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/tecdsa"
-
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 )
 
@@ -55,7 +54,7 @@ func TestZKP2CommitValues(t *testing.T) {
 	rc := big.NewInt(7)
 
 	g := params.CurveBasePoint()
-	r := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(eta1.Bytes()))
+	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes()))
 	u := big.NewInt(7)
 	w := big.NewInt(9)
 
@@ -76,7 +75,7 @@ func TestZKP2CommitValues(t *testing.T) {
 		t.Errorf("Unexpected z2\nActual: %v\nExpected: 17194", zkp.z1)
 	}
 	// g^10
-	expectedU1 := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes()))
+	expectedU1 := curve.NewPoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes()))
 	if !reflect.DeepEqual(expectedU1, zkp.u1) {
 		t.Errorf("Unexpected u1\nActual: %v\nExpected: %v", zkp.u1, expectedU1)
 	}
@@ -147,7 +146,7 @@ func TestZKP2Verification(t *testing.T) {
 	}
 
 	eta1 := big.NewInt(3)
-	r := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(eta1.Bytes()))
+	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes()))
 	u := big.NewInt(7)
 	// `w` is calculated from:
 	// w = u^η1 * Γ^qη2 * rc^N mod N^2
@@ -172,7 +171,7 @@ func TestZKP2Verification(t *testing.T) {
 		z1: big.NewInt(19261),
 		z2: big.NewInt(17194),
 
-		u1: tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes())),
+		u1: curve.NewPoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes())),
 		u2: big.NewInt(289613),
 		u3: big.NewInt(19547),
 
@@ -189,7 +188,7 @@ func TestZKP2Verification(t *testing.T) {
 		t3: t3,
 	}
 
-	expectedU1 := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes()))
+	expectedU1 := curve.NewPoint(params.curve.ScalarBaseMult(big.NewInt(10).Bytes()))
 	actualU1 := zkp.evaluateVerificationU1(r, params)
 	if !reflect.DeepEqual(expectedU1, actualU1) {
 		t.Errorf("Unexpected u1\nActual: %v\nExpected: %v", actualU1, expectedU1)
@@ -237,9 +236,9 @@ func TestRoundTripZKP2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	g := params.CurveBasePoint()                                         // curveBasePoint
-	r := tecdsa.NewCurvePoint(params.curve.ScalarBaseMult(eta1.Bytes())) // eta1CurvePoint
-	u, _ := privateKey.EncryptWithR(big.NewInt(5), rc)                   // encryptedFactor1 (rho from round 1), u = E(ρ)
+	g := params.CurveBasePoint()                                   // curveBasePoint
+	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes())) // eta1CurvePoint
+	u, _ := privateKey.EncryptWithR(big.NewInt(5), rc)             // encryptedFactor1 (rho from round 1), u = E(ρ)
 
 	// D(w) = η1*D(u) + q*η2 = η1*ρ + q*η2
 	// w = E(D(w)) = E(η1*ρ + q*η2) = E(η1*D(u) + E(q*η2) = E(η1*u) + E(q*η2)
@@ -274,14 +273,14 @@ func TestRoundTripZKP2(t *testing.T) {
 		},
 		"negative validation - wrong g": {
 			verify: func() bool {
-				wrongG := tecdsa.NewCurvePoint(big.NewInt(1), big.NewInt(2))
+				wrongG := curve.NewPoint(big.NewInt(1), big.NewInt(2))
 				return zkp.Verify(wrongG, r, w.C, u.C, params)
 			},
 			expectedResult: false,
 		},
 		"negative validation - wrong r": {
 			verify: func() bool {
-				wrongR := tecdsa.NewCurvePoint(big.NewInt(3), big.NewInt(4))
+				wrongR := curve.NewPoint(big.NewInt(3), big.NewInt(4))
 				return zkp.Verify(g, wrongR, w.C, u.C, params)
 			},
 			expectedResult: false,
