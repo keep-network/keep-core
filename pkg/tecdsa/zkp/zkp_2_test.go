@@ -37,16 +37,7 @@ func TestZKP2CommitValues(t *testing.T) {
 	// rho1=18
 	// rho2=19
 
-	params := &PublicParameters{
-		N:      big.NewInt(1081),  // 23 * 47
-		NTilde: big.NewInt(25651), // 23 * 11
-
-		h1: big.NewInt(20535),
-		h2: big.NewInt(20919),
-
-		q:     secp256k1.S256().Params().N,
-		curve: secp256k1.S256(),
-	}
+	params := generateTestPublicParams()
 
 	eta1 := big.NewInt(3)
 	eta2 := big.NewInt(5)
@@ -134,16 +125,7 @@ func TestZKP2CommitValues(t *testing.T) {
 
 func TestZKP2Verification(t *testing.T) {
 	//GIVEN
-	params := &PublicParameters{
-		N:      big.NewInt(1081),  // 23 * 47
-		NTilde: big.NewInt(25651), // 23 * 11
-
-		h1: big.NewInt(20535),
-		h2: big.NewInt(20919),
-
-		q:     secp256k1.S256().Params().N,
-		curve: secp256k1.S256(),
-	}
+	params := generateTestPublicParams()
 
 	eta1 := big.NewInt(3)
 	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes()))
