@@ -69,6 +69,7 @@ func (n *Node) JoinGroupIfEligible(
 				)
 			}
 
+			dkg.Init(groupChannel)
 			member, err := dkg.ExecuteDKG(
 				index,
 				n.blockCounter,

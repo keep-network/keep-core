@@ -57,6 +57,7 @@ func main() {
 	app.Commands = []cli.Command{
 		cmd.SmokeTestCommand,
 		cmd.StartCommand,
+		cmd.RelayCommand,
 		{
 			Name:  "print-info",
 			Usage: "Prints keep client information",
