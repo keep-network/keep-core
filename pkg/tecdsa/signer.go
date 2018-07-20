@@ -251,7 +251,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 			if commitmentMsg.signerID == revealedSharesMsg.signerID {
 				foundMatchingRevealMessage = true
 
-				if revealedSharesMsg.IsValid(
+				if revealedSharesMsg.isValid(
 					commitmentMsg.commitment, ls.zkpParameters,
 				) {
 					secretKeyShares[i] = revealedSharesMsg.secretKeyShare
