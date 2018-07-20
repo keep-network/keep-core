@@ -1,117 +1,68 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
-	"net"
 	"strings"
 
-	"regexp"
-
-	ma "github.com/multiformats/go-multiaddr"
+	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
-// AppendIfUnique appends unique values to a string slice
-func AppendIfUnique(slice []string, val string) []string {
-	for _, ele := range slice {
-		if ele == val {
-			return slice
-		}
-	}
-	return append(slice, val)
-}
+func nodeHeader(isBootstrapNode bool, multiaddrs []multiaddr.Multiaddr, port int) {
+	prefix := "| "
+	suffix := " |"
 
-// GetIPv4Address returns the IPv4 IP Address over which p2p communication travels
-// If more than one IP address found, call GetPreferredOutboundIP
-// 127.0.0.1 will be returned if no other IPv4 addresses are found;
-// otherwise, the non 127.0.0.1 address will be returned
-// Assumes node has at least one interface (and the 127.0.0.1 address)
-func GetIPv4Address(ips []ma.Multiaddr) string {
-	myIPAddress := "127.0.0.1"
-	var ipv4s []string
-	for _, ip := range ips {
-		if ip != nil {
-			ipAddr := ip.String()
-			if strings.Contains(ipAddr, "ip4") &&
-				!strings.Contains(ipAddr, "127.0.0.1") &&
-				len(regexp.MustCompile("/").FindAllStringIndex(ipAddr, -1)) > 2 {
-				// Ex: ipAddr = "/ip4/192.168.10.103/tcp/27001"
-				ipv4s = AppendIfUnique(ipv4s, strings.Split(ipAddr, "/")[2])
-			}
-		}
-	}
-	if len(ipv4s) == 1 {
-		myIPAddress = ipv4s[0]
-	} else if len(ipv4s) > 1 {
-		preferredIPAddress, err := GetPreferredOutboundIP()
-		if err == nil {
-			myIPAddress = preferredIPAddress
-		}
-	}
-	return myIPAddress
-}
-
-// GetPreferredOutboundIP gets the preferred outbound ip address
-func GetPreferredOutboundIP() (string, error) {
-	conn, err := net.Dial("udp", "9.9.9.9:9999")
-	if err != nil {
-		return "", err
-	}
-	defer closeConn(conn)
-
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-	return localAddr.IP.String(), nil
-}
-
-func header(header string) {
-	dashes := strings.Repeat("-", len(header))
-	fmt.Printf("\n%s\n%s\n%s\n", dashes, header, dashes)
-}
-
-func nodeHeader(isBootstrapNode bool, myIPv4Address string, port int) {
 	nodeName := "node"
 	if isBootstrapNode {
 		nodeName = "BOOTSTRAP node"
 	}
-	header(fmt.Sprintf("starting %s, connnecting to network and listening at %s Port %d", nodeName, myIPv4Address, port))
-}
+	maxLineLength := len(nodeName)
 
-type testMessage struct {
-	Payload string
-}
-
-// Type of this message
-func (m *testMessage) Type() string {
-	return "test/unmarshaler"
-}
-
-// Marshal this message
-func (m *testMessage) Marshal() ([]byte, error) {
-	return json.Marshal(m)
-}
-
-// Unmarshal this message
-func (m *testMessage) Unmarshal(bytes []byte) error {
-	var message testMessage
-	if err := json.Unmarshal(bytes, &message); err != nil {
-		fmt.Println("hit this error")
-		return err
+	ipStrings := make([]string, 0, len(multiaddrs))
+	for _, multiaddr := range multiaddrs {
+		multiaddrString := multiaddr.String()
+		ipStrings = append(ipStrings, multiaddr.String())
+		if len(multiaddrString) > maxLineLength {
+			maxLineLength = len(multiaddrString)
+		}
 	}
-	m.Payload = message.Payload
 
-	return nil
+	maxLineLength += len(prefix) + len(suffix) + 6
+	dashes := strings.Repeat("-", maxLineLength)
+
+	fmt.Printf(
+		"%s\n"+
+			"%s\n"+
+			"%s\n"+
+			"%s"+
+			"%s\n",
+		dashes,
+		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Node: %s", nodeName)),
+		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Port: %d", port)),
+		buildMultiLine(maxLineLength, prefix, suffix, "IPs : ", ipStrings),
+		dashes,
+	)
 }
 
-// Closable wraps Close() method
-type Closable interface {
-	Close() error
+func buildLine(lineLength int, prefix, suffix string, internalContent string) string {
+	contentLength := len(prefix) + len(suffix) + len(internalContent)
+	padding := lineLength - contentLength
+
+	return fmt.Sprintf(
+		"%s%s%s%s",
+		prefix,
+		internalContent,
+		strings.Repeat(" ", padding),
+		suffix,
+	)
 }
 
-func closeConn(conn Closable) {
-	err := conn.Close()
-	if err != nil {
-		log.Fatal(err)
+func buildMultiLine(lineLength int, prefix, suffix, startPrefix string, lines []string) string {
+	combinedLines := buildLine(lineLength, prefix+startPrefix, suffix, lines[0]) + "\n"
+
+	startPadding := strings.Repeat(" ", len(startPrefix))
+	for _, line := range lines[1:] {
+		combinedLines += buildLine(lineLength, prefix+startPadding, suffix, line) + "\n"
 	}
+
+	return combinedLines
 }

@@ -9,8 +9,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
-	testutils "github.com/libp2p/go-testutil"
-	ma "github.com/multiformats/go-multiaddr"
 )
 
 func TestProviderReturnsType(t *testing.T) {
@@ -56,6 +54,11 @@ func TestSendReceive(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
+	identity, err := generateIdentity(0)
+	if err != nil {
+		t.Errorf("Failed to generate identity: [%v].", err)
+	}
+
 	var (
 		config             = generateDeterministicNetworkConfig(t)
 		name               = "testchannel"
@@ -79,14 +82,14 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.RegisterIdentifier(
-		config.identity.id,
+		networkIdentity(identity.id),
 		protocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := broadcastChannel.Send(
-		&testMessage{Sender: config.identity, Payload: expectedPayload},
+		&testMessage{Sender: identity, Payload: expectedPayload},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -128,11 +131,20 @@ func TestSendToReceiveFrom(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
+	identity1, err := generateIdentity(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity2, err := generateIdentity(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	var (
 		config1                  = generateDeterministicNetworkConfig(t)
 		senderProtocolIdentifier = &protocolIdentifier{id: "sender"}
 
-		config2                     = generateDeterministicNetworkConfig(t)
 		recipientprotocolIdentifier = &protocolIdentifier{id: "recipient"}
 
 		name            = "testchannel"
@@ -155,23 +167,23 @@ func TestSendToReceiveFrom(t *testing.T) {
 	}
 
 	if err := broadcastChannel.RegisterIdentifier(
-		config1.identity.id,
+		networkIdentity(identity1.id),
 		senderProtocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := broadcastChannel.RegisterIdentifier(
-		config2.identity.id,
+		networkIdentity(identity2.id),
 		recipientprotocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	err = broadcastChannel.SendTo(
-		config2.identity.id,
+		identity2.id,
 		&testMessage{
-			Sender:  config1.identity,
+			Sender:  identity1,
 			Payload: expectedPayload,
 		},
 	)
@@ -262,19 +274,17 @@ func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
 
-func generateDeterministicNetworkConfig(t *testing.T) *Config {
-	p := testutils.RandPeerNetParamsOrFatal(t)
-	identity, err := generateIdentity(0)
-	if err != nil {
-		t.Fatalf("failed to generate valid libp2p identity with err: [%v]", err)
-	}
-	return &Config{Port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: identity}
+func generateDeterministicNetworkConfig(t *testing.T) Config {
+	return Config{Port: 8080}
 }
 
 func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
-	testConfig := generateDeterministicNetworkConfig(t)
+	identity, err := generateIdentity(0)
+	if err != nil {
+		return nil, err
+	}
 
-	host, identity, err := discoverAndListen(ctx, testConfig)
+	host, err := discoverAndListen(ctx, identity, 8080)
 	if err != nil {
 		return nil, err
 	}

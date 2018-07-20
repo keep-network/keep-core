@@ -20,6 +20,13 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereum/go-ethereum/cmd/abigen"]
+
+[[constraint]]
+  name = "github.com/keep-network/paillier"
+  revision = "c9c5d2df026b807d99b63f1d1518ad186e27e233"
+  source = "https://github.com/keep-network/paillier"
+
 [[constraint]]
   name = "github.com/dfinity/go-dfinity-crypto"
   revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
@@ -71,3 +78,8 @@
 [[override]]
   name = "github.com/libp2p/go-libp2p-kad-dht"
   revision = "240a27a66982945ba87967a08a6e04b74b228c45"
+
+[[override]]
+  name = "github.com/gogo/protobuf"
+  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  source = "https://github.com/keep-network/protobuf.git"

@@ -120,7 +120,7 @@ func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request))
 		c.relayRequestHandlers,
 		handler,
 	)
-	c.handlerMutex.Unlock()
+
 }
 
 func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
@@ -175,4 +175,18 @@ func (c *localChain) AddStaker(
 // gets back the list of stakers.
 func (c *localChain) GetStakerList() ([]string, error) {
 	return c.stakerList, nil
+}
+
+// RequestRelayEntry simulates calling to start the random generation process.
+func (c *localChain) RequestRelayEntry(
+	blockReward, seed *big.Int,
+) *async.RelayRequestPromise {
+	promise := &async.RelayRequestPromise{}
+	promise.Fulfill(&event.Request{
+		RequestID:   big.NewInt(c.simulatedHeight),
+		Payment:     big.NewInt(1),
+		BlockReward: blockReward,
+		Seed:        seed,
+	})
+	return promise
 }

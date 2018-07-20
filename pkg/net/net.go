@@ -11,6 +11,9 @@ type TransportIdentifier interface {
 	// Returns a string name of the network provider. Expected to be purely
 	// informational.
 	ProviderName() string
+
+	// Returns a string representation of the transport identifier.
+	String() string
 }
 
 // ProtocolIdentifier represents a protocol-level identifier. It is an opaque
@@ -45,6 +48,8 @@ type TaggedMarshaler interface {
 // return a provider type, which is an informational string indicating what type
 // of provider this is, and the list of IP addresses on which it can listen.
 type Provider interface {
+	ID() TransportIdentifier
+
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 	Addrs() []ma.Multiaddr
