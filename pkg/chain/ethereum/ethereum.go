@@ -6,6 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	erpc "github.com/ethereum/go-ethereum/rpc"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -190,10 +193,12 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf(
+			fmt.Fprintf(
+				os.Stderr,
 				"watch relay entry failed with: [%v]",
 				err,
 			)
+			return err
 		},
 	)
 	if err != nil {
@@ -204,8 +209,6 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 	}
 }
 
-// OnRelayEntryRequested registers a callback function for a new
-// relay request on chain.
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) {
@@ -237,8 +240,6 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	}
 }
 
-// AddStaker is a temporary function for Milestone 1 that adds a
-// staker to the group contract.
 func (ec *ethereumChain) AddStaker(
 	groupMemberID string,
 ) *async.StakerRegistrationPromise {
@@ -268,32 +269,79 @@ func (ec *ethereumChain) AddStaker(
 			}
 		},
 		func(err error) error {
-			return onStakerAddedPromise.Fail(
+			failErr := onStakerAddedPromise.Fail(
 				fmt.Errorf(
 					"adding new staker failed with: [%v]",
 					err,
 				),
 			)
+
+			if failErr != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Staker added promise failing failed: [%v]\n",
+					err,
+				)
+			}
+
+			return failErr
 		},
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to watch OnStakerAdded [%v].\n", err)
+		err = onStakerAddedPromise.Fail(
+			fmt.Errorf(
+				"on staker added failed with: [%v]",
+				err,
+			),
+		)
+		if err != nil {
+			fmt.Printf("Staker added promise failing failed: [%v]\n", err)
+		}
+
 		return onStakerAddedPromise
 	}
 
 	_, err = ec.keepGroupContract.AddStaker(groupMemberID)
 	if err != nil {
-		fmt.Printf(
-			"on staker added failed with: [%v]",
-			err,
+		err = onStakerAddedPromise.Fail(
+			fmt.Errorf(
+				"on staker added failed with: [%v]",
+				err,
+			),
 		)
+		if err != nil {
+			fmt.Printf("Staker added promise failing failed: [%v]\n", err)
+		}
+
+		return onStakerAddedPromise
 	}
 
 	return onStakerAddedPromise
 }
 
-// GetStakerList is a temporary function for Milestone 1 that
-// gets back the list of stakers.
+func (ec *ethereumChain) OnStakerAdded(
+	handle func(staker *event.StakerRegistration),
+) {
+	err := ec.keepGroupContract.WatchOnStakerAdded(
+		func(index int, groupMemberID []byte) {
+			handle(&event.StakerRegistration{
+				Index:         index,
+				GroupMemberID: string(groupMemberID),
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("staker event failed with %v", err)
+		},
+	)
+	if err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"failed to watch OnStakerAdded [%v].\n",
+			err,
+		)
+	}
+}
+
 func (ec *ethereumChain) GetStakerList() ([]string, error) {
 	count, err := ec.keepGroupContract.GetNStaker()
 	if err != nil {
@@ -315,7 +363,7 @@ func (ec *ethereumChain) GetStakerList() ([]string, error) {
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
-	handle func(key *event.GroupRegistration),
+	handle func(registration *event.GroupRegistration),
 ) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
@@ -342,19 +390,10 @@ func (ec *ethereumChain) OnGroupRegistered(
 	}
 }
 
-// Preliminary - the interface for creating a relay request.
-
-// Will call .../contracts/solidity/contracts/KeepRandomBeaconImplV1.sol;
-// function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
-// through the proxy.
-// Note: using 'seed' as a big.Int will loose/drop any leading 0's in the seed.
-// Note: Having a return value `returns (uint256 requestID) {` will not return this value through the
-//       transaction.  The requestID can be found in the event:
-//       RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
 func (ec *ethereumChain) RequestRelayEntry(
 	blockReward, seed *big.Int,
-) *async.RelayEntryRequestedPromise {
-	promise := &async.RelayEntryRequestedPromise{}
+) *async.RelayRequestPromise {
+	promise := &async.RelayRequestPromise{}
 	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
@@ -363,12 +402,11 @@ func (ec *ethereumChain) RequestRelayEntry(
 			seed *big.Int,
 			blockNumber *big.Int,
 		) {
-			promise.Fulfill(&event.RelayEntryRequested{
+			promise.Fulfill(&event.Request{
 				RequestID:   requestID,
 				Payment:     payment,
 				BlockReward: blockReward,
 				Seed:        seed,
-				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {
@@ -385,4 +423,64 @@ func (ec *ethereumChain) RequestRelayEntry(
 		return promise
 	}
 	return promise
+}
+
+func (ec *ethereumChain) ResetStaker() (*types.Transaction, error) {
+	return ec.keepGroupContract.ResetStaker()
+}
+
+// ConnectTest makes the network connection to the Ethereum network.  Note: for
+// other things to work correctly the configuration will need to reference a
+// websocket, "ws://", or local IPC connection.
+func ConnectTest(cfg Config) (*ethereumChain, error) {
+	client, err := ethclient.Dial(cfg.URL)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			cfg.URL,
+			err,
+		)
+	}
+
+	clientws, err := erpc.Dial(cfg.URL)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			cfg.URL,
+			err,
+		)
+	}
+
+	clientrpc, err := erpc.Dial(cfg.URLRPC)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			cfg.URL,
+			err,
+		)
+	}
+
+	pv := &ethereumChain{
+		config:    cfg,
+		client:    client,
+		clientRPC: clientrpc,
+		clientWS:  clientws,
+	}
+
+	keepRandomBeaconContract, err := newKeepRandomBeacon(pv)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error attaching to KeepRandomBeacon contract: [%v]",
+			err,
+		)
+	}
+	pv.keepRandomBeaconContract = keepRandomBeaconContract
+
+	keepGroupContract, err := newKeepGroup(pv)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
+	}
+	pv.keepGroupContract = keepGroupContract
+
+	return pv, nil
 }
