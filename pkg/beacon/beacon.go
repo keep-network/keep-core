@@ -95,13 +95,15 @@ func Initialize(
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-			entryBigInt := &big.Int{}
-			entryBigInt.SetBytes(entry.Value[:])
+			entryBigInt := (&big.Int{}).SetBytes(entry.Value[:])
 			node.JoinGroupIfEligible(relayChain, entry.RequestID, entryBigInt)
 		})
 
 		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-			node.RegisterGroup(registration.RequestID, registration.GroupPublicKey)
+			node.RegisterGroup(
+				registration.RequestID,
+				registration.GroupPublicKey,
+			)
 		})
 
 	}
