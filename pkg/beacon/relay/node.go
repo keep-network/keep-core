@@ -94,7 +94,7 @@ func (n *Node) JoinGroupIfEligible(
 				return
 			}
 
-			n.registerPendingGroup(member, groupChannel, requestID)
+			n.registerPendingGroup(requestID.String(), member, groupChannel)
 
 			relayChain.SubmitGroupPublicKey(
 				requestID.String(),
@@ -109,7 +109,7 @@ func (n *Node) JoinGroupIfEligible(
 					return
 				}
 
-				n.RegisterGroup(registration.RequestID, registration.GroupPublicKey)
+				n.RegisterGroup(registration.RequestID.String(), registration.GroupPublicKey)
 			})
 		}()
 	}
@@ -140,30 +140,29 @@ func (n *Node) SyncStakingList(stakingList []string) {
 
 // RegisterGroup registers that a group was successfully created by the given
 // requestID, and its group public key is groupPublicKey.
-func (n *Node) RegisterGroup(requestID *big.Int, groupPublicKey []byte) {
+func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	index := len(n.groupPublicKeys) - 1
 
-	requestIDString := requestID.String()
-	if membership, found := n.pendingGroups[requestIDString]; found {
+	if membership, found := n.pendingGroups[requestID]; found {
 		membership.index = index
-		n.myGroups[requestIDString] = membership
-		delete(n.pendingGroups, requestIDString)
+		n.myGroups[requestID] = membership
+		delete(n.pendingGroups, requestID)
 	}
 }
 
 func (n *Node) registerPendingGroup(
+	requestID string,
 	member *thresholdgroup.Member,
 	channel net.BroadcastChannel,
-	requestID *big.Int,
 ) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	n.pendingGroups[requestID.String()] = &membership{
+	n.pendingGroups[requestID] = &membership{
 		member:  member,
 		channel: channel,
 	}
