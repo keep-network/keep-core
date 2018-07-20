@@ -102,6 +102,7 @@ func (n *Node) JoinGroupIfEligible(
 	}
 }
 
+// AddStaker registers a staker seen on-chain for the node's internal tracking.
 func (n *Node) AddStaker(index int, staker string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
@@ -116,6 +117,8 @@ func (n *Node) AddStaker(index int, staker string) {
 	n.stakeIDs[index] = staker
 }
 
+// SyncStakingList performs an initial sync of the on-chain staker list into
+// the node's internal state.
 func (n *Node) SyncStakingList(stakingList []string) {
 	for index, value := range stakingList {
 		n.AddStaker(index, value)
