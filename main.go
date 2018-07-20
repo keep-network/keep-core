@@ -57,23 +57,7 @@ func main() {
 	app.Commands = []cli.Command{
 		cmd.SmokeTestCommand,
 		cmd.StartCommand,
-		{
-			Name:        "relay",
-			Usage:       `Provides access to the Keep threshold relay random beacon.`,
-			Description: "Provides access to the Keep threshold relay random beacon.",
-			Subcommands: []cli.Command{
-				{
-					Name:   "request",
-					Usage:  "Requests a new entry from the relay.",
-					Action: cmd.RelayRequest,
-				},
-				{
-					Name:   "entry",
-					Usage:  "Requests the entry associated with the given request id from the relay.",
-					Action: cmd.RelayEntry,
-				},
-			},
-		},
+		cmd.RelayCommand,
 		{
 			Name:  "print-info",
 			Usage: "Prints keep client information",

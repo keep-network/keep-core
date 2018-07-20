@@ -14,10 +14,42 @@ import (
 	"github.com/urfave/cli"
 )
 
-// RelayRequest requests a new entry from the threshold relay and prints the
+// RelayCommand contains the definition of the relay command-line subcommand and
+// its own subcommands.
+var RelayCommand cli.Command
+
+const relayDescription = `The relay command allows access to the two functions
+   possible in the Keep threshold relay implementation of a random
+   beacon: requesting a new entry (equivalent to asking the beacon
+   for a new random number) and retrieving an existing entry (using
+   the request ID). Each of these is a subcommand (respectively,
+   request and entry). The request subcommand waits for the entry
+   to appear on-chain and then reports its value.`
+
+func init() {
+	RelayCommand = cli.Command{
+		Name:        "relay",
+		Usage:       `Provides access to the Keep threshold relay.`,
+		Description: relayDescription,
+		Subcommands: []cli.Command{
+			{
+				Name:   "request",
+				Usage:  "Requests a new entry from the relay.",
+				Action: relayRequest,
+			},
+			{
+				Name:   "entry",
+				Usage:  "Requests the entry associated with the given request id from the relay.",
+				Action: relayEntry,
+			},
+		},
+	}
+}
+
+// relayRequest requests a new entry from the threshold relay and prints the
 // request id. By default, it also waits until the associated relay entry is
 // generated and prints out the entry.
-func RelayRequest(c *cli.Context) error {
+func relayRequest(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
@@ -59,7 +91,7 @@ func RelayRequest(c *cli.Context) error {
 		}
 	})
 
-	// provider.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
+	provider.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
 
 	select {
 	case <-wait:
@@ -83,8 +115,8 @@ func RelayRequest(c *cli.Context) error {
 	return nil
 }
 
-// RelayEntry requests an entry with a particular id from the threshold relay
+// relayEntry requests an entry with a particular id from the threshold relay
 // and prints that entry.
-func RelayEntry(c *cli.Context) error {
+func relayEntry(c *cli.Context) error {
 	return fmt.Errorf("relay entry lookups are currently unimplemented")
 }
