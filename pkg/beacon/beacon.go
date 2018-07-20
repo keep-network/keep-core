@@ -89,7 +89,7 @@ func Initialize(
 		})
 
 		// Retry until we can sync our staking list
-		syncStakingListWithRetry(relayChain)
+		syncStakingListWithRetry(node, relayChain)
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 			entryBigInt := (&big.Int{}).SetBytes(entry.Value[:])
@@ -114,24 +114,29 @@ func checkParticipantState() (participantState, error) {
 	return staked, nil
 }
 
-func syncStakingListWithRetry(relayChain chain.Interface) {
+func syncStakingListWithRetry(node *relay.Node, relayChain relaychain.Interface) {
 	for {
 		t := time.NewTimer(1)
 		defer t.Stop()
 
 		select {
 		case <-t.C:
-			err := node.SyncStakingList(relayChain)
-			if err == nil {
-				// exit this loop when we've successfully synced
-				return
+			list, err := relayChain.GetStakerList()
+			if err != nil {
+				fmt.Printf(
+					"failed to sync staking list: [%v], retrying...\n",
+					err,
+				)
+
+				// FIXME: exponential backoff
+				t.Reset(3 * time.Second)
+				continue
 			}
-			fmt.Println(
-				"failed to sync staking list: [%v]\n",
-				err,
-			)
-			// FIXME: exponential backoff
-			t.Reset(3 * time.Second)
+
+			node.SyncStakingList(list)
+
+			// exit this loop when we've successfully synced
+			return
 		}
 	}
 }

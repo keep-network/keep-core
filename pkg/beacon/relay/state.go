@@ -117,16 +117,10 @@ func (n *Node) AddStaker(index int, staker string) {
 	n.stakeIDs[index] = staker
 }
 
-func (n *Node) SyncStakingList(relayChain relaychain.Interface) error {
-	list, err := relayChain.GetStakerList()
-	if err != nil {
-		return err
-	}
-
-	for index, value := range list {
+func (n *Node) SyncStakingList(stakingList []string) {
+	for index, value := range stakingList {
 		n.AddStaker(index, value)
 	}
-
 }
 
 // RegisterGroup registers that a group was successfully created by the given
