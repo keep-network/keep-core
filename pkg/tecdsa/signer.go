@@ -399,7 +399,9 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 		return nil, nil, err
 	}
 
-	signer := &Round2Signer{}
+	signer := &Round2Signer{
+		s.Signer,
+	}
 
 	round2Message := &SignRound2Message{
 		s.encryptedRandomFactorShare,
