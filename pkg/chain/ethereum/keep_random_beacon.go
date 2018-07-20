@@ -141,23 +141,6 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	)
 }
 
-// Initialize the underlying contract
-func (krb *KeepRandomBeacon) Initialize(
-	stakingProxy string,
-	minPayment *big.Int,
-	minStake *big.Int,
-	withdrawalDelay *big.Int,
-) (*types.Transaction, error) {
-	stakingProxyAddress := common.Address(common.HexToAddress(stakingProxy))
-	return krb.transactor.Initialize(
-		krb.transactorOpts,
-		stakingProxyAddress,
-		minPayment,
-		minStake,
-		withdrawalDelay,
-	)
-}
-
 // SubmitGroupPublicKey upon completion of a sgiagure make the contract
 // call to put it on chain.
 func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
