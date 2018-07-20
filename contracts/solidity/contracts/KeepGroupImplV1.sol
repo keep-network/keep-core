@@ -12,6 +12,36 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
+	bytes32 esKeepGroupImplV1;
+	bytes32 esKeepRandomBeaconAddress;
+	bytes32 esGroupThreshold;
+	bytes32 esGroupSize;
+	bytes32 esGroupsCount;
+   	bytes32 esGroupIndexToGroupPubKey;
+	bytes32 esMemberIndexToMemberPubKey;
+	bytes32 esGroupExists;
+	bytes32 esGroupComplete;
+	bytes32 esMembersCount;
+    bytes32 esGroup;
+	bytes32 esListOfGroupMemberIDs; 
+	bytes32 esNoOfListOfGroupMemberIDs; 
+
+	constructor () {
+		esKeepGroupImplV1 = keccak256("KeepGroupImplV1");
+		esKeepRandomBeaconAddress = keccak256("keepRandomBeaconAddress");
+		esGroupThreshold = keccak256("groupThreshold");
+		esGroupSize = keccak256("groupSize");
+		esGroupsCount = keccak256("groupsCount");
+   		esGroupIndexToGroupPubKey = keccak256("groupIndexToGroupPubKey");
+		esMemberIndexToMemberPubKey = keccak256("memberIndexToMemberPubKey");
+		esGroupExists = keccak256("groupExists");
+		esGroupComplete = keccak256("groupComplete");
+		esMembersCount = keccak256("membersCount");
+    	esGroup = keccak256("group");
+		esListOfGroupMemberIDs =  keccak256("listOfGroupMemberIDs"); 
+		esNoOfListOfGroupMemberIDs =  keccak256("noOfListOfGroupMemberIDs"); 
+	}
+
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
@@ -29,39 +59,68 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     function initialize(uint256 _groupThreshold, uint256 _groupSize, address _keepRandomBeaconAddress) public onlyOwner {
         require(!initialized());
         require(_keepRandomBeaconAddress != address(0x0));
-        boolStorage[keccak256("KeepGroupImplV1")] = true;
-        addressStorage[keccak256("keepRandomBeaconAddress")] = _keepRandomBeaconAddress;
-        uintStorage[keccak256("groupThreshold")] = _groupThreshold;
-        uintStorage[keccak256("groupSize")] = _groupSize;
-        uintStorage[keccak256("groupsCount")] = 0;
+		esKeepGroupImplV1 = keccak256("KeepGroupImplV1");
+		esKeepRandomBeaconAddress = keccak256("keepRandomBeaconAddress");
+		esGroupThreshold = keccak256("groupThreshold");
+		esGroupSize = keccak256("groupSize");
+		esGroupsCount = keccak256("groupsCount");
+   		esGroupIndexToGroupPubKey = keccak256("groupIndexToGroupPubKey");
+		esMemberIndexToMemberPubKey = keccak256("memberIndexToMemberPubKey");
+		esGroupExists = keccak256("groupExists");
+		esGroupComplete = keccak256("groupComplete");
+		esMembersCount = keccak256("membersCount");
+    	esGroup = keccak256("group");
+		esListOfGroupMemberIDs =  keccak256("listOfGroupMemberIDs"); 
+		esNoOfListOfGroupMemberIDs =  keccak256("noOfListOfGroupMemberIDs"); 
+        boolStorage[esKeepGroupImplV1] = true;
+        addressStorage[esKeepRandomBeaconAddress] = _keepRandomBeaconAddress;
+        uintStorage[esGroupThreshold] = _groupThreshold;
+        uintStorage[esGroupSize] = _groupSize;
+        uintStorage[esGroupsCount] = 0;
     }
+
+	// temp: testing functions to verify stuff is getting set correctly.
+	function getValue1() public view returns(bytes32) {
+		return ( esKeepGroupImplV1 );
+	}
+	function getValue2() public view returns(bytes32) {
+		return ( esGroup );
+	}
+
+    /**
+     * @dev Allows owner to chagne the groupSize and Threshold.
+     */
+	function setGroupSizeThreshold ( uint256 _groupSize, uint256 _groupThreshold ) public onlyOwner {
+        uintStorage[esGroupThreshold] = _groupThreshold;
+        uintStorage[esGroupSize] = _groupSize;
+	}
 
     /**
      * @dev Checks if this contract is initialized.
      */
     function initialized() public view returns (bool) {
-        return boolStorage[keccak256("KeepGroupImplV1")];
+        return boolStorage[esKeepGroupImplV1];
     }
 
     /**
      * @dev Gets the threshold size for groups.
      */
     function groupThreshold() public view returns(uint256) {
-        return uintStorage[keccak256("groupThreshold")];
+        return uintStorage[esGroupThreshold];
     }
 
     /**
      * @dev Gets the minimum number of members in a group.
      */
     function groupSize() public view returns(uint256) {
-        return uintStorage[keccak256("groupSize")];
+        return uintStorage[esGroupSize];
     }
 
     /**
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return uintStorage[keccak256("groupsCount")];
+        return uintStorage[esGroupsCount];
     }
 
     /**
@@ -69,7 +128,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupIndex Index number of a group.
      */
     function getGroupPubKey(uint256 _groupIndex) public view returns(bytes32) {
-        return bytes32Storage[keccak256("groupIndexToGroupPubKey", _groupIndex)];
+        return bytes32StorageMap[esGroupIndexToGroupPubKey][_groupIndex];
     }
 
     /**
@@ -77,8 +136,8 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupPubKey Group public key.
      */
     function getGroupIndex(bytes32 _groupPubKey) public view returns(uint) {
-        for (uint i = 0; i < uintStorage[keccak256("groupsCount")]; i++) {
-            if (bytes32Storage[keccak256("groupIndexToGroupPubKey", i)] == _groupPubKey) {
+        for (uint i = 0; i < uintStorage[esGroupsCount]; i++) {
+            if (bytes32StorageMap[esGroupIndexToGroupPubKey][i] == _groupPubKey) {
                 return i;
             }
         }
@@ -91,7 +150,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _memberIndex Index number of a member.
      */
     function getGroupMemberPubKey(uint256 _groupIndex, uint256 _memberIndex) public view returns(bytes32) {
-        return bytes32Storage[keccak256("memberIndexToMemberPubKey", _memberIndex, getGroupPubKey(_groupIndex))];
+        return bytes32StorageMap[esMemberIndexToMemberPubKey][_memberIndex ^ uint256(getGroupPubKey(_groupIndex))];		// this is a problem!!! PJS xyzzy
     }
 
     /**
@@ -99,7 +158,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupPubKey Group public key.
      */
     function emitEventGroupExists(bytes32 _groupPubKey) public {
-        if (boolStorage[keccak256("groupExists", _groupPubKey)]) {
+        if (boolStorageMap2[esGroupExists][_groupPubKey]) {
             emit GroupExistsEvent(_groupPubKey, true);
         } else {
             emit GroupExistsEvent(_groupPubKey, false);
@@ -113,18 +172,18 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function createGroup(bytes32 _groupPubKey) public returns(bool) {
 
-        if (boolStorage[keccak256("groupExists", _groupPubKey)] == true) {
+        if (boolStorageMap2[esGroupExists][_groupPubKey] == true) {
             emit GroupErrorCode(20);
             return false;
         }
 
-        boolStorage[keccak256("groupExists", _groupPubKey)] = true;
-        boolStorage[keccak256("groupComplete", _groupPubKey)] = false;
-        uintStorage[keccak256("membersCount", _groupPubKey)] = 0;
+        boolStorageMap2[esGroupExists][_groupPubKey] = true;
+        boolStorageMap2[esGroupComplete][_groupPubKey] = false;
+        uintStorageMap2[esMembersCount][_groupPubKey] = 0;
 
-        uint256 lastIndex = uintStorage[keccak256("groupsCount")];
-        bytes32Storage[keccak256("groupIndexToGroupPubKey", lastIndex)] = _groupPubKey;
-        uintStorage[keccak256("groupsCount")]++;
+        uint256 lastIndex = uintStorage[esGroupsCount];
+        bytes32StorageMap[esGroupIndexToGroupPubKey][lastIndex] = _groupPubKey;
+        uintStorage[esGroupsCount]++;
 
         emit GroupStartedEvent(_groupPubKey);
         return true;
@@ -139,27 +198,27 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function dissolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
 
-        if (boolStorage[keccak256("groupExists", _groupPubKey)] != true) {
+        if (boolStorageMap2[esGroupExists][_groupPubKey] != true) {
             emit GroupErrorCode(10);
             return false;
         }
 
-        for (uint i = 0; i < uintStorage[keccak256("membersCount", _groupPubKey)]; i++) {
-            delete bytes32Storage[keccak256("memberIndexToMemberPubKey", i, _groupPubKey)];
+        for (uint i = 0; i < uintStorageMap[esMembersCount][uint256(_groupPubKey)]; i++) {
+            delete bytes32StorageMap[esMemberIndexToMemberPubKey][ i ^ uint256(_groupPubKey)];		// Problem again xyzzy
         }
 
-        delete uintStorage[keccak256("membersCount", _groupPubKey)];
-        delete boolStorage[keccak256("groupExists", _groupPubKey)];
-        delete boolStorage[keccak256("groupComplete", _groupPubKey)];
+        delete uintStorageMap2[esMembersCount][_groupPubKey];
+        delete boolStorageMap2[esGroupExists][_groupPubKey];
+        delete boolStorageMap2[esGroupComplete][_groupPubKey];
 
         uint _groupIndex = getGroupIndex(_groupPubKey);
-        delete bytes32Storage[keccak256("groupIndexToGroupPubKey", _groupIndex)];
+        delete bytes32StorageMap[esGroupIndexToGroupPubKey][_groupIndex];
 
         // Get last group _groupPubKey and move it into released index
-        uint lastIndex = uintStorage[keccak256("groupsCount")];
-        bytes32 lastGroup = bytes32Storage[keccak256("groupIndexToGroupPubKey", lastIndex)];
-        bytes32Storage[keccak256("group", _groupIndex)] = lastGroup;
-        uintStorage[keccak256("groupsCount")]--;
+        uint lastIndex = uintStorage[esGroupsCount];
+        bytes32 lastGroup = bytes32Storage[esGroupIndexToGroupPubKey][lastIndex];
+        bytes32StorageMap[esGroup][_groupIndex] = lastGroup;
+        uintStorage[esGroupsCount]--;
     }
 
     /**
@@ -169,8 +228,8 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @return True if member is part of the group, false otherwise.
      */
     function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
-        for (uint i = 0; i < uintStorage[keccak256("membersCount", _groupPubKey)]; i++) {
-            if (bytes32Storage[keccak256("memberIndexToMemberPubKey", i, _groupPubKey)] == _memberPubKey) {
+        for (uint i = 0; i < uintStorageMap[esMembersCount][uint256(_groupPubKey)]; i++) {
+            if (bytes32StorageMap[esMemberIndexToMemberPubKey][ i ^ uint256(_groupPubKey)] == _memberPubKey) {		// Problem again xyzzy
                 return true;
             }
         }
@@ -184,14 +243,13 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     /**
      * @dev Testing for M1 - create a staker.
-     * @param _index Index where to add the member.
      * @param _groupMemberID the ID of the member that is being added.
      */
-    function addStaker(uint32 _index, bytes32 _groupMemberID) public onlyOwner {
-		// TODO save some info at this point - this is only for use in Milestone 1 and will
-		// not need to be added to the "forever" storage.
-		listOfGroupMemberIDs[_index] = _groupMemberID;
-    	emit OnStakerAdded(_index, _groupMemberID);
+    function addStaker(bytes32 _groupMemberID) public onlyOwner {
+		// TODO save some info at this point - this is only for use in Milestone 1.
+		listOfGroupMemberIDs.push( _groupMemberID );
+		uint32 index = uint32(listOfGroupMemberIDs.length - 1);
+    	emit OnStakerAdded( index, _groupMemberID );
 	}
 
     /**

@@ -22,6 +22,43 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
+	bytes32 esSeq;
+	bytes32 esMinPayment;
+	bytes32 esMinStake;
+	bytes32 esRequestPayer;
+	bytes32 esRequestPayment;
+	bytes32 esBlockReward;
+    bytes32 esRequestGroupID;
+    bytes32 esGroupThreshold;
+	bytes32 esStakingProxy;
+    bytes32 esKeepRandomBeaconImplV1;
+    bytes32 esWithdrawalDelay;
+    bytes32 esPendingWithdrawal;
+
+	constructor () {
+		esSeq = keccak256("seq");
+        uintStorage[esSeq] = 55;
+		esMinPayment = keccak256("minPayment");
+		esMinStake = keccak256("minStake");
+		esRequestPayer = keccak256("requestPayer");
+		esRequestPayment = keccak256("requestPayment");
+		esBlockReward = keccak256("blockReward");
+		esRequestGroupID = keccak256("requestGroupID");
+		esGroupThreshold = keccak256("groupThreshold");
+        esStakingProxy = keccak256("stakingProxy");
+    	esKeepRandomBeaconImplV1 = keccak256("KeepRandomBeaconImplV1");
+    	esWithdrawalDelay = keccak256("withdrawalDelay");
+    	esPendingWithdrawal = keccak256("pendingWithdrawal");
+	}
+
+	// temp: testing functions to verify stuff is set correctly.
+	function getValue1() public view returns(bytes32) {
+		return ( esSeq );
+	}
+	function getValue2() public view returns(bytes32) {
+		return ( esStakingProxy );
+	}
+
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
@@ -42,19 +79,32 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     {
         require(!initialized());
         require(_stakingProxy != address(0x0));
-        addressStorage[keccak256("stakingProxy")] = _stakingProxy;
-        uintStorage[keccak256("minStake")] = _minStake;
-        uintStorage[keccak256("minPayment")] = _minPayment;
-        boolStorage[keccak256("KeepRandomBeaconImplV1")] = true;
-        uintStorage[keccak256("withdrawalDelay")] = _withdrawalDelay;
-        uintStorage[keccak256("pendingWithdrawal")] = 0;
+		esSeq = keccak256("seq");
+        uintStorage[esSeq] = 100;
+		esMinPayment = keccak256("minPayment");
+		esMinStake = keccak256("minStake");
+		esRequestPayer = keccak256("requestPayer");
+		esRequestPayment = keccak256("requestPayment");
+		esBlockReward = keccak256("blockReward");
+		esRequestGroupID = keccak256("requestGroupID");
+		esGroupThreshold = keccak256("groupThreshold");
+        esStakingProxy = keccak256("stakingProxy");
+    	esKeepRandomBeaconImplV1 = keccak256("KeepRandomBeaconImplV1");
+    	esWithdrawalDelay = keccak256("withdrawalDelay");
+    	esPendingWithdrawal = keccak256("pendingWithdrawal");
+        addressStorage[esStakingProxy] = _stakingProxy;
+        uintStorage[esMinStake] = _minStake;
+        uintStorage[esMinPayment] = _minPayment;
+        boolStorage[esKeepRandomBeaconImplV1] = true;
+        uintStorage[esWithdrawalDelay] = _withdrawalDelay;
+        uintStorage[esPendingWithdrawal] = 0;
     }
 
     /**
      * @dev Checks if this contract is initialized.
      */
     function initialized() public view returns (bool) {
-        return boolStorage[keccak256("KeepRandomBeaconImplV1")];
+        return boolStorage[esKeepRandomBeaconImplV1];
     }
 
     /**
@@ -64,9 +114,9 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      */
     function hasMinimumStake(address _staker) public view returns(bool) {
         uint256 balance;
-        stakingProxy = StakingProxy(addressStorage[keccak256("stakingProxy")]);
+        stakingProxy = StakingProxy(addressStorage[esStakingProxy]);
         balance = stakingProxy.balanceOf(_staker);
-        return (balance >= uintStorage[keccak256("minStake")]);
+        return (balance >= uintStorage[esMinStake]);
     }
 
     /**
@@ -77,37 +127,53 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
-        require(msg.value >= uintStorage[keccak256("minPayment")]); // Prevents payments that are too small in wei
+        require(msg.value >= uintStorage[esMinPayment]); // Prevents payments that are too small in wei
 
-        requestID = uintStorage[keccak256("seq")]++;
+		/*
+        requestID = uintStorage[esSeq]++;	// this causes the contract to fail, why.., why..., why...
+		// the 5 lines below do the same job - but work. So...
+		*/
+		uint256 tmp;
+        tmp = uintStorage[esSeq];
+        requestID = tmp;
+		tmp = tmp + 1;
+        uintStorage[esSeq] = tmp;
 
-        addressStorage[keccak256("requestPayer", requestID)] = msg.sender;
-        uintStorage[keccak256("requestPayment", requestID)] = msg.value;
-        uintStorage[keccak256("blockReward", requestID)] = _blockReward; // TODO - who decides the block reward? is it in KEEP?
+        addressStorageMap[esRequestPayer][requestID] = msg.sender;
+        uintStorageMap[esRequestPayment][requestID] = msg.value;
+        uintStorageMap[esBlockReward][requestID] = _blockReward;
 
         emit RelayEntryRequested(requestID, msg.value, _blockReward, _seed, block.number);
         return requestID;
     }
 
     /**
+     * @dev Return the current RequestID - used in testing.
+     */
+    function getRequestId() public view returns (uint256 requestID) {
+        requestID = uintStorage[esSeq];
+        return requestID;
+	}
+
+    /**
      * @dev Initiate withdrawal of this contract balance to the owner.
      */
     function initiateWithdrawal() public onlyOwner {
-        uint256 withdrawalDelay = uintStorage[keccak256("withdrawalDelay")];
-        uintStorage[keccak256("pendingWithdrawal")] = block.timestamp + withdrawalDelay;
+        uint256 withdrawalDelay = uintStorage[esWithdrawalDelay];
+        uintStorage[esPendingWithdrawal] = block.timestamp + withdrawalDelay;
     }
 
     /**
      * @dev Finish withdrawal of this contract balance to the owner.
      */
     function finishWithdrawal() public onlyOwner {
-        uint pendingWithdrawal = uintStorage[keccak256("pendingWithdrawal")];
+        uint pendingWithdrawal = uintStorage[esPendingWithdrawal];
 
         require(pendingWithdrawal > 0);
         require(block.timestamp >= pendingWithdrawal);
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
-        uintStorage[keccak256("pendingWithdrawal")] = 0;
+        uintStorage[esPendingWithdrawal] = 0;
         owner.transfer(this.balance);
     }
 
@@ -116,7 +182,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @param _minPayment is the value in wei that is required to be payed for the process to start.
      */
     function setMinimumPayment(uint256 _minPayment) public onlyOwner {
-        uintStorage[keccak256("minPayment")] = _minPayment;
+        uintStorage[esMinPayment] = _minPayment;
     }
 
     /**
@@ -124,28 +190,28 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @param _minStake Amount in KEEP.
      */
     function setMinimumStake(uint256 _minStake) public onlyOwner {
-        uintStorage[keccak256("minStake")] = _minStake;
+        uintStorage[esMinStake] = _minStake;
     }
 
     /**
      * @dev Get the minimum payment that is required before a relay entry occurs.
      */
     function minimumPayment() public view returns(uint256) {
-        return uintStorage[keccak256("minPayment")];
+        return uintStorage[esMinPayment];
     }
 
     /**
      * @dev Get the minimum amount in KEEP that allows KEEP network client to participate in a group.
      */
     function minimumStake() public view returns(uint256) {
-        return uintStorage[keccak256("minStake")];
+        return uintStorage[esMinStake];
     }
 
     /**
      * @dev Gets the threshold size for groups.
      */
     function groupThreshold() public view returns(uint256) {
-        return uintStorage[keccak256("groupThreshold")];
+        return uintStorage[esGroupThreshold];
     }
 
     /**
@@ -155,7 +221,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @param _groupID Public key of the group that generated the threshold signature.
      */
     function relayEntry(uint256 _requestID, uint256 _groupSignature, uint256 _groupID, uint256 _previousEntry) public {
-        uintStorage[keccak256("requestGroupID", _requestID)] = _groupID;
+        uintStorageMap[esRequestGroupID][_requestID] = _groupID;
 
         emit RelayEntryGenerated(_requestID, _groupSignature, _groupID, _previousEntry, block.number);
     }
