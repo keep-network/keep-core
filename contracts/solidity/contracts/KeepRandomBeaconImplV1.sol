@@ -51,14 +51,6 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     	esPendingWithdrawal = keccak256("pendingWithdrawal");
 	}
 
-	// temp: testing functions to verify stuff is set correctly.
-	function getValue1() public view returns(bytes32) {
-		return ( esSeq );
-	}
-	function getValue2() public view returns(bytes32) {
-		return ( esStakingProxy );
-	}
-
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */

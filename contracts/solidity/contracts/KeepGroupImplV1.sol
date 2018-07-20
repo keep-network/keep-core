@@ -79,14 +79,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         uintStorage[esGroupsCount] = 0;
     }
 
-	// temp: testing functions to verify stuff is getting set correctly.
-	function getValue1() public view returns(bytes32) {
-		return ( esKeepGroupImplV1 );
-	}
-	function getValue2() public view returns(bytes32) {
-		return ( esGroup );
-	}
-
     /**
      * @dev Allows owner to chagne the groupSize and Threshold.
      */
