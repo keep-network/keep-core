@@ -113,7 +113,6 @@ func (n *Node) AddStaker(index int, staker string) {
 		n.stakeIDs = newSlice
 	}
 
-	// TODO: conflicting index?
 	n.stakeIDs[index] = staker
 }
 
