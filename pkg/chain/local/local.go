@@ -23,10 +23,11 @@ type localChain struct {
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[int64][32]byte
 
-	handlerMutex            sync.Mutex
-	relayEntryHandlers      []func(entry *event.Entry)
-	relayRequestHandlers    []func(request *event.Request)
-	groupRegisteredHandlers []func(key *event.GroupRegistration)
+	handlerMutex               sync.Mutex
+	relayEntryHandlers         []func(entry *event.Entry)
+	relayRequestHandlers       []func(request *event.Request)
+	groupRegisteredHandlers    []func(key *event.GroupRegistration)
+	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
@@ -127,6 +128,15 @@ func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration
 	c.handlerMutex.Lock()
 	c.groupRegisteredHandlers = append(
 		c.groupRegisteredHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
+}
+
+func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration)) {
+	c.handlerMutex.Lock()
+	c.stakerRegistrationHandlers = append(
+		c.stakerRegistrationHandlers,
 		handler,
 	)
 	c.handlerMutex.Unlock()
