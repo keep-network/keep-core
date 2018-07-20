@@ -264,7 +264,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 
 		if !foundMatchingRevealMessage {
 			return nil, fmt.Errorf(
-				"No matching share reveal message for signer with ID=%v",
+				"no matching share reveal message for signer with ID=%v",
 				commitmentMsg.signerID,
 			)
 		}
@@ -365,7 +365,10 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 		paillierRandomness,
 	}
 
-	round1Message := &SignRound1Message{commitment}
+	round1Message := &SignRound1Message{
+		signerID:               s.ID,
+		randomFactorCommitment: commitment,
+	}
 
 	return round1Signer, round1Message, nil
 }
@@ -404,11 +407,125 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 	}
 
 	round2Message := &SignRound2Message{
-		s.encryptedRandomFactorShare,
-		s.secretKeyMultiple,
-		s.randomFactorDecommitmentKey,
-		zkp,
+		signerID:                    s.ID,
+		randomFactorShare:           s.encryptedRandomFactorShare,
+		secretKeyMultiple:           s.secretKeyMultiple,
+		randomFactorDecommitmentKey: s.randomFactorDecommitmentKey,
+		secretKeyFactorProof:        zkp,
 	}
 
 	return signer, round2Message, nil
+}
+
+// Round3Signer represents state of `Signer` after executing the second round
+// of signing algorithm.
+type Round3Signer struct {
+	Signer
+
+	randomFactor      *paillier.Cypher
+	secretKeyMultiple *paillier.Cypher
+}
+
+// SignRound3 executes the third round of T-ECDSA signing as described in
+// [GGN 16], section 4.3.
+//
+// Before it executed all computations described in [GGN 16], it needs to
+// combine messages from the previous two rounds in order to combine
+// random factor shares and secret key multiple shares:
+// u = u_1 + u_2 + ... + u_n = E(ρ_1) + E(ρ_2) + ... + E(ρ_n)
+// v = v_1 + v_2 + ... + v_n = E(ρ_1 * x) + E(ρ_2 * x) + ... + E(ρ_n * x)
+func (s *Round2Signer) SignRound3(
+	round1Messages []*SignRound1Message,
+	round2Messages []*SignRound2Message,
+) (
+	*Round3Signer, *SignRound3Message, error,
+) {
+
+	randomFactor, secretKeyMultiple, err := s.combineMessages(
+		round1Messages, round2Messages,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: Implement the rest of round 3 logic
+
+	signer := &Round3Signer{
+		Signer:            s.Signer,
+		randomFactor:      randomFactor,
+		secretKeyMultiple: secretKeyMultiple,
+	}
+
+	round3Message := &SignRound3Message{}
+
+	return signer, round3Message, nil
+}
+
+// combineMessages takes all messages from the first and second signing round,
+// validates and combines them together in order to evaluate random factor `u`
+// and secret key multiple `v`:
+// u = u_1 + u_2 + ... + u_n = E(ρ_1) + E(ρ_2) + ... + E(ρ_n)
+// v = v_1 + v_2 + ... + v_n = E(ρ_1 * x) + E(ρ_2 * x) + ... + E(ρ_n * x)
+func (s *Round2Signer) combineMessages(
+	round1Messages []*SignRound1Message,
+	round2Messages []*SignRound2Message,
+) (
+	randomFactor *paillier.Cypher,
+	secretKeyMultiple *paillier.Cypher,
+	err error,
+) {
+	groupSize := s.groupParameters.groupSize
+
+	if len(round1Messages) != groupSize {
+		return nil, nil, fmt.Errorf(
+			"round 1 messages required from all group members; got %v, expected %v",
+			len(round1Messages),
+			groupSize,
+		)
+	}
+
+	if len(round2Messages) != groupSize {
+		return nil, nil, fmt.Errorf(
+			"round 2 messages required from all group members; got %v, expected %v",
+			len(round2Messages),
+			groupSize,
+		)
+	}
+
+	randomFactorShares := make([]*paillier.Cypher, groupSize)
+	secretKeyMultipleShares := make([]*paillier.Cypher, groupSize)
+
+	for i, round1Message := range round1Messages {
+		foundMatchingRound2Message := false
+
+		for _, round2Message := range round2Messages {
+			if round1Message.signerID == round2Message.signerID {
+				foundMatchingRound2Message = true
+
+				if round2Message.isValid(
+					round1Message.randomFactorCommitment,
+					s.dsaKey.secretKey,
+					s.zkpParameters,
+				) {
+					randomFactorShares[i] = round2Message.randomFactorShare
+					secretKeyMultipleShares[i] = round2Message.secretKeyMultiple
+				} else {
+					return nil, nil, errors.New("round 2 message rejected")
+				}
+			}
+		}
+
+		if !foundMatchingRound2Message {
+			return nil, nil, fmt.Errorf(
+				"no matching round 2 message for signer with ID = %v",
+				round1Message.signerID,
+			)
+		}
+	}
+
+	randomFactor = s.paillierKey.Add(randomFactorShares...)
+	secretKeyMultiple = s.paillierKey.Add(secretKeyMultipleShares...)
+	err = nil
+
+	return
 }
