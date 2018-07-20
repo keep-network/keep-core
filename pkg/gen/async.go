@@ -1,4 +1,4 @@
-//go:generate go run async.go
+//go:generate sh -c "rm -f ./async/*_promise.go; go run async.go"
 // Code generation execution command requires the package to be set to `main`.
 package main
 
@@ -58,8 +58,8 @@ func main() {
 			outputFile: "staker_registration_promise.go",
 		},
 		{
-			Type:       "*event.RelayEntryRequested",
-			Prefix:     "RelayEntryRequested",
+			Type:       "*event.Request",
+			Prefix:     "RelayRequest",
 			outputFile: "relay_entry_requested_promise.go",
 		},
 	}
