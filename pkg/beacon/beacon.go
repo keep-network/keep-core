@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -75,9 +76,6 @@ func Initialize(
 				curParticipantState = unstaked
 				return
 			}
-
-			// Add our registration to our internal state
-			node.AddStaker(stake.Index, stake.GroupMemberID)
 		})
 	proceed.Wait()
 
@@ -86,13 +84,12 @@ func Initialize(
 		// check for stake command-line parameter to initialize staking?
 		return fmt.Errorf("account is unstaked")
 	default:
-		if err := node.SyncStakingList(relayChain); err != nil {
-			fmt.Println("failed to sync staking list: [%v]", err)
-		}
-
 		relayChain.OnStakerAdded(func(staker *event.StakerRegistration) {
 			node.AddStaker(staker.Index, staker.GroupMemberID)
 		})
+
+		// Retry until we can sync our staking list
+		syncStakingListWithRetry(relayChain)
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 			entryBigInt := (&big.Int{}).SetBytes(entry.Value[:])
@@ -115,4 +112,26 @@ func Initialize(
 
 func checkParticipantState() (participantState, error) {
 	return staked, nil
+}
+
+func syncStakingListWithRetry(relayChain chain.Interface) {
+	for {
+		t := time.NewTimer(1)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+			err := node.SyncStakingList(relayChain)
+			if err == nil {
+				// exit this loop when we've successfully synced
+				return
+			}
+			fmt.Println(
+				"failed to sync staking list: [%v]\n",
+				err,
+			)
+			// FIXME: exponential backoff
+			t.Reset(3 * time.Second)
+		}
+	}
 }
