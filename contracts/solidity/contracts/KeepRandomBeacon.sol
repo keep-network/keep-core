@@ -25,7 +25,7 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber); 
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
-    constructor(string _version, address _implementation) {
+    function KeepRandomBeacon (string _version, address _implementation) public {
         require(_implementation != address(0));
         version = _version;
         implementation = _implementation;
