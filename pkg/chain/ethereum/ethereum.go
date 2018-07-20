@@ -6,9 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	erpc "github.com/ethereum/go-ethereum/rpc"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -423,64 +420,4 @@ func (ec *ethereumChain) RequestRelayEntry(
 		return promise
 	}
 	return promise
-}
-
-func (ec *ethereumChain) ResetStaker() (*types.Transaction, error) {
-	return ec.keepGroupContract.ResetStaker()
-}
-
-// ConnectTest makes the network connection to the Ethereum network.  Note: for
-// other things to work correctly the configuration will need to reference a
-// websocket, "ws://", or local IPC connection.
-func ConnectTest(cfg Config) (*ethereumChain, error) {
-	client, err := ethclient.Dial(cfg.URL)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
-			cfg.URL,
-			err,
-		)
-	}
-
-	clientws, err := erpc.Dial(cfg.URL)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
-			cfg.URL,
-			err,
-		)
-	}
-
-	clientrpc, err := erpc.Dial(cfg.URLRPC)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
-			cfg.URL,
-			err,
-		)
-	}
-
-	pv := &ethereumChain{
-		config:    cfg,
-		client:    client,
-		clientRPC: clientrpc,
-		clientWS:  clientws,
-	}
-
-	keepRandomBeaconContract, err := newKeepRandomBeacon(pv)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error attaching to KeepRandomBeacon contract: [%v]",
-			err,
-		)
-	}
-	pv.keepRandomBeaconContract = keepRandomBeaconContract
-
-	keepGroupContract, err := newKeepGroup(pv)
-	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
-	}
-	pv.keepGroupContract = keepGroupContract
-
-	return pv, nil
 }
