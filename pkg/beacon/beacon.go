@@ -114,7 +114,7 @@ func checkParticipantState() (participantState, error) {
 	return staked, nil
 }
 
-func syncStakingListWithRetry(node *relay.Node, relayChain relaychain.Interface) {
+func syncStakingListWithRetry(node relay.Node, relayChain relaychain.Interface) {
 	for {
 		t := time.NewTimer(1)
 		defer t.Stop()
