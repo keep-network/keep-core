@@ -22,34 +22,18 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
-	bytes32 esSeq;
-	bytes32 esMinPayment;
-	bytes32 esMinStake;
-	bytes32 esRequestPayer;
-	bytes32 esRequestPayment;
-	bytes32 esBlockReward;
-    bytes32 esRequestGroupID;
-    bytes32 esGroupThreshold;
-	bytes32 esStakingProxy;
-    bytes32 esKeepRandomBeaconImplV1;
-    bytes32 esWithdrawalDelay;
-    bytes32 esPendingWithdrawal;
-
-	constructor () {
-		esSeq = keccak256("seq");
-        uintStorage[esSeq] = 55;
-		esMinPayment = keccak256("minPayment");
-		esMinStake = keccak256("minStake");
-		esRequestPayer = keccak256("requestPayer");
-		esRequestPayment = keccak256("requestPayment");
-		esBlockReward = keccak256("blockReward");
-		esRequestGroupID = keccak256("requestGroupID");
-		esGroupThreshold = keccak256("groupThreshold");
-        esStakingProxy = keccak256("stakingProxy");
-    	esKeepRandomBeaconImplV1 = keccak256("KeepRandomBeaconImplV1");
-    	esWithdrawalDelay = keccak256("withdrawalDelay");
-    	esPendingWithdrawal = keccak256("pendingWithdrawal");
-	}
+    bytes32 private constant esSeq = keccak256("seq");
+    bytes32 private constant esMinPayment = keccak256("minPayment");
+    bytes32 private constant esMinStake = keccak256("minStake");
+    bytes32 private constant esRequestPayer = keccak256("requestPayer");
+    bytes32 private constant esRequestPayment = keccak256("requestPayment");
+    bytes32 private constant esBlockReward = keccak256("blockReward");
+    bytes32 private constant esRequestGroupID = keccak256("requestGroupID");
+    bytes32 private constant esGroupThreshold = keccak256("groupThreshold");
+    bytes32 private constant esStakingProxy = keccak256("stakingProxy");
+    bytes32 private constant esKeepRandomBeaconImplV1 = keccak256("KeepRandomBeaconImplV1");
+    bytes32 private constant esWithdrawalDelay = keccak256("withdrawalDelay");
+    bytes32 private constant esPendingWithdrawal = keccak256("pendingWithdrawal");
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -71,19 +55,6 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     {
         require(!initialized());
         require(_stakingProxy != address(0x0));
-		esSeq = keccak256("seq");
-        uintStorage[esSeq] = 100;
-		esMinPayment = keccak256("minPayment");
-		esMinStake = keccak256("minStake");
-		esRequestPayer = keccak256("requestPayer");
-		esRequestPayment = keccak256("requestPayment");
-		esBlockReward = keccak256("blockReward");
-		esRequestGroupID = keccak256("requestGroupID");
-		esGroupThreshold = keccak256("groupThreshold");
-        esStakingProxy = keccak256("stakingProxy");
-    	esKeepRandomBeaconImplV1 = keccak256("KeepRandomBeaconImplV1");
-    	esWithdrawalDelay = keccak256("withdrawalDelay");
-    	esPendingWithdrawal = keccak256("pendingWithdrawal");
         addressStorage[esStakingProxy] = _stakingProxy;
         uintStorage[esMinStake] = _minStake;
         uintStorage[esMinPayment] = _minPayment;
@@ -121,16 +92,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
         require(msg.value >= uintStorage[esMinPayment]); // Prevents payments that are too small in wei
 
-		/*
-        requestID = uintStorage[esSeq]++;	// this causes the contract to fail, why.., why..., why...
-		// the 5 lines below do the same job - but work. So...
-		*/
-		uint256 tmp;
-        tmp = uintStorage[esSeq];
-        requestID = tmp;
-		tmp = tmp + 1;
-        uintStorage[esSeq] = tmp;
-
+        requestID = uintStorage[esSeq]++;
         addressStorageMap[esRequestPayer][requestID] = msg.sender;
         uintStorageMap[esRequestPayment][requestID] = msg.value;
         uintStorageMap[esBlockReward][requestID] = _blockReward;

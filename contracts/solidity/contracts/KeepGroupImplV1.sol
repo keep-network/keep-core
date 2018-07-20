@@ -12,35 +12,19 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-	bytes32 esKeepGroupImplV1;
-	bytes32 esKeepRandomBeaconAddress;
-	bytes32 esGroupThreshold;
-	bytes32 esGroupSize;
-	bytes32 esGroupsCount;
-   	bytes32 esGroupIndexToGroupPubKey;
-	bytes32 esMemberIndexToMemberPubKey;
-	bytes32 esGroupExists;
-	bytes32 esGroupComplete;
-	bytes32 esMembersCount;
-    bytes32 esGroup;
-	bytes32 esListOfGroupMemberIDs; 
-	bytes32 esNoOfListOfGroupMemberIDs; 
-
-	constructor () {
-		esKeepGroupImplV1 = keccak256("KeepGroupImplV1");
-		esKeepRandomBeaconAddress = keccak256("keepRandomBeaconAddress");
-		esGroupThreshold = keccak256("groupThreshold");
-		esGroupSize = keccak256("groupSize");
-		esGroupsCount = keccak256("groupsCount");
-   		esGroupIndexToGroupPubKey = keccak256("groupIndexToGroupPubKey");
-		esMemberIndexToMemberPubKey = keccak256("memberIndexToMemberPubKey");
-		esGroupExists = keccak256("groupExists");
-		esGroupComplete = keccak256("groupComplete");
-		esMembersCount = keccak256("membersCount");
-    	esGroup = keccak256("group");
-		esListOfGroupMemberIDs =  keccak256("listOfGroupMemberIDs"); 
-		esNoOfListOfGroupMemberIDs =  keccak256("noOfListOfGroupMemberIDs"); 
-	}
+    bytes32 private constant esKeepGroupImplV1 = keccak256("KeepGroupImplV1");
+    bytes32 private constant esKeepRandomBeaconAddress = keccak256("keepRandomBeaconAddress");
+    bytes32 private constant esGroupThreshold = keccak256("groupThreshold");
+    bytes32 private constant esGroupSize = keccak256("groupSize");
+    bytes32 private constant esGroupsCount = keccak256("groupsCount");
+    bytes32 private constant esGroupIndexToGroupPubKey = keccak256("groupIndexToGroupPubKey");
+    bytes32 private constant esMemberIndexToMemberPubKey = keccak256("memberIndexToMemberPubKey");
+    bytes32 private constant esGroupExists = keccak256("groupExists");
+    bytes32 private constant esGroupComplete = keccak256("groupComplete");
+    bytes32 private constant esMembersCount = keccak256("membersCount");
+    bytes32 private constant esGroup = keccak256("group");
+    bytes32 private constant esListOfGroupMemberIDs = keccak256("listOfGroupMemberIDs");
+    bytes32 private constant esNoOfListOfGroupMemberIDs = keccak256("noOfListOfGroupMemberIDs");
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -59,19 +43,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     function initialize(uint256 _groupThreshold, uint256 _groupSize, address _keepRandomBeaconAddress) public onlyOwner {
         require(!initialized());
         require(_keepRandomBeaconAddress != address(0x0));
-		esKeepGroupImplV1 = keccak256("KeepGroupImplV1");
-		esKeepRandomBeaconAddress = keccak256("keepRandomBeaconAddress");
-		esGroupThreshold = keccak256("groupThreshold");
-		esGroupSize = keccak256("groupSize");
-		esGroupsCount = keccak256("groupsCount");
-   		esGroupIndexToGroupPubKey = keccak256("groupIndexToGroupPubKey");
-		esMemberIndexToMemberPubKey = keccak256("memberIndexToMemberPubKey");
-		esGroupExists = keccak256("groupExists");
-		esGroupComplete = keccak256("groupComplete");
-		esMembersCount = keccak256("membersCount");
-    	esGroup = keccak256("group");
-		esListOfGroupMemberIDs =  keccak256("listOfGroupMemberIDs"); 
-		esNoOfListOfGroupMemberIDs =  keccak256("noOfListOfGroupMemberIDs"); 
         boolStorage[esKeepGroupImplV1] = true;
         addressStorage[esKeepRandomBeaconAddress] = _keepRandomBeaconAddress;
         uintStorage[esGroupThreshold] = _groupThreshold;
