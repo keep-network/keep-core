@@ -102,27 +102,19 @@ func (n *Node) JoinGroupIfEligible(
 	}
 }
 
-func (n *Node) AddStaker(index int, staker string) error {
+func (n *Node) AddStaker(index int, staker string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	if cap(n.stakeIDs) < index {
 		// need something larger
 		newSlice := make([]string, index*2)
-
-		// copy everything that will fit before the new index
-		copy(newSlice, n.stakeIDs[:index])
-		n.stakeIDs[index] = staker
-
-		// copy the rest of the elements over
-		copy(newSlice[index+1:], n.stakeIDs[index:])
-
+		copy(newSlice, n.stakeIDs)
 		n.stakeIDs = newSlice
-		return nil
 	}
 
+	// TODO: conflicting index?
 	n.stakeIDs[index] = staker
-	return nil
 }
 
 func (n *Node) SyncStakingList(relayChain relaychain.Interface) error {
@@ -132,9 +124,7 @@ func (n *Node) SyncStakingList(relayChain relaychain.Interface) error {
 	}
 
 	for index, value := range list {
-		if err := n.AddStaker(index, value); err != nil {
-			return err
-		}
+		n.AddStaker(index, value)
 	}
 
 }
