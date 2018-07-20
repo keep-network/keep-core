@@ -180,14 +180,13 @@ func (c *localChain) GetStakerList() ([]string, error) {
 // RequestRelayEntry simulates calling to start the random generation process.
 func (c *localChain) RequestRelayEntry(
 	blockReward, seed *big.Int,
-) *async.RelayEntryRequestedPromise {
-	promise := &async.RelayEntryRequestedPromise{}
-	promise.Fulfill(&event.RelayEntryRequested{
+) *async.RelayRequestPromise {
+	promise := &async.RelayRequestPromise{}
+	promise.Fulfill(&event.Request{
 		RequestID:   big.NewInt(c.simulatedHeight),
 		Payment:     big.NewInt(1),
 		BlockReward: blockReward,
 		Seed:        seed,
-		BlockNumber: big.NewInt(c.simulatedHeight),
 	})
 	return promise
 }
