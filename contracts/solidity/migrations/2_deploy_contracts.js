@@ -4,7 +4,6 @@ const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconImplV1 = artifacts.require("./KeepRandomBeaconImplV1.sol");
 const KeepGroupImplV1 = artifacts.require("./KeepGroupImplV1.sol");
-const EternalStorage = artifacts.require("./EternalStorage.sol");
 const KeepGroup = artifacts.require("./KeepGroup.sol");
 const KeepRandomBeacon = artifacts.require("./KeepRandomBeacon.sol");
 
@@ -12,32 +11,20 @@ const withdrawalDelay = 86400; // 1 day
 const minPayment = 1;
 const minStake = 1;
 
-module.exports = function(deployer) {
-  deployer.deploy(KeepToken)
-    .then(function() {
-      return deployer.deploy(StakingProxy);
-    }).then(function() {
-      return deployer.deploy(EternalStorage);
-    }).then(function() {
-      return deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
-    }).then(function() {
-      return deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
-    }).then(function() {
-      return deployer.deploy(KeepRandomBeaconImplV1, StakingProxy.address, minPayment, minStake);
-    }).then(function() {
-      return deployer.deploy(KeepGroupImplV1);
-    }).then(function() {
-      return deployer.deploy(KeepGroup, "v1.0.0", KeepGroupImplV1.address); // TODO - constants
-    }).then(function() {
-      return deployer.deploy(KeepRandomBeacon, "v1.0.0", KeepRandomBeaconImplV1.address ); // TODO - constants
-    }).then(function() {
-	  return KeepGroupImplV1.new(KeepGroupImplV1.address);
-	}).then(function(instance) {
-	  return instance.initialize(10, 4, KeepRandomBeaconImplV1.address); // TODO - really should have constants
-    }).then(function() {
-	  return KeepRandomBeaconImplV1.new(KeepRandomBeaconImplV1.address);
-	}).then(function(instance) {
-	  return instance.initialize(StakingProxy.address, 0, 0, 0); // TODO - really should have constants
-	});
-};
+const groupThreshold = 2;
+const groupSize = 3;
 
+module.exports = (deployer) => {
+  deployer.then(async () => {
+    await deployer.deploy(KeepToken);
+    await deployer.deploy(StakingProxy);
+    await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
+    await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
+    await deployer.deploy(KeepRandomBeaconImplV1);
+    await deployer.deploy(KeepRandomBeacon, "v1.0.0", KeepRandomBeaconImplV1.address);
+    await deployer.deploy(KeepGroupImplV1);
+    await deployer.deploy(KeepGroup, "v1.0.0", KeepGroupImplV1.address);
+    await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address).initialize(StakingProxy.address, minPayment, minStake, withdrawalDelay);
+    await KeepGroupImplV1.at(KeepGroup.address).initialize(groupThreshold, groupSize, KeepRandomBeaconImplV1.address);
+  });
+};
