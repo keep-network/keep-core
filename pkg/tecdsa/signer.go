@@ -409,7 +409,7 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 	round2Message := &SignRound2Message{
 		signerID:                    s.ID,
 		randomFactorShare:           s.encryptedRandomFactorShare,
-		secretKeyMultiple:           s.secretKeyMultiple,
+		secretKeyMultipleShare:      s.secretKeyMultiple,
 		randomFactorDecommitmentKey: s.randomFactorDecommitmentKey,
 		secretKeyFactorProof:        zkp,
 	}
@@ -508,7 +508,7 @@ func (s *Round2Signer) combineMessages(
 					s.zkpParameters,
 				) {
 					randomFactorShares[i] = round2Message.randomFactorShare
-					secretKeyMultipleShares[i] = round2Message.secretKeyMultiple
+					secretKeyMultipleShares[i] = round2Message.secretKeyMultipleShare
 				} else {
 					return nil, nil, errors.New("round 2 message rejected")
 				}

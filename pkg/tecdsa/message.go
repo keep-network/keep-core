@@ -66,7 +66,7 @@ type SignRound2Message struct {
 	signerID string
 
 	randomFactorShare           *paillier.Cypher            // u_i = E(ρ_i)
-	secretKeyMultiple           *paillier.Cypher            // v_i = E(ρ_i * x)
+	secretKeyMultipleShare      *paillier.Cypher            // v_i = E(ρ_i * x)
 	randomFactorDecommitmentKey *commitment.DecommitmentKey // D_1i
 
 	secretKeyFactorProof *zkp.DsaPaillierSecretKeyFactorRangeProof // PI_1i
@@ -83,11 +83,11 @@ func (msg *SignRound2Message) isValid(
 	commitmentValid := commitment.Verify(
 		msg.randomFactorDecommitmentKey,
 		msg.randomFactorShare.C.Bytes(),
-		msg.secretKeyMultiple.C.Bytes(),
+		msg.secretKeyMultipleShare.C.Bytes(),
 	)
 
 	zkpValid := msg.secretKeyFactorProof.Verify(
-		msg.secretKeyMultiple, dsaSecretKey, msg.randomFactorShare, zkpParams,
+		msg.secretKeyMultipleShare, dsaSecretKey, msg.randomFactorShare, zkpParams,
 	)
 
 	return commitmentValid && zkpValid
