@@ -48,27 +48,36 @@ func Initialize(
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
 
+	node := relay.NewNode(
+		netProvider.ID().String(),
+		netProvider,
+		blockCounter,
+		chainConfig,
+	)
+
 	// FIXME Nuke post-M1 when we plug in real staking stuff.
 	var (
 		proceed   sync.WaitGroup
-		selfStake *event.StakerRegistration
+		stakingID = netProvider.ID().String()[:32]
 	)
+
 	proceed.Add(1)
-	relayChain.AddStaker(netProvider.ID().String()).
+	relayChain.AddStaker(stakingID).
 		OnComplete(func(stake *event.StakerRegistration, err error) {
+			defer proceed.Done()
+
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
 					"Failed to register staker with id [%v].",
-					netProvider.ID().String(),
+					stakingID,
 				)
 				curParticipantState = unstaked
-				selfStake = stake
-				proceed.Done()
 				return
 			}
 
-			proceed.Done()
+			// Add our registration to our internal state
+			node.AddStaker(stake.Index, stake.GroupMemberID)
 		})
 	proceed.Wait()
 
@@ -77,16 +86,6 @@ func Initialize(
 		// check for stake command-line parameter to initialize staking?
 		return fmt.Errorf("account is unstaked")
 	default:
-		node := relay.NewNode(
-			netProvider.ID().String(),
-			netProvider,
-			blockCounter,
-			chainConfig,
-		)
-
-		// Add our registration to our internal state
-		node.AddStaker(selfStake.Index, selfStake.GroupMemberID)
-
 		if err := node.SyncStakingList(relayChain); err != nil {
 			fmt.Println("failed to sync staking list: [%v]", err)
 		}
