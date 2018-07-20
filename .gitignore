@@ -8,9 +8,9 @@ _local/
 *.pb.go
 ,*
 config.toml
-config.bootstrap.toml
+config.*.toml
 *.config.toml
-*.config.bootstrap.toml
+*.config.*.toml
 *.out
 *.abi
 *.account
