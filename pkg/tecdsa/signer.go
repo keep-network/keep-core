@@ -402,9 +402,7 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 		return nil, nil, err
 	}
 
-	signer := &Round2Signer{
-		s.Signer,
-	}
+	signer := &Round2Signer{s.Signer}
 
 	round2Message := &SignRound2Message{
 		signerID:                    s.ID,
@@ -417,7 +415,7 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 	return signer, round2Message, nil
 }
 
-// Round3Signer represents state of `Signer` after executing the second round
+// Round3Signer represents state of `Signer` after executing the third round
 // of signing algorithm.
 type Round3Signer struct {
 	Signer
