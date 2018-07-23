@@ -65,11 +65,6 @@ func Execute(
 		member.MemberID(),
 	)
 
-	err = blockCounter.WaitForBlocks(1)
-	if err != nil {
-		return nil, fmt.Errorf("failed to wait 1 block: [%v]", err)
-	}
-
 	err = sendSignatureShare(bytes, channel, member)
 	if err != nil {
 		return nil, err
