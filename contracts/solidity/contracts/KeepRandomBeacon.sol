@@ -25,7 +25,7 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber); 
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
-    function KeepRandomBeacon(string _version, address _implementation) {
+    function KeepRandomBeacon(string _version, address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
         version = _version;
         implementation = _implementation;
@@ -34,7 +34,7 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
     /**
      * @dev Delegate call to the current implementation contract.
      */
-    function() payable {
+    function() public payable {
         address _impl = implementation;
         assembly {
             let ptr := mload(0x40)
