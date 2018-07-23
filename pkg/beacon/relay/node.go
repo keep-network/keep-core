@@ -57,7 +57,10 @@ func (n *Node) JoinGroupIfEligible(
 ) {
 	if index := n.indexInEntryGroup(entryValue); index >= 0 {
 		go func() {
-			n.initializePendingGroup(requestID.String())
+			if !n.initializePendingGroup(requestID.String()) {
+				// Failed to initialize; in progress for this entry
+				return
+			}
 			// Release control of this group if we error
 			defer n.flushPendingGroup(requestID.String())
 
@@ -155,19 +158,22 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	}
 }
 
-func (n *Node) initializePendingGroup(
-	requestID string,
-) {
+// initializePendingGroup grabs ownership of an attempt at group creation for a
+// given goroutine. If it returns false, we're already in progress and failed to
+// initialize.
+func (n *Node) initializePendingGroup(requestID string) bool {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	// If the pending group exists, we're already active
 	if _, found := n.pendingGroups[requestID]; found {
-		return
+		return false
 	}
 
 	// Pending group does not exist, take control
 	n.pendingGroups[requestID] = &membership{}
+
+	return true
 }
 
 func (n *Node) flushPendingGroup(requestID string) {
