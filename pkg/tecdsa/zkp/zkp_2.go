@@ -181,9 +181,11 @@ func CommitZkpPi2(
 		params.NTilde,
 	)
 
+	// In the original paper, elliptic curve generator point is also hashed.
+	// However, since g is a constant in go-ethereum, we don't include it in
+	// the sum256.
 	// e = hash(g, w, u, z1, z2, u1, u2, u3, v1, v2, v3)
 	digest := sum256(
-		g.Bytes(),
 		w.C.Bytes(),
 		u.C.Bytes(),
 		z1.Bytes(),
@@ -251,7 +253,6 @@ func (zkp *PI2) Verify(
 
 	// e = hash(g,w,u,z1,z2,u1,u2,u3,v1,v2,v3)
 	digest := sum256(
-		g.Bytes(),
 		w.C.Bytes(),
 		u.C.Bytes(),
 		zkp.z1.Bytes(),
