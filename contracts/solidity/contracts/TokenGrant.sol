@@ -145,7 +145,14 @@ contract TokenGrant {
      * @param _start timestamp at which vesting will start.
      * @param _revocable whether the token grant is revocable or not.
      */
-    function grant(uint256 _amount, address _beneficiary, uint256 _duration, uint256 _start, uint256 _cliff, bool _revocable) public returns (uint256) {
+    function grant(
+        uint256 _amount,
+        address _beneficiary,
+        uint256 _duration,
+        uint256 _start,
+        uint256 _cliff,
+        bool _revocable
+    ) public returns (uint256) {
         require(_beneficiary != address(0), "Beneficiary address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
         require(_amount <= token.balanceOf(msg.sender), "Sender must have enough amount.");

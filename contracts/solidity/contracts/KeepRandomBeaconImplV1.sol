@@ -77,7 +77,10 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
-        require(msg.value >= uintStorage[keccak256("minPayment")], "Payment is less than required minimum."); // Prevents payments that are too small in wei
+        require(
+            msg.value >= uintStorage[keccak256("minPayment")],
+            "Payment is less than required minimum."
+        ); // Prevents payments that are too small in wei
 
         requestID = uintStorage[keccak256("seq")]++;
 
