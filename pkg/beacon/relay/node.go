@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"sync"
-	"sync/atomic"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -36,11 +35,6 @@ type Node struct {
 	seenPublicKeys  map[string]struct{}
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
-
-	// lastSeenEntry is the last relay entry this node is aware of.
-	lastSeenEntry event.Entry
-
-	dkgInProgress int64
 }
 
 type membership struct {
@@ -63,14 +57,9 @@ func (n *Node) JoinGroupIfEligible(
 ) {
 	if index := n.indexInEntryGroup(entryValue); index >= 0 {
 		go func() {
-			// Is DKG in progress?
-			requestInProgress := atomic.LoadInt64(&n.dkgInProgress)
-			if requestInProgress == 1 {
-				return
-			}
-			atomic.AddInt64(&n.dkgInProgress, 1)
-			// safe to run dkg again
-			defer atomic.AddInt64(&n.dkgInProgress, -1)
+			n.initializePendingGroup(requestID.String())
+			// Release control of this group if we error
+			defer n.flushPendingGroup(requestID.String())
 
 			groupChannel, err := n.netProvider.ChannelFor(requestID.String())
 			if err != nil {
@@ -162,6 +151,30 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	if membership, found := n.pendingGroups[requestID]; found {
 		membership.index = index
 		n.myGroups[requestID] = membership
+		delete(n.pendingGroups, requestID)
+	}
+}
+
+func (n *Node) initializePendingGroup(
+	requestID string,
+) {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+
+	// If the pending group exists, we're already active
+	if _, found := n.pendingGroups[requestID]; found {
+		return
+	}
+
+	// Pending group does not exist, take control
+	n.pendingGroups[requestID] = &membership{}
+}
+
+func (n *Node) flushPendingGroup(requestID string) {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+
+	if _, found := n.pendingGroups[requestID]; found {
 		delete(n.pendingGroups, requestID)
 	}
 }
