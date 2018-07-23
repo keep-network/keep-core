@@ -26,7 +26,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() public payable {
-        revert();
+        revert("Can not call contract without explicitly calling a function.");
     }
 
     /**
@@ -40,8 +40,8 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         public
         onlyOwner
     {
-        require(!initialized());
-        require(_stakingProxy != address(0x0));
+        require(!initialized(), "Contract is already initialized.");
+        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         addressStorage[keccak256("stakingProxy")] = _stakingProxy;
         uintStorage[keccak256("minStake")] = _minStake;
         uintStorage[keccak256("minPayment")] = _minPayment;
@@ -77,7 +77,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
-        require(msg.value >= uintStorage[keccak256("minPayment")]); // Prevents payments that are too small in wei
+        require(msg.value >= uintStorage[keccak256("minPayment")], "Payment is less than required minimum."); // Prevents payments that are too small in wei
 
         requestID = uintStorage[keccak256("seq")]++;
 
@@ -103,8 +103,8 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     function finishWithdrawal() public onlyOwner {
         uint pendingWithdrawal = uintStorage[keccak256("pendingWithdrawal")];
 
-        require(pendingWithdrawal > 0);
-        require(block.timestamp >= pendingWithdrawal);
+        require(pendingWithdrawal > 0, "Pending withdrawal timestamp must be set and be greater than zero." );
+        require(block.timestamp >= pendingWithdrawal, "The current time must pass the pending withdrawal timestamp.");
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
         uintStorage[keccak256("pendingWithdrawal")] = 0;

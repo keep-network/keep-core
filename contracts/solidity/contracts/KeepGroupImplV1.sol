@@ -16,7 +16,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() public payable {
-        revert();
+        revert("Can not call contract without explicitly calling a function.");
     }
 
     /**
@@ -27,8 +27,8 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupSize Minimum number of members in a group - to form a group.
      */
     function initialize(uint256 _groupThreshold, uint256 _groupSize, address _keepRandomBeaconAddress) public onlyOwner {
-        require(!initialized());
-        require(_keepRandomBeaconAddress != address(0x0));
+        require(!initialized(), "Contract is already initialized.");
+        require(_keepRandomBeaconAddress != address(0x0), "Random Beacon address can't be zero.");
         boolStorage[keccak256("KeepGroupImplV1")] = true;
         addressStorage[keccak256("keepRandomBeaconAddress")] = _keepRandomBeaconAddress;
         uintStorage[keccak256("groupThreshold")] = _groupThreshold;
@@ -82,7 +82,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
                 return i;
             }
         }
-        revert();
+        revert("Group index is not found.");
     }
 
     /**
@@ -200,7 +200,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupMemberID the ID of the member that is being tested for.
      */
     function isGroupMemberStaker(uint32 _index, bytes32 _groupMemberID) public view returns (bool) {
-        require(_index >= 0 && _index < listOfGroupMemberIDs.length);
+        require(_index >= 0 && _index < listOfGroupMemberIDs.length, "Index must be within the length of Group member's array.");
         return (listOfGroupMemberIDs[_index] == _groupMemberID);
     }
 
@@ -209,7 +209,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _index Index where to add the member.
      */
     function getStaker(uint32 _index) public view returns (bytes32) {
-        require(_index >= 0 && _index < listOfGroupMemberIDs.length);
+        require(_index >= 0 && _index < listOfGroupMemberIDs.length, "Index must be within the length of Group member's array.");
         return (listOfGroupMemberIDs[_index]);
     }
 

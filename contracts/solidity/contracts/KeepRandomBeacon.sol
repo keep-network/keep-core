@@ -26,7 +26,7 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
     function KeepRandomBeacon(string _version, address _implementation) {
-        require(_implementation != address(0));
+        require(_implementation != address(0), "Implementation address can't be zero.");
         version = _version;
         implementation = _implementation;
     }
@@ -58,9 +58,9 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
         public
         onlyOwner
     {
-        require(_implementation != address(0));
-        require(_implementation != implementation);
-        require(keccak256(_version) != keccak256(version));
+        require(_implementation != address(0), "Implementation address can't be zero.");
+        require(_implementation != implementation, "Implementation address must be different from the current one.");
+        require(keccak256(_version) != keccak256(version), "Implementation version must be different from the current one.");
         version = _version;
         implementation = _implementation;
         emit Upgraded(version, implementation);

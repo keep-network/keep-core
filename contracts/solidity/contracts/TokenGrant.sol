@@ -67,7 +67,7 @@ contract TokenGrant {
      * @param _delay withdrawal delay for unstake.
      */
     function TokenGrant(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
-        require(_tokenAddress != address(0x0));
+        require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = StandardToken(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
         stakeWithdrawalDelay = _delay;
@@ -146,9 +146,9 @@ contract TokenGrant {
      * @param _revocable whether the token grant is revocable or not.
      */
     function grant(uint256 _amount, address _beneficiary, uint256 _duration, uint256 _start, uint256 _cliff, bool _revocable) public returns (uint256) {
-        require(_beneficiary != address(0));
-        require(_cliff <= _duration);
-        require(_amount <= token.balanceOf(msg.sender));
+        require(_beneficiary != address(0), "Beneficiary address can't be zero.");
+        require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
+        require(_amount <= token.balanceOf(msg.sender), "Sender must have enough amount.");
 
         uint256 id = numGrants++;
         grants[id] = Grant(msg.sender, _beneficiary, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
@@ -173,9 +173,9 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function release(uint256 _id) public {
-        require(!grants[_id].locked);
+        require(!grants[_id].locked, "Grant must not be locked.");
         uint256 unreleased = unreleasedAmount(_id);
-        require(unreleased > 0);
+        require(unreleased > 0, "Grant unreleased amount should be greater than zero.");
 
         // Update released amount.
         grants[_id].released = grants[_id].released.add(unreleased);
@@ -225,15 +225,13 @@ contract TokenGrant {
      */
     function stake(uint256 _id) public {
 
-        // Grant must be unlocked and not revoked.
-        require(!grants[_id].locked);
-        require(!grants[_id].revoked);
+        require(!grants[_id].locked, "Grant must not be locked.");
+        require(!grants[_id].revoked, "Grant must not be revoked.");
     
-        // Make sure decision to stake is up to the beneficiary of the token grant.
-        require(grants[_id].beneficiary == msg.sender);
+        require(grants[_id].beneficiary == msg.sender, "Only beneficiary of the grant can stake it.");
         // Calculate available amount. Amount of vested tokens minus what user already released.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0);
+        require(available > 0, "Must have available granted amount to stake.");
 
         // Lock grant from releasing its balance.
         grants[_id].locked = true;
@@ -252,22 +250,17 @@ contract TokenGrant {
      */
     function initiateUnstake(uint256 _id) public {
 
-        // Grant must be locked and not revoked.
-        require(grants[_id].locked);
-        require(!grants[_id].revoked);
-
-        // Make sure decision to unstake is up to the beneficiary of the token grant.
-        require(msg.sender == grants[_id].beneficiary);
-        
-        // Grant withdrawal start shouldn't be set.
-        require(stakeWithdrawalStart[_id] == 0);
+        require(grants[_id].locked, "Grant must be locked.");
+        require(!grants[_id].revoked, "Grant must not be be revoked.");
+        require(msg.sender == grants[_id].beneficiary, "Only beneficiary of the grant can initiate unstake.");
+        require(stakeWithdrawalStart[_id] == 0, "Grant withdrawal start must not be already set.");
 
         // Set token grant stake withdrawal start.
         stakeWithdrawalStart[_id] = now;
 
         // Calculate granted amount that was staked.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0);
+        require(available > 0, "Must have available granted amount to unstake.");
 
         // Remove tokens from granted stake balance.
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].sub(available);
@@ -284,15 +277,10 @@ contract TokenGrant {
      */
     function finishUnstake(uint256 _id) public {
 
-        // Grant withdrawal start must be set.
-        require(stakeWithdrawalStart[_id] > 0);
-
-        // Grant must be locked and not revoked.
-        require(grants[_id].locked);
-        require(!grants[_id].revoked);
-
-        // Grant withdrawal delay should be over.
-        require(now >= stakeWithdrawalStart[_id].add(stakeWithdrawalDelay));
+        require(stakeWithdrawalStart[_id] > 0, "Grant withdrawal start must be set.");
+        require(grants[_id].locked, "Grant must be locked.");
+        require(!grants[_id].revoked, "Grant must not be be revoked.");
+        require(now >= stakeWithdrawalStart[_id].add(stakeWithdrawalDelay), "Grant withdrawal delay should be over.");
 
         // Unlock grant.
         grants[_id].locked = false;
@@ -309,17 +297,10 @@ contract TokenGrant {
      */
     function revoke(uint256 _id) public {
 
-        // Only grant creator can revoke.
-        require(grants[_id].owner == msg.sender);
-
-        // Grant must be revocable in the first place.
-        require(grants[_id].revocable);
-
-        // Grant must not be already revoked.
-        require(!grants[_id].revoked);
-
-        // Grant must not be locked for staking.
-        require(!grants[_id].locked);
+        require(grants[_id].owner == msg.sender, "Only grant creator can revoke.");
+        require(grants[_id].revocable, "Grant must be revocable in the first place.");
+        require(!grants[_id].revoked, "Grant must not be already revoked.");
+        require(!grants[_id].locked, "Grant must not be locked for staking.");
 
         uint256 unreleased = unreleasedAmount(_id);
         uint256 refund = grants[_id].amount.sub(unreleased);

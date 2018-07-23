@@ -46,7 +46,7 @@ contract TokenStaking {
      * @param _delay Withdrawal delay for unstake.
      */
     function TokenStaking(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
-        require(_tokenAddress != address(0x0));
+        require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = StandardToken(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
         withdrawalDelay = _delay;
@@ -64,11 +64,8 @@ contract TokenStaking {
         extraData_; // Suppress unused variable warning.
         emit ReceivedApproval(_value);
 
-        // Make sure provided token contract is the same one linked to this contract.
-        require(StandardToken(_token) == token);
-
-        // Make sure sender has enough tokens.
-        require(_value <= token.balanceOf(_from));
+        require(StandardToken(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, this, _value);
@@ -88,7 +85,8 @@ contract TokenStaking {
      * @param _value The amount to be unstaked.
      */
     function initiateUnstake(uint256 _value) public returns (uint256 id) {
-        require(_value <= balances[msg.sender]);
+
+        require(_value <= balances[msg.sender], "Staker must have enough tokens to unstake.");
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
 
@@ -109,7 +107,7 @@ contract TokenStaking {
      * @param _id Withdrawal ID.
      */
     function finishUnstake(uint256 _id) public {
-        require(now >= withdrawals[_id].createdAt.add(withdrawalDelay));
+        require(now >= withdrawals[_id].createdAt.add(withdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
 
         address staker = withdrawals[_id].staker;
 

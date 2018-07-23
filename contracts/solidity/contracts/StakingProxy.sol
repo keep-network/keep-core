@@ -23,7 +23,7 @@ contract StakingProxy is Ownable {
      * @dev Only authorized contracts can invoke functions with this modifier.
      */
     modifier onlyAuthorized {
-        require(isAuthorized(msg.sender));
+        require(isAuthorized(msg.sender), "Sender is not authorized.");
         _;
     }
 
@@ -45,7 +45,7 @@ contract StakingProxy is Ownable {
         constant
         returns (uint256)
     {
-        require(_staker != address(0));
+        require(_staker != address(0), "Staker address can't be zero.");
         uint256 balance = 0;
         for (uint i = 0; i < authorizedContracts.length; i++) {
             balance = balance + authorizedStakingContract(authorizedContracts[i]).stakeBalanceOf(_staker);
@@ -63,9 +63,9 @@ contract StakingProxy is Ownable {
         public
         onlyOwner
     {
-        require(_contract != address(0));
-        require(!isAuthorized(_contract));
-        require(!isDeauthorized(_contract));
+        require(_contract != address(0), "Contract address can't be zero.");
+        require(!isAuthorized(_contract), "Contract is already authorized.");
+        require(!isDeauthorized(_contract), "Contract was deauthorized.");
 
         authorizedContracts.push(_contract);
         emit AuthorizedContractAdded(_contract);
@@ -84,9 +84,9 @@ contract StakingProxy is Ownable {
         public
         onlyOwner
     {
-        require(_contract != address(0));
-        require(isAuthorized(_contract));
-        require(!isDeauthorized(_contract));
+        require(_contract != address(0), "Contract address can't be zero.");
+        require(isAuthorized(_contract), "Contract is already authorized.");
+        require(!isDeauthorized(_contract), "Contract was deauthorized.");
 
         authorizedContracts.removeAddress(_contract);
         deauthorizedContracts.push(_contract);

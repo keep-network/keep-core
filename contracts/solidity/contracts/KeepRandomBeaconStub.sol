@@ -21,7 +21,7 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() public payable {
-        revert();
+        revert("Can not call contract without explicitly calling a function.");
     }
 
     /**
@@ -31,7 +31,7 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
         public
         onlyOwner
     {
-        require(!initialized());
+        require(!initialized(), "Contract is already initialized.");
         boolStorage[keccak256("KeepRandomBeaconStub")] = true;
     }
 
