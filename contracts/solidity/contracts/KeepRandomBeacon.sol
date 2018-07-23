@@ -36,6 +36,7 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
      */
     function() public payable {
         address _impl = implementation;
+        /* solium-disable-next-line */
         assembly {
             let ptr := mload(0x40)
             calldatacopy(ptr, 0, calldatasize)
