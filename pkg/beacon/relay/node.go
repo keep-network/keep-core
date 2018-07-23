@@ -176,6 +176,8 @@ func (n *Node) initializePendingGroup(requestID string) bool {
 	return true
 }
 
+// flushPendingGroup if group creation fails, we clean our references to creating
+// a group for a given request ID.
 func (n *Node) flushPendingGroup(requestID string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
@@ -185,6 +187,8 @@ func (n *Node) flushPendingGroup(requestID string) {
 	}
 }
 
+// registerPendingGroup assigns a new membership for a give request ID.
+// We overwrite our placeholder membership set by initializePendingGroup.
 func (n *Node) registerPendingGroup(
 	requestID string,
 	member *thresholdgroup.Member,
