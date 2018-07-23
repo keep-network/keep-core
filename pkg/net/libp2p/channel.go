@@ -312,7 +312,6 @@ func (c *channel) deliver(message net.Message) error {
 			return
 		}(message, handler)
 	}
-	snapshot = nil // release copy to the gc
 
 	return nil
 }
