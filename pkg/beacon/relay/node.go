@@ -76,10 +76,11 @@ func (n *Node) JoinGroupIfEligible(
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Error joining group channel for request group [%s]: [%v]",
+					"Error joining group channel for request group [%s]: [%v]\n",
 					requestID.String(),
 					err,
 				)
+				return
 			}
 
 			dkg.Init(groupChannel)
@@ -91,7 +92,11 @@ func (n *Node) JoinGroupIfEligible(
 				n.chainConfig.Threshold,
 			)
 			if err != nil {
-				fmt.Printf("Error joining group: [%v]", err)
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed DKG, error creating group: [%v]\n",
+					err,
+				)
 				return
 			}
 
