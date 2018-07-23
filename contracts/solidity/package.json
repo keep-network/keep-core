@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "zeppelin-solidity": "^1.10.0"
+    "openzeppelin-solidity": "^1.11.0"
   },
   "devDependencies": {
     "@digix/doxity": "github:keep-network/doxity#master",
