@@ -44,8 +44,6 @@ func Execute(
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
-	seenShares := make(map[bls.ID][]byte)
-
 	fmt.Printf(
 		"[member:%v, state:signing] Waiting for other group members to enter signing state...\n",
 		member.MemberID(),
@@ -65,7 +63,14 @@ func Execute(
 		member.MemberID(),
 	)
 
-	err = sendSignatureShare(bytes, channel, member)
+	seenShares := make(map[bls.ID][]byte)
+	share := member.SignatureShare(string(bytes))
+
+	// Ensure we add our share to our map
+	// as we can't rely on the network
+	seenShares[member.BlsID] = share
+
+	err = sendSignatureShare(share, channel, member)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +93,11 @@ func Execute(
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
 				if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
+					// Ignore our own share, we already have it
+					if senderID.IsEqual(&member.BlsID) {
+						continue
+					}
+
 					seenShares[*senderID] = signatureShareMsg.ShareBytes
 				}
 			}
@@ -109,10 +119,9 @@ func Execute(
 }
 
 func sendSignatureShare(
-	bytes []byte,
+	share []byte,
 	channel net.BroadcastChannel,
 	member *thresholdgroup.Member,
 ) error {
-	share := member.SignatureShare(string(bytes))
 	return channel.Send(&SignatureShareMessage{&member.BlsID, share})
 }
