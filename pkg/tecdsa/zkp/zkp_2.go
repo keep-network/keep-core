@@ -20,7 +20,6 @@ import (
 //
 // Because of the complexity of the proof, we use the same naming for values
 // as in the paper in most cases. We do an exception for function parameters:
-// - `g` in the paper represents elliptic curve base point,
 // - `r` in the paper represents point on an elliptic curve,
 // - `w` in the paper represents masked encrypted factor
 // - `u` in the paper represents encrypted factor ρ from round 1
@@ -62,7 +61,6 @@ type PI2 struct {
 // It's required to use the same randomness `rc` to generate this proof as
 // the one used for Paillier encryption of `factor1` into `encryptedFactor1`.
 func CommitZkpPi2(
-	g *curve.Point, // curveBasePoint
 	r *curve.Point, // eta1CurvePoint - r = g^η1
 	w *paillier.Cypher, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
 	u *paillier.Cypher, // encryptedFactor1 - u = E(ρ)
@@ -236,7 +234,6 @@ func CommitZkpPi2(
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *PI2) Verify(
-	g *curve.Point, // curveBasePoint
 	r *curve.Point, // eta1CurvePoint - r = g^η1
 	w *paillier.Cypher, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
 	u *paillier.Cypher, // encryptedFactor1 - u = E(ρ)
