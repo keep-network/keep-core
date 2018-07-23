@@ -4,7 +4,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./utils/AddressArrayUtils.sol";
 
 interface authorizedStakingContract {
-    function stakeBalanceOf(address addr) external constant returns (uint256);
+    function stakeBalanceOf(address addr) external view returns (uint256);
 }
 
 
@@ -42,7 +42,7 @@ contract StakingProxy is Ownable {
      */
     function balanceOf(address _staker)
         public
-        constant
+        view
         returns (uint256)
     {
         require(_staker != address(0), "Staker address can't be zero.");
@@ -131,7 +131,7 @@ contract StakingProxy is Ownable {
      */
     function isAuthorized(address _address)
         public
-        constant
+        view
         returns (bool)
     {
         return authorizedContracts.contains(_address);
@@ -147,7 +147,7 @@ contract StakingProxy is Ownable {
      */
     function isDeauthorized(address _address)
         public
-        constant
+        view
         returns (bool)
     {
         return deauthorizedContracts.contains(_address);

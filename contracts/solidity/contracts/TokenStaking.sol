@@ -128,7 +128,7 @@ contract TokenStaking {
      * @param _staker The address to query the balance of.
      * @return An uint256 representing the amount owned by the passed address.
      */
-    function stakeBalanceOf(address _staker) public constant returns (uint256 balance) {
+    function stakeBalanceOf(address _staker) public view returns (uint256 balance) {
         return balances[_staker];
     }
 
@@ -137,7 +137,7 @@ contract TokenStaking {
      * @param _id ID of withdrawal request.
      * @return staker, amount, createdAt.
      */
-    function getWithdrawal(uint256 _id) public constant returns (address, uint256, uint256) {
+    function getWithdrawal(uint256 _id) public view returns (address, uint256, uint256) {
         return (withdrawals[_id].staker, withdrawals[_id].amount, withdrawals[_id].createdAt);
     }
 
@@ -146,7 +146,7 @@ contract TokenStaking {
      * @param _staker The address to query.
      * @return An uint256 array of withdrawal IDs.
      */
-    function getWithdrawals(address _staker) public constant returns (uint256[]) {
+    function getWithdrawals(address _staker) public view returns (uint256[]) {
         return withdrawalIndices[_staker];
     }
 }

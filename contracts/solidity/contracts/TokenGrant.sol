@@ -78,7 +78,7 @@ contract TokenGrant {
      * @param _owner The address to query the grants balance of.
      * @return An uint256 representing the grants balance owned by the passed address.
      */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
@@ -87,7 +87,7 @@ contract TokenGrant {
      * @param _owner The address to query the grants balance of.
      * @return An uint256 representing the grants stake balance owned by the passed address.
      */
-    function stakeBalanceOf(address _owner) public constant returns (uint256 balance) {
+    function stakeBalanceOf(address _owner) public view returns (uint256 balance) {
         return stakeBalances[_owner];
     }
 
@@ -99,7 +99,7 @@ contract TokenGrant {
      * @param _id ID of the token grant.
      * @return amount, released, locked, revoked.
      */
-    function getGrant(uint256 _id) public constant returns (uint256, uint256, bool, bool) {
+    function getGrant(uint256 _id) public view returns (uint256, uint256, bool, bool) {
         return (
             grants[_id].amount,
             grants[_id].released,
@@ -113,7 +113,7 @@ contract TokenGrant {
      * @param _id ID of the token grant.
      * @return  owner, duration, start, cliff
      */
-    function getGrantVestingSchedule(uint256 _id) public constant returns (address, uint256, uint256, uint256) {
+    function getGrantVestingSchedule(uint256 _id) public view returns (address, uint256, uint256, uint256) {
         return (
             grants[_id].owner,
             grants[_id].duration,
@@ -127,7 +127,7 @@ contract TokenGrant {
      * @param _beneficiaryOrCreator The address to query.
      * @return An uint256 array of grant IDs.
      */
-    function getGrants(address _beneficiaryOrCreator) public constant returns (uint256[]) {
+    function getGrants(address _beneficiaryOrCreator) public view returns (uint256[]) {
         return grantIndices[_beneficiaryOrCreator];
     }
 
@@ -196,7 +196,7 @@ contract TokenGrant {
      * as any tokens that are available to withdraw but have not yet been withdrawn.
      * @param _id Grant ID.
      */
-    function grantedAmount(uint256 _id) public constant returns (uint256) {
+    function grantedAmount(uint256 _id) public view returns (uint256) {
         uint256 balance = grants[_id].amount;
 
         if (now < grants[_id].cliff) {
@@ -213,7 +213,7 @@ contract TokenGrant {
      * @dev Calculates the amount that has already vested but hasn't been released yet.
      * @param _id Grant ID.
      */
-    function unreleasedAmount(uint256 _id) public constant returns (uint256) {
+    function unreleasedAmount(uint256 _id) public view returns (uint256) {
         uint256 released = grants[_id].released;
         return grantedAmount(_id).sub(released);
     }
