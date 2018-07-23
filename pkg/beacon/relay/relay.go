@@ -110,7 +110,6 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 }
 
 func (n *Node) indexForNextGroup(request event.Request) *big.Int {
-	entry := (&big.Int{}).SetBytes(request.PreviousEntry())
 	entry := (&big.Int{}).SetBytes(request.PreviousValue[:])
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
