@@ -20,4 +20,5 @@ contract EternalStorage {
 	mapping(bytes32 => mapping(uint256 => bool)) boolStorageMap;
 	mapping(bytes32 => mapping(bytes32 => bool)) boolStorageMap2;
 	mapping(bytes32 => mapping(uint256 => bytes32)) bytes32StorageMap;
+	mapping(bytes32 => mapping(bytes32 => bytes32)) bytes32bytes32StorageMap;
 }

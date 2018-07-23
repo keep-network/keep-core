@@ -113,7 +113,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _memberIndex Index number of a member.
      */
     function getGroupMemberPubKey(uint256 _groupIndex, uint256 _memberIndex) public view returns(bytes32) {
-        return bytes32StorageMap[esMemberIndexToMemberPubKey][_memberIndex ^ uint256(getGroupPubKey(_groupIndex))];		// this is a problem!!! PJS xyzzy
+        return bytes32bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked(_memberIndex, uint256(getGroupPubKey(_groupIndex))))];
     }
 
     /**
@@ -167,7 +167,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         }
 
         for (uint i = 0; i < uintStorageMap[esMembersCount][uint256(_groupPubKey)]; i++) {
-            delete bytes32StorageMap[esMemberIndexToMemberPubKey][ i ^ uint256(_groupPubKey)];		// Problem again xyzzy
+            delete bytes32bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked( i, uint256(_groupPubKey)))];
         }
 
         delete uintStorageMap2[esMembersCount][_groupPubKey];
@@ -192,7 +192,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
         for (uint i = 0; i < uintStorageMap[esMembersCount][uint256(_groupPubKey)]; i++) {
-            if (bytes32StorageMap[esMemberIndexToMemberPubKey][ i ^ uint256(_groupPubKey)] == _memberPubKey) {		// Problem again xyzzy
+            if (bytes32bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked( i , uint256(_groupPubKey)))] == _memberPubKey) {		// Problem again xyzzy
                 return true;
             }
         }
