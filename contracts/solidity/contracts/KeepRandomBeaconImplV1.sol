@@ -106,7 +106,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     function finishWithdrawal() public onlyOwner {
         uint pendingWithdrawal = uintStorage[keccak256("pendingWithdrawal")];
 
-        require(pendingWithdrawal > 0, "Pending withdrawal timestamp must be set and be greater than zero." );
+        require(pendingWithdrawal > 0, "Pending withdrawal timestamp must be set and be greater than zero.");
         require(block.timestamp >= pendingWithdrawal, "The current time must pass the pending withdrawal timestamp.");
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
