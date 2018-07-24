@@ -36,7 +36,7 @@ import (
 //    random multiple when we produce a signature `s = k^-1 (m + xr)` in
 //    rounds 5 and 6. Also, since it's kept secret, it has the appropriate sufix,
 // -  `r_i` is named `signatureRandomMultiplePublic` because it's a revealed
-//    value of `k` (`k` is kept hidden) to which siger may commit, `r_i = g^{k_i}`,
+//    value of `k` (`k` is kept hidden) to which signer may commit, `r_i = g^{k_i}`,
 // - `c_i` is named `signatureRandomMultipleMask` because it's used in the
 //    value `w_i` to mask the value of `k_i`: `w_i = E(k_i * ρ + c_i * q),
 // -  `w_i` is namd `signatureUnmask` because the way how it's constructed
@@ -94,8 +94,8 @@ type EcdsaSignatureFactorRangeProof struct {
 	t3 *big.Int
 }
 
-// CommitZkpPi2 generates `PI2` for the specified encrytped DSA factor and
-// masked factor.
+// CommitZkpPi2 generates `EcdsaSignatureFactorRangeProof` for the specified
+// encrypted DSA factor and masked factor.
 // It's required to use the same randomness `rc` to generate this proof as
 // the one used for Paillier encryption of `factor1` into `encryptedFactor1`.
 func CommitZkpPi2(
@@ -171,7 +171,7 @@ func CommitZkpPi2(
 	u1 := curve.NewPoint(params.curve.ScalarBaseMult(
 		new(big.Int).Mod(alpha, params.q).Bytes(),
 	))
-	// u2 = (Γ^α) * (β^N) mod N2
+	// u2 = (Γ^α) * (β^N) mod N^2
 	u2 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(params.G(), alpha, params.NSquare()),
@@ -187,7 +187,7 @@ func CommitZkpPi2(
 		),
 		params.NTilde,
 	)
-	// v1 = (u^α) * (Γ^(q*θ) * (μ^N) mod N2
+	// v1 = (u^α) * Γ^(q*θ) * (μ^N) mod N^2
 	v1 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
@@ -267,8 +267,9 @@ func CommitZkpPi2(
 	return &EcdsaSignatureFactorRangeProof{z1, z2, u1, u2, u3, v1, v2, v3, e, s1, s2, t1, t2, t3}, nil
 }
 
-// Verify checks the `PI2` against the provided secret message and secret key
-// shares.
+// Verify checks the `EcdsaSignatureFactorRangeProof` against the provided
+// signature's random curve point, encrypted signature unmask and encrypted
+// secret key random multiple.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *EcdsaSignatureFactorRangeProof) Verify(
@@ -329,17 +330,16 @@ func (zkp *EcdsaSignatureFactorRangeProof) allParametersInRange(params *PublicPa
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// We want to verify whether u1 = (c^s1) * (r^(−e)) in G
+// We want to verify whether u1 = (g^s1) * (r^(−e)) in G
 // is equal to u1 = g^α in G
 // we evaluated in the commitment phase.
 //
 // Since:
-// s1 = e*η1+α
+// s1 = e*η1 + α
 // r = g^η1
-// c = g
 //
 // We can do:
-// u1 = (c^s1) * (r^(−e)) = g^{e*η1+α} * (g^η1)^(-e) =
+// u1 = (g^s1) * (r^(−e)) = g^{e*η1+α} * (g^η1)^(-e) =
 // g^{e*η1+α} * g^{-e*η1} = g^α
 //
 // which is exactly how u1 is evaluated during the commitment phase.
@@ -370,7 +370,7 @@ func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU1(
 // we evaluated in the commitment phase.
 //
 // Since:
-// s1 = e*η1+α
+// s1 = e*η1 + α
 // s2 = e*ρ1 + γ
 // z1 = (h1^η1) * (h2^ρ1) mod N ̃
 //
@@ -378,7 +378,7 @@ func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU1(
 // u3 = (h1^s1) * (h2^s2) * (z1^(−e)) =
 // h1^{e*η1+α} * h2^{e*ρ1 + γ} * [(h1^η1) * (h2^ρ1)]^(-e) =
 // h1^{e*η1+α} * h2^{e*ρ1 + γ} * h1^{-e*η1} * h2^{-e*ρ1} =
-// h1^η1 * h2^ρ1
+// h1^α * h2^γ
 //
 // which is exactly how u3 is evaluated during the commitment phase.
 func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU3(params *PublicParameters) *big.Int {
@@ -398,15 +398,15 @@ func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU3(params *Public
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-// We want to verify whether v1 = (u^s1) * (Γ^(q*t2)) * (t1^N) * (w^(−e)) mod N2
-// is equal to v1 = (u^α) * (Γ^(q*θ) * (μ^N) mod N2
+// We want to verify whether v1 = (u^s1) * (Γ^(q*t2)) * (t1^N) * (w^(−e)) mod N^2
+// is equal to v1 = (u^α) * (Γ^(q*θ) * (μ^N) mod N^2
 // we evaluated in the commitment phase.
 //
 // Since:
-// s1 = e*η1+α
+// s1 = e*η1 + α
 // t1 = (rc^e) * μ mod N
 // t2 = e*η2 + θ
-// w = u^η1 * Γ^(q*η2) * rc^N mod N2
+// w = u^η1 * Γ^(q*η2) * rc^N mod N^2
 //
 // We can do:
 // v1 = (u^s1) * (Γ^(q*t2)) * (t1^N) * (w^(−e)) =
@@ -442,7 +442,6 @@ func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationV1(
 // further comparison with the expected one, evaluated during the commitment
 // phase.
 //
-//
 // We want to verify whether v3 = (h1^t2) * (h2^t3) * (z2^(−e)) mod N ̃
 // is equal to v3 = (h1^θ) * (h2^τ) mod N ̃
 // we evaluated in the commitment phase.
@@ -453,7 +452,8 @@ func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationV1(
 // z2 = (h1^η2) * (h2^ρ2) mod N ̃
 //
 // We can do:
-// v3 = (h1^t2) * (h2^t3) * (z2^(−e)) = h1^{e*η2 + θ} * h2^{e*ρ2 + τ} * [(h1^η2) * (h2^ρ2)]^{-e} =
+// v3 = (h1^t2) * (h2^t3) * (z2^(−e)) =
+// h1^{e*η2 + θ} * h2^{e*ρ2 + τ} * [(h1^η2) * (h2^ρ2)]^{-e} =
 // h1^{e*η2 + θ} * h2^{e*ρ2 + τ} * h1^{-e*η2} * h2^{-e*ρ2} =
 // h1^θ * h2^τ
 //

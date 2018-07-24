@@ -77,7 +77,7 @@ func TestZKP2CommitValues(t *testing.T) {
 	if zkp.u3.Cmp(big.NewInt(19547)) != 0 {
 		t.Errorf("Unexpected u3\nActual: %v\nExpected: 19547", zkp.u3)
 	}
-	// 7^10 * 1082^(115792089237316195423570985008687907852837564279074904382605163141518161494337*16) * 14^1081 mod 1168561 = 583302
+	// 7^10 * 1082^(q*16) * 14^1081 mod 1168561 = 583302
 	if zkp.v1.Cmp(big.NewInt(583302)) != 0 {
 		t.Errorf("Unexpected v1\nActual: %v\nExpected: 583302", zkp.v1)
 	}
@@ -90,32 +90,32 @@ func TestZKP2CommitValues(t *testing.T) {
 		t.Errorf("Unexpected v3\nActual: %v\nExpected: 21032", zkp.v3)
 	}
 
-	// hash(g, 9, 7, 19261, 17194, g^10, 289613, 19547, 583302, 5738, 21032) = expectedHash
+	// hash(9, 7, 19261, 17194, g^10, 289613, 19547, 583302, 5738, 21032) = expectedHash
 	expectedHash, _ := new(big.Int).SetString("25499118291731768019248475116926786227164997290767802448110811852901126765839", 10)
 	if zkp.e.Cmp(expectedHash) != 0 {
 		t.Errorf("Unexpected e\nActual: %v\nExpected: %v", zkp.e, expectedHash)
 	}
 
-	// expectedHash * 3 + 10 = expectedS1
+	// 3 * e + 10 = expectedS1
 	expectedS1, _ := new(big.Int).SetString("76497354875195304057745425350780358681494991872303407344332435558703380297527", 10)
 	if zkp.s1.Cmp(expectedS1) != 0 {
 		t.Errorf("Unexpected s1\nActual: %v\nExpected: %v", zkp.s1, expectedS1)
 	}
-	// expectedHash * 18 + 12 = expectedS2
+	// 18 * e + 12 = expectedS2
 	expectedS2, _ := new(big.Int).SetString("458984129251171824346472552104682152088969951233820444065994613352220281785114", 10)
 	if zkp.s2.Cmp(expectedS2) != 0 {
 		t.Errorf("Unexpected s2\nActual: %v\nExpected: %v", zkp.s2, expectedS2)
 	}
-	// 7^expectedHash * 14 mod 1081 = 811
+	// 7^e * 14 mod 1081 = 811
 	if zkp.t1.Cmp(big.NewInt(811)) != 0 {
 		t.Errorf("Unexpected t1\nActual: %v\nExpected: 811", zkp.t1)
 	}
-	// expectedHash * 5 + 16 = expectedT2
+	// 5 * e + 16 = expectedT2
 	expectedT2, _ := new(big.Int).SetString("127495591458658840096242375584633931135824986453839012240554059264505633829211", 10)
 	if zkp.t2.Cmp(expectedT2) != 0 {
 		t.Errorf("Unexpected t2\nActual: %v\nExpected: %v", zkp.t2, expectedT2)
 	}
-	// expectedHash * 19 + 17 = 213
+	// 19 * e + 17 = expectedT3
 	expectedT3, _ := new(big.Int).SetString("484483247542903592365721027221608938316134948524588246514105425205121408550958", 10)
 	if zkp.t3.Cmp(expectedT3) != 0 {
 		t.Errorf("Unexpected t3\nActual: %v\nExpected: %v", zkp.t3, expectedT3)
