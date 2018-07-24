@@ -99,12 +99,12 @@ type PI2 struct {
 // It's required to use the same randomness `rc` to generate this proof as
 // the one used for Paillier encryption of `factor1` into `encryptedFactor1`.
 func CommitZkpPi2(
-	r *curve.Point, // eta1CurvePoint - r = g^η1
-	w *paillier.Cypher, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
-	u *paillier.Cypher, // encryptedFactor1 - u = E(ρ)
-	eta1 *big.Int, // η1
-	eta2 *big.Int, // η2
-	rc *big.Int, // randomness
+	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
+	signatureUnmask *paillier.Cypher, // w = E(k * ρ + c_i * q)
+	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
+	signatureRandomMultipleSecret *big.Int, // η1 = k_i
+	signatureRandomMultipleMask *big.Int, // η2 = c_i
+	paillierR *big.Int, // Paillier randomness r
 	params *PublicParameters,
 	random io.Reader,
 ) (*PI2, error) {
@@ -152,7 +152,7 @@ func CommitZkpPi2(
 	// z1 = (h1^η1) * (h2^ρ1) mod N ̃
 	z1 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.h1, eta1, params.NTilde),
+			new(big.Int).Exp(params.h1, signatureRandomMultipleSecret, params.NTilde),
 			new(big.Int).Exp(params.h2, rho1, params.NTilde),
 		),
 
@@ -161,7 +161,7 @@ func CommitZkpPi2(
 	// z2 = (h1^η2) * (h2^ρ2) mod N ̃
 	z2 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.h1, eta2, params.NTilde),
+			new(big.Int).Exp(params.h1, signatureRandomMultipleMask, params.NTilde),
 			new(big.Int).Exp(params.h2, rho2, params.NTilde),
 		),
 
@@ -191,7 +191,7 @@ func CommitZkpPi2(
 	v1 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(u.C, alpha, params.NSquare()),
+				new(big.Int).Exp(secretKeyRandomMultiple.C, alpha, params.NSquare()),
 				new(big.Int).Exp(params.G(),
 					new(big.Int).Mul(params.q, theta),
 					params.NSquare()),
@@ -222,8 +222,8 @@ func CommitZkpPi2(
 	// the sum256.
 	// e = hash(g, w, u, z1, z2, u1, u2, u3, v1, v2, v3)
 	digest := sum256(
-		w.C.Bytes(),
-		u.C.Bytes(),
+		signatureUnmask.C.Bytes(),
+		secretKeyRandomMultiple.C.Bytes(),
 		z1.Bytes(),
 		z2.Bytes(),
 		u1.Bytes(),
@@ -237,7 +237,7 @@ func CommitZkpPi2(
 
 	// s1 = e*η1 + α
 	s1 := new(big.Int).Add(
-		new(big.Int).Mul(e, eta1),
+		new(big.Int).Mul(e, signatureRandomMultipleSecret),
 		alpha,
 	)
 	// s2 = e*ρ1 + γ
@@ -248,14 +248,14 @@ func CommitZkpPi2(
 	// t1 = (rc^e) * μ mod N
 	t1 := new(big.Int).Mod(
 		new(big.Int).Mul(
-			discreteExp(rc, e, params.N),
+			discreteExp(paillierR, e, params.N),
 			mu,
 		),
 		params.N,
 	)
 	// t2 = e*η2 + θ
 	t2 := new(big.Int).Add(
-		new(big.Int).Mul(e, eta2),
+		new(big.Int).Mul(e, signatureRandomMultipleMask),
 		theta,
 	)
 	// t3 = e*ρ2 + τ
@@ -272,24 +272,24 @@ func CommitZkpPi2(
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *PI2) Verify(
-	r *curve.Point, // eta1CurvePoint - r = g^η1
-	w *paillier.Cypher, // encryptedMaskedFactor - w = E(η1)*u + E(qη2)
-	u *paillier.Cypher, // encryptedFactor1 - u = E(ρ)
+	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
+	signatureUnmask *paillier.Cypher, // w = E(k * ρ + c_i * q)
+	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
 		return false
 	}
 
-	u1 := zkp.evaluateVerificationU1(r, params)
+	u1 := zkp.evaluateVerificationU1(signatureRandomMultiplePublic, params)
 	u3 := zkp.evaluateVerificationU3(params)
-	v1 := zkp.evaluateVerificationV1(w, u, params)
+	v1 := zkp.evaluateVerificationV1(signatureUnmask, secretKeyRandomMultiple, params)
 	v3 := zkp.evaluateVerificationV3(params)
 
 	// e = hash(g,w,u,z1,z2,u1,u2,u3,v1,v2,v3)
 	digest := sum256(
-		w.C.Bytes(),
-		u.C.Bytes(),
+		signatureUnmask.C.Bytes(),
+		secretKeyRandomMultiple.C.Bytes(),
 		zkp.z1.Bytes(),
 		zkp.z2.Bytes(),
 		u1.Bytes(),
@@ -343,12 +343,15 @@ func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
 // g^{e*η1+α} * g^{-e*η1} = g^α
 //
 // which is exactly how u1 is evaluated during the commitment phase.
-func (zkp *PI2) evaluateVerificationU1(r *curve.Point, params *PublicParameters) *curve.Point {
+func (zkp *PI2) evaluateVerificationU1(
+	signatureRandomMultiplePublic *curve.Point,
+	params *PublicParameters,
+) *curve.Point {
 	cs1x, cs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
 	)
 	rex, rey := params.curve.ScalarMult(
-		r.X, r.Y, zkp.e.Bytes(),
+		signatureRandomMultiplePublic.X, signatureRandomMultiplePublic.Y, zkp.e.Bytes(),
 	)
 
 	// For a Weierstrass elliptic curve form, the additive inverse of
@@ -411,11 +414,15 @@ func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 // u^α * Γ^(q*θ) * μ^N
 //
 // which is exactly how v1 is evaluated during the commitment phase.
-func (zkp *PI2) evaluateVerificationV1(w, u *paillier.Cypher, params *PublicParameters) *big.Int {
+func (zkp *PI2) evaluateVerificationV1(
+	signatureUnmask *paillier.Cypher,
+	secretKeyRandomMultiple *paillier.Cypher,
+	params *PublicParameters,
+) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				discreteExp(u.C, zkp.s1, params.NSquare()),
+				discreteExp(secretKeyRandomMultiple.C, zkp.s1, params.NSquare()),
 				discreteExp(
 					params.G(),
 					new(big.Int).Mul(params.q, zkp.t2),
@@ -424,7 +431,7 @@ func (zkp *PI2) evaluateVerificationV1(w, u *paillier.Cypher, params *PublicPara
 			),
 			new(big.Int).Mul(
 				new(big.Int).Exp(zkp.t1, params.N, params.NSquare()),
-				discreteExp(w.C, new(big.Int).Neg(zkp.e), params.NSquare()),
+				discreteExp(signatureUnmask.C, new(big.Int).Neg(zkp.e), params.NSquare()),
 			),
 		),
 		params.NSquare(),

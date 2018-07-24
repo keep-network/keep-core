@@ -39,17 +39,17 @@ func TestZKP2CommitValues(t *testing.T) {
 
 	params := generateTestPublicParams()
 
-	eta1 := big.NewInt(3)
-	eta2 := big.NewInt(5)
+	signatureRandomMultipleSecret := big.NewInt(3)
+	signatureRandomMultipleMask := big.NewInt(5)
 
-	rc := big.NewInt(7)
+	paillierR := big.NewInt(7)
 
-	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes()))
-	u := &paillier.Cypher{C: big.NewInt(7)}
-	w := &paillier.Cypher{C: big.NewInt(9)}
+	signatureRandomMultiplePublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureRandomMultipleSecret.Bytes()))
+	signatureUnmask := &paillier.Cypher{C: big.NewInt(9)}
+	secretKeyRandomMultiple := &paillier.Cypher{C: big.NewInt(7)}
 
 	// WHEN
-	zkp, err := CommitZkpPi2(r, w, u, eta1, eta2, rc, params, mockRandom)
+	zkp, err := CommitZkpPi2(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,9 +126,9 @@ func TestZKP2Verification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
-	eta1 := big.NewInt(3)
-	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes()))
-	u := &paillier.Cypher{C: big.NewInt(7)}
+	signatureRandomMultipleSecret := big.NewInt(3)
+	signatureRandomMultiplePublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureRandomMultipleSecret.Bytes()))
+	secretKeyRandomMultiple := &paillier.Cypher{C: big.NewInt(7)}
 	// `w` is calculated from:
 	// w = u^η1 * Γ^qη2 * rc^N mod N^2
 	//
@@ -140,7 +140,7 @@ func TestZKP2Verification(t *testing.T) {
 	// η2 = 5
 	// rc = 7
 	// N = params.N
-	w := &paillier.Cypher{C: big.NewInt(1005955)}
+	signatureUnmask := &paillier.Cypher{C: big.NewInt(1005955)}
 
 	e, _ := new(big.Int).SetString("5409986892274499674842741357332043231522465088980131051275882178073046897869", 10)
 	s1, _ := new(big.Int).SetString("16229960676823499024528224071996129694567395266940393153827646534219140693617", 10)
@@ -175,9 +175,9 @@ func TestZKP2Verification(t *testing.T) {
 	expectedV3 := big.NewInt(21032)
 
 	// WHEN
-	actualU1 := zkp.evaluateVerificationU1(r, params)
+	actualU1 := zkp.evaluateVerificationU1(signatureRandomMultiplePublic, params)
 	actualU3 := zkp.evaluateVerificationU3(params)
-	actualV1 := zkp.evaluateVerificationV1(w, u, params)
+	actualV1 := zkp.evaluateVerificationV1(signatureUnmask, secretKeyRandomMultiple, params)
 	actualV3 := zkp.evaluateVerificationV3(params)
 
 	// THEN
@@ -204,39 +204,39 @@ func TestRoundTripZKP2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	eta1, err := rand.Int(rand.Reader, params.q) // factor from ZKP PI2,1
+	signatureRandomMultipleSecret, err := rand.Int(rand.Reader, params.q) // factor from ZKP PI2,1
 	if err != nil {
 		t.Fatal(err)
 	}
-	eta2, err := rand.Int(rand.Reader, params.QSix()) // factor from ZKP PI2,1
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rc, err := paillier.GetRandomNumberInMultiplicativeGroup(params.N, rand.Reader)
+	signatureRandomMultipleMask, err := rand.Int(rand.Reader, params.QSix()) // factor from ZKP PI2,1
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	r := curve.NewPoint(params.curve.ScalarBaseMult(eta1.Bytes())) // eta1CurvePoint
-	u, _ := privateKey.EncryptWithR(big.NewInt(5), rc)             // encryptedFactor1 (rho from round 1), u = E(ρ)
+	paillierR, err := paillier.GetRandomNumberInMultiplicativeGroup(params.N, rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signatureRandomMultiplePublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureRandomMultipleSecret.Bytes())) // eta1CurvePoint
+	secretKeyRandomMultiple, _ := privateKey.EncryptWithR(big.NewInt(5), paillierR)                                     // encryptedFactor1 (rho from round 1), u = E(ρ)
 
 	// D(w) = η1*D(u) + q*η2 = η1*ρ + q*η2
 	// w = E(D(w)) = E(η1*D(u) + q*η2) = E(η1*D(u) + E(q*η2) = E(η1*u) + E(q*η2)
 	// E(η1*u)
-	encryptedUEta1 := privateKey.PublicKey.Mul(u, eta1)
+	encryptedUEta1 := privateKey.PublicKey.Mul(secretKeyRandomMultiple, signatureRandomMultipleSecret)
 
 	// E(q*η2)
-	qEta2 := new(big.Int).Mod(new(big.Int).Mul(params.q, eta2), params.N)
-	encryptedQEta2, err := privateKey.EncryptWithR(qEta2, rc)
+	qEta2 := new(big.Int).Mod(new(big.Int).Mul(params.q, signatureRandomMultipleMask), params.N)
+	encryptedQEta2, err := privateKey.EncryptWithR(qEta2, paillierR)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	w := privateKey.PublicKey.Add(encryptedUEta1, encryptedQEta2) // encryptedMaskedFactor
+	signatureUnmask := privateKey.PublicKey.Add(encryptedUEta1, encryptedQEta2)
 
 	// WHEN
-	zkp, err := CommitZkpPi2(r, w, u, eta1, eta2, rc, params, rand.Reader)
+	zkp, err := CommitZkpPi2(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, rand.Reader)
 
 	if err != nil {
 		t.Fatal(err)
@@ -249,28 +249,28 @@ func TestRoundTripZKP2(t *testing.T) {
 	}{
 		"positive validation": {
 			verify: func() bool {
-				return zkp.Verify(r, w, u, params)
+				return zkp.Verify(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, params)
 			},
 			expectedResult: true,
 		},
-		"negative validation - wrong r": {
+		"negative validation - wrong signatureRandomMultiplePublic": {
 			verify: func() bool {
-				wrongR := curve.NewPoint(big.NewInt(3), big.NewInt(4))
-				return zkp.Verify(wrongR, w, u, params)
+				wrongSignatureRandomMultiplePublic := curve.NewPoint(big.NewInt(3), big.NewInt(4))
+				return zkp.Verify(wrongSignatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, params)
 			},
 			expectedResult: false,
 		},
-		"negative validation - wrong w": {
+		"negative validation - wrong signatureUnmask": {
 			verify: func() bool {
-				wrongW := &paillier.Cypher{C: new(big.Int).Add(w.C, big.NewInt(1))}
-				return zkp.Verify(r, wrongW, u, params)
+				wrongSignatureUnmask := &paillier.Cypher{C: new(big.Int).Add(signatureUnmask.C, big.NewInt(1))}
+				return zkp.Verify(signatureRandomMultiplePublic, wrongSignatureUnmask, secretKeyRandomMultiple, params)
 			},
 			expectedResult: false,
 		},
-		"negative validation - wrong u": {
+		"negative validation - wrong secretKeyRandomMultiple": {
 			verify: func() bool {
-				wrongU := &paillier.Cypher{C: new(big.Int).Add(w.C, big.NewInt(1))}
-				return zkp.Verify(r, w, wrongU, params)
+				wrongSecretKeyRandomMultiple := &paillier.Cypher{C: new(big.Int).Add(signatureUnmask.C, big.NewInt(1))}
+				return zkp.Verify(signatureRandomMultiplePublic, signatureUnmask, wrongSecretKeyRandomMultiple, params)
 			},
 			expectedResult: false,
 		},
