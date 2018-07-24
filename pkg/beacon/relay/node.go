@@ -29,7 +29,8 @@ type Node struct {
 	chainConfig  config.Chain
 
 	// The IDs of the known stakes in the system, including this node's StakeID.
-	stakeIDs []string
+	stakeIDs      []string
+	maxStakeIndex int
 
 	groupPublicKeys [][]byte
 	seenPublicKeys  map[string]struct{}
@@ -126,6 +127,10 @@ func (n *Node) AddStaker(index int, staker string) {
 	}
 
 	n.stakeIDs[index] = staker
+
+	if index > n.maxStakeIndex {
+		n.maxStakeIndex = index
+	}
 }
 
 // SyncStakingList performs an initial sync of the on-chain staker list into
@@ -212,7 +217,7 @@ func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
 	shuffler := rand.New(rand.NewSource(entryValue.Int64()))
 
 	n.mutex.Lock()
-	shuffledStakeIDs := make([]string, len(n.stakeIDs))
+	shuffledStakeIDs := make([]string, n.maxStakeIndex+1)
 	copy(shuffledStakeIDs, n.stakeIDs)
 	defer n.mutex.Unlock()
 
