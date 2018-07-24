@@ -89,7 +89,7 @@ func Initialize(
 		})
 
 		// Retry until we can sync our staking list
-		syncStakingListWithRetry(node, relayChain)
+		syncStakingListWithRetry(&node, relayChain)
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 			entryBigInt := (&big.Int{}).SetBytes(entry.Value[:])
@@ -114,7 +114,7 @@ func checkParticipantState() (participantState, error) {
 	return staked, nil
 }
 
-func syncStakingListWithRetry(node relay.Node, relayChain relaychain.Interface) {
+func syncStakingListWithRetry(node *relay.Node, relayChain relaychain.Interface) {
 	for {
 		t := time.NewTimer(1)
 		defer t.Stop()
