@@ -157,9 +157,11 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	index := len(n.groupPublicKeys) - 1
 
 	if membership, found := n.pendingGroups[requestID]; found {
-		membership.index = index
-		n.myGroups[requestID] = membership
-		delete(n.pendingGroups, requestID)
+		if membership != nil {
+			membership.index = index
+			n.myGroups[requestID] = membership
+			delete(n.pendingGroups, requestID)
+		}
 	}
 }
 
@@ -176,7 +178,7 @@ func (n *Node) initializePendingGroup(requestID string) bool {
 	}
 
 	// Pending group does not exist, take control
-	n.pendingGroups[requestID] = &membership{}
+	n.pendingGroups[requestID] = nil
 
 	return true
 }
@@ -187,8 +189,10 @@ func (n *Node) flushPendingGroup(requestID string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	if _, found := n.pendingGroups[requestID]; found {
-		delete(n.pendingGroups, requestID)
+	if membership, found := n.pendingGroups[requestID]; found {
+		if membership == nil {
+			delete(n.pendingGroups, requestID)
+		}
 	}
 }
 
