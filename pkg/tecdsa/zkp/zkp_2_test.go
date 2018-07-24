@@ -148,7 +148,7 @@ func TestZKP2Verification(t *testing.T) {
 	t2, _ := new(big.Int).SetString("27049934461372498374213706786660216157612325444900655256379410890365234489361", 10)
 	t3, _ := new(big.Int).SetString("102789750953215493822012085789308821398926836690622489974241761383387891059528", 10)
 
-	zkp := &PI2{
+	zkp := &EcdsaSignatureFactorRangeProof{
 		z1: big.NewInt(19261),
 		z2: big.NewInt(17194),
 

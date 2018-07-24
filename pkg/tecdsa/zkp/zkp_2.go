@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 )
 
-// PI2 is an implementation of Gennaro's PI_2,i
+// EcdsaSignatureFactorRangeProof is an implementation of Gennaro's PI_2,i
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the fourth round of the T-ECSA signing algorithm and operates
@@ -72,7 +72,7 @@ import (
 //          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
 //          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
 //          vol 9696. Springer, Cham
-type PI2 struct {
+type EcdsaSignatureFactorRangeProof struct {
 	z1 *big.Int
 	z2 *big.Int
 
@@ -107,7 +107,7 @@ func CommitZkpPi2(
 	paillierR *big.Int, // Paillier randomness r
 	params *PublicParameters,
 	random io.Reader,
-) (*PI2, error) {
+) (*EcdsaSignatureFactorRangeProof, error) {
 	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
@@ -264,14 +264,14 @@ func CommitZkpPi2(
 		tau,
 	)
 
-	return &PI2{z1, z2, u1, u2, u3, v1, v2, v3, e, s1, s2, t1, t2, t3}, nil
+	return &EcdsaSignatureFactorRangeProof{z1, z2, u1, u2, u3, v1, v2, v3, e, s1, s2, t1, t2, t3}, nil
 }
 
 // Verify checks the `PI2` against the provided secret message and secret key
 // shares.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
-func (zkp *PI2) Verify(
+func (zkp *EcdsaSignatureFactorRangeProof) Verify(
 	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
 	signatureUnmask *paillier.Cypher, // w = E(k * ρ + c_i * q)
 	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
@@ -311,7 +311,7 @@ func (zkp *PI2) Verify(
 
 // Checks whether parameters are in the expected range.
 // It's a preliminary step to check if proof is not corrupted.
-func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
+func (zkp *EcdsaSignatureFactorRangeProof) allParametersInRange(params *PublicParameters) bool {
 	zero := big.NewInt(0)
 
 	return isInRange(zkp.z1, zero, params.NTilde) &&
@@ -343,7 +343,7 @@ func (zkp *PI2) allParametersInRange(params *PublicParameters) bool {
 // g^{e*η1+α} * g^{-e*η1} = g^α
 //
 // which is exactly how u1 is evaluated during the commitment phase.
-func (zkp *PI2) evaluateVerificationU1(
+func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU1(
 	signatureRandomMultiplePublic *curve.Point,
 	params *PublicParameters,
 ) *curve.Point {
@@ -381,7 +381,7 @@ func (zkp *PI2) evaluateVerificationU1(
 // h1^η1 * h2^ρ1
 //
 // which is exactly how u3 is evaluated during the commitment phase.
-func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
+func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU3(params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
@@ -414,7 +414,7 @@ func (zkp *PI2) evaluateVerificationU3(params *PublicParameters) *big.Int {
 // u^α * Γ^(q*θ) * μ^N
 //
 // which is exactly how v1 is evaluated during the commitment phase.
-func (zkp *PI2) evaluateVerificationV1(
+func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationV1(
 	signatureUnmask *paillier.Cypher,
 	secretKeyRandomMultiple *paillier.Cypher,
 	params *PublicParameters,
@@ -458,7 +458,7 @@ func (zkp *PI2) evaluateVerificationV1(
 // h1^θ * h2^τ
 //
 // which is exactly how v3 is evaluated during the commitment phase.
-func (zkp *PI2) evaluateVerificationV3(params *PublicParameters) *big.Int {
+func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationV3(params *PublicParameters) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
