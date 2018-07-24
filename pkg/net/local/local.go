@@ -188,11 +188,12 @@ func (lc *localChannel) deliver(senderIdentifier net.TransportIdentifier, payloa
 			senderIdentifier,
 			protocolIdentifier,
 			payload,
+			"local",
 		)
 
 	go func() {
 		for _, handler := range snapshot {
-			handler(message)
+			handler.Handler(message)
 		}
 	}()
 }
