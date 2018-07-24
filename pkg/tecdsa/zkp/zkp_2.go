@@ -14,20 +14,58 @@ import (
 // PI2 is an implementation of Gennaro's PI_2,i
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
-// The proof is used in the fourth round of the T-ECDSA signing algorithm
-// and operates on factor encrypted with an additively homomorphic
-// encryption scheme.
+// The proof is used in the fourth round of the T-ECSA signing algorithm and operates
+// on a random elliptic curve point `r_i = g^{k_i}` and value `w` evaluated from `k_i`,
+// random integer `c_i` and value `ρ` (secret key random factor) evaluated in rounds
+// one and two: `w_i = E(k_i * ρ + c_i * q)`.
+//
+// Values `w` and `r` evaluated as a sum of all shares `w_i` and `r_i` are used in
+// the fifth round to produce an encrypted ECDSA signature for a message.
 //
 // Because of the complexity of the proof, we use the same naming for values
 // as in the paper in most cases. We do an exception for function parameters:
-// - `r` in the paper represents point on an elliptic curve,
-// - `w` in the paper represents masked encrypted factor
-// - `u` in the paper represents encrypted factor ρ from round 1
+// - `k_i` in the paper is the `signatureRandomMultipleSecret`
+// - `r_i` in the paper is the `signatureRandomMultiplePublic`
+// - `c_i` in the paper is the `signatureRandomMultipleMask`
+// - `u` in the paper is the `secretKeyRandomMultiple` evaluated in round 2
+// - `w_i` in the paper is the `signatureUnmask`
+// - `r_c` in the paper is the `paillierR` which is a Paillier randomness r
+//
+// Few notes:
+// - `k_i` is named `signatureRandomMultipleSecret` because it is used as a
+//    random multiple when we produce a signature `s = k^-1 (m + xr)` in
+//    rounds 5 and 6. Also, since it's kept secret, it has the appropriate sufix,
+// -  `r_i` is named `signatureRandomMultiplePublic` because it's a revealed
+//    value of `k` (`k` is kept hidden) to which siger may commit, `r_i = g^{k_i}`,
+// - `c_i` is named `signatureRandomMultipleMask` because it's used in the
+//    value `w_i` to mask the value of `k_i`: `w_i = E(k_i * ρ + c_i * q),
+// -  `w_i` is namd `signatureUnmask` because the way how it's constructed
+//    lets to unmask the value of `k_i` and eliminate random multiple `ρ` in
+//    rounds 5 and 6 - please consult their documentation for more details.
 //
 // The proof states that:
 // ∃ η1 ∈ [-q^3, q^3], η2 ∈ [-q^8, q^8] such that
 // g^η1 = r
 // D(w) = η1*D(u) + q*η2
+//
+// Using the same naming as in round 3 and 4 when the values used here are constructed, we have:
+//
+// η1 = k_i
+// η2 = c_i
+//
+// and we prove that:
+// D(w) = k_i * D(u) + c_i * q
+//
+// which is how `w` in round 3 is constructed:
+// w = E(k_i * ρ + c_i * q)
+//
+// since u = E(ρ)
+//
+// The way how `w` is constructed lets to eliminate `ρ` factor in the fifth round
+// of signing and `k` which is a sum of all `k_i` factors can be then used as
+// a random multiple for the ECDSA signature.
+// Please consult the documentation of round 4 and 5 for more details.
+//
 //
 //     [GGN 16]: Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal
 //          DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security.
