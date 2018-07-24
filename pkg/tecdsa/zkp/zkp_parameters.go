@@ -124,15 +124,15 @@ func (p *PublicParameters) QCube() *big.Int {
 	return new(big.Int).Exp(p.q, big.NewInt(3), nil)
 }
 
-// QSix is an auxiliary function returning q^8 which is needed to generate
+// QPow6 is an auxiliary function returning q^6 which is needed to generate
 // and validate internal commitment parameters.
-func (p *PublicParameters) QSix() *big.Int {
+func (p *PublicParameters) QPow6() *big.Int {
 	return new(big.Int).Exp(p.q, big.NewInt(6), nil)
 }
 
-// QEight is an auxiliary function returning q^8 which is needed to generate
+// QPow8 is an auxiliary function returning q^8 which is needed to generate
 // and validate internal commitment parameters.
-func (p *PublicParameters) QEight() *big.Int {
+func (p *PublicParameters) QPow8() *big.Int {
 	return new(big.Int).Exp(p.q, big.NewInt(8), nil)
 }
 
@@ -148,16 +148,16 @@ func (p *PublicParameters) QCubeNTilde() *big.Int {
 	return new(big.Int).Mul(p.QCube(), p.NTilde)
 }
 
-// QSixNTilde is an auxiliary function returning q^8 * NTilde which is needed
+// QPow6NTilde is an auxiliary function returning q^6 * NTilde which is needed
 // to generate and validate internal commitment parameters.
-func (p *PublicParameters) QSixNTilde() *big.Int {
-	return new(big.Int).Mul(p.QSix(), p.NTilde)
+func (p *PublicParameters) QPow6NTilde() *big.Int {
+	return new(big.Int).Mul(p.QPow6(), p.NTilde)
 }
 
-// QEightNTilde is an auxiliary function returning q^8 * NTilde which is needed
+// QPow8NTilde is an auxiliary function returning q^8 * NTilde which is needed
 // to generate and validate internal commitment parameters.
-func (p *PublicParameters) QEightNTilde() *big.Int {
-	return new(big.Int).Mul(p.QEight(), p.NTilde)
+func (p *PublicParameters) QPow8NTilde() *big.Int {
+	return new(big.Int).Mul(p.QPow8(), p.NTilde)
 }
 
 // CurveBasePoint returns base point of the Elliptic Curve used in `curve` reference

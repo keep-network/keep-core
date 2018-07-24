@@ -208,7 +208,7 @@ func TestRoundTripZKP2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	signatureRandomMultipleMask, err := rand.Int(rand.Reader, params.QSix()) // factor from ZKP PI2,1
+	signatureRandomMultipleMask, err := rand.Int(rand.Reader, params.QPow6()) // factor from ZKP PI2,1
 	if err != nil {
 		t.Fatal(err)
 	}

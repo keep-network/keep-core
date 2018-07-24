@@ -132,11 +132,11 @@ func CommitZkpPi2(
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	theta, err := rand.Int(random, params.QEight())
+	theta, err := rand.Int(random, params.QPow8())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	tau, err := rand.Int(random, params.QEightNTilde())
+	tau, err := rand.Int(random, params.QPow8NTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
@@ -144,7 +144,7 @@ func CommitZkpPi2(
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
-	rho2, err := rand.Int(random, params.QSixNTilde())
+	rho2, err := rand.Int(random, params.QPow6NTilde())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct ZKP2i [%v]", err)
 	}
