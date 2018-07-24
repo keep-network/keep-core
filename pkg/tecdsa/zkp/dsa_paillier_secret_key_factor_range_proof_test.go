@@ -256,3 +256,16 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 		})
 	}
 }
+
+func generateTestPublicParams() *PublicParameters {
+	return &PublicParameters{
+		N:      big.NewInt(1081),  // 23 * 47
+		NTilde: big.NewInt(25651), // 23 * 11
+
+		h1: big.NewInt(20535),
+		h2: big.NewInt(20919),
+
+		q:     secp256k1.S256().Params().N,
+		curve: secp256k1.S256(),
+	}
+}
