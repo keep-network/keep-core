@@ -26,26 +26,23 @@ contract TestKeepGroupCreate {
     function beforeAll() public {
 		// I don't know if we can do this - since .initialize() checks to see if it is already been called.
         keepGroupContract.initialize(2, 3, address(keepRandomBeacon));
+        keepGroupContract.createGroup(groupOnePubKey);
     }
 
     function testCreateGroup() public {
-        keepGroupContract.createGroup(groupOnePubKey);
         Assert.equal(keepGroupContract.getGroupIndex(groupOnePubKey), 0, "Should get index of a group by its public key.");
         Assert.equal(keepGroupContract.getGroupPubKey(0), groupOnePubKey, "Should get public key of a group by its index.");
         Assert.equal(keepGroupContract.numberOfGroups(), 1, "Should get number of groups.");
     }
 
-    function testGroupNotFound() public {
-        // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-        ThrowProxy throwProxy = new ThrowProxy(address(keepGroupContract));
+    function testFindNonExistingGroup() public {
+        bytes4 methodId = bytes4(keccak256("getGroupIndex(bytes32)"));
+        Assert.isTrue(address(keepGroupContract).call(methodId, groupOnePubKey), "Should succeed to call to find existing group index.");
+    }
 
-        // Prime the proxy
-        KeepGroupImplV1(address(throwProxy)).getGroupIndex(groupTwoPubKey);
-
-        // Execute the call that is supposed to throw.
-        // r will be false if it threw and true if it didn't.
-        bool r = throwProxy.execute.gas(200000)();
-        Assert.isFalse(r, "Should fail to get index of a group that doesn't exist.");
+    function testFindExistingGroup() public {
+        bytes4 methodId = bytes4(keccak256("getGroupIndex(bytes32)"));
+        Assert.isFalse(address(keepGroupContract).call(methodId, groupTwoPubKey), "Should fail to call to find non existing group index.");
     }
 
 }
