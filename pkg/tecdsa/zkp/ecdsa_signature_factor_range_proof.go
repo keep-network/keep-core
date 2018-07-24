@@ -94,11 +94,11 @@ type EcdsaSignatureFactorRangeProof struct {
 	t3 *big.Int
 }
 
-// CommitZkpPi2 generates `EcdsaSignatureFactorRangeProof` for the specified
-// encrypted DSA factor and masked factor.
-// It's required to use the same randomness `rc` to generate this proof as
-// the one used for Paillier encryption of `factor1` into `encryptedFactor1`.
-func CommitZkpPi2(
+// CommitEcdsaSignatureFactorRangeProof generates `EcdsaSignatureFactorRangeProof`
+// for the specified parameters.
+// It's required to use the same randomness `paillierR` to generate this proof as
+// the one used for Paillier encryption of secretKeyRandomMultiple`.
+func CommitEcdsaSignatureFactorRangeProof(
 	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
 	signatureUnmask *paillier.Cypher, // w = E(k * ρ + c_i * q)
 	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)

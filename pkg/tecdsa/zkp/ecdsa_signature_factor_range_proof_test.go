@@ -11,14 +11,14 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// TestZKP2CommitValues creates a commitment and checks all
-// commitment values against expected ones.
+// TestCommitEcdsaSignatureFactorRangeProofValues creates a commitment and checks
+// all commitment values against expected ones.
 //
 // This is not a full roundtrip test. We test the private commitment phase
 // interface to make sure if anything goes wrong in future (e.g. curve
 // implementation changes), we can isolate the problem easily.
 // All expected values has been manually calculated based on the [GGN16] paper.
-func TestZKP2CommitValues(t *testing.T) {
+func TestCommitEcdsaSignatureFactorRangeProofValues(t *testing.T) {
 	// GIVEN
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
@@ -49,7 +49,7 @@ func TestZKP2CommitValues(t *testing.T) {
 	secretKeyRandomMultiple := &paillier.Cypher{C: big.NewInt(7)}
 
 	// WHEN
-	zkp, err := CommitZkpPi2(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, mockRandom)
+	zkp, err := CommitEcdsaSignatureFactorRangeProof(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestZKP2CommitValues(t *testing.T) {
 	}
 }
 
-func TestZKP2Verification(t *testing.T) {
+func TestEcdsaSignatureFactorRangeProofVerification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
@@ -195,7 +195,7 @@ func TestZKP2Verification(t *testing.T) {
 	}
 }
 
-func TestRoundTripZKP2(t *testing.T) {
+func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
 	// GIVEN
 	privateKey := paillier.CreatePrivateKey(big.NewInt(23), big.NewInt(47))
 
@@ -236,7 +236,7 @@ func TestRoundTripZKP2(t *testing.T) {
 	signatureUnmask := privateKey.PublicKey.Add(encryptedUEta1, encryptedQEta2)
 
 	// WHEN
-	zkp, err := CommitZkpPi2(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, rand.Reader)
+	zkp, err := CommitEcdsaSignatureFactorRangeProof(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, rand.Reader)
 
 	if err != nil {
 		t.Fatal(err)
