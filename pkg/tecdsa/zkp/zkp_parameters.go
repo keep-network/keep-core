@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/paillier"
 )
 
@@ -158,9 +157,4 @@ func (p *PublicParameters) QPow6NTilde() *big.Int {
 // to generate and validate internal commitment parameters.
 func (p *PublicParameters) QPow8NTilde() *big.Int {
 	return new(big.Int).Mul(p.QPow8(), p.NTilde)
-}
-
-// CurveBasePoint returns base point of the Elliptic Curve used in `curve` reference
-func (p *PublicParameters) CurveBasePoint() *curve.Point {
-	return curve.NewPoint(p.curve.Params().Gx, p.curve.Params().Gy)
 }
