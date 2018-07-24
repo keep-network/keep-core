@@ -32,11 +32,9 @@ type Node struct {
 	stakeIDs []string
 
 	groupPublicKeys [][]byte
+	seenPublicKeys  map[string]struct{}
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
-
-	// lastSeenEntry is the last relay entry this node is aware of.
-	lastSeenEntry event.Entry
 }
 
 type membership struct {
@@ -59,14 +57,22 @@ func (n *Node) JoinGroupIfEligible(
 ) {
 	if index := n.indexInEntryGroup(entryValue); index >= 0 {
 		go func() {
+			if !n.initializePendingGroup(requestID.String()) {
+				// Failed to initialize; in progress for this entry.
+				return
+			}
+			// Release control of this group if we error.
+			defer n.flushPendingGroup(requestID.String())
+
 			groupChannel, err := n.netProvider.ChannelFor(requestID.String())
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Error joining group channel for request group [%s]: [%v]",
+					"Error joining group channel for request group [%s]: [%v].\n",
 					requestID.String(),
 					err,
 				)
+				return
 			}
 
 			dkg.Init(groupChannel)
@@ -78,11 +84,15 @@ func (n *Node) JoinGroupIfEligible(
 				n.chainConfig.Threshold,
 			)
 			if err != nil {
-				fmt.Printf("Error joining group: [%v]", err)
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed DKG, error creating group: [%v].\n",
+					err,
+				)
 				return
 			}
 
-			n.registerPendingGroup(member, groupChannel, requestID)
+			n.registerPendingGroup(requestID.String(), member, groupChannel)
 
 			relayChain.SubmitGroupPublicKey(
 				requestID.String(),
@@ -97,7 +107,7 @@ func (n *Node) JoinGroupIfEligible(
 					return
 				}
 
-				n.RegisterGroup(registration.RequestID, registration.GroupPublicKey)
+				n.RegisterGroup(registration.RequestID.String(), registration.GroupPublicKey)
 			})
 		}()
 	}
@@ -128,29 +138,66 @@ func (n *Node) SyncStakingList(stakingList []string) {
 
 // RegisterGroup registers that a group was successfully created by the given
 // requestID, and its group public key is groupPublicKey.
-func (n *Node) RegisterGroup(requestID *big.Int, groupPublicKey []byte) {
+func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	requestIDString := requestID.String()
-	if membership, found := n.pendingGroups[requestIDString]; found {
-		n.myGroups[requestIDString] = membership
-		delete(n.pendingGroups, requestIDString)
+	// If we've already registered a group for this request ID, return early.
+	if _, exists := n.seenPublicKeys[requestID]; exists {
+		return
 	}
 
+	n.seenPublicKeys[requestID] = struct{}{}
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
-	n.myGroups[requestIDString].index = len(n.groupPublicKeys) - 1
+	index := len(n.groupPublicKeys) - 1
+
+	if membership, found := n.pendingGroups[requestID]; found {
+		membership.index = index
+		n.myGroups[requestID] = membership
+		delete(n.pendingGroups, requestID)
+	}
 }
 
+// initializePendingGroup grabs ownership of an attempt at group creation for a
+// given goroutine. If it returns false, we're already in progress and failed to
+// initialize.
+func (n *Node) initializePendingGroup(requestID string) bool {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+
+	// If the pending group exists, we're already active
+	if _, found := n.pendingGroups[requestID]; found {
+		return false
+	}
+
+	// Pending group does not exist, take control
+	n.pendingGroups[requestID] = &membership{}
+
+	return true
+}
+
+// flushPendingGroup if group creation fails, we clean our references to creating
+// a group for a given request ID.
+func (n *Node) flushPendingGroup(requestID string) {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+
+	if _, found := n.pendingGroups[requestID]; found {
+		delete(n.pendingGroups, requestID)
+	}
+}
+
+// registerPendingGroup assigns a new membership for a given request ID.
+// We overwrite our placeholder membership set by initializePendingGroup.
 func (n *Node) registerPendingGroup(
+	requestID string,
 	member *thresholdgroup.Member,
 	channel net.BroadcastChannel,
-	requestID *big.Int,
 ) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	n.pendingGroups[requestID.String()] = &membership{
+	n.pendingGroups[requestID] = &membership{
 		member:  member,
 		channel: channel,
 	}
@@ -165,9 +212,9 @@ func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
 	shuffler := rand.New(rand.NewSource(entryValue.Int64()))
 
 	n.mutex.Lock()
-	shuffledStakeIDs := make([]string, 0, len(n.stakeIDs))
+	shuffledStakeIDs := make([]string, len(n.stakeIDs))
 	copy(shuffledStakeIDs, n.stakeIDs)
-	n.mutex.Unlock()
+	defer n.mutex.Unlock()
 
 	shuffler.Shuffle(len(shuffledStakeIDs), func(i, j int) {
 		shuffledStakeIDs[i], shuffledStakeIDs[j] = shuffledStakeIDs[j], shuffledStakeIDs[i]

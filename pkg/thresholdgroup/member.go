@@ -609,7 +609,9 @@ func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign
 	for _, memberID := range m.memberIDs {
 		if serializedShare, found := signatureShares[*memberID]; found {
 			share := bls.Sign{}
-			share.Deserialize(serializedShare)
+			if err := share.Deserialize(serializedShare); err != nil {
+				return nil, fmt.Errorf("failed to deserliaze share %v with err: %v", serializedShare, err)
+			}
 
 			availableIDs = append(availableIDs, *memberID)
 			deserializedShares = append(deserializedShares, share)
@@ -617,7 +619,9 @@ func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign
 	}
 
 	fullSignature := bls.Sign{}
-	fullSignature.Recover(deserializedShares, availableIDs)
+	if err := fullSignature.Recover(deserializedShares, availableIDs); err != nil {
+		return nil, fmt.Errorf("failed to recover the fullsignature with err: %v", err)
+	}
 
 	return &fullSignature, nil
 }

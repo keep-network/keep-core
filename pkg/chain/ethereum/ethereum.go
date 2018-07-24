@@ -179,7 +179,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 			blockNumber *big.Int,
 		) {
 			var value [32]byte
-			copy(value[:], requestResponse.Bytes()[:32])
+			copy(value[:], requestResponse.Bytes())
 
 			handle(&event.Entry{
 				RequestID:     requestID,
