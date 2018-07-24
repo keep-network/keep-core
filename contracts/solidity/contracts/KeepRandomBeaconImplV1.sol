@@ -53,8 +53,8 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         public
         onlyOwner
     {
-        require(!initialized());
-        require(_stakingProxy != address(0x0));
+        require(!initialized(), "Contract has already been initialized.");
+        require(_stakingProxy != address(0x0), "Invalid 0 address for StakingProxy passed.");
         addressStorage[esStakingProxy] = _stakingProxy;
         uintStorage[esMinStake] = _minStake;
         uintStorage[esMinPayment] = _minPayment;
@@ -90,7 +90,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
-        require(msg.value >= uintStorage[esMinPayment]); // Prevents payments that are too small in wei
+        require(msg.value >= uintStorage[esMinPayment], "Payment too small."); // Prevents payments that are too small in wei
 
         requestID = uintStorage[esSeq]++;
         addressStorageMap[esRequestPayer][requestID] = msg.sender;
@@ -123,12 +123,12 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     function finishWithdrawal() public onlyOwner {
         uint pendingWithdrawal = uintStorage[esPendingWithdrawal];
 
-        require(pendingWithdrawal > 0);
+        require(pendingWithdrawal > 0, "Pending Withdrawl must be larger than 0.");
         require(block.timestamp >= pendingWithdrawal);
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
         uintStorage[esPendingWithdrawal] = 0;
-        owner.transfer(this.balance);
+        owner.transfer(address(this).balance);
     }
 
     /**

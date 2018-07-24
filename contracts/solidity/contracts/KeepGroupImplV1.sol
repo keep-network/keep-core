@@ -34,15 +34,15 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Initialize Keep Group implementaion contract with a linked Keep Random Beacon contract.
+     * @dev Initialize Keep Group implementation contract with a linked Keep Random Beacon contract.
      * @param _keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
      * @param _groupThreshold Max number of bad members in a group that we can detect as well as “number
      * of good members needed to produce a relay entry”.
      * @param _groupSize Minimum number of members in a group - to form a group.
      */
     function initialize(uint256 _groupThreshold, uint256 _groupSize, address _keepRandomBeaconAddress) public onlyOwner {
-        require(!initialized());
-        require(_keepRandomBeaconAddress != address(0x0));
+        require(!initialized(), "Contract has already been initialized.");
+        require(_keepRandomBeaconAddress != address(0x0), "Invalid 0 address for KeepRandomBeacon passed.");
         boolStorage[esKeepGroupImplV1] = true;
         addressStorage[esKeepRandomBeaconAddress] = _keepRandomBeaconAddress;
         uintStorage[esGroupThreshold] = _groupThreshold;
@@ -51,7 +51,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     }
 
     /**
-     * @dev Allows owner to chagne the groupSize and Threshold.
+     * @dev Allows owner to change the groupSize and Threshold.
      */
 	function setGroupSizeThreshold ( uint256 _groupSize, uint256 _groupThreshold ) public onlyOwner {
         uintStorage[esGroupThreshold] = _groupThreshold;
@@ -142,7 +142,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
         boolStorageMap2[esGroupExists][_groupPubKey] = true;
         boolStorageMap2[esGroupComplete][_groupPubKey] = false;
-        uintStorageMap2[esMembersCount][_groupPubKey] = 0;
+        uintBytes32StorageMap[esMembersCount][_groupPubKey] = 0;
 
         uint256 lastIndex = uintStorage[esGroupsCount];
         bytes32StorageMap[esGroupIndexToGroupPubKey][lastIndex] = _groupPubKey;
@@ -166,11 +166,11 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
             return false;
         }
 
-        for (uint i = 0; i < uintStorageMap[esMembersCount][uint256(_groupPubKey)]; i++) {
+        for (uint i = 0; i < uintBytes32StorageMap[esMembersCount][_groupPubKey]; i++) {
             delete bytes32bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked( i, uint256(_groupPubKey)))];
         }
 
-        delete uintStorageMap2[esMembersCount][_groupPubKey];
+        delete uintBytes32StorageMap[esMembersCount][_groupPubKey];
         delete boolStorageMap2[esGroupExists][_groupPubKey];
         delete boolStorageMap2[esGroupComplete][_groupPubKey];
 
@@ -191,7 +191,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @return True if member is part of the group, false otherwise.
      */
     function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
-        for (uint i = 0; i < uintStorageMap[esMembersCount][uint256(_groupPubKey)]; i++) {
+        for (uint i = 0; i < uintBytes32StorageMap[esMembersCount][_groupPubKey]; i++) {
             if (bytes32bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked( i , uint256(_groupPubKey)))] == _memberPubKey) {		// Problem again xyzzy
                 return true;
             }
@@ -223,7 +223,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupMemberID the ID of the member that is being tested for.
      */
     function isGroupMemberStaker(uint32 _index, bytes32 _groupMemberID) public view returns (bool) {
-        require( _index >= 0 && _index < listOfGroupMemberIDs.length );
+        require( _index >= 0 && _index < listOfGroupMemberIDs.length, "Index out of range." );
         return ( listOfGroupMemberIDs[_index] == _groupMemberID );
     }
 
@@ -232,7 +232,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _index Index where to add the member.
      */
     function getStaker(uint32 _index) public view returns ( bytes32 ) {
-        require( _index >= 0 && _index < listOfGroupMemberIDs.length );
+        require( _index >= 0 && _index < listOfGroupMemberIDs.length, "Index out of range." );
         return ( listOfGroupMemberIDs[_index] );
     }
 
