@@ -58,17 +58,17 @@ func (n *Node) JoinGroupIfEligible(
 	if index := n.indexInEntryGroup(entryValue); index >= 0 {
 		go func() {
 			if !n.initializePendingGroup(requestID.String()) {
-				// Failed to initialize; in progress for this entry
+				// Failed to initialize; in progress for this entry.
 				return
 			}
-			// Release control of this group if we error
+			// Release control of this group if we error.
 			defer n.flushPendingGroup(requestID.String())
 
 			groupChannel, err := n.netProvider.ChannelFor(requestID.String())
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Error joining group channel for request group [%s]: [%v]\n",
+					"Error joining group channel for request group [%s]: [%v].\n",
 					requestID.String(),
 					err,
 				)
@@ -86,7 +86,7 @@ func (n *Node) JoinGroupIfEligible(
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Failed DKG, error creating group: [%v]\n",
+					"Failed DKG, error creating group: [%v].\n",
 					err,
 				)
 				return
@@ -187,7 +187,7 @@ func (n *Node) flushPendingGroup(requestID string) {
 	}
 }
 
-// registerPendingGroup assigns a new membership for a give request ID.
+// registerPendingGroup assigns a new membership for a given request ID.
 // We overwrite our placeholder membership set by initializePendingGroup.
 func (n *Node) registerPendingGroup(
 	requestID string,

@@ -66,8 +66,7 @@ func Execute(
 	seenShares := make(map[bls.ID][]byte)
 	share := member.SignatureShare(string(bytes))
 
-	// Ensure we add our share to our map
-	// as we can't rely on the network
+	// Add local share to map rather than receiving from the network.
 	seenShares[member.BlsID] = share
 
 	err = sendSignatureShare(share, channel, member)
@@ -93,7 +92,7 @@ func Execute(
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
 				if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
-					// Ignore our own share, we already have it
+					// Ignore our own share, we already have it.
 					if senderID.IsEqual(&member.BlsID) {
 						continue
 					}
