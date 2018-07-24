@@ -12,7 +12,7 @@ const minPayment = 1;
 const minStake = 1;
 
 const groupThreshold = 2;
-const groupSize = 3;
+const groupSize = 5;
 
 module.exports = (deployer) => {
   deployer.then(async () => {
