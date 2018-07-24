@@ -23,10 +23,11 @@ type localChain struct {
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[int64][32]byte
 
-	handlerMutex            sync.Mutex
-	relayEntryHandlers      []func(entry *event.Entry)
-	relayRequestHandlers    []func(request *event.Request)
-	groupRegisteredHandlers []func(key *event.GroupRegistration)
+	handlerMutex               sync.Mutex
+	relayEntryHandlers         []func(entry *event.Entry)
+	relayRequestHandlers       []func(request *event.Request)
+	groupRegisteredHandlers    []func(key *event.GroupRegistration)
+	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
@@ -120,13 +121,22 @@ func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request))
 		c.relayRequestHandlers,
 		handler,
 	)
-	c.handlerMutex.Unlock()
+
 }
 
 func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
 	c.handlerMutex.Lock()
 	c.groupRegisteredHandlers = append(
 		c.groupRegisteredHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
+}
+
+func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration)) {
+	c.handlerMutex.Lock()
+	c.stakerRegistrationHandlers = append(
+		c.stakerRegistrationHandlers,
 		handler,
 	)
 	c.handlerMutex.Unlock()
@@ -175,4 +185,18 @@ func (c *localChain) AddStaker(
 // gets back the list of stakers.
 func (c *localChain) GetStakerList() ([]string, error) {
 	return c.stakerList, nil
+}
+
+// RequestRelayEntry simulates calling to start the random generation process.
+func (c *localChain) RequestRelayEntry(
+	blockReward, seed *big.Int,
+) *async.RelayRequestPromise {
+	promise := &async.RelayRequestPromise{}
+	promise.Fulfill(&event.Request{
+		RequestID:   big.NewInt(c.simulatedHeight),
+		Payment:     big.NewInt(1),
+		BlockReward: blockReward,
+		Seed:        seed,
+	})
+	return promise
 }

@@ -8,45 +8,53 @@ import (
 )
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
+	committedValues := []string{"eeyore", "rabbit"}
+
 	var tests = map[string]struct {
-		modifySecret     func(secret *Secret)
-		modifyCommitment func(commitment *TrapdoorCommitment)
-		expectedResult   bool
+		verificationValues    []string
+		modifyDecommitmentKey func(key *DecommitmentKey)
+		modifyCommitment      func(commitment *TrapdoorCommitment)
+		expectedResult        bool
 	}{
 		"positive validation": {
-			modifySecret:     nil,
-			modifyCommitment: nil,
-			expectedResult:   true,
+			verificationValues: committedValues,
+			expectedResult:     true,
 		},
-		"negative validation - incorrect `secret`": {
-			modifySecret: func(secret *Secret) {
-				msg := []byte("top secret message2")
-				secret.message = &msg
-			},
-			modifyCommitment: nil,
-			expectedResult:   false,
+		"negative validation - first verification value is not the committed one": {
+			verificationValues: []string{"pooh", "rabbit"},
+			expectedResult:     false,
 		},
-		"negative validation - incorrect `r`": {
-			modifySecret: func(secret *Secret) {
-				secret.r = big.NewInt(3)
+		"negative validation - second verification value is not the committed one": {
+			verificationValues: []string{"eeyore", "pooh"},
+			expectedResult:     false,
+		},
+		"negative validation - verification values in wrong order": {
+			verificationValues: []string{"rabbit", "eeyore"},
+			expectedResult:     false,
+		},
+		"negative validation - incorrect decommitment key `r`": {
+			verificationValues: committedValues,
+			modifyDecommitmentKey: func(key *DecommitmentKey) {
+				key.r = big.NewInt(3)
 			},
-			modifyCommitment: nil,
-			expectedResult:   false,
+			expectedResult: false,
 		},
 		"negative validation - incorrect `commitment`": {
-			modifySecret: nil,
+			verificationValues: committedValues,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.commitment = new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `pubKey`": {
-			modifySecret:     nil,
-			modifyCommitment: func(commitment *TrapdoorCommitment) { commitment.pubKey = big.NewInt(3) },
-			expectedResult:   false,
+			verificationValues: committedValues,
+			modifyCommitment: func(commitment *TrapdoorCommitment) {
+				commitment.pubKey = big.NewInt(3)
+			},
+			expectedResult: false,
 		},
 		"negative validation - incorrect `h`": {
-			modifySecret: nil,
+			verificationValues: committedValues,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
 				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
 			},
@@ -56,52 +64,60 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			msg := []byte("top secret message")
+			commitmentBytes := toBytes(committedValues)
+			verificationBytes := toBytes(test.verificationValues)
 
-			// Generate Commitment
-			commitment, secret, err := GenerateCommitment(&msg)
+			commitment, decommitmentKey, err := Generate(commitmentBytes...)
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
 
-			// Invoke modification functions defined in test
 			if test.modifyCommitment != nil {
 				test.modifyCommitment(commitment)
 			}
 
-			newSecret := secret
-			if test.modifySecret != nil {
-				test.modifySecret(newSecret)
+			if test.modifyDecommitmentKey != nil {
+				test.modifyDecommitmentKey(decommitmentKey)
 			}
 
-			// Validate Commitment
-			result := commitment.ValidateCommitment(newSecret)
+			result := commitment.Verify(decommitmentKey, verificationBytes...)
 
-			// Check result
 			if result != test.expectedResult {
-				t.Fatalf("\nexpected: %v\nactual:   %v", test.expectedResult, result)
+				t.Fatalf(
+					"expected: %v\nactual: %v\n",
+					test.expectedResult,
+					result,
+				)
 			}
 		})
 	}
 }
 
+func toBytes(strings []string) [][]byte {
+	bytes := make([][]byte, len(strings))
+	for i, s := range strings {
+		bytes[i] = []byte(s)
+	}
+	return bytes
+}
+
 func TestCommitmentRandomness(t *testing.T) {
-	msg := []byte("top secret message")
+	secret := []byte("top secret message")
 
 	// Generate Commitment 1
-	commitment1, secret1, err := GenerateCommitment(&msg)
+	commitment1, decommitmentKey1, err := Generate(secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Generate Commitment 2
-	commitment2, secret2, err := GenerateCommitment(&msg)
+	commitment2, decommitmentKey2, err := Generate(secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
-	// Check decommitments are unique
-	if secret1.r.Cmp(secret2.r) == 0 {
+	// Check decommitment keys are unique
+	if decommitmentKey1.r.Cmp(decommitmentKey2.r) == 0 {
 		t.Fatal("both decommitment keys `r` are equal")
 	}
 

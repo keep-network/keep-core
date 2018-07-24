@@ -27,13 +27,17 @@ type Message interface {
 	TransportSenderID() TransportIdentifier
 	ProtocolSenderID() ProtocolIdentifier
 	Payload() interface{}
+	Type() string
 }
 
 // HandleMessageFunc is the type of function called for each Message m furnished
 // by the BroadcastChannel. If there is a problem handling the Message, the
 // incoming error will describe the problem and the function can decide how to
 // handle that error. If an error is returned, processing stops.
-type HandleMessageFunc func(m Message) error
+type HandleMessageFunc struct {
+	Type    string
+	Handler func(m Message) error
+}
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
 // but also provides a string type for the marshalable object.
@@ -100,6 +104,9 @@ type BroadcastChannel interface {
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error
+	// UnregisterRecv takes the type of HandleMessageFunc and returns an error. This function should
+	// be defered.
+	UnregisterRecv(handlerType string) error
 
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any

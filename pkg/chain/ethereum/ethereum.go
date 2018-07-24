@@ -179,7 +179,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 			blockNumber *big.Int,
 		) {
 			var value [32]byte
-			copy(value[:], requestResponse.Bytes()[:32])
+			copy(value[:], requestResponse.Bytes())
 
 			handle(&event.Entry{
 				RequestID:     requestID,
@@ -190,10 +190,12 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf(
+			fmt.Fprintf(
+				os.Stderr,
 				"watch relay entry failed with: [%v]",
 				err,
 			)
+			return err
 		},
 	)
 	if err != nil {
@@ -204,8 +206,6 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 	}
 }
 
-// OnRelayEntryRequested registers a callback function for a new
-// relay request on chain.
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) {
@@ -237,8 +237,6 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	}
 }
 
-// AddStaker is a temporary function for Milestone 1 that adds a
-// staker to the group contract.
 func (ec *ethereumChain) AddStaker(
 	groupMemberID string,
 ) *async.StakerRegistrationPromise {
@@ -268,38 +266,79 @@ func (ec *ethereumChain) AddStaker(
 			}
 		},
 		func(err error) error {
-			return onStakerAddedPromise.Fail(
+			failErr := onStakerAddedPromise.Fail(
 				fmt.Errorf(
 					"adding new staker failed with: [%v]",
 					err,
 				),
 			)
+
+			if failErr != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Staker added promise failing failed: [%v]\n",
+					err,
+				)
+			}
+
+			return failErr
 		},
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to watch OnStakerAdded [%v].\n", err)
-		return onStakerAddedPromise
-	}
-
-	index, err := ec.keepGroupContract.GetNStaker()
-	if err != nil {
-		fmt.Printf("Error: failed on call to GetNStaker: [%v]\n", err)
-		return onStakerAddedPromise
-	}
-
-	_, err = ec.keepGroupContract.AddStaker(index, groupMemberID)
-	if err != nil {
-		fmt.Printf(
-			"on staker added failed with: [%v]",
-			err,
+		err = onStakerAddedPromise.Fail(
+			fmt.Errorf(
+				"on staker added failed with: [%v]",
+				err,
+			),
 		)
+		if err != nil {
+			fmt.Printf("Staker added promise failing failed: [%v]\n", err)
+		}
+
+		return onStakerAddedPromise
+	}
+
+	_, err = ec.keepGroupContract.AddStaker(groupMemberID)
+	if err != nil {
+		err = onStakerAddedPromise.Fail(
+			fmt.Errorf(
+				"on staker added failed with: [%v]",
+				err,
+			),
+		)
+		if err != nil {
+			fmt.Printf("Staker added promise failing failed: [%v]\n", err)
+		}
+
+		return onStakerAddedPromise
 	}
 
 	return onStakerAddedPromise
 }
 
-// GetStakerList is a temporary function for Milestone 1 that
-// gets back the list of stakers.
+func (ec *ethereumChain) OnStakerAdded(
+	handle func(staker *event.StakerRegistration),
+) {
+	err := ec.keepGroupContract.WatchOnStakerAdded(
+		func(index int, groupMemberID []byte) {
+			handle(&event.StakerRegistration{
+				Index:         index,
+				GroupMemberID: string(groupMemberID),
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("staker event failed with %v", err)
+		},
+	)
+	if err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"failed to watch OnStakerAdded [%v].\n",
+			err,
+		)
+	}
+}
+
 func (ec *ethereumChain) GetStakerList() ([]string, error) {
 	count, err := ec.keepGroupContract.GetNStaker()
 	if err != nil {
@@ -321,7 +360,7 @@ func (ec *ethereumChain) GetStakerList() ([]string, error) {
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
-	handle func(key *event.GroupRegistration),
+	handle func(registration *event.GroupRegistration),
 ) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
@@ -346,4 +385,39 @@ func (ec *ethereumChain) OnGroupRegistered(
 			err,
 		)
 	}
+}
+
+func (ec *ethereumChain) RequestRelayEntry(
+	blockReward, seed *big.Int,
+) *async.RelayRequestPromise {
+	promise := &async.RelayRequestPromise{}
+	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+		func(
+			requestID *big.Int,
+			payment *big.Int,
+			blockReward *big.Int,
+			seed *big.Int,
+			blockNumber *big.Int,
+		) {
+			promise.Fulfill(&event.Request{
+				RequestID:   requestID,
+				Payment:     payment,
+				BlockReward: blockReward,
+				Seed:        seed,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("relay request failed with %v", err)
+		},
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "relay request failed with: [%v]", err)
+		return promise
+	}
+	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed.Bytes())
+	if err != nil {
+		promise.Fail(fmt.Errorf("failure to request a relay entry: [%v]", err))
+		return promise
+	}
+	return promise
 }

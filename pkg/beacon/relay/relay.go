@@ -23,10 +23,15 @@ func NewNode(
 	chainConfig config.Chain,
 ) Node {
 	return Node{
-		StakeID:      stakeID,
-		netProvider:  netProvider,
-		blockCounter: blockCounter,
-		chainConfig:  chainConfig,
+		StakeID:         stakeID,
+		netProvider:     netProvider,
+		blockCounter:    blockCounter,
+		chainConfig:     chainConfig,
+		stakeIDs:        make([]string, 100),
+		groupPublicKeys: make([][]byte, 0),
+		seenPublicKeys:  make(map[string]struct{}),
+		myGroups:        make(map[string]*membership),
+		pendingGroups:   make(map[string]*membership),
 	}
 }
 
@@ -51,6 +56,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		return
 	}
 
+	thresholdsignature.Init(membership.channel)
 	go func() {
 		signature, err := thresholdsignature.Execute(
 			combinedEntryToSign,
@@ -67,11 +73,10 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			return
 		}
 
-		var (
-			rightSizeSignature [32]byte
-			previousEntry      *big.Int
-		)
+		rightSizeSignature := [32]byte{}
+		previousEntry := &big.Int{}
 		previousEntry.SetBytes(request.PreviousEntry())
+
 		for i := 0; i < 32; i++ {
 			rightSizeSignature[i] = signature[i]
 		}
@@ -81,6 +86,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			Value:         rightSizeSignature,
 			PreviousEntry: previousEntry,
 			Timestamp:     time.Now().UTC(),
+			GroupID:       &big.Int{},
 		}
 
 		relayChain.SubmitRelayEntry(
@@ -106,18 +112,18 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 }
 
 func (n *Node) indexForNextGroup(request event.Request) *big.Int {
-	var (
-		entry     *big.Int
-		nextGroup *big.Int
-	)
-	entry = entry.SetBytes(request.PreviousEntry())
+	entry := (&big.Int{}).SetBytes(request.PreviousEntry())
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
+	return nextGroupIndex(entry, numberOfGroups)
+}
+
+func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
 	if numberOfGroups.Cmp(&big.Int{}) == 0 {
-		return nextGroup
+		return &big.Int{}
 	}
 
-	return nextGroup.Mod(entry, numberOfGroups)
+	return (&big.Int{}).Mod(entry, numberOfGroups)
 }
 
 func (n *Node) membershipForRequest(

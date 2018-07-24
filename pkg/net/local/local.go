@@ -155,11 +155,12 @@ func (channel *localChannel) deliver(senderIdentifier net.TransportIdentifier, p
 			senderIdentifier,
 			protocolIdentifier,
 			payload,
+			"local",
 		)
 
 	go func() {
 		for _, handler := range snapshot {
-			handler(message)
+			handler.Handler(message)
 		}
 	}()
 }
@@ -182,6 +183,18 @@ func (channel *localChannel) Recv(handler net.HandleMessageFunc) error {
 	return nil
 }
 
+func (c *localChannel) UnregisterRecv(handlerType string) error {
+	c.messageHandlersMutex.Lock()
+	defer c.messageHandlersMutex.Unlock()
+	for i, mh := range c.messageHandlers {
+		if mh.Type == handlerType {
+			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
+			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
+		}
+	}
+
+	return nil
+}
 func (channel *localChannel) RegisterIdentifier(
 	transportIdentifier net.TransportIdentifier,
 	protocolIdentifier net.ProtocolIdentifier,
