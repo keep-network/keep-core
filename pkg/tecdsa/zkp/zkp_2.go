@@ -233,7 +233,7 @@ func CommitZkpPi2(
 		v2.Bytes(),
 		v3.Bytes(),
 	)
-	e := new(big.Int).Abs(new(big.Int).SetBytes(digest[:]))
+	e := new(big.Int).SetBytes(digest[:])
 
 	// s1 = e*η1 + α
 	s1 := new(big.Int).Add(
