@@ -76,6 +76,8 @@ func Initialize(
 				curParticipantState = unstaked
 				return
 			}
+
+			node.StakeID = stake.GroupMemberID
 		})
 	proceed.Wait()
 
