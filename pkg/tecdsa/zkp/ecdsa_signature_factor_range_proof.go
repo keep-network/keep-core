@@ -14,7 +14,7 @@ import (
 // EcdsaSignatureFactorRangeProof is an implementation of Gennaro's PI_2,i
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
-// The proof is used in the fourth round of the T-ECSA signing algorithm and operates
+// The proof is used in the fourth round of the T-ECDSA signing algorithm and operates
 // on a random elliptic curve point `r_i = g^{k_i}` and value `w` evaluated from `k_i`,
 // random integer `c_i` and value `ρ` (secret key random factor) evaluated in rounds
 // one and two: `w_i = E(k_i * ρ + c_i * q)`.
@@ -34,12 +34,12 @@ import (
 // Few notes:
 // - `k_i` is named `signatureRandomMultipleSecret` because it is used as a
 //    random multiple when we produce a signature `s = k^-1 (m + xr)` in
-//    rounds 5 and 6. Also, since it's kept secret, it has the appropriate sufix,
+//    rounds 5 and 6. Also, since it's kept secret, it has the appropriate suffix,
 // -  `r_i` is named `signatureRandomMultiplePublic` because it's a revealed
 //    value of `k` (`k` is kept hidden) to which signer may commit, `r_i = g^{k_i}`,
 // - `c_i` is named `signatureRandomMultipleMask` because it's used in the
 //    value `w_i` to mask the value of `k_i`: `w_i = E(k_i * ρ + c_i * q),
-// -  `w_i` is namd `signatureUnmask` because the way how it's constructed
+// -  `w_i` is named `signatureUnmask` because the way how it's constructed
 //    lets to unmask the value of `k_i` and eliminate random multiple `ρ` in
 //    rounds 5 and 6 - please consult their documentation for more details.
 //
@@ -48,7 +48,8 @@ import (
 // g^η1 = r
 // D(w) = η1*D(u) + q*η2
 //
-// Using the same naming as in round 3 and 4 when the values used here are constructed, we have:
+// Using the same naming as in round 3 and 4 when the values used here are constructed,
+// we have:
 //
 // η1 = k_i
 // η2 = c_i
@@ -97,7 +98,7 @@ type EcdsaSignatureFactorRangeProof struct {
 // CommitEcdsaSignatureFactorRangeProof generates `EcdsaSignatureFactorRangeProof`
 // for the specified parameters.
 // It's required to use the same randomness `paillierR` to generate this proof as
-// the one used for Paillier encryption of secretKeyRandomMultiple`.
+// the one used for Paillier encryption of `secretKeyRandomMultiple`.
 func CommitEcdsaSignatureFactorRangeProof(
 	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
 	signatureUnmask *paillier.Cypher, // w = E(k * ρ + c_i * q)
@@ -220,7 +221,7 @@ func CommitEcdsaSignatureFactorRangeProof(
 	// In the original paper, elliptic curve generator point is also hashed.
 	// However, since g is a constant in go-ethereum, we don't include it in
 	// the sum256.
-	// e = hash(g, w, u, z1, z2, u1, u2, u3, v1, v2, v3)
+	// e = hash(w, u, z1, z2, u1, u2, u3, v1, v2, v3)
 	digest := sum256(
 		signatureUnmask.C.Bytes(),
 		secretKeyRandomMultiple.C.Bytes(),
@@ -287,7 +288,10 @@ func (zkp *EcdsaSignatureFactorRangeProof) Verify(
 	v1 := zkp.evaluateVerificationV1(signatureUnmask, secretKeyRandomMultiple, params)
 	v3 := zkp.evaluateVerificationV3(params)
 
-	// e = hash(g,w,u,z1,z2,u1,u2,u3,v1,v2,v3)
+	// In the original paper, elliptic curve generator point is also hashed.
+	// However, since g is a constant in go-ethereum, we don't include it in
+	// the sum256.
+	// e = hash(w,u,z1,z2,u1,u2,u3,v1,v2,v3)
 	digest := sum256(
 		signatureUnmask.C.Bytes(),
 		secretKeyRandomMultiple.C.Bytes(),
