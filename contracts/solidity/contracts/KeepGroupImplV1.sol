@@ -7,6 +7,20 @@ import "./KeepRandomBeaconImplV1.sol";
 
 contract KeepGroupImplV1 is Ownable, EternalStorage {
 
+    // Current implementation contract address.
+    address public implementation;
+
+    // Current implementation version.
+    string public version;
+
+    // Temporary Code for Milestone 1 follows
+    bytes32[] listOfGroupMemberIDs; 
+    // End Temporary Code for Milestone 1
+
+    // Temporary Code for Milestone 1 follows
+    event OnStakerAdded(uint32 index, bytes32 groupMemberID);
+    // End Temporary Code for Milestone 1
+
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
     event GroupStartedEvent(bytes32 groupPubKey);
     event GroupCompleteEvent(bytes32 groupPubKey);
@@ -201,10 +215,8 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         return false;
     }
 
-    // Temporary Code for Milestone 1 follows
 
-    event OnStakerAdded(uint32 index, bytes32 groupMemberID);
-    bytes32[] listOfGroupMemberIDs; 
+    // Temporary Code for Milestone 1 follows
 
     /**
      * @dev Testing for M1 - create a staker.

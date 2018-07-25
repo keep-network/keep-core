@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./EternalStorage.sol";
+import "./StakingProxy.sol";
 
 /**
  * @title Keep Random Beacon
@@ -17,6 +18,8 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
 
     // Current implementation version.
     string public version;
+
+    StakingProxy public stakingProxy; // Staking proxy contract that is used to check stake balances against.
 
     event Upgraded(string version, address implementation);
 
