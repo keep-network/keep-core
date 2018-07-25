@@ -45,7 +45,7 @@ contract TokenStaking {
      * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    function TokenStaking(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
+    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = StandardToken(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);

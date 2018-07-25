@@ -26,7 +26,7 @@ contract KeepGroup is Ownable, EternalStorage {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-    function KeepGroup(string _version, address _implementation) public {
+    constructor(string _version, address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
         version = _version;
         implementation = _implementation;
