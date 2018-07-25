@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 
 /**
@@ -14,11 +14,11 @@ contract EternalStorage {
     mapping(bytes32 => bool) internal boolStorage;
     mapping(bytes32 => int256) internal intStorage;
 
-	mapping(bytes32 => mapping(uint256 => uint256)) uintStorageMap;
-	mapping(bytes32 => mapping(bytes32 => uint256)) uintBytes32StorageMap;
-	mapping(bytes32 => mapping(uint256 => address)) addressUintStorageMap;
-	mapping(bytes32 => mapping(uint256 => bool)) boolUintStorageMap;
-	mapping(bytes32 => mapping(bytes32 => bool)) boolUintStorageMap2;
-	mapping(bytes32 => mapping(uint256 => bytes32)) bytes32UintStorageMap;
-	mapping(bytes32 => mapping(bytes32 => bytes32)) bytes32bytes32UintStorageMap;
+    mapping(bytes32 => mapping(uint256 => uint256)) uintStorageMap;
+    mapping(bytes32 => mapping(bytes32 => uint256)) uintBytes32StorageMap;
+    mapping(bytes32 => mapping(uint256 => address)) addressUintStorageMap;
+    mapping(bytes32 => mapping(uint256 => bool)) boolUintStorageMap;
+    mapping(bytes32 => mapping(bytes32 => bool)) boolBytes32StorageMap;
+    mapping(bytes32 => mapping(uint256 => bytes32)) bytes32UintStorageMap;
+    mapping(bytes32 => mapping(bytes32 => bytes32)) bytes32StorageMap;
 }

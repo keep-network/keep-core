@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./StakingProxy.sol";
 import "./EternalStorage.sol";
 
@@ -39,7 +39,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() public payable {
-        revert();
+        revert("Can not call contract without explicitly calling a function.");
     }
 
     /**
@@ -53,8 +53,8 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         public
         onlyOwner
     {
-        require(!initialized(), "Contract has already been initialized.");
-        require(_stakingProxy != address(0x0), "Invalid 0 address for StakingProxy passed.");
+        require(!initialized(), "Contract is already initialized.");
+        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         addressStorage[esStakingProxy] = _stakingProxy;
         uintStorage[esMinStake] = _minStake;
         uintStorage[esMinPayment] = _minPayment;
@@ -90,7 +90,10 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 _blockReward, uint256 _seed) public payable returns (uint256 requestID) {
-        require(msg.value >= uintStorage[esMinPayment], "Payment too small."); // Prevents payments that are too small in wei
+        require(
+            msg.value >= uintStorage[keccak256("minPayment")],
+            "Payment is less than required minimum."
+        );
 
         requestID = uintStorage[esSeq]++;
         addressUintStorageMap[esRequestPayer][requestID] = msg.sender;
@@ -107,7 +110,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     function getRequestId() public view returns (uint256 requestID) {
         requestID = uintStorage[esSeq];
         return requestID;
-	}
+    }
 
     /**
      * @dev Initiate withdrawal of this contract balance to the owner.
@@ -123,8 +126,8 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
     function finishWithdrawal() public onlyOwner {
         uint pendingWithdrawal = uintStorage[esPendingWithdrawal];
 
-        require(pendingWithdrawal > 0, "Pending Withdrawl must be larger than 0.");
-        require(block.timestamp >= pendingWithdrawal);
+        require(pendingWithdrawal > 0, "Pending withdrawal timestamp must be set and be greater than zero.");
+        require(block.timestamp >= pendingWithdrawal, "The current time must pass the pending withdrawal timestamp.");
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
         uintStorage[esPendingWithdrawal] = 0;
