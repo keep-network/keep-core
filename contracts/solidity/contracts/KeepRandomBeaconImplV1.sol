@@ -93,7 +93,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
         require(msg.value >= uintStorage[esMinPayment], "Payment too small."); // Prevents payments that are too small in wei
 
         requestID = uintStorage[esSeq]++;
-        addressStorageMap[esRequestPayer][requestID] = msg.sender;
+        addressUintStorageMap[esRequestPayer][requestID] = msg.sender;
         uintStorageMap[esRequestPayment][requestID] = msg.value;
         uintStorageMap[esBlockReward][requestID] = _blockReward;
 
