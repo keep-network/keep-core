@@ -113,7 +113,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _memberIndex Index number of a member.
      */
     function getGroupMemberPubKey(uint256 _groupIndex, uint256 _memberIndex) public view returns(bytes32) {
-        return bytes32bytes32UintStorageMap[esMemberIndexToMemberPubKey][keccak256(
+        return bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(
             abi.encodePacked(_memberIndex, uint256(getGroupPubKey(_groupIndex))))];
     }
 
@@ -122,7 +122,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupPubKey Group public key.
      */
     function emitEventGroupExists(bytes32 _groupPubKey) public {
-        if (boolUintStorageMap2[esGroupExists][_groupPubKey]) {
+        if (boolBytes32StorageMap[esGroupExists][_groupPubKey]) {
             emit GroupExistsEvent(_groupPubKey, true);
         } else {
             emit GroupExistsEvent(_groupPubKey, false);
@@ -136,13 +136,13 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function createGroup(bytes32 _groupPubKey) public returns(bool) {
 
-        if (boolUintStorageMap2[esGroupExists][_groupPubKey] == true) {
+        if (boolBytes32StorageMap[esGroupExists][_groupPubKey] == true) {
             emit GroupErrorCode(20);
             return false;
         }
 
-        boolUintStorageMap2[esGroupExists][_groupPubKey] = true;
-        boolUintStorageMap2[esGroupComplete][_groupPubKey] = false;
+        boolBytes32StorageMap[esGroupExists][_groupPubKey] = true;
+        boolBytes32StorageMap[esGroupComplete][_groupPubKey] = false;
         uintBytes32StorageMap[esMembersCount][_groupPubKey] = 0;
 
         uint256 lastIndex = uintStorage[esGroupsCount];
@@ -162,18 +162,18 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function dissolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
 
-        if (boolUintStorageMap2[esGroupExists][_groupPubKey] != true) {
+        if (boolBytes32StorageMap[esGroupExists][_groupPubKey] != true) {
             emit GroupErrorCode(10);
             return false;
         }
 
         for (uint i = 0; i < uintBytes32StorageMap[esMembersCount][_groupPubKey]; i++) {
-            delete bytes32bytes32UintStorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked(i, uint256(_groupPubKey)))];
+            delete bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked(i, uint256(_groupPubKey)))];
         }
 
         delete uintBytes32StorageMap[esMembersCount][_groupPubKey];
-        delete boolUintStorageMap2[esGroupExists][_groupPubKey];
-        delete boolUintStorageMap2[esGroupComplete][_groupPubKey];
+        delete boolBytes32StorageMap[esGroupExists][_groupPubKey];
+        delete boolBytes32StorageMap[esGroupComplete][_groupPubKey];
 
         uint _groupIndex = getGroupIndex(_groupPubKey);
         delete bytes32UintStorageMap[esGroupIndexToGroupPubKey][_groupIndex];
@@ -193,7 +193,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      */
     function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
         for (uint i = 0; i < uintBytes32StorageMap[esMembersCount][_groupPubKey]; i++) {
-            if (bytes32bytes32UintStorageMap[esMemberIndexToMemberPubKey][keccak256(
+            if (bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(
                 abi.encodePacked(i, uint256(_groupPubKey)))] == _memberPubKey) {
                 return true;
             }
