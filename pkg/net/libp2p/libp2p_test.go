@@ -95,9 +95,12 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	recvChan := make(chan net.Message)
-	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		recvChan <- msg
-		return nil
+	if err := broadcastChannel.Recv(net.HandleMessageFunc{
+		Type: "test",
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -192,9 +195,12 @@ func TestSendToReceiveFrom(t *testing.T) {
 	}
 
 	recvChan := make(chan net.Message)
-	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		recvChan <- msg
-		return nil
+	if err := broadcastChannel.Recv(net.HandleMessageFunc{
+		Type: "test",
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
 	}); err != nil {
 		t.Fatal(err)
 	}

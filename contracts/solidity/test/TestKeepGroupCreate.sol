@@ -24,6 +24,7 @@ contract TestKeepGroupCreate {
     bytes32 public groupTwoPubKey = hex"0200";
 
     function beforeAll() public {
+		// I don't know if we can do this - since .initialize() checks to see if it is already been called.
         keepGroupContract.initialize(2, 3, address(keepRandomBeacon));
         keepGroupContract.createGroup(groupOnePubKey);
     }
