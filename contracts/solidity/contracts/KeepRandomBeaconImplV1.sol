@@ -95,8 +95,6 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
             "Payment is less than required minimum."
         );
 
-        requestID = uintStorage[keccak256("seq")]++;
-
         requestID = uintStorage[esSeq]++;
         addressUintStorageMap[esRequestPayer][requestID] = msg.sender;
         uintStorageMap[esRequestPayment][requestID] = msg.value;
