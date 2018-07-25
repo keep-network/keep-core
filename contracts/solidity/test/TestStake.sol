@@ -68,16 +68,9 @@ contract TestStake {
 
   // Token holder should not be able to stake without providing correct stakingContract address.
   function testCanNotStakeWithWrongRecipient() public {
-    
-    // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-    ThrowProxy throwProxy = new ThrowProxy(address(token));
 
-    // Prime the proxy
-    KeepToken(address(throwProxy)).approveAndCall(0, 100, "");
-
-    // Execute the call that is supposed to throw.
-    // r will be false if it threw and true if it didn't.
-    bool r = throwProxy.execute.gas(200000)();
-    Assert.isFalse(r, "Should throw when trying to stake.");
+    bytes4 methodId = bytes4(keccak256("approveAndCall(address,uint256,bytes)"));
+    Assert.isFalse(address(token).call(
+      methodId, address(0), 100, 0x1234), "Should throw when trying to stake.");
   }
 }

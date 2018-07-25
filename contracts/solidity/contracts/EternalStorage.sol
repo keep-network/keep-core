@@ -13,4 +13,12 @@ contract EternalStorage {
     mapping(bytes32 => bytes32) internal bytes32Storage;
     mapping(bytes32 => bool) internal boolStorage;
     mapping(bytes32 => int256) internal intStorage;
+
+	mapping(bytes32 => mapping(uint256 => uint256)) uintStorageMap;
+	mapping(bytes32 => mapping(bytes32 => uint256)) uintBytes32StorageMap;
+	mapping(bytes32 => mapping(uint256 => address)) addressStorageMap;
+	mapping(bytes32 => mapping(uint256 => bool)) boolStorageMap;
+	mapping(bytes32 => mapping(bytes32 => bool)) boolStorageMap2;
+	mapping(bytes32 => mapping(uint256 => bytes32)) bytes32StorageMap;
+	mapping(bytes32 => mapping(bytes32 => bytes32)) bytes32bytes32StorageMap;
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./EternalStorage.sol";
@@ -26,7 +26,7 @@ contract KeepGroup is Ownable, EternalStorage {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-    function KeepGroup(string _version, address _implementation) {
+	function KeepGroup (string _version, address _implementation) public {
         require(_implementation != address(0));
         version = _version;
         implementation = _implementation;
