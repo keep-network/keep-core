@@ -14,6 +14,12 @@ import "./EternalStorage.sol";
  */
 contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
 
+    // Current implementation contract address.
+    address public implementation;
+
+    // Current implementation version.
+    string public version;
+
     StakingProxy public stakingProxy; // Staking proxy contract that is used to check stake balances against.
 
     // These are the public events that are used by clients

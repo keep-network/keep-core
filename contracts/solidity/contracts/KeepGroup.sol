@@ -18,6 +18,10 @@ contract KeepGroup is Ownable, EternalStorage {
     // Current implementation version.
     string public version;
 
+    // Temporary Code for Milestone 1 follows
+    bytes32[] listOfGroupMemberIDs; 
+    // End Temporary Code for Milestone 1 
+
     event Upgraded(string version, address implementation);
 
     // Mirror events from the implementation contract
