@@ -77,8 +77,7 @@ contract KeepRandomBeaconImplV1 is Ownable, EternalStorage {
      */
     function hasMinimumStake(address _staker) public view returns(bool) {
         uint256 balance;
-        stakingProxy = StakingProxy(addressStorage[esStakingProxy]);
-        balance = stakingProxy.balanceOf(_staker);
+        balance = StakingProxy(addressStorage[esStakingProxy]).balanceOf(_staker);
         return (balance >= uintStorage[esMinStake]);
     }
 

@@ -61,7 +61,10 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
     {
         require(_implementation != address(0), "Implementation address can't be zero.");
         require(_implementation != implementation, "Implementation address must be different from the current one.");
-        require(keccak256(_version) != keccak256(version), "Implementation version must be different from the current one.");
+        require(
+            keccak256(abi.encodePacked(_version)) != keccak256(abi.encodePacked(version)),
+            "Implementation version must be different from the current one."
+        );
         version = _version;
         implementation = _implementation;
         emit Upgraded(version, implementation);
