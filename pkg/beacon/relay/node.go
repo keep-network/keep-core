@@ -219,14 +219,15 @@ func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
 	n.mutex.Lock()
 	shuffledStakeIDs := make([]string, n.maxStakeIndex+1)
 	copy(shuffledStakeIDs, n.stakeIDs)
-	defer n.mutex.Unlock()
+	currentStake := n.StakeID
+	n.mutex.Unlock()
 
 	shuffler.Shuffle(len(shuffledStakeIDs), func(i, j int) {
 		shuffledStakeIDs[i], shuffledStakeIDs[j] = shuffledStakeIDs[j], shuffledStakeIDs[i]
 	})
 
-	for i, id := range shuffledStakeIDs[:n.chainConfig.GroupSize] {
-		if id == n.StakeID {
+	for i, id := range shuffledStakeIDs {
+		if id == currentStake {
 			return i
 		}
 	}
