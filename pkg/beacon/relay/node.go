@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"reflect"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -202,9 +203,29 @@ func (n *Node) registerPendingGroup(
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	n.pendingGroups[requestID] = &membership{
-		member:  member,
-		channel: channel,
+	if _, seen := n.seenPublicKeys[requestID]; seen {
+		groupPublicKey := member.GroupPublicKeyBytes()
+		// Start at the end since it's likely the public key was closer to the
+		// end if it happened to come in before we had a chance to register it
+		// as pending.
+		existingIndex := len(n.groupPublicKeys) - 1
+		for ; existingIndex >= 0; existingIndex-- {
+			if reflect.DeepEqual(n.groupPublicKeys[existingIndex], groupPublicKey[:]) {
+				break
+			}
+		}
+
+		n.myGroups[requestID] = &membership{
+			index:   existingIndex,
+			member:  member,
+			channel: channel,
+		}
+		delete(n.pendingGroups, requestID)
+	} else {
+		n.pendingGroups[requestID] = &membership{
+			member:  member,
+			channel: channel,
+		}
 	}
 }
 
