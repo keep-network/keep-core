@@ -136,3 +136,23 @@ func initializeNewSignerGroup() ([]*Signer, error) {
 
 	return signers, nil
 }
+
+func TestRandomInRange(t *testing.T) {
+	min := new(big.Int).Neg(big.NewInt(5))
+	max := big.NewInt(3)
+
+	for i := 0; i < 100; i++ {
+		rand, err := randomInRange(min, max)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if rand.Cmp(min) == -1 {
+			t.Errorf("%v < %v (min value)", rand, min)
+		}
+
+		if rand.Cmp(max) == 1 {
+			t.Errorf("%v > %v (max value)", rand, max)
+		}
+	}
+}

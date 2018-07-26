@@ -97,4 +97,6 @@ func (msg *SignRound2Message) isValid(
 // executing the third round of T-ECDSA signing algorithm.
 type SignRound3Message struct {
 	signerID string
+
+	signatureFactorCommitment *commitment.TrapdoorCommitment
 }

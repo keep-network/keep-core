@@ -420,8 +420,14 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 type Round3Signer struct {
 	Signer
 
-	randomFactor      *paillier.Cypher
-	secretKeyMultiple *paillier.Cypher
+	randomFactor      *paillier.Cypher // u = E(ρ)
+	secretKeyMultiple *paillier.Cypher // v = E(ρx)
+
+	signatureRandomMultipleSecretShare *big.Int                    // k_i
+	signatureRandomMultiplePublicShare *curve.Point                // r_i = g^{k_i}
+	signatureRandomMultipleMaskShare   *big.Int                    // c_i
+	signatureUnmaskShare               *paillier.Cypher            // w_i = E(k_i * ρ + c_i * q)
+	signatureFactorDecommitmentKey     *commitment.DecommitmentKey // Com
 }
 
 // SignRound3 executes the third round of T-ECDSA signing as described in
@@ -438,7 +444,8 @@ func (s *Round2Signer) SignRound3(
 ) (
 	*Round3Signer, *SignRound3Message, error,
 ) {
-
+	// u = u_1 + u_2 + ... + u_n
+	// v = v_1 + v_2 + ... + v_n
 	randomFactor, secretKeyMultiple, err := s.combineMessages(
 		round1Messages, round2Messages,
 	)
@@ -446,15 +453,87 @@ func (s *Round2Signer) SignRound3(
 		return nil, nil, err
 	}
 
-	// TODO: Implement the rest of round 3 logic
-
-	signer := &Round3Signer{
-		Signer:            s.Signer,
-		randomFactor:      randomFactor,
-		secretKeyMultiple: secretKeyMultiple,
+	// k_i = rand(Z_q)
+	signatureRandomMultipleSecretShare, err := rand.Int(
+		rand.Reader,
+		s.groupParameters.curveCardinality(),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
 	}
 
-	round3Message := &SignRound3Message{}
+	// r_i = g^{k_i}
+	signatureRandomMultiplePublicShare := curve.NewPoint(
+		s.groupParameters.curve.ScalarBaseMult(
+			signatureRandomMultipleSecretShare.Bytes(),
+		),
+	)
+
+	// c_i = rand[-q^6, q^6]
+	qPow6 := new(big.Int).Exp(
+		s.groupParameters.curveCardinality(),
+		big.NewInt(6),
+		nil,
+	)
+	signatureRandomMultipleMaskShare, err := randomInRange(
+		new(big.Int).Neg(qPow6),
+		qPow6,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+
+	// w_i = E(k_i * ρ + c_i * q)
+	maskShareMulCardinality, err := s.paillierKey.Encrypt(
+		new(big.Int).Mul(
+			signatureRandomMultipleMaskShare,
+			s.groupParameters.curveCardinality(),
+		),
+		rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+	signatureUnmaskShare := s.paillierKey.Add(
+		s.paillierKey.Mul(randomFactor, signatureRandomMultipleSecretShare),
+		maskShareMulCardinality,
+	)
+
+	// [C_2i, D_2i] = Com(r_i, w_i)
+	signatureFactorCommitment, signatureFactorDecommitmentKey, err :=
+		commitment.Generate(
+			signatureRandomMultipleMaskShare.Bytes(),
+			maskShareMulCardinality.C.Bytes(),
+		)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+
+	signer := &Round3Signer{
+		Signer: s.Signer,
+
+		randomFactor:      randomFactor,
+		secretKeyMultiple: secretKeyMultiple,
+
+		signatureRandomMultipleSecretShare: signatureRandomMultipleSecretShare,
+		signatureRandomMultiplePublicShare: signatureRandomMultiplePublicShare,
+		signatureRandomMultipleMaskShare:   signatureRandomMultipleMaskShare,
+		signatureUnmaskShare:               signatureUnmaskShare,
+		signatureFactorDecommitmentKey:     signatureFactorDecommitmentKey,
+	}
+
+	round3Message := &SignRound3Message{
+		signerID:                  s.ID,
+		signatureFactorCommitment: signatureFactorCommitment,
+	}
 
 	return signer, round3Message, nil
 }
@@ -526,4 +605,22 @@ func (s *Round2Signer) combineMessages(
 	err = nil
 
 	return
+}
+
+// Returns random int from [min, max]
+func randomInRange(min *big.Int, max *big.Int) (*big.Int, error) {
+	// for rand(max) returning number from [0, max) we need to do:
+	// result = rand(max - min + 1) + min
+	// in order to generate random number from [min, max]
+
+	randMax := new(big.Int)
+	randMax.Sub(max, min)
+	randMax.Add(randMax, big.NewInt(1))
+
+	rand, err := rand.Int(rand.Reader, randMax)
+	if err != nil {
+		return nil, err
+	}
+
+	return new(big.Int).Add(rand, min), nil
 }
