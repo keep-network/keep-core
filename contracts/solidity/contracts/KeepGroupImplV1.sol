@@ -25,7 +25,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     bytes32 private constant esGroup = keccak256("group");
     // Temporary Code for Milestone 1 follows
     bytes32 private constant esListOfGroupMembersIDs = keccak256("ListOfGroupMembersIDs");
-    bytes32 private constant esListOfGroupMembersIDsCount = keccak256("ListOfGroupMembersIDsCount");
     // End Temporary Code for Milestone 1
 
     /**
@@ -50,9 +49,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         uintStorage[esGroupThreshold] = _groupThreshold;
         uintStorage[esGroupSize] = _groupSize;
         uintStorage[esGroupsCount] = 0;
-        // Temporary Code for Milestone 1 follows
-        uintStorage[esListOfGroupMembersIDsCount] = 0;
-        // End Temporary Code for Milestone 1
     }
 
     /**
@@ -218,8 +214,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
         // TODO save some info at this point - this is only for use in Milestone 1 and will
         // not need to be added to the "forever" storage.
         bytes32StorageArray[esListOfGroupMembersIDs].push(_groupMemberID);
-        uintStorage[esListOfGroupMembersIDsCount]++;
-        emit OnStakerAdded(uint32(uintStorage[esListOfGroupMembersIDsCount] - 1), _groupMemberID);
+        emit OnStakerAdded(uint32(bytes32StorageArray[esListOfGroupMembersIDs].length - 1), _groupMemberID);
     }
 
     /**
@@ -228,8 +223,11 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _groupMemberID the ID of the member that is being tested for.
      */
     function isGroupMemberStaker(uint32 _index, bytes32 _groupMemberID) public view returns (bool) {
-        require(_index >= 0 && _index <= uintStorage[esListOfGroupMembersIDsCount], "Index must be within the length of Group member's array.");
-        return ( bytes32StorageArray[esListOfGroupMembersIDs][_index] == _groupMemberID);
+        require(
+            _index >= 0 && _index <= bytes32StorageArray[esListOfGroupMembersIDs].length,
+            "Index must be within the length of Group member's array."
+        );
+        return bytes32StorageArray[esListOfGroupMembersIDs][_index] == _groupMemberID;
     }
 
     /**
@@ -237,22 +235,24 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @param _index Index where to add the member.
      */
     function getStaker(uint32 _index) public view returns (bytes32) {
-        require(_index >= 0 && _index <= uintStorage[esListOfGroupMembersIDsCount], "Index must be within the length of Group member's array.");
-        return (bytes32StorageArray[esListOfGroupMembersIDs][_index]);
+        require(
+            _index >= 0 && _index <= bytes32StorageArray[esListOfGroupMembersIDs].length,
+            "Index must be within the length of Group member's array."
+        );
+        return bytes32StorageArray[esListOfGroupMembersIDs][_index];
     }
 
     /**
      * @dev Testing for M1 - return the number of stakers
      */
     function getNStaker() public view returns (uint256) {
-        return (uintStorage[esListOfGroupMembersIDsCount]);
+        return bytes32StorageArray[esListOfGroupMembersIDs].length;
     }
 
     /**
      * @dev Testing for M1 - for testing - reset the array to 0 length.
      */
     function resetStaker() public onlyOwner {
-        uintStorage[esListOfGroupMembersIDsCount] = 0;
         delete( bytes32StorageArray[esListOfGroupMembersIDs] );
     }
 
