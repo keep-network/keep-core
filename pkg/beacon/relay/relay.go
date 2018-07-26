@@ -67,7 +67,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		if err != nil {
 			fmt.Fprintf(
 				os.Stderr,
-				"error creating threshold signature: [%v]",
+				"error creating threshold signature: [%v]\n",
 				err,
 			)
 			return
