@@ -23,8 +23,6 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     bytes32 private constant esGroupComplete = keccak256("groupComplete");
     bytes32 private constant esMembersCount = keccak256("membersCount");
     bytes32 private constant esGroup = keccak256("group");
-    bytes32 private constant esListOfGroupMemberIDs = keccak256("listOfGroupMemberIDs");
-    bytes32 private constant esNoOfListOfGroupMemberIDs = keccak256("noOfListOfGroupMemberIDs");
     // Temporary Code for Milestone 1 follows
     bytes32 private constant esListOfGroupMembersIDs = keccak256("ListOfGroupMembersIDs");
     bytes32 private constant esListOfGroupMembersIDsCount = keccak256("ListOfGroupMembersIDsCount");
@@ -219,11 +217,9 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
     function addStaker(bytes32 _groupMemberID) public onlyOwner {
         // TODO save some info at this point - this is only for use in Milestone 1 and will
         // not need to be added to the "forever" storage.
-        uint32 count = uint32(uintStorage[esListOfGroupMembersIDsCount]);
      	bytes32StorageArray[esListOfGroupMembersIDs].push(_groupMemberID);
-		count = count + 1;
-        uintStorage[esListOfGroupMembersIDsCount] = count;
-        emit OnStakerAdded(count, _groupMemberID);
+        uintStorage[esListOfGroupMembersIDsCount]++;
+        emit OnStakerAdded( uint32(uintStorage[esListOfGroupMembersIDsCount] - 1), _groupMemberID);
     }
 
     /**
