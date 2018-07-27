@@ -275,7 +275,7 @@ func CommitEcdsaSignatureFactorRangeProof(
 // Otherwise, `false` is returned.
 func (zkp *EcdsaSignatureFactorRangeProof) Verify(
 	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
-	signatureUnmask *paillier.Cypher, // w = E(k * ρ + c_i * q)
+	signatureUnmask *paillier.Cypher, // w_i = E(k_i * ρ + c_i * q)
 	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
 	params *PublicParameters,
 ) bool {

@@ -100,3 +100,34 @@ type SignRound3Message struct {
 
 	signatureFactorCommitment *commitment.TrapdoorCommitment
 }
+
+type SignRound4Message struct {
+	signerID string
+
+	signatureRandomMultiplePublicShare *curve.Point     // r_i = g^{k_i}
+	signatureUnmaskShare               *paillier.Cypher // w_i = E(k_i * ρ + c_i * q)
+	signatureFactorDecommitmentKey     *commitment.DecommitmentKey
+
+	signatureFactorProof *zkp.EcdsaSignatureFactorRangeProof
+}
+
+func (msg *SignRound4Message) isValid(
+	signatureFactorCommitment *commitment.TrapdoorCommitment,
+	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
+	zkpParams *zkp.PublicParameters,
+) bool {
+	commitmentValid := signatureFactorCommitment.Verify(
+		msg.signatureFactorDecommitmentKey,
+		msg.signatureRandomMultiplePublicShare.Bytes(),
+		msg.signatureUnmaskShare.C.Bytes(),
+	)
+
+	zkpValid := msg.signatureFactorProof.Verify(
+		msg.signatureRandomMultiplePublicShare,
+		msg.signatureUnmaskShare,
+		secretKeyRandomMultiple,
+		zkpParams,
+	)
+
+	return commitmentValid && zkpValid
+}

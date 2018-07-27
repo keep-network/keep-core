@@ -399,7 +399,9 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 		rand.Reader,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf(
+			"could not execute round 2 of signing [%v]", err,
+		)
 	}
 
 	signer := &Round2Signer{s.Signer}
@@ -420,6 +422,7 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 type Round3Signer struct {
 	Signer
 
+	// TODO: rename to secret key random factor?
 	randomFactor      *paillier.Cypher // u = E(ρ)
 	secretKeyMultiple *paillier.Cypher // v = E(ρx)
 
@@ -427,7 +430,8 @@ type Round3Signer struct {
 	signatureRandomMultiplePublicShare *curve.Point                // r_i = g^{k_i}
 	signatureRandomMultipleMaskShare   *big.Int                    // c_i
 	signatureUnmaskShare               *paillier.Cypher            // w_i = E(k_i * ρ + c_i * q)
-	signatureFactorDecommitmentKey     *commitment.DecommitmentKey // Com
+	signatureFactorDecommitmentKey     *commitment.DecommitmentKey // Com(r_i, w_i)
+	paillierRandomness                 *big.Int
 }
 
 // SignRound3 executes the third round of T-ECDSA signing as described in
@@ -450,7 +454,9 @@ func (s *Round2Signer) SignRound3(
 		round1Messages, round2Messages,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
 	}
 
 	// k_i = rand(Z_q)
@@ -488,12 +494,20 @@ func (s *Round2Signer) SignRound3(
 	}
 
 	// w_i = E(k_i * ρ + c_i * q)
-	maskShareMulCardinality, err := s.paillierKey.Encrypt(
+	paillierRandomness, err := paillier.GetRandomNumberInMultiplicativeGroup(
+		s.paillierKey.N, rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+	maskShareMulCardinality, err := s.paillierKey.EncryptWithR(
 		new(big.Int).Mul(
 			signatureRandomMultipleMaskShare,
 			s.groupParameters.curveCardinality(),
 		),
-		rand.Reader,
+		paillierRandomness,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -508,8 +522,8 @@ func (s *Round2Signer) SignRound3(
 	// [C_2i, D_2i] = Com(r_i, w_i)
 	signatureFactorCommitment, signatureFactorDecommitmentKey, err :=
 		commitment.Generate(
-			signatureRandomMultipleMaskShare.Bytes(),
-			maskShareMulCardinality.C.Bytes(),
+			signatureRandomMultiplePublicShare.Bytes(),
+			signatureUnmaskShare.C.Bytes(),
 		)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -528,6 +542,7 @@ func (s *Round2Signer) SignRound3(
 		signatureRandomMultipleMaskShare:   signatureRandomMultipleMaskShare,
 		signatureUnmaskShare:               signatureUnmaskShare,
 		signatureFactorDecommitmentKey:     signatureFactorDecommitmentKey,
+		paillierRandomness:                 paillierRandomness,
 	}
 
 	round3Message := &SignRound3Message{
@@ -623,4 +638,163 @@ func randomInRange(min *big.Int, max *big.Int) (*big.Int, error) {
 	}
 
 	return new(big.Int).Add(rand, min), nil
+}
+
+type Round4Signer struct {
+	Signer
+
+	// TODO: is it secret key random factor? worth renaming?
+	randomFactor *paillier.Cypher // u = E(ρ)
+}
+
+func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
+	zkp, err := zkp.CommitEcdsaSignatureFactorRangeProof(
+		s.signatureRandomMultiplePublicShare,
+		s.signatureUnmaskShare,
+		s.secretKeyMultiple,
+		s.signatureRandomMultipleSecretShare,
+		s.signatureRandomMultipleMaskShare,
+		s.paillierRandomness,
+		s.zkpParameters,
+		rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 4 of signing [%v]", err,
+		)
+	}
+
+	signer := &Round4Signer{
+		Signer: s.Signer,
+
+		randomFactor: s.randomFactor,
+	}
+
+	round4Message := &SignRound4Message{
+		signerID: s.ID,
+
+		signatureRandomMultiplePublicShare: s.signatureRandomMultiplePublicShare,
+		signatureUnmaskShare:               s.signatureUnmaskShare,
+		signatureFactorDecommitmentKey:     s.signatureFactorDecommitmentKey,
+
+		signatureFactorProof: zkp,
+	}
+
+	return signer, round4Message, nil
+}
+
+type Round5Signer struct {
+	Signer
+
+	signatureUnmask               *paillier.Cypher // w
+	signatureRandomMultiplePublic *curve.Point     // R
+}
+
+func (s *Round4Signer) SignRound5(
+	round3Messages []*SignRound3Message,
+	round4Messages []*SignRound4Message,
+) (
+	*Round5Signer, error,
+) {
+	// w = w_1 + w_2 + ... + w_n
+	// R = r_i + r_2 + ... + r_n
+	signatureUnmask, signatureRandomMultiplePublic, err := s.combineMessages(
+		round3Messages,
+		round4Messages,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not execute round 5 of signing [%v]", err,
+		)
+	}
+
+	signer := &Round5Signer{
+		Signer: s.Signer,
+
+		signatureUnmask:               signatureUnmask,
+		signatureRandomMultiplePublic: signatureRandomMultiplePublic,
+	}
+
+	return signer, nil
+}
+
+func (s *Round4Signer) combineMessages(
+	round3Messages []*SignRound3Message,
+	round4Messages []*SignRound4Message,
+) (
+	signatureUnmask *paillier.Cypher, // w
+	signatureRandomMultiplePublic *curve.Point, // R
+	err error,
+) {
+	groupSize := s.groupParameters.groupSize
+
+	if len(round3Messages) != groupSize {
+		return nil, nil, fmt.Errorf(
+			"round 3 messages required from all group members; got %v, expected %v",
+			len(round3Messages),
+			groupSize,
+		)
+	}
+
+	if len(round4Messages) != groupSize {
+		return nil, nil, fmt.Errorf(
+			"round 4 messages required from all group members; got %v, expected %v",
+			len(round4Messages),
+			groupSize,
+		)
+	}
+
+	signatureUnmaskShares := make([]*paillier.Cypher, groupSize)
+	signatureRandomMultiplePublicShares := make([]*curve.Point, groupSize)
+
+	for i, round3Message := range round3Messages {
+		foundMatchingRound4Message := false
+
+		for _, round4Message := range round4Messages {
+			if round3Message.signerID == round4Message.signerID {
+				foundMatchingRound4Message = true
+
+				if round4Message.isValid(
+					round3Message.signatureFactorCommitment,
+					s.randomFactor,
+					s.zkpParameters,
+				) {
+					signatureRandomMultiplePublicShares[i] = round4Message.signatureRandomMultiplePublicShare
+					signatureUnmaskShares[i] = round4Message.signatureUnmaskShare
+				} else {
+					return nil, nil, errors.New("round 4 message rejected")
+				}
+			}
+		}
+
+		if !foundMatchingRound4Message {
+			return nil, nil, fmt.Errorf(
+				"no matching round 4 message for signer with ID = %v",
+				round3Message.signerID,
+			)
+		}
+	}
+
+	// w = w_1 + w_2 + ... + w_n
+	signatureUnmask = s.paillierKey.Add(signatureUnmaskShares...)
+
+	// R = r_i + r_2 + ... + r_n
+	signatureRandomMultiplePublicX := big.NewInt(0)
+	signatureRandomMultiplePublicY := big.NewInt(0)
+	for _, share := range signatureRandomMultiplePublicShares {
+		signatureRandomMultiplePublicX.Add(
+			signatureRandomMultiplePublicX, share.X,
+		)
+		signatureRandomMultiplePublicY.Add(
+			signatureRandomMultiplePublicY, share.Y,
+		)
+	}
+	signatureRandomMultiplePublic = &curve.Point{
+		X: signatureRandomMultiplePublicX,
+		Y: signatureRandomMultiplePublicY,
+	}
+
+	err = nil
+
+	return
 }
