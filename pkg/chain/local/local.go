@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"os"
 	"sync"
-	"time"
+	"sync/atomic"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -21,13 +21,16 @@ type localChain struct {
 	groupRegistrations      map[string][96]byte
 
 	groupRelayEntriesMutex sync.Mutex
-	groupRelayEntries      map[int64][32]byte
+	groupRelayEntries      map[string][32]byte
 
 	handlerMutex               sync.Mutex
 	relayEntryHandlers         []func(entry *event.Entry)
 	relayRequestHandlers       []func(request *event.Request)
 	groupRegisteredHandlers    []func(key *event.GroupRegistration)
 	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
+
+	requestID   int64
+	latestValue [32]byte
 
 	simulatedHeight int64
 	blockCounter    chain.BlockCounter
@@ -44,31 +47,51 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 }
 
 func (c *localChain) SubmitGroupPublicKey(
-	groupID string,
+	requestID *big.Int,
 	key [96]byte,
 ) *async.GroupRegistrationPromise {
+	groupID := requestID.String()
+
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
+	registration := &event.GroupRegistration{
+		GroupPublicKey:        key[:],
+		RequestID:             requestID,
+		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
+	}
+
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
-	if existing, exists := c.groupRegistrations[groupID]; exists && existing != key {
-		fmt.Fprintf(
-			os.Stderr,
-			"mismatched public key for [%s], submission failed; \n"+
-				"[%v] vs [%v]\n",
-			groupID,
-			existing,
-			key,
-		)
+	if existing, exists := c.groupRegistrations[groupID]; exists {
+		if existing != key {
+			err := fmt.Errorf(
+				"mismatched public key for [%s], submission failed; \n"+
+					"[%v] vs [%v]",
+				groupID,
+				existing,
+				key,
+			)
+			fmt.Fprintf(os.Stderr, err.Error())
+
+			groupRegistrationPromise.Fail(err)
+		} else {
+			groupRegistrationPromise.Fulfill(registration)
+		}
+
 		return groupRegistrationPromise
 	}
 	c.groupRegistrations[groupID] = key
-	c.simulatedHeight++
 
-	groupRegistrationPromise.Fulfill(&event.GroupRegistration{
-		GroupPublicKey:        []byte(groupID),
-		RequestID:             big.NewInt(c.simulatedHeight),
-		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
-	})
+	groupRegistrationPromise.Fulfill(registration)
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.groupRegisteredHandlers {
+		go func(handler func(registration *event.GroupRegistration), registration *event.GroupRegistration) {
+			handler(registration)
+		}(handler, registration)
+	}
+	c.handlerMutex.Unlock()
+
+	atomic.AddInt64(&c.simulatedHeight, 1)
 
 	return groupRegistrationPromise
 }
@@ -79,29 +102,36 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	c.groupRelayEntriesMutex.Lock()
 	defer c.groupRelayEntriesMutex.Unlock()
 
-	existing, exists := c.groupRelayEntries[entry.GroupID.Int64()]
-	if exists && existing != entry.Value {
-		err := fmt.Errorf(
-			"mismatched signature for [%v], submission failed; \n"+
-				"[%v] vs [%v]\n",
-			entry.GroupID,
-			existing,
-			entry.Value,
-		)
+	existing, exists := c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()]
+	if exists {
+		if existing != entry.Value {
+			err := fmt.Errorf(
+				"mismatched signature for [%v], submission failed; \n"+
+					"[%v] vs [%v]\n",
+				entry.GroupID,
+				existing,
+				entry.Value,
+			)
 
-		relayEntryPromise.Fail(err)
+			relayEntryPromise.Fail(err)
+		} else {
+			relayEntryPromise.Fulfill(entry)
+		}
 
 		return relayEntryPromise
 	}
-	c.groupRelayEntries[entry.GroupID.Int64()] = entry.Value
+	c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()] = entry.Value
 
-	relayEntryPromise.Fulfill(&event.Entry{
-		RequestID:     entry.RequestID,
-		Value:         entry.Value,
-		GroupID:       entry.GroupID,
-		PreviousEntry: entry.PreviousEntry,
-		Timestamp:     time.Now().UTC(),
-	})
+	c.handlerMutex.Lock()
+	for _, handler := range c.relayEntryHandlers {
+		go func(handler func(entry *event.Entry), entry *event.Entry) {
+			handler(entry)
+		}(handler, entry)
+	}
+	c.handlerMutex.Unlock()
+
+	c.latestValue = entry.Value
+	relayEntryPromise.Fulfill(entry)
 
 	return relayEntryPromise
 }
@@ -121,7 +151,7 @@ func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request))
 		c.relayRequestHandlers,
 		handler,
 	)
-
+	c.handlerMutex.Unlock()
 }
 
 func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
@@ -157,7 +187,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			Threshold: threshold,
 		},
 		groupRegistrationsMutex: sync.Mutex{},
-		groupRelayEntries:       make(map[int64][32]byte),
+		groupRelayEntries:       make(map[string][32]byte),
 		groupRegistrations:      make(map[string][96]byte),
 		blockCounter:            bc,
 	}
@@ -169,15 +199,28 @@ func (c *localChain) AddStaker(
 	groupMemberID string,
 ) *async.StakerRegistrationPromise {
 	onStakerAddedPromise := &async.StakerRegistrationPromise{}
-	Index := len(c.stakerList)
+	index := len(c.stakerList)
 	c.stakerList = append(c.stakerList, groupMemberID)
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.stakerRegistrationHandlers {
+		go func(handler func(staker *event.StakerRegistration), groupMemberID string, index int) {
+			handler(&event.StakerRegistration{
+				GroupMemberID: groupMemberID,
+				Index:         index,
+			})
+		}(handler, groupMemberID, index)
+	}
+	c.handlerMutex.Unlock()
+
 	err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
-		Index:         Index,
+		Index:         index,
 		GroupMemberID: string(groupMemberID),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
 	}
+
 	return onStakerAddedPromise
 }
 
@@ -192,11 +235,26 @@ func (c *localChain) RequestRelayEntry(
 	blockReward, seed *big.Int,
 ) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
-	promise.Fulfill(&event.Request{
-		RequestID:   big.NewInt(c.simulatedHeight),
-		Payment:     big.NewInt(1),
-		BlockReward: blockReward,
-		Seed:        seed,
-	})
+
+	request := &event.Request{
+		PreviousValue: c.latestValue,
+		RequestID:     big.NewInt(c.requestID),
+		Payment:       big.NewInt(1),
+		BlockReward:   blockReward,
+		Seed:          seed,
+	}
+	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddInt64(&c.requestID, 1)
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.relayRequestHandlers {
+		go func(handler func(*event.Request), request *event.Request) {
+			handler(request)
+		}(handler, request)
+	}
+	c.handlerMutex.Unlock()
+
+	promise.Fulfill(request)
+
 	return promise
 }

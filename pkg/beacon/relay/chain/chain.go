@@ -14,9 +14,9 @@ type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (config.Chain, error)
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
-	// associated with a string groupID. On-chain errors are
-	// are reported through the promise.
-	SubmitGroupPublicKey(groupID string, key [96]byte) *async.GroupRegistrationPromise
+	// associated with a request with id requestID. On-chain errors are reported
+	// through the promise.
+	SubmitGroupPublicKey(requestID *big.Int, key [96]byte) *async.GroupRegistrationPromise
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting

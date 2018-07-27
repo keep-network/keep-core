@@ -19,16 +19,12 @@ type Entry struct {
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	previousEntry Entry
-
 	RequestID   *big.Int
 	Payment     *big.Int
 	BlockReward *big.Int
 	Seed        *big.Int
-}
 
-func (r Request) PreviousEntry() []byte {
-	return r.previousEntry.Value[:]
+	PreviousValue [32]byte
 }
 
 // GroupRegistration represents a registered group in the threshold relay with a

@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"reflect"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -29,7 +30,8 @@ type Node struct {
 	chainConfig  config.Chain
 
 	// The IDs of the known stakes in the system, including this node's StakeID.
-	stakeIDs []string
+	stakeIDs      []string
+	maxStakeIndex int
 
 	groupPublicKeys [][]byte
 	seenPublicKeys  map[string]struct{}
@@ -95,7 +97,7 @@ func (n *Node) JoinGroupIfEligible(
 			n.registerPendingGroup(requestID.String(), member, groupChannel)
 
 			relayChain.SubmitGroupPublicKey(
-				requestID.String(),
+				requestID,
 				member.GroupPublicKeyBytes(),
 			).OnComplete(func(registration *event.GroupRegistration, err error) {
 				if err != nil {
@@ -126,6 +128,10 @@ func (n *Node) AddStaker(index int, staker string) {
 	}
 
 	n.stakeIDs[index] = staker
+
+	if index > n.maxStakeIndex {
+		n.maxStakeIndex = index
+	}
 }
 
 // SyncStakingList performs an initial sync of the on-chain staker list into
@@ -151,7 +157,7 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	index := len(n.groupPublicKeys) - 1
 
-	if membership, found := n.pendingGroups[requestID]; found {
+	if membership, found := n.pendingGroups[requestID]; found && membership != nil {
 		membership.index = index
 		n.myGroups[requestID] = membership
 		delete(n.pendingGroups, requestID)
@@ -171,7 +177,7 @@ func (n *Node) initializePendingGroup(requestID string) bool {
 	}
 
 	// Pending group does not exist, take control
-	n.pendingGroups[requestID] = &membership{}
+	n.pendingGroups[requestID] = nil
 
 	return true
 }
@@ -182,7 +188,7 @@ func (n *Node) flushPendingGroup(requestID string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	if _, found := n.pendingGroups[requestID]; found {
+	if membership, found := n.pendingGroups[requestID]; found && membership == nil {
 		delete(n.pendingGroups, requestID)
 	}
 }
@@ -197,9 +203,29 @@ func (n *Node) registerPendingGroup(
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	n.pendingGroups[requestID] = &membership{
-		member:  member,
-		channel: channel,
+	if _, seen := n.seenPublicKeys[requestID]; seen {
+		groupPublicKey := member.GroupPublicKeyBytes()
+		// Start at the end since it's likely the public key was closer to the
+		// end if it happened to come in before we had a chance to register it
+		// as pending.
+		existingIndex := len(n.groupPublicKeys) - 1
+		for ; existingIndex >= 0; existingIndex-- {
+			if reflect.DeepEqual(n.groupPublicKeys[existingIndex], groupPublicKey[:]) {
+				break
+			}
+		}
+
+		n.myGroups[requestID] = &membership{
+			index:   existingIndex,
+			member:  member,
+			channel: channel,
+		}
+		delete(n.pendingGroups, requestID)
+	} else {
+		n.pendingGroups[requestID] = &membership{
+			member:  member,
+			channel: channel,
+		}
 	}
 }
 
@@ -212,16 +238,17 @@ func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
 	shuffler := rand.New(rand.NewSource(entryValue.Int64()))
 
 	n.mutex.Lock()
-	shuffledStakeIDs := make([]string, len(n.stakeIDs))
+	shuffledStakeIDs := make([]string, n.maxStakeIndex+1)
 	copy(shuffledStakeIDs, n.stakeIDs)
-	defer n.mutex.Unlock()
+	currentStake := n.StakeID
+	n.mutex.Unlock()
 
 	shuffler.Shuffle(len(shuffledStakeIDs), func(i, j int) {
 		shuffledStakeIDs[i], shuffledStakeIDs[j] = shuffledStakeIDs[j], shuffledStakeIDs[i]
 	})
 
-	for i, id := range shuffledStakeIDs[:n.chainConfig.GroupSize] {
-		if id == n.StakeID {
+	for i, id := range shuffledStakeIDs {
+		if id == currentStake {
 			return i
 		}
 	}

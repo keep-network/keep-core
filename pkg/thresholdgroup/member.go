@@ -227,7 +227,7 @@ func (mc *memberCore) MemberID() string {
 // `dishonestThreshold` >= `groupSize` / 2, as the distributed key generation and threshold
 // signature algorithm security breaks down past that point.
 func NewMember(id string, dishonestThreshold int, groupSize int) (*LocalMember, error) {
-	if dishonestThreshold >= groupSize/2 {
+	if float64(dishonestThreshold) >= float64(groupSize)/2 {
 		return nil, fmt.Errorf(
 			"threshold %v >= %v / 2, so group security cannot be guaranteed",
 			dishonestThreshold,
