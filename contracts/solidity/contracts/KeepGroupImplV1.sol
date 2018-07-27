@@ -253,7 +253,7 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @dev Testing for M1 - for testing - reset the array to 0 length.
      */
     function resetStaker() public onlyOwner {
-        delete( bytes32StorageArray[esListOfGroupMembersIDs] );
+        delete bytes32StorageArray[esListOfGroupMembersIDs];
     }
 
 }
