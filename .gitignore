@@ -8,5 +8,21 @@ _local/
 *.pb.go
 ,*
 config.toml
+config.*.toml
 *.config.toml
+*.config.*.toml
 *.out
+*.abi
+*.account
+pkg/gen/*/*.go
+
+# Executables
+debug
+debug.test
+keep-core
+main
+main.test
+
+# IDEs
+.vscode/
+.idea/

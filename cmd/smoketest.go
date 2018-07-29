@@ -1,17 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"math/big"
-	"os"
-	"strings"
+	"time"
 
-	"github.com/dfinity/go-dfinity-crypto/bls"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	"github.com/keep-network/keep-core/pkg/beacon"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
-	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 	"github.com/urfave/cli"
 )
 
@@ -20,30 +19,87 @@ const (
 	defaultThreshold int = 4
 )
 
-// SmokeTestFlags for group size and threshold settings
-var SmokeTestFlags []cli.Flag
+// SmokeTestCommand contains the definition of the smoke-test command-line
+// subcommand.
+var SmokeTestCommand cli.Command
+
+const (
+	groupSizeFlag  = "group-size"
+	groupSizeShort = "g"
+	thresholdFlag  = "threshold"
+	thresholdShort = "t"
+)
+
+const smokeTestDescription = `The smoke-test command creates a local threshold group of the
+   specified size and with the specified threshold and simulates a
+   distributed key generation process with an in-process broadcast
+   channel and chain implementation. Once the process is complete,
+   a threshold signature is executed, once again with an in-process
+   broadcast channel and chain, and the final signature is verified
+   by each member of the group.`
 
 func init() {
-	SmokeTestFlags = []cli.Flag{
-		&cli.IntFlag{
-			Name:  "group-size,g",
-			Value: defaultGroupSize,
-		},
-		&cli.IntFlag{
-			Name:  "threshold,t",
-			Value: defaultThreshold,
+	SmokeTestCommand = cli.Command{
+		Name:        "smoke-test",
+		Usage:       "Simulates Distributed Key Generation (DKG) and signature generation locally",
+		Description: smokeTestDescription,
+		Action:      SmokeTest,
+		Flags: []cli.Flag{
+			&cli.IntFlag{
+				Name:  groupSizeFlag + "," + groupSizeShort,
+				Value: defaultGroupSize,
+			},
+			&cli.IntFlag{
+				Name:  thresholdFlag + "," + thresholdShort,
+				Value: defaultThreshold,
+			},
 		},
 	}
 }
 
-// SmokeTest performs a simulated distributed key generation and verifyies that the members can do a threshold signature
+// SmokeTest sets up a set of local virtual nodes and launches the beacon on
+// them, simulating some relay entries and requests.
 func SmokeTest(c *cli.Context) error {
-
-	groupSize := c.Int("group-size")
-	threshold := c.Int("threshold")
-	header(fmt.Sprintf("Smoke test for DKG - GroupSize (%d), Threshold (%d)", groupSize, threshold))
+	groupSize := c.Int(groupSizeFlag)
+	threshold := c.Int(thresholdFlag)
 
 	chainHandle := local.Connect(groupSize, threshold)
+	context := context.Background()
+
+	for i := 0; i < groupSize; i++ {
+		createNode(context, chainHandle, groupSize, threshold)
+	}
+
+	// Give the nodes a sec to get going.
+	<-time.NewTimer(time.Second).C
+
+	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
+		RequestID:     big.NewInt(int64(135)),
+		Value:         [32]byte{},
+		GroupID:       big.NewInt(int64(168)),
+		PreviousEntry: &big.Int{},
+	})
+
+	chainHandle.ThresholdRelay().
+		OnGroupRegistered(func(registration *event.GroupRegistration) {
+			// Give the nodes a sec to all get registered.
+			<-time.NewTimer(time.Second).C
+			chainHandle.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
+		})
+
+	select {
+	case <-context.Done():
+		fmt.Println("All done!")
+		return context.Err()
+	}
+}
+
+func createNode(
+	context context.Context,
+	chainHandle chain.Handle,
+	groupSize int,
+	threshold int,
+) {
 	chainCounter, err := chainHandle.BlockCounter()
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -52,95 +108,12 @@ func SmokeTest(c *cli.Context) error {
 		))
 	}
 
-	_ = pb.Envelope{}
+	netProvider := netlocal.Connect()
 
-	beaconConfig, err := chainHandle.RandomBeacon().GetConfig()
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Failed to run get configuration: [%v].",
-			err,
-		))
-	}
-
-	memberChannel := make(chan *thresholdgroup.Member)
-	for i := 0; i < beaconConfig.GroupSize; i++ {
-		channel := netlocal.Channel("test")
-		dkg.Init(channel)
-
-		go func(i int) {
-			member, err := dkg.ExecuteDKG(chainCounter, channel, beaconConfig.GroupSize, beaconConfig.Threshold)
-			if err != nil {
-				panic(fmt.Sprintf("Failed to run DKG [%v].", err))
-			}
-
-			chainHandle.ThresholdRelay().OnGroupPublicKeySubmitted(
-				func(groupID string, activationBlock *big.Int) {
-					if groupID == "test" {
-						memberChannel <- member
-					}
-				})
-			chainHandle.ThresholdRelay().OnGroupPublicKeySubmissionFailed(
-				func(groupID string, errorMsg string) {
-					if groupID == "test" {
-						fmt.Fprintf(
-							os.Stderr,
-							"[member:%s] Failed to submit group public key: [%s]\n",
-							member.BlsID.GetHexString(),
-							err,
-						)
-						memberChannel <- nil
-					}
-				})
-
-			err = chainHandle.ThresholdRelay().SubmitGroupPublicKey(
-				"test",
-				member.GroupPublicKeyBytes(),
-			)
-		}(i)
-	}
-
-	seenMembers := make(map[*bls.ID]*thresholdgroup.Member)
-	for member := range memberChannel {
-		if _, alreadySeen := seenMembers[&member.BlsID]; !alreadySeen {
-			seenMembers[&member.BlsID] = member
-		}
-
-		if len(seenMembers) == beaconConfig.GroupSize {
-			break
-		}
-	}
-
-	if len(seenMembers) < beaconConfig.GroupSize {
-		panic("Failed to reach group size during DKG, aborting.")
-	}
-
-	message := "This is a message!"
-	shares := make(map[bls.ID][]byte, 0)
-	for _, member := range seenMembers {
-		shares[member.BlsID] = member.SignatureShare(message)
-	}
-
-	for _, member := range seenMembers {
-		validSignature, err := member.VerifySignature(shares, message)
-		if err != nil {
-			fmt.Printf(
-				"[member:0x%010s] Error verifying signature: [%v].\n",
-				member.BlsID.GetHexString(),
-				err,
-			)
-		}
-
-		fmt.Printf(
-			"[member:0x%010s] Did we get it? %v\n",
-			member.BlsID.GetHexString(),
-			validSignature,
-		)
-	}
-
-	return nil
-}
-
-func header(header string) {
-	dashes := strings.Repeat("-", len(header))
-	fmt.Printf("\n%s\n%s\n%s\n", dashes, header, dashes)
+	go beacon.Initialize(
+		context,
+		chainHandle.ThresholdRelay(),
+		chainCounter,
+		netProvider,
+	)
 }

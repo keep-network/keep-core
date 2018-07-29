@@ -3,15 +3,12 @@ package libp2p
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
-	testutils "github.com/libp2p/go-testutil"
-	ma "github.com/multiformats/go-multiaddr"
 )
 
 func TestProviderReturnsType(t *testing.T) {
@@ -28,7 +25,8 @@ func TestProviderReturnsType(t *testing.T) {
 
 	if provider.Type() != expectedType {
 		t.Fatalf("expected: provider type [%s]\nactual:   provider type [%s]",
-			provider.Type(), expectedType,
+			provider.Type(),
+			expectedType,
 		)
 	}
 }
@@ -46,7 +44,8 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	if _, err = provider.ChannelFor(testName); err != nil {
 		t.Fatalf("expected: test to fail with [%v]\nactual:   failed with [%v]",
-			nil, err,
+			nil,
+			err,
 		)
 	}
 }
@@ -54,6 +53,11 @@ func TestProviderReturnsChannel(t *testing.T) {
 func TestSendReceive(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
+
+	identity, err := generateIdentity(0)
+	if err != nil {
+		t.Errorf("Failed to generate identity: [%v].", err)
+	}
 
 	var (
 		config             = generateDeterministicNetworkConfig(t)
@@ -78,22 +82,25 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.RegisterIdentifier(
-		config.identity.id,
+		networkIdentity(identity.id),
 		protocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := broadcastChannel.Send(
-		&testMessage{ID: config.identity, Payload: expectedPayload},
+		&testMessage{Sender: identity, Payload: expectedPayload},
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	recvChan := make(chan net.Message)
-	if err := broadcastChannel.Recv(func(msg net.Message) error {
-		recvChan <- msg
-		return nil
+	if err := broadcastChannel.Recv(net.HandleMessageFunc{
+		Type: "test",
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -103,15 +110,122 @@ func TestSendReceive(t *testing.T) {
 		case msg := <-recvChan:
 			testPayload, ok := msg.Payload().(*testMessage)
 			if !ok {
-				t.Fatalf("Expected message payload to be of type string, got type %v", testPayload)
+				t.Fatalf(
+					"expected: payload type string\nactual:   payload type [%v]",
+					testPayload,
+				)
 			}
 
 			if expectedPayload != testPayload.Payload {
-				t.Fatalf("expected message payload %s, got payload %s", expectedPayload, testPayload.Payload)
+				t.Fatalf(
+					"expected: message payload [%s]\ngot:   payload [%s]",
+					expectedPayload,
+					testPayload.Payload,
+				)
 			}
 			return
 		case <-ctx.Done():
 			t.Fatal(err)
+		}
+	}
+}
+
+func TestSendToReceiveFrom(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	identity1, err := generateIdentity(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity2, err := generateIdentity(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		config1                  = generateDeterministicNetworkConfig(t)
+		senderProtocolIdentifier = &protocolIdentifier{id: "sender"}
+
+		recipientprotocolIdentifier = &protocolIdentifier{id: "recipient"}
+
+		name            = "testchannel"
+		expectedPayload = "some text"
+	)
+
+	provider, err := Connect(ctx, config1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broadcastChannel, err := provider.ChannelFor(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := broadcastChannel.RegisterUnmarshaler(
+		func() net.TaggedUnmarshaler { return &testMessage{} },
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := broadcastChannel.RegisterIdentifier(
+		networkIdentity(identity1.id),
+		senderProtocolIdentifier,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := broadcastChannel.RegisterIdentifier(
+		networkIdentity(identity2.id),
+		recipientprotocolIdentifier,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	err = broadcastChannel.SendTo(
+		identity2.id,
+		&testMessage{
+			Sender:  identity1,
+			Payload: expectedPayload,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recvChan := make(chan net.Message)
+	if err := broadcastChannel.Recv(net.HandleMessageFunc{
+		Type: "test",
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	for {
+		select {
+		case msg := <-recvChan:
+			testPayload, ok := msg.Payload().(*testMessage)
+			if !ok {
+				t.Fatalf(
+					"expected: payload type string\ngot:   payload type [%v]",
+					testPayload,
+				)
+			}
+
+			if expectedPayload != testPayload.Payload {
+				t.Fatalf(
+					"expected: message payload [%s]\ngot:   payload [%s]",
+					expectedPayload,
+					testPayload.Payload,
+				)
+			}
+			return
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
 		}
 	}
 }
@@ -121,8 +235,9 @@ type protocolIdentifier struct {
 }
 
 type testMessage struct {
-	ID      *identity
-	Payload string
+	Sender    *identity
+	Recipient *identity
+	Payload   string
 }
 
 func (m *testMessage) Type() string {
@@ -136,10 +251,10 @@ func (m *testMessage) Marshal() ([]byte, error) {
 func (m *testMessage) Unmarshal(bytes []byte) error {
 	var message testMessage
 	if err := json.Unmarshal(bytes, &message); err != nil {
-		fmt.Println("hit this error")
 		return err
 	}
-	m.ID = message.ID
+	m.Sender = message.Sender
+	m.Recipient = message.Recipient
 	m.Payload = message.Payload
 
 	return nil
@@ -165,16 +280,17 @@ func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
 
-func generateDeterministicNetworkConfig(t *testing.T) *Config {
-	p := testutils.RandPeerNetParamsOrFatal(t)
-	pi := &identity{id: networkIdentity(p.ID), privKey: p.PrivKey, pubKey: p.PubKey}
-	return &Config{port: 8080, listenAddrs: []ma.Multiaddr{p.Addr}, identity: pi}
+func generateDeterministicNetworkConfig(t *testing.T) Config {
+	return Config{Port: 8080}
 }
 
 func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
-	testConfig := generateDeterministicNetworkConfig(t)
+	identity, err := generateIdentity(0)
+	if err != nil {
+		return nil, err
+	}
 
-	host, identity, err := discoverAndListen(ctx, testConfig)
+	host, err := discoverAndListen(ctx, identity, 8080)
 	if err != nil {
 		return nil, err
 	}
@@ -199,19 +315,19 @@ func buildTestProxies(ctx context.Context, t *testing.T, num int) ([]*provider, 
 	return proxies, nil
 }
 
-func connectNetworks(ctx context.Context, t *testing.T, proxies []*provider) {
+func connectNetworks(ctx context.Context, t *testing.T, providers []*provider) {
 	var waitGroup sync.WaitGroup
 
-	for i, proxy := range proxies {
+	for i, provider := range providers {
 		// connect to all other peers, proxies after i+1, for good connectivity
-		for _, peer := range proxies[i+1:] {
+		for _, peer := range providers[i+1:] {
 			waitGroup.Add(1)
-			proxy.host.Peerstore().AddAddr(
+			provider.host.Peerstore().AddAddr(
 				peer.host.ID(),
 				peer.host.Network().ListenAddresses()[0],
 				peerstore.PermanentAddrTTL,
 			)
-			_, err := proxy.host.Network().DialPeer(ctx, peer.host.ID())
+			_, err := provider.host.Network().DialPeer(ctx, peer.host.ID())
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -8,10 +8,14 @@ func BasicMessage(
 	networkSenderID net.TransportIdentifier,
 	protocolSenderID net.ProtocolIdentifier,
 	payload interface{},
+	messageType string,
 ) net.Message {
-	return &basicMessage{networkSenderID,
+	return &basicMessage{
+		networkSenderID,
 		protocolSenderID,
-		payload}
+		payload,
+		messageType,
+	}
 }
 
 // basicMessage is a struct-based trivial implementation of the net.Message
@@ -20,6 +24,7 @@ type basicMessage struct {
 	networkSenderID  net.TransportIdentifier
 	protocolSenderID net.ProtocolIdentifier
 	payload          interface{}
+	messageType      string
 }
 
 func (m *basicMessage) TransportSenderID() net.TransportIdentifier {
@@ -32,4 +37,8 @@ func (m *basicMessage) ProtocolSenderID() net.ProtocolIdentifier {
 
 func (m *basicMessage) Payload() interface{} {
 	return m.payload
+}
+
+func (m *basicMessage) Type() string {
+	return m.messageType
 }

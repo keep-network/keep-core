@@ -38,9 +38,9 @@ import (
 
 // High-level description with 3 players. Note that in practice 3 players would
 // mean our threshold could be at most 1, so we would only operate with 1
-// coefficient. We do 3 players and 3 coefficients for explanatory purposes:
+// coefficient. We do 3 players and threshold equals 2 for explanatory purposes:
 //
-// Take 3 players. Each generates a random polynomial:
+// Take 3 players. Each generates a random polynomial of `dishonestThreshold` degree:
 //
 // f_1(x) = a_10 + a_11 x + a_12 x^2
 // f_2(x) = a_20 + a_21 x + a_22 x^2
@@ -105,10 +105,6 @@ type memberCore struct {
 	BlsID bls.ID
 	// The number of members in the complete group.
 	groupSize int
-	// The threshold of group members who must be honest in order for the
-	// generated key to be uncompromised. Corresponds to the number of secret
-	// shares and public commitments of this group member.
-	threshold int
 	// The BLS IDs of all members of this member's group, including the member
 	// itself. Initially empty, populated as each other member announces its
 	// presence.
@@ -119,13 +115,16 @@ type memberCore struct {
 // initiation of the distributed key generation process.
 type LocalMember struct {
 	memberCore
-	// Created locally, these are the `threshold` secret components that,
+	// The maximum number of group members who could be dishonest in order for the
+	// generated key to be uncompromised.
+	dishonestThreshold int
+	// Created locally, these are the `dishonestThreshold + 1` secret components that,
 	// combined, represent this group member's share of the group secret key.
 	// They are used to generate shares of this member's group secret key share
 	// for other members, which can be verified against the public commitments
 	// from this member.
 	secretShares []bls.SecretKey
-	// Created locally from secretShares, these are the `threshold` public
+	// Created locally from secretShares, these are the `dishonestThreshold + 1` public
 	// commitments to this group member's secret shares, which are broadcast to
 	// all other members.
 	shareCommitments []bls.PublicKey
@@ -209,6 +208,8 @@ type Member struct {
 	// This group member's share of the group secret key; nil if not yet
 	// computed.
 	groupSecretKeyShare *bls.SecretKey
+	// The minimum number of participants needed to produce a valid signature.
+	signingThreshold int
 	// The final list of qualified group members; empty if not yet computed.
 	qualifiedMembers []bls.ID
 }
@@ -223,13 +224,13 @@ func (mc *memberCore) MemberID() string {
 // be unique per group member.
 //
 // Returns an error if the id fails to be read as a valid hex string, or if the
-// threshold >= groupSize / 2, as the distributed key generation and threshold
+// `dishonestThreshold` >= `groupSize` / 2, as the distributed key generation and threshold
 // signature algorithm security breaks down past that point.
-func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
-	if threshold >= groupSize/2 {
+func NewMember(id string, dishonestThreshold int, groupSize int) (*LocalMember, error) {
+	if float64(dishonestThreshold) >= float64(groupSize)/2 {
 		return nil, fmt.Errorf(
 			"threshold %v >= %v / 2, so group security cannot be guaranteed",
-			threshold,
+			dishonestThreshold,
 			groupSize,
 		)
 	}
@@ -240,6 +241,10 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 		return nil, err
 	}
 
+	// According to [GJKR 99] the polynomial is of degree `dishonestThreshold`,
+	// it means that we have `dishonestThreshold + 1` coefficients in the polynomial,
+	// which is also the number of `secretShares` and `shareCommitments`
+	//
 	// Note: bls.SecretKey, before we call some sort of `Set` on it, can be
 	// considered a zeroed *container* for a secret key.
 	//
@@ -247,8 +252,9 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 	//    cryptographically secure pseudo-random number generator.
 	//  - `Set` instead initializes a key from an existing set of shares and a
 	//    group member bls.ID.
-	secretShares := make([]bls.SecretKey, threshold)
-	shareCommitments := make([]bls.PublicKey, threshold)
+	secretSharesCount := dishonestThreshold + 1
+	secretShares := make([]bls.SecretKey, secretSharesCount)
+	shareCommitments := make([]bls.PublicKey, secretSharesCount)
 
 	// Alternate description from original Pedersen VSS paper, [Ped91b]
 	// reference in [GJKR 99]:
@@ -270,7 +276,7 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 	// and store them in secretShares. We also generate the equivalent public
 	// keys, C_ik = g^{a_ik}·h^{b_ik} mod p, which are stored as the commitments
 	// to those shares.
-	for i := 0; i < threshold; i++ {
+	for i := 0; i < secretSharesCount; i++ {
 		secretShares[i].SetByCSPRNG()
 
 		// The public keys for each share of this group member's secret key
@@ -287,11 +293,11 @@ func NewMember(id string, threshold int, groupSize int) (*LocalMember, error) {
 			ID:        fmt.Sprintf("0x%010s", id),
 			BlsID:     blsID,
 			groupSize: groupSize,
-			threshold: threshold,
 			memberIDs: make([]*bls.ID, 0, groupSize),
 		},
-		secretShares:     secretShares,
-		shareCommitments: shareCommitments,
+		dishonestThreshold: dishonestThreshold,
+		secretShares:       secretShares,
+		shareCommitments:   shareCommitments,
 	}, nil
 }
 
@@ -308,8 +314,8 @@ func (lm *LocalMember) MemberListComplete() bool {
 	return len(lm.memberIDs) >= lm.groupSize
 }
 
-// Commitments returns the `threshold` public commitments this group member has
-// generated corresponding to the `threshold` shares of its secret key.
+// Commitments returns the `dishonestThreshold + 1` public commitments this group member has
+// generated corresponding to the `dishonestThreshold + 1` shares of its secret key.
 func (lm *LocalMember) Commitments() []bls.PublicKey {
 	return lm.shareCommitments
 }
@@ -518,15 +524,15 @@ func (jm *JustifyingMember) deleteUnjustifiedShares() {
 // with a share of the private key.
 //
 // Returns an error if, during finalization, the final set of qualified members
-// (including this member) is less than the `threshold`.
+// (including this member) is less than the `dishonestThreshold+1`.
 func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 	jm.deleteUnjustifiedShares()
 
 	// Note: this member is counted as a qualified member.
-	if len(jm.receivedShares) < jm.threshold-1 {
+	if len(jm.receivedShares) < jm.dishonestThreshold {
 		return nil, fmt.Errorf(
 			"required %v qualified members but only had %v",
-			jm.threshold,
+			jm.dishonestThreshold+1,
 			len(jm.receivedShares)+1,
 		)
 	}
@@ -540,7 +546,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 
 	// [GJKR 99], Fig 2, 4(c)? There is an accusation flow around public key
 	//            			   computation as well...
-	combinedCommitments := make([]bls.PublicKey, jm.threshold)
+	combinedCommitments := make([]bls.PublicKey, len(jm.shareCommitments))
 	for i, commitment := range jm.shareCommitments {
 		combinedCommitments[i] = commitment
 	}
@@ -562,6 +568,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 		memberCore:          jm.memberCore,
 		groupSecretKeyShare: groupSecretKeyShare,
 		groupPublicKey:      &groupPublicKey,
+		signingThreshold:    jm.dishonestThreshold + 1,
 		qualifiedMembers:    qualifiedMembers,
 	}, nil
 }
@@ -576,24 +583,24 @@ func (m *Member) GroupPublicKeyBytes() [96]byte {
 }
 
 // SignatureShare returns this member's serialized share of the threshold
-// signature for the given message. It can be combined with `threshold` other
+// signature for the given message. It can be combined with `signingThreshold` other
 // signatures to produce a valid group signature. This group signature will be
 // the same no matter which other group members' signatures are combined, as
-// long as there are at least `threshold` of them.
+// long as there are at least `signingThreshold` of them.
 func (m *Member) SignatureShare(message string) []byte {
 	return m.groupSecretKeyShare.Sign(message).Serialize()
 }
 
 // CompleteSignature takes a set of signature shares, bls.IDs associated with
 // the bytes of each member's signature, and combines them into one complete
-// signature. Returns an error if the number of signature shares is less than
-// the group threshold.
+// signature. Returns an error if the number of signature shares is less then
+// the `signingThreshold`.
 func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign, error) {
-	if len(signatureShares) < m.threshold {
+	if len(signatureShares) < m.signingThreshold {
 		return nil, fmt.Errorf(
 			"%v shares are insufficient for a complete signature; need %v",
 			len(signatureShares),
-			m.threshold,
+			m.signingThreshold,
 		)
 	}
 
@@ -602,7 +609,9 @@ func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign
 	for _, memberID := range m.memberIDs {
 		if serializedShare, found := signatureShares[*memberID]; found {
 			share := bls.Sign{}
-			share.Deserialize(serializedShare)
+			if err := share.Deserialize(serializedShare); err != nil {
+				return nil, fmt.Errorf("failed to deserliaze share %v with err: %v", serializedShare, err)
+			}
 
 			availableIDs = append(availableIDs, *memberID)
 			deserializedShares = append(deserializedShares, share)
@@ -610,7 +619,9 @@ func (m *Member) CompleteSignature(signatureShares map[bls.ID][]byte) (*bls.Sign
 	}
 
 	fullSignature := bls.Sign{}
-	fullSignature.Recover(deserializedShares, availableIDs)
+	if err := fullSignature.Recover(deserializedShares, availableIDs); err != nil {
+		return nil, fmt.Errorf("failed to recover the fullsignature with err: %v", err)
+	}
 
 	return &fullSignature, nil
 }

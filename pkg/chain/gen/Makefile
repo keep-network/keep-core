@@ -12,29 +12,17 @@ generate_solidity_go:
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
 
 all:
-	echo all 
-	pwd
-	ls
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
 	goimports -w *.go
 	go build
-	echo all 
-	pwd
-	ls
 
 SOL=$(shell ls *.sol | sed -e 's/.sol/.go/' )
 
 gen_go: 
-	echo gen_go 
-	pwd
-	ls
 	make -f ${OP_DIR}/Makefile ${SOL}
 
 %.go : %.sol
-	echo Rule: $*
-	pwd
-	ls
-	( cd ${SOL_DIR} ; solc zeppelin-solidity/=../node_modules/zeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
+	( cd ${SOL_DIR} ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
 	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg gen --type $* --out $@ )
 	mv $@ ${OP_DIR}/$@
 

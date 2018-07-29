@@ -20,6 +20,13 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereum/go-ethereum/cmd/abigen"]
+
+[[constraint]]
+  name = "github.com/keep-network/paillier"
+  revision = "3eb21f405c6012a319b14ab5b4f6c3d982596ba5"
+  source = "https://github.com/keep-network/paillier"
+
 [[constraint]]
   name = "github.com/dfinity/go-dfinity-crypto"
   revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
@@ -53,8 +60,8 @@
 
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-peer"
-  revision = "aa0e03e559bde9d4749ad8e38595e15a6fe808fa"
-
+  revision = "e8858116ad7f0a54dfc2bb6af554f2024221d19c"
+  
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-peerstore"
   revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
@@ -67,3 +74,16 @@
   name = "github.com/urfave/cli"
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
   source = "https://github.com/keep-network/cli.git"
+
+[[override]]
+  name = "github.com/ipfs/go-datastore"
+  revision = "f2426c09e56ae390fc416f21b224c7d7ad13418c"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-kad-dht"
+  revision = "240a27a66982945ba87967a08a6e04b74b228c45"
+
+[[override]]
+  name = "github.com/gogo/protobuf"
+  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  source = "https://github.com/keep-network/protobuf.git"

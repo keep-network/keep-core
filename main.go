@@ -38,12 +38,11 @@ func main() {
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
 	app.Description = "Command line interface (CLI) for running a Keep provider"
-	app.Copyright = "" //TODO: Insert copyright printInfo later
 	app.Compiled = time.Now()
 	app.Authors = []cli.Author{
 		{
 			Name:  "Keep Network",
-			Email: "printInfo@keep.network",
+			Email: "info@keep.network",
 		},
 	}
 	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
@@ -56,21 +55,16 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
+		cmd.SmokeTestCommand,
+		cmd.StartCommand,
+		cmd.RelayCommand,
 		{
-			Name:     "print-info",
-			Usage:    "prints keep client information",
-			Category: "keep client information",
+			Name:  "print-info",
+			Usage: "Prints keep client information",
 			Action: func(c *cli.Context) error {
 				printInfo(c)
 				return nil
 			},
-		},
-		{
-			Name:        "smoke-test",
-			Usage:       "Simulates DKG and signature verification",
-			Description: "simulate Distributed Key Generation (DKG) and verify group's threshold signature",
-			Action:      cmd.SmokeTest,
-			Flags:       cmd.SmokeTestFlags,
 		},
 	}
 

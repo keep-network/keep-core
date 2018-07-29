@@ -13,3 +13,12 @@
 	KeepRandomBeacon = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
 	GroupContract = "0x139deb0dd975af8e4cc91fe9053a37e4faf37649"
 
+# Non-bootstrap node connecting to an existing network.
+# [LibP2P]
+# 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
+# 	Port = 3920
+
+# Bootstrap node creating a new network.
+# [LibP2P]
+# 	Seed = 2
+# 	Port = 3919

@@ -13,7 +13,7 @@ import (
 func TestLocalMemberCreation(t *testing.T) {
 	id := fmt.Sprintf("%x", rand.Int31())
 
-	member, err := NewMember(id, defaultThreshold, defaultGroupSize)
+	member, err := NewMember(id, defaultDishonestThreshold, defaultGroupSize)
 	if err != nil {
 		t.Fatalf("unexpected error [%v]", err)
 	}
@@ -35,8 +35,8 @@ func TestLocalMemberCreation(t *testing.T) {
 			expected:     id,
 		},
 		"threshold": {
-			propertyFunc: func(lm *LocalMember) string { return fmt.Sprintf("%v", lm.threshold) },
-			expected:     fmt.Sprintf("%v", defaultThreshold),
+			propertyFunc: func(lm *LocalMember) string { return fmt.Sprintf("%v", lm.dishonestThreshold) },
+			expected:     fmt.Sprintf("%v", defaultDishonestThreshold),
 		},
 		"group size": {
 			propertyFunc: func(lm *LocalMember) string { return fmt.Sprintf("%v", lm.groupSize) },
@@ -65,12 +65,14 @@ func TestLocalMemberFailsForHighThreshold(t *testing.T) {
 }
 
 func TestLocalMemberCommitments(t *testing.T) {
-	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+	member, _ := NewMember(defaultID, defaultDishonestThreshold, defaultGroupSize)
 
-	if len(member.Commitments()) != defaultThreshold {
+	expectedShareCommitmentsCount := defaultDishonestThreshold + 1
+
+	if len(member.Commitments()) != expectedShareCommitmentsCount {
 		t.Errorf(
 			"\nexpected: %v commitments\nactual:   %v commitments",
-			defaultThreshold,
+			expectedShareCommitmentsCount,
 			len(member.Commitments()),
 		)
 	}
@@ -97,7 +99,7 @@ func TestLocalMemberCommitments(t *testing.T) {
 }
 
 func TestLocalMemberRegistration(t *testing.T) {
-	member, _ := NewMember(defaultID, defaultThreshold, defaultGroupSize)
+	member, _ := NewMember(defaultID, defaultDishonestThreshold, defaultGroupSize)
 	member.RegisterMemberID(&member.BlsID)
 
 	otherMemberCount := defaultGroupSize - 1
@@ -436,34 +438,38 @@ func TestJustifyingMemberFinalization(t *testing.T) {
 		"all accused without justification": {
 			accuseFunc:    accuseAll,
 			justifyFunc:   justify(0, 0),
-			expectedError: fmt.Errorf("required 4 qualified members but only had 1"),
+			expectedError: fmt.Errorf("required 5 qualified members but only had 1"),
 		},
-		"all accused with less than threshold justifications": {
+		"all accused with less than `defaultDishonestThreshold` justifications": {
 			accuseFunc:    accuseAll,
-			justifyFunc:   justify(2, 0),
-			expectedError: fmt.Errorf("required 4 qualified members but only had 3"),
+			justifyFunc:   justify(defaultDishonestThreshold-1, 0),
+			expectedError: fmt.Errorf("required 5 qualified members but only had 4"),
 		},
-		"all accused with bad justifications and less than threshold good justifications": {
+		"all accused with bad justifications and less than `defaultDishonestThreshold` good justifications": {
 			accuseFunc:    accuseAll,
-			justifyFunc:   justify(2, defaultGroupSize-2),
-			expectedError: fmt.Errorf("required 4 qualified members but only had 3"),
+			justifyFunc:   justify(defaultDishonestThreshold-1, defaultGroupSize-2),
+			expectedError: fmt.Errorf("required 5 qualified members but only had 4"),
 		},
-		"all accused with threshold-1 justifications": {
+		"all accused with `defaultDishonestThreshold` justifications": {
 			accuseFunc:  accuseAll,
-			justifyFunc: justify(defaultThreshold-1, 0),
+			justifyFunc: justify(defaultDishonestThreshold, 0),
+		},
+		"all accused with `defaultDishonestThreshold+1` justifications": {
+			accuseFunc:  accuseAll,
+			justifyFunc: justify(defaultDishonestThreshold+1, 0),
 		},
 		"all accused with all justifications": {
 			accuseFunc:  accuseAll,
 			justifyFunc: justify(defaultGroupSize-1, 0),
 		},
-		"threshold-1 honest with no justifications": {
-			accuseFunc:    accuse(defaultGroupSize - defaultThreshold + 1),
+		"`defaultDishonestThreshold` honest with no justifications": {
+			accuseFunc:    accuse(defaultGroupSize - defaultDishonestThreshold),
 			justifyFunc:   justify(0, 0),
-			expectedError: fmt.Errorf("required 4 qualified members but only had 3"),
+			expectedError: fmt.Errorf("required 5 qualified members but only had 4"),
 		},
-		"threshold accused with threshold-1 justifications": {
-			accuseFunc:  accuse(defaultThreshold),
-			justifyFunc: justify(defaultThreshold-1, 0),
+		"`defaultDishonestThreshold+1` accused with `defaultDishonestThreshold` justifications": {
+			accuseFunc:  accuse(defaultDishonestThreshold + 1),
+			justifyFunc: justify(defaultDishonestThreshold, 0),
 		},
 		"bad shares without justification": {
 			badShares:  1,
@@ -481,7 +487,7 @@ func TestJustifyingMemberFinalization(t *testing.T) {
 					)
 				}
 			},
-			expectedError: fmt.Errorf("required 4 qualified members but only had 1"),
+			expectedError: fmt.Errorf("required 5 qualified members but only had 1"),
 		},
 		"bad shares with justification": {
 			badShares:  5,
