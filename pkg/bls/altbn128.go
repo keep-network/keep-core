@@ -2,8 +2,9 @@ package bls
 
 import (
 	"crypto/sha256"
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"errors"
 	"math/big"
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
 func sum(ints ...*big.Int) *big.Int {
@@ -31,20 +32,26 @@ func modSqrt(i, m *big.Int) *big.Int {
 }
 
 func yFromX(x *big.Int) *big.Int {
-    return modSqrt(sum(product(x, x, x), big.NewInt(3)), p)
+    return modSqrt(sum(product(x, x, x), big.NewInt(3)), bn256.P)
 }
 
-func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1) {
-    // TODO error out if ints are over 32 bytes
+func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
+	if len(x.Bytes()) > 32 || len(y.Bytes()) > 32 {
+		return nil, errors.New("Points on G1 are limited to 256-bit coordinates.")
+	}
 
-	m := append(x.Bytes(), y.Bytes())
+	m := append(x.Bytes(), y.Bytes()...)
 
-	return new(bn256.G1).Unmarshal(m)
+	g1 := new(bn256.G1)
+
+	_, err := g1.Unmarshal(m)
+
+	return g1, err
 }
 
 func G1HashToPoint(m []byte) *bn256.G1 {
 
-	one, three := big.NewInt(1), big.NewInt(3)
+	one := big.NewInt(1)
 
 	h := sha256.Sum256(m)
 
@@ -53,7 +60,8 @@ func G1HashToPoint(m []byte) *bn256.G1 {
 	for {
 		y := yFromX(x)
 		if y != nil {
-            return G1FromInts(x, y)
+			g1, _ := G1FromInts(x, y)
+			return g1
         }
 
 		x.Add(x, one)
@@ -62,25 +70,20 @@ func G1HashToPoint(m []byte) *bn256.G1 {
 
 func ySign(y *big.Int) byte {
     arr := y.Bytes()
-    return arr[len(arr-1)] & 1
+    return arr[len(arr)-1] & 1
 }
 
-func (g *bn256.G1) Compress() []byte {
+func Compress(g *bn256.G1) []byte {
 
     rt := make([]byte, 32)
-
-    // x := g.p.x.Bytes()
-    // y := g.p.y.Bytes()
-
-    // for i := len(x)-1; i >= 0; i-- {
-    //     rt[i] = x[i]
-    // }
 
 	marshalled := g.Marshal()
 
     for i := 31; i >= 0; i-- {
         rt[i] = marshalled[i]
     }
+
+	y := new(big.Int).SetBytes(marshalled[32:])
 
     mask := ySign(y) << 7
 
@@ -89,14 +92,18 @@ func (g *bn256.G1) Compress() []byte {
     return rt
 }
 
-func Decompress(m []byte) *bn256.G1 {
+func Decompress(m []byte) (*bn256.G1, error) {
 
-    x := new(big.Int).SetBytes(append([]byte{m[0] & 011111111}, m[1:]))
+    x := new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:]...))
     y := yFromX(x)
 
-    if ySign(m[0]) != ySign(y){
-        y = new(big.Int).minus(bn256.P, y)
+	if y == nil {
+		return nil, errors.New("Failed to decompress G1.")
+	}
+
+    if m[0] & 0x80 >> 7 != ySign(y) {
+        y = new(big.Int).Add(bn256.P, new(big.Int).Neg(y))
     }
 
-    return G1FromInts(x, y)
+	return G1FromInts(x, y)
 }
