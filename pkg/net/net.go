@@ -2,7 +2,6 @@ package net
 
 import (
 	"github.com/gogo/protobuf/proto"
-	ma "github.com/multiformats/go-multiaddr"
 )
 
 // TransportIdentifier represents the identity of a participant at the transport
@@ -56,7 +55,7 @@ type Provider interface {
 
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
-	Addrs() []ma.Multiaddr
+	AddrStrings() []string
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

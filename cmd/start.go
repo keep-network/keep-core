@@ -58,7 +58,7 @@ func Start(c *cli.Context) error {
 	}
 
 	isBootstrapNode := config.LibP2P.Seed != 0
-	nodeHeader(isBootstrapNode, netProvider.Addrs(), port)
+	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
 
 	chainProvider, err := ethereum.Connect(config.Ethereum)
 	if err != nil {

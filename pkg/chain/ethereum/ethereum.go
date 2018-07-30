@@ -35,7 +35,7 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 }
 
 func (ec *ethereumChain) SubmitGroupPublicKey(
-	groupID string,
+	requestID *big.Int,
 	key [96]byte,
 ) *async.GroupRegistrationPromise {
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
@@ -77,7 +77,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], big.NewInt(1))
+	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], requestID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise

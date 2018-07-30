@@ -3,11 +3,9 @@ package cmd
 import (
 	"fmt"
 	"strings"
-
-	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
-func nodeHeader(isBootstrapNode bool, multiaddrs []multiaddr.Multiaddr, port int) {
+func nodeHeader(isBootstrapNode bool, addrStrings []string, port int) {
 	prefix := "| "
 	suffix := " |"
 
@@ -17,12 +15,9 @@ func nodeHeader(isBootstrapNode bool, multiaddrs []multiaddr.Multiaddr, port int
 	}
 	maxLineLength := len(nodeName)
 
-	ipStrings := make([]string, 0, len(multiaddrs))
-	for _, multiaddr := range multiaddrs {
-		multiaddrString := multiaddr.String()
-		ipStrings = append(ipStrings, multiaddr.String())
-		if len(multiaddrString) > maxLineLength {
-			maxLineLength = len(multiaddrString)
+	for _, addrString := range addrStrings {
+		if addrLength := len(addrString); addrLength > maxLineLength {
+			maxLineLength = addrLength
 		}
 	}
 
@@ -38,7 +33,7 @@ func nodeHeader(isBootstrapNode bool, multiaddrs []multiaddr.Multiaddr, port int
 		dashes,
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Node: %s", nodeName)),
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Port: %d", port)),
-		buildMultiLine(maxLineLength, prefix, suffix, "IPs : ", ipStrings),
+		buildMultiLine(maxLineLength, prefix, suffix, "IPs : ", addrStrings),
 		dashes,
 	)
 }

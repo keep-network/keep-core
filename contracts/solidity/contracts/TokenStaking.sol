@@ -1,8 +1,8 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
-import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
 import "./utils/UintArrayUtils.sol";
 
@@ -45,8 +45,8 @@ contract TokenStaking {
      * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    function TokenStaking(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
-        require(_tokenAddress != address(0x0));
+    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
+        require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = StandardToken(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
         withdrawalDelay = _delay;
@@ -64,11 +64,8 @@ contract TokenStaking {
         extraData_; // Suppress unused variable warning.
         emit ReceivedApproval(_value);
 
-        // Make sure provided token contract is the same one linked to this contract.
-        require(StandardToken(_token) == token);
-
-        // Make sure sender has enough tokens.
-        require(_value <= token.balanceOf(_from));
+        require(StandardToken(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, this, _value);
@@ -88,7 +85,8 @@ contract TokenStaking {
      * @param _value The amount to be unstaked.
      */
     function initiateUnstake(uint256 _value) public returns (uint256 id) {
-        require(_value <= balances[msg.sender]);
+
+        require(_value <= balances[msg.sender], "Staker must have enough tokens to unstake.");
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
 
@@ -109,7 +107,7 @@ contract TokenStaking {
      * @param _id Withdrawal ID.
      */
     function finishUnstake(uint256 _id) public {
-        require(now >= withdrawals[_id].createdAt.add(withdrawalDelay));
+        require(now >= withdrawals[_id].createdAt.add(withdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
 
         address staker = withdrawals[_id].staker;
 
@@ -130,7 +128,7 @@ contract TokenStaking {
      * @param _staker The address to query the balance of.
      * @return An uint256 representing the amount owned by the passed address.
      */
-    function stakeBalanceOf(address _staker) public constant returns (uint256 balance) {
+    function stakeBalanceOf(address _staker) public view returns (uint256 balance) {
         return balances[_staker];
     }
 
@@ -139,7 +137,7 @@ contract TokenStaking {
      * @param _id ID of withdrawal request.
      * @return staker, amount, createdAt.
      */
-    function getWithdrawal(uint256 _id) public constant returns (address, uint256, uint256) {
+    function getWithdrawal(uint256 _id) public view returns (address, uint256, uint256) {
         return (withdrawals[_id].staker, withdrawals[_id].amount, withdrawals[_id].createdAt);
     }
 
@@ -148,7 +146,7 @@ contract TokenStaking {
      * @param _staker The address to query.
      * @return An uint256 array of withdrawal IDs.
      */
-    function getWithdrawals(address _staker) public constant returns (uint256[]) {
+    function getWithdrawals(address _staker) public view returns (uint256[]) {
         return withdrawalIndices[_staker];
     }
 }

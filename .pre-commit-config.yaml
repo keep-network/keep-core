@@ -9,3 +9,14 @@ repos:
    rev: 63e729f
    hooks:
     - id: check-added-large-files
+ - repo: local
+   hooks:
+    - id: solium
+      name: Solidity linter
+      language: node
+      entry: solium
+      args:
+      - --dir=contracts/solidity/contracts/
+      - --config=contracts/solidity/.soliumrc.json
+      additional_dependencies:
+      - solium@1.1.8

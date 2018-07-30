@@ -1,6 +1,6 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./EternalStorage.sol";
 
 
@@ -21,7 +21,7 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() public payable {
-        revert();
+        revert("Can not call contract without explicitly calling a function.");
     }
 
     /**
@@ -31,7 +31,7 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
         public
         onlyOwner
     {
-        require(!initialized());
+        require(!initialized(), "Contract is already initialized.");
         boolStorage[keccak256("KeepRandomBeaconStub")] = true;
     }
 
@@ -55,8 +55,8 @@ contract KeepRandomBeaconStub is Ownable, EternalStorage {
 
         // Return mocked data instead of interacting with relay.
         uint256 _previousEntry = uintStorage[keccak256("previousEntry")];
-        uint256 _groupSignature = uint256(keccak256(_previousEntry, block.timestamp, _seed));
-        uint256 _groupID = uint256(keccak256(block.timestamp, 1));
+        uint256 _groupSignature = uint256(keccak256(abi.encodePacked(_previousEntry, block.timestamp, _seed)));
+        uint256 _groupID = uint256(keccak256(abi.encodePacked(block.timestamp, uint(1))));
         emit RelayEntryGenerated(requestID, _groupSignature, _groupID, _previousEntry, block.number);
 
         uintStorage[keccak256("previousEntry")] = _groupSignature;
