@@ -102,7 +102,7 @@ func TestSignRound1And2(t *testing.T) {
 				round2Messages = test.modifyRound2Messages(round2Messages)
 			}
 
-			_, _, err = round2Signers[0].combineMessages(
+			_, _, err = round2Signers[0].CombineRound2Messages(
 				round1Messages,
 				round2Messages,
 			)
