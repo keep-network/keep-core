@@ -65,7 +65,8 @@ func relayRequest(c *cli.Context) error {
 	wait := make(chan struct{})
 	var requestID *big.Int
 	provider.ThresholdRelay().OnRelayEntryRequested(func(request *event.Request) {
-		fmt.Println(
+		fmt.Fprintf(
+			os.Stderr,
 			"Relay entry request submitted with id ",
 			request.RequestID.String(),
 			".",
@@ -82,7 +83,8 @@ func relayRequest(c *cli.Context) error {
 		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
 			valueBigInt := &big.Int{}
 			valueBigInt.SetBytes(entry.Value[:])
-			fmt.Printf(
+			fmt.Fprintf(
+				os.Stderr,
 				"Relay entry received with value: [%s].\n",
 				valueBigInt.String(),
 			)
@@ -93,10 +95,18 @@ func relayRequest(c *cli.Context) error {
 
 	provider.ThresholdRelay().RequestRelayEntry(big.NewInt(2), big.NewInt(2)).OnComplete(func(ev *event.Request, err error) {
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "requesting error: %v\n", err)
+			fmt.Fprintf(
+				os.Stderr,
+				"Error in requesting relay entry: [%v].\n",
+				err,
+			)
 			return
 		}
-		fmt.Printf("Valid ev: %+v\n", ev)
+		fmt.Fprintf(
+			os.Stderr,
+			"Relay entry requested: [%v].\n",
+			ev,
+		)
 	})
 
 	select {
