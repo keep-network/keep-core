@@ -91,7 +91,13 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
-	provider.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
+	provider.ThresholdRelay().RequestRelayEntry(big.NewInt(2), big.NewInt(2)).OnComplete(func(ev *event.Request, err error) {
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "requesting error: %v\n", err)
+			return
+		}
+		fmt.Printf("Valid ev: %+v\n", ev)
+	})
 
 	select {
 	case <-wait:
