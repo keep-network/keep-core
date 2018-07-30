@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	setupBlocks     = 15
-	signatureBlocks = 10
+	setupBlocks     = 1
+	signatureBlocks = 2
 )
 
 // Init initializes a given broadcast channel to be able to perform distributed
