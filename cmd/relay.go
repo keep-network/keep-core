@@ -67,9 +67,8 @@ func relayRequest(c *cli.Context) error {
 	provider.ThresholdRelay().OnRelayEntryRequested(func(request *event.Request) {
 		fmt.Fprintf(
 			os.Stderr,
-			"Relay entry request submitted with id ",
+			"Relay entry request submitted with id %s.",
 			request.RequestID.String(),
-			".",
 		)
 		requestMutex.Lock()
 		requestID = request.RequestID
