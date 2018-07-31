@@ -43,4 +43,7 @@ contract KeepRandomBeaconUpgradeExample is KeepRandomBeaconImplV1 {
         return _newVar;
     }
 
+    function version() public pure returns (string) {
+        return "V2";
+    }
 }
