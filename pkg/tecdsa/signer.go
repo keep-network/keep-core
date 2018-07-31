@@ -636,6 +636,8 @@ func randomInRange(min *big.Int, max *big.Int) (*big.Int, error) {
 	return new(big.Int).Add(rand, min), nil
 }
 
+// Round4Signer represents state of `Signer` after executing the fourth round
+// of signing algorithm.
 type Round4Signer struct {
 	Signer
 
@@ -643,6 +645,14 @@ type Round4Signer struct {
 	randomFactor *paillier.Cypher // u = E(ρ)
 }
 
+// SignRound4 executes the fourth round of T-ECDSA signing as described in
+// [GGN 16], section 4.3.
+//
+// In the round 4, signer reveals signature random multiple public share (`r_i`)
+// and signature unmask share (`w_i`) evaluated in the previous round,
+// decommitment key allowing to validate commitment to those values that was
+// published in the previous round as well as ZKP allowing to check their
+// correctness.
 func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 	zkp, err := zkp.CommitEcdsaSignatureFactorRangeProof(
 		s.signatureRandomMultiplePublicShare,
@@ -679,42 +689,16 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 	return signer, round4Message, nil
 }
 
-type Round5Signer struct {
-	Signer
-
-	signatureUnmask               *paillier.Cypher // w
-	signatureRandomMultiplePublic *curve.Point     // R
-}
-
-func (s *Round4Signer) SignRound5(
-	round3Messages []*SignRound3Message,
-	round4Messages []*SignRound4Message,
-) (
-	*Round5Signer, error,
-) {
-	// w = w_1 + w_2 + ... + w_n
-	// R = r_i + r_2 + ... + r_n
-	signatureUnmask, signatureRandomMultiplePublic, err := s.combineMessages(
-		round3Messages,
-		round4Messages,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not execute round 5 of signing [%v]", err,
-		)
-	}
-
-	signer := &Round5Signer{
-		Signer: s.Signer,
-
-		signatureUnmask:               signatureUnmask,
-		signatureRandomMultiplePublic: signatureRandomMultiplePublic,
-	}
-
-	return signer, nil
-}
-
-func (s *Round4Signer) combineMessages(
+// CombineRound4Messages takes all messages from the third and fourth signing
+// round, validates and combines them together in order to evaluate public
+// signature random multiple `R` and signature unmask parameter `w`:
+//
+// w = w_1 + w_2 + ... + w_n = E(kρ + cq)
+// R = r_1 + r_2 + ... + r_n = g^k
+//
+// This function should be called before the `SignRound5` and the returned
+// values should be used as a parameters to `SignRound5`.
+func (s *Round4Signer) CombineRound4Messages(
 	round3Messages []*SignRound3Message,
 	round4Messages []*SignRound4Message,
 ) (
@@ -793,4 +777,30 @@ func (s *Round4Signer) combineMessages(
 	err = nil
 
 	return
+}
+
+// Round5Signer represents state of `Signer` after executing the fifth round
+// of signing algorithm.
+type Round5Signer struct {
+	Signer
+
+	signatureUnmask               *paillier.Cypher // w
+	signatureRandomMultiplePublic *curve.Point     // R
+}
+
+// SignRound5 executes the fifth round of signing
+func (s *Round4Signer) SignRound5(
+	signatureUnmask *paillier.Cypher, // w
+	signatureRandomMultiplePublic *curve.Point, // R
+) (
+	*Round5Signer, error,
+) {
+	signer := &Round5Signer{
+		Signer: s.Signer,
+
+		signatureUnmask:               signatureUnmask,
+		signatureRandomMultiplePublic: signatureRandomMultiplePublic,
+	}
+
+	return signer, nil
 }
