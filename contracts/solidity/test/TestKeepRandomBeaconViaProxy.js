@@ -19,7 +19,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     stakingProxy = await StakingProxy.new();
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
     implV1 = await KeepRandomBeaconImplV1.new();
-    proxy = await Proxy.new('v1', implV1.address);
+    proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
     await implViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(30));
   });

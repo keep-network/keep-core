@@ -21,7 +21,7 @@ module.exports = (deployer) => {
     await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
     await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
     await deployer.deploy(KeepRandomBeaconImplV1);
-    await deployer.deploy(KeepRandomBeacon, "v1.0.0", KeepRandomBeaconImplV1.address);
+    await deployer.deploy(KeepRandomBeacon, KeepRandomBeaconImplV1.address);
     await deployer.deploy(KeepGroupImplV1);
     await deployer.deploy(KeepGroup, "v1.0.0", KeepGroupImplV1.address);
     await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address).initialize(StakingProxy.address, minPayment, minStake, withdrawalDelay);
