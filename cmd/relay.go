@@ -92,7 +92,10 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
-	provider.ThresholdRelay().RequestRelayEntry(big.NewInt(2), big.NewInt(2)).OnComplete(func(ev *event.Request, err error) {
+	provider.ThresholdRelay().RequestRelayEntry(
+		big.NewInt(2),
+		big.NewInt(2),
+	).OnComplete(func(ev *event.Request, err error) {
 		if err != nil {
 			fmt.Fprintf(
 				os.Stderr,
