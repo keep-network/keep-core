@@ -1,6 +1,7 @@
 package tecdsa
 
 import (
+	"crypto/rand"
 	"errors"
 	"math/big"
 	"reflect"
@@ -118,6 +119,72 @@ func TestSignRound1And2(t *testing.T) {
 	}
 }
 
+func TestSignRound3And4(t *testing.T) {
+	var tests = map[string]struct {
+		modifyRound3Messages func(msgs []*SignRound3Message) []*SignRound3Message
+		modifyRound4Messages func(msgs []*SignRound4Message) []*SignRound4Message
+		expectedError        error
+	}{
+		"positive validation": {
+			expectedError: nil,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			round2Signers, secretKeyRandomFactor, secretKeyMultiple, err :=
+				initializeNewRound2SignerGroup()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			round3Messages := make([]*SignRound3Message, len(round2Signers))
+			round4Messages := make([]*SignRound4Message, len(round2Signers))
+			round4Signers := make([]*Round4Signer, len(round2Signers))
+
+			for i, signer := range round2Signers {
+				round3Signer, round3Message, err := signer.SignRound3(
+					secretKeyRandomFactor, secretKeyMultiple,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				round4Signer, round4Message, err := round3Signer.SignRound4()
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				round3Messages[i] = round3Message
+				round4Messages[i] = round4Message
+				round4Signers[i] = round4Signer
+			}
+
+			if test.modifyRound3Messages != nil {
+				round3Messages = test.modifyRound3Messages(round3Messages)
+			}
+
+			if test.modifyRound4Messages != nil {
+				round4Messages = test.modifyRound4Messages(round4Messages)
+			}
+
+			_, _, err = round4Signers[0].CombineRound4Messages(
+				round3Messages,
+				round4Messages,
+			)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"unexpected error\nexpected %v\nactual %v",
+					test.expectedError,
+					err,
+				)
+			}
+
+		})
+	}
+}
+
 // Crates and initializes a new group of `Signer`s with T-ECDSA key set and
 // ready for signing.
 func initializeNewSignerGroup() ([]*Signer, error) {
@@ -135,6 +202,40 @@ func initializeNewSignerGroup() ([]*Signer, error) {
 	}
 
 	return signers, nil
+}
+
+func initializeNewRound2SignerGroup() (
+	round2Signers []*Round2Signer,
+	secretKeyRandomFactor *paillier.Cypher,
+	secretKeyMultiple *paillier.Cypher,
+	err error,
+) {
+	signers, err := initializeNewSignerGroup()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	round2Signers = make([]*Round2Signer, len(signers))
+	for i, signer := range signers {
+		round2Signers[i] = &Round2Signer{
+			Signer: *signer,
+		}
+	}
+
+	paillierKey := signers[0].paillierKey
+
+	secretKeyRandomFactor, err = paillierKey.Encrypt(
+		big.NewInt(1337), rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	secretKeyMultiple = paillierKey.Mul(
+		signers[0].dsaKey.secretKey, big.NewInt(1337),
+	)
+
+	return
 }
 
 func TestRandomInRange(t *testing.T) {
