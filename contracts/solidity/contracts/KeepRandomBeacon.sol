@@ -1,7 +1,6 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./EternalStorage.sol";
 
 /**
  * @title Keep Random Beacon
@@ -10,7 +9,7 @@ import "./EternalStorage.sol";
  * the address of the upgraded contract. All calls to this proxy contract
  * are delegated to the implementation contract.
  */
-contract KeepRandomBeacon is Ownable, EternalStorage {
+contract KeepRandomBeacon is Ownable {
 
     // Storage position of the address of the current implementation
     bytes32 private constant implementationPosition = keccak256("network.keep.randombeacon.proxy.implementation");
