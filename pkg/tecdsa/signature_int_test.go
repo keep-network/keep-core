@@ -27,11 +27,11 @@ func TestCustomSignatureVerification(t *testing.T) {
 	v := byte(1) // Recovery ID - 0 or 1
 
 	if result, err := verifySignatureInBitcoin(curve, hash, publicKeyX, publicKeyY, r, s); !result || err != nil {
-		t.Fatalf("Signature verification in btcec failed [%s]", err)
+		t.Fatalf("Signature verification for bitcoin failed [%s]", err)
 	}
 
 	if result, err := verifySignatureInEthereum(curve, hash, publicKeyX, publicKeyY, r, s, v); !result || err != nil {
-		t.Fatalf("Signature verification in ethereum failed [%s]", err)
+		t.Fatalf("Signature verification for ethereum failed [%s]", err)
 	}
 }
 
@@ -104,55 +104,4 @@ func verifySignatureInEthereum(
 		return false, fmt.Errorf("Recovered Public Key doesn't match expected")
 	}
 	return true, nil
-}
-
-// We might not need this test
-func TestBitcoinCompactSignature(t *testing.T) {
-	hash := []byte("test message")
-	curve := btcec.S256()
-
-	// Generate Private and Public keys
-	privateKey, _ := btcec.NewPrivateKey(curve)
-	publicKey := privateKey.PubKey()
-	isPubKeyCompressed := false
-
-	// Sign the message
-	sig, err := btcec.SignCompact(curve, privateKey, hash, isPubKeyCompressed)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Logf("%v", sig)
-
-	recoveredKey, wasCompressed, err := btcec.RecoverCompact(curve, sig, hash)
-	if err != nil {
-		t.Error(err)
-	}
-	if !reflect.DeepEqual(publicKey, recoveredKey) {
-		t.Error("Recovered key doesn't match original")
-	}
-	if wasCompressed != isPubKeyCompressed {
-		t.Errorf("recovered pubkey doesn't match compressed state (%v vs %v)", isPubKeyCompressed, wasCompressed)
-		return
-	}
-}
-
-// We might not need this test
-func TestBtecSignatureBtcecVerification(t *testing.T) {
-	hash := []byte("test message")
-	curve := btcec.S256()
-
-	// Generate Private and Public keys
-	privateKey, _ := btcec.NewPrivateKey(curve)
-	publicKey := privateKey.PubKey()
-
-	// Sign the message
-	sig, err := privateKey.Sign(hash)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if result, err := verifySignatureInBitcoin(curve, hash, publicKey.X, publicKey.Y, sig.R, sig.S); !result || err != nil {
-		t.Fatalf("Signature verification in btcec failed [%s]", err)
-	}
 }
