@@ -655,7 +655,7 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 	zkp, err := zkp.CommitEcdsaSignatureFactorRangeProof(
 		s.signatureRandomMultiplePublicShare,
 		s.signatureUnmaskShare,
-		s.secretKeyMultiple,
+		s.secretKeyRandomFactor,
 		s.signatureRandomMultipleSecretShare,
 		s.signatureRandomMultipleMaskShare,
 		s.paillierRandomness,
