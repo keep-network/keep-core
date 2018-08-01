@@ -628,24 +628,6 @@ func (s *Round2Signer) SignRound3(
 	return signer, round3Message, nil
 }
 
-// Returns random int from [min, max]
-func randomInRange(min *big.Int, max *big.Int) (*big.Int, error) {
-	// for rand(max) returning number from [0, max) we need to do:
-	// result = rand(max - min + 1) + min
-	// in order to generate random number from [min, max]
-
-	randMax := new(big.Int)
-	randMax.Sub(max, min)
-	randMax.Add(randMax, big.NewInt(1))
-
-	rand, err := rand.Int(rand.Reader, randMax)
-	if err != nil {
-		return nil, err
-	}
-
-	return new(big.Int).Add(rand, min), nil
-}
-
 // Round4Signer represents state of `Signer` after executing the fourth round
 // of signing algorithm.
 type Round4Signer struct {
