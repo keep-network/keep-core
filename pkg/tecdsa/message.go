@@ -101,6 +101,8 @@ type SignRound3Message struct {
 	signatureFactorCommitment *commitment.TrapdoorCommitment
 }
 
+// SignRound4Message is a message produced by each `Signer` as a result of
+// executing the fourth round of T-ECDSA signing algorithm.
 type SignRound4Message struct {
 	signerID string
 
@@ -113,7 +115,7 @@ type SignRound4Message struct {
 
 func (msg *SignRound4Message) isValid(
 	signatureFactorCommitment *commitment.TrapdoorCommitment,
-	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
+	secretKeyRandomFactor *paillier.Cypher, // u = E(ρ)
 	zkpParams *zkp.PublicParameters,
 ) bool {
 	commitmentValid := signatureFactorCommitment.Verify(
@@ -125,7 +127,7 @@ func (msg *SignRound4Message) isValid(
 	zkpValid := msg.signatureFactorProof.Verify(
 		msg.signatureRandomMultiplePublicShare,
 		msg.signatureUnmaskShare,
-		secretKeyRandomMultiple,
+		secretKeyRandomFactor,
 		zkpParams,
 	)
 
