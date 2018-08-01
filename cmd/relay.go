@@ -95,7 +95,7 @@ func relayRequest(c *cli.Context) error {
 	provider.ThresholdRelay().RequestRelayEntry(
 		big.NewInt(0),
 		big.NewInt(0),
-	).OnComplete(func(ev *event.Request, err error) {
+	).OnComplete(func(request *event.Request, err error) {
 		if err != nil {
 			fmt.Fprintf(
 				os.Stderr,
@@ -107,7 +107,7 @@ func relayRequest(c *cli.Context) error {
 		fmt.Fprintf(
 			os.Stdout,
 			"Relay entry requested: [%v].\n",
-			ev,
+			request,
 		)
 	})
 
