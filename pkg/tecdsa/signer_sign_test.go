@@ -57,9 +57,7 @@ func TestSignRound1And2(t *testing.T) {
 			modifyRound2Messages: func(
 				round2Messages []*SignRound2Message,
 			) []*SignRound2Message {
-				round2Messages[2].secretKeyRandomFactorShare = &paillier.Cypher{
-					C: big.NewInt(1337),
-				}
+				round2Messages[2].secretKeyRandomFactorShare.C = big.NewInt(1337)
 				return round2Messages
 			},
 			expectedError: errors.New(
@@ -127,6 +125,48 @@ func TestSignRound3And4(t *testing.T) {
 	}{
 		"positive validation": {
 			expectedError: nil,
+		},
+		"negative validation - too few round 3 messages": {
+			modifyRound3Messages: func(
+				round3Messages []*SignRound3Message,
+			) []*SignRound3Message {
+				return []*SignRound3Message{round3Messages[0]}
+			},
+			expectedError: errors.New(
+				"round 3 messages required from all group members; got 1, expected 10",
+			),
+		},
+		"negative validation - too few round 4 messages": {
+			modifyRound4Messages: func(
+				round4Messages []*SignRound4Message,
+			) []*SignRound4Message {
+				return []*SignRound4Message{round4Messages[0]}
+			},
+			expectedError: errors.New(
+				"round 4 messages required from all group members; got 1, expected 10",
+			),
+		},
+		"negative validation - missing round 3 message for signer": {
+			modifyRound3Messages: func(
+				round3Messages []*SignRound3Message,
+			) []*SignRound3Message {
+				round3Messages[3].signerID = "evil"
+				return round3Messages
+			},
+			expectedError: errors.New(
+				"no matching round 4 message for signer with ID = evil",
+			),
+		},
+		"negative validation - invalid ZKP": {
+			modifyRound4Messages: func(
+				round4Messages []*SignRound4Message,
+			) []*SignRound4Message {
+				round4Messages[5].signatureUnmaskShare.C = big.NewInt(1337)
+				return round4Messages
+			},
+			expectedError: errors.New(
+				"round 4 message rejected",
+			),
 		},
 	}
 
