@@ -57,7 +57,7 @@ func TestSignRound1And2(t *testing.T) {
 			modifyRound2Messages: func(
 				round2Messages []*SignRound2Message,
 			) []*SignRound2Message {
-				round2Messages[2].randomFactorShare = &paillier.Cypher{
+				round2Messages[2].secretKeyRandomFactorShare = &paillier.Cypher{
 					C: big.NewInt(1337),
 				}
 				return round2Messages
