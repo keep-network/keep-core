@@ -105,7 +105,7 @@ func relayRequest(c *cli.Context) error {
 			return
 		}
 		fmt.Fprintf(
-			os.Stderr,
+			os.Stdout,
 			"Relay entry requested: [%v].\n",
 			ev,
 		)
