@@ -147,9 +147,11 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	// GIVEN
 	message := big.NewInt(430)
 
-	privateKey := paillier.CreatePrivateKey(big.NewInt(23), big.NewInt(47))
+	p, _ := new(big.Int).SetString("104479735358598948369258156463683391052543755432914893102752306517616376250927", 10)
+	q, _ := new(big.Int).SetString("110280671641689691092051226222060939019447720119674706500089479951904142152567", 10)
+	paillierKey := paillier.CreatePrivateKey(p, q)
 
-	params, err := GeneratePublicParameters(privateKey.N, secp256k1.S256())
+	params, err := GeneratePublicParameters(paillierKey.N, secp256k1.S256())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +161,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encryptedSecretDsaKey, err := privateKey.EncryptWithR(message, r)
+	encryptedSecretDsaKey, err := paillierKey.EncryptWithR(message, r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +176,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	// (E(c2))^η = E(c2 * η)
 	encryptedSecretDsaKeyMultiple := &paillier.Cypher{C: new(big.Int).Exp(encryptedSecretDsaKey.C, factor, params.NSquare())}
 
-	encryptedFactor, err := privateKey.EncryptWithR(factor, r)
+	encryptedFactor, err := paillierKey.EncryptWithR(factor, r)
 	t.Logf("encryptedfactor: %s", encryptedFactor.C)
 	if err != nil {
 		t.Fatal(err)
