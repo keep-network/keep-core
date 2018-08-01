@@ -495,9 +495,8 @@ func (s *Round2Signer) CombineRound2Messages(
 type Round3Signer struct {
 	Signer
 
-	// TODO: rename to secret key random factor?
-	randomFactor      *paillier.Cypher // u = E(ρ)
-	secretKeyMultiple *paillier.Cypher // v = E(ρx)
+	secretKeyRandomFactor *paillier.Cypher // u = E(ρ)
+	secretKeyMultiple     *paillier.Cypher // v = E(ρx)
 
 	signatureRandomMultipleSecretShare *big.Int                    // k_i
 	signatureRandomMultiplePublicShare *curve.Point                // r_i = g^{k_i}
@@ -599,8 +598,8 @@ func (s *Round2Signer) SignRound3(
 	signer := &Round3Signer{
 		Signer: s.Signer,
 
-		randomFactor:      randomFactor,
-		secretKeyMultiple: secretKeyMultiple,
+		secretKeyRandomFactor: randomFactor,
+		secretKeyMultiple:     secretKeyMultiple,
 
 		signatureRandomMultipleSecretShare: signatureRandomMultipleSecretShare,
 		signatureRandomMultiplePublicShare: signatureRandomMultiplePublicShare,
@@ -641,8 +640,7 @@ func randomInRange(min *big.Int, max *big.Int) (*big.Int, error) {
 type Round4Signer struct {
 	Signer
 
-	// TODO: is it secret key random factor? worth renaming?
-	randomFactor *paillier.Cypher // u = E(ρ)
+	secretKeyRandomFactor *paillier.Cypher // u = E(ρ)
 }
 
 // SignRound4 executes the fourth round of T-ECDSA signing as described in
@@ -673,7 +671,7 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 	signer := &Round4Signer{
 		Signer: s.Signer,
 
-		randomFactor: s.randomFactor,
+		secretKeyRandomFactor: s.secretKeyRandomFactor,
 	}
 
 	round4Message := &SignRound4Message{
@@ -736,7 +734,7 @@ func (s *Round4Signer) CombineRound4Messages(
 
 				if round4Message.isValid(
 					round3Message.signatureFactorCommitment,
-					s.randomFactor,
+					s.secretKeyRandomFactor,
 					s.zkpParameters,
 				) {
 					signatureRandomMultiplePublicShares[i] = round4Message.signatureRandomMultiplePublicShare
