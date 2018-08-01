@@ -102,7 +102,7 @@ type EcdsaSignatureFactorRangeProof struct {
 func CommitEcdsaSignatureFactorRangeProof(
 	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
 	signatureUnmask *paillier.Cypher, // w = E(k * ρ + c_i * q)
-	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
+	secretKeyRandomFactor *paillier.Cypher, // u = E(ρ)
 	signatureRandomMultipleSecret *big.Int, // η1 = k_i
 	signatureRandomMultipleMask *big.Int, // η2 = c_i
 	paillierR *big.Int, // Paillier randomness r
@@ -192,7 +192,7 @@ func CommitEcdsaSignatureFactorRangeProof(
 	v1 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				new(big.Int).Exp(secretKeyRandomMultiple.C, alpha, params.NSquare()),
+				new(big.Int).Exp(secretKeyRandomFactor.C, alpha, params.NSquare()),
 				new(big.Int).Exp(params.G(),
 					new(big.Int).Mul(params.q, theta),
 					params.NSquare()),
@@ -224,7 +224,7 @@ func CommitEcdsaSignatureFactorRangeProof(
 	// e = hash(w, u, z1, z2, u1, u2, u3, v1, v2, v3)
 	digest := sum256(
 		signatureUnmask.C.Bytes(),
-		secretKeyRandomMultiple.C.Bytes(),
+		secretKeyRandomFactor.C.Bytes(),
 		z1.Bytes(),
 		z2.Bytes(),
 		u1.Bytes(),
@@ -276,7 +276,7 @@ func CommitEcdsaSignatureFactorRangeProof(
 func (zkp *EcdsaSignatureFactorRangeProof) Verify(
 	signatureRandomMultiplePublic *curve.Point, // r_i = g^{k_i}
 	signatureUnmask *paillier.Cypher, // w_i = E(k_i * ρ + c_i * q)
-	secretKeyRandomMultiple *paillier.Cypher, // u = E(ρ)
+	secretKeyRandomFactor *paillier.Cypher, // u = E(ρ)
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
@@ -285,7 +285,7 @@ func (zkp *EcdsaSignatureFactorRangeProof) Verify(
 
 	u1 := zkp.evaluateVerificationU1(signatureRandomMultiplePublic, params)
 	u3 := zkp.evaluateVerificationU3(params)
-	v1 := zkp.evaluateVerificationV1(signatureUnmask, secretKeyRandomMultiple, params)
+	v1 := zkp.evaluateVerificationV1(signatureUnmask, secretKeyRandomFactor, params)
 	v3 := zkp.evaluateVerificationV3(params)
 
 	// In the original paper, elliptic curve generator point is also hashed.
@@ -294,7 +294,7 @@ func (zkp *EcdsaSignatureFactorRangeProof) Verify(
 	// e = hash(w,u,z1,z2,u1,u2,u3,v1,v2,v3)
 	digest := sum256(
 		signatureUnmask.C.Bytes(),
-		secretKeyRandomMultiple.C.Bytes(),
+		secretKeyRandomFactor.C.Bytes(),
 		zkp.z1.Bytes(),
 		zkp.z2.Bytes(),
 		u1.Bytes(),
@@ -420,13 +420,13 @@ func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU3(params *Public
 // which is exactly how v1 is evaluated during the commitment phase.
 func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationV1(
 	signatureUnmask *paillier.Cypher,
-	secretKeyRandomMultiple *paillier.Cypher,
+	secretKeyRandomFactor *paillier.Cypher,
 	params *PublicParameters,
 ) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				discreteExp(secretKeyRandomMultiple.C, zkp.s1, params.NSquare()),
+				discreteExp(secretKeyRandomFactor.C, zkp.s1, params.NSquare()),
 				discreteExp(
 					params.G(),
 					new(big.Int).Mul(params.q, zkp.t2),
