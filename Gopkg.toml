@@ -83,3 +83,13 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   name = "github.com/gogo/protobuf"
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
   source = "https://github.com/keep-network/protobuf.git"
+
+[[override]]
+  name = "github.com/btcsuite/btcd"
+  revision = "9a2f9524024889e129a5422aca2cff73cb3eabf6"
+  source = "https://github.com/btcsuite/btcd.git"
+
+[[override]]
+  name = "github.com/btcsuite/btcutil"
+  revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
+  source = "https://github.com/btcsuite/btcutil.git"
