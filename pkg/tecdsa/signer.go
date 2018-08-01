@@ -541,15 +541,26 @@ func (s *Round2Signer) SignRound3(
 		),
 	)
 
-	// c_i = rand[-q^6, q^6]
-	qPow6 := new(big.Int).Exp(
-		s.groupParameters.curveCardinality(),
-		big.NewInt(6),
-		nil,
-	)
-	signatureRandomMultipleMaskShare, err := randomInRange(
-		new(big.Int).Neg(qPow6),
-		qPow6,
+	// c_i = rand[0, q^6)
+	//
+	// According to [GGN 16], `c_i` should be randomly chosen from
+	// `[-q^6, q^6]`. Since `k_i` is chosen from [0, q), it means that in
+	// a lot of cases, signature unmask will be a negative integer, since
+	// `D(w) = k_i * rho + c_i * q`.
+	// However, keep in mind, that Paillier encryption scheme does not allow for
+	// encrypting negative integers by default since they are out of the allowed
+	// plaintext space `[0, N)` where `N` is the Paillier modulus.
+	// If we pick a negative integer as `c_i`, there is a high probability the
+	// signature ZKP and final T-ECDSA signature will fail.
+	// That's the reason why we decided to pick a random element from [0, q^6)
+	// instead of from `[-q^6, q^6]`.
+	signatureRandomMultipleMaskShare, err := rand.Int(
+		rand.Reader,
+		new(big.Int).Exp(
+			s.groupParameters.curveCardinality(),
+			big.NewInt(6),
+			nil,
+		),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
