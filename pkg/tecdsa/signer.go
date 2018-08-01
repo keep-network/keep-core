@@ -419,7 +419,7 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 
 // CombineRound2Messages takes all messages from the first and second signing
 // round, validates and combines them together in order to evaluate random
-// factor `u` and secret key multiple `v`:
+// secret key factor `u` and secret key multiple `v`:
 //
 // u = u_1 + u_2 + ... + u_n = E(ρ_1) + E(ρ_2) + ... + E(ρ_n)
 // v = v_1 + v_2 + ... + v_n = E(ρ_1 * x) + E(ρ_2 * x) + ... + E(ρ_n * x)
@@ -511,12 +511,12 @@ type Round3Signer struct {
 //
 // Before it executes all computations described in [GGN 16], it's required to
 // combine messages from the previous two rounds in order to combine
-// random factor shares and secret key multiple shares:
+// secret key random factor shares and secret key multiple shares:
 // u = u_1 + u_2 + ... + u_n = E(ρ_1) + E(ρ_2) + ... + E(ρ_n)
 // v = v_1 + v_2 + ... + v_n = E(ρ_1 * x) + E(ρ_2 * x) + ... + E(ρ_n * x)
 //
-// To do that, please execute CombineRound2Messages function and pass returned
-// values as an arguments to `SignRound3`.
+// To do that, please execute `CombineRound2Messages`` function and pass the
+// returned values as an arguments to `SignRound3`.
 func (s *Round2Signer) SignRound3(
 	randomFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
@@ -639,10 +639,10 @@ type Round4Signer struct {
 // SignRound4 executes the fourth round of T-ECDSA signing as described in
 // [GGN 16], section 4.3.
 //
-// In the round 4, signer reveals signature random multiple public share (`r_i`)
-// and signature unmask share (`w_i`) evaluated in the previous round,
-// decommitment key allowing to validate commitment to those values that was
-// published in the previous round as well as ZKP allowing to check their
+// In the round 4, signer reveals signature random multiple public share
+// (`r_i`), signature unmask share (`w_i`) evaluated in the previous round,
+// decommitment key allowing to validate commitment to those values
+// (published in the previous round) as well as ZKP allowing to check their
 // correctness.
 func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 	zkp, err := zkp.CommitEcdsaSignatureFactorRangeProof(
