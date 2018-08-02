@@ -12,8 +12,8 @@ import "./EternalStorage.sol";
  */
 contract KeepGroup is Ownable, EternalStorage {
 
-    // Current implementation contract address.
-    address public implementation;
+    // Storage position of the address of the current implementation
+    bytes32 private constant implementationPosition = keccak256("network.keep.group.proxy.implementation");
 
     // Current implementation version.
     string public version;
@@ -29,14 +29,38 @@ contract KeepGroup is Ownable, EternalStorage {
     constructor(string _version, address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
         version = _version;
-        implementation = _implementation;
+        setImplementation(_implementation);
+    }
+
+    /**
+     * @dev Gets the address of the current implementation.
+     * @return address of the current implementation.
+    */
+    function implementation() public view returns (address _implementation) {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            _implementation := sload(position)
+        }
+    }
+
+    /**
+     * @dev Sets the address of the current implementation.
+     * @param _implementation address representing the new implementation to be set.
+    */
+    function setImplementation(address _implementation) internal {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _implementation)
+        }
     }
 
     /**
      * @dev Delegate call to the current implementation contract.
      */
     function() public payable {
-        address _impl = implementation;
+        address _impl = implementation();
         /* solium-disable-next-line */
         assembly {
             let ptr := mload(0x40)
@@ -60,14 +84,15 @@ contract KeepGroup is Ownable, EternalStorage {
         public
         onlyOwner
     {
+        address currentImplementation = implementation();
         require(_implementation != address(0), "Implementation address can't be zero.");
-        require(_implementation != implementation, "Implementation address must be different from the current one.");
+        require(_implementation != currentImplementation, "Implementation address must be different from the current one.");
         require(
             keccak256(abi.encodePacked(_version)) != keccak256(abi.encodePacked(version)),
             "Implementation version must be different from the current one."
         );
         version = _version;
-        implementation = _implementation;
-        emit Upgraded(version, implementation);
+        setImplementation(_implementation);
+        emit Upgraded(version, _implementation);
     }
 }
