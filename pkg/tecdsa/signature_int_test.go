@@ -73,6 +73,17 @@ func verifySignatureInBitcoin(
 	return true, nil
 }
 
+//TODO: Provide more detailed description. Below few things not to loose it:
+// V is recovery ID. Described in https://bitcoin.stackexchange.com/a/38909/85654/
+// It's related with compact signatures.
+// When using SignCompact function from bitcoin it produces RecoveryID in first byte,
+// as 27+i. Where i is a number of iteration. For ethereum signature we have to
+// subtract 27 and move it to the end of the signature.
+//
+// Signature should be generated similar as in crypto.Sign
+//
+// See:
+// https://github.com/ethereum/go-ethereum/blob/adc2944b4c9fc3dc6192e2fc5d1cc1200c6edf6b/crypto/signature_nocgo.go#L60
 func verifySignatureInEthereum(
 	curve elliptic.Curve,
 	hash []byte,
