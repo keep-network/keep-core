@@ -1,30 +1,30 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./EternalStorage.sol";
 import "./KeepRandomBeaconImplV1.sol";
 
 
-contract KeepGroupImplV1 is Ownable, EternalStorage {
+contract KeepGroupImplV1 is Ownable {
 
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
     event GroupStartedEvent(bytes32 groupPubKey);
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-    bytes32 private constant esKeepGroupImplV1 = keccak256("KeepGroupImplV1");
-    bytes32 private constant esKeepRandomBeaconAddress = keccak256("keepRandomBeaconAddress");
-    bytes32 private constant esGroupThreshold = keccak256("groupThreshold");
-    bytes32 private constant esGroupSize = keccak256("groupSize");
-    bytes32 private constant esGroupsCount = keccak256("groupsCount");
-    bytes32 private constant esGroupIndexToGroupPubKey = keccak256("groupIndexToGroupPubKey");
-    bytes32 private constant esMemberIndexToMemberPubKey = keccak256("memberIndexToMemberPubKey");
-    bytes32 private constant esGroupExists = keccak256("groupExists");
-    bytes32 private constant esGroupComplete = keccak256("groupComplete");
-    bytes32 private constant esMembersCount = keccak256("membersCount");
-    bytes32 private constant esGroup = keccak256("group");
+    address internal _keepRandomBeaconAddress;
+    uint256 internal _groupThreshold;
+    uint256 internal _groupSize;
+    uint256 internal _groupsCount;
+
+    mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
+    mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
+    mapping (bytes32 => bool) internal _groupExists;
+    mapping (bytes32 => bool) internal _groupComplete;
+    mapping (bytes32 => uint256) internal _membersCount;
+    mapping (string => bool) internal _initialized;
+
     // Temporary Code for Milestone 1 follows
-    bytes32 private constant esListOfGroupMembersIDs = keccak256("ListOfGroupMembersIDs");
+    bytes32[] private _listOfGroupMembersIDs;
     // End Temporary Code for Milestone 1
 
     /**
@@ -36,72 +36,72 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     /**
      * @dev Initialize Keep Group implementation contract with a linked Keep Random Beacon contract.
-     * @param _keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
-     * @param _groupThreshold Max number of bad members in a group that we can detect as well as “number
+     * @param keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
+     * @param groupThreshold Max number of bad members in a group that we can detect as well as “number
      * of good members needed to produce a relay entry”.
-     * @param _groupSize Minimum number of members in a group - to form a group.
+     * @param groupSize Minimum number of members in a group - to form a group.
      */
-    function initialize(uint256 _groupThreshold, uint256 _groupSize, address _keepRandomBeaconAddress) public onlyOwner {
+    function initialize(uint256 groupThreshold, uint256 groupSize, address keepRandomBeaconAddress) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
-        require(_keepRandomBeaconAddress != address(0x0), "Random Beacon address can't be zero.");
-        boolStorage[esKeepGroupImplV1] = true;
-        addressStorage[esKeepRandomBeaconAddress] = _keepRandomBeaconAddress;
-        uintStorage[esGroupThreshold] = _groupThreshold;
-        uintStorage[esGroupSize] = _groupSize;
-        uintStorage[esGroupsCount] = 0;
+        require(keepRandomBeaconAddress != address(0x0), "Random Beacon address can't be zero.");
+        _initialized["KeepGroupImplV1"] = true;
+        _keepRandomBeaconAddress = keepRandomBeaconAddress;
+        _groupThreshold = groupThreshold;
+        _groupSize = groupSize;
+        _groupsCount = 0;
     }
 
     /**
      * @dev Allows owner to change the groupSize and Threshold.
      */
-    function setGroupSizeThreshold ( uint256 _groupSize, uint256 _groupThreshold ) public onlyOwner {
-        uintStorage[esGroupThreshold] = _groupThreshold;
-        uintStorage[esGroupSize] = _groupSize;
+    function setGroupSizeThreshold(uint256 groupSize, uint256 groupThreshold) public onlyOwner {
+        _groupThreshold = groupThreshold;
+        _groupSize = groupSize;
     }
 
     /**
      * @dev Checks if this contract is initialized.
      */
     function initialized() public view returns (bool) {
-        return boolStorage[esKeepGroupImplV1];
+        return _initialized["KeepGroupImplV1"];
     }
 
     /**
      * @dev Gets the threshold size for groups.
      */
     function groupThreshold() public view returns(uint256) {
-        return uintStorage[esGroupThreshold];
+        return _groupThreshold;
     }
 
     /**
      * @dev Gets the minimum number of members in a group.
      */
     function groupSize() public view returns(uint256) {
-        return uintStorage[esGroupSize];
+        return _groupSize;
     }
 
     /**
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return uintStorage[esGroupsCount];
+        return _groupsCount;
     }
 
     /**
      * @dev Gets public key of a group.
-     * @param _groupIndex Index number of a group.
+     * @param groupIndex Index number of a group.
      */
-    function getGroupPubKey(uint256 _groupIndex) public view returns(bytes32) {
-        return bytes32UintStorageMap[esGroupIndexToGroupPubKey][_groupIndex];
+    function getGroupPubKey(uint256 groupIndex) public view returns(bytes32) {
+        return _groupIndexToGroupPubKey[groupIndex];
     }
 
     /**
      * @dev Gets group index number.
-     * @param _groupPubKey Group public key.
+     * @param groupPubKey Group public key.
      */
-    function getGroupIndex(bytes32 _groupPubKey) public view returns(uint) {
-        for (uint i = 0; i < uintStorage[esGroupsCount]; i++) {
-            if (bytes32UintStorageMap[esGroupIndexToGroupPubKey][i] == _groupPubKey) {
+    function getGroupIndex(bytes32 groupPubKey) public view returns(uint) {
+        for (uint i = 0; i < _groupsCount; i++) {
+            if (_groupIndexToGroupPubKey[i] == groupPubKey) {
                 return i;
             }
         }
@@ -110,47 +110,45 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     /**
      * @dev Gets member public key with group and member index numbers.
-     * @param _groupIndex Index number of a group.
-     * @param _memberIndex Index number of a member.
+     * @param groupIndex Index number of a group.
+     * @param memberIndex Index number of a member.
      */
-    function getGroupMemberPubKey(uint256 _groupIndex, uint256 _memberIndex) public view returns(bytes32) {
-        return bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(
-            abi.encodePacked(_memberIndex, uint256(getGroupPubKey(_groupIndex))))];
+    function getGroupMemberPubKey(uint256 groupIndex, uint256 memberIndex) public view returns(bytes32) {
+        return _memberIndexToMemberPubKey[getGroupPubKey(groupIndex)][memberIndex];
     }
 
     /**
      * @dev Emits events with group status, whether it exists or not.
-     * @param _groupPubKey Group public key.
+     * @param groupPubKey Group public key.
      */
-    function emitEventGroupExists(bytes32 _groupPubKey) public {
-        if (boolBytes32StorageMap[esGroupExists][_groupPubKey]) {
-            emit GroupExistsEvent(_groupPubKey, true);
+    function emitEventGroupExists(bytes32 groupPubKey) public {
+        if (_groupExists[groupPubKey]) {
+            emit GroupExistsEvent(groupPubKey, true);
         } else {
-            emit GroupExistsEvent(_groupPubKey, false);
+            emit GroupExistsEvent(groupPubKey, false);
         }
     }
 
     /**
      * @dev Creates a new group with provided public key.
-     * @param _groupPubKey Group public key.
+     * @param groupPubKey Group public key.
      * @return True if group was created, false otherwise.
      */
-    function createGroup(bytes32 _groupPubKey) public returns(bool) {
+    function createGroup(bytes32 groupPubKey) public returns(bool) {
 
-        if (boolBytes32StorageMap[esGroupExists][_groupPubKey] == true) {
+        if (_groupExists[groupPubKey] == true) {
             emit GroupErrorCode(20);
             return false;
         }
 
-        boolBytes32StorageMap[esGroupExists][_groupPubKey] = true;
-        boolBytes32StorageMap[esGroupComplete][_groupPubKey] = false;
-        uintBytes32StorageMap[esMembersCount][_groupPubKey] = 0;
+        _groupExists[groupPubKey] = true;
+        _groupComplete[groupPubKey] = false;
+        _membersCount[groupPubKey] = 0;
 
-        uint256 lastIndex = uintStorage[esGroupsCount];
-        bytes32UintStorageMap[esGroupIndexToGroupPubKey][lastIndex] = _groupPubKey;
-        uintStorage[esGroupsCount]++;
+        _groupIndexToGroupPubKey[_groupsCount] = groupPubKey;
+        _groupsCount++;
 
-        emit GroupStartedEvent(_groupPubKey);
+        emit GroupStartedEvent(groupPubKey);
         return true;
     }
 
@@ -158,44 +156,43 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
      * @dev Removes a group and the list of its members. Last group public
      * key is moved into the released index and the total group list count
      * is reduced accordingly.
-     * @param _groupPubKey Group public key.
+     * @param groupPubKey Group public key.
      * @return True if group was removed, false otherwise.
      */
-    function dissolveGroup(bytes32 _groupPubKey) public onlyOwner returns(bool) {
+    function dissolveGroup(bytes32 groupPubKey) public onlyOwner returns(bool) {
 
-        if (boolBytes32StorageMap[esGroupExists][_groupPubKey] != true) {
+        if (_groupExists[groupPubKey] != true) {
             emit GroupErrorCode(10);
             return false;
         }
 
-        for (uint i = 0; i < uintBytes32StorageMap[esMembersCount][_groupPubKey]; i++) {
-            delete bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(abi.encodePacked(i, uint256(_groupPubKey)))];
+        for (uint i = 0; i < _membersCount[groupPubKey]; i++) {
+            delete _memberIndexToMemberPubKey[groupPubKey][i];
         }
 
-        delete uintBytes32StorageMap[esMembersCount][_groupPubKey];
-        delete boolBytes32StorageMap[esGroupExists][_groupPubKey];
-        delete boolBytes32StorageMap[esGroupComplete][_groupPubKey];
+        delete _membersCount[groupPubKey];
+        delete _groupExists[groupPubKey];
+        delete _groupComplete[groupPubKey];
 
-        uint _groupIndex = getGroupIndex(_groupPubKey);
-        delete bytes32UintStorageMap[esGroupIndexToGroupPubKey][_groupIndex];
+        uint groupIndex = getGroupIndex(groupPubKey);
+        delete _groupIndexToGroupPubKey[groupIndex];
 
         // Get last group _groupPubKey and move it into released index
-        uint lastIndex = uintStorage[esGroupsCount];
-        bytes32 lastGroup = bytes32Storage[esGroupIndexToGroupPubKey][lastIndex];
-        bytes32UintStorageMap[esGroup][_groupIndex] = lastGroup;
-        uintStorage[esGroupsCount]--;
+        uint lastIndex = _groupsCount;
+        bytes32 lastGroup = _groupIndexToGroupPubKey[lastIndex];
+        _groupIndexToGroupPubKey[groupIndex] = lastGroup;
+        _groupsCount--;
     }
 
     /**
      * @dev Checks if member is part of the group.
-     * @param _groupPubKey Group public key.
-     * @param _memberPubKey Member public key.
+     * @param groupPubKey Group public key.
+     * @param memberPubKey Member public key.
      * @return True if member is part of the group, false otherwise.
      */
-    function isMember(bytes32 _groupPubKey, bytes32 _memberPubKey) public view returns(bool) {
-        for (uint i = 0; i < uintBytes32StorageMap[esMembersCount][_groupPubKey]; i++) {
-            if (bytes32StorageMap[esMemberIndexToMemberPubKey][keccak256(
-                abi.encodePacked(i, uint256(_groupPubKey)))] == _memberPubKey) {
+    function isMember(bytes32 groupPubKey, bytes32 memberPubKey) public view returns(bool) {
+        for (uint i = 0; i < _membersCount[groupPubKey]; i++) {
+            if (_memberIndexToMemberPubKey[groupPubKey][i] == memberPubKey) {
                 return true;
             }
         }
@@ -208,52 +205,52 @@ contract KeepGroupImplV1 is Ownable, EternalStorage {
 
     /**
      * @dev Testing for M1 - create a staker.
-     * @param _groupMemberID the ID of the member that is being added.
+     * @param groupMemberID the ID of the member that is being added.
      */
-    function addStaker(bytes32 _groupMemberID) public onlyOwner {
+    function addStaker(bytes32 groupMemberID) public onlyOwner {
         // TODO save some info at this point - this is only for use in Milestone 1 and will
         // not need to be added to the "forever" storage.
-        bytes32StorageArray[esListOfGroupMembersIDs].push(_groupMemberID);
-        emit OnStakerAdded(uint32(bytes32StorageArray[esListOfGroupMembersIDs].length - 1), _groupMemberID);
+        _listOfGroupMembersIDs.push(groupMemberID);
+        emit OnStakerAdded(uint32(_listOfGroupMembersIDs.length - 1), groupMemberID);
     }
 
     /**
      * @dev Testing for M1 - return true if the staker at _index is _groupMemberID
-     * @param _index Index where to find the member.
-     * @param _groupMemberID the ID of the member that is being tested for.
+     * @param index Index where to find the member.
+     * @param groupMemberID the ID of the member that is being tested for.
      */
-    function isGroupMemberStaker(uint32 _index, bytes32 _groupMemberID) public view returns (bool) {
+    function isGroupMemberStaker(uint32 index, bytes32 groupMemberID) public view returns (bool) {
         require(
-            _index >= 0 && _index <= bytes32StorageArray[esListOfGroupMembersIDs].length,
+            index >= 0 && index <= _listOfGroupMembersIDs.length,
             "Index must be within the length of Group member's array."
         );
-        return bytes32StorageArray[esListOfGroupMembersIDs][_index] == _groupMemberID;
+        return _listOfGroupMembersIDs[index] == groupMemberID;
     }
 
     /**
      * @dev Testing for M1 - return the groupMemberID for the _index staker.
-     * @param _index Index where to add the member.
+     * @param index Index where to add the member.
      */
-    function getStaker(uint32 _index) public view returns (bytes32) {
+    function getStaker(uint32 index) public view returns (bytes32) {
         require(
-            _index >= 0 && _index <= bytes32StorageArray[esListOfGroupMembersIDs].length,
+            index >= 0 && index <= _listOfGroupMembersIDs.length,
             "Index must be within the length of Group member's array."
         );
-        return bytes32StorageArray[esListOfGroupMembersIDs][_index];
+        return _listOfGroupMembersIDs[index];
     }
 
     /**
      * @dev Testing for M1 - return the number of stakers
      */
     function getNStaker() public view returns (uint256) {
-        return bytes32StorageArray[esListOfGroupMembersIDs].length;
+        return _listOfGroupMembersIDs.length;
     }
 
     /**
      * @dev Testing for M1 - for testing - reset the array to 0 length.
      */
     function resetStaker() public onlyOwner {
-        delete bytes32StorageArray[esListOfGroupMembersIDs];
+        delete _listOfGroupMembersIDs;
     }
 
 }

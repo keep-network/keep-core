@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./EternalStorage.sol";
+
 
 /**
  * @title Keep Group contract
@@ -10,7 +10,7 @@ import "./EternalStorage.sol";
  * the address of the upgraded contract. All calls to this proxy contract
  * are delegated to the implementation contract.
  */
-contract KeepGroup is Ownable, EternalStorage {
+contract KeepGroup is Ownable {
 
     // Storage position of the address of the current implementation
     bytes32 private constant implementationPosition = keccak256("network.keep.group.proxy.implementation");
