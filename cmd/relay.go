@@ -65,10 +65,10 @@ func relayRequest(c *cli.Context) error {
 	wait := make(chan struct{})
 	var requestID *big.Int
 	provider.ThresholdRelay().OnRelayEntryRequested(func(request *event.Request) {
-		fmt.Println(
-			"Relay entry request submitted with id ",
+		fmt.Fprintf(
+			os.Stderr,
+			"Relay entry request submitted with id [%s].\n",
 			request.RequestID.String(),
-			".",
 		)
 		requestMutex.Lock()
 		requestID = request.RequestID
@@ -82,7 +82,8 @@ func relayRequest(c *cli.Context) error {
 		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
 			valueBigInt := &big.Int{}
 			valueBigInt.SetBytes(entry.Value[:])
-			fmt.Printf(
+			fmt.Fprintf(
+				os.Stderr,
 				"Relay entry received with value: [%s].\n",
 				valueBigInt.String(),
 			)
@@ -91,7 +92,24 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
-	provider.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
+	provider.ThresholdRelay().RequestRelayEntry(
+		big.NewInt(0),
+		big.NewInt(0),
+	).OnComplete(func(request *event.Request, err error) {
+		if err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"Error in requesting relay entry: [%v].\n",
+				err,
+			)
+			return
+		}
+		fmt.Fprintf(
+			os.Stdout,
+			"Relay entry requested: [%v].\n",
+			request,
+		)
+	})
 
 	select {
 	case <-wait:

@@ -29,7 +29,7 @@ func (is *initializationState) groupMember() thresholdgroup.BaseMember {
 	return is.member
 }
 
-func (is *initializationState) activeBlocks() int { return 15 }
+func (is *initializationState) activeBlocks() int { return 1 }
 
 func (is *initializationState) initiate() error {
 	return nil
@@ -53,7 +53,7 @@ type joinState struct {
 }
 
 func (js *joinState) groupMember() thresholdgroup.BaseMember { return js.member }
-func (js *joinState) activeBlocks() int                      { return 15 }
+func (js *joinState) activeBlocks() int                      { return 1 }
 
 func (js *joinState) initiate() error {
 	return js.channel.Send(&JoinMessage{&js.member.BlsID})
@@ -90,7 +90,7 @@ type commitmentState struct {
 }
 
 func (cs *commitmentState) groupMember() thresholdgroup.BaseMember { return cs.member }
-func (cs *commitmentState) activeBlocks() int                      { return 15 }
+func (cs *commitmentState) activeBlocks() int                      { return 2 }
 
 func (cs *commitmentState) initiate() error {
 	return cs.channel.Send(&MemberCommitmentsMessage{
@@ -104,6 +104,7 @@ func (cs *commitmentState) receive(msg net.Message) error {
 	case *MemberCommitmentsMessage:
 		if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
 			if senderID.IsEqual(&cs.member.BlsID) {
+				fmt.Printf("sender [%v]", cs.member.BlsID)
 				return nil
 			}
 
@@ -139,7 +140,7 @@ type sharingState struct {
 }
 
 func (ss *sharingState) groupMember() thresholdgroup.BaseMember { return ss.member }
-func (ss *sharingState) activeBlocks() int                      { return 15 }
+func (ss *sharingState) activeBlocks() int                      { return 3 }
 
 func (ss *sharingState) initiate() error {
 	for _, receiverID := range ss.member.OtherMemberIDs() {
@@ -191,7 +192,7 @@ type accusingState struct {
 }
 
 func (as *accusingState) groupMember() thresholdgroup.BaseMember { return as.member }
-func (as *accusingState) activeBlocks() int                      { return 15 }
+func (as *accusingState) activeBlocks() int                      { return 1 }
 
 func (as *accusingState) initiate() error {
 	return as.channel.Send(&AccusationsMessage{
@@ -250,7 +251,7 @@ type justifyingState struct {
 }
 
 func (js *justifyingState) groupMember() thresholdgroup.BaseMember { return js.member }
-func (js *justifyingState) activeBlocks() int                      { return 15 }
+func (js *justifyingState) activeBlocks() int                      { return 1 }
 
 func (js *justifyingState) initiate() error {
 	return js.channel.Send(
