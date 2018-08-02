@@ -15,10 +15,7 @@ contract KeepGroup is Ownable, EternalStorage {
     // Storage position of the address of the current implementation
     bytes32 private constant implementationPosition = keccak256("network.keep.group.proxy.implementation");
 
-    // Current implementation version.
-    string public version;
-
-    event Upgraded(string version, address implementation);
+    event Upgraded(address implementation);
 
     // Mirror events from the implementation contract
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
@@ -26,9 +23,8 @@ contract KeepGroup is Ownable, EternalStorage {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-    constructor(string _version, address _implementation) public {
+    constructor(address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
-        version = _version;
         setImplementation(_implementation);
     }
 
@@ -77,22 +73,16 @@ contract KeepGroup is Ownable, EternalStorage {
 
     /**
      * @dev Upgrade current implementation.
-     * @param _version Version name for the new implementation.
      * @param _implementation Address of the new implementation contract.
      */
-    function upgradeTo(string _version, address _implementation)
+    function upgradeTo(address _implementation)
         public
         onlyOwner
     {
         address currentImplementation = implementation();
         require(_implementation != address(0), "Implementation address can't be zero.");
         require(_implementation != currentImplementation, "Implementation address must be different from the current one.");
-        require(
-            keccak256(abi.encodePacked(_version)) != keccak256(abi.encodePacked(version)),
-            "Implementation version must be different from the current one."
-        );
-        version = _version;
         setImplementation(_implementation);
-        emit Upgraded(version, _implementation);
+        emit Upgraded(_implementation);
     }
 }

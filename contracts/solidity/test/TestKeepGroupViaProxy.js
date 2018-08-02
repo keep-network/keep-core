@@ -35,7 +35,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
     // Initialize Keep Group contract
     keepGroupImplV1 = await KeepGroupImplV1.new();
-    keepGroupProxy = await KeepGroupProxy.new('v1', keepGroupImplV1.address);
+    keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(6, 10, keepRandomBeaconProxy.address);
 
