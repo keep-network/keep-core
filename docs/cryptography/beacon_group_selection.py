@@ -128,7 +128,7 @@ class Ticket:
     A Ticket contains a pseudorandom value which is used to determine whether
     a given virtual staker is in the candidate group P
     """
-    value:  Sha3Digest
+    value:  Sha3Digest # corresponds to W_k
     proof:  TicketProof
     sender: StakerID
 

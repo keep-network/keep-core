@@ -1,0 +1,335 @@
+== Random Beacon Group Selection
+
+The group selection protocol is intended to be
+an interactive method of selecting candidate group _P_
+from the set of all stakers _S_
+given a pseudorandom seed value _V~i~_.
+
+Functional interface:
+
+inputs: _S, V~i~_
+
+output: _P_
+
+The protocol should:
+
+1. be possible to perform offline, without on-chain operations
+2. produce a result that can be verified on-chain
+3. securely generate a pseudorandom selection of participants for _P_
+weighted by their respective stakes
+  - be infeasible by any actor to manipulate
+  - enable detection of manipulation attempts
+4. be easily compatible with future privacy features
+
+.Some terms
+|===
+|Term |Meaning
+
+|Non-interactive
+|A protocol is non-interactive if it can be performed without stakers
+providing additional information.
+Specifically, _S~i~_ can determine whether they are in _P_
+without input from other stakers in _S_.
+
+|Interactive
+|An interactive protocol requires stakers to provide additional information
+over what is available on-chain,
+and then performs a deterministic algorithm to select a group
+based on the information provided by the stakers.
+In an interactive protocol _S~i~_ cannot know for sure
+whether they are in _P_ before they receive the other stakers' input.
+
+|Actual staker
+|An actor holding and staking at least _MINIMUM_STAKE_ tokens,
+represented as _S~i~_.
+Each actual staker corresponds to one or more virtual stakers.
+An actual staker can be represented multiple times in a candidate group,
+through multiple virtual stakers.
+
+|Virtual staker
+|A construct used to simplify
+the mathematical requirements of the group selection protocol
+and ensure blitzpantsing provides no advantage.
+
+Each virtual staker represents _MINIMUM_STAKE_ tokens
+staked by some actual staker who may or may not be anonymous.
+A virtual staker may only ever be included once in a candidate group,
+and _N_ properly denotes the number of virtual stakers in _P_.
+
+|Ticket
+|A message containing a pseudorandomly generated value _W~k~_ which is used to 
+ determine whether a given _virtual staker_ is eligible for the group _P_ (the
+ lowest _N_ tickets will be chosen) and a proof of the validity of the value
+
+|Threshold
+|The value of the highest-valued ticket in _P_
+
+|Trenchcoating
+|Several actors pooling up their stakes under one actual staker,
+to take advantage of rich-get-richer effects.
+Thus what seems to be a whale is actually
+a hundred small stakers "in a trenchcoat".
+
+|Blitzpantsing
+|Inverse trenchcoating;
+a single token holder dividing their stake into multiple actual stakers
+to avoid rich-get-poorer effects or increase their representation in groups.
+This can increase profits or the probability of controlling a group.
+Thus what seems to be a hundred small stakers is actually
+a single whale in an "inverse trenchcoat" or "blitzpants".
+
+|===
+
+=== Requirements -v
+
+==== 1. Representative result
+
+Each staker _S~i~_ who has staked _Stake~i~_ tokens should
+have a probability of ending up in _P_
+equal to _N * Stake~i~ / Stake~total~_.
+
+If this cannot be achieved,
+the total profit earned by _S~i~_ when _time -> infinity_ should be
+proportional to _Profit~total~ * Stake~i~ / Stake~total~_.
+
+==== 2. Constant _N_
+
+The protocol should output group candidates of constant size.
+
+==== 3. Off-chain
+
+The protocol shouldn't require a significant quantity
+of on-chain operations to perform.
+
+==== 4. Cheap verification
+
+Verifying that the protocol has executed correctly
+should not be too expensive in terms of on-chain operations.
+
+==== 5. Security
+
+The results of the protocol should be difficult to manipulate by an adversary
+to either favor or disfavor some stakers
+
+==== 6. Privacy compatibility
+
+In the future we want to introduce effective privacy measures.
+The protocol should be possible to modify to hide the identities
+and stakes of stakers as much as feasible,
+and this modification should not be too difficult.
+
+=== Implications
+
+==== Virtual stakers
+
+A staker who holds more than the minimum staking amount in tokens
+can get selected multiple times for the same group;
+effectively, each minimum staked amount
+acts as a separate "virtual staker" under the token holder identity.
+
+This makes (1) much easier to satisfy,
+as giving each virtual staker an equal chance of being included
+in a candidate group makes a _S~j~_'s profits proportional to
+_Weight~j~ = floor(Stake~j~ / Stake~min~)_.
+Correspondingly, a staker cannot increase their profits
+by "blitzpantsing" and splitting their stake across multiple identities.
+
+Virtual stakers are also much more compatible with (6),
+as the virtual stakers can be used to conceal
+actual stakers' identities and staked token amounts.
+
+==== Interactive protocol
+
+(6) means that the protocol has to be interactive.
+
+Why? The simple non-interactive protocol would be to use some method
+of having each _S~j~_ calculate a pseudorandom value _Seed~j~_,
+and then everybody whose _Seed~j~ < Threshold~i~_ is in _P_.
+_Threshold~i~_ will be calculated using public information,
+eg. by _Threshold~i~ = N * (2^256-1) / |S|_ for a 256-bit _Seed~j~_.
+However, this means that due to random chance, most of the time _|P| != N_.
+This violates (2).
+
+Another non-interactive protocol would be to have each staker present
+some kind of a hashed value _Hash~j~_
+so that whether _S~j~_ is in _P_ can be determined publicly
+by _f(V~i~, Hash~j~, S, N) -> Bool_.
+This cannot work, because then anybody could
+calculate _f(V~m~, Hash~j~, S, N)_ for a large number of different values _V~m~_
+and see how often _S~j~_ ends up eligible for the candidate group.
+Due to (1), this reveals how much _S~j~_ has staked
+to an arbitrary degree of precision, violating (6).
+
+It seems necessary to thus have _S~j~_ to calculate a value _W~j~_,
+so that _S~j~_ will be in _P_ if _Threshold~P~ > W~j~_.
+[source, python]
+----
+all_tickets = []
+for S_j in S:
+    for vs in [1..Weight_j]:
+        W_k = prf(V_i, Q_j, vs)
+        all_tickets.append(Ticket(W_k, proof(W_k))
+
+Threshold_P = max(all_tickets.map(fn(t): t.W_k).sort().take(N)
+----
+
+Assuming once again 256-bit values for _W~k~_ and _Threshold~P~_,
+_S~j~_ can predict their expected probability of being in _P_
+by calculating how likely it would be that _Threshold~P~ > W~k~_.
+Then _S~j~_ can broadcast their input only if there seems to be
+a realistic chance that they could be selected.
+If it seems likely that _Threshold~P~ < W~k~_,
+_S~j~_ can refrain from broadcasting _W~k~_ and only monitor the situation,
+reacting if it seems that few stakers' ticket values are falling under
+the estimated threshold.
+
+== Full protocol proposal
+
+When a staker _S~j~_ is created, the following values are determined:
+- _Stake~j~_: the amount of tokens staked by _S~j~_ and thus locked up until the
+  staker is destroyed 
+- _Weight~j~= floor(Stake~j~ / MINIMUM_STAKE)_: the staking weight of _S~j~_;
+  how many virtual stakers can represent _S~j~_ 
+- _Q~j~_: a staker-specific value used as an input to the pseudorandom function
+
+The staker creation operation needs to include a proof of the correctness of the
+above values. Once we introduce privacy, these values should be private and the
+proof should take the form of a ZKP (likely Bulletproof); until then _Stake~j~_
+being public and _Q~j~_ being the ECDSA pubkey of _S~j~_ is sufficient.
+
+When a group is being created, _S~j~_ calculates _Ticket~k~ = (W~k~, proof~k~)_ 
+containing the value _W~k~_ and proof that:
+- the ticket value _W~k~_ is created correctly with _W~k~ = prf(V~i~, Q~j~, vs)_
+- the staker-specific values _Q~j~, Weight~j~_ correspond to _S~j~_ in _S_
+- the virtual staker number _vs_ is within the range _1 <= vs <= Weight~j~_
+
+Then each staker with promising tickets publishes them
+and the lowest _N_ are chosen to form _P_.
+The _W~k~_ of the __N__th ticket is set as _Threshold~i~_
+_Threshold~i~ = max(tickets.sort().take(N))_
+
+The DKG is performed, at the end the result is published.
+
+== On-chain protocol
+
+Each staker calculates their tickets
+
+Each staker who thinks they may be eligible for the group publishes ticket
+
+When on-chain receives ticket,
+do a cheap check and add it to the sorted tickets data structure
+
+When _T~selection~_ has elapsed, on-chain stops receiving any further tickets
+and waits for challenges to submitted ones
+
+If a staker notices an invalid ticket being submitted, they publish a challenge
+
+The challenge includes the original ticket plus an argument for its invalidity
+
+The proof supplied in the original ticket is checked for validity:
+if invalid, the challenger is rewarded, the original submitter is punished,
+and the original ticket is removed from the valid tickets;
+if valid, the challenger is punished
+
+After _T~challenge~_ time has elapsed, no more challenges are accepted
+and the _N_ tickets with the lowest values are selected for the candidate group
+
+The stakers whose tickets were selected will perform DKG
+
+=== Notes
+
+An easy way to calculate whether _S~j~_ should submit their ticket with value
+_W~j~_ is to see if _W~j~ < N * (MINIMUM_STAKE / Stake~total~) * (2^256 - 1)_
+for a 256-bit value. This "natural threshold" is the value the threshold would
+be expected to be at, if the largest possible number of virtual stakers were to
+calculate their tickets and those tickets were evenly distributed in the domain
+of ticket values. Given that this is usually a lower value than what the actual
+threshold ends up being, those stakers whose tickets fall above this line will
+publish theirs if they seem eligible after witnessing how many tickets below the
+natural threshold there are. This should be quite efficient in practice for
+minimizing the number of unnecessary tickets published on-chain.
+
+==== Q~j~
+
+The value _Q~j~_ will initially be something public and easy to verify, such as
+the ECDSA pubkey of _S~j~_, but after the introduction of privacy it will be
+private and only known by _S~j~_.
+
+== Alternative off-chain protocol
+
+This protocol was not chosen but is included in the yellowpaper to illustrate
+reasoning and what alternatives were considered
+
+=== Protocol
+
+Each staker calculates their tickets
+
+Each staker who has one or more ticket/s that may be eligible for the group
+broadcasts the ticket, including proof of its validity
+
+Other stakers check broadcasted tickets for validity; if an invalid ticket is
+broadcast, the ticket is rejected
+
+After _T~selection~_ has elapsed, stakers following the broadcast channel
+select _N_ tickets with the lowest value to form the candidate group
+
+Each member of the candidate group BLS-signs a message
+containing all the tickets of the group and the threshold
+
+This is the _Group Formation Message_, signed by _[P~1~..P~N~]_ to ensure the
+integrity of the group selection process. Because all participants are required
+to sign the _Group Formation Message_, the group composition cannot be
+manipulated later.
+
+The members of _P_ perform DKG; at the end of DKG the final message contains:
+- DKG output, similarly BLS signed
+- group formation message
+- aggregate BLS signature of the above
+
+On-chain receives DKG conclusion message, and:
+- checks that all stakers in the group formation message are valid
+- checks the proofs supplied in the tickets
+- checks that all tickets are below the threshold
+- checks that the group formation message is signed by everyone in _P_
+and that the DKG output is signed by at least _H_ members of _P_
+
+If two or more valid group formations are presented,
+the one with the lowest threshold wins
+
+Any virtual staker is only permitted to sign a group formation message for one
+group (any given ticket may only be used for one group); if a ticket is used for
+two or more different groups, the staker should be penalized
+
+Submitting only a group formation message without DKG conclusion is also valid
+and signifies that the group was formed, but DKG did not reach quorum (_H_
+participants would not agree on any given result)
+
+However, if a group formation message is published it may be superseded by a
+valid DKG conclusion message for the same group
+
+If a member of group _P_ with _Threshold~P~_ publishes a valid group formation
+message, and a member of group _P'_ with _Threshold~P'~_ publishes a valid group
+formation and DKG conclusion message:
+- if _P ∩ P' != {}_, the stakers who signed both group formation messages should
+  be penalized, but the groups _P_ and _P'_ may still be valid (this is to
+  prevent an attack where one member of an unfavorable group prevents the group
+  creation by signing and publishing a different, unrelated group creation message)
+- if _Threshold~P~ > Threshold~P'~_, group _P'_ is to be considered the correct
+  group and the group selection is to be deemed a success.
+- if _Threshold~P~ < Threshold~P'~_, group _P_ is to be considered the correct
+  group and the group selection is to be deemed a failure.
+- if _Threshold~P~ = Threshold~P'~_, group _P'_ is to be considered the correct group
+
+
+=== Notes
+
+==== Cryptography
+
+The BLS signatures should probably be verified with the protocol in
+https://crypto.stanford.edu/~dabo/pubs/papers/BLSmultisig.html and Bulletproofs
+would likely be used for the ZKP element after the introduction of staker
+privacy
+
+==== Attack mitigation
+
+TODO: analysis for a couple of potential attacks and mitigations
