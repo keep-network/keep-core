@@ -5,33 +5,33 @@ import "truffle/DeployedAddresses.sol";
 import "../contracts/KeepToken.sol";
 import "../contracts/TokenGrant.sol";
 
+
 contract TestTokenGrantRevoke {
-  
-  // Create KEEP token.
-  KeepToken t = new KeepToken();
 
-  // Create token grant contract with 30 days withdrawal delay.
-  TokenGrant c = new TokenGrant(t, 0, 30 days);
+    // Create KEEP token.
+    KeepToken t = new KeepToken();
 
-  uint id;
-  address beneficiary = 0xf17f52151EbEF6C7334FAD080c5704D77216b732;
+    // Create token grant contract with 30 days withdrawal delay.
+    TokenGrant c = new TokenGrant(t, 0, 30 days);
 
-  // Token grant creator can revoke the grant but no amount 
-  // is refunded since duration of the vesting is over.
-  function testCanZeroRevokeGrant() public {
-    uint balance = t.balanceOf(address(this));
-  
-    // Create revocable token grant with 0 duration.
-    t.approve(address(c), 100);
-    id = c.grant(100, beneficiary, 0, now, 0, true);
-    
-    Assert.equal(t.balanceOf(address(this)), balance - 100, "Amount should be removed from grant creator main balance.");
-    Assert.equal(c.balanceOf(beneficiary), 100, "Amount should be added to beneficiary's granted balance.");
-    
-    c.revoke(id);
+    uint id;
+    address beneficiary = 0xf17f52151EbEF6C7334FAD080c5704D77216b732;
 
-    Assert.equal(t.balanceOf(address(this)), balance - 100, "No amount to be returned to grant creator since vesting duration is over.");
-    Assert.equal(c.balanceOf(beneficiary), 100, "Amount should stay at beneficiary's grant balance.");
-  }
+    // Token grant creator can revoke the grant but no amount
+    // is refunded since duration of the vesting is over.
+    function testCanZeroRevokeGrant() public {
+        uint balance = t.balanceOf(address(this));
 
+        // Create revocable token grant with 0 duration.
+        t.approve(address(c), 100);
+        id = c.grant(100, beneficiary, 0, now, 0, true);
+
+        Assert.equal(t.balanceOf(address(this)), balance - 100, "Amount should be removed from grant creator main balance.");
+        Assert.equal(c.balanceOf(beneficiary), 100, "Amount should be added to beneficiary's granted balance.");
+
+        c.revoke(id);
+
+        Assert.equal(t.balanceOf(address(this)), balance - 100, "No amount to be returned to grant creator since vesting duration is over.");
+        Assert.equal(c.balanceOf(beneficiary), 100, "Amount should stay at beneficiary's grant balance.");
+    }
 }

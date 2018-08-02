@@ -1,6 +1,6 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./EternalStorage.sol";
 
 /**
@@ -26,8 +26,8 @@ contract KeepGroup is Ownable, EternalStorage {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-    function KeepGroup(string _version, address _implementation) {
-        require(_implementation != address(0));
+    constructor(string _version, address _implementation) public {
+        require(_implementation != address(0), "Implementation address can't be zero.");
         version = _version;
         implementation = _implementation;
     }
@@ -35,8 +35,9 @@ contract KeepGroup is Ownable, EternalStorage {
     /**
      * @dev Delegate call to the current implementation contract.
      */
-    function() payable {
+    function() public payable {
         address _impl = implementation;
+        /* solium-disable-next-line */
         assembly {
             let ptr := mload(0x40)
             calldatacopy(ptr, 0, calldatasize)
@@ -59,9 +60,12 @@ contract KeepGroup is Ownable, EternalStorage {
         public
         onlyOwner
     {
-        require(_implementation != address(0));
-        require(_implementation != implementation);
-        require(keccak256(_version) != keccak256(version));
+        require(_implementation != address(0), "Implementation address can't be zero.");
+        require(_implementation != implementation, "Implementation address must be different from the current one.");
+        require(
+            keccak256(abi.encodePacked(_version)) != keccak256(abi.encodePacked(version)),
+            "Implementation version must be different from the current one."
+        );
         version = _version;
         implementation = _implementation;
         emit Upgraded(version, implementation);

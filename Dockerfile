@@ -1,4 +1,4 @@
-FROM golang:1.9.4-alpine3.7 AS runtime
+FROM golang:1.10.3-alpine3.7 AS runtime
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin \
@@ -55,19 +55,18 @@ RUN apk add --update --no-cache \
 
 COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
-COPY --from=ethereum/solc:0.4.21 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.4.24 /usr/bin/solc /usr/bin/solc
 
 RUN mkdir -p $APP_DIR
 
 WORKDIR $APP_DIR
 
-RUN go get -u github.com/gogo/protobuf/protoc-gen-gogoslick github.com/golang/dep/cmd/dep
+RUN go get -u github.com/golang/dep/cmd/dep
 
 COPY ./Gopkg.toml ./Gopkg.lock ./
 RUN dep ensure -v --vendor-only
-
-RUN go get github.com/ethereum/go-ethereum/cmd/abigen
-RUN go install github.com/ethereum/go-ethereum/cmd/abigen
+RUN cd vendor/github.com/gogo/protobuf/protoc-gen-gogoslick && go install .
+RUN cd vendor/github.com/ethereum/go-ethereum/cmd/abigen && go install .
 
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
 RUN cd $APP_DIR/contracts/solidity && npm install
@@ -75,10 +74,11 @@ RUN cd $APP_DIR/contracts/solidity && npm install
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
-COPY ./pkg/gen $APP_DIR/pkg/gen
-RUN go generate ./.../gen
+COPY ./pkg/beacon/relay/thresholdsignature/gen $APP_DIR/pkg/beacon/relay/thresholdsignature/gen
+RUN go generate ./.../gen 
 
 COPY ./ $APP_DIR/
+RUN go generate ./pkg/gen
 
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH

@@ -2,7 +2,6 @@ package net
 
 import (
 	"github.com/gogo/protobuf/proto"
-	ma "github.com/multiformats/go-multiaddr"
 )
 
 // TransportIdentifier represents the identity of a participant at the transport
@@ -11,6 +10,9 @@ type TransportIdentifier interface {
 	// Returns a string name of the network provider. Expected to be purely
 	// informational.
 	ProviderName() string
+
+	// Returns a string representation of the transport identifier.
+	String() string
 }
 
 // ProtocolIdentifier represents a protocol-level identifier. It is an opaque
@@ -24,13 +26,17 @@ type Message interface {
 	TransportSenderID() TransportIdentifier
 	ProtocolSenderID() ProtocolIdentifier
 	Payload() interface{}
+	Type() string
 }
 
 // HandleMessageFunc is the type of function called for each Message m furnished
 // by the BroadcastChannel. If there is a problem handling the Message, the
 // incoming error will describe the problem and the function can decide how to
 // handle that error. If an error is returned, processing stops.
-type HandleMessageFunc func(m Message) error
+type HandleMessageFunc struct {
+	Type    string
+	Handler func(m Message) error
+}
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
 // but also provides a string type for the marshalable object.
@@ -45,9 +51,11 @@ type TaggedMarshaler interface {
 // return a provider type, which is an informational string indicating what type
 // of provider this is, and the list of IP addresses on which it can listen.
 type Provider interface {
+	ID() TransportIdentifier
+
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
-	Addrs() []ma.Multiaddr
+	AddrStrings() []string
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
@@ -95,6 +103,9 @@ type BroadcastChannel interface {
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error
+	// UnregisterRecv takes the type of HandleMessageFunc and returns an error. This function should
+	// be defered.
+	UnregisterRecv(handlerType string) error
 
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any

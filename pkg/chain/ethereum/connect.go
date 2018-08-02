@@ -3,26 +3,20 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 type ethereumChain struct {
-	config                           Config
-	client                           *ethclient.Client
-	clientRPC                        *rpc.Client
-	clientWS                         *rpc.Client
-	requestID                        *big.Int
-	keepGroupContract                *keepGroup
-	keepRandomBeaconContract         *KeepRandomBeacon
-	tx                               *types.Transaction
-	handlerMutex                     sync.Mutex
-	groupPublicKeyFailureHandlers    []func(groupID string, errorMessage string)
-	groupPublicKeySubmissionHandlers []func(groupID string, activationBlock *big.Int)
+	config                   Config
+	client                   *ethclient.Client
+	clientRPC                *rpc.Client
+	clientWS                 *rpc.Client
+	requestID                *big.Int
+	keepGroupContract        *keepGroup
+	keepRandomBeaconContract *KeepRandomBeacon
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for

@@ -4,30 +4,43 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // Interface represents the interface that the relay expects to interact
 // with the anchoring blockchain on.
 type Interface interface {
-	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
-	// associated with a string groupID. An error is generally only returned in
-	// case of connectivity issues; on-chain errors are reported through event
-	// callbacks.
-	SubmitGroupPublicKey(groupID string, key [96]byte) error
-	// OnGroupPublicKeySubmissionFailed takes a callback that is invoked when
-	// an attempted group public key submission has failed. The provided groupID
-	// is the id of the group for which the public key submission was attempted,
-	// while the errorMsg is the on-chain error message indicating what went
-	// wrong.
-	OnGroupPublicKeySubmissionFailed(func(groupID string, errorMsg string)) error
-	// OnGroupPublicKeySubmitted takes a callback that is invoked when a group
-	// public key is submitted successfully. The provided groupID is the id of
-	// the group for which the public key was submitted, and the activationBlock
-	// is the block at which the group will be considered active in the relay.
-	//
-	// TODO activation delay may be unnecessary, we'll see.
-	OnGroupPublicKeySubmitted(func(groupID string, activationBlock *big.Int)) error
-
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (config.Chain, error)
+	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
+	// associated with a request with id requestID. On-chain errors are reported
+	// through the promise.
+	SubmitGroupPublicKey(requestID *big.Int, key [96]byte) *async.GroupRegistrationPromise
+	// SubmitRelayEntry submits an entry in the threshold relay and returns a
+	// promise to track the submission result. The promise is fulfilled with
+	// the entry as seen on-chain, or failed if there is an error submitting
+	// the entry.
+	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
+	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
+	// notification of a new, valid relay entry is seen.
+	OnRelayEntryGenerated(func(entry *event.Entry))
+	// OnRelayEntryRequested is a callback that is invoked when an on-chain
+	// notification of a new, valid relay request is seen.
+	OnRelayEntryRequested(func(request *event.Request))
+	// OnStakerAdded is a callback that is invoked when an on-chain
+	// notification of a new, valid staker is seen.
+	OnStakerAdded(func(staker *event.StakerRegistration))
+	// AddStaker is a temporary function for Milestone 1 that
+	// adds a staker to the group contract.
+	AddStaker(groupMemberID string) *async.StakerRegistrationPromise
+	// GetStakerList is a temporary function for Milestone 1 that
+	// gets back the list of stakers.
+	GetStakerList() ([]string, error)
+	// OnGroupRegistered is a callback that is invoked when an on-chain
+	// notification of a new, valid group being registered is seen.
+	OnGroupRegistered(func(key *event.GroupRegistration))
+	// RequestRelayEntry makes an on-chain request to start generation of a
+	// random signature.  An event is generated.
+	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
 }
