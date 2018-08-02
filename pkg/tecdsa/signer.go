@@ -776,23 +776,78 @@ func (s *Round4Signer) CombineRound4Messages(
 type Round5Signer struct {
 	Signer
 
-	signatureUnmask               *paillier.Cypher // w
-	signatureRandomMultiplePublic *curve.Point     // R
+	signatureRandomMultiplePublicHash *big.Int // r = H'(R)
 }
 
-// SignRound5 executes the fifth round of signing
+// SignRound5 executes the fifth round of signing. In the fifth round, signers
+// jointly decrypt signature unmask `w` as well as compute hash of the signature
+// random multiple public parameter. Both values will be used in round six when
+// evaluating the final signature.
 func (s *Round4Signer) SignRound5(
 	signatureUnmask *paillier.Cypher, // w
 	signatureRandomMultiplePublic *curve.Point, // R
 ) (
-	*Round5Signer, error,
+	*Round5Signer, *SignRound5Message, error,
 ) {
+
+	// TDec(w)
+	signatureUnmaskPartialDecryption := s.paillierKey.Decrypt(signatureUnmask.C)
+
+	// r = H'(R)
+	signatureRandomMultiplePublicHash := new(big.Int).Mod(
+		signatureRandomMultiplePublic.X,
+		s.groupParameters.curveCardinality(),
+	)
+
+	message := &SignRound5Message{
+		signerID: s.ID,
+
+		signatureUnmaskPartialDecryption: signatureUnmaskPartialDecryption,
+	}
+
 	signer := &Round5Signer{
 		Signer: s.Signer,
 
-		signatureUnmask:               signatureUnmask,
-		signatureRandomMultiplePublic: signatureRandomMultiplePublic,
+		signatureRandomMultiplePublicHash: signatureRandomMultiplePublicHash,
 	}
 
-	return signer, nil
+	return signer, message, nil
+}
+
+// CombineRound5Messages combines together all `SignRound5Message`s produced by
+// signers. Each message contains a partial decryption for signature unmask
+// parameter `w`. Function combines them together and returns a final decrypted
+// value of signature unmask.
+func (s *Round4Signer) CombineRound5Messages(
+	round5Messages []*SignRound5Message,
+) (
+	signatureUnmask *big.Int, // D(w)
+	err error,
+) {
+	groupSize := s.groupParameters.groupSize
+
+	if len(round5Messages) != groupSize {
+		return nil, fmt.Errorf(
+			"round 5 messages required from all group members; got %v, expected %v",
+			len(round5Messages),
+			groupSize,
+		)
+	}
+
+	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
+	for i, round5Message := range round5Messages {
+		partialDecryptions[i] = round5Message.signatureUnmaskPartialDecryption
+	}
+
+	signatureUnmask, err = s.paillierKey.CombinePartialDecryptions(
+		partialDecryptions,
+	)
+	if err != nil {
+		err = fmt.Errorf(
+			"could not combine signature unmask partial decryptions [%v]",
+			err,
+		)
+	}
+
+	return
 }
