@@ -921,8 +921,19 @@ func (s *Round5Signer) CombineRound6Messages(
 		)
 	}
 
+	sign = new(big.Int).Mod(sign, s.groupParameters.curveCardinality())
+
+	// Inherent ECDSA signature malleability
+	// BTC and ETH require that the S value inside ECDSA signatures is at most
+	// the curve order divided by 2 (essentially restricting this value to its
+	// lower half range).
+	halfOrder := new(big.Int).Rsh(s.groupParameters.curveCardinality(), 1)
+	if sign.Cmp(halfOrder) == 1 {
+		sign = new(big.Int).Sub(s.groupParameters.curveCardinality(), sign)
+	}
+
 	return &Signature{
 		R: s.signatureRandomMultiplePublicHash,
-		S: new(big.Int).Mod(sign, s.groupParameters.curveCardinality()),
+		S: sign,
 	}, nil
 }
