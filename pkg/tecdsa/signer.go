@@ -635,6 +635,7 @@ type Round4Signer struct {
 	Signer
 
 	secretKeyRandomFactor *paillier.Cypher // u = E(ρ)
+	secretKeyMultiple     *paillier.Cypher // v = E(ρx)
 }
 
 // SignRound4 executes the fourth round of T-ECDSA signing as described in
@@ -666,6 +667,7 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 		Signer: s.Signer,
 
 		secretKeyRandomFactor: s.secretKeyRandomFactor,
+		secretKeyMultiple:     s.secretKeyMultiple,
 	}
 
 	round4Message := &SignRound4Message{
@@ -776,7 +778,9 @@ func (s *Round4Signer) CombineRound4Messages(
 type Round5Signer struct {
 	Signer
 
-	signatureRandomMultiplePublicHash *big.Int // r = H'(R)
+	secretKeyRandomFactor             *paillier.Cypher // u = E(ρ)
+	secretKeyMultiple                 *paillier.Cypher // v = E(ρx)
+	signatureRandomMultiplePublicHash *big.Int         // r = H'(R)
 }
 
 // SignRound5 executes the fifth round of signing. In the fifth round, signers
@@ -790,7 +794,7 @@ func (s *Round4Signer) SignRound5(
 	*Round5Signer, *SignRound5Message, error,
 ) {
 
-	// TDec(w)
+	// TDec(w) share
 	signatureUnmaskPartialDecryption := s.paillierKey.Decrypt(signatureUnmask.C)
 
 	// r = H'(R)
@@ -808,6 +812,8 @@ func (s *Round4Signer) SignRound5(
 	signer := &Round5Signer{
 		Signer: s.Signer,
 
+		secretKeyRandomFactor:             s.secretKeyRandomFactor,
+		secretKeyMultiple:                 s.secretKeyMultiple,
 		signatureRandomMultiplePublicHash: signatureRandomMultiplePublicHash,
 	}
 
@@ -821,7 +827,7 @@ func (s *Round4Signer) SignRound5(
 func (s *Round4Signer) CombineRound5Messages(
 	round5Messages []*SignRound5Message,
 ) (
-	signatureUnmask *big.Int, // D(w)
+	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
 	groupSize := s.groupParameters.groupSize
@@ -850,4 +856,78 @@ func (s *Round4Signer) CombineRound5Messages(
 	}
 
 	return
+}
+
+// SignRound6 executes the sixth round of signing. In the sixth round, all
+// parameters signers evaluates so far are combined together in order to produce
+// a final signature. The final signature is in a Paillier-encrypted form, so
+// a threshold decode action must be performed.
+func (s *Round5Signer) SignRound6(
+	signatureUnmask *big.Int, // TDec(w)
+	messageHash []byte, // m
+) *SignRound6Message {
+	// TODO: add 32-byte validation for message hash
+	signatureCypher := s.paillierKey.Mul(
+		s.paillierKey.Add(
+			s.paillierKey.Mul(
+				s.secretKeyRandomFactor,
+				new(big.Int).SetBytes(messageHash[:]),
+			),
+			s.paillierKey.Mul(
+				s.secretKeyMultiple,
+				s.signatureRandomMultiplePublicHash,
+			),
+		),
+		new(big.Int).ModInverse(
+			signatureUnmask,
+			s.groupParameters.curveCardinality(),
+		),
+	)
+
+	return &SignRound6Message{
+		signaturePartialDecryption: s.paillierKey.Decrypt(signatureCypher.C),
+	}
+}
+
+// Signature represents a final T-ECDSA signature
+type Signature struct {
+	R *big.Int
+	S *big.Int
+}
+
+// CombineRound6Messages combines together all partial decryptions of signature
+// generated in the sixth round of signing. It outputs a final T-ECDSA signature
+// in an unencrypted form.
+func (s *Round5Signer) CombineRound6Messages(
+	round6Messages []*SignRound6Message,
+) (*Signature, error) {
+	groupSize := s.groupParameters.groupSize
+
+	if len(round6Messages) != groupSize {
+		return nil, fmt.Errorf(
+			"round 6 messages required from all group members; got %v, expected %v",
+			len(round6Messages),
+			groupSize,
+		)
+	}
+
+	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
+	for i, round6Message := range round6Messages {
+		partialDecryptions[i] = round6Message.signaturePartialDecryption
+	}
+
+	sign, err := s.paillierKey.CombinePartialDecryptions(
+		partialDecryptions,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not combine signature partial decryptions [%v]",
+			err,
+		)
+	}
+
+	return &Signature{
+		R: s.signatureRandomMultiplePublicHash,
+		S: sign,
+	}, nil
 }
