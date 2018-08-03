@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -16,7 +16,7 @@ contract StakeDelegatable {
      * @dev Only not null addresses can be passed to the functions with this modifier.
      */
     modifier notNull(address _address) {
-        require(_address != address(0));
+        require(_address != address(0), "Provided address can not be zero.");
         _;
     }
 
@@ -24,7 +24,7 @@ contract StakeDelegatable {
      * @dev Only non staker addresses can be passed to the functions with this modifier.
      */
     modifier notStaker(address _address) {
-        require(stakeBalances[_address] == 0);
+        require(stakeBalances[_address] == 0, "Provided address is not a staker.");
         _;
     }
 
@@ -121,7 +121,7 @@ contract StakeDelegatable {
     function revertIfDelegateStakes(address _address) internal {
         address delegator = delegatorToDelegate[_address];
         if (delegator != address(0)) {
-            revert();
+            revert("Provided address can not stake since it has stake delegated to it.");
         }
     }
 }
