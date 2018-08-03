@@ -210,7 +210,10 @@ var publicParameters = &PublicParameters{
 // testing.
 func createNewCoreGroup() ([]*signerCore, error) {
 	paillierKeyGen := paillier.GetThresholdKeyGenerator(
-		paillierModulusBitLength,
+		// TODO: GetThresholdKeyGenerator accepts the bit length of p and q
+		// primes; we should refactor it to accept a modulus bit length so that
+		// we don't have to divide here
+		paillierModulusBitLength/2,
 		publicParameters.groupSize,
 		publicParameters.threshold,
 		rand.Reader,

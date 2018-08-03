@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/keep-network/paillier"
 )
@@ -48,8 +49,9 @@ type PublicParameters struct {
 	curve elliptic.Curve
 }
 
-//TODO: Increase once safe prime generator performance is bosted
-const safePrimeBitLength = 256
+const safePrimeBitLength = 1024
+const safePrimeGenConcurrencyLevel = 4
+const safePrimeGenTimeout = 120 * time.Second
 
 // GeneratePublicParameters creates a new instance of `PublicParameters` with
 // all field set to appropriate values.
@@ -57,8 +59,11 @@ func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
-	pTilde, pTildePrime, err := paillier.GenerateSafePrimes(
-		safePrimeBitLength, rand.Reader,
+	pTilde, pTildePrime, err := paillier.GenerateSafePrime(
+		safePrimeBitLength,
+		safePrimeGenConcurrencyLevel,
+		safePrimeGenTimeout,
+		rand.Reader,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -68,8 +73,11 @@ func GeneratePublicParameters(
 	}
 
 	qTilde, qTildePrime := big.NewInt(0), big.NewInt(0)
-	for qTilde, qTildePrime, err = paillier.GenerateSafePrimes(
-		safePrimeBitLength, rand.Reader,
+	for qTilde, qTildePrime, err = paillier.GenerateSafePrime(
+		safePrimeBitLength,
+		safePrimeGenConcurrencyLevel,
+		safePrimeGenTimeout,
+		rand.Reader,
 	); err == nil && pTilde.Cmp(qTilde) == 0; {
 	}
 	if err != nil {

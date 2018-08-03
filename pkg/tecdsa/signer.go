@@ -91,8 +91,7 @@ type Signer struct {
 //
 // secp256k1 cardinality q is a 256 bit number, so we must have at least
 // 2048 bit Paillier modulus.
-// TODO: Boost prime generator performance and switch to 2048
-const paillierModulusBitLength = 256
+const paillierModulusBitLength = 2048
 
 func (pp *PublicParameters) curveCardinality() *big.Int {
 	return pp.curve.Params().N
