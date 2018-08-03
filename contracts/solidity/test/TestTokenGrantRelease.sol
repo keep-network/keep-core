@@ -21,16 +21,6 @@ contract TestTokenGrantRelease {
     uint duration = 10 days;
     uint cliff = 0;
 
-    // Token holder should be able to grant it's tokens to a beneficiary.
-    function testCanGrant() public {
-        uint balance = t.balanceOf(address(this));
-
-        t.approve(address(c), 100);
-        id = c.grant(100, beneficiary, duration, start, cliff, false);
-        Assert.equal(t.balanceOf(address(this)), balance - 100, "Amount should be taken out from grant creator main balance.");
-        Assert.equal(c.balanceOf(beneficiary), 100, "Amount should be added to beneficiary's granted balance.");
-    }
-
     // Token grant with 0 duration, release available immediately.
     function testCanReleaseGrantedAmount() public {
         

@@ -5,7 +5,7 @@ import "../contracts/KeepToken.sol";
 import "../contracts/TokenGrant.sol";
 
 
-contract TestTokenGrantLookup {
+contract TestTokenGrantLookupVesting {
 
     // Create KEEP token.
     KeepToken t = new KeepToken();
@@ -24,15 +24,15 @@ contract TestTokenGrantLookup {
         id = c.grant(100, beneficiary, duration, start, cliff, false);
     }
 
-    function testCanGetGrantByID() public {
-        uint _amount;
-        uint _released;
-        bool _locked;
-        bool _revoked;
-        (_amount, _released, _locked, _revoked) = c.getGrant(id);
-        Assert.equal(_amount, 100, "Grant should maintain a record of the granted amount.");
-        Assert.equal(_released, 0, "Grant should have 0 amount released initially.");
-        Assert.equal(_locked, false, "Grant should initially be unlocked.");
-        Assert.equal(_revoked, false, "Grant should not be marked as revoked initially.");
+    function testCanGetGrantVestingScheduleByGrantID() public {
+        address _owner;
+        uint _duration;
+        uint _start;
+        uint _cliff;
+        (_owner, _duration, _start, _cliff) = c.getGrantVestingSchedule(id);
+        Assert.equal(_owner, address(this), "Grant should maintain a record of the creator.");
+        Assert.equal(_duration, duration, "Grant should have vesting schedule duration.");
+        Assert.equal(_start, start, "Grant should have start time.");
+        Assert.equal(_cliff, start+cliff, "Grant should have vesting schedule cliff duration.");
     }
 }

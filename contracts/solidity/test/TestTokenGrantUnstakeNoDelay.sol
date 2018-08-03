@@ -7,7 +7,7 @@ import "../contracts/TokenGrant.sol";
 import "./helpers/ThrowProxy.sol";
 
 
-contract TestTokenGrantStakeNoDelay {
+contract TestTokenGrantUnstakeNoDelay {
 
     // Create KEEP token
     KeepToken t = new KeepToken();
@@ -21,9 +21,8 @@ contract TestTokenGrantStakeNoDelay {
     uint duration = 10 days;
     uint cliff = 0;
 
-
-    // Token grant beneficiary should be able to stake unreleased granted balance.
-    function testCanStakeTokenGrant() public {
+    // Token grant beneficiary can finish unstake of token grant when delay is over
+    function testCanFinishUnstakeTokenGrant() public {
 
         // Approve transfer of tokens to the token grant contract.
         t.approve(address(c), 100);
@@ -32,15 +31,6 @@ contract TestTokenGrantStakeNoDelay {
         // Stake token grant.
         c.stake(id);
 
-        Assert.equal(c.stakeBalances(beneficiary), 100, "Token grant balance should be added to beneficiary grant stake balance.");
-
-        bool _locked;
-        (, , _locked, , , , , , ,) = c.grants(id);
-        Assert.equal(_locked, true, "Token grant should become locked.");
-    }
-
-    // Token grant beneficiary can finish unstake of token grant when delay is over
-    function testCanFinishUnstakeTokenGrant() public {
         c.initiateUnstake(id);
         c.finishUnstake(id);
         Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
