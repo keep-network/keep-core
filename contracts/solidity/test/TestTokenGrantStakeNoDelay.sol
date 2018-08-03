@@ -39,15 +39,9 @@ contract TestTokenGrantStakeNoDelay {
         Assert.equal(_locked, true, "Token grant should become locked.");
     }
 
-    // Token grant beneficiary should be able to initiate unstake of the token grant
-    function testCanInitiateUnstakeTokenGrant() public {
-        c.initiateUnstake(id);
-        Assert.equal(c.stakeWithdrawalStart(id), now, "Stake withdrawal start should be set.");
-        Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should change immediately after unstake initiation.");
-    }
-
     // Token grant beneficiary can finish unstake of token grant when delay is over
     function testCanFinishUnstakeTokenGrant() public {
+        c.initiateUnstake(id);
         c.finishUnstake(id);
         Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
         bool _locked;
