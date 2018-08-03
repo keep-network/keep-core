@@ -923,6 +923,6 @@ func (s *Round5Signer) CombineRound6Messages(
 
 	return &Signature{
 		R: s.signatureRandomMultiplePublicHash,
-		S: sign,
+		S: new(big.Int).Mod(sign, s.groupParameters.curveCardinality()),
 	}, nil
 }
