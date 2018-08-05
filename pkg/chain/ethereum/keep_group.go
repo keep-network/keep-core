@@ -263,9 +263,13 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
+				eventSubscription.Unsubscribe()
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				eventSubscription.Unsubscribe()
+				return
 			}
 		}
 	}()
@@ -293,9 +297,13 @@ func (kg *keepGroup) WatchGroupErrorCode(
 			select {
 			case event := <-eventChan:
 				success(event.Code)
+				eventSubscription.Unsubscribe()
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				eventSubscription.Unsubscribe()
+				return
 			}
 		}
 	}()
@@ -324,9 +332,13 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:], event.Exists)
+				eventSubscription.Unsubscribe()
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				eventSubscription.Unsubscribe()
+				return
 			}
 		}
 	}()
@@ -355,9 +367,13 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
+				eventSubscription.Unsubscribe()
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				eventSubscription.Unsubscribe()
+				return
 			}
 		}
 	}()
@@ -383,9 +399,13 @@ func (kg *keepGroup) WatchOnStakerAdded(
 			select {
 			case event := <-eventChan:
 				success(int(event.Index), event.GroupMemberID[:])
+				eventSubscription.Unsubscribe()
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				eventSubscription.Unsubscribe()
+				return
 			}
 		}
 	}()
