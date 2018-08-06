@@ -776,9 +776,9 @@ func (s *Round4Signer) CombineRound4Messages(
 type Round5Signer struct {
 	Signer
 
-	signatureMultiplePublicHash *big.Int         // r = H'(R)
-	signatureUnmask             *paillier.Cypher // w
-	signatureFactorPublic       *curve.Point     // R
+	signatureUnmask           *paillier.Cypher // w
+	signatureFactorPublic     *curve.Point     // R
+	signatureFactorPublicHash *big.Int         // r = H'(R)
 }
 
 // SignRound5 executes the fifth round of signing. In the fifth round, signers
@@ -800,7 +800,7 @@ func (s *Round4Signer) SignRound5(
 	// According to [GGN 16], H' is a hash function defined from `G` to `Z_q`.
 	// It does not have to be a cryptographic hash function, so we use the
 	// simplest possible form here.
-	signatureMultiplePublicHash := new(big.Int).Mod(
+	signatureFactorPublicHash := new(big.Int).Mod(
 		signatureFactorPublic.X,
 		s.groupParameters.curveCardinality(),
 	)
@@ -814,9 +814,9 @@ func (s *Round4Signer) SignRound5(
 	signer := &Round5Signer{
 		Signer: s.Signer,
 
-		signatureMultiplePublicHash: signatureMultiplePublicHash,
-		signatureUnmask:             signatureUnmask,
-		signatureFactorPublic:       signatureFactorPublic,
+		signatureUnmask:           signatureUnmask,
+		signatureFactorPublic:     signatureFactorPublic,
+		signatureFactorPublicHash: signatureFactorPublicHash,
 	}
 
 	return signer, message, nil

@@ -248,30 +248,30 @@ func TestSignRound5(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signatureRandomMultiplePublic := curve.NewPoint(
+	signatureFactorPublic := curve.NewPoint(
 		publicParameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
 	)
 
 	round5Signer, _, err := signer.SignRound5(
 		signatureUnmaskCypher,
-		signatureRandomMultiplePublic,
+		signatureFactorPublic,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedSignatureRandomMultiplePublicHash := new(big.Int).Mod(
-		signatureRandomMultiplePublic.X,
+	expectedSignatureFactorPublicHash := new(big.Int).Mod(
+		signatureFactorPublic.X,
 		publicParameters.curve.Params().N,
 	)
 
-	if round5Signer.signatureMultiplePublicHash.Cmp(
-		expectedSignatureRandomMultiplePublicHash,
+	if round5Signer.signatureFactorPublicHash.Cmp(
+		expectedSignatureFactorPublicHash,
 	) != 0 {
 		t.Fatalf(
 			"unexpected signature random multiple public hash\nexpected: %v\nactual: %v",
-			expectedSignatureRandomMultiplePublicHash,
-			round5Signer.signatureMultiplePublicHash,
+			expectedSignatureFactorPublicHash,
+			round5Signer.signatureFactorPublicHash,
 		)
 	}
 
@@ -284,7 +284,7 @@ func TestSignRound5(t *testing.T) {
 func TestSignAndCombineRound5(t *testing.T) {
 	signatureUnmask := big.NewInt(712)
 
-	signatureRandomMultiplePublic := curve.NewPoint(
+	signatureFactorPublic := curve.NewPoint(
 		publicParameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
 	)
 
@@ -326,7 +326,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 			for i, signer := range round4Signers {
 				signer, message, err := signer.SignRound5(
 					signatureUnmaskCypher,
-					signatureRandomMultiplePublic,
+					signatureFactorPublic,
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -427,7 +427,7 @@ func initializeNewRound4SignerGroup() ([]*Round4Signer, error) {
 		return nil, err
 	}
 
-	secretKeyRandomFactor, err := signers[0].paillierKey.Encrypt(
+	secretKeyFactor, err := signers[0].paillierKey.Encrypt(
 		big.NewInt(7331), rand.Reader,
 	)
 	if err != nil {
@@ -437,8 +437,8 @@ func initializeNewRound4SignerGroup() ([]*Round4Signer, error) {
 	round4Signers := make([]*Round4Signer, len(signers))
 	for i, signer := range signers {
 		round4Signers[i] = &Round4Signer{
-			Signer:                *signer,
-			secretKeyRandomFactor: secretKeyRandomFactor,
+			Signer:          *signer,
+			secretKeyFactor: secretKeyFactor,
 		}
 	}
 
