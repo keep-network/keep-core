@@ -776,16 +776,16 @@ func (s *Round4Signer) CombineRound4Messages(
 type Round5Signer struct {
 	Signer
 
-	signatureRandomMultiplePublicHash *big.Int // r = H'(R)
+	signatureMultiplePublicHash *big.Int // r = H'(R)
 }
 
 // SignRound5 executes the fifth round of signing. In the fifth round, signers
 // jointly decrypt signature unmask `w` as well as compute hash of the signature
-// random multiple public parameter. Both values will be used in round six when
+// multiple public parameter. Both values will be used in round six when
 // evaluating the final signature.
 func (s *Round4Signer) SignRound5(
 	signatureUnmask *paillier.Cypher, // w
-	signatureRandomMultiplePublic *curve.Point, // R
+	signatureMultiplePublic *curve.Point, // R
 ) (
 	*Round5Signer, *SignRound5Message, error,
 ) {
@@ -794,8 +794,8 @@ func (s *Round4Signer) SignRound5(
 	signatureUnmaskPartialDecryption := s.paillierKey.Decrypt(signatureUnmask.C)
 
 	// r = H'(R)
-	signatureRandomMultiplePublicHash := new(big.Int).Mod(
-		signatureRandomMultiplePublic.X,
+	signatureMultiplePublicHash := new(big.Int).Mod(
+		signatureMultiplePublic.X,
 		s.groupParameters.curveCardinality(),
 	)
 
@@ -808,7 +808,7 @@ func (s *Round4Signer) SignRound5(
 	signer := &Round5Signer{
 		Signer: s.Signer,
 
-		signatureRandomMultiplePublicHash: signatureRandomMultiplePublicHash,
+		signatureMultiplePublicHash: signatureMultiplePublicHash,
 	}
 
 	return signer, message, nil
