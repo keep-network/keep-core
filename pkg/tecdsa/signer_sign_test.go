@@ -57,7 +57,7 @@ func TestSignRound1And2(t *testing.T) {
 			modifyRound2Messages: func(
 				round2Messages []*SignRound2Message,
 			) []*SignRound2Message {
-				round2Messages[2].secretKeyRandomFactorShare.C = big.NewInt(1337)
+				round2Messages[2].secretKeyFactorShare.C = big.NewInt(1337)
 				return round2Messages
 			},
 			expectedError: errors.New(
@@ -246,7 +246,7 @@ func initializeNewSignerGroup() ([]*Signer, error) {
 
 func initializeNewRound2SignerGroup() (
 	round2Signers []*Round2Signer,
-	secretKeyRandomFactor *paillier.Cypher,
+	secretKeyFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
@@ -264,7 +264,7 @@ func initializeNewRound2SignerGroup() (
 
 	paillierKey := signers[0].paillierKey
 
-	secretKeyRandomFactor, err = paillierKey.Encrypt(
+	secretKeyFactor, err = paillierKey.Encrypt(
 		big.NewInt(1337), rand.Reader,
 	)
 	if err != nil {

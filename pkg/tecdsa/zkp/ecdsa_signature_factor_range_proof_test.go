@@ -39,17 +39,26 @@ func TestCommitEcdsaSignatureFactorRangeProofValues(t *testing.T) {
 
 	params := generateTestPublicParams()
 
-	signatureRandomMultipleSecret := big.NewInt(3)
-	signatureRandomMultipleMask := big.NewInt(5)
+	signatureFactorSecret := big.NewInt(3)
+	signatureFactorMask := big.NewInt(5)
 
 	paillierR := big.NewInt(7)
 
-	signatureRandomMultiplePublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureRandomMultipleSecret.Bytes()))
+	signatureFactorPublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureFactorSecret.Bytes()))
 	signatureUnmask := &paillier.Cypher{C: big.NewInt(9)}
-	secretKeyRandomMultiple := &paillier.Cypher{C: big.NewInt(7)}
+	secretKeyFactor := &paillier.Cypher{C: big.NewInt(7)}
 
 	// WHEN
-	zkp, err := CommitEcdsaSignatureFactorRangeProof(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, mockRandom)
+	zkp, err := CommitEcdsaSignatureFactorRangeProof(
+		signatureFactorPublic,
+		signatureUnmask,
+		secretKeyFactor,
+		signatureFactorSecret,
+		signatureFactorMask,
+		paillierR,
+		params,
+		mockRandom,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,9 +135,9 @@ func TestEcdsaSignatureFactorRangeProofVerification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
-	signatureRandomMultipleSecret := big.NewInt(3)
-	signatureRandomMultiplePublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureRandomMultipleSecret.Bytes()))
-	secretKeyRandomMultiple := &paillier.Cypher{C: big.NewInt(7)}
+	signatureFactorSecret := big.NewInt(3)
+	signatureFactorPublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureFactorSecret.Bytes()))
+	secretKeyFactor := &paillier.Cypher{C: big.NewInt(7)}
 	// `w` is calculated from:
 	// w = u^η1 * Γ^qη2 * rc^N mod N^2
 	//
@@ -175,9 +184,9 @@ func TestEcdsaSignatureFactorRangeProofVerification(t *testing.T) {
 	expectedV3 := big.NewInt(21032)
 
 	// WHEN
-	actualU1 := zkp.evaluateVerificationU1(signatureRandomMultiplePublic, params)
+	actualU1 := zkp.evaluateVerificationU1(signatureFactorPublic, params)
 	actualU3 := zkp.evaluateVerificationU3(params)
-	actualV1 := zkp.evaluateVerificationV1(signatureUnmask, secretKeyRandomMultiple, params)
+	actualV1 := zkp.evaluateVerificationV1(signatureUnmask, secretKeyFactor, params)
 	actualV3 := zkp.evaluateVerificationV3(params)
 
 	// THEN
@@ -204,11 +213,11 @@ func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signatureRandomMultipleSecret, err := rand.Int(rand.Reader, params.q) // factor from ZKP PI2,1
+	signatureFactorSecret, err := rand.Int(rand.Reader, params.q) // factor from ZKP PI2,1
 	if err != nil {
 		t.Fatal(err)
 	}
-	signatureRandomMultipleMask, err := rand.Int(rand.Reader, params.QPow6()) // factor from ZKP PI2,1
+	signatureFactorMask, err := rand.Int(rand.Reader, params.QPow6()) // factor from ZKP PI2,1
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -218,16 +227,16 @@ func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signatureRandomMultiplePublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureRandomMultipleSecret.Bytes())) // eta1CurvePoint
-	secretKeyRandomMultiple, _ := privateKey.EncryptWithR(big.NewInt(5), paillierR)                                     // encryptedFactor1 (rho from round 1), u = E(ρ)
+	signatureFactorPublic := curve.NewPoint(params.curve.ScalarBaseMult(signatureFactorSecret.Bytes())) // eta1CurvePoint
+	secretKeyFactor, _ := privateKey.EncryptWithR(big.NewInt(5), paillierR)                             // encryptedFactor1 (rho from round 1), u = E(ρ)
 
 	// D(w) = η1*D(u) + q*η2 = η1*ρ + q*η2
 	// w = E(D(w)) = E(η1*D(u) + q*η2) = E(η1*D(u) + E(q*η2) = E(η1*u) + E(q*η2)
 	// E(η1*u)
-	encryptedUEta1 := privateKey.PublicKey.Mul(secretKeyRandomMultiple, signatureRandomMultipleSecret)
+	encryptedUEta1 := privateKey.PublicKey.Mul(secretKeyFactor, signatureFactorSecret)
 
 	// E(q*η2)
-	qEta2 := new(big.Int).Mod(new(big.Int).Mul(params.q, signatureRandomMultipleMask), params.N)
+	qEta2 := new(big.Int).Mod(new(big.Int).Mul(params.q, signatureFactorMask), params.N)
 	encryptedQEta2, err := privateKey.EncryptWithR(qEta2, paillierR)
 	if err != nil {
 		t.Fatal(err)
@@ -236,7 +245,16 @@ func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
 	signatureUnmask := privateKey.PublicKey.Add(encryptedUEta1, encryptedQEta2)
 
 	// WHEN
-	zkp, err := CommitEcdsaSignatureFactorRangeProof(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, signatureRandomMultipleSecret, signatureRandomMultipleMask, paillierR, params, rand.Reader)
+	zkp, err := CommitEcdsaSignatureFactorRangeProof(
+		signatureFactorPublic,
+		signatureUnmask,
+		secretKeyFactor,
+		signatureFactorSecret,
+		signatureFactorMask,
+		paillierR,
+		params,
+		rand.Reader,
+	)
 
 	if err != nil {
 		t.Fatal(err)
@@ -249,28 +267,28 @@ func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
 	}{
 		"positive validation": {
 			verify: func() bool {
-				return zkp.Verify(signatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, params)
+				return zkp.Verify(signatureFactorPublic, signatureUnmask, secretKeyFactor, params)
 			},
 			expectedResult: true,
 		},
-		"negative validation - wrong signatureRandomMultiplePublic": {
+		"negative validation - wrong signatureFactorPublic": {
 			verify: func() bool {
-				wrongSignatureRandomMultiplePublic := curve.NewPoint(big.NewInt(3), big.NewInt(4))
-				return zkp.Verify(wrongSignatureRandomMultiplePublic, signatureUnmask, secretKeyRandomMultiple, params)
+				wrongSignatureFactorPublic := curve.NewPoint(big.NewInt(3), big.NewInt(4))
+				return zkp.Verify(wrongSignatureFactorPublic, signatureUnmask, secretKeyFactor, params)
 			},
 			expectedResult: false,
 		},
 		"negative validation - wrong signatureUnmask": {
 			verify: func() bool {
 				wrongSignatureUnmask := &paillier.Cypher{C: new(big.Int).Add(signatureUnmask.C, big.NewInt(1))}
-				return zkp.Verify(signatureRandomMultiplePublic, wrongSignatureUnmask, secretKeyRandomMultiple, params)
+				return zkp.Verify(signatureFactorPublic, wrongSignatureUnmask, secretKeyFactor, params)
 			},
 			expectedResult: false,
 		},
-		"negative validation - wrong secretKeyRandomMultiple": {
+		"negative validation - wrong secretKeyFactor": {
 			verify: func() bool {
-				wrongSecretKeyRandomMultiple := &paillier.Cypher{C: new(big.Int).Add(signatureUnmask.C, big.NewInt(1))}
-				return zkp.Verify(signatureRandomMultiplePublic, signatureUnmask, wrongSecretKeyRandomMultiple, params)
+				wrongSecretKeyFactor := &paillier.Cypher{C: new(big.Int).Add(signatureUnmask.C, big.NewInt(1))}
+				return zkp.Verify(signatureFactorPublic, signatureUnmask, wrongSecretKeyFactor, params)
 			},
 			expectedResult: false,
 		},
