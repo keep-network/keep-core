@@ -296,7 +296,7 @@ type Round1Signer struct {
 	// Intermediate values stored between the first and second round of signing.
 	secretKeyFactorShare                *big.Int                    // ρ_i
 	encryptedSecretKeyFactorShare       *paillier.Cypher            // u_i = E(ρ_i)
-	secretKeyMultiple                   *paillier.Cypher            // v_i = E(ρ_i * x)
+	secretKeyMultipleShare              *paillier.Cypher            // v_i = E(ρ_i * x)
 	secretKeyFactorShareDecommitmentKey *commitment.DecommitmentKey // D_1i
 	paillierRandomness                  *big.Int
 }
@@ -360,7 +360,7 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 		Signer:                              *s,
 		secretKeyFactorShare:                secretKeyFactorShare,
 		encryptedSecretKeyFactorShare:       encryptedSecretKeyFactorShare,
-		secretKeyMultiple:                   secretKeyMultiple,
+		secretKeyMultipleShare:              secretKeyMultiple,
 		secretKeyFactorShareDecommitmentKey: decommitmentKey,
 		paillierRandomness:                  paillierRandomness,
 	}
@@ -390,7 +390,7 @@ type Round2Signer struct {
 // verify correctness of the revealed values.
 func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 	zkp, err := zkp.CommitDsaPaillierSecretKeyFactorRange(
-		s.secretKeyMultiple,
+		s.secretKeyMultipleShare,
 		s.dsaKey.secretKey,
 		s.encryptedSecretKeyFactorShare,
 		s.secretKeyFactorShare,
@@ -409,7 +409,7 @@ func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 	round2Message := &SignRound2Message{
 		signerID:                            s.ID,
 		secretKeyFactorShare:                s.encryptedSecretKeyFactorShare,
-		secretKeyMultipleShare:              s.secretKeyMultiple,
+		secretKeyMultipleShare:              s.secretKeyMultipleShare,
 		secretKeyFactorShareDecommitmentKey: s.secretKeyFactorShareDecommitmentKey,
 		secretKeyFactorProof:                zkp,
 	}
