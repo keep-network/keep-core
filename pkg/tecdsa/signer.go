@@ -818,7 +818,7 @@ func (s *Round4Signer) SignRound5(
 // signers. Each message contains a partial decryption for signature unmask
 // parameter `w`. Function combines them together and returns a final decrypted
 // value of signature unmask.
-func (s *Round4Signer) CombineRound5Messages(
+func (s *Round5Signer) CombineRound5Messages(
 	round5Messages []*SignRound5Message,
 ) (
 	signatureUnmask *big.Int, // D(w)

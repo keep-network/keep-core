@@ -265,13 +265,13 @@ func TestSignRound5(t *testing.T) {
 		publicParameters.curve.Params().N,
 	)
 
-	if round5Signer.signatureRandomMultiplePublicHash.Cmp(
+	if round5Signer.signatureMultiplePublicHash.Cmp(
 		expectedSignatureRandomMultiplePublicHash,
 	) != 0 {
 		t.Fatalf(
 			"unexpected signature random multiple public hash\nexpected: %v\nactual: %v",
 			expectedSignatureRandomMultiplePublicHash,
-			round5Signer.signatureRandomMultiplePublicHash,
+			round5Signer.signatureMultiplePublicHash,
 		)
 	}
 
@@ -320,10 +320,11 @@ func TestSignAndCombineRound5(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			round5Signers := make([]*Round5Signer, len(round4Signers))
 			round5Messages := make([]*SignRound5Message, len(round4Signers))
 
 			for i, signer := range round4Signers {
-				_, message, err := signer.SignRound5(
+				signer, message, err := signer.SignRound5(
 					signatureUnmaskCypher,
 					signatureRandomMultiplePublic,
 				)
@@ -331,6 +332,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 					t.Fatal(err)
 				}
 
+				round5Signers[i] = signer
 				round5Messages[i] = message
 			}
 
@@ -338,7 +340,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 				round5Messages = test.modifyRound5Messages(round5Messages)
 			}
 
-			actualSignatureUnmask, err := round4Signers[0].CombineRound5Messages(
+			actualSignatureUnmask, err := round5Signers[0].CombineRound5Messages(
 				round5Messages,
 			)
 			if !reflect.DeepEqual(test.expectedError, err) {
