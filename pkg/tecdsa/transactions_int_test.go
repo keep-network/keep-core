@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"testing"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -72,7 +74,8 @@ func TestTransactionSigning(t *testing.T) {
 	fmt.Printf("Generated transaction ID: %s\n", transaction.TxID)
 
 	// SendTransactionToPeer(transaction)
-	SendTransactionToQBitNinjaAPI(transaction.TxMessage)
+	// SendTransactionToQBitNinjaAPI(transaction.TxMessage)
+	SendTransactionToRPC(transaction)
 }
 
 func validatePubKeyScriptAddress(pubKeyScript []byte, expectedAddress string, networkParams *chaincfg.Params) (bool, error) {
@@ -144,9 +147,26 @@ func CreateTransaction(wifString string,
 	}, nil
 }
 
-// TODO: https://github.com/btcsuite/btcd/tree/master/connmgr
-func SendWithConnectionManager(transaction *Transaction) {
-	// connectionManager := connmgr.New(networkParams)
+// Requires local RPC server to be runing
+// Command:
+// btcd --testnet --notls --rpcuser testNetRPCuser --rpcpass testNetRPCpass
+func SendTransactionToRPC(transaction *Transaction) {
+	client, err := rpcclient.New(&rpcclient.ConnConfig{
+		HTTPPostMode: true,
+		DisableTLS:   true,
+		Host:         "127.0.0.1:18334",
+		User:         "testNetRPCuser",
+		Pass:         "testNetRPCpass",
+	}, nil)
+	if err != nil {
+		log.Fatalf("error creating new btc client: %v", err)
+	}
+
+	txID, err := client.SendRawTransaction(transaction.TxMessage, false)
+	if err != nil {
+		log.Fatalf("error sendMany: %v", err)
+	}
+	log.Printf("SendRawTransaction completed! tx sha is: %s", txID.String())
 }
 
 // List of DNS Seeds
