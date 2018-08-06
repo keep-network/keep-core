@@ -348,14 +348,14 @@ func (zkp *EcdsaSignatureFactorRangeProof) allParametersInRange(params *PublicPa
 //
 // which is exactly how u1 is evaluated during the commitment phase.
 func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU1(
-	signatureRandomMultiplePublic *curve.Point,
+	signatureMultiplePublic *curve.Point,
 	params *PublicParameters,
 ) *curve.Point {
 	cs1x, cs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
 	)
 	rex, rey := params.curve.ScalarMult(
-		signatureRandomMultiplePublic.X, signatureRandomMultiplePublic.Y, zkp.e.Bytes(),
+		signatureMultiplePublic.X, signatureMultiplePublic.Y, zkp.e.Bytes(),
 	)
 
 	// For a Weierstrass elliptic curve form, the additive inverse of
@@ -420,13 +420,13 @@ func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationU3(params *Public
 // which is exactly how v1 is evaluated during the commitment phase.
 func (zkp *EcdsaSignatureFactorRangeProof) evaluateVerificationV1(
 	signatureUnmask *paillier.Cypher,
-	secretKeyRandomFactor *paillier.Cypher,
+	secretKeyFactor *paillier.Cypher,
 	params *PublicParameters,
 ) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Mul(
-				discreteExp(secretKeyRandomFactor.C, zkp.s1, params.NSquare()),
+				discreteExp(secretKeyFactor.C, zkp.s1, params.NSquare()),
 				discreteExp(
 					params.G(),
 					new(big.Int).Mul(params.q, zkp.t2),
