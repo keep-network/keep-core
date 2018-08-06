@@ -783,7 +783,7 @@ type Round5Signer struct {
 
 // SignRound5 executes the fifth round of signing. In the fifth round, signers
 // jointly decrypt signature unmask `w` as well as compute hash of the signature
-// multiple public parameter. Both values will be used in round six when
+// factor public parameter. Both values will be used in round six when
 // evaluating the final signature.
 func (s *Round4Signer) SignRound5(
 	signatureUnmask *paillier.Cypher, // w
@@ -829,7 +829,7 @@ func (s *Round4Signer) SignRound5(
 func (s *Round5Signer) CombineRound5Messages(
 	round5Messages []*SignRound5Message,
 ) (
-	signatureUnmask *big.Int, // D(w)
+	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
 	groupSize := s.groupParameters.groupSize

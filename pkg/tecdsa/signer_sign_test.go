@@ -230,7 +230,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 }
 
 // In the fifth round, signers jointly decrypt signature unmask as well as
-// compute hash of the signature random multiple public parameter.
+// compute hash of the signature factor public parameter.
 // Here we test the hash computation process. Threshold decryption is tested
 // separately in another test.
 func TestSignRound5(t *testing.T) {
@@ -278,7 +278,7 @@ func TestSignRound5(t *testing.T) {
 }
 
 // In the fifth round, signers jointly decrypt signature unmask as well as
-// compute hash of the signature random multiple public parameter.
+// compute hash of the signature factor public parameter.
 // After the fifth round, partial signature unmask decryptions are combined
 // together. Here we test the decryption process.
 func TestSignAndCombineRound5(t *testing.T) {
