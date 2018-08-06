@@ -58,7 +58,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 			modifyRound2Messages: func(
 				round2Messages []*SignRound2Message,
 			) []*SignRound2Message {
-				round2Messages[2].secretKeyRandomFactorShare.C = big.NewInt(1337)
+				round2Messages[2].secretKeyFactorShare.C = big.NewInt(1337)
 				return round2Messages
 			},
 			expectedError: errors.New(
@@ -386,7 +386,7 @@ func initializeNewSignerGroup() ([]*Signer, error) {
 // all other parameters set and ready for round 3 signing.
 func initializeNewRound2SignerGroup() (
 	round2Signers []*Round2Signer,
-	secretKeyRandomFactor *paillier.Cypher,
+	secretKeyFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
@@ -403,16 +403,17 @@ func initializeNewRound2SignerGroup() (
 	}
 
 	paillierKey := signers[0].paillierKey
+	secretKeyFactorPlaintext := big.NewInt(1337)
 
-	secretKeyRandomFactor, err = paillierKey.Encrypt(
-		big.NewInt(1337), rand.Reader,
+	secretKeyFactor, err = paillierKey.Encrypt(
+		secretKeyFactorPlaintext, rand.Reader,
 	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	secretKeyMultiple = paillierKey.Mul(
-		signers[0].dsaKey.secretKey, big.NewInt(1337),
+		signers[0].dsaKey.secretKey, secretKeyFactorPlaintext,
 	)
 
 	return

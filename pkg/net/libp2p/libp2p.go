@@ -56,8 +56,13 @@ func (p *provider) ID() net.TransportIdentifier {
 	return networkIdentity(p.identity.id)
 }
 
-func (p *provider) Addrs() []ma.Multiaddr {
-	return p.addrs
+func (p *provider) AddrStrings() []string {
+	multiaddrStrings := make([]string, 0, len(p.addrs))
+	for _, multiaddr := range p.addrs {
+		multiaddrStrings = append(multiaddrStrings, multiaddr.String())
+	}
+
+	return multiaddrStrings
 }
 
 // Connect connects to a libp2p network based on the provided config. The

@@ -122,7 +122,9 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 	rawseed []byte,
 ) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
-	return krb.transactor.RequestRelayEntry(krb.transactorOpts, blockReward, seed)
+	newTransactorOpts := *krb.transactorOpts
+	newTransactorOpts.Value = big.NewInt(2)
+	return krb.transactor.RequestRelayEntry(&newTransactorOpts, blockReward, seed)
 }
 
 // SubmitRelayEntry submits a group signature for consideration.
