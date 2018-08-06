@@ -10,7 +10,7 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// DsaPaillierKeyRangeProof is an implementation of Gennaro's PI_i proof for the
+// DsaPaillierKeyRangeProof is an implementation of Gennaro's Π_i proof for the
 // Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the DSA key initialization phase of T-ECDSA and operates

@@ -1,6 +1,7 @@
 package tecdsa
 
 import (
+	"crypto/rand"
 	"errors"
 	"math/big"
 	"reflect"
@@ -56,9 +57,7 @@ func TestSignRound1And2(t *testing.T) {
 			modifyRound2Messages: func(
 				round2Messages []*SignRound2Message,
 			) []*SignRound2Message {
-				round2Messages[2].randomFactorShare = &paillier.Cypher{
-					C: big.NewInt(1337),
-				}
+				round2Messages[2].secretKeyFactorShare.C = big.NewInt(1337)
 				return round2Messages
 			},
 			expectedError: errors.New(
@@ -102,7 +101,7 @@ func TestSignRound1And2(t *testing.T) {
 				round2Messages = test.modifyRound2Messages(round2Messages)
 			}
 
-			_, _, err = round2Signers[0].combineMessages(
+			_, _, err = round2Signers[0].CombineRound2Messages(
 				round1Messages,
 				round2Messages,
 			)
@@ -114,6 +113,114 @@ func TestSignRound1And2(t *testing.T) {
 					err,
 				)
 			}
+		})
+	}
+}
+
+func TestSignRound3And4(t *testing.T) {
+	var tests = map[string]struct {
+		modifyRound3Messages func(msgs []*SignRound3Message) []*SignRound3Message
+		modifyRound4Messages func(msgs []*SignRound4Message) []*SignRound4Message
+		expectedError        error
+	}{
+		"positive validation": {
+			expectedError: nil,
+		},
+		"negative validation - too few round 3 messages": {
+			modifyRound3Messages: func(
+				round3Messages []*SignRound3Message,
+			) []*SignRound3Message {
+				return []*SignRound3Message{round3Messages[0]}
+			},
+			expectedError: errors.New(
+				"round 3 messages required from all group members; got 1, expected 10",
+			),
+		},
+		"negative validation - too few round 4 messages": {
+			modifyRound4Messages: func(
+				round4Messages []*SignRound4Message,
+			) []*SignRound4Message {
+				return []*SignRound4Message{round4Messages[0]}
+			},
+			expectedError: errors.New(
+				"round 4 messages required from all group members; got 1, expected 10",
+			),
+		},
+		"negative validation - missing round 3 message for signer": {
+			modifyRound3Messages: func(
+				round3Messages []*SignRound3Message,
+			) []*SignRound3Message {
+				round3Messages[3].signerID = "evil"
+				return round3Messages
+			},
+			expectedError: errors.New(
+				"no matching round 4 message for signer with ID = evil",
+			),
+		},
+		"negative validation - invalid ZKP": {
+			modifyRound4Messages: func(
+				round4Messages []*SignRound4Message,
+			) []*SignRound4Message {
+				round4Messages[5].signatureUnmaskShare.C = big.NewInt(1337)
+				return round4Messages
+			},
+			expectedError: errors.New(
+				"round 4 message rejected",
+			),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			round2Signers, secretKeyRandomFactor, secretKeyMultiple, err :=
+				initializeNewRound2SignerGroup()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			round3Messages := make([]*SignRound3Message, len(round2Signers))
+			round4Messages := make([]*SignRound4Message, len(round2Signers))
+			round4Signers := make([]*Round4Signer, len(round2Signers))
+
+			for i, signer := range round2Signers {
+				round3Signer, round3Message, err := signer.SignRound3(
+					secretKeyRandomFactor, secretKeyMultiple,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				round4Signer, round4Message, err := round3Signer.SignRound4()
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				round3Messages[i] = round3Message
+				round4Messages[i] = round4Message
+				round4Signers[i] = round4Signer
+			}
+
+			if test.modifyRound3Messages != nil {
+				round3Messages = test.modifyRound3Messages(round3Messages)
+			}
+
+			if test.modifyRound4Messages != nil {
+				round4Messages = test.modifyRound4Messages(round4Messages)
+			}
+
+			_, _, err = round4Signers[0].CombineRound4Messages(
+				round3Messages,
+				round4Messages,
+			)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"unexpected error\nexpected %v\nactual %v",
+					test.expectedError,
+					err,
+				)
+			}
+
 		})
 	}
 }
@@ -135,4 +242,39 @@ func initializeNewSignerGroup() ([]*Signer, error) {
 	}
 
 	return signers, nil
+}
+
+func initializeNewRound2SignerGroup() (
+	round2Signers []*Round2Signer,
+	secretKeyFactor *paillier.Cypher,
+	secretKeyMultiple *paillier.Cypher,
+	err error,
+) {
+	signers, err := initializeNewSignerGroup()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	round2Signers = make([]*Round2Signer, len(signers))
+	for i, signer := range signers {
+		round2Signers[i] = &Round2Signer{
+			Signer: *signer,
+		}
+	}
+
+	paillierKey := signers[0].paillierKey
+	secretKeyFactorPlaintext := big.NewInt(1337)
+
+	secretKeyFactor, err = paillierKey.Encrypt(
+		secretKeyFactorPlaintext, rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	secretKeyMultiple = paillierKey.Mul(
+		signers[0].dsaKey.secretKey, secretKeyFactorPlaintext,
+	)
+
+	return
 }

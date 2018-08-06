@@ -148,8 +148,8 @@ func (ls *LocalSigner) InitializeDsaKeyShares() (
 	ls.publicDsaKeyShareDecommitmentKey = decommitmentKey
 
 	return &PublicKeyShareCommitmentMessage{
-		signerID:   ls.ID,
-		commitment: commitment,
+		signerID:                 ls.ID,
+		publicKeyShareCommitment: commitment,
 	}, nil
 }
 
@@ -193,11 +193,11 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 	)
 
 	return &KeyShareRevealMessage{
-		signerID:                 ls.ID,
-		secretKeyShare:           encryptedSecretKeyShare,
-		publicKeyShare:           ls.dsaKeyShare.publicKeyShare,
-		publicKeyDecommitmentKey: ls.publicDsaKeyShareDecommitmentKey,
-		secretKeyProof:           rangeProof,
+		signerID:                      ls.ID,
+		secretKeyShare:                encryptedSecretKeyShare,
+		publicKeyShare:                ls.dsaKeyShare.publicKeyShare,
+		publicKeyShareDecommitmentKey: ls.publicDsaKeyShareDecommitmentKey,
+		secretKeyProof:                rangeProof,
 	}, nil
 }
 
@@ -252,7 +252,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 				foundMatchingRevealMessage = true
 
 				if revealedSharesMsg.isValid(
-					commitmentMsg.commitment, ls.zkpParameters,
+					commitmentMsg.publicKeyShareCommitment, ls.zkpParameters,
 				) {
 					secretKeyShares[i] = revealedSharesMsg.secretKeyShare
 					publicKeyShares[i] = revealedSharesMsg.publicKeyShare
@@ -288,29 +288,29 @@ func generateMemberID() string {
 	return memberID
 }
 
-// Round1Signer represents state of `Signer` after executing the first round
+// Round1Signer represents state of signer after executing the first round
 // of signing algorithm.
 type Round1Signer struct {
 	Signer
 
 	// Intermediate values stored between the first and second round of signing.
-	randomFactorShare           *big.Int                    // ρ_i
-	encryptedRandomFactorShare  *paillier.Cypher            // u_i = E(ρ_i)
-	secretKeyMultiple           *paillier.Cypher            // v_i = E(ρ_i * x)
-	randomFactorDecommitmentKey *commitment.DecommitmentKey // D_1i
-	paillierRandomness          *big.Int
+	secretKeyFactorShare                *big.Int                    // ρ_i
+	encryptedSecretKeyFactorShare       *paillier.Cypher            // u_i = E(ρ_i)
+	secretKeyMultipleShare              *paillier.Cypher            // v_i = E(ρ_i * x)
+	secretKeyFactorShareDecommitmentKey *commitment.DecommitmentKey // D_1i
+	paillierRandomness                  *big.Int
 }
 
 // SignRound1 executes the first round of T-ECDSA signing as described in
 // [GGN 16], section 4.3.
 //
-// In the first round, each signer generates a random factor share `ρ_i`,
+// In the first round, each signer generates a secret key factor share `ρ_i`,
 // encodes it with Paillier key `u_i = E(ρ_i)`, multiplies it with secret ECDSA
 // key `v_i = E(ρ_i * x)` and publishes commitment for both those values
 // `Com(u_i, v_i)`.
 func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 	// Choosing random ρ_i from Z_q
-	randomFactorShare, err := rand.Int(
+	secretKeyFactorShare, err := rand.Int(
 		rand.Reader,
 		s.groupParameters.curveCardinality(),
 	)
@@ -330,8 +330,8 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 	}
 
 	// u_i = E(ρ_i)
-	encryptedRandomFactorShare, err := s.paillierKey.EncryptWithR(
-		randomFactorShare, paillierRandomness,
+	encryptedSecretKeyFactorShare, err := s.paillierKey.EncryptWithR(
+		secretKeyFactorShare, paillierRandomness,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -342,12 +342,12 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 	// v_i = E(ρ_i * x)
 	secretKeyMultiple := s.paillierKey.Mul(
 		s.dsaKey.secretKey,
-		randomFactorShare,
+		secretKeyFactorShare,
 	)
 
 	// [C_1i, D_1i] = Com([u_i, v_i])
 	commitment, decommitmentKey, err := commitment.Generate(
-		encryptedRandomFactorShare.C.Bytes(),
+		encryptedSecretKeyFactorShare.C.Bytes(),
 		secretKeyMultiple.C.Bytes(),
 	)
 	if err != nil {
@@ -357,23 +357,23 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 	}
 
 	round1Signer := &Round1Signer{
-		*s,
-		randomFactorShare,
-		encryptedRandomFactorShare,
-		secretKeyMultiple,
-		decommitmentKey,
-		paillierRandomness,
+		Signer:                              *s,
+		secretKeyFactorShare:                secretKeyFactorShare,
+		encryptedSecretKeyFactorShare:       encryptedSecretKeyFactorShare,
+		secretKeyMultipleShare:              secretKeyMultiple,
+		secretKeyFactorShareDecommitmentKey: decommitmentKey,
+		paillierRandomness:                  paillierRandomness,
 	}
 
 	round1Message := &SignRound1Message{
-		signerID:               s.ID,
-		randomFactorCommitment: commitment,
+		signerID:                       s.ID,
+		secretKeyFactorShareCommitment: commitment,
 	}
 
 	return round1Signer, round1Message, nil
 }
 
-// Round2Signer represents state of `Signer` after executing the second round
+// Round2Signer represents state of signer after executing the second round
 // of signing algorithm.
 type Round2Signer struct {
 	Signer
@@ -382,93 +382,55 @@ type Round2Signer struct {
 // SignRound2 executes the second round of T-ECDSA signing as described in
 // [GGN 16], section 4.3.
 //
-// In the second round, encrypted secret factor share `u_i = E(ρ_i)` and
-// secret DSA key multiple `v_i = E(ρ_i * x)` is revealed along with
+// In the second round, encrypted secret key factor share `u_i = E(ρ_i)` and
+// secret DSA key multiple `v_i = E(ρ_i * x)` are revealed along with
 // a decommitment key `D_1i` allowing to check revealed values against the
 // commitment published in the first round.
 // Moreover, message produced in the second round contains a ZKP allowing to
-// verify correctness of revealed values.
+// verify correctness of the revealed values.
 func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 	zkp, err := zkp.CommitDsaPaillierSecretKeyFactorRange(
-		s.secretKeyMultiple,
+		s.secretKeyMultipleShare,
 		s.dsaKey.secretKey,
-		s.encryptedRandomFactorShare,
-		s.randomFactorShare,
+		s.encryptedSecretKeyFactorShare,
+		s.secretKeyFactorShare,
 		s.paillierRandomness,
 		s.zkpParameters,
 		rand.Reader,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf(
+			"could not execute round 2 of signing [%v]", err,
+		)
 	}
 
 	signer := &Round2Signer{s.Signer}
 
 	round2Message := &SignRound2Message{
-		signerID:                    s.ID,
-		randomFactorShare:           s.encryptedRandomFactorShare,
-		secretKeyMultipleShare:      s.secretKeyMultiple,
-		randomFactorDecommitmentKey: s.randomFactorDecommitmentKey,
-		secretKeyFactorProof:        zkp,
+		signerID:                            s.ID,
+		secretKeyFactorShare:                s.encryptedSecretKeyFactorShare,
+		secretKeyMultipleShare:              s.secretKeyMultipleShare,
+		secretKeyFactorShareDecommitmentKey: s.secretKeyFactorShareDecommitmentKey,
+		secretKeyFactorProof:                zkp,
 	}
 
 	return signer, round2Message, nil
 }
 
-// Round3Signer represents state of `Signer` after executing the third round
-// of signing algorithm.
-type Round3Signer struct {
-	Signer
-
-	randomFactor      *paillier.Cypher
-	secretKeyMultiple *paillier.Cypher
-}
-
-// SignRound3 executes the third round of T-ECDSA signing as described in
-// [GGN 16], section 4.3.
+// CombineRound2Messages takes all messages from the first and second signing
+// round, validates and combines them together in order to evaluate random
+// secret key factor `u` and secret key multiple `v`:
 //
-// Before it executed all computations described in [GGN 16], it needs to
-// combine messages from the previous two rounds in order to combine
-// random factor shares and secret key multiple shares:
 // u = u_1 + u_2 + ... + u_n = E(ρ_1) + E(ρ_2) + ... + E(ρ_n)
 // v = v_1 + v_2 + ... + v_n = E(ρ_1 * x) + E(ρ_2 * x) + ... + E(ρ_n * x)
-func (s *Round2Signer) SignRound3(
+//
+// This function should be called before the `SignRound3` and the returned
+// values should be used as a parameters to `SignRound3`.
+func (s *Round2Signer) CombineRound2Messages(
 	round1Messages []*SignRound1Message,
 	round2Messages []*SignRound2Message,
 ) (
-	*Round3Signer, *SignRound3Message, error,
-) {
-
-	randomFactor, secretKeyMultiple, err := s.combineMessages(
-		round1Messages, round2Messages,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// TODO: Implement the rest of round 3 logic
-
-	signer := &Round3Signer{
-		Signer:            s.Signer,
-		randomFactor:      randomFactor,
-		secretKeyMultiple: secretKeyMultiple,
-	}
-
-	round3Message := &SignRound3Message{}
-
-	return signer, round3Message, nil
-}
-
-// combineMessages takes all messages from the first and second signing round,
-// validates and combines them together in order to evaluate random factor `u`
-// and secret key multiple `v`:
-// u = u_1 + u_2 + ... + u_n = E(ρ_1) + E(ρ_2) + ... + E(ρ_n)
-// v = v_1 + v_2 + ... + v_n = E(ρ_1 * x) + E(ρ_2 * x) + ... + E(ρ_n * x)
-func (s *Round2Signer) combineMessages(
-	round1Messages []*SignRound1Message,
-	round2Messages []*SignRound2Message,
-) (
-	randomFactor *paillier.Cypher,
+	secretKeyFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
@@ -490,7 +452,7 @@ func (s *Round2Signer) combineMessages(
 		)
 	}
 
-	randomFactorShares := make([]*paillier.Cypher, groupSize)
+	secretKeyFactorShares := make([]*paillier.Cypher, groupSize)
 	secretKeyMultipleShares := make([]*paillier.Cypher, groupSize)
 
 	for i, round1Message := range round1Messages {
@@ -501,11 +463,11 @@ func (s *Round2Signer) combineMessages(
 				foundMatchingRound2Message = true
 
 				if round2Message.isValid(
-					round1Message.randomFactorCommitment,
+					round1Message.secretKeyFactorShareCommitment,
 					s.dsaKey.secretKey,
 					s.zkpParameters,
 				) {
-					randomFactorShares[i] = round2Message.randomFactorShare
+					secretKeyFactorShares[i] = round2Message.secretKeyFactorShare
 					secretKeyMultipleShares[i] = round2Message.secretKeyMultipleShare
 				} else {
 					return nil, nil, errors.New("round 2 message rejected")
@@ -521,9 +483,316 @@ func (s *Round2Signer) combineMessages(
 		}
 	}
 
-	randomFactor = s.paillierKey.Add(randomFactorShares...)
+	secretKeyFactor = s.paillierKey.Add(secretKeyFactorShares...)
 	secretKeyMultiple = s.paillierKey.Add(secretKeyMultipleShares...)
 	err = nil
 
 	return
+}
+
+// Round3Signer represents state of signer after executing the third round
+// of signing algorithm.
+type Round3Signer struct {
+	Signer
+
+	secretKeyFactor   *paillier.Cypher // u = E(ρ)
+	secretKeyMultiple *paillier.Cypher // v = E(ρx)
+
+	// Intermediate values stored between the third and fourth round of signing
+	signatureFactorSecretShare          *big.Int                    // k_i
+	signatureFactorPublicShare          *curve.Point                // r_i = g^{k_i}
+	signatureFactorMaskShare            *big.Int                    // c_i
+	signatureUnmaskShare                *paillier.Cypher            // w_i = E(k_i * ρ + c_i * q)
+	signatureFactorShareDecommitmentKey *commitment.DecommitmentKey // Com(r_i, w_i)
+	paillierRandomness                  *big.Int
+}
+
+// SignRound3 executes the third round of T-ECDSA signing as described in
+// [GGN 16], section 4.3.
+//
+// Before it executes all computations described in [GGN 16], it's required to
+// combine messages from the previous two rounds in order to combine
+// secret key factor shares and secret key multiple shares:
+// u = u_1 + u_2 + ... + u_n = E(ρ_1) + E(ρ_2) + ... + E(ρ_n)
+// v = v_1 + v_2 + ... + v_n = E(ρ_1 * x) + E(ρ_2 * x) + ... + E(ρ_n * x)
+//
+// To do that, please execute `CombineRound2Messages`` function and pass the
+// returned values as an arguments to `SignRound3`.
+func (s *Round2Signer) SignRound3(
+	secretKeyFactor *paillier.Cypher, // u = E(ρ)
+	secretKeyMultiple *paillier.Cypher, // v = E(ρx)
+) (
+	*Round3Signer, *SignRound3Message, error,
+) {
+	// k_i = rand(Z_q)
+	signatureFactorSecretShare, err := rand.Int(
+		rand.Reader,
+		s.groupParameters.curveCardinality(),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+
+	// r_i = g^{k_i}
+	signatureFactorPublicShare := curve.NewPoint(
+		s.groupParameters.curve.ScalarBaseMult(
+			signatureFactorSecretShare.Bytes(),
+		),
+	)
+
+	// c_i = rand[0, q^6)
+	//
+	// According to [GGN 16], `c_i` should be randomly chosen from
+	// `[-q^6, q^6]`. Since `k_i` is chosen from [0, q), it means that in
+	// a lot of cases, signature unmask will be a negative integer, since
+	// `D(w) = k_i * rho + c_i * q`.
+	// However, keep in mind, that Paillier encryption scheme does not allow for
+	// encrypting negative integers by default since they are out of the allowed
+	// plaintext space `[0, N)` where `N` is the Paillier modulus.
+	// If we pick a negative integer as `c_i`, there is a high probability the
+	// signature ZKP and final T-ECDSA signature will fail.
+	// That's the reason why we decided to pick a random element from [0, q^6)
+	// instead of from `[-q^6, q^6]`.
+	signatureFactorMaskShare, err := rand.Int(
+		rand.Reader,
+		new(big.Int).Exp(
+			s.groupParameters.curveCardinality(),
+			big.NewInt(6),
+			nil,
+		),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+
+	// w_i = E(k_i * ρ + c_i * q)
+	paillierRandomness, err := paillier.GetRandomNumberInMultiplicativeGroup(
+		s.paillierKey.N, rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+	maskShareMulCardinality, err := s.paillierKey.EncryptWithR(
+		new(big.Int).Mul(
+			signatureFactorMaskShare,
+			s.groupParameters.curveCardinality(),
+		),
+		paillierRandomness,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+	signatureUnmaskShare := s.paillierKey.Add(
+		s.paillierKey.Mul(secretKeyFactor, signatureFactorSecretShare),
+		maskShareMulCardinality,
+	)
+
+	// [C_2i, D_2i] = Com(r_i, w_i)
+	commitment, decommitmentKey, err :=
+		commitment.Generate(
+			signatureFactorPublicShare.Bytes(),
+			signatureUnmaskShare.C.Bytes(),
+		)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 3 of signing [%v]", err,
+		)
+	}
+
+	signer := &Round3Signer{
+		Signer: s.Signer,
+
+		secretKeyFactor:   secretKeyFactor,
+		secretKeyMultiple: secretKeyMultiple,
+
+		signatureFactorSecretShare:          signatureFactorSecretShare,
+		signatureFactorPublicShare:          signatureFactorPublicShare,
+		signatureFactorMaskShare:            signatureFactorMaskShare,
+		signatureUnmaskShare:                signatureUnmaskShare,
+		signatureFactorShareDecommitmentKey: decommitmentKey,
+		paillierRandomness:                  paillierRandomness,
+	}
+
+	round3Message := &SignRound3Message{
+		signerID:                       s.ID,
+		signatureFactorShareCommitment: commitment,
+	}
+
+	return signer, round3Message, nil
+}
+
+// Round4Signer represents state of signer after executing the fourth round
+// of signing algorithm.
+type Round4Signer struct {
+	Signer
+
+	secretKeyFactor *paillier.Cypher // u = E(ρ)
+}
+
+// SignRound4 executes the fourth round of T-ECDSA signing as described in
+// [GGN 16], section 4.3.
+//
+// In the round 4, signer reveals signature factor public share
+// (`r_i`), signature unmask share (`w_i`) evaluated in the previous round,
+// decommitment key allowing to validate commitment to those values
+// (published in the previous round) as well as ZKP allowing to check their
+// correctness.
+func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
+	zkp, err := zkp.CommitEcdsaSignatureFactorRangeProof(
+		s.signatureFactorPublicShare,
+		s.signatureUnmaskShare,
+		s.secretKeyFactor,
+		s.signatureFactorSecretShare,
+		s.signatureFactorMaskShare,
+		s.paillierRandomness,
+		s.zkpParameters,
+		rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not execute round 4 of signing [%v]", err,
+		)
+	}
+
+	signer := &Round4Signer{
+		Signer: s.Signer,
+
+		secretKeyFactor: s.secretKeyFactor,
+	}
+
+	round4Message := &SignRound4Message{
+		signerID: s.ID,
+
+		signatureFactorPublicShare:          s.signatureFactorPublicShare,
+		signatureUnmaskShare:                s.signatureUnmaskShare,
+		signatureFactorShareDecommitmentKey: s.signatureFactorShareDecommitmentKey,
+
+		signatureFactorProof: zkp,
+	}
+
+	return signer, round4Message, nil
+}
+
+// CombineRound4Messages takes all messages from the third and fourth signing
+// round, validates and combines them together in order to evaluate public
+// signature factor `R` and signature unmask parameter `w`:
+//
+// w = w_1 + w_2 + ... + w_n = E(kρ + cq)
+// R = r_1 + r_2 + ... + r_n = g^k
+//
+// This function should be called before the `SignRound5` and the returned
+// values should be used as a parameters to `SignRound5`.
+func (s *Round4Signer) CombineRound4Messages(
+	round3Messages []*SignRound3Message,
+	round4Messages []*SignRound4Message,
+) (
+	signatureUnmask *paillier.Cypher, // w
+	signatureFactorPublic *curve.Point, // R
+	err error,
+) {
+	groupSize := s.groupParameters.groupSize
+
+	if len(round3Messages) != groupSize {
+		return nil, nil, fmt.Errorf(
+			"round 3 messages required from all group members; got %v, expected %v",
+			len(round3Messages),
+			groupSize,
+		)
+	}
+
+	if len(round4Messages) != groupSize {
+		return nil, nil, fmt.Errorf(
+			"round 4 messages required from all group members; got %v, expected %v",
+			len(round4Messages),
+			groupSize,
+		)
+	}
+
+	signatureUnmaskShares := make([]*paillier.Cypher, groupSize)
+	signatureFactorPublicShares := make([]*curve.Point, groupSize)
+
+	for i, round3Message := range round3Messages {
+		foundMatchingRound4Message := false
+
+		for _, round4Message := range round4Messages {
+			if round3Message.signerID == round4Message.signerID {
+				foundMatchingRound4Message = true
+
+				if round4Message.isValid(
+					round3Message.signatureFactorShareCommitment,
+					s.secretKeyFactor,
+					s.zkpParameters,
+				) {
+					signatureFactorPublicShares[i] = round4Message.signatureFactorPublicShare
+					signatureUnmaskShares[i] = round4Message.signatureUnmaskShare
+				} else {
+					return nil, nil, errors.New("round 4 message rejected")
+				}
+			}
+		}
+
+		if !foundMatchingRound4Message {
+			return nil, nil, fmt.Errorf(
+				"no matching round 4 message for signer with ID = %v",
+				round3Message.signerID,
+			)
+		}
+	}
+
+	// w = w_1 + w_2 + ... + w_n
+	signatureUnmask = s.paillierKey.Add(signatureUnmaskShares...)
+
+	// R = r_i + r_2 + ... + r_n
+	signatureFactorPublicX := big.NewInt(0)
+	signatureFactorPublicY := big.NewInt(0)
+	for _, share := range signatureFactorPublicShares {
+		signatureFactorPublicX.Add(
+			signatureFactorPublicX, share.X,
+		)
+		signatureFactorPublicY.Add(
+			signatureFactorPublicY, share.Y,
+		)
+	}
+	signatureFactorPublic = &curve.Point{
+		X: signatureFactorPublicX,
+		Y: signatureFactorPublicY,
+	}
+
+	err = nil
+
+	return
+}
+
+// Round5Signer represents state of `Signer` after executing the fifth round
+// of signing algorithm.
+type Round5Signer struct {
+	Signer
+
+	signatureUnmask       *paillier.Cypher // w
+	signatureFactorPublic *curve.Point     // R
+}
+
+// SignRound5 executes the fifth round of signing
+func (s *Round4Signer) SignRound5(
+	signatureUnmask *paillier.Cypher, // w
+	signatureFactorPublic *curve.Point, // R
+) (
+	*Round5Signer, error,
+) {
+	signer := &Round5Signer{
+		Signer: s.Signer,
+
+		signatureUnmask:       signatureUnmask,
+		signatureFactorPublic: signatureFactorPublic,
+	}
+
+	return signer, nil
 }
