@@ -794,6 +794,10 @@ func (s *Round4Signer) SignRound5(
 	signatureUnmaskPartialDecryption := s.paillierKey.Decrypt(signatureUnmask.C)
 
 	// r = H'(R)
+	//
+	// According to [GGN 16], H' is a hash function defined from `G` to `Z_q`.
+	// It does not have to be a cryptographic hash function, so we use the
+	// simplest possible form here.
 	signatureMultiplePublicHash := new(big.Int).Mod(
 		signatureMultiplePublic.X,
 		s.groupParameters.curveCardinality(),
