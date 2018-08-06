@@ -15,7 +15,7 @@ import (
 type PublicKeyShareCommitmentMessage struct {
 	signerID string
 
-	commitment *commitment.TrapdoorCommitment
+	publicKeyShareCommitment *commitment.TrapdoorCommitment // C_i
 }
 
 // KeyShareRevealMessage is a message payload that carries the sender's share of
@@ -26,11 +26,11 @@ type PublicKeyShareCommitmentMessage struct {
 type KeyShareRevealMessage struct {
 	signerID string
 
-	secretKeyShare *paillier.Cypher
-	publicKeyShare *curve.Point
+	secretKeyShare *paillier.Cypher // α_i = E(x_i)
+	publicKeyShare *curve.Point     // y_i
 
-	publicKeyDecommitmentKey *commitment.DecommitmentKey
-	secretKeyProof           *zkp.DsaPaillierKeyRangeProof
+	publicKeyShareDecommitmentKey *commitment.DecommitmentKey   // D_i
+	secretKeyProof                *zkp.DsaPaillierKeyRangeProof // Π_i
 }
 
 // isValid checks secret and public key share against zero knowledge range proof
@@ -38,11 +38,11 @@ type KeyShareRevealMessage struct {
 // first phase of the key generation process. This function should be called
 // for each received KeyShareRevealMessage before it's combined to a final key.
 func (msg *KeyShareRevealMessage) isValid(
-	commitment *commitment.TrapdoorCommitment,
+	publicKeyShareCommitment *commitment.TrapdoorCommitment, // C_i
 	zkpParams *zkp.PublicParameters,
 ) bool {
-	commitmentValid := commitment.Verify(
-		msg.publicKeyDecommitmentKey, msg.publicKeyShare.Bytes(),
+	commitmentValid := publicKeyShareCommitment.Verify(
+		msg.publicKeyShareDecommitmentKey, msg.publicKeyShare.Bytes(),
 	)
 
 	zkpValid := msg.secretKeyProof.Verify(

@@ -148,8 +148,8 @@ func (ls *LocalSigner) InitializeDsaKeyShares() (
 	ls.publicDsaKeyShareDecommitmentKey = decommitmentKey
 
 	return &PublicKeyShareCommitmentMessage{
-		signerID:   ls.ID,
-		commitment: commitment,
+		signerID:                 ls.ID,
+		publicKeyShareCommitment: commitment,
 	}, nil
 }
 
@@ -193,11 +193,11 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 	)
 
 	return &KeyShareRevealMessage{
-		signerID:                 ls.ID,
-		secretKeyShare:           encryptedSecretKeyShare,
-		publicKeyShare:           ls.dsaKeyShare.publicKeyShare,
-		publicKeyDecommitmentKey: ls.publicDsaKeyShareDecommitmentKey,
-		secretKeyProof:           rangeProof,
+		signerID:                      ls.ID,
+		secretKeyShare:                encryptedSecretKeyShare,
+		publicKeyShare:                ls.dsaKeyShare.publicKeyShare,
+		publicKeyShareDecommitmentKey: ls.publicDsaKeyShareDecommitmentKey,
+		secretKeyProof:                rangeProof,
 	}, nil
 }
 
@@ -252,7 +252,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 				foundMatchingRevealMessage = true
 
 				if revealedSharesMsg.isValid(
-					commitmentMsg.commitment, ls.zkpParameters,
+					commitmentMsg.publicKeyShareCommitment, ls.zkpParameters,
 				) {
 					secretKeyShares[i] = revealedSharesMsg.secretKeyShare
 					publicKeyShares[i] = revealedSharesMsg.publicKeyShare
