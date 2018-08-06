@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 )
 
-// EcdsaSignatureFactorRangeProof is an implementation of Gennaro's PI_2,i
+// EcdsaSignatureFactorRangeProof is an implementation of Gennaro's Π_2,i
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the fourth round of the T-ECDSA signing algorithm and operates

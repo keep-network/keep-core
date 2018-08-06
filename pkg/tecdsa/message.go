@@ -69,7 +69,7 @@ type SignRound2Message struct {
 	secretKeyMultipleShare              *paillier.Cypher            // v_i = E(ρ_i * x)
 	secretKeyFactorShareDecommitmentKey *commitment.DecommitmentKey // D_1i
 
-	secretKeyFactorProof *zkp.DsaPaillierSecretKeyFactorRangeProof // PI_1i
+	secretKeyFactorProof *zkp.DsaPaillierSecretKeyFactorRangeProof // Π_1i
 }
 
 // isValid checks secret key random factor share and secret key multiple share
@@ -110,7 +110,7 @@ type SignRound4Message struct {
 	signatureUnmaskShare                *paillier.Cypher            // w_i = E(k_i * ρ + c_i * q)
 	signatureFactorShareDecommitmentKey *commitment.DecommitmentKey // D_2i
 
-	signatureFactorProof *zkp.EcdsaSignatureFactorRangeProof // PI_2i
+	signatureFactorProof *zkp.EcdsaSignatureFactorRangeProof // Π_2i
 }
 
 // isValid checks the signature random multiple public share and signature

@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// DsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's PI_1,i
+// DsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's Π_1,i
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the first and second round of the T-ECDSA signing algorithm
