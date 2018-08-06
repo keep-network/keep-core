@@ -263,16 +263,17 @@ func initializeNewRound2SignerGroup() (
 	}
 
 	paillierKey := signers[0].paillierKey
+	secretKeyFactorPlaintext := big.NewInt(1337)
 
 	secretKeyFactor, err = paillierKey.Encrypt(
-		big.NewInt(1337), rand.Reader,
+		secretKeyFactorPlaintext, rand.Reader,
 	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	secretKeyMultiple = paillierKey.Mul(
-		signers[0].dsaKey.secretKey, big.NewInt(1337),
+		signers[0].dsaKey.secretKey, secretKeyFactorPlaintext,
 	)
 
 	return
