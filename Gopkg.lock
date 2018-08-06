@@ -24,10 +24,25 @@
   revision = "4b9133d8ba77cab2812e147080198080b65b19b2"
 
 [[projects]]
-  branch = "master"
   name = "github.com/btcsuite/btcd"
-  packages = ["btcec"]
-  revision = "86fed781132ac890ee03e906e4ecd5d6fa180c64"
+  packages = [
+    "btcec",
+    "chaincfg",
+    "chaincfg/chainhash",
+    "wire"
+  ]
+  revision = "9a2f9524024889e129a5422aca2cff73cb3eabf6"
+  source = "https://github.com/btcsuite/btcd.git"
+
+[[projects]]
+  name = "github.com/btcsuite/btcutil"
+  packages = [
+    ".",
+    "base58",
+    "bech32"
+  ]
+  revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
+  source = "https://github.com/btcsuite/btcutil.git"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -715,6 +730,7 @@
     "blake2s",
     "blowfish",
     "pbkdf2",
+    "ripemd160",
     "scrypt",
     "sha3",
     "ssh/terminal"
@@ -798,6 +814,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ccfedd66f8b4635d6bb8e912b0d657916981d7acdf444b11fe31678db62a6171"
+  inputs-digest = "7ace59d5d2f8418655679ec8a2fcfbdd514ffec3d78a2c705b837d0329d14bd1"
   solver-name = "gps-cdcl"
   solver-version = 1
