@@ -76,6 +76,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 
 			round1Messages := make([]*SignRound1Message, len(signers))
 			round2Messages := make([]*SignRound2Message, len(signers))
+			round1Signers := make([]*Round1Signer, len(signers))
 			round2Signers := make([]*Round2Signer, len(signers))
 
 			for i, signer := range signers {
@@ -91,6 +92,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 
 				round1Messages[i] = round1Message
 				round2Messages[i] = round2Message
+				round1Signers[i] = round1Signer
 				round2Signers[i] = round2Signer
 			}
 
@@ -102,17 +104,48 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				round2Messages = test.modifyRound2Messages(round2Messages)
 			}
 
-			_, _, err = round2Signers[0].CombineRound2Messages(
-				round1Messages,
-				round2Messages,
-			)
+			paillierKey := round2Signers[0].paillierKey
+			expectedSecretKeyFactor := round1Signers[0].encryptedSecretKeyFactorShare
+			expectedSecretKeyMultiple := round1Signers[0].secretKeyMultipleShare
+			for _, signer := range round1Signers[1:] {
+				expectedSecretKeyFactor = paillierKey.Add(
+					expectedSecretKeyFactor, signer.encryptedSecretKeyFactorShare,
+				)
+				expectedSecretKeyMultiple = paillierKey.Add(
+					expectedSecretKeyMultiple, signer.secretKeyMultipleShare,
+				)
+			}
+
+			secretKeyFactor, secretKeyMultiple, err :=
+				round2Signers[0].CombineRound2Messages(
+					round1Messages,
+					round2Messages,
+				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
-					"unexpected error\nexpected %v\nactual %v",
+					"unexpected error\nexpected: %v\nactual: %v",
 					test.expectedError,
 					err,
 				)
+			}
+
+			if test.expectedError == nil {
+				if !reflect.DeepEqual(expectedSecretKeyFactor, secretKeyFactor) {
+					t.Fatalf(
+						"unexpected secret key factor\nexpected: %v\nactual: %v",
+						expectedSecretKeyFactor,
+						secretKeyFactor,
+					)
+				}
+
+				if !reflect.DeepEqual(expectedSecretKeyMultiple, secretKeyMultiple) {
+					t.Fatalf(
+						"unexpected secret key multiple\nexpected: %v\nactual: %v",
+						expectedSecretKeyMultiple,
+						secretKeyMultiple,
+					)
+				}
 			}
 		})
 	}
