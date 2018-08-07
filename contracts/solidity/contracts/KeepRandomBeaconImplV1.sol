@@ -180,6 +180,9 @@ contract KeepRandomBeaconImplV1 is Ownable {
         emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID, activationBlockHeight);
     }
 
+    /**
+     * @dev Gets version of the current implementation.
+    */
     function version() public pure returns (string) {
         return "V1";
     }

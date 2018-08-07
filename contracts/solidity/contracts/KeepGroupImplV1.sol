@@ -253,6 +253,9 @@ contract KeepGroupImplV1 is Ownable {
         delete _listOfGroupMembersIDs;
     }
 
+    /**
+     * @dev Gets version of the current implementation.
+    */
     function version() public pure returns (string) {
         return "V1";
     }
