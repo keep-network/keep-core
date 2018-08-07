@@ -16,11 +16,6 @@ contract KeepRandomBeacon is Ownable {
 
     event Upgraded(address implementation);
 
-    // Mirror events from the implementation contract
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber); 
-    event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
-
     constructor(address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
         setImplementation(_implementation);

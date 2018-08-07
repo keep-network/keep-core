@@ -17,12 +17,6 @@ contract KeepGroup is Ownable {
 
     event Upgraded(address implementation);
 
-    // Mirror events from the implementation contract
-    event GroupExistsEvent(bytes32 groupPubKey, bool exists);
-    event GroupStartedEvent(bytes32 groupPubKey);
-    event GroupCompleteEvent(bytes32 groupPubKey);
-    event GroupErrorCode(uint8 code);
-
     constructor(address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
         setImplementation(_implementation);
