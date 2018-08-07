@@ -751,19 +751,15 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureUnmask = s.paillierKey.Add(signatureUnmaskShares...)
 
 	// R = r_i + r_2 + ... + r_n
-	signatureFactorPublicX := big.NewInt(0)
-	signatureFactorPublicY := big.NewInt(0)
-	for _, share := range signatureFactorPublicShares {
-		signatureFactorPublicX.Add(
-			signatureFactorPublicX, share.X,
-		)
-		signatureFactorPublicY.Add(
-			signatureFactorPublicY, share.Y,
-		)
-	}
-	signatureFactorPublic = &curve.Point{
-		X: signatureFactorPublicX,
-		Y: signatureFactorPublicY,
+	signatureFactorPublic = signatureFactorPublicShares[0]
+	for _, share := range signatureFactorPublicShares[1:] {
+		signatureFactorPublic = curve.NewPoint(
+			s.groupParameters.curve.Add(
+				signatureFactorPublic.X,
+				signatureFactorPublic.Y,
+				share.X,
+				share.Y,
+			))
 	}
 
 	err = nil

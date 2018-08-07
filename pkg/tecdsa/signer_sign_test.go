@@ -184,6 +184,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 
 			round3Messages := make([]*SignRound3Message, len(round2Signers))
 			round4Messages := make([]*SignRound4Message, len(round2Signers))
+			round3Signers := make([]*Round3Signer, len(round2Signers))
 			round4Signers := make([]*Round4Signer, len(round2Signers))
 
 			for i, signer := range round2Signers {
@@ -201,7 +202,27 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 
 				round3Messages[i] = round3Message
 				round4Messages[i] = round4Message
+				round3Signers[i] = round3Signer
 				round4Signers[i] = round4Signer
+			}
+
+			paillierKey := round3Signers[0].paillierKey
+			expectedSignatureUnmask := round3Signers[0].signatureUnmaskShare
+			for _, signer := range round3Signers[1:] {
+				expectedSignatureUnmask = paillierKey.Add(
+					expectedSignatureUnmask, signer.signatureUnmaskShare,
+				)
+			}
+
+			ellipticCurve := round3Signers[0].groupParameters.curve
+			expectedSignatureFactorPublic := round3Signers[0].signatureFactorPublicShare
+			for _, signer := range round3Signers[1:] {
+				expectedSignatureFactorPublic = curve.NewPoint(ellipticCurve.Add(
+					expectedSignatureFactorPublic.X,
+					expectedSignatureFactorPublic.Y,
+					signer.signatureFactorPublicShare.X,
+					signer.signatureFactorPublicShare.Y,
+				))
 			}
 
 			if test.modifyRound3Messages != nil {
@@ -212,19 +233,39 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				round4Messages = test.modifyRound4Messages(round4Messages)
 			}
 
-			_, _, err = round4Signers[0].CombineRound4Messages(
-				round3Messages,
-				round4Messages,
-			)
+			signatureUnmask, signatureFactorPublic, err :=
+				round4Signers[0].CombineRound4Messages(
+					round3Messages,
+					round4Messages,
+				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
-					"unexpected error\nexpected %v\nactual %v",
+					"unexpected error\nexpected: %v\nactual: %v",
 					test.expectedError,
 					err,
 				)
 			}
 
+			if test.expectedError == nil {
+				if !reflect.DeepEqual(expectedSignatureUnmask, signatureUnmask) {
+					t.Fatalf(
+						"unexpected signature unmask\n expected: %v\n actual: %v",
+						expectedSignatureUnmask,
+						signatureUnmask,
+					)
+				}
+
+				if !reflect.DeepEqual(
+					expectedSignatureFactorPublic, signatureFactorPublic,
+				) {
+					t.Fatalf(
+						"unexpected signature factor public\nexpected: %v\nactual: %v",
+						expectedSignatureFactorPublic,
+						signatureFactorPublic,
+					)
+				}
+			}
 		})
 	}
 }
