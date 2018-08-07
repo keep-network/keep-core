@@ -29,13 +29,13 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     // Initialize Keep Random Beacon
     let minimumStake = 200;
     keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
-    keepRandomBeaconProxy = await KeepRandomBeaconProxy.new('v1', keepRandomBeaconImplV1.address);
+    keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
     await keepRandomBeaconImplViaProxy.initialize(stakingProxy.address, 100, minimumStake, duration.days(30));
 
     // Initialize Keep Group contract
     keepGroupImplV1 = await KeepGroupImplV1.new();
-    keepGroupProxy = await KeepGroupProxy.new('v1', keepGroupImplV1.address);
+    keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(6, 10, keepRandomBeaconProxy.address);
 
