@@ -50,7 +50,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via proxy contract with enough ether", async function() {
-    const relayEntryRequestedEvent = proxy.RelayEntryRequested();
+    const relayEntryRequestedEvent = implViaProxy.RelayEntryRequested();
 
     await exceptThrow(proxy.sendTransaction({from: account_two, value: 1000}));
 
