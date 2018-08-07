@@ -751,19 +751,15 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureUnmask = s.paillierKey.Add(signatureUnmaskShares...)
 
 	// R = r_i + r_2 + ... + r_n
-	signatureFactorPublicX := big.NewInt(0)
-	signatureFactorPublicY := big.NewInt(0)
-	for _, share := range signatureFactorPublicShares {
-		signatureFactorPublicX.Add(
-			signatureFactorPublicX, share.X,
-		)
-		signatureFactorPublicY.Add(
-			signatureFactorPublicY, share.Y,
-		)
-	}
-	signatureFactorPublic = &curve.Point{
-		X: signatureFactorPublicX,
-		Y: signatureFactorPublicY,
+	signatureFactorPublic = signatureFactorPublicShares[0]
+	for _, share := range signatureFactorPublicShares[1:] {
+		signatureFactorPublic = curve.NewPoint(
+			s.groupParameters.curve.Add(
+				signatureFactorPublic.X,
+				signatureFactorPublic.Y,
+				share.X,
+				share.Y,
+			))
 	}
 
 	err = nil
@@ -776,23 +772,86 @@ func (s *Round4Signer) CombineRound4Messages(
 type Round5Signer struct {
 	Signer
 
-	signatureUnmask       *paillier.Cypher // w
-	signatureFactorPublic *curve.Point     // R
+	signatureUnmask           *paillier.Cypher // w
+	signatureFactorPublic     *curve.Point     // R
+	signatureFactorPublicHash *big.Int         // r = H'(R)
 }
 
-// SignRound5 executes the fifth round of signing
+// SignRound5 executes the fifth round of signing. In the fifth round, signers
+// jointly decrypt signature unmask `w` as well as compute hash of the signature
+// factor public parameter. Both values will be used in round six when
+// evaluating the final signature.
 func (s *Round4Signer) SignRound5(
 	signatureUnmask *paillier.Cypher, // w
 	signatureFactorPublic *curve.Point, // R
 ) (
-	*Round5Signer, error,
+	*Round5Signer, *SignRound5Message, error,
 ) {
+
+	// TDec(w)
+	signatureUnmaskPartialDecryption := s.paillierKey.Decrypt(signatureUnmask.C)
+
+	// r = H'(R)
+	//
+	// According to [GGN 16], H' is a hash function defined from `G` to `Z_q`.
+	// It does not have to be a cryptographic hash function, so we use the
+	// simplest possible form here.
+	signatureFactorPublicHash := new(big.Int).Mod(
+		signatureFactorPublic.X,
+		s.groupParameters.curveCardinality(),
+	)
+
+	message := &SignRound5Message{
+		signerID: s.ID,
+
+		signatureUnmaskPartialDecryption: signatureUnmaskPartialDecryption,
+	}
+
 	signer := &Round5Signer{
 		Signer: s.Signer,
 
-		signatureUnmask:       signatureUnmask,
-		signatureFactorPublic: signatureFactorPublic,
+		signatureUnmask:           signatureUnmask,
+		signatureFactorPublic:     signatureFactorPublic,
+		signatureFactorPublicHash: signatureFactorPublicHash,
 	}
 
-	return signer, nil
+	return signer, message, nil
+}
+
+// CombineRound5Messages combines together all `SignRound5Message`s produced by
+// signers. Each message contains a partial decryption for signature unmask
+// parameter `w`. Function combines them together and returns a final decrypted
+// value of signature unmask.
+func (s *Round5Signer) CombineRound5Messages(
+	round5Messages []*SignRound5Message,
+) (
+	signatureUnmask *big.Int, // TDec(w)
+	err error,
+) {
+	groupSize := s.groupParameters.groupSize
+
+	if len(round5Messages) != groupSize {
+		return nil, fmt.Errorf(
+			"round 5 messages required from all group members; got %v, expected %v",
+			len(round5Messages),
+			groupSize,
+		)
+	}
+
+	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
+	for i, round5Message := range round5Messages {
+		partialDecryptions[i] = round5Message.signatureUnmaskPartialDecryption
+	}
+
+	signatureUnmask, err = s.paillierKey.CombinePartialDecryptions(
+		partialDecryptions,
+	)
+	if err != nil {
+		err = fmt.Errorf(
+			"could not combine signature unmask partial decryptions [%v]",
+			err,
+		)
+	}
+
+	return
 }

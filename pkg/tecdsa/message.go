@@ -52,7 +52,7 @@ func (msg *KeyShareRevealMessage) isValid(
 	return commitmentValid && zkpValid
 }
 
-// SignRound1Message is a message produced by each `Signer` as a result of
+// SignRound1Message is a message produced by each signer as a result of
 // executing the first round of T-ECDSA signing algorithm.
 type SignRound1Message struct {
 	signerID string
@@ -60,7 +60,7 @@ type SignRound1Message struct {
 	secretKeyFactorShareCommitment *commitment.TrapdoorCommitment // C_1i
 }
 
-// SignRound2Message is a message produced by each `Signer` as a result of
+// SignRound2Message is a message produced by each signer as a result of
 // executing the second round of T-ECDSA signing algorithm.
 type SignRound2Message struct {
 	signerID string
@@ -93,7 +93,7 @@ func (msg *SignRound2Message) isValid(
 	return commitmentValid && zkpValid
 }
 
-// SignRound3Message is a message produced by each `Signer` as a result of
+// SignRound3Message is a message produced by each signer as a result of
 // executing the third round of T-ECDSA signing algorithm.
 type SignRound3Message struct {
 	signerID string
@@ -101,7 +101,7 @@ type SignRound3Message struct {
 	signatureFactorShareCommitment *commitment.TrapdoorCommitment // C_2i
 }
 
-// SignRound4Message is a message produced by each `Signer` as a result of
+// SignRound4Message is a message produced by each signer as a result of
 // executing the fourth round of T-ECDSA signing algorithm.
 type SignRound4Message struct {
 	signerID string
@@ -135,4 +135,12 @@ func (msg *SignRound4Message) isValid(
 	)
 
 	return commitmentValid && zkpValid
+}
+
+// SignRound5Message is a message produced by each signer as a result of
+// executing the fifth round of T-ECDSA signing algorithm.
+type SignRound5Message struct {
+	signerID string
+
+	signatureUnmaskPartialDecryption *paillier.PartialDecryption // TDec(w)
 }
