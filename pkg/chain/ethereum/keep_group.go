@@ -259,16 +259,15 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
-				eventSubscription.Unsubscribe()
 				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
@@ -293,16 +292,15 @@ func (kg *keepGroup) WatchGroupErrorCode(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.Code)
-				eventSubscription.Unsubscribe()
 				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
@@ -328,16 +326,15 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:], event.Exists)
-				eventSubscription.Unsubscribe()
 				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
@@ -363,16 +360,15 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
-				eventSubscription.Unsubscribe()
 				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
@@ -395,16 +391,15 @@ func (kg *keepGroup) WatchOnStakerAdded(
 		return fmt.Errorf("error creating watch for OnStakerAdded events [%v]", err)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(int(event.Index), event.GroupMemberID[:])
-				eventSubscription.Unsubscribe()
 				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}

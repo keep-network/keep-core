@@ -177,6 +177,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
@@ -187,12 +188,10 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Seed,
 					event.BlockNumber,
 				)
-				eventSubscription.Unsubscribe()
 				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
@@ -224,6 +223,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
@@ -234,12 +234,10 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.PreviousEntry,
 					event.BlockNumber,
 				)
-				eventSubscription.Unsubscribe()
 				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
@@ -268,6 +266,7 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
@@ -276,12 +275,10 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 					event.LastValidRelayTxHash,
 					event.LastValidRelayBlock,
 				)
-				eventSubscription.Unsubscribe()
 				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
@@ -314,17 +311,16 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 		)
 	}
 	go func() {
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				gpk := sliceOf1ByteToByteSlice(event.GroupPublicKey)
 				success(gpk, event.RequestID, event.ActivationBlockHeight)
-				eventSubscription.Unsubscribe()
 				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
-				eventSubscription.Unsubscribe()
 				return
 			}
 		}
