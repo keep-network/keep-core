@@ -120,6 +120,7 @@
     "proto",
     "protoc-gen-gogo/descriptor",
     "protoc-gen-gogo/generator",
+    "protoc-gen-gogo/generator/internal/remap",
     "protoc-gen-gogo/grpc",
     "protoc-gen-gogo/plugin",
     "protoc-gen-gogoslick",
@@ -127,7 +128,7 @@
     "vanity",
     "vanity/command"
   ]
-  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  revision = "baf2ea5cdb7ce2d399176f925052690c3dad1f56"
   source = "https://github.com/keep-network/protobuf.git"
 
 [[projects]]
@@ -798,6 +799,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ccfedd66f8b4635d6bb8e912b0d657916981d7acdf444b11fe31678db62a6171"
+  inputs-digest = "a560d459ef45be0e83c4221ef6a626f25a07468fb771a5b63cf10c94de13002e"
   solver-name = "gps-cdcl"
   solver-version = 1
