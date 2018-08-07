@@ -58,7 +58,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 			modifyRound2Messages: func(
 				round2Messages []*SignRound2Message,
 			) []*SignRound2Message {
-				round2Messages[2].secretKeyRandomFactorShare.C = big.NewInt(1337)
+				round2Messages[2].secretKeyFactorShare.C = big.NewInt(1337)
 				return round2Messages
 			},
 			expectedError: errors.New(
@@ -76,6 +76,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 
 			round1Messages := make([]*SignRound1Message, len(signers))
 			round2Messages := make([]*SignRound2Message, len(signers))
+			round1Signers := make([]*Round1Signer, len(signers))
 			round2Signers := make([]*Round2Signer, len(signers))
 
 			for i, signer := range signers {
@@ -91,6 +92,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 
 				round1Messages[i] = round1Message
 				round2Messages[i] = round2Message
+				round1Signers[i] = round1Signer
 				round2Signers[i] = round2Signer
 			}
 
@@ -102,17 +104,48 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				round2Messages = test.modifyRound2Messages(round2Messages)
 			}
 
-			_, _, err = round2Signers[0].CombineRound2Messages(
-				round1Messages,
-				round2Messages,
-			)
+			paillierKey := round2Signers[0].paillierKey
+			expectedSecretKeyFactor := round1Signers[0].encryptedSecretKeyFactorShare
+			expectedSecretKeyMultiple := round1Signers[0].secretKeyMultipleShare
+			for _, signer := range round1Signers[1:] {
+				expectedSecretKeyFactor = paillierKey.Add(
+					expectedSecretKeyFactor, signer.encryptedSecretKeyFactorShare,
+				)
+				expectedSecretKeyMultiple = paillierKey.Add(
+					expectedSecretKeyMultiple, signer.secretKeyMultipleShare,
+				)
+			}
+
+			secretKeyFactor, secretKeyMultiple, err :=
+				round2Signers[0].CombineRound2Messages(
+					round1Messages,
+					round2Messages,
+				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
-					"unexpected error\nexpected %v\nactual %v",
+					"unexpected error\nexpected: %v\nactual: %v",
 					test.expectedError,
 					err,
 				)
+			}
+
+			if test.expectedError == nil {
+				if !reflect.DeepEqual(expectedSecretKeyFactor, secretKeyFactor) {
+					t.Fatalf(
+						"unexpected secret key factor\nexpected: %v\nactual: %v",
+						expectedSecretKeyFactor,
+						secretKeyFactor,
+					)
+				}
+
+				if !reflect.DeepEqual(expectedSecretKeyMultiple, secretKeyMultiple) {
+					t.Fatalf(
+						"unexpected secret key multiple\nexpected: %v\nactual: %v",
+						expectedSecretKeyMultiple,
+						secretKeyMultiple,
+					)
+				}
 			}
 		})
 	}
@@ -184,6 +217,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 
 			round3Messages := make([]*SignRound3Message, len(round2Signers))
 			round4Messages := make([]*SignRound4Message, len(round2Signers))
+			round3Signers := make([]*Round3Signer, len(round2Signers))
 			round4Signers := make([]*Round4Signer, len(round2Signers))
 
 			for i, signer := range round2Signers {
@@ -201,7 +235,27 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 
 				round3Messages[i] = round3Message
 				round4Messages[i] = round4Message
+				round3Signers[i] = round3Signer
 				round4Signers[i] = round4Signer
+			}
+
+			paillierKey := round3Signers[0].paillierKey
+			expectedSignatureUnmask := round3Signers[0].signatureUnmaskShare
+			for _, signer := range round3Signers[1:] {
+				expectedSignatureUnmask = paillierKey.Add(
+					expectedSignatureUnmask, signer.signatureUnmaskShare,
+				)
+			}
+
+			ellipticCurve := round3Signers[0].groupParameters.curve
+			expectedSignatureFactorPublic := round3Signers[0].signatureFactorPublicShare
+			for _, signer := range round3Signers[1:] {
+				expectedSignatureFactorPublic = curve.NewPoint(ellipticCurve.Add(
+					expectedSignatureFactorPublic.X,
+					expectedSignatureFactorPublic.Y,
+					signer.signatureFactorPublicShare.X,
+					signer.signatureFactorPublicShare.Y,
+				))
 			}
 
 			if test.modifyRound3Messages != nil {
@@ -212,25 +266,45 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				round4Messages = test.modifyRound4Messages(round4Messages)
 			}
 
-			_, _, err = round4Signers[0].CombineRound4Messages(
-				round3Messages,
-				round4Messages,
-			)
+			signatureUnmask, signatureFactorPublic, err :=
+				round4Signers[0].CombineRound4Messages(
+					round3Messages,
+					round4Messages,
+				)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
-					"unexpected error\nexpected %v\nactual %v",
+					"unexpected error\nexpected: %v\nactual: %v",
 					test.expectedError,
 					err,
 				)
 			}
 
+			if test.expectedError == nil {
+				if !reflect.DeepEqual(expectedSignatureUnmask, signatureUnmask) {
+					t.Fatalf(
+						"unexpected signature unmask\n expected: %v\n actual: %v",
+						expectedSignatureUnmask,
+						signatureUnmask,
+					)
+				}
+
+				if !reflect.DeepEqual(
+					expectedSignatureFactorPublic, signatureFactorPublic,
+				) {
+					t.Fatalf(
+						"unexpected signature factor public\nexpected: %v\nactual: %v",
+						expectedSignatureFactorPublic,
+						signatureFactorPublic,
+					)
+				}
+			}
 		})
 	}
 }
 
 // In the fifth round, signers jointly decrypt signature unmask as well as
-// compute hash of the signature random multiple public parameter.
+// compute hash of the signature factor public parameter.
 // Here we test the hash computation process. Threshold decryption is tested
 // separately in another test.
 func TestSignRound5(t *testing.T) {
@@ -248,43 +322,43 @@ func TestSignRound5(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signatureRandomMultiplePublic := curve.NewPoint(
+	signatureFactorPublic := curve.NewPoint(
 		publicParameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
 	)
 
 	round5Signer, _, err := signer.SignRound5(
 		signatureUnmaskCypher,
-		signatureRandomMultiplePublic,
+		signatureFactorPublic,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedSignatureRandomMultiplePublicHash := new(big.Int).Mod(
-		signatureRandomMultiplePublic.X,
+	expectedSignatureFactorPublicHash := new(big.Int).Mod(
+		signatureFactorPublic.X,
 		publicParameters.curve.Params().N,
 	)
 
-	if round5Signer.signatureRandomMultiplePublicHash.Cmp(
-		expectedSignatureRandomMultiplePublicHash,
+	if round5Signer.signatureFactorPublicHash.Cmp(
+		expectedSignatureFactorPublicHash,
 	) != 0 {
 		t.Fatalf(
 			"unexpected signature random multiple public hash\nexpected: %v\nactual: %v",
-			expectedSignatureRandomMultiplePublicHash,
-			round5Signer.signatureRandomMultiplePublicHash,
+			expectedSignatureFactorPublicHash,
+			round5Signer.signatureFactorPublicHash,
 		)
 	}
 
 }
 
 // In the fifth round, signers jointly decrypt signature unmask as well as
-// compute hash of the signature random multiple public parameter.
+// compute hash of the signature factor public parameter.
 // After the fifth round, partial signature unmask decryptions are combined
 // together. Here we test the decryption process.
 func TestSignAndCombineRound5(t *testing.T) {
 	signatureUnmask := big.NewInt(712)
 
-	signatureRandomMultiplePublic := curve.NewPoint(
+	signatureFactorPublic := curve.NewPoint(
 		publicParameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
 	)
 
@@ -320,17 +394,19 @@ func TestSignAndCombineRound5(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			round5Signers := make([]*Round5Signer, len(round4Signers))
 			round5Messages := make([]*SignRound5Message, len(round4Signers))
 
 			for i, signer := range round4Signers {
-				_, message, err := signer.SignRound5(
+				signer, message, err := signer.SignRound5(
 					signatureUnmaskCypher,
-					signatureRandomMultiplePublic,
+					signatureFactorPublic,
 				)
 				if err != nil {
 					t.Fatal(err)
 				}
 
+				round5Signers[i] = signer
 				round5Messages[i] = message
 			}
 
@@ -338,7 +414,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 				round5Messages = test.modifyRound5Messages(round5Messages)
 			}
 
-			actualSignatureUnmask, err := round4Signers[0].CombineRound5Messages(
+			actualSignatureUnmask, err := round5Signers[0].CombineRound5Messages(
 				round5Messages,
 			)
 			if !reflect.DeepEqual(test.expectedError, err) {
@@ -384,7 +460,7 @@ func initializeNewSignerGroup() ([]*Signer, error) {
 // all other parameters set and ready for round 3 signing.
 func initializeNewRound2SignerGroup() (
 	round2Signers []*Round2Signer,
-	secretKeyRandomFactor *paillier.Cypher,
+	secretKeyFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
@@ -401,16 +477,17 @@ func initializeNewRound2SignerGroup() (
 	}
 
 	paillierKey := signers[0].paillierKey
+	secretKeyFactorPlaintext := big.NewInt(1337)
 
-	secretKeyRandomFactor, err = paillierKey.Encrypt(
-		big.NewInt(1337), rand.Reader,
+	secretKeyFactor, err = paillierKey.Encrypt(
+		secretKeyFactorPlaintext, rand.Reader,
 	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	secretKeyMultiple = paillierKey.Mul(
-		signers[0].dsaKey.secretKey, big.NewInt(1337),
+		signers[0].dsaKey.secretKey, secretKeyFactorPlaintext,
 	)
 
 	return
@@ -424,7 +501,7 @@ func initializeNewRound4SignerGroup() ([]*Round4Signer, error) {
 		return nil, err
 	}
 
-	secretKeyRandomFactor, err := signers[0].paillierKey.Encrypt(
+	secretKeyFactor, err := signers[0].paillierKey.Encrypt(
 		big.NewInt(7331), rand.Reader,
 	)
 	if err != nil {
@@ -434,8 +511,8 @@ func initializeNewRound4SignerGroup() ([]*Round4Signer, error) {
 	round4Signers := make([]*Round4Signer, len(signers))
 	for i, signer := range signers {
 		round4Signers[i] = &Round4Signer{
-			Signer:                *signer,
-			secretKeyRandomFactor: secretKeyRandomFactor,
+			Signer:          *signer,
+			secretKeyFactor: secretKeyFactor,
 		}
 	}
 

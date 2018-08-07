@@ -152,7 +152,8 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	commitmentMessages[len(commitmentMessages)-1].commitment = invalidCommitment
+	commitmentMessages[len(commitmentMessages)-1].publicKeyShareCommitment =
+		invalidCommitment
 
 	expectedError := fmt.Errorf("KeyShareRevealMessage rejected")
 

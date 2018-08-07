@@ -43,11 +43,11 @@ func NewNode(
 // determining whether the node is or is not is a member of the requested group, and
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
-	request event.Request,
+	request *event.Request,
 	relayChain relaychain.Interface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
-		request.PreviousEntry(),
+		request.PreviousValue[:],
 		request.Seed.Bytes(),
 	)
 
@@ -67,15 +67,15 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		if err != nil {
 			fmt.Fprintf(
 				os.Stderr,
-				"error creating threshold signature: [%v]",
+				"error creating threshold signature: [%v]\n",
 				err,
 			)
 			return
 		}
 
 		rightSizeSignature := [32]byte{}
-		previousEntry := &big.Int{}
-		previousEntry.SetBytes(request.PreviousEntry())
+		previousValue := &big.Int{}
+		previousValue.SetBytes(request.PreviousValue[:])
 
 		for i := 0; i < 32; i++ {
 			rightSizeSignature[i] = signature[i]
@@ -84,7 +84,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		newEntry := &event.Entry{
 			RequestID:     request.RequestID,
 			Value:         rightSizeSignature,
-			PreviousEntry: previousEntry,
+			PreviousEntry: previousValue,
 			Timestamp:     time.Now().UTC(),
 			GroupID:       &big.Int{},
 		}
@@ -111,8 +111,8 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 	return combinedEntryToSign
 }
 
-func (n *Node) indexForNextGroup(request event.Request) *big.Int {
-	entry := (&big.Int{}).SetBytes(request.PreviousEntry())
+func (n *Node) indexForNextGroup(request *event.Request) *big.Int {
+	entry := (&big.Int{}).SetBytes(request.PreviousValue[:])
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
 	return nextGroupIndex(entry, numberOfGroups)
@@ -127,7 +127,7 @@ func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
 }
 
 func (n *Node) membershipForRequest(
-	request event.Request,
+	request *event.Request,
 ) *membership {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()

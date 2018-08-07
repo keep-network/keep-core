@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	setupBlocks     = 15
-	signatureBlocks = 10
+	setupBlocks     = 1
+	signatureBlocks = 2
 )
 
 // Init initializes a given broadcast channel to be able to perform distributed
@@ -105,9 +105,10 @@ func Execute(
 			signature, err := member.CompleteSignature(seenShares)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"[member:%v] failed to complete signature inside active period [%v]",
+					"[member:%v] failed to complete signature inside active period [%v]: [%v]",
 					member.MemberID(),
 					signatureBlocks,
+					err,
 				)
 			}
 

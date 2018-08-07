@@ -151,7 +151,7 @@ func TestFullSignPath(t *testing.T) {
 		}
 	}
 
-	signatureUnmaskDecrypted, err := round4Signers[0].CombineRound5Messages(
+	signatureUnmaskDecrypted, err := round5Signers[0].CombineRound5Messages(
 		round5Messages,
 	)
 	if err != nil {
