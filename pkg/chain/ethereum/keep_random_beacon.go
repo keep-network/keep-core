@@ -171,6 +171,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
 	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for RelayEntryRequested events: [%v]",
 			err,
@@ -218,6 +219,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for RelayEntryGenerated event: [%v]",
 			err,
@@ -262,6 +264,7 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
 	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for RelayResetEvent event: [%v]",
 			err,
@@ -308,6 +311,7 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 		eventChan,
 	)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
 			err,
