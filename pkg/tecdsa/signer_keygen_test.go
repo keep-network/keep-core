@@ -199,9 +199,10 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 
 // Test group public parameters used to construct and validate groups for tests
 var publicParameters = &PublicParameters{
-	groupSize: 10,
-	threshold: 6,
-	curve:     secp256k1.S256(),
+	groupSize:            10,
+	threshold:            6,
+	curve:                secp256k1.S256(),
+	paillierKeyBitLength: 2048,
 }
 
 // createNewCoreGroup generates a group of `signerCore`s backed by a threshold
@@ -210,15 +211,17 @@ var publicParameters = &PublicParameters{
 // generating Paillier keys and distributing them and should be used only for
 // testing.
 func createNewCoreGroup() ([]*signerCore, error) {
-	paillierKeyGen := paillier.GetThresholdKeyGenerator(
-		// TODO: GetThresholdKeyGenerator accepts the bit length of p and q
-		// primes; we should refactor it to accept a modulus bit length so that
-		// we don't have to divide here
-		paillierModulusBitLength/2,
+	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
+		publicParameters.paillierKeyBitLength,
 		publicParameters.groupSize,
 		publicParameters.threshold,
 		rand.Reader,
 	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate threshold Paillier keys [%v]", err,
+		)
+	}
 
 	paillierKeys, err := paillierKeyGen.Generate()
 	if err != nil {

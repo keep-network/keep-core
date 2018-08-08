@@ -23,8 +23,9 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// PublicParameters for T-ECDSA. Defines how many Signers are in the group
-// and what is a group signing threshold.
+// PublicParameters for T-ECDSA. Defines how many Signers are in the group,
+// what is a group signing threshold, which curve is used and what's the bit
+// length of Paillier key.
 //
 // If we consider an honest-but-curious adversary, i.e. an adversary that learns
 // all the secret data of compromised server but does not change their code,
@@ -41,11 +42,21 @@ import (
 //
 // The Curve specified in the PublicParameters is the one used for signing and
 // all intermediate constructions during initialization and signing process.
+//
+// In order for the [GGN 16] protocol to be correct, all the homomorphic
+// operations over the ciphertexts (which are modulo N) must not conflict with
+// the operations modulo q of the DSA algorithms. Because of that, [GGN 16]
+// requires that `N > q^8`, where `N` is a paillier modulus from a Paillier
+// publicnkey and `q` is the elliptic curve cardinality.
+//
+// For instance, secp256k1 cardinality `q`` is a 256 bit number, so we must have
+// at least 2048 bit Paillier modulus (Paillier public key).
 type PublicParameters struct {
 	groupSize int
 	threshold int
 
-	curve elliptic.Curve
+	curve                elliptic.Curve
+	paillierKeyBitLength int
 }
 
 type signerCore struct {
@@ -83,15 +94,6 @@ type Signer struct {
 
 	dsaKey *ThresholdDsaKey
 }
-
-// In order for the [GGN 16] protocol to be correct, all the homomorphic
-// operations over the ciphertexts (which are modulo N) must not conflict with
-// the operations modulo q of the DSA algorithms. Because of that, [GGN 16]
-// requires that N > q^8.
-//
-// secp256k1 cardinality q is a 256 bit number, so we must have at least
-// 2048 bit Paillier modulus.
-const paillierModulusBitLength = 2048
 
 func (pp *PublicParameters) curveCardinality() *big.Int {
 	return pp.curve.Params().N
