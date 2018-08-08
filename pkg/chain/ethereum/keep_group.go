@@ -253,19 +253,24 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
 	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for GroupCompleteEvent events [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -283,19 +288,24 @@ func (kg *keepGroup) WatchGroupErrorCode(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
 	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"failed go create watch for GroupErrorCode events: [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.Code)
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -314,19 +324,24 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
 	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for GropExistsEvent events [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:], event.Exists)
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -345,19 +360,24 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
 	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for GorupStartedEvent events [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -376,16 +396,21 @@ func (kg *keepGroup) WatchOnStakerAdded(
 	eventChan := make(chan *gen.KeepGroupImplV1OnStakerAdded)
 	eventSubscription, err := kg.contract.WatchOnStakerAdded(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf("error creating watch for OnStakerAdded events [%v]", err)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(int(event.Index), event.GroupMemberID[:])
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
