@@ -162,9 +162,12 @@ func TestFullSignPath(t *testing.T) {
 	// Execute the 6th signing round
 	//
 	for i, signer := range round5Signers {
-		round6Messages[i] = signer.SignRound6(
+		round6Messages[i], err = signer.SignRound6(
 			signatureUnmaskDecrypted, messageHash,
 		)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	signature, err := round5Signers[0].CombineRound6Messages(round6Messages)

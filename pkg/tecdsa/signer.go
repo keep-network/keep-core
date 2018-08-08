@@ -868,8 +868,14 @@ func (s *Round5Signer) CombineRound5Messages(
 func (s *Round5Signer) SignRound6(
 	signatureUnmask *big.Int, // TDec(w)
 	messageHash []byte, // m
-) *SignRound6Message {
-	// TODO: add 32-byte validation for message hash
+) (*SignRound6Message, error) {
+	if len(messageHash) != 32 {
+		return nil, fmt.Errorf(
+			"message hash is required to be exactly 32 bytes (%d)",
+			len(messageHash),
+		)
+	}
+
 	signatureCypher := s.paillierKey.Mul(
 		s.paillierKey.Add(
 			s.paillierKey.Mul(
@@ -889,7 +895,7 @@ func (s *Round5Signer) SignRound6(
 
 	return &SignRound6Message{
 		signaturePartialDecryption: s.paillierKey.Decrypt(signatureCypher.C),
-	}
+	}, nil
 }
 
 // Signature represents a final T-ECDSA signature
