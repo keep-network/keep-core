@@ -24,7 +24,7 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 [[constraint]]
   name = "github.com/keep-network/paillier"
-  revision = "3a27db63e5e4c30cdd4f7c6c6b0d9f7a10a2961f"
+  revision = "3571790b8a9809dc656efe874b2f564084cbcd3b"
   source = "https://github.com/keep-network/paillier"
 
 [[constraint]]
