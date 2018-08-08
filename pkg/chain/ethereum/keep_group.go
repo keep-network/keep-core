@@ -259,6 +259,7 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
@@ -292,6 +293,7 @@ func (kg *keepGroup) WatchGroupErrorCode(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
@@ -326,6 +328,7 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
@@ -360,6 +363,7 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
@@ -391,6 +395,7 @@ func (kg *keepGroup) WatchOnStakerAdded(
 		return fmt.Errorf("error creating watch for OnStakerAdded events [%v]", err)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {

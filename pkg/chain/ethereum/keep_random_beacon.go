@@ -177,6 +177,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
@@ -223,6 +224,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
@@ -266,6 +268,7 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
@@ -311,6 +314,7 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 		)
 	}
 	go func() {
+		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
 		for {
 			select {
