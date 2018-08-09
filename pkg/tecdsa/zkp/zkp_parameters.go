@@ -3,6 +3,7 @@ package zkp
 import (
 	"crypto/elliptic"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -53,8 +54,7 @@ const safePrimeBitLength = 1024
 const safePrimeGenConcurrencyLevel = 4
 const safePrimeGenTimeout = 120 * time.Second
 
-// GeneratePublicParameters creates a new instance of `PublicParameters` with
-// all field set to appropriate values.
+// GeneratePublicParameters generates a new instance of `PublicParameters`.
 func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
@@ -93,7 +93,7 @@ func GeneratePublicParameters(
 }
 
 // GeneratePublicParametersFromSafePrimes generates a new instance of
-// `PublicParameters` from the provided safe primes.
+// `PublicParameters` from the provided safe primes of equal bit length.
 func GeneratePublicParametersFromSafePrimes(
 	paillierModulus *big.Int,
 	pTilde *big.Int,
@@ -109,6 +109,27 @@ func GeneratePublicParametersFromSafePrimes(
 		new(big.Int).Sub(qTilde, big.NewInt(1)),
 		big.NewInt(2),
 	)
+
+	if pTilde.BitLen() != qTilde.BitLen() {
+		return nil, fmt.Errorf(
+			"safe primes must have the same bit length, got %d and %d bits",
+			pTilde.BitLen(),
+			qTilde.BitLen(),
+		)
+	}
+
+	if pTilde.Cmp(qTilde) == 0 {
+		return nil, fmt.Errorf(
+			"safe primes must not be equal, got %v and %v", pTilde, qTilde,
+		)
+	}
+
+	if !pTilde.ProbablyPrime(20) ||
+		!qTilde.ProbablyPrime(20) ||
+		!pTildePrime.ProbablyPrime(20) ||
+		!qTildePrime.ProbablyPrime(20) {
+		return nil, errors.New("both numbers must be safe primes")
+	}
 
 	NTilde := new(big.Int).Mul(pTilde, qTilde)
 	h2, err := randomFromMultiplicativeGroup(rand.Reader, NTilde)
