@@ -207,16 +207,21 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	}
 }
 
-// readTestParameters returns test `PublicParameters` and a threshold Paillier
-// key that was generated for them.
+// readTestParameters returns test `PublicParameters`, threshold Paillier
+// key generated for those parameters and ZKP `PublicParameters` generated for
+// the key.
 //
 // Since Paillier key initialization is quite expensive, for secp256k1 curve
 // Paillier key must be at least 2048-bit long and we don't really want to test
 // the initialization process here, we just load the existing key from file.
-// Please bear in mind this is not a correct approach for all T-ECDSA tests.
+// Moreover, we create ZKP parameters from predefined 1024-bit safe prime
+// numbers instead of generating them for the same reason as for Paillier key.
+//
+// Please bear in mind this is not a correct approach for all T-ECDSA tests!
 func readTestParameters() (
 	[]paillier.ThresholdPrivateKey,
 	*PublicParameters,
+	*zkp.PublicParameters,
 	error,
 ) {
 	publicParameters := &PublicParameters{
@@ -229,17 +234,37 @@ func readTestParameters() (
 	var paillierKey []paillier.ThresholdPrivateKey
 	data, err := ioutil.ReadFile("paillier.test.key")
 	if err != nil {
-		return nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
+		return nil, nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
 	}
 	buffer := bytes.NewBuffer(data)
 
 	decoder := gob.NewDecoder(buffer)
 	err = decoder.Decode(&paillierKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
+		return nil, nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
 	}
 
-	return paillierKey, publicParameters, nil
+	pTilde, _ := new(big.Int).SetString(
+		"T7J6D6kn5JGzrJpskwFuabU33cBMKgkfjucmEuSvCWH4PmgcghcdSBV9u8oPWikoKokF"+
+			"XVVr8NriqFizRqbRiG7R0OABnxHl1lL2CtS4pv3Raoc8Ubv6uGzbat2dx0kgGkve"+
+			"LfIQOVmLrFxYOvFXKHEKal9OYlZTdIcRe5vA9XfR", 62,
+	)
+	qTilde, _ := new(big.Int).SetString(
+		"UOzoNzDzf4dFKuTyVfEXGnbaiLXTDBtWoWLR83wl34AgEOteIhDtVdngNPbcCKP1A0H9"+
+			"CBRUE081rsad6ftTyiVeDhEHIToSf3LRenAJAxic4kNrzYtyKN1yFtzMKPH6ndcT"+
+			"8NPTI7gEOt789ZAf3queB54mbZjWWsm1sV2plmhR", 62,
+	)
+
+	zkpParameters, err := zkp.GeneratePublicParametersFromSafePrimes(
+		paillierKey[0].N, pTilde, qTilde, publicParameters.curve,
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"could not generate public ZKP parameters [%v]", err,
+		)
+	}
+
+	return paillierKey, publicParameters, zkpParameters, nil
 }
 
 // createNewCoreGroup generates a group of `signerCore`s backed by a threshold
@@ -248,19 +273,9 @@ func readTestParameters() (
 // generating Paillier keys and distributing them and should be used only for
 // testing.
 func createNewCoreGroup() ([]*signerCore, *PublicParameters, error) {
-	paillierKeys, publicParameters, err := readTestParameters()
+	paillierKeys, publicParameters, zkpParameters, err := readTestParameters()
 	if err != nil {
 		return nil, nil, err
-	}
-
-	zkpParameters, err := zkp.GeneratePublicParameters(
-		paillierKeys[0].N,
-		publicParameters.curve,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"could not generate public ZKP parameters [%v]", err,
-		)
 	}
 
 	members := make([]*signerCore, len(paillierKeys))

@@ -59,7 +59,7 @@ func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
-	pTilde, pTildePrime, err := paillier.GenerateSafePrime(
+	pTilde, _, err := paillier.GenerateSafePrime(
 		safePrimeBitLength,
 		safePrimeGenConcurrencyLevel,
 		safePrimeGenTimeout,
@@ -72,8 +72,8 @@ func GeneratePublicParameters(
 		)
 	}
 
-	qTilde, qTildePrime := big.NewInt(0), big.NewInt(0)
-	for qTilde, qTildePrime, err = paillier.GenerateSafePrime(
+	qTilde := big.NewInt(0)
+	for qTilde, _, err = paillier.GenerateSafePrime(
 		safePrimeBitLength,
 		safePrimeGenConcurrencyLevel,
 		safePrimeGenTimeout,
@@ -86,6 +86,29 @@ func GeneratePublicParameters(
 			err,
 		)
 	}
+
+	return GeneratePublicParametersFromSafePrimes(
+		paillierModulus, pTilde, qTilde, curve,
+	)
+}
+
+// GeneratePublicParametersFromSafePrimes generates a new instance of
+// `PublicParameters` from the provided safe primes.
+func GeneratePublicParametersFromSafePrimes(
+	paillierModulus *big.Int,
+	pTilde *big.Int,
+	qTilde *big.Int,
+	curve elliptic.Curve,
+) (*PublicParameters, error) {
+	pTildePrime := new(big.Int).Div(
+		new(big.Int).Sub(pTilde, big.NewInt(1)),
+		big.NewInt(2),
+	)
+
+	qTildePrime := new(big.Int).Div(
+		new(big.Int).Sub(qTilde, big.NewInt(1)),
+		big.NewInt(2),
+	)
 
 	NTilde := new(big.Int).Mul(pTilde, qTilde)
 	h2, err := randomFromMultiplicativeGroup(rand.Reader, NTilde)
