@@ -198,11 +198,15 @@ class Staker:
 
     def runGroupSelection():
         unpublished = tickets()
+        tNat = naturalThreshold()
 
         # Publish all tickets that fall under the natural threshold
-        while unpublished.first().value < naturalThreshold():
+        while unpublished.first().value < tNat:
             promisingTicket = unpublished.pop()
             publish(promisingTicket)
+
+        while not T_elapsed(TICKET_INITIAL_TIMEOUT):
+            wait()
 
         while not T_elapsed(TICKET_SUBMISSION_TIMEOUT):
             t = getLatestSubmission()
@@ -212,15 +216,19 @@ class Staker:
                 publish(c)
 
             # If it seems like we would have another ticket eligible for P,
-            # publish the most promising one. This prevents dumping all tickets
+            # publish the most promising ones. This prevents dumping all tickets
             # at once before others have had time to publish theirs, but should
             # be decently responsive anyway.
             currentBestTickets = getContract().tickets.query(N)
             currentBestThreshold = max(currentBestTickets.map(value))
 
-            if unpublished.first().value < currentBestThreshold:
-                myTicket = unpublished.pop()
-                publish(myTicket)
+            bestTicket = unpublished.first()
+            bestTicketEligible = bestTicket.value < currentBestThreshold
+            timeToPublish = bestTicket.value * TICKET_INITIAL_TIMEOUT / tNat
+
+            if bestTicketEligible and T_elapsed(timeToPublish):
+                unpublished.pop()
+                publish(bestTicket)
 
         # Group selection done, see if we are in P
         P = getContract().tickets.query(N).map(sender)
