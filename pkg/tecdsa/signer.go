@@ -99,6 +99,12 @@ func (pp *PublicParameters) curveCardinality() *big.Int {
 	return pp.Curve.Params().N
 }
 
+// PublicEcdsaKey returns the group public ECDSA key. This value is the same for
+// all signers in the group.
+func (s *Signer) PublicEcdsaKey() *curve.Point {
+	return s.dsaKey.publicKey
+}
+
 // generateDsaKeyShare generates a DSA public and secret key shares and puts
 // them into `dsaKeyShare`. Secret key share is a random integer from Z_q where
 // `q` is the cardinality of Elliptic Curve and public key share is a point
