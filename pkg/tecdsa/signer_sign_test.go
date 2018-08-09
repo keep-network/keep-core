@@ -336,7 +336,7 @@ func TestSignRound5(t *testing.T) {
 
 	expectedSignatureFactorPublicHash := new(big.Int).Mod(
 		signatureFactorPublic.X,
-		parameters.Curve.Params().N,
+		parameters.curveCardinality(),
 	)
 
 	if round5Signer.signatureFactorPublicHash.Cmp(

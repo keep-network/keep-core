@@ -32,8 +32,7 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	curveCardinality := parameters.Curve.Params().N
-	if curveCardinality.Cmp(dsaKeyShare.secretKeyShare) != 1 {
+	if parameters.curveCardinality().Cmp(dsaKeyShare.secretKeyShare) != 1 {
 		t.Errorf("DSA secret key share must be less than Curve's cardinality")
 	}
 
