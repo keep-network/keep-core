@@ -177,7 +177,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Verify produced signature
 	//
 	err = verifySignatureInBitcoin(
-		parameters.curve,
+		parameters.Curve,
 		messageHash,
 		round5Signers[0].dsaKey.publicKey,
 		signature,
@@ -187,7 +187,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	}
 
 	err = verifySignatureInEthereum(
-		parameters.curve,
+		parameters.Curve,
 		messageHash,
 		round5Signers[0].dsaKey.publicKey,
 		signature,
@@ -203,16 +203,16 @@ func generateNewLocalGroup() (
 	error,
 ) {
 	parameters := &PublicParameters{
-		groupSize:            20,
-		threshold:            12,
-		curve:                secp256k1.S256(),
-		paillierKeyBitLength: 2048,
+		GroupSize:            20,
+		Threshold:            12,
+		Curve:                secp256k1.S256(),
+		PaillierKeyBitLength: 2048,
 	}
 
 	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
-		parameters.paillierKeyBitLength,
-		parameters.groupSize,
-		parameters.threshold,
+		parameters.PaillierKeyBitLength,
+		parameters.GroupSize,
+		parameters.Threshold,
 		rand.Reader,
 	)
 	if err != nil {
@@ -230,7 +230,7 @@ func generateNewLocalGroup() (
 
 	zkpParameters, err := zkp.GeneratePublicParameters(
 		paillierKeys[0].N,
-		parameters.curve,
+		parameters.Curve,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(

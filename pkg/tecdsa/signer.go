@@ -52,11 +52,11 @@ import (
 // For instance, secp256k1 cardinality `q`` is a 256 bit number, so we must have
 // at least 2048 bit Paillier modulus (Paillier public key).
 type PublicParameters struct {
-	groupSize int
-	threshold int
+	GroupSize int
+	Threshold int
 
-	curve                elliptic.Curve
-	paillierKeyBitLength int
+	Curve                elliptic.Curve
+	PaillierKeyBitLength int
 }
 
 type signerCore struct {
@@ -96,7 +96,7 @@ type Signer struct {
 }
 
 func (pp *PublicParameters) curveCardinality() *big.Int {
-	return pp.curve.Params().N
+	return pp.Curve.Params().N
 }
 
 // generateDsaKeyShare generates a DSA public and secret key shares and puts
@@ -104,7 +104,7 @@ func (pp *PublicParameters) curveCardinality() *big.Int {
 // `q` is the cardinality of Elliptic Curve and public key share is a point
 // on the Curve g^secretKeyShare.
 func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
-	curveParams := ls.groupParameters.curve.Params()
+	curveParams := ls.groupParameters.Curve.Params()
 
 	secretKeyShare, err := rand.Int(rand.Reader, curveParams.N)
 	if err != nil {
@@ -112,7 +112,7 @@ func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	}
 
 	publicKeyShare := curve.NewPoint(
-		ls.groupParameters.curve.ScalarBaseMult(secretKeyShare.Bytes()),
+		ls.groupParameters.Curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
 	return &dsaKeyShare{
@@ -225,24 +225,24 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	shareCommitments []*PublicKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shareCommitments) != ls.groupParameters.groupSize {
+	if len(shareCommitments) != ls.groupParameters.GroupSize {
 		return nil, fmt.Errorf(
 			"commitments required from all group members; got %v, expected %v",
 			len(shareCommitments),
-			ls.groupParameters.groupSize,
+			ls.groupParameters.GroupSize,
 		)
 	}
 
-	if len(revealedShares) != ls.groupParameters.groupSize {
+	if len(revealedShares) != ls.groupParameters.GroupSize {
 		return nil, fmt.Errorf(
 			"all group members should reveal shares; Got %v, expected %v",
 			len(revealedShares),
-			ls.groupParameters.groupSize,
+			ls.groupParameters.GroupSize,
 		)
 	}
 
-	secretKeyShares := make([]*paillier.Cypher, ls.groupParameters.groupSize)
-	publicKeyShares := make([]*curve.Point, ls.groupParameters.groupSize)
+	secretKeyShares := make([]*paillier.Cypher, ls.groupParameters.GroupSize)
+	publicKeyShares := make([]*curve.Point, ls.groupParameters.GroupSize)
 
 	for i, commitmentMsg := range shareCommitments {
 		foundMatchingRevealMessage := false
@@ -274,7 +274,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	secretKey := ls.paillierKey.Add(secretKeyShares...)
 	publicKey := publicKeyShares[0]
 	for _, share := range publicKeyShares[1:] {
-		publicKey = curve.NewPoint(ls.groupParameters.curve.Add(
+		publicKey = curve.NewPoint(ls.groupParameters.Curve.Add(
 			publicKey.X, publicKey.Y, share.X, share.Y,
 		))
 	}
@@ -435,7 +435,7 @@ func (s *Round2Signer) CombineRound2Messages(
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	groupSize := s.groupParameters.groupSize
+	groupSize := s.groupParameters.GroupSize
 
 	if len(round1Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -538,7 +538,7 @@ func (s *Round2Signer) SignRound3(
 
 	// r_i = g^{k_i}
 	signatureFactorPublicShare := curve.NewPoint(
-		s.groupParameters.curve.ScalarBaseMult(
+		s.groupParameters.Curve.ScalarBaseMult(
 			signatureFactorSecretShare.Bytes(),
 		),
 	)
@@ -701,7 +701,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic *curve.Point, // R
 	err error,
 ) {
-	groupSize := s.groupParameters.groupSize
+	groupSize := s.groupParameters.GroupSize
 
 	if len(round3Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -757,7 +757,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic = signatureFactorPublicShares[0]
 	for _, share := range signatureFactorPublicShares[1:] {
 		signatureFactorPublic = curve.NewPoint(
-			s.groupParameters.curve.Add(
+			s.groupParameters.Curve.Add(
 				signatureFactorPublic.X,
 				signatureFactorPublic.Y,
 				share.X,
@@ -835,7 +835,7 @@ func (s *Round5Signer) CombineRound5Messages(
 	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
-	groupSize := s.groupParameters.groupSize
+	groupSize := s.groupParameters.GroupSize
 
 	if len(round5Messages) != groupSize {
 		return nil, fmt.Errorf(
@@ -912,7 +912,7 @@ type Signature struct {
 func (s *Round5Signer) CombineRound6Messages(
 	round6Messages []*SignRound6Message,
 ) (*Signature, error) {
-	groupSize := s.groupParameters.groupSize
+	groupSize := s.groupParameters.GroupSize
 
 	if len(round6Messages) != groupSize {
 		return nil, fmt.Errorf(

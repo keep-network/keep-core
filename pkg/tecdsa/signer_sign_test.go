@@ -247,7 +247,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				)
 			}
 
-			ellipticCurve := round3Signers[0].groupParameters.curve
+			ellipticCurve := round3Signers[0].groupParameters.Curve
 			expectedSignatureFactorPublic := round3Signers[0].signatureFactorPublicShare
 			for _, signer := range round3Signers[1:] {
 				expectedSignatureFactorPublic = curve.NewPoint(ellipticCurve.Add(
@@ -323,7 +323,7 @@ func TestSignRound5(t *testing.T) {
 	}
 
 	signatureFactorPublic := curve.NewPoint(
-		parameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
+		parameters.Curve.ScalarBaseMult(big.NewInt(411).Bytes()),
 	)
 
 	round5Signer, _, err := signer.SignRound5(
@@ -336,7 +336,7 @@ func TestSignRound5(t *testing.T) {
 
 	expectedSignatureFactorPublicHash := new(big.Int).Mod(
 		signatureFactorPublic.X,
-		parameters.curve.Params().N,
+		parameters.Curve.Params().N,
 	)
 
 	if round5Signer.signatureFactorPublicHash.Cmp(
@@ -384,7 +384,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 			}
 
 			signatureFactorPublic := curve.NewPoint(
-				parameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
+				parameters.Curve.ScalarBaseMult(big.NewInt(411).Bytes()),
 			)
 
 			signatureUnmaskCypher, err := round4Signers[0].paillierKey.Encrypt(

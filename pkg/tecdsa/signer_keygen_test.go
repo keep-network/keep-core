@@ -32,12 +32,12 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	curveCardinality := parameters.curve.Params().N
+	curveCardinality := parameters.Curve.Params().N
 	if curveCardinality.Cmp(dsaKeyShare.secretKeyShare) != 1 {
 		t.Errorf("DSA secret key share must be less than Curve's cardinality")
 	}
 
-	if !parameters.curve.IsOnCurve(
+	if !parameters.Curve.IsOnCurve(
 		dsaKeyShare.publicKeyShare.X,
 		dsaKeyShare.publicKeyShare.Y,
 	) {
@@ -61,12 +61,12 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	//    constructed
 
 	// 1. Check if publicKey is a point on curve
-	if !parameters.curve.IsOnCurve(dsaKey.publicKey.X, dsaKey.publicKey.Y) {
+	if !parameters.Curve.IsOnCurve(dsaKey.publicKey.X, dsaKey.publicKey.Y) {
 		t.Fatal("ThresholdDsaKey.y must be a point on Curve")
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
-	xShares := make([]*paillier.PartialDecryption, parameters.groupSize)
+	xShares := make([]*paillier.PartialDecryption, parameters.GroupSize)
 	for i, signer := range group {
 		xShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
 	}
@@ -79,12 +79,12 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	// xi shares we may produce number greater than q and exceed curve's
 	// cardinality. specs256k1 can't handle scalars > 256 bits, so we need to
 	// mod N here to stay in the curve's field.
-	secretKey = new(big.Int).Mod(secretKey, parameters.curve.Params().N)
+	secretKey = new(big.Int).Mod(secretKey, parameters.Curve.Params().N)
 
 	// 3. Having secretKey, we can evaluate publicKey from
 	//    publicKey = g^secretKey and compare with the actual
 	//    value stored in ThresholdDsaKey.
-	publicKeyX, publicKeyY := parameters.curve.ScalarBaseMult(secretKey.Bytes())
+	publicKeyX, publicKeyY := parameters.Curve.ScalarBaseMult(secretKey.Bytes())
 
 	if !reflect.DeepEqual(publicKeyX, dsaKey.publicKey.X) {
 		t.Errorf(
@@ -225,10 +225,10 @@ func readTestParameters() (
 	error,
 ) {
 	publicParameters := &PublicParameters{
-		groupSize:            10,
-		threshold:            6,
-		curve:                secp256k1.S256(),
-		paillierKeyBitLength: 2048,
+		GroupSize:            10,
+		Threshold:            6,
+		Curve:                secp256k1.S256(),
+		PaillierKeyBitLength: 2048,
 	}
 
 	var paillierKey []paillier.ThresholdPrivateKey
@@ -256,7 +256,7 @@ func readTestParameters() (
 	)
 
 	zkpParameters, err := zkp.GeneratePublicParametersFromSafePrimes(
-		paillierKey[0].N, pTilde, qTilde, publicParameters.curve,
+		paillierKey[0].N, pTilde, qTilde, publicParameters.Curve,
 	)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf(
@@ -336,7 +336,7 @@ func initializeNewLocalGroupWithKeyShares() (
 	// in the PublicKeyShareCommitmentMessage.
 	publicKeyCommitmentMessages := make(
 		[]*PublicKeyShareCommitmentMessage,
-		parameters.groupSize,
+		parameters.GroupSize,
 	)
 	for i, signer := range group {
 		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
@@ -354,7 +354,7 @@ func initializeNewLocalGroupWithKeyShares() (
 	// we use Paillier.
 	keyShareRevealMessages := make(
 		[]*KeyShareRevealMessage,
-		parameters.groupSize,
+		parameters.GroupSize,
 	)
 	for i, signer := range group {
 		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
