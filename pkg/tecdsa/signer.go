@@ -879,7 +879,7 @@ func (s *Round5Signer) SignRound6(
 ) (*SignRound6Message, error) {
 	if len(messageHash) != 32 {
 		return nil, fmt.Errorf(
-			"message hash is required to be exactly 32 bytes (%d)",
+			"message hash is required to be exactly 32 bytes and it's %d bytes",
 			len(messageHash),
 		)
 	}
