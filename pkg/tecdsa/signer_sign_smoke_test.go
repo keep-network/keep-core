@@ -1,5 +1,7 @@
 package tecdsa
 
+// TODO: rename to signer_smoke_test.go
+
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -9,11 +11,13 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
+	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
 	"github.com/keep-network/paillier"
 )
 
-func TestGenerateValidKey(t *testing.T) {
+func TestFullInitAndSignPath(t *testing.T) {
 	messageHash := make([]byte, 32)
 
 	_, err := rand.Read(messageHash)
@@ -21,65 +25,59 @@ func TestGenerateValidKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	group, dsaKey, err := initializeNewLocalGroupWithFullKey()
+	localSigners, parameters, err := generateNewLocalGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Decrypt secretKey from E(secretKey)
-	dShares := make([]*paillier.PartialDecryption, publicParameters.groupSize)
-	for i, signer := range group {
-		dShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
-	}
-	D, err := group[0].paillierKey.CombinePartialDecryptions(dShares)
-	if err != nil {
-		t.Fatal(err)
-	}
+	publicKeyCommitmentMessages := make([]*PublicKeyShareCommitmentMessage, len(localSigners))
+	keyShareRevealMessages := make([]*KeyShareRevealMessage, len(localSigners))
 
-	key := &ecdsa.PrivateKey{
-		PublicKey: ecdsa.PublicKey{
-			Curve: publicParameters.curve,
-			X:     dsaKey.publicKey.X,
-			Y:     dsaKey.publicKey.Y,
-		},
-		D: D,
-	}
+	round1Messages := make([]*SignRound1Message, len(localSigners))
+	round2Messages := make([]*SignRound2Message, len(localSigners))
+	round3Messages := make([]*SignRound3Message, len(localSigners))
+	round4Messages := make([]*SignRound4Message, len(localSigners))
+	round5Messages := make([]*SignRound5Message, len(localSigners))
+	round6Messages := make([]*SignRound6Message, len(localSigners))
 
-	r, s, err := ecdsa.Sign(rand.Reader, key, messageHash)
-	if err != nil {
-		t.Fatal(err)
-	}
+	round1Signers := make([]*Round1Signer, len(localSigners))
+	round2Signers := make([]*Round2Signer, len(localSigners))
+	round3Signers := make([]*Round3Signer, len(localSigners))
+	round4Signers := make([]*Round4Signer, len(localSigners))
+	round5Signers := make([]*Round5Signer, len(localSigners))
 
-	if !ecdsa.Verify(&key.PublicKey, messageHash, r, s) {
-		t.Fatal("Signature verification failed")
-	}
-}
-
-func TestFullSignPath(t *testing.T) {
-	messageHash := make([]byte, 32)
-
-	_, err := rand.Read(messageHash)
-	if err != nil {
-		t.Fatal(err)
+	//
+	// Execute the 1st key-gen round
+	//
+	for i, signer := range localSigners {
+		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	signers, err := initializeNewSignerGroup()
-	if err != nil {
-		t.Fatal(err)
+	//
+	// Execute the 2nd key-gen round
+	//
+	for i, signer := range localSigners {
+		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	round1Messages := make([]*SignRound1Message, len(signers))
-	round2Messages := make([]*SignRound2Message, len(signers))
-	round3Messages := make([]*SignRound3Message, len(signers))
-	round4Messages := make([]*SignRound4Message, len(signers))
-	round5Messages := make([]*SignRound5Message, len(signers))
-	round6Messages := make([]*SignRound6Message, len(signers))
+	dsaKey, err := localSigners[0].CombineDsaKeyShares(
+		publicKeyCommitmentMessages,
+		keyShareRevealMessages,
+	)
 
-	round1Signers := make([]*Round1Signer, len(signers))
-	round2Signers := make([]*Round2Signer, len(signers))
-	round3Signers := make([]*Round3Signer, len(signers))
-	round4Signers := make([]*Round4Signer, len(signers))
-	round5Signers := make([]*Round5Signer, len(signers))
+	signers := make([]*Signer, len(localSigners))
+	for i, localSigner := range localSigners {
+		signers[i] = &Signer{
+			dsaKey:     dsaKey,
+			signerCore: localSigner.signerCore,
+		}
+	}
 
 	//
 	// Execute the 1st signing round
@@ -179,7 +177,7 @@ func TestFullSignPath(t *testing.T) {
 	// Verify produced signature
 	//
 	err = verifySignatureInBitcoin(
-		publicParameters.curve,
+		parameters.curve,
 		messageHash,
 		round5Signers[0].dsaKey.publicKey,
 		signature,
@@ -189,7 +187,7 @@ func TestFullSignPath(t *testing.T) {
 	}
 
 	err = verifySignatureInEthereum(
-		publicParameters.curve,
+		parameters.curve,
 		messageHash,
 		round5Signers[0].dsaKey.publicKey,
 		signature,
@@ -197,6 +195,67 @@ func TestFullSignPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func generateNewLocalGroup() (
+	[]*LocalSigner,
+	*PublicParameters,
+	error,
+) {
+	parameters := &PublicParameters{
+		groupSize:            20,
+		threshold:            12,
+		curve:                secp256k1.S256(),
+		paillierKeyBitLength: 2048,
+	}
+
+	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
+		parameters.paillierKeyBitLength,
+		parameters.groupSize,
+		parameters.threshold,
+		rand.Reader,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not generate threshold Paillier keys [%v]", err,
+		)
+	}
+
+	paillierKeys, err := paillierKeyGen.Generate()
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not generate threshold Paillier keys [%v]", err,
+		)
+	}
+
+	zkpParameters, err := zkp.GeneratePublicParameters(
+		paillierKeys[0].N,
+		parameters.curve,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not generate public ZKP parameters [%v]", err,
+		)
+	}
+
+	members := make([]*signerCore, len(paillierKeys))
+	for i := 0; i < len(members); i++ {
+		members[i] = &signerCore{
+			ID:              generateMemberID(),
+			paillierKey:     paillierKeys[i],
+			groupParameters: parameters,
+			zkpParameters:   zkpParameters,
+		}
+	}
+
+	localSigners := make([]*LocalSigner, len(members))
+	for i := 0; i < len(localSigners); i++ {
+		localSigners[i] = &LocalSigner{
+			signerCore: *members[i],
+		}
+	}
+
+	return localSigners, parameters, nil
 }
 
 func verifySignatureInBitcoin(

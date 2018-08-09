@@ -69,7 +69,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			signers, err := initializeNewSignerGroup()
+			signers, _, err := initializeNewSignerGroup()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -209,7 +209,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			round2Signers, secretKeyRandomFactor, secretKeyMultiple, err :=
+			round2Signers, _, secretKeyRandomFactor, secretKeyMultiple, err :=
 				initializeNewRound2SignerGroup()
 			if err != nil {
 				t.Fatal(err)
@@ -308,7 +308,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 // Here we test the hash computation process. Threshold decryption is tested
 // separately in another test.
 func TestSignRound5(t *testing.T) {
-	round4Signers, err := initializeNewRound4SignerGroup()
+	round4Signers, parameters, err := initializeNewRound4SignerGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,7 +323,7 @@ func TestSignRound5(t *testing.T) {
 	}
 
 	signatureFactorPublic := curve.NewPoint(
-		publicParameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
+		parameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
 	)
 
 	round5Signer, _, err := signer.SignRound5(
@@ -336,7 +336,7 @@ func TestSignRound5(t *testing.T) {
 
 	expectedSignatureFactorPublicHash := new(big.Int).Mod(
 		signatureFactorPublic.X,
-		publicParameters.curve.Params().N,
+		parameters.curve.Params().N,
 	)
 
 	if round5Signer.signatureFactorPublicHash.Cmp(
@@ -358,10 +358,6 @@ func TestSignRound5(t *testing.T) {
 func TestSignAndCombineRound5(t *testing.T) {
 	signatureUnmask := big.NewInt(712)
 
-	signatureFactorPublic := curve.NewPoint(
-		publicParameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
-	)
-
 	var tests = map[string]struct {
 		modifyRound5Messages    func(msgs []*SignRound5Message) []*SignRound5Message
 		expectedSignatureUnmask *big.Int
@@ -382,10 +378,14 @@ func TestSignAndCombineRound5(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			round4Signers, err := initializeNewRound4SignerGroup()
+			round4Signers, parameters, err := initializeNewRound4SignerGroup()
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			signatureFactorPublic := curve.NewPoint(
+				parameters.curve.ScalarBaseMult(big.NewInt(411).Bytes()),
+			)
 
 			signatureUnmaskCypher, err := round4Signers[0].paillierKey.Encrypt(
 				signatureUnmask, rand.Reader,
@@ -439,10 +439,10 @@ func TestSignAndCombineRound5(t *testing.T) {
 
 // Crates and initializes a new group of `Signer`s with T-ECDSA key set and
 // ready for signing.
-func initializeNewSignerGroup() ([]*Signer, error) {
-	localGroup, key, err := initializeNewLocalGroupWithFullKey()
+func initializeNewSignerGroup() ([]*Signer, *PublicParameters, error) {
+	localGroup, parameters, key, err := initializeNewLocalGroupWithFullKey()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	signers := make([]*Signer, len(localGroup))
@@ -453,20 +453,21 @@ func initializeNewSignerGroup() ([]*Signer, error) {
 		}
 	}
 
-	return signers, nil
+	return signers, parameters, nil
 }
 
 // Crates and initializes a new group of `Round2Signer`s with T-ECDSA key and
 // all other parameters set and ready for round 3 signing.
 func initializeNewRound2SignerGroup() (
 	round2Signers []*Round2Signer,
+	parameters *PublicParameters,
 	secretKeyFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	signers, err := initializeNewSignerGroup()
+	signers, parameters, err := initializeNewSignerGroup()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	round2Signers = make([]*Round2Signer, len(signers))
@@ -483,7 +484,7 @@ func initializeNewRound2SignerGroup() (
 		secretKeyFactorPlaintext, rand.Reader,
 	)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	secretKeyMultiple = paillierKey.Mul(
@@ -495,17 +496,21 @@ func initializeNewRound2SignerGroup() (
 
 // Crates and initializes a new group of `Round4Signer`s with T-ECDSA key and
 // all other parameters set and ready for round 5 signing.
-func initializeNewRound4SignerGroup() ([]*Round4Signer, error) {
-	signers, err := initializeNewSignerGroup()
+func initializeNewRound4SignerGroup() (
+	[]*Round4Signer,
+	*PublicParameters,
+	error,
+) {
+	signers, parameters, err := initializeNewSignerGroup()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	secretKeyFactor, err := signers[0].paillierKey.Encrypt(
 		big.NewInt(7331), rand.Reader,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	round4Signers := make([]*Round4Signer, len(signers))
@@ -516,5 +521,5 @@ func initializeNewRound4SignerGroup() ([]*Round4Signer, error) {
 		}
 	}
 
-	return round4Signers, nil
+	return round4Signers, parameters, nil
 }

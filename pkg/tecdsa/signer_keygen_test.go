@@ -1,8 +1,11 @@
 package tecdsa
 
 import (
+	"bytes"
 	"crypto/rand"
+	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"reflect"
 	"testing"
@@ -17,7 +20,7 @@ import (
 )
 
 func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
-	group, err := createNewLocalGroup()
+	group, parameters, err := createNewLocalGroup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,18 +32,21 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	curveCardinality := publicParameters.curve.Params().N
+	curveCardinality := parameters.curve.Params().N
 	if curveCardinality.Cmp(dsaKeyShare.secretKeyShare) != 1 {
 		t.Errorf("DSA secret key share must be less than Curve's cardinality")
 	}
 
-	if !publicParameters.curve.IsOnCurve(dsaKeyShare.publicKeyShare.X, dsaKeyShare.publicKeyShare.Y) {
+	if !parameters.curve.IsOnCurve(
+		dsaKeyShare.publicKeyShare.X,
+		dsaKeyShare.publicKeyShare.Y,
+	) {
 		t.Errorf("DSA public key share must be a point on Curve")
 	}
 }
 
 func TestInitializeAndCombineDsaKey(t *testing.T) {
-	group, dsaKey, err := initializeNewLocalGroupWithFullKey()
+	group, parameters, dsaKey, err := initializeNewLocalGroupWithFullKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,12 +61,12 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	//    constructed
 
 	// 1. Check if publicKey is a point on curve
-	if !publicParameters.curve.IsOnCurve(dsaKey.publicKey.X, dsaKey.publicKey.Y) {
+	if !parameters.curve.IsOnCurve(dsaKey.publicKey.X, dsaKey.publicKey.Y) {
 		t.Fatal("ThresholdDsaKey.y must be a point on Curve")
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
-	xShares := make([]*paillier.PartialDecryption, publicParameters.groupSize)
+	xShares := make([]*paillier.PartialDecryption, parameters.groupSize)
 	for i, signer := range group {
 		xShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
 	}
@@ -73,12 +79,12 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	// xi shares we may produce number greater than q and exceed curve's
 	// cardinality. specs256k1 can't handle scalars > 256 bits, so we need to
 	// mod N here to stay in the curve's field.
-	secretKey = new(big.Int).Mod(secretKey, publicParameters.curve.Params().N)
+	secretKey = new(big.Int).Mod(secretKey, parameters.curve.Params().N)
 
 	// 3. Having secretKey, we can evaluate publicKey from
 	//    publicKey = g^secretKey and compare with the actual
 	//    value stored in ThresholdDsaKey.
-	publicKeyX, publicKeyY := publicParameters.curve.ScalarBaseMult(secretKey.Bytes())
+	publicKeyX, publicKeyY := parameters.curve.ScalarBaseMult(secretKey.Bytes())
 
 	if !reflect.DeepEqual(publicKeyX, dsaKey.publicKey.X) {
 		t.Errorf(
@@ -97,7 +103,8 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 }
 
 func TestCombineWithNotEnoughCommitMessages(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
+	group, _, commitmentMessages, revealMessages, err :=
+		initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +126,8 @@ func TestCombineWithNotEnoughCommitMessages(t *testing.T) {
 }
 
 func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
+	group, _, commitmentMessages, revealMessages, err :=
+		initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +149,8 @@ func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
 }
 
 func TestCombineWithInvalidCommitment(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
+	group, _, commitmentMessages, revealMessages, err :=
+		initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +176,8 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 }
 
 func TestCombineWithInvalidZKP(t *testing.T) {
-	group, commitmentMessages, revealMessages, err := initializeNewLocalGroupWithKeyShares()
+	group, _, commitmentMessages, revealMessages, err :=
+		initializeNewLocalGroupWithKeyShares()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,12 +207,39 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	}
 }
 
-// Test group public parameters used to construct and validate groups for tests
-var publicParameters = &PublicParameters{
-	groupSize:            10,
-	threshold:            6,
-	curve:                secp256k1.S256(),
-	paillierKeyBitLength: 2048,
+// readTestParameters returns test `PublicParameters` and a threshold Paillier
+// key that was generated for them.
+//
+// Since Paillier key initialization is quite expensive, for secp256k1 curve
+// Paillier key must be at least 2048-bit long and we don't really want to test
+// the initialization process here, we just load the existing key from file.
+// Please bear in mind this is not a correct approach for all T-ECDSA tests.
+func readTestParameters() (
+	[]paillier.ThresholdPrivateKey,
+	*PublicParameters,
+	error,
+) {
+	publicParameters := &PublicParameters{
+		groupSize:            10,
+		threshold:            6,
+		curve:                secp256k1.S256(),
+		paillierKeyBitLength: 2048,
+	}
+
+	var paillierKey []paillier.ThresholdPrivateKey
+	data, err := ioutil.ReadFile("paillier.test.key")
+	if err != nil {
+		return nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
+	}
+	buffer := bytes.NewBuffer(data)
+
+	decoder := gob.NewDecoder(buffer)
+	err = decoder.Decode(&paillierKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
+	}
+
+	return paillierKey, publicParameters, nil
 }
 
 // createNewCoreGroup generates a group of `signerCore`s backed by a threshold
@@ -210,24 +247,10 @@ var publicParameters = &PublicParameters{
 // This approach works in an oracle mode - one party is responsible for
 // generating Paillier keys and distributing them and should be used only for
 // testing.
-func createNewCoreGroup() ([]*signerCore, error) {
-	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
-		publicParameters.paillierKeyBitLength,
-		publicParameters.groupSize,
-		publicParameters.threshold,
-		rand.Reader,
-	)
+func createNewCoreGroup() ([]*signerCore, *PublicParameters, error) {
+	paillierKeys, publicParameters, err := readTestParameters()
 	if err != nil {
-		return nil, fmt.Errorf(
-			"could not generate threshold Paillier keys [%v]", err,
-		)
-	}
-
-	paillierKeys, err := paillierKeyGen.Generate()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not generate threshold Paillier keys [%v]", err,
-		)
+		return nil, nil, err
 	}
 
 	zkpParameters, err := zkp.GeneratePublicParameters(
@@ -235,7 +258,7 @@ func createNewCoreGroup() ([]*signerCore, error) {
 		publicParameters.curve,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"could not generate public ZKP parameters [%v]", err,
 		)
 	}
@@ -244,21 +267,21 @@ func createNewCoreGroup() ([]*signerCore, error) {
 	for i := 0; i < len(members); i++ {
 		members[i] = &signerCore{
 			ID:              generateMemberID(),
-			paillierKey:     paillierKeys[i],
+			paillierKey:     &paillierKeys[i],
 			groupParameters: publicParameters,
 			zkpParameters:   zkpParameters,
 		}
 	}
 
-	return members, nil
+	return members, publicParameters, nil
 }
 
 // createNewLocalGroup creates a new group of `LocalSigner`s that did not
 // started initialization process yet.
-func createNewLocalGroup() ([]*LocalSigner, error) {
-	coreGroup, err := createNewCoreGroup()
+func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
+	coreGroup, parameters, err := createNewCoreGroup()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	localSigners := make([]*LocalSigner, len(coreGroup))
@@ -268,7 +291,7 @@ func createNewLocalGroup() ([]*LocalSigner, error) {
 		}
 	}
 
-	return localSigners, nil
+	return localSigners, parameters, nil
 }
 
 // initializeNewLocalGroupWithKeyShares creates and initializes a new group of
@@ -280,13 +303,14 @@ func createNewLocalGroup() ([]*LocalSigner, error) {
 // threshold ECDSA key, if needed.
 func initializeNewLocalGroupWithKeyShares() (
 	[]*LocalSigner,
+	*PublicParameters,
 	[]*PublicKeyShareCommitmentMessage,
 	[]*KeyShareRevealMessage,
 	error,
 ) {
-	group, err := createNewLocalGroup()
+	group, parameters, err := createNewLocalGroup()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Let each signer initialize the DSA key share and create
@@ -297,12 +321,12 @@ func initializeNewLocalGroupWithKeyShares() (
 	// in the PublicKeyShareCommitmentMessage.
 	publicKeyCommitmentMessages := make(
 		[]*PublicKeyShareCommitmentMessage,
-		publicParameters.groupSize,
+		parameters.groupSize,
 	)
 	for i, signer := range group {
 		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 	}
 
@@ -315,16 +339,16 @@ func initializeNewLocalGroupWithKeyShares() (
 	// we use Paillier.
 	keyShareRevealMessages := make(
 		[]*KeyShareRevealMessage,
-		publicParameters.groupSize,
+		parameters.groupSize,
 	)
 	for i, signer := range group {
 		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 	}
 
-	return group, publicKeyCommitmentMessages, keyShareRevealMessages, nil
+	return group, parameters, publicKeyCommitmentMessages, keyShareRevealMessages, nil
 }
 
 // initializeNewLocalGroupWithFullKey creates and initializes a new group of
@@ -332,12 +356,12 @@ func initializeNewLocalGroupWithKeyShares() (
 // `initializeNewLocalGroupWithKeyShares` except that it also calls
 // `ConbineDsaKeyShares` in order to produce a full `ThresholdDsaKey`.
 func initializeNewLocalGroupWithFullKey() (
-	[]*LocalSigner, *ThresholdDsaKey, error,
+	[]*LocalSigner, *PublicParameters, *ThresholdDsaKey, error,
 ) {
-	group, commitmentMessages, revealMessages, err :=
+	group, parameters, commitmentMessages, revealMessages, err :=
 		initializeNewLocalGroupWithKeyShares()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Combine all PublicKeyShareCommitmentMessages and KeyShareRevealMessages
@@ -347,8 +371,8 @@ func initializeNewLocalGroupWithFullKey() (
 		revealMessages,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return group, dsaKey, nil
+	return group, parameters, dsaKey, nil
 }
