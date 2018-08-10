@@ -23,39 +23,45 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// PublicParameters for T-ECDSA. Defines how many Signers are in the group,
-// what is a group signing threshold, which curve is used and what's the bit
-// length of Paillier key.
-//
-// If we consider an honest-but-curious adversary, i.e. an adversary that learns
-// all the secret data of compromised server but does not change their code,
-// then [GGN 16] protocol produces signature with n = t + 1 players in the
-// network (since all players will behave honestly, even the corrupted ones).
-// But in the presence of a malicious adversary, who can force corrupted players
-// to shut down or send incorrect messages, one needs at least n = 2t + 1
-// players in total to guarantee robustness, i.e. the ability to generate
-// signatures even in the presence of malicious faults.
-//
-// Threshold is just for signing. If anything goes wrong during key generation,
-// e.g. one of ZKP fails or any commitment opens incorrectly, key generation
-// protocol terminates without an output.
-//
-// The Curve specified in the PublicParameters is the one used for signing and
-// all intermediate constructions during initialization and signing process.
-//
-// In order for the [GGN 16] protocol to be correct, all the homomorphic
-// operations over the ciphertexts (which are modulo N) must not conflict with
-// the operations modulo q of the DSA algorithms. Because of that, [GGN 16]
-// requires that `N > q^8`, where `N` is a paillier modulus from a Paillier
-// publicnkey and `q` is the elliptic curve cardinality.
-//
-// For instance, secp256k1 cardinality `q`` is a 256 bit number, so we must have
-// at least 2048 bit Paillier modulus (Paillier public key).
+// PublicParameters for T-ECDSA key generation and signing protocol.
+// Defines how many Signers are in the group, what is the group signing
+// threshold, which curve is used and what's the bit length of Paillier key.
 type PublicParameters struct {
+
+	// GroupSize defines how many signers are in the group.
 	GroupSize int
+
+	// Threshold defines a group signing threshold.
+	//
+	// If we consider an honest-but-curious adversary, i.e. an adversary that
+	// learns all the secret data of compromised server but does not change
+	// their code, then [GGN 16] protocol produces signature with `n = t + 1`
+	// players in the network (since all players will behave honestly, even the
+	// corrupted ones).
+	// But in the presence of a malicious adversary, who can force corrupted
+	// players to shut down or send incorrect messages, one needs at least
+	// `n = 2t + 1` players in total to guarantee robustness, i.e. the ability
+	// to generate signatures even in the presence of malicious faults.
+	//
+	// Threshold is just for signing. If anything goes wrong during key
+	// generation, e.g. one of ZKPs fails or any commitment opens incorrectly,
+	// key generation protocol terminates without an output.
 	Threshold int
 
-	Curve                elliptic.Curve
+	// Curve defines the Elliptic Curve that is used for key generation and
+	// signing protocols.
+	Curve elliptic.Curve
+
+	// PaillierKeyBitLength is the length of Paillier public key.
+	//
+	// In order for the [GGN 16] protocol to be correct, all the homomorphic
+	// operations over the ciphertexts (which are modulo `N`) must not conflict
+	// with the operations modulo `q` of the DSA algorithms. Because of that,
+	// [GGN 16] requires that `N > q^8`, where `N` is a paillier modulus from
+	// a Paillier public key and `q` is the elliptic curve cardinality.
+	//
+	// For instance, secp256k1 cardinality `q` is a 256 bit number, so we must
+	// have at least 2048 bit PaillierKeyBitLength.
 	PaillierKeyBitLength int
 }
 
