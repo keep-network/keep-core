@@ -437,6 +437,117 @@ func TestSignAndCombineRound5(t *testing.T) {
 	}
 }
 
+// In the sixth round, each signer evaluates a final signature in an encrypted
+// form using the parameters evaluated so far.
+// Partial decryptions are combined together in order to present the signature
+// in a decrypted form.
+func TestSignAndCombineRound6(t *testing.T) {
+	paillierKeys, groupParameters, zkpParameters, err := readTestParameters()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	curveCardinality := groupParameters.curveCardinality() // q
+
+	secretKey := big.NewInt(211) // x = 211
+	publicKey := curve.NewPoint( // y = g^x
+		groupParameters.Curve.ScalarBaseMult(secretKey.Bytes()),
+	)
+
+	encryptedSecretKey, err := paillierKeys[0].Encrypt(secretKey, rand.Reader)
+	if err != nil {
+		t.Fatalf("paillier encryption failed [%v]", err)
+	}
+
+	ecdsaKey := &ThresholdDsaKey{encryptedSecretKey, publicKey}
+
+	secretKeyFactor := big.NewInt(314) // ρ = 314
+
+	// u = E(ρ)
+	encryptedSecretKeyFactor, err := paillierKeys[0].Encrypt(
+		secretKeyFactor, rand.Reader,
+	)
+	if err != nil {
+		t.Fatalf("paillier encryption failed [%v]", err)
+	}
+
+	// v = E(ρx)
+	secretKeyMultiple, err := paillierKeys[0].Encrypt(
+		new(big.Int).Mul(secretKey, secretKeyFactor),
+		rand.Reader,
+	)
+	if err != nil {
+		t.Fatalf("paillier encryption failed [%v]", err)
+	}
+
+	signatureFactorSecret := big.NewInt(708) // k = 708
+	signatureFactorPublic := curve.NewPoint( // R = g^k
+		groupParameters.Curve.ScalarBaseMult(signatureFactorSecret.Bytes()),
+	)
+	signatureFactorMask := big.NewInt(9) // c = 9
+
+	// TDec(w) = kρ + cq
+	signatureUnmask := new(big.Int).Add(
+		new(big.Int).Mul(signatureFactorSecret, secretKeyFactor),
+		new(big.Int).Mul(signatureFactorMask, curveCardinality),
+	)
+
+	// r = H'(R)
+	signatureFactorPublicHash := new(big.Int).Mod(
+		signatureFactorPublic.X,
+		curveCardinality,
+	)
+
+	signers := make([]*Round5Signer, len(paillierKeys))
+	for i := 0; i < len(signers); i++ {
+		signers[i] = &Round5Signer{
+			Signer: *NewLocalSigner(
+				&paillierKeys[i], groupParameters, zkpParameters,
+			).WithDsaKey(ecdsaKey),
+
+			secretKeyFactor:           encryptedSecretKeyFactor,
+			secretKeyMultiple:         secretKeyMultiple,
+			signatureFactorPublic:     signatureFactorPublic,
+			signatureFactorPublicHash: signatureFactorPublicHash,
+		}
+	}
+
+	messageHash := make([]byte, 32) // m
+	_, err = rand.Read(messageHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	round6Messages := make([]*SignRound6Message, len(signers))
+	for i, signer := range signers {
+		round6Messages[i], err = signer.SignRound6(signatureUnmask, messageHash)
+		if err != nil {
+			t.Fatalf("could not execute round 6 of signing [%v]", err)
+		}
+	}
+
+	signature, err := signers[0].CombineRound6Messages(round6Messages)
+	if err != nil {
+		t.Fatalf("could not combine round 6 messages [%v]", err)
+	}
+
+	// s = k^{-1} (m + xr)
+	expectedS := new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).ModInverse(signatureFactorSecret, curveCardinality),
+			new(big.Int).Add(
+				new(big.Int).SetBytes(messageHash[:]),
+				new(big.Int).Mul(secretKey, signatureFactorPublicHash),
+			),
+		),
+		curveCardinality,
+	)
+
+	if signature.S.Cmp(expectedS) != 0 {
+		t.Errorf("Unexpected S\nExpected: %v\nActual: %v", expectedS, signature.S)
+	}
+}
+
 // Crates and initializes a new group of `Signer`s with T-ECDSA key set and
 // ready for signing.
 func initializeNewSignerGroup() ([]*Signer, *PublicParameters, error) {

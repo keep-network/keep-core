@@ -846,7 +846,6 @@ func (s *Round4Signer) SignRound5(
 
 		secretKeyFactor:           s.secretKeyFactor,
 		secretKeyMultiple:         s.secretKeyMultiple,
-		signatureUnmask:           signatureUnmask,
 		signatureFactorPublic:     signatureFactorPublic,
 		signatureFactorPublicHash: signatureFactorPublicHash,
 	}
