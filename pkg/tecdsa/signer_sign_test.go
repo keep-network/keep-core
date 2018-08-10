@@ -542,6 +542,9 @@ func TestSignAndCombineRound6(t *testing.T) {
 		),
 		curveCardinality,
 	)
+	if expectedS.Cmp(groupParameters.halfCurveCardinality()) == 1 {
+		expectedS = new(big.Int).Sub(curveCardinality, expectedS)
+	}
 
 	if signature.S.Cmp(expectedS) != 0 {
 		t.Errorf("Unexpected S\nExpected: %v\nActual: %v", expectedS, signature.S)

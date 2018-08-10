@@ -99,6 +99,14 @@ func (pp *PublicParameters) curveCardinality() *big.Int {
 	return pp.Curve.Params().N
 }
 
+// BTC and ETH require that the S value inside ECDSA signatures is at most
+// the curve order divided by 2 (essentially restricting this value to its
+// lower half range). `halfCurveCardinality` helps to test if S is at most
+// the curve order divided by 2.
+func (pp *PublicParameters) halfCurveCardinality() *big.Int {
+	return new(big.Int).Rsh(pp.curveCardinality(), 1)
+}
+
 // NewLocalSigner creates a fully initialized `LocalSigner` instance for the
 // provided Paillier `ThresholdPrivateKey`, group and ZKP parameters.
 // Please keep in mind there should never be created two `LocalSigner`s
@@ -971,8 +979,7 @@ func (s *Round5Signer) CombineRound6Messages(
 	// BTC and ETH require that the S value inside ECDSA signatures is at most
 	// the curve order divided by 2 (essentially restricting this value to its
 	// lower half range).
-	halfOrder := new(big.Int).Rsh(s.groupParameters.curveCardinality(), 1)
-	if sign.Cmp(halfOrder) == 1 {
+	if sign.Cmp(s.groupParameters.halfCurveCardinality()) == 1 {
 		sign = new(big.Int).Sub(s.groupParameters.curveCardinality(), sign)
 	}
 
