@@ -318,12 +318,6 @@ func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
 	}
 }
 
-// PublicEcdsaKey returns the group public ECDSA key. This value is the same for
-// all signers in the group.
-func (s *Signer) PublicEcdsaKey() *curve.Point {
-	return s.dsaKey.publicKey
-}
-
 // Round1Signer represents state of signer after executing the first round
 // of signing algorithm.
 type Round1Signer struct {

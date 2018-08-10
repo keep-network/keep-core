@@ -15,7 +15,7 @@ import (
 // since the decryption key of E is shared among the n Signers.
 type ThresholdDsaKey struct {
 	secretKey *paillier.Cypher
-	publicKey *curve.Point
+	PublicKey *curve.Point
 }
 
 // dsaKeyShare represents a share of DSA key owned by LocalSigner before

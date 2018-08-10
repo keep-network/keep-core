@@ -60,7 +60,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	//    constructed
 
 	// 1. Check if publicKey is a point on curve
-	if !parameters.Curve.IsOnCurve(dsaKey.publicKey.X, dsaKey.publicKey.Y) {
+	if !parameters.Curve.IsOnCurve(dsaKey.PublicKey.X, dsaKey.PublicKey.Y) {
 		t.Fatal("ThresholdDsaKey.y must be a point on Curve")
 	}
 
@@ -85,18 +85,18 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	//    value stored in ThresholdDsaKey.
 	publicKeyX, publicKeyY := parameters.Curve.ScalarBaseMult(secretKey.Bytes())
 
-	if !reflect.DeepEqual(publicKeyX, dsaKey.publicKey.X) {
+	if !reflect.DeepEqual(publicKeyX, dsaKey.PublicKey.X) {
 		t.Errorf(
 			"Unexpected publicKey.x decoded\nActual %v\nExpected %v",
 			publicKeyX,
-			dsaKey.publicKey.X,
+			dsaKey.PublicKey.X,
 		)
 	}
-	if !reflect.DeepEqual(publicKeyY, dsaKey.publicKey.Y) {
+	if !reflect.DeepEqual(publicKeyY, dsaKey.PublicKey.Y) {
 		t.Errorf(
 			"Unexpected publicKey.y decoded\nActual %v\nExpected %v",
 			publicKeyY,
-			dsaKey.publicKey.Y,
+			dsaKey.PublicKey.Y,
 		)
 	}
 }

@@ -176,7 +176,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	err = verifySignatureInBitcoin(
 		parameters.Curve,
 		messageHash,
-		round5Signers[0].dsaKey.publicKey,
+		round5Signers[0].dsaKey.PublicKey,
 		signature,
 	)
 	if err != nil {
@@ -186,7 +186,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	err = verifySignatureInEthereum(
 		parameters.Curve,
 		messageHash,
-		round5Signers[0].dsaKey.publicKey,
+		round5Signers[0].dsaKey.PublicKey,
 		signature,
 	)
 	if err != nil {
