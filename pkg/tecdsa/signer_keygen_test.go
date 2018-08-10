@@ -266,46 +266,22 @@ func readTestParameters() (
 	return paillierKey, publicParameters, zkpParameters, nil
 }
 
-// createNewCoreGroup generates a group of `signerCore`s backed by a threshold
-// Paillier key and ZKP public parameters built from the generated Paillier key.
-// This approach works in an oracle mode - one party is responsible for
-// generating Paillier keys and distributing them and should be used only for
-// testing.
-func createNewCoreGroup() ([]*signerCore, *PublicParameters, error) {
-	paillierKeys, publicParameters, zkpParameters, err := readTestParameters()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	members := make([]*signerCore, len(paillierKeys))
-	for i := 0; i < len(members); i++ {
-		members[i] = &signerCore{
-			ID:              generateMemberID(),
-			paillierKey:     &paillierKeys[i],
-			groupParameters: publicParameters,
-			zkpParameters:   zkpParameters,
-		}
-	}
-
-	return members, publicParameters, nil
-}
-
 // createNewLocalGroup creates a new group of `LocalSigner`s that did not
 // started initialization process yet.
 func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
-	coreGroup, parameters, err := createNewCoreGroup()
+	paillierKeys, groupParameters, zkpParameters, err := readTestParameters()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	localSigners := make([]*LocalSigner, len(coreGroup))
+	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
-		localSigners[i] = &LocalSigner{
-			signerCore: *coreGroup[i],
-		}
+		localSigners[i] = NewLocalSigner(
+			&paillierKeys[i], groupParameters, zkpParameters,
+		)
 	}
 
-	return localSigners, parameters, nil
+	return localSigners, groupParameters, nil
 }
 
 // initializeNewLocalGroupWithKeyShares creates and initializes a new group of

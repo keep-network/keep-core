@@ -73,10 +73,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 
 	signers := make([]*Signer, len(localSigners))
 	for i, localSigner := range localSigners {
-		signers[i] = &Signer{
-			dsaKey:     dsaKey,
-			signerCore: localSigner.signerCore,
-		}
+		signers[i] = localSigner.WithDsaKey(dsaKey)
 	}
 
 	//
@@ -238,21 +235,11 @@ func generateNewLocalGroup() (
 		)
 	}
 
-	members := make([]*signerCore, len(paillierKeys))
-	for i := 0; i < len(members); i++ {
-		members[i] = &signerCore{
-			ID:              generateMemberID(),
-			paillierKey:     paillierKeys[i],
-			groupParameters: parameters,
-			zkpParameters:   zkpParameters,
-		}
-	}
-
-	localSigners := make([]*LocalSigner, len(members))
+	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
-		localSigners[i] = &LocalSigner{
-			signerCore: *members[i],
-		}
+		localSigners[i] = NewLocalSigner(
+			paillierKeys[i], parameters, zkpParameters,
+		)
 	}
 
 	return localSigners, parameters, nil

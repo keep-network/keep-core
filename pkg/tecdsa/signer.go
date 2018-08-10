@@ -99,10 +99,30 @@ func (pp *PublicParameters) curveCardinality() *big.Int {
 	return pp.Curve.Params().N
 }
 
-// PublicEcdsaKey returns the group public ECDSA key. This value is the same for
-// all signers in the group.
-func (s *Signer) PublicEcdsaKey() *curve.Point {
-	return s.dsaKey.publicKey
+// NewLocalSigner creates a fully initialized `LocalSigner` instance for the
+// provided Paillier `ThresholdPrivateKey`, group and ZKP parameters.
+// Please keep in mind there should never be created two `LocalSigner`s
+// for the same instance of a `ThresholdPrivateKey`.
+func NewLocalSigner(
+	paillierKey *paillier.ThresholdPrivateKey,
+	groupParameters *PublicParameters,
+	zkpParameters *zkp.PublicParameters,
+) *LocalSigner {
+	return &LocalSigner{
+		signerCore: signerCore{
+			ID:              generateMemberID(),
+			paillierKey:     paillierKey,
+			groupParameters: groupParameters,
+			zkpParameters:   zkpParameters,
+		},
+	}
+}
+
+func generateMemberID() string {
+	memberID := "0"
+	for memberID = fmt.Sprintf("%v", mathrand.Int31()); memberID == "0"; {
+	}
+	return memberID
 }
 
 // generateDsaKeyShare generates a DSA public and secret key shares and puts
@@ -288,11 +308,20 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	return &ThresholdDsaKey{secretKey, publicKey}, nil
 }
 
-func generateMemberID() string {
-	memberID := "0"
-	for memberID = fmt.Sprintf("%v", mathrand.Int31()); memberID == "0"; {
+// WithDsaKey transforms `LocalSigner` into a `Signer` when the key generation
+// process completes and `ThresholdDsaKey` is ready.
+// There is a one instance of `ThresholdDsaKey` for all `Signer`s.
+func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
+	return &Signer{
+		dsaKey:     dsaKey,
+		signerCore: ls.signerCore,
 	}
-	return memberID
+}
+
+// PublicEcdsaKey returns the group public ECDSA key. This value is the same for
+// all signers in the group.
+func (s *Signer) PublicEcdsaKey() *curve.Point {
+	return s.dsaKey.publicKey
 }
 
 // Round1Signer represents state of signer after executing the first round
