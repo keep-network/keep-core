@@ -1,7 +1,6 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./EternalStorage.sol";
 
 /**
  * @title Keep Random Beacon
@@ -10,32 +9,47 @@ import "./EternalStorage.sol";
  * the address of the upgraded contract. All calls to this proxy contract
  * are delegated to the implementation contract.
  */
-contract KeepRandomBeacon is Ownable, EternalStorage {
+contract KeepRandomBeacon is Ownable {
 
-    // Current implementation contract address.
-    address public implementation;
+    // Storage position of the address of the current implementation
+    bytes32 private constant implementationPosition = keccak256("network.keep.randombeacon.proxy.implementation");
 
-    // Current implementation version.
-    string public version;
+    event Upgraded(address implementation);
 
-    event Upgraded(string version, address implementation);
-
-    // Mirror events from the implementation contract
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber); 
-    event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
-
-    constructor(string _version, address _implementation) public {
+    constructor(address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
-        version = _version;
-        implementation = _implementation;
+        setImplementation(_implementation);
+    }
+
+    /**
+     * @dev Gets the address of the current implementation.
+     * @return address of the current implementation.
+    */
+    function implementation() public view returns (address _implementation) {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            _implementation := sload(position)
+        }
+    }
+
+    /**
+     * @dev Sets the address of the current implementation.
+     * @param _implementation address representing the new implementation to be set.
+    */
+    function setImplementation(address _implementation) internal {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _implementation)
+        }
     }
 
     /**
      * @dev Delegate call to the current implementation contract.
      */
     function() public payable {
-        address _impl = implementation;
+        address _impl = implementation();
         /* solium-disable-next-line */
         assembly {
             let ptr := mload(0x40)
@@ -52,21 +66,16 @@ contract KeepRandomBeacon is Ownable, EternalStorage {
 
     /**
      * @dev Upgrade current implementation.
-     * @param _version Version name for the new implementation.
      * @param _implementation Address of the new implementation contract.
      */
-    function upgradeTo(string _version, address _implementation)
+    function upgradeTo(address _implementation)
         public
         onlyOwner
     {
+        address currentImplementation = implementation();
         require(_implementation != address(0), "Implementation address can't be zero.");
-        require(_implementation != implementation, "Implementation address must be different from the current one.");
-        require(
-            keccak256(abi.encodePacked(_version)) != keccak256(abi.encodePacked(version)),
-            "Implementation version must be different from the current one."
-        );
-        version = _version;
-        implementation = _implementation;
-        emit Upgraded(version, implementation);
+        require(_implementation != currentImplementation, "Implementation address must be different from the current one.");
+        setImplementation(_implementation);
+        emit Upgraded(_implementation);
     }
 }

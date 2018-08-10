@@ -171,12 +171,15 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
 	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for RelayEntryRequested events: [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
@@ -187,9 +190,11 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Seed,
 					event.BlockNumber,
 				)
+				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
+				return
 			}
 		}
 	}()
@@ -214,12 +219,15 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for RelayEntryGenerated event: [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
@@ -230,9 +238,11 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.PreviousEntry,
 					event.BlockNumber,
 				)
+				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
+				return
 			}
 		}
 	}()
@@ -254,12 +264,15 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
 	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for RelayResetEvent event: [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
@@ -268,9 +281,11 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 					event.LastValidRelayTxHash,
 					event.LastValidRelayBlock,
 				)
+				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
+				return
 			}
 		}
 	}()
@@ -296,20 +311,25 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 		eventChan,
 	)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				gpk := sliceOf1ByteToByteSlice(event.GroupPublicKey)
 				success(gpk, event.RequestID, event.ActivationBlockHeight)
+				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
+				return
 			}
 		}
 	}()
