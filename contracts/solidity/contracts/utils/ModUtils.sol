@@ -8,6 +8,7 @@ library ModUtils {
     {
         uint256[6] memory args = [32, 32, 32, a, exponent, p];
         uint256[1] memory output;
+        /* solium-disable-next-line */
         assembly {
             // 0x05 is the modular exponent contract address
             if iszero(call(not(0), 0x05, 0, args, 0xc0, output, 0x20)) {
