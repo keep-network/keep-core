@@ -16,13 +16,13 @@ library AltBn128 {
 
     uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
-    function getP() public constant returns (uint256) {
+    function getP() public view returns (uint256) {
         return p;
     }
 
     function yFromX(uint256 x)
         private
-        constant returns(uint256)
+        view returns(uint256)
     {
         return ((x.modExp(3, p) + 3) % p).modSqrt(p);
     }
@@ -35,7 +35,7 @@ library AltBn128 {
      */
     function g1HashToPoint(bytes m)
         public
-        constant returns(uint256, uint256)
+        view returns(uint256, uint256)
     {
         bytes32 h = sha256(m);
         uint256 x = uint256(h) % p;
@@ -55,7 +55,7 @@ library AltBn128 {
      */
     function g1Compress(uint256 x, uint256 y)
         public
-        constant returns(bytes32)
+        view returns(bytes32)
     {
         bytes32 m = bytes32(x);
 
@@ -73,7 +73,7 @@ library AltBn128 {
      */
     function g1Decompress(bytes32 m)
         public
-        constant returns(uint256, uint256)
+        view returns(uint256, uint256)
     {
         byte ySign = (m[0] ^ byte(0x10000000)) >> 7;
         bytes32 mX = bytes32(0);
@@ -100,7 +100,7 @@ library AltBn128 {
      * the sum of two points on G1. Revert if the provided points aren't on the
      * curve.
      */
-    function add(uint256[2] a, uint256[2] b) public constant returns (uint256, uint256) {
+    function add(uint256[2] a, uint256[2] b) public view returns (uint256, uint256) {
         uint256[4] memory arg;
         arg[0] = a[0];
         arg[1] = a[1];
@@ -122,7 +122,7 @@ library AltBn128 {
      * match the point added to itself the same number of times. Revert if the
      * provided point isn't on the curve.
      */
-    function scalarMultiply(uint256[2] p_1, uint256 scalar) public constant returns (uint256, uint256) {
+    function scalarMultiply(uint256[2] p_1, uint256 scalar) public view returns (uint256, uint256) {
         uint256[3] memory arg;
         arg[0] = p_1[0];
         arg[1] = p_1[1];
@@ -141,7 +141,7 @@ library AltBn128 {
      * @dev Wrap the bn256Pairing pre-compile introduced in Byzantium. Return
      * the result of a pairing check of 4 pairs (G1 p1, G2 p2, G1 p3, G2 p4)
      */
-    function pairing(uint256[2] p1, uint256[4] p2, uint256[2] p3, uint256[4] p4) public constant returns (bool) {
+    function pairing(uint256[2] p1, uint256[4] p2, uint256[2] p3, uint256[4] p4) public view returns (bool) {
         uint256[12] memory arg = [
             p1[0], p1[1], p2[0], p2[1], p2[2], p2[3], p3[0], p3[1], p4[0], p4[1], p4[2], p4[3]
         ];

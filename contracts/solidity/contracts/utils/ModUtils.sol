@@ -4,7 +4,7 @@ library ModUtils {
 
     function modExp(uint256 a, uint256 exponent, uint256 p)
         public
-        constant returns(uint256 raised)
+        view returns(uint256 raised)
     {
         uint256[6] memory args = [32, 32, 32, a, exponent, p];
         uint256[1] memory output;
@@ -19,7 +19,7 @@ library ModUtils {
 
     function modSqrt(uint256 a, uint256 p)
         public
-        constant returns(uint256)
+        view returns(uint256)
     {
 
         if (legendre(a, p) != 1) {
@@ -88,7 +88,7 @@ library ModUtils {
 
     function legendre(uint256 a, uint256 p)
         public
-        constant returns(int8)
+        view returns(int8)
     {
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
 
