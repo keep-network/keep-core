@@ -47,42 +47,42 @@ library ModUtils {
             e = e + 1;
         }
 
-		// Note the smaller int- finding n with Legendre symbol or -1
+        // Note the smaller int- finding n with Legendre symbol or -1
         // should be quick
         uint32 n = 2;
         while (legendre(n, p) != -1) {
             n = n + 1;
         }
 
-		uint256 x = modExp(a, (s + 1) / 2, p);
-		uint256 b = modExp(a, s, p);
-		uint256 g = modExp(n, s, p);
-		uint8 r = e;
+        uint256 x = modExp(a, (s + 1) / 2, p);
+        uint256 b = modExp(a, s, p);
+        uint256 g = modExp(n, s, p);
+        uint8 r = e;
         uint256 gs = 0;
         uint8 m = 0;
         uint256 t = b;
 
-		while (true) {
-			t = b;
-			m = 0;
+        while (true) {
+            t = b;
+            m = 0;
 
             for (m = 0; m < r; m++) {
                 if (t == 1) {
                     break;
                 }
-				t = modExp(t, 2, p);
+                t = modExp(t, 2, p);
             }
 
             if (m == 0) {
                 return x;
             }
 
-			gs = modExp(g, uint256(2) ** (r - m - 1), p);
-			g = (gs * gs) % p;
-			x = (x * gs) % p;
-			b = (b * g) % p;
-			r = m;
-		}
+            gs = modExp(g, uint256(2) ** (r - m - 1), p);
+            g = (gs * gs) % p;
+            x = (x * gs) % p;
+            b = (b * g) % p;
+            r = m;
+        }
     }
 
 
