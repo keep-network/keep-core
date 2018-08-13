@@ -60,7 +60,7 @@ library AltBn128 {
         bytes32 m = bytes32(x);
 
         byte leadM = m[0] | ((bytes32(y)[31] & byte(1)) << 7);
-
+        /* solium-disable-next-line */
         assembly {
             mstore(add(m, 1), leadM)
         }
@@ -78,7 +78,7 @@ library AltBn128 {
         byte ySign = (m[0] ^ byte(0x10000000)) >> 7;
         bytes32 mX = bytes32(0);
         byte leadX = mX[0] & byte(0x01111111);
-
+        /* solium-disable-next-line */
         assembly {
             mstore(add(mX, 32), m)
             mstore(add(mX, 1), leadX)
@@ -107,6 +107,7 @@ library AltBn128 {
         arg[2] = b[0];
         arg[3] = b[1];
         uint256[2] memory c;
+        /* solium-disable-next-line */
         assembly {
             // 0x60 is the ECADD precompile address
             if iszero(call(not(0), 0x06, 0, arg, 0x80, c, 0x40)) {
@@ -128,6 +129,7 @@ library AltBn128 {
         arg[1] = p_1[1];
         arg[2] = scalar;
         uint256[2] memory p_2;
+        /* solium-disable-next-line */
         assembly {
             // 0x70 is the ECMUL precompile address
             if iszero(call(not(0), 0x07, 0, arg, 0x60, p_2, 0x40)) {
@@ -146,6 +148,7 @@ library AltBn128 {
             p1[0], p1[1], p2[0], p2[1], p2[2], p2[3], p3[0], p3[1], p4[0], p4[1], p4[2], p4[3]
         ];
         uint[1] memory c;
+        /* solium-disable-next-line */
         assembly {
             // call(gasLimit, to, value, inputOffset, inputSize, outputOffset, outputSize)
             if iszero(call(not(0), 0x08, 0, arg, 0x180, c, 0x20)) {
