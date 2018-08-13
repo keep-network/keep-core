@@ -100,6 +100,6 @@ library ModUtils {
             return -1;
         }
 
-        require(false);
+        require(false, "Failed to calculate legendre.");
     }
 }
