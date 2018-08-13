@@ -6,6 +6,9 @@ import "../contracts/AltBn128.sol";
 
 contract TestAltBn128 {
 
+    uint256[2] g1 = AltBn128.g1();
+    uint256[4] g2 = AltBn128.g2();
+
     function testHashing() public {
         string memory hello = "hello!";
         string memory goodbye = "goodbye.";
@@ -125,5 +128,10 @@ contract TestAltBn128 {
             Assert.equal(p_1_x, p_2_x, "Scalar multiplication should match repeat addition.");
             Assert.equal(p_1_y, p_2_y, "Scalar multiplication should match repeat addition.");
         }
+    }
+
+    function testBasicPairing() public {
+        bool result = AltBn128.pairing(g1, g2, [g1[0], AltBn128.getP() - g1[1]], g2);
+        Assert.isTrue(result, "Basic pairing check should succeed.");
     }
 }
