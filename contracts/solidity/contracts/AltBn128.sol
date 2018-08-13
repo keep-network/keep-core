@@ -136,4 +136,22 @@ library AltBn128 {
         }
         return (p_2[0], p_2[1]);
     }
+
+    /**
+     * @dev Wrap the bn256Pairing pre-compile introduced in Byzantium. Return
+     * the result of a pairing check of 4 pairs (G1 p1, G2 p2, G1 p3, G2 p4)
+     */
+    function pairing(uint256[2] p1, uint256[4] p2, uint256[2] p3, uint256[4] p4) public constant returns (bool) {
+        uint256[12] memory arg = [
+            p1[0], p1[1], p2[0], p2[1], p2[2], p2[3], p3[0], p3[1], p4[0], p4[1], p4[2], p4[3]
+        ];
+        uint[1] memory c;
+        assembly {
+            // call(gasLimit, to, value, inputOffset, inputSize, outputOffset, outputSize)
+            if iszero(call(not(0), 0x08, 0, arg, 0x180, c, 0x20)) {
+                revert(0, 0)
+            }
+        }
+        return c[0] != 0;
+    }
 }
