@@ -144,3 +144,11 @@ type SignRound5Message struct {
 
 	signatureUnmaskPartialDecryption *paillier.PartialDecryption // TDec(w)
 }
+
+// SignRound6Message is a message produced by each signer as a result of
+// executing the sixth round of T-ECDSA signing algorithm.
+type SignRound6Message struct {
+	signerID string
+
+	signaturePartialDecryption *paillier.PartialDecryption // TDec(σ)
+}

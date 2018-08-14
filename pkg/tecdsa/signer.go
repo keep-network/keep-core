@@ -23,29 +23,46 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// PublicParameters for T-ECDSA. Defines how many Signers are in the group
-// and what is a group signing threshold.
-//
-// If we consider an honest-but-curious adversary, i.e. an adversary that learns
-// all the secret data of compromised server but does not change their code,
-// then [GGN 16] protocol produces signature with n = t + 1 players in the
-// network (since all players will behave honestly, even the corrupted ones).
-// But in the presence of a malicious adversary, who can force corrupted players
-// to shut down or send incorrect messages, one needs at least n = 2t + 1
-// players in total to guarantee robustness, i.e. the ability to generate
-// signatures even in the presence of malicious faults.
-//
-// Threshold is just for signing. If anything goes wrong during key generation,
-// e.g. one of ZKP fails or any commitment opens incorrectly, key generation
-// protocol terminates without an output.
-//
-// The Curve specified in the PublicParameters is the one used for signing and
-// all intermediate constructions during initialization and signing process.
+// PublicParameters for T-ECDSA key generation and signing protocol.
+// Defines how many Signers are in the group, what is the group signing
+// threshold, which curve is used and what's the bit length of Paillier key.
 type PublicParameters struct {
-	groupSize int
-	threshold int
 
-	curve elliptic.Curve
+	// GroupSize defines how many signers are in the group.
+	GroupSize int
+
+	// Threshold defines a group signing threshold.
+	//
+	// If we consider an honest-but-curious adversary, i.e. an adversary that
+	// learns all the secret data of compromised server but does not change
+	// their code, then [GGN 16] protocol produces signature with `n = t + 1`
+	// players in the network (since all players will behave honestly, even the
+	// corrupted ones).
+	// But in the presence of a malicious adversary, who can force corrupted
+	// players to shut down or send incorrect messages, one needs at least
+	// `n = 2t + 1` players in total to guarantee robustness, i.e. the ability
+	// to generate signatures even in the presence of malicious faults.
+	//
+	// Threshold is just for signing. If anything goes wrong during key
+	// generation, e.g. one of ZKPs fails or any commitment opens incorrectly,
+	// key generation protocol terminates without an output.
+	Threshold int
+
+	// Curve defines the Elliptic Curve that is used for key generation and
+	// signing protocols.
+	Curve elliptic.Curve
+
+	// PaillierKeyBitLength is the length of Paillier public key.
+	//
+	// In order for the [GGN 16] protocol to be correct, all the homomorphic
+	// operations over the ciphertexts (which are modulo `N`) must not conflict
+	// with the operations modulo `q` of the DSA algorithms. Because of that,
+	// [GGN 16] requires that `N > q^8`, where `N` is a paillier modulus from
+	// a Paillier public key and `q` is the elliptic curve cardinality.
+	//
+	// For instance, secp256k1 cardinality `q` is a 256 bit number, so we must
+	// have at least 2048 bit PaillierKeyBitLength.
+	PaillierKeyBitLength int
 }
 
 type signerCore struct {
@@ -84,18 +101,42 @@ type Signer struct {
 	dsaKey *ThresholdDsaKey
 }
 
-// In order for the [GGN 16] protocol to be correct, all the homomorphic
-// operations over the ciphertexts (which are modulo N) must not conflict with
-// the operations modulo q of the DSA algorithms. Because of that, [GGN 16]
-// requires that N > q^8.
-//
-// secp256k1 cardinality q is a 256 bit number, so we must have at least
-// 2048 bit Paillier modulus.
-// TODO: Boost prime generator performance and switch to 2048
-const paillierModulusBitLength = 256
-
 func (pp *PublicParameters) curveCardinality() *big.Int {
-	return pp.curve.Params().N
+	return pp.Curve.Params().N
+}
+
+// BTC and ETH require that the S value inside ECDSA signatures is at most
+// the curve order divided by 2 (essentially restricting this value to its
+// lower half range). `halfCurveCardinality` helps to test if S is at most
+// the curve order divided by 2.
+func (pp *PublicParameters) halfCurveCardinality() *big.Int {
+	return new(big.Int).Rsh(pp.curveCardinality(), 1)
+}
+
+// NewLocalSigner creates a fully initialized `LocalSigner` instance for the
+// provided Paillier `ThresholdPrivateKey`, group and ZKP parameters.
+// Please keep in mind there should never be created two `LocalSigner`s
+// for the same instance of a `ThresholdPrivateKey`.
+func NewLocalSigner(
+	paillierKey *paillier.ThresholdPrivateKey,
+	groupParameters *PublicParameters,
+	zkpParameters *zkp.PublicParameters,
+) *LocalSigner {
+	return &LocalSigner{
+		signerCore: signerCore{
+			ID:              generateMemberID(),
+			paillierKey:     paillierKey,
+			groupParameters: groupParameters,
+			zkpParameters:   zkpParameters,
+		},
+	}
+}
+
+func generateMemberID() string {
+	memberID := "0"
+	for memberID = fmt.Sprintf("%v", mathrand.Int31()); memberID == "0"; {
+	}
+	return memberID
 }
 
 // generateDsaKeyShare generates a DSA public and secret key shares and puts
@@ -103,7 +144,7 @@ func (pp *PublicParameters) curveCardinality() *big.Int {
 // `q` is the cardinality of Elliptic Curve and public key share is a point
 // on the Curve g^secretKeyShare.
 func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
-	curveParams := ls.groupParameters.curve.Params()
+	curveParams := ls.groupParameters.Curve.Params()
 
 	secretKeyShare, err := rand.Int(rand.Reader, curveParams.N)
 	if err != nil {
@@ -111,7 +152,7 @@ func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	}
 
 	publicKeyShare := curve.NewPoint(
-		ls.groupParameters.curve.ScalarBaseMult(secretKeyShare.Bytes()),
+		ls.groupParameters.Curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
 	return &dsaKeyShare{
@@ -224,24 +265,24 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	shareCommitments []*PublicKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shareCommitments) != ls.groupParameters.groupSize {
+	if len(shareCommitments) != ls.groupParameters.GroupSize {
 		return nil, fmt.Errorf(
 			"commitments required from all group members; got %v, expected %v",
 			len(shareCommitments),
-			ls.groupParameters.groupSize,
+			ls.groupParameters.GroupSize,
 		)
 	}
 
-	if len(revealedShares) != ls.groupParameters.groupSize {
+	if len(revealedShares) != ls.groupParameters.GroupSize {
 		return nil, fmt.Errorf(
 			"all group members should reveal shares; Got %v, expected %v",
 			len(revealedShares),
-			ls.groupParameters.groupSize,
+			ls.groupParameters.GroupSize,
 		)
 	}
 
-	secretKeyShares := make([]*paillier.Cypher, ls.groupParameters.groupSize)
-	publicKeyShares := make([]*curve.Point, ls.groupParameters.groupSize)
+	secretKeyShares := make([]*paillier.Cypher, ls.groupParameters.GroupSize)
+	publicKeyShares := make([]*curve.Point, ls.groupParameters.GroupSize)
 
 	for i, commitmentMsg := range shareCommitments {
 		foundMatchingRevealMessage := false
@@ -273,7 +314,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	secretKey := ls.paillierKey.Add(secretKeyShares...)
 	publicKey := publicKeyShares[0]
 	for _, share := range publicKeyShares[1:] {
-		publicKey = curve.NewPoint(ls.groupParameters.curve.Add(
+		publicKey = curve.NewPoint(ls.groupParameters.Curve.Add(
 			publicKey.X, publicKey.Y, share.X, share.Y,
 		))
 	}
@@ -281,11 +322,14 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	return &ThresholdDsaKey{secretKey, publicKey}, nil
 }
 
-func generateMemberID() string {
-	memberID := "0"
-	for memberID = fmt.Sprintf("%v", mathrand.Int31()); memberID == "0"; {
+// WithDsaKey transforms `LocalSigner` into a `Signer` when the key generation
+// process completes and `ThresholdDsaKey` is ready.
+// There is a one instance of `ThresholdDsaKey` for all `Signer`s.
+func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
+	return &Signer{
+		dsaKey:     dsaKey,
+		signerCore: ls.signerCore,
 	}
-	return memberID
 }
 
 // Round1Signer represents state of signer after executing the first round
@@ -434,7 +478,7 @@ func (s *Round2Signer) CombineRound2Messages(
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	groupSize := s.groupParameters.groupSize
+	groupSize := s.groupParameters.GroupSize
 
 	if len(round1Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -537,7 +581,7 @@ func (s *Round2Signer) SignRound3(
 
 	// r_i = g^{k_i}
 	signatureFactorPublicShare := curve.NewPoint(
-		s.groupParameters.curve.ScalarBaseMult(
+		s.groupParameters.Curve.ScalarBaseMult(
 			signatureFactorSecretShare.Bytes(),
 		),
 	)
@@ -634,7 +678,8 @@ func (s *Round2Signer) SignRound3(
 type Round4Signer struct {
 	Signer
 
-	secretKeyFactor *paillier.Cypher // u = E(ρ)
+	secretKeyFactor   *paillier.Cypher // u = E(ρ)
+	secretKeyMultiple *paillier.Cypher // v = E(ρx)
 }
 
 // SignRound4 executes the fourth round of T-ECDSA signing as described in
@@ -665,7 +710,8 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 	signer := &Round4Signer{
 		Signer: s.Signer,
 
-		secretKeyFactor: s.secretKeyFactor,
+		secretKeyFactor:   s.secretKeyFactor,
+		secretKeyMultiple: s.secretKeyMultiple,
 	}
 
 	round4Message := &SignRound4Message{
@@ -698,7 +744,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic *curve.Point, // R
 	err error,
 ) {
-	groupSize := s.groupParameters.groupSize
+	groupSize := s.groupParameters.GroupSize
 
 	if len(round3Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -754,7 +800,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic = signatureFactorPublicShares[0]
 	for _, share := range signatureFactorPublicShares[1:] {
 		signatureFactorPublic = curve.NewPoint(
-			s.groupParameters.curve.Add(
+			s.groupParameters.Curve.Add(
 				signatureFactorPublic.X,
 				signatureFactorPublic.Y,
 				share.X,
@@ -772,6 +818,8 @@ func (s *Round4Signer) CombineRound4Messages(
 type Round5Signer struct {
 	Signer
 
+	secretKeyFactor           *paillier.Cypher // u = E(ρ)
+	secretKeyMultiple         *paillier.Cypher // v = E(ρx)
 	signatureUnmask           *paillier.Cypher // w
 	signatureFactorPublic     *curve.Point     // R
 	signatureFactorPublicHash *big.Int         // r = H'(R)
@@ -788,7 +836,7 @@ func (s *Round4Signer) SignRound5(
 	*Round5Signer, *SignRound5Message, error,
 ) {
 
-	// TDec(w)
+	// TDec(w) share
 	signatureUnmaskPartialDecryption := s.paillierKey.Decrypt(signatureUnmask.C)
 
 	// r = H'(R)
@@ -810,7 +858,8 @@ func (s *Round4Signer) SignRound5(
 	signer := &Round5Signer{
 		Signer: s.Signer,
 
-		signatureUnmask:           signatureUnmask,
+		secretKeyFactor:           s.secretKeyFactor,
+		secretKeyMultiple:         s.secretKeyMultiple,
 		signatureFactorPublic:     signatureFactorPublic,
 		signatureFactorPublicHash: signatureFactorPublicHash,
 	}
@@ -828,7 +877,7 @@ func (s *Round5Signer) CombineRound5Messages(
 	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
-	groupSize := s.groupParameters.groupSize
+	groupSize := s.groupParameters.GroupSize
 
 	if len(round5Messages) != groupSize {
 		return nil, fmt.Errorf(
@@ -854,4 +903,94 @@ func (s *Round5Signer) CombineRound5Messages(
 	}
 
 	return
+}
+
+// SignRound6 executes the sixth round of signing. In the sixth round, all
+// parameters signers evaluates so far are combined together in order to produce
+// a final signature. The final signature is in a Paillier-encrypted form, so
+// a threshold decode action must be performed.
+func (s *Round5Signer) SignRound6(
+	signatureUnmask *big.Int, // TDec(w)
+	messageHash []byte, // m
+) (*SignRound6Message, error) {
+	if len(messageHash) != 32 {
+		return nil, fmt.Errorf(
+			"message hash is required to be exactly 32 bytes and it's %d bytes",
+			len(messageHash),
+		)
+	}
+
+	signatureCypher := s.paillierKey.Mul(
+		s.paillierKey.Add(
+			s.paillierKey.Mul(
+				s.secretKeyFactor,
+				new(big.Int).SetBytes(messageHash[:]),
+			),
+			s.paillierKey.Mul(
+				s.secretKeyMultiple,
+				s.signatureFactorPublicHash,
+			),
+		),
+		new(big.Int).ModInverse(
+			signatureUnmask,
+			s.groupParameters.curveCardinality(),
+		),
+	)
+
+	return &SignRound6Message{
+		signaturePartialDecryption: s.paillierKey.Decrypt(signatureCypher.C),
+	}, nil
+}
+
+// Signature represents a final T-ECDSA signature
+type Signature struct {
+	R *big.Int
+	S *big.Int
+}
+
+// CombineRound6Messages combines together all partial decryptions of signature
+// generated in the sixth round of signing. It outputs a final T-ECDSA signature
+// in an unencrypted form.
+func (s *Round5Signer) CombineRound6Messages(
+	round6Messages []*SignRound6Message,
+) (*Signature, error) {
+	groupSize := s.groupParameters.GroupSize
+
+	if len(round6Messages) != groupSize {
+		return nil, fmt.Errorf(
+			"round 6 messages required from all group members; got %v, expected %v",
+			len(round6Messages),
+			groupSize,
+		)
+	}
+
+	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
+	for i, round6Message := range round6Messages {
+		partialDecryptions[i] = round6Message.signaturePartialDecryption
+	}
+
+	sign, err := s.paillierKey.CombinePartialDecryptions(
+		partialDecryptions,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not combine signature partial decryptions [%v]",
+			err,
+		)
+	}
+
+	sign = new(big.Int).Mod(sign, s.groupParameters.curveCardinality())
+
+	// Inherent ECDSA signature malleability
+	// BTC and ETH require that the S value inside ECDSA signatures is at most
+	// the curve order divided by 2 (essentially restricting this value to its
+	// lower half range).
+	if sign.Cmp(s.groupParameters.halfCurveCardinality()) == 1 {
+		sign = new(big.Int).Sub(s.groupParameters.curveCardinality(), sign)
+	}
+
+	return &Signature{
+		R: s.signatureFactorPublicHash,
+		S: sign,
+	}, nil
 }
