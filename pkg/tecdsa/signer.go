@@ -288,6 +288,11 @@ func generateMemberID() string {
 	return memberID
 }
 
+// PublicKey returns a public key from `ThresholdDsaKey` of the signer
+func (s *Signer) PublicKey() *curve.Point {
+	return s.dsaKey.PublicKey
+}
+
 // Round1Signer represents state of `Signer` after executing the first round
 // of signing algorithm.
 type Round1Signer struct {
