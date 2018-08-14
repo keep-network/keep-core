@@ -332,7 +332,8 @@ func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
 	}
 }
 
-// PublicKey returns a public key from `ThresholdDsaKey` of the signer
+// PublicKey returns a public key from `ThresholdDsaKey` of the signer.
+// The public key is expected to be identical for all signers in a signing group.
 func (s *Signer) PublicKey() *curve.Point {
 	return s.dsaKey.PublicKey
 }
