@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -32,6 +33,16 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 		GroupSize: size,
 		Threshold: threshold,
 	}, nil
+}
+
+// HasMinimumStake returns true if the specified address is staked.
+func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
+	has, err := ec.keepRandomBeaconContract.HasMinimumStake(address)
+	if err != nil {
+		return false, fmt.Errorf("error calling HasMnimumStake: [%v]", err)
+	}
+
+	return has, nil
 }
 
 func (ec *ethereumChain) SubmitGroupPublicKey(
