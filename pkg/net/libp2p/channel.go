@@ -244,6 +244,27 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
+	// Construct an identifier from the sender
+	senderIdentifier := &identity{}
+	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
+		return err
+	}
+
+	// Verify that the message is signed by the sender
+	if err := verifyPayload(
+		senderIdentifier.id,
+		envelope.GetPayload(),
+		envelope.GetSignature(),
+	); err != nil {
+		return err
+	}
+
+	// Get the associated protocol identifier from an association map
+	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
+	if err != nil {
+		return err
+	}
+
 	if envelope.Recipient != nil {
 		// Construct an identifier from the Recipient
 		recipientIdentifier := &identity{}
@@ -257,18 +278,6 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 				recipientIdentifier.id.String(),
 			)
 		}
-	}
-
-	// Construct an identifier from the sender
-	senderIdentifier := &identity{}
-	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
-		return err
-	}
-
-	// Get the associated protocol identifier from an association map
-	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
-	if err != nil {
-		return err
 	}
 
 	// Fire a message back to the protocol
