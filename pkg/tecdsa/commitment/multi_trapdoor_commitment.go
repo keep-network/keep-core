@@ -4,11 +4,14 @@
 package commitment
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 // DecommitmentKey allows to open a commitment and verify if the value is what
@@ -36,6 +39,8 @@ type TrapdoorCommitment struct {
 	h *bn256.G2
 	// Calculated trapdoor commitment.
 	commitment *bn256.G2
+
+	commitmentSignature []byte
 }
 
 // Generate evaluates a commitment and decommitment key for the secret
@@ -43,11 +48,16 @@ type TrapdoorCommitment struct {
 func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) {
 	secret := combineSecrets(secrets...)
 
-	// Generate a random public key.
-	pubKey, _, err := bn256.RandomG2(rand.Reader)
+	signatureSecretKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf(
+			"could not generate multi-trapdoor commitment [%v]", err,
+		)
 	}
+	signaturePublicKey := signatureSecretKey.PublicKey
+
+	// pk = H(vk)
+	commitmentPublicKey := hashPublicSignatureKey(signaturePublicKey)
 
 	// Generate a decommitment key.
 	r, _, err := bn256.RandomG1(rand.Reader)
@@ -65,7 +75,7 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
 	// he = h + g * pubKey
-	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(pubKey))
+	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(commitmentPublicKey))
 
 	// commitment = g * digest + he * r
 	commitment := new(bn256.G2).Add(
@@ -73,10 +83,20 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 		new(bn256.G2).ScalarMult(he, r),
 	)
 
+	commitmentSignature, err := signatureSecretKey.Sign(
+		rand.Reader, commitment.Marshal(), nil,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not generate multi-trapdoor commitment [%v]", err,
+		)
+	}
+
 	return &TrapdoorCommitment{
-			pubKey:     pubKey,
-			h:          h,
-			commitment: commitment,
+			pubKey:              commitmentPublicKey,
+			h:                   h,
+			commitment:          commitment,
+			commitmentSignature: commitmentSignature,
 		},
 		&DecommitmentKey{
 			r: r,
@@ -113,6 +133,16 @@ func (tc *TrapdoorCommitment) Verify(
 		return false
 	}
 	return true
+}
+
+func hashPublicSignatureKey(publicSignatureKey ecdsa.PublicKey) *big.Int {
+	return new(big.Int).Mod(
+		sha256Sum(combineSecrets(
+			publicSignatureKey.X.Bytes(),
+			publicSignatureKey.Y.Bytes(),
+		)),
+		publicSignatureKey.Params().N,
+	)
 }
 
 // sha256Sum calculates sha256 hash for the passed `secret`
