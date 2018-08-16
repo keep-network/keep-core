@@ -70,7 +70,17 @@ func (c *channel) doSend(
 		c.identifiersMutex.Unlock()
 	}
 	// Transform net.TaggedMarshaler to a protobuf message
-	envelopeBytes, err := c.envelopeProto(transportRecipient, sender, message)
+	messageBytes, err := c.messageProto(transportRecipient, sender, message)
+	if err != nil {
+		return err
+	}
+
+	signature, err := c.Sign(messageBytes)
+	if err != nil {
+		return err
+	}
+
+	envelopeBytes, err := c.envelopeProto(messageBytes, signature)
 	if err != nil {
 		return err
 	}
@@ -107,44 +117,6 @@ func (c *channel) UnregisterRecv(handlerType string) error {
 	}
 
 	return nil
-}
-
-func (c *channel) envelopeProto(
-	recipient net.TransportIdentifier,
-	sender *identity,
-	message net.TaggedMarshaler,
-) ([]byte, error) {
-	payloadBytes, err := message.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	sig, err := c.clientIdentity.privKey.Sign(payloadBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	senderIdentityBytes, err := sender.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	var recipientIdentityBytes []byte
-	if recipient != nil {
-		recipientIdentity := &identity{id: peer.ID(recipient.(networkIdentity))}
-		recipientIdentityBytes, err = recipientIdentity.Marshal()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return (&pb.Envelope{
-		Payload:   payloadBytes,
-		Signature: sig,
-		Sender:    senderIdentityBytes,
-		Recipient: recipientIdentityBytes,
-		Type:      []byte(message.Type()),
-	}).Marshal()
 }
 
 func (c *channel) RegisterIdentifier(
@@ -197,6 +169,48 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 	c.unmarshalersByType[tpe] = unmarshaler
 	return nil
+}
+
+func (c *channel) messageProto(
+	recipient net.TransportIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
+) ([]byte, error) {
+	payloadBytes, err := message.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	senderIdentityBytes, err := sender.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var recipientIdentityBytes []byte
+	if recipient != nil {
+		recipientIdentity := &identity{id: peer.ID(recipient.(networkIdentity))}
+		recipientIdentityBytes, err = recipientIdentity.Marshal()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return (&pb.Message{
+		Payload:   payloadBytes,
+		Sender:    senderIdentityBytes,
+		Recipient: recipientIdentityBytes,
+		Type:      []byte(message.Type()),
+	}).Marshal()
+}
+
+func (c *channel) envelopeProto(
+	messageBytes []byte,
+	signature []byte,
+) ([]byte, error) {
+	return (&pb.Envelope{
+		Message:   messageBytes,
+		Signature: signature,
+	}).Marshal()
 }
 
 func (c *channel) Sign(messageBytes []byte) ([]byte, error) {
