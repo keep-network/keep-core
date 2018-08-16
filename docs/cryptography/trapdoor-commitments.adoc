@@ -121,6 +121,23 @@ To commit to a message `a` in `Z_q` with public key `pk = e`, the sender runs Pe
 
 To open a commitment, the sender reveals `a` and `F = g^r`, The receiver accepts the opening if `DDHTest(F, h*g^e, A * g^{-a}) = 1` 
 
+We can use the described multi-trapdoor commitment scheme to achieve a non-malleable trapdoor commitments. Say the adversary, after seeing a tuple of commitments produced by honest parties, outputs his own tuple of committed values. At this point the honest parties decommit their values and now the adversary tries to decommit his values in a way that his messages are related to the honest parties’ ones. Intuitively, we say that a commitment scheme is non-malleable if the adversary fails at this game.
+
+The way a non-malleable commitment scheme is constructed is as follows:
+
+Key Generation: The public key of the non-malleable scheme includes three elements: 
+
+1. the master public key `PK` for a a multi-trapdoor commitment scheme,
+2. the description of a one-time signature scheme,
+3. a collision-resistant hash function `H` from the set of verification keys `vk` of the one-time signature scheme, to the set of public keys `pk` in the multi-trapdoor commitment scheme determined by the master public key `PK`.
+The trapdoor of the scheme is `TK` the master trapdoor of the multi-trapdoor family.
+
+Commitment Algorithm: To commit to a message `M`, the sender chooses a key pair `(sk,vk)` for a one-time signature scheme and computes `pk = H(vk)`. Then the sender computes `[C(M),D(M)] = Com(PK,pk,M,r)` where `r` is chosen at random (as prescribed by the definition of `Com`). The commitment string is `vk, C(M)`.
+To decommit the sender reveals `M, D(M)` and `sig`, where `sig` is the one-time signature on `C(M)`.
+
+Verification Algorithm: On input a commitment `vk, C` , the receiver accepts the decommitment `M,D,sig` if after computing `pk = H(vk)`, it holds that `Ver(PK,pk,M,C,D) = 1` and the signature is valid.
+
+The crucial trick here is the fact that the verification key `vk` is used to determine the value `pk` used in the commitment scheme.
 
 === Generating commitment
 `INPUT: secret`
