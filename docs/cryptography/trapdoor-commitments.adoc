@@ -99,10 +99,12 @@ value as the original pair `(m, r)`. So even if `log_g(h)` is known to the
 adversary, brute-forcing giving an arbitrary number of results and no way to 
 distinguish between them is what makes the scheme unconditionally hiding.
 
-Sender knowing `g` and `h` can change the message he committed to
+Sender knowing discrete logarithm to the base `g` of `h` can change the message he committed to
 even after commitment has been published (but before `r` has been published) 
 since it's possible to find another pair of `(r', secret')` evaluating to the 
 same commitment. 
+
+Note that `log_g(h)` is a discrete logarithm problem and if we want to enable trapdoor, `log_g(h)` must be known at the moment of chosing `g` and `h`.
 
 `log_g(h)` is the trapdoor (our secret door) allowing to change the committed
 message. If one has committed to message `m` with `(m, r)`, then in order to 
