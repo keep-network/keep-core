@@ -186,10 +186,8 @@ return DDHTest(a, b, c) == 1 && sig.isValid(pk, c)
 
 References
 
-* Gennaro R. (2004) Multi-trapdoor Commitments and Their Applications to Proofs 
-of Knowledge Secure Under Concurrent Man-in-the-Middle Attacks. In: Franklin M. 
-(eds) Advances in Cryptology – CRYPTO 2004. CRYPTO 2004. Lecture Notes in 
-Computer Science, vol 3152. Springer, Berlin, Heidelberg
+* Gennaro R. (2004) Multi-trapdoor Commitments and their Applications to 
+Non-Malleable Protocols.
 
 * Delfs H., Knebl H. Introduction to Cryptography Principles and Applications
 (2015) Springer
