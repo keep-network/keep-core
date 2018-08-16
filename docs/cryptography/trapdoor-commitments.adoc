@@ -140,33 +140,45 @@ Verification Algorithm: On input a commitment `vk, C` , the receiver accepts the
 The crucial trick here is the fact that the verification key `vk` is used to determine the value `pk` used in the commitment scheme.
 
 === Generating commitment
-`INPUT: secret`
+`INPUT: secret, PK = (g, h)`
 
 ```
-pubKey = (randomZ[0, q - 1])
+// generate a one-time signature key pair
+(vk, sk) <- OneTimeGen
+
+// generate a commitment public key from a one-time signature verification key
+pk = H(vk) % q
+
+// pick a random r
 r = (randomZ[0, q - 1])
 
+// evaluate a message digest
 digest = sha256(secret) mod q
 
-// + and * are operations on the selected curve
-he = h + g * pubKey
+// + and * are operations in group G
+he = h + g * pk
 commitment = g * digest + he * r
 
-return (r, pubKey, commitment)
+sig = sk.sign(commitment)
+
+return (COM[vk, commitment], DEC[r, sig])
 ```
 
 === Commitment verification
-`INPUT: secret, r, pubKey, commitment`
+`INPUT: secret, PK = (g, h), COM = (vk, commitment), DEC = (r, sig)`
 
 ```
+pk = H(vk) % q
+
 digest = sha256(secret) mod q
 
-// + and * are operations on the selected curve
+// + and * are operations in group G
 a = g * r 
-b = h + g * pubKey 
+b = h + g * pk 
 c = commitment + g * (-digest) 
 
-pairing(a, b) == pairing(g, c)
+// For G being an elliptic curve, DDHTest is: pairing(a, b) == pairing(g, c)
+return DDHTest(a, b, c) == 1 && sig.isValid(pk, c)
 ```
 
 
