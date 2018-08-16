@@ -1,6 +1,6 @@
 :toc: macro
 
-= Commitment Schemes
+= Trapdoor Commitment Schemes
 
 toc::[]
 
