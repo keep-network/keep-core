@@ -199,6 +199,45 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 	return nil
 }
 
+func (c *channel) Sign(messageBytes []byte) ([]byte, error) {
+	return c.clientIdentity.privKey.Sign(messageBytes)
+}
+
+func (c *channel) Verify(sender peer.ID, messageBytes []byte, signature []byte) error {
+	return verifyEnvelope(sender, messageBytes, signature)
+}
+
+func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error {
+	pubKey, err := sender.ExtractPublicKey()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to extract public key from peer [%v]",
+			sender,
+		)
+	}
+
+	ok, err := pubKey.Verify(messageBytes, signature)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to verify signature [%v] for sender [%v] with err [%v]",
+			signature,
+			sender,
+			err,
+		)
+	}
+
+	if !ok {
+		return fmt.Errorf(
+			"failed to verify signature [%v] for sender with id [%v] and pubkey [%v]",
+			signature,
+			sender,
+			pubKey,
+		)
+	}
+
+	return nil
+}
+
 func (c *channel) handleMessages(ctx context.Context) {
 	defer c.subscription.Cancel()
 
