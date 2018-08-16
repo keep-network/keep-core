@@ -268,7 +268,7 @@ func (c *channel) handleMessages(ctx context.Context) {
 				continue
 			}
 
-			if err := c.processMessage(msg); err != nil {
+			if err := c.processPubsubMessage(msg); err != nil {
 				// TODO: handle error - different error types
 				// result in different outcomes. Print err is very noisy.
 				fmt.Println(err)
@@ -278,28 +278,43 @@ func (c *channel) handleMessages(ctx context.Context) {
 	}
 }
 
-func (c *channel) processMessage(message *floodsub.Message) error {
+func (c *channel) processPubsubMessage(pubsubMessage *floodsub.Message) error {
 	var envelope pb.Envelope
-	if err := proto.Unmarshal(message.Data, &envelope); err != nil {
+	if err := proto.Unmarshal(pubsubMessage.Data, &envelope); err != nil {
 		return err
 	}
 
-	// TODO: handle authentication, etc
+	if err := c.Verify(
+		pubsubMessage.GetFrom(),
+		envelope.GetMessage(),
+		envelope.GetSignature(),
+	); err != nil {
+		return err
+	}
 
+	var protoMessage pb.Message
+	if err := proto.Unmarshal(envelope.Message, &protoMessage); err != nil {
+		return err
+	}
+
+	return c.processContainerMessage(protoMessage)
+}
+
+func (c *channel) processContainerMessage(message pb.Message) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
-	unmarshaled, err := c.getUnmarshalingContainerByType(string(envelope.Type))
+	unmarshaled, err := c.getUnmarshalingContainerByType(string(message.Type))
 	if err != nil {
 		return err
 	}
 
-	if err := unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
+	if err := unmarshaled.Unmarshal(message.GetPayload()); err != nil {
 		return err
 	}
 
 	// Construct an identifier from the sender
 	senderIdentifier := &identity{}
-	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
+	if err := senderIdentifier.Unmarshal(message.Sender); err != nil {
 		return err
 	}
 
@@ -309,10 +324,10 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
-	if envelope.Recipient != nil {
+	if message.Recipient != nil {
 		// Construct an identifier from the Recipient
 		recipientIdentifier := &identity{}
-		if err := recipientIdentifier.Unmarshal(envelope.Recipient); err != nil {
+		if err := recipientIdentifier.Unmarshal(message.Recipient); err != nil {
 			return err
 		}
 
@@ -329,20 +344,20 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		networkIdentity(senderIdentifier.id),
 		protocolIdentifier,
 		unmarshaled,
-		string(envelope.Type),
+		string(message.Type),
 	)
 
 	return c.deliver(protocolMessage)
 }
 
-func (c *channel) getUnmarshalingContainerByType(envelopeType string) (net.TaggedUnmarshaler, error) {
+func (c *channel) getUnmarshalingContainerByType(messageType string) (net.TaggedUnmarshaler, error) {
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
 
-	unmarshaler, found := c.unmarshalersByType[envelopeType]
+	unmarshaler, found := c.unmarshalersByType[messageType]
 	if !found {
 		return nil, fmt.Errorf(
-			"couldn't find unmarshaler for type %s", envelopeType,
+			"couldn't find unmarshaler for type %s", messageType,
 		)
 	}
 
