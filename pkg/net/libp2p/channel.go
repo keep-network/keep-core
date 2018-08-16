@@ -303,15 +303,6 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		return err
 	}
 
-	// Verify that the message is signed by the sender
-	if err := verifyPayload(
-		senderIdentifier.id,
-		envelope.GetPayload(),
-		envelope.GetSignature(),
-	); err != nil {
-		return err
-	}
-
 	// Get the associated protocol identifier from an association map
 	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
 	if err != nil {
@@ -342,37 +333,6 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 	)
 
 	return c.deliver(protocolMessage)
-}
-
-func verifyPayload(sender peer.ID, payloadBytes []byte, signature []byte) error {
-	pubKey, err := sender.ExtractPublicKey()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to extract public key from peer [%v]",
-			sender,
-		)
-	}
-
-	ok, err := pubKey.Verify(payloadBytes, signature)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to verify signature [%v] for sender [%v] with err [%v]",
-			signature,
-			sender,
-			err,
-		)
-	}
-
-	if !ok {
-		return fmt.Errorf(
-			"failed to verify signature [%v] for sender with id [%v] and pubkey [%v]",
-			signature,
-			sender,
-			pubKey,
-		)
-	}
-
-	return nil
 }
 
 func (c *channel) getUnmarshalingContainerByType(envelopeType string) (net.TaggedUnmarshaler, error) {
