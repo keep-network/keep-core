@@ -34,8 +34,6 @@ type DecommitmentKey struct {
 // secret value along with a DecommitmentKey is revealed and the receiver can
 // check the secret value against the Commitment received earlier.
 type TrapdoorCommitment struct {
-	// Public key for a specific trapdoor commitment.
-	pubKey *big.Int
 	// Master trapdoor public key for the commitment family.
 	h *bn256.G2
 	// Calculated trapdoor commitment.
@@ -94,7 +92,6 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 	}
 
 	return &TrapdoorCommitment{
-			pubKey:          commitmentPublicKey,
 			h:               h,
 			commitment:      commitment,
 			verificationKey: signaturePublicKey,
@@ -116,11 +113,14 @@ func (tc *TrapdoorCommitment) Verify(
 	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
+	// pk = H(vk)
+	commitmentPublicKey := hashPublicSignatureKey(tc.verificationKey)
+
 	// a = g * r
 	a := new(bn256.G1).ScalarBaseMult(decommitmentKey.r)
 
 	// b = h + g * pubKey
-	b := new(bn256.G2).Add(tc.h, new(bn256.G2).ScalarBaseMult(tc.pubKey))
+	b := new(bn256.G2).Add(tc.h, new(bn256.G2).ScalarBaseMult(commitmentPublicKey))
 
 	// c = commitment - g * digest
 	c := new(bn256.G2).Add(

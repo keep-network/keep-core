@@ -2,6 +2,7 @@ package commitment
 
 import (
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -46,10 +47,10 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			},
 			expectedResult: false,
 		},
-		"negative validation - incorrect `pubKey`": {
+		"negative validation - incorrect `verification key`": {
 			verificationValues: committedValues,
 			modifyCommitment: func(commitment *TrapdoorCommitment) {
-				commitment.pubKey = big.NewInt(3)
+				commitment.verificationKey.X = big.NewInt(3)
 			},
 			expectedResult: false,
 		},
@@ -122,7 +123,7 @@ func TestCommitmentRandomness(t *testing.T) {
 	}
 
 	// Check public keys are unique
-	if commitment1.pubKey.String() == commitment2.pubKey.String() {
+	if reflect.DeepEqual(commitment1.verificationKey, commitment2.verificationKey) {
 		t.Fatal("both public keys `pubKey` are equal")
 	}
 
