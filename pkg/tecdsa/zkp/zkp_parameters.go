@@ -132,7 +132,7 @@ func GeneratePublicParametersFromSafePrimes(
 	}
 
 	NTilde := new(big.Int).Mul(pTilde, qTilde)
-	h2, err := randomFromMultiplicativeGroup(rand.Reader, NTilde)
+	h2, err := paillier.GetRandomNumberInMultiplicativeGroup(NTilde, rand.Reader)
 
 	NTildePrime := new(big.Int).Mul(pTildePrime, qTildePrime)
 	x, err := rand.Int(rand.Reader, NTildePrime)

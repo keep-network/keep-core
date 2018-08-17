@@ -213,7 +213,7 @@ func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r, err := randomFromMultiplicativeGroup(rand.Reader, parameters.N)
+	r, err := paillier.GetRandomNumberInMultiplicativeGroup(parameters.N, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
