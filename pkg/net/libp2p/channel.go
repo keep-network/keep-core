@@ -297,10 +297,10 @@ func (c *channel) processPubsubMessage(pubsubMessage *floodsub.Message) error {
 		return err
 	}
 
-	return c.processContainerMessage(protoMessage)
+	return c.processContainerMessage(pubsubMessage.GetFrom(), protoMessage)
 }
 
-func (c *channel) processContainerMessage(message pb.Message) error {
+func (c *channel) processContainerMessage(proposedSender peer.ID, message pb.Message) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
 	unmarshaled, err := c.getUnmarshalingContainerByType(string(message.Type))
@@ -316,6 +316,17 @@ func (c *channel) processContainerMessage(message pb.Message) error {
 	senderIdentifier := &identity{}
 	if err := senderIdentifier.Unmarshal(message.Sender); err != nil {
 		return err
+	}
+
+	// Ensure the sender wasn't tampered by:
+	//     Test that the proposed sender (outer layer) matches the
+	//     sender identifier we grab from the message (inner layer)
+	if proposedSender != senderIdentifier.id {
+		return fmt.Errorf(
+			"Outer layer sender [%v] does not match inner layer sender [%v]",
+			proposedSender,
+			senderIdentifier,
+		)
 	}
 
 	// Get the associated protocol identifier from an association map
