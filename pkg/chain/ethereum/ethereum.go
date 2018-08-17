@@ -35,7 +35,7 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 	}, nil
 }
 
-// HasMinimumStake returns nil if the specified address is staked, else error.
+// HasMinimumStake determines if the specified address is staked.
 func (ec *ethereumChain) HasMinimumStake(address common.Address) error {
 	has, err := ec.keepRandomBeaconContract.HasMinimumStake(address)
 	if err != nil {
