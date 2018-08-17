@@ -18,7 +18,11 @@ import (
 // we have really committed to.
 type DecommitmentKey struct {
 	r                   *big.Int
-	commitmentSignature []byte
+	commitmentSignature *ecdsaSignature
+}
+
+type ecdsaSignature struct {
+	r, s *big.Int
 }
 
 // TrapdoorCommitment is produced for each message we have committed to.
@@ -39,7 +43,7 @@ type TrapdoorCommitment struct {
 	// Calculated trapdoor commitment.
 	commitment *bn256.G2
 
-	verificationKey ecdsa.PublicKey
+	verificationKey *ecdsa.PublicKey
 }
 
 // Generate evaluates a commitment and decommitment key for the secret
@@ -53,10 +57,10 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 			"could not generate multi-trapdoor commitment [%v]", err,
 		)
 	}
-	signaturePublicKey := signatureSecretKey.PublicKey
+	signatureVerificationKey := &signatureSecretKey.PublicKey
 
 	// pk = H(vk)
-	commitmentPublicKey := hashPublicSignatureKey(signaturePublicKey)
+	commitmentPublicKey := hashPublicSignatureKey(signatureVerificationKey)
 
 	// Generate a decommitment key.
 	r, _, err := bn256.RandomG1(rand.Reader)
@@ -82,8 +86,8 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 		new(bn256.G2).ScalarMult(he, r),
 	)
 
-	commitmentSignature, err := signatureSecretKey.Sign(
-		rand.Reader, commitment.Marshal(), nil,
+	signatureR, signatureS, err := ecdsa.Sign(
+		rand.Reader, signatureSecretKey, commitment.Marshal(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -91,10 +95,12 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 		)
 	}
 
+	commitmentSignature := &ecdsaSignature{r: signatureR, s: signatureS}
+
 	return &TrapdoorCommitment{
 			h:               h,
 			commitment:      commitment,
-			verificationKey: signaturePublicKey,
+			verificationKey: signatureVerificationKey,
 		},
 		&DecommitmentKey{
 			r:                   r,
@@ -134,10 +140,20 @@ func (tc *TrapdoorCommitment) Verify(
 	if bn256.Pair(a, b).String() != bn256.Pair(g, c).String() {
 		return false
 	}
+
+	if !ecdsa.Verify(
+		tc.verificationKey,
+		tc.commitment.Marshal(),
+		decommitmentKey.commitmentSignature.r,
+		decommitmentKey.commitmentSignature.s,
+	) {
+		return false
+	}
+
 	return true
 }
 
-func hashPublicSignatureKey(publicSignatureKey ecdsa.PublicKey) *big.Int {
+func hashPublicSignatureKey(publicSignatureKey *ecdsa.PublicKey) *big.Int {
 	return new(big.Int).Mod(
 		sha256Sum(combineSecrets(
 			publicSignatureKey.X.Bytes(),
