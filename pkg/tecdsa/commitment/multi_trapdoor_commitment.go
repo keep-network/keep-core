@@ -17,7 +17,8 @@ import (
 // DecommitmentKey allows to open a commitment and verify if the value is what
 // we have really committed to.
 type DecommitmentKey struct {
-	r *big.Int
+	r                   *big.Int
+	commitmentSignature []byte
 }
 
 // TrapdoorCommitment is produced for each message we have committed to.
@@ -40,7 +41,7 @@ type TrapdoorCommitment struct {
 	// Calculated trapdoor commitment.
 	commitment *bn256.G2
 
-	commitmentSignature []byte
+	verificationKey ecdsa.PublicKey
 }
 
 // Generate evaluates a commitment and decommitment key for the secret
@@ -93,13 +94,14 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 	}
 
 	return &TrapdoorCommitment{
-			pubKey:              commitmentPublicKey,
-			h:                   h,
-			commitment:          commitment,
-			commitmentSignature: commitmentSignature,
+			pubKey:          commitmentPublicKey,
+			h:               h,
+			commitment:      commitment,
+			verificationKey: signaturePublicKey,
 		},
 		&DecommitmentKey{
-			r: r,
+			r:                   r,
+			commitmentSignature: commitmentSignature,
 		},
 		nil
 }
