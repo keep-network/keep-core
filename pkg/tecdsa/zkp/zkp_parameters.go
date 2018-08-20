@@ -52,8 +52,8 @@ type PublicParameters struct {
 
 // Bit length of safe prime numbers used to generate NTilde.
 //
-// ZKP security relays on this value, hence it's recommended to be 1024 bit long,
-// so the length of a generated NTilde will be 2048 bit.
+// ZKP security relies on this value, hence it's currently recommended to be
+// 1024 bit long, so the length of a generated NTilde will be 2048 bit.
 const safePrimeBitLength = 1024
 
 // GeneratePublicParameters generates a new instance of `PublicParameters`.
