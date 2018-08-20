@@ -1,5 +1,6 @@
-// Package commitment implements a multi-trapdoor commitment scheme
-// described by Rosario Gennaro in the referenced [G04] paper.
+// Package commitment implements a multi-trapdoor commitment scheme secure under
+// concurrent adversary composition described by Rosario Gennaro in the
+// referenced [G04] paper.
 //
 // The implementation is based on the the SDH assumption and uses bn256 elliptic
 // curve as a group for which deciding Diffie-Hellman triplets is easy (bn256
@@ -148,7 +149,7 @@ func (tc *MultiTrapdoorCommitment) Verify(
 		new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)),
 	)
 
-	// Get base point `g`
+	// Get the base curve point `g`
 	g := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
 
 	if bn256.Pair(a, b).String() != bn256.Pair(g, c).String() {
