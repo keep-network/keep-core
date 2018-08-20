@@ -394,7 +394,6 @@ func (c *channel) deliver(message net.Message) error {
 				// TODO: handle error
 				fmt.Println(err)
 			}
-			return
 		}(message, handler)
 	}
 
