@@ -28,8 +28,8 @@ import (
 // DecommitmentKey allows to open a commitment and verify if the value is what
 // we have really committed to.
 type DecommitmentKey struct {
-	r         *big.Int
-	signature *ecdsaSignature
+	r         *big.Int        // D(M)
+	signature *ecdsaSignature // sig = one_time_sig(C(M))
 }
 
 type ecdsaSignature struct {
@@ -37,49 +37,52 @@ type ecdsaSignature struct {
 }
 
 // MultiTrapdoorCommitment is produced for each message we have committed to.
-// It is usually revealed to the receiver immediately after it has been produced.
-// Commitment lets to verify if the message revealed later by the sending party
+// It is usually revealed to the verifier immediately after it has been produced
+// and lets to verify if the message revealed later by the committing party
 // is really what that party has committed to.
-// However, the commitment itself is not enough for a verification.
-// In order to perform verification, the interested party must receive
-// the DecommitmentKey too.
 //
-// Usually the process happens in two phases:
-// first, Commitment is evaluated and sent to receiver and then, after some time,
-// secret value along with a DecommitmentKey is revealed and the receiver can
-// check the secret value against the Commitment received earlier.
+// The commitment itself is not enough for a verification. In order to perform
+// a verification, the interested party must receive the `DecommitmentKey`.
+//
+// Usually the process happens in two phases: first, `MultiTrapdoorCommitment`
+// is evaluated and sent to verifier and then, after some time,
+// secret value along with a `DecommitmentKey` is revealed and sent to the
+// verifier. Then, the verifier can check the secret value against the
+// commitment received earlier.
 type MultiTrapdoorCommitment struct {
 	// Master trapdoor public key for the commitment family.
-	h *bn256.G2
-	// Calculated trapdoor commitment.
-	commitment *bn256.G2
+	h *bn256.G2 // TODO: This should not be a part of the commitment.
 
-	verificationKey *ecdsa.PublicKey
+	commitment      *bn256.G2        // C(M)
+	verificationKey *ecdsa.PublicKey // vk
 }
 
-// Generate evaluates a commitment and decommitment key for the secret
+// Generate evaluates a commitment and a decommitment key for the secret
 // messages provided as an argument.
 func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, error) {
 	secret := combineSecrets(secrets...)
 
+	// sk
 	signatureSecretKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
 			"could not generate multi-trapdoor commitment [%v]", err,
 		)
 	}
+	// vk
 	signatureVerificationKey := &signatureSecretKey.PublicKey
 
 	// pk = H(vk)
 	commitmentPublicKey := hashPublicSignatureKey(signatureVerificationKey)
 
-	// Generate a decommitment key.
+	// Generate a decommitment key
 	r, _, err := bn256.RandomG1(rand.Reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Generate random point.
+	// Generate random point
+	// TODO: This should not be a part of a commitment generation.
 	_, h, err := bn256.RandomG2(rand.Reader)
 	if err != nil {
 		return nil, nil, err
@@ -88,7 +91,7 @@ func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, er
 	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
-	// he = h + g * pubKey
+	// he = h + g * pk
 	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(commitmentPublicKey))
 
 	// commitment = g * digest + he * r
@@ -97,6 +100,7 @@ func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, er
 		new(bn256.G2).ScalarMult(he, r),
 	)
 
+	// sig = one_time_sig(C(M))
 	signatureR, signatureS, err := ecdsa.Sign(
 		rand.Reader, signatureSecretKey, commitment.Marshal(),
 	)
@@ -105,8 +109,7 @@ func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, er
 			"could not generate multi-trapdoor commitment [%v]", err,
 		)
 	}
-
-	commitmentSignature := &ecdsaSignature{r: signatureR, s: signatureS}
+	signature := &ecdsaSignature{r: signatureR, s: signatureS}
 
 	return &MultiTrapdoorCommitment{
 			h:               h,
@@ -115,12 +118,12 @@ func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, er
 		},
 		&DecommitmentKey{
 			r:         r,
-			signature: commitmentSignature,
+			signature: signature,
 		},
 		nil
 }
 
-// Verify checks received commitment against the revealed secret messages.
+// Verify checks the received commitment against the revealed secret message.
 func (tc *MultiTrapdoorCommitment) Verify(
 	decommitmentKey *DecommitmentKey,
 	secrets ...[]byte,
