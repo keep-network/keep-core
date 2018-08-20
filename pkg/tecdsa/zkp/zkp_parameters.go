@@ -31,7 +31,7 @@ type PublicParameters struct {
 	// Paillier modulus used for generating T-ECDSA key and signing.
 	N *big.Int
 
-	// Auxilliary RSA modulus which is the product of two safe primes.
+	// Auxiliary RSA modulus which is the product of two safe primes.
 	// It's uniquely generated for each new instance of `PublicParameters`.
 	NTilde *big.Int
 
