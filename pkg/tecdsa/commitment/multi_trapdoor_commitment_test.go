@@ -40,7 +40,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			},
 			expectedResult: false,
 		},
-		"negative validation - incorrect `commitmentSignature`": {
+		"negative validation - incorrect `signature`": {
 			verificationValues: committedValues,
 			modifyDecommitmentKey: func(key *DecommitmentKey) {
 				key.signature.s = big.NewInt(4)
@@ -129,7 +129,12 @@ func TestCommitmentRandomness(t *testing.T) {
 		t.Fatal("both decommitment keys `r` are equal")
 	}
 
-	// Check public keys are unique
+	// Check signatures are unique
+	if reflect.DeepEqual(decommitmentKey1.signature, decommitmentKey2.signature) {
+		t.Fatal("both signatures are equal")
+	}
+
+	// Check verification keys are unique
 	if reflect.DeepEqual(commitment1.verificationKey, commitment2.verificationKey) {
 		t.Fatal("both public keys `pubKey` are equal")
 	}
