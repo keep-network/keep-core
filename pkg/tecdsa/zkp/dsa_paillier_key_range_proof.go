@@ -70,7 +70,7 @@ func CommitDsaPaillierKeyRange(
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
-	beta, err := randomFromMultiplicativeGroup(random, params.N)
+	beta, err := paillier.GetRandomNumberInMultiplicativeGroup(params.N, random)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
