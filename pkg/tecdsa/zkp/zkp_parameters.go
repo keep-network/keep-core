@@ -51,14 +51,16 @@ type PublicParameters struct {
 }
 
 const safePrimeBitLength = 1024
-const safePrimeGenConcurrencyLevel = 4
-const safePrimeGenTimeout = 120 * time.Second
 
 // GeneratePublicParameters generates a new instance of `PublicParameters`.
 func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
+	// Concurrency configuration for safe prime generator.
+	safePrimeGenConcurrencyLevel := 4
+	safePrimeGenTimeout := 120 * time.Second
+
 	pTilde, _, err := paillier.GenerateSafePrime(
 		safePrimeBitLength,
 		safePrimeGenConcurrencyLevel,
