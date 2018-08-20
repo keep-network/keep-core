@@ -1,6 +1,17 @@
-// Package commitment generates and validates trapdoor commitments using
-// bn256 elliptic curve pairings as described in
+// Package commitment implements a multi-trapdoor commitment scheme
+// described by Rosario Gennaro in the referenced [G04] paper.
+//
+// The implementation is based on the the SDH assumption and uses bn256 elliptic
+// curve as a group for which deciding Diffie-Hellman triplets is easy (bn256
+// pairing). For a one-time signature scheme, we use ECDSA based on secp256k1
+// curve. For each generated commitment a new secret and public key is generated
+// and used to produce the commitment verification signature.
+//
+// You may consult our documentation for more details:
 // docs/cryptography/trapdoor-commitments.adoc
+//
+//     [G04] Gennaro R. (2004) Multi-trapdoor Commitments and their
+//           Applications to Non-Malleable Protocols.
 package commitment
 
 import (
@@ -29,7 +40,7 @@ type ecdsaSignature struct {
 // It is usually revealed to the receiver immediately after it has been produced.
 // Commitment lets to verify if the message revealed later by the sending party
 // is really what that party has committed to.
-// However, the Commitment itself is not enough for a verification.
+// However, the commitment itself is not enough for a verification.
 // In order to perform verification, the interested party must receive
 // the DecommitmentKey too.
 //
