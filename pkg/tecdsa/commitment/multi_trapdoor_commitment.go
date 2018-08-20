@@ -36,7 +36,7 @@ type ecdsaSignature struct {
 	r, s *big.Int
 }
 
-// TrapdoorCommitment is produced for each message we have committed to.
+// MultiTrapdoorCommitment is produced for each message we have committed to.
 // It is usually revealed to the receiver immediately after it has been produced.
 // Commitment lets to verify if the message revealed later by the sending party
 // is really what that party has committed to.
@@ -48,7 +48,7 @@ type ecdsaSignature struct {
 // first, Commitment is evaluated and sent to receiver and then, after some time,
 // secret value along with a DecommitmentKey is revealed and the receiver can
 // check the secret value against the Commitment received earlier.
-type TrapdoorCommitment struct {
+type MultiTrapdoorCommitment struct {
 	// Master trapdoor public key for the commitment family.
 	h *bn256.G2
 	// Calculated trapdoor commitment.
@@ -59,7 +59,7 @@ type TrapdoorCommitment struct {
 
 // Generate evaluates a commitment and decommitment key for the secret
 // messages provided as an argument.
-func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) {
+func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, error) {
 	secret := combineSecrets(secrets...)
 
 	signatureSecretKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
@@ -108,7 +108,7 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 
 	commitmentSignature := &ecdsaSignature{r: signatureR, s: signatureS}
 
-	return &TrapdoorCommitment{
+	return &MultiTrapdoorCommitment{
 			h:               h,
 			commitment:      commitment,
 			verificationKey: signatureVerificationKey,
@@ -121,7 +121,7 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 }
 
 // Verify checks received commitment against the revealed secret messages.
-func (tc *TrapdoorCommitment) Verify(
+func (tc *MultiTrapdoorCommitment) Verify(
 	decommitmentKey *DecommitmentKey,
 	secrets ...[]byte,
 ) bool {

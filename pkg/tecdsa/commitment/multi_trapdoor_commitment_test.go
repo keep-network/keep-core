@@ -14,7 +14,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 	var tests = map[string]struct {
 		verificationValues    []string
 		modifyDecommitmentKey func(key *DecommitmentKey)
-		modifyCommitment      func(commitment *TrapdoorCommitment)
+		modifyCommitment      func(commitment *MultiTrapdoorCommitment)
 		expectedResult        bool
 	}{
 		"positive validation": {
@@ -49,21 +49,21 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		},
 		"negative validation - incorrect `commitment`": {
 			verificationValues: committedValues,
-			modifyCommitment: func(commitment *TrapdoorCommitment) {
+			modifyCommitment: func(commitment *MultiTrapdoorCommitment) {
 				commitment.commitment = new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `verification key`": {
 			verificationValues: committedValues,
-			modifyCommitment: func(commitment *TrapdoorCommitment) {
+			modifyCommitment: func(commitment *MultiTrapdoorCommitment) {
 				commitment.verificationKey.X = big.NewInt(3)
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `h`": {
 			verificationValues: committedValues,
-			modifyCommitment: func(commitment *TrapdoorCommitment) {
+			modifyCommitment: func(commitment *MultiTrapdoorCommitment) {
 				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
 			},
 			expectedResult: false,
