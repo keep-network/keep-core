@@ -25,14 +25,14 @@ message Message {
   // The PublicKey of the recipient
   bytes recipient = 2;
 
+  // A marshalled, encrypted message; if this exists, payload is encrypted
+  bool encrypted = 3;
+
   // A marshaled Protocol Message
-  bytes payload = 3;
+  bytes payload = 4;
 
   // Type of the message as registered by the protocol
-  bytes type = 4;
-
-  // A marshalled, encrypted message; if this exists, payload is empty
-  EncryptedMessage encrypted_message = 5;
+  bytes type = 5;
 
   // Channel is the group name as well as the pubsub channel
   // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
@@ -41,12 +41,6 @@ message Message {
 
   // Proof that the peer that sent this message knows the channel's name.
   bytes channel_MAC = 7;
-}
-
-// EncryptedMessage is a marshalled, encrypted message.
-message EncryptedMessage {
-  bytes payload = 1;
-  bytes signature = 4;
 }
 
 message Identity {
