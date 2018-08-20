@@ -28,8 +28,8 @@ import (
 // DecommitmentKey allows to open a commitment and verify if the value is what
 // we have really committed to.
 type DecommitmentKey struct {
-	r                   *big.Int
-	commitmentSignature *ecdsaSignature
+	r         *big.Int
+	signature *ecdsaSignature
 }
 
 type ecdsaSignature struct {
@@ -114,8 +114,8 @@ func Generate(secrets ...[]byte) (*TrapdoorCommitment, *DecommitmentKey, error) 
 			verificationKey: signatureVerificationKey,
 		},
 		&DecommitmentKey{
-			r:                   r,
-			commitmentSignature: commitmentSignature,
+			r:         r,
+			signature: commitmentSignature,
 		},
 		nil
 }
@@ -155,8 +155,8 @@ func (tc *TrapdoorCommitment) Verify(
 	if !ecdsa.Verify(
 		tc.verificationKey,
 		tc.commitment.Marshal(),
-		decommitmentKey.commitmentSignature.r,
-		decommitmentKey.commitmentSignature.s,
+		decommitmentKey.signature.r,
+		decommitmentKey.signature.s,
 	) {
 		return false
 	}

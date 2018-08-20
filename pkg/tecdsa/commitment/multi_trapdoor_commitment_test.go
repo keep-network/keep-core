@@ -43,7 +43,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		"negative validation - incorrect `commitmentSignature`": {
 			verificationValues: committedValues,
 			modifyDecommitmentKey: func(key *DecommitmentKey) {
-				key.commitmentSignature.s = big.NewInt(4)
+				key.signature.s = big.NewInt(4)
 			},
 			expectedResult: false,
 		},
