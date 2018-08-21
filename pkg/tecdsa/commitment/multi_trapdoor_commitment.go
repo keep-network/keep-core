@@ -178,18 +178,18 @@ func hashPublicSignatureKey(publicSignatureKey *ecdsa.PublicKey) *big.Int {
 	)
 }
 
-// sha256Sum calculates sha256 hash for the passed `secret`
-// and converts it to `big.Int`.
-func sha256Sum(secret []byte) *big.Int {
-	hash := sha256.Sum256(secret)
+// sha256Sum calculates sha256 hash for the
+// passed `bytes` and converts it to `big.Int`.
+func sha256Sum(bytes []byte) *big.Int {
+	hash := sha256.Sum256(bytes)
 
 	return new(big.Int).SetBytes(hash[:])
 }
 
-func toSingleByteSlice(secrets ...[]byte) []byte {
+func toSingleByteSlice(slices ...[]byte) []byte {
 	var combined []byte
-	for _, secret := range secrets {
-		combined = append(combined, secret...)
+	for _, slice := range slices {
+		combined = append(combined, slice...)
 	}
 	return combined
 }
