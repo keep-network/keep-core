@@ -171,11 +171,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
-	// An encrypted plaintext raised to the power of another plaintext will
-	// decrypt to the product of the two plaintexts:
-	// (E(c2))^η = E(c2 * η)
-	secretDsaKeyMultiple := &paillier.Cypher{C: new(big.Int).Exp(secretDsaKey.C, factor, params.NSquare())}
-
+	secretDsaKeyMultiple := paillierKey.Mul(secretDsaKey, factor)
 	secretDsaKeyFactor, err := paillierKey.EncryptWithR(factor, r)
 	t.Logf("encryptedfactor: %s", secretDsaKeyFactor.C)
 	if err != nil {
