@@ -69,18 +69,9 @@ func (c *channel) doSend(
 		}
 		c.identifiersMutex.Unlock()
 	}
-	// Transform net.TaggedMarshaler to a protobuf message.
-	messageBytes, err := c.messageProto(transportRecipient, sender, message)
-	if err != nil {
-		return err
-	}
-
-	signature, err := c.Sign(messageBytes)
-	if err != nil {
-		return err
-	}
-
-	envelopeBytes, err := c.envelopeProto(messageBytes, signature)
+	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
+	// in an envelope.
+	envelopeBytes, err := c.envelopeProto(transportRecipient, sender, message)
 	if err != nil {
 		return err
 	}
@@ -204,16 +195,26 @@ func (c *channel) messageProto(
 }
 
 func (c *channel) envelopeProto(
-	messageBytes []byte,
-	signature []byte,
+	recipient net.TransportIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
 ) ([]byte, error) {
+	messageBytes, err := c.messageProto(recipient, sender, message)
+	if err != nil {
+		return nil, err
+	}
+	signature, err := c.sign(messageBytes)
+	if err != nil {
+		return nil, err
+	}
+
 	return (&pb.Envelope{
 		Message:   messageBytes,
 		Signature: signature,
 	}).Marshal()
 }
 
-func (c *channel) Sign(messageBytes []byte) ([]byte, error) {
+func (c *channel) sign(messageBytes []byte) ([]byte, error) {
 	return c.clientIdentity.privKey.Sign(messageBytes)
 }
 
