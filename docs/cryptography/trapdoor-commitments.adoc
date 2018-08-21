@@ -165,9 +165,9 @@ prescribed by the definition of `Com`). The commitment string is `vk, C(M)`.
 To decommit the sender reveals `M, D(M)` and `sig`, where `sig` is the one-time 
 signature on `C(M)`.
 
-Verification Algorithm: On input a commitment `vk, C` , the receiver accepts the 
-decommitment `M,D,sig` if after computing `pk = H(vk)`, it holds that 
-`Ver(PK,pk,M,C,D) = 1` and the signature is valid.
+Verification Algorithm: On input a commitment `vk, C(M)` , the receiver accepts the 
+decommitment `M,D(M),sig` if after computing `pk = H(vk)`, it holds that 
+`Ver(PK,pk,M,C(M),D(M)) = 1` and the signature is valid.
 
 The crucial trick here is the fact that the verification key `vk` is used to 
 determine the value `pk` used in the commitment scheme.
