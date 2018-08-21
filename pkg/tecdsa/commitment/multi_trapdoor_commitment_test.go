@@ -2,6 +2,7 @@ package commitment
 
 import (
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -13,7 +14,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 	var tests = map[string]struct {
 		verificationValues    []string
 		modifyDecommitmentKey func(key *DecommitmentKey)
-		modifyCommitment      func(commitment *TrapdoorCommitment)
+		modifyCommitment      func(commitment *MultiTrapdoorCommitment)
 		expectedResult        bool
 	}{
 		"positive validation": {
@@ -39,23 +40,30 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			},
 			expectedResult: false,
 		},
+		"negative validation - incorrect `signature`": {
+			verificationValues: committedValues,
+			modifyDecommitmentKey: func(key *DecommitmentKey) {
+				key.signature.s = big.NewInt(4)
+			},
+			expectedResult: false,
+		},
 		"negative validation - incorrect `commitment`": {
 			verificationValues: committedValues,
-			modifyCommitment: func(commitment *TrapdoorCommitment) {
+			modifyCommitment: func(commitment *MultiTrapdoorCommitment) {
 				commitment.commitment = new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 			},
 			expectedResult: false,
 		},
-		"negative validation - incorrect `pubKey`": {
+		"negative validation - incorrect `verification key`": {
 			verificationValues: committedValues,
-			modifyCommitment: func(commitment *TrapdoorCommitment) {
-				commitment.pubKey = big.NewInt(3)
+			modifyCommitment: func(commitment *MultiTrapdoorCommitment) {
+				commitment.verificationKey.X = big.NewInt(3)
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `h`": {
 			verificationValues: committedValues,
-			modifyCommitment: func(commitment *TrapdoorCommitment) {
+			modifyCommitment: func(commitment *MultiTrapdoorCommitment) {
 				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
 			},
 			expectedResult: false,
@@ -121,8 +129,13 @@ func TestCommitmentRandomness(t *testing.T) {
 		t.Fatal("both decommitment keys `r` are equal")
 	}
 
-	// Check public keys are unique
-	if commitment1.pubKey.String() == commitment2.pubKey.String() {
+	// Check signatures are unique
+	if reflect.DeepEqual(decommitmentKey1.signature, decommitmentKey2.signature) {
+		t.Fatal("both signatures are equal")
+	}
+
+	// Check verification keys are unique
+	if reflect.DeepEqual(commitment1.verificationKey, commitment2.verificationKey) {
 		t.Fatal("both public keys `pubKey` are equal")
 	}
 
