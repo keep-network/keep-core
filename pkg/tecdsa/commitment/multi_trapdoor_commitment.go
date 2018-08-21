@@ -94,16 +94,16 @@ func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, er
 	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
-	// he = h + g * pk
+	// he = h + g^pk
 	he := new(bn256.G2).Add(h, new(bn256.G2).ScalarBaseMult(commitmentPublicKey))
 
-	// commitment = g * digest + he * r
+	// commitment = g^digest + he^r
 	commitment := new(bn256.G2).Add(
 		new(bn256.G2).ScalarBaseMult(digest),
 		new(bn256.G2).ScalarMult(he, r),
 	)
 
-	// sig = one_time_sig(C(M))
+	// sig = sk.sign(commitment)
 	signatureR, signatureS, err := ecdsa.Sign(
 		rand.Reader, signatureSecretKey, commitment.Marshal(),
 	)
@@ -139,13 +139,13 @@ func (tc *MultiTrapdoorCommitment) Verify(
 	// pk = H(vk)
 	commitmentPublicKey := hashPublicSignatureKey(tc.verificationKey)
 
-	// a = g * r
+	// a = g^r
 	a := new(bn256.G1).ScalarBaseMult(decommitmentKey.r)
 
-	// b = h + g * pubKey
+	// b = h + g^pk
 	b := new(bn256.G2).Add(tc.h, new(bn256.G2).ScalarBaseMult(commitmentPublicKey))
 
-	// c = commitment - g * digest
+	// c = commitment + g^(-digest)
 	c := new(bn256.G2).Add(
 		tc.commitment,
 		new(bn256.G2).Neg(new(bn256.G2).ScalarBaseMult(digest)),
