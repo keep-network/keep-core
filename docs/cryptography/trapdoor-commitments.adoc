@@ -158,6 +158,8 @@ multi-trapdoor commitment scheme determined by the master public key `PK`.
 The trapdoor of the scheme is `TK`, the master trapdoor of the multi-trapdoor 
 family.
 
+`Com` is a multi-trapdoor commitment scheme.
+
 Commitment Algorithm: To commit to a message `M`, the sender chooses a key pair 
 `(sk,vk)` for a one-time signature scheme and computes `pk = H(vk)`. Then the 
 sender computes `[C(M),D(M)] = Com(PK,pk,M,r)` where `r` is chosen at random (as 
