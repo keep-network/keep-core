@@ -147,7 +147,9 @@ non-malleable if the adversary fails at this game.
 
 The way a non-malleable commitment scheme is constructed is as follows:
 
-Key Generation: The public key of the non-malleable scheme includes three 
+==== Key Generation
+
+The public key of the non-malleable scheme includes three 
 elements: 
 
 1. the master public key `PK` for a a multi-trapdoor commitment scheme,
@@ -160,21 +162,15 @@ family.
 
 `Com` is a multi-trapdoor commitment scheme.
 
-Commitment Algorithm: To commit to a message `M`, the sender chooses a key pair 
+==== Commitment Algorithm
+
+To commit to a message `M`, the sender chooses a key pair 
 `(sk,vk)` for a one-time signature scheme and computes `pk = H(vk)`. Then the 
 sender computes `[C(M),D(M)] = Com(PK,pk,M,r)` where `r` is chosen at random (as 
 prescribed by the definition of `Com`). The commitment string is `vk, C(M)`.
 To decommit the sender reveals `M, D(M)` and `sig`, where `sig` is the one-time 
 signature on `C(M)`.
 
-Verification Algorithm: On input a commitment `vk, C(M)` , the receiver accepts the 
-decommitment `M,D(M),sig` if after computing `pk = H(vk)`, it holds that 
-`Ver(PK,pk,M,C(M),D(M)) = 1` and the signature is valid.
-
-The crucial trick here is the fact that the verification key `vk` is used to 
-determine the value `pk` used in the commitment scheme.
-
-=== Generating commitment
 `INPUT: M, PK = (g, h)`
 
 ```
@@ -198,7 +194,15 @@ sig = sk.sign(commitment)
 return (COM[vk, commitment], DEC[r, sig])
 ```
 
-=== Commitment verification
+==== Verification Algorithm
+
+On input a commitment `vk, C(M)` , the receiver accepts the 
+decommitment `M,D(M),sig` if after computing `pk = H(vk)`, it holds that 
+`Ver(PK,pk,M,C(M),D(M)) = 1` and the signature is valid.
+
+The crucial trick here is the fact that the verification key `vk` is used to 
+determine the value `pk` used in the commitment scheme.
+
 `INPUT: M, PK = (g, h), COM = (vk, commitment), DEC = (r, sig)`
 
 ```
