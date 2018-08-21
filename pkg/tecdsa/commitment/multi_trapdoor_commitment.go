@@ -49,7 +49,9 @@ type ecdsaSignature struct {
 // is evaluated and sent to verifier and then, after some time,
 // secret value along with a `DecommitmentKey` is revealed and sent to the
 // verifier. Then, the verifier can check the secret value against the
-// commitment received earlier.
+// commitment received earlier. The verification involves re-computing and
+// comparing the commitment with the one published earlier as well as checking
+// the commitment signature.
 type MultiTrapdoorCommitment struct {
 	// Master trapdoor public key for the commitment family.
 	h *bn256.G2 // TODO: This should not be a part of the commitment.
