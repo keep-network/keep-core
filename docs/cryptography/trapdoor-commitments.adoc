@@ -67,11 +67,11 @@ h = (randomZ[0, 2^p - 1]) ^2
 ```
 
 === Generating commitment
-`INPUT: secret`
+`INPUT: M`
 
 ```
 r = randomZ[0, 2^q - 1] 
-digest = sha256(secret) % q
+digest = sha256(M) % q
 
 commitment = [ (g ^  digest) % p ] * [ (h ^ r) % p ]
 
@@ -81,10 +81,10 @@ return (commitment, r)
 `r` is a decommitment key needed for commitment verification.
 
 === Commitment verification
-`INPUT: secret, commitment, r`
+`INPUT: M, commitment, r`
 
 ```
-digest = sha256(secret) % q
+digest = sha256(M) % q
 
 expectedCommitment  = [ (g ^ digest) % p ] * [ (h ^ r) % p ]
 
@@ -129,13 +129,13 @@ public key `pk` which is simply a randomly chosen element `e` in `Z_q`. The
 specific trapdoor `tk` of this scheme is the value `f_e` in `G` such that 
 `f_e^{x+e} = g`.
 
-To commit to a message `a` in `Z_q` with public key `pk = e`, the sender runs 
+To commit to a message `M` in `Z_q` with public key `pk = e`, the sender runs 
 Pedersen's commitment with bases `g, h_e` where `h_e = h + g^e`. I.e., it 
-selects a random `r` in `Z_q` and computes `A = g^a + h_e^r`. The commitment to 
-`a` is the value `A`.
+selects a random `r` in `Z_q` and computes `C(M) = g^M + h_e^r`. The commitment to 
+`M` is the value `C(M)`.
 
-To open a commitment, the sender reveals `a` and `F = g^r`, The receiver accepts 
-the opening if `DDHTest(F, h + g^e, A + g^{-a}) = 1` 
+To open a commitment, the sender reveals `M` and `F = g^r`, The receiver accepts 
+the opening if `DDHTest(F, h + g^e, A + g^{-M}) = 1` 
 
 We can use the described multi-trapdoor commitment scheme to achieve a 
 non-malleable trapdoor commitments. Say the adversary, after seeing a tuple of 
@@ -173,7 +173,7 @@ The crucial trick here is the fact that the verification key `vk` is used to
 determine the value `pk` used in the commitment scheme.
 
 === Generating commitment
-`INPUT: secret, PK = (g, h)`
+`INPUT: M, PK = (g, h)`
 
 ```
 // generate a one-time signature key pair
@@ -186,7 +186,7 @@ pk = H(vk) % q
 r = (randomZ[0, q - 1])
 
 // evaluate a message digest
-digest = sha256(secret) mod q
+digest = sha256(M) mod q
 
 he = h + g^pk
 commitment = g^digest + he^r
@@ -197,12 +197,12 @@ return (COM[vk, commitment], DEC[r, sig])
 ```
 
 === Commitment verification
-`INPUT: secret, PK = (g, h), COM = (vk, commitment), DEC = (r, sig)`
+`INPUT: M, PK = (g, h), COM = (vk, commitment), DEC = (r, sig)`
 
 ```
 pk = H(vk) % q
 
-digest = sha256(secret) mod q
+digest = sha256(M) mod q
 
 a = g^r 
 b = h + g^pk 
