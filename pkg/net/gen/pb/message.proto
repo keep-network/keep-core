@@ -19,19 +19,19 @@ message Envelope {
 // Message field for messages which need to be secret (in which case the
 // payload will be empty).
 message Message {
-  // The PublicKey of the sender
+  // The PublicKey of the sender.
   bytes sender = 1;
 
-  // The PublicKey of the recipient
+  // The PublicKey of the recipient.
   bytes recipient = 2;
 
-  // A marshalled, encrypted message; if this exists, payload is encrypted
+  // A marshalled, encrypted message; if this exists, payload is encrypted.
   bool encrypted = 3;
 
-  // A marshaled Protocol Message
+  // A marshaled Protocol Message.
   bytes payload = 4;
 
-  // Type of the message as registered by the protocol
+  // Type of the message as registered by the protocol.
   bytes type = 5;
 
   // Channel is the group name as well as the pubsub channel

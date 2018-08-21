@@ -69,7 +69,7 @@ func (c *channel) doSend(
 		}
 		c.identifiersMutex.Unlock()
 	}
-	// Transform net.TaggedMarshaler to a protobuf message
+	// Transform net.TaggedMarshaler to a protobuf message.
 	messageBytes, err := c.messageProto(transportRecipient, sender, message)
 	if err != nil {
 		return err
@@ -312,7 +312,7 @@ func (c *channel) processContainerMessage(proposedSender peer.ID, message pb.Mes
 		return err
 	}
 
-	// Construct an identifier from the sender
+	// Construct an identifier from the sender.
 	senderIdentifier := &identity{}
 	if err := senderIdentifier.Unmarshal(message.Sender); err != nil {
 		return err
@@ -320,7 +320,7 @@ func (c *channel) processContainerMessage(proposedSender peer.ID, message pb.Mes
 
 	// Ensure the sender wasn't tampered by:
 	//     Test that the proposed sender (outer layer) matches the
-	//     sender identifier we grab from the message (inner layer)
+	//     sender identifier we grab from the message (inner layer).
 	if proposedSender != senderIdentifier.id {
 		return fmt.Errorf(
 			"Outer layer sender [%v] does not match inner layer sender [%v]",
@@ -329,14 +329,14 @@ func (c *channel) processContainerMessage(proposedSender peer.ID, message pb.Mes
 		)
 	}
 
-	// Get the associated protocol identifier from an association map
+	// Get the associated protocol identifier from an association map.
 	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
 	if err != nil {
 		return err
 	}
 
 	if message.Recipient != nil {
-		// Construct an identifier from the Recipient
+		// Construct an identifier from the Recipient.
 		recipientIdentifier := &identity{}
 		if err := recipientIdentifier.Unmarshal(message.Recipient); err != nil {
 			return err
@@ -350,7 +350,7 @@ func (c *channel) processContainerMessage(proposedSender peer.ID, message pb.Mes
 		}
 	}
 
-	// Fire a message back to the protocol
+	// Fire a message back to the protocol.
 	protocolMessage := internal.BasicMessage(
 		networkIdentity(senderIdentifier.id),
 		protocolIdentifier,
