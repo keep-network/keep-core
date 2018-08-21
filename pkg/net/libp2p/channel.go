@@ -218,7 +218,7 @@ func (c *channel) sign(messageBytes []byte) ([]byte, error) {
 	return c.clientIdentity.privKey.Sign(messageBytes)
 }
 
-func (c *channel) Verify(sender peer.ID, messageBytes []byte, signature []byte) error {
+func (c *channel) verify(sender peer.ID, messageBytes []byte, signature []byte) error {
 	return verifyEnvelope(sender, messageBytes, signature)
 }
 
@@ -285,7 +285,7 @@ func (c *channel) processPubsubMessage(pubsubMessage *floodsub.Message) error {
 		return err
 	}
 
-	if err := c.Verify(
+	if err := c.verify(
 		pubsubMessage.GetFrom(),
 		envelope.GetMessage(),
 		envelope.GetSignature(),
