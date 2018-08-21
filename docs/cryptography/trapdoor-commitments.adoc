@@ -208,7 +208,8 @@ a = g^r
 b = h + g^pk 
 c = commitment + g^(-digest) 
 
-// For G being an elliptic curve, DDHTest is: pairing(a, b) == pairing(g, c)
+// For G being a group of points on the elliptic curve, DDHTest is: 
+// pairing(a, b) == pairing(g, c)
 return DDHTest(a, b, c) == 1 && sig.isValid(pk, c)
 ```
 
