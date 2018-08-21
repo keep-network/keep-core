@@ -17,32 +17,33 @@ import (
 func GenerateSignature(
 	keyFile, password string,
 	inMessage []byte,
-) ([]byte, string, error) {
+) (string, string, error) {
 	data, err := ioutil.ReadFile(keyFile)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("unable to read keyfile %s [%v]", keyFile, err)
+		return "", "", fmt.Errorf("unable to read keyfile %s [%v]", keyFile, err)
 	}
 	key, err := keystore.DecryptKey(data, password)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("unable to decrypt %s [%v]", keyFile, err)
+		return "", "", fmt.Errorf("unable to decrypt %s [%v]", keyFile, err)
 	}
 	var message []byte
+	var messageStr string
 	if len(inMessage) == 0 {
 		message, err = genRandBytes(20)
 		if err != nil {
-			return []byte{}, "", fmt.Errorf("unable to generate random message [%v]", err)
+			return "", "", fmt.Errorf("unable to generate random message [%v]", err)
 		}
-		tmp := hex.EncodeToString(message)
-		message = []byte(tmp)
+		message = []byte(messageStr)
 	} else {
 		message = inMessage
 	}
-	rawSignature, err := crypto.Sign(signHash(message), key.PrivateKey)
+	messageStr = hex.EncodeToString(message)
+	signature, err := crypto.Sign(signHash(message), key.PrivateKey)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("unable to sign message [%v]", err)
+		return "", "", fmt.Errorf("unable to sign message [%v]", err)
 	}
-	signature := hex.EncodeToString(rawSignature)
-	return message, signature, nil
+	signatureStr := hex.EncodeToString(signature)
+	return messageStr, signatureStr, nil
 }
 
 // genRandBytes generates `n` random bytes of data using the cryptographically
