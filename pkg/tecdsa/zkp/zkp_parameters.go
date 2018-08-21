@@ -31,7 +31,7 @@ type PublicParameters struct {
 	// Paillier modulus used for generating T-ECDSA key and signing.
 	N *big.Int
 
-	// Auxilliary RSA modulus which is the product of two safe primes.
+	// Auxiliary RSA modulus which is the product of two safe primes.
 	// It's uniquely generated for each new instance of `PublicParameters`.
 	NTilde *big.Int
 
@@ -50,15 +50,21 @@ type PublicParameters struct {
 	curve elliptic.Curve
 }
 
+// Bit length of safe prime numbers used to generate NTilde.
+//
+// ZKP security relies on this value, hence it's currently recommended to be
+// 1024 bit long, so the length of a generated NTilde will be 2048 bit.
 const safePrimeBitLength = 1024
-const safePrimeGenConcurrencyLevel = 4
-const safePrimeGenTimeout = 120 * time.Second
 
 // GeneratePublicParameters generates a new instance of `PublicParameters`.
 func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
+	// Concurrency configuration for safe prime generator.
+	safePrimeGenConcurrencyLevel := 4
+	safePrimeGenTimeout := 120 * time.Second
+
 	pTilde, _, err := paillier.GenerateSafePrime(
 		safePrimeBitLength,
 		safePrimeGenConcurrencyLevel,
@@ -132,7 +138,7 @@ func GeneratePublicParametersFromSafePrimes(
 	}
 
 	NTilde := new(big.Int).Mul(pTilde, qTilde)
-	h2, err := randomFromMultiplicativeGroup(rand.Reader, NTilde)
+	h2, err := paillier.GetRandomNumberInMultiplicativeGroup(NTilde, rand.Reader)
 
 	NTildePrime := new(big.Int).Mul(pTildePrime, qTildePrime)
 	x, err := rand.Int(rand.Reader, NTildePrime)
