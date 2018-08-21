@@ -61,7 +61,7 @@ type MultiTrapdoorCommitment struct {
 // Generate evaluates a commitment and a decommitment key for the secret
 // messages provided as an argument.
 func Generate(secrets ...[]byte) (*MultiTrapdoorCommitment, *DecommitmentKey, error) {
-	secret := combineSecrets(secrets...)
+	secret := toSingleByteSlice(secrets...)
 
 	// sk
 	signatureSecretKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
@@ -129,7 +129,7 @@ func (tc *MultiTrapdoorCommitment) Verify(
 	decommitmentKey *DecommitmentKey,
 	secrets ...[]byte,
 ) bool {
-	secret := combineSecrets(secrets...)
+	secret := toSingleByteSlice(secrets...)
 
 	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
@@ -170,7 +170,7 @@ func (tc *MultiTrapdoorCommitment) Verify(
 
 func hashPublicSignatureKey(publicSignatureKey *ecdsa.PublicKey) *big.Int {
 	return new(big.Int).Mod(
-		sha256Sum(combineSecrets(
+		sha256Sum(toSingleByteSlice(
 			publicSignatureKey.X.Bytes(),
 			publicSignatureKey.Y.Bytes(),
 		)),
@@ -186,7 +186,7 @@ func sha256Sum(secret []byte) *big.Int {
 	return new(big.Int).SetBytes(hash[:])
 }
 
-func combineSecrets(secrets ...[]byte) []byte {
+func toSingleByteSlice(secrets ...[]byte) []byte {
 	var combined []byte
 	for _, secret := range secrets {
 		combined = append(combined, secret...)
