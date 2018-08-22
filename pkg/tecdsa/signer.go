@@ -350,7 +350,9 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 				foundMatchingRevealMessage = true
 
 				if revealedSharesMsg.isValid(
-					commitmentMsg.publicKeyShareCommitment, ls.zkpParameters,
+					ls.commitmentMasterPublicKey,
+					commitmentMsg.publicKeyShareCommitment,
+					ls.zkpParameters,
 				) {
 					secretKeyShares[i] = revealedSharesMsg.secretKeyShare
 					publicKeyShares[i] = revealedSharesMsg.publicKeyShare
@@ -570,6 +572,7 @@ func (s *Round2Signer) CombineRound2Messages(
 				foundMatchingRound2Message = true
 
 				if round2Message.isValid(
+					s.commitmentMasterPublicKey,
 					round1Message.secretKeyFactorShareCommitment,
 					s.dsaKey.secretKey,
 					s.zkpParameters,
@@ -836,6 +839,7 @@ func (s *Round4Signer) CombineRound4Messages(
 				foundMatchingRound4Message = true
 
 				if round4Message.isValid(
+					s.commitmentMasterPublicKey,
 					round3Message.signatureFactorShareCommitment,
 					s.secretKeyFactor,
 					s.zkpParameters,
