@@ -7,10 +7,10 @@ package net;
 // the contents of the message (to ensure an adversary hasn't tampered
 // with the contents).
 message Envelope {
-  // The marshalled message
+  // The marshalled message.
   bytes message = 1;
 
-  // Signature of the message
+  // Signature of the message.
   bytes signature = 2;
 }
 
