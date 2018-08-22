@@ -17,6 +17,7 @@ import (
 	"math/big"
 	mathrand "math/rand"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/tecdsa/commitment"
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
@@ -84,6 +85,10 @@ type LocalSigner struct {
 
 	dsaKeyShare *dsaKeyShare
 
+	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
+	// master public key
+	commitmentMasterPublicKey *bn256.G2
+
 	// Intermediate value stored between first and second round of
 	// key generation. In the first round, `LocalSigner` commits to the chosen
 	// public key share. In the second round, it reveals the public key share
@@ -97,6 +102,10 @@ type LocalSigner struct {
 // underlying DSA key.
 type Signer struct {
 	signerCore
+
+	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
+	// master public key
+	commitmentMasterPublicKey *bn256.G2
 
 	dsaKey *ThresholdDsaKey
 }
