@@ -30,8 +30,11 @@ func TestFullInitAndSignPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	masterPublicKeyShareMessagesKeyGeneration := make([]*MasterPublicKeyShareMessage, len(localSigners))
 	publicKeyCommitmentMessages := make([]*PublicKeyShareCommitmentMessage, len(localSigners))
 	keyShareRevealMessages := make([]*KeyShareRevealMessage, len(localSigners))
+
+	masterPublicKeyShareMessagesSigning := make([]*MasterPublicKeyShareMessage, len(localSigners))
 
 	round1Messages := make([]*SignRound1Message, len(localSigners))
 	round2Messages := make([]*SignRound2Message, len(localSigners))
@@ -45,6 +48,29 @@ func TestFullInitAndSignPath(t *testing.T) {
 	round3Signers := make([]*Round3Signer, len(localSigners))
 	round4Signers := make([]*Round4Signer, len(localSigners))
 	round5Signers := make([]*Round5Signer, len(localSigners))
+
+	//
+	// Initialize master public key for multi-trapdoor commitment scheme for key
+	// generation process
+	//
+	for i, signer := range localSigners {
+		masterPublicKeyShareMessagesKeyGeneration[i], err = signer.GenerateMasterPublicKeyShare()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	masterPublicKeyKeyGeneration, err := localSigners[0].CombineMasterPublicKeyShares(masterPublicKeyShareMessagesKeyGeneration)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, signer := range localSigners {
+		signer.commitmentMasterPublicKey = masterPublicKeyKeyGeneration
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	//
 	// Execute the 1st key-gen round
@@ -74,6 +100,29 @@ func TestFullInitAndSignPath(t *testing.T) {
 	signers := make([]*Signer, len(localSigners))
 	for i, localSigner := range localSigners {
 		signers[i] = localSigner.WithDsaKey(dsaKey)
+	}
+
+	//
+	// Initialize master public key for multi-trapdoor commitment scheme for
+	// signing process
+	//
+	for i, signer := range signers {
+		masterPublicKeyShareMessagesSigning[i], err = signer.GenerateMasterPublicKeyShare()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	masterpublicKeySigning, err := signers[0].CombineMasterPublicKeyShares(masterPublicKeyShareMessagesSigning)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, signer := range signers {
+		signer.commitmentMasterPublicKey = masterpublicKeySigning
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	//
