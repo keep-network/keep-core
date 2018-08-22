@@ -55,7 +55,9 @@ type ecdsaSignature struct {
 // is evaluated and sent to verifier and then, after some time,
 // secret value along with a `DecommitmentKey` is revealed and sent to the
 // verifier. Then, the verifier can check the secret value against the
-// commitment received earlier.
+// commitment received earlier. The verification involves re-computing and
+// comparing the commitment with the one published earlier as well as checking
+// the commitment signature.
 type MultiTrapdoorCommitment struct {
 	commitment      *bn256.G2        // C(M)
 	verificationKey *ecdsa.PublicKey // vk
@@ -67,7 +69,7 @@ func Generate(
 	masterPublicKey *bn256.G2, // h
 	secrets ...[]byte,
 ) (*MultiTrapdoorCommitment, *DecommitmentKey, error) {
-	secret := combineSecrets(secrets...)
+	secret := toSingleByteSlice(secrets...)
 
 	// sk
 	signatureSecretKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
@@ -128,7 +130,7 @@ func (tc *MultiTrapdoorCommitment) Verify(
 	decommitmentKey *DecommitmentKey,
 	secrets ...[]byte,
 ) bool {
-	secret := combineSecrets(secrets...)
+	secret := toSingleByteSlice(secrets...)
 
 	hash := sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
@@ -169,7 +171,7 @@ func (tc *MultiTrapdoorCommitment) Verify(
 
 func hashPublicSignatureKey(publicSignatureKey *ecdsa.PublicKey) *big.Int {
 	return new(big.Int).Mod(
-		sha256Sum(combineSecrets(
+		sha256Sum(toSingleByteSlice(
 			publicSignatureKey.X.Bytes(),
 			publicSignatureKey.Y.Bytes(),
 		)),
@@ -177,18 +179,18 @@ func hashPublicSignatureKey(publicSignatureKey *ecdsa.PublicKey) *big.Int {
 	)
 }
 
-// sha256Sum calculates sha256 hash for the passed `secret`
-// and converts it to `big.Int`.
-func sha256Sum(secret []byte) *big.Int {
-	hash := sha256.Sum256(secret)
+// sha256Sum calculates sha256 hash for the
+// passed `bytes` and converts it to `big.Int`.
+func sha256Sum(bytes []byte) *big.Int {
+	hash := sha256.Sum256(bytes)
 
 	return new(big.Int).SetBytes(hash[:])
 }
 
-func combineSecrets(secrets ...[]byte) []byte {
+func toSingleByteSlice(slices ...[]byte) []byte {
 	var combined []byte
-	for _, secret := range secrets {
-		combined = append(combined, secret...)
+	for _, slice := range slices {
+		combined = append(combined, slice...)
 	}
 	return combined
 }

@@ -280,14 +280,14 @@ func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
 		},
 		"negative validation - wrong signatureUnmask": {
 			verify: func() bool {
-				wrongSignatureUnmask := &paillier.Cypher{C: new(big.Int).Add(signatureUnmask.C, big.NewInt(1))}
+				wrongSignatureUnmask := privateKey.PublicKey.Mul(signatureUnmask, big.NewInt(2))
 				return zkp.Verify(signatureFactorPublic, wrongSignatureUnmask, secretKeyFactor, params)
 			},
 			expectedResult: false,
 		},
 		"negative validation - wrong secretKeyFactor": {
 			verify: func() bool {
-				wrongSecretKeyFactor := &paillier.Cypher{C: new(big.Int).Add(signatureUnmask.C, big.NewInt(1))}
+				wrongSecretKeyFactor := privateKey.PublicKey.Mul(secretKeyFactor, big.NewInt(2))
 				return zkp.Verify(signatureFactorPublic, signatureUnmask, wrongSecretKeyFactor, params)
 			},
 			expectedResult: false,
