@@ -10,11 +10,13 @@ import (
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
 	committedValues := []string{"eeyore", "rabbit"}
+	masterPublicKey := new(bn256.G2).ScalarBaseMult(big.NewInt(13))
 
 	var tests = map[string]struct {
 		verificationValues    []string
 		modifyDecommitmentKey func(key *DecommitmentKey)
 		modifyCommitment      func(commitment *MultiTrapdoorCommitment)
+		modifyMasterPublicKey func(masterPublicKey *bn256.G2)
 		expectedResult        bool
 	}{
 		"positive validation": {
@@ -61,10 +63,10 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			},
 			expectedResult: false,
 		},
-		"negative validation - incorrect `h`": {
+		"negative validation - incorrect `masterPublicKey`": {
 			verificationValues: committedValues,
-			modifyCommitment: func(commitment *MultiTrapdoorCommitment) {
-				commitment.h = new(bn256.G2).ScalarBaseMult(big.NewInt(6))
+			modifyMasterPublicKey: func(masterPublicKey *bn256.G2) {
+				masterPublicKey.ScalarBaseMult(big.NewInt(2))
 			},
 			expectedResult: false,
 		},
@@ -75,7 +77,9 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			commitmentBytes := toBytes(committedValues)
 			verificationBytes := toBytes(test.verificationValues)
 
-			commitment, decommitmentKey, err := Generate(commitmentBytes...)
+			commitment, decommitmentKey, err := Generate(
+				masterPublicKey, commitmentBytes...,
+			)
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
@@ -88,7 +92,11 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				test.modifyDecommitmentKey(decommitmentKey)
 			}
 
-			result := commitment.Verify(decommitmentKey, verificationBytes...)
+			if test.modifyMasterPublicKey != nil {
+				test.modifyMasterPublicKey(masterPublicKey)
+			}
+
+			result := commitment.Verify(masterPublicKey, decommitmentKey, verificationBytes...)
 
 			if result != test.expectedResult {
 				t.Fatalf(
@@ -111,15 +119,16 @@ func toBytes(strings []string) [][]byte {
 
 func TestCommitmentRandomness(t *testing.T) {
 	secret := []byte("top secret message")
+	masterTrapdoorPublicKey := new(bn256.G2).ScalarBaseMult(big.NewInt(13))
 
 	// Generate Commitment 1
-	commitment1, decommitmentKey1, err := Generate(secret)
+	commitment1, decommitmentKey1, err := Generate(masterTrapdoorPublicKey, secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
 
 	// Generate Commitment 2
-	commitment2, decommitmentKey2, err := Generate(secret)
+	commitment2, decommitmentKey2, err := Generate(masterTrapdoorPublicKey, secret)
 	if err != nil {
 		t.Fatalf("generation error [%v]", err)
 	}
@@ -137,11 +146,6 @@ func TestCommitmentRandomness(t *testing.T) {
 	// Check verification keys are unique
 	if reflect.DeepEqual(commitment1.verificationKey, commitment2.verificationKey) {
 		t.Fatal("both public keys `pubKey` are equal")
-	}
-
-	// Check master public keys are unique
-	if commitment1.h.String() == commitment2.h.String() {
-		t.Fatal("both master public keys `h` are equal")
 	}
 
 	// Check commitments are unique
