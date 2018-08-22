@@ -7,6 +7,15 @@ import (
 	"github.com/keep-network/paillier"
 )
 
+// MasterPublicKeyShareMessage is a message payload that carries a share of a
+// master public key of a multi-trapdoor commitment.
+// It's a to be exchanged prior to key generation and signing processess in order
+// to build a master public key needed for commitments generation.
+// The message is expected to be broadcast publicly.
+type MasterPublicKeyShareMessage struct {
+	masterPublicKeyShare []byte
+}
+
 // PublicKeyShareCommitmentMessage is a message payload that carries signer's
 // commitment for a public DSA key share the signer generated.
 // It's the very first message exchanged between signers during the T-ECDSA
