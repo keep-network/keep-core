@@ -234,6 +234,7 @@ func (ls *LocalSigner) InitializeDsaKeyShares() (
 	}
 
 	commitment, decommitmentKey, err := commitment.Generate(
+		ls.commitmentMasterPublicKey,
 		keyShare.publicKeyShare.Bytes(),
 	)
 	if err != nil {
@@ -456,6 +457,7 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 
 	// [C_1i, D_1i] = Com([u_i, v_i])
 	commitment, decommitmentKey, err := commitment.Generate(
+		s.commitmentMasterPublicKey,
 		encryptedSecretKeyFactorShare.C.Bytes(),
 		secretKeyMultiple.C.Bytes(),
 	)
@@ -708,6 +710,7 @@ func (s *Round2Signer) SignRound3(
 	// [C_2i, D_2i] = Com(r_i, w_i)
 	commitment, decommitmentKey, err :=
 		commitment.Generate(
+			s.commitmentMasterPublicKey,
 			signatureFactorPublicShare.Bytes(),
 			signatureUnmaskShare.C.Bytes(),
 		)
