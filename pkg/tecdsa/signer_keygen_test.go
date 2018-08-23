@@ -155,6 +155,7 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 	}
 
 	invalidCommitment, _, err := commitment.Generate(
+		group[0].commitmentMasterPublicKey,
 		big.NewInt(1).Bytes(),
 	)
 	if err != nil {
@@ -285,9 +286,11 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
 }
 
 // initializeNewLocalGroupWithKeyShares creates and initializes a new group of
-// `LocalSigner`s. It simulates a real initialization process by first calling
-// `InitializeDsaKeyShares` and then `RevealDsaKeyShares`. Messages produced by
-// those functions are returned along with all `LocalSigner`s created.
+// `LocalSigner`s.
+// It simulates a real initialization process by first generating master public key
+// for multi-trapdoor commitment scbheme and then calling `InitializeDsaKeyShares`
+//  and then `RevealDsaKeyShares`. Messages produced by those functions are returned
+// along with all `LocalSigner`s created.
 // It's responsibility of code calling this function to execute
 // `CombineDsaKeyShares`, in order to produce signers with a fully initialized
 // threshold ECDSA key, if needed.
@@ -301,6 +304,29 @@ func initializeNewLocalGroupWithKeyShares() (
 	group, parameters, err := createNewLocalGroup()
 	if err != nil {
 		return nil, nil, nil, nil, err
+	}
+
+	// Initialize master public key for multi-trapdoor commitment scheme.
+	// Each signer generates a master public key share which is a point in
+	// G2 abstract cyclic group of bn256 curve. The share is broadcasted in
+	// MasterPublicKeyShareMessage.
+	// The shares are combined by adding the points which results in a point
+	// which is a master public key.
+	masterPublicKeyShareMessages := make([]*MasterPublicKeyShareMessage, len(group))
+	for i, signer := range group {
+		masterPublicKeyShareMessages[i], err = signer.GenerateMasterPublicKeyShare()
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+	}
+
+	masterPublicKey, err := group[0].CombineMasterPublicKeyShares(masterPublicKeyShareMessages)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	for _, signer := range group {
+		signer.commitmentMasterPublicKey = masterPublicKey
 	}
 
 	// Let each signer initialize the DSA key share and create
