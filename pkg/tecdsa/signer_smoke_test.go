@@ -415,3 +415,20 @@ func verifySignatureInEthereum(
 	// All is fine
 	return nil
 }
+
+func padTo32Bytes(bytes []byte) ([]byte, error) {
+	expectedByteLen := 32
+	if len(bytes) > expectedByteLen {
+		return nil, fmt.Errorf(
+			"cannot pad %v byte array to %v bytes", len(bytes), expectedByteLen,
+		)
+	}
+
+	result := make([]byte, 0)
+	if len(bytes) < expectedByteLen {
+		result = make([]byte, expectedByteLen-len(bytes))
+	}
+	result = append(result, bytes...)
+
+	return result, nil
+}
