@@ -41,7 +41,8 @@ type LocalSigner struct {
 	dsaKeyShare *dsaKeyShare
 
 	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
-	// master public key
+	// master public key.
+	// It should be initialized to a new value for each key generation process.
 	commitmentMasterPublicKey *bn256.G2
 
 	// Intermediate value stored between first and second round of
@@ -59,7 +60,9 @@ type Signer struct {
 	signerCore
 
 	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
-	// master public key
+	// master public key.
+	// It should be initialized to a new value for each signing process, even
+	// if the value was already initialized for `LocalSigner` before.
 	commitmentMasterPublicKey *bn256.G2
 
 	dsaKey *ThresholdDsaKey
