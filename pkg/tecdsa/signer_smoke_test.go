@@ -390,7 +390,18 @@ func verifySignatureInEthereum(
 		Y:     publicKey.Y,
 	}
 
-	ethSignatureRS := append(signature.R.Bytes(), signature.S.Bytes()...)
+	// We need to add padding to the R and S.
+	// Ethereum requires that both values are 32 bytes long each.
+	paddedR, err := padTo32Bytes(signature.R.Bytes())
+	if err != nil {
+		return err
+	}
+	paddedS, err := padTo32Bytes(signature.S.Bytes())
+	if err != nil {
+		return err
+	}
+
+	ethSignatureRS := append(paddedR, paddedS...)
 
 	// Verify if signature is valid for the given hash and public key
 	if !crypto.VerifySignature(
