@@ -22,8 +22,22 @@ SOL=$(shell ls *.sol | sed -e 's/.sol/.go/' )
 gen_go: 
 	make -f ${OP_DIR}/Makefile ${SOL}
 
+#%.go : %.sol
+#	( cd ${SOL_DIR} ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
+#	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg abi --type $* --out $@ )
+#	mv $@ ${GEN_DIR}/$@
+
+#solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . \
+#	--combined-json abi,bin,devdoc,userdoc,metadata \
+#	KeepGroup.sol | \
+#	abigen --abi - --pkg abi --type packagename --out xyzzy.go
+
 %.go : %.sol
-	( cd ${SOL_DIR} ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
-	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg abi --type $* --out $@ )
-	mv $@ ${GEN_DIR}/$@
+	( cd ${SOL_DIR} ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ \
+		--allow-paths . \
+		--combined-json abi,bin,devdoc,userdoc,metadata \
+		$< | \
+		abigen --abi - --pkg abi --type $* --out ${GEN_DIR}/$@ \
+		)
+
 
