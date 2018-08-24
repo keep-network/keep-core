@@ -16,8 +16,8 @@ message Envelope {
 
 // Message contains a marshalled payload. It also contains the Identities of
 // the sender and receiver. Optionally, a Message may contain an encrypted
-// Message field for messages which need to be secret (in which case the
-// payload will be empty).
+// payload for messages which need to be secret; in this case, the encrypted
+// field will be set.
 message Message {
   // The PublicKey of the sender.
   bytes sender = 1;
@@ -25,7 +25,7 @@ message Message {
   // The PublicKey of the recipient.
   bytes recipient = 2;
 
-  // A marshalled, encrypted message; if this exists, payload is encrypted.
+  // A flag indicating whether the payload is encrypted.
   bool encrypted = 3;
 
   // A marshaled Protocol Message.
