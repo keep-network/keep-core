@@ -7,6 +7,8 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
+	"math/big"
+
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -229,7 +231,12 @@ func TestFullInitAndSignPath(t *testing.T) {
 		signature,
 	)
 	if err != nil {
-		t.Fatal(err)
+		t.Logf("H: %v\n", new(big.Int).SetBytes(messageHash))
+		t.Logf("R: %v\n", signature.R)
+		t.Logf("S: %v\n", signature.S)
+		t.Logf("X: %v\n", round5Signers[0].dsaKey.PublicKey.X)
+		t.Logf("Y: %v\n", round5Signers[0].dsaKey.PublicKey.Y)
+		t.Fatalf("signature verification in bitcoin failed [%v]", err)
 	}
 
 	err = verifySignatureInEthereum(
@@ -239,7 +246,46 @@ func TestFullInitAndSignPath(t *testing.T) {
 		signature,
 	)
 	if err != nil {
-		t.Fatal(err)
+		fmt.Printf("H: %v\n", new(big.Int).SetBytes(messageHash))
+		fmt.Printf("R: %v\n", signature.R)
+		fmt.Printf("S: %v\n", signature.S)
+		fmt.Printf("X: %v\n", round5Signers[0].dsaKey.PublicKey.X)
+		fmt.Printf("Y: %v\n", round5Signers[0].dsaKey.PublicKey.Y)
+		t.Fatalf("signature verification in ethereum failed [%v]", err)
+	}
+}
+
+// Test31ByteSignatureRS is used to confirm that our signature verification
+// algorithms work as expected if R or S is not 32 bytes long.
+func Test31ByteSignatureRS(t *testing.T) {
+	curve256 := secp256k1.S256()
+	hash, _ := new(big.Int).SetString("8212313713408286312196617183996305874840581803582507267077647863768629906917", 10)
+	publicKeyX, _ := new(big.Int).SetString("37243867901665327053253589157822427909743265115168368728514491795447858153874", 10)
+	publicKeyY, _ := new(big.Int).SetString("48390273199951608338554842648959247259879464398730289908850755020939488517653", 10)
+	signatureR, _ := new(big.Int).SetString("364606010805150545511962786008183839616327659698238570520068502825199705412", 10)
+	signatureS, _ := new(big.Int).SetString("13781549995437993932032462513201290378095678483995393941371114222574658241776", 10)
+
+	publicKey := curve.NewPoint(publicKeyX, publicKeyY)
+	signature := &Signature{R: signatureR, S: signatureS}
+
+	err := verifySignatureInBitcoin(
+		curve256,
+		hash.Bytes(),
+		publicKey,
+		signature,
+	)
+	if err != nil {
+		t.Fatalf("signature verification in bitcoin failed [%v]", err)
+	}
+
+	err = verifySignatureInEthereum(
+		curve256,
+		hash.Bytes(),
+		publicKey,
+		signature,
+	)
+	if err != nil {
+		t.Fatalf("signature verification in ethereum failed [%v]", err)
 	}
 }
 
@@ -344,7 +390,18 @@ func verifySignatureInEthereum(
 		Y:     publicKey.Y,
 	}
 
-	ethSignatureRS := append(signature.R.Bytes(), signature.S.Bytes()...)
+	// We need to add padding to the R and S.
+	// Ethereum requires that both values are 32 bytes long each.
+	paddedR, err := leftPadTo32Bytes(signature.R.Bytes())
+	if err != nil {
+		return err
+	}
+	paddedS, err := leftPadTo32Bytes(signature.S.Bytes())
+	if err != nil {
+		return err
+	}
+
+	ethSignatureRS := append(paddedR, paddedS...)
 
 	// Verify if signature is valid for the given hash and public key
 	if !crypto.VerifySignature(
@@ -357,4 +414,21 @@ func verifySignatureInEthereum(
 
 	// All is fine
 	return nil
+}
+
+func leftPadTo32Bytes(bytes []byte) ([]byte, error) {
+	expectedByteLen := 32
+	if len(bytes) > expectedByteLen {
+		return nil, fmt.Errorf(
+			"cannot pad %v byte array to %v bytes", len(bytes), expectedByteLen,
+		)
+	}
+
+	result := make([]byte, 0)
+	if len(bytes) < expectedByteLen {
+		result = make([]byte, expectedByteLen-len(bytes))
+	}
+	result = append(result, bytes...)
+
+	return result, nil
 }
