@@ -84,6 +84,11 @@
   revision = "316fc7ecfc10d06603f1358c1f4c1020ec36dd2a"
   version = "v1.8.14"
 
+[[projects]]
+  name = "github.com/deckarep/golang-set"
+  packages = ["."]
+  revision = "1d4478f51bed434f1dadf96dcd9b43aabac66795"
+  version = "v1.7"
 
 [[projects]]
   name = "github.com/fd/go-nat"
