@@ -36,6 +36,12 @@
   version = "v0.2.0"
 
 [[projects]]
+  name = "github.com/deckarep/golang-set"
+  packages = ["."]
+  revision = "1d4478f51bed434f1dadf96dcd9b43aabac66795"
+  source = "https://github.com/deckarep/golang-set.git"
+
+[[projects]]
   name = "github.com/dfinity/go-dfinity-crypto"
   packages = ["bls"]
   revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
@@ -67,7 +73,6 @@
     "core/types",
     "crypto",
     "crypto/bn256/cloudflare",
-    "crypto/randentropy",
     "crypto/secp256k1",
     "crypto/sha3",
     "ethclient",
@@ -83,12 +88,6 @@
   ]
   revision = "316fc7ecfc10d06603f1358c1f4c1020ec36dd2a"
   version = "v1.8.14"
-
-[[projects]]
-  name = "github.com/deckarep/golang-set"
-  packages = ["."]
-  revision = "1d4478f51bed434f1dadf96dcd9b43aabac66795"
-  version = "v1.7"
 
 [[projects]]
   name = "github.com/fd/go-nat"
@@ -269,6 +268,15 @@
   packages = ["."]
   revision = "79cb054ad9bbe9f6b7a433bb7e4f892e92e1f8b3"
   source = "https://github.com/keep-network/paillier"
+
+[[projects]]
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "oid"
+  ]
+  revision = "4ded0e9383f75c197b3a2aaa6d590ac52df6fd79"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -535,6 +543,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/mgutz/ansi"
+  packages = ["."]
+  revision = "9520e82c474b0a04dd04f8a40959027271bab992"
+
+[[projects]]
+  branch = "master"
   name = "github.com/minio/blake2b-simd"
   packages = ["."]
   revision = "3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4"
@@ -603,6 +617,55 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/pschlump/Go-FTL"
+  packages = [
+    "server/common",
+    "server/sizlib",
+    "server/tr"
+  ]
+  revision = "5ad272fcfcd7ed677c65a0e5b1079717be8a99d8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pschlump/MiscLib"
+  packages = ["."]
+  revision = "e4e6a3a34d5f96ca07d227443cfe10bf3049a31f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pschlump/check-json-syntax"
+  packages = ["lib"]
+  revision = "a533dbd76328ff27f16213eec6d681658af0a548"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pschlump/godebug"
+  packages = ["."]
+  revision = "62d14b53fc74bc27c1d4000a89e1f01b723f19d3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pschlump/json"
+  packages = ["."]
+  revision = "0d2e6a308e08fb871c1bcd9b56fb21a1be305e22"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pschlump/radix.v2"
+  packages = [
+    "pool",
+    "redis"
+  ]
+  revision = "12a9aa275d4e03395c3b996dbdc95b5663b89583"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pschlump/uuid"
+  packages = ["."]
+  revision = "9800b9e0ffd3634d02deaa54464d1e3766cc6b28"
+
+[[projects]]
+  branch = "master"
   name = "github.com/rjeczalik/notify"
   packages = ["."]
   revision = "d152f3ce359a5464dc41e84a8919fc67e55bbbf0"
@@ -642,6 +705,12 @@
     "leveldb/util"
   ]
   revision = "5d6fca44a948d2be89a9702de7717f0168403d3d"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/taskcluster/slugid-go"
+  packages = ["slugid"]
+  revision = "3e2e4d1dd9e7646233f4f5d6f282fca72c955b2c"
 
 [[projects]]
   name = "github.com/urfave/cli"
@@ -785,12 +854,6 @@
   revision = "a5b4c53f6e8bdcafa95a94671bf2d1203365858b"
 
 [[projects]]
-  name = "gopkg.in/fatih/set.v0"
-  packages = ["."]
-  revision = "57907de300222151a123d29255ed17f5ed43fad3"
-  version = "v0.1.0"
-
-[[projects]]
   branch = "v2"
   name = "gopkg.in/karalabe/cookiejar.v2"
   packages = ["collections/prque"]
@@ -805,6 +868,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e6bc4e312276c68cf61cc85688d34dad74da1cc9fac4100ab19cf200617386f9"
+  inputs-digest = "edd9f22d94aea93168dcaf8ae840bb5120f4c51981078c08c7bfcd23961376e9"
   solver-name = "gps-cdcl"
   solver-version = 1
