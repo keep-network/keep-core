@@ -134,4 +134,31 @@ contract TestAltBn128 {
         bool result = AltBn128.pairing(g1, g2, [g1[0], AltBn128.getP() - g1[1]], g2);
         Assert.isTrue(result, "Basic pairing check should succeed.");
     }
+
+    // Verifying sample data generated with bn256.go - Ethereum's bn256/cloudflare curve.
+    function testVerifySignature() public {
+
+        // Random G1 point representing hashed message for signing.
+        uint256[2] memory message = [
+            1249920946123107736881880579589628776471089304261205601970795500273499276114,
+            728188933559580529884482280521249066571633994114453484261759779981671949946
+        ];
+
+        // G1 point hashed message above signed with private key = 123
+        uint256[2] memory signature = [
+            7620499035101479049639874746806544419787136120732359452720282924111605598692,
+            11271029883921456630944741433370141152860479143128675161527671273775224123760
+        ];
+
+        // G2 point representing public key for private key = 123
+        uint256[4] memory publicKey = [
+            14066454060412929535985836631817650877381034334390275410072431082437297539867,
+            19276105129625393659655050515259006463014579919681138299520812914148935621072,
+            10109651107942685361120988628892759706059655669161016107907096760613704453218,
+            12642665914920339463975152321804664028480770144655934937445922690262428344269
+        ];
+
+        bool result = AltBn128.pairing(signature, g2, [message[0], AltBn128.getP() - message[1]], publicKey);
+        Assert.isTrue(result, "Verify signature using precompiled pairing contract should succeed.");
+    }
 }
