@@ -69,8 +69,9 @@ func (c *channel) doSend(
 		}
 		c.identifiersMutex.Unlock()
 	}
-	// Transform net.TaggedMarshaler to a protobuf message
-	envelopeBytes, err := envelopeProto(transportRecipient, sender, message)
+	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
+	// in an envelope.
+	envelopeBytes, err := c.envelopeProto(transportRecipient, sender, message)
 	if err != nil {
 		return err
 	}
@@ -107,38 +108,6 @@ func (c *channel) UnregisterRecv(handlerType string) error {
 	}
 
 	return nil
-}
-
-func envelopeProto(
-	recipient net.TransportIdentifier,
-	sender *identity,
-	message net.TaggedMarshaler,
-) ([]byte, error) {
-	payloadBytes, err := message.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	senderIdentityBytes, err := sender.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	var recipientIdentityBytes []byte
-	if recipient != nil {
-		recipientIdentity := &identity{id: peer.ID(recipient.(networkIdentity))}
-		recipientIdentityBytes, err = recipientIdentity.Marshal()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return (&pb.Envelope{
-		Payload:   payloadBytes,
-		Sender:    senderIdentityBytes,
-		Recipient: recipientIdentityBytes,
-		Type:      []byte(message.Type()),
-	}).Marshal()
 }
 
 func (c *channel) RegisterIdentifier(
@@ -193,6 +162,97 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 	return nil
 }
 
+func (c *channel) messageProto(
+	recipient net.TransportIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
+) ([]byte, error) {
+	payloadBytes, err := message.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	senderIdentityBytes, err := sender.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var recipientIdentityBytes []byte
+	if recipient != nil {
+		recipientIdentity := &identity{id: peer.ID(recipient.(networkIdentity))}
+		recipientIdentityBytes, err = recipientIdentity.Marshal()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return (&pb.Message{
+		Payload:   payloadBytes,
+		Sender:    senderIdentityBytes,
+		Recipient: recipientIdentityBytes,
+		Type:      []byte(message.Type()),
+	}).Marshal()
+}
+
+func (c *channel) envelopeProto(
+	recipient net.TransportIdentifier,
+	sender *identity,
+	message net.TaggedMarshaler,
+) ([]byte, error) {
+	messageBytes, err := c.messageProto(recipient, sender, message)
+	if err != nil {
+		return nil, err
+	}
+	signature, err := c.sign(messageBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return (&pb.Envelope{
+		Message:   messageBytes,
+		Signature: signature,
+	}).Marshal()
+}
+
+func (c *channel) sign(messageBytes []byte) ([]byte, error) {
+	return c.clientIdentity.privKey.Sign(messageBytes)
+}
+
+func (c *channel) verify(sender peer.ID, messageBytes []byte, signature []byte) error {
+	return verifyEnvelope(sender, messageBytes, signature)
+}
+
+func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error {
+	pubKey, err := sender.ExtractPublicKey()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to extract public key from peer [%v]",
+			sender,
+		)
+	}
+
+	ok, err := pubKey.Verify(messageBytes, signature)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to verify signature [%v] for sender [%v] with err [%v]",
+			signature,
+			sender,
+			err,
+		)
+	}
+
+	if !ok {
+		return fmt.Errorf(
+			"failed to verify signature [%v] for sender with id [%v] and pubkey [%v]",
+			signature,
+			sender,
+			pubKey,
+		)
+	}
+
+	return nil
+}
+
 func (c *channel) handleMessages(ctx context.Context) {
 	defer c.subscription.Cancel()
 
@@ -209,7 +269,7 @@ func (c *channel) handleMessages(ctx context.Context) {
 				continue
 			}
 
-			if err := c.processMessage(msg); err != nil {
+			if err := c.processPubsubMessage(msg); err != nil {
 				// TODO: handle error - different error types
 				// result in different outcomes. Print err is very noisy.
 				fmt.Println(err)
@@ -219,29 +279,67 @@ func (c *channel) handleMessages(ctx context.Context) {
 	}
 }
 
-func (c *channel) processMessage(message *floodsub.Message) error {
+func (c *channel) processPubsubMessage(pubsubMessage *floodsub.Message) error {
 	var envelope pb.Envelope
-	if err := proto.Unmarshal(message.Data, &envelope); err != nil {
+	if err := proto.Unmarshal(pubsubMessage.Data, &envelope); err != nil {
 		return err
 	}
 
-	// TODO: handle authentication, etc
+	if err := c.verify(
+		pubsubMessage.GetFrom(),
+		envelope.GetMessage(),
+		envelope.GetSignature(),
+	); err != nil {
+		return err
+	}
 
+	var protoMessage pb.Message
+	if err := proto.Unmarshal(envelope.Message, &protoMessage); err != nil {
+		return err
+	}
+
+	return c.processContainerMessage(pubsubMessage.GetFrom(), protoMessage)
+}
+
+func (c *channel) processContainerMessage(proposedSender peer.ID, message pb.Message) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
-	unmarshaled, err := c.getUnmarshalingContainerByType(string(envelope.Type))
+	unmarshaled, err := c.getUnmarshalingContainerByType(string(message.Type))
 	if err != nil {
 		return err
 	}
 
-	if err := unmarshaled.Unmarshal(envelope.GetPayload()); err != nil {
+	if err := unmarshaled.Unmarshal(message.GetPayload()); err != nil {
 		return err
 	}
 
-	if envelope.Recipient != nil {
-		// Construct an identifier from the Recipient
+	// Construct an identifier from the sender.
+	senderIdentifier := &identity{}
+	if err := senderIdentifier.Unmarshal(message.Sender); err != nil {
+		return err
+	}
+
+	// Ensure the sender wasn't tampered by:
+	//     Test that the proposed sender (outer layer) matches the
+	//     sender identifier we grab from the message (inner layer).
+	if proposedSender != senderIdentifier.id {
+		return fmt.Errorf(
+			"Outer layer sender [%v] does not match inner layer sender [%v]",
+			proposedSender,
+			senderIdentifier,
+		)
+	}
+
+	// Get the associated protocol identifier from an association map.
+	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
+	if err != nil {
+		return err
+	}
+
+	if message.Recipient != nil {
+		// Construct an identifier from the Recipient.
 		recipientIdentifier := &identity{}
-		if err := recipientIdentifier.Unmarshal(envelope.Recipient); err != nil {
+		if err := recipientIdentifier.Unmarshal(message.Recipient); err != nil {
 			return err
 		}
 
@@ -253,37 +351,25 @@ func (c *channel) processMessage(message *floodsub.Message) error {
 		}
 	}
 
-	// Construct an identifier from the sender
-	senderIdentifier := &identity{}
-	if err := senderIdentifier.Unmarshal(envelope.Sender); err != nil {
-		return err
-	}
-
-	// Get the associated protocol identifier from an association map
-	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
-	if err != nil {
-		return err
-	}
-
-	// Fire a message back to the protocol
+	// Fire a message back to the protocol.
 	protocolMessage := internal.BasicMessage(
 		networkIdentity(senderIdentifier.id),
 		protocolIdentifier,
 		unmarshaled,
-		string(envelope.Type),
+		string(message.Type),
 	)
 
 	return c.deliver(protocolMessage)
 }
 
-func (c *channel) getUnmarshalingContainerByType(envelopeType string) (net.TaggedUnmarshaler, error) {
+func (c *channel) getUnmarshalingContainerByType(messageType string) (net.TaggedUnmarshaler, error) {
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
 
-	unmarshaler, found := c.unmarshalersByType[envelopeType]
+	unmarshaler, found := c.unmarshalersByType[messageType]
 	if !found {
 		return nil, fmt.Errorf(
-			"couldn't find unmarshaler for type %s", envelopeType,
+			"couldn't find unmarshaler for type %s", messageType,
 		)
 	}
 
@@ -309,7 +395,6 @@ func (c *channel) deliver(message net.Message) error {
 				// TODO: handle error
 				fmt.Println(err)
 			}
-			return
 		}(message, handler)
 	}
 
