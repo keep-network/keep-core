@@ -231,7 +231,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 		signature,
 	)
 	if err != nil {
-		t.Logf("H: %x\n", messageHash)
+		t.Logf("H: %v\n", new(big.Int).SetBytes(messageHash))
 		t.Logf("R: %v\n", signature.R)
 		t.Logf("S: %v\n", signature.S)
 		t.Logf("X: %v\n", round5Signers[0].dsaKey.PublicKey.X)
@@ -246,7 +246,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 		signature,
 	)
 	if err != nil {
-		fmt.Printf("H: %x\n", messageHash)
+		fmt.Printf("H: %v\n", new(big.Int).SetBytes(messageHash))
 		fmt.Printf("R: %v\n", signature.R)
 		fmt.Printf("S: %v\n", signature.S)
 		fmt.Printf("X: %v\n", round5Signers[0].dsaKey.PublicKey.X)
