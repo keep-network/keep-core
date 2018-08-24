@@ -9,16 +9,16 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	gen "github.com/keep-network/keep-core/pkg/chain/gen/ethereum"
+	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 )
 
 // KeepRandomBeacon connection information for interface to the contract.
 type KeepRandomBeacon struct {
-	caller          *gen.KeepRandomBeaconImplV1Caller
+	caller          *abi.KeepRandomBeaconImplV1Caller
 	callerOpts      *bind.CallOpts
-	transactor      *gen.KeepRandomBeaconImplV1Transactor
+	transactor      *abi.KeepRandomBeaconImplV1Transactor
 	transactorOpts  *bind.TransactOpts
-	contract        *gen.KeepRandomBeaconImplV1
+	contract        *abi.KeepRandomBeaconImplV1
 	contractAddress common.Address
 }
 
@@ -33,7 +33,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
 
-	beaconTransactor, err := gen.NewKeepRandomBeaconImplV1Transactor(
+	beaconTransactor, err := abi.NewKeepRandomBeaconImplV1Transactor(
 		contractAddress,
 		pv.client,
 	)
@@ -65,7 +65,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 		)
 	}
 
-	beaconCaller, err := gen.NewKeepRandomBeaconImplV1Caller(
+	beaconCaller, err := abi.NewKeepRandomBeaconImplV1Caller(
 		contractAddress,
 		pv.client,
 	)
@@ -80,7 +80,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 		From: contractAddress,
 	}
 
-	randomBeaconContract, err := gen.NewKeepRandomBeaconImplV1(
+	randomBeaconContract, err := abi.NewKeepRandomBeaconImplV1(
 		contractAddress,
 		pv.client,
 	)
@@ -168,7 +168,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryRequested)
+	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryRequested)
 	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
 	if err != nil {
 		close(eventChan)
@@ -216,7 +216,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayEntryGenerated)
+	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
 	if err != nil {
 		close(eventChan)
@@ -261,7 +261,7 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 	success relayResetEventFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1RelayResetEvent)
+	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayResetEvent)
 	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
 	if err != nil {
 		close(eventChan)
@@ -305,7 +305,7 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 	success submitGroupPublicKeyEventFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
+	eventChan := make(chan *abi.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
 	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
 		nil,
 		eventChan,

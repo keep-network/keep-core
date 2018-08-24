@@ -7,7 +7,7 @@ SOL_DIR=../../../contracts/solidity/contracts
 # Relative directory where the Go code needs to go.  This is relative to the
 # ${SOL_DIR} directory.
 OP_DIR=../../../pkg/chain/gen
-GEN_DIR=../../../pkg/chain/gen/ethereum/
+GEN_DIR=../../../pkg/chain/gen/abi/
 
 generate_solidity_go:
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
@@ -24,6 +24,6 @@ gen_go:
 
 %.go : %.sol
 	( cd ${SOL_DIR} ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
-	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg gen --type $* --out $@ )
+	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg abi --type $* --out $@ )
 	mv $@ ${GEN_DIR}/$@
 
