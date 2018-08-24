@@ -81,8 +81,9 @@
     "rpc",
     "trie"
   ]
-  revision = "eae63c511ceafab14b92e274c1b18bf1700e2d3d"
-  version = "v1.8.10"
+  revision = "316fc7ecfc10d06603f1358c1f4c1020ec36dd2a"
+  version = "v1.8.14"
+
 
 [[projects]]
   name = "github.com/fd/go-nat"
