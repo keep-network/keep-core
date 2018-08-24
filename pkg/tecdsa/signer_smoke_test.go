@@ -392,11 +392,11 @@ func verifySignatureInEthereum(
 
 	// We need to add padding to the R and S.
 	// Ethereum requires that both values are 32 bytes long each.
-	paddedR, err := padTo32Bytes(signature.R.Bytes())
+	paddedR, err := leftPadTo32Bytes(signature.R.Bytes())
 	if err != nil {
 		return err
 	}
-	paddedS, err := padTo32Bytes(signature.S.Bytes())
+	paddedS, err := leftPadTo32Bytes(signature.S.Bytes())
 	if err != nil {
 		return err
 	}
@@ -416,7 +416,7 @@ func verifySignatureInEthereum(
 	return nil
 }
 
-func padTo32Bytes(bytes []byte) ([]byte, error) {
+func leftPadTo32Bytes(bytes []byte) ([]byte, error) {
 	expectedByteLen := 32
 	if len(bytes) > expectedByteLen {
 		return nil, fmt.Errorf(
