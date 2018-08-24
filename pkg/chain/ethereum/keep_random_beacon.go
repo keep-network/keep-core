@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/chain/gen"
+	gen "github.com/keep-network/keep-core/pkg/chain/gen/ethereum"
 )
 
 // KeepRandomBeacon connection information for interface to the contract.
