@@ -12,22 +12,16 @@ GEN_DIR=../../../pkg/chain/gen/abi/
 generate_solidity_go:
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
 
-all:
-	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
-	goimports -w *.go
-	go build
-
 GO=$(shell ls *.sol | sed -e 's/.sol/.go/' )
 
 gen_go: 
 	make -f ${OP_DIR}/Makefile ${GO}
 
 %.go : %.sol
-	( cd ${SOL_DIR} ; mkdir ${GEN_DIR}/$* ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ \
+	( cd ${SOL_DIR} ; mkdir -p ${GEN_DIR}/$* ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ \
 		--allow-paths . \
 		--combined-json abi,bin,devdoc,userdoc,metadata \
 		$< | \
 		abigen --abi - --pkg $* --out ${GEN_DIR}/$*/$@ \
 		)
-
 
