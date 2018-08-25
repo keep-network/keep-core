@@ -17,17 +17,17 @@ all:
 	goimports -w *.go
 	go build
 
-SOL=$(shell ls *.sol | sed -e 's/.sol/.go/' )
+GO=$(shell ls *.sol | sed -e 's/.sol/.go/' )
 
 gen_go: 
-	make -f ${OP_DIR}/Makefile ${SOL}
+	make -f ${OP_DIR}/Makefile ${GO}
 
 %.go : %.sol
-	( cd ${SOL_DIR} ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ \
+	( cd ${SOL_DIR} ; mkdir ${GEN_DIR}/$* ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ \
 		--allow-paths . \
 		--combined-json abi,bin,devdoc,userdoc,metadata \
 		$< | \
-		abigen --abi - --pkg abi --type $* --out ${GEN_DIR}/$@ \
+		abigen --abi - --pkg $* --out ${GEN_DIR}/$*/$@ \
 		)
 
 
