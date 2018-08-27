@@ -9,9 +9,9 @@ func setupGroup(group []*LocalSigner) error {
 	// MasterPublicKeyShareMessage.
 	// The shares are combined by adding the points which results in a point
 	// which is a master public key.
-	masterPublicKeyShareMessages := make([]*MasterPublicKeyShareMessage, len(group))
+	masterPublicKeyShareMessages := make([]*CommitmentMasterPublicKeyMessage, len(group))
 	for i, signer := range group {
-		masterPublicKeyShareMessages[i], err = signer.GenerateMasterPublicKeyShare()
+		masterPublicKeyShareMessages[i], err = signer.GenerateCommitmentMasterPublicKey()
 		if err != nil {
 			return err
 		}

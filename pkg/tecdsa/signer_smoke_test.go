@@ -32,11 +32,11 @@ func TestFullInitAndSignPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	masterPublicKeyShareMessagesKeyGeneration := make([]*MasterPublicKeyShareMessage, len(localSigners))
+	masterPublicKeyShareMessagesKeyGeneration := make([]*CommitmentMasterPublicKeyMessage, len(localSigners))
 	publicKeyCommitmentMessages := make([]*PublicKeyShareCommitmentMessage, len(localSigners))
 	keyShareRevealMessages := make([]*KeyShareRevealMessage, len(localSigners))
 
-	masterPublicKeyShareMessagesSigning := make([]*MasterPublicKeyShareMessage, len(localSigners))
+	masterPublicKeyShareMessagesSigning := make([]*CommitmentMasterPublicKeyMessage, len(localSigners))
 
 	round1Messages := make([]*SignRound1Message, len(localSigners))
 	round2Messages := make([]*SignRound2Message, len(localSigners))
@@ -56,7 +56,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// generation process
 	//
 	for i, signer := range localSigners {
-		masterPublicKeyShareMessagesKeyGeneration[i], err = signer.GenerateMasterPublicKeyShare()
+		masterPublicKeyShareMessagesKeyGeneration[i], err = signer.GenerateCommitmentMasterPublicKey()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -109,7 +109,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// signing process
 	//
 	for i, signer := range signers {
-		masterPublicKeyShareMessagesSigning[i], err = signer.GenerateMasterPublicKeyShare()
+		masterPublicKeyShareMessagesSigning[i], err = signer.GenerateCommitmentMasterPublicKey()
 		if err != nil {
 			t.Fatal(err)
 		}
