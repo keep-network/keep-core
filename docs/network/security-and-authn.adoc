@@ -70,21 +70,39 @@ that all intended recipients will eventually receive the message BUT will be onl
 be able to unpack the contents of a sub-message intended for them (M can read S in P).
 
 
-=== Implementation
+=== Potential Implementations
 
 There are four implementations we can explore given the above constraints:
 
-==== TLS
-==== Station-to-Station
-==== Elliptic-Curve-Diffie-Hellman
-==== Custom
+Building Blocks
 
-=== Limitations
+==== Elliptic-Curve-Diffie-Hellman
+===== Overview
+        - [draft]Diffie-Hellman satisifys some of the properties above, but due to [reasons],
+        it does not assume the presence of signature keys and hence is susceptible
+        to MITM attacks. As a building block, we can take this into account and layer on-top
+     signing keys. This introduces complexity to the protocol, though.
+
+===== Limitations
+
+Frameworks
+==== Station-to-Station
+===== Overview
+
+===== Limitations
+
+==== Noise Protocol
+===== Overview
+
+===== Limitations
 
 ==== TLS
-==== Station-to-Station
-==== Elliptic-Curve-Diffie-Hellman
+===== Overview
+===== Limitations
+
 ==== Custom
+===== Overview
+===== Limitations
 
 == Future Work (optional)
 
@@ -92,7 +110,7 @@ If applicable, what future evolutions could you see this approach leading to?
 Particularly if these possibilities influenced your thinking about the main
 proposal, this is important.
 
-== Open Questions (construction section for Raghav)
+== Open Questions (construction section for Raghav :hammer:)
 
 Does our protocol need to be application independent? Application protocol indepedent?
 Do we need to expect that other higher-level protocols will be layered on top?
@@ -109,3 +127,10 @@ Are we at risk of version downgrade if we support more than one negotiation type
 What does a non bootstrap node do with an authentication message? Or, does a
 non bootstrap node accept a connection even if the node in question isn't known
 authenticated via a bootstrap node?
+
+[bibliography]
+== References
+
+- [[[TLS]]] E Rescorla, Mozilla, August 2018
+The Transport Layer Security (TLS) Protocol Version 1.3
+https://www.rfc-editor.org/rfc/rfc8446.txt
