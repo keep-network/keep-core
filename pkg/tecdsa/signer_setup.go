@@ -33,6 +33,7 @@ func (sc *signerCore) GenerateMasterPublicKeyShare() (*MasterPublicKeyShareMessa
 	}
 
 	return &MasterPublicKeyShareMessage{
+		signerID:             sc.ID,
 		masterPublicKeyShare: hShare.Marshal(),
 	}, nil
 }
