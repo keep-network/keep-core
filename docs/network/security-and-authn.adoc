@@ -1,0 +1,109 @@
+= RFC ##: draft-keep-network-layer-security
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+This document describes a protocol to secure the network layer of the keep
+network. This involves verifying identities (to avoid sybill attacks), ensuring
+message integrity (to avoid mallicious tampering), and encrypting messages (to
+ensure that only intended recipients receive a message).
+
+=== Current Functionality
+
+ Currently, we do not authenticate, authorize, or encrypt identities or messages
+ in our network. This limits our ability to restrict access to mallicious actors,
+ prevents our messages from being tamper-resistant, and allows sensitive information
+ to be seen in the clear. This document attempts to provide a solution to remedy
+ these problems.
+
+== Proposal
+
+=== Terminology
+
+* client: the initiator of a secure connection
+* server: the receiver of a secure connection
+* peer: a member of a network that is both a client and a server
+* network: connections between many peers, not necissarily p2p, for the purpose of executing protocols
+* endpoint: either of a client or a server in a connection
+* handshake: an initial negotiation between a client and a server to establish X
+* chain: a decentralized, consensus driven store with identities and economic incentives
+* stake: minimum amount of value held by an identity on chain that grants access to a network
+* bootstrap: a trusted peer in a network that facilitates new connections into the network from untrusted peers by verifying an on-chain stake
+
+=== Goal
+
+We aim to authenticate peers, control access to a network where Keep’s protocols
+execute, and provide a secure channel between two communicating peers. The
+protocol must provide the following properties:
+
+- Authentication: Every node is a server and a client. All nodes are always
+authenticated. Authentication happens via asymmetric cryptography, using the
+Elliptic Curve Digital Signature Algorithm (ECDSA). The client must provide the
+server proof of attestation over a staked key on chain.
+
+- Authorization: the only capabilities a node has before establishing a secure,
+authenticated connection is sending an authentication message to a node that can
+process the client hello. Authenticated nodes can participate in the network and
+form secure channels with other authenticated members.
+
+- Confidentiality: Data sent over wire via the established secure channel is only
+visible to the endpoints.
+
+- Integrity: Data sent over the channel after establishment cannot be modified by
+adversaries without detection.
+
+The protocol should be flexible enough to satisfy the following (but not limited to) scenarios:
+
+* A client wants to become a peer in the Keep network. A client must be, first
+and formost, successfully staked (otherwise dishonest participants can't be
+punished). Furthermore, the client must prove their stake to the members of the
+network.
+
+* A client wishes to send a point-to-point message such that only the intended
+recipient can inspect and verify the contents of the message.
+
+- A packed message P that contains many sub-messages S, each signed and encrypted
+for a specific member M. This message can be circulated throughout a network such
+that all intended recipients will eventually receive the message BUT will be only
+be able to unpack the contents of a sub-message intended for them (M can read S in P).
+
+
+=== Implementation
+
+How will we achieve it? Examples of how the implementation will be used could be
+useful. Flow diagrams can also be useful here.
+
+=== Limitations
+
+What are the limitations of this approach?
+
+=== Proof of Concept
+
+If you have PoC code, refer to the relevant branch and give a brief summary.
+
+== Future Work (optional)
+
+If applicable, what future evolutions could you see this approach leading to?
+Particularly if these possibilities influenced your thinking about the main
+proposal, this is important.
+
+== Open Questions (construction section for Raghav)
+
+Does our protocol need to be application independent? Application protocol indepedent?
+Do we need to expect that other higher-level protocols will be layered on top?
+we need forward secrecy - how will we get that?
+
+What messages are in the clear? In any handshake, does the first message
+(ClientHello) have to be in the clear? Or can we state that the first message to
+the bootstrap node is encrypted with the bootstrap node's Public Key? And then
+the return (ServerHello) is encrypted with the client's pubkey.
+
+No need for point format negotiation, right? Single point format for each curve.
+
+Are we at risk of version downgrade if we support more than one negotiation type?
+What does a non bootstrap node do with an authentication message? Or, does a
+non bootstrap node accept a connection even if the node in question isn't known
+authenticated via a bootstrap node?
