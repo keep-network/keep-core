@@ -12,6 +12,11 @@ const Network = {
     return web3.eth
   },
 
+  async getNetworkType() {
+    const web3 = await Network.web3()
+    return web3.eth.net.getNetworkType()
+  },
+
   async provider() {
     let { web3 } = window
 

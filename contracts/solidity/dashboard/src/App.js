@@ -36,6 +36,13 @@ class Main extends Component {
   }
 
   componentDidMount() {
+
+    Network.getNetworkType().then(result => {
+      this.setState({
+        networkType: result,
+      });
+    });
+  
     this.getData().catch(error => {
       this.setState({
         error: error,
@@ -56,7 +63,7 @@ class Main extends Component {
 
     return (
       <div className="main">
-      <Header />
+      <Header networkType={this.state.networkType}/>
       <Grid>
         <Row>
           <Col xs={12}>

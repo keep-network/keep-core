@@ -2,7 +2,7 @@ import React from 'react';
 import { Navbar, NavbarBrand } from 'react-bootstrap';
 import * as Icons from './Icons';
 
-const Header = () => {
+const Header = ({networkType}) => {
   return (
     <Navbar>
       <Navbar.Header>
@@ -18,7 +18,7 @@ const Header = () => {
         </div>
         <div>
           <strong>Network: </strong>
-          <span className="txt-primary">{ process.env.REACT_APP_NETWORK }</span>
+          <span className="txt-primary">{ networkType }</span>
         </div>
       </div>
     </Navbar>
