@@ -72,16 +72,19 @@ be able to unpack the contents of a sub-message intended for them (M can read S 
 
 === Implementation
 
-How will we achieve it? Examples of how the implementation will be used could be
-useful. Flow diagrams can also be useful here.
+There are four implementations we can explore given the above constraints:
+
+==== TLS
+==== Station-to-Station
+==== Elliptic-Curve-Diffie-Hellman
+==== Custom
 
 === Limitations
 
-What are the limitations of this approach?
-
-=== Proof of Concept
-
-If you have PoC code, refer to the relevant branch and give a brief summary.
+==== TLS
+==== Station-to-Station
+==== Elliptic-Curve-Diffie-Hellman
+==== Custom
 
 == Future Work (optional)
 
