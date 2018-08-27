@@ -30,6 +30,12 @@ const Network = {
     })
   },
 
+  getCode(address) {
+    return new Promise((resolve, reject) => {
+      Network.eth().then(eth => eth.getCode(address, Network._web3Callback(resolve, reject)))
+    })
+  },
+
   _web3Callback(resolve, reject) {
     return (error, value) => {
       if (error) reject(error)

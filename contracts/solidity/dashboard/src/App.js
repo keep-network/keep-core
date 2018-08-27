@@ -36,7 +36,11 @@ class Main extends Component {
   }
 
   componentDidMount() {
-    this.getData();
+    this.getData().catch(error => {
+      this.setState({
+        error: error,
+      });
+    });
   }
 
   selectTokenGrant(i) {
@@ -48,7 +52,7 @@ class Main extends Component {
   render() {
     const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
       chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
-      selectedGrant, totalAvailableToStake, totalAvailableToUnstake } = this.state;
+      selectedGrant, totalAvailableToStake, totalAvailableToUnstake, error } = this.state;
 
     return (
       <div className="main">
@@ -56,6 +60,9 @@ class Main extends Component {
       <Grid>
         <Row>
           <Col xs={12}>
+            {this.state.error ?
+              <div className="alert alert-danger m-5" role="alert">{error}</div>:<div></div>
+            }
             <Tabs defaultActiveKey={1} id="dashboard-tabs">
               <Tab eventKey={1} title="Overview">
                 <Row className="overview">
@@ -152,9 +159,14 @@ class Main extends Component {
     const yourAddress = accounts[0];
 
     // Contracts
-    const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
-    const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
-    const grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS);
+    let token, stakingContract, grantContract;
+    try {
+      token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
+      stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
+      grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS);
+    } catch (e) {
+      throw "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network.";
+    }
 
     // Balances
     const tokenBalance = displayAmount(await token.balanceOf(yourAddress), 18, 3);
