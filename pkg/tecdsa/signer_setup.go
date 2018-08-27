@@ -22,6 +22,22 @@ type signerCore struct {
 	signerIDs []string
 }
 
+// RegisterSignerID adds a signer to the list of signers the local signer
+// knows about.
+func (ls *LocalSigner) RegisterSignerID(ID string) {
+	ls.signerIDs = append(ls.signerIDs, ID)
+}
+
+// RemoveSignerID removes a signer from the list of signers the local signer
+// knows about.
+func (sc *signerCore) RemoveSignerID(ID string) {
+	for i := 0; i < len(sc.signerIDs); i++ {
+		if sc.signerIDs[i] == ID {
+			sc.signerIDs = append(sc.signerIDs[:i], sc.signerIDs[i+1:]...)
+		}
+	}
+}
+
 // GenerateMasterPublicKeyShare produces a MasterPublicKeyShareMessage and should
 // be called by all members of the group on very early stage prior to generating
 // any commitments.
