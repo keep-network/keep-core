@@ -14,7 +14,6 @@ import (
 	"fmt"
 	mathrand "math/rand"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/tecdsa/commitment"
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
@@ -31,11 +30,6 @@ type LocalSigner struct {
 
 	dsaKeyShare *dsaKeyShare
 
-	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
-	// master public key.
-	// It should be initialized to a new value for each key generation process.
-	commitmentMasterPublicKey *bn256.G2
-
 	// Intermediate value stored between first and second round of
 	// key generation. In the first round, `LocalSigner` commits to the chosen
 	// public key share. In the second round, it reveals the public key share
@@ -49,12 +43,6 @@ type LocalSigner struct {
 // underlying DSA key.
 type Signer struct {
 	signerCore
-
-	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
-	// master public key.
-	// It should be initialized to a new value for each signing process, even
-	// if the value was already initialized for `LocalSigner` before.
-	commitmentMasterPublicKey *bn256.G2
 
 	dsaKey *ThresholdDsaKey
 }
@@ -123,7 +111,7 @@ func (ls *LocalSigner) InitializeDsaKeyShares() (
 	}
 
 	commitment, decommitmentKey, err := commitment.Generate(
-		ls.commitmentMasterPublicKey,
+		ls.commitmentMasterPublicKey(),
 		keyShare.publicKeyShare.Bytes(),
 	)
 	if err != nil {
@@ -240,7 +228,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 				foundMatchingRevealMessage = true
 
 				if revealedSharesMsg.isValid(
-					ls.commitmentMasterPublicKey,
+					ls.commitmentVerificationMasterPublicKey(commitmentMsg.signerID),
 					commitmentMsg.publicKeyShareCommitment,
 					ls.zkpParameters,
 				) {

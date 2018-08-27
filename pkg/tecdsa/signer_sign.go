@@ -80,7 +80,7 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 
 	// [C_1i, D_1i] = Com([u_i, v_i])
 	commitment, decommitmentKey, err := commitment.Generate(
-		s.commitmentMasterPublicKey,
+		s.commitmentMasterPublicKey(),
 		encryptedSecretKeyFactorShare.C.Bytes(),
 		secretKeyMultiple.C.Bytes(),
 	)
@@ -197,7 +197,7 @@ func (s *Round2Signer) CombineRound2Messages(
 				foundMatchingRound2Message = true
 
 				if round2Message.isValid(
-					s.commitmentMasterPublicKey,
+					s.commitmentVerificationMasterPublicKey(round2Message.signerID),
 					round1Message.secretKeyFactorShareCommitment,
 					s.dsaKey.secretKey,
 					s.zkpParameters,
@@ -333,7 +333,7 @@ func (s *Round2Signer) SignRound3(
 	// [C_2i, D_2i] = Com(r_i, w_i)
 	commitment, decommitmentKey, err :=
 		commitment.Generate(
-			s.commitmentMasterPublicKey,
+			s.commitmentMasterPublicKey(),
 			signatureFactorPublicShare.Bytes(),
 			signatureUnmaskShare.C.Bytes(),
 		)
@@ -465,7 +465,7 @@ func (s *Round4Signer) CombineRound4Messages(
 				foundMatchingRound4Message = true
 
 				if round4Message.isValid(
-					s.commitmentMasterPublicKey,
+					s.commitmentVerificationMasterPublicKey(round4Message.signerID),
 					round3Message.signatureFactorShareCommitment,
 					s.secretKeyFactor,
 					s.zkpParameters,

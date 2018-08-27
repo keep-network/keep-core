@@ -155,7 +155,7 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 	}
 
 	invalidCommitment, _, err := commitment.Generate(
-		group[0].commitmentMasterPublicKey,
+		group[0].commitmentMasterPublicKey(),
 		big.NewInt(1).Bytes(),
 	)
 	if err != nil {

@@ -16,6 +16,18 @@ type signerCore struct {
 
 	groupParameters *PublicParameters
 	zkpParameters   *zkp.PublicParameters
+
+	commitmentPublicKeys map[string]*bn256.G2
+}
+
+func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
+	return sc.commitmentPublicKeys[sc.ID]
+}
+
+func (sc *signerCore) commitmentVerificationMasterPublicKey(
+	signerID string,
+) *bn256.G2 {
+	return sc.commitmentPublicKeys[signerID]
 }
 
 // GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
@@ -43,30 +55,30 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 	}, nil
 }
 
-// CombineMasterPublicKeyShares combines all group `MasterPublicKeyShareMessage`s
-// into a `masterPublicKey`.
-//
-// The shares are expected to be points in G2 abstract cyclic group of bn256 curve.
-// Shares are combined by points addition.
-func (sc *signerCore) CombineMasterPublicKeyShares(
-	masterPublicKeySharesMessages []*CommitmentMasterPublicKeyMessage) (*bn256.G2, error) {
-	if len(masterPublicKeySharesMessages) != sc.groupParameters.GroupSize {
-		return nil, fmt.Errorf(
-			"master public key share required from all group members; got %v, expected %v",
-			len(masterPublicKeySharesMessages),
+// ReceiveCommitmentMasterPublicKeys takes all the received
+// `CommitmentMasterPublicKeyMessage`s and saves the commitment master public
+// key value specific for the signer. This value is used later to validate
+// commitments from the given signer.
+func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
+	messages []*CommitmentMasterPublicKeyMessage,
+) error {
+	if len(messages) != sc.groupParameters.GroupSize {
+		return fmt.Errorf(
+			"master public key messages required from all group members; got %v, expected %v",
+			len(messages),
 			sc.groupParameters.GroupSize,
 		)
 	}
 
-	masterPublicKey := new(bn256.G2)
-	masterPublicKey.Unmarshal(
-		masterPublicKeySharesMessages[0].masterPublicKey,
-	)
+	sc.commitmentPublicKeys = make(map[string]*bn256.G2)
+	for _, message := range messages {
+		masterPublicKey := new(bn256.G2)
+		masterPublicKey.Unmarshal(
+			message.masterPublicKey,
+		)
 
-	for _, message := range masterPublicKeySharesMessages[1:] {
-		masterPublicKeyShare := new(bn256.G2)
-		masterPublicKeyShare.Unmarshal(message.masterPublicKey)
-		masterPublicKey = new(bn256.G2).Add(masterPublicKey, masterPublicKeyShare)
+		sc.commitmentPublicKeys[message.signerID] = masterPublicKey
 	}
-	return masterPublicKey, nil
+
+	return nil
 }
