@@ -16,6 +16,10 @@ type signerCore struct {
 
 	groupParameters *PublicParameters
 	zkpParameters   *zkp.PublicParameters
+
+	// IDs of all signers in active signer's group, including the signer itself.
+	// Initially empty, populated as each other signer announces its presence.
+	signerIDs []string
 }
 
 // GenerateMasterPublicKeyShare produces a MasterPublicKeyShareMessage and should
