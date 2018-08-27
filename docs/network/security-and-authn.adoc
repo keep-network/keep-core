@@ -6,18 +6,17 @@ toc::[]
 
 == Background
 
-This document describes a protocol to secure the network layer of the keep
-network. This involves verifying identities (to avoid sybill attacks), ensuring
+This document describes a protocol to secure the network layer of the Keep
+Network. This involves verifying identities (to prevent sybill attacks), ensuring
 message integrity (to avoid mallicious tampering), and encrypting messages (to
 ensure that only intended recipients receive a message).
 
 === Current Functionality
 
- Currently, we do not authenticate, authorize, or encrypt identities or messages
- in our network. This limits our ability to restrict access to mallicious actors,
- prevents our messages from being tamper-resistant, and allows sensitive information
- to be seen in the clear. This document attempts to provide a solution to remedy
- these problems.
+Currently, we do neither of authenticating identities and encrypting messages
+in our network. This limits our ability to restrict access to mallicious actors,
+prevents our messages from being tamper-resistant, and allows sensitive information
+to be seen in the clear. This document attempts to provide a path forward.
 
 == Proposal
 
@@ -40,13 +39,13 @@ execute, and provide a secure channel between two communicating peers. The
 protocol must provide the following properties:
 
 - Authentication: Every node is a server and a client. All nodes are always
-authenticated. Authentication happens via asymmetric cryptography, using the
-Elliptic Curve Digital Signature Algorithm (ECDSA). The client must provide the
-server proof of attestation over a staked key on chain.
+authenticated. Authentication happens via asymmetric cryptography, using a
+signature algorithm that is cheap to verify on-chain (ie. ECDSA, BLS). The client
+must provide the server proof of attestation over a staked key on chain.
 
 - Authorization: the only capabilities a node has before establishing a secure,
 authenticated connection is sending an authentication message to a node that can
-process the client hello. Authenticated nodes can participate in the network and
+process the ClientHello. Authenticated nodes can participate in the network and
 form secure channels with other authenticated members.
 
 - Confidentiality: Data sent over wire via the established secure channel is only
@@ -57,7 +56,7 @@ adversaries without detection.
 
 The protocol should be flexible enough to satisfy the following (but not limited to) scenarios:
 
-* A client wants to become a peer in the Keep network. A client must be, first
+* A client wants to become a peer in the Keep Network. A client must be, first
 and formost, successfully staked (otherwise dishonest participants can't be
 punished). Furthermore, the client must prove their stake to the members of the
 network.
