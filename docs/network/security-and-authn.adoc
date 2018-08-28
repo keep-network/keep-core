@@ -93,7 +93,21 @@ be able to unpack the contents of a sub-message intended for them (M can read S 
 
 === Potential Implementations
 
-There are four implementations we can explore given the above constraints:
+Given the above, we are primarily concerned with authentication and key exchange.
+The literature overwhelmingly recommends a solution which provides authentication
+and key-exchange considered jointly. Per diffie (1992):
+
+``` A protocol providing authentication without key exchange is susceptible to an
+enemy who waits until the authentication is complete and then takes over one end
+of the communications line. Such an attack is not precluded by a key exchange
+that is independent of authentication. Key exchange should be linked to
+authentication so that a party has assurances that an exchanged key (which might
+be used to facilitate privacy or integrity and thus keep authenticity alive) is
+in fact shared with the authenticated party, and not an impostor. For these
+reasons, it is essential to keep key exchange in mind in the design and analysis of
+authentication protocols. ```
+
+There are a few implementations we can explore given the above constraints:
 
 Building Blocks
 
