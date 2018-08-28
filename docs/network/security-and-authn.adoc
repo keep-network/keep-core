@@ -6,20 +6,19 @@ toc::[]
 
 == Background
 
-This document describes a protocol to secure the network layer of the Keep
-Network. This involves verifying identities (to prevent Sybil attacks), ensuring
-message integrity (to avoid malicious tampering), and encrypting messages (to
-ensure that only intended recipients receive a message).
-
 Keep is both a decentralized application that lives on a host chain, and a
 layer two network which fulfills the requests of the application. To ensure the
 safety, security, and integrity of the network, the network needs to implement
 authorization, encryption, and authentication. The decentralized nature of the
 network brings about the unique challenge where off-the-shelf protocols such as
-TLS can't be used due to the lack of trusted third parties and intermediaries.
+TLS can't be used due to the lack of trusted central authorities and intermediaries.
 
-This presents an opportunity to survey the current available protocols, and
-identify which pieces best fit the requirements of the layer 2 network.
+This document specifies requirements, surveys current available protocols, and
+describes a protocol to secure the network layer of Keep.
+
+A successful protocol involves verifying identities (to prevent Sybil attacks),
+ensuring message integrity (to avoid malicious tampering), and encrypting messages
+(to ensure that only intended recipients receive a message).
 
 
 === Current Functionality
