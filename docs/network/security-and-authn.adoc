@@ -37,7 +37,6 @@ to be seen in the clear. This document attempts to provide a path forward.
 * server: the receiver of a secure connection
 * peer: a member of a network that is both a client and a server
 * network: connections between many peers, not necissarily p2p, for the purpose of executing protocols
-* endpoint: either of a client or a server in a connection
 * handshake: an initial negotiation between a client and a server to establish X
 * chain: a decentralized, consensus driven store with identities and economic incentives
 * stake: minimum amount of value held by an identity on chain that grants access to a network
@@ -60,7 +59,7 @@ process the ClientHello. Authenticated nodes can participate in the network and
 form secure channels with other authenticated members.
 
 - Confidentiality: Data sent over wire via the established secure channel is only
-visible to the endpoints.
+visible to the communicating peers.
 
 - Integrity: Data sent over the channel after establishment cannot be modified by
 adversaries without detection.
