@@ -7,15 +7,15 @@ toc::[]
 == Background
 
 This document describes a protocol to secure the network layer of the Keep
-Network. This involves verifying identities (to prevent sybill attacks), ensuring
-message integrity (to avoid mallicious tampering), and encrypting messages (to
+Network. This involves verifying identities (to prevent Sybil attacks), ensuring
+message integrity (to avoid malicious tampering), and encrypting messages (to
 ensure that only intended recipients receive a message).
 
 Keep is both a decentralized application that lives on a host chain, and a
 layer two network which fulfills the requests of the application. To ensure the
 safety, security, and integrity of the network, the network needs to implement
 authorization, encryption, and authentication. The decentralized nature of the
-network brings about the unique challenege where off-the-shelf protocols such as
+network brings about the unique challenge where off-the-shelf protocols such as
 TLS can't be used due to the lack of trusted third parties and intermediaries.
 
 This presents an opportunity to survey the current available protocols, and
@@ -25,7 +25,7 @@ identify which pieces best fit the requirements of the layer 2 network.
 === Current Functionality
 
 Currently, we do neither of authenticating identities and encrypting messages
-in our network. This limits our ability to restrict access to mallicious actors,
+in our network. This limits our ability to restrict access to malicious actors,
 prevents our messages from being tamper-resistant, and allows sensitive information
 to be seen in the clear. This document attempts to provide a path forward.
 
@@ -36,7 +36,7 @@ to be seen in the clear. This document attempts to provide a path forward.
 * client: the initiator of a secure connection.
 * server: the receiver of a secure connection.
 * peer: a member of a network that is both a client and a server.
-* network: connections between many peers, not necissarily p2p.
+* network: connections between many peers, not necessarily p2p.
 * handshake: an initial negotiation between a client and a server to establish
 secret key material.
 * chain: a decentralized, consensus driven store with identities and economic
@@ -55,7 +55,7 @@ must provide the following properties:
 The goal of authentication is to provide the communicating parties with some
 assurance that they know each others identities.
 
-In our model of authentiation, every node is a server and a client, and all nodes
+In our model of authentication, every node is a server and a client, and all nodes
 must always be authenticated. Authentication happens via asymmetric cryptography,
 using a signature algorithm that is cheap to verify on-chain (ie. ECDSA, BLS).
 The client must provide the server proof of attestation over a staked key on chain.
@@ -79,7 +79,7 @@ adversaries without detection.
 The protocol should be flexible enough to satisfy the following (but not limited to) scenarios:
 
 * A client wants to become a peer in the Keep Network. A client must be, first
-and formost, successfully staked (otherwise dishonest participants can't be
+and foremost, successfully staked (otherwise dishonest participants can't be
 punished). Furthermore, the client must prove their stake to the members of the
 network.
 
@@ -100,9 +100,9 @@ Building Blocks
 
 ==== Elliptic-Curve-Diffie-Hellman
 ===== Overview
-        - [draft]Diffie-Hellman satisifys some of the properties above, but due to [reasons],
+        - [draft]Diffie-Hellman satisfies some of the properties above, but due to [reasons],
         it does not assume the presence of signature keys and hence is susceptible
-        to MITM attacks. As a building block, we can take this into account and layer on-top
+        to man-in-the-middle attacks. As a building block, we can take this into account and layer on-top
      signing keys. This introduces complexity to the protocol, though.
 
 ===== Limitations
@@ -110,11 +110,11 @@ Building Blocks
 ==== Station-to-Station
 ===== Overview
 - The base spec concerns with exponentiation, but also applies equally well to additive groups (ec over finite fields).
-- Authenticated key agrement with key confirmation: two-way explicit key confirmation
+- Authenticated key agreement with key confirmation: two-way explicit key confirmation
 
 ===== Limitations
-* This is only a cryptographic key agreement scheme
-* Still vulnerable to a mitm attack if the persistent signing keys aren't known
+* This is only a cryptography key agreement scheme
+* Still vulnerable to a man-in-the-middle attacks if the persistent signing keys aren't known
 in advance. Fortunately, we can use staked keys or X509 certs generated from
 those staked keys to ensure that both parties are known before hand.
 
@@ -142,7 +142,7 @@ proposal, this is important.
 
 == Open Questions (construction section for Raghav :hammer:)
 
-Does our protocol need to be application independent? Application protocol indepedent?
+Does our protocol need to be application independent? Application protocol independent?
 Do we need to expect that other higher-level protocols will be layered on top?
 we need forward secrecy - how will we get that?
 
