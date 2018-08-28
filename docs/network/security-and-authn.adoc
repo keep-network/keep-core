@@ -48,8 +48,8 @@ required to be a participant in the network.
 === Goal
 
 We aim to authenticate peers, control access to a network where Keep’s protocols
-execute, and provide a secure channel between two communicating peers. The
-protocol must provide the following properties:
+execute, and provide a secure channel between communicating peers. The protocol
+must provide the following properties:
 
 - Authentication:
 The goal of authentication is to provide the communicating parties with some
@@ -86,7 +86,7 @@ network.
 * A client wishes to send a point-to-point message such that only the intended
 recipient can inspect and verify the contents of the message.
 
-- A packed message P that contains many sub-messages S, each signed and encrypted
+* A packed message P that contains many sub-messages S, each signed and encrypted
 for a specific member M. This message can be circulated throughout a network such
 that all intended recipients will eventually receive the message BUT will be only
 be able to unpack the contents of a sub-message intended for them (M can read S in P).
