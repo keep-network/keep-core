@@ -62,3 +62,15 @@ func TestIsActiveSigner(t *testing.T) {
 		t.Fatal("signer with ID 1009 should not be active")
 	}
 }
+
+func TestSize(t *testing.T) {
+	group := signerGroup{}
+	if group.Size() != 0 {
+		t.Fatalf("returned group size %v doesn't match expected %v", group.Size(), 0)
+	}
+
+	group.signerIDs = []string{"1001", "1002", "1003", "1004"}
+	if group.Size() != 4 {
+		t.Fatalf("returned group size %v doesn't match expected %v", group.Size(), 4)
+	}
+}

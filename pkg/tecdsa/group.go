@@ -32,3 +32,8 @@ func (sg *signerGroup) IsActiveSigner(ID string) bool {
 	}
 	return false
 }
+
+// Size return number of signers in the signing group
+func (sg *signerGroup) Size() int {
+	return len(sg.signerIDs)
+}
