@@ -28,6 +28,7 @@ in our network. This limits our ability to restrict access to malicious actors,
 prevents our messages from being tamper-resistant, and allows sensitive information
 to be seen in the clear. This document attempts to provide a path forward.
 
+
 == Proposal
 
 === Terminology
@@ -43,6 +44,7 @@ incentives.
 * stake: an on-chain identity that holds at least the minimum amount of value
 required to be a participant in the network.
 * bootstrap: a trusted peer in a network that facilitates new connections into the network from untrusted peers by verifying an on-chain stake.
+
 
 === Goal
 
@@ -74,6 +76,9 @@ visible to the communicating peers.
 
 - Integrity: Data sent over the channel after establishment cannot be modified by
 adversaries without detection.
+
+
+==== Examples
 
 The protocol should be flexible enough to satisfy the following (but not limited to) scenarios:
 
@@ -109,9 +114,9 @@ authentication protocols. ```
 
 There are a few implementations we can explore given the above constraints:
 
-Building Blocks
 
 ==== Elliptic-Curve-Diffie-Hellman
+
 ===== Overview
         - [draft]Diffie-Hellman satisfies some of the properties above, but due to [reasons],
         it does not assume the presence of signature keys and hence is susceptible
@@ -120,12 +125,16 @@ Building Blocks
 
 ===== Limitations
 
-==== Station-to-Station
+
+==== Full Elliptic Curve, Diffie-Hellman Station-to-Station
+
 ===== Overview
+
 - The base spec concerns with exponentiation, but also applies equally well to additive groups (ec over finite fields).
 - Authenticated key agreement with key confirmation: two-way explicit key confirmation
 
 ===== Limitations
+
 * This is only a cryptography key agreement scheme
 * Still vulnerable to a man-in-the-middle attacks if the persistent signing keys aren't known
 in advance. Fortunately, we can use staked keys or X509 certs generated from
@@ -133,25 +142,31 @@ those staked keys to ensure that both parties are known before hand.
 
 
 ==== Noise Protocol
+
 ===== Overview
 
 ===== Limitations
 
 
-Frameworks
 ==== TLS
+
 ===== Overview
+
 ===== Limitations
 
 ==== Custom
+
 ===== Overview
+
 ===== Limitations
+
 
 == Future Work (optional)
 
 If applicable, what future evolutions could you see this approach leading to?
 Particularly if these possibilities influenced your thinking about the main
 proposal, this is important.
+
 
 == Open Questions (construction section for Raghav :hammer:)
 
@@ -182,6 +197,7 @@ established for the lifetime because connections are short lived.
 That being said, you can explicitly rekey if you'd like.
 
 TLS has very low overhead; ideal for things that are significantly lower powered than phones).
+
 
 [bibliography]
 == References
