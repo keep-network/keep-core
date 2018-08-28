@@ -33,14 +33,17 @@ to be seen in the clear. This document attempts to provide a path forward.
 
 === Terminology
 
-* client: the initiator of a secure connection
-* server: the receiver of a secure connection
-* peer: a member of a network that is both a client and a server
-* network: connections between many peers, not necissarily p2p, for the purpose of executing protocols
-* handshake: an initial negotiation between a client and a server to establish X
-* chain: a decentralized, consensus driven store with identities and economic incentives
-* stake: minimum amount of value held by an identity on chain that grants access to a network
-* bootstrap: a trusted peer in a network that facilitates new connections into the network from untrusted peers by verifying an on-chain stake
+* client: the initiator of a secure connection.
+* server: the receiver of a secure connection.
+* peer: a member of a network that is both a client and a server.
+* network: connections between many peers, not necissarily p2p.
+* handshake: an initial negotiation between a client and a server to establish
+secret key material.
+* chain: a decentralized, consensus driven store with identities and economic
+incentives.
+* stake: an on-chain identity that holds at least the minimum amount of value
+required to be a participant in the network.
+* bootstrap: a trusted peer in a network that facilitates new connections into the network from untrusted peers by verifying an on-chain stake.
 
 === Goal
 
