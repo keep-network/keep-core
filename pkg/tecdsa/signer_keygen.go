@@ -74,6 +74,7 @@ func NewLocalSigner(
 			paillierKey:     paillierKey,
 			groupParameters: groupParameters,
 			zkpParameters:   zkpParameters,
+			signerGroup:     &signerGroup{},
 		},
 	}
 }
