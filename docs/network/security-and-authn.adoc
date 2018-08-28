@@ -48,15 +48,24 @@ We aim to authenticate peers, control access to a network where Keep’s protoco
 execute, and provide a secure channel between two communicating peers. The
 protocol must provide the following properties:
 
-- Authentication: Every node is a server and a client. All nodes are always
-authenticated. Authentication happens via asymmetric cryptography, using a
-signature algorithm that is cheap to verify on-chain (ie. ECDSA, BLS). The client
-must provide the server proof of attestation over a staked key on chain.
+- Authentication:
+The goal of authentication is to provide the communicating parties with some
+assurance that they know each others identities.
 
-- Authorization: the only capabilities a node has before establishing a secure,
-authenticated connection is sending an authentication message to a node that can
-process the ClientHello. Authenticated nodes can participate in the network and
-form secure channels with other authenticated members.
+In our model of authentiation, every node is a server and a client, and all nodes
+must always be authenticated. Authentication happens via asymmetric cryptography,
+using a signature algorithm that is cheap to verify on-chain (ie. ECDSA, BLS).
+The client must provide the server proof of attestation over a staked key on chain.
+
+- Authorization:
+The goal of authorization is to ensure that capabilities within the system are
+restricted to authenticated identities
+
+The only capabilities a node has before establishing a secure, authenticated
+connection is sending an initialization message, ClientHello, to a node that can
+process this message and authenticate the node. Authenticated nodes can
+participate in the network and form secure channels with other authenticated
+members.
 
 - Confidentiality: Data sent over wire via the established secure channel is only
 visible to the communicating peers.
