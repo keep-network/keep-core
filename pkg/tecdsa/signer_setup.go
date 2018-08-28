@@ -17,36 +17,10 @@ type signerCore struct {
 	groupParameters *PublicParameters
 	zkpParameters   *zkp.PublicParameters
 
-	// IDs of all signers in active signer's group, including the signer itself.
+	// Group of all signers in active signers group, including the signer itself.
 	// Initially empty, populated as each other signer announces its presence.
-	signerIDs []string
-}
-
-// RegisterSignerID adds a signer to the list of signers the local signer
-// knows about.
-func (ls *LocalSigner) RegisterSignerID(ID string) {
-	ls.signerIDs = append(ls.signerIDs, ID)
-}
-
-// RemoveSignerID removes a signer from the list of signers the local signer
-// knows about.
-func (sc *signerCore) RemoveSignerID(ID string) {
-	for i := 0; i < len(sc.signerIDs); i++ {
-		if sc.signerIDs[i] == ID {
-			sc.signerIDs = append(sc.signerIDs[:i], sc.signerIDs[i+1:]...)
-		}
-	}
-}
-
-// IsActiveSigner checks if a signer with given ID is one of the signers the local
-// signer knows about.
-func (sc *signerCore) IsActiveSigner(ID string) bool {
-	for i := 0; i < len(sc.signerIDs); i++ {
-		if sc.signerIDs[i] == ID {
-			return true
-		}
-	}
-	return false
+	// Signers are removed from the group if they missbehave.
+	signerGroup *signerGroup
 }
 
 // GenerateMasterPublicKeyShare produces a MasterPublicKeyShareMessage and should
