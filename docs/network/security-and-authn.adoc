@@ -11,6 +11,17 @@ Network. This involves verifying identities (to prevent sybill attacks), ensurin
 message integrity (to avoid mallicious tampering), and encrypting messages (to
 ensure that only intended recipients receive a message).
 
+Keep is both a decentralized application that lives on a host chain, and a
+layer two network which fulfills the requests of the application. To ensure the
+safety, security, and integrity of the network, the network needs to implement
+authorization, encryption, and authentication. The decentralized nature of the
+network brings about the unique challenege where off-the-shelf protocols such as
+TLS can't be used due to the lack of trusted third parties and intermediaries.
+
+This presents an opportunity to survey the current available protocols, and
+identify which pieces best fit the requirements of the layer 2 network.
+
+
 === Current Functionality
 
 Currently, we do neither of authenticating identities and encrypting messages
@@ -127,6 +138,18 @@ Are we at risk of version downgrade if we support more than one negotiation type
 What does a non bootstrap node do with an authentication message? Or, does a
 non bootstrap node accept a connection even if the node in question isn't known
 authenticated via a bootstrap node?
+
+Datagram-based transports have a terrible story (DTLS) - noise protocol is an obvious winner here.
+
+Noise protocol makes a lot of sense for situations where you've committed to not using TLS and embarking on a custom protocol.
+
+TLS requires that communicating participants be online.
+
+There is no "constant" rekeying in TLS - typically you use the same key that's
+established for the lifetime because connections are short lived.
+That being said, you can explicitly rekey if you'd like.
+
+TLS has very low overhead; ideal for things that are significantly lower powered than phones).
 
 [bibliography]
 == References
