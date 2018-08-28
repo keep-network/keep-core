@@ -77,3 +77,16 @@ func TestRemoveSignerID(t *testing.T) {
 		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1002]", signer.signerIDs)
 	}
 }
+
+func TestIsActiveSigner(t *testing.T) {
+	signer := NewLocalSigner(nil, nil, nil)
+	signer.signerIDs = []string{"1001", "1002", "1003", "1004"}
+
+	if !signer.IsActiveSigner("1003") {
+		t.Fatal("signer with ID 1003 should be active")
+	}
+
+	if signer.IsActiveSigner("1009") {
+		t.Fatal("signer with ID 1009 should not be active")
+	}
+}

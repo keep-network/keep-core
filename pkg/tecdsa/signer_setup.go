@@ -38,6 +38,17 @@ func (sc *signerCore) RemoveSignerID(ID string) {
 	}
 }
 
+// IsActiveSigner checks if a signer with given ID is one of the signers the local
+// signer knows about.
+func (sc *signerCore) IsActiveSigner(ID string) bool {
+	for i := 0; i < len(sc.signerIDs); i++ {
+		if sc.signerIDs[i] == ID {
+			return true
+		}
+	}
+	return false
+}
+
 // GenerateMasterPublicKeyShare produces a MasterPublicKeyShareMessage and should
 // be called by all members of the group on very early stage prior to generating
 // any commitments.
