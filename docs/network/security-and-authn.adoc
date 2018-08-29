@@ -161,43 +161,21 @@ hand.
 ===== Limitations
 
 
-== Future Work (optional)
+== Open Questions
 
-If applicable, what future evolutions could you see this approach leading to?
-Particularly if these possibilities influenced your thinking about the main
-proposal, this is important.
+* Does our protocol need to be application independent? Application protocol
+independent?
 
+* Do we need to expect that other higher-level protocols will be
+layered on top?
 
-== Open Questions (construction section for Raghav :hammer:)
+* Do we require forward secrecy - how will we get that?
 
-Does our protocol need to be application independent? Application protocol independent?
-Do we need to expect that other higher-level protocols will be layered on top?
-we need forward secrecy - how will we get that?
+* Are we at risk of version downgrade if we support more than one negotiation type?
 
-What messages are in the clear? In any handshake, does the first message
-(ClientHello) have to be in the clear? Or can we state that the first message to
-the bootstrap node is encrypted with the bootstrap node's Public Key? And then
-the return (ServerHello) is encrypted with the sender of the ClientHello's pubkey.
+* What does a non-bootstrap node do with an authentication message?
 
-No need for point format negotiation, right? Single point format for each curve.
-
-Are we at risk of version downgrade if we support more than one negotiation type?
-What does a non bootstrap node do with an authentication message? Or, does a
-non bootstrap node accept a connection even if the peer in question isn't known
-authenticated via a bootstrap node?
-
-Datagram-based transports have a terrible story (DTLS) - noise protocol is an obvious winner here.
-
-Noise protocol makes a lot of sense for situations where you've committed to not using TLS and embarking on a custom protocol.
-
-TLS requires that communicating participants be online.
-
-There is no "constant" rekeying in TLS - typically you use the same key that's
-established for the lifetime because connections are short lived.
-That being said, you can explicitly rekey if you'd like.
-
-TLS has very low overhead; ideal for things that are significantly lower powered than phones).
-
+* Is a requirement for communicating participants that they be online?
 
 [bibliography]
 == References
