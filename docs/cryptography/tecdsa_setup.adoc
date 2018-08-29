@@ -6,3 +6,45 @@ The goal of this document is to describe our custom approach for T-ECDSA
 protocol setup and required modifications to the protocol itself to make the 
 setup possible. This document does not cover a dealerless protocol for Paillier 
 threshold key generator.
+
+== Background
+
+The Threshold-optimal DSA/ECDSA protocol described by Gennaro et al. [GGN16]  
+assumes a number of initial parameters are provided by a trusted third-party. 
+Those parameters need to meet certain strict requirements so that the protocol 
+is secure. What's more, numbers used to construct those parameters must remain 
+hidden from players executing the protocol. Those two facts eliminate the 
+possibility of either randomly generating those parameters using the random beacon 
+protocol or generating all those parameters by one member of the group. 
+
+The mentioned parameters include:
+
+* auxiliary RSA modulus `N_tilde` which is a product of two safe primes and is 
+used to construct Zero-Knowledge Proofs `Π_i`, `Π_1i`, `Π_2i`,
+
+* two elements `h1`, `h2` from a multiplicative group of integers modulo `N_tilde` 
+constructed according to Fujisaki and Okamoto [FO 97], used to construct range 
+commitments in the Zero-Knowledge Proofs `Π_i`, `Π_1i`, `Π_2i`,
+
+* master trapdoor public key used to construct multi-trapdoor commitments.
+
+For the sake of this document, we assume a threshold Paillier key is generated 
+elsewhere. 
+
+Since in the original paper, all those parameters are generated in accordance with 
+the protocol by a trusted third party and numbers used to construct them are not 
+known to the group members, all members use the same parameters and all the 
+communication inside the group is public and based on broadcast messages.
+
+
+
+== References
+
+* [GGN 16]: Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal
+DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security.
+In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
+and Network Security. ACNS 2016. Lecture Notes in Computer Science,
+vol 9696. Springer, Cham
+
+* [FO 97] Fujisaki E. Okamoto T.: Statistical Zero Knowledge Protocols to 
+Prove Modular Polynomial Relations. CRYPTO 1997: LNCS Vol.1294, pp.16-30
