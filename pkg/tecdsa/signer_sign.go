@@ -209,12 +209,14 @@ func (s *Round2Signer) CombineRound2Messages(
 					secretKeyFactorShares[i] = round2Message.secretKeyFactorShare
 					secretKeyMultipleShares[i] = round2Message.secretKeyMultipleShare
 				} else {
+					s.signerGroup.RemoveSignerID(round1Message.signerID)
 					return nil, nil, errors.New("round 2 message rejected")
 				}
 			}
 		}
 
 		if !foundMatchingRound2Message {
+			s.signerGroup.RemoveSignerID(round1Message.signerID)
 			return nil, nil, fmt.Errorf(
 				"no matching round 2 message for signer with ID = %v",
 				round1Message.signerID,
@@ -481,12 +483,14 @@ func (s *Round4Signer) CombineRound4Messages(
 					signatureFactorPublicShares[i] = round4Message.signatureFactorPublicShare
 					signatureUnmaskShares[i] = round4Message.signatureUnmaskShare
 				} else {
+					s.signerGroup.RemoveSignerID(round3Message.signerID)
 					return nil, nil, errors.New("round 4 message rejected")
 				}
 			}
 		}
 
 		if !foundMatchingRound4Message {
+			s.signerGroup.RemoveSignerID(round3Message.signerID)
 			return nil, nil, fmt.Errorf(
 				"no matching round 4 message for signer with ID = %v",
 				round3Message.signerID,

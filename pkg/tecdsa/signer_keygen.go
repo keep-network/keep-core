@@ -251,12 +251,14 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 					secretKeyShares[i] = revealedSharesMsg.secretKeyShare
 					publicKeyShares[i] = revealedSharesMsg.publicKeyShare
 				} else {
+					ls.signerGroup.RemoveSignerID(commitmentMsg.signerID)
 					return nil, errors.New("KeyShareRevealMessage rejected")
 				}
 			}
 		}
 
 		if !foundMatchingRevealMessage {
+			ls.signerGroup.RemoveSignerID(commitmentMsg.signerID)
 			return nil, fmt.Errorf(
 				"no matching share reveal message for signer with ID=%v",
 				commitmentMsg.signerID,
