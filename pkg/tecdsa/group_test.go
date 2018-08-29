@@ -56,11 +56,11 @@ func TestIsActiveSigner(t *testing.T) {
 	}
 
 	if !group.IsActiveSigner("1003") {
-		t.Fatal("signer with ID 1003 should be active")
+		t.Fatal("signer with ID 1003 should be a member of the group")
 	}
 
 	if group.IsActiveSigner("1009") {
-		t.Fatal("signer with ID 1009 should not be active")
+		t.Fatal("signer with ID 1009 should not be a member of the group")
 	}
 }
 
