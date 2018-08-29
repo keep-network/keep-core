@@ -295,16 +295,20 @@ func generateNewLocalGroup() (
 	error,
 ) {
 	parameters := &PublicParameters{
-		GroupSize:            20,
-		Threshold:            12,
+
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
 	}
 
+	signerGroup := &signerGroup{
+		GroupSize: 20,
+		Threshold: 12,
+	}
+
 	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
 		parameters.PaillierKeyBitLength,
-		parameters.GroupSize,
-		parameters.Threshold,
+		signerGroup.GroupSize,
+		signerGroup.Threshold,
 		rand.Reader,
 	)
 	if err != nil {
@@ -333,7 +337,7 @@ func generateNewLocalGroup() (
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
 		localSigners[i] = NewLocalSigner(
-			paillierKeys[i], parameters, zkpParameters,
+			paillierKeys[i], parameters, zkpParameters, signerGroup,
 		)
 	}
 

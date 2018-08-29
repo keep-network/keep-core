@@ -168,7 +168,7 @@ func (s *Round2Signer) CombineRound2Messages(
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.GroupSize
 
 	if len(round1Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -436,7 +436,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic *curve.Point, // R
 	err error,
 ) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.GroupSize
 
 	if len(round3Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -570,7 +570,7 @@ func (s *Round5Signer) CombineRound5Messages(
 	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.GroupSize
 
 	if len(round5Messages) != groupSize {
 		return nil, fmt.Errorf(
@@ -647,7 +647,7 @@ type Signature struct {
 func (s *Round5Signer) CombineRound6Messages(
 	round6Messages []*SignRound6Message,
 ) (*Signature, error) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.GroupSize
 
 	if len(round6Messages) != groupSize {
 		return nil, fmt.Errorf(

@@ -11,6 +11,26 @@ import "fmt"
 // value during protocol execution, if does the protocol run will be aborted.
 // Group members may vary between different runs of the protocol.
 type signerGroup struct {
+	// GroupSize defines how many signers are in the group.
+	GroupSize int
+
+	// Threshold defines a group signing threshold.
+	//
+	// If we consider an honest-but-curious adversary, i.e. an adversary that
+	// learns all the secret data of compromised server but does not change
+	// their code, then [GGN 16] protocol produces signature with `n = t + 1`
+	// players in the network (since all players will behave honestly, even the
+	// corrupted ones).
+	// But in the presence of a malicious adversary, who can force corrupted
+	// players to shut down or send incorrect messages, one needs at least
+	// `n = 2t + 1` players in total to guarantee robustness, i.e. the ability
+	// to generate signatures even in the presence of malicious faults.
+	//
+	// Threshold is just for signing. If anything goes wrong during key
+	// generation, e.g. one of ZKPs fails or any commitment opens incorrectly,
+	// key generation protocol terminates without an output.
+	Threshold int
+
 	// IDs of all signers in active signer's group, including the signer itself.
 	signerIDs []string
 }
@@ -49,11 +69,11 @@ func (sg *signerGroup) Size() int {
 
 // IsSignerGroupComplete checks if a number of signers in a group matches initial
 // signers group size.
-func (sc *signerCore) IsSignerGroupComplete() (bool, error) {
-	if sc.signerGroup.Size() != sc.groupParameters.GroupSize {
+func (sg *signerGroup) IsSignerGroupComplete() (bool, error) {
+	if sg.Size() != sg.GroupSize {
 		return false, fmt.Errorf("current signers group size %v doesn't match expected size %v",
-			sc.signerGroup.Size(),
-			sc.groupParameters.GroupSize,
+			sg.Size(),
+			sg.GroupSize,
 		)
 	}
 	return true, nil

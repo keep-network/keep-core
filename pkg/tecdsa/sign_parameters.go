@@ -18,26 +18,6 @@ import (
 // threshold, which curve is used and what's the bit length of Paillier key.
 type PublicParameters struct {
 
-	// GroupSize defines how many signers are in the group.
-	GroupSize int
-
-	// Threshold defines a group signing threshold.
-	//
-	// If we consider an honest-but-curious adversary, i.e. an adversary that
-	// learns all the secret data of compromised server but does not change
-	// their code, then [GGN 16] protocol produces signature with `n = t + 1`
-	// players in the network (since all players will behave honestly, even the
-	// corrupted ones).
-	// But in the presence of a malicious adversary, who can force corrupted
-	// players to shut down or send incorrect messages, one needs at least
-	// `n = 2t + 1` players in total to guarantee robustness, i.e. the ability
-	// to generate signatures even in the presence of malicious faults.
-	//
-	// Threshold is just for signing. If anything goes wrong during key
-	// generation, e.g. one of ZKPs fails or any commitment opens incorrectly,
-	// key generation protocol terminates without an output.
-	Threshold int
-
 	// Curve defines the Elliptic Curve that is used for key generation and
 	// signing protocols.
 	Curve elliptic.Curve

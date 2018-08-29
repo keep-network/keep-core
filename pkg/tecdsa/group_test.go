@@ -102,9 +102,9 @@ func TestIsSignerGroupComplete(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			signer.groupParameters.GroupSize = test.initialGroupSize
+			signer.signerGroup.GroupSize = test.initialGroupSize
 
-			result, err := signer.IsSignerGroupComplete()
+			result, err := signer.signerGroup.IsSignerGroupComplete()
 
 			if result != test.expectedResult {
 				t.Fatalf(

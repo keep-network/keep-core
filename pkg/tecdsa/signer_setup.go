@@ -51,11 +51,11 @@ func (sc *signerCore) GenerateMasterPublicKeyShare() (*MasterPublicKeyShareMessa
 func (sc *signerCore) CombineMasterPublicKeyShares(
 	masterPublicKeySharesMessages []*MasterPublicKeyShareMessage,
 ) (*bn256.G2, error) {
-	if len(masterPublicKeySharesMessages) != sc.groupParameters.GroupSize {
+	if len(masterPublicKeySharesMessages) != sc.signerGroup.GroupSize {
 		return nil, fmt.Errorf(
 			"master public key share required from all group members; got %v, expected %v",
 			len(masterPublicKeySharesMessages),
-			sc.groupParameters.GroupSize,
+			sc.signerGroup.GroupSize,
 		)
 	}
 

@@ -442,7 +442,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 // Partial decryptions are combined together in order to present the signature
 // in a decrypted form.
 func TestSignAndCombineRound6(t *testing.T) {
-	paillierKeys, groupParameters, zkpParameters, err := readTestParameters()
+	paillierKeys, groupParameters, zkpParameters, signerGroup, err := readTestParameters()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -502,7 +502,7 @@ func TestSignAndCombineRound6(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		signers[i] = &Round5Signer{
 			Signer: *NewLocalSigner(
-				&paillierKeys[i], groupParameters, zkpParameters,
+				&paillierKeys[i], groupParameters, zkpParameters, signerGroup,
 			).WithDsaKey(ecdsaKey),
 
 			secretKeyFactor:           encryptedSecretKeyFactor,

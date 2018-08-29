@@ -67,6 +67,7 @@ func NewLocalSigner(
 	paillierKey *paillier.ThresholdPrivateKey,
 	groupParameters *PublicParameters,
 	zkpParameters *zkp.PublicParameters,
+	signerGroup *signerGroup,
 ) *LocalSigner {
 	return &LocalSigner{
 		signerCore: signerCore{
@@ -74,7 +75,7 @@ func NewLocalSigner(
 			paillierKey:     paillierKey,
 			groupParameters: groupParameters,
 			zkpParameters:   zkpParameters,
-			signerGroup:     &signerGroup{},
+			signerGroup:     signerGroup,
 		},
 	}
 }
@@ -213,24 +214,24 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	shareCommitments []*PublicKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shareCommitments) != ls.groupParameters.GroupSize {
+	if len(shareCommitments) != ls.signerGroup.GroupSize {
 		return nil, fmt.Errorf(
 			"commitments required from all group members; got %v, expected %v",
 			len(shareCommitments),
-			ls.groupParameters.GroupSize,
+			ls.signerGroup.GroupSize,
 		)
 	}
 
-	if len(revealedShares) != ls.groupParameters.GroupSize {
+	if len(revealedShares) != ls.signerGroup.GroupSize {
 		return nil, fmt.Errorf(
 			"all group members should reveal shares; Got %v, expected %v",
 			len(revealedShares),
-			ls.groupParameters.GroupSize,
+			ls.signerGroup.GroupSize,
 		)
 	}
 
-	secretKeyShares := make([]*paillier.Cypher, ls.groupParameters.GroupSize)
-	publicKeyShares := make([]*curve.Point, ls.groupParameters.GroupSize)
+	secretKeyShares := make([]*paillier.Cypher, ls.signerGroup.GroupSize)
+	publicKeyShares := make([]*curve.Point, ls.signerGroup.GroupSize)
 
 	for i, commitmentMsg := range shareCommitments {
 		foundMatchingRevealMessage := false

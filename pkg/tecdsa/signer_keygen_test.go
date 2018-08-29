@@ -65,7 +65,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
-	xShares := make([]*paillier.PartialDecryption, parameters.GroupSize)
+	xShares := make([]*paillier.PartialDecryption, group[0].signerCore.signerGroup.GroupSize)
 	for i, signer := range group {
 		xShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
 	}
@@ -222,26 +222,30 @@ func readTestParameters() (
 	[]paillier.ThresholdPrivateKey,
 	*PublicParameters,
 	*zkp.PublicParameters,
+	*signerGroup,
 	error,
 ) {
 	publicParameters := &PublicParameters{
-		GroupSize:            10,
-		Threshold:            6,
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
+	}
+
+	signerGroup := &signerGroup{
+		GroupSize: 10,
+		Threshold: 6,
 	}
 
 	var paillierKey []paillier.ThresholdPrivateKey
 	data, err := ioutil.ReadFile("paillier.test.key")
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
+		return nil, nil, nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
 	}
 	buffer := bytes.NewBuffer(data)
 
 	decoder := gob.NewDecoder(buffer)
 	err = decoder.Decode(&paillierKey)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
+		return nil, nil, nil, nil, fmt.Errorf("Could not read test Paillier key [%v]", err)
 	}
 
 	pTilde, _ := new(big.Int).SetString(
@@ -259,18 +263,18 @@ func readTestParameters() (
 		paillierKey[0].N, pTilde, qTilde, publicParameters.Curve,
 	)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf(
+		return nil, nil, nil, nil, fmt.Errorf(
 			"could not generate public ZKP parameters [%v]", err,
 		)
 	}
 
-	return paillierKey, publicParameters, zkpParameters, nil
+	return paillierKey, publicParameters, zkpParameters, signerGroup, nil
 }
 
 // createNewLocalGroup creates a new group of `LocalSigner`s that did not
 // started initialization process yet.
 func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
-	paillierKeys, groupParameters, zkpParameters, err := readTestParameters()
+	paillierKeys, groupParameters, zkpParameters, signerGroup, err := readTestParameters()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -278,7 +282,7 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
 		localSigners[i] = NewLocalSigner(
-			&paillierKeys[i], groupParameters, zkpParameters,
+			&paillierKeys[i], groupParameters, zkpParameters, signerGroup,
 		)
 	}
 
@@ -319,7 +323,7 @@ func initializeNewLocalGroupWithKeyShares() (
 	// in the PublicKeyShareCommitmentMessage.
 	publicKeyCommitmentMessages := make(
 		[]*PublicKeyShareCommitmentMessage,
-		parameters.GroupSize,
+		group[0].signerGroup.GroupSize,
 	)
 	for i, signer := range group {
 		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
@@ -337,7 +341,7 @@ func initializeNewLocalGroupWithKeyShares() (
 	// we use Paillier.
 	keyShareRevealMessages := make(
 		[]*KeyShareRevealMessage,
-		parameters.GroupSize,
+		group[0].signerGroup.GroupSize,
 	)
 	for i, signer := range group {
 		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
