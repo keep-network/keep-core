@@ -36,6 +36,11 @@
   version = "v0.2.0"
 
 [[projects]]
+  name = "github.com/deckarep/golang-set"
+  packages = ["."]
+  revision = "1d4478f51bed434f1dadf96dcd9b43aabac66795"
+
+[[projects]]
   name = "github.com/dfinity/go-dfinity-crypto"
   packages = ["bls"]
   revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
@@ -67,7 +72,6 @@
     "core/types",
     "crypto",
     "crypto/bn256/cloudflare",
-    "crypto/randentropy",
     "crypto/secp256k1",
     "crypto/sha3",
     "ethclient",
@@ -81,8 +85,8 @@
     "rpc",
     "trie"
   ]
-  revision = "eae63c511ceafab14b92e274c1b18bf1700e2d3d"
-  version = "v1.8.10"
+  revision = "316fc7ecfc10d06603f1358c1f4c1020ec36dd2a"
+  version = "v1.8.14"
 
 [[projects]]
   name = "github.com/fd/go-nat"
@@ -777,12 +781,6 @@
     "internal/fastwalk"
   ]
   revision = "a5b4c53f6e8bdcafa95a94671bf2d1203365858b"
-
-[[projects]]
-  name = "gopkg.in/fatih/set.v0"
-  packages = ["."]
-  revision = "57907de300222151a123d29255ed17f5ed43fad3"
-  version = "v0.1.0"
 
 [[projects]]
   branch = "v2"

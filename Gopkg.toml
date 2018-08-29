@@ -83,3 +83,4 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   name = "github.com/gogo/protobuf"
   revision = "baf2ea5cdb7ce2d399176f925052690c3dad1f56"
   source = "https://github.com/keep-network/protobuf.git"
+
