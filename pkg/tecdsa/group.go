@@ -2,6 +2,14 @@ package tecdsa
 
 import "fmt"
 
+// signerGroup represents a state of a signing group for each protocol execution.
+// Number of members at the begining of execution is equal preconfigured global
+// initial group size.
+// Missbehaving members may be removed from the group. if a member doesn't respond
+// in a given timeout it may be removed as well.
+// Actual number of members in the group cannot fall under preconfigured threshold
+// value during protocol execution, if does the protocol run will be aborted.
+// Group members may vary between different runs of the protocol.
 type signerGroup struct {
 	// IDs of all signers in active signer's group, including the signer itself.
 	signerIDs []string
