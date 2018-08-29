@@ -128,15 +128,17 @@ There are a few implementations we can explore given the above constraints:
 
 ===== Overview
 
-- The base spec concerns with exponentiation, but also applies equally well to additive groups (ec over finite fields).
+- The base spec concerns with exponentiation, but also applies equally well to additive groups
+(ec over finite fields).
 - Authenticated key agreement with key confirmation: two-way explicit key confirmation
 
 ===== Limitations
 
 * This is only a cryptography key agreement scheme
-* Still vulnerable to a man-in-the-middle attacks if the persistent signing keys aren't known
-in advance. Fortunately, we can use staked keys or X509 certs generated from
-those staked keys to ensure that both parties are known before hand.
+* Still vulnerable to a man-in-the-middle attacks if the persistent signing keys
+aren't known in advance. Fortunately, we can use staked keys or X509 certs
+generated from those staked keys to ensure that both parties are known before
+hand.
 
 
 ==== Noise Protocol
