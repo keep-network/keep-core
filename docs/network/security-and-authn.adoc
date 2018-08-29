@@ -21,14 +21,6 @@ ensuring message integrity (to avoid malicious tampering), and encrypting messag
 (to ensure that only intended recipients receive a message).
 
 
-=== Current Functionality
-
-Currently, we do neither of authenticating identities and encrypting messages
-in our network. This limits our ability to restrict access to malicious actors,
-prevents our messages from being tamper-resistant, and allows sensitive information
-to be seen in the clear. This document attempts to provide a path forward.
-
-
 == Proposal
 
 === Terminology
