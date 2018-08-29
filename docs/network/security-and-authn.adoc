@@ -7,8 +7,8 @@ toc::[]
 == Background
 
 Keep is both a decentralized application that lives on a host chain, and a
-layer two network which fulfills the requests of the application. To ensure the
-safety, security, and integrity of the network, the network needs to implement
+network which fulfills the requests of the application. To ensure the safety,
+security, and integrity of the network, the network needs to implement
 authorization, encryption, and authentication. The decentralized nature of the
 network brings about the unique challenge where off-the-shelf protocols such as
 TLS can't be used due to the lack of trusted central authorities and intermediaries.
