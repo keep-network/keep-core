@@ -2,7 +2,6 @@ package tecdsa
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -25,28 +24,28 @@ func TestRemoveSignerID(t *testing.T) {
 		signerIDs: []string{"1001", "1002", "1003", "1004"},
 	}
 
-	if len(group.signerIDs) != 4 || fmt.Sprint(group.signerIDs) != "[1001 1002 1003 1004]" {
+	if !reflect.DeepEqual(group.signerIDs, []string{"1001", "1002", "1003", "1004"}) {
 		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1001 1002 1003 1004]", group.signerIDs)
 	}
 
 	// Remove middle item
 	group.RemoveSignerID("1003")
 
-	if len(group.signerIDs) != 3 || fmt.Sprint(group.signerIDs) != "[1001 1002 1004]" {
+	if !reflect.DeepEqual(group.signerIDs, []string{"1001", "1002", "1004"}) {
 		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1001 1002 1004]", group.signerIDs)
 	}
 
 	// Remove last item
 	group.RemoveSignerID("1004")
 
-	if len(group.signerIDs) != 2 || fmt.Sprint(group.signerIDs) != "[1001 1002]" {
+	if !reflect.DeepEqual(group.signerIDs, []string{"1001", "1002"}) {
 		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1001 1002]", group.signerIDs)
 	}
 
 	// Remove first item
 	group.RemoveSignerID("1001")
 
-	if len(group.signerIDs) != 1 || fmt.Sprint(group.signerIDs) != "[1002]" {
+	if !reflect.DeepEqual(group.signerIDs, []string{"1002"}) {
 		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1002]", group.signerIDs)
 	}
 }
