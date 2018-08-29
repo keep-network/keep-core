@@ -65,17 +65,16 @@ type Signer struct {
 // for the same instance of a `ThresholdPrivateKey`.
 func NewLocalSigner(
 	paillierKey *paillier.ThresholdPrivateKey,
-	groupParameters *PublicParameters,
-	zkpParameters *zkp.PublicParameters,
+	signatureParameters *PublicSignatureParameters, zkpParameters *zkp.PublicParameters,
 	signerGroup *signerGroup,
 ) *LocalSigner {
 	return &LocalSigner{
 		signerCore: signerCore{
-			ID:              generateMemberID(),
-			paillierKey:     paillierKey,
-			groupParameters: groupParameters,
-			zkpParameters:   zkpParameters,
-			signerGroup:     signerGroup,
+			ID:                  generateMemberID(),
+			paillierKey:         paillierKey,
+			signatureParameters: signatureParameters,
+			zkpParameters:       zkpParameters,
+			signerGroup:         signerGroup,
 		},
 	}
 }
@@ -92,7 +91,7 @@ func generateMemberID() string {
 // `q` is the cardinality of Elliptic Curve and public key share is a point
 // on the Curve g^secretKeyShare.
 func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
-	curveParams := ls.groupParameters.Curve.Params()
+	curveParams := ls.signatureParameters.Curve.Params()
 
 	secretKeyShare, err := rand.Int(rand.Reader, curveParams.N)
 	if err != nil {
@@ -100,7 +99,7 @@ func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	}
 
 	publicKeyShare := curve.NewPoint(
-		ls.groupParameters.Curve.ScalarBaseMult(secretKeyShare.Bytes()),
+		ls.signatureParameters.Curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
 	return &dsaKeyShare{
@@ -265,7 +264,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	secretKey := ls.paillierKey.Add(secretKeyShares...)
 	publicKey := publicKeyShares[0]
 	for _, share := range publicKeyShares[1:] {
-		publicKey = curve.NewPoint(ls.groupParameters.Curve.Add(
+		publicKey = curve.NewPoint(ls.signatureParameters.Curve.Add(
 			publicKey.X, publicKey.Y, share.X, share.Y,
 		))
 	}

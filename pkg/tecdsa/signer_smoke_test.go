@@ -291,10 +291,9 @@ func Test31ByteSignatureRS(t *testing.T) {
 
 func generateNewLocalGroup() (
 	[]*LocalSigner,
-	*PublicParameters,
-	error,
+	*PublicSignatureParameters, error,
 ) {
-	parameters := &PublicParameters{
+	parameters := &PublicSignatureParameters{
 
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
