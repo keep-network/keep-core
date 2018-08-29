@@ -66,13 +66,13 @@ for each key-gen and signature protocol execution.
 We may use modified Schnorr protocol to construct a zero-knowledge proof of a discrete 
 logarithm. The original Schnorr protocol works as follows:
 
-Setup
+*Schnorr protocol setup*
 
 * Prover chooses a large prime `p` and a generator `g` of the `q` order subgroup of `Z*_p`,
 
 * Prover chooses a secret `x <- Z*_q`, computes `y=g^x` and gives `y` to Verifier.
 
-Protocol
+*Schnorr protocol*
 
 * Prover chooses `r <- Z*_q`, computes `t=g^r` and sends `t` to Verifier,
 
@@ -90,10 +90,10 @@ challenge and solving a simple equation:
 secret = (s - s') / (c - c')
 ```
 
-We use the Fiat-Shamir Heuristic to make it interactive and statistically zero knowledge. 
+We use the Fiat-Shamir heuristic to make it interactive and statistically zero knowledge. 
 The setup is the same as in the original version of the protocol.
 
-Protocol
+*Schnorr protocol updated with Fiat-Shamir heuristic*
 
 * Prover chooses `r <- Z*_q` and computes `t=g^r`,
 
@@ -122,4 +122,4 @@ vol 9696. Springer, Cham
 Prove Modular Polynomial Relations. CRYPTO 1997: LNCS Vol.1294, pp.16-30
 
 * [MKR 04] MacKenzie P., Reiter M.: Two-party Generation of DSA Signatures. 
-Int. J. Inf. Secur. (2004)
+Int. J. Inf. Secur. 2004
