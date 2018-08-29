@@ -23,9 +23,11 @@ messages (to ensure that only intended recipients receive a message).
 
 === Terminology
 
-peer:: A member of a network that can initiate, accept, and handle secure connections.
+peer:: A member of a network that can initiate, accept, and handle secure
+connections.
 network:: Connections between many peers, not necessarily p2p.
-handshake:: An initial negotiation between peers to establish secret key material.
+handshake:: An initial negotiation between peers to establish secret key
+material.
 chain:: A decentralized, consensus driven store with identities and economic
 incentives.
 stake:: The amount of value required to be a participant in the network. This
