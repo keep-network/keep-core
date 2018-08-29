@@ -73,9 +73,10 @@ adversaries without detection.
 
 - Attributability: A message from a given peer is known to be from that peer.
 
-==== Examples
+==== Scenarios
 
-The protocol should be flexible enough to satisfy the following (but not limited to) scenarios:
+The protocol should be flexible enough to satisfy the following (but not limited to)
+scenarios:
 
 * An unauthenticated peer wants to become an authenticated peer in the Keep
 Network. This peer must be, first and foremost, successfully staked (otherwise
