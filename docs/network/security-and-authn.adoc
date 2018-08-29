@@ -39,8 +39,8 @@ into the network from untrusted peers by verifying an on-chain stake.
 === Goal
 
 We aim to authenticate peers, control access to a network where Keep’s protocols
-execute, and provide a secure channel between communicating peers. The protocol
-must provide the following properties:
+execute, and provide verifiable, private channels between communicating peers.
+The protocol must provide the following capabilities:
 
 - Authentication:
 The goal of authentication is to provide the communicating parties with some
@@ -55,20 +55,23 @@ authenticated peer proof of attestation over a staked key on chain.
 
 - Authorization:
 The goal of authorization is to ensure that capabilities within the system are
-restricted to authenticated identities
+restricted to authenticated identities.
 
 The only capabilities a peer has before establishing a secure, authenticated
-connection is sending an initialization message, ClientHello, to a peer that can
-process this message and authenticate the peer. Authenticated peers can
-participate in the network and form secure channels with other authenticated
-members.
+connection is sending an initialization message, referred to as the
+AuthenticationMessage, to a peer that can process this message and authenticate
+the peer. Authenticated peers can participate in the network and form secure
+channels with other authenticated members.
+
+And have the following properties:
 
 - Confidentiality: Data sent over wire via the established secure channel is only
-visible to the communicating peers.
+intelligible to the communicating peers.
 
 - Integrity: Data sent over the channel after establishment cannot be modified by
 adversaries without detection.
 
+- Attributability: A message from a given peer is known to be from that peer.
 
 ==== Examples
 
