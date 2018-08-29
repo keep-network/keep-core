@@ -29,8 +29,7 @@ ensuring message integrity (to avoid malicious tampering), and encrypting messag
 * server: the receiver of a secure connection.
 * peer: a member of a network that is both a client and a server.
 * network: connections between many peers, not necessarily p2p.
-* handshake: an initial negotiation between a client and a server to establish
-secret key material.
+* handshake: an initial negotiation between peers to establish secret key material.
 * chain: a decentralized, consensus driven store with identities and economic
 incentives.
 * stake: an on-chain identity that holds at least the minimum amount of value
@@ -110,15 +109,16 @@ There are a few implementations we can explore given the above constraints:
 ==== Elliptic-Curve-Diffie-Hellman
 
 ===== Overview
-        - [draft]Diffie-Hellman satisfies some of the properties above, but due to [reasons],
-        it does not assume the presence of signature keys and hence is susceptible
-        to man-in-the-middle attacks. As a building block, we can take this into account and layer on-top
-     signing keys. This introduces complexity to the protocol, though.
+        - [draft]Diffie-Hellman satisfies some of the properties above, but due
+        to [reasons], it does not assume the presence of signature keys and hence
+        is susceptible to man-in-the-middle attacks. As a building block, we can
+        take this into account and layer on-top signing keys. This introduces
+        complexity to the protocol.
 
 ===== Limitations
 
 
-==== Full Elliptic Curve, Diffie-Hellman Station-to-Station
+==== Elliptic Curve, Diffie-Hellman Full Station-to-Station
 
 ===== Overview
 
