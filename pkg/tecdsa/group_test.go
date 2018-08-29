@@ -7,14 +7,14 @@ import (
 	"testing"
 )
 
-func TestRegisterSignerID(t *testing.T) {
+func TestAddSignerID(t *testing.T) {
 	group := signerGroup{}
 
 	if len(group.signerIDs) != 0 {
 		t.Fatal("signerIDs is not empty")
 	}
 
-	group.RegisterSignerID("1001")
+	group.AddSignerID("1001")
 	if len(group.signerIDs) != 1 || group.signerIDs[0] != "1001" {
 		t.Fatalf("signerIDs should contain only one element with value %v, but is %v", "1001", group.signerIDs)
 	}

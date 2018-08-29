@@ -7,9 +7,8 @@ type signerGroup struct {
 	signerIDs []string
 }
 
-// RegisterSignerID adds a signer to the list of signers the local signer
-// knows about.
-func (sg *signerGroup) RegisterSignerID(ID string) {
+// AddSignerID adds a signer ID to the list of signers in the group.
+func (sg *signerGroup) AddSignerID(ID string) {
 	// TODO Validate if signer ID is unique, add trim
 	sg.signerIDs = append(sg.signerIDs, ID)
 }
