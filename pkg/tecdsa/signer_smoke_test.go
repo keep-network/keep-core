@@ -337,6 +337,13 @@ func generateNewLocalGroup() (
 		)
 	}
 
+	// Register signers' IDs
+	for i := 0; i < len(localSigners); i++ {
+		for j := 0; j < len(localSigners); j++ {
+			localSigners[i].signerGroup.RegisterSignerID(localSigners[j].ID)
+		}
+	}
+
 	return localSigners, parameters, nil
 }
 

@@ -510,6 +510,13 @@ func TestSignAndCombineRound6(t *testing.T) {
 			signatureFactorPublic:     signatureFactorPublic,
 			signatureFactorPublicHash: signatureFactorPublicHash,
 		}
+
+	}
+
+	for i := 0; i < len(signers); i++ {
+		for j := 0; j < len(signers); j++ {
+			signers[i].signerGroup.RegisterSignerID(signers[j].ID)
+		}
 	}
 
 	messageHash := make([]byte, 32) // m
