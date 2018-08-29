@@ -56,6 +56,10 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// generation process
 	//
 	for i, signer := range localSigners {
+		if groupComplete, err := signer.IsSignerGroupComplete(); !groupComplete || err != nil {
+			t.Fatal(err)
+		}
+
 		masterPublicKeyShareMessagesKeyGeneration[i], err = signer.GenerateMasterPublicKeyShare()
 		if err != nil {
 			t.Fatal(err)
