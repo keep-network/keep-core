@@ -89,24 +89,25 @@ recipient can inspect and verify the contents of the message.
 * A packed message P that contains many sub-messages S, each signed and encrypted
 for a specific member M. This message can be circulated throughout a network such
 that all intended recipients will eventually receive the message BUT will be only
-be able to unpack the contents of a sub-message intended for them (M can read S in P).
+be able to unpack the contents of a sub-message intended for them
+(M can read S in P).
 
 
 === Potential Implementations
 
 Given the above, we are primarily concerned with authentication and key exchange.
 The literature overwhelmingly recommends a solution which provides authentication
-and key-exchange considered jointly. Per diffie (1992):
+and key-exchange considered jointly. Per <<Station-To-Station>>:
 
-``` A protocol providing authentication without key exchange is susceptible to an
-enemy who waits until the authentication is complete and then takes over one end
-of the communications line. Such an attack is not precluded by a key exchange
-that is independent of authentication. Key exchange should be linked to
-authentication so that a party has assurances that an exchanged key (which might
-be used to facilitate privacy or integrity and thus keep authenticity alive) is
-in fact shared with the authenticated party, and not an impostor. For these
-reasons, it is essential to keep key exchange in mind in the design and analysis of
-authentication protocols. ```
+> A protocol providing authentication without key exchange is susceptible to an
+> enemy who waits until the authentication is complete and then takes over one
+> end of the communications line. Such an attack is not precluded by a key
+> exchange that is independent of authentication. Key exchange should be linked
+> to authentication so that a party has assurances that an exchanged key (which
+> might be used to facilitate privacy or integrity and thus keep authenticity
+> alive) is in fact shared with the authenticated party, and not an impostor. For
+> these reasons, it is essential to keep key exchange in mind in the design and
+> analysis of authentication protocols.
 
 There are a few implementations we can explore given the above constraints:
 
