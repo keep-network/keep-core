@@ -132,7 +132,7 @@ func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
 	}
 
 	expectedError := fmt.Errorf(
-		"all group members should reveal shares; Got 1, expected 10",
+		"all group members should reveal shares; got 1, expected 10",
 	)
 
 	_, err = group[0].CombineDsaKeyShares(
