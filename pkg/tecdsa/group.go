@@ -1,5 +1,7 @@
 package tecdsa
 
+import "fmt"
+
 type signerGroup struct {
 	// IDs of all signers in active signer's group, including the signer itself.
 	signerIDs []string
@@ -33,7 +35,19 @@ func (sg *signerGroup) IsActiveSigner(ID string) bool {
 	return false
 }
 
-// Size return number of signers in the signing group
+// Size return number of signers in the signing group.
 func (sg *signerGroup) Size() int {
 	return len(sg.signerIDs)
+}
+
+// IsSignerGroupComplete checks if a number of signers in a group matches initial
+// signers group size.
+func (sc *signerCore) IsSignerGroupComplete() (bool, error) {
+	if sc.signerGroup.Size() != sc.groupParameters.GroupSize {
+		return false, fmt.Errorf("current signers group size %v doesn't match expected size %v",
+			sc.signerGroup.Size(),
+			sc.groupParameters.GroupSize,
+		)
+	}
+	return true, nil
 }

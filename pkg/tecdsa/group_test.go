@@ -1,7 +1,9 @@
 package tecdsa
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -72,5 +74,54 @@ func TestSize(t *testing.T) {
 	group.signerIDs = []string{"1001", "1002", "1003", "1004"}
 	if group.Size() != 4 {
 		t.Fatalf("returned group size %v doesn't match expected %v", group.Size(), 4)
+	}
+}
+
+func TestIsSignerGroupComplete(t *testing.T) {
+	signer := signerCore{
+		signerGroup: &signerGroup{
+			signerIDs: []string{"1001", "1002", "1003", "1004"},
+		},
+		groupParameters: &PublicParameters{},
+	}
+
+	var tests = map[string]struct {
+		initialGroupSize int
+		expectedResult   bool
+		expectedError    error
+	}{
+		"positive validation": {
+			initialGroupSize: 4,
+			expectedResult:   true,
+			expectedError:    nil,
+		},
+		"negative validation - group size doesn't match": {
+			initialGroupSize: 3,
+			expectedResult:   false,
+			expectedError:    errors.New("current signers group size 4 doesn't match expected size 3"),
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			signer.groupParameters.GroupSize = test.initialGroupSize
+
+			result, err := signer.IsSignerGroupComplete()
+
+			if result != test.expectedResult {
+				t.Fatalf(
+					"unexpected result\nexpected: %v\nactual: %v",
+					test.expectedResult,
+					result,
+				)
+			}
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"unexpected error\nexpected: %v\nactual: %v",
+					test.expectedError,
+					err,
+				)
+			}
+		})
 	}
 }
