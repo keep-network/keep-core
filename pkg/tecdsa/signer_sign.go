@@ -647,6 +647,7 @@ func (s *Round5Signer) SignRound6(
 	)
 
 	return &SignRound6Message{
+		signerID:                   s.ID,
 		signaturePartialDecryption: s.paillierKey.Decrypt(signatureCypher.C),
 	}, nil
 }
