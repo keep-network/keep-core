@@ -301,13 +301,13 @@ func generateNewLocalGroup() (
 	}
 
 	signerGroup := &signerGroup{
-		GroupSize: 20,
-		Threshold: 12,
+		InitialGroupSize: 20,
+		Threshold:        12,
 	}
 
 	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
 		parameters.PaillierKeyBitLength,
-		signerGroup.GroupSize,
+		signerGroup.InitialGroupSize,
 		signerGroup.Threshold,
 		rand.Reader,
 	)

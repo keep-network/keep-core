@@ -65,7 +65,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
-	xShares := make([]*paillier.PartialDecryption, group[0].signerCore.signerGroup.GroupSize)
+	xShares := make([]*paillier.PartialDecryption, group[0].signerCore.signerGroup.InitialGroupSize)
 	for i, signer := range group {
 		xShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
 	}
@@ -231,8 +231,8 @@ func readTestParameters() (
 	}
 
 	signerGroup := &signerGroup{
-		GroupSize: 10,
-		Threshold: 6,
+		InitialGroupSize: 10,
+		Threshold:        6,
 	}
 
 	var paillierKey []paillier.ThresholdPrivateKey
@@ -323,7 +323,7 @@ func initializeNewLocalGroupWithKeyShares() (
 	// in the PublicKeyShareCommitmentMessage.
 	publicKeyCommitmentMessages := make(
 		[]*PublicKeyShareCommitmentMessage,
-		group[0].signerGroup.GroupSize,
+		group[0].signerGroup.InitialGroupSize,
 	)
 	for i, signer := range group {
 		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
@@ -341,7 +341,7 @@ func initializeNewLocalGroupWithKeyShares() (
 	// we use Paillier.
 	keyShareRevealMessages := make(
 		[]*KeyShareRevealMessage,
-		group[0].signerGroup.GroupSize,
+		group[0].signerGroup.InitialGroupSize,
 	)
 	for i, signer := range group {
 		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()

@@ -214,24 +214,24 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	shareCommitments []*PublicKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shareCommitments) != ls.signerGroup.GroupSize {
+	if len(shareCommitments) != ls.signerGroup.InitialGroupSize {
 		return nil, fmt.Errorf(
 			"commitments required from all group members; got %v, expected %v",
 			len(shareCommitments),
-			ls.signerGroup.GroupSize,
+			ls.signerGroup.InitialGroupSize,
 		)
 	}
 
-	if len(revealedShares) != ls.signerGroup.GroupSize {
+	if len(revealedShares) != ls.signerGroup.InitialGroupSize {
 		return nil, fmt.Errorf(
 			"all group members should reveal shares; Got %v, expected %v",
 			len(revealedShares),
-			ls.signerGroup.GroupSize,
+			ls.signerGroup.InitialGroupSize,
 		)
 	}
 
-	secretKeyShares := make([]*paillier.Cypher, ls.signerGroup.GroupSize)
-	publicKeyShares := make([]*curve.Point, ls.signerGroup.GroupSize)
+	secretKeyShares := make([]*paillier.Cypher, ls.signerGroup.InitialGroupSize)
+	publicKeyShares := make([]*curve.Point, ls.signerGroup.InitialGroupSize)
 
 	for i, commitmentMsg := range shareCommitments {
 		foundMatchingRevealMessage := false

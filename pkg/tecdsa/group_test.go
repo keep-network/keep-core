@@ -97,12 +97,12 @@ func TestIsSignerGroupComplete(t *testing.T) {
 		"negative validation - group size doesn't match": {
 			initialGroupSize: 3,
 			expectedResult:   false,
-			expectedError:    errors.New("current signers group size 4 doesn't match expected size 3"),
+			expectedError:    errors.New("current signers group size 4 doesn't match expected initial group size 3"),
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			signer.signerGroup.GroupSize = test.initialGroupSize
+			signer.signerGroup.InitialGroupSize = test.initialGroupSize
 
 			result, err := signer.signerGroup.IsSignerGroupComplete()
 

@@ -10,9 +10,12 @@ import "fmt"
 // Actual number of members in the group cannot fall under preconfigured threshold
 // value during protocol execution, if does the protocol run will be aborted.
 // Group members may vary between different runs of the protocol.
+//
+// Defines also what is an initial size of the group and what is a threshold for
+// signing.
 type signerGroup struct {
 	// GroupSize defines how many signers are in the group.
-	GroupSize int
+	InitialGroupSize int
 
 	// Threshold defines a group signing threshold.
 	//
@@ -70,10 +73,10 @@ func (sg *signerGroup) Size() int {
 // IsSignerGroupComplete checks if a number of signers in a group matches initial
 // signers group size.
 func (sg *signerGroup) IsSignerGroupComplete() (bool, error) {
-	if sg.Size() != sg.GroupSize {
-		return false, fmt.Errorf("current signers group size %v doesn't match expected size %v",
+	if sg.Size() != sg.InitialGroupSize {
+		return false, fmt.Errorf("current signers group size %v doesn't match expected initial group size %v",
 			sg.Size(),
-			sg.GroupSize,
+			sg.InitialGroupSize,
 		)
 	}
 	return true, nil
