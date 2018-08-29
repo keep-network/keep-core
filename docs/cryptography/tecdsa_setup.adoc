@@ -1,4 +1,4 @@
-= T-ECDSA protocol setup
+= T-ECDSA setup protocol
 
 == Goal
 
@@ -36,7 +36,79 @@ the protocol by a trusted third party and numbers used to construct them are not
 known to the group members, all members use the same parameters and all the 
 communication inside the group is public and based on broadcast messages.
 
+== Setup protocol
 
+==== ZKP `Π_i`, `Π_1i`, `Π_2i` parameters
+
+Zero-knowledge proofs `Π` described by Gennaro are based on the work of 
+MacKenzie and Reiter [MKR 04].  
+
+According to their paper, soundness requires:
+
+* `N_tilde = p_tilde * q_tilde`, where `p_tilde` and `q_tilde` are strong 
+primes unknown for Prover,
+
+* discrete logs of `h1` and `h2` relative to each other modulo `N_tilde` are 
+unknown for Prover
+
+Zero-knowledge requires:
+
+* discrete logs of `h1` and `h2` relative to each other modulo `N_tilde` exist
+
+Taking those requirements into account, we expect Verifier to generate `N_tilde`, 
+`h1` and `h2` and send those values to Prover. Prover uses those values later to 
+create Π proofs.  Along with those parameters, Verifier needs to provide a zero-knowledge 
+proof for a discrete logarithm. 
+
+The best solution in terms of security is to generate `N_tilde`, `h1`, and `h2` separately 
+for each key-gen and signature protocol execution.
+
+We may use modified Schnorr protocol to construct a zero-knowledge proof of a discrete 
+logarithm. The original Schnorr protocol works as follows:
+
+Setup
+
+* Prover chooses a large prime `p` and a generator `g` of the `q` order subgroup of `Z*_p`,
+
+* Prover chooses a secret `x <- Z*_q`, computes `y=g^x` and gives `y` to Verifier.
+
+Protocol
+
+* Prover chooses `r <- Z*_q`, computes `t=g^r` and sends `t` to Verifier,
+
+* Verifier chooses `c <- Z*_q` and sends `c` to Prover,
+
+* Prover computes `s = r + cx` and sends `s` to Verifier,
+
+* Verifier checks whether `g^s = ty^c`.
+
+The original Schnorr protocol is interactive and honest-verifier zero-knowledge. It lets 
+a dishonest adversary extract the secret value by executing the protocol twice for a different 
+challenge and solving a simple equation:
+
+```
+secret = (s - s') / (c - c')
+```
+
+We use the Fiat-Shamir Heuristic to make it interactive and statistically zero knowledge. 
+The setup is the same as in the original version of the protocol.
+
+Protocol
+
+* Prover chooses `r <- Z*_q` and computes `t=g^r`,
+
+* Prover computes `c = H(g, y, r)` where `H` is a cryptographic hash function,
+
+* Prover computes `s = r + cx`. The resulting proof is the pair `(t, s)`.
+
+* Verifier checks whether `g^s = ty^c`.
+
+Since soundness requires `N_tilde` to be a product of two safe primes with factorization 
+unknown for Prover, we can't just group-generate two primes and compute their product. 
+For the same reason, we can't just choose `N_tilde` randomly. Since zero-knowledge requires 
+discrete logs of `h1` and `h2` relative to each other modulo `N_tilde` to exist and soundness 
+requires discrete logs are uknown for Prover, we can't just generate those parameters using 
+the random beacon.
 
 == References
 
@@ -48,3 +120,6 @@ vol 9696. Springer, Cham
 
 * [FO 97] Fujisaki E. Okamoto T.: Statistical Zero Knowledge Protocols to 
 Prove Modular Polynomial Relations. CRYPTO 1997: LNCS Vol.1294, pp.16-30
+
+* [MKR 04] MacKenzie P., Reiter M.: Two-party Generation of DSA Signatures. 
+Int. J. Inf. Secur. (2004)
