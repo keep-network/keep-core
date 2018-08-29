@@ -222,7 +222,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 
 	if len(revealedShares) != ls.groupParameters.GroupSize {
 		return nil, fmt.Errorf(
-			"all group members should reveal shares; Got %v, expected %v",
+			"all group members should reveal shares; got %v, expected %v",
 			len(revealedShares),
 			ls.groupParameters.GroupSize,
 		)
