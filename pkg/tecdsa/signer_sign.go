@@ -170,19 +170,19 @@ func (s *Round2Signer) CombineRound2Messages(
 ) {
 	groupSize := s.signerGroup.Size()
 
-	if len(round1Messages) != groupSize {
+	if len(round1Messages) < s.groupParameters.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 1 messages required from all group members; got %v, expected %v",
+			"round 1 messages required from at least %v group members but got %v",
+			s.groupParameters.Threshold,
 			len(round1Messages),
-			groupSize,
 		)
 	}
 
-	if len(round2Messages) != groupSize {
+	if len(round2Messages) < s.groupParameters.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 2 messages required from all group members; got %v, expected %v",
+			"round 2 messages required from at least %v group members but got %v",
+			s.groupParameters.Threshold,
 			len(round2Messages),
-			groupSize,
 		)
 	}
 
@@ -444,19 +444,19 @@ func (s *Round4Signer) CombineRound4Messages(
 ) {
 	groupSize := s.signerGroup.Size()
 
-	if len(round3Messages) != groupSize {
+	if len(round3Messages) < s.groupParameters.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 3 messages required from all group members; got %v, expected %v",
+			"round 3 messages required from at least %v group members but got %v",
+			s.groupParameters.Threshold,
 			len(round3Messages),
-			groupSize,
 		)
 	}
 
-	if len(round4Messages) != groupSize {
+	if len(round4Messages) < s.groupParameters.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 4 messages required from all group members; got %v, expected %v",
+			"round 4 messages required from at least %v group members but got %v",
+			s.groupParameters.Threshold,
 			len(round4Messages),
-			groupSize,
 		)
 	}
 
@@ -584,11 +584,11 @@ func (s *Round5Signer) CombineRound5Messages(
 ) {
 	groupSize := s.signerGroup.Size()
 
-	if len(round5Messages) != groupSize {
+	if len(round5Messages) < s.groupParameters.Threshold {
 		return nil, fmt.Errorf(
-			"round 5 messages required from all group members; got %v, expected %v",
+			"round 5 messages required from at least %v group members but got %v",
+			s.groupParameters.Threshold,
 			len(round5Messages),
-			groupSize,
 		)
 	}
 
@@ -665,11 +665,11 @@ func (s *Round5Signer) CombineRound6Messages(
 ) (*Signature, error) {
 	groupSize := s.signerGroup.Size()
 
-	if len(round6Messages) != groupSize {
+	if len(round6Messages) < s.groupParameters.Threshold {
 		return nil, fmt.Errorf(
-			"round 6 messages required from all group members; got %v, expected %v",
+			"round 6 messages required from at least %v group members but got %v",
+			s.groupParameters.Threshold,
 			len(round6Messages),
-			groupSize,
 		)
 	}
 
