@@ -1,0 +1,8 @@
+= T-ECDSA protocol setup
+
+== Goal
+
+The goal of this document is to describe our custom approach for T-ECDSA 
+protocol setup and required modifications to the protocol itself to make the 
+setup possible. This document does not cover a dealerless protocol for Paillier 
+threshold key generator.
