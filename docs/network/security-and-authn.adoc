@@ -25,16 +25,15 @@ ensuring message integrity (to avoid malicious tampering), and encrypting messag
 
 === Terminology
 
-* client: the initiator of a secure connection.
-* server: the receiver of a secure connection.
-* peer: a member of a network that is both a client and a server.
+* peer: a member of a network that can initiate, accept, and handle secure connections.
 * network: connections between many peers, not necessarily p2p.
 * handshake: an initial negotiation between peers to establish secret key material.
 * chain: a decentralized, consensus driven store with identities and economic
 incentives.
 * stake: an on-chain identity that holds at least the minimum amount of value
 required to be a participant in the network.
-* bootstrap: a trusted peer in a network that facilitates new connections into the network from untrusted peers by verifying an on-chain stake.
+* bootstrap node: a trusted peer in a network that facilitates new connections
+into the network from untrusted peers by verifying an on-chain stake.
 
 
 === Goal
@@ -45,20 +44,22 @@ must provide the following properties:
 
 - Authentication:
 The goal of authentication is to provide the communicating parties with some
-assurance that they know each others identities.
+assurance that they know each others identities. If the authentication involves
+key exchange, then they both accept the exchanged key also.
 
-In our model of authentication, every node is a server and a client, and all nodes
-must always be authenticated. Authentication happens via asymmetric cryptography,
-using a signature algorithm that is cheap to verify on-chain (ie. ECDSA, BLS).
-The client must provide the server proof of attestation over a staked key on chain.
+In our model of authentication, all peers must always be authenticated.
+Authentication happens via asymmetric cryptography, using a signature algorithm
+that is cheap to verify on-chain (ie. ECDSA, BLS). Given an authenticated peer
+and an unauthenticated peer, the unauthenticated peer must provide the
+authenticated peer proof of attestation over a staked key on chain.
 
 - Authorization:
 The goal of authorization is to ensure that capabilities within the system are
 restricted to authenticated identities
 
-The only capabilities a node has before establishing a secure, authenticated
-connection is sending an initialization message, ClientHello, to a node that can
-process this message and authenticate the node. Authenticated nodes can
+The only capabilities a peer has before establishing a secure, authenticated
+connection is sending an initialization message, ClientHello, to a peer that can
+process this message and authenticate the peer. Authenticated peers can
 participate in the network and form secure channels with other authenticated
 members.
 
@@ -73,12 +74,12 @@ adversaries without detection.
 
 The protocol should be flexible enough to satisfy the following (but not limited to) scenarios:
 
-* A client wants to become a peer in the Keep Network. A client must be, first
-and foremost, successfully staked (otherwise dishonest participants can't be
-punished). Furthermore, the client must prove their stake to the members of the
-network.
+* An unauthenticated peer wants to become an authenticated peer in the Keep
+Network. This peer must be, first and foremost, successfully staked (otherwise
+dishonest participants can't be punished). Furthermore, the peer must prove their
+stake to the members of the network.
 
-* A client wishes to send a point-to-point message such that only the intended
+* A peer wishes to send a point-to-point message such that only the intended
 recipient can inspect and verify the contents of the message.
 
 * A packed message P that contains many sub-messages S, each signed and encrypted
@@ -169,13 +170,13 @@ we need forward secrecy - how will we get that?
 What messages are in the clear? In any handshake, does the first message
 (ClientHello) have to be in the clear? Or can we state that the first message to
 the bootstrap node is encrypted with the bootstrap node's Public Key? And then
-the return (ServerHello) is encrypted with the client's pubkey.
+the return (ServerHello) is encrypted with the sender of the ClientHello's pubkey.
 
 No need for point format negotiation, right? Single point format for each curve.
 
 Are we at risk of version downgrade if we support more than one negotiation type?
 What does a non bootstrap node do with an authentication message? Or, does a
-non bootstrap node accept a connection even if the node in question isn't known
+non bootstrap node accept a connection even if the peer in question isn't known
 authenticated via a bootstrap node?
 
 Datagram-based transports have a terrible story (DTLS) - noise protocol is an obvious winner here.
