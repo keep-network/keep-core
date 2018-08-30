@@ -81,6 +81,16 @@ channels with other authenticated members.
 And have the following properties:
 
 
+===== Secure
+
+<<F2>> introduces us to the definition of a secure protocol. We summarize it as:
+
+1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
+infeasible for anyone not _P~1~_ and _P~2~_, to recover the secret key.
+
+2.  The record of messages shared between _P~1~_ and _P~2~_ to establish the
+authentication of identity must be identical.
+
 ===== Confidentiality
 
 Data sent over wire via the established secure channel is only
