@@ -119,7 +119,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 		}
 	}
 
-	for _, signer := range localSigners {
+	for _, signer := range signers {
 		err = signer.ReceiveCommitmentMasterPublicKeys(
 			commitmentMasterPublicKeyMessagesSigning,
 		)

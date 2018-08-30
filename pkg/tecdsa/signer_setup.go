@@ -14,8 +14,6 @@ type signerCore struct {
 
 	paillierKey *paillier.ThresholdPrivateKey
 
-	commitmentPublicKeys map[string]*bn256.G2
-
 	publicParameters *PublicParameters
 	zkpParameters    *zkp.PublicParameters
 
@@ -24,16 +22,22 @@ type signerCore struct {
 	// Initially empty, populated as each other signer announces its presence.
 	// Signers are removed from the group if they misbehave or do not reply.
 	signerGroup *signerGroup
+
+	peerProtocolParameters map[string]*protocolParameters
+}
+
+type protocolParameters struct {
+	commitmentPublicKey *bn256.G2
 }
 
 func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
-	return sc.commitmentPublicKeys[sc.ID]
+	return sc.peerProtocolParameters[sc.ID].commitmentPublicKey
 }
 
 func (sc *signerCore) commitmentVerificationMasterPublicKey(
 	signerID string,
 ) *bn256.G2 {
-	return sc.commitmentPublicKeys[signerID]
+	return sc.peerProtocolParameters[signerID].commitmentPublicKey
 }
 
 // GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
@@ -53,6 +57,11 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 			"could not generate multi-trapdoor commitment master public key [%v]",
 			err,
 		)
+	}
+
+	sc.peerProtocolParameters = make(map[string]*protocolParameters)
+	sc.peerProtocolParameters[sc.ID] = &protocolParameters{
+		commitmentPublicKey: publicKey,
 	}
 
 	return &CommitmentMasterPublicKeyMessage{
@@ -76,14 +85,17 @@ func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 		)
 	}
 
-	sc.commitmentPublicKeys = make(map[string]*bn256.G2)
 	for _, message := range messages {
-		masterPublicKey := new(bn256.G2)
-		masterPublicKey.Unmarshal(
-			message.masterPublicKey,
-		)
+		if message.signerID != sc.ID {
+			masterPublicKey := new(bn256.G2)
+			masterPublicKey.Unmarshal(
+				message.masterPublicKey,
+			)
 
-		sc.commitmentPublicKeys[message.signerID] = masterPublicKey
+			sc.peerProtocolParameters[message.signerID] = &protocolParameters{
+				commitmentPublicKey: masterPublicKey,
+			}
+		}
 	}
 
 	return nil
