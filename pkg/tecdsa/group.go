@@ -1,13 +1,20 @@
 package tecdsa
 
 // signerGroup represents a state of a signing group for each protocol execution.
+//
 // Number of members at the beginning of execution is equal to a preconfigured value,
 // specific for each group, represented by `InitialGroupSize`.
 // Misbehaving or not responding members are removed from the group.
+//
 // The actual number of members in the group cannot fall under the `Threshold`
 // value. If it does, the protocol execution will be aborted. The `Threshold` is
 // a preconfigured value, specific for each group.
-// Group members may vary between different runs of the protocol.
+//
+// Initial group is set by the group selection protocol. A fresh list of members
+// is selected before key generation process execution, where ECDSA key shares are
+// distributed among group members. Hence for the signing part of the protocol the
+// group must be fixed. New members cannot join the group after the ECDSA key
+// share are distributed.
 //
 // Defines also what is an initial size of the group and what is a threshold for
 // signing.
