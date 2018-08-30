@@ -85,14 +85,48 @@ Network. This peer must be, first and foremost, successfully staked (otherwise
 dishonest participants can't be punished). Furthermore, the peer must prove their
 stake to the members of the network.
 
+The above capabilities, authentication and authorization, cover the requirements
+of this example. Specifically, authentication allows a peer to validate the
+identity of the unknown peer. Next, authorization enables the following:
+
+1. The restriction of the unknown, untrusted peer to only send the initial
+request to be authenticated.
+2. The capability of an authenticated peer to respond to on-chain events or to
+network-specific events.
+3. The restriction (and potential disconnection) from the network for members
+who fall below the minimum stake or for those who act maliciously.
+
+----
+
 * A peer wishes to send a point-to-point message such that only the intended
 recipient can inspect and verify the contents of the message.
 
-* A packed message P that contains many sub-messages S, each signed and encrypted
-for a specific member M. This message can be circulated throughout a network such
-that all intended recipients will eventually receive the message BUT will be only
-be able to unpack the contents of a sub-message intended for them
-(M can read S in P).
+This example presumes that the identity is verified and accepted in the network,
+which means that authentication and authorization are satisfied.
+Confidentiality is needed to ensure that the communicating peers can communicate
+in secret. Integrity to ensure that the message hasn't been tampered with in
+transit over the wire. Attributability to ensure that if the either peer means
+the other harm, then they will be removed from the network.
+
+----
+
+* A packed message _M_ that contains many sub-messages _S~all~_, each signed and
+encrypted for a specific peer _P~i~_. This message _M_ can be circulated
+throughout a network such that all intended recipients _P~all~_ will eventually
+receive the message _M_ BUT will be only be able to unpack the contents of a
+sub-message _S~i~_ intended for them (_P~i~_ can read _S~i~_ in _M_).
+
+This example will require all of confidentiality, integrity, and attributability.
+
+Confidentiality ensures that each sub-message _S~i~_ is signed and encrypted for
+the use of a specific peer _P~i~_.
+
+Integrity ensures that no other peer _P~1~_ can successfully tamper with another
+peer's _P~2~_ message _S~2~_(as many peers will be exposed to the same message _M_,
+but only have access to a specific sub-message _S~i~_).
+
+Attributability ensures that if a peer acts in bad faith, they are easily
+identifiable by any other authenticated peer in the network.
 
 
 === Potential Implementations
