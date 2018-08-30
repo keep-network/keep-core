@@ -17,7 +17,8 @@ type signerCore struct {
 	signatureParameters *PublicSignatureParameters
 	zkpParameters       *zkp.PublicParameters
 
-	// Group of all signers in the group, including the signer itself.
+	// Information about the signing group. Holds information about all the members,
+	// including the signer itself.
 	// Initially empty, populated as each other signer announces its presence.
 	// Signers are removed from the group if they misbehave or do not reply.
 	signerGroup *signerGroup
