@@ -1,7 +1,5 @@
 package tecdsa
 
-import "fmt"
-
 // signerGroup represents a state of a signing group for each protocol execution.
 // Number of members at the beginning of execution is equal to a preconfigured value,
 // specific for each group, represented by `InitialGroupSize`.
@@ -64,19 +62,13 @@ func (sg *signerGroup) IsActiveSigner(ID string) bool {
 	return false
 }
 
-// Size return number of signers in the signing group.
-func (sg *signerGroup) Size() int {
+// SignerCount return number of signers in the signing group.
+func (sg *signerGroup) SignerCount() int {
 	return len(sg.signerIDs)
 }
 
 // IsSignerGroupComplete checks if a number of signers in a group matches initial
 // signers group size.
-func (sg *signerGroup) IsSignerGroupComplete() (bool, error) {
-	if sg.Size() != sg.InitialGroupSize {
-		return false, fmt.Errorf("current signers group size %v doesn't match expected initial group size %v",
-			sg.Size(),
-			sg.InitialGroupSize,
-		)
-	}
-	return true, nil
+func (sg *signerGroup) IsSignerGroupComplete() bool {
+	return sg.SignerCount() == sg.InitialGroupSize
 }
