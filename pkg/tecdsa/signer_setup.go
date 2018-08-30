@@ -27,17 +27,17 @@ type signerCore struct {
 }
 
 type protocolParameters struct {
-	commitmentPublicKey *bn256.G2
+	commitmentMasterTrapdoorPublicKey *bn256.G2
 }
 
 func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
-	return sc.peerProtocolParameters[sc.ID].commitmentPublicKey
+	return sc.peerProtocolParameters[sc.ID].commitmentMasterTrapdoorPublicKey
 }
 
 func (sc *signerCore) commitmentVerificationMasterPublicKey(
 	signerID string,
 ) *bn256.G2 {
-	return sc.peerProtocolParameters[signerID].commitmentPublicKey
+	return sc.peerProtocolParameters[signerID].commitmentMasterTrapdoorPublicKey
 }
 
 // GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
@@ -61,7 +61,7 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 
 	sc.peerProtocolParameters = make(map[string]*protocolParameters)
 	sc.peerProtocolParameters[sc.ID] = &protocolParameters{
-		commitmentPublicKey: publicKey,
+		commitmentMasterTrapdoorPublicKey: publicKey,
 	}
 
 	return &CommitmentMasterPublicKeyMessage{
@@ -93,7 +93,7 @@ func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 			)
 
 			sc.peerProtocolParameters[message.signerID] = &protocolParameters{
-				commitmentPublicKey: masterPublicKey,
+				commitmentMasterTrapdoorPublicKey: masterPublicKey,
 			}
 		}
 	}
