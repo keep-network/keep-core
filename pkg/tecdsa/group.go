@@ -51,11 +51,10 @@ func (sg *signerGroup) RemoveSignerID(ID string) {
 	}
 }
 
-// IsActiveSigner checks if a signer with given ID is one of the signers the local
-// signer knows about.
-func (sg *signerGroup) IsActiveSigner(ID string) bool {
+// Contains checks if a group of signers has a signer with the given ID..
+func (sg *signerGroup) Contains(signerID string) bool {
 	for i := 0; i < len(sg.signerIDs); i++ {
-		if sg.signerIDs[i] == ID {
+		if sg.signerIDs[i] == signerID {
 			return true
 		}
 	}

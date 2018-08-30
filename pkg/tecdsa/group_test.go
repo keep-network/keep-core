@@ -57,17 +57,17 @@ func TestRemoveSignerID(t *testing.T) {
 	}
 }
 
-func TestIsActiveSigner(t *testing.T) {
+func TestContains(t *testing.T) {
 	expectedSigners := []string{"1001", "1002", "1003", "1004"}
 	group := signerGroup{
 		signerIDs: expectedSigners,
 	}
 
-	if !group.IsActiveSigner("1003") {
+	if !group.Contains("1003") {
 		t.Fatal("signer with ID 1003 should be a member of the group")
 	}
 
-	if group.IsActiveSigner("1009") {
+	if group.Contains("1009") {
 		t.Fatal("signer with ID 1009 should not be a member of the group")
 	}
 }
