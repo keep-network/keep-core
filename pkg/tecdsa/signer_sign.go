@@ -45,7 +45,7 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 	// Choosing random ρ_i from Z_q
 	secretKeyFactorShare, err := rand.Int(
 		rand.Reader,
-		s.groupParameters.curveCardinality(),
+		s.publicParameters.curveCardinality(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -168,7 +168,7 @@ func (s *Round2Signer) CombineRound2Messages(
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.InitialGroupSize
 
 	if len(round1Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -262,7 +262,7 @@ func (s *Round2Signer) SignRound3(
 	// k_i = rand(Z_q)
 	signatureFactorSecretShare, err := rand.Int(
 		rand.Reader,
-		s.groupParameters.curveCardinality(),
+		s.publicParameters.curveCardinality(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -272,7 +272,7 @@ func (s *Round2Signer) SignRound3(
 
 	// r_i = g^{k_i}
 	signatureFactorPublicShare := curve.NewPoint(
-		s.groupParameters.Curve.ScalarBaseMult(
+		s.publicParameters.Curve.ScalarBaseMult(
 			signatureFactorSecretShare.Bytes(),
 		),
 	)
@@ -293,7 +293,7 @@ func (s *Round2Signer) SignRound3(
 	signatureFactorMaskShare, err := rand.Int(
 		rand.Reader,
 		new(big.Int).Exp(
-			s.groupParameters.curveCardinality(),
+			s.publicParameters.curveCardinality(),
 			big.NewInt(6),
 			nil,
 		),
@@ -316,7 +316,7 @@ func (s *Round2Signer) SignRound3(
 	maskShareMulCardinality, err := s.paillierKey.EncryptWithR(
 		new(big.Int).Mul(
 			signatureFactorMaskShare,
-			s.groupParameters.curveCardinality(),
+			s.publicParameters.curveCardinality(),
 		),
 		paillierRandomness,
 	)
@@ -436,7 +436,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic *curve.Point, // R
 	err error,
 ) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.InitialGroupSize
 
 	if len(round3Messages) != groupSize {
 		return nil, nil, fmt.Errorf(
@@ -493,7 +493,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic = signatureFactorPublicShares[0]
 	for _, share := range signatureFactorPublicShares[1:] {
 		signatureFactorPublic = curve.NewPoint(
-			s.groupParameters.Curve.Add(
+			s.publicParameters.Curve.Add(
 				signatureFactorPublic.X,
 				signatureFactorPublic.Y,
 				share.X,
@@ -539,7 +539,7 @@ func (s *Round4Signer) SignRound5(
 	// simplest possible form here.
 	signatureFactorPublicHash := new(big.Int).Mod(
 		signatureFactorPublic.X,
-		s.groupParameters.curveCardinality(),
+		s.publicParameters.curveCardinality(),
 	)
 
 	message := &SignRound5Message{
@@ -570,7 +570,7 @@ func (s *Round5Signer) CombineRound5Messages(
 	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.InitialGroupSize
 
 	if len(round5Messages) != groupSize {
 		return nil, fmt.Errorf(
@@ -626,7 +626,7 @@ func (s *Round5Signer) SignRound6(
 		),
 		new(big.Int).ModInverse(
 			signatureUnmask,
-			s.groupParameters.curveCardinality(),
+			s.publicParameters.curveCardinality(),
 		),
 	)
 
@@ -647,7 +647,7 @@ type Signature struct {
 func (s *Round5Signer) CombineRound6Messages(
 	round6Messages []*SignRound6Message,
 ) (*Signature, error) {
-	groupSize := s.groupParameters.GroupSize
+	groupSize := s.signerGroup.InitialGroupSize
 
 	if len(round6Messages) != groupSize {
 		return nil, fmt.Errorf(
@@ -672,14 +672,14 @@ func (s *Round5Signer) CombineRound6Messages(
 		)
 	}
 
-	sign = new(big.Int).Mod(sign, s.groupParameters.curveCardinality())
+	sign = new(big.Int).Mod(sign, s.publicParameters.curveCardinality())
 
 	// Inherent ECDSA signature malleability
 	// BTC and ETH require that the S value inside ECDSA signatures is at most
 	// the curve order divided by 2 (essentially restricting this value to its
 	// lower half range).
-	if sign.Cmp(s.groupParameters.halfCurveCardinality()) == 1 {
-		sign = new(big.Int).Sub(s.groupParameters.curveCardinality(), sign)
+	if sign.Cmp(s.publicParameters.halfCurveCardinality()) == 1 {
+		sign = new(big.Int).Sub(s.publicParameters.curveCardinality(), sign)
 	}
 
 	return &Signature{

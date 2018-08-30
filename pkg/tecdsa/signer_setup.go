@@ -14,10 +14,16 @@ type signerCore struct {
 
 	paillierKey *paillier.ThresholdPrivateKey
 
-	groupParameters *PublicParameters
-	zkpParameters   *zkp.PublicParameters
-
 	commitmentPublicKeys map[string]*bn256.G2
+
+	publicParameters *PublicParameters
+	zkpParameters    *zkp.PublicParameters
+
+	// Information about the signing group. Holds information about all the members,
+	// including the signer itself.
+	// Initially empty, populated as each other signer announces its presence.
+	// Signers are removed from the group if they misbehave or do not reply.
+	signerGroup *signerGroup
 }
 
 func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
@@ -62,11 +68,11 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 	messages []*CommitmentMasterPublicKeyMessage,
 ) error {
-	if len(messages) != sc.groupParameters.GroupSize {
+	if len(messages) != sc.signerGroup.InitialGroupSize {
 		return fmt.Errorf(
 			"master public key messages required from all group members; got %v, expected %v",
 			len(messages),
-			sc.groupParameters.GroupSize,
+			sc.signerGroup.InitialGroupSize,
 		)
 	}
 
