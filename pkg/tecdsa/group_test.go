@@ -124,12 +124,12 @@ func TestIsSignerGroupComplete(t *testing.T) {
 		initialGroupSize int
 		expectedResult   bool
 	}{
-		"positive validation": {
+		"group is complete": {
 			initialGroupSize: 4,
 			expectedResult:   true,
 		},
-		"negative validation - group size doesn't match": {
-			initialGroupSize: 3,
+		"group is not complete": {
+			initialGroupSize: 5,
 			expectedResult:   false,
 		},
 	}
