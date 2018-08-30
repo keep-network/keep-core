@@ -65,7 +65,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
-	xShares := make([]*paillier.PartialDecryption, group[0].signerGroup.InitialGroupSize)
+	xShares := make([]*paillier.PartialDecryption, len(group))
 	for i, signer := range group {
 		xShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
 	}
