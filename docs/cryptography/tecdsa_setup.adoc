@@ -3,7 +3,7 @@
 == Goal
 
 The goal of this document is to describe our custom approach for T-ECDSA 
-protocol setup with no trusted oracle as well as describes all the required 
+protocol setup with no trusted oracle as well as to describe all the required 
 modifications to the protocol itself to make the setup possible. This document 
 does not cover a dealerless protocol for Paillier threshold key generator.
 
@@ -14,8 +14,9 @@ assumes a number of initial parameters are provided by a trusted third-party.
 Those parameters need to meet certain strict requirements so that the protocol 
 is secure. What's more, numbers used to construct those parameters must remain 
 hidden from players executing the protocol. Those two facts eliminate the 
-possibility of either randomly generating those parameters using the random beacon 
-protocol or generating all those parameters by one member of the group. 
+possibility of either randomly generating those parameters using a generic  
+random beacon protocol or generating all those parameters by one member of the 
+group. 
 
 The mentioned parameters include:
 
@@ -151,7 +152,7 @@ several one-to-one messages into a broadcast channel with each message possibly 
 ephemeral key. This makes the misbehavior more difficult and complaints must be published individually, 
 as well as a better reconciliation algorithm is needed. 
 
-Luckily, for each published compliant we may assume at least one of the involved parties is always 
+Luckily, for each published complaint we may assume at least one of the involved parties is always 
 cheating. It means we can just publish private ephemeral keys for this communication channel, allowing 
 all other nodes to inspect the content and to give their judgment. The fact that communication channel 
 is compromised is fine since one party we'll be always excluded from the group and that channel will 
