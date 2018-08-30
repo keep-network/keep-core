@@ -5,10 +5,10 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @title Stake Delegatable
- * @dev A contract that allows delegate your stake balance to any address
- * that is not already a staker. Delegator refers to a staker who has
- * delegated their stake to another address, while delegate refers to an
- * address that has had a stake delegated to it.
+ * @dev A contract that allows a staker to delegate their staked balance
+ * to any address that is not already a staker. Delegator refers to a
+ * staker who has delegated their stake to another address, while delegate
+ * refers to an address that has had a stake delegated to it.
  */
 contract StakeDelegatable {
 
@@ -33,7 +33,7 @@ contract StakeDelegatable {
     mapping(address => address) public delegateToDelegator;
 
     /**
-     * @dev Gets the stake balance of the specified address.
+     * @dev Gets the staked balance of the specified address.
      * @param _address The address to query the balance of.
      * @return The amount staked by the passed address.
      */
@@ -115,7 +115,7 @@ contract StakeDelegatable {
     }
 
     /**
-     * @dev Revert if a delegate try to stake.
+     * @dev Revert if a delegate tries to stake.
      * @param _address The address to check.
      */
     function revertIfDelegateStakes(address _address) internal {
