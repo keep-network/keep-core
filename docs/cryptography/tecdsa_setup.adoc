@@ -21,13 +21,15 @@ group.
 The mentioned parameters include:
 
 * auxiliary RSA modulus `N_tilde` which is a product of two safe primes and is 
-used to construct Zero-Knowledge Proofs `Π_i`, `Π_1i`, `Π_2i`,
+used to construct Zero-Knowledge Proofs `Π_i`, `Π_1i`, `Π_2i`, 
+[GGN 16] section 4.4,
 
 * two elements `h1`, `h2` from a multiplicative group of integers modulo `N_tilde` 
 constructed according to Fujisaki and Okamoto [FO 97], used to construct range 
-commitments in the Zero-Knowledge Proofs `Π_i`, `Π_1i`, `Π_2i`,
+commitments in the Zero-Knowledge Proofs `Π_i`, `Π_1i`, `Π_2i`, [GGN 16] section 4.4,
 
-* master trapdoor public key used to construct multi-trapdoor commitments.
+* master trapdoor public key used to construct multi-trapdoor commitments, 
+[GGN 16] section 2.3,
 
 For the sake of this document, we assume a threshold Paillier key is generated 
 elsewhere. 
