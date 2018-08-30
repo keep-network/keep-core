@@ -18,7 +18,11 @@ func TestAddSignerID(t *testing.T) {
 	group.AddSignerID("1001")
 
 	if !reflect.DeepEqual(expectedSigners, group.signerIDs) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
+		t.Fatalf(
+			"signer IDs list doesn't match expected\nExpected: %v\nActual: %v",
+			expectedSigners,
+			group.signerIDs,
+		)
 	}
 }
 
@@ -29,7 +33,11 @@ func TestRemoveSignerID(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
+		t.Fatalf(
+			"signer IDs list doesn't match expected\nExpected: %v\nActual: %v",
+			expectedSigners,
+			group.signerIDs,
+		)
 	}
 
 	// Remove middle item
@@ -37,7 +45,11 @@ func TestRemoveSignerID(t *testing.T) {
 	group.RemoveSignerID("1003")
 
 	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
+		t.Fatalf(
+			"signer IDs list doesn't match expected\nExpected: %v\nActual: %v",
+			expectedSigners,
+			group.signerIDs,
+		)
 	}
 
 	// Remove last item
@@ -45,7 +57,11 @@ func TestRemoveSignerID(t *testing.T) {
 	group.RemoveSignerID("1004")
 
 	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
+		t.Fatalf(
+			"signer IDs list doesn't match expected\nExpected: %v\nActual: %v",
+			expectedSigners,
+			group.signerIDs,
+		)
 	}
 
 	// Remove first item
@@ -53,7 +69,11 @@ func TestRemoveSignerID(t *testing.T) {
 	group.RemoveSignerID("1001")
 
 	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
+		t.Fatalf(
+			"signer IDs list doesn't match expected\nExpected: %v\nActual: %v",
+			expectedSigners,
+			group.signerIDs,
+		)
 	}
 }
 
@@ -75,12 +95,20 @@ func TestContains(t *testing.T) {
 func TestSize(t *testing.T) {
 	group := signerGroup{}
 	if group.SignerCount() != 0 {
-		t.Fatalf("returned group size %v doesn't match expected %v", group.SignerCount(), 0)
+		t.Fatalf(
+			"returned group size %v doesn't match expected %v",
+			group.SignerCount(),
+			0,
+		)
 	}
 
 	group.signerIDs = []string{"1001", "1002", "1003", "1004"}
 	if group.SignerCount() != 4 {
-		t.Fatalf("returned group size %v doesn't match expected %v", group.SignerCount(), 4)
+		t.Fatalf(
+			"returned group size %v doesn't match expected %v",
+			group.SignerCount(),
+			4,
+		)
 	}
 }
 
