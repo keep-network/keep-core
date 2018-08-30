@@ -65,7 +65,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
-	xShares := make([]*paillier.PartialDecryption, group[0].signerCore.signerGroup.InitialGroupSize)
+	xShares := make([]*paillier.PartialDecryption, group[0].signerGroup.InitialGroupSize)
 	for i, signer := range group {
 		xShares[i] = signer.paillierKey.Decrypt(dsaKey.secretKey.C)
 	}
@@ -220,7 +220,8 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 // Please bear in mind this is not a correct approach for all T-ECDSA tests!
 func readTestParameters() (
 	[]paillier.ThresholdPrivateKey,
-	*PublicSignatureParameters, *zkp.PublicParameters,
+	*PublicSignatureParameters,
+	*zkp.PublicParameters,
 	*signerGroup,
 	error,
 ) {

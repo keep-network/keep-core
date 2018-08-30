@@ -65,7 +65,8 @@ type Signer struct {
 // for the same instance of a `ThresholdPrivateKey`.
 func NewLocalSigner(
 	paillierKey *paillier.ThresholdPrivateKey,
-	signatureParameters *PublicSignatureParameters, zkpParameters *zkp.PublicParameters,
+	signatureParameters *PublicSignatureParameters,
+	zkpParameters *zkp.PublicParameters,
 	signerGroup *signerGroup,
 ) *LocalSigner {
 	return &LocalSigner{
