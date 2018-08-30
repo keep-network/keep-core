@@ -575,7 +575,8 @@ func initializeNewSignerGroup() ([]*Signer, *PublicSignatureParameters, error) {
 // all other parameters set and ready for round 3 signing.
 func initializeNewRound2SignerGroup() (
 	round2Signers []*Round2Signer,
-	parameters *PublicSignatureParameters, secretKeyFactor *paillier.Cypher,
+	parameters *PublicSignatureParameters,
+	secretKeyFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
@@ -612,7 +613,8 @@ func initializeNewRound2SignerGroup() (
 // all other parameters set and ready for round 5 signing.
 func initializeNewRound4SignerGroup() (
 	[]*Round4Signer,
-	*PublicSignatureParameters, error,
+	*PublicSignatureParameters,
+	error,
 ) {
 	signers, parameters, err := initializeNewSignerGroup()
 	if err != nil {

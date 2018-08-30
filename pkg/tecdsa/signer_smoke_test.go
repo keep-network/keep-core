@@ -291,7 +291,8 @@ func Test31ByteSignatureRS(t *testing.T) {
 
 func generateNewLocalGroup() (
 	[]*LocalSigner,
-	*PublicSignatureParameters, error,
+	*PublicSignatureParameters,
+	error,
 ) {
 	parameters := &PublicSignatureParameters{
 

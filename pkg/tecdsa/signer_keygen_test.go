@@ -300,7 +300,8 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicSignatureParameters, error) {
 // threshold ECDSA key, if needed.
 func initializeNewLocalGroupWithKeyShares() (
 	[]*LocalSigner,
-	*PublicSignatureParameters, []*PublicKeyShareCommitmentMessage,
+	*PublicSignatureParameters,
+	[]*PublicKeyShareCommitmentMessage,
 	[]*KeyShareRevealMessage,
 	error,
 ) {
