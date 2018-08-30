@@ -8,50 +8,59 @@ import (
 func TestAddSignerID(t *testing.T) {
 	group := signerGroup{}
 
+	// Check empty signers group
 	if len(group.signerIDs) != 0 {
 		t.Fatal("signerIDs is not empty")
 	}
 
+	// Add Signer to the group
+	expectedSigners := []string{"1001"}
 	group.AddSignerID("1001")
-	if len(group.signerIDs) != 1 || group.signerIDs[0] != "1001" {
-		t.Fatalf("signerIDs should contain only one element with value %v, but is %v", "1001", group.signerIDs)
+
+	if !reflect.DeepEqual(expectedSigners, group.signerIDs) {
+		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
 	}
 }
 
 func TestRemoveSignerID(t *testing.T) {
+	expectedSigners := []string{"1001", "1002", "1003", "1004"}
 	group := signerGroup{
-		signerIDs: []string{"1001", "1002", "1003", "1004"},
+		signerIDs: expectedSigners,
 	}
 
-	if !reflect.DeepEqual(group.signerIDs, []string{"1001", "1002", "1003", "1004"}) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1001 1002 1003 1004]", group.signerIDs)
+	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
+		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
 	}
 
 	// Remove middle item
+	expectedSigners = []string{"1001", "1002", "1004"}
 	group.RemoveSignerID("1003")
 
-	if !reflect.DeepEqual(group.signerIDs, []string{"1001", "1002", "1004"}) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1001 1002 1004]", group.signerIDs)
+	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
+		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
 	}
 
 	// Remove last item
+	expectedSigners = []string{"1001", "1002"}
 	group.RemoveSignerID("1004")
 
-	if !reflect.DeepEqual(group.signerIDs, []string{"1001", "1002"}) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1001 1002]", group.signerIDs)
+	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
+		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
 	}
 
 	// Remove first item
+	expectedSigners = []string{"1002"}
 	group.RemoveSignerID("1001")
 
-	if !reflect.DeepEqual(group.signerIDs, []string{"1002"}) {
-		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", "[1002]", group.signerIDs)
+	if !reflect.DeepEqual(group.signerIDs, expectedSigners) {
+		t.Fatalf("signer IDs list doesn't match expected\nExpected: %v\nActual: %v", expectedSigners, group.signerIDs)
 	}
 }
 
 func TestIsActiveSigner(t *testing.T) {
+	expectedSigners := []string{"1001", "1002", "1003", "1004"}
 	group := signerGroup{
-		signerIDs: []string{"1001", "1002", "1003", "1004"},
+		signerIDs: expectedSigners,
 	}
 
 	if !group.IsActiveSigner("1003") {
