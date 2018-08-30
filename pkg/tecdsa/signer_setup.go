@@ -14,8 +14,14 @@ type signerCore struct {
 
 	paillierKey *paillier.ThresholdPrivateKey
 
-	groupParameters *PublicParameters
-	zkpParameters   *zkp.PublicParameters
+	publicParameters *PublicParameters
+	zkpParameters    *zkp.PublicParameters
+
+	// Information about the signing group. Holds information about all the members,
+	// including the signer itself.
+	// Initially empty, populated as each other signer announces its presence.
+	// Signers are removed from the group if they misbehave or do not reply.
+	signerGroup *signerGroup
 }
 
 // GenerateMasterPublicKeyShare produces a MasterPublicKeyShareMessage and should
@@ -33,6 +39,7 @@ func (sc *signerCore) GenerateMasterPublicKeyShare() (*MasterPublicKeyShareMessa
 	}
 
 	return &MasterPublicKeyShareMessage{
+		signerID:             sc.ID,
 		masterPublicKeyShare: hShare.Marshal(),
 	}, nil
 }
@@ -45,16 +52,16 @@ func (sc *signerCore) GenerateMasterPublicKeyShare() (*MasterPublicKeyShareMessa
 func (sc *signerCore) CombineMasterPublicKeyShares(
 	masterPublicKeySharesMessages []*MasterPublicKeyShareMessage,
 ) (*bn256.G2, error) {
-	if len(masterPublicKeySharesMessages) != sc.groupParameters.GroupSize {
+	if len(masterPublicKeySharesMessages) != sc.signerGroup.InitialGroupSize {
 		return nil, fmt.Errorf(
 			"master public key share required from all group members; got %v, expected %v",
 			len(masterPublicKeySharesMessages),
-			sc.groupParameters.GroupSize,
+			sc.signerGroup.InitialGroupSize,
 		)
 	}
 
 	for _, message := range masterPublicKeySharesMessages[1:] {
-		if !sc.signerGroup.IsActiveSigner(message.signerID) {
+		if !sc.signerGroup.Contains(message.signerID) {
 			return nil, fmt.Errorf("signer with ID %s is not in active signers group",
 				message.signerID,
 			)

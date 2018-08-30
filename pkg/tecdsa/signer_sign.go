@@ -45,7 +45,7 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 	// Choosing random ρ_i from Z_q
 	secretKeyFactorShare, err := rand.Int(
 		rand.Reader,
-		s.groupParameters.curveCardinality(),
+		s.publicParameters.curveCardinality(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -168,20 +168,20 @@ func (s *Round2Signer) CombineRound2Messages(
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	groupSize := s.signerGroup.Size()
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round1Messages) < s.groupParameters.Threshold {
+	if len(round1Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
 			"round 1 messages required from at least %v group members but got %v",
-			s.groupParameters.Threshold,
+			s.signerGroup.Threshold,
 			len(round1Messages),
 		)
 	}
 
-	if len(round2Messages) < s.groupParameters.Threshold {
+	if len(round2Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
 			"round 2 messages required from at least %v group members but got %v",
-			s.groupParameters.Threshold,
+			s.signerGroup.Threshold,
 			len(round2Messages),
 		)
 	}
@@ -196,7 +196,7 @@ func (s *Round2Signer) CombineRound2Messages(
 			if round1Message.signerID == round2Message.signerID {
 				foundMatchingRound2Message = true
 
-				if !s.signerGroup.IsActiveSigner(round1Message.signerID) {
+				if !s.signerGroup.Contains(round1Message.signerID) {
 					return nil, nil, fmt.Errorf("signer with ID %s is not in active signers group", round1Message.signerID)
 				}
 
@@ -268,7 +268,7 @@ func (s *Round2Signer) SignRound3(
 	// k_i = rand(Z_q)
 	signatureFactorSecretShare, err := rand.Int(
 		rand.Reader,
-		s.groupParameters.curveCardinality(),
+		s.publicParameters.curveCardinality(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -278,7 +278,7 @@ func (s *Round2Signer) SignRound3(
 
 	// r_i = g^{k_i}
 	signatureFactorPublicShare := curve.NewPoint(
-		s.groupParameters.Curve.ScalarBaseMult(
+		s.publicParameters.Curve.ScalarBaseMult(
 			signatureFactorSecretShare.Bytes(),
 		),
 	)
@@ -299,7 +299,7 @@ func (s *Round2Signer) SignRound3(
 	signatureFactorMaskShare, err := rand.Int(
 		rand.Reader,
 		new(big.Int).Exp(
-			s.groupParameters.curveCardinality(),
+			s.publicParameters.curveCardinality(),
 			big.NewInt(6),
 			nil,
 		),
@@ -322,7 +322,7 @@ func (s *Round2Signer) SignRound3(
 	maskShareMulCardinality, err := s.paillierKey.EncryptWithR(
 		new(big.Int).Mul(
 			signatureFactorMaskShare,
-			s.groupParameters.curveCardinality(),
+			s.publicParameters.curveCardinality(),
 		),
 		paillierRandomness,
 	)
@@ -442,20 +442,20 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic *curve.Point, // R
 	err error,
 ) {
-	groupSize := s.signerGroup.Size()
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round3Messages) < s.groupParameters.Threshold {
+	if len(round3Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
 			"round 3 messages required from at least %v group members but got %v",
-			s.groupParameters.Threshold,
+			s.signerGroup.Threshold,
 			len(round3Messages),
 		)
 	}
 
-	if len(round4Messages) < s.groupParameters.Threshold {
+	if len(round4Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
 			"round 4 messages required from at least %v group members but got %v",
-			s.groupParameters.Threshold,
+			s.signerGroup.Threshold,
 			len(round4Messages),
 		)
 	}
@@ -470,7 +470,7 @@ func (s *Round4Signer) CombineRound4Messages(
 			if round3Message.signerID == round4Message.signerID {
 				foundMatchingRound4Message = true
 
-				if !s.signerGroup.IsActiveSigner(round3Message.signerID) {
+				if !s.signerGroup.Contains(round3Message.signerID) {
 					return nil, nil, fmt.Errorf("signer with ID %s is not in active signers group", round3Message.signerID)
 				}
 
@@ -505,7 +505,7 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic = signatureFactorPublicShares[0]
 	for _, share := range signatureFactorPublicShares[1:] {
 		signatureFactorPublic = curve.NewPoint(
-			s.groupParameters.Curve.Add(
+			s.publicParameters.Curve.Add(
 				signatureFactorPublic.X,
 				signatureFactorPublic.Y,
 				share.X,
@@ -551,7 +551,7 @@ func (s *Round4Signer) SignRound5(
 	// simplest possible form here.
 	signatureFactorPublicHash := new(big.Int).Mod(
 		signatureFactorPublic.X,
-		s.groupParameters.curveCardinality(),
+		s.publicParameters.curveCardinality(),
 	)
 
 	message := &SignRound5Message{
@@ -582,19 +582,19 @@ func (s *Round5Signer) CombineRound5Messages(
 	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
-	groupSize := s.signerGroup.Size()
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round5Messages) < s.groupParameters.Threshold {
+	if len(round5Messages) < s.signerGroup.Threshold {
 		return nil, fmt.Errorf(
 			"round 5 messages required from at least %v group members but got %v",
-			s.groupParameters.Threshold,
+			s.signerGroup.Threshold,
 			len(round5Messages),
 		)
 	}
 
 	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
 	for i, round5Message := range round5Messages {
-		if !s.signerGroup.IsActiveSigner(round5Message.signerID) {
+		if !s.signerGroup.Contains(round5Message.signerID) {
 			return nil, fmt.Errorf("signer with ID %s is not in active signers group", round5Message.signerID)
 		}
 
@@ -642,7 +642,7 @@ func (s *Round5Signer) SignRound6(
 		),
 		new(big.Int).ModInverse(
 			signatureUnmask,
-			s.groupParameters.curveCardinality(),
+			s.publicParameters.curveCardinality(),
 		),
 	)
 
@@ -664,19 +664,19 @@ type Signature struct {
 func (s *Round5Signer) CombineRound6Messages(
 	round6Messages []*SignRound6Message,
 ) (*Signature, error) {
-	groupSize := s.signerGroup.Size()
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round6Messages) < s.groupParameters.Threshold {
+	if len(round6Messages) < s.signerGroup.Threshold {
 		return nil, fmt.Errorf(
 			"round 6 messages required from at least %v group members but got %v",
-			s.groupParameters.Threshold,
+			s.signerGroup.Threshold,
 			len(round6Messages),
 		)
 	}
 
 	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
 	for i, round6Message := range round6Messages {
-		if !s.signerGroup.IsActiveSigner(round6Message.signerID) {
+		if !s.signerGroup.Contains(round6Message.signerID) {
 			return nil, fmt.Errorf("signer with ID %s is not in active signers group", round6Message.signerID)
 		}
 
@@ -693,14 +693,14 @@ func (s *Round5Signer) CombineRound6Messages(
 		)
 	}
 
-	sign = new(big.Int).Mod(sign, s.groupParameters.curveCardinality())
+	sign = new(big.Int).Mod(sign, s.publicParameters.curveCardinality())
 
 	// Inherent ECDSA signature malleability
 	// BTC and ETH require that the S value inside ECDSA signatures is at most
 	// the curve order divided by 2 (essentially restricting this value to its
 	// lower half range).
-	if sign.Cmp(s.groupParameters.halfCurveCardinality()) == 1 {
-		sign = new(big.Int).Sub(s.groupParameters.curveCardinality(), sign)
+	if sign.Cmp(s.publicParameters.halfCurveCardinality()) == 1 {
+		sign = new(big.Int).Sub(s.publicParameters.curveCardinality(), sign)
 	}
 
 	return &Signature{

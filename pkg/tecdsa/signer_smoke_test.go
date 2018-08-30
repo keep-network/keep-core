@@ -56,8 +56,8 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// generation process
 	//
 	for i, signer := range localSigners {
-		if groupComplete, err := signer.IsSignerGroupComplete(); !groupComplete || err != nil {
-			t.Fatal(err)
+		if !signer.signerGroup.IsSignerGroupComplete() {
+			t.Fatal("signer group is not complete")
 		}
 
 		masterPublicKeyShareMessagesKeyGeneration[i], err = signer.GenerateMasterPublicKeyShare()
@@ -298,17 +298,18 @@ func generateNewLocalGroup() (
 	*PublicParameters,
 	error,
 ) {
-	parameters := &PublicParameters{
-		GroupSize:            20,
-		Threshold:            12,
+	publicParameters := &PublicParameters{
+
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
 	}
+	initialGroupSize := 20
+	groupThreshold := 12
 
 	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
-		parameters.PaillierKeyBitLength,
-		parameters.GroupSize,
-		parameters.Threshold,
+		publicParameters.PaillierKeyBitLength,
+		initialGroupSize,
+		groupThreshold,
 		rand.Reader,
 	)
 	if err != nil {
@@ -326,7 +327,7 @@ func generateNewLocalGroup() (
 
 	zkpParameters, err := zkp.GeneratePublicParameters(
 		paillierKeys[0].N,
-		parameters.Curve,
+		publicParameters.Curve,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -337,18 +338,24 @@ func generateNewLocalGroup() (
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
 		localSigners[i] = NewLocalSigner(
-			paillierKeys[i], parameters, zkpParameters,
+			paillierKeys[i],
+			publicParameters,
+			zkpParameters,
+			&signerGroup{
+				InitialGroupSize: initialGroupSize,
+				Threshold:        groupThreshold,
+			},
 		)
 	}
 
 	// Register signers' IDs
 	for i := 0; i < len(localSigners); i++ {
 		for j := 0; j < len(localSigners); j++ {
-			localSigners[i].signerGroup.RegisterSignerID(localSigners[j].ID)
+			localSigners[i].signerGroup.AddSignerID(localSigners[j].ID)
 		}
 	}
 
-	return localSigners, parameters, nil
+	return localSigners, publicParameters, nil
 }
 
 func verifySignatureInBitcoin(

@@ -65,15 +65,17 @@ type Signer struct {
 // for the same instance of a `ThresholdPrivateKey`.
 func NewLocalSigner(
 	paillierKey *paillier.ThresholdPrivateKey,
-	groupParameters *PublicParameters,
+	publicParameters *PublicParameters,
 	zkpParameters *zkp.PublicParameters,
+	signerGroup *signerGroup,
 ) *LocalSigner {
 	return &LocalSigner{
 		signerCore: signerCore{
-			ID:              generateMemberID(),
-			paillierKey:     paillierKey,
-			groupParameters: groupParameters,
-			zkpParameters:   zkpParameters,
+			ID:               generateMemberID(),
+			paillierKey:      paillierKey,
+			publicParameters: publicParameters,
+			zkpParameters:    zkpParameters,
+			signerGroup:      signerGroup,
 		},
 	}
 }
@@ -90,7 +92,7 @@ func generateMemberID() string {
 // `q` is the cardinality of Elliptic Curve and public key share is a point
 // on the Curve g^secretKeyShare.
 func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
-	curveParams := ls.groupParameters.Curve.Params()
+	curveParams := ls.publicParameters.Curve.Params()
 
 	secretKeyShare, err := rand.Int(rand.Reader, curveParams.N)
 	if err != nil {
@@ -98,7 +100,7 @@ func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 	}
 
 	publicKeyShare := curve.NewPoint(
-		ls.groupParameters.Curve.ScalarBaseMult(secretKeyShare.Bytes()),
+		ls.publicParameters.Curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
 	return &dsaKeyShare{
@@ -212,24 +214,24 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	shareCommitments []*PublicKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
 ) (*ThresholdDsaKey, error) {
-	if len(shareCommitments) != ls.groupParameters.GroupSize {
+	if len(shareCommitments) != ls.signerGroup.InitialGroupSize {
 		return nil, fmt.Errorf(
 			"commitments required from all group members; got %v, expected %v",
 			len(shareCommitments),
-			ls.groupParameters.GroupSize,
+			ls.signerGroup.InitialGroupSize,
 		)
 	}
 
-	if len(revealedShares) != ls.groupParameters.GroupSize {
+	if len(revealedShares) != ls.signerGroup.InitialGroupSize {
 		return nil, fmt.Errorf(
 			"all group members should reveal shares; got %v, expected %v",
 			len(revealedShares),
-			ls.groupParameters.GroupSize,
+			ls.signerGroup.InitialGroupSize,
 		)
 	}
 
-	secretKeyShares := make([]*paillier.Cypher, ls.groupParameters.GroupSize)
-	publicKeyShares := make([]*curve.Point, ls.groupParameters.GroupSize)
+	secretKeyShares := make([]*paillier.Cypher, ls.signerGroup.InitialGroupSize)
+	publicKeyShares := make([]*curve.Point, ls.signerGroup.InitialGroupSize)
 
 	for i, commitmentMsg := range shareCommitments {
 		foundMatchingRevealMessage := false
@@ -239,7 +241,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 			if commitmentMsg.signerID == revealedSharesMsg.signerID {
 				foundMatchingRevealMessage = true
 
-				if !ls.signerGroup.IsActiveSigner(commitmentMsg.signerID) {
+				if !ls.signerGroup.Contains(commitmentMsg.signerID) {
 					return nil, fmt.Errorf("signer with ID %s is not in active signers group", commitmentMsg.signerID)
 				}
 
@@ -269,7 +271,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	secretKey := ls.paillierKey.Add(secretKeyShares...)
 	publicKey := publicKeyShares[0]
 	for _, share := range publicKeyShares[1:] {
-		publicKey = curve.NewPoint(ls.groupParameters.Curve.Add(
+		publicKey = curve.NewPoint(ls.publicParameters.Curve.Add(
 			publicKey.X, publicKey.Y, share.X, share.Y,
 		))
 	}

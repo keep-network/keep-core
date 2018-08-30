@@ -247,7 +247,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				)
 			}
 
-			ellipticCurve := round3Signers[0].groupParameters.Curve
+			ellipticCurve := round3Signers[0].publicParameters.Curve
 			expectedSignatureFactorPublic := round3Signers[0].signatureFactorPublicShare
 			for _, signer := range round3Signers[1:] {
 				expectedSignatureFactorPublic = curve.NewPoint(ellipticCurve.Add(
@@ -442,16 +442,16 @@ func TestSignAndCombineRound5(t *testing.T) {
 // Partial decryptions are combined together in order to present the signature
 // in a decrypted form.
 func TestSignAndCombineRound6(t *testing.T) {
-	paillierKeys, groupParameters, zkpParameters, err := readTestParameters()
+	paillierKeys, publicParameters, zkpParameters, groupParameters, err := readTestParameters()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	curveCardinality := groupParameters.curveCardinality() // q
+	curveCardinality := publicParameters.curveCardinality() // q
 
 	secretKey := big.NewInt(211) // x = 211
 	publicKey := curve.NewPoint( // y = g^x
-		groupParameters.Curve.ScalarBaseMult(secretKey.Bytes()),
+		publicParameters.Curve.ScalarBaseMult(secretKey.Bytes()),
 	)
 
 	encryptedSecretKey, err := paillierKeys[0].Encrypt(secretKey, rand.Reader)
@@ -482,7 +482,7 @@ func TestSignAndCombineRound6(t *testing.T) {
 
 	signatureFactorSecret := big.NewInt(708) // k = 708
 	signatureFactorPublic := curve.NewPoint( // R = g^k
-		groupParameters.Curve.ScalarBaseMult(signatureFactorSecret.Bytes()),
+		publicParameters.Curve.ScalarBaseMult(signatureFactorSecret.Bytes()),
 	)
 	signatureFactorMask := big.NewInt(9) // c = 9
 
@@ -502,7 +502,13 @@ func TestSignAndCombineRound6(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		signers[i] = &Round5Signer{
 			Signer: *NewLocalSigner(
-				&paillierKeys[i], groupParameters, zkpParameters,
+				&paillierKeys[i],
+				publicParameters,
+				zkpParameters,
+				&signerGroup{
+					InitialGroupSize: groupParameters.InitialGroupSize,
+					Threshold:        groupParameters.Threshold,
+				},
 			).WithDsaKey(ecdsaKey),
 
 			secretKeyFactor:           encryptedSecretKeyFactor,
@@ -515,7 +521,7 @@ func TestSignAndCombineRound6(t *testing.T) {
 
 	for i := 0; i < len(signers); i++ {
 		for j := 0; j < len(signers); j++ {
-			signers[i].signerGroup.RegisterSignerID(signers[j].ID)
+			signers[i].signerGroup.AddSignerID(signers[j].ID)
 		}
 	}
 
@@ -549,7 +555,7 @@ func TestSignAndCombineRound6(t *testing.T) {
 		),
 		curveCardinality,
 	)
-	if expectedS.Cmp(groupParameters.halfCurveCardinality()) == 1 {
+	if expectedS.Cmp(publicParameters.halfCurveCardinality()) == 1 {
 		expectedS = new(big.Int).Sub(curveCardinality, expectedS)
 	}
 
@@ -561,7 +567,7 @@ func TestSignAndCombineRound6(t *testing.T) {
 // Crates and initializes a new group of `Signer`s with T-ECDSA key set and
 // ready for signing.
 func initializeNewSignerGroup() ([]*Signer, *PublicParameters, error) {
-	localGroup, parameters, key, err := initializeNewLocalGroupWithFullKey()
+	localGroup, publicParameters, key, err := initializeNewLocalGroupWithFullKey()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -575,19 +581,19 @@ func initializeNewSignerGroup() ([]*Signer, *PublicParameters, error) {
 		}
 	}
 
-	return signers, parameters, nil
+	return signers, publicParameters, nil
 }
 
 // Crates and initializes a new group of `Round2Signer`s with T-ECDSA key and
 // all other parameters set and ready for round 3 signing.
 func initializeNewRound2SignerGroup() (
 	round2Signers []*Round2Signer,
-	parameters *PublicParameters,
+	publicParameters *PublicParameters,
 	secretKeyFactor *paillier.Cypher,
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	signers, parameters, err := initializeNewSignerGroup()
+	signers, publicParameters, err := initializeNewSignerGroup()
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

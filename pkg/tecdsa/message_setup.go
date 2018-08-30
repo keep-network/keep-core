@@ -6,5 +6,7 @@ package tecdsa
 // to build a master public key needed for commitments generation.
 // The message is expected to be broadcast publicly.
 type MasterPublicKeyShareMessage struct {
+	signerID string
+
 	masterPublicKeyShare []byte
 }
