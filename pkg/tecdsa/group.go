@@ -3,18 +3,18 @@ package tecdsa
 import "fmt"
 
 // signerGroup represents a state of a signing group for each protocol execution.
-// Number of members at the begining of execution is equal preconfigured global
-// initial group size.
-// Missbehaving members may be removed from the group. if a member doesn't respond
-// in a given timeout it may be removed as well.
-// Actual number of members in the group cannot fall under preconfigured threshold
-// value during protocol execution, if does the protocol run will be aborted.
+// Number of members at the beginning of execution is equal to a preconfigured value,
+// specific for each group, represented by `InitialGroupSize`.
+// Misbehaving or not responding members are removed from the group.
+// The actual number of members in the group cannot fall under the `Threshold`
+// value. If it does, the protocol execution will be aborted. The `Threshold` is
+// a preconfigured value, specific for each group.
 // Group members may vary between different runs of the protocol.
 //
 // Defines also what is an initial size of the group and what is a threshold for
 // signing.
 type signerGroup struct {
-	// GroupSize defines how many signers are in the group.
+	// InitialGroupSize defines how many signers are initially in the group.
 	InitialGroupSize int
 
 	// Threshold defines a group signing threshold.
@@ -34,18 +34,17 @@ type signerGroup struct {
 	// key generation protocol terminates without an output.
 	Threshold int
 
-	// IDs of all signers in active signer's group, including the signer itself.
+	// IDs of all signers in the group, including the signer itself.
 	signerIDs []string
 }
 
-// AddSignerID adds a signer ID to the list of signers in the group.
+// AddSignerID adds a signer ID to the group of signers.
 func (sg *signerGroup) AddSignerID(ID string) {
 	// TODO Validate if signer ID is unique, add trim
 	sg.signerIDs = append(sg.signerIDs, ID)
 }
 
-// RemoveSignerID removes a signer from the list of signers the local signer
-// knows about.
+// RemoveSignerID removes a signer from the group of signers.
 func (sg *signerGroup) RemoveSignerID(ID string) {
 	for i := 0; i < len(sg.signerIDs); i++ {
 		if sg.signerIDs[i] == ID {
