@@ -44,7 +44,9 @@ We aim to authenticate peers, control access to a network where Keep’s protoco
 execute, and provide verifiable, private channels between communicating peers.
 The protocol must provide the following capabilities:
 
-- Authentication:
+
+==== Authentication
+
 The goal of authentication is to provide the communicating parties with some
 assurance that they know each others identities. If the authentication involves
 key exchange, then they both accept the exchanged key also.
@@ -55,7 +57,9 @@ that is cheap to verify on-chain (ie. ECDSA, BLS). Given an authenticated peer
 and an unauthenticated peer, the unauthenticated peer must provide the
 authenticated peer proof of attestation over a staked key on chain.
 
-- Authorization:
+
+==== Authorization
+
 The goal of authorization is to ensure that capabilities within the system are
 restricted to authenticated identities.
 
@@ -65,15 +69,25 @@ AuthenticationMessage, to a peer that can process this message and authenticate
 the peer. Authenticated peers can participate in the network and form secure
 channels with other authenticated members.
 
+---
+
 And have the following properties:
 
-- Confidentiality: Data sent over wire via the established secure channel is only
+---
+
+==== Confidentiality
+
+Data sent over wire via the established secure channel is only
 intelligible to the communicating peers.
 
-- Integrity: Data sent over the channel after establishment cannot be modified by
+==== Integrity
+
+Data sent over the channel after establishment cannot be modified by
 adversaries without detection.
 
-- Attributability: A message from a given peer is known to be from that peer.
+==== Attributability
+
+A message from a given peer is known to be from that peer.
 
 
 === Scenarios
