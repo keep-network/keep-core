@@ -13,9 +13,9 @@ import (
 	"math/big"
 )
 
-// PublicSignatureParameters for T-ECDSA key generation and signing protocol.
+// PublicParameters for T-ECDSA key generation and signing protocol.
 // Defines which curve is used and what's the bit length of Paillier key.
-type PublicSignatureParameters struct {
+type PublicParameters struct {
 	// Curve defines the Elliptic Curve that is used for key generation and
 	// signing protocols.
 	Curve elliptic.Curve
@@ -33,7 +33,7 @@ type PublicSignatureParameters struct {
 	PaillierKeyBitLength int
 }
 
-func (pp *PublicSignatureParameters) curveCardinality() *big.Int {
+func (pp *PublicParameters) curveCardinality() *big.Int {
 	return pp.Curve.Params().N
 }
 
@@ -41,6 +41,6 @@ func (pp *PublicSignatureParameters) curveCardinality() *big.Int {
 // the curve order divided by 2 (essentially restricting this value to its
 // lower half range). `halfCurveCardinality` helps to test if S is at most
 // the curve order divided by 2.
-func (pp *PublicSignatureParameters) halfCurveCardinality() *big.Int {
+func (pp *PublicParameters) halfCurveCardinality() *big.Int {
 	return new(big.Int).Rsh(pp.curveCardinality(), 1)
 }

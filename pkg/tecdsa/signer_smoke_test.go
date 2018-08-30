@@ -291,10 +291,10 @@ func Test31ByteSignatureRS(t *testing.T) {
 
 func generateNewLocalGroup() (
 	[]*LocalSigner,
-	*PublicSignatureParameters,
+	*PublicParameters,
 	error,
 ) {
-	parameters := &PublicSignatureParameters{
+	publicParameters := &PublicParameters{
 
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
@@ -306,7 +306,7 @@ func generateNewLocalGroup() (
 	}
 
 	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
-		parameters.PaillierKeyBitLength,
+		publicParameters.PaillierKeyBitLength,
 		signerGroup.InitialGroupSize,
 		signerGroup.Threshold,
 		rand.Reader,
@@ -326,7 +326,7 @@ func generateNewLocalGroup() (
 
 	zkpParameters, err := zkp.GeneratePublicParameters(
 		paillierKeys[0].N,
-		parameters.Curve,
+		publicParameters.Curve,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -337,11 +337,11 @@ func generateNewLocalGroup() (
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
 		localSigners[i] = NewLocalSigner(
-			paillierKeys[i], parameters, zkpParameters, signerGroup,
+			paillierKeys[i], publicParameters, zkpParameters, signerGroup,
 		)
 	}
 
-	return localSigners, parameters, nil
+	return localSigners, publicParameters, nil
 }
 
 func verifySignatureInBitcoin(

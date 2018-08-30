@@ -14,8 +14,8 @@ type signerCore struct {
 
 	paillierKey *paillier.ThresholdPrivateKey
 
-	signatureParameters *PublicSignatureParameters
-	zkpParameters       *zkp.PublicParameters
+	publicParameters *PublicParameters
+	zkpParameters    *zkp.PublicParameters
 
 	// Information about the signing group. Holds information about all the members,
 	// including the signer itself.

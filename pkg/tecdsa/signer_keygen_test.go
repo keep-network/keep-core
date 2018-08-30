@@ -220,12 +220,12 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 // Please bear in mind this is not a correct approach for all T-ECDSA tests!
 func readTestParameters() (
 	[]paillier.ThresholdPrivateKey,
-	*PublicSignatureParameters,
+	*PublicParameters,
 	*zkp.PublicParameters,
 	*signerGroup,
 	error,
 ) {
-	publicParameters := &PublicSignatureParameters{
+	publicParameters := &PublicParameters{
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
 	}
@@ -273,7 +273,7 @@ func readTestParameters() (
 
 // createNewLocalGroup creates a new group of `LocalSigner`s that did not
 // started initialization process yet.
-func createNewLocalGroup() ([]*LocalSigner, *PublicSignatureParameters, error) {
+func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
 	paillierKeys, signerParameters, zkpParameters, signerGroup, err := readTestParameters()
 	if err != nil {
 		return nil, nil, err
@@ -300,7 +300,7 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicSignatureParameters, error) {
 // threshold ECDSA key, if needed.
 func initializeNewLocalGroupWithKeyShares() (
 	[]*LocalSigner,
-	*PublicSignatureParameters,
+	*PublicParameters,
 	[]*PublicKeyShareCommitmentMessage,
 	[]*KeyShareRevealMessage,
 	error,
@@ -358,7 +358,7 @@ func initializeNewLocalGroupWithKeyShares() (
 // `initializeNewLocalGroupWithKeyShares` except that it also calls
 // `ConbineDsaKeyShares` in order to produce a full `ThresholdDsaKey`.
 func initializeNewLocalGroupWithFullKey() (
-	[]*LocalSigner, *PublicSignatureParameters, *ThresholdDsaKey, error,
+	[]*LocalSigner, *PublicParameters, *ThresholdDsaKey, error,
 ) {
 	group, parameters, commitmentMessages, revealMessages, err :=
 		initializeNewLocalGroupWithKeyShares()

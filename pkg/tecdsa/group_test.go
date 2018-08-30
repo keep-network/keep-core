@@ -117,7 +117,7 @@ func TestIsSignerGroupComplete(t *testing.T) {
 		signerGroup: &signerGroup{
 			signerIDs: []string{"1001", "1002", "1003", "1004"},
 		},
-		signatureParameters: &PublicSignatureParameters{},
+		publicParameters: &PublicParameters{},
 	}
 
 	var tests = map[string]struct {
