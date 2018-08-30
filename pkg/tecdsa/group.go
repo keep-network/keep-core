@@ -14,7 +14,7 @@ package tecdsa
 // is selected before key generation process execution, where ECDSA key shares are
 // distributed among group members. Hence for the signing part of the protocol the
 // group must be fixed. New members cannot join the group after the ECDSA key
-// share are distributed.
+// shares are distributed.
 //
 // Defines also what is an initial size of the group and what is a threshold for
 // signing.
