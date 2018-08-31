@@ -71,98 +71,98 @@ class Main extends Component {
 
     return (
       <div className="main">
-      <Header networkType={this.state.networkType}/>
-      <Grid>
-        <Row>
-          <Col xs={12}>
-            {this.state.error ?
-              <div className="alert alert-danger m-5" role="alert">{error}</div>:null
-            }
-            <Tabs defaultActiveKey={1} id="dashboard-tabs">
-              <Tab eventKey={1} title="Overview">
-                <Row className="overview">
-                  <Col xs={12} md={6}>
-                    <Pie dataKey="name" data={ chartData } options={ chartOptions } />
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <Table className="small table-sm" striped bordered condensed>
-                      <tbody>
-                        <TableRow title="Your wallet address">
-                          { yourAddress }
-                        </TableRow>
-                        <TableRow title="Tokens">
-                          { tokenBalance }
-                        </TableRow>
-                        <TableRow title="Staked">
-                          { stakeBalance }
-                        </TableRow>
-                        <TableRow title="Pending unstake">
-                          { withdrawalsTotal }
-                        </TableRow>
-                        <TableRow title="Token Grants">
-                          { grantBalance }
-                        </TableRow>
-                        <TableRow title="Staked Token Grants">
-                          { grantStakeBalance }
-                        </TableRow>
-                      </tbody>
-                    </Table>
-                    <h6>You can stake up to { totalAvailableToStake } KEEP</h6>
-                    <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
-                    <h6>You can unstake up to { totalAvailableToUnstake } KEEP</h6>
-                    <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col xs={12} md={6}>
-                    <h4>Pending unstake</h4>
-                    <WithdrawalsTable data={withdrawals}/>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <h4>Tokens granted to you</h4>
-                    <TokenGrantsTable data={ grantedToYou }/>
-                  </Col>
-                </Row>
-              </Tab>
-              <Tab eventKey={2} title="Token Grants">
-                <h3>Tokens granted to you</h3>
-                <Row>
-                  <Col xs={12} md={6}>
-                    <VestingDetails
-                      details={this.selectedGrant()}
-                    />
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <VestingChart details={this.selectedGrant()}/>
-                  </Col>
-                </Row>
-                <Row>
-                  <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
-                </Row>
-              </Tab>
-              <Tab eventKey={3} title="Create Token Grant">
-                <h3>Grant tokens</h3>
-                <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
-                  gradually in a linear fashion until start + duration. By then all of the balance will have vested.
-                  You must approve the amount you want to grant by calling approve() method of the token contract first
-                </p>
-                <Row>
-                  <Col xs={12} md={8}>
-                    <TokenGrantForm tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
-                  </Col>
-                </Row>
-                <Row>
-                  <h3>Granted by you</h3>
-                  <Col xs={12}>
-                    <TokenGrantsOwnerTable data={ grantedByYou }/>
-                  </Col>
-                </Row>
-              </Tab>
-            </Tabs>
-          </Col>
-        </Row>
-      </Grid>
-      <Footer />
+        <Header networkType={this.state.networkType}/>
+        <Grid>
+          <Row>
+            <Col xs={12}>
+              {this.state.error ?
+                <div className="alert alert-danger m-5" role="alert">{error}</div>:null
+              }
+              <Tabs defaultActiveKey={1} id="dashboard-tabs">
+                <Tab eventKey={1} title="Overview">
+                  <Row className="overview">
+                    <Col xs={12} md={6}>
+                      <Pie dataKey="name" data={ chartData } options={ chartOptions } />
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Table className="small table-sm" striped bordered condensed>
+                        <tbody>
+                          <TableRow title="Your wallet address">
+                            { yourAddress }
+                          </TableRow>
+                          <TableRow title="Tokens">
+                            { tokenBalance }
+                          </TableRow>
+                          <TableRow title="Staked">
+                            { stakeBalance }
+                          </TableRow>
+                          <TableRow title="Pending unstake">
+                            { withdrawalsTotal }
+                          </TableRow>
+                          <TableRow title="Token Grants">
+                            { grantBalance }
+                          </TableRow>
+                          <TableRow title="Staked Token Grants">
+                            { grantStakeBalance }
+                          </TableRow>
+                        </tbody>
+                      </Table>
+                      <h6>You can stake up to { totalAvailableToStake } KEEP</h6>
+                      <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+                      <h6>You can unstake up to { totalAvailableToUnstake } KEEP</h6>
+                      <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col xs={12} md={6}>
+                      <h4>Pending unstake</h4>
+                      <WithdrawalsTable data={withdrawals}/>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <h4>Tokens granted to you</h4>
+                      <TokenGrantsTable data={ grantedToYou }/>
+                    </Col>
+                  </Row>
+                </Tab>
+                <Tab eventKey={2} title="Token Grants">
+                  <h3>Tokens granted to you</h3>
+                  <Row>
+                    <Col xs={12} md={6}>
+                      <VestingDetails
+                        details={this.selectedGrant()}
+                      />
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <VestingChart details={this.selectedGrant()}/>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
+                  </Row>
+                </Tab>
+                <Tab eventKey={3} title="Create Token Grant">
+                  <h3>Grant tokens</h3>
+                  <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
+                    gradually in a linear fashion until start + duration. By then all of the balance will have vested.
+                    You must approve the amount you want to grant by calling approve() method of the token contract first
+                  </p>
+                  <Row>
+                    <Col xs={12} md={8}>
+                      <TokenGrantForm tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <h3>Granted by you</h3>
+                    <Col xs={12}>
+                      <TokenGrantsOwnerTable data={ grantedByYou }/>
+                    </Col>
+                  </Row>
+                </Tab>
+              </Tabs>
+            </Col>
+          </Row>
+        </Grid>
+        <Footer />
       </div>
     )
   }
