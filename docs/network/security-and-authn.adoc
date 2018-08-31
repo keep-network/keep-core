@@ -200,11 +200,11 @@ There are a few implementations we can explore given the above constraints:
 
 ===== Overview
 
-        - [draft]Diffie-Hellman satisfies some of the properties above, but due
-        to [reasons], it does not assume the presence of signature keys and hence
-        is susceptible to man-in-the-middle attacks. As a building block, we can
-        take this into account and layer on-top signing keys. This introduces
-        complexity to the protocol.
+Diffie-Hellman satisfies some of the properties above, but due
+to [reasons], it does not assume the presence of signature keys and hence
+is susceptible to man-in-the-middle attacks. As a building block, we can
+take this into account and layer on-top signing keys. This introduces
+complexity to the protocol.
 
 ===== Limitations
 
@@ -213,9 +213,11 @@ There are a few implementations we can explore given the above constraints:
 
 ===== Overview
 
-- The base spec concerns with exponentiation, but also applies equally well to additive groups
-(ec over finite fields).
-- Authenticated key agreement with key confirmation: two-way explicit key confirmation
+- The base spec concerns with exponentiation, but also applies equally well to
+additive groups (ec over finite fields).
+
+- Authenticated key agreement with key confirmation: two-way explicit key
+confirmation
 
 ===== Limitations
 
