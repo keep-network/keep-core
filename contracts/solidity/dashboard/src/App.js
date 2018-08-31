@@ -33,7 +33,6 @@ class Main extends Component {
     super()
     this.state = {}
     this.state.chartData = {}
-    this.selectTokenGrant = this.selectTokenGrant.bind(this)
   }
 
   componentDidMount() {
@@ -51,7 +50,7 @@ class Main extends Component {
     })
   }
 
-  selectTokenGrant(i) {
+  selectTokenGrant = (i) => {
     this.setState(
       { selectedGrant: this.state.grantedToYou[i] }
     )
