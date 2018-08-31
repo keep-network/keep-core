@@ -76,7 +76,7 @@ class Main extends Component {
         <Row>
           <Col xs={12}>
             {this.state.error ?
-              <div className="alert alert-danger m-5" role="alert">{error}</div>:<div></div>
+              <div className="alert alert-danger m-5" role="alert">{error}</div>:null
             }
             <Tabs defaultActiveKey={1} id="dashboard-tabs">
               <Tab eventKey={1} title="Overview">
