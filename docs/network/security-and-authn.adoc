@@ -20,7 +20,7 @@ off-the-shelf protocols such as TLS aren't suitable. Specifically, these
 protocols can't be used as-is due to their requirement of trusted central
 authorities and intermediaries.
 
-This document (as requested in <<F1>><<F2>><<F3>>) specifies desired behaviors,
+This document (as requested in <<FD>>) specifies desired behaviors,
 surveys current available protocols, and describes a protocol to secure the
 network layer of Keep.
 
@@ -87,7 +87,7 @@ In addition to these capabilities, the following security properties should hold
 
 ===== Secure
 
-<<F2>> introduces us to the definition of a secure protocol. We summarize it as:
+<<FD>> introduces us to the definition of a secure protocol. We summarize it as:
 
 1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
 infeasible for anyone not _P~1~_ and _P~2~_, to recover the secret key.
@@ -98,7 +98,7 @@ authentication of identity must be identical.
 ===== Confidentiality
 
 A message sent from a peer that is authenticated is only intelligible to the
-communicating peers <<F5>>.
+communicating peers <<CNF>>.
 
 ===== Integrity
 
@@ -156,7 +156,7 @@ the other harm, then they will be removed from the network.
 
 ==== Message Gossip
 
-Originally specified in <<F4>>, formalized here.
+Originally specified in <<0RTT>>, formalized here.
 
 A packed message _M_ that contains many sub-messages _S~all~_, each signed and
 encrypted for a specific peer _P~i~_. This message _M_ can be circulated
@@ -207,6 +207,9 @@ take this into account and layer on-top signing keys. This introduces
 complexity to the protocol.
 
 ===== Limitations
+
+- Does not deal with DoS attacks where _P~1~_ accepts _P~2~_'s identity, and then
+sends a final message to P2 letting them know
 
 
 ==== Full Station-to-Station
@@ -276,22 +279,16 @@ Authentication and Authenticated Key Exchanges
 In: Designs, Codes and Cryptography, 2, 107-125 (1992), Kluwer Academic Publishers
 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.216.6107&rep=rep1&type=pdf
 
-- [[[F1]]] Gulati R., Cardozo A., Schlump P. (2018)
+- [[[FD]]] Discussions on writing this document (2018)
 In: Thesis Flowdock
 https://www.flowdock.com/app/cardforcoin/tech/messages/152290
-
-- [[[F2]]] Cardozo A., Dyraga P. (2018)
-In: Thesis Flowdock
 https://www.flowdock.com/app/cardforcoin/tech/messages/153124
-
-- [[[F3]]] Gulati R., Cardozo A., Dryga P., Luongo M. (2018)
-In: Thesis Flowdock
 https://www.flowdock.com/app/cardforcoin/tech/messages/153592
 
-- [[[F4]]] Dryga P., Cardozo A., Luongo M. (2018)
+- [[[0RTT]]] Point-to-Point vs a single message with 0-RTT (2018)
 In: Thesis Flowdock
 https://www.flowdock.com/app/cardforcoin/tech/messages/154946
 
-- [[[F5]]] Gulati R., Dryga P. (2018)
+- [[[CNF]]] Desired properties of confidentiality in Keep's network (2018)
 In: Thesis Flowdock
 https://www.flowdock.com/app/cardforcoin/tech/messages/156769
