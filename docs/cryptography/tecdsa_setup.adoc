@@ -123,6 +123,8 @@ commitments, must use the specific master public key when evaluating and sending
 specific node. In this setup, commitment verifier has a trapdoor. However, since it's in the best 
 interest of verifier to have non-alterable commitments, the scheme is safe by a definition.
 
+==== Alternative (vulnerable) solution
+
 The alternative approach we considered is to let each node to generate it's share of `h_i = g^{x_i}` 
 and sum all of them together to produce a global master public key, `h = h_1 + h_2 + ... + h_n`. 
 However, this approach has a vulnerability allowing the adversary to make all the parties use a 
