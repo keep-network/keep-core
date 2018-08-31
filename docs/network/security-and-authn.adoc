@@ -97,8 +97,8 @@ authentication of identity must be identical.
 
 ===== Confidentiality
 
-Data sent over wire via the established secure channel is only
-intelligible to the communicating peers <<F5>>.
+A message sent from a peer that is authenticated is only intelligible to the
+communicating peers <<F5>>.
 
 ===== Integrity
 
