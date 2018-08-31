@@ -24,7 +24,7 @@ class VestingChart extends Component {
   getPoints() {
     const { start, cliff, end } = this.props.details
 
-    const now = new Date() / 1000 // normalize to seconds
+    const now = moment().valueOf() / 1000 // normalize to seconds
 
     const points = [ this.getDataPointAt(start) ]
 

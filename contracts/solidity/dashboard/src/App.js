@@ -196,8 +196,8 @@ class Main extends Component {
       withdrawalsTotal += withdrawal[1].toNumber()
       const availableAt = moment(withdrawal[2].toNumber()*1000).add(withdrawalDelay, 'seconds')
       let available = false
-      let now = moment()
-      if (now > availableAt) {
+      const now = moment()
+      if (availableAt.isSameOrBefore(now)) {
         available = true
       }
 
