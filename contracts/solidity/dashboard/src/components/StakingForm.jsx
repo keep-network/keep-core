@@ -29,7 +29,7 @@ class StakingForm extends Component {
     }
   }
 
-  onChange(e) {
+  onChange = (e) => {
     this.setState(
       { amount: e.target.value }
     )
@@ -46,11 +46,15 @@ class StakingForm extends Component {
     }, RESET_DELAY)
   }
 
-  onClick(e) {
+  onClick = (e) => {
     this.submit()
   }
 
-  onKeyUp(e) {
+  onSubmit = (e) => {
+    e.preventDefault()
+  }
+
+  onKeyUp = (e) => {
     if (e.keyCode === 13) {
       this.submit()
     }
@@ -81,19 +85,19 @@ class StakingForm extends Component {
     return (
       <div className="staking-form">
         <Form inline
-          onSubmit={(e) => { e.preventDefault() }}>
+          onSubmit={this.onSubmit}>
           <FormGroup>
             <FormControl
               type="text"
               value={amount}
-              onChange={this.onChange.bind(this)}
-              onKeyUp={this.onKeyUp.bind(this)}
+              onChange={this.onChange}
+              onKeyUp={this.onKeyUp}
               />
           </FormGroup>
           <Button
             bsStyle="primary"
             bsSize="large"
-            onClick={this.onClick.bind(this)}>
+            onClick={this.onClick}>
             {btnText}
           </Button>
         </Form>
