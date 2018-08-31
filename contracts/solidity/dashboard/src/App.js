@@ -1,4 +1,5 @@
 import Web3 from 'web3'
+import BigNumber from "bignumber.js"
 import React, { Component } from 'react'
 import { Pie } from 'react-chartjs-2'
 import { Table, Col, Grid, Row, Tabs, Tab } from 'react-bootstrap'
@@ -187,13 +188,13 @@ class Main extends Component {
     const withdrawalIndexes = await stakingContract.getWithdrawals(yourAddress)
     const withdrawalDelay = (await stakingContract.withdrawalDelay()).toNumber()
     let withdrawals = []
-    let withdrawalsTotal = 0
+    let withdrawalsTotal = new BigNumber(0)
 
     for(let i=0; i < withdrawalIndexes.length; i++) {
       const withdrawalId = withdrawalIndexes[i].toNumber()
       const withdrawal = await stakingContract.getWithdrawal(withdrawalId)
       const withdrawalAmount = displayAmount(withdrawal[1], 18, 3)
-      withdrawalsTotal += withdrawal[1].toNumber()
+      withdrawalsTotal = withdrawalsTotal.plus(withdrawal[1])
       const availableAt = moment(withdrawal[2].toNumber()*1000).add(withdrawalDelay, 'seconds')
       let available = false
       const now = moment()
