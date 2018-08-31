@@ -1,4 +1,9 @@
-= RFC ##: draft-keep-network-layer-security
+    * Feature Name: Network Security
+    * Status: draft
+    * Start Date: 2018-08-
+    * Authors: Raghav Gulati
+    * RFC PR: #275
+    * Keep Issues: #9, #87, #88
 
 :icons: font
 :numbered:
