@@ -52,14 +52,22 @@ class Main extends Component {
 
   selectTokenGrant = (i) => {
     this.setState(
-      { selectedGrant: this.state.grantedToYou[i] }
+      { selectedGrantIndex: i }
     )
+  }
+
+  selectedGrant = () => {
+    if (this.state.grantedToYou) {
+      return this.state.grantedToYou[this.state.selectedGrantIndex]
+    } else {
+      return {}
+    }
   }
 
   render() {
     const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
       chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
-      selectedGrant, totalAvailableToStake, totalAvailableToUnstake, error } = this.state
+      totalAvailableToStake, totalAvailableToUnstake, error } = this.state
 
     return (
       <div className="main">
@@ -121,11 +129,11 @@ class Main extends Component {
                 <Row>
                   <Col xs={12} md={6}>
                     <VestingDetails
-                      details={selectedGrant}
+                      details={this.selectedGrant()}
                     />
                   </Col>
                   <Col xs={12} md={6}>
-                    <VestingChart details={selectedGrant}/>
+                    <VestingChart details={this.selectedGrant()}/>
                   </Col>
                 </Row>
                 <Row>
@@ -250,7 +258,7 @@ class Main extends Component {
       }
     }
 
-    let selectedGrant = grantedToYou[0]
+    let selectedGrantIndex = 0
 
     const chartOptions = {
       legend: {
@@ -287,7 +295,7 @@ class Main extends Component {
       withdrawalsTotal,
       grantedToYou,
       grantedByYou,
-      selectedGrant,
+      selectedGrantIndex,
       totalAvailableToStake,
       totalAvailableToUnstake
     })
