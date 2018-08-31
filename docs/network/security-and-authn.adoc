@@ -33,7 +33,7 @@ messages (to ensure that only intended recipients receive a message).
 
 peer:: A member of a network that can initiate, accept, and handle secure
 connections.
-network:: Connections between many peers, not necessarily p2p.
+network:: A set of peers who are connected to each other, not necessarily p2p.
 handshake:: An initial negotiation between peers to establish secret key
 material.
 chain:: A decentralized, consensus driven store with identities and economic
