@@ -242,7 +242,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 				foundMatchingRevealMessage = true
 
 				if !ls.signerGroup.Contains(commitmentMsg.signerID) {
-					return nil, fmt.Errorf("signer with ID %s is not in active signers group", commitmentMsg.signerID)
+					return nil, fmt.Errorf("signer with ID %s is not in signers group", commitmentMsg.signerID)
 				}
 
 				if revealedSharesMsg.isValid(

@@ -197,7 +197,7 @@ func (s *Round2Signer) CombineRound2Messages(
 				foundMatchingRound2Message = true
 
 				if !s.signerGroup.Contains(round1Message.signerID) {
-					return nil, nil, fmt.Errorf("signer with ID %s is not in active signers group", round1Message.signerID)
+					return nil, nil, fmt.Errorf("signer with ID %s is not in signers group", round1Message.signerID)
 				}
 
 				if round2Message.isValid(
@@ -471,7 +471,7 @@ func (s *Round4Signer) CombineRound4Messages(
 				foundMatchingRound4Message = true
 
 				if !s.signerGroup.Contains(round3Message.signerID) {
-					return nil, nil, fmt.Errorf("signer with ID %s is not in active signers group", round3Message.signerID)
+					return nil, nil, fmt.Errorf("signer with ID %s is not in signers group", round3Message.signerID)
 				}
 
 				if round4Message.isValid(
@@ -595,7 +595,7 @@ func (s *Round5Signer) CombineRound5Messages(
 	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
 	for i, round5Message := range round5Messages {
 		if !s.signerGroup.Contains(round5Message.signerID) {
-			return nil, fmt.Errorf("signer with ID %s is not in active signers group", round5Message.signerID)
+			return nil, fmt.Errorf("signer with ID %s is not in signers group", round5Message.signerID)
 		}
 
 		partialDecryptions[i] = round5Message.signatureUnmaskPartialDecryption
@@ -677,7 +677,7 @@ func (s *Round5Signer) CombineRound6Messages(
 	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
 	for i, round6Message := range round6Messages {
 		if !s.signerGroup.Contains(round6Message.signerID) {
-			return nil, fmt.Errorf("signer with ID %s is not in active signers group", round6Message.signerID)
+			return nil, fmt.Errorf("signer with ID %s is not in signers group", round6Message.signerID)
 		}
 
 		partialDecryptions[i] = round6Message.signaturePartialDecryption
