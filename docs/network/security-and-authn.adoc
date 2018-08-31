@@ -59,8 +59,7 @@ The protocol must provide the following capabilities:
 ===== Authentication
 
 The goal of authentication is to provide the communicating parties with some
-assurance that they know each others identities. If the authentication involves
-key exchange, then they both accept the exchanged key also.
+assurance that they know each others' identities.
 
 In our model of authentication, all peers must always be authenticated.
 Authentication happens via asymmetric cryptography, using a signature algorithm
