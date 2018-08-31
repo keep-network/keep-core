@@ -67,15 +67,20 @@ class Main extends Component {
   render() {
     const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
       chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
-      totalAvailableToStake, totalAvailableToUnstake, error } = this.state
+      totalAvailableToStake, totalAvailableToUnstake, error, networkType } = this.state
 
     return (
       <div className="main">
-        <Header networkType={this.state.networkType}/>
+        <Header networkType={networkType}/>
         <Grid>
           <Row>
             <Col xs={12}>
-              {this.state.error ?
+
+              {!networkType ?
+                <div className="alert alert-danger m-5" role="alert">No network detected. Do you have MetaMask installed?</div>:null
+              }
+
+              {error ?
                 <div className="alert alert-danger m-5" role="alert">{error}</div>:null
               }
               <Tabs defaultActiveKey={1} id="dashboard-tabs">
