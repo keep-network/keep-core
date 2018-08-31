@@ -80,9 +80,9 @@ the peer. Authenticated peers can participate in the network and form secure
 channels with other authenticated members.
 
 
-==== Properties
+==== Required Properties
 
-And have the following properties:
+In addition to these capabilities, the following security properties should hold:
 
 
 ===== Secure
@@ -108,6 +108,12 @@ adversaries without detection.
 ===== Attributability
 
 A message from a given peer is known to be from that peer.
+
+==== Optional Properties
+
+Lastly, the desired protocol may have the following optional properties:
+
+---
 
 
 === Scenarios
