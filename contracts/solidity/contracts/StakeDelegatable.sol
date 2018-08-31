@@ -24,7 +24,7 @@ contract StakeDelegatable {
      * @dev Only non staker addresses can be passed to the functions with this modifier.
      */
     modifier notStaker(address _address) {
-        require(stakeBalances[_address] == 0, "Provided address is not a staker.");
+        require(stakeBalances[_address] <= 0, "Provided address is not a staker.");
         _;
     }
 
