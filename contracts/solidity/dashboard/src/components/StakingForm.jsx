@@ -7,8 +7,8 @@ import Network from '../network'
 import { formatAmount } from '../utils'
 
 const ERRORS = {
-  INVALID_AMOUNT: `INVALID_AMOUNT`,
-  SERVER: `Sorry, your request cannot be completed at this time.`
+  INVALID_AMOUNT: 'Invalid amount',
+  SERVER: 'Sorry, your request cannot be completed at this time.'
 }
 
 const RESET_DELAY = 3000 // 3 seconds
