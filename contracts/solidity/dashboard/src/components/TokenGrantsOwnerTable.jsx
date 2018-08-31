@@ -6,7 +6,7 @@ class TokenGrantsOwnerTable extends Component {
     if (this.props.data) {
       var rows = this.props.data.map(function(item, i){
         return (
-          <tr key={i}>
+          <tr key={"token-grant-"+i+"-for-"+item.beneficiary}>
             <td>{item.formatted.amount}</td>
             <td><a href="">{item.beneficiary}</a></td>
             <td><button>Revoke</button></td>

@@ -7,7 +7,7 @@ class TokenGrants extends Component {
     if (this.props.data) {
       var rows = this.props.data.map((item, i) => {
         return (
-          <tr key={i} onClick={() => this.props.selectTokenGrant(i)}>
+          <tr key={"token-grant-"+i+"-from-"+item.owner} onClick={() => this.props.selectTokenGrant(i)}>
             <td>{item.formatted.amount}</td>
             <td><a href="">{item.owner}</a></td>
             <td>{item.formatted.start}</td>
