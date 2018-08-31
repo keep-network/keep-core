@@ -37,7 +37,7 @@ contract StakeDelegatable {
      * @param _address The address to query the balance of.
      * @return The amount staked by the passed address.
      */
-    function stakeBalanceOf(address _address)
+    function stakedBalanceOf(address _address)
         public
         view
         notNull(_address)

@@ -21,7 +21,7 @@ contract TestStakeNoDelay {
         token.approveAndCall(address(stakingContract), 100, "");
 
         Assert.equal(token.balanceOf(address(this)), balance - 100, "Stake amount should be taken out from token holder's main balance.");
-        Assert.equal(stakingContract.stakeBalanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance.");
+        Assert.equal(stakingContract.stakedBalanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance.");
     }
 
 
@@ -40,7 +40,7 @@ contract TestStakeNoDelay {
         Assert.equal(amount, 100, "Withdrawal request should maintain a record of the amount.");
         Assert.equal(start, now, "Withdrawal request should maintain a record of when it was initiated.");
 
-        Assert.equal(stakingContract.stakeBalanceOf(address(this)), 0, "Unstake amount should be taken out from token holder's stake balance."); 
+        Assert.equal(stakingContract.stakedBalanceOf(address(this)), 0, "Unstake amount should be taken out from token holder's stake balance."); 
         Assert.equal(token.balanceOf(address(this)), balance, "Unstake amount should not be added to token holder main balance.");
     }
 
@@ -50,7 +50,7 @@ contract TestStakeNoDelay {
 
         stakingContract.finishUnstake(withdrawalId);
         Assert.equal(token.balanceOf(address(this)), balance + 100, "Unstake amount should be added to token holder main balance.");
-        Assert.equal(stakingContract.stakeBalanceOf(address(this)), 0, "Stake balance should be empty.");
+        Assert.equal(stakingContract.stakedBalanceOf(address(this)), 0, "Stake balance should be empty.");
 
         // Inspect changes in withdrawal request
         address owner;

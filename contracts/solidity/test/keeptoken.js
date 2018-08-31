@@ -48,7 +48,7 @@ contract('KeepToken', function(accounts) {
 
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    let account_one_stake_balance = await stakingContract.stakedBalanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber() - stakingAmount, "Staking amount should be transfered from sender balance");
     assert.equal(account_one_stake_balance.toNumber(), stakingAmount, "Staking amount should be added to the sender staking balance");
@@ -81,7 +81,7 @@ contract('KeepToken', function(accounts) {
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    account_one_stake_balance = await stakingContract.stakedBalanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.toNumber(), account_one_starting_balance.toNumber(), "Staking amount should be transfered to sender balance");
     assert.equal(account_one_stake_balance.toNumber(), 0, "Staking amount should be removed from sender staking balance");
@@ -170,7 +170,7 @@ contract('KeepToken', function(accounts) {
 
         // stake granted tokens can be only called by grant beneficiary
         await grantContract.stake(id, {from: account_two});
-        let account_two_grant_stake_balance = await grantContract.stakeBalanceOf.call(account_two);
+        let account_two_grant_stake_balance = await grantContract.stakedBalanceOf.call(account_two);
         assert.equal(account_two_grant_stake_balance.toNumber(), amount, "Should stake grant amount");
 
         // should throw if initiate unstake called by anyone except grant beneficiary
@@ -196,7 +196,7 @@ contract('KeepToken', function(accounts) {
         // jump in time over withdrawal delay
         await increaseTimeTo(latestTime()+duration.days(30));
         await grantContract.finishUnstake(stakeWithdrawalId);
-        account_two_grant_stake_balance = await grantContract.stakeBalanceOf.call(account_two);
+        account_two_grant_stake_balance = await grantContract.stakedBalanceOf.call(account_two);
         assert.equal(account_two_grant_stake_balance.toNumber(), 0, "Stake grant amount should be 0");
 
         // should be able to release 'releasable' granted amount as it's not locked for staking anymore
