@@ -40,10 +40,14 @@ class TokenGrantForm extends Component {
     }
   }
 
-  onChange(e) {
+  onChange = (e) => {
     const name = e.target.name
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     this.setState({[name]: value})
+  }
+
+  onSubmit = (e) => {
+    e.preventDefault()
   }
 
   validateBeneficiary() {
@@ -52,7 +56,7 @@ class TokenGrantForm extends Component {
     return null
   }
 
-  onClick(e) {
+  onClick = (e) => {
     this.submit()
   }
 
@@ -76,7 +80,7 @@ class TokenGrantForm extends Component {
 
     return (
       <div className="token-grant-form">
-        <Form horizontal onSubmit={(e) => { e.preventDefault() }}>
+        <Form horizontal onSubmit={this.onSubmit}>
           <FormGroup validationState={this.validateBeneficiary()}>
             <Col componentClass={ControlLabel} sm={2}>
               Beneficiary:
@@ -86,7 +90,7 @@ class TokenGrantForm extends Component {
                 type="text"
                 name="beneficiary"
                 value={this.state.beneficiary}
-                onChange={this.onChange.bind(this)}
+                onChange={this.onChange}
               />
               <FormControl.Feedback />
               <HelpBlock className="small">Address to which granted tokens are going to be released.</HelpBlock>
@@ -102,7 +106,7 @@ class TokenGrantForm extends Component {
                 type="text"
                 name="amount"
                 value={amount}
-                onChange={this.onChange.bind(this)}
+                onChange={this.onChange}
               />
               <FormControl.Feedback />
               <HelpBlock className="small">Amount to be granted.</HelpBlock>
@@ -118,7 +122,7 @@ class TokenGrantForm extends Component {
                 type="text"
                 name="duration"
                 value={duration}
-                onChange={this.onChange.bind(this)}
+                onChange={this.onChange}
               />
               <FormControl.Feedback />
               <HelpBlock className="small">Duration in seconds of the period in which the tokens will vest.</HelpBlock>
@@ -134,7 +138,7 @@ class TokenGrantForm extends Component {
                 type="text"
                 name="start"
                 value={start}
-                onChange={this.onChange.bind(this)}
+                onChange={this.onChange}
               />
               <FormControl.Feedback />
               <HelpBlock className="small">Timestamp at which vesting will start.</HelpBlock>
@@ -150,7 +154,7 @@ class TokenGrantForm extends Component {
                 type="text"
                 name="cliff"
                 value={cliff}
-                onChange={this.onChange.bind(this)}
+                onChange={this.onChange}
               />
               <FormControl.Feedback />
               <HelpBlock className="small">Duration in seconds of the cliff after which tokens will begin to vest.</HelpBlock>
@@ -165,7 +169,7 @@ class TokenGrantForm extends Component {
               <Checkbox
                 name="revocable"
                 checked={revocable}
-                onChange={this.onChange.bind(this)}></Checkbox>
+                onChange={this.onChange}></Checkbox>
               <HelpBlock className="small">Whether the token grant is revocable or not.</HelpBlock>
             </Col>
           </FormGroup>
@@ -173,7 +177,7 @@ class TokenGrantForm extends Component {
           <Button
             bsStyle="primary"
             bsSize="large"
-            onClick={this.onClick.bind(this)}>
+            onClick={this.onClick}>
             Grant tokens
           </Button>
         </Form>
