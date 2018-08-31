@@ -1,4 +1,4 @@
-import BigNumber from "bignumber.js";
+import BigNumber from "bignumber.js"
 
 export function displayAmount(amount, decimals, precision) {
   amount = new BigNumber(amount)

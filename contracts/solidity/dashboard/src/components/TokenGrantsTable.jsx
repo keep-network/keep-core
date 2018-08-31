@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { Table } from 'react-bootstrap';
+import React, { Component } from 'react'
+import { Table } from 'react-bootstrap'
 
 class TokenGrantsTable extends Component {
   render() {
@@ -10,8 +10,8 @@ class TokenGrantsTable extends Component {
             <td>{item.formatted.amount}</td>
             <td><a href="">{item.owner}</a></td>
           </tr>
-        );
-      });
+        )
+      })
     }
     return (
       <Table className="small table-sm" condensed>
@@ -25,8 +25,8 @@ class TokenGrantsTable extends Component {
           { rows }
         </tbody>
       </Table>
-    );
+    )
   }
 }
 
-export default TokenGrantsTable;
+export default TokenGrantsTable

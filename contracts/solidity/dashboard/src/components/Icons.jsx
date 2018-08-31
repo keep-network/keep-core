@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from 'react'
+import PropTypes from 'prop-types'
 
 const Keep = ({ color, height, width }) => (
   <svg height={height} id="svg2" width={width} version="1.1" viewBox="0 0 928.81335 238.16" xmlSpace="preserve">
@@ -13,20 +13,20 @@ const Keep = ({ color, height, width }) => (
       </g>
     </g>
   </svg>
-);
+)
 
 Keep.propTypes = {
   color: PropTypes.string,
   height: PropTypes.string,
   width: PropTypes.string
-};
+}
 
 Keep.defaultProps = {
   color: '#293330',
   height: '238.16',
   width:'917.41333'
-};
+}
 
 export {
   Keep
-};
+}

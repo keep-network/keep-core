@@ -1,6 +1,6 @@
-import React from 'react';
-import { Navbar, NavbarBrand } from 'react-bootstrap';
-import * as Icons from './Icons';
+import React from 'react'
+import { Navbar, NavbarBrand } from 'react-bootstrap'
+import * as Icons from './Icons'
 
 const Header = ({networkType}) => {
   return (
@@ -25,4 +25,4 @@ const Header = ({networkType}) => {
   )
 }
 
-export default Header;
+export default Header

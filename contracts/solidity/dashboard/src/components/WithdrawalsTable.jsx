@@ -1,21 +1,21 @@
-import React, { Component } from 'react';
-import { Table, Button } from 'react-bootstrap';
-import { getTokenStaking } from '../contracts';
-import Network from '../network';
+import React, { Component } from 'react'
+import { Table, Button } from 'react-bootstrap'
+import { getTokenStaking } from '../contracts'
+import Network from '../network'
 
 class Withdrawal extends Component {
 
   async finishUnstake(withdrawalId) {
-    const accounts = await Network.getAccounts();
-    const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
-    stakingContract.finishUnstake(withdrawalId, {from: accounts[0], gas: 110000});
+    const accounts = await Network.getAccounts()
+    const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS)
+    stakingContract.finishUnstake(withdrawalId, {from: accounts[0], gas: 110000})
   }
 
   render() {
 
-    let action = 'N/A';
+    let action = 'N/A'
     if (this.props.withdrawal.available) {
-      action = <Button bsSize="small" bsStyle="primary" onClick={()=>this.finishUnstake(this.props.withdrawal.id)}>Finish Unstake</Button>;
+      action = <Button bsSize="small" bsStyle="primary" onClick={()=>this.finishUnstake(this.props.withdrawal.id)}>Finish Unstake</Button>
     }
 
     return (
@@ -24,7 +24,7 @@ class Withdrawal extends Component {
         <td className="text-mute">{this.props.withdrawal.availableAt}</td>
         <td>{action}</td>
       </tr>
-    );
+    )
   }
 }
 
@@ -35,8 +35,8 @@ class WithdrawalsTable extends Component {
       var rows = this.props.data.map(function(item, i){
         return (
           <Withdrawal key={i} withdrawal={item}/>
-        );
-      });
+        )
+      })
     }
 
     return (
@@ -52,8 +52,8 @@ class WithdrawalsTable extends Component {
           { rows }
         </tbody>
       </Table>
-    );
+    )
   }
 }
 
-export default WithdrawalsTable;
+export default WithdrawalsTable

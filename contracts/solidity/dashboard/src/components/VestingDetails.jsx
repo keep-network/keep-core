@@ -5,8 +5,8 @@ import moment from 'moment'
 class VestingDetails extends Component {
   render() {
     if (this.props.details) {
-      const { start, cliff, end, amount, released, grantedAmount, revocable, owner } = this.props.details;
-      const unreleased = grantedAmount ? grantedAmount - released : null;
+      const { start, cliff, end, amount, released, grantedAmount, revocable, owner } = this.props.details
+      const unreleased = grantedAmount ? grantedAmount - released : null
       return <div>
         <Table striped bordered condensed className="small table-sm">
           <tbody>
@@ -53,21 +53,21 @@ class VestingDetails extends Component {
   }
 
   formatDate(date) {
-    if (! date) return;
-    const milliseconds = date * 1000;
-    return moment(milliseconds).format("MMMM Do YYYY, h:mm:ss a");
+    if (! date) return
+    const milliseconds = date * 1000
+    return moment(milliseconds).format("MMMM Do YYYY, h:mm:ss a")
   }
 
   displayAmount(amount, decimals) {
-    amount = amount / (10 ** decimals);
-    return Math.round(amount * 10000) / 10000;
+    amount = amount / (10 ** decimals)
+    return Math.round(amount * 10000) / 10000
   }
 
   formatTokens(amount) {
-    if (amount == null) return;
-    const { decimals, symbol } = this.props.details;
-    const display = this.displayAmount(amount, decimals);
-    return `${display} ${symbol}`;
+    if (amount == null) return
+    const { decimals, symbol } = this.props.details
+    const display = this.displayAmount(amount, decimals)
+    return `${display} ${symbol}`
   }
 
 }

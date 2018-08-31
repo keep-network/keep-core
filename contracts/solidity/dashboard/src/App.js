@@ -1,22 +1,22 @@
-import Web3 from 'web3';
-import React, { Component } from 'react';
-import { Pie } from 'react-chartjs-2';
-import { Table, Col, Grid, Row, Tabs, Tab } from 'react-bootstrap';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import moment from 'moment';
-import { displayAmount } from './utils';
-import Network from './network';
-import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import StakingForm from './components/StakingForm';
-import WithdrawalsTable from './components/WithdrawalsTable';
-import TokenGrantsTable from './components/TokenGrantsTable';
-import TokenGrantForm from './components/TokenGrantForm';
-import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable';
-import TokenGrants from './components/TokenGrants';
-import VestingChart from './components/VestingChart';
-import VestingDetails from './components/VestingDetails';
+import Web3 from 'web3'
+import React, { Component } from 'react'
+import { Pie } from 'react-chartjs-2'
+import { Table, Col, Grid, Row, Tabs, Tab } from 'react-bootstrap'
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import moment from 'moment'
+import { displayAmount } from './utils'
+import Network from './network'
+import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts'
+import Header from './components/Header'
+import Footer from './components/Footer'
+import StakingForm from './components/StakingForm'
+import WithdrawalsTable from './components/WithdrawalsTable'
+import TokenGrantsTable from './components/TokenGrantsTable'
+import TokenGrantForm from './components/TokenGrantForm'
+import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable'
+import TokenGrants from './components/TokenGrants'
+import VestingChart from './components/VestingChart'
+import VestingDetails from './components/VestingDetails'
 
 const App = () => (
   <Router>
@@ -30,9 +30,9 @@ class Main extends Component {
 
   constructor() {
     super()
-    this.state = {};
-    this.state.chartData = {};
-    this.selectTokenGrant = this.selectTokenGrant.bind(this);
+    this.state = {}
+    this.state.chartData = {}
+    this.selectTokenGrant = this.selectTokenGrant.bind(this)
   }
 
   componentDidMount() {
@@ -40,26 +40,26 @@ class Main extends Component {
     Network.getNetworkType().then(result => {
       this.setState({
         networkType: result,
-      });
-    });
+      })
+    })
   
     this.getData().catch(error => {
       this.setState({
         error: error,
-      });
-    });
+      })
+    })
   }
 
   selectTokenGrant(i) {
     this.setState(
       { selectedGrant: this.state.grantedToYou[i] }
-    );
+    )
   }
 
   render() {
     const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
       chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
-      selectedGrant, totalAvailableToStake, totalAvailableToUnstake, error } = this.state;
+      selectedGrant, totalAvailableToStake, totalAvailableToUnstake, error } = this.state
 
     return (
       <div className="main">
@@ -162,43 +162,43 @@ class Main extends Component {
   async getData() {
 
     // Your address
-    const accounts = await Network.getAccounts();
-    const yourAddress = accounts[0];
+    const accounts = await Network.getAccounts()
+    const yourAddress = accounts[0]
 
     // Contracts
-    let token, stakingContract, grantContract;
+    let token, stakingContract, grantContract
     try {
-      token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
-      stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS);
-      grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS);
+      token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS)
+      stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS)
+      grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS)
     } catch (e) {
-      throw "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network.";
+      throw "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network."
     }
 
     // Balances
-    const tokenBalance = displayAmount(await token.balanceOf(yourAddress), 18, 3);
-    const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(yourAddress), 18, 3);
-    const grantBalance = displayAmount(await grantContract.balanceOf(yourAddress), 18, 3);
-    const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 18, 3);
-    const totalAvailableToStake = parseInt(tokenBalance)+parseInt(grantBalance);
-    const totalAvailableToUnstake = parseInt(stakeBalance)+parseInt(grantStakeBalance);
+    const tokenBalance = displayAmount(await token.balanceOf(yourAddress), 18, 3)
+    const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(yourAddress), 18, 3)
+    const grantBalance = displayAmount(await grantContract.balanceOf(yourAddress), 18, 3)
+    const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 18, 3)
+    const totalAvailableToStake = parseInt(tokenBalance)+parseInt(grantBalance)
+    const totalAvailableToUnstake = parseInt(stakeBalance)+parseInt(grantStakeBalance)
 
     // Unstake withdrawals
-    const withdrawalIndexes = await stakingContract.getWithdrawals(yourAddress);
+    const withdrawalIndexes = await stakingContract.getWithdrawals(yourAddress)
     const withdrawalDelay = (await stakingContract.withdrawalDelay()).toNumber()
-    let withdrawals = [];
-    let withdrawalsTotal = 0;
+    let withdrawals = []
+    let withdrawalsTotal = 0
 
     for(let i=0; i < withdrawalIndexes.length; i++) {
-      const withdrawalId = withdrawalIndexes[i].toNumber();
-      const withdrawal = await stakingContract.getWithdrawal(withdrawalId);
-      const withdrawalAmount = displayAmount(withdrawal[1], 18, 3);
-      withdrawalsTotal += withdrawal[1].toNumber();
-      const availableAt = moment(withdrawal[2].toNumber()*1000).add(withdrawalDelay, 'seconds');
-      let available = false;
-      let now = moment();
+      const withdrawalId = withdrawalIndexes[i].toNumber()
+      const withdrawal = await stakingContract.getWithdrawal(withdrawalId)
+      const withdrawalAmount = displayAmount(withdrawal[1], 18, 3)
+      withdrawalsTotal += withdrawal[1].toNumber()
+      const availableAt = moment(withdrawal[2].toNumber()*1000).add(withdrawalDelay, 'seconds')
+      let available = false
+      let now = moment()
       if (now > availableAt) {
-        available = true;
+        available = true
       }
 
       withdrawals.push({
@@ -207,19 +207,19 @@ class Main extends Component {
         'available': available,
         'availableAt': availableAt.format("MMMM Do YYYY, h:mm:ss a")
         }
-      );
+      )
     }
 
-    withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3);
+    withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3)
 
     // Token Grants
-    const grantIndexes = await grantContract.getGrants(yourAddress);
-    let grantedToYou = [];
-    let grantedByYou = [];
+    const grantIndexes = await grantContract.getGrants(yourAddress)
+    let grantedToYou = []
+    let grantedByYou = []
 
     for(let i=0; i < grantIndexes.length; i++) {
-      const grant = await grantContract.grants(grantIndexes[i].toNumber());
-      const grantedAmount = await grantContract.grantedAmount(grantIndexes[i].toNumber());
+      const grant = await grantContract.grants(grantIndexes[i].toNumber())
+      const grantedAmount = await grantContract.grantedAmount(grantIndexes[i].toNumber())
       const data = {
         'owner': Web3.utils.toChecksumAddress(grant[0]),
         'beneficiary': Web3.utils.toChecksumAddress(grant[1]),
@@ -241,16 +241,16 @@ class Main extends Component {
           'cliff': moment((grant[8].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
           'released': grant[9].toNumber()
         }
-      };
+      }
 
       if (yourAddress === data['owner']) {
-        grantedByYou.push(data);
+        grantedByYou.push(data)
       } else if (yourAddress === data['beneficiary']) {
-        grantedToYou.push(data);
+        grantedToYou.push(data)
       }
     }
 
-    let selectedGrant = grantedToYou[0];
+    let selectedGrant = grantedToYou[0]
 
     const chartOptions = {
       legend: {
@@ -273,7 +273,7 @@ class Main extends Component {
         '#FFCE56'
         ]
       }]
-    };
+    }
 
     this.setState({
       yourAddress,
@@ -305,4 +305,4 @@ function TableRow({ title, children }) {
   )
 }
 
-export default App;
+export default App

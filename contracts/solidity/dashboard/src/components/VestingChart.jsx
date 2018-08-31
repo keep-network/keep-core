@@ -7,7 +7,7 @@ class VestingChart extends Component {
     if (this.props.details) {
       return <Line data={ this.chartData() } options={ this.chartOptions() } />
     } else {
-      return "Loading ...";
+      return "Loading ..."
     }
   }
 

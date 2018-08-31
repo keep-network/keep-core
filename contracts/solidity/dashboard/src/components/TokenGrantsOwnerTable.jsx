@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { Table } from 'react-bootstrap';
+import React, { Component } from 'react'
+import { Table } from 'react-bootstrap'
 
 class TokenGrantsOwnerTable extends Component {
   render() {
@@ -11,8 +11,8 @@ class TokenGrantsOwnerTable extends Component {
             <td><a href="">{item.beneficiary}</a></td>
             <td><button>Revoke</button></td>
           </tr>
-        );
-      });
+        )
+      })
     }
     return (
       <Table className="small table-sm" condensed>
@@ -27,8 +27,8 @@ class TokenGrantsOwnerTable extends Component {
           { rows }
         </tbody>
       </Table>
-    );
+    )
   }
 }
 
-export default TokenGrantsOwnerTable;
+export default TokenGrantsOwnerTable

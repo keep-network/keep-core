@@ -1,24 +1,24 @@
-import moment from 'moment';
-import Web3 from 'web3';
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import moment from 'moment'
+import Web3 from 'web3'
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 import { Button, Form, FormGroup,
-  FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap';
+  FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
 import { getKeepToken, getTokenGrant } from '../contracts'
 import Network from '../network'
-import { formatAmount } from '../utils';
+import { formatAmount } from '../utils'
 
 const ERRORS = {
   INVALID_AMOUNT: `INVALID_AMOUNT`,
   SERVER: `Sorry, your request cannot be completed at this time.`
-};
+}
 
-const RESET_DELAY = 3000; // 3 seconds
+const RESET_DELAY = 3000 // 3 seconds
 
 class TokenGrantForm extends Component {
   constructor(props) {
-    super(props);
-    this.state = this.getInitialState();
+    super(props)
+    this.state = this.getInitialState()
   }
 
   getInitialState() {
@@ -37,46 +37,46 @@ class TokenGrantForm extends Component {
       requestSent: false,
       requestSuccess: false,
       errorMsg: ERRORS.INVALID_AMOUNT
-    };
+    }
   }
 
   onChange(e) {
-    const name = e.target.name;
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    this.setState({[name]: value});
+    const name = e.target.name
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    this.setState({[name]: value})
   }
 
   validateBeneficiary() {
-    if (Web3.utils.isAddress(this.state.beneficiary)) return 'success';
-    else return 'error';
-    return null;
+    if (Web3.utils.isAddress(this.state.beneficiary)) return 'success'
+    else return 'error'
+    return null
   }
 
   onClick(e) {
-    this.submit();
+    this.submit()
   }
 
   async submit() {
-    const { amount, beneficiary, duration, start, cliff, revocable} = this.state;
-    const { tokenGrantContractAddress } = this.props;
+    const { amount, beneficiary, duration, start, cliff, revocable} = this.state
+    const { tokenGrantContractAddress } = this.props
 
-    const accounts = await Network.getAccounts();
-    const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS);
-    const tokenGrantContract = await getTokenGrant(tokenGrantContractAddress);
+    const accounts = await Network.getAccounts()
+    const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS)
+    const tokenGrantContract = await getTokenGrant(tokenGrantContractAddress)
 
-    token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: accounts[0], gas: 60000});
-    tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: accounts[0], gas: 300000});
+    token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: accounts[0], gas: 60000})
+    tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: accounts[0], gas: 300000})
 
   }
 
   render() {
     const { amount, beneficiary, duration, start, cliff, revocable,
         hasError,
-        errorMsg} = this.state;
+        errorMsg} = this.state
 
     return (
       <div className="token-grant-form">
-        <Form horizontal onSubmit={(e) => { e.preventDefault(); }}>
+        <Form horizontal onSubmit={(e) => { e.preventDefault() }}>
           <FormGroup validationState={this.validateBeneficiary()}>
             <Col componentClass={ControlLabel} sm={2}>
               Beneficiary:
@@ -180,8 +180,8 @@ class TokenGrantForm extends Component {
         { hasError &&
           <small className="error-message">{errorMsg}</small> }
       </div>
-    );
+    )
   }
 }
 
-export default TokenGrantForm;
+export default TokenGrantForm

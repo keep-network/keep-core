@@ -1,8 +1,8 @@
-import React from 'react';
+import React from 'react'
 
 const Footer = () => {
-  const d = new Date();
-  const year = d.getFullYear();
+  const d = new Date()
+  const year = d.getFullYear()
   return (
     <footer class="footer">
       <div class="container text-center">
