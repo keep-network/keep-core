@@ -101,14 +101,14 @@ library AltBn128 {
         view returns(uint256, uint256)
     {
         bytes32 mX = bytes32(0);
-        byte leadX = mX[0] & byte(0x01111111);
+        byte leadX = m[0] & byte(127);
         bytes32 mask = 0xff << 31*8;
         mX = (m & ~mask) | (leadX >> 0);
 
         uint256 x = uint256(mX);
         uint256 y = yFromX(x);
 
-        if (ySign(y) != (bytes32(y)[0] ^ byte(0x10000000)) >> 7) {
+        if (ySign(y) != (m[0] & byte(128)) >> 7) {
             y = p - y;
         }
 
