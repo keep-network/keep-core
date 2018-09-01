@@ -87,10 +87,8 @@ library AltBn128 {
         bytes32 m = bytes32(x);
 
         byte leadM = m[0] | ySign(y) << 7;
-        /* solium-disable-next-line */
-        assembly {
-            mstore(add(m, 1), leadM)
-        }
+        bytes32 mask = 0xff << 31*8;
+        m = (m & ~mask) | (leadM >> 0);
 
         return m;
     }
@@ -104,11 +102,8 @@ library AltBn128 {
     {
         bytes32 mX = bytes32(0);
         byte leadX = mX[0] & byte(0x01111111);
-        /* solium-disable-next-line */
-        assembly {
-            mstore(add(mX, 32), m)
-            mstore(add(mX, 1), leadX)
-        }
+        bytes32 mask = 0xff << 31*8;
+        mX = (m & ~mask) | (leadX >> 0);
 
         uint256 x = uint256(mX);
         uint256 y = yFromX(x);
