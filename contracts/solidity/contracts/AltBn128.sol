@@ -70,6 +70,14 @@ library AltBn128 {
     }
 
     /**
+     * @dev Calculates whether provided y coordinate is even or odd number.
+     * @return 0x01 byte if y is an even number and 0x00 if it's odd.
+     */
+    function ySign(uint256 y) private returns (byte) {
+        return bytes32(y)[31] & byte(1);
+    }
+
+    /**
      * @dev Compress a point on G1 to a single uint256 for serialization.
      */
     function g1Compress(uint256 x, uint256 y)
@@ -78,7 +86,7 @@ library AltBn128 {
     {
         bytes32 m = bytes32(x);
 
-        byte leadM = m[0] | ((bytes32(y)[31] & byte(1)) << 7);
+        byte leadM = m[0] | ySign(y) << 7;
         /* solium-disable-next-line */
         assembly {
             mstore(add(m, 1), leadM)
@@ -94,7 +102,6 @@ library AltBn128 {
         public
         view returns(uint256, uint256)
     {
-        byte ySign = (m[0] ^ byte(0x10000000)) >> 7;
         bytes32 mX = bytes32(0);
         byte leadX = mX[0] & byte(0x01111111);
         /* solium-disable-next-line */
@@ -106,7 +113,7 @@ library AltBn128 {
         uint256 x = uint256(mX);
         uint256 y = yFromX(x);
 
-        if (ySign != (bytes32(y)[0] ^ byte(0x10000000)) >> 7) {
+        if (ySign(y) != (bytes32(y)[0] ^ byte(0x10000000)) >> 7) {
             y = p - y;
         }
 
