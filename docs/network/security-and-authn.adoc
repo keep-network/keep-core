@@ -63,7 +63,7 @@ assurance that they know each others' identities.
 
 In our model of authentication, all peers must always be authenticated.
 Authentication happens via asymmetric cryptography, using a signature algorithm
-that is cheap to verify on-chain (ie. ECDSA, BLS) <<F3>>. Given an authenticated
+that is cheap to verify on-chain (ie. ECDSA, BLS) <<FD>>. Given an authenticated
 peer and an unauthenticated peer, the unauthenticated peer must provide the
 authenticated peer proof of attestation over a staked key on chain.
 
@@ -212,23 +212,57 @@ complexity to the protocol.
 sends a final message to P2 letting them know
 
 
-==== Full Station-to-Station
+==== Station-to-Station (STS)
 
 ===== Overview
 
-- The base spec concerns with exponentiation, but also applies equally well to
-additive groups (ec over finite fields).
+* The base spec concerns with exponentiation, but also applies equally well to
+additive groups (elliptic curve over finite fields).
 
-- Authenticated key agreement with key confirmation: two-way explicit key
-confirmation
+* Authenticated key agreement with key confirmation: two-way explicit key
+confirmation.
 
-===== Limitations
+* Begins with Diffie-Helman key establishment, followed by an exchange of
+authentication signatures, specifically of exponentials (of which at least one is
+created for this specific run.
 
-* This is only a cryptography key agreement scheme
-* Still vulnerable to a man-in-the-middle attacks if the persistent signing keys
-aren't known in advance. Fortunately, we can use staked keys or X509 certs
-generated from those staked keys to ensure that both parties are known before
-hand.
+* Requires (given honest peers _P~1~_, _P~2~_, and adversary _A_)
+
+** Encryption on signatures.
+*** If we remove this requirement, _A_ can man-in-the-middle a handshake between
+*** _P~1~_ and _P~2~_ (where _P~2~_ starts the handshake). Therefore, the
+*** protocol fails to maintain a shared secret key between _P~1~_ and _P~2~_.
+*** Instead, a secret key exists between _P~1~_ and _P~2~_ BUT _P~1~_ has
+*** acknowledged _A_'s identity, not _P~2~_'s.
+
+** _P~1~_ and _P~2~_ both sign _P~1~_, _P~2~_ exponentials.
+*** Specific (though, not general) attacks exists for the case where an honest
+*** peer only signs their exponential, or where they only sign the other peer's
+*** exponential.
+
+** Authentication must be coupled with Diffie-Hellman key-exchange.
+*** Otherwise the protocol is susceptible to a man-in-the-middle attack <<AAKE>>.
+
+** Must include Diffie-Hellman parameters in certificates.
+*** _A_ has the freedom to modify the DH parameters, allowing _A_ to calculate
+*** the exchanged key.
+
+The following is a slightly modified summary from <<AAKE>>:
+
+> There are two other desirable properties of the STS protocol. The first is that
+> public key techniques are used to make key management simpler and more secure
+> than is possible using conventional cryptography. If parties generate their own
+> secret keys, these keys need never be disclosed (to anyone, including any
+> supposedly trusted party), even during initialization. The second is that there
+> is no need for communicating parties to contact a central facility on a per-
+> call basis. If certificates are used for distributing public keys, once a party
+> has its own certificate and the trusted authority’s public key, it can exchange
+> keys with, and authenticate other parties without consulting a central facility.
+> The protocol appears to strike an elegant and difficult balance, being simple
+> and secure without utilizing unnecessary or redundant elements.
+
+===== Analysis
+
 
 
 ==== Noise Protocol
