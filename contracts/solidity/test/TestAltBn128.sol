@@ -161,4 +161,19 @@ contract TestAltBn128 {
         bool result = AltBn128.pairing(signature, g2, [message[0], AltBn128.getP() - message[1]], publicKey);
         Assert.isTrue(result, "Verify signature using precompiled pairing contract should succeed.");
     }
+
+    function testCompressG1Invertibility() public {
+        uint256 p_1_x;
+        uint256 p_1_y;
+        uint256 p_2_x;
+        uint256 p_2_y;
+        for (uint i = 0; i < randomG1.length; i++) {
+            p_1_x = randomG1[i][0];
+            p_1_y = randomG1[i][1];
+            bytes32 compressed = AltBn128.g1Compress(p_1_x, p_1_y);
+            (p_2_x, p_2_y) = AltBn128.g1Decompress(compressed);
+            Assert.equal(p_1_x, p_2_x, "Decompressing a compressed point should give the same x coordinate.");
+            Assert.equal(p_1_y, p_2_y, "Decompressing a compressed point should give the same y coordinate.");
+        }
+    }
 }
