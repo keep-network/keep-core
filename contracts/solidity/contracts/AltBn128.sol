@@ -16,21 +16,21 @@ library AltBn128 {
 
     uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
-    function getP() public view returns (uint256) {
+    function getP() public pure returns (uint256) {
         return p;
     }
 
     /**
      * @dev Gets generator of G1 group.
      */
-    function g1() public view returns (uint256[2]) {
+    function g1() public pure returns (uint256[2]) {
         return [uint256(1), uint256(2)];
     }
 
     /**
      * @dev Gets generator of G2 group.
      */
-    function g2() public view returns (uint256[4]) {
+    function g2() public pure returns (uint256[4]) {
         return [
             11559732032986387107991004021392285783925812861821192530917403151452391805634,
             10857046999023057135944570762232829481370756359578518086990519993285655852781,
@@ -73,7 +73,7 @@ library AltBn128 {
      * @dev Calculates whether provided y coordinate is even or odd number.
      * @return 0x01 byte if y is an even number and 0x00 if it's odd.
      */
-    function ySign(uint256 y) private returns (byte) {
+    function ySign(uint256 y) private pure returns (byte) {
         return bytes32(y)[31] & byte(1);
     }
 
@@ -82,7 +82,7 @@ library AltBn128 {
      */
     function g1Compress(uint256 x, uint256 y)
         public
-        view returns(bytes32)
+        pure returns(bytes32)
     {
         bytes32 m = bytes32(x);
 
