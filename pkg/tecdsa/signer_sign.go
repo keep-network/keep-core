@@ -168,21 +168,21 @@ func (s *Round2Signer) CombineRound2Messages(
 	secretKeyMultiple *paillier.Cypher,
 	err error,
 ) {
-	groupSize := s.signerGroup.InitialGroupSize
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round1Messages) != groupSize {
+	if len(round1Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 1 messages required from all group members; got %v, expected %v",
+			"round 1 messages required from at least %v group members but got %v",
+			s.signerGroup.Threshold,
 			len(round1Messages),
-			groupSize,
 		)
 	}
 
-	if len(round2Messages) != groupSize {
+	if len(round2Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 2 messages required from all group members; got %v, expected %v",
+			"round 2 messages required from at least %v group members but got %v",
+			s.signerGroup.Threshold,
 			len(round2Messages),
-			groupSize,
 		)
 	}
 
@@ -196,6 +196,10 @@ func (s *Round2Signer) CombineRound2Messages(
 			if round1Message.signerID == round2Message.signerID {
 				foundMatchingRound2Message = true
 
+				if !s.signerGroup.Contains(round1Message.signerID) {
+					return nil, nil, fmt.Errorf("signer with ID %s is not in signers group", round1Message.signerID)
+				}
+
 				if round2Message.isValid(
 					s.commitmentMasterPublicKey,
 					round1Message.secretKeyFactorShareCommitment,
@@ -205,12 +209,14 @@ func (s *Round2Signer) CombineRound2Messages(
 					secretKeyFactorShares[i] = round2Message.secretKeyFactorShare
 					secretKeyMultipleShares[i] = round2Message.secretKeyMultipleShare
 				} else {
+					s.signerGroup.RemoveSignerID(round1Message.signerID)
 					return nil, nil, errors.New("round 2 message rejected")
 				}
 			}
 		}
 
 		if !foundMatchingRound2Message {
+			s.signerGroup.RemoveSignerID(round1Message.signerID)
 			return nil, nil, fmt.Errorf(
 				"no matching round 2 message for signer with ID = %v",
 				round1Message.signerID,
@@ -436,21 +442,21 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic *curve.Point, // R
 	err error,
 ) {
-	groupSize := s.signerGroup.InitialGroupSize
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round3Messages) != groupSize {
+	if len(round3Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 3 messages required from all group members; got %v, expected %v",
+			"round 3 messages required from at least %v group members but got %v",
+			s.signerGroup.Threshold,
 			len(round3Messages),
-			groupSize,
 		)
 	}
 
-	if len(round4Messages) != groupSize {
+	if len(round4Messages) < s.signerGroup.Threshold {
 		return nil, nil, fmt.Errorf(
-			"round 4 messages required from all group members; got %v, expected %v",
+			"round 4 messages required from at least %v group members but got %v",
+			s.signerGroup.Threshold,
 			len(round4Messages),
-			groupSize,
 		)
 	}
 
@@ -464,6 +470,10 @@ func (s *Round4Signer) CombineRound4Messages(
 			if round3Message.signerID == round4Message.signerID {
 				foundMatchingRound4Message = true
 
+				if !s.signerGroup.Contains(round3Message.signerID) {
+					return nil, nil, fmt.Errorf("signer with ID %s is not in signers group", round3Message.signerID)
+				}
+
 				if round4Message.isValid(
 					s.commitmentMasterPublicKey,
 					round3Message.signatureFactorShareCommitment,
@@ -473,12 +483,14 @@ func (s *Round4Signer) CombineRound4Messages(
 					signatureFactorPublicShares[i] = round4Message.signatureFactorPublicShare
 					signatureUnmaskShares[i] = round4Message.signatureUnmaskShare
 				} else {
+					s.signerGroup.RemoveSignerID(round3Message.signerID)
 					return nil, nil, errors.New("round 4 message rejected")
 				}
 			}
 		}
 
 		if !foundMatchingRound4Message {
+			s.signerGroup.RemoveSignerID(round3Message.signerID)
 			return nil, nil, fmt.Errorf(
 				"no matching round 4 message for signer with ID = %v",
 				round3Message.signerID,
@@ -570,18 +582,22 @@ func (s *Round5Signer) CombineRound5Messages(
 	signatureUnmask *big.Int, // TDec(w)
 	err error,
 ) {
-	groupSize := s.signerGroup.InitialGroupSize
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round5Messages) != groupSize {
+	if len(round5Messages) < s.signerGroup.Threshold {
 		return nil, fmt.Errorf(
-			"round 5 messages required from all group members; got %v, expected %v",
+			"round 5 messages required from at least %v group members but got %v",
+			s.signerGroup.Threshold,
 			len(round5Messages),
-			groupSize,
 		)
 	}
 
 	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
 	for i, round5Message := range round5Messages {
+		if !s.signerGroup.Contains(round5Message.signerID) {
+			return nil, fmt.Errorf("signer with ID %s is not in signers group", round5Message.signerID)
+		}
+
 		partialDecryptions[i] = round5Message.signatureUnmaskPartialDecryption
 	}
 
@@ -631,6 +647,7 @@ func (s *Round5Signer) SignRound6(
 	)
 
 	return &SignRound6Message{
+		signerID:                   s.ID,
 		signaturePartialDecryption: s.paillierKey.Decrypt(signatureCypher.C),
 	}, nil
 }
@@ -647,18 +664,22 @@ type Signature struct {
 func (s *Round5Signer) CombineRound6Messages(
 	round6Messages []*SignRound6Message,
 ) (*Signature, error) {
-	groupSize := s.signerGroup.InitialGroupSize
+	groupSize := s.signerGroup.SignerCount()
 
-	if len(round6Messages) != groupSize {
+	if len(round6Messages) < s.signerGroup.Threshold {
 		return nil, fmt.Errorf(
-			"round 6 messages required from all group members; got %v, expected %v",
+			"round 6 messages required from at least %v group members but got %v",
+			s.signerGroup.Threshold,
 			len(round6Messages),
-			groupSize,
 		)
 	}
 
 	partialDecryptions := make([]*paillier.PartialDecryption, groupSize)
 	for i, round6Message := range round6Messages {
+		if !s.signerGroup.Contains(round6Message.signerID) {
+			return nil, fmt.Errorf("signer with ID %s is not in signers group", round6Message.signerID)
+		}
+
 		partialDecryptions[i] = round6Message.signaturePartialDecryption
 	}
 

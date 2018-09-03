@@ -132,7 +132,7 @@ func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
 	}
 
 	expectedError := fmt.Errorf(
-		"all group members should reveal shares; Got 1, expected 10",
+		"all group members should reveal shares; got 1, expected 10",
 	)
 
 	_, err = group[0].CombineDsaKeyShares(
@@ -274,7 +274,7 @@ func readTestParameters() (
 // createNewLocalGroup creates a new group of `LocalSigner`s that did not
 // started initialization process yet.
 func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
-	paillierKeys, signerParameters, zkpParameters, signerGroup, err := readTestParameters()
+	paillierKeys, publicParameters, zkpParameters, groupParameters, err := readTestParameters()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -282,11 +282,24 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
 		localSigners[i] = NewLocalSigner(
-			&paillierKeys[i], signerParameters, zkpParameters, signerGroup,
+			&paillierKeys[i],
+			publicParameters,
+			zkpParameters,
+			&signerGroup{
+				InitialGroupSize: groupParameters.InitialGroupSize,
+				Threshold:        groupParameters.Threshold,
+			},
 		)
 	}
 
-	return localSigners, signerParameters, nil
+	// Register signers' IDs
+	for i := 0; i < len(localSigners); i++ {
+		for j := 0; j < len(localSigners); j++ {
+			localSigners[i].signerGroup.AddSignerID(localSigners[j].ID)
+		}
+	}
+
+	return localSigners, publicParameters, nil
 }
 
 // initializeNewLocalGroupWithKeyShares creates and initializes a new group of

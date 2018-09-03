@@ -30,7 +30,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				return []*SignRound1Message{round1Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 1 messages required from all group members; got 1, expected 10",
+				"round 1 messages required from at least 6 group members but got 1",
 			),
 		},
 		"negative validation - too few round 2 messages": {
@@ -40,7 +40,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				return []*SignRound2Message{round2Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 2 messages required from all group members; got 1, expected 10",
+				"round 2 messages required from at least 6 group members but got 1",
 			),
 		},
 		"negative validation - missing round 2 message for signer": {
@@ -170,7 +170,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				return []*SignRound3Message{round3Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 3 messages required from all group members; got 1, expected 10",
+				"round 3 messages required from at least 6 group members but got 1",
 			),
 		},
 		"negative validation - too few round 4 messages": {
@@ -180,7 +180,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				return []*SignRound4Message{round4Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 4 messages required from all group members; got 1, expected 10",
+				"round 4 messages required from at least 6 group members but got 1",
 			),
 		},
 		"negative validation - missing round 3 message for signer": {
@@ -371,7 +371,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 				return []*SignRound5Message{msgs[0], msgs[1]}
 			},
 			expectedError: errors.New(
-				"round 5 messages required from all group members; got 2, expected 10",
+				"round 5 messages required from at least 6 group members but got 2",
 			),
 		},
 	}
@@ -442,7 +442,7 @@ func TestSignAndCombineRound5(t *testing.T) {
 // Partial decryptions are combined together in order to present the signature
 // in a decrypted form.
 func TestSignAndCombineRound6(t *testing.T) {
-	paillierKeys, publicParameters, zkpParameters, signerGroup, err := readTestParameters()
+	paillierKeys, publicParameters, zkpParameters, groupParameters, err := readTestParameters()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -502,13 +502,26 @@ func TestSignAndCombineRound6(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		signers[i] = &Round5Signer{
 			Signer: *NewLocalSigner(
-				&paillierKeys[i], publicParameters, zkpParameters, signerGroup,
+				&paillierKeys[i],
+				publicParameters,
+				zkpParameters,
+				&signerGroup{
+					InitialGroupSize: groupParameters.InitialGroupSize,
+					Threshold:        groupParameters.Threshold,
+				},
 			).WithDsaKey(ecdsaKey),
 
 			secretKeyFactor:           encryptedSecretKeyFactor,
 			secretKeyMultiple:         secretKeyMultiple,
 			signatureFactorPublic:     signatureFactorPublic,
 			signatureFactorPublicHash: signatureFactorPublicHash,
+		}
+
+	}
+
+	for i := 0; i < len(signers); i++ {
+		for j := 0; j < len(signers); j++ {
+			signers[i].signerGroup.AddSignerID(signers[j].ID)
 		}
 	}
 

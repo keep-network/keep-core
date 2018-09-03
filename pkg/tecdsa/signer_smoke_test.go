@@ -56,6 +56,10 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// generation process
 	//
 	for i, signer := range localSigners {
+		if !signer.signerGroup.IsSignerGroupComplete() {
+			t.Fatal("signer group is not complete")
+		}
+
 		masterPublicKeyShareMessagesKeyGeneration[i], err = signer.GenerateMasterPublicKeyShare()
 		if err != nil {
 			t.Fatal(err)
@@ -299,16 +303,13 @@ func generateNewLocalGroup() (
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
 	}
-
-	signerGroup := &signerGroup{
-		InitialGroupSize: 20,
-		Threshold:        12,
-	}
+	initialGroupSize := 20
+	groupThreshold := 12
 
 	paillierKeyGen, err := paillier.GetThresholdKeyGenerator(
 		publicParameters.PaillierKeyBitLength,
-		signerGroup.InitialGroupSize,
-		signerGroup.Threshold,
+		initialGroupSize,
+		groupThreshold,
 		rand.Reader,
 	)
 	if err != nil {
@@ -337,8 +338,21 @@ func generateNewLocalGroup() (
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
 		localSigners[i] = NewLocalSigner(
-			paillierKeys[i], publicParameters, zkpParameters, signerGroup,
+			paillierKeys[i],
+			publicParameters,
+			zkpParameters,
+			&signerGroup{
+				InitialGroupSize: initialGroupSize,
+				Threshold:        groupThreshold,
+			},
 		)
+	}
+
+	// Register signers' IDs
+	for i := 0; i < len(localSigners); i++ {
+		for j := 0; j < len(localSigners); j++ {
+			localSigners[i].signerGroup.AddSignerID(localSigners[j].ID)
+		}
 	}
 
 	return localSigners, publicParameters, nil
