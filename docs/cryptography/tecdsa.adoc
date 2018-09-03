@@ -25,3 +25,72 @@ _Master Publick Key_ is a value needed for commitment generation. This value is 
 ^|Master Public Key Share
 |=== 
 . Each signer combines _Master Public Key Shares_ of all signers to get _Master Public Key_.
+
+== Key Generation
+
+=== Round #1
+
+. Each signer generates _DSA Key Share_ which consists of _Private Key Share_ and _Public Key Share_.
++
+_Private Key Share_ value must be kept secret and never shared.
++
+_Public Key Share_ value cannot be exposed until all signers in the group commit to their values.
+
+. Each signer calculates a commitment for the _Public Key Share_ value and broadcasts this commitment in 
+ _Public Key Share Commitment Message_.
+
+.Public Key Share Commitment Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`publicKeyShareCommitment` 
+^|`commitment.MultiTrapdoorCommitment`
+^|Commitment to _Public Key Share_
+|=== 
+
+=== Round #2
+After commitments from all signers are gathered the next round starts.
+
+. Signers reveal their _DSA Key Shares_ and broadcast _Key Share Reveal Message_.
++
+Since _Private Key Share_ should always be kept secret it is first encrypted with Paillier and this encrypted value is broadcasted along with
+Zero Knowledge Proof Π~i~ to confirm that _Private Key Share_ value is in [-q^3^, q^3^] range.
++
+_Public Key Share_ is broadcasted with a decommitment key used in a previous round in commitment to _Public Key Share_ value.
++
+.Key Share Reveal Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`secretKeyShare` 
+^|`paillier.Cypher`
+^|Encrypted _Private Key Share_
+
+^|`publicKeyShare` 
+^|`curve.Point`
+^|_Public Key Share_
+
+^|`publicKeyShareDecommitmentKey` 
+^|`commitment.DecommitmentKey`
+^|Decommitment key for _Public Key Share_
+
+^|`secretKeyProof` 
+^|`zkp.DsaPaillierKeyRangeProof`
+^|ZKP Π~i~ -- _Private Key Share_ is in range [-q^3^, q^3^]
+|=== 
+
+. Each signer validates received _Key Share Reveal Messages_ and combines shares to get encrypted _Private Key_ and _Public Key_ which forms _DSA Key_.
+
+== Signing
+
+TBD
