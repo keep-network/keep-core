@@ -1,0 +1,27 @@
+:toc: macro
+
+= T-ECDSA Protocol
+
+toc::[]
+
+== Setup
+
+=== Master Public Key
+_Master Publick Key_ is a value needed for commitment generation. This value is generated individually for each signer before each of two phases: key generation and signing.
+
+. Each signer generates _Master Public Key Share_ and broadcasts it to other signers in _Master Public Key Share Message_.
++
+.Master Public Key Share Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`masterPublicKeyShare` 
+^|`[]byte`
+^|Master Public Key Share
+|=== 
+. Each signer combines _Master Public Key Shares_ of all signers to get _Master Public Key_.
