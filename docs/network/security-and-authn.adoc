@@ -1,6 +1,6 @@
     * Feature Name: Network Security
     * Status: draft
-    * Start Date: 2018-08-
+    * Start Date: 2018-08-11
     * Authors: Raghav Gulati
     * RFC PR: #275
     * Keep Issues: #9, #87, #88
@@ -87,13 +87,21 @@ In addition to these capabilities, the following security properties should hold
 
 ===== Secure
 
-<<FD>> introduces us to the definition of a secure protocol. We summarize it as:
+<<AAKE>> introduces us to the definition of a secure protocol. We summarize it as:
 
 1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
 infeasible for anyone not _P~1~_ and _P~2~_, to recover the secret key.
 
 2.  The record of messages shared between _P~1~_ and _P~2~_ to establish the
-authentication of identity must be identical.
+authentication of identity must be identical and logically linked. This prevents
+replay attacks (re-use of previous messages) and interleaving attacks (injecting
+a message used in previous runs).
+
+Furthermore, <<TLS>> states that for a protocol to be secure it must contain the
+capabilities listed above as well as provide confidentiality and integrity. Then,
+the __Secure__ property is a superset of the capabilities and properties listed in
+this section.
+
 
 ===== Confidentiality
 
@@ -104,6 +112,7 @@ communicating peers <<CNF>>.
 
 Data sent over the channel after establishment cannot be modified by
 adversaries without detection.
+
 
 ===== Attributability
 
