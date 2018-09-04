@@ -9,6 +9,7 @@
 :numbered:
 toc::[]
 
+
 == Background
 
 Keep is a decentralized network that is anchored to one or more host chains via
@@ -16,7 +17,7 @@ on-chain smart contracts, allowing interactions both on- and off-chain depending
 on the use case. To ensure the safety, security, and integrity of the network,
 the network needs to implement authorization, encryption, and authentication. The
 decentralized nature of the network brings about the unique challenge where
-off-the-shelf protocols such as TLS aren't suitable. Specifically, these
+off-the-shelf protocols (such as TLS) aren't suitable. Specifically, these
 protocols can't be used as-is due to their requirement of trusted central
 authorities and intermediaries.
 
@@ -41,8 +42,8 @@ chain:: A decentralized, consensus driven store with identities and economic
 incentives.
 stake:: The amount of value required to be a participant in the network. This
 amount is held on the host chain and associated with an identity.
-bootstrap node:: A trusted peer in a network that handles requests for joining
-the network from peers outside of it. This involves verifying an on-chain stake
+bootstrap node:: A trusted, authenticated peer that handles requests for joining
+the network from unauthenticated peers. This involves verifying an on-chain stake
 among many other responsibilities.
 
 
