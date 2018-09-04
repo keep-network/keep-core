@@ -68,9 +68,19 @@ func (sg *signerGroup) Contains(signerID string) bool {
 	return false
 }
 
-// SignerCount return number of signers in the signing group.
+// SignerCount returns number of signers in the signing group.
 func (sg *signerGroup) SignerCount() int {
 	return len(sg.signerIDs)
+}
+
+// PeerSignerCount returns number of peer signers in the signing group. This
+// number is always one signer less than the `SignerCount`.
+func (sg *signerGroup) PeerSignerCount() int {
+	if sg.SignerCount() == 0 {
+		return 0
+	}
+
+	return sg.SignerCount() - 1
 }
 
 // IsSignerGroupComplete checks if a number of signers in a group matches initial
