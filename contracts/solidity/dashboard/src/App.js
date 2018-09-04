@@ -18,6 +18,7 @@ import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable'
 import TokenGrants from './components/TokenGrants'
 import VestingChart from './components/VestingChart'
 import VestingDetails from './components/VestingDetails'
+import { colors } from './colors'
 
 const App = () => (
   <Router>
@@ -280,10 +281,10 @@ class Main extends Component {
       datasets: [{
         data: [tokenBalance, stakeBalance, withdrawalsTotal, grantBalance],
         backgroundColor: [
-        '#505e5b',
-        '#48dbb4',
-        '#2f9278',
-        '#FFCE56'
+          colors.nandor,
+          colors.turquoise,
+          colors.lochinvar,
+          colors.goldenTainoi
         ]
       }]
     }

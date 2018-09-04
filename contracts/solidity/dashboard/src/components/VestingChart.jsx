@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Line } from 'react-chartjs-2'
 import moment from 'moment'
+import { colors } from '../colors'
 
 class VestingChart extends Component {
   render() {
@@ -95,15 +96,15 @@ class VestingChart extends Component {
   fromBaseDataset(opts) {
     return {
       lineTension: 0.1,
-      backgroundColor: 'rgba(92,182,228,0.4)',
-      borderColor: 'rgba(92,182,228,1)',
+      backgroundColor: colors.malibuTransparent,
+      borderColor: colors.malibu,
       borderJoinStyle: 'miter',
-      pointBorderColor: 'rgba(92,182,228,1)',
-      pointBackgroundColor: 'rgba(92,182,228,1)',
+      pointBorderColor: colors.malibu,
+      pointBackgroundColor: colors.malibu,
       pointBorderWidth: 1,
       pointHoverRadius: 5,
-      pointHoverBackgroundColor: 'rgba(92,182,228,1)',
-      pointHoverBorderColor: 'rgba(220,220,220,1)',
+      pointHoverBackgroundColor: colors.malibu,
+      pointHoverBorderColor: colors.grey,
       pointHoverBorderWidth: 2,
       pointRadius: 5,
       pointHitRadius: 10,
