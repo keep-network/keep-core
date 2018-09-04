@@ -30,9 +30,11 @@ of two phases: key generation and signing.
 ^|`[]byte`
 ^|Master Public Key Share
 |=== 
+
 . Each signer combines all _Master Public Key Shares_ to get _Master Public Key_.
 
 == Key Generation Phase
+
 *Input*: _Master Public Key_ +
 *Output*: _DSA Key_
 
@@ -42,10 +44,10 @@ phase.
 
 === Round #1
 
-. Each signer generates _DSA Key Share_ which consists of _Private Key Share_ and
+. Each signer generates _DSA Key Share_ which consists of _Secret Key Share_ and
 _Public Key Share_.
 +
-_Private Key Share_ value must be kept secret and never shared.
+_Secret Key Share_ value must be kept secret and never shared.
 +
 _Public Key Share_ value cannot be exposed until all signers in the group commit
 to their values.
@@ -70,11 +72,11 @@ broadcasts this commitment in  _Public Key Share Commitment Message_.
 === Round #2
 After commitments from all signers are gathered the next round starts.
 
-. Signers reveal their _DSA Key Shares_ and broadcast _Key Share Reveal Message_.
+. Signers reveal their _DSA Key Shares_ and broadcast _Key Share Reveal Message_. 
 +
-Since _Private Key Share_ should always be kept secret it is first encrypted with
+Since _Secret Key Share_ should always be kept secret it is first encrypted with
 Paillier and this encrypted value is broadcasted along with Zero Knowledge Proof 
-Π~i~ to confirm that _Private Key Share_ value is in [-q^3^, q^3^] range.
+Π~i~ to confirm that _Secret Key Share_ value is in [-q^3^, q^3^] range.
 +
 _Public Key Share_ is broadcasted with a decommitment key used in a previous round
 in commitment to _Public Key Share_ value.
@@ -90,7 +92,7 @@ in commitment to _Public Key Share_ value.
 
 ^|`secretKeyShare` 
 ^|`paillier.Cypher`
-^|Encrypted _Private Key Share_
+^|Encrypted _Secret Key Share_
 
 ^|`publicKeyShare` 
 ^|`curve.Point`
@@ -102,12 +104,78 @@ in commitment to _Public Key Share_ value.
 
 ^|`secretKeyProof` 
 ^|`zkp.DsaPaillierKeyRangeProof`
-^|ZKP Π~i~ -- _Private Key Share_ is in range [-q^3^, q^3^]
+^|ZKP Π~i~ -- _Secret Key Share_ is in range [-q^3^, q^3^]
 |=== 
 
 . Each signer validates received _Key Share Reveal Messages_ and combines shares 
-to get encrypted _Private Key_ and _Public Key_ which forms _DSA Key_.
+to get encrypted _Secret Key_ and _Public Key_ which together forms _DSA Key_.
 
 == Signing Phase
 
-TBD
+*Input*: _Master Public Key_, _Message Hash_, _DSA Key_ +
+*Output*: _Signature_
+
+[.lead]
+In this phase signers jointly generate signature for a message hash.
+
+=== Round #1
+Each signer:
+
+. Generates encrypted _Secret Key Factor Share_ and _Secret Key Multiple Share_. These
+values are kept secret for now. +
+
+. Calculates a commitment to both values and broadcasts the commitment in _Sign Round 1 Message_.
+
+.Sign Round 1 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`secretKeyFactorShareCommitment` 
+^|`commitment.MultiTrapdoorCommitment`
+^|Commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
+|=== 
+
+=== Round #2
+
+Each signer:
+
+. Calculates a Zero Knowledge Proof Π~1,i~.
+
+. Broadcasts _Sign Round 2 Message_ containing _Secret Key Factor Share_, 
+_Secret Key Multiple Share_ and decommitment key for the commitment from Round #1.
+
+.Sign Round 2 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`secretKeyFactorShare` 
+^|`paillier.Cypher`
+^|_Secret Key Factor Share_
+
+^|`secretKeyMultipleShare` 
+^|`paillier.Cypher`
+^|_Secret Key Multiple Share_
+
+^|`secretKeyFactorShareDecommitmentKey` 
+^|`commitment.DecommitmentKey`
+^|Decommitment key for a commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
+
+^|`secretKeyFactorProof` 
+^|`zkp.DsaPaillierSecretKeyFactorRangeProof`
+^|ZKP Π~1,i~
+|=== 
+
+. Validates received _Sign Round 1 Messages_ and _Sign Round 2 Messages_. +
+Combines shares to get _Secret Key Factor_ and _Secret Key Multiple_.
+
+=== Round #3
