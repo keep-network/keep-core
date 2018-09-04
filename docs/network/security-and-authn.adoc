@@ -150,8 +150,8 @@ identity of the unknown peer. Next, authorization enables the following:
 request to be authenticated.
 2. The capability of an authenticated peer to respond to on-chain events or to
 network-specific events.
-3. The restriction (and potential disconnection) from the network for members
-who fall below the minimum stake or for those who act maliciously.
+3. The disconnection from the network for members who fall below the minimum
+stake.
 
 
 ==== Point-to-Point
