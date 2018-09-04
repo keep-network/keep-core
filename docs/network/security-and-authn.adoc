@@ -61,11 +61,15 @@ The protocol must provide the following capabilities:
 The goal of authentication is to provide the communicating parties with some
 assurance that they know each others' identities.
 
-In our model of authentication, all peers must always be authenticated.
-Authentication happens via asymmetric cryptography, using a signature algorithm
-that is cheap to verify on-chain (ie. ECDSA, BLS) <<FD>>. Given an authenticated
-peer and an unauthenticated peer, the unauthenticated peer must provide the
-authenticated peer proof of attestation over a staked key on chain.
+An authenticated peer is a known identity in the network such that all messages
+from the authenticated peer, _M~i~_, can be provably linked to the authenticated
+peer.
+
+Given an authenticated peer and an unauthenticated peer, the unauthenticated peer
+must provide the authenticated peer proof of attestation over a staked key on
+chain. If an authenticated peer's stake falls below the minimum stake amount or
+they it is proven that they are malicious, then an authenticated peer becomes
+unauthenticated.
 
 
 ===== Authorization
