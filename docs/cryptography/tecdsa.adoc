@@ -4,12 +4,18 @@
 
 toc::[]
 
-== Setup
+== Setup Phase
 
 === Master Public Key
-_Master Publick Key_ is a value needed for commitment generation. This value is generated individually for each signer before each of two phases: key generation and signing.
+*Output*: _Master Public Key_
 
-. Each signer generates _Master Public Key Share_ and broadcasts it to other signers in _Master Public Key Share Message_.
+[.lead]
+_Master Publick Key_ is a value needed for commitment generation.
+It is generated individually for each signer. This setup needs to be done before each 
+of two phases: key generation and signing.
+
+. Each signer generates _Master Public Key Share_ and broadcasts it to other signers
+ in _Master Public Key Share Message_.
 +
 .Master Public Key Share Message
 [halign=center,options="header"]
@@ -24,20 +30,28 @@ _Master Publick Key_ is a value needed for commitment generation. This value is 
 ^|`[]byte`
 ^|Master Public Key Share
 |=== 
-. Each signer combines _Master Public Key Shares_ of all signers to get _Master Public Key_.
+. Each signer combines all _Master Public Key Shares_ to get _Master Public Key_.
 
-== Key Generation
+== Key Generation Phase
+*Input*: _Master Public Key_ +
+*Output*: _DSA Key_
+
+[.lead]
+In this phase signers jointly generate _DSA Key_ which will be used in the Signing
+phase.
 
 === Round #1
 
-. Each signer generates _DSA Key Share_ which consists of _Private Key Share_ and _Public Key Share_.
+. Each signer generates _DSA Key Share_ which consists of _Private Key Share_ and
+_Public Key Share_.
 +
 _Private Key Share_ value must be kept secret and never shared.
 +
-_Public Key Share_ value cannot be exposed until all signers in the group commit to their values.
+_Public Key Share_ value cannot be exposed until all signers in the group commit
+to their values.
 
-. Each signer calculates a commitment for the _Public Key Share_ value and broadcasts this commitment in 
- _Public Key Share Commitment Message_.
+. Each signer calculates a commitment to the _Public Key Share_ value and 
+broadcasts this commitment in  _Public Key Share Commitment Message_.
 
 .Public Key Share Commitment Message
 [halign=center,options="header"]
@@ -58,10 +72,12 @@ After commitments from all signers are gathered the next round starts.
 
 . Signers reveal their _DSA Key Shares_ and broadcast _Key Share Reveal Message_.
 +
-Since _Private Key Share_ should always be kept secret it is first encrypted with Paillier and this encrypted value is broadcasted along with
-Zero Knowledge Proof Π~i~ to confirm that _Private Key Share_ value is in [-q^3^, q^3^] range.
+Since _Private Key Share_ should always be kept secret it is first encrypted with
+Paillier and this encrypted value is broadcasted along with Zero Knowledge Proof 
+Π~i~ to confirm that _Private Key Share_ value is in [-q^3^, q^3^] range.
 +
-_Public Key Share_ is broadcasted with a decommitment key used in a previous round in commitment to _Public Key Share_ value.
+_Public Key Share_ is broadcasted with a decommitment key used in a previous round
+in commitment to _Public Key Share_ value.
 +
 .Key Share Reveal Message
 [halign=center,options="header"]
@@ -89,8 +105,9 @@ _Public Key Share_ is broadcasted with a decommitment key used in a previous rou
 ^|ZKP Π~i~ -- _Private Key Share_ is in range [-q^3^, q^3^]
 |=== 
 
-. Each signer validates received _Key Share Reveal Messages_ and combines shares to get encrypted _Private Key_ and _Public Key_ which forms _DSA Key_.
+. Each signer validates received _Key Share Reveal Messages_ and combines shares 
+to get encrypted _Private Key_ and _Public Key_ which forms _DSA Key_.
 
-== Signing
+== Signing Phase
 
 TBD
