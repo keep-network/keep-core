@@ -301,15 +301,10 @@ The following is a slightly modified summary from <<AAKE>>:
 
 == Open Questions
 
-* Does our protocol need to be application independent? Application protocol
-independent?
-
 * Do we need to expect that other higher-level protocols will be
 layered on top?
 
 * Do we require forward secrecy - how will we get that?
-
-* Are we at risk of version downgrade if we support more than one negotiation type?
 
 * What does a non-bootstrap node do with an authentication message?
 
