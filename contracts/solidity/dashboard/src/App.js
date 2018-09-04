@@ -274,7 +274,7 @@ class Main extends Component {
     }
     const chartData = {
       labels: [
-        'Tokens',
+        'Unstaked tokens',
         'Staked',
         'Pending unstake',
         'Token grants'
