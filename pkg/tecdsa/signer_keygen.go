@@ -260,6 +260,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 		)
 	}
 
+	// Combine secret and public key shares from peer signers
 	secretKeyShares := make([]*paillier.Cypher, peerSignerCount)
 	publicKeyShares := make([]*curve.Point, peerSignerCount)
 
@@ -292,6 +293,20 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 		}
 	}
 
+	// Add signer's own secret and public key share
+	encryptedSecretKeyShare, err := ls.paillierKey.Encrypt(
+		ls.dsaKeyShare.secretKeyShare, rand.Reader,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not encrypt secret key share [%v]", err,
+		)
+	}
+
+	secretKeyShares = append(secretKeyShares, encryptedSecretKeyShare)
+	publicKeyShares = append(publicKeyShares, ls.dsaKeyShare.publicKeyShare)
+
+	// Combine signer's own and peer signers' shares together
 	secretKey := ls.paillierKey.Add(secretKeyShares...)
 	publicKey := publicKeyShares[0]
 	for _, share := range publicKeyShares[1:] {
