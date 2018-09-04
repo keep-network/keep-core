@@ -6,176 +6,59 @@ toc::[]
 
 == Setup Phase
 
-=== Master Public Key
-*Output*: _Master Public Key_
-
+=== Commitment Master Public Key
 [.lead]
-_Master Publick Key_ is a value needed for commitment generation.
-It is generated individually for each signer. This setup needs to be done before each 
-of two phases: key generation and signing.
+_Commitment Master Publick Key_ is a value needed for commitment generation.
+It is generated individually for each signer. This setup needs to be performed 
+before each of two phases: key generation and signing.
 
-. Each signer generates _Master Public Key Share_ and broadcasts it to other signers
- in _Master Public Key Share Message_.
-+
-.Master Public Key Share Message
-[halign=center,options="header"]
-|=== 
-^|name ^|type ^|description
+Each signer generates _Commitment Master Public Key Share_ and broadcasts it to other signers.
+After receiving all shares signers combine them to get _Commitment Master Public Key_.
 
-^|`signerID` 
-^|`string`
-^|Signer's ID
+A _Commitment Master Public Key Share_ is a point in an abstract cyclic group _G2_ of link:https://github.com/ethereum/go-ethereum/tree/master/crypto/bn256/cloudflare[256-bit Barreto-Naehrig]
+curve.
 
-^|`masterPublicKeyShare` 
-^|`[]byte`
-^|Master Public Key Share
-|=== 
-
-. Each signer combines all _Master Public Key Shares_ to get _Master Public Key_.
+* *Output*: 
+** _Commitment Master Public Key_
 
 == Key Generation Phase
-
-*Input*: _Master Public Key_ +
-*Output*: _DSA Key_
 
 [.lead]
 In this phase signers jointly generate _DSA Key_ which will be used in the Signing
 phase.
 
-=== Round #1
+Each signer generates _Secret Key Share_ and _Public Key Share_ which form
+_ECDSA Key Share_. +
+Since _Secret Key Share_ must always be kept private, signer encrypts it with 
+Paillier and broadcasts the encrypted _Secret Key Share_ along with _Public Key Share_
+to other signers. +
+After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
+_Encrypted Secret Key_ and _Public Key_.
 
-. Each signer generates _DSA Key Share_ which consists of _Secret Key Share_ and
-_Public Key Share_.
-+
-_Secret Key Share_ value must be kept secret and never shared.
-+
-_Public Key Share_ value cannot be exposed until all signers in the group commit
-to their values.
+* *Input*:
+** _Commitment Master Public Key_
 
-. Each signer calculates a commitment to the _Public Key Share_ value and 
-broadcasts this commitment in  _Public Key Share Commitment Message_.
+* *Output*: 
+** _ECDSA Key_ {_Encrypted Secret Key_, _Public Key_}
 
-.Public Key Share Commitment Message
-[halign=center,options="header"]
-|=== 
-^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
-^|`publicKeyShareCommitment` 
-^|`commitment.MultiTrapdoorCommitment`
-^|Commitment to _Public Key Share_
-|=== 
-
-=== Round #2
-After commitments from all signers are gathered the next round starts.
-
-. Signers reveal their _DSA Key Shares_ and broadcast _Key Share Reveal Message_. 
-+
-Since _Secret Key Share_ should always be kept secret it is first encrypted with
-Paillier and this encrypted value is broadcasted along with Zero Knowledge Proof 
-Π~i~ to confirm that _Secret Key Share_ value is in [-q^3^, q^3^] range.
-+
-_Public Key Share_ is broadcasted with a decommitment key used in a previous round
-in commitment to _Public Key Share_ value.
-+
-.Key Share Reveal Message
-[halign=center,options="header"]
-|=== 
-^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
-^|`secretKeyShare` 
-^|`paillier.Cypher`
-^|Encrypted _Secret Key Share_
-
-^|`publicKeyShare` 
-^|`curve.Point`
-^|_Public Key Share_
-
-^|`publicKeyShareDecommitmentKey` 
-^|`commitment.DecommitmentKey`
-^|Decommitment key for _Public Key Share_
-
-^|`secretKeyProof` 
-^|`zkp.DsaPaillierKeyRangeProof`
-^|ZKP Π~i~ -- _Secret Key Share_ is in range [-q^3^, q^3^]
-|=== 
-
-. Each signer validates received _Key Share Reveal Messages_ and combines shares 
-to get encrypted _Secret Key_ and _Public Key_ which together forms _DSA Key_.
 
 == Signing Phase
 
-*Input*: _Master Public Key_, _Message Hash_, _DSA Key_ +
-*Output*: _Signature_
-
 [.lead]
-In this phase signers jointly generate signature for a message hash.
+In this phase signers jointly generate a _Signature_ for a _Message Hash_.
 
-=== Round #1
-Each signer:
+Signers communicate with each other in 6 rounds, exchanging information
+to produce a T-ECDSA _Signature_ in a {_R_, _S_} format over a _Message Hash_ 
+which is expected to be exactly 32 bytes.
 
-. Generates encrypted _Secret Key Factor Share_ and _Secret Key Multiple Share_. These
-values are kept secret for now. +
+Before starting this phase a fresh _Commitment Master Public Key_ should be generated.
 
-. Calculates a commitment to both values and broadcasts the commitment in _Sign Round 1 Message_.
+This phase requires also _ECDSA Key_ which is a result of Key Generation Phase.
 
-.Sign Round 1 Message
-[halign=center,options="header"]
-|=== 
-^|name ^|type ^|description
+* *Input*:
+** _Commitment Master Public Key_
+** _ECDSA Key_
+** _Message Hash_
 
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
-^|`secretKeyFactorShareCommitment` 
-^|`commitment.MultiTrapdoorCommitment`
-^|Commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
-|=== 
-
-=== Round #2
-
-Each signer:
-
-. Calculates a Zero Knowledge Proof Π~1,i~.
-
-. Broadcasts _Sign Round 2 Message_ containing _Secret Key Factor Share_, 
-_Secret Key Multiple Share_ and decommitment key for the commitment from Round #1.
-
-.Sign Round 2 Message
-[halign=center,options="header"]
-|=== 
-^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
-^|`secretKeyFactorShare` 
-^|`paillier.Cypher`
-^|_Secret Key Factor Share_
-
-^|`secretKeyMultipleShare` 
-^|`paillier.Cypher`
-^|_Secret Key Multiple Share_
-
-^|`secretKeyFactorShareDecommitmentKey` 
-^|`commitment.DecommitmentKey`
-^|Decommitment key for a commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
-
-^|`secretKeyFactorProof` 
-^|`zkp.DsaPaillierSecretKeyFactorRangeProof`
-^|ZKP Π~1,i~
-|=== 
-
-. Validates received _Sign Round 1 Messages_ and _Sign Round 2 Messages_. +
-Combines shares to get _Secret Key Factor_ and _Secret Key Multiple_.
-
-=== Round #3
+* *Output*: 
+** _Signature_ {_R_, _S_}
