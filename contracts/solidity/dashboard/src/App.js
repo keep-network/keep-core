@@ -18,6 +18,7 @@ import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable'
 import TokenGrants from './components/TokenGrants'
 import VestingChart from './components/VestingChart'
 import VestingDetails from './components/VestingDetails'
+import TableRow from './components/TableRow'
 import { colors } from './colors'
 
 const App = () => (
@@ -306,17 +307,6 @@ class Main extends Component {
       totalAvailableToUnstake
     })
   }
-}
-
-function TableRow({ title, children }) {
-  return (
-    <tr>
-      <th><strong>{ title }</strong></th>
-      <td>
-        { children }
-      </td>
-    </tr>
-  )
 }
 
 export default App

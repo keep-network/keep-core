@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { Table } from 'react-bootstrap'
+import TableRow from './TableRow'
 import moment from 'moment'
 
 class VestingDetails extends Component {
@@ -70,17 +71,6 @@ class VestingDetails extends Component {
     return `${display} ${symbol}`
   }
 
-}
-
-function TableRow({ title, children }) {
-  return (
-    <tr>
-      <th>{ title }</th>
-      <td>
-        { children }
-      </td>
-    </tr>
-  )
 }
 
 export default VestingDetails
