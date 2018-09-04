@@ -17,8 +17,8 @@ type signerCore struct {
 	publicParameters *PublicParameters
 	zkpParameters    *zkp.PublicParameters
 
-	// Information about the signing group. Holds information about all the members,
-	// including the signer itself.
+	// Information about the signing group. Holds information about all the
+	// members, including the signer itself.
 	// Initially empty, populated as each other signer announces its presence.
 	// Signers are removed from the group if they misbehave or do not reply.
 	signerGroup *signerGroup
@@ -27,17 +27,32 @@ type signerCore struct {
 }
 
 type protocolParameters struct {
-	commitmentMasterTrapdoorPublicKey *bn256.G2
+	commitmentMasterPublicKey *bn256.G2
+}
+
+func (sc *signerCore) selfProtocolParameters() *protocolParameters {
+	return sc.peerProtocolParameters[sc.ID]
+}
+
+func (sc *signerCore) peerSignerIDs() []string {
+	peerIDs := make([]string, 0)
+	for _, peerID := range sc.signerGroup.signerIDs {
+		if peerID != sc.ID {
+			peerIDs = append(peerIDs, peerID)
+		}
+	}
+
+	return peerIDs
 }
 
 func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
-	return sc.peerProtocolParameters[sc.ID].commitmentMasterTrapdoorPublicKey
+	return sc.peerProtocolParameters[sc.ID].commitmentMasterPublicKey
 }
 
 func (sc *signerCore) commitmentVerificationMasterPublicKey(
 	signerID string,
 ) *bn256.G2 {
-	return sc.peerProtocolParameters[signerID].commitmentMasterTrapdoorPublicKey
+	return sc.peerProtocolParameters[signerID].commitmentMasterPublicKey
 }
 
 // GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
@@ -61,7 +76,7 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 
 	sc.peerProtocolParameters = make(map[string]*protocolParameters)
 	sc.peerProtocolParameters[sc.ID] = &protocolParameters{
-		commitmentMasterTrapdoorPublicKey: publicKey,
+		commitmentMasterPublicKey: publicKey,
 	}
 
 	return &CommitmentMasterPublicKeyMessage{
@@ -93,7 +108,7 @@ func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 			)
 
 			sc.peerProtocolParameters[message.signerID] = &protocolParameters{
-				commitmentMasterTrapdoorPublicKey: masterPublicKey,
+				commitmentMasterPublicKey: masterPublicKey,
 			}
 		}
 	}

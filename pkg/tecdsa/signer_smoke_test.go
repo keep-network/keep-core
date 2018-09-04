@@ -34,10 +34,8 @@ func TestFullInitAndSignPath(t *testing.T) {
 		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
 	)
 
-	publicKeyCommitmentMessages := make(
-		[]*PublicKeyShareCommitmentMessage, len(localSigners),
-	)
-	keyShareRevealMessages := make([]*KeyShareRevealMessage, len(localSigners))
+	publicKeyShareCommitmentMessages := make([]*PublicKeyShareCommitmentMessage, 0)
+	keyShareRevealMessages := make([]*KeyShareRevealMessage, 0)
 
 	commitmentMasterPublicKeyMessagesSigning := make(
 		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
@@ -80,26 +78,34 @@ func TestFullInitAndSignPath(t *testing.T) {
 	//
 	// Execute the 1st key-gen round
 	//
-	for i, signer := range localSigners {
-		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
+	for _, signer := range localSigners {
+		messages, err := signer.InitializeDsaKeyShares()
 		if err != nil {
 			t.Fatal(err)
 		}
+		publicKeyShareCommitmentMessages = append(
+			publicKeyShareCommitmentMessages, messages...,
+		)
 	}
 
 	//
 	// Execute the 2nd key-gen round
 	//
-	for i, signer := range localSigners {
-		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
+	for _, signer := range localSigners {
+		messages, err := signer.RevealDsaKeyShares()
 		if err != nil {
 			t.Fatal(err)
 		}
+		keyShareRevealMessages = append(keyShareRevealMessages, messages...)
 	}
 
 	dsaKey, err := localSigners[0].CombineDsaKeyShares(
-		publicKeyCommitmentMessages,
-		keyShareRevealMessages,
+		publicKeyShareCommitmentMessagesForReceiver(
+			publicKeyShareCommitmentMessages, localSigners[0].ID,
+		),
+		publicKeyShareRevealMessagesForReceiver(
+			keyShareRevealMessages, localSigners[0].ID,
+		),
 	)
 
 	signers := make([]*Signer, len(localSigners))
@@ -296,7 +302,6 @@ func generateNewLocalGroup() (
 	error,
 ) {
 	publicParameters := &PublicParameters{
-
 		Curve:                secp256k1.S256(),
 		PaillierKeyBitLength: 2048,
 	}
@@ -337,9 +342,12 @@ func generateNewLocalGroup() (
 
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
-		localSigners[i] = NewLocalSigner(
+		signer := NewLocalSigner(
 			paillierKeys[i], publicParameters, zkpParameters, signerGroup,
 		)
+
+		signerGroup.signerIDs = append(signerGroup.signerIDs, signer.ID)
+		localSigners[i] = signer
 	}
 
 	return localSigners, publicParameters, nil
