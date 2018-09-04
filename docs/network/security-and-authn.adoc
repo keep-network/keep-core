@@ -27,6 +27,7 @@ network layer of Keep.
 A successful protocol involves verifying identities (to prevent Sybil attacks),
 ensuring message integrity (to avoid malicious tampering), and encrypting
 messages (to ensure that only intended recipients receive a message).
+Furthermore, we should support sequential version capability for easy upgrades.
 
 
 === Terminology
