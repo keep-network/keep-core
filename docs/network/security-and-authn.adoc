@@ -163,8 +163,9 @@ This example presumes that the identity is verified and accepted in the network,
 which means that authentication and authorization are satisfied.
 Confidentiality is needed to ensure that the communicating peers can communicate
 in secret. Integrity to ensure that the message hasn't been tampered with in
-transit over the wire. Attributability to ensure that if the either peer means
-the other harm, then they will be removed from the network.
+transit over the wire. Attributability to ensure that if either peer sends a
+message which contains a payload that would result in punishment, the correct
+peer will be punished.
 
 
 ==== Message Gossip
