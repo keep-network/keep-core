@@ -81,9 +81,13 @@ restricted to authenticated identities.
 
 The only capabilities a peer has before establishing a secure, authenticated
 connection is sending an initialization message, referred to as the
-AuthenticationMessage, to a peer that can process this message and authenticate
-the peer. Authenticated peers can participate in the network and form secure
-channels with other authenticated members.
+NetworkJoinRequest, to an authenticated peer that can process this message
+(bootstrap peers) and authenticate the unauthenticated peer. Authenticated peers
+can participate in the network and form secure channels with other authenticated
+peers. In short:
+
+* unauthenticated peer => can only send NetworkJoinRequest to bootstrap nodes
+* authenticated peer => can send and accept all kinds of messages
 
 
 ==== Required Properties
