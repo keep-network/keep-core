@@ -224,7 +224,7 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 
 	if len(revealedShares) != ls.signerGroup.InitialGroupSize {
 		return nil, fmt.Errorf(
-			"all group members should reveal shares; Got %v, expected %v",
+			"all group members should reveal shares; got %v, expected %v",
 			len(revealedShares),
 			ls.signerGroup.InitialGroupSize,
 		)
@@ -241,6 +241,10 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 			if commitmentMsg.signerID == revealedSharesMsg.signerID {
 				foundMatchingRevealMessage = true
 
+				if !ls.signerGroup.Contains(commitmentMsg.signerID) {
+					return nil, fmt.Errorf("signer with ID %s is not in signers group", commitmentMsg.signerID)
+				}
+
 				if revealedSharesMsg.isValid(
 					ls.commitmentMasterPublicKey,
 					commitmentMsg.publicKeyShareCommitment,
@@ -249,12 +253,14 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 					secretKeyShares[i] = revealedSharesMsg.secretKeyShare
 					publicKeyShares[i] = revealedSharesMsg.publicKeyShare
 				} else {
+					ls.signerGroup.RemoveSignerID(commitmentMsg.signerID)
 					return nil, errors.New("KeyShareRevealMessage rejected")
 				}
 			}
 		}
 
 		if !foundMatchingRevealMessage {
+			ls.signerGroup.RemoveSignerID(commitmentMsg.signerID)
 			return nil, fmt.Errorf(
 				"no matching share reveal message for signer with ID=%v",
 				commitmentMsg.signerID,

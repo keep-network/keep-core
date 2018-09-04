@@ -60,6 +60,14 @@ func (sc *signerCore) CombineMasterPublicKeyShares(
 		)
 	}
 
+	for _, message := range masterPublicKeySharesMessages[1:] {
+		if !sc.signerGroup.Contains(message.signerID) {
+			return nil, fmt.Errorf("signer with ID %s is not in signers group",
+				message.signerID,
+			)
+		}
+	}
+
 	masterPublicKey := new(bn256.G2)
 	masterPublicKey.Unmarshal(
 		masterPublicKeySharesMessages[0].masterPublicKeyShare,
