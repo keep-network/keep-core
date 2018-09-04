@@ -123,12 +123,6 @@ adversaries without detection.
 
 A message from a given peer is known to be from that peer.
 
-==== Optional Properties
-
-Lastly, the desired protocol may have the following optional properties:
-
----
-
 
 === Scenarios
 
@@ -192,7 +186,7 @@ Attributability ensures that if a peer acts in bad faith, they are easily
 identifiable by any other authenticated peer in the network.
 
 
-=== Potential Implementations
+== Survey of Implementations
 
 Given the above, we are primarily concerned with authentication and key exchange.
 The literature overwhelmingly recommends a solution which provides authentication
@@ -211,9 +205,9 @@ and key-exchange considered jointly. Per <<AAKE>>:
 There are a few implementations we can explore given the above constraints:
 
 
-==== Elliptic-Curve-Diffie-Hellman
+=== Elliptic-Curve-Diffie-Hellman
 
-===== Overview
+==== Overview
 
 Diffie-Hellman satisfies some of the properties above, but due
 to [reasons], it does not assume the presence of signature keys and hence
@@ -221,15 +215,15 @@ is susceptible to man-in-the-middle attacks. As a building block, we can
 take this into account and layer on-top signing keys. This introduces
 complexity to the protocol.
 
-===== Limitations
+==== Limitations
 
 - Does not deal with DoS attacks where _P~1~_ accepts _P~2~_'s identity, and then
 sends a final message to P2 letting them know
 
 
-==== Station-to-Station (STS)
+=== Station-to-Station (STS)
 
-===== Overview
+==== Overview
 
 * The base spec concerns with exponentiation, but also applies equally well to
 additive groups (elliptic curve over finite fields).
@@ -276,28 +270,22 @@ The following is a slightly modified summary from <<AAKE>>:
 > The protocol appears to strike an elegant and difficult balance, being simple
 > and secure without utilizing unnecessary or redundant elements.
 
-===== Analysis
+==== Analysis
 
 
 
-==== Noise Protocol
+=== Noise Protocol
 
-===== Overview
+==== Overview
 
-===== Limitations
+==== Limitations
 
 
-==== TLS
+=== TLS
 
-===== Overview
+==== Overview
 
-===== Limitations
-
-==== Custom
-
-===== Overview
-
-===== Limitations
+==== Limitations
 
 
 == Open Questions
