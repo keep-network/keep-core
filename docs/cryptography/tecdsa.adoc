@@ -29,18 +29,21 @@ Output::
 === Key Generation
 
 [.lead]
-In this phase signers jointly generate _DSA Key_ which will be used in the Signing
+In this phase signers jointly generate _ECDSA Key_ which is used in the Signing
 phase.
 
-Each signer generates _Secret Key Share_ and _Public Key Share_ which form
+Each signer generates _Secret Key Share_ and _Public Key Share_ which together form
 _ECDSA Key Share_. +
 Since _Secret Key Share_ must always be kept private, signer encrypts it with 
 Paillier and broadcasts the encrypted _Secret Key Share_ along with _Public Key Share_
 to other signers. +
 After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
-_Encrypted Secret Key_ and _Public Key_.
+_Encrypted Secret Key_ and _Public Key_. _Secret Key_ is encrypted with threshold
+Paillier scheme in a way that no single signer is able decrypt it.
 
-This phase requires all signers in the group to produce a valid _ECDSA Key_.
+This phase requires all signers in the group to cooperate to produce a valid 
+_ECDSA Key_.+
+If a malicious behavior is detected from any signer, the whole phase is aborted.
 
 Input::
 * _Commitment Master Public Key_
@@ -61,8 +64,8 @@ Before starting this phase a fresh _Commitment Master Public Key_ should be gene
 
 This phase requires also _ECDSA Key_ which is a result of Key Generation Phase.
 
-To complete this round just part of signers is required. The number of signers
-needed is specified by _Threshold_.  +
+To complete this round just part of signers is required. The minimum number of signers
+needed is specified by _Threshold_. +
 Signer can be expelled from the signing group if he misbehaves or doesn't provide
 a message on time.
 
