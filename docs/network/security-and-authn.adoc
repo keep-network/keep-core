@@ -313,7 +313,7 @@ and centralized (whatsapp, signal protocol) solutions.
 * Not an all-in-one solution; requires careful stitching together of decisions
 (the least dangerous of the "stitching together" options).
 
-=== TLS
+=== TLS 1.3
 
 ==== Overview
 
@@ -321,6 +321,10 @@ and centralized (whatsapp, signal protocol) solutions.
 
 * Traditionally relies on trusted central authorities; requires reworking and
 figuring out the certificate piece.
+
+* If session resumption is implemented, forward-secrecy may be lost.
+
+* Initial part of the handshake is in the clear.
 
 * Large spec; requires nuanced review to determine which parts are safe to remove.
 
@@ -370,3 +374,7 @@ https://www.flowdock.com/app/cardforcoin/tech/messages/154946
 - [[[CNF]]] Desired properties of confidentiality in Keep's network (2018)
 In: Thesis Flowdock
 https://www.flowdock.com/app/cardforcoin/tech/messages/156769
+
+- Lacorta, Cryptographically Right Answers
+- Lacorta, 
+
