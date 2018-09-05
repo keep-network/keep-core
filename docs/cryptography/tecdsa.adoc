@@ -190,3 +190,227 @@ to produce commitment to _Public Key Share_ value.
 to get encrypted _Secret Key_ and _Public Key_ which together forms _DSA Key_.
 
 === Signing
+
+==== Round #1 [[sign_round_1]]
+
+Input::
+* _Encrypted Secret Key_
+* _Commitment Master Public Key_
+
+Output::
+* _Secret Key Factor Share Commitment_
+
+//-
+
+. Each signer generates _Encrypted Secret Key Factor Share_ and _Secret Key Multiple Share_. These
+values are kept private for now. +
+
+. Signer calculates a commitment to both values and broadcasts the commitment in _Sign Round 1 Message_.
++
+.Sign Round 1 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`secretKeyFactorShareCommitment` 
+^|`commitment.MultiTrapdoorCommitment`
+^|Commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
+|=== 
+
+==== Round #2 [[sign_round_2]]
+
+Output::
+* _Encrypted Secret Key Factor Share_
+* _Secret Key Multiple Share_
+* Decommitment key for _Secret Key Factor Share Commitment_
+* _Zero Knowledge Proof Π~1,i~_
+
+//-
+
+. Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters.
+
+. Signers broadcast _Sign Round 2 Message_ containing _Secret Key Factor Share_, 
+_Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_round_1>>.
++
+.Sign Round 2 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`secretKeyFactorShare` 
+^|`paillier.Cypher`
+^|_Secret Key Factor Share_
+
+^|`secretKeyMultipleShare` 
+^|`paillier.Cypher`
+^|_Secret Key Multiple Share_
+
+^|`secretKeyFactorShareDecommitmentKey` 
+^|`commitment.DecommitmentKey`
+^|Decommitment key for a commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
+
+^|`secretKeyFactorProof` 
+^|`zkp.DsaPaillierSecretKeyFactorRangeProof`
+^|ZKP Π~1,i~
+|=== 
+
+. Signer validates received _Sign Round 1 Messages_ and _Sign Round 2 Messages_. +
+Combines shares to get _Secret Key Factor_ and _Secret Key Multiple_.
+
+==== Round #3 [[sign_round_3]]
+
+Input::
+* _Secret Key Factor_
+* _Secret Key Multiple_
+* _Commitment Master Public Key_
+
+Output::
+* _Signature Factor Share Commitment_
+
+//-
+
+. Each signer computes a set of parameters and calculates a commitment to these
+values. All the parameters are kept private for now.
+
+. Signer broadcasts the commitment in a _Sign Round 3 Message_.
++
+.Sign Round 3 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`signatureFactorShareCommitment` 
+^|`commitment.MultiTrapdoorCommitment`
+^|Commitment to parameters from <<sign_round_3>>
+|=== 
+
+==== Round #4 [[sign_round_4]]
+
+Output::
+* _Signature Factor Public Share_
+* _Signature Unmask Share_
+* Decommitment key for _Signature Factor Share Commitment_
+* _Zero Knowledge Proof Π~2,i~_
+
+//-
+
+This round starts after all signers share their commitments in <<sign_round_3>>.
+
+. Each signer calculates a Zero Knowledge Proof Π~2,i~ for his individual parameters.
+
+. Signers broadcast _Sign Round 4 Message_ containing the Zero Knowledge Proof Π~2,i~,
+along with parameters and decommitment key from the <<sign_round_3>>.
++
+.Sign Round 4 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`signatureFactorPublicShare` 
+^|`curve.Point`
+^|_Signature Factor Public Share_
+
+^|`signatureUnmaskShare` 
+^|`paillier.Cypher`
+^|_Encrypted Signature Unmask Share_
+
+^|`signatureFactorShareDecommitmentKey` 
+^|`commitment.DecommitmentKey`
+^|Decommitment key for a commitment from <<sign_round_3>>
+
+^|`signatureFactorProof` 
+^|`zkp.EcdsaSignatureFactorRangeProof`
+^|ZKP Π~2,i~
+|=== 
+
+. Signer validates received _Sign Round 3 Messages_ and _Sign Round 4 Messages_. +
+Combines shares to get _Signature Factor Public_ and _Encrypted Signature Unmask_.
+
+==== Round #5 [[sign_round_5]]
+
+Input::
+* _Signature Factor Public_
+* _Encrypted Signature Unmask_
+
+Output::
+* _Signature Unmask Partial Decryption_
+
+//-
+
+. Each signer computes hash of _Signature Factor Public_ parameter.
+
+. Signers jointly decrypt _Encrypted Signature Unmask_ with Paillier, so each signer
+receives just a part of _Signature Unmask_.
+
+. Signer broadcasts _Sign Round 5 Message_.
++
+.Sign Round 5 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`signatureUnmaskPartialDecryption` 
+^|`paillier.PartialDecryption`
+^|_Signature Unmask_ partial decryption.
+|=== 
+
+. Signer validates received _Sign Round 5 Messages_. +
+Combines partial decryptions to get _Signature Unmask_.
+
+==== Round #6 [[sign_round_6]]
+
+Input::
+* _Signature Unmask_
+* _Message Hash_
+
+Output::
+* _Signature Partial Decryption_
+
+//-
+
+. Each signer computes _Encrypted Signature_ value which next they jointly decrypt.
+Each signer receives a part of _Signature_.
+
+. Signer broadcasts _Sign Round 6 Message_.
++
+.Sign Round 6 Message
+[halign=center,options="header"]
+|=== 
+^|name ^|type ^|description
+
+^|`signerID` 
+^|`string`
+^|Signer's ID
+
+^|`signaturePartialDecryption` 
+^|`paillier.PartialDecryption`
+^|_Signature.S_ partial decryption.
+|=== 
+
+. Signer validates received _Sign Round 6 Messages_. +
+Combines partial decryptions to get _Signature_.
+
+. Signer produces a _T-ECDSA Signature_ in {R,S} format where:
+[horizontal]
+R:: Hash of _Signature Factor Public_
+S:: _Signature_
