@@ -19,16 +19,18 @@ the network needs to implement authorization, encryption, and authentication. Th
 decentralized nature of the network brings about the unique challenge where
 off-the-shelf protocols (such as TLS) aren't suitable. Specifically, these
 protocols can't be used as-is due to their requirement of trusted central
-authorities and intermediaries.
+authorities and intermediaries. That being said, with some modifications,
+we can make these options more secure and work for our use case.
 
 This document (as requested in <<FD>>) specifies desired behaviors,
 surveys current available protocols, and describes a protocol to secure the
 network layer of Keep.
 
 A successful protocol involves verifying identities (to prevent Sybil attacks),
-ensuring message integrity (to avoid malicious tampering), and encrypting
-messages (to ensure that only intended recipients receive a message).
-Furthermore, we should support sequential version capability for easy upgrades.
+ensuring message integrity (to avoid malicious tampering), and allows for the
+encrypting of messages (to ensure that only intended recipients receive a
+message). Furthermore, we should support sequential version capability for easy
+upgrades.
 
 
 === Terminology
@@ -69,9 +71,8 @@ peer.
 
 Given an authenticated peer and an unauthenticated peer, the unauthenticated peer
 must provide the authenticated peer proof of attestation over a staked key on
-chain. If an authenticated peer's stake falls below the minimum stake amount or
-they it is proven that they are malicious, then an authenticated peer becomes
-unauthenticated.
+chain. If an authenticated peer's stake falls below the minimum stake amount for
+any reason, then an authenticated peer becomes unauthenticated.
 
 
 ===== Authorization
@@ -214,16 +215,18 @@ There are a few implementations we can explore given the above constraints:
 
 ==== Overview
 
-Diffie-Hellman satisfies some of the properties above, but due
-to [reasons], it does not assume the presence of signature keys and hence
-is susceptible to man-in-the-middle attacks. As a building block, we can
-take this into account and layer on-top signing keys. This introduces
-complexity to the protocol.
 
 ==== Limitations
 
 - Does not deal with DoS attacks where _P~1~_ accepts _P~2~_'s identity, and then
 sends a final message to P2 letting them know
+
+- Unless specifically configured to do so, it does not assume the presence of
+signature keys and hence is susceptible to man-in-the-middle attacks. 
+
+- Dizzying array of options - should be constructed from well used and audited
+primitives such as battle-tested codebases or the primitives available in
+NaCl or Noise.
 
 
 === Station-to-Station (STS)
@@ -275,6 +278,14 @@ The following is a slightly modified summary from <<AAKE>>:
 > The protocol appears to strike an elegant and difficult balance, being simple
 > and secure without utilizing unnecessary or redundant elements.
 
+
+==== Limitations
+
+* No well tested out of the box framework; must construct from primitives in NaCl
+and Noise.
+
+* Implementations such as Cosmos are investigating this.
+
 ==== Analysis
 
 
@@ -283,14 +294,41 @@ The following is a slightly modified summary from <<AAKE>>:
 
 ==== Overview
 
+* Safe building blocks to build a protocol.
+
+* Begins by providing a safe base (ECDH) from which other operations can be
+layered in/combined depending on the guarantees needed and the constraints of the
+protocol being developed.
+
+* Handles all the nitty-gritty of a stateful cryptographic protocol (state
+machines, etc) where many of the mistakes are typically made. Abstracts that away
+behind a clean API.
+
+* In use by many decentralized (wireguard vpn, lightning network, tendermint)
+and centralized (whatsapp, signal protocol) solutions.
+
+
 ==== Limitations
 
+* Not an all-in-one solution; requires careful stitching together of decisions
+(the least dangerous of the "stitching together" options).
 
 === TLS
 
 ==== Overview
 
 ==== Limitations
+
+* Traditionally relies on trusted central authorities; requires reworking and
+figuring out the certificate piece.
+
+* Large spec; requires nuanced review to determine which parts are safe to remove.
+
+* Large surface area for attack; for Keep's use case, recommended that the base
+spec be modified to a safe subset.
+
+* Though parallel work is being done (protocol labs, maybe others), no good
+examples to draw from (in a decentralized setting).
 
 
 == Open Questions
@@ -303,6 +341,9 @@ layered on top?
 * What does a non-bootstrap node do with an authentication message?
 
 * Is a requirement for communicating participants that they be online?
+
+* Should all communications between Keep nodes be encrypted in order to provide
+confidentiality for all transcripts between nodes?
 
 [bibliography]
 == References
