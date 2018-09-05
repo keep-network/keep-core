@@ -203,8 +203,8 @@ class Main extends Component {
     const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(this.state.web3.yourAddress), 18, 3)
     const grantBalance = displayAmount(await grantContract.balanceOf(this.state.web3.yourAddress), 18, 3)
     const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(this.state.web3.yourAddress), 18, 3)
-    const totalAvailableToStake = parseInt(tokenBalance)+parseInt(grantBalance)
-    const totalAvailableToUnstake = parseInt(stakeBalance)+parseInt(grantStakeBalance)
+    const totalAvailableToStake = parseInt(tokenBalance, 10) + parseInt(grantBalance, 10)
+    const totalAvailableToUnstake = parseInt(stakeBalance, 10) + parseInt(grantStakeBalance, 10)
 
     // Unstake withdrawals
     const withdrawalIndexes = await stakingContract.getWithdrawals(this.state.web3.yourAddress)
