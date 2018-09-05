@@ -1,7 +1,6 @@
 import moment from 'moment'
 import Web3 from 'web3'
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
 import { Button, Form, FormGroup,
   FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
 import { getKeepToken, getTokenGrant } from '../contracts'
@@ -12,8 +11,6 @@ const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount.',
   SERVER: 'Sorry, your request cannot be completed at this time.'
 }
-
-const RESET_DELAY = 3000 // 3 seconds
 
 class TokenGrantForm extends Component {
   constructor(props) {
@@ -53,7 +50,6 @@ class TokenGrantForm extends Component {
   validateBeneficiary() {
     if (Web3.utils.isAddress(this.state.beneficiary)) return 'success'
     else return 'error'
-    return null
   }
 
   onClick = (e) => {
@@ -87,7 +83,7 @@ class TokenGrantForm extends Component {
               <FormControl
                 type="text"
                 name="beneficiary"
-                value={this.state.beneficiary}
+                value={beneficiary}
                 onChange={this.onChange}
               />
               <FormControl.Feedback />
