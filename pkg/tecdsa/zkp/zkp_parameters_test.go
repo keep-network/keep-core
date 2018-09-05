@@ -13,7 +13,7 @@ import (
 )
 
 func TestGeneratePublicParameters(t *testing.T) {
-	paillierModulus := big.NewInt(13)
+	paillierModulus := big.NewInt(64319 * 59063)
 	curve := secp256k1.S256()
 
 	params, err := GeneratePublicParameters(paillierModulus, curve)
@@ -21,6 +21,13 @@ func TestGeneratePublicParameters(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if params.NTilde.BitLen() != paillierModulus.BitLen() {
+		t.Errorf(
+			"Unexpected NTilde bit length\nExpected: %v\nActual: %v",
+			paillierModulus.BitLen(),
+			params.NTilde.BitLen(),
+		)
+	}
 	if params.NTilde.Cmp(big.NewInt(0)) <= 0 {
 		t.Errorf("NTilde should be greater than 0. Actual: %v", params.NTilde)
 	}
