@@ -66,8 +66,8 @@ class TokenGrantForm extends Component {
     const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS)
     const tokenGrantContract = await getTokenGrant(tokenGrantContractAddress)
 
-    token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
-    tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
+    await token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
+    await tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
 
   }
 
