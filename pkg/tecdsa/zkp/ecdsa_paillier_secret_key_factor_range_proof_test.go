@@ -143,7 +143,7 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	}
 }
 
-func TestEcdsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
+func TestEcdsaPaillierSecretKeyFactorRangeProofCommitAndVerify(t *testing.T) {
 	// GIVEN
 	message := big.NewInt(430)
 

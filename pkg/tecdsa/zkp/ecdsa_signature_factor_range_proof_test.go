@@ -204,7 +204,7 @@ func TestEcdsaSignatureFactorRangeProofVerification(t *testing.T) {
 	}
 }
 
-func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
+func TestEcdsaSignatureFactorRangeProofCommitAndVerify(t *testing.T) {
 	// GIVEN
 	privateKey, params, err := createTestZkpParameters(secp256k1.S256())
 	if err != nil {
