@@ -5,8 +5,7 @@ import { Pie } from 'react-chartjs-2'
 import { Table, Col, Grid, Row, Tabs, Tab } from 'react-bootstrap'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import moment from 'moment'
-import { displayAmount } from './utils'
-import Network from './network'
+import { displayAmount, getWeb3 } from './utils'
 import { Web3Context } from './components/WithWeb3Context'
 import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts'
 import Header from './components/Header'
@@ -37,29 +36,59 @@ class Main extends Component {
     this.state = {
       web3: {
         yourAddress: undefined,
-        networkType: undefined
+        networkType: undefined,
+        token: undefined,
+        stakingContract: undefined,
+        grantContract: undefined
       }
     }
     this.state.chartData = {}
   }
 
-  componentDidMount() {
-    this.getWeb3()
-    this.getData().catch(error => {
-      this.setState({
-        error: error,
-      })
-    })
-  }
+  async componentDidMount() {
 
-  getWeb3 = async () => {
-    const web3 = await Network.web3()
+    const web3 = await getWeb3()
+    if (!web3) {
+      this.setState({
+        error: "No network detected. Do you have MetaMask installed?",
+      })
+      return
+    }
+
+    const contracts = await this.getContracts(web3)
+    if (!contracts) {
+      this.setState({
+        error: "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network.",
+      })
+      return
+    }
+
     this.setState({
       web3: {
         yourAddress: (await web3.eth.getAccounts())[0],
-        networkType: await web3.eth.net.getNetworkType()
+        networkType: await web3.eth.net.getNetworkType(),
+        token: contracts.token,
+        stakingContract: contracts.stakingContract,
+        grantContract: contracts.grantContract
       }
     })
+
+    this.getData()
+  }
+
+  getContracts = async (web3) => {
+    try {
+      const token = await getKeepToken(web3, process.env.REACT_APP_TOKEN_ADDRESS)
+      const stakingContract = await getTokenStaking(web3, process.env.REACT_APP_STAKING_ADDRESS)
+      const grantContract = await getTokenGrant(web3, process.env.REACT_APP_TOKENGRANT_ADDRESS)
+      return {
+        token: token,
+        stakingContract: stakingContract,
+        grantContract: grantContract
+      }
+    } catch (e) {
+      return null
+    }
   }
 
   selectTokenGrant = (i) => {
@@ -77,22 +106,17 @@ class Main extends Component {
   }
 
   render() {
-    const { tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
+    const { web3, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
       chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
       totalAvailableToStake, totalAvailableToUnstake, error } = this.state
 
     return (
-      <Web3Context.Provider value={this.state.web3}>
+      <Web3Context.Provider value={web3}>
         <div className="main">
-          <Header networkType={this.state.web3.networkType}/>
+          <Header networkType={web3.networkType}/>
           <Grid>
             <Row>
               <Col xs={12}>
-
-                {!this.state.web3.networkType ?
-                  <div className="alert alert-danger m-5" role="alert">No network detected. Do you have MetaMask installed?</div>:null
-                }
-
                 {error ?
                   <div className="alert alert-danger m-5" role="alert">{error}</div>:null
                 }
@@ -188,15 +212,9 @@ class Main extends Component {
 
   async getData() {
 
-    // Contracts
-    let token, stakingContract, grantContract
-    try {
-      token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS)
-      stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS)
-      grantContract = await getTokenGrant(process.env.REACT_APP_TOKENGRANT_ADDRESS)
-    } catch (e) {
-      throw "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network."
-    }
+    const token = this.state.web3.token
+    const stakingContract = this.state.web3.stakingContract
+    const grantContract = this.state.web3.grantContract
 
     // Balances
     const tokenBalance = displayAmount(await token.balanceOf(this.state.web3.yourAddress), 18, 3)

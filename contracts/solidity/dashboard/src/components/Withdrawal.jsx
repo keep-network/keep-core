@@ -1,14 +1,12 @@
 import React, { Component } from 'react'
 import { Button } from 'react-bootstrap'
-import { getTokenStaking } from '../contracts'
 import WithWeb3Context from './WithWeb3Context'
 
 class Withdrawal extends Component {
 
   async finishUnstake(withdrawalId) {
     const { web3 } = this.props
-    const stakingContract = await getTokenStaking(process.env.REACT_APP_STAKING_ADDRESS)
-    stakingContract.finishUnstake(withdrawalId, {from: web3.yourAddress, gas: 110000})
+    web3.stakingContract.finishUnstake(withdrawalId, {from: web3.yourAddress, gas: 110000})
   }
 
   render() {

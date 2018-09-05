@@ -3,7 +3,6 @@ import Web3 from 'web3'
 import React, { Component } from 'react'
 import { Button, Form, FormGroup,
   FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
-import { getKeepToken, getTokenGrant } from '../contracts'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 
@@ -59,11 +58,9 @@ class TokenGrantForm extends Component {
   async submit() {
     const { amount, beneficiary, duration, start, cliff, revocable} = this.state
     const { web3, tokenGrantContractAddress } = this.props
-    const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS)
-    const tokenGrantContract = await getTokenGrant(tokenGrantContractAddress)
 
-    await token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
-    await tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
+    await web3.token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
+    await web3.tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
 
   }
 
