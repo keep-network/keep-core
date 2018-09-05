@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import { Button, Form, FormGroup,
   FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
 import { getKeepToken, getTokenGrant } from '../contracts'
-import Network from '../network'
+import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 
 const ERRORS = {
@@ -62,14 +62,12 @@ class TokenGrantForm extends Component {
 
   async submit() {
     const { amount, beneficiary, duration, start, cliff, revocable} = this.state
-    const { tokenGrantContractAddress } = this.props
-
-    const accounts = await Network.getAccounts()
+    const { web3, tokenGrantContractAddress } = this.props
     const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS)
     const tokenGrantContract = await getTokenGrant(tokenGrantContractAddress)
 
-    token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: accounts[0], gas: 60000})
-    tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: accounts[0], gas: 300000})
+    token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
+    tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
 
   }
 
@@ -188,4 +186,4 @@ class TokenGrantForm extends Component {
   }
 }
 
-export default TokenGrantForm
+export default WithWeb3Context(TokenGrantForm)
