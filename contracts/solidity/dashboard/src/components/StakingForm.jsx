@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Button, Form, FormGroup,
   FormControl } from 'react-bootstrap'
 import { getKeepToken, getTokenStaking } from '../contracts'
-import Network from '../network'
+import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 
 const ERRORS = {
@@ -62,17 +62,14 @@ class StakingForm extends Component {
 
   async submit() {
     const { amount } = this.state
-    const { action } = this.props
-    const { stakingContractAddress } = this.props
-
-    const accounts = await Network.getAccounts()
+    const { action, web3, stakingContractAddress } = this.props
     const token = await getKeepToken(process.env.REACT_APP_TOKEN_ADDRESS)
     const stakingContract = await getTokenStaking(stakingContractAddress)
 
     if (action === 'stake') {
-      token.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: accounts[0], gas: 150000})
+      token.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: web3.yourAddress, gas: 150000})
     } else if (action === 'unstake') {
-      stakingContract.initiateUnstake(formatAmount(amount, 18), {from: accounts[0], gas: 150000})
+      stakingContract.initiateUnstake(formatAmount(amount, 18), {from: web3.yourAddress, gas: 150000})
     }
   }
 
@@ -113,4 +110,4 @@ StakingForm.propTypes = {
   action: PropTypes.string
 }
 
-export default StakingForm
+export default WithWeb3Context(StakingForm);
