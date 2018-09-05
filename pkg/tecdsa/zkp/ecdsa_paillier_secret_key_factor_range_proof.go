@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// DsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's Π_1,i
+// EcdsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's Π_1,i
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the first and second round of the T-ECDSA signing algorithm
@@ -42,7 +42,7 @@ import (
 //          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
 //          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
 //          vol 9696. Springer, Cham
-type DsaPaillierSecretKeyFactorRangeProof struct {
+type EcdsaPaillierSecretKeyFactorRangeProof struct {
 	z *big.Int
 	v *big.Int
 
@@ -57,7 +57,7 @@ type DsaPaillierSecretKeyFactorRangeProof struct {
 }
 
 // CommitDsaPaillierSecretKeyFactorRange generates
-// `DsaPaillierSecretKeyFactorRangeProof` for the specified DSA secret
+// `EcdsaPaillierSecretKeyFactorRangeProof` for the specified DSA secret
 // key and multiplication factor. It's required to use the same randomness
 // `r` to generate this proof as the one used for Paillier encryption of
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
@@ -69,7 +69,7 @@ func CommitDsaPaillierSecretKeyFactorRange(
 	r *big.Int,
 	params *PublicParameters,
 	random io.Reader,
-) (*DsaPaillierSecretKeyFactorRangeProof, error) {
+) (*EcdsaPaillierSecretKeyFactorRangeProof, error) {
 	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
@@ -153,14 +153,14 @@ func CommitDsaPaillierSecretKeyFactorRange(
 		gamma,
 	)
 
-	return &DsaPaillierSecretKeyFactorRangeProof{z, v, u1, u2, e, s1, s2, s3}, nil
+	return &EcdsaPaillierSecretKeyFactorRangeProof{z, v, u1, u2, e, s1, s2, s3}, nil
 }
 
-// Verify checks the `DsaPaillierSecretKeyFactorRangeProof` against the provided
+// Verify checks the `EcdsaPaillierSecretKeyFactorRangeProof` against the provided
 // DSA secret key and the multiplication factor.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
-func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
+func (zkp *EcdsaPaillierSecretKeyFactorRangeProof) Verify(
 	secretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
 	secretDsaKey *paillier.Cypher, // = c2 = E(x)
 	secretDsaKeyFactor *paillier.Cypher, // = c3 = E(η)
@@ -194,7 +194,7 @@ func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
 
 // Checks whether parameters are in the expected range.
 // It's a preliminary step to check if proof is not corrupted.
-func (zkp *DsaPaillierSecretKeyFactorRangeProof) allParametersInRange(params *PublicParameters) bool {
+func (zkp *EcdsaPaillierSecretKeyFactorRangeProof) allParametersInRange(params *PublicParameters) bool {
 	zero := big.NewInt(0)
 
 	return isInRange(zkp.z, zero, params.NSquare()) &&

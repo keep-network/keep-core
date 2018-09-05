@@ -9,14 +9,14 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// TestDsaPaillierSecretKeyFactorRangeProofCommitValues creates a commitment and
+// TestEcdsaPaillierSecretKeyFactorRangeProofCommitValues creates a commitment and
 // checks all commitment values against expected ones.
 //
 // This is not a full roundtrip test. We test the private commitment phase
 // interface to make sure if anything goes wrong in future (e.g. curve
 // implementation changes), we can isolate the problem easily.
 // All expected values has been manually calculated based on the [GGN16] paper.
-func TestDsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
+func TestEcdsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	// GIVEN
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
@@ -92,7 +92,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	}
 }
 
-func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
+func TestEcdsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
@@ -108,7 +108,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
 	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
 
-	zkp := &DsaPaillierSecretKeyFactorRangeProof{
+	zkp := &EcdsaPaillierSecretKeyFactorRangeProof{
 		z:  big.NewInt(289613),
 		v:  big.NewInt(285526),
 		u1: big.NewInt(10797),
@@ -143,7 +143,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	}
 }
 
-func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
+func TestEcdsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	// GIVEN
 	message := big.NewInt(430)
 
