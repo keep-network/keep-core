@@ -10,7 +10,7 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// DsaPaillierKeyRangeProof is an implementation of Gennaro's Π_i proof for the
+// EcdsaPaillierKeyRangeProof is an implementation of Gennaro's Π_i proof for the
 // Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the DSA key initialization phase of T-ECDSA and operates
@@ -40,7 +40,7 @@ import (
 //          In: Manulis M., Sadeghi AR., Schneider S. (eds) Applied Cryptography
 //          and Network Security. ACNS 2016. Lecture Notes in Computer Science,
 //          vol 9696. Springer, Cham
-type DsaPaillierKeyRangeProof struct {
+type EcdsaPaillierKeyRangeProof struct {
 	z  *big.Int
 	u1 *curve.Point
 	u2 *big.Int
@@ -53,7 +53,7 @@ type DsaPaillierKeyRangeProof struct {
 	s3 *big.Int
 }
 
-// CommitDsaPaillierKeyRange generates `DsaPaillierKeyRangeProof` for the
+// CommitDsaPaillierKeyRange generates `EcdsaPaillierKeyRangeProof` for the
 // specified DSA key shares. It's required to use the same randomness `r`
 // to generate this proof as the one used for Paillier encryption of
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
@@ -64,7 +64,7 @@ func CommitDsaPaillierKeyRange(
 	r *big.Int,
 	params *PublicParameters,
 	random io.Reader,
-) (*DsaPaillierKeyRangeProof, error) {
+) (*EcdsaPaillierKeyRangeProof, error) {
 	alpha, err := rand.Int(random, params.QCube())
 	if err != nil {
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
@@ -130,13 +130,13 @@ func CommitDsaPaillierKeyRange(
 	)
 	s3 := new(big.Int).Add(new(big.Int).Mul(e, rho), gamma)
 
-	return &DsaPaillierKeyRangeProof{z, u1, u2, u3, e, s1, s2, s3}, nil
+	return &EcdsaPaillierKeyRangeProof{z, u1, u2, u3, e, s1, s2, s3}, nil
 }
 
-// Verify checks the `DsaPaillierKeyRangeProof` against the provided DSA secret
+// Verify checks the `EcdsaPaillierKeyRangeProof` against the provided DSA secret
 // key shares. If they match values used to generate the proof, function returns
 // `true`. Otherwise, `false` is returned.
-func (zkp *DsaPaillierKeyRangeProof) Verify(
+func (zkp *EcdsaPaillierKeyRangeProof) Verify(
 	encryptedSecretDsaKeyShare *paillier.Cypher,
 	publicDsaKeyShare *curve.Point,
 	params *PublicParameters,
@@ -165,7 +165,7 @@ func (zkp *DsaPaillierKeyRangeProof) Verify(
 
 // Checks whether parameters are in the expected range.
 // It's a preliminary step to check if proof is not corrupted.
-func (zkp *DsaPaillierKeyRangeProof) allParametersInRange(
+func (zkp *EcdsaPaillierKeyRangeProof) allParametersInRange(
 	params *PublicParameters,
 ) bool {
 	zero := big.NewInt(0)
@@ -195,7 +195,7 @@ func (zkp *DsaPaillierKeyRangeProof) allParametersInRange(
 // g^α
 //
 // which is exactly how u1 is evaluated during the commitment phase.
-func (zkp *DsaPaillierKeyRangeProof) evaluateU1Verification(
+func (zkp *EcdsaPaillierKeyRangeProof) evaluateU1Verification(
 	publicDsaKeyShare *curve.Point,
 	params *PublicParameters,
 ) *curve.Point {
@@ -233,7 +233,7 @@ func (zkp *DsaPaillierKeyRangeProof) evaluateU1Verification(
 // G^α * β^N
 //
 // which is exactly how u2 is evaluated during the commitment phase.
-func (zkp *DsaPaillierKeyRangeProof) evaluateU2Verification(
+func (zkp *EcdsaPaillierKeyRangeProof) evaluateU2Verification(
 	encryptedSecretDsaKeyShare *big.Int,
 	params *PublicParameters,
 ) *big.Int {
@@ -271,7 +271,7 @@ func (zkp *DsaPaillierKeyRangeProof) evaluateU2Verification(
 // (h1)^α * (h2)^γ
 //
 // which is exactly how u3 is evaluated during the commitment phase.
-func (zkp *DsaPaillierKeyRangeProof) evaluateU3Verification(
+func (zkp *EcdsaPaillierKeyRangeProof) evaluateU3Verification(
 	params *PublicParameters,
 ) *big.Int {
 	h1s1 := discreteExp(params.h1, zkp.s1, params.NTilde)

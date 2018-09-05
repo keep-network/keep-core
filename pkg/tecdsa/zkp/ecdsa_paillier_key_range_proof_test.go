@@ -12,13 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-// TestDsaPaillierKeyRangeProofCommitValues creates a commitment and checks all
+// TestEcdsaPaillierKeyRangeProofCommitValues creates a commitment and checks all
 // commitment values against expected ones. This is not a full roundtrip test.
 // We test the private commitment phase interface to make sure if anything goes
 // wrong in future (e.g. curve implementation changes), we can isolate the
 // problem easily. All expected values has been manually calculated basis on
 // the [GGN16] paper.
-func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
+func TestEcdsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
 	}
@@ -131,14 +131,14 @@ func TestDsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	}
 }
 
-// TestDsaPaillierKeyRangeProofVerification runs over the verification phase
+// TestEcdsaPaillierKeyRangeProofVerification runs over the verification phase
 // using supplied, hardcoded commitment values. This is not a full roundtrip
 // test. We test the private verification phase interface to make sure if
 // anything goes wrong in future (e.g. curve implementation changes), we can
 // isolate the problem easily. All expected values has been manually calculated
 // basis on the [GGN16] paper.
-func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
-	zkp := &DsaPaillierKeyRangeProof{
+func TestEcdsaPaillierKeyRangeProofVerification(t *testing.T) {
+	zkp := &EcdsaPaillierKeyRangeProof{
 		s1: big.NewInt(22),
 		s2: big.NewInt(17),
 		s3: big.NewInt(63),
@@ -196,10 +196,10 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 	}
 }
 
-// TestDsaPaillierKeyRangeProofCommitAndVerify is a full roundtrip
+// TestEcdsaPaillierKeyRangeProofCommitAndVerify is a full roundtrip
 // test of the ZKP, including generating public parameters, positive
 // and negative validation scenarios.
-func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
+func TestEcdsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 	ellipticCurve := secp256k1.S256()
 	paillierKey, parameters, err := createTestZkpParameters(ellipticCurve)
 	if err != nil {
@@ -294,10 +294,10 @@ func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 	}
 }
 
-// TestDsaPaillierKeyRangeProofParamsInRange runs a test of preliminary
+// TestEcdsaPaillierKeyRangeProofParamsInRange runs a test of preliminary
 // commitment validation parameters check. The check is a preliminary step to
 // test if commitment is not corrupted (MiM attack).
-func TestDsaPaillierKeyRangeProofParamsInRange(t *testing.T) {
+func TestEcdsaPaillierKeyRangeProofParamsInRange(t *testing.T) {
 	params := &PublicParameters{
 		N:      big.NewInt(1081), // 23 * 47
 		NTilde: big.NewInt(253),  // 23 * 11
@@ -308,7 +308,7 @@ func TestDsaPaillierKeyRangeProofParamsInRange(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		modifyProof    func(zkp *DsaPaillierKeyRangeProof)
+		modifyProof    func(zkp *EcdsaPaillierKeyRangeProof)
 		expectedResult bool
 	}{
 		"positive parameters range validation": {
@@ -316,73 +316,73 @@ func TestDsaPaillierKeyRangeProofParamsInRange(t *testing.T) {
 			expectedResult: true,
 		},
 		"negative validation - z less than 0": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.z = big.NewInt(-1)
 			},
 			expectedResult: false,
 		},
 		"negative validation - z equal NTilde": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.z = params.NTilde
 			},
 			expectedResult: false,
 		},
 		"negative validation - z greater than NTilde": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.z = new(big.Int).Add(params.NTilde, big.NewInt(1))
 			},
 			expectedResult: false,
 		},
 		"negative validation - u2 less than 0": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u2 = big.NewInt(-1)
 			},
 			expectedResult: false,
 		},
 		"negative validation - u2 equal NSquare": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u2 = params.NSquare()
 			},
 			expectedResult: false,
 		},
 		"negative validation - u2 greater than NSquare": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u2 = new(big.Int).Add(params.NSquare(), big.NewInt(1))
 			},
 			expectedResult: false,
 		},
 		"negative validation - u3 less than 0": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u3 = big.NewInt(-1)
 			},
 			expectedResult: false,
 		},
 		"negative validation - u3 equal NTilde": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u3 = params.NTilde
 			},
 			expectedResult: false,
 		},
 		"negative validation - u3 greater than NTilde": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u3 = new(big.Int).Add(params.NTilde, big.NewInt(1))
 			},
 			expectedResult: false,
 		},
 		"negative validation - s2 less than 0": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u3 = big.NewInt(-1)
 			},
 			expectedResult: false,
 		},
 		"negative validation - s2 equal N": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u3 = params.N
 			},
 			expectedResult: false,
 		},
 		"negative validation - s2 greater than N": {
-			modifyProof: func(zkp *DsaPaillierKeyRangeProof) {
+			modifyProof: func(zkp *EcdsaPaillierKeyRangeProof) {
 				zkp.u3 = new(big.Int).Add(params.N, big.NewInt(1))
 			},
 			expectedResult: false,
@@ -391,7 +391,7 @@ func TestDsaPaillierKeyRangeProofParamsInRange(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			zkp := &DsaPaillierKeyRangeProof{
+			zkp := &EcdsaPaillierKeyRangeProof{
 				z:  big.NewInt(250),
 				u2: big.NewInt(224),
 				u3: big.NewInt(123),
