@@ -38,8 +38,7 @@ to other signers. +
 After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
 _Encrypted Secret Key_ and _Public Key_.
 
-* *Input*:
-** _Commitment Master Public Key_
+This phase requires all signers in the group to produce a valid _ECDSA Key_.
 
 * *Output*: 
 ** _ECDSA Key_ {_Encrypted Secret Key_, _Public Key_}
@@ -58,7 +57,10 @@ Before starting this phase a fresh _Commitment Master Public Key_ should be gene
 
 This phase requires also _ECDSA Key_ which is a result of Key Generation Phase.
 
-== Rounds Description
+To complete this round just part of signers is required. The number of signers
+needed is specified by _Threshold_.  +
+Signer can be expelled from the signing group if he misbehaves or doesn't provide
+a message on time.
 
 === Setup
 
