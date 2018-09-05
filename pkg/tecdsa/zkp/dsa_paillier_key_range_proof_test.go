@@ -201,14 +201,7 @@ func TestDsaPaillierKeyRangeProofVerification(t *testing.T) {
 // and negative validation scenarios.
 func TestDsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 	ellipticCurve := secp256k1.S256()
-
-	p, _ := new(big.Int).SetString("104479735358598948369258156463683391052543755432914893102752306517616376250927", 10)
-	q, _ := new(big.Int).SetString("110280671641689691092051226222060939019447720119674706500089479951904142152567", 10)
-	paillierKey := paillier.CreatePrivateKey(p, q)
-
-	parameters, err := GeneratePublicParameters(
-		paillierKey.PublicKey.N, ellipticCurve,
-	)
+	paillierKey, parameters, err := createTestZkpParameters(ellipticCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
