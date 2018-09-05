@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import moment from 'moment'
 import { displayAmount } from './utils'
 import Network from './network'
+import { Web3Context } from './components/WithWeb3Context'
 import { getKeepToken, getTokenStaking, getTokenGrant } from './contracts'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -33,22 +34,31 @@ class Main extends Component {
 
   constructor() {
     super()
-    this.state = {}
+    this.state = {
+      web3: {
+        yourAddress: undefined,
+        networkType: undefined
+      }
+    }
     this.state.chartData = {}
   }
 
   componentDidMount() {
-
-    Network.getNetworkType().then(result => {
-      this.setState({
-        networkType: result,
-      })
-    })
-  
+    this.getWeb3()
     this.getData().catch(error => {
       this.setState({
         error: error,
       })
+    })
+  }
+
+  getWeb3 = async () => {
+    const web3 = await Network.web3()
+    this.setState({
+      web3: {
+        yourAddress: (await web3.eth.getAccounts())[0],
+        networkType: await web3.eth.net.getNetworkType()
+      }
     })
   }
 
@@ -67,118 +77,116 @@ class Main extends Component {
   }
 
   render() {
-    const { yourAddress, tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
+    const { tokenBalance, stakeBalance, grantBalance, grantStakeBalance, 
       chartOptions, chartData, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
-      totalAvailableToStake, totalAvailableToUnstake, error, networkType } = this.state
+      totalAvailableToStake, totalAvailableToUnstake, error } = this.state
 
     return (
-      <div className="main">
-        <Header networkType={networkType}/>
-        <Grid>
-          <Row>
-            <Col xs={12}>
+      <Web3Context.Provider value={this.state.web3}>
+        <div className="main">
+          <Header networkType={this.state.web3.networkType}/>
+          <Grid>
+            <Row>
+              <Col xs={12}>
 
-              {!networkType ?
-                <div className="alert alert-danger m-5" role="alert">No network detected. Do you have MetaMask installed?</div>:null
-              }
+                {!this.state.web3.networkType ?
+                  <div className="alert alert-danger m-5" role="alert">No network detected. Do you have MetaMask installed?</div>:null
+                }
 
-              {error ?
-                <div className="alert alert-danger m-5" role="alert">{error}</div>:null
-              }
-              <Tabs defaultActiveKey={1} id="dashboard-tabs">
-                <Tab eventKey={1} title="Overview">
-                  <Row className="overview">
-                    <Col xs={12} md={6}>
-                      <Pie dataKey="name" data={ chartData } options={ chartOptions } />
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <Table className="small table-sm" striped bordered condensed>
-                        <tbody>
-                          <TableRow title="Your wallet address">
-                            { yourAddress }
-                          </TableRow>
-                          <TableRow title="Tokens">
-                            { tokenBalance }
-                          </TableRow>
-                          <TableRow title="Staked">
-                            { stakeBalance }
-                          </TableRow>
-                          <TableRow title="Pending unstake">
-                            { withdrawalsTotal }
-                          </TableRow>
-                          <TableRow title="Token Grants">
-                            { grantBalance }
-                          </TableRow>
-                          <TableRow title="Staked Token Grants">
-                            { grantStakeBalance }
-                          </TableRow>
-                        </tbody>
-                      </Table>
-                      <h6>You can stake up to { totalAvailableToStake } KEEP</h6>
-                      <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
-                      <h6>You can unstake up to { totalAvailableToUnstake } KEEP</h6>
-                      <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col xs={12} md={6}>
-                      <h4>Pending unstake</h4>
-                      <WithdrawalsTable data={withdrawals}/>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <h4>Tokens granted to you</h4>
-                      <TokenGrantsTable data={ grantedToYou }/>
-                    </Col>
-                  </Row>
-                </Tab>
-                <Tab eventKey={2} title="Token Grants">
-                  <h3>Tokens granted to you</h3>
-                  <Row>
-                    <Col xs={12} md={6}>
-                      <VestingDetails
-                        details={this.selectedGrant()}
-                      />
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <VestingChart details={this.selectedGrant()}/>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
-                  </Row>
-                </Tab>
-                <Tab eventKey={3} title="Create Token Grant">
-                  <h3>Grant tokens</h3>
-                  <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
-                    gradually in a linear fashion until start + duration. By then all of the balance will have vested.
-                    You must approve the amount you want to grant by calling approve() method of the token contract first
-                  </p>
-                  <Row>
-                    <Col xs={12} md={8}>
-                      <TokenGrantForm tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <h3>Granted by you</h3>
-                    <Col xs={12}>
-                      <TokenGrantsOwnerTable data={ grantedByYou }/>
-                    </Col>
-                  </Row>
-                </Tab>
-              </Tabs>
-            </Col>
-          </Row>
-        </Grid>
-        <Footer />
-      </div>
+                {error ?
+                  <div className="alert alert-danger m-5" role="alert">{error}</div>:null
+                }
+                <Tabs defaultActiveKey={1} id="dashboard-tabs">
+                  <Tab eventKey={1} title="Overview">
+                    <Row className="overview">
+                      <Col xs={12} md={6}>
+                        <Pie dataKey="name" data={ chartData } options={ chartOptions } />
+                      </Col>
+                      <Col xs={12} md={6}>
+                        <Table className="small table-sm" striped bordered condensed>
+                          <tbody>
+                            <TableRow title="Your wallet address">
+                              { this.state.web3.yourAddress }
+                            </TableRow>
+                            <TableRow title="Tokens">
+                              { tokenBalance }
+                            </TableRow>
+                            <TableRow title="Staked">
+                              { stakeBalance }
+                            </TableRow>
+                            <TableRow title="Pending unstake">
+                              { withdrawalsTotal }
+                            </TableRow>
+                            <TableRow title="Token Grants">
+                              { grantBalance }
+                            </TableRow>
+                            <TableRow title="Staked Token Grants">
+                              { grantStakeBalance }
+                            </TableRow>
+                          </tbody>
+                        </Table>
+                        <h6>You can stake up to { totalAvailableToStake } KEEP</h6>
+                        <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+                        <h6>You can unstake up to { totalAvailableToUnstake } KEEP</h6>
+                        <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col xs={12} md={6}>
+                        <h4>Pending unstake</h4>
+                        <WithdrawalsTable data={withdrawals}/>
+                      </Col>
+                      <Col xs={12} md={6}>
+                        <h4>Tokens granted to you</h4>
+                        <TokenGrantsTable data={ grantedToYou }/>
+                      </Col>
+                    </Row>
+                  </Tab>
+                  <Tab eventKey={2} title="Token Grants">
+                    <h3>Tokens granted to you</h3>
+                    <Row>
+                      <Col xs={12} md={6}>
+                        <VestingDetails
+                          details={this.selectedGrant()}
+                        />
+                      </Col>
+                      <Col xs={12} md={6}>
+                        <VestingChart details={this.selectedGrant()}/>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
+                    </Row>
+                  </Tab>
+                  <Tab eventKey={3} title="Create Token Grant">
+                    <h3>Grant tokens</h3>
+                    <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
+                      gradually in a linear fashion until start + duration. By then all of the balance will have vested.
+                      You must approve the amount you want to grant by calling approve() method of the token contract first
+                    </p>
+                    <Row>
+                      <Col xs={12} md={8}>
+                        <TokenGrantForm tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <h3>Granted by you</h3>
+                      <Col xs={12}>
+                        <TokenGrantsOwnerTable data={ grantedByYou }/>
+                      </Col>
+                    </Row>
+                  </Tab>
+                </Tabs>
+              </Col>
+            </Row>
+          </Grid>
+          <Footer />
+        </div>
+      </Web3Context.Provider>
     )
   }
 
   async getData() {
-
-    // Your address
-    const accounts = await Network.getAccounts()
-    const yourAddress = accounts[0]
 
     // Contracts
     let token, stakingContract, grantContract
@@ -191,15 +199,15 @@ class Main extends Component {
     }
 
     // Balances
-    const tokenBalance = displayAmount(await token.balanceOf(yourAddress), 18, 3)
-    const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(yourAddress), 18, 3)
-    const grantBalance = displayAmount(await grantContract.balanceOf(yourAddress), 18, 3)
-    const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(yourAddress), 18, 3)
+    const tokenBalance = displayAmount(await token.balanceOf(this.state.web3.yourAddress), 18, 3)
+    const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(this.state.web3.yourAddress), 18, 3)
+    const grantBalance = displayAmount(await grantContract.balanceOf(this.state.web3.yourAddress), 18, 3)
+    const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(this.state.web3.yourAddress), 18, 3)
     const totalAvailableToStake = parseInt(tokenBalance)+parseInt(grantBalance)
     const totalAvailableToUnstake = parseInt(stakeBalance)+parseInt(grantStakeBalance)
 
     // Unstake withdrawals
-    const withdrawalIndexes = await stakingContract.getWithdrawals(yourAddress)
+    const withdrawalIndexes = await stakingContract.getWithdrawals(this.state.web3.yourAddress)
     const withdrawalDelay = (await stakingContract.withdrawalDelay()).toNumber()
     let withdrawals = []
     let withdrawalsTotal = new BigNumber(0)
@@ -228,7 +236,7 @@ class Main extends Component {
     withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3)
 
     // Token Grants
-    const grantIndexes = await grantContract.getGrants(yourAddress)
+    const grantIndexes = await grantContract.getGrants(this.state.web3.yourAddress)
     let grantedToYou = []
     let grantedByYou = []
 
@@ -258,9 +266,9 @@ class Main extends Component {
         }
       }
 
-      if (yourAddress === data['owner']) {
+      if (this.state.web3.yourAddress === data['owner']) {
         grantedByYou.push(data)
-      } else if (yourAddress === data['beneficiary']) {
+      } else if (this.state.web3.yourAddress === data['beneficiary']) {
         grantedToYou.push(data)
       }
     }
@@ -291,7 +299,6 @@ class Main extends Component {
     }
 
     this.setState({
-      yourAddress,
       tokenBalance,
       stakeBalance,
       grantBalance,
