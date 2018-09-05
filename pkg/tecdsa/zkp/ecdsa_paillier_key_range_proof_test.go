@@ -47,7 +47,7 @@ func TestEcdsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	encryptedSecretDsaKeyShare := &paillier.Cypher{C: big.NewInt(12)}
 	r := big.NewInt(14)
 
-	commitment, err := CommitDsaPaillierKeyRange(
+	commitment, err := CommitEcdsaPaillierKeyRange(
 		secretDsaKeyShare,
 		publicDsaKeyShare,
 		encryptedSecretDsaKeyShare,
@@ -223,7 +223,7 @@ func TestEcdsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 		ellipticCurve.ScalarBaseMult(secretDsaKeyShare.Bytes()),
 	)
 
-	commitment, err := CommitDsaPaillierKeyRange(
+	commitment, err := CommitEcdsaPaillierKeyRange(
 		secretDsaKeyShare,
 		publicDsaKeyShare,
 		encryptedSecretDsaKeyShare,

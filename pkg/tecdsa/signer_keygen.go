@@ -173,7 +173,7 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 		)
 	}
 
-	rangeProof, err := zkp.CommitDsaPaillierKeyRange(
+	rangeProof, err := zkp.CommitEcdsaPaillierKeyRange(
 		ls.dsaKeyShare.secretKeyShare,
 		ls.dsaKeyShare.publicKeyShare,
 		encryptedSecretKeyShare,

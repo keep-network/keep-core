@@ -53,11 +53,11 @@ type EcdsaPaillierKeyRangeProof struct {
 	s3 *big.Int
 }
 
-// CommitDsaPaillierKeyRange generates `EcdsaPaillierKeyRangeProof` for the
+// CommitEcdsaPaillierKeyRange generates `EcdsaPaillierKeyRangeProof` for the
 // specified DSA key shares. It's required to use the same randomness `r`
 // to generate this proof as the one used for Paillier encryption of
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
-func CommitDsaPaillierKeyRange(
+func CommitEcdsaPaillierKeyRange(
 	secretDsaKeyShare *big.Int,
 	publicDsaKeyShare *curve.Point,
 	encryptedSecretDsaKeyShare *paillier.Cypher,

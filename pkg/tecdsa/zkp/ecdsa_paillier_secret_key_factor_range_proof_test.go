@@ -40,7 +40,7 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	r := big.NewInt(7)
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
+	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
 		secretDsaKey, secretDsaKeyFactor, factor, r, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
@@ -174,7 +174,7 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 	}
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
+	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
 		secretDsaKey, secretDsaKeyFactor, factor, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)

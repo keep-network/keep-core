@@ -56,12 +56,12 @@ type EcdsaPaillierSecretKeyFactorRangeProof struct {
 	s3 *big.Int
 }
 
-// CommitDsaPaillierSecretKeyFactorRange generates
+// CommitEcdsaPaillierSecretKeyFactorRange generates
 // `EcdsaPaillierSecretKeyFactorRangeProof` for the specified DSA secret
 // key and multiplication factor. It's required to use the same randomness
 // `r` to generate this proof as the one used for Paillier encryption of
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
-func CommitDsaPaillierSecretKeyFactorRange(
+func CommitEcdsaPaillierSecretKeyFactorRange(
 	secretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
 	secretDsaKey *paillier.Cypher, // = c2 = E(x)
 	secretDsaKeyFactor *paillier.Cypher, // = c3 = E(η)

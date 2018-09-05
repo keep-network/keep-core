@@ -183,7 +183,7 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	}
 
 	// Let's modify one of reveal message ZKPs to make it fail
-	invalidProof, err := zkp.CommitDsaPaillierKeyRange(
+	invalidProof, err := zkp.CommitEcdsaPaillierKeyRange(
 		big.NewInt(1),
 		&curve.Point{X: big.NewInt(1), Y: big.NewInt(2)},
 		&paillier.Cypher{C: big.NewInt(3)},

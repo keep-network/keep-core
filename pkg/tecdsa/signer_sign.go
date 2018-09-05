@@ -123,7 +123,7 @@ type Round2Signer struct {
 // Moreover, message produced in the second round contains a ZKP allowing to
 // verify correctness of the revealed values.
 func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
-	zkp, err := zkp.CommitDsaPaillierSecretKeyFactorRange(
+	zkp, err := zkp.CommitEcdsaPaillierSecretKeyFactorRange(
 		s.secretKeyMultipleShare,
 		s.dsaKey.secretKey,
 		s.encryptedSecretKeyFactorShare,
