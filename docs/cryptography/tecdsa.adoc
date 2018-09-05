@@ -15,10 +15,12 @@ _Commitment Master Public Key_ is a value needed for commitment generation.
 It is generated individually for each signer. This setup needs to be performed 
 before each of two phases: key generation and signing.
 
-Each signer generates _Commitment Master Public Key Share_ and broadcasts it to other signers.
+Each signer generates _Commitment Master Public Key Share_ and broadcasts it to 
+other signers.
 After receiving all shares signers combine them to get _Commitment Master Public Key_.
 
-A _Commitment Master Public Key Share_ is a point in an abstract cyclic group _G2_ of link:https://github.com/ethereum/go-ethereum/tree/master/crypto/bn256/cloudflare[256-bit Barreto-Naehrig]
+A _Commitment Master Public Key Share_ is a point in an abstract cyclic group _G2_ 
+of link:https://github.com/ethereum/go-ethereum/tree/master/crypto/bn256/cloudflare[256-bit Barreto-Naehrig]
 curve.
 
 Output::
@@ -83,8 +85,8 @@ Output::
 
 //-
 
-. Each signer generates _Commitment Master Public Key Share_ and broadcasts it to other signers
- in _Commitment Master Public Key Share Message_.
+. Each signer generates _Commitment Master Public Key Share_ and broadcasts it to 
+other signers in _Commitment Master Public Key Share Message_.
 +
 .Master Public Key Share Message
 [halign=center,options="header"]
@@ -100,7 +102,8 @@ Output::
 ^|Master Public Key Share
 |=== 
 
-. Each signer combines all __Commitment Master Public Key Shares_ to get __Commitment Master Public Key_.
+. Each signer combines all _Commitment Master Public Key Shares_ to get 
+_Commitment Master Public Key_.
 
 === Key Generation
 
@@ -202,10 +205,11 @@ Output::
 
 //-
 
-. Each signer generates _Encrypted Secret Key Factor Share_ and _Secret Key Multiple Share_. These
-values are kept private for now. +
+. Each signer generates _Encrypted Secret Key Factor Share_ and _Secret Key Multiple Share_. 
+These values are kept private for now. +
 
-. Signer calculates a commitment to both values and broadcasts the commitment in _Sign Round 1 Message_.
+. Signer calculates a commitment to both values and broadcasts the commitment in 
+_Sign Round 1 Message_.
 +
 .Sign Round 1 Message
 [halign=center,options="header"]
