@@ -21,8 +21,8 @@ After receiving all shares signers combine them to get _Commitment Master Public
 A _Commitment Master Public Key Share_ is a point in an abstract cyclic group _G2_ of link:https://github.com/ethereum/go-ethereum/tree/master/crypto/bn256/cloudflare[256-bit Barreto-Naehrig]
 curve.
 
-* *Output*: 
-** _Commitment Master Public Key_
+Output::
+* _Commitment Master Public Key_
 
 === Key Generation
 
@@ -40,9 +40,11 @@ _Encrypted Secret Key_ and _Public Key_.
 
 This phase requires all signers in the group to produce a valid _ECDSA Key_.
 
-* *Output*: 
-** _ECDSA Key_ {_Encrypted Secret Key_, _Public Key_}
+Input::
+* _Commitment Master Public Key_
 
+Output::
+* _ECDSA Key_ {_Encrypted Secret Key_, _Public Key_}
 
 === Signing
 
@@ -62,11 +64,7 @@ needed is specified by _Threshold_.  +
 Signer can be expelled from the signing group if he misbehaves or doesn't provide
 a message on time.
 
-=== Setup
-
-==== Master Public Key
-
-=== Key Generation
+Input::
 * _Commitment Master Public Key_
 * _ECDSA Key_
 * _Message Hash_
