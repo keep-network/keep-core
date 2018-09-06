@@ -22,14 +22,13 @@ protocols can't be used as-is due to their requirement of trusted central
 authorities and intermediaries. That being said, with some modifications,
 we can make these options more secure and work for our use case.
 
-This document (as requested in <<FD>>) specifies the desired behaviors and
-properties of a protocol that will secure the network layer of Keep.
+This document specifies the desired behaviors and properties of a protocol that
+will secure the network layer of Keep <<FD>>.
 
 A successful protocol involves verifying identities (to prevent Sybil attacks),
 ensuring message integrity (to avoid malicious tampering), and allows for the
 encrypting of messages (to ensure that only intended recipients receive a
-message). Furthermore, we should support sequential version capability for easy
-upgrades.
+message). Furthermore, the protocol should be versioned for easy upgrades.
 
 
 === Terminology
