@@ -22,9 +22,8 @@ protocols can't be used as-is due to their requirement of trusted central
 authorities and intermediaries. That being said, with some modifications,
 we can make these options more secure and work for our use case.
 
-This document (as requested in <<FD>>) specifies desired behaviors,
-surveys current available protocols, and describes a protocol to secure the
-network layer of Keep.
+This document (as requested in <<FD>>) specifies the desired behaviors and
+properties of a protocol that will secure the network layer of Keep.
 
 A successful protocol involves verifying identities (to prevent Sybil attacks),
 ensuring message integrity (to avoid malicious tampering), and allows for the
@@ -128,9 +127,6 @@ adversaries without detection.
 ===== Attributability
 
 A message from a given peer is known to be from that peer.
-
-
-===== Ephemeral Channel
 
 
 === Scenarios
