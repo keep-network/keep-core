@@ -40,7 +40,7 @@ type LocalSigner struct {
 	// key generation. In the first round, `LocalSigner` commits to the chosen
 	// public key share. In the second round, it reveals the public key share
 	// along with the decommitment key.
-	publicDsaKeyShareDecommitmentKey *commitment.DecommitmentKey
+	publicKeyShareDecommitmentKey *commitment.DecommitmentKey
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
@@ -135,7 +135,7 @@ func (ls *LocalSigner) InitializeDsaKeyShares() (
 	}
 
 	ls.dsaKeyShare = keyShare
-	ls.publicDsaKeyShareDecommitmentKey = decommitmentKey
+	ls.publicKeyShareDecommitmentKey = decommitmentKey
 
 	return &PublicKeyShareCommitmentMessage{
 		signerID:                 ls.ID,
@@ -186,7 +186,7 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 		signerID:                      ls.ID,
 		secretKeyShare:                encryptedSecretKeyShare,
 		publicKeyShare:                ls.dsaKeyShare.publicKeyShare,
-		publicKeyShareDecommitmentKey: ls.publicDsaKeyShareDecommitmentKey,
+		publicKeyShareDecommitmentKey: ls.publicKeyShareDecommitmentKey,
 		secretKeyProof:                rangeProof,
 	}, nil
 }
