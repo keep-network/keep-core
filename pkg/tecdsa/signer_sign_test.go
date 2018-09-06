@@ -562,7 +562,7 @@ func initializeNewSignerGroup() ([]*Signer, *PublicParameters, error) {
 	signers := make([]*Signer, len(localGroup))
 	for i, localSigner := range localGroup {
 		signers[i] = &Signer{
-			dsaKey: key,
+			ecdsaKey:                  key,
 			commitmentMasterPublicKey: localSigner.commitmentMasterPublicKey,
 			signerCore:                localSigner.signerCore,
 		}
@@ -603,7 +603,7 @@ func initializeNewRound2SignerGroup() (
 	}
 
 	secretKeyMultiple = paillierKey.Mul(
-		signers[0].dsaKey.secretKey, secretKeyFactorPlaintext,
+		signers[0].ecdsaKey.secretKey, secretKeyFactorPlaintext,
 	)
 
 	return

@@ -56,7 +56,7 @@ type Signer struct {
 	// if the value was already initialized for `LocalSigner` before.
 	commitmentMasterPublicKey *bn256.G2
 
-	dsaKey *ThresholdDsaKey
+	ecdsaKey *ThresholdDsaKey
 }
 
 // NewLocalSigner creates a fully initialized `LocalSigner` instance for the
@@ -273,12 +273,12 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 	return &ThresholdDsaKey{secretKey, publicKey}, nil
 }
 
-// WithDsaKey transforms `LocalSigner` into a `Signer` when the key generation
+// WithEcdsaKey transforms `LocalSigner` into a `Signer` when the key generation
 // process completes and `ThresholdDsaKey` is ready.
 // There is a one instance of `ThresholdDsaKey` for all `Signer`s.
-func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
+func (ls *LocalSigner) WithEcdsaKey(ecdsaKey *ThresholdDsaKey) *Signer {
 	return &Signer{
-		dsaKey:     dsaKey,
+		ecdsaKey:   ecdsaKey,
 		signerCore: ls.signerCore,
 	}
 }
@@ -287,5 +287,5 @@ func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
 // The public key is expected to be identical for all signers in
 // a signing group.
 func (s *Signer) PublicKey() *curve.Point {
-	return s.dsaKey.PublicKey
+	return s.ecdsaKey.PublicKey
 }

@@ -74,7 +74,7 @@ func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
 
 	// v_i = E(ρ_i * x)
 	secretKeyMultiple := s.paillierKey.Mul(
-		s.dsaKey.secretKey,
+		s.ecdsaKey.secretKey,
 		secretKeyFactorShare,
 	)
 
@@ -125,7 +125,7 @@ type Round2Signer struct {
 func (s *Round1Signer) SignRound2() (*Round2Signer, *SignRound2Message, error) {
 	zkp, err := zkp.CommitEcdsaPaillierSecretKeyFactorRange(
 		s.secretKeyMultipleShare,
-		s.dsaKey.secretKey,
+		s.ecdsaKey.secretKey,
 		s.encryptedSecretKeyFactorShare,
 		s.secretKeyFactorShare,
 		s.paillierRandomness,
@@ -199,7 +199,7 @@ func (s *Round2Signer) CombineRound2Messages(
 				if round2Message.isValid(
 					s.commitmentMasterPublicKey,
 					round1Message.secretKeyFactorShareCommitment,
-					s.dsaKey.secretKey,
+					s.ecdsaKey.secretKey,
 					s.zkpParameters,
 				) {
 					secretKeyFactorShares[i] = round2Message.secretKeyFactorShare
