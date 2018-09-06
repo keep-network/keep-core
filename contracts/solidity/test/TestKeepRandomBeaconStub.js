@@ -10,7 +10,7 @@ contract('TestKeepRandomBeaconStub', function(accounts) {
 
   beforeEach(async () => {
     implV1 = await KeepRandomBeaconStub.new();
-    proxy = await Proxy.new('v1', implV1.address);
+    proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconStub.at(proxy.address);
     await implViaProxy.initialize();
   });

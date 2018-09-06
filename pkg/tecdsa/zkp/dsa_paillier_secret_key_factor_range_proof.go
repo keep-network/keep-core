@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// DsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's PI_1,i
+// DsaPaillierSecretKeyFactorRangeProof is an implementation of Gennaro's Π_1,i
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the first and second round of the T-ECDSA signing algorithm
@@ -62,9 +62,9 @@ type DsaPaillierSecretKeyFactorRangeProof struct {
 // `r` to generate this proof as the one used for Paillier encryption of
 // `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
 func CommitDsaPaillierSecretKeyFactorRange(
-	encryptedSecretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
-	encryptedSecretDsaKey *paillier.Cypher, // = c2 = E(x)
-	encryptedFactor *paillier.Cypher, // = c3 = E(η)
+	secretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
+	secretDsaKey *paillier.Cypher, // = c2 = E(x)
+	secretDsaKeyFactor *paillier.Cypher, // = c3 = E(η)
 	factor *big.Int, // = η
 	r *big.Int,
 	params *PublicParameters,
@@ -75,7 +75,7 @@ func CommitDsaPaillierSecretKeyFactorRange(
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
 
-	beta, err := randomFromMultiplicativeGroup(random, params.N)
+	beta, err := paillier.GetRandomNumberInMultiplicativeGroup(params.N, random)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct the proof [%v]", err)
 	}
@@ -118,13 +118,13 @@ func CommitDsaPaillierSecretKeyFactorRange(
 	)
 
 	// v = (c2)^α mod N^2
-	v := new(big.Int).Exp(encryptedSecretDsaKey.C, alpha, params.NSquare())
+	v := new(big.Int).Exp(secretDsaKey.C, alpha, params.NSquare())
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
-		encryptedSecretDsaKeyMultiple.C.Bytes(),
-		encryptedSecretDsaKey.C.Bytes(),
-		encryptedFactor.C.Bytes(),
+		secretDsaKeyMultiple.C.Bytes(),
+		secretDsaKey.C.Bytes(),
+		secretDsaKeyFactor.C.Bytes(),
 		z.Bytes(),
 		u1.Bytes(),
 		u2.Bytes(),
@@ -161,24 +161,24 @@ func CommitDsaPaillierSecretKeyFactorRange(
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *DsaPaillierSecretKeyFactorRangeProof) Verify(
-	encryptedSecretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
-	encryptedSecretDsaKey *paillier.Cypher, // = c2 = E(x)
-	encryptedFactor *paillier.Cypher, // = c3 = E(η)
+	secretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
+	secretDsaKey *paillier.Cypher, // = c2 = E(x)
+	secretDsaKeyFactor *paillier.Cypher, // = c3 = E(η)
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
 		return false
 	}
 
-	z := evaluateVerificationZ(encryptedFactor, zkp.s1, zkp.s2, zkp.e, params)
-	v := evaluateVerificationV(encryptedSecretDsaKeyMultiple, encryptedSecretDsaKey, zkp.s1, zkp.e, params)
+	z := evaluateVerificationZ(secretDsaKeyFactor, zkp.s1, zkp.s2, zkp.e, params)
+	v := evaluateVerificationV(secretDsaKeyMultiple, secretDsaKey, zkp.s1, zkp.e, params)
 	u2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 
 	// e = hash(c1,c2,c3,z,u1,u2,v)
 	digest := sum256(
-		encryptedSecretDsaKeyMultiple.C.Bytes(),
-		encryptedSecretDsaKey.C.Bytes(),
-		encryptedFactor.C.Bytes(),
+		secretDsaKeyMultiple.C.Bytes(),
+		secretDsaKey.C.Bytes(),
+		secretDsaKeyFactor.C.Bytes(),
 		z.Bytes(),
 		zkp.u1.Bytes(),
 		u2.Bytes(),

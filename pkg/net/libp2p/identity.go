@@ -112,7 +112,7 @@ func generateIdentity(randseed int) (*identity, error) {
 		r = rand.Reader
 	}
 
-	privKey, pubKey, err := libp2pcrypto.GenerateKeyPairWithReader(libp2pcrypto.Ed25519, 2048, r)
+	privKey, pubKey, err := libp2pcrypto.GenerateSecp256k1Key(r)
 	if err != nil {
 		return nil, err
 	}

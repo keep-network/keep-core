@@ -3,8 +3,10 @@ package zkp
 import (
 	"crypto/elliptic"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/keep-network/paillier"
 )
@@ -29,7 +31,7 @@ type PublicParameters struct {
 	// Paillier modulus used for generating T-ECDSA key and signing.
 	N *big.Int
 
-	// Auxilliary RSA modulus which is the product of two safe primes.
+	// Auxiliary RSA modulus which is the product of two safe primes.
 	// It's uniquely generated for each new instance of `PublicParameters`.
 	NTilde *big.Int
 
@@ -48,17 +50,26 @@ type PublicParameters struct {
 	curve elliptic.Curve
 }
 
-//TODO: Increase once safe prime generator performance is bosted
-const safePrimeBitLength = 256
+// Bit length of safe prime numbers used to generate NTilde.
+//
+// ZKP security relies on this value, hence it's currently recommended to be
+// 1024 bit long, so the length of a generated NTilde will be 2048 bit.
+const safePrimeBitLength = 1024
 
-// GeneratePublicParameters creates a new instance of `PublicParameters` with
-// all field set to appropriate values.
+// GeneratePublicParameters generates a new instance of `PublicParameters`.
 func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
 ) (*PublicParameters, error) {
-	pTilde, pTildePrime, err := paillier.GenerateSafePrimes(
-		safePrimeBitLength, rand.Reader,
+	// Concurrency configuration for safe prime generator.
+	safePrimeGenConcurrencyLevel := 4
+	safePrimeGenTimeout := 120 * time.Second
+
+	pTilde, _, err := paillier.GenerateSafePrime(
+		safePrimeBitLength,
+		safePrimeGenConcurrencyLevel,
+		safePrimeGenTimeout,
+		rand.Reader,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -67,9 +78,12 @@ func GeneratePublicParameters(
 		)
 	}
 
-	qTilde, qTildePrime := big.NewInt(0), big.NewInt(0)
-	for qTilde, qTildePrime, err = paillier.GenerateSafePrimes(
-		safePrimeBitLength, rand.Reader,
+	qTilde := big.NewInt(0)
+	for qTilde, _, err = paillier.GenerateSafePrime(
+		safePrimeBitLength,
+		safePrimeGenConcurrencyLevel,
+		safePrimeGenTimeout,
+		rand.Reader,
 	); err == nil && pTilde.Cmp(qTilde) == 0; {
 	}
 	if err != nil {
@@ -79,8 +93,52 @@ func GeneratePublicParameters(
 		)
 	}
 
+	return GeneratePublicParametersFromSafePrimes(
+		paillierModulus, pTilde, qTilde, curve,
+	)
+}
+
+// GeneratePublicParametersFromSafePrimes generates a new instance of
+// `PublicParameters` from the provided safe primes of equal bit length.
+func GeneratePublicParametersFromSafePrimes(
+	paillierModulus *big.Int,
+	pTilde *big.Int,
+	qTilde *big.Int,
+	curve elliptic.Curve,
+) (*PublicParameters, error) {
+	pTildePrime := new(big.Int).Div(
+		new(big.Int).Sub(pTilde, big.NewInt(1)),
+		big.NewInt(2),
+	)
+
+	qTildePrime := new(big.Int).Div(
+		new(big.Int).Sub(qTilde, big.NewInt(1)),
+		big.NewInt(2),
+	)
+
+	if pTilde.BitLen() != qTilde.BitLen() {
+		return nil, fmt.Errorf(
+			"safe primes must have the same bit length, got %d and %d bits",
+			pTilde.BitLen(),
+			qTilde.BitLen(),
+		)
+	}
+
+	if pTilde.Cmp(qTilde) == 0 {
+		return nil, fmt.Errorf(
+			"safe primes must not be equal, got %v and %v", pTilde, qTilde,
+		)
+	}
+
+	if !pTilde.ProbablyPrime(20) ||
+		!qTilde.ProbablyPrime(20) ||
+		!pTildePrime.ProbablyPrime(20) ||
+		!qTildePrime.ProbablyPrime(20) {
+		return nil, errors.New("both numbers must be safe primes")
+	}
+
 	NTilde := new(big.Int).Mul(pTilde, qTilde)
-	h2, err := randomFromMultiplicativeGroup(rand.Reader, NTilde)
+	h2, err := paillier.GetRandomNumberInMultiplicativeGroup(NTilde, rand.Reader)
 
 	NTildePrime := new(big.Int).Mul(pTildePrime, qTildePrime)
 	x, err := rand.Int(rand.Reader, NTildePrime)

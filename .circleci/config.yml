@@ -74,13 +74,13 @@ jobs:
           paths:
             - /caches/go_build_env.tar
             - /caches/client.tar
-  generate_docs:
+  generate_docs_tex:
     docker:
       - image: thomasweise/texlive
     steps:
       - checkout
       - run:
-          name: Generate Document Files
+          name: Generate TeX Document Files
           command: |
             cd docs
             make clean
@@ -93,6 +93,26 @@ jobs:
           paths:
             - ./*.pdf
             - img/generated/*.png
+  generate_docs_asciidoctor:
+    docker:
+      - image: asciidoctor/docker-asciidoctor
+    steps:
+      - checkout
+      - run:
+          name: Generate Asciidoctor PDF/HTML Files
+          command: |
+            cd docs
+            asciidoctor *.adoc */*.adoc
+            for a in $(ls *.html */*.html); do mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            asciidoctor-pdf *.adoc */*.adoc
+            for a in $(ls *.pdf */*.pdf); do mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - ./*.pdf
+            - ./*/*.pdf
+            - ./*.html
+            - ./*/*.html
   upload_docs:
     docker:
       - image: google/cloud-sdk:slim
@@ -119,9 +139,11 @@ workflows:
       - build_client_and_test_go
   docs:
     jobs:
-      - generate_docs
+      - generate_docs_tex
+      - generate_docs_asciidoctor
       - generate_docs_solidity
       - upload_docs:
           requires:
-            - generate_docs
+            - generate_docs_tex
             - generate_docs_solidity
+            - generate_docs_asciidoctor

@@ -19,7 +19,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     stakingProxy = await StakingProxy.new();
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
     implV1 = await KeepRandomBeaconImplV1.new();
-    proxy = await Proxy.new('v1', implV1.address);
+    proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
     await implViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(30));
   });
@@ -50,7 +50,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via proxy contract with enough ether", async function() {
-    const relayEntryRequestedEvent = proxy.RelayEntryRequested();
+    const relayEntryRequestedEvent = implViaProxy.RelayEntryRequested();
 
     await exceptThrow(proxy.sendTransaction({from: account_two, value: 1000}));
 

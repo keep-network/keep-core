@@ -24,7 +24,7 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 [[constraint]]
   name = "github.com/keep-network/paillier"
-  revision = "3eb21f405c6012a319b14ab5b4f6c3d982596ba5"
+  revision = "79cb054ad9bbe9f6b7a433bb7e4f892e92e1f8b3"
   source = "https://github.com/keep-network/paillier"
 
 [[constraint]]
@@ -34,7 +34,8 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
-  version = "v1.8.8"
+  revision = "89451f7c382ad2185987ee369f16416f89c28a7d"
+  source = "https://github.com/keep-network/go-ethereum.git"
 
 [[constraint]]
   name = "github.com/BurntSushi/toml"
@@ -85,5 +86,6 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 [[override]]
   name = "github.com/gogo/protobuf"
-  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  revision = "baf2ea5cdb7ce2d399176f925052690c3dad1f56"
   source = "https://github.com/keep-network/protobuf.git"
+
