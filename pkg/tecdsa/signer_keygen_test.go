@@ -50,7 +50,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// We have ThresholdDsaKey with E(secretKey) and public key where
+	// We have ThresholdEcdsaKey with E(secretKey) and public key where
 	// E(secretKey) is a threshold sharing of secretKey.
 	//
 	// We may check the correctness of E(secretKey) and publicKey:
@@ -61,7 +61,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 
 	// 1. Check if publicKey is a point on curve
 	if !parameters.Curve.IsOnCurve(dsaKey.PublicKey.X, dsaKey.PublicKey.Y) {
-		t.Fatal("ThresholdDsaKey.y must be a point on Curve")
+		t.Fatal("ThresholdEcdsaKey.y must be a point on Curve")
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
@@ -82,7 +82,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 
 	// 3. Having secretKey, we can evaluate publicKey from
 	//    publicKey = g^secretKey and compare with the actual
-	//    value stored in ThresholdDsaKey.
+	//    value stored in ThresholdEcdsaKey.
 	publicKeyX, publicKeyY := parameters.Curve.ScalarBaseMult(secretKey.Bytes())
 
 	if !reflect.DeepEqual(publicKeyX, dsaKey.PublicKey.X) {
@@ -356,9 +356,9 @@ func initializeNewLocalGroupWithKeyShares() (
 // initializeNewLocalGroupWithFullKey creates and initializes a new group of
 // `LocalSigner`s simulating a real initialization process just like the
 // `initializeNewLocalGroupWithKeyShares` except that it also calls
-// `ConbineDsaKeyShares` in order to produce a full `ThresholdDsaKey`.
+// `ConbineDsaKeyShares` in order to produce a full `ThresholdEcdsaKey`.
 func initializeNewLocalGroupWithFullKey() (
-	[]*LocalSigner, *PublicParameters, *ThresholdDsaKey, error,
+	[]*LocalSigner, *PublicParameters, *ThresholdEcdsaKey, error,
 ) {
 	group, parameters, commitmentMessages, revealMessages, err :=
 		initializeNewLocalGroupWithKeyShares()
@@ -367,7 +367,7 @@ func initializeNewLocalGroupWithFullKey() (
 	}
 
 	// Combine all PublicKeyShareCommitmentMessages and KeyShareRevealMessages
-	// from signers in order to create a ThresholdDsaKey.
+	// from signers in order to create a ThresholdEcdsaKey.
 	dsaKey, err := group[0].CombineDsaKeyShares(
 		commitmentMessages,
 		revealMessages,

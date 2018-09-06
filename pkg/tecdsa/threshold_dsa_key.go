@@ -7,13 +7,13 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// ThresholdDsaKey represents DSA key for a fully initialized Signer.
+// ThresholdEcdsaKey represents DSA key for a fully initialized Signer.
 //
 // For (secretKey, publicKey = g^secretKey) DSA key pair, publicKey
 // and E(secretKey) are made public, where E is an additively homomorphic
 // encryption scheme. This is an implicit (t, n) secret sharing of secretKey
 // since the decryption key of E is shared among the n Signers.
-type ThresholdDsaKey struct {
+type ThresholdEcdsaKey struct {
 	secretKey *paillier.Cypher
 	PublicKey *curve.Point
 }
@@ -29,7 +29,7 @@ type ThresholdDsaKey struct {
 // E(secretKey) = E(secretKeyShare_1) + E(secretKeyShare_2) + ... + E(secretKeyShare_n)
 // publicKey = publicKeyShare_1 + publicKeyShare_2 + ... + publicKeyShare_n
 //
-// to create a `ThresholdDsaKey`.
+// to create a `ThresholdEcdsaKey`.
 type dsaKeyShare struct {
 	secretKeyShare *big.Int
 	publicKeyShare *curve.Point

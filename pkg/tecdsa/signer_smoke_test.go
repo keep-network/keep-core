@@ -101,7 +101,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 
 	signers := make([]*Signer, len(localSigners))
 	for i, localSigner := range localSigners {
-		signers[i] = localSigner.WithDsaKey(dsaKey)
+		signers[i] = localSigner.WithEcdsaKey(dsaKey)
 	}
 
 	//

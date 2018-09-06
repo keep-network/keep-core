@@ -44,7 +44,7 @@ type LocalSigner struct {
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
-// ready for signing. Each Signer has a reference to a ThresholdDsaKey used
+// ready for signing. Each Signer has a reference to a ThresholdEcdsaKey used
 // in a signing process. It represents a (t, n) threshold sharing of the
 // underlying DSA key.
 type Signer struct {
@@ -56,7 +56,7 @@ type Signer struct {
 	// if the value was already initialized for `LocalSigner` before.
 	commitmentMasterPublicKey *bn256.G2
 
-	ecdsaKey *ThresholdDsaKey
+	ecdsaKey *ThresholdEcdsaKey
 }
 
 // NewLocalSigner creates a fully initialized `LocalSigner` instance for the
@@ -192,7 +192,7 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 }
 
 // CombineDsaKeyShares combines all group `PublicKeyShareCommitmentMessage`s and
-// `KeyShareRevealMessage`s into a `ThresholdDsaKey` which is a (t, n) threshold
+// `KeyShareRevealMessage`s into a `ThresholdEcdsaKey` which is a (t, n) threshold
 // sharing of an underlying secret DSA key. Secret and public
 // DSA key shares are combined in the following way:
 //
@@ -213,7 +213,7 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 func (ls *LocalSigner) CombineDsaKeyShares(
 	shareCommitments []*PublicKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
-) (*ThresholdDsaKey, error) {
+) (*ThresholdEcdsaKey, error) {
 	if len(shareCommitments) != ls.signerGroup.InitialGroupSize {
 		return nil, fmt.Errorf(
 			"commitments required from all group members; got %v, expected %v",
@@ -270,13 +270,13 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 		))
 	}
 
-	return &ThresholdDsaKey{secretKey, publicKey}, nil
+	return &ThresholdEcdsaKey{secretKey, publicKey}, nil
 }
 
 // WithEcdsaKey transforms `LocalSigner` into a `Signer` when the key generation
-// process completes and `ThresholdDsaKey` is ready.
-// There is a one instance of `ThresholdDsaKey` for all `Signer`s.
-func (ls *LocalSigner) WithEcdsaKey(ecdsaKey *ThresholdDsaKey) *Signer {
+// process completes and `ThresholdEcdsaKey` is ready.
+// There is a one instance of `ThresholdEcdsaKey` for all `Signer`s.
+func (ls *LocalSigner) WithEcdsaKey(ecdsaKey *ThresholdEcdsaKey) *Signer {
 	return &Signer{
 		ecdsaKey:   ecdsaKey,
 		signerCore: ls.signerCore,
