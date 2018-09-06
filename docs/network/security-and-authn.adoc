@@ -40,7 +40,7 @@ chain:: A decentralized, consensus driven store with identities and economic
 incentives.
 stake:: The amount of value required to be a participant in the network. This
 amount is held on the host chain and associated with an identity.
-bootstrap node:: A trusted, authenticated peer that handles requests for joining
+bootstrap peer:: A trusted, authenticated peer that handles requests for joining
 the network from unauthenticated peers. This involves verifying an on-chain stake
 among many other responsibilities.
 
@@ -83,7 +83,7 @@ NetworkJoinRequest, to an authenticated peer that can process this message
 can participate in the network and form secure channels with other authenticated
 peers. In short:
 
-* unauthenticated peer => can only send NetworkJoinRequest to bootstrap nodes
+* unauthenticated peer => can only send NetworkJoinRequest to bootstrap peers
 * authenticated peer => can send and accept all kinds of messages
 
 
@@ -212,7 +212,7 @@ layered on top?
 
 * Do we require forward secrecy - how will we get that?
 
-* What does a non-bootstrap node do with an authentication message?
+* What does a non-bootstrap peer do with an authentication message?
 
 * Is a requirement for communicating participants that they be online?
 
