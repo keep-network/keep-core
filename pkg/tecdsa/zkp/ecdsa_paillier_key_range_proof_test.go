@@ -40,7 +40,7 @@ func TestEcdsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 	}
 
 	secretEcdsaKeyShare := big.NewInt(13)
-	publicDsaKeyShare := curve.NewPoint(
+	publicEcdsaKeyShare := curve.NewPoint(
 		secp256k1.S256().ScalarBaseMult(big.NewInt(11).Bytes()),
 	)
 
@@ -49,7 +49,7 @@ func TestEcdsaPaillierKeyRangeProofCommitValues(t *testing.T) {
 
 	commitment, err := CommitEcdsaPaillierKeyRange(
 		secretEcdsaKeyShare,
-		publicDsaKeyShare,
+		publicEcdsaKeyShare,
 		encryptedSecretEcdsaKeyShare,
 		r,
 		parameters,
@@ -156,7 +156,7 @@ func TestEcdsaPaillierKeyRangeProofVerification(t *testing.T) {
 	}
 
 	encryptedSecretEcdsaKeyShare := big.NewInt(674)
-	publicDsaKeyShare := curve.NewPoint(
+	publicEcdsaKeyShare := curve.NewPoint(
 		secp256k1.S256().ScalarBaseMult(big.NewInt(10).Bytes()),
 	)
 
@@ -164,7 +164,7 @@ func TestEcdsaPaillierKeyRangeProofVerification(t *testing.T) {
 	expectedU1 := curve.NewPoint(secp256k1.S256().ScalarBaseMult(
 		new(big.Int).Sub(params.q, big.NewInt(8788)).Bytes(),
 	))
-	actualU1 := zkp.evaluateU1Verification(publicDsaKeyShare, params)
+	actualU1 := zkp.evaluateU1Verification(publicEcdsaKeyShare, params)
 	if !reflect.DeepEqual(expectedU1, actualU1) {
 		t.Errorf(
 			"Unexpected u1\nActual: %v\nExpected: %v",
@@ -219,13 +219,13 @@ func TestEcdsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	publicDsaKeyShare := curve.NewPoint(
+	publicEcdsaKeyShare := curve.NewPoint(
 		ellipticCurve.ScalarBaseMult(secretEcdsaKeyShare.Bytes()),
 	)
 
 	commitment, err := CommitEcdsaPaillierKeyRange(
 		secretEcdsaKeyShare,
-		publicDsaKeyShare,
+		publicEcdsaKeyShare,
 		encryptedSecretEcdsaKeyShare,
 		r,
 		parameters,
@@ -243,7 +243,7 @@ func TestEcdsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 			verify: func() bool {
 				return commitment.Verify(
 					encryptedSecretEcdsaKeyShare,
-					publicDsaKeyShare,
+					publicEcdsaKeyShare,
 					parameters,
 				)
 			},
@@ -256,7 +256,7 @@ func TestEcdsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 				}
 				return commitment.Verify(
 					wrongEncryptedSecretEcdsaKeyShare,
-					publicDsaKeyShare,
+					publicEcdsaKeyShare,
 					parameters,
 				)
 			},
@@ -264,13 +264,13 @@ func TestEcdsaPaillierKeyRangeProofCommitAndVerify(t *testing.T) {
 		},
 		"negative validation - wrong public DSA key share": {
 			verify: func() bool {
-				wrongPublicDsaKeyShare := &curve.Point{
+				wrongPublicEcdsaKeyShare := &curve.Point{
 					X: big.NewInt(997),
 					Y: big.NewInt(998),
 				}
 				return commitment.Verify(
 					encryptedSecretEcdsaKeyShare,
-					wrongPublicDsaKeyShare,
+					wrongPublicEcdsaKeyShare,
 					parameters,
 				)
 			},

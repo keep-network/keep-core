@@ -59,7 +59,7 @@ type EcdsaPaillierKeyRangeProof struct {
 // `secretEcdsaKeyShare` into `encryptedSecretEcdsaKeyShare`.
 func CommitEcdsaPaillierKeyRange(
 	secretEcdsaKeyShare *big.Int,
-	publicDsaKeyShare *curve.Point,
+	publicEcdsaKeyShare *curve.Point,
 	encryptedSecretEcdsaKeyShare *paillier.Cypher,
 	r *big.Int,
 	params *PublicParameters,
@@ -115,7 +115,7 @@ func CommitEcdsaPaillierKeyRange(
 	// However, since g is a constant in go-ethereum, we don't include it in
 	// the sum256.
 	digest := sum256(
-		publicDsaKeyShare.Bytes(), encryptedSecretEcdsaKeyShare.C.Bytes(),
+		publicEcdsaKeyShare.Bytes(), encryptedSecretEcdsaKeyShare.C.Bytes(),
 		z.Bytes(), u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 	e := new(big.Int).SetBytes(digest[:])
@@ -138,19 +138,19 @@ func CommitEcdsaPaillierKeyRange(
 // `true`. Otherwise, `false` is returned.
 func (zkp *EcdsaPaillierKeyRangeProof) Verify(
 	encryptedSecretEcdsaKeyShare *paillier.Cypher,
-	publicDsaKeyShare *curve.Point,
+	publicEcdsaKeyShare *curve.Point,
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
 		return false
 	}
 
-	u1 := zkp.evaluateU1Verification(publicDsaKeyShare, params)
+	u1 := zkp.evaluateU1Verification(publicEcdsaKeyShare, params)
 	u2 := zkp.evaluateU2Verification(encryptedSecretEcdsaKeyShare.C, params)
 	u3 := zkp.evaluateU3Verification(params)
 
 	digest := sum256(
-		publicDsaKeyShare.Bytes(), encryptedSecretEcdsaKeyShare.C.Bytes(),
+		publicEcdsaKeyShare.Bytes(), encryptedSecretEcdsaKeyShare.C.Bytes(),
 		zkp.z.Bytes(), u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 
@@ -196,14 +196,14 @@ func (zkp *EcdsaPaillierKeyRangeProof) allParametersInRange(
 //
 // which is exactly how u1 is evaluated during the commitment phase.
 func (zkp *EcdsaPaillierKeyRangeProof) evaluateU1Verification(
-	publicDsaKeyShare *curve.Point,
+	publicEcdsaKeyShare *curve.Point,
 	params *PublicParameters,
 ) *curve.Point {
 	gs1x, gs1y := params.curve.ScalarBaseMult(
 		new(big.Int).Mod(zkp.s1, params.q).Bytes(),
 	)
 	yex, yey := params.curve.ScalarMult(
-		publicDsaKeyShare.X, publicDsaKeyShare.Y, zkp.e.Bytes(),
+		publicEcdsaKeyShare.X, publicEcdsaKeyShare.Y, zkp.e.Bytes(),
 	)
 
 	// For a Weierstrass elliptic curve form, the additive inverse of
