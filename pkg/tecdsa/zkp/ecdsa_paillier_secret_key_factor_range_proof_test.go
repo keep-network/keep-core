@@ -33,15 +33,15 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 
 	factor := big.NewInt(8)
 
-	secretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(9)}
-	secretDsaKey := &paillier.Cypher{C: big.NewInt(7)}
-	secretDsaKeyFactor := &paillier.Cypher{C: big.NewInt(9)}
+	secretEcdsaKeyMultiple := &paillier.Cypher{C: big.NewInt(9)}
+	secretEcdsaKey := &paillier.Cypher{C: big.NewInt(7)}
+	secretEcdsaKeyFactor := &paillier.Cypher{C: big.NewInt(9)}
 
 	r := big.NewInt(7)
 
 	// WHEN
-	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
-		secretDsaKey, secretDsaKeyFactor, factor, r, params, mockRandom)
+	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretEcdsaKeyMultiple,
+		secretEcdsaKey, secretEcdsaKeyFactor, factor, r, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,9 +96,9 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
-	secretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(729674)}
-	secretDsaKey := &paillier.Cypher{C: big.NewInt(133808)}
-	secretDsaKeyFactor := &paillier.Cypher{C: big.NewInt(688361)}
+	secretEcdsaKeyMultiple := &paillier.Cypher{C: big.NewInt(729674)}
+	secretEcdsaKey := &paillier.Cypher{C: big.NewInt(133808)}
+	secretEcdsaKeyFactor := &paillier.Cypher{C: big.NewInt(688361)}
 
 	expectedZ := big.NewInt(289613)
 	expectedV := big.NewInt(285526)
@@ -122,11 +122,11 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	}
 
 	//WHEN
-	actualZ := evaluateVerificationZ(secretDsaKeyFactor, zkp.s1, zkp.s2, zkp.e, params)
-	actualV := evaluateVerificationV(secretDsaKeyMultiple, secretDsaKey,
+	actualZ := evaluateVerificationZ(secretEcdsaKeyFactor, zkp.s1, zkp.s2, zkp.e, params)
+	actualV := evaluateVerificationV(secretEcdsaKeyMultiple, secretEcdsaKey,
 		zkp.s1, zkp.e, params)
 	actualU2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
-	verificationResult := zkp.Verify(secretDsaKeyMultiple, secretDsaKey, secretDsaKeyFactor, params)
+	verificationResult := zkp.Verify(secretEcdsaKeyMultiple, secretEcdsaKey, secretEcdsaKeyFactor, params)
 
 	//THEN
 	if expectedZ.Cmp(actualZ) != 0 {
@@ -167,15 +167,15 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofCommitAndVerify(t *testing.T) {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
-	secretDsaKeyMultiple := paillierKey.Mul(secretDsaKey, factor)
-	secretDsaKeyFactor, err := paillierKey.EncryptWithR(factor, r)
+	secretEcdsaKeyMultiple := paillierKey.Mul(secretDsaKey, factor)
+	secretEcdsaKeyFactor, err := paillierKey.EncryptWithR(factor, r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// WHEN
-	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
-		secretDsaKey, secretDsaKeyFactor, factor, r, params, rand.Reader)
+	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretEcdsaKeyMultiple,
+		secretDsaKey, secretEcdsaKeyFactor, factor, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,9 +188,9 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofCommitAndVerify(t *testing.T) {
 		"positive validation": {
 			verify: func() bool {
 				return zkp.Verify(
-					secretDsaKeyMultiple,
+					secretEcdsaKeyMultiple,
 					secretDsaKey,
-					secretDsaKeyFactor,
+					secretEcdsaKeyFactor,
 					params,
 				)
 			},
@@ -202,7 +202,7 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofCommitAndVerify(t *testing.T) {
 				return zkp.Verify(
 					wrongEncryptedSecretDsaKeyMultiple,
 					secretDsaKey,
-					secretDsaKeyFactor,
+					secretEcdsaKeyFactor,
 					params,
 				)
 			},
@@ -212,9 +212,9 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofCommitAndVerify(t *testing.T) {
 			verify: func() bool {
 				wrongSecretDsaKey := &paillier.Cypher{C: big.NewInt(856)}
 				return zkp.Verify(
-					secretDsaKeyMultiple,
+					secretEcdsaKeyMultiple,
 					wrongSecretDsaKey,
-					secretDsaKeyFactor,
+					secretEcdsaKeyFactor,
 					params,
 				)
 			},
@@ -224,7 +224,7 @@ func TestEcdsaPaillierSecretKeyFactorRangeProofCommitAndVerify(t *testing.T) {
 			verify: func() bool {
 				wrongFactor := &paillier.Cypher{C: big.NewInt(798)}
 				return zkp.Verify(
-					secretDsaKeyMultiple,
+					secretEcdsaKeyMultiple,
 					secretDsaKey,
 					wrongFactor,
 					params,

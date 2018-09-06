@@ -13,13 +13,13 @@ import (
 // proof for the Paillier encryption scheme, as described in [GGN16], section 4.4.
 //
 // The proof is used in the first and second round of the T-ECDSA signing algorithm
-// and operates on DSA secret key encrypted with an additively homomorphic
+// and operates on ECDSA secret key encrypted with an additively homomorphic
 // encryption scheme.
 //
 // Because of the complexity of the proof, we use the same naming for values
 // as in the paper in most cases. We do an exception for function parameters:
-// - `c1` in the paper represents encrypted DSA secret key multiplied by a factor η,
-// - `c2` in the paper represents encrypted DSA secret key,
+// - `c1` in the paper represents encrypted ECDSA secret key multiplied by a factor η,
+// - `c2` in the paper represents encrypted ECDSA secret key,
 // - `c3` represents encrypted factor η
 //
 // The proof states that:
@@ -57,14 +57,14 @@ type EcdsaPaillierSecretKeyFactorRangeProof struct {
 }
 
 // CommitEcdsaPaillierSecretKeyFactorRange generates
-// `EcdsaPaillierSecretKeyFactorRangeProof` for the specified DSA secret
+// `EcdsaPaillierSecretKeyFactorRangeProof` for the specified ECDSA secret
 // key and multiplication factor. It's required to use the same randomness
 // `r` to generate this proof as the one used for Paillier encryption of
 // `secretEcdsaKeyShare` into `encryptedSecretEcdsaKeyShare`.
 func CommitEcdsaPaillierSecretKeyFactorRange(
-	secretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
-	secretDsaKey *paillier.Cypher, // = c2 = E(x)
-	secretDsaKeyFactor *paillier.Cypher, // = c3 = E(η)
+	secretEcdsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
+	secretEcdsaKey *paillier.Cypher, // = c2 = E(x)
+	secretEcdsaKeyFactor *paillier.Cypher, // = c3 = E(η)
 	factor *big.Int, // = η
 	r *big.Int,
 	params *PublicParameters,
@@ -118,13 +118,13 @@ func CommitEcdsaPaillierSecretKeyFactorRange(
 	)
 
 	// v = (c2)^α mod N^2
-	v := new(big.Int).Exp(secretDsaKey.C, alpha, params.NSquare())
+	v := new(big.Int).Exp(secretEcdsaKey.C, alpha, params.NSquare())
 
 	// e = hash(c1, c2, c3, z, u1, u2, v)
 	digest := sum256(
-		secretDsaKeyMultiple.C.Bytes(),
-		secretDsaKey.C.Bytes(),
-		secretDsaKeyFactor.C.Bytes(),
+		secretEcdsaKeyMultiple.C.Bytes(),
+		secretEcdsaKey.C.Bytes(),
+		secretEcdsaKeyFactor.C.Bytes(),
 		z.Bytes(),
 		u1.Bytes(),
 		u2.Bytes(),
@@ -157,28 +157,28 @@ func CommitEcdsaPaillierSecretKeyFactorRange(
 }
 
 // Verify checks the `EcdsaPaillierSecretKeyFactorRangeProof` against the provided
-// DSA secret key and the multiplication factor.
+// ECDSA secret key and the multiplication factor.
 // If they match values used to generate the proof, function returns `true`.
 // Otherwise, `false` is returned.
 func (zkp *EcdsaPaillierSecretKeyFactorRangeProof) Verify(
-	secretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
-	secretDsaKey *paillier.Cypher, // = c2 = E(x)
-	secretDsaKeyFactor *paillier.Cypher, // = c3 = E(η)
+	secretEcdsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
+	secretEcdsaKey *paillier.Cypher, // = c2 = E(x)
+	secretEcdsaKeyFactor *paillier.Cypher, // = c3 = E(η)
 	params *PublicParameters,
 ) bool {
 	if !zkp.allParametersInRange(params) {
 		return false
 	}
 
-	z := evaluateVerificationZ(secretDsaKeyFactor, zkp.s1, zkp.s2, zkp.e, params)
-	v := evaluateVerificationV(secretDsaKeyMultiple, secretDsaKey, zkp.s1, zkp.e, params)
+	z := evaluateVerificationZ(secretEcdsaKeyFactor, zkp.s1, zkp.s2, zkp.e, params)
+	v := evaluateVerificationV(secretEcdsaKeyMultiple, secretEcdsaKey, zkp.s1, zkp.e, params)
 	u2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
 
 	// e = hash(c1,c2,c3,z,u1,u2,v)
 	digest := sum256(
-		secretDsaKeyMultiple.C.Bytes(),
-		secretDsaKey.C.Bytes(),
-		secretDsaKeyFactor.C.Bytes(),
+		secretEcdsaKeyMultiple.C.Bytes(),
+		secretEcdsaKey.C.Bytes(),
+		secretEcdsaKeyFactor.C.Bytes(),
 		z.Bytes(),
 		zkp.u1.Bytes(),
 		u2.Bytes(),
