@@ -18,7 +18,7 @@ type ThresholdEcdsaKey struct {
 	PublicKey *curve.Point
 }
 
-// dsaKeyShare represents a share of DSA key owned by LocalSigner before
+// ecdsaKeyShare represents a share of DSA key owned by LocalSigner before
 // it's fully initialized into Signer.
 //
 // Each `LocalSigner` generates a share of secret and public DSA key.
@@ -30,7 +30,7 @@ type ThresholdEcdsaKey struct {
 // publicKey = publicKeyShare_1 + publicKeyShare_2 + ... + publicKeyShare_n
 //
 // to create a `ThresholdEcdsaKey`.
-type dsaKeyShare struct {
+type ecdsaKeyShare struct {
 	secretKeyShare *big.Int
 	publicKeyShare *curve.Point
 }

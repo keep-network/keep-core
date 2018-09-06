@@ -78,7 +78,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Execute the 1st key-gen round
 	//
 	for i, signer := range localSigners {
-		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
+		publicKeyCommitmentMessages[i], err = signer.InitializeEcdsaKeyShares()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -88,13 +88,13 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Execute the 2nd key-gen round
 	//
 	for i, signer := range localSigners {
-		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
+		keyShareRevealMessages[i], err = signer.RevealEcdsaKeyShares()
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	dsaKey, err := localSigners[0].CombineDsaKeyShares(
+	dsaKey, err := localSigners[0].CombineEcdsaKeyShares(
 		publicKeyCommitmentMessages,
 		keyShareRevealMessages,
 	)
