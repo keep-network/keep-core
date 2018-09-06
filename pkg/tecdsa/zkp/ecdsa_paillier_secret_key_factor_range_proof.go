@@ -60,7 +60,7 @@ type EcdsaPaillierSecretKeyFactorRangeProof struct {
 // `EcdsaPaillierSecretKeyFactorRangeProof` for the specified DSA secret
 // key and multiplication factor. It's required to use the same randomness
 // `r` to generate this proof as the one used for Paillier encryption of
-// `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
+// `secretEcdsaKeyShare` into `encryptedSecretEcdsaKeyShare`.
 func CommitEcdsaPaillierSecretKeyFactorRange(
 	secretDsaKeyMultiple *paillier.Cypher, // = c1 = E(ηx)
 	secretDsaKey *paillier.Cypher, // = c2 = E(x)

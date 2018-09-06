@@ -56,11 +56,11 @@ type EcdsaPaillierKeyRangeProof struct {
 // CommitEcdsaPaillierKeyRange generates `EcdsaPaillierKeyRangeProof` for the
 // specified DSA key shares. It's required to use the same randomness `r`
 // to generate this proof as the one used for Paillier encryption of
-// `secretDsaKeyShare` into `encryptedSecretDsaKeyShare`.
+// `secretEcdsaKeyShare` into `encryptedSecretEcdsaKeyShare`.
 func CommitEcdsaPaillierKeyRange(
-	secretDsaKeyShare *big.Int,
+	secretEcdsaKeyShare *big.Int,
 	publicDsaKeyShare *curve.Point,
-	encryptedSecretDsaKeyShare *paillier.Cypher,
+	encryptedSecretEcdsaKeyShare *paillier.Cypher,
 	r *big.Int,
 	params *PublicParameters,
 	random io.Reader,
@@ -87,7 +87,7 @@ func CommitEcdsaPaillierKeyRange(
 
 	z := new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(params.h1, secretDsaKeyShare, params.NTilde),
+			new(big.Int).Exp(params.h1, secretEcdsaKeyShare, params.NTilde),
 			new(big.Int).Exp(params.h2, rho, params.NTilde),
 		),
 		params.NTilde,
@@ -115,12 +115,12 @@ func CommitEcdsaPaillierKeyRange(
 	// However, since g is a constant in go-ethereum, we don't include it in
 	// the sum256.
 	digest := sum256(
-		publicDsaKeyShare.Bytes(), encryptedSecretDsaKeyShare.C.Bytes(),
+		publicDsaKeyShare.Bytes(), encryptedSecretEcdsaKeyShare.C.Bytes(),
 		z.Bytes(), u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 	e := new(big.Int).SetBytes(digest[:])
 
-	s1 := new(big.Int).Add(new(big.Int).Mul(e, secretDsaKeyShare), alpha)
+	s1 := new(big.Int).Add(new(big.Int).Mul(e, secretEcdsaKeyShare), alpha)
 	s2 := new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(r, e, params.N),
@@ -137,7 +137,7 @@ func CommitEcdsaPaillierKeyRange(
 // key shares. If they match values used to generate the proof, function returns
 // `true`. Otherwise, `false` is returned.
 func (zkp *EcdsaPaillierKeyRangeProof) Verify(
-	encryptedSecretDsaKeyShare *paillier.Cypher,
+	encryptedSecretEcdsaKeyShare *paillier.Cypher,
 	publicDsaKeyShare *curve.Point,
 	params *PublicParameters,
 ) bool {
@@ -146,11 +146,11 @@ func (zkp *EcdsaPaillierKeyRangeProof) Verify(
 	}
 
 	u1 := zkp.evaluateU1Verification(publicDsaKeyShare, params)
-	u2 := zkp.evaluateU2Verification(encryptedSecretDsaKeyShare.C, params)
+	u2 := zkp.evaluateU2Verification(encryptedSecretEcdsaKeyShare.C, params)
 	u3 := zkp.evaluateU3Verification(params)
 
 	digest := sum256(
-		publicDsaKeyShare.Bytes(), encryptedSecretDsaKeyShare.C.Bytes(),
+		publicDsaKeyShare.Bytes(), encryptedSecretEcdsaKeyShare.C.Bytes(),
 		zkp.z.Bytes(), u1.Bytes(), u2.Bytes(), u3.Bytes(),
 	)
 
@@ -234,13 +234,13 @@ func (zkp *EcdsaPaillierKeyRangeProof) evaluateU1Verification(
 //
 // which is exactly how u2 is evaluated during the commitment phase.
 func (zkp *EcdsaPaillierKeyRangeProof) evaluateU2Verification(
-	encryptedSecretDsaKeyShare *big.Int,
+	encryptedSecretEcdsaKeyShare *big.Int,
 	params *PublicParameters,
 ) *big.Int {
 	gs1 := new(big.Int).Exp(params.G(), zkp.s1, params.NSquare())
 	s2N := new(big.Int).Exp(zkp.s2, params.N, params.NSquare())
 	we := discreteExp(
-		encryptedSecretDsaKeyShare,
+		encryptedSecretEcdsaKeyShare,
 		new(big.Int).Neg(zkp.e),
 		params.NSquare(),
 	)
