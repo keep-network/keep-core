@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/big"
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 func sum(ints ...*big.Int) *big.Int {
@@ -35,12 +36,18 @@ func yFromX(x *big.Int) *big.Int {
     return modSqrt(sum(product(x, x, x), big.NewInt(3)), bn256.P)
 }
 
+func toBytes(i *big.Int) []byte {
+    return append(make([]byte, 32-len(i.Bytes())), i.Bytes()...)
+}
+
 func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
 	if len(x.Bytes()) > 32 || len(y.Bytes()) > 32 {
 		return nil, errors.New("Points on G1 are limited to 256-bit coordinates.")
 	}
 
-	m := append(x.Bytes(), y.Bytes()...)
+	paddedX, _ := byteutils.LeftPadTo32Bytes(x.Bytes())
+	paddedY, _ := byteutils.LeftPadTo32Bytes(y.Bytes())
+	m := append(paddedX, paddedY...)
 
 	g1 := new(bn256.G1)
 
