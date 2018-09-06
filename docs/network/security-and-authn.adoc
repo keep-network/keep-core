@@ -30,7 +30,6 @@ ensuring message integrity (to avoid malicious tampering), and allows for the
 encrypting of messages (to ensure that only intended recipients receive a
 message). Furthermore, the protocol should be versioned for easy upgrades.
 
-
 === Terminology
 
 peer:: A member of a network that can initiate, accept, and handle secure
@@ -44,17 +43,14 @@ bootstrap peer:: A trusted, authenticated peer that handles requests for joining
 the network from unauthenticated peers. This involves verifying an on-chain stake
 among many other responsibilities.
 
-
 === Goal
 
 We aim to authenticate peers, control access to a network where Keep’s protocols
 execute, and provide verifiable, private channels between communicating peers.
 
-
 ==== Capabilities
 
 The protocol must provide the following capabilities:
-
 
 ===== Authentication
 
@@ -69,7 +65,6 @@ Given an authenticated peer and an unauthenticated peer, the unauthenticated pee
 must provide the authenticated peer proof of attestation over a staked key on
 chain. If an authenticated peer's stake falls below the minimum stake amount for
 any reason, then an authenticated peer becomes unauthenticated.
-
 
 ===== Authorization
 
@@ -91,7 +86,6 @@ peers. In short:
 
 In addition to these capabilities, the following security properties should hold:
 
-
 ===== Secure
 
 <<AAKE>> introduces us to the definition of a secure protocol. We summarize it as:
@@ -109,7 +103,6 @@ capabilities listed above as well as provide confidentiality and integrity. Then
 the __Secure__ property is a superset of the capabilities and properties listed in
 this section.
 
-
 ===== Confidentiality
 
 A message sent from a peer that is authenticated is only intelligible to the
@@ -120,7 +113,6 @@ communicating peers <<CNF>>.
 Data sent over the channel after establishment cannot be modified by
 adversaries without detection.
 
-
 ===== Attributability
 
 A message from a given peer is known to be from that peer.
@@ -130,7 +122,6 @@ A message from a given peer is known to be from that peer.
 
 The protocol should be flexible enough to satisfy the following (but not limited to)
 scenarios:
-
 
 ==== Joining
 
@@ -150,7 +141,6 @@ network-specific events.
 3. The disconnection from the network for members who fall below the minimum
 stake.
 
-
 ==== Point-to-Point
 
 A peer wishes to send a point-to-point message such that only the intended
@@ -163,7 +153,6 @@ in secret. Integrity to ensure that the message hasn't been tampered with in
 transit over the wire. Attributability to ensure that if either peer sends a
 message which contains a payload that would result in punishment, the correct
 peer will be punished.
-
 
 ==== Message Gossip
 
@@ -203,7 +192,6 @@ and key-exchange considered jointly. Per <<AAKE>>:
 > alive) is in fact shared with the authenticated party, and not an impostor. For
 > these reasons, it is essential to keep key exchange in mind in the design and
 > analysis of authentication protocols.
-
 
 == Open Questions
 
