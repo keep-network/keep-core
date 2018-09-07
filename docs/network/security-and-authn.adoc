@@ -113,6 +113,14 @@ without detection.
 A message from a given peer is known to be from that peer.
 
 
+==== Optional Properties
+
+===== Confidentiality
+
+A message sent from a peer that is authenticated is only intelligible to the
+communicating peers.
+
+
 === Scenarios
 
 The protocol should be able to satisfy some known scenarios, described below,
