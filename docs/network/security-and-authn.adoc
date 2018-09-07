@@ -122,7 +122,7 @@ A message from a given peer is known to be from that peer.
 The protocol should be flexible enough to satisfy the following (but not limited to)
 scenarios:
 
-==== Joining
+==== Joining the network
 
 An unauthenticated peer wants to become an authenticated peer in the Keep
 Network. This peer must be, first and foremost, successfully staked (otherwise
@@ -140,7 +140,7 @@ network-specific events.
 3. The disconnection from the network for members who fall below the minimum
 stake.
 
-==== Point-to-Point
+==== Point-to-Point communications
 
 A peer wishes to send a point-to-point message such that only the intended
 recipient can inspect and verify the contents of the message.
