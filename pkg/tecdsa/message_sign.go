@@ -25,7 +25,7 @@ type SignRound2Message struct {
 	secretKeyMultipleShare              *paillier.Cypher            // v_i = E(ρ_i * x)
 	secretKeyFactorShareDecommitmentKey *commitment.DecommitmentKey // D_1i
 
-	secretKeyFactorProof *zkp.DsaPaillierSecretKeyFactorRangeProof // Π_1i
+	secretKeyFactorProof *zkp.EcdsaPaillierSecretKeyFactorRangeProof // Π_1i
 }
 
 // isValid checks secret key random factor share and secret key multiple share
