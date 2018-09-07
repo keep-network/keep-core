@@ -14,7 +14,7 @@ toc::[]
 _Commitment Master Public Key_ is a value needed for commitment generation.
 This setup needs to be performed before each of two phases: key generation and signing.
 
-Each signer generates _Commitment Master Public Key Share_ and broadcasts it to 
+Each signer generates _Commitment Master Public Key Share_ and publishes it to 
 other signers.
 After receiving all shares signers combine them to get _Commitment Master Public Key_.
 
@@ -34,7 +34,7 @@ phase.
 Each signer generates _Secret Key Share_ and _Public Key Share_ which together form
 _ECDSA Key Share_. +
 Since _Secret Key Share_ must always be kept private, signer encrypts it with 
-Paillier and broadcasts the encrypted _Secret Key Share_ along with plaintext 
+Paillier and publishes the encrypted _Secret Key Share_ along with plaintext 
 _Public Key Share_ to other signers. +
 After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
 _Encrypted Secret Key_ and _Public Key_. _Secret Key_ is encrypted with threshold
@@ -87,7 +87,7 @@ Output::
 
 //-
 
-. Each signer generates _Commitment Master Public Key Share_ and broadcasts it to 
+. Each signer generates _Commitment Master Public Key Share_ and publishes it to 
 other signers in _CommitmentMasterPublicKeyShareMessage_.
 +
 .MasterPublicKeyShareMessage
@@ -128,7 +128,7 @@ _Public Key Share_ value cannot be exposed until all signers in the group commit
 to their values.
 
 . Each signer calculates a commitment to the _Public Key Share_ value and 
-broadcasts this commitment in  _PublicKeyShareCommitmentMessage_.
+publishes this commitment in  _PublicKeyShareCommitmentMessage_.
 
 .PublicKeyShareCommitmentMessage
 [halign=center,options="header"]
@@ -156,13 +156,13 @@ Output::
 
 After commitments from all signers are gathered the second round starts.
 
-. Signers reveal their _ECDSA Key Shares_ and broadcast _KeyShareRevealMessage_. 
+. Signers reveal their _ECDSA Key Shares_ and send _KeyShareRevealMessage_. 
 +
 Since _Secret Key Share_ should always be kept secret it is first encrypted with
-Paillier and this encrypted value is broadcasted along with Zero Knowledge Proof 
+Paillier and this encrypted value is published along with Zero Knowledge Proof 
 Π~i~ to confirm that _Secret Key Share_ value is in [-q^3^, q^3^] range.
 +
-_Public Key Share_ is broadcasted with a decommitment key used in a previous round
+_Public Key Share_ is published with a decommitment key used in a previous round
 to produce commitment to _Public Key Share_ value.
 +
 .KeyShareRevealMessage
@@ -210,7 +210,7 @@ Output::
 . Each signer generates _Encrypted Secret Key Factor Share_ and _Secret Key Multiple Share_. 
 These values are kept private for now. +
 
-. Signer calculates a commitment to both values and broadcasts the commitment in 
+. Signer calculates a commitment to both values and publishes the commitment in 
 _SignRound1Message_.
 +
 .SignRound1Message
@@ -239,7 +239,7 @@ Output::
 
 . Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters.
 
-. Signers broadcast _SignRound2Message_ containing _Secret Key Factor Share_, 
+. Signers publish _SignRound2Message_ containing _Secret Key Factor Share_, 
 _Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_round_1>>.
 +
 .SignRound2Message
@@ -286,7 +286,7 @@ Output::
 . Each signer computes a set of parameters and calculates a commitment to these
 values. All the parameters are kept private for now.
 
-. Signer broadcasts the commitment in a _SignRound3Message_.
+. Signer publishes the commitment in a _SignRound3Message_.
 +
 .SignRound3Message
 [halign=center,options="header"]
@@ -316,7 +316,7 @@ This round starts after all signers share their commitments in <<sign_round_3>>.
 
 . Each signer calculates a Zero Knowledge Proof Π~2,i~ for his individual parameters.
 
-. Signers broadcast _SignRound4Message_ containing the Zero Knowledge Proof Π~2,i~,
+. Signers publish _SignRound4Message_ containing the Zero Knowledge Proof Π~2,i~,
 along with parameters and decommitment key from the <<sign_round_3>>.
 +
 .SignRound4Message
@@ -364,7 +364,7 @@ Output::
 . Signers jointly decrypt _Encrypted Signature Unmask_ with Paillier, so each signer
 receives just a part of _Signature Unmask_.
 
-. Signer broadcasts _SignRound5Message_.
+. Signer publishes _SignRound5Message_.
 +
 .SignRound5Message
 [halign=center,options="header"]
@@ -397,7 +397,7 @@ Output::
 . Each signer computes _Encrypted Signature_ value which next they jointly decrypt.
 Each signer receives a part of _Signature_.
 
-. Signer broadcasts _SignRound6Message_.
+. Signer publishes _SignRound6Message_.
 +
 .SignRound6Message
 [halign=center,options="header"]
