@@ -397,7 +397,9 @@ Output::
 //-
 
 . Each signer computes _Encrypted Signature_ value which next they jointly decrypt.
-Each signer receives a part of _Signature_.
+The computation is done on Paillier-encrypted parameters, it's possible because 
+it's and additively homomorphic scheme.
+Each signer receives a partial decryption of _Signature_.
 
 . Signer publishes _SignRound6Message_.
 +
