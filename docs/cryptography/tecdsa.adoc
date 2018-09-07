@@ -160,7 +160,17 @@ After commitments from all signers are gathered the second round starts.
 +
 Since _Secret Key Share_ should always be kept secret it is first encrypted with
 Paillier and this encrypted value is published along with Zero Knowledge Proof 
-Π~i~ to confirm that _Secret Key Share_ value is in [-q^3^, q^3^] range.
+Π~i~, which states that:
++
+****
+∃ _secretKeyShare_ ∈ [-q^3^, q^3^] such that
+
+_g_^_secretKeyShare_^ = _publicKeyShare_
+
+D(_encryptedSecretKeyShare_) = _secretKeyShare_
+
+where _q_ is an order and _g_ is a generator point of an Elliptic Curve
+****
 +
 _Public Key Share_ is published with a decommitment key used in a previous round
 to produce commitment to _Public Key Share_ value.
@@ -188,7 +198,7 @@ to produce commitment to _Public Key Share_ value.
 
 ^|`secretKeyProof` 
 ^|`zkp.DsaPaillierKeyRangeProof`
-^|ZKP Π~i~ -- _Secret Key Share_ is in range [-q^3^, q^3^]
+^|ZKP Π~i~
 |=== 
 
 . Each signer validates received _KeyShareRevealMessages_ and combines shares 
