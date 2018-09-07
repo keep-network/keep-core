@@ -88,9 +88,9 @@ Output::
 //-
 
 . Each signer generates _Commitment Master Public Key Share_ and broadcasts it to 
-other signers in _Commitment Master Public Key Share Message_.
+other signers in _CommitmentMasterPublicKeyShareMessage_.
 +
-.Master Public Key Share Message
+.MasterPublicKeyShareMessage
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -119,7 +119,7 @@ Output::
 
 //-
 
-. Each signer generates _DSA Key Share_ which consists of _Secret Key Share_ and
+. Each signer generates _ECDSA Key Share_ which consists of _Secret Key Share_ and
 _Public Key Share_.
 +
 _Secret Key Share_ value must be kept secret and never shared in a plaintext form.
@@ -128,9 +128,9 @@ _Public Key Share_ value cannot be exposed until all signers in the group commit
 to their values.
 
 . Each signer calculates a commitment to the _Public Key Share_ value and 
-broadcasts this commitment in  _Public Key Share Commitment Message_.
+broadcasts this commitment in  _PublicKeyShareCommitmentMessage_.
 
-.Public Key Share Commitment Message
+.PublicKeyShareCommitmentMessage
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -156,7 +156,7 @@ Output::
 
 After commitments from all signers are gathered the second round starts.
 
-. Signers reveal their _DSA Key Shares_ and broadcast _Key Share Reveal Message_. 
+. Signers reveal their _ECDSA Key Shares_ and broadcast _KeyShareRevealMessage_. 
 +
 Since _Secret Key Share_ should always be kept secret it is first encrypted with
 Paillier and this encrypted value is broadcasted along with Zero Knowledge Proof 
@@ -165,7 +165,7 @@ Paillier and this encrypted value is broadcasted along with Zero Knowledge Proof
 _Public Key Share_ is broadcasted with a decommitment key used in a previous round
 to produce commitment to _Public Key Share_ value.
 +
-.Key Share Reveal Message
+.KeyShareRevealMessage
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -191,6 +191,7 @@ to produce commitment to _Public Key Share_ value.
 ^|ZKP Π~i~ -- _Secret Key Share_ is in range [-q^3^, q^3^]
 |=== 
 
+. Each signer validates received _KeyShareRevealMessages_ and combines shares 
 to get encrypted _Secret Key_ and _Public Key_ which together forms _ECDSA Key_.
 
 === Signing
@@ -210,9 +211,9 @@ Output::
 These values are kept private for now. +
 
 . Signer calculates a commitment to both values and broadcasts the commitment in 
-_Sign Round 1 Message_.
+_SignRound1Message_.
 +
-.Sign Round 1 Message
+.SignRound1Message
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -238,10 +239,10 @@ Output::
 
 . Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters.
 
-. Signers broadcast _Sign Round 2 Message_ containing _Secret Key Factor Share_, 
+. Signers broadcast _SignRound2Message_ containing _Secret Key Factor Share_, 
 _Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_round_1>>.
 +
-.Sign Round 2 Message
+.SignRound2Message
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -267,7 +268,7 @@ _Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_
 ^|ZKP Π~1,i~
 |=== 
 
-. Signer validates received _Sign Round 1 Messages_ and _Sign Round 2 Messages_. +
+. Signer validates received _SignRound1Messages_ and _SignRound2Messages_. +
 Combines shares to get _Secret Key Factor_ and _Secret Key Multiple_.
 
 ==== Round #3 [[sign_round_3]]
@@ -285,9 +286,9 @@ Output::
 . Each signer computes a set of parameters and calculates a commitment to these
 values. All the parameters are kept private for now.
 
-. Signer broadcasts the commitment in a _Sign Round 3 Message_.
+. Signer broadcasts the commitment in a _SignRound3Message_.
 +
-.Sign Round 3 Message
+.SignRound3Message
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -315,10 +316,10 @@ This round starts after all signers share their commitments in <<sign_round_3>>.
 
 . Each signer calculates a Zero Knowledge Proof Π~2,i~ for his individual parameters.
 
-. Signers broadcast _Sign Round 4 Message_ containing the Zero Knowledge Proof Π~2,i~,
+. Signers broadcast _SignRound4Message_ containing the Zero Knowledge Proof Π~2,i~,
 along with parameters and decommitment key from the <<sign_round_3>>.
 +
-.Sign Round 4 Message
+.SignRound4Message
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -344,7 +345,7 @@ along with parameters and decommitment key from the <<sign_round_3>>.
 ^|ZKP Π~2,i~
 |=== 
 
-. Signer validates received _Sign Round 3 Messages_ and _Sign Round 4 Messages_. +
+. Signer validates received _SignRound3Messages_ and _SignRound4Messages_. +
 Combines shares to get _Signature Factor Public_ and _Encrypted Signature Unmask_.
 
 ==== Round #5 [[sign_round_5]]
@@ -363,9 +364,9 @@ Output::
 . Signers jointly decrypt _Encrypted Signature Unmask_ with Paillier, so each signer
 receives just a part of _Signature Unmask_.
 
-. Signer broadcasts _Sign Round 5 Message_.
+. Signer broadcasts _SignRound5Message_.
 +
-.Sign Round 5 Message
+.SignRound5Message
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -379,7 +380,7 @@ receives just a part of _Signature Unmask_.
 ^|_Signature Unmask_ partial decryption.
 |=== 
 
-. Signer validates received _Sign Round 5 Messages_. +
+. Signer validates received _SignRound5Messages_. +
 Combines partial decryptions to get _Signature Unmask_.
 
 ==== Round #6 [[sign_round_6]]
@@ -396,9 +397,9 @@ Output::
 . Each signer computes _Encrypted Signature_ value which next they jointly decrypt.
 Each signer receives a part of _Signature_.
 
-. Signer broadcasts _Sign Round 6 Message_.
+. Signer broadcasts _SignRound6Message_.
 +
-.Sign Round 6 Message
+.SignRound6Message
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
@@ -412,7 +413,7 @@ Each signer receives a part of _Signature_.
 ^|_Signature.S_ partial decryption.
 |=== 
 
-. Signer validates received _Sign Round 6 Messages_. +
+. Signer validates received _SignRound6Messages_. +
 Combines partial decryptions to get _Signature_.
 
 . Signer produces a _T-ECDSA Signature_ in {R,S} format where:
