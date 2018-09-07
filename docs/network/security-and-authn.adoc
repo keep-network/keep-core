@@ -33,15 +33,15 @@ message). Furthermore, the protocol should be versioned for easy upgrades.
 === Terminology
 
 peer:: A member of a network that can initiate, accept, and handle secure
-connections.
+       connections.
 network:: A set of peers who are connected to each other, not necessarily p2p.
 chain:: A decentralized, consensus driven store with identities and economic
-incentives.
+        incentives.
 stake:: The amount of value required to be a participant in the network. This
-amount is held on the host chain and associated with an identity.
+        amount is held on the host chain and associated with an identity.
 bootstrap peer:: A trusted, authenticated peer that handles requests for joining
-the network from unauthenticated peers. This involves verifying an on-chain stake
-among many other responsibilities.
+          the network from unauthenticated peers. This involves verifying an
+          on-chain stake among many other responsibilities.
 
 === Goal
 
