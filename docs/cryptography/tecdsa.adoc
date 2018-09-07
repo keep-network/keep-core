@@ -283,8 +283,10 @@ Output::
 
 //-
 
-. Each signer computes a set of parameters and calculates a commitment to these
-values. All the parameters are kept private for now.
+. Each signer computes a set of parameters: _Signature Factor Public Share_, and 
+_Signature Unmask Share_ and calculates a commitment to these
+values. All the parameters are kept private for now, they will be used later to
+compute the final signature.
 
 . Signer publishes the commitment in a _SignRound3Message_.
 +
