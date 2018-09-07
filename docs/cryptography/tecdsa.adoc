@@ -316,7 +316,18 @@ Output::
 
 This round starts after all signers share their commitments in <<sign_round_3>>.
 
-. Each signer calculates a Zero Knowledge Proof Π~2,i~ for his individual parameters.
+. Each signer calculates a Zero Knowledge Proof Π~2,i~ for his individual parameters,
+which states that:
++
+****
+∃ _signatureFactorSecretShare_ ∈ [-q^3^, q^3^], _signatureFactorPublicShare_ ∈ [-q^8^, q^8^] such that
+
+_g_^_signatureFactorSecretShare_^ = _signatureFactorPublicShare_
+
+D(_signatureUnmaskShare_) = _signatureFactorSecretShare_ × D(_secretKeyFactor_) + _q_ × _signatureFactorMaskShare_
+
+where _q_ is an order and _g_ is a generator point of an Elliptic Curve
+****
 
 . Signers publish _SignRound4Message_ containing the Zero Knowledge Proof Π~2,i~,
 along with parameters and decommitment key from the <<sign_round_3>>.
