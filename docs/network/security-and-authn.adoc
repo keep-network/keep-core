@@ -92,25 +92,21 @@ In addition to these capabilities, the following security properties should hold
 <<AAKE>> introduces us to the definition of a secure protocol. We summarize it as:
 
 1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
-infeasible for anyone not _P~1~_ and _P~2~_, to recover the secret key.
+infeasible for anyone other than _P~1~_ and _P~2~_, to recover the secret key.
 
 2.  The record of messages shared between _P~1~_ and _P~2~_ to establish the
-authentication of identity must be identical and logically linked. This prevents
-replay attacks (re-use of previous messages) and interleaving attacks (injecting
-a message used in previous runs).
+authentication of identity must be:
 
-Furthermore, <<TLS>> states that for a protocol to be secure it must contain the
-capabilities listed above as well as provide confidentiality and integrity. Then,
-the __Secure__ property is a superset of the capabilities and properties listed in
-this section.
+ * identical, within a given session, regardless of perspective
+ * logically linked, from one message to the next
 
 This prevents replay attacks (re-use of previous messages) and interleaving
 attacks (injecting a message used in previous runs).
 
 ===== Integrity
 
-Data sent over the channel after establishment cannot be modified by
-adversaries without detection.
+Data sent over the network after authentication cannot be modified by adversaries
+without detection.
 
 ===== Attributability
 
@@ -119,8 +115,8 @@ A message from a given peer is known to be from that peer.
 
 === Scenarios
 
-The protocol should be flexible enough to satisfy the following (but not limited to)
-scenarios:
+The protocol should be able to satisfy some known scenarios, described below,
+though this should not be considered a comprehensive list.
 
 ==== Joining the network
 
