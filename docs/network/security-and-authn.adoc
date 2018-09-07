@@ -37,8 +37,10 @@ peer:: A member of a network that can initiate, accept, and handle secure
 network:: A set of peers who are connected to each other, not necessarily p2p.
 chain:: A decentralized, consensus driven store with identities and economic
         incentives.
-stake:: The amount of value required to be a participant in the network. This
-        amount is held on the host chain and associated with an identity.
+stake:: The amount of value a given participant has locked up for participation
+        in the network. This value is held on the host chain, and always
+        associated with an identity.
+minimum stake:: The minimum amount of value that is required to be a participant.
 bootstrap peer:: A trusted, authenticated peer that handles requests for joining
           the network from unauthenticated peers. This involves verifying an
           on-chain stake among many other responsibilities.
