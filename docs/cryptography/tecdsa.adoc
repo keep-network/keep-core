@@ -63,7 +63,7 @@ Before starting this phase a fresh _Commitment Master Public Key_ should be gene
 
 This phase requires also _ECDSA Key_ which is a result of Key Generation Phase.
 
-To complete this round just part of signers is required. The minimum number of signers
+To complete this round, just part of signers is required. The minimum number of signers
 needed is specified by _Threshold_. +
 Signer can be expelled from the signing group if he misbehaves or doesn't provide
 a message on time.
@@ -122,7 +122,7 @@ Output::
 . Each signer generates _DSA Key Share_ which consists of _Secret Key Share_ and
 _Public Key Share_.
 +
-_Secret Key Share_ value must be kept secret and never shared.
+_Secret Key Share_ value must be kept secret and never shared in a plaintext form.
 +
 _Public Key Share_ value cannot be exposed until all signers in the group commit
 to their values.
@@ -191,8 +191,7 @@ to produce commitment to _Public Key Share_ value.
 ^|ZKP Π~i~ -- _Secret Key Share_ is in range [-q^3^, q^3^]
 |=== 
 
-. Each signer validates received _Key Share Reveal Messages_ and combines shares 
-to get encrypted _Secret Key_ and _Public Key_ which together forms _DSA Key_.
+to get encrypted _Secret Key_ and _Public Key_ which together forms _ECDSA Key_.
 
 === Signing
 
