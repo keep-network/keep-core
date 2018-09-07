@@ -247,7 +247,18 @@ Output::
 
 //-
 
-. Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters.
+. Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters,
+which states that:
++
+****
+∃ _secretKeyFactorShare_ ∈ [-q^3^, q^3^] such that
+
+D(_encryptedSecretKeyFactorShare_) = _secretKeyFactorShare_
+
+D(_secretKeyMultipleShare_) = η * D(_secretKey_)
+
+where _q_ is an order of an Elliptic Curve
+****
 
 . Signers publish _SignRound2Message_ containing _Secret Key Factor Share_, 
 _Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_round_1>>.
