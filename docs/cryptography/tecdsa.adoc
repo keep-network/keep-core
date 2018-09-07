@@ -12,8 +12,7 @@ toc::[]
 ==== Commitment Master Public Key
 [.lead]
 _Commitment Master Public Key_ is a value needed for commitment generation.
-It is generated individually for each signer. This setup needs to be performed 
-before each of two phases: key generation and signing.
+This setup needs to be performed before each of two phases: key generation and signing.
 
 Each signer generates _Commitment Master Public Key Share_ and broadcasts it to 
 other signers.
