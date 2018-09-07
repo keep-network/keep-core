@@ -364,7 +364,7 @@ Output::
 . Each signer computes hash of _Signature Factor Public_ parameter.
 
 . Signers jointly decrypt _Encrypted Signature Unmask_ with Paillier, so each signer
-receives just a part of _Signature Unmask_.
+receives just a partial decryption of _Signature Unmask_.
 
 . Signer publishes _SignRound5Message_.
 +
