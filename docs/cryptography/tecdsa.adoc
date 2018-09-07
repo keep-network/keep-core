@@ -34,14 +34,14 @@ phase.
 Each signer generates _Secret Key Share_ and _Public Key Share_ which together form
 _ECDSA Key Share_. +
 Since _Secret Key Share_ must always be kept private, signer encrypts it with 
-Paillier and broadcasts the encrypted _Secret Key Share_ along with _Public Key Share_
-to other signers. +
+Paillier and broadcasts the encrypted _Secret Key Share_ along with plaintext 
+_Public Key Share_ to other signers. +
 After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
 _Encrypted Secret Key_ and _Public Key_. _Secret Key_ is encrypted with threshold
 Paillier scheme in a way that no single signer is able decrypt it.
 
 This phase requires all signers in the group to cooperate to produce a valid 
-_ECDSA Key_.+
+_ECDSA Key_. +
 If a malicious behavior is detected from any signer, the whole phase is aborted.
 
 Input::
