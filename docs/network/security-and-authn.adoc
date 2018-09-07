@@ -46,7 +46,7 @@ among many other responsibilities.
 === Goal
 
 We aim to authenticate peers, control access to a network where Keep’s protocols
-execute, and provide verifiable, private channels between communicating peers.
+execute, and provide verifiable private channels between communicating peers.
 
 ==== Capabilities
 
@@ -72,11 +72,10 @@ The goal of authorization is to ensure that capabilities within the system are
 restricted to authenticated identities.
 
 The only capabilities a peer has before establishing a secure, authenticated
-connection is sending an initialization message, referred to as the
-NetworkJoinRequest, to an authenticated peer that can process this message
-(bootstrap peers) and authenticate the unauthenticated peer. Authenticated peers
-can participate in the network and form secure channels with other authenticated
-peers. In short:
+connection is sending an initialization message, to an authenticated peer that
+can process this message (bootstrap peers) and authenticate the unauthenticated
+peer. Authenticated peers can participate in the network and form secure channels
+with other authenticated peers. In short:
 
 * unauthenticated peer => can only send NetworkJoinRequest to bootstrap peers
 * authenticated peer => can send and accept all kinds of messages
