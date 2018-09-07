@@ -1,9 +1,4 @@
-    * Feature Name: Network Security
-    * Status: draft
-    * Start Date: 2018-08-11
-    * Authors: Raghav Gulati
-    * RFC PR: #275
-    * Keep Issues: #9, #87, #88
+= RFC 1: Network Security Requirements
 
 :icons: font
 :numbered:
