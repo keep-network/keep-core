@@ -68,23 +68,35 @@ any reason, then an authenticated peer becomes unauthenticated.
 The goal of authorization is to ensure that capabilities within the system are
 restricted to authenticated identities.
 
-The only capabilities a peer has before establishing a secure, authenticated
-connection is sending an initialization message, to an authenticated peer that
-can process this message (bootstrap peers) and authenticate the unauthenticated
-peer. Authenticated peers can participate in the network and form secure channels
-with other authenticated peers. In short:
+The only capabilities unauthenticated peers have are sending an initialization
+message to bootstrap peers.
 
-* unauthenticated peer => can only send NetworkJoinRequest to bootstrap peers
-* authenticated peer => can send and accept all kinds of messages
+Bootstrap peers are authenticated peers that accept connections from
+unauthenticated peers and attempting to authenticate those peers.
+
+Authenticated peers can send and accept all kinds of messages.
+
+Further access and capabilities are restricted by the individual protocols.
 
 
 ==== Required Properties
 
-In addition to these capabilities, the following security properties should hold:
+In addition to the aforementioned capabilities, our protocol should provide
+integrity, attributability, and (optionally) confidentiality.
 
-===== Secure
+A protocol that enforces integrity is one in which data sent over the network by
+authenticated peers cannot be modified by adversaries without detection.
 
-<<AAKE>> introduces us to the definition of a secure protocol. We summarize it as:
+Attributability enforces that a message from a given peer is known to be from
+that peer.
+
+Our protocol optionally provides confidentiality, where a message sent
+from an authenticated peer is only intelligible to the communicating,
+authenticated peers.
+
+===== What is a Secure Protocol?
+
+<<AAKE>> introduces us to the definition of a secure protocol; summarized:
 
 1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
 infeasible for anyone other than _P~1~_ and _P~2~_, to recover the secret key.
@@ -98,22 +110,9 @@ authentication of identity must be:
 This prevents replay attacks (re-use of previous messages) and interleaving
 attacks (injecting a message used in previous runs).
 
-===== Integrity
-
-Data sent over the network after authentication cannot be modified by adversaries
-without detection.
-
-===== Attributability
-
-A message from a given peer is known to be from that peer.
-
-
-==== Optional Properties
-
-===== Confidentiality
-
-A message sent from a peer that is authenticated is only intelligible to the
-communicating peers.
+In addition to the capabilities, authentication and authorization, along with the
+properties, integrity, attributability, and confidentiality, the protocol must be
+above all, secure.
 
 
 === Scenarios
