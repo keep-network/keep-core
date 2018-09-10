@@ -5,8 +5,6 @@ import (
 	"io"
 	"os"
 	"runtime"
-
-	"github.com/pschlump/godebug"
 )
 
 var errorOutput = io.MultiWriter(os.Stdout, os.Stderr)
@@ -30,6 +28,6 @@ func init() {
 // is redirected to a different file.
 func Fatalf(rc int, format string, args ...interface{}) {
 	fmt.Fprintf(errorOutput, "Fatal: "+format+"\n", args...)
-	fmt.Fprintf(errorOutput, " From: %s\n", godebug.LF(2))
+	fmt.Fprintf(errorOutput, " From: %s\n", LF(2))
 	os.Exit(rc)
 }

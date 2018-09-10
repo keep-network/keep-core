@@ -11,7 +11,7 @@ import (
 )
 
 // CheckPassword if ignore is false will use remote site to validate passwrod.
-// ighore should be true for things like the old password when chaning
+// ignore should be true for things like the old password when chaning
 // passwrods (so you can upgrade a password).
 //
 // Documented: https://haveibeenpwned.com/API/v2#PwnedPasswords
@@ -42,6 +42,7 @@ func CheckPassword(pw string, ignore bool) bool {
 	return true // just return true, password is ok for now.
 }
 
+// Sha1String takes the sha1 has of a string and returns it.
 func Sha1String(s string) []byte {
 	h := sha1.New()
 	h.Write([]byte(s))
@@ -49,6 +50,7 @@ func Sha1String(s string) []byte {
 	return hash
 }
 
+// DoGet performs a get request.
 func DoGet(uri string, args ...string) (status int, rv string) {
 
 	sep := "?"

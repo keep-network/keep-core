@@ -3,20 +3,13 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore" //
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 
-	"github.com/pschlump/godebug"
 	"github.com/urfave/cli"
 )
-
-// "www.2c-why.com/Corp-Reg/MidGeth/Signature/keystore" // "github.com/ethereum/go-ethereum/accounts/keystore" //
-
-// TODO
-// 1. generate new file with standard name, UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044 for example.
 
 var commandChangePassphrase = cli.Command{
 	Name: "change-passphrase",
@@ -84,15 +77,9 @@ func ActionChangeKeyfilePassword(ctx *cli.Context) error {
 		Fatalf(1, "Error decrypting key: %v", err)
 	}
 
-	// PJS - dump the keyfile to stdout - non-encrypted.
+	// dump the keyfile to stdout - non-encrypted.
 	if DbMap["db01"] {
-		fmt.Printf("Dump of keyfile - unencrypted: %s\n", godebug.SVarI(key))
-	}
-
-	// PJS - exit after dump.
-	if DbMap["db02"] {
-		fmt.Printf("Early exit at: %s\n", godebug.LF())
-		os.Exit(0)
+		fmt.Printf("Dump of keyfile - unencrypted: %s\n", FormatAsJSON(key))
 	}
 
 	address := key.Address.Hex()

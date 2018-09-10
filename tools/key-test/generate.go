@@ -67,7 +67,7 @@ If you want to encrypt an existing private key, it can be specified by setting
 	Action: ActionGenerate,
 }
 
-// Generate a new key file.
+// ActionGenerate will generate a new key file.
 func ActionGenerate(ctx *cli.Context) error {
 	// Check if keyfile path given and make sure it doesn't already exist.
 	keyfilepath := ctx.Args().First()
@@ -167,18 +167,4 @@ func ActionGenerate(ctx *cli.Context) error {
 		}
 	}
 	return nil
-}
-
-func AppendToLog(filename, text string) {
-	f, err := Fopen(filename, "a")
-	if err != nil {
-		fmt.Printf("Failed to open to log file:%s, error:%s\n", filename, err)
-		return
-	}
-	defer f.Close()
-
-	if _, err = f.WriteString(text); err != nil {
-		fmt.Printf("Failed to write to log file:%s error:%s\n", filename, err)
-		return
-	}
 }

@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
-	"github.com/pschlump/GCall/jsonSyntaxErrorLib"
-	"github.com/pschlump/pw"
+	"github.com/keep-network/keep-core/tools/key-test/jsonSyntaxErrorLib"
 )
 
 // -------------------------------------------------------------------------------------------------
@@ -104,16 +104,6 @@ func Fopen(fn string, mode string) (file *os.File, err error) {
 }
 
 // -------------------------------------------------------------------------------------------------
-func ParseLineIntoWords(line string) []string {
-	// rv := strings.Fields ( line )
-	Pw := pw.NewParseWords()
-	Pw.SetOptions("C", true, true)
-	Pw.SetLine(line)
-	rv := Pw.GetWords()
-	return rv
-}
-
-// -------------------------------------------------------------------------------------------------
 // This is to be used/implemented when we add
 // 1. ability to chagne the prompt - using templates
 // 2. ability to use templates in commands
@@ -180,10 +170,6 @@ func IsIntString(s string) bool {
 func ParseBool(s string) (b bool) {
 	_, b = trueValues[s]
 	return
-	//if InArray(s, []string{"t", "T", "yes", "Yes", "YES", "1", "true", "True", "TRUE", "on", "On", "ON"}) {
-	//	return true
-	//}
-	//return false
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -286,51 +272,6 @@ func ConvStringToByte32(pp string) (rv [32]byte) {
 }
 
 // -------------------------------------------------------------------------------------------------
-//func ReadConfig(fn string) (rv GethInfo) {
-//
-//	// Create some defaults
-//	rv.UnlockSeconds = 600
-//	rv.ContractList = make(map[string]ContractInfo)
-//	rv.ContractList = make(map[string]ContractInfo)
-//	rv.ContractNames = make([]string, 0, 10)
-//	rv.DebugFlags = make([]string, 0, 10)
-//
-//	data, err := ioutil.ReadFile(fn)
-//	if err != nil {
-//		fmt.Fprintf(os.Stderr, "Must supply config file %s, error=%s\n", fn, err)
-//		os.Exit(1)
-//	}
-//
-//	err = json.Unmarshal(data, &rv)
-//	if err != nil {
-//		fmt.Fprintf(os.Stderr, "Error parsing %s, error=%s\n", fn, err)
-//		PrintErrorJson(string(data), err)
-//		os.Exit(1)
-//	}
-//
-//	if strings.HasPrefix(rv.FromAddressPassword, "$ENV$") {
-//		pw := os.Getenv(rv.FromAddressPassword[5:])
-//		if pw == "" {
-//			fmt.Printf("No password set for FromAddressPassword in %s\n", fn)
-//		}
-//		rv.FromAddressPassword = pw
-//	}
-//
-//	if strings.HasPrefix(rv.KeyFilePassword, "$ENV$") {
-//		pw := os.Getenv(rv.KeyFilePassword[5:])
-//		if pw == "" {
-//			fmt.Printf("No password set for KeyFilePassword in %s\n", fn)
-//		}
-//		rv.KeyFilePassword = pw
-//	}
-//
-//	return
-//}
-
-// -------------------------------------------------------------------------------------------------
-// name, abi := ReadABI(fn)
-
-// -------------------------------------------------------------------------------------------------
 func StripQuote(s string) string {
 	if len(s) > 0 && s[0] == '"' { // only double quotes around prompt with blanks in it.
 		s = s[1:]
@@ -372,19 +313,31 @@ func GenRandBytes(nRandBytes int) (buf []byte, err error) {
 	return
 }
 
-//func SetDebugFlags() {
-//	if Debug != nil {
-//		df := strings.Split(*Debug, ",")
-//		for _, dd := range df {
-//			if _, have := gDebug[dd]; have {
-//				gDebug[dd] = !gDebug[dd]
-//			} else {
-//				gDebug[dd] = true
-//			}
-//		}
-//	}
-//}
+// LF Returns the File name and Line no as a string.
+func LF(d ...int) string {
+	depth := 1
+	if len(d) > 0 {
+		depth = d[0]
+	}
+	_, file, line, ok := runtime.Caller(depth)
+	if ok {
+		return fmt.Sprintf("File: %s LineNo:%d", file, line)
+	} else {
+		return fmt.Sprintf("File: Unk LineNo:Unk")
+	}
+}
 
-// I bid you adieu!
+// AppendToLog appends text to a log file.
+func AppendToLog(filename, text string) {
+	f, err := Fopen(filename, "a")
+	if err != nil {
+		fmt.Printf("Failed to open to log file:%s, error:%s\n", filename, err)
+		return
+	}
+	defer f.Close()
 
-/* vim: set noai ts=4 sw=4: */
+	if _, err = f.WriteString(text); err != nil {
+		fmt.Printf("Failed to write to log file:%s error:%s\n", filename, err)
+		return
+	}
+}

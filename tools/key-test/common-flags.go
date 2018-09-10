@@ -41,11 +41,6 @@ var genMsgFlag = cli.BoolFlag{
 	Usage: "randomly generate a message to sign",
 }
 
-//var batchFlag = cli.IntFlag{
-//	Name:  "batch",
-//	Usage: "number of items to generate in a batch",
-//}
-
 var randomPassFlag = cli.BoolFlag{
 	Name:  "random-pass",
 	Usage: "randomly generate passwords",

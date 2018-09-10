@@ -25,10 +25,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/crypto" //
-	//
 	"github.com/ethereum/go-ethereum/console"
-	"github.com/pschlump/godebug"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli"
 )
 
@@ -182,7 +180,7 @@ func SetDebugFlags(debugFlags string) {
 		return
 	}
 	flags := strings.Split(debugFlags, ",")
-	fmt.Printf("Debug Flags Are: %s\n", godebug.SVar(flags))
+	fmt.Printf("Debug Flags Are: %s\n", FormatAsJSON(flags))
 	for _, f := range flags {
 		DbMap[f] = true
 	}
@@ -203,4 +201,15 @@ func getMessage(ctx *cli.Context, msgarg int) []byte {
 	}
 	Fatalf(2, "Invalid number of arguments: want %d, got %d", msgarg+1, len(ctx.Args()))
 	return nil
+}
+
+// FormatAsJSON return the JSON encoded version of the data with tab indentation.
+func FormatAsJSON(v interface{}) string {
+	// s, err := json.Marshal ( v )
+	s, err := json.MarshalIndent(v, "", "\t")
+	if err != nil {
+		return fmt.Sprintf("Error:%s", err)
+	} else {
+		return string(s)
+	}
 }
