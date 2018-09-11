@@ -95,10 +95,6 @@ other signers in _CommitmentMasterPublicKeyShareMessage_.
 |=== 
 ^|name ^|type ^|description
 
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
 ^|`masterPublicKeyShare` 
 ^|`[]byte`
 ^|Master Public Key Share
@@ -134,10 +130,6 @@ publishes this commitment in  _PublicKeyShareCommitmentMessage_.
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
 
 ^|`publicKeyShareCommitment` 
 ^|`commitment.MultiTrapdoorCommitment`
@@ -179,10 +171,6 @@ to produce commitment to _Public Key Share_ value.
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
 
 ^|`secretKeyShare` 
 ^|`paillier.Cypher`
@@ -228,10 +216,6 @@ _SignRound1Message_.
 |=== 
 ^|name ^|type ^|description
 
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
 ^|`secretKeyFactorShareCommitment` 
 ^|`commitment.MultiTrapdoorCommitment`
 ^|Commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
@@ -267,10 +251,6 @@ _Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
 
 ^|`secretKeyFactorShare` 
 ^|`paillier.Cypher`
@@ -316,10 +296,6 @@ compute the final signature.
 |=== 
 ^|name ^|type ^|description
 
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
 ^|`signatureFactorShareCommitment` 
 ^|`commitment.MultiTrapdoorCommitment`
 ^|Commitment to parameters from <<sign_round_3>>
@@ -357,10 +333,6 @@ along with parameters and decommitment key from the <<sign_round_3>>.
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
 
 ^|`signatureFactorPublicShare` 
 ^|`curve.Point`
@@ -405,10 +377,6 @@ receives just a partial decryption of _Signature Unmask_.
 |=== 
 ^|name ^|type ^|description
 
-^|`signerID` 
-^|`string`
-^|Signer's ID
-
 ^|`signatureUnmaskPartialDecryption` 
 ^|`paillier.PartialDecryption`
 ^|_Signature Unmask_ partial decryption.
@@ -439,10 +407,6 @@ Each signer receives a partial decryption of _Signature_.
 [halign=center,options="header"]
 |=== 
 ^|name ^|type ^|description
-
-^|`signerID` 
-^|`string`
-^|Signer's ID
 
 ^|`signaturePartialDecryption` 
 ^|`paillier.PartialDecryption`
