@@ -100,8 +100,8 @@ other signers in _CommitmentMasterPublicKeyShareMessage_.
 ^|Master Public Key Share
 |=== 
 
-. Each signer combines all _Commitment Master Public Key Shares_ to get 
-_Commitment Master Public Key_.
+. Each signer generates his own _Commitment Master Public Key_ and publishes it 
+to other signers in _CommitmentMasterPublicKeyMessage_.
 
 === Key Generation
 
