@@ -398,10 +398,14 @@ Output::
 
 //-
 
-. Each signer computes _Encrypted Signature_ value which next they jointly decrypt.
-The computation is done on Paillier-encrypted parameters, it's possible because 
-it's and additively homomorphic scheme.
-Each signer receives a partial decryption of _Signature_.
+. Each signer computes _Encrypted Signature_ value for a _Message Hash_ with 
+_Signature Unmask_, _Signature Factor Public Hash_ and encrypted _Secret Key Factor_ 
+and _Secret Key Multiple_. +
+It's possible to perform a computation on Paillier-encrypted parameters because 
+it's an additively homomorphic scheme.
+
+. Signers jointly decrypt the computed _Encrypted Signature_, so each signer receives 
+a partial decryption of _Signature_.
 
 . Signer publishes _SignRound6Message_.
 +
@@ -415,8 +419,8 @@ Each signer receives a partial decryption of _Signature_.
 ^|_Signature.S_ partial decryption.
 |=== 
 
-. Signer validates received _SignRound6Messages_. +
-Combines partial decryptions to get _Signature_.
+. Signer validates received _SignRound6Messages_ and combines partial decryptions 
+to get _Signature_.
 
 . Signer produces a _T-ECDSA Signature_ in {R,S} format where:
 [horizontal]
