@@ -240,7 +240,7 @@ which states that:
 
 D(_encryptedSecretKeyFactorShare_) = _secretKeyFactorShare_
 
-D(_secretKeyMultipleShare_) = η * D(_secretKey_)
+D(_secretKeyMultipleShare_) = _secretKeyFactorShare_ * D(_secretKey_)
 
 where _q_ is an order of an Elliptic Curve and D is a Decrypt function of a Paillier scheme
 ****
