@@ -31,14 +31,14 @@ Output::
 In this phase signers jointly generate _ECDSA Key_ which is used in the Signing
 phase.
 
-Each signer generates _Secret Key Share_ and _Public Key Share_ which together form
-_ECDSA Key Share_. +
-Since _Secret Key Share_ must always be kept private, signer encrypts it with 
-Paillier and publishes the encrypted _Secret Key Share_ along with plaintext 
-_Public Key Share_ to other signers. +
+Each signer generates _ECDSA Private Key Share_ and _ECDSA Public Key Share_ which 
+together form _ECDSA Key Share_. +
+Since _ECDSA Private Key Share_ must always be kept private, signer encrypts it with 
+Paillier and publishes the encrypted _ECDSA Private Key Share_ along with plaintext 
+_ECDSA Public Key Share_ to other signers. +
 After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
-_Encrypted Secret Key_ and _Public Key_. _Secret Key_ is encrypted with threshold
-Paillier scheme in a way that no single signer is able decrypt it.
+_Encrypted ECDSA Private Key_ and _ECDSA Public Key_. _ECDSA Private Key_ is encrypted 
+with threshold Paillier scheme in a way that no single signer is able decrypt it.
 
 This phase requires all signers in the group to cooperate to produce a valid 
 _ECDSA Key_. +
@@ -48,7 +48,7 @@ Input::
 * _Commitment Master Public Key_
 
 Output::
-* _ECDSA Key_ {_Encrypted Secret Key_, _Public Key_}
+* _ECDSA Key_ {_Encrypted ECDSA Private Key_, _ECDSA Public Key_}
 
 === Signing
 
@@ -63,8 +63,8 @@ Before starting this phase a fresh _Commitment Master Public Key_ should be gene
 
 This phase requires also _ECDSA Key_ which is a result of Key Generation Phase.
 
-To complete this phase, just part of signers is required. The minimum number of signers
-needed is specified by _Threshold_. +
+To complete this phase, just part of signers is required. The minimum number of 
+signers needed is specified by _Threshold_. +
 Signer can be expelled from the signing group if he misbehaves or doesn't provide
 a message on time.
 
@@ -115,15 +115,16 @@ Output::
 
 //-
 
-. Each signer generates _ECDSA Key Share_ which consists of _Secret Key Share_ and
-_Public Key Share_.
+. Each signer generates _ECDSA Key Share_ which consists of _ECDSA Private Key Share_ 
+and _ECDSA Public Key Share_.
 +
-_Secret Key Share_ value must be kept secret and never shared in a plaintext form.
+_ECDSA Private Key Share_ value must be kept secret and never shared in a plaintext 
+form.
 +
-_Public Key Share_ value cannot be exposed until all signers in the group commit
-to their values.
+_ECDSA Public Key Share_ value cannot be exposed until all signers in the group 
+commit to their values.
 
-. Each signer calculates a commitment to the _Public Key Share_ value and 
+. Each signer calculates a commitment to the _ECDSA Public Key Share_ value and 
 publishes this commitment in  _PublicKeyShareCommitmentMessage_.
 
 .PublicKeyShareCommitmentMessage
@@ -133,16 +134,16 @@ publishes this commitment in  _PublicKeyShareCommitmentMessage_.
 
 ^|`publicKeyShareCommitment` 
 ^|`commitment.MultiTrapdoorCommitment`
-^|Commitment to _Public Key Share_
+^|Commitment to _ECDSA Public Key Share_
 |=== 
 
 ==== Round #2
 
 Input::
-* _Public Key Share Commitment_
+* _ECDSA Public Key Share Commitment_
 
 Output::
-* _ECDSA Key_ {_Encrypted Secret Key_, _Public Key_}
+* _ECDSA Key_ {_Encrypted ECDSA Private Key_, _ECDSA Public Key_}
 
 //-
 
@@ -150,7 +151,7 @@ After commitments from all signers are gathered the second round starts.
 
 . Signers reveal their _ECDSA Key Shares_ and send _KeyShareRevealMessage_. 
 +
-Since _Secret Key Share_ should always be kept secret it is first encrypted with
+Since _ECDSA Private Key Share_ should always be kept secret it is first encrypted with
 Paillier and this encrypted value is published along with Zero Knowledge Proof 
 Π~i~, which states that:
 +
@@ -165,8 +166,8 @@ where _q_ is an order and _g_ is a generator point of an Elliptic Curve and
 D is a Decrypt function of a Paillier scheme
 ****
 +
-_Public Key Share_ is published with a decommitment key used in a previous round
-to produce commitment to _Public Key Share_ value.
+_ECDSA Public Key Share_ is published with a decommitment key used in a previous 
+round to produce commitment to _ECDSA Public Key Share_ value.
 +
 .KeyShareRevealMessage
 [halign=center,options="header"]
@@ -175,15 +176,15 @@ to produce commitment to _Public Key Share_ value.
 
 ^|`secretKeyShare` 
 ^|`paillier.Cypher`
-^|Encrypted _Secret Key Share_
+^|Encrypted _ECDSA Private Key Share_
 
 ^|`publicKeyShare` 
 ^|`curve.Point`
-^|_Public Key Share_
+^|_ECDSA Public Key Share_
 
 ^|`publicKeyShareDecommitmentKey` 
 ^|`commitment.DecommitmentKey`
-^|Decommitment key for _Public Key Share_
+^|Decommitment key for _ECDSA Public Key Share_
 
 ^|`secretKeyProof` 
 ^|`zkp.DsaPaillierKeyRangeProof`
@@ -191,23 +192,24 @@ to produce commitment to _Public Key Share_ value.
 |=== 
 
 . Each signer validates received _KeyShareRevealMessages_ and combines shares 
-to get encrypted _Secret Key_ and _Public Key_ which together forms _ECDSA Key_.
+to get encrypted _ECDSA Private Key_ and _ECDSA Public Key_ which together form 
+_ECDSA Key_.
 
 === Signing
 
 ==== Round #1 [[sign_round_1]]
 
 Input::
-* _Encrypted Secret Key_
+* _Encrypted ECDSA Private Key_
 * _Commitment Master Public Key_
 
 Output::
-* _Secret Key Factor Share Commitment_
+* _ECDSA Private Key Factor Share Commitment_
 
 //-
 
-. Each signer generates _Encrypted Secret Key Factor Share_ and _Secret Key Multiple Share_. 
-These values are kept private for now. +
+. Each signer generates _Encrypted ECDSA Private Key Factor Share_ and 
+_ECDSA Private Key Multiple Share_. These values are kept private for now. +
 
 . Signer calculates a commitment to both values and publishes the commitment in 
 _SignRound1Message_.
@@ -219,15 +221,15 @@ _SignRound1Message_.
 
 ^|`secretKeyFactorShareCommitment` 
 ^|`commitment.MultiTrapdoorCommitment`
-^|Commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
+^|Commitment to _ECDSA Private Key Factor Share_ and _ECDSA Private Key Multiple Share_
 |=== 
 
 ==== Round #2 [[sign_round_2]]
 
 Output::
-* _Encrypted Secret Key Factor Share_
-* _Secret Key Multiple Share_
-* Decommitment key for _Secret Key Factor Share Commitment_
+* _Encrypted ECDSA Private Key Factor Share_
+* _ECDSA Private Key Multiple Share_
+* Decommitment key for _ECDSA Private Key Factor Share Commitment_
 * _Zero Knowledge Proof Π~1,i~_
 
 //-
@@ -245,8 +247,9 @@ D(_secretKeyMultipleShare_) = _secretKeyFactorShare_ * D(_secretKey_)
 where _q_ is an order of an Elliptic Curve and D is a Decrypt function of a Paillier scheme
 ****
 
-. Signers publish _SignRound2Message_ containing _Secret Key Factor Share_, 
-_Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_round_1>>.
+. Signers publish _SignRound2Message_ containing _ECDSA Private Key Factor Share_, 
+_ECDSA Private Key Multiple Share_ and decommitment key for the commitment from 
+<<sign_round_1>>.
 +
 .SignRound2Message
 [halign=center,options="header"]
@@ -255,15 +258,15 @@ _Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_
 
 ^|`secretKeyFactorShare` 
 ^|`paillier.Cypher`
-^|_Secret Key Factor Share_
+^|_ECDSA Private Key Factor Share_
 
 ^|`secretKeyMultipleShare` 
 ^|`paillier.Cypher`
-^|_Secret Key Multiple Share_
+^|_ECDSA Private Key Multiple Share_
 
 ^|`secretKeyFactorShareDecommitmentKey` 
 ^|`commitment.DecommitmentKey`
-^|Decommitment key for a commitment to _Secret Key Factor Share_ and _Secret Key Multiple Share_
+^|Decommitment key for a commitment to _ECDSA Private Key Factor Share_ and _ECDSA Private Key Multiple Share_
 
 ^|`secretKeyFactorProof` 
 ^|`zkp.DsaPaillierSecretKeyFactorRangeProof`
@@ -271,13 +274,13 @@ _Secret Key Multiple Share_ and decommitment key for the commitment from <<sign_
 |=== 
 
 . Signer validates received _SignRound1Messages_ and _SignRound2Messages_. +
-Combines shares to get _Secret Key Factor_ and _Secret Key Multiple_.
+Combines shares to get _ECDSA Private Key Factor_ and _ECDSA Private Key Multiple_.
 
 ==== Round #3 [[sign_round_3]]
 
 Input::
-* _Secret Key Factor_
-* _Secret Key Multiple_
+* _ECDSA Private Key Factor_
+* _ECDSA Private Key Multiple_
 * _Commitment Master Public Key_
 
 Output::
@@ -399,8 +402,8 @@ Output::
 //-
 
 . Each signer computes _Encrypted Signature_ value for a _Message Hash_ with 
-_Signature Unmask_, _Signature Factor Public Hash_ and encrypted _Secret Key Factor_ 
-and _Secret Key Multiple_. +
+_Signature Unmask_, _Signature Factor Public Hash_ and encrypted _ECDSA Private Key Factor_ 
+and _ECDSA Private Key Multiple_. +
 It's possible to perform a computation on Paillier-encrypted parameters because 
 it's an additively homomorphic scheme.
 
