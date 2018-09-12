@@ -429,3 +429,16 @@ to get _Signature_.
 [horizontal]
 R:: Hash of _Signature Factor Public_
 S:: _Signature_
+
+== Threats
+
+* `Master Trapdoor` (`x`) generated in a setup phase has to remain private and 
+can be known to the Verifier only. It's described in 
+link:https://github.com/keep-network/keep-core/blob/master/docs/cryptography/tecdsa_setup.adoc#master-public-key[Master Public Key setup protocol] documentation.
+
+* Generated `ECDSA Private Key` is too weak (e.g. just 10-bit long). It gives 
+a opportunity to brute-force the `ECDSA Private Key` when knowing `ECDSA Public Key`.
+It's covered by an issue link:https://github.com/keep-network/keep-core/issues/270[#270]
+
+* Adversary delivers invalid/corrupted partial decryption in round 5 or 6.
+It's covered by an issue link:https://github.com/keep-network/keep-core/issues/246[#246]
