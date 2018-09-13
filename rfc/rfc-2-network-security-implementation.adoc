@@ -26,3 +26,46 @@ out of the network.
 Each peer is identified by a static public key equal to the delegate key 
 associated with an on-chain stake. There are no two peers in the network with 
 the same static public key.
+
+== Network join protocol
+
+Keep publishes a list of recommended bootstrap peers but every other network 
+member can run its own bootstrap peer as well. The list contains addresses of 
+bootstrap peers and their static public keys.
+
+Peer wanting to connect to the network sends a network join request to one of 
+the bootstrap peers. Each peer wanting to join a network needs to provide a proof 
+of attestation over a minimum stake associated with peer's static public key, the 
+same is required from a bootstrap peer handling the network join request.
+
+The procedure is as follows:
+
+1. Peer joining the network initiates the protocol by sending a network join 
+request message containing randomly generated nonce `n_1`. The message is signed 
+with peer's static private key.
+2. Bootstrap peer randomly generates nonce `n_2` and evaluates challenge which is 
+`sha256` of `n1 || n2`. The bootstrap peer sends back `challenge`, `n_2` and signs 
+the message with its static private key.
+3. Peer joining the network recomputes challenge from `n_1` and `n_2`, if it matches 
+the challenge sent by the bootstrap peer, it answers with a message containing the 
+challenge. The message is signed with peer's static private key.
+
+```
+JOINING PEER                                         BOOTSTRAP PEER
+
+n_1 = random_nonce()
+Message { n_1 } ---->
+                                                     n_2 = random_nonce()
+                                                     challenge = sha256(n_1 || n_2)                                  
+                                                     <---- Message { n_2, challenge }
+challenge = sha256(n_1 || n_2)
+Message {challenge} ---->
+```
+
+If all signatures have been valid and challenge response was as expected, both 
+bootstrap peer and peer joining the network executes on-chain check for a stake of 
+the second party. If peer joining the network has a minimum stake, the bootstrap 
+peer sends it a list of peers in the network and announces peer's presence. If the 
+bootstrap peer has a minimum stake, peer joining the network accepts the list. 
+Otherwise, when at least one of the parties do not have a minimum stake, the protocol 
+is aborted.
