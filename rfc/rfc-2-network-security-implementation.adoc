@@ -1,4 +1,4 @@
-= RFC 1: Network Security Implementation
+= RFC 2: Network Security Implementation
 
 :icons: font
 :numbered:
@@ -21,3 +21,8 @@ a higher probability of DoS. Also, they hide information about network topology
 from parties not being a part of the network what increases anonymity. The only 
 type of message bootstrap peer handles is the network join message from peers 
 out of the network.
+
+== Peer identification
+Each peer is identified by a static public key equal to the delegate key 
+associated with an on-chain stake. There are no two peers in the network with 
+the same static public key.
