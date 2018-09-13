@@ -116,3 +116,15 @@ to communicate with it.
 When peer receives a message it firsts check the signature. If it matches, then peer validates 
 the nonce. If the nonce is greater by one from the nonce included in the previous message, 
 then the message is accepted.
+
+== Message encryption
+
+Encryption is based on ephemeral keys generated individually for each protocol execution. 
+Only point-to-point communication can be encrypted. 
+
+Before the encrypted communication can happen, both involved peers generate a symmetric key 
+using `Noise_KK` protocol (both initiator and responder public static keys are known). 
+
+Any of the communicating peers can reveal the symmetric key in order to publicly publish 
+a complaint about the other peer's message. In such case, the symmetric key is considered as 
+compromised and shouldn't be used for communication anymore.
