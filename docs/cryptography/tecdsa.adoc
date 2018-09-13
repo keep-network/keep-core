@@ -456,4 +456,5 @@ It's covered by an issue link:https://github.com/keep-network/keep-core/issues/2
 
 * Signer provides invalid Commitment, Decommitment Key or Zero Knowledge Proof. +
 In case of a misbehavior in Signing phase the signer is removed from the group 
-and his shares are not taking a part in calculations anymore.
+and his shares are not taking a part in calculations anymore. When it happens in
+Key Generation phase the protocol is aborted.
