@@ -1,3 +1,5 @@
+:toc: macro
+
 = RFC 2: Network Security Implementation
 
 :icons: font
