@@ -5,3 +5,19 @@
 toc::[]
 
 
+== Background
+The goal of this document is to describe implementation details of the Keep 
+network security mechanisms, meeting requirements specified in the RFC 1. 
+
+Messages exchanged in the network must be attributable and maintain integrity. 
+Messages are also optionally encrypted.
+
+== Types of peers
+
+There are two types of peers in the Keep network: standard peers (referred later 
+just as "peers") and bootstrap peers. Bootstrap peers are not trusted any more 
+than other peers. One of the goals of having bootstrap peers is that they accept 
+a higher probability of DoS. Also, they hide information about network topology 
+from parties not being a part of the network what increases anonymity. The only 
+type of message bootstrap peer handles is the network join message from peers 
+out of the network.
