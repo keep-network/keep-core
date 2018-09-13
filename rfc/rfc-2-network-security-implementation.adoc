@@ -79,6 +79,7 @@ attacks. The protocol is similar to the one used to create a challenge:
 
 ```
 PEER 1                                               PEER 2
+
 n_1 = random_nonce() 
 Message { n_1 } ---->
                                                      n_2 = random_nonce()
