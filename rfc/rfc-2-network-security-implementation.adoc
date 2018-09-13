@@ -44,8 +44,8 @@ The procedure is as follows:
 request message containing randomly generated nonce `n_1`. The message is signed 
 with peer's static private key.
 2. Bootstrap peer randomly generates nonce `n_2` and evaluates challenge which is 
-`sha256` of `n1 || n2`. The bootstrap peer sends back `challenge`, `n_2` and signs 
-the message with its static private key.
+`sha256` of `n1 || n2`. The bootstrap peer sends back `n_2` and signs the message 
+with its static private key.
 3. Peer joining the network recomputes challenge from `n_1` and `n_2`, if it matches 
 the challenge sent by the bootstrap peer, it answers with a message containing the 
 challenge. The message is signed with peer's static private key.
@@ -57,15 +57,62 @@ n_1 = random_nonce()
 Message { n_1 } ---->
                                                      n_2 = random_nonce()
                                                      challenge = sha256(n_1 || n_2)                                  
-                                                     <---- Message { n_2, challenge }
+                                                     <---- Message { n_2 }
 challenge = sha256(n_1 || n_2)
 Message {challenge} ---->
 ```
 
 If all signatures have been valid and challenge response was as expected, both 
-bootstrap peer and peer joining the network executes on-chain check for a stake of 
+bootstrap peer and peer joining the network execute a check for an on-chain stake of 
 the second party. If peer joining the network has a minimum stake, the bootstrap 
 peer sends it a list of peers in the network and announces peer's presence. If the 
 bootstrap peer has a minimum stake, peer joining the network accepts the list. 
 Otherwise, when at least one of the parties do not have a minimum stake, the protocol 
 is aborted.
+
+== Attributability and integrity of the network messages
+
+All messages in the network are signed with sender's private static key. Before any 
+two peers start exchanging messages, they need to agree on a common nonce that will be 
+used to track order of messages as well as to prevent replay and message-from-future 
+attacks. The protocol is similar to the one used to create a challenge:
+
+```
+PEER 1                                               PEER 2
+n_1 = random_nonce() 
+Message { n_1 } ---->
+                                                     n_2 = random_nonce()
+                                                     nonce = sha256(n_1 || n_2).toInt
+                                                     <---- Message { n_2 }
+nonce = sha256(n_1 || n_2).toInt
+```
+
+Once peers agree on a common initial nonce they both execute a check for an on-chain 
+stake of the second party. If at least one of the peers does not have a minimum stake, 
+protocol is aborted and all messages from that peer are rejected.
+
+Sender's nonce is tracked per individual peer. Each message sent from a peer must have 
+a nonce greater by one from the nonce of the previous message. The nonce is included in 
+a message in a way that makes it a part of the content used to produce a signature. 
+
+All messages received from a given peer must contain nonces forming an ordered sequence. 
+If a peer receives a message with nonce less than or equal to the most recent one for 
+the given sender, the message is rejected and the sender is informed about that. Due to 
+the nature of the network, some messages can be lost or delayed. Each peer has a cache 
+of messages received within a fixed time window. If a received message has a nonce greater 
+by more than one from the currently expected nonce, that message is added to cache but it's 
+not accepted until the gap between the expected and message's nonce is filled. There is 
+a fixed, short time limit under which the gap must be filled. If that not happens, the 
+message is rejected and the sender is informed about this fact.
+
+All peers in the network periodically execute requests to the chain in order to update 
+current value of stake for each other peers they have communicated with so far. Stake value 
+is cached along with the sender's nonce value. If stake drops down below the required minimum 
+for some peer, that peer's nonce and stake are removed from the cache and all messages from 
+that peer are rejected. Once the peer increases its stake so that it's above the required 
+minimum, it must initialize the connection with the other peer once again in order to be able 
+to communicate with it.
+
+When peer receives a message it firsts check the signature. If it matches, then peer validates 
+the nonce. If the nonce is greater by one from the nonce included in the previous message, 
+then the message is accepted.
