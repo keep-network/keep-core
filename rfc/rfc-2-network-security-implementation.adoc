@@ -128,3 +128,17 @@ using `Noise_KK` protocol (both initiator and responder public static keys are k
 Any of the communicating peers can reveal the symmetric key in order to publicly publish 
 a complaint about the other peer's message. In such case, the symmetric key is considered as 
 compromised and shouldn't be used for communication anymore.
+
+== Related Links
+
+- Discussions on writing this document:
+https://www.flowdock.com/app/cardforcoin/tech/threads/Zc_bHNDU5eNJY8JHB22NfU2a9Bk
+
+- Noise Protocol documentation:
+http://noiseprotocol.org/noise.html
+
+- Noise Protocol variations matrix:
+https://latacora.singles/2018/07/18/factoring-the-noise.html
+
+- Lighting Network Noise implementation:
+https://github.com/lightningnetwork/lnd/tree/master/brontide
