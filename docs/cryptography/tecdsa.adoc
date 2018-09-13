@@ -38,7 +38,7 @@ Paillier and publishes the encrypted _ECDSA Private Key Share_ along with plaint
 _ECDSA Public Key Share_ to other signers. +
 After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
 _Encrypted ECDSA Private Key_ and _ECDSA Public Key_. _ECDSA Private Key_ is encrypted 
-with threshold Paillier scheme in a way that no single signer is able decrypt it.
+with threshold Paillier scheme in a way that no single signer is able to decrypt it.
 
 This phase requires all signers in the group to cooperate to produce a valid 
 _ECDSA Key_. +
@@ -167,7 +167,7 @@ D is a Decrypt function of a Paillier scheme
 ****
 +
 _ECDSA Public Key Share_ is published with a decommitment key used in a previous 
-round to produce commitment to _ECDSA Public Key Share_ value.
+round to produce a commitment to _ECDSA Public Key Share_ value.
 +
 .KeyShareRevealMessage
 [halign=center,options="header"]
@@ -370,7 +370,7 @@ Output::
 
 //-
 
-. Each signer computes hash of _Signature Factor Public_ parameter.
+. Each signer computes a hash of _Signature Factor Public_ parameter.
 
 . Signers jointly decrypt _Encrypted Signature Unmask_ with Paillier, so each signer
 receives just a partial decryption of _Signature Unmask_.
@@ -445,7 +445,7 @@ It gives an opportunity to brute-force the `ECDSA Private Key` when knowing
 `ECDSA Public Key`. +
 Another scenario is that adversarial Signer provides a share which is close to 
 curve's cardinality reduced by another signer's share. This way his share "clears"
-the share of other participant. +
+the share of another participant. +
 It's covered by an issue link:https://github.com/keep-network/keep-core/issues/270[#270]
 
 * Adversary delivers invalid/corrupted partial decryption in round 5 or 6. +
