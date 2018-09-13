@@ -437,9 +437,10 @@ The security of a commitment depends solely on a verifier. `Master Trapdoor`
 generated in a setup phase has to remain secret. Committer cannot be able to evaluate
 a value of `Master Trapdoor` in any way (e.g. by brute-forcing if the value is too weak). +
 It's described in 
-link:https://github.com/keep-network/keep-core/blob/master/docs/cryptography/tecdsa_setup.adoc#master-public-key[Master Public Key setup protocol] documentation.
+link:https://github.com/keep-network/keep-core/blob/master/docs/cryptography/tecdsa_setup.adoc#master-public-key[Master Public Key setup protocol] 
+documentation.
 
-* Signers provide too short `ECDSA Private Key Shares` +
+* Signers provide too short `ECDSA Private Key Shares`. +
 If the shares have small bit length, then a resulting `ECDSA Private Key` will be weak.
 It gives an opportunity to brute-force the `ECDSA Private Key` when knowing 
 `ECDSA Public Key`. +
@@ -451,6 +452,8 @@ It's covered by an issue link:https://github.com/keep-network/keep-core/issues/2
 * Adversary delivers invalid/corrupted partial decryption in round 5 or 6. +
 The partial decryption may be corrupted. The decryption may also be valid, but underlying
 value may not be evaluated from the previously published parameters. +
-In case of a misbehavior the adversary is removed from the group and his shares are
-not taking a part in calculations anymore. +
 It's covered by an issue link:https://github.com/keep-network/keep-core/issues/246[#246]
+
+* Signer provides invalid Commitment, Decommitment Key or Zero Knowledge Proof. +
+In case of a misbehavior in Signing phase the signer is removed from the group 
+and his shares are not taking a part in calculations anymore.
