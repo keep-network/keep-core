@@ -50,13 +50,9 @@ type PublicParameters struct {
 	curve elliptic.Curve
 }
 
-// Bit length of safe prime numbers used to generate NTilde.
-//
-// ZKP security relies on this value, hence it's currently recommended to be
-// 1024 bit long, so the length of a generated NTilde will be 2048 bit.
-const safePrimeBitLength = 1024
-
 // GeneratePublicParameters generates a new instance of `PublicParameters`.
+// The auxiliary ZKP `NTilde` modulus will have the same bit length as the
+// `paillierModulus` passed as a parameter.
 func GeneratePublicParameters(
 	paillierModulus *big.Int,
 	curve elliptic.Curve,
@@ -64,6 +60,14 @@ func GeneratePublicParameters(
 	// Concurrency configuration for safe prime generator.
 	safePrimeGenConcurrencyLevel := 4
 	safePrimeGenTimeout := 120 * time.Second
+
+	// Bit length of safe prime numbers used to generate NTilde.
+	//
+	// Bit length of `NTilde` will be the same as the bit length of
+	// `paillierModulus`. This is not a protocol requirement but our
+	// implementation choice - we use the same security guarantees for ZKPs
+	// as they are used for the Paillier key.
+	safePrimeBitLength := paillierModulus.BitLen() / 2
 
 	pTilde, _, err := paillier.GenerateSafePrime(
 		safePrimeBitLength,

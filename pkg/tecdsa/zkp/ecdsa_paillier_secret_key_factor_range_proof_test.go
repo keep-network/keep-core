@@ -9,14 +9,14 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// TestDsaPaillierSecretKeyFactorRangeProofCommitValues creates a commitment and
+// TestEcdsaPaillierSecretKeyFactorRangeProofCommitValues creates a commitment and
 // checks all commitment values against expected ones.
 //
 // This is not a full roundtrip test. We test the private commitment phase
 // interface to make sure if anything goes wrong in future (e.g. curve
 // implementation changes), we can isolate the problem easily.
 // All expected values has been manually calculated based on the [GGN16] paper.
-func TestDsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
+func TestEcdsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	// GIVEN
 	mockRandom := &mockRandReader{
 		counter: big.NewInt(10),
@@ -33,15 +33,15 @@ func TestDsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 
 	factor := big.NewInt(8)
 
-	secretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(9)}
-	secretDsaKey := &paillier.Cypher{C: big.NewInt(7)}
-	secretDsaKeyFactor := &paillier.Cypher{C: big.NewInt(9)}
+	secretEcdsaKeyMultiple := &paillier.Cypher{C: big.NewInt(9)}
+	secretEcdsaKey := &paillier.Cypher{C: big.NewInt(7)}
+	secretEcdsaKeyFactor := &paillier.Cypher{C: big.NewInt(9)}
 
 	r := big.NewInt(7)
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
-		secretDsaKey, secretDsaKeyFactor, factor, r, params, mockRandom)
+	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretEcdsaKeyMultiple,
+		secretEcdsaKey, secretEcdsaKeyFactor, factor, r, params, mockRandom)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,13 +92,13 @@ func TestDsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	}
 }
 
-func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
+func TestEcdsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	//GIVEN
 	params := generateTestPublicParams()
 
-	secretDsaKeyMultiple := &paillier.Cypher{C: big.NewInt(729674)}
-	secretDsaKey := &paillier.Cypher{C: big.NewInt(133808)}
-	secretDsaKeyFactor := &paillier.Cypher{C: big.NewInt(688361)}
+	secretEcdsaKeyMultiple := &paillier.Cypher{C: big.NewInt(729674)}
+	secretEcdsaKey := &paillier.Cypher{C: big.NewInt(133808)}
+	secretEcdsaKeyFactor := &paillier.Cypher{C: big.NewInt(688361)}
 
 	expectedZ := big.NewInt(289613)
 	expectedV := big.NewInt(285526)
@@ -108,7 +108,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	s1, _ := new(big.Int).SetString("315316451549676609891527321649951320104713343566772879194502097535991531763634", 10)
 	s3, _ := new(big.Int).SetString("343981583508738119881666169072674167386960011163752231848547742766536216469421", 10)
 
-	zkp := &DsaPaillierSecretKeyFactorRangeProof{
+	zkp := &EcdsaPaillierSecretKeyFactorRangeProof{
 		z:  big.NewInt(289613),
 		v:  big.NewInt(285526),
 		u1: big.NewInt(10797),
@@ -122,11 +122,11 @@ func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	}
 
 	//WHEN
-	actualZ := evaluateVerificationZ(secretDsaKeyFactor, zkp.s1, zkp.s2, zkp.e, params)
-	actualV := evaluateVerificationV(secretDsaKeyMultiple, secretDsaKey,
+	actualZ := evaluateVerificationZ(secretEcdsaKeyFactor, zkp.s1, zkp.s2, zkp.e, params)
+	actualV := evaluateVerificationV(secretEcdsaKeyMultiple, secretEcdsaKey,
 		zkp.s1, zkp.e, params)
 	actualU2 := evaluateVerificationU2(zkp.u1, zkp.s1, zkp.s3, zkp.e, params)
-	verificationResult := zkp.Verify(secretDsaKeyMultiple, secretDsaKey, secretDsaKeyFactor, params)
+	verificationResult := zkp.Verify(secretEcdsaKeyMultiple, secretEcdsaKey, secretEcdsaKeyFactor, params)
 
 	//THEN
 	if expectedZ.Cmp(actualZ) != 0 {
@@ -143,15 +143,11 @@ func TestDsaPaillierSecretKeyFactorRangeProofVerification(t *testing.T) {
 	}
 }
 
-func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
+func TestEcdsaPaillierSecretKeyFactorRangeProofCommitAndVerify(t *testing.T) {
 	// GIVEN
 	message := big.NewInt(430)
 
-	p, _ := new(big.Int).SetString("104479735358598948369258156463683391052543755432914893102752306517616376250927", 10)
-	q, _ := new(big.Int).SetString("110280671641689691092051226222060939019447720119674706500089479951904142152567", 10)
-	paillierKey := paillier.CreatePrivateKey(p, q)
-
-	params, err := GeneratePublicParameters(paillierKey.N, secp256k1.S256())
+	paillierKey, params, err := createTestZkpParameters(secp256k1.S256())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,16 +167,15 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 		t.Fatalf("could not generate eta [%v]", err)
 	}
 
-	secretDsaKeyMultiple := paillierKey.Mul(secretDsaKey, factor)
-	secretDsaKeyFactor, err := paillierKey.EncryptWithR(factor, r)
-	t.Logf("encryptedfactor: %s", secretDsaKeyFactor.C)
+	secretEcdsaKeyMultiple := paillierKey.Mul(secretDsaKey, factor)
+	secretEcdsaKeyFactor, err := paillierKey.EncryptWithR(factor, r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// WHEN
-	zkp, err := CommitDsaPaillierSecretKeyFactorRange(secretDsaKeyMultiple,
-		secretDsaKey, secretDsaKeyFactor, factor, r, params, rand.Reader)
+	zkp, err := CommitEcdsaPaillierSecretKeyFactorRange(secretEcdsaKeyMultiple,
+		secretDsaKey, secretEcdsaKeyFactor, factor, r, params, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,9 +188,9 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 		"positive validation": {
 			verify: func() bool {
 				return zkp.Verify(
-					secretDsaKeyMultiple,
+					secretEcdsaKeyMultiple,
 					secretDsaKey,
-					secretDsaKeyFactor,
+					secretEcdsaKeyFactor,
 					params,
 				)
 			},
@@ -207,7 +202,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 				return zkp.Verify(
 					wrongEncryptedSecretDsaKeyMultiple,
 					secretDsaKey,
-					secretDsaKeyFactor,
+					secretEcdsaKeyFactor,
 					params,
 				)
 			},
@@ -217,9 +212,9 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 			verify: func() bool {
 				wrongSecretDsaKey := &paillier.Cypher{C: big.NewInt(856)}
 				return zkp.Verify(
-					secretDsaKeyMultiple,
+					secretEcdsaKeyMultiple,
 					wrongSecretDsaKey,
-					secretDsaKeyFactor,
+					secretEcdsaKeyFactor,
 					params,
 				)
 			},
@@ -229,7 +224,7 @@ func TestDsaPaillierSecretKeyFactorRangeProofRoundTrip(t *testing.T) {
 			verify: func() bool {
 				wrongFactor := &paillier.Cypher{C: big.NewInt(798)}
 				return zkp.Verify(
-					secretDsaKeyMultiple,
+					secretEcdsaKeyMultiple,
 					secretDsaKey,
 					wrongFactor,
 					params,
