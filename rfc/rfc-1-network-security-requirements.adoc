@@ -45,9 +45,28 @@ bootstrap peer:: A trusted, authenticated peer that handles requests for joining
 We aim to authenticate peers, control access to a network where Keep’s protocols
 execute, and provide verifiable private channels between communicating peers.
 
+First and foremost, the protocol should be secure.
+
+==== What is a Secure Protocol?
+
+<<AAKE>> introduces us to the definition of a secure protocol; summarized:
+
+1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
+infeasible for anyone other than _P~1~_ and _P~2~_, to recover the secret key.
+Both peers can unlock the whole communication, but no other peers can understand
+the communication unless one of the peers chooses to unlock the communication.
+
+2.  The record of messages shared between _P~1~_ and _P~2~_ to establish the
+authentication of identity must be identical, within a given session, regardless
+of perspective and logically linked (from one message to the next).
+
+These constraints prevent replay attacks (re-use of previous messages) and
+interleaving attacks (injecting a message used in previous runs).
+
 ==== Capabilities
 
-The protocol must provide the following capabilities:
+In addition to being a secure protocol, the protocol must also provide the
+following capabilities:
 
 ===== Authentication
 
@@ -81,8 +100,8 @@ Further access and capabilities are restricted by the individual protocols.
 
 ==== Required Properties
 
-In addition to the aforementioned capabilities, our protocol should provide
-integrity, attributability, and (optionally) confidentiality.
+A secure protocol that is capable of authenticating and authorizing peers should
+also guarantee integrity, attributability, and (optionally) confidentiality.
 
 A protocol that enforces integrity is one in which data sent over the network by
 authenticated peers cannot be modified by adversaries without detection.
@@ -90,29 +109,19 @@ authenticated peers cannot be modified by adversaries without detection.
 Attributability enforces that a message from a given peer is known to be from
 that peer.
 
+Furthermore, successful attributability requires replay protection (which implies
+message ordering enforcement). Consider the following case: An insecure scheme
+would allow an adversary to intercept the communications between two peers,
+modify the contents of a message (particularly of a message that has already been
+received and processed by the receiving peer), and continue forwarding the
+communication off to the receiving end. A receiver with an improper
+implementation would process this message like any other, believing it was from
+the intended sender. This would allow the adversary to forge communications with
+a unsuspecting recipient as if they were the sender!
+
 Our protocol optionally provides confidentiality, where a message sent
 from an authenticated peer is only intelligible to the communicating,
 authenticated peers.
-
-===== What is a Secure Protocol?
-
-<<AAKE>> introduces us to the definition of a secure protocol; summarized:
-
-1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
-infeasible for anyone other than _P~1~_ and _P~2~_, to recover the secret key.
-
-2.  The record of messages shared between _P~1~_ and _P~2~_ to establish the
-authentication of identity must be:
-
- * identical, within a given session, regardless of perspective
- * logically linked, from one message to the next
-
-This prevents replay attacks (re-use of previous messages) and interleaving
-attacks (injecting a message used in previous runs).
-
-In addition to the capabilities, authentication and authorization, along with the
-properties, integrity, attributability, and confidentiality, the protocol must be
-above all, secure.
 
 
 === Scenarios
@@ -151,7 +160,7 @@ transit over the wire. Attributability to ensure that if either peer sends a
 message which contains a payload that would result in punishment, the correct
 peer will be punished.
 
-==== Message Gossip
+==== Message Broadcast
 
 A packed message _M_ that contains many sub-messages _S~all~_, each signed and
 encrypted for a specific peer _P~i~_. This message _M_ can be circulated
