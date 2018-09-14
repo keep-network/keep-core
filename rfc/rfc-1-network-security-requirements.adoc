@@ -199,13 +199,6 @@ and key-exchange considered jointly. Per <<AAKE>>:
 
 == Open Questions
 
-* Do we need to expect that other higher-level protocols will be
-layered on top?
-
-* Do we require forward secrecy - how will we get that?
-
-* What does a non-bootstrap peer do with an authentication message?
-
 * Is a requirement for communicating participants that they be online?
 
 * Should all communications between Keep nodes be encrypted in order to provide
