@@ -45,7 +45,7 @@ func ReadAndDecryptKeyFile(
 ) (*keystore.Key, error) {
 	data, err := ioutil.ReadFile(keyFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read keyfile %s [%v]", keyFile, err)
+		return nil, fmt.Errorf("unable to read KeyFile %s [%v]", keyFile, err)
 	}
 	key, err := keystore.DecryptKey(data, password)
 	if err != nil {
