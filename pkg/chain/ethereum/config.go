@@ -1,5 +1,9 @@
 package ethereum
 
+import (
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+)
+
 // Account is a struct that contains the configuration for accessing an
 // Ethereum network and a contract on the network.
 type Account struct {
@@ -17,6 +21,10 @@ type Account struct {
 	// KeyFilePassword is the password used to unlock the account specified in
 	// KeyFile.
 	KeyFilePassword string
+
+	// key is a saved decrypted key read from KeyFile and decrypted with
+	// KeyFilePassword.
+	key *keystore.Key
 }
 
 // Config is a struct that contains the configuration needed to connect to an
