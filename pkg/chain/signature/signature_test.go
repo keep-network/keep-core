@@ -70,9 +70,10 @@ func TestSignature(t *testing.T) {
 		if msg != test.expectedMsg {
 			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedMsg, msg)
 		}
-		ra, pk, sigValid, err := VerifySignature(test.addr, sig, msg)
+		// ra, pk, sigValid, err := VerifySignature(test.addr, sig, msg)
+		val, err := VerifySignature(test.addr, sig, msg)
 		if test.expectNotToValidate {
-			if sigValid {
+			if val.IsValid {
 				t.Errorf("Test %d, should not have validated but did\n", ii)
 			}
 			continue
@@ -80,11 +81,11 @@ func TestSignature(t *testing.T) {
 		if err != nil {
 			t.Errorf("Test %d, valied to verify [%v] \n", ii, err)
 		}
-		if ra != test.expectedEIP55Addr {
-			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedEIP55Addr, ra)
+		if val.RecoveredAddress != test.expectedEIP55Addr {
+			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedEIP55Addr, val.RecoveredAddress)
 		}
-		if pk != test.expectedPubKey {
-			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedEIP55Addr, ra)
+		if val.RecoveredPublicKey != test.expectedPubKey {
+			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedEIP55Addr, val.RecoveredPublicKey)
 		}
 	}
 
