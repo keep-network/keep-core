@@ -10,22 +10,15 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// GenerateSignature uses a key file and password to sign a message.
+// GenerateSignature uses a key file and password to sign a message.:
 // If the input message is a zero length byte slice then a random message
 // 20 bytes long will be generated.  The message, encoded in hex, and the
 // signature are returned.
 func GenerateSignature(
-	keyFile, password string,
+	key *keystore.Key,
 	inMessage []byte,
 ) (string, string, error) {
-	data, err := ioutil.ReadFile(keyFile)
-	if err != nil {
-		return "", "", fmt.Errorf("unable to read keyfile %s [%v]", keyFile, err)
-	}
-	key, err := keystore.DecryptKey(data, password)
-	if err != nil {
-		return "", "", fmt.Errorf("unable to decrypt %s [%v]", keyFile, err)
-	}
+	var err error
 	var message []byte
 	var messageStr string
 	if len(inMessage) == 0 {
@@ -44,6 +37,21 @@ func GenerateSignature(
 	}
 	signatureStr := hex.EncodeToString(signature)
 	return messageStr, signatureStr, nil
+}
+
+// ReadAndDecryptKeyFile reads in a key file and uses the password to decrypt it.
+func ReadAndDecryptKeyFile(
+	keyFile, password string,
+) (*keystore.Key, error) {
+	data, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read keyfile %s [%v]", keyFile, err)
+	}
+	key, err := keystore.DecryptKey(data, password)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt %s [%v]", keyFile, err)
+	}
+	return key, nil
 }
 
 // genRandBytes generates `n` random bytes of data using the cryptographically

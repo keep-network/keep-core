@@ -50,7 +50,14 @@ func TestSignature(t *testing.T) {
 	}
 
 	for ii, test := range tests {
-		msg, sig, err := GenerateSignature(test.keyFile, test.password, test.in)
+		key, err := ReadAndDecryptKeyFile(test.keyFile, test.password)
+		if test.expectError {
+			if err == nil {
+				t.Errorf("Test %d, failed to returne an error [%v] \n", ii, err)
+			}
+			continue
+		}
+		msg, sig, err := GenerateSignature(key, test.in)
 		if test.expectError {
 			if err == nil {
 				t.Errorf("Test %d, failed to returne an error [%v] \n", ii, err)
