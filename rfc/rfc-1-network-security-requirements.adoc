@@ -35,8 +35,9 @@ chain:: A decentralized, consensus driven store with identities and economic
 stake:: The amount of value a given participant has locked up for participation
         in the network. This value is held on the host chain, and always
         associated with an identity.
-minimum stake:: The minimum amount of value that is required to be a participant.
-bootstrap peer:: A trusted, authenticated peer that handles requests for joining
+minimum stake:: The minimum amount of value that is required to be a participant
+        in the network.
+bootstrap peer:: An authenticated peer that handles requests for joining
           the network from unauthenticated peers. This involves verifying an
           on-chain stake among many other responsibilities.
 
