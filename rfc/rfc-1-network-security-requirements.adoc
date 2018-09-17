@@ -199,7 +199,7 @@ confidentiality for all transcripts between nodes?
 * [[AAKE]] Diffie W. (1992)
 Authentication and Authenticated Key Exchanges
 In: Designs, Codes and Cryptography, 2, 107-125 (1992), Kluwer Academic Publishers
-http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.216.6107&rep=rep1&type=pdf
+** http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.216.6107&rep=rep1&type=pdf
 
 * Discussions on writing this document:
 ** https://www.flowdock.com/app/cardforcoin/tech/messages/152290
