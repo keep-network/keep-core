@@ -178,6 +178,15 @@ and key-exchange considered jointly. Per <<AAKE>>:
 > these reasons, it is essential to keep key exchange in mind in the design and
 > analysis of authentication protocols.
 
+Our system has two levels of key exchange:
+
+ 1. An out-of-band process for confirming an on-chain identity (is the peer
+    attempting to join the network staked).
+
+ 2. Ephemeral key exchange for the purposes of authenticating in-network
+    identities and sending confidential messages (is the peer sending this
+    message really who they say they are).
+
 == Open Questions
 
 * Is a requirement for communicating participants that they be online?
