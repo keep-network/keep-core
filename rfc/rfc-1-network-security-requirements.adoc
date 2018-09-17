@@ -52,7 +52,7 @@ First and foremost, the protocol should be secure.
 
 <<AAKE>> introduces us to the definition of a secure protocol; summarized:
 
-1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
+1. If two peers, _P~1~_ and _P~2~_, share a secret key it is computationally
 infeasible for anyone other than _P~1~_ and _P~2~_, to recover the secret key.
 Both peers can unlock the whole communication, but no other peers can understand
 the communication unless one of the peers chooses to unlock the communication.
@@ -75,13 +75,12 @@ The goal of authentication is to provide the communicating parties with some
 assurance that they know each others' identities.
 
 An authenticated peer is a known identity in the network such that all messages
-from the authenticated peer, _M~i~_, can be provably linked to the authenticated
-peer.
+from the authenticated peer, _P~i~_, can be provably linked to _P~i~_.
 
 Given an authenticated peer and an unauthenticated peer, the unauthenticated peer
-must provide the authenticated peer proof of attestation over a staked key on
-chain. If an authenticated peer's stake falls below the minimum stake amount for
-any reason, then an authenticated peer becomes unauthenticated.
+must provide the authenticated peer proof of ownership of an on-chain identity
+with an associated stake. If an authenticated peer's stake falls below the
+minimum stake for any reason, then an authenticated peer becomes unauthenticated.
 
 ===== Authorization
 
@@ -92,7 +91,7 @@ The only capabilities unauthenticated peers have are sending an initialization
 message to bootstrap peers.
 
 Bootstrap peers are authenticated peers that accept connections from
-unauthenticated peers and attempting to authenticate those peers.
+unauthenticated peers and attempt to authenticate those peers.
 
 Authenticated peers can send and accept all kinds of messages.
 
@@ -102,16 +101,17 @@ Further access and capabilities are restricted by the individual protocols.
 ==== Required Properties
 
 A secure protocol that is capable of authenticating and authorizing peers should
-also guarantee integrity, attributability, and (optionally) confidentiality.
+also guarantee **integrity**, **attributability**, and (optionally)
+**confidentiality**.
 
-A protocol that enforces integrity is one in which data sent over the network by
-authenticated peers cannot be modified by adversaries without detection.
+A protocol that enforces **integrity** is one in which data sent over the network
+by authenticated peers cannot be modified by adversaries without detection.
 
-Attributability enforces that a message from a given peer is known to be from
+**Attributability** enforces that a message from a given peer is known to be from
 that peer.
 
 Furthermore, successful attributability requires replay protection (which implies
-message ordering enforcement). Consider the following case: An insecure scheme
+message ordering enforcement). Consider the following case: an insecure scheme
 would allow an adversary to intercept the communications between two peers,
 modify the contents of a message (particularly of a message that has already been
 received and processed by the receiving peer), and continue forwarding the
@@ -120,7 +120,7 @@ implementation would process this message like any other, believing it was from
 the intended sender. This would allow the adversary to forge communications with
 a unsuspecting recipient as if they were the sender!
 
-Our protocol optionally provides confidentiality, where a message sent
+Our protocol optionally provides **confidentiality**, where a message sent
 from an authenticated peer is only intelligible to the communicating,
 authenticated peers.
 
