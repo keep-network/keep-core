@@ -79,7 +79,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Execute the 1st key-gen round
 	//
 	for _, signer := range localSigners {
-		messages, err := signer.InitializeDsaKeyShares()
+		messages, err := signer.InitializeEcdsaKeyShares()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -92,14 +92,14 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Execute the 2nd key-gen round
 	//
 	for _, signer := range localSigners {
-		messages, err := signer.RevealDsaKeyShares()
+		messages, err := signer.RevealEcdsaKeyShares()
 		if err != nil {
 			t.Fatal(err)
 		}
 		keyShareRevealMessages = append(keyShareRevealMessages, messages...)
 	}
 
-	dsaKey, err := localSigners[0].CombineDsaKeyShares(
+	dsaKey, err := localSigners[0].CombineEcdsaKeyShares(
 		publicKeyShareCommitmentMessagesForReceiver(
 			publicKeyShareCommitmentMessages, localSigners[0].ID,
 		),
@@ -110,7 +110,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 
 	signers := make([]*Signer, len(localSigners))
 	for i, localSigner := range localSigners {
-		signers[i] = localSigner.WithDsaKey(dsaKey)
+		signers[i] = localSigner.WithEcdsaKey(dsaKey)
 	}
 
 	//
@@ -234,30 +234,30 @@ func TestFullInitAndSignPath(t *testing.T) {
 	err = verifySignatureInBitcoin(
 		parameters.Curve,
 		messageHash,
-		round5Signers[0].dsaKey.PublicKey,
+		round5Signers[0].ecdsaKey.PublicKey,
 		signature,
 	)
 	if err != nil {
 		t.Logf("H: %v\n", new(big.Int).SetBytes(messageHash))
 		t.Logf("R: %v\n", signature.R)
 		t.Logf("S: %v\n", signature.S)
-		t.Logf("X: %v\n", round5Signers[0].dsaKey.PublicKey.X)
-		t.Logf("Y: %v\n", round5Signers[0].dsaKey.PublicKey.Y)
+		t.Logf("X: %v\n", round5Signers[0].ecdsaKey.PublicKey.X)
+		t.Logf("Y: %v\n", round5Signers[0].ecdsaKey.PublicKey.Y)
 		t.Fatalf("signature verification in bitcoin failed [%v]", err)
 	}
 
 	err = verifySignatureInEthereum(
 		parameters.Curve,
 		messageHash,
-		round5Signers[0].dsaKey.PublicKey,
+		round5Signers[0].ecdsaKey.PublicKey,
 		signature,
 	)
 	if err != nil {
 		fmt.Printf("H: %v\n", new(big.Int).SetBytes(messageHash))
 		fmt.Printf("R: %v\n", signature.R)
 		fmt.Printf("S: %v\n", signature.S)
-		fmt.Printf("X: %v\n", round5Signers[0].dsaKey.PublicKey.X)
-		fmt.Printf("Y: %v\n", round5Signers[0].dsaKey.PublicKey.Y)
+		fmt.Printf("X: %v\n", round5Signers[0].ecdsaKey.PublicKey.X)
+		fmt.Printf("Y: %v\n", round5Signers[0].ecdsaKey.PublicKey.Y)
 		t.Fatalf("signature verification in ethereum failed [%v]", err)
 	}
 }

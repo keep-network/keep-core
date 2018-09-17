@@ -204,11 +204,9 @@ func TestEcdsaSignatureFactorRangeProofVerification(t *testing.T) {
 	}
 }
 
-func TestEcdsaSignatureFactorRangeProofRoundTrip(t *testing.T) {
+func TestEcdsaSignatureFactorRangeProofCommitAndVerify(t *testing.T) {
 	// GIVEN
-	privateKey := paillier.CreatePrivateKey(big.NewInt(23), big.NewInt(47))
-
-	params, err := GeneratePublicParameters(privateKey.N, secp256k1.S256())
+	privateKey, params, err := createTestZkpParameters(secp256k1.S256())
 	if err != nil {
 		t.Fatal(err)
 	}

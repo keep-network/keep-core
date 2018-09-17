@@ -34,8 +34,8 @@ type KeyShareRevealMessage struct {
 	secretKeyShare *paillier.Cypher // α_i = E(x_i)
 	publicKeyShare *curve.Point     // y_i
 
-	publicKeyShareDecommitmentKey *commitment.DecommitmentKey   // D_i
-	secretKeyProof                *zkp.DsaPaillierKeyRangeProof // Π_i
+	publicKeyShareDecommitmentKey *commitment.DecommitmentKey     // D_i
+	secretKeyProof                *zkp.EcdsaPaillierKeyRangeProof // Π_i
 }
 
 // isValid checks secret and public key share against zero knowledge range proof
