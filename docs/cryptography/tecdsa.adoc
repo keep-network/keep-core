@@ -12,36 +12,28 @@ toc::[]
 ==== Commitment Master Public Key
 [.lead]
 _Commitment Master Public Key_ is a value needed for commitment generation.
-This setup needs to be performed before each of two phases: key generation and signing.
-
-Each signer generates _Commitment Master Public Key Share_ and publishes it to 
-other signers.
-After receiving all shares signers combine them to get _Commitment Master Public Key_.
-
-A _Commitment Master Public Key Share_ is a point in an abstract cyclic group _G2_ 
-of link:https://github.com/ethereum/go-ethereum/tree/master/crypto/bn256/cloudflare[256-bit Barreto-Naehrig]
-curve.
+This setup needs to be performed before each of two phases: key generation and 
+signing. +
+The value is calculated by a signer for each peer signer and send to them.
+The peer signer have to use received value when calculating a commitment for given
+signer.
 
 Output::
-* _Commitment Master Public Key_
+* _Commitment Master Public Key_ for each peer signer
 
 //-
 
-. Each signer generates _Commitment Master Public Key Share_ and publishes it to 
-other signers in _CommitmentMasterPublicKeyShareMessage_:
+. A signer generates _Commitment Master Public Key_ for each peer signer and publishes it to them in _CommitmentMasterPublicKeyMessage_:
 +
 .CommitmentMasterPublicKeyShareMessage
 [%header]
 |=== 
 ^|Field Name ^|Type ^|Description
 
-|`masterPublicKeyShare` 
+|`masterPublicKey` 
 |`[]byte`
-|Master Public Key Share
+|Master Public Key
 |=== 
-
-. Each signer generates his own _Commitment Master Public Key_ and publishes it 
-to other signers in _CommitmentMasterPublicKeyMessage_.
 
 === Key Generation
 
