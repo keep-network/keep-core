@@ -28,21 +28,22 @@ Output::
 === Key Generation
 
 [.lead]
-In this phase signers jointly generate _ECDSA Key_ which is used in the Signing
+In this phase signers jointly generate an _ECDSA Key_ which is used in the Signing
 phase.
 
-Each signer generates _ECDSA Private Key Share_ and _ECDSA Public Key Share_ which 
-together form _ECDSA Key Share_. +
-Since _ECDSA Private Key Share_ must always be kept private, signer encrypts it with 
-Paillier and publishes the encrypted _ECDSA Private Key Share_ along with plaintext 
-_ECDSA Public Key Share_ to other signers. +
-After receiving all shares, signers combine them to get _ECDSA Key_, consisting of
-_Encrypted ECDSA Private Key_ and _ECDSA Public Key_. _ECDSA Private Key_ is encrypted 
-with threshold Paillier scheme in a way that no single signer is able to decrypt it.
+Each signer generates an _ECDSA Private Key Share_ and an _ECDSA Public Key Share_ 
+which together form an _ECDSA Key Share_. +
+Since the _ECDSA Private Key Share_ must always be kept private, signer encrypts 
+it with Paillier and publishes the encrypted _ECDSA Private Key Share_ along with 
+the plaintext _ECDSA Public Key Share_ to other signers. +
+After receiving all shares, signers combine them to get the _ECDSA Key_, consisting 
+of the _Encrypted ECDSA Private Key_ and the _ECDSA Public Key_. The _ECDSA Private Key_ 
+is encrypted with threshold Paillier scheme in a way that no single signer is able 
+to decrypt it.
 
 This phase requires all signers in the group to cooperate to produce a valid 
 _ECDSA Key_. +
-If a malicious behavior is detected from any signer, the whole phase is aborted.
+If malicious behavior is detected from any signer, the whole phase is aborted.
 
 Input::
 * _Commitment Master Public Key_
@@ -53,7 +54,7 @@ Output::
 === Signing
 
 [.lead]
-In this phase signers jointly generate a _Signature_ for a _Message Hash_.
+In this phase the signers jointly generate a _Signature_ for a _Message Hash_.
 
 Signers communicate with each other in 6 rounds, exchanging information
 to produce a T-ECDSA _Signature_ in a {_R_, _S_} format over a _Message Hash_ 
@@ -65,7 +66,7 @@ This phase requires also _ECDSA Key_ which is a result of Key Generation Phase.
 
 To complete this phase, just part of signers is required. The minimum number of 
 signers needed is specified by _Threshold_. +
-Signer can be expelled from the signing group if he misbehaves or doesn't provide
+A signer can be expelled from the signing group if they misbehave or don't provide
 a message on time.
 
 Input::
