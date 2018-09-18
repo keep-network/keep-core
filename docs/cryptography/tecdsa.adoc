@@ -125,7 +125,7 @@ _ECDSA Public Key Share_ value cannot be exposed until all signers in the group
 commit to their values.
 
 . Each signer calculates a commitment to the _ECDSA Public Key Share_ value and 
-publishes this commitment in  _PublicKeyShareCommitmentMessage_.
+publishes this commitment in  _PublicKeyShareCommitmentMessage_:
 
 .PublicKeyShareCommitmentMessage
 [%header]
