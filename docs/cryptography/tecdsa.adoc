@@ -80,7 +80,7 @@ Output::
 
 === Setup
 
-==== Master Public Key
+==== Commitment Master Public Key
 
 Output::
 * _Commitment Master Public Key_
@@ -88,9 +88,9 @@ Output::
 //-
 
 . Each signer generates _Commitment Master Public Key Share_ and publishes it to 
-other signers in _CommitmentMasterPublicKeyShareMessage_.
+other signers in _CommitmentMasterPublicKeyShareMessage_:
 +
-.MasterPublicKeyShareMessage
+.CommitmentMasterPublicKeyShareMessage
 [%header]
 |=== 
 ^|Field Name ^|Type ^|Description
