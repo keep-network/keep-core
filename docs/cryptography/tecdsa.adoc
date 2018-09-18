@@ -1,7 +1,7 @@
 :toc: macro
 :toclevels: 4
 
-= T-ECDSA Protocol
+= t-ECDSA Protocol
 
 toc::[]
 
@@ -57,7 +57,7 @@ Output::
 In this phase the signers jointly generate a _Signature_ for a _Message Hash_.
 
 Signers communicate with each other in 6 rounds, exchanging information
-to produce a T-ECDSA _Signature_ in a {_R_, _S_} format over a _Message Hash_ 
+to produce a threshold ECDSA (t-ECDSA) _Signature_ in a {_R_, _S_} format over a _Message Hash_ 
 which is expected to be exactly 32 bytes.
 
 Before starting this phase a fresh _Commitment Master Public Key_ should be generated.
@@ -426,7 +426,7 @@ a partial decryption of _Signature_.
 . Signer validates received _SignRound6Messages_ and combines partial decryptions 
 to get _Signature_.
 
-. Signer produces a _T-ECDSA Signature_ in {R,S} format where:
+. Signer produces a _t-ECDSA Signature_ in {R,S} format where:
 [horizontal]
 R:: Hash of _Signature Factor Public_
 S:: _Signature_
