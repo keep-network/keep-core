@@ -138,16 +138,17 @@ contract TestAltBn128 {
     // Verifying sample data generated with bn256.go - Ethereum's bn256/cloudflare curve.
     function testVerifySignature() public {
 
-        // Random G1 point representing hashed message for signing.
+        // "hello!" message hashed to G1 point using G1HashToPoint from keep-core/pkg/bls/altbn128.go
         uint256[2] memory message = [
-            1249920946123107736881880579589628776471089304261205601970795500273499276114,
-            728188933559580529884482280521249066571633994114453484261759779981671949946
+            5634139805531803244211629196316241342481813136353842610045004964364565232495,
+            12935759374343796368049060881302766596646163398265176009268480404372697203641
         ];
 
-        // G1 point hashed message above signed with private key = 123
+        // G1 point hashed message above signed with private key = 123 using ScalarMult
+        // from go-ethereum/crypto/bn256/cloudflare library
         uint256[2] memory signature = [
-            7620499035101479049639874746806544419787136120732359452720282924111605598692,
-            11271029883921456630944741433370141152860479143128675161527671273775224123760
+            656647519899395589093611455851658769732922739162315270379466002146796568126,
+            5296675831567268847773497112983742440203412208935796410329912816023128374551
         ];
 
         // G2 point representing public key for private key = 123
