@@ -25,66 +25,6 @@ curve.
 Output::
 * _Commitment Master Public Key_
 
-=== Key Generation
-
-[.lead]
-In this phase signers jointly generate an _ECDSA Key_ which is used in the Signing
-phase.
-
-Each signer generates an _ECDSA Private Key Share_ and an _ECDSA Public Key Share_ 
-which together form an _ECDSA Key Share_. +
-Since the _ECDSA Private Key Share_ must always be kept private, signer encrypts 
-it with Paillier and publishes the encrypted _ECDSA Private Key Share_ along with 
-the plaintext _ECDSA Public Key Share_ to other signers. +
-After receiving all shares, signers combine them to get the _ECDSA Key_, consisting 
-of the _Encrypted ECDSA Private Key_ and the _ECDSA Public Key_. 
-The _ECDSA Private Key_ is created by combining the Paillier-encrypted _ECDSA 
-Private Key Shares_ using a threshold variant of Paillier's homomorphic operations.
-
-This phase requires all signers in the group to cooperate to produce a valid 
-_ECDSA Key_. +
-If malicious behavior is detected from any signer, the whole phase is aborted.
-
-Input::
-* _Commitment Master Public Key_
-
-Output::
-* _ECDSA Key_: {_Encrypted ECDSA Private Key_, _ECDSA Public Key_}
-
-=== Signing
-
-[.lead]
-In this phase the signers jointly generate a _Signature_ for a _Message Hash_.
-
-Signers communicate with each other in 6 rounds, exchanging information
-to produce a threshold ECDSA (t-ECDSA) _Signature_ in a {_R_, _S_} format over an
-exactly 32-byte _Message Hash_.
-
-Before starting this phase a fresh <<Commitment Master Public Key>> should be generated.
-
-This phase also requires the _ECDSA Key_ generated in the <<Key Generation>> phase.
-
-Not all signers are required to complete this phase; the minimum number of signers needed is specified by the _Threshold_. +
-A signer can be expelled from the signing group if they misbehave or don't provide
-a message on time.
-
-Input::
-* _Commitment Master Public Key_
-* _ECDSA Key_
-* _Message Hash_
-
-Output::
-* _Signature_ {_R_, _S_}
-
-== Rounds Description
-
-=== Setup
-
-==== Commitment Master Public Key
-
-Output::
-* _Commitment Master Public Key_
-
 //-
 
 . Each signer generates _Commitment Master Public Key Share_ and publishes it to 
@@ -104,6 +44,24 @@ other signers in _CommitmentMasterPublicKeyShareMessage_:
 to other signers in _CommitmentMasterPublicKeyMessage_.
 
 === Key Generation
+
+[.lead]
+In this phase signers jointly generate an _ECDSA Key_ which is used in the Signing
+phase.
+
+Each signer generates an _ECDSA Private Key Share_ and an _ECDSA Public Key Share_ 
+which together form an _ECDSA Key Share_. +
+Since the _ECDSA Private Key Share_ must always be kept private, signer encrypts 
+it with Paillier and publishes the encrypted _ECDSA Private Key Share_ along with 
+the plaintext _ECDSA Public Key Share_ to other signers. +
+After receiving all shares, signers combine them to get the _ECDSA Key_, consisting 
+of the _Encrypted ECDSA Private Key_ and the _ECDSA Public Key_. 
+The _ECDSA Private Key_ is created by combining the Paillier-encrypted _ECDSA 
+Private Key Shares_ using a threshold variant of Paillier's homomorphic operations.
+
+This phase requires all signers in the group to cooperate to produce a valid 
+_ECDSA Key_. +
+If malicious behavior is detected from any signer, the whole phase is aborted.
 
 ==== Round #1
 
@@ -196,6 +154,21 @@ to get encrypted _ECDSA Private Key_ and _ECDSA Public Key_ which together form
 _ECDSA Key_.
 
 === Signing
+
+[.lead]
+In this phase the signers jointly generate a _Signature_ for a _Message Hash_.
+
+Signers communicate with each other in 6 rounds, exchanging information
+to produce a threshold ECDSA (t-ECDSA) _Signature_ in a {_R_, _S_} format over an
+exactly 32-byte _Message Hash_.
+
+Before starting this phase a fresh <<Commitment Master Public Key>> should be generated.
+
+This phase also requires the _ECDSA Key_ generated in the <<Key Generation>> phase.
+
+Not all signers are required to complete this phase; the minimum number of signers needed is specified by the _Threshold_. +
+A signer can be expelled from the signing group if they misbehave or don't provide
+a message on time.
 
 ==== Round #1 [[sign_round_1]]
 
