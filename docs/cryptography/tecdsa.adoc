@@ -57,15 +57,14 @@ Output::
 In this phase the signers jointly generate a _Signature_ for a _Message Hash_.
 
 Signers communicate with each other in 6 rounds, exchanging information
-to produce a threshold ECDSA (t-ECDSA) _Signature_ in a {_R_, _S_} format over a _Message Hash_ 
-which is expected to be exactly 32 bytes.
+to produce a threshold ECDSA (t-ECDSA) _Signature_ in a {_R_, _S_} format over an
+exactly 32-byte _Message Hash_.
 
-Before starting this phase a fresh _Commitment Master Public Key_ should be generated.
+Before starting this phase a fresh <<Commitment Master Public Key>> should be generated.
 
-This phase requires also _ECDSA Key_ which is a result of Key Generation Phase.
+This phase also requires the _ECDSA Key_ generated in the <<Key Generation>> phase.
 
-To complete this phase, just part of signers is required. The minimum number of 
-signers needed is specified by _Threshold_. +
+Not all signers are required to complete this phase; the minimum number of signers needed is specified by the _Threshold_. +
 A signer can be expelled from the signing group if they misbehave or don't provide
 a message on time.
 
