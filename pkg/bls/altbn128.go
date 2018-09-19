@@ -36,10 +36,6 @@ func yFromX(x *big.Int) *big.Int {
     return modSqrt(sum(product(x, x, x), big.NewInt(3)), bn256.P)
 }
 
-func toBytes(i *big.Int) []byte {
-    return append(make([]byte, 32-len(i.Bytes())), i.Bytes()...)
-}
-
 func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
 	if len(x.Bytes()) > 32 || len(y.Bytes()) > 32 {
 		return nil, errors.New("Points on G1 are limited to 256-bit coordinates.")
