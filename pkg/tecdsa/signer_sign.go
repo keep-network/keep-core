@@ -110,7 +110,7 @@ func (s *Signer) SignRound1() (*Round1Signer, []*SignRound1Message, error) {
 // Round2Signer represents state of signer after executing the second round
 // of signing algorithm.
 type Round2Signer struct {
-	Signer
+	*Round1Signer
 }
 
 // SignRound2 executes the second round of T-ECDSA signing as described in
