@@ -48,6 +48,7 @@ proposal, this is important.
 
 If any open questions are left that you haven't yet investigated, what are they?
 
+[bibliography]
 == Related Links
 
 - Flowdock Links
