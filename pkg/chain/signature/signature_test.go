@@ -65,7 +65,7 @@ func TestSignature(t *testing.T) {
 				}
 				goto Done
 			}
-			msg, sig, err = GenerateSignature(key, test.in)
+			msg, sig, err = Sign(key, test.in)
 			if test.expectError {
 				if err == nil {
 					t.Errorf("failed to returne an error [%v] \n", err)
