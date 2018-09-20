@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
-	"github.com/keep-network/keep-core/pkg/chain/signature"
 )
 
 // keepGroup connection information for interface to KeepGroup contract.
@@ -64,7 +63,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	}
 
 	if pv.accountKey.key == nil {
-		key, err := signature.ReadAndDecryptKeyFile(
+		key, err := ReadAndDecryptKeyFile(
 			pv.config.Account.KeyFile,
 			pv.config.Account.KeyFilePassword,
 		)

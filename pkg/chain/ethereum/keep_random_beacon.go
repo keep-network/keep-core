@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
-	"github.com/keep-network/keep-core/pkg/chain/signature"
 )
 
 // KeepRandomBeacon connection information for interface to the contract.
@@ -44,7 +43,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 	}
 
 	if pv.accountKey.key == nil {
-		key, err := signature.ReadAndDecryptKeyFile(
+		key, err := ReadAndDecryptKeyFile(
 			pv.config.Account.KeyFile,
 			pv.config.Account.KeyFilePassword,
 		)

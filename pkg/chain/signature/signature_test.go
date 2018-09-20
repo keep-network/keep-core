@@ -1,6 +1,10 @@
 package signature
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+)
 
 func TestSignature(t *testing.T) {
 
@@ -54,7 +58,7 @@ func TestSignature(t *testing.T) {
 			var err error
 			var val *VerifiedSignatureData
 			var msg, sig string
-			key, err := ReadAndDecryptKeyFile(test.keyFile, test.password)
+			key, err := ethereum.ReadAndDecryptKeyFile(test.keyFile, test.password)
 			if test.expectError {
 				if err == nil {
 					t.Errorf("failed to returne an error [%v] \n", err)
