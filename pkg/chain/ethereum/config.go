@@ -21,10 +21,6 @@ type Account struct {
 	// KeyFilePassword is the password used to unlock the account specified in
 	// KeyFile.
 	KeyFilePassword string
-
-	// key is a saved decrypted key read from KeyFile and decrypted with
-	// KeyFilePassword.
-	key *keystore.Key
 }
 
 // Config is a struct that contains the configuration needed to connect to an
@@ -40,4 +36,11 @@ type Config struct {
 	ContractAddresses map[string]string
 
 	Account Account
+}
+
+// AccountKey is a struct that contains the decrypted key from Account.
+type AccountKey struct {
+	// key is a saved decrypted key read from KeyFile and decrypted with
+	// KeyFilePassword.
+	key *keystore.Key
 }

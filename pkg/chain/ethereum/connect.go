@@ -17,6 +17,7 @@ type ethereumChain struct {
 	requestID                *big.Int
 	keepGroupContract        *keepGroup
 	keepRandomBeaconContract *KeepRandomBeacon
+	accountKey               AccountKey
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
