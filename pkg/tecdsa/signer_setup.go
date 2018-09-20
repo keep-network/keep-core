@@ -49,6 +49,8 @@ func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
 	return sc.peerProtocolParameters[sc.ID].commitmentMasterPublicKey
 }
 
+// TODO: rename to just commitmentMasterPublicKey when the original
+// commitmentMasterPublicKey is gone (after we update signing phase)
 func (sc *signerCore) commitmentVerificationMasterPublicKey(
 	signerID string,
 ) *bn256.G2 {
