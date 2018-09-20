@@ -53,13 +53,15 @@ First and foremost, the protocol should be secure.
 <<AAKE>> introduces us to the definition of a secure protocol; summarized:
 
 1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
-infeasible for anyone other than _P~1~_ and _P~2~_ to recover that secret key.
-Both peers can unlock the whole communication, but no other peers can understand
-the communication unless one of the peers chooses to unlock the communication.
+   infeasible for anyone other than _P~1~_ and _P~2~_ to recover that secret
+   key. Both peers can unlock the whole communication, but no other peers can
+   understand the communication unless one of the peers chooses to unlock the
+   communication.
 
-2.  The record of messages shared between _P~1~_ and _P~2~_ to establish the
-authentication of identity must be identical, within a given session, regardless
-of perspective and logically linked (from one message to the next).
+2. The record of messages shared between _P~1~_ and _P~2~_ to establish the
+   authentication of identity must be identical, within a given session,
+   regardless of perspective and logically linked (from one message to the
+   next).
 
 These constraints prevent replay attacks (re-use of previous messages) and
 interleaving attacks (injecting a message used in previous runs).
@@ -142,11 +144,11 @@ this example. Specifically, _authentication_ allows a peer to validate the
 identity of the unknown peer. _Authorization_ enables the following:
 
 1. The restriction of the unknown, untrusted peer to only send the initial
-request to be authenticated.
+   request to be authenticated.
 2. The capability of an authenticated peer to respond to on-chain events or to
-network-specific events.
+   network-specific events.
 3. The disconnection from the network for members who fall below the minimum
-stake.
+   stake.
 
 ==== Point-to-Point communications
 
@@ -180,12 +182,11 @@ and key-exchange considered jointly. Per <<AAKE>>:
 
 Our system has two levels of key exchange:
 
- 1. An out-of-band process for confirming an on-chain identity (is the peer
-    attempting to join the network staked).
-
- 2. Ephemeral key exchange for the purposes of authenticating in-network
-    identities and sending confidential messages (is the peer sending this
-    message really who they say they are).
+1. An out-of-band process for confirming an on-chain identity (is the peer
+   attempting to join the network staked).
+2. Ephemeral key exchange for the purposes of authenticating in-network
+   identities and sending confidential messages (is the peer sending this
+   message really who they say they are).
 
 == Open Questions
 
