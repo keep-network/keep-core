@@ -40,7 +40,7 @@ type LocalSigner struct {
 	// Since a separate commitment is produced for each peer signer in the
 	// group, decommitment keys must be stored separately for each peer.
 	// The map's key is the peer signer's ID.
-	publicKeyShareDecommitmentKeys map[string]*commitment.DecommitmentKey
+	publicEcdsaKeyShareDecommitmentKeys map[string]*commitment.DecommitmentKey
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
@@ -122,7 +122,7 @@ func (ls *LocalSigner) InitializeEcdsaKeyShares() (
 	ls.ecdsaKeyShare = keyShare
 
 	// Initialize map holding decommitment keys for each peer signer.
-	ls.publicKeyShareDecommitmentKeys = make(
+	ls.publicEcdsaKeyShareDecommitmentKeys = make(
 		map[string]*commitment.DecommitmentKey,
 	)
 
@@ -144,7 +144,7 @@ func (ls *LocalSigner) InitializeEcdsaKeyShares() (
 			)
 		}
 
-		ls.publicKeyShareDecommitmentKeys[peerSignerID] = decommitmentKey
+		ls.publicEcdsaKeyShareDecommitmentKeys[peerSignerID] = decommitmentKey
 		messages[i] = &PublicEcdsaKeyShareCommitmentMessage{
 			senderID:                 ls.ID,
 			receiverID:               peerSignerID,
@@ -207,7 +207,7 @@ func (ls *LocalSigner) RevealEcdsaKeyShares() ([]*KeyShareRevealMessage, error) 
 			receiverID:                    peerSignerID,
 			secretKeyShare:                encryptedSecretKeyShare,
 			publicKeyShare:                ls.ecdsaKeyShare.publicKeyShare,
-			publicKeyShareDecommitmentKey: ls.publicKeyShareDecommitmentKeys[peerSignerID],
+			publicKeyShareDecommitmentKey: ls.publicEcdsaKeyShareDecommitmentKeys[peerSignerID],
 			secretKeyProof:                rangeProof,
 		}
 	}
