@@ -4,7 +4,7 @@ import "testing"
 
 func TestSignature(t *testing.T) {
 
-	tests := []struct {
+	tests := map[string]struct {
 		in                  []byte
 		addr                string
 		expectedMsg         string
@@ -15,7 +15,7 @@ func TestSignature(t *testing.T) {
 		expectError         bool
 		expectNotToValidate bool
 	}{
-		{
+		"of successful signature without errors": {
 			in:                  []byte{01, 02, 03, 04},
 			addr:                "6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
 			expectedMsg:         "01020304",
@@ -26,7 +26,7 @@ func TestSignature(t *testing.T) {
 			expectError:         false,
 			expectNotToValidate: false,
 		},
-		{
+		"of invalid password on decrypiton of a signature file": {
 			in:                []byte{01, 02, 03, 04},
 			addr:              "6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
 			expectedMsg:       "01020304",
@@ -36,7 +36,7 @@ func TestSignature(t *testing.T) {
 			password:          "nanananana",
 			expectError:       true,
 		},
-		{
+		"with a valid KeyFile password, but an invalid signature": {
 			in:                  []byte{01, 02, 03, 04},
 			addr:                "9ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
 			expectedMsg:         "01020304",
@@ -49,44 +49,50 @@ func TestSignature(t *testing.T) {
 		},
 	}
 
-	for ii, test := range tests {
-		key, err := ReadAndDecryptKeyFile(test.keyFile, test.password)
-		if test.expectError {
-			if err == nil {
-				t.Errorf("Test %d, failed to returne an error [%v] \n", ii, err)
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			var err error
+			var val *VerifiedSignatureData
+			var msg, sig string
+			key, err := ReadAndDecryptKeyFile(test.keyFile, test.password)
+			if test.expectError {
+				if err == nil {
+					t.Errorf("failed to returne an error [%v] \n", err)
+				}
+				goto Done
 			}
-			continue
-		}
-		msg, sig, err := GenerateSignature(key, test.in)
-		if test.expectError {
-			if err == nil {
-				t.Errorf("Test %d, failed to returne an error [%v] \n", ii, err)
+			msg, sig, err = GenerateSignature(key, test.in)
+			if test.expectError {
+				if err == nil {
+					t.Errorf("failed to returne an error [%v] \n", err)
+				}
+				goto Done
 			}
-			continue
-		}
-		if err != nil {
-			t.Errorf("Test %d, returned an error [%v] \n", ii, err)
-		}
-		if msg != test.expectedMsg {
-			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedMsg, msg)
-		}
-		// ra, pk, sigValid, err := VerifySignature(test.addr, sig, msg)
-		val, err := VerifySignature(test.addr, sig, msg)
-		if test.expectNotToValidate {
-			if val.IsValid {
-				t.Errorf("Test %d, should not have validated but did\n", ii)
+			if err != nil {
+				t.Errorf("returned an error [%v] \n", err)
 			}
-			continue
-		}
-		if err != nil {
-			t.Errorf("Test %d, valied to verify [%v] \n", ii, err)
-		}
-		if val.RecoveredAddress != test.expectedEIP55Addr {
-			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedEIP55Addr, val.RecoveredAddress)
-		}
-		if val.RecoveredPublicKey != test.expectedPubKey {
-			t.Errorf("Test %d, expected %s got %s\n", ii, test.expectedEIP55Addr, val.RecoveredPublicKey)
-		}
+			if msg != test.expectedMsg {
+				t.Errorf("expected %s got %s\n", test.expectedMsg, msg)
+			}
+			// ra, pk, sigValid, err := VerifySignature(test.addr, sig, msg)
+			val, err = VerifySignature(test.addr, sig, msg)
+			if test.expectNotToValidate {
+				if val.IsValid {
+					t.Errorf("should not have validated but did\n")
+				}
+				goto Done
+			}
+			if err != nil {
+				t.Errorf("valied to verify [%v] \n", err)
+			}
+			if val.RecoveredAddress != test.expectedEIP55Addr {
+				t.Errorf("expected %s got %s\n", test.expectedEIP55Addr, val.RecoveredAddress)
+			}
+			if val.RecoveredPublicKey != test.expectedPubKey {
+				t.Errorf("expected %s got %s\n", test.expectedEIP55Addr, val.RecoveredPublicKey)
+			}
+		Done:
+		})
 	}
 
 }
