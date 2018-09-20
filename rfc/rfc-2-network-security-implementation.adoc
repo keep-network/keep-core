@@ -9,10 +9,9 @@ toc::[]
 
 == Background
 The goal of this document is to describe implementation details of the Keep 
-network security mechanisms, meeting requirements specified in the RFC 1. 
-
-Messages exchanged in the network must be attributable and maintain integrity. 
-Messages are also optionally encrypted.
+network security mechanisms, meeting requirements specified in 
+[RFC 1](rfc-1-network-security-requirements.adoc); messages must be 
+attributable, maintain integrity and optionally confidential.
 
 == Types of peers
 
@@ -35,7 +34,7 @@ Keep publishes a list of recommended bootstrap peers but every other network
 member can run its own bootstrap peer as well. The list contains addresses of 
 bootstrap peers and their static public keys.
 
-Peer wanting to connect to the network sends a network join request to one of 
+A peer wanting to connect to the network sends a network join request to one of 
 the bootstrap peers. Each peer wanting to join a network needs to provide a proof 
 of attestation over a minimum stake associated with peer's static public key, the 
 same is required from a bootstrap peer handling the network join request.
@@ -44,11 +43,11 @@ The procedure is as follows:
 
 1. Peer joining the network initiates the protocol by sending a network join 
 request message containing randomly generated nonce `n_1`. The message is signed 
-with peer's static private key.
-2. Bootstrap peer randomly generates nonce `n_2` and evaluates challenge which is 
+with the peer's static private key.
+2. The bootstrap peer randomly generates nonce `n_2` and computes a challenge which is 
 `sha256` of `n1 || n2`. The bootstrap peer sends back `n_2` and signs the message 
 with its static private key.
-3. Peer joining the network recomputes challenge from `n_1` and `n_2`, if it matches 
+3. The peer joining the network recomputes challenge from `n_1` and `n_2`, if it matches 
 the challenge sent by the bootstrap peer, it answers with a message containing the 
 challenge. The message is signed with peer's static private key.
 
@@ -69,7 +68,7 @@ bootstrap peer and peer joining the network execute a check for an on-chain stak
 the second party. If peer joining the network has a minimum stake, the bootstrap 
 peer sends it a list of peers in the network and announces peer's presence. If the 
 bootstrap peer has a minimum stake, peer joining the network accepts the list. 
-Otherwise, when at least one of the parties do not have a minimum stake, the protocol 
+Otherwise, when at least one of the parties does not have a minimum stake, the protocol 
 is aborted.
 
 == Attributability and integrity of the network messages
@@ -120,7 +119,7 @@ When peer receives a message it firsts check the signature. If it matches, then 
 the nonce. If the nonce is greater by one from the nonce included in the previous message, 
 then the message is accepted.
 
-== Message encryption
+== Message Confidentiality
 
 Encryption is based on ephemeral keys generated individually for each protocol execution. 
 Only point-to-point communication can be encrypted. 
@@ -130,7 +129,7 @@ using `Noise_KK` protocol (both initiator and responder public static keys are k
 
 Any of the communicating peers can reveal the symmetric key in order to publicly publish 
 a complaint about the other peer's message. In such case, the symmetric key is considered as 
-compromised and shouldn't be used for communication anymore.
+compromised and should not be used for further communications.
 
 == Related Links
 
