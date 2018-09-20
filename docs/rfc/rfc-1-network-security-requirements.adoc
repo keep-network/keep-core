@@ -52,8 +52,8 @@ First and foremost, the protocol should be secure.
 
 <<AAKE>> introduces us to the definition of a secure protocol; summarized:
 
-1. If two peers, _P~1~_ and _P~2~_, share a secret key it is computationally
-infeasible for anyone other than _P~1~_ and _P~2~_, to recover the secret key.
+1. If two peers, _P~1~_ and _P~2~_, share a secret key, it is computationally
+infeasible for anyone other than _P~1~_ and _P~2~_ to recover that secret key.
 Both peers can unlock the whole communication, but no other peers can understand
 the communication unless one of the peers chooses to unlock the communication.
 
