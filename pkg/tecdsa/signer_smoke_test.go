@@ -34,7 +34,7 @@ func TestFullInitAndSignPath(t *testing.T) {
 		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
 	)
 
-	publicKeyShareCommitmentMessages := make([]*PublicKeyShareCommitmentMessage, 0)
+	publicKeyShareCommitmentMessages := make([]*PublicEcdsaKeyShareCommitmentMessage, 0)
 	keyShareRevealMessages := make([]*KeyShareRevealMessage, 0)
 
 	commitmentMasterPublicKeyMessagesSigning := make(

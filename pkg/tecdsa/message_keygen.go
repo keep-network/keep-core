@@ -8,13 +8,13 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// PublicKeyShareCommitmentMessage is a message payload that carries signer's
-// commitment for a public DSA key share the signer generated.
+// PublicEcdsaKeyShareCommitmentMessage is a message payload that carries
+// signer's commitment for a public DSA key share the signer generated.
 // It's the very first message exchanged between signers during the T-ECDSA
 // distributed key generation process. Since commitment is generated
 // individually for each peer signer in the group, this message is generated and
 // expected to be delivered to each peer signer individually.
-type PublicKeyShareCommitmentMessage struct {
+type PublicEcdsaKeyShareCommitmentMessage struct {
 	senderID   string
 	receiverID string
 

@@ -120,7 +120,7 @@ func TestCombineWithNotEnoughCommitMessages(t *testing.T) {
 		revealMessages, receiver.ID,
 	)
 	_, err = receiver.CombineEcdsaKeyShares(
-		[]*PublicKeyShareCommitmentMessage{receiverCommitmentMessages[0]},
+		[]*PublicEcdsaKeyShareCommitmentMessage{receiverCommitmentMessages[0]},
 		receiverRevealMessages,
 	)
 	if err == nil {
@@ -342,7 +342,7 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
 func initializeNewLocalGroupWithKeyShares() (
 	[]*LocalSigner,
 	*PublicParameters,
-	[]*PublicKeyShareCommitmentMessage,
+	[]*PublicEcdsaKeyShareCommitmentMessage,
 	[]*KeyShareRevealMessage,
 	error,
 ) {
@@ -362,7 +362,7 @@ func initializeNewLocalGroupWithKeyShares() (
 	// Generated key shares are saved internally by each Signer. Each Signer
 	// generates commitment for the public key share. Commitment is broadcasted
 	// in the PublicKeyShareCommitmentMessage.
-	publicKeyCommitmentMessages := make([]*PublicKeyShareCommitmentMessage, 0)
+	publicKeyCommitmentMessages := make([]*PublicEcdsaKeyShareCommitmentMessage, 0)
 	for _, signer := range group {
 		messages, err := signer.InitializeEcdsaKeyShares()
 		if err != nil {
@@ -420,10 +420,10 @@ func initializeNewLocalGroupWithFullKey() (
 }
 
 func publicKeyShareCommitmentMessagesForReceiver(
-	messages []*PublicKeyShareCommitmentMessage,
+	messages []*PublicEcdsaKeyShareCommitmentMessage,
 	receiverID string,
-) []*PublicKeyShareCommitmentMessage {
-	filtered := make([]*PublicKeyShareCommitmentMessage, 0)
+) []*PublicEcdsaKeyShareCommitmentMessage {
+	filtered := make([]*PublicEcdsaKeyShareCommitmentMessage, 0)
 	for _, message := range messages {
 		if message.receiverID == receiverID {
 			filtered = append(filtered, message)
