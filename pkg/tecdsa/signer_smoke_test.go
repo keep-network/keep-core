@@ -41,8 +41,8 @@ func TestFullInitAndSignPath(t *testing.T) {
 		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
 	)
 
-	round1Messages := make([]*SignRound1Message, len(localSigners))
-	round2Messages := make([]*SignRound2Message, len(localSigners))
+	var round1Messages []*SignRound1Message
+	var round2Messages []*SignRound2Message
 	round3Messages := make([]*SignRound3Message, len(localSigners))
 	round4Messages := make([]*SignRound4Message, len(localSigners))
 	round5Messages := make([]*SignRound5Message, len(localSigners))
@@ -138,25 +138,30 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Execute the 1st signing round
 	//
 	for i, signer := range signers {
-		round1Signers[i], round1Messages[i], err = signer.SignRound1()
+		var messages []*SignRound1Message
+		round1Signers[i], messages, err = signer.SignRound1()
 		if err != nil {
 			t.Fatal(err)
 		}
+		round1Messages = append(round1Messages, messages...)
 	}
 
 	//
 	// Execute the 2nd signing round
 	//
 	for i, signer := range round1Signers {
-		round2Signers[i], round2Messages[i], err = signer.SignRound2()
+		var messages []*SignRound2Message
+		round2Signers[i], messages, err = signer.SignRound2()
 		if err != nil {
 			t.Fatal(err)
 		}
+		round2Messages = append(round2Messages, messages...)
 	}
 
 	secretKeyRandomFactor, secretKeyMultiple, err :=
 		round2Signers[0].CombineRound2Messages(
-			round1Messages, round2Messages,
+			signRound1MessagesForReceiver(round1Messages, round1Signers[0].ID),
+			signRound2MessagesForReceiver(round2Messages, round2Signers[0].ID),
 		)
 	if err != nil {
 		t.Fatal(err)
