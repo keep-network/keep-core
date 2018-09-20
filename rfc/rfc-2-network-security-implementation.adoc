@@ -13,16 +13,6 @@ network security mechanisms, meeting requirements specified in
 [RFC 1](rfc-1-network-security-requirements.adoc); messages must be 
 attributable, maintain integrity and optionally confidential.
 
-== Types of peers
-
-There are two types of peers in the Keep network: standard peers (referred later 
-just as "peers") and bootstrap peers. Bootstrap peers are not trusted any more 
-than other peers. One of the goals of having bootstrap peers is that they accept 
-a higher probability of DoS. Also, they hide information about network topology 
-from parties not being a part of the network what increases anonymity. The only 
-type of message bootstrap peer handles is the network join message from peers 
-out of the network.
-
 == Peer identification
 Each peer is identified by a static public key equal to the delegate key 
 associated with an on-chain stake. There are no two peers in the network with 
