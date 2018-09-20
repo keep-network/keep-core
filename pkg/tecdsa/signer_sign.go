@@ -39,9 +39,9 @@ type Round1Signer struct {
 //
 // In the first round, each signer generates a secret key factor share `ρ_i`,
 // encodes it with Paillier key `u_i = E(ρ_i)`, multiplies it with secret ECDSA
-// key `v_i = E(ρ_i * x)` and publishes commitment for both those values
-// `Com(u_i, v_i)`.
-func (s *Signer) SignRound1() (*Round1Signer, *SignRound1Message, error) {
+// key `v_i = E(ρ_i * x)` and publishes commitments for both those values
+// `Com(u_i, v_i)`. Individual commitment is calculated for each peer signer.
+func (s *Signer) SignRound1() (*Round1Signer, []*SignRound1Message, error) {
 	// Choosing random ρ_i from Z_q
 	secretKeyFactorShare, err := rand.Int(
 		rand.Reader,
