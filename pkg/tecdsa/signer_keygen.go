@@ -252,7 +252,7 @@ func (ls *LocalSigner) CombineEcdsaKeyShares(
 		)
 	}
 
-	if len(revealedShares) != ls.signerGroup.PeerSignerCount() {
+	if len(revealedShares) != peerSignerCount {
 		return nil, fmt.Errorf(
 			"all group peer members should reveal shares; Got %v, expected %v",
 			len(revealedShares),
@@ -268,7 +268,6 @@ func (ls *LocalSigner) CombineEcdsaKeyShares(
 		foundMatchingRevealMessage := false
 
 		for _, revealedSharesMsg := range revealedShares {
-
 			if commitmentMsg.senderID == revealedSharesMsg.senderID {
 				foundMatchingRevealMessage = true
 
