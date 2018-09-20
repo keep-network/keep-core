@@ -11,7 +11,8 @@ import (
 // SignRound1Message is a message produced by each signer as a result of
 // executing the first round of T-ECDSA signing algorithm.
 type SignRound1Message struct {
-	signerID string
+	senderID   string
+	receiverID string
 
 	secretKeyFactorShareCommitment *commitment.MultiTrapdoorCommitment // C_1i
 }
@@ -19,7 +20,8 @@ type SignRound1Message struct {
 // SignRound2Message is a message produced by each signer as a result of
 // executing the second round of T-ECDSA signing algorithm.
 type SignRound2Message struct {
-	signerID string
+	senderID   string
+	receiverID string
 
 	secretKeyFactorShare                *paillier.Cypher            // u_i = E(ρ_i)
 	secretKeyMultipleShare              *paillier.Cypher            // v_i = E(ρ_i * x)
