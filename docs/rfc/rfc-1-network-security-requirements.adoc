@@ -199,9 +199,9 @@ confidentiality for all transcripts between nodes?
 == Related Links
 
 * [[[AAKE]]] Diffie W. (1992)
-Authentication and Authenticated Key Exchanges
-In: Designs, Codes and Cryptography, 2, 107-125 (1992), Kluwer Academic Publishers
-** http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.216.6107&rep=rep1&type=pdf
+  Authentication and Authenticated Key Exchanges
+  In: Designs, Codes and Cryptography, 2, 107-125 (1992), Kluwer Academic Publishers
+  http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.216.6107&rep=rep1&type=pdf
 
 * Discussions on writing this document:
 ** https://www.flowdock.com/app/cardforcoin/tech/messages/152290
@@ -209,7 +209,7 @@ In: Designs, Codes and Cryptography, 2, 107-125 (1992), Kluwer Academic Publishe
 ** https://www.flowdock.com/app/cardforcoin/tech/messages/153592
 
 * t-ECDSA performance with some thoughts on network performance optimizations:
-** https://www.flowdock.com/app/cardforcoin/tech/messages/154946
+  https://www.flowdock.com/app/cardforcoin/tech/messages/154946
 
 * Desired properties of confidentiality in Keep's network:
-** https://www.flowdock.com/app/cardforcoin/tech/messages/156769
+  https://www.flowdock.com/app/cardforcoin/tech/messages/156769
