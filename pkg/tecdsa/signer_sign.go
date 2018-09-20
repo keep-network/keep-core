@@ -27,11 +27,11 @@ type Round1Signer struct {
 	Signer
 
 	// Intermediate values stored between the first and second round of signing.
-	secretKeyFactorShare                *big.Int                    // ρ_i
-	encryptedSecretKeyFactorShare       *paillier.Cypher            // u_i = E(ρ_i)
-	secretKeyMultipleShare              *paillier.Cypher            // v_i = E(ρ_i * x)
-	secretKeyFactorShareDecommitmentKey *commitment.DecommitmentKey // D_1i
-	paillierRandomness                  *big.Int
+	secretKeyFactorShare                 *big.Int                               // ρ_i
+	encryptedSecretKeyFactorShare        *paillier.Cypher                       // u_i = E(ρ_i)
+	secretKeyMultipleShare               *paillier.Cypher                       // v_i = E(ρ_i * x)
+	secretKeyFactorShareDecommitmentKeys map[string]*commitment.DecommitmentKey // D_1i
+	paillierRandomness                   *big.Int
 }
 
 // SignRound1 executes the first round of T-ECDSA signing as described in
