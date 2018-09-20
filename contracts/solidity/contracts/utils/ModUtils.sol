@@ -1,12 +1,19 @@
 pragma solidity ^0.4.21;
 
+
 library ModUtils {
 
-    function modExp(uint256 a, uint256 exponent, uint256 p)
+    /**
+     * @dev Wrap the modular exponent pre-compile introduced in Byzantium.
+     * Returns base^exponent mod p.
+     */
+    function modExp(uint256 base, uint256 exponent, uint256 p)
         public
-        view returns(uint256 raised)
+        view returns(uint256)
     {
-        uint256[6] memory args = [32, 32, 32, a, exponent, p];
+        // Args for the pre-compile: [<length_of_BASE> <length_of_EXPONENT>
+        // <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>]
+        uint256[6] memory args = [32, 32, 32, base, exponent, p];
         uint256[1] memory output;
         /* solium-disable-next-line */
         assembly {
@@ -18,6 +25,10 @@ library ModUtils {
         return output[0];
     }
 
+    /**
+     * @dev Calculates and returns the square root of a mod p,
+     * or 0 if there is no such root.
+     */
     function modSqrt(uint256 a, uint256 p)
         public
         view returns(uint256)
@@ -40,7 +51,6 @@ library ModUtils {
         }
 
         uint256 s = p - 1;
-        // log_2(256) = 8 => uint8
         uint8 e = 0;
 
         while (s % 2 == 0) {
@@ -86,7 +96,11 @@ library ModUtils {
         }
     }
 
-
+    /**
+     * @dev Calculates the Legendre symbol of the given a mod p.
+     * @return Returns 1 if a is a quadratic residue mod p, -1 if it is
+     * a non-quadratic residue, and 0 if a is 0.
+     */
     function legendre(uint256 a, uint256 p)
         public
         view returns(int8)
@@ -95,8 +109,7 @@ library ModUtils {
 
         if (raised == 0 || raised == 1) {
             return int8(raised);
-        }
-        else if (raised == p - 1) {
+        } else if (raised == p - 1) {
             return -1;
         }
 

@@ -14,6 +14,8 @@ library AltBn128 {
 
     using ModUtils for uint256;
 
+    // p is a prime over which we form a basic field
+    // Taken from go-ethereum/crypto/bn256/cloudflare/constants.go
     uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     function getP() public pure returns (uint256) {
@@ -22,6 +24,7 @@ library AltBn128 {
 
     /**
      * @dev Gets generator of G1 group.
+     * Taken from go-ethereum/crypto/bn256/cloudflare/curve.go
      */
     function g1() public pure returns (uint256[2]) {
         return [uint256(1), uint256(2)];
@@ -29,6 +32,7 @@ library AltBn128 {
 
     /**
      * @dev Gets generator of G2 group.
+     * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
     function g2() public pure returns (uint256[4]) {
         return [
@@ -39,6 +43,12 @@ library AltBn128 {
         ];
     }
 
+    /**
+     * @dev yFromX computes a Y value for a point based on an X value. This
+     * computation is simply evaluating the curve equation for Y on a
+     * given X, and allows a point on the curve to be represented by just
+     * an X value + a sign bit.
+     */
     function yFromX(uint256 x)
         private
         view returns(uint256)
@@ -70,8 +80,9 @@ library AltBn128 {
     }
 
     /**
-     * @dev Calculates whether provided y coordinate is even or odd number.
-     * @return 0x01 byte if y is an even number and 0x00 if it's odd.
+     * @dev Calculates whether the provided y coordinate is an even or odd
+     * number.
+     * @return 0x01 if y is an even number and 0x00 if it's odd.
      */
     function ySign(uint256 y) private pure returns (byte) {
         return bytes32(y)[31] & byte(1);
@@ -161,8 +172,8 @@ library AltBn128 {
     }
 
     /**
-     * @dev Wrap the bn256Pairing pre-compile introduced in Byzantium. Return
-     * the result of a pairing check of 4 pairs (G1 p1, G2 p2, G1 p3, G2 p4)
+     * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
+     * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
      */
     function pairing(uint256[2] p1, uint256[4] p2, uint256[2] p3, uint256[4] p4) public view returns (bool) {
         uint256[12] memory arg = [
