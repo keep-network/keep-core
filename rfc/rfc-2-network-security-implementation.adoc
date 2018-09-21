@@ -11,7 +11,7 @@ toc::[]
 The goal of this document is to describe implementation details of the Keep 
 network security mechanisms, meeting requirements specified in 
 link:rfc-1-network-security-requirements.adoc[RFC 1]; messages must be 
-attributable, maintain integrity and optionally confidential.
+attributable, maintain the integrity and must be optionally confidential.
 
 == Peer identification
 Each peer is identified by a static public key equal to the delegate key 
@@ -21,8 +21,9 @@ the same static public key.
 == Network join protocol
 
 Keep publishes a list of recommended bootstrap peers but every other network 
-member can run its own bootstrap peer as well. The list contains addresses of 
-bootstrap peers and their static public keys.
+member can enable the bootstrap capability as well. The list contains addresses of 
+bootstrap peers and their static public keys. Bootstrap peers are just like any 
+other peers except that they also handle network join requests.
 
 A peer wanting to connect to the network sends a network join request to one of 
 the bootstrap peers. Each peer wanting to join a network needs to provide a 
@@ -57,10 +58,12 @@ Message {challenge} ---->
 If all signatures have been valid and challenge response was as expected, both 
 bootstrap peer and peer joining the network execute a check for an on-chain 
 stake of the second party. If peer joining the network has a minimum stake, the 
-bootstrap peer sends it a list of peers in the network and announces peer's 
+bootstrap peer connects peer to the network and announces peer's 
 presence. If the bootstrap peer has a minimum stake, peer joining the network 
-accepts the list. Otherwise, when at least one of the parties does not have a 
-minimum stake, the protocol is aborted.
+decides to connect to the bootstrap peer and becomes a part of the network. 
+Otherwise, when at least one of the parties does not have a minimum stake, the 
+protocol is aborted. Peer joining the network executes the protocol again with the
+next known bootstrap peer.
 
 == Attributability and integrity of the network messages
 
