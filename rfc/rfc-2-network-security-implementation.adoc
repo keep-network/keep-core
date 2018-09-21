@@ -138,7 +138,8 @@ minimum stake, protocol is aborted and all messages from that peer are rejected.
 Sender's nonce is tracked per individual peer. Each message sent from a peer 
 must have a nonce greater by one from the nonce of the previous message. The 
 nonce is included in a message in a way that makes it a part of the content used 
-to produce a signature. 
+to produce a signature. Nonce does not expire. The only way to re-initialize the
+nonce is to repeat the protocol described above.
 
 All messages received from a given peer must contain nonces forming an ordered 
 sequence. If a peer receives a message with nonce less than or equal to the most 
