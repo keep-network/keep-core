@@ -13,6 +13,31 @@ network security mechanisms, meeting requirements specified in
 link:rfc-1-network-security-requirements.adoc[RFC 1]; messages must be 
 attributable, maintain the integrity and must be optionally confidential.
 
+
+== Nework topology and application-level messaging
+It is important to understand the difference between the network topology 
+and communication between peers on the application level. Peers connect to 
+each other basis on the rules defined by the underlying P2P network protocol. 
+Two peers exchanging messages on the application level does not necessarily 
+need to have a direct connection with each other on the network level. It is 
+possible that messages exchanged at the application level by two peers are 
+relayed by other peers on the network level.
+
+On the network level, we require all peers to prove their identity and minimum 
+stake when they establish a connection with each other. All peers monitor the 
+on-chain stake of peers they are connected to and are obligated to drop the 
+connection with the given peer if that peer's on-chain stake dropped below the 
+required minimum. This requirement enforces that only peers with a minimum 
+stake are able to be a part of the network and this requirement is enforced by 
+all peers individually. 
+
+Attributability, integrity and optional confidentiality of messages are 
+requirements enforced on the application level. Even if a message between two 
+peers was relayed by others, this message still needs to fulfil all of those 
+requirements. Since two peers exchanging messages does not necessarily need to 
+have a connection on the network level with each other, they also perform an 
+identity and stake check before the communication between them happens.
+
 == Peer identification
 Each peer is identified by a static public key equal to the delegate key 
 associated with an on-chain stake. There are no two peers in the network with 
