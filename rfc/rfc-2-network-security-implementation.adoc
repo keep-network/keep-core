@@ -64,7 +64,8 @@ The procedure is as follows:
 
 1. Peer joining the network initiates the protocol by sending a network join 
 request message containing randomly generated nonce `n_1` which is a 8-byte 
-(64-bit) unsigned integer. The message is signed with the peer's static private key.
+(64-bit) unsigned integer to the bootstrap peer. The message is signed with the 
+peer's static private key.
 2. The bootstrap peer randomly generates nonce `n_2` which is also 8-byte unsigned 
 integer and computes a challenge which is a result of calling a cryptographic hash 
 function `hash` on the concatenated bytes of `n1` and `n2` (referenced as `n1 || n2`). 
@@ -72,6 +73,7 @@ The bootstrap peer sends back `n_2` and signs the message with its static privat
 3. The peer joining the network recomputes challenge from `n_1` and `n_2`, if it 
 matches the challenge sent by the bootstrap peer, it answers with a message 
 containing the challenge. The message is signed with peer's static private key.
+4. Bootstrap peer validates the challenge.
 
 ```
 JOINING PEER                                      BOOTSTRAP PEER
@@ -85,6 +87,7 @@ challenge = hash(n_1 || n_2)
 Message {challenge} ---->
 ```
 
+Message signature check happens after each round of the protocol.
 If all signatures have been valid and challenge response was as expected, both 
 bootstrap peer and peer joining the network execute a check for an on-chain 
 stake of the second party. If peer joining the network has a minimum stake, the 
