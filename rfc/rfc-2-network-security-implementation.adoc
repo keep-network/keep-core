@@ -10,7 +10,7 @@ toc::[]
 == Background
 The goal of this document is to describe implementation details of the Keep 
 network security mechanisms, meeting requirements specified in 
-[RFC 1](rfc-1-network-security-requirements.adoc); messages must be 
+link:rfc-1-network-security-requirements.adoc[RFC 1]; messages must be 
 attributable, maintain integrity and optionally confidential.
 
 == Peer identification
