@@ -56,10 +56,9 @@ bootstrap peers and their static public keys. Bootstrap peers are just like any
 other peers except that they also handle network join requests.
 
 A peer wanting to connect to the network sends a network join request to one of 
-the bootstrap peers. Each peer wanting to join a network needs to provide a 
-proof of attestation over a minimum stake associated with peer's static public 
-key, the same is required from a bootstrap peer handling the network join 
-request.
+the bootstrap peers. Each peer wanting to join a network needs to provide a proof
+of ownership of an on-chain identity with an associated stake. As part of the 
+network join handshake, the bootstrap peer will also provide proof of its own stake.
 
 The procedure is as follows:
 
