@@ -59,11 +59,12 @@ request.
 The procedure is as follows:
 
 1. Peer joining the network initiates the protocol by sending a network join 
-request message containing randomly generated nonce `n_1`. The message is signed 
-with the peer's static private key.
-2. The bootstrap peer randomly generates nonce `n_2` and computes a challenge 
-which is `sha256` of `n1 || n2`. The bootstrap peer sends back `n_2` and signs 
-the message with its static private key.
+request message containing randomly generated nonce `n_1` which is a 8-byte 
+(64-bit) unsigned integer. The message is signed with the peer's static private key.
+2. The bootstrap peer randomly generates nonce `n_2` which is also 8-byte unsigned 
+integer and computes a challenge which is a result of calling a cryptographic hash 
+function `hash` on the concatenated bytes of `n1` and `n2` (referenced as `n1 || n2`). 
+The bootstrap peer sends back `n_2` and signs the message with its static private key.
 3. The peer joining the network recomputes challenge from `n_1` and `n_2`, if it 
 matches the challenge sent by the bootstrap peer, it answers with a message 
 containing the challenge. The message is signed with peer's static private key.
@@ -74,9 +75,9 @@ JOINING PEER                                      BOOTSTRAP PEER
 n_1 = random_nonce()
 Message { n_1 } ---->
                                                   n_2 = random_nonce()
-                                                  challenge = sha256(n_1 || n_2)                                  
+                                                  challenge = hash(n_1 || n_2)                                  
                                                   <---- Message { n_2 }
-challenge = sha256(n_1 || n_2)
+challenge = hash(n_1 || n_2)
 Message {challenge} ---->
 ```
 
@@ -108,9 +109,9 @@ and challenge are discarded when connection protocol completed.
 
 All messages in the network are signed with sender's private static key. Before 
 any two peers start exchanging messages, they need to agree on a common nonce 
-that will be used to track order of messages as well as to prevent replay and 
-message-from-future attacks. The protocol is similar to the one used to create 
-a challenge:
+(8-byte unsigned integer) that will be used to track order of messages as well 
+as to prevent replay and message-from-future attacks. The protocol is similar 
+to the one used to create a challenge:
 
 ```
 PEER 1                                          PEER 2
@@ -118,7 +119,7 @@ PEER 1                                          PEER 2
 n_1 = random_nonce() 
 Message { n_1 } ---->
                                                 n_2 = random_nonce()
-                                                nonce = sha256(n_1 || n_2).toInt
+                                                nonce = hash(n_1 || n_2).toInt
                                                 <---- Message { n_2 }
 nonce = sha256(n_1 || n_2).toInt
 ```
