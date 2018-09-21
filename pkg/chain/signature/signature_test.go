@@ -55,22 +55,19 @@ func TestSignature(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			var err error
-			var val *VerifiedSignatureData
-			var msg, sig string
 			key, err := ethereum.ReadAndDecryptKeyFile(test.keyFile, test.password)
 			if test.expectError {
 				if err == nil {
 					t.Errorf("failed to returne an error [%v] \n", err)
 				}
-				goto Done
+				return
 			}
-			msg, sig, err = Sign(key, test.in)
+			msg, sig, err := Sign(key, test.in)
 			if test.expectError {
 				if err == nil {
 					t.Errorf("failed to returne an error [%v] \n", err)
 				}
-				goto Done
+				return
 			}
 			if err != nil {
 				t.Errorf("returned an error [%v] \n", err)
@@ -78,16 +75,15 @@ func TestSignature(t *testing.T) {
 			if msg != test.expectedMsg {
 				t.Errorf("expected %s got %s\n", test.expectedMsg, msg)
 			}
-			// ra, pk, sigValid, err := VerifySignature(test.addr, sig, msg)
-			val, err = VerifySignature(test.addr, sig, msg)
+			val, err := VerifySignature(test.addr, sig, msg)
 			if test.expectNotToValidate {
 				if val.IsValid {
 					t.Errorf("should not have validated but did\n")
 				}
-				goto Done
+				return
 			}
 			if err != nil {
-				t.Errorf("valied to verify [%v] \n", err)
+				t.Errorf("falied to verify [%v] \n", err)
 			}
 			if val.RecoveredAddress != test.expectedEIP55Addr {
 				t.Errorf("expected %s got %s\n", test.expectedEIP55Addr, val.RecoveredAddress)
@@ -95,7 +91,25 @@ func TestSignature(t *testing.T) {
 			if val.RecoveredPublicKey != test.expectedPubKey {
 				t.Errorf("expected %s got %s\n", test.expectedEIP55Addr, val.RecoveredPublicKey)
 			}
-		Done:
+
+			if got := MessageHasValidSignature(test.addr, sig, msg); got == test.expectNotToValidate {
+				t.Errorf("validation error, expected %v, got %v\n", !test.expectNotToValidate, got)
+			}
+
+			pk, err := GetPublicKey(test.addr, sig, msg)
+			if err == nil {
+				if pk != test.expectedPubKey {
+					t.Errorf("invalid public key, expected %v, got %v\n", test.expectedPubKey, pk)
+				}
+			}
+
+			pkEcdsa, _ := GetPublicKeyECDSA(test.addr, sig, msg)
+			ca := PublicKeyToAddress(pkEcdsa)
+			encCa := EncodeAddressToEIP55(ca)
+			if encCa != test.expectedEIP55Addr {
+				t.Errorf("error, expected %s, got %s\n", test.expectedEIP55Addr, encCa)
+			}
+
 		})
 	}
 
