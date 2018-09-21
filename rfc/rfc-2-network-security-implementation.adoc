@@ -65,6 +65,20 @@ Otherwise, when at least one of the parties does not have a minimum stake, the
 protocol is aborted. Peer joining the network executes the protocol again with the
 next known bootstrap peer.
 
+== Network peer authorization protocol
+
+When a peer went through network join protocol successfully it is connected to 
+a bootstrap peer and is a full-fledged network member. It starts discovering other 
+peers in the network and connects to some of those according to the strategy used 
+in the network. Before peer decides to connect to any other network member, the 
+same nonce, challenge, and stake check protocol must be executed between those two 
+peers as it was between the peer when it was joining the network and the bootstrap 
+peer. Peers decide to connect to each other only if they both went through the 
+protocol successfully and proved their on-chain minimum stakes. This is a trust 
+no-one strategy which allows that even a corrupted network can heal in case of a 
+malicious split brain event. Just like it is with the network join protocol, nonce 
+and challenge are discarded when connection protocol completed.
+
 == Attributability and integrity of the network messages
 
 All messages in the network are signed with sender's private static key. Before 
