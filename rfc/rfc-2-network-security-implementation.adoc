@@ -7,14 +7,19 @@
 toc::[]
 
 
-== Background
-The goal of this document is to describe implementation details of the Keep 
-network security mechanisms, meeting requirements specified in 
-link:rfc-1-network-security-requirements.adoc[RFC 1]; messages must be 
-attributable, maintain the integrity and must be optionally confidential.
+== Proposal
+In this document, we describe implementation details of the Keep network 
+security mechanisms meeting requirements specified in 
+link:rfc-1-network-security-requirements.adoc[RFC 1]
 
+=== Goal
 
-== Nework topology and application-level messaging
+Messages exchanged in the network must be attributable, maintain the 
+integrity and must be optionally confidential.
+
+=== Implementation
+
+==== Nework topology and application-level messaging
 It is important to understand the difference between the network topology 
 and communication between peers on the application level. Peers connect to 
 each other basis on the rules defined by the underlying P2P network protocol. 
@@ -38,12 +43,12 @@ requirements. Since two peers exchanging messages does not necessarily need to
 have a connection on the network level with each other, they also perform an 
 identity and stake check before the communication between them happens.
 
-== Peer identification
+==== Peer identification
 Each peer is identified by a static public key equal to the delegate key 
 associated with an on-chain stake. There are no two peers in the network with 
 the same static public key.
 
-== Network join protocol
+==== Network join protocol
 
 Keep publishes a list of recommended bootstrap peers but every other network 
 member can enable the bootstrap capability as well. The list contains addresses of 
@@ -91,7 +96,7 @@ Otherwise, when at least one of the parties does not have a minimum stake, the
 protocol is aborted. Peer joining the network executes the protocol again with the
 next known bootstrap peer.
 
-== Network peer authorization protocol
+==== Network peer authorization protocol
 
 When a peer went through network join protocol successfully it is connected to 
 a bootstrap peer and is a full-fledged network member. It starts discovering other 
@@ -105,7 +110,7 @@ no-one strategy which allows that even a corrupted network can heal in case of a
 malicious split brain event. Just like it is with the network join protocol, nonce 
 and challenge are discarded when connection protocol completed.
 
-== Attributability and integrity of the network messages
+==== Attributability and integrity of the network messages
 
 All messages in the network are signed with sender's private static key. Before 
 any two peers start exchanging messages, they need to agree on a common nonce 
@@ -167,7 +172,7 @@ When peer receives a message it firsts check the signature. If it matches, then
 peer validates the nonce. If the nonce is greater by one from the nonce included 
 in the previous message, then the message is accepted.
 
-== Message Confidentiality
+==== Message Confidentiality
 
 Encryption is based on ephemeral keys generated individually for each protocol 
 execution. Only point-to-point communication can be encrypted. 
@@ -181,6 +186,7 @@ publish a complaint about the other peer's message. In such case, the symmetric
 key is considered as compromised and should not be used for further 
 communications.
 
+[bibliography]
 == Related Links
 
 - Discussions on writing this document:
