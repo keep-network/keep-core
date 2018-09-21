@@ -136,12 +136,22 @@ All messages received from a given peer must contain nonces forming an ordered
 sequence. If a peer receives a message with nonce less than or equal to the most 
 recent one for the given sender, the message is rejected and the sender is 
 informed about that. Due to the nature of the network, some messages can be lost 
-or delayed. Each peer has a cache of messages received within a fixed time 
-window. If a received message has a nonce greater by more than one from the 
-currently expected nonce, that message is added to cache but it's not accepted 
-until the gap between the expected and message's nonce is filled. There is 
-a fixed, short time limit under which the gap must be filled. If that not 
-happens, the message is rejected and the sender is informed about this fact.
+or delayed. Each peer has a cache of messages sent and received within a fixed 
+time window. If a received message has a nonce greater by more than one from the 
+currently expected nonce, that message is added to cache but it’s not accepted
+until the gap between the expected and message’s nonce is filled. There is a 
+fixed, short time limit under which the gap must be filled. If that not happens, 
+the message is rejected and the sender is informed about this fact. Message 
+rejected notification contains a nonce of a message that was rejected as well as 
+the currently expected nonce. Sender, having the cache of messages sent in the 
+fixed time window resends all the messages starting from the one with nonce 
+expected by the receiver. If sender does not provide the missing messages 
+within a fixed timeout, receiver drops the connection.
+
+Sent and received messages cache window, time after a notification about 
+rejecting a message is sent as well as time after connection is droped if 
+expected messages were not delivered should be the same for all peers in the 
+network. That's why those values are fixed and are not configurable per peer.
 
 All peers in the network periodically execute requests to the chain in order to 
 update current value of stake for each other peers they have communicated with 
