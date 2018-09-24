@@ -22,8 +22,8 @@ type KeepRandomBeacon struct {
 
 // NewKeepRandomBeacon creates the necessary connections and configurations for
 // accessing the contract.
-func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
-	contractAddressHex, exists := pv.config.ContractAddresses["KeepRandomBeaconImplV1"]
+func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) {
+	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepRandomBeaconImplV1"]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for 'KeepRandomBeacon' in configuration",
@@ -33,7 +33,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 
 	beaconTransactor, err := abi.NewKeepRandomBeaconImplV1Transactor(
 		contractAddress,
-		pv.client,
+		chainConfig.client,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -42,28 +42,28 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 		)
 	}
 
-	if pv.accountKey.key == nil {
+	if chainConfig.accountKey.key == nil {
 		key, err := ReadAndDecryptKeyFile(
-			pv.config.Account.KeyFile,
-			pv.config.Account.KeyFilePassword,
+			chainConfig.config.Account.KeyFile,
+			chainConfig.config.Account.KeyFilePassword,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to read KeyFile: %s: [%v]",
-				pv.config.Account.KeyFile,
+				chainConfig.config.Account.KeyFile,
 				err,
 			)
 		}
-		pv.accountKey.key = key
+		chainConfig.accountKey.key = key
 	}
 
 	optsTransactor := bind.NewKeyedTransactor(
-		pv.accountKey.key.PrivateKey,
+		chainConfig.accountKey.key.PrivateKey,
 	)
 
 	beaconCaller, err := abi.NewKeepRandomBeaconImplV1Caller(
 		contractAddress,
-		pv.client,
+		chainConfig.client,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -78,7 +78,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 
 	randomBeaconContract, err := abi.NewKeepRandomBeaconImplV1(
 		contractAddress,
-		pv.client,
+		chainConfig.client,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
