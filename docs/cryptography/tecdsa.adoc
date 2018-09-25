@@ -93,9 +93,11 @@ After commitments from all signers are gathered the second round starts.
 +
 Since _ECDSA Private Key Share_ should always be kept secret it is first encrypted with
 Paillier and this encrypted value is published along with Zero Knowledge Proof 
-Π~i~, which states that:
+Π~i~.
 +
-****
+[NOTE]
+.Zero Knowledge Proof Π~i~
+====
 ∃ _secretKeyShare_ ∈ [-q^3^, q^3^] such that
 
 _g_^_secretKeyShare_^ = _publicKeyShare_
@@ -104,7 +106,7 @@ D(_encryptedSecretKeyShare_) = _secretKeyShare_
 
 where _q_ is an order and _g_ is a generator point of an Elliptic Curve and 
 D is a Decrypt function of a Paillier scheme
-****
+====
 +
 _ECDSA Public Key Share_ is published with a decommitment key used in a previous 
 round to produce a commitment to _ECDSA Public Key Share_ value.
@@ -192,10 +194,11 @@ Output::
 
 ===== Procedure
 
-. Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters,
-which states that:
+. Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters.
 +
-****
+[NOTE]
+.Zero Knowledge Proof Π~1,i~
+====
 ∃ _secretKeyFactorShare_ ∈ [-q^3^, q^3^] such that
 
 D(_encryptedSecretKeyFactorShare_) = _secretKeyFactorShare_
@@ -203,7 +206,7 @@ D(_encryptedSecretKeyFactorShare_) = _secretKeyFactorShare_
 D(_secretKeyMultipleShare_) = _secretKeyFactorShare_ * D(_secretKey_)
 
 where _q_ is an order of an Elliptic Curve and D is a Decrypt function of a Paillier scheme
-****
+====
 
 . Signers publish _SignRound2Message_ containing _ECDSA Private Key Factor Share_, 
 _ECDSA Private Key Multiple Share_ and decommitment key for the commitment from 
@@ -278,7 +281,9 @@ This round starts after all signers share their commitments in <<sign_round_3>>.
 . Each signer calculates a Zero Knowledge Proof Π~2,i~ for his individual parameters,
 which states that:
 +
-****
+[NOTE]
+.Zero Knowledge Proof Π~2,i~
+====
 ∃ _signatureFactorSecretShare_ ∈ [-q^3^, q^3^], _signatureFactorPublicShare_ ∈ [-q^8^, q^8^] such that
 
 _g_^_signatureFactorSecretShare_^ = _signatureFactorPublicShare_
@@ -287,7 +292,7 @@ D(_signatureUnmaskShare_) = _signatureFactorSecretShare_ × D(_secretKeyFactor_)
 
 where _q_ is an order and _g_ is a generator point of an Elliptic Curve and 
 D is a Decrypt function of a Paillier scheme
-****
+====
 
 . Signers publish _SignRound4Message_ containing the Zero Knowledge Proof Π~2,i~,
 along with parameters and decommitment key from the <<sign_round_3>>.
