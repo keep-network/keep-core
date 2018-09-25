@@ -20,7 +20,7 @@ to a verifier, committer is required to use the verifier's _Commitment Master Pu
 Output::
 * _Commitment Master Public Key_ for each peer signer
 
-//-
+===== Procedure
 
 . A signer generates _Commitment Master Public Key_ for each peer signer and publishes it to them in _CommitmentMasterPublicKeyMessage_:
 +
@@ -62,7 +62,7 @@ Input::
 Output::
 * _Public Key Share Commitment_
 
-//-
+===== Procedure
 
 . Each signer generates _ECDSA Key Share_ which consists of _ECDSA Private Key Share_ 
 and _ECDSA Public Key Share_.
@@ -94,7 +94,7 @@ Input::
 Output::
 * _ECDSA Key_ {_Encrypted ECDSA Private Key_, _ECDSA Public Key_}
 
-//-
+===== Procedure
 
 After commitments from all signers are gathered the second round starts.
 
@@ -171,7 +171,7 @@ Input::
 Output::
 * _ECDSA Private Key Factor Share Commitment_
 
-//-
+===== Procedure
 
 . Each signer generates _Encrypted ECDSA Private Key Factor Share_ and 
 _ECDSA Private Key Multiple Share_. These values are kept private for now. +
@@ -197,7 +197,7 @@ Output::
 * Decommitment key for _ECDSA Private Key Factor Share Commitment_
 * _Zero Knowledge Proof Π~1,i~_
 
-//-
+===== Procedure
 
 . Each signer calculates a Zero Knowledge Proof Π~1,i~ for his individual parameters,
 which states that:
@@ -251,7 +251,7 @@ Input::
 Output::
 * _Signature Factor Share Commitment_
 
-//-
+===== Procedure
 
 . Each signer computes a set of parameters: _Signature Factor Public Share_, and 
 _Signature Unmask Share_ and calculates a commitment to these
@@ -278,7 +278,7 @@ Output::
 * Decommitment key for _Signature Factor Share Commitment_
 * _Zero Knowledge Proof Π~2,i~_
 
-//-
+===== Procedure
 
 This round starts after all signers share their commitments in <<sign_round_3>>.
 
@@ -333,7 +333,7 @@ Input::
 Output::
 * _Signature Unmask Partial Decryption_
 
-//-
+===== Procedure
 
 . Each signer computes a hash of _Signature Factor Public_ parameter.
 
@@ -364,7 +364,7 @@ Input::
 Output::
 * _Signature Partial Decryption_
 
-//-
+===== Procedure
 
 . Each signer computes _Encrypted Signature_ value for a _Message Hash_ with 
 _Signature Unmask_, _Signature Factor Public Hash_ and encrypted _ECDSA Private Key Factor_ 
