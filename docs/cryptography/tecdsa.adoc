@@ -18,11 +18,12 @@ and sent to all other peer signers. When generating a commitment that will be se
 to a verifier, committer is required to use the verifier's _Commitment Master Public Key_.
 
 Output::
-* _Commitment Master Public Key_ for each peer signer
+* _Commitment Master Public Key_
 
 ===== Procedure
 
-. A signer generates _Commitment Master Public Key_ for each peer signer and publishes it to them in _CommitmentMasterPublicKeyMessage_:
+. A signer generates _Commitment Master Public Key_ and broadcasts it to all peer 
+signers in _CommitmentMasterPublicKeyMessage_:
 +
 .CommitmentMasterPublicKeyShareMessage
 [%header]
