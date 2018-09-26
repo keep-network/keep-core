@@ -45,7 +45,7 @@ func VerifySignature(addr, sig, msg string) (*VerifiedSignatureData, error) {
 	}
 	recoveredPublicKey := hex.EncodeToString(crypto.FromECDSAPub(recoveredPubkey))
 	rawRecoveredAddress := crypto.PubkeyToAddress(*recoveredPubkey)
-	isValid := constantTimeCompare(address, rawRecoveredAddress) == 1
+	isValid := address == rawRecoveredAddress
 	if !isValid {
 		return &VerifiedSignatureData{}, nil
 	}

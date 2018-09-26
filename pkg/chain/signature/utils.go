@@ -2,7 +2,6 @@ package signature
 
 import (
 	"crypto/ecdsa"
-	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 
@@ -19,7 +18,7 @@ func GetPublicKey(addr, sig, msg string) (string, error) {
 	return tmp.RecoveredPublicKey, nil
 }
 
-func GetPublicKeyECDSA(addr, sig, msg string) (*ecdsa.PublicKey, error) {
+func GetPublicKeyECDSA(sig, msg string) (*ecdsa.PublicKey, error) {
 	message, err := hex.DecodeString(msg)
 	if err != nil {
 		return nil, fmt.Errorf("unabgle to decode message (invalid hex data) [%v]", err)
@@ -65,7 +64,7 @@ func VerifySignatureWithPubKey(pubkey *ecdsa.PublicKey, sig, msg string) (bool, 
 		return false, fmt.Errorf("signature verification failed [%v]", err)
 	}
 	rawRecoveredAddress := crypto.PubkeyToAddress(*recoveredPubkey)
-	isValid := constantTimeCompare(PublicKeyToAddress(pubkey), rawRecoveredAddress) == 1
+	isValid := PublicKeyToAddress(pubkey) == rawRecoveredAddress
 	return isValid, nil
 }
 
@@ -73,14 +72,6 @@ func VerifySignatureWithPubKey(pubkey *ecdsa.PublicKey, sig, msg string) (bool, 
 func PublicKeyToAddress(p *ecdsa.PublicKey) common.Address {
 	pubBytes := crypto.FromECDSAPub(p)
 	return common.BytesToAddress(crypto.Keccak256(pubBytes[1:])[12:])
-}
-
-// constantTimeCompare calls the standard constant time compare after doing a
-// typecast from common.Address to byte slice.
-func constantTimeCompare(a, b common.Address) int {
-	aa := ([common.AddressLength]byte)(a)
-	bb := ([common.AddressLength]byte)(b)
-	return subtle.ConstantTimeCompare(aa[:], bb[:])
 }
 
 // EncodeAddressToEIP55 encodes and address with EIP-55 encoding.
