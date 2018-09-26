@@ -73,8 +73,3 @@ func PublicKeyToAddress(p *ecdsa.PublicKey) common.Address {
 	pubBytes := crypto.FromECDSAPub(p)
 	return common.BytesToAddress(crypto.Keccak256(pubBytes[1:])[12:])
 }
-
-// EncodeAddressToEIP55 encodes and address with EIP-55 encoding.
-func EncodeAddressToEIP55(addr common.Address) string {
-	return addr.Hex()
-}
