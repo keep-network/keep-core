@@ -43,7 +43,7 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 	}
 
 	if pv.accountKey.key == nil {
-		key, err := ReadAndDecryptKeyFile(
+		key, err := DecryptKeyFile(
 			pv.config.Account.KeyFile,
 			pv.config.Account.KeyFilePassword,
 		)
