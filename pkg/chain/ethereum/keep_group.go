@@ -62,7 +62,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 		)
 	}
 
-	if pv.accountKey.key == nil {
+	if pv.accountKey == nil {
 		key, err := DecryptKeyFile(
 			pv.config.Account.KeyFile,
 			pv.config.Account.KeyFilePassword,
@@ -74,11 +74,11 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 				err,
 			)
 		}
-		pv.accountKey.key = key
+		pv.accountKey = key
 	}
 
 	optsTransactor := bind.NewKeyedTransactor(
-		pv.accountKey.key.PrivateKey,
+		pv.accountKey.PrivateKey,
 	)
 
 	groupCaller, err := abi.NewKeepGroupImplV1Caller(contractAddress, pv.client)

@@ -38,9 +38,6 @@ type Config struct {
 	Account Account
 }
 
-// AccountKey is a struct that contains the decrypted key from Account.
-type AccountKey struct {
-	// key is a saved decrypted key read from KeyFile and decrypted with
-	// KeyFilePassword.
-	key *keystore.Key
-}
+// key is a saved decrypted key read from KeyFile and decrypted with
+// KeyFilePassword.
+type AccountKey *keystore.Key
