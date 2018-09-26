@@ -1,9 +1,5 @@
 package ethereum
 
-import (
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-)
-
 // Account is a struct that contains the configuration for accessing an
 // Ethereum network and a contract on the network.
 type Account struct {
@@ -37,7 +33,3 @@ type Config struct {
 
 	Account Account
 }
-
-// key is a saved decrypted key read from KeyFile and decrypted with
-// KeyFilePassword.
-type AccountKey *keystore.Key
