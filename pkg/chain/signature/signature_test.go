@@ -103,13 +103,6 @@ func TestSignature(t *testing.T) {
 				}
 			}
 
-			pkEcdsa, _ := GetPublicKeyECDSA(sig, msg)
-			ca := PublicKeyToAddress(pkEcdsa)
-			encCa := EncodeAddressToEIP55(ca)
-			if encCa != test.expectedEIP55Addr {
-				t.Errorf("error, expected %s, got %s\n", test.expectedEIP55Addr, encCa)
-			}
-
 		})
 	}
 
