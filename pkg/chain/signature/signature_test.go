@@ -55,7 +55,7 @@ func TestSignature(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			key, err := ethereum.ReadAndDecryptKeyFile(test.keyFile, test.password)
+			key, err := ethereum.DecryptKeyFile(test.keyFile, test.password)
 			if test.expectError {
 				if err == nil {
 					t.Errorf("failed to returne an error [%v] \n", err)
