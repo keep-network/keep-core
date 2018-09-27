@@ -348,19 +348,28 @@ func (s *Round2Signer) SignRound3(
 		maskShareMulCardinality,
 	)
 
+	commitments := make(map[string]*commitment.MultiTrapdoorCommitment)
+	decommitmentKeys := make(map[string]*commitment.DecommitmentKey)
 	round3Messages := make([]*SignRound3Message, s.signerGroup.PeerSignerCount())
 
-	// [C_2i, D_2i] = Com(r_i, w_i)
-	commitment, decommitmentKey, err :=
-		commitment.Generate(
-			s.commitmentMasterPublicKey(),
-			signatureFactorPublicShare.Bytes(),
-			signatureUnmaskShare.C.Bytes(),
-		)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"could not execute round 3 of signing [%v]", err,
-		)
+	for i, peerSignerID := range s.peerSignerIDs() {
+		// [C_2i, D_2i] = Com(r_i, w_i)
+		commitments[peerSignerID], decommitmentKeys[peerSignerID], err =
+			commitment.Generate(
+				s.peerProtocolParameters[peerSignerID].commitmentMasterPublicKey,
+				signatureFactorPublicShare.Bytes(),
+				signatureUnmaskShare.C.Bytes(),
+			)
+		if err != nil {
+			return nil, nil, fmt.Errorf(
+				"could not execute round 3 of signing [%v]", err,
+			)
+		}
+
+		round3Messages[i] = &SignRound3Message{
+			signerID:                       s.ID,
+			signatureFactorShareCommitment: commitments[peerSignerID],
+		}
 	}
 
 	signer := &Round3Signer{
@@ -369,17 +378,12 @@ func (s *Round2Signer) SignRound3(
 		secretKeyFactor:   secretKeyFactor,
 		secretKeyMultiple: secretKeyMultiple,
 
-		signatureFactorSecretShare:          signatureFactorSecretShare,
-		signatureFactorPublicShare:          signatureFactorPublicShare,
-		signatureFactorMaskShare:            signatureFactorMaskShare,
-		signatureUnmaskShare:                signatureUnmaskShare,
-		signatureFactorShareDecommitmentKey: decommitmentKey,
-		paillierRandomness:                  paillierRandomness,
-	}
-
-	round3Message := &SignRound3Message{
-		signerID:                       s.ID,
-		signatureFactorShareCommitment: commitment,
+		signatureFactorSecretShare:           signatureFactorSecretShare,
+		signatureFactorPublicShare:           signatureFactorPublicShare,
+		signatureFactorMaskShare:             signatureFactorMaskShare,
+		signatureUnmaskShare:                 signatureUnmaskShare,
+		signatureFactorShareDecommitmentKeys: decommitmentKeys,
+		paillierRandomness:                   paillierRandomness,
 	}
 
 	return signer, round3Messages, nil
@@ -402,7 +406,7 @@ type Round4Signer struct {
 // decommitment key allowing to validate commitment to those values
 // (published in the previous round) as well as ZKP allowing to check their
 // correctness.
-func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
+func (s *Round3Signer) SignRound4() (*Round4Signer, []*SignRound4Message, error) {
 	zkp, err := zkp.CommitEcdsaSignatureFactorRangeProof(
 		s.signatureFactorPublicShare,
 		s.signatureUnmaskShare,
@@ -426,17 +430,21 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, *SignRound4Message, error) {
 		secretKeyMultiple: s.secretKeyMultiple,
 	}
 
-	round4Message := &SignRound4Message{
-		signerID: s.ID,
+	round4Messages := make([]*SignRound4Message, s.signerGroup.PeerSignerCount())
 
-		signatureFactorPublicShare:          s.signatureFactorPublicShare,
-		signatureUnmaskShare:                s.signatureUnmaskShare,
-		signatureFactorShareDecommitmentKey: s.signatureFactorShareDecommitmentKey,
+	for i, peerSignerID := range s.peerSignerIDs() {
+		round4Messages[i] = &SignRound4Message{
+			signerID: s.ID,
 
-		signatureFactorProof: zkp,
+			signatureFactorPublicShare:          s.signatureFactorPublicShare,
+			signatureUnmaskShare:                s.signatureUnmaskShare,
+			signatureFactorShareDecommitmentKey: s.signatureFactorShareDecommitmentKeys[peerSignerID],
+
+			signatureFactorProof: zkp,
+		}
 	}
 
-	return signer, round4Message, nil
+	return signer, round4Messages, nil
 }
 
 // CombineRound4Messages takes all messages from the third and fourth signing
