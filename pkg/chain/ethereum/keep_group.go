@@ -65,8 +65,8 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 
 	if chainConfig.accountKey == nil {
 		key, err := DecryptKeyFile(
-			pv.config.Account.KeyFile,
-			pv.config.Account.KeyFilePassword,
+			chainConfig.config.Account.KeyFile,
+			chainConfig.config.Account.KeyFilePassword,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
