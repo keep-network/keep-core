@@ -465,26 +465,26 @@ func (s *Round4Signer) CombineRound4Messages(
 	signatureFactorPublic *curve.Point, // R
 	err error,
 ) {
-	groupSize := s.signerGroup.InitialGroupSize
+	peerSignerCount := s.signerGroup.PeerSignerCount()
 
-	if len(round3Messages) != groupSize {
+	if len(round3Messages) != peerSignerCount {
 		return nil, nil, fmt.Errorf(
-			"round 3 messages required from all group members; got %v, expected %v",
+			"round 3 messages required from all group peer members; got %v, expected %v",
 			len(round3Messages),
-			groupSize,
+			peerSignerCount,
 		)
 	}
 
-	if len(round4Messages) != groupSize {
+	if len(round4Messages) != peerSignerCount {
 		return nil, nil, fmt.Errorf(
-			"round 4 messages required from all group members; got %v, expected %v",
+			"round 4 messages required from all group peer members; got %v, expected %v",
 			len(round4Messages),
-			groupSize,
+			peerSignerCount,
 		)
 	}
 
-	signatureUnmaskShares := make([]*paillier.Cypher, groupSize)
-	signatureFactorPublicShares := make([]*curve.Point, groupSize)
+	signatureUnmaskShares := make([]*paillier.Cypher, peerSignerCount)
+	signatureFactorPublicShares := make([]*curve.Point, peerSignerCount)
 
 	for i, round3Message := range round3Messages {
 		foundMatchingRound4Message := false
