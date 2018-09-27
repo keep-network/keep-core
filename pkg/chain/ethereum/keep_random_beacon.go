@@ -42,8 +42,8 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		)
 	}
 
-	if chainConfig.accountKey.key == nil {
-		key, err := ReadAndDecryptKeyFile(
+	if chainConfig.accountKey == nil {
+		key, err := DecryptKeyFile(
 			chainConfig.config.Account.KeyFile,
 			chainConfig.config.Account.KeyFilePassword,
 		)
@@ -54,11 +54,11 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 				err,
 			)
 		}
-		chainConfig.accountKey.key = key
+		chainConfig.accountKey = key
 	}
 
 	optsTransactor := bind.NewKeyedTransactor(
-		chainConfig.accountKey.key.PrivateKey,
+		chainConfig.accountKey.PrivateKey,
 	)
 
 	beaconCaller, err := abi.NewKeepRandomBeaconImplV1Caller(

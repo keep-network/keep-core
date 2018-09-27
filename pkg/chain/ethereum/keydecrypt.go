@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 )
 
-// ReadAndDecryptKeyFile reads in a key file and uses the password to decrypt it.
-func ReadAndDecryptKeyFile(
+// DecryptKeyFile reads in a key file and uses the password to decrypt it.
+func DecryptKeyFile(
 	keyFile, password string,
 ) (*keystore.Key, error) {
 	data, err := ioutil.ReadFile(keyFile)
