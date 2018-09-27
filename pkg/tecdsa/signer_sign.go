@@ -367,7 +367,9 @@ func (s *Round2Signer) SignRound3(
 		}
 
 		round3Messages[i] = &SignRound3Message{
-			signerID:                       s.ID,
+			signerID:   s.ID,
+			receiverID: peerSignerID,
+
 			signatureFactorShareCommitment: commitments[peerSignerID],
 		}
 	}
