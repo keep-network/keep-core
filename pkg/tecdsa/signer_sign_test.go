@@ -178,7 +178,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				return []*SignRound3Message{round3Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 3 messages required from all group members; got 1, expected 10",
+				"round 3 messages required from all group peer members; got 1, expected 9",
 			),
 		},
 		"negative validation - too few round 4 messages": {
@@ -188,7 +188,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				return []*SignRound4Message{round4Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 4 messages required from all group members; got 1, expected 10",
+				"round 4 messages required from all group peer members; got 1, expected 9",
 			),
 		},
 		"negative validation - missing round 3 message for signer": {
