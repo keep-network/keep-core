@@ -65,7 +65,8 @@ type SignRound3Message struct {
 // SignRound4Message is a message produced by each signer as a result of
 // executing the fourth round of T-ECDSA signing algorithm.
 type SignRound4Message struct {
-	signerID string
+	signerID   string
+	receiverID string
 
 	signatureFactorPublicShare          *curve.Point                // r_i = g^{k_i}
 	signatureUnmaskShare                *paillier.Cypher            // w_i = E(k_i * ρ + c_i * q)

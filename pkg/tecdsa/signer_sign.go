@@ -434,7 +434,8 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, []*SignRound4Message, error)
 
 	for i, peerSignerID := range s.peerSignerIDs() {
 		round4Messages[i] = &SignRound4Message{
-			signerID: s.ID,
+			signerID:   s.ID,
+			receiverID: peerSignerID,
 
 			signatureFactorPublicShare:          s.signatureFactorPublicShare,
 			signatureUnmaskShare:                s.signatureUnmaskShare,
