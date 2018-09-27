@@ -74,10 +74,10 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			var round1Messages []*SignRound1Message
-			var round2Messages []*SignRound2Message
 			round1Signers := make([]*Round1Signer, len(signers))
 			round2Signers := make([]*Round2Signer, len(signers))
+			var round1Messages []*SignRound1Message
+			var round2Messages []*SignRound2Message
 
 			for i, signer := range signers {
 				round1Signer, signersRound1Message, err := signer.SignRound1()
@@ -221,10 +221,10 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			round3Messages := make([]*SignRound3Message, len(round2Signers))
-			round4Messages := make([]*SignRound4Message, len(round2Signers))
 			round3Signers := make([]*Round3Signer, len(round2Signers))
 			round4Signers := make([]*Round4Signer, len(round2Signers))
+			var round3Messages []*SignRound3Message
+			var round4Messages []*SignRound4Message
 
 			for i, signer := range round2Signers {
 				round3Signer, round3Message, err := signer.SignRound3(

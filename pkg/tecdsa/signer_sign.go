@@ -501,8 +501,8 @@ func (s *Round4Signer) CombineRound4Messages(
 					s.secretKeyFactor,
 					s.zkpParameters,
 				) {
-					signatureFactorPublicShares[i] = round4Message.signatureFactorPublicShare
 					signatureUnmaskShares[i] = round4Message.signatureUnmaskShare
+					signatureFactorPublicShares[i] = round4Message.signatureFactorPublicShare
 				} else {
 					return nil, nil, errors.New("round 4 message rejected")
 				}
