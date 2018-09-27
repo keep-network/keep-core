@@ -392,7 +392,7 @@ func (s *Round2Signer) SignRound3(
 // Round4Signer represents state of signer after executing the fourth round
 // of signing algorithm.
 type Round4Signer struct {
-	Signer
+	*Round3Signer
 
 	secretKeyFactor   *paillier.Cypher // u = E(ρ)
 	secretKeyMultiple *paillier.Cypher // v = E(ρx)
@@ -424,7 +424,7 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, []*SignRound4Message, error)
 	}
 
 	signer := &Round4Signer{
-		Signer: s.Signer,
+		Round3Signer: s,
 
 		secretKeyFactor:   s.secretKeyFactor,
 		secretKeyMultiple: s.secretKeyMultiple,
