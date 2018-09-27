@@ -229,23 +229,28 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 			var round4Messages []*SignRound4Message
 
 			for i, signer := range round2Signers {
-				round3Signer, round3Message, err := signer.SignRound3(
+				round3Signer, signersRound3Messages, err := signer.SignRound3(
 					secretKeyRandomFactor, secretKeyMultiple,
 				)
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				round4Signer, round4Message, err := round3Signer.SignRound4()
+				round4Signer, signersRound4Messages, err := round3Signer.SignRound4()
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				round3Messages[i] = round3Message
-				round4Messages[i] = round4Message
 				round3Signers[i] = round3Signer
 				round4Signers[i] = round4Signer
+
+				round3Messages = append(round3Messages, signersRound3Messages...)
+				round4Messages = append(round4Messages, signersRound4Messages...)
 			}
+
+			signerID := round3Signers[0].ID
+			round3Messages = signRound3MessagesForReceiver(round3Messages, signerID)
+			round4Messages = signRound4MessagesForReceiver(round4Messages, signerID)
 
 			paillierKey := round3Signers[0].paillierKey
 			expectedSignatureUnmask := round3Signers[0].signatureUnmaskShare
