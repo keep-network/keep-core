@@ -671,3 +671,29 @@ func signRound2MessagesForReceiver(
 	}
 	return filtered
 }
+
+func signRound3MessagesForReceiver(
+	messages []*SignRound3Message,
+	receiverID string,
+) []*SignRound3Message {
+	filtered := make([]*SignRound3Message, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
+}
+
+func signRound4MessagesForReceiver(
+	messages []*SignRound4Message,
+	receiverID string,
+) []*SignRound4Message {
+	filtered := make([]*SignRound4Message, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
+}
