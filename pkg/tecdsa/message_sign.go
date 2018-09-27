@@ -56,7 +56,8 @@ func (msg *SignRound2Message) isValid(
 // SignRound3Message is a message produced by each signer as a result of
 // executing the third round of T-ECDSA signing algorithm.
 type SignRound3Message struct {
-	signerID string
+	signerID   string
+	receiverID string
 
 	signatureFactorShareCommitment *commitment.MultiTrapdoorCommitment // C_2i
 }
