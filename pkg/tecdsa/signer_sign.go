@@ -515,6 +515,10 @@ func (s *Round4Signer) CombineRound4Messages(
 		}
 	}
 
+	// Add signer's own shares
+	signatureUnmaskShares = append(signatureUnmaskShares, s.signatureUnmaskShare)
+	signatureFactorPublicShares = append(signatureFactorPublicShares, s.signatureFactorPublicShare)
+
 	// w = w_1 + w_2 + ... + w_n
 	signatureUnmask = s.paillierKey.Add(signatureUnmaskShares...)
 
