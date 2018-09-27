@@ -85,7 +85,7 @@ func (s *Signer) SignRound1() (*Round1Signer, []*SignRound1Message, error) {
 	for i, peerSignerID := range s.peerSignerIDs() {
 		// [C_1i, D_1i] = Com([u_i, v_i])
 		commitments[peerSignerID], decommitmentKeys[peerSignerID], err = commitment.Generate(
-			s.peerProtocolParameters[peerSignerID].commitmentMasterPublicKey,
+			s.commitmentVerificationMasterPublicKey(peerSignerID),
 			encryptedSecretKeyFactorShare.C.Bytes(),
 			secretKeyMultiple.C.Bytes(),
 		)
@@ -356,7 +356,7 @@ func (s *Round2Signer) SignRound3(
 		// [C_2i, D_2i] = Com(r_i, w_i)
 		commitments[peerSignerID], decommitmentKeys[peerSignerID], err =
 			commitment.Generate(
-				s.peerProtocolParameters[peerSignerID].commitmentMasterPublicKey,
+				s.commitmentVerificationMasterPublicKey(peerSignerID),
 				signatureFactorPublicShare.Bytes(),
 				signatureUnmaskShare.C.Bytes(),
 			)
