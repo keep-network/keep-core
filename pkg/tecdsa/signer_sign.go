@@ -275,7 +275,7 @@ func (s *Round2Signer) SignRound3(
 	secretKeyFactor *paillier.Cypher, // u = E(ρ)
 	secretKeyMultiple *paillier.Cypher, // v = E(ρx)
 ) (
-	*Round3Signer, *SignRound3Message, error,
+	*Round3Signer, []*SignRound3Message, error,
 ) {
 	// k_i = rand(Z_q)
 	signatureFactorSecretShare, err := rand.Int(
@@ -348,6 +348,8 @@ func (s *Round2Signer) SignRound3(
 		maskShareMulCardinality,
 	)
 
+	round3Messages := make([]*SignRound3Message, s.signerGroup.PeerSignerCount())
+
 	// [C_2i, D_2i] = Com(r_i, w_i)
 	commitment, decommitmentKey, err :=
 		commitment.Generate(
@@ -380,7 +382,7 @@ func (s *Round2Signer) SignRound3(
 		signatureFactorShareCommitment: commitment,
 	}
 
-	return signer, round3Message, nil
+	return signer, round3Messages, nil
 }
 
 // Round4Signer represents state of signer after executing the fourth round
