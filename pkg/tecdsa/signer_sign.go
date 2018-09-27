@@ -395,9 +395,6 @@ func (s *Round2Signer) SignRound3(
 // of signing algorithm.
 type Round4Signer struct {
 	*Round3Signer
-
-	secretKeyFactor   *paillier.Cypher // u = E(ρ)
-	secretKeyMultiple *paillier.Cypher // v = E(ρx)
 }
 
 // SignRound4 executes the fourth round of T-ECDSA signing as described in
@@ -425,12 +422,7 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, []*SignRound4Message, error)
 		)
 	}
 
-	signer := &Round4Signer{
-		Round3Signer: s,
-
-		secretKeyFactor:   s.secretKeyFactor,
-		secretKeyMultiple: s.secretKeyMultiple,
-	}
+	signer := &Round4Signer{s}
 
 	round4Messages := make([]*SignRound4Message, s.signerGroup.PeerSignerCount())
 

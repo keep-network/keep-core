@@ -646,9 +646,9 @@ func initializeNewRound4SignerGroup() (
 	for i, signer := range signers {
 		round4Signers[i] = &Round4Signer{
 			Round3Signer: &Round3Signer{
-				Signer: *signer,
+				Signer:          *signer,
+				secretKeyFactor: secretKeyFactor,
 			},
-			secretKeyFactor: secretKeyFactor,
 		}
 	}
 
