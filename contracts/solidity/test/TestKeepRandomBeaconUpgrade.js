@@ -20,7 +20,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
     implV1 = await KeepRandomBeaconImplV1.new();
     implV2 = await Upgrade.new();
-    proxy = await Proxy.new('v1', implV1.address);
+    proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
     await implViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(0));
 
@@ -37,11 +37,11 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
   });
 
   it("should fail to upgrade implementation if called by not contract owner", async function() {
-    await exceptThrow(proxy.upgradeTo('v2', implV2.address, {from: account_two}));
+    await exceptThrow(proxy.upgradeTo(implV2.address, {from: account_two}));
   });
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
-    await proxy.upgradeTo('v2', implV2.address);
+    await proxy.upgradeTo(implV2.address);
     
     impl2ViaProxy = await Upgrade.at(proxy.address);
     await impl2ViaProxy.initialize(stakingProxy.address, 100, 200, duration.days(0));

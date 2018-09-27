@@ -82,6 +82,27 @@ func TestPromiseOnSuccessAlreadyFulfilled(t *testing.T) {
 	}
 }
 
+func TestPromiseOnSuccessAlreadyFailed(t *testing.T) {
+	ctx, cancel := newTestContext(100 * time.Millisecond)
+	defer cancel()
+
+	promise := &async.BigIntPromise{}
+
+	// first fail, then install callback
+	err := promise.Fail(fmt.Errorf("it's not working"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	promise.OnSuccess(func(in *big.Int) {
+		t.Fatal("OnSuccess callback called for failed promise")
+	})
+
+	select {
+	case <-ctx.Done():
+	}
+}
+
 func TestPromiseOnCompleteFulfill(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
@@ -228,6 +249,27 @@ func TestPromiseOnFailureAlreadyFailed(t *testing.T) {
 	}
 }
 
+func TestPromiseOnFailureAlreadyFulfilled(t *testing.T) {
+	ctx, cancel := newTestContext(100 * time.Millisecond)
+	defer cancel()
+
+	promise := &async.BigIntPromise{}
+
+	// first fulfill, then install callback
+	err := promise.Fulfill(big.NewInt(19))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	promise.OnFailure(func(err error) {
+		t.Fatal("OnFailure callback called for fulfilled promise")
+	})
+
+	select {
+	case <-ctx.Done():
+	}
+}
+
 func TestPromiseOnCompleteFail(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
@@ -303,6 +345,21 @@ func TestPromiseOnCompleteAlreadyFailed(t *testing.T) {
 	}
 }
 
+func TestFailPromiseWithNilError(t *testing.T) {
+	promise := &async.BigIntPromise{}
+	actualError := promise.Fail(nil)
+
+	expectedError := fmt.Errorf("error cannot be nil")
+
+	if !reflect.DeepEqual(actualError, expectedError) {
+		t.Fatalf(
+			"Unexpected error.\nExpected: %v\nActual: %v\n",
+			expectedError,
+			actualError,
+		)
+	}
+}
+
 func TestPromiseAlreadyCompleted(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
@@ -326,8 +383,9 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 			function: func() error {
 				promise := &async.BigIntPromise{}
 				promise.OnFailure(func(error) { done <- true })
-				promise.Fail(nil)
-				return promise.Fail(nil)
+				err := fmt.Errorf("i failed you master wayne")
+				promise.Fail(err)
+				return promise.Fail(err)
 			},
 			expectedError: fmt.Errorf("promise already completed"),
 		},
@@ -353,6 +411,10 @@ func TestPromiseAlreadyCompleted(t *testing.T) {
 	}
 }
 
-func newTestContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), 3*time.Second)
+func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFunc) {
+	defaultTimeout := 3 * time.Second
+	if len(timeout) > 0 {
+		defaultTimeout = timeout[0]
+	}
+	return context.WithTimeout(context.Background(), defaultTimeout)
 }

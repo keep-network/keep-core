@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 import "../KeepRandomBeaconImplV1.sol";
 
@@ -9,6 +9,8 @@ import "../KeepRandomBeaconImplV1.sol";
  * under Keep Random Beacon proxy.
  */
 contract KeepRandomBeaconUpgradeExample is KeepRandomBeaconImplV1 {
+
+    uint256 internal _newVar;
 
     /**
      * @dev Example of overriding existing function.
@@ -21,24 +23,27 @@ contract KeepRandomBeaconUpgradeExample is KeepRandomBeaconImplV1 {
         onlyOwner
     {
         super.initialize(_stakingProxy, _minPayment, _minStake, _withdrawalDelay);
-        boolStorage[keccak256("KeepRandomBeaconImplV2")] = true;
+        _initialized["KeepRandomBeaconImplV2"] = true;
 
         // Example of adding new data to the existing storage.
-        uintStorage[keccak256("newVar")] = 1234;
+        _newVar = 1234;
     }
 
     /**
      * @dev Example of overriding initialized function.
      */
     function initialized() public view returns (bool) {
-        return boolStorage[keccak256("KeepRandomBeaconImplV2")];
+        return _initialized["KeepRandomBeaconImplV2"];
     }
 
     /**
      * @dev Example of adding a new function.
      */
     function getNewVar() public view returns (uint256) {
-        return uintStorage[keccak256("newVar")];
+        return _newVar;
     }
 
+    function version() public pure returns (string) {
+        return "V2";
+    }
 }

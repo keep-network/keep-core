@@ -2,7 +2,7 @@ package dkg
 
 import (
 	"fmt"
-	"math/rand"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -25,20 +25,25 @@ func Init(channel net.BroadcastChannel) {
 }
 
 // ExecuteDKG runs the full distributed key generation lifecycle, given a
-// broadcast channel to mediate it and a group size and threshold. It returns a
-// threshold group member who is participating in the group if the generation
-// was successful, and an error representing what went wrong if not.
+// broadcast channel to mediate it, a player index to use in the group, and a
+// group size and threshold. If generation is successful, it returns a threshold
+// group member who can participate in the group; if generation fails, it
+// returns an error representing what went wrong.
 func ExecuteDKG(
+	playerIndex int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	groupSize int,
 	threshold int,
 ) (*thresholdgroup.Member, error) {
-	// Generate a nonzero memberID; loop until rand.Int31 returns something
-	// other than 0, hopefully no more than once :)
-	memberID := "0"
-	for memberID = fmt.Sprintf("%v", rand.Int31()); memberID == "0"; {
+	if playerIndex < 0 {
+		return nil, fmt.Errorf(
+			"playerIndex must be >= 0, got [%v]",
+			playerIndex,
+		)
 	}
+	memberID := fmt.Sprintf("%v", playerIndex+1)
+
 	fmt.Printf("[member:0x%010s] Initializing member.\n", memberID)
 
 	var (
@@ -57,10 +62,16 @@ func ExecuteDKG(
 
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
-	channel.Recv(func(msg net.Message) error {
-		recvChan <- msg
-		return nil
-	})
+	handler := net.HandleMessageFunc{
+		Type: fmt.Sprintf("dkg/%s", string(time.Now().UTC().UnixNano())),
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
+	}
+
+	channel.Recv(handler)
+	defer channel.UnregisterRecv(handler.Type)
 
 	stateTransition := func() error {
 		fmt.Printf(
@@ -69,7 +80,19 @@ func ExecuteDKG(
 			currentState,
 			pendingState,
 		)
-		err := pendingState.initiate()
+		currentState = pendingState
+		pendingState = nil
+
+		err := blockCounter.WaitForBlocks(1)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to wait 1 block entering state [%T]: [%v]",
+				currentState,
+				err,
+			)
+		}
+
+		err = currentState.initiate()
 		if err != nil {
 			return fmt.Errorf(
 				"failed to initialize state [%T]: [%v]",
@@ -77,9 +100,6 @@ func ExecuteDKG(
 				err,
 			)
 		}
-
-		currentState = pendingState
-		pendingState = nil
 
 		blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
 		if err != nil {
@@ -101,7 +121,9 @@ func ExecuteDKG(
 
 	currentState = &initializationState{channel, localMember}
 	pendingState = &initializationState{channel, localMember}
-	stateTransition()
+	if err := stateTransition(); err != nil {
+		return nil, err
+	}
 	pendingState, err = currentState.nextState()
 	if err != nil {
 		return nil, fmt.Errorf(
