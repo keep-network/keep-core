@@ -494,7 +494,7 @@ func (s *Round4Signer) CombineRound4Messages(
 				foundMatchingRound4Message = true
 
 				if round4Message.isValid(
-					s.commitmentVerificationMasterPublicKey(round4Message.signerID),
+					s.commitmentVerificationMasterPublicKey(round4Message.receiverID),
 					round3Message.signatureFactorShareCommitment,
 					s.secretKeyFactor,
 					s.zkpParameters,
