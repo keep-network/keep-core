@@ -211,7 +211,7 @@ func (s *Round2Signer) CombineRound2Messages(
 				foundMatchingRound2Message = true
 
 				if round2Message.isValid(
-					s.commitmentVerificationMasterPublicKey(round2Message.receiverID),
+					s.selfProtocolParameters().commitmentMasterPublicKey,
 					round1Message.secretKeyFactorShareCommitment,
 					s.ecdsaKey.secretKey,
 					s.zkpParameters,
@@ -496,7 +496,7 @@ func (s *Round4Signer) CombineRound4Messages(
 				foundMatchingRound4Message = true
 
 				if round4Message.isValid(
-					s.commitmentVerificationMasterPublicKey(round4Message.receiverID),
+					s.selfProtocolParameters().commitmentMasterPublicKey,
 					round3Message.signatureFactorShareCommitment,
 					s.secretKeyFactor,
 					s.zkpParameters,
