@@ -45,10 +45,6 @@ func (sc *signerCore) peerSignerIDs() []string {
 	return peerIDs
 }
 
-func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
-	return sc.peerProtocolParameters[sc.ID].commitmentMasterPublicKey
-}
-
 func (sc *signerCore) commitmentVerificationMasterPublicKey(
 	signerID string,
 ) *bn256.G2 {

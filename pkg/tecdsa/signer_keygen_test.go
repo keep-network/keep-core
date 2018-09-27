@@ -167,16 +167,16 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	receiver := group[0]
 
 	invalidCommitment, _, err := commitment.Generate(
-		group[0].commitmentMasterPublicKey(),
+		receiver.commitmentVerificationMasterPublicKey(receiver.ID),
 		big.NewInt(1).Bytes(),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	receiver := group[0]
 	receiverCommitmentMessages := publicKeyShareCommitmentMessagesForReceiver(
 		commitmentMessages, receiver.ID,
 	)
