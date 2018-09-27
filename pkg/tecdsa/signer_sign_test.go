@@ -80,25 +80,27 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 			var round2Messages []*SignRound2Message
 
 			for i, signer := range signers {
-				round1Signer, signersRound1Message, err := signer.SignRound1()
+				round1Signer, signersRound1Messages, err := signer.SignRound1()
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				round2Signer, signersRound2Message, err := round1Signer.SignRound2()
+				round2Signer, signersRound2Messages, err := round1Signer.SignRound2()
 				if err != nil {
 					t.Fatal(err)
 				}
-
-				round1Messages = append(round1Messages, signersRound1Message...)
-				round2Messages = append(round2Messages, signersRound2Message...)
 
 				round1Signers[i] = round1Signer
 				round2Signers[i] = round2Signer
+
+				round1Messages = append(round1Messages, signersRound1Messages...)
+				round2Messages = append(round2Messages, signersRound2Messages...)
+
 			}
 
-			round1Messages = signRound1MessagesForReceiver(round1Messages, round2Signers[0].ID)
-			round2Messages = signRound2MessagesForReceiver(round2Messages, round2Signers[0].ID)
+			signerID := round2Signers[0].ID
+			round1Messages = signRound1MessagesForReceiver(round1Messages, signerID)
+			round2Messages = signRound2MessagesForReceiver(round2Messages, signerID)
 
 			if test.modifyRound1Messages != nil {
 				round1Messages = test.modifyRound1Messages(round1Messages)
