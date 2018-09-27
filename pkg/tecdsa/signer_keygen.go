@@ -40,7 +40,7 @@ type LocalSigner struct {
 	// Since a separate commitment is produced for each peer signer in the
 	// group, decommitment keys must be stored separately for each peer.
 	// The map's key is the peer signer's ID.
-	publicKeyShareDecommitmentKeys map[string]*commitment.DecommitmentKey
+	publicEcdsaKeyShareDecommitmentKeys map[string]*commitment.DecommitmentKey
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
@@ -108,8 +108,7 @@ func (ls *LocalSigner) generateEcdsaKeyShare() (*ecdsaKeyShare, error) {
 // peer signer in the group. The message contains signer's public ECDSA key
 // share commitment.
 func (ls *LocalSigner) InitializeEcdsaKeyShares() (
-	[]*PublicKeyShareCommitmentMessage,
-	error,
+	[]*PublicEcdsaKeyShareCommitmentMessage, error,
 ) {
 	// Generate and store signer's DSA key share
 	keyShare, err := ls.generateEcdsaKeyShare()
@@ -123,14 +122,14 @@ func (ls *LocalSigner) InitializeEcdsaKeyShares() (
 	ls.ecdsaKeyShare = keyShare
 
 	// Initialize map holding decommitment keys for each peer signer.
-	ls.publicKeyShareDecommitmentKeys = make(
+	ls.publicEcdsaKeyShareDecommitmentKeys = make(
 		map[string]*commitment.DecommitmentKey,
 	)
 
 	// Generate a separate `PublicKeyShareCommitmentMessage` for each peer
 	// signer. Use peer signer's commitment master public key for that.
 	messages := make(
-		[]*PublicKeyShareCommitmentMessage,
+		[]*PublicEcdsaKeyShareCommitmentMessage,
 		ls.signerGroup.PeerSignerCount(),
 	)
 	for i, peerSignerID := range ls.peerSignerIDs() {
@@ -145,8 +144,8 @@ func (ls *LocalSigner) InitializeEcdsaKeyShares() (
 			)
 		}
 
-		ls.publicKeyShareDecommitmentKeys[peerSignerID] = decommitmentKey
-		messages[i] = &PublicKeyShareCommitmentMessage{
+		ls.publicEcdsaKeyShareDecommitmentKeys[peerSignerID] = decommitmentKey
+		messages[i] = &PublicEcdsaKeyShareCommitmentMessage{
 			senderID:                 ls.ID,
 			receiverID:               peerSignerID,
 			publicKeyShareCommitment: commitment,
@@ -208,7 +207,7 @@ func (ls *LocalSigner) RevealEcdsaKeyShares() ([]*KeyShareRevealMessage, error) 
 			receiverID:                    peerSignerID,
 			secretKeyShare:                encryptedSecretKeyShare,
 			publicKeyShare:                ls.ecdsaKeyShare.publicKeyShare,
-			publicKeyShareDecommitmentKey: ls.publicKeyShareDecommitmentKeys[peerSignerID],
+			publicKeyShareDecommitmentKey: ls.publicEcdsaKeyShareDecommitmentKeys[peerSignerID],
 			secretKeyProof:                rangeProof,
 		}
 	}
@@ -240,7 +239,7 @@ func (ls *LocalSigner) RevealEcdsaKeyShares() ([]*KeyShareRevealMessage, error) 
 // It's expected all peer signers in the group delivered both types of messages
 // to the signer.
 func (ls *LocalSigner) CombineEcdsaKeyShares(
-	shareCommitments []*PublicKeyShareCommitmentMessage,
+	shareCommitments []*PublicEcdsaKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
 ) (*ThresholdEcdsaKey, error) {
 	peerSignerCount := ls.signerGroup.PeerSignerCount()
@@ -253,7 +252,7 @@ func (ls *LocalSigner) CombineEcdsaKeyShares(
 		)
 	}
 
-	if len(revealedShares) != ls.signerGroup.PeerSignerCount() {
+	if len(revealedShares) != peerSignerCount {
 		return nil, fmt.Errorf(
 			"all group peer members should reveal shares; Got %v, expected %v",
 			len(revealedShares),
@@ -269,7 +268,6 @@ func (ls *LocalSigner) CombineEcdsaKeyShares(
 		foundMatchingRevealMessage := false
 
 		for _, revealedSharesMsg := range revealedShares {
-
 			if commitmentMsg.senderID == revealedSharesMsg.senderID {
 				foundMatchingRevealMessage = true
 
