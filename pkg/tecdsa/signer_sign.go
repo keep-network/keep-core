@@ -252,12 +252,12 @@ type Round3Signer struct {
 	secretKeyMultiple *paillier.Cypher // v = E(ρx)
 
 	// Intermediate values stored between the third and fourth round of signing
-	signatureFactorSecretShare          *big.Int                    // k_i
-	signatureFactorPublicShare          *curve.Point                // r_i = g^{k_i}
-	signatureFactorMaskShare            *big.Int                    // c_i
-	signatureUnmaskShare                *paillier.Cypher            // w_i = E(k_i * ρ + c_i * q)
-	signatureFactorShareDecommitmentKey *commitment.DecommitmentKey // Com(r_i, w_i)
-	paillierRandomness                  *big.Int
+	signatureFactorSecretShare           *big.Int                               // k_i
+	signatureFactorPublicShare           *curve.Point                           // r_i = g^{k_i}
+	signatureFactorMaskShare             *big.Int                               // c_i
+	signatureUnmaskShare                 *paillier.Cypher                       // w_i = E(k_i * ρ + c_i * q)
+	signatureFactorShareDecommitmentKeys map[string]*commitment.DecommitmentKey // Com(r_i, w_i)
+	paillierRandomness                   *big.Int
 }
 
 // SignRound3 executes the third round of T-ECDSA signing as described in
