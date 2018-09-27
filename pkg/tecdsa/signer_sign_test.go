@@ -195,7 +195,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 			modifyRound3Messages: func(
 				round3Messages []*SignRound3Message,
 			) []*SignRound3Message {
-				round3Messages[3].signerID = "evil"
+				round3Messages[3].senderID = "evil"
 				return round3Messages
 			},
 			expectedError: errors.New(

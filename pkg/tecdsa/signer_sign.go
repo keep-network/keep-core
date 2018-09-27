@@ -367,7 +367,7 @@ func (s *Round2Signer) SignRound3(
 		}
 
 		round3Messages[i] = &SignRound3Message{
-			signerID:   s.ID,
+			senderID:   s.ID,
 			receiverID: peerSignerID,
 
 			signatureFactorShareCommitment: commitments[peerSignerID],
@@ -436,7 +436,7 @@ func (s *Round3Signer) SignRound4() (*Round4Signer, []*SignRound4Message, error)
 
 	for i, peerSignerID := range s.peerSignerIDs() {
 		round4Messages[i] = &SignRound4Message{
-			signerID:   s.ID,
+			senderID:   s.ID,
 			receiverID: peerSignerID,
 
 			signatureFactorPublicShare:          s.signatureFactorPublicShare,
@@ -492,7 +492,7 @@ func (s *Round4Signer) CombineRound4Messages(
 		foundMatchingRound4Message := false
 
 		for _, round4Message := range round4Messages {
-			if round3Message.signerID == round4Message.signerID {
+			if round3Message.senderID == round4Message.senderID {
 				foundMatchingRound4Message = true
 
 				if round4Message.isValid(
@@ -512,7 +512,7 @@ func (s *Round4Signer) CombineRound4Messages(
 		if !foundMatchingRound4Message {
 			return nil, nil, fmt.Errorf(
 				"no matching round 4 message for signer with ID = %v",
-				round3Message.signerID,
+				round3Message.senderID,
 			)
 		}
 	}
