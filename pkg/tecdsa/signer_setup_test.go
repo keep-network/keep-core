@@ -19,10 +19,22 @@ func setupGroup(group []*LocalSigner) error {
 	}
 
 	for _, signer := range group {
-		signer.ReceiveCommitmentMasterPublicKeys(
-			commitmentMasterPublicKeyMessages,
-		)
+		messages := commitmentMasterPublicKeyMessagesNotFromSigner(commitmentMasterPublicKeyMessages, signer.ID)
+		signer.ReceiveCommitmentMasterPublicKeys(messages)
 	}
 
 	return nil
+}
+
+func commitmentMasterPublicKeyMessagesNotFromSigner(
+	messages []*CommitmentMasterPublicKeyMessage,
+	signerID string,
+) []*CommitmentMasterPublicKeyMessage {
+	filtered := make([]*CommitmentMasterPublicKeyMessage, 0)
+	for _, message := range messages {
+		if message.signerID != signerID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
 }
