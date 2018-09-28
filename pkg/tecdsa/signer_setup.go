@@ -87,23 +87,22 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 // `CommitmentMasterPublicKeyMessage`s and saves the commitment master public
 // key value specific for the signer. This value is used later to validate
 // commitments from the given signer.
+// It's expected to receive messages from peer signers only.
 func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 	messages []*CommitmentMasterPublicKeyMessage,
 ) error {
-	if len(messages) != sc.signerGroup.InitialGroupSize {
+	if len(messages) != sc.signerGroup.PeerSignerCount() {
 		return fmt.Errorf(
-			"master public key messages required from all group members; got %v, expected %v",
+			"master public key messages required from all group peer members; got %v, expected %v",
 			len(messages),
-			sc.signerGroup.InitialGroupSize,
+			sc.signerGroup.PeerSignerCount(),
 		)
 	}
 
 	for _, message := range messages {
 		if message.signerID != sc.ID {
 			masterPublicKey := new(bn256.G2)
-			masterPublicKey.Unmarshal(
-				message.masterPublicKey,
-			)
+			masterPublicKey.Unmarshal(message.masterPublicKey)
 
 			sc.peerProtocolParameters[message.signerID] = &protocolParameters{
 				commitmentMasterPublicKey: masterPublicKey,
