@@ -170,7 +170,7 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 	receiver := group[0]
 
 	invalidCommitment, _, err := commitment.Generate(
-		receiver.commitmentVerificationMasterPublicKey(receiver.ID),
+		receiver.commitmentMasterPublicKey(receiver.ID),
 		big.NewInt(1).Bytes(),
 	)
 	if err != nil {

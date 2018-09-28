@@ -25,11 +25,7 @@ func TestPeerSignerIDs(t *testing.T) {
 }
 
 func TestGenerateCommitmentMasterPublicKey(t *testing.T) {
-	signers, _, err := generateNewLocalGroup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	signer := signers[0]
+	signer := &LocalSigner{}
 
 	message, err := signer.GenerateCommitmentMasterPublicKey()
 	if err != nil {
