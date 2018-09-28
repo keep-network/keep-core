@@ -562,9 +562,8 @@ func initializeNewSignerGroup() ([]*Signer, *PublicParameters, error) {
 	signers := make([]*Signer, len(localGroup))
 	for i, localSigner := range localGroup {
 		signers[i] = &Signer{
-			ecdsaKey:                  key,
-			commitmentMasterPublicKey: localSigner.commitmentMasterPublicKey,
-			signerCore:                localSigner.signerCore,
+			ecdsaKey:   key,
+			signerCore: localSigner.signerCore,
 		}
 	}
 

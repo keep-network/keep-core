@@ -17,58 +17,103 @@ type signerCore struct {
 	publicParameters *PublicParameters
 	zkpParameters    *zkp.PublicParameters
 
-	// Information about the signing group. Holds information about all the members,
-	// including the signer itself.
+	// Information about the signing group. Holds information about all the
+	// members, including the signer itself.
 	// Initially empty, populated as each other signer announces its presence.
 	// Signers are removed from the group if they misbehave or do not reply.
 	signerGroup *signerGroup
+
+	peerProtocolParameters map[string]*protocolParameters
 }
 
-// GenerateMasterPublicKeyShare produces a MasterPublicKeyShareMessage and should
-// be called by all members of the group on very early stage prior to generating
-// any commitments.
-//
-// `MasterPublicKeyShareMessage` contains signer's multi-trapdoor commitment master
-// public key share.
-//
-// The shares should be combined and set as master public key for each signer.
-func (sc *signerCore) GenerateMasterPublicKeyShare() (*MasterPublicKeyShareMessage, error) {
-	_, hShare, err := bn256.RandomG2(rand.Reader)
-	if err != nil {
-		return nil, fmt.Errorf("could not generate multi-trapdoor commitment master trapdoor public key share [%v]", err)
+type protocolParameters struct {
+	commitmentMasterPublicKey *bn256.G2
+}
+
+func (sc *signerCore) selfProtocolParameters() *protocolParameters {
+	return sc.peerProtocolParameters[sc.ID]
+}
+
+func (sc *signerCore) peerSignerIDs() []string {
+	peerIDs := make([]string, 0)
+	for _, peerID := range sc.signerGroup.signerIDs {
+		if peerID != sc.ID {
+			peerIDs = append(peerIDs, peerID)
+		}
 	}
 
-	return &MasterPublicKeyShareMessage{
-		signerID:             sc.ID,
-		masterPublicKeyShare: hShare.Marshal(),
+	return peerIDs
+}
+
+func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
+	return sc.peerProtocolParameters[sc.ID].commitmentMasterPublicKey
+}
+
+// TODO: rename to just commitmentMasterPublicKey when the original
+// commitmentMasterPublicKey is gone (after we update signing phase)
+func (sc *signerCore) commitmentVerificationMasterPublicKey(
+	signerID string,
+) *bn256.G2 {
+	return sc.peerProtocolParameters[signerID].commitmentMasterPublicKey
+}
+
+// GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
+// and should be called by all members of the group on very early stage, during
+// the group setup, prior to generating any commitments.
+//
+// `CommitmentMasterPublicKeyMessage` contains signer-specific multi-trapdoor
+// commitment master public key. For security reasons, each signer should
+// produce its own key.
+func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
+	*CommitmentMasterPublicKeyMessage,
+	error,
+) {
+	_, publicKey, err := bn256.RandomG2(rand.Reader)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate multi-trapdoor commitment master public key [%v]",
+			err,
+		)
+	}
+
+	sc.peerProtocolParameters = make(map[string]*protocolParameters)
+	sc.peerProtocolParameters[sc.ID] = &protocolParameters{
+		commitmentMasterPublicKey: publicKey,
+	}
+
+	return &CommitmentMasterPublicKeyMessage{
+		signerID:        sc.ID,
+		masterPublicKey: publicKey.Marshal(),
 	}, nil
 }
 
-// CombineMasterPublicKeyShares combines all group `MasterPublicKeyShareMessage`s
-// into a `masterPublicKey`.
-//
-// The shares are expected to be points in G2 abstract cyclic group of bn256 curve.
-// Shares are combined by points addition.
-func (sc *signerCore) CombineMasterPublicKeyShares(
-	masterPublicKeySharesMessages []*MasterPublicKeyShareMessage,
-) (*bn256.G2, error) {
-	if len(masterPublicKeySharesMessages) != sc.signerGroup.InitialGroupSize {
-		return nil, fmt.Errorf(
-			"master public key share required from all group members; got %v, expected %v",
-			len(masterPublicKeySharesMessages),
+// ReceiveCommitmentMasterPublicKeys takes all the received
+// `CommitmentMasterPublicKeyMessage`s and saves the commitment master public
+// key value specific for the signer. This value is used later to validate
+// commitments from the given signer.
+func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
+	messages []*CommitmentMasterPublicKeyMessage,
+) error {
+	if len(messages) != sc.signerGroup.InitialGroupSize {
+		return fmt.Errorf(
+			"master public key messages required from all group members; got %v, expected %v",
+			len(messages),
 			sc.signerGroup.InitialGroupSize,
 		)
 	}
 
-	masterPublicKey := new(bn256.G2)
-	masterPublicKey.Unmarshal(
-		masterPublicKeySharesMessages[0].masterPublicKeyShare,
-	)
+	for _, message := range messages {
+		if message.signerID != sc.ID {
+			masterPublicKey := new(bn256.G2)
+			masterPublicKey.Unmarshal(
+				message.masterPublicKey,
+			)
 
-	for _, message := range masterPublicKeySharesMessages[1:] {
-		masterPublicKeyShare := new(bn256.G2)
-		masterPublicKeyShare.Unmarshal(message.masterPublicKeyShare)
-		masterPublicKey = new(bn256.G2).Add(masterPublicKey, masterPublicKeyShare)
+			sc.peerProtocolParameters[message.signerID] = &protocolParameters{
+				commitmentMasterPublicKey: masterPublicKey,
+			}
+		}
 	}
-	return masterPublicKey, nil
+
+	return nil
 }
