@@ -459,7 +459,7 @@ func TestSignAndCombineRound6(t *testing.T) {
 		t.Fatalf("paillier encryption failed [%v]", err)
 	}
 
-	ecdsaKey := &ThresholdDsaKey{encryptedSecretKey, publicKey}
+	ecdsaKey := &ThresholdEcdsaKey{encryptedSecretKey, publicKey}
 
 	secretKeyFactor := big.NewInt(314) // ρ = 314
 
@@ -503,7 +503,7 @@ func TestSignAndCombineRound6(t *testing.T) {
 		signers[i] = &Round5Signer{
 			Signer: *NewLocalSigner(
 				&paillierKeys[i], publicParameters, zkpParameters, signerGroup,
-			).WithDsaKey(ecdsaKey),
+			).WithEcdsaKey(ecdsaKey),
 
 			secretKeyFactor:           encryptedSecretKeyFactor,
 			secretKeyMultiple:         secretKeyMultiple,
@@ -562,9 +562,8 @@ func initializeNewSignerGroup() ([]*Signer, *PublicParameters, error) {
 	signers := make([]*Signer, len(localGroup))
 	for i, localSigner := range localGroup {
 		signers[i] = &Signer{
-			dsaKey: key,
-			commitmentMasterPublicKey: localSigner.commitmentMasterPublicKey,
-			signerCore:                localSigner.signerCore,
+			ecdsaKey:   key,
+			signerCore: localSigner.signerCore,
 		}
 	}
 
@@ -603,7 +602,7 @@ func initializeNewRound2SignerGroup() (
 	}
 
 	secretKeyMultiple = paillierKey.Mul(
-		signers[0].dsaKey.secretKey, secretKeyFactorPlaintext,
+		signers[0].ecdsaKey.secretKey, secretKeyFactorPlaintext,
 	)
 
 	return

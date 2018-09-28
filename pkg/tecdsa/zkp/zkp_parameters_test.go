@@ -1,16 +1,19 @@
 package zkp
 
 import (
+	"crypto/elliptic"
 	"errors"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/paillier"
 )
 
 func TestGeneratePublicParameters(t *testing.T) {
-	paillierModulus := big.NewInt(13)
+	paillierModulus := big.NewInt(64319 * 59063)
 	curve := secp256k1.S256()
 
 	params, err := GeneratePublicParameters(paillierModulus, curve)
@@ -18,6 +21,13 @@ func TestGeneratePublicParameters(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if params.NTilde.BitLen() != paillierModulus.BitLen() {
+		t.Errorf(
+			"Unexpected NTilde bit length\nExpected: %v\nActual: %v",
+			paillierModulus.BitLen(),
+			params.NTilde.BitLen(),
+		)
+	}
 	if params.NTilde.Cmp(big.NewInt(0)) <= 0 {
 		t.Errorf("NTilde should be greater than 0. Actual: %v", params.NTilde)
 	}
@@ -121,4 +131,56 @@ func TestGeneratePublicParametersFromSafePrimes(t *testing.T) {
 
 		})
 	}
+}
+
+// createTestZkpParameters creates `paillier.PrivateKey` and
+// `zkp.PublicParameters` from the predefined safe prime values.
+//
+// Since prime generation is expensive and we want our unit tests to be blazing
+// fast we need to use predefined values. This approach is only valid for unit
+// tests. In case of integration tests testing whole key-gen or signature
+// processes, we should use a real code for generating paillier keys and ZKP
+// parameters.
+func createTestZkpParameters(curve elliptic.Curve) (
+	*paillier.PrivateKey,
+	*PublicParameters,
+	error,
+) {
+	p, _ := new(big.Int).SetString(
+		"IYZo9UHyYhqclSgETOQ9hgfVxdW480zaODUjjTlECgHsihK7mf5Ujf8MLbM0thyNlK9Ga"+
+			"drGNYKqsUqMqEKusO52NUydpTgqVwykdNjJRtNle7SPP5CfKnVHBQi5JrVty1luws"+
+			"WRAl1AYMv3mPlUumWbw7oopLJ3oHIKAkXlaP07",
+		62,
+	)
+
+	q, _ := new(big.Int).SetString(
+		"KPLO1v0WSSFFgtDWgxggB6ug8IIhVcG2CRRCveXouTqloltXOaN4xitDebsnXjktkgSUi"+
+			"HLHrzzWnLnAr5Dt5w2UKSDs2wdnJeh1MKKXdnfpApiLDfv5TwbS54UzZSOW3Ajqky"+
+			"iGperkiwsdzdhZQUG0kKSK177STEUSBZ9QUIKn",
+		62,
+	)
+
+	paillierKey := paillier.CreatePrivateKey(p, q)
+
+	pTilde, _ := new(big.Int).SetString(
+		"T7J6D6kn5JGzrJpskwFuabU33cBMKgkfjucmEuSvCWH4PmgcghcdSBV9u8oPWikoKokF"+
+			"XVVr8NriqFizRqbRiG7R0OABnxHl1lL2CtS4pv3Raoc8Ubv6uGzbat2dx0kgGkve"+
+			"LfIQOVmLrFxYOvFXKHEKal9OYlZTdIcRe5vA9XfR", 62,
+	)
+	qTilde, _ := new(big.Int).SetString(
+		"UOzoNzDzf4dFKuTyVfEXGnbaiLXTDBtWoWLR83wl34AgEOteIhDtVdngNPbcCKP1A0H9"+
+			"CBRUE081rsad6ftTyiVeDhEHIToSf3LRenAJAxic4kNrzYtyKN1yFtzMKPH6ndcT"+
+			"8NPTI7gEOt789ZAf3queB54mbZjWWsm1sV2plmhR", 62,
+	)
+
+	zkpParameters, err := GeneratePublicParametersFromSafePrimes(
+		paillierKey.N, pTilde, qTilde, curve,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"could not generate public ZKP parameters [%v]", err,
+		)
+	}
+
+	return paillierKey, zkpParameters, nil
 }

@@ -92,22 +92,36 @@ func TestContains(t *testing.T) {
 	}
 }
 
-func TestSize(t *testing.T) {
+func TestSignerCount(t *testing.T) {
 	group := signerGroup{}
 	if group.SignerCount() != 0 {
 		t.Fatalf(
-			"returned group size %v doesn't match expected %v",
-			group.SignerCount(),
+			"unexpected signer count\nExpected: %v\nActual: %v",
 			0,
+			group.SignerCount(),
+		)
+	}
+	if group.PeerSignerCount() != 0 {
+		t.Fatalf(
+			"unexpected peer signer count\nExpected: %v\nActual:%v",
+			0,
+			group.PeerSignerCount(),
 		)
 	}
 
 	group.signerIDs = []string{"1001", "1002", "1003", "1004"}
 	if group.SignerCount() != 4 {
 		t.Fatalf(
-			"returned group size %v doesn't match expected %v",
-			group.SignerCount(),
+			"unexpected signer count\nExpected: %v\nActual: %v",
 			4,
+			group.SignerCount(),
+		)
+	}
+	if group.PeerSignerCount() != 3 {
+		t.Fatalf(
+			"unexpected peer signer count\nExpected: %v\nActual:%v",
+			3,
+			group.PeerSignerCount(),
 		)
 	}
 }

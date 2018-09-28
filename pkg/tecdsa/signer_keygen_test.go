@@ -19,7 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
+func TestLocalSignerGenerateEcdsaKeyShare(t *testing.T) {
 	group, parameters, err := createNewLocalGroup()
 	if err != nil {
 		t.Fatal(err)
@@ -27,18 +27,18 @@ func TestLocalSignerGenerateDsaKeyShare(t *testing.T) {
 
 	signer := group[0]
 
-	dsaKeyShare, err := signer.generateDsaKeyShare()
+	ecdsaKeyShare, err := signer.generateEcdsaKeyShare()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if parameters.curveCardinality().Cmp(dsaKeyShare.secretKeyShare) != 1 {
+	if parameters.curveCardinality().Cmp(ecdsaKeyShare.secretKeyShare) != 1 {
 		t.Errorf("DSA secret key share must be less than Curve's cardinality")
 	}
 
 	if !parameters.Curve.IsOnCurve(
-		dsaKeyShare.publicKeyShare.X,
-		dsaKeyShare.publicKeyShare.Y,
+		ecdsaKeyShare.publicKeyShare.X,
+		ecdsaKeyShare.publicKeyShare.Y,
 	) {
 		t.Errorf("DSA public key share must be a point on Curve")
 	}
@@ -50,7 +50,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// We have ThresholdDsaKey with E(secretKey) and public key where
+	// We have ThresholdEcdsaKey with E(secretKey) and public key where
 	// E(secretKey) is a threshold sharing of secretKey.
 	//
 	// We may check the correctness of E(secretKey) and publicKey:
@@ -61,7 +61,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 
 	// 1. Check if publicKey is a point on curve
 	if !parameters.Curve.IsOnCurve(dsaKey.PublicKey.X, dsaKey.PublicKey.Y) {
-		t.Fatal("ThresholdDsaKey.y must be a point on Curve")
+		t.Fatal("ThresholdEcdsaKey.y must be a point on Curve")
 	}
 
 	// 2. Decrypt secretKey from E(secretKey)
@@ -82,7 +82,7 @@ func TestInitializeAndCombineDsaKey(t *testing.T) {
 
 	// 3. Having secretKey, we can evaluate publicKey from
 	//    publicKey = g^secretKey and compare with the actual
-	//    value stored in ThresholdDsaKey.
+	//    value stored in ThresholdEcdsaKey.
 	publicKeyX, publicKeyY := parameters.Curve.ScalarBaseMult(secretKey.Bytes())
 
 	if !reflect.DeepEqual(publicKeyX, dsaKey.PublicKey.X) {
@@ -109,12 +109,19 @@ func TestCombineWithNotEnoughCommitMessages(t *testing.T) {
 	}
 
 	expectedError := fmt.Errorf(
-		"commitments required from all group members; got 1, expected 10",
+		"commitments required from all group peer members; got 1, expected 9",
 	)
 
-	_, err = group[0].CombineDsaKeyShares(
-		[]*PublicKeyShareCommitmentMessage{commitmentMessages[0]},
-		revealMessages,
+	receiver := group[0]
+	receiverCommitmentMessages := publicKeyShareCommitmentMessagesForReceiver(
+		commitmentMessages, receiver.ID,
+	)
+	receiverRevealMessages := publicKeyShareRevealMessagesForReceiver(
+		revealMessages, receiver.ID,
+	)
+	_, err = receiver.CombineEcdsaKeyShares(
+		[]*PublicEcdsaKeyShareCommitmentMessage{receiverCommitmentMessages[0]},
+		receiverRevealMessages,
 	)
 	if err == nil {
 		t.Fatal("Error was expected")
@@ -132,12 +139,19 @@ func TestCombineWithNotEnoughRevealMessages(t *testing.T) {
 	}
 
 	expectedError := fmt.Errorf(
-		"all group members should reveal shares; Got 1, expected 10",
+		"all group peer members should reveal shares; Got 1, expected 9",
 	)
 
-	_, err = group[0].CombineDsaKeyShares(
-		commitmentMessages,
-		[]*KeyShareRevealMessage{revealMessages[0]},
+	receiver := group[0]
+	receiverCommitmentMessages := publicKeyShareCommitmentMessagesForReceiver(
+		commitmentMessages, receiver.ID,
+	)
+	receiverRevealMessages := publicKeyShareRevealMessagesForReceiver(
+		revealMessages, receiver.ID,
+	)
+	_, err = receiver.CombineEcdsaKeyShares(
+		receiverCommitmentMessages,
+		[]*KeyShareRevealMessage{receiverRevealMessages[0]},
 	)
 	if err == nil {
 		t.Fatal("Error was expected")
@@ -155,18 +169,29 @@ func TestCombineWithInvalidCommitment(t *testing.T) {
 	}
 
 	invalidCommitment, _, err := commitment.Generate(
-		group[0].commitmentMasterPublicKey,
+		group[0].commitmentMasterPublicKey(),
 		big.NewInt(1).Bytes(),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	commitmentMessages[len(commitmentMessages)-1].publicKeyShareCommitment =
+
+	receiver := group[0]
+	receiverCommitmentMessages := publicKeyShareCommitmentMessagesForReceiver(
+		commitmentMessages, receiver.ID,
+	)
+	receiverRevealMessages := publicKeyShareRevealMessagesForReceiver(
+		revealMessages, receiver.ID,
+	)
+	receiverCommitmentMessages[1].publicKeyShareCommitment =
 		invalidCommitment
 
 	expectedError := fmt.Errorf("KeyShareRevealMessage rejected")
 
-	_, err = group[0].CombineDsaKeyShares(commitmentMessages, revealMessages)
+	_, err = receiver.CombineEcdsaKeyShares(
+		receiverCommitmentMessages,
+		receiverRevealMessages,
+	)
 	if err == nil {
 		t.Fatal("Error was expected")
 	}
@@ -183,7 +208,7 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	}
 
 	// Let's modify one of reveal message ZKPs to make it fail
-	invalidProof, err := zkp.CommitDsaPaillierKeyRange(
+	invalidProof, err := zkp.CommitEcdsaPaillierKeyRange(
 		big.NewInt(1),
 		&curve.Point{X: big.NewInt(1), Y: big.NewInt(2)},
 		&paillier.Cypher{C: big.NewInt(3)},
@@ -194,11 +219,23 @@ func TestCombineWithInvalidZKP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	revealMessages[len(revealMessages)-1].secretKeyProof = invalidProof
+
+	receiver := group[0]
+	receiverCommitmentMessages := publicKeyShareCommitmentMessagesForReceiver(
+		commitmentMessages, receiver.ID,
+	)
+	receiverRevealMessages := publicKeyShareRevealMessagesForReceiver(
+		revealMessages, receiver.ID,
+	)
+
+	receiverRevealMessages[len(receiverRevealMessages)-1].secretKeyProof =
+		invalidProof
 
 	expectedError := fmt.Errorf("KeyShareRevealMessage rejected")
 
-	_, err = group[0].CombineDsaKeyShares(commitmentMessages, revealMessages)
+	_, err = group[0].CombineEcdsaKeyShares(
+		receiverCommitmentMessages, receiverRevealMessages,
+	)
 	if err == nil {
 		t.Fatal("Error was expected")
 	}
@@ -233,6 +270,7 @@ func readTestParameters() (
 	signerGroup := &signerGroup{
 		InitialGroupSize: 10,
 		Threshold:        6,
+		signerIDs:        make([]string, 0),
 	}
 
 	var paillierKey []paillier.ThresholdPrivateKey
@@ -281,9 +319,12 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
 
 	localSigners := make([]*LocalSigner, len(paillierKeys))
 	for i := 0; i < len(localSigners); i++ {
-		localSigners[i] = NewLocalSigner(
+		signer := NewLocalSigner(
 			&paillierKeys[i], signerParameters, zkpParameters, signerGroup,
 		)
+
+		signerGroup.signerIDs = append(signerGroup.signerIDs, signer.ID)
+		localSigners[i] = signer
 	}
 
 	return localSigners, signerParameters, nil
@@ -292,16 +333,16 @@ func createNewLocalGroup() ([]*LocalSigner, *PublicParameters, error) {
 // initializeNewLocalGroupWithKeyShares creates and initializes a new group of
 // `LocalSigner`s.
 // It simulates a real initialization process by first generating master public key
-// for multi-trapdoor commitment scbheme and then calling `InitializeDsaKeyShares`
-//  and then `RevealDsaKeyShares`. Messages produced by those functions are returned
+// for multi-trapdoor commitment scbheme and then calling `InitializeEcdsaKeyShares`
+//  and then `RevealEcdsaKeyShares`. Messages produced by those functions are returned
 // along with all `LocalSigner`s created.
 // It's responsibility of code calling this function to execute
-// `CombineDsaKeyShares`, in order to produce signers with a fully initialized
+// `CombineEcdsaKeyShares`, in order to produce signers with a fully initialized
 // threshold ECDSA key, if needed.
 func initializeNewLocalGroupWithKeyShares() (
 	[]*LocalSigner,
 	*PublicParameters,
-	[]*PublicKeyShareCommitmentMessage,
+	[]*PublicEcdsaKeyShareCommitmentMessage,
 	[]*KeyShareRevealMessage,
 	error,
 ) {
@@ -321,15 +362,15 @@ func initializeNewLocalGroupWithKeyShares() (
 	// Generated key shares are saved internally by each Signer. Each Signer
 	// generates commitment for the public key share. Commitment is broadcasted
 	// in the PublicKeyShareCommitmentMessage.
-	publicKeyCommitmentMessages := make(
-		[]*PublicKeyShareCommitmentMessage,
-		group[0].signerGroup.InitialGroupSize,
-	)
-	for i, signer := range group {
-		publicKeyCommitmentMessages[i], err = signer.InitializeDsaKeyShares()
+	publicKeyCommitmentMessages := make([]*PublicEcdsaKeyShareCommitmentMessage, 0)
+	for _, signer := range group {
+		messages, err := signer.InitializeEcdsaKeyShares()
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
+		publicKeyCommitmentMessages = append(
+			publicKeyCommitmentMessages, messages...,
+		)
 	}
 
 	// In the next phase, each Signer publishes KeyShareRevealMessage with:
@@ -339,15 +380,13 @@ func initializeNewLocalGroupWithKeyShares() (
 	//
 	// E is an additively homomorphic encryption scheme. For our implementation
 	// we use Paillier.
-	keyShareRevealMessages := make(
-		[]*KeyShareRevealMessage,
-		group[0].signerGroup.InitialGroupSize,
-	)
-	for i, signer := range group {
-		keyShareRevealMessages[i], err = signer.RevealDsaKeyShares()
+	keyShareRevealMessages := make([]*KeyShareRevealMessage, 0)
+	for _, signer := range group {
+		messages, err := signer.RevealEcdsaKeyShares()
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
+		keyShareRevealMessages = append(keyShareRevealMessages, messages...)
 	}
 
 	return group, parameters, publicKeyCommitmentMessages, keyShareRevealMessages, nil
@@ -356,9 +395,9 @@ func initializeNewLocalGroupWithKeyShares() (
 // initializeNewLocalGroupWithFullKey creates and initializes a new group of
 // `LocalSigner`s simulating a real initialization process just like the
 // `initializeNewLocalGroupWithKeyShares` except that it also calls
-// `ConbineDsaKeyShares` in order to produce a full `ThresholdDsaKey`.
+// `CombineEcdsaKeyShares` in order to produce a full `ThresholdEcdsaKey`.
 func initializeNewLocalGroupWithFullKey() (
-	[]*LocalSigner, *PublicParameters, *ThresholdDsaKey, error,
+	[]*LocalSigner, *PublicParameters, *ThresholdEcdsaKey, error,
 ) {
 	group, parameters, commitmentMessages, revealMessages, err :=
 		initializeNewLocalGroupWithKeyShares()
@@ -368,13 +407,40 @@ func initializeNewLocalGroupWithFullKey() (
 
 	// Combine all PublicKeyShareCommitmentMessages and KeyShareRevealMessages
 	// from signers in order to create a ThresholdDsaKey.
-	dsaKey, err := group[0].CombineDsaKeyShares(
-		commitmentMessages,
-		revealMessages,
+	receiver := group[0]
+	ecdsaKey, err := receiver.CombineEcdsaKeyShares(
+		publicKeyShareCommitmentMessagesForReceiver(commitmentMessages, receiver.ID),
+		publicKeyShareRevealMessagesForReceiver(revealMessages, receiver.ID),
 	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	return group, parameters, dsaKey, nil
+	return group, parameters, ecdsaKey, nil
+}
+
+func publicKeyShareCommitmentMessagesForReceiver(
+	messages []*PublicEcdsaKeyShareCommitmentMessage,
+	receiverID string,
+) []*PublicEcdsaKeyShareCommitmentMessage {
+	filtered := make([]*PublicEcdsaKeyShareCommitmentMessage, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
+}
+
+func publicKeyShareRevealMessagesForReceiver(
+	messages []*KeyShareRevealMessage,
+	receiverID string,
+) []*KeyShareRevealMessage {
+	filtered := make([]*KeyShareRevealMessage, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
 }

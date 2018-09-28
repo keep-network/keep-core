@@ -8,13 +8,15 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-// PublicKeyShareCommitmentMessage is a message payload that carries signer's
-// commitment for a public DSA key share the signer generated.
+// PublicEcdsaKeyShareCommitmentMessage is a message payload that carries
+// signer's commitment for a public DSA key share the signer generated.
 // It's the very first message exchanged between signers during the T-ECDSA
-// distributed key generation process. The message is expected to be broadcast
-// publicly.
-type PublicKeyShareCommitmentMessage struct {
-	signerID string
+// distributed key generation process. Since commitment is generated
+// individually for each peer signer in the group, this message is generated and
+// expected to be delivered to each peer signer individually.
+type PublicEcdsaKeyShareCommitmentMessage struct {
+	senderID   string
+	receiverID string
 
 	publicKeyShareCommitment *commitment.MultiTrapdoorCommitment // C_i
 }
@@ -22,16 +24,18 @@ type PublicKeyShareCommitmentMessage struct {
 // KeyShareRevealMessage is a message payload that carries the sender's share of
 // public and secret DSA key during T-ECDSA distributed key generation as well
 // as proofs of correctness for the shares. Sender's share is encrypted with
-// (t, n) Paillier threshold key. The message is expected to be broadcast
-// publicly.
+// (t, n) Paillier threshold key. Since commitment is generated
+// individually for each peer signer in the group, this message is generated and
+// expected to be delivered to each peer signer individually.
 type KeyShareRevealMessage struct {
-	signerID string
+	senderID   string
+	receiverID string
 
 	secretKeyShare *paillier.Cypher // α_i = E(x_i)
 	publicKeyShare *curve.Point     // y_i
 
-	publicKeyShareDecommitmentKey *commitment.DecommitmentKey   // D_i
-	secretKeyProof                *zkp.DsaPaillierKeyRangeProof // Π_i
+	publicKeyShareDecommitmentKey *commitment.DecommitmentKey     // D_i
+	secretKeyProof                *zkp.EcdsaPaillierKeyRangeProof // Π_i
 }
 
 // isValid checks secret and public key share against zero knowledge range proof

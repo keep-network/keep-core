@@ -1,4 +1,6 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
+const ModUtils = artifacts.require("./utils/ModUtils.sol");
+const AltBn128 = artifacts.require("./AltBn128.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
@@ -16,6 +18,9 @@ const groupSize = 5;
 
 module.exports = (deployer) => {
   deployer.then(async () => {
+    await deployer.deploy(ModUtils);
+    await deployer.link(ModUtils, AltBn128);
+    await deployer.deploy(AltBn128);
     await deployer.deploy(KeepToken);
     await deployer.deploy(StakingProxy);
     await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);

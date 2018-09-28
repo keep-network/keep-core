@@ -14,7 +14,6 @@ import (
 	"fmt"
 	mathrand "math/rand"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/tecdsa/commitment"
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
@@ -29,34 +28,29 @@ import (
 type LocalSigner struct {
 	signerCore
 
-	dsaKeyShare *dsaKeyShare
+	ecdsaKeyShare *ecdsaKeyShare
 
-	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
-	// master public key.
-	// It should be initialized to a new value for each key generation process.
-	commitmentMasterPublicKey *bn256.G2
-
-	// Intermediate value stored between first and second round of
-	// key generation. In the first round, `LocalSigner` commits to the chosen
-	// public key share. In the second round, it reveals the public key share
-	// along with the decommitment key.
-	publicDsaKeyShareDecommitmentKey *commitment.DecommitmentKey
+	// Intermediate value stored between the first and the second round of
+	// key generation.
+	//
+	// In the first round, `LocalSigner` commits to the chosen public key share.
+	// In the second round, it reveals the public key share along with the
+	// decommitment key.
+	//
+	// Since a separate commitment is produced for each peer signer in the
+	// group, decommitment keys must be stored separately for each peer.
+	// The map's key is the peer signer's ID.
+	publicEcdsaKeyShareDecommitmentKeys map[string]*commitment.DecommitmentKey
 }
 
 // Signer represents T-ECDSA group member in a fully initialized state,
-// ready for signing. Each Signer has a reference to a ThresholdDsaKey used
+// ready for signing. Each Signer has a reference to a ThresholdEcdsaKey used
 // in a signing process. It represents a (t, n) threshold sharing of the
 // underlying DSA key.
 type Signer struct {
 	signerCore
 
-	// commitmentMasterPublicKey is a `h` value of multi-trapdor commitment's
-	// master public key.
-	// It should be initialized to a new value for each signing process, even
-	// if the value was already initialized for `LocalSigner` before.
-	commitmentMasterPublicKey *bn256.G2
-
-	dsaKey *ThresholdDsaKey
+	ecdsaKey *ThresholdEcdsaKey
 }
 
 // NewLocalSigner creates a fully initialized `LocalSigner` instance for the
@@ -87,11 +81,11 @@ func generateMemberID() string {
 	return memberID
 }
 
-// generateDsaKeyShare generates a DSA public and secret key shares and puts
-// them into `dsaKeyShare`. Secret key share is a random integer from Z_q where
+// generateEcdsaKeyShare generates ECDSA public and secret key shares.
+// Secret key share is a random integer from Z_q where
 // `q` is the cardinality of Elliptic Curve and public key share is a point
 // on the Curve g^secretKeyShare.
-func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
+func (ls *LocalSigner) generateEcdsaKeyShare() (*ecdsaKeyShare, error) {
 	curveParams := ls.publicParameters.Curve.Params()
 
 	secretKeyShare, err := rand.Int(rand.Reader, curveParams.N)
@@ -103,58 +97,79 @@ func (ls *LocalSigner) generateDsaKeyShare() (*dsaKeyShare, error) {
 		ls.publicParameters.Curve.ScalarBaseMult(secretKeyShare.Bytes()),
 	)
 
-	return &dsaKeyShare{
+	return &ecdsaKeyShare{
 		secretKeyShare: secretKeyShare,
 		publicKeyShare: publicKeyShare,
 	}, nil
 }
 
-// InitializeDsaKeyShares initializes key generation process by generating DSA
-// key shares and publishing PublicKeyShareCommitmentMessage which is
-// broadcasted to all other `Signer`s in the group and contains signer's public
-// DSA key share commitment.
-func (ls *LocalSigner) InitializeDsaKeyShares() (
-	*PublicKeyShareCommitmentMessage,
-	error,
+// InitializeEcdsaKeyShares initializes key generation process by generating
+// ECDSA key shares and publishing `PublicKeyShareCommitmentMessage` for each
+// peer signer in the group. The message contains signer's public ECDSA key
+// share commitment.
+func (ls *LocalSigner) InitializeEcdsaKeyShares() (
+	[]*PublicEcdsaKeyShareCommitmentMessage, error,
 ) {
-	keyShare, err := ls.generateDsaKeyShare()
+	// Generate and store signer's DSA key share
+	keyShare, err := ls.generateEcdsaKeyShare()
+
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not generate DSA key shares [%v]", err,
 		)
 	}
 
-	commitment, decommitmentKey, err := commitment.Generate(
-		ls.commitmentMasterPublicKey,
-		keyShare.publicKeyShare.Bytes(),
+	ls.ecdsaKeyShare = keyShare
+
+	// Initialize map holding decommitment keys for each peer signer.
+	ls.publicEcdsaKeyShareDecommitmentKeys = make(
+		map[string]*commitment.DecommitmentKey,
 	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not generate DSA public key commitment [%v]", err,
+
+	// Generate a separate `PublicKeyShareCommitmentMessage` for each peer
+	// signer. Use peer signer's commitment master public key for that.
+	messages := make(
+		[]*PublicEcdsaKeyShareCommitmentMessage,
+		ls.signerGroup.PeerSignerCount(),
+	)
+	for i, peerSignerID := range ls.peerSignerIDs() {
+		peerProtocolParameters := ls.peerProtocolParameters[peerSignerID]
+		commitment, decommitmentKey, err := commitment.Generate(
+			peerProtocolParameters.commitmentMasterPublicKey,
+			keyShare.publicKeyShare.Bytes(),
 		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"could not generate DSA public key commitment [%v]", err,
+			)
+		}
+
+		ls.publicEcdsaKeyShareDecommitmentKeys[peerSignerID] = decommitmentKey
+		messages[i] = &PublicEcdsaKeyShareCommitmentMessage{
+			senderID:                 ls.ID,
+			receiverID:               peerSignerID,
+			publicKeyShareCommitment: commitment,
+		}
 	}
 
-	ls.dsaKeyShare = keyShare
-	ls.publicDsaKeyShareDecommitmentKey = decommitmentKey
-
-	return &PublicKeyShareCommitmentMessage{
-		signerID:                 ls.ID,
-		publicKeyShareCommitment: commitment,
-	}, nil
+	return messages, nil
 }
 
-// RevealDsaKeyShares produces a KeyShareRevealMessage and should be called
-// when `PublicKeyShareCommitmentMessage`s from all group members are gathered.
+// RevealEcdsaKeyShares produces `KeyShareRevealMessage`s and should be called
+// when `PublicKeyShareCommitmentMessage`s from all group members have been
+// received.
 //
-// `KeyShareRevealMessage` contains signer's public DSA key share, decommitment
+// `KeyShareRevealMessage` contains signer's public ECDSA key share, decommitment
 // key for this share (used to validate the commitment published in the previous
 // `PublicKeyShareCommitmentMessage` message), encrypted secret DSA key share
-// and ZKP for the secret key share correctness.
+// and ZKP for the secret key share correctness. Bear in mind the decommitment
+// key is different for each peer signer. That's why, `KeyShareRevealMessage` is
+// produced individually for each peer signer.
 //
 // Secret key share is encrypted with an additively homomorphic encryption
-// scheme and sent to all other Signers in the group along with the public key
+// scheme and sent to all other signers in the group along with the public key
 // share.
-func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
+func (ls *LocalSigner) RevealEcdsaKeyShares() ([]*KeyShareRevealMessage, error) {
 	paillierRandomness, err := paillier.GetRandomNumberInMultiplicativeGroup(
 		ls.paillierKey.N, rand.Reader,
 	)
@@ -165,7 +180,7 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 	}
 
 	encryptedSecretKeyShare, err := ls.paillierKey.EncryptWithR(
-		ls.dsaKeyShare.secretKeyShare, paillierRandomness,
+		ls.ecdsaKeyShare.secretKeyShare, paillierRandomness,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -173,26 +188,34 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 		)
 	}
 
-	rangeProof, err := zkp.CommitDsaPaillierKeyRange(
-		ls.dsaKeyShare.secretKeyShare,
-		ls.dsaKeyShare.publicKeyShare,
+	rangeProof, err := zkp.CommitEcdsaPaillierKeyRange(
+		ls.ecdsaKeyShare.secretKeyShare,
+		ls.ecdsaKeyShare.publicKeyShare,
 		encryptedSecretKeyShare,
 		paillierRandomness,
 		ls.zkpParameters,
 		rand.Reader,
 	)
 
-	return &KeyShareRevealMessage{
-		signerID:                      ls.ID,
-		secretKeyShare:                encryptedSecretKeyShare,
-		publicKeyShare:                ls.dsaKeyShare.publicKeyShare,
-		publicKeyShareDecommitmentKey: ls.publicDsaKeyShareDecommitmentKey,
-		secretKeyProof:                rangeProof,
-	}, nil
+	messages := make(
+		[]*KeyShareRevealMessage,
+		ls.signerGroup.PeerSignerCount(),
+	)
+	for i, peerSignerID := range ls.peerSignerIDs() {
+		messages[i] = &KeyShareRevealMessage{
+			senderID:                      ls.ID,
+			receiverID:                    peerSignerID,
+			secretKeyShare:                encryptedSecretKeyShare,
+			publicKeyShare:                ls.ecdsaKeyShare.publicKeyShare,
+			publicKeyShareDecommitmentKey: ls.publicEcdsaKeyShareDecommitmentKeys[peerSignerID],
+			secretKeyProof:                rangeProof,
+		}
+	}
+	return messages, nil
 }
 
-// CombineDsaKeyShares combines all group `PublicKeyShareCommitmentMessage`s and
-// `KeyShareRevealMessage`s into a `ThresholdDsaKey` which is a (t, n) threshold
+// CombineEcdsaKeyShares combines all group `PublicKeyShareCommitmentMessage`s and
+// `KeyShareRevealMessage`s into a `ThresholdEcdsaKey` which is a (t, n) threshold
 // sharing of an underlying secret DSA key. Secret and public
 // DSA key shares are combined in the following way:
 //
@@ -210,39 +233,46 @@ func (ls *LocalSigner) RevealDsaKeyShares() (*KeyShareRevealMessage, error) {
 // Every `PublicKeyShareCommitmentMessage` should have a corresponding
 // `KeyShareRevealMessage`. They are matched by a signer ID contained in
 // each of the messages.
-func (ls *LocalSigner) CombineDsaKeyShares(
-	shareCommitments []*PublicKeyShareCommitmentMessage,
+//
+// This function accepts all `PublicKeyShareCommitmentMessage`s and
+// `KeyShareRevealMessage`s that were generated for the current signer.
+// It's expected all peer signers in the group delivered both types of messages
+// to the signer.
+func (ls *LocalSigner) CombineEcdsaKeyShares(
+	shareCommitments []*PublicEcdsaKeyShareCommitmentMessage,
 	revealedShares []*KeyShareRevealMessage,
-) (*ThresholdDsaKey, error) {
-	if len(shareCommitments) != ls.signerGroup.InitialGroupSize {
+) (*ThresholdEcdsaKey, error) {
+	peerSignerCount := ls.signerGroup.PeerSignerCount()
+
+	if len(shareCommitments) != peerSignerCount {
 		return nil, fmt.Errorf(
-			"commitments required from all group members; got %v, expected %v",
+			"commitments required from all group peer members; got %v, expected %v",
 			len(shareCommitments),
-			ls.signerGroup.InitialGroupSize,
+			peerSignerCount,
 		)
 	}
 
-	if len(revealedShares) != ls.signerGroup.InitialGroupSize {
+	if len(revealedShares) != peerSignerCount {
 		return nil, fmt.Errorf(
-			"all group members should reveal shares; Got %v, expected %v",
+			"all group peer members should reveal shares; Got %v, expected %v",
 			len(revealedShares),
-			ls.signerGroup.InitialGroupSize,
+			peerSignerCount,
 		)
 	}
 
-	secretKeyShares := make([]*paillier.Cypher, ls.signerGroup.InitialGroupSize)
-	publicKeyShares := make([]*curve.Point, ls.signerGroup.InitialGroupSize)
+	// Combine secret and public key shares from peer signers
+	secretKeyShares := make([]*paillier.Cypher, peerSignerCount)
+	publicKeyShares := make([]*curve.Point, peerSignerCount)
 
 	for i, commitmentMsg := range shareCommitments {
 		foundMatchingRevealMessage := false
 
 		for _, revealedSharesMsg := range revealedShares {
-
-			if commitmentMsg.signerID == revealedSharesMsg.signerID {
+			if commitmentMsg.senderID == revealedSharesMsg.senderID {
 				foundMatchingRevealMessage = true
 
 				if revealedSharesMsg.isValid(
-					ls.commitmentMasterPublicKey,
+					ls.selfProtocolParameters().commitmentMasterPublicKey,
 					commitmentMsg.publicKeyShareCommitment,
 					ls.zkpParameters,
 				) {
@@ -257,11 +287,25 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 		if !foundMatchingRevealMessage {
 			return nil, fmt.Errorf(
 				"no matching share reveal message for signer with ID=%v",
-				commitmentMsg.signerID,
+				commitmentMsg.senderID,
 			)
 		}
 	}
 
+	// Add signer's own secret and public key share
+	encryptedSecretKeyShare, err := ls.paillierKey.Encrypt(
+		ls.ecdsaKeyShare.secretKeyShare, rand.Reader,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not encrypt secret key share [%v]", err,
+		)
+	}
+
+	secretKeyShares = append(secretKeyShares, encryptedSecretKeyShare)
+	publicKeyShares = append(publicKeyShares, ls.ecdsaKeyShare.publicKeyShare)
+
+	// Combine signer's own and peer signers' shares together
 	secretKey := ls.paillierKey.Add(secretKeyShares...)
 	publicKey := publicKeyShares[0]
 	for _, share := range publicKeyShares[1:] {
@@ -270,15 +314,15 @@ func (ls *LocalSigner) CombineDsaKeyShares(
 		))
 	}
 
-	return &ThresholdDsaKey{secretKey, publicKey}, nil
+	return &ThresholdEcdsaKey{secretKey, publicKey}, nil
 }
 
-// WithDsaKey transforms `LocalSigner` into a `Signer` when the key generation
-// process completes and `ThresholdDsaKey` is ready.
-// There is a one instance of `ThresholdDsaKey` for all `Signer`s.
-func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
+// WithEcdsaKey transforms `LocalSigner` into a `Signer` when the key generation
+// process completes and `ThresholdEcdsaKey` is ready.
+// There is a one instance of `ThresholdEcdsaKey` for all `Signer`s.
+func (ls *LocalSigner) WithEcdsaKey(ecdsaKey *ThresholdEcdsaKey) *Signer {
 	return &Signer{
-		dsaKey:     dsaKey,
+		ecdsaKey:   ecdsaKey,
 		signerCore: ls.signerCore,
 	}
 }
@@ -287,5 +331,5 @@ func (ls *LocalSigner) WithDsaKey(dsaKey *ThresholdDsaKey) *Signer {
 // The public key is expected to be identical for all signers in
 // a signing group.
 func (s *Signer) PublicKey() *curve.Point {
-	return s.dsaKey.PublicKey
+	return s.ecdsaKey.PublicKey
 }
