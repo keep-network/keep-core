@@ -570,7 +570,7 @@ func (s *Round4Signer) SignRound5(
 	)
 
 	message := &SignRound5Message{
-		signerID: s.ID,
+		senderID: s.ID,
 
 		signatureUnmaskPartialDecryption: signatureUnmaskPartialDecryption,
 	}

@@ -104,7 +104,7 @@ func (msg *SignRound4Message) isValid(
 // SignRound5Message is a message produced by each signer as a result of
 // executing the fifth round of T-ECDSA signing algorithm.
 type SignRound5Message struct {
-	signerID string
+	senderID string
 
 	signatureUnmaskPartialDecryption *paillier.PartialDecryption // TDec(w)
 }
@@ -112,7 +112,7 @@ type SignRound5Message struct {
 // SignRound6Message is a message produced by each signer as a result of
 // executing the sixth round of T-ECDSA signing algorithm.
 type SignRound6Message struct {
-	signerID string
+	senderID string
 
 	signaturePartialDecryption *paillier.PartialDecryption // TDec(σ)
 }

@@ -76,7 +76,7 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 	}
 
 	return &CommitmentMasterPublicKeyMessage{
-		signerID:        sc.ID,
+		senderID:        sc.ID,
 		masterPublicKey: publicKey.Marshal(),
 	}, nil
 }
@@ -98,11 +98,11 @@ func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 	}
 
 	for _, message := range messages {
-		if message.signerID != sc.ID {
+		if message.senderID != sc.ID {
 			masterPublicKey := new(bn256.G2)
 			masterPublicKey.Unmarshal(message.masterPublicKey)
 
-			sc.protocolParameters[message.signerID] = &protocolParameters{
+			sc.protocolParameters[message.senderID] = &protocolParameters{
 				commitmentMasterPublicKey: masterPublicKey,
 			}
 		}

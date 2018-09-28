@@ -92,7 +92,7 @@ func TestReceiveCommitmentMasterPublicKeys(t *testing.T) {
 			messages := make([]*CommitmentMasterPublicKeyMessage, 0)
 			for k, v := range signerKeys {
 				messages = append(messages, &CommitmentMasterPublicKeyMessage{
-					signerID:        k,
+					senderID:        k,
 					masterPublicKey: []byte(v),
 				})
 			}
@@ -154,7 +154,7 @@ func commitmentMasterPublicKeyMessagesNotFromSigner(
 ) []*CommitmentMasterPublicKeyMessage {
 	filtered := make([]*CommitmentMasterPublicKeyMessage, 0)
 	for _, message := range messages {
-		if message.signerID != signerID {
+		if message.senderID != signerID {
 			filtered = append(filtered, message)
 		}
 	}
