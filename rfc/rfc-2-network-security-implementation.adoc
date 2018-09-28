@@ -104,10 +104,10 @@ the network executes the protocol again with the next bootstrap peer.
 
 Once a peer has completed the network join protocol successfully, it is connected to 
 a bootstrap peer and is a full-fledged network member. It starts discovering other 
-peers in the network and connects to some of those according to the strategy used 
-in the network. Before the peer decides to connect to any other network member, the 
-same nonce, challenge, and stake check protocol must be executed between the peer
-and the new network member it is connecting to. 
+peers in the network and connects to some of those according to the peer discovery
+strategy implemented in the network. Before the peer decides to connect to any other 
+network member, the same nonce, challenge, and stake check protocol must be executed
+between the peer and the new network member it is connecting to. 
 Peers decide to connect to each other only if they both complete the 
 protocol successfully and prove their on-chain minimum stakes. This is a trust no-one 
 strategy which allows for even a corrupted network to heal in the case of a malicious 
@@ -130,7 +130,7 @@ Message { n_1 } ---->
                                                 n_2 = random_nonce()
                                                 nonce = hash(n_1 || n_2).toInt
                                                 <---- Message { n_2 }
-nonce = sha256(n_1 || n_2).toInt
+nonce = hash(n_1 || n_2).toInt
 ```
 
 Once peers agree on a common initial nonce they both execute a check for an 
@@ -162,15 +162,18 @@ within a fixed timeout, receiver drops the connection.
 Sent and received messages cache window, time after a notification about 
 rejecting a message is sent as well as time after connection is droped if 
 expected messages were not delivered should be the same for all peers in the 
-network. That's why those values are fixed and are not configurable per peer.
+network. These values are fixed and tracked on-chain as system constants which
+require a hard-fork-level event to change. 
 
 All peers in the network have a streaming view of the latest chain state that 
 notifies in an event-style when a given address falls below the minimum stake.
 
 If stake drops down below the required minimum for some peer, that peer's nonce 
-is discarded and all messages from that peer are rejected. Once the peer increases 
-its stake so that it's above the required minimum, it must initialize the connection 
-with the other peer once again in order to be able to communicate with it.
+is discarded and all connections to that peer are dropped and any unprocessed 
+messages from that peer are immediately discarded. Once the peer increases 
+its stake so that it is above the required minimum, it must initialize its 
+connections with any disconnected peers once again in order to be able to 
+communicate with them.
 
 When peer receives a message it firsts check the signature. If it matches, then 
 peer validates the nonce. If the nonce is greater by one from the nonce included 
