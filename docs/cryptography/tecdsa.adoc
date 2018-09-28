@@ -250,7 +250,7 @@ Output::
 
 ===== Procedure
 
-. Each signer computes a set of parameters: _Signature Factor Public Share_, and 
+. Each signer computes a set of parameters: _Signature Factor Public Share_ and 
 _Signature Unmask Share_ and calculates a commitment to these
 values. All the parameters are kept private for now, they will be used later to
 compute the final signature.
@@ -264,7 +264,7 @@ compute the final signature.
 
 |`signatureFactorShareCommitment` 
 |`commitment.MultiTrapdoorCommitment`
-|Commitment to parameters from <<sign_round_3>>
+|Commitment to _Signature Factor Public Share_ and _Signature Unmask Share_
 |=== 
 
 ==== Round #4 [[sign_round_4]]
