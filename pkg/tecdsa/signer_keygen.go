@@ -133,7 +133,7 @@ func (ls *LocalSigner) InitializeEcdsaKeyShares() (
 		ls.signerGroup.PeerSignerCount(),
 	)
 	for i, peerSignerID := range ls.peerSignerIDs() {
-		peerProtocolParameters := ls.peerProtocolParameters[peerSignerID]
+		peerProtocolParameters := ls.protocolParameters[peerSignerID]
 		commitment, decommitmentKey, err := commitment.Generate(
 			peerProtocolParameters.commitmentMasterPublicKey,
 			keyShare.publicKeyShare.Bytes(),

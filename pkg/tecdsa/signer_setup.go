@@ -23,7 +23,7 @@ type signerCore struct {
 	// Signers are removed from the group if they misbehave or do not reply.
 	signerGroup *signerGroup
 
-	peerProtocolParameters map[string]*protocolParameters
+	protocolParameters map[string]*protocolParameters
 }
 
 type protocolParameters struct {
@@ -31,7 +31,7 @@ type protocolParameters struct {
 }
 
 func (sc *signerCore) selfProtocolParameters() *protocolParameters {
-	return sc.peerProtocolParameters[sc.ID]
+	return sc.protocolParameters[sc.ID]
 }
 
 func (sc *signerCore) peerSignerIDs() []string {
@@ -48,7 +48,7 @@ func (sc *signerCore) peerSignerIDs() []string {
 func (sc *signerCore) commitmentMasterPublicKey(
 	signerID string,
 ) *bn256.G2 {
-	return sc.peerProtocolParameters[signerID].commitmentMasterPublicKey
+	return sc.protocolParameters[signerID].commitmentMasterPublicKey
 }
 
 // GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
@@ -70,8 +70,8 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 		)
 	}
 
-	sc.peerProtocolParameters = make(map[string]*protocolParameters)
-	sc.peerProtocolParameters[sc.ID] = &protocolParameters{
+	sc.protocolParameters = make(map[string]*protocolParameters)
+	sc.protocolParameters[sc.ID] = &protocolParameters{
 		commitmentMasterPublicKey: publicKey,
 	}
 
@@ -102,7 +102,7 @@ func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 			masterPublicKey := new(bn256.G2)
 			masterPublicKey.Unmarshal(message.masterPublicKey)
 
-			sc.peerProtocolParameters[message.signerID] = &protocolParameters{
+			sc.protocolParameters[message.signerID] = &protocolParameters{
 				commitmentMasterPublicKey: masterPublicKey,
 			}
 		}

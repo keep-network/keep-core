@@ -76,7 +76,7 @@ func TestReceiveCommitmentMasterPublicKeys(t *testing.T) {
 					signerGroup: &signerGroup{
 						signerIDs: signerIDs,
 					},
-					peerProtocolParameters: make(map[string]*protocolParameters, 0),
+					protocolParameters: make(map[string]*protocolParameters, 0),
 				},
 			}
 
@@ -111,7 +111,7 @@ func TestReceiveCommitmentMasterPublicKeys(t *testing.T) {
 			if test.expectedError == nil {
 				for k, v := range signerKeys {
 					if reflect.DeepEqual(
-						signer.peerProtocolParameters[k].commitmentMasterPublicKey.Marshal(),
+						signer.protocolParameters[k].commitmentMasterPublicKey.Marshal(),
 						[]byte(v),
 					) {
 						t.Fatal("peer's commitmentMasterPublicKey doesn't match received in a message")
