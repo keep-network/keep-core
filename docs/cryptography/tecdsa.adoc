@@ -129,7 +129,7 @@ round to produce a commitment to _ECDSA Public Key Share_ value.
 |Decommitment key for _ECDSA Public Key Share_
 
 |`secretKeyProof` 
-|`zkp.DsaPaillierKeyRangeProof`
+|`zkp.EcdsaPaillierKeyRangeProof`
 |ZKP Π~i~
 |=== 
 
@@ -231,7 +231,7 @@ _ECDSA Private Key Multiple Share_ and decommitment key for the commitment from
 |Decommitment key for a commitment to _ECDSA Private Key Factor Share_ and _ECDSA Private Key Multiple Share_
 
 |`secretKeyFactorProof` 
-|`zkp.DsaPaillierSecretKeyFactorRangeProof`
+|`zkp.EcdsaPaillierSecretKeyFactorRangeProof`
 |ZKP Π~1,i~
 |=== 
 
