@@ -1,6 +1,7 @@
 package tecdsa
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -39,6 +40,86 @@ func TestGenerateCommitmentMasterPublicKey(t *testing.T) {
 		t.Fatal("signer's commitmentMasterPublicKey doesn't match the one from the message")
 	}
 
+}
+
+func TestReceiveCommitmentMasterPublicKeys(t *testing.T) {
+	var tests = map[string]struct {
+		signerKeys    func(signerKeys map[string]string)
+		expectedError error
+	}{
+		"positive": {
+			expectedError: nil,
+		},
+		"negative validation - not enough messages": {
+			signerKeys: func(signerKeys map[string]string) {
+				delete(signerKeys, "1003")
+			},
+			expectedError: errors.New("master public key messages required from all group peer members; got 2, expected 3"),
+		},
+		"negative validation - too many messages": {
+			signerKeys: func(signerKeys map[string]string) {
+				signerKeys["1005"] = "key1005"
+			},
+			expectedError: errors.New("master public key messages required from all group peer members; got 4, expected 3"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			// Given
+			signerID := "1001"
+			signerIDs := []string{"1001", "1002", "1003", "1004"}
+
+			signer := &LocalSigner{
+				signerCore: signerCore{
+					ID: signerID,
+					signerGroup: &signerGroup{
+						signerIDs: signerIDs,
+					},
+					peerProtocolParameters: make(map[string]*protocolParameters, 0),
+				},
+			}
+
+			signerKeys := make(map[string]string)
+			signerKeys["1002"] = "key1002"
+			signerKeys["1003"] = "key1003"
+			signerKeys["1004"] = "key1004"
+
+			if test.signerKeys != nil {
+				test.signerKeys(signerKeys)
+			}
+
+			messages := make([]*CommitmentMasterPublicKeyMessage, 0)
+			for k, v := range signerKeys {
+				messages = append(messages, &CommitmentMasterPublicKeyMessage{
+					signerID:        k,
+					masterPublicKey: []byte(v),
+				})
+			}
+
+			// When
+			err := signer.ReceiveCommitmentMasterPublicKeys(messages)
+
+			// Then
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"unexpected error\nexpected: %v\nactual: %v",
+					test.expectedError,
+					err,
+				)
+			}
+			if test.expectedError == nil {
+				for k, v := range signerKeys {
+					if reflect.DeepEqual(
+						signer.peerProtocolParameters[k].commitmentMasterPublicKey.Marshal(),
+						[]byte(v),
+					) {
+						t.Fatal("peer's commitmentMasterPublicKey doesn't match received in a message")
+					}
+				}
+			}
+		})
+	}
 }
 
 func setupGroup(group []*LocalSigner) error {
