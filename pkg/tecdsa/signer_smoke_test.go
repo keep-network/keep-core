@@ -30,16 +30,8 @@ func TestFullInitAndSignPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	commitmentMasterPublicKeyMessagesKeyGen := make(
-		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
-	)
-
 	publicKeyShareCommitmentMessages := make([]*PublicEcdsaKeyShareCommitmentMessage, 0)
 	keyShareRevealMessages := make([]*KeyShareRevealMessage, 0)
-
-	commitmentMasterPublicKeyMessagesSigning := make(
-		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
-	)
 
 	round1Signers := make([]*Round1Signer, len(localSigners))
 	round2Signers := make([]*Round2Signer, len(localSigners))
@@ -58,21 +50,9 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Initialize master public key for multi-trapdoor commitment scheme for key
 	// generation process
 	//
-	for i, signer := range localSigners {
-		commitmentMasterPublicKeyMessagesKeyGen[i], err =
-			signer.GenerateCommitmentMasterPublicKey()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	for _, signer := range localSigners {
-		err = signer.ReceiveCommitmentMasterPublicKeys(
-			commitmentMasterPublicKeyMessagesKeyGen,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
+	err = setupGroup(localSigners)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	//
@@ -117,21 +97,9 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Initialize master public key for multi-trapdoor commitment scheme for
 	// signing process
 	//
-	for i, signer := range signers {
-		commitmentMasterPublicKeyMessagesSigning[i], err =
-			signer.GenerateCommitmentMasterPublicKey()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	for _, signer := range signers {
-		err = signer.ReceiveCommitmentMasterPublicKeys(
-			commitmentMasterPublicKeyMessagesSigning,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
+	err = setupGroup(localSigners)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	//
