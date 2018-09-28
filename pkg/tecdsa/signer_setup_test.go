@@ -1,5 +1,29 @@
 package tecdsa
 
+import (
+	"reflect"
+	"testing"
+)
+
+func TestPeerSignerIDs(t *testing.T) {
+	signerID := "1003"
+	signerIDs := []string{"1001", "1002", "1003", "1004"}
+	expectedPeerIDs := []string{"1001", "1002", "1004"}
+
+	signer := &LocalSigner{
+		signerCore: signerCore{
+			ID: signerID,
+			signerGroup: &signerGroup{
+				signerIDs: signerIDs,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(signer.peerSignerIDs(), expectedPeerIDs) {
+		t.Fatalf("peer signer IDs doesn't match expected\nactual: %s\nexpected: %s", signer.peerSignerIDs(), expectedPeerIDs)
+	}
+}
+
 func setupGroup(group []*LocalSigner) error {
 	var err error
 
