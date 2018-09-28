@@ -24,6 +24,27 @@ func TestPeerSignerIDs(t *testing.T) {
 	}
 }
 
+func TestGenerateCommitmentMasterPublicKey(t *testing.T) {
+	signers, _, err := generateNewLocalGroup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	signer := signers[0]
+
+	message, err := signer.GenerateCommitmentMasterPublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(
+		signer.selfProtocolParameters().commitmentMasterPublicKey.Marshal(),
+		message.masterPublicKey,
+	) {
+		t.Fatal("signer's commitmentMasterPublicKey doesn't match the one from the message")
+	}
+
+}
+
 func setupGroup(group []*LocalSigner) error {
 	var err error
 
