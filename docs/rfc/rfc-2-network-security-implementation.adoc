@@ -35,7 +35,7 @@ on-chain stake of peers they are connected to and are obligated to drop the
 connection with the given peer if that peer's on-chain stake drops below the 
 required minimum. This requirement enforces that only peers with a minimum 
 stake are able to be a part of the network and this requirement is enforced by 
-all peers individually. 
+all peers individually.
 
 Attributability, integrity and optional confidentiality of messages are 
 requirements enforced on the application level. Even if a message between two 
@@ -93,9 +93,10 @@ Message signature is checked for any message that is received. Any message with
 an invalid signature immediately aborts the protocol. If all signatures have been 
 valid and challenge response was as expected, both parties execute a check for an 
 on-chain stake of each other. If the peer joining the network has a minimum stake,  
-the bootstrap peer connects peer to the network and announces peer's presence. 
+the bootstrap peer connects the peer to the network and announces peer's presence. 
 If the bootstrap peer has a minimum stake, peer joining the network 
-decides to connect to the bootstrap peer and becomes a part of the network. 
+decides to connect to the bootstrap peer and becomes a part of the network.
+Nonces and challenge generated during the handshake are discarded. 
 Otherwise, when at least one of the parties does not have a minimum stake, the 
 protocol is aborted. If the bootstrap peer had a deficient stake, the peer joining
 the network executes the protocol again with the next bootstrap peer.
@@ -111,10 +112,9 @@ between the peer and the new network member it is connecting to.
 Peers decide to connect to each other only if they both complete the 
 protocol successfully and prove their on-chain minimum stakes. This is a trust no-one 
 strategy which allows for even a corrupted network to heal in the case of a malicious 
-split brain event. Just like it is with the network join protocol, nonce and challenge 
-are discarded when the connection protocol is completed.
+split brain event.
 
-==== Attributability and integrity of the network messages
+==== Attributability and integrity of messages
 
 All messages in the network are signed with sender's private static key. Before 
 any two peers start exchanging messages, they need to agree on a common nonce 
@@ -140,8 +140,11 @@ minimum stake, protocol is aborted and all messages from that peer are rejected.
 Sender's nonce is tracked per individual peer. Each message sent from a peer 
 must have a nonce greater by one from the nonce of the previous message. The 
 nonce is included in a message in a way that makes it a part of the content used 
-to produce a signature. Nonce does not expire. The only way to re-initialize the
-nonce is to repeat the protocol described above.
+to produce a signature. Nonce expires if two peers do not communicate for a 
+certain period of time. Nonce timeout is a parameter tracked on-chain. Two peers 
+need to execute the handshake protocol again to initialize a new nonce if the 
+previous one has expired. If the nonce has exhausted (reached the maximum
+possible value), it should be set back to 0.
 
 All messages received from a given peer must contain nonces forming an ordered 
 sequence. If a peer receives a message with nonce less than or equal to the most 
@@ -193,6 +196,15 @@ Any of the communicating peers can reveal the symmetric key in order to publicly
 publish a complaint about the other peer's message. In such case, the symmetric 
 key is considered as compromised and should not be used for further 
 communications.
+
+==== Message relay
+
+Two peers communicating on the application level does not necessarily need to 
+have a direct network-level connection with each other. It is possible messages 
+are relayed by other peers. Each peer relying the message validates the message 
+signature against sender's key and should drop the message if the signature is 
+not valid. This strategy reduces the risk of flooding the network with tampered 
+messages.
 
 ==== Group formation
 
