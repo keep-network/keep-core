@@ -78,10 +78,15 @@ to provide some familiarity with how Ethereum works under the covers.
 
 == Common problems
 
-Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
+- Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
 We've been observing https://github.com/google/protobuf/issues/3355[some issues] 
 with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN` 
 contained `~`.
+
+- For Mojave, if you have a problem with missing include or missing library and
+you are sure that you have installed xcode with `xcode-select --install`. Then
+install the following package:
+`/Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg`
 
 == Working with Solidity contracts
 
