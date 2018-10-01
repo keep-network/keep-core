@@ -1,8 +1,10 @@
 package signature
 
 import (
+	"encoding/hex"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
@@ -77,34 +79,35 @@ func TestSignature(t *testing.T) {
 			if msg != test.expectedMsg {
 				t.Errorf("Message invalid\nexpected: [%s]\nactual : [%s]\n", test.expectedMsg, msg)
 			}
-			val, err := VerifySignature(test.addr, sig, msg)
-			if test.expectNotToValidate {
-				if val.IsValid {
-					t.Errorf("should not have validated but did\n")
-				}
-				return
-			}
-			if err != nil {
-				t.Errorf("falied to verify [%v] \n", err)
-			}
-			if val.RecoveredAddress != test.expectedEIP55Addr {
-				t.Errorf("Invalid recovered address\nexpected: [%s] actual : [%s]\n",
-					test.expectedEIP55Addr, val.RecoveredAddress)
-			}
-			if val.RecoveredPublicKey != test.expectedPubKey {
+
+			// From sig/msg to a public key.
+			recoveredPubkey, err := RecoverPublicKey(sig, msg)
+			RecoveredPublicKey := hex.EncodeToString(crypto.FromECDSAPub(recoveredPubkey))
+			if RecoveredPublicKey != test.expectedPubKey {
 				t.Errorf("invalid recovered public key\nexpected: [%s]\nactual : [%s]\n",
-					test.expectedEIP55Addr, val.RecoveredPublicKey)
+					test.expectedPubKey, RecoveredPublicKey)
 			}
 
-			if got := MessageHasValidSignature(test.addr, sig, msg); got == test.expectNotToValidate {
-				t.Errorf("validation error\nexpected: [%v]\nactual : [%v]\n", !test.expectNotToValidate, got)
+			// corrupt the msg/signature so it will not validate.
+			if test.expectNotToValidate {
+				msg = msg + "00"
 			}
 
-			pk, err := GetPublicKey(test.addr, sig, msg)
-			if err == nil {
-				if pk != test.expectedPubKey {
-					t.Errorf("invalid public key\nexpected: [%v]\nactual : [%v]\n", test.expectedPubKey, pk)
-				}
+			// Determine if the original key is signer for sig/msg
+			isValid, err := VerifySignatureWithPubKey(&key.PrivateKey.PublicKey, sig, msg)
+
+			if test.expectNotToValidate && isValid {
+				t.Errorf("should not have validated but did\n")
+			} else if !test.expectNotToValidate && !isValid {
+				t.Errorf("should have validated, but did not\n")
+			}
+
+			// Test that we get back the correct address for the recovered public key.
+			addr := PublicKeyToAddress(recoveredPubkey)
+			RecoveredAddress := addr.Hex()
+			if RecoveredAddress != test.expectedEIP55Addr {
+				t.Errorf("Invalid recovered address\nexpected: [%s] actual : [%s]\n",
+					test.expectedEIP55Addr, RecoveredAddress)
 			}
 
 		})
