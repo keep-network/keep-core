@@ -69,9 +69,10 @@ The procedure is as follows:
    unsigned integer, to the bootstrap peer. The message is signed with the 
    peer's static private key.
 2. The bootstrap peer randomly generates nonce `n_2`, which is also an 8-byte unsigned 
-   integer, and computes a challenge which is the result of calling a cryptographic hash 
+   integer, and computes a `challenge` which is the result of calling a cryptographic hash 
    function `hash` on the concatenated bytes of `n1` and `n2` (referenced as `n1 || n2`). 
-   The bootstrap peer sends back `n_2` and signs the message with its static private key.
+   The bootstrap peer sends back `challenge,` `n_2` and signs the message with its static 
+   private key.
 3. The peer joining the network recomputes the challenge from `n_1` and `n_2`; if it 
    matches the challenge sent by the bootstrap peer, it answers with a message 
    containing the challenge. The message is signed with the peer's static private key.
@@ -84,7 +85,7 @@ n_1 = random_nonce()
 Message { n_1 } ---->
                                                   n_2 = random_nonce()
                                                   challenge = hash(n_1 || n_2)                                  
-                                                  <---- Message { n_2 }
+                                                  <---- Message { challenge, n_2 }
 challenge = hash(n_1 || n_2)
 Message {challenge} ---->
 ```
