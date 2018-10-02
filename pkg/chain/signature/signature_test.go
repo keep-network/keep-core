@@ -2,115 +2,131 @@ package signature
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
-func TestSignature(t *testing.T) {
+// FIXME This needs to be moved to chain/ethereum/keydecrypt_test.go
+func TestKeyFileDecryption(t *testing.T) {
+	goodKeyFile := "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
+	badKeyFile := "./testdata/nonexistent-file.booyan"
 
 	tests := map[string]struct {
-		in                  []byte
-		addr                string
-		expectedMsg         string
-		expectedEIP55Addr   string
-		expectedPubKey      string
-		keyFile             string
-		password            string
-		expectError         bool
-		expectNotToValidate bool
+		keyFile      string
+		password     string
+		errorMessage string
 	}{
-		"successful signature": {
-			in:                  []byte{01, 02, 03, 04},
-			addr:                "6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
-			expectedMsg:         "01020304",
-			expectedEIP55Addr:   "0x6FFBA2D0F4C8FD7961F516af43C55fe2d56f6044",
-			expectedPubKey:      "0483bb5756ae8c2e9a4345682e38d585f76a769f5ba3e08505c1a1338c05edf800baf45ad8d256aeb74ee2fa6f52aa4a02621a95e208c263884beca60d8543bc4e",
-			keyFile:             "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
-			password:            "password",
-			expectError:         false,
-			expectNotToValidate: false,
+		"good password": {
+			keyFile:      goodKeyFile,
+			password:     "password",
+			errorMessage: "",
 		},
-		"signature file with invalid password": {
-			in:                []byte{01, 02, 03, 04},
-			addr:              "6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
-			expectedMsg:       "01020304",
-			expectedEIP55Addr: "0x6FFBA2D0F4C8FD7961F516af43C55fe2d56f6044",
-			expectedPubKey:    "0483bb5756ae8c2e9a4345682e38d585f76a769f5ba3e08505c1a1338c05edf800baf45ad8d256aeb74ee2fa6f52aa4a02621a95e208c263884beca60d8543bc4e",
-			keyFile:           "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
-			password:          "nanananana",
-			expectError:       true,
+		"bad file": {
+			keyFile:  badKeyFile,
+			password: "",
+			errorMessage: fmt.Sprintf(
+				"unable to read KeyFile %v [open %v: no such file or directory]",
+				badKeyFile,
+				badKeyFile,
+			),
 		},
-		"invalid signature": {
-			in:                  []byte{01, 02, 03, 04},
-			addr:                "9ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
-			expectedMsg:         "01020304",
-			expectedEIP55Addr:   "0x6FFBA2D0F4C8FD7961F516af43C55fe2d56f6044",
-			expectedPubKey:      "0483bb5756ae8c2e9a4345682e38d585f76a769f5ba3e08505c1a1338c05edf800baf45ad8d256aeb74ee2fa6f52aa4a02621a95e208c263884beca60d8543bc4e",
-			keyFile:             "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
-			password:            "password",
-			expectError:         false,
-			expectNotToValidate: true,
+		"bad password": {
+			keyFile:  goodKeyFile,
+			password: "nanananana",
+			errorMessage: fmt.Sprintf(
+				"unable to decrypt %v [could not decrypt key with given passphrase]",
+				goodKeyFile,
+			),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			key, err := ethereum.DecryptKeyFile(test.keyFile, test.password)
-			if test.expectError {
-				if err == nil {
-					t.Errorf("failed to return an error when error expected. Should have [%v]\n",
-						test.expectError)
-				}
-				return
-			}
-			msg, sig, err := Sign(key, test.in)
-			if test.expectError {
-				if err == nil {
-					t.Errorf("failed to return an error when error expected. Should have [%v]\n",
-						test.expectError)
-				}
-				return
-			}
+			_, err := ethereum.DecryptKeyFile(test.keyFile, test.password)
+			message := ""
 			if err != nil {
-				t.Errorf("returned an error [%v] \n", err)
-			}
-			if msg != test.expectedMsg {
-				t.Errorf("Message invalid\nexpected: [%s]\nactual : [%s]\n", test.expectedMsg, msg)
+				message = err.Error()
 			}
 
-			// From sig/msg to a public key.
-			recoveredPubkey, err := RecoverPublicKey(sig, msg)
-			RecoveredPublicKey := hex.EncodeToString(crypto.FromECDSAPub(recoveredPubkey))
-			if RecoveredPublicKey != test.expectedPubKey {
-				t.Errorf("invalid recovered public key\nexpected: [%s]\nactual : [%s]\n",
-					test.expectedPubKey, RecoveredPublicKey)
+			if message != test.errorMessage {
+				t.Errorf(
+					"\nexpected: [%v]\nactual:   [%v]",
+					test.errorMessage,
+					err,
+				)
 			}
-
-			// corrupt the msg/signature so it will not validate.
-			if test.expectNotToValidate {
-				msg = msg + "00"
-			}
-
-			// Determine if the original key is signer for sig/msg
-			isValid, err := VerifySignatureWithPubKey(&key.PrivateKey.PublicKey, sig, msg)
-
-			if test.expectNotToValidate && isValid {
-				t.Errorf("should not have validated but did\n")
-			} else if !test.expectNotToValidate && !isValid {
-				t.Errorf("should have validated, but did not\n")
-			}
-
-			// Test that we get back the correct address for the recovered public key.
-			addr := PublicKeyToAddress(recoveredPubkey)
-			RecoveredAddress := addr.Hex()
-			if RecoveredAddress != test.expectedEIP55Addr {
-				t.Errorf("Invalid recovered address\nexpected: [%s] actual : [%s]\n",
-					test.expectedEIP55Addr, RecoveredAddress)
-			}
-
 		})
 	}
+}
 
+func TestSign(t *testing.T) {
+	// Test for one address + message = good signature.
+	// Test for different address + message = different good signature.
+	// Don't test for failure but note that the only failures are deep in C-land.
+}
+
+func TestRecoverPublicKey(t *testing.T) {
+	hexPubkey := "0483bb5756ae8c2e9a4345682e38d585f76a769f5ba3e08505c1a1338c05edf800baf45ad8d256aeb74ee2fa6f52aa4a02621a95e208c263884beca60d8543bc4e"
+
+	tests := map[string]struct {
+		message              string
+		signature            string
+		errorMessage         string
+		expectedHexPublicKey *string
+	}{
+		"bad message": {
+			message:              "this is a test",
+			signature:            "should be hex",
+			errorMessage:         "failed to decode hex message to bytes: [encoding/hex: invalid byte: U+0074 't']",
+			expectedHexPublicKey: nil,
+		},
+		"bad signature": {
+			message:              "01020304",
+			signature:            "should be hex",
+			errorMessage:         "failed to decode hex signature to bytes: [encoding/hex: invalid byte: U+0073 's']",
+			expectedHexPublicKey: nil,
+		},
+		"correct signature for pubkey": {
+			message:              "01020304",
+			signature:            "b6d61b98d0722a249c9cad3e16de3626d4969cef56ab12e9efb3ef00a4f9356e5a25574aed6447d3d2797ee8afb71b8b7ff68c0f2cfe8fa437d145f16a192fb201",
+			errorMessage:         "",
+			expectedHexPublicKey: &hexPubkey,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			publicKey, err := RecoverPublicKey(test.signature, test.message)
+
+			if err != nil {
+				if test.errorMessage == "" || err.Error() != test.errorMessage {
+					t.Errorf(
+						"\nexpected: [%v]\nactual:   [%v]",
+						test.errorMessage,
+						err,
+					)
+				}
+
+				return
+			}
+
+			hexKey := hex.EncodeToString(crypto.FromECDSAPub(publicKey))
+			if hexKey != *test.expectedHexPublicKey {
+				t.Errorf(
+					"\nexpected: [%v]\nactual:   [%v]",
+					test.expectedHexPublicKey,
+					hexKey,
+				)
+			}
+		})
+	}
+}
+
+func TestPublicKeyToAddress(t *testing.T) {
+	// public key is nil
+	// public key is bad somehow?
+	// public key is good, address is correct
 }
