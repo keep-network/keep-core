@@ -1,4 +1,4 @@
-package bls
+package altbn128
 
 import (
 	"bytes"

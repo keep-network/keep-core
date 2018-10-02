@@ -41,7 +41,7 @@ func yFromX(x *big.Int) *big.Int {
 // G1FromInts returns G1 point based on the provided x and y.
 func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
 	if len(x.Bytes()) > 32 || len(y.Bytes()) > 32 {
-		return nil, errors.New("Points on G1 are limited to 256-bit coordinates.")
+		return nil, errors.New("points on G1 are limited to 256-bit coordinates")
 	}
 
 	paddedX, _ := byteutils.LeftPadTo32Bytes(x.Bytes())
@@ -119,7 +119,7 @@ func Decompress(m []byte) (*bn256.G1, error) {
 	y := yFromX(x)
 
 	if y == nil {
-		return nil, errors.New("Failed to decompress G1.")
+		return nil, errors.New("failed to decompress G1")
 	}
 
 	// Compare calculated Y sign with the original Y sign and if it doesn't match
