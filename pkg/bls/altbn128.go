@@ -33,7 +33,7 @@ func modSqrt(i, m *big.Int) *big.Int {
 }
 
 func yFromX(x *big.Int) *big.Int {
-    return modSqrt(sum(product(x, x, x), big.NewInt(3)), bn256.P)
+	return modSqrt(sum(product(x, x, x), big.NewInt(3)), bn256.P)
 }
 
 func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
@@ -65,48 +65,48 @@ func G1HashToPoint(m []byte) *bn256.G1 {
 		if y != nil {
 			g1, _ := G1FromInts(x, y)
 			return g1
-        }
+		}
 
 		x.Add(x, one)
 	}
 }
 
 func ySign(y *big.Int) byte {
-    arr := y.Bytes()
-    return arr[len(arr)-1] & 1
+	arr := y.Bytes()
+	return arr[len(arr)-1] & 1
 }
 
 func Compress(g *bn256.G1) []byte {
 
-    rt := make([]byte, 32)
+	rt := make([]byte, 32)
 
 	marshalled := g.Marshal()
 
-    for i := 31; i >= 0; i-- {
-        rt[i] = marshalled[i]
-    }
+	for i := 31; i >= 0; i-- {
+		rt[i] = marshalled[i]
+	}
 
 	y := new(big.Int).SetBytes(marshalled[32:])
 
-    mask := ySign(y) << 7
+	mask := ySign(y) << 7
 
-    rt[0] |= mask
+	rt[0] |= mask
 
-    return rt
+	return rt
 }
 
 func Decompress(m []byte) (*bn256.G1, error) {
 
-    x := new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:]...))
-    y := yFromX(x)
+	x := new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:]...))
+	y := yFromX(x)
 
 	if y == nil {
 		return nil, errors.New("Failed to decompress G1.")
 	}
 
-    if m[0] & 0x80 >> 7 != ySign(y) {
-        y = new(big.Int).Add(bn256.P, new(big.Int).Neg(y))
-    }
+	if m[0] & 0x80 >> 7 != ySign(y) {
+		y = new(big.Int).Add(bn256.P, new(big.Int).Neg(y))
+	}
 
 	return G1FromInts(x, y)
 }
