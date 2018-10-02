@@ -57,6 +57,14 @@ bootstrap peers and their static public keys. Bootstrap peers are just like any
 other peers, but with the added capability of being able to handle network join 
 requests.
 
+The result of joining the network is inherently dependent on the bootstrap peer's 
+announced view of the network, that is why choosing a right bootstrap peer is so 
+important. Using a malicious bootstrap peer may lead to joining a fake network if 
+the malicious bootstrap peer and other fake network members can prove the ownership 
+of their on-chain stakes. Using a recommended but hacked bootstrap peer may lead to 
+not establishing connections with any other peers in the network if the hacked 
+bootstrap peer does not properly announce new peer's presence.
+
 A peer wanting to connect to the network sends a network join request to one of 
 the bootstrap peers. Each peer wanting to join a network needs to provide a proof
 of ownership of an on-chain identity with an associated stake. As part of the 
