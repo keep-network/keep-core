@@ -13,17 +13,17 @@ import (
 func RecoverPublicKey(sig, msg string) (*ecdsa.PublicKey, error) {
 	message, err := hex.DecodeString(msg)
 	if err != nil {
-		return nil, fmt.Errorf("unabgle to decode message (invalid hex data) [%v]", err)
+		return nil, fmt.Errorf("failed to decode hex message to bytes: [%v]", err)
 	}
 
 	signature, err := hex.DecodeString(sig)
 	if err != nil {
-		return nil, fmt.Errorf("signature is not valid hex [%v]", err)
+		return nil, fmt.Errorf("failed to decode hex signature to bytes: [%v]", err)
 	}
 
 	recoveredPubkey, err := crypto.SigToPub(signHash(message), signature)
 	if err != nil || recoveredPubkey == nil {
-		return nil, fmt.Errorf("signature verification failed [%v]", err)
+		return nil, fmt.Errorf("failed to verify signature: [%v]", err)
 	}
 	return recoveredPubkey, nil
 }

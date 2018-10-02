@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// Sign uses a key file and password to sign a message. The message, encoded
-// in hex, and the signature are returned.
+// Sign uses a key to sign a message. The message, encoded in hex.
+// The signature and message are returned.
 func Sign(
 	key *keystore.Key,
 	message []byte,
