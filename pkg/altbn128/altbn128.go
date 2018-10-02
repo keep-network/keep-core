@@ -32,11 +32,13 @@ func modSqrt(i, m *big.Int) *big.Int {
 	return new(big.Int).ModSqrt(i, m)
 }
 
-// Returns only one of the two possible Y (even/odd) for provided X
+// yFromX calculates and returns only one of the two possible Y (even/odd)
+// for provided X.
 func yFromX(x *big.Int) *big.Int {
 	return modSqrt(sum(product(x, x, x), big.NewInt(3)), bn256.P)
 }
 
+// G1FromInts returns G1 point based on the provided x and y.
 func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
 	if len(x.Bytes()) > 32 || len(y.Bytes()) > 32 {
 		return nil, errors.New("Points on G1 are limited to 256-bit coordinates.")
@@ -53,6 +55,8 @@ func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
 	return g1, err
 }
 
+// G1HashToPoint hashes the provided byte slice, maps it into a G1
+// and returns it as a G1 point.
 func G1HashToPoint(m []byte) *bn256.G1 {
 
 	one := big.NewInt(1)
@@ -72,16 +76,15 @@ func G1HashToPoint(m []byte) *bn256.G1 {
 	}
 }
 
-// Calculates whether the provided Y coordinate is an even or odd number.
-// Returns 0x01 if Y is an even number and 0x00 if it's odd.
+// ySign calculates whether the provided Y coordinate is an even or odd
+// number. Returns 0x01 if Y is an even number and 0x00 if it's odd.
 func ySign(y *big.Int) byte {
 	arr := y.Bytes()
 	return arr[len(arr)-1] & 1
 }
 
-// Compress point by using X value and the sign of Y (even/odd) encoded
-// into the first byte. This is achieved by using bitwise `OR` operator.
-// Original byte and the sign can be later extracted with bitswise `AND`.
+// Compress compresses point by using X value and the sign of Y (even/odd)
+// encoded into the first byte.
 func Compress(g *bn256.G1) []byte {
 
 	rt := make([]byte, 32)
@@ -94,27 +97,25 @@ func Compress(g *bn256.G1) []byte {
 
 	y := new(big.Int).SetBytes(marshalled[32:])
 
-	// Prepare bytes mask with (even/odd) sign
+	// Prepare bytes mask with (even/odd) sign.
 	mask := ySign(y) << 7
 
-	// Use `OR` operator to save the sign
+	// Use `OR` operator to save the sign.
 	rt[0] |= mask
 
 	return rt
 }
 
-// Decompress byte slice into G1 point by extracting Y sign from the first
-// byte, extracting X value and calculating original Y value based on the
-// extracted Y sign. Extracting sign and original byte is achieved by
-// using `AND` bitwise operator:
-// ... & 0x7F => to get the original byte
-// ... & 0x80 => to get the sign
+// Decompress decompresses byte slice into G1 point by extracting Y sign
+// from the first byte, extracting X value and calculating original Y
+// value based on the extracted Y sign. The sign is encoded in the top
+// byte as 0x01 (even) or 0x00 (odd).
 func Decompress(m []byte) (*bn256.G1, error) {
 
-	// Get the original X
+	// Get the original X.
 	x := new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:]...))
 
-	// Get one of the two possible Y
+	// Get one of the two possible Y.
 	y := yFromX(x)
 
 	if y == nil {
