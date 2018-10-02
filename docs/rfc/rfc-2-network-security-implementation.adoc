@@ -146,14 +146,17 @@ Once peers agree on a common initial nonce they both execute a check for an
 on-chain stake of the second party. If at least one of the peers does not have a 
 minimum stake, protocol is aborted and all messages from that peer are rejected.
 
-Sender's nonce is tracked per individual peer. Each message sent from a peer 
-must have a nonce greater by one from the nonce of the previous message. The 
-nonce is included in a message in a way that makes it a part of the content used 
-to produce a signature. Nonce expires if two peers do not communicate for a 
-certain period of time. Nonce timeout is a parameter tracked on-chain. Two peers 
-need to execute the handshake protocol again to initialize a new nonce if the 
-previous one has expired. If the nonce has exhausted (reached the maximum
-possible value), it should be set back to 0.
+Nonces are tracked individually by all communicating peers; each peer maps all 
+other peers it communicates with to the current nonces they have maintained 
+with them. 
+
+Each message sent from a peer must have a nonce greater by one from the nonce of 
+the previous message. The nonce is included in a message in a way that makes it 
+a part of the content used to produce a signature. Nonce expires if two peers do 
+not communicate for a certain period of time. Nonce timeout is a parameter tracked 
+on-chain. Two peers need to execute the handshake protocol again to initialize a 
+new nonce if the previous one has expired. If the nonce has exhausted (reached the 
+maximum possible value), it should be set back to 0.
 
 All messages received from a given peer must contain nonces forming an ordered 
 sequence. If a peer receives a message with nonce less than or equal to the most 
