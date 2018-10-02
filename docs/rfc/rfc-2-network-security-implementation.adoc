@@ -199,12 +199,12 @@ communications.
 
 ==== Message relay
 
-Two peers communicating on the application level does not necessarily need to 
+Two peers communicating on the application level do not necessarily need to 
 have a direct network-level connection with each other. It is possible messages 
-are relayed by other peers. Each peer relying the message validates the message 
-signature against sender's key and should drop the message if the signature is 
-not valid. This strategy reduces the risk of flooding the network with tampered 
-messages.
+are relayed by other peers. Each peer relaying the message validates the message 
+signature against sender's key. If the signature is not valid, peer rejects the 
+message and drops the connection with the peer that relayed that message since that 
+peer is the one that tampered the message.
 
 ==== Group formation
 
