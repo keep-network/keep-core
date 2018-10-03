@@ -2,70 +2,90 @@ package signature
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
-// FIXME This needs to be moved to chain/ethereum/keydecrypt_test.go
-func TestKeyFileDecryption(t *testing.T) {
-	goodKeyFile := "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
-	badKeyFile := "./testdata/nonexistent-file.booyan"
+func TestSign(t *testing.T) {
+	keyFile := "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
+	keyPassword := "password"
 
 	tests := map[string]struct {
-		keyFile      string
-		password     string
-		errorMessage string
+		message              string
+		errorMessage         string
+		expectedMessageInHex string
+		expectedSignature    string
 	}{
-		"good password": {
-			keyFile:      goodKeyFile,
-			password:     "password",
-			errorMessage: "",
+		"correct signature": {
+			message:              "01020304",
+			errorMessage:         "",
+			expectedMessageInHex: "3031303230333034",
+			expectedSignature:    "2844b7b1b57a020623c70c842c5795dce6bc61531dac75b5246c5825c44644b44fc0160fc82ccfdac1463407e7a2ff474beaf30d41674a9ee72838d39b0e5fec01",
 		},
-		"bad file": {
-			keyFile:  badKeyFile,
-			password: "",
-			errorMessage: fmt.Sprintf(
-				"unable to read KeyFile %v [open %v: no such file or directory]",
-				badKeyFile,
-				badKeyFile,
-			),
+		"correct signature 2": {
+			message:              "Ethereum is a lot of fun.",
+			errorMessage:         "",
+			expectedMessageInHex: "457468657265756d2069732061206c6f74206f662066756e2e",
+			expectedSignature:    "c37e29996a39a237f46a3eeea8be2707d37e455ef29ffca10188089b1f47bbab010d020a093d3c617d65e9c1bb6cb50c964accf2c215ea979e69c90d0d66eab400",
 		},
-		"bad password": {
-			keyFile:  goodKeyFile,
-			password: "nanananana",
-			errorMessage: fmt.Sprintf(
-				"unable to decrypt %v [could not decrypt key with given passphrase]",
-				goodKeyFile,
-			),
+		"correct signature 3": {
+			message:              "Move $1,000,000 from Tim's account to my account right now!",
+			errorMessage:         "",
+			expectedMessageInHex: "4d6f76652024312c3030302c3030302066726f6d2054696d2773206163636f756e7420746f206d79206163636f756e74207269676874206e6f7721",
+			expectedSignature:    "7220cfea62ee991206156c6301d49bc16d841bff387d81acb8a1cad5a84c801c37871f7f4a37a070e42aa3836512e483ba908924031079224facb5c2dfe2ecc401",
 		},
+		// Notes:
+		//
+		// Any error failures come from somewhare in C land.  This makes an
+		// error case very hard to test.
+		//
+		// The data for #2 and #3 signatures were generated from NaCl - this
+		// provides independent verification that the signature is correct.
+	}
+
+	key, err := ethereum.DecryptKeyFile(keyFile, keyPassword)
+	if err != nil {
+		t.Fatalf("Missing %s or invalid [%s]\n", keyFile, err)
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			_, err := ethereum.DecryptKeyFile(test.keyFile, test.password)
-			message := ""
+
+			messageInHex, signature, err := Sign(key, []byte(test.message))
+
 			if err != nil {
-				message = err.Error()
+				if test.errorMessage == "" || err.Error() != test.errorMessage {
+					t.Errorf(
+						"\nexpected: [%v]\nactual:   [%v]",
+						test.errorMessage,
+						err,
+					)
+				}
+				return
 			}
 
-			if message != test.errorMessage {
+			// Did we get the correct message back?
+			if messageInHex != test.expectedMessageInHex {
 				t.Errorf(
 					"\nexpected: [%v]\nactual:   [%v]",
-					test.errorMessage,
-					err,
+					test.expectedMessageInHex,
+					messageInHex,
 				)
 			}
+
+			// Is the signature correct
+			if signature != test.expectedSignature {
+				t.Errorf(
+					"\nexpected: [%v]\nactual:   [%v]",
+					test.expectedSignature,
+					signature,
+				)
+			}
+
 		})
 	}
-}
-
-func TestSign(t *testing.T) {
-	// Test for one address + message = good signature.
-	// Test for different address + message = different good signature.
-	// Don't test for failure but note that the only failures are deep in C-land.
 }
 
 func TestRecoverPublicKey(t *testing.T) {
@@ -126,7 +146,43 @@ func TestRecoverPublicKey(t *testing.T) {
 }
 
 func TestPublicKeyToAddress(t *testing.T) {
-	// public key is nil
-	// public key is bad somehow?
-	// public key is good, address is correct
+	tests := map[string]struct {
+		expectedAddressHex string
+		keyFile            string
+		keyPassword        string
+	}{
+		"valid address": {
+			expectedAddressHex: "0x6FFBA2D0F4C8FD7961F516af43C55fe2d56f6044",
+			keyFile:            "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
+			keyPassword:        "password",
+		},
+		"valid address 2": {
+			expectedAddressHex: "0xDb180Da9A8982C7Bb75Ca40039f959CB959c62e8",
+			keyFile:            "./testdata/UTC--2018-08-27T00-03-51.111292084Z--Db180Da9A8982C7Bb75Ca40039f959CB959c62e8",
+			keyPassword:        "vEbeMJ/kP9mN2gdI",
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+
+			key, err := ethereum.DecryptKeyFile(test.keyFile, test.keyPassword)
+			if err != nil {
+				t.Fatalf("Unable to read keyfile [%s] error [%v]\n", test.keyFile, err)
+				return
+			}
+			address := PublicKeyToAddress(&key.PrivateKey.PublicKey)
+			addressHex := address.Hex()
+
+			// Did we get the correct message back?
+			if addressHex != test.expectedAddressHex {
+				t.Errorf(
+					"\nexpected: [%v]\nactual:   [%v]",
+					test.expectedAddressHex,
+					addressHex,
+				)
+			}
+
+		})
+	}
 }
