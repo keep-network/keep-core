@@ -223,3 +223,67 @@ func TestPublicKeyToAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestVerifySignatureWithPubKey(t *testing.T) {
+	keyFile := "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
+	keyPassword := "password"
+
+	tests := map[string]struct {
+		message       string
+		errorMessage  string
+		expectedValid bool
+		signature     string
+	}{
+		"verify correct signature": {
+			message:       "3031303230333034",
+			signature:     "2844b7b1b57a020623c70c842c5795dce6bc61531dac75b5246c5825c44644b44fc0160fc82ccfdac1463407e7a2ff474beaf30d41674a9ee72838d39b0e5fec01",
+			errorMessage:  "",
+			expectedValid: true,
+		},
+		"verify correct signature 2": {
+			message:       "457468657265756d2069732061206c6f74206f662066756e2e",
+			signature:     "c37e29996a39a237f46a3eeea8be2707d37e455ef29ffca10188089b1f47bbab010d020a093d3c617d65e9c1bb6cb50c964accf2c215ea979e69c90d0d66eab400",
+			errorMessage:  "",
+			expectedValid: true,
+		},
+		"verify correct signature 3": {
+			message:       "4d6f76652024312c3030302c3030302066726f6d2054696d2773206163636f756e7420746f206d79206163636f756e74207269676874206e6f7721",
+			signature:     "7220cfea62ee991206156c6301d49bc16d841bff387d81acb8a1cad5a84c801c37871f7f4a37a070e42aa3836512e483ba908924031079224facb5c2dfe2ecc401",
+			errorMessage:  "",
+			expectedValid: true,
+		},
+	}
+
+	key, err := ethereum.DecryptKeyFile(keyFile, keyPassword)
+	if err != nil {
+		t.Fatalf("Missing %s or invalid [%s]\n", keyFile, err)
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+
+			// func VerifySignatureWithPubKey(pubkey *ecdsa.PublicKey, sig, msg string) (bool, error) {
+			ok, err := VerifySignatureWithPubKey(&key.PrivateKey.PublicKey, test.signature, test.message)
+
+			if err != nil {
+				if test.errorMessage == "" || err.Error() != test.errorMessage {
+					t.Errorf(
+						"\nexpected: [%v]\nactual:   [%v]",
+						test.errorMessage,
+						err,
+					)
+				}
+				return
+			}
+
+			if ok != test.expectedValid {
+				t.Errorf(
+					"\nexpected: [%v]\nactual:   [%v]",
+					test.expectedValid,
+					ok,
+				)
+			}
+
+		})
+	}
+}
