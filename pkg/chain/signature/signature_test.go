@@ -39,7 +39,11 @@ func TestSign(t *testing.T) {
 		// Notes:
 		//
 		// Any error failures come from somewhare in C land.  This makes an
-		// error case very hard to test.
+		// error case very hard to test.  (Also errors from C depend on
+		// go-ethereum's compile time flags as different C implementations
+		// are supported - so the errors would not be consistent.  The
+		// errors would depend on the set of OS libraries installed and
+		// the underlying architecture of the system.)
 		//
 		// The data for #2 and #3 signatures were generated from NaCl - this
 		// provides independent verification that the signature is correct.
@@ -96,6 +100,7 @@ func TestRecoverPublicKey(t *testing.T) {
 		signature            string
 		errorMessage         string
 		expectedHexPublicKey *string
+		signatureCorrect     bool
 	}{
 		"bad message": {
 			message:              "this is a test",
@@ -114,6 +119,28 @@ func TestRecoverPublicKey(t *testing.T) {
 			signature:            "b6d61b98d0722a249c9cad3e16de3626d4969cef56ab12e9efb3ef00a4f9356e5a25574aed6447d3d2797ee8afb71b8b7ff68c0f2cfe8fa437d145f16a192fb201",
 			errorMessage:         "",
 			expectedHexPublicKey: &hexPubkey,
+			signatureCorrect:     true,
+		},
+		"correct signature for pubkey 2": {
+			message:              "457468657265756d2069732061206c6f74206f662066756e2e",
+			signature:            "c37e29996a39a237f46a3eeea8be2707d37e455ef29ffca10188089b1f47bbab010d020a093d3c617d65e9c1bb6cb50c964accf2c215ea979e69c90d0d66eab400",
+			errorMessage:         "",
+			expectedHexPublicKey: &hexPubkey,
+			signatureCorrect:     true,
+		},
+		"correct signature for pubkey 3": {
+			message:              "4d6f76652024312c3030302c3030302066726f6d2054696d2773206163636f756e7420746f206d79206163636f756e74207269676874206e6f7721",
+			signature:            "7220cfea62ee991206156c6301d49bc16d841bff387d81acb8a1cad5a84c801c37871f7f4a37a070e42aa3836512e483ba908924031079224facb5c2dfe2ecc401",
+			errorMessage:         "",
+			expectedHexPublicKey: &hexPubkey,
+			signatureCorrect:     true,
+		},
+		"in-correct signature for pubkey": {
+			message:              "4d6f76652024312c3030302c3030302066726f6d2054696d2773206163636f756e7420746f206d79206163636f756e74207269676874206e6f7721",
+			signature:            "b6d61b98d0722a249c9cad3e16de3626d4969cef56ab12e9efb3ef00a4f9356e5a25574aed6447d3d2797ee8afb71b8b7ff68c0f2cfe8fa437d145f16a192fb201",
+			errorMessage:         "",
+			expectedHexPublicKey: &hexPubkey,
+			signatureCorrect:     false,
 		},
 	}
 
@@ -134,12 +161,22 @@ func TestRecoverPublicKey(t *testing.T) {
 			}
 
 			hexKey := hex.EncodeToString(crypto.FromECDSAPub(publicKey))
-			if hexKey != *test.expectedHexPublicKey {
-				t.Errorf(
-					"\nexpected: [%v]\nactual:   [%v]",
-					test.expectedHexPublicKey,
-					hexKey,
-				)
+			if test.signatureCorrect {
+				if hexKey != *test.expectedHexPublicKey {
+					t.Errorf(
+						"\nexpected: [%v]\nactual:   [%v]",
+						*test.expectedHexPublicKey,
+						hexKey,
+					)
+				}
+			} else {
+				if hexKey == *test.expectedHexPublicKey {
+					t.Errorf(
+						"\nexpected: [%v]\nactual:   [%v]",
+						*test.expectedHexPublicKey,
+						hexKey,
+					)
+				}
 			}
 		})
 	}
