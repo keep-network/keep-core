@@ -30,6 +30,9 @@ func RecoverPublicKey(sig, msg string) (*ecdsa.PublicKey, error) {
 
 // PublicKeyToAddress converts form a public key to an Ethereum address.
 func PublicKeyToAddress(p *ecdsa.PublicKey) common.Address {
+	if p == nil {
+		return common.Address{0}
+	}
 	pubBytes := crypto.FromECDSAPub(p)
 	return common.BytesToAddress(crypto.Keccak256(pubBytes[1:])[12:])
 }

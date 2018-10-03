@@ -2,6 +2,7 @@ package signature
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -168,11 +169,13 @@ func TestRecoverPublicKey(t *testing.T) {
 func TestPublicKeyToAddress(t *testing.T) {
 	tests := map[string]struct {
 		expectedAddressHex string
+		publicKeyHex       string
 		keyFile            string
 		keyPassword        string
 	}{
 		"valid address": {
 			expectedAddressHex: "0x6FFBA2D0F4C8FD7961F516af43C55fe2d56f6044",
+			publicKeyHex:       "000000",
 			keyFile:            "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
 			keyPassword:        "password",
 		},
@@ -183,9 +186,10 @@ func TestPublicKeyToAddress(t *testing.T) {
 
 			key, err := ethereum.DecryptKeyFile(test.keyFile, test.keyPassword)
 			if err != nil {
-				t.Fatalf("Failed to read key file [%s] [%v]\n", keyFile, err)
+				t.Fatalf("Failed to read key file [%s] [%v]\n", test.keyFile, err)
 				return
 			}
+			fmt.Printf("%+v", key.PrivateKey.PublicKey)
 			address := PublicKeyToAddress(&key.PrivateKey.PublicKey)
 			addressHex := address.Hex()
 
