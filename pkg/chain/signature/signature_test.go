@@ -52,7 +52,6 @@ func TestSign(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 
 			messageInHex, signature, err := Sign(key, []byte(test.message))
-
 			if err != nil {
 				if test.errorMessage == "" || err.Error() != test.errorMessage {
 					t.Errorf(
@@ -177,11 +176,6 @@ func TestPublicKeyToAddress(t *testing.T) {
 			keyFile:            "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
 			keyPassword:        "password",
 		},
-		"valid address 2": {
-			expectedAddressHex: "0xDb180Da9A8982C7Bb75Ca40039f959CB959c62e8",
-			keyFile:            "./testdata/UTC--2018-08-27T00-03-51.111292084Z--Db180Da9A8982C7Bb75Ca40039f959CB959c62e8",
-			keyPassword:        "vEbeMJ/kP9mN2gdI",
-		},
 	}
 
 	for testName, test := range tests {
@@ -235,7 +229,6 @@ func TestVerifySignatureWithPubKey(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 
 			ok, err := VerifySignatureWithPubKey(&key.PrivateKey.PublicKey, test.signature, test.message)
-
 			if err != nil {
 				if test.errorMessage == "" || err.Error() != test.errorMessage {
 					t.Errorf(
