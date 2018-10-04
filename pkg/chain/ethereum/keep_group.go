@@ -42,8 +42,8 @@ type keepGroup struct {
 
 // NewKeepGroup creates the necessary connections and configurations
 // for accessing the KeepGroup contract.
-func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
-	contractAddressHex, exists := pv.config.ContractAddresses["KeepGroupImplV1"]
+func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
+	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepGroupImplV1"]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for 'KeepGroup' in configuration",
@@ -53,7 +53,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 
 	groupTransactor, err := abi.NewKeepGroupImplV1Transactor(
 		contractAddress,
-		pv.client,
+		chainConfig.client,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -62,26 +62,27 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 		)
 	}
 
-	if pv.accountKey == nil {
+
+	if chainConfig.accountKey == nil {
 		key, err := DecryptKeyFile(
-			pv.config.Account.KeyFile,
-			pv.config.Account.KeyFilePassword,
+			chainConfig.config.Account.KeyFile,
+			chainConfig.config.Account.KeyFilePassword,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to read KeyFile: %s: [%v]",
-				pv.config.Account.KeyFile,
+				chainConfig.config.Account.KeyFile,
 				err,
 			)
 		}
-		pv.accountKey = key
+		chainConfig.accountKey = key
 	}
 
 	optsTransactor := bind.NewKeyedTransactor(
-		pv.accountKey.PrivateKey,
+		chainConfig.accountKey.PrivateKey,
 	)
 
-	groupCaller, err := abi.NewKeepGroupImplV1Caller(contractAddress, pv.client)
+	groupCaller, err := abi.NewKeepGroupImplV1Caller(contractAddress, chainConfig.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate a KeepRelayBeaconCaller contract: [%v]",
@@ -93,7 +94,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 		From: contractAddress,
 	}
 
-	groupContract, err := abi.NewKeepGroupImplV1(contractAddress, pv.client)
+	groupContract, err := abi.NewKeepGroupImplV1(contractAddress, chainConfig.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate contract object: %s at address: [%v]",
