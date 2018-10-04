@@ -22,6 +22,57 @@
 
 required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereum/go-ethereum/cmd/abigen"]
 
+# libp2p
+[[override]]
+  name = "github.com/libp2p/go-floodsub"
+  revision = "10eaec55ad0fe58b2fb77cbaf01a3760eb8c211b"
+  source = "https://github.com/keep-network/go-floodsub.git"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-peer"
+  revision = "e8858116ad7f0a54dfc2bb6af554f2024221d19c"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-peerstore"
+  revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-crypto"
+  revision = "18915b5467c77ad8c07a35328c2cab468667a4e8"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-kad-dht"
+  revision = "240a27a66982945ba87967a08a6e04b74b228c45"
+
+# multiformats
+[[override]]
+  name = "github.com/multiformats/go-multihash"
+  revision = "468a1b73e980e5aff011d308623e43e28c582b16"
+
+[[override]]
+  name = "github.com/multiformats/go-multiaddr"
+  revision = "123a717755e0559ec8fda308019cd24e0a37bb07"
+
+# libp2p related deps
+[[override]]
+  name = "github.com/ipfs/go-datastore"
+  revision = "f2426c09e56ae390fc416f21b224c7d7ad13418c"
+  
+# other
+[[override]]
+  name = "github.com/gogo/protobuf"
+  revision = "baf2ea5cdb7ce2d399176f925052690c3dad1f56"
+  source = "https://github.com/keep-network/protobuf.git"
+
+[[constraint]]
+  name = "github.com/urfave/cli"
+  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+  source = "https://github.com/keep-network/cli.git"
+
+[[override]]
+  name = "github.com/satori/go.uuid"
+  revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
+
 [[constraint]]
   name = "github.com/keep-network/paillier"
   revision = "79cb054ad9bbe9f6b7a433bb7e4f892e92e1f8b3"
@@ -41,51 +92,3 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   name = "github.com/BurntSushi/toml"
   revision = "b26d9c308763d68093482582cea63d69be07a0f0"
   source = "https://github.com/keep-network/toml.git"
-
-[[override]]
-  name = "github.com/libp2p/go-floodsub"
-  revision = "10eaec55ad0fe58b2fb77cbaf01a3760eb8c211b"
-  source = "https://github.com/keep-network/go-floodsub.git"
-
-[[override]]
-  name = "github.com/multiformats/go-multihash"
-  revision = "468a1b73e980e5aff011d308623e43e28c582b16"
-
-[[override]]
-  name = "github.com/multiformats/go-multiaddr"
-  revision = "123a717755e0559ec8fda308019cd24e0a37bb07"
-
-[[override]]
-  name = "github.com/satori/go.uuid"
-  revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
-
-[[constraint]]
-  name = "github.com/libp2p/go-libp2p-peer"
-  revision = "e8858116ad7f0a54dfc2bb6af554f2024221d19c"
-  
-[[constraint]]
-  name = "github.com/libp2p/go-libp2p-peerstore"
-  revision = "7ac092e7f77f5bda1cb6e4ef95efbe911e97db41"
-
-[[constraint]]
-  name = "github.com/libp2p/go-libp2p-crypto"
-  revision = "18915b5467c77ad8c07a35328c2cab468667a4e8"
-
-[[constraint]]
-  name = "github.com/urfave/cli"
-  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
-  source = "https://github.com/keep-network/cli.git"
-
-[[override]]
-  name = "github.com/ipfs/go-datastore"
-  revision = "f2426c09e56ae390fc416f21b224c7d7ad13418c"
-
-[[override]]
-  name = "github.com/libp2p/go-libp2p-kad-dht"
-  revision = "240a27a66982945ba87967a08a6e04b74b228c45"
-
-[[override]]
-  name = "github.com/gogo/protobuf"
-  revision = "baf2ea5cdb7ce2d399176f925052690c3dad1f56"
-  source = "https://github.com/keep-network/protobuf.git"
-
