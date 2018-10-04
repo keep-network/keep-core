@@ -221,6 +221,12 @@ signature against sender's key. If the signature is not valid, peer rejects the
 message and drops the connection with the peer that relayed that message since 
 that peer is the one that tampered the message.
 
+Peer which tampered the message is blacklisted by the peer who received the 
+relayed, tampered message. Peer is blacklisted for a certain period of time, 
+tracked as an on-chain parameter. This time period is never shorter than the time 
+needed to re-transmit the message. During the time peer is blacklisted, all 
+connection attempts from that peer to the peer who blacklisted it are rejected.
+
 ==== Group formation
 
 In the Keep network, peers may form groups selected to execute various protocols.
