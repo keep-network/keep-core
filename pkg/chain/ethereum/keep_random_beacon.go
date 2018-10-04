@@ -1,10 +1,8 @@
 package ethereum
 
 import (
-	"bufio"
 	"fmt"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -44,26 +42,24 @@ func newKeepRandomBeacon(pv *ethereumChain) (*KeepRandomBeacon, error) {
 		)
 	}
 
-	file, err := os.Open(pv.config.Account.KeyFile)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to open keyfile: %s [%v]",
+	if pv.accountKey == nil {
+		key, err := DecryptKeyFile(
 			pv.config.Account.KeyFile,
-			err,
+			pv.config.Account.KeyFilePassword,
 		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to read KeyFile: %s: [%v]",
+				pv.config.Account.KeyFile,
+				err,
+			)
+		}
+		pv.accountKey = key
 	}
 
-	optsTransactor, err := bind.NewTransactor(
-		bufio.NewReader(file),
-		pv.config.Account.KeyFilePassword,
+	optsTransactor := bind.NewKeyedTransactor(
+		pv.accountKey.PrivateKey,
 	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to read keyfile: %s [%v]",
-			pv.config.Account.KeyFile,
-			err,
-		)
-	}
 
 	beaconCaller, err := abi.NewKeepRandomBeaconImplV1Caller(
 		contractAddress,
