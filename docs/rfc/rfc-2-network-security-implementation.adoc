@@ -52,23 +52,25 @@ to have the same static public key.
 ==== Network join protocol
 
 Keep publishes a list of recommended bootstrap peers but every other network 
-member can enable the bootstrap capability as well. The list contains addresses of 
-bootstrap peers and their static public keys. Bootstrap peers are just like any 
-other peers, but with the added capability of being able to handle network join 
-requests.
+member can enable the bootstrap capability as well. The list contains addresses 
+of bootstrap peers and their static public keys. Bootstrap peers are just like 
+any other peers, but with the added capability of being able to handle network 
+join requests.
 
-The result of joining the network is inherently dependent on the bootstrap peer's 
-announced view of the network, that is why choosing a right bootstrap peer is so 
-important. Using a malicious bootstrap peer may lead to joining a fake network if 
-the malicious bootstrap peer and other fake network members can prove the ownership 
-of their on-chain stakes. Using a recommended but hacked bootstrap peer may lead to 
-not establishing connections with any other peers in the network if the hacked 
-bootstrap peer does not properly announce new peer's presence.
+The result of joining the network is inherently dependent on the bootstrap 
+peer's announced view of the network, that is why choosing a right bootstrap 
+peer is so important. Using a malicious bootstrap peer may lead to joining a 
+fake network if the malicious bootstrap peer and other fake network members can 
+prove the ownership of their on-chain stakes. Using a recommended but hacked 
+bootstrap peer may lead to not establishing connections with any other peers in 
+the network if the hacked bootstrap peer does not properly announce new peer's 
+presence.
 
 A peer wanting to connect to the network sends a network join request to one of 
-the bootstrap peers. Each peer wanting to join a network needs to provide a proof
-of ownership of an on-chain identity with an associated stake. As part of the 
-network join handshake, the bootstrap peer will also provide proof of its own stake.
+the bootstrap peers. Each peer wanting to join a network needs to provide a 
+proof of ownership of an on-chain identity with an associated stake. As part of 
+the network join handshake, the bootstrap peer will also provide proof of its 
+own stake.
 
 The procedure is as follows:
 
@@ -76,14 +78,15 @@ The procedure is as follows:
    request message containing randomly generated nonce `n_1`, an 8-byte (64-bit) 
    unsigned integer, to the bootstrap peer. The message is signed with the 
    peer's static private key.
-2. The bootstrap peer randomly generates nonce `n_2`, which is also an 8-byte unsigned 
-   integer, and computes a `challenge` which is the result of calling a cryptographic hash 
-   function `hash` on the concatenated bytes of `n1` and `n2` (referenced as `n1 || n2`). 
-   The bootstrap peer sends back `challenge,` `n_2` and signs the message with its static 
-   private key.
-3. The peer joining the network recomputes the challenge from `n_1` and `n_2`; if it 
-   matches the challenge sent by the bootstrap peer, it answers with a message 
-   containing the challenge. The message is signed with the peer's static private key.
+2. The bootstrap peer randomly generates nonce `n_2`, which is also an 8-byte 
+   unsigned integer, and computes a `challenge` which is the result of calling a 
+   cryptographic hash function `hash` on the concatenated bytes of `n1` and `n2` 
+   (referenced as `n1 || n2`). The bootstrap peer sends back `challenge,` `n_2` 
+   and signs the message with its static private key.
+3. The peer joining the network recomputes the challenge from `n_1` and `n_2`; 
+   if it matches the challenge sent by the bootstrap peer, it answers with a 
+   message containing the challenge. The message is signed with the peer's 
+   static private key.
 4. The bootstrap peer validates the challenge.
 
 ```
@@ -99,37 +102,37 @@ Message {challenge} ---->
 ```
 
 Message signature is checked for any message that is received. Any message with
-an invalid signature immediately aborts the protocol. If all signatures have been 
-valid and challenge response was as expected, both parties execute a check for an 
-on-chain stake of each other. If the peer joining the network has a minimum stake,  
-the bootstrap peer connects the peer to the network and announces peer's presence. 
-If the bootstrap peer has a minimum stake, peer joining the network 
-decides to connect to the bootstrap peer and becomes a part of the network.
-Nonces and challenge generated during the handshake are discarded. 
+an invalid signature immediately aborts the protocol. If all signatures have 
+been valid and challenge response was as expected, both parties execute a check 
+for an on-chain stake of each other. If the peer joining the network has a 
+minimum stake, the bootstrap peer connects the peer to the network and announces 
+peer's presence. If the bootstrap peer has a minimum stake, peer joining the 
+network decides to connect to the bootstrap peer and becomes a part of the 
+network. Nonces and challenge generated during the handshake are discarded. 
 Otherwise, when at least one of the parties does not have a minimum stake, the 
-protocol is aborted. If the bootstrap peer had a deficient stake, the peer joining 
-the network may execute the protocol again with the next bootstrap peer.
+protocol is aborted. If the bootstrap peer had a deficient stake, the peer 
+joining the network may execute the protocol again with the next bootstrap peer.
 
 ==== Network peer authorization protocol
 
-Once a peer has completed the network join protocol successfully, it is connected to 
-a bootstrap peer and is a full-fledged network member. It starts discovering other 
-peers in the network and connects to some of those according to the peer discovery
-strategy implemented in the network. Before the peer decides to connect to any other 
-network member, the same nonce, challenge, and stake check protocol must be executed
-between the peer and the new network member it is connecting to. 
-Peers decide to connect to each other only if they both complete the 
-protocol successfully and prove their on-chain minimum stakes. This is a trust-no-one 
-strategy which allows for even a corrupted network to heal in the case of a malicious 
-split brain event.
+Once a peer has completed the network join protocol successfully, it is 
+connected to a bootstrap peer and is a full-fledged network member. It starts 
+discovering other peers in the network and connects to some of those according 
+to the peer discovery strategy implemented in the network. Before the peer 
+decides to connect to any other network member, the same nonce, challenge, and 
+stake check protocol must be executed between the peer and the new network 
+member it is connecting to. Peers decide to connect to each other only if they 
+both complete the protocol successfully and prove their on-chain minimum stakes. 
+This is a trust-no-one strategy which allows for even a corrupted network to 
+heal in the case of a malicious split brain event.
 
 ==== Attributability and integrity of messages
 
 All messages in the network are signed with sender's private static key. Before 
 any two peers start exchanging messages, they need to agree on a common nonce 
-(8-byte unsigned integer) that will be used to track the order of messages as well 
-as to prevent replay and message-from-future attacks. The protocol is similar 
-to the one used to create a challenge:
+(8-byte unsigned integer) that will be used to track the order of messages as 
+well as to prevent replay and message-from-future attacks. The protocol is 
+similar to the one used to create a challenge:
 
 ```
 PEER 1                                          PEER 2
@@ -153,10 +156,10 @@ with them.
 Each message sent from a peer must have a nonce greater by one from the nonce of 
 the previous message. The nonce is included in a message in a way that makes it 
 a part of the content used to produce a signature. Nonce expires if two peers do 
-not communicate for a certain period of time. Nonce timeout is a parameter tracked 
-on-chain. Two peers need to execute the handshake protocol again to initialize a 
-new nonce if the previous one has expired. If the nonce has exhausted (reached the 
-maximum possible value), it should be set back to 0.
+not communicate for a certain period of time. Nonce timeout is a parameter 
+tracked on-chain. Two peers need to execute the handshake protocol again to 
+initialize a new nonce if the previous one has expired. If the nonce has 
+exhausted (reached the maximum possible value), it should be set back to 0.
 
 All messages received from a given peer must contain nonces forming an ordered 
 sequence. If a peer receives a message with nonce less than or equal to the most 
@@ -166,12 +169,12 @@ or delayed. Each peer has a cache of messages sent and received within a fixed
 time window. If a received message has a nonce greater by more than one from the 
 currently expected nonce, that message is added to cache but it’s not accepted
 until the gap between the expected and message’s nonce is filled. There is a 
-fixed, short time limit under which the gap must be filled. If that does not happen, 
-the message is rejected and the sender is informed about this fact. Message 
-rejected notification contains a nonce of a message that was rejected as well as 
-the currently expected nonce. Sender, having the cache of messages sent in the 
-fixed time window resends all the messages starting from the one with nonce 
-expected by the receiver. If sender does not provide the missing messages 
+fixed, short time limit under which the gap must be filled. If that does not 
+happen, the message is rejected and the sender is informed about this fact. 
+Message rejected notification contains a nonce of a message that was rejected as 
+well as the currently expected nonce. Sender, having the cache of messages sent 
+in the fixed time window resends all the messages starting from the one with 
+nonce expected by the receiver. If sender does not provide the missing messages 
 within a fixed timeout, receiver drops the connection.
 
 Sent and received messages cache window, time after a notification about 
@@ -215,8 +218,8 @@ Two peers communicating on the application level do not necessarily need to
 have a direct network-level connection with each other. It is possible messages 
 are relayed by other peers. Each peer relaying the message validates the message 
 signature against sender's key. If the signature is not valid, peer rejects the 
-message and drops the connection with the peer that relayed that message since that 
-peer is the one that tampered the message.
+message and drops the connection with the peer that relayed that message since 
+that peer is the one that tampered the message.
 
 ==== Group formation
 
