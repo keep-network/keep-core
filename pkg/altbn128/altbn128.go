@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"math/big"
+
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
@@ -32,8 +33,9 @@ func modSqrt(i, m *big.Int) *big.Int {
 	return new(big.Int).ModSqrt(i, m)
 }
 
-// yFromX calculates and returns only one of the two possible Y (even/odd)
-// for provided X.
+// yFromX calculates and returns only one of the two possible Ys, by
+// solving the curve equation for X, the two Ys can be distinguished by
+// their parity.
 func yFromX(x *big.Int) *big.Int {
 	return modSqrt(sum(product(x, x, x), big.NewInt(3)), bn256.P)
 }
@@ -76,14 +78,14 @@ func G1HashToPoint(m []byte) *bn256.G1 {
 	}
 }
 
-// ySign calculates whether the provided Y coordinate is an even or odd
+// yParity calculates whether the provided Y coordinate is an even or odd
 // number. Returns 0x01 if Y is an even number and 0x00 if it's odd.
-func ySign(y *big.Int) byte {
+func yParity(y *big.Int) byte {
 	arr := y.Bytes()
 	return arr[len(arr)-1] & 1
 }
 
-// Compress compresses point by using X value and the sign of Y (even/odd)
+// Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
 func Compress(g *bn256.G1) []byte {
 
@@ -97,19 +99,19 @@ func Compress(g *bn256.G1) []byte {
 
 	y := new(big.Int).SetBytes(marshalled[32:])
 
-	// Prepare bytes mask with (even/odd) sign.
-	mask := ySign(y) << 7
+	// Prepare bytes mask with parity bit.
+	mask := yParity(y) << 7
 
-	// Use `OR` operator to save the sign.
+	// Use `OR` operator to save the parity bit.
 	rt[0] |= mask
 
 	return rt
 }
 
-// Decompress decompresses byte slice into G1 point by extracting Y sign
-// from the first byte, extracting X value and calculating original Y
-// value based on the extracted Y sign. The sign is encoded in the top
-// byte as 0x01 (even) or 0x00 (odd).
+// Decompress decompresses byte slice into G1 point by extracting Y parity
+// bit from the first byte, extracting X value and calculating original Y
+// value based on the extracted Y parity. The parity bit is encoded in the
+// top byte as 0x01 (even) or 0x00 (odd).
 func Decompress(m []byte) (*bn256.G1, error) {
 
 	// Get the original X.
@@ -122,9 +124,10 @@ func Decompress(m []byte) (*bn256.G1, error) {
 		return nil, errors.New("failed to decompress G1")
 	}
 
-	// Compare calculated Y sign with the original Y sign and if it doesn't match
-	// get the right Y by extracting the calculated one from the bn256.P
-	if m[0] & 0x80 >> 7 != ySign(y) {
+	// Compare calculated Y parity with the original Y parity and if it
+	// doesn't match get the right Y by extracting the calculated one from
+	// the bn256.P since `Y1 + Y2 = P`.
+	if m[0]&0x80>>7 != yParity(y) {
 		y = new(big.Int).Add(bn256.P, new(big.Int).Neg(y))
 	}
 
