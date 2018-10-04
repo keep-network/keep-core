@@ -1,8 +1,9 @@
 package signature
 
 import (
+	"crypto/ecdsa"
 	"encoding/hex"
-	"fmt"
+	"encoding/json"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -169,13 +170,11 @@ func TestRecoverPublicKey(t *testing.T) {
 func TestPublicKeyToAddress(t *testing.T) {
 	tests := map[string]struct {
 		expectedAddressHex string
-		publicKeyHex       string
 		keyFile            string
 		keyPassword        string
 	}{
 		"valid address": {
 			expectedAddressHex: "0x6FFBA2D0F4C8FD7961F516af43C55fe2d56f6044",
-			publicKeyHex:       "000000",
 			keyFile:            "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
 			keyPassword:        "password",
 		},
@@ -189,7 +188,6 @@ func TestPublicKeyToAddress(t *testing.T) {
 				t.Fatalf("Failed to read key file [%s] [%v]\n", test.keyFile, err)
 				return
 			}
-			fmt.Printf("%+v", key.PrivateKey.PublicKey)
 			address := PublicKeyToAddress(&key.PrivateKey.PublicKey)
 			addressHex := address.Hex()
 
@@ -207,32 +205,29 @@ func TestPublicKeyToAddress(t *testing.T) {
 }
 
 func TestVerifySignatureWithPubKey(t *testing.T) {
-	keyFile := "./testdata/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044"
-	keyPassword := "password"
 
 	tests := map[string]struct {
 		message       string
 		errorMessage  string
 		expectedValid bool
+		pubKeyJSON    string
 		signature     string
 	}{
 		"verify correct signature": {
 			message:       "3031303230333034",
 			signature:     "2844b7b1b57a020623c70c842c5795dce6bc61531dac75b5246c5825c44644b44fc0160fc82ccfdac1463407e7a2ff474beaf30d41674a9ee72838d39b0e5fec01",
+			pubKeyJSON:    `{"Curve":{"P":115792089237316195423570985008687907853269984665640564039457584007908834671663,"N":115792089237316195423570985008687907852837564279074904382605163141518161494337,"B":7,"Gx":55066263022277343669578718895168534326250603453777594175500187360389116729240,"Gy":32670510020758816978083085130507043184471273380659243275938904335757337482424,"BitSize":256},"X":59583986354391045197850449728092779822530178549585112526757356439863210932224,"Y":84561927522964405625378711571517351344267579854412957918810298793357853572174}`,
 			errorMessage:  "",
 			expectedValid: true,
 		},
 	}
 
-	key, err := ethereum.DecryptKeyFile(keyFile, keyPassword)
-	if err != nil {
-		t.Fatalf("Failed to read key file [%s] [%v]\n", keyFile, err)
-	}
-
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 
-			ok, err := VerifySignatureWithPubKey(&key.PrivateKey.PublicKey, test.signature, test.message)
+			var pubkey ecdsa.PublicKey
+			json.Unmarshal([]byte(test.pubKeyJSON), &pubkey)
+			ok, err := VerifySignatureWithPubKey(&pubkey, test.signature, test.message)
 			if err != nil {
 				if test.errorMessage == "" || err.Error() != test.errorMessage {
 					t.Errorf(
