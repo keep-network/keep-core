@@ -47,7 +47,7 @@ identity and stake check before the communication between them happens.
 ==== Peer identification
 Each peer is identified by a static public key equal to the delegate key 
 associated with an on-chain stake. No two peers in the network are permitted 
-to have the same static public key
+to have the same static public key.
 
 ==== Network join protocol
 
@@ -107,8 +107,8 @@ If the bootstrap peer has a minimum stake, peer joining the network
 decides to connect to the bootstrap peer and becomes a part of the network.
 Nonces and challenge generated during the handshake are discarded. 
 Otherwise, when at least one of the parties does not have a minimum stake, the 
-protocol is aborted. If the bootstrap peer had a deficient stake, the peer joining
-the network executes the protocol again with the next bootstrap peer.
+protocol is aborted. If the bootstrap peer had a deficient stake, the peer joining 
+the network may execute the protocol again with the next bootstrap peer.
 
 ==== Network peer authorization protocol
 
@@ -119,7 +119,7 @@ strategy implemented in the network. Before the peer decides to connect to any o
 network member, the same nonce, challenge, and stake check protocol must be executed
 between the peer and the new network member it is connecting to. 
 Peers decide to connect to each other only if they both complete the 
-protocol successfully and prove their on-chain minimum stakes. This is a trust no-one 
+protocol successfully and prove their on-chain minimum stakes. This is a trust-no-one 
 strategy which allows for even a corrupted network to heal in the case of a malicious 
 split brain event.
 
