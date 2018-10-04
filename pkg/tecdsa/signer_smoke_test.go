@@ -15,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/tecdsa/curve"
 	"github.com/keep-network/keep-core/pkg/tecdsa/zkp"
 	"github.com/keep-network/paillier"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 func TestFullInitAndSignPath(t *testing.T) {
@@ -405,11 +406,11 @@ func verifySignatureInEthereum(
 
 	// We need to add padding to the R and S.
 	// Ethereum requires that both values are 32 bytes long each.
-	paddedR, err := leftPadTo32Bytes(signature.R.Bytes())
+	paddedR, err := byteutils.LeftPadTo32Bytes(signature.R.Bytes())
 	if err != nil {
 		return err
 	}
-	paddedS, err := leftPadTo32Bytes(signature.S.Bytes())
+	paddedS, err := byteutils.LeftPadTo32Bytes(signature.S.Bytes())
 	if err != nil {
 		return err
 	}
@@ -427,21 +428,4 @@ func verifySignatureInEthereum(
 
 	// All is fine
 	return nil
-}
-
-func leftPadTo32Bytes(bytes []byte) ([]byte, error) {
-	expectedByteLen := 32
-	if len(bytes) > expectedByteLen {
-		return nil, fmt.Errorf(
-			"cannot pad %v byte array to %v bytes", len(bytes), expectedByteLen,
-		)
-	}
-
-	result := make([]byte, 0)
-	if len(bytes) < expectedByteLen {
-		result = make([]byte, expectedByteLen-len(bytes))
-	}
-	result = append(result, bytes...)
-
-	return result, nil
 }
