@@ -10,7 +10,7 @@ toc::[]
 == Proposal
 In this document, we describe the implementation details of the Keep network 
 security mechanisms meeting requirements specified in 
-link:rfc-1-network-security-requirements.adoc[RFC 1]
+<<rfc-1-network-security-requirements.adoc#header,RFC 1>>.
 
 === Goal
 
