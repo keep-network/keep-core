@@ -143,7 +143,7 @@ func setupGroup(group []*LocalSigner) error {
 	}
 
 	for _, signer := range group {
-		messages := commitmentMasterPublicKeyMessagesNotFromSigner(
+		messages := peerSignersCommitmentMasterPublicKeys(
 			commitmentMasterPublicKeyMessages,
 			signer.ID)
 		signer.ReceiveCommitmentMasterPublicKeys(messages)
@@ -152,7 +152,7 @@ func setupGroup(group []*LocalSigner) error {
 	return nil
 }
 
-func commitmentMasterPublicKeyMessagesNotFromSigner(
+func peerSignersCommitmentMasterPublicKeys(
 	messages []*CommitmentMasterPublicKeyMessage,
 	signerID string,
 ) []*CommitmentMasterPublicKeyMessage {
