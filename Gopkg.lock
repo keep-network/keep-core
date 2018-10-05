@@ -534,11 +534,11 @@
   version = "v2.0.10"
 
 [[projects]]
-  digest = "1:f3bbece6399e13de52afd22f2e072f2686bb23fb672871f1bdad03cf3bd32add"
+  digest = "1:c85d184a2a74ca3e4c7027dd0b59a681c203164e8098d7a98cf3d25fd252c355"
   name = "github.com/libp2p/go-libp2p-swarm"
   packages = ["."]
   pruneopts = ""
-  revision = "f42fa3a7ad35cb35f54197562233b4955eb44724"
+  revision = "1f6ea5423e51605b2a900cb05bb6d29821dd9628"
 
 [[projects]]
   digest = "1:121c5d0939723626a2776ecd87a3a30475990f3a1b745fbf02b3365cb0744c3a"
@@ -1007,7 +1007,6 @@
     "github.com/libp2p/go-libp2p-kad-dht",
     "github.com/libp2p/go-libp2p-peer",
     "github.com/libp2p/go-libp2p-peerstore",
-    "github.com/libp2p/go-libp2p-routing",
     "github.com/libp2p/go-libp2p/p2p/host/routed",
     "github.com/multiformats/go-multiaddr",
     "github.com/urfave/cli",
