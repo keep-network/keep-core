@@ -14,7 +14,6 @@ import (
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-peerstore"
-	routing "github.com/libp2p/go-libp2p-routing"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
 	ma "github.com/multiformats/go-multiaddr"
@@ -33,7 +32,7 @@ type provider struct {
 
 	identity *identity
 	host     host.Host
-	routing  routing.IpfsRouting
+	routing  *dht.IpfsDHT
 	addrs    []ma.Multiaddr
 }
 
