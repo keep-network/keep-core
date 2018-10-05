@@ -45,12 +45,6 @@ func (sc *signerCore) peerSignerIDs() []string {
 	return peerIDs
 }
 
-func (sc *signerCore) commitmentMasterPublicKey(
-	signerID string,
-) *bn256.G2 {
-	return sc.protocolParameters[signerID].commitmentMasterPublicKey
-}
-
 // GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
 // and should be called by all members of the group on very early stage, during
 // the group setup, prior to generating any commitments.
