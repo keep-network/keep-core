@@ -98,9 +98,10 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 
 			}
 
-			signerID := round2Signers[0].ID
-			round1Messages = signRound1MessagesForReceiver(round1Messages, signerID)
-			round2Messages = signRound2MessagesForReceiver(round2Messages, signerID)
+			receiver := round2Signers[0]
+
+			round1Messages = signRound1MessagesForReceiver(round1Messages, receiver.ID)
+			round2Messages = signRound2MessagesForReceiver(round2Messages, receiver.ID)
 
 			if test.modifyRound1Messages != nil {
 				round1Messages = test.modifyRound1Messages(round1Messages)
@@ -112,20 +113,19 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 
 			}
 
-			paillierKey := round2Signers[0].paillierKey
-			expectedSecretKeyFactor := round1Signers[0].encryptedSecretKeyFactorShare
-			expectedSecretKeyMultiple := round1Signers[0].secretKeyMultipleShare
+			expectedSecretKeyFactor := receiver.encryptedSecretKeyFactorShare
+			expectedSecretKeyMultiple := receiver.secretKeyMultipleShare
 			for _, signer := range round1Signers[1:] {
-				expectedSecretKeyFactor = paillierKey.Add(
+				expectedSecretKeyFactor = receiver.paillierKey.Add(
 					expectedSecretKeyFactor, signer.encryptedSecretKeyFactorShare,
 				)
-				expectedSecretKeyMultiple = paillierKey.Add(
+				expectedSecretKeyMultiple = receiver.paillierKey.Add(
 					expectedSecretKeyMultiple, signer.secretKeyMultipleShare,
 				)
 			}
 
 			secretKeyFactor, secretKeyMultiple, err :=
-				round2Signers[0].CombineRound2Messages(
+				receiver.CombineRound2Messages(
 					round1Messages,
 					round2Messages,
 				)
@@ -248,20 +248,20 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				round4Messages = append(round4Messages, signersRound4Messages...)
 			}
 
-			signerID := round3Signers[0].ID
-			round3Messages = signRound3MessagesForReceiver(round3Messages, signerID)
-			round4Messages = signRound4MessagesForReceiver(round4Messages, signerID)
+			receiver := round4Signers[0]
 
-			paillierKey := round3Signers[0].paillierKey
-			expectedSignatureUnmask := round3Signers[0].signatureUnmaskShare
+			round3Messages = signRound3MessagesForReceiver(round3Messages, receiver.ID)
+			round4Messages = signRound4MessagesForReceiver(round4Messages, receiver.ID)
+
+			expectedSignatureUnmask := receiver.signatureUnmaskShare
 			for _, signer := range round3Signers[1:] {
-				expectedSignatureUnmask = paillierKey.Add(
+				expectedSignatureUnmask = signer.paillierKey.Add(
 					expectedSignatureUnmask, signer.signatureUnmaskShare,
 				)
 			}
 
-			ellipticCurve := round3Signers[0].publicParameters.Curve
-			expectedSignatureFactorPublic := round3Signers[0].signatureFactorPublicShare
+			ellipticCurve := receiver.publicParameters.Curve
+			expectedSignatureFactorPublic := receiver.signatureFactorPublicShare
 			for _, signer := range round3Signers[1:] {
 				expectedSignatureFactorPublic = curve.NewPoint(ellipticCurve.Add(
 					expectedSignatureFactorPublic.X,
@@ -280,7 +280,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 			}
 
 			signatureUnmask, signatureFactorPublic, err :=
-				round4Signers[0].CombineRound4Messages(
+				receiver.CombineRound4Messages(
 					round3Messages,
 					round4Messages,
 				)
