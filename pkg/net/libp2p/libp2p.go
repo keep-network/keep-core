@@ -128,7 +128,7 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 	if err != nil {
 		return nil, err
 	}
-	addrs := make([]ma.Multiaddr, len(ia))
+	addrs := make([]ma.Multiaddr, 0)
 	for _, addr := range ia {
 		portAddr, err := ma.NewMultiaddr(fmt.Sprintf("/tcp/%d", port))
 		if err != nil {
