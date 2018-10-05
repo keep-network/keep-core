@@ -21,7 +21,9 @@ func TestPeerSignerIDs(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(signer.peerSignerIDs(), expectedPeerIDs) {
-		t.Fatalf("peer signer IDs doesn't match expected\nactual: %s\nexpected: %s", signer.peerSignerIDs(), expectedPeerIDs)
+		t.Fatalf("peer signer IDs doesn't match expected\nactual: %s\nexpected: %s",
+			signer.peerSignerIDs(),
+			expectedPeerIDs)
 	}
 }
 
@@ -141,7 +143,9 @@ func setupGroup(group []*LocalSigner) error {
 	}
 
 	for _, signer := range group {
-		messages := commitmentMasterPublicKeyMessagesNotFromSigner(commitmentMasterPublicKeyMessages, signer.ID)
+		messages := commitmentMasterPublicKeyMessagesNotFromSigner(
+			commitmentMasterPublicKeyMessages,
+			signer.ID)
 		signer.ReceiveCommitmentMasterPublicKeys(messages)
 	}
 
