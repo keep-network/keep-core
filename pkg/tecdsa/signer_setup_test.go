@@ -46,20 +46,20 @@ func TestGenerateCommitmentMasterPublicKey(t *testing.T) {
 
 func TestReceiveCommitmentMasterPublicKeys(t *testing.T) {
 	var tests = map[string]struct {
-		signerKeys    func(signerKeys map[string]string)
-		expectedError error
+		updateSignerKeys func(signerKeys map[string]string)
+		expectedError    error
 	}{
 		"positive": {
 			expectedError: nil,
 		},
 		"negative validation - not enough messages": {
-			signerKeys: func(signerKeys map[string]string) {
+			updateSignerKeys: func(signerKeys map[string]string) {
 				delete(signerKeys, "1003")
 			},
 			expectedError: errors.New("master public key messages required from all group peer members; got 2, expected 3"),
 		},
 		"negative validation - too many messages": {
-			signerKeys: func(signerKeys map[string]string) {
+			updateSignerKeys: func(signerKeys map[string]string) {
 				signerKeys["1005"] = "key1005"
 			},
 			expectedError: errors.New("master public key messages required from all group peer members; got 4, expected 3"),
@@ -87,8 +87,8 @@ func TestReceiveCommitmentMasterPublicKeys(t *testing.T) {
 			signerKeys["1003"] = "key1003"
 			signerKeys["1004"] = "key1004"
 
-			if test.signerKeys != nil {
-				test.signerKeys(signerKeys)
+			if test.updateSignerKeys != nil {
+				test.updateSignerKeys(signerKeys)
 			}
 
 			messages := make([]*CommitmentMasterPublicKeyMessage, 0)
