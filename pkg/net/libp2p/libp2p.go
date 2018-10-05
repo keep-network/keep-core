@@ -110,7 +110,7 @@ func discoverAndListen(
 ) (host.Host, error) {
 	var err error
 
-	// Get available network ifaces to listen on into multiaddrs
+	// Get available network ifaces, for a specific port, as multiaddrs
 	addrs, err := getListenAddrs(port)
 	if err != nil {
 		return nil, err
@@ -119,6 +119,7 @@ func discoverAndListen(
 	return libp2p.New(ctx,
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
+		libp2p.NoSecurity, // TODO: replace with our own security module
 	)
 }
 
