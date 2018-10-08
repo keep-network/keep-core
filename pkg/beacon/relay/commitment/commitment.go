@@ -63,8 +63,7 @@ func Generate(parameters *Parameters, secret []byte) (*Commitment, *Decommitment
 		return nil, nil, fmt.Errorf("r generation failed [%s]", err)
 	}
 
-	hash := byteutils.Sha256Sum(secret)
-	digest := new(big.Int).Mod(hash, parameters.q)
+	digest := calculateDigest(secret, parameters.q)
 
 	// commitment = ((g ^ digest) % p) * ((h ^ r) % p)
 	commitment := new(big.Int).Mul(
@@ -78,8 +77,10 @@ func Generate(parameters *Parameters, secret []byte) (*Commitment, *Decommitment
 }
 
 // Verify checks the received commitment against the revealed secret message.
-func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
-	return false
+func calculateDigest(secret []byte, mod *big.Int) *big.Int {
+	hash := byteutils.Sha256Sum(secret)
+	digest := new(big.Int).Mod(hash, mod)
+	return digest
 }
 
 func generateSafePrimes() (*big.Int, *big.Int, error) {
