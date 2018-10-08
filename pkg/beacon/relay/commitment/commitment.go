@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/paillier"
 )
 
@@ -57,7 +58,23 @@ func GenerateParameters() (*Parameters, error) {
 // Generate evaluates a commitment and a decommitment key with specific master
 // public key for the secret messages provided as an argument.
 func Generate(parameters *Parameters, secret []byte) (*Commitment, *DecommitmentKey, error) {
-	return nil, nil, nil
+	r, err := randomFromZn(parameters.q) // randomZ(0, 2^q - 1]
+	if err != nil {
+		return nil, nil, fmt.Errorf("r generation failed [%s]", err)
+	}
+
+	hash := byteutils.Sha256Sum(secret)
+	digest := new(big.Int).Mod(hash, parameters.q)
+
+	// commitment = ((g ^ digest) % p) * ((h ^ r) % p)
+	commitment := new(big.Int).Mul(
+		new(big.Int).Exp(parameters.g, digest, parameters.p),
+		new(big.Int).Exp(parameters.h, r, parameters.p),
+	)
+
+	return &Commitment{commitment},
+		&DecommitmentKey{r},
+		nil
 }
 
 // Verify checks the received commitment against the revealed secret message.
