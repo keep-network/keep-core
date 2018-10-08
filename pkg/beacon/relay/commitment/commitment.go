@@ -73,6 +73,12 @@ func Generate(parameters *Parameters, secret []byte) (*Commitment, *Decommitment
 }
 
 // Verify checks the received commitment against the revealed secret message.
+func (c *Commitment) Verify(parameters *Parameters, decommitmentKey *DecommitmentKey, secret []byte) bool {
+	digest := calculateDigest(secret, parameters.q)
+	expectedCommitment := calculateCommitment(parameters, digest, decommitmentKey.r)
+	return expectedCommitment.Cmp(c.commitment) == 0
+}
+
 func calculateDigest(secret []byte, mod *big.Int) *big.Int {
 	hash := byteutils.Sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, mod)
