@@ -19,7 +19,9 @@ import (
 
 // Parameters specific to the scheme
 type Parameters struct {
-	p, q, g, h *big.Int
+	p    *big.Int // Prime such that p = 2q + 1
+	q    *big.Int // Sophie Germain prime
+	g, h *big.Int // Elements of a subgroup of quadratic residues of order q
 }
 
 // Commitment is produced for each message we have committed to.
