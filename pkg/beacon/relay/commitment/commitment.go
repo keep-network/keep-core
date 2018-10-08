@@ -65,11 +65,7 @@ func Generate(parameters *Parameters, secret []byte) (*Commitment, *Decommitment
 
 	digest := calculateDigest(secret, parameters.q)
 
-	// commitment = ((g ^ digest) % p) * ((h ^ r) % p)
-	commitment := new(big.Int).Mul(
-		new(big.Int).Exp(parameters.g, digest, parameters.p),
-		new(big.Int).Exp(parameters.h, r, parameters.p),
-	)
+	commitment := calculateCommitment(parameters, digest, r)
 
 	return &Commitment{commitment},
 		&DecommitmentKey{r},
@@ -81,6 +77,14 @@ func calculateDigest(secret []byte, mod *big.Int) *big.Int {
 	hash := byteutils.Sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, mod)
 	return digest
+}
+
+func calculateCommitment(parameters *Parameters, digest, r *big.Int) *big.Int {
+	// ((g ^ digest) % p) * ((h ^ r) % p)
+	return new(big.Int).Mul(
+		new(big.Int).Exp(parameters.g, digest, parameters.p),
+		new(big.Int).Exp(parameters.h, r, parameters.p),
+	)
 }
 
 func generateSafePrimes() (*big.Int, *big.Int, error) {
