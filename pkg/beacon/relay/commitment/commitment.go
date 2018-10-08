@@ -8,7 +8,11 @@
 package commitment
 
 import (
+	"crypto/rand"
 	"math/big"
+	"time"
+
+	"github.com/keep-network/paillier"
 )
 
 // Parameters specific to the scheme
@@ -36,4 +40,12 @@ func Generate(parameters *Parameters, secret []byte) (*Commitment, *Decommitment
 // Verify checks the received commitment against the revealed secret message.
 func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
 	return false
+}
+
+func generateSafePrimes() (*big.Int, *big.Int, error) {
+	concurrencyLevel := 4
+	timeout := 120 * time.Second
+	safePrimeBitLength := 512
+
+	return paillier.GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, rand.Reader)
 }
