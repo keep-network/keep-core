@@ -9,6 +9,7 @@ package commitment
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -48,4 +49,27 @@ func generateSafePrimes() (*big.Int, *big.Int, error) {
 	safePrimeBitLength := 512
 
 	return paillier.GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, rand.Reader)
+}
+
+// randomFromZn generates a random `big.Int` in a range (0, 2^n - 1]
+// TODO check if this is what we really need for g,h and r
+func randomFromZn(n *big.Int) (*big.Int, error) {
+	x := big.NewInt(0)
+	var err error
+	// 2^n - 1
+	max := new(big.Int).Sub(
+		new(big.Int).Exp(
+			big.NewInt(2),
+			n,
+			nil,
+		),
+		big.NewInt(1),
+	)
+	for x.Sign() == 0 {
+		x, err = rand.Int(rand.Reader, max)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate random number [%s]", err)
+		}
+	}
+	return x, nil
 }
