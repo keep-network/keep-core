@@ -32,6 +32,28 @@ type DecommitmentKey struct {
 	r *big.Int
 }
 
+// GenerateParameters generates parameters for a scheme execution
+func GenerateParameters() (*Parameters, error) {
+	p, q, err := generateSafePrimes()
+	if err != nil {
+		return nil, fmt.Errorf("p,q generation failed [%s]", err)
+	}
+
+	randomG, err := randomFromZn(p)
+	if err != nil {
+		return nil, fmt.Errorf("g generation failed [%s]", err)
+	}
+	g := new(big.Int).Exp(randomG, big.NewInt(2), nil) // (randomZ(0, 2^p - 1]) ^2
+
+	randomH, err := randomFromZn(p) // (randomZ(0, 2^p - 1]) ^2
+	if err != nil {
+		return nil, fmt.Errorf("h generation failed [%s]", err)
+	}
+	h := new(big.Int).Exp(randomH, big.NewInt(2), nil) // (randomZ(0, 2^p - 1]) ^2
+
+	return &Parameters{p: p, q: q, g: g, h: h}, nil
+}
+
 // Generate evaluates a commitment and a decommitment key with specific master
 // public key for the secret messages provided as an argument.
 func Generate(parameters *Parameters, secret []byte) (*Commitment, *DecommitmentKey, error) {
