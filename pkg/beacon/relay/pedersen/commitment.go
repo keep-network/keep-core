@@ -17,9 +17,6 @@ import (
 
 // Parameters specific to the scheme
 type Parameters struct {
-	p *big.Int // Prime such that p = 2q + 1
-	q *big.Int // Sophie Germain prime
-
 	// Elements of a subgroup of quadratic residues of order q
 	// g,h are elements of a group of order q such that nobody knows log_g(h)
 	g, h *big.Int
@@ -41,6 +38,9 @@ type Commitment struct {
 type DecommitmentKey struct {
 	r *big.Int
 }
+
+// Primes such that `p = 2q + 1`.
+var p, q *big.Int
 
 // GenerateParameters generates parameters for a scheme execution
 //
