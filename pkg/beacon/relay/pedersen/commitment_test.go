@@ -70,7 +70,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				test.modifyVSS(vss)
 			}
 
-			result := commitment.Verify(vss, decommitmentKey, []byte(test.verificationValue))
+			result := commitment.Verify(decommitmentKey, []byte(test.verificationValue))
 
 			if result != test.expectedResult {
 				t.Fatalf(

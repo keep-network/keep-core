@@ -30,6 +30,7 @@ type VSS struct {
 // The commitment itself is not enough for a verification. In order to perform
 // a verification, the interested party must receive the `DecommitmentKey`.
 type Commitment struct {
+	vss        *VSS
 	commitment *big.Int
 }
 
@@ -95,15 +96,15 @@ func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, erro
 
 	commitment := calculateCommitment(vss, digest, r)
 
-	return &Commitment{commitment},
+	return &Commitment{vss, commitment},
 		&DecommitmentKey{r},
 		nil
 }
 
 // Verify checks the received commitment against the revealed secret message.
-func (c *Commitment) Verify(vss *VSS, decommitmentKey *DecommitmentKey, secret []byte) bool {
+func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
 	digest := calculateDigest(secret, q)
-	expectedCommitment := calculateCommitment(vss, digest, decommitmentKey.r)
+	expectedCommitment := calculateCommitment(c.vss, digest, decommitmentKey.r)
 	return expectedCommitment.Cmp(c.commitment) == 0
 }
 
