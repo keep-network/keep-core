@@ -16,7 +16,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		verificationValue     string
 		modifyDecommitmentKey func(key *DecommitmentKey)
 		modifyCommitment      func(commitment *Commitment)
-		modifyParameters      func(parameters *Parameters)
+		modifyParameters      func(parameters *VSS)
 		expectedResult        bool
 	}{
 		"positive validation": {
@@ -43,7 +43,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		},
 		"negative validation - incorrect `h`": {
 			verificationValue: committedValue,
-			modifyParameters: func(parameters *Parameters) {
+			modifyParameters: func(parameters *VSS) {
 				parameters.h = big.NewInt(23)
 			},
 			expectedResult: false,
