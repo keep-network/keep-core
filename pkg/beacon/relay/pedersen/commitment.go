@@ -125,10 +125,11 @@ func calculateCommitment(parameters *Parameters, digest, r *big.Int) *big.Int {
 func randomFromZn(n *big.Int) (*big.Int, error) {
 	x := big.NewInt(0)
 	var err error
-	// 2^n - 1
 	// TODO check if this is what we really need for g,h and r
+	// 2^n - 1
 	max := new(big.Int).Sub(
-		new(big.Int).Exp(big.NewInt(2), n, nil),
+		// new(big.Int).Exp(big.NewInt(2), n, nil),
+		n,
 		big.NewInt(1),
 	)
 	for x.Sign() == 0 {
