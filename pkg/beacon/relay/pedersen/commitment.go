@@ -17,15 +17,17 @@ import (
 
 // VSS scheme
 type VSS struct {
-	// Elements of a subgroup of quadratic residues of order q
-	// g,h are elements of a group of order q such that nobody knows log_g(h)
+	// g and h are elements of a group of order q, and should be chosen such that
+	// no one knows log_g(h).
 	g, h *big.Int
 }
 
-// Commitment is produced for each message we have committed to.
-// It is usually revealed to the verifier immediately after it has been produced
-// and lets to verify if the message revealed later by the committing party
-// is really what that party has committed to.
+// Commitment represents a single commitment to a single message. One is produced
+// for each message we have committed to.
+//
+// It is usually shared with the verifier immediately after it has been produced
+// and lets the recipient verify if the message revealed later by the committing
+// party is really what that party has committed to.
 //
 // The commitment itself is not enough for a verification. In order to perform
 // a verification, the interested party must receive the `DecommitmentKey`.
@@ -34,8 +36,9 @@ type Commitment struct {
 	commitment *big.Int
 }
 
-// DecommitmentKey allows to open a commitment and verify if the value is what
-// we have really committed to.
+// DecommitmentKey represents the key that allows a recipient to open an
+// already-received commitment and verify if the value is what the sender have
+// really committed to.
 type DecommitmentKey struct {
 	r *big.Int
 }
@@ -84,8 +87,8 @@ func NewVSS() (*VSS, error) {
 	return &VSS{g: g, h: h}, nil
 }
 
-// CommitmentTo evaluates a commitment and a decommitment key with specific master
-// public key for the secret messages provided as an argument.
+// CommitmentTo takes a secret message and a set of parameters and returns
+// a commitment to that message and the associated decommitment key.
 func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, error) {
 	r, err := randomFromZn(q) // randomZ(0, 2^q - 1]
 	if err != nil {
