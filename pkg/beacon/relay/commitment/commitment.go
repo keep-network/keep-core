@@ -19,12 +19,21 @@ import (
 
 // Parameters specific to the scheme
 type Parameters struct {
-	p    *big.Int // Prime such that p = 2q + 1
-	q    *big.Int // Sophie Germain prime
-	g, h *big.Int // Elements of a subgroup of quadratic residues of order q
+	p *big.Int // Prime such that p = 2q + 1
+	q *big.Int // Sophie Germain prime
+
+	// Elements of a subgroup of quadratic residues of order q
+	// g,h are elements of a group of order q such that nobody knows log_g(h)
+	g, h *big.Int
 }
 
 // Commitment is produced for each message we have committed to.
+// It is usually revealed to the verifier immediately after it has been produced
+// and lets to verify if the message revealed later by the committing party
+// is really what that party has committed to.
+//
+// The commitment itself is not enough for a verification. In order to perform
+// a verification, the interested party must receive the `DecommitmentKey`.
 type Commitment struct {
 	commitment *big.Int
 }
