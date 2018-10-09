@@ -1,4 +1,4 @@
-package commitment
+package pedersen
 
 import (
 	"math/big"

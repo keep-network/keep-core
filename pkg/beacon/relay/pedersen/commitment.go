@@ -1,11 +1,11 @@
-// Package commitment implements a commitment scheme described by
+// Package pedersen implements a commitment scheme described by
 // Torben Pryds Pedersen in the referenced [Ped] paper.
 //
 // [Ped] Pedersen T.P. (1992) Non-Interactive and Information-Theoretic Secure
 // Verifiable Secret Sharing. In: Feigenbaum J. (eds) Advances in Cryptology —
 // CRYPTO ’91. CRYPTO 1991. Lecture Notes in Computer Science, vol 576. Springer,
 // Berlin, Heidelberg
-package commitment
+package pedersen
 
 import (
 	"crypto/rand"
