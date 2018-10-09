@@ -7,16 +7,16 @@ import (
 
 func TestGenerateAndValidateCommitment(t *testing.T) {
 	committedValue := "eeyore"
-	parameters, err := GenerateParameters()
+	vss, err := NewVSS()
 	if err != nil {
-		t.Fatalf("parameters generation error [%v]", err)
+		t.Fatalf("vss creation failed [%v]", err)
 	}
 
 	var tests = map[string]struct {
 		verificationValue     string
 		modifyDecommitmentKey func(key *DecommitmentKey)
 		modifyCommitment      func(commitment *Commitment)
-		modifyParameters      func(parameters *VSS)
+		modifyVSS             func(parameters *VSS)
 		expectedResult        bool
 	}{
 		"positive validation": {
@@ -43,8 +43,8 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		},
 		"negative validation - incorrect `h`": {
 			verificationValue: committedValue,
-			modifyParameters: func(parameters *VSS) {
-				parameters.h = big.NewInt(23)
+			modifyVSS: func(vss *VSS) {
+				vss.h = big.NewInt(23)
 			},
 			expectedResult: false,
 		},
@@ -54,7 +54,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 
 			commitment, decommitmentKey, err := Generate(
-				parameters, []byte(committedValue),
+				vss, []byte(committedValue),
 			)
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
@@ -68,11 +68,11 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				test.modifyDecommitmentKey(decommitmentKey)
 			}
 
-			if test.modifyParameters != nil {
-				test.modifyParameters(parameters)
+			if test.modifyVSS != nil {
+				test.modifyVSS(vss)
 			}
 
-			result := commitment.Verify(parameters, decommitmentKey, []byte(test.verificationValue))
+			result := commitment.Verify(vss, decommitmentKey, []byte(test.verificationValue))
 
 			if result != test.expectedResult {
 				t.Fatalf(
