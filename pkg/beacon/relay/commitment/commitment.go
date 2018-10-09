@@ -107,7 +107,7 @@ func calculateCommitment(parameters *Parameters, digest, r *big.Int) *big.Int {
 func generateSafePrimes() (*big.Int, *big.Int, error) {
 	concurrencyLevel := 4
 	timeout := 120 * time.Second
-	safePrimeBitLength := 512
+	safePrimeBitLength := 16 // TODO Confirm what size we need
 
 	return paillier.GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, rand.Reader)
 }
