@@ -41,10 +41,10 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			},
 			expectedResult: false,
 		},
-		"negative validation - incorrect `g`": {
+		"negative validation - incorrect `h`": {
 			verificationValue: committedValue,
 			modifyParameters: func(parameters *Parameters) {
-				parameters.g = big.NewInt(23)
+				parameters.h = big.NewInt(23)
 			},
 			expectedResult: false,
 		},
