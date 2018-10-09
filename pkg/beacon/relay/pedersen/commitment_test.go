@@ -53,7 +53,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 
-			commitment, decommitmentKey, err := vss.Generate([]byte(committedValue))
+			commitment, decommitmentKey, err := vss.CommitmentTo([]byte(committedValue))
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}

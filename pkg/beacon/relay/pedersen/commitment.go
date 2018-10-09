@@ -83,9 +83,9 @@ func NewVSS() (*VSS, error) {
 	return &VSS{g: g, h: h}, nil
 }
 
-// Generate evaluates a commitment and a decommitment key with specific master
+// CommitmentTo evaluates a commitment and a decommitment key with specific master
 // public key for the secret messages provided as an argument.
-func (vss *VSS) Generate(secret []byte) (*Commitment, *DecommitmentKey, error) {
+func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, error) {
 	r, err := randomFromZn(q) // randomZ(0, 2^q - 1]
 	if err != nil {
 		return nil, nil, fmt.Errorf("r generation failed [%s]", err)
