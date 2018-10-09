@@ -58,7 +58,7 @@ func init() {
 
 	q, result = new(big.Int).SetString(qStr, 0)
 	if !result {
-		panic("failed to initialize p")
+		panic("failed to initialize q")
 	}
 }
 
