@@ -153,9 +153,12 @@ func hashBytesToBigInt(secret []byte, mod *big.Int) *big.Int {
 // - `s` is a message to which one is committing,
 // - `r` is a decommitment key.
 func CalculateCommitment(vss *VSS, digest, r *big.Int) *big.Int {
-	return new(big.Int).Mul(
-		new(big.Int).Exp(vss.g, digest, p),
-		new(big.Int).Exp(vss.h, r, p),
+	return new(big.Int).Mod(
+		new(big.Int).Mul(
+			new(big.Int).Exp(vss.g, digest, p),
+			new(big.Int).Exp(vss.h, r, p),
+		),
+		p,
 	)
 }
 
