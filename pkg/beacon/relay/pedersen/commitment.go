@@ -127,7 +127,7 @@ func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, erro
 	}
 
 	digest := hashBytesToBigInt(secret, q)
-	commitment := calculateCommitment(vss, digest, r)
+	commitment := CalculateCommitment(vss, digest, r)
 
 	return &Commitment{vss, commitment},
 		&DecommitmentKey{r},
@@ -137,7 +137,7 @@ func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, erro
 // Verify checks the received commitment against the revealed secret message.
 func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
 	digest := hashBytesToBigInt(secret, q)
-	expectedCommitment := calculateCommitment(c.vss, digest, decommitmentKey.r)
+	expectedCommitment := CalculateCommitment(c.vss, digest, decommitmentKey.r)
 	return expectedCommitment.Cmp(c.commitment) == 0
 }
 
@@ -147,8 +147,12 @@ func hashBytesToBigInt(secret []byte, mod *big.Int) *big.Int {
 	return digest
 }
 
-func calculateCommitment(vss *VSS, digest, r *big.Int) *big.Int {
-	// ((g ^ digest) % p) * ((h ^ r) % p)
+// CalculateCommitment calculates a commitment with equation `(g ^ s) * (h ^ r) mod p`
+// where:
+// - `g` and `h` are scheme specific parameters passed in vss,
+// - `s` is a message to which one is committing,
+// - `r` is a decommitment key.
+func CalculateCommitment(vss *VSS, digest, r *big.Int) *big.Int {
 	return new(big.Int).Mul(
 		new(big.Int).Exp(vss.g, digest, p),
 		new(big.Int).Exp(vss.h, r, p),
