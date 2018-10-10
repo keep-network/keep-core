@@ -110,8 +110,7 @@ func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, erro
 		return nil, nil, fmt.Errorf("r generation failed [%s]", err)
 	}
 
-	digest := calculateDigest(secret, q)
-
+	digest := hashBytesToBigInt(secret, q)
 	commitment := calculateCommitment(vss, digest, r)
 
 	return &Commitment{vss, commitment},
@@ -121,12 +120,12 @@ func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, erro
 
 // Verify checks the received commitment against the revealed secret message.
 func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
-	digest := calculateDigest(secret, q)
+	digest := hashBytesToBigInt(secret, q)
 	expectedCommitment := calculateCommitment(c.vss, digest, decommitmentKey.r)
 	return expectedCommitment.Cmp(c.commitment) == 0
 }
 
-func calculateDigest(secret []byte, mod *big.Int) *big.Int {
+func hashBytesToBigInt(secret []byte, mod *big.Int) *big.Int {
 	hash := byteutils.Sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, mod)
 	return digest
