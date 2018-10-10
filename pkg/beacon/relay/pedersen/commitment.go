@@ -104,6 +104,10 @@ func NewVSS() (*VSS, error) {
 
 // CommitmentTo takes a secret message and a set of parameters and returns
 // a commitment to that message and the associated decommitment key.
+//
+// First random `r` value is chosen as a Decommitment Key.
+// Then commitment is calculated as `(g ^ digest) * (h ^ r) mod p`, where digest
+// is sha256 hash of the secret brought to big.Int.
 func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, error) {
 	r, err := randomFromZn(q) // randomZ(0, 2^q - 1]
 	if err != nil {
