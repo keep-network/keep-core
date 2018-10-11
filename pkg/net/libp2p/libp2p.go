@@ -71,6 +71,7 @@ func Connect(ctx context.Context, config Config) (net.Provider, error) {
 		return nil, err
 	}
 
+	fmt.Printf("HEY! MY IDENTITY IS: %s\n", identity.id.Pretty())
 	host, err := discoverAndListen(ctx, identity, config.Port)
 	if err != nil {
 		return nil, err
@@ -119,7 +120,6 @@ func discoverAndListen(
 	return libp2p.New(ctx,
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
-		libp2p.NoSecurity, // TODO: replace with our own security module
 	)
 }
 
