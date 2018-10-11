@@ -1,7 +1,9 @@
 package pedersen
 
 import (
+	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 )
 
@@ -80,5 +82,17 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestNewVSSpqValidation(t *testing.T) {
+	p := big.NewInt(17)
+	q := big.NewInt(4)
+	expectedError := fmt.Errorf("incorrect p and q values")
+
+	_, err := NewVSS(p, q)
+
+	if !reflect.DeepEqual(err, expectedError) {
+		t.Fatalf("actual error: %v\nexpected error: %v", err, expectedError)
 	}
 }
