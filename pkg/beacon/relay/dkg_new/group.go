@@ -18,3 +18,8 @@ type Group struct {
 func (g *Group) MemberIDs() []*big.Int {
 	return g.memberIDs
 }
+
+// RegisterMemberID adds a member to the list of group members.
+func (g *Group) RegisterMemberID(id *big.Int) {
+	g.memberIDs = append(g.memberIDs, id)
+}
