@@ -12,7 +12,57 @@ package dkg
 
 import (
 	"math/big"
+
+	"github.com/golang/go/src/crypto/rand"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
+
+// CalculateSharesAndCommitments starts with generating coefficients for two
+// polynomials. Then it is calculating shares for all group members. Additionally,
+// it calculates commitments to coefficients of first polynomial using second's
+// polynomial coefficients B.
+//
+// See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_3_polynomial_generation
+func (cm *CommittingMember) CalculateSharesAndCommitments() (*MemberCommitmentsMessage, error) {
+	var err error
+	coefficientsSize := cm.group.dishonestThreshold + 1
+	coefficientsA := make([]*big.Int, coefficientsSize)
+	coefficientsB := make([]*big.Int, coefficientsSize)
+	for j := 0; j < coefficientsSize; j++ {
+		coefficientsA[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
+		if err != nil {
+			return nil, err
+		}
+		coefficientsB[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	cm.secretKeyShare = coefficientsA[0] // z_i = a_i0
+
+	commitments := make([]*big.Int, coefficientsSize)
+	for k := 0; k < coefficientsSize; k++ {
+		// C_k = g^a_k * h^b_k mod p
+		commitments[k] = pedersen.CalculateCommitment(cm.vss, coefficientsA[k], coefficientsB[k])
+	}
+
+	sharesS := make(map[*big.Int]*big.Int, cm.group.groupSize)
+	sharesT := make(map[*big.Int]*big.Int, cm.group.groupSize)
+	for _, id := range cm.group.MemberIDs() {
+		// s_j = f_(j) mod q
+		sharesS[id] = calculateShare(id, coefficientsA, cm.ProtocolConfig().Q)
+		// t_j = g_(j) mod q
+		sharesT[id] = calculateShare(id, coefficientsB, cm.ProtocolConfig().Q)
+	}
+
+	return &MemberCommitmentsMessage{
+		senderID:    cm.ID,
+		sharesS:     sharesS,
+		sharesT:     sharesT,
+		commitments: commitments,
+	}, nil
+}
 
 // calculateShare calculates a share for given memberID.
 //
