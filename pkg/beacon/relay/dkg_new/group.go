@@ -13,3 +13,8 @@ type Group struct {
 	// Initially empty, populated as each other member announces its presence.
 	memberIDs []*big.Int
 }
+
+// MemberIDs returns IDs of all group members.
+func (g *Group) MemberIDs() []*big.Int {
+	return g.memberIDs
+}
