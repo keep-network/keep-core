@@ -64,6 +64,49 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() (*MemberCommitmentsM
 	}, nil
 }
 
+// VerifySharesAndCommitments verifies member's shares and commitments received
+// in messages from all group members.
+// It returns accusation message with ID of members for which verification failed.
+//
+// See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_4_share_verification
+func (cm *CommittingMember) VerifySharesAndCommitments(messages []*MemberCommitmentsMessage) (*FirstAccusationsMessage, error) {
+	var accusedMembersIDs []*big.Int
+
+	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
+	// where: j is sender's ID, i is current member ID, T is threshold.
+	for _, message := range messages {
+		commitmentsProduct := big.NewInt(1)
+		for k, c := range message.commitments {
+			commitmentsProduct = new(big.Int).Mod(
+				new(big.Int).Mul(
+					commitmentsProduct,
+					new(big.Int).Exp(
+						c,
+						new(big.Int).Exp(
+							cm.ID,
+							big.NewInt(int64(k)),
+							cm.ProtocolConfig().P,
+						),
+						cm.ProtocolConfig().P,
+					),
+				),
+				cm.ProtocolConfig().P,
+			)
+		}
+
+		// `expectedProduct = (g ^ s_j) * (h ^ t_j)`
+		expectedProduct := pedersen.CalculateCommitment(cm.vss, message.sharesS[cm.ID], message.sharesT[cm.ID])
+
+		if expectedProduct.Cmp(commitmentsProduct) != 0 {
+			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+		}
+	}
+	return &FirstAccusationsMessage{
+		senderID:   cm.ID,
+		accusedIDs: accusedMembersIDs,
+	}, nil
+}
+
 // calculateShare calculates a share for given memberID.
 //
 // It calculates `Σ a_j * z^j mod q`for j in [0..T], where:
