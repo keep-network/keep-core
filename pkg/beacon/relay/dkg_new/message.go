@@ -13,3 +13,14 @@ type MemberCommitmentsMessage struct {
 	sharesT     map[*big.Int]*big.Int
 	commitments []*big.Int
 }
+
+// FirstAccusationsMessage is a message payload that carries all of the sender's
+// accusations against other members of the threshold group.
+// If all other members behaved honestly from the sender's point of view, this message should
+// be broadcast but with an empty slice of `accusedIDs`.
+// It is expected to be broadcast.
+type FirstAccusationsMessage struct {
+	senderID *big.Int
+
+	accusedIDs []*big.Int
+}
