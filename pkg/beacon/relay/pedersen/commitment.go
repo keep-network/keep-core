@@ -28,7 +28,7 @@
 package pedersen
 
 import (
-	"crypto/rand"
+	crand "crypto/rand"
 	"fmt"
 	"math/big"
 
@@ -174,7 +174,7 @@ func randomFromZn(n *big.Int) (*big.Int, error) {
 		big.NewInt(1),
 	)
 	for x.Sign() == 0 {
-		x, err = rand.Int(rand.Reader, max)
+		x, err = crand.Int(crand.Reader, max)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate random number [%s]", err)
 		}
