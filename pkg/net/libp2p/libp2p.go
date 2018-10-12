@@ -53,7 +53,8 @@ func (p *provider) ID() net.TransportIdentifier {
 func (p *provider) AddrStrings() []string {
 	multiaddrStrings := make([]string, 0, len(p.addrs))
 	for _, multiaddr := range p.addrs {
-		multiaddrStrings = append(multiaddrStrings, multiaddr.String())
+		addrWithIdentity := fmt.Sprintf("%s/ipfs/%s", multiaddr.String(), p.identity.id.Pretty())
+		multiaddrStrings = append(multiaddrStrings, addrWithIdentity)
 	}
 
 	return multiaddrStrings
@@ -71,7 +72,6 @@ func Connect(ctx context.Context, config Config) (net.Provider, error) {
 		return nil, err
 	}
 
-	fmt.Printf("HEY! MY IDENTITY IS: %s\n", identity.id.Pretty())
 	host, err := discoverAndListen(ctx, identity, config.Port)
 	if err != nil {
 		return nil, err
