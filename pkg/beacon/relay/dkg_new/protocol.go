@@ -18,12 +18,13 @@ import (
 )
 
 // CalculateSharesAndCommitments starts with generating coefficients for two
-// polynomials. Then it is calculating shares for all group members. Additionally,
-// it calculates commitments to coefficients of first polynomial using second's
-// polynomial coefficients B.
+// polynomials. Then it is calculating shares for all group member and packing
+// them in individual messages for each peer member. Additionally, it calculates
+// commitments to `a` coefficients of first polynomial using second's polynomial
+// `b` coefficients.
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_3_polynomial_generation
-func (cm *CommittingMember) CalculateSharesAndCommitments() (*MemberCommitmentsMessage, error) {
+func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessage, *MemberCommitmentsMessage, error) {
 	var err error
 	coefficientsSize := cm.group.dishonestThreshold + 1
 	coefficientsA := make([]*big.Int, coefficientsSize)
@@ -31,42 +32,61 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() (*MemberCommitmentsM
 	for j := 0; j < coefficientsSize; j++ {
 		coefficientsA[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		coefficientsB[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	cm.coefficientsA = coefficientsA
+
+	// Calculate shares for other group members by evaluating polynomials defined
+	// by coefficients `a_i` and `b_i`
+	var sharesMessages []*PeerSharesMessage
+	for _, id := range cm.group.MemberIDs() {
+		// s_j = f_(j) mod q
+		secretShare := calculateShare(id, coefficientsA, cm.ProtocolConfig().Q)
+		// t_j = g_(j) mod q
+		randomShare := calculateShare(id, coefficientsB, cm.ProtocolConfig().Q)
+
+		// Check if calculated shares for the current member. If true store them
+		// without sharing in a message.
+		if cm.ID.Cmp(id) == 0 {
+			cm.secretShares[cm.ID] = secretShare
+			cm.randomShares[cm.ID] = randomShare
+			continue
+		}
+
+		sharesMessages = append(sharesMessages,
+			&PeerSharesMessage{
+				senderID:    cm.ID,
+				receiverID:  id,
+				secretShare: secretShare,
+				randomShare: randomShare,
+			})
+	}
 
 	commitments := make([]*big.Int, coefficientsSize)
 	for k := 0; k < coefficientsSize; k++ {
 		// C_k = g^a_k * h^b_k mod p
 		commitments[k] = pedersen.CalculateCommitment(cm.vss, coefficientsA[k], coefficientsB[k])
 	}
-
-	sharesS := make(map[*big.Int]*big.Int, cm.group.groupSize)
-	sharesT := make(map[*big.Int]*big.Int, cm.group.groupSize)
-	for _, id := range cm.group.MemberIDs() {
-		// s_j = f_(j) mod q
-		sharesS[id] = calculateShare(id, coefficientsA, cm.ProtocolConfig().Q)
-		// t_j = g_(j) mod q
-		sharesT[id] = calculateShare(id, coefficientsB, cm.ProtocolConfig().Q)
+	commitmentsMessage := &MemberCommitmentsMessage{
+		senderID:    cm.ID,
+		commitments: commitments,
 	}
 
-	return &MemberCommitmentsMessage{
-		senderID:    cm.ID,
-		sharesS:     sharesS,
-		sharesT:     sharesT,
-		commitments: commitments,
-	}, nil
+	return sharesMessages, commitmentsMessage, nil
 }
 
-// VerifySharesAndCommitments verifies member's shares and commitments received
-// in messages from all group members.
+// VerifySharesAndCommitments verifies shares and commitments received in messages
+// from peer group members.
 // It returns accusation message with ID of members for which verification failed.
+//
+// If cannot match commitments message with shares message for given sender then
+// error is returned.
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_4_share_verification
 func (cm *CommittingMember) VerifySharesAndCommitments(messages []*MemberCommitmentsMessage) (*FirstAccusationsMessage, error) {
