@@ -29,8 +29,10 @@ type CommittingMember struct {
 
 	// Pedersen VSS scheme used to calculate commitments.
 	vss *pedersen.VSS
-	// Member's share of the shared secret key.
-	secretKeyShare *big.Int
-	// memberShares calculated for each group member.
-	memberSharesS, memberSharesT map[*big.Int]*big.Int
+	// Shares calculated for current member by themself and peer group member.
+	// secretShares are defined as `s_ij` and randomShares are defined as `t_ij`
+	// across [documentation].
+	//
+	// [documentation]: http://docs.keep.network/cryptography/beacon_dkg.html#_protocol
+	secretShares, randomShares map[*big.Int]*big.Int
 }
