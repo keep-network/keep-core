@@ -11,6 +11,7 @@
 package dkg
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/golang/go/src/crypto/rand"
@@ -89,14 +90,17 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessag
 // error is returned.
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_4_share_verification
-func (cm *CommittingMember) VerifySharesAndCommitments(messages []*MemberCommitmentsMessage) (*FirstAccusationsMessage, error) {
+func (cm *CommittingMember) VerifySharesAndCommitments(
+	sharesMessages []*PeerSharesMessage,
+	commitmentsMessages []*MemberCommitmentsMessage,
+) (*FirstAccusationsMessage, error) {
 	var accusedMembersIDs []*big.Int
-
 	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
-	for _, message := range messages {
+
+	for _, commitmentMessage := range commitmentsMessages {
 		commitmentsProduct := big.NewInt(1)
-		for k, c := range message.commitments {
+		for k, c := range commitmentMessage.commitments {
 			commitmentsProduct = new(big.Int).Mod(
 				new(big.Int).Mul(
 					commitmentsProduct,
@@ -113,14 +117,28 @@ func (cm *CommittingMember) VerifySharesAndCommitments(messages []*MemberCommitm
 				cm.ProtocolConfig().P,
 			)
 		}
+		// Find share message sent by the same member who sent commitment message
+		shareMessageFound := false
+		for _, shareMessage := range sharesMessages {
+			if shareMessage.senderID.Cmp(commitmentMessage.senderID) == 0 {
+				shareMessageFound = true
+				// `expectedProduct = (g ^ s_j) * (h ^ t_j)`
+				expectedProduct := pedersen.CalculateCommitment(cm.vss, shareMessage.secretShare, shareMessage.randomShare)
 
-		// `expectedProduct = (g ^ s_j) * (h ^ t_j)`
-		expectedProduct := pedersen.CalculateCommitment(cm.vss, message.sharesS[cm.ID], message.sharesT[cm.ID])
-
-		if expectedProduct.Cmp(commitmentsProduct) != 0 {
-			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+				if expectedProduct.Cmp(commitmentsProduct) != 0 {
+					accusedMembersIDs = append(accusedMembersIDs, commitmentMessage.senderID)
+					break
+				}
+				// Phase 6
+				cm.secretShares[commitmentMessage.senderID] = shareMessage.secretShare
+				cm.randomShares[commitmentMessage.senderID] = shareMessage.randomShare
+			}
+		}
+		if !shareMessageFound {
+			return nil, fmt.Errorf("cannot find shares message from member %s", commitmentMessage.senderID)
 		}
 	}
+
 	return &FirstAccusationsMessage{
 		senderID:   cm.ID,
 		accusedIDs: accusedMembersIDs,
