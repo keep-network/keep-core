@@ -39,7 +39,7 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() (*MemberCommitmentsM
 		}
 	}
 
-	cm.secretKeyShare = coefficientsA[0] // z_i = a_i0
+	cm.coefficientsA = coefficientsA
 
 	commitments := make([]*big.Int, coefficientsSize)
 	for k := 0; k < coefficientsSize; k++ {
