@@ -65,7 +65,20 @@ func TestPhase3and4(t *testing.T) {
 	}
 }
 
-func filterMessagesForReceiver(
+func filterPeerSharesMessage(
+	messages []*PeerSharesMessage,
+	receiverID *big.Int,
+) []*PeerSharesMessage {
+	var result []*PeerSharesMessage
+	for _, msg := range messages {
+		if msg.senderID != receiverID {
+			result = append(result, msg)
+		}
+	}
+	return result
+}
+
+func filterMemberCommitmentsMessages(
 	messages []*MemberCommitmentsMessage,
 	receiverID *big.Int,
 ) []*MemberCommitmentsMessage {
