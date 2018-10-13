@@ -57,11 +57,11 @@ func TestPhase3and4(t *testing.T) {
 	accusedMessage, err := currentMember.VerifySharesAndCommitments(
 		filterMessagesForReceiver(messages, currentMember.ID))
 	if err != nil {
-		t.Fatalf("phase4 failed [%s]", err)
+		t.Fatalf("shares and commitments verification failed [%s]", err)
 	}
 
 	if len(accusedMessage.accusedIDs) > 0 {
-		t.Fatalf("something wrong")
+		t.Fatalf("found accused members but was not expecting to")
 	}
 }
 
