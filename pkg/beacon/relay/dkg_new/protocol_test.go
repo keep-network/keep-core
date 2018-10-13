@@ -8,13 +8,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
-var (
-	groupSize          = 10
-	dishonestThreshold = 5
-)
-
 func TestPhase3and4(t *testing.T) {
-	config, err := config.PredefinedDKGconfig()
+	threshold := 1
+	groupSize := 2
 	if err != nil {
 		t.Fatalf("DKG Config initialization failed [%s]", err)
 	}
