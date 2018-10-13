@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -11,41 +12,25 @@ import (
 func TestPhase3and4(t *testing.T) {
 	threshold := 1
 	groupSize := 2
+
+	members, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
-		t.Fatalf("DKG Config initialization failed [%s]", err)
+		t.Fatalf("group initialization failed [%s]", err)
 	}
 
-	vss, err := pedersen.NewVSS(config.P, config.Q)
-	if err != nil {
-		t.Fatalf("VSS initialization failed [%s]", err)
-	}
-
-	group := &Group{
-		groupSize:          groupSize,
-		dishonestThreshold: dishonestThreshold,
-	}
-
-	var members []*CommittingMember
-
-	for i := 1; i <= groupSize; i++ {
-		id := big.NewInt(int64(i))
-		members = append(members, &CommittingMember{
-			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: config,
-			},
-			vss: vss,
-		})
-		group.RegisterMemberID(id)
-	}
-
-	messages := make([]*MemberCommitmentsMessage, groupSize)
-	for i, member := range members {
-		messages[i], err = member.CalculateSharesAndCommitments()
+	var peerSharesMessages []*PeerSharesMessage
+	var messages []*MemberCommitmentsMessage
+	for _, member := range members {
+		peerSharesMessage, commitmentsMessage, err := member.CalculateSharesAndCommitments()
 		if err != nil {
-			t.Fatalf("phase3 failed [%s]", err)
+			t.Fatalf("shares and commitments calculation failed [%s]", err)
 		}
+		peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
+		messages = append(messages, commitmentsMessage)
+	}
+
+	if len(messages) != groupSize {
+		t.Fatalf("generated messages number %d doesn't match expected number %d", len(messages), groupSize)
 	}
 
 	currentMember := members[0]
@@ -61,6 +46,41 @@ func TestPhase3and4(t *testing.T) {
 	if len(accusedMessage.accusedIDs) > 0 {
 		t.Fatalf("found accused members but was not expecting to")
 	}
+}
+
+func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMember, error) {
+	config, err := config.PredefinedDKGconfig()
+	if err != nil {
+		return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
+	}
+
+	vss, err := pedersen.NewVSS(config.P, config.Q)
+	if err != nil {
+		return nil, fmt.Errorf("VSS initialization failed [%s]", err)
+	}
+
+	group := &Group{
+		groupSize:          groupSize,
+		dishonestThreshold: threshold,
+	}
+
+	var members []*CommittingMember
+
+	for i := 1; i <= groupSize; i++ {
+		id := big.NewInt(int64(i))
+		members = append(members, &CommittingMember{
+			memberCore: &memberCore{
+				ID:             id,
+				group:          group,
+				protocolConfig: config,
+			},
+			vss:          vss,
+			secretShares: make(map[*big.Int]*big.Int),
+			randomShares: make(map[*big.Int]*big.Int),
+		})
+		group.RegisterMemberID(id)
+	}
+	return members, nil
 }
 
 func filterPeerSharesMessage(
