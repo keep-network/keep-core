@@ -55,7 +55,9 @@ func TestPhase3and4(t *testing.T) {
 	currentMember := members[0]
 
 	accusedMessage, err := currentMember.VerifySharesAndCommitments(
-		filterMessagesForReceiver(messages, currentMember.ID))
+		filterPeerSharesMessage(peerSharesMessages, currentMember.ID),
+		filterMemberCommitmentsMessages(messages, currentMember.ID),
+	)
 	if err != nil {
 		t.Fatalf("shares and commitments verification failed [%s]", err)
 	}
