@@ -9,6 +9,42 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
+func TestCalculateSharesAndCommitments(t *testing.T) {
+	threshold := 4
+	groupSize := 10
+
+	members, err := initializeCommittingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	member := members[0]
+	peerSharesMessages, commitmentsMessage, err := member.CalculateSharesAndCommitments()
+	if err != nil {
+		t.Fatalf("shares and commitments calculation failed [%s]", err)
+	}
+
+	if len(member.coefficientsA) != (threshold + 1) {
+		t.Fatalf("generated coefficients A number %d doesn't match expected number %d",
+			len(member.coefficientsA),
+			threshold+1,
+		)
+	}
+	if len(peerSharesMessages) != (groupSize - 1) {
+		t.Fatalf("peer shares messages number %d doesn't match expected %d",
+			len(peerSharesMessages),
+			groupSize-1,
+		)
+	}
+
+	if len(commitmentsMessage.commitments) != (threshold + 1) {
+		t.Fatalf("calculated commitments number %d doesn't match expected number %d",
+			len(member.coefficientsA),
+			threshold+1,
+		)
+	}
+}
+
 func TestPhase3and4(t *testing.T) {
 	threshold := 1
 	groupSize := 2
