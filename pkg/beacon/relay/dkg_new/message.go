@@ -42,3 +42,15 @@ type MemberPublicKeySharesMessage struct {
 
 	publicKeyShares []*big.Int
 }
+
+// SecondAccusationsMessage is a message payload that carries all of the sender's
+// accusations against other members of the threshold group after public key share
+// validation.
+// If all other members behaved honestly from the sender's point of view, this
+// message should be broadcast but with an empty slice of `accusedIDs`.
+// It is expected to be broadcast.
+type SecondAccusationsMessage struct {
+	senderID *big.Int
+
+	accusedIDs []*big.Int
+}
