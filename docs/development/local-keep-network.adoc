@@ -1,4 +1,4 @@
-= Setting up local Keep node for development purposes
+= Setting up local Keep network for development purposes
 
 == Pre-requirements
 * Installed `geth` Ethereum client
@@ -206,4 +206,141 @@ Running migration: 2_deploy_contracts.js
 Saving successful migration to network...
   ... 0xc0a0de324da6d02d7804229a691b2ece9ae18f84e8977f994baed5c90e9c27e2
 Saving artifacts...
+```
+
+== Setting up local Keep peers
+
+
+For each Keep peer we need to create a separate configuration file. We need at 
+least one bootstrap peer in the network. Here, we will create one bootstrap peer 
+and 4 non-bootstrap peers pointing to it.
+
+Let's create a configuration for the bootstrap peer first:
+```
+$ cp config.toml.SAMPLE config.local.1.toml
+```
+
+Next, edit `config.local.1.toml` and update `[ethereum.account]` section to 
+point to the account that will be used by Keep peers:
+```
+[ethereum.account]
+        Address            = "0xca6aa3681a4f6ff5f759fec196d80fb0539b3626"
+        KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-11T23-27-24.289597249Z--ca6aa3681a4f6ff5f759fec196d80fb0539b3626"
+```
+
+Update `[ethereum.ContractAddresses]` section to point to the previously 
+deployed instances. Please use addresses of `KeepGroup` and `KeepRandomBeacon` 
+proxy contracts as well as the address of `KeepGroup` contract from the truffle 
+migration output:
+```
+[ethereum.ContractAddresses]
+        KeepRandomBeacon = "0xb63a1a13a5099fad0fb703d3161ec08d4db2ab83"
+        GroupContract = "0xde93fc1fd2dc3679c48dc9abac96b731112f1670"
+        KeepGroup = "0xde93fc1fd2dc3679c48dc9abac96b731112f1670"
+
+```
+
+Next, create configuration files for non-bootstrap peers:
+```
+$ cp config.local.1.toml config.local.2.toml
+$ cp config.local.1.toml config.local.3.toml
+$ cp config.local.1.toml config.local.4.toml
+$ cp config.local.1.toml config.local.5.toml
+```
+
+In the `config.local.1.toml` enable network settings for bootstrap peer:
+```
+[LibP2P]
+        Seed = 2
+        Port = 3919
+```
+
+And start the peer:
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip6/::1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca |
+|       /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca     |
+------------------------------------------------------------------------------------------------
+```
+
+The next thing we need to do is to alter configuration file of each 
+non-bootstrap peer. Please modify `Port` number so that it is unique for each 
+peer and update the address of the bootstrap peer. For a non-bootstrap peer, 
+`Seed` value should remain commented out or should be removed.
+
+In `config.local.2.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3920
+```
+
+In `config.local.3.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3921
+```
+
+In `config.local.4.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3922
+```
+
+In `config.local.5.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3923
+```
+
+The last thing we need to do is to start each non-bootstrap instance:
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr |
+------------------------------------------------------------------------------------------------
+```
+
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.3.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784 |
+------------------------------------------------------------------------------------------------
+```
+
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.4.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb |
+------------------------------------------------------------------------------------------------
+```
+
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p |
+------------------------------------------------------------------------------------------------
 ```
