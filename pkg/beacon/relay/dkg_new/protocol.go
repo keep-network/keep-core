@@ -41,12 +41,12 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessag
 		}
 	}
 
-	cm.coefficientsA = coefficientsA
+	cm.secretShares = coefficientsA
 
 	// Calculate shares for other group members by evaluating polynomials defined
 	// by coefficients `a_i` and `b_i`
 	var sharesMessages []*PeerSharesMessage
-	for _, id := range cm.group.MemberIDs() {
+	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
 		secretShare := evaluateMemberShare(receiverID, coefficientsA, cm.ProtocolConfig().Q)
 		// t_j = g_(j) mod q
@@ -54,16 +54,16 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessag
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
-		if cm.ID.Cmp(id) == 0 {
-			cm.secretShares[cm.ID] = secretShare
-			cm.randomShares[cm.ID] = randomShare
+		if cm.ID.Cmp(receiverID) == 0 {
+			cm.receivedSecretShares[cm.ID] = secretShare
+			cm.receivedRandomShares[cm.ID] = randomShare
 			continue
 		}
 
 		sharesMessages = append(sharesMessages,
 			&PeerSharesMessage{
 				senderID:    cm.ID,
-				receiverID:  id,
+				receiverID:  receiverID,
 				secretShare: secretShare,
 				randomShare: randomShare,
 			})
@@ -129,9 +129,8 @@ func (cm *CommittingMember) VerifySharesAndCommitments(
 					accusedMembersIDs = append(accusedMembersIDs, commitmentMessage.senderID)
 					break
 				}
-				// Phase 6
-				cm.secretShares[commitmentMessage.senderID] = shareMessage.secretShare
-				cm.randomShares[commitmentMessage.senderID] = shareMessage.randomShare
+				cm.receivedSecretShares[commitmentMessage.senderID] = shareMessage.secretShare
+				cm.receivedRandomShares[commitmentMessage.senderID] = shareMessage.randomShare
 			}
 		}
 		if !shareMessageFound {

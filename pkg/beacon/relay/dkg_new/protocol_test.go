@@ -24,9 +24,9 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 		t.Fatalf("shares and commitments calculation failed [%s]", err)
 	}
 
-	if len(member.coefficientsA) != (threshold + 1) {
+	if len(member.secretShares) != (threshold + 1) {
 		t.Fatalf("generated coefficients A number %d doesn't match expected number %d",
-			len(member.coefficientsA),
+			len(member.secretShares),
 			threshold+1,
 		)
 	}
@@ -39,7 +39,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 
 	if len(commitmentsMessage.commitments) != (threshold + 1) {
 		t.Fatalf("calculated commitments number %d doesn't match expected number %d",
-			len(member.coefficientsA),
+			len(member.secretShares),
 			threshold+1,
 		)
 	}
@@ -110,9 +110,9 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 				group:          group,
 				protocolConfig: config,
 			},
-			vss:          vss,
-			secretShares: make(map[*big.Int]*big.Int),
-			randomShares: make(map[*big.Int]*big.Int),
+			vss:                  vss,
+			receivedSecretShares: make(map[*big.Int]*big.Int),
+			receivedRandomShares: make(map[*big.Int]*big.Int),
 		})
 		group.RegisterMemberID(id)
 	}
