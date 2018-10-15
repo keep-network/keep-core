@@ -167,3 +167,27 @@ func calculateShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *b
 	}
 	return result
 }
+
+// CombineReceivedShares sums up all shares received from peer group members.
+//
+// See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_6_share_calculation
+func (sm *SharingMember) CombineReceivedShares() {
+	secretShare := big.NewInt(0)
+	for _, s := range sm.receivedSecretShares {
+		secretShare = new(big.Int).Mod(
+			new(big.Int).Add(secretShare, s),
+			sm.ProtocolConfig().Q,
+		)
+	}
+
+	randomShare := big.NewInt(0)
+	for _, t := range sm.receivedRandomShares {
+		randomShare = new(big.Int).Mod(
+			new(big.Int).Add(randomShare, t),
+			sm.ProtocolConfig().Q,
+		)
+	}
+
+	sm.privateKeyShare = secretShare
+	sm.privateRandomShare = randomShare
+}
