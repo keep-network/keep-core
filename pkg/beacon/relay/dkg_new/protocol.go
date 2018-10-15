@@ -18,14 +18,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
-// CalculateSharesAndCommitments starts with generating coefficients for two
+// CalculateMembersSharesAndCommitments starts with generating coefficients for two
 // polynomials. Then it is calculating shares for all group member and packing
 // them in individual messages for each peer member. Additionally, it calculates
 // commitments to `a` coefficients of first polynomial using second's polynomial
 // `b` coefficients.
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_3_polynomial_generation
-func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessage, *MemberCommitmentsMessage, error) {
+func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerSharesMessage, *MemberCommitmentsMessage, error) {
 	var err error
 	coefficientsSize := cm.group.dishonestThreshold + 1
 	coefficientsA := make([]*big.Int, coefficientsSize)
