@@ -3,6 +3,7 @@ package dkg
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -10,8 +11,8 @@ import (
 )
 
 func TestCalculateSharesAndCommitments(t *testing.T) {
-	threshold := 4
-	groupSize := 10
+	threshold := 3
+	groupSize := 5
 
 	members, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
@@ -19,14 +20,14 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 
 	member := members[0]
-	peerSharesMessages, commitmentsMessage, err := member.CalculateSharesAndCommitments()
+	peerSharesMessages, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		t.Fatalf("shares and commitments calculation failed [%s]", err)
 	}
 
-	if len(member.coefficientsA) != (threshold + 1) {
+	if len(member.secretShares) != (threshold + 1) {
 		t.Fatalf("generated coefficients A number %d doesn't match expected number %d",
-			len(member.coefficientsA),
+			len(member.secretShares),
 			threshold+1,
 		)
 	}
@@ -39,15 +40,15 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 
 	if len(commitmentsMessage.commitments) != (threshold + 1) {
 		t.Fatalf("calculated commitments number %d doesn't match expected number %d",
-			len(member.coefficientsA),
+			len(member.secretShares),
 			threshold+1,
 		)
 	}
 }
 
-func TestPhase3and4(t *testing.T) {
-	threshold := 1
-	groupSize := 2
+func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
+	threshold := 3
+	groupSize := 5
 
 	members, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
@@ -55,9 +56,90 @@ func TestPhase3and4(t *testing.T) {
 	}
 
 	var peerSharesMessages []*PeerSharesMessage
-	var messages []*MemberCommitmentsMessage
+	var commitmentsMessages []*MemberCommitmentsMessage
 	for _, member := range members {
-		peerSharesMessage, commitmentsMessage, err := member.CalculateSharesAndCommitments()
+		peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+		if err != nil {
+			t.Fatalf("shares and commitments calculation failed [%s]", err)
+		}
+		peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
+		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
+	}
+
+	currentMember := members[0]
+
+	var tests = map[string]struct {
+		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
+		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
+		expectedError             error
+		expectedAccusedIDs        int
+	}{
+		"positive validation": {
+			expectedError:      nil,
+			expectedAccusedIDs: 0,
+		},
+		"negative validation - changed random share": {
+			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
+				messages[1].randomShare = big.NewInt(13)
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: 1,
+		},
+		"negative validation - changed commitment": {
+			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
+				messages[1].commitments[0] = big.NewInt(13)
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: 1,
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			filteredPeerSharesMessages := filterPeerSharesMessage(peerSharesMessages, currentMember.ID)
+			filteredMemberCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
+
+			if test.modifyPeerShareMessages != nil {
+				test.modifyPeerShareMessages(filteredPeerSharesMessages)
+			}
+			if test.modifyCommitmentsMessages != nil {
+				test.modifyCommitmentsMessages(filteredMemberCommitmentsMessages)
+			}
+
+			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
+				filteredPeerSharesMessages,
+				filteredMemberCommitmentsMessages,
+			)
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"expected: %v\nactual: %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
+				t.Fatalf("expecting %d accused member's IDs but received %d",
+					test.expectedAccusedIDs,
+					accusedMessage.accusedIDs,
+				)
+			}
+		})
+	}
+}
+
+func TestRoundTrip(t *testing.T) {
+	threshold := 5
+	groupSize := 10
+
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	var peerSharesMessages []*PeerSharesMessage
+	var messages []*MemberCommitmentsMessage
+	for _, member := range committingMembers {
+		peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 		if err != nil {
 			t.Fatalf("shares and commitments calculation failed [%s]", err)
 		}
@@ -65,15 +147,11 @@ func TestPhase3and4(t *testing.T) {
 		messages = append(messages, commitmentsMessage)
 	}
 
-	if len(messages) != groupSize {
-		t.Fatalf("generated messages number %d doesn't match expected number %d", len(messages), groupSize)
-	}
+	committingMember := committingMembers[0]
 
-	currentMember := members[0]
-
-	accusedMessage, err := currentMember.VerifySharesAndCommitments(
-		filterPeerSharesMessage(peerSharesMessages, currentMember.ID),
-		filterMemberCommitmentsMessages(messages, currentMember.ID),
+	accusedMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
+		filterPeerSharesMessage(peerSharesMessages, committingMember.ID),
+		filterMemberCommitmentsMessages(messages, committingMember.ID),
 	)
 	if err != nil {
 		t.Fatalf("shares and commitments verification failed [%s]", err)
@@ -110,9 +188,9 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 				group:          group,
 				protocolConfig: config,
 			},
-			vss:          vss,
-			secretShares: make(map[*big.Int]*big.Int),
-			randomShares: make(map[*big.Int]*big.Int),
+			vss:                  vss,
+			receivedSecretShares: make(map[*big.Int]*big.Int),
+			receivedRandomShares: make(map[*big.Int]*big.Int),
 		})
 		group.RegisterMemberID(id)
 	}
@@ -125,7 +203,8 @@ func filterPeerSharesMessage(
 ) []*PeerSharesMessage {
 	var result []*PeerSharesMessage
 	for _, msg := range messages {
-		if msg.senderID != receiverID {
+		if msg.senderID.Cmp(receiverID) != 0 &&
+			msg.receiverID.Cmp(receiverID) == 0 {
 			result = append(result, msg)
 		}
 	}

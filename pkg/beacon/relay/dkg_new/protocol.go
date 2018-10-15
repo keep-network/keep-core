@@ -18,14 +18,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
-// CalculateSharesAndCommitments starts with generating coefficients for two
+// CalculateMembersSharesAndCommitments starts with generating coefficients for two
 // polynomials. Then it is calculating shares for all group member and packing
 // them in individual messages for each peer member. Additionally, it calculates
 // commitments to `a` coefficients of first polynomial using second's polynomial
 // `b` coefficients.
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_3_polynomial_generation
-func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessage, *MemberCommitmentsMessage, error) {
+func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerSharesMessage, *MemberCommitmentsMessage, error) {
 	var err error
 	coefficientsSize := cm.group.dishonestThreshold + 1
 	coefficientsA := make([]*big.Int, coefficientsSize)
@@ -41,29 +41,29 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessag
 		}
 	}
 
-	cm.coefficientsA = coefficientsA
+	cm.secretShares = coefficientsA
 
 	// Calculate shares for other group members by evaluating polynomials defined
 	// by coefficients `a_i` and `b_i`
 	var sharesMessages []*PeerSharesMessage
-	for _, id := range cm.group.MemberIDs() {
+	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
-		secretShare := calculateShare(id, coefficientsA, cm.ProtocolConfig().Q)
+		secretShare := evaluateMemberShare(receiverID, coefficientsA, cm.ProtocolConfig().Q)
 		// t_j = g_(j) mod q
-		randomShare := calculateShare(id, coefficientsB, cm.ProtocolConfig().Q)
+		randomShare := evaluateMemberShare(receiverID, coefficientsB, cm.ProtocolConfig().Q)
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
-		if cm.ID.Cmp(id) == 0 {
-			cm.secretShares[cm.ID] = secretShare
-			cm.randomShares[cm.ID] = randomShare
+		if cm.ID.Cmp(receiverID) == 0 {
+			cm.receivedSecretShares[cm.ID] = secretShare
+			cm.receivedRandomShares[cm.ID] = randomShare
 			continue
 		}
 
 		sharesMessages = append(sharesMessages,
 			&PeerSharesMessage{
 				senderID:    cm.ID,
-				receiverID:  id,
+				receiverID:  receiverID,
 				secretShare: secretShare,
 				randomShare: randomShare,
 			})
@@ -82,22 +82,22 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessag
 	return sharesMessages, commitmentsMessage, nil
 }
 
-// VerifySharesAndCommitments verifies shares and commitments received in messages
-// from peer group members.
+// VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments received in
+// messages from peer group members.
 // It returns accusation message with ID of members for which verification failed.
 //
 // If cannot match commitments message with shares message for given sender then
 // error is returned.
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_4_share_verification
-func (cm *CommittingMember) VerifySharesAndCommitments(
+func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*FirstAccusationsMessage, error) {
 	var accusedMembersIDs []*big.Int
+
 	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
-
 	for _, commitmentMessage := range commitmentsMessages {
 		commitmentsProduct := big.NewInt(1)
 		for k, c := range commitmentMessage.commitments {
@@ -129,9 +129,8 @@ func (cm *CommittingMember) VerifySharesAndCommitments(
 					accusedMembersIDs = append(accusedMembersIDs, commitmentMessage.senderID)
 					break
 				}
-				// Phase 6
-				cm.secretShares[commitmentMessage.senderID] = shareMessage.secretShare
-				cm.randomShares[commitmentMessage.senderID] = shareMessage.randomShare
+				cm.receivedSecretShares[commitmentMessage.senderID] = shareMessage.secretShare
+				cm.receivedRandomShares[commitmentMessage.senderID] = shareMessage.randomShare
 			}
 		}
 		if !shareMessageFound {
@@ -145,13 +144,13 @@ func (cm *CommittingMember) VerifySharesAndCommitments(
 	}, nil
 }
 
-// calculateShare calculates a share for given memberID.
+// evaluateMemberShare calculates a share for given memberID.
 //
 // It calculates `Σ a_j * z^j mod q`for j in [0..T], where:
 // - `a_j` is j coefficient
 // - `z` is memberID
 // - `T` is threshold
-func calculateShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *big.Int {
+func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *big.Int {
 	result := big.NewInt(0)
 	for j, a := range coefficients {
 		result = new(big.Int).Mod(
