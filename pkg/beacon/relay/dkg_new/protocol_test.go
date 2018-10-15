@@ -160,6 +160,35 @@ func TestRoundTrip(t *testing.T) {
 	if len(accusedMessage.accusedIDs) > 0 {
 		t.Fatalf("found accused members but was not expecting to")
 	}
+
+	var sharingMembers []*SharingMember
+	for _, cm := range committingMembers {
+
+		sharingMembers = append(sharingMembers, &SharingMember{
+			CommittingMember: cm,
+		})
+	}
+
+	sharingMember := sharingMembers[0]
+	if len(sharingMember.receivedSecretShares) != groupSize {
+		t.Fatalf("received shares number %d doesn't match expected number %d", len(sharingMember.receivedSecretShares), groupSize-1)
+	}
+
+	for _, member := range sharingMembers {
+		member.CombineReceivedShares()
+	}
+
+	secondMessages := make([]*MemberPublicKeySharesMessage, groupSize)
+	for i, member := range sharingMembers {
+		secondMessages[i] = member.CalculatePublicKeyShares()
+	}
+	secondAccusedMessage, err := sharingMember.VerifyPublicKeyShares(secondMessages)
+	if err != nil {
+		t.Fatalf("phase8 failed [%s]", err)
+	}
+	if len(secondAccusedMessage.accusedIDs) > 0 {
+		t.Fatalf("something wrong %v", secondAccusedMessage.accusedIDs)
+	}
 }
 
 func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMember, error) {
