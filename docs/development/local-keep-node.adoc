@@ -1,0 +1,120 @@
+= Setting up local Keep node for development purposes
+
+== Pre-requirements
+* Installed `geth` Ethereum client
+* Installed `truffle` framework
+
+== Setting up local Ethereum client
+
+Create directories for Ethereum client data:
+
+```
+$ mkdir ~/ethereum
+$ mkdir ~/ethereum/data
+$ mkdir ~/ethereum/data/keystore
+```
+
+Create a new account for Ethereum client, set the password to just `password`:
+```
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-11|16:24:40] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase: 
+Repeat passphrase: 
+Address: {dd9fc033955d6fbb4908967bb2fe2a74ec965e92}
+```
+
+And a new account that will be used by Keep peers. Each Keep peer can have its 
+own account. In this document, we use one for all peers, just for simplicity:
+```
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-11|16:27:19] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase: 
+Repeat passphrase: 
+Address: {ca6aa3681a4f6ff5f759fec196d80fb0539b3626}
+```
+
+Check accounts have been created correctly and `geth` can recognize them:
+```
+$ ls ~/ethereum/data/keystore/
+
+UTC--2018-10-11T23-24-47.203195376Z--dd9fc033955d6fbb4908967bb2fe2a74ec965e92
+UTC--2018-10-11T23-27-24.289597249Z--ca6aa3681a4f6ff5f759fec196d80fb0539b3626
+```
+
+```
+$ geth account list --keystore ~/ethereum/data/keystore
+
+Account #0: {dd9fc033955d6fbb4908967bb2fe2a74ec965e92} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-11T23-24-47.203195376Z--dd9fc033955d6fbb4908967bb2fe2a74ec965e92
+Account #1: {ca6aa3681a4f6ff5f759fec196d80fb0539b3626} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-11T23-27-24.289597249Z--ca6aa3681a4f6ff5f759fec196d80fb0539b3626
+```
+
+Initialize your local Ethereum node from `genesis.json` file. This allows to 
+issue some tokens to the addresses we just created. It is enough to issue tokens 
+only to the address that will be used by Keep peers (we need to deploy tokens  
+and submit relay requests to the chain):
+```
+{
+    "config": {
+        "chainId": 1101,
+        "homesteadBlock": 0,
+        "eip155Block": 0,
+        "eip158Block": 0
+    },
+    "difficulty" : "0x20",
+    "gasLimit"   : "0x493E0000",
+    "alloc": {
+        "0xca6aa3681a4f6ff5f759fec196d80fb0539b3626": { "balance": "1000000000000000000000000000000000000000000000000000000" }
+     }
+}
+```
+
+```
+$ geth --datadir="/Users/piotr/ethereum/data" init genesis.json 
+
+INFO [10-13|13:29:17] Maximum peer count                       ETH=25 LES=0 total=25
+INFO [10-13|13:29:17] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/chaindata cache=16 handles=16
+INFO [10-13|13:29:17] Writing custom genesis block 
+INFO [10-13|13:29:17] Persisted trie from memory database      nodes=1 size=163.00B time=79.138µs gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B
+INFO [10-13|13:29:17] Successfully wrote genesis state         database=chaindata                                 hash=7c33da…6cbe42
+INFO [10-13|13:29:17] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/lightchaindata cache=16 handles=16
+INFO [10-13|13:29:17] Writing custom genesis block 
+INFO [10-13|13:29:17] Persisted trie from memory database      nodes=1 size=163.00B time=44.995µs gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B
+INFO [10-13|13:29:17] Successfully wrote genesis state         database=lightchaindata                                 hash=7c33da…6cbe42
+```
+
+Start Ethereum client locally using client's wallet address. It is not required 
+to unlock this account since tokens will be only added to it as a reward for 
+mining a block:
+
+```
+$ geth --port 3000 --networkid 11011 --identity "somerandomidentity" --ws --wsaddr "127.0.0.1" --wsport "8546" --wsorigins "" --rpc --rpcport "8545" --rpcaddr "127.0.0.1" --rpccorsdomain "" --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" --datadir=/Users/piotr/ethereum/data/ --fast --etherbase="0xca6aa3681a4f6ff5f759fec196d80fb0539b3626" --mine --minerthreads=1
+
+INFO [10-13|13:35:01] Maximum peer count                       ETH=25 LES=0 total=25
+INFO [10-13|13:35:01] Starting peer-to-peer node               instance=Geth/somerandomidentity/v1.8.11-stable/darwin-amd64/go1.10.3
+INFO [10-13|13:35:01] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/chaindata cache=768 handles=128
+INFO [10-13|13:35:01] Initialised chain configuration          config="{ChainID: 1101 Homestead: 0 DAO: <nil> DAOSupport: false EIP150: <nil> EIP155: 0 EIP158: 0 Byzantium: <nil> Constantinople: <nil> Engine: unknown}"
+INFO [10-13|13:35:01] Disk storage enabled for ethash caches   dir=/Users/piotr/ethereum/data/geth/ethash count=3
+INFO [10-13|13:35:01] Disk storage enabled for ethash DAGs     dir=/Users/piotr/.ethash                   count=2
+INFO [10-13|13:35:01] Initialising Ethereum protocol           versions="[63 62]" network=11011
+INFO [10-13|13:35:01] Loaded most recent local header          number=0 hash=7c33da…6cbe42 td=32
+INFO [10-13|13:35:01] Loaded most recent local full block      number=0 hash=7c33da…6cbe42 td=32
+INFO [10-13|13:35:01] Loaded most recent local fast block      number=0 hash=7c33da…6cbe42 td=32
+INFO [10-13|13:35:01] Loaded local transaction journal         transactions=0 dropped=0
+INFO [10-13|13:35:01] Regenerated local transaction journal    transactions=0 accounts=0
+INFO [10-13|13:35:01] Starting P2P networking 
+INFO [10-13|13:35:01] UDP listener up                          self=enode://55e29cc362db46cb37ed24f0aa9f3ea7502410a6a07ab04af782c52276a02d2fda74aaaf9e552ffbe94c1998b447a4444e7524a9e480398ce974d441b9264fe9@[::]:3000
+INFO [10-13|13:35:01] RLPx listener up                         self=enode://55e29cc362db46cb37ed24f0aa9f3ea7502410a6a07ab04af782c52276a02d2fda74aaaf9e552ffbe94c1998b447a4444e7524a9e480398ce974d441b9264fe9@[::]:3000
+INFO [10-13|13:35:01] IPC endpoint opened                      url=/Users/piotr/ethereum/data/geth.ipc
+INFO [10-13|13:35:01] HTTP endpoint opened                     url=http://127.0.0.1:8545               cors= vhosts=localhost
+INFO [10-13|13:35:01] WebSocket endpoint opened                url=ws://127.0.0.1:8546
+INFO [10-13|13:35:01] Transaction pool price threshold updated price=18000000000
+INFO [10-13|13:35:01] Starting mining operation 
+INFO [10-13|13:35:01] Commit new mining work                   number=1 txs=0 uncles=0 elapsed=145.275µs
+INFO [10-13|13:35:07] Successfully sealed new block            number=1 hash=384b15…68956e
+INFO [10-13|13:35:07] 🔨 mined potential block                  number=1 hash=384b15…68956e
+INFO [10-13|13:35:07] Commit new mining work                   number=2 txs=0 uncles=0 elapsed=192.531µs
+```
