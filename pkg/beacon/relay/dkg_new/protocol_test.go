@@ -138,6 +138,18 @@ func filterMemberCommitmentsMessages(
 ) []*MemberCommitmentsMessage {
 	var result []*MemberCommitmentsMessage
 	for _, msg := range messages {
+		if msg.senderID.Cmp(receiverID) != 0 {
+			result = append(result, msg)
+		}
+	}
+	return result
+}
+
+func filterMemberPublicKeySharesMessageMessages(
+	messages []*MemberPublicKeySharesMessage, receiverID *big.Int,
+) []*MemberPublicKeySharesMessage {
+	var result []*MemberPublicKeySharesMessage
+	for _, msg := range messages {
 		if msg.senderID != receiverID {
 			result = append(result, msg)
 		}
