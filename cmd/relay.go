@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"os"
@@ -41,6 +42,11 @@ func init() {
 				Name:   "entry",
 				Usage:  "Requests the entry associated with the given request id from the relay.",
 				Action: relayEntry,
+			},
+			{
+				Name:   "submit",
+				Usage:  "Submits a new seed entry to the relay; only for testing.",
+				Action: submitRelayEntrySeed,
 			},
 		},
 	}
@@ -137,4 +143,107 @@ func relayRequest(c *cli.Context) error {
 // and prints that entry.
 func relayEntry(c *cli.Context) error {
 	return fmt.Errorf("relay entry lookups are currently unimplemented")
+}
+
+// submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
+// off the group selection process, and prints the newly generated value. By
+// default, it uses a random big integer as the value.
+func submitRelayEntrySeed(c *cli.Context) error {
+	cfg, err := config.ReadConfig(c.GlobalString("config"))
+	if err != nil {
+		return fmt.Errorf("error reading config file: [%v]", err)
+	}
+
+	provider, err := ethereum.Connect(cfg.Ethereum)
+	if err != nil {
+		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
+	}
+
+	var (
+		value        [32]byte
+		requestID    *big.Int
+		entropy      = make([]byte, 32)
+		wait         = make(chan struct{})
+		requestMutex = sync.Mutex{}
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
+		requestMutex.Lock()
+		defer requestMutex.Unlock()
+
+		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
+			valueBigInt := &big.Int{}
+			valueBigInt.SetBytes(entry.Value[:])
+			fmt.Fprintf(
+				os.Stderr,
+				"Relay entry received with value: [%s].\n",
+				valueBigInt.String(),
+			)
+
+			wait <- struct{}{}
+		}
+	})
+
+	// Create the random seed, a 32-byte value
+	if _, err := rand.Read(entropy); err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"Failed to generate entropy with error [%v].\n",
+			err,
+		)
+	}
+	copy(value[:], entropy)
+
+	entry := &event.Entry{
+		RequestID:     big.NewInt(39287359027845),
+		Value:         value,
+		GroupID:       big.NewInt(0),
+		PreviousEntry: big.NewInt(0),
+		Timestamp:     time.Now().UTC(),
+	}
+
+	provider.ThresholdRelay().SubmitRelayEntry(
+		entry,
+	).OnSuccess(func(data *event.Entry) {
+		fmt.Fprintf(
+			os.Stdout,
+			"Submitted relay entry: [%v].\n",
+			data,
+		)
+
+		requestMutex.Lock()
+		requestID = data.RequestID
+		requestMutex.Unlock()
+	}).OnFailure(func(err error) {
+		if err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"Error in submitting relay entry: [%v].\n",
+				err,
+			)
+			return
+		}
+	})
+
+	select {
+	case <-wait:
+		cancel()
+		os.Exit(0)
+	case <-ctx.Done():
+		err := ctx.Err()
+		if err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"Request errored out: [%v].\n",
+				err,
+			)
+		} else {
+			fmt.Fprintf(os.Stderr, "Request errored for unknown reason.\n")
+		}
+
+		os.Exit(1)
+	}
+
+	return nil
 }
