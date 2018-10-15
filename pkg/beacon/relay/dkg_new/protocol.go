@@ -215,3 +215,46 @@ func (sm *SharingMember) CalculatePublicKeyShares() *MemberPublicKeySharesMessag
 }
 
 // VerifyPublicKeyShares validates public key shares received in messages from
+// peer group members.
+// It returns accusation message with ID of members for which verification failed.
+//
+// See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_8_public_key_share_validation
+func (sm *SharingMember) VerifyPublicKeyShares(messages []*MemberPublicKeySharesMessage) (*SecondAccusationsMessage, error) {
+	var accusedMembersIDs []*big.Int
+	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
+	// where: j is sender's ID, i is current member ID, T is threshold.
+	for _, message := range messages {
+		product := big.NewInt(1)
+		for k, c := range message.publicKeyShares {
+			product = new(big.Int).Mod(
+				new(big.Int).Mul(
+					product,
+					new(big.Int).Exp(
+						c,
+						new(big.Int).Exp(
+							sm.ID,
+							big.NewInt(int64(k)),
+							sm.ProtocolConfig().P,
+						),
+						sm.ProtocolConfig().P,
+					),
+				),
+				sm.ProtocolConfig().P,
+			)
+		}
+		// `expectedProduct = g^s_ji`
+		expectedProduct := new(big.Int).Exp(
+			sm.vss.G(),
+			sm.receivedSecretShares[message.senderID],
+			sm.ProtocolConfig().P)
+
+		if expectedProduct.Cmp(product) != 0 {
+			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+		}
+	}
+
+	return &SecondAccusationsMessage{
+		senderID:   sm.ID,
+		accusedIDs: accusedMembersIDs,
+	}, nil
+}
