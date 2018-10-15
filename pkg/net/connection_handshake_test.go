@@ -7,61 +7,65 @@ import (
 )
 
 func TestGenAndRecvActOne(t *testing.T) {
-	initiator := &connectionHandshake{}
-	responder := &connectionHandshake{}
+	initiatorAct1 := &initiatorAct1{}
+	responderAct1 := responderAct2{}
 
-	actOneMsg := initiator.GenActOne()
-	responder.RecvActOne(actOneMsg)
+	// execute 1st act
+	// initiator -> responder
+	initiatorAct2, act1Msg := initiatorAct1.genActOne()
+	responderAct2 := responderAct1.recvActOne(act1Msg)
 
-	if initiator.nonce1 != responder.nonce1 {
+	if initiatorAct2.nonce1 != responderAct2.nonce1 {
 		t.Fatalf(
 			"Unexpected nonce 1\nExpected: %v\nActual: %v",
-			initiator.nonce1,
-			responder.nonce1,
+			initiatorAct2.nonce1,
+			responderAct2.nonce1,
 		)
 	}
 }
 
-func TestGenAndRecvActTwo(t *testing.T) {
-	initiator := &connectionHandshake{}
-	responder := &connectionHandshake{}
+func TestGenAndRectActTwo(t *testing.T) {
+	nonce1 := uint64(1337)
 
-	initiator.nonce1 = uint64(1337)
-	responder.nonce1 = initiator.nonce1
+	initiatorAct2 := &initiatorAct2{nonce1: nonce1}
+	responderAct2 := &responderAct2{nonce1: nonce1}
 
-	actTwoMsg := responder.GenActTwo()
-	err := initiator.RecvActTwo(actTwoMsg)
+	// execute 2nd act
+	// responder -> initiator
+	responderAct3, act2Msg := responderAct2.genActTwo()
+	initiatorAct3, err := initiatorAct2.recvActTwo(act2Msg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if initiator.nonce2 != responder.nonce2 {
+	if initiatorAct3.nonce2 != responderAct3.nonce2 {
 		t.Fatalf(
 			"Unexpected nonce 2\nExpected: %v\nActual: %v",
-			initiator.nonce1,
-			responder.nonce1,
+			initiatorAct3.nonce1,
+			responderAct3.nonce1,
 		)
 	}
 
-	if initiator.challenge != responder.challenge {
+	if initiatorAct3.challenge != responderAct3.challenge {
 		t.Fatalf(
 			"Unexpected challenge\nExpected: %v\nActual: %v",
-			initiator.nonce1,
-			responder.nonce1,
+			initiatorAct3.nonce1,
+			responderAct3.nonce1,
 		)
 	}
 }
 
 func TestRecvActTwoUnexpectedChallenge(t *testing.T) {
-	initiator := &connectionHandshake{}
-	responder := &connectionHandshake{}
+	nonce1 := uint64(1337)
 
-	initiator.nonce1 = uint64(1337)
-	responder.nonce1 = initiator.nonce1
+	initiatorAct2 := &initiatorAct2{nonce1: nonce1}
+	responderAct2 := &responderAct2{nonce1: nonce1}
 
-	actTwoMsg := responder.GenActTwo()
-	actTwoMsg[2] = 0xff
-	err := initiator.RecvActTwo(actTwoMsg)
+	// execute 2nd act
+	// responder -> initiator
+	_, act2Msg := responderAct2.genActTwo()
+	act2Msg.challenge[2] = 0xff
+	_, err := initiatorAct2.recvActTwo(act2Msg)
 
 	expectedError := errors.New("unexpected responder's challenge")
 	if !reflect.DeepEqual(err, expectedError) {
@@ -74,38 +78,51 @@ func TestRecvActTwoUnexpectedChallenge(t *testing.T) {
 }
 
 func TestGenAndRecvActThree(t *testing.T) {
-	initiator := &connectionHandshake{}
-	responder := &connectionHandshake{}
+	nonce1 := uint64(1337)
+	nonce2 := uint64(1410)
 
-	initiator.nonce1 = uint64(1337)
-	responder.nonce1 = initiator.nonce1
+	initiatorAct3 := &initiatorAct3{
+		initiatorAct2: initiatorAct2{nonce1: nonce1},
+		nonce2:        nonce2,
+		challenge:     hashToChallenge(nonce1, nonce2),
+	}
 
-	initiator.nonce2 = uint64(1410)
-	responder.nonce2 = initiator.nonce2
-	initiator.challenge = hashToChallenge(responder.nonce1, responder.nonce2)
-	responder.challenge = initiator.challenge
+	responderAct3 := &responderAct3{
+		responderAct2: responderAct2{nonce1: nonce1},
+		nonce2:        nonce2,
+		challenge:     hashToChallenge(nonce1, nonce2),
+	}
 
-	actThreeMsg := initiator.GenActThree()
-	err := responder.RecvActThree(actThreeMsg)
+	// execute 3rd act
+	// initiator -> responder
+	act3Msg := initiatorAct3.genActThree()
+	err := responderAct3.recvActThree(act3Msg)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestGenAndRecvActThreeUnexpectedChallenge(t *testing.T) {
-	initiator := &connectionHandshake{}
-	responder := &connectionHandshake{}
+	nonce1 := uint64(1337)
+	nonce2 := uint64(1410)
 
-	initiator.nonce1 = uint64(1337)
-	responder.nonce1 = initiator.nonce1
+	initiatorAct3 := &initiatorAct3{
+		initiatorAct2: initiatorAct2{nonce1: nonce1},
+		nonce2:        nonce2,
+		challenge:     hashToChallenge(nonce1, nonce2),
+	}
 
-	initiator.nonce2 = uint64(1410)
-	responder.nonce2 = initiator.nonce2
-	initiator.challenge = hashToChallenge(responder.nonce1, responder.nonce2)
-	responder.challenge = [32]byte{0xff, 0xfa}
+	responderAct3 := &responderAct3{
+		responderAct2: responderAct2{nonce1: nonce1},
+		nonce2:        nonce2,
+		challenge:     hashToChallenge(nonce1, nonce2),
+	}
 
-	actThreeMsg := initiator.GenActThree()
-	err := responder.RecvActThree(actThreeMsg)
+	// execute 3rd act
+	// initiator -> responder
+	act3Msg := initiatorAct3.genActThree()
+	act3Msg.challenge = [32]byte{0xff, 0xfa}
+	err := responderAct3.recvActThree(act3Msg)
 
 	expectedError := errors.New("unexpected initiator's challenge")
 	if !reflect.DeepEqual(err, expectedError) {
@@ -118,45 +135,51 @@ func TestGenAndRecvActThreeUnexpectedChallenge(t *testing.T) {
 }
 
 func TestFullHandshake(t *testing.T) {
-	initiator := &connectionHandshake{}
-	responder := &connectionHandshake{}
+	initiatorAct1 := &initiatorAct1{}
+	responderAct1 := responderAct2{}
 
-	actOneMsg := initiator.GenActOne()
-	responder.RecvActOne(actOneMsg)
+	// execute 1st act
+	// initiator -> responder
+	initiatorAct2, act1Msg := initiatorAct1.genActOne()
+	responderAct2 := responderAct1.recvActOne(act1Msg)
 
-	actTwoMsg := responder.GenActTwo()
-	err := initiator.RecvActTwo(actTwoMsg)
+	// execute 2nd act
+	// responder -> initiator
+	responderAct3, act2Msg := responderAct2.genActTwo()
+	initiatorAct3, err := initiatorAct2.recvActTwo(act2Msg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	actThreeMsg := initiator.GenActThree()
-	err = responder.RecvActThree(actThreeMsg)
+	// execute 3rd act
+	// initiator -> responder
+	act3Msg := initiatorAct3.genActThree()
+	err = responderAct3.recvActThree(act3Msg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if initiator.nonce1 != responder.nonce1 {
+	if initiatorAct3.nonce1 != responderAct3.nonce1 {
 		t.Fatalf(
 			"Unexpected nonce 1\nExpected: %v\nActual: %v",
-			initiator.nonce1,
-			responder.nonce1,
+			initiatorAct3.nonce1,
+			responderAct3.nonce1,
 		)
 	}
 
-	if initiator.nonce2 != responder.nonce2 {
+	if initiatorAct3.nonce2 != responderAct3.nonce2 {
 		t.Fatalf(
 			"Unexpected nonce 2\nExpected: %v\nActual: %v",
-			initiator.nonce1,
-			responder.nonce1,
+			initiatorAct3.nonce1,
+			responderAct3.nonce1,
 		)
 	}
 
-	if initiator.challenge != responder.challenge {
+	if initiatorAct3.challenge != responderAct3.challenge {
 		t.Fatalf(
 			"Unexpected challenge\nExpected: %v\nActual: %v",
-			initiator.nonce1,
-			responder.nonce1,
+			initiatorAct3.nonce1,
+			responderAct3.nonce1,
 		)
 	}
 }
