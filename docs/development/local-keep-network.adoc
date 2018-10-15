@@ -29,8 +29,8 @@ Repeat passphrase:
 Address: {dd9fc033955d6fbb4908967bb2fe2a74ec965e92}
 ```
 
-And a new account that will be used by Keep peers. Each Keep peer can have its 
-own account. In this document, we use one for all peers, just for simplicity:
+Create a new account for Keep peers. Each Keep peer can have its own account 
+but in this document, for simplicity, we use only one account for all peers:
 ```
 $ geth account new --keystore ~/ethereum/data/keystore
 
@@ -41,7 +41,7 @@ Repeat passphrase:
 Address: {ca6aa3681a4f6ff5f759fec196d80fb0539b3626}
 ```
 
-Check accounts have been created correctly and `geth` can recognize them:
+Check if accounts have been created correctly and `geth` can recognize them:
 ```
 $ ls ~/ethereum/data/keystore/
 
@@ -57,7 +57,7 @@ Account #1: {ca6aa3681a4f6ff5f759fec196d80fb0539b3626} keystore:///Users/piotr/e
 ```
 
 Initialize your local Ethereum node from `genesis.json` file. This allows to 
-issue some tokens to the addresses we just created. It is enough to issue tokens 
+issue some tokens to the accounts we just created. It is enough to issue tokens 
 only to the address that will be used by Keep peers (we need to deploy tokens  
 and submit relay requests to the chain):
 ```
@@ -91,8 +91,8 @@ INFO [10-13|13:29:17] Successfully wrote genesis state         database=lightcha
 ```
 
 Start Ethereum client locally using client's wallet address. It is not required 
-to unlock this account since tokens will be only added to it as a reward for 
-mining a block:
+to unlock this account since tokens will only be added to it as a mining block 
+reward:
 
 ```
 $ geth --port 3000 --networkid 11011 --identity "somerandomidentity" --ws --wsaddr "127.0.0.1" --wsport "8546" --wsorigins "" --rpc --rpcport "8545" --rpcaddr "127.0.0.1" --rpccorsdomain "" --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" --datadir=/Users/piotr/ethereum/data/ --fast --etherbase="0xca6aa3681a4f6ff5f759fec196d80fb0539b3626" --mine --minerthreads=1
@@ -147,6 +147,7 @@ true
 
 We also need to create a new network entry in `keep-core/contracts/solidity` 
 pointing to our local node and address used to deploy contracts:
+
 ```
 local: {
      host: "127.0.0.1",
@@ -233,7 +234,7 @@ point to the account that will be used by Keep peers:
 ```
 
 Update `[ethereum.ContractAddresses]` section to point to the previously 
-deployed instances. Please use addresses of `KeepGroup` and `KeepRandomBeacon` 
+deployed contract instances. Please use addresses of `KeepGroup` and `KeepRandomBeacon` 
 proxy contracts as well as the address of `KeepGroup` contract from the truffle 
 migration output:
 ```
@@ -274,7 +275,7 @@ $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml sta
 The next thing we need to do is to alter configuration file of each 
 non-bootstrap peer. Please modify `Port` number so that it is unique for each 
 peer and update the address of the bootstrap peer. For a non-bootstrap peer, 
-`Seed` value should remain commented out or should be removed.
+`Seed` value should be removed or remain commented out.
 
 In `config.local.2.toml`:
 ```
@@ -304,7 +305,7 @@ In `config.local.5.toml`:
         Port = 3923
 ```
 
-The last thing we need to do is to start each non-bootstrap instance:
+Finally, we can start each non-bootstrap instance:
 ```
 $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
 ------------------------------------------------------------------------------------------------
