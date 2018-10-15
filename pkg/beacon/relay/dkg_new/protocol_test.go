@@ -3,6 +3,7 @@ package dkg
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -19,7 +20,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 
 	member := members[0]
-	peerSharesMessages, commitmentsMessage, err := member.CalculateSharesAndCommitments()
+	peerSharesMessages, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		t.Fatalf("shares and commitments calculation failed [%s]", err)
 	}
@@ -45,9 +46,9 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 }
 
-func TestPhase3and4(t *testing.T) {
-	threshold := 1
-	groupSize := 2
+func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
+	threshold := 3
+	groupSize := 5
 
 	members, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
@@ -55,13 +56,74 @@ func TestPhase3and4(t *testing.T) {
 	}
 
 	var peerSharesMessages []*PeerSharesMessage
-	var messages []*MemberCommitmentsMessage
+	var commitmentsMessages []*MemberCommitmentsMessage
 	for _, member := range members {
-		peerSharesMessage, commitmentsMessage, err := member.CalculateSharesAndCommitments()
+		peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 		if err != nil {
 			t.Fatalf("shares and commitments calculation failed [%s]", err)
 		}
 		peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
+		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
+	}
+
+	currentMember := members[0]
+
+	var tests = map[string]struct {
+		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
+		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
+		expectedError             error
+		expectedAccusedIDs        int
+	}{
+		"positive validation": {
+			expectedError:      nil,
+			expectedAccusedIDs: 0,
+		},
+		"negative validation - changed random share": {
+			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
+				messages[1].randomShare = big.NewInt(13)
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: 1,
+		},
+		"negative validation - changed commitment": {
+			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
+				messages[1].commitments[0] = big.NewInt(13)
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: 1,
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			filteredPeerSharesMessages := filterPeerSharesMessage(peerSharesMessages, currentMember.ID)
+			filteredMemberCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
+
+			if test.modifyPeerShareMessages != nil {
+				test.modifyPeerShareMessages(filteredPeerSharesMessages)
+			}
+			if test.modifyCommitmentsMessages != nil {
+				test.modifyCommitmentsMessages(filteredMemberCommitmentsMessages)
+			}
+
+			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
+				filteredPeerSharesMessages,
+				filteredMemberCommitmentsMessages,
+			)
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"expected: %v\nactual: %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
+				t.Fatalf("expecting %d accused member's IDs but received %d",
+					test.expectedAccusedIDs,
+					accusedMessage.accusedIDs,
+				)
+			}
+		})
 		messages = append(messages, commitmentsMessage)
 	}
 
