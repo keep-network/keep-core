@@ -4,7 +4,7 @@
 
 [ethereum]
 	URL                = "ws://127.0.0.1:8546"
-    URLRPC             = "http://127.0.0.1:8545"
+	URLRPC             = "http://127.0.0.1:8545"
 
 [ethereum.account]
 	Address            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
@@ -13,7 +13,7 @@
 [ethereum.ContractAddresses]
 	KeepRandomBeacon = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
 	GroupContract = "0x139deb0dd975af8e4cc91fe9053a37e4faf37649"
-    KeepGroup = "0xde93fc1fd2dc3679c48dc9abac96b731112f1670"
+	KeepGroup = "0xde93fc1fd2dc3679c48dc9abac96b731112f1670"
 
 # Non-bootstrap node connecting to an existing network.
 # [LibP2P]
