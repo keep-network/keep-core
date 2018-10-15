@@ -11,8 +11,8 @@ import (
 )
 
 func TestCalculateSharesAndCommitments(t *testing.T) {
-	threshold := 4
-	groupSize := 10
+	threshold := 3
+	groupSize := 5
 
 	members, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
@@ -124,18 +124,34 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestRoundTrip(t *testing.T) {
+	threshold := 5
+	groupSize := 10
+
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	var peerSharesMessages []*PeerSharesMessage
+	var messages []*MemberCommitmentsMessage
+	for _, member := range committingMembers {
+		peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+		if err != nil {
+			t.Fatalf("shares and commitments calculation failed [%s]", err)
+		}
+		peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
 		messages = append(messages, commitmentsMessage)
 	}
 
-	if len(messages) != groupSize {
-		t.Fatalf("generated messages number %d doesn't match expected number %d", len(messages), groupSize)
-	}
+	committingMember := committingMembers[0]
 
-	currentMember := members[0]
-
-	accusedMessage, err := currentMember.VerifySharesAndCommitments(
-		filterPeerSharesMessage(peerSharesMessages, currentMember.ID),
-		filterMemberCommitmentsMessages(messages, currentMember.ID),
+	accusedMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
+		filterPeerSharesMessage(peerSharesMessages, committingMember.ID),
+		filterMemberCommitmentsMessages(messages, committingMember.ID),
 	)
 	if err != nil {
 		t.Fatalf("shares and commitments verification failed [%s]", err)
