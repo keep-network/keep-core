@@ -48,9 +48,9 @@ func (cm *CommittingMember) CalculateSharesAndCommitments() ([]*PeerSharesMessag
 	var sharesMessages []*PeerSharesMessage
 	for _, id := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
-		secretShare := calculateShare(id, coefficientsA, cm.ProtocolConfig().Q)
+		secretShare := evaluateMemberShare(receiverID, coefficientsA, cm.ProtocolConfig().Q)
 		// t_j = g_(j) mod q
-		randomShare := calculateShare(id, coefficientsB, cm.ProtocolConfig().Q)
+		randomShare := evaluateMemberShare(receiverID, coefficientsB, cm.ProtocolConfig().Q)
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
@@ -145,13 +145,13 @@ func (cm *CommittingMember) VerifySharesAndCommitments(
 	}, nil
 }
 
-// calculateShare calculates a share for given memberID.
+// evaluateMemberShare calculates a share for given memberID.
 //
 // It calculates `Σ a_j * z^j mod q`for j in [0..T], where:
 // - `a_j` is j coefficient
 // - `z` is memberID
 // - `T` is threshold
-func calculateShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *big.Int {
+func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *big.Int {
 	result := big.NewInt(0)
 	for j, a := range coefficients {
 		result = new(big.Int).Mod(
