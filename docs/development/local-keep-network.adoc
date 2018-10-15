@@ -1,4 +1,8 @@
+:toc: macro
+
 = Setting up local Keep network for development purposes
+
+toc::[]
 
 == Pre-requirements
 * Installed `geth` Ethereum client
