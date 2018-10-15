@@ -82,22 +82,22 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 	return sharesMessages, commitmentsMessage, nil
 }
 
-// VerifySharesAndCommitments verifies shares and commitments received in messages
-// from peer group members.
+// VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments received in
+// messages from peer group members.
 // It returns accusation message with ID of members for which verification failed.
 //
 // If cannot match commitments message with shares message for given sender then
 // error is returned.
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_4_share_verification
-func (cm *CommittingMember) VerifySharesAndCommitments(
+func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*FirstAccusationsMessage, error) {
 	var accusedMembersIDs []*big.Int
+
 	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
-
 	for _, commitmentMessage := range commitmentsMessages {
 		commitmentsProduct := big.NewInt(1)
 		for k, c := range commitmentMessage.commitments {
