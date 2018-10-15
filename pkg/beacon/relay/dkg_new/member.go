@@ -39,3 +39,11 @@ type CommittingMember struct {
 	// [documentation]: http://docs.keep.network/cryptography/beacon_dkg.html#_protocol
 	secretShares, randomShares map[*big.Int]*big.Int
 }
+
+// SharingMember represents one member in a threshold key sharing group.
+type SharingMember struct {
+	*CommittingMember
+
+	privateKeyShare, privateRandomShare *big.Int
+	publicCoefficientsA                 []*big.Int
+}
