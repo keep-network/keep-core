@@ -191,3 +191,27 @@ func (sm *SharingMember) CombineReceivedShares() {
 	sm.privateKeyShare = secretShare
 	sm.privateRandomShare = randomShare
 }
+
+// CalculatePublicKeyShares calculates public values for member's shares.
+// It calculates `A_k = g^a_k mod p` for k in [0..T].
+//
+// See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_7_public_key_share_points
+func (sm *SharingMember) CalculatePublicKeyShares() *MemberPublicKeySharesMessage {
+	var publicShares []*big.Int
+	for _, share := range sm.secretShares {
+		publicShare := new(big.Int).Exp(
+			sm.vss.G(),
+			share,
+			sm.ProtocolConfig().P,
+		)
+		publicShares = append(publicShares, publicShare)
+	}
+	sm.publicShares = publicShares
+
+	return &MemberPublicKeySharesMessage{
+		senderID:        sm.ID,
+		publicKeyShares: publicShares,
+	}
+}
+
+// VerifyPublicKeyShares validates public key shares received in messages from
