@@ -33,3 +33,12 @@ type FirstAccusationsMessage struct {
 
 	accusedIDs []*big.Int
 }
+
+// MemberPublicKeySharesMessage is a message payload that carries she sender's
+// public key shares.
+// It is expected to be broadcast.
+type MemberPublicKeySharesMessage struct {
+	senderID *big.Int
+
+	publicKeyShares []*big.Int
+}
