@@ -45,5 +45,5 @@ type SharingMember struct {
 	*CommittingMember
 
 	privateKeyShare, privateRandomShare *big.Int
-	publicCoefficientsA                 []*big.Int
+	publicShares                        []*big.Int
 }
