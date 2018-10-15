@@ -125,7 +125,8 @@ func filterPeerSharesMessage(
 ) []*PeerSharesMessage {
 	var result []*PeerSharesMessage
 	for _, msg := range messages {
-		if msg.senderID != receiverID {
+		if msg.senderID.Cmp(receiverID) != 0 &&
+			msg.receiverID.Cmp(receiverID) == 0 {
 			result = append(result, msg)
 		}
 	}
