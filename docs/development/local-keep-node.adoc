@@ -118,3 +118,92 @@ INFO [10-13|13:35:07] Successfully sealed new block            number=1 hash=384
 INFO [10-13|13:35:07] 🔨 mined potential block                  number=1 hash=384b15…68956e
 INFO [10-13|13:35:07] Commit new mining work                   number=2 txs=0 uncles=0 elapsed=192.531µs
 ```
+
+== Deployment of Keep contracts
+
+Before we deploy Keep contracts to the local Ethereum network it is required to 
+unlock the account from which gas will be subtracted for this operation. We will 
+use the address created for Keep clients:
+
+```
+$ geth attach http://127.0.0.1:8545
+
+Welcome to the Geth JavaScript console!
+
+instance: Geth/somerandomidentity/v1.8.11-stable/darwin-amd64/go1.10.3
+coinbase: 0xca6aa3681a4f6ff5f759fec196d80fb0539b3626
+at block: 76 (Sat, 13 Oct 2018 13:38:30 CEST)
+ datadir: /Users/piotr/ethereum/data
+ modules: admin:1.0 eth:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 web3:1.0
+
+> personal.unlockAccount("0xca6aa3681a4f6ff5f759fec196d80fb0539b3626", "password", 150000);
+true
+> exit
+```
+
+We also need to create a new network entry in `keep-core/contracts/solidity` 
+pointing to our local node and address used to deploy contracts:
+```
+local: {
+     host: "127.0.0.1",
+     port: 8545,
+     network_id: "*",
+     gas: 4712388,
+     from: "0xca6aa3681a4f6ff5f759fec196d80fb0539b3626"
+   }
+```
+
+Having done all those steps we can finally run a migration and deploy our contracts:
+
+```
+$ cd keep-core/contracts/solidity
+$ truffle migrate --reset --network local
+
+Using network 'local'.
+
+Running migration: 1_initial_migration.js
+  Replacing Migrations...
+  ... 0xa8d22ed27113c92ac814c4c381fe25ec2321f1d1ea57b2b3594fcb561c2ba3df
+  Migrations: 0x5af683b079f326defd8fdae3abe9ff7cc43e3088
+Saving successful migration to network...
+  ... 0x5adb7f372fc816ea5f49fcfa514bf1c2b23ce637d903c6f6831567b1d894e97e
+Saving artifacts...
+Running migration: 2_deploy_contracts.js
+  Running step...
+  Replacing ModUtils...
+  ... 0x0fee6d28048ee6de1e148f9f9bc7112ac7127a91af7b88143bb4676d14480528
+  ModUtils: 0xb4518c596d3bf70957b261f76993aba7b9d7daed
+  Linking ModUtils to AltBn128
+  Replacing AltBn128...
+  ... 0x333312961dada8d84567bf948a708367ff88b6fc2434be69dee8c7d29103773f
+  AltBn128: 0x681e1d5f3d66cd38b0a06bca5fa02d3685117268
+  Replacing KeepToken...
+  ... 0x05198b31a61ca76b880ee85177ddf30013a0b6cfe5389ab4fc59a4c57719b439
+  KeepToken: 0x16763f6e80bb87619496227349fc83489a77c9bf
+  Replacing StakingProxy...
+  ... 0x28b667932866f2abdfec75a7d0c72366780588ad37152afdb99c74943f5aaf36
+  StakingProxy: 0xc2100a17916ddb70fcdaafc14f104b9110001571
+  Replacing TokenStaking...
+  ... 0xd33083a5c94b3e0222c5fc60cfdc82412e5f900d3fd26e8a41962dbe4e78d673
+  TokenStaking: 0x11ee04a5e5275e28f19740294c81a30c22c43f38
+  Replacing TokenGrant...
+  ... 0xbe29cb360e50b7abdb9ef9e77817e6533f052efa1c848709543b56c5aa49c01c
+  TokenGrant: 0xf79f36d99c954f6950e367765047e769ee11ac52
+  Replacing KeepRandomBeaconImplV1...
+  ... 0xd3d08f4b71edd8a109ba34fc52aac272403792bfbb4ce7352d644dd9c7a2aeeb
+  KeepRandomBeaconImplV1: 0x38ec1c40aa400502f7ef1e6b055c44f94ec59eb4
+  Replacing KeepRandomBeacon...
+  ... 0xec90d1c2972078f4efd48bf2f710406c8daa6bd67144f3e5ad35f293c4f47bec
+  KeepRandomBeacon: 0xb63a1a13a5099fad0fb703d3161ec08d4db2ab83
+  Replacing KeepGroupImplV1...
+  ... 0x142b64f3704c7d059d5a51d0e911487c2f580f681a690e732eb4e7e7cb370db2
+  KeepGroupImplV1: 0xa83abe4c89ca8163e96acf10a88825af05751abb
+  Replacing KeepGroup...
+  ... 0xc0b243ff35f371676ec4eeaf21effab7c73fe8ea117a16c2d0e97e99048d9ce0
+  KeepGroup: 0xde93fc1fd2dc3679c48dc9abac96b731112f1670
+  ... 0x4f7d638ea414b1b7f7c32c82944a0e49ea37992ee3eb347793e707c9604aed9d
+  ... 0xb57df372f286b97ff693aa308086355498233099822934543d3340298a142710
+Saving successful migration to network...
+  ... 0xc0a0de324da6d02d7804229a691b2ece9ae18f84e8977f994baed5c90e9c27e2
+Saving artifacts...
+```
