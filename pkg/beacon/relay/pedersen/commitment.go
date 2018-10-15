@@ -45,6 +45,11 @@ type VSS struct {
 	g, h *big.Int
 }
 
+// G returns `g` parameter of VSS scheme.
+func (vss *VSS) G() *big.Int {
+	return vss.g
+}
+
 // Commitment represents a single commitment to a single message. One is produced
 // for each message we have committed to.
 //
@@ -161,7 +166,6 @@ func randomFromZn(n *big.Int) (*big.Int, error) {
 	// TODO check if this is what we really need for g,h and r
 	// 2^n - 1
 	max := new(big.Int).Sub(
-		// new(big.Int).Exp(big.NewInt(2), n, nil),
 		n,
 		big.NewInt(1),
 	)
