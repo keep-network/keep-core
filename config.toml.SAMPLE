@@ -4,7 +4,8 @@
 
 [ethereum]
 	URL                = "ws://127.0.0.1:8546"
-
+    URLRPC             = "http://127.0.0.1:8545"
+	
 [ethereum.account]
 	Address            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
