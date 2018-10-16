@@ -55,8 +55,8 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
 		if cm.ID.Cmp(receiverID) == 0 {
-			cm.receivedSecretShares[cm.ID] = secretShare
-			cm.receivedRandomShares[cm.ID] = randomShare
+			cm.selfSecretShareS = memberShareS
+			cm.selfSecretShareT = memberShareT
 			continue
 		}
 

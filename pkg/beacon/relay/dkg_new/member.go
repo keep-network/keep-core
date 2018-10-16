@@ -33,6 +33,9 @@ type CommittingMember struct {
 	// Number of coefficients equals `dishonestThreshold + 1`.
 	// This is private value and should not be exposed.
 	secretCoefficients []*big.Int
+	// Shares calculated for current member by themself.
+	// This is private value and should not be exposed.
+	selfSecretShareS, selfSecretShareT *big.Int
 	//
 	// [documentation]: http://docs.keep.network/cryptography/beacon_dkg.html#_protocol
 	receivedSecretShares, receivedRandomShares map[*big.Int]*big.Int
