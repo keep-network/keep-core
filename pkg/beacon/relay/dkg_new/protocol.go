@@ -11,10 +11,10 @@
 package dkg
 
 import (
+	crand "crypto/rand"
 	"fmt"
 	"math/big"
 
-	"github.com/golang/go/src/crypto/rand"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
@@ -31,11 +31,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 	coefficientsA := make([]*big.Int, coefficientsSize)
 	coefficientsB := make([]*big.Int, coefficientsSize)
 	for j := 0; j < coefficientsSize; j++ {
-		coefficientsA[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
+		coefficientsA[j], err = crand.Int(crand.Reader, cm.ProtocolConfig().Q)
 		if err != nil {
 			return nil, nil, err
 		}
-		coefficientsB[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
+		coefficientsB[j], err = crand.Int(crand.Reader, cm.ProtocolConfig().Q)
 		if err != nil {
 			return nil, nil, err
 		}
