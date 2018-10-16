@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	crand "crypto/rand"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -318,6 +319,35 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 		group.RegisterMemberID(id)
 	}
 	return members, nil
+}
+
+func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, error) {
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
+
+	var sharingMembers []*SharingMember
+	for _, cm := range committingMembers {
+		cm.secretShares = make([]*big.Int, threshold+1)
+		for i := 0; i < threshold+1; i++ {
+			cm.secretShares[i], err = crand.Int(rand.Reader, cm.ProtocolConfig().Q)
+			if err != nil {
+				return nil, fmt.Errorf("secret share generation failed [%s]", err)
+			}
+		}
+		sharingMembers = append(sharingMembers, &SharingMember{
+			CommittingMember: cm,
+		})
+	}
+
+	for _, sm := range sharingMembers {
+		for _, cm := range committingMembers {
+			sm.receivedSecretShares[cm.ID] = evaluateMemberShare(sm.ID, cm.secretShares, cm.ProtocolConfig().Q)
+		}
+	}
+
+	return sharingMembers, nil
 }
 
 func filterPeerSharesMessage(
