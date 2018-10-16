@@ -222,6 +222,70 @@ func TestCalculatePublicKeyShares(t *testing.T) {
 	}
 }
 
+func TestCalculateAndVerifyPublicKeyShares(t *testing.T) {
+	threshold := 3
+	groupSize := 5
+
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	sharingMember := sharingMembers[0]
+	var tests = map[string]struct {
+		modifyPublicKeySharesMessages func(messages []*MemberPublicKeySharesMessage)
+		expectedError                 error
+		expectedAccusedIDs            int
+	}{
+		"positive validation": {
+			expectedError:      nil,
+			expectedAccusedIDs: 0,
+		},
+		"negative validation - changed public key share": {
+			modifyPublicKeySharesMessages: func(messages []*MemberPublicKeySharesMessage) {
+				messages[1].publicKeyShares[1] = big.NewInt(13)
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: 1,
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			publicKeySharesMessages := make([]*MemberPublicKeySharesMessage, groupSize)
+
+			for i, m := range sharingMembers {
+				publicKeySharesMessages[i] = m.CalculatePublicKeyShares()
+			}
+
+			filteredPublicKeySharesMessages := filterMemberPublicKeySharesMessages(
+				publicKeySharesMessages,
+				sharingMember.ID,
+			)
+
+			if test.modifyPublicKeySharesMessages != nil {
+				test.modifyPublicKeySharesMessages(filteredPublicKeySharesMessages)
+			}
+
+			accusedMessage, err := sharingMember.VerifyPublicKeyShares(filteredPublicKeySharesMessages)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"expected: %v\nactual: %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
+				t.Fatalf("expecting %d accused member's IDs but received %d",
+					test.expectedAccusedIDs,
+					accusedMessage.accusedIDs,
+				)
+			}
+		})
+	}
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 5
 	groupSize := 10
