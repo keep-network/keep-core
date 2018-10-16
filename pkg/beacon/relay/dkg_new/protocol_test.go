@@ -347,7 +347,7 @@ func filterMemberCommitmentsMessages(
 	return result
 }
 
-func filterMemberPublicKeySharesMessageMessages(
+func filterMemberPublicKeySharesMessages(
 	messages []*MemberPublicKeySharesMessage, receiverID *big.Int,
 ) []*MemberPublicKeySharesMessage {
 	var result []*MemberPublicKeySharesMessage
