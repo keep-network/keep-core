@@ -82,6 +82,29 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 	return sharesMessages, commitmentsMessage, nil
 }
 
+// evaluateMemberShare calculates a share for given memberID.
+//
+// It calculates `Σ a_j * z^j mod q`for j in [0..T], where:
+// - `a_j` is j coefficient
+// - `z` is memberID
+// - `T` is threshold
+func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *big.Int {
+	result := big.NewInt(0)
+	for j, a := range coefficients {
+		result = new(big.Int).Mod(
+			new(big.Int).Add(
+				result,
+				new(big.Int).Mul(
+					a,
+					new(big.Int).Exp(memberID, big.NewInt(int64(j)), mod),
+				),
+			),
+			mod,
+		)
+	}
+	return result
+}
+
 // VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments received in
 // messages from peer group members.
 // It returns accusation message with ID of members for which verification failed.
@@ -142,29 +165,6 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 		senderID:   cm.ID,
 		accusedIDs: accusedMembersIDs,
 	}, nil
-}
-
-// evaluateMemberShare calculates a share for given memberID.
-//
-// It calculates `Σ a_j * z^j mod q`for j in [0..T], where:
-// - `a_j` is j coefficient
-// - `z` is memberID
-// - `T` is threshold
-func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *big.Int {
-	result := big.NewInt(0)
-	for j, a := range coefficients {
-		result = new(big.Int).Mod(
-			new(big.Int).Add(
-				result,
-				new(big.Int).Mul(
-					a,
-					new(big.Int).Exp(memberID, big.NewInt(int64(j)), mod),
-				),
-			),
-			mod,
-		)
-	}
-	return result
 }
 
 // CombineReceivedShares sums up all shares received from peer group members.
