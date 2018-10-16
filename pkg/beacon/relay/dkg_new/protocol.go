@@ -98,9 +98,9 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 
 	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
-	for _, commitmentMessage := range commitmentsMessages {
-		commitmentsProduct := big.NewInt(1)
-		for k, c := range commitmentMessage.commitments {
+	for _, commitmentsMessage := range commitmentsMessages {
+		commitmentsProduct := commitmentsMessage.commitments[0]
+		for k, c := range commitmentsMessage.commitments[1:] {
 			commitmentsProduct = new(big.Int).Mod(
 				new(big.Int).Mul(
 					commitmentsProduct,
@@ -171,4 +171,21 @@ func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.In
 		)
 	}
 	return result
+}
+
+// CombinePublicKeyShares calculates group public key from public key shares.
+// Public key is calculated as a product of zeroth public shares (coefficients)
+// `A_j0 = z_j` for all group members including member themself.
+func (sm *SharingMember) CombinePublicKeyShares() {
+	// Member's zeroth coefficient.
+	memberGroupPublicKeyShare := sm.publicCoefficientsA[0]
+	groupPublicKey := memberGroupPublicKeyShare
+	// Multiply peer group members' zeroth coefficients.
+	for _, publicKeyShare := range sm.receivedGroupPublicKeyShares {
+		groupPublicKey = new(big.Int).Mod(
+			new(big.Int).Mul(groupPublicKey, publicKeyShare),
+			sm.ProtocolConfig().P,
+		)
+	}
+	sm.groupPublicKey = groupPublicKey
 }
