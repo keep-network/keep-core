@@ -127,6 +127,45 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 }
 
+func TestCombineReceivedShares(t *testing.T) {
+	receivedSecretShares := make(map[*big.Int]*big.Int)
+	receivedRandomShares := make(map[*big.Int]*big.Int)
+	for i := 0; i <= 5; i++ {
+		receivedSecretShares[big.NewInt(int64(100+i))] = big.NewInt(int64(i))
+		receivedRandomShares[big.NewInt(int64(100+i))] = big.NewInt(int64(10 + i))
+	}
+
+	expectedPrivateKeyShare := big.NewInt(15)
+	expectedPrivateRandomShare := big.NewInt(75)
+
+	config, err := config.PredefinedDKGconfig()
+	if err != nil {
+		t.Fatalf("DKG Config initialization failed [%s]", err)
+	}
+	member := &SharingMember{
+		CommittingMember: &CommittingMember{
+			memberCore: &memberCore{
+				protocolConfig: config,
+			},
+			receivedSecretShares: receivedSecretShares,
+			receivedRandomShares: receivedRandomShares,
+		},
+	}
+
+	member.CombineReceivedShares()
+
+	if member.privateKeyShare.Cmp(expectedPrivateKeyShare) != 0 {
+		t.Errorf("combined secret shares %s doesn't match expected %s",
+			member.privateKeyShare,
+			expectedPrivateKeyShare)
+	}
+	if member.privateRandomShare.Cmp(expectedPrivateRandomShare) != 0 {
+		t.Errorf("combined random shares %s doesn't match expected %s",
+			member.privateRandomShare,
+			expectedPrivateRandomShare)
+	}
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 5
 	groupSize := 10
