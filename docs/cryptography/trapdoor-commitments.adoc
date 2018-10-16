@@ -59,25 +59,26 @@ Then lets take `h` which is an element of `G_q` and that `log_g(h)` is unknown.
 q <- is a prime
 p = 2q + 1 <- is a prime
 g = randomZ[2, q - 1]
-h = g ^ randomZ[0, q - 1]) mod q
+h = (g ^ randomZ[0, q - 1]) % q
 ```
 
 === Generating commitment
 To generate a commitment to a message `m`, first it needs to be represented as
 a part of group `G_q` (which we will denote as an `s`), then a random `t` from
-`G_q` is selected. Finally, the commitment is a result of `g^s * h^t`.
+`G_q` is selected. The value `t` is kept secret until the commitment 
+verification phase. Finally, the commitment is a result of `g^s * h^t`.
 
 `INPUT: m`
 
 ```
 t = randomZ[0, q - 1] 
-s = sha256(m) % q
+s = hash(m) % q
 
-commitment = [ (g ^ s) % q ] * [ (h ^ t) % q ]
+commitment = [ (g ^ s) % q ] * [ (h ^ t) % q ] % q
 ```
 
 === Commitment verification
-The commitment verification is analogical to the commitment generation, because
+The commitment verification is analogous to the commitment generation, because
 one needs to compare received `commitment` with a self-generated commitment
 using message `m` and disclosed `t` value. If both commitment values are the
 same, then we have a successfull commitment verification.
@@ -85,9 +86,9 @@ same, then we have a successfull commitment verification.
 `INPUT: m, commitment, t`
 
 ```
-s = sha256(m) % q
+s = hash(m) % q
 
-expectedCommitment  = [ (g ^ s) % q ] * [ (h ^ s) % q ]
+expectedCommitment  = [ (g ^ s) % q ] * [ (h ^ s) % q ] % q
 
 if commitment == expectedCommitment
     return true
