@@ -181,6 +181,8 @@ func TestCalculatePublicKeyShares(t *testing.T) {
 		big.NewInt(60466176),
 	}
 
+	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
+	// initialization.
 	mockRandomReader := testutils.NewMockRandReader(big.NewInt(6))
 
 	config, err := config.PredefinedDKGconfig()
