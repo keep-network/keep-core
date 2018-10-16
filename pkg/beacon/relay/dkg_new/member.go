@@ -36,7 +36,10 @@ type CommittingMember struct {
 	// Shares calculated for current member by themself.
 	// This is private value and should not be exposed.
 	selfSecretShareS, selfSecretShareT *big.Int
+	// Shares calculated for current member by peer group member.
 	//
+	// receivedSharesS are defined as `s_ji` and receivedSharesT are
+	// defined as `t_ji` across [documentation].
 	// [documentation]: http://docs.keep.network/cryptography/beacon_dkg.html#_protocol
-	receivedSecretShares, receivedRandomShares map[*big.Int]*big.Int
+	receivedSharesS, receivedSharesT map[*big.Int]*big.Int
 }

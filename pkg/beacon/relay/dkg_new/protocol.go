@@ -48,9 +48,9 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 	var sharesMessages []*PeerSharesMessage
 	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
-		secretShare := evaluateMemberShare(receiverID, coefficientsA, cm.ProtocolConfig().Q)
+		memberShareS := evaluateMemberShare(receiverID, coefficientsA, cm.ProtocolConfig().Q)
 		// t_j = g_(j) mod q
-		randomShare := evaluateMemberShare(receiverID, coefficientsB, cm.ProtocolConfig().Q)
+		memberShareT := evaluateMemberShare(receiverID, coefficientsB, cm.ProtocolConfig().Q)
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
@@ -62,10 +62,10 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 
 		sharesMessages = append(sharesMessages,
 			&PeerSharesMessage{
-				senderID:    cm.ID,
-				receiverID:  receiverID,
-				secretShare: secretShare,
-				randomShare: randomShare,
+				senderID:   cm.ID,
+				receiverID: receiverID,
+				shareS:     memberShareS,
+				shareT:     memberShareT,
 			})
 	}
 
@@ -118,23 +118,29 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 			)
 		}
 		// Find share message sent by the same member who sent commitment message
-		shareMessageFound := false
-		for _, shareMessage := range sharesMessages {
-			if shareMessage.senderID.Cmp(commitmentMessage.senderID) == 0 {
-				shareMessageFound = true
-				// `expectedProduct = (g ^ s_j) * (h ^ t_j)`
-				expectedProduct := pedersen.CalculateCommitment(cm.vss, shareMessage.secretShare, shareMessage.randomShare)
+		sharesMessageFound := false
+		for _, sharesMessage := range sharesMessages {
+			if sharesMessage.senderID.Cmp(commitmentsMessage.senderID) == 0 {
+				sharesMessageFound = true
+				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji)`
+				// where: j is sender's ID, i is current member ID.
+				expectedProduct := pedersen.CalculateCommitment(
+					cm.vss,
+					sharesMessage.shareS,
+					sharesMessage.shareT,
+				)
 
 				if expectedProduct.Cmp(commitmentsProduct) != 0 {
-					accusedMembersIDs = append(accusedMembersIDs, commitmentMessage.senderID)
+					accusedMembersIDs = append(accusedMembersIDs,
+						commitmentsMessage.senderID)
 					break
 				}
-				cm.receivedSecretShares[commitmentMessage.senderID] = shareMessage.secretShare
-				cm.receivedRandomShares[commitmentMessage.senderID] = shareMessage.randomShare
+				cm.receivedSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
+				cm.receivedSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
 			}
 		}
-		if !shareMessageFound {
-			return nil, fmt.Errorf("cannot find shares message from member %s", commitmentMessage.senderID)
+		if !sharesMessageFound {
+			return nil, fmt.Errorf("cannot find shares message from member %s", commitmentsMessage.senderID)
 		}
 	}
 

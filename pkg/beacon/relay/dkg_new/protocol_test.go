@@ -80,7 +80,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		},
 		"negative validation - changed random share": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
-				messages[1].randomShare = big.NewInt(13)
+				messages[1].shareT = big.NewInt(13)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: 1,
@@ -188,9 +188,9 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 				group:          group,
 				protocolConfig: config,
 			},
-			vss:                  vss,
-			receivedSecretShares: make(map[*big.Int]*big.Int),
-			receivedRandomShares: make(map[*big.Int]*big.Int),
+			vss:             vss,
+			receivedSharesS: make(map[*big.Int]*big.Int),
+			receivedSharesT: make(map[*big.Int]*big.Int),
 		})
 		group.RegisterMemberID(id)
 	}

@@ -11,16 +11,16 @@ type MemberCommitmentsMessage struct {
 	commitments []*big.Int
 }
 
-// PeerSharesMessage is a message payload that carries the sender's secret and
-// random shares for the recipient during distributed key generation.
+// PeerSharesMessage is a message payload that carries the sender's shares `s_ij`
+// and `t_ij` for the recipient during distributed key generation.
 // It is expected to be communicated in encrypted fashion to the recipient over
 // a broadcast channel.
 type PeerSharesMessage struct {
 	senderID   *big.Int
 	receiverID *big.Int
 
-	secretShare *big.Int
-	randomShare *big.Int
+	shareS *big.Int
+	shareT *big.Int
 }
 
 // FirstAccusationsMessage is a message payload that carries all of the sender's
