@@ -25,9 +25,9 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 		t.Fatalf("shares and commitments calculation failed [%s]", err)
 	}
 
-	if len(member.secretShares) != (threshold + 1) {
+	if len(member.secretCoefficients) != (threshold + 1) {
 		t.Fatalf("generated coefficients A number %d doesn't match expected number %d",
-			len(member.secretShares),
+			len(member.secretCoefficients),
 			threshold+1,
 		)
 	}
@@ -40,7 +40,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 
 	if len(commitmentsMessage.commitments) != (threshold + 1) {
 		t.Fatalf("calculated commitments number %d doesn't match expected number %d",
-			len(member.secretShares),
+			len(member.secretCoefficients),
 			threshold+1,
 		)
 	}

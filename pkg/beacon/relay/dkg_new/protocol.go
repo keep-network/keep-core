@@ -41,7 +41,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 		}
 	}
 
-	cm.secretShares = coefficientsA
+	cm.secretCoefficients = coefficientsA
 
 	// Calculate shares for other group members by evaluating polynomials defined
 	// by coefficients `a_i` and `b_i`
