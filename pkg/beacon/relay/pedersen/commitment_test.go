@@ -1,6 +1,7 @@
 package pedersen
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -56,7 +57,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 
-			commitment, decommitmentKey, err := vss.CommitmentTo([]byte(committedValue))
+			commitment, decommitmentKey, err := vss.CommitmentTo(rand.Reader, []byte(committedValue))
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
@@ -91,7 +92,7 @@ func TestNewVSSpqValidation(t *testing.T) {
 	q := big.NewInt(4)
 	expectedError := fmt.Errorf("incorrect p and q values")
 
-	_, err := NewVSS(p, q)
+	_, err := NewVSS(rand.Reader, p, q)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("actual error: %v\nexpected error: %v", err, expectedError)
@@ -124,7 +125,7 @@ func initializeVSS() (*VSS, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get P and Q [%v]", err)
 	}
-	vss, err := NewVSS(p, q)
+	vss, err := NewVSS(rand.Reader, p, q)
 	if err != nil {
 		return nil, fmt.Errorf("vss creation failed [%v]", err)
 	}
