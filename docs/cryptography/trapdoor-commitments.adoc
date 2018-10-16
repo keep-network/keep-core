@@ -49,69 +49,73 @@ will always recover the committed value.
 
 == Pedersen commitment
 
-We generate an order `q` https://en.wikipedia.org/wiki/Cyclic_group[cyclic group]. 
-To do this, we find a large https://en.wikipedia.org/wiki/Sophie_Germain_prime[Sophie 
-Germain prime] and use that as `q`. `p`, the modulus, is set to `2q+1`.
+The Pedersen commitment requires to have a two large primes `p` and `q` such
+that `q` divides `p - 1`, a `G_q` which is a unique subgroup of `Z_p` of order
+`q` and `g` is a generator of `G_q`.
 
-The order `q` subgroup of https://en.wikipedia.org/wiki/Quadratic_residue[quadratic 
-residues] is cyclic and of prime order and every element in it is a generator. 
-To get a generator of this subgroup, we choose any element `Z^p` and then square it, 
-thus, ensuring that we have an element in the order `q` subgroup.
+Then lets take `h` which is an element of `G_q` and that `log_g(h)` is unknown.
 
 ```
-q <- Sophie Germain prime
-p = 2q + 1
-
-g = (randomZ[0, 2^p - 1]) ^2
-h = (randomZ[0, 2^p - 1]) ^2
+q <- is a prime
+p = 2q + 1 <- is a prime
+g = randomZ[2, q - 1]
+h = g ^ randomZ[0, q - 1]) mod q
 ```
 
 === Generating commitment
-`INPUT: M`
+To generate a commitment to a message `m`, first it needs to be represented as
+a part of group `G_q` (which we will denote as an `s`), then a random `t` from
+`G_q` is selected. Finally, the commitment is a result of `g^s * h^t`.
+
+`INPUT: m`
 
 ```
-r = randomZ[0, 2^q - 1] 
-digest = sha256(M) % q
+t = randomZ[0, q - 1] 
+s = sha256(m) % q
 
-commitment = [ (g ^  digest) % p ] * [ (h ^ r) % p ]
-
-return (commitment, r)
+commitment = [ (g ^ s) % q ] * [ (h ^ t) % q ]
 ```
-
-`r` is a decommitment key needed for commitment verification.
 
 === Commitment verification
-`INPUT: M, commitment, r`
+The commitment verification is analogical to the commitment generation, because
+one needs to compare received `commitment` with a self-generated commitment
+using message `m` and disclosed `t` value. If both commitment values are the
+same, then we have a successfull commitment verification.
+
+`INPUT: m, commitment, t`
 
 ```
-digest = sha256(M) % q
+s = sha256(m) % q
 
-expectedCommitment  = [ (g ^ digest) % p ] * [ (h ^ r) % p ]
+expectedCommitment  = [ (g ^ s) % q ] * [ (h ^ s) % q ]
 
-return commitment == expectedCommitment
+if commitment == expectedCommitment
+    return true
+else
+    return false
 ```
 
 Pedersen commitment scheme has an unconditional hiding property, whereas the 
 binding property depends on the difficulty of computing discrete logarithms.
 
-There is an arbitrary number of `(m', r')` pairs mapping to the same `commitment` 
-value as the original pair `(m, r)`. So even if `log_g(h)` is known to the
+There is an arbitrary number of `(m', t')` pairs mapping to the same `commitment` 
+value as the original pair `(m, t)`. So even if `log_g(h)` is known to the
 adversary, brute-forcing giving an arbitrary number of results and no way to 
 distinguish between them is what makes the scheme unconditionally hiding.
 
 Sender knowing discrete logarithm to the base `g` of `h` can change the message 
-he committed to even after commitment has been published (but before `r` has 
-been published) since it's possible to find another pair of `(r', secret')` 
+he committed to even after commitment has been published (but before `t` has 
+been published) since it's possible to find another pair of `(s', m')` 
 evaluating to the same commitment. 
 
 Note that `log_g(h)` is a discrete logarithm problem and if we want to enable 
 trapdoor, `log_g(h)` must be known at the moment of chosing `g` and `h`.
 
 `log_g(h)` is the trapdoor (our secret door) allowing to change the committed
-message. If one has committed to message `m` with `(m, r)`, then in order to 
+message. If one has committed to message `m` with `(m, t)`, then in order to 
 change `m -> m'` knowing `log_g(h)`, she can compute:
 ```
-r' = r + (m - m') / log_g(h)
+t' = t + (m - m') / log_g(h)
 ```
 
 == Multi-trapdoor commitments
