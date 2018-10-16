@@ -6,6 +6,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
+
+	"github.com/golang/go/src/crypto/rand"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
@@ -166,6 +169,56 @@ func TestCombineReceivedShares(t *testing.T) {
 	}
 }
 
+func TestCalculatePublicKeyShares(t *testing.T) {
+	secretShares := []*big.Int{
+		big.NewInt(3),
+		big.NewInt(1),
+		big.NewInt(5),
+	}
+	expectedPublicShares := []*big.Int{
+		big.NewInt(46656),
+		big.NewInt(36),
+		big.NewInt(60466176),
+	}
+
+	mockRandomReader := testutils.NewMockRandReader(big.NewInt(6))
+
+	config, err := config.PredefinedDKGconfig()
+	if err != nil {
+		t.Fatalf("DKG Config initialization failed [%s]", err)
+	}
+	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
+	if err != nil {
+		t.Fatalf("VSS initialization failed [%s]", err)
+	}
+
+	member := &SharingMember{
+		CommittingMember: &CommittingMember{
+			memberCore: &memberCore{
+				protocolConfig: config,
+			},
+			vss:          vss,
+			secretShares: secretShares,
+		},
+	}
+
+	memberPublicKeySharesMessage := member.CalculatePublicKeyShares()
+
+	if !reflect.DeepEqual(member.publicShares, expectedPublicShares) {
+		t.Errorf("public shares for member doesn't match expected\nactual: %s\nexpected: %s",
+			memberPublicKeySharesMessage.publicKeyShares,
+			expectedPublicShares,
+		)
+	}
+
+	if !reflect.DeepEqual(memberPublicKeySharesMessage.publicKeyShares, expectedPublicShares) {
+		t.Errorf("public shares in message doesn't match expected\nactual: %s\nexpected: %s",
+			memberPublicKeySharesMessage.publicKeyShares,
+			expectedPublicShares,
+		)
+	}
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 5
 	groupSize := 10
@@ -236,7 +289,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 		return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
 	}
 
-	vss, err := pedersen.NewVSS(config.P, config.Q)
+	vss, err := pedersen.NewVSS(rand.Reader, config.P, config.Q)
 	if err != nil {
 		return nil, fmt.Errorf("VSS initialization failed [%s]", err)
 	}
