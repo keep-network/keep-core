@@ -148,23 +148,17 @@ func pingRequest(c *cli.Context) error {
 			fmt.Println("waiting for peer...\n")
 			continue
 		}
-		fmt.Printf("Got peer %s\n", peers[0])
 		break
 	}
 
-	if isBootstrapNode {
-		time.Sleep(1 * time.Second)
+	err = broadcastChannel.Send(
+		&PingMessage{
+			Sender:  netProvider.ID().String(),
+			Payload: ping})
+	if err != nil {
+		return err
 	}
-
-	if isBootstrapNode {
-		err = broadcastChannel.Send(
-			&PingMessage{
-				Sender:  netProvider.ID().String(),
-				Payload: ping})
-		if err != nil {
-			return err
-		}
-	}
+	fmt.Println("Sent PING")
 
 	for {
 		select {
@@ -177,11 +171,6 @@ func pingRequest(c *cli.Context) error {
 				)
 			}
 
-			// // Ensure we don't send the response to the peer that
-			// // sent the originating ping
-			// if netProvider.ID().String() == pingPayload.Sender {
-			// 	continue
-			// }
 			err := broadcastChannel.Send(
 				&PongMessage{
 					Sender:  netProvider.ID().String(),
