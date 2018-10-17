@@ -142,7 +142,7 @@ func pingRequest(c *cli.Context) error {
 		time.Sleep(3 * time.Second)
 		peers := netProvider.Peers()
 		if len(peers) < 1 {
-			fmt.Println("waiting for peer...\n")
+			fmt.Println("waiting for peer...")
 			continue
 		}
 		break
