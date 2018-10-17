@@ -56,6 +56,8 @@ type Provider interface {
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 	AddrStrings() []string
+
+	Peers() []string
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
