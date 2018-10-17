@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"crypto/rand"
 	"testing"
+
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
 func TestCompressG1(t *testing.T) {
-	for i := 0; i<100; i++ {
+	for i := 0; i < 100; i++ {
 		_, p, err := bn256.RandomG1(rand.Reader)
 
 		if err != nil {
@@ -22,12 +23,11 @@ func TestCompressG1(t *testing.T) {
 
 func TestDecompressG1(t *testing.T) {
 	errorSeen := false
-	for i := 0; i<100; i++ {
+	for i := 0; i < 100; i++ {
 		buffer := make([]byte, 32)
 		_, err := rand.Read(buffer)
 		if err == nil {
 			_, err2 := Decompress(buffer)
-
 
 			if err2 == nil {
 				errorSeen = true
@@ -40,7 +40,7 @@ func TestDecompressG1(t *testing.T) {
 }
 
 func TestCompressG1Invertibility(t *testing.T) {
-	for i := 0; i<100; i++ {
+	for i := 0; i < 100; i++ {
 		_, p1, err1 := bn256.RandomG1(rand.Reader)
 
 		if err1 != nil {
