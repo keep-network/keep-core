@@ -196,7 +196,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	copy(value[:], entropy)
 
 	entry := &event.Entry{
-		RequestID:     big.NewInt(39287359027845),
+		RequestID:     big.NewInt(0),
 		Value:         value,
 		GroupID:       big.NewInt(0),
 		PreviousEntry: big.NewInt(0),
