@@ -1,5 +1,6 @@
-// Package pedersen implements a Verifiable Secret Sharing (VSS) scheme described
-// by Torben Pryds Pedersen in the referenced [Ped91b] paper.
+// Package pedersen implements a Commitment scheme which is a part of Verifiable
+// Secret Sharing (VSS) scheme described by Torben Pryds Pedersen in the
+// referenced [Ped91b] paper.
 // It consists of VSS parameters structure and functions to calculate and verify
 // a commitment to chosen value.
 //
@@ -10,7 +11,7 @@
 //
 // pedersen.NewVSS() initializes scheme with `g` and `h` values, which need to
 // be randomly generated for each scheme execution.
-// To stop an adversary Committer from changing the value them already committed
+// To stop an adversary Committer from changing the value they already committed
 // to, the scheme requires that `log_g(h)` is unknown to the Committer.
 //
 // You may consult our documentation for more details:
@@ -122,7 +123,11 @@ func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, erro
 	return &Commitment{vss, commitment}, &DecommitmentKey{t}, nil
 }
 
-// Verify checks the received commitment against the revealed secret message.
+// Verify checks the received commitment against the revealed secret message and
+// decommitment key.
+//
+// It returns `true` if a commitment calculated for passed decommitment key and
+// secret matches the commitment value received before. Otherwise it returns false.
 func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
 	s := calculateDigest(secret, c.vss.q)
 	expectedCommitment := CalculateCommitment(c.vss, s, decommitmentKey.t)
