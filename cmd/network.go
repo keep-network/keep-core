@@ -45,11 +45,8 @@ func init() {
 		}
 }
 
-// pingRequest tests our network layer code
-//
-// requests a new entry from the threshold relay and prints the
-// request id. By default, it also waits until the associated relay entry is
-// generated and prints out the entry.
+// pingRequest tests the functionality and availability of Keep's libp2p
+// network layer.
 func pingRequest(c *cli.Context) error {
 	var bootstrapPeers []string
 
@@ -140,7 +137,7 @@ func pingRequest(c *cli.Context) error {
 	}
 	defer broadcastChannel.UnregisterRecv(ping)
 
-	// Give ourselves a moment to form a mesh with potential peers
+	// Give ourselves a moment to form a mesh with the other peer
 	for {
 		time.Sleep(3 * time.Second)
 		peers := netProvider.Peers()
