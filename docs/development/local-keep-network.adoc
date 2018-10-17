@@ -145,7 +145,7 @@ true
 > exit
 ```
 
-We also need to create a new network entry in `keep-core/contracts/solidity` 
+We also need to create a new network entry in `keep-core/contracts/solidity/truffle.js` 
 pointing to our local node and address used to deploy contracts:
 
 ```
