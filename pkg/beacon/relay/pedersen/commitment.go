@@ -106,27 +106,26 @@ func NewVSS(p, q *big.Int) (*VSS, error) {
 // CommitmentTo takes a secret message and a set of parameters and returns
 // a commitment to that message and the associated decommitment key.
 //
-// First random `r` value is chosen as a Decommitment Key.
-// Then commitment is calculated as `(g ^ digest) * (h ^ r) mod p`, where digest
+// First random `t` value is chosen as a Decommitment Key.
+// Then commitment is calculated as `(g ^ s) * (h ^ t) mod q`, where digest
 // is sha256 hash of the secret brought to big.Int.
 func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, error) {
 	t, err := randomFromZn(big.NewInt(0), vss.q) // t = randomZ[0, q - 1]
 	if err != nil {
-		return nil, nil, fmt.Errorf("r generation failed [%s]", err)
+		return nil, nil, fmt.Errorf("t generation failed [%s]", err)
 	}
 
-	digest := calculateDigest(secret, vss.q)
-	commitment := CalculateCommitment(vss, digest, r)
+	s := calculateDigest(secret, vss.q) // s = hash(m) % q
 
-	return &Commitment{vss, commitment},
-		&DecommitmentKey{r},
-		nil
+	commitment := CalculateCommitment(vss, s, t)
+
+	return &Commitment{vss, commitment}, &DecommitmentKey{t}, nil
 }
 
 // Verify checks the received commitment against the revealed secret message.
 func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
-	digest := calculateDigest(secret, c.vss.q)
-	expectedCommitment := CalculateCommitment(c.vss, digest, decommitmentKey.t)
+	s := calculateDigest(secret, c.vss.q)
+	expectedCommitment := CalculateCommitment(c.vss, s, decommitmentKey.t)
 	return expectedCommitment.Cmp(c.commitment) == 0
 }
 
