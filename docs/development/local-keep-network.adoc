@@ -8,6 +8,9 @@ toc::[]
 * Installed `geth` Ethereum client
 * Installed `truffle` framework
 
+The `scripts/macos-setup.sh` installs all required packages. Please consult 
+<<README.adoc#getting-set-up,Keep developer documentation>> for details.
+ 
 == Setting up local Ethereum client
 
 Create directories for Ethereum client data:
