@@ -11,9 +11,9 @@
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 [ethereum.ContractAddresses]
-    # Address of KeepRandomBeacon contract
+	# Hex-encoded address of KeepRandomBeacon contract
 	KeepRandomBeacon = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-	# Address of KeepGroup contract
+	# Hex-encoded address of KeepGroup contract
 	KeepGroup = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 	    
 # Non-bootstrap node connecting to an existing network.
