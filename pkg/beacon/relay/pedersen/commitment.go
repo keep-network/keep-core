@@ -135,18 +135,18 @@ func calculateDigest(secret []byte, mod *big.Int) *big.Int {
 	return digest
 }
 
-// CalculateCommitment calculates a commitment with equation `(g ^ s) * (h ^ r) mod p`
+// CalculateCommitment calculates a commitment with equation `(g ^ s) * (h ^ t) mod q`
 // where:
-// - `g` and `h` are scheme specific parameters passed in vss,
 // - `s` is a message to which one is committing,
-// - `r` is a decommitment key.
-func CalculateCommitment(vss *VSS, digest, r *big.Int) *big.Int {
+// - `t` is a decommitment key.
+// - `g`, `h`, `q` are scheme specific parameters passed in vss,
+func CalculateCommitment(vss *VSS, s, t *big.Int) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(vss.g, digest, vss.p),
-			new(big.Int).Exp(vss.h, r, vss.p),
+			new(big.Int).Exp(vss.g, s, vss.q),
+			new(big.Int).Exp(vss.h, t, vss.q),
 		),
-		vss.p,
+		vss.q,
 	)
 }
 
