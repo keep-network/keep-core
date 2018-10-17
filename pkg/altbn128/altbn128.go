@@ -80,6 +80,30 @@ func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
 	return g1, err
 }
 
+// G2FromInts returns G2 point based on the provided x and y.
+func G2FromInts(x *gfP2, y *gfP2) (*bn256.G2, error) {
+
+	if len(x.x.Bytes()) > 32 || len(x.y.Bytes()) > 32 || len(y.x.Bytes()) > 32 || len(y.y.Bytes()) > 32 {
+		return nil, errors.New("points on G2 are limited to two 256-bit coordinates")
+	}
+
+	paddedXX, _ := byteutils.LeftPadTo32Bytes(x.x.Bytes())
+	paddedXY, _ := byteutils.LeftPadTo32Bytes(x.y.Bytes())
+	paddedX := append(paddedXY, paddedXX...)
+
+	paddedYX, _ := byteutils.LeftPadTo32Bytes(y.x.Bytes())
+	paddedYY, _ := byteutils.LeftPadTo32Bytes(y.y.Bytes())
+	paddedY := append(paddedYY, paddedYX...)
+
+	m := append(paddedX, paddedY...)
+
+	g2 := new(bn256.G2)
+
+	_, err := g2.Unmarshal(m)
+
+	return g2, err
+}
+
 // G1HashToPoint hashes the provided byte slice, maps it into a G1
 // and returns it as a G1 point.
 func G1HashToPoint(m []byte) *bn256.G1 {
@@ -131,6 +155,29 @@ func Compress(g *bn256.G1) []byte {
 	return rt
 }
 
+// Compress compresses point by using X value and the parity bit of Y
+// encoded into the first byte.
+func CompressG2(g *bn256.G2) []byte {
+
+	rt := make([]byte, 64)
+
+	marshalled := g.Marshal()
+
+	for i := 63; i >= 0; i-- {
+		rt[i] = marshalled[i]
+	}
+
+	y := new(big.Int).SetBytes(marshalled[64:96])
+
+	// Prepare bytes mask with parity bit.
+	mask := yParity(y) << 7
+
+	// Use `OR` operator to save the parity bit.
+	rt[0] |= mask
+
+	return rt
+}
+
 // Decompress decompresses byte slice into G1 point by extracting Y parity
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
@@ -155,6 +202,33 @@ func Decompress(m []byte) (*bn256.G1, error) {
 	}
 
 	return G1FromInts(x, y)
+}
+
+// Decompress decompresses byte slice into G2 point by extracting Y parity
+// bit from the first byte, extracting X value and calculating original Y
+// value based on the extracted Y parity. The parity bit is encoded in the
+// top byte as 0x01 (even) or 0x00 (odd).
+func DecompressG2(m []byte) (*bn256.G2, error) {
+
+	// Get the original X.
+	x := new(gfP2)
+	x.x = new(big.Int).SetBytes(m[32:64])
+	x.y = new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:32]...))
+
+	// Get one of the two possible Y.
+	y2 := new(gfP2).Pow(x, bigFromBase10("3"))
+	y2.Add(y2, twistB)
+	y := sqrtGfP2(y2)
+
+	// Compare calculated Y parity with the original Y parity and if it
+	// doesn't match get the right Y by extracting the calculated one from
+	// the bn256.P since `Y1 + Y2 = P`.
+	if m[0]&0x80>>7 != yParity(y.y) {
+		y.x = new(big.Int).Add(bn256.P, new(big.Int).Neg(y.x))
+		y.y = new(big.Int).Add(bn256.P, new(big.Int).Neg(y.y))
+	}
+
+	return G2FromInts(x, y)
 }
 
 // Multiply returns multiplication of two gfP2 elements.
