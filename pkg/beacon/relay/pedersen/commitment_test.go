@@ -93,13 +93,13 @@ func TestNewVSSpqValidation(t *testing.T) {
 		expectedError error
 	}{
 		"positive validation": {
-			p:             big.NewInt(7),
-			q:             big.NewInt(3),
+			p:             big.NewInt(19),
+			q:             big.NewInt(7),
 			expectedError: nil,
 		},
 		"negative validation - p not prime": {
 			p:             big.NewInt(16),
-			q:             big.NewInt(3),
+			q:             big.NewInt(7),
 			expectedError: fmt.Errorf("p and q have to be primes"),
 		},
 		"negative validation - q not prime": {

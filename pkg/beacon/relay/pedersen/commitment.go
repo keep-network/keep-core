@@ -158,22 +158,15 @@ func CalculateCommitment(vss *VSS, digest, r *big.Int) *big.Int {
 	)
 }
 
-// randomFromZn generates a random `big.Int` in a range (0, 2^n - 1]
-func randomFromZn(n *big.Int) (*big.Int, error) {
-	x := big.NewInt(0)
-	var err error
-	// TODO check if this is what we really need for g,h and r
-	// 2^n - 1
-	max := new(big.Int).Sub(
-		// new(big.Int).Exp(big.NewInt(2), n, nil),
-		n,
-		big.NewInt(1),
-	)
-	for x.Sign() == 0 {
-		x, err = crand.Int(crand.Reader, max)
+// randomFromZn generates a random `big.Int` in a range [min, max - 1].
+func randomFromZn(min, max *big.Int) (*big.Int, error) {
+	for {
+		x, err := crand.Int(crand.Reader, max) // returns a value in [0, max)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate random number [%s]", err)
 		}
+		if x.Cmp(min) >= 0 && x.Cmp(max) <= 0 {
+			return x, nil
+		}
 	}
-	return x, nil
 }
