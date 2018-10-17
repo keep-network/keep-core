@@ -19,9 +19,6 @@ var PingCommand cli.Command
 const (
 	ping = "PING"
 	pong = "PONG"
-
-	bootstrapPeerFlag = "bootstrap-peer"
-	bootstrapShort    = "b"
 )
 
 const pingDescription = `The ping command allows a peer to construct an adhoc
@@ -34,14 +31,10 @@ func init() {
 	PingCommand =
 		cli.Command{
 			Name:        "ping",
-			Usage:       ``,
+			Usage:       `bidirectional send between two peers to test the network`,
+			ArgsUsage:   "[multiaddr]",
 			Description: pingDescription,
 			Action:      pingRequest,
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name: bootstrapPeerFlag + "," + bootstrapShort,
-				},
-			},
 		}
 }
 
@@ -50,8 +43,9 @@ func init() {
 func pingRequest(c *cli.Context) error {
 	var bootstrapPeers []string
 
-	if c.String(bootstrapPeerFlag) != "" {
-		bootstrapPeers = append(bootstrapPeers, c.String(bootstrapPeerFlag))
+	// Not a bootstrap node
+	if len(c.Args()) > 0 {
+		bootstrapPeers = append(bootstrapPeers, c.Args()[0])
 	}
 
 	libp2pConfig := libp2p.Config{Peers: bootstrapPeers}
@@ -73,8 +67,8 @@ func pingRequest(c *cli.Context) error {
 			}
 		}
 
-		fmt.Printf("Enable other peer with:\n"+
-			"   > ./keep-core ping -bootstrap-peer %s\n"+
+		fmt.Printf("Enable other peer with:\n\n"+
+			"   > ./keep-core ping %s\n\n"+
 			"modifications to the above may be necessary\n",
 			bootstrapAddr,
 		)
