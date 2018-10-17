@@ -31,23 +31,8 @@ func TestFullInitAndSignPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	commitmentMasterPublicKeyMessagesKeyGen := make(
-		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
-	)
-
 	publicKeyShareCommitmentMessages := make([]*PublicEcdsaKeyShareCommitmentMessage, 0)
 	keyShareRevealMessages := make([]*KeyShareRevealMessage, 0)
-
-	commitmentMasterPublicKeyMessagesSigning := make(
-		[]*CommitmentMasterPublicKeyMessage, len(localSigners),
-	)
-
-	round1Messages := make([]*SignRound1Message, len(localSigners))
-	round2Messages := make([]*SignRound2Message, len(localSigners))
-	round3Messages := make([]*SignRound3Message, len(localSigners))
-	round4Messages := make([]*SignRound4Message, len(localSigners))
-	round5Messages := make([]*SignRound5Message, len(localSigners))
-	round6Messages := make([]*SignRound6Message, len(localSigners))
 
 	round1Signers := make([]*Round1Signer, len(localSigners))
 	round2Signers := make([]*Round2Signer, len(localSigners))
@@ -55,25 +40,20 @@ func TestFullInitAndSignPath(t *testing.T) {
 	round4Signers := make([]*Round4Signer, len(localSigners))
 	round5Signers := make([]*Round5Signer, len(localSigners))
 
+	var round1Messages []*SignRound1Message
+	var round2Messages []*SignRound2Message
+	var round3Messages []*SignRound3Message
+	var round4Messages []*SignRound4Message
+	round5Messages := make([]*SignRound5Message, len(localSigners))
+	round6Messages := make([]*SignRound6Message, len(localSigners))
+
 	//
 	// Initialize master public key for multi-trapdoor commitment scheme for key
 	// generation process
 	//
-	for i, signer := range localSigners {
-		commitmentMasterPublicKeyMessagesKeyGen[i], err =
-			signer.GenerateCommitmentMasterPublicKey()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	for _, signer := range localSigners {
-		err = signer.ReceiveCommitmentMasterPublicKeys(
-			commitmentMasterPublicKeyMessagesKeyGen,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
+	err = setupGroup(localSigners)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	//
@@ -118,46 +98,39 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Initialize master public key for multi-trapdoor commitment scheme for
 	// signing process
 	//
-	for i, signer := range signers {
-		commitmentMasterPublicKeyMessagesSigning[i], err =
-			signer.GenerateCommitmentMasterPublicKey()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	for _, signer := range signers {
-		err = signer.ReceiveCommitmentMasterPublicKeys(
-			commitmentMasterPublicKeyMessagesSigning,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
+	err = setupGroup(localSigners)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	//
 	// Execute the 1st signing round
 	//
 	for i, signer := range signers {
-		round1Signers[i], round1Messages[i], err = signer.SignRound1()
+		var messages []*SignRound1Message
+		round1Signers[i], messages, err = signer.SignRound1()
 		if err != nil {
 			t.Fatal(err)
 		}
+		round1Messages = append(round1Messages, messages...)
 	}
 
 	//
 	// Execute the 2nd signing round
 	//
 	for i, signer := range round1Signers {
-		round2Signers[i], round2Messages[i], err = signer.SignRound2()
+		var messages []*SignRound2Message
+		round2Signers[i], messages, err = signer.SignRound2()
 		if err != nil {
 			t.Fatal(err)
 		}
+		round2Messages = append(round2Messages, messages...)
 	}
 
 	secretKeyRandomFactor, secretKeyMultiple, err :=
 		round2Signers[0].CombineRound2Messages(
-			round1Messages, round2Messages,
+			signRound1MessagesForReceiver(round1Messages, round1Signers[0].ID),
+			signRound2MessagesForReceiver(round2Messages, round2Signers[0].ID),
 		)
 	if err != nil {
 		t.Fatal(err)
@@ -167,27 +140,32 @@ func TestFullInitAndSignPath(t *testing.T) {
 	// Execute the 3rd signing round
 	//
 	for i, signer := range round2Signers {
-		round3Signers[i], round3Messages[i], err = signer.SignRound3(
+		var messages []*SignRound3Message
+		round3Signers[i], messages, err = signer.SignRound3(
 			secretKeyRandomFactor, secretKeyMultiple,
 		)
 		if err != nil {
 			t.Fatal(err)
 		}
+		round3Messages = append(round3Messages, messages...)
 	}
 
 	//
 	// Execute the 4th signing round
 	//
 	for i, signer := range round3Signers {
-		round4Signers[i], round4Messages[i], err = signer.SignRound4()
+		var messages []*SignRound4Message
+		round4Signers[i], messages, err = signer.SignRound4()
 		if err != nil {
 			t.Fatal(err)
 		}
+		round4Messages = append(round4Messages, messages...)
 	}
 
 	signatureUnmask, signatureRandomMultiplePublic, err :=
 		round4Signers[0].CombineRound4Messages(
-			round3Messages, round4Messages,
+			signRound3MessagesForReceiver(round3Messages, round2Signers[0].ID),
+			signRound4MessagesForReceiver(round4Messages, round2Signers[0].ID),
 		)
 	if err != nil {
 		t.Fatal(err)
