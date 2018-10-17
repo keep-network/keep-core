@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -64,9 +65,23 @@ func pingRequest(c *cli.Context) error {
 		return err
 	}
 
-	isBootstrapNode := config.LibP2P.Seed != 0
-	// TODO: make this custom output
-	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), config.LibP2P.Port)
+	isBootstrapNode := len(libp2pConfig.Peers) == 0
+
+	if isBootstrapNode {
+		var bootstrapAddr string
+		for _, addr := range netProvider.AddrStrings() {
+			if strings.Contains(addr, "ip4") && !strings.Contains(addr, "127.0.0.1") {
+				bootstrapAddr = addr
+				break
+			}
+		}
+
+		fmt.Printf("Enable other peer with:\n"+
+			"   > ./keep-core ping -bootstrap-peer %s\n"+
+			"modifications to the above may be necessary\n",
+			bootstrapAddr,
+		)
+	}
 
 	// When we call ChannelFor, we create a coordination point for peers
 	broadcastChannel, err := netProvider.ChannelFor(ping)
