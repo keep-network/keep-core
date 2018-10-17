@@ -163,6 +163,10 @@ func pingRequest(c *cli.Context) error {
 	for {
 		select {
 		case msg := <-pingChan:
+			// don't read our own ping
+			if msg.TransportSenderID().String() == netProvider.ID().String() {
+				continue
+			}
 			pingPayload, ok := msg.Payload().(*PingMessage)
 			if !ok {
 				return fmt.Errorf(
@@ -179,6 +183,10 @@ func pingRequest(c *cli.Context) error {
 				return err
 			}
 		case msg := <-pongChan:
+			// don't read our own pong
+			if msg.TransportSenderID().String() == netProvider.ID().String() {
+				continue
+			}
 			// if you read a pong message, go ahead and ack and close out
 			pongPayload, ok := msg.Payload().(*PongMessage)
 			if !ok {
@@ -188,7 +196,7 @@ func pingRequest(c *cli.Context) error {
 				)
 			}
 
-			fmt.Println("Received PONG")
+			fmt.Printf("Received PONG from %s", msg.TransportSenderID().String())
 			return nil
 		case <-ctx.Done():
 			err := ctx.Err()
