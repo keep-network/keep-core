@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
@@ -19,6 +18,9 @@ var PingCommand cli.Command
 const (
 	ping = "PING"
 	pong = "PONG"
+
+	bootstrapPeerFlag = "bootstrap-peer"
+	bootstrapShort    = "b"
 )
 
 const pingDescription = `The ping command allows a peer to construct an adhoc
@@ -34,6 +36,11 @@ func init() {
 			Usage:       ``,
 			Description: pingDescription,
 			Action:      pingRequest,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name: bootstrapPeerFlag + "," + bootstrapShort,
+				},
+			},
 		}
 }
 
@@ -43,13 +50,16 @@ func init() {
 // request id. By default, it also waits until the associated relay entry is
 // generated and prints out the entry.
 func pingRequest(c *cli.Context) error {
-	config, err := config.ReadConfig(c.GlobalString("config"))
-	if err != nil {
-		return fmt.Errorf("error reading config file: [%v]", err)
+	var bootstrapPeers []string
+
+	if c.String(bootstrapPeerFlag) != "" {
+		bootstrapPeers = append(bootstrapPeers, c.String(bootstrapPeerFlag))
 	}
 
+	libp2pConfig := libp2p.Config{Peers: bootstrapPeers}
+
 	ctx := context.Background()
-	netProvider, err := libp2p.Connect(ctx, config.LibP2P)
+	netProvider, err := libp2p.Connect(ctx, libp2pConfig)
 	if err != nil {
 		return err
 	}
