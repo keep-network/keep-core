@@ -66,8 +66,8 @@ h = (g ^ randomZ[0, q - 1]) % q
 === Generating commitment
 To generate a commitment to a message `m`, we first need to map `m` into `G_q`
 (this mapped version will be denoted `s`).  We also need to select a random `t`
-from `G_q` is selected. The value `t` is kept secret until the commitment
-verification phase. Finally, the commitment is a result of `g^s * h^t`.
+from `G_q`. The value `t` is kept secret until the commitment verification 
+phase. Finally, the commitment is a result of `(g^s * h^t) % q`.
 
 `INPUT: m`
 
@@ -89,7 +89,7 @@ same, then we have a successful commitment verification.
 ```
 s = hash(m) % q
 
-expectedCommitment  = [ (g ^ s) % q ] * [ (h ^ s) % q ] % q
+expectedCommitment  = [ (g ^ s) % q ] * [ (h ^ t) % q ] % q
 
 if commitment == expectedCommitment
     return true
@@ -107,16 +107,15 @@ distinguish between them is what makes the scheme unconditionally hiding.
 
 Sender knowing discrete logarithm to the base `g` of `h` can change the message
 he committed to even after commitment has been published (but before `t` has
-been published) since it's possible to find another pair of `(t', m')`
+been published) since it's possible to find another pair of `(s', t')`
 evaluating to the same commitment. 
 
 Note that `log_g(h)` is a discrete logarithm problem and if we want to enable
 trapdoor, `log_g(h)` must be known at the moment of choosing `g` and `h`.
 
 `log_g(h)` is the trapdoor (our secret door) allowing to change the committed
-message. If one has committed to message `m` with `(m, t)`, then in order to
-change `m -> m'` (mapped to `G_g` is `s -> s'`) and knowing `log_g(h)`, she can
-compute:
+message. If one has committed to message `m` with `(s, t)`, then in order to
+change `s -> s'` (effectively `m -> m'`) and knowing `log_g(h)`, she can compute:
 
 ```
 t' = t + (s - s') / log_g(h)
