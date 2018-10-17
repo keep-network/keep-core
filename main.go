@@ -58,6 +58,7 @@ func main() {
 		cmd.SmokeTestCommand,
 		cmd.StartCommand,
 		cmd.RelayCommand,
+		cmd.PingCommand,
 		{
 			Name:  "print-info",
 			Usage: "Prints keep client information",
