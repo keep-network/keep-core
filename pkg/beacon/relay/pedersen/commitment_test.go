@@ -33,7 +33,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		"negative validation - incorrect decommitment key `r`": {
 			verificationValue: committedValue,
 			modifyDecommitmentKey: func(key *DecommitmentKey) {
-				key.r = big.NewInt(3)
+				key.t = big.NewInt(3)
 			},
 			expectedResult: false,
 		},

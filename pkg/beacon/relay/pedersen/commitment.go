@@ -63,7 +63,7 @@ type Commitment struct {
 // already-received commitment and verify if the value is what the sender have
 // really committed to.
 type DecommitmentKey struct {
-	r *big.Int
+	t *big.Int
 }
 
 // NewVSS generates parameters for a scheme execution
@@ -129,7 +129,7 @@ func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, erro
 // Verify checks the received commitment against the revealed secret message.
 func (c *Commitment) Verify(decommitmentKey *DecommitmentKey, secret []byte) bool {
 	digest := calculateDigest(secret, c.vss.q)
-	expectedCommitment := CalculateCommitment(c.vss, digest, decommitmentKey.r)
+	expectedCommitment := CalculateCommitment(c.vss, digest, decommitmentKey.t)
 	return expectedCommitment.Cmp(c.commitment) == 0
 }
 
