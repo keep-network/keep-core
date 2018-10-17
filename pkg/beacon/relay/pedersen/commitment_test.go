@@ -87,14 +87,42 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 }
 
 func TestNewVSSpqValidation(t *testing.T) {
-	p := big.NewInt(17)
-	q := big.NewInt(4)
-	expectedError := fmt.Errorf("incorrect p and q values")
+	var tests = map[string]struct {
+		p             *big.Int
+		q             *big.Int
+		expectedError error
+	}{
+		"positive validation": {
+			p:             big.NewInt(7),
+			q:             big.NewInt(3),
+			expectedError: nil,
+		},
+		"negative validation - p not prime": {
+			p:             big.NewInt(16),
+			q:             big.NewInt(3),
+			expectedError: fmt.Errorf("p and q have to be primes"),
+		},
+		"negative validation - q not prime": {
+			p:             big.NewInt(17),
+			q:             big.NewInt(4),
+			expectedError: fmt.Errorf("p and q have to be primes"),
+		},
+		"negative validation - incorrect p and q values": {
+			p:             big.NewInt(19),
+			q:             big.NewInt(3),
+			expectedError: fmt.Errorf("incorrect p and q values"),
+		},
+	}
 
-	_, err := NewVSS(p, q)
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
 
-	if !reflect.DeepEqual(err, expectedError) {
-		t.Fatalf("actual error: %v\nexpected error: %v", err, expectedError)
+			_, err := NewVSS(test.p, test.q)
+
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Fatalf("actual error: %v\nexpected error: %v", err, test.expectedError)
+			}
+		})
 	}
 }
 
