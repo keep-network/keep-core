@@ -93,8 +93,8 @@ func TestNewVSSpqValidation(t *testing.T) {
 		expectedError error
 	}{
 		"positive validation": {
-			p:             big.NewInt(19),
-			q:             big.NewInt(7),
+			p:             big.NewInt(11),
+			q:             big.NewInt(5),
 			expectedError: nil,
 		},
 		"negative validation - p not prime": {
