@@ -67,9 +67,11 @@ and submit relay requests to the chain):
 {
     "config": {
         "chainId": 1101,
-        "homesteadBlock": 0,
-        "eip155Block": 0,
-        "eip158Block": 0
+        "homesteadBlock": 0,
+        "byzantiumBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0
     },
     "difficulty" : "0x20",
     "gasLimit"   : "0x493E0000",
@@ -98,7 +100,7 @@ to unlock this account since tokens will only be added to it as a mining block
 reward:
 
 ```
-$ geth --port 3000 --networkid 11011 --identity "somerandomidentity" --ws --wsaddr "127.0.0.1" --wsport "8546" --wsorigins "" --rpc --rpcport "8545" --rpcaddr "127.0.0.1" --rpccorsdomain "" --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" --datadir=/Users/piotr/ethereum/data/ --fast --etherbase="0xca6aa3681a4f6ff5f759fec196d80fb0539b3626" --mine --minerthreads=1
+$ geth --port 3000 --networkid 1101 --identity "somerandomidentity" --ws --wsaddr "127.0.0.1" --wsport "8546" --wsorigins "" --rpc --rpcport "8545" --rpcaddr "127.0.0.1" --rpccorsdomain "" --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" --datadir=/Users/piotr/ethereum/data/ --fast --etherbase="0xca6aa3681a4f6ff5f759fec196d80fb0539b3626" --mine --minerthreads=1
 
 INFO [10-13|13:35:01] Maximum peer count                       ETH=25 LES=0 total=25
 INFO [10-13|13:35:01] Starting peer-to-peer node               instance=Geth/somerandomidentity/v1.8.11-stable/darwin-amd64/go1.10.3
