@@ -11,8 +11,8 @@
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 [ethereum.ContractAddresses]
-    KeepRandomBeacon = "0xd471d1bcfe57a8c1a31a5ba91574a5dc0ea03bb1"
-    KeepGroup = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
+	KeepRandomBeacon = "0xd471d1bcfe57a8c1a31a5ba91574a5dc0ea03bb1"
+	KeepGroup = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
 
 # Non-bootstrap node connecting to an existing network.
 # [LibP2P]
