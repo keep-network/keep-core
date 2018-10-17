@@ -240,9 +240,7 @@ migration output:
 ```
 [ethereum.ContractAddresses]
         KeepRandomBeacon = "0xb63a1a13a5099fad0fb703d3161ec08d4db2ab83"
-        GroupContract = "0xde93fc1fd2dc3679c48dc9abac96b731112f1670"
         KeepGroup = "0xde93fc1fd2dc3679c48dc9abac96b731112f1670"
-
 ```
 
 Next, create configuration files for non-bootstrap peers:
