@@ -158,7 +158,10 @@ local: {
    }
 ```
 
-Having done all those steps we can finally run a migration and deploy our contracts:
+Having done all those steps we can finally run a migration and deploy our 
+contracts. Please save the output of `truffle migrate` as we will need to 
+use some of the outputted contract addresses in the Keep peer configuration 
+later.
 
 ```
 $ cd keep-core/contracts/solidity
