@@ -98,13 +98,7 @@ func NewVSS(p, q *big.Int) (*VSS, error) {
 	if err != nil {
 		return nil, fmt.Errorf("randomValue generation failed [%s]", err)
 	}
-
-	k := new(big.Int).Div(
-		new(big.Int).Sub(p, big.NewInt(1)),
-		q,
-	)
-
-	h := new(big.Int).Exp(randomValue, k, p)
+	h := new(big.Int).Exp(g, randomValue, q)
 
 	return &VSS{p: p, q: q, g: g, h: h}, nil
 }
