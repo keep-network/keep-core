@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/golang/go/src/crypto/rand"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 )
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
@@ -29,19 +29,14 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	*MemberCommitmentsMessage,
 	error,
 ) {
-	var err error
-	coefficientsSize := cm.group.dishonestThreshold + 1
-	coefficientsA := make([]*big.Int, coefficientsSize)
-	coefficientsB := make([]*big.Int, coefficientsSize)
-	for j := 0; j < coefficientsSize; j++ {
-		coefficientsA[j], err = rand.Int(rand.Reader, cm.protocolConfig.Q)
-		if err != nil {
-			return nil, nil, err
-		}
-		coefficientsB[j], err = rand.Int(rand.Reader, cm.protocolConfig.Q)
-		if err != nil {
-			return nil, nil, err
-		}
+	polynomialDegree := cm.group.dishonestThreshold
+	coefficientsA, err := generatePolynomial(polynomialDegree, cm.protocolConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+	coefficientsB, err := generatePolynomial(polynomialDegree, cm.protocolConfig)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	cm.secretCoefficients = coefficientsA
@@ -72,8 +67,8 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 			})
 	}
 
-	commitments := make([]*big.Int, coefficientsSize)
-	for k := 0; k < coefficientsSize; k++ {
+	commitments := make([]*big.Int, len(coefficientsA))
+	for k := range commitments {
 		// C_k = g^a_k * h^b_k mod p
 		commitments[k] = cm.vss.CalculateCommitment(
 			coefficientsA[k],
@@ -89,8 +84,8 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	return sharesMessages, commitmentsMessage, nil
 }
 
-// VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments received in
-// messages from peer group members.
+// VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments
+// received in messages from peer group members.
 // It returns accusation message with ID of members for which verification failed.
 //
 // If cannot match commitments message with shares message for given sender then
@@ -147,7 +142,9 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 			}
 		}
 		if !sharesMessageFound {
-			return nil, fmt.Errorf("cannot find shares message from member %s", commitmentsMessage.senderID)
+			return nil, fmt.Errorf("cannot find shares message from member %s",
+				commitmentsMessage.senderID,
+			)
 		}
 	}
 
@@ -178,4 +175,19 @@ func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.In
 		)
 	}
 	return result
+}
+
+// generatePolynomial generates a random polynomial over Z_q of a given degree.
+// This function will generate a slice of `degree + 1` coefficients. Each value
+// will be a random `big.Int` in range (0, q).
+func generatePolynomial(degree int, protocolConfig *config.DKG) ([]*big.Int, error) {
+	coefficients := make([]*big.Int, degree+1)
+	var err error
+	for i := range coefficients {
+		coefficients[i], err = protocolConfig.RandomQ()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return coefficients, nil
 }

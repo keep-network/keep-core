@@ -40,7 +40,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 
 	if len(commitmentsMessage.commitments) != (threshold + 1) {
 		t.Fatalf("calculated commitments number %d doesn't match expected number %d",
-			len(member.secretCoefficients),
+			len(commitmentsMessage.commitments),
 			threshold+1,
 		)
 	}
@@ -159,6 +159,28 @@ func TestRoundTrip(t *testing.T) {
 
 	if len(accusedMessage.accusedIDs) > 0 {
 		t.Fatalf("found accused members but was not expecting to")
+	}
+}
+
+func TestGeneratePolynomial(t *testing.T) {
+	degree := 5
+	config := &config.DKG{P: big.NewInt(100), Q: big.NewInt(9)}
+
+	coefficients, err := generatePolynomial(config, degree)
+	if err != nil {
+		t.Fatalf("unexpected error [%s]", err)
+	}
+
+	if len(coefficients) != degree+1 {
+		t.Fatalf("number of generated coefficients %d doesn't match expected %d",
+			len(coefficients),
+			degree+1,
+		)
+	}
+	for i, c := range coefficients {
+		if !(c.Cmp(big.NewInt(0)) > 0 && c.Cmp(config.Q) < 0) {
+			t.Fatalf("coefficient %d value %s is out of the range", i, c)
+		}
 	}
 }
 
