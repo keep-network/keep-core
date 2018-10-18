@@ -23,7 +23,7 @@ import (
 // commitments to `a` coefficients of first polynomial using second's polynomial
 // `b` coefficients.
 //
-// See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_3_polynomial_generation
+// See Phase 3 of the protocol specification.
 func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	[]*PeerSharesMessage,
 	*MemberCommitmentsMessage,
@@ -96,7 +96,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 // If cannot match commitments message with shares message for given sender then
 // error is returned.
 //
-// See http://docs.keep.network/cryptography/beacon_dkg.html#_phase_4_share_verification
+// See Phase 4 of the protocol specification.
 func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
