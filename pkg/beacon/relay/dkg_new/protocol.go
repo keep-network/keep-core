@@ -30,11 +30,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 	coefficientsA := make([]*big.Int, coefficientsSize)
 	coefficientsB := make([]*big.Int, coefficientsSize)
 	for j := 0; j < coefficientsSize; j++ {
-		coefficientsA[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
+		coefficientsA[j], err = rand.Int(rand.Reader, cm.protocolConfig.Q)
 		if err != nil {
 			return nil, nil, err
 		}
-		coefficientsB[j], err = rand.Int(rand.Reader, cm.ProtocolConfig().Q)
+		coefficientsB[j], err = rand.Int(rand.Reader, cm.protocolConfig.Q)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -47,9 +47,9 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 	var sharesMessages []*PeerSharesMessage
 	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
-		memberShareS := evaluateMemberShare(receiverID, coefficientsA, cm.ProtocolConfig().Q)
+		memberShareS := evaluateMemberShare(receiverID, coefficientsA, cm.protocolConfig.Q)
 		// t_j = g_(j) mod q
-		memberShareT := evaluateMemberShare(receiverID, coefficientsB, cm.ProtocolConfig().Q)
+		memberShareT := evaluateMemberShare(receiverID, coefficientsB, cm.protocolConfig.Q)
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
@@ -112,12 +112,12 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 						new(big.Int).Exp(
 							cm.ID,
 							big.NewInt(int64(k)),
-							cm.ProtocolConfig().P,
+							cm.protocolConfig.P,
 						),
-						cm.ProtocolConfig().P,
+						cm.protocolConfig.P,
 					),
 				),
-				cm.ProtocolConfig().P,
+				cm.protocolConfig.P,
 			)
 		}
 		// Find share message sent by the same member who sent commitment message
