@@ -100,7 +100,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
-) (*FirstAccusationsMessage, error) {
+) (*SecretSharesAccusationsMessage, error) {
 	var accusedMembersIDs []*big.Int
 
 	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
@@ -151,7 +151,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 		}
 	}
 
-	return &FirstAccusationsMessage{
+	return &SecretSharesAccusationsMessage{
 		senderID:   cm.ID,
 		accusedIDs: accusedMembersIDs,
 	}, nil

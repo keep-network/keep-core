@@ -4,6 +4,7 @@ import "math/big"
 
 // MemberCommitmentsMessage is a message payload that carries the sender's
 // commitments to polynomial coefficients during distributed key generation.
+//
 // It is expected to be broadcast.
 type MemberCommitmentsMessage struct {
 	senderID *big.Int
@@ -13,6 +14,7 @@ type MemberCommitmentsMessage struct {
 
 // PeerSharesMessage is a message payload that carries the sender's shares `s_ij`
 // and `t_ij` for the recipient during distributed key generation.
+//
 // It is expected to be communicated in encrypted fashion to the recipient over
 // a broadcast channel.
 type PeerSharesMessage struct {
@@ -23,12 +25,13 @@ type PeerSharesMessage struct {
 	shareT *big.Int
 }
 
-// FirstAccusationsMessage is a message payload that carries all of the sender's
-// accusations against other members of the threshold group.
-// If all other members behaved honestly from the sender's point of view, this message should
-// be broadcast but with an empty slice of `accusedIDs`.
+// SecretSharesAccusationsMessage is a message payload that carries all of the
+// sender's accusations against other members of the threshold group.
+// If all other members behaved honestly from the sender's point of view, this
+// message should be broadcast but with an empty slice of `accusedIDs`.
+//
 // It is expected to be broadcast.
-type FirstAccusationsMessage struct {
+type SecretSharesAccusationsMessage struct {
 	senderID *big.Int
 
 	accusedIDs []*big.Int
