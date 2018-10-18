@@ -1,18 +1,17 @@
 // Package handshake contains the code that implements authentication handshake
-// performed when a new peer wants to join the Keep network, as described in the
-// network security implementation [RFC], section 1.2.3.
+// performed when a new connection between two peers is established, as
+// described in the network security implementation [RFC], section 1.2.3
+// and 1.2.4.
 //
 // Each peer wanting to join a network needs to provide a proof of ownership of
 // an on-chain identity with an associated stake. As part of the network join
 // handshake, peer responding to the handshake will also provide proof of its
-// own stake.
+// own stake. The same handshake is executed when two peers already being a part
+// of the network establish a new connection with each other.
 //
 // The handshake is a 3-round procedure when two parties called initiator and
-// responder exchange messages. When a new peer wants to join a network, it
-// reaches out to some bootstrap peer. In this setup, the new peer is the
-// initiator and bootstrap peer is the responder.
-//
-// The entire handshake procedure can be described with the following diagram:
+// responder exchange messages. The entire handshake procedure can be described
+// with the following diagram:
 //
 //
 // INITIATOR                             RESPONDER
