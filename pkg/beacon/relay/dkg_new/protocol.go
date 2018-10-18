@@ -15,7 +15,6 @@ import (
 	"math/big"
 
 	"github.com/golang/go/src/crypto/rand"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for two
@@ -72,7 +71,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() ([]*PeerShare
 	commitments := make([]*big.Int, coefficientsSize)
 	for k := 0; k < coefficientsSize; k++ {
 		// C_k = g^a_k * h^b_k mod p
-		commitments[k] = pedersen.CalculateCommitment(cm.vss, coefficientsA[k], coefficientsB[k])
+		commitments[k] = cm.vss.CalculateCommitment(
+			coefficientsA[k],
+			coefficientsB[k],
+			cm.protocolConfig.P,
+		)
 	}
 	commitmentsMessage := &MemberCommitmentsMessage{
 		senderID:    cm.ID,
@@ -124,10 +127,10 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 				sharesMessageFound = true
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji)`
 				// where: j is sender's ID, i is current member ID.
-				expectedProduct := pedersen.CalculateCommitment(
-					cm.vss,
+				expectedProduct := cm.vss.CalculateCommitment(
 					sharesMessage.shareS,
 					sharesMessage.shareT,
+					cm.protocolConfig.P,
 				)
 
 				if expectedProduct.Cmp(commitmentsProduct) != 0 {
