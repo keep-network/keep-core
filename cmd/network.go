@@ -83,6 +83,9 @@ func pingRequest(c *cli.Context) error {
 		return err
 	}
 
+	// PingMessage and PongMessage conform to the net.Message interface
+	// (Type, Unmarshal, Marshal); ensure our network knows how to serialize
+	// them when sending over the wire
 	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &PingMessage{} },
 	); err != nil {
@@ -106,30 +109,36 @@ func pingRequest(c *cli.Context) error {
 		pongChan = make(chan net.Message)
 	)
 
-	if err := broadcastChannel.Recv(net.HandleMessageFunc{
-		Type: pong,
-		Handler: func(msg net.Message) error {
-			// Do some message routing
-			if msg.Type() == pong {
-				pongChan <- msg
-			}
-			return nil
+	err = broadcastChannel.Recv(
+		net.HandleMessageFunc{
+			Type: pong,
+			Handler: func(msg net.Message) error {
+				// Do some message routing
+				if msg.Type() == pong {
+					pongChan <- msg
+				}
+				return nil
+			},
 		},
-	}); err != nil {
+	)
+	if err != nil {
 		return err
 	}
 	defer broadcastChannel.UnregisterRecv(pong)
 
-	if err := broadcastChannel.Recv(net.HandleMessageFunc{
-		Type: ping,
-		Handler: func(msg net.Message) error {
-			// Do some message routing
-			if msg.Type() == ping {
-				pingChan <- msg
-			}
-			return nil
+	err = broadcastChannel.Recv(
+		net.HandleMessageFunc{
+			Type: ping,
+			Handler: func(msg net.Message) error {
+				// Do some message routing
+				if msg.Type() == ping {
+					pingChan <- msg
+				}
+				return nil
+			},
 		},
-	}); err != nil {
+	)
+	if err != nil {
 		return err
 	}
 	defer broadcastChannel.UnregisterRecv(ping)
@@ -145,11 +154,9 @@ func pingRequest(c *cli.Context) error {
 		break
 	}
 
-	err = broadcastChannel.Send(
-		&PingMessage{
-			Sender:  netProvider.ID().String(),
-			Payload: ping})
-	if err != nil {
+	if err := broadcastChannel.Send(
+		&PingMessage{Sender: netProvider.ID().String(), Payload: ping},
+	); err != nil {
 		return err
 	}
 	fmt.Println("Sent PING")
