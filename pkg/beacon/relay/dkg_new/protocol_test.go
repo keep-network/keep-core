@@ -54,23 +54,11 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
-
-	var peerSharesMessages []*PeerSharesMessage
-	var commitmentsMessages []*MemberCommitmentsMessage
-	for _, member := range members {
-		peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
-		if err != nil {
-			t.Fatalf("shares and commitments calculation failed [%s]", err)
-		}
-		peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
-		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
-	}
-
 	currentMember := members[0]
 
 	var tests = map[string]struct {
-		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
-		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
+		modifyPeerShareMessages   func(messages []*PeerSharesMessage) []*PeerSharesMessage
+		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage
 		expectedError             error
 		expectedAccusedIDs        int
 	}{
@@ -79,15 +67,17 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			expectedAccusedIDs: 0,
 		},
 		"negative validation - changed random share": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
+			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []*PeerSharesMessage {
 				messages[1].shareT = big.NewInt(13)
+				return messages
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: 1,
 		},
 		"negative validation - changed commitment": {
-			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
+			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage {
 				messages[1].commitments[0] = big.NewInt(13)
+				return messages
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: 1,
@@ -95,14 +85,26 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			var peerSharesMessages []*PeerSharesMessage
+			var commitmentsMessages []*MemberCommitmentsMessage
+
+			for _, member := range members {
+				peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+				if err != nil {
+					t.Fatalf("shares and commitments calculation failed [%s]", err)
+				}
+				peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
+				commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
+			}
+
 			filteredPeerSharesMessages := filterPeerSharesMessage(peerSharesMessages, currentMember.ID)
 			filteredMemberCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
 
 			if test.modifyPeerShareMessages != nil {
-				test.modifyPeerShareMessages(filteredPeerSharesMessages)
+				filteredPeerSharesMessages = test.modifyPeerShareMessages(filteredPeerSharesMessages)
 			}
 			if test.modifyCommitmentsMessages != nil {
-				test.modifyCommitmentsMessages(filteredMemberCommitmentsMessages)
+				filteredMemberCommitmentsMessages = test.modifyCommitmentsMessages(filteredMemberCommitmentsMessages)
 			}
 
 			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
