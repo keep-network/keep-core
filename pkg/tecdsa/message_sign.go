@@ -11,7 +11,8 @@ import (
 // SignRound1Message is a message produced by each signer as a result of
 // executing the first round of T-ECDSA signing algorithm.
 type SignRound1Message struct {
-	signerID string
+	senderID   string
+	receiverID string
 
 	secretKeyFactorShareCommitment *commitment.MultiTrapdoorCommitment // C_1i
 }
@@ -19,7 +20,8 @@ type SignRound1Message struct {
 // SignRound2Message is a message produced by each signer as a result of
 // executing the second round of T-ECDSA signing algorithm.
 type SignRound2Message struct {
-	signerID string
+	senderID   string
+	receiverID string
 
 	secretKeyFactorShare                *paillier.Cypher            // u_i = E(ρ_i)
 	secretKeyMultipleShare              *paillier.Cypher            // v_i = E(ρ_i * x)
@@ -54,7 +56,8 @@ func (msg *SignRound2Message) isValid(
 // SignRound3Message is a message produced by each signer as a result of
 // executing the third round of T-ECDSA signing algorithm.
 type SignRound3Message struct {
-	signerID string
+	senderID   string
+	receiverID string
 
 	signatureFactorShareCommitment *commitment.MultiTrapdoorCommitment // C_2i
 }
@@ -62,7 +65,8 @@ type SignRound3Message struct {
 // SignRound4Message is a message produced by each signer as a result of
 // executing the fourth round of T-ECDSA signing algorithm.
 type SignRound4Message struct {
-	signerID string
+	senderID   string
+	receiverID string
 
 	signatureFactorPublicShare          *curve.Point                // r_i = g^{k_i}
 	signatureUnmaskShare                *paillier.Cypher            // w_i = E(k_i * ρ + c_i * q)
@@ -100,7 +104,7 @@ func (msg *SignRound4Message) isValid(
 // SignRound5Message is a message produced by each signer as a result of
 // executing the fifth round of T-ECDSA signing algorithm.
 type SignRound5Message struct {
-	signerID string
+	senderID string
 
 	signatureUnmaskPartialDecryption *paillier.PartialDecryption // TDec(w)
 }
@@ -108,7 +112,7 @@ type SignRound5Message struct {
 // SignRound6Message is a message produced by each signer as a result of
 // executing the sixth round of T-ECDSA signing algorithm.
 type SignRound6Message struct {
-	signerID string
+	senderID string
 
 	signaturePartialDecryption *paillier.PartialDecryption // TDec(σ)
 }

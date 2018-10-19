@@ -23,7 +23,7 @@ type KeepRandomBeacon struct {
 // NewKeepRandomBeacon creates the necessary connections and configurations for
 // accessing the contract.
 func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) {
-	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepRandomBeaconImplV1"]
+	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepRandomBeacon"]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for 'KeepRandomBeacon' in configuration",

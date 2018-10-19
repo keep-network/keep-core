@@ -9,7 +9,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 // identity represents a group member's network level identity. It
@@ -82,22 +81,6 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// AddIdentityToStore takes an identity and notifies the addressbook of the
-// existance of a new client joining the network.
-func addIdentityToStore(i *identity) (pstore.Peerstore, error) {
-	// TODO: investigate a generic store interface that gives us a unified interface
-	// to our address book (peerstore in libp2p) from secure storage (dht)
-	peerstore := pstore.NewPeerstore()
-
-	if err := peerstore.AddPrivKey(i.id, i.privKey); err != nil {
-		return nil, fmt.Errorf("failed to add PrivateKey to store with error %s", err)
-	}
-	if err := peerstore.AddPubKey(i.id, i.pubKey); err != nil {
-		return nil, fmt.Errorf("failed to add PubKey to store with error %s", err)
-	}
-	return peerstore, nil
-}
-
 // generateIdentity generates a public/private-key pair (using the libp2p/crypto
 // wrapper for golang/crypto). A randseed value of 0, the default for ints in Go,
 // will result in a cryptographically strong source of psuedorandomness,
@@ -111,7 +94,8 @@ func generateIdentity(randseed int) (*identity, error) {
 	} else {
 		r = rand.Reader
 	}
-
+	// curve parameters defined in:
+	// https://github.com/btcsuite/btcd/blob/master/btcec/btcec.go#L908
 	privKey, pubKey, err := libp2pcrypto.GenerateSecp256k1Key(r)
 	if err != nil {
 		return nil, err

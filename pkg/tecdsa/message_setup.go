@@ -5,7 +5,7 @@ package tecdsa
 //
 // The message is expected to be broadcast publicly.
 type CommitmentMasterPublicKeyMessage struct {
-	signerID string
+	senderID string
 
 	masterPublicKey []byte
 }
