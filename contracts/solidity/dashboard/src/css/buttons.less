@@ -1,0 +1,53 @@
+
+.btn {
+  padding: 10px 33px;
+  border-radius: @border-radius;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  border-radius: @border-radius;
+}
+
+.btn-default {
+  background-color: @white;
+  color: @link-color;
+  border-color: @white;
+}
+
+.btn-primary {
+  background-color: @link-color;
+  border-color: @link-color;
+}
+
+.txt-primary {
+  color: @link-color;
+}
+
+.btn-default,
+.btn-primary,
+.btn-primary[disabled],
+.btn-primary.disabled {
+  transition: 0.25s all ease-in;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active.focus,
+  &.active,
+  &.focus {
+    background-color: @link-active-color;
+    border-color: @link-active-color;
+    color: @white;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+.btn.disabled,
+.btn[disabled],
+fieldset[disabled] .btn {
+  opacity: 0.5;
+}

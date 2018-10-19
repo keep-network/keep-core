@@ -3,25 +3,36 @@ syntax = "proto3";
 option go_package = "pb";
 package net;
 
-// Envelope contains a marshalled payload, as well as a signature over the
-// payload. It also contains the Identities of the sender and receiver.
-// Optionally, an Envelope may contain an encrypted Envelope field for messages
-// which need to be secret (in which case the payload will be empty).
+// Envelope contains a marshalled message, as well as a signature over the
+// the contents of the message (to ensure an adversary hasn't tampered
+// with the contents).
 message Envelope {
-  // The PublicKey of the sender
+  // The marshalled message.
+  bytes message = 1;
+
+  // Signature of the message.
+  bytes signature = 2;
+}
+
+// Message contains a marshalled payload. It also contains the Identities of
+// the sender and receiver. Optionally, a Message may contain an encrypted
+// payload for messages which need to be secret; in this case, the encrypted
+// field will be set.
+message Message {
+  // The PublicKey of the sender.
   bytes sender = 1;
 
-  // The PublicKey of the recipient
+  // The PublicKey of the recipient.
   bytes recipient = 2;
 
-  // A marshaled Protocol Message
-  bytes payload = 3;
+  // A flag indicating whether the payload is encrypted.
+  bool encrypted = 3;
 
-  // Signature of the message
-  bytes signature = 4;
+  // A marshaled Protocol Message.
+  bytes payload = 4;
 
-  // A marshalled, encrypted message; if this exists, payload is empty
-  EncryptedEnvelope encrypted_envelope = 5;
+  // Type of the message as registered by the protocol.
+  bytes type = 5;
 
   // Channel is the group name as well as the pubsub channel
   // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
@@ -30,15 +41,6 @@ message Envelope {
 
   // Proof that the peer that sent this message knows the channel's name.
   bytes channel_MAC = 7;
-
-  // Type of the message as registered by the protocol
-  bytes type = 8;
-}
-
-// EncryptedEnvelope is a marshalled, encrypted message.
-message EncryptedEnvelope {
-  bytes payload = 1;
-  bytes signature = 4;
 }
 
 message Identity {

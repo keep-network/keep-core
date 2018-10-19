@@ -1,24 +1,22 @@
 package ethereum
 
 import (
-	"bufio"
 	"fmt"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/chain/gen"
+	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 )
 
 // keepGroup connection information for interface to KeepGroup contract.
 type keepGroup struct {
-	caller          *gen.KeepGroupImplV1Caller
+	caller          *abi.KeepGroupImplV1Caller
 	callerOpts      *bind.CallOpts
-	transactor      *gen.KeepGroupImplV1Transactor
+	transactor      *abi.KeepGroupImplV1Transactor
 	transactorOpts  *bind.TransactOpts
-	contract        *gen.KeepGroupImplV1
+	contract        *abi.KeepGroupImplV1
 	contractAddress common.Address
 }
 
@@ -44,8 +42,8 @@ type keepGroup struct {
 
 // NewKeepGroup creates the necessary connections and configurations
 // for accessing the KeepGroup contract.
-func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
-	contractAddressHex, exists := pv.config.ContractAddresses["KeepGroupImplV1"]
+func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
+	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepGroup"]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for 'KeepGroup' in configuration",
@@ -53,9 +51,9 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
 
-	groupTransactor, err := gen.NewKeepGroupImplV1Transactor(
+	groupTransactor, err := abi.NewKeepGroupImplV1Transactor(
 		contractAddress,
-		pv.client,
+		chainConfig.client,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -64,28 +62,26 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 		)
 	}
 
-	file, err := os.Open(pv.config.Account.KeyFile)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to open keyfile %s: [%v]",
-			pv.config.Account.KeyFile,
-			err,
+	if chainConfig.accountKey == nil {
+		key, err := DecryptKeyFile(
+			chainConfig.config.Account.KeyFile,
+			chainConfig.config.Account.KeyFilePassword,
 		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to read KeyFile: %s: [%v]",
+				chainConfig.config.Account.KeyFile,
+				err,
+			)
+		}
+		chainConfig.accountKey = key
 	}
 
-	optsTransactor, err := bind.NewTransactor(
-		bufio.NewReader(file),
-		pv.config.Account.KeyFilePassword,
+	optsTransactor := bind.NewKeyedTransactor(
+		chainConfig.accountKey.PrivateKey,
 	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to read keyfile: %s: [%v]",
-			pv.config.Account.KeyFile,
-			err,
-		)
-	}
 
-	groupCaller, err := gen.NewKeepGroupImplV1Caller(contractAddress, pv.client)
+	groupCaller, err := abi.NewKeepGroupImplV1Caller(contractAddress, chainConfig.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate a KeepRelayBeaconCaller contract: [%v]",
@@ -97,7 +93,7 @@ func newKeepGroup(pv *ethereumChain) (*keepGroup, error) {
 		From: contractAddress,
 	}
 
-	groupContract, err := gen.NewKeepGroupImplV1(contractAddress, pv.client)
+	groupContract, err := abi.NewKeepGroupImplV1(contractAddress, chainConfig.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate contract object: %s at address: [%v]",
@@ -250,22 +246,27 @@ func (kg *keepGroup) WatchGroupCompleteEvent(
 	success groupCompleteEventFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepGroupImplV1GroupCompleteEvent)
+	eventChan := make(chan *abi.KeepGroupImplV1GroupCompleteEvent)
 	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for GroupCompleteEvent events [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -280,22 +281,27 @@ func (kg *keepGroup) WatchGroupErrorCode(
 	success groupErrorCodeFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepGroupImplV1GroupErrorCode)
+	eventChan := make(chan *abi.KeepGroupImplV1GroupErrorCode)
 	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"failed go create watch for GroupErrorCode events: [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.Code)
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -311,22 +317,27 @@ func (kg *keepGroup) WatchGroupExistsEvent(
 	success groupExistsEventFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepGroupImplV1GroupExistsEvent)
+	eventChan := make(chan *abi.KeepGroupImplV1GroupExistsEvent)
 	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for GropExistsEvent events [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:], event.Exists)
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -342,22 +353,27 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 	success groupStartedEventFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepGroupImplV1GroupStartedEvent)
+	eventChan := make(chan *abi.KeepGroupImplV1GroupStartedEvent)
 	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf(
 			"error creating watch for GorupStartedEvent events [%v]",
 			err,
 		)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
@@ -373,19 +389,24 @@ func (kg *keepGroup) WatchOnStakerAdded(
 	success onStakerAddedFunc,
 	fail errorCallback,
 ) error {
-	eventChan := make(chan *gen.KeepGroupImplV1OnStakerAdded)
+	eventChan := make(chan *abi.KeepGroupImplV1OnStakerAdded)
 	eventSubscription, err := kg.contract.WatchOnStakerAdded(nil, eventChan)
 	if err != nil {
+		close(eventChan)
 		return fmt.Errorf("error creating watch for OnStakerAdded events [%v]", err)
 	}
 	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
 		for {
 			select {
 			case event := <-eventChan:
 				success(int(event.Index), event.GroupMemberID[:])
+				return
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()

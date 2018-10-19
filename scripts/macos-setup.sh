@@ -38,4 +38,8 @@ if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
   exit 1
 fi
 
+echo "Installing contracts/solidity npm and requirements..."
+brew list npm &>/dev/null || brew install npm
+cd ../contracts/solidity && npm install && cd ../../scripts
+
 echo "Ready to rock! See above for any extra environment-related instructions."
