@@ -82,6 +82,13 @@ of the account from above prepended with `0x`:
 }
 ```
 
+Save the path to your data directory and preferred ethereum account in
+environment variables:
+```
+$ export GETH_DATA_DIR=/Users/piotr/ethereum/data/
+$ export ETHEREUM_ACCOUNT=0xca6aa3681a4f6ff5f759fec196d80fb0539b3626
+```
+
 ```
 $ geth --datadir="/Users/piotr/ethereum/data" init genesis.json 
 
