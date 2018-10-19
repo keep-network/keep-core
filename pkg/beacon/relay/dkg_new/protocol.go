@@ -12,6 +12,7 @@ package dkg
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -108,7 +109,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 					commitmentsProduct,
 					new(big.Int).Exp(
 						c,
-						big.NewInt(int64(cm.ID^k)),
+						pow(cm.ID, k),
 						cm.protocolConfig.P,
 					),
 				),
@@ -163,7 +164,7 @@ func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
 			result,
 			new(big.Int).Mul(
 				a,
-				big.NewInt(int64(memberID^k)),
+				pow(memberID, k),
 			),
 		)
 	}
@@ -183,4 +184,8 @@ func generatePolynomial(degree int, protocolConfig *config.DKG) ([]*big.Int, err
 		}
 	}
 	return coefficients, nil
+}
+
+func pow(x, y int) *big.Int {
+	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
 }
