@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"context"
-	"crypto/rand"
+	"encoding/binary"
 	"fmt"
+	"math"
 	"math/big"
 	"os"
 	"sync"
@@ -162,7 +163,6 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	var (
 		value        [32]byte
 		requestID    *big.Int
-		entropy      = make([]byte, 32)
 		wait         = make(chan struct{})
 		requestMutex = sync.Mutex{}
 	)
@@ -185,15 +185,8 @@ func submitRelayEntrySeed(c *cli.Context) error {
 		}
 	})
 
-	// Create the random seed, a 32-byte value
-	if _, err := rand.Read(entropy); err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"Failed to generate entropy with error [%v].\n",
-			err,
-		)
-	}
-	copy(value[:], entropy)
+	// Seed the network with the first 32-bytes of pi
+	binary.BigEndian.PutUint64(value[:], math.Float64bits(math.Pi))
 
 	entry := &event.Entry{
 		RequestID:     big.NewInt(0),
