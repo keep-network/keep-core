@@ -13,12 +13,12 @@ output: _P_
 
 The protocol should:
 
-1. [[req 1]]produce a representative result, where each staker's profit is proportional
+1. [[1]]produce a representative result, where each staker's profit is proportional
 to the number of tokens they have staked
-2. [[req 2]]produce a group _P_ of constant size _N_
-3. [[req 3]]not require an excessive amount of on-chain operations to perform
-4. [[req 4]]not be feasible for an adversary to manipulate
-5. [[req 5]]be compatible with future measures to make stakers indistinguishable
+2. [[2]]produce a group _P_ of constant size _N_
+3. [[3]]not require an excessive amount of on-chain operations to perform
+4. [[4]]not be feasible for an adversary to manipulate
+5. [[5]]be compatible with future measures to make stakers indistinguishable
 
 .Some terms
 |===
@@ -190,7 +190,7 @@ for the same group.
 
 This makes the result representative and ensures that neither blitzpantsing nor
 trenchcoating will provide the staker greater profits than they could acquire
-otherwise (<<req 1>>), with the exception that pooling token amounts below
+otherwise (<<1>>), with the exception that pooling token amounts below
 _MINIMUM_STAKE_ and sharing the risk and profits would enable the utilization of
 smaller holders' tokens or surplus tokens from regular stakers.
 This form of trenchcoating is arguably either neutral or beneficial, and in any
@@ -198,7 +198,7 @@ case it does not violate proportionality of rewards.
 
 Additionally, using virtual stakers and tickets instead of eg. a threshold that
 adjusts itself based on the staked amount lets us hide any particular staker's
-identity and the size of their stake later (<<req 5>>).
+identity and the size of their stake later (<<5>>).
 
 === Interactive protocol
 
@@ -210,15 +210,15 @@ _Seed~j~_, and then everybody whose _Seed~j~ < Threshold~i~_ is in _P_.
 _Threshold~i~_ would be calculated using public information,
 eg. by _Threshold~i~ = N * (2^256-1) / |S|_ for a 256-bit _Seed~j~_.
 However, this means that due to random chance, most of the time _|P| != N_.
-This violates <<req 2>>.
+This violates <<2>>.
 2. Alternatively each staker could present  some kind of a hashed value
 _Hash~j~_ so that whether _S~j~_ is in _P_ can be determined publicly
 by _f(V~i~, Hash~j~, S, N) -> Bool_.
 This cannot work, because then anybody could
 calculate _f(V~m~, Hash~j~, S, N)_ for a large number of different values _V~m~_
 and see how often _S~j~_ ends up eligible for the candidate group.
-Due to <<req 1>> this necessarily reveals how much _S~j~_ has staked
-to an arbitrary degree of precision, violating <<req 5>>.
+Due to <<1>> this necessarily reveals how much _S~j~_ has staked
+to an arbitrary degree of precision, violating <<5>>.
 
 These constraints seem inherent in the problem, and thus an interactive protocol
 appears necessary. The aforementioned issues can be avoided by having _S~j~_
@@ -248,7 +248,7 @@ the estimated threshold.
 === Zero-knowledge proofs
 
 The protocol has been designed to be easily compatible with zero-knowledge
-proofs later (<<req 5>>). The weights and virtual staker indices can use range
+proofs later (<<5>>). The weights and virtual staker indices can use range
 proofs, and _Q~j~_ is required to be simply a value unique to any given staker.
 
 Initially _Q~j~_ can be something public and easy to verify, such as the ECDSA
