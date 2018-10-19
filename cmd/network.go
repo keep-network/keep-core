@@ -66,9 +66,9 @@ func pingRequest(c *cli.Context) error {
 			}
 		}
 
-		fmt.Printf("Enable other peer with:\n\n"+
-			"   > ./keep-core ping %s\n\n"+
-			"modifications to the above may be necessary\n",
+		fmt.Printf("You can ping this node using:\n"+
+			"    %s ping %s\n\n",
+			c.App.Name,
 			bootstrapAddr,
 		)
 	}
