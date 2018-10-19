@@ -44,7 +44,7 @@ func pingRequest(c *cli.Context) error {
 
 	// Not a bootstrap node
 	if len(c.Args()) > 0 {
-		bootstrapPeers = append(bootstrapPeers, c.Args()[0])
+		bootstrapPeers = append(bootstrapPeers, c.Args().Get(0))
 	}
 
 	libp2pConfig := libp2p.Config{Peers: bootstrapPeers}
