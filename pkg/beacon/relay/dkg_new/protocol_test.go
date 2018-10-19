@@ -179,9 +179,12 @@ func TestGeneratePolynomial(t *testing.T) {
 			degree+1,
 		)
 	}
-	for i, c := range coefficients {
-		if !(c.Cmp(big.NewInt(0)) > 0 && c.Cmp(config.Q) < 0) {
-			t.Fatalf("coefficient %d value %s is out of the range", i, c)
+	for _, c := range coefficients {
+		if c.Cmp(big.NewInt(0)) <= 0 || c.Cmp(config.Q) >= 0 {
+			t.Fatalf("\nexpected: coefficient between 0 and %d\nactual:   %v\n",
+				config.Q,
+				c,
+			)
 		}
 	}
 }
