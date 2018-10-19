@@ -7,7 +7,7 @@ import "math/big"
 //
 // It is expected to be broadcast.
 type MemberCommitmentsMessage struct {
-	senderID *big.Int
+	senderID int
 
 	commitments []*big.Int
 }
@@ -18,8 +18,8 @@ type MemberCommitmentsMessage struct {
 // It is expected to be communicated in encrypted fashion to the recipient over
 // a broadcast channel.
 type PeerSharesMessage struct {
-	senderID   *big.Int
-	receiverID *big.Int
+	senderID   int
+	receiverID int
 
 	shareS *big.Int
 	shareT *big.Int
@@ -32,7 +32,7 @@ type PeerSharesMessage struct {
 //
 // It is expected to be broadcast.
 type SecretSharesAccusationsMessage struct {
-	senderID *big.Int
+	senderID int
 
-	accusedIDs []*big.Int
+	accusedIDs []int
 }

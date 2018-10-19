@@ -9,7 +9,7 @@ import (
 
 type memberCore struct {
 	// ID of this group member.
-	ID *big.Int
+	ID int
 	// Group to which this member belongs.
 	group *Group
 	// DKG Protocol configuration parameters.
@@ -37,5 +37,5 @@ type CommittingMember struct {
 	//
 	// receivedSharesS are defined as `s_ji` and receivedSharesT are
 	// defined as `t_ji` across the protocol specification.
-	receivedSharesS, receivedSharesT map[*big.Int]*big.Int
+	receivedSharesS, receivedSharesT map[int]*big.Int
 }

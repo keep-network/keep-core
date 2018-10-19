@@ -52,7 +52,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
-		if cm.ID.Cmp(receiverID) == 0 {
+		if cm.ID == receiverID {
 			cm.selfSecretShareS = memberShareS
 			cm.selfSecretShareT = memberShareT
 			continue
@@ -96,7 +96,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
-	var accusedMembersIDs []*big.Int
+	var accusedMembersIDs []int
 
 	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
@@ -108,11 +108,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 					commitmentsProduct,
 					new(big.Int).Exp(
 						c,
-						new(big.Int).Exp(
-							cm.ID,
-							big.NewInt(int64(k)),
-							cm.protocolConfig.P,
-						),
+						big.NewInt(int64(cm.ID^k)),
 						cm.protocolConfig.P,
 					),
 				),
@@ -122,7 +118,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
-			if sharesMessage.senderID.Cmp(commitmentsMessage.senderID) == 0 {
+			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji)`
 				// where: j is sender's ID, i is current member ID.
@@ -142,7 +138,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 			}
 		}
 		if !sharesMessageFound {
-			return nil, fmt.Errorf("cannot find shares message from member %s",
+			return nil, fmt.Errorf("cannot find shares message from member %d",
 				commitmentsMessage.senderID,
 			)
 		}
@@ -160,7 +156,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 // - `a_j` is j coefficient
 // - `z` is memberID
 // - `T` is threshold
-func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.Int) *big.Int {
+func evaluateMemberShare(memberID int, coefficients []*big.Int, mod *big.Int) *big.Int {
 	result := big.NewInt(0)
 	for j, a := range coefficients {
 		result = new(big.Int).Mod(
@@ -168,7 +164,7 @@ func evaluateMemberShare(memberID *big.Int, coefficients []*big.Int, mod *big.In
 				result,
 				new(big.Int).Mul(
 					a,
-					new(big.Int).Exp(memberID, big.NewInt(int64(j)), mod),
+					big.NewInt(int64(memberID^j)),
 				),
 			),
 			mod,

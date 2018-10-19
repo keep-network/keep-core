@@ -203,7 +203,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 	var members []*CommittingMember
 
 	for i := 1; i <= groupSize; i++ {
-		id := big.NewInt(int64(i))
+		id := i
 		members = append(members, &CommittingMember{
 			memberCore: &memberCore{
 				ID:             id,
@@ -211,8 +211,8 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 				protocolConfig: config,
 			},
 			vss:             vss,
-			receivedSharesS: make(map[*big.Int]*big.Int),
-			receivedSharesT: make(map[*big.Int]*big.Int),
+			receivedSharesS: make(map[int]*big.Int),
+			receivedSharesT: make(map[int]*big.Int),
 		})
 		group.RegisterMemberID(id)
 	}
@@ -221,12 +221,12 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 
 func filterPeerSharesMessage(
 	messages []*PeerSharesMessage,
-	receiverID *big.Int,
+	receiverID int,
 ) []*PeerSharesMessage {
 	var result []*PeerSharesMessage
 	for _, msg := range messages {
-		if msg.senderID.Cmp(receiverID) != 0 &&
-			msg.receiverID.Cmp(receiverID) == 0 {
+		if msg.senderID != receiverID &&
+			msg.receiverID == receiverID {
 			result = append(result, msg)
 		}
 	}
@@ -235,7 +235,7 @@ func filterPeerSharesMessage(
 
 func filterMemberCommitmentsMessages(
 	messages []*MemberCommitmentsMessage,
-	receiverID *big.Int,
+	receiverID int,
 ) []*MemberCommitmentsMessage {
 	var result []*MemberCommitmentsMessage
 	for _, msg := range messages {
