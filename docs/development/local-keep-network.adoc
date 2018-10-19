@@ -59,10 +59,11 @@ Account #0: {dd9fc033955d6fbb4908967bb2fe2a74ec965e92} keystore:///Users/piotr/e
 Account #1: {ca6aa3681a4f6ff5f759fec196d80fb0539b3626} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-11T23-27-24.289597249Z--ca6aa3681a4f6ff5f759fec196d80fb0539b3626
 ```
 
-Initialize your local Ethereum node from `genesis.json` file. This allows to 
-issue some tokens to the accounts we just created. It is enough to issue tokens 
-only to the address that will be used by Keep peers (we need to deploy tokens  
-and submit relay requests to the chain):
+Initialize your local Ethereum node from `genesis.json` file. This allows to
+issue some tokens to the accounts we just created. It is enough to issue tokens
+only to the address that will be used by Keep peers (we need to deploy tokens
+and submit relay requests to the chain). The account under alloc is the address
+of the account from above prepended with `0x`:
 ```
 {
     "config": {
