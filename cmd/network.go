@@ -21,11 +21,10 @@ const (
 	pong = "PONG"
 )
 
-const pingDescription = `The ping command allows a peer to construct an adhoc
-   peer-to-peer network with other known peers. Known peers can then ping this
-   client (or vis versa) to ensure that they are able to properly build up and
-   tear down all of the connections. At least one peer must take the
-   responsibility of being the bootstrap node.`
+const pingDescription = `The ping command conducts a simple peer-to-peer test
+   between a bootstrap node and another peer: can known peers communicate over
+   a peer-to-peer network. Both peers send a "PING" and expect to receive a
+   corresponding "PONG". Notably, this does not exercise peer discovery.`
 
 func init() {
 	PingCommand =
