@@ -50,6 +50,24 @@ Two major deviations from typical Go practices that are worth calling out:
       of type `magic` whose name would naturally be `magic`, the last vowel
       may be dropped to achieve a unique name.
 
+=== Testing
+
+There are a few common patterns for testing in the Keep codebase:
+
+- Table-driven tests. Any case where a function needs to verify multiple cases
+  are generally structured as table-driven tests. There is a very short page on
+  table-driven testing https://github.com/golang/go/wiki/TableDrivenTests[on the
+  Go wiki].
+- Carefully aligned error output. Generally all tests that call `Errorf` should
+  provide a clear expected-vs-actual output stacked and aligned to make it
+  trivial to spot differences. This is typically represented as a call like:
+  `t.Errorf("\nexpected: [%v]\nactual:   [%v]\n", expected, actual)`. This
+  aligns the expected and actual on top of each other. The context of the error
+  should be clear from the test or subtest's name, but if some additional
+  information is deemed useful, it can be included before the initial newline.
+  See `pkg/internal/testutils` for an example of an assert helper that uses this
+  style.
+
 === Directory structure
 
 The directory structure used in the Keep repository is very similar to that used
