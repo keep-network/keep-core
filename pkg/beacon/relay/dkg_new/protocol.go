@@ -45,10 +45,10 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	// by coefficients `a_i` and `b_i`
 	var sharesMessages []*PeerSharesMessage
 	for _, receiverID := range cm.group.MemberIDs() {
-		// s_j = f_(j) mod q
-		memberShareS := evaluateMemberShare(receiverID, coefficientsA, cm.protocolConfig.Q)
-		// t_j = g_(j) mod q
-		memberShareT := evaluateMemberShare(receiverID, coefficientsB, cm.protocolConfig.Q)
+		// s_j = f_(j)
+		memberShareS := evaluateMemberShare(receiverID, coefficientsA)
+		// t_j = g_(j)
+		memberShareT := evaluateMemberShare(receiverID, coefficientsB)
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
@@ -101,8 +101,8 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, commitmentsMessage := range commitmentsMessages {
-		commitmentsProduct := commitmentsMessage.commitments[0]
-		for k, c := range commitmentsMessage.commitments[1:] {
+		commitmentsProduct := big.NewInt(1)
+		for k, c := range commitmentsMessage.commitments {
 			commitmentsProduct = new(big.Int).Mod(
 				new(big.Int).Mul(
 					commitmentsProduct,
@@ -120,7 +120,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 		for _, sharesMessage := range sharesMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
-				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji)`
+				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
 				// where: j is sender's ID, i is current member ID.
 				expectedProduct := cm.vss.CalculateCommitment(
 					sharesMessage.shareS,
@@ -152,22 +152,19 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 
 // evaluateMemberShare calculates a share for given memberID.
 //
-// It calculates `Σ a_j * z^j mod q`for j in [0..T], where:
-// - `a_j` is j coefficient
-// - `z` is memberID
+// It calculates `s_j = Σ a_k * j^k`for k in [0..T], where:
+// - `a_k` is k coefficient
+// - `j` is memberID
 // - `T` is threshold
-func evaluateMemberShare(memberID int, coefficients []*big.Int, mod *big.Int) *big.Int {
+func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
 	result := big.NewInt(0)
-	for j, a := range coefficients {
-		result = new(big.Int).Mod(
-			new(big.Int).Add(
-				result,
-				new(big.Int).Mul(
-					a,
-					big.NewInt(int64(memberID^j)),
-				),
+	for k, a := range coefficients {
+		result = new(big.Int).Add(
+			result,
+			new(big.Int).Mul(
+				a,
+				big.NewInt(int64(memberID^k)),
 			),
-			mod,
 		)
 	}
 	return result
