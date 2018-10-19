@@ -1,4 +1,4 @@
-package dkg
+package gjkr
 
 import (
 	"fmt"
@@ -130,8 +130,8 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 }
 
 func TestRoundTrip(t *testing.T) {
-	threshold := 5
-	groupSize := 10
+	threshold := 3
+	groupSize := 5
 
 	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
@@ -165,7 +165,7 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func TestGeneratePolynomial(t *testing.T) {
-	degree := 5
+	degree := 3
 	config := &config.DKG{P: big.NewInt(100), Q: big.NewInt(9)}
 
 	coefficients, err := generatePolynomial(degree, config)

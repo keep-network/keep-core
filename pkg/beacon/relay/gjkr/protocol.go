@@ -8,7 +8,7 @@
 //         Stern J. (eds) Advances in Cryptology — EUROCRYPT ’99. EUROCRYPT 1999.
 //         Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
 //         http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz
-package dkg
+package gjkr
 
 import (
 	"fmt"

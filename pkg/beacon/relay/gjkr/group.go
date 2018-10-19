@@ -1,4 +1,4 @@
-package dkg
+package gjkr
 
 // Group is protocol's members group.
 type Group struct {

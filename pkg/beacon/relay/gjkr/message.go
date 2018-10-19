@@ -1,4 +1,4 @@
-package dkg
+package gjkr
 
 import "math/big"
 
