@@ -90,7 +90,7 @@ $ export ETHEREUM_ACCOUNT=0xca6aa3681a4f6ff5f759fec196d80fb0539b3626
 ```
 
 ```
-$ geth --datadir="/Users/piotr/ethereum/data" init genesis.json 
+$ geth --datadir=$GETH_DATA_DIR init genesis.json
 
 INFO [10-13|13:29:17] Maximum peer count                       ETH=25 LES=0 total=25
 INFO [10-13|13:29:17] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/chaindata cache=16 handles=16
