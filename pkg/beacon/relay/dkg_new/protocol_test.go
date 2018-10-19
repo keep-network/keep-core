@@ -26,22 +26,22 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 
 	if len(member.secretCoefficients) != (threshold + 1) {
-		t.Fatalf("generated coefficients A number %d doesn't match expected number %d",
-			len(member.secretCoefficients),
+		t.Fatalf("\nexpected: secret coefficients number %v\nactual:   %v\n",
 			threshold+1,
+			len(member.secretCoefficients),
 		)
 	}
 	if len(peerSharesMessages) != (groupSize - 1) {
-		t.Fatalf("peer shares messages number %d doesn't match expected %d",
-			len(peerSharesMessages),
+		t.Fatalf("\nexpected: peer shares messages number %v\nactual:   %v\n",
 			groupSize-1,
+			len(peerSharesMessages),
 		)
 	}
 
 	if len(commitmentsMessage.commitments) != (threshold + 1) {
-		t.Fatalf("calculated commitments number %d doesn't match expected number %d",
-			len(commitmentsMessage.commitments),
+		t.Fatalf("\nexpected: calculated commitments number %v\nactual:   %v\n",
 			threshold+1,
+			len(commitmentsMessage.commitments),
 		)
 	}
 }
@@ -113,14 +113,14 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			)
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
-					"expected: %v\nactual: %v\n",
+					"\nexpected: [%v]\nactual:   [%v]\n",
 					test.expectedError,
 					err,
 				)
 			}
 
 			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
-				t.Fatalf("expecting %d accused member's IDs but received %d",
+				t.Fatalf("\nexpected: accused member's IDs %v\nactual:   %v\n",
 					test.expectedAccusedIDs,
 					accusedMessage.accusedIDs,
 				)
@@ -174,9 +174,9 @@ func TestGeneratePolynomial(t *testing.T) {
 	}
 
 	if len(coefficients) != degree+1 {
-		t.Fatalf("number of generated coefficients %d doesn't match expected %d",
-			len(coefficients),
+		t.Fatalf("\nexpected: coefficients number %d\nactual:   %d\n",
 			degree+1,
+			len(coefficients),
 		)
 	}
 	for _, c := range coefficients {
