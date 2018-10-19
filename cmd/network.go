@@ -37,25 +37,29 @@ func init() {
 		}
 }
 
-// pingRequest tests the functionality and availability of Keep's libp2p
-// network layer.
-func pingRequest(c *cli.Context) error {
+func isBootstrapNode(args cli.Args) (bool, []string) {
 	var bootstrapPeers []string
 
 	// Not a bootstrap node
-	if len(c.Args()) > 0 {
-		bootstrapPeers = append(bootstrapPeers, c.Args().Get(0))
+	if len(args) > 0 {
+		bootstrapPeers = append(bootstrapPeers, args.Get(0))
 	}
 
-	libp2pConfig := libp2p.Config{Peers: bootstrapPeers}
+	return len(bootstrapPeers) == 0, bootstrapPeers
+}
 
-	ctx := context.Background()
+// pingRequest tests the functionality and availability of Keep's libp2p
+// network layer.
+func pingRequest(c *cli.Context) error {
+	isBootstrapNode, bootstrapPeers := isBootstrapNode(c.Args())
+	var (
+		libp2pConfig = libp2p.Config{Peers: bootstrapPeers}
+		ctx          = context.Background()
+	)
 	netProvider, err := libp2p.Connect(ctx, libp2pConfig)
 	if err != nil {
 		return err
 	}
-
-	isBootstrapNode := len(libp2pConfig.Peers) == 0
 
 	if isBootstrapNode {
 		var bootstrapAddr string
