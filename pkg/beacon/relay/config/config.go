@@ -25,7 +25,7 @@ type DKG struct {
 // RandomQ generates a random `big.Int` in range (0, q).
 func (d *DKG) RandomQ() (*big.Int, error) {
 	for {
-		x, err := crand.Int(crand.Reader, d.Q) // returns a value in [0, max)
+		x, err := crand.Int(crand.Reader, d.Q)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate random number [%s]", err)
 		}
