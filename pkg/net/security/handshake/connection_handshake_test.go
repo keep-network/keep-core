@@ -8,8 +8,14 @@ import (
 )
 
 func TestInitiateHanshakeWithUniqueNonce(t *testing.T) {
-	initiator1 := initiateHandshake()
-	initiator2 := initiateHandshake()
+	initiator1, err := initiateHandshake()
+	if err != nil {
+		t.Fatal(err)
+	}
+	initiator2, err := initiateHandshake()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if initiator1.nonce1 == 0 {
 		t.Fatalf("Nonce not initialized")
@@ -27,11 +33,17 @@ func TestAnswerHandshakeWithChallenge(t *testing.T) {
 	//
 
 	// initiator station
-	initiator := initiateHandshake()
+	initiator, err := initiateHandshake()
+	if err != nil {
+		t.Fatal(err)
+	}
 	act1Msg := initiator.message()
 
 	// responder station
-	responder := answerHandshake(act1Msg)
+	responder, err := answerHandshake(act1Msg)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	//
 	// Act 2
@@ -146,12 +158,18 @@ func TestFullHandshake(t *testing.T) {
 	//
 
 	// initiator station
-	initiatorAct1 := initiateHandshake()
+	initiatorAct1, err := initiateHandshake()
+	if err != nil {
+		t.Fatal(err)
+	}
 	act1Message := initiatorAct1.message()
 	initiatorAct2 := initiatorAct1.next()
 
 	// responder station
-	responderAct2 := answerHandshake(act1Message)
+	responderAct2, err := answerHandshake(act1Message)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	//
 	// Act 2

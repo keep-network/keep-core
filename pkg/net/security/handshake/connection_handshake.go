@@ -45,10 +45,11 @@
 package handshake
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"math/rand"
+	"fmt"
 )
 
 // act1Message is sent in the first handshake act by the initiator to the
@@ -89,10 +90,13 @@ type initiatorAct1 struct {
 // initiateHandshake function allows to initiate a hanshake by creating
 // and initializing a state machine representing initiator in the first round
 // of the handshake, ready to execute the protocol.
-func initiateHandshake() *initiatorAct1 {
-	return &initiatorAct1{
-		nonce1: rand.Uint64(),
+func initiateHandshake() (*initiatorAct1, error) {
+	nonce1, err := randomNonce()
+	if err != nil {
+		return nil, fmt.Errorf("could not initiate the handshake [%v]", err)
 	}
+
+	return &initiatorAct1{nonce1}, nil
 }
 
 // message returns the message sent by initiator to the responder in the first
@@ -115,12 +119,15 @@ func (ia1 *initiatorAct1) next() *initiatorAct2 {
 // message from initiator in the first act of the handshake protocol.
 // The returned responder is in a state ready to execute the second act of the
 // handshake protocol.
-func answerHandshake(act1Msg *act1Message) *responderAct2 {
+func answerHandshake(act1Msg *act1Message) (*responderAct2, error) {
 	nonce1 := act1Msg.nonce1
-	nonce2 := rand.Uint64()
+	nonce2, err := randomNonce()
+	if err != nil {
+		return nil, fmt.Errorf("could not answer the handshake [%v]", err)
+	}
 	challenge := hashToChallenge(nonce1, nonce2)
 
-	return &responderAct2{nonce2, challenge}
+	return &responderAct2{nonce2, challenge}, nil
 }
 
 // initiatorAct2 represents the state of the initiator in the second act of the
@@ -212,4 +219,16 @@ func hashToChallenge(nonce1 uint64, nonce2 uint64) [sha256.Size]byte {
 	binary.LittleEndian.PutUint64(inputBytes[8:], nonce2)
 
 	return sha256.Sum256(inputBytes[:])
+}
+
+// randomNonce uses a cryptographically secure pseudorandom number generator
+// to produce an 8-byte unsigned integer nonce.
+func randomNonce() (uint64, error) {
+	bytes := make([]byte, 8)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return 0, fmt.Errorf("could not generate a new nonce [%v]", err)
+	}
+
+	return binary.LittleEndian.Uint64(bytes), nil
 }
