@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 )
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
@@ -174,11 +172,11 @@ func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
 // generatePolynomial generates a random polynomial over Z_q of a given degree.
 // This function will generate a slice of `degree + 1` coefficients. Each value
 // will be a random `big.Int` in range (0, q).
-func generatePolynomial(degree int, protocolConfig *config.DKG) ([]*big.Int, error) {
+func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
 	coefficients := make([]*big.Int, degree+1)
 	var err error
 	for i := range coefficients {
-		coefficients[i], err = protocolConfig.RandomQ()
+		coefficients[i], err = dkg.RandomQ()
 		if err != nil {
 			return nil, err
 		}

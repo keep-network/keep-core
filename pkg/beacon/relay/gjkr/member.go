@@ -3,7 +3,6 @@ package gjkr
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
@@ -13,7 +12,7 @@ type memberCore struct {
 	// Group to which this member belongs.
 	group *Group
 	// DKG Protocol configuration parameters.
-	protocolConfig *config.DKG
+	protocolConfig *DKG
 }
 
 // CommittingMember represents one member in a threshold key sharing group, after

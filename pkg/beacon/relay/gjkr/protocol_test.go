@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
@@ -166,7 +165,7 @@ func TestRoundTrip(t *testing.T) {
 
 func TestGeneratePolynomial(t *testing.T) {
 	degree := 3
-	config := &config.DKG{P: big.NewInt(100), Q: big.NewInt(9)}
+	config := &DKG{P: big.NewInt(100), Q: big.NewInt(9)}
 
 	coefficients, err := generatePolynomial(degree, config)
 	if err != nil {
@@ -190,7 +189,7 @@ func TestGeneratePolynomial(t *testing.T) {
 }
 
 func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMember, error) {
-	config, err := config.PredefinedDKGconfig()
+	config, err := predefinedDKGconfig()
 	if err != nil {
 		return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
 	}
