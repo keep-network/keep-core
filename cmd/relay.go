@@ -87,12 +87,10 @@ func relayRequest(c *cli.Context) error {
 		defer requestMutex.Unlock()
 
 		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
-			valueBigInt := &big.Int{}
-			valueBigInt.SetBytes(entry.Value[:])
 			fmt.Fprintf(
 				os.Stderr,
 				"Relay entry received with value: [%s].\n",
-				valueBigInt.String(),
+				entry.Value.String(),
 			)
 
 			wait <- struct{}{}
@@ -171,7 +169,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 
 	entry := &event.Entry{
 		RequestID:     big.NewInt(0),
-		Value:         value,
+		Value:         big.NewInt(0).SetBytes(value[:]),
 		GroupID:       big.NewInt(0),
 		PreviousEntry: big.NewInt(0),
 		Timestamp:     time.Now().UTC(),

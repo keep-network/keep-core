@@ -47,7 +47,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	relayChain relaychain.Interface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
-		request.PreviousValue[:],
+		request.PreviousValue.Bytes(),
 		request.Seed.Bytes(),
 	)
 
@@ -58,7 +58,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 
 	thresholdsignature.Init(membership.channel)
 	go func() {
-		signature, err := thresholdsignature.Execute(
+		groupSignature, err := thresholdsignature.Execute(
 			combinedEntryToSign,
 			n.blockCounter,
 			membership.channel,
@@ -74,17 +74,16 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		}
 
 		rightSizeSignature := [32]byte{}
-		previousValue := &big.Int{}
-		previousValue.SetBytes(request.PreviousValue[:])
 
 		for i := 0; i < 32; i++ {
-			rightSizeSignature[i] = signature[i]
+			rightSizeSignature[i] = groupSignature[i]
 		}
+		signature := big.NewInt(0).SetBytes(rightSizeSignature[:])
 
 		newEntry := &event.Entry{
 			RequestID:     request.RequestID,
-			Value:         rightSizeSignature,
-			PreviousEntry: previousValue,
+			Value:         signature,
+			PreviousEntry: request.PreviousValue,
 			Timestamp:     time.Now().UTC(),
 			GroupID:       &big.Int{},
 		}
@@ -112,10 +111,9 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 }
 
 func (n *Node) indexForNextGroup(request *event.Request) *big.Int {
-	entry := (&big.Int{}).SetBytes(request.PreviousValue[:])
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
-	return nextGroupIndex(entry, numberOfGroups)
+	return nextGroupIndex(request.PreviousValue, numberOfGroups)
 }
 
 func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
