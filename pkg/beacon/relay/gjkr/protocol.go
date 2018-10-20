@@ -1,4 +1,4 @@
-// Package dkg conatins code that implements Distributed Key Generation protocol
+// Package gjkr conatins code that implements Distributed Key Generation protocol
 // described in [GJKR 99].
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_protocol
@@ -155,6 +155,10 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 // - `a_k` is k coefficient
 // - `j` is memberID
 // - `T` is threshold
+//
+// Note: [GJKR] fig. 2 pt. 1.a. states that calculation should be done `mod q`.
+// Our tests gave unstable results if doing so. We decided not to be using modulo
+// operation here.
 func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
 	result := big.NewInt(0)
 	for k, a := range coefficients {
