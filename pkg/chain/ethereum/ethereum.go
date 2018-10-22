@@ -107,12 +107,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 			previousEntry *big.Int,
 			blockNumber *big.Int,
 		) {
-			var value [32]byte
-			copy(value[:], requestResponse.Bytes()[:32])
 
 			err := relayEntryPromise.Fulfill(&event.Entry{
 				RequestID:     requestID,
-				Value:         value,
+				Value:         requestResponse,
 				GroupID:       requestGroupID,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
@@ -151,12 +149,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		return relayEntryPromise
 	}
 
-	groupSignature := big.NewInt(int64(0)).SetBytes(newEntry.Value[:])
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
 		newEntry.RequestID,
 		newEntry.GroupID,
 		newEntry.PreviousEntry,
-		groupSignature,
+		newEntry.Value,
 	)
 	if err != nil {
 		promiseErr := relayEntryPromise.Fail(
@@ -186,12 +183,9 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 			previousEntry *big.Int,
 			blockNumber *big.Int,
 		) {
-			var value [32]byte
-			copy(value[:], requestResponse.Bytes())
-
 			handle(&event.Entry{
 				RequestID:     requestID,
-				Value:         value,
+				Value:         requestResponse,
 				GroupID:       requestGroupID,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
