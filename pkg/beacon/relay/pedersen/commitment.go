@@ -84,7 +84,7 @@ func NewVSS(p, q *big.Int) (*VSS, error) {
 	}
 
 	// Generate random `g`
-	g, err := randomFromZn(big.NewInt(2), q) // randomZ[2, q - 1]
+	g, err := randomFromZn(big.NewInt(1), q) // randomZ(1, q - 1]
 	if err != nil {
 		return nil, fmt.Errorf("g generation failed [%s]", err)
 	}
@@ -106,7 +106,7 @@ func NewVSS(p, q *big.Int) (*VSS, error) {
 // Then commitment is calculated as `(g ^ s) * (h ^ t) mod q`, where digest
 // is sha256 hash of the secret brought to big.Int.
 func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, error) {
-	t, err := randomFromZn(big.NewInt(0), vss.q) // t = randomZ[0, q - 1]
+	t, err := randomFromZn(big.NewInt(1), vss.q) // t = randomZ(1, q - 1]
 	if err != nil {
 		return nil, nil, fmt.Errorf("t generation failed [%s]", err)
 	}
