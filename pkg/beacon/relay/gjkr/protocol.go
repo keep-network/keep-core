@@ -215,3 +215,25 @@ func (sm *SharingMember) CombineReceivedShares() {
 	sm.shareS = shareS
 	sm.shareT = shareT
 }
+
+// CalculatePublicCoefficients calculates public values for member's coefficients.
+// It calculates `A_k = g^a_k mod p` for k in [0..T].
+//
+// See Phase 7 of the protocol specification.
+func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicKeySharesMessage {
+	var publicCoefficients []*big.Int
+	for _, a := range sm.secretCoefficients {
+		publicA := new(big.Int).Exp(
+			sm.vss.G,
+			a,
+			sm.protocolConfig.P,
+		)
+		publicCoefficients = append(publicCoefficients, publicA)
+	}
+	sm.publicShares = publicCoefficients
+
+	return &MemberPublicKeySharesMessage{
+		senderID:           sm.ID,
+		publicCoefficients: publicCoefficients,
+	}
+}
