@@ -149,14 +149,14 @@ func (vss *VSS) CalculateCommitment(s, r, m *big.Int) *big.Int {
 	)
 }
 
-// randomFromZn generates a random `big.Int` in a range [min, max).
+// randomFromZn generates a random `big.Int` in a range (min, max).
 func randomFromZn(min, max *big.Int) (*big.Int, error) {
 	for {
 		x, err := crand.Int(crand.Reader, max) // returns a value in [0, max)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate random number [%s]", err)
 		}
-		if x.Cmp(min) >= 0 {
+		if x.Cmp(min) > 0 {
 			return x, nil
 		}
 	}
