@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestCalculateSharesAndCommitments(t *testing.T) {
@@ -125,6 +126,94 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestCombineReceivedShares(t *testing.T) {
+	receivedShareS := make(map[int]*big.Int)
+	receivedShareT := make(map[int]*big.Int)
+	for i := 0; i <= 5; i++ {
+		receivedShareS[100+i] = big.NewInt(int64(i))
+		receivedShareT[100+i] = big.NewInt(int64(10 + i))
+	}
+
+	expectedShareS := big.NewInt(15)
+	expectedShareT := big.NewInt(75)
+
+	config, err := predefinedDKGconfig()
+	if err != nil {
+		t.Fatalf("DKG Config initialization failed [%s]", err)
+	}
+	member := &SharingMember{
+		CommittingMember: &CommittingMember{
+			memberCore: &memberCore{
+				protocolConfig: config,
+			},
+			receivedSharesS: receivedShareS,
+			receivedSharesT: receivedShareT,
+		},
+	}
+
+	member.CombineReceivedShares()
+
+	if member.shareS.Cmp(expectedShareS) != 0 {
+		t.Errorf("combined shares s %s doesn't match expected %s",
+			member.shareS,
+			expectedShareS)
+	}
+	if member.shareT.Cmp(expectedShareT) != 0 {
+		t.Errorf("combined shares t %s doesn't match expected %s",
+			member.shareT,
+			expectedShareT)
+	}
+}
+
+func TestCalculatePublicCoefficients(t *testing.T) {
+	secretCoefficients := []*big.Int{
+		big.NewInt(3),
+		big.NewInt(5),
+		big.NewInt(2),
+	}
+	expectedPublicCoefficients := []*big.Int{
+		big.NewInt(216),
+		big.NewInt(148),
+		big.NewInt(36),
+	}
+
+	config := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
+
+	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
+	// initialization.
+	mockRandomReader := testutils.NewMockRandReader(big.NewInt(6))
+	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
+	if err != nil {
+		t.Fatalf("VSS initialization failed [%s]", err)
+	}
+
+	member := &SharingMember{
+		CommittingMember: &CommittingMember{
+			memberCore: &memberCore{
+				protocolConfig: config,
+			},
+			vss:                vss,
+			secretCoefficients: secretCoefficients,
+		},
+	}
+
+	message := member.CalculatePublicCoefficients()
+
+	if !reflect.DeepEqual(member.publicCoefficients, expectedPublicCoefficients) {
+		t.Errorf("public shares for member doesn't match expected\nactual: %s\nexpected: %s",
+			member.publicCoefficients,
+			expectedPublicCoefficients,
+		)
+	}
+
+	if !reflect.DeepEqual(message.publicCoefficients, expectedPublicCoefficients) {
+		t.Errorf("public shares in message doesn't match expected\nactual: %s\nexpected: %s",
+			message.publicCoefficients,
+			expectedPublicCoefficients,
+		)
 	}
 }
 
