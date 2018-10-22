@@ -31,6 +31,7 @@ package pedersen
 import (
 	crand "crypto/rand"
 	"fmt"
+	"io"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
@@ -72,7 +73,7 @@ type DecommitmentKey struct {
 // It has to be run by a verifier or a trusted party. Executing generation by
 // commiter themself causes that binding property is not held. Commiter gets an
 // ability to manipulate with already committed values.
-func NewVSS(p, q *big.Int) (*VSS, error) {
+func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 	if !p.ProbablyPrime(20) || !q.ProbablyPrime(20) {
 		return nil, fmt.Errorf("p and q have to be primes")
 	}
@@ -84,19 +85,19 @@ func NewVSS(p, q *big.Int) (*VSS, error) {
 	}
 
 	// Generate random `g`
-	g, err := randomFromZn(big.NewInt(2), q) // randomZ[2, q - 1]
+	g, err := randomFromZn(rand, big.NewInt(2), q) // randomZ[2, q - 1]
 	if err != nil {
 		return nil, fmt.Errorf("g generation failed [%s]", err)
 	}
 
 	// h = (g ^ randomZ[0, q - 1]) % q
-	randomValue, err := randomFromZn(big.NewInt(0), q) // randomZ[0, q - 1]
+	randomValue, err := randomFromZn(rand, big.NewInt(0), q) // randomZ[0, q - 1]
 	if err != nil {
 		return nil, fmt.Errorf("randomValue generation failed [%s]", err)
 	}
 	h := new(big.Int).Exp(g, randomValue, q)
 
-	return &VSS{p: p, q: q, g: g, h: h}, nil
+	return &VSS{p: p, q: q, G: g, h: h}, nil
 }
 
 // CommitmentTo takes a secret message and a set of parameters and returns
@@ -105,8 +106,8 @@ func NewVSS(p, q *big.Int) (*VSS, error) {
 // First random `t` value is chosen as a Decommitment Key.
 // Then commitment is calculated as `(g ^ s) * (h ^ t) mod q`, where digest
 // is sha256 hash of the secret brought to big.Int.
-func (vss *VSS) CommitmentTo(secret []byte) (*Commitment, *DecommitmentKey, error) {
-	t, err := randomFromZn(big.NewInt(0), vss.q) // t = randomZ[0, q - 1]
+func (vss *VSS) CommitmentTo(rand io.Reader, secret []byte) (*Commitment, *DecommitmentKey, error) {
+	t, err := randomFromZn(rand, big.NewInt(0), vss.q) // t = randomZ[0, q - 1]
 	if err != nil {
 		return nil, nil, fmt.Errorf("t generation failed [%s]", err)
 	}
@@ -150,9 +151,9 @@ func (vss *VSS) CalculateCommitment(s, r, m *big.Int) *big.Int {
 }
 
 // randomFromZn generates a random `big.Int` in a range [min, max - 1].
-func randomFromZn(min, max *big.Int) (*big.Int, error) {
+func randomFromZn(rand io.Reader, min, max *big.Int) (*big.Int, error) {
 	for {
-		x, err := crand.Int(crand.Reader, max) // returns a value in [0, max)
+		x, err := crand.Int(rand, max) // returns a value in [0, max)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate random number [%s]", err)
 		}
