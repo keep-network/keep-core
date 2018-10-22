@@ -194,8 +194,6 @@ func submitRelayEntrySeed(c *cli.Context) error {
 			"Relay entry received with value: [%v].\n",
 			entry.Value,
 		)
-
-		wait <- nil
 	})
 
 	select {
