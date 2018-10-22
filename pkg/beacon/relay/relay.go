@@ -73,12 +73,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			return
 		}
 
-		rightSizeSignature := [32]byte{}
-
-		for i := 0; i < 32; i++ {
-			rightSizeSignature[i] = groupSignature[i]
-		}
-		signature := big.NewInt(0).SetBytes(rightSizeSignature[:])
+		signature := big.NewInt(0).SetBytes(groupSignature[:32])
 
 		newEntry := &event.Entry{
 			RequestID:     request.RequestID,
