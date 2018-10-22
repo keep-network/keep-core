@@ -43,6 +43,6 @@ type CommittingMember struct {
 type SharingMember struct {
 	*CommittingMember
 
-	shareS, shareT *big.Int
-	publicShares   []*big.Int
+	shareS, shareT     *big.Int
+	publicCoefficients []*big.Int
 }

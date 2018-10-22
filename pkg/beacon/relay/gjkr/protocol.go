@@ -230,7 +230,7 @@ func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicCoefficients
 		)
 		publicCoefficients = append(publicCoefficients, publicA)
 	}
-	sm.publicShares = publicCoefficients
+	sm.publicCoefficients = publicCoefficients
 
 	return &MemberPublicCoefficientsMessage{
 		senderID:           sm.ID,
