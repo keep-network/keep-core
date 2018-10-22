@@ -45,3 +45,15 @@ type MemberPublicKeySharesMessage struct {
 
 	publicCoefficients []*big.Int
 }
+
+// CoefficientsAccusationsMessage is a message payload that carries all of the
+// sender's accusations against other members of the threshold group after public
+// coefficients validation.
+// If all other members behaved honestly from the sender's point of view, this
+// message should be broadcast but with an empty slice of `accusedIDs`.
+// It is expected to be broadcast.
+type CoefficientsAccusationsMessage struct {
+	senderID int
+
+	accusedIDs []int
+}
