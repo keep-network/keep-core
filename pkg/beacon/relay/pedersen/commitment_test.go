@@ -41,7 +41,14 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		"negative validation - incorrect `commitment`": {
 			verificationValue: committedValue,
 			modifyCommitment: func(commitment *Commitment) {
-				commitment.commitment, _ = generateNewRandom(commitment.commitment, q)
+				commitment.commitment, _ = generateNewRandom(commitment.commitment, vss.q)
+			},
+			expectedResult: false,
+		},
+		"negative validation - incorrect `g`": {
+			verificationValue: committedValue,
+			modifyVSS: func(vss *VSS) {
+				vss.g, _ = generateNewRandom(vss.g, vss.q)
 			},
 			expectedResult: false,
 		},
@@ -56,7 +63,6 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-
 			commitment, decommitmentKey, err := vss.CommitmentTo([]byte(committedValue))
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
@@ -117,7 +123,6 @@ func TestNewVSSpqValidation(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-
 			_, err := NewVSS(test.p, test.q)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
