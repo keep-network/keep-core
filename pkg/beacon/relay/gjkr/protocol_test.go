@@ -292,28 +292,61 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	var peerSharesMessages []*PeerSharesMessage
-	var messages []*MemberCommitmentsMessage
+	var commitmentsMessages []*MemberCommitmentsMessage
 	for _, member := range committingMembers {
 		peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 		if err != nil {
 			t.Fatalf("shares and commitments calculation failed [%s]", err)
 		}
 		peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
-		messages = append(messages, commitmentsMessage)
+		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
 	}
 
 	committingMember := committingMembers[0]
 
-	accusedMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
+	accusedSecretSharesMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
 		filterPeerSharesMessage(peerSharesMessages, committingMember.ID),
-		filterMemberCommitmentsMessages(messages, committingMember.ID),
+		filterMemberCommitmentsMessages(commitmentsMessages, committingMember.ID),
 	)
 	if err != nil {
 		t.Fatalf("shares and commitments verification failed [%s]", err)
 	}
 
-	if len(accusedMessage.accusedIDs) > 0 {
+	if len(accusedSecretSharesMessage.accusedIDs) > 0 {
 		t.Fatalf("found accused members but was not expecting to")
+	}
+
+	var sharingMembers []*SharingMember
+	for _, cm := range committingMembers {
+		sharingMembers = append(sharingMembers, &SharingMember{
+			CommittingMember: cm,
+		})
+	}
+
+	sharingMember := sharingMembers[0]
+	if len(sharingMember.receivedSharesS) != groupSize-1 {
+		t.Fatalf("received shares number %d doesn't match expected number %d",
+			len(sharingMember.receivedSharesS),
+			groupSize-1,
+		)
+	}
+
+	for _, member := range sharingMembers {
+		member.CombineReceivedShares()
+	}
+
+	secondMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
+	for i, member := range sharingMembers {
+		secondMessages[i] = member.CalculatePublicCoefficients()
+	}
+	accusedCoefficientsMessage, err := sharingMember.VerifyPublicCoefficients(
+		filterMemberPublicCoefficientsMessages(secondMessages, sharingMember.ID),
+	)
+	if err != nil {
+		t.Fatalf("phase8 failed [%s]", err)
+	}
+	if len(accusedCoefficientsMessage.accusedIDs) > 0 {
+		t.Fatalf("something wrong %v", accusedCoefficientsMessage.accusedIDs)
 	}
 }
 
