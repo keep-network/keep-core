@@ -118,20 +118,14 @@ func relayRequest(c *cli.Context) error {
 	select {
 	case <-wait:
 		cancel()
-		os.Exit(0)
+		return nil
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Request errored out: [%v].\n",
-				err,
-			)
+			return fmt.Errorf("Request errored out: [%v].\n", err)
 		} else {
-			fmt.Fprintf(os.Stderr, "Request errored for unknown reason.\n")
+			return fmt.Errorf("Request errored for unknown reason.\n")
 		}
-
-		os.Exit(1)
 	}
 
 	return nil
@@ -199,28 +193,20 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	select {
 	case err := <-wait:
 		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
+			return fmt.Errorf(
 				"Error in submitting relay entry: [%v].\n",
 				err,
 			)
 		} else {
 			cancel()
 		}
-		os.Exit(1)
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Request errored out: [%v].\n",
-				err,
-			)
+			return fmt.Errorf("Request errored out: [%v].\n", err)
 		} else {
-			fmt.Fprintf(os.Stderr, "Request errored for unknown reason.\n")
+			return fmt.Errorf("Request errored for unknown reason.\n")
 		}
-
-		os.Exit(1)
 	}
 
 	return nil
