@@ -217,6 +217,70 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	}
 }
 
+func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
+	threshold := 3
+	groupSize := 5
+
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	sharingMember := sharingMembers[0]
+	var tests = map[string]struct {
+		modifyPublicCoefficientsMessages func(messages []*MemberPublicCoefficientsMessage)
+		expectedError                    error
+		expectedAccusedIDs               int
+	}{
+		"positive validation": {
+			expectedError:      nil,
+			expectedAccusedIDs: 0,
+		},
+		"negative validation - changed public key share": {
+			modifyPublicCoefficientsMessages: func(messages []*MemberPublicCoefficientsMessage) {
+				messages[1].publicCoefficients[1] = big.NewInt(13)
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: 1,
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			messages := make([]*MemberPublicCoefficientsMessage, groupSize)
+
+			for i, m := range sharingMembers {
+				messages[i] = m.CalculatePublicCoefficients()
+			}
+
+			filteredMessages := filterMemberPublicCoefficientsMessages(
+				messages,
+				sharingMember.ID,
+			)
+
+			if test.modifyPublicCoefficientsMessages != nil {
+				test.modifyPublicCoefficientsMessages(filteredMessages)
+			}
+
+			accusedMessage, err := sharingMember.VerifyPublicCoefficients(filteredMessages)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"expected: %v\nactual: %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
+				t.Fatalf("expecting %d accused member's IDs but received %d",
+					test.expectedAccusedIDs,
+					accusedMessage.accusedIDs,
+				)
+			}
+		})
+	}
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 3
 	groupSize := 5
