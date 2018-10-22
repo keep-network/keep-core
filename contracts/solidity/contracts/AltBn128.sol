@@ -150,6 +150,65 @@ library AltBn128 {
     }
 
     /**
+     * @dev Return the sum of two gfP2 points.
+     */
+    function gfP2Add(uint256[2] a, uint256[2] b) internal pure returns(uint256, uint256) {
+        return (
+            addmod(a[0], b[0], p),
+            addmod(a[1], b[1], p)
+        );
+    }
+
+    /**
+     * @dev Return multiplication of two gfP2 points.
+     */
+    function gfP2Multiply(uint256[2] a, uint256[2] b) internal pure returns(uint256, uint256) {
+        return (
+            addmod(mulmod(a[0], b[0], p), p - mulmod(a[1], b[1], p), p),
+            addmod(mulmod(a[0], b[1], p), mulmod(a[1], b[0], p), p)
+        );
+    }
+
+    /**
+     * @dev Return gfP2 element to the power of the provided exponent.
+     */
+    function gfP2Pow(uint256[2] a, uint256 _exp) internal pure returns(uint256, uint256) {
+        uint256 exp = _exp;
+        uint256[2] memory input;
+        uint256[2] memory output;
+        output[0] = 1;
+        output[1] = 0;
+        input[0] = a[0];
+        input[1] = a[1];
+
+        // Reduce exp with right shift operator (divide by 2) gradually to 0
+        // while computing a when exp is an odd number.
+        while (exp > 0) {
+            if (ySign(exp) == 1) {
+                (output[0], output[1]) = gfP2Multiply(output, input);
+            }
+
+            exp = exp / 2;
+            (input[0], input[1]) = gfP2Multiply(input, input);
+        }
+
+        return (
+            output[0], output[1]
+        );
+    }
+
+    /**
+     * @dev Return true if y^2 equals x.
+     */
+    function x2y(uint256[2] x, uint256[2] y) internal pure returns(bool) {
+       
+        uint256[2] memory y2;
+        (y2[0], y2[1]) = gfP2Pow(y, 2);
+
+        return (y2[0] == x[0] && y2[1] == x[1]);
+    }
+
+    /**
      * @dev Wrap the scalar point multiplication pre-compile introduced in
      * Byzantium. The result of a point from G1 multiplied by a scalar should
      * match the point added to itself the same number of times. Revert if the
