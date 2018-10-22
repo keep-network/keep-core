@@ -43,7 +43,7 @@ type VSS struct {
 
 	// g and h are elements of a group of order q, and should be chosen such that
 	// no one knows log_g(h).
-	g, h *big.Int
+	G, h *big.Int
 }
 
 // Commitment represents a single commitment to a single message. One is produced
@@ -142,7 +142,7 @@ func calculateDigest(secret []byte, mod *big.Int) *big.Int {
 func (vss *VSS) CalculateCommitment(s, r, m *big.Int) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(vss.g, s, m),
+			new(big.Int).Exp(vss.G, s, m),
 			new(big.Int).Exp(vss.h, r, m),
 		),
 		m,
