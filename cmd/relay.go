@@ -158,7 +158,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	}
 
 	var (
-		wait        = make(chan struct{}, 2)
+		wait        = make(chan error)
 		ctx, cancel = context.WithCancel(context.Background())
 	)
 
@@ -181,18 +181,10 @@ func submitRelayEntrySeed(c *cli.Context) error {
 			"Submitted relay entry: [%v].\n",
 			data,
 		)
-		wait <- struct{}{}
+		wait <- nil
 		return
 	}).OnFailure(func(err error) {
-		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Error in submitting relay entry: [%v].\n",
-				err,
-			)
-			return
-		}
-		wait <- struct{}{}
+		wait <- err
 		return
 	})
 
@@ -203,13 +195,21 @@ func submitRelayEntrySeed(c *cli.Context) error {
 			entry.Value,
 		)
 
-		wait <- struct{}{}
+		wait <- nil
 	})
 
 	select {
 	case <-wait:
-		cancel()
-		os.Exit(0)
+		if err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"Error in submitting relay entry: [%v].\n",
+				err,
+			)
+		} else {
+			cancel()
+		}
+		os.Exit(1)
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
