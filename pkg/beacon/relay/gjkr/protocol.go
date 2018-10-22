@@ -220,7 +220,7 @@ func (sm *SharingMember) CombineReceivedShares() {
 // It calculates `A_k = g^a_k mod p` for k in [0..T].
 //
 // See Phase 7 of the protocol specification.
-func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicKeySharesMessage {
+func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicCoefficientsMessage {
 	var publicCoefficients []*big.Int
 	for _, a := range sm.secretCoefficients {
 		publicA := new(big.Int).Exp(
@@ -232,7 +232,7 @@ func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicKeySharesMes
 	}
 	sm.publicShares = publicCoefficients
 
-	return &MemberPublicKeySharesMessage{
+	return &MemberPublicCoefficientsMessage{
 		senderID:           sm.ID,
 		publicCoefficients: publicCoefficients,
 	}
@@ -243,7 +243,7 @@ func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicKeySharesMes
 // It returns accusation message with ID of members for which verification failed.
 //
 // See Phase 8 of the protocol specification.
-func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicKeySharesMessage) (*CoefficientsAccusationsMessage, error) {
+func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoefficientsMessage) (*CoefficientsAccusationsMessage, error) {
 	var accusedMembersIDs []int
 	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
