@@ -44,6 +44,27 @@ library AltBn128 {
     }
 
     /**
+     * @dev Gets twist curve B constant.
+     * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
+     */
+    function twistB() public pure returns (uint256[2]) {
+        return [
+            19485874751759354771024239261021720505790618469301721065564631296452457478373,
+            266929791119991161246907387137283842545076965332900288569378510910307636690
+        ];
+    }
+
+    /**
+     * @dev Gets root of the point where x and y are equal.
+     */
+    function hexRoot() public pure returns (uint256[2]) {
+        return [
+            21573744529824266246521972077326577680729363968861965890554801909984373949499,
+            16854739155576650954933913186877292401521110422362946064090026408937773542853
+        ];
+    }
+
+    /**
      * @dev yFromX computes a Y value for a point based on an X value. This
      * computation is simply evaluating the curve equation for Y on a
      * given X, and allows a point on the curve to be represented by just
@@ -54,6 +75,32 @@ library AltBn128 {
         view returns(uint256)
     {
         return ((x.modExp(3, p) + 3) % p).modSqrt(p);
+    }
+
+    /**
+     * @dev gfP2YFromX computes a Y value for a gfP2 point based on an X value.
+     * This computation is simply evaluating the curve equation for Y on a
+     * given X, and allows a point on the curve to be represented by just
+     * an X value + a sign bit.
+     */
+    function gfP2YFromX(uint256[2] _x)
+        private
+        pure returns(uint256[2] y)
+    {
+        uint256[2] memory x = gfP2Add(gfP2Pow(_x, 3), twistB());
+
+        // Using formula y = x ^ (p^2 + 15) // 32) from 
+        // https://github.com/ethereum/beacon_chain/blob/master/beacon_chain/utils/bls.py
+        // (p^2 + 15) // 32) results into a big 512bit value, so breaking it to two uint256 as (a * a + b)
+        uint256 a = 3869331240733915743250440106392954448556483137451914450067252501901456824595;
+        uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
+  
+        y = gfP2Multiply(gfP2Pow(gfP2Pow(x, a), a), gfP2Pow(x, b));
+
+        // Multiply y by hexRoot constant to find correct y.
+        while (!x2y(x, y)) {
+            y = gfP2Multiply(y, hexRoot());
+        }
     }
 
     /**
@@ -105,6 +152,22 @@ library AltBn128 {
     }
 
     /**
+     * @dev Compress a point on G2 to a pair of uint256 for serialization.
+     */
+    function g2Compress(uint256[2] x, uint256[2] y)
+        public
+        pure returns(bytes)
+    {
+        bytes32 m = bytes32(x[0]);
+
+        byte leadM = m[0] | ySign(y[0]) << 7;
+        bytes32 mask = 0xff << 31*8;
+        m = (m & ~mask) | (leadM >> 0);
+
+        return abi.encodePacked(m, bytes32(x[1]));
+    }
+
+    /**
      * @dev Decompress a point on G1 from a single uint256.
      */
     function g1Decompress(bytes32 m)
@@ -124,7 +187,44 @@ library AltBn128 {
         }
 
         return (x, y);
+    }
 
+    /**
+     * @dev Decompress a point on G2 from a pair of uint256.
+     */
+    function g2Decompress(bytes m)
+        public
+        view returns(uint256[2], uint256[2])
+    {
+        bytes32 x1;
+        bytes32 x2;
+        uint256 temp;
+
+        // Extract two bytes32 from bytes array
+        /* solium-disable-next-line */
+        assembly {
+            temp := add(m, 32)
+            x1 := mload(temp)
+            temp := add(m, 64)
+            x2 := mload(temp)
+        }
+
+        bytes32 mX = bytes32(0);
+        byte leadX = x1[0] & byte(127);
+        bytes32 mask = 0xff << 31*8;
+        mX = (x1 & ~mask) | (leadX >> 0);
+
+        uint256[2] memory x = [uint256(x2), uint256(mX)];
+        uint256[2] memory y = gfP2YFromX(x);
+        y = [y[1], y[0]];
+        x = [x[1], x[0]];
+
+        if (ySign(y[0]) != (m[0] & byte(128)) >> 7) {
+            y[0] = p - y[0];
+            y[1] = p - y[1];
+        }
+
+        return (x, y);
     }
 
     /**
