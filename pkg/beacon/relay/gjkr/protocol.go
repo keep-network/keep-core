@@ -237,3 +237,44 @@ func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicKeySharesMes
 		publicCoefficients: publicCoefficients,
 	}
 }
+
+// VerifyPublicCoefficients validates public key shares received in messages from
+// peer group members.
+// It returns accusation message with ID of members for which verification failed.
+//
+// See Phase 8 of the protocol specification.
+func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicKeySharesMessage) (*CoefficientsAccusationsMessage, error) {
+	var accusedMembersIDs []int
+	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
+	// where: j is sender's ID, i is current member ID, T is threshold.
+	for _, message := range messages {
+		product := big.NewInt(1)
+		for k, a := range message.publicCoefficients {
+			product = new(big.Int).Mod(
+				new(big.Int).Mul(
+					product,
+					new(big.Int).Exp(
+						a,
+						pow(sm.ID, k),
+						sm.protocolConfig.P,
+					),
+				),
+				sm.protocolConfig.P,
+			)
+		}
+		// `expectedProduct = g^s_ji`
+		expectedProduct := new(big.Int).Exp(
+			sm.vss.G,
+			sm.receivedSharesS[message.senderID],
+			sm.protocolConfig.P)
+
+		if expectedProduct.Cmp(product) != 0 {
+			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+		}
+	}
+
+	return &CoefficientsAccusationsMessage{
+		senderID:   sm.ID,
+		accusedIDs: accusedMembersIDs,
+	}, nil
+}
