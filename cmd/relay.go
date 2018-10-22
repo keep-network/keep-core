@@ -161,30 +161,11 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	}
 
 	var (
-		value        [32]byte
-		requestID    *big.Int
-		wait         = make(chan struct{})
-		requestMutex = sync.Mutex{}
+		value [32]byte
+		wait  = make(chan struct{}, 2)
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
-		requestMutex.Lock()
-		defer requestMutex.Unlock()
-
-		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
-			valueBigInt := &big.Int{}
-			valueBigInt.SetBytes(entry.Value[:])
-			fmt.Fprintf(
-				os.Stderr,
-				"Relay entry received with value: [%s].\n",
-				valueBigInt.String(),
-			)
-
-			wait <- struct{}{}
-		}
-	})
-
+	ctx, cancel := context.WithCancel(context.Background())
 	// Seed the network with the first 32-bytes of pi
 	binary.BigEndian.PutUint64(value[:], math.Float64bits(math.Pi))
 
@@ -204,10 +185,8 @@ func submitRelayEntrySeed(c *cli.Context) error {
 			"Submitted relay entry: [%v].\n",
 			data,
 		)
-
-		requestMutex.Lock()
-		requestID = data.RequestID
-		requestMutex.Unlock()
+		wait <- struct{}{}
+		return
 	}).OnFailure(func(err error) {
 		if err != nil {
 			fmt.Fprintf(
@@ -217,6 +196,19 @@ func submitRelayEntrySeed(c *cli.Context) error {
 			)
 			return
 		}
+		wait <- struct{}{}
+		return
+	})
+
+	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
+		valueBigInt := (&big.Int{}).SetBytes(entry.Value[:])
+		fmt.Fprintf(
+			os.Stderr,
+			"Relay entry received with value: [%s].\n",
+			valueBigInt.String(),
+		)
+
+		wait <- struct{}{}
 	})
 
 	select {
