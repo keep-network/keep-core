@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net"
 
 	dstore "github.com/ipfs/go-datastore"
@@ -66,8 +67,12 @@ func (p *provider) AddrStrings() []string {
 //
 // An error is returned if any part of the connection or bootstrap process
 // fails.
-func Connect(ctx context.Context, config Config) (net.Provider, error) {
-	identity, err := generateIdentity(config.Seed)
+func Connect(
+	ctx context.Context,
+	config Config,
+	account ethereum.Account,
+) (net.Provider, error) {
+	identity, err := readIdentity(account)
 	if err != nil {
 		return nil, err
 	}

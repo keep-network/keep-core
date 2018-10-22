@@ -52,7 +52,9 @@ func Start(c *cli.Context) error {
 	}
 
 	ctx := context.Background()
-	netProvider, err := libp2p.Connect(ctx, config.LibP2P)
+	netProvider, err := libp2p.Connect(
+		ctx, config.LibP2P, config.Ethereum.Account,
+	)
 	if err != nil {
 		return err
 	}

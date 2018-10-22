@@ -1,19 +1,13 @@
 package libp2p
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"fmt"
-	"io"
-	mrand "math/rand"
 
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
-
-	mh "github.com/multiformats/go-multihash"
 )
 
 // identity represents a group member's network level identity. It
@@ -86,55 +80,28 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// generateIdentity generates a public/private-key pair (using the libp2p/crypto
-// wrapper for golang/crypto). A randseed value of 0, the default for ints in Go,
-// will result in a cryptographically strong source of psuedorandomness,
-// whereas providing a randseed value (anything but 0), will result in using
-// the seed and math/rand, a deterministic, weak source of psuedorandomness.
-func generateIdentity(randseed int) (*identity, error) {
-	// FIXME: rather than a seed, read in pub/pk from config
-	var r io.Reader
-	if randseed != 0 {
-		r = mrand.New(mrand.NewSource(int64(randseed)))
-	} else {
-		r = rand.Reader
-	}
-	// curve parameters defined in:
-	// https://github.com/btcsuite/btcd/blob/master/btcec/btcec.go#L908
-	privKey, pubKey, err := libp2pcrypto.GenerateSecp256k1Key(r)
+func readIdentity(account ethereum.Account) (*identity, error) {
+	ethereumKey, err := ethereum.DecryptKeyFile(
+		account.KeyFile,
+		account.KeyFilePassword,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"failed to read KeyFile: %s [%v]", account.KeyFile, err,
+		)
 	}
 
-	pid, err := peer.IDFromPublicKey(pubKey)
+	privateKey, publicKey, err := identityKeyPair(ethereumKey.PrivateKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse provided key [%v]", err)
 	}
 
-	return &identity{privKey: privKey, pubKey: pubKey, id: pid}, nil
-}
-
-// peerIDFromPublicKey turns ECDSA public key into libp2p `peer.ID` and works
-// for key defined with any elliptic curve.
-//
-// `peer.IDFromPublicKey` defined by libp2p works only for keys defined with
-// curves from the standard Go library and it's not possible to use this
-// function for keys created with secp256k1 curve defined in `go-ethereum`
-// library.
-//
-// peerIDFromPublicKey uses the same strategy for creating a multihash of key
-// bytes as the libp2p `peer.IDFromPublicKey`.
-func peerIDFromPublicKey(pubKey *ecdsa.PublicKey) peer.ID {
-	return bytesToPeerID(elliptic.Marshal(
-		pubKey.Curve, pubKey.X, pubKey.Y,
-	))
-}
-
-func bytesToPeerID(bytes []byte) peer.ID {
-	var alg uint64 = mh.SHA2_256
-	if len(bytes) <= peer.MaxInlineKeyLength {
-		alg = mh.ID
+	peerID, err := peer.IDFromPublicKey(publicKey)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not transform public key to peer's identity [%v]", err,
+		)
 	}
-	hash, _ := mh.Sum(bytes, alg, -1)
-	return peer.ID(hash)
+
+	return &identity{peerID, publicKey, privateKey}, nil
 }
