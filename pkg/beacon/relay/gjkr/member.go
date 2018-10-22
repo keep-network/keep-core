@@ -47,4 +47,6 @@ type SharingMember struct {
 	publicCoefficients []*big.Int
 
 	receivedGroupPublicKeyShares map[int]*big.Int
+
+	groupPublicKey *big.Int
 }
