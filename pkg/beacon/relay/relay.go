@@ -58,7 +58,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 
 	thresholdsignature.Init(membership.channel)
 	go func() {
-		groupSignature, err := thresholdsignature.Execute(
+		signature, err := thresholdsignature.Execute(
 			combinedEntryToSign,
 			n.blockCounter,
 			membership.channel,
@@ -73,11 +73,11 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			return
 		}
 
-		signature := big.NewInt(0).SetBytes(groupSignature[:32])
+		rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
 
 		newEntry := &event.Entry{
 			RequestID:     request.RequestID,
-			Value:         signature,
+			Value:         rightSizeSignature,
 			PreviousEntry: request.PreviousValue,
 			Timestamp:     time.Now().UTC(),
 			GroupID:       &big.Int{},
