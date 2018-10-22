@@ -89,12 +89,19 @@ func NewVSS(p, q *big.Int) (*VSS, error) {
 		return nil, fmt.Errorf("g generation failed [%s]", err)
 	}
 
-	// h = (g ^ randomZ[0, q - 1]) % q
-	randomValue, err := randomFromZn(big.NewInt(0), q) // randomZ[0, q - 1]
-	if err != nil {
-		return nil, fmt.Errorf("randomValue generation failed [%s]", err)
+	// h = (g ^ randomZ(1, q - 1]) % q
+	var h *big.Int
+	for {
+		randomValue, err := randomFromZn(big.NewInt(1), q) // randomZ(1, q - 1]
+		if err != nil {
+			return nil, fmt.Errorf("randomValue generation failed [%s]", err)
+		}
+		h = new(big.Int).Exp(g, randomValue, q)
+
+		if h.Cmp(big.NewInt(1)) > 0 {
+			break
+		}
 	}
-	h := new(big.Int).Exp(g, randomValue, q)
 
 	return &VSS{p: p, q: q, g: g, h: h}, nil
 }
