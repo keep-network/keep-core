@@ -280,3 +280,22 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 		accusedIDs: accusedMembersIDs,
 	}, nil
 }
+
+// CombinePublicKeyShares calculates a group public key from public key shares.
+// Public key is calculated as a product of zeroth public shares (coefficients)
+// `A_j0 = z_j` for all group members including member themself.
+//
+// See Phase 12 of the protocol specification.
+func (sm *SharingMember) CombinePublicKeyShares() {
+	// Current member's zeroth coefficient.
+	groupPublicKey := sm.publicCoefficients[0]
+
+	// Multiply peer group members' zeroth coefficients.
+	for _, publicKeyShare := range sm.receivedGroupPublicKeyShares {
+		groupPublicKey = new(big.Int).Mod(
+			new(big.Int).Mul(groupPublicKey, publicKeyShare),
+			sm.protocolConfig.P,
+		)
+	}
+	sm.groupPublicKey = groupPublicKey
+}
