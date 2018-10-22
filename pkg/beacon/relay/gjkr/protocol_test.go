@@ -51,12 +51,6 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize)
-	if err != nil {
-		t.Fatalf("group initialization failed [%s]", err)
-	}
-	currentMember := members[0]
-
 	var tests = map[string]struct {
 		modifyPeerShareMessages   func(messages []*PeerSharesMessage) []*PeerSharesMessage
 		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage
@@ -69,7 +63,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		},
 		"negative validation - changed random share": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []*PeerSharesMessage {
-				messages[1].shareT = big.NewInt(13)
+				messages[0].shareT = big.NewInt(13)
 				return messages
 			},
 			expectedError:      nil,
@@ -77,7 +71,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		},
 		"negative validation - changed commitment": {
 			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage {
-				messages[1].commitments[0] = big.NewInt(13)
+				messages[0].commitments[0] = big.NewInt(13)
 				return messages
 			},
 			expectedError:      nil,
@@ -86,6 +80,12 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			members, err := initializeCommittingMembersGroup(threshold, groupSize)
+			if err != nil {
+				t.Fatalf("group initialization failed [%s]", err)
+			}
+			currentMember := members[0]
+
 			var peerSharesMessages []*PeerSharesMessage
 			var commitmentsMessages []*MemberCommitmentsMessage
 
@@ -124,6 +124,20 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				t.Fatalf("\nexpected: accused member's IDs %v\nactual:   %v\n",
 					test.expectedAccusedIDs,
 					accusedMessage.accusedIDs,
+				)
+			}
+
+			expectedReceivedSharesLength := groupSize - 1 - test.expectedAccusedIDs
+			if len(currentMember.receivedSharesS) != expectedReceivedSharesLength {
+				t.Fatalf("\nexpected: received shares S %v\nactual:   %v\n",
+					expectedReceivedSharesLength,
+					len(currentMember.receivedSharesS),
+				)
+			}
+			if len(currentMember.receivedSharesT) != expectedReceivedSharesLength {
+				t.Fatalf("\nexpected: received shares T %v\nactual:   %v\n",
+					expectedReceivedSharesLength,
+					len(currentMember.receivedSharesT),
 				)
 			}
 		})
