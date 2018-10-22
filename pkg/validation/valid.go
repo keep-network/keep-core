@@ -4,24 +4,27 @@ import "math/big"
 
 type ValidationConfig struct {
 	TMax      int // M_Max
-	TConflict     // T_conflict
+	TConflict int // T_conflict
 }
 
 type ValidationState struct {
 	TNow     int // Current block height at the current time
+	TFirst   int //
 	PerGroup map[string]ValidationGroupState
 }
 
 type ValidationGroupState struct {
-	TFirst     int          // T_first - Block height for the group - when the first result event occurred block height
-	AllResults []ResultType // Set of all results
-	LeadResult int          // Position of lead result
+	TFirst           int          // T_first - Block height for the group - when the first result event occurred block height
+	AllResults       []ResultType // Set of all results
+	LeadResult       int          // Position of lead result
+	alreadySubmitted bool         //
 }
 
 type ResultType struct {
 	Votes       int      // How many votes this has
 	BlockHeight int      // Block height of this results
 	Result      *big.Int // The random value
+	group       string
 }
 
 /*
@@ -48,25 +51,31 @@ while resultPublished and not finished:
 
 */
 
+var submission chan ResultType
+
 func Phase14(vs *ValidationState, vc ValidationConfig) {
 
+	correctResult := 0   // ResultType{} // Where is this from?
+	resultHash := "TODO" // where is this from?
 	for {
 		select {
 		case result := <-submission:
-			vs.AllResults = append(vs.AllResults, result)
-			leadResult = FindMostVotes(vs.AllResults)
+			group := result.group
+			m1 := vs.PerGroup[group]
+			m1.AllResults = append(m1.AllResults, result)
+			leadResult := FindMostVotes(m1.AllResults)
 			vs.TNow = getCurrentBlockHeight() // has to have geth connect info
-			vs.TFirst = vs.AllResults[0].BlockHeight
-			if vs.TNow > (vs.TFirst+vc.TConflict) || leadResults.votes > vc.TMax {
-				return true
-			} else if correctResult == leadResult || vs.AllResults[group].alreadySubmitted {
+			vs.TFirst = m1.AllResults[0].BlockHeight
+			if vs.TNow > (vs.TFirst+vc.TConflict) || m1.AllResults[leadResult].Votes > vc.TMax {
+				return
+			} else if correctResult == leadResult || m1.alreadySubmitted {
 				continue
-			} else if inResult(correctResult, vs.AllResults) {
+			} else if inResult(correctResult, m1.AllResults) {
 				SubmitRessult(SignResult(resultHash))
-				vs.AllResults[group].alreadySubmitted = true
+				m1.alreadySubmitted = true
 			} else {
 				SubmitRessult(correctResult)
-				vs.AllResults[group].alreadySubmitted = true
+				m1.alreadySubmitted = true
 			}
 		}
 	}
@@ -99,19 +108,22 @@ Q's
 
 */
 
-func inResult(correctResult *big.Int, allResults []ResultType) {
-	for ii := range ResultType {
-		if big.Cmp(correctResult.Result, correctResult) == 0 {
+func inResult(correctResult int, allResults []ResultType) bool {
+	cr := allResults[correctResult].Result
+	for _, val := range allResults {
+		if cr.Cmp(val.Result) == 0 {
 			return true
 		}
 	}
 	return false
 }
 
-func SubmitRessult(aResult interface{}) {
+func SubmitRessult(aResult interface{}) string {
+	return ""
 }
 
-func SignResult(resultHash interface{}) {
+func SignResult(resultHash interface{}) string {
+	return ""
 }
 
 func getCurrentBlockHeight() int {
@@ -119,11 +131,11 @@ func getCurrentBlockHeight() int {
 	return 42
 }
 
-func FindMostVotes(vgs []ValidationGroupState) int {
+func FindMostVotes(vgs []ResultType) int {
 	maxPos := 0
 	nVote := -1
 	for pos := range vgs {
-		if vgs[pos].Votes > nVoge {
+		if vgs[pos].Votes > nVote {
 			nVote = vgs[pos].Votes
 			maxPos = pos
 		}
