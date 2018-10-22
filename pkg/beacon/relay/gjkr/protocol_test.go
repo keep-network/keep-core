@@ -402,3 +402,15 @@ func filterMemberCommitmentsMessages(
 	}
 	return result
 }
+
+func filterMemberPublicCoefficientsMessages(
+	messages []*MemberPublicCoefficientsMessage, receiverID int,
+) []*MemberPublicCoefficientsMessage {
+	var result []*MemberPublicCoefficientsMessage
+	for _, msg := range messages {
+		if msg.senderID != receiverID {
+			result = append(result, msg)
+		}
+	}
+	return result
+}
