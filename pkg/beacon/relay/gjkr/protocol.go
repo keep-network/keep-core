@@ -191,3 +191,27 @@ func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
 func pow(x, y int) *big.Int {
 	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
 }
+
+// CombineReceivedShares sums up all shares received from peer group members.
+//
+// See Phase 6 of the protocol specification.
+func (sm *SharingMember) CombineReceivedShares() {
+	shareS := big.NewInt(0)
+	for _, s := range sm.receivedSharesS {
+		shareS = new(big.Int).Mod(
+			new(big.Int).Add(shareS, s),
+			sm.protocolConfig.Q,
+		)
+	}
+
+	shareT := big.NewInt(0)
+	for _, t := range sm.receivedSharesT {
+		shareT = new(big.Int).Mod(
+			new(big.Int).Add(shareT, t),
+			sm.protocolConfig.Q,
+		)
+	}
+
+	sm.shareS = shareS
+	sm.shareT = shareT
+}
