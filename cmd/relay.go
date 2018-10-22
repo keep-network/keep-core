@@ -88,8 +88,8 @@ func relayRequest(c *cli.Context) error {
 		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
 			fmt.Fprintf(
 				os.Stderr,
-				"Relay entry received with value: [%s].\n",
-				entry.Value.String(),
+				"Relay entry received with value: [%v].\n",
+				entry.Value,
 			)
 
 			wait <- struct{}{}
@@ -157,9 +157,10 @@ func submitRelayEntrySeed(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	var wait = make(chan struct{}, 2)
-
-	ctx, cancel := context.WithCancel(context.Background())
+	var (
+		wait        = make(chan struct{}, 2)
+		ctx, cancel = context.WithCancel(context.Background())
+	)
 
 	// Seed the network with the first n bits of pi
 	value := relay.GenesisEntryValue()
@@ -196,11 +197,10 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	})
 
 	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
-		valueBigInt := (&big.Int{}).SetBytes(entry.Value[:])
 		fmt.Fprintf(
 			os.Stderr,
-			"Relay entry received with value: [%s].\n",
-			valueBigInt.String(),
+			"Relay entry received with value: [%v].\n",
+			entry.Value,
 		)
 
 		wait <- struct{}{}
