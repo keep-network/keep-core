@@ -1,14 +1,19 @@
 package libp2p
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
 	"io"
 	mrand "math/rand"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
+
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
+
+	mh "github.com/multiformats/go-multihash"
 )
 
 // identity represents a group member's network level identity. It
@@ -107,4 +112,29 @@ func generateIdentity(randseed int) (*identity, error) {
 	}
 
 	return &identity{privKey: privKey, pubKey: pubKey, id: pid}, nil
+}
+
+// peerIDFromPublicKey turns ECDSA public key into libp2p `peer.ID` and works
+// for key defined with any elliptic curve.
+//
+// `peer.IDFromPublicKey` defined by libp2p works only for keys defined with
+// curves from the standard Go library and it's not possible to use this
+// function for keys created with secp256k1 curve defined in `go-ethereum`
+// library.
+//
+// peerIDFromPublicKey uses the same strategy for creating a multihash of key
+// bytes as the libp2p `peer.IDFromPublicKey`.
+func peerIDFromPublicKey(pubKey *ecdsa.PublicKey) peer.ID {
+	return bytesToPeerID(elliptic.Marshal(
+		pubKey.Curve, pubKey.X, pubKey.Y,
+	))
+}
+
+func bytesToPeerID(bytes []byte) peer.ID {
+	var alg uint64 = mh.SHA2_256
+	if len(bytes) <= peer.MaxInlineKeyLength {
+		alg = mh.ID
+	}
+	hash, _ := mh.Sum(bytes, alg, -1)
+	return peer.ID(hash)
 }
