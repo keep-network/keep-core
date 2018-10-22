@@ -270,7 +270,9 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 
 		if expectedProduct.Cmp(product) != 0 {
 			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+			continue
 		}
+		sm.receivedGroupPublicKeyShares[message.senderID] = message.publicCoefficients[0]
 	}
 
 	return &CoefficientsAccusationsMessage{
