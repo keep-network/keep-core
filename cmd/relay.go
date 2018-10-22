@@ -2,15 +2,14 @@ package cmd
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
-	"math"
 	"math/big"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/urfave/cli"
@@ -158,18 +157,16 @@ func submitRelayEntrySeed(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	var (
-		value [32]byte
-		wait  = make(chan struct{}, 2)
-	)
+	var wait = make(chan struct{}, 2)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	// Seed the network with the first 32-bytes of pi
-	binary.BigEndian.PutUint64(value[:], math.Float64bits(math.Pi))
+
+	// Seed the network with the first n bits of pi
+	value := relay.GenesisEntryValue()
 
 	entry := &event.Entry{
 		RequestID:     big.NewInt(0),
-		Value:         big.NewInt(0).SetBytes(value[:]),
+		Value:         value,
 		GroupID:       big.NewInt(0),
 		PreviousEntry: big.NewInt(0),
 		Timestamp:     time.Now().UTC(),
