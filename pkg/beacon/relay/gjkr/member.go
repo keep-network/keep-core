@@ -38,3 +38,11 @@ type CommittingMember struct {
 	// defined as `t_ji` across the protocol specification.
 	receivedSharesS, receivedSharesT map[int]*big.Int
 }
+
+// SharingMember represents one member in a threshold key sharing group.
+type SharingMember struct {
+	*CommittingMember
+
+	shareS, shareT *big.Int
+	publicShares   []*big.Int
+}
