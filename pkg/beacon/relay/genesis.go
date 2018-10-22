@@ -2,8 +2,6 @@ package relay
 
 import "math/big"
 
-// Taken from math.Pi in golang's math package. Trailing zeros added to fill up
-// a full 32 bytes, 256 bits.
 // https://www.wolframalpha.com/input/?i=pi+to+78+digits
 const piAsString = "31415926535897932384626433832795028841971693993751058209749445923078164062862"
 
