@@ -197,7 +197,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	})
 
 	select {
-	case <-wait:
+	case err := <-wait:
 		if err != nil {
 			fmt.Fprintf(
 				os.Stderr,
