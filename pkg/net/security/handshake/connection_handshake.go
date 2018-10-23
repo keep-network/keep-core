@@ -45,7 +45,7 @@
 package handshake
 
 import (
-	"crypto/rand"
+	crand "crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
@@ -225,7 +225,7 @@ func hashToChallenge(nonce1 uint64, nonce2 uint64) [sha256.Size]byte {
 // to produce an 8-byte unsigned integer nonce.
 func randomNonce() (uint64, error) {
 	bytes := make([]byte, 8)
-	_, err := rand.Read(bytes)
+	_, err := crand.Read(bytes)
 	if err != nil {
 		return 0, fmt.Errorf("could not generate a new nonce [%v]", err)
 	}
