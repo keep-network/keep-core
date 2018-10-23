@@ -106,6 +106,8 @@ Q's
 
 	8. In "submit(correctResut)" why is this not submit(hash(correctResult))" ?
 
+#phase14questions
+
 */
 
 func inResult(correctResult int, allResults []ResultType) bool {
