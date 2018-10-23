@@ -393,7 +393,10 @@ func TestRoundTrip(t *testing.T) {
 	secondMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
 	for i, member := range sharingMembers {
 		secondMessages[i] = member.CalculatePublicCoefficients()
+
+		member.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
 	}
+
 	accusedCoefficientsMessage, err := sharingMember.VerifyPublicCoefficients(
 		filterMemberPublicCoefficientsMessages(secondMessages, sharingMember.ID),
 	)
@@ -402,6 +405,10 @@ func TestRoundTrip(t *testing.T) {
 	}
 	if len(accusedCoefficientsMessage.accusedIDs) > 0 {
 		t.Fatalf("something wrong %v", accusedCoefficientsMessage.accusedIDs)
+	}
+
+	for i := range sharingMembers {
+		sharingMembers[i].CombineGroupPublicKeyShares()
 	}
 }
 
