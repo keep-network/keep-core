@@ -296,6 +296,47 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	}
 }
 
+func TestCombineGroupPublicKeyShares(t *testing.T) {
+	threshold := 3
+	groupSize := 5
+
+	expectedGroupPublicKey := big.NewInt(12000000)
+
+	members, err := initializeSharingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	for _, m := range members {
+		m.publicCoefficients = make([]*big.Int, threshold+1)
+		for k := range m.publicCoefficients {
+			m.publicCoefficients[k] = big.NewInt(int64(m.ID*10 + k))
+		}
+	}
+
+	for _, m := range members {
+		m.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
+		for _, p := range members {
+			if m.ID != p.ID {
+				m.receivedGroupPublicKeyShares[p.ID] = p.publicCoefficients[0]
+			}
+		}
+	}
+
+	for i := range members {
+		members[i].CombineGroupPublicKeyShares()
+
+		if members[i].groupPublicKey.Cmp(expectedGroupPublicKey) != 0 {
+			t.Fatalf(
+				"\nexpected: group public key for %d member %v\nactual: %v\n",
+				i,
+				expectedGroupPublicKey,
+				members[0].groupPublicKey,
+			)
+		}
+	}
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 3
 	groupSize := 5

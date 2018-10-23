@@ -281,12 +281,12 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 	}, nil
 }
 
-// CombinePublicKeyShares calculates a group public key from public key shares.
-// Public key is calculated as a product of zeroth public shares (coefficients)
+// CombineGroupPublicKeyShares calculates a group public key from group public key
+// shares. Public key is calculated as a product of zeroth public coefficients
 // `A_j0 = z_j` for all group members including member themself.
 //
 // See Phase 12 of the protocol specification.
-func (sm *SharingMember) CombinePublicKeyShares() {
+func (sm *SharingMember) CombineGroupPublicKeyShares() {
 	// Current member's zeroth coefficient.
 	groupPublicKey := sm.publicCoefficients[0]
 
