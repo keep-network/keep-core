@@ -172,14 +172,16 @@ func TestCombineReceivedShares(t *testing.T) {
 	member.CombineReceivedShares()
 
 	if member.shareS.Cmp(expectedShareS) != 0 {
-		t.Errorf("combined shares s %s doesn't match expected %s",
+		t.Errorf("\nexpected: combined shares S %v\nactual:   %v\n",
+			expectedShareS,
 			member.shareS,
-			expectedShareS)
+		)
 	}
 	if member.shareT.Cmp(expectedShareT) != 0 {
-		t.Errorf("combined shares t %s doesn't match expected %s",
+		t.Errorf("\nexpected: combined shares T %v\nactual:   %v\n",
+			expectedShareT,
 			member.shareT,
-			expectedShareT)
+		)
 	}
 }
 
@@ -218,16 +220,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	message := member.CalculatePublicCoefficients()
 
 	if !reflect.DeepEqual(member.publicCoefficients, expectedPublicCoefficients) {
-		t.Errorf("public shares for member doesn't match expected\nactual: %s\nexpected: %s",
-			member.publicCoefficients,
+		t.Errorf("\nexpected: public shares for member %v\nactual:   %v\n",
 			expectedPublicCoefficients,
+			member.publicCoefficients,
 		)
 	}
 
 	if !reflect.DeepEqual(message.publicCoefficients, expectedPublicCoefficients) {
-		t.Errorf("public shares in message doesn't match expected\nactual: %s\nexpected: %s",
-			message.publicCoefficients,
+		t.Errorf("\nexpected: public shares in message %v\nactual:   %v\n",
 			expectedPublicCoefficients,
+			message.publicCoefficients,
 		)
 	}
 }
@@ -280,14 +282,14 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
-					"expected: %v\nactual: %v\n",
+					"\nexpected: %s\nactual:   %s\n",
 					test.expectedError,
 					err,
 				)
 			}
 
 			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
-				t.Fatalf("expecting %d accused member's IDs but received %d",
+				t.Fatalf("\nexpected: accused members %v\nactual:   %v\n",
 					test.expectedAccusedIDs,
 					accusedMessage.accusedIDs,
 				)
@@ -327,7 +329,9 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	if len(accusedSecretSharesMessage.accusedIDs) > 0 {
-		t.Fatalf("found accused members but was not expecting to")
+		t.Fatalf("\nexpected: no accused members\nactual:   %d\n",
+			accusedSecretSharesMessage.accusedIDs,
+		)
 	}
 
 	var sharingMembers []*SharingMember
@@ -339,9 +343,9 @@ func TestRoundTrip(t *testing.T) {
 
 	sharingMember := sharingMembers[0]
 	if len(sharingMember.receivedSharesS) != groupSize-1 {
-		t.Fatalf("received shares number %d doesn't match expected number %d",
-			len(sharingMember.receivedSharesS),
+		t.Fatalf("\nexpected: received %d shares\nactual:   %d\n",
 			groupSize-1,
+			len(sharingMember.receivedSharesS),
 		)
 	}
 
@@ -357,10 +361,12 @@ func TestRoundTrip(t *testing.T) {
 		filterMemberPublicCoefficientsMessages(secondMessages, sharingMember.ID),
 	)
 	if err != nil {
-		t.Fatalf("phase8 failed [%s]", err)
+		t.Fatalf("public coefficients verification failed [%s]", err)
 	}
 	if len(accusedCoefficientsMessage.accusedIDs) > 0 {
-		t.Fatalf("something wrong %v", accusedCoefficientsMessage.accusedIDs)
+		t.Fatalf("\nexpected: no accused members\nactual:   %d\n",
+			accusedCoefficientsMessage.accusedIDs,
+		)
 	}
 }
 
