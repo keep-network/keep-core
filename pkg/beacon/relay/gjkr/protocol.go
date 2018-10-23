@@ -150,6 +150,57 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	}, nil
 }
 
+// ResolveSecretSharesAccusations resolves a complaint received from a sender
+// against a member accused in shares and commitments verification.
+//
+// Current member cannot be a part of a dispute, if the member is either a sender
+// or accused the function will return an error.
+//
+// The function requires shares `s_mj` and `t_mj` calculated by the accused
+// member (`m`) for the sender (`j`). These values are expect to be broadcasted
+// before in encrypted form. On accusation the shares should be decrypted and
+// the revealed value should be passed to this function.
+//
+// See Phase 5 of the protocol specification.
+func (cm *CommittingMember) ResolveSecretSharesAccusations(
+	senderID, accusedID int,
+	shareS, shareT *big.Int,
+) (int, error) {
+	if cm.ID == senderID || cm.ID == accusedID {
+		return 0, fmt.Errorf("current member cannot be a part of a dispute")
+	}
+
+	// `commitmentsProduct = Π (commitments_m[k] ^ (j^k)) mod p` for k in [0..T],
+	// where: m is accused member's ID, j is sender's ID, T is threshold.
+	commitmentsProduct := big.NewInt(1)
+	for k, c := range cm.receivedCommitments[accusedID] {
+		commitmentsProduct = new(big.Int).Mod(
+			new(big.Int).Mul(
+				commitmentsProduct,
+				new(big.Int).Exp(
+					c,
+					pow(senderID, k),
+					cm.protocolConfig.P,
+				),
+			),
+			cm.protocolConfig.P,
+		)
+	}
+
+	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`, where:
+	// m is accused member's ID, j is sender's ID.
+	expectedProduct := cm.vss.CalculateCommitment(
+		shareS,
+		shareT,
+		cm.protocolConfig.P,
+	)
+
+	if expectedProduct.Cmp(commitmentsProduct) == 0 {
+		return senderID, nil
+	}
+	return accusedID, nil
+}
+
 // evaluateMemberShare calculates a share for given memberID.
 //
 // It calculates `s_j = Σ a_k * j^k`for k in [0..T], where:
