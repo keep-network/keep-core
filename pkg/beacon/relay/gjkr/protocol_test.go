@@ -171,6 +171,109 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 }
 
+func TestResolveSecretSharesAccusations(t *testing.T) {
+	threshold := 3
+	groupSize := 5
+
+	members, err := initializeCommittingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+	member := members[1]
+
+	var tests = map[string]struct {
+		senderID          int
+		accusedID         int
+		modifyShareS      func(shareS *big.Int) *big.Int
+		modifyShareT      func(shareT *big.Int) *big.Int
+		modifyCommitments func(commitments []*big.Int) []*big.Int
+		expectedResult    int
+		expectedError     error
+	}{
+		"false accusation - sender is punished": {
+			senderID:       3,
+			accusedID:      4,
+			expectedResult: 3,
+		},
+		"current member as a sender - error returned": {
+			senderID:       2,
+			accusedID:      3,
+			expectedResult: 0,
+			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+		},
+		"current member as an accused - error returned": {
+			senderID:       3,
+			accusedID:      2,
+			expectedResult: 0,
+			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+		},
+		"incorrect shareS - accused member is punished": {
+			senderID:  3,
+			accusedID: 4,
+			modifyShareS: func(shareS *big.Int) *big.Int {
+				return new(big.Int).Sub(shareS, big.NewInt(1))
+			},
+			expectedResult: 4,
+		},
+		"incorrect shareT - accused member is punished": {
+			senderID:  3,
+			accusedID: 4,
+			modifyShareT: func(shareT *big.Int) *big.Int {
+				return new(big.Int).Sub(shareT, big.NewInt(13))
+			},
+			expectedResult: 4,
+		},
+		"incorrect commitments - accused member is punished": {
+			senderID:  3,
+			accusedID: 4,
+			modifyCommitments: func(commitments []*big.Int) []*big.Int {
+				newCommitments := make([]*big.Int, len(commitments))
+				for i := range newCommitments {
+					newCommitments[i] = big.NewInt(int64(990 + i))
+				}
+				return newCommitments
+			},
+			expectedResult: 4,
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			setupSharesAndCommitments(members, threshold)
+
+			sender := findMemberByID(members, test.senderID)
+			revealedShareS := sender.receivedSharesS[test.accusedID]
+			revealedShareT := sender.receivedSharesT[test.accusedID]
+
+			if test.modifyShareS != nil {
+				revealedShareS = test.modifyShareS(revealedShareS)
+			}
+
+			if test.modifyShareT != nil {
+				revealedShareT = test.modifyShareT(revealedShareT)
+			}
+
+			if test.modifyCommitments != nil {
+				member.receivedCommitments[test.accusedID] = test.modifyCommitments(member.receivedCommitments[test.accusedID])
+			}
+
+			result, err := member.ResolveSecretSharesAccusations(
+				test.senderID,
+				test.accusedID,
+				revealedShareS,
+				revealedShareT,
+			)
+
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
+			}
+
+			if result != test.expectedResult {
+				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
+			}
+		})
+	}
+}
+
 // setupSharesAndCommitments simulates shares calculation and commitments sharing
 // betwen members. It generates coefficients for each group member, calculates
 // commitments and shares for each peer member individually. At the end it stores
