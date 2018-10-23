@@ -170,7 +170,7 @@ func (ra2 *responderAct2) next() *responderAct3 {
 func (ia2 *initiatorAct2) next(message *act2Message) (*initiatorAct3, error) {
 	expectedChallenge := hashToChallenge(ia2.nonce1, message.nonce2)
 	if expectedChallenge != message.challenge {
-		return nil, errors.New("unexpected responder's challenge")
+		return nil, fmt.Errorf("unexpected responder's challenge")
 	}
 
 	return &initiatorAct3{
