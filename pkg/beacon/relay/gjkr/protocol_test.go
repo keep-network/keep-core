@@ -49,43 +49,53 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize)
-	if err != nil {
-		t.Fatalf("group initialization failed [%s]", err)
-	}
-	currentMember := members[0]
-
 	var tests = map[string]struct {
-		modifyPeerShareMessages   func(messages []*PeerSharesMessage) []*PeerSharesMessage
-		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage
+		modifyPeerShareMessages   func(messages []*PeerSharesMessage) []int
+		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage) []int
 		expectedError             error
-		expectedAccusedIDs        int
+		expectedAccusations       int
 	}{
 		"positive validation - no accusations": {
-			expectedError:      nil,
-			expectedAccusedIDs: 0,
+			expectedError:       nil,
+			expectedAccusations: 0,
 		},
-		"negative validation - changed random share": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []*PeerSharesMessage {
-				messages[1].shareT = big.NewInt(13)
-				return messages
+		"negative validation - changed share S": {
+			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []int {
+				messages[0].shareS = big.NewInt(13)
+				return []int{messages[0].senderID}
 			},
-			expectedError:      nil,
-			expectedAccusedIDs: 1,
+			expectedError:       nil,
+			expectedAccusations: 1,
+		},
+		"negative validation - changed two shares T": {
+			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []int {
+				messages[1].shareT = big.NewInt(13)
+				messages[2].shareT = big.NewInt(23)
+				return []int{messages[1].senderID, messages[2].senderID}
+			},
+			expectedError:       nil,
+			expectedAccusations: 2,
 		},
 		"negative validation - changed commitment": {
-			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage {
-				messages[1].commitments[0] = big.NewInt(13)
-				return messages
+			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) []int {
+				messages[3].commitments[1] = big.NewInt(33)
+				return []int{messages[3].senderID}
 			},
-			expectedError:      nil,
-			expectedAccusedIDs: 1,
+			expectedError:       nil,
+			expectedAccusations: 1,
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			members, err := initializeCommittingMembersGroup(threshold, groupSize)
+			if err != nil {
+				t.Fatalf("group initialization failed [%s]", err)
+			}
+			currentMember := members[0]
+
 			var peerSharesMessages []*PeerSharesMessage
 			var commitmentsMessages []*MemberCommitmentsMessage
+			var expectedAccusedIDs []int
 
 			for _, member := range members {
 				peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
@@ -100,16 +110,23 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			filteredMemberCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
 
 			if test.modifyPeerShareMessages != nil {
-				filteredPeerSharesMessages = test.modifyPeerShareMessages(filteredPeerSharesMessages)
+				expectedAccusedIDs = append(
+					expectedAccusedIDs,
+					test.modifyPeerShareMessages(filteredPeerSharesMessages)...,
+				)
 			}
 			if test.modifyCommitmentsMessages != nil {
-				filteredMemberCommitmentsMessages = test.modifyCommitmentsMessages(filteredMemberCommitmentsMessages)
+				expectedAccusedIDs = append(
+					expectedAccusedIDs,
+					test.modifyCommitmentsMessages(filteredMemberCommitmentsMessages)...,
+				)
 			}
 
 			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
 				filteredPeerSharesMessages,
 				filteredMemberCommitmentsMessages,
 			)
+
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
 					"\nexpected: %v\nactual:   %v\n",
@@ -118,10 +135,36 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			}
 
-			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
+			if len(accusedMessage.accusedIDs) != test.expectedAccusations {
 				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
-					test.expectedAccusedIDs,
+					test.expectedAccusations,
 					len(accusedMessage.accusedIDs),
+				)
+			}
+			if !reflect.DeepEqual(accusedMessage.accusedIDs, expectedAccusedIDs) {
+				t.Fatalf("incorrect accused members IDs\nexpected: %v\nactual:   %v\n",
+					expectedAccusedIDs,
+					accusedMessage.accusedIDs,
+				)
+			}
+
+			expectedReceivedSharesLength := groupSize - 1 - test.expectedAccusations
+			if len(currentMember.receivedSharesS) != expectedReceivedSharesLength {
+				t.Fatalf("\nexpected: %v received shares S\nactual:   %v\n",
+					expectedReceivedSharesLength,
+					len(currentMember.receivedSharesS),
+				)
+			}
+			if len(currentMember.receivedSharesT) != expectedReceivedSharesLength {
+				t.Fatalf("\nexpected: %v received shares T\nactual:   %v\n",
+					expectedReceivedSharesLength,
+					len(currentMember.receivedSharesT),
+				)
+			}
+			if len(currentMember.receivedCommitments) != expectedReceivedSharesLength {
+				t.Fatalf("\nexpected: %v received commitments\nactual:   %v\n",
+					expectedReceivedSharesLength,
+					len(currentMember.receivedCommitments),
 				)
 			}
 		})
