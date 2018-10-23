@@ -472,14 +472,14 @@
   revision = "c070e8fb6eade68612d96e0fbace731f89897d33"
 
 [[projects]]
-  digest = "1:c1b03b1a6b0ee14b13da11f51ad25781f16e2830135904869ec48716ab0a53bb"
+  digest = "1:8dfbe4afb81ac7a7fb6c77023a9df88d5d51573202a2bbcd7b55f717fe2d182f"
   name = "github.com/libp2p/go-libp2p-peer"
   packages = [
     ".",
     "peerset",
   ]
   pruneopts = ""
-  revision = "993d742bc29dcf4894b7730ba610fd78900be76c"
+  revision = "dd9b45c0649b38aebe65f98cb460676b4214a42c"
 
 [[projects]]
   digest = "1:d289020da61669fb17a6ba41a50242aa324877c57c54fd94bb028bc84d359e64"
@@ -1000,6 +1000,7 @@
     "github.com/ipfs/go-datastore/sync",
     "github.com/keep-network/paillier",
     "github.com/libp2p/go-addr-util",
+    "github.com/libp2p/go-conn-security",
     "github.com/libp2p/go-floodsub",
     "github.com/libp2p/go-libp2p",
     "github.com/libp2p/go-libp2p-crypto",
