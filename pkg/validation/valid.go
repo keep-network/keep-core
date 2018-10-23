@@ -14,13 +14,13 @@ type ValidationState struct {
 }
 
 type ValidationGroupState struct {
-	TFirst           int          // T_first - Block height for the group - when the first result event occurred block height
-	AllResults       []ResultType // Set of all results
-	LeadResult       int          // Position of lead result
-	alreadySubmitted bool         //
+	TFirst           int             // T_first - Block height for the group - when the first result event occurred block height
+	AllResults       []ResultPackage // Set of all results
+	LeadResult       int             // Position of lead result
+	alreadySubmitted bool            //
 }
 
-type ResultType struct {
+type ResultPackage struct {
 	Votes       int      // How many votes this has
 	BlockHeight int      // Block height of this results
 	Result      *big.Int // The random value
@@ -51,11 +51,11 @@ while resultPublished and not finished:
 
 */
 
-var submission chan ResultType
+var submission chan ResultPackage
 
 func Phase14(vs *ValidationState, vc ValidationConfig) {
 
-	correctResult := 0   // ResultType{} // Where is this from?
+	correctResult := 0   // ResultPackage{} // Where is this from?
 	resultHash := "TODO" // where is this from?
 	for {
 		select {
@@ -110,7 +110,7 @@ Q's
 
 */
 
-func inResult(correctResult int, allResults []ResultType) bool {
+func inResult(correctResult int, allResults []ResultPackage) bool {
 	cr := allResults[correctResult].Result
 	for _, val := range allResults {
 		if cr.Cmp(val.Result) == 0 {
@@ -133,7 +133,7 @@ func getCurrentBlockHeight() int {
 	return 42
 }
 
-func FindMostVotes(vgs []ResultType) int {
+func FindMostVotes(vgs []ResultPackage) int {
 	maxPos := 0
 	nVote := -1
 	for pos := range vgs {
