@@ -25,20 +25,20 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 
 	if len(member.secretCoefficients) != (threshold + 1) {
-		t.Fatalf("\nexpected: secret coefficients number %v\nactual:   %v\n",
+		t.Fatalf("\nexpected: %v secret coefficients\nactual:   %v\n",
 			threshold+1,
 			len(member.secretCoefficients),
 		)
 	}
 	if len(peerSharesMessages) != (groupSize - 1) {
-		t.Fatalf("\nexpected: peer shares messages number %v\nactual:   %v\n",
+		t.Fatalf("\nexpected: %v peer shares messages\nactual:   %v\n",
 			groupSize-1,
 			len(peerSharesMessages),
 		)
 	}
 
 	if len(commitmentsMessage.commitments) != (threshold + 1) {
-		t.Fatalf("\nexpected: calculated commitments number %v\nactual:   %v\n",
+		t.Fatalf("\nexpected: %v calculated commitments\nactual:   %v\n",
 			threshold+1,
 			len(commitmentsMessage.commitments),
 		)
@@ -61,7 +61,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		expectedError             error
 		expectedAccusedIDs        int
 	}{
-		"positive validation": {
+		"positive validation - no accusations": {
 			expectedError:      nil,
 			expectedAccusedIDs: 0,
 		},
@@ -112,16 +112,16 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			)
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
-					"\nexpected: [%v]\nactual:   [%v]\n",
+					"\nexpected: %v\nactual:   %v\n",
 					test.expectedError,
 					err,
 				)
 			}
 
 			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
-				t.Fatalf("\nexpected: accused member's IDs %v\nactual:   %v\n",
+				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
 					test.expectedAccusedIDs,
-					accusedMessage.accusedIDs,
+					len(accusedMessage.accusedIDs),
 				)
 			}
 		})
@@ -173,14 +173,14 @@ func TestGeneratePolynomial(t *testing.T) {
 	}
 
 	if len(coefficients) != degree+1 {
-		t.Fatalf("\nexpected: coefficients number %d\nactual:   %d\n",
+		t.Fatalf("\nexpected: %d coefficients\nactual:   %d\n",
 			degree+1,
 			len(coefficients),
 		)
 	}
 	for _, c := range coefficients {
-		if c.Cmp(big.NewInt(0)) <= 0 || c.Cmp(config.Q) >= 0 {
-			t.Fatalf("\nexpected: coefficient between 0 and %d\nactual:   %v\n",
+		if c.Sign() <= 0 || c.Cmp(config.Q) >= 0 {
+			t.Fatalf("coefficient out of range\nexpected: 0 < value < %d\nactual:   %v\n",
 				config.Q,
 				c,
 			)
