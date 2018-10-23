@@ -240,7 +240,7 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 
 	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
 	if err != nil {
-		t.Fatalf("Group initialization failed [%s]", err)
+		t.Fatalf("group initialization failed [%s]", err)
 	}
 
 	sharingMember := sharingMembers[0]
@@ -330,7 +330,7 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 
 		if members[i].groupPublicKey.Cmp(expectedGroupPublicKey) != 0 {
 			t.Fatalf(
-				"\nexpected: group public key for %d member %v\nactual: %v\n",
+				"incorrect group public key for %d. member\nexpected: %v\nactual:   %v\n",
 				i,
 				expectedGroupPublicKey,
 				members[0].groupPublicKey,
