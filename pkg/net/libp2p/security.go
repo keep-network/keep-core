@@ -1,4 +1,4 @@
-package security
+package libp2p
 
 import (
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
