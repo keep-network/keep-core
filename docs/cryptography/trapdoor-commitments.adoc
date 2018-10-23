@@ -64,7 +64,7 @@ h = (g ^ randomZ[0, q - 1]) % q
 ```
 
 === Generating commitment
-To generate a commitment to a message `m`, we first need to map `m` into `G_q`
+To generate a commitment to a message `m`, we first need to map `m` into `Z_q`
 (this mapped version will be denoted `s`).  We also need to select a random `t`
 from `G_q`. The value `t` is kept secret until the commitment verification 
 phase. Finally, the commitment is a result of `(g^s * h^t) % q`.
