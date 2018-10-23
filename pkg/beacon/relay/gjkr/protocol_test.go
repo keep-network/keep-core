@@ -171,6 +171,53 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 }
 
+// setupSharesAndCommitments simulates shares calculation and commitments sharing
+// betwen members. It generates coefficients for each group member, calculates
+// commitments and shares for each peer member individually. At the end it stores
+// values for each member just like they would be received from peers.
+func setupSharesAndCommitments(members []*CommittingMember, threshold int) {
+	groupSize := len(members)
+
+	// Maps which will keep coefficients and commitments of all group members,
+	// with members IDs as keys.
+	groupCoefficientsA := make(map[int][]*big.Int, groupSize)
+	groupCoefficientsB := make(map[int][]*big.Int, groupSize)
+	groupCommitments := make(map[int][]*big.Int, groupSize)
+
+	// Generate threshold+1 coefficients and commitments for each group member.
+	for _, m := range members {
+		memberCoefficientsA := make([]*big.Int, threshold+1)
+		memberCoefficientsB := make([]*big.Int, threshold+1)
+		commitments := make([]*big.Int, threshold+1)
+		for k := range memberCoefficientsA {
+			memberCoefficientsA[k] = big.NewInt(int64(100*m.ID + 10 + k))
+			memberCoefficientsB[k] = big.NewInt(int64(100*m.ID + 20 + k))
+
+			commitments[k] = m.vss.CalculateCommitment(
+				memberCoefficientsA[k],
+				memberCoefficientsB[k],
+				m.protocolConfig.P,
+			)
+		}
+		// Store generated values in maps.
+		groupCoefficientsA[m.ID] = memberCoefficientsA
+		groupCoefficientsB[m.ID] = memberCoefficientsB
+		groupCommitments[m.ID] = commitments
+	}
+	// Simulate phase where members are calculating shares individually for each
+	// peer member and store received shares and commitments from peers.
+	for _, m := range members {
+		for _, p := range members {
+			if m.ID != p.ID {
+				p.receivedSharesS[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
+				p.receivedSharesT[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
+
+				p.receivedCommitments[m.ID] = groupCommitments[m.ID]
+			}
+		}
+	}
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 3
 	groupSize := 5
