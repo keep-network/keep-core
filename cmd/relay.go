@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/urfave/cli"
@@ -41,6 +42,11 @@ func init() {
 				Name:   "entry",
 				Usage:  "Requests the entry associated with the given request id from the relay.",
 				Action: relayEntry,
+			},
+			{
+				Name:   "submit",
+				Usage:  "Submits a new seed entry to the relay; only for testing.",
+				Action: submitRelayEntrySeed,
 			},
 		},
 	}
@@ -80,12 +86,10 @@ func relayRequest(c *cli.Context) error {
 		defer requestMutex.Unlock()
 
 		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
-			valueBigInt := &big.Int{}
-			valueBigInt.SetBytes(entry.Value[:])
 			fmt.Fprintf(
 				os.Stderr,
-				"Relay entry received with value: [%s].\n",
-				valueBigInt.String(),
+				"Relay entry received with value: [%v].\n",
+				entry.Value,
 			)
 
 			wait <- struct{}{}
@@ -114,20 +118,14 @@ func relayRequest(c *cli.Context) error {
 	select {
 	case <-wait:
 		cancel()
-		os.Exit(0)
+		return nil
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Request errored out: [%v].\n",
-				err,
-			)
+			return fmt.Errorf("Request errored out: [%v].\n", err)
 		} else {
-			fmt.Fprintf(os.Stderr, "Request errored for unknown reason.\n")
+			return fmt.Errorf("Request errored for unknown reason.\n")
 		}
-
-		os.Exit(1)
 	}
 
 	return nil
@@ -137,4 +135,79 @@ func relayRequest(c *cli.Context) error {
 // and prints that entry.
 func relayEntry(c *cli.Context) error {
 	return fmt.Errorf("relay entry lookups are currently unimplemented")
+}
+
+// submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
+// off the group selection process, and prints the newly generated value. By
+// default, it uses a random big integer as the value.
+func submitRelayEntrySeed(c *cli.Context) error {
+	cfg, err := config.ReadConfig(c.GlobalString("config"))
+	if err != nil {
+		return fmt.Errorf("error reading config file: [%v]", err)
+	}
+
+	provider, err := ethereum.Connect(cfg.Ethereum)
+	if err != nil {
+		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
+	}
+
+	var (
+		wait        = make(chan error)
+		ctx, cancel = context.WithCancel(context.Background())
+	)
+
+	// Seed the network with the first n bits of pi
+	value := relay.GenesisEntryValue()
+
+	entry := &event.Entry{
+		RequestID:     big.NewInt(0),
+		Value:         value,
+		GroupID:       big.NewInt(0),
+		PreviousEntry: big.NewInt(0),
+		Timestamp:     time.Now().UTC(),
+	}
+
+	provider.ThresholdRelay().SubmitRelayEntry(
+		entry,
+	).OnSuccess(func(data *event.Entry) {
+		fmt.Fprintf(
+			os.Stdout,
+			"Submitted relay entry: [%v].\n",
+			data,
+		)
+		wait <- nil
+		return
+	}).OnFailure(func(err error) {
+		wait <- err
+		return
+	})
+
+	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
+		fmt.Fprintf(
+			os.Stderr,
+			"Relay entry received with value: [%v].\n",
+			entry.Value,
+		)
+	})
+
+	select {
+	case err := <-wait:
+		if err != nil {
+			return fmt.Errorf(
+				"Error in submitting relay entry: [%v].\n",
+				err,
+			)
+		} else {
+			cancel()
+		}
+	case <-ctx.Done():
+		err := ctx.Err()
+		if err != nil {
+			return fmt.Errorf("Request errored out: [%v].\n", err)
+		} else {
+			return fmt.Errorf("Request errored for unknown reason.\n")
+		}
+	}
+
+	return nil
 }

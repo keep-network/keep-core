@@ -44,7 +44,7 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
 				"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37649",
-				"GroupContract":    "0x139deb0dd975af8e4cc91fe9053a37e4faf37649",
+				"KeepGroup":        "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
 			},
 		},
 	}

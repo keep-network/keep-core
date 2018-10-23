@@ -1,3 +1,5 @@
+:toc: macro
+
 = RFC ##: RFC Title (number should be unique with respect to pending and existing RFCs)
 
 :icons: font
