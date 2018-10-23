@@ -3,8 +3,6 @@ package libp2p
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
@@ -24,6 +22,17 @@ type identity struct {
 }
 
 type networkIdentity peer.ID
+
+func createIdentity(privateKey libp2pcrypto.PrivKey) (*identity, error) {
+	peerID, err := peer.IDFromPublicKey(privateKey.GetPublic())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not transform public key to peer's identity [%v]", err,
+		)
+	}
+
+	return &identity{peerID, privateKey.GetPublic(), privateKey}, nil
+}
 
 func (networkIdentity) ProviderName() string {
 	return "libp2p"
@@ -79,43 +88,4 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	i.id = pid
 
 	return nil
-}
-
-func readSecp256k1Key(account ethereum.Account) (
-	libp2pcrypto.PrivKey,
-	libp2pcrypto.PubKey,
-	error,
-) {
-	ethereumKey, err := ethereum.DecryptKeyFile(
-		account.KeyFile,
-		account.KeyFilePassword,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to read KeyFile: %s [%v]", account.KeyFile, err,
-		)
-	}
-
-	privKey, _ := btcec.PrivKeyFromBytes(
-		btcec.S256(), ethereumKey.PrivateKey.D.Bytes(),
-	)
-
-	k := (*libp2pcrypto.Secp256k1PrivateKey)(privKey)
-	return k, k.GetPublic(), nil
-}
-
-func readIdentity(account ethereum.Account) (*identity, error) {
-	privateKey, publicKey, err := readSecp256k1Key(account)
-	if err != nil {
-		return nil, fmt.Errorf("could not load peer's static key [%v]", err)
-	}
-
-	peerID, err := peer.IDFromPublicKey(publicKey)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not transform public key to peer's identity [%v]", err,
-		)
-	}
-
-	return &identity{peerID, publicKey, privateKey}, nil
 }

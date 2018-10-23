@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
@@ -51,9 +52,14 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
+	staticKey, err := loadStaticKey(config.Ethereum.Account)
+	if err != nil {
+		return fmt.Errorf("error loading static peer's key [%v]", err)
+	}
+
 	ctx := context.Background()
 	netProvider, err := libp2p.Connect(
-		ctx, config.LibP2P, config.Ethereum.Account,
+		ctx, config.LibP2P, staticKey,
 	)
 	if err != nil {
 		return err
@@ -90,4 +96,18 @@ func Start(c *cli.Context) error {
 
 		return fmt.Errorf("uh-oh, we went boom boom for no reason")
 	}
+}
+
+func loadStaticKey(account ethereum.Account) (*keystore.Key, error) {
+	ethereumKey, err := ethereum.DecryptKeyFile(
+		account.KeyFile,
+		account.KeyFilePassword,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to read KeyFile: %s [%v]", account.KeyFile, err,
+		)
+	}
+
+	return ethereumKey, nil
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/keep-network/keep-core/pkg/net"
 
 	dstore "github.com/ipfs/go-datastore"
@@ -70,9 +70,11 @@ func (p *provider) AddrStrings() []string {
 func Connect(
 	ctx context.Context,
 	config Config,
-	account ethereum.Account,
+	staticKey *keystore.Key,
 ) (net.Provider, error) {
-	identity, err := readIdentity(account)
+	privateKey := loadSecp256k1Key(staticKey)
+
+	identity, err := createIdentity(privateKey)
 	if err != nil {
 		return nil, err
 	}
