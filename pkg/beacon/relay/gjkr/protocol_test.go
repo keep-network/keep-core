@@ -232,7 +232,7 @@ func TestGeneratePolynomial(t *testing.T) {
 }
 
 func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMember, error) {
-	config, err := predefinedDKGconfig()
+	config, err := predefinedDKG2048()
 	if err != nil {
 		return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
 	}
@@ -257,13 +257,36 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 				group:          group,
 				protocolConfig: config,
 			},
-			vss:             vss,
-			receivedSharesS: make(map[int]*big.Int),
-			receivedSharesT: make(map[int]*big.Int),
+			vss:                 vss,
+			receivedSharesS:     make(map[int]*big.Int),
+			receivedSharesT:     make(map[int]*big.Int),
+			receivedCommitments: make(map[int][]*big.Int),
 		})
 		group.RegisterMemberID(id)
 	}
 	return members, nil
+}
+
+// predefinedDKGconfig initializez DKG configuration with predefined 2048-bit
+// p and q values.
+func predefinedDKG2048() (*DKG, error) {
+	// `p` is 2048-bit safe prime.
+	pStr := "0x93cef9a05e49e4701ab80ec2be6fa7b77524520f4bdad03b8b1a4424c0329588ace3f597cf1e99d8c54486cf2970bd9833b1d83a80ae3315459f9d6ca55dd4ab73e6e84d98d6e0b8f06a409374c646c79aaad075ea4685c6d91b1b2a034044dcfed7b7d5d628e939a63fa03185a71570819c830cb2f8d8d5a8a5b757f4966c362317e96a181d213afff464783bc31b196b5971d8988a98e1c81db6e7ad06c151ca6e4801fe566ae212a8bdbf56c971bc9bb8e64b61ec5bb36a2eb6d5842e4b95e6175d862fbfd8b71ae9912c0a94df6c77c5feeb1c82fb05976d07cad53f012f6910d55d8617ecf166c0856da0932c7d0e6ca858367642295113a1d72ca2408b"
+	// `q` is 2048-bit Sophie Germain prime.
+	qStr := "0x49e77cd02f24f2380d5c07615f37d3dbba922907a5ed681dc58d221260194ac45671facbe78f4cec62a2436794b85ecc19d8ec1d4057198aa2cfceb652aeea55b9f37426cc6b705c78352049ba632363cd55683af52342e36c8d8d9501a0226e7f6bdbeaeb14749cd31fd018c2d38ab840ce4186597c6c6ad452dbabfa4b361b118bf4b50c0e909d7ffa323c1de18d8cb5acb8ec4c454c70e40edb73d68360a8e5372400ff2b357109545edfab64b8de4ddc7325b0f62dd9b5175b6ac21725caf30baec317dfec5b8d74c896054a6fb63be2ff758e417d82cbb683e56a9f8097b4886aaec30bf678b36042b6d049963e8736542c1b3b2114a889d0eb96512045"
+
+	var result bool
+
+	p, result := new(big.Int).SetString(pStr, 0)
+	if !result {
+		return nil, fmt.Errorf("failed to initialize p")
+	}
+
+	q, result := new(big.Int).SetString(qStr, 0)
+	if !result {
+		return nil, fmt.Errorf("failed to initialize q")
+	}
+	return &DKG{p, q}, nil
 }
 
 func filterPeerSharesMessage(
