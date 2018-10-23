@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -133,7 +134,7 @@ func discoverAndListen(
 	return libp2p.New(ctx,
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
-		DefaultSecurity,
+		libp2p.Security(handshake.ID, handshake.New),
 	)
 }
 
