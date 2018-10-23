@@ -72,7 +72,7 @@ func Connect(
 	config Config,
 	staticKey *keystore.Key,
 ) (net.Provider, error) {
-	privateKey := loadSecp256k1Key(staticKey)
+	privateKey := toLibp2pKey(staticKey)
 
 	identity, err := createIdentity(privateKey)
 	if err != nil {

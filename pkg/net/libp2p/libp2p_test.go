@@ -329,7 +329,7 @@ func newTestIdentity() (*identity, error) {
 		return nil, err
 	}
 
-	return createIdentity(loadSecp256k1Key(staticKey))
+	return createIdentity(toLibp2pKey(staticKey))
 }
 
 func generateDeterministicNetworkConfig(t *testing.T) Config {
