@@ -55,27 +55,27 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		modifyPeerShareMessages   func(messages []*PeerSharesMessage) []*PeerSharesMessage
 		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage
 		expectedError             error
-		expectedAccusedIDs        int
+		expectedAccusations       int
 	}{
 		"positive validation - no accusations": {
-			expectedError:      nil,
-			expectedAccusedIDs: 0,
+			expectedError:       nil,
+			expectedAccusations: 0,
 		},
 		"negative validation - changed random share": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []*PeerSharesMessage {
 				messages[0].shareT = big.NewInt(13)
 				return messages
 			},
-			expectedError:      nil,
-			expectedAccusedIDs: 1,
+			expectedError:       nil,
+			expectedAccusations: 1,
 		},
 		"negative validation - changed commitment": {
 			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) []*MemberCommitmentsMessage {
 				messages[0].commitments[0] = big.NewInt(13)
 				return messages
 			},
-			expectedError:      nil,
-			expectedAccusedIDs: 1,
+			expectedError:       nil,
+			expectedAccusations: 1,
 		},
 	}
 	for testName, test := range tests {
@@ -120,22 +120,22 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			}
 
-			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
+			if len(accusedMessage.accusedIDs) != test.expectedAccusations {
 				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
-					test.expectedAccusedIDs,
+					test.expectedAccusations,
 					len(accusedMessage.accusedIDs),
 				)
 			}
 
-			expectedReceivedSharesLength := groupSize - 1 - test.expectedAccusedIDs
+			expectedReceivedSharesLength := groupSize - 1 - test.expectedAccusations
 			if len(currentMember.receivedSharesS) != expectedReceivedSharesLength {
-				t.Fatalf("\nexpected: received shares S %v\nactual:   %v\n",
+				t.Fatalf("\nexpected: %v received shares S\nactual:   %v\n",
 					expectedReceivedSharesLength,
 					len(currentMember.receivedSharesS),
 				)
 			}
 			if len(currentMember.receivedSharesT) != expectedReceivedSharesLength {
-				t.Fatalf("\nexpected: received shares T %v\nactual:   %v\n",
+				t.Fatalf("\nexpected: %v received shares T\nactual:   %v\n",
 					expectedReceivedSharesLength,
 					len(currentMember.receivedSharesT),
 				)
@@ -172,13 +172,13 @@ func TestCombineReceivedShares(t *testing.T) {
 	member.CombineReceivedShares()
 
 	if member.shareS.Cmp(expectedShareS) != 0 {
-		t.Errorf("\nexpected: combined shares S %v\nactual:   %v\n",
+		t.Errorf("incorrect combined shares S value\nexpected: %v\nactual:   %v\n",
 			expectedShareS,
 			member.shareS,
 		)
 	}
 	if member.shareT.Cmp(expectedShareT) != 0 {
-		t.Errorf("\nexpected: combined shares T %v\nactual:   %v\n",
+		t.Errorf("incorrect combined shares T value\nexpected: %v\nactual:   %v\n",
 			expectedShareT,
 			member.shareT,
 		)
@@ -220,14 +220,14 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	message := member.CalculatePublicCoefficients()
 
 	if !reflect.DeepEqual(member.publicCoefficients, expectedPublicCoefficients) {
-		t.Errorf("\nexpected: public shares for member %v\nactual:   %v\n",
+		t.Errorf("incorrect member's public shares\nexpected: %v\nactual:   %v\n",
 			expectedPublicCoefficients,
 			member.publicCoefficients,
 		)
 	}
 
 	if !reflect.DeepEqual(message.publicCoefficients, expectedPublicCoefficients) {
-		t.Errorf("\nexpected: public shares in message %v\nactual:   %v\n",
+		t.Errorf("incorrect public shares in message\nexpected: %v\nactual:   %v\n",
 			expectedPublicCoefficients,
 			message.publicCoefficients,
 		)
@@ -240,25 +240,25 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 
 	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
 	if err != nil {
-		t.Fatalf("group initialization failed [%s]", err)
+		t.Fatalf("Group initialization failed [%s]", err)
 	}
 
 	sharingMember := sharingMembers[0]
 	var tests = map[string]struct {
 		modifyPublicCoefficientsMessages func(messages []*MemberPublicCoefficientsMessage)
 		expectedError                    error
-		expectedAccusedIDs               int
+		expectedAccusations              int
 	}{
-		"positive validation": {
-			expectedError:      nil,
-			expectedAccusedIDs: 0,
+		"positive validation - no accusations": {
+			expectedError:       nil,
+			expectedAccusations: 0,
 		},
 		"negative validation - changed public key share": {
 			modifyPublicCoefficientsMessages: func(messages []*MemberPublicCoefficientsMessage) {
 				messages[1].publicCoefficients[1] = big.NewInt(13)
 			},
-			expectedError:      nil,
-			expectedAccusedIDs: 1,
+			expectedError:       nil,
+			expectedAccusations: 1,
 		},
 	}
 	for testName, test := range tests {
@@ -288,10 +288,10 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 				)
 			}
 
-			if len(accusedMessage.accusedIDs) != test.expectedAccusedIDs {
-				t.Fatalf("\nexpected: accused members %v\nactual:   %v\n",
-					test.expectedAccusedIDs,
-					accusedMessage.accusedIDs,
+			if len(accusedMessage.accusedIDs) != test.expectedAccusations {
+				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
+					test.expectedAccusations,
+					len(accusedMessage.accusedIDs),
 				)
 			}
 		})
@@ -329,7 +329,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	if len(accusedSecretSharesMessage.accusedIDs) > 0 {
-		t.Fatalf("\nexpected: no accused members\nactual:   %d\n",
+		t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
 			accusedSecretSharesMessage.accusedIDs,
 		)
 	}
@@ -343,7 +343,7 @@ func TestRoundTrip(t *testing.T) {
 
 	sharingMember := sharingMembers[0]
 	if len(sharingMember.receivedSharesS) != groupSize-1 {
-		t.Fatalf("\nexpected: received %d shares\nactual:   %d\n",
+		t.Fatalf("\nexpected: %d received shares\nactual:   %d\n",
 			groupSize-1,
 			len(sharingMember.receivedSharesS),
 		)
@@ -364,7 +364,7 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("public coefficients verification failed [%s]", err)
 	}
 	if len(accusedCoefficientsMessage.accusedIDs) > 0 {
-		t.Fatalf("\nexpected: no accused members\nactual:   %d\n",
+		t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
 			accusedCoefficientsMessage.accusedIDs,
 		)
 	}
