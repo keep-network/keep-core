@@ -102,17 +102,13 @@ func initiateHandshake() (*initiatorAct1, error) {
 // message returns the message sent by initiator to the responder in the first
 // act of the handshake protocol.
 func (ia1 *initiatorAct1) message() *act1Message {
-	return &act1Message{
-		nonce1: ia1.nonce1,
-	}
+	return &act1Message{nonce1: ia1.nonce1}
 }
 
 // next performs a state transition and returns initiator in a state ready to
 // execute the second act of the handshake protocol.
 func (ia1 *initiatorAct1) next() *initiatorAct2 {
-	return &initiatorAct2{
-		nonce1: ia1.nonce1,
-	}
+	return &initiatorAct2{nonce1: ia1.nonce1}
 }
 
 // answerHandshake is used to initiate a responder as a result of receiving
@@ -146,18 +142,13 @@ type responderAct2 struct {
 // message returns the message sent by responder to the initiator in the second
 // act of the handshake protocol.
 func (ra2 *responderAct2) message() *act2Message {
-	return &act2Message{
-		nonce2:    ra2.nonce2,
-		challenge: ra2.challenge,
-	}
+	return &act2Message{nonce2: ra2.nonce2, challenge: ra2.challenge}
 }
 
 // next performs a state transition and returns responder in a state ready to
 // execute the third act of the handshake protocol.
 func (ra2 *responderAct2) next() *responderAct3 {
-	return &responderAct3{
-		challenge: ra2.challenge,
-	}
+	return &responderAct3{challenge: ra2.challenge}
 }
 
 // next performs a state transition and returns initiator in a state ready to
@@ -173,9 +164,7 @@ func (ia2 *initiatorAct2) next(message *act2Message) (*initiatorAct3, error) {
 		return nil, fmt.Errorf("unexpected responder's challenge")
 	}
 
-	return &initiatorAct3{
-		challenge: message.challenge,
-	}, nil
+	return &initiatorAct3{challenge: message.challenge}, nil
 }
 
 // initiatorAct3 represents the state of the initiator in the third act of the
@@ -193,9 +182,7 @@ type responderAct3 struct {
 // message returns the message sent by initiator to the responder in the third
 // act of the handshake protocol.
 func (ia3 *initiatorAct3) message() *act3Message {
-	return &act3Message{
-		challenge: ia3.challenge,
-	}
+	return &act3Message{challenge: ia3.challenge}
 }
 
 // finalizeHandshake is used in the third act of the handshake protocol to
