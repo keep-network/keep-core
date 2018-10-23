@@ -11,7 +11,7 @@ import (
 // Entry represents one entry in the threshold relay.
 type Entry struct {
 	RequestID     *big.Int
-	Value         [32]byte
+	Value         *big.Int
 	GroupID       *big.Int
 	PreviousEntry *big.Int
 	Timestamp     time.Time
@@ -24,7 +24,7 @@ type Request struct {
 	BlockReward *big.Int
 	Seed        *big.Int
 
-	PreviousValue [32]byte
+	PreviousValue *big.Int
 }
 
 // GroupRegistration represents a registered group in the threshold relay with a

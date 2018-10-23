@@ -75,7 +75,7 @@ func SmokeTest(c *cli.Context) error {
 
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
 		RequestID:     big.NewInt(int64(135)),
-		Value:         [32]byte{},
+		Value:         big.NewInt(int64(154)),
 		GroupID:       big.NewInt(int64(168)),
 		PreviousEntry: &big.Int{},
 	})

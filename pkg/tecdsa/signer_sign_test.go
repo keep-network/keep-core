@@ -30,7 +30,7 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				return []*SignRound1Message{round1Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 1 messages required from all group members; got 1, expected 10",
+				"round 1 messages required from all group peer members; got 1, expected 9",
 			),
 		},
 		"negative validation - too few round 2 messages": {
@@ -40,14 +40,14 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				return []*SignRound2Message{round2Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 2 messages required from all group members; got 1, expected 10",
+				"round 2 messages required from all group peer members; got 1, expected 9",
 			),
 		},
 		"negative validation - missing round 2 message for signer": {
 			modifyRound1Messages: func(
 				round1Messages []*SignRound1Message,
 			) []*SignRound1Message {
-				round1Messages[1].signerID = "evil"
+				round1Messages[1].senderID = "evil"
 				return round1Messages
 			},
 			expectedError: errors.New(
@@ -74,50 +74,58 @@ func TestSignAndCombineRound1And2(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			round1Messages := make([]*SignRound1Message, len(signers))
-			round2Messages := make([]*SignRound2Message, len(signers))
 			round1Signers := make([]*Round1Signer, len(signers))
 			round2Signers := make([]*Round2Signer, len(signers))
+			var round1Messages []*SignRound1Message
+			var round2Messages []*SignRound2Message
 
 			for i, signer := range signers {
-				round1Signer, round1Message, err := signer.SignRound1()
+				round1Signer, signersRound1Messages, err := signer.SignRound1()
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				round2Signer, round2Message, err := round1Signer.SignRound2()
+				round2Signer, signersRound2Messages, err := round1Signer.SignRound2()
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				round1Messages[i] = round1Message
-				round2Messages[i] = round2Message
 				round1Signers[i] = round1Signer
 				round2Signers[i] = round2Signer
+
+				round1Messages = append(round1Messages, signersRound1Messages...)
+				round2Messages = append(round2Messages, signersRound2Messages...)
+
 			}
+
+			receiver := round2Signers[0]
+
+			round1Messages = signRound1MessagesForReceiver(round1Messages, receiver.ID)
+			round2Messages = signRound2MessagesForReceiver(round2Messages, receiver.ID)
 
 			if test.modifyRound1Messages != nil {
 				round1Messages = test.modifyRound1Messages(round1Messages)
+
 			}
 
 			if test.modifyRound2Messages != nil {
 				round2Messages = test.modifyRound2Messages(round2Messages)
+
 			}
 
-			paillierKey := round2Signers[0].paillierKey
-			expectedSecretKeyFactor := round1Signers[0].encryptedSecretKeyFactorShare
-			expectedSecretKeyMultiple := round1Signers[0].secretKeyMultipleShare
+			expectedSecretKeyFactor := receiver.encryptedSecretKeyFactorShare
+			expectedSecretKeyMultiple := receiver.secretKeyMultipleShare
 			for _, signer := range round1Signers[1:] {
-				expectedSecretKeyFactor = paillierKey.Add(
+				expectedSecretKeyFactor = receiver.paillierKey.Add(
 					expectedSecretKeyFactor, signer.encryptedSecretKeyFactorShare,
 				)
-				expectedSecretKeyMultiple = paillierKey.Add(
+				expectedSecretKeyMultiple = receiver.paillierKey.Add(
 					expectedSecretKeyMultiple, signer.secretKeyMultipleShare,
 				)
 			}
 
 			secretKeyFactor, secretKeyMultiple, err :=
-				round2Signers[0].CombineRound2Messages(
+				receiver.CombineRound2Messages(
 					round1Messages,
 					round2Messages,
 				)
@@ -170,7 +178,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				return []*SignRound3Message{round3Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 3 messages required from all group members; got 1, expected 10",
+				"round 3 messages required from all group peer members; got 1, expected 9",
 			),
 		},
 		"negative validation - too few round 4 messages": {
@@ -180,14 +188,14 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				return []*SignRound4Message{round4Messages[0]}
 			},
 			expectedError: errors.New(
-				"round 4 messages required from all group members; got 1, expected 10",
+				"round 4 messages required from all group peer members; got 1, expected 9",
 			),
 		},
 		"negative validation - missing round 3 message for signer": {
 			modifyRound3Messages: func(
 				round3Messages []*SignRound3Message,
 			) []*SignRound3Message {
-				round3Messages[3].signerID = "evil"
+				round3Messages[3].senderID = "evil"
 				return round3Messages
 			},
 			expectedError: errors.New(
@@ -215,40 +223,45 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			round3Messages := make([]*SignRound3Message, len(round2Signers))
-			round4Messages := make([]*SignRound4Message, len(round2Signers))
 			round3Signers := make([]*Round3Signer, len(round2Signers))
 			round4Signers := make([]*Round4Signer, len(round2Signers))
+			var round3Messages []*SignRound3Message
+			var round4Messages []*SignRound4Message
 
 			for i, signer := range round2Signers {
-				round3Signer, round3Message, err := signer.SignRound3(
+				round3Signer, signersRound3Messages, err := signer.SignRound3(
 					secretKeyRandomFactor, secretKeyMultiple,
 				)
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				round4Signer, round4Message, err := round3Signer.SignRound4()
+				round4Signer, signersRound4Messages, err := round3Signer.SignRound4()
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				round3Messages[i] = round3Message
-				round4Messages[i] = round4Message
 				round3Signers[i] = round3Signer
 				round4Signers[i] = round4Signer
+
+				round3Messages = append(round3Messages, signersRound3Messages...)
+				round4Messages = append(round4Messages, signersRound4Messages...)
 			}
 
-			paillierKey := round3Signers[0].paillierKey
-			expectedSignatureUnmask := round3Signers[0].signatureUnmaskShare
+			receiver := round4Signers[0]
+
+			round3Messages = signRound3MessagesForReceiver(round3Messages, receiver.ID)
+			round4Messages = signRound4MessagesForReceiver(round4Messages, receiver.ID)
+
+			expectedSignatureUnmask := receiver.signatureUnmaskShare
 			for _, signer := range round3Signers[1:] {
-				expectedSignatureUnmask = paillierKey.Add(
+				expectedSignatureUnmask = signer.paillierKey.Add(
 					expectedSignatureUnmask, signer.signatureUnmaskShare,
 				)
 			}
 
-			ellipticCurve := round3Signers[0].publicParameters.Curve
-			expectedSignatureFactorPublic := round3Signers[0].signatureFactorPublicShare
+			ellipticCurve := receiver.publicParameters.Curve
+			expectedSignatureFactorPublic := receiver.signatureFactorPublicShare
 			for _, signer := range round3Signers[1:] {
 				expectedSignatureFactorPublic = curve.NewPoint(ellipticCurve.Add(
 					expectedSignatureFactorPublic.X,
@@ -267,7 +280,7 @@ func TestSignAndCombineRound3And4(t *testing.T) {
 			}
 
 			signatureUnmask, signatureFactorPublic, err :=
-				round4Signers[0].CombineRound4Messages(
+				receiver.CombineRound4Messages(
 					round3Messages,
 					round4Messages,
 				)
@@ -587,7 +600,9 @@ func initializeNewRound2SignerGroup() (
 	round2Signers = make([]*Round2Signer, len(signers))
 	for i, signer := range signers {
 		round2Signers[i] = &Round2Signer{
-			Signer: *signer,
+			&Round1Signer{
+				Signer: *signer,
+			},
 		}
 	}
 
@@ -630,10 +645,64 @@ func initializeNewRound4SignerGroup() (
 	round4Signers := make([]*Round4Signer, len(signers))
 	for i, signer := range signers {
 		round4Signers[i] = &Round4Signer{
-			Signer:          *signer,
-			secretKeyFactor: secretKeyFactor,
+			Round3Signer: &Round3Signer{
+				Signer:          *signer,
+				secretKeyFactor: secretKeyFactor,
+			},
 		}
 	}
 
 	return round4Signers, parameters, nil
+}
+
+func signRound1MessagesForReceiver(
+	messages []*SignRound1Message,
+	receiverID string,
+) []*SignRound1Message {
+	filtered := make([]*SignRound1Message, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
+}
+
+func signRound2MessagesForReceiver(
+	messages []*SignRound2Message,
+	receiverID string,
+) []*SignRound2Message {
+	filtered := make([]*SignRound2Message, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
+}
+
+func signRound3MessagesForReceiver(
+	messages []*SignRound3Message,
+	receiverID string,
+) []*SignRound3Message {
+	filtered := make([]*SignRound3Message, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
+}
+
+func signRound4MessagesForReceiver(
+	messages []*SignRound4Message,
+	receiverID string,
+) []*SignRound4Message {
+	filtered := make([]*SignRound4Message, 0)
+	for _, message := range messages {
+		if message.receiverID == receiverID {
+			filtered = append(filtered, message)
+		}
+	}
+	return filtered
 }

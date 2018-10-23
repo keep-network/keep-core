@@ -1,0 +1,370 @@
+:toc: macro
+
+= Setting up local Keep network for development purposes
+
+toc::[]
+
+== Pre-requirements
+* Installed `geth` Ethereum client
+* Installed `truffle` framework
+
+The `scripts/macos-setup.sh` installs all required packages. Please consult 
+<<README.adoc#getting-set-up,Keep developer documentation>> for details.
+ 
+== Setting up local Ethereum client
+
+Create directories for Ethereum client data:
+
+```
+$ mkdir ~/ethereum
+$ mkdir ~/ethereum/data
+$ mkdir ~/ethereum/data/keystore
+```
+
+Create a new account for Ethereum client, set the password to just `password`:
+```
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-11|16:24:40] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase: 
+Repeat passphrase: 
+Address: {dd9fc033955d6fbb4908967bb2fe2a74ec965e92}
+```
+
+Create a new account for Keep peers. Each Keep peer can have its own account 
+but in this document, for simplicity, we use only one account for all peers:
+```
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-11|16:27:19] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase: 
+Repeat passphrase: 
+Address: {ca6aa3681a4f6ff5f759fec196d80fb0539b3626}
+```
+
+Check if accounts have been created correctly and `geth` can recognize them:
+```
+$ ls ~/ethereum/data/keystore/
+
+UTC--2018-10-11T23-24-47.203195376Z--dd9fc033955d6fbb4908967bb2fe2a74ec965e92
+UTC--2018-10-11T23-27-24.289597249Z--ca6aa3681a4f6ff5f759fec196d80fb0539b3626
+```
+
+```
+$ geth account list --keystore ~/ethereum/data/keystore
+
+Account #0: {dd9fc033955d6fbb4908967bb2fe2a74ec965e92} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-11T23-24-47.203195376Z--dd9fc033955d6fbb4908967bb2fe2a74ec965e92
+Account #1: {ca6aa3681a4f6ff5f759fec196d80fb0539b3626} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-11T23-27-24.289597249Z--ca6aa3681a4f6ff5f759fec196d80fb0539b3626
+```
+
+Initialize your local Ethereum node from `genesis.json` file. This allows to
+issue some tokens to the accounts we just created. It is enough to issue tokens
+only to the address that will be used by Keep peers (we need to deploy tokens
+and submit relay requests to the chain). The account under alloc is the address
+of the account from above prepended with `0x`:
+```
+{
+    "config": {
+        "chainId": 1101,
+        "homesteadBlock": 0,
+        "byzantiumBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0
+    },
+    "difficulty" : "0x20",
+    "gasLimit"   : "0x493E0000",
+    "alloc": {
+        "0xca6aa3681a4f6ff5f759fec196d80fb0539b3626": { "balance": "1000000000000000000000000000000000000000000000000000000" }
+     }
+}
+```
+
+Save the path to your data directory and preferred ethereum account in
+environment variables:
+```
+$ export GETH_DATA_DIR=/Users/piotr/ethereum/data/
+$ export ETHEREUM_ACCOUNT=0xca6aa3681a4f6ff5f759fec196d80fb0539b3626
+```
+
+```
+$ geth --datadir=$GETH_DATA_DIR init genesis.json
+
+INFO [10-13|13:29:17] Maximum peer count                       ETH=25 LES=0 total=25
+INFO [10-13|13:29:17] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/chaindata cache=16 handles=16
+INFO [10-13|13:29:17] Writing custom genesis block 
+INFO [10-13|13:29:17] Persisted trie from memory database      nodes=1 size=163.00B time=79.138µs gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B
+INFO [10-13|13:29:17] Successfully wrote genesis state         database=chaindata                                 hash=7c33da…6cbe42
+INFO [10-13|13:29:17] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/lightchaindata cache=16 handles=16
+INFO [10-13|13:29:17] Writing custom genesis block 
+INFO [10-13|13:29:17] Persisted trie from memory database      nodes=1 size=163.00B time=44.995µs gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B
+INFO [10-13|13:29:17] Successfully wrote genesis state         database=lightchaindata                                 hash=7c33da…6cbe42
+```
+
+Start Ethereum client locally using client's wallet address. It is not required 
+to unlock this account since tokens will only be added to it as a mining block 
+reward:
+
+```
+$ geth --port 3000 --networkid 1101 --identity "somerandomidentity" \
+    --ws --wsaddr "127.0.0.1" --wsport "8546" --wsorigins "" \
+    --rpc --rpcport "8545" --rpcaddr "127.0.0.1" --rpccorsdomain "" \
+    --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" \
+    --datadir=$GETH_DATA_DIR --syncmode "fast" \
+    --miner.etherbase=$ETHEREUM_ACCOUNT --mine --miner.threads=1
+
+INFO [10-13|13:35:01] Maximum peer count                       ETH=25 LES=0 total=25
+INFO [10-13|13:35:01] Starting peer-to-peer node               instance=Geth/somerandomidentity/v1.8.11-stable/darwin-amd64/go1.10.3
+INFO [10-13|13:35:01] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/chaindata cache=768 handles=128
+INFO [10-13|13:35:01] Initialised chain configuration          config="{ChainID: 1101 Homestead: 0 DAO: <nil> DAOSupport: false EIP150: <nil> EIP155: 0 EIP158: 0 Byzantium: <nil> Constantinople: <nil> Engine: unknown}"
+INFO [10-13|13:35:01] Disk storage enabled for ethash caches   dir=/Users/piotr/ethereum/data/geth/ethash count=3
+INFO [10-13|13:35:01] Disk storage enabled for ethash DAGs     dir=/Users/piotr/.ethash                   count=2
+INFO [10-13|13:35:01] Initialising Ethereum protocol           versions="[63 62]" network=11011
+INFO [10-13|13:35:01] Loaded most recent local header          number=0 hash=7c33da…6cbe42 td=32
+INFO [10-13|13:35:01] Loaded most recent local full block      number=0 hash=7c33da…6cbe42 td=32
+INFO [10-13|13:35:01] Loaded most recent local fast block      number=0 hash=7c33da…6cbe42 td=32
+INFO [10-13|13:35:01] Loaded local transaction journal         transactions=0 dropped=0
+INFO [10-13|13:35:01] Regenerated local transaction journal    transactions=0 accounts=0
+INFO [10-13|13:35:01] Starting P2P networking 
+INFO [10-13|13:35:01] UDP listener up                          self=enode://55e29cc362db46cb37ed24f0aa9f3ea7502410a6a07ab04af782c52276a02d2fda74aaaf9e552ffbe94c1998b447a4444e7524a9e480398ce974d441b9264fe9@[::]:3000
+INFO [10-13|13:35:01] RLPx listener up                         self=enode://55e29cc362db46cb37ed24f0aa9f3ea7502410a6a07ab04af782c52276a02d2fda74aaaf9e552ffbe94c1998b447a4444e7524a9e480398ce974d441b9264fe9@[::]:3000
+INFO [10-13|13:35:01] IPC endpoint opened                      url=/Users/piotr/ethereum/data/geth.ipc
+INFO [10-13|13:35:01] HTTP endpoint opened                     url=http://127.0.0.1:8545               cors= vhosts=localhost
+INFO [10-13|13:35:01] WebSocket endpoint opened                url=ws://127.0.0.1:8546
+INFO [10-13|13:35:01] Transaction pool price threshold updated price=18000000000
+INFO [10-13|13:35:01] Starting mining operation 
+INFO [10-13|13:35:01] Commit new mining work                   number=1 txs=0 uncles=0 elapsed=145.275µs
+INFO [10-13|13:35:07] Successfully sealed new block            number=1 hash=384b15…68956e
+INFO [10-13|13:35:07] 🔨 mined potential block                  number=1 hash=384b15…68956e
+INFO [10-13|13:35:07] Commit new mining work                   number=2 txs=0 uncles=0 elapsed=192.531µs
+```
+
+== Deployment of Keep contracts
+
+Before we deploy Keep contracts to the local Ethereum network it is required to 
+unlock the account from which gas will be subtracted for this operation. We will 
+use the address created for Keep clients:
+
+```
+$ geth attach http://127.0.0.1:8545
+
+Welcome to the Geth JavaScript console!
+
+instance: Geth/somerandomidentity/v1.8.11-stable/darwin-amd64/go1.10.3
+coinbase: 0xca6aa3681a4f6ff5f759fec196d80fb0539b3626
+at block: 76 (Sat, 13 Oct 2018 13:38:30 CEST)
+ datadir: /Users/piotr/ethereum/data
+ modules: admin:1.0 eth:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 web3:1.0
+
+> personal.unlockAccount("0xca6aa3681a4f6ff5f759fec196d80fb0539b3626", "password", 150000);
+true
+> exit
+```
+
+We also need to create a new network entry in `keep-core/contracts/solidity/truffle.js` 
+pointing to our local node and address used to deploy contracts:
+
+```
+local: {
+     host: "127.0.0.1",
+     port: 8545,
+     network_id: "*",
+     gas: 4712388,
+     from: "0xca6aa3681a4f6ff5f759fec196d80fb0539b3626"
+   }
+```
+
+Having done all those steps we can finally run a migration and deploy our 
+contracts. Please save the output of `truffle migrate` as we will need to 
+use some of the outputted contract addresses in the Keep peer configuration 
+later.
+
+```
+$ cd keep-core/contracts/solidity
+$ truffle migrate --reset --network local
+
+Using network 'local'.
+
+Running migration: 1_initial_migration.js
+  Replacing Migrations...
+  ... 0xa8d22ed27113c92ac814c4c381fe25ec2321f1d1ea57b2b3594fcb561c2ba3df
+  Migrations: 0x5af683b079f326defd8fdae3abe9ff7cc43e3088
+Saving successful migration to network...
+  ... 0x5adb7f372fc816ea5f49fcfa514bf1c2b23ce637d903c6f6831567b1d894e97e
+Saving artifacts...
+Running migration: 2_deploy_contracts.js
+  Running step...
+  Replacing ModUtils...
+  ... 0x0fee6d28048ee6de1e148f9f9bc7112ac7127a91af7b88143bb4676d14480528
+  ModUtils: 0xb4518c596d3bf70957b261f76993aba7b9d7daed
+  Linking ModUtils to AltBn128
+  Replacing AltBn128...
+  ... 0x333312961dada8d84567bf948a708367ff88b6fc2434be69dee8c7d29103773f
+  AltBn128: 0x681e1d5f3d66cd38b0a06bca5fa02d3685117268
+  Replacing KeepToken...
+  ... 0x05198b31a61ca76b880ee85177ddf30013a0b6cfe5389ab4fc59a4c57719b439
+  KeepToken: 0x16763f6e80bb87619496227349fc83489a77c9bf
+  Replacing StakingProxy...
+  ... 0x28b667932866f2abdfec75a7d0c72366780588ad37152afdb99c74943f5aaf36
+  StakingProxy: 0xc2100a17916ddb70fcdaafc14f104b9110001571
+  Replacing TokenStaking...
+  ... 0xd33083a5c94b3e0222c5fc60cfdc82412e5f900d3fd26e8a41962dbe4e78d673
+  TokenStaking: 0x11ee04a5e5275e28f19740294c81a30c22c43f38
+  Replacing TokenGrant...
+  ... 0xbe29cb360e50b7abdb9ef9e77817e6533f052efa1c848709543b56c5aa49c01c
+  TokenGrant: 0xf79f36d99c954f6950e367765047e769ee11ac52
+  Replacing KeepRandomBeaconImplV1...
+  ... 0xd3d08f4b71edd8a109ba34fc52aac272403792bfbb4ce7352d644dd9c7a2aeeb
+  KeepRandomBeaconImplV1: 0x38ec1c40aa400502f7ef1e6b055c44f94ec59eb4
+  Replacing KeepRandomBeacon...
+  ... 0xec90d1c2972078f4efd48bf2f710406c8daa6bd67144f3e5ad35f293c4f47bec
+  KeepRandomBeacon: 0xb63a1a13a5099fad0fb703d3161ec08d4db2ab83
+  Replacing KeepGroupImplV1...
+  ... 0x142b64f3704c7d059d5a51d0e911487c2f580f681a690e732eb4e7e7cb370db2
+  KeepGroupImplV1: 0xa83abe4c89ca8163e96acf10a88825af05751abb
+  Replacing KeepGroup...
+  ... 0xc0b243ff35f371676ec4eeaf21effab7c73fe8ea117a16c2d0e97e99048d9ce0
+  KeepGroup: 0xde93fc1fd2dc3679c48dc9abac96b731112f1670
+  ... 0x4f7d638ea414b1b7f7c32c82944a0e49ea37992ee3eb347793e707c9604aed9d
+  ... 0xb57df372f286b97ff693aa308086355498233099822934543d3340298a142710
+Saving successful migration to network...
+  ... 0xc0a0de324da6d02d7804229a691b2ece9ae18f84e8977f994baed5c90e9c27e2
+Saving artifacts...
+```
+
+== Setting up local Keep peers
+
+
+For each Keep peer we need to create a separate configuration file. We need at 
+least one bootstrap peer in the network. Here, we will create one bootstrap peer 
+and 4 non-bootstrap peers pointing to it.
+
+Let's create a configuration for the bootstrap peer first:
+```
+$ cp config.toml.SAMPLE config.local.1.toml
+```
+
+Next, edit `config.local.1.toml` and update `[ethereum.account]` section to 
+point to the account that will be used by Keep peers:
+```
+[ethereum.account]
+        Address            = "0xca6aa3681a4f6ff5f759fec196d80fb0539b3626"
+        KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-11T23-27-24.289597249Z--ca6aa3681a4f6ff5f759fec196d80fb0539b3626"
+```
+
+Update `[ethereum.ContractAddresses]` section to point to the previously 
+deployed contract instances. Please use addresses of `KeepGroup` and `KeepRandomBeacon` 
+proxy contracts as well as the address of `KeepGroup` contract from the truffle 
+migration output:
+```
+[ethereum.ContractAddresses]
+        KeepRandomBeacon = "0xb63a1a13a5099fad0fb703d3161ec08d4db2ab83"
+        KeepGroup = "0xde93fc1fd2dc3679c48dc9abac96b731112f1670"
+```
+
+Next, create configuration files for non-bootstrap peers:
+```
+$ cp config.local.1.toml config.local.2.toml
+$ cp config.local.1.toml config.local.3.toml
+$ cp config.local.1.toml config.local.4.toml
+$ cp config.local.1.toml config.local.5.toml
+```
+
+In the `config.local.1.toml` enable network settings for bootstrap peer:
+```
+[LibP2P]
+        Seed = 2
+        Port = 3919
+```
+
+And start the peer:
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip6/::1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca |
+|       /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca     |
+------------------------------------------------------------------------------------------------
+```
+
+The next thing we need to do is to alter configuration file of each 
+non-bootstrap peer. Please modify `Port` number so that it is unique for each 
+peer and update the address of the bootstrap peer. For a non-bootstrap peer, 
+`Seed` value should be removed or remain commented out.
+
+In `config.local.2.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3920
+```
+
+In `config.local.3.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3921
+```
+
+In `config.local.4.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3922
+```
+
+In `config.local.5.toml`:
+```
+[LibP2P]
+        Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
+        Port = 3923
+```
+
+Finally, we can start each non-bootstrap instance:
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr |
+------------------------------------------------------------------------------------------------
+```
+
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.3.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784 |
+------------------------------------------------------------------------------------------------
+```
+
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.4.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb |
+------------------------------------------------------------------------------------------------
+```
+
+```
+$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml start
+------------------------------------------------------------------------------------------------
+| Node: BOOTSTRAP node                                                                         |
+| Port: 0                                                                                      |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p     |
+|       /ip6/::1/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p           |
+|       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p |
+------------------------------------------------------------------------------------------------
+```
