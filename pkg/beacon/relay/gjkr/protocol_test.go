@@ -218,6 +218,15 @@ func setupSharesAndCommitments(members []*CommittingMember, threshold int) {
 	}
 }
 
+func findMemberByID(members []*CommittingMember, id int) *CommittingMember {
+	for _, m := range members {
+		if m.ID == id {
+			return m
+		}
+	}
+	return nil
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 3
 	groupSize := 5
