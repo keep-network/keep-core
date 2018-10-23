@@ -18,18 +18,18 @@
 //
 // [Act 1]
 // nonce1 = random_nonce()
-// act1Message { nonce1 } ---->
+// act1Message{nonce1} ---->
 //                                       [Act 2]
 //                                       nonce2 = random_nonce()
 //                                       challenge = sha256(nonce1 || nonce2)
-//                                       <---- act2Message { challenge, nonce2 }
+//                                       <---- act2Message{challenge, nonce2}
 // [Act 3]
 // challenge = sha256(nonce1 || nonce2)
-// act3Message {challenge} ---->
+// act3Message{challenge} ---->
 //
 //
 // act1Message, act2Message, and act3Message are messages exchanged between
-// initiator and responder in the act one, two and three of the handshake,
+// initiator and responder in acts one, two, and three of the handshake,
 // respectively.
 //
 // initiatorAct1, initiatorAct2, and initiatorAct3 represent the state of the
@@ -62,9 +62,9 @@ type act1Message struct {
 }
 
 // act2Message is sent in the second handshake act by the responder to the
-// initiator. It contains randomly generated `nonce2`, an 8-byte unsigned
-// integer and `challenge` which is a result of SHA256 on the concatenated
-// bytes of `nonce1` and `nonce2`.
+// initiator. It contains randomly generated `nonce2`, which is an 8-byte
+// unsigned integer and `challenge`, which is the result of SHA256 on the
+// concatenated bytes of `nonce1` and `nonce2`.
 //
 // act2Message should be signed with responder's static private key.
 type act2Message struct {
