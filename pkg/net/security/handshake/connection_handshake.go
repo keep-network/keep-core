@@ -119,8 +119,8 @@ func (ia1 *initiatorAct1) next() *initiatorAct2 {
 // message from initiator in the first act of the handshake protocol.
 // The returned responder is in a state ready to execute the second act of the
 // handshake protocol.
-func answerHandshake(act1Msg *act1Message) (*responderAct2, error) {
-	nonce1 := act1Msg.nonce1
+func answerHandshake(message *act1Message) (*responderAct2, error) {
+	nonce1 := message.nonce1
 	nonce2, err := randomNonce()
 	if err != nil {
 		return nil, fmt.Errorf("could not answer the handshake [%v]", err)
@@ -162,18 +162,19 @@ func (ra2 *responderAct2) next() *responderAct3 {
 
 // next performs a state transition and returns initiator in a state ready to
 // execute the third act of the handshake protocol.
+//
 // Function validates the challenge received from responder in the second act of
 // the protocol. If the challenge is the same as expected one, new state of
 // initiator is returned. Otherwise, function reports an error and handshake
 // protocol should be immediately aborted.
-func (ia2 *initiatorAct2) next(act2Msg *act2Message) (*initiatorAct3, error) {
-	expectedChallenge := hashToChallenge(ia2.nonce1, act2Msg.nonce2)
-	if expectedChallenge != act2Msg.challenge {
+func (ia2 *initiatorAct2) next(message *act2Message) (*initiatorAct3, error) {
+	expectedChallenge := hashToChallenge(ia2.nonce1, message.nonce2)
+	if expectedChallenge != message.challenge {
 		return nil, errors.New("unexpected responder's challenge")
 	}
 
 	return &initiatorAct3{
-		challenge: act2Msg.challenge,
+		challenge: message.challenge,
 	}, nil
 }
 
@@ -203,8 +204,8 @@ func (ia3 *initiatorAct3) message() *act3Message {
 // If both challenges are equal, handshake has completed successfully and
 // function returns nil. Otherwise, if challenge is not as expected, function
 // returns an error and it means the handshake protocol failed.
-func (ra3 *responderAct3) finalizeHandshake(act3Msg *act3Message) error {
-	if ra3.challenge != act3Msg.challenge {
+func (ra3 *responderAct3) finalizeHandshake(message *act3Message) error {
+	if ra3.challenge != message.challenge {
 		return errors.New("unexpected initiator's challenge")
 	}
 
