@@ -23,7 +23,7 @@ var _ secure.Conn = (*authenticatedConnection)(nil)
 
 // Transport constructs an authenticated communication connection for a peer.
 type Transport struct {
-	LocalID    peer.ID
+	LocalPeerID    peer.ID
 	PrivateKey libp2pcrypto.PrivKey
 }
 
@@ -33,7 +33,7 @@ func New(pk libp2pcrypto.PrivKey) (*Transport, error) {
 		return nil, err
 	}
 	return &Transport{
-		LocalID:    id,
+		LocalPeerID:    id,
 		PrivateKey: pk,
 	}, nil
 }
@@ -45,7 +45,7 @@ func (t *Transport) SecureInbound(
 ) (secure.Conn, error) {
 	return newAuthenticatedSession(
 		ctx,
-		t.LocalID,
+		t.LocalPeerID,
 		t.PrivateKey,
 		unauthenticatedConn,
 		"",
@@ -56,14 +56,14 @@ func (t *Transport) SecureInbound(
 func (t *Transport) SecureOutbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
-	remotePeer peer.ID,
+	remotePeerID peer.ID,
 ) (secure.Conn, error) {
 	return newAuthenticatedSession(
 		ctx,
-		t.LocalID,
+		t.LocalPeerID,
 		t.PrivateKey,
 		unauthenticatedConn,
-		remotePeer,
+		remotePeerID,
 	)
 }
 
