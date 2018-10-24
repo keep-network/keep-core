@@ -1,9 +1,15 @@
 package key
 
 import (
+	"crypto/ecdsa"
+	"io"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/pborman/uuid"
 )
 
 // EthereumStaticKey is an implementation of StaticKey interface that supports
@@ -16,6 +22,25 @@ type EthereumStaticKey struct {
 // ethereum ECDSA key.
 func NewEthereumStaticKey(ethereumKey *keystore.Key) *EthereumStaticKey {
 	return &EthereumStaticKey{ethereumKey}
+}
+
+// GenerateEthereumStaticKey generates a new, random EthereumStaticKey based on
+// secp256k1 curve.
+func GenerateEthereumStaticKey(rand io.Reader) (*EthereumStaticKey, error) {
+	id := uuid.NewRandom()
+
+	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
+	if err != nil {
+		return nil, err
+	}
+
+	key := &keystore.Key{
+		Id:         id,
+		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
+		PrivateKey: ecdsaKey,
+	}
+
+	return NewEthereumStaticKey(key), nil
 }
 
 // PrivateKey returns ethereum secp256k1 ECDSA key as a libp2p PrivKey instance.

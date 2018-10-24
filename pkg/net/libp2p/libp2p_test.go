@@ -2,26 +2,22 @@ package libp2p
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"crypto/rand"
 	"encoding/json"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
-	"github.com/pborman/uuid"
 )
 
 func TestProviderReturnsType(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	staticKey, err := newTestStaticKey()
+	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +44,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	testName := "testname"
 
-	staticKey, err := newTestStaticKey()
+	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +80,7 @@ func TestSendReceive(t *testing.T) {
 		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
 	)
 
-	staticKey, err := newTestStaticKey()
+	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +173,7 @@ func TestSendToReceiveFrom(t *testing.T) {
 		expectedPayload = "some text"
 	)
 
-	staticKey, err := newTestStaticKey()
+	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -308,28 +304,13 @@ func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
 
-func newTestStaticKey() (*keystore.Key, error) {
-	id := uuid.NewRandom()
-
-	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	return &keystore.Key{
-		Id:         id,
-		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
-		PrivateKey: ecdsaKey,
-	}, nil
-}
-
 func newTestIdentity() (*identity, error) {
-	staticKey, err := newTestStaticKey()
+	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	return createIdentity(toLibp2pKey(staticKey))
+	return createIdentity(staticKey.PrivateKey())
 }
 
 func generateDeterministicNetworkConfig(t *testing.T) Config {
