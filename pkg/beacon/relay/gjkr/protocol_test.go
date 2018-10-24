@@ -294,6 +294,14 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 					len(accusedMessage.accusedIDs),
 				)
 			}
+
+			expectedStoredPublicCoefficients := groupSize - 1 - test.expectedAccusations
+			if len(sharingMember.receivedPublicCoefficients) != expectedStoredPublicCoefficients {
+				t.Fatalf("\nexpected: %v received public coefficients\nactual:   %v\n",
+					expectedStoredPublicCoefficients,
+					len(sharingMember.receivedPublicCoefficients),
+				)
+			}
 		})
 	}
 }
