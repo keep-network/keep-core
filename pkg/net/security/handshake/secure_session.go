@@ -11,30 +11,30 @@ import (
 type authenticatedSession struct {
 	net.Conn
 
-	localPrivateKey libp2pcrypto.PrivKey
-	localPeer       peer.ID
+	localPeerID         peer.ID
+	localPeerPrivateKey libp2pcrypto.PrivKey
 
-	remotePeer      peer.ID
-	remotePublicKey libp2pcrypto.PubKey
+	remotePeerID        peer.ID
+	remotePeerPublicKey libp2pcrypto.PubKey
 }
 
 func newAuthenticatedSession(
 	ctx context.Context,
-	local peer.ID,
+	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	unauthenticatedConn net.Conn,
-	remotePeer peer.ID,
+	remotePeerID peer.ID,
 ) (*authenticatedSession, error) {
-	remotePublicKey, err := remotePeer.ExtractPublicKey()
+	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
 		return nil, err
 	}
 
 	return &authenticatedSession{
-		Conn:            unauthenticatedConn,
-		localPeer:       local,
-		localPrivateKey: privateKey,
-		remotePeer:      remotePeer,
-		remotePublicKey: remotePublicKey,
+		Conn:                unauthenticatedConn,
+		localPeerID:         localPeerID,
+		localPeerPrivateKey: privateKey,
+		remotePeerID:        remotePeerID,
+		remotePeerPublicKey: remotePublicKey,
 	}, nil
 }

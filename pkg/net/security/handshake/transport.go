@@ -69,20 +69,20 @@ func (t *Transport) SecureOutbound(
 
 // LocalPeer retrieves the local peer.
 func (ss *authenticatedSession) LocalPeer() peer.ID {
-	return ss.localPeer
+	return ss.localPeerID
 }
 
 // LocalPrivateKey retrieves the local peer's PrivateKey
 func (ss *authenticatedSession) LocalPrivateKey() libp2pcrypto.PrivKey {
-	return ss.localPrivateKey
+	return ss.localPeerPrivateKey
 }
 
 // RemotePeer retrieves the remote peer.
 func (ss *authenticatedSession) RemotePeer() peer.ID {
-	return ss.remotePeer
+	return ss.remotePeerID
 }
 
 // RemotePublicKey retrieves the remote public key.
 func (ss *authenticatedSession) RemotePublicKey() libp2pcrypto.PubKey {
-	return ss.remotePublicKey
+	return ss.remotePeerPublicKey
 }
