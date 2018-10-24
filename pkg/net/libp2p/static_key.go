@@ -6,7 +6,7 @@ import (
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 )
 
-func toLibp2pKey(ethereumKey *keystore.Key) libp2pcrypto.PrivKey {
+func toLibp2pKey(ethereumKey *keystore.Key) *libp2pcrypto.Secp256k1PrivateKey {
 	privKey, _ := btcec.PrivKeyFromBytes(
 		btcec.S256(), ethereumKey.PrivateKey.D.Bytes(),
 	)
