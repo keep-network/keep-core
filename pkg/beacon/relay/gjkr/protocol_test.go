@@ -347,7 +347,8 @@ func TestRoundTrip(t *testing.T) {
 	var sharingMembers []*SharingMember
 	for _, cm := range committingMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			CommittingMember: cm,
+			CommittingMember:           cm,
+			receivedPublicCoefficients: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
@@ -461,7 +462,8 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 			}
 		}
 		sharingMembers = append(sharingMembers, &SharingMember{
-			CommittingMember: cm,
+			CommittingMember:           cm,
+			receivedPublicCoefficients: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
