@@ -21,8 +21,8 @@ type PeerSharesMessage struct {
 	senderID   int
 	receiverID int
 
-	shareS *big.Int
-	shareT *big.Int
+	shareS *big.Int // s_ij
+	shareT *big.Int // s_ij
 }
 
 // SecretSharesAccusationsMessage is a message payload that carries all of the
@@ -43,7 +43,7 @@ type SecretSharesAccusationsMessage struct {
 type MemberPublicCoefficientsMessage struct {
 	senderID int
 
-	publicCoefficients []*big.Int
+	publicCoefficients []*big.Int // A_ik = g^{a_ik}
 }
 
 // CoefficientsAccusationsMessage is a message payload that carries all of the
