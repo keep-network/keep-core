@@ -1,12 +1,12 @@
 class Bid(NamedTuple):
-    amount: Money
-    expiresAt: Blockheight
+    amount:         Money
+    expiresAt:      Blockheight
     seedCommitment: Commitment[SeedValue]
 
 
 class BidPool(NamedTuple):
     bidTotal: Money
-    allBids: OrderedList[Bid]
+    allBids:  OrderedList[Bid]
 
 
 def popBid(
@@ -93,6 +93,14 @@ def generateOutput(
     #
     # thus highest stakes create the best risk:reward ratio
     totalStake = usedBids.bidTotal * BID_STAKE_MULTIPLIER
+    memberStake = totalStake / N
+
+    # an alternative algorithm, creating more variability in the stakes
+    #
+    # getCurrentGasPrice() is a simplification and should actually use
+    # a smoother estimate to correct for price fluctuations
+    totalProfit = usedBids.bidTotal - (getCurrentGasPrice() * OUTPUT_GAS_COST)
+    totalStake = totalProfit * BID_STAKE_MULTIPLIER
     memberStake = totalStake / N
 
     # select the group to perform the beacon output

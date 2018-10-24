@@ -5,7 +5,9 @@ Possibilities:
 . bid for stake
 . bid for seed
 
-== Bid For Seed
+= Bid For Seed
+
+== Overview
 
 Customers publish bids, including:
 
@@ -14,29 +16,29 @@ Customers publish bids, including:
 - seed commitment
 
 When the total of bids in the pool reaches or exceeds _Price~current~_
-a number of highest bids are selected so that the sum of the selected
-bids' values is at least _Price~current~_ -> _Bids~used~_.
+a number of highest bids _Bids~used~_ are selected so that the sum of the selected
+bids' values is at least _Price~current~_.
 
 The number of bids in _Bids~used~_ determines the _Timeout~seedReveal~_
 by some function `timeoutByBidN`. With a smaller number of bidders, the timeout
 will be reached sooner and thus the output will be generated faster; this
 incentivizes placing high bids to improve the reliability.
 
-One implication of this is that the top bidder can manipulate the output by
-withholding the reveal of their seed to re-roll an unfavorable output
-(if they collude with the selected group to determine the output in advance).
-With solo bidding (bidding more than the current price) reaching timeout means
-no output is generated, and this convenient vulnerability is blocked.
-This would incentivize users with extremely high trust requirements to be solo
-bidders.
+The beacon signing group is selected. The customer who placed the highest bid in
+_Bids~used~_ will open their seed commitment (if not performed within
+_Timeout~seedReveal~_, the next highest bidder will take their place, continuing
+until either a valid seed has been revealed or no bidders are left).
 
-=== Stakes
+The seed commitment and the beacon's previous output will be used to produce the
+next output of the random beacon.
+
+== Stakes
 
 The amounts staked by beacon operators should scale with the prices customers
 pay for the beacon outputs. This can be achieved by either a linear or
 profit-proportional method.
 
-==== Linear stakes
+=== Linear stakes
 
 The total value of the bids in _Bids~used~_ is multiplied by
 _BID_STAKE_MULTIPLIER_ to determine the total stake for that beacon output;
@@ -56,7 +58,7 @@ The total amount staked scales directly with the total amount bid for
 the output. As the cost of generating an output is more or less constant,
 profits for stakers will be highest when the bid totals are highest.
 
-==== Profit-proportional stakes
+=== Profit-proportional stakes
 
 Alternatively, the total stakes could be made proportional to the
 total profits of generating such an output:
@@ -75,11 +77,19 @@ member_stake = staked_total / N
 In this case, the risk:reward ratio stays consistent, and the stakes vary
 from minimal to significant; even a small increase in bid amount over the
 minimum can substantially increase the stakes. If higher stakers for beacon
-operators are sufficiently desirable to customers, this can serve as an
+operators are sufficiently desirable to customers this can serve as an
 incentive to bid above the minimum, especially for solo bidders who might
 otherwise be likely to bid the mimimum required to reach solo status.
 
-=== Solo bidding
+== Bidding
+
+[source, python]
+----
+class Bid(NamedTuple):
+    amount:         Money
+    expiresAt:      Blockheight
+    seedCommitment: Commitment[SeedValue]
+----
 
 The BFS model is intended to both enable "crowdfunded" output generation by
 pooling smaller bids, and to incentivize customers with particular needs to
@@ -97,6 +107,40 @@ responsiveness).
 
 For customers with particularly high trust or responsiveness requirements,
 solo bidding should be the obvious choice.
+
+=== Pool bidding
+
+The bid pool is an ordered data structure supporting the following operations:
+
+- querying the total of the pooled bids
+- retrieving and removing the highest bid
+- adding a new bid to the pool
+- removing any expired bids
+
+If a bid doesn't exceed the minimum price to produce an output, it will be
+added to the bid pool. Bids whose expiration blockheight has been reached will
+be removed from the bid pool and refunded (minus gas fees?).
+
+If the total amount of currency in the pooled bids exceeds the minimum price,
+output generation will commence. The highest bid will be removed from the pool
+and added to a temporary pool, repeating until the total of the bids in the
+temporary pool is at least the price required to generate a beacon output.
+Leftover bids will stay in the pool.
+
+Beacon output generation will then be triggered. Information from the bids is
+used to select the group to perform the BLS signature for the output. The top
+bidder (bidder who made the highest-value bid among those used for that output)
+is called to reveal the seed value they committed to in their bid. If a seed
+value matching the commitment is not presented within the timeout period, the
+top bidder position will shift to the next highest bidder, continuing until
+either a valid seed has been revealed or every bidder has timed out; in the
+latter case the generation aborts and no output is produced.
+
+=== Solo bidding
+
+Solo bidding means a situation where one single bid exceeds the current minimum
+price for a beacon output. This provides the greatest responsiveness and
+resistance to output manipulation.
 
 ==== Top bidder manipulation
 
@@ -139,10 +183,10 @@ for situations requiring the highest levels of third-party trust.
 
 ==== Implementation
 
-In the BFS algorithm, solo bidding arises from the design with only a special
-case for disabling top bidder timeouts when the number of bidders is 1.
+In the BFS algorithm, solo bidding arises from the design without special cases,
+except optionally disabling top bidder timeouts when the number of bidders is 1.
 
-=== Pricing
+== Pricing
 
 The function `getCurrentOutputPrice` does most of the heavy lifting here.
 While defining a precise function would require more work and is out of scope,
@@ -155,9 +199,27 @@ with low demand (few outputs generated) it should fall
 the beacon should generate an output eventually as a long period of inactivity
 pushes the price below the bid sum
 
-=== Timeouts
+== Timeouts
 
 The function `timeoutByBidN` returns the timeout for _each_ top bidder for a
 certain number of bids. The function can be constant, increasing, or decreasing
 depending on what characteristics are desired. A special case for _n~bids~ = 1_
 can be included to disable top bidder timeouts for solo bidders.
+
+In pool bidding situations, the output generation can be set to commence either
+immediately as the seed value is revealed, or after the minimum timeout has been
+reached (in which case the group will either generate the output if a valid seed
+is revealed, or wait another timeout period for the next highest bidder to
+reveal their seed value).
+
+In the first case a customer can ensure optimum responsiveness by simply bidding
+enough to be the top bidder. In the second, a minimum timeout dependent on the
+total number of bids is present; this may incentivize higher bids (to bump off
+small bids at the tail, or to reach solo bidder status) but could also have a
+significant negative impact on the usefulness of the beacon for pool bidders.
+
+== TBD
+
+- value-added accessory features; calling some customer-defined contract with
+the beacon output?
+- details of pricing and timeout functions
