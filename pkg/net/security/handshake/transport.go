@@ -19,7 +19,7 @@ const ID = "/secio/1.0.0"
 
 // Compile time assertions of custom types
 var _ secure.Transport = (*Transport)(nil)
-var _ secure.Conn = (*authenticatedSession)(nil)
+var _ secure.Conn = (*authenticatedConnection)(nil)
 
 // Transport constructs an authenticated communication connection for a peer.
 type Transport struct {
@@ -68,21 +68,21 @@ func (t *Transport) SecureOutbound(
 }
 
 // LocalPeer retrieves the local peer.
-func (ss *authenticatedSession) LocalPeer() peer.ID {
+func (ss *authenticatedConnection) LocalPeer() peer.ID {
 	return ss.localPeerID
 }
 
 // LocalPrivateKey retrieves the local peer's PrivateKey
-func (ss *authenticatedSession) LocalPrivateKey() libp2pcrypto.PrivKey {
+func (ss *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
 	return ss.localPeerPrivateKey
 }
 
 // RemotePeer retrieves the remote peer.
-func (ss *authenticatedSession) RemotePeer() peer.ID {
+func (ss *authenticatedConnection) RemotePeer() peer.ID {
 	return ss.remotePeerID
 }
 
 // RemotePublicKey retrieves the remote public key.
-func (ss *authenticatedSession) RemotePublicKey() libp2pcrypto.PubKey {
+func (ss *authenticatedConnection) RemotePublicKey() libp2pcrypto.PubKey {
 	return ss.remotePeerPublicKey
 }

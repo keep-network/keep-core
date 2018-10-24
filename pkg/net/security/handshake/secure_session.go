@@ -8,7 +8,7 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
-type authenticatedSession struct {
+type authenticatedConnection struct {
 	net.Conn
 
 	localPeerID         peer.ID
@@ -24,13 +24,13 @@ func newAuthenticatedSession(
 	privateKey libp2pcrypto.PrivKey,
 	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
-) (*authenticatedSession, error) {
+) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
 		return nil, err
 	}
 
-	return &authenticatedSession{
+	return &authenticatedConnection{
 		Conn:                unauthenticatedConn,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
