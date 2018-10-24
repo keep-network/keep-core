@@ -280,7 +280,7 @@ for c in complaints_A:
 
   C_prod = product(
     for k in [0..T]:
-      C_jk ^ (m^k)
+      C_mk ^ (j^k)
   ) mod p
 
   if g^s_mj * h^t_mj = C_prod: # <1>
