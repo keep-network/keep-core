@@ -508,6 +508,7 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 	for _, sm := range sharingMembers {
 		for _, cm := range committingMembers {
 			sm.receivedSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
+			sm.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
 		}
 	}
 
