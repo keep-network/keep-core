@@ -281,3 +281,54 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 		accusedIDs: accusedMembersIDs,
 	}, nil
 }
+
+// ResolvePublicCoefficientsAccusations resolves a complaint received from a sender
+// against a member accused in public coefficients verification.
+//
+// Current member cannot be a part of a dispute, if the member is either a sender
+// or accused the function will return an error.
+//
+// The function requires share `s_mj` calculated by the accused member (`m`) for
+// the sender (`j`). This values is expect to be broadcasted before in encrypted
+// form. On accusation the share should be decrypted and the revealed value should
+// be passed to this function.
+//
+// See Phase 9 of the protocol specification.
+func (sm *SharingMember) ResolvePublicCoefficientsAccusations(
+	senderID, accusedID int,
+	shareS *big.Int,
+) (int, error) {
+	if sm.ID == senderID || sm.ID == accusedID {
+		return 0, fmt.Errorf("current member cannot be a part of a dispute")
+	}
+
+	// `product = Π (A_mk ^ (j^k)) mod p` for k in [0..T],
+	// where: m is accused member's ID, j is sender's ID, T is threshold.
+	product := big.NewInt(1)
+	for k, a := range sm.receivedPublicCoefficients[accusedID] {
+		product = new(big.Int).Mod(
+			new(big.Int).Mul(
+				product,
+				new(big.Int).Exp(
+					a,
+					pow(senderID, k),
+					sm.protocolConfig.P,
+				),
+			),
+			sm.protocolConfig.P,
+		)
+	}
+
+	// `expectedProduct = g^s_mj mod p`, where:
+	// m is accused member's ID, j is sender's ID.
+	expectedProduct := new(big.Int).Exp(
+		sm.vss.G,
+		shareS,
+		sm.protocolConfig.P,
+	)
+
+	if expectedProduct.Cmp(product) == 0 {
+		return senderID, nil
+	}
+	return accusedID, nil
+}
