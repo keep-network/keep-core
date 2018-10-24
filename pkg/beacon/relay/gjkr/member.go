@@ -48,4 +48,7 @@ type SharingMember struct {
 
 	shareS, shareT     *big.Int
 	publicCoefficients []*big.Int
+	// Public coefficients received from peer group members. Defined as `A_jk`
+	// across the protocol documentation.
+	receivedPublicCoefficients map[int][]*big.Int
 }
