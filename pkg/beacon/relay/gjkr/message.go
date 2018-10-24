@@ -22,7 +22,7 @@ type PeerSharesMessage struct {
 	receiverID int
 
 	shareS *big.Int // s_ij
-	shareT *big.Int // s_ij
+	shareT *big.Int // t_ij
 }
 
 // SecretSharesAccusationsMessage is a message payload that carries all of the
