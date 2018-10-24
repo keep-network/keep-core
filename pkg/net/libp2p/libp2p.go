@@ -74,7 +74,7 @@ func Connect(
 ) (net.Provider, error) {
 	privateKey := toLibp2pKey(staticKey)
 
-	identity, err := createIdentity(privateKey)
+	identity, err := createIdentity(toLibp2pKey(staticKey))
 	if err != nil {
 		return nil, err
 	}
