@@ -306,6 +306,88 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	}
 }
 
+func TestResolvePublicCoefficientsAccusations(t *testing.T) {
+	threshold := 3
+	groupSize := 5
+
+	members, err := initializeSharingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+	member := members[1]
+
+	var tests = map[string]struct {
+		senderID                 int
+		accusedID                int
+		modifyShareS             func(shareS *big.Int) *big.Int
+		modifyPublicCoefficients func(coefficients []*big.Int) []*big.Int
+		expectedResult           int
+		expectedError            error
+	}{
+		"false accusation - sender is punished": {
+			senderID:       3,
+			accusedID:      4,
+			expectedResult: 3,
+		},
+		"current member as a sender - error returned": {
+			senderID:       2,
+			accusedID:      3,
+			expectedResult: 0,
+			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+		},
+		"current member as an accused - error returned": {
+			senderID:       3,
+			accusedID:      2,
+			expectedResult: 0,
+			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+		},
+		"incorrect shareS - accused member is punished": {
+			senderID:  3,
+			accusedID: 4,
+			modifyShareS: func(shareS *big.Int) *big.Int {
+				return new(big.Int).Sub(shareS, big.NewInt(1))
+			},
+			expectedResult: 4,
+		},
+		"incorrect commitments - accused member is punished": {
+			senderID:  3,
+			accusedID: 4,
+			modifyPublicCoefficients: func(coefficients []*big.Int) []*big.Int {
+				newCoefficients := make([]*big.Int, len(coefficients))
+				for i := range newCoefficients {
+					newCoefficients[i] = big.NewInt(int64(990 + i))
+				}
+				return newCoefficients
+			},
+			expectedResult: 4,
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			setupPublicCoefficients(members)
+			sender := findSharingMemberByID(members, test.senderID)
+			revealedShareS := sender.receivedSharesS[test.accusedID]
+			if test.modifyShareS != nil {
+				revealedShareS = test.modifyShareS(revealedShareS)
+			}
+			if test.modifyPublicCoefficients != nil {
+				member.receivedPublicCoefficients[test.accusedID] = test.modifyPublicCoefficients(member.receivedPublicCoefficients[test.accusedID])
+			}
+			result, err := member.ResolvePublicCoefficientsAccusations(
+				test.senderID,
+				test.accusedID,
+				revealedShareS,
+			)
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
+			}
+			if result != test.expectedResult {
+				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
+			}
+		})
+	}
+}
+
 // setupPublicCoefficients simulates public coefficients calculation and sharing
 // between members. It expects secret coefficients to be already stored in
 // secretCoefficients field for each group member. At the end it stores
