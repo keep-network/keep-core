@@ -11,6 +11,19 @@ import (
 	"github.com/pborman/uuid"
 )
 
+// `geth` uses `go-ethereum` library to generate key with secp256k1 curve.
+// `libp2p` does not recognize this curve and when it comes to creating peer's
+// ID or deserializing the key, operation fails with unrecognized curve error.
+//
+// To overcome this limitation we rewrite ECDSA key referencing secp256k1 curve
+// from `go-ethereum` library into a new key instance supported by `libP2P` and
+// referencing secp256k1 curve from `btcsuite` used by `libp2p` under the hood.
+// This happens in `toLibp2pKey` function.
+//
+// As long as all curve parameters are the same, this operation is valid.
+// This test ensures that secp256k1 from `go-ethereum` and secp256k1 from
+// `btcsuite` are the same. If this test starts to fails, we'll need to revisit
+// how the key is ported from one instance to another in `toLibp2pKey` function.
 func TestSameCurveAsEthereum(t *testing.T) {
 	ethereumKey, err := generateEthereumKey()
 	if err != nil {
