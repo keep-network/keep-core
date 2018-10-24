@@ -1,6 +1,7 @@
 package pedersen
 
 import (
+	crand "crypto/rand"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -30,24 +31,31 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 			verificationValue: "pooh",
 			expectedResult:    false,
 		},
-		"negative validation - incorrect decommitment key `r`": {
+		"negative validation - incorrect decommitment key `t`": {
 			verificationValue: committedValue,
 			modifyDecommitmentKey: func(key *DecommitmentKey) {
-				key.t = big.NewInt(3)
+				key.t, _ = generateNewRandom(key.t, vss.q)
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `commitment`": {
 			verificationValue: committedValue,
 			modifyCommitment: func(commitment *Commitment) {
-				commitment.commitment = big.NewInt(13)
+				commitment.commitment, _ = generateNewRandom(commitment.commitment, vss.q)
+			},
+			expectedResult: false,
+		},
+		"negative validation - incorrect `g`": {
+			verificationValue: committedValue,
+			modifyVSS: func(vss *VSS) {
+				vss.g, _ = generateNewRandom(vss.g, vss.q)
 			},
 			expectedResult: false,
 		},
 		"negative validation - incorrect `h`": {
 			verificationValue: committedValue,
 			modifyVSS: func(vss *VSS) {
-				vss.h = big.NewInt(23)
+				vss.h, _ = generateNewRandom(vss.h, vss.q)
 			},
 			expectedResult: false,
 		},
@@ -55,7 +63,6 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-
 			commitment, decommitmentKey, err := vss.CommitmentTo([]byte(committedValue))
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
@@ -116,7 +123,6 @@ func TestNewVSSpqValidation(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-
 			_, err := NewVSS(test.p, test.q)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
@@ -150,4 +156,17 @@ func initializeVSS() (*VSS, error) {
 		return nil, fmt.Errorf("vss creation failed [%v]", err)
 	}
 	return vss, nil
+}
+
+// generateNewRandom generates value different than `currentValue` in range (1, max)
+func generateNewRandom(currentValue *big.Int, max *big.Int) (*big.Int, error) {
+	for {
+		x, err := crand.Int(crand.Reader, max)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate random number [%s]", err)
+		}
+		if x.Cmp(currentValue) != 0 && x.Cmp(big.NewInt(1)) > 0 {
+			return x, nil
+		}
+	}
 }

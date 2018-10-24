@@ -49,13 +49,18 @@ type TaggedMarshaler interface {
 //
 // Providers expose the ability to get a amed BroadcastChannel, the ability to
 // return a provider type, which is an informational string indicating what type
-// of provider this is, and the list of IP addresses on which it can listen.
+// of provider this is, the list of IP addresses on which it can listen, and
+// known peers from peer discovery mechanims.
 type Provider interface {
 	ID() TransportIdentifier
 
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 	AddrStrings() []string
+
+	// All known peers from the underlying PeerStore. This may include
+	// peers we're not directly connected to.
+	Peers() []string
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
