@@ -30,12 +30,119 @@ no output is generated, and this convenient vulnerability is blocked.
 This would incentivize users with extremely high trust requirements to be solo
 bidders.
 
+=== Stakes
+
+The amounts staked by beacon operators should scale with the prices customers
+pay for the beacon outputs. This can be achieved by either a linear or
+profit-proportional method.
+
+==== Linear stakes
+
 The total value of the bids in _Bids~used~_ is multiplied by
-_BID_STAKE_MULTIPLIER_ to determine the total stakes;
+_BID_STAKE_MULTIPLIER_ to determine the total stake for that beacon output;
 this is then divided by the number of members in a beacon signing group
 to calculate each member's individual stake.
-Thus bidding above the minimum price increases the group members' profits
-but also penalties in the case of a failure.
+
+[source, python]
+----
+bid_total = sum(bids.map(.amount))
+
+staked_total = bid_total * BID_STAKE_MULTIPLIER
+
+member_stake = staked_total / N
+----
+
+The total amount staked scales directly with the total amount bid for
+the output. As the cost of generating an output is more or less constant,
+profits for stakers will be highest when the bid totals are highest.
+
+==== Profit-proportional stakes
+
+Alternatively, the total stakes could be made proportional to the
+total profits of generating such an output:
+
+[source, python]
+----
+bid_total = sum(bids.map(.amount))
+
+profit_amount = bid_total - (getCurrentGasPrice() * OUTPUT_GAS_COST)
+
+staked_total = profit_amount * BID_STAKE_MULTIPLIER
+
+member_stake = staked_total / N
+----
+
+In this case, the risk:reward ratio stays consistent, and the stakes vary
+from minimal to significant; even a small increase in bid amount over the
+minimum can substantially increase the stakes. If higher stakers for beacon
+operators are sufficiently desirable to customers, this can serve as an
+incentive to bid above the minimum, especially for solo bidders who might
+otherwise be likely to bid the mimimum required to reach solo status.
+
+=== Solo bidding
+
+The BFS model is intended to both enable "crowdfunded" output generation by
+pooling smaller bids, and to incentivize customers with particular needs to
+offer substantially higher bids.
+
+An output with a smaller number of bids will have shorter timeouts for the top
+bidder to respond before the next highest bidder is called to reveal their seed,
+and a smaller number of bidders altogether.
+This means that reducing the number of bidders for an output will significantly
+improve the reliability of the output generation, and a customer desiring fast
+response times has an incentive to bid more to bump off bottom bidders (reducing
+the total number of bidders and thus the timeout intervals) and to reach top
+bidder status (ensuring that they don't need to rely on someone else's
+responsiveness).
+
+For customers with particularly high trust or responsiveness requirements,
+solo bidding should be the obvious choice.
+
+==== Top bidder manipulation
+
+In the BFS algorithm, the top bidder is called to reveal their committed seed
+value to trigger the output generation. If the top bidder doesn't respond within
+the specified timeout period, the next highest bidder is called to reveal their
+seed instead, and so forth. If none of the bidders respond, the generation is
+aborted.
+
+If an actor holding the top bidder position is also in control of the selected
+group, they can determine the output of the beacon in advance of publishing the
+seed value. If the output is unfavorable, they can withhold the seed and wait
+for the next highest bidder to reveal theirs. A powerful actor can safely retry
+the generation as many times as they have bids higher than the highest
+independent bidder.
+
+In the case where there is only one bidder paying for the entire output
+generation, reaching timeout simply aborts the generation.
+(As nobody else relies on the response time of a solo bidder, the timeout can
+alternatively be set to infinite with few downsides, with the advantage of
+protecting against transient network issues, miner censorship etc. causing the
+solo bidder to lose their bid amount without getting the output they paid for.)
+
+This means that no manipulation opportunity is present, and third parties can
+trust the output to be independent
+
+[NOTE]
+====
+To control the output of a solo bidder, the actor needs to control all of:
+
+- the bidder: to know the seed value in advance
+- the miners: to manipulate the blocks used to select the beacon group, which
+is the only source of nondeterminism in a solo bidding situation
+- the stakers: to reliably predict the outputs of the groups that might be
+selected
+
+In practice this is expected to be highly unlikely, making solo bidding suitable
+for situations requiring the highest levels of third-party trust.
+====
+
+==== Implementation
+
+In the BFS algorithm, solo bidding arises from the design with only a special
+case for disabling top bidder timeouts when the number of bidders is 1.
+
+=== Pricing
 
 The function `getCurrentOutputPrice` does most of the heavy lifting here.
 While defining a precise function would require more work and is out of scope,
@@ -47,3 +154,10 @@ with low demand (few outputs generated) it should fall
 - If a certain total amount of bids exceeding the gas cost is placed,
 the beacon should generate an output eventually as a long period of inactivity
 pushes the price below the bid sum
+
+=== Timeouts
+
+The function `timeoutByBidN` returns the timeout for _each_ top bidder for a
+certain number of bids. The function can be constant, increasing, or decreasing
+depending on what characteristics are desired. A special case for _n~bids~ = 1_
+can be included to disable top bidder timeouts for solo bidders.
