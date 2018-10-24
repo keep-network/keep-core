@@ -87,7 +87,7 @@ type initiatorAct1 struct {
 	nonce1 uint64
 }
 
-// initiateHandshake function allows to initiate a hanshake by creating
+// initiateHandshake function allows to initiate a handshake by creating
 // and initializing a state machine representing initiator in the first round
 // of the handshake, ready to execute the protocol.
 func initiateHandshake() (*initiatorAct1, error) {
