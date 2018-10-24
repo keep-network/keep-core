@@ -31,11 +31,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	polynomialDegree := cm.group.dishonestThreshold
 	coefficientsA, err := generatePolynomial(polynomialDegree, cm.protocolConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot generate polynomial [%v]", err)
 	}
 	coefficientsB, err := generatePolynomial(polynomialDegree, cm.protocolConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("cannot generate hiding polynomial [%v]", err)
 	}
 
 	cm.secretCoefficients = coefficientsA
