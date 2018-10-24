@@ -19,7 +19,7 @@ const ID = "/secio/1.0.0"
 
 // Compile time assertions of custom types
 var _ secure.Transport = (*Transport)(nil)
-var _ secure.Conn = (*secureSession)(nil)
+var _ secure.Conn = (*authenticatedSession)(nil)
 
 // Transport constructs secure communication sessions for a peer.
 type Transport struct {
@@ -39,31 +39,50 @@ func New(pk libp2pcrypto.PrivKey) (*Transport, error) {
 }
 
 // SecureInbound secures an inbound connection.
-func (t *Transport) SecureInbound(ctx context.Context, insecure net.Conn) (secure.Conn, error) {
-	return newSecureSession(ctx, t.LocalID, t.PrivateKey, insecure, "")
+func (t *Transport) SecureInbound(
+	ctx context.Context,
+	unauthenticatedConn net.Conn,
+) (secure.Conn, error) {
+	return newAuthenticatedSession(
+		ctx,
+		t.LocalID,
+		t.PrivateKey,
+		unauthenticatedConn,
+		"",
+	)
 }
 
 // SecureOutbound secures an outbound connection.
-func (t *Transport) SecureOutbound(ctx context.Context, insecure net.Conn, p peer.ID) (secure.Conn, error) {
-	return newSecureSession(ctx, t.LocalID, t.PrivateKey, insecure, p)
+func (t *Transport) SecureOutbound(
+	ctx context.Context,
+	unauthenticatedConn net.Conn,
+	remotePeer peer.ID,
+) (secure.Conn, error) {
+	return newAuthenticatedSession(
+		ctx,
+		t.LocalID,
+		t.PrivateKey,
+		unauthenticatedConn,
+		remotePeer,
+	)
 }
 
 // LocalPeer retrieves the local peer.
-func (ss *secureSession) LocalPeer() peer.ID {
+func (ss *authenticatedSession) LocalPeer() peer.ID {
 	return ss.localPeer
 }
 
 // LocalPrivateKey retrieves the local peer's PrivateKey
-func (ss *secureSession) LocalPrivateKey() libp2pcrypto.PrivKey {
+func (ss *authenticatedSession) LocalPrivateKey() libp2pcrypto.PrivKey {
 	return ss.localPrivateKey
 }
 
 // RemotePeer retrieves the remote peer.
-func (ss *secureSession) RemotePeer() peer.ID {
+func (ss *authenticatedSession) RemotePeer() peer.ID {
 	return ss.remotePeer
 }
 
 // RemotePublicKey retrieves the remote public key.
-func (ss *secureSession) RemotePublicKey() libp2pcrypto.PubKey {
+func (ss *authenticatedSession) RemotePublicKey() libp2pcrypto.PubKey {
 	return ss.remotePublicKey
 }
