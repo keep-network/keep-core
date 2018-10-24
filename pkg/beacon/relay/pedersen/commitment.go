@@ -85,17 +85,24 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 	}
 
 	// Generate random `g`
-	g, err := randomFromZn(rand, big.NewInt(2), q) // randomZ[2, q - 1]
+	g, err := randomFromZn(rand, big.NewInt(1), q) // randomZ(1, q - 1]
 	if err != nil {
 		return nil, fmt.Errorf("g generation failed [%s]", err)
 	}
 
-	// h = (g ^ randomZ[0, q - 1]) % q
-	randomValue, err := randomFromZn(rand, big.NewInt(0), q) // randomZ[0, q - 1]
-	if err != nil {
-		return nil, fmt.Errorf("randomValue generation failed [%s]", err)
+	// h = (g ^ randomZ(1, q - 1]) % q
+	var h *big.Int
+	for {
+		randomValue, err := randomFromZn(rand, big.NewInt(1), q) // randomZ(1, q - 1]
+		if err != nil {
+			return nil, fmt.Errorf("randomValue generation failed [%s]", err)
+		}
+		h = new(big.Int).Exp(g, randomValue, q)
+
+		if h.Cmp(big.NewInt(1)) > 0 {
+			break
+		}
 	}
-	h := new(big.Int).Exp(g, randomValue, q)
 
 	return &VSS{p: p, q: q, G: g, h: h}, nil
 }
@@ -107,7 +114,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 // Then commitment is calculated as `(g ^ s) * (h ^ t) mod q`, where digest
 // is sha256 hash of the secret brought to big.Int.
 func (vss *VSS) CommitmentTo(rand io.Reader, secret []byte) (*Commitment, *DecommitmentKey, error) {
-	t, err := randomFromZn(rand, big.NewInt(0), vss.q) // t = randomZ[0, q - 1]
+	t, err := randomFromZn(rand, big.NewInt(1), vss.q) // t = randomZ(1, q - 1]
 	if err != nil {
 		return nil, nil, fmt.Errorf("t generation failed [%s]", err)
 	}
@@ -150,14 +157,15 @@ func (vss *VSS) CalculateCommitment(s, r, m *big.Int) *big.Int {
 	)
 }
 
-// randomFromZn generates a random `big.Int` in a range [min, max - 1].
+// randomFromZn generates a random `big.Int` in a range (min, max).
 func randomFromZn(rand io.Reader, min, max *big.Int) (*big.Int, error) {
 	for {
 		x, err := crand.Int(rand, max) // returns a value in [0, max)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate random number [%s]", err)
 		}
-		if x.Cmp(min) >= 0 && x.Cmp(max) <= 0 {
+
+		if x.Cmp(min) > 0 {
 			return x, nil
 		}
 	}
