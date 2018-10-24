@@ -306,6 +306,25 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	}
 }
 
+// setupPublicCoefficients simulates public coefficients calculation and sharing
+// between members. It expects secret coefficients to be already stored in
+// secretCoefficients field for each group member. At the end it stores
+// values for each member just like they would be received from peers.
+func setupPublicCoefficients(members []*SharingMember) {
+	// Calculate public coefficients for each group member.
+	for _, m := range members {
+		m.CalculatePublicCoefficients()
+	}
+	// Simulate phase where members store received public coefficients from peers.
+	for _, m := range members {
+		for _, p := range members {
+			if m.ID != p.ID {
+				m.receivedPublicCoefficients[p.ID] = p.publicCoefficients
+			}
+		}
+	}
+}
+
 func findSharingMemberByID(members []*SharingMember, id int) *SharingMember {
 	for _, m := range members {
 		if m.ID == id {
