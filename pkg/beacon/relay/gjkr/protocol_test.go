@@ -19,7 +19,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 
 	member := members[0]
-	peerSharesMessages, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+	sharesMessages, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		t.Fatalf("shares and commitments calculation failed [%s]", err)
 	}
@@ -30,10 +30,10 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 			len(member.secretCoefficients),
 		)
 	}
-	if len(peerSharesMessages) != (groupSize - 1) {
+	if len(sharesMessages) != (groupSize - 1) {
 		t.Fatalf("\nexpected: %v peer shares messages\nactual:   %v\n",
 			groupSize-1,
-			len(peerSharesMessages),
+			len(sharesMessages),
 		)
 	}
 
@@ -84,31 +84,31 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			var peerSharesMessages []*PeerSharesMessage
+			var sharesMessages []*PeerSharesMessage
 			var commitmentsMessages []*MemberCommitmentsMessage
 
 			for _, member := range members {
-				peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+				sharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 				if err != nil {
 					t.Fatalf("shares and commitments calculation failed [%s]", err)
 				}
-				peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
+				sharesMessages = append(sharesMessages, sharesMessage...)
 				commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
 			}
 
-			filteredPeerSharesMessages := filterPeerSharesMessage(peerSharesMessages, currentMember.ID)
-			filteredMemberCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
+			filteredSharesMessages := filterPeerSharesMessage(sharesMessages, currentMember.ID)
+			filteredCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
 
 			if test.modifyPeerShareMessages != nil {
-				filteredPeerSharesMessages = test.modifyPeerShareMessages(filteredPeerSharesMessages)
+				filteredSharesMessages = test.modifyPeerShareMessages(filteredSharesMessages)
 			}
 			if test.modifyCommitmentsMessages != nil {
-				filteredMemberCommitmentsMessages = test.modifyCommitmentsMessages(filteredMemberCommitmentsMessages)
+				filteredCommitmentsMessages = test.modifyCommitmentsMessages(filteredCommitmentsMessages)
 			}
 
 			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
-				filteredPeerSharesMessages,
-				filteredMemberCommitmentsMessages,
+				filteredSharesMessages,
+				filteredCommitmentsMessages,
 			)
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
@@ -137,22 +137,22 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
 
-	var peerSharesMessages []*PeerSharesMessage
-	var messages []*MemberCommitmentsMessage
+	var sharesMessages []*PeerSharesMessage
+	var commitmentMessages []*MemberCommitmentsMessage
 	for _, member := range committingMembers {
-		peerSharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+		sharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 		if err != nil {
 			t.Fatalf("shares and commitments calculation failed [%s]", err)
 		}
-		peerSharesMessages = append(peerSharesMessages, peerSharesMessage...)
-		messages = append(messages, commitmentsMessage)
+		sharesMessages = append(sharesMessages, sharesMessage...)
+		commitmentMessages = append(commitmentMessages, commitmentsMessage)
 	}
 
 	committingMember := committingMembers[0]
 
 	accusedMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
-		filterPeerSharesMessage(peerSharesMessages, committingMember.ID),
-		filterMemberCommitmentsMessages(messages, committingMember.ID),
+		filterPeerSharesMessage(sharesMessages, committingMember.ID),
+		filterMemberCommitmentsMessages(commitmentMessages, committingMember.ID),
 	)
 	if err != nil {
 		t.Fatalf("shares and commitments verification failed [%s]", err)
