@@ -72,7 +72,7 @@ type DecommitmentKey struct {
 //
 // It has to be run by a verifier or a trusted party. Executing generation by
 // commiter themself causes that binding property is not held. Commiter gets an
-// ability to manipulate with already committed values.
+// ability to change the value they already committed to.
 func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 	if !p.ProbablyPrime(20) || !q.ProbablyPrime(20) {
 		return nil, fmt.Errorf("p and q have to be primes")
