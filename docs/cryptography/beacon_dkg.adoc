@@ -168,18 +168,18 @@ Commitments and encrypted shares are broadcast to other players.
 
 G_3 = G_2
 
-for j in [0..T]:
-  a_ij = random(Z_q)
-  b_ij = random(Z_q)
+for k in [0..T]:
+  a_ik = random(Z_q)
+  b_ik = random(Z_q)
 
 f_i(z) = sum(
-  for j in [0..T]:
-    a_ij * z^j
+  for k in [0..T]:
+    a_ik * z^k
 )
 
 g_i(z) = sum(
-  for j in [0..T]:
-    b_ij * z^j
+  for k in [0..T]:
+    b_ik * z^k
 )
 
 z_i = a_i0 = f_i(0) # <1>
