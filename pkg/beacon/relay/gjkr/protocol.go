@@ -134,6 +134,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 				}
 				cm.receivedSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
 				cm.receivedSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
+				break
 			}
 		}
 		if !sharesMessageFound {
