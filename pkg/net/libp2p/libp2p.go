@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -70,11 +70,9 @@ func (p *provider) AddrStrings() []string {
 func Connect(
 	ctx context.Context,
 	config Config,
-	staticKey *keystore.Key,
+	networkKey key.NetworkKey,
 ) (net.Provider, error) {
-	privateKey := toLibp2pKey(staticKey)
-
-	identity, err := createIdentity(privateKey)
+	identity, err := createIdentity(networkKey.PrivateKey())
 	if err != nil {
 		return nil, err
 	}

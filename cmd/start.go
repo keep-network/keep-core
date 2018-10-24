@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
 )
@@ -98,7 +98,7 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func loadStaticKey(account ethereum.Account) (*keystore.Key, error) {
+func loadStaticKey(account ethereum.Account) (*key.EthereumStaticKey, error) {
 	ethereumKey, err := ethereum.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
@@ -109,5 +109,5 @@ func loadStaticKey(account ethereum.Account) (*keystore.Key, error) {
 		)
 	}
 
-	return ethereumKey, nil
+	return key.NewEthereumStaticKey(ethereumKey), nil
 }

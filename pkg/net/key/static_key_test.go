@@ -1,4 +1,4 @@
-package libp2p
+package key
 
 import (
 	"crypto/ecdsa"
@@ -30,7 +30,7 @@ func TestSameCurveAsEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pKey := toLibp2pKey(ethereumKey)
+	libp2pKey := NewEthereumStaticKey(ethereumKey).toLibp2pKey()
 
 	ethereumCurve := ethereumKey.PrivateKey.Curve.Params()
 	libp2pCurve := libp2pKey.Curve.Params()
@@ -90,7 +90,7 @@ func TestSameKeyAsEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pKey := toLibp2pKey(ethereumKey)
+	libp2pKey := NewEthereumStaticKey(ethereumKey).toLibp2pKey()
 
 	if ethereumKey.PrivateKey.D.Cmp(libp2pKey.D) != 0 {
 		t.Errorf(
