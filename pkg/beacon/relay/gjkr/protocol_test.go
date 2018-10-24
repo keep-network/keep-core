@@ -148,18 +148,20 @@ func TestRoundTrip(t *testing.T) {
 		commitmentMessages = append(commitmentMessages, commitmentsMessage)
 	}
 
-	committingMember := committingMembers[0]
+	for i := range committingMembers {
+		committingMember := committingMembers[i]
 
-	accusedMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
-		filterPeerSharesMessage(sharesMessages, committingMember.ID),
-		filterMemberCommitmentsMessages(commitmentMessages, committingMember.ID),
-	)
-	if err != nil {
-		t.Fatalf("shares and commitments verification failed [%s]", err)
-	}
+		accusedMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
+			filterPeerSharesMessage(sharesMessages, committingMember.ID),
+			filterMemberCommitmentsMessages(commitmentMessages, committingMember.ID),
+		)
+		if err != nil {
+			t.Fatalf("shares and commitments verification failed [%s]", err)
+		}
 
-	if len(accusedMessage.accusedIDs) > 0 {
-		t.Fatalf("found accused members but was not expecting to")
+		if len(accusedMessage.accusedIDs) > 0 {
+			t.Fatalf("found accused members but was not expecting to")
+		}
 	}
 }
 
