@@ -238,12 +238,6 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
-	if err != nil {
-		t.Fatalf("Group initialization failed [%s]", err)
-	}
-
-	sharingMember := sharingMembers[0]
 	var tests = map[string]struct {
 		modifyPublicCoefficientsMessages func(messages []*MemberPublicCoefficientsMessage)
 		expectedError                    error
@@ -263,6 +257,12 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+			if err != nil {
+				t.Fatalf("Group initialization failed [%s]", err)
+			}
+			sharingMember := sharingMembers[0]
+
 			messages := make([]*MemberPublicCoefficientsMessage, groupSize)
 
 			for i, m := range sharingMembers {
