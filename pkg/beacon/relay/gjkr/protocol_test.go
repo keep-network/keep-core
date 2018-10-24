@@ -579,7 +579,9 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 
 	for _, sm := range sharingMembers {
 		for _, cm := range committingMembers {
-			sm.receivedSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
+			if cm.ID != sm.ID {
+				sm.receivedSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
+			}
 		}
 	}
 
