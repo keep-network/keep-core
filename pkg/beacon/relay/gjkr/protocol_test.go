@@ -306,6 +306,15 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	}
 }
 
+func findSharingMemberByID(members []*SharingMember, id int) *SharingMember {
+	for _, m := range members {
+		if m.ID == id {
+			return m
+		}
+	}
+	return nil
+}
+
 func TestRoundTrip(t *testing.T) {
 	threshold := 3
 	groupSize := 5
