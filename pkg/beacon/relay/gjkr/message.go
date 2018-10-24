@@ -9,14 +9,14 @@ import "math/big"
 type MemberCommitmentsMessage struct {
 	senderID int
 
-	commitments []*big.Int
+	commitments []*big.Int // slice of `C_ik`
 }
 
 // PeerSharesMessage is a message payload that carries the sender's shares `s_ij`
 // and `t_ij` for the recipient during distributed key generation.
 //
-// It is expected to be communicated in encrypted fashion to the recipient over
-// a broadcast channel.
+// It is expected to be communicated in an encrypted fashion to the selected
+// recipient.
 type PeerSharesMessage struct {
 	senderID   int
 	receiverID int
