@@ -21,7 +21,7 @@ const ID = "/secio/1.0.0"
 var _ secure.Transport = (*Transport)(nil)
 var _ secure.Conn = (*authenticatedSession)(nil)
 
-// Transport constructs secure communication sessions for a peer.
+// Transport constructs an authenticated communication connection for a peer.
 type Transport struct {
 	LocalID    peer.ID
 	PrivateKey libp2pcrypto.PrivKey
