@@ -163,6 +163,7 @@ func randomFromZn(min, max *big.Int) (*big.Int, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate random number [%s]", err)
 		}
+
 		if x.Cmp(min) > 0 {
 			return x, nil
 		}
