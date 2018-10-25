@@ -97,37 +97,22 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 ) (*SecretSharesAccusationsMessage, error) {
 	var accusedMembersIDs []int
 
-	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
-	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, commitmentsMessage := range commitmentsMessages {
-		commitmentsProduct := big.NewInt(1)
-		for k, c := range commitmentsMessage.commitments {
-			commitmentsProduct = new(big.Int).Mod(
-				new(big.Int).Mul(
-					commitmentsProduct,
-					new(big.Int).Exp(
-						c,
-						pow(cm.ID, k),
-						cm.protocolConfig.P,
-					),
-				),
-				cm.protocolConfig.P,
-			)
-		}
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
-				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
-				// where: j is sender's ID, i is current member ID.
-				expectedProduct := cm.vss.CalculateCommitment(
-					sharesMessage.shareS,
-					sharesMessage.shareT,
-					cm.protocolConfig.P,
-				)
 
-				if expectedProduct.Cmp(commitmentsProduct) != 0 {
+				// Check if `commitmentsProduct == expectedProduct`
+				// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]
+				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
+				// where: j is sender's ID, i is current member ID, T is threshold.
+				if !cm.areSharesValidAgainstCommitments(
+					sharesMessage.shareS, sharesMessage.shareT, // s_ji, t_ji
+					commitmentsMessage.commitments, // C_j
+					cm.ID,                          // i
+				) {
 					accusedMembersIDs = append(accusedMembersIDs,
 						commitmentsMessage.senderID)
 					break
