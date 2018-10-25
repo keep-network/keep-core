@@ -111,6 +111,10 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   name = "github.com/satori/go.uuid"
   revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
 
+[[override]]
+  name = "github.com/whyrusleeping/yamux"
+  revision = "5364a42fe4b5efa5967c11c8f9b0f049cac0c4a9"
+
 [[constraint]]
   name = "github.com/urfave/cli"
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"

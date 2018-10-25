@@ -322,6 +322,14 @@
   revision = "3bd34419494fb7f15182ddd19a5d92ac017a27c6"
 
 [[projects]]
+  digest = "1:88ea07ba505c877ffd86fb7b7b2704b16e1febab674ee2724c56453fd6360b49"
+  name = "github.com/libp2p/go-buffer-pool"
+  packages = ["."]
+  pruneopts = ""
+  revision = "1d28ab5fdb424e5b3523d357553082e68df9b068"
+  version = "v0.1.1"
+
+[[projects]]
   digest = "1:2b90bc26b9d28e630de014dc957f5a3d22b7f5024e7365682ae911c75e827845"
   name = "github.com/libp2p/go-conn-security"
   packages = [
@@ -877,12 +885,11 @@
   revision = "cfcb2f1abfee846c430233aef0b630a946e0a5a6"
 
 [[projects]]
-  branch = "master"
-  digest = "1:1dfd7cecf80961ff9dca0b2644414d8709d4d88f67a46c30aa0fdd5a7948b2b3"
+  digest = "1:6022a6b1d1c3b8c7ada286a338317b92d12f7a6cbf4e8e68b261379441e2f666"
   name = "github.com/whyrusleeping/yamux"
   packages = ["."]
   pruneopts = ""
-  revision = "35d045d4429ecf19430a2b94efc590bc40f2f7af"
+  revision = "5364a42fe4b5efa5967c11c8f9b0f049cac0c4a9"
 
 [[projects]]
   branch = "master"
