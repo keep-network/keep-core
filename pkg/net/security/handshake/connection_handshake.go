@@ -63,7 +63,7 @@ type act1Message struct {
 
 // act2Message is sent in the second handshake act by the responder to the
 // initiator. It contains randomly generated `nonce2`, which is an 8-byte
-// unsigned integer and `challenge`, which is the result of SHA256 on the
+// unsigned integer, and `challenge`, which is the result of SHA256 on the
 // concatenated bytes of `nonce1` and `nonce2`.
 //
 // act2Message should be signed with responder's static private key.
