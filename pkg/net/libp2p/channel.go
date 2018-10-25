@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/libp2p/go-libp2p-peerstore"
-	libp2ppubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p-pubsub"
 )
 
 type channel struct {
@@ -21,9 +21,9 @@ type channel struct {
 	peerStore      peerstore.Peerstore
 
 	pubsubMutex sync.Mutex
-	pubsub      *libp2ppubsub.PubSub
+	pubsub      *pubsub.PubSub
 
-	subscription *libp2ppubsub.Subscription
+	subscription *pubsub.Subscription
 
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
@@ -279,7 +279,7 @@ func (c *channel) handleMessages(ctx context.Context) {
 	}
 }
 
-func (c *channel) processPubsubMessage(pubsubMessage *libp2ppubsub.Message) error {
+func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 	var envelope pb.Envelope
 	if err := proto.Unmarshal(pubsubMessage.Data, &envelope); err != nil {
 		return err
