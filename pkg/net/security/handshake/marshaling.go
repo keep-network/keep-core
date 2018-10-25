@@ -39,7 +39,6 @@ func (am *act2Message) Unmarshal(bytes []byte) error {
 	if err := pbAct2.Unmarshal(bytes); err != nil {
 		return err
 	}
-
 	am.nonce2 = binary.LittleEndian.Uint64(pbAct2.Nonce)
 	copy(am.challenge[:], pbAct2.Challenge[:32])
 
