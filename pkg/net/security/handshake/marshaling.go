@@ -45,3 +45,20 @@ func (am *act2Message) Unmarshal(bytes []byte) error {
 
 	return nil
 }
+
+// Marshal converts this act3Message to a byte array suitable for network
+// communication.
+func (am *act3Message) Marshal() ([]byte, error) {
+	return (&pb.Act3Message{Challenge: am.challenge[:]}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a act3Message.
+func (am *act3Message) Unmarshal(bytes []byte) error {
+	pbAct3 := pb.Act3Message{}
+	if err := pbAct3.Unmarshal(bytes); err != nil {
+		return err
+	}
+	copy(am.challenge[:], pbAct3.Challenge[:32])
+
+	return nil
+}
