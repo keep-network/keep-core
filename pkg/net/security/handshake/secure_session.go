@@ -1,7 +1,6 @@
 package handshake
 
 import (
-	"context"
 	"net"
 
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
@@ -19,7 +18,6 @@ type authenticatedConnection struct {
 }
 
 func newAuthenticatedSession(
-	ctx context.Context,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	unauthenticatedConn net.Conn,
