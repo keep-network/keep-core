@@ -168,23 +168,55 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 //
 // See Phase 5 of the protocol specification.
 func (cm *CommittingMember) ResolveSecretSharesAccusations(
-	senderID, accusedID int,
-	shareS, shareT *big.Int,
+	senderID, accusedID int, // j, m
+	shareS, shareT *big.Int, // s_mj, t_mj
 ) (int, error) {
 	if cm.ID == senderID || cm.ID == accusedID {
 		return 0, fmt.Errorf("current member cannot be a part of a dispute")
 	}
 
-	// `commitmentsProduct = Π (commitments_m[k] ^ (j^k)) mod p` for k in [0..T],
+	// Check if `commitmentsProduct == expectedProduct`
+	// `commitmentsProduct = Π (C_m[k] ^ (j^k)) mod p` for k in [0..T]
+	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`
 	// where: m is accused member's ID, j is sender's ID, T is threshold.
+	if cm.areSharesValidAgainstCommitments(
+		shareS, shareT, // s_mj, t_mj
+		cm.receivedCommitments[accusedID], // C_m
+		senderID,                          // j
+	) {
+		return senderID, nil
+	}
+	return accusedID, nil
+}
+
+// areSharesValidAgainstCommitments verifies if commitments are valid for passed
+// shares.
+//
+// The `j` member generated a polynomial with `k` coefficients before. Then they
+// calculated a commitments to the polynomial's coefficients `C_j` and individual
+// shares `s_ji` and `t_ji` with a polynomial for a member `i`. In this function
+// the verifier checks if the shares are valid against the commitments.
+//
+// The verifier checks that:
+// `commitmentsProduct == expectedProduct`
+// where:
+// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T],
+// and
+// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`:
+func (cm *CommittingMember) areSharesValidAgainstCommitments(
+	shareS, shareT *big.Int, // s_ji, t_ji
+	commitments []*big.Int, // C_j
+	memberID int, // i
+) bool {
+	// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p`
 	commitmentsProduct := big.NewInt(1)
-	for k, c := range cm.receivedCommitments[accusedID] {
+	for k, c := range commitments {
 		commitmentsProduct = new(big.Int).Mod(
 			new(big.Int).Mul(
 				commitmentsProduct,
 				new(big.Int).Exp(
 					c,
-					pow(senderID, k),
+					pow(memberID, k),
 					cm.protocolConfig.P,
 				),
 			),
@@ -192,18 +224,14 @@ func (cm *CommittingMember) ResolveSecretSharesAccusations(
 		)
 	}
 
-	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`, where:
-	// m is accused member's ID, j is sender's ID.
+	// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`, where:
 	expectedProduct := cm.vss.CalculateCommitment(
 		shareS,
 		shareT,
 		cm.protocolConfig.P,
 	)
 
-	if expectedProduct.Cmp(commitmentsProduct) == 0 {
-		return senderID, nil
-	}
-	return accusedID, nil
+	return expectedProduct.Cmp(commitmentsProduct) == 0
 }
 
 // evaluateMemberShare calculates a share for given memberID.
