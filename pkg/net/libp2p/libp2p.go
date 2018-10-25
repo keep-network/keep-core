@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -79,8 +80,12 @@ func (p *provider) Peers() []string {
 //
 // An error is returned if any part of the connection or bootstrap process
 // fails.
-func Connect(ctx context.Context, config Config) (net.Provider, error) {
-	identity, err := generateIdentity(config.Seed)
+func Connect(
+	ctx context.Context,
+	config Config,
+	networkKey key.NetworkKey,
+) (net.Provider, error) {
+	identity, err := createIdentity(networkKey.PrivateKey())
 	if err != nil {
 		return nil, err
 	}
