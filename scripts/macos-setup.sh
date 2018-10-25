@@ -52,7 +52,12 @@ cd ../contracts/solidity && npm install && cd ../../scripts
 #	         ^~~~~~~~~~~
 #	1 error generated.
 #
-echo "Installing bn..."
+echo "Installing bn and it's dependencies..."
+echo "  As a part of installing bn the llvm compiler is needed.  Usually this takes a few minutes to install."
+brew list gmp &>/dev/null || brew install gmp 
+brew list openssl &>/dev/null || brew install openssl 
+brew list llvm &>/dev/null || brew install llvm
+mkdir -p ~/go/src/github.com/keep-network
 cd ~/go/src/github.com/keep-network
 if [ -d bn ] ; then
 	cd bn
