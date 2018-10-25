@@ -76,7 +76,8 @@ func (ss *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
 	return ss.localPeerPrivateKey
 }
 
-// RemotePeer retrieves the remote peer.
+// RemotePeer returns the remote peer ID if we initiated the dial. Otherwise, it
+// returns "" (because this connection isn't actually secure).
 func (ss *authenticatedConnection) RemotePeer() peer.ID {
 	return ss.remotePeerID
 }
