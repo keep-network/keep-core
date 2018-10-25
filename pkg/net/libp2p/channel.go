@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -234,19 +235,18 @@ func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error
 	ok, err := pubKey.Verify(messageBytes, signature)
 	if err != nil {
 		return fmt.Errorf(
-			"failed to verify signature [%v] for sender [%v] with err [%v]",
-			signature,
-			sender,
+			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
+			hex.EncodeToString(signature),
+			sender.Pretty(),
 			err,
 		)
 	}
 
 	if !ok {
 		return fmt.Errorf(
-			"failed to verify signature [%v] for sender with id [%v] and pubkey [%v]",
-			signature,
-			sender,
-			pubKey,
+			"invalid signature [0x%v] on message from sender [%v] ",
+			hex.EncodeToString(signature),
+			sender.Pretty(),
 		)
 	}
 
