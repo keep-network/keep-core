@@ -42,4 +42,26 @@ echo "Installing contracts/solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
 cd ../contracts/solidity && npm install && cd ../../scripts
 
+#
+# This section is to install 'bn', Barreto-Naehrig curve implementation and BLS.
+# If you don't have this you get the error:
+#
+#	# github.com/keep-network/keep-core/vendor/github.com/dfinity/go-dfinity-crypto/bls
+#	../../vendor/github.com/dfinity/go-dfinity-crypto/bls/bls.go:6:10: fatal error: 'bls/bls.h' file not found
+#	#include <bls/bls.h>
+#	         ^~~~~~~~~~~
+#	1 error generated.
+#
+echo "Installing bn..."
+cd ~/go/src/github.com/keep-network
+if [ -d bn ] ; then
+	cd bn
+	git pull
+else
+	git clone https://github.com/keep-network/bn.git
+	cd bn
+fi
+make
+make install
+
 echo "Ready to rock! See above for any extra environment-related instructions."
