@@ -152,14 +152,18 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 }
 
 // ResolveSecretSharesAccusations resolves a complaint received from a sender
-// against a member accused in shares and commitments verification.
+// against a member accused in the shares and commitments verification phase.
+// A member is calling this function to judge which party of the dispute is lying.
 //
-// Current member cannot be a part of a dispute, if the member is either a sender
-// or accused the function will return an error.
+// A current member cannot be a part of a dispute. If the current member is
+// either an accuser or is accused the function will return an error. The accused
+// party cannot be a judge in its own case. From the other hand, the accuser has
+// already performed the calculation in the previous phase which resulted in the
+// accusation and waits now for a judgment from other players.
 //
 // The function requires shares `s_mj` and `t_mj` calculated by the accused
-// member (`m`) for the sender (`j`). These values are expect to be broadcasted
-// before in encrypted form. On accusation the shares should be decrypted and
+// member (`m`) for the sender (`j`). These values are expected to be broadcast
+// before in encrypted form. On accusation, the shares should be decrypted and
 // the revealed value should be passed to this function.
 //
 // See Phase 5 of the protocol specification.
