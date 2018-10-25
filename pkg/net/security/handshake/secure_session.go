@@ -25,9 +25,20 @@ func newAuthenticatedSession(
 	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
 ) (*authenticatedConnection, error) {
-	remotePublicKey, err := remotePeerID.ExtractPublicKey()
-	if err != nil {
-		return nil, err
+	var (
+		remotePublicKey libp2pcrypto.PubKey
+		err             error
+	)
+
+	if remotePeerID == "" {
+		// SecureInbound case; if we don't have a remote peer.id, we
+		// can't have their public key!
+		remotePublicKey = nil
+	} else {
+		remotePublicKey, err = remotePeerID.ExtractPublicKey()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &authenticatedConnection{
