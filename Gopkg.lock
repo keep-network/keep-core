@@ -502,6 +502,16 @@
   revision = "b29f3d97e3a2fb8b29c5d04290e6cb5c5018004b"
 
 [[projects]]
+  digest = "1:8805aa03f7436e4ec36b9e31d57f71fc8e13ee3b88e8733ce032729fa1b0426f"
+  name = "github.com/libp2p/go-libp2p-pubsub"
+  packages = [
+    ".",
+    "pb",
+  ]
+  pruneopts = ""
+  revision = "107b3bdc9730f1b7ce294523e81dbffe3a639dcb"
+
+[[projects]]
   digest = "1:c5852131afc16f464e7241da9e9143262063bbe434a1f3f6645c5f82ffe74759"
   name = "github.com/libp2p/go-libp2p-record"
   packages = [
@@ -1007,6 +1017,7 @@
     "github.com/libp2p/go-libp2p-kad-dht",
     "github.com/libp2p/go-libp2p-peer",
     "github.com/libp2p/go-libp2p-peerstore",
+    "github.com/libp2p/go-libp2p-pubsub",
     "github.com/libp2p/go-libp2p/p2p/host/routed",
     "github.com/multiformats/go-multiaddr",
     "github.com/urfave/cli",
