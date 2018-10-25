@@ -341,16 +341,6 @@
   version = "v0.1.10"
 
 [[projects]]
-  digest = "1:5885879ccfd697078a1fe96295660e93d8bbbf5edf3a59519e6bf4bbd66b1b4f"
-  name = "github.com/libp2p/go-floodsub"
-  packages = [
-    ".",
-    "pb",
-  ]
-  pruneopts = ""
-  revision = "900095341be1eeba1a0d6c1e08ab61d1242c6cb4"
-
-[[projects]]
   branch = "master"
   digest = "1:b6801929ad9da6e4257761aeb31872feb25601ee231231654d9320e4799d748b"
   name = "github.com/libp2p/go-flow-metrics"
@@ -1010,7 +1000,6 @@
     "github.com/ipfs/go-datastore/sync",
     "github.com/keep-network/paillier",
     "github.com/libp2p/go-addr-util",
-    "github.com/libp2p/go-floodsub",
     "github.com/libp2p/go-libp2p",
     "github.com/libp2p/go-libp2p-crypto",
     "github.com/libp2p/go-libp2p-host",
