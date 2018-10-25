@@ -13,9 +13,8 @@ import (
 )
 
 // ID is the multistream-select protocol ID that should be used when identifying
-// this security transport. Unfortunately, listeners are configured to match on
-// either /plaintext/1.0.0 or /secio/1.0.0. For now, we must lie until custom listeners.
-const ID = "/secio/1.0.0"
+// this security transport.
+const ID = "/keep/handshake/1.0.0"
 
 // Compile time assertions of custom types
 var _ secure.Transport = (*Transport)(nil)
