@@ -1,7 +1,4 @@
-// Package handshake is used to turn inbound and outbound unauthenticated,
-// plain-text connections into authenticated, plain-text connections. Noticeably,
-// it does not guarantee confidentiality as it does not encrypt connections.
-package handshake
+package libp2p
 
 import (
 	"context"
@@ -14,7 +11,7 @@ import (
 
 // ID is the multistream-select protocol ID that should be used when identifying
 // this security transport.
-const ID = "/keep/handshake/1.0.0"
+const handshakeID = "/keep/handshake/1.0.0"
 
 // Compile time assertions of custom types
 var _ secure.Transport = (*Transport)(nil)

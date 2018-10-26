@@ -1,4 +1,4 @@
-package handshake
+package libp2p
 
 import (
 	"net"
