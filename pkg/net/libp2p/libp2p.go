@@ -6,12 +6,12 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
 	libp2p "github.com/libp2p/go-libp2p"
+	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-peerstore"
@@ -83,9 +83,9 @@ func (p *provider) Peers() []string {
 func Connect(
 	ctx context.Context,
 	config Config,
-	networkKey key.NetworkKey,
+	staticKey libp2pcrypto.PrivKey,
 ) (net.Provider, error) {
-	identity, err := createIdentity(networkKey.PrivateKey())
+	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
 	}
