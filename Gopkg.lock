@@ -1017,6 +1017,7 @@
     "github.com/libp2p/go-libp2p-pubsub",
     "github.com/libp2p/go-libp2p/p2p/host/routed",
     "github.com/multiformats/go-multiaddr",
+    "github.com/pborman/uuid",
     "github.com/urfave/cli",
     "golang.org/x/crypto/sha3",
     "golang.org/x/crypto/ssh/terminal",
