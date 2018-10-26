@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/altbn128"
 )
 
 // Test verifying BLS multi signature.
@@ -16,11 +15,8 @@ func TestMultisigBLS(t *testing.T) {
 	var signatures []*bn256.G1
 	var publicKeys []*bn256.G2
 
-	// Generator point of G2 group.
-	p2 := new(bn256.G2).ScalarBaseMult(big.NewInt(1))
-
 	// Message to sign.
-	msg := altbn128.G1HashToPoint([]byte("Hello!"))
+	msg := []byte("Hello!")
 
 	for i := 0; i < 100; i++ {
 		// Get private key.
@@ -35,20 +31,16 @@ func TestMultisigBLS(t *testing.T) {
 		publicKeys = append(publicKeys, pub)
 
 		// Sign the message.
-		sig := new(bn256.G1).ScalarMult(msg, k)
+		sig := Sign(k, msg)
 		signatures = append(signatures, sig)
 	}
 
 	aggSig := AggregateG1Points(signatures)
-	negAggSig := new(bn256.G1).Neg(aggSig)
 	aggPub := AggregateG2Points(publicKeys)
 
-	// Perform 2 pairing operations.
-	a := []*bn256.G1{negAggSig, msg}
-	b := []*bn256.G2{p2, aggPub}
-	pairingCheck := bn256.PairingCheck(a, b)
+	result := Verify(aggPub, msg, aggSig)
 
-	if !pairingCheck {
+	if !result {
 		t.Errorf("Error verifying BLS multi signature.")
 	}
 }
