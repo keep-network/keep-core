@@ -18,18 +18,18 @@
 //
 // [Act 1]
 // nonce1 = random_nonce()
-// act1Message { nonce1 } ---->
+// act1Message{nonce1} ---->
 //                                       [Act 2]
 //                                       nonce2 = random_nonce()
 //                                       challenge = sha256(nonce1 || nonce2)
-//                                       <---- act2Message { challenge, nonce2 }
+//                                       <---- act2Message{challenge, nonce2}
 // [Act 3]
 // challenge = sha256(nonce1 || nonce2)
-// act3Message {challenge} ---->
+// act3Message{challenge} ---->
 //
 //
 // act1Message, act2Message, and act3Message are messages exchanged between
-// initiator and responder in the act one, two and three of the handshake,
+// initiator and responder in acts one, two, and three of the handshake,
 // respectively.
 //
 // initiatorAct1, initiatorAct2, and initiatorAct3 represent the state of the
@@ -45,7 +45,7 @@
 package handshake
 
 import (
-	"crypto/rand"
+	crand "crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
@@ -62,9 +62,9 @@ type act1Message struct {
 }
 
 // act2Message is sent in the second handshake act by the responder to the
-// initiator. It contains randomly generated `nonce2`, an 8-byte unsigned
-// integer and `challenge` which is a result of SHA256 on the concatenated
-// bytes of `nonce1` and `nonce2`.
+// initiator. It contains randomly generated `nonce2`, which is an 8-byte
+// unsigned integer, and `challenge`, which is the result of SHA256 on the
+// concatenated bytes of `nonce1` and `nonce2`.
 //
 // act2Message should be signed with responder's static private key.
 type act2Message struct {
@@ -102,25 +102,21 @@ func initiateHandshake() (*initiatorAct1, error) {
 // message returns the message sent by initiator to the responder in the first
 // act of the handshake protocol.
 func (ia1 *initiatorAct1) message() *act1Message {
-	return &act1Message{
-		nonce1: ia1.nonce1,
-	}
+	return &act1Message{nonce1: ia1.nonce1}
 }
 
 // next performs a state transition and returns initiator in a state ready to
 // execute the second act of the handshake protocol.
 func (ia1 *initiatorAct1) next() *initiatorAct2 {
-	return &initiatorAct2{
-		nonce1: ia1.nonce1,
-	}
+	return &initiatorAct2{nonce1: ia1.nonce1}
 }
 
 // answerHandshake is used to initiate a responder as a result of receiving
 // message from initiator in the first act of the handshake protocol.
 // The returned responder is in a state ready to execute the second act of the
 // handshake protocol.
-func answerHandshake(act1Msg *act1Message) (*responderAct2, error) {
-	nonce1 := act1Msg.nonce1
+func answerHandshake(message *act1Message) (*responderAct2, error) {
+	nonce1 := message.nonce1
 	nonce2, err := randomNonce()
 	if err != nil {
 		return nil, fmt.Errorf("could not answer the handshake [%v]", err)
@@ -146,35 +142,29 @@ type responderAct2 struct {
 // message returns the message sent by responder to the initiator in the second
 // act of the handshake protocol.
 func (ra2 *responderAct2) message() *act2Message {
-	return &act2Message{
-		nonce2:    ra2.nonce2,
-		challenge: ra2.challenge,
-	}
+	return &act2Message{nonce2: ra2.nonce2, challenge: ra2.challenge}
 }
 
 // next performs a state transition and returns responder in a state ready to
 // execute the third act of the handshake protocol.
 func (ra2 *responderAct2) next() *responderAct3 {
-	return &responderAct3{
-		challenge: ra2.challenge,
-	}
+	return &responderAct3{challenge: ra2.challenge}
 }
 
 // next performs a state transition and returns initiator in a state ready to
 // execute the third act of the handshake protocol.
+//
 // Function validates the challenge received from responder in the second act of
 // the protocol. If the challenge is the same as expected one, new state of
 // initiator is returned. Otherwise, function reports an error and handshake
 // protocol should be immediately aborted.
-func (ia2 *initiatorAct2) next(act2Msg *act2Message) (*initiatorAct3, error) {
-	expectedChallenge := hashToChallenge(ia2.nonce1, act2Msg.nonce2)
-	if expectedChallenge != act2Msg.challenge {
-		return nil, errors.New("unexpected responder's challenge")
+func (ia2 *initiatorAct2) next(message *act2Message) (*initiatorAct3, error) {
+	expectedChallenge := hashToChallenge(ia2.nonce1, message.nonce2)
+	if expectedChallenge != message.challenge {
+		return nil, fmt.Errorf("unexpected responder's challenge")
 	}
 
-	return &initiatorAct3{
-		challenge: act2Msg.challenge,
-	}, nil
+	return &initiatorAct3{challenge: message.challenge}, nil
 }
 
 // initiatorAct3 represents the state of the initiator in the third act of the
@@ -192,9 +182,7 @@ type responderAct3 struct {
 // message returns the message sent by initiator to the responder in the third
 // act of the handshake protocol.
 func (ia3 *initiatorAct3) message() *act3Message {
-	return &act3Message{
-		challenge: ia3.challenge,
-	}
+	return &act3Message{challenge: ia3.challenge}
 }
 
 // finalizeHandshake is used in the third act of the handshake protocol to
@@ -203,8 +191,8 @@ func (ia3 *initiatorAct3) message() *act3Message {
 // If both challenges are equal, handshake has completed successfully and
 // function returns nil. Otherwise, if challenge is not as expected, function
 // returns an error and it means the handshake protocol failed.
-func (ra3 *responderAct3) finalizeHandshake(act3Msg *act3Message) error {
-	if ra3.challenge != act3Msg.challenge {
+func (ra3 *responderAct3) finalizeHandshake(message *act3Message) error {
+	if ra3.challenge != message.challenge {
 		return errors.New("unexpected initiator's challenge")
 	}
 
@@ -225,7 +213,7 @@ func hashToChallenge(nonce1 uint64, nonce2 uint64) [sha256.Size]byte {
 // to produce an 8-byte unsigned integer nonce.
 func randomNonce() (uint64, error) {
 	bytes := make([]byte, 8)
-	_, err := rand.Read(bytes)
+	_, err := crand.Read(bytes)
 	if err != nil {
 		return 0, fmt.Errorf("could not generate a new nonce [%v]", err)
 	}
