@@ -56,7 +56,7 @@ func newAuthenticatedConnection(
 	return ac.runHandshake(ctx)
 }
 
-func (ac *authenticatedConnection) run(ctx context.Context) (*authenticatedConnection, error) {
+func (ac *authenticatedConnection) runHandshake(ctx context.Context) (*authenticatedConnection, error) {
 	// TODO: placeholder code
 	//
 	// Act 1
