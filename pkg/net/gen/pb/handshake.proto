@@ -21,10 +21,10 @@ message Act1Message {
 // act2Message should be signed with responder's static private key.
 message Act2Message {
   // nonce from responder; 8-byte (64-bit) nonce as bytes
-  bytes nonce = 2;
+  bytes nonce = 1;
 
   // bytes of sha256(nonce1||nonce2)
-  bytes challenge = 3;
+  bytes challenge = 2;
 }
 
 // act1Message is sent in the first handshake act by the initiator to the
