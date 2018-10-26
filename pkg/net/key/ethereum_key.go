@@ -12,10 +12,9 @@ import (
 	"github.com/pborman/uuid"
 )
 
-// StaticNetworkKey represents static peer's key equal to the delegate key
-// associated with an on-chain stake. It is used to authenticate the peer and
-// for message attributability - each message leaving the peer is signed with
-// its static key.
+// StaticNetworkKey represents the static peer's key, which should be associated
+// with an on-chain stake. It is used to authenticate the peer and for message
+// attributability - each message leaving the peer is signed with its static key.
 type StaticNetworkKey = libp2pcrypto.Secp256k1PrivateKey
 
 // GenerateStaticNetworkKey generates a new, random static key based on
@@ -37,11 +36,11 @@ func GenerateStaticNetworkKey(rand io.Reader) (*StaticNetworkKey, error) {
 	return EthereumKeyToNetworkKey(key), nil
 }
 
-// EthereumKeyToNetworkKey transforms `go-ethereum`-based ECDSA key into format
-// supported by `libp2p`. Because all curve parameters of secp256k1 curve
-// defined by `go-ethereum` and all curve parameters of secp256k1 curve defined
-// by `btcsuite` used by `lipb2b` under the hood are identical, we can simply
-// rewrite the private key.
+// EthereumKeyToNetworkKey transforms `go-ethereum`-based ECDSA key into the
+// format supported by the network layer. Because all curve parameters of
+// secp256k1 curve defined by `go-ethereum` and all curve parameters of
+// secp256k1 curve defined by `btcsuite` used by `lipb2b` under the hood are
+// identical, we can simply rewrite the private key.
 //
 // `libp2p` does not recognize `go-ethereum` curves and when it comes to
 // creating peer's ID or deserializing the key, operation fails with
