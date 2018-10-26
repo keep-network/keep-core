@@ -12,7 +12,7 @@ import (
 	"github.com/pborman/uuid"
 )
 
-// StaticNetworkKey represents the static peer's key, which should be associated
+// StaticNetworkKey represents peer's static key, which should be associated
 // with an on-chain stake. It is used to authenticate the peer and for message
 // attributability - each message leaving the peer is signed with its static key.
 type StaticNetworkKey = libp2pcrypto.Secp256k1PrivateKey
