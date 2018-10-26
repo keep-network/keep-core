@@ -64,8 +64,8 @@ func TestDetectUnexpectedMessageSignature(t *testing.T) {
 	}
 }
 
-// Basic unit test checking if invalid signature is considered as incorrect
-func TestDetectInvalidMessageSignature(t *testing.T) {
+// Basic unit test checking if malformed signature is considered as incorrect
+func TestDetectMalformedMessageSignature(t *testing.T) {
 	identity, err := newTestIdentity()
 
 	ch := &channel{
@@ -92,7 +92,7 @@ func TestDetectInvalidMessageSignature(t *testing.T) {
 // - one with a valid signature evaluated with key other than sender's key
 // The first message should be properly delivered, the second message should get
 // rejected.
-func TestRejectMessageWithInvalidSignature(t *testing.T) {
+func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
