@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"context"
 	"net"
 
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
@@ -22,6 +23,7 @@ type authenticatedConnection struct {
 }
 
 func newAuthenticatedConnection(
+	ctx context.Context,
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
@@ -51,10 +53,10 @@ func newAuthenticatedConnection(
 		remotePeerPublicKey: remotePublicKey,
 	}
 
-	return ac.run()
+	return ac.runHandshake(ctx)
 }
 
-func (ac *authenticatedConnection) run() (*authenticatedConnection, error) {
+func (ac *authenticatedConnection) run(ctx context.Context) (*authenticatedConnection, error) {
 	// TODO: placeholder code
 	//
 	// Act 1
