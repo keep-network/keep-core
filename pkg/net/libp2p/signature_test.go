@@ -35,7 +35,7 @@ func TestVerifyMessageSignature(t *testing.T) {
 
 // Basic unit test checking if signature created with other key than expected
 // is considered as incorrect.
-func TestDetectInvalidMessageSignature(t *testing.T) {
+func TestDetectUnexpectedMessageSignature(t *testing.T) {
 	identity, err := newTestIdentity()
 
 	ch := &channel{
@@ -64,6 +64,28 @@ func TestDetectInvalidMessageSignature(t *testing.T) {
 	}
 }
 
+// Basic unit test checking if invalid signature is considered as incorrect
+func TestDetectInvalidMessageSignature(t *testing.T) {
+	identity, err := newTestIdentity()
+
+	ch := &channel{
+		clientIdentity: identity,
+	}
+
+	msg := []byte("It's not much of a tail, but I'm sort of attached to it.")
+
+	signature := []byte{0x01, 0x02, 0x03, 0x04, 0x05}
+
+	err = ch.verify(identity.id, msg, signature)
+	if err == nil {
+		t.Fatal("signature validation should fail")
+	}
+
+	if !strings.HasPrefix(err.Error(), "failed to verify signature") {
+		t.Fatalf("error other than expected: %v", err)
+	}
+}
+
 // Integration test simulating malicious adversary tampering the network message
 // put into the channel. There are two messages sent:
 // - one with a valid signature evaluated with sender's key
@@ -87,9 +109,7 @@ func TestRejectMessageWithInvalidSignature(t *testing.T) {
 	honestPayload := "I did know once, only I've sort of forgotten."
 	maliciousPayload := "You never can tell with bees."
 
-	//
-	// Create and publish message with a correct signature
-	//
+	// Create and publish message with a correct signature...
 	envelope, err := ch.sealEnvelope(nil, &testMessage{Payload: honestPayload})
 	if err != nil {
 		t.Fatal(err)
@@ -102,10 +122,8 @@ func TestRejectMessageWithInvalidSignature(t *testing.T) {
 
 	ch.pubsub.Publish(ch.name, envelopeBytes)
 
-	//
 	// Create and publish message with a signature created with other key than
-	// sender's.
-	//
+	// sender's...
 	adversaryKey, err := key.GenerateEthereumStaticKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -129,10 +147,8 @@ func TestRejectMessageWithInvalidSignature(t *testing.T) {
 
 	ch.pubsub.Publish(ch.name, envelopeBytes)
 
-	//
 	// Check if the message with correct signature has been properly delivered
-	// and if the message with incorrect signature has been dropped.
-	//
+	// and if the message with incorrect signature has been dropped...
 	recvChan := make(chan net.Message)
 	if err := ch.Recv(net.HandleMessageFunc{
 		Type: "test",
@@ -177,6 +193,10 @@ func TestRejectMessageWithInvalidSignature(t *testing.T) {
 	}
 }
 
+// createTestChannel creates and initializes `BroadcastChannel` with all
+// underlying libp2p setup steps. Created instance is then casted to
+// `lib2p.channel` type so the private interface is available and can be
+// tested.
 func createTestChannel(
 	ctx context.Context,
 	staticKey key.NetworkKey,
