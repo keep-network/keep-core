@@ -65,22 +65,22 @@ func (t *Transport) SecureOutbound(
 }
 
 // LocalPeer retrieves the local peer.
-func (ss *authenticatedConnection) LocalPeer() peer.ID {
-	return ss.localPeerID
+func (ac *authenticatedConnection) LocalPeer() peer.ID {
+	return ac.localPeerID
 }
 
 // LocalPrivateKey retrieves the local peer's PrivateKey
-func (ss *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
-	return ss.localPeerPrivateKey
+func (ac *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
+	return ac.localPeerPrivateKey
 }
 
 // RemotePeer returns the remote peer ID if we initiated the dial. Otherwise, it
 // returns "" (because this connection isn't actually secure).
-func (ss *authenticatedConnection) RemotePeer() peer.ID {
-	return ss.remotePeerID
+func (ac *authenticatedConnection) RemotePeer() peer.ID {
+	return ac.remotePeerID
 }
 
 // RemotePublicKey retrieves the remote public key.
-func (ss *authenticatedConnection) RemotePublicKey() libp2pcrypto.PubKey {
-	return ss.remotePeerPublicKey
+func (ac *authenticatedConnection) RemotePublicKey() libp2pcrypto.PubKey {
+	return ac.remotePeerPublicKey
 }
