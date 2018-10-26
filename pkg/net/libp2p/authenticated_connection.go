@@ -3,6 +3,7 @@ package libp2p
 import (
 	"net"
 
+	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 )
@@ -42,11 +43,62 @@ func newAuthenticatedConnection(
 		}
 	}
 
-	return &authenticatedConnection{
+	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
 		remotePeerID:        remotePeerID,
 		remotePeerPublicKey: remotePublicKey,
-	}, nil
+	}
+
+	return ac.run()
+}
+
+func (ac *authenticatedConnection) run() (*authenticatedConnection, error) {
+	// TODO: placeholder code
+	//
+	// Act 1
+	//
+
+	// initiator station
+	initiatorAct1, err := handshake.InitiateHandshake()
+	if err != nil {
+		return nil, err
+	}
+	act1Message := initiatorAct1.Message()
+	initiatorAct2 := initiatorAct1.Next()
+
+	// responder station
+	responderAct2, err := handshake.AnswerHandshake(act1Message)
+	if err != nil {
+		return nil, err
+	}
+
+	//
+	// Act 2
+	//
+
+	// responder station
+	act2Message := responderAct2.Message()
+	responderAct3 := responderAct2.Next()
+
+	// initiator station
+	initiatorAct3, err := initiatorAct2.Next(act2Message)
+	if err != nil {
+		return nil, err
+	}
+
+	//
+	// Act 3
+	//
+
+	// initiator station
+	act3Message := initiatorAct3.Message()
+
+	// responder station
+	err = responderAct3.FinalizeHandshake(act3Message)
+	if err != nil {
+		return nil, err
+	}
+	return ac, nil
 }
