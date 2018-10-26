@@ -68,8 +68,8 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   revision = "7240b40a3ddc47c4d17c15baabcbe45e5219171b"
 
 [[constraint]]
-  name = "github.com/libp2p/go-floodsub"
-  revision = "900095341be1eeba1a0d6c1e08ab61d1242c6cb4"
+  name = "github.com/libp2p/go-libp2p-pubsub"
+  revision = "107b3bdc9730f1b7ce294523e81dbffe3a639dcb"
 
 # multiformats
 [[override]]

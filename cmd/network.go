@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/urfave/cli"
 )
@@ -56,7 +58,12 @@ func pingRequest(c *cli.Context) error {
 		libp2pConfig = libp2p.Config{Peers: bootstrapPeers}
 		ctx          = context.Background()
 	)
-	netProvider, err := libp2p.Connect(ctx, libp2pConfig)
+	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
+	if err != nil {
+		return err
+	}
+
+	netProvider, err := libp2p.Connect(ctx, libp2pConfig, staticKey)
 	if err != nil {
 		return err
 	}

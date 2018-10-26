@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	floodsub "github.com/libp2p/go-floodsub"
 	host "github.com/libp2p/go-libp2p-host"
 	"github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-pubsub"
 )
 
 type channelManager struct {
@@ -19,7 +19,7 @@ type channelManager struct {
 	channelsMutex sync.Mutex
 	channels      map[string]*channel
 
-	pubsub *floodsub.PubSub
+	pubsub *pubsub.PubSub
 }
 
 func newChannelManager(
@@ -27,7 +27,7 @@ func newChannelManager(
 	identity *identity,
 	p2phost host.Host,
 ) (*channelManager, error) {
-	gossipsub, err := floodsub.NewGossipSub(ctx, p2phost)
+	gossipsub, err := pubsub.NewGossipSub(ctx, p2phost)
 	if err != nil {
 		return nil, err
 	}
