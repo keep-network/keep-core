@@ -341,16 +341,6 @@
   version = "v0.1.10"
 
 [[projects]]
-  digest = "1:5885879ccfd697078a1fe96295660e93d8bbbf5edf3a59519e6bf4bbd66b1b4f"
-  name = "github.com/libp2p/go-floodsub"
-  packages = [
-    ".",
-    "pb",
-  ]
-  pruneopts = ""
-  revision = "900095341be1eeba1a0d6c1e08ab61d1242c6cb4"
-
-[[projects]]
   branch = "master"
   digest = "1:b6801929ad9da6e4257761aeb31872feb25601ee231231654d9320e4799d748b"
   name = "github.com/libp2p/go-flow-metrics"
@@ -500,6 +490,16 @@
   packages = ["."]
   pruneopts = ""
   revision = "b29f3d97e3a2fb8b29c5d04290e6cb5c5018004b"
+
+[[projects]]
+  digest = "1:8805aa03f7436e4ec36b9e31d57f71fc8e13ee3b88e8733ce032729fa1b0426f"
+  name = "github.com/libp2p/go-libp2p-pubsub"
+  packages = [
+    ".",
+    "pb",
+  ]
+  pruneopts = ""
+  revision = "107b3bdc9730f1b7ce294523e81dbffe3a639dcb"
 
 [[projects]]
   digest = "1:c5852131afc16f464e7241da9e9143262063bbe434a1f3f6645c5f82ffe74759"
@@ -1000,13 +1000,13 @@
     "github.com/ipfs/go-datastore/sync",
     "github.com/keep-network/paillier",
     "github.com/libp2p/go-addr-util",
-    "github.com/libp2p/go-floodsub",
     "github.com/libp2p/go-libp2p",
     "github.com/libp2p/go-libp2p-crypto",
     "github.com/libp2p/go-libp2p-host",
     "github.com/libp2p/go-libp2p-kad-dht",
     "github.com/libp2p/go-libp2p-peer",
     "github.com/libp2p/go-libp2p-peerstore",
+    "github.com/libp2p/go-libp2p-pubsub",
     "github.com/libp2p/go-libp2p/p2p/host/routed",
     "github.com/multiformats/go-multiaddr",
     "github.com/urfave/cli",
