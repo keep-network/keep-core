@@ -43,3 +43,59 @@ func Verify(pub *bn256.G2, msg []byte, sig *bn256.G1) bool {
 
 	return bn256.PairingCheck(a, b)
 }
+
+// Recover reconstructs the full BLS signature from a threshold t number of
+// signature shares using Lagrange interpolation.
+func Recover(shares []*bn256.G1, t int) *bn256.G1 {
+
+	// x holds id`s of the t amount of shares required to recover signature.
+	x := make(map[int]*big.Int)
+
+	for i, s := range shares {
+		if s == nil {
+			continue
+		}
+		x[i] = big.NewInt(1 + int64(i))
+		if len(x) == t {
+			break
+		}
+	}
+
+	result := new(bn256.G1)
+
+	for i, xi := range x {
+
+		a := big.NewInt(1)
+		b := big.NewInt(1)
+
+		for j, xj := range x {
+			if i == j {
+				continue
+			}
+			a = new(big.Int).Mod(new(big.Int).Mul(a, xj), bn256.Order)
+			b = new(big.Int).Mod(new(big.Int).Mul(b, new(big.Int).Sub(xj, xi)), bn256.Order)
+		}
+
+		// Perform modular division of a by b.
+		modInv := new(big.Int).ModInverse(b, bn256.Order)
+		div := new(big.Int).Mod(new(big.Int).Mul(a, modInv), bn256.Order)
+
+		result.Add(result, new(bn256.G1).ScalarMult(shares[i], div))
+	}
+
+	return result
+}
+
+// SecretKeyShare computes private share.
+func SecretKeyShare(masterSecretKey []*big.Int, i int64) *big.Int {
+
+	xi := big.NewInt(int64(1 + i))
+	v := big.NewInt(0)
+
+	for j := len(masterSecretKey) - 1; j >= 0; j-- {
+		v = new(big.Int).Mul(v, xi)
+		v = new(big.Int).Add(v, masterSecretKey[j])
+	}
+
+	return v
+}

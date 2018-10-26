@@ -52,3 +52,39 @@ func TestMultisigBLS(t *testing.T) {
 		t.Errorf("Error verifying BLS multi signature.")
 	}
 }
+
+// Test verifying BLS threshold signature.
+func TestThresholdBLS(t *testing.T) {
+
+	msg := []byte("Hello!")
+
+	numOfPlayers := 5
+	threshold := 3
+
+	var masterSecretKey []*big.Int
+	var masterPublicKey []*bn256.G2
+	var signatureShares []*bn256.G1
+
+	// Set up master keys.
+	for i := 0; i < threshold; i++ {
+		sk, pk, _ := bn256.RandomG2(rand.Reader)
+		masterSecretKey = append(masterSecretKey, sk)
+		masterPublicKey = append(masterPublicKey, pk)
+	}
+
+	// Each member of the group signs the same message creating signature share.
+	for i := 0; i < numOfPlayers; i++ {
+		sk := SecretKeyShare(masterSecretKey, int64(i))
+		share := Sign(sk, msg)
+		signatureShares = append(signatureShares, share)
+	}
+
+	// Get full BLS signature.
+	sig := Recover(signatureShares, threshold)
+
+	result := Verify(masterPublicKey[0], msg, sig)
+
+	if !result {
+		t.Errorf("Error verifying BLS threshold signature.")
+	}
+}
