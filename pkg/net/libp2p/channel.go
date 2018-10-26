@@ -42,14 +42,14 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	return c.doSend(nil, c.clientIdentity, message)
+	return c.doSend(nil, message)
 }
 
 func (c *channel) SendTo(
 	recipientIdentifier net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) error {
-	return c.doSend(recipientIdentifier, c.clientIdentity, message)
+	return c.doSend(recipientIdentifier, message)
 }
 
 // doSend attempts to send a message, from a sender, to all members of a
@@ -59,7 +59,6 @@ func (c *channel) SendTo(
 // address the message specifically to them.
 func (c *channel) doSend(
 	recipient net.ProtocolIdentifier,
-	sender *identity,
 	message net.TaggedMarshaler,
 ) error {
 	var transportRecipient net.TransportIdentifier
@@ -72,7 +71,7 @@ func (c *channel) doSend(
 	}
 	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
 	// in an envelope.
-	envelopeBytes, err := c.envelopeProto(transportRecipient, sender, message)
+	envelopeBytes, err := c.envelopeProto(transportRecipient, message)
 	if err != nil {
 		return err
 	}
@@ -165,7 +164,6 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 func (c *channel) messageProto(
 	recipient net.TransportIdentifier,
-	sender *identity,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
@@ -173,7 +171,7 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	senderIdentityBytes, err := sender.Marshal()
+	senderIdentityBytes, err := c.clientIdentity.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -195,12 +193,11 @@ func (c *channel) messageProto(
 	}).Marshal()
 }
 
-func (c *channel) envelopeProto(
+func (c *channel) sealEnvelope(
 	recipient net.TransportIdentifier,
-	sender *identity,
 	message net.TaggedMarshaler,
-) ([]byte, error) {
-	messageBytes, err := c.messageProto(recipient, sender, message)
+) (*pb.Envelope, error) {
+	messageBytes, err := c.messageProto(recipient, message)
 	if err != nil {
 		return nil, err
 	}
@@ -209,10 +206,22 @@ func (c *channel) envelopeProto(
 		return nil, err
 	}
 
-	return (&pb.Envelope{
+	return &pb.Envelope{
 		Message:   messageBytes,
 		Signature: signature,
-	}).Marshal()
+	}, nil
+}
+
+func (c *channel) envelopeProto(
+	recipient net.TransportIdentifier,
+	message net.TaggedMarshaler,
+) ([]byte, error) {
+	envelope, err := c.sealEnvelope(recipient, message)
+	if err != nil {
+		return nil, err
+	}
+
+	return envelope.Marshal()
 }
 
 func (c *channel) sign(messageBytes []byte) ([]byte, error) {
