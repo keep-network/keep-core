@@ -233,10 +233,10 @@ func DecompressG2(m []byte) (*bn256.G2, error) {
 
 // Multiply returns multiplication of two gfP2 elements.
 func (e *gfP2) Multiply(a, b *gfP2) *gfP2 {
-	xx := new(big.Int).Mul(a.x, b.x)
-	xy := new(big.Int).Mul(a.x, b.y)
-	yx := new(big.Int).Mul(a.y, b.x)
-	yy := new(big.Int).Mul(a.y, b.y)
+	xx := mod(new(big.Int).Mul(a.x, b.x), bn256.P)
+	xy := mod(new(big.Int).Mul(a.x, b.y), bn256.P)
+	yx := mod(new(big.Int).Mul(a.y, b.x), bn256.P)
+	yy := mod(new(big.Int).Mul(a.y, b.y), bn256.P)
 	e.x = mod(new(big.Int).Sub(xx, yy), bn256.P)
 	e.y = mod(new(big.Int).Add(xy, yx), bn256.P)
 	return e
