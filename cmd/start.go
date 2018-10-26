@@ -9,7 +9,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/urfave/cli"
 )
 
@@ -97,7 +96,7 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func loadStaticKey(account ethereum.Account) (libp2pcrypto.PrivKey, error) {
+func loadStaticKey(account ethereum.Account) (*key.StaticNetworkKey, error) {
 	ethereumKey, err := ethereum.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
@@ -108,5 +107,5 @@ func loadStaticKey(account ethereum.Account) (libp2pcrypto.PrivKey, error) {
 		)
 	}
 
-	return key.EthereumKeyToLibp2pKey(ethereumKey), nil
+	return key.EthereumKeyToNetworkKey(ethereumKey), nil
 }

@@ -12,9 +12,15 @@ import (
 	"github.com/pborman/uuid"
 )
 
-// GenerateStaticKey generates a new, random static key based on secp256k1
-// ethereum curve.
-func GenerateStaticKey(rand io.Reader) (*libp2pcrypto.Secp256k1PrivateKey, error) {
+// StaticNetworkKey represents static peer's key equal to the delegate key
+// associated with an on-chain stake. It is used to authenticate the peer and
+// for message attributability - each message leaving the peer is signed with
+// its static key.
+type StaticNetworkKey = libp2pcrypto.Secp256k1PrivateKey
+
+// GenerateStaticNetworkKey generates a new, random static key based on
+// secp256k1 ethereum curve.
+func GenerateStaticNetworkKey(rand io.Reader) (*StaticNetworkKey, error) {
 	id := uuid.NewRandom()
 
 	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
@@ -28,10 +34,10 @@ func GenerateStaticKey(rand io.Reader) (*libp2pcrypto.Secp256k1PrivateKey, error
 		PrivateKey: ecdsaKey,
 	}
 
-	return EthereumKeyToLibp2pKey(key), nil
+	return EthereumKeyToNetworkKey(key), nil
 }
 
-// EthereumKeyToLibp2pKey transforms `go-ethereum`-based ECDSA key into format
+// EthereumKeyToNetworkKey transforms `go-ethereum`-based ECDSA key into format
 // supported by `libp2p`. Because all curve parameters of secp256k1 curve
 // defined by `go-ethereum` and all curve parameters of secp256k1 curve defined
 // by `btcsuite` used by `lipb2b` under the hood are identical, we can simply
@@ -41,12 +47,10 @@ func GenerateStaticKey(rand io.Reader) (*libp2pcrypto.Secp256k1PrivateKey, error
 // creating peer's ID or deserializing the key, operation fails with
 // unrecognized curve error. This is no longer a problem if we transform the
 // key using this function.
-func EthereumKeyToLibp2pKey(
-	ethereumKey *keystore.Key,
-) *libp2pcrypto.Secp256k1PrivateKey {
+func EthereumKeyToNetworkKey(ethereumKey *keystore.Key) *StaticNetworkKey {
 	privKey, _ := btcec.PrivKeyFromBytes(
 		btcec.S256(), ethereumKey.PrivateKey.D.Bytes(),
 	)
 
-	return (*libp2pcrypto.Secp256k1PrivateKey)(privKey)
+	return (*StaticNetworkKey)(privKey)
 }
