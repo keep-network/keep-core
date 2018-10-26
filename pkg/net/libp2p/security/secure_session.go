@@ -7,6 +7,9 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
+// authenticatedConnection turns inbound and outbound unauthenticated,
+// plain-text connections into authenticated, plain-text connections. Noticeably,
+// it does not guarantee confidentiality as it does not encrypt connections.
 type authenticatedConnection struct {
 	net.Conn
 
@@ -17,7 +20,7 @@ type authenticatedConnection struct {
 	remotePeerPublicKey libp2pcrypto.PubKey
 }
 
-func newAuthenticatedSession(
+func newAuthenticatedConnection(
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	unauthenticatedConn net.Conn,

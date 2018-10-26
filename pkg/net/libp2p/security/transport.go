@@ -26,7 +26,7 @@ type Transport struct {
 	PrivateKey  libp2pcrypto.PrivKey
 }
 
-func New(pk libp2pcrypto.PrivKey) (*Transport, error) {
+func newAuthenticatedTransport(pk libp2pcrypto.PrivKey) (*Transport, error) {
 	id, err := peer.IDFromPrivateKey(pk)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (t *Transport) SecureInbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
 ) (secure.Conn, error) {
-	return newAuthenticatedSession(
+	return newAuthenticatedConnection(
 		t.LocalPeerID,
 		t.PrivateKey,
 		unauthenticatedConn,
@@ -56,7 +56,7 @@ func (t *Transport) SecureOutbound(
 	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
 ) (secure.Conn, error) {
-	return newAuthenticatedSession(
+	return newAuthenticatedConnection(
 		t.LocalPeerID,
 		t.PrivateKey,
 		unauthenticatedConn,
