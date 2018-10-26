@@ -68,11 +68,6 @@ func TestSendReceive(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	identity, err := newTestIdentity()
-	if err != nil {
-		t.Errorf("Failed to generate identity: [%v].", err)
-	}
-
 	var (
 		config             = generateDeterministicNetworkConfig(t)
 		name               = "testchannel"
@@ -81,6 +76,11 @@ func TestSendReceive(t *testing.T) {
 	)
 
 	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity, err := createIdentity(staticKey.PrivateKey())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,16 +153,6 @@ func TestSendToReceiveFrom(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	identity1, err := newTestIdentity()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	identity2, err := newTestIdentity()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	var (
 		config1                  = generateDeterministicNetworkConfig(t)
 		senderProtocolIdentifier = &protocolIdentifier{id: "sender"}
@@ -174,6 +164,16 @@ func TestSendToReceiveFrom(t *testing.T) {
 	)
 
 	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity1, err := createIdentity(staticKey.PrivateKey())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity2, err := newTestIdentity()
 	if err != nil {
 		t.Fatal(err)
 	}
