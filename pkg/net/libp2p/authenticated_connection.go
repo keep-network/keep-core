@@ -53,10 +53,16 @@ func newAuthenticatedConnection(
 		remotePeerPublicKey: remotePublicKey,
 	}
 
-	return ac.runHandshake(ctx)
+	if err := ac.runHandshake(ctx); err != nil {
+		// close the conn before returning otherwise we leak
+		ac.Close()
+		return nil, err
+	}
+
+	return ac, nil
 }
 
-func (ac *authenticatedConnection) runHandshake(ctx context.Context) (*authenticatedConnection, error) {
+func (ac *authenticatedConnection) runHandshake(ctx context.Context) error {
 	// TODO: placeholder code
 	//
 	// Act 1
@@ -65,7 +71,7 @@ func (ac *authenticatedConnection) runHandshake(ctx context.Context) (*authentic
 	// initiator station
 	initiatorAct1, err := handshake.InitiateHandshake()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	act1Message := initiatorAct1.Message()
 	initiatorAct2 := initiatorAct1.Next()
@@ -73,7 +79,7 @@ func (ac *authenticatedConnection) runHandshake(ctx context.Context) (*authentic
 	// responder station
 	responderAct2, err := handshake.AnswerHandshake(act1Message)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	//
@@ -87,7 +93,7 @@ func (ac *authenticatedConnection) runHandshake(ctx context.Context) (*authentic
 	// initiator station
 	initiatorAct3, err := initiatorAct2.Next(act2Message)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	//
@@ -100,7 +106,7 @@ func (ac *authenticatedConnection) runHandshake(ctx context.Context) (*authentic
 	// responder station
 	err = responderAct3.FinalizeHandshake(act3Message)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return ac, nil
+	return nil
 }
