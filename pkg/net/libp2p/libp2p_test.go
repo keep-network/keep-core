@@ -17,7 +17,7 @@ func TestProviderReturnsType(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	staticKey, err := key.GenerateStaticKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	testName := "testname"
 
-	staticKey, err := key.GenerateStaticKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestSendReceive(t *testing.T) {
 		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
 	)
 
-	staticKey, err := key.GenerateStaticKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func TestSendToReceiveFrom(t *testing.T) {
 		expectedPayload = "some text"
 	)
 
-	staticKey, err := key.GenerateStaticKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -305,7 +305,7 @@ func newTestContext() (context.Context, context.CancelFunc) {
 }
 
 func newTestIdentity() (*identity, error) {
-	staticKey, err := key.GenerateStaticKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}

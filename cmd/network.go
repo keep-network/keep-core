@@ -58,7 +58,7 @@ func pingRequest(c *cli.Context) error {
 		libp2pConfig = libp2p.Config{Peers: bootstrapPeers}
 		ctx          = context.Background()
 	)
-	staticKey, err := key.GenerateStaticKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		return err
 	}
