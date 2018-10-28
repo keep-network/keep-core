@@ -4,10 +4,15 @@ import (
 	"context"
 	"net"
 
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
+
+	protoio "github.com/gogo/protobuf/io"
 )
+
+const maxFrameSize = 1 << 20
 
 // authenticatedConnection turns inbound and outbound unauthenticated,
 // plain-text connections into authenticated, plain-text connections. Noticeably,
@@ -62,35 +67,39 @@ func newAuthenticatedConnection(
 	return ac, nil
 }
 
-func (ac *authenticatedConnection) runHandshake(ctx context.Context) error {
-	// TODO: placeholder code
+func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) error {
+	// initiator station
+
 	//
 	// Act 1
 	//
 
-	// initiator station
+	initiatorConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
+
 	initiatorAct1, err := handshake.InitiateHandshake()
 	if err != nil {
 		return err
 	}
-	act1Message := initiatorAct1.Message()
-	initiatorAct2 := initiatorAct1.Next()
 
-	// responder station
-	responderAct2, err := handshake.AnswerHandshake(act1Message)
-	if err != nil {
+	act1WireMessage := initiatorAct1.Message().Proto()
+	if err := initiatorConnectionWriter.WriteMsg(act1WireMessage); err != nil {
 		return err
 	}
+
+	initiatorAct2 := initiatorAct1.Next()
 
 	//
 	// Act 2
 	//
 
-	// responder station
-	act2Message := responderAct2.Message()
-	responderAct3 := responderAct2.Next()
+	initiatorConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
 
-	// initiator station
+	var act2WireResponseMessage pb.Act2Message
+	if err := initiatorConnectionReader.ReadMsg(&act2WireResponseMessage); err != nil {
+		return err
+	}
+
+	act2Message := handshake.Act2MessageFromProto(act2WireResponseMessage)
 	initiatorAct3, err := initiatorAct2.Next(act2Message)
 	if err != nil {
 		return err
@@ -100,8 +109,13 @@ func (ac *authenticatedConnection) runHandshake(ctx context.Context) error {
 	// Act 3
 	//
 
-	// initiator station
-	act3Message := initiatorAct3.Message()
+	act3WireMessage := initiatorAct3.Message().Proto()
+	if err := initiatorConnectionWriter.WriteMsg(act3WireMessage); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 	// responder station
 	err = responderAct3.FinalizeHandshake(act3Message)
