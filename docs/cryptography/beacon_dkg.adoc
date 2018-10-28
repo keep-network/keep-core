@@ -465,7 +465,7 @@ for m in (G_6 - G_11): # <1>
     for k in is_m, s_mk in ss_m:
       a_mk = product(
         for l in is_m, l /= k:
-          k / (k - l)
+          l / (l - k)
       )
       s_mk * a_mk
   )
