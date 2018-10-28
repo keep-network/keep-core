@@ -12,7 +12,7 @@ import (
 	protoio "github.com/gogo/protobuf/io"
 )
 
-const maxFrameSize = 1 << 20
+const maxFrameSize = 1 << 10
 
 // authenticatedConnection turns inbound and outbound unauthenticated,
 // plain-text connections into authenticated, plain-text connections. Noticeably,
