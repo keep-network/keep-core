@@ -117,10 +117,52 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) 
 	return nil
 }
 
+func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) error {
 	// responder station
-	err = responderAct3.FinalizeHandshake(act3Message)
+
+	//
+	// Act 1
+	//
+
+	responderConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
+
+	var act1WireResponseMessage pb.Act1Message
+	if err := responderConnectionReader.ReadMsg(&act1WireResponseMessage); err != nil {
+		return err
+	}
+	act1Message := handshake.Act1MessageFromProto(act1WireResponseMessage)
+
+	responderAct2, err := handshake.AnswerHandshake(act1Message)
 	if err != nil {
 		return err
 	}
+
+	//
+	// Act 2
+	//
+
+	act2WireMessage := responderAct2.Message().Proto()
+
+	responderConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
+	if err := responderConnectionWriter.WriteMsg(act2WireMessage); err != nil {
+		return err
+	}
+
+	responderAct3 := responderAct2.Next()
+
+	//
+	// Act 3
+	//
+
+	var act3WireResponseMessage pb.Act3Message
+	if err := responderConnectionReader.ReadMsg(&act3WireResponseMessage); err != nil {
+		return err
+	}
+
+	act3Message := handshake.Act3MessageFromProto(act3WireResponseMessage)
+	if err := responderAct3.FinalizeHandshake(act3Message); err != nil {
+		return err
+	}
+
 	return nil
 }
