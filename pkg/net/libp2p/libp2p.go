@@ -83,9 +83,9 @@ func (p *provider) Peers() []string {
 func Connect(
 	ctx context.Context,
 	config Config,
-	networkKey key.NetworkKey,
+	staticKey *key.StaticNetworkKey,
 ) (net.Provider, error) {
-	identity, err := createIdentity(networkKey.PrivateKey())
+	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
 	}
