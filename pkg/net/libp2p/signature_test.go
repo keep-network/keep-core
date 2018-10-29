@@ -27,8 +27,7 @@ func TestVerifyMessageSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = ch.verify(identity.id, msg, signature)
-	if err != nil {
+	if err := ch.verify(identity.id, msg, signature); err != nil {
 		t.Fatal(err)
 	}
 }
