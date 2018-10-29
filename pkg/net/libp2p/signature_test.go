@@ -2,7 +2,7 @@ package libp2p
 
 import (
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"fmt"
 	"strings"
 	"testing"
@@ -95,7 +95,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	// Create and publish message with a signature created with other key than
 	// sender's...
-	adversaryKey, err := key.GenerateStaticNetworkKey(rand.Reader)
+	adversaryKey, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
