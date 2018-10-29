@@ -40,7 +40,7 @@ func (am *Act2Message) Unmarshal(bytes []byte) error {
 		return err
 	}
 	am.nonce2 = binary.LittleEndian.Uint64(pbAct2.Nonce)
-	copy(am.challenge[:], pbAct2.Challenge[:])
+	copy(am.challenge[:], pbAct2.Challenge[:32])
 
 	return nil
 }
@@ -57,7 +57,7 @@ func (am *Act3Message) Unmarshal(bytes []byte) error {
 	if err := pbAct3.Unmarshal(bytes); err != nil {
 		return err
 	}
-	copy(am.challenge[:], pbAct3.Challenge[:])
+	copy(am.challenge[:], pbAct3.Challenge[:32])
 
 	return nil
 }
