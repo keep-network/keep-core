@@ -101,7 +101,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) 
 		return err
 	}
 
-	if err := ac.initiatorAct1(act1WireMessage, initiatorConnectionWriter); err != nil {
+	if err := ac.initiatorSendAct1Message(act1WireMessage, initiatorConnectionWriter); err != nil {
 		return err
 	}
 
@@ -111,7 +111,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) 
 	// Act 2
 	//
 
-	act2Message, err := ac.initiatorAct2(initiatorConnectionReader)
+	act2Message, err := ac.initiatorReceiveAct2(initiatorConnectionReader)
 	if err != nil {
 		return err
 	}
@@ -130,14 +130,14 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) 
 		return err
 	}
 
-	if err := ac.initiatorAct3(act3WireMessage, initiatorConnectionWriter); err != nil {
+	if err := ac.initiatorSendAct3(act3WireMessage, initiatorConnectionWriter); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ac *authenticatedConnection) initiatorAct1(
+func (ac *authenticatedConnection) initiatorSendAct1Message(
 	act1WireMessage []byte,
 	initiatorConnectionWriter protoio.WriteCloser,
 ) error {
@@ -159,7 +159,7 @@ func (ac *authenticatedConnection) initiatorAct1(
 	return nil
 }
 
-func (ac *authenticatedConnection) initiatorAct2(
+func (ac *authenticatedConnection) initiatorReceiveAct2(
 	initiatorConnectionReader protoio.ReadCloser,
 ) (*handshake.Act2Message, error) {
 	var (
@@ -185,7 +185,7 @@ func (ac *authenticatedConnection) initiatorAct2(
 	return act2Message, nil
 }
 
-func (ac *authenticatedConnection) initiatorAct3(
+func (ac *authenticatedConnection) initiatorSendAct3(
 	act3WireMessage []byte,
 	initiatorConnectionWriter protoio.WriteCloser,
 ) error {
@@ -217,7 +217,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 	// Act 1
 	//
 
-	act1Message, err := ac.responderAct1(responderConnectionReader)
+	act1Message, err := ac.responderReceiveAct1(responderConnectionReader)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 	if err != nil {
 		return err
 	}
-	if err := ac.responderAct2(act2WireMessage, responderConnectionWriter); err != nil {
+	if err := ac.responderSendAct2(act2WireMessage, responderConnectionWriter); err != nil {
 		return err
 	}
 
@@ -245,7 +245,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 	// Act 3
 	//
 
-	act3Message, err := ac.responderAct3(responderConnectionReader)
+	act3Message, err := ac.responderReceiveAct3(responderConnectionReader)
 	if err != nil {
 		return err
 	}
@@ -257,7 +257,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 	return nil
 }
 
-func (ac *authenticatedConnection) responderAct1(
+func (ac *authenticatedConnection) responderReceiveAct1(
 	responderConnectionReader protoio.ReadCloser,
 ) (*handshake.Act1Message, error) {
 	var (
@@ -283,7 +283,7 @@ func (ac *authenticatedConnection) responderAct1(
 	return act1Message, nil
 }
 
-func (ac *authenticatedConnection) responderAct2(
+func (ac *authenticatedConnection) responderSendAct2(
 	act2WireMessage []byte,
 	responderConnectionWriter protoio.WriteCloser,
 ) error {
@@ -305,7 +305,7 @@ func (ac *authenticatedConnection) responderAct2(
 	return nil
 }
 
-func (ac *authenticatedConnection) responderAct3(
+func (ac *authenticatedConnection) responderReceiveAct3(
 	responderConnectionReader protoio.ReadCloser,
 ) (*handshake.Act3Message, error) {
 	var (
