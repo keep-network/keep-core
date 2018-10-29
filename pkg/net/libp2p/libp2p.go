@@ -138,6 +138,7 @@ func discoverAndListen(
 	return libp2p.New(ctx,
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
+		libp2p.Security(handshakeID, newAuthenticatedTransport),
 	)
 }
 

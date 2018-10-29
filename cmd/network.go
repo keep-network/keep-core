@@ -190,6 +190,11 @@ func pingRequest(c *cli.Context) error {
 			if err != nil {
 				return err
 			}
+
+			// Help with synchronization between slow clients.
+			// Occasionally the client exits before successfully
+			// writing the ping to the wire.
+			time.Sleep(1 * time.Second)
 		case msg := <-pongChan:
 			// don't read our own pong
 			if msg.TransportSenderID().String() == netProvider.ID().String() {
