@@ -186,7 +186,9 @@ func (ac *authenticatedConnection) initiatorAct2(
 		return nil, err
 	}
 
-	act2Message.Unmarshal(act2Envelope.Message)
+	if err := act2Message.Unmarshal(act2Envelope.Message); err != nil {
+		return nil, err
+	}
 
 	return act2Message, nil
 }
@@ -282,7 +284,9 @@ func (ac *authenticatedConnection) responderAct1(
 		return nil, err
 	}
 
-	act1Message.Unmarshal(act1Envelope.Message)
+	if err := act1Message.Unmarshal(act1Envelope.Message); err != nil {
+		return nil, err
+	}
 
 	return act1Message, nil
 }
@@ -328,7 +332,9 @@ func (ac *authenticatedConnection) responderAct3(
 		return nil, err
 	}
 
-	act3Message.Unmarshal(act3Envelope.Message)
+	if err := act3Message.Unmarshal(act3Envelope.Message); err != nil {
+		return nil, err
+	}
 
 	return act3Message, nil
 }
