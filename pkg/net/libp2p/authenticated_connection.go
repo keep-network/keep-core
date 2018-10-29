@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	"fmt"
 	"net"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -109,16 +108,8 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) 
 	if err != nil {
 		return err
 	}
-	signedAct1Message, err := ac.localPeerPrivateKey.Sign(act1WireMessage)
-	if err != nil {
-		return err
-	}
-	act1Envelope := &pb.HandshakeEnvelope{
-		Message:   act1WireMessage,
-		PeerID:    []byte(ac.localPeerID),
-		Signature: signedAct1Message,
-	}
-	if err := initiatorConnectionWriter.WriteMsg(act1Envelope); err != nil {
+
+	if err := ac.initiatorAct1(act1WireMessage, initiatorConnectionWriter); err != nil {
 		return err
 	}
 
@@ -128,23 +119,10 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) 
 	// Act 2
 	//
 
-	var (
-		act2Envelope pb.HandshakeEnvelope
-		act2Message  = &handshake.Act2Message{}
-	)
-	if err := initiatorConnectionReader.ReadMsg(&act2Envelope); err != nil {
+	act2Message, err := ac.initiatorAct2(initiatorConnectionReader)
+	if err != nil {
 		return err
 	}
-
-	if err := verifyEnvelope(
-		peer.ID(act2Envelope.GetPeerID()),
-		act2Envelope.GetMessage(),
-		act2Envelope.GetSignature(),
-	); err != nil {
-		return err
-	}
-
-	act2Message.Unmarshal(act2Envelope.Message)
 
 	initiatorAct3, err := initiatorAct2.Next(act2Message)
 	if err != nil {
@@ -159,15 +137,75 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) 
 	if err != nil {
 		return err
 	}
+
+	if err := ac.initiatorAct3(act3WireMessage, initiatorConnectionWriter); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ac *authenticatedConnection) initiatorAct1(
+	act1WireMessage []byte,
+	initiatorConnectionWriter protoio.WriteCloser,
+) error {
+	signedAct1Message, err := ac.localPeerPrivateKey.Sign(act1WireMessage)
+	if err != nil {
+		return err
+	}
+
+	act1Envelope := &pb.HandshakeEnvelope{
+		Message:   act1WireMessage,
+		PeerID:    []byte(ac.localPeerID),
+		Signature: signedAct1Message,
+	}
+
+	if err := initiatorConnectionWriter.WriteMsg(act1Envelope); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ac *authenticatedConnection) initiatorAct2(
+	initiatorConnectionReader protoio.ReadCloser,
+) (*handshake.Act2Message, error) {
+	var (
+		act2Envelope pb.HandshakeEnvelope
+		act2Message  = &handshake.Act2Message{}
+	)
+	if err := initiatorConnectionReader.ReadMsg(&act2Envelope); err != nil {
+		return nil, err
+	}
+
+	if err := verifyEnvelope(
+		peer.ID(act2Envelope.GetPeerID()),
+		act2Envelope.GetMessage(),
+		act2Envelope.GetSignature(),
+	); err != nil {
+		return nil, err
+	}
+
+	act2Message.Unmarshal(act2Envelope.Message)
+
+	return act2Message, nil
+}
+
+func (ac *authenticatedConnection) initiatorAct3(
+	act3WireMessage []byte,
+	initiatorConnectionWriter protoio.WriteCloser,
+) error {
 	signedAct3Message, err := ac.localPeerPrivateKey.Sign(act3WireMessage)
 	if err != nil {
 		return err
 	}
+
 	act3Envelope := &pb.HandshakeEnvelope{
 		Message:   act3WireMessage,
 		PeerID:    []byte(ac.localPeerID),
 		Signature: signedAct3Message,
 	}
+
 	if err := initiatorConnectionWriter.WriteMsg(act3Envelope); err != nil {
 		return err
 	}
@@ -185,24 +223,10 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 	// Act 1
 	//
 
-	var (
-		act1Envelope pb.HandshakeEnvelope
-		act1Message  = &handshake.Act1Message{}
-	)
-	if err := responderConnectionReader.ReadMsg(&act1Envelope); err != nil {
+	act1Message, err := ac.responderAct1(responderConnectionReader)
+	if err != nil {
 		return err
 	}
-
-	if err := verifyEnvelope(
-		peer.ID(act1Envelope.GetPeerID()),
-		act1Envelope.GetMessage(),
-		act1Envelope.GetSignature(),
-	); err != nil {
-		fmt.Println("hit error with: ", err)
-		return err
-	}
-
-	act1Message.Unmarshal(act1Envelope.Message)
 
 	responderAct2, err := handshake.AnswerHandshake(act1Message)
 	if err != nil {
@@ -217,10 +241,61 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 	if err != nil {
 		return err
 	}
+	if err := ac.responderAct2(act2WireMessage, responderConnectionWriter); err != nil {
+		return err
+	}
+
+	responderAct3 := responderAct2.Next()
+
+	//
+	// Act 3
+	//
+
+	act3Message, err := ac.responderAct3(responderConnectionReader)
+	if err != nil {
+		return err
+	}
+
+	if err := responderAct3.FinalizeHandshake(act3Message); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ac *authenticatedConnection) responderAct1(
+	responderConnectionReader protoio.ReadCloser,
+) (*handshake.Act1Message, error) {
+	var (
+		act1Envelope pb.HandshakeEnvelope
+		act1Message  = &handshake.Act1Message{}
+	)
+	if err := responderConnectionReader.ReadMsg(&act1Envelope); err != nil {
+		return nil, err
+	}
+
+	if err := verifyEnvelope(
+		peer.ID(act1Envelope.GetPeerID()),
+		act1Envelope.GetMessage(),
+		act1Envelope.GetSignature(),
+	); err != nil {
+		return nil, err
+	}
+
+	act1Message.Unmarshal(act1Envelope.Message)
+
+	return act1Message, nil
+}
+
+func (ac *authenticatedConnection) responderAct2(
+	act2WireMessage []byte,
+	responderConnectionWriter protoio.WriteCloser,
+) error {
 	signedAct2Message, err := ac.localPeerPrivateKey.Sign(act2WireMessage)
 	if err != nil {
 		return err
 	}
+
 	act2Envelope := &pb.HandshakeEnvelope{
 		Message:   act2WireMessage,
 		PeerID:    []byte(ac.localPeerID),
@@ -231,18 +306,18 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 		return err
 	}
 
-	responderAct3 := responderAct2.Next()
+	return nil
+}
 
-	//
-	// Act 3
-	//
-
+func (ac *authenticatedConnection) responderAct3(
+	responderConnectionReader protoio.ReadCloser,
+) (*handshake.Act3Message, error) {
 	var (
 		act3Envelope pb.HandshakeEnvelope
 		act3Message  = &handshake.Act3Message{}
 	)
 	if err := responderConnectionReader.ReadMsg(&act3Envelope); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := verifyEnvelope(
@@ -250,14 +325,10 @@ func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) 
 		act3Envelope.GetMessage(),
 		act3Envelope.GetSignature(),
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	act3Message.Unmarshal(act3Envelope.Message)
 
-	if err := responderAct3.FinalizeHandshake(act3Message); err != nil {
-		return err
-	}
-
-	return nil
+	return act3Message, nil
 }
