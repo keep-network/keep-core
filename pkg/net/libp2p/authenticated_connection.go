@@ -12,7 +12,7 @@ import (
 	protoio "github.com/gogo/protobuf/io"
 )
 
-// Enough space for proto-encoded envelope with messages, peer id, and signature.
+// Enough space for a proto-encoded envelope with a message, peer.ID, and sig.
 const maxFrameSize = 1024
 
 // authenticatedConnection turns inbound and outbound unauthenticated,
@@ -28,27 +28,41 @@ type authenticatedConnection struct {
 	remotePeerPublicKey libp2pcrypto.PubKey
 }
 
-func newAuthenticatedConnection(
+func newAuthenticatedInboundConnection(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
 ) (*authenticatedConnection, error) {
-	var (
-		remotePublicKey libp2pcrypto.PubKey
-		err             error
-	)
+	ac := &authenticatedConnection{
+		Conn:                unauthenticatedConn,
+		localPeerID:         localPeerID,
+		localPeerPrivateKey: privateKey,
+	}
 
-	if remotePeerID == "" {
-		// SecureInbound case; if we don't have a remote peer.id, we
-		// can't have their public key!
-		remotePublicKey = nil
-	} else {
-		remotePublicKey, err = remotePeerID.ExtractPublicKey()
-		if err != nil {
-			return nil, err
-		}
+	// If the request to the transport didn't provide our connection a
+	// remotePeerID, it's the one being connected to (the responder).
+	if err := ac.runHandshakeAsResponder(ctx); err != nil {
+		// close the conn before returning (if it hasn't already)
+		// otherwise we leak.
+		ac.Close()
+		return nil, err
+	}
+
+	return ac, nil
+}
+
+func newAuthenticatedOutboundConnection(
+	ctx context.Context,
+	unauthenticatedConn net.Conn,
+	localPeerID peer.ID,
+	privateKey libp2pcrypto.PrivKey,
+	remotePeerID peer.ID,
+) (*authenticatedConnection, error) {
+	remotePublicKey, err := remotePeerID.ExtractPublicKey()
+	if err != nil {
+		return nil, err
 	}
 
 	ac := &authenticatedConnection{
@@ -59,32 +73,9 @@ func newAuthenticatedConnection(
 		remotePeerPublicKey: remotePublicKey,
 	}
 
-	// If the request to the transport didn't provide our connection a
-	// remotePeerID, it's the one being connected to (the responder).
-	if ac.remotePeerID == "" {
-		if err := ac.runHandshakeAsResponder(ctx); err != nil {
-			// close the conn before returning (if it hasn't already)
-			// otherwise we leak.
-			ac.Close()
-			return nil, err
-		}
-
-		// Mutually authenticate peers, run the other side now.
-		if err := ac.runHandshakeAsInitiator(ctx); err != nil {
-			ac.Close()
-			return nil, err
-		}
-	} else {
-		if err := ac.runHandshakeAsInitiator(ctx); err != nil {
-			ac.Close()
-			return nil, err
-		}
-
-		// Mutually authenticate peers, run the other side now.
-		if err := ac.runHandshakeAsResponder(ctx); err != nil {
-			ac.Close()
-			return nil, err
-		}
+	if err := ac.runHandshakeAsInitiator(ctx); err != nil {
+		ac.Close()
+		return nil, err
 	}
 
 	return ac, nil
