@@ -12,7 +12,8 @@ import (
 	protoio "github.com/gogo/protobuf/io"
 )
 
-const maxFrameSize = 1 << 10
+// Enough space for proto-encoded envelope with messages, peer id, and signature.
+const maxFrameSize = 1024
 
 // authenticatedConnection turns inbound and outbound unauthenticated,
 // plain-text connections into authenticated, plain-text connections. Noticeably,
