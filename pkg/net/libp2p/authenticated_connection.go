@@ -22,9 +22,9 @@ type authenticatedConnection struct {
 }
 
 func newAuthenticatedConnection(
+	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
-	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
 ) (*authenticatedConnection, error) {
 	var (

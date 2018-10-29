@@ -40,9 +40,9 @@ func (t *Transport) SecureInbound(
 	unauthenticatedConn net.Conn,
 ) (secure.Conn, error) {
 	return newAuthenticatedConnection(
+		unauthenticatedConn,
 		t.LocalPeerID,
 		t.PrivateKey,
-		unauthenticatedConn,
 		"",
 	)
 }
@@ -54,9 +54,9 @@ func (t *Transport) SecureOutbound(
 	remotePeerID peer.ID,
 ) (secure.Conn, error) {
 	return newAuthenticatedConnection(
+		unauthenticatedConn,
 		t.LocalPeerID,
 		t.PrivateKey,
-		unauthenticatedConn,
 		remotePeerID,
 	)
 }
