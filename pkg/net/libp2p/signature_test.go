@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
-// Check if a correct message signature is recognized
 func TestVerifyMessageSignature(t *testing.T) {
 	identity, err := newTestIdentity()
 
