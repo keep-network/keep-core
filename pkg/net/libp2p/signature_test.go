@@ -33,7 +33,7 @@ func TestVerifyMessageSignature(t *testing.T) {
 	}
 }
 
-// Basic unit test checking if signature created with other key than expected
+// Check if a signature created with a key other than the expected
 // is considered as incorrect.
 func TestDetectUnexpectedMessageSignature(t *testing.T) {
 	identity, err := newTestIdentity()
