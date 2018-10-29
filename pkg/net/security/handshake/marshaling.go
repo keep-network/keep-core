@@ -3,50 +3,61 @@ package handshake
 import (
 	"encoding/binary"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 )
 
-// Proto converts this Act1Message to a proto.Message suitable for network
+// Marshal converts this Act1Message to a byte array suitable for network
 // communication.
-func (am *Act1Message) Proto() proto.Message {
+func (am *Act1Message) Marshal() ([]byte, error) {
 	nonceBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(nonceBytes, am.nonce1)
-	return &pb.Act1Message{Nonce: nonceBytes}
+	return (&pb.Act1Message{Nonce: nonceBytes}).Marshal()
 }
 
-// Act1MessageFromProto converts a pb.Act1Message produced by Proto to a
-// Act1Message.
-func Act1MessageFromProto(pbAct1 pb.Act1Message) *Act1Message {
-	return &Act1Message{nonce1: binary.LittleEndian.Uint64(pbAct1.Nonce)}
+// Unmarshal converts a byte array produced by Marshal to a Act1Message.
+func (am *Act1Message) Unmarshal(bytes []byte) error {
+	pbAct1 := pb.Act1Message{}
+	if err := pbAct1.Unmarshal(bytes); err != nil {
+		return err
+	}
+	am.nonce1 = binary.LittleEndian.Uint64(pbAct1.Nonce)
+
+	return nil
 }
 
-// Proto converts this Act2Message to a proto.Message suitable for network
+// Marshal converts this Act2Message to a byte array suitable for network
 // communication.
-func (am *Act2Message) Proto() proto.Message {
+func (am *Act2Message) Marshal() ([]byte, error) {
 	nonceBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(nonceBytes, am.nonce2)
-	return &pb.Act2Message{Nonce: nonceBytes, Challenge: am.challenge[:]}
+	return (&pb.Act2Message{Nonce: nonceBytes, Challenge: am.challenge[:]}).Marshal()
 }
 
-// Act2MessageFromProto converts a pb.Act2Message produced by Proto to a
-// Act2Message.
-func Act2MessageFromProto(pbAct2 pb.Act2Message) *Act2Message {
-	am := &Act2Message{nonce2: binary.LittleEndian.Uint64(pbAct2.Nonce)}
+// Unmarshal converts a byte array produced by Marshal to a Act2Message.
+func (am *Act2Message) Unmarshal(bytes []byte) error {
+	pbAct2 := pb.Act2Message{}
+	if err := pbAct2.Unmarshal(bytes); err != nil {
+		return err
+	}
+	am.nonce2 = binary.LittleEndian.Uint64(pbAct2.Nonce)
 	copy(am.challenge[:], pbAct2.Challenge[:])
-	return am
+
+	return nil
 }
 
-// Proto converts this Act3Message to a proto.Message suitable for network
+// Marshal converts this Act3Message to a byte array suitable for network
 // communication.
-func (am *Act3Message) Proto() proto.Message {
-	return &pb.Act3Message{Challenge: am.challenge[:]}
+func (am *Act3Message) Marshal() ([]byte, error) {
+	return (&pb.Act3Message{Challenge: am.challenge[:]}).Marshal()
 }
 
-// Act3MessageFromProto converts a pb.Act3Message produced by Proto to a
-// Act3Message.
-func Act3MessageFromProto(pbAct3 pb.Act3Message) *Act3Message {
-	am := &Act3Message{}
+// Unmarshal converts a byte array produced by Marshal to a Act3Message.
+func (am *Act3Message) Unmarshal(bytes []byte) error {
+	pbAct3 := pb.Act3Message{}
+	if err := pbAct3.Unmarshal(bytes); err != nil {
+		return err
+	}
 	copy(am.challenge[:], pbAct3.Challenge[:])
-	return am
+
+	return nil
 }
