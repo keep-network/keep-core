@@ -14,49 +14,49 @@ import (
 const handshakeID = "/keep/handshake/1.0.0"
 
 // Compile time assertions of custom types
-var _ secure.Transport = (*Transport)(nil)
+var _ secure.Transport = (*transport)(nil)
 var _ secure.Conn = (*authenticatedConnection)(nil)
 
-// Transport constructs an authenticated communication connection for a peer.
-type Transport struct {
-	LocalPeerID peer.ID
-	PrivateKey  libp2pcrypto.PrivKey
+// transport constructs an authenticated communication connection for a peer.
+type transport struct {
+	localPeerID peer.ID
+	privateKey  libp2pcrypto.PrivKey
 }
 
-func newAuthenticatedTransport(pk libp2pcrypto.PrivKey) (*Transport, error) {
+func newAuthenticatedTransport(pk libp2pcrypto.PrivKey) (*transport, error) {
 	id, err := peer.IDFromPrivateKey(pk)
 	if err != nil {
 		return nil, err
 	}
-	return &Transport{
-		LocalPeerID: id,
-		PrivateKey:  pk,
+	return &transport{
+		localPeerID: id,
+		privateKey:  pk,
 	}, nil
 }
 
 // SecureInbound secures an inbound connection.
-func (t *Transport) SecureInbound(
+func (t *transport) SecureInbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
 ) (secure.Conn, error) {
 	return newAuthenticatedConnection(
 		unauthenticatedConn,
-		t.LocalPeerID,
-		t.PrivateKey,
+		t.localPeerID,
+		t.privateKey,
 		"",
 	)
 }
 
 // SecureOutbound secures an outbound connection.
-func (t *Transport) SecureOutbound(
+func (t *transport) SecureOutbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
 ) (secure.Conn, error) {
 	return newAuthenticatedConnection(
 		unauthenticatedConn,
-		t.LocalPeerID,
-		t.PrivateKey,
+		t.localPeerID,
+		t.privateKey,
 		remotePeerID,
 	)
 }
@@ -66,7 +66,7 @@ func (ac *authenticatedConnection) LocalPeer() peer.ID {
 	return ac.localPeerID
 }
 
-// LocalPrivateKey retrieves the local peer's PrivateKey
+// LocalPrivateKey retrieves the local peer's privateKey
 func (ac *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
 	return ac.localPeerPrivateKey
 }
