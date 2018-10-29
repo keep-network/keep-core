@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
-// Basic unit test checking if a correct message signature is recognized
+// Check if a correct message signature is recognized
 func TestVerifyMessageSignature(t *testing.T) {
 	identity, err := newTestIdentity()
 
