@@ -96,7 +96,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	staticKey, err := key.GenerateEthereumStaticKey(rand.Reader)
+	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	// Create and publish message with a signature created with other key than
 	// sender's...
-	adversaryKey, err := key.GenerateEthereumStaticKey(rand.Reader)
+	adversaryKey, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	adversarySignature, err := adversaryKey.PrivateKey().Sign(envelope.Message)
+	adversarySignature, err := adversaryKey.Sign(envelope.Message)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,9 +199,9 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 // tested.
 func createTestChannel(
 	ctx context.Context,
-	staticKey key.NetworkKey,
+	staticKey *key.StaticNetworkKey,
 ) (*channel, error) {
-	identity, err := createIdentity(staticKey.PrivateKey())
+	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
 	}

@@ -80,7 +80,7 @@ func TestSendReceive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	identity, err := createIdentity(staticKey.PrivateKey())
+	identity, err := createIdentity(staticKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestSendToReceiveFrom(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	identity1, err := createIdentity(staticKey.PrivateKey())
+	identity1, err := createIdentity(staticKey)
 	if err != nil {
 		t.Fatal(err)
 	}
