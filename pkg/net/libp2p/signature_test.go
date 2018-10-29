@@ -64,7 +64,7 @@ func TestDetectUnexpectedMessageSignature(t *testing.T) {
 	}
 }
 
-// Basic unit test checking if malformed signature is considered as incorrect
+// Check if a malformed signature is considered incorrect
 func TestDetectMalformedMessageSignature(t *testing.T) {
 	identity, err := newTestIdentity()
 
