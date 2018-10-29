@@ -58,9 +58,9 @@ func newAuthenticatedConnection(
 		remotePeerPublicKey: remotePublicKey,
 	}
 
+	// If the request to the transport didn't provide our connection a
+	// remotePeerID, it's the one being connected to (the responder).
 	if ac.remotePeerID == "" {
-		// If the connect doesn't have a remotePeerID, it's the one being
-		// connected to (the responder), via SecureInbound.
 		if err := ac.runHandshakeAsResponder(ctx); err != nil {
 			// close the conn before returning (if it hasn't already)
 			// otherwise we leak.
@@ -70,23 +70,17 @@ func newAuthenticatedConnection(
 
 		// Mutually authenticate peers, run the other side now.
 		if err := ac.runHandshakeAsInitiator(ctx); err != nil {
-			// close the conn before returning (if it hasn't already)
-			// otherwise we leak.
 			ac.Close()
 			return nil, err
 		}
 	} else {
 		if err := ac.runHandshakeAsInitiator(ctx); err != nil {
-			// close the conn before returning (if it hasn't already)
-			// otherwise we leak.
 			ac.Close()
 			return nil, err
 		}
 
 		// Mutually authenticate peers, run the other side now.
 		if err := ac.runHandshakeAsResponder(ctx); err != nil {
-			// close the conn before returning (if it hasn't already)
-			// otherwise we leak.
 			ac.Close()
 			return nil, err
 		}
