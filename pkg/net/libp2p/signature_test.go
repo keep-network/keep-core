@@ -91,7 +91,7 @@ func TestDetectMalformedMessageSignature(t *testing.T) {
 // The first message should be properly delivered, the second message should get
 // rejected.
 func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
 
 	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
