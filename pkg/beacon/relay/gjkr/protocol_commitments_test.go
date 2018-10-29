@@ -50,39 +50,35 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	groupSize := 5
 
 	var tests = map[string]struct {
-		modifyPeerShareMessages   func(messages []*PeerSharesMessage) []int
-		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage) []int
+		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
+		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
 		expectedError             error
-		expectedAccusations       int
+		expectedAccusedIDs        []int
 	}{
 		"positive validation - no accusations": {
-			expectedError:       nil,
-			expectedAccusations: 0,
+			expectedError: nil,
 		},
 		"negative validation - changed share S": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []int {
+			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
 				messages[0].shareS = big.NewInt(13)
-				return []int{messages[0].senderID}
 			},
-			expectedError:       nil,
-			expectedAccusations: 1,
+			expectedError:      nil,
+			expectedAccusedIDs: []int{2},
 		},
 		"negative validation - changed two shares T": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) []int {
+			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
 				messages[1].shareT = big.NewInt(13)
 				messages[2].shareT = big.NewInt(23)
-				return []int{messages[1].senderID, messages[2].senderID}
 			},
-			expectedError:       nil,
-			expectedAccusations: 2,
+			expectedError:      nil,
+			expectedAccusedIDs: []int{3, 4},
 		},
 		"negative validation - changed commitment": {
-			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) []int {
+			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
 				messages[3].commitments[1] = big.NewInt(33)
-				return []int{messages[3].senderID}
 			},
-			expectedError:       nil,
-			expectedAccusations: 1,
+			expectedError:      nil,
+			expectedAccusedIDs: []int{5},
 		},
 	}
 	for testName, test := range tests {
@@ -95,7 +91,6 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 
 			var sharesMessages []*PeerSharesMessage
 			var commitmentsMessages []*MemberCommitmentsMessage
-			var expectedAccusedIDs []int
 
 			for _, member := range members {
 				sharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
@@ -110,16 +105,10 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			filteredCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
 
 			if test.modifyPeerShareMessages != nil {
-				expectedAccusedIDs = append(
-					expectedAccusedIDs,
-					test.modifyPeerShareMessages(filteredSharesMessages)...,
-				)
+				test.modifyPeerShareMessages(filteredSharesMessages)
 			}
 			if test.modifyCommitmentsMessages != nil {
-				expectedAccusedIDs = append(
-					expectedAccusedIDs,
-					test.modifyCommitmentsMessages(filteredCommitmentsMessages)...,
-				)
+				test.modifyCommitmentsMessages(filteredCommitmentsMessages)
 			}
 
 			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
@@ -135,20 +124,20 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			}
 
-			if len(accusedMessage.accusedIDs) != test.expectedAccusations {
+			if len(accusedMessage.accusedIDs) != len(test.expectedAccusedIDs) {
 				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
-					test.expectedAccusations,
+					len(test.expectedAccusedIDs),
 					len(accusedMessage.accusedIDs),
 				)
 			}
-			if !reflect.DeepEqual(accusedMessage.accusedIDs, expectedAccusedIDs) {
+			if !reflect.DeepEqual(accusedMessage.accusedIDs, test.expectedAccusedIDs) {
 				t.Fatalf("incorrect accused members IDs\nexpected: %v\nactual:   %v\n",
-					expectedAccusedIDs,
+					test.expectedAccusedIDs,
 					accusedMessage.accusedIDs,
 				)
 			}
 
-			expectedReceivedSharesLength := groupSize - 1 - test.expectedAccusations
+			expectedReceivedSharesLength := groupSize - 1 - len(test.expectedAccusedIDs)
 			if len(currentMember.receivedSharesS) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received shares S\nactual:   %v\n",
 					expectedReceivedSharesLength,
