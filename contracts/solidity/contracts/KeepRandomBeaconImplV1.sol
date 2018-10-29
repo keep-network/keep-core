@@ -123,7 +123,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
         _pendingWithdrawal = 0;
-        owner.transfer(address(this).balance);
+        owner().transfer(address(this).balance);
     }
 
     /**

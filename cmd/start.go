@@ -58,9 +58,7 @@ func Start(c *cli.Context) error {
 	}
 
 	ctx := context.Background()
-	netProvider, err := libp2p.Connect(
-		ctx, config.LibP2P, staticKey,
-	)
+	netProvider, err := libp2p.Connect(ctx, config.LibP2P, staticKey)
 	if err != nil {
 		return err
 	}
@@ -98,7 +96,7 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func loadStaticKey(account ethereum.Account) (*key.EthereumStaticKey, error) {
+func loadStaticKey(account ethereum.Account) (*key.StaticNetworkKey, error) {
 	ethereumKey, err := ethereum.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
@@ -109,5 +107,5 @@ func loadStaticKey(account ethereum.Account) (*key.EthereumStaticKey, error) {
 		)
 	}
 
-	return key.NewEthereumStaticKey(ethereumKey), nil
+	return key.EthereumKeyToNetworkKey(ethereumKey), nil
 }
