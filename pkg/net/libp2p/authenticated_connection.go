@@ -186,7 +186,8 @@ func (ac *authenticatedConnection) initiatorReceiveAct2(
 		return nil, err
 	}
 
-	if err := verifyEnvelope(
+	if err := ac.verify(
+		ac.remotePeerID,
 		peer.ID(act2Envelope.GetPeerID()),
 		act2Envelope.GetMessage(),
 		act2Envelope.GetSignature(),
@@ -298,7 +299,8 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 	// of the connection.
 	ac.remotePeerID = peer.ID(act1Envelope.GetPeerID())
 
-	if err := verifyEnvelope(
+	if err := ac.verify(
+		ac.remotePeerID,
 		peer.ID(act1Envelope.GetPeerID()),
 		act1Envelope.GetMessage(),
 		act1Envelope.GetSignature(),
@@ -352,7 +354,8 @@ func (ac *authenticatedConnection) responderReceiveAct3(
 		return nil, err
 	}
 
-	if err := verifyEnvelope(
+	if err := ac.verify(
+		ac.remotePeerID,
 		peer.ID(act3Envelope.GetPeerID()),
 		act3Envelope.GetMessage(),
 		act3Envelope.GetSignature(),
@@ -365,4 +368,20 @@ func (ac *authenticatedConnection) responderReceiveAct3(
 	}
 
 	return act3Message, nil
+}
+
+// verify checks to see if pinned (static) identity matches the message sender's
+// identity before running through the signature verification check.
+func (ac *authenticatedConnection) verify(
+	pinned, sender peer.ID,
+	messageBytes, signatureBytes []byte,
+) error {
+	if pinned != sender {
+		return fmt.Errorf(
+			"pinned identity [%v] does not match sender identity [%v]",
+			pinned,
+			sender,
+		)
+	}
+	return verifyEnvelope(sender, messageBytes, signatureBytes)
 }
