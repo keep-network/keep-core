@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -47,7 +48,7 @@ func newAuthenticatedInboundConnection(
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
 		ac.Close()
-		return nil, err
+		return nil, fmt.Errorf("connection handshake failed [%v]", err)
 	}
 
 	return ac, nil
@@ -62,7 +63,10 @@ func newAuthenticatedOutboundConnection(
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
-		return nil, fmt.Errorf("could not create new authenticated outbound connection [%v]", err)
+		return nil, fmt.Errorf(
+			"could not create new authenticated outbound connection [%v]",
+			err,
+		)
 	}
 
 	ac := &authenticatedConnection{
@@ -75,7 +79,7 @@ func newAuthenticatedOutboundConnection(
 
 	if err := ac.runHandshakeAsInitiator(ctx); err != nil {
 		ac.Close()
-		return nil, err
+		return nil, fmt.Errorf("connection handshake failed [%v]", err)
 	}
 
 	return ac, nil

@@ -72,7 +72,7 @@ func connectInitiatorAndResponderFull(t *testing.T, ctx context.Context) (*authe
 		"",
 	)
 	if err != nil {
-		t.Fatalf("failed to connect initiator with responder")
+		t.Fatalf("failed to connect initiator with responder [%v]", err)
 	}
 
 	// handshake is done, and we'll know if the outbound failed
