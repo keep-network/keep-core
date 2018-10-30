@@ -26,29 +26,29 @@ func AggregateG2Points(points []*bn256.G2) *bn256.G2 {
 }
 
 // Sign creates a point on a curve G1 by hashing and signing provided message
-// using the private key `k`.
-func Sign(k *big.Int, msg []byte) *bn256.G1 {
-	return new(bn256.G1).ScalarMult(altbn128.G1HashToPoint(msg), k)
+// using the private key `privateKey`.
+func Sign(privateKey *big.Int, message []byte) *bn256.G1 {
+	return new(bn256.G1).ScalarMult(altbn128.G1HashToPoint(message), privateKey)
 }
 
 // Verify performs the pairing operation to check if the signature is correct
 // for the provided message and the corresponding public key.
-func Verify(pub *bn256.G2, msg []byte, sig *bn256.G1) bool {
+func Verify(publicKey *bn256.G2, message []byte, signature *bn256.G1) bool {
 
 	// Generator point of G2 group.
 	p2 := new(bn256.G2).ScalarBaseMult(big.NewInt(1))
 
-	a := []*bn256.G1{new(bn256.G1).Neg(sig), altbn128.G1HashToPoint(msg)}
-	b := []*bn256.G2{p2, pub}
+	a := []*bn256.G1{new(bn256.G1).Neg(signature), altbn128.G1HashToPoint(message)}
+	b := []*bn256.G2{p2, publicKey}
 
 	return bn256.PairingCheck(a, b)
 }
 
-// Recover reconstructs the full BLS signature from a threshold t number of
+// Recover reconstructs the full BLS signature from a threshold number of
 // signature shares using Lagrange interpolation.
-func Recover(shares []*bn256.G1, t int) *bn256.G1 {
+func Recover(shares []*bn256.G1, threshold int) *bn256.G1 {
 
-	// x holds id`s of the t amount of shares required to recover signature.
+	// x holds id's of the threshold amount of shares required to recover signature.
 	x := make(map[int]*big.Int)
 
 	for i, s := range shares {
@@ -56,7 +56,7 @@ func Recover(shares []*bn256.G1, t int) *bn256.G1 {
 			continue
 		}
 		x[i] = big.NewInt(1 + int64(i))
-		if len(x) == t {
+		if len(x) == threshold {
 			break
 		}
 	}
