@@ -62,7 +62,7 @@ func newAuthenticatedOutboundConnection(
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not create new authenticated outbound connection [%v]", err)
 	}
 
 	ac := &authenticatedConnection{
