@@ -14,11 +14,11 @@ import (
 )
 
 func TestHandshakeRoundTrip(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	// Connect the initiator and responder sessions
-	authnInboundConn, authnOutboundConn := connectInitiatorAndResponderFull(t, ctx)
+	authnInboundConn, authnOutboundConn := connectInitiatorAndResponderFull(t)
 
 	msg := []byte("brown fox blue tail")
 	go func(authnOutboundConn *authenticatedConnection, msg []byte) {
@@ -37,7 +37,7 @@ func TestHandshakeRoundTrip(t *testing.T) {
 	}
 }
 
-func connectInitiatorAndResponderFull(t *testing.T, ctx context.Context) (*authenticatedConnection, *authenticatedConnection) {
+func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *authenticatedConnection) {
 	initiatorStaticKey, initiatorPeerID := testStaticKeyAndID(t)
 	responderStaticKey, responderPeerID := testStaticKeyAndID(t)
 	initiatorConn, responderConn := newConnPair()
@@ -48,24 +48,21 @@ func connectInitiatorAndResponderFull(t *testing.T, ctx context.Context) (*authe
 		authnOutboundConn *authenticatedConnection
 	)
 	go func(
-		ctx context.Context,
 		initiatorConn net.Conn,
 		initiatorPeerID peer.ID,
 		initiatorStaticKey libp2pcrypto.PrivKey,
 		responderPeerID peer.ID,
 	) {
 		authnOutboundConn, initiatorErr = newAuthenticatedOutboundConnection(
-			ctx,
 			initiatorConn,
 			initiatorPeerID,
 			initiatorStaticKey,
 			responderPeerID,
 		)
 		done <- struct{}{}
-	}(ctx, initiatorConn, initiatorPeerID, initiatorStaticKey, responderPeerID)
+	}(initiatorConn, initiatorPeerID, initiatorStaticKey, responderPeerID)
 
 	authnInboundConn, err := newAuthenticatedInboundConnection(
-		ctx,
 		responderConn,
 		responderPeerID,
 		responderStaticKey,

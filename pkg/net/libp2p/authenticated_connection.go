@@ -1,7 +1,6 @@
 package libp2p
 
 import (
-	"context"
 	"fmt"
 	"net"
 
@@ -30,7 +29,6 @@ type authenticatedConnection struct {
 }
 
 func newAuthenticatedInboundConnection(
-	ctx context.Context,
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
@@ -44,7 +42,7 @@ func newAuthenticatedInboundConnection(
 
 	// If the request to the transport didn't provide our connection a
 	// remotePeerID, it's the one being connected to (the responder).
-	if err := ac.runHandshakeAsResponder(ctx); err != nil {
+	if err := ac.runHandshakeAsResponder(); err != nil {
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
 		ac.Close()
@@ -55,7 +53,6 @@ func newAuthenticatedInboundConnection(
 }
 
 func newAuthenticatedOutboundConnection(
-	ctx context.Context,
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
@@ -77,7 +74,7 @@ func newAuthenticatedOutboundConnection(
 		remotePeerPublicKey: remotePublicKey,
 	}
 
-	if err := ac.runHandshakeAsInitiator(ctx); err != nil {
+	if err := ac.runHandshakeAsInitiator(); err != nil {
 		ac.Close()
 		return nil, fmt.Errorf("connection handshake failed [%v]", err)
 	}
@@ -85,7 +82,7 @@ func newAuthenticatedOutboundConnection(
 	return ac, nil
 }
 
-func (ac *authenticatedConnection) runHandshakeAsInitiator(ctx context.Context) error {
+func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// initiator station
 
 	initiatorConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
@@ -211,7 +208,7 @@ func (ac *authenticatedConnection) initiatorSendAct3(
 	return nil
 }
 
-func (ac *authenticatedConnection) runHandshakeAsResponder(ctx context.Context) error {
+func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	// responder station
 
 	responderConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
