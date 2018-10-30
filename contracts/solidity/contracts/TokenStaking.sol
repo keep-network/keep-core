@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
@@ -15,10 +15,10 @@ import "./utils/UintArrayUtils.sol";
  */
 contract TokenStaking {
     using SafeMath for uint256;
-    using SafeERC20 for StandardToken;
+    using SafeERC20 for ERC20;
     using UintArrayUtils for uint256[];
 
-    StandardToken public token;
+    ERC20 public token;
     StakingProxy public stakingProxy;
 
     event ReceivedApproval(uint256 _value);
@@ -47,7 +47,7 @@ contract TokenStaking {
      */
     constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
-        token = StandardToken(_tokenAddress);
+        token = ERC20(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
         withdrawalDelay = _delay;
     }
@@ -64,7 +64,7 @@ contract TokenStaking {
         extraData_; // Suppress unused variable warning.
         emit ReceivedApproval(_value);
 
-        require(StandardToken(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
 
         // Transfer tokens to this contract.

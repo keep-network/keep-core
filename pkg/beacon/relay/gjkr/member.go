@@ -40,6 +40,8 @@ type CommittingMember struct {
 	// receivedSharesS are defined as `s_ji` and receivedSharesT are
 	// defined as `t_ji` across the protocol specification.
 	receivedSharesS, receivedSharesT map[int]*big.Int
+	// Commitments to coefficients received from peer group members.
+	receivedCommitments map[int][]*big.Int
 }
 
 // SharingMember represents one member in a threshold key sharing group.
