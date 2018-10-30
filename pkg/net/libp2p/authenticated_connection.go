@@ -290,6 +290,14 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 		return nil, err
 	}
 
+	// Libp2p specific step: the responder has no knowledge of the initiator
+	// until after the handshake has succeeded, the connection has been
+	// upgraded, and identity information is exchanged. This provides an
+	// element of identity hiding for the initiator. To help prevent
+	// malicious interference, we want to pin this identity for the duration
+	// of the connection.
+	ac.remotePeerID = peer.ID(act1Envelope.GetPeerID())
+
 	if err := verifyEnvelope(
 		peer.ID(act1Envelope.GetPeerID()),
 		act1Envelope.GetMessage(),
