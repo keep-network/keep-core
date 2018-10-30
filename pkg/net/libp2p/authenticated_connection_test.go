@@ -94,6 +94,8 @@ func testStaticKeyAndID(t *testing.T) (libp2pcrypto.PrivKey, peer.ID) {
 	return staticKey, peerID
 }
 
+// Connect an initiator and responder via a full duplex network connection (reads
+// on one end should be matched with writes on the other).
 func newConnPair() (net.Conn, net.Conn) {
 	return net.Pipe()
 }

@@ -28,6 +28,12 @@ type authenticatedConnection struct {
 	remotePeerPublicKey libp2pcrypto.PubKey
 }
 
+// newAuthenticatedInboundConnection is the connection that's formed by
+// transport.SecureInbound. This function is executed by the receiver of a new
+// connection, who acts as the responder. This side of the connection lacks
+// knowledge of the remotePeerID (passed in as empty string). On success running
+// the responder side of the handshake, it returns a fully-authenticated
+// connection, which grants access to the network.
 func newAuthenticatedInboundConnection(
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
@@ -40,8 +46,6 @@ func newAuthenticatedInboundConnection(
 		localPeerPrivateKey: privateKey,
 	}
 
-	// If the request to the transport didn't provide our connection a
-	// remotePeerID, it's the one being connected to (the responder).
 	if err := ac.runHandshakeAsResponder(); err != nil {
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
@@ -52,6 +56,11 @@ func newAuthenticatedInboundConnection(
 	return ac, nil
 }
 
+// newAuthenticatedOutboundConnection is the connection that's formed by
+// transport.SecureOutbound. This function is executed by the initiator of a new
+// connection. This side of the connection has knowledge of the remote peer
+// identity. On success running the initiator side of the handshake, it returns a
+// fully-authenticated connection, which grants access to the network.
 func newAuthenticatedOutboundConnection(
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
@@ -102,7 +111,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 		return err
 	}
 
-	if err := ac.initiatorSendAct1Message(act1WireMessage, initiatorConnectionWriter); err != nil {
+	if err := ac.initiatorSendAct1(act1WireMessage, initiatorConnectionWriter); err != nil {
 		return err
 	}
 
@@ -138,7 +147,10 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	return nil
 }
 
-func (ac *authenticatedConnection) initiatorSendAct1Message(
+// initiatorSendAct1 signs a marshaled *handshake.Act1Message, prepares
+// the message in a pb.HandshakeEnvelope, and sends the message to the responder
+// (over the open connection) from the initiator.
+func (ac *authenticatedConnection) initiatorSendAct1(
 	act1WireMessage []byte,
 	initiatorConnectionWriter protoio.WriteCloser,
 ) error {
@@ -160,6 +172,9 @@ func (ac *authenticatedConnection) initiatorSendAct1Message(
 	return nil
 }
 
+// initiatorReceiveAct2 unmarshals a pb.HandshakeEnvelope from a responder,
+// verifies that the signed messages matches the expected peer.ID, and returns
+// the handshake.Act2Message for processing by the initiator.
 func (ac *authenticatedConnection) initiatorReceiveAct2(
 	initiatorConnectionReader protoio.ReadCloser,
 ) (*handshake.Act2Message, error) {
@@ -186,6 +201,9 @@ func (ac *authenticatedConnection) initiatorReceiveAct2(
 	return act2Message, nil
 }
 
+// initiatorSendAct3 signs a marshaled *handshake.Act3Message, prepares the
+// message in a pb.HandshakeEnvelope, and sends the message to the responder
+// (over the open connection) from the initiator.
 func (ac *authenticatedConnection) initiatorSendAct3(
 	act3WireMessage []byte,
 	initiatorConnectionWriter protoio.WriteCloser,
@@ -258,6 +276,9 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	return nil
 }
 
+// responderReceiveAct1 unmarshals a pb.HandshakeEnvelope from an initiator,
+// verifies that the signed messages matches the expected peer.ID, and returns
+// the handshake.Act1Message for processing by the responder.
 func (ac *authenticatedConnection) responderReceiveAct1(
 	responderConnectionReader protoio.ReadCloser,
 ) (*handshake.Act1Message, error) {
@@ -284,6 +305,9 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 	return act1Message, nil
 }
 
+// responderSendAct2 signs a marshaled *handshake.Act2Message, prepares the
+// message in a pb.HandshakeEnvelope, and sends the message to the initiator
+// (over the open connection) from the responder.
 func (ac *authenticatedConnection) responderSendAct2(
 	act2WireMessage []byte,
 	responderConnectionWriter protoio.WriteCloser,
@@ -306,6 +330,9 @@ func (ac *authenticatedConnection) responderSendAct2(
 	return nil
 }
 
+// responderReceiveAct3 unmarshals a pb.HandshakeEnvelope from an initiator,
+// verifies that the signed messages matches the expected peer.ID, and returns
+// the handshake.Act3Message for processing by the responder.
 func (ac *authenticatedConnection) responderReceiveAct3(
 	responderConnectionReader protoio.ReadCloser,
 ) (*handshake.Act3Message, error) {
