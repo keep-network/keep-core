@@ -353,3 +353,69 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 		accusedIDs: accusedMembersIDs,
 	}, nil
 }
+
+// ReconstructPrivateKeyShares reconstructs disqualified members' private key
+// shares from shares calculated by disqualified members for peer members.
+//
+// Function can be executed for shares from members that presented valid shares
+// but were disqualified on public key shares validation stage.
+//
+// Function requires disqualified shares to be provided as map of the following
+// format: <disqualifiedID, <peerID, shareS>>
+//
+// It returns a map of reconstructed private key shares for each disqualified ID:
+// <disqualifiedID, privateKeyShare>
+//
+// See Phase 11 of the protocol specification.
+func (sm *SharingMember) ReconstructPrivateKeyShares(
+	disqualifiedShares map[int]map[int]*big.Int, // <m, <k, s_mk>>
+) map[int]*big.Int { // <m, z_m>
+	reconstructedPrivateKeyShares := make(map[int]*big.Int, len(disqualifiedShares))
+
+	for disqualifiedID, shares := range disqualifiedShares {
+		// `z_m = Σ s_mk * a_mk` where:
+		// - `z_m` is disqualified member's private key share
+		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
+		// - `a_mk` is lagrange coefficient for peer member k (see below)
+		privateKeyShare := big.NewInt(0)
+		for peerID, share := range shares {
+			// `a_mk = Π (l / (l - k))` where:
+			// - `a_mk` is lagrange coefficient for peer member k
+			// - `l` are IDs of other members who provided shares and `l != k`
+			lagrangeCoefficient := big.NewInt(1)
+
+			for otherID := range shares {
+				if otherID != peerID { // l != k
+					// l / (l - k)
+					idsQuotient := new(big.Int).Mod(
+						new(big.Int).Mul(
+							big.NewInt(int64(otherID)),
+							new(big.Int).ModInverse(
+								new(big.Int).Sub(
+									big.NewInt(int64(otherID)),
+									big.NewInt(int64(peerID)),
+								),
+								sm.protocolConfig.P,
+							),
+						),
+						sm.protocolConfig.P,
+					)
+
+					lagrangeCoefficient = new(big.Int).Mul(
+						lagrangeCoefficient, idsQuotient)
+				}
+			}
+			// s_mk * a_mk
+			multipliedShare := new(big.Int).Mul(share, lagrangeCoefficient)
+
+			privateKeyShare = new(big.Int).Mod(
+				new(big.Int).Add(
+					privateKeyShare,
+					multipliedShare,
+				), sm.protocolConfig.P,
+			)
+		}
+		reconstructedPrivateKeyShares[disqualifiedID] = privateKeyShare
+	}
+	return reconstructedPrivateKeyShares
+}
