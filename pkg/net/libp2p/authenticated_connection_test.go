@@ -43,6 +43,7 @@ func connectInitiatorAndResponderFull(t *testing.T, ctx context.Context) (*authe
 	initiatorConn, responderConn := newConnPair()
 
 	var (
+		done              = make(chan struct{})
 		initiatorErr      error
 		authnOutboundConn *authenticatedConnection
 	)
@@ -60,11 +61,8 @@ func connectInitiatorAndResponderFull(t *testing.T, ctx context.Context) (*authe
 			initiatorStaticKey,
 			responderPeerID,
 		)
+		done <- struct{}{}
 	}(ctx, initiatorConn, initiatorPeerID, initiatorStaticKey, responderPeerID)
-
-	if initiatorErr != nil {
-		t.Fatal(initiatorErr)
-	}
 
 	authnInboundConn, err := newAuthenticatedInboundConnection(
 		ctx,
@@ -75,6 +73,13 @@ func connectInitiatorAndResponderFull(t *testing.T, ctx context.Context) (*authe
 	)
 	if err != nil {
 		t.Fatalf("failed to connect initiator with responder")
+	}
+
+	// handshake is done, and we'll know if the outbound failed
+	<-done
+
+	if initiatorErr != nil {
+		t.Fatal(initiatorErr)
 	}
 
 	return authnInboundConn, authnOutboundConn
