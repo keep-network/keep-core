@@ -21,11 +21,11 @@ func TestHandshakeRoundTrip(t *testing.T) {
 	authnInboundConn, authnOutboundConn := connectInitiatorAndResponderFull(t, ctx)
 
 	msg := []byte("brown fox blue tail")
-	go func(msg []byte) {
-		if _, err := authnOutboundConn.Conn.Write(msg); err != nil {
+	go func(authnOutboundConn *authenticatedConnection, msg []byte) {
+		if _, err := authnOutboundConn.Write(msg); err != nil {
 			t.Fatal(err)
 		}
-	}(msg)
+	}(authnOutboundConn, msg)
 
 	msgContainer := make([]byte, len(msg))
 	if _, err := io.ReadFull(authnInboundConn.Conn, msgContainer); err != nil {
