@@ -3,6 +3,8 @@ package gjkr
 import (
 	"math/big"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
 func TestReconstructPrivateKeyShares(t *testing.T) {
@@ -43,6 +45,51 @@ func contains(slice []int, value int) bool {
 		}
 	}
 	return false
+}
+
+func TestCalculateReconstructedPublicKeyShares(t *testing.T) {
+	groupSize := 3
+	p := big.NewInt(179)
+	g := big.NewInt(7)
+
+	disqualifiedIDs := []int{4, 5} // m
+
+	reconstructedPrivateKeyShares := make(map[int]*big.Int, len(disqualifiedIDs)) // z_m
+	reconstructedPrivateKeyShares[4] = big.NewInt(14)                             // z_4
+	reconstructedPrivateKeyShares[5] = big.NewInt(15)                             // z_5
+
+	expectedPublicKeyShares := make(map[int]*big.Int, len(disqualifiedIDs)) // y_m = g^{z_m} mod p
+	expectedPublicKeyShares[4] = big.NewInt(43)                             // 7^14 mod 179
+	expectedPublicKeyShares[5] = big.NewInt(122)                            // 7^15 mod 179
+
+	members := make([]*ReconstructingMember, groupSize)
+	for i := range members {
+		members[i] = &ReconstructingMember{
+			SharingMember: &SharingMember{
+				CommittingMember: &CommittingMember{
+					memberCore: &memberCore{
+						ID:             i,
+						protocolConfig: &DKG{P: p},
+					},
+					vss: &pedersen.VSS{G: g},
+				},
+			},
+			reconstructedPrivateKeyShares: reconstructedPrivateKeyShares,
+		}
+	}
+
+	for _, rm := range members {
+		rm.CalculateReconstructedPublicKeyShares()
+
+		for m, expectedPublicKeyShare := range expectedPublicKeyShares {
+			if rm.reconstructedPublicKeyShares[m].Cmp(expectedPublicKeyShare) != 0 {
+				t.Fatalf("\nexpected: %s\nactual:   %s\n",
+					expectedPublicKeyShare,
+					rm.reconstructedPublicKeyShares[m],
+				)
+			}
+		}
+	}
 }
 
 func initializeReconstructingMembersGroup(
