@@ -82,6 +82,7 @@ After phase _p_, the nodes that failed to broadcast a required message
 will be added to _IA~p~_.
 Nodes that broadcast a malformed message may be added to _IA~p~_ or _DQ~p~_.
 
+[#phase-1,reftext="Phase 1"]
 ==== Phase 1. Ephemeral key generation
 
 To ensure integrity in later parts of the DKG protocol,
@@ -120,6 +121,7 @@ for P_j in P, P_j /= P_i:
 <2> Private keys for communicating with other participants in _P_
 <3> Public keys for communicating with other participants in _P_
 
+[#phase-2,reftext="Phase 2"]
 ==== Phase 2. Ephemeral ECDH
 
 Every node in _P_ has now published a valid list of ephemeral ECDH pubkeys.
@@ -146,6 +148,7 @@ for P_j in G_2:
 <2> A validation function which determines which nodes
 have broadcast the correct message for phase _p_
 
+[#phase-3,reftext="Phase 3"]
 ==== Phase 3. Polynomial generation
 
 Every node in _G~3~_ has, for every other node in _G~3~_, a symmetric key that
@@ -204,6 +207,7 @@ encryptedShares_i =
 <2> Pedersen commitments to coefficients
 <3> Shares for _P~j~_ encrypted with the shared symkey
 
+[#phase-4,reftext="Phase 4"]
 ==== Phase 4: Share verification
 
 Receive, decrypt and validate shares from other participants. If any share
@@ -245,6 +249,7 @@ complaints_Ai
 <<1>> Publish the private key _P~i~_ created for communicating with _P~j~_,
 so anyone can decrypt and verify the shares _P~i~_ received from _P~j~_.
 
+[#phase-5,reftext="Phase 5"]
 ==== Phase 5: First complaint resolution
 
 If anyone has complaints about another player,
@@ -292,7 +297,7 @@ for c in complaints_A:
 <<1>> If the shares are inconsistent with commitments,
 disqualify the accused _P~m~_; if consistent, disqualify the accuser _P~j~_.
 
-
+[#phase-6,reftext="Phase 6"]
 ==== Phase 6: Share calculation
 
 Each player sets their share _x~i~_ of the secret _X_ to equal the sum of all
@@ -315,7 +320,7 @@ x'_i = sum(
 ) mod q
 ----
 
-
+[#phase-7,reftext="Phase 7"]
 ==== Phase 7: Public key share points
 
 Each player broadcasts their _A~ik~_ values.
@@ -334,6 +339,7 @@ for k in [0..T]:
 [A_i0, A_i1, ... A_iT]
 ----
 
+[#phase-8,reftext="Phase 8"]
 ==== Phase 8: Public key share validation
 
 Each player validates the values received in the previous step.
@@ -364,6 +370,7 @@ for j in G_8:
 complaints_Bi
 ----
 
+[#phase-9,reftext="Phase 9"]
 ==== Phase 9: Second complaint resolution
 
 As in Phase 5, but with the validation formula from Phase 8.
@@ -411,6 +418,7 @@ for c in complaints_B:
     DQ_9 += P_m
 ----
 
+[#phase-10,reftext="Phase 10"]
 ==== Phase 10: Disqualified share opening
 
 All active players in _G~10~_ broadcast the keys they share with
@@ -434,6 +442,7 @@ if keys_i /= []:
   keys_i
 ----
 
+[#phase-11,reftext="Phase 11"]
 ==== Phase 11: Disqualified share reconstruction
 
 Decrypt and reconstruct _z~m~_ for every participant _P~m~_ that presented
@@ -476,6 +485,7 @@ for m in (G_6 - G_11): # <1>
 <<1>> Reconstruct the shares of participants that became inactive
 or were disqualified since _phase 6_
 
+[#phase-12,reftext="Phase 12"]
 ==== Phase 12: Public key reconstruction
 
 Let _G~12~ = G~11~_
@@ -496,7 +506,7 @@ Y = product(
 ) mod p
 ----
 
-
+[#phase-13,reftext="Phase 13"]
 ==== Phase 13: Result publication
 
 Let _IA = IA~1~ + IA~2~ + ... + IA~10~_
@@ -547,6 +557,7 @@ while not resultPublished:
     resultPublished = checkChainForResult()
 ----
 
+[#phase-14,reftext="Phase 14"]
 ==== Phase 14: Result conflict resolution
 
 Because of the honest majority assumption, we can expect
