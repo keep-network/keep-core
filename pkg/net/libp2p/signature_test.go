@@ -91,8 +91,7 @@ func TestDetectMalformedMessageSignature(t *testing.T) {
 // The first message should be properly delivered, the second message should get
 // rejected.
 func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
@@ -158,7 +157,6 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	honestMessageDelivered := false
 
 	ensureNonMaliciousMessage := func(t *testing.T, msg net.Message) error {
 		testPayload, ok := msg.Payload().(*testMessage)
@@ -187,14 +185,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 			}
 
 			// Ensure all messages are flushed before exiting
-			time.Sleep(500 * time.Millisecond)
-			honestMessageDelivered = true
-			return
-		case <-ctx.Done():
-			if !honestMessageDelivered {
-				t.Fatal("expected message not delivered")
-			}
-
+			time.Sleep(1 * time.Second)
 			return
 		}
 	}
