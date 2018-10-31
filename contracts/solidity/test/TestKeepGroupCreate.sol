@@ -6,16 +6,16 @@ import "./helpers/ThrowProxy.sol";
 import "../contracts/KeepGroupImplV1.sol";
 
 
-contract KeepRandomBeaconMock {
-    function hasMinimumStake(address _staker) public view returns(bool) {
-        return true;
+contract StakingProxyMock {
+    function balanceOf(address _staker) public view returns(uint256) {
+        return 200;
     }
 }
 
 
 contract TestKeepGroupCreate {
-    // Create KEEP random beacon contract mock
-    KeepRandomBeaconMock keepRandomBeacon = new KeepRandomBeaconMock();
+    // Create Staking proxy contract mock
+    StakingProxyMock stakingProxy = new StakingProxyMock();
 
     // Create KEEP Group Contract
     KeepGroupImplV1 keepGroupContract = new KeepGroupImplV1();
@@ -24,8 +24,7 @@ contract TestKeepGroupCreate {
     bytes32 public groupTwoPubKey = hex"0200";
 
     function beforeAll() public {
-		// I don't know if we can do this - since .initialize() checks to see if it is already been called.
-        keepGroupContract.initialize(2, 3, address(keepRandomBeacon));
+        keepGroupContract.initialize(address(stakingProxy), 200, 2, 3);
         keepGroupContract.createGroup(groupOnePubKey);
     }
 

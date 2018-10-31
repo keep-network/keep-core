@@ -29,7 +29,7 @@ module.exports = (deployer) => {
     await deployer.deploy(KeepRandomBeacon, KeepRandomBeaconImplV1.address);
     await deployer.deploy(KeepGroupImplV1);
     await deployer.deploy(KeepGroup, KeepGroupImplV1.address);
-    await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address).initialize(StakingProxy.address, minPayment, minStake, withdrawalDelay);
-    await KeepGroupImplV1.at(KeepGroup.address).initialize(groupThreshold, groupSize, KeepRandomBeaconImplV1.address);
+    await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address).initialize(minPayment, withdrawalDelay);
+    await KeepGroupImplV1.at(KeepGroup.address).initialize(StakingProxy.address, minStake, groupThreshold, groupSize);
   });
 };

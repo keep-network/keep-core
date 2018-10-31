@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./KeepRandomBeaconImplV1.sol";
+import "./StakingProxy.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
@@ -11,10 +11,11 @@ contract KeepGroupImplV1 is Ownable {
     event GroupCompleteEvent(bytes32 groupPubKey);
     event GroupErrorCode(uint8 code);
 
-    address internal _keepRandomBeaconAddress;
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
     uint256 internal _groupsCount;
+    uint256 internal _minStake;
+    address internal _stakingProxy;
 
     mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
     mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
@@ -35,20 +36,53 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Initialize Keep Group implementation contract with a linked Keep Random Beacon contract.
-     * @param keepRandomBeaconAddress Address of Keep Random Beacon that will be linked to this contract.
+     * @dev Initialize Keep Group implementation contract with a linked Staking proxy contract.
+     * @param stakingProxy Address of a staking proxy contract that will be linked to this contract.
+     * @param minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      * @param groupThreshold Max number of bad members in a group that we can detect as well as “number
      * of good members needed to produce a relay entry”.
      * @param groupSize Minimum number of members in a group - to form a group.
      */
-    function initialize(uint256 groupThreshold, uint256 groupSize, address keepRandomBeaconAddress) public onlyOwner {
+    function initialize(
+        address stakingProxy,
+        uint256 minStake,
+        uint256 groupThreshold,
+        uint256 groupSize
+    ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
-        require(keepRandomBeaconAddress != address(0x0), "Random Beacon address can't be zero.");
+        require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         _initialized["KeepGroupImplV1"] = true;
-        _keepRandomBeaconAddress = keepRandomBeaconAddress;
+        _stakingProxy = stakingProxy;
+        _minStake = minStake;
         _groupThreshold = groupThreshold;
         _groupSize = groupSize;
         _groupsCount = 0;
+    }
+
+    /**
+     * @dev Checks that the specified user has an appropriately large stake.
+     * @param staker Specifies the identity of the staker.
+     * @return True if staked enough to participate in the group, false otherwise.
+     */
+    function hasMinimumStake(address staker) public view returns(bool) {
+        uint256 balance;
+        balance = StakingProxy(_stakingProxy).balanceOf(staker);
+        return (balance >= _minStake);
+    }
+
+    /**
+     * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
+     * @param minStake Amount in KEEP.
+     */
+    function setMinimumStake(uint256 minStake) public onlyOwner {
+        _minStake = minStake;
+    }
+
+    /**
+     * @dev Get the minimum amount in KEEP that allows KEEP network client to participate in a group.
+     */
+    function minimumStake() public view returns(uint256) {
+        return _minStake;
     }
 
     /**

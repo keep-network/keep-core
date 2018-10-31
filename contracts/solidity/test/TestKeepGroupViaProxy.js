@@ -27,17 +27,17 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     await stakingProxy.authorizeContract(stakingContract.address, {from: account_one})
 
     // Initialize Keep Random Beacon
-    let minimumStake = 200;
     keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
-    await keepRandomBeaconImplViaProxy.initialize(stakingProxy.address, 100, minimumStake, duration.days(30));
+    await keepRandomBeaconImplViaProxy.initialize(100, duration.days(30));
 
     // Initialize Keep Group contract
+    let minimumStake = 200;
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
-    await keepGroupImplViaProxy.initialize(6, 10, keepRandomBeaconProxy.address);
+    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, 6, 10);
 
     // Create test groups.
     groupOnePubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -48,6 +48,16 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake, "", {from: account_one});
 
+  });
+
+  it("should fail to update minimum stake by non owner", async function() {
+    await exceptThrow(keepGroupImplViaProxy.setMinimumStake(123, {from: account_two}));
+  });
+
+  it("should be able to update minimum stake by the owner", async function() {
+    await keepGroupImplViaProxy.setMinimumStake(123);
+    let newMinStake = await keepGroupImplViaProxy.minimumStake();
+    assert.equal(newMinStake, 123, "Should be able to get updated minimum stake.");
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {

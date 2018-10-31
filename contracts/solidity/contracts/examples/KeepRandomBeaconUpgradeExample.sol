@@ -18,11 +18,11 @@ contract KeepRandomBeaconUpgradeExample is KeepRandomBeaconImplV1 {
      * >Functions can be overridden by another function with the same name and the
      * same number/types of inputs.
      */
-    function initialize(address _stakingProxy, uint256 _minPayment, uint256 _minStake, uint256 _withdrawalDelay)
+    function initialize(uint256 _minPayment, uint256 _withdrawalDelay)
         public
         onlyOwner
     {
-        super.initialize(_stakingProxy, _minPayment, _minStake, _withdrawalDelay);
+        super.initialize(_minPayment, _withdrawalDelay);
         _initialized["KeepRandomBeaconImplV2"] = true;
 
         // Example of adding new data to the existing storage.
