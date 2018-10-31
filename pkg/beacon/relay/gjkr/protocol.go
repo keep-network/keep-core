@@ -420,3 +420,23 @@ func (rm *ReconstructingMember) ReconstructPrivateKeyShares(
 	}
 	rm.reconstructedPrivateKeyShares = privateKeyShares // <m, z_m>
 }
+
+// CalculateReconstructedPublicKeyShares calculates and stores public key shares
+// from reconstructed private key shares.
+//
+// Public key share is calculated as `g^privateKeyShare`.
+//
+// See Phase 11 of the protocol specification.
+func (rm *ReconstructingMember) CalculateReconstructedPublicKeyShares() {
+	publicKeyShares := make(map[int]*big.Int, len(rm.reconstructedPrivateKeyShares))
+	for id, privateKeyShare := range rm.reconstructedPrivateKeyShares {
+		// `y_m = g^{z_m}`
+		publicKeyShare := new(big.Int).Exp(
+			rm.vss.G,
+			privateKeyShare,
+			rm.protocolConfig.P,
+		)
+		publicKeyShares[id] = publicKeyShare
+	}
+	rm.reconstructedPublicKeyShares = publicKeyShares
+}
