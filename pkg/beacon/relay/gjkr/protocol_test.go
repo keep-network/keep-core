@@ -86,12 +86,19 @@ func TestRoundTrip(t *testing.T) {
 		}
 	}
 
-	for i := range sharingMembers {
-		sharingMembers[i].CombineGroupPublicKeyShares()
+	var reconstructingMembers []*ReconstructingMember
+	for _, sm := range sharingMembers {
+		reconstructingMembers = append(reconstructingMembers, &ReconstructingMember{
+			SharingMember: sm,
+		})
 	}
 
-	for i := range sharingMembers {
-		member := sharingMembers[i]
+	for i := range reconstructingMembers {
+		reconstructingMembers[i].CombineGroupPublicKeyShares()
+	}
+
+	for i := range reconstructingMembers {
+		member := reconstructingMembers[i]
 
 		accusedCoefficientsMessage, err := member.VerifyPublicCoefficients(
 			filterMemberPublicCoefficientsMessages(publicCoefficientsMessages, member.ID),
