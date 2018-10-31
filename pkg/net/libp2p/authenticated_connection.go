@@ -370,8 +370,8 @@ func (ac *authenticatedConnection) responderReceiveAct3(
 	return act3Message, nil
 }
 
-// verify checks to see if pinned (static) identity matches the message sender's
-// identity before running through the signature verification check.
+// verify checks to see if the pinned (static) identity matches the message
+// sender's identity before running through the signature verification check.
 func (ac *authenticatedConnection) verify(
 	pinned, sender peer.ID,
 	messageBytes, signatureBytes []byte,
