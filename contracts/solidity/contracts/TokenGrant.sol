@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
@@ -16,14 +16,14 @@ import "./StakingProxy.sol";
  */
 contract TokenGrant {
     using SafeMath for uint256;
-    using SafeERC20 for StandardToken;
+    using SafeERC20 for ERC20;
 
     event CreatedTokenGrant(uint256 id);
     event ReleasedTokenGrant(uint256 amount);
     event InitiatedTokenGrantUnstake(uint256 id);
     event RevokedTokenGrant(uint256 id);
 
-    StandardToken public token;
+    ERC20 public token;
     StakingProxy public stakingProxy;
 
     struct Grant {
@@ -68,7 +68,7 @@ contract TokenGrant {
      */
     constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
-        token = StandardToken(_tokenAddress);
+        token = ERC20(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
         stakeWithdrawalDelay = _delay;
     }
