@@ -95,41 +95,83 @@ func TestCalculateReconstructedPublicKeyShares(t *testing.T) {
 func TestCombineGroupPublicKeyShares(t *testing.T) {
 	threshold := 3
 	groupSize := 5
+	p := big.NewInt(1907)
 
-	expectedGroupPublicKey := big.NewInt(12000000)
-
-	members, err := initializeSharingMembersGroup(threshold, groupSize)
-	if err != nil {
-		t.Fatalf("group initialization failed [%s]", err)
+	var tests = map[string]struct {
+		disqualifiedIDs        []int
+		expectedError          error
+		expectedGroupPublicKey *big.Int
+	}{
+		"no disqualified members - no reconstructed public key shares": {
+			expectedError:          nil,
+			expectedGroupPublicKey: big.NewInt(1156),
+		},
+		"2 disqualified members - 2 reconstructed public key shares": {
+			disqualifiedIDs:        []int{6, 7},
+			expectedError:          nil,
+			expectedGroupPublicKey: big.NewInt(1037),
+		},
 	}
-
-	for _, m := range members {
-		m.publicCoefficients = make([]*big.Int, threshold+1)
-		for k := range m.publicCoefficients {
-			m.publicCoefficients[k] = big.NewInt(int64(m.ID*10 + k))
-		}
-	}
-
-	for _, m := range members {
-		m.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
-		for _, p := range members {
-			if m.ID != p.ID {
-				m.receivedGroupPublicKeyShares[p.ID] = p.publicCoefficients[0]
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			// Prepare members group.
+			members := make([]*ReconstructingMember, groupSize)
+			for i := range members {
+				members[i] = &ReconstructingMember{
+					SharingMember: &SharingMember{
+						CommittingMember: &CommittingMember{
+							memberCore: &memberCore{
+								ID: i + 1,
+								protocolConfig: &DKG{
+									P: p,
+								},
+							},
+						},
+					},
+				}
 			}
-		}
-	}
 
-	for i := range members {
-		members[i].CombineGroupPublicKeyShares()
+			// Generate member's public coefficients.
+			for _, member := range members {
+				member.publicCoefficients = make([]*big.Int, threshold+1)
+				for k := range member.publicCoefficients {
+					member.publicCoefficients[k] = big.NewInt(int64(member.ID*10 + k))
+				}
+			}
 
-		if members[i].groupPublicKey.Cmp(expectedGroupPublicKey) != 0 {
-			t.Fatalf(
-				"incorrect group public key for %d. member\nexpected: %v\nactual:   %v\n",
-				i,
-				expectedGroupPublicKey,
-				members[0].groupPublicKey,
-			)
-		}
+			// Configure public coefficients received from peer members.
+			for _, member := range members {
+				member.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
+				for _, peer := range members {
+					if member.ID != peer.ID {
+						member.receivedGroupPublicKeyShares[peer.ID] =
+							peer.publicCoefficients[0]
+					}
+				}
+			}
+
+			// Configure reconstructed public key shares of disqualified members.
+			for _, member := range members {
+				member.reconstructedPublicKeyShares = make(map[int]*big.Int, len(test.disqualifiedIDs))
+				for _, disqualifiedID := range test.disqualifiedIDs {
+					member.reconstructedPublicKeyShares[disqualifiedID] =
+						big.NewInt(int64(20 + disqualifiedID))
+				}
+			}
+
+			for _, member := range members {
+				member.CombineGroupPublicKeyShares()
+
+				if member.groupPublicKey.Cmp(test.expectedGroupPublicKey) != 0 {
+					t.Fatalf(
+						"incorrect group public key for member %d\nexpected: %v\nactual:   %v\n",
+						member.ID,
+						test.expectedGroupPublicKey,
+						member.groupPublicKey,
+					)
+				}
+			}
+		})
 	}
 }
 
