@@ -150,7 +150,6 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	if err := ch.Recv(net.HandleMessageFunc{
 		Type: "test",
 		Handler: func(msg net.Message) error {
-			// return filterBySender(msg)
 			recvChan <- msg
 			return nil
 		},
