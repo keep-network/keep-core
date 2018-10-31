@@ -31,22 +31,21 @@ func TestReconstructPrivateKeyShares(t *testing.T) {
 		}
 		allDisqualifiedShares[disqualifiedID] = disqualifiedShares
 	}
+	for _, rm := range group {
+		if !contains(disqualifiedIDs, rm.ID) {
+			rm.ReconstructPrivateKeyShares(allDisqualifiedShares)
 
-	for _, sm := range group {
-		if !contains(disqualifiedIDs, sm.ID) {
-			privateKeyShares := sm.ReconstructPrivateKeyShares(allDisqualifiedShares)
-
-			if privateKeyShares[disqualifiedIDs[0]].Cmp(expectedPrivateKeyShare1) != 0 {
+			if rm.reconstructedPrivateKeyShares[disqualifiedIDs[0]].Cmp(expectedPrivateKeyShare1) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
 					expectedPrivateKeyShare1,
-					privateKeyShares[disqualifiedIDs[0]],
+					rm.reconstructedPrivateKeyShares[disqualifiedIDs[0]],
 				)
 			}
 
-			if privateKeyShares[disqualifiedIDs[1]].Cmp(expectedPrivateKeyShare2) != 0 {
+			if rm.reconstructedPrivateKeyShares[disqualifiedIDs[1]].Cmp(expectedPrivateKeyShare2) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
 					expectedPrivateKeyShare1,
-					privateKeyShares[disqualifiedIDs[1]],
+					rm.reconstructedPrivateKeyShares[disqualifiedIDs[1]],
 				)
 			}
 		}
