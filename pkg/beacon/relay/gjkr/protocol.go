@@ -363,14 +363,14 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 // Function requires disqualified shares to be provided as map of the following
 // format: <disqualifiedID, <peerID, shareS>>
 //
-// It returns a map of reconstructed private key shares for each disqualified ID:
+// It stores a map of reconstructed private key shares for each disqualified ID:
 // <disqualifiedID, privateKeyShare>
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructPrivateKeyShares(
 	disqualifiedShares map[int]map[int]*big.Int, // <m, <k, s_mk>>
-) map[int]*big.Int { // <m, z_m>
-	reconstructedPrivateKeyShares := make(map[int]*big.Int, len(disqualifiedShares))
+) {
+	privateKeyShares := make(map[int]*big.Int, len(disqualifiedShares))
 
 	for disqualifiedID, shares := range disqualifiedShares {
 		// `z_m = Σ s_mk * a_mk` where:
@@ -416,7 +416,7 @@ func (rm *ReconstructingMember) ReconstructPrivateKeyShares(
 				rm.protocolConfig.P,
 			)
 		}
-		reconstructedPrivateKeyShares[disqualifiedID] = privateKeyShare
+		privateKeyShares[disqualifiedID] = privateKeyShare
 	}
-	return reconstructedPrivateKeyShares
+	rm.reconstructedPrivateKeyShares = privateKeyShares // <m, z_m>
 }
