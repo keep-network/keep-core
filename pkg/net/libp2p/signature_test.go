@@ -10,6 +10,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 )
 
 func TestVerifyMessageSignature(t *testing.T) {
@@ -91,7 +92,7 @@ func TestDetectMalformedMessageSignature(t *testing.T) {
 // The first message should be properly delivered, the second message should get
 // rejected.
 func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
@@ -101,6 +102,10 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	ch, err := createTestChannel(ctx, staticKey)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := registerIdentity(ch, staticKey, "honest"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -127,6 +132,10 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err := registerIdentity(ch, adversaryKey, "malicious"); err != nil {
+		t.Fatal(err)
+	}
+
 	envelope, err = ch.sealEnvelope(nil, &testMessage{Payload: maliciousPayload})
 	if err != nil {
 		t.Fatal(err)
@@ -145,14 +154,53 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	ch.pubsub.Publish(ch.name, envelopeBytes)
 
+	var (
+		honestRecvChan    = make(chan net.Message)
+		maliciousRecvChan = make(chan net.Message)
+	)
+
+	filterBySender := func(msg net.Message) error {
+		protocolIdentifier, ok := msg.ProtocolSenderID().(*protocolIdentifier)
+		if !ok {
+			return fmt.Errorf(
+				"expected: type *protocolIdentifier\ngot:   type [%v]",
+				protocolIdentifier,
+			)
+		}
+		if protocolIdentifier.id == "malicious" {
+			maliciousRecvChan <- msg
+		}
+		if protocolIdentifier.id == "honest" {
+			honestRecvChan <- msg
+		}
+		return nil
+	}
+
+	ensureNonMaliciousMessage := func(t *testing.T, msg net.Message) error {
+		testPayload, ok := msg.Payload().(*testMessage)
+		if !ok {
+			return fmt.Errorf(
+				"expected: payload type string\ngot:   payload type [%v]",
+				testPayload,
+			)
+		}
+
+		if honestPayload != testPayload.Payload {
+			return fmt.Errorf(
+				"expected: message payload [%s]\ngot:   payload [%s]",
+				honestPayload,
+				testPayload.Payload,
+			)
+		}
+		return nil
+	}
+
 	// Check if the message with correct signature has been properly delivered
 	// and if the message with incorrect signature has been dropped...
-	recvChan := make(chan net.Message)
 	if err := ch.Recv(net.HandleMessageFunc{
 		Type: "test",
 		Handler: func(msg net.Message) error {
-			recvChan <- msg
-			return nil
+			return filterBySender(msg)
 		},
 	}); err != nil {
 		t.Fatal(err)
@@ -162,25 +210,20 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	for {
 		select {
-		case msg := <-recvChan:
-			testPayload, ok := msg.Payload().(*testMessage)
-			if !ok {
-				t.Fatalf(
-					"expected: payload type string\ngot:   payload type [%v]",
-					testPayload,
-				)
+		case msg := <-maliciousRecvChan:
+			if err := ensureNonMaliciousMessage(t, msg); err != nil {
+				t.Fatal(err)
 			}
-
-			if honestPayload != testPayload.Payload {
-				t.Fatalf(
-					"expected: message payload [%s]\ngot:   payload [%s]",
-					honestPayload,
-					testPayload.Payload,
-				)
+		case msg := <-honestRecvChan:
+			if err := ensureNonMaliciousMessage(t, msg); err != nil {
+				t.Fatal(err)
 			}
 
 			honestMessageDelivered = true
 
+			// Ensure all messages are flushed before exiting
+			time.Sleep(500 * time.Millisecond)
+			return
 		case <-ctx.Done():
 			if !honestMessageDelivered {
 				t.Fatal("expected message not delivered")
@@ -191,6 +234,26 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	}
 }
 
+func registerIdentity(
+	ch *channel,
+	staticKey libp2pcrypto.PrivKey,
+	protocolID string,
+) error {
+	identity, err := createIdentity(staticKey)
+	if err != nil {
+		return err
+	}
+
+	if err := ch.RegisterIdentifier(
+		networkIdentity(identity.id),
+		&protocolIdentifier{id: protocolID},
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // createTestChannel creates and initializes `BroadcastChannel` with all
 // underlying libp2p setup steps. Created instance is then casted to
 // `lib2p.channel` type so the private interface is available and can be
@@ -199,11 +262,6 @@ func createTestChannel(
 	ctx context.Context,
 	staticKey *key.StaticNetworkKey,
 ) (*channel, error) {
-	identity, err := createIdentity(staticKey)
-	if err != nil {
-		return nil, err
-	}
-
 	networkConfig := Config{Port: 8080}
 
 	provider, err := Connect(ctx, networkConfig, staticKey)
@@ -218,13 +276,6 @@ func createTestChannel(
 
 	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
-	); err != nil {
-		return nil, err
-	}
-
-	if err := broadcastChannel.RegisterIdentifier(
-		networkIdentity(identity.id),
-		&protocolIdentifier{id: "testProtocolIdentifier"},
 	); err != nil {
 		return nil, err
 	}
