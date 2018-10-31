@@ -97,43 +97,29 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 ) (*SecretSharesAccusationsMessage, error) {
 	var accusedMembersIDs []int
 
-	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
-	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, commitmentsMessage := range commitmentsMessages {
-		commitmentsProduct := big.NewInt(1)
-		for k, c := range commitmentsMessage.commitments {
-			commitmentsProduct = new(big.Int).Mod(
-				new(big.Int).Mul(
-					commitmentsProduct,
-					new(big.Int).Exp(
-						c,
-						pow(cm.ID, k),
-						cm.protocolConfig.P,
-					),
-				),
-				cm.protocolConfig.P,
-			)
-		}
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
-				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
-				// where: j is sender's ID, i is current member ID.
-				expectedProduct := cm.vss.CalculateCommitment(
-					sharesMessage.shareS,
-					sharesMessage.shareT,
-					cm.protocolConfig.P,
-				)
 
-				if expectedProduct.Cmp(commitmentsProduct) != 0 {
+				// Check if `commitmentsProduct == expectedProduct`
+				// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]
+				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
+				// where: j is sender's ID, i is current member ID, T is threshold.
+				if !cm.areSharesValidAgainstCommitments(
+					sharesMessage.shareS, sharesMessage.shareT, // s_ji, t_ji
+					commitmentsMessage.commitments, // C_j
+					cm.ID,                          // i
+				) {
 					accusedMembersIDs = append(accusedMembersIDs,
 						commitmentsMessage.senderID)
 					break
 				}
 				cm.receivedSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
 				cm.receivedSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
+				cm.receivedCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
 				break
 			}
 		}
@@ -148,6 +134,94 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 		senderID:   cm.ID,
 		accusedIDs: accusedMembersIDs,
 	}, nil
+}
+
+// ResolveSecretSharesAccusations resolves a complaint received from a sender
+// against a member accused in the shares and commitments verification phase.
+// A member is calling this function to judge which party of the dispute is lying.
+//
+// The function requires shares `s_mj` and `t_mj` calculated by the accused
+// member (`m`) for the sender (`j`). These values are expected to be broadcast
+// before in encrypted form. On accusation, the shares should be decrypted and
+// the revealed value should be passed to this function.
+//
+// A current member cannot be a part of a dispute. If the current member is
+// either an accuser or is accused the function will return an error. The accused
+// party cannot be a judge in its own case. From the other hand, the accuser has
+// already performed the calculation in the previous phase which resulted in the
+// accusation and waits now for a judgment from other players.
+//
+// The returned value is an ID of the member who should be slashed. It will be
+// an accuser ID if the validation shows that shares and commitments are valid,
+// so the accusation was unfounded. Else it confirms that accused member misbehaved
+// and their ID is returned.
+//
+// See Phase 5 of the protocol specification.
+func (cm *CommittingMember) ResolveSecretSharesAccusations(
+	senderID, accusedID int, // j, m
+	shareS, shareT *big.Int, // s_mj, t_mj
+) (int, error) {
+	if cm.ID == senderID || cm.ID == accusedID {
+		return 0, fmt.Errorf("current member cannot be a part of a dispute")
+	}
+
+	// Check if `commitmentsProduct == expectedProduct`
+	// `commitmentsProduct = Π (C_m[k] ^ (j^k)) mod p` for k in [0..T]
+	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`
+	// where: m is accused member's ID, j is sender's ID, T is threshold.
+	if cm.areSharesValidAgainstCommitments(
+		shareS, shareT, // s_mj, t_mj
+		cm.receivedCommitments[accusedID], // C_m
+		senderID,                          // j
+	) {
+		return senderID, nil
+	}
+	return accusedID, nil
+}
+
+// areSharesValidAgainstCommitments verifies if commitments are valid for passed
+// shares.
+//
+// The `j` member generated a polynomial with `k` coefficients before. Then they
+// calculated a commitments to the polynomial's coefficients `C_j` and individual
+// shares `s_ji` and `t_ji` with a polynomial for a member `i`. In this function
+// the verifier checks if the shares are valid against the commitments.
+//
+// The verifier checks that:
+// `commitmentsProduct == expectedProduct`
+// where:
+// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T],
+// and
+// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`:
+func (cm *CommittingMember) areSharesValidAgainstCommitments(
+	shareS, shareT *big.Int, // s_ji, t_ji
+	commitments []*big.Int, // C_j
+	memberID int, // i
+) bool {
+	// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p`
+	commitmentsProduct := big.NewInt(1)
+	for k, c := range commitments {
+		commitmentsProduct = new(big.Int).Mod(
+			new(big.Int).Mul(
+				commitmentsProduct,
+				new(big.Int).Exp(
+					c,
+					pow(memberID, k),
+					cm.protocolConfig.P,
+				),
+			),
+			cm.protocolConfig.P,
+		)
+	}
+
+	// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`, where:
+	expectedProduct := cm.vss.CalculateCommitment(
+		shareS,
+		shareT,
+		cm.protocolConfig.P,
+	)
+
+	return expectedProduct.Cmp(commitmentsProduct) == 0
 }
 
 // evaluateMemberShare calculates a share for given memberID.
@@ -280,6 +354,93 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 		senderID:   sm.ID,
 		accusedIDs: accusedMembersIDs,
 	}, nil
+}
+
+// ReconstructPrivateKeyShares reconstructs disqualified members' private key
+// shares from shares calculated by disqualified members for peer members.
+//
+// Function can be executed for shares from members that presented valid shares
+// but were disqualified on public key shares validation stage.
+//
+// Function requires disqualified shares to be provided as map of the following
+// format: <disqualifiedID, <peerID, shareS>>
+//
+// It stores a map of reconstructed private key shares for each disqualified ID:
+// <disqualifiedID, privateKeyShare>
+//
+// See Phase 11 of the protocol specification.
+func (rm *ReconstructingMember) ReconstructPrivateKeyShares(
+	disqualifiedShares map[int]map[int]*big.Int, // <m, <k, s_mk>>
+) {
+	privateKeyShares := make(map[int]*big.Int, len(disqualifiedShares))
+
+	for disqualifiedID, shares := range disqualifiedShares {
+		// `z_m = Σ s_mk * a_mk` where:
+		// - `z_m` is disqualified member's private key share
+		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
+		// - `a_mk` is lagrange coefficient for peer member k (see below)
+		privateKeyShare := big.NewInt(0)
+		for peerID, share := range shares {
+			// `a_mk = Π (l / (l - k))` where:
+			// - `a_mk` is lagrange coefficient for peer member k
+			// - `l` are IDs of other members who provided shares and `l != k`
+			lagrangeCoefficient := big.NewInt(1)
+
+			for otherID := range shares {
+				if otherID != peerID { // l != k
+					// l / (l - k)
+					idsQuotient := new(big.Int).Mod(
+						new(big.Int).Mul(
+							big.NewInt(int64(otherID)),
+							new(big.Int).ModInverse(
+								new(big.Int).Sub(
+									big.NewInt(int64(otherID)),
+									big.NewInt(int64(peerID)),
+								),
+								rm.protocolConfig.P,
+							),
+						),
+						rm.protocolConfig.P,
+					)
+
+					lagrangeCoefficient = new(big.Int).Mul(
+						lagrangeCoefficient, idsQuotient)
+				}
+			}
+			// s_mk * a_mk
+			multipliedShare := new(big.Int).Mul(share, lagrangeCoefficient)
+
+			privateKeyShare = new(big.Int).Mod(
+				new(big.Int).Add(
+					privateKeyShare,
+					multipliedShare,
+				),
+				rm.protocolConfig.P,
+			)
+		}
+		privateKeyShares[disqualifiedID] = privateKeyShare
+	}
+	rm.reconstructedPrivateKeyShares = privateKeyShares // <m, z_m>
+}
+
+// CalculateReconstructedPublicKeyShares calculates and stores public key shares
+// from reconstructed private key shares.
+//
+// Public key share is calculated as `g^privateKeyShare`.
+//
+// See Phase 11 of the protocol specification.
+func (rm *ReconstructingMember) CalculateReconstructedPublicKeyShares() {
+	publicKeyShares := make(map[int]*big.Int, len(rm.reconstructedPrivateKeyShares))
+	for id, privateKeyShare := range rm.reconstructedPrivateKeyShares {
+		// `y_m = g^{z_m}`
+		publicKeyShare := new(big.Int).Exp(
+			rm.vss.G,
+			privateKeyShare,
+			rm.protocolConfig.P,
+		)
+		publicKeyShares[id] = publicKeyShare
+	}
+	rm.reconstructedPublicKeyShares = publicKeyShares
 }
 
 // CombineGroupPublicKeyShares calculates a group public key from group public key
