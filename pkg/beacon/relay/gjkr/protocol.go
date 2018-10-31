@@ -367,7 +367,7 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 // <disqualifiedID, privateKeyShare>
 //
 // See Phase 11 of the protocol specification.
-func (sm *SharingMember) ReconstructPrivateKeyShares(
+func (rm *ReconstructingMember) ReconstructPrivateKeyShares(
 	disqualifiedShares map[int]map[int]*big.Int, // <m, <k, s_mk>>
 ) map[int]*big.Int { // <m, z_m>
 	reconstructedPrivateKeyShares := make(map[int]*big.Int, len(disqualifiedShares))
@@ -395,10 +395,10 @@ func (sm *SharingMember) ReconstructPrivateKeyShares(
 									big.NewInt(int64(otherID)),
 									big.NewInt(int64(peerID)),
 								),
-								sm.protocolConfig.P,
+								rm.protocolConfig.P,
 							),
 						),
-						sm.protocolConfig.P,
+						rm.protocolConfig.P,
 					)
 
 					lagrangeCoefficient = new(big.Int).Mul(
@@ -412,7 +412,8 @@ func (sm *SharingMember) ReconstructPrivateKeyShares(
 				new(big.Int).Add(
 					privateKeyShare,
 					multipliedShare,
-				), sm.protocolConfig.P,
+				),
+				rm.protocolConfig.P,
 			)
 		}
 		reconstructedPrivateKeyShares[disqualifiedID] = privateKeyShare
