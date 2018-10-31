@@ -184,8 +184,8 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			// Ensure all messages are flushed before exiting
-			time.Sleep(1 * time.Second)
+		// Ensure all messages are flushed before exiting
+		case <-time.After(2 * time.Second):
 			return
 		}
 	}
