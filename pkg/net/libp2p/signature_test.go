@@ -92,7 +92,7 @@ func TestDetectMalformedMessageSignature(t *testing.T) {
 // The first message should be properly delivered, the second message should get
 // rejected.
 func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
@@ -132,10 +132,6 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := registerIdentity(ch, adversaryKey, "malicious"); err != nil {
-		t.Fatal(err)
-	}
-
 	envelope, err = ch.sealEnvelope(nil, &testMessage{Payload: maliciousPayload})
 	if err != nil {
 		t.Fatal(err)
@@ -154,27 +150,20 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	ch.pubsub.Publish(ch.name, envelopeBytes)
 
-	var (
-		honestRecvChan    = make(chan net.Message)
-		maliciousRecvChan = make(chan net.Message)
-	)
-
-	filterBySender := func(msg net.Message) error {
-		protocolIdentifier, ok := msg.ProtocolSenderID().(*protocolIdentifier)
-		if !ok {
-			return fmt.Errorf(
-				"expected: type *protocolIdentifier\ngot:   type [%v]",
-				protocolIdentifier,
-			)
-		}
-		if protocolIdentifier.id == "malicious" {
-			maliciousRecvChan <- msg
-		}
-		if protocolIdentifier.id == "honest" {
-			honestRecvChan <- msg
-		}
-		return nil
+	// Check if the message with correct signature has been properly delivered
+	// and if the message with incorrect signature has been dropped...
+	recvChan := make(chan net.Message)
+	if err := ch.Recv(net.HandleMessageFunc{
+		Type: "test",
+		Handler: func(msg net.Message) error {
+			// return filterBySender(msg)
+			recvChan <- msg
+			return nil
+		},
+	}); err != nil {
+		t.Fatal(err)
 	}
+	honestMessageDelivered := false
 
 	ensureNonMaliciousMessage := func(t *testing.T, msg net.Message) error {
 		testPayload, ok := msg.Payload().(*testMessage)
@@ -195,34 +184,16 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 		return nil
 	}
 
-	// Check if the message with correct signature has been properly delivered
-	// and if the message with incorrect signature has been dropped...
-	if err := ch.Recv(net.HandleMessageFunc{
-		Type: "test",
-		Handler: func(msg net.Message) error {
-			return filterBySender(msg)
-		},
-	}); err != nil {
-		t.Fatal(err)
-	}
-
-	honestMessageDelivered := false
-
 	for {
 		select {
-		case msg := <-maliciousRecvChan:
+		case msg := <-recvChan:
 			if err := ensureNonMaliciousMessage(t, msg); err != nil {
 				t.Fatal(err)
 			}
-		case msg := <-honestRecvChan:
-			if err := ensureNonMaliciousMessage(t, msg); err != nil {
-				t.Fatal(err)
-			}
-
-			honestMessageDelivered = true
 
 			// Ensure all messages are flushed before exiting
 			time.Sleep(500 * time.Millisecond)
+			honestMessageDelivered = true
 			return
 		case <-ctx.Done():
 			if !honestMessageDelivered {
