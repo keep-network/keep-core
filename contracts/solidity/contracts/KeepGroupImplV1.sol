@@ -60,14 +60,12 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Checks that the specified user has an appropriately large stake.
+     * @dev Gets staking weight.
      * @param staker Specifies the identity of the staker.
-     * @return True if staked enough to participate in the group, false otherwise.
+     * @return Number of how many virtual stakers can staker represent.
      */
-    function hasMinimumStake(address staker) public view returns(bool) {
-        uint256 balance;
-        balance = StakingProxy(_stakingProxy).balanceOf(staker);
-        return (balance >= _minStake);
+    function stakingWeight(address staker) public view returns(uint256) {
+        return StakingProxy(_stakingProxy).balanceOf(staker)/_minStake;
     }
 
     /**

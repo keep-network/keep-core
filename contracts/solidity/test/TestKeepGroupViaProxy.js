@@ -76,4 +76,10 @@ contract('TestKeepGroupViaProxy', function(accounts) {
   it("should be able to get group public key by group index number", async function() {
     assert.equal(await keepGroupImplViaProxy.getGroupPubKey(0), groupOnePubKey, "Should get group public key.");
   });
+
+  it("should be able to get staking weight", async function() {
+    assert.equal(await keepGroupImplViaProxy.stakingWeight(account_one), 1, "Should have the staking weight of 1.");
+    assert.equal(await keepGroupImplViaProxy.stakingWeight(account_two), 0, "Should have staking weight of 0.");
+  });
+
 });
