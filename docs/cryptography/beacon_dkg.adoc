@@ -373,7 +373,7 @@ complaints_Bi
 [#phase-9,reftext="Phase 9"]
 ==== Phase 9: Second complaint resolution
 
-As in Phase 5, but with the validation formula from Phase 8.
+As in <<phase-5>>, but with the validation formula from <<phase-8>>.
 
 It should be noted that the symmetric nature of the encryption
 allows the parties to also decrypt _E~jm~_ and not just _E~mj~_.
@@ -446,7 +446,7 @@ if keys_i /= []:
 ==== Phase 11: Disqualified share reconstruction
 
 Decrypt and reconstruct _z~m~_ for every participant _P~m~_ that presented
-valid shares in _phase 3_ but whose public key shares in _phase 7_ were invalid.
+valid shares in <<phase-3>> but whose public key shares in <<phase-7>> were invalid.
 Calculate _y~m~ = g^z~m~^ mod p_ for each reconstructed _z~m~_.
 
 [source, python]
@@ -483,7 +483,7 @@ for m in (G_6 - G_11): # <1>
   y_m = g^z_m mod p
 ----
 <<1>> Reconstruct the shares of participants that became inactive
-or were disqualified since _phase 6_
+or were disqualified since <<phase-6>>
 
 [#phase-12,reftext="Phase 12"]
 ==== Phase 12: Public key reconstruction
