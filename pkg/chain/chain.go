@@ -16,9 +16,14 @@ type BlockCounter interface {
 	BlockWaiter(numBlocks int) (<-chan int, error)
 }
 
+type StakeMonitoring interface {
+	HasMinimumStake(address string) (bool, error)
+}
+
 // Handle represents a handle to a blockchain that provides access to the core
 // functionality needed for Keep network interactions.
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
+	StakeMonitoring() (StakeMonitoring, error)
 	ThresholdRelay() relaychain.Interface
 }

@@ -33,6 +33,7 @@ type localChain struct {
 	latestValue *big.Int
 
 	simulatedHeight int64
+	stakeMonitoring chain.StakeMonitoring
 	blockCounter    chain.BlockCounter
 
 	stakerList []string
@@ -40,6 +41,10 @@ type localChain struct {
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
+}
+
+func (c *localChain) StakeMonitoring() (chain.StakeMonitoring, error) {
+	return c.stakeMonitoring, nil
 }
 
 func (c *localChain) GetConfig() (relayconfig.Chain, error) {
@@ -190,6 +195,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		groupRelayEntries:       make(map[string]*big.Int),
 		groupRegistrations:      make(map[string][96]byte),
 		blockCounter:            bc,
+		stakeMonitoring:         &localStakeMonitoring{},
 	}
 }
 

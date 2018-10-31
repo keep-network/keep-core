@@ -6,6 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -76,6 +77,17 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing blockcounter: [%v]", err)
 	}
 
+	hasMinimumStake, err := checkMinimumStake(
+		chainProvider,
+		config.Ethereum.Account,
+	)
+	if err != nil {
+		return fmt.Errorf("could not check the minimum stake [%v]", err)
+	}
+	if !hasMinimumStake {
+		return fmt.Errorf("ethereum account balance is below the minimum stake")
+	}
+
 	err = beacon.Initialize(
 		ctx,
 		chainProvider.ThresholdRelay(),
@@ -108,4 +120,19 @@ func loadStaticKey(account ethereum.Account) (*key.StaticNetworkKey, error) {
 	}
 
 	return key.EthereumKeyToNetworkKey(ethereumKey), nil
+}
+
+func checkMinimumStake(
+	chain chain.Handle,
+	account ethereum.Account,
+) (bool, error) {
+	stakeMonitoring, err := chain.StakeMonitoring()
+	if err != nil {
+		return false, fmt.Errorf(
+			"error initializing stake monitoring: [%v]",
+			err,
+		)
+	}
+
+	return stakeMonitoring.HasMinimumStake(account.Address)
 }
