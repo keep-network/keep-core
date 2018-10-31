@@ -448,16 +448,25 @@ func (rm *ReconstructingMember) CalculateReconstructedPublicKeyShares() {
 // `A_j0 = z_j` for all group members including member themself.
 //
 // See Phase 12 of the protocol specification.
-func (sm *SharingMember) CombineGroupPublicKeyShares() {
+func (rm *ReconstructingMember) CombineGroupPublicKeyShares() {
 	// Current member's zeroth coefficient.
-	groupPublicKey := sm.publicCoefficients[0]
+	groupPublicKey := rm.publicCoefficients[0]
 
-	// Multiply peer group members' zeroth coefficients.
-	for _, publicKeyShare := range sm.receivedGroupPublicKeyShares {
+	// Multiply received peer group members' public key shares.
+	for _, publicKeyShare := range rm.receivedGroupPublicKeyShares {
 		groupPublicKey = new(big.Int).Mod(
 			new(big.Int).Mul(groupPublicKey, publicKeyShare),
-			sm.protocolConfig.P,
+			rm.protocolConfig.P,
 		)
 	}
-	sm.groupPublicKey = groupPublicKey
+
+	// Multiply reconstructed disqualified members' public key shares.
+	for _, publicKeyShare := range rm.reconstructedPublicKeyShares {
+		groupPublicKey = new(big.Int).Mod(
+			new(big.Int).Mul(groupPublicKey, publicKeyShare),
+			rm.protocolConfig.P,
+		)
+	}
+
+	rm.groupPublicKey = groupPublicKey
 }
