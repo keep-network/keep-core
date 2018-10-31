@@ -437,7 +437,8 @@ if keys_i /= []:
 ==== Phase 11: Disqualified share reconstruction
 
 Decrypt and reconstruct _z~m~_ for every participant _P~m~_ that presented
-valid shares in _phase 4_ but whose public key shares in _phase 7_ were invalid.
+valid shares in _phase 3_ but whose public key shares in _phase 7_ were invalid.
+Calculate _y~m~ = g^z~m~^ mod p_ for each reconstructed _z~m~_.
 
 [source, python]
 ----
@@ -469,6 +470,8 @@ for m in (G_6 - G_11): # <1>
       )
       s_mk * a_mk
   )
+
+  y_m = g^z_m mod p
 ----
 <<1>> Reconstruct the shares of participants that became inactive
 or were disqualified since _phase 6_
