@@ -57,9 +57,15 @@ type SharingMember struct {
 type ReconstructingMember struct {
 	*SharingMember
 
-	// Disqualified members' private key shares reconstructed from shares revealed
-	// by other group members.
+	// Disqualified members' private key shares reconstructed from shares
+	// revealed by other group members.
+	// Stored as `<m, z_m>`, where:
+	// - `m` is disqualified member's ID
+	// - `z_m` is reconstructed private key share of member `m`
 	reconstructedPrivateKeyShares map[int]*big.Int
 	// Public key shares calculated from reconstructed private key shares.
+	// Stored as `<m, y_m>`, where:
+	// - `m` is disqualified member's ID
+	// - `y_m` is reconstructed public key share of member `m`
 	reconstructedPublicKeyShares map[int]*big.Int
 }
