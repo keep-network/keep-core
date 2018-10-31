@@ -10,7 +10,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 )
 
 func TestVerifyMessageSignature(t *testing.T) {
@@ -102,10 +101,6 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	ch, err := createTestChannel(ctx, staticKey)
 	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := registerIdentity(ch, staticKey, "honest"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -203,26 +198,6 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 			return
 		}
 	}
-}
-
-func registerIdentity(
-	ch *channel,
-	staticKey libp2pcrypto.PrivKey,
-	protocolID string,
-) error {
-	identity, err := createIdentity(staticKey)
-	if err != nil {
-		return err
-	}
-
-	if err := ch.RegisterIdentifier(
-		networkIdentity(identity.id),
-		&protocolIdentifier{id: protocolID},
-	); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // createTestChannel creates and initializes `BroadcastChannel` with all
