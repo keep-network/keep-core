@@ -51,3 +51,15 @@ type SharingMember struct {
 	shareS, shareT     *big.Int
 	publicCoefficients []*big.Int
 }
+
+// ReconstructingMember represents one member in a threshold sharing group who
+// is reconstructing private and public key shares of disqualified group members.
+type ReconstructingMember struct {
+	*SharingMember
+
+	// Disqualified members' private key shares reconstructed from shares revealed
+	// by other group members.
+	reconstructedPrivateKeyShares map[int]*big.Int
+	// Public key shares calculated from reconstructed private key shares.
+	reconstructedPublicKeyShares map[int]*big.Int
+}
