@@ -66,43 +66,65 @@ in the cloud.
 ....
 
 == Setup
+We assume you have Homebrew installed. Many of the tools needed for a complete
+development environment can be installed via Homebrew. In some cases Homebrew
+won't install the latest version. We will mention the minimum version needed
+for each tool. Please check the version you install.
+
 === Mojave Fixes
-Install the missing header files:
+Make sure the Xcode developer tools are installed:
+
+....
+xcode-select --install
+....
+
+On Mojave you will need to install the missing header files:
 
 ....
 open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
-----
+....
 
 === Docker for Mac
-Install Docker for Mac via Homebrew:
+Install Docker for Mac via Homebrew. Make sure you run at least
+version `18.09.0-ce-beta1` or higher.
+
 ....
 brew cask install docker
 ....
+
 Or download the installer from here:
 https://docs.docker.com/docker-for-mac/install/
 
+After the installation activate Kubernetes in the Docker preferences
+and make sure you are running at least version `v1.10.3` or higher.
+
 === Kubernetes-CLI
 Docker for Mac comes with an older version of `kubectl`. You'll want
-to upgrade that.
+to upgrade that. Make sure you are using version `v1.12.0` or higher.
+
 ....
 kubectl version
 mv /usr/local/bin/kubectl /usr/local/bin/kubectl-Docker-for-Mac
 brew install kubernetes-cli
 kubectl version
 ....
-Make sure you are using version `v1.12.0` or higher.
+
 
 === Skaffold
 Install Skaffold via Homebrew:
+
 ....
 brew install skaffold
 ....
+
 Or by downloading a release binary:
+
 ....
 curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-darwin-amd64
 chmod +x skaffold
 mv skaffold /usr/local/bin
 ....
+
 Whatever you choose make sure you're using version `v0.17.0` or
 higher.
 
@@ -110,7 +132,4 @@ higher.
 
 === Develop
 === Attach a Debugger
-=== Pumba Network Fuzzing 
-
-
-
+=== Pumba Network Fuzzing
