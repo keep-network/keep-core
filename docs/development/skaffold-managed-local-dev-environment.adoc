@@ -66,6 +66,45 @@ in the cloud.
 ....
 
 == Setup
+=== Mojave Fixes
+Install the missing header files:
+
+....
+open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
+----
+
+=== Docker for Mac
+Install Docker for Mac via Homebrew:
+....
+brew cask install docker
+....
+Or download the installer from here:
+https://docs.docker.com/docker-for-mac/install/
+
+=== Kubernetes-CLI
+Docker for Mac comes with an older version of `kubectl`. You'll want
+to upgrade that.
+....
+kubectl version
+mv /usr/local/bin/kubectl /usr/local/bin/kubectl-Docker-for-Mac
+brew install kubernetes-cli
+kubectl version
+....
+Make sure you are using version `v1.12.0` or higher.
+
+=== Skaffold
+Install Skaffold via Homebrew:
+....
+brew install skaffold
+....
+Or by downloading a release binary:
+....
+curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-darwin-amd64
+chmod +x skaffold
+mv skaffold /usr/local/bin
+....
+Whatever you choose make sure you're using version `v0.17.0` or
+higher.
 
 == Development
 
