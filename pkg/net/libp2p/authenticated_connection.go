@@ -370,18 +370,18 @@ func (ac *authenticatedConnection) responderReceiveAct3(
 	return act3Message, nil
 }
 
-// verify checks to see if the pinned (static) identity matches the message
+// verify checks to see if the pinned (expected) identity matches the message
 // sender's identity before running through the signature verification check.
 func (ac *authenticatedConnection) verify(
-	pinned, sender peer.ID,
+	expectedSender, actualSender peer.ID,
 	messageBytes, signatureBytes []byte,
 ) error {
-	if pinned != sender {
+	if expectedSender != actualSender {
 		return fmt.Errorf(
 			"pinned identity [%v] does not match sender identity [%v]",
-			pinned,
-			sender,
+			expectedSender,
+			actualSender,
 		)
 	}
-	return verifyEnvelope(sender, messageBytes, signatureBytes)
+	return verifyEnvelope(actualSender, messageBytes, signatureBytes)
 }
