@@ -18,7 +18,7 @@ all:
 
 SOL=$(shell ls *.sol | sed -e 's/.sol/.go/' )
 
-gen_go: 
+gen_go:
 	make -f ${OP_DIR}/Makefile ${SOL}
 
 %.go : %.sol
