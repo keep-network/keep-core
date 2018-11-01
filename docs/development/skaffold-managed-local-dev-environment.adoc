@@ -1,0 +1,77 @@
+= Skaffold Managed Local Dev Environment
+
+== Overview
+We use Skaffold to manage the local development environment. Skaffold
+takes care of booting up a sane local Kubernetes environment that includes:
+- a local Ethereum test network (n nodes)
+- a local Keep client (n nodes)
+- Pumba chaos creator to disturbe the network or mess with container
+  state
+- a standardized way to attach the Go Delve debugger to a Keep node in
+  the cluster.
+
+When started in `dev` mode Skaffold will automatically build new Keep
+binaries on file changes.
+
+=== Goals
+1. Simplify coding, debugging and testing Keep code
+by standardizing the local development environment
+2. Keeping local development congruent with the Kubernetes environment
+in the cloud.
+
+=== Design ===
+
+....
++-------------------------------------------------------------------+
+|                        Kubernetes Cluster                         |
+|                                                                   |
+| +----------------------------------------------------------+      |
+| |                         Ethereum                         |      |
+| |                         Testnet                          |      |
+| |                                                          |      |
+| |                                                          |      |
+| |                                                          |      |
+| |                                                          |      |
+| | +---------+    +---------+    +---------+    +---------+ |      |
+| | |         |    |         |    |         |    |         | |      |
+| | |  Geth   |    |  Geth   |    |  Geth   |    |  Geth   | |      |
+| | |  Node   |<-->|  Node   |<-->|  Node   |<-->|  Node   | |      |
+| | |         |    |         |    |         |    |         | |      |
+| | +----^----+    +---------+    +---------+    +----^----+ |      |
+| +------+--------------+-------+------+------+-------+------+      |
+|        |              |       |   ^  |      |    ^  |             |
+|        |              |       |   |  |      |    |  |             |
+|        |          +-------+   +--++-----+   +----+  |             |
+|        |          |       |      |      |           |             |
+|        |          | Keep  |      | Keep |           |             |
+|        |      +-->|   2   |<---->|  3   |<--+       |             |
+|        |      |   |       |      |      |   |       |             |
+|        |      |   +-------+      +------+   |       |             |
+|    +-------+  |       ^              ^      |   +-------+         |
+|    |       |  |       |              |      |   |       |         |
+|    | Keep  |  |       |              |      |   | Keep  |         |
+|    |   1   |<-+       |              |      +-->|   4   |         |
+|    |       |          |              |          |       |         |
+|    +-------+          |              |          +-------+         |
+|        ^              |              |              ^             |
+|        |              |              |              |             |
+|        +--------------+--------------+--------------+             |
+|                                                                   |
+|                         +--------+                                |
+|                         |        |                                |
+|                         | Pumba  |                                |
+|                         |        |                                |
+|                         +--------+                                |
++-------------------------------------------------------------------+
+....
+
+== Setup
+
+== Development
+
+=== Develop
+=== Attach a Debugger
+=== Pumba Network Fuzzing 
+
+
+
