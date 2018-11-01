@@ -3,14 +3,14 @@ syntax = "proto3";
 option go_package = "pb";
 package net;
 
-// Envelope contains a marshalled message, as well as a signature over the
+// NetworkEnvelope contains a marshalled message, as well as a signature over the
 // the contents of the message (to ensure an adversary hasn't tampered
 // with the contents).
-message Envelope {
-  // The marshalled message.
-  bytes message = 1;
+message NetworkEnvelope {
+  // The marshalled network message.
+  bytes network_message = 1;
 
-  // Signature of the message.
+  // Signature over the network message.
   bytes signature = 2;
 }
 
@@ -18,7 +18,7 @@ message Envelope {
 // the sender and receiver. Optionally, a Message may contain an encrypted
 // payload for messages which need to be secret; in this case, the encrypted
 // field will be set.
-message Message {
+message NetworkMessage {
   // The PublicKey of the sender.
   bytes sender = 1;
 
