@@ -41,6 +41,9 @@ message NetworkMessage {
 
   // Proof that the peer that sent this message knows the channel's name.
   bytes channel_MAC = 7;
+
+  // Nonce of this network message
+  bytes nonce = 8;
 }
 
 message Identity {
