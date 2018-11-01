@@ -124,7 +124,7 @@ with _P~j~_
 with _P~j~_ using _k~ij~ = ECDH(x~ij~, y~ji~)_
 
 |**X**
-|The (virtual) private key corresponding to the group _G'_. _X = Σ z~i~_
+|The (virtual) private key corresponding to the group _G'_: _X = Σ z~i~_
 
 |**Y**
 |The public key corresponding to the group _G'_
