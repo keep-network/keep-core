@@ -18,7 +18,7 @@ message NetworkEnvelope {
 // the sender and receiver. Optionally, a Message may contain an encrypted
 // payload for messages which need to be secret; in this case, the encrypted
 // field will be set.
-message Message {
+message NetworkMessage {
   // The PublicKey of the sender.
   bytes sender = 1;
 
