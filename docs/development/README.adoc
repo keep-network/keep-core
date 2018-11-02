@@ -23,7 +23,10 @@ headers) and `openssl` (also with headers) installed, as well as the LLVM
 developer tools. On macOS, you can `brew install gmp openssl llvm` to install
 all of these. Note that `llvm` requires some additional `env` variables work that
 the formula will explain when you install it.
-Then you will need to build and install `bn`. 
+
+Then you will need to build and install `bn`.   Change directory to `bn` and
+run `make` then `make install`.
+
 Also you'll also need https://github.com/golang/dep=installation[`dep`], the Go
 dependency manager we use.
 
