@@ -9,6 +9,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
+type G1point struct {
+	*bn256.G1
+}
+
+type G2point struct {
+	*bn256.G2
+}
+
+type compressedPoint []byte
+
 // Quadratic extension field element as seen in bn256/gfp2.go
 type gfP2 struct {
 	x, y *big.Int
@@ -134,9 +144,9 @@ func yParity(y *big.Int) byte {
 
 // Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func Compress(g *bn256.G1) []byte {
+func (g G1point) Compress() compressedPoint {
 
-	rt := make([]byte, 32)
+	rt := make(compressedPoint, 32)
 
 	marshalled := g.Marshal()
 
@@ -154,12 +164,12 @@ func Compress(g *bn256.G1) []byte {
 	return rt
 }
 
-// CompressG2 compresses point by using X value and the parity bit of Y
+// Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func CompressG2(g *bn256.G2) []byte {
+func (g G2point) Compress() compressedPoint {
 
 	// X of G2 point is a 64 bytes value.
-	rt := make([]byte, 64)
+	rt := make(compressedPoint, 64)
 
 	marshalled := g.Marshal()
 
@@ -177,11 +187,11 @@ func CompressG2(g *bn256.G2) []byte {
 	return rt
 }
 
-// Decompress decompresses byte slice into G1 point by extracting Y parity
+// DecompressToG1 decompresses byte slice into G1 point by extracting Y parity
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
 // top byte as 0x01 (even) or 0x00 (odd).
-func Decompress(m []byte) (*bn256.G1, error) {
+func (m compressedPoint) DecompressToG1() (*bn256.G1, error) {
 
 	// Get the original X.
 	x := new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:]...))
@@ -203,11 +213,11 @@ func Decompress(m []byte) (*bn256.G1, error) {
 	return G1FromInts(x, y)
 }
 
-// DecompressG2 decompresses byte slice into G2 point by extracting Y parity
+// DecompressToG2 decompresses byte slice into G2 point by extracting Y parity
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
 // top byte as 0x01 (even) or 0x00 (odd).
-func DecompressG2(m []byte) (*bn256.G2, error) {
+func (m compressedPoint) DecompressToG2() (*bn256.G2, error) {
 
 	// Get the original X.
 	x := new(gfP2)

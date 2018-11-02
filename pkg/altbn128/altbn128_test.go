@@ -16,7 +16,7 @@ func TestCompressG1(t *testing.T) {
 			t.Errorf("Error generating random point on G1")
 		}
 
-		buffer := Compress(p)
+		buffer := G1point{p}.Compress()
 		assertEqual(t, len(buffer), 32, "Compressed G1 should be 32 bytes")
 	}
 }
@@ -24,10 +24,10 @@ func TestCompressG1(t *testing.T) {
 func TestDecompressG1(t *testing.T) {
 	errorSeen := false
 	for i := 0; i < 100; i++ {
-		buffer := make([]byte, 32)
+		buffer := make(compressedPoint, 32)
 		_, err := rand.Read(buffer)
 		if err == nil {
-			_, err2 := Decompress(buffer)
+			_, err2 := buffer.DecompressToG1()
 
 			if err2 == nil {
 				errorSeen = true
@@ -47,11 +47,11 @@ func TestCompressG1Invertibility(t *testing.T) {
 			continue
 		}
 
-		buffer := Compress(p1)
+		buffer := G1point{p1}.Compress()
 
 		t.Logf("Compressed G1 to [%v]", buffer)
 
-		p2, _ := Decompress(buffer)
+		p2, _ := buffer.DecompressToG1()
 
 		assertPointsEqual(t, p1, p2, "Decompressing a compressed point should give the same point.")
 	}
@@ -65,11 +65,11 @@ func TestCompressG2Invertibility(t *testing.T) {
 			continue
 		}
 
-		buffer := CompressG2(p1)
+		buffer := G2point{p1}.Compress()
 
 		t.Logf("Compressed G2 to [%v]", buffer)
 
-		p2, _ := DecompressG2(buffer)
+		p2, _ := buffer.DecompressToG2()
 
 		assertG2PointsEqual(t, p1, p2, "Decompressing a compressed point should give the same point.")
 	}
