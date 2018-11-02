@@ -146,19 +146,19 @@ func Compress(g *bn256.G1) []byte {
 
 	y := new(big.Int).SetBytes(marshalled[32:])
 
-	// Prepare bytes mask with parity bit.
+	// Encode the parity (even/oddness) of y as a 0 or 1 in the topmost bit of
+	// the compressed point.
 	mask := yParity(y) << 7
-
-	// Use `OR` operator to save the parity bit.
 	rt[0] |= mask
 
 	return rt
 }
 
-// Compress compresses point by using X value and the parity bit of Y
+// CompressG2 compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
 func CompressG2(g *bn256.G2) []byte {
 
+	// X of G2 point is a 64 bytes value.
 	rt := make([]byte, 64)
 
 	marshalled := g.Marshal()
@@ -169,10 +169,9 @@ func CompressG2(g *bn256.G2) []byte {
 
 	y := new(big.Int).SetBytes(marshalled[64:96])
 
-	// Prepare bytes mask with parity bit.
+	// Encode the parity (even/oddness) of y as a 0 or 1 in the topmost bit of
+	// the compressed point.
 	mask := yParity(y) << 7
-
-	// Use `OR` operator to save the parity bit.
 	rt[0] |= mask
 
 	return rt
@@ -194,9 +193,9 @@ func Decompress(m []byte) (*bn256.G1, error) {
 		return nil, errors.New("failed to decompress G1")
 	}
 
-	// Compare calculated Y parity with the original Y parity and if it
-	// doesn't match get the right Y by extracting the calculated one from
-	// the bn256.P since `Y1 + Y2 = P`.
+	// Compare calculated Y parity with the original Y parity in the top bit of
+	// the compressed point. If it doesn't match, we know `Y1 + Y2 = P`, so we
+	// recover the correct Y using bn256.P.
 	if m[0]&0x80>>7 != yParity(y) {
 		y = new(big.Int).Add(bn256.P, new(big.Int).Neg(y))
 	}
@@ -204,7 +203,7 @@ func Decompress(m []byte) (*bn256.G1, error) {
 	return G1FromInts(x, y)
 }
 
-// Decompress decompresses byte slice into G2 point by extracting Y parity
+// DecompressG2 decompresses byte slice into G2 point by extracting Y parity
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
 // top byte as 0x01 (even) or 0x00 (odd).
@@ -220,9 +219,9 @@ func DecompressG2(m []byte) (*bn256.G2, error) {
 	y2.Add(y2, twistB)
 	y := sqrtGfP2(y2)
 
-	// Compare calculated Y parity with the original Y parity and if it
-	// doesn't match get the right Y by extracting the calculated one from
-	// the bn256.P since `Y1 + Y2 = P`.
+	// Compare calculated Y parity with the original Y parity in the top bit of
+	// the compressed point. If it doesn't match, we know `Y1 + Y2 = P`, so we
+	// recover the correct Y using bn256.P.
 	if m[0]&0x80>>7 != yParity(y.y) {
 		y.x = new(big.Int).Add(bn256.P, new(big.Int).Neg(y.x))
 		y.y = new(big.Int).Add(bn256.P, new(big.Int).Neg(y.y))
