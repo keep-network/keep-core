@@ -42,7 +42,9 @@ message Message {
   // Proof that the peer that sent this message knows the channel's name.
   bytes channel_MAC = 7;
 
-  // Nonce of this network message
+  // Per RFC 2, Section 1.2.5: 
+  // The nonce is included in a message in a way that makes it a part of the
+  // content used to produce a signature.
   bytes nonce = 8;
 }
 
