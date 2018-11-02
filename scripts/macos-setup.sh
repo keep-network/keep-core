@@ -44,10 +44,10 @@ cd ../contracts/solidity && npm install && cd ../../scripts
 
 echo "Installing bn and it's dependencies..."
 echo "  As a part of installing bn the llvm compiler is needed.  Usually this takes a few minutes to install."
-for i in gmp openssl llvm ; do
-	brew list "$i" &>/dev/null || brew install "$i" 
+for pkg in gmp openssl llvm ; do
+	brew list "$pkg" &>/dev/null || brew install "$pkg" 
 done
-cd ~/go/src/github.com/keep-network
+( cd ../..
 if [ -d bn ] ; then
 	cd bn
 	git pull
@@ -57,5 +57,6 @@ else
 fi
 make
 make install
+)
 
 echo "Ready to rock! See above for any extra environment-related instructions."
