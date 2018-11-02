@@ -128,9 +128,55 @@ mv skaffold /usr/local/bin
 Whatever you choose make sure you're using version `v0.17.0` or
 higher.
 
-== Development
+== Local Development
+=== Boot Ethereum Network
+You first need to start the Ethereum testnet and it's pods.
 
-=== Develop
+....
+kubectl create -f dashboard.yaml
+kubectl create -f miner-nodes.yaml
+kubectl create -f tx-nodes.yaml
+....
+
+Check if all pods have booted by running this command:
+
+....
+kubectl get pods
+....
+
+You can reach the Ethereum dashboard at http://localhost:3000 and once it shows
+all nodes as active you can start Skaffold.
+
+To destroy the Ethereum testnet run the following commands:
+
+....
+kubectl delete deployment dashboard
+kubectl delete deployment miner-node
+kubectl delete deployment tx-node
+....
+
+=== Develop Keep
+To start developing run the following command:
+
+....
+skaffold dev
+....
+
+This will build the Docker container for the Keep client and deploy it inside
+a Kubernetes pod. Any log output will be printed on the console where you
+started Skaffold.
+
+Any time you save a changed file related to the Keep client a new build is
+kicked off and the resulting container deployed.
+
+To destroy the Skaffold environment just press Ctrl-C.
+
+=== Attach a Debugger
+=== Kubernetes Network Fuzzing
+
+== GCS Development
+
+=== Develop Keep
 === Attach a Debugger
 === Kubernetes Network Fuzzing
 
