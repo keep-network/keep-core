@@ -354,32 +354,33 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 	}, nil
 }
 
-// ReconstructPrivateKeyShares reconstructs disqualified members' private key
-// shares from shares calculated by disqualified members for peer members.
+// ReconstructIndividualPrivateKeys reconstructs disqualified members' individual
+// private keys from shares calculated by disqualified members for peer members.
 //
-// Function can be executed for shares from members that presented valid shares
+// Function can be executed for members that presented valid shares and commitments
 // but were disqualified on public key shares validation stage.
 //
 // Function requires disqualified shares to be provided as map of the following
 // format: <disqualifiedID, <peerID, shareS>>
 //
-// It stores a map of reconstructed private key shares for each disqualified ID:
+// It stores a map of reconstructed individual private keys for each disqualified
+// member:
 // <disqualifiedID, privateKeyShare>
 //
 // See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) ReconstructPrivateKeyShares(
+func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 	disqualifiedShares map[int]map[int]*big.Int, // <m, <k, s_mk>>
 ) {
-	privateKeyShares := make(map[int]*big.Int, len(disqualifiedShares))
+	rm.reconstructedIndividualPrivateKeys = make(map[int]*big.Int, len(disqualifiedShares))
 
 	for disqualifiedID, shares := range disqualifiedShares {
-		// `z_m = Σ s_mk * a_mk` where:
-		// - `z_m` is disqualified member's private key share
+		// `z_m = Σ s_mk * a_mk mod p` where:
+		// - `z_m` is disqualified member's individual private key
 		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
 		// - `a_mk` is lagrange coefficient for peer member k (see below)
-		privateKeyShare := big.NewInt(0)
+		individualPrivateKey := big.NewInt(0)
 		for peerID, share := range shares {
-			// `a_mk = Π (l / (l - k))` where:
+			// `a_mk = Π (l / (l - k)) mod p` where:
 			// - `a_mk` is lagrange coefficient for peer member k
 			// - `l` are IDs of other members who provided shares and `l != k`
 			lagrangeCoefficient := big.NewInt(1)
@@ -408,35 +409,33 @@ func (rm *ReconstructingMember) ReconstructPrivateKeyShares(
 			// s_mk * a_mk
 			multipliedShare := new(big.Int).Mul(share, lagrangeCoefficient)
 
-			privateKeyShare = new(big.Int).Mod(
+			individualPrivateKey = new(big.Int).Mod(
 				new(big.Int).Add(
-					privateKeyShare,
+					individualPrivateKey,
 					multipliedShare,
 				),
 				rm.protocolConfig.P,
 			)
 		}
-		privateKeyShares[disqualifiedID] = privateKeyShare
+		rm.reconstructedIndividualPrivateKeys[disqualifiedID] = individualPrivateKey // <m, z_m>
 	}
-	rm.reconstructedPrivateKeyShares = privateKeyShares // <m, z_m>
 }
 
-// CalculateReconstructedPublicKeyShares calculates and stores public key shares
-// from reconstructed private key shares.
+// CalculateReconstructedIndividualPublicKeys calculates and stores individual
+// public keys from reconstructed private key shares.
 //
-// Public key share is calculated as `g^privateKeyShare`.
+// Public key is calculated as `g^privateKey mod p`.
 //
 // See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) CalculateReconstructedPublicKeyShares() {
-	publicKeyShares := make(map[int]*big.Int, len(rm.reconstructedPrivateKeyShares))
-	for id, privateKeyShare := range rm.reconstructedPrivateKeyShares {
+func (rm *ReconstructingMember) CalculateReconstructedIndividualPublicKeys() {
+	rm.reconstructedIndividualPublicKeys = make(map[int]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
+	for id, privateKeyShare := range rm.reconstructedIndividualPrivateKeys {
 		// `y_m = g^{z_m}`
 		publicKeyShare := new(big.Int).Exp(
 			rm.vss.G,
 			privateKeyShare,
 			rm.protocolConfig.P,
 		)
-		publicKeyShares[id] = publicKeyShare
+		rm.reconstructedIndividualPublicKeys[id] = publicKeyShare
 	}
-	rm.reconstructedPublicKeyShares = publicKeyShares
 }

@@ -53,19 +53,19 @@ type SharingMember struct {
 }
 
 // ReconstructingMember represents one member in a threshold sharing group who
-// is reconstructing private and public key shares of disqualified group members.
+// is reconstructing individual private and public keys of disqualified group members.
 type ReconstructingMember struct {
 	*SharingMember
 
-	// Disqualified members' private key shares reconstructed from shares
+	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
 	// Stored as `<m, z_m>`, where:
 	// - `m` is disqualified member's ID
-	// - `z_m` is reconstructed private key share of member `m`
-	reconstructedPrivateKeyShares map[int]*big.Int
-	// Public key shares calculated from reconstructed private key shares.
+	// - `z_m` is reconstructed individual private key of member `m`
+	reconstructedIndividualPrivateKeys map[int]*big.Int
+	// Individual public keys calculated from reconstructed individual private keys.
 	// Stored as `<m, y_m>`, where:
 	// - `m` is disqualified member's ID
-	// - `y_m` is reconstructed public key share of member `m`
-	reconstructedPublicKeyShares map[int]*big.Int
+	// - `y_m` is reconstructed individual public key of member `m`
+	reconstructedIndividualPublicKeys map[int]*big.Int
 }

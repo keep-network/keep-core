@@ -7,31 +7,31 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
-func TestReconstructPrivateKeyShares(t *testing.T) {
+func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 	disqualifiedIDs := []int{3, 5}
 
 	group, allDisqualifiedShares, _ := initializeReconstructingMembersGroup(threshold, groupSize, disqualifiedIDs)
 
-	expectedPrivateKeyShare1 := group[2].secretCoefficients[0] // for ID = 3
-	expectedPrivateKeyShare2 := group[4].secretCoefficients[0] // for ID = 5
+	expectedIndividualPrivateKey1 := group[2].secretCoefficients[0] // for ID = 3
+	expectedIndividualPrivateKey2 := group[4].secretCoefficients[0] // for ID = 5
 
 	for _, rm := range group {
 		if !contains(disqualifiedIDs, rm.ID) {
-			rm.ReconstructPrivateKeyShares(allDisqualifiedShares)
+			rm.ReconstructIndividualPrivateKeys(allDisqualifiedShares)
 
-			if rm.reconstructedPrivateKeyShares[disqualifiedIDs[0]].Cmp(expectedPrivateKeyShare1) != 0 {
+			if rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[0]].Cmp(expectedIndividualPrivateKey1) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
-					expectedPrivateKeyShare1,
-					rm.reconstructedPrivateKeyShares[disqualifiedIDs[0]],
+					expectedIndividualPrivateKey1,
+					rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[0]],
 				)
 			}
 
-			if rm.reconstructedPrivateKeyShares[disqualifiedIDs[1]].Cmp(expectedPrivateKeyShare2) != 0 {
+			if rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[1]].Cmp(expectedIndividualPrivateKey2) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
-					expectedPrivateKeyShare1,
-					rm.reconstructedPrivateKeyShares[disqualifiedIDs[1]],
+					expectedIndividualPrivateKey1,
+					rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[1]],
 				)
 			}
 		}
@@ -47,20 +47,20 @@ func contains(slice []int, value int) bool {
 	return false
 }
 
-func TestCalculateReconstructedPublicKeyShares(t *testing.T) {
+func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	groupSize := 3
 	p := big.NewInt(179)
 	g := big.NewInt(7)
 
 	disqualifiedIDs := []int{4, 5} // m
 
-	reconstructedPrivateKeyShares := make(map[int]*big.Int, len(disqualifiedIDs)) // z_m
-	reconstructedPrivateKeyShares[4] = big.NewInt(14)                             // z_4
-	reconstructedPrivateKeyShares[5] = big.NewInt(15)                             // z_5
+	reconstructedIndividualPrivateKeys := make(map[int]*big.Int, len(disqualifiedIDs)) // z_m
+	reconstructedIndividualPrivateKeys[4] = big.NewInt(14)                             // z_4
+	reconstructedIndividualPrivateKeys[5] = big.NewInt(15)                             // z_5
 
-	expectedPublicKeyShares := make(map[int]*big.Int, len(disqualifiedIDs)) // y_m = g^{z_m} mod p
-	expectedPublicKeyShares[4] = big.NewInt(43)                             // 7^14 mod 179
-	expectedPublicKeyShares[5] = big.NewInt(122)                            // 7^15 mod 179
+	expectedIndividualPublicKeys := make(map[int]*big.Int, len(disqualifiedIDs)) // y_m = g^{z_m} mod p
+	expectedIndividualPublicKeys[4] = big.NewInt(43)                             // 7^14 mod 179
+	expectedIndividualPublicKeys[5] = big.NewInt(122)                            // 7^15 mod 179
 
 	members := make([]*ReconstructingMember, groupSize)
 	for i := range members {
@@ -74,18 +74,18 @@ func TestCalculateReconstructedPublicKeyShares(t *testing.T) {
 					vss: &pedersen.VSS{G: g},
 				},
 			},
-			reconstructedPrivateKeyShares: reconstructedPrivateKeyShares,
+			reconstructedIndividualPrivateKeys: reconstructedIndividualPrivateKeys,
 		}
 	}
 
 	for _, rm := range members {
-		rm.CalculateReconstructedPublicKeyShares()
+		rm.CalculateReconstructedIndividualPublicKeys()
 
-		for m, expectedPublicKeyShare := range expectedPublicKeyShares {
-			if rm.reconstructedPublicKeyShares[m].Cmp(expectedPublicKeyShare) != 0 {
+		for m, expectedIndividualPublicKey := range expectedIndividualPublicKeys {
+			if rm.reconstructedIndividualPublicKeys[m].Cmp(expectedIndividualPublicKey) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
-					expectedPublicKeyShare,
-					rm.reconstructedPublicKeyShares[m],
+					expectedIndividualPublicKey,
+					rm.reconstructedIndividualPublicKeys[m],
 				)
 			}
 		}
