@@ -289,6 +289,8 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 		return nil, err
 	}
 
+	ac.remotePeerID = peer.ID(act1Envelope.GetPeerID())
+
 	if err := verifyEnvelope(
 		peer.ID(act1Envelope.GetPeerID()),
 		act1Envelope.GetMessage(),
