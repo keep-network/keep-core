@@ -71,8 +71,9 @@ func TestThresholdBLS(t *testing.T) {
 		signatureShares = append(signatureShares, share)
 	}
 
-	// Get full BLS signature.
-	sig := Recover(signatureShares, threshold)
+	// Get full BLS signature. Use only threshold amount of signatures to
+	// demonstrate it's a functional threshold construction.
+	sig := Recover(signatureShares[:threshold], threshold)
 
 	result := Verify(masterPublicKey[0], msg, sig)
 
