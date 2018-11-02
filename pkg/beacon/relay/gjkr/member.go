@@ -52,8 +52,6 @@ type SharingMember struct {
 	publicCoefficients []*big.Int
 
 	receivedGroupPublicKeyShares map[int]*big.Int
-
-	groupPublicKey *big.Int
 }
 
 // ReconstructingMember represents one member in a threshold sharing group who
@@ -72,4 +70,7 @@ type ReconstructingMember struct {
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed public key share of member `m`
 	reconstructedPublicKeyShares map[int]*big.Int
+	// Group public key calculated from individual public keys of all group members.
+	// Denoted as `Y` across the protocol specification.
+	groupPublicKey *big.Int
 }
