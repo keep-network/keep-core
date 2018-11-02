@@ -37,13 +37,13 @@ type SecretSharesAccusationsMessage struct {
 	accusedIDs []int
 }
 
-// MemberPublicCoefficientsMessage is a message payload that carries she sender's
+// MemberPublicCoefficientsMessage is a message payload that carries the sender's
 // public coefficients.
 // It is expected to be broadcast.
 type MemberPublicCoefficientsMessage struct {
 	senderID int
 
-	publicCoefficients []*big.Int // A_ik = g^{a_ik}
+	publicCoefficients []*big.Int // A_ik = g^{a_ik} mod p
 }
 
 // CoefficientsAccusationsMessage is a message payload that carries all of the

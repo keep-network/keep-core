@@ -267,7 +267,7 @@ func pow(x, y int) *big.Int {
 	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
 }
 
-// CombineMemberShares sums up all shares intended for this member.
+// CombineMemberShares sums up all `s` and `t` shares intended for this member.
 // Combines secret shares calculated by current member `i` for itself `s_ii` with
 // shares calculated by peer members `j` for this member `s_ji`.
 //
