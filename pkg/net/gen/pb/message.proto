@@ -8,14 +8,14 @@ package net;
 // with the contents).
 message NetworkEnvelope {
   // The marshalled network message.
-  bytes network_message = 1;
+  bytes message = 1;
 
   // Signature over the network message.
   bytes signature = 2;
 }
 
-// Message contains a marshalled payload. It also contains the Identities of
-// the sender and receiver. Optionally, a Message may contain an encrypted
+// NetworkMessage contains a marshalled payload. It also contains the Identities
+// of the sender and receiver. Optionally, a Message may contain an encrypted
 // payload for messages which need to be secret; in this case, the encrypted
 // field will be set.
 message NetworkMessage {

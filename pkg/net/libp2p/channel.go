@@ -207,8 +207,8 @@ func (c *channel) sealEnvelope(
 	}
 
 	return &pb.NetworkEnvelope{
-		NetworkMessage: messageBytes,
-		Signature:      signature,
+		Message:   messageBytes,
+		Signature: signature,
 	}, nil
 }
 
@@ -296,14 +296,14 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 
 	if err := c.verify(
 		pubsubMessage.GetFrom(),
-		envelope.GetNetworkMessage(),
+		envelope.GetMessage(),
 		envelope.GetSignature(),
 	); err != nil {
 		return err
 	}
 
 	var protoMessage pb.NetworkMessage
-	if err := proto.Unmarshal(envelope.NetworkMessage, &protoMessage); err != nil {
+	if err := proto.Unmarshal(envelope.Message, &protoMessage); err != nil {
 		return err
 	}
 

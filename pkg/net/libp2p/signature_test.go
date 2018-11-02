@@ -131,7 +131,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	adversarySignature, err := adversaryKey.Sign(envelope.NetworkMessage)
+	adversarySignature, err := adversaryKey.Sign(envelope.Message)
 	if err != nil {
 		t.Fatal(err)
 	}
