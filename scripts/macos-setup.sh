@@ -60,6 +60,7 @@ done
 	fi
 	make
 	make install
+<<<<<<< HEAD
 )
 =======
 for i in gmp openssl llvm ; do
@@ -82,6 +83,8 @@ make install
 <<<<<<< HEAD
 >>>>>>> 8597abb9... Convert inline code to for loop
 =======
+=======
+>>>>>>> b447fdf4... Indent sub-shell
 )
 >>>>>>> de43a1f3... Make cd relative so can be in different paths
 

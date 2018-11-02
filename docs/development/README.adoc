@@ -74,8 +74,8 @@ You'll also need https://github.com/golang/dep=installation[`dep`], the Go
 Then you will need to build and install `bn`. 
 =======
 
-Then you will need to build and install `bn`.   Change directory to `bn` and
-run `make` then `make install`.
+Then you will need to build and install `bn`. Change directory to `bn` and
+run `make install`.
 
 >>>>>>> 58e19cc2... Put commands into paragraph
 Also you'll also need https://github.com/golang/dep=installation[`dep`], the Go
@@ -166,5 +166,3 @@ Go to `contracts/solidity` directory and run:
 npm install
 npm run demo
 ```
-
-
