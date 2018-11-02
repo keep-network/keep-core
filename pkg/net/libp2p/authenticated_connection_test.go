@@ -66,7 +66,6 @@ func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *
 		responderConn,
 		responderPeerID,
 		responderStaticKey,
-		"",
 	)
 	if err != nil {
 		t.Fatalf("failed to connect initiator with responder [%v]", err)

@@ -43,7 +43,6 @@ func (t *transport) SecureInbound(
 		unauthenticatedConn,
 		t.localPeerID,
 		t.privateKey,
-		"",
 	)
 }
 
