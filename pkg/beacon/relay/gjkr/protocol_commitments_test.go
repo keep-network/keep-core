@@ -267,21 +267,29 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	}
 
 	sharingMember := sharingMembers[0]
+
 	var tests = map[string]struct {
 		modifyPublicCoefficientsMessages func(messages []*MemberPublicCoefficientsMessage)
 		expectedError                    error
-		expectedAccusations              int
+		expectedAccusedIDs               []int
 	}{
 		"positive validation - no accusations": {
-			expectedError:       nil,
-			expectedAccusations: 0,
+			expectedError: nil,
 		},
-		"negative validation - changed public key share": {
+		"negative validation - changed public key share - one accused member": {
 			modifyPublicCoefficientsMessages: func(messages []*MemberPublicCoefficientsMessage) {
 				messages[1].publicCoefficients[1] = big.NewInt(13)
 			},
-			expectedError:       nil,
-			expectedAccusations: 1,
+			expectedError:      nil,
+			expectedAccusedIDs: []int{3},
+		},
+		"negative validation - changed public key share - two accused members": {
+			modifyPublicCoefficientsMessages: func(messages []*MemberPublicCoefficientsMessage) {
+				messages[0].publicCoefficients[1] = big.NewInt(13)
+				messages[3].publicCoefficients[1] = big.NewInt(18)
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: []int{2, 5},
 		},
 	}
 	for testName, test := range tests {
@@ -311,10 +319,10 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 				)
 			}
 
-			if len(accusedMessage.accusedIDs) != test.expectedAccusations {
-				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
-					test.expectedAccusations,
-					len(accusedMessage.accusedIDs),
+			if !reflect.DeepEqual(accusedMessage.accusedIDs, test.expectedAccusedIDs) {
+				t.Fatalf("incorrect accused IDs\nexpected: %v\nactual:   %v\n",
+					test.expectedAccusedIDs,
+					accusedMessage.accusedIDs,
 				)
 			}
 		})
