@@ -163,31 +163,33 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 }
 
 func TestCombineReceivedShares(t *testing.T) {
+	selfShareS := big.NewInt(9)
+	selfShareT := big.NewInt(19)
+
 	receivedShareS := make(map[int]*big.Int)
 	receivedShareT := make(map[int]*big.Int)
 	for i := 0; i <= 5; i++ {
-		receivedShareS[100+i] = big.NewInt(int64(i))
-		receivedShareT[100+i] = big.NewInt(int64(10 + i))
+		receivedShareS[100+i] = big.NewInt(int64(10 + i))
+		receivedShareT[100+i] = big.NewInt(int64(20 + i))
 	}
 
-	expectedShareS := big.NewInt(15)
-	expectedShareT := big.NewInt(75)
+	expectedShareS := big.NewInt(25)
+	expectedShareT := big.NewInt(36)
 
-	config, err := predefinedDKG()
-	if err != nil {
-		t.Fatalf("DKG Config initialization failed [%s]", err)
-	}
+	config := &DKG{Q: big.NewInt(59)}
 	member := &SharingMember{
 		CommittingMember: &CommittingMember{
 			memberCore: &memberCore{
 				protocolConfig: config,
 			},
-			receivedSharesS: receivedShareS,
-			receivedSharesT: receivedShareT,
+			selfSecretShareS: selfShareS,
+			selfSecretShareT: selfShareT,
+			receivedSharesS:  receivedShareS,
+			receivedSharesT:  receivedShareT,
 		},
 	}
 
-	member.CombineReceivedShares()
+	member.CombineMemberShares()
 
 	if member.shareS.Cmp(expectedShareS) != 0 {
 		t.Errorf("incorrect combined shares S value\nexpected: %v\nactual:   %v\n",

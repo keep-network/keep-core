@@ -267,11 +267,16 @@ func pow(x, y int) *big.Int {
 	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
 }
 
-// CombineReceivedShares sums up all shares received from peer group members.
+// CombineMemberShares sums up all shares intended for this member.
+// Combines secret shares calculated by current member `i` for itself `s_ii` with
+// shares calculated by peer members `j` for this member `s_ji`.
+//
+// `x_i = Σ s_ji mod q` and `x'_i = Σ t_ji mod q` for `j` in a group of players
+// who passed secret shares accusations stage.
 //
 // See Phase 6 of the protocol specification.
-func (sm *SharingMember) CombineReceivedShares() {
-	shareS := big.NewInt(0)
+func (sm *SharingMember) CombineMemberShares() {
+	shareS := sm.selfSecretShareS // s_ii
 	for _, s := range sm.receivedSharesS {
 		shareS = new(big.Int).Mod(
 			new(big.Int).Add(shareS, s),
@@ -279,7 +284,7 @@ func (sm *SharingMember) CombineReceivedShares() {
 		)
 	}
 
-	shareT := big.NewInt(0)
+	shareT := sm.selfSecretShareT // t_ii
 	for _, t := range sm.receivedSharesT {
 		shareT = new(big.Int).Mod(
 			new(big.Int).Add(shareT, t),

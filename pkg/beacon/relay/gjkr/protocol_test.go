@@ -56,7 +56,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	for _, member := range sharingMembers {
-		member.CombineReceivedShares()
+		member.CombineMemberShares()
 	}
 
 	publicCoefficientsMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
