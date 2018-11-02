@@ -301,20 +301,18 @@ func (sm *SharingMember) CombineMemberShares() {
 //
 // See Phase 7 of the protocol specification.
 func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicCoefficientsMessage {
-	var publicCoefficients []*big.Int
-	for _, a := range sm.secretCoefficients {
-		publicA := new(big.Int).Exp(
+	sm.publicCoefficients = make([]*big.Int, len(sm.secretCoefficients))
+	for i, a := range sm.secretCoefficients {
+		sm.publicCoefficients[i] = new(big.Int).Exp(
 			sm.vss.G,
 			a,
 			sm.protocolConfig.P,
 		)
-		publicCoefficients = append(publicCoefficients, publicA)
 	}
-	sm.publicCoefficients = publicCoefficients
 
 	return &MemberPublicCoefficientsMessage{
 		senderID:           sm.ID,
-		publicCoefficients: publicCoefficients,
+		publicCoefficients: sm.publicCoefficients,
 	}
 }
 
