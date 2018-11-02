@@ -443,16 +443,19 @@ func (rm *ReconstructingMember) CalculateReconstructedPublicKeyShares() {
 	rm.reconstructedPublicKeyShares = publicKeyShares
 }
 
-// CombineGroupPublicKeyShares calculates a group public key from group public key
-// shares. Public key is calculated as a product of zeroth public coefficients
-// `A_j0 = z_j` for all group members including member themself.
+// CombineGroupPublicKey calculates a group public key by combining individual
+// public keys. Group public key is calculated as a product of individual public
+// keys of all group members including member themself.
+//
+// `Y = Π y_j mod p` for `j`, where `y_j` is individual public key of each qualified
+// group member.
 //
 // See Phase 12 of the protocol specification.
-func (rm *ReconstructingMember) CombineGroupPublicKeyShares() {
-	// Current member's zeroth coefficient.
+func (rm *ReconstructingMember) CombineGroupPublicKey() {
+	// Current member's zeroth public coefficient `A_i0`.
 	groupPublicKey := rm.publicCoefficients[0]
 
-	// Multiply received peer group members' public key shares.
+	// Multiply received peer group members' individual public keys `A_j0`.
 	for _, publicKeyShare := range rm.receivedGroupPublicKeyShares {
 		groupPublicKey = new(big.Int).Mod(
 			new(big.Int).Mul(groupPublicKey, publicKeyShare),
@@ -460,7 +463,7 @@ func (rm *ReconstructingMember) CombineGroupPublicKeyShares() {
 		)
 	}
 
-	// Multiply reconstructed disqualified members' public key shares.
+	// Multiply reconstructed disqualified members' individual public keys `g^{z_m}`.
 	for _, publicKeyShare := range rm.reconstructedPublicKeyShares {
 		groupPublicKey = new(big.Int).Mod(
 			new(big.Int).Mul(groupPublicKey, publicKeyShare),

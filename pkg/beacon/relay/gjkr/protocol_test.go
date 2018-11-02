@@ -94,7 +94,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	for i := range reconstructingMembers {
-		reconstructingMembers[i].CombineGroupPublicKeyShares()
+		reconstructingMembers[i].CombineGroupPublicKey()
 	}
 
 	for i := range reconstructingMembers {

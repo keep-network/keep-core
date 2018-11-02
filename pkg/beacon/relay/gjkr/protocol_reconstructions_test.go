@@ -92,7 +92,7 @@ func TestCalculateReconstructedPublicKeyShares(t *testing.T) {
 	}
 }
 
-func TestCombineGroupPublicKeyShares(t *testing.T) {
+func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 	p := big.NewInt(1907)
@@ -102,11 +102,11 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 		expectedError          error
 		expectedGroupPublicKey *big.Int
 	}{
-		"no disqualified members - no reconstructed public key shares": {
+		"no disqualified members - no reconstructed individual public key": {
 			expectedError:          nil,
 			expectedGroupPublicKey: big.NewInt(1156),
 		},
-		"2 disqualified members - 2 reconstructed public key shares": {
+		"2 disqualified members - 2 reconstructed individual public keys": {
 			disqualifiedIDs:        []int{6, 7},
 			expectedError:          nil,
 			expectedGroupPublicKey: big.NewInt(1037),
@@ -150,7 +150,7 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 				}
 			}
 
-			// Configure reconstructed public key shares of disqualified members.
+			// Configure reconstructed individual public key of disqualified members.
 			for _, member := range members {
 				member.reconstructedPublicKeyShares = make(map[int]*big.Int, len(test.disqualifiedIDs))
 				for _, disqualifiedID := range test.disqualifiedIDs {
@@ -160,7 +160,7 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 			}
 
 			for _, member := range members {
-				member.CombineGroupPublicKeyShares()
+				member.CombineGroupPublicKey()
 
 				if member.groupPublicKey.Cmp(test.expectedGroupPublicKey) != 0 {
 					t.Fatalf(
