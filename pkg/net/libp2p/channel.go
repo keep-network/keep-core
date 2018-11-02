@@ -185,7 +185,7 @@ func (c *channel) messageProto(
 		}
 	}
 
-	return (&pb.NetworkMessage{
+	return (&pb.Message{
 		Payload:   payloadBytes,
 		Sender:    senderIdentityBytes,
 		Recipient: recipientIdentityBytes,
@@ -302,7 +302,7 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 		return err
 	}
 
-	var protoMessage pb.NetworkMessage
+	var protoMessage pb.Message
 	if err := proto.Unmarshal(envelope.NetworkMessage, &protoMessage); err != nil {
 		return err
 	}
@@ -312,7 +312,7 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 
 func (c *channel) processContainerMessage(
 	proposedSender peer.ID,
-	message pb.NetworkMessage,
+	message pb.Message,
 ) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
