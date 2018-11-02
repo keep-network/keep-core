@@ -3,14 +3,14 @@
 == Overview
 We use Skaffold to manage the local development environment. Skaffold
 takes care of booting up a sane local Kubernetes environment that includes:
+
 - a local Ethereum test network (n nodes)
 - a local Keep client (n nodes)
 - Pumba chaos creator to disturbe the network or mess with container
   state
 - a standardized way to attach the Go Delve debugger to a Keep node in
   the cluster.
-
-When started in `dev` mode Skaffold will automatically build new Keep
+- when started in `dev` mode Skaffold will automatically build new Keep
 binaries on file changes.
 
 === Goals
@@ -132,4 +132,78 @@ higher.
 
 === Develop
 === Attach a Debugger
-=== Pumba Network Fuzzing
+=== Kubernetes Network Fuzzing
+
+== Appendix
+=== Docker Network Fuzzing
+Pumba enables the `netem` tool for Docker containers so you can
+simulate wide area network failures like packet delay and packet loss.
+
+https://github.com/alexei-led/pumba][https://github.com/alexei-led/pumba
+
+....
+brew install pumba
+....
+
+Fetch the pumba container
+....
+docker run gaiaadm/pumba
+....
+
+Fetch the iproute2 image
+....
+docker run gaiadocker/iproute2
+....
+
+Start the first shell in a docker container
+....
+docker run -it busybox bash
+....
+
+Open a new shell window and start the second shell in a docker container.
+....
+docker run -it busybox bash
+....
+
+On the shell inside the first container get it's IP address.
+....
+ifconfig eth0|grep 'inet addr'
+  inet addr:172.17.0.2  Bcast:172.17.255.255  Mask:255.255.0.0
+....
+
+On the shell inside the second container get it's container id.
+....
+hostname
+  fbb3b55b17ec
+....
+
+Now ping the first container.
+....
+ping 172.17.0.2
+....
+
+Open a third shell on your Docker host. The hostname of our second container was
+`fbb3b55b17ec`. We need to fetch it's name.
+....
+docker ps|grep fbb3b55b17ec
+  fbb3b55b17ec        busybox             "sh"                13 minutes ago
+  Up 13 minutes                           fervent_hermann
+....
+
+Disturb the network of the container named `fervent_hermann`.
+....
+pumba netem --duration 20s --tc-image gaiadocker/iproute2 \
+ delay --time 3000 jitter 50 --distribution normal\
+ fervent_hermann
+....
+You should observe the ping times jumping up to 3000ms for the duration of 20s
+then fall back to normal.
+
+Randomly kill a matching container who's name starts with the matching string
+....
+pumba --random --interval 3s kill re2:^fervent_hermann
+....
+There's only one exact match to the regular expression in this case and container
+two is killed immediately. If there were a set of containers named `fervent_xxx`
+then it would kill one of them at random every 3s until you abort `pumba` with
+Ctrl-C.
