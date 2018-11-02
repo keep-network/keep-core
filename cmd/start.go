@@ -82,10 +82,10 @@ func Start(c *cli.Context) error {
 		config.Ethereum.Account,
 	)
 	if err != nil {
-		return fmt.Errorf("could not check the minimum stake [%v]", err)
+		return fmt.Errorf("could not check the KEEP token stake [%v]", err)
 	}
 	if !hasMinimumStake {
-		return fmt.Errorf("ethereum account balance is below the minimum stake")
+		return fmt.Errorf("KEEP token stake is below the required minimum")
 	}
 
 	err = beacon.Initialize(
