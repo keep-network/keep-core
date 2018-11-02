@@ -48,6 +48,8 @@ type CommittingMember struct {
 type SharingMember struct {
 	*CommittingMember
 
-	shareS, shareT     *big.Int
+	shareS, shareT *big.Int
+	// Public values of each polynomial `a` coefficient defined in secretCoefficients
+	// field. It is denoted as `A_ik` in protocol specification.
 	publicCoefficients []*big.Int
 }
