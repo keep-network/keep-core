@@ -43,10 +43,10 @@ func TestCombineReceivedShares(t *testing.T) {
 
 	member.CombineMemberShares()
 
-	if member.shareS.Cmp(expectedShareS) != 0 {
+	if member.masterPrivateKeyShare.Cmp(expectedShareS) != 0 {
 		t.Errorf("incorrect combined shares S value\nexpected: %v\nactual:   %v\n",
 			expectedShareS,
-			member.shareS,
+			member.masterPrivateKeyShare,
 		)
 	}
 	if member.shareT.Cmp(expectedShareT) != 0 {

@@ -276,24 +276,24 @@ func pow(x, y int) *big.Int {
 //
 // See Phase 6 of the protocol specification.
 func (sm *SharingMember) CombineMemberShares() {
-	shareS := sm.selfSecretShareS // s_ii
+	combinedSharesS := sm.selfSecretShareS // s_ii
 	for _, s := range sm.receivedSharesS {
-		shareS = new(big.Int).Mod(
-			new(big.Int).Add(shareS, s),
+		combinedSharesS = new(big.Int).Mod(
+			new(big.Int).Add(combinedSharesS, s),
 			sm.protocolConfig.Q,
 		)
 	}
 
-	shareT := sm.selfSecretShareT // t_ii
+	combinedSharesT := sm.selfSecretShareT // t_ii
 	for _, t := range sm.receivedSharesT {
-		shareT = new(big.Int).Mod(
-			new(big.Int).Add(shareT, t),
+		combinedSharesT = new(big.Int).Mod(
+			new(big.Int).Add(combinedSharesT, t),
 			sm.protocolConfig.Q,
 		)
 	}
 
-	sm.shareS = shareS
-	sm.shareT = shareT
+	sm.masterPrivateKeyShare = combinedSharesS
+	sm.shareT = combinedSharesT
 }
 
 // CalculatePublicCoefficients calculates public values for member's coefficients.
