@@ -165,6 +165,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 func TestCombineReceivedShares(t *testing.T) {
 	selfShareS := big.NewInt(9)
 	selfShareT := big.NewInt(19)
+	q := big.NewInt(59)
 
 	receivedShareS := make(map[int]*big.Int)
 	receivedShareT := make(map[int]*big.Int)
@@ -173,10 +174,12 @@ func TestCombineReceivedShares(t *testing.T) {
 		receivedShareT[100+i] = big.NewInt(int64(20 + i))
 	}
 
+	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 59 = 25
 	expectedShareS := big.NewInt(25)
+	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 59 = 36
 	expectedShareT := big.NewInt(36)
 
-	config := &DKG{Q: big.NewInt(59)}
+	config := &DKG{Q: q}
 	member := &SharingMember{
 		CommittingMember: &CommittingMember{
 			memberCore: &memberCore{
@@ -212,9 +215,9 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		big.NewInt(2),
 	}
 	expectedPublicCoefficients := []*big.Int{
-		big.NewInt(216),
-		big.NewInt(148),
-		big.NewInt(36),
+		big.NewInt(216), // 6^3 mod 1907 = 216
+		big.NewInt(148), // 6^5 mod 1907 = 148
+		big.NewInt(36),  // 6^2 mod 1907 = 36
 	}
 
 	config := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
