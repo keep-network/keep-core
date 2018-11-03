@@ -44,8 +44,6 @@ cd ../contracts/solidity && npm install && cd ../../scripts
 
 echo "Installing bn and it's dependencies..."
 echo "  As a part of installing bn the llvm compiler is needed.  Usually this takes a few minutes to install."
-<<<<<<< HEAD
-<<<<<<< HEAD
 for pkg in gmp openssl llvm ; do
 	brew list "$pkg" &>/dev/null || brew install "$pkg" 
 done
@@ -60,32 +58,6 @@ done
 	fi
 	make
 	make install
-<<<<<<< HEAD
 )
-=======
-for i in gmp openssl llvm ; do
-	brew list "$i" &>/dev/null || brew install "$i" 
-=======
-for pkg in gmp openssl llvm ; do
-	brew list "$pkg" &>/dev/null || brew install "$pkg" 
->>>>>>> de43a1f3... Make cd relative so can be in different paths
-done
-( cd ../..
-if [ -d bn ] ; then
-	cd bn
-	git pull
-else
-	git clone https://github.com/keep-network/bn.git
-	cd bn
-fi
-make
-make install
-<<<<<<< HEAD
->>>>>>> 8597abb9... Convert inline code to for loop
-=======
-=======
->>>>>>> b447fdf4... Indent sub-shell
-)
->>>>>>> de43a1f3... Make cd relative so can be in different paths
 
 echo "Ready to rock! See above for any extra environment-related instructions."
