@@ -6,6 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
+	secure "github.com/libp2p/go-conn-security"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 
@@ -14,6 +15,9 @@ import (
 
 // Enough space for a proto-encoded envelope with a message, peer.ID, and sig.
 const maxFrameSize = 1024
+
+// Compile time assertions of the libp2p interfaces we implement
+var _ secure.Conn = (*authenticatedConnection)(nil)
 
 // authenticatedConnection turns inbound and outbound unauthenticated,
 // plain-text connections into authenticated, plain-text connections. Noticeably,
@@ -26,6 +30,27 @@ type authenticatedConnection struct {
 
 	remotePeerID        peer.ID
 	remotePeerPublicKey libp2pcrypto.PubKey
+}
+
+// LocalPeer retrieves the local peer.
+func (ac *authenticatedConnection) LocalPeer() peer.ID {
+	return ac.localPeerID
+}
+
+// LocalPrivateKey retrieves the local peer's privateKey
+func (ac *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
+	return ac.localPeerPrivateKey
+}
+
+// RemotePeer returns the remote peer ID if we initiated the dial. Otherwise, it
+// returns "" (because this connection isn't actually secure).
+func (ac *authenticatedConnection) RemotePeer() peer.ID {
+	return ac.remotePeerID
+}
+
+// RemotePublicKey retrieves the remote public key.
+func (ac *authenticatedConnection) RemotePublicKey() libp2pcrypto.PubKey {
+	return ac.remotePeerPublicKey
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
