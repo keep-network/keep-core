@@ -14,6 +14,8 @@ type BlockCounter interface {
 	// BlockWaiter returns a channel that will emit the current block height
 	// after the given number of blocks has elapsed and then immediately close.
 	BlockWaiter(numBlocks int) (<-chan int, error)
+	// GetBlockNo returns the block number.
+	GetBlockNo() int
 }
 
 // Handle represents a handle to a blockchain that provides access to the core
