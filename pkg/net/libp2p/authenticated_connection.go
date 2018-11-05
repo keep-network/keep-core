@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 	secure "github.com/libp2p/go-conn-security"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
@@ -151,7 +150,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// Act 2
 	//
 
-	act2Message, err := initiatorReceiveAct2(initiatorConnectionReader)
+	act2Message, err := initiatorReceiveAct2(initiatorConnectionReader, ac.RemotePeer())
 	if err != nil {
 		return err
 	}
@@ -182,90 +181,6 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	return nil
 }
 
-// initiatorSendAct1 signs a marshaled *handshake.Act1Message, prepares
-// the message in a pb.HandshakeEnvelope, and sends the message to the responder
-// (over the open connection) from the initiator.
-func initiatorSendAct1(
-	act1WireMessage []byte,
-	initiatorConnectionWriter protoio.WriteCloser,
-	localPeerPrivateKey libp2pcrypto.PrivKey,
-	localPeerID peer.ID,
-) error {
-	signedAct1Message, err := localPeerPrivateKey.Sign(act1WireMessage)
-	if err != nil {
-		return err
-	}
-
-	act1Envelope := &pb.HandshakeEnvelope{
-		Message:   act1WireMessage,
-		PeerID:    []byte(localPeerID),
-		Signature: signedAct1Message,
-	}
-
-	if err := initiatorConnectionWriter.WriteMsg(act1Envelope); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// initiatorReceiveAct2 unmarshals a pb.HandshakeEnvelope from a responder,
-// verifies that the signed messages matches the expected peer.ID, and returns
-// the handshake.Act2Message for processing by the initiator.
-func initiatorReceiveAct2(
-	initiatorConnectionReader protoio.ReadCloser,
-) (*handshake.Act2Message, error) {
-	var (
-		act2Envelope pb.HandshakeEnvelope
-		act2Message  = &handshake.Act2Message{}
-	)
-	if err := initiatorConnectionReader.ReadMsg(&act2Envelope); err != nil {
-		return nil, err
-	}
-
-	if err := ac.verify(
-		ac.remotePeerID,
-		peer.ID(act2Envelope.GetPeerID()),
-		act2Envelope.GetMessage(),
-		act2Envelope.GetSignature(),
-	); err != nil {
-		return nil, err
-	}
-
-	if err := act2Message.Unmarshal(act2Envelope.Message); err != nil {
-		return nil, err
-	}
-
-	return act2Message, nil
-}
-
-// initiatorSendAct3 signs a marshaled *handshake.Act3Message, prepares the
-// message in a pb.HandshakeEnvelope, and sends the message to the responder
-// (over the open connection) from the initiator.
-func initiatorSendAct3(
-	act3WireMessage []byte,
-	initiatorConnectionWriter protoio.WriteCloser,
-	localPeerPrivateKey libp2pcrypto.PrivKey,
-	localPeerID peer.ID,
-) error {
-	signedAct3Message, err := localPeerPrivateKey.Sign(act3WireMessage)
-	if err != nil {
-		return err
-	}
-
-	act3Envelope := &pb.HandshakeEnvelope{
-		Message:   act3WireMessage,
-		PeerID:    []byte(localPeerID),
-		Signature: signedAct3Message,
-	}
-
-	if err := initiatorConnectionWriter.WriteMsg(act3Envelope); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	// responder station
 
@@ -276,10 +191,18 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	// Act 1
 	//
 
-	act1Message, err := responderReceiveAct1(responderConnectionReader)
+	act1Message, remotePeerID, err := responderReceiveAct1(responderConnectionReader)
 	if err != nil {
 		return err
 	}
+
+	// Libp2p specific step: the responder has no knowledge of the initiator
+	// until after the handshake has succeeded, the connection has been
+	// upgraded, and identity information is exchanged. This provides an
+	// element of identity hiding for the initiator. To help prevent
+	// malicious interference, we want to pin this identity for the duration
+	// of the connection.
+	ac.remotePeerID = remotePeerID
 
 	responderAct2, err := handshake.AnswerHandshake(act1Message)
 	if err != nil {
@@ -309,7 +232,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	// Act 3
 	//
 
-	act3Message, err := responderReceiveAct3(responderConnectionReader)
+	act3Message, err := responderReceiveAct3(responderConnectionReader, ac.RemotePeer())
 	if err != nil {
 		return err
 	}
@@ -319,115 +242,4 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	}
 
 	return nil
-}
-
-// responderReceiveAct1 unmarshals a pb.HandshakeEnvelope from an initiator,
-// verifies that the signed messages matches the expected peer.ID, and returns
-// the handshake.Act1Message for processing by the responder.
-func responderReceiveAct1(
-	responderConnectionReader protoio.ReadCloser,
-) (*handshake.Act1Message, error) {
-	var (
-		act1Envelope pb.HandshakeEnvelope
-		act1Message  = &handshake.Act1Message{}
-	)
-	if err := responderConnectionReader.ReadMsg(&act1Envelope); err != nil {
-		return nil, err
-	}
-
-	// Libp2p specific step: the responder has no knowledge of the initiator
-	// until after the handshake has succeeded, the connection has been
-	// upgraded, and identity information is exchanged. This provides an
-	// element of identity hiding for the initiator. To help prevent
-	// malicious interference, we want to pin this identity for the duration
-	// of the connection.
-	ac.remotePeerID = peer.ID(act1Envelope.GetPeerID())
-
-	if err := ac.verify(
-		ac.remotePeerID,
-		peer.ID(act1Envelope.GetPeerID()),
-		act1Envelope.GetMessage(),
-		act1Envelope.GetSignature(),
-	); err != nil {
-		return nil, err
-	}
-
-	if err := act1Message.Unmarshal(act1Envelope.Message); err != nil {
-		return nil, err
-	}
-
-	return act1Message, nil
-}
-
-// responderSendAct2 signs a marshaled *handshake.Act2Message, prepares the
-// message in a pb.HandshakeEnvelope, and sends the message to the initiator
-// (over the open connection) from the responder.
-func responderSendAct2(
-	act2WireMessage []byte,
-	responderConnectionWriter protoio.WriteCloser,
-	localPeerPrivateKey libp2pcrypto.PrivKey,
-	localPeerID peer.ID,
-) error {
-	signedAct2Message, err := localPeerPrivateKey.Sign(act2WireMessage)
-	if err != nil {
-		return err
-	}
-
-	act2Envelope := &pb.HandshakeEnvelope{
-		Message:   act2WireMessage,
-		PeerID:    []byte(localPeerID),
-		Signature: signedAct2Message,
-	}
-
-	if err := responderConnectionWriter.WriteMsg(act2Envelope); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// responderReceiveAct3 unmarshals a pb.HandshakeEnvelope from an initiator,
-// verifies that the signed messages matches the expected peer.ID, and returns
-// the handshake.Act3Message for processing by the responder.
-func responderReceiveAct3(
-	responderConnectionReader protoio.ReadCloser,
-) (*handshake.Act3Message, error) {
-	var (
-		act3Envelope pb.HandshakeEnvelope
-		act3Message  = &handshake.Act3Message{}
-	)
-	if err := responderConnectionReader.ReadMsg(&act3Envelope); err != nil {
-		return nil, err
-	}
-
-	if err := ac.verify(
-		ac.remotePeerID,
-		peer.ID(act3Envelope.GetPeerID()),
-		act3Envelope.GetMessage(),
-		act3Envelope.GetSignature(),
-	); err != nil {
-		return nil, err
-	}
-
-	if err := act3Message.Unmarshal(act3Envelope.Message); err != nil {
-		return nil, err
-	}
-
-	return act3Message, nil
-}
-
-// verify checks to see if the pinned (expected) identity matches the message
-// sender's identity before running through the signature verification check.
-func (ac *authenticatedConnection) verify(
-	expectedSender, actualSender peer.ID,
-	messageBytes, signatureBytes []byte,
-) error {
-	if expectedSender != actualSender {
-		return fmt.Errorf(
-			"pinned identity [%v] does not match sender identity [%v]",
-			expectedSender,
-			actualSender,
-		)
-	}
-	return verifyEnvelope(actualSender, messageBytes, signatureBytes)
 }

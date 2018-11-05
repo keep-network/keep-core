@@ -1,6 +1,8 @@
 package libp2p
 
 import (
+	"fmt"
+
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 
@@ -42,6 +44,7 @@ func initiatorSendAct1(
 // the handshake.Act2Message for processing by the initiator.
 func initiatorReceiveAct2(
 	initiatorConnectionReader protoio.ReadCloser,
+	remotePeerID peer.ID,
 ) (*handshake.Act2Message, error) {
 	var (
 		act2Envelope pb.HandshakeEnvelope
@@ -51,7 +54,8 @@ func initiatorReceiveAct2(
 		return nil, err
 	}
 
-	if err := verifyEnvelope(
+	if err := verifyHandshakeMessage(
+		remotePeerID,
 		peer.ID(act2Envelope.GetPeerID()),
 		act2Envelope.GetMessage(),
 		act2Envelope.GetSignature(),
@@ -98,28 +102,33 @@ func initiatorSendAct3(
 // the handshake.Act1Message for processing by the responder.
 func responderReceiveAct1(
 	responderConnectionReader protoio.ReadCloser,
-) (*handshake.Act1Message, error) {
+) (*handshake.Act1Message, peer.ID, error) {
 	var (
 		act1Envelope pb.HandshakeEnvelope
 		act1Message  = &handshake.Act1Message{}
+		remotePeerID peer.ID
 	)
 	if err := responderConnectionReader.ReadMsg(&act1Envelope); err != nil {
-		return nil, err
+		return nil, remotePeerID, err
 	}
 
-	if err := verifyEnvelope(
+	// New remote pinned identity
+	remotePeerID = peer.ID(act1Envelope.GetPeerID())
+
+	if err := verifyHandshakeMessage(
+		remotePeerID,
 		peer.ID(act1Envelope.GetPeerID()),
 		act1Envelope.GetMessage(),
 		act1Envelope.GetSignature(),
 	); err != nil {
-		return nil, err
+		return nil, remotePeerID, err
 	}
 
 	if err := act1Message.Unmarshal(act1Envelope.Message); err != nil {
-		return nil, err
+		return nil, remotePeerID, err
 	}
 
-	return act1Message, nil
+	return act1Message, remotePeerID, nil
 }
 
 // responderSendAct2 signs a marshaled *handshake.Act2Message, prepares the
@@ -154,6 +163,7 @@ func responderSendAct2(
 // the handshake.Act3Message for processing by the responder.
 func responderReceiveAct3(
 	responderConnectionReader protoio.ReadCloser,
+	remotePeerID peer.ID,
 ) (*handshake.Act3Message, error) {
 	var (
 		act3Envelope pb.HandshakeEnvelope
@@ -163,7 +173,8 @@ func responderReceiveAct3(
 		return nil, err
 	}
 
-	if err := verifyEnvelope(
+	if err := verifyHandshakeMessage(
+		remotePeerID,
 		peer.ID(act3Envelope.GetPeerID()),
 		act3Envelope.GetMessage(),
 		act3Envelope.GetSignature(),
@@ -176,4 +187,20 @@ func responderReceiveAct3(
 	}
 
 	return act3Message, nil
+}
+
+// verify checks to see if the pinned (expected) identity matches the message
+// sender's identity before running through the signature verification check.
+func verifyHandshakeMessage(
+	expectedSender, actualSender peer.ID,
+	messageBytes, signatureBytes []byte,
+) error {
+	if expectedSender != actualSender {
+		return fmt.Errorf(
+			"pinned identity [%v] does not match sender identity [%v]",
+			expectedSender,
+			actualSender,
+		)
+	}
+	return verifyEnvelope(actualSender, messageBytes, signatureBytes)
 }
