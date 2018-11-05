@@ -17,17 +17,14 @@ func (c *channel) InitiateRequestForNonceHandler(
 	ctx context.Context,
 	peerID peer.ID,
 ) {
-	// Check to see if we have a nonce for that Peer, but that happens out of here
-	fmt.Println("peerID: ", peerID)
-	fmt.Println("ID: ", NonceHandshakeID)
-	fmt.Println("host: ", c.p2phost)
+	// TODO: Check to see if we have a nonce for that Peer, but that happens
+	// out of here
 	stream, err := c.p2phost.NewStream(ctx, peerID, NonceHandshakeID)
 	if err != nil {
 		fmt.Printf("failed to open stream: [%v]\n", err)
 		return
 	}
 
-	fmt.Println("setting protocol")
 	stream.SetProtocol(NonceHandshakeID)
 
 	if err := msmux.SelectProtoOrFail(NonceHandshakeID, stream); err != nil {
@@ -117,7 +114,6 @@ func (c *channel) setInitiatorNonce(
 	ns.max = act3Message.Nonce()
 	ns.used[act3Message.Nonce()] = true
 
-	fmt.Println("Got a goddamn nonce %+v\n", act3Message.Nonce())
 	c.messageCache.nonceServiceLock.Unlock()
 	return nil
 }
