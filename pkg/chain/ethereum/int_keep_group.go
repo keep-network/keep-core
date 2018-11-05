@@ -1,11 +1,9 @@
 package ethereum
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/pschlump/godebug"
 )
 
 func (kg *keepGroup) SetGroupSizeThreshold(groupSize, threshold int) (*types.Transaction, error) {
@@ -14,7 +12,6 @@ func (kg *keepGroup) SetGroupSizeThreshold(groupSize, threshold int) (*types.Tra
 	kg.transactorOpts.GasLimit = 4712388
 	kg.transactorOpts.GasPrice = big.NewInt(int64(100000000000))
 	// func (_KeepGroupImplV1 *KeepGroupImplV1Transactor) SetGroupSizeThreshold(opts *bind.TransactOpts, _groupSize *big.Int, _groupThreshold *big.Int) (*types.Transaction, error) {
-	fmt.Printf("tOpts=%s\n", godebug.SVarI(kg.transactorOpts))
 	return kg.transactor.SetGroupSizeThreshold(kg.transactorOpts, bigGroupSize, bigThreshold)
 }
 

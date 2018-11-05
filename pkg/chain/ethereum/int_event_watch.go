@@ -37,8 +37,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
-	"github.com/pschlump/MiscLib"
-	"github.com/pschlump/godebug"
 )
 
 // --------------------------------------------------------------------------------------------------------
@@ -58,8 +56,10 @@ import (
 // --------------------------------------------------------------------------------------------------------
 func doWatch(contractName, eventName string, assumeProxy bool) (err error) {
 
-	godebug.Printf(db10001, "contractName [%s] eventName [%s], %s\n", contractName, eventName, godebug.LF())
-	godebug.Printf(db10001, "Found contract [before overload check], %s, %s\n", contractName, godebug.LF())
+	if db10001 {
+		fmt.Printf("contractName [%s] eventName [%s]\n", contractName, eventName)
+		fmt.Printf("Found contract [before overload check], %s\n", contractName)
+	}
 
 	var ABIraw string
 	switch contractName {
@@ -86,7 +86,7 @@ func doWatch(contractName, eventName string, assumeProxy bool) (err error) {
 	// conn, err := ethclient.Dial(gCfg.GethURL_ws)
 	_, parsedABI, err := Bind2Contract(ABIraw, contractAddress, EthConn.client, EthConn.client, EthConn.client)
 	if err != nil {
-		fmt.Printf("Error on Bind2Contract: %s, %s\n", err, godebug.LF())
+		fmt.Printf("Error on Bind2Contract: %s\n", err)
 		return err
 	}
 
@@ -94,20 +94,14 @@ func doWatch(contractName, eventName string, assumeProxy bool) (err error) {
 		Addresses: []common.Address{contractAddress},
 	}
 
-	godebug.Printf(db10001, "AT: %s\n", godebug.LF())
-
 	var ch = make(chan types.Log)
 	ctx := context.Background()
-
-	godebug.Printf(db10001, "AT: %s\n", godebug.LF()) // last working line with truffle, "Subscribe: notifications not supported"
 
 	sub, err := EthConn.client.SubscribeFilterLogs(ctx, query, ch)
 	if err != nil {
 		log.Println("Subscribe:", err) // xyzzy  - fix
 		return err
 	}
-
-	godebug.Printf(db10001, "AT: %s\n", godebug.LF())
 
 	/*
 		// list out the current watched events! -- capture current events in list
@@ -122,19 +116,21 @@ func doWatch(contractName, eventName string, assumeProxy bool) (err error) {
 
 	go func() {
 		for {
-			godebug.Printf(db10001, "%sWaiting for event at 'select' - AT: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+			if db10001 {
+				fmt.Printf("Waiting for event at 'select'n")
+			}
 			select {
 			case log := <-ch:
 				if len(log.Topics) > 0 {
 					// PJS - xyzzy xyzzy - name := gCfg.GetNameForTopic(log.Topics[0].String())
 					name := GetNameForTopic(log.Topics[0].String())
-					godebug.Printf(db10001, "name [%s] eventName [%s], %s\n", name, eventName, godebug.LF())
+					if db10001 {
+						fmt.Printf("name [%s] eventName [%s]\n", name, eventName)
+					}
 					if eventName == "" || name == eventName {
-						fmt.Printf("%sCaught Event Log:%s, %s%s\n", MiscLib.ColorGreen, godebug.LF(), godebug.SVarI(log), MiscLib.ColorReset)
-						godebug.Printf(db10001, "%sAT:%s name ->%s<-%s\n", MiscLib.ColorYellow, godebug.LF(), name, MiscLib.ColorReset)
+						fmt.Printf("Caught Event Name:%s Log:%s\n", name, PrintAsJson(log))
 
 						if event, ok := parsedABI.Events[name]; ok {
-							godebug.Printf(db10001, "%sAT: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 							arguments := event.Inputs                                 // get the inputs to the event - these will determine the unpack.
 							marshalledValues, err := arguments.UnpackValues(log.Data) // marshalledValues is an array of interface{}
 							if err != nil {
@@ -143,9 +139,7 @@ func doWatch(contractName, eventName string, assumeProxy bool) (err error) {
 								// 1. Output of watch "bytes32" data - display better as a hex string
 								// 0xBBbbBB... for 32 bytes instead of an array of byte.
 								typeModified := ReturnTypeConverter(marshalledValues)
-								fmt.Printf("%sEvent Data: %s%s\n", MiscLib.ColorGreen, godebug.SVarI(typeModified), MiscLib.ColorReset)
-								godebug.Printf(db10001, "%sAT: %s %T %s\n", MiscLib.ColorCyan, godebug.LF(), marshalledValues, MiscLib.ColorReset)
-								godebug.Printf(db10001, "%sAT: %s %T %s\n", MiscLib.ColorCyan, godebug.LF(), marshalledValues[0], MiscLib.ColorReset)
+								fmt.Printf("Event Data: %s\n", PrintAsJson(typeModified))
 
 								if db10003 {
 									TypeOfSlice(marshalledValues)
@@ -155,14 +149,15 @@ func doWatch(contractName, eventName string, assumeProxy bool) (err error) {
 							fmt.Printf("Error failed to lookup event [%s] in ABI\n", name)
 						}
 					} else {
-						godebug.Printf(db10001, "%s%s.%s - event ignored; not watched%s\n", MiscLib.ColorYellow, contractName, name, MiscLib.ColorReset)
+						if db10001 {
+							fmt.Printf(db10001, "%s.%s - event ignored; not watched\n", contractName, name)
+						}
 					}
 				}
 			case err := <-sub.Err():
-				fmt.Printf("AT: %s, error=%s\n", godebug.LF(), err)
+				fmt.Printf("error=%s\n", err)
 				return
 			}
-			godebug.Printf(db10001, "AT: %s\n", godebug.LF())
 		}
 	}()
 
@@ -176,7 +171,6 @@ func Bind2Contract(ABI string, address common.Address, caller bind.ContractCalle
 	if err != nil {
 		return nil, nil, err
 	}
-	godebug.Printf(db10002, "Type of parsed = %T, value %s, %s\n", parsed, godebug.SVarI(parsed), godebug.LF())
 	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), &parsed, nil
 }
 

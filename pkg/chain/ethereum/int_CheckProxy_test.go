@@ -22,8 +22,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pschlump/MiscLib"
-	"github.com/pschlump/godebug"
 )
 
 var WaitForTx chan string
@@ -124,7 +122,6 @@ func TestSetGroupSizeThreshold(t *testing.T) {
 	}
 
 	tx, err := EthConn.SetGroupSizeThreshold(256, 129)
-	// fmt.Printf("tx=%s\n", godebug.SVarI(tx))
 	if err != nil {
 		t.Errorf("error creating transaction: tx error: %s\n", err)
 		return
@@ -135,7 +132,7 @@ func TestSetGroupSizeThreshold(t *testing.T) {
 	}
 
 	// ---------------------------------------
-	fmt.Printf("tx=%s\n", godebug.SVarI(tx))
+	fmt.Printf("tx=%s\n", PrintAsJson(tx))
 	// ---------------------------------------
 
 	fmt.Printf("Sleeping 60 seconds - waiting for blocks to occur on chain\n")
@@ -158,7 +155,7 @@ func TestSetGroupSizeThreshold(t *testing.T) {
 	}
 
 	// ---------------------------------------
-	fmt.Printf("%snewSize=%d newThreshold=%d AT:%s, %s\n", MiscLib.ColorYellow, newSize, newThreshold, godebug.LF(), MiscLib.ColorReset)
+	fmt.Printf("newSize=%d newThreshold=%d\n", newSize, newThreshold)
 	// ---------------------------------------
 
 	if newSize != 256 {
@@ -170,7 +167,6 @@ func TestSetGroupSizeThreshold(t *testing.T) {
 
 	// Reset to original values
 	tx, err = EthConn.SetGroupSizeThreshold(size, threshold)
-	// fmt.Printf("2nd tx=%s\n", godebug.SVarI(tx))
 	if tx == nil {
 		t.Errorf("error creating transaction: tx should not be nil\n")
 		return
@@ -209,7 +205,7 @@ func ChkForNoEvent(s string, rp GetTransactionReceiptType) {
 
 func GetTheReceipt(txHash string, chkEvent func(s string, rp GetTransactionReceiptType)) {
 
-	fmt.Printf("%sTxHash: %s%s\n", MiscLib.ColorCyan, txHash, MiscLib.ColorReset)
+	fmt.Printf("TxHash: %s\n", txHash)
 
 	go func(URLToCall, txHash string) {
 		var s string
@@ -226,13 +222,13 @@ func GetTheReceipt(txHash string, chkEvent func(s string, rp GetTransactionRecei
 			fmt.Printf(".")
 		}
 		if err != nil {
-			fmt.Printf("%serror getting transaction: %s%s\n", MiscLib.ColorRed, err, MiscLib.ColorReset)
+			fmt.Printf("error getting transaction: %s\n", err)
 			SendError("Failed to get transaction")
 		} else if status == 0 {
-			fmt.Printf("%sfailed s=->%s<-%s\n", MiscLib.ColorYellow, s, MiscLib.ColorReset)
+			fmt.Printf("failed s=->%s<-\n", s)
 			SendError("")
 		} else {
-			fmt.Printf("%sTransaction succeeded success Receipt:%s%s\n", MiscLib.ColorGreen, s, MiscLib.ColorReset)
+			fmt.Printf("Transaction succeeded success Receipt:%s\n", s)
 			SendSuccess("Transaction worked.")
 			// xyzzy - TODO - check for event with correct signature.
 			chkEvent(s, rp)
@@ -353,7 +349,7 @@ func FetchReceipt(URLToCall, txHash string) (rv string, rp GetTransactionReceipt
 	}
 
 	if db0101 {
-		fmt.Printf("resp: %s err: %s\n", godebug.SVarI(resp), err)
+		fmt.Printf("resp: %s err: %s\n", PrintAsJson(resp), err)
 	}
 
 	defer resp.Body.Close()
@@ -393,7 +389,7 @@ func FetchReceipt(URLToCall, txHash string) (rv string, rp GetTransactionReceipt
 
 	bodyDecode.Result.StatusInt = int(StatusInt)
 	status = bodyDecode.Result.StatusInt
-	rv = fmt.Sprintf("\n%s\n", godebug.SVarI(bodyDecode))
+	rv = fmt.Sprintf("\n%s\n", PrintAsJson(bodyDecode))
 
 	return
 }
@@ -454,7 +450,7 @@ func TestGroupCreation(t *testing.T) {
 	}
 
 	if db0102 {
-		fmt.Printf("tx=%s\n", godebug.SVarI(tx))
+		fmt.Printf("tx=%s\n", PrintAsJson(tx))
 	}
 
 	fmt.Printf("Sleeping 60 seconds - waiting for blocks to occur on chain\n")

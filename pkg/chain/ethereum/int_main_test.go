@@ -12,7 +12,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// fmt.Printf("%sAT:%s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 	var envFn = os.Getenv("KEEP_TEST_CFG")
 	if envFn == "" {
 		envFn = "int_cfg.json"
