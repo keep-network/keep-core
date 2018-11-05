@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
@@ -200,7 +201,8 @@ func createTestChannel(
 ) (*channel, error) {
 	networkConfig := Config{Port: 8080}
 
-	provider, err := Connect(ctx, networkConfig, staticKey)
+	stakeMonitoring := local.NewStakeMonitoring()
+	provider, err := Connect(ctx, networkConfig, staticKey, stakeMonitoring)
 	if err != nil {
 		return nil, err
 	}

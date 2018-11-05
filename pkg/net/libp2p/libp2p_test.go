@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
@@ -24,7 +25,10 @@ func TestProviderReturnsType(t *testing.T) {
 
 	expectedType := "libp2p"
 	provider, err := Connect(
-		ctx, generateDeterministicNetworkConfig(t), staticKey,
+		ctx,
+		generateDeterministicNetworkConfig(t),
+		staticKey,
+		local.NewStakeMonitoring(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -50,7 +54,10 @@ func TestProviderReturnsChannel(t *testing.T) {
 	}
 
 	provider, err := Connect(
-		ctx, generateDeterministicNetworkConfig(t), staticKey,
+		ctx,
+		generateDeterministicNetworkConfig(t),
+		staticKey,
+		local.NewStakeMonitoring(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -85,7 +92,12 @@ func TestSendReceive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	provider, err := Connect(ctx, config, staticKey)
+	provider, err := Connect(
+		ctx,
+		config,
+		staticKey,
+		local.NewStakeMonitoring(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +190,12 @@ func TestSendToReceiveFrom(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	provider, err := Connect(ctx, config1, staticKey)
+	provider, err := Connect(
+		ctx,
+		config1,
+		staticKey,
+		local.NewStakeMonitoring(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,7 +340,7 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, 8080)
+	host, err := discoverAndListen(ctx, identity, 8080, local.NewStakeMonitoring())
 	if err != nil {
 		return nil, err
 	}
