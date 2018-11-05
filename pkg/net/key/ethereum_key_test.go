@@ -117,6 +117,26 @@ func TestSameKeyAsEthereum(t *testing.T) {
 	}
 }
 
+func TestSameAddressAsEthereum(t *testing.T) {
+	ethereumKey, err := generateEthereumKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ethAddress := crypto.PubkeyToAddress(ethereumKey.PrivateKey.PublicKey).String()
+
+	libp2pKey := EthereumKeyToNetworkKey(ethereumKey)
+	libp2pAddress := ToAddress(libp2pKey)
+
+	if ethAddress != libp2pAddress {
+		t.Errorf(
+			"unexpected address\nexpected: %v\nactual: %v",
+			ethAddress,
+			libp2pAddress,
+		)
+	}
+}
+
 func generateEthereumKey() (*keystore.Key, error) {
 	ethCurve := secp256k1.S256()
 

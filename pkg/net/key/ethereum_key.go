@@ -53,3 +53,9 @@ func EthereumKeyToNetworkKey(ethereumKey *keystore.Key) *StaticNetworkKey {
 
 	return (*StaticNetworkKey)(privKey)
 }
+
+// ToAddress converts `StaticNetworkKey` into ethereum-compatible account
+// address.
+func ToAddress(snk *StaticNetworkKey) string {
+	return crypto.PubkeyToAddress(snk.PublicKey).String()
+}
