@@ -1,0 +1,30 @@
+{
+	"URL"                : "ws://192.168.0.199:8546",
+	"URLRPC"             : "http://192.168.0.199:8545",
+	"ContractAddress": {
+		"KeepGroup": "0x18b8562f6013356a6787013ada7ed168b62208c5",
+		"KeepGroupImplV1": "0x6cb7ece98d81e93f7a7686b6ba09e30f5ce7ae95",
+		"KeepRandomBeacon": "0xe47c461416da2178828d6c41b9ca679243904bbc",
+		"KeepRandomBeaconImplV1": "0x5a3945ba26a17395a4dec705511dc832a4ad87da"
+	},
+	"ProxyFor": {
+		"KeepGroup": "KeepGroupImplV1",
+		"KeepRandomBeacon": "KeepRandomBeaconImplV1"
+	},
+
+	"x6ff_Address": "0x6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
+	"x6ff_KeyFile": "/Users/corwin/Projects/eth/data/keystore/UTC--2018-02-15T19-57-35.216297214Z--6ffba2d0f4c8fd7961f516af43c55fe2d56f6044",
+	"x6ff_KeyFilePassword": "password",
+
+	"Address" : "0x023e291a99d21c944a871adcc44561a58f99bdbc",
+	"KeyFile" : "/Users/corwin/Projects/eth/data/keystore/UTC--2018-07-17T00-00-00.000000000Z--023e291a99d21c944a871adcc44561a58f99bdbc",
+	"KeyFilePassword" : "linux",
+
+	"ZeroBal_Address": "0xc2a56884538778bacd91aa5bf343bf882c5fb18b",
+	"ZeroBal_KeyFile" : "/Users/corwin/Projects/eth158/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b",
+	"ZeroBal_KeyFilePassword": "pdFkee7chq901",
+
+	"BadPw_Address": "0xc2a56884538778bacd91aa5bf343bf882c5fb18b",
+	"BadPw_KeyFile" : "/Users/corwin/Projects/eth158/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b",
+	"BadPw_KeyFilePassword": "yayayayayaya"
+}
