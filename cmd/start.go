@@ -58,15 +58,6 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error loading static peer's key [%v]", err)
 	}
 
-	ctx := context.Background()
-	netProvider, err := libp2p.Connect(ctx, config.LibP2P, staticKey)
-	if err != nil {
-		return err
-	}
-
-	isBootstrapNode := config.LibP2P.Seed != 0
-	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
-
 	chainProvider, err := ethereum.Connect(config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
@@ -87,6 +78,25 @@ func Start(c *cli.Context) error {
 	if !hasMinimumStake {
 		return fmt.Errorf("KEEP token stake is below the required minimum")
 	}
+
+	stakeMonitoring, err := chainProvider.StakeMonitoring()
+	if err != nil {
+		return fmt.Errorf("error obtaining stake monitoring handle [%v]", err)
+	}
+
+	ctx := context.Background()
+	netProvider, err := libp2p.Connect(
+		ctx,
+		config.LibP2P,
+		staticKey,
+		stakeMonitoring,
+	)
+	if err != nil {
+		return err
+	}
+
+	isBootstrapNode := config.LibP2P.Seed != 0
+	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
 
 	err = beacon.Initialize(
 		ctx,

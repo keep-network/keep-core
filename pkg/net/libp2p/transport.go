@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	"github.com/keep-network/keep-core/pkg/chain"
 	secure "github.com/libp2p/go-conn-security"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -23,7 +24,10 @@ type transport struct {
 	privateKey  libp2pcrypto.PrivKey
 }
 
-func newAuthenticatedTransport(pk libp2pcrypto.PrivKey) (*transport, error) {
+func newAuthenticatedTransport(
+	pk libp2pcrypto.PrivKey,
+	stakeMonitoring chain.StakeMonitoring,
+) (*transport, error) {
 	id, err := peer.IDFromPrivateKey(pk)
 	if err != nil {
 		return nil, err

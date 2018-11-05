@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -63,7 +65,16 @@ func pingRequest(c *cli.Context) error {
 		return err
 	}
 
-	netProvider, err := libp2p.Connect(ctx, libp2pConfig, staticKey)
+	stakeMonitoring := local.NewStakeMonitoring()
+	address := crypto.PubkeyToAddress(staticKey.PublicKey).String()
+	stakeMonitoring.StakeTokens(address)
+
+	netProvider, err := libp2p.Connect(
+		ctx,
+		libp2pConfig,
+		staticKey,
+		stakeMonitoring,
+	)
 	if err != nil {
 		return err
 	}
