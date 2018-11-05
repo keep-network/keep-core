@@ -229,10 +229,10 @@ func (c *channel) sign(messageBytes []byte) ([]byte, error) {
 }
 
 func (c *channel) verify(sender peer.ID, messageBytes []byte, signature []byte) error {
-	return verifyEnvelope(sender, messageBytes, signature)
+	return verify(sender, messageBytes, signature)
 }
 
-func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error {
+func verify(sender peer.ID, messageBytes []byte, signature []byte) error {
 	pubKey, err := sender.ExtractPublicKey()
 	if err != nil {
 		return fmt.Errorf(

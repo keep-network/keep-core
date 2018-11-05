@@ -202,5 +202,5 @@ func verifyHandshakeMessage(
 			actualSender,
 		)
 	}
-	return verifyEnvelope(actualSender, messageBytes, signatureBytes)
+	return verify(actualSender, messageBytes, signatureBytes)
 }
