@@ -189,8 +189,9 @@ func responderReceiveAct3(
 	return act3Message, nil
 }
 
-// verify checks to see if the pinned (expected) identity matches the message
-// sender's identity before running through the signature verification check.
+// verifyHandshakeMessage checks to see if the pinned (expected) identity
+// matches the message sender's identity before running through the signature
+// verification check.
 func verifyHandshakeMessage(
 	expectedSender, actualSender peer.ID,
 	messageBytes, signatureBytes []byte,
