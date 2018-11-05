@@ -1,4 +1,8 @@
+:toc: macro
+
 = Skaffold Managed Local Dev Environment
+
+toc::[]
 
 == Overview
 We use Skaffold to manage the local development environment. Skaffold
