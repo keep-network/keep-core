@@ -7,25 +7,32 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
+
+	host "github.com/libp2p/go-libp2p-host"
 	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/libp2p/go-libp2p-peerstore"
 	"github.com/libp2p/go-libp2p-pubsub"
 )
 
 type channel struct {
-	name string
-
+	name           string
 	clientIdentity *identity
-	peerStore      peerstore.Peerstore
+	p2phost        host.Host
+	messageCache   *messageCache
+
+	// libp2p state
+	peerStore peerstore.Peerstore
 
 	pubsubMutex sync.Mutex
 	pubsub      *pubsub.PubSub
 
 	subscription *pubsub.Subscription
 
+	// protocol level state
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
 

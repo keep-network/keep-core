@@ -18,6 +18,7 @@ type channelManager struct {
 
 	identity  *identity
 	peerStore peerstore.Peerstore
+	p2phost   host.Host
 
 	channelsMutex sync.Mutex
 	channels      map[string]*channel
@@ -38,6 +39,7 @@ func newChannelManager(
 		channels:  make(map[string]*channel),
 		pubsub:    gossipsub,
 		peerStore: p2phost.Peerstore(),
+		p2phost:   p2phost,
 		identity:  identity,
 		ctx:       ctx,
 	}, nil
@@ -78,6 +80,8 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	channel := &channel{
 		name:                        name,
 		clientIdentity:              cm.identity,
+		p2phost:                     cm.p2phost,
+		messageCache:                newMessageCache(100, cm.p2phost, cm.identity),
 		peerStore:                   cm.peerStore,
 		pubsub:                      cm.pubsub,
 		subscription:                sub,
@@ -86,6 +90,14 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
 		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
 	}
+
+	// Set response handler for incoming requests to decide on an initial nonce
+	channel.p2phost.SetStreamHandler(
+		NonceHandshakeID, channel.respondToRequestForNonceHandler,
+	)
+	// Get notified of new connections, and initiate the nonce handshake with
+	// each new connected peer
+	channel.p2phost.Network().Notify((*channelNotifiee)(channel))
 
 	go channel.handleMessages(cm.ctx)
 
