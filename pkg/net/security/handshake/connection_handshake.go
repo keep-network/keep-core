@@ -144,6 +144,12 @@ func (ra2 *responderAct2) Message() *Act2Message {
 	return &Act2Message{nonce2: ra2.nonce2, challenge: ra2.challenge}
 }
 
+// Nonce returns a uint64 of the first 8 bytes (64bits) of the challenge computed
+// in Act2 by the responder through hashing the two nonces.
+func (act2 *Act2Message) Nonce() uint64 {
+	return binary.LittleEndian.Uint64(act2.challenge[:8])
+}
+
 // Next performs a state transition and returns responder in a state ready to
 // execute the third act of the handshake protocol.
 func (ra2 *responderAct2) Next() *responderAct3 {
@@ -182,6 +188,12 @@ type responderAct3 struct {
 // act of the handshake protocol.
 func (ia3 *initiatorAct3) Message() *Act3Message {
 	return &Act3Message{challenge: ia3.challenge}
+}
+
+// Nonce returns a uint64 of the first 8 bytes (64bits) of the challenge computed
+// in Act3 by the initiator through hashing the two nonces.
+func (act3 *Act3Message) Nonce() uint64 {
+	return binary.LittleEndian.Uint64(act3.challenge[:8])
 }
 
 // FinalizeHandshake is used in the third act of the handshake protocol to
