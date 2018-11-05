@@ -10,6 +10,9 @@ import (
 	"github.com/libp2p/go-libp2p-pubsub"
 )
 
+// Protocol ID for initiating nonce handshake
+const NonceHandshakeID = "/keep/nonce/1.0.0"
+
 type channelManager struct {
 	ctx context.Context
 
