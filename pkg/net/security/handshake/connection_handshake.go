@@ -48,7 +48,6 @@ import (
 	crand "crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
-	"errors"
 	"fmt"
 )
 
@@ -193,7 +192,7 @@ func (ia3 *initiatorAct3) Message() *Act3Message {
 // returns an error and it means the handshake protocol failed.
 func (ra3 *responderAct3) FinalizeHandshake(message *Act3Message) error {
 	if ra3.challenge != message.challenge {
-		return errors.New("unexpected initiator's challenge")
+		return fmt.Errorf("unexpected initiator's challenge")
 	}
 
 	return nil
