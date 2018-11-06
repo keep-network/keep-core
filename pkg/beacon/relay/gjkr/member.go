@@ -45,7 +45,8 @@ type CommittingMember struct {
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
-// after it completed secret shares and commitments verification.
+// after it completed secret shares and commitments verification and enters
+// justification phase where it resolves invalid share accusations.
 type SharesJustifyingMember struct {
 	*CommittingMember
 }
@@ -62,7 +63,9 @@ type QualifiedMember struct {
 	masterPrivateKeyShare, shareT *big.Int
 }
 
-// SharingMember represents one member in a threshold key sharing group.
+// SharingMember represents one member in a threshold key sharing group, after it
+// has been qualified to the master private key sharing group. A member shares
+// public values of it's polynomial coefficients with peer members.
 type SharingMember struct {
 	*QualifiedMember
 
