@@ -192,6 +192,8 @@ func (c *channel) messageProto(
 		}
 	}
 
+	// mint a new nonce
+
 	return (&pb.NetworkMessage{
 		Payload:   payloadBytes,
 		Sender:    senderIdentityBytes,
@@ -314,7 +316,40 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 		return err
 	}
 
-	return c.processContainerMessage(pubsubMessage.GetFrom(), protoMessage)
+	return c.processMessageSequence(pubsubMessage.GetFrom(), protoMessage)
+}
+
+func (c *channel) processMessageSequence(
+	proposedSender peer.ID,
+	protoMessage pb.NetworkMessage,
+) error {
+	messageNonce := nonceFromBytes(protoMessage.GetNonce())
+	c.messageCache.nonceServiceLock.Lock()
+	nonceService, ok := c.messageCache.nonceService[proposedSender]
+	if !ok {
+		c.messageCache.nonceServiceLock.Unlock()
+		return fmt.Errorf(
+			"Missing current nonce for peer [%v]",
+			proposedSender,
+		)
+	}
+	if _, ok := nonceService.used[messageNonce]; ok {
+		c.messageCache.nonceServiceLock.Unlock()
+		return fmt.Errorf(
+			"Nonce [%v] already used for peer [%v]; rejecting message",
+			messageNonce,
+			proposedSender,
+		)
+	}
+	if messageNonce > nonceService.latest {
+		// add it to the message buffer, we'll try again later
+		return nil
+	}
+	c.messageCache.nonceServiceLock.Unlock()
+
+	// increment latest known nonce
+	// nonceService.latest == messageNonce
+	return c.processContainerMessage(proposedSender, protoMessage)
 }
 
 func (c *channel) processContainerMessage(
