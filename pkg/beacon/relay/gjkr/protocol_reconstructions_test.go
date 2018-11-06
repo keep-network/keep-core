@@ -66,12 +66,16 @@ func TestCalculateReconstructedPublicKeyShares(t *testing.T) {
 	for i := range members {
 		members[i] = &ReconstructingMember{
 			SharingMember: &SharingMember{
-				CommittingMember: &CommittingMember{
-					memberCore: &memberCore{
-						ID:             i,
-						protocolConfig: &DKG{P: p},
+				QualifiedMember: &QualifiedMember{
+					SharesJustifyingMember: &SharesJustifyingMember{
+						CommittingMember: &CommittingMember{
+							memberCore: &memberCore{
+								ID:             i,
+								protocolConfig: &DKG{P: p},
+							},
+							vss: &pedersen.VSS{G: g},
+						},
 					},
-					vss: &pedersen.VSS{G: g},
 				},
 			},
 			reconstructedPrivateKeyShares: reconstructedPrivateKeyShares,
@@ -119,11 +123,15 @@ func TestCombineGroupPublicKey(t *testing.T) {
 			for i := range members {
 				members[i] = &ReconstructingMember{
 					SharingMember: &SharingMember{
-						CommittingMember: &CommittingMember{
-							memberCore: &memberCore{
-								ID: i + 1,
-								protocolConfig: &DKG{
-									P: p,
+						QualifiedMember: &QualifiedMember{
+							SharesJustifyingMember: &SharesJustifyingMember{
+								CommittingMember: &CommittingMember{
+									memberCore: &memberCore{
+										ID: i + 1,
+										protocolConfig: &DKG{
+											P: p,
+										},
+									},
 								},
 							},
 						},

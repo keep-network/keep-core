@@ -41,28 +41,43 @@ func TestRoundTrip(t *testing.T) {
 		}
 	}
 
-	var sharingMembers []*SharingMember
+	var qualifiedMembers []*QualifiedMember
+	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, cm := range committingMembers {
+		qualifiedMembers = append(qualifiedMembers, &QualifiedMember{
+			SharesJustifyingMember: &SharesJustifyingMember{
+				CommittingMember: cm,
+			},
+		})
+	}
+
+	for _, member := range qualifiedMembers {
+		member.CombineMemberShares()
+	}
+
+	var sharingMembers []*SharingMember
+	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
+	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			CommittingMember: cm,
+			QualifiedMember: qm,
 		})
 	}
 
 	for _, member := range sharingMembers {
 		if len(member.receivedSharesS) != groupSize-1 {
-			t.Fatalf("\nexpected: %d received shares T\nactual:   %d\n",
+			t.Fatalf("\nexpected: %d received shares S\nactual:   %d\n",
 				groupSize-1,
 				len(member.receivedSharesS),
 			)
 		}
 		if len(member.receivedSharesT) != groupSize-1 {
-			t.Fatalf("\nexpected: %d received shares S\nactual:   %d\n",
+			t.Fatalf("\nexpected: %d received shares T\nactual:   %d\n",
 				groupSize-1,
 				len(member.receivedSharesT),
 			)
 		}
 
-		member.CombineReceivedShares()
+		member.CombineMemberShares()
 	}
 
 	publicCoefficientsMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
