@@ -76,3 +76,10 @@ type SharingMember struct {
 	// across the protocol documentation.
 	receivedPublicCoefficients map[int][]*big.Int
 }
+
+// CoefficientsJustifyingMember represents one member in a threshold key sharing group,
+// after it completed public coefficients verification and enters justification
+// phase where it resolves invalid public coefficients accusations.
+type CoefficientsJustifyingMember struct {
+	*SharingMember
+}
