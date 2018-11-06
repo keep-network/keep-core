@@ -12,14 +12,15 @@ import (
 	"github.com/pborman/uuid"
 )
 
-// StaticNetworkKey represents peer's static key, which should be associated
+// NetworkPrivateKey represents peer's static key, which should be associated
 // with an on-chain stake. It is used to authenticate the peer and for message
-// attributability - each message leaving the peer is signed with its static key.
-type StaticNetworkKey = libp2pcrypto.Secp256k1PrivateKey
+// attributability - each message leaving the peer is signed with its network
+// private key.
+type NetworkPrivateKey = libp2pcrypto.Secp256k1PrivateKey
 
 // GenerateStaticNetworkKey generates a new, random static key based on
 // secp256k1 ethereum curve.
-func GenerateStaticNetworkKey(rand io.Reader) (*StaticNetworkKey, error) {
+func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivateKey, error) {
 	id := uuid.NewRandom()
 
 	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
@@ -46,16 +47,16 @@ func GenerateStaticNetworkKey(rand io.Reader) (*StaticNetworkKey, error) {
 // creating peer's ID or deserializing the key, operation fails with
 // unrecognized curve error. This is no longer a problem if we transform the
 // key using this function.
-func EthereumKeyToNetworkKey(ethereumKey *keystore.Key) *StaticNetworkKey {
+func EthereumKeyToNetworkKey(ethereumKey *keystore.Key) *NetworkPrivateKey {
 	privKey, _ := btcec.PrivKeyFromBytes(
 		btcec.S256(), ethereumKey.PrivateKey.D.Bytes(),
 	)
 
-	return (*StaticNetworkKey)(privKey)
+	return (*NetworkPrivateKey)(privKey)
 }
 
 // ToAddress converts `StaticNetworkKey` into ethereum-compatible account
 // address.
-func ToAddress(snk *StaticNetworkKey) string {
+func ToAddress(snk *NetworkPrivateKey) string {
 	return crypto.PubkeyToAddress(snk.PublicKey).String()
 }

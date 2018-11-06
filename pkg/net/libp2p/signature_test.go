@@ -197,8 +197,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 // tested.
 func createTestChannel(
 	ctx context.Context,
-	staticKey *key.StaticNetworkKey,
-) (*channel, error) {
+	staticKey *key.NetworkPrivateKey) (*channel, error) {
 	networkConfig := Config{Port: 8080}
 
 	stakeMonitoring := local.NewStakeMonitoring()

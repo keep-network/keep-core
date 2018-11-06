@@ -118,7 +118,7 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func loadStaticKey(account ethereum.Account) (*key.StaticNetworkKey, error) {
+func loadStaticKey(account ethereum.Account) (*key.NetworkPrivateKey, error) {
 	ethereumKey, err := ethereum.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
