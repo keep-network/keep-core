@@ -8,7 +8,6 @@ import (
 
 	inet "github.com/libp2p/go-libp2p-net"
 	peer "github.com/libp2p/go-libp2p-peer"
-	msmux "github.com/multiformats/go-multistream"
 
 	protoio "github.com/gogo/protobuf/io"
 )
@@ -24,14 +23,11 @@ func (c *channel) InitiateRequestForNonceHandler(
 		fmt.Printf("failed to open stream: [%v]\n", err)
 		return
 	}
+	defer inet.FullClose(stream)
 
 	stream.SetProtocol(NonceHandshakeID)
 
-	if err := msmux.SelectProtoOrFail(NonceHandshakeID, stream); err != nil {
-		fmt.Printf("failed to select protocol: [%v]\n", err)
-		return
-	}
-
+	fmt.Println("Made it out to the other side")
 	// initiator station
 
 	initiatorConnectionReader := protoio.NewDelimitedReader(stream, maxFrameSize)
@@ -41,6 +37,7 @@ func (c *channel) InitiateRequestForNonceHandler(
 	// Act 1
 	//
 
+	fmt.Println("shake shake...")
 	initiatorAct1, err := handshake.InitiateHandshake()
 	if err != nil {
 		fmt.Printf("initiator failed initializing handshake: [%v]\n", err)
@@ -93,9 +90,6 @@ func (c *channel) InitiateRequestForNonceHandler(
 		fmt.Printf("[%v]\n", err)
 		return
 	}
-
-	go inet.FullClose(stream)
-	return
 }
 
 func (c *channel) setInitiatorNonce(
@@ -103,18 +97,24 @@ func (c *channel) setInitiatorNonce(
 	act3Message *handshake.Act3Message,
 ) error {
 	if act3Message == nil {
-		return fmt.Errorf("failed to provide valid act3Message\n")
+		return fmt.Errorf("failed to provide valid act3Message")
 	}
 
 	c.messageCache.nonceServiceLock.Lock()
+	defer c.messageCache.nonceServiceLock.Unlock()
+
 	ns := c.messageCache.nonceService[peerID]
+	// TODO: I shouldn't need this
+	if ns.initial != uint64(0) {
+		// exit early, we already have a value for this peer
+		return fmt.Errorf("already have nonce value %v, trying to set %v", ns.initial, act3Message.Nonce())
+	}
 
 	ns.initial = act3Message.Nonce()
 	ns.latest = act3Message.Nonce()
-	ns.max = act3Message.Nonce()
 	ns.used[act3Message.Nonce()] = true
 
-	c.messageCache.nonceServiceLock.Unlock()
+	fmt.Printf("Setting nonce value %+v\n", act3Message.Nonce())
 	return nil
 }
 
@@ -127,20 +127,25 @@ func (c *channel) setResponderNonce(
 	}
 
 	c.messageCache.nonceServiceLock.Lock()
+	defer c.messageCache.nonceServiceLock.Unlock()
+
 	ns := c.messageCache.nonceService[peerID]
+	// TODO: I shouldn't need this
+	if ns.initial != uint64(0) {
+		// exit early, we already have a value for this peer
+		return fmt.Errorf("already have nonce value %v, trying to set %v", ns.initial, act2Message.Nonce())
+	}
 
 	ns.initial = act2Message.Nonce()
 	ns.latest = act2Message.Nonce()
-	ns.max = act2Message.Nonce()
 	ns.used[act2Message.Nonce()] = true
 
-	c.messageCache.nonceServiceLock.Unlock()
+	fmt.Printf("Setting nonce value %+v\n", act2Message.Nonce())
 	return nil
 }
 
 func (c *channel) respondToRequestForNonceHandler(stream inet.Stream) {
-	defer inet.FullClose(stream)
-
+	fmt.Println("I am LE trying to respond")
 	// responder station
 	responderConnectionReader := protoio.NewDelimitedReader(stream, maxFrameSize)
 	responderConnectionWriter := protoio.NewDelimitedWriter(stream)
@@ -151,12 +156,16 @@ func (c *channel) respondToRequestForNonceHandler(stream inet.Stream) {
 
 	act1Message, _, err := responderReceiveAct1(responderConnectionReader)
 	if err != nil {
+		stream.Reset()
 		fmt.Printf("responder failed receving act 1: [%v]\n", err)
+		return
 	}
 
 	responderAct2, err := handshake.AnswerHandshake(act1Message)
 	if err != nil {
+		stream.Reset()
 		fmt.Printf("responder failed parsing act 1: [%v]\n", err)
+		return
 	}
 
 	//
@@ -167,18 +176,14 @@ func (c *channel) respondToRequestForNonceHandler(stream inet.Stream) {
 	// off our nonce, n2, (for the initiator to calculate the challenge), and
 	// exit the protocol (no finalizing or waiting for an Act3 response).
 
-	// This nonce is the new starting point for communications with this peer
+	// Wait to set the nonce until communications have succeeded...
 	act2Message := responderAct2.Message()
-	if err := c.setResponderNonce(
-		stream.Conn().RemotePeer(),
-		act2Message,
-	); err != nil {
-		fmt.Printf("[%v]\n", err)
-	}
 
 	act2WireMessage, err := act2Message.Marshal()
 	if err != nil {
+		stream.Reset()
 		fmt.Printf("responder failed marshaling act 2: [%v]\n", err)
+		return
 	}
 
 	if err := responderSendAct2(
@@ -187,6 +192,18 @@ func (c *channel) respondToRequestForNonceHandler(stream inet.Stream) {
 		c.clientIdentity.privKey,
 		c.clientIdentity.id,
 	); err != nil {
+		stream.Reset()
 		fmt.Printf("responder failed sending act 2: [%v]\n", err)
+		return
+	}
+
+	// This nonce is the new starting point for communications with this peer
+	if err := c.setResponderNonce(
+		stream.Conn().RemotePeer(),
+		act2Message,
+	); err != nil {
+		stream.Reset()
+		fmt.Printf("[%v]\n", err)
+		return
 	}
 }
