@@ -372,37 +372,37 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 // be passed to this function.
 //
 // See Phase 9 of the protocol specification.
-func (sm *SharingMember) ResolvePublicCoefficientsAccusations(
+func (cjm *CoefficientsJustifyingMember) ResolvePublicCoefficientsAccusations(
 	senderID, accusedID int,
 	shareS *big.Int,
 ) (int, error) {
-	if sm.ID == senderID || sm.ID == accusedID {
+	if cjm.ID == senderID || cjm.ID == accusedID {
 		return 0, fmt.Errorf("current member cannot be a part of a dispute")
 	}
 
 	// `product = Π (A_mk ^ (j^k)) mod p` for k in [0..T],
 	// where: m is accused member's ID, j is sender's ID, T is threshold.
 	product := big.NewInt(1)
-	for k, a := range sm.receivedPublicCoefficients[accusedID] {
+	for k, a := range cjm.receivedPublicCoefficients[accusedID] {
 		product = new(big.Int).Mod(
 			new(big.Int).Mul(
 				product,
 				new(big.Int).Exp(
 					a,
 					pow(senderID, k),
-					sm.protocolConfig.P,
+					cjm.protocolConfig.P,
 				),
 			),
-			sm.protocolConfig.P,
+			cjm.protocolConfig.P,
 		)
 	}
 
 	// `expectedProduct = g^s_mj mod p`, where:
 	// m is accused member's ID, j is sender's ID.
 	expectedProduct := new(big.Int).Exp(
-		sm.vss.G,
+		cjm.vss.G,
 		shareS,
-		sm.protocolConfig.P,
+		cjm.protocolConfig.P,
 	)
 
 	if expectedProduct.Cmp(product) == 0 {
