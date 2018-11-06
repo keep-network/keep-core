@@ -72,7 +72,7 @@ type SharingMember struct {
 	// Public values of each polynomial `a` coefficient defined in secretCoefficients
 	// field. It is denoted as `A_ik` in protocol specification.
 	publicCoefficients []*big.Int
-
+	// Individual public keys `A_j0` received from peer group members.
 	receivedGroupPublicKeyShares map[int]*big.Int
 }
 
