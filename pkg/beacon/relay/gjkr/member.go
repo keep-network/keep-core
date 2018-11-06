@@ -44,14 +44,28 @@ type CommittingMember struct {
 	receivedCommitments map[int][]*big.Int
 }
 
-// SharingMember represents one member in a threshold key sharing group.
-type SharingMember struct {
+// SharesJustifyingMember represents one member in a threshold key sharing group,
+// after it completed secret shares and commitments verification.
+type SharesJustifyingMember struct {
 	*CommittingMember
+}
+
+// QualifiedMember represents one member in a threshold key sharing group, after
+// it completed secret shares justification. The member holds a share of group
+// master private key.
+type QualifiedMember struct {
+	*SharesJustifyingMember
 
 	// Member's share of the secret master private key. It is denoted as `z_ik`
 	// in protocol specification.
 	// TODO: unsure if we need shareT `x'_i` field, it should be removed if not used in further steps
 	masterPrivateKeyShare, shareT *big.Int
+}
+
+// SharingMember represents one member in a threshold key sharing group.
+type SharingMember struct {
+	*QualifiedMember
+
 	// Public values of each polynomial `a` coefficient defined in secretCoefficients
 	// field. It is denoted as `A_ik` in protocol specification.
 	publicCoefficients []*big.Int
