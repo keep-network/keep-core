@@ -79,7 +79,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				t.Fatalf("unexpected error [%s]", err)
 			}
 
-			sender := findMemberByID(members, test.senderID)
+			sender := findSharesJustifyingMemberByID(members, test.senderID)
 			revealedShareS := sender.receivedSharesS[test.accusedID]
 			revealedShareT := sender.receivedSharesT[test.accusedID]
 
@@ -106,6 +106,88 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
 			}
 
+			if result != test.expectedResult {
+				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestResolvePublicCoefficientsAccusations(t *testing.T) {
+	threshold := 3
+	groupSize := 5
+
+	members, err := initializeCoefficientsJustifyingMemberGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+	member := members[1]
+
+	var tests = map[string]struct {
+		senderID                 int
+		accusedID                int
+		modifyShareS             func(shareS *big.Int) *big.Int
+		modifyPublicCoefficients func(coefficients []*big.Int) []*big.Int
+		expectedResult           int
+		expectedError            error
+	}{
+		"false accusation - sender is punished": {
+			senderID:       3,
+			accusedID:      4,
+			expectedResult: 3,
+		},
+		"current member as a sender - error returned": {
+			senderID:       2,
+			accusedID:      3,
+			expectedResult: 0,
+			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+		},
+		"current member as an accused - error returned": {
+			senderID:       3,
+			accusedID:      2,
+			expectedResult: 0,
+			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+		},
+		"incorrect shareS - accused member is punished": {
+			senderID:  3,
+			accusedID: 4,
+			modifyShareS: func(shareS *big.Int) *big.Int {
+				return new(big.Int).Sub(shareS, big.NewInt(1))
+			},
+			expectedResult: 4,
+		},
+		"incorrect commitments - accused member is punished": {
+			senderID:  3,
+			accusedID: 4,
+			modifyPublicCoefficients: func(coefficients []*big.Int) []*big.Int {
+				newCoefficients := make([]*big.Int, len(coefficients))
+				for i := range newCoefficients {
+					newCoefficients[i] = big.NewInt(int64(990 + i))
+				}
+				return newCoefficients
+			},
+			expectedResult: 4,
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			setupPublicCoefficients(members)
+			sender := findCoefficientsJustifyingMemberByID(members, test.senderID)
+			revealedShareS := sender.receivedSharesS[test.accusedID]
+			if test.modifyShareS != nil {
+				revealedShareS = test.modifyShareS(revealedShareS)
+			}
+			if test.modifyPublicCoefficients != nil {
+				member.receivedPublicCoefficients[test.accusedID] = test.modifyPublicCoefficients(member.receivedPublicCoefficients[test.accusedID])
+			}
+			result, err := member.ResolvePublicCoefficientsAccusations(
+				test.senderID,
+				test.accusedID,
+				revealedShareS,
+			)
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
+			}
 			if result != test.expectedResult {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
 			}
@@ -166,7 +248,38 @@ func setupSharesAndCommitments(members []*SharesJustifyingMember, threshold int)
 	return nil
 }
 
-func findMemberByID(members []*SharesJustifyingMember, id int) *SharesJustifyingMember {
+// setupPublicCoefficients simulates public coefficients calculation and sharing
+// between members. It expects secret coefficients to be already stored in
+// secretCoefficients field for each group member. At the end it stores
+// values for each member just like they would be received from peers.
+func setupPublicCoefficients(members []*CoefficientsJustifyingMember) {
+	// Calculate public coefficients for each group member.
+	for _, m := range members {
+		m.CalculatePublicCoefficients()
+	}
+	// Simulate phase where members store received public coefficients from peers.
+	for _, m := range members {
+		for _, p := range members {
+			if m.ID != p.ID {
+				m.receivedPublicCoefficients[p.ID] = p.publicCoefficients
+			}
+		}
+	}
+}
+
+func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id int) *SharesJustifyingMember {
+	for _, m := range members {
+		if m.ID == id {
+			return m
+		}
+	}
+	return nil
+}
+
+func findCoefficientsJustifyingMemberByID(
+	members []*CoefficientsJustifyingMember,
+	id int,
+) *CoefficientsJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
 			return m
@@ -189,4 +302,21 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJ
 	}
 
 	return sharesJustifyingMember, nil
+}
+
+func initializeCoefficientsJustifyingMemberGroup(threshold, groupSize int) ([]*CoefficientsJustifyingMember, error) {
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
+
+	var coefficientsJustifyingMember []*CoefficientsJustifyingMember
+	for _, sm := range sharingMembers {
+		coefficientsJustifyingMember = append(coefficientsJustifyingMember,
+			&CoefficientsJustifyingMember{
+				SharingMember: sm,
+			})
+	}
+
+	return coefficientsJustifyingMember, nil
 }
