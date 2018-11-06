@@ -94,12 +94,12 @@ func TestDetectMalformedMessageSignature(t *testing.T) {
 func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	ctx := context.Background()
 
-	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ch, err := createTestChannel(ctx, staticKey)
+	ch, err := createTestChannel(ctx, privKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	// Create and publish message with a signature created with other key than
 	// sender's...
-	adversaryKey, err := key.GenerateStaticNetworkKey(crand.Reader)
+	adversaryPrivKey, _, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +132,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	adversarySignature, err := adversaryKey.Sign(envelope.Message)
+	adversarySignature, err := adversaryPrivKey.Sign(envelope.Message)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -30,7 +30,7 @@ func TestSameCurveAsEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pKey := EthereumKeyToNetworkKey(ethereumKey)
+	libp2pKey, _ := EthereumKeyToNetworkKey(ethereumKey)
 
 	ethereumCurve := ethereumKey.PrivateKey.Curve.Params()
 	libp2pCurve := libp2pKey.Curve.Params()
@@ -90,34 +90,34 @@ func TestSameKeyAsEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pKey := EthereumKeyToNetworkKey(ethereumKey)
+	libp2pPrivKey, libp2pPubKey := EthereumKeyToNetworkKey(ethereumKey)
 
-	if ethereumKey.PrivateKey.D.Cmp(libp2pKey.D) != 0 {
+	if ethereumKey.PrivateKey.D.Cmp(libp2pPrivKey.D) != 0 {
 		t.Errorf(
 			"unexpected D\nexpected: %v\nactual: %v",
 			ethereumKey.PrivateKey.D,
-			libp2pKey.D,
+			libp2pPrivKey.D,
 		)
 	}
 
-	if ethereumKey.PrivateKey.PublicKey.X.Cmp(libp2pKey.PublicKey.X) != 0 {
+	if ethereumKey.PrivateKey.PublicKey.X.Cmp(libp2pPubKey.X) != 0 {
 		t.Errorf(
 			"unexpected X\nexpected: %v\nactual: %v",
 			ethereumKey.PrivateKey.PublicKey.X,
-			libp2pKey.PublicKey.X,
+			libp2pPubKey.X,
 		)
 	}
 
-	if ethereumKey.PrivateKey.PublicKey.Y.Cmp(libp2pKey.PublicKey.Y) != 0 {
+	if ethereumKey.PrivateKey.PublicKey.Y.Cmp(libp2pPubKey.Y) != 0 {
 		t.Errorf(
 			"unexpected Y\nexpected: %v\nactual: %v",
 			ethereumKey.PrivateKey.PublicKey.Y,
-			libp2pKey.PublicKey.Y,
+			libp2pPubKey.Y,
 		)
 	}
 }
 
-func TestSameAddressAsEthereum(t *testing.T) {
+func TestNetworkPubKeyToAddress(t *testing.T) {
 	ethereumKey, err := generateEthereumKey()
 	if err != nil {
 		t.Fatal(err)
@@ -125,8 +125,8 @@ func TestSameAddressAsEthereum(t *testing.T) {
 
 	ethAddress := crypto.PubkeyToAddress(ethereumKey.PrivateKey.PublicKey).String()
 
-	libp2pKey := EthereumKeyToNetworkKey(ethereumKey)
-	libp2pAddress := ToAddress(libp2pKey)
+	_, pubKey := EthereumKeyToNetworkKey(ethereumKey)
+	libp2pAddress := NetworkPubKeyToEthAddress(pubKey)
 
 	if ethAddress != libp2pAddress {
 		t.Errorf(

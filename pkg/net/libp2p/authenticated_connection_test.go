@@ -82,15 +82,15 @@ func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *
 }
 
 func testStaticKeyAndID(t *testing.T) (libp2pcrypto.PrivKey, peer.ID) {
-	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	peerID, err := peer.IDFromPrivateKey(staticKey)
+	peerID, err := peer.IDFromPrivateKey(privKey)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return staticKey, peerID
+	return privKey, peerID
 }
 
 // Connect an initiator and responder via a full duplex network connection (reads

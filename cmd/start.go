@@ -129,7 +129,8 @@ func loadStaticKey(account ethereum.Account) (*key.NetworkPrivateKey, error) {
 		)
 	}
 
-	return key.EthereumKeyToNetworkKey(ethereumKey), nil
+	privKey, _ := key.EthereumKeyToNetworkKey(ethereumKey)
+	return privKey, nil
 }
 
 func checkMinimumStake(

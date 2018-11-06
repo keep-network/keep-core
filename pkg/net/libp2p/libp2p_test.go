@@ -18,7 +18,7 @@ func TestProviderReturnsType(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestProviderReturnsType(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		generateDeterministicNetworkConfig(t),
-		staticKey,
+		privKey,
 		local.NewStakeMonitoring(),
 	)
 	if err != nil {
@@ -48,7 +48,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	testName := "testname"
 
-	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		generateDeterministicNetworkConfig(t),
-		staticKey,
+		privKey,
 		local.NewStakeMonitoring(),
 	)
 	if err != nil {
@@ -82,12 +82,12 @@ func TestSendReceive(t *testing.T) {
 		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
 	)
 
-	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity, err := createIdentity(staticKey)
+	identity, err := createIdentity(privKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func TestSendReceive(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		config,
-		staticKey,
+		privKey,
 		local.NewStakeMonitoring(),
 	)
 	if err != nil {
@@ -175,12 +175,12 @@ func TestSendToReceiveFrom(t *testing.T) {
 		expectedPayload = "some text"
 	)
 
-	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity1, err := createIdentity(staticKey)
+	identity1, err := createIdentity(privKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +193,7 @@ func TestSendToReceiveFrom(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		config1,
-		staticKey,
+		privKey,
 		local.NewStakeMonitoring(),
 	)
 	if err != nil {
@@ -322,12 +322,12 @@ func newTestContext() (context.Context, context.CancelFunc) {
 }
 
 func newTestIdentity() (*identity, error) {
-	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	return createIdentity(staticKey)
+	return createIdentity(privKey)
 }
 
 func generateDeterministicNetworkConfig(t *testing.T) Config {
