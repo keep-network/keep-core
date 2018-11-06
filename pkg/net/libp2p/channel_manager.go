@@ -7,11 +7,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	host "github.com/libp2p/go-libp2p-host"
 	"github.com/libp2p/go-libp2p-peerstore"
+	protocol "github.com/libp2p/go-libp2p-protocol"
 	"github.com/libp2p/go-libp2p-pubsub"
 )
 
 // Protocol ID for initiating nonce handshake
-const NonceHandshakeID = "/keep/nonce/1.0.0"
+const NonceHandshakeID = protocol.ID("/keep/nonce/0.0.1")
 
 type channelManager struct {
 	ctx context.Context
