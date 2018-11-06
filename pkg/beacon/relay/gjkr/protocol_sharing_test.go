@@ -32,15 +32,17 @@ func TestCombineReceivedShares(t *testing.T) {
 	expectedShareT := big.NewInt(36)
 
 	config := &DKG{Q: q}
-	member := &SharingMember{
-		CommittingMember: &CommittingMember{
-			memberCore: &memberCore{
-				protocolConfig: config,
+	member := &QualifiedMember{
+		SharesJustifyingMember: &SharesJustifyingMember{
+			CommittingMember: &CommittingMember{
+				memberCore: &memberCore{
+					protocolConfig: config,
+				},
+				selfSecretShareS: selfShareS,
+				selfSecretShareT: selfShareT,
+				receivedSharesS:  receivedShareS,
+				receivedSharesT:  receivedShareT,
 			},
-			selfSecretShareS: selfShareS,
-			selfSecretShareT: selfShareT,
-			receivedSharesS:  receivedShareS,
-			receivedSharesT:  receivedShareT,
 		},
 	}
 
@@ -83,12 +85,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	}
 
 	member := &SharingMember{
-		CommittingMember: &CommittingMember{
-			memberCore: &memberCore{
-				protocolConfig: config,
+		QualifiedMember: &QualifiedMember{
+			SharesJustifyingMember: &SharesJustifyingMember{
+				CommittingMember: &CommittingMember{
+					memberCore: &memberCore{
+						protocolConfig: config,
+					},
+					vss:                vss,
+					secretCoefficients: secretCoefficients,
+				},
 			},
-			vss:                vss,
-			secretCoefficients: secretCoefficients,
 		},
 	}
 
@@ -197,7 +203,11 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 			}
 		}
 		sharingMembers = append(sharingMembers, &SharingMember{
-			CommittingMember: cm,
+			QualifiedMember: &QualifiedMember{
+				SharesJustifyingMember: &SharesJustifyingMember{
+					CommittingMember: cm,
+				},
+			},
 		})
 	}
 
