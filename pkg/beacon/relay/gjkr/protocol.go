@@ -83,71 +83,23 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	return sharesMessages, commitmentsMessage, nil
 }
 
-// VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments
-// received in messages from peer group members.
-// It returns accusation message with ID of members for which verification failed.
-//
-// If cannot match commitments message with shares message for given sender then
-// error is returned.
-//
-// See Phase 4 of the protocol specification.
-func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
-	sharesMessages []*PeerSharesMessage,
-	commitmentsMessages []*MemberCommitmentsMessage,
-) (*SecretSharesAccusationsMessage, error) {
-	var accusedMembersIDs []int
-
-	// `commitmentsProduct = Π (commitments_j[k] ^ (i^k)) mod p` for k in [0..T],
-	// where: j is sender's ID, i is current member ID, T is threshold.
-	for _, commitmentsMessage := range commitmentsMessages {
-		commitmentsProduct := big.NewInt(1)
-		for k, c := range commitmentsMessage.commitments {
-			commitmentsProduct = new(big.Int).Mod(
-				new(big.Int).Mul(
-					commitmentsProduct,
-					new(big.Int).Exp(
-						c,
-						pow(cm.ID, k),
-						cm.protocolConfig.P,
-					),
-				),
-				cm.protocolConfig.P,
-			)
-		}
-		// Find share message sent by the same member who sent commitment message
-		sharesMessageFound := false
-		for _, sharesMessage := range sharesMessages {
-			if sharesMessage.senderID == commitmentsMessage.senderID {
-				sharesMessageFound = true
-				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
-				// where: j is sender's ID, i is current member ID.
-				expectedProduct := cm.vss.CalculateCommitment(
-					sharesMessage.shareS,
-					sharesMessage.shareT,
-					cm.protocolConfig.P,
-				)
-
-				if expectedProduct.Cmp(commitmentsProduct) != 0 {
-					accusedMembersIDs = append(accusedMembersIDs,
-						commitmentsMessage.senderID)
-					break
-				}
-				cm.receivedSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
-				cm.receivedSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
-				break
-			}
-		}
-		if !sharesMessageFound {
-			return nil, fmt.Errorf("cannot find shares message from member %d",
-				commitmentsMessage.senderID,
-			)
+// generatePolynomial generates a random polynomial over Z_q of a given degree.
+// This function will generate a slice of `degree + 1` coefficients. Each value
+// will be a random `big.Int` in range (0, q).
+func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
+	coefficients := make([]*big.Int, degree+1)
+	var err error
+	for i := range coefficients {
+		coefficients[i], err = dkg.RandomQ()
+		if err != nil {
+			return nil, err
 		}
 	}
+	return coefficients, nil
+}
 
-	return &SecretSharesAccusationsMessage{
-		senderID:   cm.ID,
-		accusedIDs: accusedMembersIDs,
-	}, nil
+func pow(x, y int) *big.Int {
+	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
 }
 
 // evaluateMemberShare calculates a share for given memberID.
@@ -174,47 +126,174 @@ func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
 	return result
 }
 
-// generatePolynomial generates a random polynomial over Z_q of a given degree.
-// This function will generate a slice of `degree + 1` coefficients. Each value
-// will be a random `big.Int` in range (0, q).
-func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
-	coefficients := make([]*big.Int, degree+1)
-	var err error
-	for i := range coefficients {
-		coefficients[i], err = dkg.RandomQ()
-		if err != nil {
-			return nil, err
+// VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments
+// received in messages from peer group members.
+// It returns accusation message with ID of members for which verification failed.
+//
+// If cannot match commitments message with shares message for given sender then
+// error is returned.
+//
+// See Phase 4 of the protocol specification.
+func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
+	sharesMessages []*PeerSharesMessage,
+	commitmentsMessages []*MemberCommitmentsMessage,
+) (*SecretSharesAccusationsMessage, error) {
+	var accusedMembersIDs []int
+
+	for _, commitmentsMessage := range commitmentsMessages {
+		// Find share message sent by the same member who sent commitment message
+		sharesMessageFound := false
+		for _, sharesMessage := range sharesMessages {
+			if sharesMessage.senderID == commitmentsMessage.senderID {
+				sharesMessageFound = true
+
+				// Check if `commitmentsProduct == expectedProduct`
+				// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]
+				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
+				// where: j is sender's ID, i is current member ID, T is threshold.
+				if !cm.areSharesValidAgainstCommitments(
+					sharesMessage.shareS, sharesMessage.shareT, // s_ji, t_ji
+					commitmentsMessage.commitments, // C_j
+					cm.ID,                          // i
+				) {
+					accusedMembersIDs = append(accusedMembersIDs,
+						commitmentsMessage.senderID)
+					break
+				}
+				cm.receivedSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
+				cm.receivedSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
+				cm.receivedCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
+				break
+			}
+		}
+		if !sharesMessageFound {
+			return nil, fmt.Errorf("cannot find shares message from member %d",
+				commitmentsMessage.senderID,
+			)
 		}
 	}
-	return coefficients, nil
+
+	return &SecretSharesAccusationsMessage{
+		senderID:   cm.ID,
+		accusedIDs: accusedMembersIDs,
+	}, nil
 }
 
-func pow(x, y int) *big.Int {
-	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
+// areSharesValidAgainstCommitments verifies if commitments are valid for passed
+// shares.
+//
+// The `j` member generated a polynomial with `k` coefficients before. Then they
+// calculated a commitments to the polynomial's coefficients `C_j` and individual
+// shares `s_ji` and `t_ji` with a polynomial for a member `i`. In this function
+// the verifier checks if the shares are valid against the commitments.
+//
+// The verifier checks that:
+// `commitmentsProduct == expectedProduct`
+// where:
+// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T],
+// and
+// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`:
+func (cm *CommittingMember) areSharesValidAgainstCommitments(
+	shareS, shareT *big.Int, // s_ji, t_ji
+	commitments []*big.Int, // C_j
+	memberID int, // i
+) bool {
+	// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p`
+	commitmentsProduct := big.NewInt(1)
+	for k, c := range commitments {
+		commitmentsProduct = new(big.Int).Mod(
+			new(big.Int).Mul(
+				commitmentsProduct,
+				new(big.Int).Exp(
+					c,
+					pow(memberID, k),
+					cm.protocolConfig.P,
+				),
+			),
+			cm.protocolConfig.P,
+		)
+	}
+
+	// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`, where:
+	expectedProduct := cm.vss.CalculateCommitment(
+		shareS,
+		shareT,
+		cm.protocolConfig.P,
+	)
+
+	return expectedProduct.Cmp(commitmentsProduct) == 0
 }
 
-// CombineReceivedShares sums up all shares received from peer group members.
+// ResolveSecretSharesAccusations resolves a complaint received from a sender
+// against a member accused in the shares and commitments verification phase.
+// A member is calling this function to judge which party of the dispute is lying.
+//
+// The function requires shares `s_mj` and `t_mj` calculated by the accused
+// member (`m`) for the sender (`j`). These values are expected to be broadcast
+// before in encrypted form. On accusation, the shares should be decrypted and
+// the revealed value should be passed to this function.
+//
+// A current member cannot be a part of a dispute. If the current member is
+// either an accuser or is accused the function will return an error. The accused
+// party cannot be a judge in its own case. From the other hand, the accuser has
+// already performed the calculation in the previous phase which resulted in the
+// accusation and waits now for a judgment from other players.
+//
+// The returned value is an ID of the member who should be slashed. It will be
+// an accuser ID if the validation shows that shares and commitments are valid,
+// so the accusation was unfounded. Else it confirms that accused member misbehaved
+// and their ID is returned.
+//
+// See Phase 5 of the protocol specification.
+func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
+	senderID, accusedID int, // j, m
+	shareS, shareT *big.Int, // s_mj, t_mj
+) (int, error) {
+	if sjm.ID == senderID || sjm.ID == accusedID {
+		return 0, fmt.Errorf("current member cannot be a part of a dispute")
+	}
+
+	// Check if `commitmentsProduct == expectedProduct`
+	// `commitmentsProduct = Π (C_m[k] ^ (j^k)) mod p` for k in [0..T]
+	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`
+	// where: m is accused member's ID, j is sender's ID, T is threshold.
+	if sjm.areSharesValidAgainstCommitments(
+		shareS, shareT, // s_mj, t_mj
+		sjm.receivedCommitments[accusedID], // C_m
+		senderID,                           // j
+	) {
+		return senderID, nil
+	}
+	return accusedID, nil
+}
+
+// CombineMemberShares sums up all `s` and `t` shares intended for this member.
+// Combines secret shares calculated by current member `i` for itself `s_ii` with
+// shares calculated by peer members `j` for this member `s_ji`.
+//
+// `x_i = Σ s_ji mod q` and `x'_i = Σ t_ji mod q` for `j` in a group of players
+// who passed secret shares accusations stage.
 //
 // See Phase 6 of the protocol specification.
-func (sm *SharingMember) CombineReceivedShares() {
-	shareS := big.NewInt(0)
-	for _, s := range sm.receivedSharesS {
-		shareS = new(big.Int).Mod(
-			new(big.Int).Add(shareS, s),
-			sm.protocolConfig.Q,
+func (qm *QualifiedMember) CombineMemberShares() {
+	combinedSharesS := qm.selfSecretShareS // s_ii
+	for _, s := range qm.receivedSharesS {
+		combinedSharesS = new(big.Int).Mod(
+			new(big.Int).Add(combinedSharesS, s),
+			qm.protocolConfig.Q,
 		)
 	}
 
-	shareT := big.NewInt(0)
-	for _, t := range sm.receivedSharesT {
-		shareT = new(big.Int).Mod(
-			new(big.Int).Add(shareT, t),
-			sm.protocolConfig.Q,
+	combinedSharesT := qm.selfSecretShareT // t_ii
+	for _, t := range qm.receivedSharesT {
+		combinedSharesT = new(big.Int).Mod(
+			new(big.Int).Add(combinedSharesT, t),
+			qm.protocolConfig.Q,
 		)
 	}
 
-	sm.shareS = shareS
-	sm.shareT = shareT
+	qm.masterPrivateKeyShare = combinedSharesS
+	qm.shareT = combinedSharesT
 }
 
 // CalculatePublicCoefficients calculates public values for member's coefficients.
@@ -222,26 +301,25 @@ func (sm *SharingMember) CombineReceivedShares() {
 //
 // See Phase 7 of the protocol specification.
 func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicCoefficientsMessage {
-	var publicCoefficients []*big.Int
-	for _, a := range sm.secretCoefficients {
-		publicA := new(big.Int).Exp(
+	sm.publicCoefficients = make([]*big.Int, len(sm.secretCoefficients))
+	for i, a := range sm.secretCoefficients {
+		sm.publicCoefficients[i] = new(big.Int).Exp(
 			sm.vss.G,
 			a,
 			sm.protocolConfig.P,
 		)
-		publicCoefficients = append(publicCoefficients, publicA)
 	}
-	sm.publicCoefficients = publicCoefficients
 
 	return &MemberPublicCoefficientsMessage{
 		senderID:           sm.ID,
-		publicCoefficients: publicCoefficients,
+		publicCoefficients: sm.publicCoefficients,
 	}
 }
 
 // VerifyPublicCoefficients validates public key shares received in messages from
 // peer group members.
-// It returns accusation message with ID of members for which verification failed.
+// It returns accusation message with ID of members for which the verification
+// failed.
 //
 // See Phase 8 of the protocol specification.
 func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoefficientsMessage) (*CoefficientsAccusationsMessage, error) {
