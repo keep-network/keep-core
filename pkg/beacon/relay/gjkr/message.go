@@ -12,14 +12,15 @@ type MemberCommitmentsMessage struct {
 	commitments []*big.Int // slice of `C_ik`
 }
 
-// PeerSharesMessage is a message payload that carries the sender's shares `s_ij`
-// and `t_ij` for the recipient during distributed key generation.
+// PeerSharesMessage is a message payload that carries shares `s_ij` and `t_ij`
+// calculated by the sender `i` for the recipient `j` during distributed key
+// generation.
 //
 // It is expected to be communicated in an encrypted fashion to the selected
 // recipient.
 type PeerSharesMessage struct {
-	senderID   int
-	receiverID int
+	senderID   int // i
+	receiverID int // j
 
 	shareS *big.Int // s_ij
 	shareT *big.Int // t_ij
