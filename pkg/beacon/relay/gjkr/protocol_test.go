@@ -41,6 +41,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	var sharingMembers []*SharingMember
+	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, cm := range committingMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
 			CommittingMember: cm,
