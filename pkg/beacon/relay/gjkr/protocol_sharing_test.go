@@ -18,6 +18,9 @@ func TestCombineReceivedShares(t *testing.T) {
 
 	receivedShareS := make(map[int]*big.Int)
 	receivedShareT := make(map[int]*big.Int)
+	// Simulate shares received from peer members.
+	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
+	// slice indices.
 	for i := 0; i <= 5; i++ {
 		receivedShareS[100+i] = big.NewInt(int64(10 + i))
 		receivedShareT[100+i] = big.NewInt(int64(20 + i))
