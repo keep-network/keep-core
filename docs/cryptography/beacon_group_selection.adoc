@@ -113,7 +113,8 @@ When a staker _S~j~_ is created, the following values are determined:
 The staker creation operation needs to include a proof of the correctness of the
 above values.
 
-Currently the _Stake~j~_ can be public and _Q~j~_ can be the ECDSA pubkey of _S~j~_.
+Currently the _Stake~j~_ and _Weight~j~_ can be public and _Q~j~_ can be the 
+ECDSA pubkey of _S~j~_.
 Future work towards indistinguishable staking would make these values private
 and prove correctness via a ZKP.
 
