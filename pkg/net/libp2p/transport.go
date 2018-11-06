@@ -39,7 +39,7 @@ func (t *transport) SecureInbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
 ) (secure.Conn, error) {
-	return newAuthenticatedConnection(
+	return newAuthenticatedInboundConnection(
 		unauthenticatedConn,
 		t.localPeerID,
 		t.privateKey,
@@ -53,7 +53,7 @@ func (t *transport) SecureOutbound(
 	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
 ) (secure.Conn, error) {
-	return newAuthenticatedConnection(
+	return newAuthenticatedOutboundConnection(
 		unauthenticatedConn,
 		t.localPeerID,
 		t.privateKey,

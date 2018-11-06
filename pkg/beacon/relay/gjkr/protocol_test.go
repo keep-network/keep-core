@@ -40,10 +40,25 @@ func TestRoundTrip(t *testing.T) {
 		}
 	}
 
-	var sharingMembers []*SharingMember
+	var qualifiedMembers []*QualifiedMember
+	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, cm := range committingMembers {
+		qualifiedMembers = append(qualifiedMembers, &QualifiedMember{
+			SharesJustifyingMember: &SharesJustifyingMember{
+				CommittingMember: cm,
+			},
+		})
+	}
+
+	for _, member := range qualifiedMembers {
+		member.CombineMemberShares()
+	}
+
+	var sharingMembers []*SharingMember
+	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
+	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			CommittingMember: cm,
+			QualifiedMember: qm,
 		})
 	}
 
@@ -53,10 +68,6 @@ func TestRoundTrip(t *testing.T) {
 			groupSize-1,
 			len(sharingMember.receivedSharesS),
 		)
-	}
-
-	for _, member := range sharingMembers {
-		member.CombineReceivedShares()
 	}
 
 	publicCoefficientsMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
