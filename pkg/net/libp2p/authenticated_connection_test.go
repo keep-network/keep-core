@@ -19,7 +19,14 @@ func TestHandshakeRoundTrip(t *testing.T) {
 	defer cancel()
 
 	// Connect the initiator and responder sessions
-	authnInboundConn, authnOutboundConn := connectInitiatorAndResponderFull(t)
+	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
+		connectInitiatorAndResponderFull(t)
+	if inboundError != nil {
+		t.Fatal(inboundError)
+	}
+	if outboundError != nil {
+		t.Fatal(outboundError)
+	}
 
 	msg := []byte("brown fox blue tail")
 	go func(authnOutboundConn *authenticatedConnection, msg []byte) {
@@ -38,7 +45,12 @@ func TestHandshakeRoundTrip(t *testing.T) {
 	}
 }
 
-func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *authenticatedConnection) {
+func connectInitiatorAndResponderFull(t *testing.T) (
+	authnInboundConn *authenticatedConnection,
+	authnOutboundConn *authenticatedConnection,
+	outboundError error,
+	inboundError error,
+) {
 	initiatorPrivKey, initiatorPubKey, initiatorPeerID := testStaticKeyAndID(t)
 	responderPrivKey, responderPubKey, responderPeerID := testStaticKeyAndID(t)
 	initiatorConn, responderConn := newConnPair()
@@ -47,18 +59,15 @@ func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *
 	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiatorPubKey))
 	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responderPubKey))
 
-	var (
-		done              = make(chan struct{})
-		initiatorErr      error
-		authnOutboundConn *authenticatedConnection
-	)
+	done := make(chan struct{})
+
 	go func(
 		initiatorConn net.Conn,
 		initiatorPeerID peer.ID,
 		initiatorPrivKey libp2pcrypto.PrivKey,
 		responderPeerID peer.ID,
 	) {
-		authnOutboundConn, initiatorErr = newAuthenticatedOutboundConnection(
+		authnOutboundConn, outboundError = newAuthenticatedOutboundConnection(
 			initiatorConn,
 			initiatorPeerID,
 			initiatorPrivKey,
@@ -68,24 +77,16 @@ func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *
 		done <- struct{}{}
 	}(initiatorConn, initiatorPeerID, initiatorPrivKey, responderPeerID)
 
-	authnInboundConn, err := newAuthenticatedInboundConnection(
+	authnInboundConn, inboundError = newAuthenticatedInboundConnection(
 		responderConn,
 		responderPeerID,
 		responderPrivKey,
 		stakeMonitoring,
 	)
-	if err != nil {
-		t.Fatalf("failed to connect initiator with responder [%v]", err)
-	}
 
-	// handshake is done, and we'll know if the outbound failed
-	<-done
+	<-done // handshake is done
 
-	if initiatorErr != nil {
-		t.Fatal(initiatorErr)
-	}
-
-	return authnInboundConn, authnOutboundConn
+	return
 }
 
 func testStaticKeyAndID(t *testing.T) (
