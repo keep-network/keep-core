@@ -80,8 +80,8 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			}
 
 			sender := findSharesJustifyingMemberByID(members, test.senderID)
-			revealedShareS := sender.receivedSharesS[test.accusedID]
-			revealedShareT := sender.receivedSharesT[test.accusedID]
+			revealedShareS := sender.receivedValidSharesS[test.accusedID]
+			revealedShareT := sender.receivedValidSharesT[test.accusedID]
 
 			if test.modifyShareS != nil {
 				revealedShareS = test.modifyShareS(revealedShareS)
@@ -92,7 +92,8 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			}
 
 			if test.modifyCommitments != nil {
-				member.receivedCommitments[test.accusedID] = test.modifyCommitments(member.receivedCommitments[test.accusedID])
+				member.receivedValidPeerCommitments[test.accusedID] =
+					test.modifyCommitments(member.receivedValidPeerCommitments[test.accusedID])
 			}
 
 			result, err := member.ResolveSecretSharesAccusations(
@@ -173,12 +174,12 @@ func TestResolvePublicCoefficientsAccusations(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			setupPublicCoefficients(members)
 			sender := findCoefficientsJustifyingMemberByID(members, test.senderID)
-			revealedShareS := sender.receivedSharesS[test.accusedID]
+			revealedShareS := sender.receivedValidSharesS[test.accusedID]
 			if test.modifyShareS != nil {
 				revealedShareS = test.modifyShareS(revealedShareS)
 			}
 			if test.modifyPublicCoefficients != nil {
-				member.receivedPublicCoefficients[test.accusedID] = test.modifyPublicCoefficients(member.receivedPublicCoefficients[test.accusedID])
+				member.receivedValidPeerCoefficients[test.accusedID] = test.modifyPublicCoefficients(member.receivedValidPeerCoefficients[test.accusedID])
 			}
 			result, err := member.ResolvePublicCoefficientsAccusations(
 				test.senderID,
@@ -238,10 +239,10 @@ func setupSharesAndCommitments(members []*SharesJustifyingMember, threshold int)
 	for _, m := range members {
 		for _, p := range members {
 			if m.ID != p.ID {
-				p.receivedSharesS[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
-				p.receivedSharesT[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
+				p.receivedValidSharesS[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
+				p.receivedValidSharesT[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
 
-				p.receivedCommitments[m.ID] = groupCommitments[m.ID]
+				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
 	}
@@ -261,7 +262,7 @@ func setupPublicCoefficients(members []*CoefficientsJustifyingMember) {
 	for _, m := range members {
 		for _, p := range members {
 			if m.ID != p.ID {
-				m.receivedPublicCoefficients[p.ID] = p.publicCoefficients
+				m.receivedValidPeerCoefficients[p.ID] = p.publicCoefficients
 			}
 		}
 	}

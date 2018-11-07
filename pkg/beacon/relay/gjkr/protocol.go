@@ -160,9 +160,9 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 						commitmentsMessage.senderID)
 					break
 				}
-				cm.receivedSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
-				cm.receivedSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
-				cm.receivedCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
+				cm.receivedValidSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
+				cm.receivedValidSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
+				cm.receivedValidPeerCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
 				break
 			}
 		}
@@ -259,8 +259,8 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
 	// where: m is accused member's ID, j is sender's ID, T is threshold.
 	if sjm.areSharesValidAgainstCommitments(
 		shareS, shareT, // s_mj, t_mj
-		sjm.receivedCommitments[accusedID], // C_m
-		senderID,                           // j
+		sjm.receivedValidPeerCommitments[accusedID], // C_m
+		senderID, // j
 	) {
 		return senderID, nil
 	}
@@ -277,7 +277,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
 	combinedSharesS := qm.selfSecretShareS // s_ii
-	for _, s := range qm.receivedSharesS {
+	for _, s := range qm.receivedValidSharesS {
 		combinedSharesS = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesS, s),
 			qm.protocolConfig.Q,
@@ -285,7 +285,7 @@ func (qm *QualifiedMember) CombineMemberShares() {
 	}
 
 	combinedSharesT := qm.selfSecretShareT // t_ii
-	for _, t := range qm.receivedSharesT {
+	for _, t := range qm.receivedValidSharesT {
 		combinedSharesT = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesT, t),
 			qm.protocolConfig.Q,
@@ -344,14 +344,14 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 		// `expectedProduct = g^s_ji`
 		expectedProduct := new(big.Int).Exp(
 			sm.vss.G,
-			sm.receivedSharesS[message.senderID],
+			sm.receivedValidSharesS[message.senderID],
 			sm.protocolConfig.P)
 
 		if expectedProduct.Cmp(product) != 0 {
 			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
 			continue
 		}
-		sm.receivedPublicCoefficients[message.senderID] = message.publicCoefficients
+		sm.receivedValidPeerCoefficients[message.senderID] = message.publicCoefficients
 	}
 
 	return &CoefficientsAccusationsMessage{
@@ -383,7 +383,7 @@ func (cjm *CoefficientsJustifyingMember) ResolvePublicCoefficientsAccusations(
 	// `product = Π (A_mk ^ (j^k)) mod p` for k in [0..T],
 	// where: m is accused member's ID, j is sender's ID, T is threshold.
 	product := big.NewInt(1)
-	for k, a := range cjm.receivedPublicCoefficients[accusedID] {
+	for k, a := range cjm.receivedValidPeerCoefficients[accusedID] {
 		product = new(big.Int).Mod(
 			new(big.Int).Mul(
 				product,

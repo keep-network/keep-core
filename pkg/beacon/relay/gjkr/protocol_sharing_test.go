@@ -38,10 +38,10 @@ func TestCombineReceivedShares(t *testing.T) {
 				memberCore: &memberCore{
 					protocolConfig: config,
 				},
-				selfSecretShareS: selfShareS,
-				selfSecretShareT: selfShareT,
-				receivedSharesS:  receivedShareS,
-				receivedSharesT:  receivedShareT,
+				selfSecretShareS:     selfShareS,
+				selfSecretShareT:     selfShareT,
+				receivedValidSharesS: receivedShareS,
+				receivedValidSharesT: receivedShareT,
 			},
 		},
 	}
@@ -208,13 +208,13 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 					CommittingMember: cm,
 				},
 			},
-			receivedPublicCoefficients: make(map[int][]*big.Int, groupSize-1),
+			receivedValidPeerCoefficients: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
 	for _, sm := range sharingMembers {
 		for _, cm := range committingMembers {
-			sm.receivedSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
+			sm.receivedValidSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
 		}
 	}
 

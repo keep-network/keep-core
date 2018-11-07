@@ -35,13 +35,15 @@ type CommittingMember struct {
 	//
 	// These are private values and should not be exposed.
 	selfSecretShareS, selfSecretShareT *big.Int
-	// Shares calculated for the current member by peer group members.
+	// Shares calculated for the current member by peer group members which passed
+	// the validation.
 	//
-	// receivedSharesS are defined as `s_ji` and receivedSharesT are
+	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
-	receivedSharesS, receivedSharesT map[int]*big.Int
-	// Commitments to coefficients received from peer group members.
-	receivedCommitments map[int][]*big.Int
+	receivedValidSharesS, receivedValidSharesT map[int]*big.Int
+	// Commitments to coefficients received from peer group members which passed
+	// the validation.
+	receivedValidPeerCommitments map[int][]*big.Int
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -72,9 +74,9 @@ type SharingMember struct {
 	// Public values of each polynomial `a` coefficient defined in secretCoefficients
 	// field. It is denoted as `A_ik` in protocol specification.
 	publicCoefficients []*big.Int
-	// Public coefficients received from peer group members. Defined as `A_jk`
-	// across the protocol documentation.
-	receivedPublicCoefficients map[int][]*big.Int
+	// Coefficients received from peer group members which passed the validation.
+	// Defined as `A_jk` across the protocol documentation.
+	receivedValidPeerCoefficients map[int][]*big.Int
 }
 
 // CoefficientsJustifyingMember represents one member in a threshold key sharing group,

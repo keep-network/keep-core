@@ -61,16 +61,16 @@ func TestRoundTrip(t *testing.T) {
 	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			QualifiedMember:            qm,
-			receivedPublicCoefficients: make(map[int][]*big.Int, groupSize-1),
+			QualifiedMember:               qm,
+			receivedValidPeerCoefficients: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
 	sharingMember := sharingMembers[0]
-	if len(sharingMember.receivedSharesS) != groupSize-1 {
+	if len(sharingMember.receivedValidSharesS) != groupSize-1 {
 		t.Fatalf("\nexpected: %d received shares\nactual:   %d\n",
 			groupSize-1,
-			len(sharingMember.receivedSharesS),
+			len(sharingMember.receivedValidSharesS),
 		)
 	}
 
