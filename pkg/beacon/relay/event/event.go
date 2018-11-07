@@ -42,3 +42,8 @@ type StakerRegistration struct {
 	Index         int
 	GroupMemberID string
 }
+
+type PublishedResult struct {
+	PublisherID int
+	Hash        []byte
+}

@@ -21,3 +21,13 @@ func (g *Group) MemberIDs() []int {
 func (g *Group) RegisterMemberID(id int) {
 	g.memberIDs = append(g.memberIDs, id)
 }
+
+func (g *Group) DisqualifiedMembers() []int {
+	// TODO: Implement
+	return []int{}
+}
+
+func (g *Group) InactiveMembers() []int {
+	// TODO: Implement
+	return []int{}
+}
