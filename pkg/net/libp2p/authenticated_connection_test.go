@@ -3,24 +3,33 @@ package libp2p
 import (
 	"context"
 	crand "crypto/rand"
+	"fmt"
 	"io"
 	"net"
+	"reflect"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
-func TestHandshakeRoundTrip(t *testing.T) {
+func TestHandshake(t *testing.T) {
 	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	// Connect the initiator and responder sessions
+	initiator := createTestConnectionConfig(t)
+	responder := createTestConnectionConfig(t)
+
+	stakeMonitoring := local.NewStakeMonitoring()
+	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+
 	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
-		connectInitiatorAndResponderFull(t)
+		connectInitiatorAndResponder(initiator, responder, stakeMonitoring, t)
 	if inboundError != nil {
 		t.Fatal(inboundError)
 	}
@@ -28,6 +37,7 @@ func TestHandshakeRoundTrip(t *testing.T) {
 		t.Fatal(outboundError)
 	}
 
+	// send a test message over the established connection
 	msg := []byte("brown fox blue tail")
 	go func(authnOutboundConn *authenticatedConnection, msg []byte) {
 		if _, err := authnOutboundConn.Write(msg); err != nil {
@@ -45,19 +55,75 @@ func TestHandshakeRoundTrip(t *testing.T) {
 	}
 }
 
-func connectInitiatorAndResponderFull(t *testing.T) (
+func TestHandshakeNoInitiatorStake(t *testing.T) {
+	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	initiator := createTestConnectionConfig(t)
+	responder := createTestConnectionConfig(t)
+
+	stakeMonitoring := local.NewStakeMonitoring()
+	// only responder is staked
+	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+
+	_, _, inboundError, outboundError :=
+		connectInitiatorAndResponder(initiator, responder, stakeMonitoring, t)
+
+	if inboundError != nil {
+		t.Fatal(inboundError)
+	}
+
+	expectedOutboundError := fmt.Errorf("connection handshake failed - remote peer has no minimum stake")
+	if !reflect.DeepEqual(expectedOutboundError, outboundError) {
+		t.Fatalf(
+			"unexpected outbound connection error\nexpected: %v\nactual: %v",
+			expectedOutboundError,
+			outboundError,
+		)
+	}
+}
+
+func TestHanshakeNoResponderStake(t *testing.T) {
+	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	initiator := createTestConnectionConfig(t)
+	responder := createTestConnectionConfig(t)
+
+	stakeMonitoring := local.NewStakeMonitoring()
+	// only initiator is staked
+	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+
+	_, _, inboundError, outboundError :=
+		connectInitiatorAndResponder(initiator, responder, stakeMonitoring, t)
+
+	expectedInboundError := fmt.Errorf("connection handshake failed - remote peer has no minimum stake")
+	if !reflect.DeepEqual(expectedInboundError, inboundError) {
+		t.Fatalf(
+			"unexpected outbound connection error\nexpected: %v\nactual: %v",
+			expectedInboundError,
+			inboundError,
+		)
+	}
+
+	if outboundError != nil {
+		t.Fatal(outboundError)
+	}
+}
+
+func connectInitiatorAndResponder(
+	initiator *testConnectionConfig,
+	responder *testConnectionConfig,
+	stakeMonitoring chain.StakeMonitoring,
+	t *testing.T,
+) (
 	authnInboundConn *authenticatedConnection,
 	authnOutboundConn *authenticatedConnection,
 	outboundError error,
 	inboundError error,
 ) {
-	initiatorPrivKey, initiatorPubKey, initiatorPeerID := testStaticKeyAndID(t)
-	responderPrivKey, responderPubKey, responderPeerID := testStaticKeyAndID(t)
-	initiatorConn, responderConn := newConnPair()
 
-	stakeMonitoring := local.NewStakeMonitoring()
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiatorPubKey))
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responderPubKey))
+	initiatorConn, responderConn := newConnPair()
 
 	done := make(chan struct{})
 
@@ -75,12 +141,12 @@ func connectInitiatorAndResponderFull(t *testing.T) (
 			stakeMonitoring,
 		)
 		done <- struct{}{}
-	}(initiatorConn, initiatorPeerID, initiatorPrivKey, responderPeerID)
+	}(initiatorConn, initiator.peerID, initiator.privKey, responder.peerID)
 
 	authnInboundConn, inboundError = newAuthenticatedInboundConnection(
 		responderConn,
-		responderPeerID,
-		responderPrivKey,
+		responder.peerID,
+		responder.privKey,
 		stakeMonitoring,
 	)
 
@@ -89,11 +155,13 @@ func connectInitiatorAndResponderFull(t *testing.T) (
 	return
 }
 
-func testStaticKeyAndID(t *testing.T) (
-	*key.NetworkPrivateKey,
-	*key.NetworkPublicKey,
-	peer.ID,
-) {
+type testConnectionConfig struct {
+	privKey *key.NetworkPrivateKey
+	pubKey  *key.NetworkPublicKey
+	peerID  peer.ID
+}
+
+func createTestConnectionConfig(t *testing.T) *testConnectionConfig {
 	privKey, pubKey, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +170,8 @@ func testStaticKeyAndID(t *testing.T) (
 	if err != nil {
 		t.Fatal(err)
 	}
-	return privKey, pubKey, peerID
+
+	return &testConnectionConfig{privKey, pubKey, peerID}
 }
 
 // Connect an initiator and responder via a full duplex network connection (reads
