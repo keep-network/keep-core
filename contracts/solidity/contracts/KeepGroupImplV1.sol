@@ -21,6 +21,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
+    uint256[] internal _tickets;
 
     mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
     mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
@@ -40,6 +41,9 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Submit ticket to request to participate in a new candidate group.
      */
     function submitTicket() public view returns(bool) {
+
+        // Check if there are already enough tickets to form a group.
+        require(_tickets.length < _groupSize);
 
         // Check if initial timeout for the ticket submission is reached.
         if (block.number > _submissionStart + _timeoutInitial) {
