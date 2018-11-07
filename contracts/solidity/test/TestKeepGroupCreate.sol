@@ -24,7 +24,7 @@ contract TestKeepGroupCreate {
     bytes32 public groupTwoPubKey = hex"0200";
 
     function beforeAll() public {
-        keepGroupContract.initialize(address(stakingProxy), 200, 2, 3);
+        keepGroupContract.initialize(address(stakingProxy), 200, 2, 3, 1, 1, 1);
         keepGroupContract.createGroup(groupOnePubKey);
     }
 

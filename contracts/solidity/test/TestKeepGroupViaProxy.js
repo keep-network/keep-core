@@ -37,7 +37,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
-    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, 6, 10);
+    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, 6, 10, 1, 1, 1);
 
     // Create test groups.
     groupOnePubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -82,4 +82,22 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     assert.equal(await keepGroupImplViaProxy.stakingWeight(account_two), 0, "Should have staking weight of 0.");
   });
 
+  it("should be able to submit a ticket within initial timeout", async function() {
+
+    await keepGroupImplViaProxy.runGroupSelection();
+
+    assert.equal(await keepGroupImplViaProxy.submitTicket(), true, "Should be able to submit ticket.");
+
+    // Mine one block
+    web3.currentProvider.sendAsync({
+      jsonrpc: "2.0",
+      method: "evm_mine",
+      id: 12345
+    }, function(err, _) {
+      if (err) console.log("Error mining a block.")
+    });
+
+    assert.equal(await keepGroupImplViaProxy.submitTicket(), false, "Should not be able to submit ticket after initial timeout is reached.");
+
+  });
 });

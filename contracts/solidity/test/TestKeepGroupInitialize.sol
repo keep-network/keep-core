@@ -26,7 +26,7 @@ contract TestKeepGroupInitialize {
         ThrowProxy throwProxy = new ThrowProxy(address(keepGroupContract));
 
         // Prime the proxy
-        KeepGroupImplV1(address(throwProxy)).initialize(0, 200, 2, 3);
+        KeepGroupImplV1(address(throwProxy)).initialize(0, 200, 2, 3, 1, 1, 1);
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.

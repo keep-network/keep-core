@@ -17,12 +17,37 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _minStake;
     address internal _stakingProxy;
 
+    uint256 internal _timeoutInitial;
+    uint256 internal _timeoutSubmission;
+    uint256 internal _timeoutChallenge;
+    uint256 internal _submissionStart;
+
     mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
     mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
     mapping (bytes32 => bool) internal _groupExists;
     mapping (bytes32 => bool) internal _groupComplete;
     mapping (bytes32 => uint256) internal _membersCount;
     mapping (string => bool) internal _initialized;
+
+    /**
+     * @dev Triggers the selection process of a new candidate group.
+     */
+    function runGroupSelection() public onlyOwner {
+        _submissionStart = block.number;
+    }
+
+    /**
+     * @dev Submit ticket to request to participate in a new candidate group.
+     */
+    function submitTicket() public view returns(bool) {
+
+        // Check if initial timeout for the ticket submission is reached.
+        if (block.number > _submissionStart + _timeoutInitial) {
+            return false;
+        }
+
+        return true;
+    }
 
     // Temporary Code for Milestone 1 follows
     bytes32[] private _listOfGroupMembersIDs;
@@ -42,12 +67,18 @@ contract KeepGroupImplV1 is Ownable {
      * @param groupThreshold Max number of bad members in a group that we can detect as well as “number
      * of good members needed to produce a relay entry”.
      * @param groupSize Minimum number of members in a group - to form a group.
+     * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
+     * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
+     * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
      */
     function initialize(
         address stakingProxy,
         uint256 minStake,
         uint256 groupThreshold,
-        uint256 groupSize
+        uint256 groupSize,
+        uint256 timeoutInitial,
+        uint256 timeoutSubmission,
+        uint256 timeoutChallenge
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -57,6 +88,9 @@ contract KeepGroupImplV1 is Ownable {
         _groupThreshold = groupThreshold;
         _groupSize = groupSize;
         _groupsCount = 0;
+        _timeoutInitial = timeoutInitial;
+        _timeoutSubmission = timeoutSubmission;
+        _timeoutChallenge = timeoutChallenge;
     }
 
     /**
