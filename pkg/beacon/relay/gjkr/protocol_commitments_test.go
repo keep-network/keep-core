@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	crand "crypto/rand"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -159,7 +160,6 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		})
 	}
 }
-
 func TestGeneratePolynomial(t *testing.T) {
 	degree := 3
 	config := &DKG{P: big.NewInt(100), Q: big.NewInt(9)}
@@ -191,7 +191,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 		return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
 	}
 
-	vss, err := pedersen.NewVSS(config.P, config.Q)
+	vss, err := pedersen.NewVSS(crand.Reader, config.P, config.Q)
 	if err != nil {
 		return nil, fmt.Errorf("VSS initialization failed [%s]", err)
 	}

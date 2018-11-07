@@ -83,6 +83,49 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	return sharesMessages, commitmentsMessage, nil
 }
 
+// generatePolynomial generates a random polynomial over Z_q of a given degree.
+// This function will generate a slice of `degree + 1` coefficients. Each value
+// will be a random `big.Int` in range (0, q).
+func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
+	coefficients := make([]*big.Int, degree+1)
+	var err error
+	for i := range coefficients {
+		coefficients[i], err = dkg.RandomQ()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return coefficients, nil
+}
+
+func pow(x, y int) *big.Int {
+	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
+}
+
+// evaluateMemberShare calculates a share for given memberID.
+//
+// It calculates `s_j = Σ a_k * j^k`for k in [0..T], where:
+// - `a_k` is k coefficient
+// - `j` is memberID
+// - `T` is threshold
+//
+// Note: [GJKR] fig. 2 pt. 1.a. states that calculation should be done `mod q`.
+// Our tests gave unstable results if doing so. We decided not to be using modulo
+// operation here.
+func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
+	result := big.NewInt(0)
+	for k, a := range coefficients {
+		result = new(big.Int).Add(
+			result,
+			new(big.Int).Mul(
+				a,
+				pow(memberID, k),
+			),
+		)
+	}
+	return result
+}
+
 // VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments
 // received in messages from peer group members.
 // It returns accusation message with ID of members for which verification failed.
@@ -136,49 +179,6 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	}, nil
 }
 
-// ResolveSecretSharesAccusations resolves a complaint received from a sender
-// against a member accused in the shares and commitments verification phase.
-// A member is calling this function to judge which party of the dispute is lying.
-//
-// The function requires shares `s_mj` and `t_mj` calculated by the accused
-// member (`m`) for the sender (`j`). These values are expected to be broadcast
-// before in encrypted form. On accusation, the shares should be decrypted and
-// the revealed value should be passed to this function.
-//
-// A current member cannot be a part of a dispute. If the current member is
-// either an accuser or is accused the function will return an error. The accused
-// party cannot be a judge in its own case. From the other hand, the accuser has
-// already performed the calculation in the previous phase which resulted in the
-// accusation and waits now for a judgment from other players.
-//
-// The returned value is an ID of the member who should be slashed. It will be
-// an accuser ID if the validation shows that shares and commitments are valid,
-// so the accusation was unfounded. Else it confirms that accused member misbehaved
-// and their ID is returned.
-//
-// See Phase 5 of the protocol specification.
-func (cm *CommittingMember) ResolveSecretSharesAccusations(
-	senderID, accusedID int, // j, m
-	shareS, shareT *big.Int, // s_mj, t_mj
-) (int, error) {
-	if cm.ID == senderID || cm.ID == accusedID {
-		return 0, fmt.Errorf("current member cannot be a part of a dispute")
-	}
-
-	// Check if `commitmentsProduct == expectedProduct`
-	// `commitmentsProduct = Π (C_m[k] ^ (j^k)) mod p` for k in [0..T]
-	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`
-	// where: m is accused member's ID, j is sender's ID, T is threshold.
-	if cm.areSharesValidAgainstCommitments(
-		shareS, shareT, // s_mj, t_mj
-		cm.receivedCommitments[accusedID], // C_m
-		senderID,                          // j
-	) {
-		return senderID, nil
-	}
-	return accusedID, nil
-}
-
 // areSharesValidAgainstCommitments verifies if commitments are valid for passed
 // shares.
 //
@@ -224,45 +224,136 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	return expectedProduct.Cmp(commitmentsProduct) == 0
 }
 
-// evaluateMemberShare calculates a share for given memberID.
+// ResolveSecretSharesAccusations resolves a complaint received from a sender
+// against a member accused in the shares and commitments verification phase.
+// A member is calling this function to judge which party of the dispute is lying.
 //
-// It calculates `s_j = Σ a_k * j^k`for k in [0..T], where:
-// - `a_k` is k coefficient
-// - `j` is memberID
-// - `T` is threshold
+// The function requires shares `s_mj` and `t_mj` calculated by the accused
+// member (`m`) for the sender (`j`). These values are expected to be broadcast
+// before in encrypted form. On accusation, the shares should be decrypted and
+// the revealed value should be passed to this function.
 //
-// Note: [GJKR] fig. 2 pt. 1.a. states that calculation should be done `mod q`.
-// Our tests gave unstable results if doing so. We decided not to be using modulo
-// operation here.
-func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
-	result := big.NewInt(0)
-	for k, a := range coefficients {
-		result = new(big.Int).Add(
-			result,
-			new(big.Int).Mul(
-				a,
-				pow(memberID, k),
-			),
+// A current member cannot be a part of a dispute. If the current member is
+// either an accuser or is accused the function will return an error. The accused
+// party cannot be a judge in its own case. From the other hand, the accuser has
+// already performed the calculation in the previous phase which resulted in the
+// accusation and waits now for a judgment from other players.
+//
+// The returned value is an ID of the member who should be slashed. It will be
+// an accuser ID if the validation shows that shares and commitments are valid,
+// so the accusation was unfounded. Else it confirms that accused member misbehaved
+// and their ID is returned.
+//
+// See Phase 5 of the protocol specification.
+func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
+	senderID, accusedID int, // j, m
+	shareS, shareT *big.Int, // s_mj, t_mj
+) (int, error) {
+	if sjm.ID == senderID || sjm.ID == accusedID {
+		return 0, fmt.Errorf("current member cannot be a part of a dispute")
+	}
+
+	// Check if `commitmentsProduct == expectedProduct`
+	// `commitmentsProduct = Π (C_m[k] ^ (j^k)) mod p` for k in [0..T]
+	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`
+	// where: m is accused member's ID, j is sender's ID, T is threshold.
+	if sjm.areSharesValidAgainstCommitments(
+		shareS, shareT, // s_mj, t_mj
+		sjm.receivedCommitments[accusedID], // C_m
+		senderID,                           // j
+	) {
+		return senderID, nil
+	}
+	return accusedID, nil
+}
+
+// CombineMemberShares sums up all `s` and `t` shares intended for this member.
+// Combines secret shares calculated by current member `i` for itself `s_ii` with
+// shares calculated by peer members `j` for this member `s_ji`.
+//
+// `x_i = Σ s_ji mod q` and `x'_i = Σ t_ji mod q` for `j` in a group of players
+// who passed secret shares accusations stage.
+//
+// See Phase 6 of the protocol specification.
+func (qm *QualifiedMember) CombineMemberShares() {
+	combinedSharesS := qm.selfSecretShareS // s_ii
+	for _, s := range qm.receivedSharesS {
+		combinedSharesS = new(big.Int).Mod(
+			new(big.Int).Add(combinedSharesS, s),
+			qm.protocolConfig.Q,
 		)
 	}
-	return result
+
+	combinedSharesT := qm.selfSecretShareT // t_ii
+	for _, t := range qm.receivedSharesT {
+		combinedSharesT = new(big.Int).Mod(
+			new(big.Int).Add(combinedSharesT, t),
+			qm.protocolConfig.Q,
+		)
+	}
+
+	qm.masterPrivateKeyShare = combinedSharesS
+	qm.shareT = combinedSharesT
 }
 
-// generatePolynomial generates a random polynomial over Z_q of a given degree.
-// This function will generate a slice of `degree + 1` coefficients. Each value
-// will be a random `big.Int` in range (0, q).
-func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
-	coefficients := make([]*big.Int, degree+1)
-	var err error
-	for i := range coefficients {
-		coefficients[i], err = dkg.RandomQ()
-		if err != nil {
-			return nil, err
+// CalculatePublicCoefficients calculates public values for member's coefficients.
+// It calculates `A_k = g^a_k mod p` for k in [0..T].
+//
+// See Phase 7 of the protocol specification.
+func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicCoefficientsMessage {
+	sm.publicCoefficients = make([]*big.Int, len(sm.secretCoefficients))
+	for i, a := range sm.secretCoefficients {
+		sm.publicCoefficients[i] = new(big.Int).Exp(
+			sm.vss.G,
+			a,
+			sm.protocolConfig.P,
+		)
+	}
+
+	return &MemberPublicCoefficientsMessage{
+		senderID:           sm.ID,
+		publicCoefficients: sm.publicCoefficients,
+	}
+}
+
+// VerifyPublicCoefficients validates public key shares received in messages from
+// peer group members.
+// It returns accusation message with ID of members for which the verification
+// failed.
+//
+// See Phase 8 of the protocol specification.
+func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoefficientsMessage) (*CoefficientsAccusationsMessage, error) {
+	var accusedMembersIDs []int
+	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
+	// where: j is sender's ID, i is current member ID, T is threshold.
+	for _, message := range messages {
+		product := big.NewInt(1)
+		for k, a := range message.publicCoefficients {
+			product = new(big.Int).Mod(
+				new(big.Int).Mul(
+					product,
+					new(big.Int).Exp(
+						a,
+						pow(sm.ID, k),
+						sm.protocolConfig.P,
+					),
+				),
+				sm.protocolConfig.P,
+			)
+		}
+		// `expectedProduct = g^s_ji`
+		expectedProduct := new(big.Int).Exp(
+			sm.vss.G,
+			sm.receivedSharesS[message.senderID],
+			sm.protocolConfig.P)
+
+		if expectedProduct.Cmp(product) != 0 {
+			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
 		}
 	}
-	return coefficients, nil
-}
 
-func pow(x, y int) *big.Int {
-	return big.NewInt(int64(math.Pow(float64(x), float64(y))))
+	return &CoefficientsAccusationsMessage{
+		senderID:   sm.ID,
+		accusedIDs: accusedMembersIDs,
+	}, nil
 }
