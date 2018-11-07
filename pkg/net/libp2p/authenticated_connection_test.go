@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -38,9 +39,13 @@ func TestHandshakeRoundTrip(t *testing.T) {
 }
 
 func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *authenticatedConnection) {
-	initiatorStaticKey, initiatorPeerID := testStaticKeyAndID(t)
-	responderStaticKey, responderPeerID := testStaticKeyAndID(t)
+	initiatorPrivKey, initiatorPubKey, initiatorPeerID := testStaticKeyAndID(t)
+	responderPrivKey, responderPubKey, responderPeerID := testStaticKeyAndID(t)
 	initiatorConn, responderConn := newConnPair()
+
+	stakeMonitoring := local.NewStakeMonitoring()
+	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiatorPubKey))
+	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responderPubKey))
 
 	var (
 		done              = make(chan struct{})
@@ -50,22 +55,24 @@ func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *
 	go func(
 		initiatorConn net.Conn,
 		initiatorPeerID peer.ID,
-		initiatorStaticKey libp2pcrypto.PrivKey,
+		initiatorPrivKey libp2pcrypto.PrivKey,
 		responderPeerID peer.ID,
 	) {
 		authnOutboundConn, initiatorErr = newAuthenticatedOutboundConnection(
 			initiatorConn,
 			initiatorPeerID,
-			initiatorStaticKey,
+			initiatorPrivKey,
 			responderPeerID,
+			stakeMonitoring,
 		)
 		done <- struct{}{}
-	}(initiatorConn, initiatorPeerID, initiatorStaticKey, responderPeerID)
+	}(initiatorConn, initiatorPeerID, initiatorPrivKey, responderPeerID)
 
 	authnInboundConn, err := newAuthenticatedInboundConnection(
 		responderConn,
 		responderPeerID,
-		responderStaticKey,
+		responderPrivKey,
+		stakeMonitoring,
 	)
 	if err != nil {
 		t.Fatalf("failed to connect initiator with responder [%v]", err)
@@ -81,8 +88,12 @@ func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *
 	return authnInboundConn, authnOutboundConn
 }
 
-func testStaticKeyAndID(t *testing.T) (libp2pcrypto.PrivKey, peer.ID) {
-	privKey, _, err := key.GenerateStaticNetworkKey(crand.Reader)
+func testStaticKeyAndID(t *testing.T) (
+	*key.NetworkPrivateKey,
+	*key.NetworkPublicKey,
+	peer.ID,
+) {
+	privKey, pubKey, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +101,7 @@ func testStaticKeyAndID(t *testing.T) (libp2pcrypto.PrivKey, peer.ID) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return privKey, peerID
+	return privKey, pubKey, peerID
 }
 
 // Connect an initiator and responder via a full duplex network connection (reads
