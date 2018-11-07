@@ -85,7 +85,7 @@ and _N_ properly denotes the number of virtual stakers in _P_.
 |The value of the highest-valued ticket in _P_
 
 |_Space~tickets~_
-|Is a space consiting of all possible tickets. It is strongly related
+|Is a space consisting of all possible tickets. It is strongly related
 with a pseudo random function that is used for ticket generation.
 Currently the _Space~tickets~_ is equal to _2^256^- 1_, which is due
 to selection of SHA3-256 as our pseudo random function.
@@ -121,7 +121,7 @@ above values.
 
 Currently the _Stake~j~_ and _Weight~j~_ can be public and _Q~j~_ can be the 
 ECDSA pubkey of _S~j~_. Future work towards indistinguishable staking would make
-_Stake~j~_ and _Weight~j~_ values private and enable theirs verification via
+_Stake~j~_ and _Weight~j~_ values private and enable their verification via
 zero-knowledge proofs.
 
 == Protocol
