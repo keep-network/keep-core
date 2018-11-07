@@ -16,9 +16,9 @@ type BlockCounter interface {
 	BlockWaiter(numBlocks int) (<-chan int, error)
 }
 
-// StakeMonitoring is an interface that provides ability to check and monitor
+// StakeMonitor is an interface that provides ability to check and monitor
 // the KEEP token stake for the provided address.
-type StakeMonitoring interface {
+type StakeMonitor interface {
 
 	// HasMinimumStake checks if the provided address staked the number of KEEP
 	// tokens above the required minimum to become a network operator.
@@ -31,6 +31,6 @@ type StakeMonitoring interface {
 // functionality needed for Keep network interactions.
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
-	StakeMonitoring() (StakeMonitoring, error)
+	StakeMonitor() (StakeMonitor, error)
 	ThresholdRelay() relaychain.Interface
 }

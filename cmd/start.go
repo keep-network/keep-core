@@ -126,13 +126,10 @@ func checkMinimumStake(
 	chain chain.Handle,
 	account ethereum.Account,
 ) (bool, error) {
-	stakeMonitoring, err := chain.StakeMonitoring()
+	stakeMonitor, err := chain.StakeMonitor()
 	if err != nil {
-		return false, fmt.Errorf(
-			"error initializing stake monitoring: [%v]",
-			err,
-		)
+		return false, fmt.Errorf("error initializing stake monitor: [%v]", err)
 	}
 
-	return stakeMonitoring.HasMinimumStake(account.Address)
+	return stakeMonitor.HasMinimumStake(account.Address)
 }
