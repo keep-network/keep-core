@@ -367,9 +367,13 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 // or accused the function will return an error.
 //
 // The function requires share `s_mj` calculated by the accused member (`m`) for
-// the sender (`j`). This values is expect to be broadcasted before in encrypted
-// form. On accusation the share should be decrypted and the revealed value should
-// be passed to this function.
+// the sender (`j`). This value was shared privately by member `m` with member
+// `j` in the previous phase. On accusation, this value is revealed publicly to
+// resolve the dispute between `m` and `j` and is an input parameter to this function.
+//
+// The function returns an ID of the member to charge after the complaint is resolved.
+// When resolution confirmed that accused member `m` provided invalid shares its
+// ID is returned. If the complaint is unfounded the accusing member `j` is charged.
 //
 // See Phase 9 of the protocol specification.
 func (cjm *CoefficientsJustifyingMember) ResolvePublicCoefficientsAccusations(
