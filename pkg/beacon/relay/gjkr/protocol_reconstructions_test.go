@@ -10,28 +10,32 @@ import (
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 5
+
 	disqualifiedIDs := []int{3, 5}
 
 	group, allDisqualifiedShares := initializeReconstructingMembersGroup(threshold, groupSize, disqualifiedIDs)
 
-	expectedIndividualPrivateKey1 := group[2].secretCoefficients[0] // for ID = 3
-	expectedIndividualPrivateKey2 := group[4].secretCoefficients[0] // for ID = 5
+	disqualifiedMember1 := group[2] // for ID = 3
+	disqualifiedMember2 := group[4] // for ID = 5
 
-	for _, rm := range group {
-		if !contains(disqualifiedIDs, rm.ID) {
-			rm.ReconstructIndividualPrivateKeys(allDisqualifiedShares)
+	expectedIndividualPrivateKey1 := disqualifiedMember1.secretCoefficients[0]
+	expectedIndividualPrivateKey2 := disqualifiedMember2.secretCoefficients[0]
 
-			if rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[0]].Cmp(expectedIndividualPrivateKey1) != 0 {
+	for _, m := range group {
+		if !contains(disqualifiedIDs, m.ID) {
+			m.ReconstructIndividualPrivateKeys(allDisqualifiedShares)
+
+			if m.reconstructedIndividualPrivateKeys[disqualifiedMember1.ID].Cmp(expectedIndividualPrivateKey1) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
 					expectedIndividualPrivateKey1,
-					rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[0]],
+					m.reconstructedIndividualPrivateKeys[disqualifiedMember1.ID],
 				)
 			}
 
-			if rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[1]].Cmp(expectedIndividualPrivateKey2) != 0 {
+			if m.reconstructedIndividualPrivateKeys[disqualifiedMember2.ID].Cmp(expectedIndividualPrivateKey2) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
 					expectedIndividualPrivateKey1,
-					rm.reconstructedIndividualPrivateKeys[disqualifiedIDs[1]],
+					m.reconstructedIndividualPrivateKeys[disqualifiedMember2.ID],
 				)
 			}
 		}
