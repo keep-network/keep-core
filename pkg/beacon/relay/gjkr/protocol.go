@@ -371,9 +371,10 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 // `j` in the previous phase. On accusation, this value is revealed publicly to
 // resolve the dispute between `m` and `j` and is an input parameter to this function.
 //
-// The function returns an ID of the member to charge after the complaint is resolved.
-// When resolution confirmed that accused member `m` provided invalid shares its
-// ID is returned. If the complaint is unfounded the accusing member `j` is charged.
+// The returned value is an ID of the member who should be slashed. It will be
+// an accuser ID if the validation shows that coefficients are valid, so the
+// accusation was unfounded. Else it confirms that accused member misbehaved
+// and their ID is returned.
 //
 // See Phase 9 of the protocol specification.
 func (cjm *CoefficientsJustifyingMember) ResolvePublicCoefficientsAccusations(
