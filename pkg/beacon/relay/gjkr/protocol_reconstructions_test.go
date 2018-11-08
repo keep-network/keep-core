@@ -100,9 +100,12 @@ func initializeReconstructingMembersGroup(
 	threshold, groupSize int,
 	disqualifiedIDs []int,
 ) ([]*ReconstructingMember, []*DisqualifiedShares) {
+	// TODO When whole protocol is implemented check if SharingMember type is really
+	// the one expected here (should be the member from Phase 10)
 	sharingMembers, _ := initializeSharingMembersGroup(threshold, groupSize)
 
 	var reconstructingMembers []*ReconstructingMember
+	// TODO Should be handled by the `.Next()`` function
 	for _, sm := range sharingMembers {
 		reconstructingMembers = append(reconstructingMembers,
 			&ReconstructingMember{
@@ -111,15 +114,20 @@ func initializeReconstructingMembersGroup(
 		)
 	}
 
-	// Disqualified shares for test run
+	// Disqualified shares for test run. Collect from all group members the shares
+	// which were calculated by disqualified members.
 	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedIDs))
 	for i, disqualifiedID := range disqualifiedIDs {
-		shares := make(map[int]*big.Int, groupSize-len(disqualifiedIDs))
+		sharesReceivedFromDisqualifiedMember := make(map[int]*big.Int, groupSize-len(disqualifiedIDs))
+		// for each group member
 		for _, m := range sharingMembers {
+			// if the member has not been disqualified
 			if !contains(disqualifiedIDs, m.ID) {
-				for peerID, share := range m.receivedSharesS {
+				// collect all shares which this member received from disqualified
+				// member and store them in sharesReceivedFromDisqualifiedMember
+				for peerID, receivedShare := range m.receivedSharesS {
 					if peerID == disqualifiedID {
-						shares[m.ID] = share
+						sharesReceivedFromDisqualifiedMember[m.ID] = receivedShare
 						break
 					}
 				}
@@ -127,7 +135,7 @@ func initializeReconstructingMembersGroup(
 		}
 		allDisqualifiedShares[i] = &DisqualifiedShares{
 			disqualifiedMemberID: disqualifiedID,
-			peerSharesS:          shares,
+			peerSharesS:          sharesReceivedFromDisqualifiedMember,
 		}
 	}
 
