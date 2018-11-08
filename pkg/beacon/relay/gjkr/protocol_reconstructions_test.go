@@ -12,7 +12,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	groupSize := 5
 	disqualifiedIDs := []int{3, 5}
 
-	group, allDisqualifiedShares, _ := initializeReconstructingMembersGroup(threshold, groupSize, disqualifiedIDs)
+	group, allDisqualifiedShares := initializeReconstructingMembersGroup(threshold, groupSize, disqualifiedIDs)
 
 	expectedIndividualPrivateKey1 := group[2].secretCoefficients[0] // for ID = 3
 	expectedIndividualPrivateKey2 := group[4].secretCoefficients[0] // for ID = 5
@@ -66,12 +66,16 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	for i := range members {
 		members[i] = &ReconstructingMember{
 			SharingMember: &SharingMember{
-				CommittingMember: &CommittingMember{
-					memberCore: &memberCore{
-						ID:             i,
-						protocolConfig: &DKG{P: p},
+				QualifiedMember: &QualifiedMember{
+					SharesJustifyingMember: &SharesJustifyingMember{
+						CommittingMember: &CommittingMember{
+							memberCore: &memberCore{
+								ID:             i,
+								protocolConfig: &DKG{P: p},
+							},
+							vss: &pedersen.VSS{G: g},
+						},
 					},
-					vss: &pedersen.VSS{G: g},
 				},
 			},
 			reconstructedIndividualPrivateKeys: reconstructedIndividualPrivateKeys,
@@ -95,7 +99,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 func initializeReconstructingMembersGroup(
 	threshold, groupSize int,
 	disqualifiedIDs []int,
-) ([]*ReconstructingMember, map[int]map[int]*big.Int, error) {
+) ([]*ReconstructingMember, []*DisqualifiedShares) {
 	sharingMembers, _ := initializeSharingMembersGroup(threshold, groupSize)
 
 	var reconstructingMembers []*ReconstructingMember
@@ -107,22 +111,25 @@ func initializeReconstructingMembersGroup(
 		)
 	}
 
-	// Disqualified shares map for test run:
-	// <disqualifiedID, <peerID, shareS>>
-	allDisqualifiedShares := make(map[int]map[int]*big.Int, groupSize-len(disqualifiedIDs))
-	for _, disqualifiedID := range disqualifiedIDs {
-		disqualifiedShares := make(map[int]*big.Int, groupSize-len(disqualifiedIDs))
+	// Disqualified shares for test run
+	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedIDs))
+	for i, disqualifiedID := range disqualifiedIDs {
+		shares := make(map[int]*big.Int, groupSize-len(disqualifiedIDs))
 		for _, m := range sharingMembers {
 			if !contains(disqualifiedIDs, m.ID) {
 				for peerID, share := range m.receivedSharesS {
 					if peerID == disqualifiedID {
-						disqualifiedShares[m.ID] = share
+						shares[m.ID] = share
+						break
 					}
 				}
 			}
 		}
-		allDisqualifiedShares[disqualifiedID] = disqualifiedShares
+		allDisqualifiedShares[i] = &DisqualifiedShares{
+			disqualifiedMemberID: disqualifiedID,
+			peerSharesS:          shares,
+		}
 	}
 
-	return reconstructingMembers, allDisqualifiedShares, nil
+	return reconstructingMembers, allDisqualifiedShares
 }
