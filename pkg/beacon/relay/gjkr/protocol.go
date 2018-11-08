@@ -451,13 +451,13 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID int, group
 	return lagrangeCoefficient // a_mk
 }
 
-// CalculateReconstructedIndividualPublicKeys calculates and stores individual
+// ReconstructIndividualPublicKeys calculates and stores individual
 // public keys from reconstructed individual private keys.
 //
 // Public key is calculated as `g^privateKey mod p`.
 //
 // See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) CalculateReconstructedIndividualPublicKeys() {
+func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
 	rm.reconstructedIndividualPublicKeys = make(map[int]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// `y_m = g^{z_m}`

@@ -83,7 +83,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	}
 
 	for _, rm := range members {
-		rm.CalculateReconstructedIndividualPublicKeys()
+		rm.ReconstructIndividualPublicKeys()
 
 		for m, expectedIndividualPublicKey := range expectedIndividualPublicKeys {
 			if rm.reconstructedIndividualPublicKeys[m].Cmp(expectedIndividualPublicKey) != 0 {
