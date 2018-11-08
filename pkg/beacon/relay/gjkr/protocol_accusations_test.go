@@ -228,6 +228,7 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJ
 	}
 
 	var sharesJustifyingMembers []*SharesJustifyingMember
+	// TODO: Handle transition from CommittingMember to SharesJustifyingMember in Next() function
 	for _, jm := range committingMembers {
 		sharesJustifyingMembers = append(sharesJustifyingMembers, &SharesJustifyingMember{
 			CommittingMember: jm,
@@ -295,6 +296,7 @@ func initializeCoefficientsJustifyingMemberGroup(
 	}
 
 	var coefficientsJustifyingMembers []*CoefficientsJustifyingMember
+	// TODO: Handle transition from SharingMember to CoefficientsJustifyingMember in Next() function
 	for _, sm := range sharingMembers {
 		coefficientsJustifyingMembers = append(coefficientsJustifyingMembers,
 			&CoefficientsJustifyingMember{

@@ -1,4 +1,4 @@
-// Package gjkr conatins code that implements Distributed Key Generation protocol
+// Package gjkr contains code that implements Distributed Key Generation protocol
 // described in [GJKR 99].
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_protocol
