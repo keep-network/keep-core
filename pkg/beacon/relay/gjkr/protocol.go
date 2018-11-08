@@ -362,13 +362,13 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 // private keys from shares calculated by disqualified members for peer members.
 //
 // Function can be executed for members that presented valid shares and commitments
-// but were disqualified on public key shares validation stage.
+// but were disqualified on public key shares validation stage (Phase 9).
 //
 // Function requires disqualified shares to be provided as map of the following
 // format: <disqualifiedID, <peerID, shareS>>
 //
 // It stores a map of reconstructed individual private keys for each disqualified
-// member:
+// member in a current member's reconstructedIndividualPrivateKeys field:
 // <disqualifiedID, privateKeyShare>
 //
 // See Phase 11 of the protocol specification.
@@ -378,7 +378,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 	rm.reconstructedIndividualPrivateKeys = make(map[int]*big.Int, len(disqualifiedShares))
 
 	for disqualifiedID, shares := range disqualifiedShares {
-		// `z_m = Σ s_mk * a_mk mod p` where:
+		// `z_m = Σ (s_mk * a_mk) mod p` where:
 		// - `z_m` is disqualified member's individual private key
 		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
 		// - `a_mk` is lagrange coefficient for peer member k (see below)

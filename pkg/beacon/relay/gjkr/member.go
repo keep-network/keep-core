@@ -77,7 +77,7 @@ type SharingMember struct {
 // ReconstructingMember represents one member in a threshold sharing group who
 // is reconstructing individual private and public keys of disqualified group members.
 type ReconstructingMember struct {
-	*SharingMember
+	*SharingMember // TODO Update this when all phases of protocol are ready
 
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
