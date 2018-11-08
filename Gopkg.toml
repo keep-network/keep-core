@@ -71,6 +71,14 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   name = "github.com/libp2p/go-libp2p-pubsub"
   revision = "107b3bdc9730f1b7ce294523e81dbffe3a639dcb"
 
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-connmgr"
+  revision = "9af270cbe3059a15af44e7f67b75d521e1fbd5e4"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-interface-connmgr"
+  revision ="61a030e46d8f6c82500b0992360d7a5c701d367a"
+
 # multiformats
 [[override]]
   name = "github.com/multiformats/go-multihash"

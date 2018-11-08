@@ -22,12 +22,12 @@ var _ secure.Conn = (*authenticatedConnection)(nil)
 type transport struct {
 	localPeerID     peer.ID
 	privateKey      libp2pcrypto.PrivKey
-	stakeMonitoring chain.StakeMonitoring
+	stakeMonitoring chain.StakeMonitor
 }
 
 func newAuthenticatedTransport(
 	pk libp2pcrypto.PrivKey,
-	stakeMonitoring chain.StakeMonitoring,
+	stakeMonitoring chain.StakeMonitor,
 ) (*transport, error) {
 	id, err := peer.IDFromPrivateKey(pk)
 	if err != nil {

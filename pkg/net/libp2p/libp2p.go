@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -13,12 +14,28 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
 	libp2p "github.com/libp2p/go-libp2p"
+	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/libp2p/go-libp2p-peerstore"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
 	ma "github.com/multiformats/go-multiaddr"
+)
+
+// Defaults from ipfs
+const (
+	// DefaultConnMgrHighWater is the default value for the connection managers
+	// 'high water' mark
+	DefaultConnMgrHighWater = 900
+
+	// DefaultConnMgrLowWater is the default value for the connection managers 'low
+	// water' mark
+	DefaultConnMgrLowWater = 600
+
+	// DefaultConnMgrGracePeriod is the default value for the connection managers
+	// grace period
+	DefaultConnMgrGracePeriod = time.Second * 20
 )
 
 // Config defines the configuration for the libp2p network provider.
@@ -84,7 +101,8 @@ func (p *provider) Peers() []string {
 func Connect(
 	ctx context.Context,
 	config Config,
-	staticKey *key.NetworkPrivateKey, stakeMonitoring chain.StakeMonitoring,
+	staticKey *key.NetworkPrivateKey,
+	stakeMonitoring chain.StakeMonitor,
 ) (net.Provider, error) {
 	identity, err := createIdentity(staticKey)
 	if err != nil {
@@ -127,7 +145,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	stakeMonitoring chain.StakeMonitoring,
+	stakeMonitoring chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
 
@@ -152,6 +170,13 @@ func discoverAndListen(
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
+		libp2p.ConnectionManager(
+			connmgr.NewConnManager(
+				DefaultConnMgrLowWater,
+				DefaultConnMgrHighWater,
+				DefaultConnMgrGracePeriod,
+			),
+		),
 	)
 }
 

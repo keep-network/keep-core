@@ -11,7 +11,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize)
+	members, err := initializeSharesJustifyingMemberGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -117,7 +117,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 // betwen members. It generates coefficients for each group member, calculates
 // commitments and shares for each peer member individually. At the end it stores
 // values for each member just like they would be received from peers.
-func setupSharesAndCommitments(members []*CommittingMember, threshold int) error {
+func setupSharesAndCommitments(members []*SharesJustifyingMember, threshold int) error {
 	groupSize := len(members)
 
 	// Maps which will keep coefficients and commitments of all group members,
@@ -166,11 +166,27 @@ func setupSharesAndCommitments(members []*CommittingMember, threshold int) error
 	return nil
 }
 
-func findMemberByID(members []*CommittingMember, id int) *CommittingMember {
+func findMemberByID(members []*SharesJustifyingMember, id int) *SharesJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
 			return m
 		}
 	}
 	return nil
+}
+
+func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJustifyingMember, error) {
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
+
+	var sharesJustifyingMember []*SharesJustifyingMember
+	for _, jm := range committingMembers {
+		sharesJustifyingMember = append(sharesJustifyingMember, &SharesJustifyingMember{
+			CommittingMember: jm,
+		})
+	}
+
+	return sharesJustifyingMember, nil
 }

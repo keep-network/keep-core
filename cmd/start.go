@@ -73,13 +73,13 @@ func Start(c *cli.Context) error {
 		config.Ethereum.Account,
 	)
 	if err != nil {
-		return fmt.Errorf("could not check the KEEP token stake [%v]", err)
+		return fmt.Errorf("could not check the stake [%v]", err)
 	}
 	if !hasMinimumStake {
-		return fmt.Errorf("KEEP token stake is below the required minimum")
+		return fmt.Errorf("stake is below the required minimum")
 	}
 
-	stakeMonitoring, err := chainProvider.StakeMonitoring()
+	stakeMonitoring, err := chainProvider.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitoring handle [%v]", err)
 	}
@@ -137,13 +137,10 @@ func checkMinimumStake(
 	chain chain.Handle,
 	account ethereum.Account,
 ) (bool, error) {
-	stakeMonitoring, err := chain.StakeMonitoring()
+	stakeMonitor, err := chain.StakeMonitor()
 	if err != nil {
-		return false, fmt.Errorf(
-			"error initializing stake monitoring: [%v]",
-			err,
-		)
+		return false, fmt.Errorf("error initializing stake monitor: [%v]", err)
 	}
 
-	return stakeMonitoring.HasMinimumStake(account.Address)
+	return stakeMonitor.HasMinimumStake(account.Address)
 }

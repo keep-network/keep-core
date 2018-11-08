@@ -29,7 +29,7 @@ type authenticatedConnection struct {
 	remotePeerID        peer.ID
 	remotePeerPublicKey libp2pcrypto.PubKey
 
-	stakeMonitoring chain.StakeMonitoring
+	stakeMonitoring chain.StakeMonitor
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
@@ -42,7 +42,7 @@ func newAuthenticatedInboundConnection(
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
-	stakeMonitoring chain.StakeMonitoring,
+	stakeMonitoring chain.StakeMonitor,
 ) (*authenticatedConnection, error) {
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
@@ -84,7 +84,7 @@ func newAuthenticatedOutboundConnection(
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
-	stakeMonitoring chain.StakeMonitoring,
+	stakeMonitoring chain.StakeMonitor,
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
@@ -230,7 +230,8 @@ func (ac *authenticatedConnection) initiatorReceiveAct2(
 		return nil, err
 	}
 
-	if err := verifyEnvelope(
+	if err := ac.verify(
+		ac.remotePeerID,
 		peer.ID(act2Envelope.GetPeerID()),
 		act2Envelope.GetMessage(),
 		act2Envelope.GetSignature(),
@@ -334,10 +335,12 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 		return nil, err
 	}
 
-	// In libp2p, responder doesn't not the identity of initiator during the
-	// handshake. We overcome it by sending the identity and public key in the
-	// envelope. In the first act of the handshake, responder extracts this
-	// information.
+	// Libp2p specific step: the responder has no knowledge of the initiator
+	// until after the handshake has succeeded, the connection has been
+	// upgraded, and identity information is exchanged. This provides an
+	// element of identity hiding for the initiator. To help prevent
+	// malicious interference, we want to pin this identity for the duration
+	// of the connection.
 	ac.remotePeerID = peer.ID(act1Envelope.GetPeerID())
 	remotePublicKey, err := ac.remotePeerID.ExtractPublicKey()
 	if err != nil {
@@ -345,7 +348,8 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 	}
 	ac.remotePeerPublicKey = remotePublicKey
 
-	if err := verifyEnvelope(
+	if err := ac.verify(
+		ac.remotePeerID,
 		peer.ID(act1Envelope.GetPeerID()),
 		act1Envelope.GetMessage(),
 		act1Envelope.GetSignature(),
@@ -399,7 +403,8 @@ func (ac *authenticatedConnection) responderReceiveAct3(
 		return nil, err
 	}
 
-	if err := verifyEnvelope(
+	if err := ac.verify(
+		ac.remotePeerID,
 		peer.ID(act3Envelope.GetPeerID()),
 		act3Envelope.GetMessage(),
 		act3Envelope.GetSignature(),
@@ -412,4 +417,20 @@ func (ac *authenticatedConnection) responderReceiveAct3(
 	}
 
 	return act3Message, nil
+}
+
+// verify checks to see if the pinned (expected) identity matches the message
+// sender's identity before running through the signature verification check.
+func (ac *authenticatedConnection) verify(
+	expectedSender, actualSender peer.ID,
+	messageBytes, signatureBytes []byte,
+) error {
+	if expectedSender != actualSender {
+		return fmt.Errorf(
+			"pinned identity [%v] does not match sender identity [%v]",
+			expectedSender,
+			actualSender,
+		)
+	}
+	return verifyEnvelope(actualSender, messageBytes, signatureBytes)
 }
