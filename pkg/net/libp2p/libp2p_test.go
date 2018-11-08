@@ -28,7 +28,7 @@ func TestProviderReturnsType(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(t),
 		privKey,
-		local.NewStakeMonitoring(),
+		local.NewStakeMonitor(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(t),
 		privKey,
-		local.NewStakeMonitoring(),
+		local.NewStakeMonitor(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -96,7 +96,7 @@ func TestSendReceive(t *testing.T) {
 		ctx,
 		config,
 		privKey,
-		local.NewStakeMonitoring(),
+		local.NewStakeMonitor(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -194,7 +194,7 @@ func TestSendToReceiveFrom(t *testing.T) {
 		ctx,
 		config1,
 		privKey,
-		local.NewStakeMonitoring(),
+		local.NewStakeMonitor(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -340,7 +340,7 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, 8080, local.NewStakeMonitoring())
+	host, err := discoverAndListen(ctx, identity, 8080, local.NewStakeMonitor())
 	if err != nil {
 		return nil, err
 	}

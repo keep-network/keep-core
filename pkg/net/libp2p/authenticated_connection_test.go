@@ -24,9 +24,9 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitoring := local.NewStakeMonitoring()
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
 	initiatorConn, responderConn := newConnPair()
 
@@ -53,7 +53,7 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 		responderConn,
 		responder.peerID,
 		responder.privKey,
-		stakeMonitoring,
+		stakeMonitor,
 	)
 	if err == nil {
 		t.Fatal("should not have successfully completed handshake")
@@ -123,12 +123,12 @@ func TestHandshake(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitoring := local.NewStakeMonitoring()
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
 	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
-		connectInitiatorAndResponder(initiator, responder, stakeMonitoring, t)
+		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
 	if inboundError != nil {
 		t.Fatal(inboundError)
 	}
@@ -161,12 +161,12 @@ func TestHandshakeNoInitiatorStake(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitoring := local.NewStakeMonitoring()
+	stakeMonitor := local.NewStakeMonitor()
 	// only responder is staked
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
 	_, _, inboundError, outboundError :=
-		connectInitiatorAndResponder(initiator, responder, stakeMonitoring, t)
+		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
 
 	if inboundError != nil {
 		t.Fatal(inboundError)
@@ -189,12 +189,12 @@ func TestHanshakeNoResponderStake(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitoring := local.NewStakeMonitoring()
+	stakeMonitor := local.NewStakeMonitor()
 	// only initiator is staked
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 
 	_, _, inboundError, outboundError :=
-		connectInitiatorAndResponder(initiator, responder, stakeMonitoring, t)
+		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
 
 	expectedInboundError := fmt.Errorf("connection handshake failed - remote peer has no minimum stake")
 	if !reflect.DeepEqual(expectedInboundError, inboundError) {
@@ -213,7 +213,7 @@ func TestHanshakeNoResponderStake(t *testing.T) {
 func connectInitiatorAndResponder(
 	initiator *testConnectionConfig,
 	responder *testConnectionConfig,
-	stakeMonitoring chain.StakeMonitor,
+	stakeMonitor chain.StakeMonitor,
 	t *testing.T,
 ) (
 	authnInboundConn *authenticatedConnection,
@@ -237,7 +237,7 @@ func connectInitiatorAndResponder(
 			initiatorPeerID,
 			initiatorPrivKey,
 			responderPeerID,
-			stakeMonitoring,
+			stakeMonitor,
 		)
 		done <- struct{}{}
 	}(initiatorConn, initiator.peerID, initiator.privKey, responder.peerID)
@@ -246,7 +246,7 @@ func connectInitiatorAndResponder(
 		responderConn,
 		responder.peerID,
 		responder.privKey,
-		stakeMonitoring,
+		stakeMonitor,
 	)
 
 	<-done // handshake is done

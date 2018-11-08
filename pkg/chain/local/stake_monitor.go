@@ -6,24 +6,22 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// StakeMonitoring implements `chain.StakeMonitoring` interface and works
+// StakeMonitor implements `chain.StakeMonitor` interface and works
 // as a local stub for testing.
-type StakeMonitoring struct {
+type StakeMonitor struct {
 	stakers map[string]bool
 }
 
-// NewStakeMonitoring creates a new instance of `StakeMonitoring` test stub.
-func NewStakeMonitoring() *StakeMonitoring {
-	return &StakeMonitoring{
+// NewStakeMonitor creates a new instance of `StakeMonitor` test stub.
+func NewStakeMonitor() *StakeMonitor {
+	return &StakeMonitor{
 		stakers: make(map[string]bool),
 	}
 }
 
-// HasMinimumStake checks if the provided address staked the number of
-// ERC20 KEEP tokens above the required minimum to become a network operator.
-// The minimum number of KEEP tokens required to be staked is an on-chain
-// parameter.
-func (lsm *StakeMonitoring) HasMinimumStake(address string) (bool, error) {
+// HasMinimumStake checks if the provided address staked enough to become
+// a network operator. The minimum stake is an on-chain parameter.
+func (lsm *StakeMonitor) HasMinimumStake(address string) (bool, error) {
 	if !common.IsHexAddress(address) {
 		return false, fmt.Errorf("not a valid ethereum address: %v", address)
 	}
@@ -31,9 +29,9 @@ func (lsm *StakeMonitoring) HasMinimumStake(address string) (bool, error) {
 	return lsm.stakers[address], nil
 }
 
-// StakeTokens stakes for the provided address enough KEEP tokens allowing to
-// become a network operator.
-func (lsm *StakeMonitoring) StakeTokens(address string) error {
+// StakeTokens stakes for the provided address enough number of tokens allowing
+// to become a network operator.
+func (lsm *StakeMonitor) StakeTokens(address string) error {
 	if !common.IsHexAddress(address) {
 		return fmt.Errorf("not a valid ethereum address: %v", address)
 	}
@@ -42,9 +40,9 @@ func (lsm *StakeMonitoring) StakeTokens(address string) error {
 	return nil
 }
 
-// UnstakeTokens unstakes from the provided address all KEEP tokens so it can
+// UnstakeTokens unstakes from the provided address all tokens so it can
 // no longer be a network operator.
-func (lsm *StakeMonitoring) UnstakeTokens(address string) error {
+func (lsm *StakeMonitor) UnstakeTokens(address string) error {
 	if !common.IsHexAddress(address) {
 		return fmt.Errorf("not a valid ethereum address: %v", address)
 	}

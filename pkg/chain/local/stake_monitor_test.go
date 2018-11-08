@@ -7,15 +7,15 @@ import (
 )
 
 func TestDetectInvalidAddress(t *testing.T) {
-	monitoring := NewStakeMonitoring()
+	monitor := NewStakeMonitor()
 
-	hasStake, err := monitoring.HasMinimumStake("0x010102003")
+	hasStake, err := monitor.HasMinimumStake("0x010102003")
 	assertInvalidEthereumAddress(hasStake, err, t)
 
-	err = monitoring.StakeTokens("0x010102003")
+	err = monitor.StakeTokens("0x010102003")
 	assertInvalidEthereumAddress(hasStake, err, t)
 
-	err = monitoring.UnstakeTokens("0x010102003")
+	err = monitor.UnstakeTokens("0x010102003")
 	assertInvalidEthereumAddress(hasStake, err, t)
 }
 
@@ -35,9 +35,9 @@ func assertInvalidEthereumAddress(hasStake bool, err error, t *testing.T) {
 }
 
 func TestNoMinimumStakeByDefault(t *testing.T) {
-	monitoring := NewStakeMonitoring()
+	monitor := NewStakeMonitor()
 
-	hasStake, err := monitoring.HasMinimumStake(
+	hasStake, err := monitor.HasMinimumStake(
 		"0x65ea55c1f10491038425725dc00dffeab2a1e28a",
 	)
 
@@ -51,14 +51,14 @@ func TestNoMinimumStakeByDefault(t *testing.T) {
 }
 
 func TestHasMinimumStakeIfStakedBefore(t *testing.T) {
-	monitoring := NewStakeMonitoring()
+	monitor := NewStakeMonitor()
 
-	err := monitoring.StakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
+	err := monitor.StakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hasStake, err := monitoring.HasMinimumStake(
+	hasStake, err := monitor.HasMinimumStake(
 		"0x524f2e0176350d950fa630d9a5a59a0a190daf48",
 	)
 
@@ -72,19 +72,19 @@ func TestHasMinimumStakeIfStakedBefore(t *testing.T) {
 }
 
 func TestNoMinimumStakeIfUnstaked(t *testing.T) {
-	monitoring := NewStakeMonitoring()
+	monitor := NewStakeMonitor()
 
-	err := monitoring.StakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
+	err := monitor.StakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = monitoring.UnstakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
+	err = monitor.UnstakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hasStake, err := monitoring.HasMinimumStake(
+	hasStake, err := monitor.HasMinimumStake(
 		"0x524f2e0176350d950fa630d9a5a59a0a190daf48",
 	)
 

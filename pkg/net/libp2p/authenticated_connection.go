@@ -29,7 +29,7 @@ type authenticatedConnection struct {
 	remotePeerID        peer.ID
 	remotePeerPublicKey libp2pcrypto.PubKey
 
-	stakeMonitoring chain.StakeMonitor
+	stakeMonitor chain.StakeMonitor
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
@@ -42,13 +42,13 @@ func newAuthenticatedInboundConnection(
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
-	stakeMonitoring chain.StakeMonitor,
+	stakeMonitor chain.StakeMonitor,
 ) (*authenticatedConnection, error) {
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
-		stakeMonitoring:     stakeMonitoring,
+		stakeMonitor:        stakeMonitor,
 	}
 
 	if err := ac.runHandshakeAsResponder(); err != nil {
@@ -84,7 +84,7 @@ func newAuthenticatedOutboundConnection(
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
-	stakeMonitoring chain.StakeMonitor,
+	stakeMonitor chain.StakeMonitor,
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
@@ -100,7 +100,7 @@ func newAuthenticatedOutboundConnection(
 		localPeerPrivateKey: privateKey,
 		remotePeerID:        remotePeerID,
 		remotePeerPublicKey: remotePublicKey,
-		stakeMonitoring:     stakeMonitoring,
+		stakeMonitor:        stakeMonitor,
 	}
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
@@ -130,7 +130,7 @@ func (ac *authenticatedConnection) checkRemotePeerStake() (bool, error) {
 		return false, fmt.Errorf("unexpected type of remote peer's public key")
 	}
 
-	return ac.stakeMonitoring.HasMinimumStake(
+	return ac.stakeMonitor.HasMinimumStake(
 		key.NetworkPubKeyToEthAddress(networkKey),
 	)
 }

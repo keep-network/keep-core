@@ -200,8 +200,8 @@ func createTestChannel(
 	staticKey *key.NetworkPrivateKey) (*channel, error) {
 	networkConfig := Config{Port: 8080}
 
-	stakeMonitoring := local.NewStakeMonitoring()
-	provider, err := Connect(ctx, networkConfig, staticKey, stakeMonitoring)
+	stakeMonitor := local.NewStakeMonitor()
+	provider, err := Connect(ctx, networkConfig, staticKey, stakeMonitor)
 	if err != nil {
 		return nil, err
 	}

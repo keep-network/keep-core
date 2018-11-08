@@ -69,12 +69,12 @@ func pingRequest(c *cli.Context) error {
 	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBotstrapPeerNetworkKey()
 	standardPeerPrivKey, standardPeerPubKey := getStandardPeerNetworkKey()
 
-	stakeMonitoring := local.NewStakeMonitoring()
+	stakeMonitor := local.NewStakeMonitor()
 
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
 		bootstrapPeerPubKey,
 	))
-	stakeMonitoring.StakeTokens(key.NetworkPubKeyToEthAddress(
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
 		standardPeerPubKey,
 	))
 
@@ -88,7 +88,7 @@ func pingRequest(c *cli.Context) error {
 		ctx,
 		libp2pConfig,
 		privKey,
-		stakeMonitoring,
+		stakeMonitor,
 	)
 	if err != nil {
 		return err

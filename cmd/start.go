@@ -6,7 +6,6 @@ import (
 
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -68,9 +67,12 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing blockcounter: [%v]", err)
 	}
 
-	hasMinimumStake, err := checkMinimumStake(
-		chainProvider,
-		config.Ethereum.Account,
+	stakeMonitor, err := chainProvider.StakeMonitor()
+	if err != nil {
+		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
+	}
+	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+		config.Ethereum.Account.Address,
 	)
 	if err != nil {
 		return fmt.Errorf("could not check the stake [%v]", err)
@@ -79,17 +81,12 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("stake is below the required minimum")
 	}
 
-	stakeMonitoring, err := chainProvider.StakeMonitor()
-	if err != nil {
-		return fmt.Errorf("error obtaining stake monitoring handle [%v]", err)
-	}
-
 	ctx := context.Background()
 	netProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
 		staticKey,
-		stakeMonitoring,
+		stakeMonitor,
 	)
 	if err != nil {
 		return err
@@ -131,16 +128,4 @@ func loadStaticKey(account ethereum.Account) (*key.NetworkPrivateKey, error) {
 
 	privKey, _ := key.EthereumKeyToNetworkKey(ethereumKey)
 	return privKey, nil
-}
-
-func checkMinimumStake(
-	chain chain.Handle,
-	account ethereum.Account,
-) (bool, error) {
-	stakeMonitor, err := chain.StakeMonitor()
-	if err != nil {
-		return false, fmt.Errorf("error initializing stake monitor: [%v]", err)
-	}
-
-	return stakeMonitor.HasMinimumStake(account.Address)
 }

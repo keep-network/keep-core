@@ -102,14 +102,14 @@ func Connect(
 	ctx context.Context,
 	config Config,
 	staticKey *key.NetworkPrivateKey,
-	stakeMonitoring chain.StakeMonitor,
+	stakeMonitor chain.StakeMonitor,
 ) (net.Provider, error) {
 	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, config.Port, stakeMonitoring)
+	host, err := discoverAndListen(ctx, identity, config.Port, stakeMonitor)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	stakeMonitoring chain.StakeMonitor,
+	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
 
@@ -157,7 +157,7 @@ func discoverAndListen(
 
 	transport, err := newAuthenticatedTransport(
 		identity.privKey,
-		stakeMonitoring,
+		stakeMonitor,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
