@@ -32,14 +32,14 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			expectedResult: 3,
 		},
 		"current member as a sender - error returned": {
-			senderID:       2,
+			senderID:       member.ID,
 			accusedID:      3,
 			expectedResult: 0,
 			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
 		},
 		"current member as an accused - error returned": {
 			senderID:       3,
-			accusedID:      2,
+			accusedID:      member.ID,
 			expectedResult: 0,
 			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
 		},
@@ -138,14 +138,14 @@ func TestResolvePublicCoefficientsAccusations(t *testing.T) {
 			expectedResult: 3,
 		},
 		"current member as a sender - error returned": {
-			senderID:       2,
+			senderID:       member.ID,
 			accusedID:      3,
 			expectedResult: 0,
 			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
 		},
 		"current member as an accused - error returned": {
 			senderID:       3,
-			accusedID:      2,
+			accusedID:      member.ID,
 			expectedResult: 0,
 			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
 		},
