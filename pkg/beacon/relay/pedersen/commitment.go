@@ -84,10 +84,17 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 		return nil, fmt.Errorf("incorrect p and q values")
 	}
 
-	// Generate random `g`
-	g, err := randomFromZn(rand, big.NewInt(1), q) // randomZ(1, q - 1]
-	if err != nil {
-		return nil, fmt.Errorf("g generation failed [%s]", err)
+	// Generate random `g` in Z_p, such that `g^q mod p = 1`
+	var err error
+	var g *big.Int
+	for {
+		g, err = randomFromZn(rand, big.NewInt(1), p) // randomZ(1, p - 1]
+		if err != nil {
+			return nil, fmt.Errorf("g generation failed [%s]", err)
+		}
+		if new(big.Int).Exp(g, q, p).Cmp(big.NewInt(1)) == 0 {
+			break
+		}
 	}
 
 	// h = (g ^ randomZ(1, q - 1]) % q
@@ -97,7 +104,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 		if err != nil {
 			return nil, fmt.Errorf("randomValue generation failed [%s]", err)
 		}
-		h = new(big.Int).Exp(g, randomValue, q)
+		h = new(big.Int).Exp(g, randomValue, p)
 
 		if h.Cmp(big.NewInt(1)) > 0 {
 			break
