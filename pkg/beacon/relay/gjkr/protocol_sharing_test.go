@@ -69,16 +69,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		big.NewInt(2),
 	}
 	expectedPublicCoefficients := []*big.Int{
-		big.NewInt(216), // 6^3 mod 1907 = 216
-		big.NewInt(148), // 6^5 mod 1907 = 148
-		big.NewInt(36),  // 6^2 mod 1907 = 36
+		big.NewInt(343),  // 7^3 mod 1907 = 343
+		big.NewInt(1551), // 7^5 mod 1907 = 1551
+		big.NewInt(49),   // 7^2 mod 1907 = 49
 	}
 
 	config := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
 	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
 	// initialization.
-	mockRandomReader := testutils.NewMockRandReader(big.NewInt(6))
+	mockRandomReader := testutils.NewMockRandReader(big.NewInt(7))
 	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
 	if err != nil {
 		t.Fatalf("VSS initialization failed [%s]", err)
@@ -213,7 +213,7 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 
 	for _, sm := range sharingMembers {
 		for _, cm := range committingMembers {
-			sm.receivedSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
+			sm.receivedSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients, cm.protocolConfig.Q)
 		}
 	}
 
