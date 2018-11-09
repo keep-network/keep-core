@@ -156,8 +156,8 @@ func setupSharesAndCommitments(members []*SharesJustifyingMember, threshold int)
 	for _, m := range members {
 		for _, p := range members {
 			if m.ID != p.ID {
-				p.receivedSharesS[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
-				p.receivedSharesT[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
+				p.receivedSharesS[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsA[m.ID], m.protocolConfig.Q)
+				p.receivedSharesT[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsB[m.ID], m.protocolConfig.Q)
 
 				p.receivedCommitments[m.ID] = groupCommitments[m.ID]
 			}

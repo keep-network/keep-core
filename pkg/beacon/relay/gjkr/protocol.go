@@ -44,10 +44,10 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	// by coefficients `a_i` and `b_i`
 	var sharesMessages []*PeerSharesMessage
 	for _, receiverID := range cm.group.MemberIDs() {
-		// s_j = f_(j)
-		memberShareS := evaluateMemberShare(receiverID, coefficientsA)
-		// t_j = g_(j)
-		memberShareT := evaluateMemberShare(receiverID, coefficientsB)
+		// s_j = f_(j) mod q
+		memberShareS := evaluateMemberShare(receiverID, coefficientsA, cm.protocolConfig.Q)
+		// t_j = g_(j) mod q
+		memberShareT := evaluateMemberShare(receiverID, coefficientsB, cm.protocolConfig.Q)
 
 		// Check if calculated shares for the current member. If true store them
 		// without sharing in a message.
@@ -104,23 +104,22 @@ func pow(x, y int) *big.Int {
 
 // evaluateMemberShare calculates a share for given memberID.
 //
-// It calculates `s_j = Σ a_k * j^k`for k in [0..T], where:
+// It calculates `s_j = Σ a_k * j^k mod m`for k in [0..T], where:
 // - `a_k` is k coefficient
 // - `j` is memberID
 // - `T` is threshold
-//
-// Note: [GJKR] fig. 2 pt. 1.a. states that calculation should be done `mod q`.
-// Our tests gave unstable results if doing so. We decided not to be using modulo
-// operation here.
-func evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
+func evaluateMemberShare(memberID int, coefficients []*big.Int, m *big.Int) *big.Int {
 	result := big.NewInt(0)
 	for k, a := range coefficients {
-		result = new(big.Int).Add(
-			result,
-			new(big.Int).Mul(
-				a,
-				pow(memberID, k),
+		result = new(big.Int).Mod(
+			new(big.Int).Add(
+				result,
+				new(big.Int).Mul(
+					a,
+					pow(memberID, k),
+				),
 			),
+			m,
 		)
 	}
 	return result
