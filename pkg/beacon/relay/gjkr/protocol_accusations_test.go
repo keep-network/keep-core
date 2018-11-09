@@ -112,19 +112,19 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	}
 }
 
-func TestResolvePublicCoefficientsAccusations(t *testing.T) {
+func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
 	currentMemberID := 2 // i
 
 	var tests = map[string]struct {
-		accuserID                int // j
-		accusedID                int // m
-		modifyShareS             func(shareS *big.Int) *big.Int
-		modifyPublicCoefficients func(coefficients []*big.Int) []*big.Int
-		expectedResult           int
-		expectedError            error
+		accuserID                  int // j
+		accusedID                  int // m
+		modifyShareS               func(shareS *big.Int) *big.Int
+		modifyPublicKeySharePoints func(coefficients []*big.Int) []*big.Int
+		expectedResult             int
+		expectedError              error
 	}{
 		"false accusation - sender is punished": {
 			accuserID:      3,
@@ -154,19 +154,19 @@ func TestResolvePublicCoefficientsAccusations(t *testing.T) {
 		"incorrect commitments - accused member is punished": {
 			accuserID: 3,
 			accusedID: 4,
-			modifyPublicCoefficients: func(coefficients []*big.Int) []*big.Int {
-				newCoefficients := make([]*big.Int, len(coefficients))
-				for i := range newCoefficients {
-					newCoefficients[i] = big.NewInt(int64(990 + i))
+			modifyPublicKeySharePoints: func(points []*big.Int) []*big.Int {
+				newPoints := make([]*big.Int, len(points))
+				for i := range newPoints {
+					newPoints[i] = big.NewInt(int64(990 + i))
 				}
-				return newCoefficients
+				return newPoints
 			},
 			expectedResult: 4,
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializeCoefficientsJustifyingMemberGroup(threshold, groupSize)
+			members, err := initializePointsJustifyingMemberGroup(threshold, groupSize)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -177,10 +177,11 @@ func TestResolvePublicCoefficientsAccusations(t *testing.T) {
 			if test.modifyShareS != nil {
 				revealedShareS = test.modifyShareS(revealedShareS)
 			}
-			if test.modifyPublicCoefficients != nil {
-				member.receivedValidPeerCoefficients[test.accusedID] = test.modifyPublicCoefficients(member.receivedValidPeerCoefficients[test.accusedID])
+			if test.modifyPublicKeySharePoints != nil {
+				member.receivedValidPeerPublicKeySharePoints[test.accusedID] =
+					test.modifyPublicKeySharePoints(member.receivedValidPeerPublicKeySharePoints[test.accusedID])
 			}
-			result, err := member.ResolvePublicCoefficientsAccusations(
+			result, err := member.ResolvePublicKeySharePointsAccusations(
 				test.accuserID,
 				test.accusedID,
 				revealedShareS,
@@ -205,9 +206,9 @@ func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id int) *
 }
 
 func findCoefficientsJustifyingMemberByID(
-	members []*CoefficientsJustifyingMember,
+	members []*PointsJustifyingMember,
 	id int,
-) *CoefficientsJustifyingMember {
+) *PointsJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
 			return m
@@ -282,41 +283,41 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJ
 	return sharesJustifyingMembers, nil
 }
 
-// initializeCoefficientsJustifyingMemberGroup generates a group of members and
+// initializePointsJustifyingMemberGroup generates a group of members and
 // simulates public coefficients calculation and sharing between members
 // (Phase 7 and 8). It expects secret coefficients to be already stored in
 // secretCoefficients field for each group member. At the end it stores
 // values for each member just like they would be received from peers.
-func initializeCoefficientsJustifyingMemberGroup(
+func initializePointsJustifyingMemberGroup(
 	threshold, groupSize int,
-) ([]*CoefficientsJustifyingMember, error) {
+) ([]*PointsJustifyingMember, error) {
 	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
-	var coefficientsJustifyingMembers []*CoefficientsJustifyingMember
-	// TODO: Handle transition from SharingMember to CoefficientsJustifyingMember in Next() function
+	var pointsJustifyingMembers []*PointsJustifyingMember
+	// TODO: Handle transition from SharingMember to PointsJustifyingMember in Next() function
 	for _, sm := range sharingMembers {
-		coefficientsJustifyingMembers = append(coefficientsJustifyingMembers,
-			&CoefficientsJustifyingMember{
+		pointsJustifyingMembers = append(pointsJustifyingMembers,
+			&PointsJustifyingMember{
 				SharingMember: sm,
 			})
 	}
 
-	// Calculate public coefficients for each group member (Phase 7).
-	for _, m := range coefficientsJustifyingMembers {
-		m.CalculatePublicCoefficients()
+	// Calculate public key share points for each group member (Phase 7).
+	for _, m := range pointsJustifyingMembers {
+		m.CalculatePublicKeySharePoints()
 	}
-	// Simulate phase where members store received public coefficients from peers
-	// (Phase 8).
-	for _, m := range coefficientsJustifyingMembers {
-		for _, p := range coefficientsJustifyingMembers {
+	// Simulate phase where members store received public key share points from
+	// peers (Phase 8).
+	for _, m := range pointsJustifyingMembers {
+		for _, p := range pointsJustifyingMembers {
 			if m.ID != p.ID {
-				m.receivedValidPeerCoefficients[p.ID] = p.publicCoefficients
+				m.receivedValidPeerPublicKeySharePoints[p.ID] = p.publicKeySharePoints
 			}
 		}
 	}
 
-	return coefficientsJustifyingMembers, nil
+	return pointsJustifyingMembers, nil
 }

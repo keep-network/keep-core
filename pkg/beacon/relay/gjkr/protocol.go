@@ -296,39 +296,41 @@ func (qm *QualifiedMember) CombineMemberShares() {
 	qm.shareT = combinedSharesT
 }
 
-// CalculatePublicCoefficients calculates public values for member's coefficients.
+// CalculatePublicKeySharePoints calculates public values for member's coefficients.
 // It calculates `A_k = g^a_k mod p` for k in [0..T].
 //
 // See Phase 7 of the protocol specification.
-func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicCoefficientsMessage {
-	sm.publicCoefficients = make([]*big.Int, len(sm.secretCoefficients))
+func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePointsMessage {
+	sm.publicKeySharePoints = make([]*big.Int, len(sm.secretCoefficients))
 	for i, a := range sm.secretCoefficients {
-		sm.publicCoefficients[i] = new(big.Int).Exp(
+		sm.publicKeySharePoints[i] = new(big.Int).Exp(
 			sm.vss.G,
 			a,
 			sm.protocolConfig.P,
 		)
 	}
 
-	return &MemberPublicCoefficientsMessage{
-		senderID:           sm.ID,
-		publicCoefficients: sm.publicCoefficients,
+	return &MemberPublicKeySharePointsMessage{
+		senderID:             sm.ID,
+		publicKeySharePoints: sm.publicKeySharePoints,
 	}
 }
 
-// VerifyPublicCoefficients validates public key shares received in messages from
-// peer group members.
+// VerifyPublicKeySharePoints validates public key share points received in
+// messages from peer group members.
 // It returns accusation message with ID of members for which the verification
 // failed.
 //
 // See Phase 8 of the protocol specification.
-func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoefficientsMessage) (*CoefficientsAccusationsMessage, error) {
+func (sm *SharingMember) VerifyPublicKeySharePoints(
+	messages []*MemberPublicKeySharePointsMessage,
+) (*PointsAccusationsMessage, error) {
 	var accusedMembersIDs []int
 	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
 		product := big.NewInt(1)
-		for k, a := range message.publicCoefficients {
+		for k, a := range message.publicKeySharePoints {
 			product = new(big.Int).Mod(
 				new(big.Int).Mul(
 					product,
@@ -351,17 +353,17 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
 			continue
 		}
-		sm.receivedValidPeerCoefficients[message.senderID] = message.publicCoefficients
+		sm.receivedValidPeerPublicKeySharePoints[message.senderID] = message.publicKeySharePoints
 	}
 
-	return &CoefficientsAccusationsMessage{
+	return &PointsAccusationsMessage{
 		senderID:   sm.ID,
 		accusedIDs: accusedMembersIDs,
 	}, nil
 }
 
-// ResolvePublicCoefficientsAccusations resolves a complaint received from a sender
-// against a member accused in public coefficients verification.
+// ResolvePublicKeySharePointsAccusations resolves a complaint received from a sender
+// against a member accused in public key share points verification.
 //
 // Current member cannot be a part of a dispute, if the member is either a sender
 // or accused the function will return an error.
@@ -377,7 +379,7 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 // and their ID is returned.
 //
 // See Phase 9 of the protocol specification.
-func (cjm *CoefficientsJustifyingMember) ResolvePublicCoefficientsAccusations(
+func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
 	senderID, accusedID int,
 	shareS *big.Int,
 ) (int, error) {
@@ -388,7 +390,7 @@ func (cjm *CoefficientsJustifyingMember) ResolvePublicCoefficientsAccusations(
 	// `product = Π (A_mk ^ (j^k)) mod p` for k in [0..T],
 	// where: m is accused member's ID, j is sender's ID, T is threshold.
 	product := big.NewInt(1)
-	for k, a := range cjm.receivedValidPeerCoefficients[accusedID] {
+	for k, a := range cjm.receivedValidPeerPublicKeySharePoints[accusedID] {
 		product = new(big.Int).Mod(
 			new(big.Int).Mul(
 				product,

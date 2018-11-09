@@ -61,8 +61,8 @@ func TestRoundTrip(t *testing.T) {
 	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			QualifiedMember:               qm,
-			receivedValidPeerCoefficients: make(map[int][]*big.Int, groupSize-1),
+			QualifiedMember:                       qm,
+			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
@@ -74,23 +74,23 @@ func TestRoundTrip(t *testing.T) {
 		)
 	}
 
-	publicCoefficientsMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
+	publicKeySharePointsMessages := make([]*MemberPublicKeySharePointsMessage, groupSize)
 	for i, member := range sharingMembers {
-		publicCoefficientsMessages[i] = member.CalculatePublicCoefficients()
+		publicKeySharePointsMessages[i] = member.CalculatePublicKeySharePoints()
 	}
 
 	for i := range sharingMembers {
 		member := sharingMembers[i]
 
-		accusedCoefficientsMessage, err := member.VerifyPublicCoefficients(
-			filterMemberPublicCoefficientsMessages(publicCoefficientsMessages, member.ID),
+		accusedPointsMessage, err := member.VerifyPublicKeySharePoints(
+			filterMemberPublicKeySharePointsMessages(publicKeySharePointsMessages, member.ID),
 		)
 		if err != nil {
 			t.Fatalf("public coefficients verification failed [%s]", err)
 		}
-		if len(accusedCoefficientsMessage.accusedIDs) > 0 {
+		if len(accusedPointsMessage.accusedIDs) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedCoefficientsMessage.accusedIDs,
+				accusedPointsMessage.accusedIDs,
 			)
 		}
 	}

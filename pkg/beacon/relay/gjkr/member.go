@@ -80,18 +80,19 @@ type SharingMember struct {
 	*QualifiedMember
 
 	// Public values of each polynomial `a` coefficient defined in secretCoefficients
-	// field. It is denoted as `A_ik` in protocol specification.
-	publicCoefficients []*big.Int
-	// Coefficients received from peer group members which passed the validation.
-	// Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerCoefficients map[int][]*big.Int
+	// field. It is denoted as `A_ik` in protocol specification. The zeroth
+	// public key share point `A_i0` is a member's public key share.
+	publicKeySharePoints []*big.Int
+	// Public key share points received from peer group members which passed the
+	// validation. Defined as `A_jk` across the protocol documentation.
+	receivedValidPeerPublicKeySharePoints map[int][]*big.Int
 }
 
-// CoefficientsJustifyingMember represents one member in a threshold key sharing group,
-// after it completed public coefficients verification and enters justification
-// phase where it resolves invalid public coefficients accusations.
+// PointsJustifyingMember represents one member in a threshold key sharing group,
+// after it completed public key share points verification and enters justification
+// phase where it resolves public key share points accusations.
 //
 // Executes Phase 9 of the protocol.
-type CoefficientsJustifyingMember struct {
+type PointsJustifyingMember struct {
 	*SharingMember
 }
