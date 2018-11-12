@@ -97,10 +97,6 @@ func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
 	return coefficients, nil
 }
 
-func pow(x, y int64, m *big.Int) *big.Int {
-	return new(big.Int).Exp(big.NewInt(x), big.NewInt(y), m)
-}
-
 // evaluateMemberShare calculates a share for given memberID.
 //
 // It calculates `s_j = Σ a_k * j^k mod q`for k in [0..T], where:
@@ -115,7 +111,7 @@ func (cm *CommittingMember) evaluateMemberShare(memberID int, coefficients []*bi
 				result,
 				new(big.Int).Mul(
 					a,
-					pow(int64(memberID), int64(k), cm.protocolConfig.Q),
+					pow(memberID, k),
 				),
 			),
 			cm.protocolConfig.Q,
@@ -204,7 +200,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 				commitmentsProduct,
 				new(big.Int).Exp(
 					c,
-					pow(int64(memberID), int64(k), cm.protocolConfig.P),
+					pow(memberID, k),
 					cm.protocolConfig.P,
 				),
 			),
@@ -334,7 +330,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 					product,
 					new(big.Int).Exp(
 						a,
-						pow(int64(sm.ID), int64(k), sm.protocolConfig.P),
+						pow(sm.ID, k),
 						sm.protocolConfig.P,
 					),
 				),
@@ -394,7 +390,7 @@ func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
 				product,
 				new(big.Int).Exp(
 					a,
-					pow(int64(senderID), int64(k), cjm.protocolConfig.P),
+					pow(senderID, k),
 					cjm.protocolConfig.P,
 				),
 			),
@@ -414,4 +410,8 @@ func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
 		return senderID, nil
 	}
 	return accusedID, nil
+}
+
+func pow(x, y int) *big.Int {
+	return new(big.Int).Exp(big.NewInt(int64(x)), big.NewInt(int64(y)), nil)
 }
