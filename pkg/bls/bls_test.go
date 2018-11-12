@@ -3,6 +3,7 @@ package bls
 import (
 	"crypto/rand"
 	"math/big"
+	mrand "math/rand"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -69,6 +70,12 @@ func TestThresholdBLS(t *testing.T) {
 		sk := SecretKeyShare(masterSecretKey, int64(i))
 		share := Sign(sk, msg)
 		signatureShares = append(signatureShares, share)
+	}
+
+	// Shuffle signatureShares array.
+	for i := range signatureShares {
+		j := mrand.Intn(1 + i)
+		signatureShares[i], signatureShares[j] = signatureShares[j], signatureShares[i]
 	}
 
 	// Get full BLS signature. Use only threshold amount of signatures to
