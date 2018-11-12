@@ -7,6 +7,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/altbn128"
 )
 
+// SecretKeyShare represents secret key share and its index.
+type SecretKeyShare struct {
+	I int      // Index of secret key share
+	V *big.Int // Value of secret key share
+}
+
+// PublicKeyShare represents public key share and its index.
+type PublicKeyShare struct {
+	I int       // Index of public key share
+	V *bn256.G2 // Value of public key share
+}
+
 // SignatureShare represents signature share and its index.
 type SignatureShare struct {
 	I int       // Index of signature share
@@ -92,10 +104,10 @@ func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
 	return result
 }
 
-// SecretKeyShare computes private share by evaluating a polynomial with
+// GetSecretKeyShare computes private share by evaluating a polynomial with
 // coefficients taken from masterSecretKey. This is based on Shamir's Secret
 // Sharing scheme and 'i' represents participant enumeration.
-func SecretKeyShare(masterSecretKey []*big.Int, i int64) *big.Int {
+func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
 
 	xi := big.NewInt(int64(1 + i))
 	share := big.NewInt(0)
@@ -105,5 +117,9 @@ func SecretKeyShare(masterSecretKey []*big.Int, i int64) *big.Int {
 		share = new(big.Int).Add(share, masterSecretKey[j])
 	}
 
-	return share
+	return &SecretKeyShare{i, share}
+}
+
+func (s SecretKeyShare) publicKeyShare() *PublicKeyShare {
+	return &PublicKeyShare{s.I, new(bn256.G2).ScalarBaseMult(s.V)}
 }

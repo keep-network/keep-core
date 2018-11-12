@@ -57,6 +57,7 @@ func TestThresholdBLS(t *testing.T) {
 	var masterSecretKey []*big.Int
 	var masterPublicKey []*bn256.G2
 	var signatureShares []*SignatureShare
+	var publicKeyShares []*PublicKeyShare
 
 	// Set up master keys.
 	for i := 0; i < threshold; i++ {
@@ -67,9 +68,10 @@ func TestThresholdBLS(t *testing.T) {
 
 	// Each member of the group signs the same message creating signature share.
 	for i := 0; i < numOfPlayers; i++ {
-		sk := SecretKeyShare(masterSecretKey, int64(i))
-		share := Sign(sk, msg)
-		signatureShares = append(signatureShares, &SignatureShare{i, share})
+		secretKeyShare := GetSecretKeyShare(masterSecretKey, int(i))
+		signatureShare := Sign(secretKeyShare.V, msg)
+		signatureShares = append(signatureShares, &SignatureShare{i, signatureShare})
+		publicKeyShares = append(publicKeyShares, secretKeyShare.publicKeyShare())
 	}
 
 	// Shuffle signatureShares array.
