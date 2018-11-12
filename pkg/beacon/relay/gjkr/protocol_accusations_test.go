@@ -272,9 +272,8 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJ
 	for _, m := range sharesJustifyingMembers {
 		for _, p := range sharesJustifyingMembers {
 			if m.ID != p.ID {
-				p.receivedValidSharesS[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
-				p.receivedValidSharesT[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
-
+				p.receivedValidSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
+				p.receivedValidSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
 				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
