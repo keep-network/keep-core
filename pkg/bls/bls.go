@@ -123,3 +123,44 @@ func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
 func (s SecretKeyShare) publicKeyShare() *PublicKeyShare {
 	return &PublicKeyShare{s.I, new(bn256.G2).ScalarBaseMult(s.V)}
 }
+
+// RecoverPublicKey reconstructs public key from a threshold number of
+// public key shares using Lagrange interpolation.
+func RecoverPublicKey(shares []*PublicKeyShare, threshold int) *bn256.G2 {
+
+	x := make(map[int]*big.Int)
+
+	for i, s := range shares {
+		if s == nil {
+			continue
+		}
+		x[i] = big.NewInt(1 + int64(s.I))
+		if len(x) == threshold {
+			break
+		}
+	}
+
+	result := new(bn256.G2)
+
+	for i, xi := range x {
+
+		a := big.NewInt(1)
+		b := big.NewInt(1)
+
+		for j, xj := range x {
+			if i == j {
+				continue
+			}
+			a = new(big.Int).Mod(new(big.Int).Mul(a, xj), bn256.Order)
+			b = new(big.Int).Mod(new(big.Int).Mul(b, new(big.Int).Sub(xj, xi)), bn256.Order)
+		}
+
+		// Perform modular division of a by b.
+		modInv := new(big.Int).ModInverse(b, bn256.Order)
+		div := new(big.Int).Mod(new(big.Int).Mul(a, modInv), bn256.Order)
+
+		result.Add(result, new(bn256.G2).ScalarMult(shares[i].V, div))
+	}
+
+	return result
+}

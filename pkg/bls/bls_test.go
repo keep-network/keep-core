@@ -84,6 +84,11 @@ func TestThresholdBLS(t *testing.T) {
 	// demonstrate it's a functional threshold construction.
 	sig := Recover(signatureShares[:threshold], threshold)
 
+	publicKey := RecoverPublicKey(publicKeyShares, threshold)
+	if publicKey.String() != masterPublicKey[0].String() {
+		t.Errorf("Error reconstructing public key from public key shares.")
+	}
+
 	result := Verify(masterPublicKey[0], msg, sig)
 
 	if !result {
