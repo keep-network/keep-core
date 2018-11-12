@@ -91,7 +91,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 	for {
 		g, err = randomFromZn(rand, big.NewInt(1), p) // randomZ(1, p - 1]
 		if err != nil {
-			return nil, fmt.Errorf("g generation failed [%s]", err)
+			return nil, fmt.Errorf("g generation failed [%v]", err)
 		}
 		if new(big.Int).Exp(g, q, p).Cmp(big.NewInt(1)) == 0 {
 			break
@@ -103,7 +103,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 	for {
 		randomValue, err := randomFromZn(rand, big.NewInt(1), q) // randomZ(1, q - 1]
 		if err != nil {
-			return nil, fmt.Errorf("randomValue generation failed [%s]", err)
+			return nil, fmt.Errorf("randomValue generation failed [%v]", err)
 		}
 		h = new(big.Int).Exp(g, randomValue, p)
 
@@ -124,7 +124,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 func (vss *VSS) CommitmentTo(rand io.Reader, secret []byte) (*Commitment, *DecommitmentKey, error) {
 	t, err := randomFromZn(rand, big.NewInt(1), vss.q) // t = randomZ(1, q - 1]
 	if err != nil {
-		return nil, nil, fmt.Errorf("t generation failed [%s]", err)
+		return nil, nil, fmt.Errorf("t generation failed [%v]", err)
 	}
 
 	s := calculateDigest(secret, vss.q) // s = hash(m) % q
@@ -170,7 +170,7 @@ func randomFromZn(rand io.Reader, min, max *big.Int) (*big.Int, error) {
 	for {
 		x, err := crand.Int(rand, max) // returns a value in [0, max)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate random number [%s]", err)
+			return nil, fmt.Errorf("failed to generate random number [%v]", err)
 		}
 
 		if x.Cmp(min) > 0 {
