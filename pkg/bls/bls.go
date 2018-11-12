@@ -7,6 +7,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/altbn128"
 )
 
+// SignatureShare represents signature share and its index.
+type SignatureShare struct {
+	I int       // Index of signature share
+	V *bn256.G1 // Value of signature share
+}
+
 // AggregateG1Points aggregates array of G1 points into a single G1 point.
 func AggregateG1Points(points []*bn256.G1) *bn256.G1 {
 	result := new(bn256.G1)
@@ -46,7 +52,7 @@ func Verify(publicKey *bn256.G2, message []byte, signature *bn256.G1) bool {
 
 // Recover reconstructs the full BLS signature from a threshold number of
 // signature shares using Lagrange interpolation.
-func Recover(shares []*bn256.G1, threshold int) *bn256.G1 {
+func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
 
 	// x holds id's of the threshold amount of shares required to recover signature.
 	x := make(map[int]*big.Int)
@@ -55,7 +61,7 @@ func Recover(shares []*bn256.G1, threshold int) *bn256.G1 {
 		if s == nil {
 			continue
 		}
-		x[i] = big.NewInt(1 + int64(i))
+		x[i] = big.NewInt(1 + int64(s.I))
 		if len(x) == threshold {
 			break
 		}
@@ -80,7 +86,7 @@ func Recover(shares []*bn256.G1, threshold int) *bn256.G1 {
 		modInv := new(big.Int).ModInverse(b, bn256.Order)
 		div := new(big.Int).Mod(new(big.Int).Mul(a, modInv), bn256.Order)
 
-		result.Add(result, new(bn256.G1).ScalarMult(shares[i], div))
+		result.Add(result, new(bn256.G1).ScalarMult(shares[i].V, div))
 	}
 
 	return result

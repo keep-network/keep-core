@@ -56,7 +56,7 @@ func TestThresholdBLS(t *testing.T) {
 
 	var masterSecretKey []*big.Int
 	var masterPublicKey []*bn256.G2
-	var signatureShares []*bn256.G1
+	var signatureShares []*SignatureShare
 
 	// Set up master keys.
 	for i := 0; i < threshold; i++ {
@@ -69,7 +69,7 @@ func TestThresholdBLS(t *testing.T) {
 	for i := 0; i < numOfPlayers; i++ {
 		sk := SecretKeyShare(masterSecretKey, int64(i))
 		share := Sign(sk, msg)
-		signatureShares = append(signatureShares, share)
+		signatureShares = append(signatureShares, &SignatureShare{i, share})
 	}
 
 	// Shuffle signatureShares array.
