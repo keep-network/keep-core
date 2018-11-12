@@ -86,16 +86,18 @@ func Recover(shares []*bn256.G1, threshold int) *bn256.G1 {
 	return result
 }
 
-// SecretKeyShare computes private share.
+// SecretKeyShare computes private share by evaluating a polynomial with
+// coefficients taken from masterSecretKey. This is based on Shamir's Secret
+// Sharing scheme and 'i' represents participant enumeration.
 func SecretKeyShare(masterSecretKey []*big.Int, i int64) *big.Int {
 
 	xi := big.NewInt(int64(1 + i))
-	v := big.NewInt(0)
+	share := big.NewInt(0)
 
 	for j := len(masterSecretKey) - 1; j >= 0; j-- {
-		v = new(big.Int).Mul(v, xi)
-		v = new(big.Int).Add(v, masterSecretKey[j])
+		share = new(big.Int).Mul(share, xi)
+		share = new(big.Int).Add(share, masterSecretKey[j])
 	}
 
-	return v
+	return share
 }
