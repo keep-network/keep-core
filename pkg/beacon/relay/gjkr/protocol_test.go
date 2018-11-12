@@ -1,6 +1,9 @@
 package gjkr
 
-import "testing"
+import (
+	"math/big"
+	"testing"
+)
 
 func TestRoundTrip(t *testing.T) {
 	threshold := 3
@@ -58,35 +61,36 @@ func TestRoundTrip(t *testing.T) {
 	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			QualifiedMember: qm,
+			QualifiedMember:                       qm,
+			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
 	sharingMember := sharingMembers[0]
-	if len(sharingMember.receivedSharesS) != groupSize-1 {
+	if len(sharingMember.receivedValidSharesS) != groupSize-1 {
 		t.Fatalf("\nexpected: %d received shares\nactual:   %d\n",
 			groupSize-1,
-			len(sharingMember.receivedSharesS),
+			len(sharingMember.receivedValidSharesS),
 		)
 	}
 
-	publicCoefficientsMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
+	publicKeySharePointsMessages := make([]*MemberPublicKeySharePointsMessage, groupSize)
 	for i, member := range sharingMembers {
-		publicCoefficientsMessages[i] = member.CalculatePublicCoefficients()
+		publicKeySharePointsMessages[i] = member.CalculatePublicKeySharePoints()
 	}
 
 	for i := range sharingMembers {
 		member := sharingMembers[i]
 
-		accusedCoefficientsMessage, err := member.VerifyPublicCoefficients(
-			filterMemberPublicCoefficientsMessages(publicCoefficientsMessages, member.ID),
+		accusedPointsMessage, err := member.VerifyPublicKeySharePoints(
+			filterMemberPublicKeySharePointsMessages(publicKeySharePointsMessages, member.ID),
 		)
 		if err != nil {
 			t.Fatalf("public coefficients verification failed [%s]", err)
 		}
-		if len(accusedCoefficientsMessage.accusedIDs) > 0 {
+		if len(accusedPointsMessage.accusedIDs) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedCoefficientsMessage.accusedIDs,
+				accusedPointsMessage.accusedIDs,
 			)
 		}
 	}
