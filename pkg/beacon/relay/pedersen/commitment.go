@@ -97,7 +97,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 		}
 	}
 
-	// h = (g ^ randomZ(1, q - 1]) % q
+	// h = (g ^ randomZ(1, q - 1]) % p
 	var h *big.Int
 	for {
 		randomValue, err := randomFromZn(rand, big.NewInt(1), q) // randomZ(1, q - 1]
@@ -154,11 +154,11 @@ func calculateDigest(secret []byte, mod *big.Int) *big.Int {
 // - `g`, `h` are scheme specific parameters passed in vss,
 // - `s` is a message to which one is committing,
 // - `t` is a decommitment key.
-func (vss *VSS) CalculateCommitment(s, r, m *big.Int) *big.Int {
+func (vss *VSS) CalculateCommitment(s, t, m *big.Int) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(vss.G, s, m),
-			new(big.Int).Exp(vss.h, r, m),
+			new(big.Int).Exp(vss.h, t, m),
 		),
 		m,
 	)
