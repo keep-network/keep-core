@@ -6,7 +6,7 @@ build:
 deploy:
   kubectl:
     manifests:
-    - k8s-*
+    - infrastructure/kube/k8s-*
 profiles:
 - name: test
   test:

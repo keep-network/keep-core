@@ -1,0 +1,23 @@
+= Build Geth Node image
+
+
+To build the docker image
+```
+docker build --pull --squash --no-cache --rm -t lispmeister/geth-node .
+```
+
+We created two accounts. Copy the file listing the accounts
+```
+docker create --name build lispmeister/geth-node
+docker cp build:/root/accounts.txt ./accounts.txt
+```
+
+You can see your new image with this command:
+```
+docker images |grep geth-node
+```
+
+Push the image to Docker Hub:
+```
+docker push $DOCKER_ID_USER/get-node
+```
