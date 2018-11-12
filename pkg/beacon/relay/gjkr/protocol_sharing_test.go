@@ -214,7 +214,7 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 
 	for _, sm := range sharingMembers {
 		for _, cm := range committingMembers {
-			sm.receivedValidSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients, m.protocolConfig.Q)
+			sm.receivedValidSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients, cm.protocolConfig.Q)
 		}
 	}
 
