@@ -78,13 +78,14 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 		return nil, fmt.Errorf("p and q have to be primes")
 	}
 
-	// Check if `p = 2q + 1`
+	// Check if `p = 2q + 1`.
 	pForQ := new(big.Int).Add(new(big.Int).Mul(big.NewInt(2), q), big.NewInt(1))
 	if p.Cmp(pForQ) != 0 {
 		return nil, fmt.Errorf("incorrect p and q values")
 	}
 
-	// Generate random `g` in Z_p, such that `g^q mod p = 1`
+	// Generate random `g` in Z_p, such that Euler's criterion `g^q mod p = 1`
+	// holds.
 	var err error
 	var g *big.Int
 	for {
