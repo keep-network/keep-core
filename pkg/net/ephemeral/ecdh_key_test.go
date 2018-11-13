@@ -1,24 +1,19 @@
 package ephemeral
 
 import (
-	"crypto/rand"
 	"reflect"
 	"testing"
 )
 
 func TestMarshalUnmarshalPublicKey(t *testing.T) {
-	_, pubKey, err := GenerateEphemeralKeypair(rand.Reader)
+	_, pubKey, err := GenerateEphemeralKeypair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	marshalled, err := pubKey.Marshal()
-	if err != nil {
-		t.Fatal(err)
-	}
+	marshalled := pubKey.Marshal()
 
-	unmarshalled := &PublicKey{}
-	err = unmarshalled.Unmarshal(marshalled)
+	unmarshalled, err := UnmarshalPublicKey(marshalled)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,21 +24,14 @@ func TestMarshalUnmarshalPublicKey(t *testing.T) {
 }
 
 func TestMarshalUnmarshalPrivateKey(t *testing.T) {
-	privKey, _, err := GenerateEphemeralKeypair(rand.Reader)
+	privKey, _, err := GenerateEphemeralKeypair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	marshalled, err := privKey.Marshal()
-	if err != nil {
-		t.Fatal(err)
-	}
+	marshalled := privKey.Marshal()
 
-	unmarshalled := &PrivateKey{}
-	err = unmarshalled.Unmarshal(marshalled)
-	if err != nil {
-		t.Fatal(err)
-	}
+	unmarshalled := UnmarshalPrivateKey(marshalled)
 
 	if !reflect.DeepEqual(unmarshalled, privKey) {
 		t.Fatal("unmarshalled private key does not match the original one")
