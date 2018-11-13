@@ -133,27 +133,23 @@ Whatever you choose make sure you're using version `v0.17.0` or
 higher.
 
 == Local Development
-=== Boot Ethereum Network
-You first need to start the Ethereum testnet and its pods.
+=== Boot Ethereum Node Docker Container
+You will need to build the Docker container following
+the instructions in `infrastructure/geth-node/Readme.adoc`.
 
+Boot the container in a separate shell with this Docker
+command:
 ```
-infrastructure/scripts/geth-startup.sh
-```
-
-Check if all pods have booted by running this command:
-
-```
-kubectl get pods
+docker run -it -p 8545:8545 lispmeister/geth-node
 ```
 
-You can reach the Ethereum dashboard at http://localhost:3000 and once it shows
-all nodes as active you can start Skaffold.
-
-To destroy the Ethereum testnet run the following commands:
-
+To connect to the JSON-RPC interface:
 ```
-infrastructure/scripts/geth-shutdown.sh
+geth attach http://localhost:8545
 ```
+
+=== Boot the Ethereum Kubernetes Testnet
+tbd
 
 === Develop Keep
 To start developing run the following command:
