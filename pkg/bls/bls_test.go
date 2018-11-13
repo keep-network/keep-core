@@ -20,7 +20,7 @@ func TestAggregateBLS(t *testing.T) {
 	msg := []byte("Hello!")
 
 	for i := 0; i < 100; i++ {
-		// Get private key.
+		// Get secret key.
 		k, _, err := bn256.RandomG1(rand.Reader)
 
 		if err != nil {

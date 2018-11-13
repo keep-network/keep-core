@@ -44,9 +44,9 @@ func AggregateG2Points(points []*bn256.G2) *bn256.G2 {
 }
 
 // Sign creates a point on a curve G1 by hashing and signing provided message
-// using the private key `privateKey`.
-func Sign(privateKey *big.Int, message []byte) *bn256.G1 {
-	return new(bn256.G1).ScalarMult(altbn128.G1HashToPoint(message), privateKey)
+// using the secret key `secretKey`.
+func Sign(secretKey *big.Int, message []byte) *bn256.G1 {
+	return new(bn256.G1).ScalarMult(altbn128.G1HashToPoint(message), secretKey)
 }
 
 // Verify performs the pairing operation to check if the signature is correct
@@ -105,7 +105,7 @@ func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
 	return result
 }
 
-// GetSecretKeyShare computes private share by evaluating a polynomial with
+// GetSecretKeyShare computes secret share by evaluating a polynomial with
 // coefficients taken from masterSecretKey. This is based on Shamir's Secret
 // Sharing scheme and 'i' represents participant enumeration.
 func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
