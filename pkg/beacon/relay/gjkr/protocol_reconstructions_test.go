@@ -129,7 +129,7 @@ func initializeReconstructingMembersGroup(
 			if !contains(disqualifiedIDs, m.ID) {
 				// collect all shares which this member received from disqualified
 				// member and store them in sharesReceivedFromDisqualifiedMember
-				for peerID, receivedShare := range m.receivedSharesS {
+				for peerID, receivedShare := range m.receivedValidSharesS {
 					if peerID == disqualifiedID {
 						sharesReceivedFromDisqualifiedMember[m.ID] = receivedShare
 						break
