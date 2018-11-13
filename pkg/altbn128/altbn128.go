@@ -24,13 +24,13 @@ type gfP2 struct {
 	x, y *big.Int
 }
 
-// Twist curve B constant from bn256/twist.go
+// Twist curve B constant from bn256/twist.go. This is used to calculate y using y² = x³ + twistB.
 var twistB = &gfP2{
 	bigFromBase10("19485874751759354771024239261021720505790618469301721065564631296452457478373"),
 	bigFromBase10("266929791119991161246907387137283842545076965332900288569378510910307636690"),
 }
 
-// Root of the point where x and y are equal.
+// Root of the point where x and y are equal. This is used to calculate square root of y in gfP2.
 var hexRoot = &gfP2{
 	bigFromBase10("21573744529824266246521972077326577680729363968861965890554801909984373949499"),
 	bigFromBase10("16854739155576650954933913186877292401521110422362946064090026408937773542853"),
@@ -219,12 +219,13 @@ func (m compressedPoint) DecompressToG1() (*bn256.G1, error) {
 // top byte as 0x01 (even) or 0x00 (odd).
 func (m compressedPoint) DecompressToG2() (*bn256.G2, error) {
 
-	// Get the original X.
+	// Get the X.
 	x := new(gfP2)
 	x.x = new(big.Int).SetBytes(m[32:64])
+	// Strip Y parity bit when recovering the upper bytes.
 	x.y = new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:32]...))
 
-	// Get one of the two possible Y.
+	// Get one of the two possible Y on curve y² = x³ + twistB.
 	y2 := new(gfP2).Pow(x, bigFromBase10("3"))
 	y2.Add(y2, twistB)
 	y := sqrtGfP2(y2)

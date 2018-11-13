@@ -83,20 +83,21 @@ func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
 
 	for i, xi := range x {
 
-		a := big.NewInt(1)
-		b := big.NewInt(1)
+		// Prepare numerator and denominator as part of Lagrange interpolation.
+		num := big.NewInt(1)
+		den := big.NewInt(1)
 
 		for j, xj := range x {
 			if i == j {
 				continue
 			}
-			a = new(big.Int).Mod(new(big.Int).Mul(a, xj), bn256.Order)
-			b = new(big.Int).Mod(new(big.Int).Mul(b, new(big.Int).Sub(xj, xi)), bn256.Order)
+			num = new(big.Int).Mod(new(big.Int).Mul(num, xj), bn256.Order)
+			den = new(big.Int).Mod(new(big.Int).Mul(den, new(big.Int).Sub(xj, xi)), bn256.Order)
 		}
 
-		// Perform modular division of a by b.
-		modInv := new(big.Int).ModInverse(b, bn256.Order)
-		div := new(big.Int).Mod(new(big.Int).Mul(a, modInv), bn256.Order)
+		// Perform modular division of num by den.
+		modInv := new(big.Int).ModInverse(den, bn256.Order)
+		div := new(big.Int).Mod(new(big.Int).Mul(num, modInv), bn256.Order)
 
 		result.Add(result, new(bn256.G1).ScalarMult(shares[i].V, div))
 	}
@@ -144,20 +145,21 @@ func RecoverPublicKey(shares []*PublicKeyShare, threshold int) *bn256.G2 {
 
 	for i, xi := range x {
 
-		a := big.NewInt(1)
-		b := big.NewInt(1)
+		// Prepare numerator and denominator as part of Lagrange interpolation.
+		num := big.NewInt(1)
+		den := big.NewInt(1)
 
 		for j, xj := range x {
 			if i == j {
 				continue
 			}
-			a = new(big.Int).Mod(new(big.Int).Mul(a, xj), bn256.Order)
-			b = new(big.Int).Mod(new(big.Int).Mul(b, new(big.Int).Sub(xj, xi)), bn256.Order)
+			num = new(big.Int).Mod(new(big.Int).Mul(num, xj), bn256.Order)
+			den = new(big.Int).Mod(new(big.Int).Mul(den, new(big.Int).Sub(xj, xi)), bn256.Order)
 		}
 
-		// Perform modular division of a by b.
-		modInv := new(big.Int).ModInverse(b, bn256.Order)
-		div := new(big.Int).Mod(new(big.Int).Mul(a, modInv), bn256.Order)
+		// Perform modular division of num by den.
+		modInv := new(big.Int).ModInverse(den, bn256.Order)
+		div := new(big.Int).Mod(new(big.Int).Mul(num, modInv), bn256.Order)
 
 		result.Add(result, new(bn256.G2).ScalarMult(shares[i].V, div))
 	}
