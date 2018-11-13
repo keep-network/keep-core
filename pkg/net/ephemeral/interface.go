@@ -11,12 +11,10 @@ type PrivateKey interface {
 
 	Ecdh(PublicKey) SymmetricKey
 
-	Marshal([]byte, error)
-	Unmarshal([]byte) error
+	Marshal() ([]byte, error)
 }
 
 // PublicKey is a session-scoped public elliptic curve key.
 type PublicKey interface {
-	Marshal([]byte, error)
-	Unmarshal([]byte) error
+	Marshal() ([]byte, error)
 }
