@@ -21,3 +21,15 @@ func (g *Group) MemberIDs() []int {
 func (g *Group) RegisterMemberID(id int) {
 	g.memberIDs = append(g.memberIDs, id)
 }
+
+// DisqualifiedMembers returns members disqualified during protocol execution.
+func (g *Group) DisqualifiedMembers() []int {
+	// TODO: Implement
+	return []int{}
+}
+
+// InactiveMembers returns members inactive during protocol execution.
+func (g *Group) InactiveMembers() []int {
+	// TODO: Implement
+	return []int{}
+}
