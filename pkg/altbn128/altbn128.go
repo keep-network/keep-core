@@ -9,11 +9,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
-type G1point struct {
+type G1Point struct {
 	*bn256.G1
 }
 
-type G2point struct {
+type G2Point struct {
 	*bn256.G2
 }
 
@@ -90,7 +90,7 @@ func G1FromInts(x *big.Int, y *big.Int) (*bn256.G1, error) {
 	return g1, err
 }
 
-// G2FromInts returns G2 point based on the provided x and y.
+// G2FromInts returns G2 point based on the provided x and y in Fp^2.
 func G2FromInts(x *gfP2, y *gfP2) (*bn256.G2, error) {
 
 	if len(x.x.Bytes()) > 32 || len(x.y.Bytes()) > 32 || len(y.x.Bytes()) > 32 || len(y.y.Bytes()) > 32 {
@@ -144,7 +144,7 @@ func yParity(y *big.Int) byte {
 
 // Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func (g G1point) Compress() compressedPoint {
+func (g G1Point) Compress() compressedPoint {
 
 	rt := make(compressedPoint, 32)
 
@@ -166,7 +166,7 @@ func (g G1point) Compress() compressedPoint {
 
 // Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func (g G2point) Compress() compressedPoint {
+func (g G2Point) Compress() compressedPoint {
 
 	// X of G2 point is a 64 bytes value.
 	rt := make(compressedPoint, 64)

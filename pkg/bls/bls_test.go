@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
-// Test verifying BLS multi signature.
-func TestMultisigBLS(t *testing.T) {
+// Test verifying BLS aggregated signature.
+func TestAggregateBLS(t *testing.T) {
 
 	// Public keys and signatures to aggregate.
 	var signatures []*bn256.G1
