@@ -4,25 +4,37 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
+	libp2p "github.com/libp2p/go-libp2p"
+	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	peer "github.com/libp2p/go-libp2p-peer"
-	"github.com/libp2p/go-libp2p-peerstore"
-	routing "github.com/libp2p/go-libp2p-routing"
-	swarm "github.com/libp2p/go-libp2p-swarm"
-	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
-	smux "github.com/libp2p/go-stream-muxer"
 	ma "github.com/multiformats/go-multiaddr"
-	msmux "github.com/whyrusleeping/go-smux-multistream"
-	yamux "github.com/whyrusleeping/go-smux-yamux"
+)
+
+// Defaults from ipfs
+const (
+	// DefaultConnMgrHighWater is the default value for the connection managers
+	// 'high water' mark
+	DefaultConnMgrHighWater = 900
+
+	// DefaultConnMgrLowWater is the default value for the connection managers 'low
+	// water' mark
+	DefaultConnMgrLowWater = 600
+
+	// DefaultConnMgrGracePeriod is the default value for the connection managers
+	// grace period
+	DefaultConnMgrGracePeriod = time.Second * 20
 )
 
 // Config defines the configuration for the libp2p network provider.
@@ -38,7 +50,7 @@ type provider struct {
 
 	identity *identity
 	host     host.Host
-	routing  routing.IpfsRouting
+	routing  *dht.IpfsDHT
 	addrs    []ma.Multiaddr
 }
 
@@ -59,10 +71,24 @@ func (p *provider) ID() net.TransportIdentifier {
 func (p *provider) AddrStrings() []string {
 	multiaddrStrings := make([]string, 0, len(p.addrs))
 	for _, multiaddr := range p.addrs {
-		multiaddrStrings = append(multiaddrStrings, multiaddr.String())
+		addrWithIdentity := fmt.Sprintf("%s/ipfs/%s", multiaddr.String(), p.identity.id.Pretty())
+		multiaddrStrings = append(multiaddrStrings, addrWithIdentity)
 	}
 
 	return multiaddrStrings
+}
+
+func (p *provider) Peers() []string {
+	var peers []string
+	peersIDSlice := p.host.Peerstore().Peers()
+	for _, peer := range peersIDSlice {
+		// filter out our own node
+		if peer == p.identity.id {
+			continue
+		}
+		peers = append(peers, peer.Pretty())
+	}
+	return peers
 }
 
 // Connect connects to a libp2p network based on the provided config. The
@@ -71,8 +97,12 @@ func (p *provider) AddrStrings() []string {
 //
 // An error is returned if any part of the connection or bootstrap process
 // fails.
-func Connect(ctx context.Context, config Config) (net.Provider, error) {
-	identity, err := generateIdentity(config.Seed)
+func Connect(
+	ctx context.Context,
+	config Config,
+	staticKey *key.StaticNetworkKey,
+) (net.Provider, error) {
+	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
 	}
@@ -116,27 +146,24 @@ func discoverAndListen(
 ) (host.Host, error) {
 	var err error
 
-	// Get available network ifaces to listen on into multiaddrs
+	// Get available network ifaces, for a specific port, as multiaddrs
 	addrs, err := getListenAddrs(port)
 	if err != nil {
 		return nil, err
 	}
 
-	peerStore, err := addIdentityToStore(identity)
-	if err != nil {
-		return nil, err
-	}
-
-	peerHost, err := buildPeerHost(ctx, addrs, peer.ID(identity.id), peerStore)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := peerHost.Network().Listen(addrs...); err != nil {
-		return nil, err
-	}
-
-	return peerHost, nil
+	return libp2p.New(ctx,
+		libp2p.ListenAddrs(addrs...),
+		libp2p.Identity(identity.privKey),
+		libp2p.Security(handshakeID, newAuthenticatedTransport),
+		libp2p.ConnectionManager(
+			connmgr.NewConnManager(
+				DefaultConnMgrLowWater,
+				DefaultConnMgrHighWater,
+				DefaultConnMgrGracePeriod,
+			),
+		),
+	)
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {
@@ -144,7 +171,7 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 	if err != nil {
 		return nil, err
 	}
-	addrs := make([]ma.Multiaddr, len(ia))
+	addrs := make([]ma.Multiaddr, 0)
 	for _, addr := range ia {
 		portAddr, err := ma.NewMultiaddr(fmt.Sprintf("/tcp/%d", port))
 		if err != nil {
@@ -153,40 +180,6 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 		addrs = append(addrs, addr.Encapsulate(portAddr))
 	}
 	return addrs, nil
-}
-
-func buildPeerHost(
-	ctx context.Context,
-	listenAddrs []ma.Multiaddr,
-	pid peer.ID,
-	peerStore peerstore.Peerstore,
-) (host.Host, error) {
-	smuxTransport := makeSmuxTransport()
-
-	swrm, err := swarm.NewSwarmWithProtector(ctx, listenAddrs, pid, peerStore, nil, smuxTransport, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	network := (*swarm.Network)(swrm)
-	opts := &basichost.HostOpts{NATManager: basichost.NewNATManager(network)}
-	h, err := basichost.NewHost(ctx, network, opts)
-	if err != nil {
-		if cerr := h.Close(); cerr != nil {
-			return nil, cerr
-		}
-		return nil, err
-	}
-
-	return h, nil
-}
-
-func makeSmuxTransport() smux.Transport {
-	multiStreamTransport := msmux.NewBlankTransport()
-	yamuxTransport := yamux.DefaultTransport
-
-	multiStreamTransport.AddTransport("/yamux/1.0.0", yamuxTransport)
-	return multiStreamTransport
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {

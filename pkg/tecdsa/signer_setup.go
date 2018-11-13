@@ -23,7 +23,7 @@ type signerCore struct {
 	// Signers are removed from the group if they misbehave or do not reply.
 	signerGroup *signerGroup
 
-	peerProtocolParameters map[string]*protocolParameters
+	protocolParameters map[string]*protocolParameters
 }
 
 type protocolParameters struct {
@@ -31,7 +31,7 @@ type protocolParameters struct {
 }
 
 func (sc *signerCore) selfProtocolParameters() *protocolParameters {
-	return sc.peerProtocolParameters[sc.ID]
+	return sc.protocolParameters[sc.ID]
 }
 
 func (sc *signerCore) peerSignerIDs() []string {
@@ -43,18 +43,6 @@ func (sc *signerCore) peerSignerIDs() []string {
 	}
 
 	return peerIDs
-}
-
-func (sc *signerCore) commitmentMasterPublicKey() *bn256.G2 {
-	return sc.peerProtocolParameters[sc.ID].commitmentMasterPublicKey
-}
-
-// TODO: rename to just commitmentMasterPublicKey when the original
-// commitmentMasterPublicKey is gone (after we update signing phase)
-func (sc *signerCore) commitmentVerificationMasterPublicKey(
-	signerID string,
-) *bn256.G2 {
-	return sc.peerProtocolParameters[signerID].commitmentMasterPublicKey
 }
 
 // GenerateCommitmentMasterPublicKey produces a CommitmentMasterPublicKeyMessage
@@ -76,13 +64,13 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 		)
 	}
 
-	sc.peerProtocolParameters = make(map[string]*protocolParameters)
-	sc.peerProtocolParameters[sc.ID] = &protocolParameters{
+	sc.protocolParameters = make(map[string]*protocolParameters)
+	sc.protocolParameters[sc.ID] = &protocolParameters{
 		commitmentMasterPublicKey: publicKey,
 	}
 
 	return &CommitmentMasterPublicKeyMessage{
-		signerID:        sc.ID,
+		senderID:        sc.ID,
 		masterPublicKey: publicKey.Marshal(),
 	}, nil
 }
@@ -91,25 +79,24 @@ func (sc *signerCore) GenerateCommitmentMasterPublicKey() (
 // `CommitmentMasterPublicKeyMessage`s and saves the commitment master public
 // key value specific for the signer. This value is used later to validate
 // commitments from the given signer.
+// It's expected to receive messages from peer signers only.
 func (sc *signerCore) ReceiveCommitmentMasterPublicKeys(
 	messages []*CommitmentMasterPublicKeyMessage,
 ) error {
-	if len(messages) != sc.signerGroup.InitialGroupSize {
+	if len(messages) != sc.signerGroup.PeerSignerCount() {
 		return fmt.Errorf(
-			"master public key messages required from all group members; got %v, expected %v",
+			"master public key messages required from all group peer members; got %v, expected %v",
 			len(messages),
-			sc.signerGroup.InitialGroupSize,
+			sc.signerGroup.PeerSignerCount(),
 		)
 	}
 
 	for _, message := range messages {
-		if message.signerID != sc.ID {
+		if message.senderID != sc.ID {
 			masterPublicKey := new(bn256.G2)
-			masterPublicKey.Unmarshal(
-				message.masterPublicKey,
-			)
+			masterPublicKey.Unmarshal(message.masterPublicKey)
 
-			sc.peerProtocolParameters[message.signerID] = &protocolParameters{
+			sc.protocolParameters[message.senderID] = &protocolParameters{
 				commitmentMasterPublicKey: masterPublicKey,
 			}
 		}

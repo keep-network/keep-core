@@ -16,14 +16,18 @@ Currently the easiest way to build is using the `Dockerfile` at the root of the
 repository. A simple `docker build` should get you a functioning container.
 
 If you want to build natively, there are a few prereqs you'll need to go through.
-First, you'll need to clone `keep-network/bn` from GitHub and run `make
-install`. To successfully build `bn`, you'll need to have `libgmp` (with
+First, you'll need to clone `keep-network/bn` from GitHub.
+
+To successfully build `bn`, you'll need to have `libgmp` (with
 headers) and `openssl` (also with headers) installed, as well as the LLVM
 developer tools. On macOS, you can `brew install gmp openssl llvm` to install
-all of these. Note that `llvm` requires some additional env variable work that
+all of these. Note that `llvm` requires some additional `env` variables work that
 the formula will explain when you install it.
 
-You'll also need https://github.com/golang/dep=installation[`dep`], the Go
+Then you will need to build and install `bn`. Change directory to `bn` and
+run `make install`.
+
+Also you'll also need https://github.com/golang/dep=installation[`dep`], the Go
 dependency manager we use.
 
 Lastly, you'll need the https://developers.google.com/protocol-buffers/docs/downloads[protobuf compiler].
@@ -75,6 +79,13 @@ hooked into the Rinkeby testnet, getting some eth from the faucet, and
 interacting with the JSON-RPC API. Also covers some basic solidity, compiling
 it, and using JSON-RPC to install a contract and call it. Relatively low-level,
 to provide some familiarity with how Ethereum works under the covers.
+
+== <<local-keep-network.adoc,Setting up local Keep network>>
+
+For development purposes, it is convenient to set up local Ethereum client with 
+a group of connected peers. A note-taken walkthrough covers the entire process 
+including setting up local Ethereum client, deploying Keep contracts and 
+configuring Keep peers. 
 
 == Common problems
 

@@ -21,7 +21,7 @@ type localChain struct {
 	groupRegistrations      map[string][96]byte
 
 	groupRelayEntriesMutex sync.Mutex
-	groupRelayEntries      map[string][32]byte
+	groupRelayEntries      map[string]*big.Int
 
 	handlerMutex               sync.Mutex
 	relayEntryHandlers         []func(entry *event.Entry)
@@ -30,9 +30,10 @@ type localChain struct {
 	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
 
 	requestID   int64
-	latestValue [32]byte
+	latestValue *big.Int
 
 	simulatedHeight int64
+	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
 	stakerList []string
@@ -40,6 +41,10 @@ type localChain struct {
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
+}
+
+func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
+	return c.stakeMonitor, nil
 }
 
 func (c *localChain) GetConfig() (relayconfig.Chain, error) {
@@ -187,9 +192,10 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			Threshold: threshold,
 		},
 		groupRegistrationsMutex: sync.Mutex{},
-		groupRelayEntries:       make(map[string][32]byte),
+		groupRelayEntries:       make(map[string]*big.Int),
 		groupRegistrations:      make(map[string][96]byte),
 		blockCounter:            bc,
+		stakeMonitor:            &localStakeMonitor{},
 	}
 }
 

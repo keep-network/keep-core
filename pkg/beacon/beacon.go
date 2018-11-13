@@ -3,7 +3,6 @@ package beacon
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"os"
 	"sync"
 	"time"
@@ -98,8 +97,7 @@ func Initialize(
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-			entryBigInt := (&big.Int{}).SetBytes(entry.Value[:])
-			node.JoinGroupIfEligible(relayChain, entry.RequestID, entryBigInt)
+			node.JoinGroupIfEligible(relayChain, entry.RequestID, entry.Value)
 		})
 
 		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {

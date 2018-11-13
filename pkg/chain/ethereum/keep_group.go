@@ -43,7 +43,7 @@ type keepGroup struct {
 // NewKeepGroup creates the necessary connections and configurations
 // for accessing the KeepGroup contract.
 func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
-	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepGroupImplV1"]
+	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepGroup"]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for 'KeepGroup' in configuration",
@@ -61,7 +61,6 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 			err,
 		)
 	}
-
 
 	if chainConfig.accountKey == nil {
 		key, err := DecryptKeyFile(
