@@ -3,6 +3,8 @@ package gjkr
 import (
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
@@ -95,4 +97,15 @@ type SharingMember struct {
 // Executes Phase 9 of the protocol.
 type PointsJustifyingMember struct {
 	*SharingMember
+}
+
+// PublishingMember represents one member in a threshold key sharing group,
+// after it completed public key share points justification and proceeds to
+// result publication phase.
+//
+// Executes Phase 13 of the protocol.
+type PublishingMember struct {
+	*PointsJustifyingMember
+
+	result *result.Result
 }
