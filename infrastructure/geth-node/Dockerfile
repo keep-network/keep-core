@@ -26,5 +26,5 @@ COPY ./docker-entrypoint.sh /
 # provision the geth daemon
 EXPOSE 8545
 EXPOSE 8546
-EXPOSE 3000
+EXPOSE 30303
 ENTRYPOINT ["/docker-entrypoint.sh"]
