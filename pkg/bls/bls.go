@@ -67,13 +67,13 @@ func Verify(publicKey *bn256.G2, message []byte, signature *bn256.G1) bool {
 func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
 
 	// x holds id's of the threshold amount of shares required to recover signature.
-	x := make(map[int]*big.Int)
+	var x []*big.Int
 
-	for i, s := range shares {
+	for _, s := range shares {
 		if s == nil {
 			continue
 		}
-		x[i] = big.NewInt(1 + int64(s.I))
+		x = append(x, big.NewInt(1+int64(s.I)))
 		if len(x) == threshold {
 			break
 		}
@@ -128,13 +128,13 @@ func (s SecretKeyShare) publicKeyShare() *PublicKeyShare {
 // public key shares using Lagrange interpolation.
 func RecoverPublicKey(shares []*PublicKeyShare, threshold int) *bn256.G2 {
 
-	x := make(map[int]*big.Int)
+	var x []*big.Int
 
-	for i, s := range shares {
+	for _, s := range shares {
 		if s == nil {
 			continue
 		}
-		x[i] = big.NewInt(1 + int64(s.I))
+		x = append(x, big.NewInt(1+int64(s.I)))
 		if len(x) == threshold {
 			break
 		}
