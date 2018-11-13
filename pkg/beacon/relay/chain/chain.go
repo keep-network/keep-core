@@ -5,6 +5,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -43,4 +44,8 @@ type Interface interface {
 	// RequestRelayEntry makes an on-chain request to start generation of a
 	// random signature.  An event is generated.
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
+	// IsResultPublished checks if the result is already published to a chain.
+	IsResultPublished(result *result.Result) bool
+	// SubmitResult sends DKG result to a chain.
+	SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise
 }
