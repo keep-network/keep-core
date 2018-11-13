@@ -8,7 +8,22 @@ import (
 	"io"
 )
 
-func GenerateEphemeralKeypair(rand io.Reader) (PrivateKey, PublicKey, error) {
+// SymmetricKey is a session-scoped ECDH symmetric key.
+type SymmetricKey interface {
+	Encrypt([]byte) ([]byte, error)
+}
+
+// PrivateKey is a session-scoped private elliptic curve key.
+type PrivateKey struct {
+	ecdsa.PrivateKey
+}
+
+// PublicKey is a session-scoped public elliptic curve key.
+type PublicKey struct {
+	ecdsa.PublicKey
+}
+
+func GenerateEphemeralKeypair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
 	ethCurve := elliptic.P256()
 
 	ecdsaKey, err := ecdsa.GenerateKey(ethCurve, rand)
@@ -16,55 +31,49 @@ func GenerateEphemeralKeypair(rand io.Reader) (PrivateKey, PublicKey, error) {
 		return nil, nil, err
 	}
 
-	privKey := &ecdsaPrivateEphemeralKey{ecdsaKey}
-	pubKey := &ecdsaPublicEphemeralKey{&ecdsaKey.PublicKey}
+	privKey := &PrivateKey{*ecdsaKey}
+	pubKey := &PublicKey{ecdsaKey.PublicKey}
 
 	return privKey, pubKey, nil
 }
 
-func UnmarshalPublicKey(bytes []byte) (PublicKey, error) {
+func (pk *PrivateKey) Decrypt(message []byte) ([]byte, error) {
+	return nil, nil
+}
+
+func (pk *PrivateKey) Ecdh(publicKey *PublicKey) SymmetricKey {
+	return nil
+}
+
+func (pk *PrivateKey) Marshal() ([]byte, error) {
+	return x509.MarshalECPrivateKey(&pk.PrivateKey)
+}
+
+func (pk *PrivateKey) Unmarshal(bytes []byte) error {
+	ecdsaPrivKey, err := x509.ParseECPrivateKey(bytes)
+	if err != nil {
+		return fmt.Errorf("could not parse ephemeral private key [%v]", err)
+	}
+
+	pk.PrivateKey = *ecdsaPrivKey
+	return nil
+}
+
+func (pk *PublicKey) Marshal() ([]byte, error) {
+	return x509.MarshalPKIXPublicKey(&pk.PublicKey)
+}
+
+func (pk *PublicKey) Unmarshal(bytes []byte) error {
 	pubKey, err := x509.ParsePKIXPublicKey(bytes)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse ephemeral public key [%v]", err)
+		return fmt.Errorf("could not parse ephemeral public key [%v]", err)
 	}
 
 	ecdsaPubKey, ok := pubKey.(*ecdsa.PublicKey)
 	if !ok {
-		return nil, fmt.Errorf("unexpected type of ephemeral public key")
+		return fmt.Errorf("unexpected type of ephemeral public key")
 	}
 
-	return &ecdsaPublicEphemeralKey{ecdsaPubKey}, nil
-}
-
-func UnmarshalPrivateKey(bytes []byte) (PrivateKey, error) {
-	ecdsaPrivKey, err := x509.ParseECPrivateKey(bytes)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse ephemeral private key [%v]", err)
-	}
-
-	return &ecdsaPrivateEphemeralKey{ecdsaPrivKey}, nil
-}
-
-type ecdsaPublicEphemeralKey struct {
-	ecdsaKey *ecdsa.PublicKey
-}
-
-func (epek *ecdsaPublicEphemeralKey) Marshal() ([]byte, error) {
-	return x509.MarshalPKIXPublicKey(epek.ecdsaKey)
-}
-
-type ecdsaPrivateEphemeralKey struct {
-	ecdsaKey *ecdsa.PrivateKey
-}
-
-func (epek *ecdsaPrivateEphemeralKey) Marshal() ([]byte, error) {
-	return x509.MarshalECPrivateKey(epek.ecdsaKey)
-}
-
-func (epek *ecdsaPrivateEphemeralKey) Decrypt(message []byte) ([]byte, error) {
-	return nil, nil
-}
-
-func (epek *ecdsaPrivateEphemeralKey) Ecdh(pubKey PublicKey) SymmetricKey {
+	pk.PublicKey = *ecdsaPubKey
 	return nil
 }

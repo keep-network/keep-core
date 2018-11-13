@@ -17,7 +17,8 @@ func TestMarshalUnmarshalPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	unmarshalled, err := UnmarshalPublicKey(marshalled)
+	unmarshalled := &PublicKey{}
+	err = unmarshalled.Unmarshal(marshalled)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +39,8 @@ func TestMarshalUnmarshalPrivateKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	unmarshalled, err := UnmarshalPrivateKey(marshalled)
+	unmarshalled := &PrivateKey{}
+	err = unmarshalled.Unmarshal(marshalled)
 	if err != nil {
 		t.Fatal(err)
 	}
