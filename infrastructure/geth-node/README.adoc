@@ -21,3 +21,14 @@ Push the image to Docker Hub:
 ```
 docker push $DOCKER_ID_USER/get-node
 ```
+
+Start a single node as a Docker container without Kubernetes
+mapping the JSON-RPC interface to `localhost:8545`:
+```
+docker run -it -p 8545:8545 lispmeister/geth-node
+```
+
+To connect to the JSON-RPC interface:
+```
+geth attach http://localhost:8545
+```
