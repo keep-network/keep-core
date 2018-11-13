@@ -5,7 +5,9 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
+	"github.com/keep-network/keep-core/pkg/internal/sliceutils"
 )
 
 // PrepareResult sets results of distributed key generation. It takes generated
@@ -36,6 +38,37 @@ func (pm *PublishingMember) PrepareResult() {
 			Inactive:       inactiveMembers,
 		}
 	}
+}
+
+// PublishResult sends a result containing i.a. group public key to the blockchain.
+// It checks if the result has already been published to the blockchain. If not
+// it determines if the current member is eligable to result submission. If allowed
+// it submits the results to the blockchain. The function returns result published
+// to the blockchain.
+//
+// See Phase 13 of the protocol specification.
+func (pm *PublishingMember) PublishResult(result *result.Result) (*event.ResultPublish, error) {
+	chainRelay := pm.protocolConfig.ChainHandle().ThresholdRelay()
+
+	for !chainRelay.IsResultPublished(result) { // while not resultPublished
+		publishersIDs, err := pm.determinePublishersIDs()
+		if err != nil {
+			return nil, err
+		}
+
+		if sliceutils.Contains(publishersIDs, pm.ID) {
+			errors := make(chan error)
+			publishedResult := make(chan *event.ResultPublish)
+
+			chainRelay.SubmitResult(pm.ID, result).
+				OnComplete(func(resultPublish *event.ResultPublish, err error) {
+					publishedResult <- resultPublish
+					errors <- err
+				})
+			return <-publishedResult, <-errors
+		}
+	}
+	return nil, nil
 }
 
 // determinePublishersIDs determines IDs of members eligable to submit the result
