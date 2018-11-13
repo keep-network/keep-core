@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 // Test verifying BLS aggregated signature.
@@ -85,9 +86,7 @@ func TestThresholdBLS(t *testing.T) {
 	sig := Recover(signatureShares[:threshold], threshold)
 
 	publicKey := RecoverPublicKey(publicKeyShares, threshold)
-	if publicKey.String() != masterPublicKey[0].String() {
-		t.Errorf("Error reconstructing public key from public key shares.")
-	}
+	testutils.AssertBytesEqual(t, publicKey.Marshal(), masterPublicKey[0].Marshal())
 
 	result := Verify(masterPublicKey[0], msg, sig)
 

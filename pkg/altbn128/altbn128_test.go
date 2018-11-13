@@ -1,11 +1,11 @@
 package altbn128
 
 import (
-	"bytes"
 	"crypto/rand"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestCompressG1(t *testing.T) {
@@ -39,7 +39,7 @@ func TestDecompressG1(t *testing.T) {
 	}
 }
 
-func TestCompressG1Invertibility(t *testing.T) {
+func TestCompressDecompressGivesSameG1Point(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		_, p1, err1 := bn256.RandomG1(rand.Reader)
 
@@ -53,11 +53,11 @@ func TestCompressG1Invertibility(t *testing.T) {
 
 		p2, _ := buffer.DecompressToG1()
 
-		assertPointsEqual(t, p1, p2, "Decompressing a compressed point should give the same point.")
+		testutils.AssertBytesEqual(t, p1.Marshal(), p2.Marshal())
 	}
 }
 
-func TestCompressG2Invertibility(t *testing.T) {
+func TestCompressDecompressGivesSameG2Point(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		_, p1, err1 := bn256.RandomG2(rand.Reader)
 
@@ -71,19 +71,7 @@ func TestCompressG2Invertibility(t *testing.T) {
 
 		p2, _ := buffer.DecompressToG2()
 
-		assertG2PointsEqual(t, p1, p2, "Decompressing a compressed point should give the same point.")
-	}
-}
-
-func assertPointsEqual(t *testing.T, p1 *bn256.G1, p2 *bn256.G1, msg string) {
-	if p1 != p2 && !bytes.Equal(p1.Marshal(), p2.Marshal()) {
-		t.Errorf("%v: [%v] != [%v]", msg, p1, p2)
-	}
-}
-
-func assertG2PointsEqual(t *testing.T, p1 *bn256.G2, p2 *bn256.G2, msg string) {
-	if p1 != p2 && !bytes.Equal(p1.Marshal(), p2.Marshal()) {
-		t.Errorf("%v: [%v] != [%v]", msg, p1, p2)
+		testutils.AssertBytesEqual(t, p1.Marshal(), p2.Marshal())
 	}
 }
 
