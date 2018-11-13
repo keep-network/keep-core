@@ -13,16 +13,23 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 )
 
+// SymmetricEcdhKey is an ephemeral Elliptic Curve key created with
+// Diffie-Hellman key exchange and implementing `SymmetricKey` interface.
 type SymmetricEcdhKey struct {
 	key [sha256.Size]byte
 }
 
+// Ecdh performs Elliptic Curve Diffie-Hellman operation between public and
+// private key. The returned value is `SymmetricEcdhKey` that can be used
+// for encryption and decryption.
 func (pk *PrivateEcdsaKey) Ecdh(publicKey *PublicEcdsaKey) *SymmetricEcdhKey {
 	shared := btcec.GenerateSharedSecret(pk.toBtcec(), publicKey.toBtcec())
 
 	return &SymmetricEcdhKey{sha256.Sum256(shared)}
 }
 
+// Encrypt takes the input plaintext and encrypts it using CBC AES encryption
+// with a random initialization vector.
 func (sek *SymmetricEcdhKey) Encrypt(plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(sek.key[:])
 	if err != nil {
@@ -45,6 +52,8 @@ func (sek *SymmetricEcdhKey) Encrypt(plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+// Decrypt takes the input CBC AES ciphertext encrypted previously with the
+// `Encrypt` function and decrypts it back into a plaintext.
 func (sek *SymmetricEcdhKey) Decrypt(ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(sek.key[:])
 	if err != nil {
