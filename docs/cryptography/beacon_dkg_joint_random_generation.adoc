@@ -1,0 +1,82 @@
+== Joint Random Number Generation in a Group ==
+
+Our Distributed Key Generation (DKG) protocol security relays on the premise
+that nobody knows `log_g(h)`, where both `g` and `h` are public values of our
+protocol. These values need to be agreed by all parties participating in a 
+particular DKG protocol run. We have considered several strategies to achieve
+this requirement. As our natural environment is a decentralized environment, we
+have decided that we do not want to use any fixed values or centralized
+authority for provisioning `g` and `h`.
+
+One of the first schemes we have considered was a coin-tossing/coin-flipping
+protocol. The most simple realization of the coin-flipping protocol is by Blum:
+```
+• Alice chooses a random bit `a` and sends a commitment `c = commit(a)` to Bob.
+• Bob chooses a random bit `b` and sends it to Alice.
+• Alice sends the bit `a` to Bob together with `de-commit(c)`.
+• If Bob does not abort during the protocol, Alice outputs `a ⊕ b`, otherwise
+she outputs a random bit.
+• If Alice does not abort during the protocol and `c` is a commitment to `a`,
+then Bob outputs `a ⊕ b`, otherwise he outputs a random bit.
+```
+
+As we can see it is a pretty simple protocol but we need to have two things in
+mind:
+
+1. It is an only two-party version which scales inefficiently. Multiparty
+versions are much more complex.
+
+2. The network costs are high. If we want to generate an n-bits random number in
+an m-party environment we need to send at least `n*m` messages. In case we would
+like to generate 1024-bits random value in a 10-party environment, the number of
+transmitted messages would be 10240. This creates a significant network load,
+which is unacceptable for our use-case. Also, we need to mention that in
+addition to a very high number of transmitted message every one of them needs to
+be cryptographically signed and verified. This creates supplementary computing
+overhead.
+
+For our needs implementing a coin-flipping protocol is an overkill, therefore we
+have devised a much more efficient solution:
+
+```
+For every party in the group:
+1. Chose a uniformly random number from `[1, m - 1]`.
+2. Broadcast a checksum of `party_id | random_number | nonce`.
+3. Wait till all parties broadcast their checksums or until a timeout.
+4. Mark timeouted parties.
+5. Broadcast `random_number` and `nonce`.
+6. Wait till all parties broadcast their `random_number` and `nonce` or until a
+   timeout.
+6. Verify if the checksum is correct for every received random_number, if it is
+   not, mark that `party_id` as malicious.
+*7. Broadcast malicious and timeouted `party_ids`.
+*8. Wait for all or until a timeout.
+*9. If more than half of the parties marked a particular `party_id` as malicious
+    or timeouted, mark it accordingly.
+10. Calculate the `final_random_number` as a sum of all non-malicious and
+    not-timeouted random_numer's modulo `m`.
+``` 
+
+Steps 7, 8, and 9, marked with a star, are an optional way to protect the group
+from the "split-horizon" attack where two groups have different views of the
+malicious and timeouted parties. The reason why it might is an option is related
+to a higher probability of a denial of service.
+
+Finally, it might be beneficial to add additional steps where confirm that
+the final random value is the same for everyone.
+
+```
+11. Broadcast `final_random_number`.
+12. Count the number of the same, received broadcasted `final_random_number`s.
+13. If more than half of parties have the same `final_random_number`, end with a
+    success.
+14. If my `final_random_number` is different from the broadcasted one and more
+    than half of the parties have the same, use it and end with partial success.
+    [this step needs more consideration]
+15. Otherwise, end with a failure. 
+```
+
+The complexity of the proposed protocol might be a bit simplified when the
+network layer would provide a message delivery confirmation and timeout
+handling. But still, this is a proposal that requires discussion and a bit of
+alignment.
