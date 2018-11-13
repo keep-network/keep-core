@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"reflect"
 	"sync"
 	"sync/atomic"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -22,6 +24,9 @@ type localChain struct {
 
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[string]*big.Int
+
+	submittedResultsMutex sync.Mutex
+	submittedResults      [][]byte
 
 	handlerMutex               sync.Mutex
 	relayEntryHandlers         []func(entry *event.Entry)
@@ -263,4 +268,45 @@ func (c *localChain) RequestRelayEntry(
 	promise.Fulfill(request)
 
 	return promise
+}
+
+// IsResultPublished simulates check if the result was already submitted to a
+// chain.
+func (c *localChain) IsResultPublished(result *result.Result) bool {
+	resultHash := result.Bytes()
+
+	for _, r := range c.submittedResults {
+		if reflect.DeepEqual(r, resultHash) {
+			return true
+		}
+	}
+	return false
+}
+
+// SubmitResult submits the result to a chain.
+func (c *localChain) SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise {
+	c.submittedResultsMutex.Lock()
+	defer c.submittedResultsMutex.Unlock()
+
+	resultPublishPromise := &async.ResultPublishPromise{}
+
+	resultBytes := result.Bytes()
+
+	for _, r := range c.submittedResults {
+		if reflect.DeepEqual(r, resultBytes) {
+			resultPublishPromise.Fail(fmt.Errorf("Result already submitted"))
+			return resultPublishPromise
+		}
+	}
+
+	resultPublishPromise.Fulfill(&event.ResultPublish{
+		PublisherID: publisherID,
+		Result:      resultBytes,
+	})
+
+	c.handlerMutex.Lock()
+	c.submittedResults = append(c.submittedResults, resultBytes)
+	c.handlerMutex.Unlock()
+
+	return resultPublishPromise
 }
