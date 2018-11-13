@@ -62,6 +62,11 @@ func main() {
 			Prefix:     "RelayRequest",
 			outputFile: "relay_entry_requested_promise.go",
 		},
+		{
+			Type:       "*event.ResultPublish",
+			Prefix:     "ResultPublish",
+			outputFile: "result_publish_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
