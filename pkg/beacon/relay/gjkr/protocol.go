@@ -453,14 +453,14 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 			// a_mk
 			lagrangeCoefficient := rm.calculateLagrangeCoefficient(peerID, peerIDs)
 
-			// Σ (s_mk * a_mk) mod p
+			// Σ (s_mk * a_mk) mod q
 			individualPrivateKey = new(big.Int).Mod(
 				new(big.Int).Add(
 					individualPrivateKey,
 					// s_mk * a_mk
 					new(big.Int).Mul(peerShareS, lagrangeCoefficient),
 				),
-				rm.protocolConfig.P,
+				rm.protocolConfig.Q,
 			)
 		}
 		rm.reconstructedIndividualPrivateKeys[ds.disqualifiedMemberID] = individualPrivateKey // <m, z_m>
@@ -469,7 +469,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 
 // Calculates Lagrange coefficient for member `k` in a group of members.
 //
-// `a_mk = Π (l / (l - k)) mod p` where:
+// `a_mk = Π (l / (l - k)) mod q` where:
 // - `a_mk` is a lagrange coefficient for the member `k`,
 // - `l` are IDs of members who provided shares,
 // and `l != k`.
@@ -487,18 +487,18 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID int, group
 							big.NewInt(int64(otherID)),
 							big.NewInt(int64(memberID)),
 						),
-						rm.protocolConfig.P,
+						rm.protocolConfig.Q,
 					),
 				),
-				rm.protocolConfig.P,
+				rm.protocolConfig.Q,
 			)
 
-			// Π (l / (l - k)) mod p
+			// Π (l / (l - k)) mod q
 			lagrangeCoefficient = new(big.Int).Mod(
 				new(big.Int).Mul(
 					lagrangeCoefficient, quotient,
 				),
-				rm.protocolConfig.P,
+				rm.protocolConfig.Q,
 			)
 		}
 	}
