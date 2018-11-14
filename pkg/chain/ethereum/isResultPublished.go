@@ -2,7 +2,7 @@ package ethereum
 
 import "github.com/keep-network/keep-core/pkg/beacon/relay/result"
 
-func (c *localChain) IsResultPublished(result *result.Result) bool {
+func (ec *ethereumChain) IsResultPublished(result *result.Result) bool {
 	resultHash := result.Hash()
 
 	// Placeholder FIXME.
