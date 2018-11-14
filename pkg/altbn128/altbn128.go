@@ -226,7 +226,7 @@ func (m compressedPoint) DecompressToG2() (*bn256.G2, error) {
 	x.y = new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:32]...))
 
 	// Get one of the two possible Y on curve y² = x³ + twistB.
-	y2 := new(gfP2).Pow(x, bigFromBase10("3"))
+	y2 := new(gfP2).Pow(x, big.NewInt(3))
 	y2.Add(y2, twistB)
 	y := sqrtGfP2(y2)
 

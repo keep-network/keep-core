@@ -73,7 +73,7 @@ func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
 		if s == nil {
 			continue
 		}
-		x = append(x, big.NewInt(1+int64(s.I)))
+		x = append(x, big.NewInt(int64(1+s.I)))
 		if len(x) == threshold {
 			break
 		}
@@ -107,7 +107,7 @@ func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
 
 // GetSecretKeyShare computes secret share by evaluating a polynomial with
 // coefficients taken from masterSecretKey. This is based on Shamir's Secret
-// Sharing scheme and 'i' represents participant enumeration.
+// Sharing scheme and 'i' represents participant index.
 func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
 
 	xi := big.NewInt(int64(1 + i))
@@ -135,7 +135,7 @@ func RecoverPublicKey(shares []*PublicKeyShare, threshold int) *bn256.G2 {
 		if s == nil {
 			continue
 		}
-		x = append(x, big.NewInt(1+int64(s.I)))
+		x = append(x, big.NewInt(int64(1+s.I)))
 		if len(x) == threshold {
 			break
 		}
