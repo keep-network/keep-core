@@ -137,8 +137,7 @@ higher.
 === Boot Ethereum Node Docker Container
 You will need to build the Docker container following
 the instructions in
-link:README.adoc{ext-relative}[../../infrastructure/geth-node/Readme.adoc]
-in the `geth-node` folder.
+link:../../infrastructure/geth-node/Readme{ext-relative}[].
 
 Boot the container in a separate shell with this Docker
 command:
