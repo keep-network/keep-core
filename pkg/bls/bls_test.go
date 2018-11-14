@@ -50,7 +50,7 @@ func TestAggregateBLS(t *testing.T) {
 // Test verifying BLS threshold signature.
 func TestThresholdBLS(t *testing.T) {
 
-	msg := []byte("Hello!")
+	message := []byte("Hello!")
 
 	numOfPlayers := 5
 	threshold := 3
@@ -60,35 +60,48 @@ func TestThresholdBLS(t *testing.T) {
 	var signatureShares []*SignatureShare
 	var publicKeyShares []*PublicKeyShare
 
-	// Set up master keys.
+	// Set up master keys. Based on Shamir's Secret Sharing scheme these are
+	// polynomial coefficients where the first one is the secret and the
+	// rest (threshold - 1) are sufficient to reconstruct this secret.
 	for i := 0; i < threshold; i++ {
 		sk, pk, _ := bn256.RandomG2(rand.Reader)
 		masterSecretKey = append(masterSecretKey, sk)
 		masterPublicKey = append(masterPublicKey, pk)
 	}
 
-	// Each member of the group signs the same message creating signature share.
+	// Each member of the group gets their secret share by evaluating their
+	// participant index over polynomial based on the coefficients from
+	// masterSecretKey array. Threshold amount of these secret shares are
+	// sufficient to reconstruct the main secret.
+	// The resulting shares are used to sign the same message creating
+	// signature shares. Threshold amount of these signature shares are
+	// sufficient to reconstruct the signature which is the same value as
+	// if the message was sign with the main secret.
 	for i := 0; i < numOfPlayers; i++ {
 		secretKeyShare := GetSecretKeyShare(masterSecretKey, int(i))
-		signatureShare := Sign(secretKeyShare.V, msg)
-		signatureShares = append(signatureShares, &SignatureShare{i, signatureShare})
 		publicKeyShares = append(publicKeyShares, secretKeyShare.publicKeyShare())
+		signatureShare := Sign(secretKeyShare.V, message)
+		signatureShares = append(signatureShares, &SignatureShare{i, signatureShare})
 	}
 
-	// Shuffle signatureShares array.
+	// Shuffle signatureShares array. It's irrelevant which signatures shares
+	// are used and in what order as long as they carry the corresponding
+	// participant index.
 	for i := range signatureShares {
 		j := mrand.Intn(1 + i)
 		signatureShares[i], signatureShares[j] = signatureShares[j], signatureShares[i]
 	}
 
-	// Get full BLS signature. Use only threshold amount of signatures to
-	// demonstrate it's a functional threshold construction.
-	sig := Recover(signatureShares[:threshold], threshold)
+	// Get full BLS signature. Only threshold amount  of valid shared will be
+	// used to reconstruct the signature. The resulting signature is the same
+	// as if it was produced using master secret key.
+	signature := RecoverSignature(signatureShares, threshold)
 
+	// Recovered public key should be the same as the main public key.
 	publicKey := RecoverPublicKey(publicKeyShares, threshold)
 	testutils.AssertBytesEqual(t, publicKey.Marshal(), masterPublicKey[0].Marshal())
 
-	result := Verify(masterPublicKey[0], msg, sig)
+	result := Verify(publicKey, message, signature)
 
 	if !result {
 		t.Errorf("Error verifying BLS threshold signature.")

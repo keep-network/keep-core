@@ -64,7 +64,7 @@ func Verify(publicKey *bn256.G2, message []byte, signature *bn256.G1) bool {
 
 // Recover reconstructs the full BLS signature from a threshold number of
 // signature shares using Lagrange interpolation.
-func Recover(shares []*SignatureShare, threshold int) *bn256.G1 {
+func RecoverSignature(shares []*SignatureShare, threshold int) *bn256.G1 {
 
 	// x holds id's of the threshold amount of shares required to recover signature.
 	var x []*big.Int
