@@ -7,11 +7,10 @@ import (
 )
 
 func (ec *ethereumChain) IsResultPublished(result *result.Result) bool {
-	resultHash := result.Hash()
-	_ = resultHash
-
 	// Placeholder FIXME.
 	/*
+		resultHash := result.Hash()
+
 		for _, r := range c.submittedResults {
 			if reflect.DeepEqual(r, resultHash) {
 				return true
