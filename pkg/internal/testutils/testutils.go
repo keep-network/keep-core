@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+
+	crand "github.com/golang/go/src/crypto/rand"
 )
 
 // AssertBytesEqual takes a testing.T and two byte slices and reports an error
@@ -78,4 +80,14 @@ func (r *MockRandReader) Read(b []byte) (int, error) {
 	}
 	r.counter = new(big.Int).Add(r.counter, big.NewInt(1))
 	return len(b), nil
+}
+
+// NewRandInt generates a random value in range [0, max), different from the
+// passed current value.
+func NewRandInt(currentValue, max *big.Int) *big.Int {
+	newValue := currentValue
+	for currentValue.Cmp(newValue) == 0 {
+		newValue, _ = crand.Int(crand.Reader, max)
+	}
+	return newValue
 }
