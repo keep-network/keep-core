@@ -438,7 +438,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 	rm.reconstructedIndividualPrivateKeys = make(map[int]*big.Int, len(revealedDisqualifiedShares))
 
 	for _, ds := range revealedDisqualifiedShares { // for each disqualified member
-		// Reconstruct individual private key `z_m = Σ (s_mk * a_mk) mod p` where:
+		// Reconstruct individual private key `z_m = Σ (s_mk * a_mk) mod q` where:
 		// - `z_m` is disqualified member's individual private key
 		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
 		// - `a_mk` is lagrange coefficient for peer member k (see below)
