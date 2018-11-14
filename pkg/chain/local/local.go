@@ -11,7 +11,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/testchain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -56,22 +55,6 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
-
-// PJS - new - --------------------------------------- --------------------------------------- ---------------------------------------
-
-// TestSetup() testchain.Interface
-func (c *localChain) TestSetup() testchain.Interface {
-	// TestSetup() testchain.Interface
-	// return c.relayConfig, nil
-	return testchain.Interface(c)
-}
-
-func (c *localChain) MoveToNextBlock() {
-	// this is automatic every 500ms in this version
-	// atomic.AddInt64(&c.simulatedHeight, 1)
-}
-
-// PJS - end - --------------------------------------- --------------------------------------- ---------------------------------------
 
 func (c *localChain) SubmitGroupPublicKey(
 	requestID *big.Int,
