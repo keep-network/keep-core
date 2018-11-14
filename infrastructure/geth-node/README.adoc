@@ -19,7 +19,7 @@ docker images |grep geth-node
 
 Push the image to Docker Hub:
 ```
-docker push $DOCKER_ID_USER/get-node
+docker push $DOCKER_ID_USER/geth-node
 ```
 
 Start a single node as a Docker container without Kubernetes
