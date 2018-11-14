@@ -8,6 +8,7 @@ import (
 
 func (ec *ethereumChain) IsResultPublished(result *result.Result) bool {
 	resultHash := result.Hash()
+	_ = resultHash
 
 	// Placeholder FIXME.
 	/*
