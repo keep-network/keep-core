@@ -1,6 +1,9 @@
 package chain
 
-import relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+import (
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	testchain "github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/testchain"
+)
 
 // BlockCounter is an interface that provides the ability to wait for a certain
 // number of abstract blocks. It provides for two ways to wait, one blocking and
@@ -23,4 +26,5 @@ type BlockCounter interface {
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
 	ThresholdRelay() relaychain.Interface
+	TestSetup() testchain.Interface
 }
