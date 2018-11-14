@@ -95,10 +95,10 @@ func TestThresholdBLS(t *testing.T) {
 	// Get full BLS signature. Only threshold amount  of valid shared will be
 	// used to reconstruct the signature. The resulting signature is the same
 	// as if it was produced using master secret key.
-	signature := RecoverSignature(signatureShares, threshold)
+	signature, _ := RecoverSignature(signatureShares, threshold)
 
 	// Recovered public key should be the same as the main public key.
-	publicKey := RecoverPublicKey(publicKeyShares, threshold)
+	publicKey, _ := RecoverPublicKey(publicKeyShares, threshold)
 	testutils.AssertBytesEqual(t, publicKey.Marshal(), masterPublicKey[0].Marshal())
 
 	result := Verify(publicKey, message, signature)

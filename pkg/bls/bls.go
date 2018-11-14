@@ -1,6 +1,7 @@
 package bls
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -64,30 +65,35 @@ func Verify(publicKey *bn256.G2, message []byte, signature *bn256.G1) bool {
 
 // Recover reconstructs the full BLS signature from a threshold number of
 // signature shares using Lagrange interpolation.
-func RecoverSignature(shares []*SignatureShare, threshold int) *bn256.G1 {
+func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error) {
 
-	// x holds id's of the threshold amount of shares required to recover signature.
-	var x []*big.Int
+	// Indexes of participants that have valid shares.
+	var validParticipants []*big.Int
 
+	// Get sufficient number of participants with valid shares.
 	for _, s := range shares {
-		if s == nil {
+		if s == nil || s.V == nil || s.I < 0 {
 			continue
 		}
-		x = append(x, big.NewInt(int64(1+s.I)))
-		if len(x) == threshold {
+		validParticipants = append(validParticipants, big.NewInt(int64(1+s.I)))
+		if len(validParticipants) == threshold {
 			break
 		}
 	}
 
+	if len(validParticipants) < threshold {
+		return nil, errors.New("Not enough shares to reconstruct signature.")
+	}
+
 	result := new(bn256.G1)
 
-	for i, xi := range x {
+	for i, xi := range validParticipants {
 
 		// Prepare numerator and denominator as part of Lagrange interpolation.
 		num := big.NewInt(1)
 		den := big.NewInt(1)
 
-		for j, xj := range x {
+		for j, xj := range validParticipants {
 			if i == j {
 				continue
 			}
@@ -102,7 +108,7 @@ func RecoverSignature(shares []*SignatureShare, threshold int) *bn256.G1 {
 		result.Add(result, new(bn256.G1).ScalarMult(shares[i].V, div))
 	}
 
-	return result
+	return result, nil
 }
 
 // GetSecretKeyShare computes secret share by evaluating a polynomial with
@@ -127,29 +133,35 @@ func (s SecretKeyShare) publicKeyShare() *PublicKeyShare {
 
 // RecoverPublicKey reconstructs public key from a threshold number of
 // public key shares using Lagrange interpolation.
-func RecoverPublicKey(shares []*PublicKeyShare, threshold int) *bn256.G2 {
+func RecoverPublicKey(shares []*PublicKeyShare, threshold int) (*bn256.G2, error) {
 
-	var x []*big.Int
+	// Indexes of participants that have valid shares.
+	var validParticipants []*big.Int
 
+	// Get sufficient number of participants with valid shares.
 	for _, s := range shares {
-		if s == nil {
+		if s == nil || s.V == nil || s.I < 0 {
 			continue
 		}
-		x = append(x, big.NewInt(int64(1+s.I)))
-		if len(x) == threshold {
+		validParticipants = append(validParticipants, big.NewInt(int64(1+s.I)))
+		if len(validParticipants) == threshold {
 			break
 		}
 	}
 
+	if len(validParticipants) < threshold {
+		return nil, errors.New("Not enough shares to reconstruct public key.")
+	}
+
 	result := new(bn256.G2)
 
-	for i, xi := range x {
+	for i, xi := range validParticipants {
 
 		// Prepare numerator and denominator as part of Lagrange interpolation.
 		num := big.NewInt(1)
 		den := big.NewInt(1)
 
-		for j, xj := range x {
+		for j, xj := range validParticipants {
 			if i == j {
 				continue
 			}
@@ -164,5 +176,5 @@ func RecoverPublicKey(shares []*PublicKeyShare, threshold int) *bn256.G2 {
 		result.Add(result, new(bn256.G2).ScalarMult(shares[i].V, div))
 	}
 
-	return result
+	return result, nil
 }
