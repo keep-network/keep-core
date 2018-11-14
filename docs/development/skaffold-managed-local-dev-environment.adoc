@@ -1,5 +1,5 @@
 :toc: macro
-:ext-relative: adoc
+:ext-relative: .adoc
 
 = Skaffold Managed Local Dev Environment
 
@@ -137,7 +137,7 @@ higher.
 === Boot Ethereum Node Docker Container
 You will need to build the Docker container following
 the instructions in
-link:../../infrastructure/geth-node/Readme{ext-relative}[].
+link:../../infrastructure/geth-node/README{ext-relative}[].
 
 Boot the container in a separate shell with this Docker
 command:
