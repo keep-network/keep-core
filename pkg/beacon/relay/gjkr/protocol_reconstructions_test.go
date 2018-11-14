@@ -26,15 +26,15 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 			m.ReconstructIndividualPrivateKeys(allDisqualifiedShares)
 
 			if m.reconstructedIndividualPrivateKeys[disqualifiedMember1.ID].Cmp(expectedIndividualPrivateKey1) != 0 {
-				t.Fatalf("\nexpected: %s\nactual:   %s\n",
+				t.Fatalf("invalid reconstructed private key 1\nexpected: %s\nactual:   %s\n",
 					expectedIndividualPrivateKey1,
 					m.reconstructedIndividualPrivateKeys[disqualifiedMember1.ID],
 				)
 			}
 
 			if m.reconstructedIndividualPrivateKeys[disqualifiedMember2.ID].Cmp(expectedIndividualPrivateKey2) != 0 {
-				t.Fatalf("\nexpected: %s\nactual:   %s\n",
-					expectedIndividualPrivateKey1,
+				t.Fatalf("invalid reconstructed private key 2\nexpected: %s\nactual:   %s\n",
+					expectedIndividualPrivateKey2,
 					m.reconstructedIndividualPrivateKeys[disqualifiedMember2.ID],
 				)
 			}
