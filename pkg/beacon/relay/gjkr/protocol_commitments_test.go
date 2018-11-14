@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestCalculateSharesAndCommitments(t *testing.T) {
@@ -50,6 +51,11 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
+	config, err := predefinedDKG()
+	if err != nil {
+		t.Fatalf("predefined config initialization failed [%s]", err)
+	}
+
 	var tests = map[string]struct {
 		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
 		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
@@ -61,22 +67,24 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		},
 		"negative validation - changed share S": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
-				messages[0].shareS = big.NewInt(13)
+				messages[0].shareS = testutils.NewRandInt(messages[0].shareS, config.Q)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{2},
 		},
 		"negative validation - changed two shares T": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
-				messages[1].shareT = big.NewInt(13)
-				messages[2].shareT = big.NewInt(23)
+				messages[1].shareT = testutils.NewRandInt(messages[1].shareT, config.Q)
+				messages[2].shareT = testutils.NewRandInt(messages[2].shareT, config.Q)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{3, 4},
 		},
 		"negative validation - changed commitment": {
 			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
-				messages[3].commitments[1] = big.NewInt(33)
+				messages[3].commitments[1] = testutils.NewRandInt(
+					messages[3].commitments[1], config.Q,
+				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{5},
