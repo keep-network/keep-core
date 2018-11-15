@@ -1,8 +1,89 @@
 package gjkr
 
 import (
+	"math/big"
+	"reflect"
+	"testing"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
+
+func TestPrepareResult(t *testing.T) {
+	threshold := 4
+	groupSize := 8
+
+	members, err := initializePublishingMembersGroup(threshold, groupSize)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	publishingMember := members[0]
+
+	var tests = map[string]struct {
+		disqualifiedMemberIDs []int
+		inactiveMemberIDs     []int
+		expectedResult        *result.Result
+	}{
+		"no disqualified or inactive members - success": {
+			expectedResult: &result.Result{
+				Success:        true,
+				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+				Disqualified:   nil,
+				Inactive:       nil,
+			},
+		},
+		"one disqualified member - success": {
+			disqualifiedMemberIDs: []int{2},
+			expectedResult: &result.Result{
+				Success:        true,
+				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+				Disqualified:   []int{2},
+				Inactive:       nil,
+			},
+		},
+		"two inactive members - success": {
+			inactiveMemberIDs: []int{3, 7},
+			expectedResult: &result.Result{
+				Success:        true,
+				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+				Disqualified:   nil,
+				Inactive:       []int{3, 7},
+			},
+		},
+		"more than half of threshold disqualified and inactive members - failure": {
+			disqualifiedMemberIDs: []int{2},
+			inactiveMemberIDs:     []int{3, 7},
+			expectedResult: &result.Result{
+				Success:        false,
+				GroupPublicKey: nil,
+				Disqualified:   []int{2},
+				Inactive:       nil, // in case of failure only disqualified members are slashed
+			},
+		},
+		"more than half of threshold inactive members - failure": {
+			inactiveMemberIDs: []int{3, 5, 7},
+			expectedResult: &result.Result{
+				Success:        false,
+				GroupPublicKey: nil,
+				Disqualified:   nil,
+				Inactive:       nil, // in case of failure only disqualified members are slashed
+			},
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			publishingMember.group.disqualifiedMemberIDs = test.disqualifiedMemberIDs
+			publishingMember.group.inactiveMemberIDs = test.inactiveMemberIDs
+
+			publishingMember.PrepareResult()
+
+			if !reflect.DeepEqual(test.expectedResult, publishingMember.result) {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, publishingMember.result)
+			}
+		})
+	}
+}
 
 func initializePublishingMembersGroup(threshold, groupSize int) ([]*PublishingMember, error) {
 	chainHandle := local.Connect(groupSize, threshold)
