@@ -99,6 +99,8 @@ type PointsJustifyingMember struct {
 
 // ReconstructingMember represents one member in a threshold sharing group who
 // is reconstructing individual private and public keys of disqualified group members.
+//
+// Executes Phase 11 of the protocol.
 type ReconstructingMember struct {
 	*SharingMember // TODO Update this when all phases of protocol are ready
 
