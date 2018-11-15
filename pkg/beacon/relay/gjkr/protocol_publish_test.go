@@ -110,10 +110,22 @@ func initializePublishingMembersGroup(threshold, groupSize int) ([]*PublishingMe
 		},
 	}
 
+}
+
+func initializePublishingMembersGroup(
+	threshold, groupSize, expectedProtocolDuration, blockStep int,
+) ([]*PublishingMember, error) {
 	group := &Group{
 		groupSize:          groupSize,
 		dishonestThreshold: threshold,
 	}
+
+	chain, err := initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
+	if err != nil {
+		return nil, err
+	}
+
+	dkg := &DKG{chain: chain}
 
 	var members []*PublishingMember
 
@@ -140,4 +152,30 @@ func initializePublishingMembersGroup(threshold, groupSize int) ([]*PublishingMe
 		group.RegisterMemberID(id)
 	}
 	return members, nil
+}
+
+func initChain(
+	threshold, groupSize, expectedProtocolDuration, blockStep int,
+) (*Chain, error) {
+	chainHandle := local.Connect(groupSize, threshold)
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		return nil, err
+	}
+	err = blockCounter.WaitForBlocks(1)
+	if err != nil {
+		return nil, err
+	}
+
+	initialBlockHeight, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Chain{
+		handle:                   chainHandle,
+		expectedProtocolDuration: expectedProtocolDuration, // T_dkg
+		blockStep:                blockStep,                // T_step
+		initialBlockHeight:       initialBlockHeight,       // T_init
+	}, nil
 }
