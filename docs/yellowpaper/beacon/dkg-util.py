@@ -11,10 +11,9 @@ def ecSum(points):
 
 
 def evaluateAt(z, coeffs):
-    Q = BLS_CURVE_ORDER
     return sum([
         coeffs[k] * z^k for k in [0..T]
-    ]) % Q
+    ]) % SECRET_SHARING_FIELD_ORDER
 
 
 def ephemeralPubkey(senderIndex, recipientIndex):

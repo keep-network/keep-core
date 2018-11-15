@@ -97,15 +97,13 @@ for complaint in messages[4]:
 # PHASE 6
 #
 
-# q = curveOrder
-
 self.x = sum([
     self.shares[j].share_S for j in goodParticipants[6]
-]) % BLS_CURVE_ORDER
+]) % BLS_G1_ORDER
 
 self.x_prime = sum([
     self.shares[j].share_T for j in goodParticipants[6]
-]) % BLS_CURVE_ORDER
+]) % BLS_G1_ORDER
 
 #
 # PHASE 7
