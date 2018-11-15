@@ -19,8 +19,8 @@ import (
 // is to weak and the result is set to a failure.
 func (pm *PublishingMember) PrepareResult() {
 	group := pm.group
-	disqualifiedMembers := group.DisqualifiedMembers()
-	inactiveMembers := group.InactiveMembers()
+	disqualifiedMembers := group.DisqualifiedMembers() // DQ
+	inactiveMembers := group.InactiveMembers()         // IA
 
 	// if nPlayers(IA + DQ) > T/2:
 	if len(disqualifiedMembers)+len(inactiveMembers) > (group.dishonestThreshold / 2) {
@@ -100,7 +100,8 @@ func (pm *PublishingMember) determinePublishersIDs() ([]int, error) {
 		// Current execution time exceeded expected protocol execution duration.
 		surpassBlocks := elapsedBlocks - expectedProtocolDuration // T_over = T_elapsed - T_dkg
 		// j = 1 + ceiling(T_over / T_step)
-		highestMemberIndex = int(math.Ceil(float64(surpassBlocks / pm.protocolConfig.chain.blockStep)))
+		highestMemberIndex = int(math.Ceil(float64(surpassBlocks) / float64(pm.protocolConfig.chain.blockStep)))
+
 	}
 
 	// Select group members with index less or equal the highest member index.
@@ -112,6 +113,5 @@ func (pm *PublishingMember) determinePublishersIDs() ([]int, error) {
 			break
 		}
 	}
-
 	return publishersIDs, nil
 }
