@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"testing"
 
-	crand "github.com/golang/go/src/crypto/rand"
+	crand "crypto/rand"
 )
 
 // AssertBytesEqual takes a testing.T and two byte slices and reports an error
