@@ -18,7 +18,7 @@ provider "kubernetes" {
   cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
 }
 
-module "helm_provider" {
+module "helm_provider_helper" {
   source = "../../../../thesis/infrastructure/terraform/modules/helm_tiller"
 
   tiller_namespace_name        = "${var.tiller_namespace_name}"
@@ -33,8 +33,8 @@ provider "helm" {
   }
 
   tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
-  service_account = "${module.helm_provider.tiller_service_account}"
+  service_account = "${module.helm_provider_helper.tiller_service_account}"
   override        = ["spec.template.spec.automountserviceaccounttoken=true"]
-  namespace       = "${module.helm_provider.tiller_namespace}"
+  namespace       = "${module.helm_provider_helper.tiller_namespace}"
   install_tiller  = true
 }
