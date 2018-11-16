@@ -320,32 +320,28 @@ func (pm *PongMessage) Unmarshal(bytes []byte) error {
 // of the bootstrap peer. We hardcode those values because we need to initialize
 // stakes on both sides of the connection using the local, stubbed `StakeMonitor`.
 func getBootstrapPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
-	d := big.NewInt(128838122312)
-	curve := secp256k1.S256()
-
-	ecdsaKey := new(ecdsa.PrivateKey)
-	ecdsaKey.PublicKey.Curve = curve
-	ecdsaKey.D = d
-	ecdsaKey.PublicKey.X, ecdsaKey.PublicKey.Y = curve.ScalarBaseMult(d.Bytes())
-
-	return key.EthereumKeyToNetworkKey(&keystore.Key{
-		Id:         uuid.NewRandom(),
-		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
-		PrivateKey: ecdsaKey,
-	})
+	return getPeerNetworkKey(big.NewInt(128838122312))
 }
 
 // getStandardPeerNetworkKey returns hardcoded public and private network key
 // of the standard peer. We hardcode those values because we need to initialize
 // stake on both sides of the connection using local, stubbed `StakeMonitor`.
 func getStandardPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
-	d := big.NewInt(6743262236222)
+	return getPeerNetworkKey(big.NewInt(6743262236222))
+}
+
+func getPeerNetworkKey(privateEcdsaKey *big.Int) (
+	*key.NetworkPrivateKey,
+	*key.NetworkPublicKey,
+) {
 	curve := secp256k1.S256()
 
 	ecdsaKey := new(ecdsa.PrivateKey)
 	ecdsaKey.PublicKey.Curve = curve
-	ecdsaKey.D = d
-	ecdsaKey.PublicKey.X, ecdsaKey.PublicKey.Y = curve.ScalarBaseMult(d.Bytes())
+	ecdsaKey.D = privateEcdsaKey
+	ecdsaKey.PublicKey.X, ecdsaKey.PublicKey.Y = curve.ScalarBaseMult(
+		ecdsaKey.D.Bytes(),
+	)
 
 	return key.EthereumKeyToNetworkKey(&keystore.Key{
 		Id:         uuid.NewRandom(),
