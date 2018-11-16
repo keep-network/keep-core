@@ -88,14 +88,15 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 		}
 	}
 
-	for _, rm := range members {
-		rm.ReconstructIndividualPublicKeys()
+	for _, reconstructingMember := range members {
+		reconstructingMember.ReconstructIndividualPublicKeys()
 
-		for m, expectedIndividualPublicKey := range expectedIndividualPublicKeys {
-			if rm.reconstructedIndividualPublicKeys[m].Cmp(expectedIndividualPublicKey) != 0 {
+		for disqualifiedMemberID, expectedIndividualPublicKey := range expectedIndividualPublicKeys {
+			if reconstructingMember.reconstructedIndividualPublicKeys[disqualifiedMemberID].
+				Cmp(expectedIndividualPublicKey) != 0 {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
 					expectedIndividualPublicKey,
-					rm.reconstructedIndividualPublicKeys[m],
+					reconstructingMember.reconstructedIndividualPublicKeys[disqualifiedMemberID],
 				)
 			}
 		}
