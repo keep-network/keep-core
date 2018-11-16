@@ -421,8 +421,8 @@ type DisqualifiedShares struct {
 }
 
 // ReconstructIndividualPrivateKeys reconstructs disqualified members' individual
-// private keys from provided revealed shares calculated by disqualified members
-// for peer members.
+// private keys `z_m` from provided revealed shares calculated by disqualified
+// members for peer members.
 //
 // Function can be executed for members that presented valid shares and commitments
 // but were disqualified on public key shares validation stage (Phase 9).
@@ -467,7 +467,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 	}
 }
 
-// Calculates Lagrange coefficient for member `k` in a group of members.
+// Calculates Lagrange coefficient `a_mk` for member `k` in a group of members.
 //
 // `a_mk = Π (l / (l - k)) mod q` where:
 // - `a_mk` is a lagrange coefficient for the member `k`,
@@ -505,8 +505,8 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID int, group
 	return lagrangeCoefficient // a_mk
 }
 
-// ReconstructIndividualPublicKeys calculates and stores individual
-// public keys from reconstructed individual private keys.
+// ReconstructIndividualPublicKeys calculates and stores individual public keys
+// `y_m` from reconstructed individual private keys `z_m`.
 //
 // Public key is calculated as `g^privateKey mod p`.
 //

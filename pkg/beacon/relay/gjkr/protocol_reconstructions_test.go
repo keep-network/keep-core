@@ -18,6 +18,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	disqualifiedMember1 := group[2] // for ID = 3
 	disqualifiedMember2 := group[4] // for ID = 5
 
+	// polynomial's zeroth coefficient is member's individual private key
 	expectedIndividualPrivateKey1 := disqualifiedMember1.secretCoefficients[0]
 	expectedIndividualPrivateKey2 := disqualifiedMember2.secretCoefficients[0]
 
