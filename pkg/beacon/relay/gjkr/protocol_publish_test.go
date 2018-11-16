@@ -128,13 +128,13 @@ func TestPublishResult(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			expectedPublishedResult.PublisherID = test.publisher.ID
 
-			chainRelay := test.publisher.protocolConfig.ChainHandle().ThresholdRelay()
-
 			// Reinitialize chain to reset block counter
 			test.publisher.protocolConfig.chain, err = initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
 			if err != nil {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
+
+			chainRelay := test.publisher.protocolConfig.ChainHandle().ThresholdRelay()
 
 			if chainRelay.IsResultPublished(result) {
 				t.Fatalf("result is already published on chain")
