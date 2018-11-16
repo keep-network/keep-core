@@ -13,13 +13,15 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 
 	disqualifiedMembersIDs := []int{3, 5}
 
-	group, allDisqualifiedShares := initializeReconstructingMembersGroup(threshold, groupSize, disqualifiedMembersIDs)
+	group := initializeReconstructingMembersGroup(threshold, groupSize)
 
 	disqualifiedMember1 := group[2] // for ID = 3
 	disqualifiedMember2 := group[4] // for ID = 5
 
 	expectedIndividualPrivateKey1 := disqualifiedMember1.secretCoefficients[0]
 	expectedIndividualPrivateKey2 := disqualifiedMember2.secretCoefficients[0]
+
+	allDisqualifiedShares := disqualifyMembers(group, disqualifiedMembersIDs)
 
 	for _, m := range group {
 		if !contains(disqualifiedMembersIDs, m.ID) {
@@ -100,10 +102,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	}
 }
 
-func initializeReconstructingMembersGroup(
-	threshold, groupSize int,
-	disqualifiedMembersIDs []int,
-) ([]*ReconstructingMember, []*DisqualifiedShares) {
+func initializeReconstructingMembersGroup(threshold, groupSize int) []*ReconstructingMember {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
 	sharingMembers, _ := initializeSharingMembersGroup(threshold, groupSize)
@@ -118,13 +117,20 @@ func initializeReconstructingMembersGroup(
 		)
 	}
 
-	// Disqualified shares for test run. Collect from all group members the shares
-	// which were calculated by disqualified members.
+	return reconstructingMembers
+}
+
+// disqualifyMembers disqualifies specific members for a test run. It collects
+// shares calculated by disqualified members for their peers and reveals them.
+func disqualifyMembers(
+	members []*ReconstructingMember,
+	disqualifiedMembersIDs []int,
+) []*DisqualifiedShares {
 	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedMembersIDs))
 	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
-		sharesReceivedFromDisqualifiedMember := make(map[int]*big.Int, groupSize-len(disqualifiedMembersIDs))
+		sharesReceivedFromDisqualifiedMember := make(map[int]*big.Int, len(members)-len(disqualifiedMembersIDs))
 		// for each group member
-		for _, m := range sharingMembers {
+		for _, m := range members {
 			// if the member has not been disqualified
 			if !contains(disqualifiedMembersIDs, m.ID) {
 				// collect all shares which this member received from disqualified
@@ -143,5 +149,5 @@ func initializeReconstructingMembersGroup(
 		}
 	}
 
-	return reconstructingMembers, allDisqualifiedShares
+	return allDisqualifiedShares
 }
