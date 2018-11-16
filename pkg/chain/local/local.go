@@ -195,7 +195,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		groupRelayEntries:       make(map[string]*big.Int),
 		groupRegistrations:      make(map[string][96]byte),
 		blockCounter:            bc,
-		stakeMonitor:            &localStakeMonitor{},
+		stakeMonitor:            NewStakeMonitor(),
 	}
 }
 
