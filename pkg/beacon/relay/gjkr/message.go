@@ -38,22 +38,22 @@ type SecretSharesAccusationsMessage struct {
 	accusedIDs []int
 }
 
-// MemberPublicCoefficientsMessage is a message payload that carries the sender's
-// public coefficients.
+// MemberPublicKeySharePointsMessage is a message payload that carries the sender's
+// public key share points.
 // It is expected to be broadcast.
-type MemberPublicCoefficientsMessage struct {
+type MemberPublicKeySharePointsMessage struct {
 	senderID int
 
-	publicCoefficients []*big.Int // A_ik = g^{a_ik} mod p
+	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
 }
 
-// CoefficientsAccusationsMessage is a message payload that carries all of the
-// sender's accusations against other members of the threshold group after public
-// coefficients validation.
+// PointsAccusationsMessage is a message payload that carries all of the sender's
+// accusations against other members of the threshold group after public key share
+// points validation.
 // If all other members behaved honestly from the sender's point of view, this
 // message should be broadcast but with an empty slice of `accusedIDs`.
 // It is expected to be broadcast.
-type CoefficientsAccusationsMessage struct {
+type PointsAccusationsMessage struct {
 	senderID int
 
 	accusedIDs []int

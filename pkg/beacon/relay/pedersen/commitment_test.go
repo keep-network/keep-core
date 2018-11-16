@@ -163,7 +163,7 @@ func generateNewRandom(currentValue *big.Int, max *big.Int) (*big.Int, error) {
 	for {
 		x, err := crand.Int(crand.Reader, max)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate random number [%s]", err)
+			return nil, fmt.Errorf("failed to generate random number [%v]", err)
 		}
 		if x.Cmp(currentValue) != 0 && x.Cmp(big.NewInt(1)) > 0 {
 			return x, nil

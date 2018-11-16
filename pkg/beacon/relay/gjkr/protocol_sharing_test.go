@@ -38,10 +38,10 @@ func TestCombineReceivedShares(t *testing.T) {
 				memberCore: &memberCore{
 					protocolConfig: config,
 				},
-				selfSecretShareS: selfShareS,
-				selfSecretShareT: selfShareT,
-				receivedSharesS:  receivedShareS,
-				receivedSharesT:  receivedShareT,
+				selfSecretShareS:     selfShareS,
+				selfSecretShareT:     selfShareT,
+				receivedValidSharesS: receivedShareS,
+				receivedValidSharesT: receivedShareT,
 			},
 		},
 	}
@@ -69,16 +69,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		big.NewInt(2),
 	}
 	expectedPublicCoefficients := []*big.Int{
-		big.NewInt(216), // 6^3 mod 1907 = 216
-		big.NewInt(148), // 6^5 mod 1907 = 148
-		big.NewInt(36),  // 6^2 mod 1907 = 36
+		big.NewInt(343),  // 7^3 mod 1907 = 343
+		big.NewInt(1551), // 7^5 mod 1907 = 1551
+		big.NewInt(49),   // 7^2 mod 1907 = 49
 	}
 
 	config := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
 	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
 	// initialization.
-	mockRandomReader := testutils.NewMockRandReader(big.NewInt(6))
+	mockRandomReader := testutils.NewMockRandReader(big.NewInt(7))
 	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
 	if err != nil {
 		t.Fatalf("VSS initialization failed [%s]", err)
@@ -98,24 +98,24 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		},
 	}
 
-	message := member.CalculatePublicCoefficients()
+	message := member.CalculatePublicKeySharePoints()
 
-	if !reflect.DeepEqual(member.publicCoefficients, expectedPublicCoefficients) {
+	if !reflect.DeepEqual(member.publicKeySharePoints, expectedPublicCoefficients) {
 		t.Errorf("incorrect member's public shares\nexpected: %v\nactual:   %v\n",
 			expectedPublicCoefficients,
-			member.publicCoefficients,
+			member.publicKeySharePoints,
 		)
 	}
 
-	if !reflect.DeepEqual(message.publicCoefficients, expectedPublicCoefficients) {
+	if !reflect.DeepEqual(message.publicKeySharePoints, expectedPublicCoefficients) {
 		t.Errorf("incorrect public shares in message\nexpected: %v\nactual:   %v\n",
 			expectedPublicCoefficients,
-			message.publicCoefficients,
+			message.publicKeySharePoints,
 		)
 	}
 }
 
-func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
+func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
@@ -127,24 +127,33 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	sharingMember := sharingMembers[0]
 
 	var tests = map[string]struct {
-		modifyPublicCoefficientsMessages func(messages []*MemberPublicCoefficientsMessage)
-		expectedError                    error
-		expectedAccusedIDs               []int
+		modifyPublicKeySharePointsMessages func(messages []*MemberPublicKeySharePointsMessage)
+		expectedError                      error
+		expectedAccusedIDs                 []int
 	}{
 		"positive validation - no accusations": {
 			expectedError: nil,
 		},
 		"negative validation - changed public key share - one accused member": {
-			modifyPublicCoefficientsMessages: func(messages []*MemberPublicCoefficientsMessage) {
-				messages[1].publicCoefficients[1] = big.NewInt(13)
+			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
+				messages[1].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[1].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{3},
 		},
 		"negative validation - changed public key share - two accused members": {
-			modifyPublicCoefficientsMessages: func(messages []*MemberPublicCoefficientsMessage) {
-				messages[0].publicCoefficients[1] = big.NewInt(13)
-				messages[3].publicCoefficients[1] = big.NewInt(18)
+			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
+				messages[0].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[0].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
+				messages[3].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[3].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{2, 5},
@@ -152,22 +161,22 @@ func TestCalculateAndVerifyPublicCoefficients(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			messages := make([]*MemberPublicCoefficientsMessage, groupSize)
+			messages := make([]*MemberPublicKeySharePointsMessage, groupSize)
 
 			for i, m := range sharingMembers {
-				messages[i] = m.CalculatePublicCoefficients()
+				messages[i] = m.CalculatePublicKeySharePoints()
 			}
 
-			filteredMessages := filterMemberPublicCoefficientsMessages(
+			filteredMessages := filterMemberPublicKeySharePointsMessages(
 				messages,
 				sharingMember.ID,
 			)
 
-			if test.modifyPublicCoefficientsMessages != nil {
-				test.modifyPublicCoefficientsMessages(filteredMessages)
+			if test.modifyPublicKeySharePointsMessages != nil {
+				test.modifyPublicKeySharePointsMessages(filteredMessages)
 			}
 
-			accusedMessage, err := sharingMember.VerifyPublicCoefficients(filteredMessages)
+			accusedMessage, err := sharingMember.VerifyPublicKeySharePoints(filteredMessages)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
@@ -208,23 +217,23 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 					CommittingMember: cm,
 				},
 			},
-			receivedGroupPublicKeyShares: make(map[int]*big.Int, groupSize-1),
+			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
 	for _, sm := range sharingMembers {
 		for _, cm := range committingMembers {
-			sm.receivedSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
+			sm.receivedValidSharesS[cm.ID] = cm.evaluateMemberShare(sm.ID, cm.secretCoefficients)
 		}
 	}
 
 	return sharingMembers, nil
 }
 
-func filterMemberPublicCoefficientsMessages(
-	messages []*MemberPublicCoefficientsMessage, receiverID int,
-) []*MemberPublicCoefficientsMessage {
-	var result []*MemberPublicCoefficientsMessage
+func filterMemberPublicKeySharePointsMessages(
+	messages []*MemberPublicKeySharePointsMessage, receiverID int,
+) []*MemberPublicKeySharePointsMessage {
+	var result []*MemberPublicKeySharePointsMessage
 	for _, msg := range messages {
 		if msg.senderID != receiverID {
 			result = append(result, msg)

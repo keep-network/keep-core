@@ -31,14 +31,45 @@ module.exports = async function() {
     stakingProxy.authorizeContract(tokenGrant.address);
   }
 
-  // Stake tokens
-  await token.approveAndCall(tokenStaking.address, formatAmount(1000000, 18), "");
+  // KEEP tokens has been transfered to the first account on the list 
+  // during the KEEP token contract deployment. Here, we stake those tokens.
+  let staked = await token.approveAndCall(
+    tokenStaking.address, 
+    formatAmount(1000000, 18), 
+    "", 
+    {from: accounts[0]}
+  ).catch((err) => {
+    console.log(`could not stake KEEP tokens for ${accounts[0]}: ${err}`);
+  });
 
-  // Send tokens to the second account
-  await token.transfer(accounts[1], formatAmount(1000000, 18));
+  if (staked) {
+    console.log(`successfully staked KEEP tokens for account ${accounts[0]}`)
+  }
 
-  // Stake tokens as a second account
-  await token.approveAndCall(tokenStaking.address, formatAmount(70000, 18), "", {from: accounts[1]});
+  // Transfer KEEP tokens to all other accounts and stake them.
+  for(let i = 1; i < accounts.length; i++) {    
+    let account = accounts[i]
+
+    await token.transfer(
+      account, 
+      formatAmount(1000000, 18)
+    ).catch((err) => { 
+      console.log(`could not transfer KEEP tokens for ${account}: ${err}`); 
+    });
+
+    staked = await token.approveAndCall(
+      tokenStaking.address, 
+      formatAmount(70000, 18),
+      "", 
+      {from: account}
+    ).catch((err) => {
+      console.log(`could not stake KEEP tokens for ${account}: ${err}`);
+    });
+
+    if (staked) {
+      console.log(`successfully staked KEEP tokens for account ${account}`)
+    }
+  }
 
   // Grant tokens to the second account
   let amount = formatAmount(70000, 18);

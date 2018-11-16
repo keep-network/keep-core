@@ -59,46 +59,32 @@ func TestRoundTrip(t *testing.T) {
 	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			QualifiedMember: qm,
+			QualifiedMember:                       qm,
+			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
 		})
 	}
 
 	for _, member := range sharingMembers {
-		if len(member.receivedSharesS) != groupSize-1 {
+		if len(member.receivedValidSharesS) != groupSize-1 {
 			t.Fatalf("\nexpected: %d received shares S\nactual:   %d\n",
 				groupSize-1,
-				len(member.receivedSharesS),
+				len(member.receivedValidSharesS),
 			)
 		}
-		if len(member.receivedSharesT) != groupSize-1 {
+		if len(member.receivedValidSharesT) != groupSize-1 {
 			t.Fatalf("\nexpected: %d received shares T\nactual:   %d\n",
 				groupSize-1,
-				len(member.receivedSharesT),
+				len(member.receivedValidSharesT),
 			)
 		}
-
 		member.CombineMemberShares()
 	}
 
-	publicCoefficientsMessages := make([]*MemberPublicCoefficientsMessage, groupSize)
+	publicKeySharePointsMessages := make([]*MemberPublicKeySharePointsMessage, groupSize)
 	for i, member := range sharingMembers {
-		publicCoefficientsMessages[i] = member.CalculatePublicCoefficients()
+		publicKeySharePointsMessages[i] = member.CalculatePublicKeySharePoints()
 
 		member.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
-	}
-
-	for _, member := range sharingMembers {
-		accusedCoefficientsMessage, err := member.VerifyPublicCoefficients(
-			filterMemberPublicCoefficientsMessages(publicCoefficientsMessages, member.ID),
-		)
-		if err != nil {
-			t.Fatalf("public coefficients verification failed [%s]", err)
-		}
-		if len(accusedCoefficientsMessage.accusedIDs) > 0 {
-			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedCoefficientsMessage.accusedIDs,
-			)
-		}
 	}
 
 	var reconstructingMembers []*ReconstructingMember
@@ -115,15 +101,15 @@ func TestRoundTrip(t *testing.T) {
 	for i := range reconstructingMembers {
 		member := reconstructingMembers[i]
 
-		accusedCoefficientsMessage, err := member.VerifyPublicCoefficients(
-			filterMemberPublicCoefficientsMessages(publicCoefficientsMessages, member.ID),
+		accusedPointsMessage, err := member.VerifyPublicKeySharePoints(
+			filterMemberPublicKeySharePointsMessages(publicKeySharePointsMessages, member.ID),
 		)
 		if err != nil {
 			t.Fatalf("public coefficients verification failed [%s]", err)
 		}
-		if len(accusedCoefficientsMessage.accusedIDs) > 0 {
+		if len(accusedPointsMessage.accusedIDs) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedCoefficientsMessage.accusedIDs,
+				accusedPointsMessage.accusedIDs,
 			)
 		}
 	}
