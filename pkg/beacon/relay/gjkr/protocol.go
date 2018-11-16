@@ -429,7 +429,7 @@ type DisqualifiedShares struct {
 //
 // It stores a map of reconstructed individual private keys for each disqualified
 // member in a current member's reconstructedIndividualPrivateKeys field:
-// <disqualifiedID, privateKeyShare>
+// <disqualifiedMemberID, privateKeyShare>
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(

@@ -11,9 +11,9 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 
-	disqualifiedIDs := []int{3, 5}
+	disqualifiedMembersIDs := []int{3, 5}
 
-	group, allDisqualifiedShares := initializeReconstructingMembersGroup(threshold, groupSize, disqualifiedIDs)
+	group, allDisqualifiedShares := initializeReconstructingMembersGroup(threshold, groupSize, disqualifiedMembersIDs)
 
 	disqualifiedMember1 := group[2] // for ID = 3
 	disqualifiedMember2 := group[4] // for ID = 5
@@ -22,7 +22,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	expectedIndividualPrivateKey2 := disqualifiedMember2.secretCoefficients[0]
 
 	for _, m := range group {
-		if !contains(disqualifiedIDs, m.ID) {
+		if !contains(disqualifiedMembersIDs, m.ID) {
 			m.ReconstructIndividualPrivateKeys(allDisqualifiedShares)
 
 			if m.reconstructedIndividualPrivateKeys[disqualifiedMember1.ID].Cmp(expectedIndividualPrivateKey1) != 0 {
@@ -56,15 +56,15 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	p := big.NewInt(179)
 	g := big.NewInt(7)
 
-	disqualifiedIDs := []int{4, 5} // m
+	disqualifiedMembersIDs := []int{4, 5} // m
 
-	reconstructedIndividualPrivateKeys := make(map[int]*big.Int, len(disqualifiedIDs)) // z_m
-	reconstructedIndividualPrivateKeys[4] = big.NewInt(14)                             // z_4
-	reconstructedIndividualPrivateKeys[5] = big.NewInt(15)                             // z_5
+	reconstructedIndividualPrivateKeys := make(map[int]*big.Int, len(disqualifiedMembersIDs)) // z_m
+	reconstructedIndividualPrivateKeys[4] = big.NewInt(14)                                    // z_4
+	reconstructedIndividualPrivateKeys[5] = big.NewInt(15)                                    // z_5
 
-	expectedIndividualPublicKeys := make(map[int]*big.Int, len(disqualifiedIDs)) // y_m = g^{z_m} mod p
-	expectedIndividualPublicKeys[4] = big.NewInt(43)                             // 7^14 mod 179
-	expectedIndividualPublicKeys[5] = big.NewInt(122)                            // 7^15 mod 179
+	expectedIndividualPublicKeys := make(map[int]*big.Int, len(disqualifiedMembersIDs)) // y_m = g^{z_m} mod p
+	expectedIndividualPublicKeys[4] = big.NewInt(43)                                    // 7^14 mod 179
+	expectedIndividualPublicKeys[5] = big.NewInt(122)                                   // 7^15 mod 179
 
 	members := make([]*ReconstructingMember, groupSize)
 	for i := range members {
@@ -102,7 +102,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 
 func initializeReconstructingMembersGroup(
 	threshold, groupSize int,
-	disqualifiedIDs []int,
+	disqualifiedMembersIDs []int,
 ) ([]*ReconstructingMember, []*DisqualifiedShares) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
@@ -120,17 +120,17 @@ func initializeReconstructingMembersGroup(
 
 	// Disqualified shares for test run. Collect from all group members the shares
 	// which were calculated by disqualified members.
-	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedIDs))
-	for i, disqualifiedID := range disqualifiedIDs {
-		sharesReceivedFromDisqualifiedMember := make(map[int]*big.Int, groupSize-len(disqualifiedIDs))
+	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedMembersIDs))
+	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
+		sharesReceivedFromDisqualifiedMember := make(map[int]*big.Int, groupSize-len(disqualifiedMembersIDs))
 		// for each group member
 		for _, m := range sharingMembers {
 			// if the member has not been disqualified
-			if !contains(disqualifiedIDs, m.ID) {
+			if !contains(disqualifiedMembersIDs, m.ID) {
 				// collect all shares which this member received from disqualified
 				// member and store them in sharesReceivedFromDisqualifiedMember
 				for peerID, receivedShare := range m.receivedValidSharesS {
-					if peerID == disqualifiedID {
+					if peerID == disqualifiedMemberID {
 						sharesReceivedFromDisqualifiedMember[m.ID] = receivedShare
 						break
 					}
@@ -138,7 +138,7 @@ func initializeReconstructingMembersGroup(
 			}
 		}
 		allDisqualifiedShares[i] = &DisqualifiedShares{
-			disqualifiedMemberID: disqualifiedID,
+			disqualifiedMemberID: disqualifiedMemberID,
 			peerSharesS:          sharesReceivedFromDisqualifiedMember,
 		}
 	}
