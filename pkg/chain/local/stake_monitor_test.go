@@ -7,6 +7,21 @@ import (
 )
 
 func TestDetectInvalidAddress(t *testing.T) {
+	assertInvalidEthereumAddress := func(hasStake bool, err error, t *testing.T) {
+		expectedError := fmt.Errorf("not a valid ethereum address: 0x010102003")
+
+		if !reflect.DeepEqual(expectedError, err) {
+			t.Fatalf(
+				"unexpected error\nexpected: %v\nactual: %v",
+				expectedError,
+				err,
+			)
+		}
+		if hasStake {
+			t.Fatalf("expected 'false' result")
+		}
+	}
+
 	monitor := NewStakeMonitor()
 
 	hasStake, err := monitor.HasMinimumStake("0x010102003")
@@ -17,21 +32,6 @@ func TestDetectInvalidAddress(t *testing.T) {
 
 	err = monitor.UnstakeTokens("0x010102003")
 	assertInvalidEthereumAddress(hasStake, err, t)
-}
-
-func assertInvalidEthereumAddress(hasStake bool, err error, t *testing.T) {
-	expectedError := fmt.Errorf("not a valid ethereum address: 0x010102003")
-
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Fatalf(
-			"unexpected error\nexpected: %v\nactual: %v",
-			expectedError,
-			err,
-		)
-	}
-	if hasStake {
-		t.Fatalf("expected 'false' result")
-	}
 }
 
 func TestNoMinimumStakeByDefault(t *testing.T) {
