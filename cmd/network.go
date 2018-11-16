@@ -66,7 +66,7 @@ func pingRequest(c *cli.Context) error {
 		privKey      *key.NetworkPrivateKey
 	)
 
-	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBotstrapPeerNetworkKey()
+	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBootstrapPeerNetworkKey()
 	standardPeerPrivKey, standardPeerPubKey := getStandardPeerNetworkKey()
 
 	stakeMonitor := local.NewStakeMonitor()
@@ -316,10 +316,10 @@ func (pm *PongMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// getBotstrapPeerNetworkKey returns hardcoded public and private network key
+// getBootstrapPeerNetworkKey returns hardcoded public and private network key
 // of the bootstrap peer. We hardcode those values because we need to initialize
-// stake on both sides of the connection using local, stubbed `StakeMonitor`.
-func getBotstrapPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
+// stakes on both sides of the connection using the local, stubbed `StakeMonitor`.
+func getBootstrapPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
 	d := big.NewInt(128838122312)
 	curve := secp256k1.S256()
 
