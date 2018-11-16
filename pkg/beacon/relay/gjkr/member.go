@@ -88,6 +88,12 @@ type SharingMember struct {
 	receivedValidPeerPublicKeySharePoints map[int][]*big.Int
 }
 
+// SelfIndividualPublicKey returns current member's individual public key.
+// Individual public key is zeroth public key share point `A_i0`.
+func (rm *ReconstructingMember) SelfIndividualPublicKey() *big.Int {
+	return rm.publicKeySharePoints[0]
+}
+
 // ReceivedValidPeerIndividualPublicKeys returns individual public keys received
 // from peer members which passed the validation. Individual public key is zeroth
 // public key share point `A_j0`.
