@@ -96,3 +96,23 @@ type SharingMember struct {
 type PointsJustifyingMember struct {
 	*SharingMember
 }
+
+// ReconstructingMember represents one member in a threshold sharing group who
+// is reconstructing individual private and public keys of disqualified group members.
+//
+// Executes Phase 11 of the protocol.
+type ReconstructingMember struct {
+	*SharingMember // TODO Update this when all phases of protocol are ready
+
+	// Disqualified members' individual private keys reconstructed from shares
+	// revealed by other group members.
+	// Stored as `<m, z_m>`, where:
+	// - `m` is disqualified member's ID
+	// - `z_m` is reconstructed individual private key of member `m`
+	reconstructedIndividualPrivateKeys map[int]*big.Int
+	// Individual public keys calculated from reconstructed individual private keys.
+	// Stored as `<m, y_m>`, where:
+	// - `m` is disqualified member's ID
+	// - `y_m` is reconstructed individual public key of member `m`
+	reconstructedIndividualPublicKeys map[int]*big.Int
+}

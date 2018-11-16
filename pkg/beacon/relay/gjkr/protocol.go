@@ -412,6 +412,118 @@ func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
 	return accusedID, nil
 }
 
+// DisqualifiedShares contains shares `s_mk` calculated by the disqualified
+// member `m` for peer members `k`. The shares were revealed due to disqualification
+// of the member `m` from the protocol execution.
+type DisqualifiedShares struct {
+	disqualifiedMemberID int              // m
+	peerSharesS          map[int]*big.Int // <k, s_mk>
+}
+
+// ReconstructIndividualPrivateKeys reconstructs disqualified members' individual
+// private keys `z_m` from provided revealed shares calculated by disqualified
+// members for peer members.
+//
+// Function can be executed for members that presented valid shares and commitments
+// but were disqualified on public key shares validation stage (Phase 9).
+//
+// It stores a map of reconstructed individual private keys for each disqualified
+// member in a current member's reconstructedIndividualPrivateKeys field:
+// <disqualifiedMemberID, privateKeyShare>
+//
+// See Phase 11 of the protocol specification.
+func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
+	revealedDisqualifiedShares []*DisqualifiedShares,
+) {
+	rm.reconstructedIndividualPrivateKeys = make(map[int]*big.Int, len(revealedDisqualifiedShares))
+
+	for _, ds := range revealedDisqualifiedShares { // for each disqualified member
+		// Reconstruct individual private key `z_m = Σ (s_mk * a_mk) mod q` where:
+		// - `z_m` is disqualified member's individual private key
+		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
+		// - `a_mk` is lagrange coefficient for peer member k (see below)
+		individualPrivateKey := big.NewInt(0)
+		// Get IDs of all peer members from disqualified shares.
+		var peerIDs []int
+		for k := range ds.peerSharesS {
+			peerIDs = append(peerIDs, k)
+		}
+		// For each peerID `k` and peerShareS `s_mk` calculate `s_mk * a_mk`
+		for peerID, peerShareS := range ds.peerSharesS {
+			// a_mk
+			lagrangeCoefficient := rm.calculateLagrangeCoefficient(peerID, peerIDs)
+
+			// Σ (s_mk * a_mk) mod q
+			individualPrivateKey = new(big.Int).Mod(
+				new(big.Int).Add(
+					individualPrivateKey,
+					// s_mk * a_mk
+					new(big.Int).Mul(peerShareS, lagrangeCoefficient),
+				),
+				rm.protocolConfig.Q,
+			)
+		}
+		rm.reconstructedIndividualPrivateKeys[ds.disqualifiedMemberID] = individualPrivateKey // <m, z_m>
+	}
+}
+
+// Calculates Lagrange coefficient `a_mk` for member `k` in a group of members.
+//
+// `a_mk = Π (l / (l - k)) mod q` where:
+// - `a_mk` is a lagrange coefficient for the member `k`,
+// - `l` are IDs of members who provided shares,
+// and `l != k`.
+func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID int, groupMembersIDs []int) *big.Int {
+	lagrangeCoefficient := big.NewInt(1)
+	// For each otherID `l` in groupMembersIDs:
+	for _, otherID := range groupMembersIDs {
+		if otherID != memberID { // l != k
+			// l / (l - k)
+			quotient := new(big.Int).Mod(
+				new(big.Int).Mul(
+					big.NewInt(int64(otherID)),
+					new(big.Int).ModInverse(
+						new(big.Int).Sub(
+							big.NewInt(int64(otherID)),
+							big.NewInt(int64(memberID)),
+						),
+						rm.protocolConfig.Q,
+					),
+				),
+				rm.protocolConfig.Q,
+			)
+
+			// Π (l / (l - k)) mod q
+			lagrangeCoefficient = new(big.Int).Mod(
+				new(big.Int).Mul(
+					lagrangeCoefficient, quotient,
+				),
+				rm.protocolConfig.Q,
+			)
+		}
+	}
+	return lagrangeCoefficient // a_mk
+}
+
+// ReconstructIndividualPublicKeys calculates and stores individual public keys
+// `y_m` from reconstructed individual private keys `z_m`.
+//
+// Public key is calculated as `g^privateKey mod p`.
+//
+// See Phase 11 of the protocol specification.
+func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
+	rm.reconstructedIndividualPublicKeys = make(map[int]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
+	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
+		// `y_m = g^{z_m}`
+		individualPublicKey := new(big.Int).Exp(
+			rm.vss.G,
+			individualPrivateKey,
+			rm.protocolConfig.P,
+		)
+		rm.reconstructedIndividualPublicKeys[memberID] = individualPublicKey
+	}
+}
+
 func pow(x, y int) *big.Int {
 	return new(big.Int).Exp(big.NewInt(int64(x)), big.NewInt(int64(y)), nil)
 }

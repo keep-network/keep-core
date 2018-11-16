@@ -136,15 +136,24 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 		},
 		"negative validation - changed public key share - one accused member": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[1].publicKeySharePoints[1] = big.NewInt(13)
+				messages[1].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[1].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{3},
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[0].publicKeySharePoints[1] = big.NewInt(13)
-				messages[3].publicKeySharePoints[1] = big.NewInt(18)
+				messages[0].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[0].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
+				messages[3].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[3].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{2, 5},
