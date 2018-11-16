@@ -29,8 +29,8 @@ func (lsm *StakeMonitor) HasMinimumStake(address string) (bool, error) {
 	return lsm.stakers[address], nil
 }
 
-// StakeTokens stakes for the provided address enough number of tokens allowing
-// to become a network operator.
+// StakeTokens stakes enough tokens for the provided address to be a network
+// operator.
 func (lsm *StakeMonitor) StakeTokens(address string) error {
 	if !common.IsHexAddress(address) {
 		return fmt.Errorf("not a valid ethereum address: %v", address)
@@ -40,8 +40,8 @@ func (lsm *StakeMonitor) StakeTokens(address string) error {
 	return nil
 }
 
-// UnstakeTokens unstakes from the provided address all tokens so it can
-// no longer be a network operator.
+// UnstakeTokens unstakes all tokens from the provided address so it can no
+// longer be a network operator.
 func (lsm *StakeMonitor) UnstakeTokens(address string) error {
 	if !common.IsHexAddress(address) {
 		return fmt.Errorf("not a valid ethereum address: %v", address)
