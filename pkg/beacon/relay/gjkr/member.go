@@ -86,8 +86,21 @@ type SharingMember struct {
 	// Public key share points received from peer group members which passed the
 	// validation. Defined as `A_jk` across the protocol documentation.
 	receivedValidPeerPublicKeySharePoints map[int][]*big.Int
-	// Individual public keys `A_j0` received from peer group members.
-	receivedGroupPublicKeyShares map[int]*big.Int
+}
+
+// ReceivedValidPeerIndividualPublicKeys returns individual public keys received
+// from peer members which passed the validation. Individual public key is zeroth
+// public key share point `A_j0`.
+func (sm *SharingMember) ReceivedValidPeerIndividualPublicKeys() map[int]*big.Int {
+	receivedValidPeerIndividualPublicKeys := make(
+		map[int]*big.Int,
+		len(sm.receivedValidPeerPublicKeySharePoints),
+	)
+
+	for peerID, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
+		receivedValidPeerIndividualPublicKeys[peerID] = peerPublicKeySharePoints[0]
+	}
+	return receivedValidPeerIndividualPublicKeys
 }
 
 // PointsJustifyingMember represents one member in a threshold key sharing group,

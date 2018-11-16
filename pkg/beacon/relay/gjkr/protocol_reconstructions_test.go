@@ -157,11 +157,11 @@ func TestCombineGroupPublicKey(t *testing.T) {
 
 			// Configure public coefficients received from peer members.
 			for _, member := range members {
-				member.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
+				member.receivedValidPeerPublicKeySharePoints = make(map[int][]*big.Int, groupSize-1)
 				for _, peer := range members {
 					if member.ID != peer.ID {
-						member.receivedGroupPublicKeyShares[peer.ID] =
-							peer.publicKeySharePoints[0]
+						member.receivedValidPeerPublicKeySharePoints[peer.ID] =
+							peer.publicKeySharePoints
 					}
 				}
 			}

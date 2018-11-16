@@ -537,21 +537,21 @@ func pow(x, y int) *big.Int {
 //
 // See Phase 12 of the protocol specification.
 func (rm *ReconstructingMember) CombineGroupPublicKey() {
-	// Current member's zeroth public coefficient `A_i0`.
+	// Current member's individual public key `A_i0`.
 	groupPublicKey := rm.publicKeySharePoints[0]
 
 	// Multiply received peer group members' individual public keys `A_j0`.
-	for _, publicKeyShare := range rm.receivedGroupPublicKeyShares {
+	for _, validPeerIndividualPublicKey := range rm.ReceivedValidPeerIndividualPublicKeys() {
 		groupPublicKey = new(big.Int).Mod(
-			new(big.Int).Mul(groupPublicKey, publicKeyShare),
+			new(big.Int).Mul(groupPublicKey, validPeerIndividualPublicKey),
 			rm.protocolConfig.P,
 		)
 	}
 
 	// Multiply reconstructed disqualified members' individual public keys `g^{z_m}`.
-	for _, publicKeyShare := range rm.reconstructedIndividualPublicKeys {
+	for _, reconstructedPeerIndividualPublicKey := range rm.reconstructedIndividualPublicKeys {
 		groupPublicKey = new(big.Int).Mod(
-			new(big.Int).Mul(groupPublicKey, publicKeyShare),
+			new(big.Int).Mul(groupPublicKey, reconstructedPeerIndividualPublicKey),
 			rm.protocolConfig.P,
 		)
 	}

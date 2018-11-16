@@ -83,8 +83,6 @@ func TestRoundTrip(t *testing.T) {
 	publicKeySharePointsMessages := make([]*MemberPublicKeySharePointsMessage, groupSize)
 	for i, member := range sharingMembers {
 		publicKeySharePointsMessages[i] = member.CalculatePublicKeySharePoints()
-
-		member.receivedGroupPublicKeyShares = make(map[int]*big.Int, groupSize-1)
 	}
 
 	var reconstructingMembers []*ReconstructingMember
