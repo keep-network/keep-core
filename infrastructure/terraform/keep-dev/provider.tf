@@ -18,16 +18,11 @@ provider "kubernetes" {
   cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
 }
 
-provider "helm" {
-  kubernetes {
-    host                   = "https://${module.gke_cluster.endpoint}"
-    token                  = "${data.google_client_config.default.access_token}"
-    cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
-  }
+module "helm_provider" {
+  source                 = "../../../../thesis/infrastructure/terraform/modules/helm_tiller"
+  host                   = "https://${module.gke_cluster.endpoint}"
+  cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
 
-  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
-  service_account = "${module.tiller_kube_config.tiller_service_account}"
-  override        = ["spec.template.spec.automountserviceaccounttoken=true"]
-  namespace       = "${module.tiller_kube_config.tiller_namespace}"
-  install_tiller  = true
+  tiller_namespace_name        = "${var.tiller_namespace_name}"
+  tiller_authorized_namespaces = "${var.tiller_authorized_namespaces}"
 }

@@ -102,6 +102,16 @@ variable "nat_gateway_ip_address_type" {
   default     = "external"
 }
 
+# helm provider
+
+variable "tiller_namespace_name" {
+  default = "tiller"
+}
+
+variable "tiller_authorized_namespaces" {
+  default = ["default"]
+}
+
 # gke
 variable "gke_cluster" {
   description = "The Google managed part of the cluster configuration."

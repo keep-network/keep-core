@@ -143,10 +143,6 @@ module "gke_cluster" {
   labels = "${local.labels}"
 }
 
-module "tiller_kube_config" {
-  source = "../../../../thesis/infrastructure/terraform/modules/helm_tiller"
-}
-
 resource "helm_release" "openvpn" {
   name      = "helm-openvpn"
   namespace = "default"
