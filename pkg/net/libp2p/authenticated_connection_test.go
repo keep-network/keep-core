@@ -182,7 +182,7 @@ func TestHandshakeNoInitiatorStake(t *testing.T) {
 	}
 }
 
-func TestHanshakeNoResponderStake(t *testing.T) {
+func TestHandshakeNoResponderStake(t *testing.T) {
 	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
