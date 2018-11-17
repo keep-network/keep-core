@@ -63,7 +63,7 @@ func Verify(publicKey *bn256.G2, message []byte, signature *bn256.G1) bool {
 	return bn256.PairingCheck(a, b)
 }
 
-// Recover reconstructs the full BLS signature from a threshold number of
+// RecoverSignature reconstructs the full BLS signature from a threshold number of
 // signature shares using Lagrange interpolation.
 func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error) {
 
@@ -82,30 +82,14 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 	}
 
 	if len(validParticipants) < threshold {
-		return nil, errors.New("Not enough shares to reconstruct signature.")
+		return nil, errors.New("not enough shares to reconstruct signature")
 	}
 
 	result := new(bn256.G1)
 
-	for i, xi := range validParticipants {
-
-		// Prepare numerator and denominator as part of Lagrange interpolation.
-		num := big.NewInt(1)
-		den := big.NewInt(1)
-
-		for j, xj := range validParticipants {
-			if i == j {
-				continue
-			}
-			num = new(big.Int).Mod(new(big.Int).Mul(num, xj), bn256.Order)
-			den = new(big.Int).Mod(new(big.Int).Mul(den, new(big.Int).Sub(xj, xi)), bn256.Order)
-		}
-
-		// Perform modular division of num by den.
-		modInv := new(big.Int).ModInverse(den, bn256.Order)
-		div := new(big.Int).Mod(new(big.Int).Mul(num, modInv), bn256.Order)
-
-		result.Add(result, new(bn256.G1).ScalarMult(shares[i].V, div))
+	for i := range validParticipants {
+		basis := lagrangeBasis(i, validParticipants)
+		result.Add(result, new(bn256.G1).ScalarMult(shares[i].V, basis))
 	}
 
 	return result, nil
@@ -150,31 +134,37 @@ func RecoverPublicKey(shares []*PublicKeyShare, threshold int) (*bn256.G2, error
 	}
 
 	if len(validParticipants) < threshold {
-		return nil, errors.New("Not enough shares to reconstruct public key.")
+		return nil, errors.New("not enough shares to reconstruct public key")
 	}
 
 	result := new(bn256.G2)
 
-	for i, xi := range validParticipants {
+	for i := range validParticipants {
+		basis := lagrangeBasis(i, validParticipants)
 
-		// Prepare numerator and denominator as part of Lagrange interpolation.
-		num := big.NewInt(1)
-		den := big.NewInt(1)
-
-		for j, xj := range validParticipants {
-			if i == j {
-				continue
-			}
-			num = new(big.Int).Mod(new(big.Int).Mul(num, xj), bn256.Order)
-			den = new(big.Int).Mod(new(big.Int).Mul(den, new(big.Int).Sub(xj, xi)), bn256.Order)
-		}
-
-		// Perform modular division of num by den.
-		modInv := new(big.Int).ModInverse(den, bn256.Order)
-		div := new(big.Int).Mod(new(big.Int).Mul(num, modInv), bn256.Order)
-
-		result.Add(result, new(bn256.G2).ScalarMult(shares[i].V, div))
+		result.Add(result, new(bn256.G2).ScalarMult(shares[i].V, basis))
 	}
 
 	return result, nil
+}
+
+func lagrangeBasis(i int, validParticipants []*big.Int) *big.Int {
+
+	// Prepare numerator and denominator as part of Lagrange interpolation.
+	num := big.NewInt(1)
+	den := big.NewInt(1)
+
+	for j, xj := range validParticipants {
+		if i == j {
+			continue
+		}
+		num = new(big.Int).Mod(new(big.Int).Mul(num, xj), bn256.Order)
+		den = new(big.Int).Mod(new(big.Int).Mul(den, new(big.Int).Sub(xj, validParticipants[i])), bn256.Order)
+	}
+
+	// Perform modular division of num by den.
+	modInv := new(big.Int).ModInverse(den, bn256.Order)
+	result := new(big.Int).Mod(new(big.Int).Mul(num, modInv), bn256.Order)
+
+	return result
 }
