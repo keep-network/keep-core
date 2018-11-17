@@ -150,7 +150,7 @@ func (g G1Point) Compress() compressedPoint {
 
 	marshalled := g.Marshal()
 
-	for i := 31; i >= 0; i-- {
+	for i := 0; i < 32; i++ {
 		rt[i] = marshalled[i]
 	}
 
@@ -173,7 +173,7 @@ func (g G2Point) Compress() compressedPoint {
 
 	marshalled := g.Marshal()
 
-	for i := 63; i >= 0; i-- {
+	for i := 0; i < 64; i++ {
 		rt[i] = marshalled[i]
 	}
 

@@ -103,9 +103,9 @@ func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
 	xi := big.NewInt(int64(1 + i))
 	share := big.NewInt(0)
 
-	for j := len(masterSecretKey) - 1; j >= 0; j-- {
+	for j := 0; j < len(masterSecretKey); j++ {
 		share = new(big.Int).Mul(share, xi)
-		share = new(big.Int).Add(share, masterSecretKey[j])
+		share = new(big.Int).Add(share, masterSecretKey[len(masterSecretKey)-1-j])
 	}
 
 	return &SecretKeyShare{i, share}
