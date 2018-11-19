@@ -2,7 +2,7 @@ package ephemeral
 
 import "testing"
 
-func TestFullEcdh(t *testing.T) {
+func TestFullECDH(t *testing.T) {
 	//
 	// players generate ephemeral keypair
 	//
@@ -24,10 +24,10 @@ func TestFullEcdh(t *testing.T) {
 	//
 
 	// player 1:
-	symmetricKey1 := privKey1.Ecdh(pubKey2)
+	symmetricKey1 := privKey1.ECDH(pubKey2)
 
 	// player 2:
-	symmetricKey2 := privKey2.Ecdh(pubKey1)
+	symmetricKey2 := privKey2.ECDH(pubKey1)
 
 	//
 	// players use symmetric key for encryption/decryption
