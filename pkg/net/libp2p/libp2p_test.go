@@ -2,12 +2,15 @@ package libp2p
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
@@ -15,9 +18,17 @@ func TestProviderReturnsType(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	expectedType := "libp2p"
 	provider, err := Connect(
-		ctx, generateDeterministicNetworkConfig(t),
+		ctx,
+		generateDeterministicNetworkConfig(t),
+		privKey,
+		local.NewStakeMonitor(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +48,17 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	testName := "testname"
 
-	provider, err := Connect(ctx, generateDeterministicNetworkConfig(t))
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider, err := Connect(
+		ctx,
+		generateDeterministicNetworkConfig(t),
+		privKey,
+		local.NewStakeMonitor(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,11 +75,6 @@ func TestSendReceive(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	identity, err := generateIdentity(0)
-	if err != nil {
-		t.Errorf("Failed to generate identity: [%v].", err)
-	}
-
 	var (
 		config             = generateDeterministicNetworkConfig(t)
 		name               = "testchannel"
@@ -66,7 +82,22 @@ func TestSendReceive(t *testing.T) {
 		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
 	)
 
-	provider, err := Connect(ctx, config)
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity, err := createIdentity(privKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider, err := Connect(
+		ctx,
+		config,
+		privKey,
+		local.NewStakeMonitor(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,16 +165,6 @@ func TestSendToReceiveFrom(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	identity1, err := generateIdentity(0)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	identity2, err := generateIdentity(0)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	var (
 		config1                  = generateDeterministicNetworkConfig(t)
 		senderProtocolIdentifier = &protocolIdentifier{id: "sender"}
@@ -154,7 +175,27 @@ func TestSendToReceiveFrom(t *testing.T) {
 		expectedPayload = "some text"
 	)
 
-	provider, err := Connect(ctx, config1)
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity1, err := createIdentity(privKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity2, err := newTestIdentity()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider, err := Connect(
+		ctx,
+		config1,
+		privKey,
+		local.NewStakeMonitor(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,17 +321,26 @@ func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
 
+func newTestIdentity() (*identity, error) {
+	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return createIdentity(privKey)
+}
+
 func generateDeterministicNetworkConfig(t *testing.T) Config {
 	return Config{Port: 8080}
 }
 
 func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
-	identity, err := generateIdentity(0)
+	identity, err := newTestIdentity()
 	if err != nil {
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, 8080)
+	host, err := discoverAndListen(ctx, identity, 8080, local.NewStakeMonitor())
 	if err != nil {
 		return nil, err
 	}

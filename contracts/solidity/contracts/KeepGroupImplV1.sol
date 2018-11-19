@@ -207,7 +207,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Testing for M1 - create a staker.
      * @param groupMemberID the ID of the member that is being added.
      */
-    function addStaker(bytes32 groupMemberID) public onlyOwner {
+    function addStaker(bytes32 groupMemberID) public {
         // TODO save some info at this point - this is only for use in Milestone 1 and will
         // not need to be added to the "forever" storage.
         _listOfGroupMembersIDs.push(groupMemberID);

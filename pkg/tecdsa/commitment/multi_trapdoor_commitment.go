@@ -18,12 +18,12 @@ package commitment
 import (
 	"crypto/ecdsa"
 	"crypto/rand"
-	"crypto/sha256"
 	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 // DecommitmentKey allows to open a commitment and verify if the value is what
@@ -93,7 +93,7 @@ func Generate(
 		return nil, nil, err
 	}
 
-	hash := sha256Sum(secret)
+	hash := byteutils.Sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
 	// he = h + g^pk
@@ -135,7 +135,7 @@ func (tc *MultiTrapdoorCommitment) Verify(
 ) bool {
 	secret := toSingleByteSlice(secrets...)
 
-	hash := sha256Sum(secret)
+	hash := byteutils.Sha256Sum(secret)
 	digest := new(big.Int).Mod(hash, bn256.Order)
 
 	// pk = H(vk)
@@ -174,20 +174,12 @@ func (tc *MultiTrapdoorCommitment) Verify(
 
 func hashPublicSignatureKey(publicSignatureKey *ecdsa.PublicKey) *big.Int {
 	return new(big.Int).Mod(
-		sha256Sum(toSingleByteSlice(
+		byteutils.Sha256Sum(toSingleByteSlice(
 			publicSignatureKey.X.Bytes(),
 			publicSignatureKey.Y.Bytes(),
 		)),
 		publicSignatureKey.Params().N,
 	)
-}
-
-// sha256Sum calculates sha256 hash for the
-// passed `bytes` and converts it to `big.Int`.
-func sha256Sum(bytes []byte) *big.Int {
-	hash := sha256.Sum256(bytes)
-
-	return new(big.Int).SetBytes(hash[:])
 }
 
 func toSingleByteSlice(slices ...[]byte) []byte {

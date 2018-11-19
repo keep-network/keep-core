@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/paillier"
 )
 
@@ -18,9 +19,7 @@ import (
 // All expected values has been manually calculated based on the [GGN16] paper.
 func TestEcdsaPaillierSecretKeyFactorRangeProofCommitValues(t *testing.T) {
 	// GIVEN
-	mockRandom := &mockRandReader{
-		counter: big.NewInt(10),
-	}
+	mockRandom := testutils.NewMockRandReader(big.NewInt(10))
 	// Following values are assigned to ZKP parameters as a result of
 	// calling mockRandom:
 	//

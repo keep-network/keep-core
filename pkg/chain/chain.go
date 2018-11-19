@@ -16,9 +16,19 @@ type BlockCounter interface {
 	BlockWaiter(numBlocks int) (<-chan int, error)
 }
 
+// StakeMonitor is an interface that provides ability to check and monitor
+// the stake for the provided address.
+type StakeMonitor interface {
+
+	// HasMinimumStake checks if the provided address staked enough to become
+	// a network operator. The minimum stake is an on-chain parameter.
+	HasMinimumStake(address string) (bool, error)
+}
+
 // Handle represents a handle to a blockchain that provides access to the core
 // functionality needed for Keep network interactions.
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
+	StakeMonitor() (StakeMonitor, error)
 	ThresholdRelay() relaychain.Interface
 }
