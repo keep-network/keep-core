@@ -33,7 +33,7 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 [[override]]
   name = "github.com/libp2p/go-libp2p-peer"
-  revision = "993d742bc29dcf4894b7730ba610fd78900be76c"
+  revision = "dd9b45c0649b38aebe65f98cb460676b4214a42c"
 
 [[override]]
   name = "github.com/libp2p/go-libp2p-swarm"
@@ -70,6 +70,14 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-pubsub"
   revision = "107b3bdc9730f1b7ce294523e81dbffe3a639dcb"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-connmgr"
+  revision = "9af270cbe3059a15af44e7f67b75d521e1fbd5e4"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-interface-connmgr"
+  revision ="61a030e46d8f6c82500b0992360d7a5c701d367a"
 
 # multiformats
 [[override]]
@@ -110,6 +118,10 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 [[override]]
   name = "github.com/satori/go.uuid"
   revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
+
+[[override]]
+  name = "github.com/whyrusleeping/yamux"
+  revision = "5364a42fe4b5efa5967c11c8f9b0f049cac0c4a9"
 
 [[constraint]]
   name = "github.com/urfave/cli"

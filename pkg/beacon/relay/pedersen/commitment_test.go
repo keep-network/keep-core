@@ -48,7 +48,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 		"negative validation - incorrect `g`": {
 			verificationValue: committedValue,
 			modifyVSS: func(vss *VSS) {
-				vss.g, _ = generateNewRandom(vss.g, vss.q)
+				vss.G, _ = generateNewRandom(vss.G, vss.q)
 			},
 			expectedResult: false,
 		},
@@ -63,7 +63,7 @@ func TestGenerateAndValidateCommitment(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			commitment, decommitmentKey, err := vss.CommitmentTo([]byte(committedValue))
+			commitment, decommitmentKey, err := vss.CommitmentTo(crand.Reader, []byte(committedValue))
 			if err != nil {
 				t.Fatalf("generation error [%v]", err)
 			}
@@ -123,7 +123,7 @@ func TestNewVSSpqValidation(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			_, err := NewVSS(test.p, test.q)
+			_, err := NewVSS(crand.Reader, test.p, test.q)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf("actual error: %v\nexpected error: %v", err, test.expectedError)
@@ -151,7 +151,7 @@ func initializeVSS() (*VSS, error) {
 		return nil, fmt.Errorf("failed to initialize q")
 	}
 
-	vss, err := NewVSS(p, q)
+	vss, err := NewVSS(crand.Reader, p, q)
 	if err != nil {
 		return nil, fmt.Errorf("vss creation failed [%v]", err)
 	}
@@ -163,7 +163,7 @@ func generateNewRandom(currentValue *big.Int, max *big.Int) (*big.Int, error) {
 	for {
 		x, err := crand.Int(crand.Reader, max)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate random number [%s]", err)
+			return nil, fmt.Errorf("failed to generate random number [%v]", err)
 		}
 		if x.Cmp(currentValue) != 0 && x.Cmp(big.NewInt(1)) > 0 {
 			return x, nil
