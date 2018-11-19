@@ -47,19 +47,13 @@ func UnmarshalPublicKey(bytes []byte) (*PublicEcdsaKey, error) {
 }
 
 // Marshal turns a `PrivateEcdsaKey` into a slice of bytes.
-func (pk *PrivateEcdsaKey) Marshal() []byte {
-	return pk.toBtcec().Serialize()
-}
+func (privk *PrivateEcdsaKey) Marshal() []byte {
+	return (*btcec.PrivateKey)(privk).Serialize()
 
-func (pk *PrivateEcdsaKey) toBtcec() *btcec.PrivateKey {
-	return (*btcec.PrivateKey)(pk)
 }
 
 // Marshal turns a `PublicEcdsaKey` into a slice of bytes.
-func (pk *PublicEcdsaKey) Marshal() []byte {
-	return pk.toBtcec().SerializeCompressed()
-}
+func (pubk *PublicEcdsaKey) Marshal() []byte {
+	return (*btcec.PublicKey)(pubk).SerializeCompressed()
 
-func (pk *PublicEcdsaKey) toBtcec() *btcec.PublicKey {
-	return (*btcec.PublicKey)(pk)
 }
