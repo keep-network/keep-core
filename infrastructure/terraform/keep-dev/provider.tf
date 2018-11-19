@@ -19,7 +19,7 @@ provider "kubernetes" {
 }
 
 module "helm_provider_helper" {
-  source                = "../../../../thesis/infrastructure/terraform/modules/helm_tiller_helper"
+  source                = "git@github.com:thesis/infrastructure.git//terraform/modules/helm_tiller_helper"
   tiller_namespace_name = "${var.tiller_namespace_name}"
 }
 
