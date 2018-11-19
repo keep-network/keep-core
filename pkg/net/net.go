@@ -2,6 +2,7 @@ package net
 
 import (
 	"github.com/gogo/protobuf/proto"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 // TransportIdentifier represents the identity of a participant at the transport
@@ -121,4 +122,12 @@ type BroadcastChannel interface {
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
+
+	// RegisterSymmetricKey associates the given network identifier with a
+	// SymmetricKey to ensure that messages are properly encrypted when
+	// required, and decrypted before being consumed by the protocol.
+	RegisterSymmetricKey(
+		networkIdentifier TransportIdentifier,
+		symmetricKey ephemeral.SymmetricKey,
+	)
 }

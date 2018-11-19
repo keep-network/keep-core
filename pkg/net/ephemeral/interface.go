@@ -6,6 +6,6 @@ package ephemeral
 type SymmetricKey interface{}
 
 type Ephemeral interface {
-	// Performs ECDH with this private key and a given public key
+	// Performs ECDH with this private key and a remote public key
 	ECDH(remoteIdentity EphemeralPublicKey) SymmetricKey
 }
