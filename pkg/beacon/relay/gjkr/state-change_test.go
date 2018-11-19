@@ -630,21 +630,11 @@ func TestChallengeStateChagne(t *testing.T) {
 					Group:      big.NewInt(10000),
 					finalState: 5,
 				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
 				{ // test the ability to detec already submitted.
 					EventName: "Challenge",
 					Group:     big.NewInt(10000),
@@ -666,9 +656,7 @@ func TestChallengeStateChagne(t *testing.T) {
 					Group:      big.NewInt(10000),
 					finalState: 1,
 				},
-				{
-					EventName: "sleep",
-				},
+				{EventName: "sleep"},
 				{
 					EventName: "Challenge",
 					Group:     big.NewInt(10000),

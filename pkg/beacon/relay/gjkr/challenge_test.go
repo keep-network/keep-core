@@ -12,6 +12,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/pschlump/MiscLib"
+	"github.com/pschlump/godebug"
 )
 
 func TestChallengeResult(t *testing.T) {
@@ -31,7 +33,7 @@ func TestChallengeResult(t *testing.T) {
 		cmds          []op
 	}{
 		"001 success with 8 of 15 group size": {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			resultValue:   2,
@@ -66,30 +68,61 @@ func TestChallengeResult(t *testing.T) {
 				{cmd: "validate-data", opt0: 1},
 			},
 		},
-		"002 success with 7 of 15 group size": {
+		"002 success with 8 of 15 group size": {
 			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
-			resultValue:   1000001,
+			resultValue:   2,
 			cmds: []op{
 				{cmd: "init"},
-				{cmd: "publish"},
+				{cmd: "publish", opt1: /*groupPublicKey*/ 1,
+					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
+						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				},
+				//	{cmd: "publish", opt1: /*groupPublicKey*/ 1,
+				//		resultHash: []byte{229, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
+				//			51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				//	},
+				{cmd: "challenge", opt0: /*correctResult*/ 0, opt1: /*groupPublicKey*/ 1,
+					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
+						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				},
+				//				{cmd: "challenge", opt0: /*correctResult*/ 0, opt1: /*groupPublicKey*/ 1,
+				//					resultHash: []byte{229, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
+				//						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				//				},
+				{cmd: "send", opt1: /*groupPublicKey*/ 1},
 				{cmd: "block"},
+				{cmd: "vote", opt0: /*result-subscript*/ 0, opt1: /*groupPublicKey*/ 1,
+					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
+						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				},
 				{cmd: "block"},
+				{cmd: "vote", opt0: /*result-subscript*/ 0, opt1: /*groupPublicKey*/ 1,
+					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
+						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				},
 				{cmd: "block"},
+				{cmd: "vote", opt0: /*result-subscript*/ 0, opt1: /*groupPublicKey*/ 1,
+					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
+						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				},
 				{cmd: "block"},
-				{cmd: "block"},
-				{cmd: "block"},
-				{cmd: "block"},
+				{cmd: "dump-data"},
+				{cmd: "validate-data", opt0: 1},
 			},
 		},
 	}
 
 	for testName, test := range tests {
 
+		one_time := true
+
 		x := t.Run(testName[3:], func(t *testing.T) {
 
 			if test.runTest {
+
+				fmt.Printf("Test: %s AT: %s\n", testName, godebug.LF()) // DEL-XXX
 
 				var members []*PublishingMember
 				var member *PublishingMember
@@ -107,7 +140,7 @@ func TestChallengeResult(t *testing.T) {
 					case "init":
 						members, err = initializePublishingMembersGroup2(test.thresholdSize, test.groupSize)
 						if err != nil {
-							t.Fatalf("%s", err)
+							t.Errorf("%s", err)
 						}
 						member = members[0] // WHY? Fix This FIXME xyzzy
 
@@ -124,20 +157,21 @@ func TestChallengeResult(t *testing.T) {
 							PublisherID: member.ID,
 							Hash:        cmd.resultHash,
 						}
-						if chainRelay.IsResultPublished(result1) {
-							t.Fatalf("Result is already published on chain")
+						if one_time && chainRelay.IsResultPublished(result1) {
+							one_time = false
+							t.Errorf("Result is already published on chain")
 						}
 
 						eventPublish, err := member.PublishResult(result1, 5)
 						if err != nil {
-							t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
+							t.Errorf("\nexpected: %s\nactual:   %s\n", "", err)
 						}
 						if !reflect.DeepEqual(expectedEvent, eventPublish) {
-							t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedEvent, eventPublish)
+							t.Errorf("\nexpected: %v\nactual:   %v\n", expectedEvent, eventPublish)
 						}
 
 						if !chainRelay.IsResultPublished(result1) {
-							t.Fatalf("Result should be published on chain")
+							t.Errorf("Result should be published on chain")
 						}
 
 					case "print-block-height":
@@ -164,6 +198,9 @@ func TestChallengeResult(t *testing.T) {
 						}
 
 						resultHash := cmd.resultHash
+						if resultHash == nil {
+							fmt.Printf("%sOOPS - bad command, pc=%d\n%s ", MiscLib.ColorRed, pc, MiscLib.ColorReset)
+						}
 						correctResult := cmd.opt0
 						go vc.Challenge(resultHash, correctResult)
 

@@ -10,6 +10,8 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/pschlump/MiscLib"
+	"github.com/pschlump/godebug"
 )
 
 type ValidationGroupState struct {
@@ -18,6 +20,7 @@ type ValidationGroupState struct {
 	AllVotes         []ResultVotes   // Set of all results
 	LeadResult       int             // Position of lead result
 	AlreadySubmitted bool            //
+	CurrentState     int             // The state that this group is currently in.
 }
 
 type ResultVotes struct {
@@ -115,7 +118,10 @@ func (vc *DKG) Challenge(resultHash []byte, correctResult int) {
 
 		vc.TNow = getCurrentBlockHeight() // has to have geth connect info
 
-		if isNew {
+		if isNew || len(m1.AllResults) == 0 {
+			if result == nil {
+				fmt.Printf("%sOOPS - results is null, %s, %s, %s %s\n", MiscLib.ColorRed, godebug.LF(3), godebug.LF(2), godebug.LF(), MiscLib.ColorReset)
+			}
 			m1.AllResults = append(m1.AllResults, *result) // Should this merge the solutions together
 
 			resultPkg := ResultVotes{
@@ -124,9 +130,12 @@ func (vc *DKG) Challenge(resultHash []byte, correctResult int) {
 				Group:       group,
 			}
 			m1.AllVotes = append(m1.AllVotes, resultPkg) // Should this merge the solutions together
+			fmt.Printf("%sAT: %s%s\n", MiscLib.ColorYellow, godebug.LF(), MiscLib.ColorReset)
 		}
 
+		fmt.Printf("%sAT: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 		leadResult := FindMostVotes(m1.AllVotes) // Summarize the votes for a particular solution
+		fmt.Printf("%sAT: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 		vc.TFirst = m1.AllVotes[0].BlockHeight
 		vc.PerGroup[group] = m1
 		if vc.TNow > (vc.TFirst + vc.TConflict) {
@@ -228,7 +237,7 @@ func SubmitRessult(aResult interface{}) {
 
 func SignResult(resultHash []byte) []byte {
 	// TODO
-	return []byte("SignedResultHash:" + string(resultHash))
+	return []byte("SignedResultHash:" + fmt.Sprintf("%x", string(resultHash)))
 }
 
 //////////////////////////////////////////////////////////////////
