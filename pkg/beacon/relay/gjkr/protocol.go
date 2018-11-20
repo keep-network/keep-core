@@ -15,6 +15,15 @@ import (
 	"math/big"
 )
 
+// CalculateMembersSharesAndCommitments takes the known candidate list, and
+// generates an ephemeral ECDH keypair with every other candidate member. These
+// shares are broadcasted to every valid cadidate member.
+//
+// See Phase 1 of the protocol specification.
+func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
+	return nil
+}
+
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
 // two polynomials. It then calculates shares for all group member and packs them
 // in individual messages for each peer member. Additionally, it calculates
