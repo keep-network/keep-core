@@ -85,20 +85,7 @@ func TestRoundTrip(t *testing.T) {
 		publicKeySharePointsMessages[i] = member.CalculatePublicKeySharePoints()
 	}
 
-	var reconstructingMembers []*ReconstructingMember
-	for _, sm := range sharingMembers {
-		reconstructingMembers = append(reconstructingMembers, &ReconstructingMember{
-			SharingMember: sm,
-		})
-	}
-
-	for i := range reconstructingMembers {
-		reconstructingMembers[i].CombineGroupPublicKey()
-	}
-
-	for i := range reconstructingMembers {
-		member := reconstructingMembers[i]
-
+	for _, member := range sharingMembers {
 		accusedPointsMessage, err := member.VerifyPublicKeySharePoints(
 			filterMemberPublicKeySharePointsMessages(publicKeySharePointsMessages, member.ID),
 		)
@@ -111,4 +98,17 @@ func TestRoundTrip(t *testing.T) {
 			)
 		}
 	}
+
+	var reconstructingMembers []*ReconstructingMember
+	for _, sm := range sharingMembers {
+		// TODO: Handle transition from SharingMember to ReconstructingMember in Next() function
+		reconstructingMembers = append(reconstructingMembers, &ReconstructingMember{
+			SharingMember: sm,
+		})
+	}
+
+	for _, member := range reconstructingMembers {
+		member.CombineGroupPublicKey()
+	}
+
 }
