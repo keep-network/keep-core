@@ -130,7 +130,7 @@ variable "gke_node_pool" {
     node_count   = "1"
     machine_type = "n1-standard-2"
     disk_type    = "pd-ssd"
-    disk_size_gb = 10
+    disk_size_gb = 100
     auto_repair  = "true"
     auto_upgrade = "true"
     oauth_scopes = "https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring"
