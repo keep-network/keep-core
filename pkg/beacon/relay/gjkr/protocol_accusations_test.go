@@ -70,7 +70,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializeSharesJustifyingMemberGroup(threshold, groupSize)
+			members, err := initializeSharesJustifyingMemberGroup(threshold, groupSize, nil)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -166,7 +166,7 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializePointsJustifyingMemberGroup(threshold, groupSize)
+			members, err := initializePointsJustifyingMemberGroup(threshold, groupSize, nil)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -222,8 +222,8 @@ func findCoefficientsJustifyingMemberByID(
 // It generates coefficients for each group member, calculates commitments and
 // shares for each peer member individually. At the end it stores values for each
 // member just like they would be received from peers.
-func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJustifyingMember, error) {
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) ([]*SharesJustifyingMember, error) {
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -289,8 +289,9 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJ
 // values for each member just like they would be received from peers.
 func initializePointsJustifyingMemberGroup(
 	threshold, groupSize int,
+	dkg *DKG,
 ) ([]*PointsJustifyingMember, error) {
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}

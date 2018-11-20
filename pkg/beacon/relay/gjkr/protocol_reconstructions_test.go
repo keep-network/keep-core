@@ -13,7 +13,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 
 	disqualifiedMembersIDs := []int{3, 5}
 
-	group := initializeReconstructingMembersGroup(threshold, groupSize)
+	group := initializeReconstructingMembersGroup(threshold, groupSize, nil)
 
 	disqualifiedMember1 := group[2] // for ID = 3
 	disqualifiedMember2 := group[4] // for ID = 5
@@ -191,10 +191,10 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func initializeReconstructingMembersGroup(threshold, groupSize int) []*ReconstructingMember {
+func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) []*ReconstructingMember {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
-	sharingMembers, _ := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, _ := initializeSharingMembersGroup(threshold, groupSize, dkg)
 
 	var reconstructingMembers []*ReconstructingMember
 	// TODO Should be handled by the `.Next()`` function
