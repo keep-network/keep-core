@@ -538,7 +538,7 @@ func pow(x, y int) *big.Int {
 // See Phase 12 of the protocol specification.
 func (rm *ReconstructingMember) CombineGroupPublicKey() {
 	// Current member's individual public key `A_i0`.
-	groupPublicKey := rm.SelfIndividualPublicKey()
+	groupPublicKey := rm.individualPublicKey()
 
 	// Multiply received peer group members' individual public keys `A_j0`.
 	for _, validPeerIndividualPublicKey := range rm.ReceivedValidPeerIndividualPublicKeys() {

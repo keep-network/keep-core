@@ -88,9 +88,9 @@ type SharingMember struct {
 	receivedValidPeerPublicKeySharePoints map[int][]*big.Int
 }
 
-// SelfIndividualPublicKey returns current member's individual public key.
+// individualPublicKey returns current member's individual public key.
 // Individual public key is zeroth public key share point `A_i0`.
-func (rm *ReconstructingMember) SelfIndividualPublicKey() *big.Int {
+func (rm *ReconstructingMember) individualPublicKey() *big.Int {
 	return rm.publicKeySharePoints[0]
 }
 
