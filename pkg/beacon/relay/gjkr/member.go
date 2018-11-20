@@ -94,10 +94,10 @@ func (rm *ReconstructingMember) individualPublicKey() *big.Int {
 	return rm.publicKeySharePoints[0]
 }
 
-// ReceivedValidPeerIndividualPublicKeys returns individual public keys received
+// receivedValidPeerIndividualPublicKeys returns individual public keys received
 // from peer members which passed the validation. Individual public key is zeroth
 // public key share point `A_j0`.
-func (sm *SharingMember) ReceivedValidPeerIndividualPublicKeys() map[int]*big.Int {
+func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() map[int]*big.Int {
 	receivedValidPeerIndividualPublicKeys := make(
 		map[int]*big.Int,
 		len(sm.receivedValidPeerPublicKeySharePoints),
