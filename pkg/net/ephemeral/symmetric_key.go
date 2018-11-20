@@ -22,7 +22,7 @@ type SymmetricEcdhKey struct {
 // Ecdh performs Elliptic Curve Diffie-Hellman operation between public and
 // private key. The returned value is `SymmetricEcdhKey` that can be used
 // for encryption and decryption.
-func (pk *PrivateEcdsaKey) Ecdh(publicKey *PublicEcdsaKey) *SymmetricEcdhKey {
+func (pk *EphemeralPrivateKey) Ecdh(publicKey *EphemeralPublicKey) *SymmetricEcdhKey {
 	shared := btcec.GenerateSharedSecret(pk.toBtcec(), publicKey.toBtcec())
 
 	return &SymmetricEcdhKey{sha256.Sum256(shared)}
