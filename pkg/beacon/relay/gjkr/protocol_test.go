@@ -99,15 +99,19 @@ func TestRoundTrip(t *testing.T) {
 		}
 	}
 
-	var reconstructingMembers []*ReconstructingMember
+	var combiningMembers []*CombiningMember
 	for _, sm := range sharingMembers {
 		// TODO: Handle transition from SharingMember to ReconstructingMember in Next() function
-		reconstructingMembers = append(reconstructingMembers, &ReconstructingMember{
-			SharingMember: sm,
+		combiningMembers = append(combiningMembers, &CombiningMember{
+			ReconstructingMember: &ReconstructingMember{
+				PointsJustifyingMember: &PointsJustifyingMember{
+					SharingMember: sm,
+				},
+			},
 		})
 	}
 
-	for _, member := range reconstructingMembers {
+	for _, member := range combiningMembers {
 		member.CombineGroupPublicKey()
 	}
 

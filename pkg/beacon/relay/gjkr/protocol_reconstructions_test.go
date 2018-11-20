@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 )
@@ -11,7 +12,10 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 
 	disqualifiedMembersIDs := []int{3, 5}
 
-	group := initializeReconstructingMembersGroup(threshold, groupSize, nil)
+	group, err := initializeReconstructingMembersGroup(threshold, groupSize, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	disqualifiedMember1 := group[2] // for ID = 3
 	disqualifiedMember2 := group[4] // for ID = 5
@@ -68,7 +72,11 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	expectedIndividualPublicKeys[4] = big.NewInt(43)                                    // 7^14 mod 179
 	expectedIndividualPublicKeys[5] = big.NewInt(122)                                   // 7^15 mod 179
 
-	members := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
+	members, err := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, member := range members {
 		member.vss.G = g // set fixed `g` value
 		// Simulate phase where individual private keys are reconstructed.
@@ -110,7 +118,10 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
+			members, err := initializeCombiningMembersGroup(threshold, groupSize, dkg)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			// Generate member's public coefficients.
 			for _, member := range members {
@@ -161,22 +172,25 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) []*ReconstructingMember {
+func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*ReconstructingMember, error) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
-	sharingMembers, _ := initializeSharingMembersGroup(threshold, groupSize, dkg)
+	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
 
 	var reconstructingMembers []*ReconstructingMember
 	// TODO Should be handled by the `.Next()`` function
-	for _, sm := range sharingMembers {
+	for _, pjm := range pointsJustifyingMembers {
 		reconstructingMembers = append(reconstructingMembers,
 			&ReconstructingMember{
-				SharingMember: sm,
+				PointsJustifyingMember: pjm,
 			},
 		)
 	}
 
-	return reconstructingMembers
+	return reconstructingMembers, nil
 }
 
 // disqualifyMembers disqualifies specific members for a test run. It collects
@@ -209,4 +223,25 @@ func disqualifyMembers(
 	}
 
 	return allDisqualifiedShares
+}
+
+func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CombiningMember, error) {
+	// TODO When whole protocol is implemented check if SharingMember type is really
+	// the one expected here (should be the member from Phase 10)
+	reconstructingMembers, err := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
+
+	var combiningMembers []*CombiningMember
+	// TODO Should be handled by the `.Next()`` function
+	for _, rm := range reconstructingMembers {
+		combiningMembers = append(combiningMembers,
+			&CombiningMember{
+				ReconstructingMember: rm,
+			},
+		)
+	}
+
+	return combiningMembers, nil
 }
