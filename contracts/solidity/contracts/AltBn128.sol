@@ -127,12 +127,11 @@ library AltBn128 {
     }
 
     /**
-     * @dev Calculates whether the provided y coordinate is an even or odd
-     * number.
+     * @dev Calculates whether the provided number is even or odd.
      * @return 0x01 if y is an even number and 0x00 if it's odd.
      */
-    function ySign(uint256 y) private pure returns (byte) {
-        return bytes32(y)[31] & byte(1);
+    function parity(uint256 value) private pure returns (byte) {
+        return bytes32(value)[31] & byte(1);
     }
 
     /**
@@ -144,7 +143,7 @@ library AltBn128 {
     {
         bytes32 m = bytes32(x);
 
-        byte leadM = m[0] | ySign(y) << 7;
+        byte leadM = m[0] | parity(y) << 7;
         bytes32 mask = 0xff << 31*8;
         m = (m & ~mask) | (leadM >> 0);
 
@@ -160,7 +159,7 @@ library AltBn128 {
     {
         bytes32 m = bytes32(x[0]);
 
-        byte leadM = m[0] | ySign(y[0]) << 7;
+        byte leadM = m[0] | parity(y[0]) << 7;
         bytes32 mask = 0xff << 31*8;
         m = (m & ~mask) | (leadM >> 0);
 
@@ -182,7 +181,7 @@ library AltBn128 {
         uint256 x = uint256(mX);
         uint256 y = yFromX(x);
 
-        if (ySign(y) != (m[0] & byte(128)) >> 7) {
+        if (parity(y) != (m[0] & byte(128)) >> 7) {
             y = p - y;
         }
 
@@ -219,7 +218,7 @@ library AltBn128 {
         y = [y[1], y[0]];
         x = [x[1], x[0]];
 
-        if (ySign(y[0]) != (m[0] & byte(128)) >> 7) {
+        if (parity(y[0]) != (m[0] & byte(128)) >> 7) {
             y[0] = p - y[0];
             y[1] = p - y[1];
         }
@@ -283,7 +282,7 @@ library AltBn128 {
         // Reduce exp dividing by 2 gradually to 0 while computing final
         // result only when exp is an odd number.
         while (exp > 0) {
-            if (ySign(exp) == 1) {
+            if (parity(exp) == 1) {
                 result = gfP2Multiply(result, a);
             }
 
