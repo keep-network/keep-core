@@ -536,7 +536,7 @@ func pow(x, y int) *big.Int {
 // group member.
 //
 // See Phase 12 of the protocol specification.
-func (rm *ReconstructingMember) CombineGroupPublicKey() {
+func (rm *CombiningMember) CombineGroupPublicKey() {
 	// Current member's individual public key `A_i0`.
 	groupPublicKey := rm.individualPublicKey()
 

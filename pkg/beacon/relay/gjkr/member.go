@@ -123,7 +123,7 @@ type PointsJustifyingMember struct {
 //
 // Executes Phase 11 of the protocol.
 type ReconstructingMember struct {
-	*SharingMember // TODO Update this when all phases of protocol are ready
+	*PointsJustifyingMember // TODO Update this when all phases of protocol are ready
 
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
@@ -136,6 +136,15 @@ type ReconstructingMember struct {
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
 	reconstructedIndividualPublicKeys map[int]*big.Int
+}
+
+// CombiningMember represents one member in a threshold sharing group who is
+// combining individual public keys of group members to receive group public key.
+//
+// Executes Phase 12 of the protocol.
+type CombiningMember struct {
+	*ReconstructingMember
+
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *big.Int
