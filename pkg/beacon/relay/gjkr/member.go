@@ -15,6 +15,14 @@ type memberCore struct {
 	protocolConfig *DKG
 }
 
+// CandidateGroupMember represents one member in a threshold key sharing group, after
+// it has a full list of `memberIDs` that belong to its threshold group.
+//
+// Executes Phase 1 of the protocol.
+type CandidateGroupMember struct {
+	*memberCore
+}
+
 // CommittingMember represents one member in a threshold key sharing group, after
 // it has a full list of `memberIDs` that belong to its threshold group. A
 // member in this state has two maps of member shares for each member of the
