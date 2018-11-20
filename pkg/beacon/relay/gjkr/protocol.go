@@ -541,17 +541,17 @@ func (rm *ReconstructingMember) CombineGroupPublicKey() {
 	groupPublicKey := rm.individualPublicKey()
 
 	// Multiply received peer group members' individual public keys `A_j0`.
-	for _, validPeerIndividualPublicKey := range rm.ReceivedValidPeerIndividualPublicKeys() {
+	for _, peerPublicKey := range rm.ReceivedValidPeerIndividualPublicKeys() {
 		groupPublicKey = new(big.Int).Mod(
-			new(big.Int).Mul(groupPublicKey, validPeerIndividualPublicKey),
+			new(big.Int).Mul(groupPublicKey, peerPublicKey),
 			rm.protocolConfig.P,
 		)
 	}
 
 	// Multiply reconstructed disqualified members' individual public keys `g^{z_m}`.
-	for _, reconstructedPeerIndividualPublicKey := range rm.reconstructedIndividualPublicKeys {
+	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
 		groupPublicKey = new(big.Int).Mod(
-			new(big.Int).Mul(groupPublicKey, reconstructedPeerIndividualPublicKey),
+			new(big.Int).Mul(groupPublicKey, peerPublicKey),
 			rm.protocolConfig.P,
 		)
 	}
