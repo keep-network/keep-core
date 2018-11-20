@@ -91,24 +91,21 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 }
 
 func TestCombineGroupPublicKey(t *testing.T) {
-	threshold := 3
-	groupSize := 5
+	threshold := 2
+	groupSize := 3
 
 	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
 	var tests = map[string]struct {
-		disqualifiedIDs        []int
-		expectedError          error
+		disqualifiedMembers    int // number of disqualified members
 		expectedGroupPublicKey *big.Int
 	}{
 		"no disqualified members - no reconstructed individual public key": {
-			expectedError:          nil,
-			expectedGroupPublicKey: big.NewInt(1156),
+			expectedGroupPublicKey: big.NewInt(279), // 10*20*30 mod 1907 = 279
 		},
 		"2 disqualified members - 2 reconstructed individual public keys": {
-			disqualifiedIDs:        []int{6, 7},
-			expectedError:          nil,
-			expectedGroupPublicKey: big.NewInt(1037),
+			disqualifiedMembers:    2,
+			expectedGroupPublicKey: big.NewInt(1620), // 10*20*30*91*92 mod 1620
 		},
 	}
 	for testName, test := range tests {
@@ -135,11 +132,16 @@ func TestCombineGroupPublicKey(t *testing.T) {
 			}
 
 			// Configure reconstructed individual public key of disqualified members.
+			//
+			// Create as many reconstructed public keys as specified by disqualifiedMembers.
+			// Reconstructed public keys will have an integer value starting
+			// from 91 (91, 92, 93, ...).
 			for _, member := range members {
-				member.reconstructedIndividualPublicKeys = make(map[int]*big.Int, len(test.disqualifiedIDs))
-				for _, disqualifiedID := range test.disqualifiedIDs {
-					member.reconstructedIndividualPublicKeys[disqualifiedID] =
-						big.NewInt(int64(20 + disqualifiedID))
+				member.reconstructedIndividualPublicKeys = make(map[int]*big.Int, test.disqualifiedMembers)
+				for m := 1; m <= test.disqualifiedMembers; m++ {
+					disqualifiedMemberID := groupSize + m
+					member.reconstructedIndividualPublicKeys[disqualifiedMemberID] =
+						big.NewInt(int64(90 + m))
 				}
 			}
 
