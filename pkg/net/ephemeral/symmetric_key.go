@@ -27,7 +27,10 @@ type SymmetricEcdhKey struct {
 // private key. The returned value is `SymmetricEcdhKey` that can be used
 // for encryption and decryption.
 func (pk *EphemeralPrivateKey) Ecdh(publicKey *EphemeralPublicKey) *SymmetricEcdhKey {
-	shared := btcec.GenerateSharedSecret(pk.toBtcec(), publicKey.toBtcec())
+	shared := btcec.GenerateSharedSecret(
+		(*btcec.PrivateKey)(pk),
+		(*btcec.PublicKey)(publicKey),
+	)
 
 	return &SymmetricEcdhKey{sha256.Sum256(shared)}
 }
