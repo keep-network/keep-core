@@ -19,7 +19,8 @@ echo "-- GETH_ETH_ACCOUNT0: $GETH_ETH_ACCOUNT0"
 export GETH_ETH_ACCOUNT1=`cat /root/account1`
 echo "-- GETH_ETH_ACCOUNT1: $GETH_ETH_ACCOUNT1"
 
-# Generate genesis.json and issue tokens to Keep peers account1
+# Generate genesis.json and issue tokens to Keep peers account1.
+# We are setting mining difficulty to zero.
 cat <<EOF >> /root/genesis.json
 {
   "config": {
@@ -28,7 +29,7 @@ cat <<EOF >> /root/genesis.json
     "eip155Block": 0,
     "eip158Block": 0
   },
-  "difficulty" : "0x20000",
+  "difficulty" : "0x0",
   "gasLimit"   : "0x493E00",
   "alloc": {
 EOF

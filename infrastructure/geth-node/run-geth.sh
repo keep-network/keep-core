@@ -68,6 +68,7 @@ if [ "$BOOTNODES" ]; then
 fi
 
 if [ ! -d "$DATADIR/chaindata" ]; then
+  echo "-- Initialize. Write genesis block"
   /geth --datadir $DATADIR init $GENESIS
 fi
 
