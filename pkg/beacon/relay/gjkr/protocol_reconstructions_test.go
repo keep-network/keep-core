@@ -3,8 +3,6 @@ package gjkr
 import (
 	"math/big"
 	"testing"
-
-	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
@@ -56,8 +54,9 @@ func contains(slice []int, value int) bool {
 
 func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	groupSize := 3
-	p := big.NewInt(179)
-	g := big.NewInt(7)
+	threshold := 2
+	dkg := &DKG{P: big.NewInt(179), Q: big.NewInt(89)}
+	g := big.NewInt(7) // `g` value for public key calculation `y_m = g^{z_m} mod p`
 
 	disqualifiedMembersIDs := []int{4, 5} // m
 
@@ -69,24 +68,11 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	expectedIndividualPublicKeys[4] = big.NewInt(43)                                    // 7^14 mod 179
 	expectedIndividualPublicKeys[5] = big.NewInt(122)                                   // 7^15 mod 179
 
-	members := make([]*ReconstructingMember, groupSize)
-	for i := range members {
-		members[i] = &ReconstructingMember{
-			SharingMember: &SharingMember{
-				QualifiedMember: &QualifiedMember{
-					SharesJustifyingMember: &SharesJustifyingMember{
-						CommittingMember: &CommittingMember{
-							memberCore: &memberCore{
-								ID:             i,
-								protocolConfig: &DKG{P: p},
-							},
-							vss: &pedersen.VSS{G: g},
-						},
-					},
-				},
-			},
-			reconstructedIndividualPrivateKeys: reconstructedIndividualPrivateKeys,
-		}
+	members := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
+	for _, member := range members {
+		member.vss.G = g // set fixed `g` value
+		// Simulate phase where individual private keys are reconstructed.
+		member.reconstructedIndividualPrivateKeys = reconstructedIndividualPrivateKeys
 	}
 
 	for _, reconstructingMember := range members {
@@ -107,7 +93,8 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 3
 	groupSize := 5
-	p := big.NewInt(1907)
+
+	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
 	var tests = map[string]struct {
 		disqualifiedIDs        []int
@@ -126,26 +113,7 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			// Prepare members group.
-			members := make([]*ReconstructingMember, groupSize)
-			for i := range members {
-				members[i] = &ReconstructingMember{
-					SharingMember: &SharingMember{
-						QualifiedMember: &QualifiedMember{
-							SharesJustifyingMember: &SharesJustifyingMember{
-								CommittingMember: &CommittingMember{
-									memberCore: &memberCore{
-										ID: i + 1,
-										protocolConfig: &DKG{
-											P: p,
-										},
-									},
-								},
-							},
-						},
-					},
-				}
-			}
+			members := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
 
 			// Generate member's public coefficients.
 			for _, member := range members {
