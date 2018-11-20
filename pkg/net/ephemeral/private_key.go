@@ -16,9 +16,9 @@ func curve() *btcec.KoblitzCurve {
 	return btcec.S256()
 }
 
-// GenerateEphemeralKeypair generates a pair of public and private ECDSA keys
+// GenerateKeypair generates a pair of public and private ephemeral keys
 // that can be used as an input for ECDH.
-func GenerateEphemeralKeypair() (*PrivateKey, *PublicKey, error) {
+func GenerateKeypair() (*PrivateKey, *PublicKey, error) {
 	ecdsaKey, err := btcec.NewPrivateKey(curve())
 	if err != nil {
 		return nil, nil, fmt.Errorf(

@@ -8,13 +8,13 @@ func TestFullEcdh(t *testing.T) {
 	//
 
 	// player 1
-	privKey1, pubKey1, err := GenerateEphemeralKeypair()
+	privKey1, pubKey1, err := GenerateKeypair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// player 2
-	privKey2, pubKey2, err := GenerateEphemeralKeypair()
+	privKey2, pubKey2, err := GenerateKeypair()
 	if err != nil {
 		t.Fatal(err)
 	}
