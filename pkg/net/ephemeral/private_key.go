@@ -6,11 +6,11 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 )
 
-// EphemeralPrivateKey is an ephemeral private elliptic curve key.
-type EphemeralPrivateKey btcec.PrivateKey
+// PrivateKey is an ephemeral private elliptic curve key.
+type PrivateKey btcec.PrivateKey
 
-// EphemeralPublicKey is an ephemeral public elliptic curve key.
-type EphemeralPublicKey btcec.PublicKey
+// PublicKey is an ephemeral public elliptic curve key.
+type PublicKey btcec.PublicKey
 
 func curve() *btcec.KoblitzCurve {
 	return btcec.S256()
@@ -18,7 +18,7 @@ func curve() *btcec.KoblitzCurve {
 
 // GenerateEphemeralKeypair generates a pair of public and private ECDSA keys
 // that can be used as an input for ECDH.
-func GenerateEphemeralKeypair() (*EphemeralPrivateKey, *EphemeralPublicKey, error) {
+func GenerateEphemeralKeypair() (*PrivateKey, *PublicKey, error) {
 	ecdsaKey, err := btcec.NewPrivateKey(curve())
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -27,31 +27,31 @@ func GenerateEphemeralKeypair() (*EphemeralPrivateKey, *EphemeralPublicKey, erro
 		)
 	}
 
-	return (*EphemeralPrivateKey)(ecdsaKey), (*EphemeralPublicKey)(&ecdsaKey.PublicKey), nil
+	return (*PrivateKey)(ecdsaKey), (*PublicKey)(&ecdsaKey.PublicKey), nil
 }
 
-// UnmarshalPrivateKey turns a slice of bytes into a `PrivateEcdsaKey`.
-func UnmarshalPrivateKey(bytes []byte) *EphemeralPrivateKey {
+// UnmarshalPrivateKey turns a slice of bytes into a `PrivateKey`.
+func UnmarshalPrivateKey(bytes []byte) *PrivateKey {
 	priv, _ := btcec.PrivKeyFromBytes(curve(), bytes)
-	return (*EphemeralPrivateKey)(priv)
+	return (*PrivateKey)(priv)
 }
 
-// UnmarshalPublicKey turns a slice of bytes into a `PublicEcdsaKey`.
-func UnmarshalPublicKey(bytes []byte) (*EphemeralPublicKey, error) {
+// UnmarshalPublicKey turns a slice of bytes into a `PublicKey`.
+func UnmarshalPublicKey(bytes []byte) (*PublicKey, error) {
 	pubKey, err := btcec.ParsePubKey(bytes, curve())
 	if err != nil {
 		return nil, fmt.Errorf("could not parse ephemeral public key [%v]", err)
 	}
 
-	return (*EphemeralPublicKey)(pubKey), nil
+	return (*PublicKey)(pubKey), nil
 }
 
-// Marshal turns a `PrivateEcdsaKey` into a slice of bytes.
-func (pk *EphemeralPrivateKey) Marshal() []byte {
+// Marshal turns a `PrivateKey` into a slice of bytes.
+func (pk *PrivateKey) Marshal() []byte {
 	return (*btcec.PrivateKey)(pk).Serialize()
 }
 
-// Marshal turns a `PublicEcdsaKey` into a slice of bytes.
-func (pk *EphemeralPublicKey) Marshal() []byte {
+// Marshal turns a `PublicKey` into a slice of bytes.
+func (pk *PublicKey) Marshal() []byte {
 	return (*btcec.PublicKey)(pk).SerializeCompressed()
 }
