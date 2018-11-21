@@ -1,6 +1,30 @@
 package gjkr
 
-import "math/big"
+import (
+	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
+)
+
+// EphemeralPublicKeyMessage is a message payload that carries sender's
+// ephemeral public key generated for the given receiver.
+//
+// Receiver performs ECDH on sender's ephemeral public key and on receiver's
+// private ephemeral key creating a symmetric key used for encrypting
+// a conversation between sender and receiver. In case of an accusation for
+// malicious behavior, accusing party reveals its private ephemeral key so that
+// all the other group members can resolve the accusation looking at messages
+// exchanged between accuser and accused party. To validate correctness of
+// accuser's private ephemeral key all group members must know its ephemeral
+// public key prior to exchanging any messages. That's why ephemeral public key
+// of the party is broadcast in the group. Construction of ECDH guarantees that
+// no security threat is created this way.
+type EphemeralPublicKeyMessage struct {
+	senderID   int // i
+	receiverID int // j
+
+	ephemeralPublicKey ephemeral.PublicKey // Y_ij
+}
 
 // MemberCommitmentsMessage is a message payload that carries the sender's
 // commitments to polynomial coefficients during distributed key generation.
