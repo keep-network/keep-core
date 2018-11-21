@@ -119,7 +119,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
 		t.Fatalf("Group initialization failed [%s]", err)
 	}
@@ -196,8 +196,8 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	}
 }
 
-func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, error) {
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}

@@ -9,7 +9,7 @@ func TestRoundTrip(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -25,12 +25,10 @@ func TestRoundTrip(t *testing.T) {
 		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
 	}
 
-	for i := range committingMembers {
-		committingMember := committingMembers[i]
-
-		accusedSecretSharesMessage, err := committingMember.VerifyReceivedSharesAndCommitmentsMessages(
-			filterPeerSharesMessage(sharesMessages, committingMember.ID),
-			filterMemberCommitmentsMessages(commitmentsMessages, committingMember.ID),
+	for _, member := range committingMembers {
+		accusedSecretSharesMessage, err := member.VerifyReceivedSharesAndCommitmentsMessages(
+			filterPeerSharesMessage(sharesMessages, member.ID),
+			filterMemberCommitmentsMessages(commitmentsMessages, member.ID),
 		)
 		if err != nil {
 			t.Fatalf("shares and commitments verification failed [%s]", err)
@@ -66,12 +64,20 @@ func TestRoundTrip(t *testing.T) {
 		})
 	}
 
-	sharingMember := sharingMembers[0]
-	if len(sharingMember.receivedValidSharesS) != groupSize-1 {
-		t.Fatalf("\nexpected: %d received shares\nactual:   %d\n",
-			groupSize-1,
-			len(sharingMember.receivedValidSharesS),
-		)
+	for _, member := range sharingMembers {
+		if len(member.receivedValidSharesS) != groupSize-1 {
+			t.Fatalf("\nexpected: %d received shares S\nactual:   %d\n",
+				groupSize-1,
+				len(member.receivedValidSharesS),
+			)
+		}
+		if len(member.receivedValidSharesT) != groupSize-1 {
+			t.Fatalf("\nexpected: %d received shares T\nactual:   %d\n",
+				groupSize-1,
+				len(member.receivedValidSharesT),
+			)
+		}
+		member.CombineMemberShares()
 	}
 
 	publicKeySharePointsMessages := make([]*MemberPublicKeySharePointsMessage, groupSize)
@@ -79,9 +85,7 @@ func TestRoundTrip(t *testing.T) {
 		publicKeySharePointsMessages[i] = member.CalculatePublicKeySharePoints()
 	}
 
-	for i := range sharingMembers {
-		member := sharingMembers[i]
-
+	for _, member := range sharingMembers {
 		accusedPointsMessage, err := member.VerifyPublicKeySharePoints(
 			filterMemberPublicKeySharePointsMessages(publicKeySharePointsMessages, member.ID),
 		)
@@ -94,4 +98,21 @@ func TestRoundTrip(t *testing.T) {
 			)
 		}
 	}
+
+	var combiningMembers []*CombiningMember
+	for _, sm := range sharingMembers {
+		// TODO: Handle transition from SharingMember to ReconstructingMember in Next() function
+		combiningMembers = append(combiningMembers, &CombiningMember{
+			ReconstructingMember: &ReconstructingMember{
+				PointsJustifyingMember: &PointsJustifyingMember{
+					SharingMember: sm,
+				},
+			},
+		})
+	}
+
+	for _, member := range combiningMembers {
+		member.CombineGroupPublicKey()
+	}
+
 }

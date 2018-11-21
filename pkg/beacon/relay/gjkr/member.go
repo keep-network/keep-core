@@ -88,6 +88,27 @@ type SharingMember struct {
 	receivedValidPeerPublicKeySharePoints map[int][]*big.Int
 }
 
+// individualPublicKey returns current member's individual public key.
+// Individual public key is zeroth public key share point `A_i0`.
+func (rm *ReconstructingMember) individualPublicKey() *big.Int {
+	return rm.publicKeySharePoints[0]
+}
+
+// receivedValidPeerIndividualPublicKeys returns individual public keys received
+// from peer members which passed the validation. Individual public key is zeroth
+// public key share point `A_j0`.
+func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
+	var receivedValidPeerIndividualPublicKeys []*big.Int
+
+	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
+		receivedValidPeerIndividualPublicKeys = append(
+			receivedValidPeerIndividualPublicKeys,
+			peerPublicKeySharePoints[0],
+		)
+	}
+	return receivedValidPeerIndividualPublicKeys
+}
+
 // PointsJustifyingMember represents one member in a threshold key sharing group,
 // after it completed public key share points verification and enters justification
 // phase where it resolves public key share points accusations.
@@ -102,7 +123,7 @@ type PointsJustifyingMember struct {
 //
 // Executes Phase 11 of the protocol.
 type ReconstructingMember struct {
-	*SharingMember // TODO Update this when all phases of protocol are ready
+	*PointsJustifyingMember // TODO Update this when all phases of protocol are ready
 
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
@@ -115,4 +136,16 @@ type ReconstructingMember struct {
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
 	reconstructedIndividualPublicKeys map[int]*big.Int
+}
+
+// CombiningMember represents one member in a threshold sharing group who is
+// combining individual public keys of group members to receive group public key.
+//
+// Executes Phase 12 of the protocol.
+type CombiningMember struct {
+	*ReconstructingMember
+
+	// Group public key calculated from individual public keys of all group members.
+	// Denoted as `Y` across the protocol specification.
+	groupPublicKey *big.Int
 }
