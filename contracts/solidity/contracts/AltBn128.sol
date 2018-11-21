@@ -344,27 +344,4 @@ library AltBn128 {
         return c[0] != 0;
     }
 
-    /**
-     * @dev Verify performs the pairing operation to check if the signature
-     * is correct for the provided message and the corresponding public key.
-     */
-    function verify(bytes publicKey, bytes message, bytes32 signature) public view returns (bool) {
-
-        uint256[2] memory _signature;
-        (_signature[0], _signature[1]) = g1Decompress(signature);
-
-        uint256[2] memory _message;
-        (_message[0], _message[1]) = g1HashToPoint(message);
-
-        uint256[2] memory _publicKeyX;
-        uint256[2] memory _publicKeyY;
-        (_publicKeyX, _publicKeyY) = g2Decompress(publicKey);
-
-        return pairing(
-            [_signature[0], getP() - _signature[1]],
-            g2(),
-            _message,
-            [_publicKeyX[0], _publicKeyX[1], _publicKeyY[0], _publicKeyY[1]]
-        );
-    }
 }
