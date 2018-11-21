@@ -221,6 +221,8 @@ library AltBn128 {
             y[1] = p - y[1];
         }
 
+        require(isG2PointOnCurve(x, y), "Malformed bn256.G2 point.");
+
         return (x, y);
     }
 
@@ -298,6 +300,20 @@ library AltBn128 {
         y2 = gfP2Pow(y, 2);
 
         return (y2[0] == x[0] && y2[1] == x[1]);
+    }
+
+    /**
+     * @dev Return true if G2 point is on the curve.
+     */
+    function isG2PointOnCurve(uint256[2] x, uint256[2] y) internal pure returns(bool) {
+
+        uint256[2] memory y2;
+        uint256[2] memory x3;
+
+        y2 = gfP2Pow(y, 2);
+        x3 = gfP2Add(gfP2Pow(x, 3), twistB());
+
+        return (y2[0] == x3[0] && y2[1] == x3[1]);
     }
 
     /**

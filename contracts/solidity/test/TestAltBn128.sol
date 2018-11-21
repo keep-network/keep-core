@@ -232,4 +232,27 @@ contract TestAltBn128 {
             Assert.equal(p_1_y[1], p_2_y[1], "Decompressing a compressed point should give the same y coordinate.");
         }
     }
+
+    function testG2PointOnCurve() public {
+        uint256[2] memory p_1_x;
+        uint256[2] memory p_1_y;
+
+        for (uint i = 0; i < randomG2.length; i++) {
+            p_1_x[0] = randomG2[i][0];
+            p_1_x[1] = randomG2[i][1];
+            p_1_y[0] = randomG2[i][2];
+            p_1_y[1] = randomG2[i][3];
+
+            Assert.isTrue(AltBn128.isG2PointOnCurve(p_1_x, p_1_y), "Valid points should be on the curve.");
+        }
+
+        for (i = 0; i < randomG2.length; i++) {
+            p_1_x[0] = randomG2[i][2];
+            p_1_x[1] = randomG2[i][3];
+            p_1_y[0] = randomG2[i][0];
+            p_1_y[1] = randomG2[i][1];
+
+            Assert.isFalse(AltBn128.isG2PointOnCurve(p_1_x, p_1_y), "Invalid points should not be on the curve.");
+        }
+    }
 }
