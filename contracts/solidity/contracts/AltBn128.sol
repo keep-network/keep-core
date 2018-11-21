@@ -49,8 +49,8 @@ library AltBn128 {
      */
     function twistB() public pure returns (uint256[2]) {
         return [
-            19485874751759354771024239261021720505790618469301721065564631296452457478373,
-            266929791119991161246907387137283842545076965332900288569378510910307636690
+            266929791119991161246907387137283842545076965332900288569378510910307636690,
+            19485874751759354771024239261021720505790618469301721065564631296452457478373
         ];
     }
 
@@ -213,10 +213,8 @@ library AltBn128 {
         bytes32 mask = 0xff << 31*8;
         mX = (x1 & ~mask) | (leadX >> 0);
 
-        uint256[2] memory x = [uint256(x2), uint256(mX)];
+        uint256[2] memory x = [uint256(mX), uint256(x2)];
         uint256[2] memory y = gfP2YFromX(x);
-        y = [y[1], y[0]];
-        x = [x[1], x[0]];
 
         if (parity(y[0]) != (m[0] & byte(128)) >> 7) {
             y[0] = p - y[0];
@@ -263,8 +261,8 @@ library AltBn128 {
      */
     function gfP2Multiply(uint256[2] a, uint256[2] b) internal pure returns(uint256[2]) {
         return (
-            [addmod(mulmod(a[0], b[0], p), p - mulmod(a[1], b[1], p), p),
-            addmod(mulmod(a[0], b[1], p), mulmod(a[1], b[0], p), p)]
+            [addmod(mulmod(a[0], b[1], p), mulmod(b[0], a[1], p), p),
+            addmod(mulmod(a[1], b[1], p), p - mulmod(a[0], b[0], p), p)]
         );
     }
 
@@ -274,8 +272,8 @@ library AltBn128 {
     function gfP2Pow(uint256[2] _a, uint256 _exp) internal pure returns(uint256[2] result) {
         uint256 exp = _exp;
         uint256[2] memory a;
-        result[0] = 1;
-        result[1] = 0;
+        result[0] = 0;
+        result[1] = 1;
         a[0] = _a[0];
         a[1] = _a[1];
 
