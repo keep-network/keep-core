@@ -101,74 +101,39 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 2
 	groupSize := 3
-
 	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
-	var tests = map[string]struct {
-		disqualifiedMembers    int // number of disqualified members
-		expectedGroupPublicKey *big.Int
-	}{
-		"no disqualified members - no reconstructed individual public key": {
-			expectedGroupPublicKey: big.NewInt(279), // 10*20*30 mod 1907 = 279
-		},
-		"2 disqualified members - 2 reconstructed individual public keys": {
-			disqualifiedMembers:    2,
-			expectedGroupPublicKey: big.NewInt(1620), // 10*20*30*91*92 mod 1620
-		},
+	expectedGroupPublicKey := big.NewInt(1620) // 10*20*30*91*92 mod 1620
+
+	members, err := initializeCombiningMembersGroup(threshold, groupSize, dkg)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			members, err := initializeCombiningMembersGroup(threshold, groupSize, dkg)
-			if err != nil {
-				t.Fatal(err)
-			}
+	member := members[0]
 
-			// Generate member's public coefficients.
-			for _, member := range members {
-				member.publicKeySharePoints = make([]*big.Int, threshold+1)
-				for k := range member.publicKeySharePoints {
-					member.publicKeySharePoints[k] = big.NewInt(int64(member.ID*10 + k))
-				}
-			}
+	// Member's public coefficients. Zeroth coefficient is member's individual
+	// public key.
+	member.publicKeySharePoints = []*big.Int{big.NewInt(10), big.NewInt(11), big.NewInt(12)}
 
-			// Configure public coefficients received from peer members.
-			for _, member := range members {
-				member.receivedValidPeerPublicKeySharePoints = make(map[int][]*big.Int, groupSize-1)
-				for _, peer := range members {
-					if member.ID != peer.ID {
-						member.receivedValidPeerPublicKeySharePoints[peer.ID] =
-							peer.publicKeySharePoints
-					}
-				}
-			}
+	// Public coefficients received from peer members. Each peer member's zeroth
+	// coefficient is their individual public key.
+	member.receivedValidPeerPublicKeySharePoints[2] = []*big.Int{big.NewInt(20), big.NewInt(21), big.NewInt(22)}
+	member.receivedValidPeerPublicKeySharePoints[3] = []*big.Int{big.NewInt(30), big.NewInt(31), big.NewInt(32)}
 
-			// Configure reconstructed individual public key of disqualified members.
-			//
-			// Create as many reconstructed public keys as specified by disqualifiedMembers.
-			// Reconstructed public keys will have an integer value starting
-			// from 91 (91, 92, 93, ...).
-			for _, member := range members {
-				member.reconstructedIndividualPublicKeys = make(map[int]*big.Int, test.disqualifiedMembers)
-				for m := 1; m <= test.disqualifiedMembers; m++ {
-					disqualifiedMemberID := groupSize + m
-					member.reconstructedIndividualPublicKeys[disqualifiedMemberID] =
-						big.NewInt(int64(90 + m))
-				}
-			}
+	// Reconstructed individual public keys for disqualified members.
+	member.reconstructedIndividualPublicKeys[4] = big.NewInt(91)
+	member.reconstructedIndividualPublicKeys[5] = big.NewInt(92)
 
-			for _, member := range members {
-				member.CombineGroupPublicKey()
+	// Combine individual public keys of group members to get group public key.
+	member.CombineGroupPublicKey()
 
-				if member.groupPublicKey.Cmp(test.expectedGroupPublicKey) != 0 {
-					t.Fatalf(
-						"incorrect group public key for member %d\nexpected: %v\nactual:   %v\n",
-						member.ID,
-						test.expectedGroupPublicKey,
-						member.groupPublicKey,
-					)
-				}
-			}
-		})
+	if member.groupPublicKey.Cmp(expectedGroupPublicKey) != 0 {
+		t.Fatalf(
+			"incorrect group public key for member %d\nexpected: %v\nactual:   %v\n",
+			member.ID,
+			expectedGroupPublicKey,
+			member.groupPublicKey,
+		)
 	}
 }
 
@@ -236,6 +201,8 @@ func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Com
 	var combiningMembers []*CombiningMember
 	// TODO Should be handled by the `.Next()`` function
 	for _, rm := range reconstructingMembers {
+		rm.reconstructedIndividualPublicKeys = make(map[int]*big.Int)
+
 		combiningMembers = append(combiningMembers,
 			&CombiningMember{
 				ReconstructingMember: rm,
