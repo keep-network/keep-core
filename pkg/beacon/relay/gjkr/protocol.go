@@ -407,6 +407,8 @@ func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
 	)
 
 	if expectedProduct.Cmp(product) == 0 {
+		// TODO The accusation turned out to be unfounded. Should we add accused
+		// member's individual public key to receivedValidPeerPublicKeySharePoints?
 		return senderID, nil
 	}
 	return accusedID, nil
@@ -424,8 +426,9 @@ type DisqualifiedShares struct {
 // private keys `z_m` from provided revealed shares calculated by disqualified
 // members for peer members.
 //
-// Function can be executed for members that presented valid shares and commitments
-// but were disqualified on public key shares validation stage (Phase 9).
+// Function need to be executed for qualified members that presented valid shares
+// and commitments and were approved for Phase 6 but were disqualified on public
+// key shares validation stage (Phase 9).
 //
 // It stores a map of reconstructed individual private keys for each disqualified
 // member in a current member's reconstructedIndividualPrivateKeys field:
@@ -534,6 +537,16 @@ func pow(x, y int) *big.Int {
 //
 // `Y = Π y_j mod p` for `j`, where `y_j` is individual public key of each qualified
 // group member.
+//
+// This function combines individual public keys of all Qualified Members who were
+// approved for Phase 6. Three categories of individual public keys are considered:
+// 1. Current member's individual public key.
+// 2. Peer members' individual public keys - for members who passed a public key
+//    share points validation in Phase 8 and accusations resolution in Phase 9 and
+//    are still active group members.
+// 3. Disqualified members' individual public keys - for members who were disqualified
+//    in Phase 9 and theirs individual private and public keys were reconstructed
+//    in Phase 11.
 //
 // See Phase 12 of the protocol specification.
 func (rm *CombiningMember) CombineGroupPublicKey() {
