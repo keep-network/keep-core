@@ -6,6 +6,12 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 )
 
+// KeyPair represents the generated ephemeral private and public key pair
+type KeyPair struct {
+	PrivateKey *PrivateKey
+	PublicKey  *PublicKey
+}
+
 // PrivateKey is an ephemeral private elliptic curve key.
 type PrivateKey btcec.PrivateKey
 
