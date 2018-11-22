@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 type memberCore struct {
@@ -13,6 +14,18 @@ type memberCore struct {
 	group *Group
 	// DKG Protocol configuration parameters.
 	protocolConfig *DKG
+}
+
+// EphemeralKeyPair represents the public and private keys we generate for a
+// given group member.
+//
+// Generated in Phase 1 of the protocol.
+type EphemeralKeyPair struct {
+	// Id of the group member we generated an ephemeral key pair for
+	id int
+
+	ephemeralPrivateKey *ephemeral.PrivateKey // X_ij
+	ephemeralPublicKey  *ephemeral.PublicKey  // Y_ij
 }
 
 // CandidateGroupMember represents one member in a threshold key sharing group, after
