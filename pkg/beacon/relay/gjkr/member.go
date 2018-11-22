@@ -14,6 +14,8 @@ type memberCore struct {
 	group *Group
 	// DKG Protocol configuration parameters.
 	protocolConfig *DKG
+	// Ephemeral key pairs we've formed with all group members
+	ephemeralKeys []*EphemeralKeyPair
 }
 
 // EphemeralKeyPair represents the public and private keys we generate for a
