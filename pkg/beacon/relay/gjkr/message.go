@@ -22,7 +22,7 @@ type EphemeralPublicKeyMessage struct {
 	senderID   int // i
 	receiverID int // j
 
-	ephemeralPublicKey ephemeral.PublicKey // Y_ij
+	ephemeralPublicKey *ephemeral.PublicKey // Y_ij
 }
 
 // MemberCommitmentsMessage is a message payload that carries the sender's
