@@ -39,11 +39,13 @@ func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() (
 		}
 
 		// save the generated ephemeral material to our state
-		cgm.ephemeralKeys = append(cgm.ephemeralKeys, &EphemeralKeyPair{
-			id:                  member,
-			ephemeralPrivateKey: ephemeralPriv,
-			ephemeralPublicKey:  ephemeralPub,
-		})
+		cgm.ephemeralKeyPairs = append(cgm.ephemeralKeyPairs,
+			&EphemeralKeyPair{
+				id:                  member,
+				ephemeralPrivateKey: ephemeralPriv,
+				ephemeralPublicKey:  ephemeralPub,
+			},
+		)
 
 		// add to our list of ephemeral public keys to broadcast
 		publicKeyMessages = append(publicKeyMessages,
