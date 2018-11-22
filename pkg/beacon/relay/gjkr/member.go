@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 type memberCore struct {
@@ -23,6 +24,10 @@ type memberCore struct {
 // Executes Phase 3 and Phase 4 of the protocol.
 type CommittingMember struct {
 	*memberCore
+
+	// Symmetric keys used to encrypt confidential information,
+	//generated individually for each other group member
+	symmetricKeys map[int]*ephemeral.SymmetricKey
 
 	// Pedersen VSS scheme used to calculate commitments.
 	vss *pedersen.VSS
