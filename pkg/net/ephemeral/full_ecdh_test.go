@@ -8,16 +8,20 @@ func TestFullEcdh(t *testing.T) {
 	//
 
 	// player 1
-	privKey1, pubKey1, err := GenerateKeypair()
+	player1KeyPair, err := GenerateKeypair()
 	if err != nil {
 		t.Fatal(err)
 	}
+	privKey1 := player1KeyPair.PrivateKey
+	pubKey1 := player1KeyPair.PublicKey
 
 	// player 2
-	privKey2, pubKey2, err := GenerateKeypair()
+	player2KeyPair, err := GenerateKeypair()
 	if err != nil {
 		t.Fatal(err)
 	}
+	privKey2 := player2KeyPair.PrivateKey
+	pubKey2 := player2KeyPair.PublicKey
 
 	//
 	// players exchange public keys and perform ECDH

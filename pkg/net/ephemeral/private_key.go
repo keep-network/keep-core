@@ -24,16 +24,19 @@ func curve() *btcec.KoblitzCurve {
 
 // GenerateKeypair generates a pair of public and private ephemeral keys
 // that can be used as an input for ECDH.
-func GenerateKeypair() (*PrivateKey, *PublicKey, error) {
+func GenerateKeypair() (*KeyPair, error) {
 	ecdsaKey, err := btcec.NewPrivateKey(curve())
 	if err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"could not generate new ephemeral keypair [%v]",
 			err,
 		)
 	}
 
-	return (*PrivateKey)(ecdsaKey), (*PublicKey)(&ecdsaKey.PublicKey), nil
+	return &KeyPair{
+		PrivateKey: (*PrivateKey)(ecdsaKey),
+		PublicKey:  (*PublicKey)(&ecdsaKey.PublicKey),
+	}, nil
 }
 
 // UnmarshalPrivateKey turns a slice of bytes into a `PrivateKey`.
