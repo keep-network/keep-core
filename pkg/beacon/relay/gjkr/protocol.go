@@ -30,7 +30,15 @@ func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() (
 	var publicKeyMessages []*EphemeralPublicKeyMessage
 	for _, member := range cgm.group.memberIDs {
 		if member == cgm.ID {
-			// don’t build a symmetric key with ourselves
+			// add empty reference to maintain the correct index
+			cgm.ephemeralKeyPairs = append(cgm.ephemeralKeyPairs,
+				&EphemeralKeyPair{},
+			)
+			publicKeyMessages = append(publicKeyMessages,
+				&EphemeralPublicKeyMessage{},
+			)
+
+			// don’t actually generate a symmetric key with ourselves
 			continue
 		}
 		ephemeralPriv, ephemeralPub, err := ephemeral.GenerateKeypair()
