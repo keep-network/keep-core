@@ -13,6 +13,8 @@ package gjkr
 import (
 	"fmt"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 // CalculateMembersSharesAndCommitments takes the known candidate list, and
@@ -20,8 +22,39 @@ import (
 // shares are broadcasted to every valid cadidate member.
 //
 // See Phase 1 of the protocol specification.
-func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
-	return nil
+func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() (
+	[]*EphemeralPublicKeyMessage,
+	error,
+) {
+	// Calculate ephemeral public keys for other group members
+	var publicKeyMessages []*EphemeralPublicKeyMessage
+	for _, member := range cgm.group.memberIDs {
+		if member == cgm.ID {
+			// don’t build a symmetric key with ourselves
+			continue
+		}
+		ephemeralPriv, ephemeralPub, err := ephemeral.GenerateKeypair()
+		if err != nil {
+			return nil, err
+		}
+
+		// save the generated ephemeral material to our state
+		cgm.ephemeralKeys = append(cgm.ephemeralKeys, &EphemeralKeyPair{
+			id:                  member,
+			ephemeralPrivateKey: ephemeralPriv,
+			ephemeralPublicKey:  ephemeralPub,
+		})
+
+		// add to our list of ephemeral public keys to broadcast
+		publicKeyMessages = append(publicKeyMessages,
+			&EphemeralPublicKeyMessage{
+				senderID:           cgm.ID,
+				receiverID:         member,
+				ephemeralPublicKey: ephemeralPub,
+			},
+		)
+	}
+	return publicKeyMessages, nil
 }
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
@@ -71,7 +104,8 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 				receiverID: receiverID,
 				shareS:     memberShareS,
 				shareT:     memberShareT,
-			})
+			},
+		)
 	}
 
 	commitments := make([]*big.Int, len(coefficientsA))
