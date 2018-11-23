@@ -56,13 +56,14 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 			continue
 		}
 
-		sharesMessages = append(sharesMessages,
-			&PeerSharesMessage{
-				senderID:   cm.ID,
-				receiverID: receiverID,
-				shareS:     memberShareS,
-				shareT:     memberShareT,
-			})
+		message := newPeerSharesMessage(
+			cm.ID,
+			receiverID,
+			memberShareS,
+			memberShareT,
+		)
+
+		sharesMessages = append(sharesMessages, message)
 	}
 
 	commitments := make([]*big.Int, len(coefficientsA))
@@ -146,16 +147,16 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
 				// where: j is sender's ID, i is current member ID, T is threshold.
 				if !cm.areSharesValidAgainstCommitments(
-					sharesMessage.shareS, sharesMessage.shareT, // s_ji, t_ji
+					sharesMessage.shareS(), sharesMessage.shareT(), // s_ji, t_ji
 					commitmentsMessage.commitments, // C_j
-					cm.ID,                          // i
+					cm.ID, // i
 				) {
 					accusedMembersIDs = append(accusedMembersIDs,
 						commitmentsMessage.senderID)
 					break
 				}
-				cm.receivedValidSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
-				cm.receivedValidSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
+				cm.receivedValidSharesS[commitmentsMessage.senderID] = sharesMessage.shareS()
+				cm.receivedValidSharesT[commitmentsMessage.senderID] = sharesMessage.shareT()
 				cm.receivedValidPeerCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
 				break
 			}

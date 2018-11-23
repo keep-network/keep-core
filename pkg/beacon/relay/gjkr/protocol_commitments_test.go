@@ -67,15 +67,30 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		},
 		"negative validation - changed share S": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
-				messages[0].shareS = testutils.NewRandInt(messages[0].shareS, config.Q)
+				messages[0] = newPeerSharesMessage(
+					messages[0].senderID,
+					messages[0].receiverID,
+					testutils.NewRandInt(messages[0].shareS(), config.Q),
+					messages[0].shareT(),
+				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{2},
 		},
 		"negative validation - changed two shares T": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
-				messages[1].shareT = testutils.NewRandInt(messages[1].shareT, config.Q)
-				messages[2].shareT = testutils.NewRandInt(messages[2].shareT, config.Q)
+				messages[1] = newPeerSharesMessage(
+					messages[1].senderID,
+					messages[1].receiverID,
+					testutils.NewRandInt(messages[1].shareS(), config.Q),
+					messages[1].shareT(),
+				)
+				messages[2] = newPeerSharesMessage(
+					messages[2].senderID,
+					messages[2].receiverID,
+					testutils.NewRandInt(messages[2].shareS(), config.Q),
+					messages[2].shareT(),
+				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{3, 4},

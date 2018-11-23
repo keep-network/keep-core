@@ -46,8 +46,23 @@ type PeerSharesMessage struct {
 	senderID   int // i
 	receiverID int // j
 
-	shareS *big.Int // s_ij
-	shareT *big.Int // t_ij
+	_shareS *big.Int // s_ij
+	_shareT *big.Int // t_ij
+}
+
+func newPeerSharesMessage(
+	senderID, receiverID int,
+	shareS, shareT *big.Int,
+) *PeerSharesMessage {
+	return &PeerSharesMessage{senderID, receiverID, shareS, shareT}
+}
+
+func (psm *PeerSharesMessage) shareS() *big.Int {
+	return psm._shareS
+}
+
+func (psm *PeerSharesMessage) shareT() *big.Int {
+	return psm._shareT
 }
 
 // SecretSharesAccusationsMessage is a message payload that carries all of the
