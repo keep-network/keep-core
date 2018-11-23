@@ -17,7 +17,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// CalculateMembersSharesAndCommitments takes the known candidate list, and
+// CalculateEphemeralKeyPair takes the known candidate list, and
 // generates an ephemeral ECDH keypair with every other candidate member. These
 // shares are broadcasted to every valid cadidate member.
 //
