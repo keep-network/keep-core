@@ -32,11 +32,17 @@ type CommittingMember struct {
 	//
 	// This is a private value and should not be exposed.
 	secretCoefficients []*big.Int
-	// Shares calculated by the current member for themself. They are defined as
-	// `s_ii` and `t_ii` respectively across the protocol specification.
+	// Commitments to secret coefficients `C_ik`.
+	commitments []*big.Int
+
+	// Shares calculated by the current member for other group members including
+	// themself. They are defined as `s_ij` and `t_ij` respectively across the
+	// protocol specification.
 	//
-	// These are private values and should not be exposed.
-	selfSecretShareS, selfSecretShareT *big.Int
+	// These are private values, the share should be exposed only to member for
+	// whom it was calculated.
+	evaluatedSecretSharesS, evaluatedSecretSharesT map[int]*big.Int
+
 	// Shares calculated for the current member by peer group members which passed
 	// the validation.
 	//
@@ -46,6 +52,10 @@ type CommittingMember struct {
 	// Commitments to coefficients received from peer group members which passed
 	// the validation.
 	receivedValidPeerCommitments map[int][]*big.Int
+
+	// List of peer members IDs accused after their shares and commitments
+	// verification.
+	accusedMembersIDs []int
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,

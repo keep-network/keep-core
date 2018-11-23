@@ -22,64 +22,41 @@ import (
 // `b` coefficients.
 //
 // See Phase 3 of the protocol specification.
-func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
-	[]*PeerSharesMessage,
-	*MemberCommitmentsMessage,
-	error,
-) {
+func (cm *CommittingMember) CalculateMembersSharesAndCommitments() error {
 	polynomialDegree := cm.group.dishonestThreshold
 	coefficientsA, err := generatePolynomial(polynomialDegree, cm.protocolConfig)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot generate polynomial [%v]", err)
+		return fmt.Errorf("cannot generate polynomial [%v]", err)
 	}
 	coefficientsB, err := generatePolynomial(polynomialDegree, cm.protocolConfig)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot generate hiding polynomial [%v]", err)
+		return fmt.Errorf("cannot generate hiding polynomial [%v]", err)
 	}
 
 	cm.secretCoefficients = coefficientsA
 
 	// Calculate shares for other group members by evaluating polynomials defined
 	// by coefficients `a_i` and `b_i`
-	var sharesMessages []*PeerSharesMessage
+	cm.evaluatedSecretSharesS = make(map[int]*big.Int, len(cm.group.MemberIDs()))
+	cm.evaluatedSecretSharesT = make(map[int]*big.Int, len(cm.group.MemberIDs()))
+
 	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
-		memberShareS := cm.evaluateMemberShare(receiverID, coefficientsA)
+		cm.evaluatedSecretSharesS[receiverID] = cm.evaluateMemberShare(receiverID, coefficientsA)
 		// t_j = g_(j) mod q
-		memberShareT := cm.evaluateMemberShare(receiverID, coefficientsB)
-
-		// Check if calculated shares for the current member. If true store them
-		// without sharing in a message.
-		if cm.ID == receiverID {
-			cm.selfSecretShareS = memberShareS
-			cm.selfSecretShareT = memberShareT
-			continue
-		}
-
-		sharesMessages = append(sharesMessages,
-			&PeerSharesMessage{
-				senderID:   cm.ID,
-				receiverID: receiverID,
-				shareS:     memberShareS,
-				shareT:     memberShareT,
-			})
+		cm.evaluatedSecretSharesT[receiverID] = cm.evaluateMemberShare(receiverID, coefficientsB)
 	}
 
-	commitments := make([]*big.Int, len(coefficientsA))
-	for k := range commitments {
+	cm.commitments = make([]*big.Int, len(coefficientsA))
+	for k := range cm.commitments {
 		// C_k = g^a_k * h^b_k mod p
-		commitments[k] = cm.vss.CalculateCommitment(
+		cm.commitments[k] = cm.vss.CalculateCommitment(
 			coefficientsA[k],
 			coefficientsB[k],
 			cm.protocolConfig.P,
 		)
 	}
-	commitmentsMessage := &MemberCommitmentsMessage{
-		senderID:    cm.ID,
-		commitments: commitments,
-	}
-
-	return sharesMessages, commitmentsMessage, nil
+	return nil
 }
 
 // generatePolynomial generates a random polynomial over Z_q of a given degree.
@@ -120,57 +97,29 @@ func (cm *CommittingMember) evaluateMemberShare(memberID int, coefficients []*bi
 	return result
 }
 
-// VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments
-// received in messages from peer group members.
-// It returns accusation message with ID of members for which verification failed.
-//
-// If cannot match commitments message with shares message for given sender then
-// error is returned.
+// VerifyReceivedSharesAndCommitments verifies shares and commitments received
+// from peer group member. It stores valid data for the current member or if
+// validation failed it adds ID of the peer member to the accused members list.
 //
 // See Phase 4 of the protocol specification.
-func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
-	sharesMessages []*PeerSharesMessage,
-	commitmentsMessages []*MemberCommitmentsMessage,
-) (*SecretSharesAccusationsMessage, error) {
-	var accusedMembersIDs []int
-
-	for _, commitmentsMessage := range commitmentsMessages {
-		// Find share message sent by the same member who sent commitment message
-		sharesMessageFound := false
-		for _, sharesMessage := range sharesMessages {
-			if sharesMessage.senderID == commitmentsMessage.senderID {
-				sharesMessageFound = true
-
-				// Check if `commitmentsProduct == expectedProduct`
-				// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]
-				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
-				// where: j is sender's ID, i is current member ID, T is threshold.
-				if !cm.areSharesValidAgainstCommitments(
-					sharesMessage.shareS, sharesMessage.shareT, // s_ji, t_ji
-					commitmentsMessage.commitments, // C_j
-					cm.ID,                          // i
-				) {
-					accusedMembersIDs = append(accusedMembersIDs,
-						commitmentsMessage.senderID)
-					break
-				}
-				cm.receivedValidSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
-				cm.receivedValidSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
-				cm.receivedValidPeerCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
-				break
-			}
-		}
-		if !sharesMessageFound {
-			return nil, fmt.Errorf("cannot find shares message from member %d",
-				commitmentsMessage.senderID,
-			)
-		}
+func (cm *CommittingMember) VerifyReceivedSharesAndCommitments(
+	peerID int, shareS, shareT *big.Int, commitments []*big.Int,
+) {
+	// Check if `commitmentsProduct == expectedProduct`
+	// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]
+	// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
+	// where: j is peer's ID, i is current member ID, T is threshold.
+	if cm.areSharesValidAgainstCommitments(
+		shareS, shareT, // s_ji, t_ji
+		commitments, // C_j
+		cm.ID,       // i
+	) {
+		cm.receivedValidSharesS[peerID] = shareS
+		cm.receivedValidSharesT[peerID] = shareT
+		cm.receivedValidPeerCommitments[peerID] = commitments
+	} else {
+		cm.accusedMembersIDs = append(cm.accusedMembersIDs, peerID)
 	}
-
-	return &SecretSharesAccusationsMessage{
-		senderID:   cm.ID,
-		accusedIDs: accusedMembersIDs,
-	}, nil
 }
 
 // areSharesValidAgainstCommitments verifies if commitments are valid for passed
@@ -270,7 +219,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
 //
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
-	combinedSharesS := qm.selfSecretShareS // s_ii
+	combinedSharesS := qm.evaluatedSecretSharesS[qm.ID] // s_ii
 	for _, s := range qm.receivedValidSharesS {
 		combinedSharesS = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesS, s),
@@ -278,7 +227,7 @@ func (qm *QualifiedMember) CombineMemberShares() {
 		)
 	}
 
-	combinedSharesT := qm.selfSecretShareT // t_ii
+	combinedSharesT := qm.evaluatedSecretSharesT[qm.ID] // t_ii
 	for _, t := range qm.receivedValidSharesT {
 		combinedSharesT = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesT, t),
