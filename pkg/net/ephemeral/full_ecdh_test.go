@@ -8,13 +8,13 @@ func TestFullEcdh(t *testing.T) {
 	//
 
 	// player 1
-	privKey1, pubKey1, err := GenerateKeypair()
+	keyPair1, err := GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// player 2
-	privKey2, pubKey2, err := GenerateKeypair()
+	keyPair2, err := GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,10 +24,10 @@ func TestFullEcdh(t *testing.T) {
 	//
 
 	// player 1:
-	symmetricKey1 := privKey1.Ecdh(pubKey2)
+	symmetricKey1 := keyPair1.PrivateKey.Ecdh(keyPair2.PublicKey)
 
 	// player 2:
-	symmetricKey2 := privKey2.Ecdh(pubKey1)
+	symmetricKey2 := keyPair2.PrivateKey.Ecdh(keyPair1.PublicKey)
 
 	//
 	// players use symmetric key for encryption/decryption
