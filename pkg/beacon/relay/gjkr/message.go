@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -69,26 +70,58 @@ func newPeerSharesMessage(
 	return &PeerSharesMessage{senderID, receiverID, encryptedS, encryptedT}, nil
 }
 
-func (psm *PeerSharesMessage) shareS(key ephemeral.SymmetricKey) (*big.Int, error) {
+func (psm *PeerSharesMessage) shareS(key ephemeral.SymmetricKey) (s *big.Int, err error) {
+	// secretbox Decrypt sometimes panics for invalid input
+	defer func() {
+		if recover() != nil {
+			err = errors.New("could not decrypt S share")
+		}
+	}()
+
 	decryptedS, err := key.Decrypt(psm.encryptedShareS)
 	if err != nil {
-		return nil, fmt.Errorf("could not evaluate S share [%v]", err)
+		return nil, fmt.Errorf("could not decrypt S share [%v]", err)
 	}
 
-	return new(big.Int).SetBytes(decryptedS), nil
+	s = new(big.Int).SetBytes(decryptedS)
+	err = nil
+
+	return
 }
 
-func (psm *PeerSharesMessage) shareT(key ephemeral.SymmetricKey) (*big.Int, error) {
+func (psm *PeerSharesMessage) shareT(key ephemeral.SymmetricKey) (s *big.Int, err error) {
+	// secretbox Decrypt sometimes panics for invalid input
+	defer func() {
+		if recover() != nil {
+			err = errors.New("could not decrypt T share")
+		}
+	}()
+
 	decryptedT, err := key.Decrypt(psm.encryptedShareT)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate T share [%v]", err)
 	}
 
-	return new(big.Int).SetBytes(decryptedT), nil
+	s = new(big.Int).SetBytes(decryptedT)
+	err = nil
+
+	return
 }
 
-func (psm *PeerSharesMessage) IsValid() bool {
-	return true // TODO: implement
+// CanDecrypt checks if the PeerSharesMessage can be successfully decrypted
+// with the provided key. This function should be called before the message
+// is passed to DKG protocol for processing. It's possible that malicious
+// group member can send an invalid message. In such case, it should be rejected
+// to do not cause a failure in DKG protocol.
+func (psm *PeerSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
+	if _, err := psm.shareS(key); err != nil {
+		return false
+	}
+	if _, err := psm.shareT(key); err != nil {
+		return false
+	}
+
+	return true
 }
 
 // SecretSharesAccusationsMessage is a message payload that carries all of the
