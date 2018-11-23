@@ -6,10 +6,12 @@ import (
 )
 
 func TestMarshalUnmarshalPublicKey(t *testing.T) {
-	_, pubKey, err := GenerateKeypair()
+	keyPair, err := GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	pubKey := keyPair.PublicKey
 
 	marshalled := pubKey.Marshal()
 
@@ -24,10 +26,12 @@ func TestMarshalUnmarshalPublicKey(t *testing.T) {
 }
 
 func TestMarshalUnmarshalPrivateKey(t *testing.T) {
-	privKey, _, err := GenerateKeypair()
+	keyPair, err := GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	privKey := keyPair.PrivateKey
 
 	marshalled := privKey.Marshal()
 
