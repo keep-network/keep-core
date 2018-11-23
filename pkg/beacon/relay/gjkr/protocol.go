@@ -68,13 +68,20 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 			)
 		}
 
-		message := newPeerSharesMessage(
+		message, err := newPeerSharesMessage(
 			cm.ID,
 			receiverID,
 			memberShareS,
 			memberShareT,
 			symmetricKey,
 		)
+		if err != nil {
+			return nil, nil, fmt.Errorf(
+				"could not create PeerSharesMessage for receiver %v [%v]",
+				receiverID,
+				err,
+			)
+		}
 
 		sharesMessages = append(sharesMessages, message)
 	}
@@ -142,6 +149,10 @@ func (cm *CommittingMember) evaluateMemberShare(memberID int, coefficients []*bi
 // error is returned. Also, error is returned if the member does not have
 // a symmetric encryption key established with sender of a message.
 //
+// All the received PeerSharesMessage should be validated before they are passed
+// to this function. It should never happen that the message can't be decrypted
+// by this function.
+//
 // See Phase 4 of the protocol specification.
 func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	sharesMessages []*PeerSharesMessage,
@@ -167,8 +178,22 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 				}
 
 				// Decrypt shares using symmetric key established with sender.
-				shareS := sharesMessage.shareS(symmetricKey) // s_ji
-				shareT := sharesMessage.shareT(symmetricKey) // t_ji
+				// Since all the message are validated prior to passing to this
+				// function, decryption error should never happen.
+				shareS, err := sharesMessage.shareS(symmetricKey) // s_ji
+				if err != nil {
+					return nil, fmt.Errorf(
+						"could not decrypt the message [%v]",
+						err,
+					)
+				}
+				shareT, err := sharesMessage.shareT(symmetricKey) // t_ji
+				if err != nil {
+					return nil, fmt.Errorf(
+						"could not decrypt the message [%v]",
+						err,
+					)
+				}
 
 				// Check if `commitmentsProduct == expectedProduct`
 				// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]

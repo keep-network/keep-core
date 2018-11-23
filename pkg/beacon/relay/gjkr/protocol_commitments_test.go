@@ -57,6 +57,46 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		t.Fatalf("predefined config initialization failed [%s]", err)
 	}
 
+	var alterPeerSharesMessage = func(
+		message *PeerSharesMessage,
+		symmetricKey ephemeral.SymmetricKey,
+		alterS bool,
+		alterT bool,
+	) *PeerSharesMessage {
+		oldShareS, err := message.shareS(symmetricKey)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		oldShareT, err := message.shareT(symmetricKey)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var newShareS = oldShareS
+		var newShareT = oldShareT
+
+		if alterS {
+			newShareS = testutils.NewRandInt(oldShareS, config.Q)
+		}
+		if alterT {
+			newShareT = testutils.NewRandInt(oldShareT, config.Q)
+		}
+
+		msg, err := newPeerSharesMessage(
+			message.senderID,
+			message.receiverID,
+			newShareS,
+			newShareT,
+			symmetricKey,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return msg
+	}
+
 	var tests = map[string]struct {
 		modifyPeerShareMessages func(
 			messages []*PeerSharesMessage,
@@ -76,13 +116,11 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			) {
 				// current member ID = 1, we modify first message on the list
 				// so it's a message from member with ID = 2
-				symmetricKey := symmetricKeys[messages[0].senderID]
-				messages[0] = newPeerSharesMessage(
-					messages[0].senderID,
-					messages[0].receiverID,
-					testutils.NewRandInt(messages[0].shareS(symmetricKey), config.Q),
-					messages[0].shareT(symmetricKey),
-					symmetricKey,
+				messages[0] = alterPeerSharesMessage(
+					messages[0],
+					symmetricKeys[messages[0].senderID],
+					true,
+					false,
 				)
 			},
 			expectedError:      nil,
@@ -95,24 +133,20 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			) {
 				// current member ID = 1, we modify second message on the list
 				// so it's a message from member with ID = 3
-				symmetricKey1 := symmetricKeys[messages[1].senderID]
-				messages[1] = newPeerSharesMessage(
-					messages[1].senderID,
-					messages[1].receiverID,
-					messages[1].shareS(symmetricKey1),
-					testutils.NewRandInt(messages[1].shareT(symmetricKey1), config.Q),
-					symmetricKey1,
+				messages[1] = alterPeerSharesMessage(
+					messages[1],
+					symmetricKeys[messages[1].senderID],
+					false,
+					true,
 				)
 
 				// current member ID = 1, we modify third message on the list
 				// so it's a message from member with ID = 4
-				symmetricKey2 := symmetricKeys[messages[2].senderID]
-				messages[2] = newPeerSharesMessage(
-					messages[2].senderID,
-					messages[2].receiverID,
-					messages[2].shareS(symmetricKey2),
-					testutils.NewRandInt(messages[2].shareT(symmetricKey2), config.Q),
-					symmetricKey2,
+				messages[2] = alterPeerSharesMessage(
+					messages[2],
+					symmetricKeys[messages[2].senderID],
+					false,
+					true,
 				)
 			},
 			expectedError:      nil,

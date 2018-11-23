@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -46,24 +47,48 @@ type PeerSharesMessage struct {
 	senderID   int // i
 	receiverID int // j
 
-	_shareS *big.Int // s_ij
-	_shareT *big.Int // t_ij
+	encryptedShareS []byte // s_ij
+	encryptedShareT []byte // t_ij
 }
 
 func newPeerSharesMessage(
 	senderID, receiverID int,
 	shareS, shareT *big.Int,
 	symmetricKey ephemeral.SymmetricKey,
-) *PeerSharesMessage {
-	return &PeerSharesMessage{senderID, receiverID, shareS, shareT}
+) (*PeerSharesMessage, error) {
+	encryptedS, err := symmetricKey.Encrypt(shareS.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("could not create PeerSharesMessage [%v]", err)
+	}
+
+	encryptedT, err := symmetricKey.Encrypt(shareT.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("could not create PeerSharesMessage [%v]", err)
+	}
+
+	return &PeerSharesMessage{senderID, receiverID, encryptedS, encryptedT}, nil
 }
 
-func (psm *PeerSharesMessage) shareS(key ephemeral.SymmetricKey) *big.Int {
-	return psm._shareS
+func (psm *PeerSharesMessage) shareS(key ephemeral.SymmetricKey) (*big.Int, error) {
+	decryptedS, err := key.Decrypt(psm.encryptedShareS)
+	if err != nil {
+		return nil, fmt.Errorf("could not evaluate S share [%v]", err)
+	}
+
+	return new(big.Int).SetBytes(decryptedS), nil
 }
 
-func (psm *PeerSharesMessage) shareT(key ephemeral.SymmetricKey) *big.Int {
-	return psm._shareT
+func (psm *PeerSharesMessage) shareT(key ephemeral.SymmetricKey) (*big.Int, error) {
+	decryptedT, err := key.Decrypt(psm.encryptedShareT)
+	if err != nil {
+		return nil, fmt.Errorf("could not evaluate T share [%v]", err)
+	}
+
+	return new(big.Int).SetBytes(decryptedT), nil
+}
+
+func (psm *PeerSharesMessage) IsValid() bool {
+	return true // TODO: implement
 }
 
 // SecretSharesAccusationsMessage is a message payload that carries all of the
