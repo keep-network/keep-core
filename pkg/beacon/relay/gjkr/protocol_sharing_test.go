@@ -12,36 +12,42 @@ import (
 )
 
 func TestCombineReceivedShares(t *testing.T) {
-	selfShareS := big.NewInt(9)
-	selfShareT := big.NewInt(19)
 	q := big.NewInt(59)
 
+	evaluatedSecretSharesS := make(map[int]*big.Int)
+	evaluatedSecretSharesT := make(map[int]*big.Int)
 	receivedShareS := make(map[int]*big.Int)
 	receivedShareT := make(map[int]*big.Int)
-	// Simulate shares received from peer members.
-	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
-	// slice indices.
+
 	for i := 0; i <= 5; i++ {
+		evaluatedSecretSharesS[100+i] = big.NewInt(int64(50 + i))
+		evaluatedSecretSharesT[100+i] = big.NewInt(int64(60 + i))
+		// Simulate shares received from peer members.
+		// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
+		// slice indices.
 		receivedShareS[100+i] = big.NewInt(int64(10 + i))
 		receivedShareT[100+i] = big.NewInt(int64(20 + i))
 	}
 
-	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 59 = 25
-	expectedShareS := big.NewInt(25)
-	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 59 = 36
-	expectedShareT := big.NewInt(36)
+	// 50 + 10 + 11 + 12 + 13 + 14 + 15 = 125 mod 59 = 7
+	expectedShareS := big.NewInt(7)
+	// 60 + 20 + 21 + 22 + 23 + 24 + 25 = 195 mod 59 = 18
+	expectedShareT := big.NewInt(18)
 
 	config := &DKG{Q: q}
 	member := &QualifiedMember{
 		SharesJustifyingMember: &SharesJustifyingMember{
 			CommittingMember: &CommittingMember{
-				memberCore: &memberCore{
-					protocolConfig: config,
+				LocalMember: &LocalMember{
+					memberCore: &memberCore{
+						ID:             100,
+						protocolConfig: config,
+					},
 				},
-				selfSecretShareS:     selfShareS,
-				selfSecretShareT:     selfShareT,
-				receivedValidSharesS: receivedShareS,
-				receivedValidSharesT: receivedShareT,
+				evaluatedSecretSharesS: evaluatedSecretSharesS,
+				evaluatedSecretSharesT: evaluatedSecretSharesT,
+				receivedValidSharesS:   receivedShareS,
+				receivedValidSharesT:   receivedShareT,
 			},
 		},
 	}
@@ -88,8 +94,10 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		QualifiedMember: &QualifiedMember{
 			SharesJustifyingMember: &SharesJustifyingMember{
 				CommittingMember: &CommittingMember{
-					memberCore: &memberCore{
-						protocolConfig: config,
+					LocalMember: &LocalMember{
+						memberCore: &memberCore{
+							protocolConfig: config,
+						},
 					},
 					vss:                vss,
 					secretCoefficients: secretCoefficients,

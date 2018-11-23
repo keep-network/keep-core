@@ -14,29 +14,55 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
 
-	var sharesMessages []*PeerSharesMessage
-	var commitmentsMessages []*MemberCommitmentsMessage
 	for _, member := range committingMembers {
-		sharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+		err := member.CalculateMembersSharesAndCommitments()
 		if err != nil {
 			t.Fatalf("shares and commitments calculation failed [%s]", err)
 		}
-		sharesMessages = append(sharesMessages, sharesMessage...)
-		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
+	}
+
+	receivedPeerSharesAndCommitments := make(map[int][]*SharesAndCommitments)
+
+	for _, member := range committingMembers {
+		for _, peer := range committingMembers {
+			if member.ID != peer.ID {
+				receivedPeerSharesAndCommitments[member.ID] = append(
+					receivedPeerSharesAndCommitments[member.ID],
+					&SharesAndCommitments{
+						peerID:      peer.ID,
+						shareS:      peer.evaluatedSecretSharesS[member.ID],
+						shareT:      peer.evaluatedSecretSharesT[member.ID],
+						commitments: peer.commitments,
+					})
+			}
+		}
 	}
 
 	for _, member := range committingMembers {
-		accusedSecretSharesMessage, err := member.VerifyReceivedSharesAndCommitmentsMessages(
-			filterPeerSharesMessage(sharesMessages, member.ID),
-			filterMemberCommitmentsMessages(commitmentsMessages, member.ID),
-		)
-		if err != nil {
-			t.Fatalf("shares and commitments verification failed [%s]", err)
+		for _, sharesAndCommitments := range receivedPeerSharesAndCommitments[member.ID] {
+			member.VerifyReceivedSharesAndCommitments(
+				sharesAndCommitments.peerID,
+				sharesAndCommitments.shareS, sharesAndCommitments.shareT,
+				sharesAndCommitments.commitments,
+			)
 		}
 
-		if len(accusedSecretSharesMessage.accusedIDs) > 0 {
+		if len(member.accusedMembersIDs) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedSecretSharesMessage.accusedIDs,
+				member.accusedMembersIDs,
+			)
+		}
+
+		if len(member.receivedValidSharesS) != groupSize-1 {
+			t.Fatalf("\nexpected: %d received shares S\nactual:   %d\n",
+				groupSize-1,
+				len(member.receivedValidSharesS),
+			)
+		}
+		if len(member.receivedValidSharesT) != groupSize-1 {
+			t.Fatalf("\nexpected: %d received shares T\nactual:   %d\n",
+				groupSize-1,
+				len(member.receivedValidSharesT),
 			)
 		}
 	}
@@ -62,22 +88,6 @@ func TestRoundTrip(t *testing.T) {
 			QualifiedMember:                       qm,
 			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
 		})
-	}
-
-	for _, member := range sharingMembers {
-		if len(member.receivedValidSharesS) != groupSize-1 {
-			t.Fatalf("\nexpected: %d received shares S\nactual:   %d\n",
-				groupSize-1,
-				len(member.receivedValidSharesS),
-			)
-		}
-		if len(member.receivedValidSharesT) != groupSize-1 {
-			t.Fatalf("\nexpected: %d received shares T\nactual:   %d\n",
-				groupSize-1,
-				len(member.receivedValidSharesT),
-			)
-		}
-		member.CombineMemberShares()
 	}
 
 	publicKeySharePointsMessages := make([]*MemberPublicKeySharePointsMessage, groupSize)
@@ -115,4 +125,10 @@ func TestRoundTrip(t *testing.T) {
 		member.CombineGroupPublicKey()
 	}
 
+}
+
+type SharesAndCommitments struct {
+	peerID         int
+	shareS, shareT *big.Int
+	commitments    []*big.Int
 }
