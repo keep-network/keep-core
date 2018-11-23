@@ -9,6 +9,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestCalculateSharesAndCommitments(t *testing.T) {
@@ -57,7 +58,10 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
+		modifyPeerShareMessages func(
+			messages []*PeerSharesMessage,
+			symmetricKeys map[int]ephemeral.SymmetricKey,
+		)
 		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
 		expectedError             error
 		expectedAccusedIDs        []int
@@ -66,30 +70,49 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			expectedError: nil,
 		},
 		"negative validation - changed share S": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
+			modifyPeerShareMessages: func(
+				messages []*PeerSharesMessage,
+				symmetricKeys map[int]ephemeral.SymmetricKey,
+			) {
+				// current member ID = 1, we modify first message on the list
+				// so it's a message from member with ID = 2
+				symmetricKey := symmetricKeys[messages[0].senderID]
 				messages[0] = newPeerSharesMessage(
 					messages[0].senderID,
 					messages[0].receiverID,
-					testutils.NewRandInt(messages[0].shareS(), config.Q),
-					messages[0].shareT(),
+					testutils.NewRandInt(messages[0].shareS(symmetricKey), config.Q),
+					messages[0].shareT(symmetricKey),
+					symmetricKey,
 				)
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []int{2},
 		},
 		"negative validation - changed two shares T": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
+			modifyPeerShareMessages: func(
+				messages []*PeerSharesMessage,
+				symmetricKeys map[int]ephemeral.SymmetricKey,
+			) {
+				// current member ID = 1, we modify second message on the list
+				// so it's a message from member with ID = 3
+				symmetricKey1 := symmetricKeys[messages[1].senderID]
 				messages[1] = newPeerSharesMessage(
 					messages[1].senderID,
 					messages[1].receiverID,
-					testutils.NewRandInt(messages[1].shareS(), config.Q),
-					messages[1].shareT(),
+					messages[1].shareS(symmetricKey1),
+					testutils.NewRandInt(messages[1].shareT(symmetricKey1), config.Q),
+					symmetricKey1,
 				)
+
+				// current member ID = 1, we modify third message on the list
+				// so it's a message from member with ID = 4
+				symmetricKey2 := symmetricKeys[messages[2].senderID]
 				messages[2] = newPeerSharesMessage(
 					messages[2].senderID,
 					messages[2].receiverID,
-					testutils.NewRandInt(messages[2].shareS(), config.Q),
-					messages[2].shareT(),
+					messages[2].shareS(symmetricKey2),
+					testutils.NewRandInt(messages[2].shareT(symmetricKey2), config.Q),
+					symmetricKey2,
 				)
 			},
 			expectedError:      nil,
@@ -129,7 +152,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			filteredCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
 
 			if test.modifyPeerShareMessages != nil {
-				test.modifyPeerShareMessages(filteredSharesMessages)
+				test.modifyPeerShareMessages(filteredSharesMessages, currentMember.symmetricKeys)
 			}
 			if test.modifyCommitmentsMessages != nil {
 				test.modifyCommitmentsMessages(filteredCommitmentsMessages)
@@ -213,37 +236,35 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 	if dkg == nil {
 		dkg, err = predefinedDKG()
 		if err != nil {
-			return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
+			return nil, fmt.Errorf("DKG Config initialization failed [%v]", err)
 		}
+	}
+
+	symmetricKeyMembers, err := initializeSymmetricKeyMembersGroup(
+		threshold,
+		groupSize,
+		dkg,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%v]", err)
 	}
 
 	vss, err := pedersen.NewVSS(crand.Reader, dkg.P, dkg.Q)
 	if err != nil {
-		return nil, fmt.Errorf("VSS initialization failed [%s]", err)
-	}
-
-	group := &Group{
-		groupSize:          groupSize,
-		dishonestThreshold: threshold,
+		return nil, fmt.Errorf("VSS initialization failed [%v]", err)
 	}
 
 	var members []*CommittingMember
-
-	for i := 1; i <= groupSize; i++ {
-		id := i
+	for _, member := range symmetricKeyMembers {
 		members = append(members, &CommittingMember{
-			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: dkg,
-			},
+			SymmetricKeyGeneratingMember: member,
 			vss:                          vss,
 			receivedValidSharesS:         make(map[int]*big.Int),
 			receivedValidSharesT:         make(map[int]*big.Int),
 			receivedValidPeerCommitments: make(map[int][]*big.Int),
 		})
-		group.RegisterMemberID(id)
 	}
+
 	return members, nil
 }
 

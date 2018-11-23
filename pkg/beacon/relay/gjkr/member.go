@@ -29,7 +29,7 @@ type SymmetricKeyGeneratingMember struct {
 
 	// Symmetric keys used to encrypt confidential information,
 	// generated individually for each other group member.
-	symmetricKeys map[int]*ephemeral.SymmetricKey
+	symmetricKeys map[int]ephemeral.SymmetricKey
 }
 
 // CommittingMember represents one member in a distributed key generation group,

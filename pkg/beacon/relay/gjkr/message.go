@@ -53,15 +53,16 @@ type PeerSharesMessage struct {
 func newPeerSharesMessage(
 	senderID, receiverID int,
 	shareS, shareT *big.Int,
+	symmetricKey ephemeral.SymmetricKey,
 ) *PeerSharesMessage {
 	return &PeerSharesMessage{senderID, receiverID, shareS, shareT}
 }
 
-func (psm *PeerSharesMessage) shareS() *big.Int {
+func (psm *PeerSharesMessage) shareS(key ephemeral.SymmetricKey) *big.Int {
 	return psm._shareS
 }
 
-func (psm *PeerSharesMessage) shareT() *big.Int {
+func (psm *PeerSharesMessage) shareT(key ephemeral.SymmetricKey) *big.Int {
 	return psm._shareT
 }
 

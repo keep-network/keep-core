@@ -35,8 +35,10 @@ func TestCombineReceivedShares(t *testing.T) {
 	member := &QualifiedMember{
 		SharesJustifyingMember: &SharesJustifyingMember{
 			CommittingMember: &CommittingMember{
-				memberCore: &memberCore{
-					protocolConfig: config,
+				SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
+					memberCore: &memberCore{
+						protocolConfig: config,
+					},
 				},
 				selfSecretShareS:     selfShareS,
 				selfSecretShareT:     selfShareT,
@@ -88,8 +90,10 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		QualifiedMember: &QualifiedMember{
 			SharesJustifyingMember: &SharesJustifyingMember{
 				CommittingMember: &CommittingMember{
-					memberCore: &memberCore{
-						protocolConfig: config,
+					SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
+						memberCore: &memberCore{
+							protocolConfig: config,
+						},
 					},
 					vss:                vss,
 					secretCoefficients: secretCoefficients,
