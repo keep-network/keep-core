@@ -65,12 +65,12 @@ library AltBn128 {
     }
 
     /**
-     * @dev yFromX computes a Y value for a point based on an X value. This
-     * computation is simply evaluating the curve equation for Y on a
+     * @dev g1YFromX computes a Y value for a G1 point based on an X value.
+     * This computation is simply evaluating the curve equation for Y on a
      * given X, and allows a point on the curve to be represented by just
      * an X value + a sign bit.
      */
-    function yFromX(uint256 x)
+    function g1YFromX(uint256 x)
         private
         view returns(uint256)
     {
@@ -78,12 +78,12 @@ library AltBn128 {
     }
 
     /**
-     * @dev gfP2YFromX computes a Y value for a gfP2 point based on an X value.
+     * @dev g2YFromX computes a Y value for a G2 point based on an X value.
      * This computation is simply evaluating the curve equation for Y on a
      * given X, and allows a point on the curve to be represented by just
      * an X value + a sign bit.
      */
-    function gfP2YFromX(uint256[2] _x)
+    function g2YFromX(uint256[2] _x)
         private
         pure returns(uint256[2] y)
     {
@@ -98,7 +98,7 @@ library AltBn128 {
         y = gfP2Multiply(gfP2Pow(gfP2Pow(x, a), a), gfP2Pow(x, b));
 
         // Multiply y by hexRoot constant to find correct y.
-        while (!x2y(x, y)) {
+        while (!g2X2y(x, y)) {
             y = gfP2Multiply(y, hexRoot());
         }
     }
@@ -118,7 +118,7 @@ library AltBn128 {
         uint256 y;
 
         while (true) {
-            y = yFromX(x);
+            y = g1YFromX(x);
             if (y > 0) {
                 return (x, y);
             }
@@ -179,7 +179,7 @@ library AltBn128 {
         mX = (m & ~mask) | (leadX >> 0);
 
         uint256 x = uint256(mX);
-        uint256 y = yFromX(x);
+        uint256 y = g1YFromX(x);
 
         if (parity(y) != (m[0] & byte(128)) >> 7) {
             y = p - y;
@@ -216,7 +216,7 @@ library AltBn128 {
         mX = (x1 & ~mask) | (leadX >> 0);
 
         uint256[2] memory x = [uint256(mX), uint256(x2)];
-        uint256[2] memory y = gfP2YFromX(x);
+        uint256[2] memory y = g2YFromX(x);
 
         if (parity(y[0]) != (m[0] & byte(128)) >> 7) {
             y[0] = p - y[0];
@@ -251,7 +251,7 @@ library AltBn128 {
     }
 
     /**
-     * @dev Return the sum of two gfP2 points.
+     * @dev Return the sum of two gfP2 field elements.
      */
     function gfP2Add(uint256[2] a, uint256[2] b) internal pure returns(uint256[2]) {
         return (
@@ -261,7 +261,7 @@ library AltBn128 {
     }
 
     /**
-     * @dev Return multiplication of two gfP2 points.
+     * @dev Return multiplication of two gfP2 field elements.
      */
     function gfP2Multiply(uint256[2] a, uint256[2] b) internal pure returns(uint256[2]) {
         return (
@@ -294,9 +294,9 @@ library AltBn128 {
     }
 
     /**
-     * @dev Return true if y^2 equals x.
+     * @dev Return true if G2 point's y^2 equals x.
      */
-    function x2y(uint256[2] x, uint256[2] y) internal pure returns(bool) {
+    function g2X2y(uint256[2] x, uint256[2] y) internal pure returns(bool) {
        
         uint256[2] memory y2;
         y2 = gfP2Pow(y, 2);
