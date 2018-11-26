@@ -22,12 +22,12 @@ import (
 // shares are broadcasted to every valid cadidate member.
 //
 // See Phase 1 of the protocol specification.
-func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
+func (em *CandidateGroupMember) CalculateEphemeralKeyPair() error {
 	// Calculate ephemeral public keys for every group member
-	for _, member := range cgm.group.memberIDs {
-		if member == cgm.ID {
+	for _, member := range em.group.memberIDs {
+		if member == em.ID {
 			// add empty reference to maintain the correct index
-			cgm.ephemeralKeys[member] = nil
+			em.ephemeralKeys[member] = nil
 
 			// don’t actually generate a symmetric key with ourselves
 			continue
@@ -39,7 +39,7 @@ func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
 		}
 
 		// save the generated ephemeral key to our state
-		cgm.ephemeralKeys[member] = ephemeralKey
+		em.ephemeralKeys[member] = ephemeralKey
 	}
 	return nil
 }
