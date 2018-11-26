@@ -95,21 +95,25 @@ contract TestAltBn128 {
         uint i;
         uint8 j;
 
-        uint256 p_1_x;
-        uint256 p_1_y;
-        uint256 p_2_x;
-        uint256 p_2_y;
+        uint256[2] memory p_1_x;
+        uint256[2] memory p_1_y;
+        uint256[2] memory p_2_x;
+        uint256[2] memory p_2_y;
 
         for (i = 0; i < randomG2.length; i++) {
             for (j = 0; j < randomG2.length; j++) {
 
-                (p_1_x, p_1_y) = AltBn128.add(randomG1[i], randomG1[j]);
-                (p_2_x, p_2_y) = AltBn128.add(randomG1[j], randomG1[i]);
+                p_1_x = AltBn128.gfP2Add([randomG2[i][0], randomG2[i][1]], [randomG2[j][0], randomG2[j][1]]);
+                p_1_y = AltBn128.gfP2Add([randomG2[i][2], randomG2[i][3]], [randomG2[j][2], randomG2[j][3]]);
 
-                Assert.equal(p_1_x, p_2_x, "Point addition should be commutative.");
-                Assert.equal(p_1_y, p_2_y, "Point addition should be commutative.");
+                p_2_x = AltBn128.gfP2Add([randomG2[j][0], randomG2[j][1]], [randomG2[i][0], randomG2[i][1]]);
+                p_2_y = AltBn128.gfP2Add([randomG2[j][2], randomG2[j][3]], [randomG2[i][2], randomG2[i][3]]);
 
-                Assert.isTrue(isOnCurve(p_1_x, p_1_y), "Added points should be on the curve.");
+                Assert.equal(p_1_x[0], p_2_x[0], "Point addition should be commutative.");
+                Assert.equal(p_1_x[1], p_2_x[1], "Point addition should be commutative.");
+                Assert.equal(p_1_y[0], p_2_y[0], "Point addition should be commutative.");
+                Assert.equal(p_1_y[1], p_2_y[1], "Point addition should be commutative.");
+
             }
         }
     }
