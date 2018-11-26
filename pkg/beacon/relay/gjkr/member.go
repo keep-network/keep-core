@@ -2,7 +2,6 @@ package gjkr
 
 import (
 	"math/big"
-	"sync"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -17,8 +16,6 @@ type memberCore struct {
 	protocolConfig *DKG
 	// remote member ID -> keypair
 	ephemeralKeys map[int]*ephemeral.KeyPair
-
-	ephemeralKeysLock sync.Mutex
 }
 
 // CandidateGroupMember represents one member in a threshold key sharing group, after
