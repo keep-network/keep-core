@@ -21,7 +21,6 @@ type BlockCounter interface {
 // StakeMonitor is an interface that provides ability to check and monitor
 // the stake for the provided address.
 type StakeMonitor interface {
-
 	// HasMinimumStake checks if the provided address staked enough to become
 	// a network operator. The minimum stake is an on-chain parameter.
 	HasMinimumStake(address string) (bool, error)

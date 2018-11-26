@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -14,6 +15,15 @@ type DKG struct {
 	P, Q *big.Int
 
 	chain *Chain
+
+	TNow             int             // T_now
+	TFirst           int             // T_first - Block height for the group - when the first result event occurred block height
+	AllResults       []result.Result // Set of all results
+	AllVotes         []ResultVotes   // Set of all results
+	LeadResult       int             // Position of lead result
+	AlreadySubmitted bool            //
+	TConflict        int
+	TMax             int
 }
 
 // Chain contains handle to interact with blockchain along with parameters specific
@@ -48,6 +58,10 @@ func (d *DKG) RandomQ() (*big.Int, error) {
 // ChainHandle returns blockchain handle that provides access to chain interactions.
 func (d *DKG) ChainHandle() chain.Handle {
 	return d.chain.handle
+}
+
+func (d *DKG) GetChain() *Chain {
+	return d.chain
 }
 
 // CurrentBlock returns current block height on a chain.
