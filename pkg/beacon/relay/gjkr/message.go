@@ -6,6 +6,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// Message is an interface for messages handled by the protocol.
+type Message interface {
+	SenderID() int
+}
+
 // EphemeralPublicKeyMessage is a message payload that carries sender's
 // ephemeral public key generated for the given receiver.
 //
@@ -36,6 +41,11 @@ type MemberCommitmentsMessage struct {
 	commitments []*big.Int // slice of `C_ik`
 }
 
+// SenderID returns ID of a member who sent the message.
+func (mcm *MemberCommitmentsMessage) SenderID() int {
+	return mcm.senderID
+}
+
 // PeerSharesMessage is a message payload that carries shares `s_ij` and `t_ij`
 // calculated by the sender `i` for the recipient `j` during distributed key
 // generation.
@@ -50,6 +60,11 @@ type PeerSharesMessage struct {
 	shareT *big.Int // t_ij
 }
 
+// SenderID returns ID of a member who sent the message.
+func (psm *PeerSharesMessage) SenderID() int {
+	return psm.senderID
+}
+
 // SecretSharesAccusationsMessage is a message payload that carries all of the
 // sender's accusations against other members of the threshold group.
 // If all other members behaved honestly from the sender's point of view, this
@@ -60,6 +75,11 @@ type SecretSharesAccusationsMessage struct {
 	senderID int
 
 	accusedIDs []int
+}
+
+// SenderID returns ID of a member who sent the message.
+func (ssam *SecretSharesAccusationsMessage) SenderID() int {
+	return ssam.senderID
 }
 
 // MemberPublicKeySharePointsMessage is a message payload that carries the sender's
