@@ -22,7 +22,7 @@ import (
 // shares are broadcasted to every valid cadidate member.
 //
 // See Phase 1 of the protocol specification.
-func (em *EphemeralKeyGeneratingMember) CalculateEphemeralKeyPair() error {
+func (em *EphemeralKeyGeneratingMember) CalculateEphemeralKeyPair() ([]*EphemeralPublicKeyMessage, error) {
 	// Calculate ephemeral public keys for every group member
 	for _, member := range em.group.memberIDs {
 		if member == em.ID {
@@ -35,13 +35,26 @@ func (em *EphemeralKeyGeneratingMember) CalculateEphemeralKeyPair() error {
 
 		ephemeralKey, err := ephemeral.GenerateKeyPair()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// save the generated ephemeral key to our state
 		em.ephemeralKeys[member] = ephemeralKey
 	}
-	return nil
+
+	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
+	for _, member := range em.group.memberIDs {
+		if keyPair, ok := em.ephemeralKeys[member]; ok {
+			ephemeralKeyMessages = append(ephemeralKeyMessages,
+				&EphemeralPublicKeyMessage{
+					senderID:           em.ID,
+					receiverID:         member,
+					ephemeralPublicKey: keyPair.PublicKey,
+				},
+			)
+		}
+	}
+	return ephemeralKeyMessages, nil
 }
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
