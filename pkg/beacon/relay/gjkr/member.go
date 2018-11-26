@@ -14,8 +14,6 @@ type memberCore struct {
 	group *Group
 	// DKG Protocol configuration parameters.
 	protocolConfig *DKG
-	// remote member ID -> keypair
-	ephemeralKeys map[int]*ephemeral.KeyPair
 }
 
 // EphemeralKeyGeneratingMember represents one member in a distributed key
@@ -28,14 +26,6 @@ type EphemeralKeyGeneratingMember struct {
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
 	ephemeralKeys map[int]*ephemeral.KeyPair
-}
-
-// CandidateGroupMember represents one member in a threshold key sharing group, after
-// it has a full list of `memberIDs` that belong to its threshold group.
-//
-// Executes Phase 1 of the protocol.
-type CandidateGroupMember struct {
-	*memberCore
 }
 
 // CommittingMember represents one member in a threshold key sharing group, after
