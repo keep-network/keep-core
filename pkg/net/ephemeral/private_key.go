@@ -6,25 +6,25 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 )
 
-// KeyPair represents the generated ephemeral private and public key pair
-type KeyPair struct {
-	PrivateKey *PrivateKey
-	PublicKey  *PublicKey
-}
-
 // PrivateKey is an ephemeral private elliptic curve key.
 type PrivateKey btcec.PrivateKey
 
 // PublicKey is an ephemeral public elliptic curve key.
 type PublicKey btcec.PublicKey
 
+// KeyPair is a pair of ephemeral elliptic curve private and public key.
+type KeyPair struct {
+	PrivateKey *PrivateKey
+	PublicKey  *PublicKey
+}
+
 func curve() *btcec.KoblitzCurve {
 	return btcec.S256()
 }
 
-// GenerateKeypair generates a pair of public and private ephemeral keys
-// that can be used as an input for ECDH.
-func GenerateKeypair() (*KeyPair, error) {
+// GenerateKeyPair generates a pair of public and private elliptic curve
+// ephemeral key that can be used as an input for ECDH.
+func GenerateKeyPair() (*KeyPair, error) {
 	ecdsaKey, err := btcec.NewPrivateKey(curve())
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -34,8 +34,8 @@ func GenerateKeypair() (*KeyPair, error) {
 	}
 
 	return &KeyPair{
-		PrivateKey: (*PrivateKey)(ecdsaKey),
-		PublicKey:  (*PublicKey)(&ecdsaKey.PublicKey),
+		(*PrivateKey)(ecdsaKey),
+		(*PublicKey)(&ecdsaKey.PublicKey),
 	}, nil
 }
 

@@ -6,7 +6,7 @@ import (
 )
 
 func TestMarshalUnmarshalPublicKey(t *testing.T) {
-	keyPair, err := GenerateKeypair()
+	keyPair, err := GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +24,7 @@ func TestMarshalUnmarshalPublicKey(t *testing.T) {
 }
 
 func TestMarshalUnmarshalPrivateKey(t *testing.T) {
-	keyPair, err := GenerateKeypair()
+	keyPair, err := GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
