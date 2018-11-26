@@ -6,6 +6,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
+// Member is an interface for types of members executing the protocol.
+type Member interface {
+	Next() Member
+}
+
 type memberCore struct {
 	// ID of this group member.
 	ID int
@@ -48,6 +53,11 @@ type CommittingMember struct {
 	receivedValidPeerCommitments map[int][]*big.Int
 }
 
+// Next initializes and returns SharesJustifyingMember.
+func (cm *CommittingMember) Next() *SharesJustifyingMember {
+	return &SharesJustifyingMember{CommittingMember: cm}
+}
+
 // SharesJustifyingMember represents one member in a threshold key sharing group,
 // after it completed secret shares and commitments verification and enters
 // justification phase where it resolves invalid share accusations.
@@ -55,6 +65,11 @@ type CommittingMember struct {
 // Executes Phase 5 of the protocol.
 type SharesJustifyingMember struct {
 	*CommittingMember
+}
+
+// Next initializes and returns QualifiedMember.
+func (sjm *SharesJustifyingMember) Next() *QualifiedMember {
+	return &QualifiedMember{SharesJustifyingMember: sjm}
 }
 
 // QualifiedMember represents one member in a threshold key sharing group, after
