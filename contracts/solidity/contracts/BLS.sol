@@ -22,15 +22,14 @@ library BLS {
         uint256[2] memory _message;
         (_message[0], _message[1]) = AltBn128.g1HashToPoint(message);
 
-        uint256[2] memory _publicKeyX;
-        uint256[2] memory _publicKeyY;
-        (_publicKeyX, _publicKeyY) = AltBn128.g2Decompress(publicKey);
+        AltBn128.G2Point memory _publicKey;
+        _publicKey = AltBn128.g2Decompress(publicKey);
 
         return AltBn128.pairing(
             [_signature[0], AltBn128.getP() - _signature[1]],
             AltBn128.g2(),
             _message,
-            [_publicKeyX[0], _publicKeyX[1], _publicKeyY[0], _publicKeyY[1]]
+            _publicKey
         );
     }
 }

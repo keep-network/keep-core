@@ -20,6 +20,12 @@ library AltBn128 {
         uint256 y;
     }
 
+    // G2Point implements a point in G2 group.
+    struct G2Point {
+        gfP2 x;
+        gfP2 y;
+    }
+
     // p is a prime over which we form a basic field
     // Taken from go-ethereum/crypto/bn256/cloudflare/constants.go
     uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
@@ -40,13 +46,17 @@ library AltBn128 {
      * @dev Gets generator of G2 group.
      * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
-    function g2() internal pure returns (uint256[4]) {
-        return [
-            11559732032986387107991004021392285783925812861821192530917403151452391805634,
-            10857046999023057135944570762232829481370756359578518086990519993285655852781,
-            4082367875863433681332203403145435568316851327593401208105741076214120093531,
-            8495653923123431417604973247489272438418190587263600148770280649306958101930
-        ];
+    function g2() internal pure returns (G2Point) {
+        return G2Point(
+            gfP2(
+                11559732032986387107991004021392285783925812861821192530917403151452391805634,
+                10857046999023057135944570762232829481370756359578518086990519993285655852781
+            ),
+            gfP2(
+                4082367875863433681332203403145435568316851327593401208105741076214120093531,
+                8495653923123431417604973247489272438418190587263600148770280649306958101930
+            )
+        );
     }
 
     /**
@@ -159,17 +169,17 @@ library AltBn128 {
     /**
      * @dev Compress a point on G2 to a pair of uint256 for serialization.
      */
-    function g2Compress(uint256[2] x, uint256[2] y)
+    function g2Compress(G2Point point)
         internal
         pure returns(bytes)
     {
-        bytes32 m = bytes32(x[0]);
+        bytes32 m = bytes32(point.x.x);
 
-        byte leadM = m[0] | parity(y[0]) << 7;
+        byte leadM = m[0] | parity(point.y.x) << 7;
         bytes32 mask = 0xff << 31*8;
         m = (m & ~mask) | (leadM >> 0);
 
-        return abi.encodePacked(m, bytes32(x[1]));
+        return abi.encodePacked(m, bytes32(point.x.y));
     }
 
     /**
@@ -201,7 +211,7 @@ library AltBn128 {
      */
     function g2Decompress(bytes m)
         internal
-        view returns(uint256[2], uint256[2])
+        view returns(G2Point)
     {
         bytes32 x1;
         bytes32 x2;
@@ -229,8 +239,7 @@ library AltBn128 {
             y.y = p - y.y;
         }
 
-        require(isG2PointOnCurve(x, y), "Malformed bn256.G2 point.");
-
+        require(isG2PointOnCurve(G2Point(x, y)), "Malformed bn256.G2 point.");
         return G2Point(x, y);
     }
 
@@ -320,13 +329,13 @@ library AltBn128 {
     /**
      * @dev Return true if G2 point is on the curve.
      */
-    function isG2PointOnCurve(uint256[2] x, uint256[2] y) internal view returns(bool) {
+    function isG2PointOnCurve(G2Point point) internal view returns(bool) {
 
         gfP2 memory y2;
         gfP2 memory x3;
 
-        y2 = gfP2Pow(y, 2);
-        x3 = gfP2Add(gfP2Pow(x, 3), twistB());
+        y2 = gfP2Pow(point.y, 2);
+        x3 = gfP2Add(gfP2Pow(point.x, 3), twistB());
 
         return (y2.x == x3.x && y2.y == x3.y);
     }
@@ -357,9 +366,9 @@ library AltBn128 {
      * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
      * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
      */
-    function pairing(uint256[2] p1, uint256[4] p2, uint256[2] p3, uint256[4] p4) internal view returns (bool) {
+    function pairing(uint256[2] p1, G2Point p2, uint256[2] p3, G2Point p4) internal view returns (bool) {
         uint256[12] memory arg = [
-            p1[0], p1[1], p2[0], p2[1], p2[2], p2[3], p3[0], p3[1], p4[0], p4[1], p4[2], p4[3]
+            p1[0], p1[1], p2.x.x, p2.x.y, p2.y.x, p2.y.y, p3[0], p3[1], p4.x.x, p4.x.y, p4.y.x, p4.y.y
         ];
         uint[1] memory c;
         /* solium-disable-next-line */

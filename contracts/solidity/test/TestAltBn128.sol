@@ -7,7 +7,7 @@ import "../contracts/AltBn128.sol";
 contract TestAltBn128 {
 
     uint256[2] g1 = AltBn128.g1();
-    uint256[4] g2 = AltBn128.g2();
+    AltBn128.G2Point g2 = AltBn128.g2();
 
     function testHashing() public {
         string memory hello = "hello!";
@@ -186,12 +186,11 @@ contract TestAltBn128 {
         ];
 
         // G2 point representing public key for private key = 123
-        uint256[4] memory publicKey = [
-            14066454060412929535985836631817650877381034334390275410072431082437297539867,
-            19276105129625393659655050515259006463014579919681138299520812914148935621072,
-            10109651107942685361120988628892759706059655669161016107907096760613704453218,
-            12642665914920339463975152321804664028480770144655934937445922690262428344269
-        ];
+        AltBn128.G2Point memory publicKey;
+        publicKey.x.x = 14066454060412929535985836631817650877381034334390275410072431082437297539867;
+        publicKey.x.y = 19276105129625393659655050515259006463014579919681138299520812914148935621072;
+        publicKey.y.x = 10109651107942685361120988628892759706059655669161016107907096760613704453218;
+        publicKey.y.y = 12642665914920339463975152321804664028480770144655934937445922690262428344269;
 
         bool result = AltBn128.pairing(signature, g2, [message[0], AltBn128.getP() - message[1]], publicKey);
         Assert.isTrue(result, "Verify signature using precompiled pairing contract should succeed.");
@@ -213,45 +212,43 @@ contract TestAltBn128 {
     }
 
     function testCompressG2Invertibility() public {
-        uint256[2] memory p_1_x;
-        uint256[2] memory p_1_y;
-        uint256[2] memory p_2_x;
-        uint256[2] memory p_2_y;
+
+        AltBn128.G2Point memory p_1;
+        AltBn128.G2Point memory p_2;
 
         for (uint i = 0; i < randomG2.length; i++) {
-            p_1_x[0] = randomG2[i][0];
-            p_1_x[1] = randomG2[i][1];
-            p_1_y[0] = randomG2[i][2];
-            p_1_y[1] = randomG2[i][3];
+            p_1.x.x = randomG2[i][0];
+            p_1.x.y = randomG2[i][1];
+            p_1.y.x = randomG2[i][2];
+            p_1.y.y = randomG2[i][3];
 
-            (p_2_x, p_2_y) = AltBn128.g2Decompress(AltBn128.g2Compress(p_1_x, p_1_y));
-            Assert.equal(p_1_x[0], p_2_x[0], "Decompressing a compressed point should give the same x coordinate.");
-            Assert.equal(p_1_x[1], p_2_x[1], "Decompressing a compressed point should give the same x coordinate.");
-            Assert.equal(p_1_y[0], p_2_y[0], "Decompressing a compressed point should give the same y coordinate.");
-            Assert.equal(p_1_y[1], p_2_y[1], "Decompressing a compressed point should give the same y coordinate.");
+            p_2 = AltBn128.g2Decompress(AltBn128.g2Compress(p_1));
+            Assert.equal(p_1.x.x, p_2.x.x, "Decompressing a compressed point should give the same x coordinate.");
+            Assert.equal(p_1.x.y, p_2.x.y, "Decompressing a compressed point should give the same x coordinate.");
+            Assert.equal(p_1.y.x, p_2.y.x, "Decompressing a compressed point should give the same x coordinate.");
+            Assert.equal(p_1.y.y, p_2.y.y, "Decompressing a compressed point should give the same x coordinate.");
         }
     }
 
     function testG2PointOnCurve() public {
-        uint256[2] memory p_1_x;
-        uint256[2] memory p_1_y;
+        AltBn128.G2Point memory point;
 
         for (uint i = 0; i < randomG2.length; i++) {
-            p_1_x[0] = randomG2[i][0];
-            p_1_x[1] = randomG2[i][1];
-            p_1_y[0] = randomG2[i][2];
-            p_1_y[1] = randomG2[i][3];
+            point.x.x = randomG2[i][0];
+            point.x.y = randomG2[i][1];
+            point.y.x = randomG2[i][2];
+            point.y.y = randomG2[i][3];
 
-            Assert.isTrue(AltBn128.isG2PointOnCurve(p_1_x, p_1_y), "Valid points should be on the curve.");
+            Assert.isTrue(AltBn128.isG2PointOnCurve(point), "Valid points should be on the curve.");
         }
 
         for (i = 0; i < randomG2.length; i++) {
-            p_1_x[0] = randomG2[i][2];
-            p_1_x[1] = randomG2[i][3];
-            p_1_y[0] = randomG2[i][0];
-            p_1_y[1] = randomG2[i][1];
+            point.x.x = randomG2[i][2];
+            point.x.y = randomG2[i][3];
+            point.y.x = randomG2[i][0];
+            point.y.y = randomG2[i][1];
 
-            Assert.isFalse(AltBn128.isG2PointOnCurve(p_1_x, p_1_y), "Invalid points should not be on the curve.");
+            Assert.isFalse(AltBn128.isG2PointOnCurve(point), "Invalid points should not be on the curve.");
         }
     }
 }
