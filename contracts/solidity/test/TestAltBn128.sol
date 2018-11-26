@@ -95,24 +95,23 @@ contract TestAltBn128 {
         uint i;
         uint8 j;
 
-        uint256[2] memory p_1_x;
-        uint256[2] memory p_1_y;
-        uint256[2] memory p_2_x;
-        uint256[2] memory p_2_y;
+        AltBn128.gfP2 memory p_1;
+        AltBn128.gfP2 memory p_2;
+        AltBn128.gfP2 memory p_3;
+        AltBn128.gfP2 memory p_4;
 
         for (i = 0; i < randomG2.length; i++) {
             for (j = 0; j < randomG2.length; j++) {
 
-                p_1_x = AltBn128.gfP2Add([randomG2[i][0], randomG2[i][1]], [randomG2[j][0], randomG2[j][1]]);
-                p_1_y = AltBn128.gfP2Add([randomG2[i][2], randomG2[i][3]], [randomG2[j][2], randomG2[j][3]]);
+                p_1 = AltBn128.gfP2Add(AltBn128.gfP2(randomG2[i][0], randomG2[i][1]), AltBn128.gfP2(randomG2[j][0], randomG2[j][1]));
+                p_2 = AltBn128.gfP2Add(AltBn128.gfP2(randomG2[i][2], randomG2[i][3]), AltBn128.gfP2(randomG2[j][2], randomG2[j][3]));
+                p_3 = AltBn128.gfP2Add(AltBn128.gfP2(randomG2[j][0], randomG2[j][1]), AltBn128.gfP2(randomG2[i][0], randomG2[i][1]));
+                p_4 = AltBn128.gfP2Add(AltBn128.gfP2(randomG2[j][2], randomG2[j][3]), AltBn128.gfP2(randomG2[i][2], randomG2[i][3]));
 
-                p_2_x = AltBn128.gfP2Add([randomG2[j][0], randomG2[j][1]], [randomG2[i][0], randomG2[i][1]]);
-                p_2_y = AltBn128.gfP2Add([randomG2[j][2], randomG2[j][3]], [randomG2[i][2], randomG2[i][3]]);
-
-                Assert.equal(p_1_x[0], p_2_x[0], "Point addition should be commutative.");
-                Assert.equal(p_1_x[1], p_2_x[1], "Point addition should be commutative.");
-                Assert.equal(p_1_y[0], p_2_y[0], "Point addition should be commutative.");
-                Assert.equal(p_1_y[1], p_2_y[1], "Point addition should be commutative.");
+                Assert.equal(p_1.x, p_3.x, "Point addition should be commutative.");
+                Assert.equal(p_1.y, p_3.y, "Point addition should be commutative.");
+                Assert.equal(p_2.x, p_4.x, "Point addition should be commutative.");
+                Assert.equal(p_2.y, p_4.y, "Point addition should be commutative.");
 
             }
         }
