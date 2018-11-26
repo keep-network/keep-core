@@ -22,9 +22,9 @@ is defined.
 
 toc::[]
 
-include::beacon_dkg_terms.adoc[]
+include::dkg-terms.adoc[]
 
-include::beacon_dkg_concepts.adoc[]
+include::dkg-concepts.adoc[]
 
 
 == Protocol
