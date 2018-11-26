@@ -35,7 +35,7 @@ func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
 			continue
 		}
 
-		ephemeralKey, err := ephemeral.GenerateKeypair()
+		ephemeralKey, err := ephemeral.GenerateKeyPair()
 		if err != nil {
 			return err
 		}
