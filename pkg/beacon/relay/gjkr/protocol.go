@@ -22,7 +22,7 @@ import (
 // shares are broadcasted to every valid cadidate member.
 //
 // See Phase 1 of the protocol specification.
-func (em *CandidateGroupMember) CalculateEphemeralKeyPair() error {
+func (em *EphemeralKeyGeneratingMember) CalculateEphemeralKeyPair() error {
 	// Calculate ephemeral public keys for every group member
 	for _, member := range em.group.memberIDs {
 		if member == em.ID {
