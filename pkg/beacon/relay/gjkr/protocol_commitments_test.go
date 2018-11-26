@@ -63,12 +63,12 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		alterS bool,
 		alterT bool,
 	) *PeerSharesMessage {
-		oldShareS, err := message.shareS(symmetricKey)
+		oldShareS, err := message.decryptShareS(symmetricKey)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		oldShareT, err := message.shareT(symmetricKey)
+		oldShareT, err := message.decryptShareT(symmetricKey)
 		if err != nil {
 			t.Fatal(err)
 		}

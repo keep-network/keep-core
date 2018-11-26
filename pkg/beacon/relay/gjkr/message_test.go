@@ -13,12 +13,12 @@ func TestCreateNewPeerSharesMessage(t *testing.T) {
 
 	peerSharesMessage, key, err := newTestPeerSharesMessage(shareS, shareT)
 
-	decryptedS, err := peerSharesMessage.shareS(key)
+	decryptedS, err := peerSharesMessage.decryptShareS(key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	decryptedT, err := peerSharesMessage.shareT(key)
+	decryptedT, err := peerSharesMessage.decryptShareT(key)
 	if err != nil {
 		t.Fatal(err)
 	}

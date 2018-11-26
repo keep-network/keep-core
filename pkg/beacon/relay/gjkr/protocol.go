@@ -180,14 +180,14 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 				// Decrypt shares using symmetric key established with sender.
 				// Since all the message are validated prior to passing to this
 				// function, decryption error should never happen.
-				shareS, err := sharesMessage.shareS(symmetricKey) // s_ji
+				shareS, err := sharesMessage.decryptShareS(symmetricKey) // s_ji
 				if err != nil {
 					return nil, fmt.Errorf(
 						"could not decrypt the message [%v]",
 						err,
 					)
 				}
-				shareT, err := sharesMessage.shareT(symmetricKey) // t_ji
+				shareT, err := sharesMessage.decryptShareT(symmetricKey) // t_ji
 				if err != nil {
 					return nil, fmt.Errorf(
 						"could not decrypt the message [%v]",
