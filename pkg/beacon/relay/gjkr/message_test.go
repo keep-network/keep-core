@@ -25,7 +25,7 @@ func TestCreateNewPeerSharesMessage(t *testing.T) {
 
 	if shareS.Cmp(decryptedS) != 0 {
 		t.Fatalf(
-			"unexpected S share\nexpected: %v\nactual: %v",
+			"unexpected S share\nexpected: %v\nactual:   %v",
 			shareS,
 			decryptedS,
 		)
@@ -33,7 +33,7 @@ func TestCreateNewPeerSharesMessage(t *testing.T) {
 
 	if shareT.Cmp(decryptedT) != 0 {
 		t.Fatalf(
-			"unexpected T share\nexpected: %v\nactual: %v",
+			"unexpected T share\nexpected: %v\nactual:   %v",
 			shareT,
 			decryptedT,
 		)
@@ -41,7 +41,6 @@ func TestCreateNewPeerSharesMessage(t *testing.T) {
 }
 
 func TestCanDecrypt(t *testing.T) {
-
 	var tests = map[string]struct {
 		modifyMessage  func(msg *PeerSharesMessage)
 		expectedResult bool
@@ -81,7 +80,7 @@ func TestCanDecrypt(t *testing.T) {
 
 			if test.expectedResult != canDecrypt {
 				t.Fatalf(
-					"unexpected CanDecrypt result\nexpected: %v\nactual: %v",
+					"unexpected CanDecrypt result\nexpected: %v\nactual:   %v",
 					test.expectedResult,
 					canDecrypt,
 				)
