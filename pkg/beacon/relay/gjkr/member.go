@@ -21,18 +21,6 @@ type memberCore struct {
 	ephemeralKeysLock sync.Mutex
 }
 
-// EphemeralKeyPair represents the public and private keys we generate for a
-// given group member.
-//
-// Generated in Phase 1 of the protocol.
-type EphemeralKeyPair struct {
-	// Id of the group member we generated an ephemeral key pair for
-	id int
-
-	ephemeralPrivateKey *ephemeral.PrivateKey // X_ij
-	ephemeralPublicKey  *ephemeral.PublicKey  // Y_ij
-}
-
 // CandidateGroupMember represents one member in a threshold key sharing group, after
 // it has a full list of `memberIDs` that belong to its threshold group.
 //
