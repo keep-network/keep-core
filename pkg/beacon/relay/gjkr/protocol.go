@@ -44,13 +44,19 @@ func (em *EphemeralKeyGeneratingMember) CalculateEphemeralKeyPair() ([]*Ephemera
 
 	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
 	for _, member := range em.group.memberIDs {
+		ephemeralKeyMessage := &EphemeralPublicKeyMessage{
+			senderID:   em.ID,
+			receiverID: member,
+		}
+
 		if keyPair, ok := em.ephemeralKeys[member]; ok {
-			ephemeralKeyMessages = append(ephemeralKeyMessages,
-				&EphemeralPublicKeyMessage{
-					senderID:           em.ID,
-					receiverID:         member,
-					ephemeralPublicKey: keyPair.PublicKey,
-				},
+			ephemeralKeyMessage.ephemeralPublicKey = keyPair.PublicKey
+			ephemeralKeyMessages = append(
+				ephemeralKeyMessages, ephemeralKeyMessage,
+			)
+		} else {
+			ephemeralKeyMessages = append(
+				ephemeralKeyMessages, ephemeralKeyMessage,
 			)
 		}
 	}
