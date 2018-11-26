@@ -17,12 +17,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// CalculateEphemeralKeyPair takes the known candidate list, and
+// GenerateEphemeralKeyPair takes the known candidate list, and
 // generates an ephemeral ECDH keypair with every other candidate member. These
 // shares are broadcasted to every valid cadidate member.
 //
 // See Phase 1 of the protocol specification.
-func (em *EphemeralKeyGeneratingMember) CalculateEphemeralKeyPair() ([]*EphemeralPublicKeyMessage, error) {
+func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
+	[]*EphemeralPublicKeyMessage,
+	error,
+) {
 	// Calculate ephemeral public keys for every group member
 	for _, member := range em.group.memberIDs {
 		if member == em.ID {
