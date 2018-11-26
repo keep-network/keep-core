@@ -3,6 +3,7 @@ package ephemeral
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"io"
 	"reflect"
 	"testing"
@@ -65,6 +66,26 @@ func TestCiphertextRandomized(t *testing.T) {
 
 	if reflect.DeepEqual(encrypted1, encrypted2) {
 		t.Fatalf("expected two different ciphertexts")
+	}
+}
+
+func TestGracefullyHandleBrokenCipher(t *testing.T) {
+	symmetricKey, err := newEcdhSymmetricKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	brokenCipher := []byte{0x01, 0x02, 0x03}
+
+	_, err = symmetricKey.Decrypt(brokenCipher)
+
+	expectedError := fmt.Errorf("symmetric key decryption failed")
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Fatalf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			expectedError,
+			err,
+		)
 	}
 }
 

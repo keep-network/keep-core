@@ -1,7 +1,6 @@
 package gjkr
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -70,42 +69,22 @@ func newPeerSharesMessage(
 	return &PeerSharesMessage{senderID, receiverID, encryptedS, encryptedT}, nil
 }
 
-func (psm *PeerSharesMessage) shareS(key ephemeral.SymmetricKey) (s *big.Int, err error) {
-	// secretbox Decrypt sometimes panics for invalid input
-	defer func() {
-		if recover() != nil {
-			err = errors.New("could not decrypt S share")
-		}
-	}()
-
+func (psm *PeerSharesMessage) shareS(key ephemeral.SymmetricKey) (*big.Int, error) {
 	decryptedS, err := key.Decrypt(psm.encryptedShareS)
 	if err != nil {
 		return nil, fmt.Errorf("could not decrypt S share [%v]", err)
 	}
 
-	s = new(big.Int).SetBytes(decryptedS)
-	err = nil
-
-	return
+	return new(big.Int).SetBytes(decryptedS), nil
 }
 
-func (psm *PeerSharesMessage) shareT(key ephemeral.SymmetricKey) (s *big.Int, err error) {
-	// secretbox Decrypt sometimes panics for invalid input
-	defer func() {
-		if recover() != nil {
-			err = errors.New("could not decrypt T share")
-		}
-	}()
-
+func (psm *PeerSharesMessage) shareT(key ephemeral.SymmetricKey) (*big.Int, error) {
 	decryptedT, err := key.Decrypt(psm.encryptedShareT)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate T share [%v]", err)
 	}
 
-	s = new(big.Int).SetBytes(decryptedT)
-	err = nil
-
-	return
+	return new(big.Int).SetBytes(decryptedT), nil
 }
 
 // CanDecrypt checks if the PeerSharesMessage can be successfully decrypted
