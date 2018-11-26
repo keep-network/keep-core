@@ -16,7 +16,7 @@ type memberCore struct {
 	// DKG Protocol configuration parameters.
 	protocolConfig *DKG
 	// remote member ID -> keypair
-	ephemeralKeyPairs map[int]*ephemeral.KeyPair
+	ephemeralKeys map[int]*ephemeral.KeyPair
 
 	ephemeralKeysLock sync.Mutex
 }

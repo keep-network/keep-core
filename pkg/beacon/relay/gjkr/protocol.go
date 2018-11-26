@@ -28,7 +28,7 @@ func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
 		if member == cgm.ID {
 			// add empty reference to maintain the correct index
 			cgm.ephemeralKeysLock.Lock()
-			cgm.ephemeralKeyPairs[member] = nil
+			cgm.ephemeralKeys[member] = nil
 			cgm.ephemeralKeysLock.Unlock()
 
 			// don’t actually generate a symmetric key with ourselves
@@ -42,7 +42,7 @@ func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
 
 		// save the generated ephemeral key to our state
 		cgm.ephemeralKeysLock.Lock()
-		cgm.ephemeralKeyPairs[member] = ephemeralKey
+		cgm.ephemeralKeys[member] = ephemeralKey
 		cgm.ephemeralKeysLock.Unlock()
 	}
 	return nil
