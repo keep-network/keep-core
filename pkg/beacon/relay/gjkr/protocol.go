@@ -22,49 +22,30 @@ import (
 // shares are broadcasted to every valid cadidate member.
 //
 // See Phase 1 of the protocol specification.
-func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() (
-	[]*EphemeralPublicKeyMessage,
-	error,
-) {
-	// Calculate ephemeral public keys for other group members
-	var publicKeyMessages []*EphemeralPublicKeyMessage
+func (cgm *CandidateGroupMember) CalculateEphemeralKeyPair() error {
+	// Calculate ephemeral public keys for every group member
 	for _, member := range cgm.group.memberIDs {
 		if member == cgm.ID {
 			// add empty reference to maintain the correct index
-			cgm.ephemeralKeyPairs = append(cgm.ephemeralKeyPairs,
-				&EphemeralKeyPair{},
-			)
-			publicKeyMessages = append(publicKeyMessages,
-				&EphemeralPublicKeyMessage{},
-			)
+			cgm.ephemeralKeysLock.Lock()
+			cgm.ephemeralKeyPairs[member] = nil
+			cgm.ephemeralKeysLock.Unlock()
 
 			// don’t actually generate a symmetric key with ourselves
 			continue
 		}
-		ephemeralPriv, ephemeralPub, err := ephemeral.GenerateKeypair()
+
+		ephemeralKey, err := ephemeral.GenerateKeypair()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		// save the generated ephemeral material to our state
-		cgm.ephemeralKeyPairs = append(cgm.ephemeralKeyPairs,
-			&EphemeralKeyPair{
-				id:                  member,
-				ephemeralPrivateKey: ephemeralPriv,
-				ephemeralPublicKey:  ephemeralPub,
-			},
-		)
-
-		// add to our list of ephemeral public keys to broadcast
-		publicKeyMessages = append(publicKeyMessages,
-			&EphemeralPublicKeyMessage{
-				senderID:           cgm.ID,
-				receiverID:         member,
-				ephemeralPublicKey: ephemeralPub,
-			},
-		)
+		// save the generated ephemeral key to our state
+		cgm.ephemeralKeysLock.Lock()
+		cgm.ephemeralKeyPairs[member] = ephemeralKey
+		cgm.ephemeralKeysLock.Unlock()
 	}
-	return publicKeyMessages, nil
+	return nil
 }
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for

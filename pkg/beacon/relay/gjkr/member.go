@@ -2,6 +2,7 @@ package gjkr
 
 import (
 	"math/big"
+	"sync"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -15,7 +16,9 @@ type memberCore struct {
 	// DKG Protocol configuration parameters.
 	protocolConfig *DKG
 	// remote member ID -> keypair
-	ephemeralKeyPairs map[int]ephemeral.KeyPair
+	ephemeralKeyPairs map[int]*ephemeral.KeyPair
+
+	ephemeralKeysLock sync.Mutex
 }
 
 // EphemeralKeyPair represents the public and private keys we generate for a
