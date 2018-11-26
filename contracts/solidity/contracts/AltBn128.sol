@@ -18,7 +18,7 @@ library AltBn128 {
     // Taken from go-ethereum/crypto/bn256/cloudflare/constants.go
     uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
-    function getP() public pure returns (uint256) {
+    function getP() internal pure returns (uint256) {
         return p;
     }
 
@@ -26,7 +26,7 @@ library AltBn128 {
      * @dev Gets generator of G1 group.
      * Taken from go-ethereum/crypto/bn256/cloudflare/curve.go
      */
-    function g1() public pure returns (uint256[2]) {
+    function g1() internal pure returns (uint256[2]) {
         return [uint256(1), uint256(2)];
     }
 
@@ -34,7 +34,7 @@ library AltBn128 {
      * @dev Gets generator of G2 group.
      * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
-    function g2() public pure returns (uint256[4]) {
+    function g2() internal pure returns (uint256[4]) {
         return [
             11559732032986387107991004021392285783925812861821192530917403151452391805634,
             10857046999023057135944570762232829481370756359578518086990519993285655852781,
@@ -47,7 +47,7 @@ library AltBn128 {
      * @dev Gets twist curve B constant.
      * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
-    function twistB() public pure returns (uint256[2]) {
+    function twistB() internal pure returns (uint256[2]) {
         return [
             266929791119991161246907387137283842545076965332900288569378510910307636690,
             19485874751759354771024239261021720505790618469301721065564631296452457478373
@@ -57,7 +57,7 @@ library AltBn128 {
     /**
      * @dev Gets root of the point where x and y are equal.
      */
-    function hexRoot() public pure returns (uint256[2]) {
+    function hexRoot() internal pure returns (uint256[2]) {
         return [
             21573744529824266246521972077326577680729363968861965890554801909984373949499,
             16854739155576650954933913186877292401521110422362946064090026408937773542853
@@ -71,7 +71,7 @@ library AltBn128 {
      * an X value + a sign bit.
      */
     function g1YFromX(uint256 x)
-        private
+        internal
         view returns(uint256)
     {
         return ((x.modExp(3, p) + 3) % p).modSqrt(p);
@@ -84,8 +84,8 @@ library AltBn128 {
      * an X value + a sign bit.
      */
     function g2YFromX(uint256[2] _x)
-        private
-        pure returns(uint256[2] y)
+        internal
+        view returns(uint256[2] y)
     {
         uint256[2] memory x = gfP2Add(gfP2Pow(_x, 3), twistB());
 
@@ -110,7 +110,7 @@ library AltBn128 {
      * G1.
      */
     function g1HashToPoint(bytes m)
-        public
+        internal
         view returns(uint256, uint256)
     {
         bytes32 h = sha256(m);
@@ -138,7 +138,7 @@ library AltBn128 {
      * @dev Compress a point on G1 to a single uint256 for serialization.
      */
     function g1Compress(uint256 x, uint256 y)
-        public
+        internal
         pure returns(bytes32)
     {
         bytes32 m = bytes32(x);
@@ -154,7 +154,7 @@ library AltBn128 {
      * @dev Compress a point on G2 to a pair of uint256 for serialization.
      */
     function g2Compress(uint256[2] x, uint256[2] y)
-        public
+        internal
         pure returns(bytes)
     {
         bytes32 m = bytes32(x[0]);
@@ -170,7 +170,7 @@ library AltBn128 {
      * @dev Decompress a point on G1 from a single uint256.
      */
     function g1Decompress(bytes32 m)
-        public
+        internal
         view returns(uint256, uint256)
     {
         bytes32 mX = bytes32(0);
@@ -194,7 +194,7 @@ library AltBn128 {
      * @dev Decompress a point on G2 from a pair of uint256.
      */
     function g2Decompress(bytes m)
-        public
+        internal
         view returns(uint256[2], uint256[2])
     {
         bytes32 x1;
@@ -233,7 +233,7 @@ library AltBn128 {
      * the sum of two points on G1. Revert if the provided points aren't on the
      * curve.
      */
-    function add(uint256[2] a, uint256[2] b) public view returns (uint256, uint256) {
+    function add(uint256[2] a, uint256[2] b) internal view returns (uint256, uint256) {
         uint256[4] memory arg;
         arg[0] = a[0];
         arg[1] = a[1];
@@ -273,7 +273,7 @@ library AltBn128 {
     /**
      * @dev Return gfP2 element to the power of the provided exponent.
      */
-    function gfP2Pow(uint256[2] _a, uint256 _exp) internal pure returns(uint256[2] result) {
+    function gfP2Pow(uint256[2] _a, uint256 _exp) internal view returns(uint256[2] result) {
         uint256 exp = _exp;
         uint256[2] memory a;
         result[0] = 0;
@@ -296,7 +296,7 @@ library AltBn128 {
     /**
      * @dev Return true if G2 point's y^2 equals x.
      */
-    function g2X2y(uint256[2] x, uint256[2] y) internal pure returns(bool) {
+    function g2X2y(uint256[2] x, uint256[2] y) internal view returns(bool) {
        
         uint256[2] memory y2;
         y2 = gfP2Pow(y, 2);
@@ -314,7 +314,7 @@ library AltBn128 {
     /**
      * @dev Return true if G2 point is on the curve.
      */
-    function isG2PointOnCurve(uint256[2] x, uint256[2] y) internal pure returns(bool) {
+    function isG2PointOnCurve(uint256[2] x, uint256[2] y) internal view returns(bool) {
 
         uint256[2] memory y2;
         uint256[2] memory x3;
@@ -331,7 +331,7 @@ library AltBn128 {
      * match the point added to itself the same number of times. Revert if the
      * provided point isn't on the curve.
      */
-    function scalarMultiply(uint256[2] p_1, uint256 scalar) public view returns (uint256, uint256) {
+    function scalarMultiply(uint256[2] p_1, uint256 scalar) internal view returns (uint256, uint256) {
         uint256[3] memory arg;
         arg[0] = p_1[0];
         arg[1] = p_1[1];
@@ -351,7 +351,7 @@ library AltBn128 {
      * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
      * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
      */
-    function pairing(uint256[2] p1, uint256[4] p2, uint256[2] p3, uint256[4] p4) public view returns (bool) {
+    function pairing(uint256[2] p1, uint256[4] p2, uint256[2] p3, uint256[4] p4) internal view returns (bool) {
         uint256[12] memory arg = [
             p1[0], p1[1], p2[0], p2[1], p2[2], p2[3], p3[0], p3[1], p4[0], p4[1], p4[2], p4[3]
         ];
