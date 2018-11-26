@@ -24,12 +24,8 @@ contract TestAltBn128 {
         Assert.isNotZero(p_2_x, "X should not equal 0 in a hashed point.");
         Assert.isNotZero(p_2_y, "Y should not equal 0 in a hashed point.");
 
-        Assert.isTrue(isOnCurve(p_1_x, p_1_y), "Hashed points should be on the curve.");
-        Assert.isTrue(isOnCurve(p_2_x, p_2_y), "Hashed points should be on the curve.");
-    }
-
-    function isOnCurve(uint256 x, uint256 y) internal view returns (bool) {
-        return ModUtils.modExp(y, 2, AltBn128.getP()) == (ModUtils.modExp(x, 3, AltBn128.getP()) + 3) % AltBn128.getP();
+        Assert.isTrue(AltBn128.isG1PointOnCurve(p_1_x, p_1_y), "Hashed points should be on the curve.");
+        Assert.isTrue(AltBn128.isG1PointOnCurve(p_2_x, p_2_y), "Hashed points should be on the curve.");
     }
 
     function testHashAndAdd() public {
@@ -53,7 +49,7 @@ contract TestAltBn128 {
         Assert.equal(p_3_x, p_4_x, "Point addition should be commutative.");
         Assert.equal(p_3_y, p_4_y, "Point addition should be commutative.");
 
-        Assert.isTrue(isOnCurve(p_3_x, p_3_y), "Added points should be on the curve.");
+        Assert.isTrue(AltBn128.isG1PointOnCurve(p_3_x, p_3_y), "Added points should be on the curve.");
     }
 
     function testHashAndScalarMultiply() public {
@@ -66,7 +62,7 @@ contract TestAltBn128 {
 
         (p_2_x, p_2_y) = AltBn128.scalarMultiply([p_1_x, p_1_y], 12);
 
-        Assert.isTrue(isOnCurve(p_2_x, p_2_y), "Multiplied point should be on the curve.");
+        Assert.isTrue(AltBn128.isG1PointOnCurve(p_2_x, p_2_y), "Multiplied point should be on the curve.");
     }
 
     uint256[2][] randomG1 = [
@@ -136,7 +132,7 @@ contract TestAltBn128 {
                 Assert.equal(p_1_x, p_2_x, "Point addition should be commutative.");
                 Assert.equal(p_1_y, p_2_y, "Point addition should be commutative.");
 
-                Assert.isTrue(isOnCurve(p_1_x, p_1_y), "Added points should be on the curve.");
+                Assert.isTrue(AltBn128.isG1PointOnCurve(p_1_x, p_1_y), "Added points should be on the curve.");
             }
         }
     }
@@ -153,7 +149,7 @@ contract TestAltBn128 {
         for (i = 1; i < randomG1.length; i++) {
             (p_1_x, p_1_y) = AltBn128.scalarMultiply(randomG1[i], i);
 
-            Assert.isTrue(isOnCurve(p_1_x, p_1_y), "Multiplied point should be on the curve.");
+            Assert.isTrue(AltBn128.isG1PointOnCurve(p_1_x, p_1_y), "Multiplied point should be on the curve.");
 
             (p_2_x, p_2_y) = (randomG1[i][0], randomG1[i][1]);
             for (j = 1; j < i; j++) {
