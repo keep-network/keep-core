@@ -26,8 +26,9 @@ type Result struct {
 	// Disqualified members IDs.
 	Disqualified []int `json:"disqualified"`
 	// Inactive members IDs.
-	Inactive  []int  `json:"inactive"`
-	HashValue []byte `json:"-"`
+	Inactive []int `json:"inactive"`
+	// HashValue the hash // xyzzy
+	HashValue []byte // xyzzy
 }
 
 // Bytes returns the result as a byte slice.

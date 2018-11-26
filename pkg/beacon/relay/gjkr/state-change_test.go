@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/pschlump/MiscLib"
 	"github.com/pschlump/godebug"
@@ -17,9 +16,7 @@ func TestChallengeStateChagne(t *testing.T) {
 	// func (vc *DKG) ChallengeStateChange(EventName string, group *big.Int, resultHash []byte, correctResult int) {
 
 	type ops struct {
-		// vc.ChallengeStateChange(test.EventName, test.Group, &test.currentResult, test.resultHash, test.correctResult)
 		EventName     string
-		Group         *big.Int
 		resultHash    []byte
 		correctResult int
 		currentResult result.Result
@@ -35,7 +32,7 @@ func TestChallengeStateChagne(t *testing.T) {
 		Ops           []ops
 	}{
 		"001 Correct Result is Lead Result, Test Case 00003.": {
-			runTest:       false,
+			runTest:       true,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -43,12 +40,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -60,7 +56,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			// finalState: 1,
 		},
 		"002 Correct Result is Lead Result, Test Case 00003 - Verify that successisive tests do not impact each other.": {
-			runTest:       false,
+			runTest:       true,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -68,12 +64,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -83,13 +78,12 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 3,
 				},
 			},
 		},
 		"003 Correct Result is Lead Result, First Plus Conflict 00001.": {
-			runTest:       false,
+			runTest:       true,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          2,
@@ -97,12 +91,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -115,17 +108,15 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 3,
 				},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -137,7 +128,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			// finalState: 3,
 		},
 		"004 Correct Result is Lead Result, Longer sleep over many blocks.": {
-			runTest:       false,
+			runTest:       true,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -145,12 +136,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -160,7 +150,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 3,
 				},
 				{
@@ -186,12 +175,11 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -201,14 +189,13 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 1,
 				},
 			},
 		},
 		"005 Correct Result is Lead Result, Test voting for stuff.": {
 			// } else if m1.AllVotes[leadResult].Votes > vc.TMax {
-			runTest:       false,
+			runTest:       true,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -216,12 +203,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -231,18 +217,15 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 3,
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
@@ -251,50 +234,43 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{EventName: "sleep"},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{EventName: "dump-vc"},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -305,7 +281,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				{EventName: "dump-vc"},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 2,
 				},
 				{EventName: "sleep"},
@@ -315,12 +290,11 @@ func TestChallengeStateChagne(t *testing.T) {
 				{EventName: "sleep"},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -330,14 +304,13 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 1,
 				},
 			},
 		},
 		"006 Correct Result is Lead Result, submitted a value.": {
 			// } else if inResult(correctResult, m1.AllVotes, m1.AllResults) {
-			runTest:       false,
+			runTest:       true,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -345,12 +318,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -360,35 +332,30 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 3,
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Vote",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 				},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{229, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 1,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -399,7 +366,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				{EventName: "dump-vc"},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 7,
 				},
 				{
@@ -425,12 +391,11 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						//	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -440,7 +405,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 1,
 				},
 			},
@@ -449,7 +413,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			// } else if inResult(correctResult, m1.AllVotes, m1.AllResults) {
 			// then...
 			// check that results that already submitted are handled correctly.
-			runTest:       false,
+			runTest:       true,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -457,12 +421,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -472,17 +435,15 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 3,
 				},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{229, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 1,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -493,7 +454,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				// {EventName: "dump-vc"},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 7,
 				},
 				{
@@ -501,12 +461,11 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{ // test the ability to detec already submitted.
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{229, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 1,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -517,7 +476,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				{EventName: "dump-vc"},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 5,
 				},
 				{
@@ -540,12 +498,11 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -555,7 +512,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 1,
 				},
 			},
@@ -570,12 +526,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			Ops: []ops{
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// 	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -585,17 +540,15 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 3,
 				},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{229, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 1,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// 	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -605,18 +558,16 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 7,
 				},
 				{EventName: "sleep"},
 				{ // test the ability to detec already submitted.
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{139, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 1,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// 	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -627,32 +578,20 @@ func TestChallengeStateChagne(t *testing.T) {
 				{EventName: "dump-vc"},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 5,
 				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
-				{
-					EventName: "sleep",
-				},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
+				{EventName: "sleep"},
 				{ // test the ability to detec already submitted.
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{139, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 1,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// 	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -663,20 +602,16 @@ func TestChallengeStateChagne(t *testing.T) {
 				{EventName: "dump-vc"},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 1,
 				},
-				{
-					EventName: "sleep",
-				},
+				{EventName: "sleep"},
 				{
 					EventName: "Challenge",
-					Group:     big.NewInt(10000),
 					resultHash: []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148,
 						51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 					correctResult: 0,
 					currentResult: result.Result{
-						Type:           result.PerfectSuccess,
+						// 	Type:           result.PerfectSuccess,
 						GroupPublicKey: big.NewInt(10000),
 						Disqualified:   []int{},
 						Inactive:       []int{},
@@ -686,7 +621,6 @@ func TestChallengeStateChagne(t *testing.T) {
 				},
 				{
 					EventName:  "check-state",
-					Group:      big.NewInt(10000),
 					finalState: 1,
 				},
 			},
@@ -698,24 +632,19 @@ func TestChallengeStateChagne(t *testing.T) {
 			if !test.runTest {
 				return
 			}
+			threshold := 1                /* xyzzy */
+			groupSize := 3                /* xyzzy */
+			expectedProtocolDuration := 3 // T_dkg	/* xyzzy */
+			blockStep := 2                // T_step	/* xyzzy */
+			chain, err := initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
+			if err != nil {
+				fmt.Printf("error: %s\n", err)
+				return
+			}
+
 			fmt.Printf("%sRunning Test %s%s\n", MiscLib.ColorCyan, testName, MiscLib.ColorReset)
-			var chainRelay chain.Interface
-			var err error
-			var vc *DKG
-			var members []*PublishingMember
-			var member *PublishingMember
-			members, err = initializePublishingMembersGroup2(test.thresholdSize, test.groupSize)
-			if err != nil {
-				t.Errorf("%s", err)
-			}
-			member = members[0] // WHY? Fix This FIXME xyzzy
-			chainRelay = member.protocolConfig.chain.ThresholdRelay()
-			_ = chainRelay // xyzzy FIXME
-			err = setup2CurrentBlockHeight(member.protocolConfig.chain)
-			if err != nil {
-				t.Fatalf("Failed to setup chain: %v", err)
-			}
-			vc = &DKG{
+			vc := &DKG{
+				chain:     chain,
 				P:         big.NewInt(100), //
 				Q:         big.NewInt(9),   //
 				TMax:      test.TMax,       // M_Max
@@ -723,21 +652,21 @@ func TestChallengeStateChagne(t *testing.T) {
 				TNow:      1,               // T_Now - Current block height at the current time
 				TFirst:    1,               // T_First -
 			}
-			vc.PerGroup = make(map[string]ValidationGroupState)
 
 			for pc, anOp := range test.Ops {
 				switch anOp.EventName {
-				case "Challenge", "Vote":
-					vc.ChallengeStateChange(anOp.EventName, anOp.Group, &anOp.currentResult, anOp.resultHash, anOp.correctResult)
+				case "Challenge":
+					vc.ChallengeStateChange(&anOp.currentResult, anOp.resultHash, anOp.correctResult)
+				case "Vote":
+					vc.VoteForHash(anOp.resultHash)
 				case "Block":
-					vc.ChallengeStateChange(anOp.EventName, nil, &anOp.currentResult, anOp.resultHash, anOp.correctResult)
+					// vc.VoteForhash(anOp.resultHash)
 				case "sleep":
 					fmt.Printf(";")
 					time.Sleep(1 * time.Second)
 					fmt.Printf(":")
 				case "check-state":
-					groupAsKey := fmt.Sprintf("%s", anOp.Group)
-					cs := vc.PerGroup[groupAsKey].CurrentState
+					cs := stateReachedValue
 					if anOp.finalState != cs {
 						t.Errorf("Did not reach the correct state in pc=%d with test=[%s], expected %d found %d\n", pc, testName, anOp.finalState, cs)
 					}
