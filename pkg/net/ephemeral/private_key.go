@@ -12,7 +12,8 @@ type PrivateKey btcec.PrivateKey
 // PublicKey is an ephemeral public elliptic curve key.
 type PublicKey btcec.PublicKey
 
-// KeyPair is a pair of ephemeral elliptic curve private and public key.
+// KeyPair represents the generated ephemeral elliptic curve private and public
+// key pair
 type KeyPair struct {
 	PrivateKey *PrivateKey
 	PublicKey  *PublicKey
