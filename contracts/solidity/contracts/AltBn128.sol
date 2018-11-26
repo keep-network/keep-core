@@ -14,6 +14,12 @@ library AltBn128 {
 
     using ModUtils for uint256;
 
+    // G1Point implements a point in G1 group.
+    struct G1Point {
+        uint256 x;
+        uint256 y;
+    }
+
     // gfP2 implements a field of size p² as a quadratic extension of the base field.
     struct gfP2 {
         uint256 x;
@@ -38,8 +44,8 @@ library AltBn128 {
      * @dev Gets generator of G1 group.
      * Taken from go-ethereum/crypto/bn256/cloudflare/curve.go
      */
-    function g1() internal pure returns (uint256[2]) {
-        return [uint256(1), uint256(2)];
+    function g1() internal pure returns (G1Point) {
+        return G1Point(uint256(1), uint256(2));
     }
 
     /**
@@ -127,7 +133,7 @@ library AltBn128 {
      */
     function g1HashToPoint(bytes m)
         internal
-        view returns(uint256, uint256)
+        view returns(G1Point)
     {
         bytes32 h = sha256(m);
         uint256 x = uint256(h) % p;
@@ -136,7 +142,7 @@ library AltBn128 {
         while (true) {
             y = g1YFromX(x);
             if (y > 0) {
-                return (x, y);
+                return G1Point(x, y);
             }
             x += 1;
         }
@@ -153,13 +159,13 @@ library AltBn128 {
     /**
      * @dev Compress a point on G1 to a single uint256 for serialization.
      */
-    function g1Compress(uint256 x, uint256 y)
+    function g1Compress(G1Point point)
         internal
         pure returns(bytes32)
     {
-        bytes32 m = bytes32(x);
+        bytes32 m = bytes32(point.x);
 
-        byte leadM = m[0] | parity(y) << 7;
+        byte leadM = m[0] | parity(point.y) << 7;
         bytes32 mask = 0xff << 31*8;
         m = (m & ~mask) | (leadM >> 0);
 
@@ -187,7 +193,7 @@ library AltBn128 {
      */
     function g1Decompress(bytes32 m)
         internal
-        view returns(uint256, uint256)
+        view returns(G1Point)
     {
         bytes32 mX = bytes32(0);
         byte leadX = m[0] & byte(127);
@@ -201,9 +207,9 @@ library AltBn128 {
             y = p - y;
         }
 
-        require(isG1PointOnCurve(x, y), "Malformed bn256.G1 point.");
+        require(isG1PointOnCurve(G1Point(x, y)), "Malformed bn256.G1 point.");
 
-        return (x, y);
+        return G1Point(x, y);
     }
 
     /**
@@ -248,13 +254,14 @@ library AltBn128 {
      * the sum of two points on G1. Revert if the provided points aren't on the
      * curve.
      */
-    function add(uint256[2] a, uint256[2] b) internal view returns (uint256, uint256) {
+    function add(G1Point a, G1Point b) internal view returns (G1Point) {
         uint256[4] memory arg;
-        arg[0] = a[0];
-        arg[1] = a[1];
-        arg[2] = b[0];
-        arg[3] = b[1];
+        arg[0] = a.x;
+        arg[1] = a.y;
+        arg[2] = b.x;
+        arg[3] = b.y;
         uint256[2] memory c;
+
         /* solium-disable-next-line */
         assembly {
             // 0x60 is the ECADD precompile address
@@ -262,7 +269,8 @@ library AltBn128 {
                 revert(0, 0)
             }
         }
-        return (c[0], c[1]);
+
+        return G1Point(c[0], c[1]);
     }
 
     /**
@@ -322,8 +330,8 @@ library AltBn128 {
     /**
      * @dev Return true if G1 point is on the curve.
      */
-    function isG1PointOnCurve(uint256 x, uint256 y) internal view returns (bool) {
-        return y.modExp(2, p) == (x.modExp(3, p) + 3) % p;
+    function isG1PointOnCurve(G1Point point) internal view returns (bool) {
+        return point.y.modExp(2, p) == (point.x.modExp(3, p) + 3) % p;
     }
 
     /**
@@ -346,10 +354,10 @@ library AltBn128 {
      * match the point added to itself the same number of times. Revert if the
      * provided point isn't on the curve.
      */
-    function scalarMultiply(uint256[2] p_1, uint256 scalar) internal view returns (uint256, uint256) {
+    function scalarMultiply(G1Point p_1, uint256 scalar) internal view returns (G1Point) {
         uint256[3] memory arg;
-        arg[0] = p_1[0];
-        arg[1] = p_1[1];
+        arg[0] = p_1.x;
+        arg[1] = p_1.y;
         arg[2] = scalar;
         uint256[2] memory p_2;
         /* solium-disable-next-line */
@@ -359,16 +367,16 @@ library AltBn128 {
                 revert(0, 0)
             }
         }
-        return (p_2[0], p_2[1]);
+        return G1Point(p_2[0], p_2[1]);
     }
 
     /**
      * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
      * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
      */
-    function pairing(uint256[2] p1, G2Point p2, uint256[2] p3, G2Point p4) internal view returns (bool) {
+    function pairing(G1Point p1, G2Point p2, G1Point p3, G2Point p4) internal view returns (bool) {
         uint256[12] memory arg = [
-            p1[0], p1[1], p2.x.x, p2.x.y, p2.y.x, p2.y.y, p3[0], p3[1], p4.x.x, p4.x.y, p4.y.x, p4.y.y
+            p1.x, p1.y, p2.x.x, p2.x.y, p2.y.x, p2.y.y, p3.x, p3.y, p4.x.x, p4.x.y, p4.y.x, p4.y.y
         ];
         uint[1] memory c;
         /* solium-disable-next-line */

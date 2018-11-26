@@ -16,20 +16,14 @@ library BLS {
      */
     function verify(bytes publicKey, bytes message, bytes32 signature) public view returns (bool) {
 
-        uint256[2] memory _signature;
-        (_signature[0], _signature[1]) = AltBn128.g1Decompress(signature);
-
-        uint256[2] memory _message;
-        (_message[0], _message[1]) = AltBn128.g1HashToPoint(message);
-
-        AltBn128.G2Point memory _publicKey;
-        _publicKey = AltBn128.g2Decompress(publicKey);
+        AltBn128.G1Point memory _signature;
+        _signature = AltBn128.g1Decompress(signature);
 
         return AltBn128.pairing(
-            [_signature[0], AltBn128.getP() - _signature[1]],
+            AltBn128.G1Point(_signature.x, AltBn128.getP() - _signature.y),
             AltBn128.g2(),
-            _message,
-            _publicKey
+            AltBn128.g1HashToPoint(message),
+            AltBn128.g2Decompress(publicKey)
         );
     }
 }
