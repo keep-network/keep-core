@@ -55,6 +55,47 @@ func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
 	return ephemeralKeyMessages, nil
 }
 
+// GenerateSymmetricKeys attempts to generate symmetric keys for all remote group
+// members via ECDH. It generates this symmetric key for each remote group member
+// by doing an ECDH between the ephemeral private key generated for a remote
+// group member, and the public key for this member, generated and broadcasted by
+// the remote group member.
+//
+// See Phase 2 of the protocol specification.
+func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys() error {
+	for _, member := range sm.group.memberIDs {
+		// get the public key broadcasted by the remote group member,
+		// which was intended for you
+		ephemeralPubKeyMsg := sm.memberCore.ephemeralPublicKeyMessage(
+			member, sm.ID,
+		)
+
+		// It's either the case that:
+		//  * we did not receive a valid message from this group member
+		//    (in which case we've added this member to IA)
+		//  * we're trying to form a symmetric key with ourselves (no-op)
+		if ephemeralPubKeyMsg == nil {
+			continue
+		}
+
+		// find the ephemeral key pair for this group member
+		ephemeralKeyPair, ok := sm.ephemeralKeys[member]
+		if !ok {
+			return fmt.Errorf(
+				"ephemeral key pair does not exist for %d", member,
+			)
+		}
+
+		if ephemeralPubKeyMsg.ephemeralPublicKey != nil {
+			symmetricKey := ephemeralKeyPair.PrivateKey.Ecdh(
+				ephemeralPubKeyMsg.ephemeralPublicKey,
+			)
+			sm.symmetricKeys[member] = symmetricKey
+		}
+	}
+	return nil
+}
+
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
 // two polynomials. It then calculates shares for all group member and packs them
 // in individual messages for each peer member. Additionally, it calculates
