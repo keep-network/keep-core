@@ -1,7 +1,7 @@
 pragma solidity ^0.4.21;
 pragma experimental ABIEncoderV2;
 
-import "./utils/ModUtils.sol";
+import "./ModUtils.sol";
 
 /**
  * @title Operations on alt_bn128

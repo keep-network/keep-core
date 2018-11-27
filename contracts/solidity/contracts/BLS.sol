@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./AltBn128.sol";
+import "./utils/AltBn128.sol";
 
 
 /**
