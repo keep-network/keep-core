@@ -60,7 +60,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
 		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
 		expectedError             error
-		expectedAccusedIDs        []int
+		expectedAccusedIDs        []MemberID
 	}{
 		"positive validation - no accusations": {
 			expectedError: nil,
@@ -70,7 +70,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				messages[0].shareS = testutils.NewRandInt(messages[0].shareS, config.Q)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{2},
+			expectedAccusedIDs: []MemberID{MemberID(2)},
 		},
 		"negative validation - changed two shares T": {
 			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
@@ -78,7 +78,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				messages[2].shareT = testutils.NewRandInt(messages[2].shareT, config.Q)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{3, 4},
+			expectedAccusedIDs: []MemberID{MemberID(3), MemberID(4)},
 		},
 		"negative validation - changed commitment": {
 			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
@@ -87,7 +87,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{5},
+			expectedAccusedIDs: []MemberID{MemberID(5)},
 		},
 	}
 	for testName, test := range tests {
@@ -215,7 +215,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 	var members []*CommittingMember
 
 	for i := 1; i <= groupSize; i++ {
-		id := i
+		id := MemberID(i)
 		members = append(members, &CommittingMember{
 			memberCore: &memberCore{
 				ID:             id,
@@ -223,9 +223,9 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 				protocolConfig: dkg,
 			},
 			vss:                          vss,
-			receivedValidSharesS:         make(map[int]*big.Int),
-			receivedValidSharesT:         make(map[int]*big.Int),
-			receivedValidPeerCommitments: make(map[int][]*big.Int),
+			receivedValidSharesS:         make(map[MemberID]*big.Int),
+			receivedValidSharesT:         make(map[MemberID]*big.Int),
+			receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
 		})
 		group.RegisterMemberID(id)
 	}
@@ -256,7 +256,7 @@ func predefinedDKG() (*DKG, error) {
 
 func filterPeerSharesMessage(
 	messages []*PeerSharesMessage,
-	receiverID int,
+	receiverID MemberID,
 ) []*PeerSharesMessage {
 	var result []*PeerSharesMessage
 	for _, msg := range messages {
@@ -270,7 +270,7 @@ func filterPeerSharesMessage(
 
 func filterMemberCommitmentsMessages(
 	messages []*MemberCommitmentsMessage,
-	receiverID int,
+	receiverID MemberID,
 ) []*MemberCommitmentsMessage {
 	var result []*MemberCommitmentsMessage
 	for _, msg := range messages {

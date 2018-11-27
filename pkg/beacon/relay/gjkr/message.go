@@ -20,8 +20,8 @@ import (
 // of the party is broadcast in the group. Construction of ECDH guarantees that
 // no security threat is created this way.
 type EphemeralPublicKeyMessage struct {
-	senderID   int // i
-	receiverID int // j
+	senderID   MemberID // i
+	receiverID MemberID // j
 
 	ephemeralPublicKey ephemeral.PublicKey // Y_ij
 }
@@ -31,7 +31,7 @@ type EphemeralPublicKeyMessage struct {
 //
 // It is expected to be broadcast.
 type MemberCommitmentsMessage struct {
-	senderID int
+	senderID MemberID
 
 	commitments []*big.Int // slice of `C_ik`
 }
@@ -43,8 +43,8 @@ type MemberCommitmentsMessage struct {
 // It is expected to be communicated in an encrypted fashion to the selected
 // recipient.
 type PeerSharesMessage struct {
-	senderID   int // i
-	receiverID int // j
+	senderID   MemberID // i
+	receiverID MemberID // j
 
 	shareS *big.Int // s_ij
 	shareT *big.Int // t_ij
@@ -57,16 +57,16 @@ type PeerSharesMessage struct {
 //
 // It is expected to be broadcast.
 type SecretSharesAccusationsMessage struct {
-	senderID int
+	senderID MemberID
 
-	accusedIDs []int
+	accusedIDs []MemberID
 }
 
 // MemberPublicKeySharePointsMessage is a message payload that carries the sender's
 // public key share points.
 // It is expected to be broadcast.
 type MemberPublicKeySharePointsMessage struct {
-	senderID int
+	senderID MemberID
 
 	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
 }
@@ -78,7 +78,7 @@ type MemberPublicKeySharePointsMessage struct {
 // message should be broadcast but with an empty slice of `accusedIDs`.
 // It is expected to be broadcast.
 type PointsAccusationsMessage struct {
-	senderID int
+	senderID MemberID
 
-	accusedIDs []int
+	accusedIDs []MemberID
 }

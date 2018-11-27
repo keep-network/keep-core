@@ -16,14 +16,14 @@ func TestCombineReceivedShares(t *testing.T) {
 	selfShareT := big.NewInt(19)
 	q := big.NewInt(59)
 
-	receivedShareS := make(map[int]*big.Int)
-	receivedShareT := make(map[int]*big.Int)
+	receivedShareS := make(map[MemberID]*big.Int)
+	receivedShareT := make(map[MemberID]*big.Int)
 	// Simulate shares received from peer members.
 	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
 	// slice indices.
 	for i := 0; i <= 5; i++ {
-		receivedShareS[100+i] = big.NewInt(int64(10 + i))
-		receivedShareT[100+i] = big.NewInt(int64(20 + i))
+		receivedShareS[MemberID(100+i)] = big.NewInt(int64(10 + i))
+		receivedShareT[MemberID(100+i)] = big.NewInt(int64(20 + i))
 	}
 
 	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 59 = 25
@@ -129,7 +129,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	var tests = map[string]struct {
 		modifyPublicKeySharePointsMessages func(messages []*MemberPublicKeySharePointsMessage)
 		expectedError                      error
-		expectedAccusedIDs                 []int
+		expectedAccusedIDs                 []MemberID
 	}{
 		"positive validation - no accusations": {
 			expectedError: nil,
@@ -142,7 +142,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{3},
+			expectedAccusedIDs: []MemberID{3},
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
@@ -156,7 +156,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{2, 5},
+			expectedAccusedIDs: []MemberID{2, 5},
 		},
 	}
 	for testName, test := range tests {
@@ -217,7 +217,7 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 					CommittingMember: cm,
 				},
 			},
-			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
+			receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
 		})
 	}
 
@@ -231,7 +231,7 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 }
 
 func filterMemberPublicKeySharePointsMessages(
-	messages []*MemberPublicKeySharePointsMessage, receiverID int,
+	messages []*MemberPublicKeySharePointsMessage, receiverID MemberID,
 ) []*MemberPublicKeySharePointsMessage {
 	var result []*MemberPublicKeySharePointsMessage
 	for _, msg := range messages {

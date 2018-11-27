@@ -60,7 +60,7 @@ func TestRoundTrip(t *testing.T) {
 	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
 			QualifiedMember:                       qm,
-			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
+			receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
 		})
 	}
 
