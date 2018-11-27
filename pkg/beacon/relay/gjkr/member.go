@@ -10,7 +10,8 @@ import (
 // MemberID is a unique-in-group identifier of a member.
 type MemberID uint32
 
-func (id MemberID) toInt() *big.Int {
+// Int converts `MemberID` to `big.Int`
+func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
 }
 
