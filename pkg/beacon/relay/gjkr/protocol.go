@@ -69,7 +69,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	// which was intended for this node
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
 		sender := ephemeralPubKeyMessage.senderID
-		// find the ephemeral key pair for this group member
+		// Find the ephemeral key pair for this group member.
 		ephemeralKeyPair, ok := sm.ephemeralKeyPairs[sender]
 		if !ok {
 			return fmt.Errorf(
