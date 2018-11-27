@@ -24,25 +24,6 @@ type memberCore struct {
 	protocolConfig *DKG
 }
 
-// implements messageBuffer.ephemeralPublicKeyMessage
-// TODO: implement
-func (mc *memberCore) ephemeralPublicKeyMessage(
-	sender int,
-	receiver int,
-) *EphemeralPublicKeyMessage {
-	return nil
-}
-
-// implements messageBuffer.peerSharesMessage
-// TODO: implement
-func (mc *memberCore) peerSharesMessage(
-	sender int,
-	receiver int,
-	key ephemeral.SymmetricKey,
-) *PeerSharesMessage {
-	return nil
-}
-
 // EphemeralKeyGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral key generation. It has a full list of
 // `memberIDs` that belong to its threshold group.
