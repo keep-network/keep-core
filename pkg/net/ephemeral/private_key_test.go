@@ -11,16 +11,14 @@ func TestMarshalUnmarshalPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pubKey := keyPair.PublicKey
-
-	marshalled := pubKey.Marshal()
+	marshalled := keyPair.PublicKey.Marshal()
 
 	unmarshalled, err := UnmarshalPublicKey(marshalled)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(unmarshalled, pubKey) {
+	if !reflect.DeepEqual(unmarshalled, keyPair.PublicKey) {
 		t.Fatal("unmarshalled public key does not match the original one")
 	}
 }
@@ -31,13 +29,11 @@ func TestMarshalUnmarshalPrivateKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	privKey := keyPair.PrivateKey
-
-	marshalled := privKey.Marshal()
+	marshalled := keyPair.PrivateKey.Marshal()
 
 	unmarshalled := UnmarshalPrivateKey(marshalled)
 
-	if !reflect.DeepEqual(unmarshalled, privKey) {
+	if !reflect.DeepEqual(unmarshalled, keyPair.PrivateKey) {
 		t.Fatal("unmarshalled private key does not match the original one")
 	}
 }

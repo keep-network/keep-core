@@ -13,7 +13,47 @@ package gjkr
 import (
 	"fmt"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
+
+// GenerateEphemeralKeyPair takes the known candidate list, and
+// generates an ephemeral ECDH keypair with every other candidate member. These
+// shares are broadcasted to every valid cadidate member.
+//
+// See Phase 1 of the protocol specification.
+func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
+	[]*EphemeralPublicKeyMessage,
+	error,
+) {
+	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
+
+	// Calculate ephemeral public keys for every group member
+	for _, member := range em.group.memberIDs {
+		if member == em.ID {
+			// don’t actually generate a symmetric key with ourselves
+			continue
+		}
+
+		ephemeralKey, err := ephemeral.GenerateKeyPair()
+		if err != nil {
+			return nil, err
+		}
+
+		// save the generated ephemeral key to our state
+		em.ephemeralKeys[member] = ephemeralKey
+
+		ephemeralKeyMessages = append(ephemeralKeyMessages,
+			&EphemeralPublicKeyMessage{
+				senderID:           em.ID,
+				receiverID:         member,
+				ephemeralPublicKey: ephemeralKey.PublicKey,
+			},
+		)
+	}
+
+	return ephemeralKeyMessages, nil
+}
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
 // two polynomials. It then calculates shares for all group member and packs them

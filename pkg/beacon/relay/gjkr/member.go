@@ -16,6 +16,18 @@ type memberCore struct {
 	protocolConfig *DKG
 }
 
+// EphemeralKeyGeneratingMember represents one member in a distributed key
+// generating group performing ephemeral key generation. It has a full list of
+// `memberIDs` that belong to its threshold group.
+//
+// Executes Phase 1 of the protocol.
+type EphemeralKeyGeneratingMember struct {
+	*memberCore
+	// Ephemeral key pairs used to create symmetric keys,
+	// generated individually for each other group member.
+	ephemeralKeys map[int]*ephemeral.KeyPair
+}
+
 // SymmetricKeyGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral symmetric key generation.
 //
