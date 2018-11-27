@@ -290,13 +290,26 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 
 	var members []*CommittingMember
 	for _, member := range symmetricKeyMembers {
-		members = append(members, &CommittingMember{
-			SymmetricKeyGeneratingMember: member,
-			vss:                          vss,
-			receivedValidSharesS:         make(map[int]*big.Int),
-			receivedValidSharesT:         make(map[int]*big.Int),
-			receivedValidPeerCommitments: make(map[int][]*big.Int),
-		})
+		members = append(members,
+			&CommittingMember{
+				SymmetricKeyGeneratingMember: member,
+				vss:                          vss,
+			})
+	}
+
+	return members, nil
+}
+
+func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CommitmentsVerifyingMember, error) {
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%v]", err)
+	}
+
+	var members []*CommitmentsVerifyingMember
+	for _, member := range committingMembers {
+		members = append(members,
+			&CommitmentsVerifyingMember{CommittingMember: member})
 	}
 
 	return members, nil
