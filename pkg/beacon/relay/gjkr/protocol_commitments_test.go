@@ -192,14 +192,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				test.modifyCommitmentsMessages(filteredCommitmentsMessages)
 			}
 
-			// Simulate step to next Phase
-			// TODO Handle by Next function
-			verifyingMember := &CommitmentsVerifyingMember{
-				CommittingMember:             currentMember,
-				receivedValidSharesS:         make(map[int]*big.Int),
-				receivedValidSharesT:         make(map[int]*big.Int),
-				receivedValidPeerCommitments: make(map[int][]*big.Int),
-			}
+			verifyingMember := currentMember.Next()
 
 			accusedMessage, err := verifyingMember.VerifyReceivedSharesAndCommitmentsMessages(
 				filteredSharesMessages,
@@ -299,11 +292,8 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 
 	var members []*CommittingMember
 	for _, member := range symmetricKeyMembers {
-		members = append(members,
-			&CommittingMember{
-				SymmetricKeyGeneratingMember: member,
-				vss:                          vss,
-			})
+		committingMember := member.Next()
+		members = append(members, committingMember)
 	}
 
 	return members, nil
@@ -317,14 +307,7 @@ func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *
 
 	var members []*CommitmentsVerifyingMember
 	for _, member := range committingMembers {
-		//TODO Handle by Next function
-		members = append(members,
-			&CommitmentsVerifyingMember{
-				CommittingMember:             member,
-				receivedValidSharesS:         make(map[int]*big.Int),
-				receivedValidSharesT:         make(map[int]*big.Int),
-				receivedValidPeerCommitments: make(map[int][]*big.Int),
-			})
+		members = append(members, member.Next())
 	}
 
 	return members, nil

@@ -1,7 +1,6 @@
 package gjkr
 
 import (
-	"math/big"
 	"testing"
 )
 
@@ -23,21 +22,15 @@ func TestRoundTrip(t *testing.T) {
 		}
 		sharesMessages = append(sharesMessages, sharesMessage...)
 		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
+
 	}
 
-	var commitmentsVerifyingMembers []*CommitmentsVerifyingMember
-	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
+	var commitmentVerifyingMembers []*CommitmentsVerifyingMember
 	for _, cm := range committingMembers {
-		commitmentsVerifyingMembers = append(commitmentsVerifyingMembers,
-			&CommitmentsVerifyingMember{CommittingMember: cm,
-				receivedValidSharesS:         make(map[int]*big.Int),
-				receivedValidSharesT:         make(map[int]*big.Int),
-				receivedValidPeerCommitments: make(map[int][]*big.Int),
-			},
-		)
+		commitmentVerifyingMembers = append(commitmentVerifyingMembers, cm.Next())
 	}
 
-	for _, member := range commitmentsVerifyingMembers {
+	for _, member := range commitmentVerifyingMembers {
 		accusedSecretSharesMessage, err := member.VerifyReceivedSharesAndCommitmentsMessages(
 			filterPeerSharesMessage(sharesMessages, member.ID),
 			filterMemberCommitmentsMessages(commitmentsMessages, member.ID),
@@ -54,13 +47,8 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	var qualifiedMembers []*QualifiedMember
-	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
-	for _, cvm := range commitmentsVerifyingMembers {
-		qualifiedMembers = append(qualifiedMembers, &QualifiedMember{
-			SharesJustifyingMember: &SharesJustifyingMember{
-				CommitmentsVerifyingMember: cvm,
-			},
-		})
+	for _, cvm := range commitmentVerifyingMembers {
+		qualifiedMembers = append(qualifiedMembers, cvm.Next().Next())
 	}
 
 	for _, member := range qualifiedMembers {
@@ -68,12 +56,8 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	var sharingMembers []*SharingMember
-	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, qm := range qualifiedMembers {
-		sharingMembers = append(sharingMembers, &SharingMember{
-			QualifiedMember:                       qm,
-			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
-		})
+		sharingMembers = append(sharingMembers, qm.Next())
 	}
 
 	for _, member := range sharingMembers {
@@ -113,14 +97,7 @@ func TestRoundTrip(t *testing.T) {
 
 	var combiningMembers []*CombiningMember
 	for _, sm := range sharingMembers {
-		// TODO: Handle transition from SharingMember to ReconstructingMember in Next() function
-		combiningMembers = append(combiningMembers, &CombiningMember{
-			ReconstructingMember: &ReconstructingMember{
-				PointsJustifyingMember: &PointsJustifyingMember{
-					SharingMember: sm,
-				},
-			},
-		})
+		combiningMembers = append(combiningMembers, sm.Next().Next().Next())
 	}
 
 	for _, member := range combiningMembers {

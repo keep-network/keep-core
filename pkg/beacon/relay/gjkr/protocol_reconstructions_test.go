@@ -146,13 +146,8 @@ func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([
 	}
 
 	var reconstructingMembers []*ReconstructingMember
-	// TODO Should be handled by the `.Next()`` function
 	for _, pjm := range pointsJustifyingMembers {
-		reconstructingMembers = append(reconstructingMembers,
-			&ReconstructingMember{
-				PointsJustifyingMember: pjm,
-			},
-		)
+		reconstructingMembers = append(reconstructingMembers, pjm.Next())
 	}
 
 	return reconstructingMembers, nil
@@ -199,15 +194,8 @@ func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Com
 	}
 
 	var combiningMembers []*CombiningMember
-	// TODO Should be handled by the `.Next()`` function
 	for _, rm := range reconstructingMembers {
-		rm.reconstructedIndividualPublicKeys = make(map[int]*big.Int)
-
-		combiningMembers = append(combiningMembers,
-			&CombiningMember{
-				ReconstructingMember: rm,
-			},
-		)
+		combiningMembers = append(combiningMembers, rm.Next())
 	}
 
 	return combiningMembers, nil
