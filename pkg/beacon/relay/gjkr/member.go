@@ -60,6 +60,12 @@ type CommittingMember struct {
 	selfSecretShareS, selfSecretShareT *big.Int
 }
 
+// SetVSS sets VSS configuration for member.
+// TODO Check if this should be passed or generated at the begining of DKG execution.
+func (cm *CommittingMember) SetVSS(vss *pedersen.VSS) {
+	cm.vss = vss
+}
+
 // Next returns a member to perform next protocol operations.
 func (cm *CommittingMember) Next() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{

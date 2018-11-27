@@ -293,6 +293,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 	var members []*CommittingMember
 	for _, member := range symmetricKeyMembers {
 		committingMember := member.Next()
+		committingMember.SetVSS(vss)
 		members = append(members, committingMember)
 	}
 
