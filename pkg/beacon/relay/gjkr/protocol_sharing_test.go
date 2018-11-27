@@ -34,14 +34,16 @@ func TestCombineReceivedShares(t *testing.T) {
 	config := &DKG{Q: q}
 	member := &QualifiedMember{
 		SharesJustifyingMember: &SharesJustifyingMember{
-			CommittingMember: &CommittingMember{
-				SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-					memberCore: &memberCore{
-						protocolConfig: config,
+			CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
+				CommittingMember: &CommittingMember{
+					SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
+						memberCore: &memberCore{
+							protocolConfig: config,
+						},
 					},
+					selfSecretShareS: selfShareS,
+					selfSecretShareT: selfShareT,
 				},
-				selfSecretShareS:     selfShareS,
-				selfSecretShareT:     selfShareT,
 				receivedValidSharesS: receivedShareS,
 				receivedValidSharesT: receivedShareT,
 			},
@@ -89,14 +91,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	member := &SharingMember{
 		QualifiedMember: &QualifiedMember{
 			SharesJustifyingMember: &SharesJustifyingMember{
-				CommittingMember: &CommittingMember{
-					SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-						memberCore: &memberCore{
-							protocolConfig: config,
+				CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
+					CommittingMember: &CommittingMember{
+						SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
+							memberCore: &memberCore{
+								protocolConfig: config,
+							},
 						},
+						vss:                vss,
+						secretCoefficients: secretCoefficients,
 					},
-					vss:                vss,
-					secretCoefficients: secretCoefficients,
 				},
 			},
 		},
@@ -201,16 +205,16 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 }
 
 func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
+	commitmentsVerifyingMembers, err := initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
 	var sharingMembers []*SharingMember
-	for _, cm := range committingMembers {
-		cm.secretCoefficients = make([]*big.Int, threshold+1)
+	for _, cvm := range commitmentsVerifyingMembers {
+		cvm.secretCoefficients = make([]*big.Int, threshold+1)
 		for i := 0; i < threshold+1; i++ {
-			cm.secretCoefficients[i], err = crand.Int(crand.Reader, cm.protocolConfig.Q)
+			cvm.secretCoefficients[i], err = crand.Int(crand.Reader, cvm.protocolConfig.Q)
 			if err != nil {
 				return nil, fmt.Errorf("secret share generation failed [%s]", err)
 			}
@@ -218,7 +222,7 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 		sharingMembers = append(sharingMembers, &SharingMember{
 			QualifiedMember: &QualifiedMember{
 				SharesJustifyingMember: &SharesJustifyingMember{
-					CommittingMember: cm,
+					CommitmentsVerifyingMember: cvm,
 				},
 			},
 			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
@@ -226,8 +230,8 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 	}
 
 	for _, sm := range sharingMembers {
-		for _, cm := range committingMembers {
-			sm.receivedValidSharesS[cm.ID] = cm.evaluateMemberShare(sm.ID, cm.secretCoefficients)
+		for _, cvm := range commitmentsVerifyingMembers {
+			sm.receivedValidSharesS[cvm.ID] = cvm.evaluateMemberShare(sm.ID, cvm.secretCoefficients)
 		}
 	}
 
