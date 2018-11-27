@@ -70,7 +70,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
 		otherMember := ephemeralPubKeyMessage.senderID
 		// Find the ephemeral key pair for this group member.
-		ephemeralKeyPair, ok := sm.ephemeralKeyPairs[otherMember]
+		ephemeralKeyPair, ok := sm.ephemeralKeys[otherMember]
 		if !ok {
 			return fmt.Errorf(
 				"ephemeral key pair does not exist for %d",

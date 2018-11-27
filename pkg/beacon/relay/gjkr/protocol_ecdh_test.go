@@ -21,13 +21,15 @@ func initializeSymmetricKeyMembersGroup(
 	for i := 1; i <= groupSize; i++ {
 		id := MemberID(i)
 		members = append(members, &SymmetricKeyGeneratingMember{
-			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: dkg,
+			EphemeralKeyGeneratingMember: &EphemeralKeyGeneratingMember{
+				memberCore: &memberCore{
+					ID:             id,
+					group:          group,
+					protocolConfig: dkg,
+				},
+				ephemeralKeys: make(map[MemberID]*ephemeral.KeyPair),
 			},
-			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
-			symmetricKeys:     make(map[MemberID]ephemeral.SymmetricKey),
+			symmetricKeys: make(map[MemberID]ephemeral.SymmetricKey),
 		})
 		group.RegisterMemberID(id)
 	}
@@ -44,7 +46,7 @@ func initializeSymmetricKeyMembersGroup(
 						err,
 					)
 				}
-				member1.ephemeralKeyPairs[member2.ID] = keyPair
+				member1.ephemeralKeys[member2.ID] = keyPair
 			}
 		}
 	}
@@ -54,8 +56,8 @@ func initializeSymmetricKeyMembersGroup(
 		for _, member2 := range members {
 			if member1.ID != member2.ID {
 
-				privKey := member1.ephemeralKeyPairs[member2.ID].PrivateKey
-				pubKey := member2.ephemeralKeyPairs[member1.ID].PublicKey
+				privKey := member1.ephemeralKeys[member2.ID].PrivateKey
+				pubKey := member2.ephemeralKeys[member1.ID].PublicKey
 				member1.symmetricKeys[member2.ID] = privKey.Ecdh(pubKey)
 			}
 		}
