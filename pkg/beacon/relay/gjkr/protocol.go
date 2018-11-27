@@ -65,7 +65,7 @@ func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
 func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	ephemeralPubKeyMessages []*EphemeralPublicKeyMessage,
 ) error {
-	// get the public key broadcasted by the remote group member,
+	// Get the public key broadcasted by the remote group member,
 	// which was intended for this node
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
 		otherMember := ephemeralPubKeyMessage.senderID

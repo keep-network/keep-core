@@ -41,6 +41,8 @@ type EphemeralKeyGeneratingMember struct {
 //
 // Executes Phase 2 of the protocol.
 type SymmetricKeyGeneratingMember struct {
+	// TODO: replace this and ephemeralKeyPairs with
+	// *EphemeralKeyGeneratingMember
 	*memberCore
 
 	// Ephemeral key pairs used to create symmetric keys,
@@ -48,7 +50,9 @@ type SymmetricKeyGeneratingMember struct {
 	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
 
 	// Symmetric keys used to encrypt confidential information,
-	// generated individually for each other group member.
+	// generated individually for each other group member by ECDH'ing the
+	// broadcasted ephemeral public key intended for this member and the
+	// ephemeral private key generated for the other member.
 	symmetricKeys map[MemberID]ephemeral.SymmetricKey
 }
 
