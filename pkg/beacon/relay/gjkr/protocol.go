@@ -154,7 +154,7 @@ func (cm *CommittingMember) evaluateMemberShare(memberID MemberID, coefficients 
 // by this function.
 //
 // See Phase 4 of the protocol specification.
-func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
+func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
@@ -169,7 +169,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 
 				// If there is no symmetric key established with a sender of
 				// the message, error is returned.
-				symmetricKey, hasKey := cm.symmetricKeys[sharesMessage.senderID]
+				symmetricKey, hasKey := cvm.symmetricKeys[sharesMessage.senderID]
 				if !hasKey {
 					return nil, fmt.Errorf(
 						"no symmetric key for sender %v",
@@ -199,19 +199,19 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 				// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
 				// where: j is sender's ID, i is current member ID, T is threshold.
-				if !cm.areSharesValidAgainstCommitments(
+				if !cvm.areSharesValidAgainstCommitments(
 					shareS, // s_ji
 					shareT, // t_ji
 					commitmentsMessage.commitments, // C_j
-					cm.ID, // i
+					cvm.ID, // i
 				) {
 					accusedMembersIDs = append(accusedMembersIDs,
 						commitmentsMessage.senderID)
 					break
 				}
-				cm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
-				cm.receivedValidSharesT[commitmentsMessage.senderID] = shareT
-				cm.receivedValidPeerCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
+				cvm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
+				cvm.receivedValidSharesT[commitmentsMessage.senderID] = shareT
+				cvm.receivedValidPeerCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
 				break
 			}
 		}
@@ -223,7 +223,7 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 	}
 
 	return &SecretSharesAccusationsMessage{
-		senderID:   cm.ID,
+		senderID:   cvm.ID,
 		accusedIDs: accusedMembersIDs,
 	}, nil
 }

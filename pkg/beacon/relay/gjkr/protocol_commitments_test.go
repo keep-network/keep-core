@@ -192,7 +192,16 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				test.modifyCommitmentsMessages(filteredCommitmentsMessages)
 			}
 
-			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
+			// Simulate step to next Phase
+			// TODO Handle by Next function
+			verifyingMember := &CommitmentsVerifyingMember{
+				CommittingMember:             currentMember,
+				receivedValidSharesS:         make(map[MemberID]*big.Int),
+				receivedValidSharesT:         make(map[MemberID]*big.Int),
+				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+			}
+
+			accusedMessage, err := verifyingMember.VerifyReceivedSharesAndCommitmentsMessages(
 				filteredSharesMessages,
 				filteredCommitmentsMessages,
 			)
@@ -219,22 +228,22 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			}
 
 			expectedReceivedSharesLength := groupSize - 1 - len(test.expectedAccusedIDs)
-			if len(currentMember.receivedValidSharesS) != expectedReceivedSharesLength {
+			if len(verifyingMember.receivedValidSharesS) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received shares S\nactual:   %v\n",
 					expectedReceivedSharesLength,
-					len(currentMember.receivedValidSharesS),
+					len(verifyingMember.receivedValidSharesS),
 				)
 			}
-			if len(currentMember.receivedValidSharesT) != expectedReceivedSharesLength {
+			if len(verifyingMember.receivedValidSharesT) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received shares T\nactual:   %v\n",
 					expectedReceivedSharesLength,
-					len(currentMember.receivedValidSharesT),
+					len(verifyingMember.receivedValidSharesT),
 				)
 			}
-			if len(currentMember.receivedValidPeerCommitments) != expectedReceivedSharesLength {
+			if len(verifyingMember.receivedValidPeerCommitments) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received commitments\nactual:   %v\n",
 					expectedReceivedSharesLength,
-					len(currentMember.receivedValidPeerCommitments),
+					len(verifyingMember.receivedValidPeerCommitments),
 				)
 			}
 		})
@@ -290,13 +299,32 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 
 	var members []*CommittingMember
 	for _, member := range symmetricKeyMembers {
-		members = append(members, &CommittingMember{
-			SymmetricKeyGeneratingMember: member,
-			vss:                          vss,
-			receivedValidSharesS:         make(map[MemberID]*big.Int),
-			receivedValidSharesT:         make(map[MemberID]*big.Int),
-			receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
-		})
+		members = append(members,
+			&CommittingMember{
+				SymmetricKeyGeneratingMember: member,
+				vss: vss,
+			})
+	}
+
+	return members, nil
+}
+
+func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CommitmentsVerifyingMember, error) {
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%v]", err)
+	}
+
+	var members []*CommitmentsVerifyingMember
+	for _, member := range committingMembers {
+		//TODO Handle by Next function
+		members = append(members,
+			&CommitmentsVerifyingMember{
+				CommittingMember:             member,
+				receivedValidSharesS:         make(map[MemberID]*big.Int),
+				receivedValidSharesT:         make(map[MemberID]*big.Int),
+				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+			})
 	}
 
 	return members, nil

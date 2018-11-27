@@ -223,16 +223,16 @@ func findCoefficientsJustifyingMemberByID(
 // shares for each peer member individually. At the end it stores values for each
 // member just like they would be received from peers.
 func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) ([]*SharesJustifyingMember, error) {
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
+	commitmentsVerifyingMembers, err := initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
 	var sharesJustifyingMembers []*SharesJustifyingMember
 	// TODO: Handle transition from CommittingMember to SharesJustifyingMember in Next() function
-	for _, jm := range committingMembers {
+	for _, cvm := range commitmentsVerifyingMembers {
 		sharesJustifyingMembers = append(sharesJustifyingMembers, &SharesJustifyingMember{
-			CommittingMember: jm,
+			CommitmentsVerifyingMember: cvm,
 		})
 	}
 
