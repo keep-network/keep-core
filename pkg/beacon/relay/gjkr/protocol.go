@@ -21,6 +21,9 @@ import (
 // commitments to `a` coefficients of first polynomial using second's polynomial
 // `b` coefficients.
 //
+// If there is no symmetric key established with the given group member,
+// function yields an error.
+//
 // See Phase 3 of the protocol specification.
 func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	[]*PeerSharesMessage,
@@ -56,13 +59,31 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 			continue
 		}
 
-		sharesMessages = append(sharesMessages,
-			&PeerSharesMessage{
-				senderID:   cm.ID,
-				receiverID: receiverID,
-				shareS:     memberShareS,
-				shareT:     memberShareT,
-			})
+		// If there is no symmetric key established with the receiver, error is
+		// returned.
+		symmetricKey, hasKey := cm.symmetricKeys[receiverID]
+		if !hasKey {
+			return nil, nil, fmt.Errorf(
+				"no symmetric key for receiver %v", receiverID,
+			)
+		}
+
+		message, err := newPeerSharesMessage(
+			cm.ID,
+			receiverID,
+			memberShareS,
+			memberShareT,
+			symmetricKey,
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf(
+				"could not create PeerSharesMessage for receiver %v [%v]",
+				receiverID,
+				err,
+			)
+		}
+
+		sharesMessages = append(sharesMessages, message)
 	}
 
 	commitments := make([]*big.Int, len(coefficientsA))
@@ -125,7 +146,12 @@ func (cm *CommittingMember) evaluateMemberShare(memberID MemberID, coefficients 
 // It returns accusation message with ID of members for which verification failed.
 //
 // If cannot match commitments message with shares message for given sender then
-// error is returned.
+// error is returned. Also, error is returned if the member does not have
+// a symmetric encryption key established with sender of a message.
+//
+// All the received PeerSharesMessage should be validated before they are passed
+// to this function. It should never happen that the message can't be decrypted
+// by this function.
 //
 // See Phase 4 of the protocol specification.
 func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
@@ -141,12 +167,41 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
 
+				// If there is no symmetric key established with a sender of
+				// the message, error is returned.
+				symmetricKey, hasKey := cm.symmetricKeys[sharesMessage.senderID]
+				if !hasKey {
+					return nil, fmt.Errorf(
+						"no symmetric key for sender %v",
+						sharesMessage.senderID,
+					)
+				}
+
+				// Decrypt shares using symmetric key established with sender.
+				// Since all the message are validated prior to passing to this
+				// function, decryption error should never happen.
+				shareS, err := sharesMessage.decryptShareS(symmetricKey) // s_ji
+				if err != nil {
+					return nil, fmt.Errorf(
+						"could not decrypt share S [%v]",
+						err,
+					)
+				}
+				shareT, err := sharesMessage.decryptShareT(symmetricKey) // t_ji
+				if err != nil {
+					return nil, fmt.Errorf(
+						"could not decrypt share T [%v]",
+						err,
+					)
+				}
+
 				// Check if `commitmentsProduct == expectedProduct`
 				// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T]
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
 				// where: j is sender's ID, i is current member ID, T is threshold.
 				if !cm.areSharesValidAgainstCommitments(
-					sharesMessage.shareS, sharesMessage.shareT, // s_ji, t_ji
+					shareS, // s_ji
+					shareT, // t_ji
 					commitmentsMessage.commitments, // C_j
 					cm.ID, // i
 				) {
@@ -154,14 +209,14 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 						commitmentsMessage.senderID)
 					break
 				}
-				cm.receivedValidSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
-				cm.receivedValidSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
+				cm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
+				cm.receivedValidSharesT[commitmentsMessage.senderID] = shareT
 				cm.receivedValidPeerCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
 				break
 			}
 		}
 		if !sharesMessageFound {
-			return nil, fmt.Errorf("cannot find shares message from member %d",
+			return nil, fmt.Errorf("cannot find shares message from member %v",
 				commitmentsMessage.senderID,
 			)
 		}
