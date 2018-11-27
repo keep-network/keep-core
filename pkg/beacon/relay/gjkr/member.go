@@ -32,6 +32,11 @@ type SymmetricKeyGeneratingMember struct {
 	symmetricKeys map[int]ephemeral.SymmetricKey
 }
 
+// Next returns a member to perform next protocol operations.
+func (skgm *SymmetricKeyGeneratingMember) Next() *CommittingMember {
+	return &CommittingMember{SymmetricKeyGeneratingMember: skgm}
+}
+
 // CommittingMember represents one member in a distributed key generation group,
 // after it has fully initialized ephemeral symmetric keys with all other group
 // members.
@@ -55,6 +60,16 @@ type CommittingMember struct {
 	selfSecretShareS, selfSecretShareT *big.Int
 }
 
+// Next returns a member to perform next protocol operations.
+func (cm *CommittingMember) Next() *CommitmentsVerifyingMember {
+	return &CommitmentsVerifyingMember{
+		CommittingMember:             cm,
+		receivedValidSharesS:         make(map[int]*big.Int),
+		receivedValidSharesT:         make(map[int]*big.Int),
+		receivedValidPeerCommitments: make(map[int][]*big.Int),
+	}
+}
+
 // CommitmentsVerifyingMember represents one member in a distributed key generation
 // group, after it has received secret shares and commitments from other group
 // members and it performs verification of received values.
@@ -74,6 +89,11 @@ type CommitmentsVerifyingMember struct {
 	receivedValidPeerCommitments map[int][]*big.Int
 }
 
+// Next returns a member to perform next protocol operations.
+func (cvm *CommitmentsVerifyingMember) Next() *SharesJustifyingMember {
+	return &SharesJustifyingMember{cvm}
+}
+
 // SharesJustifyingMember represents one member in a threshold key sharing group,
 // after it completed secret shares and commitments verification and enters
 // justification phase where it resolves invalid share accusations.
@@ -81,6 +101,11 @@ type CommitmentsVerifyingMember struct {
 // Executes Phase 5 of the protocol.
 type SharesJustifyingMember struct {
 	*CommitmentsVerifyingMember
+}
+
+// Next returns a member to perform next protocol operations.
+func (sjm *SharesJustifyingMember) Next() *QualifiedMember {
+	return &QualifiedMember{SharesJustifyingMember: sjm}
 }
 
 // QualifiedMember represents one member in a threshold key sharing group, after
@@ -95,6 +120,14 @@ type QualifiedMember struct {
 	// in protocol specification.
 	// TODO: unsure if we need shareT `x'_i` field, it should be removed if not used in further steps
 	masterPrivateKeyShare, shareT *big.Int
+}
+
+// Next returns a member to perform next protocol operations.
+func (qm *QualifiedMember) Next() *SharingMember {
+	return &SharingMember{
+		QualifiedMember:                       qm,
+		receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int),
+	}
 }
 
 // SharingMember represents one member in a threshold key sharing group, after it
@@ -135,6 +168,11 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
 	return receivedValidPeerIndividualPublicKeys
 }
 
+// Next returns a member to perform next protocol operations.
+func (sm *SharingMember) Next() *PointsJustifyingMember {
+	return &PointsJustifyingMember{sm}
+}
+
 // PointsJustifyingMember represents one member in a threshold key sharing group,
 // after it completed public key share points verification and enters justification
 // phase where it resolves public key share points accusations.
@@ -142,6 +180,15 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
 // Executes Phase 9 of the protocol.
 type PointsJustifyingMember struct {
 	*SharingMember
+}
+
+// Next returns a member to perform next protocol operations.
+func (pjm *PointsJustifyingMember) Next() *ReconstructingMember {
+	return &ReconstructingMember{
+		PointsJustifyingMember:             pjm,
+		reconstructedIndividualPrivateKeys: make(map[int]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[int]*big.Int),
+	}
 }
 
 // ReconstructingMember represents one member in a threshold sharing group who
@@ -162,6 +209,11 @@ type ReconstructingMember struct {
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
 	reconstructedIndividualPublicKeys map[int]*big.Int
+}
+
+// Next returns a member to perform next protocol operations.
+func (rm *ReconstructingMember) Next() *CombiningMember {
+	return &CombiningMember{ReconstructingMember: rm}
 }
 
 // CombiningMember represents one member in a threshold sharing group who is
