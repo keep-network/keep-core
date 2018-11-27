@@ -183,14 +183,14 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 				shareS, err := sharesMessage.decryptShareS(symmetricKey) // s_ji
 				if err != nil {
 					return nil, fmt.Errorf(
-						"could not decrypt the message [%v]",
+						"could not decrypt share S [%v]",
 						err,
 					)
 				}
 				shareT, err := sharesMessage.decryptShareT(symmetricKey) // t_ji
 				if err != nil {
 					return nil, fmt.Errorf(
-						"could not decrypt the message [%v]",
+						"could not decrypt share T [%v]",
 						err,
 					)
 				}
