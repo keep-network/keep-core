@@ -68,12 +68,13 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	// get the public key broadcasted by the remote group member,
 	// which was intended for this node
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
+		sender := ephemeralPubKeyMessage.senderID
 		// find the ephemeral key pair for this group member
-		ephemeralKeyPair, ok := sm.ephemeralKeyPairs[ephemeralPubKeyMessage.senderID]
+		ephemeralKeyPair, ok := sm.ephemeralKeyPairs[sender]
 		if !ok {
 			return fmt.Errorf(
 				"ephemeral key pair does not exist for %d",
-				ephemeralPubKeyMessage.senderID,
+				sender,
 			)
 		}
 
@@ -81,7 +82,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 			symmetricKey := ephemeralKeyPair.PrivateKey.Ecdh(
 				ephemeralPubKeyMessage.ephemeralPublicKey,
 			)
-			sm.symmetricKeys[ephemeralPubKeyMessage.senderID] = symmetricKey
+			sm.symmetricKeys[sender] = symmetricKey
 		}
 	}
 	return nil
