@@ -30,6 +30,13 @@ type Chain struct {
 	// Predefined step for each publishing window. The value is used to determine
 	// eligible publishing member. Relates to DKG Phase 13.
 	blockStep int // t_step
+
+	TMax      int // M_Max
+	TConflict int // T_conflict
+
+	TNow     int // T_Now - Current block height at the current time
+	TFirst   int // T_First -
+	PerGroup map[string]ValidationGroupState
 }
 
 // RandomQ generates a random `big.Int` in range (0, q).
