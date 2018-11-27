@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -45,8 +46,60 @@ type PeerSharesMessage struct {
 	senderID   int // i
 	receiverID int // j
 
-	shareS *big.Int // s_ij
-	shareT *big.Int // t_ij
+	encryptedShareS []byte // s_ij
+	encryptedShareT []byte // t_ij
+}
+
+func newPeerSharesMessage(
+	senderID, receiverID int,
+	shareS, shareT *big.Int,
+	symmetricKey ephemeral.SymmetricKey,
+) (*PeerSharesMessage, error) {
+	encryptedS, err := symmetricKey.Encrypt(shareS.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("could not create PeerSharesMessage [%v]", err)
+	}
+
+	encryptedT, err := symmetricKey.Encrypt(shareT.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("could not create PeerSharesMessage [%v]", err)
+	}
+
+	return &PeerSharesMessage{senderID, receiverID, encryptedS, encryptedT}, nil
+}
+
+func (psm *PeerSharesMessage) decryptShareS(key ephemeral.SymmetricKey) (*big.Int, error) {
+	decryptedS, err := key.Decrypt(psm.encryptedShareS)
+	if err != nil {
+		return nil, fmt.Errorf("could not decrypt S share [%v]", err)
+	}
+
+	return new(big.Int).SetBytes(decryptedS), nil
+}
+
+func (psm *PeerSharesMessage) decryptShareT(key ephemeral.SymmetricKey) (*big.Int, error) {
+	decryptedT, err := key.Decrypt(psm.encryptedShareT)
+	if err != nil {
+		return nil, fmt.Errorf("could not evaluate T share [%v]", err)
+	}
+
+	return new(big.Int).SetBytes(decryptedT), nil
+}
+
+// CanDecrypt checks if the PeerSharesMessage can be successfully decrypted
+// with the provided key. This function should be called before the message
+// is passed to DKG protocol for processing. It's possible that malicious
+// group member can send an invalid message. In such case, it should be rejected
+// to do not cause a failure in DKG protocol.
+func (psm *PeerSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
+	if _, err := psm.decryptShareS(key); err != nil {
+		return false
+	}
+	if _, err := psm.decryptShareT(key); err != nil {
+		return false
+	}
+
+	return true
 }
 
 // SecretSharesAccusationsMessage is a message payload that carries all of the
