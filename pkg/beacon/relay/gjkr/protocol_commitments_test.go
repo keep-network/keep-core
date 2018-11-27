@@ -15,7 +15,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize)
+	members, err := initializeCommittingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -92,7 +92,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializeCommittingMembersGroup(threshold, groupSize)
+			members, err := initializeCommittingMembersGroup(threshold, groupSize, nil)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -193,13 +193,16 @@ func TestGeneratePolynomial(t *testing.T) {
 	}
 }
 
-func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMember, error) {
-	config, err := predefinedDKG()
-	if err != nil {
-		return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
+func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CommittingMember, error) {
+	var err error
+	if dkg == nil {
+		dkg, err = predefinedDKG()
+		if err != nil {
+			return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
+		}
 	}
 
-	vss, err := pedersen.NewVSS(crand.Reader, config.P, config.Q)
+	vss, err := pedersen.NewVSS(crand.Reader, dkg.P, dkg.Q)
 	if err != nil {
 		return nil, fmt.Errorf("VSS initialization failed [%s]", err)
 	}
@@ -217,7 +220,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 			memberCore: &memberCore{
 				ID:             id,
 				group:          group,
-				protocolConfig: config,
+				protocolConfig: dkg,
 			},
 			vss:                          vss,
 			receivedValidSharesS:         make(map[int]*big.Int),
