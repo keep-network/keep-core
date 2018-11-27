@@ -26,12 +26,11 @@ func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
 	[]*EphemeralPublicKeyMessage,
 	error,
 ) {
+	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
+
 	// Calculate ephemeral public keys for every group member
 	for _, member := range em.group.memberIDs {
 		if member == em.ID {
-			// add empty reference to maintain the correct index
-			em.ephemeralKeys[member] = nil
-
 			// don’t actually generate a symmetric key with ourselves
 			continue
 		}
@@ -43,26 +42,16 @@ func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
 
 		// save the generated ephemeral key to our state
 		em.ephemeralKeys[member] = ephemeralKey
+
+		ephemeralKeyMessages = append(ephemeralKeyMessages,
+			&EphemeralPublicKeyMessage{
+				senderID:           em.ID,
+				receiverID:         member,
+				ephemeralPublicKey: ephemeralKey.PublicKey,
+			},
+		)
 	}
 
-	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
-	for _, member := range em.group.memberIDs {
-		ephemeralKeyMessage := &EphemeralPublicKeyMessage{
-			senderID:   em.ID,
-			receiverID: member,
-		}
-
-		if keyPair, ok := em.ephemeralKeys[member]; ok {
-			ephemeralKeyMessage.ephemeralPublicKey = keyPair.PublicKey
-			ephemeralKeyMessages = append(
-				ephemeralKeyMessages, ephemeralKeyMessage,
-			)
-		} else {
-			ephemeralKeyMessages = append(
-				ephemeralKeyMessages, ephemeralKeyMessage,
-			)
-		}
-	}
 	return ephemeralKeyMessages, nil
 }
 
