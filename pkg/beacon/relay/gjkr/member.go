@@ -80,7 +80,7 @@ type CommitmentsVerifyingMember struct {
 //
 // Executes Phase 5 of the protocol.
 type SharesJustifyingMember struct {
-	*CommittingMember
+	*CommitmentsVerifyingMember
 }
 
 // QualifiedMember represents one member in a threshold key sharing group, after
