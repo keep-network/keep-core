@@ -20,8 +20,8 @@ import (
 // public key prior to exchanging any messages. Hence, why the ephemeral public
 // key of the party is broadcast to the group.
 type EphemeralPublicKeyMessage struct {
-	senderID   int // i
-	receiverID int // j
+	senderID   MemberID // i
+	receiverID MemberID // j
 
 	ephemeralPublicKey *ephemeral.PublicKey // Y_ij
 }
@@ -31,7 +31,7 @@ type EphemeralPublicKeyMessage struct {
 //
 // It is expected to be broadcast.
 type MemberCommitmentsMessage struct {
-	senderID int
+	senderID MemberID
 
 	commitments []*big.Int // slice of `C_ik`
 }
@@ -43,15 +43,15 @@ type MemberCommitmentsMessage struct {
 // It is expected to be communicated in an encrypted fashion to the selected
 // recipient.
 type PeerSharesMessage struct {
-	senderID   int // i
-	receiverID int // j
+	senderID   MemberID // i
+	receiverID MemberID // j
 
 	encryptedShareS []byte // s_ij
 	encryptedShareT []byte // t_ij
 }
 
 func newPeerSharesMessage(
-	senderID, receiverID int,
+	senderID, receiverID MemberID,
 	shareS, shareT *big.Int,
 	symmetricKey ephemeral.SymmetricKey,
 ) (*PeerSharesMessage, error) {
@@ -109,16 +109,16 @@ func (psm *PeerSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
 //
 // It is expected to be broadcast.
 type SecretSharesAccusationsMessage struct {
-	senderID int
+	senderID MemberID
 
-	accusedIDs []int
+	accusedIDs []MemberID
 }
 
 // MemberPublicKeySharePointsMessage is a message payload that carries the sender's
 // public key share points.
 // It is expected to be broadcast.
 type MemberPublicKeySharePointsMessage struct {
-	senderID int
+	senderID MemberID
 
 	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
 }
@@ -130,7 +130,7 @@ type MemberPublicKeySharePointsMessage struct {
 // message should be broadcast but with an empty slice of `accusedIDs`.
 // It is expected to be broadcast.
 type PointsAccusationsMessage struct {
-	senderID int
+	senderID MemberID
 
-	accusedIDs []int
+	accusedIDs []MemberID
 }

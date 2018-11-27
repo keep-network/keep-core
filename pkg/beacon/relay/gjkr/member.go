@@ -7,9 +7,17 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// MemberID is a unique-in-group identifier of a member.
+type MemberID uint32
+
+// Int converts `MemberID` to `big.Int`
+func (id MemberID) Int() *big.Int {
+	return new(big.Int).SetUint64(uint64(id))
+}
+
 type memberCore struct {
 	// ID of this group member.
-	ID int
+	ID MemberID
 	// Group to which this member belongs.
 	group *Group
 	// DKG Protocol configuration parameters.
@@ -37,11 +45,11 @@ type SymmetricKeyGeneratingMember struct {
 
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
-	ephemeralKeyPairs map[int]*ephemeral.KeyPair
+	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
 
 	// Symmetric keys used to encrypt confidential information,
 	// generated individually for each other group member.
-	symmetricKeys map[int]ephemeral.SymmetricKey
+	symmetricKeys map[MemberID]ephemeral.SymmetricKey
 }
 
 // CommittingMember represents one member in a distributed key generation group,
@@ -80,10 +88,10 @@ type CommitmentsVerifyingMember struct {
 	//
 	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
-	receivedValidSharesS, receivedValidSharesT map[int]*big.Int
+	receivedValidSharesS, receivedValidSharesT map[MemberID]*big.Int
 	// Commitments to coefficients received from peer group members which passed
 	// the validation.
-	receivedValidPeerCommitments map[int][]*big.Int
+	receivedValidPeerCommitments map[MemberID][]*big.Int
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -123,7 +131,7 @@ type SharingMember struct {
 	publicKeySharePoints []*big.Int
 	// Public key share points received from peer group members which passed the
 	// validation. Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerPublicKeySharePoints map[int][]*big.Int
+	receivedValidPeerPublicKeySharePoints map[MemberID][]*big.Int
 }
 
 // individualPublicKey returns current member's individual public key.
@@ -168,12 +176,12 @@ type ReconstructingMember struct {
 	// Stored as `<m, z_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `z_m` is reconstructed individual private key of member `m`
-	reconstructedIndividualPrivateKeys map[int]*big.Int
+	reconstructedIndividualPrivateKeys map[MemberID]*big.Int
 	// Individual public keys calculated from reconstructed individual private keys.
 	// Stored as `<m, y_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
-	reconstructedIndividualPublicKeys map[int]*big.Int
+	reconstructedIndividualPublicKeys map[MemberID]*big.Int
 }
 
 // CombiningMember represents one member in a threshold sharing group who is

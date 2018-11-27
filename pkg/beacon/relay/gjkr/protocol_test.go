@@ -30,9 +30,9 @@ func TestRoundTrip(t *testing.T) {
 	for _, cm := range committingMembers {
 		commitmentsVerifyingMembers = append(commitmentsVerifyingMembers,
 			&CommitmentsVerifyingMember{CommittingMember: cm,
-				receivedValidSharesS:         make(map[int]*big.Int),
-				receivedValidSharesT:         make(map[int]*big.Int),
-				receivedValidPeerCommitments: make(map[int][]*big.Int),
+				receivedValidSharesS:         make(map[MemberID]*big.Int),
+				receivedValidSharesT:         make(map[MemberID]*big.Int),
+				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
 			},
 		)
 	}
@@ -72,7 +72,7 @@ func TestRoundTrip(t *testing.T) {
 	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
 			QualifiedMember:                       qm,
-			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
+			receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
 		})
 	}
 

@@ -19,15 +19,15 @@ func initializeSymmetricKeyMembersGroup(
 	var members []*SymmetricKeyGeneratingMember
 
 	for i := 1; i <= groupSize; i++ {
-		id := i
+		id := MemberID(i)
 		members = append(members, &SymmetricKeyGeneratingMember{
 			memberCore: &memberCore{
 				ID:             id,
 				group:          group,
 				protocolConfig: dkg,
 			},
-			ephemeralKeyPairs: make(map[int]*ephemeral.KeyPair),
-			symmetricKeys:     make(map[int]ephemeral.SymmetricKey),
+			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
+			symmetricKeys:     make(map[MemberID]ephemeral.SymmetricKey),
 		})
 		group.RegisterMemberID(id)
 	}

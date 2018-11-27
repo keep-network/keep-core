@@ -11,15 +11,15 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	currentMemberID := 2 // i
+	currentMemberID := MemberID(2) // i
 
 	var tests = map[string]struct {
-		accuserID         int // j
-		accusedID         int // m
+		accuserID         MemberID // j
+		accusedID         MemberID // m
 		modifyShareS      func(shareS *big.Int) *big.Int
 		modifyShareT      func(shareT *big.Int) *big.Int
 		modifyCommitments func(commitments []*big.Int) []*big.Int
-		expectedResult    int
+		expectedResult    MemberID
 		expectedError     error
 	}{
 		"false accusation - accuser is punished": {
@@ -116,14 +116,14 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	currentMemberID := 2 // i
+	currentMemberID := MemberID(2) // i
 
 	var tests = map[string]struct {
-		accuserID                  int // j
-		accusedID                  int // m
+		accuserID                  MemberID // j
+		accusedID                  MemberID // m
 		modifyShareS               func(shareS *big.Int) *big.Int
 		modifyPublicKeySharePoints func(coefficients []*big.Int) []*big.Int
-		expectedResult             int
+		expectedResult             MemberID
 		expectedError              error
 	}{
 		"false accusation - sender is punished": {
@@ -196,7 +196,7 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 	}
 }
 
-func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id int) *SharesJustifyingMember {
+func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id MemberID) *SharesJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
 			return m
@@ -207,7 +207,7 @@ func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id int) *
 
 func findCoefficientsJustifyingMemberByID(
 	members []*PointsJustifyingMember,
-	id int,
+	id MemberID,
 ) *PointsJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
@@ -238,9 +238,9 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) (
 
 	// Maps which will keep coefficients and commitments of all group members,
 	// with members IDs as keys.
-	groupCoefficientsA := make(map[int][]*big.Int, groupSize)
-	groupCoefficientsB := make(map[int][]*big.Int, groupSize)
-	groupCommitments := make(map[int][]*big.Int, groupSize)
+	groupCoefficientsA := make(map[MemberID][]*big.Int, groupSize)
+	groupCoefficientsB := make(map[MemberID][]*big.Int, groupSize)
+	groupCommitments := make(map[MemberID][]*big.Int, groupSize)
 
 	// Generate threshold+1 coefficients and commitments for each group member.
 	for _, m := range sharesJustifyingMembers {

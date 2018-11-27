@@ -100,11 +100,11 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	var tests = map[string]struct {
 		modifyPeerShareMessages func(
 			messages []*PeerSharesMessage,
-			symmetricKeys map[int]ephemeral.SymmetricKey,
+			symmetricKeys map[MemberID]ephemeral.SymmetricKey,
 		)
 		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
 		expectedError             error
-		expectedAccusedIDs        []int
+		expectedAccusedIDs        []MemberID
 	}{
 		"positive validation - no accusations": {
 			expectedError: nil,
@@ -112,7 +112,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		"negative validation - changed share S": {
 			modifyPeerShareMessages: func(
 				messages []*PeerSharesMessage,
-				symmetricKeys map[int]ephemeral.SymmetricKey,
+				symmetricKeys map[MemberID]ephemeral.SymmetricKey,
 			) {
 				// current member ID = 1, we modify first message on the list
 				// so it's a message from member with ID = 2
@@ -124,12 +124,12 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{2},
+			expectedAccusedIDs: []MemberID{MemberID(2)},
 		},
 		"negative validation - changed two shares T": {
 			modifyPeerShareMessages: func(
 				messages []*PeerSharesMessage,
-				symmetricKeys map[int]ephemeral.SymmetricKey,
+				symmetricKeys map[MemberID]ephemeral.SymmetricKey,
 			) {
 				// current member ID = 1, we modify second message on the list
 				// so it's a message from member with ID = 3
@@ -150,7 +150,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{3, 4},
+			expectedAccusedIDs: []MemberID{MemberID(3), MemberID(4)},
 		},
 		"negative validation - changed commitment": {
 			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
@@ -159,7 +159,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{5},
+			expectedAccusedIDs: []MemberID{MemberID(5)},
 		},
 	}
 	for testName, test := range tests {
@@ -196,9 +196,9 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			// TODO Handle by Next function
 			verifyingMember := &CommitmentsVerifyingMember{
 				CommittingMember:             currentMember,
-				receivedValidSharesS:         make(map[int]*big.Int),
-				receivedValidSharesT:         make(map[int]*big.Int),
-				receivedValidPeerCommitments: make(map[int][]*big.Int),
+				receivedValidSharesS:         make(map[MemberID]*big.Int),
+				receivedValidSharesT:         make(map[MemberID]*big.Int),
+				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
 			}
 
 			accusedMessage, err := verifyingMember.VerifyReceivedSharesAndCommitmentsMessages(
@@ -302,7 +302,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 		members = append(members,
 			&CommittingMember{
 				SymmetricKeyGeneratingMember: member,
-				vss:                          vss,
+				vss: vss,
 			})
 	}
 
@@ -321,9 +321,9 @@ func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *
 		members = append(members,
 			&CommitmentsVerifyingMember{
 				CommittingMember:             member,
-				receivedValidSharesS:         make(map[int]*big.Int),
-				receivedValidSharesT:         make(map[int]*big.Int),
-				receivedValidPeerCommitments: make(map[int][]*big.Int),
+				receivedValidSharesS:         make(map[MemberID]*big.Int),
+				receivedValidSharesT:         make(map[MemberID]*big.Int),
+				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
 			})
 	}
 
@@ -354,7 +354,7 @@ func predefinedDKG() (*DKG, error) {
 
 func filterPeerSharesMessage(
 	messages []*PeerSharesMessage,
-	receiverID int,
+	receiverID MemberID,
 ) []*PeerSharesMessage {
 	var result []*PeerSharesMessage
 	for _, msg := range messages {
@@ -368,7 +368,7 @@ func filterPeerSharesMessage(
 
 func filterMemberCommitmentsMessages(
 	messages []*MemberCommitmentsMessage,
-	receiverID int,
+	receiverID MemberID,
 ) []*MemberCommitmentsMessage {
 	var result []*MemberCommitmentsMessage
 	for _, msg := range messages {

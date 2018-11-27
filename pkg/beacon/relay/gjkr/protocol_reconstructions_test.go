@@ -10,7 +10,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 
-	disqualifiedMembersIDs := []int{3, 5}
+	disqualifiedMembersIDs := []MemberID{3, 5}
 
 	group, err := initializeReconstructingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
@@ -47,7 +47,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	}
 }
 
-func contains(slice []int, value int) bool {
+func contains(slice []MemberID, value MemberID) bool {
 	for _, i := range slice {
 		if i == value {
 			return true
@@ -64,13 +64,13 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 
 	disqualifiedMembersIDs := []int{4, 5} // m
 
-	reconstructedIndividualPrivateKeys := make(map[int]*big.Int, len(disqualifiedMembersIDs)) // z_m
-	reconstructedIndividualPrivateKeys[4] = big.NewInt(14)                                    // z_4
-	reconstructedIndividualPrivateKeys[5] = big.NewInt(15)                                    // z_5
+	reconstructedIndividualPrivateKeys := make(map[MemberID]*big.Int, len(disqualifiedMembersIDs)) // z_m
+	reconstructedIndividualPrivateKeys[4] = big.NewInt(14)                                         // z_4
+	reconstructedIndividualPrivateKeys[5] = big.NewInt(15)                                         // z_5
 
-	expectedIndividualPublicKeys := make(map[int]*big.Int, len(disqualifiedMembersIDs)) // y_m = g^{z_m} mod p
-	expectedIndividualPublicKeys[4] = big.NewInt(43)                                    // 7^14 mod 179
-	expectedIndividualPublicKeys[5] = big.NewInt(122)                                   // 7^15 mod 179
+	expectedIndividualPublicKeys := make(map[MemberID]*big.Int, len(disqualifiedMembersIDs)) // y_m = g^{z_m} mod p
+	expectedIndividualPublicKeys[4] = big.NewInt(43)                                         // 7^14 mod 179
+	expectedIndividualPublicKeys[5] = big.NewInt(122)                                        // 7^15 mod 179
 
 	members, err := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
@@ -162,11 +162,11 @@ func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([
 // shares calculated by disqualified members for their peers and reveals them.
 func disqualifyMembers(
 	members []*ReconstructingMember,
-	disqualifiedMembersIDs []int,
+	disqualifiedMembersIDs []MemberID,
 ) []*DisqualifiedShares {
 	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedMembersIDs))
 	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
-		sharesReceivedFromDisqualifiedMember := make(map[int]*big.Int, len(members)-len(disqualifiedMembersIDs))
+		sharesReceivedFromDisqualifiedMember := make(map[MemberID]*big.Int, len(members)-len(disqualifiedMembersIDs))
 		// for each group member
 		for _, m := range members {
 			// if the member has not been disqualified
@@ -201,7 +201,7 @@ func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Com
 	var combiningMembers []*CombiningMember
 	// TODO Should be handled by the `.Next()`` function
 	for _, rm := range reconstructingMembers {
-		rm.reconstructedIndividualPublicKeys = make(map[int]*big.Int)
+		rm.reconstructedIndividualPublicKeys = make(map[MemberID]*big.Int)
 
 		combiningMembers = append(combiningMembers,
 			&CombiningMember{
