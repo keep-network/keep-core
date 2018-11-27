@@ -3,6 +3,7 @@ package ephemeral
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 
@@ -49,14 +50,21 @@ func (sek *SymmetricEcdhKey) Encrypt(plaintext []byte) ([]byte, error) {
 }
 
 // Decrypt takes the input ciphertext and authenticates and decrypts it.
-func (sek *SymmetricEcdhKey) Decrypt(ciphertext []byte) ([]byte, error) {
+func (sek *SymmetricEcdhKey) Decrypt(ciphertext []byte) (plaintext []byte, err error) {
+	defer func() {
+		// secretbox Open panics for invalid input
+		if recover() != nil {
+			err = errors.New("symmetric key decryption failed")
+		}
+	}()
+
 	var nonce [NonceSize]byte
 	copy(nonce[:], ciphertext[:NonceSize])
 
-	decrypted, ok := secretbox.Open(nil, ciphertext[NonceSize:], &nonce, &sek.key)
+	plaintext, ok := secretbox.Open(nil, ciphertext[NonceSize:], &nonce, &sek.key)
 	if !ok {
-		return nil, fmt.Errorf("symmetric key decryption failed")
+		err = fmt.Errorf("symmetric key decryption failed")
 	}
 
-	return decrypted, nil
+	return
 }

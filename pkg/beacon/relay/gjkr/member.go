@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 type memberCore struct {
@@ -15,14 +16,29 @@ type memberCore struct {
 	protocolConfig *DKG
 }
 
-// CommittingMember represents one member in a threshold key sharing group, after
-// it has a full list of `memberIDs` that belong to its threshold group. A
-// member in this state has two maps of member shares for each member of the
-// group.
+// SymmetricKeyGeneratingMember represents one member in a distributed key
+// generating group performing ephemeral symmetric key generation.
+//
+// Executes Phase 2 of the protocol.
+type SymmetricKeyGeneratingMember struct {
+	*memberCore
+
+	// Ephemeral key pairs used to create symmetric keys,
+	// generated individually for each other group member.
+	ephemeralKeyPairs map[int]*ephemeral.KeyPair
+
+	// Symmetric keys used to encrypt confidential information,
+	// generated individually for each other group member.
+	symmetricKeys map[int]ephemeral.SymmetricKey
+}
+
+// CommittingMember represents one member in a distributed key generation group,
+// after it has fully initialized ephemeral symmetric keys with all other group
+// members.
 //
 // Executes Phase 3 and Phase 4 of the protocol.
 type CommittingMember struct {
-	*memberCore
+	*SymmetricKeyGeneratingMember
 
 	// Pedersen VSS scheme used to calculate commitments.
 	vss *pedersen.VSS
