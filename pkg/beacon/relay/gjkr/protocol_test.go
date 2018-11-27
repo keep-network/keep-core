@@ -25,7 +25,19 @@ func TestRoundTrip(t *testing.T) {
 		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
 	}
 
-	for _, member := range committingMembers {
+	var commitmentsVerifyingMembers []*CommitmentsVerifyingMember
+	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
+	for _, cm := range committingMembers {
+		commitmentsVerifyingMembers = append(commitmentsVerifyingMembers,
+			&CommitmentsVerifyingMember{CommittingMember: cm,
+				receivedValidSharesS:         make(map[int]*big.Int),
+				receivedValidSharesT:         make(map[int]*big.Int),
+				receivedValidPeerCommitments: make(map[int][]*big.Int),
+			},
+		)
+	}
+
+	for _, member := range commitmentsVerifyingMembers {
 		accusedSecretSharesMessage, err := member.VerifyReceivedSharesAndCommitmentsMessages(
 			filterPeerSharesMessage(sharesMessages, member.ID),
 			filterMemberCommitmentsMessages(commitmentsMessages, member.ID),
@@ -43,10 +55,10 @@ func TestRoundTrip(t *testing.T) {
 
 	var qualifiedMembers []*QualifiedMember
 	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
-	for _, cm := range committingMembers {
+	for _, cvm := range commitmentsVerifyingMembers {
 		qualifiedMembers = append(qualifiedMembers, &QualifiedMember{
 			SharesJustifyingMember: &SharesJustifyingMember{
-				CommittingMember: cm,
+				CommitmentsVerifyingMember: cvm,
 			},
 		})
 	}
