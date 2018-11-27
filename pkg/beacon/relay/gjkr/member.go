@@ -36,7 +36,7 @@ type SymmetricKeyGeneratingMember struct {
 // after it has fully initialized ephemeral symmetric keys with all other group
 // members.
 //
-// Executes Phase 3 and Phase 4 of the protocol.
+// Executes Phase 3 of the protocol.
 type CommittingMember struct {
 	*SymmetricKeyGeneratingMember
 
@@ -53,6 +53,16 @@ type CommittingMember struct {
 	//
 	// These are private values and should not be exposed.
 	selfSecretShareS, selfSecretShareT *big.Int
+}
+
+// CommitmentsVerifyingMember represents one member in a distributed key generation
+// group, after it has received secret shares and commitments from other group
+// members and it performs verification of received values.
+//
+// Executes Phase 4 of the protocol.
+type CommitmentsVerifyingMember struct {
+	*CommittingMember
+
 	// Shares calculated for the current member by peer group members which passed
 	// the validation.
 	//
