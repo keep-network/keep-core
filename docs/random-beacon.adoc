@@ -81,7 +81,7 @@ Czech Republic, May 2–6, 1999 Proceedings, chapter Secure Distributed Key
 Generation for Discrete-Log Based Cryptosystems, pages 295–310. Springer Berlin
 Heidelberg, Berlin, Heidelberg, 1999 ;
 http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz], as also described in the
-Dfinity paper above. The Keep relay beacon publishes group public keys to the
+Dfinity paper above. The Keep Random Beacon publishes group public keys to the
 anchoring blockchain and does member selection on-chain, but key generation
 occurs between nodes.
 
