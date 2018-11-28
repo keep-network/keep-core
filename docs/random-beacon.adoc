@@ -1,4 +1,6 @@
 :toc: macro
+:toclevels: 4
+:yellowpaper:
 
 = The Keep Random Beacon: An Implementation of a Threshold Relay
 
@@ -108,6 +110,8 @@ individual sections:
   the relay (which in turn also triggers the formation of a new group). signing
   also involves selecting the appropriate price for a new relay entry.
 
+include::random-beacon/group-selection.adoc[leveloffset=+2]
 
+include::random-beacon/dkg.adoc[leveloffset=+2]
 
 include::glossary.adoc[]
