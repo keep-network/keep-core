@@ -72,6 +72,30 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
+	return (&pb.PeerShares{
+		SenderID:        memberIDToBytes(psm.senderID),
+		ReceiverID:      memberIDToBytes(psm.receiverID),
+		EncryptedShareS: psm.encryptedShareS,
+		EncryptedShareT: psm.encryptedShareT,
+	}).Marshal()
+}
+
+func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.PeerShares{}
+	err := pbMsg.Unmarshal(bytes)
+	if err != nil {
+		return err
+	}
+
+	psm.senderID = bytesToMemberID(pbMsg.SenderID)
+	psm.receiverID = bytesToMemberID(pbMsg.ReceiverID)
+	psm.encryptedShareS = pbMsg.EncryptedShareS
+	psm.encryptedShareT = pbMsg.EncryptedShareT
+
+	return nil
+}
+
 func memberIDToBytes(memberID MemberID) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(memberID))

@@ -52,3 +52,22 @@ func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
 }
+
+func TestPeerSharesMessageRoundtrip(t *testing.T) {
+	msg := &PeerSharesMessage{
+		senderID:        MemberID(997),
+		receiverID:      MemberID(112),
+		encryptedShareS: []byte{0x01, 0x02, 0x03, 0x04, 0x05},
+		encryptedShareT: []byte{0x0F, 0x0E, 0x0D, 0x0C, 0x0B},
+	}
+	unmarshaled := &PeerSharesMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}

@@ -6,11 +6,17 @@ package gjkr;
 message EphemeralPublicKey {
     bytes senderID = 1;
     bytes receiverID = 2;
-
     bytes ephemeralPublicKey = 3;
 }
 
 message MemberCommitments {
     bytes senderID = 1;
     repeated bytes commitments = 2;
+}
+
+message PeerShares {
+    bytes senderID = 1;
+    bytes receiverID = 2;
+    bytes encryptedShareS = 3;
+    bytes encryptedShareT = 4;
 }
