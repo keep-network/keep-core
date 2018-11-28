@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -22,6 +23,27 @@ func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 	unmarshaled := &EphemeralPublicKeyMessage{}
 
 	err = pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
+	msg := &MemberCommitmentsMessage{
+		senderID: MemberID(1410),
+		commitments: []*big.Int{
+			big.NewInt(966),
+			big.NewInt(1385),
+			big.NewInt(1569),
+		},
+	}
+	unmarshaled := &MemberCommitmentsMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -9,3 +9,8 @@ message EphemeralPublicKey {
 
     bytes ephemeralPublicKey = 3;
 }
+
+message MemberCommitments {
+    bytes senderID = 1;
+    repeated bytes commitments = 2;
+}

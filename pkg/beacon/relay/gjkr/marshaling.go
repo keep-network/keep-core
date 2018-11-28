@@ -2,6 +2,7 @@ package gjkr
 
 import (
 	"encoding/binary"
+	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -36,6 +37,37 @@ func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	epkm.senderID = bytesToMemberID(pbMsg.SenderID)
 	epkm.receiverID = bytesToMemberID(pbMsg.ReceiverID)
 	epkm.ephemeralPublicKey = ephemeralPublicKey
+
+	return nil
+}
+
+func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
+	commitmentBytes := make([][]byte, 0, len(mcm.commitments))
+	for _, commitment := range mcm.commitments {
+		commitmentBytes = append(commitmentBytes, commitment.Bytes())
+	}
+
+	return (&pb.MemberCommitments{
+		SenderID:    memberIDToBytes(mcm.senderID),
+		Commitments: commitmentBytes,
+	}).Marshal()
+}
+
+func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.MemberCommitments{}
+	err := pbMsg.Unmarshal(bytes)
+	if err != nil {
+		return err
+	}
+
+	mcm.senderID = bytesToMemberID(pbMsg.SenderID)
+
+	var commitments []*big.Int
+	for _, commitmentBytes := range pbMsg.Commitments {
+		commitment := new(big.Int).SetBytes(commitmentBytes)
+		commitments = append(commitments, commitment)
+	}
+	mcm.commitments = commitments
 
 	return nil
 }
