@@ -96,6 +96,36 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
+	accusedIDsBytes := make([][]byte, 0, len(ssam.accusedIDs))
+	for _, accusedID := range ssam.accusedIDs {
+		accusedIDsBytes = append(accusedIDsBytes, memberIDToBytes(accusedID))
+	}
+
+	return (&pb.SecretSharesAccusations{
+		SenderID:   memberIDToBytes(ssam.senderID),
+		AccusedIDs: accusedIDsBytes,
+	}).Marshal()
+}
+
+func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.SecretSharesAccusations{}
+	err := pbMsg.Unmarshal(bytes)
+	if err != nil {
+		return err
+	}
+
+	ssam.senderID = bytesToMemberID(pbMsg.SenderID)
+
+	var accusedIDs []MemberID
+	for _, accusedIDBytes := range pbMsg.AccusedIDs {
+		accusedIDs = append(accusedIDs, bytesToMemberID(accusedIDBytes))
+	}
+	ssam.accusedIDs = accusedIDs
+
+	return nil
+}
+
 func memberIDToBytes(memberID MemberID) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(memberID))

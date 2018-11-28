@@ -20,3 +20,8 @@ message PeerShares {
     bytes encryptedShareS = 3;
     bytes encryptedShareT = 4;
 }
+
+message SecretSharesAccusations {
+    bytes senderID = 1;
+    repeated bytes accusedIDs = 2;
+}
