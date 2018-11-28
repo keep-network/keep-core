@@ -25,3 +25,8 @@ message SecretSharesAccusations {
     bytes senderID = 1;
     repeated bytes accusedIDs = 2;
 }
+
+message MemberPublicKeySharePoints {
+    bytes senderID = 1;
+    repeated bytes publicKeySharePoints = 2;
+}

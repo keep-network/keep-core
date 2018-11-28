@@ -126,6 +126,37 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
+	keySharePoints := make([][]byte, 0, len(mpspm.publicKeySharePoints))
+	for _, keySharePoint := range mpspm.publicKeySharePoints {
+		keySharePoints = append(keySharePoints, keySharePoint.Bytes())
+	}
+
+	return (&pb.MemberPublicKeySharePoints{
+		SenderID:             memberIDToBytes(mpspm.senderID),
+		PublicKeySharePoints: keySharePoints,
+	}).Marshal()
+}
+
+func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.MemberPublicKeySharePoints{}
+	err := pbMsg.Unmarshal(bytes)
+	if err != nil {
+		return err
+	}
+
+	mpspm.senderID = bytesToMemberID(pbMsg.SenderID)
+
+	var keySharePoints []*big.Int
+	for _, keySharePointBytes := range pbMsg.PublicKeySharePoints {
+		keySharePoint := new(big.Int).SetBytes(keySharePointBytes)
+		keySharePoints = append(keySharePoints, keySharePoint)
+	}
+	mpspm.publicKeySharePoints = keySharePoints
+
+	return nil
+}
+
 func memberIDToBytes(memberID MemberID) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(memberID))

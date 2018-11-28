@@ -92,3 +92,25 @@ func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
 }
+
+func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
+	msg := &MemberPublicKeySharePointsMessage{
+		senderID: MemberID(987112),
+		publicKeySharePoints: []*big.Int{
+			big.NewInt(18211),
+			big.NewInt(12311),
+			big.NewInt(18828),
+			big.NewInt(88711),
+		},
+	}
+	unmarshaled := &MemberPublicKeySharePointsMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
