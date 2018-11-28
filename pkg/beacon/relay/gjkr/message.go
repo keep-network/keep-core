@@ -111,7 +111,7 @@ func (psm *PeerSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
 type SecretSharesAccusationsMessage struct {
 	senderID MemberID
 
-	accusedMembersKeys map[MemberID]ephemeral.SymmetricKey
+	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }
 
 // MemberPublicKeySharePointsMessage is a message payload that carries the sender's
@@ -132,5 +132,5 @@ type MemberPublicKeySharePointsMessage struct {
 type PointsAccusationsMessage struct {
 	senderID MemberID
 
-	accusedMembersKeys map[MemberID]ephemeral.SymmetricKey
+	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }
