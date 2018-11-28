@@ -7,11 +7,10 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
-	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 func TestPublishResult(t *testing.T) {
-	members, err := initializePublishingMembersGroup(1, 3)
+	members, err := initializePublishingMembersGroup(1, 3, 3, 2)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -29,7 +28,8 @@ func TestPublishResult(t *testing.T) {
 		t.Fatalf("Result is already published on chain")
 	}
 
-	eventPublish, err := member.PublishResult(result1, 5)
+	// eventPublish, err := member.PublishResult(result1, 5)
+	eventPublish, err := member.PublishResult(result1)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
@@ -45,7 +45,8 @@ func TestPublishResult(t *testing.T) {
 	if chainRelay.IsResultPublished(result2) {
 		t.Fatalf("Result is already published on chain")
 	}
-	eventPublish2, err := member.PublishResult(result2, 5)
+	// eventPublish2, err := member.PublishResult(result2, 5)
+	eventPublish2, err := member.PublishResult(result2)
 	expectedEvent2 := &event.PublishedResult{
 		PublisherID: member.ID,
 		// Hash:        []byte(fmt.Sprintf("%v", result2)),
@@ -64,7 +65,7 @@ func TestPublishResult(t *testing.T) {
 }
 
 func TestPublishResult2(t *testing.T) {
-	members, err := initializePublishingMembersGroup(1, 3)
+	members, err := initializePublishingMembersGroup(1, 3, 3, 2)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -77,7 +78,8 @@ func TestPublishResult2(t *testing.T) {
 		// Hash:        []byte(fmt.Sprintf("%v", result1)),
 		Hash: []byte{17, 137, 135, 209, 119, 129, 62, 207, 107, 14, 232, 183, 212, 85, 145, 250, 177, 214, 29, 131, 210, 38, 166, 15, 30, 249, 96, 53, 131, 87, 139, 200},
 	}
-	eventPublish1, err := member.PublishResult(result1, 5)
+	// eventPublish1, err := member.PublishResult(result1, 5)
+	eventPublish1, err := member.PublishResult(result1)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
@@ -86,7 +88,8 @@ func TestPublishResult2(t *testing.T) {
 	}
 
 	member = members[1]
-	eventPublish21, err := member.PublishResult(result1, 5)
+	// eventPublish21, err := member.PublishResult(result1, 5)
+	eventPublish21, err := member.PublishResult(result1)
 	// expectedError := fmt.Errorf("sad")
 	// if !reflect.DeepEqual(expectedError, err) {
 	// 	t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
@@ -101,7 +104,8 @@ func TestPublishResult2(t *testing.T) {
 		// Hash:        []byte(fmt.Sprintf("%v", result2)),
 		Hash: []byte{152, 74, 143, 75, 44, 214, 60, 242, 96, 1, 6, 138, 243, 191, 180, 171, 172, 83, 149, 128, 39, 129, 211, 169, 247, 41, 67, 149, 219, 31, 128, 105},
 	}
-	eventPublish2, err := member.PublishResult(result2, 5)
+	// eventPublish2, err := member.PublishResult(result2, 5)
+	eventPublish2, err := member.PublishResult(result2)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
@@ -111,55 +115,55 @@ func TestPublishResult2(t *testing.T) {
 
 }
 
-func initializePublishingMembersGroup(threshold, groupSize int) ([]*PublishingMember, error) {
-	chain := local.Connect(10, 4)
-	blockCounter, err := chain.BlockCounter()
-	if err != nil {
-		return nil, err
-	}
-	err = blockCounter.WaitForBlocks(1)
-	if err != nil {
-		return nil, err
-	}
-
-	initialBlockHeight, err := blockCounter.CurrentBlock()
-	if err != nil {
-		return nil, err
-	}
-
-	dkg := &DKG{
-		chain:              chain,
-		expectedDuration:   4,
-		blockStep:          1,
-		initialBlockHeight: initialBlockHeight,
-	}
-
-	group := &Group{
-		groupSize:          groupSize,
-		dishonestThreshold: threshold,
-	}
-
-	var members []*PublishingMember
-
-	for i := 1; i <= groupSize; i++ {
-		id := i
-		members = append(members,
-			&PublishingMember{
-				SharingMember: &SharingMember{
-					QualifiedMember: &QualifiedMember{
-						SharesJustifyingMember: &SharesJustifyingMember{
-							CommittingMember: &CommittingMember{
-								memberCore: &memberCore{
-									ID:             id,
-									group:          group,
-									protocolConfig: dkg,
-								},
-							},
-						},
-					},
-				},
-			})
-		group.RegisterMemberID(id)
-	}
-	return members, nil
-}
+//func initializePublishingMembersGroup(threshold, groupSize int) ([]*PublishingMember, error) {
+//	chain := local.Connect(10, 4)
+//	blockCounter, err := chain.BlockCounter()
+//	if err != nil {
+//		return nil, err
+//	}
+//	err = blockCounter.WaitForBlocks(1)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	initialBlockHeight, err := blockCounter.CurrentBlock()
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	dkg := &DKG{
+//		chain:              chain,
+//		expectedDuration:   4,
+//		blockStep:          1,
+//		initialBlockHeight: initialBlockHeight,
+//	}
+//
+//	group := &Group{
+//		groupSize:          groupSize,
+//		dishonestThreshold: threshold,
+//	}
+//
+//	var members []*PublishingMember
+//
+//	for i := 1; i <= groupSize; i++ {
+//		id := i
+//		members = append(members,
+//			&PublishingMember{
+//				SharingMember: &SharingMember{
+//					QualifiedMember: &QualifiedMember{
+//						SharesJustifyingMember: &SharesJustifyingMember{
+//							CommittingMember: &CommittingMember{
+//								memberCore: &memberCore{
+//									ID:             id,
+//									group:          group,
+//									protocolConfig: dkg,
+//								},
+//							},
+//						},
+//					},
+//				},
+//			})
+//		group.RegisterMemberID(id)
+//	}
+//	return members, nil
+//}

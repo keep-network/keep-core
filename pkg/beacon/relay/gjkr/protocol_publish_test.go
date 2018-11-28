@@ -35,7 +35,7 @@ func TestPrepareResult(t *testing.T) {
 				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
 				Disqualified:   nil,
 				Inactive:       nil,
-				Hash:           []byte{44, 154, 182, 135, 19, 160, 13, 133, 181, 132, 146, 42, 153, 216, 10, 81, 67, 136, 165, 213, 19, 43, 219, 181, 4, 110, 168, 199, 224, 88, 149, 80},
+				HashValue:      []byte{44, 154, 182, 135, 19, 160, 13, 133, 181, 132, 146, 42, 153, 216, 10, 81, 67, 136, 165, 213, 19, 43, 219, 181, 4, 110, 168, 199, 224, 88, 149, 80},
 			},
 		},
 		"one disqualified member - success": {
@@ -45,7 +45,7 @@ func TestPrepareResult(t *testing.T) {
 				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
 				Disqualified:   []int{2},
 				Inactive:       nil,
-				Hash:           []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148, 51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				HashValue:      []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148, 51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 			},
 		},
 		"two inactive members - success": {
@@ -55,7 +55,7 @@ func TestPrepareResult(t *testing.T) {
 				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
 				Disqualified:   nil,
 				Inactive:       []int{3, 7},
-				Hash:           []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148, 51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				HashValue:      []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148, 51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 			},
 		},
 		"more than half of threshold disqualified and inactive members - failure": {
@@ -66,7 +66,7 @@ func TestPrepareResult(t *testing.T) {
 				GroupPublicKey: nil,
 				Disqualified:   []int{2},
 				Inactive:       nil, // in case of failure only disqualified members are slashed
-				Hash:           []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148, 51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
+				HashValue:      []byte{129, 169, 11, 49, 6, 91, 33, 192, 47, 59, 124, 52, 156, 242, 148, 51, 37, 195, 18, 222, 25, 74, 74, 245, 109, 140, 243, 253, 185, 54, 214, 108},
 			},
 		},
 		"more than half of threshold inactive members - failure": {
@@ -76,7 +76,7 @@ func TestPrepareResult(t *testing.T) {
 				GroupPublicKey: nil,
 				Disqualified:   nil,
 				Inactive:       nil, // in case of failure only disqualified members are slashed
-				Hash:           nil,
+				HashValue:      nil,
 			},
 		},
 	}
@@ -108,7 +108,7 @@ func TestPublishResult(t *testing.T) {
 
 	result := &result.Result{GroupPublicKey: big.NewInt(13)}
 
-	expectedPublishedResult := &event.ResultPublish{
+	expectedPublishedResult := &event.PublishedResult{
 		Result: []byte(fmt.Sprintf("%v", result)),
 	}
 
@@ -134,7 +134,9 @@ func TestPublishResult(t *testing.T) {
 			expectedPublishedResult.PublisherID = test.publisher.ID
 
 			// Reinitialize chain to reset block counter
-			test.publisher.protocolConfig.chain, err = initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
+			// test.publisher.protocolConfig.chain, err = initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
+			itmp, err := initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
+			test.publisher.protocolConfig.chain = itmp
 			if err != nil {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
@@ -188,7 +190,7 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 	}
 
 	// Publish a result
-	expectedPublishedResult := &event.ResultPublish{
+	expectedPublishedResult := &event.PublishedResult{
 		PublisherID: publisher.ID,
 		Result:      []byte(fmt.Sprintf("%v", result)),
 	}
@@ -370,7 +372,7 @@ func initChain(
 	}
 
 	return &Chain{
-		handle: chainHandle,
+		handle:                   chainHandle,
 		expectedProtocolDuration: expectedProtocolDuration, // T_dkg
 		blockStep:                blockStep,                // T_step
 		initialBlockHeight:       initialBlockHeight,       // T_init
