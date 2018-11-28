@@ -192,7 +192,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				test.modifyCommitmentsMessages(filteredCommitmentsMessages)
 			}
 
-			verifyingMember := currentMember.Next()
+			verifyingMember := currentMember.InitializeCommitmentsVerification()
 
 			accusedMessage, err := verifyingMember.VerifyReceivedSharesAndCommitmentsMessages(
 				filteredSharesMessages,
@@ -292,7 +292,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 
 	var members []*CommittingMember
 	for _, member := range symmetricKeyMembers {
-		committingMember := member.Next()
+		committingMember := member.InitializeCommitting()
 		committingMember.SetVSS(vss)
 		members = append(members, committingMember)
 	}
@@ -308,7 +308,7 @@ func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *
 
 	var members []*CommitmentsVerifyingMember
 	for _, member := range committingMembers {
-		members = append(members, member.Next())
+		members = append(members, member.InitializeCommitmentsVerification())
 	}
 
 	return members, nil

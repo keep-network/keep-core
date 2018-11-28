@@ -32,8 +32,8 @@ type SymmetricKeyGeneratingMember struct {
 	symmetricKeys map[int]ephemeral.SymmetricKey
 }
 
-// Next returns a member to perform next protocol operations.
-func (skgm *SymmetricKeyGeneratingMember) Next() *CommittingMember {
+// InitializeCommitting returns a member to perform next protocol operations.
+func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMember {
 	return &CommittingMember{SymmetricKeyGeneratingMember: skgm}
 }
 
@@ -66,8 +66,8 @@ func (cm *CommittingMember) SetVSS(vss *pedersen.VSS) {
 	cm.vss = vss
 }
 
-// Next returns a member to perform next protocol operations.
-func (cm *CommittingMember) Next() *CommitmentsVerifyingMember {
+// InitializeCommitmentsVerification returns a member to perform next protocol operations.
+func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
 		CommittingMember:             cm,
 		receivedValidSharesS:         make(map[int]*big.Int),
@@ -95,8 +95,8 @@ type CommitmentsVerifyingMember struct {
 	receivedValidPeerCommitments map[int][]*big.Int
 }
 
-// Next returns a member to perform next protocol operations.
-func (cvm *CommitmentsVerifyingMember) Next() *SharesJustifyingMember {
+// InitializeSharesJustification returns a member to perform next protocol operations.
+func (cvm *CommitmentsVerifyingMember) InitializeSharesJustification() *SharesJustifyingMember {
 	return &SharesJustifyingMember{cvm}
 }
 
@@ -109,8 +109,8 @@ type SharesJustifyingMember struct {
 	*CommitmentsVerifyingMember
 }
 
-// Next returns a member to perform next protocol operations.
-func (sjm *SharesJustifyingMember) Next() *QualifiedMember {
+// InitializeQualified returns a member to perform next protocol operations.
+func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
 	return &QualifiedMember{SharesJustifyingMember: sjm}
 }
 
@@ -128,8 +128,8 @@ type QualifiedMember struct {
 	masterPrivateKeyShare, shareT *big.Int
 }
 
-// Next returns a member to perform next protocol operations.
-func (qm *QualifiedMember) Next() *SharingMember {
+// InitializeSharing returns a member to perform next protocol operations.
+func (qm *QualifiedMember) InitializeSharing() *SharingMember {
 	return &SharingMember{
 		QualifiedMember:                       qm,
 		receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int),
@@ -174,8 +174,8 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
 	return receivedValidPeerIndividualPublicKeys
 }
 
-// Next returns a member to perform next protocol operations.
-func (sm *SharingMember) Next() *PointsJustifyingMember {
+// InitializePointsJustification returns a member to perform next protocol operations.
+func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember {
 	return &PointsJustifyingMember{sm}
 }
 
@@ -188,8 +188,8 @@ type PointsJustifyingMember struct {
 	*SharingMember
 }
 
-// Next returns a member to perform next protocol operations.
-func (pjm *PointsJustifyingMember) Next() *ReconstructingMember {
+// InitializeReconstruction returns a member to perform next protocol operations.
+func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
 		PointsJustifyingMember:             pjm,
 		reconstructedIndividualPrivateKeys: make(map[int]*big.Int),
@@ -217,8 +217,8 @@ type ReconstructingMember struct {
 	reconstructedIndividualPublicKeys map[int]*big.Int
 }
 
-// Next returns a member to perform next protocol operations.
-func (rm *ReconstructingMember) Next() *CombiningMember {
+// InitializeCombining returns a member to perform next protocol operations.
+func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
 	return &CombiningMember{ReconstructingMember: rm}
 }
 

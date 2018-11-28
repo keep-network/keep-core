@@ -27,7 +27,8 @@ func TestRoundTrip(t *testing.T) {
 
 	var commitmentVerifyingMembers []*CommitmentsVerifyingMember
 	for _, cm := range committingMembers {
-		commitmentVerifyingMembers = append(commitmentVerifyingMembers, cm.Next())
+		commitmentVerifyingMembers = append(commitmentVerifyingMembers,
+			cm.InitializeCommitmentsVerification())
 	}
 
 	for _, member := range commitmentVerifyingMembers {
@@ -48,7 +49,8 @@ func TestRoundTrip(t *testing.T) {
 
 	var qualifiedMembers []*QualifiedMember
 	for _, cvm := range commitmentVerifyingMembers {
-		qualifiedMembers = append(qualifiedMembers, cvm.Next().Next())
+		qualifiedMembers = append(qualifiedMembers,
+			cvm.InitializeSharesJustification().InitializeQualified())
 	}
 
 	for _, member := range qualifiedMembers {
@@ -57,7 +59,7 @@ func TestRoundTrip(t *testing.T) {
 
 	var sharingMembers []*SharingMember
 	for _, qm := range qualifiedMembers {
-		sharingMembers = append(sharingMembers, qm.Next())
+		sharingMembers = append(sharingMembers, qm.InitializeSharing())
 	}
 
 	for _, member := range sharingMembers {
@@ -97,7 +99,9 @@ func TestRoundTrip(t *testing.T) {
 
 	var combiningMembers []*CombiningMember
 	for _, sm := range sharingMembers {
-		combiningMembers = append(combiningMembers, sm.Next().Next().Next())
+		combiningMembers = append(combiningMembers,
+			sm.InitializePointsJustification().InitializeReconstruction().
+				InitializeCombining())
 	}
 
 	for _, member := range combiningMembers {

@@ -219,7 +219,7 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 				return nil, fmt.Errorf("secret share generation failed [%s]", err)
 			}
 		}
-		sharingMembers = append(sharingMembers, sjm.Next().Next())
+		sharingMembers = append(sharingMembers, sjm.InitializeQualified().InitializeSharing())
 	}
 
 	for _, sm := range sharingMembers {
