@@ -78,12 +78,10 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 			)
 		}
 
-		if ephemeralPubKeyMessage.ephemeralPublicKey != nil {
-			symmetricKey := ephemeralKeyPair.PrivateKey.Ecdh(
-				ephemeralPubKeyMessage.ephemeralPublicKey,
-			)
-			sm.symmetricKeys[otherMemberID] = symmetricKey
-		}
+		symmetricKey := ephemeralKeyPair.PrivateKey.Ecdh(
+			ephemeralPubKeyMessage.ephemeralPublicKey,
+		)
+		sm.symmetricKeys[otherMemberID] = symmetricKey
 	}
 	return nil
 }
