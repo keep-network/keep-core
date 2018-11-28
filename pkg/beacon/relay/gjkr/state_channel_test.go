@@ -9,8 +9,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 )
 
-func TestChallengeStateChagne(t *testing.T) {
-	fmt.Printf("Test of func (vc *ChallengeState) ChallengeStateChange( - direct\n")
+func TestStateChannel(t *testing.T) {
+	fmt.Printf("Test of func (vc *ChallengeState) ChallengeStateChange( - channel\n")
 
 	type ops struct {
 		EventName     string
@@ -29,7 +29,7 @@ func TestChallengeStateChagne(t *testing.T) {
 		Ops           []ops
 	}{
 		"001 Correct Result is Lead Result, Test Case 00003.": {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -53,7 +53,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			// finalState: 1,
 		},
 		"002 Correct Result is Lead Result, Test Case 00003 - Verify that successisive tests do not impact each other.": {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -80,7 +80,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			},
 		},
 		"003 Correct Result is Lead Result, First Plus Conflict 00001.": {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          2,
@@ -125,7 +125,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			// finalState: 3,
 		},
 		"004 Correct Result is Lead Result, Longer sleep over many blocks.": {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -192,7 +192,7 @@ func TestChallengeStateChagne(t *testing.T) {
 		},
 		"005 Correct Result is Lead Result, Test voting for stuff.": {
 			// } else if m1.AllVotes[leadResult].Votes > vc.TMax {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -307,7 +307,7 @@ func TestChallengeStateChagne(t *testing.T) {
 		},
 		"006 Correct Result is Lead Result, submitted a value.": {
 			// } else if inResult(correctResult, m1.AllVotes, m1.AllResults) {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -410,7 +410,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			// } else if inResult(correctResult, m1.AllVotes, m1.AllResults) {
 			// then...
 			// check that results that already submitted are handled correctly.
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -514,7 +514,7 @@ func TestChallengeStateChagne(t *testing.T) {
 			},
 		},
 		"008 Correct Result is Lead Result, Test the else case.": {
-			runTest:       true,
+			runTest:       false,
 			thresholdSize: 8,
 			groupSize:     15,
 			TMax:          8,
@@ -657,11 +657,23 @@ func TestChallengeStateChagne(t *testing.T) {
 			for pc, anOp := range test.Ops {
 				switch anOp.EventName {
 				case "Challenge":
-					vc.ChallengeStateChange(&anOp.currentResult, anOp.resultHash, anOp.correctResult)
+					// vc.ChallengeStateChange(&anOp.currentResult, anOp.resultHash, anOp.correctResult)
+					// case challenge := <-Challenge:
+					// 	err := vc.ChallengeStateChange(challenge.result, challenge.resultHash, challenge.correctResult)
+					Challenge <- ChallengeType{
+						result:        &anOp.currentResult,
+						resultHash:    anOp.resultHash,
+						correctResult: anOp.correctResult,
+					}
 				case "Vote":
-					vc.VoteForHash(anOp.resultHash)
+					// vc.VoteForHash(anOp.resultHash)
+					// case vote := <-Vote:
+					// 	err := vc.VoteForHash(vote.resultHash)
+					Vote <- VoteType{
+						resultHash: anOp.resultHash,
+					}
 				case "Block":
-					// vc.VoteForhash(anOp.resultHash)
+					Block <- BlockType{}
 				case "sleep":
 					fmt.Printf(";")
 					time.Sleep(1 * time.Second)

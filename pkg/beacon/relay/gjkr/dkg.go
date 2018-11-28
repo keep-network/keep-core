@@ -21,12 +21,6 @@ type DKG struct {
 	expectedDuration   int // t_dkg
 	blockStep          int // t_step
 
-	TMax      int // M_Max
-	TConflict int // T_conflict
-
-	TNow     int // T_Now - Current block height at the current time
-	TFirst   int // T_First -
-	PerGroup map[string]ValidationGroupState
 }
 
 // RandomQ generates a random `big.Int` in range (0, q).
@@ -40,4 +34,38 @@ func (d *DKG) RandomQ() (*big.Int, error) {
 			return x, nil
 		}
 	}
+}
+
+// Chain contains handle to interact with blockchain along with parameters specific
+// for block height tracking.
+type Chain struct {
+	handle chain.Handle
+
+	// Block height when the protocol execution started. Value needs to be set
+	// at the begining of the protocol execution.
+	initialBlockHeight int // t_init
+	// Predefined expected duration of the protocol execution. Relates to DKG
+	// Phase 13.
+	expectedProtocolDuration int // t_dkg
+	// Predefined step for each publishing window. The value is used to determine
+	// eligible publishing member. Relates to DKG Phase 13.
+	blockStep int // t_step
+}
+
+// ChainHandle returns blockchain handle that provides access to chain interactions.
+func (d *DKG) ChainHandle() chain.Handle {
+	return d.chain.handle
+}
+
+func (d *DKG) GetChain() *Chain {
+	return d.chain
+}
+
+// CurrentBlock returns current block height on a chain.
+func (d *Chain) CurrentBlock() (int, error) {
+	blockCounter, err := d.handle.BlockCounter()
+	if err != nil {
+		return 0, err
+	}
+	return blockCounter.CurrentBlock()
 }

@@ -1,121 +1,212 @@
 package gjkr
 
 import (
+	"bytes"
 	"fmt"
-	"math/big"
+	"reflect"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
-	"github.com/pschlump/MiscLib"
-	"github.com/pschlump/godebug"
 )
 
-func (vc *DKG) ChallengeStateChange(
-	EventName string,
-	group *big.Int,
+func (dkg *DKG) NewChallengeState() (*ChallengeState, error) {
+	TNow, err := dkg.GetChain().CurrentBlock()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current block [%v]", err)
+	}
+	return &ChallengeState{
+		TNow:             0,
+		TFirst:           TNow,
+		AllResults:       make([]result.Result, 0, 1),
+		AllVotes:         make([]ResultVotes, 0, 1),
+		LeadResult:       0,
+		AlreadySubmitted: false,
+		TConflict:        3,
+		TMax:             5,
+		dkg:              dkg,
+	}, nil
+}
+
+func (vc *ChallengeState) GetChain() *Chain {
+	return vc.dkg.GetChain()
+}
+
+func (vc *ChallengeState) ChallengeStateChange(
 	currentResult *result.Result,
 	resultHash []byte,
 	correctResult int,
-) {
-
-	AddGrupIfNotExists := func(group *big.Int) {
-		groupAsKey := fmt.Sprintf("%s", group)
-		_, found := vc.PerGroup[groupAsKey]
-		if found {
-			return
-		}
-		newGroup := ValidationGroupState{
-			TFirst:           vc.TNow,                  // T_first - Block height for the group - when the first result event occurred block height
-			AllResults:       make([]result.Result, 0), // []result.Result // Set of all results
-			AllVotes:         make([]ResultVotes, 0),   // []ResultVotes   // Set of all results
-			LeadResult:       correctResult,            // Position of lead result
-			AlreadySubmitted: false,                    //
-		}
-		vc.PerGroup[groupAsKey] = newGroup
+) error {
+	TNow, err := vc.GetChain().CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get current block [%v]", err)
 	}
-
-	RmGrup := func(group *big.Int) {
-	}
-
-	switch EventName {
-	case "Challenge":
-		// If group not in set of groups add it.
-		vc.TNow = getCurrentBlockHeight() // has to have geth connect info
-		AddGrupIfNotExists(group)
-
-		groupAsKey := fmt.Sprintf("%s", group)
-		m1 := vc.PerGroup[groupAsKey]
-		// If 'resultHash' is new then Initialize - In this group, take
-		// TFirst and stash it.  This is the staring block, save in teh set
-		// of results.
-		_, err := FindHash(resultHash, m1.AllResults)
-		if err != nil {
-			fmt.Printf("%sREACHED: 00000 Add result, %s%s\n", MiscLib.ColorYellow, godebug.LF(), MiscLib.ColorReset)
-			m1.AllResults = append(m1.AllResults, *currentResult) // Should this merge the solutions together
-			resultPkg := ResultVotes{
-				Votes:       1,
-				BlockHeight: vc.TNow,
-				Group:       groupAsKey,
-			}
-			m1.AllVotes = append(m1.AllVotes, resultPkg) // Should this merge the solutions together
+	vc.TNow = TNow
+	_, err = vc.findHash(resultHash, vc.AllResults)
+	if err != nil {
+		vc.AllResults = append(vc.AllResults, *currentResult)
+		resultPkg := ResultVotes{
+			Votes:       1,
+			BlockHeight: vc.TNow,
 		}
-		leadResult := FindMostVotes(m1.AllVotes) // Summarize the votes for a particular solution
-		vc.PerGroup[groupAsKey] = m1
-
-		if vc.TNow > (vc.TFirst + vc.TConflict) {
-			fmt.Printf("%sREACHED: 00001 Criteria Met, %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
-			m1.CurrentState = 1
-		} else if m1.AllVotes[leadResult].Votes > vc.TMax {
-			fmt.Printf("%sREACHED: 00002 Criteria Met: Votes for lead larger than TMax, %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
-			m1.CurrentState = 2
-		} else if correctResult == leadResult {
-			fmt.Printf("%sREACHED: 00003 Criteria Met: Correct result is lead result, %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
-			m1.CurrentState = 3
-		} else if m1.AlreadySubmitted {
-			m1.CurrentState = 5
-			fmt.Printf("%sREACHED: 00005 AllreadySubmitted is true. %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
-		} else if inResult(correctResult, m1.AllVotes, m1.AllResults) {
-			m1.CurrentState = 7
-			fmt.Printf("%sREACHED: 00007 Submitted Result!!!!!! Yea !!!!!!!. %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
-			SubmitRessult(SignResult(resultHash))
-			m1.AlreadySubmitted = true
-		} else {
-			m1.CurrentState = 11
-			fmt.Printf("%sREACHED: 00011 how do you get to this point???. %s%s\n", MiscLib.ColorRed, godebug.LF(), MiscLib.ColorReset)
-			m1.AlreadySubmitted = true
-		}
-		vc.PerGroup[groupAsKey] = m1
-
-	case "Vote":
-		vc.TNow = getCurrentBlockHeight()
-		AddGrupIfNotExists(group)
-		vc.VoteChangeState(resultHash, group)
-
-	case "Block":
-		// If too mahy blocks have passed then toss and close.
-
-		// go thorugh all the pending stuff -
-		//	For each one
-		//	  for each group
-		//		If ....
-
-	case "CreateGroup":
-		AddGrupIfNotExists(group)
-
-	case "TerminateGroup":
-		RmGrup(group)
-
+		vc.AllVotes = append(vc.AllVotes, resultPkg)
 	}
+	leadResult := vc.findMostVotes(vc.AllVotes)
+	vc.LeadResult = leadResult
+
+	if vc.TNow > (vc.TFirst + vc.TConflict) {
+		vc.stateReached(1)
+		return nil
+	} else if vc.AllVotes[leadResult].Votes > vc.TMax {
+		vc.stateReached(2)
+		return nil
+	} else if correctResult == leadResult {
+		vc.stateReached(3)
+		return nil
+	} else if vc.AlreadySubmitted {
+		vc.stateReached(5)
+		return nil
+	} else if vc.inResult(correctResult, vc.AllVotes, vc.AllResults) {
+		vc.stateReached(7)
+		SubmitRessult(SignResult(resultHash))
+		vc.AlreadySubmitted = true
+		return nil
+	} else {
+		vc.stateReached(11)
+		vc.AlreadySubmitted = true
+		return nil
+	}
+	return nil
 }
 
-// Vote Adds 1 to vote
-func (vc *DKG) VoteChangeState(resultHash []byte, groupPublicKey *big.Int) error {
-	group := fmt.Sprintf("%s", groupPublicKey) // Public Key for Group - big number
-	m1 := vc.PerGroup[group]
-	// Find resultHash in set of all results or error
-	pos, err := FindHash(resultHash, m1.AllResults)
+// Vote Adds 1 to vote for a specific result.
+func (vc *ChallengeState) VoteForHash(resultHash []byte) error {
+	if vc.TNow == 0 {
+		return fmt.Errorf("did not see a challenge before a vote")
+	}
+	TNow, err := vc.GetChain().CurrentBlock()
+	if err != nil {
+		return fmt.Errorf("failed to get current block [%v]", err)
+	}
+	vc.TNow = TNow
+	pos, err := vc.findHash(resultHash, vc.AllResults)
 	if err != nil {
 		return fmt.Errorf("invalid hash not found [%v]", err)
 	}
-	m1.AllVotes[pos].Votes++
+	vc.AllVotes[pos].Votes++
 	return nil
+}
+
+var stateReachedValue int
+
+func (vc *ChallengeState) stateReached(stateNo int) {
+	stateReachedValue = stateNo
+	Complete <- CompleteType{
+		StateReached:   stateNo,
+		LineNoFileName: LF(2),
+	}
+}
+
+func (vc *ChallengeState) findMostVotes(vgs []ResultVotes) int {
+	maxPos := 0
+	nVote := -1
+	for pos := range vgs {
+		if vgs[pos].Votes > nVote {
+			nVote = vgs[pos].Votes
+			maxPos = pos
+		}
+	}
+	return maxPos
+}
+
+func (vc *ChallengeState) findHash(resultHash []byte, all []result.Result) (int, error) {
+	for pos := range all {
+		if bytes.Equal(resultHash, all[pos].HashValue) {
+			return pos, nil
+		}
+	}
+	return -1, fmt.Errorf("Did not find resultHash")
+}
+
+func (vc *ChallengeState) inResult(correctResult int, allVotes []ResultVotes, allResults []result.Result) bool {
+	cr := allResults[correctResult]
+	for _, val := range allResults {
+		if reflect.DeepEqual(cr, val) {
+			return true
+		}
+	}
+	return false
+}
+
+func SubmitRessult(signedResult []byte) {
+	Complete <- CompleteType{
+		StateReached:   7,
+		LineNoFileName: LF(2),
+		Result:         signedResult,
+	}
+}
+
+func SignResult(resultHash []byte) []byte {
+	// TODO -- Implement Signature of this. -- Whith what key to sign?
+	return []byte("SignedResultHash:" + fmt.Sprintf("%x", string(resultHash)))
+}
+
+type ResultVotes struct {
+	Votes       int // How many votes this has
+	BlockHeight int // Block height of this results
+}
+
+type CompleteType struct {
+	StateReached   int
+	LineNoFileName string
+	Result         []byte
+}
+
+type VoteType struct {
+	resultHash []byte
+}
+
+type BlockType struct {
+	blockNo int
+}
+
+type ChallengeType struct {
+	result        *result.Result
+	resultHash    []byte
+	correctResult int
+}
+
+var Challenge chan ChallengeType
+var Vote chan VoteType
+var Block chan BlockType
+var Complete chan CompleteType
+
+func init() {
+	Challenge = make(chan ChallengeType)
+	Vote = make(chan VoteType)
+	Block = make(chan BlockType)
+	Complete = make(chan CompleteType, 200)
+}
+
+func EventDispatch(vc *ChallengeState) {
+	for {
+		select {
+		case challenge := <-Challenge:
+			err := vc.ChallengeStateChange(challenge.result, challenge.resultHash, challenge.correctResult)
+			if err != nil {
+				fmt.Printf("error creating challenge: [%v]\n", err)
+			} else {
+				fmt.Printf("message processed: Challenge\n")
+			}
+
+		case vote := <-Vote:
+			err := vc.VoteForHash(vote.resultHash)
+			if err != nil {
+				fmt.Printf("error with vote: [%v]\n", err)
+			} else {
+				fmt.Printf("message processed: Challenge\n")
+			}
+
+		case block := <-Block:
+			_ = block
+		}
+	}
 }
