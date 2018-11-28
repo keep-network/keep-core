@@ -157,6 +157,36 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
+	accusedIDsBytes := make([][]byte, 0, len(pam.accusedIDs))
+	for _, accusedID := range pam.accusedIDs {
+		accusedIDsBytes = append(accusedIDsBytes, memberIDToBytes(accusedID))
+	}
+
+	return (&pb.PointsAccusations{
+		SenderID:   memberIDToBytes(pam.senderID),
+		AccusedIDs: accusedIDsBytes,
+	}).Marshal()
+}
+
+func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.PointsAccusations{}
+	err := pbMsg.Unmarshal(bytes)
+	if err != nil {
+		return err
+	}
+
+	pam.senderID = bytesToMemberID(pbMsg.SenderID)
+
+	var accusedIDs []MemberID
+	for _, accusedIDBytes := range pbMsg.AccusedIDs {
+		accusedIDs = append(accusedIDs, bytesToMemberID(accusedIDBytes))
+	}
+	pam.accusedIDs = accusedIDs
+
+	return nil
+}
+
 func memberIDToBytes(memberID MemberID) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(memberID))

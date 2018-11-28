@@ -30,3 +30,8 @@ message MemberPublicKeySharePoints {
     bytes senderID = 1;
     repeated bytes publicKeySharePoints = 2;
 }
+
+message PointsAccusations {
+    bytes senderID = 1;
+    repeated bytes accusedIDs = 2;
+}
