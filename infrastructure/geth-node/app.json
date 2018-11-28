@@ -28,7 +28,7 @@
       "RPC_HOST"        : "localhost",
       "RPC_PORT"        : "8545",
       "LISTENING_PORT"  : "30303",
-      "VERBOSITY"       : 2
+      "VERBOSITY"       : 3
     }
   },
   {
