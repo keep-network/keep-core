@@ -8,10 +8,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// Type returns a string describing an EphemeralPublicKeyMessage type for
+// marshaling purposes.
 func (epkm *EphemeralPublicKeyMessage) Type() string {
-	return "dkg/ephemeral_public_key"
+	return "gjkr/ephemeral_public_key"
 }
 
+// Marshal converts this EphemeralPublicKeyMessage to a byte array suitable for
+// network communication.
 func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	return (&pb.EphemeralPublicKey{
 		SenderID:           memberIDToBytes(epkm.senderID),
@@ -20,6 +24,8 @@ func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	}).Marshal()
 }
 
+// Unmarshal converts a byte array produced by Marshal to
+// an EphemeralPublicKeyMessage
 func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.EphemeralPublicKey{}
 	err := pbMsg.Unmarshal(bytes)
@@ -41,6 +47,14 @@ func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing a MemberCommitmentsMessage type
+// for marshaling purposes.
+func (mcm *MemberCommitmentsMessage) Type() string {
+	return "gjkr/member_commitments"
+}
+
+// Marshal converts this MemberCommitmentsMessage to a byte array suitable for
+// network communication.
 func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	commitmentBytes := make([][]byte, 0, len(mcm.commitments))
 	for _, commitment := range mcm.commitments {
@@ -53,6 +67,8 @@ func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	}).Marshal()
 }
 
+// Unmarshal converts a byte array produced by Marshal to
+// a MemberCommitmentsMessage
 func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.MemberCommitments{}
 	err := pbMsg.Unmarshal(bytes)
@@ -72,6 +88,14 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing a PeerSharesMessage type for marshaling
+// purposes
+func (psm *PeerSharesMessage) Type() string {
+	return "gjkr/peer_shares"
+}
+
+// Marshal converts this PeerSharesMessage to a byte array suitable for
+// network communication.
 func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 	return (&pb.PeerShares{
 		SenderID:        memberIDToBytes(psm.senderID),
@@ -81,6 +105,7 @@ func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 	}).Marshal()
 }
 
+// Unmarshal converts a byte array produced by Marshal to a PeerSharesMessage.
 func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.PeerShares{}
 	err := pbMsg.Unmarshal(bytes)
@@ -96,6 +121,14 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing a SecretSharesAccusationsMessage type
+// for marshalling purposes.
+func (ssam *SecretSharesAccusationsMessage) Type() string {
+	return "gjkr/secret_shares_accusations"
+}
+
+// Marshal converts this SecretSharesAccusationsMessage to a byte array
+// suitable for network communication.
 func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
 	accusedIDsBytes := make([][]byte, 0, len(ssam.accusedIDs))
 	for _, accusedID := range ssam.accusedIDs {
@@ -108,6 +141,8 @@ func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
 	}).Marshal()
 }
 
+// Unmarshal converts a byte array produced by Marshal to
+// a SecretSharesAccusationsMessage.
 func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.SecretSharesAccusations{}
 	err := pbMsg.Unmarshal(bytes)
@@ -126,6 +161,14 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing MemberPublicKeySharePointsMessage type for
+// marshaling purposes
+func (mpspm *MemberPublicKeySharePointsMessage) Type() string {
+	return "gjkr/member_public_key_share_points"
+}
+
+// Marshal converts this MemberPublicKeySharePointsMessage to a byte array
+// suitable for network communication.
 func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	keySharePoints := make([][]byte, 0, len(mpspm.publicKeySharePoints))
 	for _, keySharePoint := range mpspm.publicKeySharePoints {
@@ -138,6 +181,8 @@ func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	}).Marshal()
 }
 
+// Unmarshal converts a byte array produced by Marshal to
+// a MemberPublicKeySharePointsMessage.
 func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.MemberPublicKeySharePoints{}
 	err := pbMsg.Unmarshal(bytes)
@@ -157,6 +202,14 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing PointsAccusationsMessage type for
+// marshaling purposes.
+func (pam *PointsAccusationsMessage) Type() string {
+	return "gjkr/points_accusations_message"
+}
+
+// Marshal converts this PointsAccusationsMessage to a byte array suitable
+// for network communication.
 func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
 	accusedIDsBytes := make([][]byte, 0, len(pam.accusedIDs))
 	for _, accusedID := range pam.accusedIDs {
@@ -169,6 +222,8 @@ func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
 	}).Marshal()
 }
 
+// Unmarshal converts a byte array produced by Marshal to
+// a PointsAccusationsMessage.
 func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.PointsAccusations{}
 	err := pbMsg.Unmarshal(bytes)
