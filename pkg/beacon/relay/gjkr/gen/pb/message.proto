@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package gjkr;
+
+message EphemeralPublicKey {
+    bytes senderID = 1;
+    bytes receiverID = 2;
+
+    bytes ephemeralPublicKey = 3;
+}
