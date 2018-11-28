@@ -14,7 +14,7 @@ WORKDIR /root/lib/bootnode
 RUN npm install
 
 # install ethStatsApi to report local stats to dashboard
-RUN git clone https://github.com/EthereumEx/eth-net-intelligence-api.git /root/lib/ethStatsApi
+RUN git clone https://github.com/lispmeister/eth-net-intelligence-api.git /root/lib/ethStatsApi
 WORKDIR /root/lib/ethStatsApi
 RUN npm install
 
