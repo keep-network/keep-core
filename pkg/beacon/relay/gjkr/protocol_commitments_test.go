@@ -214,16 +214,22 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				)
 			}
 
-			if len(accusedMessage.accusedIDs) != len(test.expectedAccusedIDs) {
+			if len(accusedMessage.accusedMembersKeys) != len(test.expectedAccusedIDs) {
 				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
 					len(test.expectedAccusedIDs),
-					len(accusedMessage.accusedIDs),
+					len(accusedMessage.accusedMembersKeys),
 				)
 			}
-			if !reflect.DeepEqual(accusedMessage.accusedIDs, test.expectedAccusedIDs) {
+
+			expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			for _, id := range test.expectedAccusedIDs {
+				expectedAccusedMembersKeys[id] = verifyingMember.ephemeralKeyPairs[id].PrivateKey
+			}
+
+			if !reflect.DeepEqual(accusedMessage.accusedMembersKeys, expectedAccusedMembersKeys) {
 				t.Fatalf("incorrect accused members IDs\nexpected: %v\nactual:   %v\n",
-					test.expectedAccusedIDs,
-					accusedMessage.accusedIDs,
+					expectedAccusedMembersKeys,
+					accusedMessage.accusedMembersKeys,
 				)
 			}
 
@@ -302,7 +308,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 		members = append(members,
 			&CommittingMember{
 				SymmetricKeyGeneratingMember: member,
-				vss: vss,
+				vss:                          vss,
 			})
 	}
 

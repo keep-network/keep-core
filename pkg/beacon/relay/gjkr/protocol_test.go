@@ -46,9 +46,9 @@ func TestRoundTrip(t *testing.T) {
 			t.Fatalf("shares and commitments verification failed [%s]", err)
 		}
 
-		if len(accusedSecretSharesMessage.accusedIDs) > 0 {
+		if len(accusedSecretSharesMessage.accusedMembersKeys) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedSecretSharesMessage.accusedIDs,
+				accusedSecretSharesMessage.accusedMembersKeys,
 			)
 		}
 	}
@@ -104,9 +104,9 @@ func TestRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatalf("public coefficients verification failed [%s]", err)
 		}
-		if len(accusedPointsMessage.accusedIDs) > 0 {
+		if len(accusedPointsMessage.accusedMembersKeys) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedPointsMessage.accusedIDs,
+				accusedPointsMessage.accusedMembersKeys,
 			)
 		}
 	}
