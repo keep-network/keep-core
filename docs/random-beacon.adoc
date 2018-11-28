@@ -87,18 +87,6 @@ Dfinity paper above. The Keep Random Beacon publishes group public keys to the
 anchoring blockchain and does member selection on-chain, but key generation
 occurs between nodes with only the final result vote occurring on-chain.
 
-== Core Technologies
-
-WIP
-
-== System States
-
-WIP
-
-== Incentives
-
-WIP
-
 == System Details
 
 The system has two high-level modes of operation, discussed in detail in their
