@@ -9,7 +9,7 @@ import (
 )
 
 func (dkg *DKG) NewChallengeState() (*ChallengeState, error) {
-	TNow, err := dkg.GetChain().CurrentBlock()
+	TNow, err := dkg.CurrentBlock()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current block [%v]", err)
 	}
@@ -26,16 +26,12 @@ func (dkg *DKG) NewChallengeState() (*ChallengeState, error) {
 	}, nil
 }
 
-func (vc *ChallengeState) GetChain() *Chain {
-	return vc.dkg.GetChain()
-}
-
 func (vc *ChallengeState) ChallengeStateChange(
 	currentResult *result.Result,
 	resultHash []byte,
 	correctResult int,
 ) error {
-	TNow, err := vc.GetChain().CurrentBlock()
+	TNow, err := vc.dkg.CurrentBlock()
 	if err != nil {
 		return fmt.Errorf("failed to get current block [%v]", err)
 	}
@@ -82,7 +78,7 @@ func (vc *ChallengeState) VoteForHash(resultHash []byte) error {
 	if vc.TNow == 0 {
 		return fmt.Errorf("did not see a challenge before a vote")
 	}
-	TNow, err := vc.GetChain().CurrentBlock()
+	TNow, err := vc.dkg.CurrentBlock()
 	if err != nil {
 		return fmt.Errorf("failed to get current block [%v]", err)
 	}

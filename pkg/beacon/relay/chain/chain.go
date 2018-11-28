@@ -46,6 +46,6 @@ type Interface interface {
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
 	// IsResultPublished checks if the result is already published to the blockchain.
 	IsResultPublished(result *result.Result) bool
-
+	// SubmitResult sends DKG result to a chain.
 	SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise
 }

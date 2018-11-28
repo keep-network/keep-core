@@ -20,6 +20,7 @@ const (
 )
 
 type Result struct {
+	Success        bool
 	Type           ResultType `json:"resulttype"`
 	GroupPublicKey *big.Int   `json:"pubkey"`
 	HashValue      []byte     `json:"-"`
@@ -28,8 +29,7 @@ type Result struct {
 }
 
 func (r *Result) Hash() []byte {
-	// OLD: return []byte(fmt.Sprintf("%v", r))
-	bb := SearilizeResultForHash(*r)
+	bb := searilizeResultForHash(*r)
 	hh := Keccak256(bb)
 	return hh
 }
@@ -38,7 +38,7 @@ func (r Result) Equal(s Result) bool {
 	return bytes.Equal(r.HashValue, s.HashValue)
 }
 
-func SearilizeResultForHash(rs Result) []byte {
+func searilizeResultForHash(rs Result) []byte {
 	var buf bytes.Buffer
 
 	binary.Write(&buf, binary.BigEndian, int64(rs.Type))

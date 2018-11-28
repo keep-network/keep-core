@@ -38,6 +38,7 @@ type localChain struct {
 	latestValue *big.Int
 
 	simulatedHeight int64
+	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
 	stakerList []string
@@ -45,6 +46,10 @@ type localChain struct {
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
+}
+
+func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
+	return c.stakeMonitor, nil
 }
 
 func (c *localChain) GetConfig() (relayconfig.Chain, error) {
@@ -195,6 +200,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		groupRelayEntries:       make(map[string]*big.Int),
 		groupRegistrations:      make(map[string][96]byte),
 		blockCounter:            bc,
+		stakeMonitor:            &localStakeMonitor{},
 	}
 }
 
@@ -264,9 +270,9 @@ func (c *localChain) RequestRelayEntry(
 	return promise
 }
 
+// IsResultPublished checks to see if the results are already on chain.
 func (c *localChain) IsResultPublished(result *result.Result) bool {
 	resultHash := result.Hash()
-
 	for _, r := range c.submittedResults {
 		if reflect.DeepEqual(r, resultHash) {
 			return true
@@ -275,6 +281,7 @@ func (c *localChain) IsResultPublished(result *result.Result) bool {
 	return false
 }
 
+// SubmitResult submits the result to a chain.
 func (c *localChain) SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()

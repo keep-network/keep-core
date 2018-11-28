@@ -1,4 +1,4 @@
-// Package gjkr conatins code that implements Distributed Key Generation protocol
+// Package gjkr contains code that implements Distributed Key Generation protocol
 // described in [GJKR 99].
 //
 // See http://docs.keep.network/cryptography/beacon_dkg.html#_protocol
@@ -160,9 +160,9 @@ func (cm *CommittingMember) VerifyReceivedSharesAndCommitmentsMessages(
 						commitmentsMessage.senderID)
 					break
 				}
-				cm.receivedSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
-				cm.receivedSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
-				cm.receivedCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
+				cm.receivedValidSharesS[commitmentsMessage.senderID] = sharesMessage.shareS
+				cm.receivedValidSharesT[commitmentsMessage.senderID] = sharesMessage.shareT
+				cm.receivedValidPeerCommitments[commitmentsMessage.senderID] = commitmentsMessage.commitments
 				break
 			}
 		}
@@ -259,8 +259,8 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
 	// where: m is accused member's ID, j is sender's ID, T is threshold.
 	if sjm.areSharesValidAgainstCommitments(
 		shareS, shareT, // s_mj, t_mj
-		sjm.receivedCommitments[accusedID], // C_m
-		senderID,                           // j
+		sjm.receivedValidPeerCommitments[accusedID], // C_m
+		senderID, // j
 	) {
 		return senderID, nil
 	}
@@ -277,7 +277,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
 	combinedSharesS := qm.selfSecretShareS // s_ii
-	for _, s := range qm.receivedSharesS {
+	for _, s := range qm.receivedValidSharesS {
 		combinedSharesS = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesS, s),
 			qm.protocolConfig.Q,
@@ -285,7 +285,7 @@ func (qm *QualifiedMember) CombineMemberShares() {
 	}
 
 	combinedSharesT := qm.selfSecretShareT // t_ii
-	for _, t := range qm.receivedSharesT {
+	for _, t := range qm.receivedValidSharesT {
 		combinedSharesT = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesT, t),
 			qm.protocolConfig.Q,
@@ -296,39 +296,41 @@ func (qm *QualifiedMember) CombineMemberShares() {
 	qm.shareT = combinedSharesT
 }
 
-// CalculatePublicCoefficients calculates public values for member's coefficients.
+// CalculatePublicKeySharePoints calculates public values for member's coefficients.
 // It calculates `A_k = g^a_k mod p` for k in [0..T].
 //
 // See Phase 7 of the protocol specification.
-func (sm *SharingMember) CalculatePublicCoefficients() *MemberPublicCoefficientsMessage {
-	sm.publicCoefficients = make([]*big.Int, len(sm.secretCoefficients))
+func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePointsMessage {
+	sm.publicKeySharePoints = make([]*big.Int, len(sm.secretCoefficients))
 	for i, a := range sm.secretCoefficients {
-		sm.publicCoefficients[i] = new(big.Int).Exp(
+		sm.publicKeySharePoints[i] = new(big.Int).Exp(
 			sm.vss.G,
 			a,
 			sm.protocolConfig.P,
 		)
 	}
 
-	return &MemberPublicCoefficientsMessage{
-		senderID:           sm.ID,
-		publicCoefficients: sm.publicCoefficients,
+	return &MemberPublicKeySharePointsMessage{
+		senderID:             sm.ID,
+		publicKeySharePoints: sm.publicKeySharePoints,
 	}
 }
 
-// VerifyPublicCoefficients validates public key shares received in messages from
-// peer group members.
+// VerifyPublicKeySharePoints validates public key share points received in
+// messages from peer group members.
 // It returns accusation message with ID of members for which the verification
 // failed.
 //
 // See Phase 8 of the protocol specification.
-func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoefficientsMessage) (*CoefficientsAccusationsMessage, error) {
+func (sm *SharingMember) VerifyPublicKeySharePoints(
+	messages []*MemberPublicKeySharePointsMessage,
+) (*PointsAccusationsMessage, error) {
 	var accusedMembersIDs []int
 	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
 		product := big.NewInt(1)
-		for k, a := range message.publicCoefficients {
+		for k, a := range message.publicKeySharePoints {
 			product = new(big.Int).Mod(
 				new(big.Int).Mul(
 					product,
@@ -344,16 +346,74 @@ func (sm *SharingMember) VerifyPublicCoefficients(messages []*MemberPublicCoeffi
 		// `expectedProduct = g^s_ji`
 		expectedProduct := new(big.Int).Exp(
 			sm.vss.G,
-			sm.receivedSharesS[message.senderID],
+			sm.receivedValidSharesS[message.senderID],
 			sm.protocolConfig.P)
 
 		if expectedProduct.Cmp(product) != 0 {
 			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+			continue
 		}
+		sm.receivedValidPeerPublicKeySharePoints[message.senderID] = message.publicKeySharePoints
 	}
 
-	return &CoefficientsAccusationsMessage{
+	return &PointsAccusationsMessage{
 		senderID:   sm.ID,
 		accusedIDs: accusedMembersIDs,
 	}, nil
+}
+
+// ResolvePublicKeySharePointsAccusations resolves a complaint received from a sender
+// against a member accused in public key share points verification.
+//
+// Current member cannot be a part of a dispute, if the member is either a sender
+// or accused the function will return an error.
+//
+// The function requires share `s_mj` calculated by the accused member (`m`) for
+// the sender (`j`). This value was shared privately by member `m` with member
+// `j` in the previous phase. On accusation, this value is revealed publicly to
+// resolve the dispute between `m` and `j` and is an input parameter to this function.
+//
+// The returned value is an ID of the member who should be slashed. It will be
+// an accuser ID if the validation shows that coefficients are valid, so the
+// accusation was unfounded. Else it confirms that accused member misbehaved
+// and their ID is returned.
+//
+// See Phase 9 of the protocol specification.
+func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
+	senderID, accusedID int,
+	shareS *big.Int,
+) (int, error) {
+	if cjm.ID == senderID || cjm.ID == accusedID {
+		return 0, fmt.Errorf("current member cannot be a part of a dispute")
+	}
+
+	// `product = Π (A_mk ^ (j^k)) mod p` for k in [0..T],
+	// where: m is accused member's ID, j is sender's ID, T is threshold.
+	product := big.NewInt(1)
+	for k, a := range cjm.receivedValidPeerPublicKeySharePoints[accusedID] {
+		product = new(big.Int).Mod(
+			new(big.Int).Mul(
+				product,
+				new(big.Int).Exp(
+					a,
+					pow(senderID, k),
+					cjm.protocolConfig.P,
+				),
+			),
+			cjm.protocolConfig.P,
+		)
+	}
+
+	// `expectedProduct = g^s_mj mod p`, where:
+	// m is accused member's ID, j is sender's ID.
+	expectedProduct := new(big.Int).Exp(
+		cjm.vss.G,
+		shareS,
+		cjm.protocolConfig.P,
+	)
+
+	if expectedProduct.Cmp(product) == 0 {
+		return senderID, nil
+	}
+	return accusedID, nil
 }

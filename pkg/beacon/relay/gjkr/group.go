@@ -10,6 +10,10 @@ type Group struct {
 	// IDs of all members of the group. Contains local member's ID.
 	// Initially empty, populated as each other member announces its presence.
 	memberIDs []int
+	// IDs of group members who were disqualified during protocol execution.
+	disqualifiedMemberIDs []int
+	// IDs of group members who went inactive during protocol execution.
+	inactiveMemberIDs []int
 }
 
 // MemberIDs returns IDs of all group members.
@@ -30,4 +34,12 @@ func (g *Group) DisqualifiedMembers() []int {
 func (g *Group) InactiveMembers() []int {
 	// TODO: Implement
 	return []int{}
+}
+
+func (g *Group) SetDisqualifiedMembers(dq []int) {
+	g.disqualifiedMemberIDs = dq
+}
+
+func (g *Group) SetInactiveMembers(iq []int) {
+	g.inactiveMemberIDs = iq
 }

@@ -139,22 +139,22 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			}
 
 			expectedReceivedSharesLength := groupSize - 1 - len(test.expectedAccusedIDs)
-			if len(currentMember.receivedSharesS) != expectedReceivedSharesLength {
+			if len(currentMember.receivedValidSharesS) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received shares S\nactual:   %v\n",
 					expectedReceivedSharesLength,
-					len(currentMember.receivedSharesS),
+					len(currentMember.receivedValidSharesS),
 				)
 			}
-			if len(currentMember.receivedSharesT) != expectedReceivedSharesLength {
+			if len(currentMember.receivedValidSharesT) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received shares T\nactual:   %v\n",
 					expectedReceivedSharesLength,
-					len(currentMember.receivedSharesT),
+					len(currentMember.receivedValidSharesT),
 				)
 			}
-			if len(currentMember.receivedCommitments) != expectedReceivedSharesLength {
+			if len(currentMember.receivedValidPeerCommitments) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received commitments\nactual:   %v\n",
 					expectedReceivedSharesLength,
-					len(currentMember.receivedCommitments),
+					len(currentMember.receivedValidPeerCommitments),
 				)
 			}
 		})
@@ -211,10 +211,10 @@ func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMe
 				group:          group,
 				protocolConfig: config,
 			},
-			vss:                 vss,
-			receivedSharesS:     make(map[int]*big.Int),
-			receivedSharesT:     make(map[int]*big.Int),
-			receivedCommitments: make(map[int][]*big.Int),
+			vss:                          vss,
+			receivedValidSharesS:         make(map[int]*big.Int),
+			receivedValidSharesT:         make(map[int]*big.Int),
+			receivedValidPeerCommitments: make(map[int][]*big.Int),
 		})
 		group.RegisterMemberID(id)
 	}

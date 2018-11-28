@@ -17,23 +17,9 @@ type DKG struct {
 
 	// Blockchain block heigh when the protocol execution started.
 	// TODO: Move it to chain.BlockCounter ?
-	initialBlockHeight int // t_init
-	expectedDuration   int // t_dkg
-	blockStep          int // t_step
-
-}
-
-// RandomQ generates a random `big.Int` in range (0, q).
-func (d *DKG) RandomQ() (*big.Int, error) {
-	for {
-		x, err := crand.Int(crand.Reader, d.Q)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate random number [%s]", err)
-		}
-		if x.Sign() > 0 {
-			return x, nil
-		}
-	}
+	initialBlockHeight       int // t_init
+	expectedProtocolDuration int // t_dkg
+	blockStep                int // t_step
 }
 
 // Chain contains handle to interact with blockchain along with parameters specific
@@ -52,18 +38,36 @@ type Chain struct {
 	blockStep int // t_step
 }
 
-// ChainHandle returns blockchain handle that provides access to chain interactions.
-func (d *DKG) ChainHandle() chain.Handle {
-	return d.chain.handle
+// RandomQ generates a random `big.Int` in range (0, q).
+func (d *DKG) RandomQ() (*big.Int, error) {
+	for {
+		x, err := crand.Int(crand.Reader, d.Q)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate random number [%s]", err)
+		}
+		if x.Sign() > 0 {
+			return x, nil
+		}
+	}
 }
 
-func (d *DKG) GetChain() *Chain {
+// ChainHandle returns blockchain handle that provides access to chain interactions.
+func (d *DKG) ChainHandle() chain.Handle {
 	return d.chain
 }
 
 // CurrentBlock returns current block height on a chain.
 func (d *Chain) CurrentBlock() (int, error) {
 	blockCounter, err := d.handle.BlockCounter()
+	if err != nil {
+		return 0, err
+	}
+	return blockCounter.CurrentBlock()
+}
+
+// CurrentBlock returns current block height on a chain.
+func (d *DKG) CurrentBlock() (int, error) {
+	blockCounter, err := d.chain.BlockCounter()
 	if err != nil {
 		return 0, err
 	}
