@@ -37,8 +37,10 @@ func TestCombineReceivedShares(t *testing.T) {
 			CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
 				CommittingMember: &CommittingMember{
 					SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-						memberCore: &memberCore{
-							protocolConfig: config,
+						EphemeralKeyGeneratingMember: &EphemeralKeyGeneratingMember{
+							memberCore: &memberCore{
+								protocolConfig: config,
+							},
 						},
 					},
 					selfSecretShareS: selfShareS,
@@ -94,8 +96,10 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 				CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
 					CommittingMember: &CommittingMember{
 						SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-							memberCore: &memberCore{
-								protocolConfig: config,
+							EphemeralKeyGeneratingMember: &EphemeralKeyGeneratingMember{
+								memberCore: &memberCore{
+									protocolConfig: config,
+								},
 							},
 						},
 						vss:                vss,
