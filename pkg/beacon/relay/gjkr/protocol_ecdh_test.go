@@ -15,7 +15,7 @@ func TestGenerateSymmetricKeyGroup(t *testing.T) {
 	ephemeralGeneratingMembers := createEphemeralKeyMembersGroup(
 		groupSize,
 		groupSize, // threshold = groupSize
-		&DKG{},
+		nil,
 	)
 
 	// generate ephemeral key pairs for each group member; prepare messages
