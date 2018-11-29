@@ -95,7 +95,7 @@ func TestGenerateSymmetricKeyGroup(t *testing.T) {
 	for _, ephemeralGeneratingMember := range ephemeralGeneratingMembers {
 		messages, err := ephemeralGeneratingMember.GenerateEphemeralKeyPair()
 		if err != nil {
-
+			t.Fatal(err)
 		}
 		broadcastedPubKeyMessages[ephemeralGeneratingMember.ID] = messages
 	}
