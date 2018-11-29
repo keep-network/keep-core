@@ -8,30 +8,26 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func initializeSymmetricKeyMembersGroup(
+func initializeEphemeralKeyMembersGroup(
 	threshold int,
 	groupSize int,
 	dkg *DKG,
-) ([]*SymmetricKeyGeneratingMember, error) {
+) ([]*EphemeralKeyGeneratingMember, error) {
 	group := &Group{
 		groupSize:          groupSize,
 		dishonestThreshold: threshold,
 	}
 
-	var members []*SymmetricKeyGeneratingMember
-
+	var members []*EphemeralKeyGeneratingMember
 	for i := 1; i <= groupSize; i++ {
 		id := MemberID(i)
-		members = append(members, &SymmetricKeyGeneratingMember{
-			EphemeralKeyGeneratingMember: &EphemeralKeyGeneratingMember{
-				memberCore: &memberCore{
-					ID:             id,
-					group:          group,
-					protocolConfig: dkg,
-				},
-				ephemeralKeys: make(map[MemberID]*ephemeral.KeyPair),
+		members = append(members, &EphemeralKeyGeneratingMember{
+			memberCore: &memberCore{
+				ID:             id,
+				group:          group,
+				protocolConfig: dkg,
 			},
-			symmetricKeys: make(map[MemberID]ephemeral.SymmetricKey),
+			ephemeralKeys: make(map[MemberID]*ephemeral.KeyPair),
 		})
 		group.RegisterMemberID(id)
 	}
@@ -51,6 +47,31 @@ func initializeSymmetricKeyMembersGroup(
 				member1.ephemeralKeys[member2.ID] = keyPair
 			}
 		}
+	}
+
+	return members, nil
+}
+
+func initializeSymmetricKeyMembersGroup(
+	threshold int,
+	groupSize int,
+	dkg *DKG,
+) ([]*SymmetricKeyGeneratingMember, error) {
+	ephemeralKeyMembers, err := initializeEphemeralKeyMembersGroup(
+		threshold,
+		groupSize,
+		dkg,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%v]", err)
+	}
+
+	var members []*SymmetricKeyGeneratingMember
+	for _, ephemeralKeyMember := range ephemeralKeyMembers {
+		members = append(members, &SymmetricKeyGeneratingMember{
+			EphemeralKeyGeneratingMember: ephemeralKeyMember,
+			symmetricKeys:                make(map[MemberID]ephemeral.SymmetricKey),
+		})
 	}
 
 	// generate symmetric keys with all other members of the group
