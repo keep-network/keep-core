@@ -28,8 +28,7 @@ func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
 // an EphemeralPublicKeyMessage
 func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.EphemeralPublicKey{}
-	err := pbMsg.Unmarshal(bytes)
-	if err != nil {
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
@@ -71,8 +70,7 @@ func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 // a MemberCommitmentsMessage
 func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.MemberCommitments{}
-	err := pbMsg.Unmarshal(bytes)
-	if err != nil {
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
@@ -108,8 +106,7 @@ func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 // Unmarshal converts a byte array produced by Marshal to a PeerSharesMessage.
 func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.PeerShares{}
-	err := pbMsg.Unmarshal(bytes)
-	if err != nil {
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
@@ -145,8 +142,7 @@ func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
 // a SecretSharesAccusationsMessage.
 func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.SecretSharesAccusations{}
-	err := pbMsg.Unmarshal(bytes)
-	if err != nil {
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
@@ -185,8 +181,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 // a MemberPublicKeySharePointsMessage.
 func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.MemberPublicKeySharePoints{}
-	err := pbMsg.Unmarshal(bytes)
-	if err != nil {
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
@@ -226,8 +221,7 @@ func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
 // a PointsAccusationsMessage.
 func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	pbMsg := pb.PointsAccusations{}
-	err := pbMsg.Unmarshal(bytes)
-	if err != nil {
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
