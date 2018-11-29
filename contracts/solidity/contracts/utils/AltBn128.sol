@@ -111,9 +111,9 @@ library AltBn128 {
     {
         gfP2 memory x = gfP2Add(gfP2Pow(_x, 3), twistB());
 
-        // Using formula y = x ^ (p^2 + 15) // 32) from 
+        // Using formula y = x ^ (p^2 + 15) / 32 from
         // https://github.com/ethereum/beacon_chain/blob/master/beacon_chain/utils/bls.py
-        // (p^2 + 15) // 32) results into a big 512bit value, so breaking it to two uint256 as (a * a + b)
+        // (p^2 + 15) / 32 results into a big 512bit value, so breaking it to two uint256 as (a * a + b)
         uint256 a = 3869331240733915743250440106392954448556483137451914450067252501901456824595;
         uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
   

@@ -5,8 +5,9 @@ import "./utils/AltBn128.sol";
 
 /**
  * @title BLS signatures verification
- * @dev Library for verification of aggregated or reconstructed threshold BLS signatures
- * generated using AltBn128 curve.
+ * @dev Library for verification of 2-pairing-check BLS signatures, including
+ * basic, aggregated, or reconstructed threshold BLS signatures, generated
+ * using the AltBn128 curve.
  */
 library BLS {
 
