@@ -105,3 +105,15 @@ type PointsJustifyingMember struct {
 type PublishingMember struct {
 	*PointsJustifyingMember
 }
+
+// PublishingIndex returns sequence number of the current member in a publishing
+// group. Counting starts with `0`.
+func (pm *PublishingMember) PublishingIndex() int {
+	// TODO Order of members need to be synchronized for all members.
+	for index, memberID := range pm.group.MemberIDs() {
+		if pm.ID == memberID {
+			return index
+		}
+	}
+	return -1
+}
