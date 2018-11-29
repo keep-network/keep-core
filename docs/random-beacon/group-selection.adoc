@@ -1,4 +1,8 @@
+:toc: macro
+
 == Random Beacon Group Selection
+
+toc::[]
 
 The group selection protocol is intended to be
 an interactive method of selecting candidate group _P_
@@ -13,12 +17,12 @@ output: _P_
 
 The protocol should:
 
-. [[1]]produce a representative result, where each staker's profit is proportional
+. [[req-1]]produce a representative result, where each staker's profit is proportional
 to the number of tokens they have staked
-. [[2]]produce a group _P_ of constant size _N_
-. [[3]]not require an excessive amount of on-chain operations to perform
-. [[4]]not be feasible for an adversary to manipulate
-. [[5]]be compatible with future measures to make stakers indistinguishable
+. [[req-2]]produce a group _P_ of constant size _N_
+. [[req-3]]not require an excessive amount of on-chain operations to perform
+. [[req-4]]not be feasible for an adversary to manipulate
+. [[req-5]]be compatible with future measures to make stakers indistinguishable
 
 .Some terms
 |===
@@ -80,8 +84,14 @@ and _N_ properly denotes the number of virtual stakers in _P_.
 |Threshold
 |The value of the highest-valued ticket in _P_
 
+|_Space~tickets~_
+|Is a space consisting of all possible tickets. It is strongly related
+with a pseudo random function that is used for ticket generation.
+Currently the _Space~tickets~_ is equal to _2^256^- 1_, which is due
+to selection of SHA3-256 as our pseudo random function.
+
 |Natural threshold
-|_Threshold~nat~ = N * (2^256 - 1) / (Tokens~total~ / MINIMUM_STAKE)_
+|_Threshold~nat~ = floor(N * Space~tickets~ / (Tokens~total~ / MINIMUM_STAKE))_
 
 In other words, the natural threshold is the value _N_ virtual stakers' tickets
 would be expected to fall below if the tokens were optimally staked, and the
@@ -109,9 +119,10 @@ When a staker _S~j~_ is created, the following values are determined:
 The staker creation operation needs to include a proof of the correctness of the
 above values.
 
-Currently the _Stake~j~_ can be public and _Q~j~_ can be the ECDSA pubkey of _S~j~_.
-Future work towards indistinguishable staking would make these values private
-and prove correctness via a ZKP.
+Currently the _Stake~j~_ and _Weight~j~_ can be public and _Q~j~_ can be the 
+ECDSA pubkey of _S~j~_. Future work towards indistinguishable staking would make
+_Stake~j~_ and _Weight~j~_ values private and enable their verification via
+zero-knowledge proofs.
 
 == Protocol
 
@@ -190,15 +201,15 @@ for the same group.
 
 This makes the result representative and ensures that neither blitzpantsing nor
 trenchcoating will provide the staker greater profits than they could acquire
-otherwise (<<1>>), with the exception that pooling token amounts below
-_MINIMUM_STAKE_ and sharing the risk and profits would enable the utilization of
-smaller holders' tokens or surplus tokens from regular stakers.
+otherwise (<<req-1,requirement 1>>), with the exception that pooling token
+amounts below _MINIMUM_STAKE_ and sharing the risk and profits would enable the
+utilization of smaller holders' tokens or surplus tokens from regular stakers.
 This form of trenchcoating is arguably either neutral or beneficial, and in any
 case it does not violate proportionality of rewards.
 
 Additionally, using virtual stakers and tickets instead of eg. a threshold that
 adjusts itself based on the staked amount lets us hide any particular staker's
-identity and the size of their stake later (<<5>>).
+identity and the size of their stake later (<<req-5,requirement 5>>).
 
 === Interactive protocol
 
@@ -208,17 +219,17 @@ satisfy all of the requirements:
 1. One method would be to have each _S~j~_ calculate a pseudorandom value
 _Seed~j~_, and then everybody whose _Seed~j~ < Threshold~i~_ is in _P_.
 _Threshold~i~_ would be calculated using public information,
-eg. by _Threshold~i~ = N * (2^256-1) / |S|_ for a 256-bit _Seed~j~_.
+eg. by _Threshold~i~ = floor(N * Space~tickets~ / |S|)_ for a 256-bit _Seed~j~_.
 However, this means that due to random chance, most of the time _|P| != N_.
-This violates <<2>>.
+This violates <<req-2,requirement 2>>.
 2. Alternatively each staker could present  some kind of a hashed value
 _Hash~j~_ so that whether _S~j~_ is in _P_ can be determined publicly
 by _f(V~i~, Hash~j~, S, N) -> Bool_.
 This cannot work, because then anybody could
 calculate _f(V~m~, Hash~j~, S, N)_ for a large number of different values _V~m~_
 and see how often _S~j~_ ends up eligible for the candidate group.
-Due to <<1>> this necessarily reveals how much _S~j~_ has staked
-to an arbitrary degree of precision, violating <<5>>.
+Due to <<req-1,requirement 1>> this necessarily reveals how much _S~j~_ has staked
+to an arbitrary degree of precision, violating <<req-5,requirement 5>>.
 
 These constraints seem inherent in the problem, and thus an interactive protocol
 appears necessary. The aforementioned issues can be avoided by having _S~j~_
@@ -248,8 +259,9 @@ the estimated threshold.
 === Zero-knowledge proofs
 
 The protocol has been designed to be easily compatible with zero-knowledge
-proofs later (<<5>>). The weights and virtual staker indices can use range
-proofs, and _Q~j~_ is required to be simply a value unique to any given staker.
+proofs later (<<req-5,requirement 5>>). The weights and virtual staker indices
+can use range proofs, and _Q~j~_ is required to be simply a value unique to any
+given staker.
 
 Initially _Q~j~_ can be something public and easy to verify, such as the ECDSA
 pubkey of _S~j~_, but the design of the protocol should be flexible later.

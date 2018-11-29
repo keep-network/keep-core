@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -9,9 +10,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
-	floodsub "github.com/libp2p/go-floodsub"
 	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-pubsub"
 )
 
 type channel struct {
@@ -21,9 +22,9 @@ type channel struct {
 	peerStore      peerstore.Peerstore
 
 	pubsubMutex sync.Mutex
-	pubsub      *floodsub.PubSub
+	pubsub      *pubsub.PubSub
 
-	subscription *floodsub.Subscription
+	subscription *pubsub.Subscription
 
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
@@ -41,14 +42,14 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	return c.doSend(nil, c.clientIdentity, message)
+	return c.doSend(nil, message)
 }
 
 func (c *channel) SendTo(
 	recipientIdentifier net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) error {
-	return c.doSend(recipientIdentifier, c.clientIdentity, message)
+	return c.doSend(recipientIdentifier, message)
 }
 
 // doSend attempts to send a message, from a sender, to all members of a
@@ -58,7 +59,6 @@ func (c *channel) SendTo(
 // address the message specifically to them.
 func (c *channel) doSend(
 	recipient net.ProtocolIdentifier,
-	sender *identity,
 	message net.TaggedMarshaler,
 ) error {
 	var transportRecipient net.TransportIdentifier
@@ -71,7 +71,7 @@ func (c *channel) doSend(
 	}
 	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
 	// in an envelope.
-	envelopeBytes, err := c.envelopeProto(transportRecipient, sender, message)
+	envelopeBytes, err := c.envelopeProto(transportRecipient, message)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,6 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 func (c *channel) messageProto(
 	recipient net.TransportIdentifier,
-	sender *identity,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
@@ -172,7 +171,7 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	senderIdentityBytes, err := sender.Marshal()
+	senderIdentityBytes, err := c.clientIdentity.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +185,7 @@ func (c *channel) messageProto(
 		}
 	}
 
-	return (&pb.Message{
+	return (&pb.NetworkMessage{
 		Payload:   payloadBytes,
 		Sender:    senderIdentityBytes,
 		Recipient: recipientIdentityBytes,
@@ -194,12 +193,11 @@ func (c *channel) messageProto(
 	}).Marshal()
 }
 
-func (c *channel) envelopeProto(
+func (c *channel) sealEnvelope(
 	recipient net.TransportIdentifier,
-	sender *identity,
 	message net.TaggedMarshaler,
-) ([]byte, error) {
-	messageBytes, err := c.messageProto(recipient, sender, message)
+) (*pb.NetworkEnvelope, error) {
+	messageBytes, err := c.messageProto(recipient, message)
 	if err != nil {
 		return nil, err
 	}
@@ -208,10 +206,22 @@ func (c *channel) envelopeProto(
 		return nil, err
 	}
 
-	return (&pb.Envelope{
+	return &pb.NetworkEnvelope{
 		Message:   messageBytes,
 		Signature: signature,
-	}).Marshal()
+	}, nil
+}
+
+func (c *channel) envelopeProto(
+	recipient net.TransportIdentifier,
+	message net.TaggedMarshaler,
+) ([]byte, error) {
+	envelope, err := c.sealEnvelope(recipient, message)
+	if err != nil {
+		return nil, err
+	}
+
+	return envelope.Marshal()
 }
 
 func (c *channel) sign(messageBytes []byte) ([]byte, error) {
@@ -234,19 +244,18 @@ func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error
 	ok, err := pubKey.Verify(messageBytes, signature)
 	if err != nil {
 		return fmt.Errorf(
-			"failed to verify signature [%v] for sender [%v] with err [%v]",
-			signature,
-			sender,
+			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
+			hex.EncodeToString(signature),
+			sender.Pretty(),
 			err,
 		)
 	}
 
 	if !ok {
 		return fmt.Errorf(
-			"failed to verify signature [%v] for sender with id [%v] and pubkey [%v]",
-			signature,
-			sender,
-			pubKey,
+			"invalid signature [0x%v] on message from sender [%v] ",
+			hex.EncodeToString(signature),
+			sender.Pretty(),
 		)
 	}
 
@@ -279,8 +288,8 @@ func (c *channel) handleMessages(ctx context.Context) {
 	}
 }
 
-func (c *channel) processPubsubMessage(pubsubMessage *floodsub.Message) error {
-	var envelope pb.Envelope
+func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
+	var envelope pb.NetworkEnvelope
 	if err := proto.Unmarshal(pubsubMessage.Data, &envelope); err != nil {
 		return err
 	}
@@ -293,7 +302,7 @@ func (c *channel) processPubsubMessage(pubsubMessage *floodsub.Message) error {
 		return err
 	}
 
-	var protoMessage pb.Message
+	var protoMessage pb.NetworkMessage
 	if err := proto.Unmarshal(envelope.Message, &protoMessage); err != nil {
 		return err
 	}
@@ -301,7 +310,10 @@ func (c *channel) processPubsubMessage(pubsubMessage *floodsub.Message) error {
 	return c.processContainerMessage(pubsubMessage.GetFrom(), protoMessage)
 }
 
-func (c *channel) processContainerMessage(proposedSender peer.ID, message pb.Message) error {
+func (c *channel) processContainerMessage(
+	proposedSender peer.ID,
+	message pb.NetworkMessage,
+) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
 	unmarshaled, err := c.getUnmarshalingContainerByType(string(message.Type))

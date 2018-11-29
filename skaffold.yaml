@@ -1,0 +1,13 @@
+apiVersion: skaffold/v1alpha5
+kind: Config
+build:
+  artifacts:
+  - image: gcr.io/keep.network/keep-client
+deploy:
+  kubectl:
+    manifests:
+    - infrastructure/kube/k8s-*
+profiles:
+- name: test
+  test:
+  - image: gcr.io/keep.network/keep-client

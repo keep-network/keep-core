@@ -76,7 +76,7 @@ jobs:
             - /caches/client.tar
   generate_docs_tex:
     docker:
-      - image: thomasweise/texlive
+      - image: keepnetwork/texlive:3
     steps:
       - checkout
       - run:

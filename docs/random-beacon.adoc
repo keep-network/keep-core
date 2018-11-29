@@ -99,7 +99,7 @@ occurs between nodes.
 
 - libp2p
 - multiaddr
-- floodsub?
+- pubsub?
 
 === Messaging
 
@@ -241,7 +241,7 @@ Specific to this section, we will refer to “relay clients”, “group members
 peers.
 
 The relay beacon leverages https://github.com/libp2p[libp2p] and the associated
-gossip sub implementation in https://github.com/libp2p/go-floodsub[go-floodsub].
+gossip sub implementation in https://github.com/libp2p/go-libp2p-pubsub[go-libp2p-pubsub].
 
 Of note, we rely on the pubsub implementation to handle the case where a message
 gets lost (through retrying). At the implementation layer, we take care to

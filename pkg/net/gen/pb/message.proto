@@ -3,22 +3,22 @@ syntax = "proto3";
 option go_package = "pb";
 package net;
 
-// Envelope contains a marshalled message, as well as a signature over the
+// NetworkEnvelope contains a marshalled message, as well as a signature over the
 // the contents of the message (to ensure an adversary hasn't tampered
 // with the contents).
-message Envelope {
-  // The marshalled message.
+message NetworkEnvelope {
+  // The marshalled network message.
   bytes message = 1;
 
-  // Signature of the message.
+  // Signature over the network message.
   bytes signature = 2;
 }
 
-// Message contains a marshalled payload. It also contains the Identities of
-// the sender and receiver. Optionally, a Message may contain an encrypted
+// NetworkMessage contains a marshalled payload. It also contains the Identities
+// of the sender and receiver. Optionally, a Message may contain an encrypted
 // payload for messages which need to be secret; in this case, the encrypted
 // field will be set.
-message Message {
+message NetworkMessage {
   // The PublicKey of the sender.
   bytes sender = 1;
 
@@ -41,6 +41,11 @@ message Message {
 
   // Proof that the peer that sent this message knows the channel's name.
   bytes channel_MAC = 7;
+
+  // Per RFC 2, Section 1.2.5: 
+  // The nonce is included in a message in a way that makes it a part of the
+  // content used to produce a signature.
+  bytes nonce = 8;
 }
 
 message Identity {

@@ -8,11 +8,11 @@ import (
 )
 
 func TestInitiateHanshakeWithUniqueNonce(t *testing.T) {
-	initiator1, err := initiateHandshake()
+	initiator1, err := InitiateHandshake()
 	if err != nil {
 		t.Fatal(err)
 	}
-	initiator2, err := initiateHandshake()
+	initiator2, err := InitiateHandshake()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,14 +33,14 @@ func TestAnswerHandshakeWithChallenge(t *testing.T) {
 	//
 
 	// initiator station
-	initiator, err := initiateHandshake()
+	initiator, err := InitiateHandshake()
 	if err != nil {
 		t.Fatal(err)
 	}
-	act1Msg := initiator.message()
+	act1Msg := initiator.Message()
 
 	// responder station
-	responder, err := answerHandshake(act1Msg)
+	responder, err := AnswerHandshake(act1Msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func TestAnswerHandshakeWithChallenge(t *testing.T) {
 	//
 
 	// responder station
-	act2Msg := responder.message()
+	act2Msg := responder.Message()
 
 	// assert if challenge sent by responder in Act 2 is properly
 	// created from `nonce1` and `nonce2`
@@ -74,11 +74,11 @@ func TestRepeatChallengeToFinalize(t *testing.T) {
 	//
 
 	// responder station
-	act2Msg := &act2Message{nonce2, expectedChallenge}
+	act2Msg := &Act2Message{nonce2, expectedChallenge}
 
 	// initiator station
 	initiatorAct2 := &initiatorAct2{nonce1}
-	initiatorAct3, err := initiatorAct2.next(act2Msg)
+	initiatorAct3, err := initiatorAct2.Next(act2Msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestRepeatChallengeToFinalize(t *testing.T) {
 	//
 
 	// initiator station
-	act3Msg := initiatorAct3.message()
+	act3Msg := initiatorAct3.Message()
 
 	// assert if challenge sent by initiator in Act3 is the
 	// same challenge as the one received from responder in Act2
@@ -111,11 +111,11 @@ func TestFailAct2ForInvalidChallenge(t *testing.T) {
 
 	// responder station
 	invalidChallenge := [32]byte{0xff, 0xfa}
-	act2Msg := &act2Message{nonce2, invalidChallenge}
+	act2Msg := &Act2Message{nonce2, invalidChallenge}
 
 	// initiator station
 	initiatorAct2 := &initiatorAct2{nonce1}
-	_, err := initiatorAct2.next(act2Msg)
+	_, err := initiatorAct2.Next(act2Msg)
 
 	// assert if initiator detects invalid challenge sent by responder
 	expectedError := errors.New("unexpected responder's challenge")
@@ -138,8 +138,8 @@ func TestFailAct3ForInvalidChallenge(t *testing.T) {
 	//
 	// Act 3
 	//
-	act3Msg := initiatorAct3.message()
-	err := responderAct3.finalizeHandshake(act3Msg)
+	act3Msg := initiatorAct3.Message()
+	err := responderAct3.FinalizeHandshake(act3Msg)
 
 	// assert if responder detects invalid challenge sent by initiator
 	expectedError := errors.New("unexpected initiator's challenge")
@@ -158,15 +158,15 @@ func TestFullHandshake(t *testing.T) {
 	//
 
 	// initiator station
-	initiatorAct1, err := initiateHandshake()
+	initiatorAct1, err := InitiateHandshake()
 	if err != nil {
 		t.Fatal(err)
 	}
-	act1Message := initiatorAct1.message()
-	initiatorAct2 := initiatorAct1.next()
+	act1Message := initiatorAct1.Message()
+	initiatorAct2 := initiatorAct1.Next()
 
 	// responder station
-	responderAct2, err := answerHandshake(act1Message)
+	responderAct2, err := AnswerHandshake(act1Message)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,11 +176,11 @@ func TestFullHandshake(t *testing.T) {
 	//
 
 	// responder station
-	act2Message := responderAct2.message()
-	responderAct3 := responderAct2.next()
+	act2Message := responderAct2.Message()
+	responderAct3 := responderAct2.Next()
 
 	// initiator station
-	initiatorAct3, err := initiatorAct2.next(act2Message)
+	initiatorAct3, err := initiatorAct2.Next(act2Message)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,10 +190,10 @@ func TestFullHandshake(t *testing.T) {
 	//
 
 	// initiator station
-	act3Message := initiatorAct3.message()
+	act3Message := initiatorAct3.Message()
 
 	// responder station
-	err = responderAct3.finalizeHandshake(act3Message)
+	err = responderAct3.FinalizeHandshake(act3Message)
 	if err != nil {
 		t.Fatal(err)
 	}
