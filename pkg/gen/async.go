@@ -63,9 +63,9 @@ func main() {
 			outputFile: "relay_entry_requested_promise.go",
 		},
 		{
-			Type:       "*event.ResultPublish",
-			Prefix:     "ResultPublish",
-			outputFile: "result_publish_promise.go",
+			Type:       "*event.PublishedResult",
+			Prefix:     "PublishedResult",
+			outputFile: "published_result_promise.go",
 		},
 	}
 

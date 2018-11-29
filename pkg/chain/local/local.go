@@ -296,7 +296,7 @@ func (c *localChain) SubmitResult(publisherID int, resultToPublish *result.Resul
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	resultPublishPromise := &async.ResultPublishPromise{}
+	publishedResultPromise := &async.PublishedResultPromise{}
 
 	for _, r := range c.submittedResults {
 		if reflect.DeepEqual(r, resultToPublish) {
