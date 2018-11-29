@@ -41,16 +41,6 @@ func TestGenerateSymmetricKeyGroup(t *testing.T) {
 		broadcastedPubKeyMessages[ephemeralGeneratingMember.ID] = messages
 	}
 
-	// We should have groupSize members.
-	members := reflect.ValueOf(broadcastedPubKeyMessages).MapKeys()
-	if len(members) != groupSize {
-		t.Fatalf(
-			"expected messages for %d members, got %d members",
-			groupSize,
-			len(members),
-		)
-	}
-
 	for memberID, ephemeralPubKeyMessages := range broadcastedPubKeyMessages {
 		// We should have groupSize - 1 messages per member.
 		if len(ephemeralPubKeyMessages) != groupSize-1 {
