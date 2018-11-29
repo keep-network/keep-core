@@ -35,7 +35,7 @@ contract TestKeepGroupInitialize {
     }
 
     function testInitialize() public {
-        keepGroupContract.initialize(address(stakingProxy), 200, 2, 3);
+        keepGroupContract.initialize(address(stakingProxy), 200, 2, 3, 1, 1, 1);
         Assert.equal(keepGroupContract.initialized(), true, "Should be initialized.");
     }
 
