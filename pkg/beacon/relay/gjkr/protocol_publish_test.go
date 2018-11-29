@@ -13,10 +13,9 @@ import (
 func TestResult(t *testing.T) {
 	threshold := 4
 	groupSize := 8
-	expectedProtocolDuration := 3 // T_dkg
-	blockStep := 2                // T_step
+	blockStep := 2 // T_step
 
-	members, err := initializePublishingMembersGroup(threshold, groupSize, expectedProtocolDuration, blockStep)
+	members, err := initializePublishingMembersGroup(threshold, groupSize, blockStep)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -91,10 +90,9 @@ func TestResult(t *testing.T) {
 func TestPublishResult(t *testing.T) {
 	threshold := 2
 	groupSize := 5
-	expectedProtocolDuration := 3 // T_dkg
-	blockStep := 2                // T_step
+	blockStep := 2 // T_step
 
-	members, err := initializePublishingMembersGroup(threshold, groupSize, expectedProtocolDuration, blockStep)
+	members, err := initializePublishingMembersGroup(threshold, groupSize, blockStep)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -127,7 +125,7 @@ func TestPublishResult(t *testing.T) {
 			}
 
 			// Reinitialize chain to reset block counter
-			test.publisher.protocolConfig.chain, err = initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
+			test.publisher.protocolConfig.chain, err = initChain(threshold, groupSize, blockStep)
 			if err != nil {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
@@ -162,10 +160,9 @@ func TestPublishResult(t *testing.T) {
 func TestPublishResult_AlreadyPublished(t *testing.T) {
 	threshold := 2
 	groupSize := 5
-	expectedProtocolDuration := 3 // T_dkg
-	blockStep := 2                // T_step
+	blockStep := 2 // T_step
 
-	members, err := initializePublishingMembersGroup(threshold, groupSize, expectedProtocolDuration, blockStep)
+	members, err := initializePublishingMembersGroup(threshold, groupSize, blockStep)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -231,15 +228,14 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 	}
 }
 
-func initializePublishingMembersGroup(
-	threshold, groupSize, expectedProtocolDuration, blockStep int,
+func initializePublishingMembersGroup(threshold, groupSize, blockStep int,
 ) ([]*PublishingMember, error) {
 	group := &Group{
 		groupSize:          groupSize,
 		dishonestThreshold: threshold,
 	}
 
-	chain, err := initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
+	chain, err := initChain(threshold, groupSize, blockStep)
 	if err != nil {
 		return nil, err
 	}
@@ -273,9 +269,7 @@ func initializePublishingMembersGroup(
 	return members, nil
 }
 
-func initChain(
-	threshold, groupSize, expectedProtocolDuration, blockStep int,
-) (*Chain, error) {
+func initChain(threshold, groupSize, blockStep int) (*Chain, error) {
 	chainHandle := local.Connect(groupSize, threshold)
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
@@ -292,9 +286,8 @@ func initChain(
 	}
 
 	return &Chain{
-		handle:                   chainHandle,
-		expectedProtocolDuration: expectedProtocolDuration, // T_dkg
-		blockStep:                blockStep,                // T_step
-		initialBlockHeight:       initialBlockHeight,       // T_init
+		handle:             chainHandle,
+		blockStep:          blockStep,          // T_step
+		initialBlockHeight: initialBlockHeight, // T_init
 	}, nil
 }

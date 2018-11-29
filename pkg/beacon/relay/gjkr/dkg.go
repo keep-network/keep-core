@@ -23,10 +23,8 @@ type Chain struct {
 
 	// Block height when the protocol execution started. Value needs to be set
 	// at the begining of the protocol execution.
+	// TODO Set this value at the begining of the protocol execution.
 	initialBlockHeight int // t_init
-	// Predefined expected duration of the protocol execution. Relates to DKG
-	// Phase 13.
-	expectedProtocolDuration int // t_dkg
 	// Predefined step for each publishing window. The value is used to determine
 	// eligible publishing member. Relates to DKG Phase 13.
 	blockStep int // t_step
