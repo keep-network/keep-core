@@ -180,10 +180,10 @@ func initializeSymmetricKeyMembersGroup(
 
 	var members []*SymmetricKeyGeneratingMember
 	for _, ephemeralKeyMember := range ephemeralKeyMembers {
-		members = append(members, &SymmetricKeyGeneratingMember{
-			EphemeralKeyGeneratingMember: ephemeralKeyMember,
-			symmetricKeys:                make(map[MemberID]ephemeral.SymmetricKey),
-		})
+		members = append(
+			members,
+			ephemeralKeyMember.InitializeSymmetricKeyGeneration(),
+		)
 	}
 
 	// generate symmetric keys with all other members of the group

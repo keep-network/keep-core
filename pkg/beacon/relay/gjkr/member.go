@@ -173,6 +173,16 @@ func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
 }
 
+// InitializeSymmetricKeyGeneration performs a transition of the member state
+// from phase 1 to phase 2. It returns a member instance ready to execute the
+// next phase of the protocol.
+func (ekgm *EphemeralKeyGeneratingMember) InitializeSymmetricKeyGeneration() *SymmetricKeyGeneratingMember {
+	return &SymmetricKeyGeneratingMember{
+		EphemeralKeyGeneratingMember: ekgm,
+		symmetricKeys:                make(map[MemberID]ephemeral.SymmetricKey),
+	}
+}
+
 // individualPublicKey returns current member's individual public key.
 // Individual public key is zeroth public key share point `A_i0`.
 func (rm *ReconstructingMember) individualPublicKey() *big.Int {
