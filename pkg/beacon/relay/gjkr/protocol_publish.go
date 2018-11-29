@@ -47,7 +47,7 @@ func (pm *PublishingMember) PrepareResult() {
 // to the blockchain.
 //
 // See Phase 13 of the protocol specification.
-func (pm *PublishingMember) PublishResult(result *result.Result) (*event.ResultPublish, error) {
+func (pm *PublishingMember) PublishResult(result *result.Result) (*event.PublishedResult, error) {
 	chainRelay := pm.protocolConfig.ChainHandle().ThresholdRelay()
 
 	for !chainRelay.IsResultPublished(result) { // while not resultPublished
@@ -58,11 +58,11 @@ func (pm *PublishingMember) PublishResult(result *result.Result) (*event.ResultP
 
 		if sliceutils.Contains(publishersIDs, pm.ID) {
 			errors := make(chan error)
-			publishedResult := make(chan *event.ResultPublish)
+			publishedResult := make(chan *event.PublishedResult)
 
 			chainRelay.SubmitResult(pm.ID, result).
-				OnComplete(func(resultPublish *event.ResultPublish, err error) {
-					publishedResult <- resultPublish
+				OnComplete(func(pr *event.PublishedResult, err error) {
+					publishedResult <- pr
 					errors <- err
 				})
 			return <-publishedResult, <-errors

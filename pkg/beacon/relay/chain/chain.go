@@ -47,5 +47,5 @@ type Interface interface {
 	// IsResultPublished checks if the result is already published to a chain.
 	IsResultPublished(result *result.Result) bool
 	// SubmitResult sends DKG result to a chain.
-	SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise
+	SubmitResult(publisherID int, result *result.Result) *async.PublishedResultPromise
 }

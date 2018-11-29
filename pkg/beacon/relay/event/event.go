@@ -43,9 +43,9 @@ type StakerRegistration struct {
 	GroupMemberID string
 }
 
-// ResultPublish represents a result published to the chain. It holds an ID of
+// PublishedResult represents a result published to the chain. It holds an ID of
 // a member who published the result and a result in a byte slice.
-type ResultPublish struct {
+type PublishedResult struct {
 	PublisherID int
 	Result      []byte
 }

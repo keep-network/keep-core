@@ -284,22 +284,22 @@ func (c *localChain) IsResultPublished(result *result.Result) bool {
 }
 
 // SubmitResult submits the result to a chain.
-func (c *localChain) SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise {
+func (c *localChain) SubmitResult(publisherID int, result *result.Result) *async.PublishedResultPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	resultPublishPromise := &async.ResultPublishPromise{}
+	publishedResultPromise := &async.PublishedResultPromise{}
 
 	resultBytes := result.Bytes()
 
 	for _, r := range c.submittedResults {
 		if reflect.DeepEqual(r, resultBytes) {
-			resultPublishPromise.Fail(fmt.Errorf("Result already submitted"))
-			return resultPublishPromise
+			publishedResultPromise.Fail(fmt.Errorf("Result already submitted"))
+			return publishedResultPromise
 		}
 	}
 
-	resultPublishPromise.Fulfill(&event.ResultPublish{
+	publishedResultPromise.Fulfill(&event.PublishedResult{
 		PublisherID: publisherID,
 		Result:      resultBytes,
 	})
@@ -308,5 +308,5 @@ func (c *localChain) SubmitResult(publisherID int, result *result.Result) *async
 	c.submittedResults = append(c.submittedResults, resultBytes)
 	c.handlerMutex.Unlock()
 
-	return resultPublishPromise
+	return publishedResultPromise
 }

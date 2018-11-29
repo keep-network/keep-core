@@ -103,7 +103,7 @@ func TestPublishResult(t *testing.T) {
 
 	result := &result.Result{GroupPublicKey: big.NewInt(13)}
 
-	expectedPublishedResult := &event.ResultPublish{
+	expectedPublishedResult := &event.PublishedResult{
 		Result: []byte(fmt.Sprintf("%v", result)),
 	}
 
@@ -183,7 +183,7 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 	}
 
 	// Publish a result
-	expectedPublishedResult := &event.ResultPublish{
+	expectedPublishedResult := &event.PublishedResult{
 		PublisherID: publisher.ID,
 		Result:      []byte(fmt.Sprintf("%v", result)),
 	}
