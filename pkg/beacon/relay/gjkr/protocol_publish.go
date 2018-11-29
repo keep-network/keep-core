@@ -1,11 +1,12 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
-	"github.com/keep-network/keep-core/pkg/internal/sliceutils"
 )
 
 // Result returns a result of distributed key generation. It takes generated
@@ -42,29 +43,56 @@ func (pm *PublishingMember) Result() *result.Result {
 // It checks if the result has already been published to the blockchain. If not
 // it determines if the current member is eligable to result submission. If allowed
 // it submits the results to the blockchain. The function returns result published
-// to the blockchain.
+// to the blockchain containing ID of the member who published it.
 //
 // See Phase 13 of the protocol specification.
-func (pm *PublishingMember) PublishResult(result *result.Result) (*event.PublishedResult, error) {
+func (pm *PublishingMember) PublishResult() (*event.PublishedResult, error) {
 	chainRelay := pm.protocolConfig.ChainHandle().ThresholdRelay()
 
-	for !chainRelay.IsResultPublished(result) { // while not resultPublished
-		publishersIDs, err := pm.determinePublishersIDs()
-		if err != nil {
-			return nil, err
-		}
+	onPublishedResultChan := make(chan *event.PublishedResult)
+	chainRelay.OnResultPublished(func(publishedResult *event.PublishedResult) {
+		onPublishedResultChan <- publishedResult
+	})
 
-		if sliceutils.Contains(publishersIDs, pm.ID) {
+	resultToPublish := pm.Result()
+
+	blockCounter, err := pm.protocolConfig.ChainHandle().BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf("block counter failure [%v]", err)
+	}
+
+	// Waits until the current member is eligable to submit a result to the
+	// blockchain.
+	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
+		pm.PublishingIndex() * pm.protocolConfig.chain.blockStep)
+	if err != nil {
+		return nil, fmt.Errorf("block waiter failure [%v]", err)
+	}
+
+	// Check if the result is already published on the chain.
+	if publishedResult := chainRelay.IsResultPublished(resultToPublish); publishedResult != nil {
+		return publishedResult, nil
+	}
+
+	for {
+		select {
+		case <-eligibleToSubmitWaiter:
+			publishedResultChan := make(chan *event.PublishedResult)
 			errors := make(chan error)
-			publishedResult := make(chan *event.PublishedResult)
 
-			chainRelay.SubmitResult(pm.ID, result).
-				OnComplete(func(pr *event.PublishedResult, err error) {
-					publishedResult <- pr
+			chainRelay.SubmitResult(pm.ID, resultToPublish).
+				OnComplete(func(publishedResult *event.PublishedResult, err error) {
+					publishedResultChan <- publishedResult
 					errors <- err
 				})
-			return <-publishedResult, <-errors
+			return <-publishedResultChan, <-errors
+
+		case newResult := <-onPublishedResultChan:
+			// Check if published result matches a result the current member
+			// wants to publish.
+			if reflect.DeepEqual(resultToPublish, newResult.Result) {
+				return newResult, nil
+			}
 		}
 	}
-	return nil, nil
 }
