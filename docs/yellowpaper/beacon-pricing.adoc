@@ -1,4 +1,4 @@
-= Random Beacon Pricing
+= [DRAFT] Random Beacon Pricing
 
 Possibilities:
 
