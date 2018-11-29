@@ -101,32 +101,31 @@ func TestPublishResult(t *testing.T) {
 	}
 	initialBlock := members[0].protocolConfig.chain.initialBlockHeight // T_init
 
-	result := &result.Result{GroupPublicKey: big.NewInt(13)}
-
-	expectedPublishedResult := &event.PublishedResult{
-		Result: []byte(fmt.Sprintf("%v", result)),
-	}
-
 	var tests = map[string]struct {
 		publisher       *PublishingMember
 		expectedTimeEnd int
 	}{
 		"first member eligible to publish straight away": {
 			publisher:       members[0],
-			expectedTimeEnd: initialBlock, // T_now < T_dkg
+			expectedTimeEnd: initialBlock, // T_now < T_init + T_step
 		},
-		"second member eligible to publish after T_dkg block passed": {
+		"second member eligible to publish after T_step block passed": {
 			publisher:       members[1],
-			expectedTimeEnd: initialBlock + expectedProtocolDuration + 1, // T_now > T_init + T_dkg
+			expectedTimeEnd: initialBlock + blockStep, // T_now = T_init + T_step
 		},
 		"fourth member eligable to publish after T_dkg + 2*T_step passed": {
 			publisher:       members[3],
-			expectedTimeEnd: initialBlock + expectedProtocolDuration + 2*blockStep + 1, // T_now > T_init + T_dkg + 2*T_step
+			expectedTimeEnd: initialBlock + 3*blockStep, // T_now = T_init + 3*T_step
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			expectedPublishedResult.PublisherID = test.publisher.ID
+			result := test.publisher.Result()
+
+			expectedPublishedResult := &event.PublishedResult{
+				PublisherID: test.publisher.ID,
+				Result:      result,
+			}
 
 			// Reinitialize chain to reset block counter
 			test.publisher.protocolConfig.chain, err = initChain(threshold, groupSize, expectedProtocolDuration, blockStep)
@@ -136,11 +135,11 @@ func TestPublishResult(t *testing.T) {
 
 			chainRelay := test.publisher.protocolConfig.ChainHandle().ThresholdRelay()
 
-			if chainRelay.IsResultPublished(result) {
+			if chainRelay.IsResultPublished(result) != nil {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			publishedResult, err := test.publisher.PublishResult(result)
+			publishedResult, err := test.publisher.PublishResult()
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -154,12 +153,11 @@ func TestPublishResult(t *testing.T) {
 			if !reflect.DeepEqual(expectedPublishedResult, publishedResult) {
 				t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult)
 			}
-			if !chainRelay.IsResultPublished(result) {
+			if chainRelay.IsResultPublished(result) == nil {
 				t.Fatalf("result is not published on chain")
 			}
 		})
 	}
-
 }
 
 func TestPublishResult_AlreadyPublished(t *testing.T) {
