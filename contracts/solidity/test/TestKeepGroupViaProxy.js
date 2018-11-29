@@ -86,7 +86,16 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
     await keepGroupImplViaProxy.runGroupSelection();
 
-    assert.equal(await keepGroupImplViaProxy.submitTicket(), true, "Should be able to submit ticket.");
+    await keepGroupImplViaProxy.submitTicket(1, 2, 3);
+
+    let proof = await keepGroupImplViaProxy.getTicketProof(1);
+    assert.equal(proof[0], 2, "Should be able to get submitted ticket proof.");
+    assert.equal(proof[1], 3, "Should be able to get submitted ticket proof.");
+  });
+
+  it("should not be able to submit a ticket after initial timeout", async function() {
+
+    await keepGroupImplViaProxy.runGroupSelection();
 
     // Mine one block
     web3.currentProvider.sendAsync({
@@ -97,7 +106,11 @@ contract('TestKeepGroupViaProxy', function(accounts) {
       if (err) console.log("Error mining a block.")
     });
 
-    assert.equal(await keepGroupImplViaProxy.submitTicket(), false, "Should not be able to submit ticket after initial timeout is reached.");
+    await keepGroupImplViaProxy.submitTicket(2, 3, 4);
 
+    let proof = await keepGroupImplViaProxy.getTicketProof(2);
+    assert.equal(proof[0], 0, "Should not be able to get submitted ticket proof.");
+    assert.equal(proof[1], 0, "Should not be able to get submitted ticket proof.");
   });
+
 });

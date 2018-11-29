@@ -23,6 +23,14 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _submissionStart;
     uint256[] internal _tickets;
 
+    struct Proof {
+        address sender;
+        uint256 stakerInput;
+        uint256 virtualStakerNumber;
+    }
+
+    mapping(uint256 => Proof) internal _proofs;
+
     mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
     mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
     mapping (bytes32 => bool) internal _groupExists;
@@ -39,8 +47,16 @@ contract KeepGroupImplV1 is Ownable {
 
     /**
      * @dev Submit ticket to request to participate in a new candidate group.
+     * @param ticketValue Result of a pseudorandom function with input values of
+     * random beacon output, staker-specific 'stakerInput' and virtualStakerNumber.
+     * @param stakerInput Staker-specific value.
+     * @param virtualStakerNumber Number within a range of 1 to staker's weight.
      */
-    function submitTicket() public view returns(bool) {
+    function submitTicket(
+        uint256 ticketValue,
+        uint256 stakerInput,
+        uint256 virtualStakerNumber
+    ) public returns(bool) {
 
         // Check if there are already enough tickets to form a group.
         require(_tickets.length < _groupSize);
@@ -50,7 +66,20 @@ contract KeepGroupImplV1 is Ownable {
             return false;
         }
 
+        _tickets.push(ticketValue);
+        _proofs[ticketValue] = Proof(msg.sender, stakerInput, virtualStakerNumber);
+
         return true;
+    }
+
+    /**
+     * @dev Gets ticket proof.
+     */
+    function getTicketProof(uint256 ticketValue) public view returns (uint256, uint256) {
+        return (
+            _proofs[ticketValue].stakerInput,
+            _proofs[ticketValue].virtualStakerNumber
+        );
     }
 
     // Temporary Code for Milestone 1 follows
