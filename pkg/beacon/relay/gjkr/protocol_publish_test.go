@@ -1,7 +1,6 @@
 package gjkr
 
 import (
-	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -11,7 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
-func TestPrepareResult(t *testing.T) {
+func TestResult(t *testing.T) {
 	threshold := 4
 	groupSize := 8
 	expectedProtocolDuration := 3 // T_dkg
@@ -21,8 +20,6 @@ func TestPrepareResult(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
-
-	publishingMember := members[0]
 
 	var tests = map[string]struct {
 		disqualifiedMemberIDs []int
@@ -77,13 +74,15 @@ func TestPrepareResult(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			publishingMember.group.disqualifiedMemberIDs = test.disqualifiedMemberIDs
-			publishingMember.group.inactiveMemberIDs = test.inactiveMemberIDs
+			for _, member := range members {
+				member.group.disqualifiedMemberIDs = test.disqualifiedMemberIDs
+				member.group.inactiveMemberIDs = test.inactiveMemberIDs
 
-			publishingMember.PrepareResult()
+				resultToPublish := member.Result()
 
-			if !reflect.DeepEqual(test.expectedResult, publishingMember.result) {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, publishingMember.result)
+				if !reflect.DeepEqual(test.expectedResult, resultToPublish) {
+					t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, resultToPublish)
+				}
 			}
 		})
 	}
@@ -170,44 +169,64 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
-	publisher := members[0]
 
-	result := &result.Result{GroupPublicKey: big.NewInt(13)}
+	publisher1 := members[0]
+	publisher2 := members[1]
 
-	chainRelay := publisher.protocolConfig.ChainHandle().ThresholdRelay()
+	expectedResult := publisher1.Result()
 
-	if chainRelay.IsResultPublished(result) {
+	chainRelay := publisher1.protocolConfig.ChainHandle().ThresholdRelay()
+
+	if chainRelay.IsResultPublished(expectedResult) != nil {
 		t.Fatalf("result is already published on chain")
 	}
 
-	// Publish a result
 	expectedPublishedResult := &event.PublishedResult{
-		PublisherID: publisher.ID,
-		Result:      []byte(fmt.Sprintf("%v", result)),
+		PublisherID: publisher1.ID,
+		Result:      expectedResult,
 	}
 
-	publishedResult, err := publisher.PublishResult(result)
+	// Case: Member 1 publishes a result.
+	// Expected: A new result is published successfully by member 1.
+	publishedResult1, err := publisher1.PublishResult()
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !reflect.DeepEqual(expectedPublishedResult, publishedResult) {
-		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult)
+	if !reflect.DeepEqual(expectedPublishedResult, publishedResult1) {
+		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult1)
 	}
-	if !chainRelay.IsResultPublished(result) {
+	if chainRelay.IsResultPublished(expectedResult) == nil {
 		t.Fatalf("result is not published on chain")
 	}
 
-	// Publish the same result for the second time
-	expectedPublishedResult = nil
-
-	publishedResult, err = publisher.PublishResult(result)
+	// Case: Member 1 publishes the same result once again.
+	// Expected: A new result is not published, function returns result published
+	// already in previous step.
+	publishedResult2, err := publisher1.PublishResult()
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !reflect.DeepEqual(expectedPublishedResult, publishedResult) {
-		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult)
+	if !reflect.DeepEqual(expectedPublishedResult, publishedResult2) {
+		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult2)
 	}
-	if !chainRelay.IsResultPublished(result) {
+	if chainRelay.IsResultPublished(expectedResult) == nil {
+		t.Fatalf("result is not published on chain")
+	}
+
+	// Case: Member 2 publishes the same result as member 1 already did.
+	// Expected: A new result is not published, function returns result published
+	// already by member 1.
+	var expectedError error
+	expectedError = nil
+
+	publishedResult3, err := publisher2.PublishResult()
+	if !reflect.DeepEqual(expectedPublishedResult, publishedResult3) {
+		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult3)
+	}
+	if !reflect.DeepEqual(err, expectedError) {
+		t.Fatalf("\nexpected: %s\nactual:   %s\n", expectedError, err)
+	}
+	if chainRelay.IsResultPublished(expectedResult) == nil {
 		t.Fatalf("result is not published on chain")
 	}
 }
