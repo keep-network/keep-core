@@ -73,7 +73,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 		ephemeralKeyPair, ok := sm.ephemeralKeyPairs[otherMember]
 		if !ok {
 			return fmt.Errorf(
-				"ephemeral key pair does not exist for %d",
+				"ephemeral key pair does not exist for member %v",
 				otherMember,
 			)
 		}
