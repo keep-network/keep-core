@@ -2,6 +2,8 @@ import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
+import BigNumber from 'bignumber.js';
+import abi from 'ethereumjs-abi';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -113,4 +115,30 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     assert.equal(proof[1], 0, "Should not be able to get submitted ticket proof.");
   });
 
+  it("should be able to verify a ticket", async function() {
+
+    await keepGroupImplViaProxy.runGroupSelection();
+
+    let randomBeaconValue = 123456789;
+    let stakerInput = 123;
+    let virtualStakerNumber = 456;
+
+    let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerInput, virtualStakerNumber]
+    ).toString('hex'));
+
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerInput, virtualStakerNumber);
+
+    let ticketProof = await keepGroupImplViaProxy.getTicketProof(ticketValue);
+
+    assert.equal(await keepGroupImplViaProxy.cheapCheck(
+      ticketValue, ticketProof[0], ticketProof[1], randomBeaconValue
+    ), true, "Should be able to verify a valid ticket.");
+    
+    assert.equal(await keepGroupImplViaProxy.cheapCheck(
+      ticketValue - 1, ticketProof[0], ticketProof[1], randomBeaconValue
+    ), false, "Should fail verifying invalid ticket.");
+
+  });
 });
