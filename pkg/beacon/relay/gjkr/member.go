@@ -3,8 +3,6 @@ package gjkr
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
@@ -106,6 +104,4 @@ type PointsJustifyingMember struct {
 // Executes Phase 13 of the protocol.
 type PublishingMember struct {
 	*PointsJustifyingMember
-
-	result *result.Result
 }
