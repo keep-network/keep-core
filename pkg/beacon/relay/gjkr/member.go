@@ -10,11 +10,6 @@ import (
 // MemberID is a unique-in-group identifier of a member.
 type MemberID uint32
 
-// Int converts `MemberID` to `big.Int`
-func (id MemberID) Int() *big.Int {
-	return new(big.Int).SetUint64(uint64(id))
-}
-
 type memberCore struct {
 	// ID of this group member.
 	ID MemberID
@@ -132,27 +127,6 @@ type SharingMember struct {
 	receivedValidPeerPublicKeySharePoints map[MemberID][]*big.Int
 }
 
-// individualPublicKey returns current member's individual public key.
-// Individual public key is zeroth public key share point `A_i0`.
-func (rm *ReconstructingMember) individualPublicKey() *big.Int {
-	return rm.publicKeySharePoints[0]
-}
-
-// receivedValidPeerIndividualPublicKeys returns individual public keys received
-// from peer members which passed the validation. Individual public key is zeroth
-// public key share point `A_j0`.
-func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
-	var receivedValidPeerIndividualPublicKeys []*big.Int
-
-	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
-		receivedValidPeerIndividualPublicKeys = append(
-			receivedValidPeerIndividualPublicKeys,
-			peerPublicKeySharePoints[0],
-		)
-	}
-	return receivedValidPeerIndividualPublicKeys
-}
-
 // PointsJustifyingMember represents one member in a threshold key sharing group,
 // after it completed public key share points verification and enters justification
 // phase where it resolves public key share points accusations.
@@ -192,4 +166,30 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *big.Int
+}
+
+// Int converts `MemberID` to `big.Int`
+func (id MemberID) Int() *big.Int {
+	return new(big.Int).SetUint64(uint64(id))
+}
+
+// individualPublicKey returns current member's individual public key.
+// Individual public key is zeroth public key share point `A_i0`.
+func (rm *ReconstructingMember) individualPublicKey() *big.Int {
+	return rm.publicKeySharePoints[0]
+}
+
+// receivedValidPeerIndividualPublicKeys returns individual public keys received
+// from peer members which passed the validation. Individual public key is zeroth
+// public key share point `A_j0`.
+func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
+	var receivedValidPeerIndividualPublicKeys []*big.Int
+
+	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
+		receivedValidPeerIndividualPublicKeys = append(
+			receivedValidPeerIndividualPublicKeys,
+			peerPublicKeySharePoints[0],
+		)
+	}
+	return receivedValidPeerIndividualPublicKeys
 }
