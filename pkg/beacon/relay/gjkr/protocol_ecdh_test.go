@@ -10,26 +10,13 @@ import (
 
 func TestGenerateSymmetricKeyGroup(t *testing.T) {
 	groupSize := 3
-	group := &Group{
-		groupSize: groupSize,
-	}
 
 	// Create a group of 3 members
-	var ephemeralGeneratingMembers []*EphemeralKeyGeneratingMember
-	for i := 1; i <= groupSize; i++ {
-		id := MemberID(i)
-		ephemeralGeneratingMembers = append(ephemeralGeneratingMembers,
-			&EphemeralKeyGeneratingMember{
-				memberCore: &memberCore{
-					ID:             id,
-					group:          group,
-					protocolConfig: nil,
-				},
-				ephemeralKeys: make(map[MemberID]*ephemeral.KeyPair),
-			},
-		)
-		group.RegisterMemberID(id)
-	}
+	ephemeralGeneratingMembers := createEphemeralKeyMembersGroup(
+		groupSize,
+		groupSize, // threshold = groupSize
+		&DKG{},
+	)
 
 	// generate ephemeral key pairs for each group member; prepare messages
 	broadcastedPubKeyMessages := make(map[MemberID][]*EphemeralPublicKeyMessage)
@@ -84,12 +71,9 @@ func TestGenerateSymmetricKeyGroup(t *testing.T) {
 	// Move to the next phase, using the previous phase as state
 	var symmetricGeneratingMembers []*SymmetricKeyGeneratingMember
 	for _, member := range ephemeralGeneratingMembers {
-		symmetricKeyMap := make(map[MemberID]ephemeral.SymmetricKey)
-		symmetricGeneratingMembers = append(symmetricGeneratingMembers,
-			&SymmetricKeyGeneratingMember{
-				EphemeralKeyGeneratingMember: member,
-				symmetricKeys:                symmetricKeyMap,
-			},
+		symmetricGeneratingMembers = append(
+			symmetricGeneratingMembers,
+			member.InitializeSymmetricKeyGeneration(),
 		)
 	}
 
@@ -120,11 +104,11 @@ func TestGenerateSymmetricKeyGroup(t *testing.T) {
 	}
 }
 
-func initializeEphemeralKeyMembersGroup(
+func createEphemeralKeyMembersGroup(
 	threshold int,
 	groupSize int,
 	dkg *DKG,
-) ([]*EphemeralKeyGeneratingMember, error) {
+) []*EphemeralKeyGeneratingMember {
 	group := &Group{
 		groupSize:          groupSize,
 		dishonestThreshold: threshold,
@@ -143,6 +127,16 @@ func initializeEphemeralKeyMembersGroup(
 		})
 		group.RegisterMemberID(id)
 	}
+
+	return members
+}
+
+func initializeEphemeralKeyMembersGroup(
+	threshold int,
+	groupSize int,
+	dkg *DKG,
+) ([]*EphemeralKeyGeneratingMember, error) {
+	members := createEphemeralKeyMembersGroup(threshold, groupSize, dkg)
 
 	// generate ephemeral key pairs for all other members of the group
 	for _, member1 := range members {
