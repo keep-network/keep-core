@@ -8,86 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func initializeEphemeralKeyMembersGroup(
-	threshold int,
-	groupSize int,
-	dkg *DKG,
-) ([]*EphemeralKeyGeneratingMember, error) {
-	group := &Group{
-		groupSize:          groupSize,
-		dishonestThreshold: threshold,
-	}
-
-	var members []*EphemeralKeyGeneratingMember
-	for i := 1; i <= groupSize; i++ {
-		id := MemberID(i)
-		members = append(members, &EphemeralKeyGeneratingMember{
-			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: dkg,
-			},
-			ephemeralKeys: make(map[MemberID]*ephemeral.KeyPair),
-		})
-		group.RegisterMemberID(id)
-	}
-
-	// generate ephemeral key pairs for all other members of the group
-	for _, member1 := range members {
-		for _, member2 := range members {
-			if member1.ID != member2.ID {
-
-				keyPair, err := ephemeral.GenerateKeyPair()
-				if err != nil {
-					return nil, fmt.Errorf(
-						"SymmetricKeyGeneratingMember initialization failed [%v]",
-						err,
-					)
-				}
-				member1.ephemeralKeys[member2.ID] = keyPair
-			}
-		}
-	}
-
-	return members, nil
-}
-
-func initializeSymmetricKeyMembersGroup(
-	threshold int,
-	groupSize int,
-	dkg *DKG,
-) ([]*SymmetricKeyGeneratingMember, error) {
-	ephemeralKeyMembers, err := initializeEphemeralKeyMembersGroup(
-		threshold,
-		groupSize,
-		dkg,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("group initialization failed [%v]", err)
-	}
-
-	var members []*SymmetricKeyGeneratingMember
-	for _, ephemeralKeyMember := range ephemeralKeyMembers {
-		members = append(members, &SymmetricKeyGeneratingMember{
-			EphemeralKeyGeneratingMember: ephemeralKeyMember,
-			symmetricKeys:                make(map[MemberID]ephemeral.SymmetricKey),
-		})
-	}
-
-	// generate symmetric keys with all other members of the group
-	for _, member1 := range members {
-		for _, member2 := range members {
-			if member1.ID != member2.ID {
-				privKey := member1.ephemeralKeys[member2.ID].PrivateKey
-				pubKey := member2.ephemeralKeys[member1.ID].PublicKey
-				member1.symmetricKeys[member2.ID] = privKey.Ecdh(pubKey)
-			}
-		}
-	}
-
-	return members, nil
-}
-
 func TestGenerateSymmetricKeyGroup(t *testing.T) {
 	groupSize := 3
 	group := &Group{
@@ -208,4 +128,84 @@ func TestGenerateSymmetricKeyGroup(t *testing.T) {
 			)
 		}
 	}
+}
+
+func initializeEphemeralKeyMembersGroup(
+	threshold int,
+	groupSize int,
+	dkg *DKG,
+) ([]*EphemeralKeyGeneratingMember, error) {
+	group := &Group{
+		groupSize:          groupSize,
+		dishonestThreshold: threshold,
+	}
+
+	var members []*EphemeralKeyGeneratingMember
+	for i := 1; i <= groupSize; i++ {
+		id := MemberID(i)
+		members = append(members, &EphemeralKeyGeneratingMember{
+			memberCore: &memberCore{
+				ID:             id,
+				group:          group,
+				protocolConfig: dkg,
+			},
+			ephemeralKeys: make(map[MemberID]*ephemeral.KeyPair),
+		})
+		group.RegisterMemberID(id)
+	}
+
+	// generate ephemeral key pairs for all other members of the group
+	for _, member1 := range members {
+		for _, member2 := range members {
+			if member1.ID != member2.ID {
+
+				keyPair, err := ephemeral.GenerateKeyPair()
+				if err != nil {
+					return nil, fmt.Errorf(
+						"SymmetricKeyGeneratingMember initialization failed [%v]",
+						err,
+					)
+				}
+				member1.ephemeralKeys[member2.ID] = keyPair
+			}
+		}
+	}
+
+	return members, nil
+}
+
+func initializeSymmetricKeyMembersGroup(
+	threshold int,
+	groupSize int,
+	dkg *DKG,
+) ([]*SymmetricKeyGeneratingMember, error) {
+	ephemeralKeyMembers, err := initializeEphemeralKeyMembersGroup(
+		threshold,
+		groupSize,
+		dkg,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%v]", err)
+	}
+
+	var members []*SymmetricKeyGeneratingMember
+	for _, ephemeralKeyMember := range ephemeralKeyMembers {
+		members = append(members, &SymmetricKeyGeneratingMember{
+			EphemeralKeyGeneratingMember: ephemeralKeyMember,
+			symmetricKeys:                make(map[MemberID]ephemeral.SymmetricKey),
+		})
+	}
+
+	// generate symmetric keys with all other members of the group
+	for _, member1 := range members {
+		for _, member2 := range members {
+			if member1.ID != member2.ID {
+				privKey := member1.ephemeralKeys[member2.ID].PrivateKey
+				pubKey := member2.ephemeralKeys[member1.ID].PublicKey
+				member1.symmetricKeys[member2.ID] = privKey.Ecdh(pubKey)
+			}
+		}
+	}
+
+	return members, nil
 }
