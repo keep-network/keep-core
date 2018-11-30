@@ -48,12 +48,19 @@ type evidenceLog interface {
 // maps, from sender to receiver to message.
 type dkgEvidenceLog struct {
 	// senderID -> receiverID -> *EphemeralPublicKeyMessage
-	pubKeyMessageLog     map[MemberID]map[MemberID]*EphemeralPublicKeyMessage
-	pubKeyMessageLogLock sync.Mutex
+	pubKeyMessageLog *messageStorage
 
 	// senderID -> receiverID -> *PeerSharesMessage
-	peerSharesMessageLog     map[MemberID]map[MemberID]*PeerSharesMessage
-	peerSharesMessageLogLock sync.Mutex
+	peerSharesMessageLog *messageStorage
+}
+
+// NewDkgEvidenceLog returns a dkgEvidenceLog with backing stores for future
+// accusations against EphemeralPublicKeyMessages and PeerShareMessages.
+func NewDkgEvidenceLog() *dkgEvidenceLog {
+	return &dkgEvidenceLog{
+		pubKeyMessageLog:     newMessageStorage(),
+		peerSharesMessageLog: newMessageStorage(),
+	}
 }
 
 // PutEphemeralMessage is a function that takes a single EphemeralPubKeyMessage
@@ -63,63 +70,70 @@ type dkgEvidenceLog struct {
 func (d *dkgEvidenceLog) PutEphemeralMessage(
 	pubKeyMessage *EphemeralPublicKeyMessage,
 ) error {
-	d.pubKeyMessageLogLock.Lock()
-	defer d.pubKeyMessageLogLock.Unlock()
-
-	senderLog, ok := d.pubKeyMessageLog[pubKeyMessage.senderID]
-	if !ok {
-		senderLog = make(map[MemberID]*EphemeralPublicKeyMessage)
-	}
-
-	if message, ok := senderLog[pubKeyMessage.receiverID]; ok {
-		return fmt.Errorf(
-			"message %v exists for sender %v and receiver %v",
-			message,
-			pubKeyMessage.senderID,
-			pubKeyMessage.receiverID,
-		)
-	}
-
-	senderLog[pubKeyMessage.receiverID] = pubKeyMessage
-	return nil
+	return d.pubKeyMessageLog.putMessage(
+		pubKeyMessage.senderID,
+		pubKeyMessage.receiverID,
+		pubKeyMessage,
+	)
 }
 
-// PutPeerSharesMessage is a function that takes a single EphemeralPubKeyMessage
+// PutPeerSharesMessage is a function that takes a single PeerSharesMessage
 // and stores that information as evidence for future accusation trials for a
 // given (sender, receiver) pair. If a message already exists for the given pair,
 // we return an error to the user.
 func (d *dkgEvidenceLog) PutPeerSharesMessage(
 	sharesMessage *PeerSharesMessage,
 ) error {
-	d.peerSharesMessageLogLock.Lock()
-	defer d.peerSharesMessageLogLock.Unlock()
-
-	senderLog, ok := d.peerSharesMessageLog[sharesMessage.senderID]
-	if !ok {
-		senderLog = make(map[MemberID]*PeerSharesMessage)
-	}
-
-	if message, ok := senderLog[sharesMessage.receiverID]; ok {
-		return fmt.Errorf(
-			"message %v exists for sender %v and receiver %v",
-			message,
-			sharesMessage.senderID,
-			sharesMessage.receiverID,
-		)
-	}
-
-	senderLog[sharesMessage.receiverID] = sharesMessage
-	return nil
+	return d.peerSharesMessageLog.putMessage(
+		sharesMessage.senderID,
+		sharesMessage.receiverID,
+		sharesMessage,
+	)
 }
 
 func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 	sender MemberID,
 	receiver MemberID,
 ) *EphemeralPublicKeyMessage {
-	d.pubKeyMessageLogLock.Lock()
-	defer d.pubKeyMessageLogLock.Unlock()
+	storedMessage := d.pubKeyMessageLog.getMessage(sender, receiver)
+	switch message := storedMessage.(type) {
+	case *EphemeralPublicKeyMessage:
+		return message
+	}
+	return nil
+}
 
-	senderLog, ok := d.pubKeyMessageLog[sender]
+func (d *dkgEvidenceLog) peerSharesMessage(
+	sender MemberID,
+	receiver MemberID,
+) *PeerSharesMessage {
+	storedMessage := d.peerSharesMessageLog.getMessage(sender, receiver)
+	switch message := storedMessage.(type) {
+	case *PeerSharesMessage:
+		return message
+	}
+	return nil
+}
+
+// messageStorage is the underlying cache used by our evidenceLog implementation
+// it implements a generic get and put of messages through a mapping of a
+// (sender, receiver) pair.
+type messageStorage struct {
+	cache     map[MemberID]map[MemberID]interface{}
+	cacheLock sync.Mutex
+}
+
+func newMessageStorage() *messageStorage {
+	return &messageStorage{
+		cache: make(map[MemberID]map[MemberID]interface{}),
+	}
+}
+
+func (ms *messageStorage) getMessage(sender, receiver MemberID) interface{} {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
+
+	senderLog, ok := ms.cache[sender]
 	if !ok {
 		return nil
 	}
@@ -132,22 +146,27 @@ func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 	return message
 }
 
-func (d *dkgEvidenceLog) peerSharesMessage(
-	sender MemberID,
-	receiverID MemberID,
-) *PeerSharesMessage {
-	d.peerSharesMessageLogLock.Lock()
-	defer d.peerSharesMessageLogLock.Unlock()
+func (ms *messageStorage) putMessage(
+	sender, receiver MemberID,
+	message interface{},
+) error {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
 
-	senderLog, ok := d.peerSharesMessageLog[sender]
+	senderLog, ok := ms.cache[sender]
 	if !ok {
-		return nil
+		senderLog = make(map[MemberID]interface{})
 	}
 
-	message, ok := senderLog[receiverID]
-	if !ok {
-		return nil
+	if message, ok := senderLog[receiver]; ok {
+		return fmt.Errorf(
+			"message %v exists for sender %v and receiver %v",
+			message,
+			sender,
+			receiver,
+		)
 	}
 
-	return message
+	senderLog[receiver] = message
+	return nil
 }
