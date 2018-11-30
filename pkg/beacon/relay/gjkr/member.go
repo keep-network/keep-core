@@ -196,26 +196,25 @@ type CombiningMember struct {
 	groupPublicKey *big.Int
 }
 
-// InitializePublishing returns a member to perform next protocol operations.
-func (cm *CombiningMember) InitializePublishing() *PublishingMember {
-	return &PublishingMember{CombiningMember: cm}
+// InitializeFinalization returns a member to perform next protocol operations.
+func (cm *CombiningMember) InitializeFinalization() *FinalizingMember {
+	return &FinalizingMember{CombiningMember: cm}
 }
 
-// PublishingMember represents one member in a threshold key sharing group,
-// after it completed public key share points justification and proceeds to
-// result publication phase.
+// FinalizingMember represents one member in a threshold key sharing group,
+// after it completed distributed key generation.
 //
-// Executes Phase 13 of the protocol.
-type PublishingMember struct {
+// Prepares a result to publish in Phase 13 of the protocol.
+type FinalizingMember struct {
 	*CombiningMember
 }
 
 // PublishingIndex returns sequence number of the current member in a publishing
 // group. Counting starts with `0`.
-func (pm *PublishingMember) PublishingIndex() int {
+func (fm *FinalizingMember) PublishingIndex() int {
 	// TODO Order of members need to be synchronized for all members.
-	for index, memberID := range pm.group.MemberIDs() {
-		if pm.ID == memberID {
+	for index, memberID := range fm.group.MemberIDs() {
+		if fm.ID == memberID {
 			return index
 		}
 	}
