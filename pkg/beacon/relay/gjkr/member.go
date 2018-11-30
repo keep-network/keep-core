@@ -196,13 +196,18 @@ type CombiningMember struct {
 	groupPublicKey *big.Int
 }
 
+// InitializePublishing returns a member to perform next protocol operations.
+func (cm *CombiningMember) InitializePublishing() *PublishingMember {
+	return &PublishingMember{CombiningMember: cm}
+}
+
 // PublishingMember represents one member in a threshold key sharing group,
 // after it completed public key share points justification and proceeds to
 // result publication phase.
 //
 // Executes Phase 13 of the protocol.
 type PublishingMember struct {
-	*PointsJustifyingMember
+	*CombiningMember
 }
 
 // PublishingIndex returns sequence number of the current member in a publishing
