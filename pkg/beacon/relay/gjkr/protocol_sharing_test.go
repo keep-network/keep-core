@@ -14,7 +14,8 @@ import (
 func TestCombineReceivedShares(t *testing.T) {
 	selfShareS := big.NewInt(9)
 	selfShareT := big.NewInt(19)
-	q := big.NewInt(59)
+	p := big.NewInt(107)
+	q := big.NewInt(53)
 
 	receivedShareS := make(map[int]*big.Int)
 	receivedShareT := make(map[int]*big.Int)
@@ -26,10 +27,10 @@ func TestCombineReceivedShares(t *testing.T) {
 		receivedShareT[100+i] = big.NewInt(int64(20 + i))
 	}
 
-	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 59 = 25
-	expectedShareS := big.NewInt(25)
-	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 59 = 36
-	expectedShareT := big.NewInt(36)
+	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 53 = 31
+	expectedShareS := big.NewInt(31)
+	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
+	expectedShareT := big.NewInt(48)
 
 	config := &DKG{Q: q}
 	member := &QualifiedMember{
