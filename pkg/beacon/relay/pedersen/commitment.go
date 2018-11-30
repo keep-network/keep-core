@@ -78,26 +78,34 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 		return nil, fmt.Errorf("p and q have to be primes")
 	}
 
-	// Check if `p = 2q + 1`
+	// Check if `p = 2q + 1`.
 	pForQ := new(big.Int).Add(new(big.Int).Mul(big.NewInt(2), q), big.NewInt(1))
 	if p.Cmp(pForQ) != 0 {
 		return nil, fmt.Errorf("incorrect p and q values")
 	}
 
-	// Generate random `g`
-	g, err := randomFromZn(rand, big.NewInt(1), q) // randomZ(1, q - 1]
-	if err != nil {
-		return nil, fmt.Errorf("g generation failed [%s]", err)
+	// Generate random `g` in Z_p, such that Euler's criterion `g^q mod p = 1`
+	// holds.
+	var err error
+	var g *big.Int
+	for {
+		g, err = randomFromZn(rand, big.NewInt(1), p) // randomZ(1, p - 1]
+		if err != nil {
+			return nil, fmt.Errorf("g generation failed [%v]", err)
+		}
+		if new(big.Int).Exp(g, q, p).Cmp(big.NewInt(1)) == 0 {
+			break
+		}
 	}
 
-	// h = (g ^ randomZ(1, q - 1]) % q
+	// h = (g ^ randomZ(1, q - 1]) % p
 	var h *big.Int
 	for {
 		randomValue, err := randomFromZn(rand, big.NewInt(1), q) // randomZ(1, q - 1]
 		if err != nil {
-			return nil, fmt.Errorf("randomValue generation failed [%s]", err)
+			return nil, fmt.Errorf("randomValue generation failed [%v]", err)
 		}
-		h = new(big.Int).Exp(g, randomValue, q)
+		h = new(big.Int).Exp(g, randomValue, p)
 
 		if h.Cmp(big.NewInt(1)) > 0 {
 			break
@@ -116,7 +124,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 func (vss *VSS) CommitmentTo(rand io.Reader, secret []byte) (*Commitment, *DecommitmentKey, error) {
 	t, err := randomFromZn(rand, big.NewInt(1), vss.q) // t = randomZ(1, q - 1]
 	if err != nil {
-		return nil, nil, fmt.Errorf("t generation failed [%s]", err)
+		return nil, nil, fmt.Errorf("t generation failed [%v]", err)
 	}
 
 	s := calculateDigest(secret, vss.q) // s = hash(m) % q
@@ -147,11 +155,11 @@ func calculateDigest(secret []byte, mod *big.Int) *big.Int {
 // - `g`, `h` are scheme specific parameters passed in vss,
 // - `s` is a message to which one is committing,
 // - `t` is a decommitment key.
-func (vss *VSS) CalculateCommitment(s, r, m *big.Int) *big.Int {
+func (vss *VSS) CalculateCommitment(s, t, m *big.Int) *big.Int {
 	return new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(vss.G, s, m),
-			new(big.Int).Exp(vss.h, r, m),
+			new(big.Int).Exp(vss.h, t, m),
 		),
 		m,
 	)
@@ -162,7 +170,7 @@ func randomFromZn(rand io.Reader, min, max *big.Int) (*big.Int, error) {
 	for {
 		x, err := crand.Int(rand, max) // returns a value in [0, max)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate random number [%s]", err)
+			return nil, fmt.Errorf("failed to generate random number [%v]", err)
 		}
 
 		if x.Cmp(min) > 0 {

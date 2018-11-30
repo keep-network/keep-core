@@ -16,14 +16,14 @@ func TestCombineReceivedShares(t *testing.T) {
 	selfShareT := big.NewInt(19)
 	q := big.NewInt(59)
 
-	receivedShareS := make(map[int]*big.Int)
-	receivedShareT := make(map[int]*big.Int)
+	receivedShareS := make(map[MemberID]*big.Int)
+	receivedShareT := make(map[MemberID]*big.Int)
 	// Simulate shares received from peer members.
 	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
 	// slice indices.
 	for i := 0; i <= 5; i++ {
-		receivedShareS[100+i] = big.NewInt(int64(10 + i))
-		receivedShareT[100+i] = big.NewInt(int64(20 + i))
+		receivedShareS[MemberID(100+i)] = big.NewInt(int64(10 + i))
+		receivedShareT[MemberID(100+i)] = big.NewInt(int64(20 + i))
 	}
 
 	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 59 = 25
@@ -34,12 +34,16 @@ func TestCombineReceivedShares(t *testing.T) {
 	config := &DKG{Q: q}
 	member := &QualifiedMember{
 		SharesJustifyingMember: &SharesJustifyingMember{
-			CommittingMember: &CommittingMember{
-				memberCore: &memberCore{
-					protocolConfig: config,
+			CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
+				CommittingMember: &CommittingMember{
+					SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
+						memberCore: &memberCore{
+							protocolConfig: config,
+						},
+					},
+					selfSecretShareS: selfShareS,
+					selfSecretShareT: selfShareT,
 				},
-				selfSecretShareS:     selfShareS,
-				selfSecretShareT:     selfShareT,
 				receivedValidSharesS: receivedShareS,
 				receivedValidSharesT: receivedShareT,
 			},
@@ -69,16 +73,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		big.NewInt(2),
 	}
 	expectedPublicCoefficients := []*big.Int{
-		big.NewInt(216), // 6^3 mod 1907 = 216
-		big.NewInt(148), // 6^5 mod 1907 = 148
-		big.NewInt(36),  // 6^2 mod 1907 = 36
+		big.NewInt(343),  // 7^3 mod 1907 = 343
+		big.NewInt(1551), // 7^5 mod 1907 = 1551
+		big.NewInt(49),   // 7^2 mod 1907 = 49
 	}
 
 	config := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
 	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
 	// initialization.
-	mockRandomReader := testutils.NewMockRandReader(big.NewInt(6))
+	mockRandomReader := testutils.NewMockRandReader(big.NewInt(7))
 	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
 	if err != nil {
 		t.Fatalf("VSS initialization failed [%s]", err)
@@ -87,12 +91,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	member := &SharingMember{
 		QualifiedMember: &QualifiedMember{
 			SharesJustifyingMember: &SharesJustifyingMember{
-				CommittingMember: &CommittingMember{
-					memberCore: &memberCore{
-						protocolConfig: config,
+				CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
+					CommittingMember: &CommittingMember{
+						SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
+							memberCore: &memberCore{
+								protocolConfig: config,
+							},
+						},
+						vss:                vss,
+						secretCoefficients: secretCoefficients,
 					},
-					vss:                vss,
-					secretCoefficients: secretCoefficients,
 				},
 			},
 		},
@@ -119,7 +127,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
 		t.Fatalf("Group initialization failed [%s]", err)
 	}
@@ -129,25 +137,34 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	var tests = map[string]struct {
 		modifyPublicKeySharePointsMessages func(messages []*MemberPublicKeySharePointsMessage)
 		expectedError                      error
-		expectedAccusedIDs                 []int
+		expectedAccusedIDs                 []MemberID
 	}{
 		"positive validation - no accusations": {
 			expectedError: nil,
 		},
 		"negative validation - changed public key share - one accused member": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[1].publicKeySharePoints[1] = big.NewInt(13)
+				messages[1].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[1].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{3},
+			expectedAccusedIDs: []MemberID{3},
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[0].publicKeySharePoints[1] = big.NewInt(13)
-				messages[3].publicKeySharePoints[1] = big.NewInt(18)
+				messages[0].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[0].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
+				messages[3].publicKeySharePoints[1] = testutils.NewRandInt(
+					messages[3].publicKeySharePoints[1],
+					sharingMember.protocolConfig.P,
+				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{2, 5},
+			expectedAccusedIDs: []MemberID{2, 5},
 		},
 	}
 	for testName, test := range tests {
@@ -187,17 +204,17 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	}
 }
 
-func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, error) {
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
+	commitmentsVerifyingMembers, err := initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
 	var sharingMembers []*SharingMember
-	for _, cm := range committingMembers {
-		cm.secretCoefficients = make([]*big.Int, threshold+1)
+	for _, cvm := range commitmentsVerifyingMembers {
+		cvm.secretCoefficients = make([]*big.Int, threshold+1)
 		for i := 0; i < threshold+1; i++ {
-			cm.secretCoefficients[i], err = crand.Int(crand.Reader, cm.protocolConfig.Q)
+			cvm.secretCoefficients[i], err = crand.Int(crand.Reader, cvm.protocolConfig.Q)
 			if err != nil {
 				return nil, fmt.Errorf("secret share generation failed [%s]", err)
 			}
@@ -205,16 +222,16 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 		sharingMembers = append(sharingMembers, &SharingMember{
 			QualifiedMember: &QualifiedMember{
 				SharesJustifyingMember: &SharesJustifyingMember{
-					CommittingMember: cm,
+					CommitmentsVerifyingMember: cvm,
 				},
 			},
-			receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int, groupSize-1),
+			receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
 		})
 	}
 
 	for _, sm := range sharingMembers {
-		for _, cm := range committingMembers {
-			sm.receivedValidSharesS[cm.ID] = evaluateMemberShare(sm.ID, cm.secretCoefficients)
+		for _, cvm := range commitmentsVerifyingMembers {
+			sm.receivedValidSharesS[cvm.ID] = cvm.evaluateMemberShare(sm.ID, cvm.secretCoefficients)
 		}
 	}
 
@@ -222,7 +239,7 @@ func initializeSharingMembersGroup(threshold, groupSize int) ([]*SharingMember, 
 }
 
 func filterMemberPublicKeySharePointsMessages(
-	messages []*MemberPublicKeySharePointsMessage, receiverID int,
+	messages []*MemberPublicKeySharePointsMessage, receiverID MemberID,
 ) []*MemberPublicKeySharePointsMessage {
 	var result []*MemberPublicKeySharePointsMessage
 	for _, msg := range messages {
