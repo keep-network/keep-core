@@ -235,7 +235,7 @@ func (fm *FinalizingMember) Result() *result.Result {
 	inactiveMembers := group.InactiveMembers()         // IA
 
 	// if nPlayers(IA + DQ) > T/2:
-	if len(disqualifiedMembers)+len(inactiveMembers) > (group.dishonestThreshold / 2) {
+	if !fm.group.isThresholdSatisfied() {
 		// Result.failure(disqualified = DQ)
 		return &result.Result{
 			Success:      false,

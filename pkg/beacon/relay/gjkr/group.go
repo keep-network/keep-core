@@ -35,3 +35,9 @@ func (g *Group) DisqualifiedMembers() []int {
 func (g *Group) InactiveMembers() []int {
 	return g.inactiveMemberIDs
 }
+
+// isThresholdSatisfied checks number of disqualified and inactive members in the
+// group. If the number is less or equal half of dishonest threshold returns true.
+func (g *Group) isThresholdSatisfied() bool {
+	return len(g.disqualifiedMemberIDs)+len(g.inactiveMemberIDs) <= (g.dishonestThreshold / 2)
+}
