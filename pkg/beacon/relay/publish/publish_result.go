@@ -1,42 +1,26 @@
-package gjkr
+package publish
 
 import (
 	"fmt"
-	"math/big"
 	"reflect"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
+	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-// Result returns a result of distributed key generation. It takes generated
-// group public key along with disqualified and inactive members and returns
-// it in a Result struct.
-//
-// Additional validation to check if number of disqualified and inactive members
-// is greater than half of the configured dishonest threshold. If so the group
-// is to weak and the result is set to a failure.
-func (pm *PublishingMember) Result() *result.Result {
-	group := pm.group
-	disqualifiedMembers := group.DisqualifiedMembers() // DQ
-	inactiveMembers := group.InactiveMembers()         // IA
-
-	// if nPlayers(IA + DQ) > T/2:
-	if len(disqualifiedMembers)+len(inactiveMembers) > (group.dishonestThreshold / 2) {
-		// Result.failure(disqualified = DQ)
-		return &result.Result{
-			Success:      false,
-			Disqualified: disqualifiedMembers,
-		}
-	}
-
-	// Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
-	return &result.Result{
-		Success:        true,
-		GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
-		Disqualified:   disqualifiedMembers,
-		Inactive:       inactiveMembers,
-	}
+// Publisher is a member
+type Publisher struct {
+	ID          gjkr.MemberID
+	chainHandle chain.Handle
+	// Sequential number of the current member in the publishing group.
+	// The value is used to determine eligible publishing member. Relates to DKG
+	// Phase 13.
+	publishingIndex int
+	// Predefined step for each publishing window. The value is used to determine
+	// eligible publishing member. Relates to DKG Phase 13.
+	blockStep int
 }
 
 // PublishResult sends a result containing i.a. group public key to the blockchain.
@@ -46,17 +30,15 @@ func (pm *PublishingMember) Result() *result.Result {
 // to the blockchain containing ID of the member who published it.
 //
 // See Phase 13 of the protocol specification.
-func (pm *PublishingMember) PublishResult() (*event.PublishedResult, error) {
-	chainRelay := pm.protocolConfig.ChainHandle().ThresholdRelay()
+func (pm *Publisher) PublishResult(resultToPublish *result.Result) (*event.PublishedResult, error) {
+	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.PublishedResult)
 	chainRelay.OnResultPublished(func(publishedResult *event.PublishedResult) {
 		onPublishedResultChan <- publishedResult
 	})
 
-	resultToPublish := pm.Result()
-
-	blockCounter, err := pm.protocolConfig.ChainHandle().BlockCounter()
+	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
 		return nil, fmt.Errorf("block counter failure [%v]", err)
 	}
@@ -64,7 +46,7 @@ func (pm *PublishingMember) PublishResult() (*event.PublishedResult, error) {
 	// Waits until the current member is eligable to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		pm.PublishingIndex() * pm.protocolConfig.chain.blockStep)
+		pm.publishingIndex * pm.blockStep)
 	if err != nil {
 		return nil, fmt.Errorf("block waiter failure [%v]", err)
 	}
