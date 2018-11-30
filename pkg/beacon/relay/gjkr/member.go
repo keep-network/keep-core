@@ -2,6 +2,7 @@ package gjkr
 
 import (
 	"math/big"
+	"strconv"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -9,11 +10,6 @@ import (
 
 // MemberID is a unique-in-group identifier of a member.
 type MemberID uint32
-
-// Int converts `MemberID` to `big.Int`
-func (id MemberID) Int() *big.Int {
-	return new(big.Int).SetUint64(uint64(id))
-}
 
 type memberCore struct {
 	// ID of this group member.
@@ -249,4 +245,25 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *big.Int
+}
+
+// Int converts `MemberID` to `big.Int`.
+func (id MemberID) Int() *big.Int {
+	return new(big.Int).SetUint64(uint64(id))
+}
+
+// HexString converts `MemberID` to hex `string` representation.
+func (id MemberID) HexString() string {
+	return strconv.FormatInt(int64(id), 16)
+}
+
+// MemberIDFromHex returns a `MemberID` created from the hex `string`
+// representation.
+func MemberIDFromHex(hex string) (MemberID, error) {
+	id, err := strconv.ParseUint(hex, 16, 32)
+	if err != nil {
+		return 0, err
+	}
+
+	return MemberID(id), nil
 }
