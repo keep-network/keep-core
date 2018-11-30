@@ -1,6 +1,9 @@
 package gjkr
 
-import "github.com/keep-network/keep-core/pkg/net/ephemeral"
+import (
+	"fmt"
+	"sync"
+)
 
 // For complaint resolution, group members need to have access to messages
 // exchanged between the accuser and the accused party. There are two situations
@@ -39,4 +42,112 @@ type evidenceLog interface {
 		sender MemberID,
 		receiver MemberID,
 	) *PeerSharesMessage
+}
+
+// dkgEvidenceLog is an implementation of an evidenceLog, containing two map of
+// maps, from sender to receiver to message.
+type dkgEvidenceLog struct {
+	// senderID -> receiverID -> *EphemeralPublicKeyMessage
+	pubKeyMessageLog     map[MemberID]map[MemberID]*EphemeralPublicKeyMessage
+	pubKeyMessageLogLock sync.Mutex
+
+	// senderID -> receiverID -> *PeerSharesMessage
+	peerSharesMessageLog     map[MemberID]map[MemberID]*PeerSharesMessage
+	peerSharesMessageLogLock sync.Mutex
+}
+
+// PutEphemeralMessage is a function that takes a single EphemeralPubKeyMessage
+// and stores that information as evidence for future accusation trials for a
+// given (sender, receiver) pair. If a message already exists for the given pair,
+// we return an error to the user.
+func (d *dkgEvidenceLog) PutEphemeralMessage(
+	pubKeyMessage *EphemeralPublicKeyMessage,
+) error {
+	d.pubKeyMessageLogLock.Lock()
+	defer d.pubKeyMessageLogLock.Unlock()
+
+	senderLog, ok := d.pubKeyMessageLog[pubKeyMessage.senderID]
+	if !ok {
+		senderLog = make(map[MemberID]*EphemeralPublicKeyMessage)
+	}
+
+	if message, ok := senderLog[pubKeyMessage.receiverID]; ok {
+		return fmt.Errorf(
+			"message %v exists for sender %v and receiver %v",
+			message,
+			pubKeyMessage.senderID,
+			pubKeyMessage.receiverID,
+		)
+	}
+
+	senderLog[pubKeyMessage.receiverID] = pubKeyMessage
+	return nil
+}
+
+// PutPeerSharesMessage is a function that takes a single EphemeralPubKeyMessage
+// and stores that information as evidence for future accusation trials for a
+// given (sender, receiver) pair. If a message already exists for the given pair,
+// we return an error to the user.
+func (d *dkgEvidenceLog) PutPeerSharesMessage(
+	sharesMessage *PeerSharesMessage,
+) error {
+	d.peerSharesMessageLogLock.Lock()
+	defer d.peerSharesMessageLogLock.Unlock()
+
+	senderLog, ok := d.peerSharesMessageLog[sharesMessage.senderID]
+	if !ok {
+		senderLog = make(map[MemberID]*PeerSharesMessage)
+	}
+
+	if message, ok := senderLog[sharesMessage.receiverID]; ok {
+		return fmt.Errorf(
+			"message %v exists for sender %v and receiver %v",
+			message,
+			sharesMessage.senderID,
+			sharesMessage.receiverID,
+		)
+	}
+
+	senderLog[sharesMessage.receiverID] = sharesMessage
+	return nil
+}
+
+func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
+	sender MemberID,
+	receiver MemberID,
+) *EphemeralPublicKeyMessage {
+	d.pubKeyMessageLogLock.Lock()
+	defer d.pubKeyMessageLogLock.Unlock()
+
+	senderLog, ok := d.pubKeyMessageLog[sender]
+	if !ok {
+		return nil
+	}
+
+	message, ok := senderLog[receiver]
+	if !ok {
+		return nil
+	}
+
+	return message
+}
+
+func (d *dkgEvidenceLog) peerSharesMessage(
+	sender MemberID,
+	receiverID MemberID,
+) *PeerSharesMessage {
+	d.peerSharesMessageLogLock.Lock()
+	defer d.peerSharesMessageLogLock.Unlock()
+
+	senderLog, ok := d.peerSharesMessageLog[sender]
+	if !ok {
+		return nil
+	}
+
+	message, ok := senderLog[receiverID]
+	if !ok {
+		return nil
+	}
+
+	return message
 }
