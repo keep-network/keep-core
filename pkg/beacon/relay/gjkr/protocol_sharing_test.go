@@ -9,6 +9,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestCombineReceivedShares(t *testing.T) {
@@ -20,14 +21,14 @@ func TestCombineReceivedShares(t *testing.T) {
 	p := big.NewInt(107)
 	q := big.NewInt(53)
 
-	receivedShareS := make(map[int]*big.Int)
-	receivedShareT := make(map[int]*big.Int)
+	receivedShareS := make(map[MemberID]*big.Int)
+	receivedShareT := make(map[MemberID]*big.Int)
 	// Simulate shares received from peer members.
 	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
 	// slice indices.
 	for i := 0; i <= 5; i++ {
-		receivedShareS[100+i] = big.NewInt(int64(10 + i))
-		receivedShareT[100+i] = big.NewInt(int64(20 + i))
+		receivedShareS[MemberID(100+i)] = big.NewInt(int64(10 + i))
+		receivedShareT[MemberID(100+i)] = big.NewInt(int64(20 + i))
 	}
 
 	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 53 = 31
@@ -136,7 +137,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	var tests = map[string]struct {
 		modifyPublicKeySharePointsMessages func(messages []*MemberPublicKeySharePointsMessage)
 		expectedError                      error
-		expectedAccusedIDs                 []int
+		expectedAccusedIDs                 []MemberID
 	}{
 		"positive validation - no accusations": {
 			expectedError: nil,
@@ -149,7 +150,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{3},
+			expectedAccusedIDs: []MemberID{3},
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
@@ -163,7 +164,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []int{2, 5},
+			expectedAccusedIDs: []MemberID{2, 5},
 		},
 	}
 	for testName, test := range tests {
@@ -192,11 +193,15 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 					err,
 				)
 			}
+			expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			for _, id := range test.expectedAccusedIDs {
+				expectedAccusedMembersKeys[id] = sharingMember.ephemeralKeyPairs[id].PrivateKey
+			}
 
-			if !reflect.DeepEqual(accusedMessage.accusedIDs, test.expectedAccusedIDs) {
+			if !reflect.DeepEqual(accusedMessage.accusedMembersKeys, expectedAccusedMembersKeys) {
 				t.Fatalf("incorrect accused IDs\nexpected: %v\nactual:   %v\n",
-					test.expectedAccusedIDs,
-					accusedMessage.accusedIDs,
+					expectedAccusedMembersKeys,
+					accusedMessage.accusedMembersKeys,
 				)
 			}
 		})
@@ -245,7 +250,7 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 }
 
 func filterMemberPublicKeySharePointsMessages(
-	messages []*MemberPublicKeySharePointsMessage, receiverID int,
+	messages []*MemberPublicKeySharePointsMessage, receiverID MemberID,
 ) []*MemberPublicKeySharePointsMessage {
 	var result []*MemberPublicKeySharePointsMessage
 	for _, msg := range messages {

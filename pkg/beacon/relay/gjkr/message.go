@@ -7,24 +7,23 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// EphemeralPublicKeyMessage is a message payload that carries sender's
-// ephemeral public key generated for the given receiver.
+// EphemeralPublicKeyMessage is a message payload that carries the sender's
+// ephemeral public key generated specifically for the given receiver.
 //
-// Receiver performs ECDH on sender's ephemeral public key and on receiver's
-// private ephemeral key creating a symmetric key used for encrypting
-// a conversation between sender and receiver. In case of an accusation for
-// malicious behavior, accusing party reveals its private ephemeral key so that
-// all the other group members can resolve the accusation looking at messages
-// exchanged between accuser and accused party. To validate correctness of
-// accuser's private ephemeral key all group members must know its ephemeral
-// public key prior to exchanging any messages. That's why ephemeral public key
-// of the party is broadcast in the group. Construction of ECDH guarantees that
-// no security threat is created this way.
+// The receiver performs ECDH on a sender's ephemeral public key and on the
+// receiver's private ephemeral key, creating a symmetric key used for encrypting
+// a conversation between a sender and receiver. In case of an accusation for
+// malicious behavior, the accusing party reveals its private ephemeral key so
+// that all the other group members can resolve the accusation looking at
+// messages exchanged between accuser and accused party. To validate correctness
+// of accuser's private ephemeral key, all group members must know its ephemeral
+// public key prior to exchanging any messages. Hence, why the ephemeral public
+// key of the party is broadcast to the group.
 type EphemeralPublicKeyMessage struct {
-	senderID   int // i
-	receiverID int // j
+	senderID   MemberID // i
+	receiverID MemberID // j
 
-	ephemeralPublicKey ephemeral.PublicKey // Y_ij
+	ephemeralPublicKey *ephemeral.PublicKey // Y_ij
 }
 
 // MemberCommitmentsMessage is a message payload that carries the sender's
@@ -32,7 +31,7 @@ type EphemeralPublicKeyMessage struct {
 //
 // It is expected to be broadcast.
 type MemberCommitmentsMessage struct {
-	senderID int
+	senderID MemberID
 
 	commitments []*big.Int // slice of `C_ik`
 }
@@ -44,15 +43,15 @@ type MemberCommitmentsMessage struct {
 // It is expected to be communicated in an encrypted fashion to the selected
 // recipient.
 type PeerSharesMessage struct {
-	senderID   int // i
-	receiverID int // j
+	senderID   MemberID // i
+	receiverID MemberID // j
 
 	encryptedShareS []byte // s_ij
 	encryptedShareT []byte // t_ij
 }
 
 func newPeerSharesMessage(
-	senderID, receiverID int,
+	senderID, receiverID MemberID,
 	shareS, shareT *big.Int,
 	symmetricKey ephemeral.SymmetricKey,
 ) (*PeerSharesMessage, error) {
@@ -110,16 +109,16 @@ func (psm *PeerSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
 //
 // It is expected to be broadcast.
 type SecretSharesAccusationsMessage struct {
-	senderID int
+	senderID MemberID
 
-	accusedIDs []int
+	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }
 
 // MemberPublicKeySharePointsMessage is a message payload that carries the sender's
 // public key share points.
 // It is expected to be broadcast.
 type MemberPublicKeySharePointsMessage struct {
-	senderID int
+	senderID MemberID
 
 	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
 }
@@ -131,7 +130,7 @@ type MemberPublicKeySharePointsMessage struct {
 // message should be broadcast but with an empty slice of `accusedIDs`.
 // It is expected to be broadcast.
 type PointsAccusationsMessage struct {
-	senderID int
+	senderID MemberID
 
-	accusedIDs []int
+	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }

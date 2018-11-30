@@ -13,7 +13,47 @@ package gjkr
 import (
 	"fmt"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
+
+// GenerateEphemeralKeyPair takes the known candidate list, and
+// generates an ephemeral ECDH keypair with every other candidate member. These
+// shares are broadcasted to every valid cadidate member.
+//
+// See Phase 1 of the protocol specification.
+func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
+	[]*EphemeralPublicKeyMessage,
+	error,
+) {
+	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
+
+	// Calculate ephemeral public keys for every group member
+	for _, member := range em.group.memberIDs {
+		if member == em.ID {
+			// don’t actually generate a symmetric key with ourselves
+			continue
+		}
+
+		ephemeralKey, err := ephemeral.GenerateKeyPair()
+		if err != nil {
+			return nil, err
+		}
+
+		// save the generated ephemeral key to our state
+		em.ephemeralKeys[member] = ephemeralKey
+
+		ephemeralKeyMessages = append(ephemeralKeyMessages,
+			&EphemeralPublicKeyMessage{
+				senderID:           em.ID,
+				receiverID:         member,
+				ephemeralPublicKey: ephemeralKey.PublicKey,
+			},
+		)
+	}
+
+	return ephemeralKeyMessages, nil
+}
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
 // two polynomials. It then calculates shares for all group member and packs them
@@ -124,7 +164,7 @@ func generatePolynomial(degree int, dkg *DKG) ([]*big.Int, error) {
 // - `a_k` is k coefficient
 // - `j` is memberID
 // - `T` is threshold
-func (cm *CommittingMember) evaluateMemberShare(memberID int, coefficients []*big.Int) *big.Int {
+func (cm *CommittingMember) evaluateMemberShare(memberID MemberID, coefficients []*big.Int) *big.Int {
 	result := big.NewInt(0)
 	for k, a := range coefficients {
 		result = new(big.Int).Mod(
@@ -158,8 +198,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
-	var accusedMembersIDs []int
-
+	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 	for _, commitmentsMessage := range commitmentsMessages {
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
@@ -205,8 +244,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 					commitmentsMessage.commitments, // C_j
 					cvm.ID,                         // i
 				) {
-					accusedMembersIDs = append(accusedMembersIDs,
-						commitmentsMessage.senderID)
+					accusedMembersKeys[commitmentsMessage.senderID] = cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break
 				}
 				cvm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
@@ -223,8 +261,8 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	}
 
 	return &SecretSharesAccusationsMessage{
-		senderID:   cvm.ID,
-		accusedIDs: accusedMembersIDs,
+		senderID:           cvm.ID,
+		accusedMembersKeys: accusedMembersKeys,
 	}, nil
 }
 
@@ -245,7 +283,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	shareS, shareT *big.Int, // s_ji, t_ji
 	commitments []*big.Int, // C_j
-	memberID int, // i
+	memberID MemberID, // i
 ) bool {
 	// `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p`
 	commitmentsProduct := big.NewInt(1)
@@ -295,9 +333,9 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 //
 // See Phase 5 of the protocol specification.
 func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
-	senderID, accusedID int, // j, m
+	senderID, accusedID MemberID, // j, m
 	shareS, shareT *big.Int, // s_mj, t_mj
-) (int, error) {
+) (MemberID, error) {
 	if sjm.ID == senderID || sjm.ID == accusedID {
 		return 0, fmt.Errorf("current member cannot be a part of a dispute")
 	}
@@ -374,7 +412,7 @@ func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePo
 func (sm *SharingMember) VerifyPublicKeySharePoints(
 	messages []*MemberPublicKeySharePointsMessage,
 ) (*PointsAccusationsMessage, error) {
-	var accusedMembersIDs []int
+	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
@@ -399,15 +437,15 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 			sm.protocolConfig.P)
 
 		if expectedProduct.Cmp(product) != 0 {
-			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+			accusedMembersKeys[message.senderID] = sm.ephemeralKeyPairs[message.senderID].PrivateKey
 			continue
 		}
 		sm.receivedValidPeerPublicKeySharePoints[message.senderID] = message.publicKeySharePoints
 	}
 
 	return &PointsAccusationsMessage{
-		senderID:   sm.ID,
-		accusedIDs: accusedMembersIDs,
+		senderID:           sm.ID,
+		accusedMembersKeys: accusedMembersKeys,
 	}, nil
 }
 
@@ -429,9 +467,9 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 //
 // See Phase 9 of the protocol specification.
 func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
-	senderID, accusedID int,
+	senderID, accusedID MemberID,
 	shareS *big.Int,
-) (int, error) {
+) (MemberID, error) {
 	if cjm.ID == senderID || cjm.ID == accusedID {
 		return 0, fmt.Errorf("current member cannot be a part of a dispute")
 	}
@@ -473,8 +511,8 @@ func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
 // member `m` for peer members `k`. The shares were revealed due to disqualification
 // of the member `m` from the protocol execution.
 type DisqualifiedShares struct {
-	disqualifiedMemberID int              // m
-	peerSharesS          map[int]*big.Int // <k, s_mk>
+	disqualifiedMemberID MemberID              // m
+	peerSharesS          map[MemberID]*big.Int // <k, s_mk>
 }
 
 // ReconstructIndividualPrivateKeys reconstructs disqualified members' individual
@@ -493,7 +531,7 @@ type DisqualifiedShares struct {
 func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 	revealedDisqualifiedShares []*DisqualifiedShares,
 ) {
-	rm.reconstructedIndividualPrivateKeys = make(map[int]*big.Int, len(revealedDisqualifiedShares))
+	rm.reconstructedIndividualPrivateKeys = make(map[MemberID]*big.Int, len(revealedDisqualifiedShares))
 
 	for _, ds := range revealedDisqualifiedShares { // for each disqualified member
 		// Reconstruct individual private key `z_m = Σ (s_mk * a_mk) mod q` where:
@@ -502,7 +540,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 		// - `a_mk` is lagrange coefficient for peer member k (see below)
 		individualPrivateKey := big.NewInt(0)
 		// Get IDs of all peer members from disqualified shares.
-		var peerIDs []int
+		var peerIDs []MemberID
 		for k := range ds.peerSharesS {
 			peerIDs = append(peerIDs, k)
 		}
@@ -531,7 +569,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 // - `a_mk` is a lagrange coefficient for the member `k`,
 // - `l` are IDs of members who provided shares,
 // and `l != k`.
-func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID int, groupMembersIDs []int) *big.Int {
+func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, groupMembersIDs []MemberID) *big.Int {
 	lagrangeCoefficient := big.NewInt(1)
 	// For each otherID `l` in groupMembersIDs:
 	for _, otherID := range groupMembersIDs {
@@ -542,8 +580,8 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID int, group
 					big.NewInt(int64(otherID)),
 					new(big.Int).ModInverse(
 						new(big.Int).Sub(
-							big.NewInt(int64(otherID)),
-							big.NewInt(int64(memberID)),
+							otherID.Int(),
+							memberID.Int(),
 						),
 						rm.protocolConfig.Q,
 					),
@@ -570,7 +608,7 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID int, group
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
-	rm.reconstructedIndividualPublicKeys = make(map[int]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
+	rm.reconstructedIndividualPublicKeys = make(map[MemberID]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// `y_m = g^{z_m}`
 		individualPublicKey := new(big.Int).Exp(
@@ -582,8 +620,8 @@ func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
 	}
 }
 
-func pow(x, y int) *big.Int {
-	return new(big.Int).Exp(big.NewInt(int64(x)), big.NewInt(int64(y)), nil)
+func pow(id MemberID, y int) *big.Int {
+	return new(big.Int).Exp(id.Int(), big.NewInt(int64(y)), nil)
 }
 
 // CombineGroupPublicKey calculates a group public key by combining individual
