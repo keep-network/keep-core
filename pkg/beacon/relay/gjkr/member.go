@@ -46,14 +46,6 @@ type SymmetricKeyGeneratingMember struct {
 	symmetricKeys map[MemberID]ephemeral.SymmetricKey
 }
 
-// InitializeCommitting returns a member to perform next protocol operations.
-func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting(vss *pedersen.VSS) *CommittingMember {
-	return &CommittingMember{
-		SymmetricKeyGeneratingMember: skgm,
-		vss: vss,
-	}
-}
-
 // CommittingMember represents one member in a distributed key generation group,
 // after it has fully initialized ephemeral symmetric keys with all other group
 // members.
@@ -77,16 +69,6 @@ type CommittingMember struct {
 	selfSecretShareS, selfSecretShareT *big.Int
 }
 
-// InitializeCommitmentsVerification returns a member to perform next protocol operations.
-func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
-	return &CommitmentsVerifyingMember{
-		CommittingMember:             cm,
-		receivedValidSharesS:         make(map[MemberID]*big.Int),
-		receivedValidSharesT:         make(map[MemberID]*big.Int),
-		receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
-	}
-}
-
 // CommitmentsVerifyingMember represents one member in a distributed key generation
 // group, after it has received secret shares and commitments from other group
 // members and it performs verification of received values.
@@ -106,11 +88,6 @@ type CommitmentsVerifyingMember struct {
 	receivedValidPeerCommitments map[MemberID][]*big.Int
 }
 
-// InitializeSharesJustification returns a member to perform next protocol operations.
-func (cvm *CommitmentsVerifyingMember) InitializeSharesJustification() *SharesJustifyingMember {
-	return &SharesJustifyingMember{cvm}
-}
-
 // SharesJustifyingMember represents one member in a threshold key sharing group,
 // after it completed secret shares and commitments verification and enters
 // justification phase where it resolves invalid share accusations.
@@ -118,11 +95,6 @@ func (cvm *CommitmentsVerifyingMember) InitializeSharesJustification() *SharesJu
 // Executes Phase 5 of the protocol.
 type SharesJustifyingMember struct {
 	*CommitmentsVerifyingMember
-}
-
-// InitializeQualified returns a member to perform next protocol operations.
-func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
-	return &QualifiedMember{SharesJustifyingMember: sjm}
 }
 
 // QualifiedMember represents one member in a threshold key sharing group, after
@@ -137,14 +109,6 @@ type QualifiedMember struct {
 	// in protocol specification.
 	// TODO: unsure if we need shareT `x'_i` field, it should be removed if not used in further steps
 	masterPrivateKeyShare, shareT *big.Int
-}
-
-// InitializeSharing returns a member to perform next protocol operations.
-func (qm *QualifiedMember) InitializeSharing() *SharingMember {
-	return &SharingMember{
-		QualifiedMember:                       qm,
-		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int),
-	}
 }
 
 // SharingMember represents one member in a threshold key sharing group, after it
@@ -164,11 +128,6 @@ type SharingMember struct {
 	receivedValidPeerPublicKeySharePoints map[MemberID][]*big.Int
 }
 
-// InitializePointsJustification returns a member to perform next protocol operations.
-func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember {
-	return &PointsJustifyingMember{sm}
-}
-
 // PointsJustifyingMember represents one member in a threshold key sharing group,
 // after it completed public key share points verification and enters justification
 // phase where it resolves public key share points accusations.
@@ -176,15 +135,6 @@ func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember
 // Executes Phase 9 of the protocol.
 type PointsJustifyingMember struct {
 	*SharingMember
-}
-
-// InitializeReconstruction returns a member to perform next protocol operations.
-func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
-	return &ReconstructingMember{
-		PointsJustifyingMember:             pjm,
-		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
-		reconstructedIndividualPublicKeys:  make(map[MemberID]*big.Int),
-	}
 }
 
 // ReconstructingMember represents one member in a threshold sharing group who
@@ -205,11 +155,6 @@ type ReconstructingMember struct {
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
 	reconstructedIndividualPublicKeys map[MemberID]*big.Int
-}
-
-// InitializeCombining returns a member to perform next protocol operations.
-func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
-	return &CombiningMember{ReconstructingMember: rm}
 }
 
 // CombiningMember represents one member in a threshold sharing group who is
@@ -237,6 +182,61 @@ func (ekgm *EphemeralKeyGeneratingMember) InitializeSymmetricKeyGeneration() *Sy
 		EphemeralKeyGeneratingMember: ekgm,
 		symmetricKeys:                make(map[MemberID]ephemeral.SymmetricKey),
 	}
+}
+
+// InitializeCommitting returns a member to perform next protocol operations.
+func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting(vss *pedersen.VSS) *CommittingMember {
+	return &CommittingMember{
+		SymmetricKeyGeneratingMember: skgm,
+		vss: vss,
+	}
+}
+
+// InitializeCommitmentsVerification returns a member to perform next protocol operations.
+func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
+	return &CommitmentsVerifyingMember{
+		CommittingMember:             cm,
+		receivedValidSharesS:         make(map[MemberID]*big.Int),
+		receivedValidSharesT:         make(map[MemberID]*big.Int),
+		receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+	}
+}
+
+// InitializeSharesJustification returns a member to perform next protocol operations.
+func (cvm *CommitmentsVerifyingMember) InitializeSharesJustification() *SharesJustifyingMember {
+	return &SharesJustifyingMember{cvm}
+}
+
+// InitializeQualified returns a member to perform next protocol operations.
+func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
+	return &QualifiedMember{SharesJustifyingMember: sjm}
+}
+
+// InitializeSharing returns a member to perform next protocol operations.
+func (qm *QualifiedMember) InitializeSharing() *SharingMember {
+	return &SharingMember{
+		QualifiedMember:                       qm,
+		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int),
+	}
+}
+
+// InitializePointsJustification returns a member to perform next protocol operations.
+func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember {
+	return &PointsJustifyingMember{sm}
+}
+
+// InitializeReconstruction returns a member to perform next protocol operations.
+func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
+	return &ReconstructingMember{
+		PointsJustifyingMember:             pjm,
+		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[MemberID]*big.Int),
+	}
+}
+
+// InitializeCombining returns a member to perform next protocol operations.
+func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
+	return &CombiningMember{ReconstructingMember: rm}
 }
 
 // individualPublicKey returns current member's individual public key.
