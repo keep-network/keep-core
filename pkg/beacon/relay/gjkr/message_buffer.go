@@ -24,7 +24,7 @@ import "github.com/keep-network/keep-core/pkg/net/ephemeral"
 // sent by the accused party. To do this, they read the round 3 message from the
 // buffer, passing the symmetric key used between the accuser and accused so that
 // the round 3 message from the accused party can be decrypted.
-type messageBuffer interface {
+type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
 	// broadcast in the first protocol round by the given sender for the
 	// given receiver.
