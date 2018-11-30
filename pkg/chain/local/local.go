@@ -182,6 +182,15 @@ func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration
 	c.handlerMutex.Unlock()
 }
 
+func (c *localChain) OnResultPublished(handler func(publishedResult *event.PublishedResult)) {
+	c.handlerMutex.Lock()
+	c.publishedResultHandlers = append(
+		c.publishedResultHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
+}
+
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
