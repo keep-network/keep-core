@@ -26,13 +26,14 @@ type localChain struct {
 	groupRelayEntries      map[string]*big.Int
 
 	submittedResultsMutex sync.Mutex
-	submittedResults      [][]byte
+	submittedResults      []*event.PublishedResult
 
 	handlerMutex               sync.Mutex
 	relayEntryHandlers         []func(entry *event.Entry)
 	relayRequestHandlers       []func(request *event.Request)
 	groupRegisteredHandlers    []func(key *event.GroupRegistration)
 	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
+	publishedResultHandlers    []func(publishedResult *event.PublishedResult)
 
 	requestID   int64
 	latestValue *big.Int
@@ -291,29 +292,41 @@ func (c *localChain) IsResultPublished(result *result.Result) *event.PublishedRe
 }
 
 // SubmitResult submits the result to a chain.
-func (c *localChain) SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise {
+func (c *localChain) SubmitResult(publisherID int, resultToPublish *result.Result) *async.PublishedResultPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
 	resultPublishPromise := &async.ResultPublishPromise{}
 
-	resultBytes := result.Bytes()
-
 	for _, r := range c.submittedResults {
-		if reflect.DeepEqual(r, resultBytes) {
-			resultPublishPromise.Fail(fmt.Errorf("Result already submitted"))
-			return resultPublishPromise
+		if reflect.DeepEqual(r, resultToPublish) {
+			publishedResultPromise.Fail(fmt.Errorf("result already submitted"))
+			return publishedResultPromise
 		}
 	}
 
-	resultPublishPromise.Fulfill(&event.ResultPublish{
+	publishedResult := &event.PublishedResult{
 		PublisherID: publisherID,
-		Result:      resultBytes,
-	})
+		Result:      resultToPublish,
+	}
+
+	c.submittedResults = append(c.submittedResults, publishedResult)
 
 	c.handlerMutex.Lock()
-	c.submittedResults = append(c.submittedResults, resultBytes)
+	for _, handler := range c.publishedResultHandlers {
+		go func(handler func(publishedResult *event.PublishedResult), publisherID int) {
+			handler(&event.PublishedResult{
+				PublisherID: publisherID,
+				Result:      resultToPublish,
+			})
+		}(handler, publisherID)
+	}
 	c.handlerMutex.Unlock()
 
-	return resultPublishPromise
+	err := publishedResultPromise.Fulfill(publishedResult)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
+	}
+
+	return publishedResultPromise
 }
