@@ -9,12 +9,17 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestCombineReceivedShares(t *testing.T) {
+	threshold := 3
+	groupSize := 7
+
 	selfShareS := big.NewInt(9)
 	selfShareT := big.NewInt(19)
-	q := big.NewInt(59)
+	p := big.NewInt(107)
+	q := big.NewInt(53)
 
 	receivedShareS := make(map[MemberID]*big.Int)
 	receivedShareT := make(map[MemberID]*big.Int)
@@ -26,29 +31,24 @@ func TestCombineReceivedShares(t *testing.T) {
 		receivedShareT[MemberID(100+i)] = big.NewInt(int64(20 + i))
 	}
 
-	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 59 = 25
-	expectedShareS := big.NewInt(25)
-	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 59 = 36
-	expectedShareT := big.NewInt(36)
+	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 53 = 31
+	expectedShareS := big.NewInt(31)
+	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
+	expectedShareT := big.NewInt(48)
 
-	config := &DKG{Q: q}
-	member := &QualifiedMember{
-		SharesJustifyingMember: &SharesJustifyingMember{
-			CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
-				CommittingMember: &CommittingMember{
-					SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-						memberCore: &memberCore{
-							protocolConfig: config,
-						},
-					},
-					selfSecretShareS: selfShareS,
-					selfSecretShareT: selfShareT,
-				},
-				receivedValidSharesS: receivedShareS,
-				receivedValidSharesT: receivedShareT,
-			},
-		},
+	config := &DKG{P: p, Q: q}
+	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
 	}
+
+	member := members[0]
+
+	// Replace initialized values with values declared at the begining.
+	member.selfSecretShareS = selfShareS
+	member.selfSecretShareT = selfShareT
+	member.receivedValidSharesS = receivedShareS
+	member.receivedValidSharesT = receivedShareT
 
 	member.CombineMemberShares()
 
@@ -129,7 +129,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 
 	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
-		t.Fatalf("Group initialization failed [%s]", err)
+		t.Fatalf("group initialization failed [%s]", err)
 	}
 
 	sharingMember := sharingMembers[0]
@@ -193,45 +193,56 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 					err,
 				)
 			}
+			expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			for _, id := range test.expectedAccusedIDs {
+				expectedAccusedMembersKeys[id] = sharingMember.ephemeralKeyPairs[id].PrivateKey
+			}
 
-			if !reflect.DeepEqual(accusedMessage.accusedIDs, test.expectedAccusedIDs) {
+			if !reflect.DeepEqual(accusedMessage.accusedMembersKeys, expectedAccusedMembersKeys) {
 				t.Fatalf("incorrect accused IDs\nexpected: %v\nactual:   %v\n",
-					test.expectedAccusedIDs,
-					accusedMessage.accusedIDs,
+					expectedAccusedMembersKeys,
+					accusedMessage.accusedMembersKeys,
 				)
 			}
 		})
 	}
 }
 
+func initializeQualifiedMembersGroup(threshold, groupSize int, dkg *DKG) ([]*QualifiedMember, error) {
+	sharesJustifyingMembers, err := initializeSharesJustifyingMemberGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
+
+	var qualifiedMembers []*QualifiedMember
+	for _, sjm := range sharesJustifyingMembers {
+		qualifiedMembers = append(qualifiedMembers, sjm.InitializeQualified())
+	}
+
+	return qualifiedMembers, nil
+}
+
 func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
-	commitmentsVerifyingMembers, err := initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize, dkg)
+	qualifiedMembers, err := initializeQualifiedMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
 	var sharingMembers []*SharingMember
-	for _, cvm := range commitmentsVerifyingMembers {
-		cvm.secretCoefficients = make([]*big.Int, threshold+1)
+	for _, sjm := range qualifiedMembers {
+		sjm.secretCoefficients = make([]*big.Int, threshold+1)
 		for i := 0; i < threshold+1; i++ {
-			cvm.secretCoefficients[i], err = crand.Int(crand.Reader, cvm.protocolConfig.Q)
+			sjm.secretCoefficients[i], err = crand.Int(crand.Reader, sjm.protocolConfig.Q)
 			if err != nil {
 				return nil, fmt.Errorf("secret share generation failed [%s]", err)
 			}
 		}
-		sharingMembers = append(sharingMembers, &SharingMember{
-			QualifiedMember: &QualifiedMember{
-				SharesJustifyingMember: &SharesJustifyingMember{
-					CommitmentsVerifyingMember: cvm,
-				},
-			},
-			receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
-		})
+		sharingMembers = append(sharingMembers, sjm.InitializeSharing())
 	}
 
 	for _, sm := range sharingMembers {
-		for _, cvm := range commitmentsVerifyingMembers {
-			sm.receivedValidSharesS[cvm.ID] = cvm.evaluateMemberShare(sm.ID, cvm.secretCoefficients)
+		for _, sjm := range qualifiedMembers {
+			sm.receivedValidSharesS[sjm.ID] = sjm.evaluateMemberShare(sm.ID, sjm.secretCoefficients)
 		}
 	}
 
