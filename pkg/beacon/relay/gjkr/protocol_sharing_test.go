@@ -9,6 +9,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestCombineReceivedShares(t *testing.T) {
@@ -193,11 +194,15 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 					err,
 				)
 			}
+			expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			for _, id := range test.expectedAccusedIDs {
+				expectedAccusedMembersKeys[id] = sharingMember.ephemeralKeyPairs[id].PrivateKey
+			}
 
-			if !reflect.DeepEqual(accusedMessage.accusedIDs, test.expectedAccusedIDs) {
+			if !reflect.DeepEqual(accusedMessage.accusedMembersKeys, expectedAccusedMembersKeys) {
 				t.Fatalf("incorrect accused IDs\nexpected: %v\nactual:   %v\n",
-					test.expectedAccusedIDs,
-					accusedMessage.accusedIDs,
+					expectedAccusedMembersKeys,
+					accusedMessage.accusedMembersKeys,
 				)
 			}
 		})

@@ -198,8 +198,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
-	var accusedMembersIDs []MemberID
-
+	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 	for _, commitmentsMessage := range commitmentsMessages {
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
@@ -240,13 +239,12 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
 				// where: j is sender's ID, i is current member ID, T is threshold.
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
-					accusedMembersIDs = append(accusedMembersIDs,
-						commitmentsMessage.senderID)
+					accusedMembersKeys[commitmentsMessage.senderID] = cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break
 				}
 				cvm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
@@ -263,8 +261,8 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	}
 
 	return &SecretSharesAccusationsMessage{
-		senderID:   cvm.ID,
-		accusedIDs: accusedMembersIDs,
+		senderID:           cvm.ID,
+		accusedMembersKeys: accusedMembersKeys,
 	}, nil
 }
 
@@ -414,7 +412,7 @@ func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePo
 func (sm *SharingMember) VerifyPublicKeySharePoints(
 	messages []*MemberPublicKeySharePointsMessage,
 ) (*PointsAccusationsMessage, error) {
-	var accusedMembersIDs []MemberID
+	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
@@ -439,15 +437,15 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 			sm.protocolConfig.P)
 
 		if expectedProduct.Cmp(product) != 0 {
-			accusedMembersIDs = append(accusedMembersIDs, message.senderID)
+			accusedMembersKeys[message.senderID] = sm.ephemeralKeyPairs[message.senderID].PrivateKey
 			continue
 		}
 		sm.receivedValidPeerPublicKeySharePoints[message.senderID] = message.publicKeySharePoints
 	}
 
 	return &PointsAccusationsMessage{
-		senderID:   sm.ID,
-		accusedIDs: accusedMembersIDs,
+		senderID:           sm.ID,
+		accusedMembersKeys: accusedMembersKeys,
 	}, nil
 }
 
