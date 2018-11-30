@@ -218,13 +218,13 @@ func initializeQualifiedMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Qua
 }
 
 func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
-	sharesJustifyingMembers, err := initializeQualifiedMembersGroup(threshold, groupSize, dkg)
+	qualifiedMembers, err := initializeQualifiedMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
 	var sharingMembers []*SharingMember
-	for _, sjm := range sharesJustifyingMembers {
+	for _, sjm := range qualifiedMembers {
 		sjm.secretCoefficients = make([]*big.Int, threshold+1)
 		for i := 0; i < threshold+1; i++ {
 			sjm.secretCoefficients[i], err = crand.Int(crand.Reader, sjm.protocolConfig.Q)
@@ -232,11 +232,11 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 				return nil, fmt.Errorf("secret share generation failed [%s]", err)
 			}
 		}
-		sharingMembers = append(sharingMembers, sjm.InitializeQualified().InitializeSharing())
+		sharingMembers = append(sharingMembers, sjm.InitializeSharing())
 	}
 
 	for _, sm := range sharingMembers {
-		for _, sjm := range sharesJustifyingMembers {
+		for _, sjm := range qualifiedMembers {
 			sm.receivedValidSharesS[sjm.ID] = sjm.evaluateMemberShare(sm.ID, sjm.secretCoefficients)
 		}
 	}
