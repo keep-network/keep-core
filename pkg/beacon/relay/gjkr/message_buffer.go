@@ -153,20 +153,18 @@ func (ms *messageStorage) putMessage(
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()
 
-	senderLog, ok := ms.cache[sender]
-	if !ok {
-		senderLog = make(map[MemberID]interface{})
+	if _, ok := ms.cache[sender]; !ok {
+		ms.cache[sender] = make(map[MemberID]interface{})
 	}
 
-	if message, ok := senderLog[receiver]; ok {
+	if _, ok := ms.cache[sender][receiver]; ok {
 		return fmt.Errorf(
-			"message %v exists for sender %v and receiver %v",
-			message,
+			"message exists for sender %v and receiver %v",
 			sender,
 			receiver,
 		)
 	}
 
-	senderLog[receiver] = message
+	ms.cache[sender][receiver] = message
 	return nil
 }
