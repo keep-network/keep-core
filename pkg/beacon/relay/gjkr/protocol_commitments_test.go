@@ -284,7 +284,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 		}
 	}
 
-	symmetricKeyMembers, err := initializeSymmetricKeyMembersGroup(
+	symmetricKeyMembers, err := generateGroupWithEphemeralKeys(
 		threshold,
 		groupSize,
 		dkg,

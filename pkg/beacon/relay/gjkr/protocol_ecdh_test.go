@@ -12,7 +12,7 @@ func TestGenerateKeys(t *testing.T) {
 	groupSize := 3
 
 	// Create a group of 3 members
-	ephemeralGeneratingMembers := createEphemeralKeyMembersGroup(
+	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
 		groupSize,
 		groupSize, // threshold = groupSize
 		nil,
@@ -104,7 +104,7 @@ func TestGenerateKeys(t *testing.T) {
 	}
 }
 
-func createEphemeralKeyMembersGroup(
+func initializeEphemeralKeyPairMembersGroup(
 	threshold int,
 	groupSize int,
 	dkg *DKG,
@@ -131,16 +131,16 @@ func createEphemeralKeyMembersGroup(
 	return members
 }
 
-func initializeEphemeralKeyMembersGroup(
+func initializeSymmetricKeyMembersGroup(
 	threshold int,
 	groupSize int,
 	dkg *DKG,
-) ([]*EphemeralKeyGeneratingMember, error) {
-	members := createEphemeralKeyMembersGroup(threshold, groupSize, dkg)
+) ([]*SymmetricKeyGeneratingMember, error) {
+	keyPairMembers := initializeEphemeralKeyPairMembersGroup(threshold, groupSize, dkg)
 
 	// generate ephemeral key pairs for all other members of the group
-	for _, member1 := range members {
-		for _, member2 := range members {
+	for _, member1 := range keyPairMembers {
+		for _, member2 := range keyPairMembers {
 			if member1.ID != member2.ID {
 
 				keyPair, err := ephemeral.GenerateKeyPair()
@@ -155,15 +155,20 @@ func initializeEphemeralKeyMembersGroup(
 		}
 	}
 
-	return members, nil
+	symmetricKeyMembers := make([]*SymmetricKeyGeneratingMember, len(keyPairMembers))
+	for i, keyPairMember := range keyPairMembers {
+		symmetricKeyMembers[i] = keyPairMember.InitializeSymmetricKeyGeneration()
+	}
+
+	return symmetricKeyMembers, nil
 }
 
-func initializeSymmetricKeyMembersGroup(
+func generateGroupWithEphemeralKeys(
 	threshold int,
 	groupSize int,
 	dkg *DKG,
 ) ([]*SymmetricKeyGeneratingMember, error) {
-	ephemeralKeyMembers, err := initializeEphemeralKeyMembersGroup(
+	symmetricKeyMembers, err := initializeSymmetricKeyMembersGroup(
 		threshold,
 		groupSize,
 		dkg,
@@ -172,17 +177,9 @@ func initializeSymmetricKeyMembersGroup(
 		return nil, fmt.Errorf("group initialization failed [%v]", err)
 	}
 
-	var members []*SymmetricKeyGeneratingMember
-	for _, ephemeralKeyMember := range ephemeralKeyMembers {
-		members = append(
-			members,
-			ephemeralKeyMember.InitializeSymmetricKeyGeneration(),
-		)
-	}
-
 	// generate symmetric keys with all other members of the group
-	for _, member1 := range members {
-		for _, member2 := range members {
+	for _, member1 := range symmetricKeyMembers {
+		for _, member2 := range symmetricKeyMembers {
 			if member1.ID != member2.ID {
 				privKey := member1.ephemeralKeys[member2.ID].PrivateKey
 				pubKey := member2.ephemeralKeys[member1.ID].PublicKey
@@ -191,5 +188,5 @@ func initializeSymmetricKeyMembersGroup(
 		}
 	}
 
-	return members, nil
+	return symmetricKeyMembers, nil
 }
