@@ -29,17 +29,14 @@ type evidenceLog interface {
 	// broadcast in the first protocol round by the given sender for the
 	// given receiver.
 	ephemeralPublicKeyMessage(
-		sender int,
-		receiver int,
+		sender MemberID,
+		receiver MemberID,
 	) *EphemeralPublicKeyMessage
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
-	// protocol round by the given sender for the given receiver. It is required
-	// to pass an `ephemeral.SymmetricKey` used to encrypt the communication
-	// between the sender and receiver.
+	// protocol round by the given sender for the given receiver.
 	peerSharesMessage(
-		sender int,
-		receiver int,
-		key ephemeral.SymmetricKey,
+		sender MemberID,
+		receiver MemberID,
 	) *PeerSharesMessage
 }
