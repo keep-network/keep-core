@@ -48,5 +48,7 @@ type Interface interface {
 	// If so it returns the published result.
 	IsResultPublished(result *result.Result) *event.PublishedResult
 	// SubmitResult sends DKG result to a chain.
-	SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise
+	// OnResultPublished is a callback that is invoked when an on-chain
+	// notification of a new, valid published result is seen.
+	OnResultPublished(func(publishedResult *event.PublishedResult))
 }
