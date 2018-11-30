@@ -12,6 +12,9 @@ import (
 )
 
 func TestCombineReceivedShares(t *testing.T) {
+	threshold := 3
+	groupSize := 7
+
 	selfShareS := big.NewInt(9)
 	selfShareT := big.NewInt(19)
 	p := big.NewInt(107)
@@ -32,24 +35,19 @@ func TestCombineReceivedShares(t *testing.T) {
 	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
 	expectedShareT := big.NewInt(48)
 
-	config := &DKG{Q: q}
-	member := &QualifiedMember{
-		SharesJustifyingMember: &SharesJustifyingMember{
-			CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
-				CommittingMember: &CommittingMember{
-					SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-						memberCore: &memberCore{
-							protocolConfig: config,
-						},
-					},
-					selfSecretShareS: selfShareS,
-					selfSecretShareT: selfShareT,
-				},
-				receivedValidSharesS: receivedShareS,
-				receivedValidSharesT: receivedShareT,
-			},
-		},
+	config := &DKG{P: p, Q: q}
+	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
 	}
+
+	member := members[0]
+
+	// Replace initialized values with values declared at the begining.
+	member.selfSecretShareS = selfShareS
+	member.selfSecretShareT = selfShareT
+	member.receivedValidSharesS = receivedShareS
+	member.receivedValidSharesT = receivedShareT
 
 	member.CombineMemberShares()
 
@@ -130,7 +128,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 
 	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
-		t.Fatalf("Group initialization failed [%s]", err)
+		t.Fatalf("group initialization failed [%s]", err)
 	}
 
 	sharingMember := sharingMembers[0]
@@ -205,8 +203,22 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	}
 }
 
-func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
+func initializeQualifiedMembersGroup(threshold, groupSize int, dkg *DKG) ([]*QualifiedMember, error) {
 	sharesJustifyingMembers, err := initializeSharesJustifyingMemberGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
+
+	var qualifiedMembers []*QualifiedMember
+	for _, sjm := range sharesJustifyingMembers {
+		qualifiedMembers = append(qualifiedMembers, sjm.InitializeQualified())
+	}
+
+	return qualifiedMembers, nil
+}
+
+func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
+	sharesJustifyingMembers, err := initializeQualifiedMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
