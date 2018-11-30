@@ -48,7 +48,7 @@ func TestRoundTrip(t *testing.T) {
 
 		if len(accusedSecretSharesMessage.accusedMembersKeys) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedSecretSharesMessage.accusedMembersKeys,
+				len(accusedSecretSharesMessage.accusedMembersKeys),
 			)
 		}
 	}
@@ -106,7 +106,7 @@ func TestRoundTrip(t *testing.T) {
 		}
 		if len(accusedPointsMessage.accusedMembersKeys) > 0 {
 			t.Fatalf("\nexpected: 0 accusations\nactual:   %d\n",
-				accusedPointsMessage.accusedMembersKeys,
+				len(accusedPointsMessage.accusedMembersKeys),
 			)
 		}
 	}
