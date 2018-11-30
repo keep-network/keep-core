@@ -228,6 +228,69 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 	}
 }
 
+// This tests runs result publication concurrently by two members.
+// Member with lower index gets to publish the result to chain. For the second
+// member loop should be aborted and result published by the first member should
+// be returned.
+func TestPublishResult_ConcurrentExecution(t *testing.T) {
+	threshold := 2
+	groupSize := 5
+	blockStep := 2 // T_step
+
+	members, err := initializePublishingMembersGroup(threshold, groupSize, blockStep)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	publisher1 := members[1]
+	publisher2 := members[4]
+
+	// We use `t_init = 1` here because `initializePublishingMembersGroup` function
+	// initializes the chain with starting block equal 1.
+	expectedBlockEnd := 1 + publisher1.PublishingIndex()*blockStep // t_init + index * t_step
+
+	expectedPublishedResult := &event.PublishedResult{
+		PublisherID: publisher1.ID,
+		Result:      publisher1.Result(),
+	}
+
+	result1Chan := make(chan *event.PublishedResult)
+	result2Chan := make(chan *event.PublishedResult)
+
+	go func() {
+		publishedResult1, err := publisher1.PublishResult()
+		if err != nil {
+			t.Fatalf("unexpected error %v", err)
+		}
+		result1Chan <- publishedResult1
+	}()
+
+	go func() {
+		// publisher2.Result()
+		publishedResult2, err := publisher2.PublishResult()
+		if err != nil {
+			t.Fatalf("unexpected error %v", err)
+		}
+		result2Chan <- publishedResult2
+	}()
+
+	if result1 := <-result1Chan; !reflect.DeepEqual(result1, expectedPublishedResult) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedPublishedResult, result1)
+	}
+	if result2 := <-result2Chan; !reflect.DeepEqual(result2, expectedPublishedResult) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedPublishedResult, result2)
+	}
+
+	currentBlock, err := publisher2.protocolConfig.chain.CurrentBlock()
+	if err != nil {
+		t.Fatalf("unexpected error [%v]", err)
+	}
+
+	if expectedBlockEnd != currentBlock {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd, currentBlock)
+	}
+}
+
 func initializePublishingMembersGroup(threshold, groupSize, blockStep int,
 ) ([]*PublishingMember, error) {
 	group := &Group{
@@ -280,7 +343,7 @@ func initChain(threshold, groupSize, blockStep int) (*Chain, error) {
 		return nil, err
 	}
 
-	initialBlockHeight, err := blockCounter.CurrentBlock()
+	initialBlockHeight, err := blockCounter.CurrentBlock() // T_init = 1
 	if err != nil {
 		return nil, err
 	}
