@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -219,4 +220,34 @@ func (fm *FinalizingMember) PublishingIndex() int {
 		}
 	}
 	return -1
+}
+
+// Result returns a result of distributed key generation. It takes generated
+// group public key along with disqualified and inactive members and returns
+// it in a Result struct.
+//
+// Additional validation to check if number of disqualified and inactive members
+// is greater than half of the configured dishonest threshold. If so the group
+// is to weak and the result is set to a failure.
+func (fm *FinalizingMember) Result() *result.Result {
+	group := fm.group
+	disqualifiedMembers := group.DisqualifiedMembers() // DQ
+	inactiveMembers := group.InactiveMembers()         // IA
+
+	// if nPlayers(IA + DQ) > T/2:
+	if len(disqualifiedMembers)+len(inactiveMembers) > (group.dishonestThreshold / 2) {
+		// Result.failure(disqualified = DQ)
+		return &result.Result{
+			Success:      false,
+			Disqualified: disqualifiedMembers,
+		}
+	}
+
+	// Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
+	return &result.Result{
+		Success:        true,
+		GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+		Disqualified:   disqualifiedMembers,
+		Inactive:       inactiveMembers,
+	}
 }
