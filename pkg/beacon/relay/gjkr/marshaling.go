@@ -258,7 +258,10 @@ func unmarshalAccusedMembersKeys(
 	for memberIDHex, keyBytes := range keys {
 		memberID, err := MemberIDFromHex(memberIDHex)
 		if err != nil {
-			return nil, fmt.Errorf("could not unmarshal the message [%v]", err)
+			return nil, fmt.Errorf(
+				"could not unmarshal accused members' keys [%v]",
+				err,
+			)
 		}
 		unmarshaled[memberID] = ephemeral.UnmarshalPrivateKey(keyBytes)
 	}
