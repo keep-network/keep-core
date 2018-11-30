@@ -20,12 +20,12 @@ type memberCore struct {
 	protocolConfig *DKG
 }
 
-// EphemeralKeyGeneratingMember represents one member in a distributed key
-// generating group performing ephemeral key generation. It has a full list of
-// `memberIDs` that belong to its threshold group.
+// EphemeralKeyPairGeneratingMember represents one member in a distributed key
+// generating group performing ephemeral key pair generation. It has a full list
+// of `memberIDs` that belong to its threshold group.
 //
 // Executes Phase 1 of the protocol.
-type EphemeralKeyGeneratingMember struct {
+type EphemeralKeyPairGeneratingMember struct {
 	*memberCore
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
@@ -37,7 +37,7 @@ type EphemeralKeyGeneratingMember struct {
 //
 // Executes Phase 2 of the protocol.
 type SymmetricKeyGeneratingMember struct {
-	*EphemeralKeyGeneratingMember
+	*EphemeralKeyPairGeneratingMember
 
 	// Symmetric keys used to encrypt confidential information,
 	// generated individually for each other group member by ECDH'ing the
@@ -177,10 +177,10 @@ func (id MemberID) Int() *big.Int {
 // InitializeSymmetricKeyGeneration performs a transition of the member state
 // from phase 1 to phase 2. It returns a member instance ready to execute the
 // next phase of the protocol.
-func (ekgm *EphemeralKeyGeneratingMember) InitializeSymmetricKeyGeneration() *SymmetricKeyGeneratingMember {
+func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration() *SymmetricKeyGeneratingMember {
 	return &SymmetricKeyGeneratingMember{
-		EphemeralKeyGeneratingMember: ekgm,
-		symmetricKeys:                make(map[MemberID]ephemeral.SymmetricKey),
+		EphemeralKeyPairGeneratingMember: ekgm,
+		symmetricKeys:                    make(map[MemberID]ephemeral.SymmetricKey),
 	}
 }
 

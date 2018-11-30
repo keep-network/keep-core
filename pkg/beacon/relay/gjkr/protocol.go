@@ -22,7 +22,7 @@ import (
 // shares are broadcasted to every valid cadidate member.
 //
 // See Phase 1 of the protocol specification.
-func (em *EphemeralKeyGeneratingMember) GenerateEphemeralKeyPair() (
+func (em *EphemeralKeyPairGeneratingMember) GenerateEphemeralKeyPair() (
 	[]*EphemeralPublicKeyMessage,
 	error,
 ) {

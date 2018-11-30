@@ -108,16 +108,16 @@ func initializeEphemeralKeyPairMembersGroup(
 	threshold int,
 	groupSize int,
 	dkg *DKG,
-) []*EphemeralKeyGeneratingMember {
+) []*EphemeralKeyPairGeneratingMember {
 	group := &Group{
 		groupSize:          groupSize,
 		dishonestThreshold: threshold,
 	}
 
-	var members []*EphemeralKeyGeneratingMember
+	var members []*EphemeralKeyPairGeneratingMember
 	for i := 1; i <= groupSize; i++ {
 		id := MemberID(i)
-		members = append(members, &EphemeralKeyGeneratingMember{
+		members = append(members, &EphemeralKeyPairGeneratingMember{
 			memberCore: &memberCore{
 				ID:             id,
 				group:          group,
