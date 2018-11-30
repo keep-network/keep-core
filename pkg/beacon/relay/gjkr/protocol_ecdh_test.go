@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func TestGenerateKeys(t *testing.T) {
+func TestGenerateEphemeralKeys(t *testing.T) {
 	groupSize := 3
 
 	// Create a group of 3 members
