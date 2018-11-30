@@ -20,7 +20,7 @@ cause a minor nuisance with subtle misbehavior.
 Additionally, the threshold relay public key submission protocol
 is defined.
 
-toc::[]
+ifndef::yellowpaper[toc::[]]
 
 include::dkg-terms.adoc[]
 

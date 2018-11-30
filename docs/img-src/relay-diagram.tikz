@@ -30,7 +30,7 @@
     \node[op] (relay-entry-seed-generation) [right=4cm of relay-request.two east] {$\times$};
     \node[plain] (relay-entry-seed) [below=of relay-entry-seed-generation] {$v_r$};
     \node[plain] (relay-entry-seed-label) [left=0 of relay-entry-seed] {``relay entry seed''};
-    \node[op] (group-combiner) [below=of relay-entry-seed] {\texttt{mod}};
+    \node[op] (group-combiner) [below=of relay-entry-seed] {\texttt{fn}};
     \node[draw,rectangle split,rectangle split horizontal,rectangle split parts=2]
         (group-signature-fn) [below right=1cm and -0.7cm of group-combiner]
         {$G_i$ \nodepart{two} $S_{G_i}$};
