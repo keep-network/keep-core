@@ -432,7 +432,7 @@ func (ec *ethereumChain) IsResultPublished(result *result.Result) bool {
 }
 
 // SubmitResult sends DKG result to a chain.
-func (ec *ethereumChain) SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise {
+func (ec *ethereumChain) SubmitResult(publisherID int, result *result.Result) *async.PublishedResultPromise {
 	// TODO Implement
 	return nil
 }
