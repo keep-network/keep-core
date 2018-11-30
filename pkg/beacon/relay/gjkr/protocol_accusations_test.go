@@ -11,15 +11,15 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	currentMemberID := 2 // i
+	currentMemberID := MemberID(2) // i
 
 	var tests = map[string]struct {
-		accuserID         int // j
-		accusedID         int // m
+		accuserID         MemberID // j
+		accusedID         MemberID // m
 		modifyShareS      func(shareS *big.Int) *big.Int
 		modifyShareT      func(shareT *big.Int) *big.Int
 		modifyCommitments func(commitments []*big.Int) []*big.Int
-		expectedResult    int
+		expectedResult    MemberID
 		expectedError     error
 	}{
 		"false accusation - accuser is punished": {
@@ -70,7 +70,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializeSharesJustifyingMemberGroup(threshold, groupSize)
+			members, err := initializeSharesJustifyingMemberGroup(threshold, groupSize, nil)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -116,14 +116,14 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	currentMemberID := 2 // i
+	currentMemberID := MemberID(2) // i
 
 	var tests = map[string]struct {
-		accuserID                  int // j
-		accusedID                  int // m
+		accuserID                  MemberID // j
+		accusedID                  MemberID // m
 		modifyShareS               func(shareS *big.Int) *big.Int
 		modifyPublicKeySharePoints func(coefficients []*big.Int) []*big.Int
-		expectedResult             int
+		expectedResult             MemberID
 		expectedError              error
 	}{
 		"false accusation - sender is punished": {
@@ -166,7 +166,7 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializePointsJustifyingMemberGroup(threshold, groupSize)
+			members, err := initializePointsJustifyingMemberGroup(threshold, groupSize, nil)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -196,7 +196,7 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 	}
 }
 
-func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id int) *SharesJustifyingMember {
+func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id MemberID) *SharesJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
 			return m
@@ -207,7 +207,7 @@ func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id int) *
 
 func findCoefficientsJustifyingMemberByID(
 	members []*PointsJustifyingMember,
-	id int,
+	id MemberID,
 ) *PointsJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
@@ -222,25 +222,25 @@ func findCoefficientsJustifyingMemberByID(
 // It generates coefficients for each group member, calculates commitments and
 // shares for each peer member individually. At the end it stores values for each
 // member just like they would be received from peers.
-func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJustifyingMember, error) {
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
+func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) ([]*SharesJustifyingMember, error) {
+	commitmentsVerifyingMembers, err := initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
 	var sharesJustifyingMembers []*SharesJustifyingMember
 	// TODO: Handle transition from CommittingMember to SharesJustifyingMember in Next() function
-	for _, jm := range committingMembers {
+	for _, cvm := range commitmentsVerifyingMembers {
 		sharesJustifyingMembers = append(sharesJustifyingMembers, &SharesJustifyingMember{
-			CommittingMember: jm,
+			CommitmentsVerifyingMember: cvm,
 		})
 	}
 
 	// Maps which will keep coefficients and commitments of all group members,
 	// with members IDs as keys.
-	groupCoefficientsA := make(map[int][]*big.Int, groupSize)
-	groupCoefficientsB := make(map[int][]*big.Int, groupSize)
-	groupCommitments := make(map[int][]*big.Int, groupSize)
+	groupCoefficientsA := make(map[MemberID][]*big.Int, groupSize)
+	groupCoefficientsB := make(map[MemberID][]*big.Int, groupSize)
+	groupCommitments := make(map[MemberID][]*big.Int, groupSize)
 
 	// Generate threshold+1 coefficients and commitments for each group member.
 	for _, m := range sharesJustifyingMembers {
@@ -272,9 +272,8 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJ
 	for _, m := range sharesJustifyingMembers {
 		for _, p := range sharesJustifyingMembers {
 			if m.ID != p.ID {
-				p.receivedValidSharesS[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
-				p.receivedValidSharesT[m.ID] = evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
-
+				p.receivedValidSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
+				p.receivedValidSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
 				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
@@ -290,8 +289,9 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) ([]*SharesJ
 // values for each member just like they would be received from peers.
 func initializePointsJustifyingMemberGroup(
 	threshold, groupSize int,
+	dkg *DKG,
 ) ([]*PointsJustifyingMember, error) {
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}

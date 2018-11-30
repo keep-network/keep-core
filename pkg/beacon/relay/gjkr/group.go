@@ -9,7 +9,7 @@ type Group struct {
 	dishonestThreshold int
 	// IDs of all members of the group. Contains local member's ID.
 	// Initially empty, populated as each other member announces its presence.
-	memberIDs []int
+	memberIDs []MemberID
 	// IDs of group members who were disqualified during protocol execution.
 	disqualifiedMemberIDs []int
 	// IDs of group members who went inactive during protocol execution.
@@ -17,12 +17,12 @@ type Group struct {
 }
 
 // MemberIDs returns IDs of all group members.
-func (g *Group) MemberIDs() []int {
+func (g *Group) MemberIDs() []MemberID {
 	return g.memberIDs
 }
 
 // RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(id int) {
+func (g *Group) RegisterMemberID(id MemberID) {
 	g.memberIDs = append(g.memberIDs, id)
 }
 

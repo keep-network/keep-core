@@ -15,6 +15,7 @@ repos:
       name: Solidity linter
       language: node
       entry: solium
+      files: '\.sol$'
       args:
       - --dir=contracts/solidity/contracts/
       - --config=contracts/solidity/.soliumrc.json

@@ -3,12 +3,16 @@ package libp2p
 import (
 	"context"
 	crand "crypto/rand"
+	"fmt"
 	"io"
 	"net"
+	"reflect"
 	"testing"
 	"time"
 
 	protoio "github.com/gogo/protobuf/io"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
@@ -17,8 +21,13 @@ import (
 )
 
 func TestPinnedAndMessageKeyMismatch(t *testing.T) {
-	initiatorStaticKey, initiatorPeerID := testStaticKeyAndID(t)
-	responderStaticKey, responderPeerID := testStaticKeyAndID(t)
+	initiator := createTestConnectionConfig(t)
+	responder := createTestConnectionConfig(t)
+
+	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+
 	initiatorConn, responderConn := newConnPair()
 
 	go func(
@@ -38,13 +47,13 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 
 		maliciousInitiatorHijacksHonestRun(t, ac)
 		return
-	}(initiatorConn, initiatorPeerID, initiatorStaticKey, responderPeerID, responderStaticKey)
+	}(initiatorConn, initiator.peerID, initiator.privKey, responder.peerID, responder.privKey)
 
 	_, err := newAuthenticatedInboundConnection(
 		responderConn,
-		responderPeerID,
-		responderStaticKey,
-		"",
+		responder.peerID,
+		responder.privKey,
+		stakeMonitor,
 	)
 	if err == nil {
 		t.Fatal("should not have successfully completed handshake")
@@ -90,15 +99,15 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 		t.Fatal(err)
 	}
 
-	maliciousInitiatorStaticKey, maliciousInitiatorPeerID := testStaticKeyAndID(t)
-	signedAct3Message, err := maliciousInitiatorStaticKey.Sign(act3WireMessage)
+	maliciousInitiator := createTestConnectionConfig(t)
+	signedAct3Message, err := maliciousInitiator.privKey.Sign(act3WireMessage)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	act3Envelope := &pb.HandshakeEnvelope{
 		Message:   act3WireMessage,
-		PeerID:    []byte(maliciousInitiatorPeerID),
+		PeerID:    []byte(maliciousInitiator.peerID),
 		Signature: signedAct3Message,
 	}
 
@@ -107,13 +116,27 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 	}
 }
 
-func TestHandshakeRoundTrip(t *testing.T) {
+func TestHandshake(t *testing.T) {
 	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	// Connect the initiator and responder sessions
-	authnInboundConn, authnOutboundConn := connectInitiatorAndResponderFull(t)
+	initiator := createTestConnectionConfig(t)
+	responder := createTestConnectionConfig(t)
 
+	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+
+	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
+		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
+	if inboundError != nil {
+		t.Fatal(inboundError)
+	}
+	if outboundError != nil {
+		t.Fatal(outboundError)
+	}
+
+	// send a test message over the established connection
 	msg := []byte("brown fox blue tail")
 	go func(authnOutboundConn *authenticatedConnection, msg []byte) {
 		if _, err := authnOutboundConn.Write(msg); err != nil {
@@ -131,61 +154,123 @@ func TestHandshakeRoundTrip(t *testing.T) {
 	}
 }
 
-func connectInitiatorAndResponderFull(t *testing.T) (*authenticatedConnection, *authenticatedConnection) {
-	initiatorStaticKey, initiatorPeerID := testStaticKeyAndID(t)
-	responderStaticKey, responderPeerID := testStaticKeyAndID(t)
+func TestHandshakeNoInitiatorStake(t *testing.T) {
+	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	initiator := createTestConnectionConfig(t)
+	responder := createTestConnectionConfig(t)
+
+	stakeMonitor := local.NewStakeMonitor()
+	// only responder is staked
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+
+	_, _, inboundError, outboundError :=
+		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
+
+	if inboundError != nil {
+		t.Fatal(inboundError)
+	}
+
+	expectedOutboundError := fmt.Errorf("connection handshake failed - remote peer has no minimum stake")
+	if !reflect.DeepEqual(expectedOutboundError, outboundError) {
+		t.Fatalf(
+			"unexpected outbound connection error\nexpected: %v\nactual: %v",
+			expectedOutboundError,
+			outboundError,
+		)
+	}
+}
+
+func TestHandshakeNoResponderStake(t *testing.T) {
+	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	initiator := createTestConnectionConfig(t)
+	responder := createTestConnectionConfig(t)
+
+	stakeMonitor := local.NewStakeMonitor()
+	// only initiator is staked
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+
+	_, _, inboundError, outboundError :=
+		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
+
+	expectedInboundError := fmt.Errorf("connection handshake failed - remote peer has no minimum stake")
+	if !reflect.DeepEqual(expectedInboundError, inboundError) {
+		t.Fatalf(
+			"unexpected outbound connection error\nexpected: %v\nactual: %v",
+			expectedInboundError,
+			inboundError,
+		)
+	}
+
+	if outboundError != nil {
+		t.Fatal(outboundError)
+	}
+}
+
+func connectInitiatorAndResponder(
+	initiator *testConnectionConfig,
+	responder *testConnectionConfig,
+	stakeMonitor chain.StakeMonitor,
+	t *testing.T,
+) (
+	authnInboundConn *authenticatedConnection,
+	authnOutboundConn *authenticatedConnection,
+	outboundError error,
+	inboundError error,
+) {
+
 	initiatorConn, responderConn := newConnPair()
 
-	var (
-		done              = make(chan struct{})
-		initiatorErr      error
-		authnOutboundConn *authenticatedConnection
-	)
+	done := make(chan struct{})
+
 	go func(
 		initiatorConn net.Conn,
 		initiatorPeerID peer.ID,
-		initiatorStaticKey libp2pcrypto.PrivKey,
+		initiatorPrivKey libp2pcrypto.PrivKey,
 		responderPeerID peer.ID,
 	) {
-		authnOutboundConn, initiatorErr = newAuthenticatedOutboundConnection(
+		authnOutboundConn, outboundError = newAuthenticatedOutboundConnection(
 			initiatorConn,
 			initiatorPeerID,
-			initiatorStaticKey,
+			initiatorPrivKey,
 			responderPeerID,
+			stakeMonitor,
 		)
 		done <- struct{}{}
-	}(initiatorConn, initiatorPeerID, initiatorStaticKey, responderPeerID)
+	}(initiatorConn, initiator.peerID, initiator.privKey, responder.peerID)
 
-	authnInboundConn, err := newAuthenticatedInboundConnection(
+	authnInboundConn, inboundError = newAuthenticatedInboundConnection(
 		responderConn,
-		responderPeerID,
-		responderStaticKey,
-		"",
+		responder.peerID,
+		responder.privKey,
+		stakeMonitor,
 	)
-	if err != nil {
-		t.Fatalf("failed to connect initiator with responder [%v]", err)
-	}
 
-	// handshake is done, and we'll know if the outbound failed
-	<-done
+	<-done // handshake is done
 
-	if initiatorErr != nil {
-		t.Fatal(initiatorErr)
-	}
-
-	return authnInboundConn, authnOutboundConn
+	return
 }
 
-func testStaticKeyAndID(t *testing.T) (libp2pcrypto.PrivKey, peer.ID) {
-	staticKey, err := key.GenerateStaticNetworkKey(crand.Reader)
+type testConnectionConfig struct {
+	privKey *key.NetworkPrivateKey
+	pubKey  *key.NetworkPublicKey
+	peerID  peer.ID
+}
+
+func createTestConnectionConfig(t *testing.T) *testConnectionConfig {
+	privKey, pubKey, err := key.GenerateStaticNetworkKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	peerID, err := peer.IDFromPrivateKey(staticKey)
+	peerID, err := peer.IDFromPrivateKey(privKey)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return staticKey, peerID
+
+	return &testConnectionConfig{privKey, pubKey, peerID}
 }
 
 // Connect an initiator and responder via a full duplex network connection (reads

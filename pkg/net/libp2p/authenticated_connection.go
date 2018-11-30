@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -26,6 +28,8 @@ type authenticatedConnection struct {
 
 	remotePeerID        peer.ID
 	remotePeerPublicKey libp2pcrypto.PubKey
+
+	stakeMonitor chain.StakeMonitor
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
@@ -38,12 +42,13 @@ func newAuthenticatedInboundConnection(
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
-	remotePeerID peer.ID,
+	stakeMonitor chain.StakeMonitor,
 ) (*authenticatedConnection, error) {
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
+		stakeMonitor:        stakeMonitor,
 	}
 
 	if err := ac.runHandshakeAsResponder(); err != nil {
@@ -51,6 +56,19 @@ func newAuthenticatedInboundConnection(
 		// otherwise we leak.
 		ac.Close()
 		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+	}
+
+	hasMinimumStake, err := ac.checkRemotePeerStake()
+	if err != nil {
+		ac.Close()
+		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+	}
+
+	if !hasMinimumStake {
+		ac.Close()
+		return nil, fmt.Errorf(
+			"connection handshake failed - remote peer has no minimum stake",
+		)
 	}
 
 	return ac, nil
@@ -66,6 +84,7 @@ func newAuthenticatedOutboundConnection(
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
+	stakeMonitor chain.StakeMonitor,
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
@@ -81,6 +100,7 @@ func newAuthenticatedOutboundConnection(
 		localPeerPrivateKey: privateKey,
 		remotePeerID:        remotePeerID,
 		remotePeerPublicKey: remotePublicKey,
+		stakeMonitor:        stakeMonitor,
 	}
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
@@ -88,7 +108,31 @@ func newAuthenticatedOutboundConnection(
 		return nil, fmt.Errorf("connection handshake failed [%v]", err)
 	}
 
+	hasMinimumStake, err := ac.checkRemotePeerStake()
+	if err != nil {
+		ac.Close()
+		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+	}
+
+	if !hasMinimumStake {
+		ac.Close()
+		return nil, fmt.Errorf(
+			"connection handshake failed - remote peer has no minimum stake",
+		)
+	}
+
 	return ac, nil
+}
+
+func (ac *authenticatedConnection) checkRemotePeerStake() (bool, error) {
+	networkKey, ok := ac.remotePeerPublicKey.(*key.NetworkPublicKey)
+	if !ok {
+		return false, fmt.Errorf("unexpected type of remote peer's public key")
+	}
+
+	return ac.stakeMonitor.HasMinimumStake(
+		key.NetworkPubKeyToEthAddress(networkKey),
+	)
 }
 
 func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
@@ -291,13 +335,16 @@ func (ac *authenticatedConnection) responderReceiveAct1(
 		return nil, err
 	}
 
-	// Libp2p specific step: the responder has no knowledge of the initiator
-	// until after the handshake has succeeded, the connection has been
-	// upgraded, and identity information is exchanged. This provides an
-	// element of identity hiding for the initiator. To help prevent
-	// malicious interference, we want to pin this identity for the duration
-	// of the connection.
+	// In libp2p, the responder doesn't know the identity of the initiator
+	// during the handshake. We overcome this limitation by sending the identity
+	// and public key in the envelope. In the first act of the handshake, the
+	// responder extracts this information.
 	ac.remotePeerID = peer.ID(act1Envelope.GetPeerID())
+	remotePublicKey, err := ac.remotePeerID.ExtractPublicKey()
+	if err != nil {
+		return nil, err
+	}
+	ac.remotePeerPublicKey = remotePublicKey
 
 	if err := ac.verify(
 		ac.remotePeerID,

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 
@@ -100,14 +101,15 @@ func (p *provider) Peers() []string {
 func Connect(
 	ctx context.Context,
 	config Config,
-	staticKey *key.StaticNetworkKey,
+	staticKey *key.NetworkPrivateKey,
+	stakeMonitor chain.StakeMonitor,
 ) (net.Provider, error) {
 	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, config.Port)
+	host, err := discoverAndListen(ctx, identity, config.Port, stakeMonitor)
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +145,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
+	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
 
@@ -152,10 +155,21 @@ func discoverAndListen(
 		return nil, err
 	}
 
+	transport, err := newAuthenticatedTransport(
+		identity.privKey,
+		stakeMonitor,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create authenticated transport [%v]",
+			err,
+		)
+	}
+
 	return libp2p.New(ctx,
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
-		libp2p.Security(handshakeID, newAuthenticatedTransport),
+		libp2p.Security(handshakeID, transport),
 		libp2p.ConnectionManager(
 			connmgr.NewConnManager(
 				DefaultConnMgrLowWater,
