@@ -8,7 +8,7 @@ library ModUtils {
      * Returns base^exponent mod p.
      */
     function modExp(uint256 base, uint256 exponent, uint256 p)
-        public
+        internal
         view returns(uint256)
     {
         // Args for the pre-compile: [<length_of_BASE> <length_of_EXPONENT>
@@ -30,7 +30,7 @@ library ModUtils {
      * or 0 if there is no such root.
      */
     function modSqrt(uint256 a, uint256 p)
-        public
+        internal
         view returns(uint256)
     {
 
@@ -102,7 +102,7 @@ library ModUtils {
      * a non-quadratic residue, and 0 if a is 0.
      */
     function legendre(uint256 a, uint256 p)
-        public
+        internal
         view returns(int8)
     {
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
