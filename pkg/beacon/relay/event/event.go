@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 )
 
@@ -48,6 +50,6 @@ type StakerRegistration struct {
 // PublishedResult represents a result published to the chain. It holds an ID of
 // a member who published the result and a result in a byte slice.
 type PublishedResult struct {
-	PublisherID int
+	PublisherID gjkr.MemberID
 	Result      *result.Result
 }
