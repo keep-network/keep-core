@@ -2,6 +2,7 @@ package gjkr
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
@@ -127,14 +128,9 @@ func (ssam *SecretSharesAccusationsMessage) Type() string {
 // Marshal converts this SecretSharesAccusationsMessage to a byte array
 // suitable for network communication.
 func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
-	accusedIDsBytes := make([][]byte, 0, len(ssam.accusedIDs))
-	for _, accusedID := range ssam.accusedIDs {
-		accusedIDsBytes = append(accusedIDsBytes, memberIDToBytes(accusedID))
-	}
-
 	return (&pb.SecretSharesAccusations{
-		SenderID:   memberIDToBytes(ssam.senderID),
-		AccusedIDs: accusedIDsBytes,
+		SenderID:           memberIDToBytes(ssam.senderID),
+		AccusedMembersKeys: marshalAccusedMembersKeys(ssam.accusedMembersKeys),
 	}).Marshal()
 }
 
@@ -146,13 +142,15 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	ssam.senderID = bytesToMemberID(pbMsg.SenderID)
-
-	var accusedIDs []MemberID
-	for _, accusedIDBytes := range pbMsg.AccusedIDs {
-		accusedIDs = append(accusedIDs, bytesToMemberID(accusedIDBytes))
+	accusedMembersKeys, err := unmarshalAccusedMembersKeys(
+		pbMsg.AccusedMembersKeys,
+	)
+	if err != nil {
+		return nil
 	}
-	ssam.accusedIDs = accusedIDs
+
+	ssam.senderID = bytesToMemberID(pbMsg.SenderID)
+	ssam.accusedMembersKeys = accusedMembersKeys
 
 	return nil
 }
@@ -206,14 +204,9 @@ func (pam *PointsAccusationsMessage) Type() string {
 // Marshal converts this PointsAccusationsMessage to a byte array suitable
 // for network communication.
 func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
-	accusedIDsBytes := make([][]byte, 0, len(pam.accusedIDs))
-	for _, accusedID := range pam.accusedIDs {
-		accusedIDsBytes = append(accusedIDsBytes, memberIDToBytes(accusedID))
-	}
-
 	return (&pb.PointsAccusations{
-		SenderID:   memberIDToBytes(pam.senderID),
-		AccusedIDs: accusedIDsBytes,
+		SenderID:           memberIDToBytes(pam.senderID),
+		AccusedMembersKeys: marshalAccusedMembersKeys(pam.accusedMembersKeys),
 	}).Marshal()
 }
 
@@ -225,13 +218,15 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	pam.senderID = bytesToMemberID(pbMsg.SenderID)
-
-	var accusedIDs []MemberID
-	for _, accusedIDBytes := range pbMsg.AccusedIDs {
-		accusedIDs = append(accusedIDs, bytesToMemberID(accusedIDBytes))
+	accusedMembersKeys, err := unmarshalAccusedMembersKeys(
+		pbMsg.AccusedMembersKeys,
+	)
+	if err != nil {
+		return nil
 	}
-	pam.accusedIDs = accusedIDs
+
+	pam.senderID = bytesToMemberID(pbMsg.SenderID)
+	pam.accusedMembersKeys = accusedMembersKeys
 
 	return nil
 }
@@ -244,4 +239,32 @@ func memberIDToBytes(memberID MemberID) []byte {
 
 func bytesToMemberID(bytes []byte) MemberID {
 	return MemberID(binary.LittleEndian.Uint32(bytes))
+}
+
+func marshalAccusedMembersKeys(
+	keys map[MemberID]*ephemeral.PrivateKey,
+) map[string][]byte {
+	marshaled := make(map[string][]byte, len(keys))
+	for id, key := range keys {
+		marshaled[id.HexString()] = key.Marshal()
+	}
+	return marshaled
+}
+
+func unmarshalAccusedMembersKeys(
+	keys map[string][]byte,
+) (map[MemberID]*ephemeral.PrivateKey, error) {
+	var unmarshaled = make(map[MemberID]*ephemeral.PrivateKey, len(keys))
+	for memberIDHex, keyBytes := range keys {
+		memberID, err := MemberIDFromHex(memberIDHex)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"could not unmarshal accused members' keys [%v]",
+				err,
+			)
+		}
+		unmarshaled[memberID] = ephemeral.UnmarshalPrivateKey(keyBytes)
+	}
+
+	return unmarshaled, nil
 }

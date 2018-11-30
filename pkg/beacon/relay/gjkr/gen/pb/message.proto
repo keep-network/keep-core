@@ -23,7 +23,7 @@ message PeerShares {
 
 message SecretSharesAccusations {
     bytes senderID = 1;
-    repeated bytes accusedIDs = 2;
+    map<string, bytes> accusedMembersKeys = 2;
 }
 
 message MemberPublicKeySharePoints {
@@ -33,5 +33,5 @@ message MemberPublicKeySharePoints {
 
 message PointsAccusations {
     bytes senderID = 1;
-    repeated bytes accusedIDs = 2;
+    map<string, bytes> accusedMembersKeys = 2;
 }

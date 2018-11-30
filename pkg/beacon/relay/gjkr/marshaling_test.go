@@ -73,17 +73,26 @@ func TestPeerSharesMessageRoundtrip(t *testing.T) {
 }
 
 func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
+	keyPair1, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keyPair2, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	msg := &SecretSharesAccusationsMessage{
 		senderID: MemberID(12121),
-		accusedIDs: []MemberID{
-			MemberID(1283),
-			MemberID(9712),
-			MemberID(8141),
+		accusedMembersKeys: map[MemberID]*ephemeral.PrivateKey{
+			MemberID(1283): keyPair1.PrivateKey,
+			MemberID(9712): keyPair2.PrivateKey,
 		},
 	}
 	unmarshaled := &SecretSharesAccusationsMessage{}
 
-	err := pbutils.RoundTrip(msg, unmarshaled)
+	err = pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,17 +125,26 @@ func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 }
 
 func TestPointsAccusationsMessage(t *testing.T) {
+	keyPair1, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keyPair2, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	msg := &PointsAccusationsMessage{
 		senderID: MemberID(129841),
-		accusedIDs: []MemberID{
-			MemberID(12818),
-			MemberID(91819),
-			MemberID(61616),
+		accusedMembersKeys: map[MemberID]*ephemeral.PrivateKey{
+			MemberID(12341): keyPair1.PrivateKey,
+			MemberID(51111): keyPair2.PrivateKey,
 		},
 	}
 	unmarshaled := &PointsAccusationsMessage{}
 
-	err := pbutils.RoundTrip(msg, unmarshaled)
+	err = pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
