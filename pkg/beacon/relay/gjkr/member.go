@@ -33,8 +33,11 @@ type SymmetricKeyGeneratingMember struct {
 }
 
 // InitializeCommitting returns a member to perform next protocol operations.
-func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMember {
-	return &CommittingMember{SymmetricKeyGeneratingMember: skgm}
+func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting(vss *pedersen.VSS) *CommittingMember {
+	return &CommittingMember{
+		SymmetricKeyGeneratingMember: skgm,
+		vss:                          vss,
+	}
 }
 
 // CommittingMember represents one member in a distributed key generation group,
@@ -58,12 +61,6 @@ type CommittingMember struct {
 	//
 	// These are private values and should not be exposed.
 	selfSecretShareS, selfSecretShareT *big.Int
-}
-
-// SetVSS sets VSS configuration for member.
-// TODO Check if this should be passed or generated at the begining of DKG execution.
-func (cm *CommittingMember) SetVSS(vss *pedersen.VSS) {
-	cm.vss = vss
 }
 
 // InitializeCommitmentsVerification returns a member to perform next protocol operations.
