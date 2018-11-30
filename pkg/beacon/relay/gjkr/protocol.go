@@ -311,14 +311,9 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	return expectedProduct.Cmp(commitmentsProduct) == 0
 }
 
-// ResolveSecretSharesAccusations resolves a complaint received from a sender
-// against a member accused in the shares and commitments verification phase.
-// A member is calling this function to judge which party of the dispute is lying.
-//
-// The function requires shares `s_mj` and `t_mj` calculated by the accused
-// member (`m`) for the sender (`j`). These values are expected to be broadcast
-// before in encrypted form. On accusation, the shares should be decrypted and
-// the revealed value should be passed to this function.
+// ResolveSecretSharesAccusationsMessages resolves complaints received in
+// secret shares accusations messages. The member calls this function to judge
+// which party of the dispute is lying.
 //
 // A current member cannot be a part of a dispute. If the current member is
 // either an accuser or is accused the function will return an error. The accused
@@ -326,32 +321,68 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // already performed the calculation in the previous phase which resulted in the
 // accusation and waits now for a judgment from other players.
 //
-// The returned value is an ID of the member who should be slashed. It will be
-// an accuser ID if the validation shows that shares and commitments are valid,
-// so the accusation was unfounded. Else it confirms that accused member misbehaved
-// and their ID is returned.
+// This function needs to decrypt shares sent previously by the accused member
+// to the accuser in an encrypted form. To do that it needs to recover a symmetric
+// key used for data encryption. It takes private key revealed by the accuser
+// and public key broadcasted by the accused and performs Elliptic Curve Diffie-
+// Hellman operation between them.
+//
+// It returns IDs of members who should be disqualified. It will be an accuser
+// if the validation shows that shares and commitments are valid, so the accusation
+// was unfounded. Else it confirms that accused member misbehaved and their ID is
+// added to the list.
 //
 // See Phase 5 of the protocol specification.
-func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusations(
-	senderID, accusedID MemberID, // j, m
-	shareS, shareT *big.Int, // s_mj, t_mj
-) (MemberID, error) {
-	if sjm.ID == senderID || sjm.ID == accusedID {
-		return 0, fmt.Errorf("current member cannot be a part of a dispute")
-	}
+func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
+	messages []*SecretSharesAccusationsMessage,
+) ([]MemberID, error) {
+	var disqualifiedMembers []MemberID
+	for _, message := range messages {
+		accuserID := message.senderID
+		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
+			if sjm.ID == accuserID || sjm.ID == accusedID {
+				return nil, fmt.Errorf("current member cannot be a part of a dispute")
+			}
 
-	// Check if `commitmentsProduct == expectedProduct`
-	// `commitmentsProduct = Π (C_m[k] ^ (j^k)) mod p` for k in [0..T]
-	// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`
-	// where: m is accused member's ID, j is sender's ID, T is threshold.
-	if sjm.areSharesValidAgainstCommitments(
-		shareS, shareT, // s_mj, t_mj
-		sjm.receivedValidPeerCommitments[accusedID], // C_m
-		senderID, // j
-	) {
-		return senderID, nil
+			messageBuffer := sjm.protocolConfig.messageBuffer
+			// Find ephemeral public key sent by accused member to the accuser.
+			accusedPublicKey := messageBuffer.ephemeralPublicKeyMessage(
+				accusedID, accuserID).ephemeralPublicKey
+			// Recover symmetric key used for communication between accused and
+			// accuser.
+			recoveredSymmetricKey := revealedAccuserPrivateKey.Ecdh(accusedPublicKey)
+
+			// Find peer share message sent by accused member to the accuser and
+			// decrypt the shares provided in them.
+			peerSharesMessage := messageBuffer.peerSharesMessage(
+				accusedID, accuserID, recoveredSymmetricKey)
+			shareS, err := peerSharesMessage.decryptShareS(recoveredSymmetricKey) // s_mj
+			if err != nil {
+				// TODO Should we disqualify accuser/accused member here?
+				return nil, fmt.Errorf("cannot decrypt share S [%v", err)
+			}
+			shareT, err := peerSharesMessage.decryptShareT(recoveredSymmetricKey) // t_mj
+			if err != nil {
+				// TODO Should we disqualify accuser/accused member here?
+				return nil, fmt.Errorf("cannot decrypt share T [%v", err)
+			}
+
+			// Check if `commitmentsProduct == expectedProduct`
+			// `commitmentsProduct = Π (C_m[k] ^ (j^k)) mod p` for k in [0..T]
+			// `expectedProduct = (g ^ s_mj) * (h ^ t_mj) mod p`
+			// where: m is accused member's ID, j is sender's ID, T is threshold.
+			if sjm.areSharesValidAgainstCommitments(
+				shareS, shareT, // s_mj, t_mj
+				sjm.receivedValidPeerCommitments[accusedID], // C_m
+				accuserID, // j
+			) {
+				disqualifiedMembers = append(disqualifiedMembers, accuserID)
+			} else {
+				disqualifiedMembers = append(disqualifiedMembers, accusedID)
+			}
+		}
 	}
-	return accusedID, nil
+	return disqualifiedMembers, nil
 }
 
 // CombineMemberShares sums up all `s` and `t` shares intended for this member.
