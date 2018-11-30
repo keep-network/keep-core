@@ -87,9 +87,9 @@ type CommittingMember struct {
 func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
 		CommittingMember:             cm,
-		receivedValidSharesS:         make(map[int]*big.Int),
-		receivedValidSharesT:         make(map[int]*big.Int),
-		receivedValidPeerCommitments: make(map[int][]*big.Int),
+		receivedValidSharesS:         make(map[MemberID]*big.Int),
+		receivedValidSharesT:         make(map[MemberID]*big.Int),
+		receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
 	}
 }
 
@@ -149,7 +149,7 @@ type QualifiedMember struct {
 func (qm *QualifiedMember) InitializeSharing() *SharingMember {
 	return &SharingMember{
 		QualifiedMember:                       qm,
-		receivedValidPeerPublicKeySharePoints: make(map[int][]*big.Int),
+		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int),
 	}
 }
 
@@ -209,8 +209,8 @@ type PointsJustifyingMember struct {
 func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
 		PointsJustifyingMember:             pjm,
-		reconstructedIndividualPrivateKeys: make(map[int]*big.Int),
-		reconstructedIndividualPublicKeys:  make(map[int]*big.Int),
+		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[MemberID]*big.Int),
 	}
 }
 
