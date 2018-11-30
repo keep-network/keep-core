@@ -103,6 +103,28 @@ contract KeepGroupImplV1 is Ownable {
         return ticketValue == expected;
     }
 
+    function challenge(
+        uint256 ticketValue
+    ) public {
+
+        Proof memory proof = _proofs[ticketValue];
+
+        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, proof.stakerInput, proof.virtualStakerNumber)));
+
+        if (ticketValue == expected) {
+            punish(msg.sender);
+        } else {
+            punish(proof.sender);
+        }
+
+    }
+
+    function punish(
+        address staker
+    ) private {
+        // TODO add permissions to this contract to access staking contracts
+    }
+
     // Temporary Code for Milestone 1 follows
     bytes32[] private _listOfGroupMembersIDs;
     // End Temporary Code for Milestone 1
