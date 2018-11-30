@@ -293,43 +293,22 @@ func TestPublishResult_ConcurrentExecution(t *testing.T) {
 
 func initializePublishingMembersGroup(threshold, groupSize, blockStep int,
 ) ([]*PublishingMember, error) {
-	group := &Group{
-		groupSize:          groupSize,
-		dishonestThreshold: threshold,
-	}
-
 	chain, err := initChain(threshold, groupSize, blockStep)
 	if err != nil {
 		return nil, err
 	}
 
-	dkg := &DKG{chain: chain}
-
-	var members []*PublishingMember
-
-	for i := 1; i <= groupSize; i++ {
-		id := i
-		members = append(members,
-			&PublishingMember{
-				PointsJustifyingMember: &PointsJustifyingMember{
-					SharingMember: &SharingMember{
-						QualifiedMember: &QualifiedMember{
-							SharesJustifyingMember: &SharesJustifyingMember{
-								CommittingMember: &CommittingMember{
-									memberCore: &memberCore{
-										ID:             id,
-										group:          group,
-										protocolConfig: dkg,
-									},
-								},
-							},
-						},
-					},
-				},
-			})
-		group.RegisterMemberID(id)
+	combiningMembers, err := initializeCombiningMembersGroup(threshold, groupSize, nil)
+	if err != nil {
+		return nil, err
 	}
-	return members, nil
+
+	var publishingMembers []*PublishingMember
+	for _, cm := range combiningMembers {
+		cm.protocolConfig.chain = chain
+		publishingMembers = append(publishingMembers, cm.InitializePublishing())
+	}
+	return publishingMembers, nil
 }
 
 func initChain(threshold, groupSize, blockStep int) (*Chain, error) {
