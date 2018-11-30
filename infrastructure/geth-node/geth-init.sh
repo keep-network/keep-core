@@ -26,6 +26,7 @@ cat <<EOF >> /root/genesis.json
   "config": {
     "chainId": 1101,
     "homesteadBlock": 0,
+    "byzantiumBlock": 0,
     "eip155Block": 0,
     "eip158Block": 0
   },
