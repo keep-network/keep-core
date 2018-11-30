@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func TestGenerateSymmetricKeyGroup(t *testing.T) {
+func TestGenerateKeys(t *testing.T) {
 	groupSize := 3
 
 	// Create a group of 3 members
