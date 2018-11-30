@@ -25,8 +25,8 @@ import (
 // symmetric key established between the sender and receiver. In the case of an
 // accusation, members performing compliant resolution need to look at the shares
 // sent by the accused party. To do this, they read the round 3 message from the
-// buffer, passing the symmetric key used between the accuser and accused so that
-// the round 3 message from the accused party can be decrypted.
+// log, and decrypt it using the symmetric key used between the accuser and
+// accused party. The key is publicly revealed by the accuser.
 type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
 	// broadcast in the first protocol round by the given sender for the
