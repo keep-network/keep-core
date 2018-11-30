@@ -86,7 +86,8 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   it("should be able to submit a ticket within initial timeout", async function() {
 
-    await keepGroupImplViaProxy.runGroupSelection();
+    let randomBeaconValue = 123456789;
+    await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
 
     await keepGroupImplViaProxy.submitTicket(1, 2, 3);
 
@@ -97,7 +98,8 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   it("should not be able to submit a ticket after initial timeout", async function() {
 
-    await keepGroupImplViaProxy.runGroupSelection();
+    let randomBeaconValue = 123456789;
+    await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
 
     // Mine one block
     web3.currentProvider.sendAsync({
@@ -117,9 +119,9 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   it("should be able to verify a ticket", async function() {
 
-    await keepGroupImplViaProxy.runGroupSelection();
-
     let randomBeaconValue = 123456789;
+    await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
+
     let stakerInput = 123;
     let virtualStakerNumber = 456;
 
@@ -133,11 +135,11 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     let ticketProof = await keepGroupImplViaProxy.getTicketProof(ticketValue);
 
     assert.equal(await keepGroupImplViaProxy.cheapCheck(
-      ticketValue, ticketProof[0], ticketProof[1], randomBeaconValue
+      ticketValue, ticketProof[0], ticketProof[1]
     ), true, "Should be able to verify a valid ticket.");
     
     assert.equal(await keepGroupImplViaProxy.cheapCheck(
-      ticketValue - 1, ticketProof[0], ticketProof[1], randomBeaconValue
+      ticketValue - 1, ticketProof[0], ticketProof[1]
     ), false, "Should fail verifying invalid ticket.");
 
   });

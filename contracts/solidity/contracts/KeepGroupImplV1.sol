@@ -21,6 +21,9 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
+
+    uint256 internal _randomBeaconValue;
+
     uint256[] internal _tickets;
 
     struct Proof {
@@ -41,8 +44,9 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
-    function runGroupSelection() public onlyOwner {
+    function runGroupSelection(uint256 randomBeaconValue) public onlyOwner {
         _submissionStart = block.number;
+        _randomBeaconValue = randomBeaconValue;
     }
 
     /**
@@ -88,16 +92,14 @@ contract KeepGroupImplV1 is Ownable {
      * random beacon output, staker-specific 'stakerInput' and virtualStakerNumber.
      * @param stakerInput Staker-specific value.
      * @param virtualStakerNumber Number within a range of 1 to staker's weight.
-     * @param randomBeaconValue Random beacon value that was used to create the ticket.
      */
     function cheapCheck(
         uint256 ticketValue,
         uint256 stakerInput,
-        uint256 virtualStakerNumber,
-        uint256 randomBeaconValue
+        uint256 virtualStakerNumber
     ) public view returns(bool) {
 
-        uint256 expected = uint256(keccak256(abi.encodePacked(randomBeaconValue, stakerInput, virtualStakerNumber)));
+        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, stakerInput, virtualStakerNumber)));
         return ticketValue == expected;
     }
 
