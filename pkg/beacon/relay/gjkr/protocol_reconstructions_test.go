@@ -137,7 +137,8 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*ReconstructingMember, error) {
+func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
+	[]*ReconstructingMember, error) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
 	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize, dkg)
@@ -146,13 +147,9 @@ func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([
 	}
 
 	var reconstructingMembers []*ReconstructingMember
-	// TODO Should be handled by the `.Next()`` function
 	for _, pjm := range pointsJustifyingMembers {
 		reconstructingMembers = append(reconstructingMembers,
-			&ReconstructingMember{
-				PointsJustifyingMember: pjm,
-			},
-		)
+			pjm.InitializeReconstruction())
 	}
 
 	return reconstructingMembers, nil
@@ -166,7 +163,8 @@ func disqualifyMembers(
 ) []*DisqualifiedShares {
 	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedMembersIDs))
 	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
-		sharesReceivedFromDisqualifiedMember := make(map[MemberID]*big.Int, len(members)-len(disqualifiedMembersIDs))
+		sharesReceivedFromDisqualifiedMember := make(map[MemberID]*big.Int,
+			len(members)-len(disqualifiedMembersIDs))
 		// for each group member
 		for _, m := range members {
 			// if the member has not been disqualified
@@ -199,15 +197,8 @@ func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Com
 	}
 
 	var combiningMembers []*CombiningMember
-	// TODO Should be handled by the `.Next()`` function
 	for _, rm := range reconstructingMembers {
-		rm.reconstructedIndividualPublicKeys = make(map[MemberID]*big.Int)
-
-		combiningMembers = append(combiningMembers,
-			&CombiningMember{
-				ReconstructingMember: rm,
-			},
-		)
+		combiningMembers = append(combiningMembers, rm.InitializeCombining())
 	}
 
 	return combiningMembers, nil

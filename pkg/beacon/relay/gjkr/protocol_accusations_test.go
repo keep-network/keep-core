@@ -229,11 +229,9 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) (
 	}
 
 	var sharesJustifyingMembers []*SharesJustifyingMember
-	// TODO: Handle transition from CommittingMember to SharesJustifyingMember in Next() function
 	for _, cvm := range commitmentsVerifyingMembers {
-		sharesJustifyingMembers = append(sharesJustifyingMembers, &SharesJustifyingMember{
-			CommitmentsVerifyingMember: cvm,
-		})
+		sharesJustifyingMembers = append(sharesJustifyingMembers,
+			cvm.InitializeSharesJustification())
 	}
 
 	// Maps which will keep coefficients and commitments of all group members,
@@ -297,12 +295,9 @@ func initializePointsJustifyingMemberGroup(
 	}
 
 	var pointsJustifyingMembers []*PointsJustifyingMember
-	// TODO: Handle transition from SharingMember to PointsJustifyingMember in Next() function
 	for _, sm := range sharingMembers {
 		pointsJustifyingMembers = append(pointsJustifyingMembers,
-			&PointsJustifyingMember{
-				SharingMember: sm,
-			})
+			sm.InitializePointsJustification())
 	}
 
 	// Calculate public key share points for each group member (Phase 7).
