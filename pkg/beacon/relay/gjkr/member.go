@@ -29,7 +29,7 @@ type EphemeralKeyPairGeneratingMember struct {
 	*memberCore
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
-	ephemeralKeys map[MemberID]*ephemeral.KeyPair
+	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
 }
 
 // SymmetricKeyGeneratingMember represents one member in a distributed key

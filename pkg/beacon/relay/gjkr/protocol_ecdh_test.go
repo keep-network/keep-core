@@ -123,7 +123,7 @@ func initializeEphemeralKeyPairMembersGroup(
 				group:          group,
 				protocolConfig: dkg,
 			},
-			ephemeralKeys: make(map[MemberID]*ephemeral.KeyPair),
+			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 		})
 		group.RegisterMemberID(id)
 	}
@@ -150,7 +150,7 @@ func initializeSymmetricKeyMembersGroup(
 						err,
 					)
 				}
-				member1.ephemeralKeys[member2.ID] = keyPair
+				member1.ephemeralKeyPairs[member2.ID] = keyPair
 			}
 		}
 	}
@@ -184,8 +184,8 @@ func generateGroupWithEphemeralKeys(
 	for _, member1 := range symmetricKeyMembers {
 		for _, member2 := range symmetricKeyMembers {
 			if member1.ID != member2.ID {
-				privKey := member1.ephemeralKeys[member2.ID].PrivateKey
-				pubKey := member2.ephemeralKeys[member1.ID].PublicKey
+				privKey := member1.ephemeralKeyPairs[member2.ID].PrivateKey
+				pubKey := member2.ephemeralKeyPairs[member1.ID].PublicKey
 				member1.symmetricKeys[member2.ID] = privKey.Ecdh(pubKey)
 			}
 		}

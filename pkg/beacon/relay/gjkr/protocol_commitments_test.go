@@ -217,7 +217,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 
 			expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 			for _, id := range test.expectedAccusedIDs {
-				expectedAccusedMembersKeys[id] = verifyingMember.ephemeralKeys[id].PrivateKey
+				expectedAccusedMembersKeys[id] = verifyingMember.ephemeralKeyPairs[id].PrivateKey
 			}
 
 			if !reflect.DeepEqual(accusedMessage.accusedMembersKeys, expectedAccusedMembersKeys) {

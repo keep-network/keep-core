@@ -197,7 +197,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			}
 			expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 			for _, id := range test.expectedAccusedIDs {
-				expectedAccusedMembersKeys[id] = sharingMember.ephemeralKeys[id].PrivateKey
+				expectedAccusedMembersKeys[id] = sharingMember.ephemeralKeyPairs[id].PrivateKey
 			}
 
 			if !reflect.DeepEqual(accusedMessage.accusedMembersKeys, expectedAccusedMembersKeys) {
