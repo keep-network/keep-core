@@ -281,15 +281,13 @@ func (c *localChain) RequestRelayEntry(
 
 // IsResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsResultPublished(result *result.Result) bool {
-	resultHash := result.Bytes()
-
+func (c *localChain) IsResultPublished(result *result.Result) *event.PublishedResult {
 	for _, r := range c.submittedResults {
-		if reflect.DeepEqual(r, resultHash) {
-			return true
+		if reflect.DeepEqual(r.Result, result) {
+			return r
 		}
 	}
-	return false
+	return nil
 }
 
 // SubmitResult submits the result to a chain.
