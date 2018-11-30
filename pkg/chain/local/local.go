@@ -26,13 +26,14 @@ type localChain struct {
 	groupRelayEntries      map[string]*big.Int
 
 	submittedResultsMutex sync.Mutex
-	submittedResults      [][]byte
+	submittedResults      []*event.PublishedResult
 
 	handlerMutex               sync.Mutex
 	relayEntryHandlers         []func(entry *event.Entry)
 	relayRequestHandlers       []func(request *event.Request)
 	groupRegisteredHandlers    []func(key *event.GroupRegistration)
 	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
+	publishedResultHandlers    []func(publishedResult *event.PublishedResult)
 
 	requestID   int64
 	latestValue *big.Int
@@ -182,6 +183,15 @@ func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration
 	c.handlerMutex.Unlock()
 }
 
+func (c *localChain) OnResultPublished(handler func(publishedResult *event.PublishedResult)) {
+	c.handlerMutex.Lock()
+	c.publishedResultHandlers = append(
+		c.publishedResultHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
+}
+
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
@@ -272,41 +282,51 @@ func (c *localChain) RequestRelayEntry(
 
 // IsResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsResultPublished(result *result.Result) bool {
-	resultHash := result.Bytes()
-
+func (c *localChain) IsResultPublished(result *result.Result) *event.PublishedResult {
 	for _, r := range c.submittedResults {
-		if reflect.DeepEqual(r, resultHash) {
-			return true
+		if reflect.DeepEqual(r.Result, result) {
+			return r
 		}
 	}
-	return false
+	return nil
 }
 
 // SubmitResult submits the result to a chain.
-func (c *localChain) SubmitResult(publisherID int, result *result.Result) *async.PublishedResultPromise {
+func (c *localChain) SubmitResult(publisherID int, resultToPublish *result.Result) *async.PublishedResultPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
 	publishedResultPromise := &async.PublishedResultPromise{}
 
-	resultBytes := result.Bytes()
-
 	for _, r := range c.submittedResults {
-		if reflect.DeepEqual(r, resultBytes) {
-			publishedResultPromise.Fail(fmt.Errorf("Result already submitted"))
+		if reflect.DeepEqual(r, resultToPublish) {
+			publishedResultPromise.Fail(fmt.Errorf("result already submitted"))
 			return publishedResultPromise
 		}
 	}
 
-	publishedResultPromise.Fulfill(&event.PublishedResult{
+	publishedResult := &event.PublishedResult{
 		PublisherID: publisherID,
-		Result:      resultBytes,
-	})
+		Result:      resultToPublish,
+	}
+
+	c.submittedResults = append(c.submittedResults, publishedResult)
 
 	c.handlerMutex.Lock()
-	c.submittedResults = append(c.submittedResults, resultBytes)
+	for _, handler := range c.publishedResultHandlers {
+		go func(handler func(publishedResult *event.PublishedResult), publisherID int) {
+			handler(&event.PublishedResult{
+				PublisherID: publisherID,
+				Result:      resultToPublish,
+			})
+		}(handler, publisherID)
+	}
 	c.handlerMutex.Unlock()
+
+	err := publishedResultPromise.Fulfill(publishedResult)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
+	}
 
 	return publishedResultPromise
 }
