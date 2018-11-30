@@ -11,6 +11,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -292,7 +293,7 @@ func (c *localChain) IsResultPublished(result *result.Result) *event.PublishedRe
 }
 
 // SubmitResult submits the result to a chain.
-func (c *localChain) SubmitResult(publisherID int, resultToPublish *result.Result) *async.PublishedResultPromise {
+func (c *localChain) SubmitResult(publisherID gjkr.MemberID, resultToPublish *result.Result) *async.PublishedResultPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
@@ -314,7 +315,7 @@ func (c *localChain) SubmitResult(publisherID int, resultToPublish *result.Resul
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.publishedResultHandlers {
-		go func(handler func(publishedResult *event.PublishedResult), publisherID int) {
+		go func(handler func(publishedResult *event.PublishedResult), publisherID gjkr.MemberID) {
 			handler(&event.PublishedResult{
 				PublisherID: publisherID,
 				Result:      resultToPublish,
