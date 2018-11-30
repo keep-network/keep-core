@@ -163,6 +163,9 @@ func initializeSymmetricKeyMembersGroup(
 	return symmetricKeyMembers, nil
 }
 
+// generateGroupWithEphemeralKeys executes first two phases of DKG protocol and
+// returns a fully initialized group of `SymmetricKeyGeneratingMember`s with all
+// ephemeral keys generated (private, public, and symmetric key).
 func generateGroupWithEphemeralKeys(
 	threshold int,
 	groupSize int,
