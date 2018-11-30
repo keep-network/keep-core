@@ -115,10 +115,10 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	// public key.
 	member.publicKeySharePoints = []*big.Int{big.NewInt(10), big.NewInt(11), big.NewInt(12)}
 
-	// Public coefficients received from peer members. Each peer member's zeroth
+	// Public coefficients received from other members. Each other member's zeroth
 	// coefficient is their individual public key.
-	member.receivedValidPeerPublicKeySharePoints[2] = []*big.Int{big.NewInt(20), big.NewInt(21), big.NewInt(22)}
-	member.receivedValidPeerPublicKeySharePoints[3] = []*big.Int{big.NewInt(30), big.NewInt(31), big.NewInt(32)}
+	member.receivedValidOtherMemberPublicKeySharePoints[2] = []*big.Int{big.NewInt(20), big.NewInt(21), big.NewInt(22)}
+	member.receivedValidOtherMemberPublicKeySharePoints[3] = []*big.Int{big.NewInt(30), big.NewInt(31), big.NewInt(32)}
 
 	// Reconstructed individual public keys for disqualified members.
 	member.reconstructedIndividualPublicKeys[4] = big.NewInt(91)
@@ -159,7 +159,7 @@ func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([
 }
 
 // disqualifyMembers disqualifies specific members for a test run. It collects
-// shares calculated by disqualified members for their peers and reveals them.
+// shares calculated by disqualified members for other members and reveals them.
 func disqualifyMembers(
 	members []*ReconstructingMember,
 	disqualifiedMembersIDs []MemberID,
@@ -173,8 +173,8 @@ func disqualifyMembers(
 			if !contains(disqualifiedMembersIDs, m.ID) {
 				// collect all shares which this member received from disqualified
 				// member and store them in sharesReceivedFromDisqualifiedMember
-				for peerID, receivedShare := range m.receivedValidSharesS {
-					if peerID == disqualifiedMemberID {
+				for otherMemberID, receivedShare := range m.receivedValidSharesS {
+					if otherMemberID == disqualifiedMemberID {
 						sharesReceivedFromDisqualifiedMember[m.ID] = receivedShare
 						break
 					}
@@ -183,7 +183,7 @@ func disqualifyMembers(
 		}
 		allDisqualifiedShares[i] = &DisqualifiedShares{
 			disqualifiedMemberID: disqualifiedMemberID,
-			peerSharesS:          sharesReceivedFromDisqualifiedMember,
+			otherMemberSharesS:   sharesReceivedFromDisqualifiedMember,
 		}
 	}
 

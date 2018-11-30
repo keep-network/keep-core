@@ -53,14 +53,14 @@ func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 	}
 }
 
-func TestPeerSharesMessageRoundtrip(t *testing.T) {
-	msg := &PeerSharesMessage{
+func TestOtherMemberSharesMessageRoundtrip(t *testing.T) {
+	msg := &OtherMemberSharesMessage{
 		senderID:        MemberID(997),
 		receiverID:      MemberID(112),
 		encryptedShareS: []byte{0x01, 0x02, 0x03, 0x04, 0x05},
 		encryptedShareT: []byte{0x0F, 0x0E, 0x0D, 0x0C, 0x0B},
 	}
-	unmarshaled := &PeerSharesMessage{}
+	unmarshaled := &OtherMemberSharesMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {

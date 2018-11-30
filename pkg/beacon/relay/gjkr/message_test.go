@@ -7,18 +7,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func TestCreateNewPeerSharesMessage(t *testing.T) {
+func TestCreateNewOtherMemberSharesMessage(t *testing.T) {
 	shareS := big.NewInt(1381319)
 	shareT := big.NewInt(1010212)
 
-	peerSharesMessage, key, err := newTestPeerSharesMessage(shareS, shareT)
+	otherMemberSharesMessage, key, err := newTestOtherMemberSharesMessage(shareS, shareT)
 
-	decryptedS, err := peerSharesMessage.decryptShareS(key)
+	decryptedS, err := otherMemberSharesMessage.decryptShareS(key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	decryptedT, err := peerSharesMessage.decryptShareT(key)
+	decryptedT, err := otherMemberSharesMessage.decryptShareT(key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,20 +42,20 @@ func TestCreateNewPeerSharesMessage(t *testing.T) {
 
 func TestCanDecrypt(t *testing.T) {
 	var tests = map[string]struct {
-		modifyMessage  func(msg *PeerSharesMessage)
+		modifyMessage  func(msg *OtherMemberSharesMessage)
 		expectedResult bool
 	}{
 		"decryption possible": {
 			expectedResult: true,
 		},
 		"decryption not possible - invalid S": {
-			modifyMessage: func(msg *PeerSharesMessage) {
+			modifyMessage: func(msg *OtherMemberSharesMessage) {
 				msg.encryptedShareS = []byte{0x01, 0x02, 0x03}
 			},
 			expectedResult: false,
 		},
 		"decryption not possible - invalid T": {
-			modifyMessage: func(msg *PeerSharesMessage) {
+			modifyMessage: func(msg *OtherMemberSharesMessage) {
 				msg.encryptedShareT = []byte{0x04, 0x05, 0x06}
 			},
 			expectedResult: false,
@@ -67,7 +67,7 @@ func TestCanDecrypt(t *testing.T) {
 			shareS := big.NewInt(90787123)
 			shareT := big.NewInt(62829113)
 
-			message, key, err := newTestPeerSharesMessage(shareS, shareT)
+			message, key, err := newTestOtherMemberSharesMessage(shareS, shareT)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -89,9 +89,8 @@ func TestCanDecrypt(t *testing.T) {
 	}
 }
 
-func newTestPeerSharesMessage(shareS, shareT *big.Int) (
-	*PeerSharesMessage,
-	ephemeral.SymmetricKey,
+func newTestOtherMemberSharesMessage(shareS, shareT *big.Int) (
+	*OtherMemberSharesMessage, ephemeral.SymmetricKey,
 	error,
 ) {
 	keyPair1, err := ephemeral.GenerateKeyPair()
@@ -106,10 +105,10 @@ func newTestPeerSharesMessage(shareS, shareT *big.Int) (
 
 	key := keyPair1.PrivateKey.Ecdh(keyPair2.PublicKey)
 
-	peerSharesMessage, err := newPeerSharesMessage(1, 2, shareS, shareT, key)
+	otherMemberSharesMessage, err := newOtherMemberSharesMessage(1, 2, shareS, shareT, key)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return peerSharesMessage, key, nil
+	return otherMemberSharesMessage, key, nil
 }

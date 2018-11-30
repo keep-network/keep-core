@@ -14,7 +14,7 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
 
-	var sharesMessages []*PeerSharesMessage
+	var sharesMessages []*OtherMemberSharesMessage
 	var commitmentsMessages []*MemberCommitmentsMessage
 	for _, member := range committingMembers {
 		sharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
@@ -30,16 +30,16 @@ func TestRoundTrip(t *testing.T) {
 	for _, cm := range committingMembers {
 		commitmentsVerifyingMembers = append(commitmentsVerifyingMembers,
 			&CommitmentsVerifyingMember{CommittingMember: cm,
-				receivedValidSharesS:         make(map[MemberID]*big.Int),
-				receivedValidSharesT:         make(map[MemberID]*big.Int),
-				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+				receivedValidSharesS:                make(map[MemberID]*big.Int),
+				receivedValidSharesT:                make(map[MemberID]*big.Int),
+				receivedValidOtherMemberCommitments: make(map[MemberID][]*big.Int),
 			},
 		)
 	}
 
 	for _, member := range commitmentsVerifyingMembers {
 		accusedSecretSharesMessage, err := member.VerifyReceivedSharesAndCommitmentsMessages(
-			filterPeerSharesMessage(sharesMessages, member.ID),
+			filterOtherMemberSharesMessage(sharesMessages, member.ID),
 			filterMemberCommitmentsMessages(commitmentsMessages, member.ID),
 		)
 		if err != nil {
@@ -71,8 +71,8 @@ func TestRoundTrip(t *testing.T) {
 	// TODO: Handle transition from CommittingMember to SharingMember in Next() function
 	for _, qm := range qualifiedMembers {
 		sharingMembers = append(sharingMembers, &SharingMember{
-			QualifiedMember:                       qm,
-			receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
+			QualifiedMember: qm,
+			receivedValidOtherMemberPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
 		})
 	}
 

@@ -36,13 +36,13 @@ type MemberCommitmentsMessage struct {
 	commitments []*big.Int // slice of `C_ik`
 }
 
-// PeerSharesMessage is a message payload that carries shares `s_ij` and `t_ij`
+// OtherMemberSharesMessage is a message payload that carries shares `s_ij` and `t_ij`
 // calculated by the sender `i` for the recipient `j` during distributed key
 // generation.
 //
 // It is expected to be communicated in an encrypted fashion to the selected
 // recipient.
-type PeerSharesMessage struct {
+type OtherMemberSharesMessage struct {
 	senderID   MemberID // i
 	receiverID MemberID // j
 
@@ -50,26 +50,26 @@ type PeerSharesMessage struct {
 	encryptedShareT []byte // t_ij
 }
 
-func newPeerSharesMessage(
+func newOtherMemberSharesMessage(
 	senderID, receiverID MemberID,
 	shareS, shareT *big.Int,
 	symmetricKey ephemeral.SymmetricKey,
-) (*PeerSharesMessage, error) {
+) (*OtherMemberSharesMessage, error) {
 	encryptedS, err := symmetricKey.Encrypt(shareS.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("could not create PeerSharesMessage [%v]", err)
+		return nil, fmt.Errorf("could not create OtherMemberSharesMessage [%v]", err)
 	}
 
 	encryptedT, err := symmetricKey.Encrypt(shareT.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("could not create PeerSharesMessage [%v]", err)
+		return nil, fmt.Errorf("could not create OtherMemberSharesMessage [%v]", err)
 	}
 
-	return &PeerSharesMessage{senderID, receiverID, encryptedS, encryptedT}, nil
+	return &OtherMemberSharesMessage{senderID, receiverID, encryptedS, encryptedT}, nil
 }
 
-func (psm *PeerSharesMessage) decryptShareS(key ephemeral.SymmetricKey) (*big.Int, error) {
-	decryptedS, err := key.Decrypt(psm.encryptedShareS)
+func (omsm *OtherMemberSharesMessage) decryptShareS(key ephemeral.SymmetricKey) (*big.Int, error) {
+	decryptedS, err := key.Decrypt(omsm.encryptedShareS)
 	if err != nil {
 		return nil, fmt.Errorf("could not decrypt S share [%v]", err)
 	}
@@ -77,8 +77,8 @@ func (psm *PeerSharesMessage) decryptShareS(key ephemeral.SymmetricKey) (*big.In
 	return new(big.Int).SetBytes(decryptedS), nil
 }
 
-func (psm *PeerSharesMessage) decryptShareT(key ephemeral.SymmetricKey) (*big.Int, error) {
-	decryptedT, err := key.Decrypt(psm.encryptedShareT)
+func (omsm *OtherMemberSharesMessage) decryptShareT(key ephemeral.SymmetricKey) (*big.Int, error) {
+	decryptedT, err := key.Decrypt(omsm.encryptedShareT)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate T share [%v]", err)
 	}
@@ -86,16 +86,16 @@ func (psm *PeerSharesMessage) decryptShareT(key ephemeral.SymmetricKey) (*big.In
 	return new(big.Int).SetBytes(decryptedT), nil
 }
 
-// CanDecrypt checks if the PeerSharesMessage can be successfully decrypted
+// CanDecrypt checks if the OtherMemberSharesMessage can be successfully decrypted
 // with the provided key. This function should be called before the message
 // is passed to DKG protocol for processing. It's possible that malicious
 // group member can send an invalid message. In such case, it should be rejected
 // to do not cause a failure in DKG protocol.
-func (psm *PeerSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
-	if _, err := psm.decryptShareS(key); err != nil {
+func (omsm *OtherMemberSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
+	if _, err := omsm.decryptShareS(key); err != nil {
 		return false
 	}
-	if _, err := psm.decryptShareT(key); err != nil {
+	if _, err := omsm.decryptShareT(key); err != nil {
 		return false
 	}
 

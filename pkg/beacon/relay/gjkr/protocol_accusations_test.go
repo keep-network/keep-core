@@ -90,8 +90,8 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			}
 
 			if test.modifyCommitments != nil {
-				member.receivedValidPeerCommitments[test.accusedID] =
-					test.modifyCommitments(member.receivedValidPeerCommitments[test.accusedID])
+				member.receivedValidOtherMemberCommitments[test.accusedID] =
+					test.modifyCommitments(member.receivedValidOtherMemberCommitments[test.accusedID])
 			}
 
 			result, err := member.ResolveSecretSharesAccusations(
@@ -178,8 +178,8 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 				revealedShareS = test.modifyShareS(revealedShareS)
 			}
 			if test.modifyPublicKeySharePoints != nil {
-				member.receivedValidPeerPublicKeySharePoints[test.accusedID] =
-					test.modifyPublicKeySharePoints(member.receivedValidPeerPublicKeySharePoints[test.accusedID])
+				member.receivedValidOtherMemberPublicKeySharePoints[test.accusedID] =
+					test.modifyPublicKeySharePoints(member.receivedValidOtherMemberPublicKeySharePoints[test.accusedID])
 			}
 			result, err := member.ResolvePublicKeySharePointsAccusations(
 				test.accuserID,
@@ -220,8 +220,8 @@ func findCoefficientsJustifyingMemberByID(
 // InitializeSharesJustifyingMemberGroup generates a group of members and simulates
 // shares calculation and commitments sharing betwen members (Phases 3 and 4).
 // It generates coefficients for each group member, calculates commitments and
-// shares for each peer member individually. At the end it stores values for each
-// member just like they would be received from peers.
+// shares for each other member individually. At the end it stores values for each
+// member just like they would be received from others.
 func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) ([]*SharesJustifyingMember, error) {
 	commitmentsVerifyingMembers, err := initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
@@ -268,13 +268,13 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) (
 		groupCommitments[m.ID] = commitments
 	}
 	// Simulate phase where members are calculating shares individually for each
-	// peer member and store received shares and commitments from peers.
+	// other member and store received shares and commitments from others.
 	for _, m := range sharesJustifyingMembers {
 		for _, p := range sharesJustifyingMembers {
 			if m.ID != p.ID {
 				p.receivedValidSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
 				p.receivedValidSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
-				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
+				p.receivedValidOtherMemberCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
 	}
@@ -286,7 +286,7 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) (
 // simulates public coefficients calculation and sharing between members
 // (Phase 7 and 8). It expects secret coefficients to be already stored in
 // secretCoefficients field for each group member. At the end it stores
-// values for each member just like they would be received from peers.
+// values for each member just like they would be received from others.
 func initializePointsJustifyingMemberGroup(
 	threshold, groupSize int,
 	dkg *DKG,
@@ -310,11 +310,11 @@ func initializePointsJustifyingMemberGroup(
 		m.CalculatePublicKeySharePoints()
 	}
 	// Simulate phase where members store received public key share points from
-	// peers (Phase 8).
+	// others (Phase 8).
 	for _, m := range pointsJustifyingMembers {
 		for _, p := range pointsJustifyingMembers {
 			if m.ID != p.ID {
-				m.receivedValidPeerPublicKeySharePoints[p.ID] = p.publicKeySharePoints
+				m.receivedValidOtherMemberPublicKeySharePoints[p.ID] = p.publicKeySharePoints
 			}
 		}
 	}

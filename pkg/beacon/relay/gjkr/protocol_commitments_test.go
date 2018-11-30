@@ -34,7 +34,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 		)
 	}
 	if len(sharesMessages) != (groupSize - 1) {
-		t.Fatalf("\nexpected: %v peer shares messages\nactual:   %v\n",
+		t.Fatalf("\nexpected: %v other members shares messages\nactual:   %v\n",
 			groupSize-1,
 			len(sharesMessages),
 		)
@@ -57,12 +57,11 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		t.Fatalf("predefined config initialization failed [%s]", err)
 	}
 
-	var alterPeerSharesMessage = func(
-		message *PeerSharesMessage,
-		symmetricKey ephemeral.SymmetricKey,
+	var alterOtherMemberSharesMessage = func(
+		message *OtherMemberSharesMessage, symmetricKey ephemeral.SymmetricKey,
 		alterS bool,
 		alterT bool,
-	) *PeerSharesMessage {
+	) *OtherMemberSharesMessage {
 		oldShareS, err := message.decryptShareS(symmetricKey)
 		if err != nil {
 			t.Fatal(err)
@@ -83,7 +82,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			newShareT = testutils.NewRandInt(oldShareT, config.Q)
 		}
 
-		msg, err := newPeerSharesMessage(
+		msg, err := newOtherMemberSharesMessage(
 			message.senderID,
 			message.receiverID,
 			newShareS,
@@ -98,9 +97,8 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		modifyPeerShareMessages func(
-			messages []*PeerSharesMessage,
-			symmetricKeys map[MemberID]ephemeral.SymmetricKey,
+		modifyOtherMemberShareMessages func(
+			messages []*OtherMemberSharesMessage, symmetricKeys map[MemberID]ephemeral.SymmetricKey,
 		)
 		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
 		expectedError             error
@@ -110,13 +108,12 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			expectedError: nil,
 		},
 		"negative validation - changed share S": {
-			modifyPeerShareMessages: func(
-				messages []*PeerSharesMessage,
-				symmetricKeys map[MemberID]ephemeral.SymmetricKey,
+			modifyOtherMemberShareMessages: func(
+				messages []*OtherMemberSharesMessage, symmetricKeys map[MemberID]ephemeral.SymmetricKey,
 			) {
 				// current member ID = 1, we modify first message on the list
 				// so it's a message from member with ID = 2
-				messages[0] = alterPeerSharesMessage(
+				messages[0] = alterOtherMemberSharesMessage(
 					messages[0],
 					symmetricKeys[messages[0].senderID],
 					true,
@@ -127,13 +124,12 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			expectedAccusedIDs: []MemberID{MemberID(2)},
 		},
 		"negative validation - changed two shares T": {
-			modifyPeerShareMessages: func(
-				messages []*PeerSharesMessage,
-				symmetricKeys map[MemberID]ephemeral.SymmetricKey,
+			modifyOtherMemberShareMessages: func(
+				messages []*OtherMemberSharesMessage, symmetricKeys map[MemberID]ephemeral.SymmetricKey,
 			) {
 				// current member ID = 1, we modify second message on the list
 				// so it's a message from member with ID = 3
-				messages[1] = alterPeerSharesMessage(
+				messages[1] = alterOtherMemberSharesMessage(
 					messages[1],
 					symmetricKeys[messages[1].senderID],
 					false,
@@ -142,7 +138,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 
 				// current member ID = 1, we modify third message on the list
 				// so it's a message from member with ID = 4
-				messages[2] = alterPeerSharesMessage(
+				messages[2] = alterOtherMemberSharesMessage(
 					messages[2],
 					symmetricKeys[messages[2].senderID],
 					false,
@@ -170,7 +166,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			}
 			currentMember := members[0]
 
-			var sharesMessages []*PeerSharesMessage
+			var sharesMessages []*OtherMemberSharesMessage
 			var commitmentsMessages []*MemberCommitmentsMessage
 
 			for _, member := range members {
@@ -182,11 +178,11 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 				commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
 			}
 
-			filteredSharesMessages := filterPeerSharesMessage(sharesMessages, currentMember.ID)
+			filteredSharesMessages := filterOtherMemberSharesMessage(sharesMessages, currentMember.ID)
 			filteredCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
 
-			if test.modifyPeerShareMessages != nil {
-				test.modifyPeerShareMessages(filteredSharesMessages, currentMember.symmetricKeys)
+			if test.modifyOtherMemberShareMessages != nil {
+				test.modifyOtherMemberShareMessages(filteredSharesMessages, currentMember.symmetricKeys)
 			}
 			if test.modifyCommitmentsMessages != nil {
 				test.modifyCommitmentsMessages(filteredCommitmentsMessages)
@@ -195,10 +191,10 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			// Simulate step to next Phase
 			// TODO Handle by Next function
 			verifyingMember := &CommitmentsVerifyingMember{
-				CommittingMember:             currentMember,
-				receivedValidSharesS:         make(map[MemberID]*big.Int),
-				receivedValidSharesT:         make(map[MemberID]*big.Int),
-				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+				CommittingMember:                    currentMember,
+				receivedValidSharesS:                make(map[MemberID]*big.Int),
+				receivedValidSharesT:                make(map[MemberID]*big.Int),
+				receivedValidOtherMemberCommitments: make(map[MemberID][]*big.Int),
 			}
 
 			accusedMessage, err := verifyingMember.VerifyReceivedSharesAndCommitmentsMessages(
@@ -246,10 +242,10 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 					len(verifyingMember.receivedValidSharesT),
 				)
 			}
-			if len(verifyingMember.receivedValidPeerCommitments) != expectedReceivedSharesLength {
+			if len(verifyingMember.receivedValidOtherMemberCommitments) != expectedReceivedSharesLength {
 				t.Fatalf("\nexpected: %v received commitments\nactual:   %v\n",
 					expectedReceivedSharesLength,
-					len(verifyingMember.receivedValidPeerCommitments),
+					len(verifyingMember.receivedValidOtherMemberCommitments),
 				)
 			}
 		})
@@ -326,10 +322,10 @@ func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *
 		//TODO Handle by Next function
 		members = append(members,
 			&CommitmentsVerifyingMember{
-				CommittingMember:             member,
-				receivedValidSharesS:         make(map[MemberID]*big.Int),
-				receivedValidSharesT:         make(map[MemberID]*big.Int),
-				receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+				CommittingMember:                    member,
+				receivedValidSharesS:                make(map[MemberID]*big.Int),
+				receivedValidSharesT:                make(map[MemberID]*big.Int),
+				receivedValidOtherMemberCommitments: make(map[MemberID][]*big.Int),
 			})
 	}
 
@@ -358,11 +354,10 @@ func predefinedDKG() (*DKG, error) {
 	return &DKG{p, q}, nil
 }
 
-func filterPeerSharesMessage(
-	messages []*PeerSharesMessage,
-	receiverID MemberID,
-) []*PeerSharesMessage {
-	var result []*PeerSharesMessage
+func filterOtherMemberSharesMessage(
+	messages []*OtherMemberSharesMessage, receiverID MemberID,
+) []*OtherMemberSharesMessage {
+	var result []*OtherMemberSharesMessage
 	for _, msg := range messages {
 		if msg.senderID != receiverID &&
 			msg.receiverID == receiverID {

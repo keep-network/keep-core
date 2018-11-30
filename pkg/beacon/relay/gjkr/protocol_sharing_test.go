@@ -19,8 +19,8 @@ func TestCombineReceivedShares(t *testing.T) {
 
 	receivedShareS := make(map[MemberID]*big.Int)
 	receivedShareT := make(map[MemberID]*big.Int)
-	// Simulate shares received from peer members.
-	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
+	// Simulate shares received from other members.
+	// Other members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
 	// slice indices.
 	for i := 0; i <= 5; i++ {
 		receivedShareS[MemberID(100+i)] = big.NewInt(int64(10 + i))
@@ -230,7 +230,7 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 					CommitmentsVerifyingMember: cvm,
 				},
 			},
-			receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
+			receivedValidOtherMemberPublicKeySharePoints: make(map[MemberID][]*big.Int, groupSize-1),
 		})
 	}
 

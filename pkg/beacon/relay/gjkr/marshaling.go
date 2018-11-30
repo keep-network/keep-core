@@ -86,34 +86,34 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// Type returns a string describing a PeerSharesMessage type for marshaling
+// Type returns a string describing a OtherMemberSharesMessage type for marshaling
 // purposes
-func (psm *PeerSharesMessage) Type() string {
-	return "gjkr/peer_shares"
+func (omsm *OtherMemberSharesMessage) Type() string {
+	return "gjkr/other_member_shares"
 }
 
-// Marshal converts this PeerSharesMessage to a byte array suitable for
+// Marshal converts this OtherMemberSharesMessage to a byte array suitable for
 // network communication.
-func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
-	return (&pb.PeerShares{
-		SenderID:        memberIDToBytes(psm.senderID),
-		ReceiverID:      memberIDToBytes(psm.receiverID),
-		EncryptedShareS: psm.encryptedShareS,
-		EncryptedShareT: psm.encryptedShareT,
+func (omsm *OtherMemberSharesMessage) Marshal() ([]byte, error) {
+	return (&pb.OtherMemberShares{
+		SenderID:        memberIDToBytes(omsm.senderID),
+		ReceiverID:      memberIDToBytes(omsm.receiverID),
+		EncryptedShareS: omsm.encryptedShareS,
+		EncryptedShareT: omsm.encryptedShareT,
 	}).Marshal()
 }
 
-// Unmarshal converts a byte array produced by Marshal to a PeerSharesMessage.
-func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
-	pbMsg := pb.PeerShares{}
+// Unmarshal converts a byte array produced by Marshal to a OtherMemberSharesMessage.
+func (omsm *OtherMemberSharesMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.OtherMemberShares{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
-	psm.senderID = bytesToMemberID(pbMsg.SenderID)
-	psm.receiverID = bytesToMemberID(pbMsg.ReceiverID)
-	psm.encryptedShareS = pbMsg.EncryptedShareS
-	psm.encryptedShareT = pbMsg.EncryptedShareT
+	omsm.senderID = bytesToMemberID(pbMsg.SenderID)
+	omsm.receiverID = bytesToMemberID(pbMsg.ReceiverID)
+	omsm.encryptedShareS = pbMsg.EncryptedShareS
+	omsm.encryptedShareT = pbMsg.EncryptedShareT
 
 	return nil
 }

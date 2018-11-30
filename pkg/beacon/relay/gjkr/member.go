@@ -83,15 +83,15 @@ type CommittingMember struct {
 type CommitmentsVerifyingMember struct {
 	*CommittingMember
 
-	// Shares calculated for the current member by peer group members which passed
+	// Shares calculated for the current member by other group members which passed
 	// the validation.
 	//
 	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
 	receivedValidSharesS, receivedValidSharesT map[MemberID]*big.Int
-	// Commitments to coefficients received from peer group members which passed
+	// Commitments to coefficients received from other group members which passed
 	// the validation.
-	receivedValidPeerCommitments map[MemberID][]*big.Int
+	receivedValidOtherMemberCommitments map[MemberID][]*big.Int
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -119,7 +119,7 @@ type QualifiedMember struct {
 
 // SharingMember represents one member in a threshold key sharing group, after it
 // has been qualified to the master private key sharing group. A member shares
-// public values of it's polynomial coefficients with peer members.
+// public values of it's polynomial coefficients with other members.
 //
 // Executes Phase 7 and Phase 8 of the protocol.
 type SharingMember struct {
@@ -129,9 +129,9 @@ type SharingMember struct {
 	// field. It is denoted as `A_ik` in protocol specification. The zeroth
 	// public key share point `A_i0` is a member's public key share.
 	publicKeySharePoints []*big.Int
-	// Public key share points received from peer group members which passed the
+	// Public key share points received from other group members which passed the
 	// validation. Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerPublicKeySharePoints map[MemberID][]*big.Int
+	receivedValidOtherMemberPublicKeySharePoints map[MemberID][]*big.Int
 }
 
 // individualPublicKey returns current member's individual public key.
@@ -140,19 +140,19 @@ func (rm *ReconstructingMember) individualPublicKey() *big.Int {
 	return rm.publicKeySharePoints[0]
 }
 
-// receivedValidPeerIndividualPublicKeys returns individual public keys received
-// from peer members which passed the validation. Individual public key is zeroth
+// receivedValidOtherMemberIndividualPublicKeys returns individual public keys received
+// from other members which passed the validation. Individual public key is zeroth
 // public key share point `A_j0`.
-func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
-	var receivedValidPeerIndividualPublicKeys []*big.Int
+func (sm *SharingMember) receivedValidOtherMemberIndividualPublicKeys() []*big.Int {
+	var receivedValidOtherMemberIndividualPublicKeys []*big.Int
 
-	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
-		receivedValidPeerIndividualPublicKeys = append(
-			receivedValidPeerIndividualPublicKeys,
-			peerPublicKeySharePoints[0],
+	for _, otherMemberPublicKeySharePoints := range sm.receivedValidOtherMemberPublicKeySharePoints {
+		receivedValidOtherMemberIndividualPublicKeys = append(
+			receivedValidOtherMemberIndividualPublicKeys,
+			otherMemberPublicKeySharePoints[0],
 		)
 	}
-	return receivedValidPeerIndividualPublicKeys
+	return receivedValidOtherMemberIndividualPublicKeys
 }
 
 // PointsJustifyingMember represents one member in a threshold key sharing group,

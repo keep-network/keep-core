@@ -33,13 +33,13 @@ type messageBuffer interface {
 		receiver int,
 	) *EphemeralPublicKeyMessage
 
-	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
-	// protocol round by the given sender for the given receiver. It is required
-	// to pass an `ephemeral.SymmetricKey` used to encrypt the communication
-	// between the sender and receiver.
-	peerSharesMessage(
+	// otherMemberSharesMessage returns the `OtherMemberSharesMessage` broadcast
+	// in the third protocol round by the given sender for the given receiver.
+	// It is required to pass an `ephemeral.SymmetricKey` used to encrypt the
+	// communication between the sender and receiver.
+	otherMemberSharesMessage(
 		sender int,
 		receiver int,
 		key ephemeral.SymmetricKey,
-	) *PeerSharesMessage
+	) *OtherMemberSharesMessage
 }
