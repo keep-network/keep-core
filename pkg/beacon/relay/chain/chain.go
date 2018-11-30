@@ -3,6 +3,8 @@ package chain
 import (
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
@@ -48,7 +50,7 @@ type Interface interface {
 	// If so it returns the published result.
 	IsResultPublished(result *result.Result) *event.PublishedResult
 	// SubmitResult sends DKG result to a chain.
-	SubmitResult(publisherID int, result *result.Result) *async.PublishedResultPromise
+	SubmitResult(publisherID gjkr.MemberID, result *result.Result) *async.PublishedResultPromise
 	// OnResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
 	OnResultPublished(func(publishedResult *event.PublishedResult))
