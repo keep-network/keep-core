@@ -356,3 +356,6 @@ def A_(i):
 Y = ecSum(
     [ A_(i)[0] for i in QUAL ]
 )
+
+for j in goodParticipants[12]:
+    self.peerPublicKeys[j] = individualPublicKey(j, QUAL)

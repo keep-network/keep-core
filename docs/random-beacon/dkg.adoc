@@ -295,12 +295,19 @@ include::dkg_util.py[lines=193..197]
 Let _G~12~ = G~11~_
 
 Combine _y~j~_ for all participants in _G~6~_ to reconstruct the public key for
-the group.
+the group. Additionally, calculate and store each qualified participant's
+individual public key for validating signature shares.
 
 .Phase 12
 [source, python]
 ----
-include::dkg.py[lines=346..358]
+include::dkg.py[lines=346..361]
+----
+
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[lines=200..211]
 ----
 
 [#phase-13,reftext="Phase 13"]
