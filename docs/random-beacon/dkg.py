@@ -62,8 +62,13 @@ for j in goodParticipants[2]:
 # PHASE 3
 #
 
+# GJKR 1.(a):
+#  f_i(z) = a_i0 + a_i1 * z + ... + a_it * z^t
+#  f'_i(z) = b_i0 + b_i1 * z + ... + b_it * z^t
+#
 # a_ij = sharePolyCoeffs[j]
 # b_ij = blindingFactors[j]
+#
 self.sharePolyCoeffs = [0..M].map(G1.randomScalar)
 self.blindingFactors = [0..M].map(G1.randomScalar)
 
