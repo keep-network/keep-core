@@ -91,67 +91,27 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 
 func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
-		sender                      MemberID
-		receiver                    MemberID
-		prefilPubKeyMessageLogState func(
-			sender, receiver MemberID,
-			log *dkgEvidenceLog,
-		) (*EphemeralPublicKeyMessage, error)
+		sender         MemberID
+		receiver       MemberID
+		expectedResult *EphemeralPublicKeyMessage
 	}{
 		"valid EphemeralPubKeyMessage returned for sender, receiver": {
 			sender:   MemberID(uint32(1)),
 			receiver: MemberID(uint32(2)),
-			prefilPubKeyMessageLogState: func(
-				sender, receiver MemberID,
-				log *dkgEvidenceLog,
-			) (*EphemeralPublicKeyMessage, error) {
-				msg := &EphemeralPublicKeyMessage{
-					senderID:   sender,
-					receiverID: receiver,
-				}
-				if err := log.PutEphemeralMessage(msg); err != nil {
-					return nil, err
-				}
-				return msg, nil
+			expectedResult: &EphemeralPublicKeyMessage{
+				senderID:   MemberID(uint32(1)),
+				receiverID: MemberID(uint32(2)),
 			},
 		},
 		"no EphemeralPubKeyMessage for sender": {
-			sender:   MemberID(uint32(1)),
-			receiver: MemberID(uint32(2)),
-			prefilPubKeyMessageLogState: func(
-				sender, receiver MemberID,
-				log *dkgEvidenceLog,
-			) (*EphemeralPublicKeyMessage, error) {
-				// change the sender
-				msg := &EphemeralPublicKeyMessage{
-					senderID:   MemberID(uint32(3)),
-					receiverID: receiver,
-				}
-				if err := log.PutEphemeralMessage(msg); err != nil {
-					return nil, err
-				}
-				// manually return nil as that's what we expect
-				return nil, nil
-			},
+			sender:         MemberID(uint32(1)),
+			receiver:       MemberID(uint32(2)),
+			expectedResult: nil,
 		},
 		"no EphemeralPubKeyMessage for receiver": {
-			sender:   MemberID(uint32(1)),
-			receiver: MemberID(uint32(2)),
-			prefilPubKeyMessageLogState: func(
-				sender, receiver MemberID,
-				log *dkgEvidenceLog,
-			) (*EphemeralPublicKeyMessage, error) {
-				// change the receiver
-				msg := &EphemeralPublicKeyMessage{
-					senderID:   sender,
-					receiverID: MemberID(uint32(3)),
-				}
-				if err := log.PutEphemeralMessage(msg); err != nil {
-					return nil, err
-				}
-				// manually return nil as that's what we expect
-				return nil, nil
-			},
+			sender:         MemberID(uint32(1)),
+			receiver:       MemberID(uint32(2)),
+			expectedResult: nil,
 		},
 	}
 	for testName, test := range tests {
@@ -160,23 +120,22 @@ func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 			dkgEvidenceLog := NewDkgEvidenceLog()
 
 			// simulate adding a message to the store
-			expectedResult, err := test.prefilPubKeyMessageLogState(
-				test.sender,
-				test.receiver,
-				dkgEvidenceLog,
-			)
-			if err != nil {
-				t.Fatal(err)
+			if test.expectedResult != nil {
+				if err := dkgEvidenceLog.PutEphemeralMessage(
+					test.expectedResult,
+				); err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			result := dkgEvidenceLog.ephemeralPublicKeyMessage(
 				test.sender, test.receiver,
 			)
 
-			if result != expectedResult {
+			if result != test.expectedResult {
 				t.Fatalf(
 					"\nexpected: %d\nactual:   %d\n",
-					expectedResult,
+					test.expectedResult,
 					result,
 				)
 			}
