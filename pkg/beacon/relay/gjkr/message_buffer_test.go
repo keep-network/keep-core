@@ -16,7 +16,7 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 			sender, receiver MemberID,
 			log *dkgEvidenceLog,
 		) error
-		expectedError func(sender, receiver MemberID) error
+		expectedError error
 	}{
 		"EphemeralPubKeyMessage successfully stored for sender, receiver": {
 			sender:   MemberID(uint32(1)),
@@ -27,9 +27,7 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 			) error {
 				return nil
 			},
-			expectedError: func(sender, receiver MemberID) error {
-				return nil
-			},
+			expectedError: nil,
 		},
 		"EphemeralPubKeyMessage already exists for sender, receiver": {
 			sender:   MemberID(uint32(1)),
@@ -42,18 +40,15 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 					senderID:   sender,
 					receiverID: receiver,
 				}
-				if err := log.PutEphemeralMessage(msg); err != nil {
+				err := log.PutEphemeralMessage(msg)
+				if err != nil {
 					return err
 				}
 				return nil
 			},
-			expectedError: func(sender, receiver MemberID) error {
-				return fmt.Errorf(
-					"message exists for sender %v and receiver %v",
-					sender,
-					receiver,
-				)
-			},
+			expectedError: fmt.Errorf(
+				"message exists for sender 1 and receiver 2",
+			),
 		},
 	}
 	for testName, test := range tests {
@@ -83,13 +78,10 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 			}
 			err = dkgEvidenceLog.PutEphemeralMessage(message)
 
-			expectedError := test.expectedError(
-				test.sender, test.receiver,
-			)
-			if !reflect.DeepEqual(err, expectedError) {
+			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf(
 					"\nexpected: %s\nactual:   %s\n",
-					expectedError,
+					test.expectedError,
 					err,
 				)
 			}
