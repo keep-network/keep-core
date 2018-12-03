@@ -188,7 +188,7 @@ func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration()
 func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting(vss *pedersen.VSS) *CommittingMember {
 	return &CommittingMember{
 		SymmetricKeyGeneratingMember: skgm,
-		vss: vss,
+		vss:                          vss,
 	}
 }
 

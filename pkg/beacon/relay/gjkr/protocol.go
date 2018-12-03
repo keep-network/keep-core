@@ -281,10 +281,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
 				// where: j is sender's ID, i is current member ID, T is threshold.
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] = cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break
@@ -601,7 +601,9 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 				rm.protocolConfig.Q,
 			)
 		}
-		rm.reconstructedIndividualPrivateKeys[ds.disqualifiedMemberID] = individualPrivateKey // <m, z_m>
+		// <m, z_m>
+		rm.reconstructedIndividualPrivateKeys[ds.disqualifiedMemberID] =
+			individualPrivateKey
 	}
 }
 
