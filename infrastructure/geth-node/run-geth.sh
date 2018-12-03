@@ -75,29 +75,6 @@ fi
 echo "-- BOOTNODES: $BOOTNODES"
 echo "-- GETHARGS:  $GETHARGS"
 
-# /geth --datadir $DATADIR \
-#         --identity $NODE_NAME \
-#         --nodiscover \
-#         --ws --wsaddr $WSHOST --wsport $WSPORT --wsorigins $WSORIGINS \
-#         --rpc --rpcport $RPCPORT --rpcaddr $RPCHOST \
-#         --rpccorsdomain "" \
-#         --rpcapi $RPCAPI \
-#         --networkid $NETWORKID \
-#         --port $GETHPORT \
-#         $GETHARGS
-
-# echo "DATADIR: $DATADIR"
-# echo "NODE_NAME: $NODE_NAME"
-# echo "WSHOST: $WSHOST"
-# echo "WSPORT: $WSPORT"
-# echo "WSORIGINS: $WSORIGINS"
-# echo "RPCPORT: $RPCPORT"
-# echo "RPCHOST: $RPCHOST"
-# echo "RPCAPI: $RPCAPI"
-# echo "NETWORKID: $NETWORKID"
-# echo "GETHPORT: $GETHPORT"
-# echo "GETHARGS: $GETHARGS"
-
 /geth --datadir $DATADIR \
     --nodiscover \
     --port 30303 --networkid $NETWORKID \
