@@ -59,8 +59,8 @@ for j in goodParticipants[2]:
 
 # a_ij = sharePolyCoeffs[j]
 # b_ij = blindingFactors[j]
-self.sharePolyCoeffs = [0..T].map(randomScalar)
-self.blindingFactors = [0..T].map(randomScalar)
+self.sharePolyCoeffs = [0..M].map(randomScalar)
+self.blindingFactors = [0..M].map(randomScalar)
 
 
 def f_i(z):

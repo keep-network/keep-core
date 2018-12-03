@@ -126,7 +126,7 @@ Every node in _G~3~_ has, for every other node in _G~3~_, a symmetric key that
 can be used for encrypted and attributable communications over the broadcast
 channel. The Pedersen-VSS phase of the GJKR DKG algorithm can commence.
 
-Create two polynomials _f~i~(z)_ and _g~i~(z)_ of degree _T_ and calculate
+Create two polynomials _f~i~(z)_ and _g~i~(z)_ of degree _M_ and calculate
 other players' shares as points on these polynomials. Additionally, calculate
 Pedersen commitments to the coefficients of _f~i~(z)_ using the coefficients
 of _g~i~(z)_.
@@ -242,7 +242,7 @@ This is not very significant though,
 as even the publication of only the misbehaving participants' shares
 would reduce the security margin excessively
 if a large fraction of _P_ were to misbehave.
-By setting the threshold for group creation failure at _f~max~/2_
+By setting the threshold for group creation failure at _M/2_
 the impact of this is reduced to a manageable level.
 
 .Phase 9
@@ -322,7 +322,7 @@ penalty for being late, while _P~j~_ will receive the submission reward.
 
 [source, python]
 ----
-if nPlayers(IA + DQ) > T/2:
+if nPlayers(IA + DQ) > M_nofail:
   correctResult = Result.failure(disqualified = DQ)
 else:
   correctResult = Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
@@ -390,7 +390,7 @@ while resultPublished and not finished:
   T_now = getCurrentBlockHeight()
   T_first = allResults.earliest.submitTime
 
-  if T_now > T_first + T_conflict or leadResult.votes > M_max:
+  if T_now > T_first + T_conflict or leadResult.votes > M:
     finished = True
 
   elif correctResult = leadResult or alreadySubmitted:
@@ -488,7 +488,7 @@ def getFinalResult():
     (leadingResult, highestVoteN) = submissionVotes.maxByValue()
     totalVotes = sum(submissionVotes.values())
 
-    if totalVotes - highestVoteN >= f_max: # <3>
+    if totalVotes - highestVoteN >= M: # <3>
         return Result.failure(disqualified = [])
     else:
         return leadingResult
@@ -501,7 +501,7 @@ after one valid submission it's a free for all.
 such as when a different result was previously submitted and two
 participants submit theirs in the same block
 
-<<3>> If more than _f~max~_ participants vote for a non-leading result,
+<<3>> If more than _M_ participants vote for a non-leading result,
 our honest majority assumption has failed
 and we cannot determine the correct outcome.
 
