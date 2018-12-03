@@ -41,7 +41,8 @@ broadcast(messagePhase1(ephemeralPubkeys))
 # PHASE 2
 #
 
-# Receive the ephemeral public keys of other participants
+# Receive messages from phase 1:
+# - ephemeral public keys of other participants
 messages.receive(1)
 
 # `goodParticipants[P]` denotes the qualified participants in phase `P`
@@ -95,6 +96,9 @@ broadcast(messagePhase3(encryptedShares, self.commitments))
 # PHASE 4
 #
 
+# Receive messages from phase 3:
+# - commitments to the secret sharing polynomials
+# - encrypted share payloads
 messages.receive(3)
 
 shareComplaints = []
@@ -122,6 +126,8 @@ broadcast(messagePhase4(shareComplaints))
 # PHASE 5
 #
 
+# Receive messages from phase 4:
+# - complaints about inconsistent shares
 messages.receive(4)
 
 for complaint in messages[4]:
@@ -200,6 +206,8 @@ broadcast(messagePhase7(self.pubkeyCoeffs))
 # PHASE 8
 #
 
+# Receive messages from phase 7:
+# - public key coefficients
 messages.receive(7)
 
 pubkeyComplaints = []
@@ -221,6 +229,8 @@ broadcast(messagePhase8(pubkeyComplaints))
 # PHASE 9
 #
 
+# Receive messages from phase 8:
+# - complaints about invalid public key coefficients
 messages.receive(8)
 
 for complaint in messages[8]:
@@ -268,6 +278,8 @@ broadcast(messagePhase10(disqualifiedKeys))
 # PHASE 11
 #
 
+# Receive messages from phase 10:
+# - good participants' ephemeral private keys for each disqualified participant
 messages.receive(10)
 
 for keys_j in messages[10]:
