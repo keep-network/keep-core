@@ -16,10 +16,9 @@ i = dkgSetup.members.index(self.pubkey)
 
 # Keep track of other qualified participants
 #
-# A compliant implementation won't get disqualified so we can assume P_i is
-# always good
+# `goodParticipants[P]` denotes the qualified participants in phase `P`
 #
-goodParticipants[1] = [1..N].remove(i)
+goodParticipants[1] = [1..N]
 
 # Record the blockheight at the start of the DKG
 #
@@ -29,7 +28,7 @@ T_dkgInit = getCurrentBlockHeight()
 
 ephemeralPubkeys = []
 
-for j in goodParticipants[1]:
+for j in goodParticipants[1], j != i:
     x_ij = genEcdhKeypair()
 
     self.ephemeralKey[j] = x_ij
@@ -49,8 +48,7 @@ broadcast(messagePhase1(ephemeralPubkeys))
 # - ephemeral public keys of other participants
 messages.receive(1)
 
-# `goodParticipants[P]` denotes the qualified participants in phase `P`
-for j in goodParticipants[2]:
+for j in goodParticipants[2], j != i:
     privkey_ij = self.ephemeralKey[j]
     pubkey_ji = ephemeralPubkey(j, i)
 
@@ -93,10 +91,13 @@ for j in goodParticipants[3]:
     s_ij = f_i(j)
     t_ij = g_i(j)
 
-    pointsBytes = marshalPoints(s_ij, t_ij)
-    payload_ij = encrypt(self.symkey[j], pointsBytes)
+    if i != j:
+        pointsBytes = marshalPoints(s_ij, t_ij)
+        payload_ij = encrypt(self.symkey[j], pointsBytes)
 
-    encryptedShares[j] = payload_ij
+        encryptedShares[j] = payload_ij
+    else:
+        self.shares[i] = (s_ij, t_ij)
 
 broadcast(messagePhase3(encryptedShares, self.commitments))
 
@@ -112,7 +113,7 @@ messages.receive(3)
 
 shareComplaints = []
 
-for j in goodParticipants[4]:
+for j in goodParticipants[4], j != i:
     k_ij = self.symkey[j]
 
     validShares = decryptAndValidateShares(
@@ -180,7 +181,7 @@ for complaint in messages[4]:
 
 # GJKR 2:
 #
-QUAL = goodParticipants[6].append(i)
+QUAL = goodParticipants[6]
 
 # GJKR 3:
 #
