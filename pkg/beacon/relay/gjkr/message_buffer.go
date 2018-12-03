@@ -44,13 +44,12 @@ type evidenceLog interface {
 	) *PeerSharesMessage
 }
 
-// dkgEvidenceLog is an implementation of an evidenceLog, containing two map of
-// maps, from sender to receiver to message.
+// dkgEvidenceLog is an implementation of an evidenceLog.
 type dkgEvidenceLog struct {
-	// senderID -> receiverID -> *EphemeralPublicKeyMessage
+	// (senderID, receiverID) -> *EphemeralPublicKeyMessage
 	pubKeyMessageLog *messageStorage
 
-	// senderID -> receiverID -> *PeerSharesMessage
+	// (senderID, receiverID) -> *PeerSharesMessage
 	peerSharesMessageLog *messageStorage
 }
 
