@@ -42,6 +42,22 @@ type evidenceLog interface {
 		sender MemberID,
 		receiver MemberID,
 	) *PeerSharesMessage
+
+	// PutEphemeralMessage is a function that takes a single
+	// EphemeralPubKeyMessage, and stores that as evidence for future
+	// accusation trials for a given (sender, receiver) pair. If a message
+	// already exists for the given pair, we return an error to the user.
+	PutEphemeralMessage(
+		pubKeyMessage *EphemeralPublicKeyMessage,
+	) error
+
+	// PutPeerSharesMessage is a function that takes a single
+	// PeerSharesMessage, and stores that as evidence for future
+	// accusation trials for a given (sender, receiver) pair. If a message
+	// already exists for the given pair, we return an error to the user.
+	PutPeerSharesMessage(
+		sharesMessage *PeerSharesMessage,
+	) error
 }
 
 // dkgEvidenceLog is an implementation of an evidenceLog.
@@ -62,10 +78,6 @@ func NewDkgEvidenceLog() *dkgEvidenceLog {
 	}
 }
 
-// PutEphemeralMessage is a function that takes a single EphemeralPubKeyMessage
-// and stores that information as evidence for future accusation trials for a
-// given (sender, receiver) pair. If a message already exists for the given pair,
-// we return an error to the user.
 func (d *dkgEvidenceLog) PutEphemeralMessage(
 	pubKeyMessage *EphemeralPublicKeyMessage,
 ) error {
@@ -76,10 +88,6 @@ func (d *dkgEvidenceLog) PutEphemeralMessage(
 	)
 }
 
-// PutPeerSharesMessage is a function that takes a single PeerSharesMessage
-// and stores that information as evidence for future accusation trials for a
-// given (sender, receiver) pair. If a message already exists for the given pair,
-// we return an error to the user.
 func (d *dkgEvidenceLog) PutPeerSharesMessage(
 	sharesMessage *PeerSharesMessage,
 ) error {
