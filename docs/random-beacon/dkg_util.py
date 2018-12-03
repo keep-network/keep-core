@@ -108,7 +108,7 @@ def checkShareConsistency(
     i = senderIndex
     j = recipientIndex
 
-    C_i = commitments(j)
+    C_i = commitments(i)
 
     C_ecSum = ecSum(
         [ C_i[k].scalarMult(j^k) for k in [0..M] ]
