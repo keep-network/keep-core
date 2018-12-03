@@ -275,7 +275,7 @@ include::dkg.py[lines=258..264]
 
 Decrypt and reconstruct _z~m~_ for every participant _P~m~_ that presented
 valid shares in <<phase-3>> but whose public key shares in <<phase-7>> were invalid.
-Calculate _y~m~ = g^z~m~^ mod p_ for each reconstructed _z~m~_.
+Calculate _y~m~ = z~m~ * P1_ for each reconstructed _z~m~_.
 
 .Phase 11
 [source, python]
@@ -517,3 +517,7 @@ Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
 Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing.
 In: Feigenbaum J. (eds) Advances in Cryptology — CRYPTO ’91. CRYPTO 1991.
 Lecture Notes in Computer Science, vol 576. Springer, Berlin, Heidelberg
+
+- [[[EIP-197]]]
+EIP 197: Precompiled contracts for optimal ate pairing check on the elliptic
+curve alt_bn128

@@ -1,5 +1,9 @@
 # i = always the player whose perspective we're in
 
+# Because G1 and G2 in alt_bn128 are cyclic groups of prime order, this number
+# can also be used as the size of the secret sharing finite field
+q = G1.curveOrder
+
 #
 # PHASE 1
 #
@@ -60,16 +64,16 @@ for j in goodParticipants[2]:
 
 # a_ij = sharePolyCoeffs[j]
 # b_ij = blindingFactors[j]
-self.sharePolyCoeffs = [0..M].map(randomScalar)
-self.blindingFactors = [0..M].map(randomScalar)
+self.sharePolyCoeffs = [0..M].map(G1.randomScalar)
+self.blindingFactors = [0..M].map(G1.randomScalar)
 
 
 def f_i(z):
-    return evaluateAt(z, self.sharePolyCoeffs) % SECRET_SHARING_ORDER
+    return evaluateAt(z, self.sharePolyCoeffs) % q
 
 
 def g_i(z):
-    return evaluateAt(z, self.blindingFactors) % SECRET_SHARING_ORDER
+    return evaluateAt(z, self.blindingFactors) % q
 
 
 z_i = self.sharePolyCoeffs[0]
@@ -180,11 +184,11 @@ QUAL = goodParticipants[6].append(i)
 #
 x_i = sum(
     [ self.shares[j].share_S for j in QUAL ]
-) % BLS_G1_ORDER
+) % q
 
 xprime_i = sum(
     [ self.shares[j].share_T for j in QUAL ]
-) % BLS_G1_ORDER
+) % q
 
 
 #
@@ -196,7 +200,7 @@ xprime_i = sum(
 #   A_ik = g^a_ik % p
 #
 self.pubkeyCoeffs = [
-    G.ecMul(A_ik) for A_ik in self.sharePolyCoeffs
+    P1.ecMul(A_ik) for A_ik in self.sharePolyCoeffs
 ]
 
 broadcast(messagePhase7(self.pubkeyCoeffs))
