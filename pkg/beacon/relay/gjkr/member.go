@@ -281,9 +281,8 @@ func (fm *FinalizingMember) PublishingIndex() int {
 // is greater than half of the configured dishonest threshold. If so the group
 // is to weak and the result is set to a failure.
 func (fm *FinalizingMember) Result() *result.Result {
-	group := fm.group
-	disqualifiedMembers := group.DisqualifiedMembers() // DQ
-	inactiveMembers := group.InactiveMembers()         // IA
+	disqualifiedMembers := fm.group.DisqualifiedMembers() // DQ
+	inactiveMembers := fm.group.InactiveMembers()         // IA
 
 	// if nPlayers(IA + DQ) > T/2:
 	if !fm.group.isThresholdSatisfied() {
