@@ -206,7 +206,7 @@ xprime_i = sum(
 #   A_ik = g^a_ik % p
 #
 self.pubkeyCoeffs = [
-    P1.ecMul(A_ik) for A_ik in self.sharePolyCoeffs
+    P1.scalarMult(A_ik) for A_ik in self.sharePolyCoeffs
 ]
 
 broadcast(messagePhase7(self.pubkeyCoeffs))
@@ -331,7 +331,7 @@ for m in disqualifiedInPhase[9]:
     indices_m = self.revealedShares[m].indices
 
     z_m = reconstruct(shares_m, indices_m)
-    y_m = G.ecMul(z_m)
+    y_m = P1.scalarMult(z_m)
     self.reconstructed_Y_[m] = y_m
 
 

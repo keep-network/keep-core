@@ -17,18 +17,18 @@ def ephemeralPubkey(senderIndex, recipientIndex):
 #
 def evaluateAt(z, coeffs):
     return sum(
-        [ coeffs[k] * z^k for k in [0..T] ]
+        [ coeffs[k] * z^k for k in [0..M] ]
     )
 
 
 # Pedersen commitment to secret value `s` and blinding factor `t`
-# `G` is the standard generator of the elliptic curve
+# `G = P1` is the standard generator of the elliptic curve
 # `H = G*a` is a custom generator where `a` is unknown
 #
 # C(s, t) = G*s + H*t
 #
 def ecCommit(s, t):
-    Gs = G.scalarMult(s)
+    Gs = P1.scalarMult(s)
     Ht = H.scalarMult(t)
     return ecAdd(Gs, Ht)
 
@@ -111,7 +111,7 @@ def checkShareConsistency(
     C_i = commitments(j)
 
     C_ecSum = ecSum(
-        [ C_i[k].scalarMult(j^k) for k in [0..T] ]
+        [ C_i[k].scalarMult(j^k) for k in [0..M] ]
     )
 
     sharesValid = ecCommit(share_S, share_T) == C_ecSum
@@ -136,7 +136,7 @@ def pubkeyShare(senderIndex, recipientIndex):
     A_i = pubkeyCoeffs(i)
 
     pubkeyShare = ecSum(
-        [ A_i[k].scalarMult(j^k) for k in [0..T] ]
+        [ A_i[k].scalarMult(j^k) for k in [0..M] ]
     )
     return pubkeyShare
 
@@ -152,7 +152,7 @@ def validatePubkeyCoeffs(
         recipientIndex,
         share_S
 ):
-    return G.scalarMult(share_S) == pubkeyShare(senderIndex, recipientIndex)
+    return P1.scalarMult(share_S) == pubkeyShare(senderIndex, recipientIndex)
 
 
 # Check which party is at fault when a complaint is presented in phase 8
@@ -194,7 +194,7 @@ def reconstruct(shares, indices):
     secret = sum(
         [ share_k * lagrange(k, indices) for share_k in shares, k in indices ]
     )
-    return secret % SECRET_SHARING_ORDER
+    return secret % q
 
 
 # Calculate the individual public key of a specific participant
