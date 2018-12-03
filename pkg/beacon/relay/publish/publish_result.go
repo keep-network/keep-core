@@ -38,6 +38,11 @@ func (pm *Publisher) PublishResult(resultToPublish *result.Result) (*event.Publi
 		onPublishedResultChan <- publishedResult
 	})
 
+	// Check if the result has already been published to the chain.
+	if publishedResult := chainRelay.IsResultPublished(resultToPublish); publishedResult != nil {
+		return publishedResult, nil
+	}
+
 	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
 		return nil, fmt.Errorf("block counter failure [%v]", err)
@@ -46,14 +51,10 @@ func (pm *Publisher) PublishResult(resultToPublish *result.Result) (*event.Publi
 	// Waits until the current member is eligable to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		pm.publishingIndex * pm.blockStep)
+		pm.publishingIndex * pm.blockStep,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("block waiter failure [%v]", err)
-	}
-
-	// Check if the result is already published on the chain.
-	if publishedResult := chainRelay.IsResultPublished(resultToPublish); publishedResult != nil {
-		return publishedResult, nil
 	}
 
 	for {
