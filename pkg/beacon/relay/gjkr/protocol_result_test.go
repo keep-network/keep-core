@@ -55,7 +55,9 @@ func TestGenerateResult(t *testing.T) {
 				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   []int{2},
-				Inactive:       nil, // in case of failure only disqualified members are slashed
+				// inactive member ids; this value is nil in the case of a failure, as
+				// only disqualified members are slashed
+				Inactive: nil,
 			},
 		},
 		"more than half of threshold inactive members - failure": {
@@ -64,7 +66,9 @@ func TestGenerateResult(t *testing.T) {
 				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   nil,
-				Inactive:       nil, // in case of failure only disqualified members are slashed
+				// inactive member ids; this value is nil in the case of a failure, as
+				// only disqualified members are slashed
+				Inactive: nil,
 			},
 		},
 	}
