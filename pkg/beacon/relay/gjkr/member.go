@@ -273,27 +273,24 @@ func (fm *FinalizingMember) PublishingIndex() int {
 	return -1
 }
 
-// Result returns a result of distributed key generation. It takes generated
-// group public key along with disqualified and inactive members and returns
-// it in a Result struct.
+// Result can be either the successful computation of a round of distributed key
+// generation, or a notification of failure.
 //
-// Additional validation to check if number of disqualified and inactive members
-// is greater than half of the configured dishonest threshold. If so the group
-// is to weak and the result is set to a failure.
+// If the number of disqualified and inactive members is greater than half of the
+// configured dishonest threshold, the group is deemed too weak, and the result
+// is set to failure. Otherwise, it returns the generated group public key along
+// with the disqualified and inactive members.
 func (fm *FinalizingMember) Result() *result.Result {
 	disqualifiedMembers := fm.group.DisqualifiedMembers() // DQ
 	inactiveMembers := fm.group.InactiveMembers()         // IA
 
-	// if nPlayers(IA + DQ) > T/2:
 	if !fm.group.isThresholdSatisfied() {
-		// Result.failure(disqualified = DQ)
 		return &result.Result{
 			Success:      false,
 			Disqualified: disqualifiedMembers,
 		}
 	}
 
-	// Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
 	return &result.Result{
 		Success:        true,
 		GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
