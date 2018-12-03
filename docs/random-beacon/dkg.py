@@ -1,12 +1,12 @@
 # i = always the player whose perspective we're in
 
-# Because G1 and G2 in alt_bn128 are cyclic groups of prime order, this number
-# can also be used as the size of the secret sharing finite field
-q = G1.curveOrder
-
 #
 # PHASE 1
 #
+
+# Because G1 and G2 in alt_bn128 are cyclic groups of prime order, this number
+# can also be used as the size of the secret sharing finite field
+q = G1.curveOrder
 
 # Receive the DKG parameters from on-chain
 dkgSetup = getDkgSetup()
@@ -187,6 +187,10 @@ QUAL = goodParticipants[6]
 #
 #   x_i = sum([ s_ji for j in QUAL ]) % q
 #   x'_i = sum([ t_ji for j in QUAL ]) % q
+#
+# This is safe to calculate here as the consistency of the shares has been
+# ascertained. If a participant gets disqualified later their public key piece
+# will be reconstructed to match the honest participants' shares.
 #
 x_i = sum(
     [ self.shares[j].share_S for j in QUAL ]

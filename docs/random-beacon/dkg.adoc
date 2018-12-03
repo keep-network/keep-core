@@ -98,7 +98,7 @@ published by each participant in phase 1.
 .Phase 1
 [source, python]
 ----
-include::dkg.py[lines=7..37]
+include::dkg.py[lines=7..40]
 ----
 
 [#phase-2,reftext="Phase 2"]
@@ -110,7 +110,7 @@ _P~i~_ will perform ECDH with every _P~j~_ in _P_ to create _k~ij~_.
 .Phase 2
 [source, python]
 ----
-include::dkg.py[lines=44..53]
+include::dkg.py[lines=47..56]
 ----
 
 .Utility functions
@@ -138,7 +138,7 @@ Commitments and encrypted shares are broadcast to other players.
 .Phase 3
 [source, python]
 ----
-include::dkg.py[lines=60..91]
+include::dkg.py[lines=63..102]
 ----
 
 .Utility functions
@@ -159,7 +159,7 @@ corresponding ephemeral private key so others can check the result.
 .Phase 4
 [source, python]
 ----
-include::dkg.py[lines=98..118]
+include::dkg.py[lines=109..132]
 ----
 
 .Utility functions
@@ -182,7 +182,7 @@ false complaint.
 .Phase 5
 [source, python]
 ----
-include::dkg.py[lines=125..159]
+include::dkg.py[lines=139..175]
 ----
 
 .Utility functions
@@ -200,7 +200,7 @@ shares _s~ji~_ as per GJKR. _X_ equals the sum of shares _s~j0~_.
 .Phase 6
 [source, python]
 ----
-include::dkg.py[lines=166..181]
+include::dkg.py[lines=182..201]
 ----
 
 [#phase-7,reftext="Phase 7"]
@@ -211,7 +211,7 @@ Each player broadcasts their _A~ik~_ values.
 .Phase 7
 [source, python]
 ----
-include::dkg.py[lines=188..196]
+include::dkg.py[lines=208..216]
 ----
 
 [#phase-8,reftext="Phase 8"]
@@ -222,7 +222,7 @@ Each player validates the values received in <<phase-7>>.
 .Phase 8
 [source, python]
 ----
-include::dkg.py[lines=203..217]
+include::dkg.py[lines=223..239]
 ----
 
 .Utility functions
@@ -248,7 +248,7 @@ the impact of this is reduced to a manageable level.
 .Phase 9
 [source, python]
 ----
-include::dkg.py[lines=224..261]
+include::dkg.py[lines=246..275]
 ----
 
 .Utility functions
@@ -267,7 +267,7 @@ offline.
 .Phase 10
 [source, python]
 ----
-include::dkg.py[lines=258..264]
+include::dkg.py[lines=282..288]
 ----
 
 [#phase-11,reftext="Phase 11"]
@@ -280,7 +280,7 @@ Calculate _y~m~ = z~m~ * P1_ for each reconstructed _z~m~_.
 .Phase 11
 [source, python]
 ----
-include::dkg.py[lines=271..313]
+include::dkg.py[lines=295..339]
 ----
 
 .Utility functions
@@ -300,7 +300,7 @@ the group.
 .Phase 12
 [source, python]
 ----
-include::dkg.py[lines=320..332]
+include::dkg.py[lines=346..358]
 ----
 
 [#phase-13,reftext="Phase 13"]
