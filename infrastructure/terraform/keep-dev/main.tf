@@ -153,4 +153,9 @@ resource "helm_release" "openvpn" {
     name  = "openvpn.redirectGateway"
     value = "false"
   }
+
+  set {
+    name  = "openvpn.conf"
+    value = "push \"route 172.16.0.0 255.255.255.240\""
+  }
 }
