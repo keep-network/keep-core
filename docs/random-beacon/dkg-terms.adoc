@@ -5,22 +5,22 @@
 |Variable |Formula |Meaning
 
 |**N**
-|H + M~max~ = 2M~max~ + 1 = 4M~fail~ + 1
+|H + M = 2M + 1 = 4M~nofail~ + 1
 |Number of participants in a group
 
 |**H**
-|M~max~ + 1
+|M + 1 = (N - 1)/2 + 1
 |Minimum number of honest participants in a group
 
-|**M~max~**
+|**M**
 |H - 1 = (N - 1)/2
 |Maximum number of malicious participants in a group
 beyond which security guarantees don't hold
 
-|**M~fail~**
-|M~max~/2 = (N - 1)/4
-|Threshold of inactive or misbehaving nodes
-beyond which the DKG does not finish
+|**M~nofail~**
+|M/2 = (N - 1)/4
+|Maximum number of disqualified participants in a group beyond which DKG will
+abort to preserve security
 |===
 
 .Time limits
