@@ -104,9 +104,9 @@ func (vc *ChallengeState) findMostVotes(vgs []ResultVotes) int {
 }
 
 func (vc *ChallengeState) findHash(resultHash []byte, all []result.Result) (int, error) {
-	for pos := range all {
-		if bytes.Equal(resultHash, all[pos].HashValue) {
-			return pos, nil
+	for i, pos := range all {
+		if bytes.Equal(resultHash, pos.HashValue) {
+			return i, nil
 		}
 	}
 	return -1, fmt.Errorf("Did not find resultHash")
