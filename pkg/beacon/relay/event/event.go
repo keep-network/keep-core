@@ -65,18 +65,14 @@ func (pr *PublishedDKGResult) Equals(pr2 *PublishedDKGResult) bool {
 	if pr == nil || pr2 == nil {
 		return pr == pr2
 	}
+	if !bigIntEquals(pr.RequestID, pr2.RequestID) {
+		return false
+	}
 	if pr.Success != pr2.Success {
 		return false
 	}
-	if pr.GroupPublicKey != nil && pr2.GroupPublicKey != nil {
-		if pr.GroupPublicKey.Cmp(pr2.GroupPublicKey) != 0 {
-			return false
-		}
-	} else {
-		if (pr.GroupPublicKey == nil && pr2.GroupPublicKey != nil) ||
-			(pr.GroupPublicKey != nil && pr2.GroupPublicKey == nil) {
-			return false
-		}
+	if !bigIntEquals(pr.GroupPublicKey, pr2.GroupPublicKey) {
+		return false
 	}
 	if !boolSlicesEqual(pr.Disqualified, pr2.Disqualified) {
 		return false
@@ -87,8 +83,23 @@ func (pr *PublishedDKGResult) Equals(pr2 *PublishedDKGResult) bool {
 	return true
 }
 
-// MemberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
-// to have the same length and have the same order of entries.
+// bigIntEquals checks if two big.Int values are equal.
+func bigIntEquals(expected *big.Int, actual *big.Int) bool {
+	if expected != nil && actual != nil {
+		if expected.Cmp(actual) != 0 {
+			return false
+		}
+	} else {
+		if (expected == nil && actual != nil) ||
+			(expected != nil && actual == nil) {
+			return false
+		}
+	}
+	return true
+}
+
+// boolSlicesEqual checks if two slices of bool are equal. Slices need to have
+// the same length and have the same order of entries.
 func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
 	if len(expectedSlice) != len(actualSlice) {
 		return false
