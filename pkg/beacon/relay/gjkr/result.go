@@ -32,6 +32,35 @@ func (r *Result) Bytes() []byte {
 	return []byte(fmt.Sprintf("%v", r))
 }
 
+// Equals checks if two results are equal.
+func (r *Result) Equals(r2 *Result) bool {
+	if r == nil || r2 == nil {
+		return r == r2
+	}
+	if r.Success != r2.Success {
+		return false
+	}
+
+	if r.GroupPublicKey != nil && r2.GroupPublicKey != nil {
+		if r.GroupPublicKey.Cmp(r2.GroupPublicKey) != 0 {
+			return false
+		}
+	} else {
+		if (r.GroupPublicKey == nil && r2.GroupPublicKey != nil) ||
+			(r.GroupPublicKey != nil && r2.GroupPublicKey == nil) {
+			return false
+		}
+	}
+
+	if !MemberIDSlicesEqual(r.Disqualified, r2.Disqualified) {
+		return false
+	}
+	if !MemberIDSlicesEqual(r.Inactive, r2.Inactive) {
+		return false
+	}
+	return true
+}
+
 // MemberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
 // to have the same length and have the same order of entries.
 func MemberIDSlicesEqual(expectedSlice []MemberID, actualSlice []MemberID) bool {
