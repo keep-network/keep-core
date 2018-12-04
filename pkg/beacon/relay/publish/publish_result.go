@@ -46,7 +46,7 @@ func (pm *Publisher) PublishResult(resultToPublish *gjkr.Result) (*event.Publish
 		return nil, fmt.Errorf("block counter failure [%v]", err)
 	}
 
-	// Waits until the current member is eligable to submit a result to the
+	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
 		pm.publishingIndex * pm.blockStep,
