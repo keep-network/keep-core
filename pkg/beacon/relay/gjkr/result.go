@@ -31,3 +31,18 @@ type Result struct {
 func (r *Result) Bytes() []byte {
 	return []byte(fmt.Sprintf("%v", r))
 }
+
+// MemberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
+// to have the same length and have the same order of entries.
+func MemberIDSlicesEqual(expectedSlice []MemberID, actualSlice []MemberID) bool {
+	if len(expectedSlice) != len(actualSlice) {
+		return false
+	}
+
+	for i := range expectedSlice {
+		if expectedSlice[i] != actualSlice[i] {
+			return false
+		}
+	}
+	return true
+}
