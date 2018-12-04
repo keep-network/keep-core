@@ -11,8 +11,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -184,7 +182,7 @@ func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnResultPublished(handler func(publishedResult *event.PublishedResult)) {
+func (c *localChain) OnDKGResultPublished(handler func(publishedResult *event.PublishedResult)) {
 	c.handlerMutex.Lock()
 	c.publishedResultHandlers = append(
 		c.publishedResultHandlers,
@@ -281,19 +279,19 @@ func (c *localChain) RequestRelayEntry(
 	return promise
 }
 
-// IsResultPublished simulates check if the result was already submitted to a
+// IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsResultPublished(result *result.Result) *event.PublishedResult {
+func (c *localChain) IsDKGResultPublished(result *event.PublishedResult) bool {
 	for _, r := range c.submittedResults {
-		if reflect.DeepEqual(r.Result, result) {
-			return r
+		if reflect.DeepEqual(r, result) {
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
-// SubmitResult submits the result to a chain.
-func (c *localChain) SubmitResult(publisherID gjkr.MemberID, resultToPublish *result.Result) *async.PublishedResultPromise {
+// SubmitDKGResult submits the result to a chain.
+func (c *localChain) SubmitDKGResult(resultToPublish *event.PublishedResult) *async.PublishedResultPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
@@ -306,25 +304,17 @@ func (c *localChain) SubmitResult(publisherID gjkr.MemberID, resultToPublish *re
 		}
 	}
 
-	publishedResult := &event.PublishedResult{
-		PublisherID: publisherID,
-		Result:      resultToPublish,
-	}
-
-	c.submittedResults = append(c.submittedResults, publishedResult)
+	c.submittedResults = append(c.submittedResults, resultToPublish)
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.publishedResultHandlers {
-		go func(handler func(publishedResult *event.PublishedResult), publisherID gjkr.MemberID) {
-			handler(&event.PublishedResult{
-				PublisherID: publisherID,
-				Result:      resultToPublish,
-			})
-		}(handler, publisherID)
+		go func(handler func(publishedResult *event.PublishedResult)) {
+			handler(resultToPublish)
+		}(handler)
 	}
 	c.handlerMutex.Unlock()
 
-	err := publishedResultPromise.Fulfill(publishedResult)
+	err := publishedResultPromise.Fulfill(resultToPublish)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
 	}

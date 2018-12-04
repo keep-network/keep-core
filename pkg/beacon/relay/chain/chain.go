@@ -43,12 +43,12 @@ type Interface interface {
 	// RequestRelayEntry makes an on-chain request to start generation of a
 	// random signature.  An event is generated.
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
-	// IsResultPublished checks if the result is already published to a chain.
+	// IsDKGResultPublished checks if the result is already published to a chain.
 	// If so it returns true.
-	IsResultPublished(publishedResult *event.PublishedResult) bool
-	// SubmitResult sends DKG result to a chain.
-	SubmitResult(publishedResult *event.PublishedResult) *async.PublishedResultPromise
-	// OnResultPublished is a callback that is invoked when an on-chain
+	IsDKGResultPublished(publishedResult *event.PublishedResult) bool
+	// SubmitDKGResult sends DKG result to a chain.
+	SubmitDKGResult(publishedResult *event.PublishedResult) *async.PublishedResultPromise
+	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
-	OnResultPublished(func(publishedResult *event.PublishedResult))
+	OnDKGResultPublished(func(publishedResult *event.PublishedResult))
 }
