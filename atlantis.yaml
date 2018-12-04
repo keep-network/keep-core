@@ -2,7 +2,7 @@ version: 2
 
 projects:
 - name: keep-dev
-  dir: ./terraform/keep-dev
+  dir: ./infrastructure/terraform/keep-dev
   workflow: default
 
 workflows:
