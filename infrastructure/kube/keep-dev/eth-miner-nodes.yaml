@@ -30,7 +30,7 @@ kind: Deployment
 metadata:
   name: eth-miner-node
 spec:
-  replicas: 1
+  replicas: 20
   template:
     metadata:
       labels:
