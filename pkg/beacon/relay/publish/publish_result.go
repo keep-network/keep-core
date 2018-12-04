@@ -2,7 +2,6 @@ package publish
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
@@ -72,7 +71,7 @@ func (pm *Publisher) PublishResult(resultToPublish *gjkr.Result) (*event.Publish
 		case newResult := <-onPublishedResultChan:
 			// Check if published result matches a result the current member
 			// wants to publish.
-			if reflect.DeepEqual(resultToPublish, newResult.Result) {
+			if resultToPublish.Equals(newResult.Result) {
 				return newResult, nil
 			}
 		}
