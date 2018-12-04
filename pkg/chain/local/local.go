@@ -184,11 +184,12 @@ func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration
 
 func (c *localChain) OnDKGResultPublished(handler func(publishedResult *event.PublishedResult)) {
 	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
 	c.publishedResultHandlers = append(
 		c.publishedResultHandlers,
 		handler,
 	)
-	c.handlerMutex.Unlock()
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {
