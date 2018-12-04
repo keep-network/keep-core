@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"reflect"
 	"sync"
 	"sync/atomic"
 
@@ -284,7 +283,7 @@ func (c *localChain) RequestRelayEntry(
 // chain.
 func (c *localChain) IsDKGResultPublished(result *event.PublishedResult) bool {
 	for _, r := range c.submittedResults {
-		if reflect.DeepEqual(r, result) {
+		if r.Equals(result) {
 			return true
 		}
 	}
@@ -298,11 +297,9 @@ func (c *localChain) SubmitDKGResult(resultToPublish *event.PublishedResult) *as
 
 	publishedResultPromise := &async.PublishedResultPromise{}
 
-	for _, r := range c.submittedResults {
-		if reflect.DeepEqual(r, resultToPublish) {
-			publishedResultPromise.Fail(fmt.Errorf("result already submitted"))
-			return publishedResultPromise
-		}
+	if c.IsDKGResultPublished(resultToPublish) {
+		publishedResultPromise.Fail(fmt.Errorf("result already submitted"))
+		return publishedResultPromise
 	}
 
 	c.submittedResults = append(c.submittedResults, resultToPublish)
