@@ -24,8 +24,8 @@ func TestPublishResult(t *testing.T) {
 	resultToPublish := &gjkr.Result{
 		Success:        false,
 		GroupPublicKey: big.NewInt(12345),
-		Disqualified:   []int{1, 2},
-		Inactive:       []int{5},
+		Disqualified:   []gjkr.MemberID{1, 2},
+		Inactive:       []gjkr.MemberID{5},
 	}
 
 	var tests = map[string]struct {
