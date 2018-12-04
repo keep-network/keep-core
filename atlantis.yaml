@@ -1,0 +1,17 @@
+version: 2
+
+projects:
+- name: keep-dev
+  dir: ./terraform/keep-dev
+  workflow: default
+
+workflows:
+  default:
+    plan:
+      steps:
+      - init
+      - run: ../scripts/terraform-fmt-check.sh
+      - plan
+    apply:
+      steps:
+      - apply
