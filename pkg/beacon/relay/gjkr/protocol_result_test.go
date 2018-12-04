@@ -16,8 +16,8 @@ func TestGenerateResult(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		disqualifiedMemberIDs []int
-		inactiveMemberIDs     []int
+		disqualifiedMemberIDs []MemberID
+		inactiveMemberIDs     []MemberID
 		expectedResult        *Result
 	}{
 		"no disqualified or inactive members - success": {
@@ -29,37 +29,37 @@ func TestGenerateResult(t *testing.T) {
 			},
 		},
 		"one disqualified member - success": {
-			disqualifiedMemberIDs: []int{2},
+			disqualifiedMemberIDs: []MemberID{2},
 			expectedResult: &Result{
 				Success:        true,
 				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
-				Disqualified:   []int{2},
+				Disqualified:   []MemberID{2},
 				Inactive:       nil,
 			},
 		},
 		"two inactive members - success": {
-			inactiveMemberIDs: []int{3, 7},
+			inactiveMemberIDs: []MemberID{3, 7},
 			expectedResult: &Result{
 				Success:        true,
 				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
 				Disqualified:   nil,
-				Inactive:       []int{3, 7},
+				Inactive:       []MemberID{3, 7},
 			},
 		},
 		"more than half of threshold disqualified and inactive members - failure": {
-			disqualifiedMemberIDs: []int{2},
-			inactiveMemberIDs:     []int{3, 7},
+			disqualifiedMemberIDs: []MemberID{2},
+			inactiveMemberIDs:     []MemberID{3, 7},
 			expectedResult: &Result{
 				Success:        false,
 				GroupPublicKey: nil,
-				Disqualified:   []int{2},
+				Disqualified:   []MemberID{2},
 				// inactive member ids; this value is nil in the case of a failure, as
 				// only disqualified members are slashed
 				Inactive: nil,
 			},
 		},
 		"more than half of threshold inactive members - failure": {
-			inactiveMemberIDs: []int{3, 5, 7},
+			inactiveMemberIDs: []MemberID{3, 5, 7},
 			expectedResult: &Result{
 				Success:        false,
 				GroupPublicKey: nil,

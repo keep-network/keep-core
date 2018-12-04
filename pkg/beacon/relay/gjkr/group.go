@@ -11,9 +11,9 @@ type Group struct {
 	// Initially empty, populated as each other member announces its presence.
 	memberIDs []MemberID
 	// IDs of group members who were disqualified during protocol execution.
-	disqualifiedMemberIDs []int
+	disqualifiedMemberIDs []MemberID
 	// IDs of group members who went inactive during protocol execution.
-	inactiveMemberIDs []int
+	inactiveMemberIDs []MemberID
 }
 
 // MemberIDs returns IDs of all group members.
@@ -27,12 +27,12 @@ func (g *Group) RegisterMemberID(id MemberID) {
 }
 
 // DisqualifiedMembers returns members disqualified during protocol execution.
-func (g *Group) DisqualifiedMembers() []int {
+func (g *Group) DisqualifiedMembers() []MemberID {
 	return g.disqualifiedMemberIDs
 }
 
 // InactiveMembers returns members inactive during protocol execution.
-func (g *Group) InactiveMembers() []int {
+func (g *Group) InactiveMembers() []MemberID {
 	return g.inactiveMemberIDs
 }
 
