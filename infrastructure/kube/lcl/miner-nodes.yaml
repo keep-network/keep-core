@@ -30,7 +30,7 @@ kind: Deployment
 metadata:
   name: miner-node
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: miner
-        image: lispmeister/geth-node
+        image: lispmeister/geth-node-w-dag
         ports:
         - containerPort: 8545
         - containerPort: 8546

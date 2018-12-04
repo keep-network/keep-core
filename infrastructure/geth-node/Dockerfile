@@ -33,4 +33,3 @@ COPY app.json app.json
 COPY run-geth.sh run-geth.sh
 
 ENTRYPOINT ["pm2", "start", "--no-daemon", "app.json"]
-#ENTRYPOINT ["/bin/bash"]

@@ -23,6 +23,7 @@ spec:
   selector:
     app: geth
     type: tx
+  type: NodePort
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment

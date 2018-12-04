@@ -4,13 +4,13 @@
     "script"            : "/root/run-geth.sh",
     "log_date_format"   : "YYYY-MM-DD HH:mm Z",
     "merge_logs"        : false,
-    "watch"             : false,
+    "watch"             : true,
     "max_restarts"      : 0,
     "exec_interpreter"  : "/bin/bash",
     "exec_mode"         : "fork_mode",
     "env":
     {
-      "VERBOSITY"       : 2
+      "VERBOSITY"       : 3
     }
   },
   {
@@ -44,7 +44,7 @@
     "env":
     {
       "NODE_ENV"        : "production",
-      "VERBOSITY"       : 2,
+      "VERBOSITY"       : 3,
       "ETH_IPC_PATH"	: "/root/.geth/geth.ipc"
     }
   }

@@ -16,6 +16,7 @@ spec:
   selector:
     app: dashboard
   type: LoadBalancer
+
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -37,3 +38,5 @@ spec:
         env:
         - name: WS_SECRET
           value: BANZAI!!!!
+        - name: BOOTNODE_URL
+          value: http://dashboard:3001
