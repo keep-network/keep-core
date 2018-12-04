@@ -47,8 +47,8 @@ type Interface interface {
 	// random signature.  An event is generated.
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
 	// IsResultPublished checks if the result is already published to a chain.
-	// If so it returns the published result.
-	IsResultPublished(result *result.Result) *event.PublishedResult
+	// If so it returns true.
+	IsResultPublished(result *event.PublishedResult) bool
 	// SubmitResult sends DKG result to a chain.
 	SubmitResult(publisherID gjkr.MemberID, result *result.Result) *async.PublishedResultPromise
 	// OnResultPublished is a callback that is invoked when an on-chain
