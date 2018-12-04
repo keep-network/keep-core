@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func TestPublishedResultEquals(t *testing.T) {
+func TestPublishedDKGResultEquals(t *testing.T) {
 	var tests = map[string]struct {
-		result1        *PublishedResult
-		result2        *PublishedResult
+		result1        *PublishedDKGResult
+		result2        *PublishedDKGResult
 		expectedResult bool
 	}{
 		"both nil": {
@@ -17,58 +17,58 @@ func TestPublishedResultEquals(t *testing.T) {
 			expectedResult: true,
 		},
 		"both empty": {
-			result1:        &PublishedResult{},
-			result2:        &PublishedResult{},
+			result1:        &PublishedDKGResult{},
+			result2:        &PublishedDKGResult{},
 			expectedResult: true,
 		},
 		"nil and empty": {
 			result1:        nil,
-			result2:        &PublishedResult{},
+			result2:        &PublishedDKGResult{},
 			expectedResult: false,
 		},
 		"success - equal": {
-			result1:        &PublishedResult{Success: true},
-			result2:        &PublishedResult{Success: true},
+			result1:        &PublishedDKGResult{Success: true},
+			result2:        &PublishedDKGResult{Success: true},
 			expectedResult: true,
 		},
 		"success - not equal": {
-			result1:        &PublishedResult{Success: true},
-			result2:        &PublishedResult{Success: false},
+			result1:        &PublishedDKGResult{Success: true},
+			result2:        &PublishedDKGResult{Success: false},
 			expectedResult: false,
 		},
 		"group public keys - equal": {
-			result1:        &PublishedResult{GroupPublicKey: big.NewInt(2)},
-			result2:        &PublishedResult{GroupPublicKey: big.NewInt(2)},
+			result1:        &PublishedDKGResult{GroupPublicKey: big.NewInt(2)},
+			result2:        &PublishedDKGResult{GroupPublicKey: big.NewInt(2)},
 			expectedResult: true,
 		},
 		"group public keys - nil and set": {
-			result1:        &PublishedResult{GroupPublicKey: nil},
-			result2:        &PublishedResult{GroupPublicKey: big.NewInt(1)},
+			result1:        &PublishedDKGResult{GroupPublicKey: nil},
+			result2:        &PublishedDKGResult{GroupPublicKey: big.NewInt(1)},
 			expectedResult: false,
 		},
 		"group public keys - not equal": {
-			result1:        &PublishedResult{GroupPublicKey: big.NewInt(3)},
-			result2:        &PublishedResult{GroupPublicKey: big.NewInt(4)},
+			result1:        &PublishedDKGResult{GroupPublicKey: big.NewInt(3)},
+			result2:        &PublishedDKGResult{GroupPublicKey: big.NewInt(4)},
 			expectedResult: false,
 		},
 		"disqualified - equal": {
-			result1:        &PublishedResult{Disqualified: []bool{false, false, true}},
-			result2:        &PublishedResult{Disqualified: []bool{false, false, true}},
+			result1:        &PublishedDKGResult{Disqualified: []bool{false, false, true}},
+			result2:        &PublishedDKGResult{Disqualified: []bool{false, false, true}},
 			expectedResult: true,
 		},
 		"disqualified - not equal": {
-			result1:        &PublishedResult{Disqualified: []bool{false, false, true}},
-			result2:        &PublishedResult{Disqualified: []bool{false, true, false}},
+			result1:        &PublishedDKGResult{Disqualified: []bool{false, false, true}},
+			result2:        &PublishedDKGResult{Disqualified: []bool{false, true, false}},
 			expectedResult: false,
 		},
 		"inactive - equal": {
-			result1:        &PublishedResult{Inactive: []bool{true, true, false}},
-			result2:        &PublishedResult{Inactive: []bool{true, true, false}},
+			result1:        &PublishedDKGResult{Inactive: []bool{true, true, false}},
+			result2:        &PublishedDKGResult{Inactive: []bool{true, true, false}},
 			expectedResult: true,
 		},
 		"inactive - not equal": {
-			result1:        &PublishedResult{Inactive: []bool{true, true, false}},
-			result2:        &PublishedResult{Inactive: []bool{true, true}},
+			result1:        &PublishedDKGResult{Inactive: []bool{true, true, false}},
+			result2:        &PublishedDKGResult{Inactive: []bool{true, true}},
 			expectedResult: false,
 		},
 	}
