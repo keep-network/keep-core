@@ -3,11 +3,8 @@ package chain
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -48,9 +45,9 @@ type Interface interface {
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
 	// IsResultPublished checks if the result is already published to a chain.
 	// If so it returns true.
-	IsResultPublished(result *event.PublishedResult) bool
+	IsResultPublished(publishedResult *event.PublishedResult) bool
 	// SubmitResult sends DKG result to a chain.
-	SubmitResult(publisherID gjkr.MemberID, result *result.Result) *async.PublishedResultPromise
+	SubmitResult(publishedResult *event.PublishedResult) *async.PublishedResultPromise
 	// OnResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
 	OnResultPublished(func(publishedResult *event.PublishedResult))
