@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 )
 
 // Entry represents one entry in the threshold relay.
@@ -51,5 +49,5 @@ type StakerRegistration struct {
 // a member who published the result and a result in a byte slice.
 type PublishedResult struct {
 	PublisherID gjkr.MemberID
-	Result      *result.Result
+	Result      *gjkr.Result
 }

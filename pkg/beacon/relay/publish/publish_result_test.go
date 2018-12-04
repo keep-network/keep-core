@@ -7,7 +7,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
@@ -22,7 +21,7 @@ func TestPublishResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resultToPublish := &result.Result{
+	resultToPublish := &gjkr.Result{
 		Success:        false,
 		GroupPublicKey: big.NewInt(12345),
 		Disqualified:   []int{1, 2},
@@ -120,7 +119,7 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 		blockStep:       blockStep,
 	}
 
-	resultToPublish := &result.Result{
+	resultToPublish := &gjkr.Result{
 		GroupPublicKey: big.NewInt(12345),
 	}
 	expectedPublishedResult := &event.PublishedResult{
@@ -200,49 +199,49 @@ func TestPublishResult_ConcurrentExecution(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		resultToPublish1         *result.Result
-		resultToPublish2         *result.Result
+		resultToPublish1         *gjkr.Result
+		resultToPublish2         *gjkr.Result
 		expectedPublishedResult1 *event.PublishedResult
 		expectedPublishedResult2 *event.PublishedResult
 		expectedDuration         int
 	}{
 		"two members publish the same results": {
-			resultToPublish1: &result.Result{
+			resultToPublish1: &gjkr.Result{
 				GroupPublicKey: big.NewInt(101),
 			},
-			resultToPublish2: &result.Result{
+			resultToPublish2: &gjkr.Result{
 				GroupPublicKey: big.NewInt(101),
 			},
 			expectedPublishedResult1: &event.PublishedResult{
 				PublisherID: publisher1.ID,
-				Result: &result.Result{
+				Result: &gjkr.Result{
 					GroupPublicKey: big.NewInt(101),
 				},
 			},
 			expectedPublishedResult2: &event.PublishedResult{
 				PublisherID: publisher1.ID,
-				Result: &result.Result{
+				Result: &gjkr.Result{
 					GroupPublicKey: big.NewInt(101),
 				},
 			},
 			expectedDuration: publisher1.publishingIndex * blockStep, // index * t_step
 		},
 		"two members publish different results": {
-			resultToPublish1: &result.Result{
+			resultToPublish1: &gjkr.Result{
 				GroupPublicKey: big.NewInt(201),
 			},
-			resultToPublish2: &result.Result{
+			resultToPublish2: &gjkr.Result{
 				GroupPublicKey: big.NewInt(202),
 			},
 			expectedPublishedResult1: &event.PublishedResult{
 				PublisherID: publisher1.ID,
-				Result: &result.Result{
+				Result: &gjkr.Result{
 					GroupPublicKey: big.NewInt(201),
 				},
 			},
 			expectedPublishedResult2: &event.PublishedResult{
 				PublisherID: publisher2.ID,
-				Result: &result.Result{
+				Result: &gjkr.Result{
 					GroupPublicKey: big.NewInt(202),
 				},
 			},
