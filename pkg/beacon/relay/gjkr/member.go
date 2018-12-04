@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -280,18 +279,18 @@ func (fm *FinalizingMember) PublishingIndex() int {
 // configured dishonest threshold, the group is deemed too weak, and the result
 // is set to failure. Otherwise, it returns the generated group public key along
 // with the disqualified and inactive members.
-func (fm *FinalizingMember) Result() *result.Result {
+func (fm *FinalizingMember) Result() *Result {
 	disqualifiedMembers := fm.group.DisqualifiedMembers() // DQ
 	inactiveMembers := fm.group.InactiveMembers()         // IA
 
 	if !fm.group.isThresholdSatisfied() {
-		return &result.Result{
+		return &Result{
 			Success:      false,
 			Disqualified: disqualifiedMembers,
 		}
 	}
 
-	return &result.Result{
+	return &Result{
 		Success:        true,
 		GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
 		Disqualified:   disqualifiedMembers,

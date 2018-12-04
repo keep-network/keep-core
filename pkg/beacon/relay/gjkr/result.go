@@ -1,4 +1,4 @@
-package result
+package gjkr
 
 import (
 	"fmt"
