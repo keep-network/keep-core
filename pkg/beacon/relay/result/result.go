@@ -1,7 +1,6 @@
 package result
 
 import (
-	"fmt"
 	"math/big"
 )
 
@@ -23,11 +22,4 @@ type Result struct {
 	Disqualified []int
 	// Inactive members IDs.
 	Inactive []int
-}
-
-// Bytes returns the result as a byte slice.
-// TODO: How should we send it to the chain? Should it be sha256 hash, result
-// serialized to json or something else?
-func (r *Result) Bytes() []byte {
-	return []byte(fmt.Sprintf("%v", r))
 }
