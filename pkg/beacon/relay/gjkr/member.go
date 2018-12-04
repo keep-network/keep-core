@@ -298,6 +298,11 @@ func (fm *FinalizingMember) Result() *Result {
 	}
 }
 
+// Equals checks if actual MemberID matches expected one, if so returns true.
+func (id MemberID) Equals(expectedMemberID MemberID) bool {
+	return id == expectedMemberID
+}
+
 // Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
