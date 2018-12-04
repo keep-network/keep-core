@@ -14,7 +14,6 @@ func (dkg *DKG) NewChallengeState() (*ChallengeState, error) {
 		return nil, fmt.Errorf("failed to get current block [%v]", err)
 	}
 	return &ChallengeState{
-		TNow:             0,
 		TFirst:           TNow,
 		AllResults:       make([]result.Result, 0, 1),
 		AllVotes:         make([]ResultVotes, 0, 1),
@@ -35,20 +34,19 @@ func (vc *ChallengeState) ChallengeStateChange(
 	if err != nil {
 		return fmt.Errorf("failed to get current block [%v]", err)
 	}
-	vc.TNow = TNow
 	_, err = vc.findHash(resultHash, vc.AllResults)
 	if err != nil {
 		vc.AllResults = append(vc.AllResults, *currentResult)
 		resultPkg := ResultVotes{
 			Votes:       1,
-			BlockHeight: vc.TNow,
+			BlockHeight: TNow,
 		}
 		vc.AllVotes = append(vc.AllVotes, resultPkg)
 	}
 	leadResult := vc.findMostVotes(vc.AllVotes)
 	vc.LeadResult = leadResult
 
-	if vc.TNow > (vc.TFirst + vc.TConflict) {
+	if TNow > (vc.TFirst + vc.TConflict) {
 		vc.stateReached(1)
 		return nil
 	} else if vc.AllVotes[leadResult].Votes > vc.TMax {
@@ -75,14 +73,6 @@ func (vc *ChallengeState) ChallengeStateChange(
 
 // Vote Adds 1 to vote for a specific result.
 func (vc *ChallengeState) VoteForHash(resultHash []byte) error {
-	if vc.TNow == 0 {
-		return fmt.Errorf("did not see a challenge before a vote")
-	}
-	TNow, err := vc.dkg.CurrentBlock()
-	if err != nil {
-		return fmt.Errorf("failed to get current block [%v]", err)
-	}
-	vc.TNow = TNow
 	pos, err := vc.findHash(resultHash, vc.AllResults)
 	if err != nil {
 		return fmt.Errorf("invalid hash not found [%v]", err)

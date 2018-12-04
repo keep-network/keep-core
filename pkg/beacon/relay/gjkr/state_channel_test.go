@@ -651,7 +651,6 @@ func TestStateChannel(t *testing.T) {
 			}
 			vc.TMax = test.TMax           // M_Max
 			vc.TConflict = test.TConflict // T_conflict
-			vc.TNow = 1                   // T_Now - Current block height at the current time
 			vc.TFirst = 1                 // T_First -
 
 			for pc, anOp := range test.Ops {
