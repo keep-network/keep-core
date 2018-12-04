@@ -58,3 +58,44 @@ type PublishedResult struct {
 	// was inactive.
 	Inactive []bool
 }
+
+// Equals checks if two published results are equal.
+func (pr *PublishedResult) Equals(pr2 *PublishedResult) bool {
+	if pr == nil || pr2 == nil {
+		return pr == pr2
+	}
+	if pr.Success != pr2.Success {
+		return false
+	}
+	if pr.GroupPublicKey != nil && pr2.GroupPublicKey != nil {
+		if pr.GroupPublicKey.Cmp(pr2.GroupPublicKey) != 0 {
+			return false
+		}
+	} else {
+		if (pr.GroupPublicKey == nil && pr2.GroupPublicKey != nil) ||
+			(pr.GroupPublicKey != nil && pr2.GroupPublicKey == nil) {
+			return false
+		}
+	}
+	if !boolSlicesEqual(pr.Disqualified, pr2.Disqualified) {
+		return false
+	}
+	if !boolSlicesEqual(pr.Inactive, pr2.Inactive) {
+		return false
+	}
+	return true
+}
+
+// MemberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
+// to have the same length and have the same order of entries.
+func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
+	if len(expectedSlice) != len(actualSlice) {
+		return false
+	}
+	for i := range expectedSlice {
+		if expectedSlice[i] != actualSlice[i] {
+			return false
+		}
+	}
+	return true
+}
