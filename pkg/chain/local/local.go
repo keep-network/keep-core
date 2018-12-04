@@ -24,14 +24,14 @@ type localChain struct {
 	groupRelayEntries      map[string]*big.Int
 
 	submittedResultsMutex sync.Mutex
-	submittedResults      []*event.PublishedResult
+	submittedResults      []*event.PublishedDKGResult
 
 	handlerMutex               sync.Mutex
 	relayEntryHandlers         []func(entry *event.Entry)
 	relayRequestHandlers       []func(request *event.Request)
 	groupRegisteredHandlers    []func(key *event.GroupRegistration)
 	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
-	publishedResultHandlers    []func(publishedResult *event.PublishedResult)
+	publishedDKGResultHandlers []func(publishedDKGResult *event.PublishedDKGResult)
 
 	requestID   int64
 	latestValue *big.Int
@@ -181,12 +181,12 @@ func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnDKGResultPublished(handler func(publishedResult *event.PublishedResult)) {
+func (c *localChain) OnDKGResultPublished(handler func(publishedDKGResult *event.PublishedDKGResult)) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	c.publishedResultHandlers = append(
-		c.publishedResultHandlers,
+	c.publishedDKGResultHandlers = append(
+		c.publishedDKGResultHandlers,
 		handler,
 	)
 }
@@ -281,7 +281,7 @@ func (c *localChain) RequestRelayEntry(
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsDKGResultPublished(result *event.PublishedResult) bool {
+func (c *localChain) IsDKGResultPublished(result *event.PublishedDKGResult) bool {
 	for _, r := range c.submittedResults {
 		if r.Equals(result) {
 			return true
@@ -291,31 +291,31 @@ func (c *localChain) IsDKGResultPublished(result *event.PublishedResult) bool {
 }
 
 // SubmitDKGResult submits the result to a chain.
-func (c *localChain) SubmitDKGResult(resultToPublish *event.PublishedResult) *async.PublishedResultPromise {
+func (c *localChain) SubmitDKGResult(resultToPublish *event.PublishedDKGResult) *async.PublishedDKGResultPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	publishedResultPromise := &async.PublishedResultPromise{}
+	publishedDKGResultPromise := &async.PublishedDKGResultPromise{}
 
 	if c.IsDKGResultPublished(resultToPublish) {
-		publishedResultPromise.Fail(fmt.Errorf("result already submitted"))
-		return publishedResultPromise
+		publishedDKGResultPromise.Fail(fmt.Errorf("result already submitted"))
+		return publishedDKGResultPromise
 	}
 
 	c.submittedResults = append(c.submittedResults, resultToPublish)
 
 	c.handlerMutex.Lock()
-	for _, handler := range c.publishedResultHandlers {
-		go func(handler func(publishedResult *event.PublishedResult)) {
+	for _, handler := range c.publishedDKGResultHandlers {
+		go func(handler func(publishedDKGResult *event.PublishedDKGResult)) {
 			handler(resultToPublish)
 		}(handler)
 	}
 	c.handlerMutex.Unlock()
 
-	err := publishedResultPromise.Fulfill(resultToPublish)
+	err := publishedDKGResultPromise.Fulfill(resultToPublish)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
 	}
 
-	return publishedResultPromise
+	return publishedDKGResultPromise
 }

@@ -63,9 +63,9 @@ func main() {
 			outputFile: "relay_entry_requested_promise.go",
 		},
 		{
-			Type:       "*event.PublishedResult",
-			Prefix:     "PublishedResult",
-			outputFile: "published_result_promise.go",
+			Type:       "*event.PublishedDKGResult",
+			Prefix:     "PublishedDKGResult",
+			outputFile: "published_dkg_result_promise.go",
 		},
 	}
 

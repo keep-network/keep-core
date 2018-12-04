@@ -45,10 +45,10 @@ type Interface interface {
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
 	// IsDKGResultPublished checks if the result is already published to a chain.
 	// If so it returns true.
-	IsDKGResultPublished(publishedResult *event.PublishedResult) bool
+	IsDKGResultPublished(publishedDKGResult *event.PublishedDKGResult) bool
 	// SubmitDKGResult sends DKG result to a chain.
-	SubmitDKGResult(publishedResult *event.PublishedResult) *async.PublishedResultPromise
+	SubmitDKGResult(publishedDKGResult *event.PublishedDKGResult) *async.PublishedDKGResultPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
-	OnDKGResultPublished(func(publishedResult *event.PublishedResult))
+	OnDKGResultPublished(func(publishedDKGResult *event.PublishedDKGResult))
 }
