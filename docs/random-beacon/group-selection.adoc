@@ -1,8 +1,8 @@
 :toc: macro
 
-== Random Beacon Group Selection
+= Random Beacon Group Selection
 
-toc::[]
+ifndef::yellowpaper[toc::[]]
 
 The group selection protocol is intended to be
 an interactive method of selecting candidate group _P_

@@ -1,11 +1,4 @@
-= [DRAFT] Random Beacon Pricing
-
-Possibilities:
-
-. bid for stake
-. bid for seed
-
-= Bid For Seed
+= [DRAFT] Random Beacon Pricing: Bid for Seed
 
 == Overview
 
