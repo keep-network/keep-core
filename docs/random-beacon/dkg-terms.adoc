@@ -46,6 +46,10 @@ becomes eligible to submit the result
 |Time limit after which
 any disputes over the correct result are assumed to be resolved,
 with the plurality being honest
+
+|T~voteResponse~
+|Extension to the time limit after a new vote has been submitted, to ensure
+honest members are able to react to last-minute votes.
 |===
 
 .Rewards and punishments
