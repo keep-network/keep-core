@@ -3,10 +3,13 @@ package local
 import (
 	"context"
 	"math/big"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
 func TestLocalSubmitRelayEntry(t *testing.T) {
@@ -94,4 +97,167 @@ func TestLocalBlockWaiter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLocalIsDKGResultPublished(t *testing.T) {
+	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
+
+	submittedRequestID1 := big.NewInt(1)
+	submittedResult11 := &relaychain.DKGResult{
+		GroupPublicKey: big.NewInt(11),
+	}
+
+	submittedRequestID2 := big.NewInt(2)
+	submittedResult21 := &relaychain.DKGResult{
+		GroupPublicKey: big.NewInt(21),
+	}
+
+	submittedResults[submittedRequestID1] = append(
+		submittedResults[submittedRequestID1],
+		submittedResult11,
+	)
+
+	submittedResults[submittedRequestID2] = append(
+		submittedResults[submittedRequestID2],
+		submittedResult21,
+	)
+
+	localChain := &localChain{
+		submittedResults: submittedResults,
+	}
+	chainHandle := localChain.ThresholdRelay()
+
+	var tests = map[string]struct {
+		requestID      *big.Int
+		dkgResult      *relaychain.DKGResult
+		expectedResult bool
+	}{
+		"matched": {
+			requestID:      submittedRequestID2,
+			dkgResult:      submittedResult21,
+			expectedResult: true,
+		},
+		"not matched - different request ID": {
+			requestID:      submittedRequestID2,
+			dkgResult:      submittedResult11,
+			expectedResult: false,
+		},
+		"not matched - different request ID and DKG Result": {
+			requestID:      big.NewInt(3),
+			dkgResult:      &relaychain.DKGResult{GroupPublicKey: big.NewInt(31)},
+			expectedResult: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResult := chainHandle.IsDKGResultPublished(test.requestID, test.dkgResult)
+
+			if actualResult != test.expectedResult {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
+			}
+		})
+	}
+}
+
+func TestLocalSubmitDKGResult(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	// Initialize local chain.
+	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
+	localChain := &localChain{
+		submittedResults: submittedResults,
+	}
+	chainHandle := localChain.ThresholdRelay()
+
+	// Channel for DKGResultPublication events.
+	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
+	localChain.OnDKGResultPublished(
+		func(dkgResultPublication *event.DKGResultPublication) {
+			dkgResultPublicationChan <- dkgResultPublication
+		},
+	)
+
+	if len(localChain.submittedResults) > 0 {
+		t.Fatalf("initial submitted results map is not empty")
+	}
+
+	// Submit new result for request ID 1
+	requestID1 := big.NewInt(1)
+	submittedResult11 := &relaychain.DKGResult{
+		GroupPublicKey: big.NewInt(11),
+	}
+	expectedOnDKGResultPublished := &event.DKGResultPublication{RequestID: requestID1}
+
+	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	if !reflect.DeepEqual(
+		localChain.submittedResults[requestID1],
+		[]*relaychain.DKGResult{submittedResult11},
+	) {
+		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
+			requestID1,
+			[]*relaychain.DKGResult{submittedResult11},
+			localChain.submittedResults[requestID1],
+		)
+	}
+
+	actualOnDKGResultPublished := <-dkgResultPublicationChan
+	if !reflect.DeepEqual(expectedOnDKGResultPublished, actualOnDKGResultPublished) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			expectedOnDKGResultPublished,
+			actualOnDKGResultPublished,
+		)
+	}
+
+	// Submit the same result for request ID 2
+	requestID2 := big.NewInt(2)
+	expectedOnDKGResultPublished = &event.DKGResultPublication{RequestID: requestID2}
+
+	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
+	if !reflect.DeepEqual(
+		localChain.submittedResults[requestID2],
+		[]*relaychain.DKGResult{submittedResult11},
+	) {
+		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
+			requestID1,
+			[]*relaychain.DKGResult{submittedResult11},
+			localChain.submittedResults[requestID2],
+		)
+	}
+
+	actualOnDKGResultPublished = <-dkgResultPublicationChan
+	if !reflect.DeepEqual(expectedOnDKGResultPublished, actualOnDKGResultPublished) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			expectedOnDKGResultPublished,
+			actualOnDKGResultPublished,
+		)
+	}
+
+	// Submit already submitted result for request ID 1
+	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	if !reflect.DeepEqual(
+		localChain.submittedResults[requestID1],
+		[]*relaychain.DKGResult{submittedResult11},
+	) {
+		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
+			requestID1,
+			[]*relaychain.DKGResult{submittedResult11},
+			localChain.submittedResults[requestID1],
+		)
+	}
+	select {
+	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
+		t.Fatalf("unexpected DKG result publication event: %v", dkgResultPublicationEvent)
+	case <-ctx.Done():
+		t.Logf("DKG result publication event not generated")
+	}
+}
+
+func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFunc) {
+	defaultTimeout := 3 * time.Second
+	if len(timeout) > 0 {
+		defaultTimeout = timeout[0]
+	}
+	return context.WithTimeout(context.Background(), defaultTimeout)
 }
