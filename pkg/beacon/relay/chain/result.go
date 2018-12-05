@@ -24,21 +24,21 @@ type DKGResult struct {
 	Inactive []bool
 }
 
-// Equals checks if two published results are equal.
-func (pr *DKGResult) Equals(pr2 *DKGResult) bool {
-	if pr == nil || pr2 == nil {
-		return pr == pr2
+// Equals checks if two DKG results are equal.
+func (r1 *DKGResult) Equals(r2 *DKGResult) bool {
+	if r1 == nil || r2 == nil {
+		return r1 == r2
 	}
-	if pr.Success != pr2.Success {
+	if r1.Success != r2.Success {
 		return false
 	}
-	if !bigIntEquals(pr.GroupPublicKey, pr2.GroupPublicKey) {
+	if !bigIntEquals(r1.GroupPublicKey, r2.GroupPublicKey) {
 		return false
 	}
-	if !boolSlicesEqual(pr.Disqualified, pr2.Disqualified) {
+	if !boolSlicesEqual(r1.Disqualified, r2.Disqualified) {
 		return false
 	}
-	if !boolSlicesEqual(pr.Inactive, pr2.Inactive) {
+	if !boolSlicesEqual(r1.Inactive, r2.Inactive) {
 		return false
 	}
 	return true
