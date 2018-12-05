@@ -56,7 +56,7 @@ with the plurality being honest
 .Values from `alt_bn128`
 [cols="h,a,a"]
 |===
-|Variable |Meaning
+|Variable |Definition |Meaning
 
 |q
 |`21888242871839275222246405745257275088548364400416034343698204186575808495617`
