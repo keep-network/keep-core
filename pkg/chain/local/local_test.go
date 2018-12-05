@@ -202,7 +202,12 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		t.Logf("event emitted: %v", dkgResultPublicationEvent)
+		if dkgResultPublicationEvent.RequestID.Cmp(requestID1) != 0 {
+			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+				requestID1,
+				dkgResultPublicationEvent.RequestID,
+			)
+		}
 	case <-ctx.Done():
 		t.Fatalf("expected event was not emitted")
 	}
@@ -216,14 +221,19 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		[]*relaychain.DKGResult{submittedResult11},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID1,
+			requestID2,
 			[]*relaychain.DKGResult{submittedResult11},
 			localChain.submittedResults[requestID2],
 		)
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		t.Logf("event emitted: %v", dkgResultPublicationEvent)
+		if dkgResultPublicationEvent.RequestID.Cmp(requestID2) != 0 {
+			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+				requestID2,
+				dkgResultPublicationEvent.RequestID,
+			)
+		}
 	case <-ctx.Done():
 		t.Fatalf("expected event was not emitted")
 	}
