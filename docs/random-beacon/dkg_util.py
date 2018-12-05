@@ -1,14 +1,17 @@
 # i is generic and doesn't relate to perspective
 
 
+# tag::phase-2[]
 # Fetch the correct ephemeral pubkey from messages broadcast in phase 1
 #
 # The format for the message of `P_j` in phase `P` is: `messages[P][j]`
 #
 def ephemeralPubkey(senderIndex, recipientIndex):
     return messages[1][senderIndex].pubkey[recipientIndex]
+# end::phase-2[]
 
 
+# tag::phase-3[]
 # Evaluate a polynomial given by `coeffs` at point `z`
 #
 # `coeffs` is little-endian; `ax^2 + bx + c` is expressed as `[c, b, a]`
@@ -31,8 +34,10 @@ def ecCommit(s, t):
     Gs = P1.scalarMult(s)
     Ht = H.scalarMult(t)
     return ecAdd(Gs, Ht)
+# end::phase-3[]
 
 
+# tag::phase-4[]
 # Calculate the sum of a list of elliptic curve points
 def ecSum(points):
     return reduce(ecAdd, points)
@@ -116,14 +121,18 @@ def checkShareConsistency(
 
     sharesValid = ecCommit(share_S, share_T) == C_ecSum
     return sharesValid
+# end::phase-4[]
 
 
+# tag::phase-5[]
 # Check that a revealed private key matches previously broadcast public key
 def validatePrivkey(senderIndex, recipientIndex, privkey):
     expectedPubkey = ephemeralPubkey(senderIndex, recipientIndex)
     return derivePubkey(privkey) == expectedPubkey
+# end::phase-5[]
 
 
+# tag::phase-8[]
 # Fetch the sender's public key coeffs `A_ik` from messages broadcast in phase 7
 def pubkeyCoeffs(senderIndex):
     return messages[7][senderIndex].pubkeyCoeffs
@@ -153,8 +162,10 @@ def validatePubkeyCoeffs(
         share_S
 ):
     return P1.scalarMult(share_S) == pubkeyShare(senderIndex, recipientIndex)
+# end::phase-8[]
 
 
+# tag::phase-9[]
 # Check which party is at fault when a complaint is presented in phase 8
 #
 # Decrypt the shares the accused sent to the complainer in phase 3 and check
@@ -188,15 +199,19 @@ def resolvePubkeyComplaint(
             return "complainer"
         else:
             return "accused"
+# end::phase-9[]
 
 
+# tag::phase-11[]
 def reconstruct(shares, indices):
     secret = sum(
         [ share_k * lagrange(k, indices) for share_k in shares, k in indices ]
     )
     return secret % q
+# end::phase-11[]
 
 
+# tag::phase-12[]
 # Calculate the individual public key of a specific participant
 #
 # GJKR (C1'):
@@ -209,3 +224,4 @@ def reconstruct(shares, indices):
 def individualPublicKey(memberIndex, QUAL):
     pubkeyShares = [ pubkeyShare(i, memberIndex) for i in QUAL ]
     return ecSum(pubkeyShares)
+# end::phase-12[]

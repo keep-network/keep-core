@@ -1,9 +1,7 @@
 # i = always the player whose perspective we're in
 
-#
-# PHASE 1
-#
 
+# tag::phase-1[]
 # Because G1 and G2 in alt_bn128 are cyclic groups of prime order, this number
 # can also be used as the size of the secret sharing finite field
 q = G1.curveOrder
@@ -38,12 +36,10 @@ for j in goodParticipants[1], j != i:
     ephemeralPubkeys[j] = y_ij
 
 broadcast(messagePhase1(ephemeralPubkeys))
+# end::phase-1[]
 
 
-#
-# PHASE 2
-#
-
+# tag::phase-2[]
 # Receive messages from phase 1:
 # - ephemeral public keys of other participants
 messages.receive(1)
@@ -54,12 +50,10 @@ for j in goodParticipants[2], j != i:
 
     k_ij = ecdh(privkey_ij, pubkey_ji)
     self.symkey[j] = k_ij
+# end::phase-2[]
 
 
-#
-# PHASE 3
-#
-
+# tag::phase-3[]
 # GJKR 1.(a):
 #  f_i(z) = a_i0 + a_i1 * z + ... + a_it * z^t
 #  f'_i(z) = b_i0 + b_i1 * z + ... + b_it * z^t
@@ -100,12 +94,10 @@ for j in goodParticipants[3]:
         self.shares[i] = (s_ij, t_ij)
 
 broadcast(messagePhase3(encryptedShares, self.commitments))
+# end::phase-3[]
 
 
-#
-# PHASE 4
-#
-
+# tag::phase-4[]
 # Receive messages from phase 3:
 # - commitments to the secret sharing polynomials
 # - encrypted share payloads
@@ -130,12 +122,10 @@ for j in goodParticipants[4], j != i:
         self.shares[j] = (s_ji, t_ji)
 
 broadcast(messagePhase4(shareComplaints))
+# end::phase-4[]
 
 
-#
-# PHASE 5
-#
-
+# tag::phase-5[]
 # Receive messages from phase 4:
 # - complaints about inconsistent shares
 messages.receive(4)
@@ -173,12 +163,10 @@ for complaint in messages[4]:
         # Shares consistent, disqualify accuser
         else:
             disqualify(5, j)
+# end::phase-5[]
 
 
-#
-# PHASE 6
-#
-
+# tag::phase-6[]
 # GJKR 2:
 #
 QUAL = goodParticipants[6]
@@ -199,12 +187,10 @@ x_i = sum(
 xprime_i = sum(
     [ self.shares[j].share_T for j in QUAL ]
 ) % q
+# end::phase-6[]
 
 
-#
-# PHASE 7
-#
-
+# tag::phase-7[]
 # GJKR 4.(a):
 #
 #   A_ik = g^a_ik % p
@@ -214,12 +200,10 @@ self.pubkeyCoeffs = [
 ]
 
 broadcast(messagePhase7(self.pubkeyCoeffs))
+# end::phase-7[]
 
 
-#
-# PHASE 8
-#
-
+# tag::phase-8[]
 # Receive messages from phase 7:
 # - public key coefficients
 messages.receive(7)
@@ -237,12 +221,10 @@ for j in goodParticipants[8]:
         pubkeyComplaints.append(pubkeyComplaint(j))
 
 broadcast(messagePhase8(pubkeyComplaints))
+# end::phase-8[]
 
 
-#
-# PHASE 9
-#
-
+# tag::phase-9[]
 # Receive messages from phase 8:
 # - complaints about invalid public key coefficients
 messages.receive(8)
@@ -273,12 +255,10 @@ for complaint in messages[8]:
             disqualify(9, m)
         if badActor == "complainer" or badActor == "both":
             disqualify(9, j)
+# end::phase-9[]
 
 
-#
-# PHASE 10
-#
-
+# tag::phase-10[]
 disqualifiedKeys = []
 
 for m in disqualifiedInPhase[9]:
@@ -286,12 +266,10 @@ for m in disqualifiedInPhase[9]:
     disqualifiedKeys.append(keyPackage)
 
 broadcast(messagePhase10(disqualifiedKeys))
+# end::phase-10[]
 
 
-#
-# PHASE 11
-#
-
+# tag::phase-11[]
 # Receive messages from phase 10:
 # - good participants' ephemeral private keys for each disqualified participant
 messages.receive(10)
@@ -337,12 +315,10 @@ for m in disqualifiedInPhase[9]:
     z_m = reconstruct(shares_m, indices_m)
     y_m = P1.scalarMult(z_m)
     self.reconstructed_Y_[m] = y_m
+# end::phase-11[]
 
 
-#
-# PHASE 12
-#
-
+# tag::phase-12[]
 # GJKR 4.(c):
 #
 #   Y = product([ A_i0 for i in QUAL ]) % p
@@ -359,3 +335,4 @@ Y = ecSum(
 
 for j in goodParticipants[12]:
     self.peerPublicKeys[j] = individualPublicKey(j, QUAL)
+# end::phase-12[]

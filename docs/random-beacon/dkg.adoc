@@ -98,7 +98,7 @@ published by each participant in phase 1.
 .Phase 1
 [source, python]
 ----
-include::dkg.py[lines=7..40]
+include::dkg.py[tags=phase-1]
 ----
 
 [#phase-2,reftext="Phase 2"]
@@ -110,13 +110,13 @@ _P~i~_ will perform ECDH with every _P~j~_ in _P_ to create _k~ij~_.
 .Phase 2
 [source, python]
 ----
-include::dkg.py[lines=47..56]
+include::dkg.py[tags=phase-2]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=4..9]
+include::dkg_util.py[tags=phase-2]
 ----
 
 [#phase-3,reftext="Phase 3"]
@@ -138,13 +138,13 @@ Commitments and encrypted shares are broadcast to other players.
 .Phase 3
 [source, python]
 ----
-include::dkg.py[lines=63..102]
+include::dkg.py[tags=phase-3]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=12..38]
+include::dkg_util.py[tags=phase-3]
 ----
 
 [#phase-4,reftext="Phase 4"]
@@ -159,13 +159,13 @@ corresponding ephemeral private key so others can check the result.
 .Phase 4
 [source, python]
 ----
-include::dkg.py[lines=109..132]
+include::dkg.py[tags=phase-4]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=36..118]
+include::dkg_util.py[tags=phase-4]
 ----
 
 [#phase-5,reftext="Phase 5"]
@@ -182,13 +182,13 @@ false complaint.
 .Phase 5
 [source, python]
 ----
-include::dkg.py[lines=139..175]
+include::dkg.py[tags=phase-5]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=121..124]
+include::dkg_util.py[tags=phase-5]
 ----
 
 [#phase-6,reftext="Phase 6"]
@@ -200,7 +200,7 @@ shares _s~ji~_ as per GJKR. _X_ equals the sum of shares _s~j0~_.
 .Phase 6
 [source, python]
 ----
-include::dkg.py[lines=182..201]
+include::dkg.py[tags=phase-6]
 ----
 
 [#phase-7,reftext="Phase 7"]
@@ -211,7 +211,7 @@ Each player broadcasts their _A~ik~_ values.
 .Phase 7
 [source, python]
 ----
-include::dkg.py[lines=208..216]
+include::dkg.py[tags=phase-7]
 ----
 
 [#phase-8,reftext="Phase 8"]
@@ -222,13 +222,13 @@ Each player validates the values received in <<phase-7>>.
 .Phase 8
 [source, python]
 ----
-include::dkg.py[lines=223..239]
+include::dkg.py[tags=phase-8]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=127..155]
+include::dkg_util.py[tags=phase-8]
 ----
 
 [#phase-9,reftext="Phase 9"]
@@ -248,13 +248,13 @@ the impact of this is reduced to a manageable level.
 .Phase 9
 [source, python]
 ----
-include::dkg.py[lines=246..275]
+include::dkg.py[tags=phase-9]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=158..190]
+include::dkg_util.py[tags=phase-9]
 ----
 
 [#phase-10,reftext="Phase 10"]
@@ -267,7 +267,7 @@ offline.
 .Phase 10
 [source, python]
 ----
-include::dkg.py[lines=282..288]
+include::dkg.py[tags=phase-10]
 ----
 
 [#phase-11,reftext="Phase 11"]
@@ -280,13 +280,13 @@ Calculate _y~m~ = z~m~ * P1_ for each reconstructed _z~m~_.
 .Phase 11
 [source, python]
 ----
-include::dkg.py[lines=295..339]
+include::dkg.py[tags=phase-11]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=193..197]
+include::dkg_util.py[tags=phase-11]
 ----
 
 [#phase-12,reftext="Phase 12"]
@@ -301,13 +301,13 @@ individual public key for validating signature shares.
 .Phase 12
 [source, python]
 ----
-include::dkg.py[lines=346..361]
+include::dkg.py[tags=phase-12]
 ----
 
 .Utility functions
 [source, python]
 ----
-include::dkg_util.py[lines=200..211]
+include::dkg_util.py[tags=phase-12]
 ----
 
 [#phase-13,reftext="Phase 13"]
