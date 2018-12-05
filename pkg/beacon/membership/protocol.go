@@ -6,6 +6,7 @@ package membership
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 )
 
 // Ticket is a message containing a pseudorandomly generated value, W_k, which is
@@ -21,15 +22,20 @@ type Ticket struct {
 }
 
 // CalculateTicket generates a Ticket from the previous beacon output, the
-// staker's ECDSA public key, and the virtual staker index. Validation is done
-// outside of this function, and it is intended to be called in a loop, ranging
-// over the list of virtual stakers.
+// staker's ECDSA public key, and the virtual staker index. This function is
+// intended to be called in a loop, ranging over the list of virtual stakers.
 
 // See Phase 1 of the Group Selection protocol specification.
 func (s *Staker) CalculateTicket(
 	beaconOutput []byte,
 	virtualStakerIndex uint64,
-) *Ticket {
+) (*Ticket, error) {
+	if virtualStakerIndex > s.Weight || virtualStakerIndex < 1 {
+		return nil, fmt.Errorf(
+			"virtualStakerIndex not in range [1, %d]",
+			s.Weight,
+		)
+	}
 	var combinedProof []byte
 
 	combinedProof = append(combinedProof, beaconOutput...)
@@ -45,5 +51,5 @@ func (s *Staker) CalculateTicket(
 		PreviousBeaconValue: beaconOutput,
 		StakerValue:         s.PubKey.SerializeCompressed(),
 		VirtualStakerIndex:  virtualStakerIndex,
-	}
+	}, nil
 }
