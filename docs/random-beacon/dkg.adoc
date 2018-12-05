@@ -396,8 +396,13 @@ while resultPublished and not finished:
 
   T_now = getCurrentBlockHeight()
   T_first = allResults.earliest.submitTime
+  T_latestVote = allResults.latest.submitTime
 
-  if T_now > T_first + T_conflict or leadResult.votes > M:
+  majorityVoted = leadResult.votes > M
+  timeoutReached = T_now > (T_first + T_conflict)
+  noRecentVotes = T_now - T_latestVote > T_voteResponse
+
+  if majorityVoted or timeoutReached and noRecentVotes:
     finished = True
 
   elif correctResult = leadResult or alreadySubmitted:
