@@ -30,10 +30,10 @@ func (s *Staker) calculateTicket(
 	beaconOutput []byte,
 	virtualStakerIndex uint64,
 ) (*Ticket, error) {
-	if virtualStakerIndex > s.Weight || virtualStakerIndex < 1 {
+	if virtualStakerIndex > s.VirtualStakers || virtualStakerIndex < 1 {
 		return nil, fmt.Errorf(
 			"virtualStakerIndex not in range [1, %d]",
-			s.Weight,
+			s.VirtualStakers,
 		)
 	}
 	var combinedProof []byte

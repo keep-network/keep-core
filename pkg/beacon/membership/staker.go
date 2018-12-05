@@ -1,9 +1,14 @@
 package membership
 
-import "github.com/btcsuite/btcd/btcec"
+import (
+	"github.com/btcsuite/btcd/btcec"
+)
 
 // Staker represents an on-chain identity and staked amount.
 type Staker struct {
 	PubKey btcec.PublicKey // Q_j
-	Weight uint64
+
+	// A staker's VirtualStakers is how many minimum-stake stakers a given
+	// actual staker could form if they were to blitzpants their stake.
+	VirtualStakers uint64
 }
