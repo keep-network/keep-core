@@ -50,6 +50,39 @@ type PeerSharesMessage struct {
 	encryptedShareT []byte // t_ij
 }
 
+// SecretSharesAccusationsMessage is a message payload that carries all of the
+// sender's accusations against other members of the threshold group.
+// If all other members behaved honestly from the sender's point of view, this
+// message should be broadcast but with an empty slice of `accusedIDs`.
+//
+// It is expected to be broadcast.
+type SecretSharesAccusationsMessage struct {
+	senderID MemberID
+
+	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
+}
+
+// MemberPublicKeySharePointsMessage is a message payload that carries the sender's
+// public key share points.
+// It is expected to be broadcast.
+type MemberPublicKeySharePointsMessage struct {
+	senderID MemberID
+
+	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
+}
+
+// PointsAccusationsMessage is a message payload that carries all of the sender's
+// accusations against other members of the threshold group after public key share
+// points validation.
+// If all other members behaved honestly from the sender's point of view, this
+// message should be broadcast but with an empty slice of `accusedIDs`.
+// It is expected to be broadcast.
+type PointsAccusationsMessage struct {
+	senderID MemberID
+
+	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
+}
+
 func newPeerSharesMessage(
 	senderID, receiverID MemberID,
 	shareS, shareT *big.Int,
@@ -100,37 +133,4 @@ func (psm *PeerSharesMessage) CanDecrypt(key ephemeral.SymmetricKey) bool {
 	}
 
 	return true
-}
-
-// SecretSharesAccusationsMessage is a message payload that carries all of the
-// sender's accusations against other members of the threshold group.
-// If all other members behaved honestly from the sender's point of view, this
-// message should be broadcast but with an empty slice of `accusedIDs`.
-//
-// It is expected to be broadcast.
-type SecretSharesAccusationsMessage struct {
-	senderID MemberID
-
-	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
-}
-
-// MemberPublicKeySharePointsMessage is a message payload that carries the sender's
-// public key share points.
-// It is expected to be broadcast.
-type MemberPublicKeySharePointsMessage struct {
-	senderID MemberID
-
-	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
-}
-
-// PointsAccusationsMessage is a message payload that carries all of the sender's
-// accusations against other members of the threshold group after public key share
-// points validation.
-// If all other members behaved honestly from the sender's point of view, this
-// message should be broadcast but with an empty slice of `accusedIDs`.
-// It is expected to be broadcast.
-type PointsAccusationsMessage struct {
-	senderID MemberID
-
-	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }
