@@ -188,7 +188,6 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(11),
 	}
-	expectedOnDKGResultPublished := &event.DKGResultPublication{RequestID: requestID1}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
 	if !reflect.DeepEqual(
@@ -201,18 +200,15 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 			localChain.submittedResults[requestID1],
 		)
 	}
-
-	actualOnDKGResultPublished := <-dkgResultPublicationChan
-	if !reflect.DeepEqual(expectedOnDKGResultPublished, actualOnDKGResultPublished) {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			expectedOnDKGResultPublished,
-			actualOnDKGResultPublished,
-		)
+	select {
+	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
+		t.Logf("event emitted: %v", dkgResultPublicationEvent)
+	case <-ctx.Done():
+		t.Fatalf("expected event was not emitted")
 	}
 
 	// Submit the same result for request ID 2
 	requestID2 := big.NewInt(2)
-	expectedOnDKGResultPublished = &event.DKGResultPublication{RequestID: requestID2}
 
 	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
 	if !reflect.DeepEqual(
@@ -225,13 +221,11 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 			localChain.submittedResults[requestID2],
 		)
 	}
-
-	actualOnDKGResultPublished = <-dkgResultPublicationChan
-	if !reflect.DeepEqual(expectedOnDKGResultPublished, actualOnDKGResultPublished) {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			expectedOnDKGResultPublished,
-			actualOnDKGResultPublished,
-		)
+	select {
+	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
+		t.Logf("event emitted: %v", dkgResultPublicationEvent)
+	case <-ctx.Done():
+		t.Fatalf("expected event was not emitted")
 	}
 
 	// Submit already submitted result for request ID 1
@@ -248,7 +242,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		t.Fatalf("unexpected DKG result publication event: %v", dkgResultPublicationEvent)
+		t.Fatalf("unexpected event was emitted: %v", dkgResultPublicationEvent)
 	case <-ctx.Done():
 		t.Logf("DKG result publication event not generated")
 	}
