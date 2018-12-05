@@ -43,7 +43,7 @@ type StakerRegistration struct {
 	GroupMemberID string
 }
 
-// DKGResultPublication represents a DKG result publication.
+// DKGResultPublication represents a DKG result publication event
 type DKGResultPublication struct {
 	RequestID *big.Int
 }
