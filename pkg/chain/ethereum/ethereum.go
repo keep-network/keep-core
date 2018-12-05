@@ -425,17 +425,21 @@ func (ec *ethereumChain) RequestRelayEntry(
 }
 
 // IsDKGResultPublished checks if the result is already published to a chain.
-func (ec *ethereumChain) IsDKGResultPublished(publishedDKGResult *event.PublishedDKGResult) bool {
+func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int, result *relaychain.DKGResult) bool {
 	// TODO Implement
 	return false
 }
 
 // SubmitDKGResult sends DKG result to a chain.
-func (ec *ethereumChain) SubmitDKGResult(publishedDKGResult *event.PublishedDKGResult) *async.PublishedDKGResultPromise {
+func (ec *ethereumChain) SubmitDKGResult(
+	requestID *big.Int, resultToPublish *relaychain.DKGResult,
+) *async.DKGResultPublicationPromise {
 	// TODO Implement
 	return nil
 }
 
-func (ec *ethereumChain) OnDKGResultPublished(handler func(publishedDKGResult *event.PublishedDKGResult)) {
+func (ec *ethereumChain) OnDKGResultPublished(
+	handler func(dkgResultPublication *event.DKGResultPublication),
+) {
 	// TODO Implement
 }
