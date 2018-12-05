@@ -14,14 +14,14 @@ func (dkg *DKG) NewChallengeState() (*ChallengeState, error) {
 		return nil, fmt.Errorf("failed to get current block [%v]", err)
 	}
 	return &ChallengeState{
-		TFirst:           TNow,
-		AllResults:       make([]result.Result, 0, 1),
-		AllVotes:         make([]ResultVotes, 0, 1),
-		LeadResult:       0,
-		AlreadySubmitted: false,
-		TConflict:        3,
-		TMax:             5,
-		dkg:              dkg,
+		TFirst:             TNow,
+		AllResults:         make([]result.Result, 0, 1),
+		AllVotes:           make([]ResultVotes, 0, 1),
+		LeadResult:         0,
+		AlreadySubmitted:   false,
+		votingDuration:     3, // T_Conflict
+		dishonestThreshold: 5, // T_Max
+		dkg:                dkg,
 	}, nil
 }
 
@@ -46,10 +46,10 @@ func (vc *ChallengeState) ChallengeStateChange(
 	leadResult := vc.findMostVotes(vc.AllVotes)
 	vc.LeadResult = leadResult
 
-	if TNow > (vc.TFirst + vc.TConflict) {
+	if TNow > (vc.TFirst + vc.votingDuration) { // TFirst + T_Conflict
 		vc.stateReached(1)
 		return nil
-	} else if vc.AllVotes[leadResult].Votes > vc.TMax {
+	} else if vc.AllVotes[leadResult].Votes > vc.dishonestThreshold { // > TMax
 		vc.stateReached(2)
 		return nil
 	} else if correctResult == leadResult {

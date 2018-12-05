@@ -21,19 +21,19 @@ func TestChallengeStateChagne(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		runTest       bool
-		groupSize     int
-		thresholdSize int
-		TMax          int
-		TConflict     int
-		Ops           []ops
+		runTest            bool  //
+		groupSize          int   //
+		thresholdSize      int   //
+		dishonestThreshold int   // T_Max
+		votingDuration     int   // T_Conflict
+		Ops                []ops //
 	}{
 		"001 Correct Result is Lead Result, Test Case 00003.": {
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          8,
-			TConflict:     4,
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 8,
+			votingDuration:     4,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -53,11 +53,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			// finalState: 1,
 		},
 		"002 Correct Result is Lead Result, Test Case 00003 - Verify that successisive tests do not impact each other.": {
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          8,
-			TConflict:     4,
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 8,
+			votingDuration:     4,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -80,11 +80,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			},
 		},
 		"003 Correct Result is Lead Result, First Plus Conflict 00001.": {
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          2,
-			TConflict:     0,
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 2,
+			votingDuration:     0,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -125,11 +125,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			// finalState: 3,
 		},
 		"004 Correct Result is Lead Result, Longer sleep over many blocks.": {
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          8,
-			TConflict:     6,
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 8,
+			votingDuration:     6,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -191,12 +191,12 @@ func TestChallengeStateChagne(t *testing.T) {
 			},
 		},
 		"005 Correct Result is Lead Result, Test voting for stuff.": {
-			// } else if m1.AllVotes[leadResult].Votes > vc.TMax {
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          8,
-			TConflict:     6,
+			// } else if m1.AllVotes[leadResult].Votes > vc.dishonestThreshold {
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 8,
+			votingDuration:     6,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -307,11 +307,11 @@ func TestChallengeStateChagne(t *testing.T) {
 		},
 		"006 Correct Result is Lead Result, submitted a value.": {
 			// } else if inResult(correctResult, m1.AllVotes, m1.AllResults) {
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          8,
-			TConflict:     6,
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 8,
+			votingDuration:     6,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -410,11 +410,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			// } else if inResult(correctResult, m1.AllVotes, m1.AllResults) {
 			// then...
 			// check that results that already submitted are handled correctly.
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          8,
-			TConflict:     6,
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 8,
+			votingDuration:     6,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -514,11 +514,11 @@ func TestChallengeStateChagne(t *testing.T) {
 			},
 		},
 		"008 Correct Result is Lead Result, Test the else case.": {
-			runTest:       true,
-			thresholdSize: 8,
-			groupSize:     15,
-			TMax:          8,
-			TConflict:     6,
+			runTest:            true,
+			thresholdSize:      8,
+			groupSize:          15,
+			dishonestThreshold: 8,
+			votingDuration:     6,
 			Ops: []ops{
 				{
 					EventName: "Challenge",
@@ -649,9 +649,9 @@ func TestChallengeStateChagne(t *testing.T) {
 				fmt.Printf("error: %s\n", err)
 				return
 			}
-			vc.TMax = test.TMax           // M_Max
-			vc.TConflict = test.TConflict // T_conflict
-			vc.TFirst = 1                 // T_First -
+			vc.dishonestThreshold = test.dishonestThreshold // M_Max
+			vc.votingDuration = test.votingDuration         // T_conflict
+			vc.TFirst = 1                                   // T_First -
 
 			for pc, anOp := range test.Ops {
 				switch anOp.EventName {
