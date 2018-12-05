@@ -47,16 +47,9 @@ func (pr *DKGResult) Equals(pr2 *DKGResult) bool {
 // bigIntEquals checks if two big.Int values are equal.
 func bigIntEquals(expected *big.Int, actual *big.Int) bool {
 	if expected != nil && actual != nil {
-		if expected.Cmp(actual) != 0 {
-			return false
-		}
-	} else {
-		if (expected == nil && actual != nil) ||
-			(expected != nil && actual == nil) {
-			return false
-		}
+		return expected.Cmp(actual) == 0
 	}
-	return true
+	return expected == nil && actual == nil
 }
 
 // boolSlicesEqual checks if two slices of bool are equal. Slices need to have
