@@ -26,6 +26,11 @@ func TestDKGResultEquals(t *testing.T) {
 			result2:        &DKGResult{},
 			expectedResult: false,
 		},
+		"empty and nil": {
+			result1:        &DKGResult{},
+			result2:        nil,
+			expectedResult: false,
+		},
 		"success - equal": {
 			result1:        &DKGResult{Success: true},
 			result2:        &DKGResult{Success: true},
