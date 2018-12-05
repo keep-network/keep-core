@@ -21,12 +21,12 @@ type Ticket struct {
 	VirtualStakerIndex  uint64
 }
 
-// CalculateTicket generates a Ticket from the previous beacon output, the
+// calculateTicket generates a Ticket from the previous beacon output, the
 // staker's ECDSA public key, and the virtual staker index. This function is
 // intended to be called in a loop, ranging over the list of virtual stakers.
 
 // See Phase 1 of the Group Selection protocol specification.
-func (s *Staker) CalculateTicket(
+func (s *Staker) calculateTicket(
 	beaconOutput []byte,
 	virtualStakerIndex uint64,
 ) (*Ticket, error) {
