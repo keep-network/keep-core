@@ -48,7 +48,7 @@ any disputes over the correct result are assumed to be resolved,
 with the plurality being honest
 |===
 
-.Rewards and punishmens
+.Rewards and punishments
 |===
 |Variable |Meaning
 |===
