@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math/big"
 
 	"github.com/btcsuite/btcd/btcec"
 )
@@ -16,7 +17,7 @@ import (
 // used to determine whether a given virtual staker is eligible for the group P
 // (the lowest N tickets will be chosen) and a proof of the validity of the value
 type Ticket struct {
-	Value [sha256.Size]byte // W_k
+	Value Value // W_k
 
 	Proof *Proof // Proof(Q_j, vs)
 }
@@ -26,6 +27,24 @@ type Ticket struct {
 type Proof struct {
 	StakerValue        *btcec.PublicKey // Staker-specific value, Q_j
 	VirtualStakerIndex uint64           // vs
+}
+
+type Value [sha256.Size]byte
+
+func (v Value) Bytes() []byte {
+	var byteSlice []byte
+	for _, byte := range v {
+		byteSlice = append(byteSlice, byte)
+	}
+	return byteSlice
+}
+
+func (v Value) Int() *big.Int {
+	return big.NewInt(0).SetBytes(v.Bytes())
+}
+
+func (v Value) Raw() [sha256.Size]byte {
+	return v
 }
 
 // calculateTicket generates a Ticket from the previous beacon output, the
@@ -63,15 +82,6 @@ func (s *Staker) calculateTicket(
 	}, nil
 }
 
-func toByteSlice(fixedSizeArray [32]byte) []byte {
-	var byteSlice []byte
-	for _, byte := range fixedSizeArray {
-		byteSlice = append(byteSlice, byte)
-	}
-	return byteSlice
-}
-
-// Tickets implements sort.Interface
 type Tickets []*Ticket
 
 // Len is the sort.Interface requirement for Tickets
@@ -86,8 +96,8 @@ func (ts Tickets) Swap(i, j int) {
 
 // Less is the sort.Interface requirement for Tickets
 func (ts Tickets) Less(i, j int) bool {
-	iBytes := toByteSlice(ts[i].Value)
-	jBytes := toByteSlice(ts[j].Value)
+	iBytes := ts[i].Value.Bytes()
+	jBytes := ts[j].Value.Bytes()
 
 	switch bytes.Compare(iBytes, jBytes) {
 	case -1:

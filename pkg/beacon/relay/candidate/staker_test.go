@@ -51,7 +51,7 @@ func TestValidateProofs(t *testing.T) {
 	binary.LittleEndian.PutUint64(virtualStakerBytes, staker.VirtualStakers)
 	valueBytes = append(valueBytes, virtualStakerBytes...)
 
-	expectedValue := sha256.Sum256(valueBytes[:])
+	expectedValue := Value(sha256.Sum256(valueBytes[:]))
 
 	tickets, err := staker.GenerateTickets(beaconOutput)
 	if err != nil {
@@ -59,8 +59,8 @@ func TestValidateProofs(t *testing.T) {
 	}
 
 	if bytes.Compare(
-		toByteSlice(tickets[0].Value),
-		toByteSlice(expectedValue),
+		tickets[0].Value.Bytes(),
+		expectedValue.Bytes(),
 	) != 0 {
 		t.Fatalf(
 			"hashed value (%v) doesn't match ticket value (%v)",
