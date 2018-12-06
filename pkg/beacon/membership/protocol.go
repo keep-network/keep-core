@@ -4,6 +4,7 @@
 package membership
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -52,4 +53,35 @@ func (s *Staker) calculateTicket(
 		StakerValue:         s.PubKey.SerializeCompressed(),
 		VirtualStakerIndex:  virtualStakerIndex,
 	}, nil
+}
+
+func toByteSlice(fixedSizeArray [32]byte) []byte {
+	var byteSlice []byte
+	for _, byte := range fixedSizeArray {
+		byteSlice = append(byteSlice, byte)
+	}
+	return byteSlice
+}
+
+type Tickets []*Ticket
+
+func (ts Tickets) Len() int {
+	return len(ts)
+}
+
+func (ts Tickets) Swap(i, j int) {
+	ts[i], ts[j] = ts[j], ts[i]
+}
+func (ts Tickets) Less(i, j int) bool {
+	iBytes := toByteSlice(ts[i].Value)
+	jBytes := toByteSlice(ts[j].Value)
+
+	switch bytes.Compare(iBytes, jBytes) {
+	case -1:
+		return true
+	case 1:
+		return false
+	}
+
+	return true
 }
