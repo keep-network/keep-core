@@ -386,8 +386,9 @@ acquired its maximum number of signatures it would be able to receive, and
 thus the result receiving the plurality of support is the correct one.
 
 An exception to this is if the total number of signatures supporting all other
-submitted results is higher than _M~max~_, in which case the result is declared a
-failure without disqualifications.
+submitted results is higher than _M_, in which case the result is declared a
+failure without disqualifications; every outcome is voted against by at least
+one honest participant, so a correct outcome cannot be determined.
 
 [source, python]
 ----
