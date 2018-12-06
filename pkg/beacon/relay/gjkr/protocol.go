@@ -357,7 +357,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // secret shares accusations messages. The member calls this function to judge
 // which party of the dispute is lying.
 //
-// A current member cannot be a part of a dispute. If the current member is
+// The current member cannot be a part of a dispute. If the current member is
 // either an accuser or is accused the function will return an error. The accused
 // party cannot be a judge in its own case. From the other hand, the accuser has
 // already performed the calculation in the previous phase which resulted in the
@@ -594,41 +594,73 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	return expectedProduct.Cmp(product) == 0
 }
 
-// ResolvePublicKeySharePointsAccusations resolves a complaint received from a sender
-// against a member accused in public key share points verification.
+// ResolvePublicKeySharePointsAccusationsMessages resolves a complaint received
+// in points accusations messages. The member calls this function to judge
+// which party of the dispute is lying.
 //
-// Current member cannot be a part of a dispute, if the member is either a sender
-// or accused the function will return an error.
+// The current member cannot be a part of a dispute. If the current member is
+// either an accuser or is accused the function will return an error. The accused
+// party cannot be a judge in its own case. From the other hand, the accuser has
+// already performed the calculation in the previous phase which resulted in the
+// accusation and waits now for a judgment from other players.
 //
-// The function requires share `s_mj` calculated by the accused member (`m`) for
-// the sender (`j`). This value was shared privately by member `m` with member
-// `j` in the previous phase. On accusation, this value is revealed publicly to
-// resolve the dispute between `m` and `j` and is an input parameter to this function.
+// This function needs to decrypt shares sent previously by the accused member
+// to the accuser in an encrypted form. To do that it needs to recover a symmetric
+// key used for data encryption. It takes private key revealed by the accuser
+// and public key broadcasted by the accused and performs Elliptic Curve Diffie-
+// Hellman operation between them.
 //
-// The returned value is an ID of the member who should be slashed. It will be
-// an accuser ID if the validation shows that coefficients are valid, so the
-// accusation was unfounded. Else it confirms that accused member misbehaved
-// and their ID is returned.
+// It returns IDs of members who should be disqualified. It will be an accuser
+// if the validation shows that coefficients are valid, so the accusation was
+// unfounded. Else it confirms that accused member misbehaved and their ID is
+// added to the list.
 //
 // See Phase 9 of the protocol specification.
-func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
-	senderID, accusedID MemberID,
-	shareS *big.Int,
-) (MemberID, error) {
-	if cjm.ID == senderID || cjm.ID == accusedID {
-		return 0, fmt.Errorf("current member cannot be a part of a dispute")
-	}
+func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessages(
+	messages []*PointsAccusationsMessage,
+) ([]MemberID, error) {
+	var disqualifiedMembers []MemberID
+	for _, message := range messages {
+		accuserID := message.senderID
+		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
+			if pjm.ID == message.senderID || pjm.ID == accusedID {
+				return nil, fmt.Errorf("current member cannot be a part of a dispute")
+			}
 
-	if cjm.isShareValidAgainstPublicKeySharePoints(
-		senderID,
-		shareS,
-		cjm.receivedValidPeerPublicKeySharePoints[accusedID],
-	) {
-		// TODO The accusation turned out to be unfounded. Should we add accused
-		// member's individual public key to receivedValidPeerPublicKeySharePoints?
-		return senderID, nil
+			evidenceLog := pjm.protocolConfig.evidenceLog
+
+			recoveredSymmetricKey := recoverSymmetricKey(
+				evidenceLog,
+				accuserID,
+				accusedID,
+				revealedAccuserPrivateKey,
+			)
+
+			shareS, _, err := recoverShares(
+				evidenceLog,
+				accusedID,
+				accuserID,
+				recoveredSymmetricKey,
+			)
+			if err != nil {
+				// TODO Should we disqualify accuser/accused member here?
+				return nil, fmt.Errorf("cannot decrypt share S [%v", err)
+			}
+
+			if pjm.isShareValidAgainstPublicKeySharePoints(
+				message.senderID,
+				shareS,
+				pjm.receivedValidPeerPublicKeySharePoints[accusedID],
+			) {
+				// TODO The accusation turned out to be unfounded. Should we add accused
+				// member's individual public key to receivedValidPeerPublicKeySharePoints?
+				disqualifiedMembers = append(disqualifiedMembers, message.senderID)
+				continue
+			}
+			disqualifiedMembers = append(disqualifiedMembers, accusedID)
+		}
 	}
-	return accusedID, nil
+	return disqualifiedMembers, nil
 }
 
 // DisqualifiedShares contains shares `s_mk` calculated by the disqualified
