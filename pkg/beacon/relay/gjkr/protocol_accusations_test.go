@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestResolveSecretSharesAccusations(t *testing.T) {
@@ -107,6 +109,124 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 
 			if result != test.expectedResult {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestRecoverSymmetricKey(t *testing.T) {
+	member1ID := MemberID(1)
+	member1KeyPair, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatalf("unexpected error: [%v]", err)
+	}
+	member2ID := MemberID(2)
+	member2KeyPair, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatalf("unexpected error: [%v]", err)
+	}
+
+	expectedSymmetricKey := member1KeyPair.PrivateKey.Ecdh(member2KeyPair.PublicKey)
+
+	messageBuffer := NewDkgEvidenceLog()
+	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
+		member1ID,
+		member2ID,
+		member1KeyPair.PublicKey,
+	})
+	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
+		member2ID,
+		member1ID,
+		member2KeyPair.PublicKey,
+	})
+
+	recoveredSymmetricKey := recoverSymmetricKey(
+		messageBuffer,
+		member1ID, // sender
+		member2ID, // receiver
+		member1KeyPair.PrivateKey,
+	)
+
+	if !reflect.DeepEqual(expectedSymmetricKey, recoveredSymmetricKey) {
+		t.Fatalf("\nexpected: %s\nactual:   %s\n", expectedSymmetricKey, recoveredSymmetricKey)
+	}
+}
+
+func TestRecoverShares(t *testing.T) {
+	member1ID := MemberID(1)
+	member1KeyPair, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatalf("unexpected error: [%v]", err)
+	}
+	member2ID := MemberID(2)
+	member2KeyPair, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatalf("unexpected error: [%v]", err)
+	}
+	symmetricKey := member1KeyPair.PrivateKey.Ecdh(member2KeyPair.PublicKey)
+
+	shareS := big.NewInt(21)
+	shareT := big.NewInt(22)
+	encryptedShareS, err := symmetricKey.Encrypt(shareS.Bytes())
+	if err != nil {
+		t.Fatalf("unexpected error: [%v]", err)
+	}
+	encryptedShareT, err := symmetricKey.Encrypt(shareT.Bytes())
+	if err != nil {
+		t.Fatalf("unexpected error: [%v]", err)
+	}
+
+	messageBuffer := NewDkgEvidenceLog()
+	messageBuffer.PutPeerSharesMessage(&PeerSharesMessage{
+		member1ID,
+		member2ID,
+		encryptedShareS,
+		encryptedShareT,
+	})
+
+	var tests = map[string]struct {
+		symmetricKey   ephemeral.SymmetricKey
+		expectedShareS *big.Int
+		expectedShareT *big.Int
+		expectedError  error
+	}{
+		"false accusation - accuser is punished": {
+			expectedShareS: shareS,
+			expectedShareT: shareT,
+			symmetricKey:   symmetricKey,
+		},
+		"false accusation - accuser is punished2": {
+			symmetricKey:  &ephemeral.SymmetricEcdhKey{},
+			expectedError: fmt.Errorf("cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			recoveredShareS, recoveredShareT, err := recoverShares(
+				messageBuffer,
+				member1ID,
+				member2ID,
+				test.symmetricKey,
+			)
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
+			}
+			if test.expectedShareS != nil {
+				if test.expectedShareS.Cmp(recoveredShareS) != 0 {
+					t.Fatalf("\nexpected: %s\nactual:   %s\n",
+						test.expectedShareS,
+						recoveredShareS,
+					)
+				}
+			}
+			if test.expectedShareT != nil {
+				if test.expectedShareT.Cmp(recoveredShareT) != 0 {
+					t.Fatalf("\nexpected: %s\nactual:   %s\n",
+						test.expectedShareT,
+						recoveredShareT,
+					)
+				}
 			}
 		})
 	}
