@@ -15,6 +15,7 @@ type Staker struct {
 	VirtualStakers uint64
 }
 
+// Returns a new Staker with the calculated weight and on-chain public key.
 func NewStaker(pubKey *btcec.PublicKey, weight uint64) *Staker {
 	return &Staker{
 		PubKey:         pubKey,
@@ -22,6 +23,8 @@ func NewStaker(pubKey *btcec.PublicKey, weight uint64) *Staker {
 	}
 }
 
+// GenerateTickets takes the previous beacon output, and calculates the number of
+// tickets corresponding to the number of virtual stakers the staker could form.
 func (s *Staker) GenerateTickets(beaconOutput []byte) (Tickets, error) {
 	var tickets Tickets
 	// VirtualStakers are 1-indexed.
