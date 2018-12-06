@@ -13,7 +13,7 @@ import (
 // used to determine whether a given virtual staker is eligible for the group P
 // (the lowest N tickets will be chosen) and a proof of the validity of the value
 type Ticket struct {
-	Value [sha256.Size]byte
+	Value [sha256.Size]byte // W_k
 
 	// Proof
 	PreviousBeaconValue []byte
@@ -36,8 +36,8 @@ func (s *Staker) calculateTicket(
 			s.VirtualStakers,
 		)
 	}
-	var combinedProof []byte
 
+	var combinedProof []byte
 	combinedProof = append(combinedProof, beaconOutput...)
 	combinedProof = append(combinedProof, s.PubKey.SerializeCompressed()...)
 	binary.LittleEndian.PutUint64(
