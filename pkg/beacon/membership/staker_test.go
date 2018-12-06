@@ -4,21 +4,17 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
 )
 
 func TestGenerateTickets(t *testing.T) {
-	ecdsaPrivateKey, err := btcec.NewPrivateKey(btcec.S256())
+	staker, err := newTestStaker(10)
 	if err != nil {
-		t.Fatalf(
-			"could not generate new ephemeral keypair [%v]",
-			err,
-		)
+		t.Fatal(err)
 	}
-
-	staker := NewStaker(ecdsaPrivateKey.PubKey(), 10)
 	previousBeaconOutput := []byte("test beacon output")
 
 	tickets, err := staker.GenerateTickets(previousBeaconOutput)
@@ -39,15 +35,11 @@ func TestGenerateTickets(t *testing.T) {
 }
 
 func TestValidateProofs(t *testing.T) {
-	ecdsaPrivateKey, err := btcec.NewPrivateKey(btcec.S256())
+	staker, err := newTestStaker(1)
 	if err != nil {
-		t.Fatalf(
-			"could not generate new ephemeral keypair [%v]",
-			err,
-		)
+		t.Fatal(err)
 	}
 
-	staker := NewStaker(ecdsaPrivateKey.PubKey(), 1)
 	beaconOutput := []byte("test beacon output")
 
 	// hash(proof) == value?
@@ -76,4 +68,16 @@ func TestValidateProofs(t *testing.T) {
 		)
 	}
 
+}
+
+func newTestStaker(virtualStakers int) (*Staker, error) {
+	ecdsaPrivateKey, err := btcec.NewPrivateKey(btcec.S256())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not generate new ephemeral keypair [%v]",
+			err,
+		)
+	}
+
+	return NewStaker(ecdsaPrivateKey.PubKey(), uint64(virtualStakers)), nil
 }
