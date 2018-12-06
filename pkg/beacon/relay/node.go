@@ -116,6 +116,16 @@ func (n *Node) JoinGroupIfEligible(
 				n.RegisterGroup(registration.RequestID.String(), registration.GroupPublicKey)
 			})
 		}()
+	} else {
+		err := n.SubmitTicketsForGroupSelection(entryValue.Bytes())
+		if err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"Failed submission of tickets for group selection: [%v].\n",
+				err,
+			)
+			return
+		}
 	}
 }
 
