@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -17,13 +18,13 @@ import (
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
-	stakeID string,
+	staker *candidate.Staker,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig config.Chain,
 ) Node {
 	return Node{
-		StakeID:         stakeID,
+		Staker:          staker,
 		netProvider:     netProvider,
 		blockCounter:    blockCounter,
 		chainConfig:     chainConfig,

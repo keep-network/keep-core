@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
@@ -23,6 +24,9 @@ type Node struct {
 
 	// StakeID is the ID this node is using to prove its stake in the system.
 	StakeID string
+	// Staker is an on-chain identity that this node is using to prove its
+	// stake in the system.
+	Staker *candidate.Staker
 
 	// External interactors.
 	netProvider  net.Provider
@@ -240,7 +244,7 @@ func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
 	n.mutex.Lock()
 	shuffledStakeIDs := make([]string, n.maxStakeIndex+1)
 	copy(shuffledStakeIDs, n.stakeIDs)
-	currentStake := n.StakeID
+	currentStake := n.Staker.StakeID
 	n.mutex.Unlock()
 
 	shuffler.Shuffle(len(shuffledStakeIDs), func(i, j int) {

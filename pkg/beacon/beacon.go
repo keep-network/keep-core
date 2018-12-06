@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -48,8 +49,9 @@ func Initialize(
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
 
+	staker := &candidate.Staker{StakeID: netProvider.ID().String()}
 	node := relay.NewNode(
-		netProvider.ID().String(),
+		staker,
 		netProvider,
 		blockCounter,
 		chainConfig,
@@ -76,7 +78,9 @@ func Initialize(
 				return
 			}
 
-			node.StakeID = stake.GroupMemberID
+			// TODO: properly initialize new staker
+			node.Staker = &candidate.Staker{}
+			node.Staker.StakeID = stake.GroupMemberID
 		})
 	proceed.Wait()
 
