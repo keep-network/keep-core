@@ -100,6 +100,9 @@ def decryptAndValidateShares(
 
 # Check that equation 2 from GJKR holds for `share_S, share_T`
 #
+# P_i is the player whose shares are validated
+# P_j is the perspective player performing the validation
+#
 # GJKR 1.(b):
 #
 #   g^s_ij * h^t_ij == product([ C_ik ^ (j^k) for k in [0..T] ]) % p
@@ -138,6 +141,9 @@ def pubkeyCoeffs(senderIndex):
     return messages[7][senderIndex].pubkeyCoeffs
 
 
+# P_i is the player whose public key share is calculated
+# P_j is the perspective player
+#
 def pubkeyShare(senderIndex, recipientIndex):
     i = senderIndex
     j = recipientIndex
@@ -213,6 +219,8 @@ def reconstruct(shares, indices):
 
 # tag::phase-12[]
 # Calculate the individual public key of a specific participant
+#
+# P_i is each qualified participant in turn
 #
 # GJKR (C1'):
 #
