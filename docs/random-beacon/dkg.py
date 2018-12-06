@@ -241,7 +241,7 @@ for complaint in messages[8]:
     ):
         disqualify(9, j)
     else:
-        pubkey_mj = ephemeralPubkeys[m][j]
+        pubkey_mj = ephemeralPubkey(m, j)
 
         symkey = ecdh(privkey_jm, pubkey_mj)
 
