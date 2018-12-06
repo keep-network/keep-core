@@ -321,7 +321,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 // where:
 // `commitmentsProduct = Π (C_j[k] ^ (i^k)) mod p` for k in [0..T],
 // and
-// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`:
+// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`.
 func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	shareS, shareT *big.Int, // s_ji, t_ji
 	commitments []*big.Int, // C_j
@@ -531,27 +531,11 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
-		product := big.NewInt(1)
-		for k, a := range message.publicKeySharePoints {
-			product = new(big.Int).Mod(
-				new(big.Int).Mul(
-					product,
-					new(big.Int).Exp(
-						a,
-						pow(sm.ID, k),
-						sm.protocolConfig.P,
-					),
-				),
-				sm.protocolConfig.P,
-			)
-		}
-		// `expectedProduct = g^s_ji`
-		expectedProduct := new(big.Int).Exp(
-			sm.vss.G,
+		if !sm.isShareValidAgainstPublicKeySharePoints(
+			sm.ID,
 			sm.receivedValidSharesS[message.senderID],
-			sm.protocolConfig.P)
-
-		if expectedProduct.Cmp(product) != 0 {
+			message.publicKeySharePoints,
+		) {
 			accusedMembersKeys[message.senderID] = sm.ephemeralKeyPairs[message.senderID].PrivateKey
 			continue
 		}
@@ -562,6 +546,52 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 		senderID:           sm.ID,
 		accusedMembersKeys: accusedMembersKeys,
 	}, nil
+}
+
+// isShareValidAgainstPublicKeySharePoints verifies if public key share points
+// are valid for passed share S.
+//
+// The `j` member calculated public key share points for their polynomial coefficients
+// and share `s_ji` with a polynomial for a member `i`. In this function the
+// verifier checks if the public key share points are valid against the share S.
+//
+// The verifier checks that:
+// `product == expectedProduct`
+// where:
+// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
+// and
+// `expectedProduct = g^s_ji mod p`.
+func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
+	senderID MemberID,
+	shareS *big.Int,
+	publicKeySharePoints []*big.Int,
+) bool {
+	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
+	// where: j is sender's ID, i is current member ID, T is threshold.
+	product := big.NewInt(1)
+	for k, a := range publicKeySharePoints {
+		product = new(big.Int).Mod(
+			new(big.Int).Mul(
+				product,
+				new(big.Int).Exp(
+					a,
+					pow(senderID, k),
+					sm.protocolConfig.P,
+				),
+			),
+			sm.protocolConfig.P,
+		)
+	}
+
+	// `expectedProduct = g^s_ji mod p`, where:
+	// where: j is sender's ID, i is current member ID.
+	expectedProduct := new(big.Int).Exp(
+		sm.vss.G,
+		shareS,
+		sm.protocolConfig.P,
+	)
+
+	return expectedProduct.Cmp(product) == 0
 }
 
 // ResolvePublicKeySharePointsAccusations resolves a complaint received from a sender
@@ -589,32 +619,11 @@ func (cjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusations(
 		return 0, fmt.Errorf("current member cannot be a part of a dispute")
 	}
 
-	// `product = Π (A_mk ^ (j^k)) mod p` for k in [0..T],
-	// where: m is accused member's ID, j is sender's ID, T is threshold.
-	product := big.NewInt(1)
-	for k, a := range cjm.receivedValidPeerPublicKeySharePoints[accusedID] {
-		product = new(big.Int).Mod(
-			new(big.Int).Mul(
-				product,
-				new(big.Int).Exp(
-					a,
-					pow(senderID, k),
-					cjm.protocolConfig.P,
-				),
-			),
-			cjm.protocolConfig.P,
-		)
-	}
-
-	// `expectedProduct = g^s_mj mod p`, where:
-	// m is accused member's ID, j is sender's ID.
-	expectedProduct := new(big.Int).Exp(
-		cjm.vss.G,
+	if cjm.isShareValidAgainstPublicKeySharePoints(
+		senderID,
 		shareS,
-		cjm.protocolConfig.P,
-	)
-
-	if expectedProduct.Cmp(product) == 0 {
+		cjm.receivedValidPeerPublicKeySharePoints[accusedID],
+	) {
 		// TODO The accusation turned out to be unfounded. Should we add accused
 		// member's individual public key to receivedValidPeerPublicKeySharePoints?
 		return senderID, nil
