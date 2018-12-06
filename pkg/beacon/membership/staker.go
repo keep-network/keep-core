@@ -25,7 +25,7 @@ func NewStaker(pubKey *btcec.PublicKey, weight uint64) *Staker {
 func (s *Staker) GenerateTickets(beaconOutput []byte) (Tickets, error) {
 	var tickets Tickets
 	// VirtualStakers are 1-indexed.
-	for i := uint64(1); i < s.VirtualStakers; i++ {
+	for i := uint64(1); i <= s.VirtualStakers; i++ {
 		ticket, err := s.calculateTicket(
 			beaconOutput, i,
 		)
