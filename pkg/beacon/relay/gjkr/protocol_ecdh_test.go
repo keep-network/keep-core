@@ -187,6 +187,14 @@ func generateGroupWithEphemeralKeys(
 				privKey := member1.ephemeralKeyPairs[member2.ID].PrivateKey
 				pubKey := member2.ephemeralKeyPairs[member1.ID].PublicKey
 				member1.symmetricKeys[member2.ID] = privKey.Ecdh(pubKey)
+
+				member1.protocolConfig.evidenceLog.PutEphemeralMessage(
+					&EphemeralPublicKeyMessage{
+						senderID:           member1.ID,
+						receiverID:         member2.ID,
+						ephemeralPublicKey: member1.ephemeralKeyPairs[member2.ID].PublicKey,
+					},
+				)
 			}
 		}
 	}
