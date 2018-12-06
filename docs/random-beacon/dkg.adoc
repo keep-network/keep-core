@@ -236,14 +236,15 @@ include::dkg_util.py[tags=phase-8]
 
 As in <<phase-5>>, but with the validation formula from <<phase-8>>.
 
-It should be noted that the symmetric nature of the encryption
-allows the parties to also decrypt _E~jm~_ and not just _E~mj~_.
-This is not very significant though,
-as even the publication of only the misbehaving participants' shares
-would reduce the security margin excessively
-if a large fraction of _P_ were to misbehave.
-By setting the threshold for group creation failure at _M/2_
-the impact of this is reduced to a manageable level.
+It should be noted that the symmetric nature of the encryption allows the
+parties to also decrypt _E~jm~_ and not just _E~mj~_. However, this is not very
+significant as even the publication of only the misbehaving participants' shares
+would reduce the security margin excessively if a large fraction of _P_ were to
+misbehave.
+
+By aborting group creation if the number of inactive and disqualified
+participants exceeds _M~nofail~ = M/2_ the impact of this is reduced to a
+manageable level.
 
 .Phase 9
 [source, python]
