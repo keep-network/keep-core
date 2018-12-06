@@ -386,27 +386,22 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				return nil, fmt.Errorf("current member cannot be a part of a dispute")
 			}
 
-			messageBuffer := sjm.protocolConfig.messageBuffer
-			// Find ephemeral public key sent by accused member to the accuser.
-			accusedPublicKey := messageBuffer.ephemeralPublicKeyMessage(
-				accusedID, accuserID).ephemeralPublicKey
-			// Recover symmetric key used for communication between accused and
-			// accuser.
-			recoveredSymmetricKey := revealedAccuserPrivateKey.Ecdh(accusedPublicKey)
+			symmetricKey := recoverSymmetricKey(
+				sjm.protocolConfig.evidenceLog,
+				accuserID,
+				accusedID,
+				revealedAccuserPrivateKey,
+			)
 
-			// Find peer share message sent by accused member to the accuser and
-			// decrypt the shares provided in them.
-			peerSharesMessage := messageBuffer.peerSharesMessage(
-				accusedID, accuserID, recoveredSymmetricKey)
-			shareS, err := peerSharesMessage.decryptShareS(recoveredSymmetricKey) // s_mj
+			shareS, shareT, err := recoverShares(
+				sjm.protocolConfig.evidenceLog,
+				accusedID,
+				accuserID,
+				symmetricKey,
+			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("cannot decrypt share S [%v", err)
-			}
-			shareT, err := peerSharesMessage.decryptShareT(recoveredSymmetricKey) // t_mj
-			if err != nil {
-				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("cannot decrypt share T [%v", err)
+				return nil, err
 			}
 
 			// Check if `commitmentsProduct == expectedProduct`
