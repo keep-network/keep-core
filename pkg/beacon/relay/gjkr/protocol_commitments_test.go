@@ -340,7 +340,7 @@ func predefinedDKG() (*DKG, error) {
 	if !result {
 		return nil, fmt.Errorf("failed to initialize q")
 	}
-	return &DKG{p, q}, nil
+	return &DKG{P: p, Q: q, evidenceLog: NewDkgEvidenceLog()}, nil
 }
 
 func filterPeerSharesMessage(
