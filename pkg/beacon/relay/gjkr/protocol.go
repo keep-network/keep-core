@@ -427,6 +427,35 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	return disqualifiedMembers, nil
 }
 
+// Recovers from the evidence log share S and share T sent by sender to the
+// receiver.
+//
+// First it finds in the evidence log the Peer Shares Message sent by the sender
+// to the receiver. Then it decrypts the decrypted shares with provided symmetric
+// key.
+func recoverShares(
+	evidenceLog evidenceLog,
+	senderID, receiverID MemberID,
+	symmetricKey ephemeral.SymmetricKey,
+) (*big.Int, *big.Int, error) {
+	peerSharesMessage := evidenceLog.peerSharesMessage(
+		senderID,
+		receiverID,
+	)
+	shareS, err := peerSharesMessage.decryptShareS(symmetricKey) // s_mj
+	if err != nil {
+		// TODO Should we disqualify accuser/accused member here?
+		return nil, nil, fmt.Errorf("cannot decrypt share S [%v", err)
+	}
+	shareT, err := peerSharesMessage.decryptShareT(symmetricKey) // t_mj
+	if err != nil {
+		// TODO Should we disqualify accuser/accused member here?
+		return nil, nil, fmt.Errorf("cannot decrypt share T [%v", err)
+	}
+
+	return shareS, shareT, nil
+}
+
 // CombineMemberShares sums up all `s` and `t` shares intended for this member.
 // Combines secret shares calculated by current member `i` for itself `s_ii` with
 // shares calculated by peer members `j` for this member `s_ji`.
