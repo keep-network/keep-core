@@ -4,41 +4,35 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-
-	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
 		sender                      MemberID
-		receiver                    MemberID
 		modifyPubKeyMessageLogState func(
-			sender, receiver MemberID,
+			sender MemberID,
 			log *dkgEvidenceLog,
 		) error
 		expectedError error
 	}{
-		"EphemeralPubKeyMessage successfully stored for sender, receiver": {
-			sender:   MemberID(uint32(1)),
-			receiver: MemberID(uint32(2)),
+		"EphemeralPubKeyMessage successfully stored for sender": {
+			sender: MemberID(1),
 			modifyPubKeyMessageLogState: func(
-				sender, receiver MemberID,
+				sender MemberID,
 				log *dkgEvidenceLog,
 			) error {
 				return nil
 			},
 			expectedError: nil,
 		},
-		"EphemeralPubKeyMessage already exists for sender, receiver": {
-			sender:   MemberID(uint32(1)),
-			receiver: MemberID(uint32(2)),
+		"EphemeralPubKeyMessage already exists for sender": {
+			sender: MemberID(1),
 			modifyPubKeyMessageLogState: func(
-				sender, receiver MemberID,
+				sender MemberID,
 				log *dkgEvidenceLog,
 			) error {
 				msg := &EphemeralPublicKeyMessage{
-					senderID:   sender,
-					receiverID: receiver,
+					senderID: sender,
 				}
 				err := log.PutEphemeralMessage(msg)
 				if err != nil {
@@ -47,7 +41,7 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 				return nil
 			},
 			expectedError: fmt.Errorf(
-				"message exists for sender 1 and receiver 2",
+				"message exists for sender 1",
 			),
 		},
 	}
@@ -59,28 +53,21 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 			// modify the state of the log
 			err := test.modifyPubKeyMessageLogState(
 				test.sender,
-				test.receiver,
 				dkgEvidenceLog,
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			ephemeralKey, err := ephemeral.GenerateKeyPair()
-			if err != nil {
-				t.Fatal(err)
-			}
 			// simulate adding a message to the store
 			message := &EphemeralPublicKeyMessage{
-				senderID:           test.sender,
-				receiverID:         test.receiver,
-				ephemeralPublicKey: ephemeralKey.PublicKey,
+				senderID: test.sender,
 			}
 			err = dkgEvidenceLog.PutEphemeralMessage(message)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf(
-					"\nexpected: %s\nactual:   %s\n",
+					"unexpected error\nexpected: %v\nactual:   %v",
 					test.expectedError,
 					err,
 				)
@@ -92,25 +79,16 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
 		sender         MemberID
-		receiver       MemberID
 		expectedResult *EphemeralPublicKeyMessage
 	}{
-		"valid EphemeralPubKeyMessage returned for sender, receiver": {
-			sender:   MemberID(uint32(1)),
-			receiver: MemberID(uint32(2)),
+		"valid EphemeralPubKeyMessage returned for sender": {
+			sender: MemberID(uint32(1)),
 			expectedResult: &EphemeralPublicKeyMessage{
-				senderID:   MemberID(uint32(1)),
-				receiverID: MemberID(uint32(2)),
+				senderID: MemberID(uint32(1)),
 			},
 		},
 		"no EphemeralPubKeyMessage for sender": {
 			sender:         MemberID(uint32(1)),
-			receiver:       MemberID(uint32(2)),
-			expectedResult: nil,
-		},
-		"no EphemeralPubKeyMessage for receiver": {
-			sender:         MemberID(uint32(1)),
-			receiver:       MemberID(uint32(2)),
 			expectedResult: nil,
 		},
 	}
@@ -128,13 +106,11 @@ func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 				}
 			}
 
-			result := dkgEvidenceLog.ephemeralPublicKeyMessage(
-				test.sender, test.receiver,
-			)
+			result := dkgEvidenceLog.ephemeralPublicKeyMessage(test.sender)
 
 			if result != test.expectedResult {
 				t.Fatalf(
-					"\nexpected: %d\nactual:   %d\n",
+					"unexpected result\nexpected: %v\nactual:   %v\n",
 					test.expectedResult,
 					result,
 				)

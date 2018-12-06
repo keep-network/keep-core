@@ -19,50 +19,40 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 	)
 
 	// generate ephemeral key pairs for each group member; prepare messages
-	broadcastedPubKeyMessages := make(map[MemberID][]*EphemeralPublicKeyMessage)
+	broadcastedPubKeyMessages := make(map[MemberID]*EphemeralPublicKeyMessage)
 	for _, ephemeralGeneratingMember := range ephemeralGeneratingMembers {
-		messages, err := ephemeralGeneratingMember.GenerateEphemeralKeyPair()
+		message, err := ephemeralGeneratingMember.GenerateEphemeralKeyPair()
 		if err != nil {
 			t.Fatal(err)
 		}
-		broadcastedPubKeyMessages[ephemeralGeneratingMember.ID] = messages
+		broadcastedPubKeyMessages[ephemeralGeneratingMember.ID] = message
 	}
 
-	for memberID, ephemeralPubKeyMessages := range broadcastedPubKeyMessages {
-		// We should have groupSize - 1 messages per member.
-		if len(ephemeralPubKeyMessages) != groupSize-1 {
-			t.Fatalf(
-				"expected %d messages, got %d messages",
-				groupSize-1,
-				len(ephemeralPubKeyMessages),
+	for memberID, message := range broadcastedPubKeyMessages {
+		// We should always be the sender of our own messages
+		if message.senderID != memberID {
+			t.Fatalf("message from incorrect sender got %v want %v",
+				message.senderID,
+				memberID,
 			)
 		}
 
-		for _, message := range ephemeralPubKeyMessages {
-			// We should always be the sender of our own messages
-			if message.senderID != memberID {
-				t.Fatalf("message from incorrect sender got %v want %v",
-					message.senderID,
-					memberID,
-				)
-			}
-
-			// We should never have a message addressed to ourselves
-			if message.receiverID == memberID {
-				t.Fatal("found message addressed to self")
-			}
+		// We should not generate an ephemeral key for ourselves
+		_, ok := message.ephemeralPublicKeys[memberID]
+		if ok {
+			t.Fatal("found ephemeral key generated to self")
 		}
 	}
 
 	// Simulate the each member receiving all messages from the network
 	receivedPubKeyMessages := make(map[MemberID][]*EphemeralPublicKeyMessage)
-	for memberID, ephemeralPubKeyMessages := range broadcastedPubKeyMessages {
+	for memberID, ephemeralPubKeyMessage := range broadcastedPubKeyMessages {
 		for _, otherMember := range ephemeralGeneratingMembers {
 			// We would only receive messages from the other members
 			if memberID != otherMember.ID {
 				receivedPubKeyMessages[otherMember.ID] = append(
 					receivedPubKeyMessages[otherMember.ID],
-					ephemeralPubKeyMessages...,
+					ephemeralPubKeyMessage,
 				)
 			}
 		}

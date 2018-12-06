@@ -6,7 +6,7 @@ package gjkr;
 message EphemeralPublicKey {
     bytes senderID = 1;
     bytes receiverID = 2;
-    bytes ephemeralPublicKey = 3;
+    map<string, bytes> ephemeralPublicKeys = 3;
 }
 
 message MemberCommitments {
