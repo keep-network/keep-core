@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// TODO Add test with many messages from accusers and many accused in the message.
 func TestResolveSecretSharesAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
@@ -104,7 +105,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 					test.modifyCommitments(member.receivedValidPeerCommitments[test.accusedID])
 			}
 
-			// Simulate received PutPeerSharesMessage send by accused member.
+			// Simulate received PeerSharesMessage send by accused member.
 			symmetricKey := accuser.symmetricKeys[test.accusedID]
 			encryptedShareS, err := symmetricKey.Encrypt(modifiedShareS.Bytes())
 			if err != nil {
@@ -268,7 +269,8 @@ func TestRecoverShares(t *testing.T) {
 	}
 }
 
-func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
+// TODO Add test with many messages from accusers and many accused in the message.
+func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
@@ -279,24 +281,24 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 		accusedID                  MemberID // m
 		modifyShareS               func(shareS *big.Int) *big.Int
 		modifyPublicKeySharePoints func(coefficients []*big.Int) []*big.Int
-		expectedResult             MemberID
+		expectedResult             []MemberID
 		expectedError              error
 	}{
 		"false accusation - sender is punished": {
 			accuserID:      3,
 			accusedID:      4,
-			expectedResult: 3,
+			expectedResult: []MemberID{3},
 		},
 		"current member as a sender - error returned": {
 			accuserID:      currentMemberID,
 			accusedID:      3,
-			expectedResult: 0,
+			expectedResult: nil,
 			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
 		},
 		"current member as an accused - error returned": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: 0,
+			expectedResult: nil,
 			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
 		},
 		"incorrect shareS - accused member is punished": {
@@ -305,7 +307,7 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 			modifyShareS: func(shareS *big.Int) *big.Int {
 				return new(big.Int).Sub(shareS, big.NewInt(1))
 			},
-			expectedResult: 4,
+			expectedResult: []MemberID{4},
 		},
 		"incorrect commitments - accused member is punished": {
 			accuserID: 3,
@@ -317,7 +319,7 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 				}
 				return newPoints
 			},
-			expectedResult: 4,
+			expectedResult: []MemberID{4},
 		},
 	}
 	for testName, test := range tests {
@@ -328,24 +330,54 @@ func TestResolvePublicKeySharePointsAccusations(t *testing.T) {
 			}
 			member := findCoefficientsJustifyingMemberByID(members, currentMemberID)
 
-			sender := findCoefficientsJustifyingMemberByID(members, test.accuserID)
-			revealedShareS := sender.receivedValidSharesS[test.accusedID]
+			accuser := findCoefficientsJustifyingMemberByID(members, test.accuserID)
+			modifiedShareS := accuser.receivedValidSharesS[test.accusedID]
 			if test.modifyShareS != nil {
-				revealedShareS = test.modifyShareS(revealedShareS)
+				modifiedShareS = test.modifyShareS(modifiedShareS)
 			}
 			if test.modifyPublicKeySharePoints != nil {
 				member.receivedValidPeerPublicKeySharePoints[test.accusedID] =
 					test.modifyPublicKeySharePoints(member.receivedValidPeerPublicKeySharePoints[test.accusedID])
 			}
-			result, err := member.ResolvePublicKeySharePointsAccusations(
-				test.accuserID,
-				test.accusedID,
-				revealedShareS,
+
+			// Simulate received PeerSharesMessage send by accused member.
+			symmetricKey := accuser.symmetricKeys[test.accusedID]
+			encryptedShareS, err := symmetricKey.Encrypt(modifiedShareS.Bytes())
+			if err != nil {
+				t.Fatalf("unexpected error: [%v]", err)
+			}
+			encryptedShareT, err := symmetricKey.Encrypt(big.NewInt(13).Bytes())
+			if err != nil {
+				t.Fatalf("unexpected error: [%v]", err)
+			}
+			member.protocolConfig.evidenceLog.PutPeerSharesMessage(
+				&PeerSharesMessage{
+					senderID:        test.accusedID,
+					receiverID:      test.accuserID,
+					encryptedShareS: encryptedShareS,
+					encryptedShareT: encryptedShareT,
+				},
+			)
+
+			// Generate PointsAccusationMessages
+			accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			accusedMembersKeys[test.accusedID] = accuser.ephemeralKeyPairs[test.accusedID].PrivateKey
+			// if test.modifyAccusedPrivateKey != nil {
+			// 	accusedMembersKeys[test.accusedID] = test.modifyAccusedPrivateKey(accusedMembersKeys[test.accusedID])
+			// }
+			var messages []*PointsAccusationsMessage
+			messages = append(messages, &PointsAccusationsMessage{
+				senderID:           test.accuserID,
+				accusedMembersKeys: accusedMembersKeys,
+			})
+
+			result, err := member.ResolvePublicKeySharePointsAccusationsMessages(
+				messages,
 			)
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
 			}
-			if result != test.expectedResult {
+			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
 			}
 		})
