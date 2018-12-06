@@ -427,6 +427,24 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	return disqualifiedMembers, nil
 }
 
+// Recover ephemeral symmetric key used to encrypt communication between sender
+// and receiver.
+//
+// Finds ephemeral public key sent by sender to the receiver. Performs ECDH
+// operation between sender's public key and receiver's private key to recover
+// the ephemeral symmetric key.
+func recoverSymmetricKey(
+	evidenceLog evidenceLog,
+	receiverID, senderID MemberID,
+	receiverPrivateKey *ephemeral.PrivateKey,
+) ephemeral.SymmetricKey {
+	senderPublicKey := evidenceLog.ephemeralPublicKeyMessage(
+		senderID,
+		receiverID,
+	).ephemeralPublicKey
+	return receiverPrivateKey.Ecdh(senderPublicKey)
+}
+
 // Recovers from the evidence log share S and share T sent by sender to the
 // receiver.
 //
