@@ -61,6 +61,8 @@ for j in goodParticipants[2], j != i:
 # a_ij = sharePolyCoeffs[j]
 # b_ij = blindingFactors[j]
 #
+# G1.randomScalar = integer from range(0, q)
+#
 self.sharePolyCoeffs = [0..M].map(G1.randomScalar)
 self.blindingFactors = [0..M].map(G1.randomScalar)
 
