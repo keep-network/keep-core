@@ -1,6 +1,8 @@
 package membership
 
 import (
+	"sort"
+
 	"github.com/btcsuite/btcd/btcec"
 )
 
@@ -18,4 +20,20 @@ func NewStaker(pubKey btcec.PublicKey, weight uint64) *Staker {
 		PubKey:         pubKey,
 		VirtualStakers: weight,
 	}
+}
+
+func (s *Staker) GenerateTickets(beaconOutput []byte) (Tickets, error) {
+	var tickets Tickets
+	// VirtualStakers are 1-indexed.
+	for i := uint64(1); i < s.VirtualStakers; i++ {
+		ticket, err := s.calculateTicket(
+			beaconOutput, i,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tickets = append(tickets, ticket)
+	}
+	sort.Sort(tickets)
+	return tickets, nil
 }
