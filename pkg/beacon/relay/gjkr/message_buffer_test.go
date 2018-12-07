@@ -48,7 +48,7 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			// set up the initial state
-			dkgEvidenceLog := NewDkgEvidenceLog()
+			dkgEvidenceLog := newDkgEvidenceLog()
 
 			// modify the state of the log
 			err := test.modifyPubKeyMessageLogState(
@@ -95,7 +95,7 @@ func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			// set up the initial state
-			dkgEvidenceLog := NewDkgEvidenceLog()
+			dkgEvidenceLog := newDkgEvidenceLog()
 
 			// simulate adding a message to the store
 			if test.expectedResult != nil {

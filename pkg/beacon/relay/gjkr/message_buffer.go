@@ -30,32 +30,23 @@ import (
 type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
 	// broadcast in the first protocol round by the given sender.
-	ephemeralPublicKeyMessage(
-		sender MemberID,
-	) *EphemeralPublicKeyMessage
+	ephemeralPublicKeyMessage(sender MemberID) *EphemeralPublicKeyMessage
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
 	// protocol round by the given sender.
-	peerSharesMessage(
-		sender MemberID,
-		receiver MemberID,
-	) *PeerSharesMessage
+	peerSharesMessage(sender MemberID, receiver MemberID) *PeerSharesMessage
 
 	// PutEphemeralMessage is a function that takes a single
 	// EphemeralPubKeyMessage, and stores that as evidence for future
 	// accusation trials for a given (sender, receiver) pair. If a message
 	// already exists for the given sender, we return an error to the user.
-	PutEphemeralMessage(
-		pubKeyMessage *EphemeralPublicKeyMessage,
-	) error
+	PutEphemeralMessage(pubKeyMessage *EphemeralPublicKeyMessage) error
 
 	// PutPeerSharesMessage is a function that takes a single
 	// PeerSharesMessage, and stores that as evidence for future
 	// accusation trials for a given (sender, receiver) pair. If a message
 	// already exists for the given sender, we return an error to the user.
-	PutPeerSharesMessage(
-		sharesMessage *PeerSharesMessage,
-	) error
+	PutPeerSharesMessage(sharesMessage *PeerSharesMessage) error
 }
 
 // dkgEvidenceLog is an implementation of an evidenceLog.
@@ -69,7 +60,7 @@ type dkgEvidenceLog struct {
 
 // NewDkgEvidenceLog returns a dkgEvidenceLog with backing stores for future
 // accusations against EphemeralPublicKeyMessages and PeerShareMessages.
-func NewDkgEvidenceLog() *dkgEvidenceLog {
+func newDkgEvidenceLog() *dkgEvidenceLog {
 	return &dkgEvidenceLog{
 		pubKeyMessageLog:     newMessageStorage(),
 		peerSharesMessageLog: newMessageStorage(),
