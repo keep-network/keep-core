@@ -40,17 +40,17 @@ func (s *Staker) calculateTicket(
 	var combinedProof []byte
 	combinedProof = append(combinedProof, beaconOutput...)
 	combinedProof = append(combinedProof, s.PubKey.SerializeCompressed()...)
-	binary.LittleEndian.PutUint64(
-		combinedProof,
-		virtualStakerIndex,
-	)
+
+	virtualStakerBytes := make([]byte, 64)
+	binary.LittleEndian.PutUint64(virtualStakerBytes, virtualStakerIndex)
+	combinedProof = append(combinedProof, virtualStakerBytes...)
+
 	value := sha256.Sum256(combinedProof[:])
 
 	return &Ticket{
-		Value:               value,
-		PreviousBeaconValue: beaconOutput,
-		StakerValue:         s.PubKey.SerializeCompressed(),
-		VirtualStakerIndex:  virtualStakerIndex,
+		Value:              value,
+		StakerValue:        s.PubKey.SerializeCompressed(),
+		VirtualStakerIndex: virtualStakerIndex,
 	}, nil
 }
 

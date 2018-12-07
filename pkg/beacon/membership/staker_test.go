@@ -46,10 +46,11 @@ func TestValidateProofs(t *testing.T) {
 	var proofBytes []byte
 	proofBytes = append(proofBytes, beaconOutput...)
 	proofBytes = append(proofBytes, staker.PubKey.SerializeCompressed()...)
-	binary.LittleEndian.PutUint64(
-		proofBytes,
-		staker.VirtualStakers,
-	)
+
+	virtualStakerBytes := make([]byte, 64)
+	binary.LittleEndian.PutUint64(virtualStakerBytes, staker.VirtualStakers)
+	proofBytes = append(proofBytes, virtualStakerBytes...)
+
 	expectedValue := sha256.Sum256(proofBytes[:])
 
 	tickets, err := staker.GenerateTickets(beaconOutput)
