@@ -68,6 +68,11 @@ func (ebc *ethereumBlockCounter) BlockWaiter(
 	return newWaiter, nil
 }
 
+// CurrentBlock returns the current block number.
+func (ebc *ethereumBlockCounter) CurrentBlock() (int, error) {
+	return ebc.latestBlockHeight, nil
+}
+
 // receiveBlocks gets each new block back from Geth and extracts the
 // block height (topBlockNumber) form it.  For each block height that is being
 // waited on a message will be sent.

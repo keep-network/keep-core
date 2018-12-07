@@ -48,7 +48,7 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			// set up the initial state
-			dkgEvidenceLog := NewDkgEvidenceLog()
+			dkgEvidenceLog := newDkgEvidenceLog()
 
 			// modify the state of the log
 			err := test.modifyPubKeyMessageLogState(
@@ -67,7 +67,7 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf(
-					"unexpected error\nexpected: %v\nactual:   %v",
+					"\nexpected: %v\nactual:   %v",
 					test.expectedError,
 					err,
 				)
@@ -95,7 +95,7 @@ func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			// set up the initial state
-			dkgEvidenceLog := NewDkgEvidenceLog()
+			dkgEvidenceLog := newDkgEvidenceLog()
 
 			// simulate adding a message to the store
 			if test.expectedResult != nil {
@@ -110,7 +110,7 @@ func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 
 			if result != test.expectedResult {
 				t.Fatalf(
-					"unexpected result\nexpected: %v\nactual:   %v\n",
+					"\nexpected: %v\nactual:   %v\n",
 					test.expectedResult,
 					result,
 				)
