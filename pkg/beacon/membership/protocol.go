@@ -17,9 +17,8 @@ type Ticket struct {
 	Value [sha256.Size]byte // W_k
 
 	// Proof
-	PreviousBeaconValue []byte
-	StakerValue         []byte // Staker-specific value, Q_j
-	VirtualStakerIndex  uint64
+	StakerValue        []byte // Staker-specific value, Q_j
+	VirtualStakerIndex uint64
 }
 
 // calculateTicket generates a Ticket from the previous beacon output, the
