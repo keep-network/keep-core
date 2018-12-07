@@ -62,15 +62,20 @@ func toByteSlice(fixedSizeArray [32]byte) []byte {
 	return byteSlice
 }
 
+// Tickets implements sort.Interface
 type Tickets []*Ticket
 
+// Len is the sort.Interface requirement for Tickets
 func (ts Tickets) Len() int {
 	return len(ts)
 }
 
+// Swap is the sort.Interface requirement for Tickets
 func (ts Tickets) Swap(i, j int) {
 	ts[i], ts[j] = ts[j], ts[i]
 }
+
+// Less is the sort.Interface requirement for Tickets
 func (ts Tickets) Less(i, j int) bool {
 	iBytes := toByteSlice(ts[i].Value)
 	jBytes := toByteSlice(ts[j].Value)
