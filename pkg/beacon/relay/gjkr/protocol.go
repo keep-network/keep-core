@@ -17,42 +17,40 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// GenerateEphemeralKeyPair takes the known candidate list, and
-// generates an ephemeral ECDH keypair with every other candidate member. These
-// shares are broadcasted to every valid cadidate member.
+// GenerateEphemeralKeyPair takes the group member list and generates an
+// ephemeral ECDH keypair for every other group member. Generated public
+// ephemeral keys are broadcasted within the group.
 //
 // See Phase 1 of the protocol specification.
 func (em *EphemeralKeyPairGeneratingMember) GenerateEphemeralKeyPair() (
-	[]*EphemeralPublicKeyMessage,
+	*EphemeralPublicKeyMessage,
 	error,
 ) {
-	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
+	ephemeralKeys := make(map[MemberID]*ephemeral.PublicKey)
 
-	// Calculate ephemeral public keys for every group member
+	// Calculate ephemeral key pair for every other group member
 	for _, member := range em.group.memberIDs {
 		if member == em.ID {
-			// don’t actually generate a symmetric key with ourselves
+			// don’t actually generate a key with ourselves
 			continue
 		}
 
-		ephemeralKey, err := ephemeral.GenerateKeyPair()
+		ephemeralKeyPair, err := ephemeral.GenerateKeyPair()
 		if err != nil {
 			return nil, err
 		}
 
 		// save the generated ephemeral key to our state
-		em.ephemeralKeyPairs[member] = ephemeralKey
+		em.ephemeralKeyPairs[member] = ephemeralKeyPair
 
-		ephemeralKeyMessages = append(ephemeralKeyMessages,
-			&EphemeralPublicKeyMessage{
-				senderID:           em.ID,
-				receiverID:         member,
-				ephemeralPublicKey: ephemeralKey.PublicKey,
-			},
-		)
+		// store the public key to the map for the message
+		ephemeralKeys[member] = ephemeralKeyPair.PublicKey
 	}
 
-	return ephemeralKeyMessages, nil
+	return &EphemeralPublicKeyMessage{
+		senderID:            em.ID,
+		ephemeralPublicKeys: ephemeralKeys,
+	}, nil
 }
 
 // GenerateSymmetricKeys attempts to generate symmetric keys for all remote group
@@ -84,7 +82,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 
 		// Get the ephemeral public key broadcasted by the other group member,
 		// which was intended for this group member.
-		otherMemberEphemeralPublicKey := ephemeralPubKeyMessage.ephemeralPublicKey
+		otherMemberEphemeralPublicKey := ephemeralPubKeyMessage.ephemeralPublicKeys[sm.ID]
 
 		// Create symmetric key for the current group member and the other
 		// group member by ECDH'ing the public and private key.
@@ -281,10 +279,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`
 				// where: j is sender's ID, i is current member ID, T is threshold.
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS,                         // s_ji
-					shareT,                         // t_ji
+					shareS, // s_ji
+					shareT, // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID,                         // i
+					cvm.ID, // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] = cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break

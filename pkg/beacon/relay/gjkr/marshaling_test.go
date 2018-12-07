@@ -10,15 +10,23 @@ import (
 )
 
 func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
-	keyPair, err := ephemeral.GenerateKeyPair()
+	keyPair1, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	keyPair2, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	publicKeys := make(map[MemberID]*ephemeral.PublicKey)
+	publicKeys[MemberID(2181)] = keyPair1.PublicKey
+	publicKeys[MemberID(9119)] = keyPair2.PublicKey
+
 	msg := &EphemeralPublicKeyMessage{
-		senderID:           MemberID(123456789),
-		receiverID:         MemberID(987654321),
-		ephemeralPublicKey: keyPair.PublicKey,
+		senderID:            MemberID(3548),
+		ephemeralPublicKeys: publicKeys,
 	}
 	unmarshaled := &EphemeralPublicKeyMessage{}
 
