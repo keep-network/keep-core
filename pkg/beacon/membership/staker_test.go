@@ -43,15 +43,15 @@ func TestValidateProofs(t *testing.T) {
 	beaconOutput := []byte("test beacon output")
 
 	// hash(proof) == value?
-	var proofBytes []byte
-	proofBytes = append(proofBytes, beaconOutput...)
-	proofBytes = append(proofBytes, staker.PubKey.SerializeCompressed()...)
+	var valueBytes []byte
+	valueBytes = append(valueBytes, beaconOutput...)
+	valueBytes = append(valueBytes, staker.PubKey.SerializeCompressed()...)
 
 	virtualStakerBytes := make([]byte, 64)
 	binary.LittleEndian.PutUint64(virtualStakerBytes, staker.VirtualStakers)
-	proofBytes = append(proofBytes, virtualStakerBytes...)
+	valueBytes = append(valueBytes, virtualStakerBytes...)
 
-	expectedValue := sha256.Sum256(proofBytes[:])
+	expectedValue := sha256.Sum256(valueBytes[:])
 
 	tickets, err := staker.GenerateTickets(beaconOutput)
 	if err != nil {
