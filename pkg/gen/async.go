@@ -67,6 +67,11 @@ func main() {
 			Prefix:     "DKGResultPublication",
 			outputFile: "dkg_result_publication_promise.go",
 		},
+		{
+			Type:       "*candidate.Ticket",
+			Prefix:     "CandidateTicket",
+			outputFile: "candidate_ticket_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {

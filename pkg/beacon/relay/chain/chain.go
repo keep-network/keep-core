@@ -3,6 +3,7 @@ package chain
 import (
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -13,6 +14,11 @@ import (
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (config.Chain, error)
+	// SubmitTicket submits a ticket corresponding to the virtual staker to
+	// the chain, and returns a promise to track the submission. The promise
+	// is fulfilled with the entry as seen on-chain, or failed if there is an
+	// error submitting the entry.
+	SubmitTicket(ticket *candidate.Ticket) *async.CandidateTicketPromise
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
 	// associated with a request with id requestID. On-chain errors are reported
 	// through the promise.
