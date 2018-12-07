@@ -113,7 +113,10 @@ func (n *Node) JoinGroupIfEligible(
 					return
 				}
 
-				n.RegisterGroup(registration.RequestID.String(), registration.GroupPublicKey)
+				n.RegisterGroup(
+					registration.RequestID.String(),
+					registration.GroupPublicKey,
+				)
 			})
 		}()
 	} else {
