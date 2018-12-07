@@ -18,7 +18,7 @@ type Ticket struct {
 
 	// Proof
 	StakerValue        []byte // Staker-specific value, Q_j
-	VirtualStakerIndex uint64
+	VirtualStakerIndex uint64 // vs
 }
 
 // calculateTicket generates a Ticket from the previous beacon output, the
