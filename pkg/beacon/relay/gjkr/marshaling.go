@@ -237,26 +237,26 @@ func bytesToMemberID(bytes []byte) MemberID {
 }
 
 func marshalPublicKeyMap(
-	keys map[MemberID]*ephemeral.PublicKey,
+	publicKeys map[MemberID]*ephemeral.PublicKey,
 ) map[string][]byte {
-	marshalled := make(map[string][]byte, len(keys))
-	for id, key := range keys {
-		marshalled[id.HexString()] = key.Marshal()
+	marshalled := make(map[string][]byte, len(publicKeys))
+	for id, publicKey := range publicKeys {
+		marshalled[id.HexString()] = publicKey.Marshal()
 	}
 	return marshalled
 }
 
 func unmarshalPublicKeyMap(
-	keys map[string][]byte,
+	publicKeys map[string][]byte,
 ) (map[MemberID]*ephemeral.PublicKey, error) {
-	var unmarshalled = make(map[MemberID]*ephemeral.PublicKey, len(keys))
-	for memberIDHex, keyBytes := range keys {
+	var unmarshalled = make(map[MemberID]*ephemeral.PublicKey, len(publicKeys))
+	for memberIDHex, publicKeyBytes := range publicKeys {
 		memberID, err := MemberIDFromHex(memberIDHex)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal member's ID [%v]", err)
 		}
 
-		publicKey, err := ephemeral.UnmarshalPublicKey(keyBytes)
+		publicKey, err := ephemeral.UnmarshalPublicKey(publicKeyBytes)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal public key [%v]", err)
 		}
@@ -269,25 +269,25 @@ func unmarshalPublicKeyMap(
 }
 
 func marshalPrivateKeyMap(
-	keys map[MemberID]*ephemeral.PrivateKey,
+	privateKeys map[MemberID]*ephemeral.PrivateKey,
 ) map[string][]byte {
-	marshalled := make(map[string][]byte, len(keys))
-	for id, key := range keys {
-		marshalled[id.HexString()] = key.Marshal()
+	marshalled := make(map[string][]byte, len(privateKeys))
+	for id, privateKey := range privateKeys {
+		marshalled[id.HexString()] = privateKey.Marshal()
 	}
 	return marshalled
 }
 
 func unmarshalPrivateKeyMap(
-	keys map[string][]byte,
+	privateKeys map[string][]byte,
 ) (map[MemberID]*ephemeral.PrivateKey, error) {
-	var unmarshalled = make(map[MemberID]*ephemeral.PrivateKey, len(keys))
-	for memberIDHex, keyBytes := range keys {
+	var unmarshalled = make(map[MemberID]*ephemeral.PrivateKey, len(privateKeys))
+	for memberIDHex, privateKeyBytes := range privateKeys {
 		memberID, err := MemberIDFromHex(memberIDHex)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal member's ID [%v]", err)
 		}
-		unmarshalled[memberID] = ephemeral.UnmarshalPrivateKey(keyBytes)
+		unmarshalled[memberID] = ephemeral.UnmarshalPrivateKey(privateKeyBytes)
 	}
 
 	return unmarshalled, nil
