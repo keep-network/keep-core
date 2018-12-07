@@ -120,7 +120,11 @@ func (n *Node) JoinGroupIfEligible(
 			})
 		}()
 	} else {
-		err := n.SubmitTicketsForGroupSelection(entryValue.Bytes())
+		err := n.SubmitTicketsForGroupSelection(
+			entryValue.Bytes(),
+			relayChain,
+			nil,
+		)
 		if err != nil {
 			fmt.Fprintf(
 				os.Stderr,
