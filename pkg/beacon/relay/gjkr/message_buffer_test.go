@@ -67,7 +67,7 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf(
-					"unexpected error\nexpected: %v\nactual:   %v",
+					"\nexpected: %v\nactual:   %v",
 					test.expectedError,
 					err,
 				)
@@ -110,7 +110,7 @@ func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 
 			if result != test.expectedResult {
 				t.Fatalf(
-					"unexpected result\nexpected: %v\nactual:   %v\n",
+					"\nexpected: %v\nactual:   %v\n",
 					test.expectedResult,
 					result,
 				)
