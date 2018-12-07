@@ -1,0 +1,81 @@
+:toc: macro
+
+= RFC 4: Secure upgrades for contracts operating staked balances
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+Following best practices for ERC-20 Tokens, we have non-upgradable and
+non-ownable Token and Token staking contracts which means there is no
+backdoor to modify the contract storage or change the implementation and
+it is left that token transfers can only be executed by the token holders.
+As a workaround for Token staking functionality upgrades it was decided to
+simply issue and deploy a new contract and advise stakers to migrate their
+balances to it.
+
+A different upgrade approach taken from Open Zeppelin was considered for the
+rest of the contracts and this RFC states the pitfalls of the approach and
+proposes alternative way similar to what we already have for Token staking
+contracts.
+
+
+=== Current Functionality
+
+Current upgrading functionality influenced by Open Zeppelin libraries makes
+upgradable contract address and storage persistent and the logic can be
+upgraded by the contract owner. This was considered a good approach for all
+the forthcoming Keep contracts including Group selection and Random beacon.
+A concern has been raised during implementation of stake slashing functionality
+where an upgradable contract such as Group Contract has to be authorized to
+modify stake balances. Since the address and storage are persistent in case
+of a compromised implementation all staked balances are at risk.
+
+
+== Proposal
+
+Use alternative upgrading approach that is safe for critically important
+operations dealing with staked balances.
+
+=== Goal
+
+Minimize the risk of lost/stolen staked tokens in the case of a hacked or
+bad implementation upgrade of the contracts that require full access to
+modify balance of a staker.
+
+=== Implementation
+
+Each new contract that does "slashing/reward" changes on staked token
+balances must be a non-upgradable and non-ownable one to minimize attack
+surface. Functionality upgrades are only possible by deploying new 
+implementation as a new contract. Address of this contract must be 
+re-authorized by a staker. Stakers do so by calling authorize(address) 
+method on a staking contract. To further secure the network only official
+Keep org contracts addresses can be authorized. The metacontract list of
+official contracts is maintained by Keep org.
+
+The contracts with authorize() method should also include a "panic button"
+- a method that cancels all authorizations in case of emergency and this
+should be restricted to be called by a Keep org account used to deploy
+this contract.
+
+
+=== Limitations
+
+Not particularly a limitation but a move from being able to do a seamless
+and instant upgrade to a drawn-out one where stakers have to reauthorize
+a newly deployed version.
+
+=== Proof of Concept
+
+The basis for the concept can be seen in the current Staking contracts
+and StakingProxy.sol
+
+
+[bibliography]
+== Related Links
+
+- Discussion on Flowdock:
+https://www.flowdock.com/app/cardforcoin/tech/threads/6_Abd7qxhJrSNhQSrDxwgyvL0Pd
