@@ -8,6 +8,8 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+
+	"github.com/btcsuite/btcd/btcec"
 )
 
 // Ticket is a message containing a pseudorandomly generated value, W_k, which is
@@ -22,8 +24,8 @@ type Ticket struct {
 // Proof consists of the components needed to construct the Ticket's value, and
 // also acts as evidence for an accusing challenge against the Ticket's value.
 type Proof struct {
-	StakerValue        []byte // Staker-specific value, Q_j
-	VirtualStakerIndex uint64 // vs
+	StakerValue        *btcec.PublicKey // Staker-specific value, Q_j
+	VirtualStakerIndex uint64           // vs
 }
 
 // calculateTicket generates a Ticket from the previous beacon output, the
@@ -55,7 +57,7 @@ func (s *Staker) calculateTicket(
 	return &Ticket{
 		Value: value,
 		Proof: &Proof{
-			StakerValue:        s.PubKey.SerializeCompressed(),
+			StakerValue:        s.PubKey,
 			VirtualStakerIndex: virtualStakerIndex,
 		},
 	}, nil
