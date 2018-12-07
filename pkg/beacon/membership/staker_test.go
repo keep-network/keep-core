@@ -28,7 +28,7 @@ func TestGenerateTickets(t *testing.T) {
 	}
 
 	for _, ticket := range tickets {
-		if ticket.VirtualStakerIndex == 0 {
+		if ticket.Proof.VirtualStakerIndex == 0 {
 			t.Fatal("Virutal stakers should be 1-indexed, not 0-indexed")
 		}
 	}

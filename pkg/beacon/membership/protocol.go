@@ -16,7 +16,12 @@ import (
 type Ticket struct {
 	Value [sha256.Size]byte // W_k
 
-	// Proof
+	Proof *Proof // Proof
+}
+
+// Proof consists of the components needed to construct the Ticket's value, and
+// also acts as evidence for an accusing challenge against the Ticket's value.
+type Proof struct {
 	StakerValue        []byte // Staker-specific value, Q_j
 	VirtualStakerIndex uint64 // vs
 }
@@ -48,9 +53,11 @@ func (s *Staker) calculateTicket(
 	value := sha256.Sum256(combinedValue[:])
 
 	return &Ticket{
-		Value:              value,
-		StakerValue:        s.PubKey.SerializeCompressed(),
-		VirtualStakerIndex: virtualStakerIndex,
+		Value: value,
+		Proof: &Proof{
+			StakerValue:        s.PubKey.SerializeCompressed(),
+			VirtualStakerIndex: virtualStakerIndex,
+		},
 	}, nil
 }
 
