@@ -93,11 +93,17 @@ func (psm *PeerSharesMessage) Type() string {
 // Marshal converts this PeerSharesMessage to a byte array suitable for
 // network communication.
 func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
+	pbShares := make(map[string]*pb.PeerShares_Shares)
+	for member, shares := range psm.shares {
+		pbShares[member.HexString()] = &pb.PeerShares_Shares{
+			EncryptedShareS: shares.encryptedShareS,
+			EncryptedShareT: shares.encryptedShareT,
+		}
+	}
+
 	return (&pb.PeerShares{
-		SenderID:        memberIDToBytes(psm.senderID),
-		ReceiverID:      memberIDToBytes(psm.receiverID),
-		EncryptedShareS: psm.encryptedShareS,
-		EncryptedShareT: psm.encryptedShareT,
+		SenderID: memberIDToBytes(psm.senderID),
+		Shares:   pbShares,
 	}).Marshal()
 }
 
@@ -109,9 +115,20 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	}
 
 	psm.senderID = bytesToMemberID(pbMsg.SenderID)
-	psm.receiverID = bytesToMemberID(pbMsg.ReceiverID)
-	psm.encryptedShareS = pbMsg.EncryptedShareS
-	psm.encryptedShareT = pbMsg.EncryptedShareT
+
+	shares := make(map[MemberID]*peerShares)
+	for memberIDHex, pbShares := range pbMsg.Shares {
+		memberID, err := MemberIDFromHex(memberIDHex)
+		if err != nil {
+			return fmt.Errorf("could not unmarshal member's ID [%v]", err)
+		}
+		shares[memberID] = &peerShares{
+			encryptedShareS: pbShares.EncryptedShareS,
+			encryptedShareT: pbShares.EncryptedShareT,
+		}
+	}
+
+	psm.shares = shares
 
 	return nil
 }
