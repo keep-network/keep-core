@@ -3,9 +3,9 @@ package chain
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -18,7 +18,7 @@ type Interface interface {
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
-	SubmitTicket(ticket *candidate.Ticket) *async.CandidateTicketPromise
+	SubmitTicket(ticket *group.Ticket) *async.GroupTicketPromise
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
 	// associated with a request with id requestID. On-chain errors are reported
 	// through the promise.

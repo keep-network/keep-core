@@ -6,10 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -18,7 +18,7 @@ import (
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
-	staker *candidate.Staker,
+	staker *group.Staker,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig config.Chain,

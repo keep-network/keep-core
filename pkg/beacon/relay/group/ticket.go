@@ -1,7 +1,7 @@
-// Package candidate contains code that implements the Random Beacon Group
+// Package group contains code that implements the Random Beacon Group
 // Selection protocol as described in
 // http://docs.keep.network/the-beaconness-of-keep/random-beacon.pdf
-package candidate
+package group
 
 import (
 	"bytes"

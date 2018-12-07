@@ -1,4 +1,4 @@
-package candidate
+package group
 
 import (
 	"sort"

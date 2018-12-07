@@ -8,11 +8,11 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
@@ -26,7 +26,7 @@ type Node struct {
 	StakeID string
 	// Staker is an on-chain identity that this node is using to prove its
 	// stake in the system.
-	Staker *candidate.Staker
+	Staker *group.Staker
 
 	// External interactors.
 	netProvider  net.Provider

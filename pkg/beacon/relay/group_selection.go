@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/candidate"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -29,7 +29,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	go func(
 		cancel context.CancelFunc,
-		tickets candidate.Tickets,
+		tickets group.Tickets,
 		relayChain relaychain.Interface,
 		blockCounter chain.BlockCounter,
 		errCh chan error,
