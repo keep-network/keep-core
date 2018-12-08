@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
 import "./utils/UintArrayUtils.sol";
+import "./ManageableStaking.sol";
 
 
 /**
@@ -13,7 +14,7 @@ import "./utils/UintArrayUtils.sol";
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
-contract TokenStaking {
+contract TokenStaking is ManageableStaking {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
     using UintArrayUtils for uint256[];
@@ -35,7 +36,6 @@ contract TokenStaking {
     uint256 public withdrawalDelay;
     uint256 public numWithdrawals;
 
-    mapping(address => uint256) public balances;
     mapping(address => uint256[]) public withdrawalIndices;
     mapping(uint256 => Withdrawal) public withdrawals;
 
