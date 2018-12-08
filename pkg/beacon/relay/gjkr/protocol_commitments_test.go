@@ -249,6 +249,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		})
 	}
 }
+
 func TestGeneratePolynomial(t *testing.T) {
 	degree := 3
 	config := &DKG{P: big.NewInt(100), Q: big.NewInt(9)}
@@ -283,7 +284,7 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 		}
 	}
 
-	symmetricKeyMembers, err := initializeSymmetricKeyMembersGroup(
+	symmetricKeyMembers, err := generateGroupWithEphemeralKeys(
 		threshold,
 		groupSize,
 		dkg,

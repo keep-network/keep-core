@@ -3,11 +3,8 @@ package chain
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -46,12 +43,12 @@ type Interface interface {
 	// RequestRelayEntry makes an on-chain request to start generation of a
 	// random signature.  An event is generated.
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
-	// IsResultPublished checks if the result is already published to a chain.
-	// If so it returns the published result.
-	IsResultPublished(result *result.Result) *event.PublishedResult
-	// SubmitResult sends DKG result to a chain.
-	SubmitResult(publisherID gjkr.MemberID, result *result.Result) *async.PublishedResultPromise
-	// OnResultPublished is a callback that is invoked when an on-chain
+	// IsDKGResultPublished checks if the specific DKG result has already been
+	// published to a chain for given request ID.
+	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
+	// SubmitDKGResult sends DKG result to a chain.
+	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
+	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
-	OnResultPublished(func(publishedResult *event.PublishedResult))
+	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication))
 }

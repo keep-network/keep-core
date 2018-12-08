@@ -94,8 +94,10 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 				CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
 					CommittingMember: &CommittingMember{
 						SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-							memberCore: &memberCore{
-								protocolConfig: config,
+							EphemeralKeyPairGeneratingMember: &EphemeralKeyPairGeneratingMember{
+								memberCore: &memberCore{
+									protocolConfig: config,
+								},
 							},
 						},
 						vss:                vss,

@@ -10,7 +10,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/result"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -425,14 +424,22 @@ func (ec *ethereumChain) RequestRelayEntry(
 	return promise
 }
 
-// IsResultPublished checks if the result is already published to a chain.
-func (ec *ethereumChain) IsResultPublished(result *result.Result) bool {
+// IsDKGResultPublished checks if the result is already published to a chain.
+func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int, result *relaychain.DKGResult) bool {
 	// TODO Implement
 	return false
 }
 
-// SubmitResult sends DKG result to a chain.
-func (ec *ethereumChain) SubmitResult(publisherID int, result *result.Result) *async.ResultPublishPromise {
+// SubmitDKGResult sends DKG result to a chain.
+func (ec *ethereumChain) SubmitDKGResult(
+	requestID *big.Int, resultToPublish *relaychain.DKGResult,
+) *async.DKGResultPublicationPromise {
 	// TODO Implement
 	return nil
+}
+
+func (ec *ethereumChain) OnDKGResultPublished(
+	handler func(dkgResultPublication *event.DKGResultPublication),
+) {
+	// TODO Implement
 }

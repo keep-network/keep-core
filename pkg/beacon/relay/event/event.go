@@ -6,8 +6,6 @@ package event
 import (
 	"math/big"
 	"time"
-
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 )
 
 // Entry represents one entry in the threshold relay.
@@ -45,9 +43,7 @@ type StakerRegistration struct {
 	GroupMemberID string
 }
 
-// PublishedResult represents a result published to the chain. It holds an ID of
-// a member who published the result and a result in a byte slice.
-type PublishedResult struct {
-	PublisherID gjkr.MemberID
-	Result      *gjkr.Result
+// DKGResultPublication represents a DKG result publication event.
+type DKGResultPublication struct {
+	RequestID *big.Int
 }
