@@ -49,18 +49,18 @@ func Initialize(
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
 
-	staker := &group.Staker{StakeID: netProvider.ID().String()}
+	var (
+		proceed sync.WaitGroup
+		// FIXME Nuke post-M1 when we plug in real staking stuff.
+		stakingID = netProvider.ID().String()[:32]
+		staker    = &group.Staker{StakeID: stakingID}
+	)
+
 	node := relay.NewNode(
 		staker,
 		netProvider,
 		blockCounter,
 		chainConfig,
-	)
-
-	// FIXME Nuke post-M1 when we plug in real staking stuff.
-	var (
-		proceed   sync.WaitGroup
-		stakingID = netProvider.ID().String()[:32]
 	)
 
 	proceed.Add(1)
