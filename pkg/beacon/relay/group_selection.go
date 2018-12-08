@@ -61,6 +61,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				return
 			}
 		}
+		cancel()
 	}(cancel, tickets, relayChain, blockCounter, errCh)
 
 	for {
