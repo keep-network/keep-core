@@ -99,7 +99,167 @@ terraform init
 #+END_EXAMPLE
 
 
-* Global Scope
+* Providers
+
+Terraform providers expose APIs for interacting with different
+services.  Below are the currently required providers.
+
+One globally applicable note for providers, we must define a provider
+version.  Without a version defined the provider will take the lastest
+stable release.  This may or may not include breaking changes for the
+services in your environment.  Provider release updates must be tested
+in lower environments before rollout.
+
+** DONE Google
+
+For our current environments this is the primary provider.  Nothing
+special here at the moment.
+
+** DONE Helm
+
+The Helm provider allows Terraform to deploy and maintain Helm charts
+for a Kubernetes cluster.
+
+Helm actions require the machine running Terraform to have access
+inside some environments network.  e.g. Be on a VPN.
+
+*** <<initial-configuration>>Initial Configuration
+
+Were using a Helm Release to configure the OpenVPN server for some
+environment.  This means we cannot be on the VPN to use a clusters
+private endpoint from the outset, it needs to be installed
+first. During initial configuration of OpenVPN we need to use the
+clusters public endpoint + a temporary whitelist entry on the clusters
+=Master Authorized Networks=.
+
+MAKE SURE YOUR GCLOUD CONTEXT IS SET TO THE CORRECT PROJECT
+
+1.) Authorize your current public IP on cluster master authorized networks
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+gcloud container clusters update keep-dev \
+--enable-master-authorized-networks \
+--master-authorized-networks $(dig @resolver1.opendns.com ANY myip.opendns.com +short)/32 \
+--region us-central1
+#+END_SRC
+
+2.) Configure Helm provider for public access
+
+Sample provider configuration using the public endpoint:
+
+#+BEGIN_EXAMPLE
+provider "helm" {
+  kubernetes {
+    host                   = "https://${module.gke_cluster.public_endpoint}"
+    token                  = "${data.google_client_config.default.access_token}"
+    cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
+  }
+
+  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
+  service_account = "${module.helm_provider_helper.tiller_service_account}"
+  override        = ["spec.template.spec.automountserviceaccounttoken=true"]
+  namespace       = "${module.helm_provider_helper.tiller_namespace}"
+  install_tiller  = true
+}
+#+END_EXAMPLE
+
+3.) Install OpenVPN Helm Release.  Defined in =main.tf=
+
+#+BEGIN_EXAMPLE
+resource "helm_release" "openvpn" {
+  name      = "helm-openvpn"
+  namespace = "default"
+  chart     = "stable/openvpn"
+  version   = "3.10.0"
+
+  set {
+    name  = "openvpn.redirectGateway"
+    value = "false"
+  }
+
+  set {
+    name  = "openvpn.conf"
+    value = "push \"route 172.16.0.0 255.255.255.240\""
+  }
+}
+#+END_EXAMPLE
+
+4.) Terraform Plan/Apply
+
+5.) Create OpenVPN profile and login
+
+See section [[helm-openvpn]] for config generation script.
+
+6.) Move the Helm provider to the cluster master private endpoint
+
+In =variables.tf= set =master_private_endpoint=.
+
+Get master private endpoint:
+#+BEGIN_SRC sh :results pp
+date -u
+whomai
+
+gcloud container clusters describe keep-dev \
+  --format="get(privateClusterConfig.privateEndpoint)" \
+  --region us-central1
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec 10 19:25:18 UTC 2018
+: 172.16.0.2
+
+Sample provider configuration using the Private Endpoint:
+
+#+BEGIN_EXAMPLE
+provider "helm" {
+  kubernetes {
+    host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
+    token                  = "${data.google_client_config.default.access_token}"
+    cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
+  }
+
+  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
+  service_account = "${module.helm_provider_helper.tiller_service_account}"
+  override        = ["spec.template.spec.automountserviceaccounttoken=true"]
+  namespace       = "${module.helm_provider_helper.tiller_namespace}"
+  install_tiller  = true
+}
+#+END_EXAMPLE
+
+7.) Remove whitelist IP entry from cluster master authorized networks
+
+#+BEGIN_SRC sh :results pp
+date -u
+whomai
+
+gcloud container clusters update keep-dev \
+--enable-master-authorized-networks \
+--region us-central1
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec 10 19:26:51 UTC 2018
+
+** DONE Kubernetes
+
+The Kubernetes provider makes sure our Terraform commands are being
+executed against the correct Kubernetes context.  Without the
+Kubernetes provider defined, Terraform will use your current
+environments Kubernetes context.  This may or may not be the
+environment you're currently working on with Terraform.
+
+Kubernetes actions require the machine running Terraform to have
+access inside some environments network.  e.g. Be on a VPN.
+
+If you're configuring the Kubernetes provider in parallel Helm, then you
+will need to follow the same procedure described in the Helm
+[[initial-configuration]] section.
+
+
+* Environment global scope
 Basic information about the global state, and for working with the
 global environment.
 
@@ -341,7 +501,7 @@ sthompson22
 #+end_example
 
 
-* Module Scope
+* Environment module scope
 
 For working with individual modules.
 
