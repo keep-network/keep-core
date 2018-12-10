@@ -27,7 +27,7 @@ type Publisher struct {
 	blockStep int
 }
 
-// PublishResult sends a result containing i.a. group public key to the blockchain.
+// PublishDKGResult sends a result containing i.a. group public key to the blockchain.
 // It checks if the result has already been published to the blockchain with
 // request ID specific for current DKG execution. If not it determines if the
 // current member is eligable to result submission. If allowed it submits the
@@ -35,7 +35,7 @@ type Publisher struct {
 // to the blockchain containing ID of the member who published it.
 //
 // See Phase 13 of the protocol specification.
-func (pm *Publisher) PublishResult(resultToPublish *relayChain.DKGResult) error {
+func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) error {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)

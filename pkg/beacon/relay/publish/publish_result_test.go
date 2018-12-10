@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
-func TestPublishResult(t *testing.T) {
+func TestPublishDKGResult(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 	blockStep := 2 // T_step
@@ -71,7 +71,7 @@ func TestPublishResult(t *testing.T) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			err = publisher.PublishResult(resultToPublish)
+			err = publisher.PublishDKGResult(resultToPublish)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -92,7 +92,7 @@ func TestPublishResult(t *testing.T) {
 	}
 }
 
-func TestPublishResult_AlreadyPublished(t *testing.T) {
+func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 	blockStep := 2 // T_step
@@ -129,7 +129,7 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 
 	// Case: Member 1 publishes a result.
 	// Expected: A new result is published successfully by member 1.
-	err = publisher1.PublishResult(resultToPublish)
+	err = publisher1.PublishDKGResult(resultToPublish)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
@@ -140,7 +140,7 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 	// Case: Member 1 publishes the same result once again.
 	// Expected: A new result is not published, function returns result published
 	// already in previous step.
-	err = publisher1.PublishResult(resultToPublish)
+	err = publisher1.PublishDKGResult(resultToPublish)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
@@ -158,7 +158,7 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 		t.Fatalf("result is not published on chain")
 	}
 
-	err = publisher2.PublishResult(resultToPublish)
+	err = publisher2.PublishDKGResult(resultToPublish)
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
@@ -172,7 +172,7 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 // Member with lower index gets to publish the result to chain. For the second
 // member loop should be aborted and result published by the first member should
 // be returned.
-func TestPublishResult_ConcurrentExecution(t *testing.T) {
+func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 	blockStep := 2 // t_step
@@ -257,7 +257,7 @@ func TestPublishResult_ConcurrentExecution(t *testing.T) {
 			}
 
 			go func() {
-				err := publisher1.PublishResult(test.resultToPublish1)
+				err := publisher1.PublishDKGResult(test.resultToPublish1)
 				if err != nil {
 					t.Fatalf("unexpected error %v", err)
 				}
@@ -270,7 +270,7 @@ func TestPublishResult_ConcurrentExecution(t *testing.T) {
 			}()
 
 			go func() {
-				err := publisher2.PublishResult(test.resultToPublish2)
+				err := publisher2.PublishDKGResult(test.resultToPublish2)
 				if err != nil {
 					t.Fatalf("unexpected error %v", err)
 				}
