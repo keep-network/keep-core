@@ -1,0 +1,95 @@
+= Random Beacon Signing
+
+Input:
+
+- request _request~i~_
+  - _commit(seed~i~)_
+  - sender pubkey _pk~j~_
+  - request value multiplier _stakeMult~i~_
+- groups _GG_
+- previous output _v~i-1~_
+
+=== _Block~k~_
+
+includes request _request~i~_
+
+=== _Block~k+1~_
+
+take hash of, _rseed~i~ = blockHash(k+1)_ use _rseed~i~_ to select _Group~i~_ from _GG_
+
+=== _Block~k+1+T_open~_
+where _1 <= T~open~ <= openTimeout(request~i~)_
+
+_T~siginit~ = k + 1 + T~open~_
+
+includes opening of commitment, _seed~i~_ signed by _pk~j~_
+
+this transaction triggers the signing
+
+=== _Block~T_siginit+T_output~_
+where _1 <= T~output~ <= failureTimeout(request~i~)_
+
+member _P~n~_ of _Group~i~_ submits _blsSign(H(seed~i~, rseed~i~), pk~G~)_
+
+verify signature
+
+if valid:
+
+- reward _P~n~_ by _R~submitter~(T~output~) * stakeMult~i~_
+- reward _P~o~_ where _o /= n_ of _G~i~_ by _R~group~(T~output~) * stakeMult~i~_
+
+if invalid:
+
+- punish _P~n~_ by _INVALID_SIGNATURE_PENALTY * stakeMult~i~_
+
+=== _Block~T_siginit+T_complain~_
+where _1 <= T~complain~ <= SIGNING_COMPLAINT_TIMEOUT_
+
+members of _Group~i~_ may submit proof of misbehavior by other members
+
+member _P~tattletale~_ submits _complaint(P~accused~, P~tattletale~, proof)_
+
+if valid:
+
+- reward _P~tattletale~_ by _TATTLETALE_REWARD * stakeMult~i~_
+- punish _P~accused~_ by _INVALID_SHARE_PENALTY * stakeMult~i~_
+
+if invalid:
+
+- punish _P~tattletale~_ by _INVALID_COMPLAINT_PENALTY * stakeMult~i~_
+
+
+
+[source, python]
+----
+
+for i in G_6:
+  gx_i = product(
+    for j in G_6:
+      product(
+        for k in [0..T]:
+          A_ik ^ (j^k)
+      )
+  ) mod p
+
+for i where isKnown(z_i):
+  sig_i = hash(msg)^z_i
+  broadcast(sig_i)
+----
+
+==== Phase 2: Share combination
+
+[source, python]
+----
+J = []
+
+for i where isReceived(sig_i):
+  if blsVerify(sig_i, msg, gx_i):
+    J += i
+----
+
+v_i-1, r_i -> v_r
+
+v_r -> G
+
+G, v_r -> v_i
