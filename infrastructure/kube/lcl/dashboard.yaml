@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
       - name: dashboard
-        image: ethereumex/eth-stats-dashboard
+        image: lispmeister/eth-stats-dashboard
         ports:
         - containerPort: 3000
         - containerPort: 3001

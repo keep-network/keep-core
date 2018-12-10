@@ -1,11 +1,9 @@
 FROM ubuntu
 MAINTAINER "Markus Fix <Markus.Fix@keep.network>
 
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get install -y npm nodejs-legacy
-RUN apt-get install -y git
-RUN apt-get install -y curl
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y build-essential
+RUN apt-get install -y nodejs npm git curl
 
 RUN npm install -g grunt
 RUN npm install -g pm2
