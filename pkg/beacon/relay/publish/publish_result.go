@@ -2,15 +2,20 @@ package publish
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-// Publisher is a member
+// Publisher is a member submitting distributed key generation result to a
+// blockchain.
 type Publisher struct {
-	ID          gjkr.MemberID
+	ID gjkr.MemberID
+	// ID of distributed key generation execution.
+	RequestID *big.Int
+	// Handle to interact with a blockchain.
 	chainHandle chain.Handle
 	// Sequential number of the current member in the publishing group.
 	// The value is used to determine eligible publishing member. Relates to DKG
