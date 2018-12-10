@@ -13,7 +13,7 @@ provider "google-beta" {
 
 provider "kubernetes" {
   load_config_file       = false
-  host                   = "https://${module.gke_cluster.endpoint}"
+  host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
   token                  = "${data.google_client_config.default.access_token}"
   cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
 }
@@ -25,7 +25,7 @@ module "helm_provider_helper" {
 
 provider "helm" {
   kubernetes {
-    host                   = "https://${module.gke_cluster.endpoint}"
+    host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
     token                  = "${data.google_client_config.default.access_token}"
     cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
   }
