@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
@@ -21,11 +21,8 @@ func TestPublishResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resultToPublish := &gjkr.Result{
-		Success:        false,
+	resultToPublish := &relayChain.DKGResult{
 		GroupPublicKey: big.NewInt(12345),
-		Disqualified:   []gjkr.MemberID{1, 2},
-		Inactive:       []gjkr.MemberID{5},
 	}
 
 	var tests = map[string]struct {
@@ -49,14 +46,10 @@ func TestPublishResult(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			publisher := &Publisher{
 				ID:              gjkr.MemberID(test.publishingIndex + 1),
+				RequestID:       big.NewInt(101),
 				publishingIndex: test.publishingIndex,
 				chainHandle:     chainHandle,
 				blockStep:       blockStep,
-			}
-
-			expectedPublishedResult := &event.PublishedResult{
-				PublisherID: publisher.ID,
-				Result:      resultToPublish,
 			}
 
 			// Reinitialize chain to reset block counter
@@ -71,11 +64,14 @@ func TestPublishResult(t *testing.T) {
 				t.Fatalf("unexpected error [%v]", err)
 			}
 
-			if chainRelay.IsResultPublished(resultToPublish) != nil {
+			if chainRelay.IsDKGResultPublished(
+				publisher.RequestID,
+				resultToPublish,
+			) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			publishedResult, err := publisher.PublishResult(resultToPublish)
+			err = publisher.PublishResult(resultToPublish)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -86,10 +82,10 @@ func TestPublishResult(t *testing.T) {
 			if test.expectedTimeEnd != currentBlock {
 				t.Fatalf("invalid current block\nexpected: %v\nactual:   %v\n", test.expectedTimeEnd, currentBlock)
 			}
-			if !reflect.DeepEqual(expectedPublishedResult, publishedResult) {
-				t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult)
-			}
-			if chainRelay.IsResultPublished(resultToPublish) == nil {
+			if !chainRelay.IsDKGResultPublished(
+				publisher.RequestID,
+				resultToPublish,
+			) {
 				t.Fatalf("result is not published on chain")
 			}
 		})
@@ -108,55 +104,47 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 
 	publisher1 := &Publisher{
 		ID:              1,
+		RequestID:       big.NewInt(101),
 		publishingIndex: 0,
 		chainHandle:     chainHandle,
 		blockStep:       blockStep,
 	}
 	publisher2 := &Publisher{
 		ID:              2,
+		RequestID:       big.NewInt(101),
 		publishingIndex: 1,
 		chainHandle:     chainHandle,
 		blockStep:       blockStep,
 	}
 
-	resultToPublish := &gjkr.Result{
+	resultToPublish := &relayChain.DKGResult{
 		GroupPublicKey: big.NewInt(12345),
-	}
-	expectedPublishedResult := &event.PublishedResult{
-		PublisherID: publisher1.ID,
-		Result:      resultToPublish,
 	}
 
 	chainRelay := chainHandle.ThresholdRelay()
 
-	if chainRelay.IsResultPublished(resultToPublish) != nil {
+	if chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
 		t.Fatalf("result is already published on chain")
 	}
 
 	// Case: Member 1 publishes a result.
 	// Expected: A new result is published successfully by member 1.
-	publishedResult1, err := publisher1.PublishResult(resultToPublish)
+	err = publisher1.PublishResult(resultToPublish)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !reflect.DeepEqual(expectedPublishedResult, publishedResult1) {
-		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult1)
-	}
-	if chainRelay.IsResultPublished(resultToPublish) == nil {
-		t.Fatalf("result is not published on chain")
+	if !chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
+		t.Fatalf("result is already published on chain")
 	}
 
 	// Case: Member 1 publishes the same result once again.
 	// Expected: A new result is not published, function returns result published
 	// already in previous step.
-	publishedResult2, err := publisher1.PublishResult(resultToPublish)
+	err = publisher1.PublishResult(resultToPublish)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !reflect.DeepEqual(expectedPublishedResult, publishedResult2) {
-		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult2)
-	}
-	if chainRelay.IsResultPublished(resultToPublish) == nil {
+	if !chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
 		t.Fatalf("result is not published on chain")
 	}
 
@@ -166,14 +154,16 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 	var expectedError error
 	expectedError = nil
 
-	publishedResult3, err := publisher2.PublishResult(resultToPublish)
-	if !reflect.DeepEqual(expectedPublishedResult, publishedResult3) {
-		t.Fatalf("invalid published result\nexpected: %v\nactual:   %v\n", expectedPublishedResult, publishedResult3)
+	if !chainRelay.IsDKGResultPublished(publisher2.RequestID, resultToPublish) {
+		t.Fatalf("result is not published on chain")
 	}
+
+	err = publisher2.PublishResult(resultToPublish)
 	if !reflect.DeepEqual(err, expectedError) {
-		t.Fatalf("\nexpected: %s\nactual:   %s\n", expectedError, err)
+		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if chainRelay.IsResultPublished(resultToPublish) == nil {
+
+	if !chainRelay.IsDKGResultPublished(publisher2.RequestID, resultToPublish) {
 		t.Fatalf("result is not published on chain")
 	}
 }
@@ -185,71 +175,69 @@ func TestPublishResult_AlreadyPublished(t *testing.T) {
 func TestPublishResult_ConcurrentExecution(t *testing.T) {
 	threshold := 2
 	groupSize := 5
-	blockStep := 2 // T_step
+	blockStep := 2 // t_step
 
 	publisher1 := &Publisher{
 		ID:              2,
-		publishingIndex: 1,
+		publishingIndex: 1, // P1
 		blockStep:       blockStep,
 	}
 	publisher2 := &Publisher{
 		ID:              5,
-		publishingIndex: 4,
+		publishingIndex: 4, // P2
 		blockStep:       blockStep,
 	}
 
 	var tests = map[string]struct {
-		resultToPublish1         *gjkr.Result
-		resultToPublish2         *gjkr.Result
-		expectedPublishedResult1 *event.PublishedResult
-		expectedPublishedResult2 *event.PublishedResult
-		expectedDuration         int
+		resultToPublish1  *relayChain.DKGResult
+		resultToPublish2  *relayChain.DKGResult
+		requestID1        *big.Int
+		requestID2        *big.Int
+		expectedDuration1 int // index * t_step
+		expectedDuration2 int // index * t_step
 	}{
 		"two members publish the same results": {
-			resultToPublish1: &gjkr.Result{
+			resultToPublish1: &relayChain.DKGResult{
 				GroupPublicKey: big.NewInt(101),
 			},
-			resultToPublish2: &gjkr.Result{
+			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: big.NewInt(101),
 			},
-			expectedPublishedResult1: &event.PublishedResult{
-				PublisherID: publisher1.ID,
-				Result: &gjkr.Result{
-					GroupPublicKey: big.NewInt(101),
-				},
-			},
-			expectedPublishedResult2: &event.PublishedResult{
-				PublisherID: publisher1.ID,
-				Result: &gjkr.Result{
-					GroupPublicKey: big.NewInt(101),
-				},
-			},
-			expectedDuration: publisher1.publishingIndex * blockStep, // index * t_step
+			requestID1:        big.NewInt(11),
+			requestID2:        big.NewInt(11),
+			expectedDuration1: publisher1.publishingIndex * blockStep, // P1 * t_step
+			expectedDuration2: publisher1.publishingIndex * blockStep, // P1 * t_step
 		},
 		"two members publish different results": {
-			resultToPublish1: &gjkr.Result{
+			resultToPublish1: &relayChain.DKGResult{
 				GroupPublicKey: big.NewInt(201),
 			},
-			resultToPublish2: &gjkr.Result{
+			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: big.NewInt(202),
 			},
-			expectedPublishedResult1: &event.PublishedResult{
-				PublisherID: publisher1.ID,
-				Result: &gjkr.Result{
-					GroupPublicKey: big.NewInt(201),
-				},
+			requestID1:        big.NewInt(11),
+			requestID2:        big.NewInt(11),
+			expectedDuration1: publisher1.publishingIndex * blockStep, // P1 * t_step
+			expectedDuration2: publisher2.publishingIndex * blockStep, // P2 * t_step
+		},
+		"two members publish the same results for different Request IDs": {
+			resultToPublish1: &relayChain.DKGResult{
+				GroupPublicKey: big.NewInt(101),
 			},
-			expectedPublishedResult2: &event.PublishedResult{
-				PublisherID: publisher2.ID,
-				Result: &gjkr.Result{
-					GroupPublicKey: big.NewInt(202),
-				},
+			resultToPublish2: &relayChain.DKGResult{
+				GroupPublicKey: big.NewInt(101),
 			},
-			expectedDuration: publisher2.publishingIndex * blockStep, // index * t_step
+			requestID1:        big.NewInt(12),
+			requestID2:        big.NewInt(13),
+			expectedDuration1: publisher1.publishingIndex * blockStep, // P1 * t_step
+			expectedDuration2: publisher2.publishingIndex * blockStep, // P1 * t_step
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			publisher1.RequestID = test.requestID1
+			publisher2.RequestID = test.requestID2
+
 			chainHandle, initialBlock, err := initChainHandle(threshold, groupSize)
 			if err != nil {
 				t.Fatal(err)
@@ -257,45 +245,48 @@ func TestPublishResult_ConcurrentExecution(t *testing.T) {
 			publisher1.chainHandle = chainHandle
 			publisher2.chainHandle = chainHandle
 
-			expectedBlockEnd := initialBlock + test.expectedDuration
+			expectedBlockEnd1 := initialBlock + test.expectedDuration1
+			expectedBlockEnd2 := initialBlock + test.expectedDuration2
 
-			result1Chan := make(chan *event.PublishedResult)
-			result2Chan := make(chan *event.PublishedResult)
-
-			go func() {
-				publishedResult1, err := publisher1.PublishResult(test.resultToPublish1)
-				if err != nil {
-					t.Fatalf("unexpected error %v", err)
-				}
-				result1Chan <- publishedResult1
-			}()
-
-			go func() {
-				publishedResult2, err := publisher2.PublishResult(test.resultToPublish2)
-				if err != nil {
-					t.Fatalf("unexpected error %v", err)
-				}
-				result2Chan <- publishedResult2
-			}()
-
-			if result1 := <-result1Chan; !reflect.DeepEqual(result1, test.expectedPublishedResult1) {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedPublishedResult1, result1)
-			}
-			if result2 := <-result2Chan; !reflect.DeepEqual(result2, test.expectedPublishedResult2) {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedPublishedResult2, result2)
-			}
+			result1Chan := make(chan int)
+			result2Chan := make(chan int)
 
 			blockCounter, err := chainHandle.BlockCounter()
 			if err != nil {
 				t.Fatalf("unexpected error [%v]", err)
 			}
-			currentBlock, err := blockCounter.CurrentBlock()
-			if err != nil {
-				t.Fatalf("unexpected error [%v]", err)
-			}
 
-			if expectedBlockEnd != currentBlock {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd, currentBlock)
+			go func() {
+				err := publisher1.PublishResult(test.resultToPublish1)
+				if err != nil {
+					t.Fatalf("unexpected error %v", err)
+				}
+				currentBlock, err := blockCounter.CurrentBlock()
+				if err != nil {
+					t.Fatalf("unexpected error [%v]", err)
+				}
+
+				result1Chan <- currentBlock
+			}()
+
+			go func() {
+				err := publisher2.PublishResult(test.resultToPublish2)
+				if err != nil {
+					t.Fatalf("unexpected error %v", err)
+				}
+				currentBlock, err := blockCounter.CurrentBlock()
+				if err != nil {
+					t.Fatalf("unexpected error [%v]", err)
+				}
+
+				result2Chan <- currentBlock
+			}()
+
+			if result1 := <-result1Chan; result1 != expectedBlockEnd1 {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd1, result1)
+			}
+			if result2 := <-result2Chan; result2 != expectedBlockEnd2 {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd2, result2)
 			}
 		})
 	}
