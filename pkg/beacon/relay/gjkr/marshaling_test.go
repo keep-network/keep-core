@@ -62,12 +62,21 @@ func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 }
 
 func TestPeerSharesMessageRoundtrip(t *testing.T) {
-	msg := &PeerSharesMessage{
-		senderID:        MemberID(997),
-		receiverID:      MemberID(112),
+	shares := make(map[MemberID]*peerShares)
+	shares[MemberID(112)] = &peerShares{
 		encryptedShareS: []byte{0x01, 0x02, 0x03, 0x04, 0x05},
 		encryptedShareT: []byte{0x0F, 0x0E, 0x0D, 0x0C, 0x0B},
 	}
+	shares[MemberID(223)] = &peerShares{
+		encryptedShareS: []byte{0x0A, 0x0E, 0x0F, 0x0F, 0x0F},
+		encryptedShareT: []byte{0x01, 0x0F, 0x0E, 0x0E, 0x0D},
+	}
+
+	msg := &PeerSharesMessage{
+		senderID: MemberID(997),
+		shares:   shares,
+	}
+
 	unmarshaled := &PeerSharesMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)

@@ -15,10 +15,13 @@ message MemberCommitments {
 }
 
 message PeerShares {
+    message Shares {
+        bytes encryptedShareS = 1;
+        bytes encryptedShareT = 2;
+    }
+
     bytes senderID = 1;
-    bytes receiverID = 2;
-    bytes encryptedShareS = 3;
-    bytes encryptedShareT = 4;
+    map<string, Shares> shares = 2;
 }
 
 message SecretSharesAccusations {
