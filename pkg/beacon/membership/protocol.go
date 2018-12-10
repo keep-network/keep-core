@@ -1,6 +1,6 @@
 // Package membership contains code that implements the Random Beacon Group
 // Selection protocol as described in
-// http://docs.keep.network/the-beaconness-of-keep/random-beacon.pdf
+// http://docs.keep.network/random-beacon.pdf
 package membership
 
 import (
