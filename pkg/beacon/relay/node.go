@@ -3,7 +3,6 @@ package relay
 import (
 	"fmt"
 	"math/big"
-	"math/rand"
 	"os"
 	"reflect"
 	"sync"
@@ -231,24 +230,13 @@ func (n *Node) registerPendingGroup(
 
 // Returns the 0-based index of this node in the group that will be spawned by
 // the given entry value. If the node will not be in the group, returns -1.
+// TODO: needs to be replaced with index obtained from group selection protocol
 func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
-	// FIXME By only using 64 bits, we're sacrificing a potentially large part
-	// FIXME of the entry. We also need to reproduce this randomizer in
-	// FIXME Solidity.
-	shuffler := rand.New(rand.NewSource(entryValue.Int64()))
-
 	n.mutex.Lock()
-	shuffledStakeIDs := make([]string, n.maxStakeIndex+1)
-	copy(shuffledStakeIDs, n.stakeIDs)
-	currentStake := n.StakeID
-	n.mutex.Unlock()
+	defer n.mutex.Unlock()
 
-	shuffler.Shuffle(len(shuffledStakeIDs), func(i, j int) {
-		shuffledStakeIDs[i], shuffledStakeIDs[j] = shuffledStakeIDs[j], shuffledStakeIDs[i]
-	})
-
-	for i, id := range shuffledStakeIDs {
-		if id == currentStake {
+	for i, id := range n.stakeIDs {
+		if id == n.StakeID {
 			return i
 		}
 	}
