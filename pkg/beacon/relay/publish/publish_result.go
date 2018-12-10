@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -27,28 +28,29 @@ type Publisher struct {
 }
 
 // PublishResult sends a result containing i.a. group public key to the blockchain.
-// It checks if the result has already been published to the blockchain. If not
-// it determines if the current member is eligable to result submission. If allowed
-// it submits the results to the blockchain. The function returns result published
+// It checks if the result has already been published to the blockchain with
+// request ID specific for current DKG execution. If not it determines if the
+// current member is eligable to result submission. If allowed it submits the
+// results to the blockchain. The function returns result published
 // to the blockchain containing ID of the member who published it.
 //
 // See Phase 13 of the protocol specification.
-func (pm *Publisher) PublishResult(resultToPublish *gjkr.Result) (*event.PublishedResult, error) {
+func (pm *Publisher) PublishResult(resultToPublish *relayChain.DKGResult) error {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
-	onPublishedResultChan := make(chan *event.PublishedResult)
-	chainRelay.OnResultPublished(func(publishedResult *event.PublishedResult) {
+	onPublishedResultChan := make(chan *event.DKGResultPublication)
+	chainRelay.OnDKGResultPublished(func(publishedResult *event.DKGResultPublication) {
 		onPublishedResultChan <- publishedResult
 	})
 
 	// Check if the result has already been published to the chain.
-	if publishedResult := chainRelay.IsResultPublished(resultToPublish); publishedResult != nil {
-		return publishedResult, nil
+	if chainRelay.IsDKGResultPublished(pm.RequestID, resultToPublish) {
+		return nil // TODO What should we return here? Should it be an error?
 	}
 
 	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
-		return nil, fmt.Errorf("block counter failure [%v]", err)
+		return fmt.Errorf("block counter failure [%v]", err)
 	}
 
 	// Waits until the current member is eligible to submit a result to the
@@ -57,27 +59,23 @@ func (pm *Publisher) PublishResult(resultToPublish *gjkr.Result) (*event.Publish
 		pm.publishingIndex * pm.blockStep,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("block waiter failure [%v]", err)
+		return fmt.Errorf("block waiter failure [%v]", err)
 	}
 
 	for {
 		select {
 		case <-eligibleToSubmitWaiter:
-			publishedResultChan := make(chan *event.PublishedResult)
 			errors := make(chan error)
-
-			chainRelay.SubmitResult(pm.ID, resultToPublish).
-				OnComplete(func(publishedResult *event.PublishedResult, err error) {
-					publishedResultChan <- publishedResult
+			chainRelay.SubmitDKGResult(pm.RequestID, resultToPublish).
+				OnComplete(func(resultPublicationEvent *event.DKGResultPublication, err error) {
 					errors <- err
 				})
-			return <-publishedResultChan, <-errors
-
-		case newResult := <-onPublishedResultChan:
-			// Check if published result matches a result the current member
-			// wants to publish.
-			if resultToPublish.Equals(newResult.Result) {
-				return newResult, nil
+			return <-errors
+		case publishedResultEvent := <-onPublishedResultChan:
+			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
+				if chainRelay.IsDKGResultPublished(pm.RequestID, resultToPublish) {
+					return nil
+				}
 			}
 		}
 	}
