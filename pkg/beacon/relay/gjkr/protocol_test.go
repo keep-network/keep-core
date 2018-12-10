@@ -20,7 +20,7 @@ func TestRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatalf("shares and commitments calculation failed [%s]", err)
 		}
-		sharesMessages = append(sharesMessages, sharesMessage...)
+		sharesMessages = append(sharesMessages, sharesMessage)
 		commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
 
 	}

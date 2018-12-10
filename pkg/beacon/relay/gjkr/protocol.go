@@ -96,17 +96,18 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 }
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
-// two polynomials. It then calculates shares for all group member and packs them
-// in individual messages for each peer member. Additionally, it calculates
-// commitments to `a` coefficients of first polynomial using second's polynomial
-// `b` coefficients.
+// two polynomials. It then calculates shares for all group member and packs
+// them into a broadcast message. Individual shares inside the message are
+// encrypted with the symmetric key of the indended share receiver.
+// Additionally, it calculates commitments to `a` coefficients of first
+// polynomial using second's polynomial `b` coefficients.
 //
-// If there is no symmetric key established with the given group member,
+// If there are no symmetric keys established with all other group members,
 // function yields an error.
 //
 // See Phase 3 of the protocol specification.
 func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
-	[]*PeerSharesMessage,
+	*PeerSharesMessage,
 	*MemberCommitmentsMessage,
 	error,
 ) {
@@ -124,7 +125,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 
 	// Calculate shares for other group members by evaluating polynomials defined
 	// by coefficients `a_i` and `b_i`
-	var sharesMessages []*PeerSharesMessage
+	var sharesMessage = newPeerSharesMessage(cm.ID)
 	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
 		memberShareS := cm.evaluateMemberShare(receiverID, coefficientsA)
@@ -148,8 +149,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 			)
 		}
 
-		message, err := newPeerSharesMessage(
-			cm.ID,
+		err := sharesMessage.addShares(
 			receiverID,
 			memberShareS,
 			memberShareT,
@@ -157,13 +157,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 		)
 		if err != nil {
 			return nil, nil, fmt.Errorf(
-				"could not create PeerSharesMessage for receiver %v [%v]",
+				"could not add shares for receiver %v [%v]",
 				receiverID,
 				err,
 			)
 		}
-
-		sharesMessages = append(sharesMessages, message)
 	}
 
 	commitments := make([]*big.Int, len(coefficientsA))
@@ -180,7 +178,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 		commitments: commitments,
 	}
 
-	return sharesMessages, commitmentsMessage, nil
+	return sharesMessage, commitmentsMessage, nil
 }
 
 // generatePolynomial generates a random polynomial over Z_q of a given degree.
@@ -259,14 +257,14 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				// Decrypt shares using symmetric key established with sender.
 				// Since all the message are validated prior to passing to this
 				// function, decryption error should never happen.
-				shareS, err := sharesMessage.decryptShareS(symmetricKey) // s_ji
+				shareS, err := sharesMessage.decryptShareS(cvm.ID, symmetricKey) // s_ji
 				if err != nil {
 					return nil, fmt.Errorf(
 						"could not decrypt share S [%v]",
 						err,
 					)
 				}
-				shareT, err := sharesMessage.decryptShareT(symmetricKey) // t_ji
+				shareT, err := sharesMessage.decryptShareT(cvm.ID, symmetricKey) // t_ji
 				if err != nil {
 					return nil, fmt.Errorf(
 						"could not decrypt share T [%v]",

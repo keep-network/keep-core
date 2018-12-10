@@ -1,24 +1,36 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func TestCreateNewPeerSharesMessage(t *testing.T) {
+func TestAddAndDecryptSharesFromMessage(t *testing.T) {
+	sender := MemberID(4181)
+	receiver := MemberID(1231)
 	shareS := big.NewInt(1381319)
 	shareT := big.NewInt(1010212)
 
-	peerSharesMessage, key, err := newTestPeerSharesMessage(shareS, shareT)
-
-	decryptedS, err := peerSharesMessage.decryptShareS(key)
+	peerSharesMessage, key, err := newTestPeerSharesMessage(
+		sender,
+		receiver,
+		shareS,
+		shareT,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	decryptedT, err := peerSharesMessage.decryptShareT(key)
+	decryptedS, err := peerSharesMessage.decryptShareS(receiver, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	decryptedT, err := peerSharesMessage.decryptShareT(receiver, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +52,47 @@ func TestCreateNewPeerSharesMessage(t *testing.T) {
 	}
 }
 
+func TestNoSharesForReceiver(t *testing.T) {
+	sender := MemberID(4181)
+	receiver := MemberID(1231)
+	shareS := big.NewInt(1381319)
+	shareT := big.NewInt(1010212)
+
+	peerSharesMessage, key, err := newTestPeerSharesMessage(
+		sender,
+		receiver,
+		shareS,
+		shareT,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedError := fmt.Errorf("no shares for receiver 9")
+
+	_, err = peerSharesMessage.decryptShareS(MemberID(9), key)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			expectedError,
+			err,
+		)
+	}
+
+	_, err = peerSharesMessage.decryptShareT(MemberID(9), key)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			expectedError,
+			err,
+		)
+	}
+}
+
 func TestCanDecrypt(t *testing.T) {
+	sender := MemberID(4181)
+	receiver := MemberID(1231)
+
 	var tests = map[string]struct {
 		modifyMessage  func(msg *PeerSharesMessage)
 		expectedResult bool
@@ -50,13 +102,13 @@ func TestCanDecrypt(t *testing.T) {
 		},
 		"decryption not possible - invalid S": {
 			modifyMessage: func(msg *PeerSharesMessage) {
-				msg.encryptedShareS = []byte{0x01, 0x02, 0x03}
+				msg.shares[receiver].encryptedShareS = []byte{0x01, 0x02, 0x03}
 			},
 			expectedResult: false,
 		},
 		"decryption not possible - invalid T": {
 			modifyMessage: func(msg *PeerSharesMessage) {
-				msg.encryptedShareT = []byte{0x04, 0x05, 0x06}
+				msg.shares[receiver].encryptedShareT = []byte{0x04, 0x05, 0x06}
 			},
 			expectedResult: false,
 		},
@@ -67,7 +119,12 @@ func TestCanDecrypt(t *testing.T) {
 			shareS := big.NewInt(90787123)
 			shareT := big.NewInt(62829113)
 
-			message, key, err := newTestPeerSharesMessage(shareS, shareT)
+			message, key, err := newTestPeerSharesMessage(
+				sender,
+				receiver,
+				shareS,
+				shareT,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -76,7 +133,7 @@ func TestCanDecrypt(t *testing.T) {
 				test.modifyMessage(message)
 			}
 
-			canDecrypt := message.CanDecrypt(key)
+			canDecrypt := message.CanDecrypt(receiver, key)
 
 			if test.expectedResult != canDecrypt {
 				t.Fatalf(
@@ -89,7 +146,7 @@ func TestCanDecrypt(t *testing.T) {
 	}
 }
 
-func newTestPeerSharesMessage(shareS, shareT *big.Int) (
+func newTestPeerSharesMessage(senderID, receiverID MemberID, shareS, shareT *big.Int) (
 	*PeerSharesMessage,
 	ephemeral.SymmetricKey,
 	error,
@@ -106,10 +163,10 @@ func newTestPeerSharesMessage(shareS, shareT *big.Int) (
 
 	key := keyPair1.PrivateKey.Ecdh(keyPair2.PublicKey)
 
-	peerSharesMessage, err := newPeerSharesMessage(1, 2, shareS, shareT, key)
-	if err != nil {
+	msg := newPeerSharesMessage(senderID)
+	if err := msg.addShares(receiverID, shareS, shareT, key); err != nil {
 		return nil, nil, err
 	}
 
-	return peerSharesMessage, key, nil
+	return msg, key, nil
 }
