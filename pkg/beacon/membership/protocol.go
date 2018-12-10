@@ -63,14 +63,6 @@ func (s *Staker) calculateTicket(
 	}, nil
 }
 
-func toByteSlice(fixedSizeArray [32]byte) []byte {
-	var byteSlice []byte
-	for _, byte := range fixedSizeArray {
-		byteSlice = append(byteSlice, byte)
-	}
-	return byteSlice
-}
-
 // Tickets implements sort.Interface
 type Tickets []*Ticket
 
@@ -86,8 +78,8 @@ func (ts Tickets) Swap(i, j int) {
 
 // Less is the sort.Interface requirement for Tickets
 func (ts Tickets) Less(i, j int) bool {
-	iBytes := toByteSlice(ts[i].Value)
-	jBytes := toByteSlice(ts[j].Value)
+	iBytes := ts[i].Value[:]
+	jBytes := ts[j].Value[:]
 
 	switch bytes.Compare(iBytes, jBytes) {
 	case -1:

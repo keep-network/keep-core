@@ -59,8 +59,8 @@ func TestValidateProofs(t *testing.T) {
 	}
 
 	if bytes.Compare(
-		toByteSlice(tickets[0].Value),
-		toByteSlice(expectedValue),
+		tickets[0].Value[:],
+		expectedValue[:],
 	) != 0 {
 		t.Fatalf(
 			"hashed value (%v) doesn't match ticket value (%v)",
