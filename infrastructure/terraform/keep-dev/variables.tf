@@ -116,6 +116,7 @@ variable "gke_cluster" {
     name                                = "keep-dev"
     private_cluster                     = true
     master_ipv4_cidr_block              = "172.16.0.0/28"
+    master_private_endpoint             = "172.16.0.2"
     daily_maintenance_window_start_time = "00:00"
     network_policy_enabled              = true
     network_policy_provider             = "CALICO"
