@@ -1,0 +1,278 @@
+New groups generated per each output
+
+Desired qualities:
+
+- larger pool of groups when demand is high
+- pool doesn't grow _O(n)_ with output demand
+- stakeless members are minimized
+- the expiry cannot be manipulated
+  - any function where stakers can impact which groups expire first is
+    vulnerable to manipulation
+- any group expires eventually
+- groups churn reliably and the system doesn't get stuck in a state favoring any
+particular staker(s)
+- number of available groups never hits zero
+
+Thus:
+
+- the number of outputs within a certain time period determines how fast groups
+expire -> to cater for DKG failures, calculate by number of groups instead? 
+- small number of outputs -> long expiry
+- large number of outputs -> short expiry
+
+Represent the group expiration function by _Expire(GG, E) -> GG'_ where _GG_ is
+the pool of currently active groups, _E_ is some value representing all other
+inputs to the function, and _GG'_ is the new pool after removing expired groups.
+
+== Expiry manipulation
+
+If the actions of stakers can impact which groups expire first, it enables
+manipulation.
+
+==== Unstake manipulation
+
+Consider a scenario where groups with unstaking members expire faster. Mallory
+blitzpantses their stake _Stake~m~_ to allotments of _Stake~minimum~_ and is
+represented in groups with an average fraction of
+_Rep~m_average~ = Stake~m~ / Stake~total~_.
+
+Then, Mallory proceeds to unstake all of their identities that are only present
+in groups _G~i~_ where _Rep~m_i~ < Rep~m_average~_. Those groups will be removed
+from the group pool faster, and replaced with groups where the expected fraction
+of Mallory's nodes is _Rep~m_average~_.
+
+==== Selection seed manipulation
+
+Consider a scenario where Mallory can influence the value _E_ which determines
+which groups expire with the function _Expire(GG, E)_.
+
+Now Mallory can calculate what values of _E~m~_ within their control would yield
+favorable outputs from _Expire(GG, E~m~)_.
+
+=== Preventing manipulation
+
+To avoid issues of this general nature, _Expire(GG, E)_ should use values of _E_
+that cannot be manipulated. Some suitable values may be:
+
+- The actual outputs of the random beacon (_V~i~_)
+- Current blockheight (_T~j~_) when used in a linear fashion: if _G~i~_ would
+expire with input _T~j~_, it should expire with all inputs _T~j+k~_ where _k > 0_
+- Historical, statistical data about the beacon usage (_BeaconData_) when used to
+eg. tune expiration sensitivity so that more groups remain in the pool if the
+beacon is busy
+- The state of the group pool (_GG_) is also suitable but is already accounted for
+separately
+
+Some values that are definitely unsuitable, unless mixed with good inputs in a
+suitable way:
+
+- Block hashes: miners can influence block hashes to select different groups for
+expiry
+- Details of requests: requesters can influence these inputs
+- The state of the staker pool: stakers, especially blitzpantsing ones, can
+manipulate these values
+- Blockheight as a seed to a pseudorandom function: miner censorship can delay
+processing of transactions to force the use of new seeds that produce a
+different outcome for expiration
+- Seeding a pseudorandom function with statistical data seems risky and is not
+recommended
+
+To summarize:
+
+- Data under adversary control should not be used without effective sanitization
+- Data the adversary can affect in very limited ways is usable as input to
+functions that don't exhibit the avalanche effect
+- Data that is out of anyone's effective control should be safe
+
+== Possible schemes
+
+Due to the previous, we are left with essentially two classes of expiry
+functions.
+
+=== Limited Lifespan
+
+Timed expiration takes the current blockheight _T~now~_ as input and outputs which
+group(s) should expire.
+
+The groups need to be in an unchanging order. If the groups' expiration order
+can change (eg. by re-shuffling groups whenever a new one is added), it enables
+manipulation by Mallory forcing a re-shuffle just before _G~j~_, where
+_Rep~m_j~> Rep~m_average~_, would expire.
+
+Timed expiration should not exhibit "evaporative cooling" either; a group should
+not get lucky with a seed value that makes it enduringly less likely to expire
+than others.
+
+Because of the above requirements, it seems that expiration with blockheight as
+input is effectively limited to ordering groups by
+_ExpirySeed~j~ = T~j_creation~ + e~j~_
+where _e~j~_ is a non-manipulateable value specific to _G~j~_, and expiring
+groups where
+_T~now~ > ExpirySeed~j~ + c_
+where _c_ is a non-manipulateable value common to all groups.
+
+There seems to be no particular advantage in _e~j~ != 0_ and thus the formula
+can be simplified to
+_T~now~ > T~j_creation~ + c_
+where _c_ acts as the maximum age of a group. Let this form of timed expiration
+be called _limited lifespan_. 
+
+Timed expiration has a slight manipulation opportunity if a group is on the
+verge of expiry and the transaction that would trigger group expiration can be
+delayed by eg. miner censorship.
+
+This is possible to mitigate by having such a transaction include a reference
+blockheight that must be higher than the blockheight of the previous such
+transaction but the same or lower than the current blockheight when the
+transaction is mined. However, the impact is limited and specific mitigation
+may not be necessary or useful when counterbalanced by the additional complexity
+required.
+
+=== Random Expiration
+
+With random expiration, each group is assigned a pseudorandom expiration seed
+value upon the expiration trigger transaction, and groups whose seed values fall
+below a specific threshold are removed from the pool. Thus each group has an
+equal chance of being removed.
+
+== Expiration thresholds
+
+Both timed and random expiration can be tuned to exhibit desirable
+characteristics. The maximum age and expiration seed value threshold will be
+referred to as simply "expiry threshold".
+
+==== Absolute expiration
+
+At each expiration trigger transaction, calculate the desired number of groups
+_n_. If _|GG| > n_, expire _|GG| - n_ groups by setting the threshold accordingly.
+
+==== Probabilistic expiration
+
+Choose parameters for the functions that calculate the expiry threshold so that
+the expected value of _|GG'|_ is _n_.
+
+=== Group churn
+
+It is desirable to have adequate turnover in beacon signing groups. Because a
+group selection is triggered by every beacon output, new groups will be reliably
+added to the pool if the DKG finishes most of the time. Assuming a group pool of
+constant size and a DKG that never fails, each group would produce one output
+before expiring, on average. If the DKG has a failure rate of _f_, a group would
+be expected to sign _1 / (1 - f)_ outputs.
+
+It seems desirable to decouple group expiration from DKG success to reduce the
+effectiveness of manipulating the group pool by deliberately inducing DKG
+failure. This has two implications:
+
+1. DKG success should not be the group expiration trigger
+2. The group expiration should be probabilistic, not absolute
+
+=== Group pool size
+
+TODO: check the math, does pool bias compound the variability in staker profits?
+Taking a small sample of (small sample of large pool) vs. small sample of (large
+sample of large pool); reconcile w/ churn and individual staker's perspective.
+
+When the group pool is small, group lifespan is relatively short and the
+probability of an active group being selected for any given output is relatively
+high. Smaller pools are less representative of the pool of stakers, and may be
+more susceptible to pool composition manipulation.
+
+With a large pool, each group's (expected) lifespan is relatively long, while
+each group's chance of being selected for any specific output is low. A large
+pool is more representative of the stakers, but also more expensive to operate
+due to on-chain processing costs.
+
+=== Stakeless members
+
+To unstake, a staker needs to wait _T~unstake~_ before the tokens are freed. An
+unstaking holder will not be selected for new groups, but they will not be
+removed from groups created earlier. Thus _G~i~_ is guaranteed not to have
+members who have finished unstaking if _T~now~< T~i_creation~ + T~unstake~_.
+
+With older groups there is a possibility that some members may have nothing at
+stake and thus cannot be penalized for misbehavior. This can be prevented by
+either extending the unstaking waiting period until the staker is no longer
+a member of any active group, or by removing those members from the group and
+possibly expiring the group if the number of remaining members falls below
+_N - M~nofail~_.
+
+With limited lifespan, these issues can be prevented entirely by setting a cap
+on the maximum lifespan at _T~unstake~_ as long as at least 1 DKG can be relied
+on to finish successfully within any period of _T~unstake~_.
+
+==== Extended unstaking delay
+
+===== Under random expiration
+
+With random expiration, the probability of a group expiring within the unstaking
+period _P~expire~(T~unstake~)_ determines the likelihood of this becoming a
+severe issue. Call the probability that a group is still active when a member
+finishes unstaking
+_P~leftover~ = 1 - P~expire~(T~unstake~)_.
+
+Because the age of a group doesn't impact the expiry probability under random
+expiration, each unstake event has a _P~leftover~_ chance of leaving the member
+in the group. After _2T~unstake~_ the probability is _P~leftover~^2^_, and so
+on for
+_1 - P~expire~(x * T~unstake~) = P~leftover~^x^_.
+If _P~leftover~_ is low enough, for example _0.001_, this should be reasonably
+uncommon. However, the non-deterministic unstaking period creates a severe tail
+risk for stakers, which may have a larger-than-expected impact on the value of
+the token.
+
+===== Under limited lifespan
+
+If group lifespans have a systemwide hard cap at _T~maxlife~_, blocking
+unstaking until a staker's groups have expired means that the real unstaking
+period _T'~unstake~_ is
+_T~unstake~ <= T'~unstake~<= T~maxlife~_.
+
+The actual value of _T'~unstake~_ for _S~i~_ can be estimated in advance with
+some accuracy, using knowledge of the ages of the groups _S~i~_ is represented
+in, and the formula for calculating group lifespans:
+_c = F~maxlife~(GG, BeaconData)_.
+This works even if no systemwide constants are used, although varying beacon
+conditions will create some unpredictability.
+
+==== Removing stakeless members
+
+If _S~i~_ is represented as _P~i~_ in _G~j~_, but finishes unstaking while
+_G~j~_ is still active, _P~i~_ could be removed from _G~j~_ so they will not be
+able to collect rewards for contributing to future outputs. The probability of
+this occurring for any given unstaking under random expiration is _P~leftover~_.
+
+If _n_, the number of members remaining in _G~j~_ after DKG is closer to _N_
+than _N - M~nofail~_, single members unstaking should not pose a significant
+problem.
+
+If a large number of members unstake, _n~remaining~ = n - n~unstaked~_ may fall
+below _N - M~nofail~_ and residual security may be compromised. It may be
+desirable to terminate a group if
+_n~unstaked~ + n~dkg_inactive~ + n~dkg_disqualified~ > M~nofail~_.
+
+If groups terminate when too many members unstake, it opens up a group pool
+manipulation attack where _S~m~_ blitzpantses and then unstakes groups where
+they control
+_m >= M~nofail~ - (n~dkg_inactive~ + n~dkg_disqualified~)_
+members.
+
+This ties down _m * Stake~min~_ KEEP for _T~unstake~_ and has _P~leftover~_
+probability of success. Assuming the blitzpantsing divides _S~m~_'s tokens in
+such a way that any blitzpantsed staker identity is represented in at most one
+group in _GG_ (expected number of representations per an identity with
+_Stake~min~_ being
+_Stake~min~ * N * |GG| / Stake~total~_),
+the opportunity cost is as follows:
+
+TODO: actually calculate this
+
+== Terminating groups
+
+In some situations a group may need to be terminated before it would expire
+normally.
+
+If enough members are removed from the group so that _n~remaining~ < H_,
+termination is the only option. If the group private key has been exposed,
+the group should be terminated. Termination may be desirable if the group loses
+enough members to push it below the threshold of _n~remaining~ < N - M~nofail~_.
