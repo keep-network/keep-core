@@ -64,10 +64,7 @@ func TestPublishDKGResult(t *testing.T) {
 				t.Fatalf("unexpected error [%v]", err)
 			}
 
-			if chainRelay.IsDKGResultPublished(
-				publisher.RequestID,
-				resultToPublish,
-			) {
+			if chainRelay.IsAnyDKGResultPublished(publisher.RequestID) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
@@ -82,10 +79,7 @@ func TestPublishDKGResult(t *testing.T) {
 			if test.expectedTimeEnd != currentBlock {
 				t.Fatalf("invalid current block\nexpected: %v\nactual:   %v\n", test.expectedTimeEnd, currentBlock)
 			}
-			if !chainRelay.IsDKGResultPublished(
-				publisher.RequestID,
-				resultToPublish,
-			) {
+			if !chainRelay.IsAnyDKGResultPublished(publisher.RequestID) {
 				t.Fatalf("result is not published on chain")
 			}
 		})
@@ -123,7 +117,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 
 	chainRelay := chainHandle.ThresholdRelay()
 
-	if chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
+	if chainRelay.IsAnyDKGResultPublished(publisher1.RequestID) {
 		t.Fatalf("result is already published on chain")
 	}
 
@@ -133,28 +127,26 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
+	if !chainRelay.IsAnyDKGResultPublished(publisher1.RequestID) {
 		t.Fatalf("result is already published on chain")
 	}
 
 	// Case: Member 1 publishes the same result once again.
-	// Expected: A new result is not published, function returns result published
-	// already in previous step.
+	// Expected: A new result is not published.
 	err = publisher1.PublishDKGResult(resultToPublish)
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
+	if !chainRelay.IsAnyDKGResultPublished(publisher1.RequestID) {
 		t.Fatalf("result is not published on chain")
 	}
 
 	// Case: Member 2 publishes the same result as member 1 already did.
-	// Expected: A new result is not published, function returns result published
-	// already by member 1.
+	// Expected: A new result is not published.
 	var expectedError error
 	expectedError = nil
 
-	if !chainRelay.IsDKGResultPublished(publisher2.RequestID, resultToPublish) {
+	if !chainRelay.IsAnyDKGResultPublished(publisher2.RequestID) {
 		t.Fatalf("result is not published on chain")
 	}
 
@@ -163,7 +155,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
 
-	if !chainRelay.IsDKGResultPublished(publisher2.RequestID, resultToPublish) {
+	if !chainRelay.IsAnyDKGResultPublished(publisher2.RequestID) {
 		t.Fatalf("result is not published on chain")
 	}
 }
