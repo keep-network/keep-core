@@ -5,7 +5,7 @@ import "math/big"
 // Submissions - PHASE 14
 type Submissions struct {
 	requestID   *big.Int
-	submissions []*Submission
+	Submissions []*Submission
 }
 
 // Submission - PHASE 14
@@ -16,8 +16,15 @@ type Submission struct {
 
 // Lead returns a submission with the highest number of votes.
 func (s *Submissions) Lead() *Submission {
-	// TODO Implement
-	return s.submissions[0]
+	top := -1
+	topPos := 0
+	for pos, aSubmission := range s.Submissions {
+		if top < aSubmission.Votes {
+			topPos = pos
+			top = aSubmission.Votes
+		}
+	}
+	return s.Submissions[topPos]
 }
 
 func (s *Submissions) Contains(result *DKGResult) bool {

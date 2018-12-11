@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"os"
@@ -43,22 +44,92 @@ type localChain struct {
 	blockCounter    chain.BlockCounter
 
 	stakerList []string
+
+	// Track the submitted votes -
+	submissionsMutex sync.Mutex
+	submissions      map[*big.Int]relaychain.Submissions
+	// vote handler
+	voteHandler []func(dkgResultVote *event.DKGResultVote)
 }
+
+/*
+From "submissions.go"
+====================================================================
+// Submissions - PHASE 14
+type Submissions struct {
+	requestID   *big.Int
+	submissions []*Submission
+}
+
+// Submission - PHASE 14
+type Submission struct {
+	DKGResult *DKGResult
+	Votes     int
+}
+
+// Lead returns a submission with the highest number of votes.
+func (s *Submissions) Lead() *Submission {
+	top := -1
+	topPos := 0
+	for pos, aSubmission := range s.submissions {
+		if top < aSubmission.Votes {
+			topPos = pos
+			top = aSubmission.Votes
+		}
+	}
+	return s.submissions[topPos]
+}
+
+func (s *Submissions) Contains(result *DKGResult) bool {
+	// TODO Implement
+	return false
+}
+====================================================================
+*/
 
 // PHASE 14
+// from relaychain:
+//	// SubmitDKGResult sends DKG result to a chain.
+//	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
+//
+// Sets:	submittedResults map[*big.Int][]*relaychain.DKGResult
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
-	// TODO
-	return nil
+	c.submissionsMutex.Lock()
+	defer c.submissionsMutex.Unlock()
+	x := c.submissions[requestID]
+	return &x
 }
 
+// Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occure.
 // PHASE 14
 func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
-	// TODO
+	c.submissionsMutex.Lock()
+	defer c.submissionsMutex.Unlock()
+	x := c.submissions[requestID]
+	for pos, sub := range x.Submissions {
+		if bytes.Equal(sub.DKGResult.Hash(), dkgResultHash) {
+			sub.Votes++
+			x.Submissions[pos] = sub
+			dkgResultVote := &event.DKGResultVote{
+				RequestID: requestID,
+			}
+			c.handlerMutex.Lock()
+			for _, handler := range c.voteHandler {
+				go func(handler func(*event.DKGResultVote), dkgResultVote *event.DKGResultVote) {
+					handler(dkgResultVote)
+				}(handler, dkgResultVote)
+			}
+			c.handlerMutex.Unlock()
+			return
+		}
+	}
 }
 
 // PHASE 14
-func (c *localChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
-	// TODO
+func (c *localChain) OnDKGResultVote(handler func(dkgResultVote *event.DKGResultVote)) {
+	c.handlerMutex.Lock()
+	c.voteHandler = append(c.voteHandler, handler)
+	c.handlerMutex.Unlock()
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -110,6 +181,7 @@ func (c *localChain) SubmitGroupPublicKey(
 
 	groupRegistrationPromise.Fulfill(registration)
 
+	// Like This... xyzzy100
 	c.handlerMutex.Lock()
 	for _, handler := range c.groupRegisteredHandlers {
 		go func(handler func(registration *event.GroupRegistration), registration *event.GroupRegistration) {
