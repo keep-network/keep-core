@@ -234,10 +234,15 @@ func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember
 	return &PointsJustifyingMember{sm}
 }
 
+// InitializeRevealing returns a member to perform next protocol operations.
+func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
+	return &RevealingMember{sm}
+}
+
 // InitializeReconstruction returns a member to perform next protocol operations.
-func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
+func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
-		PointsJustifyingMember:             pjm,
+		RevealingMember:                    rm,
 		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
 		reconstructedIndividualPublicKeys:  make(map[MemberID]*big.Int),
 	}
