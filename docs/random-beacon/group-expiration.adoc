@@ -1,4 +1,6 @@
-desired qualities:
+= Group expiration
+
+Desired qualities:
 
 - larger pool of groups when demand is high
 - pool doesn't grow _O(n)_ with output demand
