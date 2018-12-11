@@ -2,6 +2,8 @@ pragma solidity ^0.4.21;
 pragma experimental ABIEncoderV2;
 
 import "./ModUtils.sol";
+import "./BytesUtils.sol";
+
 
 /**
  * @title Operations on alt_bn128
@@ -219,18 +221,9 @@ library AltBn128 {
         internal
         view returns(G2Point)
     {
-        bytes32 x1;
-        bytes32 x2;
-        uint256 temp;
-
         // Extract two bytes32 from bytes array
-        /* solium-disable-next-line */
-        assembly {
-            temp := add(m, 32)
-            x1 := mload(temp)
-            temp := add(m, 64)
-            x2 := mload(temp)
-        }
+        bytes32 x1 = BytesUtils.readBytes32(m, 0);
+        bytes32 x2 = BytesUtils.readBytes32(m, 32);
 
         bytes32 mX = bytes32(0);
         byte leadX = x1[0] & byte(127);
