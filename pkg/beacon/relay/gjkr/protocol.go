@@ -686,6 +686,56 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 	}
 }
 
+// Recover shares `s_mk` calculated by members `m` disqualified in Phase 9.
+// The shares were evaluated in Phase 3 by `m` for other members `k` and
+// broadcasted in an encrypted fashion, hence reconstructing member has to
+// recover a symmetric key to decode the shares messages. It returns a slice
+// containing shares `s_mk` recovered for each member `m` whose ephemeral key
+// was revealed in provided DisqualifiedMembersKeysMessage.
+func (rm *ReconstructingMember) recoverDisqualifiedShares(
+	messages []*DisqualifiedMembersKeysMessage,
+) ([]*DisqualifiedShares, error) {
+	var revealedDisqualifiedShares []*DisqualifiedShares
+
+	allRevealedShares := make(map[MemberID]map[MemberID]*big.Int)
+
+	for _, message := range messages {
+		for disqualifiedID, disqualifiedMemberPrivateKey := range message.disqualifiedMembersKeys {
+			evidenceLog := rm.protocolConfig.evidenceLog
+
+			recoveredSymmetricKey := recoverSymmetricKey(
+				evidenceLog,
+				message.senderID, // k
+				disqualifiedID,   // m
+				disqualifiedMemberPrivateKey,
+			)
+
+			shareS, _, err := recoverShares(
+				evidenceLog,
+				disqualifiedID,        // m
+				message.senderID,      // k
+				recoveredSymmetricKey, // s_mk
+			)
+			if err != nil {
+				// TODO Should we disqualify sender here?
+				return nil, fmt.Errorf("cannot decrypt share S [%v]", err)
+			}
+
+			allRevealedShares[disqualifiedID][message.senderID] = shareS
+		}
+	}
+
+	for disqualifiedID, disqualifiedMembersShares := range allRevealedShares {
+		revealedDisqualifiedShares = append(revealedDisqualifiedShares,
+			&DisqualifiedShares{
+				disqualifiedMemberID: disqualifiedID,
+				peerSharesS:          disqualifiedMembersShares,
+			})
+	}
+
+	return revealedDisqualifiedShares, nil
+}
+
 // DisqualifiedShares contains shares `s_mk` calculated by the disqualified
 // member `m` for peer members `k`. The shares were revealed due to disqualification
 // of the member `m` from the protocol execution.
