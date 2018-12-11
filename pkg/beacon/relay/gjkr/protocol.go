@@ -663,6 +663,29 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	return disqualifiedMembers, nil
 }
 
+// RevealDisqualifiedMembersKeys reveals ephemeral private keys used to create
+// an ephemeral symmetric key with members specified in provided slice.
+// The function expects to receive a slice containing IDs of members disqualified
+// in Phase 9. It returns a message containing a map of ephemeral private key
+// for each disqualified member ID.
+//
+// See Phase 10 of the protocol specification.
+func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
+	disqualifiedMembersIDs []MemberID,
+) *DisqualifiedMembersKeysMessage {
+	disqualifiedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+
+	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
+		disqualifiedMembersKeys[disqualifiedMemberID] =
+			rm.ephemeralKeyPairs[disqualifiedMemberID].PrivateKey
+	}
+
+	return &DisqualifiedMembersKeysMessage{
+		senderID:                rm.ID,
+		disqualifiedMembersKeys: disqualifiedMembersKeys,
+	}
+}
+
 // DisqualifiedShares contains shares `s_mk` calculated by the disqualified
 // member `m` for peer members `k`. The shares were revealed due to disqualification
 // of the member `m` from the protocol execution.
