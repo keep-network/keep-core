@@ -45,9 +45,10 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 		onPublishedResultChan <- publishedResult
 	})
 
-	// Check if the result has already been published to the chain.
-	if chainRelay.IsDKGResultPublished(pm.RequestID, resultToPublish) {
-		return nil // TODO What should we return here? Should it be an error?
+	// Check if any result has already been published to the chain with current
+	// request ID.
+	if chainRelay.IsAnyDKGResultPublished(pm.RequestID) {
+		return nil
 	}
 
 	blockCounter, err := pm.chainHandle.BlockCounter()
