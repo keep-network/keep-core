@@ -118,42 +118,41 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 		return fmt.Errorf("block waiter failure [%v]", err)
 	}
 
+	votesAndSubmissions := func(chainRelay relayChain.Interface) (bool, error) {
+		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
+		if !checkVotingThreshold(submissions) {
+			return true, fmt.Errorf("voting threshold exceeded")
+		}
+
+		if !submissions.Lead().DKGResult.Equals(correctResult) {
+			chainRelay.Vote(pm.RequestID, correctResult.Hash())
+			return true, nil
+		} else if !submissions.Contains(correctResult) {
+			chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
+			return true, nil
+		}
+		return false, nil
+	}
+
 	for {
 		select {
 		case <-phaseDurationWaiter:
 			return nil
 		case vote := <-onVoteChan:
 			if vote.RequestID.Cmp(pm.RequestID) == 0 {
-				submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
-				if !checkVotingThreshold(submissions) {
-					return fmt.Errorf("voting threshold exceeded")
-				}
-
-				if !submissions.Lead().DKGResult.Equals(correctResult) {
-					chainRelay.Vote(pm.RequestID, correctResult.Hash())
-					return nil
-				} else if !submissions.Contains(correctResult) {
-					chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
-					return nil
+				if result, err := votesAndSubmissions(chainRelay); result {
+					return err
 				}
 			}
 		case submission := <-onSubmissionChan:
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
-				submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
-				if !checkVotingThreshold(submissions) {
-					return fmt.Errorf("voting threshold exceeded")
-				}
-
-				if !submissions.Lead().DKGResult.Equals(correctResult) {
-					chainRelay.Vote(pm.RequestID, correctResult.Hash())
-					return nil
-				} else if !submissions.Contains(correctResult) {
-					chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
-					return nil
+				if result, err := votesAndSubmissions(chainRelay); result {
+					return err
 				}
 			}
 		}
 	}
+
 }
 
 func checkVotingThreshold(submissions *relayChain.Submissions) bool {
