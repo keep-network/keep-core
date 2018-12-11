@@ -1,6 +1,4 @@
-New groups generated per each output
-
-Desired qualities:
+desired qualities:
 
 - larger pool of groups when demand is high
 - pool doesn't grow _O(n)_ with output demand
@@ -272,7 +270,150 @@ TODO: actually calculate this
 In some situations a group may need to be terminated before it would expire
 normally.
 
+=== Member attrition
+
 If enough members are removed from the group so that _n~remaining~ < H_,
-termination is the only option. If the group private key has been exposed,
-the group should be terminated. Termination may be desirable if the group loses
-enough members to push it below the threshold of _n~remaining~ < N - M~nofail~_.
+termination is the only option to preserve beacon reliability.
+
+Termination may be desirable if the group loses enough members to push it below
+the threshold of _n~remaining~ < N - M~nofail~_, to preserve residual security.
+
+===== Technical requirements
+
+As qualified members of each group are tracked, no additional capabilities are
+required to be able to terminate groups incapable of reaching quorum.
+
+===== Punishment
+
+In the case of termination due to member attrition, the remaining participants
+should not be penalized, especially if member attrition below _N - M~nofail~_ is
+used as the termination threshold.
+
+If the punishment for each remaining member is _D~terminate_attrition~_ and the
+lowest punishment for misbehavior that leads to _P~m~_ being removed from the
+group is _D~dropout~_, punishing remaining members enables control bootstrapping
+attacks if
+_D~terminate_attrition~ * (N - M~terminate~) > D~dropout~ * (M~terminate~ - n~dkg_removed~)_ +
+_= D~terminate_attrition~ > D~dropout~ * (M~terminate~ - n~dkg_removed~) / (N - M~terminate~)_ +
+_= D~terminate_attrition~ / D~dropout~ > (M~terminate~ - n~dkg_removed~) / (N - M~terminate~)_ +
+where +
+_n~dkg_removed~ = n~dkg_inactive~ + n~dkg_disqualified~_ +
+and _M~terminate~_ is the threshold at which number of removed members the group
+is terminated, with probability equal to the adversary controlling
+_M~terminate~ - n~dkg_removed~_
+members in the group.
+
+If punishing the subquorum group is desired, it will be safe if:
+
+----
+D_ta / D_d < (M_t - n_dr) / (N - M_t)
+D_d / D_ta > (N - M_t) / (M_t - n_dr)
+----
+
+at _n~dkg_removed~ = M~nofail~_: +
+_D~dropout~ / D~terminate_attrition~ > (N - M~terminate~) / (M~terminate~ - M~nofail~)_
+
+
+
+If _M~terminate~ = M~nofail~ + 1 = (N - 1) / 4 + 1_, +
+the above becomes +
+*_D~dropout~ / D~terminate_attrition~ > (3N - 3) / 4_*
+
+----
+D_d / D_ta > (N - M_nf - 1) / (M_nf + 1 - M_nf)
+D_d / D_ta > N - M_nf - 1
+D_d / D_ta > N - (N - 1) / 4 - 1
+D_d / D_ta > (4N - N + 1) / 4 - 4/4
+D_d / D_ta > (3N - 3) / 4
+----
+
+Thus a safe punishment for a group falling under quorum would need to be
+extremely small.
+
+If _M~terminate~ = M + 1 = (N - 1) / 2 + 1_, +
+we get the requirement +
+*_D~dropout~ / D~terminate_attrition~ > 2 - 8 / (N + 3)_*
+
+----
+D_d / D_ta > (N - M - 1) / (M + 1 - M_nf)
+D_d / D_ta > (N - (N - 1) / 2 - 1) / ((N - 1) / 2 - (N - 1) / 4 + 1)
+D_d / D_ta > ((2N - N + 1) / 2 - 1) / ((N - 1) / 4 + 1)
+D_d / D_ta > ((N + 1) / 2 - 1) / ((N - 1) / 4 + 1)
+D_d / D_ta > (N/2 - 1/2) / (N/4 + 3/4)
+D_d / D_ta > (2N - 2) / (N + 3)
+D_d / D_ta > (2N + 6 - 8) / (N + 3)
+D_d / D_ta > (2(N + 3) - 8) / (N + 3)
+D_d / D_ta > 2 - 8 / (N + 3)
+----
+
+In this case, as long as the punishment for each remaining group member is less
+than half of the smallest dropout punishment, the punishments can be given
+without enabling arbitrary power bootstrapping attacks. Nonetheless, punishing a
+disproportionately honest group of stakers for something caused by the actions
+of the other members is not recommended.
+
+Punishing the removed members in the case of failure to stay in quorum is
+possible if removed members are flagged as disqualified for rewards while
+remaining on the list of the original group members.
+
+=== Compromised private key
+
+If the group private key has been exposed or the group is proven to collude in
+signing invalid values, the group should be terminated to preserve beacon
+security.
+
+===== Technical requirements
+
+This can be achieved by tracking the values _Input~i~_ signed by the group to
+generate outputs _V~i~_. Because each group signs on average
+_1 + Prob~dkg_failure~ / Prob~dkg_success~_ inputs before expiring, this would
+not lead to excessively expensive record-keeping.
+
+If a valid signature on value _Input~m~_ is made using the public key of _G~j~_,
+and _Input~m~_ is not present in the list of values _G~j~_ has signed in the
+beacon operation, _G~j~_ should be terminated.
+
+===== Punishment
+
+Because signing such an invalid value requires at least _H_ members to misbehave
+or have their individual private keys compromised, punishing the entire group
+may seem safe and appropriate even if the specific guilty parties cannot be
+identified.
+
+However, control bootstrapping attacks are possible if +
+_D~terminate_compromise~ * M > D~min_compromise~ * (H - n~dkg_dq_late~ - 1) + D~terminate_compromise~ - R~tattletale_compromise~_ +
+where +
+_D~min_compromise~= min(D~terminate_compromise~, D~dropout~)_, +
+_n~dkg_dq_late~_ members are disqualified in phase 9 of the DKG, and +
+_R~tattletale_compromise~_ is the reward for the actor presenting proof of the
+violation.
+
+Thus no amount of punishment is entirely safe if _n~dkg_dq_late~ > 1_.
+
+The probability of success equals the probability of the adversary controlling
+_m = H - n~dkg_dq_late~_ members in the group, with the minimum being
+_m = M~nofail~ + 1_ with _n~dkg_dq_late~ = M~nofail~_.
+
+The control bootstrap multiplier for this attack in the most favorable case is:
+_(D~tc~ * M) / (D~mc~ * M~nf~ + D~tc~ - R~tc~)_.
+Defining _R~tc~ = a * D~tc~_ where _a < m~mc~_ gets:
+_(D~tc~ * M) / (D~mc~ * M~nf~ - (a - 1) * D~tc~)_
+Define _r = D~tc~ / D~mc~_:
+
+----
+_(r * M) / (M~nf~ - (a - 1) * r)_
+_(r * M) / (M/2 - (a - 1) * r)_
+_2(r * M) / (M - (2a - 2) * r)_
+_2r * M / (M - 2ar + 2r)_
+----
+
+simplifying to:
+
+_2r + 4r^2^ * (a - 1) / (M - 2ar + 2r)_
+
+Because _a_ should be larger than 1 to incentivize burning a compromised group
+even if you have a node in it, and lower than _M/2_ to disincentivize actively
+seeking to collude and loot other stakers, the _2r_ factor is the most relevant.
+Consequently the required economic power for this attack is roughly
+_50% * min(1, D~dropout~ / D~terminate_compromise~)_ of the honest participants'
+power.
