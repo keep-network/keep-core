@@ -45,6 +45,22 @@ type localChain struct {
 	stakerList []string
 }
 
+// PHASE 14
+func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
+	// TODO
+	return nil
+}
+
+// PHASE 14
+func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
+	// TODO
+}
+
+// PHASE 14
+func (c *localChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
+	// TODO
+}
+
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
 }
