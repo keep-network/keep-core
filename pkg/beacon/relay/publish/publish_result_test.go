@@ -218,7 +218,7 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
 			expectedDuration1: publisher1.publishingIndex * blockStep, // P1 * t_step
-			expectedDuration2: publisher2.publishingIndex * blockStep, // P2 * t_step
+			expectedDuration2: publisher1.publishingIndex * blockStep, // P1 * t_step
 		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{

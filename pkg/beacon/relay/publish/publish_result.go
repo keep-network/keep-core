@@ -31,8 +31,10 @@ type Publisher struct {
 // It checks if the result has already been published to the blockchain with
 // request ID specific for current DKG execution. If not it determines if the
 // current member is eligable to result submission. If allowed it submits the
-// results to the blockchain. The function returns result published
-// to the blockchain containing ID of the member who published it.
+// results to the blockchain.
+// When member is waiting for their round the function keeps tracking results being
+// published to the blockchain. If any result is published for the current request
+// ID the phase is finished.
 //
 // See Phase 13 of the protocol specification.
 func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) error {
@@ -73,9 +75,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 			return <-errors
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
-				if chainRelay.IsDKGResultPublished(pm.RequestID, resultToPublish) {
-					return nil
-				}
+				return nil
 			}
 		}
 	}
