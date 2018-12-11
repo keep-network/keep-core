@@ -119,7 +119,7 @@ func (n *Node) AddStaker(index int, staker string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	if cap(n.stakeIDs) < index {
+	if cap(n.stakeIDs) <= index { // we index from 0
 		// need something larger
 		newSlice := make([]string, index*2)
 		copy(newSlice, n.stakeIDs)
