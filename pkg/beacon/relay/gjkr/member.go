@@ -137,12 +137,21 @@ type PointsJustifyingMember struct {
 	*SharingMember
 }
 
+// RevealingMember represents one member in a threshold sharing group who is
+// revealing ephemeral private keys used to create ephemeral symmetric key
+// to communicate with other members disqualified in Phase 9.
+//
+// Executes Phase 10 of the protocol.
+type RevealingMember struct {
+	*PointsJustifyingMember
+}
+
 // ReconstructingMember represents one member in a threshold sharing group who
 // is reconstructing individual private and public keys of disqualified group members.
 //
 // Executes Phase 11 of the protocol.
 type ReconstructingMember struct {
-	*PointsJustifyingMember // TODO Update this when all phases of protocol are ready
+	*RevealingMember
 
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
