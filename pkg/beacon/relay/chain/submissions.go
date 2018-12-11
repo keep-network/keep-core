@@ -15,7 +15,11 @@ type Submission struct {
 }
 
 // Lead returns a submission with the highest number of votes.
+// PHASE 14
 func (s *Submissions) Lead() *Submission {
+	if len(s.Submissions) == 0 {
+		return nil
+	}
 	top := -1
 	topPos := 0
 	for pos, aSubmission := range s.Submissions {
@@ -27,7 +31,13 @@ func (s *Submissions) Lead() *Submission {
 	return s.Submissions[topPos]
 }
 
+// Contains returns true if 'result' is in the set of submissions.
+// PHASE 14
 func (s *Submissions) Contains(result *DKGResult) bool {
-	// TODO Implement
+	for _, aSubmission := range s.Submissions {
+		if result.Equals(aSubmission.DKGResult) {
+			return true
+		}
+	}
 	return false
 }

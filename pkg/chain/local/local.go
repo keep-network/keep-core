@@ -58,7 +58,7 @@ From "submissions.go"
 // Submissions - PHASE 14
 type Submissions struct {
 	requestID   *big.Int
-	submissions []*Submission
+	Submissions []*Submission
 }
 
 // Submission - PHASE 14
