@@ -47,3 +47,8 @@ type StakerRegistration struct {
 type DKGResultPublication struct {
 	RequestID *big.Int
 }
+
+// DKGResultVote - PHASE 14
+type DKGResultVote struct {
+	RequestID *big.Int
+}

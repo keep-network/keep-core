@@ -25,6 +25,9 @@ type Publisher struct {
 	// Predefined step for each publishing window. The value is used to determine
 	// eligible publishing member. Relates to DKG Phase 13.
 	blockStep int
+
+	// PHASE 14
+	conflictDuration int // T_conflict
 }
 
 // PublishDKGResult sends a result containing i.a. group public key to the blockchain.
@@ -79,4 +82,72 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 			}
 		}
 	}
+}
+
+// Phase14 - PHASE 14
+func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
+	chainRelay := pm.chainHandle.ThresholdRelay()
+
+	onVoteChan := make(chan *event.DKGResultVote)
+	chainRelay.OnDKGResultVote(func(vote *event.DKGResultVote) {
+		onVoteChan <- vote
+	})
+	onSubmissionChan := make(chan *event.DKGResultPublication)
+	chainRelay.OnDKGResultPublished(func(result *event.DKGResultPublication) {
+		onSubmissionChan <- result
+	})
+
+	submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
+	if !checkVotingThreshold(submissions) {
+		return fmt.Errorf("voting threshold exceeded")
+	}
+
+	blockCounter, err := pm.chainHandle.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("block counter failure [%v]", err)
+	}
+
+	// TODO We wait for T_conflict blocks but the protocol specification states
+	// that we should wait for block `T_first + T_conflict`. Need clarification.
+	phaseDurationWaiter, err := blockCounter.BlockWaiter(pm.conflictDuration)
+	if err != nil {
+		return fmt.Errorf("block waiter failure [%v]", err)
+	}
+
+	for {
+		select {
+		case <-phaseDurationWaiter:
+			return nil
+		case vote := <-onVoteChan:
+			if vote.RequestID.Cmp(pm.RequestID) == 0 {
+				submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
+				if !checkVotingThreshold(submissions) {
+					return fmt.Errorf("voting threshold exceeded")
+				}
+
+				if !submissions.Lead().DKGResult.Equals(correctResult) {
+					chainRelay.Vote(pm.RequestID, correctResult.Hash())
+					return nil
+				}
+			}
+		case submission := <-onSubmissionChan:
+			if submission.RequestID.Cmp(pm.RequestID) == 0 {
+				submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
+				if !checkVotingThreshold(submissions) {
+					return fmt.Errorf("voting threshold exceeded")
+				}
+
+				if !submissions.Lead().DKGResult.Equals(correctResult) {
+					chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
+					return nil
+				}
+			}
+		}
+	}
+}
+
+func checkVotingThreshold(submissions *relayChain.Submissions) bool {
+	var votingThreshold int // M_max
+	// leadResult.votes > M_max
+	return submissions.Lead().Votes <= votingThreshold
 }

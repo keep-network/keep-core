@@ -51,4 +51,9 @@ type Interface interface {
 	// IsDKGResultPublished checks if the specific DKG result has already been
 	// published to a chain for given request ID.
 	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
+
+	// PHASE 14
+	GetDKGSubmissions(requestID *big.Int) *Submissions
+	Vote(requestID *big.Int, dkgResultHash []byte)
+	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
 }

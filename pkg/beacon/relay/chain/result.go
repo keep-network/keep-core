@@ -69,3 +69,8 @@ func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
 	}
 	return true
 }
+
+// Hash - PHASE 14
+func (r1 *DKGResult) Hash() []byte {
+	return []byte("TODO")
+}
