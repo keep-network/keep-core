@@ -686,6 +686,26 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 	}
 }
 
+// ReconstructIndividualKeys reconstructs individual private key `z_m` and  public
+// key `y_m` of disqualified members `m`. To do that it first needs to  recover
+// shares calculated by disqualified members `m` in Phase 3 for other members `k`.
+// The shares were encrypted before broadcast, so ephemeral symmetric key needs
+// to be recovered. This requires messages containing ephemeral private key
+// revealed by member `k` used in communication with disqualified member `m`.
+//
+// See Phase 11 of the protocol specification.
+func (rm *ReconstructingMember) ReconstructIndividualKeys(
+	messages []*DisqualifiedMembersKeysMessage,
+) error {
+	revealedDisqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
+	if err != nil {
+		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
+	}
+	rm.ReconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
+	rm.ReconstructIndividualPublicKeys()                            // y_m
+	return nil
+}
+
 // Recover shares `s_mk` calculated by members `m` disqualified in Phase 9.
 // The shares were evaluated in Phase 3 by `m` for other members `k` and
 // broadcasted in an encrypted fashion, hence reconstructing member has to
@@ -755,9 +775,7 @@ type DisqualifiedShares struct {
 // It stores a map of reconstructed individual private keys for each disqualified
 // member in a current member's reconstructedIndividualPrivateKeys field:
 // <disqualifiedMemberID, privateKeyShare>
-//
-// See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
+func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys( // TODO Make function private
 	revealedDisqualifiedShares []*DisqualifiedShares,
 ) {
 	rm.reconstructedIndividualPrivateKeys = make(map[MemberID]*big.Int, len(revealedDisqualifiedShares))
@@ -836,9 +854,7 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 // `y_m` from reconstructed individual private keys `z_m`.
 //
 // Public key is calculated as `g^privateKey mod p`.
-//
-// See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
+func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() { // TODO Make function private
 	rm.reconstructedIndividualPublicKeys = make(map[MemberID]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// `y_m = g^{z_m}`
