@@ -6,8 +6,7 @@ build:
 deploy:
   kubectl:
     manifests:
-    - infrastructure/kube/k8s-*
-profiles:
-- name: test
-  test:
-  - image: gcr.io/keep.network/keep-client
+    - infrastructure/kube/lcl/k8s-*
+    - infrastructure/kube/lcl/dashboard.yaml
+    - infrastructure/kube/lcl/miner-nodes.yaml
+    - infrastructure/kube/lcl/tx-nodes.yaml
