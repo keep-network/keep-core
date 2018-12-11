@@ -101,6 +101,10 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	if !checkVotingThreshold(submissions) {
 		return fmt.Errorf("voting threshold exceeded")
 	}
+	if !submissions.Contains(correctResult) {
+		chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
+		return nil
+	}
 
 	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
@@ -128,6 +132,9 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 				if !submissions.Lead().DKGResult.Equals(correctResult) {
 					chainRelay.Vote(pm.RequestID, correctResult.Hash())
 					return nil
+				} else if !submissions.Contains(correctResult) {
+					chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
+					return nil
 				}
 			}
 		case submission := <-onSubmissionChan:
@@ -138,6 +145,9 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 				}
 
 				if !submissions.Lead().DKGResult.Equals(correctResult) {
+					chainRelay.Vote(pm.RequestID, correctResult.Hash())
+					return nil
+				} else if !submissions.Contains(correctResult) {
 					chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
 					return nil
 				}

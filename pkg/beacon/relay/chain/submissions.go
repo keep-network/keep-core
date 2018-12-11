@@ -19,3 +19,8 @@ func (s *Submissions) Lead() *Submission {
 	// TODO Implement
 	return s.submissions[0]
 }
+
+func (s *Submissions) Contains(result *DKGResult) bool {
+	// TODO Implement
+	return false
+}
