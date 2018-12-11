@@ -48,7 +48,7 @@ type Interface interface {
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
 	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication))
-	// IsDKGResultPublished checks if the specific DKG result has already been
-	// published to a chain for given request ID.
-	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
+	// IsAnyDKGResultPublished checks if any DKG result has already been published
+	// to a chain for given request ID.
+	IsAnyDKGResultPublished(requestID *big.Int) bool
 }
