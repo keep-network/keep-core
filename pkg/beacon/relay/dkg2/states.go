@@ -1,9 +1,11 @@
 package dkg2
 
 import (
+	crand "crypto/rand"
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -109,19 +111,11 @@ func (ekpgs *ephemeralKeyPairGeneratingState) initiate() error {
 func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 	switch publicKeyMessage := msg.Payload().(type) {
 	case *gjkr.EphemeralPublicKeyMessage:
-		if senderID, ok := msg.ProtocolSenderID().(gjkr.MemberID); ok {
-			if senderID == ekpgs.member.ID {
-				return nil // ignore message from self
-			}
+		if !messageFromSelf(ekpgs.memberID(), msg) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, publicKeyMessage)
-			return nil
 		}
 
-		return fmt.Errorf(
-			"unknown protocol sender id type [%T]  [%v]",
-			msg.ProtocolSenderID(),
-			msg.TransportSenderID(),
-		)
+		return nil
 	}
 
 	return fmt.Errorf(
@@ -156,13 +150,98 @@ func (skgs *symmetricKeyGeneratingState) initiate() error {
 }
 
 func (skgs *symmetricKeyGeneratingState) receive(msg net.Message) error {
-	return fmt.Errorf("unexpected message for initialization state: [%#v]", msg)
+	return fmt.Errorf(
+		"unexpected message for symmetric key generation state: [%#v]",
+		msg,
+	)
 }
 
 func (skgs *symmetricKeyGeneratingState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	vss, err := pedersen.NewVSS(
+		crand.Reader,
+		skgs.member.ProtocolConfig().P,
+		skgs.member.ProtocolConfig().Q,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"symmetric key generation state transition failed [%v]",
+			err,
+		)
+	}
+
+	return &committingState{
+		channel: skgs.channel,
+		member:  skgs.member.InitializeCommitting(vss),
+	}, nil
 }
 
 func (skgs *symmetricKeyGeneratingState) memberID() gjkr.MemberID {
 	return skgs.member.ID
+}
+
+type committingState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.CommittingMember
+
+	phaseShareMessages       []*gjkr.PeerSharesMessage
+	phaseCommitmentsMessages []*gjkr.MemberCommitmentsMessage
+}
+
+func (cs *committingState) activeBlocks() int { return 1 }
+
+func (cs *committingState) initiate() error {
+	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
+	if err != nil {
+		return fmt.Errorf("committing phase failed [%v]", err)
+	}
+
+	if err := cs.channel.Send(sharesMsg); err != nil {
+		return fmt.Errorf("committing phase failed [%v]", err)
+	}
+
+	if err := cs.channel.Send(commitmentsMsg); err != nil {
+		return fmt.Errorf("committing phase failed [%v]", err)
+	}
+
+	return nil
+}
+
+func (cs *committingState) receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *gjkr.PeerSharesMessage:
+		if !messageFromSelf(cs.memberID(), msg) {
+			cs.phaseShareMessages = append(cs.phaseShareMessages, phaseMessage)
+		}
+
+		return nil
+
+	case *gjkr.MemberCommitmentsMessage:
+		if !messageFromSelf(cs.memberID(), msg) {
+			cs.phaseCommitmentsMessages = append(
+				cs.phaseCommitmentsMessages,
+				phaseMessage,
+			)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("unexpected message for committing state: [%#v]", msg)
+}
+
+func (cs *committingState) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (cs *committingState) memberID() gjkr.MemberID {
+	return cs.member.ID
+}
+
+func messageFromSelf(selfMemberID gjkr.MemberID, message net.Message) bool {
+	if senderID, ok := message.ProtocolSenderID().(gjkr.MemberID); ok {
+		if senderID == selfMemberID {
+			return true
+		}
+	}
+	return false
 }
