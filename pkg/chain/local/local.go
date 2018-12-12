@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"os"
@@ -26,7 +27,7 @@ type localChain struct {
 	submittedResultsMutex sync.Mutex
 	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
 	// execution.
-	submittedResults map[*big.Int][]*relaychain.DKGResult
+	submittedResults map[string][]*relaychain.DKGResult
 
 	handlerMutex                 sync.Mutex
 	relayEntryHandlers           []func(entry *event.Entry)
@@ -43,6 +44,65 @@ type localChain struct {
 	blockCounter    chain.BlockCounter
 
 	stakerList []string
+
+	// Track the submitted votes -
+	// Note: the map is on the "address" of an allocated big.Int, not on the value - so
+	// this may be an error.
+	submissionsMutex sync.Mutex
+	submissions      map[string]relaychain.Submissions
+	// vote handler
+	voteHandler       []func(dkgResultVote *event.DKGResultVote)
+	groupPublicKeyMap map[string]*big.Int
+}
+
+func bigIntToHex(b *big.Int) string {
+	return fmt.Sprintf("%s", b)
+}
+
+// GetDKGSubmissions returns the current set of submissions for the requestID.
+// PHASE 14
+func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
+	c.submissionsMutex.Lock()
+	defer c.submissionsMutex.Unlock()
+	x := c.submissions[bigIntToHex(requestID)]
+	return &x
+}
+
+// Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
+// PHASE 14
+func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
+	c.submissionsMutex.Lock()
+	defer c.submissionsMutex.Unlock()
+	x, ok := c.submissions[bigIntToHex(requestID)]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "Missing requestID in c.submissions - vote will be ignored.\n")
+		return
+	}
+	for pos, sub := range x.Submissions {
+		if bytes.Equal(sub.DKGResult.Hash(), dkgResultHash) {
+			sub.Votes++
+			x.Submissions[pos] = sub
+			dkgResultVote := &event.DKGResultVote{
+				RequestID: requestID,
+			}
+			c.handlerMutex.Lock()
+			for _, handler := range c.voteHandler {
+				go func(handler func(*event.DKGResultVote), dkgResultVote *event.DKGResultVote) {
+					handler(dkgResultVote)
+				}(handler, dkgResultVote)
+			}
+			c.handlerMutex.Unlock()
+			return
+		}
+	}
+}
+
+// OnDKGResultVote sets up to call the passed handler function when a vote occurs.
+// PHASE 14
+func (c *localChain) OnDKGResultVote(handler func(dkgResultVote *event.DKGResultVote)) {
+	c.handlerMutex.Lock()
+	c.voteHandler = append(c.voteHandler, handler)
+	c.handlerMutex.Unlock()
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -200,9 +260,11 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		groupRegistrationsMutex: sync.Mutex{},
 		groupRelayEntries:       make(map[string]*big.Int),
 		groupRegistrations:      make(map[string][96]byte),
-		submittedResults:        make(map[*big.Int][]*relaychain.DKGResult),
+		submittedResults:        make(map[string][]*relaychain.DKGResult),
 		blockCounter:            bc,
 		stakeMonitor:            NewStakeMonitor(),
+		submissions:             make(map[string]relaychain.Submissions),
+		groupPublicKeyMap:       make(map[string]*big.Int),
 	}
 }
 
@@ -278,7 +340,7 @@ func (c *localChain) IsDKGResultPublished(
 	requestID *big.Int, result *relaychain.DKGResult,
 ) bool {
 	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID.Cmp(requestID) == 0 {
+		if publishedRequestID == bigIntToHex(requestID) {
 			for _, publishedResult := range publishedResults {
 				if publishedResult.Equals(result) {
 					return true
@@ -288,6 +350,13 @@ func (c *localChain) IsDKGResultPublished(
 		}
 	}
 	return false
+}
+
+// --------------------------------- ---------------------------------
+// the GroupPublicKey is a problem - don't know where to get it from at this point.
+// --------------------------------- ---------------------------------
+func (c *localChain) getGroupPublicKeyFromRequestID(requestID *big.Int) *big.Int {
+	return c.groupPublicKeyMap[bigIntToHex(requestID)]
 }
 
 // SubmitDKGResult submits the result to a chain.
@@ -304,7 +373,30 @@ func (c *localChain) SubmitDKGResult(
 		return dkgResultPublicationPromise
 	}
 
-	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
+	c.submittedResults[bigIntToHex(requestID)] = append(c.submittedResults[bigIntToHex(requestID)], resultToPublish)
+
+	c.submissionsMutex.Lock()
+	if c.submissions == nil {
+		c.submissions = make(map[string]relaychain.Submissions)
+	}
+	if _, ok := c.submissions[bigIntToHex(requestID)]; !ok {
+		groupPublicKey := c.getGroupPublicKeyFromRequestID(requestID)
+		ss := relaychain.Submissions{
+			Submissions: []*relaychain.Submission{
+				{
+					DKGResult: &relaychain.DKGResult{
+						Success:        true,
+						GroupPublicKey: groupPublicKey,
+						Disqualified:   []bool{},
+						Inactive:       []bool{},
+					},
+					Votes: 1,
+				},
+			},
+		}
+		c.submissions[bigIntToHex(requestID)] = ss
+	}
+	c.submissionsMutex.Unlock()
 
 	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
 
