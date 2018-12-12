@@ -72,21 +72,11 @@ operating on the __delegated stake_.
 __delegated stake_ needs to be return to the _owner_. In that case the _owner_
 needs to be informed.
 
-==== Undelegating a stake by the owner:
-1. The _owner_ initiates undelegation of the __delegated stake_.
-2. The __delegated stake_ is locked forbidding any further operations on it by
-either an _operator_ or a _owner_.
-3. The _operator_ finishes all previously started on __delegated stake_ 
-operations and confirms undelegation.
-4. After reception of the confirmation from the _operator_ or after a timeout,
-the _delegated stake_ is unlocked and returned to the _owner_.
-
-==== Undelegating a stake by the operator:
-1. The _operator_ initiates undelegation of the _delegated stake_.
+==== Undelegating a stake:
+1. The _owner_/_operator_ initiates undelegation of the _delegated stake_.
 2. The _delegated stake_ is locked for a period necessary to finish all 
-operations already initiated by the _operator_ (or the _operator_ can only 
-initiate an undelegation after finishing all operations). A notification is sent
-to the _owner_.
+operations already initiated by the _operator_. No new actions are possible on a
+locked stake until the timeout.
 3. After a timeout _delegated stake_ is unlocked and transferred to the _owner_.
 
 ==== Operating on a stake:
