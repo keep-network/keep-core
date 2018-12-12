@@ -43,11 +43,17 @@ of the _owner_. The owner defines also a _magpie_ address (recipient) where all 
 The goal of this proposal is to specify a simple and secure stake delegation
 mechanism.
 
-=== General requirements for staking (safe assumptions):
-_owner_:: can only have one operator, can only delegate all of his stake
-(relaxing?).
-_operator_:: cannot have any stake of his own, can only have a stake from one
-owner.
+=== General requirements for staking:
+1. _owner_ can only have one operator.
+2. _owner_ can only delegate all of his stake.
+3. _operator_ cannot have any stake of his own.
+4. _operator_ can only have a _delegated stake_ from one _owner_.
+5. If an _owner_ tries to delegate to more than one operator, the tx must
+fail.
+6. If an _owner_ tries to delegate a stake to an _operator_ who already has a
+stake, the tx must fail.
+7. If an _operator_ tries to operate on a stake that he already operates on, the
+tx must fail.
 
 === Functionality
 
