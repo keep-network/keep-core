@@ -190,6 +190,7 @@ func NewMember(
 				seed,
 			},
 		},
+		ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 	}
 }
 
