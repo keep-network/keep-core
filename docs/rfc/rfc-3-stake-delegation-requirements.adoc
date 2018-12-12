@@ -8,8 +8,17 @@ toc::[]
 
 == Background
 
-Keep enables token owners to delegate their tokens to the third party operators
-who will be operating on their behalf on their stake.
+Keep tokens are going to be staked by having token owners delegate their staked
+balance to an operator account and use it to run the Keep Client. The operator
+account cannot access the stake directly, nonetheless, it operates on behalf of
+the owner and bad acting will result in slashing the owners' stake. The operator
+may be a third party, or it may be a different address controlled by the owner,
+or it may be the same address that owns the tokens.
+
+The stake delegation will be beneficial for the security of Keep users as it
+allows on-stake operations with a "cold wallet". Thus, putting Keep users
+wallets offline protects them from "hacks" and stake delegation enables
+continuous rewarding on safe operations on staked assets.
 
 === Terminology
 
