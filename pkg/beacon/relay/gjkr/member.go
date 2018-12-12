@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"strconv"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/google"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -176,22 +175,20 @@ func NewMember(
 	memberID MemberID,
 	groupMembers []MemberID,
 	dishonestThreshold int,
-	seed *big.Int,
-) *EphemeralKeyPairGeneratingMember {
+) (*EphemeralKeyPairGeneratingMember, error) {
+	dkg, err := GenerateDKG()
+	if err != nil {
+		return nil, err
+	}
+
 	return &EphemeralKeyPairGeneratingMember{
 		memberCore: &memberCore{
 			memberID,
 			&Group{dishonestThreshold, groupMembers},
-			&DKG{
-				// TODO: We'll no longer need the P param when we'll switch to
-				// Elliptic Curves. We are hardcoding it here temporarily to
-				// minimize the impact on the API.
-				bn256.P,
-				seed,
-			},
+			dkg,
 		},
 		ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
-	}
+	}, nil
 }
 
 // Int converts `MemberID` to `big.Int`
@@ -205,6 +202,11 @@ func (id MemberID) Int() *big.Int {
 // protocol will be implemented.
 func (mc *memberCore) AddToGroup(memberID MemberID) {
 	mc.group.RegisterMemberID(memberID)
+}
+
+// ProtocolConfig returns current member's DKG protocol config.
+func (mc *memberCore) ProtocolConfig() *DKG {
+	return mc.protocolConfig
 }
 
 // InitializeSymmetricKeyGeneration performs a transition of the member state
