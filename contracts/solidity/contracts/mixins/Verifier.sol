@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./utils/BytesUtils.sol";
+import "../utils/BytesUtils.sol";
 
 
 contract Verifier {

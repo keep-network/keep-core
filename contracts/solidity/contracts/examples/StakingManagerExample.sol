@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "../StakingManager.sol";
+import "../mixins/StakingManager.sol";
 
 
 contract StakingManagerExample is StakingManager {

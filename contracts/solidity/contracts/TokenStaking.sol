@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
 import "./utils/UintArrayUtils.sol";
-import "./ManageableStaking.sol";
+import "./mixins/ManageableStaking.sol";
 
 
 /**
