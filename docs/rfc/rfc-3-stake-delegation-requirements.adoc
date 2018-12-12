@@ -26,12 +26,12 @@ Keep users private keys will be limited.
 owner:: The address of an owner of the staked tokens.
 
 operator:: The address of a party authorized to operate a stake in the name of a
-  given  _owner_.
+  given _owner_.
 
 magpie:: The address where the incentives are sent, earned by an _operator_ in
   the name of an _owner_.
 
-delegated stake:: A number of tokens delegated to an _operator_ by an _owner_.
+delegated stake:: All of _owner_ tokens delegated to the _operator_ .
 
 == Proposal
 
