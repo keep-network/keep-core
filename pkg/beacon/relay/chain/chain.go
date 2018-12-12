@@ -43,12 +43,25 @@ type Interface interface {
 	// RequestRelayEntry makes an on-chain request to start generation of a
 	// random signature.  An event is generated.
 	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
-	// IsDKGResultPublished checks if the specific DKG result has already been
-	// published to a chain for given request ID.
-	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
 	// SubmitDKGResult sends DKG result to a chain.
 	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
 	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication))
+	// IsDKGResultPublished checks if the specific DKG result has already been
+	// published to a chain for given request ID.
+	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
+
+	// GetDKGSubmissions returns the entire set of submissions that is related
+	// to a particular requestID.
+	// PHASE 14
+	GetDKGSubmissions(requestID *big.Int) *Submissions
+
+	// Vote increases the number of votes for a dkgResultHash
+	// PHASE 14
+	Vote(requestID *big.Int, dkgResultHash []byte)
+
+	// OnDKGResultVote registers a callback when a vote occurs.
+	// PHASE 14
+	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
 }

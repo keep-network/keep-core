@@ -1,7 +1,12 @@
 package chain
 
 import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/crypto/sha3"
 )
 
 // DKGResult is a result of distributed key generation protocol.
@@ -68,4 +73,42 @@ func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
 		}
 	}
 	return true
+}
+
+// Hash - PHASE 14 - Hash the DKGResult and return the hashed value.
+func (r1 *DKGResult) Hash() []byte {
+	serial := r1.searialize()
+	return keccak256(serial)
+}
+
+// Searialize converts the DKGResult into bytes.  This is so that it can be hashed.
+func (r1 *DKGResult) searialize() []byte {
+	boolToByte := func(b bool) []byte {
+		if b {
+			return []byte{0x01}
+		}
+		return []byte{0x00}
+	}
+
+	var buf bytes.Buffer
+	buf.Write(boolToByte(r1.Success))
+	buf.Write([]byte(fmt.Sprintf("%s", r1.GroupPublicKey)))
+	binary.Write(&buf, binary.BigEndian, len(r1.Disqualified))
+	for _, b := range r1.Disqualified {
+		buf.Write(boolToByte(b))
+	}
+	binary.Write(&buf, binary.BigEndian, len(r1.Inactive))
+	for _, b := range r1.Inactive {
+		buf.Write(boolToByte(b))
+	}
+	return buf.Bytes()
+}
+
+// keccak256 use the Ethereum Keccak hasing fucntions to return a hash from a list of values.
+func keccak256(data ...[]byte) []byte {
+	d := sha3.NewKeccak256()
+	for _, b := range data {
+		d.Write(b)
+	}
+	return d.Sum(nil)
 }
