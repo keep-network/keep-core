@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"strconv"
 
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/google"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -167,6 +168,29 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *big.Int
+}
+
+// NewMember creates a new member in an initial state, ready to execute DKG
+// protocol.
+func NewMember(
+	memberID MemberID,
+	groupMembers []MemberID,
+	dishonestThreshold int,
+	seed *big.Int,
+) *EphemeralKeyPairGeneratingMember {
+	return &EphemeralKeyPairGeneratingMember{
+		memberCore: &memberCore{
+			memberID,
+			&Group{dishonestThreshold, groupMembers},
+			&DKG{
+				// TODO: We'll no longer need the P param when we'll switch to
+				// Elliptic Curves. We are hardcoding it here temporarily to
+				// minimize the impact on the API.
+				bn256.P,
+				seed,
+			},
+		},
+	}
 }
 
 // Int converts `MemberID` to `big.Int`
