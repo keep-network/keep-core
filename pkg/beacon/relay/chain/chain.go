@@ -52,10 +52,16 @@ type Interface interface {
 	// published to a chain for given request ID.
 	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
 
-	// PHASE 14
 	// GetDKGSubmissions returns the entire set of submissions that is related
 	// to a particular requestID.
+	// PHASE 14
 	GetDKGSubmissions(requestID *big.Int) *Submissions
+
+	// Vote increases the number of votes for a dkgResultHash
+	// PHASE 14
 	Vote(requestID *big.Int, dkgResultHash []byte)
+
+	// OnDKGResultVote registers a callback when a vote occurs.
+	// PHASE 14
 	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
 }
