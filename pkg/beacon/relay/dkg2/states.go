@@ -13,6 +13,8 @@ type keyGenerationState interface {
 	initiate() error
 	receive(msg net.Message) error
 	nextState() (keyGenerationState, error)
+
+	memberID() gjkr.MemberID
 }
 
 // initializationState is the starting state of key generation; it waits for
@@ -34,6 +36,10 @@ func (is *initializationState) receive(msg net.Message) error {
 
 func (is *initializationState) nextState() (keyGenerationState, error) {
 	return &joinState{is.channel, is.member}, nil
+}
+
+func (is *initializationState) memberID() gjkr.MemberID {
+	return is.member.ID
 }
 
 // joinState is the state during which a member announces itself to the key
@@ -73,6 +79,10 @@ func (js *joinState) nextState() (keyGenerationState, error) {
 	}, nil
 }
 
+func (js *joinState) memberID() gjkr.MemberID {
+	return js.member.ID
+}
+
 // ephemeralKeyPairGeneratingState is the state during which members broadcast
 // publish ephemeral keys generated for each other member in the group.
 // `EphemeralPublicKeyMessage`s from other members are valid in this state.
@@ -95,6 +105,7 @@ func (ekpgs *ephemeralKeyPairGeneratingState) initiate() error {
 	}
 	return nil
 }
+
 func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 	switch publicKeyMessage := msg.Payload().(type) {
 	case *gjkr.EphemeralPublicKeyMessage:
@@ -118,6 +129,11 @@ func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 		msg,
 	)
 }
+
 func (ekpgs *ephemeralKeyPairGeneratingState) nextState() (keyGenerationState, error) {
 	return nil, nil
+}
+
+func (ekpgs *ephemeralKeyPairGeneratingState) memberID() gjkr.MemberID {
+	return ekpgs.member.ID
 }
