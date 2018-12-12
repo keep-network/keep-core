@@ -15,8 +15,8 @@ who will be operating on their behalf on their stake.
 
 owner:: The address of an owner of the staked tokens.
 
-operator:: The address of a party handling staked tokens in the name of an
-  _owner_.
+operator:: The address of a party authorized to operate a stake in the name of a
+  given  _owner_.
 
 magpie:: The address where the incentives are sent, earned by an _operator_ in
   the name of an _owner_.
