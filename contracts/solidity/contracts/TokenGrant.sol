@@ -29,7 +29,7 @@ contract TokenGrant {
     struct Grant {
         address owner; // Creator of token grant.
         address beneficiary; // Address to which granted tokens are going to be released.
-        bool locked; // Whether the grant is locked (i.e. for staking).
+        bool staked; // Whether the grant is staked.
         bool revoked; // Whether the grant was revoked by the creator.
         bool revocable; // Whether creator of grant can revoke it.
         uint256 amount; // Amount of tokens to be granted.
@@ -97,13 +97,13 @@ contract TokenGrant {
      * This is to avoid Ethereum `Stack too deep` issue described here:
      * https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
      * @param _id ID of the token grant.
-     * @return amount, released, locked, revoked.
+     * @return amount, released, staked, revoked.
      */
     function getGrant(uint256 _id) public view returns (uint256, uint256, bool, bool) {
         return (
             grants[_id].amount,
             grants[_id].released,
-            grants[_id].locked,
+            grants[_id].staked,
             grants[_id].revoked
         );
     }
@@ -180,7 +180,7 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function release(uint256 _id) public {
-        require(!grants[_id].locked, "Grant must not be locked.");
+        require(!grants[_id].staked, "Grant must not be staked.");
         uint256 unreleased = unreleasedAmount(_id);
         require(unreleased > 0, "Grant unreleased amount should be greater than zero.");
 
@@ -232,7 +232,7 @@ contract TokenGrant {
      */
     function stake(uint256 _id) public {
 
-        require(!grants[_id].locked, "Grant must not be locked.");
+        require(!grants[_id].staked, "Grant must not be staked.");
         require(!grants[_id].revoked, "Grant must not be revoked.");
     
         require(grants[_id].beneficiary == msg.sender, "Only beneficiary of the grant can stake it.");
@@ -240,8 +240,8 @@ contract TokenGrant {
         uint256 available = grants[_id].amount.sub(grants[_id].released);
         require(available > 0, "Must have available granted amount to stake.");
 
-        // Lock grant from releasing its balance.
-        grants[_id].locked = true;
+        // Mark as staked. This also locks grant from releasing its balance.
+        grants[_id].staked = true;
     
         // Transfer tokens to beneficiary's grants stake balance.
         stakeBalances[grants[_id].beneficiary] = stakeBalances[grants[_id].beneficiary].add(available);
@@ -257,7 +257,7 @@ contract TokenGrant {
      */
     function initiateUnstake(uint256 _id) public {
 
-        require(grants[_id].locked, "Grant must be locked.");
+        require(grants[_id].staked, "Grant must be staked.");
         require(!grants[_id].revoked, "Grant must not be be revoked.");
         require(msg.sender == grants[_id].beneficiary, "Only beneficiary of the grant can initiate unstake.");
         require(stakeWithdrawalStart[_id] == 0, "Grant withdrawal start must not be already set.");
@@ -285,12 +285,12 @@ contract TokenGrant {
     function finishUnstake(uint256 _id) public {
 
         require(stakeWithdrawalStart[_id] > 0, "Grant withdrawal start must be set.");
-        require(grants[_id].locked, "Grant must be locked.");
+        require(grants[_id].staked, "Grant must be staked.");
         require(!grants[_id].revoked, "Grant must not be be revoked.");
         require(now >= stakeWithdrawalStart[_id].add(stakeWithdrawalDelay), "Grant withdrawal delay should be over.");
 
-        // Unlock grant.
-        grants[_id].locked = false;
+        // Unstake grant.
+        grants[_id].staked = false;
 
         // Unset stake withdrawal start.
         stakeWithdrawalStart[_id] = 0;
@@ -307,7 +307,7 @@ contract TokenGrant {
         require(grants[_id].owner == msg.sender, "Only grant creator can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
         require(!grants[_id].revoked, "Grant must not be already revoked.");
-        require(!grants[_id].locked, "Grant must not be locked for staking.");
+        require(!grants[_id].staked, "Grant must not be staked for staking.");
 
         uint256 unreleased = unreleasedAmount(_id);
         uint256 refund = grants[_id].amount.sub(unreleased);

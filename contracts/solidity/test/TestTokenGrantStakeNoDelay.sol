@@ -33,9 +33,9 @@ contract TestTokenGrantStakeNoDelay {
 
         Assert.equal(c.stakeBalances(beneficiary), 100, "Token grant balance should be added to beneficiary grant stake balance.");
 
-        bool _locked;
-        (, , _locked, , , , , , ,) = c.grants(id);
-        Assert.equal(_locked, true, "Token grant should become locked.");
+        bool _staked;
+        (, , _staked, , , , , , ,) = c.grants(id);
+        Assert.equal(_staked, true, "Token grant should become staked.");
     }
 
     // Token grant beneficiary should be able to initiate unstake of the token grant
@@ -49,8 +49,8 @@ contract TestTokenGrantStakeNoDelay {
     function testCanFinishUnstakeTokenGrant() public {
         c.finishUnstake(id);
         Assert.equal(c.stakeBalances(beneficiary), 0, "Stake balance should stay unchanged.");
-        bool _locked;
-        (, , _locked, , , , , , ,) = c.grants(id);
-        Assert.equal(_locked, false, "Grant should become unlocked.");
+        bool _staked;
+        (, , _staked, , , , , , ,) = c.grants(id);
+        Assert.equal(_staked, false, "Grant should become unstaked.");
     }
 }

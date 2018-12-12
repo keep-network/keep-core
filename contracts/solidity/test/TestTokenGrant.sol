@@ -33,12 +33,12 @@ contract TestTokenGrant {
     function testCanGetGrantByID() public {
         uint _amount;
         uint _released;
-        bool _locked;
+        bool _staked;
         bool _revoked;
-        (_amount, _released, _locked, _revoked) = c.getGrant(id);
+        (_amount, _released, _staked, _revoked) = c.getGrant(id);
         Assert.equal(_amount, 100, "Grant should maintain a record of the granted amount.");
         Assert.equal(_released, 0, "Grant should have 0 amount released initially.");
-        Assert.equal(_locked, false, "Grant should initially be unlocked.");
+        Assert.equal(_staked, false, "Grant should initially be unstaked.");
         Assert.equal(_revoked, false, "Grant should not be marked as revoked initially.");
     }
 
