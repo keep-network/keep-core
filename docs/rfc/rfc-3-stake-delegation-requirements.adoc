@@ -80,18 +80,20 @@ locked stake until the timeout.
 3. After a timeout _delegated stake_ is unlocked and transferred to the _owner_.
 
 ==== Operating on a stake:
-Every operation made on a stake needs to be atomic, in the meaning that when an
-_operator_ is staking a _owners_ _delegated stake_, he needs to provide a 
-reference to the appropriate contract that there is a consensus between 
-_delegated stake_,  _operator_, _owner_ and _magpie_. Therefore, the parties
-performing an operation always need to validate the staking credentials and 
-verify:
+Any operation on a stake needs to start from presenting a valid stake delegation
+certificate. All of the parties (_operators_) participating in a particular
+ operation are required to validate each other's certificates.
 
-- if the contract is valid,
-- if the _operator_ is correct,
-- if the _delegated stake_ is correct,
+To validate the certificate, it is necessary to verify:
+
+- if the contract is valid, (properly signed)
+- if the _operator_ is correct, (is signed by the same party which is presenting
+the contract)
 - if the _owner_ is correct,
 - if the _magpie_ is correct.
+
+The _delegated stake_ is taken from the on-chain data of the _owner_. This value
+should not be explicitly written in the contract.
 
 The incentives need always to be sent to the correct _magpie_ address.
 
