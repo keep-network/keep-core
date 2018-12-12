@@ -100,7 +100,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 }
 
 func TestLocalIsDKGResultPublished(t *testing.T) {
-	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
+	submittedResults := make(map[string][]*relaychain.DKGResult)
 
 	submittedRequestID1 := big.NewInt(1)
 	submittedResult11 := &relaychain.DKGResult{
@@ -112,13 +112,13 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		GroupPublicKey: big.NewInt(21),
 	}
 
-	submittedResults[submittedRequestID1] = append(
-		submittedResults[submittedRequestID1],
+	submittedResults[bigIntToHex(submittedRequestID1)] = append(
+		submittedResults[bigIntToHex(submittedRequestID1)],
 		submittedResult11,
 	)
 
-	submittedResults[submittedRequestID2] = append(
-		submittedResults[submittedRequestID2],
+	submittedResults[bigIntToHex(submittedRequestID2)] = append(
+		submittedResults[bigIntToHex(submittedRequestID2)],
 		submittedResult21,
 	)
 
@@ -165,7 +165,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	defer cancel()
 
 	// Initialize local chain.
-	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
+	submittedResults := make(map[string][]*relaychain.DKGResult)
 	localChain := &localChain{
 		submittedResults: submittedResults,
 	}
@@ -191,13 +191,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1],
+		localChain.submittedResults[bigIntToHex(requestID1)],
 		[]*relaychain.DKGResult{submittedResult11},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID1],
+			localChain.submittedResults[bigIntToHex(requestID1)],
 		)
 	}
 	select {
@@ -217,13 +217,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID2],
+		localChain.submittedResults[bigIntToHex(requestID2)],
 		[]*relaychain.DKGResult{submittedResult11},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID2,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID2],
+			localChain.submittedResults[bigIntToHex(requestID2)],
 		)
 	}
 	select {
@@ -241,13 +241,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Submit already submitted result for request ID 1
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1],
+		localChain.submittedResults[bigIntToHex(requestID1)],
 		[]*relaychain.DKGResult{submittedResult11},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID1],
+			localChain.submittedResults[bigIntToHex(requestID1)],
 		)
 	}
 	select {
