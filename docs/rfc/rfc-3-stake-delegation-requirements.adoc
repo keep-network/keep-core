@@ -60,10 +60,9 @@ tx must fail.
 === Functionality
 
 ==== Delegating a stake:
-1. The _owner_, signs a contract where he declares a __delegated stake_ (the 
-number of tokens he wants to delegate), an _operator_ address (who will be
-operating on the __delegated stake_) and a _magpie_ address (where the rewards
-will be sent).
+1. The _owner_, signs a contract where he delegates all of his stake to an
+_operator_ address (who will be operating on the __delegated stake_) and a
+_magpie_ address (where the rewards will be sent).
 2. The _operator_, agrees to the contract, hence making it effective and starts
 operating on the __delegated stake_.
 3. If there will be no acceptance from the _operator_ until a timeout, then the
