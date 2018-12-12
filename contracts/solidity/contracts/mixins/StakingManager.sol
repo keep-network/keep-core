@@ -23,14 +23,9 @@ contract StakingManager is Verifier {
         // Expecting manageableStaking contract as a caller for this method.
         ManageableStaking stakingContract = ManageableStaking(msg.sender);
 
-        // Must be a staker.
-        require(stakingContract.stakeBalanceOf(staker) > 0);
-
-        // Authorization must not already exist.
-        require(_manageableContractFor[staker] == 0);
-
-        // This contract address must be signed by the staker.
-        require(isSigned(keccak256(address(this)), signature, staker));
+        require(stakingContract.stakeBalanceOf(staker) > 0, "Staker must have staked token.");
+        require(_manageableContractFor[staker] == 0, "Manageable contract for the staker is already set.");
+        require(isSigned(keccak256(address(this)), signature, staker), "This contract address must be signed by the staker.");
 
         _manageableContractFor[staker] = msg.sender;
     }
