@@ -13,13 +13,13 @@ who will be operating on their behalf on their stake.
 
 === Terminology
 
-owner:: An address of the owner of the staked tokens.
+owner:: The address of an owner of the staked tokens.
 
-operator:: An address of the party handling staked tokens in the name of a
+operator:: The address of a party handling staked tokens in the name of an
   _owner_.
 
-magpie:: An address where the incentives are sent, earned by an _operator_ in
-  the name of a _owner_.
+magpie:: The address where the incentives are sent, earned by an _operator_ in
+  the name of an _owner_.
 
 stake:: A number of tokens delegated to an _operator_ by a _owner_.
 
