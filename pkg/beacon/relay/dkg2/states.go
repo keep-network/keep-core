@@ -73,9 +73,8 @@ func (js *joinState) receive(msg net.Message) error {
 
 func (js *joinState) nextState() (keyGenerationState, error) {
 	return &ephemeralKeyPairGeneratingState{
-		js.channel,
-		js.member,
-		make([]*gjkr.EphemeralPublicKeyMessage, 0),
+		channel: js.channel,
+		member:  js.member,
 	}, nil
 }
 
@@ -87,8 +86,9 @@ func (js *joinState) memberID() gjkr.MemberID {
 // publish ephemeral keys generated for each other member in the group.
 // `EphemeralPublicKeyMessage`s from other members are valid in this state.
 type ephemeralKeyPairGeneratingState struct {
-	channel       net.BroadcastChannel
-	member        *gjkr.EphemeralKeyPairGeneratingMember
+	channel net.BroadcastChannel
+	member  *gjkr.EphemeralKeyPairGeneratingMember
+
 	phaseMessages []*gjkr.EphemeralPublicKeyMessage
 }
 
@@ -131,9 +131,38 @@ func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 }
 
 func (ekpgs *ephemeralKeyPairGeneratingState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	return &symmetricKeyGeneratingState{
+		channel:               ekpgs.channel,
+		member:                ekpgs.member.InitializeSymmetricKeyGeneration(),
+		previousPhaseMessages: ekpgs.phaseMessages,
+	}, nil
 }
 
 func (ekpgs *ephemeralKeyPairGeneratingState) memberID() gjkr.MemberID {
 	return ekpgs.member.ID
+}
+
+type symmetricKeyGeneratingState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.SymmetricKeyGeneratingMember
+
+	previousPhaseMessages []*gjkr.EphemeralPublicKeyMessage
+}
+
+func (skgs *symmetricKeyGeneratingState) activeBlocks() int { return 1 }
+
+func (skgs *symmetricKeyGeneratingState) initiate() error {
+	return skgs.member.GenerateSymmetricKeys(skgs.previousPhaseMessages)
+}
+
+func (skgs *symmetricKeyGeneratingState) receive(msg net.Message) error {
+	return fmt.Errorf("unexpected message for initialization state: [%#v]", msg)
+}
+
+func (skgs *symmetricKeyGeneratingState) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (skgs *symmetricKeyGeneratingState) memberID() gjkr.MemberID {
+	return skgs.member.ID
 }
