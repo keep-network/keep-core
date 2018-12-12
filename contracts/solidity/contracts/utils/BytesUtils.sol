@@ -13,16 +13,17 @@ library BytesUtils {
         pure
         returns (bytes32 result)
     {
+        // Skip the first 32 bytes where the length of the bytes array is stored.
+        uint256 position = i + 32;
+
         require(
-            b.length >= i + 32,
+            b.length >= position,
             "Input bytes array must be 32 length or more."
         );
 
-        i += 32;
-
         /* solium-disable-next-line */
         assembly {
-            result := mload(add(b, i))
+            result := mload(add(b, position))
         }
     }
 }
