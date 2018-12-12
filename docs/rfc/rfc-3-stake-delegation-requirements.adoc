@@ -112,6 +112,10 @@ Should an _operator_ have an accountable address which will be slashed?
 === Timeouts:
 What timeouts are reasonable?
 
+== Future work
+Consider how the stake delegation will interact with ETH bonding (part of Keep,
+but not the beacon).
+
 [bibliography]
 == Related Links
 - https://www.flowdock.com/app/cardforcoin/tech/threads/UQhnqrQAWk3azp2TO9UhOJQRMXp
