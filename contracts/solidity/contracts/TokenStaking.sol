@@ -124,15 +124,6 @@ contract TokenStaking is ManageableStaking {
     }
 
     /**
-     * @dev Gets the stake balance of the specified address.
-     * @param _staker The address to query the balance of.
-     * @return An uint256 representing the amount owned by the passed address.
-     */
-    function stakeBalanceOf(address _staker) public view returns (uint256 balance) {
-        return balances[_staker];
-    }
-
-    /**
      * @dev Gets withdrawal request by ID.
      * @param _id ID of withdrawal request.
      * @return staker, amount, createdAt.
