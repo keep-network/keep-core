@@ -89,9 +89,9 @@ The penalties/slashing need always to be done on the correct _owner_ address.
 == Open Questions
 
 === Incentivisations:
-Do we want to promote beeing an _operator_?
+Do we want to promote being an _operator_?
 
-How to make profitable beeing an _operator_?
+How to make profitable being an _operator_?
 
 Should an _operator_ get a portion of the rewards he own? If so, we need to add
  an _operators-magpie_ address where the portion of rewards will be sent.
