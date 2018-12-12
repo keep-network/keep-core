@@ -102,6 +102,8 @@ The penalties/slashing need always to be done on the correct _owner_ address.
 
 == Open Questions
 
+How is this going to interact with RFC 4 (on secure upgrades)?
+
 === Penalisation:
 How to penalise misbehaviour?
 
