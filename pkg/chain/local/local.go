@@ -52,47 +52,8 @@ type localChain struct {
 	voteHandler []func(dkgResultVote *event.DKGResultVote)
 }
 
-/*
-From "submissions.go"
-====================================================================
-// Submissions - PHASE 14
-type Submissions struct {
-	requestID   *big.Int
-	Submissions []*Submission
-}
-
-// Submission - PHASE 14
-type Submission struct {
-	DKGResult *DKGResult
-	Votes     int
-}
-
-// Lead returns a submission with the highest number of votes.
-func (s *Submissions) Lead() *Submission {
-	top := -1
-	topPos := 0
-	for pos, aSubmission := range s.submissions {
-		if top < aSubmission.Votes {
-			topPos = pos
-			top = aSubmission.Votes
-		}
-	}
-	return s.submissions[topPos]
-}
-
-func (s *Submissions) Contains(result *DKGResult) bool {
-	// TODO Implement
-	return false
-}
-====================================================================
-*/
-
+// GetDKGSubmissions returns the current set of submissions for the requestID.
 // PHASE 14
-// from relaychain:
-//	// SubmitDKGResult sends DKG result to a chain.
-//	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
-//
-// Sets:	submittedResults map[*big.Int][]*relaychain.DKGResult
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
@@ -102,20 +63,16 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissio
 
 // Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
 // PHASE 14
-// func (c *localChain) SubmitDKGResult( -- submits a result - iof we vote for a result
-// that is non-existent - do we just ignore - or error - or create?
 func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
 	x, ok := c.submissions[requestID]
 	if !ok {
-		fmt.Printf("Missing requestID in c.submissions - early return\n")
+		fmt.Fprintf(os.Stderr, "Missing requestID in c.submissions - vote will be ignored.\n")
 		return
 	}
 	for pos, sub := range x.Submissions {
-		fmt.Printf("At pos=%d\n", pos)
 		if bytes.Equal(sub.DKGResult.Hash(), dkgResultHash) {
-			fmt.Printf("At pos=%d, match for DKGResult\n", pos)
 			sub.Votes++
 			x.Submissions[pos] = sub
 			dkgResultVote := &event.DKGResultVote{
@@ -133,6 +90,7 @@ func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	}
 }
 
+// OnDKGResultVote sets up to call the passed handler function when a vote occurs.
 // PHASE 14
 func (c *localChain) OnDKGResultVote(handler func(dkgResultVote *event.DKGResultVote)) {
 	c.handlerMutex.Lock()
@@ -387,22 +345,6 @@ func (c *localChain) IsDKGResultPublished(
 	return false
 }
 
-/*
-From "submissions.go"
-====================================================================
-// Submissions - PHASE 14
-type Submissions struct {
-	requestID   *big.Int
-	Submissions []*Submission
-}
-
-// Submission - PHASE 14
-type Submission struct {
-	DKGResult *DKGResult
-	Votes     int
-}
-====================================================================
-*/
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int, resultToPublish *relaychain.DKGResult,
@@ -423,9 +365,10 @@ func (c *localChain) SubmitDKGResult(
 	if c.submissions == nil {
 		c.submissions = make(map[*big.Int]relaychain.Submissions)
 	}
+	// --------------------------------- ---------------------------------
+	// the GroupPublicKey is a problem - don't know where to get it from at this point.
+	// --------------------------------- ---------------------------------
 	if _, ok := c.submissions[requestID]; !ok {
-		fmt.Printf("Addin in a 1st vote\n")
-		// submissions      map[*big.Int]relaychain.Submissions
 		ss := relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{

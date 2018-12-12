@@ -41,7 +41,7 @@ func TestVote(t *testing.T) {
 				fmt.Printf("%s\tError: %+v%s\n", MiscLib.ColorRed, subs, MiscLib.ColorReset)
 				t.Errorf(
 					"\nexpected: [%v]\nactual:   [%v]",
-					expected,
+					test.expected,
 					actual,
 				)
 			}
