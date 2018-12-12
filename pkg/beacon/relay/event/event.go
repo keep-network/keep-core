@@ -43,7 +43,12 @@ type StakerRegistration struct {
 	GroupMemberID string
 }
 
-// DKGResultPublication represents a DKG result publication event
+// DKGResultPublication represents a DKG result publication event.
 type DKGResultPublication struct {
+	RequestID *big.Int
+}
+
+// DKGResultVote - PHASE 14
+type DKGResultVote struct {
 	RequestID *big.Int
 }
