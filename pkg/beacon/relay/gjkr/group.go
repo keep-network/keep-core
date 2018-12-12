@@ -18,6 +18,11 @@ func (g *Group) MemberIDs() []MemberID {
 }
 
 // RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(id MemberID) {
-	g.memberIDs = append(g.memberIDs, id)
+func (g *Group) RegisterMemberID(memberID MemberID) {
+	for _, id := range g.memberIDs {
+		if id == memberID {
+			return // already there
+		}
+	}
+	g.memberIDs = append(g.memberIDs, memberID)
 }

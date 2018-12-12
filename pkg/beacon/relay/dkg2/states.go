@@ -33,5 +33,40 @@ func (is *initializationState) receive(msg net.Message) error {
 }
 
 func (is *initializationState) nextState() (keyGenerationState, error) {
+	return &joinState{is.channel, is.member}, nil
+}
+
+// joinState is the state during which a member announces itself to the key
+// generation broadcast channel to initiate the distributed protocol. Join
+// messages from other members are valid in this state, and when the member is
+// ready and activePeriod has elapsed, it proceeds to
+// ephemeralKeyPairGeneratingState.
+type joinState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.EphemeralKeyPairGeneratingMember
+}
+
+func (js *joinState) activeBlocks() int { return 1 }
+
+func (js *joinState) initiate() error {
+	return nil
+}
+
+func (js *joinState) receive(msg net.Message) error {
+	switch joinMsg := msg.Payload().(type) {
+	case *gjkr.JoinMessage:
+		if err := js.channel.RegisterIdentifier(
+			msg.TransportSenderID(),
+			joinMsg.SenderID,
+		); err != nil {
+			return err
+		}
+
+		js.member.AddToGroup(joinMsg.SenderID)
+	}
+	return nil
+}
+
+func (js *joinState) nextState() (keyGenerationState, error) {
 	return nil, nil
 }

@@ -174,6 +174,14 @@ func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
 }
 
+// AddToGroup adds the provided MemberID to the group
+//
+// TODO: This is a temporary method, please remove it once the group selection
+// protocol will be implemented.
+func (mc *memberCore) AddToGroup(memberID MemberID) {
+	mc.group.RegisterMemberID(memberID)
+}
+
 // InitializeSymmetricKeyGeneration performs a transition of the member state
 // from phase 1 to phase 2. It returns a member instance ready to execute the
 // next phase of the protocol.
@@ -188,7 +196,7 @@ func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration()
 func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting(vss *pedersen.VSS) *CommittingMember {
 	return &CommittingMember{
 		SymmetricKeyGeneratingMember: skgm,
-		vss:                          vss,
+		vss: vss,
 	}
 }
 
