@@ -100,7 +100,6 @@ func initializeEphemeralKeyPairMembersGroup(
 	dkg *DKG,
 ) []*EphemeralKeyPairGeneratingMember {
 	group := &Group{
-		groupSize:          groupSize,
 		dishonestThreshold: threshold,
 	}
 

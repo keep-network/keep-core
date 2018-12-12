@@ -2,8 +2,6 @@ package gjkr
 
 // Group is protocol's members group.
 type Group struct {
-	// The number of members in the complete group.
-	groupSize int
 	// The maximum number of group members who could be dishonest in order for the
 	// generated key to be uncompromised.
 	dishonestThreshold int
