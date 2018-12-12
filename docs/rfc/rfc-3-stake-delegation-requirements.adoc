@@ -58,41 +58,44 @@ tx must fail.
 === Functionality
 
 ==== Delegating a stake:
-1. The _owner_, signs a contract where he declares a _stake_ (the number of
-tokens he wants to delegate), an _operator_ address (who will be operating on
-the _stake_) and a _magpie_ address (where the rewards will be sent).
+1. The _owner_, signs a contract where he declares a __delegated stake_ (the 
+number of tokens he wants to delegate), an _operator_ address (who will be
+operating on the __delegated stake_) and a _magpie_ address (where the rewards
+will be sent).
 2. The _operator_, agrees to the contract, hence making it effective and starts
-operating on the _stake_.
+operating on the __delegated stake_.
 3. If there will be no acceptance from the _operator_ until a timeout, then the
-_stake_ needs to be return to the _owner_. In that case the _owner_ needs to
-be informed.
+__delegated stake_ needs to be return to the _owner_. In that case the _owner_
+needs to be informed.
 
 ==== Undelegating a stake by the owner:
-1. The _owner_ initiates undelegation of the _stake_.
-2. The _stake_ is locked forbidding any further operations on it by either an
+1. The _owner_ initiates undelegation of the __delegated stake_.
+2. The __delegated stake_ is locked forbidding any further operations on it by either an
 _operator_ or a _owner_.
-3. The _operator_ finishes all previously started on _stake_ operations and
+3. The _operator_ finishes all previously started on __delegated stake_ operations and
 confirms undelegation.
 4. After reception of the confirmation from the _operator_ or after a timeout,
-the _stake_ is unlocked and returned to the _owner_.
+the _delegated stake_ is unlocked and returned to the _owner_.
 
 ==== Undelegating a stake by the operator:
-1. The _operator_ initiates undelegation of the _stake_.
-2. The _stake_ is locked for a period necessary to finish all operations already
-initiated by the _operator_ (or the _operator_ can only initiate an undelegation
-after finishing all operations). A notification is sent to the _owner_.
-3. After a timeout _stake_ is unlocked and transferred to the _owner_.
+1. The _operator_ initiates undelegation of the _delegated stake_.
+2. The _delegated stake_ is locked for a period necessary to finish all 
+operations already initiated by the _operator_ (or the _operator_ can only 
+initiate an undelegation after finishing all operations). A notification is sent
+to the _owner_.
+3. After a timeout _delegated stake_ is unlocked and transferred to the _owner_.
 
 ==== Operating on a stake:
 Every operation made on a stake needs to be atomic, in the meaning that when an
-_operator_ is staking a _owners_ _stake_, he needs to provide a reference to
-the appropriate contract that there is a consensus between _stake_, _operator_,
-_owner_ and _magpie_. Therefore, the parties performing an operation always
-need to validate the staking credentials and verify:
+_operator_ is staking a _owners_ _delegated stake_, he needs to provide a 
+reference to the appropriate contract that there is a consensus between 
+_delegated stake_,  _operator_, _owner_ and _magpie_. Therefore, the parties
+performing an operation always need to validate the staking credentials and 
+verify:
 
 - if the contract is valid,
 - if the _operator_ is correct,
-- if the _stake_ is correct,
+- if the _delegated stake_ is correct,
 - if the _owner_ is correct,
 - if the _magpie_ is correct.
 
