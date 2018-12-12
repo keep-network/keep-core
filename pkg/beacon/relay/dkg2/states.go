@@ -53,7 +53,7 @@ type joinState struct {
 func (js *joinState) activeBlocks() int { return 1 }
 
 func (js *joinState) initiate() error {
-	return nil
+	return js.channel.Send(&gjkr.JoinMessage{SenderID: js.member.ID})
 }
 
 func (js *joinState) receive(msg net.Message) error {
