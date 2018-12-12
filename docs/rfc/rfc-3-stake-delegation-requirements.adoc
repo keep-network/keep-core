@@ -48,12 +48,13 @@ mechanism.
 1. _owner_ can only have one operator.
 2. _owner_ can only delegate all of his stake.
 3. _operator_ cannot have any stake of his own.
-4. _operator_ can only have a _delegated stake_ from one _owner_.
-5. If an _owner_ tries to delegate to more than one operator, the tx must
+4. _operator_ cannot have any tokens at all.
+5. _operator_ can only have a _delegated stake_ from one _owner_.
+6. If an _owner_ tries to delegate to more than one operator, the tx must
 fail.
-6. If an _owner_ tries to delegate a stake to an _operator_ who already has a
+7. If an _owner_ tries to delegate a stake to an _operator_ who already has a
 stake, the tx must fail.
-7. If an _operator_ tries to operate on a stake that he already operates on, the
+8. If an _operator_ tries to operate on a stake that he already operates on, the
 tx must fail.
 
 === Functionality
