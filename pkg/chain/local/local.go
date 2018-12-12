@@ -100,14 +100,22 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissio
 	return &x
 }
 
-// Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occure.
+// Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
 // PHASE 14
+// func (c *localChain) SubmitDKGResult( -- submits a result - iof we vote for a result
+// that is non-existent - do we just ignore - or error - or create?
 func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
-	x := c.submissions[requestID]
+	x, ok := c.submissions[requestID]
+	if !ok {
+		fmt.Printf("Missing requestID in c.submissions - early return\n")
+		return
+	}
 	for pos, sub := range x.Submissions {
+		fmt.Printf("At pos=%d\n", pos)
 		if bytes.Equal(sub.DKGResult.Hash(), dkgResultHash) {
+			fmt.Printf("At pos=%d, match for DKGResult\n", pos)
 			sub.Votes++
 			x.Submissions[pos] = sub
 			dkgResultVote := &event.DKGResultVote{
@@ -291,6 +299,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		submittedResults:        make(map[*big.Int][]*relaychain.DKGResult),
 		blockCounter:            bc,
 		stakeMonitor:            NewStakeMonitor(),
+		submissions:             make(map[*big.Int]relaychain.Submissions),
 	}
 }
 
@@ -378,6 +387,22 @@ func (c *localChain) IsDKGResultPublished(
 	return false
 }
 
+/*
+From "submissions.go"
+====================================================================
+// Submissions - PHASE 14
+type Submissions struct {
+	requestID   *big.Int
+	Submissions []*Submission
+}
+
+// Submission - PHASE 14
+type Submission struct {
+	DKGResult *DKGResult
+	Votes     int
+}
+====================================================================
+*/
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int, resultToPublish *relaychain.DKGResult,
@@ -393,6 +418,30 @@ func (c *localChain) SubmitDKGResult(
 	}
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
+
+	c.submissionsMutex.Lock()
+	if c.submissions == nil {
+		c.submissions = make(map[*big.Int]relaychain.Submissions)
+	}
+	if _, ok := c.submissions[requestID]; !ok {
+		fmt.Printf("Addin in a 1st vote\n")
+		// submissions      map[*big.Int]relaychain.Submissions
+		ss := relaychain.Submissions{
+			Submissions: []*relaychain.Submission{
+				{
+					DKGResult: &relaychain.DKGResult{
+						Success:        true,
+						GroupPublicKey: big.NewInt(1001), // where is this from TODO - FIXME
+						Disqualified:   []bool{},
+						Inactive:       []bool{},
+					},
+					Votes: 1,
+				},
+			},
+		}
+		c.submissions[requestID] = ss
+	}
+	c.submissionsMutex.Unlock()
 
 	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
 
