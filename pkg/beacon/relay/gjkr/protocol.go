@@ -382,12 +382,16 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				return nil, fmt.Errorf("current member cannot be a part of a dispute")
 			}
 
-			symmetricKey := recoverSymmetricKey(
+			symmetricKey, err := recoverSymmetricKey(
 				sjm.protocolConfig.evidenceLog,
-				accuserID,
 				accusedID,
+				accuserID,
 				revealedAccuserPrivateKey,
 			)
+			if err != nil {
+				// TODO Should we disqualify accuser/accused member here?
+				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
+			}
 
 			shareS, shareT, err := recoverShares(
 				sjm.protocolConfig.evidenceLog,
@@ -397,7 +401,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, err
+				return nil, fmt.Errorf("could not decrypt shares [%v]", err)
 			}
 
 			// Check if `commitmentsProduct == expectedProduct`
@@ -419,21 +423,33 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 }
 
 // Recover ephemeral symmetric key used to encrypt communication between sender
-// and receiver.
+// and receiver assuming that receiver revealed its private ephemeral key.
 //
 // Finds ephemeral public key sent by sender to the receiver. Performs ECDH
 // operation between sender's public key and receiver's private key to recover
 // the ephemeral symmetric key.
 func recoverSymmetricKey(
 	evidenceLog evidenceLog,
-	receiverID, senderID MemberID,
+	senderID, receiverID MemberID,
 	receiverPrivateKey *ephemeral.PrivateKey,
-) ephemeral.SymmetricKey {
-	senderPublicKey := evidenceLog.ephemeralPublicKeyMessage(
-		senderID,
-		receiverID,
-	).ephemeralPublicKey
-	return receiverPrivateKey.Ecdh(senderPublicKey)
+) (ephemeral.SymmetricKey, error) {
+	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
+	if ephemeralPublicKeyMessage == nil {
+		return nil, fmt.Errorf(
+			"no ephemeral public key message for sender %v",
+			senderID,
+		)
+	}
+
+	senderPublicKey, ok := ephemeralPublicKeyMessage.ephemeralPublicKeys[receiverID]
+	if !ok {
+		return nil, fmt.Errorf(
+			"no ephemeral public key generated for receiver %v",
+			receiverID,
+		)
+	}
+
+	return receiverPrivateKey.Ecdh(senderPublicKey), nil
 }
 
 // Recovers from the evidence log share S and share T sent by sender to the
@@ -447,19 +463,23 @@ func recoverShares(
 	senderID, receiverID MemberID,
 	symmetricKey ephemeral.SymmetricKey,
 ) (*big.Int, *big.Int, error) {
-	peerSharesMessage := evidenceLog.peerSharesMessage(
-		senderID,
-		receiverID,
-	)
-	shareS, err := peerSharesMessage.decryptShareS(symmetricKey) // s_mj
-	if err != nil {
-		// TODO Should we disqualify accuser/accused member here?
-		return nil, nil, fmt.Errorf("cannot decrypt share S [%v", err)
+	peerSharesMessage := evidenceLog.peerSharesMessage(senderID)
+	if peerSharesMessage == nil {
+		return nil, nil, fmt.Errorf(
+			"no peer shares message for sender %v",
+			senderID,
+		)
 	}
-	shareT, err := peerSharesMessage.decryptShareT(symmetricKey) // t_mj
+
+	shareS, err := peerSharesMessage.decryptShareS(receiverID, symmetricKey) // s_mj
 	if err != nil {
 		// TODO Should we disqualify accuser/accused member here?
-		return nil, nil, fmt.Errorf("cannot decrypt share T [%v", err)
+		return nil, nil, fmt.Errorf("cannot decrypt share S [%v]", err)
+	}
+	shareT, err := peerSharesMessage.decryptShareT(receiverID, symmetricKey) // t_mj
+	if err != nil {
+		// TODO Should we disqualify accuser/accused member here?
+		return nil, nil, fmt.Errorf("cannot decrypt share T [%v]", err)
 	}
 
 	return shareS, shareT, nil
@@ -625,12 +645,16 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 
 			evidenceLog := pjm.protocolConfig.evidenceLog
 
-			recoveredSymmetricKey := recoverSymmetricKey(
+			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,
-				accuserID,
 				accusedID,
+				accuserID,
 				revealedAccuserPrivateKey,
 			)
+			if err != nil {
+				// TODO Should we disqualify accuser/accused member here?
+				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
+			}
 
 			shareS, _, err := recoverShares(
 				evidenceLog,
@@ -640,7 +664,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("cannot decrypt share S [%v", err)
+				return nil, fmt.Errorf("could not decrypt share S [%v]", err)
 			}
 
 			if pjm.isShareValidAgainstPublicKeySharePoints(

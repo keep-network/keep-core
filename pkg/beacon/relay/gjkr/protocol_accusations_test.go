@@ -79,7 +79,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			// TODO Should we disqualify accuser/accused member here?
 			expectedResult: nil,
-			expectedError:  fmt.Errorf("cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]"),
+			expectedError:  fmt.Errorf("could not decrypt shares [cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]]"),
 		},
 	}
 	for testName, test := range tests {
@@ -115,12 +115,12 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: [%v]", err)
 			}
+			shares := make(map[MemberID]*peerShares)
+			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
 			member.protocolConfig.evidenceLog.PutPeerSharesMessage(
 				&PeerSharesMessage{
-					senderID:        test.accusedID,
-					receiverID:      test.accuserID,
-					encryptedShareS: encryptedShareS,
-					encryptedShareT: encryptedShareT,
+					senderID: test.accusedID,
+					shares:   shares,
 				},
 			)
 
@@ -155,34 +155,42 @@ func TestRecoverSymmetricKey(t *testing.T) {
 	member1ID := MemberID(1)
 	member1KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
+
 	member2ID := MemberID(2)
 	member2KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
 
 	expectedSymmetricKey := member1KeyPair.PrivateKey.Ecdh(member2KeyPair.PublicKey)
 
-	messageBuffer := NewDkgEvidenceLog()
+	messageBuffer := newDkgEvidenceLog()
+
+	ephemeralPublicKeys1 := make(map[MemberID]*ephemeral.PublicKey)
+	ephemeralPublicKeys1[member2ID] = member1KeyPair.PublicKey
 	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
 		member1ID,
-		member2ID,
-		member1KeyPair.PublicKey,
-	})
-	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
-		member2ID,
-		member1ID,
-		member2KeyPair.PublicKey,
+		ephemeralPublicKeys1,
 	})
 
-	recoveredSymmetricKey := recoverSymmetricKey(
+	ephemeralPublicKeys2 := make(map[MemberID]*ephemeral.PublicKey)
+	ephemeralPublicKeys2[member1ID] = member2KeyPair.PublicKey
+	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
+		member2ID,
+		ephemeralPublicKeys2,
+	})
+
+	recoveredSymmetricKey, err := recoverSymmetricKey(
 		messageBuffer,
-		member1ID, // sender
-		member2ID, // receiver
-		member1KeyPair.PrivateKey,
+		member1ID,                 // sender
+		member2ID,                 // receiver
+		member2KeyPair.PrivateKey, // receiver's private key
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if !reflect.DeepEqual(expectedSymmetricKey, recoveredSymmetricKey) {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", expectedSymmetricKey, recoveredSymmetricKey)
@@ -193,33 +201,32 @@ func TestRecoverShares(t *testing.T) {
 	member1ID := MemberID(1)
 	member1KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
+
 	member2ID := MemberID(2)
 	member2KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
+
 	symmetricKey := member1KeyPair.PrivateKey.Ecdh(member2KeyPair.PublicKey)
 
 	shareS := big.NewInt(21)
 	shareT := big.NewInt(22)
 	encryptedShareS, err := symmetricKey.Encrypt(shareS.Bytes())
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
 	encryptedShareT, err := symmetricKey.Encrypt(shareT.Bytes())
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
 
-	messageBuffer := NewDkgEvidenceLog()
-	messageBuffer.PutPeerSharesMessage(&PeerSharesMessage{
-		member1ID,
-		member2ID,
-		encryptedShareS,
-		encryptedShareT,
-	})
+	messageBuffer := newDkgEvidenceLog()
+	shares := make(map[MemberID]*peerShares)
+	shares[member2ID] = &peerShares{encryptedShareS, encryptedShareT}
+	messageBuffer.PutPeerSharesMessage(&PeerSharesMessage{member1ID, shares})
 
 	var tests = map[string]struct {
 		symmetricKey   ephemeral.SymmetricKey
@@ -227,14 +234,14 @@ func TestRecoverShares(t *testing.T) {
 		expectedShareT *big.Int
 		expectedError  error
 	}{
-		"false accusation - accuser is punished": {
+		"shares successfully recovered": {
 			expectedShareS: shareS,
 			expectedShareT: shareT,
 			symmetricKey:   symmetricKey,
 		},
-		"false accusation - accuser is punished2": {
+		"shares recovery failed - incorrect symmetric key": {
 			symmetricKey:  &ephemeral.SymmetricEcdhKey{},
-			expectedError: fmt.Errorf("cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]"),
+			expectedError: fmt.Errorf("cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]"),
 		},
 	}
 
@@ -350,13 +357,10 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: [%v]", err)
 			}
+			shares := make(map[MemberID]*peerShares)
+			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
 			member.protocolConfig.evidenceLog.PutPeerSharesMessage(
-				&PeerSharesMessage{
-					senderID:        test.accusedID,
-					receiverID:      test.accuserID,
-					encryptedShareS: encryptedShareS,
-					encryptedShareT: encryptedShareT,
-				},
+				&PeerSharesMessage{test.accusedID, shares},
 			)
 
 			// Generate PointsAccusationMessages
