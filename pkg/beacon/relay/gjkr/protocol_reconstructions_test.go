@@ -244,6 +244,81 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
+func TestReconstructIndividualKeys(t *testing.T) {
+	threshold := 2
+	groupSize := 6
+
+	members, err := initializeReconstructingMembersGroup(threshold, groupSize, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Recovering member:
+	member1 := members[0]
+	// Other members:
+	member2 := members[1]
+	member3 := members[2]
+	member4 := members[3]
+	otherMembers := []*ReconstructingMember{member2, member3, member4}
+	// Disqualified members:
+	member5 := members[4]
+	member6 := members[5]
+	disqualifiedMembers := []*ReconstructingMember{member5, member6}
+
+	var disqualifiedMembersKeysMessages []*DisqualifiedMembersKeysMessage
+	for _, otherMember := range otherMembers {
+		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
+		for _, disqualifiedMember := range disqualifiedMembers {
+			revealedKeys[disqualifiedMember.ID] = otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
+		}
+		disqualifiedMembersKeysMessages = append(
+			disqualifiedMembersKeysMessages,
+			&DisqualifiedMembersKeysMessage{
+				senderID:                otherMember.ID,
+				disqualifiedMembersKeys: revealedKeys,
+			},
+		)
+	}
+
+	evidenceLog := member1.protocolConfig.evidenceLog
+	for _, disqualifiedMember := range disqualifiedMembers {
+		for _, otherMember := range otherMembers {
+			// Evaluate shares which were calculated in Phase 3.
+			shareS := disqualifiedMember.evaluateMemberShare(otherMember.ID, disqualifiedMember.secretCoefficients)
+
+			// Simulate messages broadcasted by disqualified member in Phase 3.
+			peerSharesMessage, _ := newPeerSharesMessage(
+				disqualifiedMember.ID,
+				otherMember.ID,
+				shareS,
+				big.NewInt(0), // share T is not needed
+				disqualifiedMember.symmetricKeys[otherMember.ID],
+			)
+			evidenceLog.PutPeerSharesMessage(peerSharesMessage)
+		}
+	}
+
+	member1.ReconstructIndividualKeys(disqualifiedMembersKeysMessages)
+
+	for _, disqualifiedMember := range disqualifiedMembers {
+		if member1.reconstructedIndividualPrivateKeys[disqualifiedMember.ID].
+			Cmp(disqualifiedMember.individualPrivateKey()) != 0 {
+			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+				member1.reconstructedIndividualPrivateKeys[disqualifiedMember.ID],
+				disqualifiedMember.individualPrivateKey(),
+			)
+		}
+
+		if member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID].
+			Cmp(disqualifiedMember.individualPublicKey()) != 0 {
+			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+				member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID],
+				disqualifiedMember.individualPrivateKey(),
+			)
+		}
+	}
+}
+
 func initializeRevealingMembersGroup(threshold, groupSize int, dkg *DKG) (
 	[]*RevealingMember, error) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
