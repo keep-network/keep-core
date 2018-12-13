@@ -38,7 +38,7 @@ func GenerateDKG() (*DKG, error) {
 		return nil, fmt.Errorf("could not generate DKG paramters [%v]", err)
 	}
 
-	return &DKG{p, q}, nil
+	return &DKG{p, q, newDkgEvidenceLog()}, nil
 }
 
 // RandomQ generates a random `big.Int` in range (0, q).
