@@ -37,6 +37,82 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedResult, result)
 	}
 }
+
+func TestRecoverDisqualifiedShares(t *testing.T) {
+	threshold := 2
+	groupSize := 6
+
+	members, err := initializeReconstructingMembersGroup(threshold, groupSize, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Recovering member:
+	member1 := members[0]
+	// Other members:
+	member2 := members[1]
+	member3 := members[2]
+	member4 := members[3]
+	otherMembers := []*ReconstructingMember{member2, member3, member4}
+	// Disqualified members:
+	member5 := members[4]
+	member6 := members[5]
+	disqualifiedMembers := []*ReconstructingMember{member5, member6}
+
+	var disqualifiedMembersKeysMessages []*DisqualifiedMembersKeysMessage
+	for _, otherMember := range otherMembers {
+		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
+		for _, disqualifiedMember := range disqualifiedMembers {
+			revealedKeys[disqualifiedMember.ID] = otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
+		}
+		disqualifiedMembersKeysMessages = append(
+			disqualifiedMembersKeysMessages,
+			&DisqualifiedMembersKeysMessage{
+				senderID:                otherMember.ID,
+				disqualifiedMembersKeys: revealedKeys,
+			},
+		)
+	}
+
+	disqualifiedMemberShares := make(map[MemberID]map[MemberID]*big.Int)
+	evidenceLog := member1.protocolConfig.evidenceLog
+	expectedResult := make([]*DisqualifiedShares, len(disqualifiedMembers))
+
+	for i, disqualifiedMember := range disqualifiedMembers {
+		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[MemberID]*big.Int)
+
+		for _, otherMember := range otherMembers {
+			// Evaluate shares which were calculated in Phase 3.
+			shareS := disqualifiedMember.evaluateMemberShare(otherMember.ID, disqualifiedMember.secretCoefficients)
+			disqualifiedMemberShares[disqualifiedMember.ID][otherMember.ID] = shareS
+
+			// Simulate messages broadcasted by disqualified member in Phase 3.
+			peerSharesMessage, _ := newPeerSharesMessage(
+				disqualifiedMember.ID,
+				otherMember.ID,
+				shareS,
+				big.NewInt(0), // share T is not needed
+				disqualifiedMember.symmetricKeys[otherMember.ID],
+			)
+			evidenceLog.PutPeerSharesMessage(peerSharesMessage)
+		}
+
+		expectedResult[i] = &DisqualifiedShares{
+			disqualifiedMemberID: disqualifiedMember.ID,
+			peerSharesS:          disqualifiedMemberShares[disqualifiedMember.ID],
+		}
+	}
+
+	result, err := member1.recoverDisqualifiedShares(disqualifiedMembersKeysMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(expectedResult, result) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedResult[0], result[0])
+	}
+}
+
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 5
