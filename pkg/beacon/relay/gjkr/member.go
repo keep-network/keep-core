@@ -253,6 +253,12 @@ func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
 	return &CombiningMember{ReconstructingMember: rm}
 }
 
+// individualPrivateKey returns current member's individual private key.
+// Individual private key is zeroth polynomial coefficient `a_i0`.
+func (rm *ReconstructingMember) individualPrivateKey() *big.Int {
+	return rm.secretCoefficients[0]
+}
+
 // individualPublicKey returns current member's individual public key.
 // Individual public key is zeroth public key share point `A_i0`.
 func (rm *ReconstructingMember) individualPublicKey() *big.Int {
