@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keep-client-peer-1
+  labels:
+    app: keep-client-peer-1
+spec:
+  ports:
+  - port: 3923
+    targetPort: 3923
+    name: tcp-3923
+  selector:
+    app: keep-client-peer-1
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keep-client-peer-1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: keep-client-peer-1
+    spec:
+      containers:
+      - name: keep-client-peer-1
+        image: gcr.io/keep-dev-fe24/keep-client-peer-1
+        ports:
+          - containerPort: 3923

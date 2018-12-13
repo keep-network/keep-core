@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keep-client-bootstrap-peer-1
+  labels:
+    app: keep-client-bootstrap-peer-1
+spec:
+  ports:
+  - port: 3920
+    targetPort: 3920
+    name: tcp-3920
+  selector:
+    app: keep-client-bootstrap-peer-1
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keep-client-bootstrap-peer-1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: keep-client-bootstrap-peer-1
+    spec:
+      containers:
+      - name: keep-client-bootstrap-peer-1
+        image: gcr.io/keep-dev-fe24/keep-client-bootstrap-peer-1
+        ports:
+          - containerPort: 3920
