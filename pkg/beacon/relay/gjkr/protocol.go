@@ -741,6 +741,9 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				return nil, fmt.Errorf("cannot decrypt share S [%v]", err)
 			}
 
+			if allRevealedShares[disqualifiedID] == nil {
+				allRevealedShares[disqualifiedID] = make(map[MemberID]*big.Int)
+			}
 			allRevealedShares[disqualifiedID][message.senderID] = shareS
 		}
 	}
