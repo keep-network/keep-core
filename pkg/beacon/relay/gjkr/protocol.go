@@ -702,7 +702,7 @@ func (rm *ReconstructingMember) ReconstructIndividualKeys(
 		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
 	}
 	rm.reconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
-	rm.ReconstructIndividualPublicKeys()                            // y_m
+	rm.reconstructIndividualPublicKeys()                            // y_m
 	return nil
 }
 
@@ -853,11 +853,11 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 	return lagrangeCoefficient // a_mk
 }
 
-// ReconstructIndividualPublicKeys calculates and stores individual public keys
+// reconstructIndividualPublicKeys calculates and stores individual public keys
 // `y_m` from reconstructed individual private keys `z_m`.
 //
 // Public key is calculated as `g^privateKey mod p`.
-func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() { // TODO Make function private
+func (rm *ReconstructingMember) reconstructIndividualPublicKeys() {
 	rm.reconstructedIndividualPublicKeys = make(map[MemberID]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// `y_m = g^{z_m}`

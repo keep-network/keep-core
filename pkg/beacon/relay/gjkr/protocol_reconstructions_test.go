@@ -191,7 +191,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	}
 
 	for _, reconstructingMember := range members {
-		reconstructingMember.ReconstructIndividualPublicKeys()
+		reconstructingMember.reconstructIndividualPublicKeys()
 
 		for disqualifiedMemberID, expectedIndividualPublicKey := range expectedIndividualPublicKeys {
 			if reconstructingMember.reconstructedIndividualPublicKeys[disqualifiedMemberID].
