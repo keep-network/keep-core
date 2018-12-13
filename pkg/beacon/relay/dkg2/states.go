@@ -291,11 +291,54 @@ func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
 }
 
 func (cvs *commitmentsVerificationState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	return &sharesJustificationState{
+		channel: cvs.channel,
+		member:  cvs.member.InitializeSharesJustification(),
+
+		previousPhaseAccusationsMessages: cvs.phaseAccusationsMessages,
+	}, nil
 }
 
 func (cvs *commitmentsVerificationState) memberID() gjkr.MemberID {
 	return cvs.member.ID
+}
+
+type sharesJustificationState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.SharesJustifyingMember
+
+	previousPhaseAccusationsMessages []*gjkr.SecretSharesAccusationsMessage
+}
+
+func (sjs *sharesJustificationState) activeBlocks() int { return 1 }
+
+func (sjs *sharesJustificationState) initiate() error {
+	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
+		sjs.previousPhaseAccusationsMessages,
+	)
+	if err != nil {
+		return fmt.Errorf("shares justification phase failed [%v]", err)
+	}
+
+	// TODO: Handle member disqualification
+	fmt.Printf("disqualified members = %v\n", disqualifiedMembers)
+
+	return nil
+}
+
+func (sjs *sharesJustificationState) receive(msg net.Message) error {
+	return fmt.Errorf(
+		"unexpected message for share justification phase: [%#v]",
+		msg,
+	)
+}
+
+func (sjs *sharesJustificationState) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
+	return sjs.member.ID
 }
 
 func messageFromSelf(selfMemberID gjkr.MemberID, message net.Message) bool {
