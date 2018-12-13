@@ -13,6 +13,9 @@ import (
 type DKG struct {
 	// P, Q are big primes, such that `p = 2q + 1`
 	P, Q *big.Int
+
+	// TODO evidenceLog placed here temporarily. Need to decide how it will be passed to protocol execution.
+	evidenceLog evidenceLog
 }
 
 // GenerateDKG generates new DKG protocol configuration using randomly chosen

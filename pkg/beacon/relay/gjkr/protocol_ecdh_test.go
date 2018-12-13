@@ -171,13 +171,21 @@ func generateGroupWithEphemeralKeys(
 
 	// generate symmetric keys with all other members of the group
 	for _, member1 := range symmetricKeyMembers {
+		ephemeralKeys := make(map[MemberID]*ephemeral.PublicKey)
+
 		for _, member2 := range symmetricKeyMembers {
 			if member1.ID != member2.ID {
 				privKey := member1.ephemeralKeyPairs[member2.ID].PrivateKey
 				pubKey := member2.ephemeralKeyPairs[member1.ID].PublicKey
 				member1.symmetricKeys[member2.ID] = privKey.Ecdh(pubKey)
+
+				ephemeralKeys[member2.ID] = member1.ephemeralKeyPairs[member2.ID].PublicKey
 			}
 		}
+
+		member1.protocolConfig.evidenceLog.PutEphemeralMessage(
+			&EphemeralPublicKeyMessage{member1.ID, ephemeralKeys},
+		)
 	}
 
 	return symmetricKeyMembers, nil
