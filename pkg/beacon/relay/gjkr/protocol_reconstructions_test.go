@@ -135,7 +135,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 
 	for _, m := range group {
 		if !contains(disqualifiedMembersIDs, m.ID) {
-			m.ReconstructIndividualPrivateKeys(allDisqualifiedShares)
+			m.reconstructIndividualPrivateKeys(allDisqualifiedShares)
 
 			if m.reconstructedIndividualPrivateKeys[disqualifiedMember1.ID].Cmp(expectedIndividualPrivateKey1) != 0 {
 				t.Fatalf("invalid reconstructed private key 1\nexpected: %s\nactual:   %s\n",

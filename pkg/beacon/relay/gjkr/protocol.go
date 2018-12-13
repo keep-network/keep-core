@@ -701,7 +701,7 @@ func (rm *ReconstructingMember) ReconstructIndividualKeys(
 	if err != nil {
 		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
 	}
-	rm.ReconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
+	rm.reconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
 	rm.ReconstructIndividualPublicKeys()                            // y_m
 	return nil
 }
@@ -767,7 +767,7 @@ type DisqualifiedShares struct {
 	peerSharesS          map[MemberID]*big.Int // <k, s_mk>
 }
 
-// ReconstructIndividualPrivateKeys reconstructs disqualified members' individual
+// reconstructIndividualPrivateKeys reconstructs disqualified members' individual
 // private keys `z_m` from provided revealed shares calculated by disqualified
 // members for peer members.
 //
@@ -778,7 +778,7 @@ type DisqualifiedShares struct {
 // It stores a map of reconstructed individual private keys for each disqualified
 // member in a current member's reconstructedIndividualPrivateKeys field:
 // <disqualifiedMemberID, privateKeyShare>
-func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys( // TODO Make function private
+func (rm *ReconstructingMember) reconstructIndividualPrivateKeys(
 	revealedDisqualifiedShares []*DisqualifiedShares,
 ) {
 	rm.reconstructedIndividualPrivateKeys = make(map[MemberID]*big.Int, len(revealedDisqualifiedShares))
