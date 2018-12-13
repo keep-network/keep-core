@@ -1,0 +1,130 @@
+- Eth account with contracts: `0x6ff38ec2540c8c7c525c9cacde36248da89bbb36`
+
+- Unlock
+
+> personal.unlockAccount("0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+
+- Truffle config:
+
+```
+require('babel-register');
+require('babel-polyfill');
+
+module.exports = {
+  networks: {
+    keep_dev: {
+      host: "eth-miner-node.default.svc.cluster.local",
+      port: 8545,
+      network_id: "*",
+      gas: 4712388,
+      from: "0x6ff38ec2540c8c7c525c9cacde36248da89bbb36"
+    }
+  }
+};
+
+```
+
+- keep-client accounts:
+
+`> personal.newAccount("doughnut_armenian_parallel_firework_backbite_employer_singlet")`
+
+```
+"0x2734e58db4707e2591571c91d3a548fa0d5b2e9c" - bootstrap-0 - up gcp
+"0xe8ec501dc9a5a78c180d722fd16b34d65f10e5e7" - bootstrap-1 - down gcp
+"0x6fb284b3c4527bafd9c5a5df08ee608b7a615cb0" - bootstrap-2 - down gcp
+"0xf1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7" - peer-0 - up gcp - point at bootstrap-0
+"0x21889b19ba3b5d1e13e63ed64023ce21cba0e843" - peer-1 - up gcp - point at bootstrap-0
+"0x1357247767a6026f2fd59d0ab81a5ae4b3a83df3" - peer-2 - up gcp - point at bootstrap-0
+"0x37859f2b2c0e3bb33e8e2389c778aaa60318c2fe" - peer-3 - up gcp - point at bootstrap-0
+```
+
+```
+personal.unlockAccount("0x2734e58db4707e2591571c91d3a548fa0d5b2e9c", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+personal.unlockAccount("0xe8ec501dc9a5a78c180d722fd16b34d65f10e5e7", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+personal.unlockAccount("0x6fb284b3c4527bafd9c5a5df08ee608b7a615cb0", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+personal.unlockAccount("0xf1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+personal.unlockAccount("0x21889b19ba3b5d1e13e63ed64023ce21cba0e843", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+personal.unlockAccount("0x1357247767a6026f2fd59d0ab81a5ae4b3a83df3", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+personal.unlockAccount("0x37859f2b2c0e3bb33e8e2389c778aaa60318c2fe", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+```
+
+```
+> personal.unlockAccount("0x2734e58db4707e2591571c91d3a548fa0d5b2e9c", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+> personal.unlockAccount("0xe8ec501dc9a5a78c180d722fd16b34d65f10e5e7", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+> personal.unlockAccount("0x6fb284b3c4527bafd9c5a5df08ee608b7a615cb0", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+> personal.unlockAccount("0xf1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+> personal.unlockAccount("0x21889b19ba3b5d1e13e63ed64023ce21cba0e843", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+> personal.unlockAccount("0x1357247767a6026f2fd59d0ab81a5ae4b3a83df3", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+> personal.unlockAccount("0x37859f2b2c0e3bb33e8e2389c778aaa60318c2fe", "doughnut_armenian_parallel_firework_backbite_employer_singlet", 150000);
+true
+>
+```
+
+- fund keep-client accounts
+
+```
+eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x2734e58db4707e2591571c91d3a548fa0d5b2e9c", value: web3.toWei(10000000000000, "Gwei")})
+eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0xe8ec501dc9a5a78c180d722fd16b34d65f10e5e7", value: web3.toWei(10000000000000, "Gwei")})
+eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x6fb284b3c4527bafd9c5a5df08ee608b7a615cb0", value: web3.toWei(10000000000000, "Gwei")})
+eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0xf1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7", value: web3.toWei(10000000000000, "Gwei")})
+eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x21889b19ba3b5d1e13e63ed64023ce21cba0e843", value: web3.toWei(10000000000000, "Gwei")})
+eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x1357247767a6026f2fd59d0ab81a5ae4b3a83df3", value: web3.toWei(10000000000000, "Gwei")})
+eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x37859f2b2c0e3bb33e8e2389c778aaa60318c2fe", value: web3.toWei(10000000000000, "Gwei")})
+```
+
+```
+> eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x2734e58db4707e2591571c91d3a548fa0d5b2e9c", value: web3.toWei(10000000000000, "Gwei")})
+"0xb2ab107cda87740572389392d9664f7f09f98f05b4e6c76eff71a331dee39377"
+> eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0xe8ec501dc9a5a78c180d722fd16b34d65f10e5e7", value: web3.toWei(10000000000000, "Gwei")})
+"0x44480c70ba1f716a5713a8b2dd55cb043df975a842ba30db5dbcd99d8a5039cb"
+> eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x6fb284b3c4527bafd9c5a5df08ee608b7a615cb0", value: web3.toWei(10000000000000, "Gwei")})
+"0x5394019c6248d5096c344da3840b8a8aaf01f259ed77e4d7c4623e8211d3bd8a"
+> eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0xf1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7", value: web3.toWei(10000000000000, "Gwei")})
+"0x400ec666bdd43d5784970b92fd5124f8e45015e2dc3df3c844722b5178cd8dc2"
+> eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x21889b19ba3b5d1e13e63ed64023ce21cba0e843", value: web3.toWei(10000000000000, "Gwei")})
+"0x16e9b3c75ee081e4dccb10342ca116360e9cc4b2d968e1995d4eb30b179c3e68"
+> eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x1357247767a6026f2fd59d0ab81a5ae4b3a83df3", value: web3.toWei(10000000000000, "Gwei")})
+"0x098e91ac665b8f318a08b51215169975cc905e73d7eed8ce9160c7a4782c99f0"
+> eth.sendTransaction({from:"0x6ff38ec2540c8c7c525c9cacde36248da89bbb36", to:"0x37859f2b2c0e3bb33e8e2389c778aaa60318c2fe", value: web3.toWei(10000000000000, "Gwei")})
+"0x258d75e477219973d9f15441505ec3f54dff24f8376fc68b1f4bd9fed3e91a97"
+```
+
+- stake keep-client accounts
+
+Using `demo.js` script
+
+```
+sthompson22@Sloans-MacBook-Pro:~/projects/keep-core/contracts/solidity/scripts(sthompson22/playing/local-keep-client⚡) » truffle exec ./demo.js --network keep_dev
+Using network 'keep_dev'.
+
+successfully staked KEEP tokens for account 0x6ff38ec2540c8c7c525c9cacde36248da89bbb36
+could not stake KEEP tokens for 0x5b8113426307f6606c0b69253c5b0c5aefef9194: Error: authentication needed: password or unlock # extra from image.
+successfully staked KEEP tokens for account 0x2734e58db4707e2591571c91d3a548fa0d5b2e9c
+successfully staked KEEP tokens for account 0xe8ec501dc9a5a78c180d722fd16b34d65f10e5e7
+successfully staked KEEP tokens for account 0x6fb284b3c4527bafd9c5a5df08ee608b7a615cb0
+successfully staked KEEP tokens for account 0xf1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7
+successfully staked KEEP tokens for account 0x21889b19ba3b5d1e13e63ed64023ce21cba0e843
+successfully staked KEEP tokens for account 0x1357247767a6026f2fd59d0ab81a5ae4b3a83df3
+successfully staked KEEP tokens for account 0x37859f2b2c0e3bb33e8e2389c778aaa60318c2fe
+```
+
+- fetch eth account keyfiles
+
+```
+kubectl cp default/eth-miner-node-74ff485d76-4pdk8:/root/.geth/keystore/UTC--2018-12-12T16-14-43.145171585Z--2734e58db4707e2591571c91d3a548fa0d5b2e9c ./UTC--2018-12-12T16-14-43.145171585Z--2734e58db4707e2591571c91d3a548fa0d5b2e9c
+kubectl cp default/eth-miner-node-74ff485d76-4pdk8:/root/.geth/keystore/UTC--2018-12-12T16-15-11.385771167Z--e8ec501dc9a5a78c180d722fd16b34d65f10e5e7 ./UTC--2018-12-12T16-15-11.385771167Z--e8ec501dc9a5a78c180d722fd16b34d65f10e5e7
+kubectl cp default/eth-miner-node-74ff485d76-4pdk8:/root/.geth/keystore/UTC--2018-12-12T16-15-15.568969227Z--6fb284b3c4527bafd9c5a5df08ee608b7a615cb0 ./UTC--2018-12-12T16-15-15.568969227Z--6fb284b3c4527bafd9c5a5df08ee608b7a615cb0
+kubectl cp default/eth-miner-node-74ff485d76-4pdk8:/root/.geth/keystore/UTC--2018-12-12T16-15-19.599297708Z--f1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7 ./UTC--2018-12-12T16-15-19.599297708Z--f1fa2b3afd55cd0af9a68d6ebfc47c47d61b81b7
+kubectl cp default/eth-miner-node-74ff485d76-4pdk8:/root/.geth/keystore/UTC--2018-12-12T16-15-23.667827410Z--21889b19ba3b5d1e13e63ed64023ce21cba0e843 ./UTC--2018-12-12T16-15-23.667827410Z--21889b19ba3b5d1e13e63ed64023ce21cba0e843
+kubectl cp default/eth-miner-node-74ff485d76-4pdk8:/root/.geth/keystore/UTC--2018-12-12T16-15-27.552231782Z--1357247767a6026f2fd59d0ab81a5ae4b3a83df3 ./UTC--2018-12-12T16-15-27.552231782Z--1357247767a6026f2fd59d0ab81a5ae4b3a83df3
+kubectl cp default/eth-miner-node-74ff485d76-4pdk8:/root/.geth/keystore/UTC--2018-12-12T16-15-31.402570490Z--37859f2b2c0e3bb33e8e2389c778aaa60318c2fe ./UTC--2018-12-12T16-15-31.402570490Z--37859f2b2c0e3bb33e8e2389c778aaa60318c2fe
+
+
+```
