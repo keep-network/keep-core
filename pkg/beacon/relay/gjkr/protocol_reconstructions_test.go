@@ -137,8 +137,8 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
-	[]*ReconstructingMember, error) {
+func initializeRevealingMembersGroup(threshold, groupSize int, dkg *DKG) (
+	[]*RevealingMember, error) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
 	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize, dkg)
@@ -146,10 +146,27 @@ func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
-	var reconstructingMembers []*ReconstructingMember
+	var revealingMembers []*RevealingMember
 	for _, pjm := range pointsJustifyingMembers {
+		revealingMembers = append(revealingMembers, pjm.InitializeRevealing())
+	}
+
+	return revealingMembers, nil
+}
+
+func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
+	[]*ReconstructingMember, error) {
+	// TODO When whole protocol is implemented check if SharingMember type is really
+	// the one expected here (should be the member from Phase 10)
+	revealingMembers, err := initializeRevealingMembersGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%s]", err)
+	}
+
+	var reconstructingMembers []*ReconstructingMember
+	for _, rm := range revealingMembers {
 		reconstructingMembers = append(reconstructingMembers,
-			pjm.InitializeReconstruction())
+			rm.InitializeReconstruction())
 	}
 
 	return reconstructingMembers, nil
