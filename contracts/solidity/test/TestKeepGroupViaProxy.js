@@ -122,24 +122,24 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     let randomBeaconValue = 123456789;
     await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
 
-    let stakerInput = 123;
-    let virtualStakerNumber = 456;
+    let stakerValue = account_one;
+    let virtualStakerIndex = 1;
 
     let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
       ["uint", "uint", "uint"],
-      [randomBeaconValue, stakerInput, virtualStakerNumber]
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
     ).toString('hex'));
 
-    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerInput, virtualStakerNumber);
-
-    let ticketProof = await keepGroupImplViaProxy.getTicketProof(ticketValue);
-
     assert.equal(await keepGroupImplViaProxy.cheapCheck(
-      ticketValue, ticketProof[0], ticketProof[1]
+      account_one, stakerValue, virtualStakerIndex
     ), true, "Should be able to verify a valid ticket.");
     
-    assert.equal(await keepGroupImplViaProxy.cheapCheck(
-      ticketValue - 1, ticketProof[0], ticketProof[1]
+    assert.equal(await keepGroupImplViaProxy.costlyCheck(
+      account_one, ticketValue, stakerValue, virtualStakerIndex
+    ), true, "Should be able to verify a valid ticket.");
+  
+    assert.equal(await keepGroupImplViaProxy.costlyCheck(
+      account_one, 1, stakerValue, virtualStakerIndex
     ), false, "Should fail verifying invalid ticket.");
 
   });

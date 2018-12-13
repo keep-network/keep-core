@@ -87,19 +87,37 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Verifies ticket with the provided proof.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerInput' and virtualStakerNumber.
-     * @param stakerInput Staker-specific value.
-     * @param virtualStakerNumber Number within a range of 1 to staker's weight.
+     * @dev Performs surface-level validation of the ticket.
+     * @param staker Address of the staker.
+     * @param stakerValue Staker-specific value.
+     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function cheapCheck(
-        uint256 ticketValue,
-        uint256 stakerInput,
-        uint256 virtualStakerNumber
+        address staker,
+        uint256 stakerValue,
+        uint256 virtualStakerIndex
     ) public view returns(bool) {
+        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
+        bool isStakerValueValid = uint256(staker) == stakerValue;
+        return isVirtualStakerIndexValid && isStakerValueValid;
+    }
 
-        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, stakerInput, virtualStakerNumber)));
+    /**
+     * @dev Performs full verification of the ticket.
+     * @param staker Address of the staker.
+     * @param ticketValue Result of a pseudorandom function with input values of
+     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
+     * @param stakerValue Staker-specific value.
+     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
+     */
+    function costlyCheck(
+        address staker,
+        uint256 ticketValue,
+        uint256 stakerValue,
+        uint256 virtualStakerIndex
+    ) public view returns(bool) {
+        require(cheapCheck(staker, stakerValue, virtualStakerIndex));
+        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, stakerValue, virtualStakerIndex)));
         return ticketValue == expected;
     }
 
