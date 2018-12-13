@@ -183,7 +183,7 @@ type committingState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.CommittingMember
 
-	phaseShareMessages       []*gjkr.PeerSharesMessage
+	phaseSharesMessages      []*gjkr.PeerSharesMessage
 	phaseCommitmentsMessages []*gjkr.MemberCommitmentsMessage
 }
 
@@ -210,7 +210,7 @@ func (cs *committingState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.PeerSharesMessage:
 		if !messageFromSelf(cs.memberID(), msg) {
-			cs.phaseShareMessages = append(cs.phaseShareMessages, phaseMessage)
+			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
 		return nil
@@ -230,11 +230,72 @@ func (cs *committingState) receive(msg net.Message) error {
 }
 
 func (cs *committingState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	return &commitmentsVerificationState{
+		channel: cs.channel,
+		member:  cs.member.InitializeCommitmentsVerification(),
+
+		previousPhaseSharesMessages:      cs.phaseSharesMessages,
+		previousPhaseCommitmentsMessages: cs.phaseCommitmentsMessages,
+	}, nil
 }
 
 func (cs *committingState) memberID() gjkr.MemberID {
 	return cs.member.ID
+}
+
+type commitmentsVerificationState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.CommitmentsVerifyingMember
+
+	previousPhaseSharesMessages      []*gjkr.PeerSharesMessage
+	previousPhaseCommitmentsMessages []*gjkr.MemberCommitmentsMessage
+
+	phaseAccusationsMessages []*gjkr.SecretSharesAccusationsMessage
+}
+
+func (cvs *commitmentsVerificationState) activeBlocks() int { return 1 }
+
+func (cvs *commitmentsVerificationState) initiate() error {
+	accusationsMsg, err := cvs.member.VerifyReceivedSharesAndCommitmentsMessages(
+		cvs.previousPhaseSharesMessages,
+		cvs.previousPhaseCommitmentsMessages,
+	)
+	if err != nil {
+		return fmt.Errorf("commitments verification phase failed [%v]", err)
+	}
+
+	if err := cvs.channel.Send(accusationsMsg); err != nil {
+		return fmt.Errorf("commitments verification phase failed [%v]", err)
+	}
+
+	return nil
+}
+
+func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
+	switch phaseMessage := msg.Payload().(type) {
+	case *gjkr.SecretSharesAccusationsMessage:
+		if !messageFromSelf(cvs.memberID(), msg) {
+			cvs.phaseAccusationsMessages = append(
+				cvs.phaseAccusationsMessages,
+				phaseMessage,
+			)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf(
+		"unexpected message for commitment verification state: [%#v]",
+		msg,
+	)
+}
+
+func (cvs *commitmentsVerificationState) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (cvs *commitmentsVerificationState) memberID() gjkr.MemberID {
+	return cvs.member.ID
 }
 
 func messageFromSelf(selfMemberID gjkr.MemberID, message net.Message) bool {
