@@ -76,13 +76,12 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 
 	disqualifiedMemberShares := make(map[MemberID]map[MemberID]*big.Int)
 	evidenceLog := member1.protocolConfig.evidenceLog
-	expectedResult := make([]*DisqualifiedShares, len(disqualifiedMembers))
 
-	for i, disqualifiedMember := range disqualifiedMembers {
+	for _, disqualifiedMember := range disqualifiedMembers {
 		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[MemberID]*big.Int)
 
 		for _, otherMember := range otherMembers {
-			// Evaluate shares which were calculated in Phase 3.
+			// Simulate shares evaluation from Phase 3.
 			shareS := disqualifiedMember.evaluateMemberShare(otherMember.ID, disqualifiedMember.secretCoefficients)
 			disqualifiedMemberShares[disqualifiedMember.ID][otherMember.ID] = shareS
 
@@ -96,20 +95,39 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 			)
 			evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 		}
-
-		expectedResult[i] = &DisqualifiedShares{
-			disqualifiedMemberID: disqualifiedMember.ID,
-			peerSharesS:          disqualifiedMemberShares[disqualifiedMember.ID],
-		}
 	}
 
-	result, err := member1.recoverDisqualifiedShares(disqualifiedMembersKeysMessages)
+	recoveredDisqualifiedShares, err := member1.recoverDisqualifiedShares(disqualifiedMembersKeysMessages)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(expectedResult, result) {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedResult[0], result[0])
+	if len(recoveredDisqualifiedShares) != len(disqualifiedMembers) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			len(recoveredDisqualifiedShares),
+			len(disqualifiedMembers),
+		)
+	}
+
+	for _, recoveredDisqualifiedShare := range recoveredDisqualifiedShares {
+		for _, disqualifiedMember := range disqualifiedMembers {
+			if recoveredDisqualifiedShare.disqualifiedMemberID == disqualifiedMember.ID {
+				expectedRecoveredDisqualifiedShares := &DisqualifiedShares{
+					disqualifiedMemberID: disqualifiedMember.ID,
+					peerSharesS:          disqualifiedMemberShares[disqualifiedMember.ID],
+				}
+
+				if !reflect.DeepEqual(
+					expectedRecoveredDisqualifiedShares,
+					recoveredDisqualifiedShare,
+				) {
+					t.Fatalf("\nexpected: %v\nactual:   %v\n",
+						expectedRecoveredDisqualifiedShares,
+						recoveredDisqualifiedShare,
+					)
+				}
+			}
+		}
 	}
 }
 
