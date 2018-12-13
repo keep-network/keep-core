@@ -7,8 +7,8 @@ import (
 
 // For complaint resolution, group members need to have access to messages
 // exchanged between the accuser and the accused party. There are two situations
-// in the DKG protocol where group members generate values for every other group
-// member:
+// in the DKG protocol where group members generate values individually for
+// every other group member:
 //
 // - Ephemeral ECDH (phase 2) - after each group member generates an ephemeral
 // keypair for each other group member and broadcasts those ephemeral public keys
@@ -29,49 +29,38 @@ import (
 // accused party. The key is publicly revealed by the accuser.
 type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
-	// broadcast in the first protocol round by the given sender for the
-	// given receiver.
-	ephemeralPublicKeyMessage(
-		sender MemberID,
-		receiver MemberID,
-	) *EphemeralPublicKeyMessage
+	// broadcast in the first protocol round by the given sender.
+	ephemeralPublicKeyMessage(sender MemberID) *EphemeralPublicKeyMessage
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
-	// protocol round by the given sender for the given receiver.
-	peerSharesMessage(
-		sender MemberID,
-		receiver MemberID,
-	) *PeerSharesMessage
+	// protocol round by the given sender.
+	peerSharesMessage(sender MemberID, receiver MemberID) *PeerSharesMessage
 
 	// PutEphemeralMessage is a function that takes a single
 	// EphemeralPubKeyMessage, and stores that as evidence for future
 	// accusation trials for a given (sender, receiver) pair. If a message
-	// already exists for the given pair, we return an error to the user.
-	PutEphemeralMessage(
-		pubKeyMessage *EphemeralPublicKeyMessage,
-	) error
+	// already exists for the given sender, we return an error to the user.
+	PutEphemeralMessage(pubKeyMessage *EphemeralPublicKeyMessage) error
 
 	// PutPeerSharesMessage is a function that takes a single
 	// PeerSharesMessage, and stores that as evidence for future
 	// accusation trials for a given (sender, receiver) pair. If a message
-	// already exists for the given pair, we return an error to the user.
-	PutPeerSharesMessage(
-		sharesMessage *PeerSharesMessage,
-	) error
+	// already exists for the given sender, we return an error to the user.
+	PutPeerSharesMessage(sharesMessage *PeerSharesMessage) error
 }
 
 // dkgEvidenceLog is an implementation of an evidenceLog.
 type dkgEvidenceLog struct {
-	// (senderID, receiverID) -> *EphemeralPublicKeyMessage
+	// senderID -> *EphemeralPublicKeyMessage
 	pubKeyMessageLog *messageStorage
 
-	// (senderID, receiverID) -> *PeerSharesMessage
+	// senderID -> *PeerSharesMessage
 	peerSharesMessageLog *messageStorage
 }
 
 // NewDkgEvidenceLog returns a dkgEvidenceLog with backing stores for future
 // accusations against EphemeralPublicKeyMessages and PeerShareMessages.
-func NewDkgEvidenceLog() *dkgEvidenceLog {
+func newDkgEvidenceLog() *dkgEvidenceLog {
 	return &dkgEvidenceLog{
 		pubKeyMessageLog:     newMessageStorage(),
 		peerSharesMessageLog: newMessageStorage(),
@@ -83,7 +72,6 @@ func (d *dkgEvidenceLog) PutEphemeralMessage(
 ) error {
 	return d.pubKeyMessageLog.putMessage(
 		pubKeyMessage.senderID,
-		pubKeyMessage.receiverID,
 		pubKeyMessage,
 	)
 }
@@ -93,16 +81,14 @@ func (d *dkgEvidenceLog) PutPeerSharesMessage(
 ) error {
 	return d.peerSharesMessageLog.putMessage(
 		sharesMessage.senderID,
-		sharesMessage.receiverID,
 		sharesMessage,
 	)
 }
 
 func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 	sender MemberID,
-	receiver MemberID,
 ) *EphemeralPublicKeyMessage {
-	storedMessage := d.pubKeyMessageLog.getMessage(sender, receiver)
+	storedMessage := d.pubKeyMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *EphemeralPublicKeyMessage:
 		return message
@@ -112,9 +98,8 @@ func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 
 func (d *dkgEvidenceLog) peerSharesMessage(
 	sender MemberID,
-	receiver MemberID,
 ) *PeerSharesMessage {
-	storedMessage := d.peerSharesMessageLog.getMessage(sender, receiver)
+	storedMessage := d.peerSharesMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *PeerSharesMessage:
 		return message
@@ -124,28 +109,23 @@ func (d *dkgEvidenceLog) peerSharesMessage(
 
 // messageStorage is the underlying cache used by our evidenceLog implementation
 // it implements a generic get and put of messages through a mapping of a
-// (sender, receiver) pair.
+// sender.
 type messageStorage struct {
-	cache     map[MemberID]map[MemberID]interface{}
+	cache     map[MemberID]interface{}
 	cacheLock sync.Mutex
 }
 
 func newMessageStorage() *messageStorage {
 	return &messageStorage{
-		cache: make(map[MemberID]map[MemberID]interface{}),
+		cache: make(map[MemberID]interface{}),
 	}
 }
 
-func (ms *messageStorage) getMessage(sender, receiver MemberID) interface{} {
+func (ms *messageStorage) getMessage(sender MemberID) interface{} {
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()
 
-	senderLog, ok := ms.cache[sender]
-	if !ok {
-		return nil
-	}
-
-	message, ok := senderLog[receiver]
+	message, ok := ms.cache[sender]
 	if !ok {
 		return nil
 	}
@@ -154,24 +134,19 @@ func (ms *messageStorage) getMessage(sender, receiver MemberID) interface{} {
 }
 
 func (ms *messageStorage) putMessage(
-	sender, receiver MemberID,
+	sender MemberID,
 	message interface{},
 ) error {
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()
 
-	if _, ok := ms.cache[sender]; !ok {
-		ms.cache[sender] = make(map[MemberID]interface{})
-	}
-
-	if _, ok := ms.cache[sender][receiver]; ok {
+	if _, ok := ms.cache[sender]; ok {
 		return fmt.Errorf(
-			"message exists for sender %v and receiver %v",
+			"message exists for sender %v",
 			sender,
-			receiver,
 		)
 	}
 
-	ms.cache[sender][receiver] = message
+	ms.cache[sender] = message
 	return nil
 }
