@@ -3,9 +3,40 @@ package gjkr
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func TestRevealDisqualifiedMembersKeys(t *testing.T) {
+	threshold := 2
+	groupSize := 5
+
+	members, err := initializeRevealingMembersGroup(threshold, groupSize, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	member := members[0]
+
+	disqualifiedMembers := []MemberID{2, 3}
+
+	expectedDisqualifiedKeys := map[MemberID]*ephemeral.PrivateKey{
+		disqualifiedMembers[0]: member.ephemeralKeyPairs[disqualifiedMembers[0]].PrivateKey,
+		disqualifiedMembers[1]: member.ephemeralKeyPairs[disqualifiedMembers[1]].PrivateKey,
+	}
+
+	result := member.RevealDisqualifiedMembersKeys(disqualifiedMembers)
+
+	expectedResult := &DisqualifiedMembersKeysMessage{
+		senderID:                member.ID,
+		disqualifiedMembersKeys: expectedDisqualifiedKeys,
+	}
+
+	if !reflect.DeepEqual(expectedResult, result) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedResult, result)
+	}
+}
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 5
