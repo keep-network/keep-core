@@ -1,0 +1,88 @@
+Compiling ./contracts/BLS.sol...
+Compiling ./contracts/utils/AltBn128.sol...
+Compiling ./contracts/utils/ModUtils.sol...
+
+Compilation warnings encountered:
+
+/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:2:1: Warning: Experimental features are turned on. Do not use experimental features on live deployments.
+pragma experimental ABIEncoderV2;
+^-------------------------------^
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:257:5: Warning: Variable is shadowed in inline assembly by an instruction of the same name
+    function add(G1Point a, G1Point b) internal view returns (G1Point) {
+    ^ (Relevant source part starts here and spans across multiple lines).
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:257:5: Warning: Variable is shadowed in inline assembly by an instruction of the same name
+    function add(G1Point a, G1Point b) internal view returns (G1Point) {
+    ^ (Relevant source part starts here and spans across multiple lines).
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:257:5: Warning: Variable is shadowed in inline assembly by an instruction of the same name
+    function add(G1Point a, G1Point b) internal view returns (G1Point) {
+    ^ (Relevant source part starts here and spans across multiple lines).
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:257:5: Warning: Variable is shadowed in inline assembly by an instruction of the same name
+    function add(G1Point a, G1Point b) internal view returns (G1Point) {
+    ^ (Relevant source part starts here and spans across multiple lines).
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:268:23: Warning: Function declared as view, but this expression (potentially) modifies the state and thus requires non-payable (the default) or payable.
+            if iszero(call(not(0), 0x06, 0, arg, 0x80, c, 0x40)) {
+                      ^---------------------------------------^
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:299:5: Warning: Function state mutability can be restricted to pure
+    function gfP2Pow(gfP2 _a, uint256 _exp) internal view returns(gfP2 result) {
+    ^ (Relevant source part starts here and spans across multiple lines).
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:366:23: Warning: Function declared as view, but this expression (potentially) modifies the state and thus requires non-payable (the default) or payable.
+            if iszero(call(not(0), 0x07, 0, arg, 0x60, p_2, 0x40)) {
+                      ^-----------------------------------------^
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/AltBn128.sol:385:23: Warning: Function declared as view, but this expression (potentially) modifies the state and thus requires non-payable (the default) or payable.
+            if iszero(call(not(0), 0x08, 0, arg, 0x180, c, 0x20)) {
+                      ^----------------------------------------^
+,/Users/sthompson22/projects/keep-core/contracts/solidity/contracts/utils/ModUtils.sol:21:23: Warning: Function declared as view, but this expression (potentially) modifies the state and thus requires non-payable (the default) or payable.
+            if iszero(call(not(0), 0x05, 0, args, 0xc0, output, 0x20)) {
+                      ^---------------------------------------------^
+
+Writing artifacts to ./build/contracts
+
+Using network 'keep_dev'.
+
+Running migration: 1_initial_migration.js
+  Replacing Migrations...
+  ... 0xb464934c109a19299d38bf8f31fe31adde16b619fdd5feed1ee96aba39f5e0ea
+  Migrations: 0x020e9925c01192de34d264d41656172ee4345b98
+Saving successful migration to network...
+  ... 0xe30e5fc0e2ca01f8df1d8d260d43376e286eaf8d2a925224da0d2fe331e35f06
+Saving artifacts...
+Running migration: 2_deploy_contracts.js
+  Running step...
+  Replacing ModUtils...
+  ... 0x3f3f25ecbe60f6c186637b7176d211b89c4d139b32fa5f382caf37fb478d93c5
+  ModUtils: 0xfaea23af9296d130574d0fff9c70edec01f9f703
+  Replacing AltBn128...
+  ... 0xfe75ea234cd7ed5a86fa865ee51b5185672447a1f2c58f244e64c83b445feaf0
+  AltBn128: 0xd45a54fc160d44acf011a4b83927b84399f476f5
+  Deploying BLS...
+  ... 0x27327f0705ce2f687366bd1347f9e35f7a62bf7fa92981e350f19583ad5e9421
+  BLS: 0x5ab70d9cdc48e5710e87ee60e9679b71014b9ab4
+  Replacing KeepToken...
+  ... 0xeb954423c05737427cdb8bb8bcb26c4b912d49b9b025f8acf3d701b0307c876d
+  KeepToken: 0xf276e3df4b3dfc64f692f0fa89c589285efee940
+  Replacing StakingProxy...
+  ... 0x01179267459ad37a8c584fdcfeb820c94fb0a1ffc5d4707c96a8fa8fc8e0bab9
+  StakingProxy: 0xb87c778aa03d6c199bc06b7f9dcba0353febe919
+  Replacing TokenStaking...
+  ... 0x9ae82a254775474e36870bc02f30c52351600a6416005c45fdac33c36d4e9c7a
+  TokenStaking: 0x36b7d3ae4de180c4e620481280d79c041544ed64
+  Replacing TokenGrant...
+  ... 0x238b84dc49d085bfa79329f9abad644d4f8f571be85196a5ed7e9961b13a18e1
+  TokenGrant: 0x3602169a6c1e75bcaf3ff7c58875a7e656a6bcfb
+  Replacing KeepRandomBeaconImplV1...
+  ... 0x10963131d0b820b0a1aab9c54de2cb89e8e027bd00e426c465fa555377e5a9ae
+  KeepRandomBeaconImplV1: 0x31d56f92d757b79bac40e6d94507d6556ce59359
+  Replacing KeepRandomBeacon...
+  ... 0xd62fd4716c3fb9cf4b0e7066f6ac87f71a090a0361703abc97a181b7b5511931
+  KeepRandomBeacon: 0x1ab0dcd22525ddab1b41a9d757227ae5130479d3
+  Replacing KeepGroupImplV1...
+  ... 0x3967aba6418167bc3958fc88b3855aecb2faa4ac71cce0a5051377375c3792ae
+  KeepGroupImplV1: 0x534cd2502bfaa2652a9aecca972c462bab2ed21f
+  Replacing KeepGroup...
+  ... 0x4efdd34d65c8ca6e0e1d53a61cf0b9f30a432d053641ed6a694db7239e19bbba
+  KeepGroup: 0xf2b1f3d44f9e440708d994b19c2515a40806aeca
+  ... 0x5c820281826ed8d5f538c70dbbd4ff2f31ab62283626f3f7892ea3fa14209bcd
+  ... 0x2a6f984b11fde143833c8066a21ebfbd5aeda119bf14c0bc44fef3e787a74325
+Saving successful migration to network...
+  ... 0xd942c6c717a8a7d764a9519507ccdc5c6f6d3506f8a744ab04c19d5ec71c381b
+Saving artifacts...
