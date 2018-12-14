@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_searialize(t *testing.T) {
+func Test_serialize(t *testing.T) {
 	r1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: big.NewInt(100),
@@ -14,7 +14,7 @@ func Test_searialize(t *testing.T) {
 		Inactive:       []bool{false, false, true, false},
 	}
 
-	actualResult := r1.searialize()
+	actualResult := r1.serialize()
 	expectedResult := "013130300100010000000100"
 
 	if fmt.Sprintf("%x", actualResult) != expectedResult {
