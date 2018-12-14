@@ -498,9 +498,36 @@ func (pjs *pointsJustificationState) receive(msg net.Message) error {
 }
 
 func (pjs *pointsJustificationState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	return &reconstructionPhase{
+		channel: pjs.channel,
+		member:  pjs.member.InitializeReconstruction(),
+	}, nil
 }
 
 func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 	return pjs.member.ID
+}
+
+type reconstructionPhase struct {
+	channel net.BroadcastChannel
+	member  *gjkr.ReconstructingMember
+}
+
+func (rp *reconstructionPhase) activeBlocks() int { return 1 }
+
+func (rp *reconstructionPhase) initiate() error {
+	// TODO: implement once member disqualification will be ready
+	return nil
+}
+
+func (rp *reconstructionPhase) receive(msg net.Message) error {
+	return fmt.Errorf("unexpected message for reconstruction phase: [%#v]", msg)
+}
+
+func (rp *reconstructionPhase) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (rp *reconstructionPhase) memberID() gjkr.MemberID {
+	return rp.member.ID
 }
