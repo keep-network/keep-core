@@ -1,7 +1,6 @@
 package publish
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/pschlump/godebug"
 )
 
 func TestPhase14_pt1(t *testing.T) {
@@ -41,8 +39,6 @@ func TestPhase14_pt1(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			fmt.Printf("Running Test: [%s] %s\n", testName, godebug.SVarI(test))
-
 			publisher := &Publisher{
 				ID:              gjkr.MemberID(test.publishingIndex + 1),
 				RequestID:       big.NewInt(101),
@@ -73,19 +69,6 @@ func TestPhase14_pt1(t *testing.T) {
 		})
 	}
 }
-
-/*
-TODO:
-1. Figure out setup for local - that includes
-	1. Setup of requestID -> groupPublicKey
-	2. Create machine to test this (clone old one)
-
-Add To Local
-	4. Add
-	5. Add
-	MapRequestIDToGroupPubKey ( requestID, groupPubKey *big.Int)
-	GetGroupPubKeyForRequestID ( groupPubKey *big.Int) ( *big.Int, error )
-*/
 
 func initChainHandle2(threshold, groupSize int) (chainHandle chain.Handle, initialBlock int, err error) {
 	chainHandle = local.Connect(groupSize, threshold)
