@@ -455,9 +455,52 @@ func (pvs *pointsValidationState) receive(msg net.Message) error {
 }
 
 func (pvs *pointsValidationState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	return &pointsJustificationState{
+		channel: pvs.channel,
+		member:  pvs.member.InitializePointsJustification(),
+
+		previousPhaseMessages: pvs.phaseMessages,
+	}, nil
 }
 
 func (pvs *pointsValidationState) memberID() gjkr.MemberID {
 	return pvs.member.ID
+}
+
+type pointsJustificationState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.PointsJustifyingMember
+
+	previousPhaseMessages []*gjkr.PointsAccusationsMessage
+}
+
+func (pjs *pointsJustificationState) activeBlocks() int { return 1 }
+
+func (pjs *pointsJustificationState) initiate() error {
+	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
+		pjs.previousPhaseMessages,
+	)
+	if err != nil {
+		return fmt.Errorf("points justification phase failed [%v]", err)
+	}
+
+	// TODO: Handle member disqualification
+	fmt.Printf("disqualified members = %v\n", disqualifiedMembers)
+
+	return nil
+}
+
+func (pjs *pointsJustificationState) receive(msg net.Message) error {
+	return fmt.Errorf(
+		"unexpected message for points justification phase: [%#v]",
+		msg,
+	)
+}
+
+func (pjs *pointsJustificationState) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
+	return pjs.member.ID
 }
