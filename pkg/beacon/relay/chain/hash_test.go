@@ -7,7 +7,6 @@ import (
 )
 
 func Test_searialize(t *testing.T) {
-
 	r1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: big.NewInt(100),
@@ -21,11 +20,9 @@ func Test_searialize(t *testing.T) {
 	if fmt.Sprintf("%x", actualResult) != expectedResult {
 		t.Errorf("\nexpected: %v\nactual:   %v\n", expectedResult, actualResult)
 	}
-
 }
 
 func Test_Hash(t *testing.T) {
-
 	r1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: big.NewInt(100),
@@ -39,5 +36,4 @@ func Test_Hash(t *testing.T) {
 	if fmt.Sprintf("%x", actualResult) != expectedResult {
 		t.Errorf("\nexpected: %v\nactual:   %v\n", expectedResult, actualResult)
 	}
-
 }
