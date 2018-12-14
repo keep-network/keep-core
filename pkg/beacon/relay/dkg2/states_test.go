@@ -2,6 +2,7 @@ package dkg2
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -57,22 +58,23 @@ func doStateTransition(
 	states []keyGenerationState,
 	channels []net.BroadcastChannel,
 ) ([]keyGenerationState, error) {
-	if len(states) == 0 {
-		return nil, fmt.Errorf("at least one state required")
-	}
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(expectedMessagesCount(states))
 
-	// phase duration time, assuming 1 block = 4 sec
-	duration := 4 * time.Second * time.Duration(states[0].activeBlocks())
-
-	nextStates := make([]keyGenerationState, len(states))
-
+	// All messages in the protocol are broadcast so if any message arrive
+	// during the current stage, it is going to be stored in `phaseMessages`
+	// slice.
+	var phaseMessagesMutex = &sync.Mutex{}
 	var phaseMessages []net.Message
 
 	for _, channel := range channels {
 		if err := channel.Recv(net.HandleMessageFunc{
 			Type: "test",
 			Handler: func(msg net.Message) error {
+				phaseMessagesMutex.Lock()
 				phaseMessages = append(phaseMessages, msg)
+				phaseMessagesMutex.Unlock()
+				waitGroup.Done()
 				return nil
 			},
 		}); err != nil {
@@ -82,24 +84,25 @@ func doStateTransition(
 		defer channel.UnregisterRecv("test")
 	}
 
-	// let all members to init and send their messages
+	// Once we have the message handler installed, we let all members to init
+	// the phase and send their messages if they want to.
 	for _, state := range states {
-		fmt.Printf(
-			"[member:%v, state:%T] Executing\n",
-			state.memberID(),
-			state,
-		)
+		fmt.Printf("[member:%v, state:%T] Executing\n", state.memberID(), state)
 
 		if err := state.initiate(); err != nil {
 			return nil, fmt.Errorf("initiate failed [%v]", err)
 		}
 	}
 
-	time.Sleep(duration)
-	fmt.Printf("Exchanged %v messages in this phase\n", len(phaseMessages))
+	// Now we need to wait until the expected amount of messages arrive.
+	// We can't wait forever, so we set the timeout to 5 seconds.
+	if waitWithTimeout(&waitGroup, 5*time.Second) {
+		return nil, fmt.Errorf("timed out waiting for messages")
+	}
 
-	// all members sent their messages, now it's part to receive them and
-	// proceed to the next state
+	// All members sent their messages, now it's part to process received
+	// messages and proceed to the next phase.
+	nextStates := make([]keyGenerationState, len(states))
 	for i, state := range states {
 		for _, message := range phaseMessages {
 			if err := state.receive(message); err != nil {
@@ -121,7 +124,7 @@ func doStateTransition(
 		nextStates[i] = next
 	}
 
-	// When there is no next state to be exected, `nextState()` in
+	// When there is no next phase to be exected, `nextState()` in
 	// `keyGenerationState` returns `nil`. To say that all states have
 	// executed completely, all `states` must be `nil`.
 	allCompleted := true
@@ -137,4 +140,46 @@ func doStateTransition(
 	}
 
 	return nextStates, nil
+}
+
+// expectedMessagesCount returns number of messages that are expected to be
+// produced by all members of the group at the given stage of DKG protocol.
+func expectedMessagesCount(states []keyGenerationState) int {
+	statesCount := len(states)
+	if statesCount == 0 {
+		return 0
+	}
+
+	switch states[0].(type) {
+	case *joinState:
+		return statesCount
+	case *ephemeralKeyPairGeneratingState:
+		return statesCount
+	case *committingState:
+		return statesCount * 2 // shares + commitments
+	case *commitmentsVerificationState:
+		return statesCount
+	case *pointsSharingState:
+		return statesCount
+	case *pointsValidationState:
+		return statesCount
+	default:
+		return 0
+	}
+}
+
+// waitWithTimeout waits for the waitgroup for the specified max timeout.
+// Returns true if waiting timed out.
+func waitWithTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false // completed normally
+	case <-time.After(timeout):
+		return true // timed out
+	}
 }
