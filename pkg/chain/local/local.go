@@ -57,7 +57,7 @@ type localChain struct {
 	groupPublicKeyMap      map[string]*big.Int
 }
 
-// PHASE 14 pt 2
+// MapRequestIDToGroupPubKey Assoiciate requestID with a groupPubKey
 func (c *localChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error {
 	c.groupPublicKeyMapMutex.Lock()
 	defer c.groupPublicKeyMapMutex.Unlock()
@@ -65,7 +65,7 @@ func (c *localChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) 
 	return nil
 }
 
-// PHASE 14 pt 2
+// GetGroupPubKeyForRequestID given requestID return the groupPubKey
 func (c *localChain) GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error) {
 	c.groupPublicKeyMapMutex.Lock()
 	defer c.groupPublicKeyMapMutex.Unlock()
@@ -80,7 +80,6 @@ func bigIntToHex(b *big.Int) string {
 }
 
 // GetDKGSubmissions returns the current set of submissions for the requestID.
-// PHASE 14
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
@@ -89,7 +88,6 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissio
 }
 
 // Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
-// PHASE 14
 func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
@@ -118,7 +116,6 @@ func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 }
 
 // OnDKGResultVote sets up to call the passed handler function when a vote occurs.
-// PHASE 14
 func (c *localChain) OnDKGResultVote(handler func(dkgResultVote *event.DKGResultVote)) {
 	c.handlerMutex.Lock()
 	c.voteHandler = append(c.voteHandler, handler)

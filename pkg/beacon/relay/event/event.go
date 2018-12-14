@@ -48,7 +48,7 @@ type DKGResultPublication struct {
 	RequestID *big.Int
 }
 
-// DKGResultVote - PHASE 14
+// DKGResultVote
 type DKGResultVote struct {
 	RequestID *big.Int
 }
