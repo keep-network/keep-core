@@ -175,12 +175,8 @@ func NewMember(
 	memberID MemberID,
 	groupMembers []MemberID,
 	dishonestThreshold int,
-) (*EphemeralKeyPairGeneratingMember, error) {
-	dkg, err := GenerateDKG()
-	if err != nil {
-		return nil, err
-	}
-
+	dkg *DKG,
+) *EphemeralKeyPairGeneratingMember {
 	return &EphemeralKeyPairGeneratingMember{
 		memberCore: &memberCore{
 			memberID,
@@ -188,7 +184,7 @@ func NewMember(
 			dkg,
 		},
 		ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
-	}, nil
+	}
 }
 
 // Int converts `MemberID` to `big.Int`
