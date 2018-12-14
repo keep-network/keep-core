@@ -51,21 +51,15 @@ type Interface interface {
 	// IsDKGResultPublished checks if the specific DKG result has already been
 	// published to a chain for given request ID.
 	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
-
 	// GetDKGSubmissions returns the entire set of submissions that is related
 	// to a particular requestID.
-	// PHASE 14
 	GetDKGSubmissions(requestID *big.Int) *Submissions
-
 	// Vote increases the number of votes for a dkgResultHash
-	// PHASE 14
 	Vote(requestID *big.Int, dkgResultHash []byte)
-
 	// OnDKGResultVote registers a callback when a vote occurs.
-	// PHASE 14
 	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
-
+	// MapRequestIDToGroupPubKey associates a requestID with a groupPubKey
 	MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error
-
+	// GetGroupPubKeyForRequestID takes a requestID and returns the associated groupPubKey
 	GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error)
 }
