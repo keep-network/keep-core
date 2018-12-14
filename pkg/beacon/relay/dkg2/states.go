@@ -320,7 +320,10 @@ func (sjs *sharesJustificationState) receive(msg net.Message) error {
 }
 
 func (sjs *sharesJustificationState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	return &qualifiedState{
+		channel: sjs.channel,
+		member:  sjs.member.InitializeQualified(),
+	}, nil
 }
 
 func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
@@ -334,4 +337,28 @@ func messageFromSelf(selfMemberID gjkr.MemberID, message net.Message) bool {
 		}
 	}
 	return false
+}
+
+type qualifiedState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.QualifiedMember
+}
+
+func (qa *qualifiedState) activeBlocks() int { return 1 }
+
+func (qa *qualifiedState) initiate() error {
+	qa.member.CombineMemberShares()
+	return nil
+}
+
+func (qa *qualifiedState) receive(msg net.Message) error {
+	return fmt.Errorf("unexpected message for qualified phase: [%#v]", msg)
+}
+
+func (qa *qualifiedState) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (qa *qualifiedState) memberID() gjkr.MemberID {
+	return qa.member.ID
 }
