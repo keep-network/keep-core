@@ -31,7 +31,7 @@ func (is *initializationState) initiate() error {
 }
 
 func (is *initializationState) receive(msg net.Message) error {
-	return fmt.Errorf("unexpected message for initialization state: [%#v]", msg)
+	return fmt.Errorf("unexpected message for initialization phase: [%#v]", msg)
 }
 
 func (is *initializationState) nextState() (keyGenerationState, error) {
@@ -117,7 +117,7 @@ func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 	}
 
 	return fmt.Errorf(
-		"unexpected message for ephemeral key generation state: [%#v]",
+		"unexpected message for ephemeral key generation phase: [%#v]",
 		msg,
 	)
 }
@@ -149,7 +149,7 @@ func (skgs *symmetricKeyGeneratingState) initiate() error {
 
 func (skgs *symmetricKeyGeneratingState) receive(msg net.Message) error {
 	return fmt.Errorf(
-		"unexpected message for symmetric key generation state: [%#v]",
+		"unexpected message for symmetric key generation phase: [%#v]",
 		msg,
 	)
 }
@@ -212,7 +212,7 @@ func (cs *committingState) receive(msg net.Message) error {
 		return nil
 	}
 
-	return fmt.Errorf("unexpected message for committing state: [%#v]", msg)
+	return fmt.Errorf("unexpected message for committing phase: [%#v]", msg)
 }
 
 func (cs *committingState) nextState() (keyGenerationState, error) {
@@ -271,7 +271,7 @@ func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
 	}
 
 	return fmt.Errorf(
-		"unexpected message for commitment verification state: [%#v]",
+		"unexpected message for commitment verification phase: [%#v]",
 		msg,
 	)
 }
@@ -344,21 +344,65 @@ type qualifiedState struct {
 	member  *gjkr.QualifiedMember
 }
 
-func (qa *qualifiedState) activeBlocks() int { return 1 }
+func (qs *qualifiedState) activeBlocks() int { return 1 }
 
-func (qa *qualifiedState) initiate() error {
-	qa.member.CombineMemberShares()
+func (qs *qualifiedState) initiate() error {
+	qs.member.CombineMemberShares()
 	return nil
 }
 
-func (qa *qualifiedState) receive(msg net.Message) error {
+func (qs *qualifiedState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for qualified phase: [%#v]", msg)
 }
 
-func (qa *qualifiedState) nextState() (keyGenerationState, error) {
+func (qs *qualifiedState) nextState() (keyGenerationState, error) {
+	return &pointsSharingState{
+		channel: qs.channel,
+		member:  qs.member.InitializeSharing(),
+	}, nil
+}
+
+func (qs *qualifiedState) memberID() gjkr.MemberID {
+	return qs.member.ID
+}
+
+type pointsSharingState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.SharingMember // TODO: SharingMember should be renamed to PointsSharingMember
+
+	phaseMessages []*gjkr.MemberPublicKeySharePointsMessage
+}
+
+func (pss *pointsSharingState) activeBlocks() int { return 1 }
+
+func (pss *pointsSharingState) initiate() error {
+	message := pss.member.CalculatePublicKeySharePoints()
+	if err := pss.channel.Send(message); err != nil {
+		return fmt.Errorf("points sharing phase failed [%v]", err)
+	}
+
+	return nil
+}
+
+func (pss *pointsSharingState) receive(msg net.Message) error {
+	switch pointsMessage := msg.Payload().(type) {
+	case *gjkr.MemberPublicKeySharePointsMessage:
+		if !messageFromSelf(pss.memberID(), msg) {
+			pss.phaseMessages = append(pss.phaseMessages, pointsMessage)
+		}
+		return nil
+	}
+
+	return fmt.Errorf(
+		"unexpected message for points sharing phase: [%#v]",
+		msg,
+	)
+}
+
+func (pss *pointsSharingState) nextState() (keyGenerationState, error) {
 	return nil, nil
 }
 
-func (qa *qualifiedState) memberID() gjkr.MemberID {
-	return qa.member.ID
+func (pss *pointsSharingState) memberID() gjkr.MemberID {
+	return pss.member.ID
 }
