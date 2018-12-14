@@ -29,8 +29,8 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	result := member.RevealDisqualifiedMembersKeys(disqualifiedMembers)
 
 	expectedResult := &DisqualifiedMembersKeysMessage{
-		senderID:                member.ID,
-		disqualifiedMembersKeys: expectedDisqualifiedKeys,
+		senderID:                   member.ID,
+		privateKeysForDisqualified: expectedDisqualifiedKeys,
 	}
 
 	if !reflect.DeepEqual(expectedResult, result) {
@@ -68,8 +68,8 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 		disqualifiedMembersKeysMessages = append(
 			disqualifiedMembersKeysMessages,
 			&DisqualifiedMembersKeysMessage{
-				senderID:                otherMember.ID,
-				disqualifiedMembersKeys: revealedKeys,
+				senderID:                   otherMember.ID,
+				privateKeysForDisqualified: revealedKeys,
 			},
 		)
 	}
@@ -79,22 +79,22 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 
 	for _, disqualifiedMember := range disqualifiedMembers {
 		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[MemberID]*big.Int)
+		// Simulate message broadcasted by disqualified member in Phase 3.
+		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
 
 		for _, otherMember := range otherMembers {
 			// Simulate shares evaluation from Phase 3.
 			shareS := disqualifiedMember.evaluateMemberShare(otherMember.ID, disqualifiedMember.secretCoefficients)
 			disqualifiedMemberShares[disqualifiedMember.ID][otherMember.ID] = shareS
 
-			// Simulate messages broadcasted by disqualified member in Phase 3.
-			peerSharesMessage, _ := newPeerSharesMessage(
-				disqualifiedMember.ID,
+			peerSharesMessage.addShares(
 				otherMember.ID,
 				shareS,
 				big.NewInt(0), // share T is not needed
 				disqualifiedMember.symmetricKeys[otherMember.ID],
 			)
-			evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 		}
+		evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 	}
 
 	recoveredDisqualifiedShares, err := member1.recoverDisqualifiedShares(disqualifiedMembersKeysMessages)
@@ -292,46 +292,47 @@ func TestReconstructIndividualKeys(t *testing.T) {
 		disqualifiedMembersKeysMessages = append(
 			disqualifiedMembersKeysMessages,
 			&DisqualifiedMembersKeysMessage{
-				senderID:                otherMember.ID,
-				disqualifiedMembersKeys: revealedKeys,
+				senderID:                   otherMember.ID,
+				privateKeysForDisqualified: revealedKeys,
 			},
 		)
 	}
 
 	evidenceLog := member1.protocolConfig.evidenceLog
 	for _, disqualifiedMember := range disqualifiedMembers {
+		// Simulate message broadcasted by disqualified member in Phase 3.
+		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+
 		for _, otherMember := range otherMembers {
 			// Evaluate shares which were calculated in Phase 3.
 			shareS := disqualifiedMember.evaluateMemberShare(otherMember.ID, disqualifiedMember.secretCoefficients)
 
-			// Simulate messages broadcasted by disqualified member in Phase 3.
-			peerSharesMessage, _ := newPeerSharesMessage(
-				disqualifiedMember.ID,
+			peerSharesMessage.addShares(
 				otherMember.ID,
 				shareS,
 				big.NewInt(0), // share T is not needed
 				disqualifiedMember.symmetricKeys[otherMember.ID],
 			)
-			evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 		}
+		evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 	}
 
 	member1.ReconstructIndividualKeys(disqualifiedMembersKeysMessages)
 
 	for _, disqualifiedMember := range disqualifiedMembers {
-		if member1.reconstructedIndividualPrivateKeys[disqualifiedMember.ID].
-			Cmp(disqualifiedMember.individualPrivateKey()) != 0 {
+		if disqualifiedMember.individualPrivateKey().
+			Cmp(member1.reconstructedIndividualPrivateKeys[disqualifiedMember.ID]) != 0 {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				member1.reconstructedIndividualPrivateKeys[disqualifiedMember.ID],
 				disqualifiedMember.individualPrivateKey(),
+				member1.reconstructedIndividualPrivateKeys[disqualifiedMember.ID],
 			)
 		}
 
 		if member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID].
 			Cmp(disqualifiedMember.individualPublicKey()) != 0 {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID],
 				disqualifiedMember.individualPrivateKey(),
+				member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID],
 			)
 		}
 	}
