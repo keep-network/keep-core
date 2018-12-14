@@ -75,7 +75,7 @@ func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
 	return true
 }
 
-// Hash - PHASE 14 - Hash the DKGResult and return the hashed value.
+// Hash the DKGResult and return the hashed value.
 func (r1 *DKGResult) Hash() []byte {
 	serial := r1.searialize()
 	return keccak256(serial)

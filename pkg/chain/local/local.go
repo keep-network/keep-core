@@ -60,7 +60,6 @@ func bigIntToHex(b *big.Int) string {
 }
 
 // GetDKGSubmissions returns the current set of submissions for the requestID.
-// PHASE 14
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
@@ -69,7 +68,6 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissio
 }
 
 // Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
-// PHASE 14
 func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
@@ -98,7 +96,6 @@ func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 }
 
 // OnDKGResultVote sets up to call the passed handler function when a vote occurs.
-// PHASE 14
 func (c *localChain) OnDKGResultVote(handler func(dkgResultVote *event.DKGResultVote)) {
 	c.handlerMutex.Lock()
 	c.voteHandler = append(c.voteHandler, handler)
