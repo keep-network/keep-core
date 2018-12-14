@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/pschlump/godebug"
 )
 
 // Publisher is a member submitting distributed key generation result to a
@@ -99,6 +100,7 @@ func (pm *Publisher) BlockCounter() (int, error) {
 func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
+	fmt.Printf("At: %s\n", godebug.LF())
 	onVoteChan := make(chan *event.DKGResultVote)
 	chainRelay.OnDKGResultVote(func(vote *event.DKGResultVote) {
 		onVoteChan <- vote
@@ -108,56 +110,94 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 		onSubmissionChan <- result
 	})
 
+	fmt.Printf("At: %s\n", godebug.LF())
+	if pm.RequestID == nil {
+		fmt.Printf("At: %s\n", godebug.LF())
+	}
 	submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
-	if !checkVotingThreshold(submissions) {
+	if submissions == nil {
+		fmt.Printf("At: %s\n", godebug.LF())
+		return fmt.Errorf("nothing submitted")
+	}
+	if !nOfVotesBelowThreshold(submissions) {
+		fmt.Printf("At: %s\n", godebug.LF())
 		return fmt.Errorf("voting threshold exceeded")
 	}
+	fmt.Printf("At: %s\n", godebug.LF())
 	if !submissions.Contains(correctResult) {
+		fmt.Printf("At: %s\n", godebug.LF())
 		chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
 		return nil
 	}
 
+	fmt.Printf("At: %s\n", godebug.LF())
 	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
+		fmt.Printf("At: %s\n", godebug.LF())
 		return fmt.Errorf("block counter failure [%v]", err)
 	}
 
-	// TODO We wait for T_conflict blocks but the protocol specification states
-	// that we should wait for block `T_first + T_conflict`. Need clarification.
-	phaseDurationWaiter, err := blockCounter.BlockWaiter(pm.conflictDuration)
+	fmt.Printf("At: %s\n", godebug.LF())
+	// firstBlock := 0 // T_First
+	firstBlock, err := blockCounter.CurrentBlock() // T_First
 	if err != nil {
+		fmt.Printf("At: %s\n", godebug.LF())
+		return fmt.Errorf("current block failure [%v]", err)
+	}
+
+	fmt.Printf("At: %s\n", godebug.LF())
+	// NOTE: We wait for T_conflict blocks but the protocol specification states
+	// that we should wait for block `T_first + T_conflict`. Need clarification.
+	phaseDurationWaiter, err := blockCounter.BlockWaiter(firstBlock + pm.conflictDuration)
+	if err != nil {
+		fmt.Printf("At: %s\n", godebug.LF())
 		return fmt.Errorf("block waiter failure [%v]", err)
 	}
 
+	fmt.Printf("At: %s\n", godebug.LF())
 	votesAndSubmissions := func(chainRelay relayChain.Interface) (bool, error) {
+		fmt.Printf("At: %s\n", godebug.LF())
 		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
-		if !checkVotingThreshold(submissions) {
+		if !nOfVotesBelowThreshold(submissions) {
+			fmt.Printf("At: %s\n", godebug.LF())
 			return true, fmt.Errorf("voting threshold exceeded")
 		}
 
+		fmt.Printf("At: %s\n", godebug.LF())
 		if !submissions.Lead().DKGResult.Equals(correctResult) {
+			fmt.Printf("At: %s\n", godebug.LF())
 			chainRelay.Vote(pm.RequestID, correctResult.Hash())
 			return true, nil
 		} else if !submissions.Contains(correctResult) {
+			fmt.Printf("At: %s\n", godebug.LF())
 			chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
 			return true, nil
 		}
+		fmt.Printf("At: %s\n", godebug.LF())
 		return false, nil
 	}
 
 	for {
+		fmt.Printf("At: %s\n", godebug.LF())
 		select {
 		case <-phaseDurationWaiter:
+			fmt.Printf("At: %s\n", godebug.LF())
 			return nil
 		case vote := <-onVoteChan:
+			fmt.Printf("At: %s\n", godebug.LF())
 			if vote.RequestID.Cmp(pm.RequestID) == 0 {
+				fmt.Printf("At: %s\n", godebug.LF())
 				if result, err := votesAndSubmissions(chainRelay); result {
+					fmt.Printf("At: %s\n", godebug.LF())
 					return err
 				}
 			}
 		case submission := <-onSubmissionChan:
+			fmt.Printf("At: %s\n", godebug.LF())
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
+				fmt.Printf("At: %s\n", godebug.LF())
 				if result, err := votesAndSubmissions(chainRelay); result {
+					fmt.Printf("At: %s\n", godebug.LF())
 					return err
 				}
 			}
@@ -166,8 +206,12 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 
 }
 
-func checkVotingThreshold(submissions *relayChain.Submissions) bool {
+func nOfVotesBelowThreshold(submissions *relayChain.Submissions) bool {
 	var votingThreshold int // M_max
-	// leadResult.votes > M_max
-	return submissions.Lead().Votes <= votingThreshold
+	fmt.Printf("At: %s -- submissions=%s\n", godebug.LF(), godebug.SVarI(submissions))
+	if submissions.Submissions == nil {
+		fmt.Printf("At: %s -- submissions= NIL - no votes yet\n", godebug.LF())
+		return true
+	}
+	return submissions.Lead().Votes <= votingThreshold // leadResult.votes > M_max
 }

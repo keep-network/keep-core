@@ -57,6 +57,11 @@ type localChain struct {
 	groupPublicKeyMap      map[string]*big.Int
 }
 
+// CurrentBlock rturns the current block number
+func (c *localChain) CurrentBlock() (int, error) {
+	return c.blockCounter.CurrentBlock()
+}
+
 // MapRequestIDToGroupPubKey Assoiciate requestID with a groupPubKey
 func (c *localChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error {
 	c.groupPublicKeyMapMutex.Lock()

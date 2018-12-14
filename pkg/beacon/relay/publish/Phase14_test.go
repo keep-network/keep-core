@@ -62,7 +62,7 @@ func TestPhase14_pt1(t *testing.T) {
 			}
 			_ = blockCounter
 
-			if false {
+			if true {
 				// func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 				publisher.Phase14(test.correctResult)
 			}

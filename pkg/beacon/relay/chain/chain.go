@@ -62,4 +62,6 @@ type Interface interface {
 	MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error
 	// GetGroupPubKeyForRequestID takes a requestID and returns the associated groupPubKey
 	GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error)
+	// CurrentBlock rturns the current block number
+	CurrentBlock() (int, error)
 }
