@@ -65,6 +65,22 @@ _operator_ ended.
 granted and all penalties are imposed. 
 11. Rewarding and penalisation happens as the last phase of all operations.
 
+=== Stake Atomicity
+By implementing this proposal we are going to enforce the stake atomicity.
+It means that the stake cannot be changed during an on stake operation. When an
+operator starts to perform an operation (enters a game) on the delegated stake,
+then the stake is locked and no other operations are possible to be done on it
+(requirement 8). Releasing delegated stake and enabling its usage for next
+operations is possible only after the game ends (requirement 9). The end of the
+game happens only after all slashing and rewarding are done (requirement 10) and
+it is the last phase of all of the games (requirement 11).  The operator can
+only have one delegated stake (requirement 5.), the owner can delegate only to
+one operator (requirement 1.), and there cannot be more than one on-stake
+operation at the same time (requirement 8), then there is always a one-to-one
+relation between the owner, stake, operator, and a game. Therefore, during a
+game, the stake can only be changed as a result of slashing which only occurs at
+the end of the game.
+
 === Functionality
 
 ==== Delegating a stake:
