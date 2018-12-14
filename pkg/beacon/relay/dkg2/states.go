@@ -498,7 +498,7 @@ func (pjs *pointsJustificationState) receive(msg net.Message) error {
 }
 
 func (pjs *pointsJustificationState) nextState() (keyGenerationState, error) {
-	return &reconstructionPhase{
+	return &reconstructionState{
 		channel: pjs.channel,
 		member:  pjs.member.InitializeReconstruction(),
 	}, nil
@@ -508,26 +508,53 @@ func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 	return pjs.member.ID
 }
 
-type reconstructionPhase struct {
+type reconstructionState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.ReconstructingMember
 }
 
-func (rp *reconstructionPhase) activeBlocks() int { return 1 }
+func (rp *reconstructionState) activeBlocks() int { return 1 }
 
-func (rp *reconstructionPhase) initiate() error {
+func (rp *reconstructionState) initiate() error {
 	// TODO: implement once member disqualification will be ready
 	return nil
 }
 
-func (rp *reconstructionPhase) receive(msg net.Message) error {
+func (rp *reconstructionState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for reconstruction phase: [%#v]", msg)
 }
 
-func (rp *reconstructionPhase) nextState() (keyGenerationState, error) {
+func (rp *reconstructionState) nextState() (keyGenerationState, error) {
+	return &combiningState{
+		channel: rp.channel,
+		member:  rp.member.InitializeCombining(),
+	}, nil
+}
+
+func (rp *reconstructionState) memberID() gjkr.MemberID {
+	return rp.member.ID
+}
+
+type combiningState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.CombiningMember
+}
+
+func (cs *combiningState) activeBlocks() int { return 1 }
+
+func (cs *combiningState) initiate() error {
+	cs.member.CombineGroupPublicKey()
+	return nil
+}
+
+func (cs *combiningState) receive(msg net.Message) error {
+	return fmt.Errorf("unexpected message for combining phase: [%#v]", msg)
+}
+
+func (cs *combiningState) nextState() (keyGenerationState, error) {
 	return nil, nil
 }
 
-func (rp *reconstructionPhase) memberID() gjkr.MemberID {
-	return rp.member.ID
+func (cs *combiningState) memberID() gjkr.MemberID {
+	return cs.member.ID
 }
