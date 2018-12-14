@@ -446,7 +446,7 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) (
 		commitments := make([]*big.Int, threshold+1)
 		for k := range memberCoefficientsA {
 
-			commitments[k] = m.vss.CalculateCommitment(
+			commitments[k] = m.protocolConfig.vss.CalculateCommitment(
 				memberCoefficientsA[k],
 				memberCoefficientsB[k],
 				m.protocolConfig.P,

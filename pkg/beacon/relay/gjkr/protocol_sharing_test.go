@@ -36,7 +36,13 @@ func TestCombineReceivedShares(t *testing.T) {
 	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
 	expectedShareT := big.NewInt(48)
 
-	config := &DKG{P: p, Q: q, evidenceLog: newDkgEvidenceLog()}
+	vss, err := pedersen.NewVSS(crand.Reader, p, q)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := &DKG{p, q, vss, newDkgEvidenceLog()}
+
 	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
@@ -88,6 +94,8 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		t.Fatalf("VSS initialization failed [%s]", err)
 	}
 
+	config.vss = vss
+
 	member := &SharingMember{
 		QualifiedMember: &QualifiedMember{
 			SharesJustifyingMember: &SharesJustifyingMember{
@@ -100,7 +108,6 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 								},
 							},
 						},
-						vss:                vss,
 						secretCoefficients: secretCoefficients,
 					},
 				},

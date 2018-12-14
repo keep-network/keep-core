@@ -167,7 +167,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	commitments := make([]*big.Int, len(coefficientsA))
 	for k := range commitments {
 		// C_k = g^a_k * h^b_k mod p
-		commitments[k] = cm.vss.CalculateCommitment(
+		commitments[k] = cm.protocolConfig.vss.CalculateCommitment(
 			coefficientsA[k],
 			coefficientsB[k],
 			cm.protocolConfig.P,
@@ -340,7 +340,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	}
 
 	// `expectedProduct = (g ^ s_ji) * (h ^ t_ji) mod p`, where:
-	expectedProduct := cm.vss.CalculateCommitment(
+	expectedProduct := cm.protocolConfig.vss.CalculateCommitment(
 		shareS,
 		shareT,
 		cm.protocolConfig.P,
@@ -522,7 +522,7 @@ func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePo
 	sm.publicKeySharePoints = make([]*big.Int, len(sm.secretCoefficients))
 	for i, a := range sm.secretCoefficients {
 		sm.publicKeySharePoints[i] = new(big.Int).Exp(
-			sm.vss.G,
+			sm.protocolConfig.vss.G,
 			a,
 			sm.protocolConfig.P,
 		)
@@ -602,7 +602,7 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	// `expectedProduct = g^s_ji mod p`, where:
 	// where: j is sender's ID, i is current member ID.
 	expectedProduct := new(big.Int).Exp(
-		sm.vss.G,
+		sm.protocolConfig.vss.G,
 		shareS,
 		sm.protocolConfig.P,
 	)
@@ -790,7 +790,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// `y_m = g^{z_m}`
 		individualPublicKey := new(big.Int).Exp(
-			rm.vss.G,
+			rm.protocolConfig.vss.G,
 			individualPrivateKey,
 			rm.protocolConfig.P,
 		)

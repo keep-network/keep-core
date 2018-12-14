@@ -299,14 +299,9 @@ func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Co
 		return nil, fmt.Errorf("group initialization failed [%v]", err)
 	}
 
-	vss, err := pedersen.NewVSS(crand.Reader, dkg.P, dkg.Q)
-	if err != nil {
-		return nil, fmt.Errorf("VSS initialization failed [%v]", err)
-	}
-
 	var members []*CommittingMember
 	for _, member := range symmetricKeyMembers {
-		committingMember := member.InitializeCommitting(vss)
+		committingMember := member.InitializeCommitting()
 		members = append(members, committingMember)
 	}
 
@@ -346,7 +341,13 @@ func predefinedDKG() (*DKG, error) {
 	if !result {
 		return nil, fmt.Errorf("failed to initialize q")
 	}
-	return &DKG{P: p, Q: q, evidenceLog: newDkgEvidenceLog()}, nil
+
+	vss, err := pedersen.NewVSS(crand.Reader, p, q)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate DKG paramters [%v]", err)
+	}
+
+	return &DKG{p, q, vss, newDkgEvidenceLog()}, nil
 }
 
 func filterPeerSharesMessage(

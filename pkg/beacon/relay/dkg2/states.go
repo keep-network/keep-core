@@ -1,11 +1,9 @@
 package dkg2
 
 import (
-	crand "crypto/rand"
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -157,21 +155,9 @@ func (skgs *symmetricKeyGeneratingState) receive(msg net.Message) error {
 }
 
 func (skgs *symmetricKeyGeneratingState) nextState() (keyGenerationState, error) {
-	vss, err := pedersen.NewVSS(
-		crand.Reader,
-		skgs.member.ProtocolConfig().P,
-		skgs.member.ProtocolConfig().Q,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"symmetric key generation state transition failed [%v]",
-			err,
-		)
-	}
-
 	return &committingState{
 		channel: skgs.channel,
-		member:  skgs.member.InitializeCommitting(vss),
+		member:  skgs.member.InitializeCommitting(),
 	}, nil
 }
 
