@@ -400,9 +400,64 @@ func (pss *pointsSharingState) receive(msg net.Message) error {
 }
 
 func (pss *pointsSharingState) nextState() (keyGenerationState, error) {
-	return nil, nil
+	return &pointsValidationState{
+		channel: pss.channel,
+		member:  pss.member,
+
+		previousPhaseMessages: pss.phaseMessages,
+	}, nil
 }
 
 func (pss *pointsSharingState) memberID() gjkr.MemberID {
 	return pss.member.ID
+}
+
+type pointsValidationState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.SharingMember // TODO: split validation logic into PointsValidatingMember
+
+	previousPhaseMessages []*gjkr.MemberPublicKeySharePointsMessage
+
+	phaseMessages []*gjkr.PointsAccusationsMessage
+}
+
+func (pvs *pointsValidationState) activeBlocks() int { return 1 }
+
+func (pvs *pointsValidationState) initiate() error {
+	accusationMsg, err := pvs.member.VerifyPublicKeySharePoints(
+		pvs.previousPhaseMessages,
+	)
+	if err != nil {
+		return fmt.Errorf("points validation phase failed [%v]", err)
+	}
+
+	if err := pvs.channel.Send(accusationMsg); err != nil {
+		return fmt.Errorf("points validation phase failed [%v]", err)
+	}
+
+	return nil
+}
+
+func (pvs *pointsValidationState) receive(msg net.Message) error {
+	switch pointsAccusationMessage := msg.Payload().(type) {
+	case *gjkr.PointsAccusationsMessage:
+		if !messageFromSelf(pvs.memberID(), msg) {
+			pvs.phaseMessages = append(pvs.phaseMessages, pointsAccusationMessage)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf(
+		"unexpected message for points validation phase: [%#v]",
+		msg,
+	)
+}
+
+func (pvs *pointsValidationState) nextState() (keyGenerationState, error) {
+	return nil, nil
+}
+
+func (pvs *pointsValidationState) memberID() gjkr.MemberID {
+	return pvs.member.ID
 }
