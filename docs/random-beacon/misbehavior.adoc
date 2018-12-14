@@ -1,3 +1,128 @@
+= Attacks and misbehavior
+
+== Types of participants
+
+=== Honest
+
+A honest actor will always follow the protocol.
+
+If the return for participating honestly _R~h~_ is below the required rate of
+return (eg. cost of capital, operating expenses), a honest participant will
+abstain from participating, even if a misbehaving course of action is available
+that would yield greater returns.
+
+The protocol should avoid relying on any participants being honest.
+
+=== Greedy
+
+A greedy actor will want to maximize its return.
+
+A greedy actor is willing to violate protocol and misbehave in arbitrary ways if
+doing so has a positive expected value, but will not take action which reduces
+their returns. A greedy actor does not care about the impact on other
+participants unless they have entered a binding contract to share the profits.
+
+A greedy participant will misbehave if and only if the return from doing so
+_R~m~_ is equal or greater than the return from honest participation _R~h~_.
+
+The protocol should be designed to be viable if most participants are greedy. It
+is also to be expected that some greedy participants will have external
+incentives; for example, manipulating a lottery to greatly increase the chance
+of winning may be worth taking a punishment for.
+
+=== Malicious
+
+A malicious actor will seek to subvert or inflict damage on the network.
+
+A malicious actor is willing to misbehave even at an immediate cost to itself,
+at the pursuit of some ulterior motive in opposition to the intended functioning
+of the network.
+
+==== Adversary power
+
+The main constraint on the malicious actor is the amount of resources it has
+available _res~m~_, especially in relation to the resources of the well-behaved
+participants _res~h~_. The ratio _power~m~ = res~m~ / res~h~_ determines the
+_adversary power_ of the malicious actor. Because money can be used to buy
+various forms of influence, it does not seem sensible to assume a malicious
+actor would be limited to any particular type of influence (a fraction of
+stakers only, with no miners, or a fraction of miners but no stakers). Instead,
+a safer assumption is that the adversary can control a fraction of each specific
+type of participant, determined by _power~m~ / (1 + power~m~)_. For example,
+with _power~m~ = 0.5_ the adversary can control 33% of all miners, stakers, etc.
+
+The protocol should be resistant to malicious participants, especially those of
+low adversary power. Any protocol relying on a honest majority is vulnerable to
+adversaries of _power~m~ >= 1_ (a 51% attack).
+
+==== Control bootstrapping
+
+_Control bootstrapping_ is the class of attacks a malicious actor can use to
+increase its share of control over the network, and thus one of the most
+significant. Preventing and limiting control bootstrapping attacks is extremely
+important for protecting against malicious participants.
+
+If an adversary with _power~m~_ power can cause _D~h~_ damage to the
+well-behaved participants at a cost of _D~m~_ to itself, so that
+_D~m~ / D~h~ < power~m~_, the attack would increase the attacker's adversary
+power relative to the well-behaved participants:
+_power'~m~ = (res~m~ - D~m~) / (res~h~ - D~h~) > power~m~_. 
+The effectiveness of attack _A_ can be expressed as its _damage multiplier_:
+_mult~A~ = D~h~ / D~m~_. Attack _A_ is useful to adversary _m_ if
+_mult~A~ * power~m~ > 1_.
+
+Such attacks can be used to "smoke out" honest and greedy participants by
+rendering staking unprofitable without the external budget provided by the
+malicious actor's ulterior motives. If an attack can be iterated enough times,
+the well-behaved participants would run out of resources before the adversary.
+Thus over time the adversary would be able to bootstrap a smaller degree of
+control over the network into a larger one.
+
+== Participant status
+
+=== Well-behaved
+
+A well-behaved participant is correctly following the protocol and sending the
+expected messages at expected times.
+
+=== Inactive
+
+An inactive participant is one that has stopped sending the messages expected by
+the protocol, but is otherwise well-behaved. An inactive participant does not
+send invalid messages or otherwise actively undermine the protocol execution.
+
+A participant can be rendered inactive due to internal, such as node
+misconfiguration or downtime, or external factors, such as network problems or
+DoS attacks.
+
+Transient inactivity is expected to be the most common form of protocol
+violation. Care should be taken not to punish such cases excessively harshly,
+especially because, unlike other forms of misbehavior, an attacker can force
+a participant to be inactive.
+
+=== Misbehaving
+
+A misbehaving participant has engaged in active protocol violations by sending
+messages (broadcasting to other nodes, or publishing transactions on-chain) that
+are invalid in either format or content.
+
+Wherever feasible, misbehavior should be attributable and punishable. A third
+party cannot force a non-compromised participant to misbehave attributably, and
+thus any such misbehavior can be blamed on the participant who signed the bad
+message.
+
+==== Compromised participants
+
+An otherwise well-behaved participant whose private key has leaked to a third
+party can be made to misbehave by using the compromised key. This is impossible
+to distinguish from straightforward misbehavior, as an attacker could just as
+well set up a scheme that makes them appear legitimately compromised, but such
+distinction is neither necessary nor desirable. Penalizing the stakers whose
+operators have been compromised acts as an incentive to protect against such
+compromise, and helps remove vulnerable operators from the network.
+
+== Types of misbehavior
+
 === Incorrect signature share
 
 Instead of broadcasting _Sig~m~_, _P~m~_ broadcasts a different, incorrect
