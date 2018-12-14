@@ -50,9 +50,29 @@ type localChain struct {
 	// this may be an error.
 	submissionsMutex sync.Mutex
 	submissions      map[string]relaychain.Submissions
-	// vote handler
-	voteHandler       []func(dkgResultVote *event.DKGResultVote)
-	groupPublicKeyMap map[string]*big.Int
+
+	voteHandler []func(dkgResultVote *event.DKGResultVote)
+
+	groupPublicKeyMapMutex sync.Mutex
+	groupPublicKeyMap      map[string]*big.Int
+}
+
+// PHASE 14 pt 2
+func (c *localChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error {
+	c.groupPublicKeyMapMutex.Lock()
+	defer c.groupPublicKeyMapMutex.Unlock()
+	c.groupPublicKeyMap[bigIntToHex(requestID)] = groupPubKey
+	return nil
+}
+
+// PHASE 14 pt 2
+func (c *localChain) GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error) {
+	c.groupPublicKeyMapMutex.Lock()
+	defer c.groupPublicKeyMapMutex.Unlock()
+	if groupPubKey, ok := c.groupPublicKeyMap[bigIntToHex(requestID)]; ok {
+		return groupPubKey, nil
+	}
+	return nil, fmt.Errorf("invalid requestID [%s]", requestID)
 }
 
 func bigIntToHex(b *big.Int) string {
@@ -264,6 +284,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		blockCounter:            bc,
 		stakeMonitor:            NewStakeMonitor(),
 		submissions:             make(map[string]relaychain.Submissions),
+		groupPublicKeyMapMutex:  sync.Mutex{},
 		groupPublicKeyMap:       make(map[string]*big.Int),
 	}
 }
@@ -352,13 +373,6 @@ func (c *localChain) IsDKGResultPublished(
 	return false
 }
 
-// --------------------------------- ---------------------------------
-// the GroupPublicKey is a problem - don't know where to get it from at this point.
-// --------------------------------- ---------------------------------
-func (c *localChain) getGroupPublicKeyFromRequestID(requestID *big.Int) *big.Int {
-	return c.groupPublicKeyMap[bigIntToHex(requestID)]
-}
-
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int, resultToPublish *relaychain.DKGResult,
@@ -380,7 +394,10 @@ func (c *localChain) SubmitDKGResult(
 		c.submissions = make(map[string]relaychain.Submissions)
 	}
 	if _, ok := c.submissions[bigIntToHex(requestID)]; !ok {
-		groupPublicKey := c.getGroupPublicKeyFromRequestID(requestID)
+		groupPublicKey, err := c.GetGroupPubKeyForRequestID(requestID)
+		if err != nil {
+			// FIXME
+		}
 		ss := relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{

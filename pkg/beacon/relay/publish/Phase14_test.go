@@ -81,8 +81,10 @@ TODO:
 	2. Create machine to test this (clone old one)
 
 Add To Local
-	4. Add a "MapRequestIDToAssociateGroupPubKeyWith" -> Has to be on chain
-	5. Add a "GetGroupPubKeyForRequestID" - pull back data from chain
+	4. Add
+	5. Add
+	MapRequestIDToGroupPubKey ( requestID, groupPubKey *big.Int)
+	GetGroupPubKeyForRequestID ( groupPubKey *big.Int) ( *big.Int, error )
 */
 
 func initChainHandle2(threshold, groupSize int) (chainHandle chain.Handle, initialBlock int, err error) {

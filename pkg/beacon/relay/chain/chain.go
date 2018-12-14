@@ -64,4 +64,8 @@ type Interface interface {
 	// OnDKGResultVote registers a callback when a vote occurs.
 	// PHASE 14
 	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
+
+	MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error
+
+	GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error)
 }
