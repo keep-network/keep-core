@@ -19,25 +19,27 @@ func TestFullStateTransitions(t *testing.T) {
 
 	provider := local.Connect()
 
+	dkg, err := gjkr.GenerateDKG()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for i := 0; i < groupSize; i++ {
 		channel, err := provider.ChannelFor("transitions_test_" + string(i))
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		member := gjkr.NewMember(
+			gjkr.MemberID(i+1),
+			make([]gjkr.MemberID, 0),
+			threshold,
+			dkg,
+		)
+
 		Init(channel)
 
 		channels[i] = channel
-
-		member, err := gjkr.NewMember(
-			gjkr.MemberID(i),
-			make([]gjkr.MemberID, 0),
-			threshold,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
-
 		states[i] = &initializationState{channel, member}
 	}
 
@@ -59,8 +61,8 @@ func doStateTransition(
 		return nil, fmt.Errorf("at least one state required")
 	}
 
-	// phase duration time, assuming 1 block = 2 sec
-	duration := 2 * time.Second * time.Duration(states[0].activeBlocks())
+	// phase duration time, assuming 1 block = 4 sec
+	duration := 4 * time.Second * time.Duration(states[0].activeBlocks())
 
 	nextStates := make([]keyGenerationState, len(states))
 
@@ -89,7 +91,7 @@ func doStateTransition(
 		)
 
 		if err := state.initiate(); err != nil {
-			return nil, fmt.Errorf("initiate failed %v", err)
+			return nil, fmt.Errorf("initiate failed [%v]", err)
 		}
 	}
 
