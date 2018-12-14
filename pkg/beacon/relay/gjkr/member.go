@@ -287,6 +287,11 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
 	return receivedValidPeerIndividualPublicKeys
 }
 
+// GroupPublicKey returns the key generated for the group by DKG protocol.
+func (cm *CombiningMember) GroupPublicKey() *big.Int {
+	return cm.groupPublicKey
+}
+
 // HexString converts `MemberID` to hex `string` representation.
 func (id MemberID) HexString() string {
 	return strconv.FormatInt(int64(id), 16)

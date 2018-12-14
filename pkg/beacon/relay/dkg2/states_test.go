@@ -2,6 +2,8 @@ package dkg2
 
 import (
 	"fmt"
+	"math/big"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -12,8 +14,8 @@ import (
 )
 
 func TestFullStateTransitions(t *testing.T) {
-	threshold := 1
-	groupSize := 2
+	threshold := 2
+	groupSize := 5
 
 	channels := make([]net.BroadcastChannel, groupSize)
 	states := make([]keyGenerationState, groupSize)
@@ -25,6 +27,9 @@ func TestFullStateTransitions(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Initialize one state and one channel per one member.
+	// Each state gets a separate channel to have a different transport
+	// identifier.
 	for i := 0; i < groupSize; i++ {
 		channel, err := provider.ChannelFor("transitions_test_" + string(i))
 		if err != nil {
@@ -44,13 +49,41 @@ func TestFullStateTransitions(t *testing.T) {
 		states[i] = &initializationState{channel, member}
 	}
 
-	for states != nil {
+	// Perform all possible state transitions.
+	for {
 		nextStates, err := doStateTransition(states, channels)
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		if nextStates == nil {
+			break
+		}
+
 		states = nextStates
+	}
+
+	// Check whether all states are final and extract generated group
+	// public keys.
+	groupPublicKeys := make([]*big.Int, groupSize)
+	for i, state := range states {
+		finalState, ok := state.(*combiningState)
+		if !ok {
+			t.Fatalf("Not a final state: %#v", state)
+		}
+
+		groupPublicKeys[i] = finalState.member.GroupPublicKey()
+	}
+
+	// Check whether all group public keys are the same.
+	for i := 1; i < len(groupPublicKeys); i++ {
+		if !reflect.DeepEqual(groupPublicKeys[i], groupPublicKeys[0]) {
+			t.Fatalf(
+				"two different group public keys: %v and %v",
+				groupPublicKeys[i],
+				groupPublicKeys[0],
+			)
+		}
 	}
 }
 
