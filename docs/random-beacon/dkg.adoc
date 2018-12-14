@@ -95,31 +95,11 @@ if the broadcast channel assumption holds,
 and all honest participants agree on the keys
 published by each participant in phase 1.
 
+.Phase 1
 [source, python]
 ----
-# Receive:
-
-[Y_1, Y_2, ... Y_N] # <1>
-
-# Calculate:
-
-t_init = getCurrentBlockHeight()
-
-for P_j in P, P_j /= P_i:
-  (X_ij, Y_ij) = genEcdhKeypair()
-
-[X_i1, X_i2, ... X_iN] # <2>
-
-[Y_i1, Y_i2, ... Y_iN] # <3>
-
-# Broadcast:
-
-[Y_i1, Y_i2, ... Y_iN]
+include::dkg.py[tags=phase-1]
 ----
-
-<1> Identifiers of participants in candidate group _P_
-<2> Private keys for communicating with other participants in _P_
-<3> Public keys for communicating with other participants in _P_
 
 [#phase-2,reftext="Phase 2"]
 ==== Phase 2. Ephemeral ECDH
@@ -127,26 +107,17 @@ for P_j in P, P_j /= P_i:
 Every node in _P_ has now published a valid list of ephemeral ECDH pubkeys.
 _P~i~_ will perform ECDH with every _P~j~_ in _P_ to create _k~ij~_.
 
+.Phase 2
 [source, python]
 ----
-# Receive:
-
-[[Y_12, Y_13, ... Y_1i, ... Y_1N],
- [Y_21, Y_23, ... Y_2i, ... Y_2N],
- ...
- [Y_N1, Y_N2, ... Y_Ni, ... Y_N(N-1)]] # <1>
-
-# Calculate:
-
-(G_2, IA_1, DQ_1) = checkBroadcast(1, G_1) # <2>
-
-for P_j in G_2:
-   k_ij = ecdh(X_ij, Y_ji)
+include::dkg.py[tags=phase-2]
 ----
 
-<1> Public keys of all other participants in _P_
-<2> A validation function which determines which nodes
-have broadcast the correct message for phase _p_
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-2]
+----
 
 [#phase-3,reftext="Phase 3"]
 ==== Phase 3. Polynomial generation
@@ -155,7 +126,7 @@ Every node in _G~3~_ has, for every other node in _G~3~_, a symmetric key that
 can be used for encrypted and attributable communications over the broadcast
 channel. The Pedersen-VSS phase of the GJKR DKG algorithm can commence.
 
-Create two polynomials _f~i~(z)_ and _g~i~(z)_ of degree _T_ and calculate
+Create two polynomials _f~i~(z)_ and _g~i~(z)_ of degree _M_ and calculate
 other players' shares as points on these polynomials. Additionally, calculate
 Pedersen commitments to the coefficients of _f~i~(z)_ using the coefficients
 of _g~i~(z)_.
@@ -164,138 +135,61 @@ Shares to _P~j~_ are encrypted with the symmetric key _K~ij~ = K~ji~_
 shared by _P~i~_ and _P~j~_.
 Commitments and encrypted shares are broadcast to other players.
 
-
+.Phase 3
 [source, python]
 ----
-# Calculate:
-
-G_3 = G_2
-
-for k in [0..T]:
-  a_ik = random(Z_q)
-  b_ik = random(Z_q)
-
-f_i(z) = sum(
-  for k in [0..T]:
-    a_ik * z^k
-)
-
-g_i(z) = sum(
-  for k in [0..T]:
-    b_ik * z^k
-)
-
-z_i = a_i0 = f_i(0) # <1>
-
-commitments_i =
-  for k in [0..T]:
-    C_ik = g^a_ik * h^b_ik mod p # <2>
-
-encryptedShares_i =
-  for j in G_3:
-    s_ij = f_i(j) mod q
-    t_ij = g_i(j) mod q
-
-    E_ij = encrypt(K_ij, (s_ij, t_ij)) # <3>
-
-# Broadcast:
-
-(encryptedShares_i, commitments_i)
+include::dkg.py[tags=phase-3]
 ----
 
-<1> _P~i~_'s share of the shared secret key
-<2> Pedersen commitments to coefficients
-<3> Shares for _P~j~_ encrypted with the shared symkey
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-3]
+----
 
 [#phase-4,reftext="Phase 4"]
 ==== Phase 4: Share verification
 
-Receive, decrypt and validate shares from other participants. If any share
-fails to pass validation, broadcast a complaint by publishing the corresponding
-ephemeral private key so others can validate the result.
 
+Receive, decrypt and validate shares from other participants. If any share
+proves inconsistent with the sender's published commitments, broadcast a
+complaint by publishing the identity of the misbehaving party along with the
+corresponding ephemeral private key so others can check the result.
+
+.Phase 4
 [source, python]
 ----
-# Receive:
-
-[(encryptedShares_1, commitments_1),
- ...
- (encryptedShares_N, commitments_N)]
-
-# Calculate:
-
-(G_4, IA_3, DQ_3) = checkBroadcast(3, G_3)
-
-complaints_Ai = []
-
-for j in G_4:
-  E_ji = encryptedShares_j[i]
-
-  (s_ji, t_ji) = decrypt(K_ij, E_ji)
-
-  C_prod = product(
-    for k in [0..T]:
-      commitments_j[k] ^ (i^k)
-  ) mod p
-
-  if g^s_ji * h^t_ji /= C_prod:
-    complaints_i += X_ij # <<1>>
-
-# Broadcast:
-
-complaints_Ai
+include::dkg.py[tags=phase-4]
 ----
 
-<<1>> Publish the private key _P~i~_ created for communicating with _P~j~_,
-so anyone can decrypt and verify the shares _P~i~_ received from _P~j~_.
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-4]
+----
 
 [#phase-5,reftext="Phase 5"]
-==== Phase 5: First complaint resolution
+==== Phase 5: Share complaint resolution
 
-If anyone has complaints about another player,
-use the published privkeys to decrypt transmitted messages and determine fault.
-As every message in the broadcast channel is signed,
-decrypting previous messages makes misbehavior attributable.
-For every complaint, one party will be disqualified:
-either the accused sent invalid shares,
-or the accuser made a false complaint.
+If anyone has complaints about another player, use the published private keys
+to decrypt transmitted messages and determine fault.
 
+As every message in the broadcast channel is signed, decrypting previous
+messages makes misbehavior attributable. For every complaint, one party will be
+disqualified: either the accused sent invalid shares, or the accuser made a
+false complaint.
+
+.Phase 5
 [source, python]
 ----
-# Receive:
-
-[complaints_A1, complaints_A2, ... ]
-
-# Calculate:
-
-(G_5, IA_4, DQ_4) = checkBroadcast(4, G_4)
-
-DQ_5 = []
-
-complaints_A = union(complaints_A1, complaints_A2, ...)
-
-for c in complaints_A:
-  P_j = c.sender
-  P_m = c.accused
-  X_jm = c.revealedKey
-
-  K_jm = ecdh(X_jm, Y_mj)
-
-  (s_mj, t_mj) = decrypt(K_jm, E_mj)
-
-  C_prod = product(
-    for k in [0..T]:
-      C_mk ^ (j^k)
-  ) mod p
-
-  if g^s_mj * h^t_mj = C_prod: # <1>
-    DQ_5 += P_j
-  else:
-    DQ_5 += P_m
+include::dkg.py[tags=phase-5]
 ----
 
-<<1>> If the shares are inconsistent with commitments,
-disqualify the accused _P~m~_; if consistent, disqualify the accuser _P~j~_.
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-5]
+----
 
 [#phase-6,reftext="Phase 6"]
 ==== Phase 6: Share calculation
@@ -303,21 +197,10 @@ disqualify the accused _P~m~_; if consistent, disqualify the accuser _P~j~_.
 Each player sets their share _x~i~_ of the secret _X_ to equal the sum of all
 shares _s~ji~_ as per GJKR. _X_ equals the sum of shares _s~j0~_.
 
+.Phase 6
 [source, python]
 ----
-# Calculate:
-
-G_6 = G_5 - DQ_5
-
-x_i = sum(
-  for j in G_6:
-    s_ji
-) mod q
-
-x'_i = sum(
-  for j in G_6:
-    t_ji
-) mod q
+include::dkg.py[tags=phase-6]
 ----
 
 [#phase-7,reftext="Phase 7"]
@@ -325,49 +208,27 @@ x'_i = sum(
 
 Each player broadcasts their _A~ik~_ values.
 
+.Phase 7
 [source, python]
 ----
-# Calculate:
-
-G_7 = G_6
-
-for k in [0..T]:
-  A_ik = g^a_ik mod p
-
-# Broadcast:
-
-[A_i0, A_i1, ... A_iT]
+include::dkg.py[tags=phase-7]
 ----
 
 [#phase-8,reftext="Phase 8"]
 ==== Phase 8: Public key share validation
 
-Each player validates the values received in the previous step.
+Each player validates the values received in <<phase-7>>.
 
+.Phase 8
 [source, python]
 ----
-# Receive:
+include::dkg.py[tags=phase-8]
+----
 
-[[A_10, A_11, ... A_1T], ...]
-
-# Calculate:
-
-(G_8, IA_7, DQ_7) = checkBroadcast(7, G_7)
-
-complaints_Bi = []
-
-for j in G_8:
-  A_prod = product(
-    for k in [0..T]:
-      A_jk ^ (i^k)
-  ) mod p
-
-  if g^s_ji /= A_prod:
-    complaints_B += X_ij
-
-# Broadcast:
-
-complaints_Bi
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-8]
 ----
 
 [#phase-9,reftext="Phase 9"]
@@ -375,47 +236,26 @@ complaints_Bi
 
 As in <<phase-5>>, but with the validation formula from <<phase-8>>.
 
-It should be noted that the symmetric nature of the encryption
-allows the parties to also decrypt _E~jm~_ and not just _E~mj~_.
-This is not very significant though,
-as even the publication of only the misbehaving participants' shares
-would reduce the security margin excessively
-if a large fraction of _P_ were to misbehave.
-By setting the threshold for group creation failure at _f~max~/2_
-the impact of this is reduced to a manageable level.
+It should be noted that the symmetric nature of the encryption allows the
+parties to also decrypt _E~jm~_ and not just _E~mj~_. However, this is not very
+significant as even the publication of only the misbehaving participants' shares
+would reduce the security margin excessively if a large fraction of _P_ were to
+misbehave.
 
+By aborting group creation if the number of inactive and disqualified
+participants exceeds _M~nofail~ = M/2_ the impact of this is reduced to a
+manageable level.
+
+.Phase 9
 [source, python]
 ----
-# Receive:
+include::dkg.py[tags=phase-9]
+----
 
-[complaints_B1, complaints_B2, ...]
-
-# Calculate:
-
-(G_9, IA_8, DQ_8) = checkBroadcast(8, G_8)
-
-DQ_9 = []
-
-complaints_B = union(complaints_B1, complaints_B2, ...)
-
-for c in complaints_B:
-  P_j = c.sender
-  P_m = c.accused
-  X_jm = c.revealedKey
-
-  K_jm = ecdh(X_jm, Y_mj)
-
-  (s_mj, t_mj) = decrypt(K_jm, E_mj)
-
-  A_prod = product(
-    for k in [0..T]:
-      A_mk ^ (j^k)
-  ) mod p
-
-  if g^s_mj = A_prod:
-    DQ_9 += P_j
-  else:
-    DQ_9 += P_m
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-9]
 ----
 
 [#phase-10,reftext="Phase 10"]
@@ -425,21 +265,10 @@ All active players in _G~10~_ broadcast the keys they share with
 players in _DQ~9~_, so the reconstruction of Pedersen-VSS can be done
 offline.
 
+.Phase 10
 [source, python]
 ----
-# Calculate:
-
-G_10 = G_9 - DQ_9
-
-keys_i = []
-
-for m in DQ_9:
-  keys_i += X_im
-
-# Broadcast:
-
-if keys_i /= []:
-  keys_i
+include::dkg.py[tags=phase-10]
 ----
 
 [#phase-11,reftext="Phase 11"]
@@ -447,43 +276,19 @@ if keys_i /= []:
 
 Decrypt and reconstruct _z~m~_ for every participant _P~m~_ that presented
 valid shares in <<phase-3>> but whose public key shares in <<phase-7>> were invalid.
-Calculate _y~m~ = g^z~m~^ mod p_ for each reconstructed _z~m~_.
+Calculate _y~m~ = z~m~ * P1_ for each reconstructed _z~m~_.
 
+.Phase 11
 [source, python]
 ----
-# Receive:
-
-[keys_1, keys_2, ... , keys_N]
-
-# Calculate:
-
-(G_11, IA_10, DQ_10) = checkBroadcast(10, G_10)
-
-for m in (G_6 - G_11): # <1>
-  for j in G:
-    X_jm = keys_j[m]
-
-    K_jm = ecdh(X_jm, Y_mj)
-
-    (s_mj, t_mj) = decrypt(K_jm, E_mj)
-
-  ss_m = take(T + 1, [s_m1, ... , s_mN])
-
-  is_m = [s.index for s in ss_m]
-
-  z_m = sum(
-    for k in is_m, s_mk in ss_m:
-      a_mk = product(
-        for l in is_m, l /= k:
-          l / (l - k)
-      )
-      s_mk * a_mk
-  )
-
-  y_m = g^z_m mod p
+include::dkg.py[tags=phase-11]
 ----
-<<1>> Reconstruct the shares of participants that became inactive
-or were disqualified since <<phase-6>>
+
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-11]
+----
 
 [#phase-12,reftext="Phase 12"]
 ==== Phase 12: Public key reconstruction
@@ -491,19 +296,19 @@ or were disqualified since <<phase-6>>
 Let _G~12~ = G~11~_
 
 Combine _y~j~_ for all participants in _G~6~_ to reconstruct the public key for
-the group.
+the group. Additionally, calculate and store each qualified participant's
+individual public key for validating signature shares.
 
+.Phase 12
 [source, python]
 ----
-# Calculate:
+include::dkg.py[tags=phase-12]
+----
 
-for j in G_6:
-  y_j = A_j0 = g^z_j mod p
-
-Y = product(
-  for j in G_6:
-    y_j
-) mod p
+.Utility functions
+[source, python]
+----
+include::dkg_util.py[tags=phase-12]
 ----
 
 [#phase-13,reftext="Phase 13"]
@@ -525,7 +330,7 @@ penalty for being late, while _P~j~_ will receive the submission reward.
 
 [source, python]
 ----
-if nPlayers(IA + DQ) > T/2:
+if nPlayers(IA + DQ) > M_nofail:
   correctResult = Result.failure(disqualified = DQ)
 else:
   correctResult = Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
@@ -581,8 +386,9 @@ acquired its maximum number of signatures it would be able to receive, and
 thus the result receiving the plurality of support is the correct one.
 
 An exception to this is if the total number of signatures supporting all other
-submitted results is higher than _M~max~_, in which case the result is declared a
-failure without disqualifications.
+submitted results is higher than _M_, in which case the result is declared a
+failure without disqualifications; every outcome is voted against by at least
+one honest participant, so a correct outcome cannot be determined.
 
 [source, python]
 ----
@@ -592,8 +398,13 @@ while resultPublished and not finished:
 
   T_now = getCurrentBlockHeight()
   T_first = allResults.earliest.submitTime
+  T_latestVote = allResults.latest.submitTime
 
-  if T_now > T_first + T_conflict or leadResult.votes > M_max:
+  majorityVoted = leadResult.votes > M
+  timeoutReached = T_now > (T_first + T_conflict)
+  noRecentVotes = T_now - T_latestVote > T_voteResponse
+
+  if majorityVoted or (timeoutReached and noRecentVotes):
     finished = True
 
   elif correctResult = leadResult or alreadySubmitted:
@@ -691,7 +502,7 @@ def getFinalResult():
     (leadingResult, highestVoteN) = submissionVotes.maxByValue()
     totalVotes = sum(submissionVotes.values())
 
-    if totalVotes - highestVoteN >= f_max: # <3>
+    if totalVotes - highestVoteN >= M: # <3>
         return Result.failure(disqualified = [])
     else:
         return leadingResult
@@ -704,7 +515,7 @@ after one valid submission it's a free for all.
 such as when a different result was previously submitted and two
 participants submit theirs in the same block
 
-<<3>> If more than _f~max~_ participants vote for a non-leading result,
+<<3>> If more than _M_ participants vote for a non-leading result,
 our honest majority assumption has failed
 and we cannot determine the correct outcome.
 
@@ -720,3 +531,7 @@ Lecture Notes in Computer Science, vol 1592. Springer, Berlin, Heidelberg
 Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing.
 In: Feigenbaum J. (eds) Advances in Cryptology — CRYPTO ’91. CRYPTO 1991.
 Lecture Notes in Computer Science, vol 576. Springer, Berlin, Heidelberg
+
+- [[[EIP-197]]]
+EIP 197: Precompiled contracts for optimal ate pairing check on the elliptic
+curve alt_bn128

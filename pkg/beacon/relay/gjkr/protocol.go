@@ -17,42 +17,40 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// GenerateEphemeralKeyPair takes the known candidate list, and
-// generates an ephemeral ECDH keypair with every other candidate member. These
-// shares are broadcasted to every valid cadidate member.
+// GenerateEphemeralKeyPair takes the group member list and generates an
+// ephemeral ECDH keypair for every other group member. Generated public
+// ephemeral keys are broadcasted within the group.
 //
 // See Phase 1 of the protocol specification.
 func (em *EphemeralKeyPairGeneratingMember) GenerateEphemeralKeyPair() (
-	[]*EphemeralPublicKeyMessage,
+	*EphemeralPublicKeyMessage,
 	error,
 ) {
-	var ephemeralKeyMessages []*EphemeralPublicKeyMessage
+	ephemeralKeys := make(map[MemberID]*ephemeral.PublicKey)
 
-	// Calculate ephemeral public keys for every group member
+	// Calculate ephemeral key pair for every other group member
 	for _, member := range em.group.memberIDs {
 		if member == em.ID {
-			// don’t actually generate a symmetric key with ourselves
+			// don’t actually generate a key with ourselves
 			continue
 		}
 
-		ephemeralKey, err := ephemeral.GenerateKeyPair()
+		ephemeralKeyPair, err := ephemeral.GenerateKeyPair()
 		if err != nil {
 			return nil, err
 		}
 
 		// save the generated ephemeral key to our state
-		em.ephemeralKeyPairs[member] = ephemeralKey
+		em.ephemeralKeyPairs[member] = ephemeralKeyPair
 
-		ephemeralKeyMessages = append(ephemeralKeyMessages,
-			&EphemeralPublicKeyMessage{
-				senderID:           em.ID,
-				receiverID:         member,
-				ephemeralPublicKey: ephemeralKey.PublicKey,
-			},
-		)
+		// store the public key to the map for the message
+		ephemeralKeys[member] = ephemeralKeyPair.PublicKey
 	}
 
-	return ephemeralKeyMessages, nil
+	return &EphemeralPublicKeyMessage{
+		senderID:            em.ID,
+		ephemeralPublicKeys: ephemeralKeys,
+	}, nil
 }
 
 // GenerateSymmetricKeys attempts to generate symmetric keys for all remote group
@@ -84,7 +82,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 
 		// Get the ephemeral public key broadcasted by the other group member,
 		// which was intended for this group member.
-		otherMemberEphemeralPublicKey := ephemeralPubKeyMessage.ephemeralPublicKey
+		otherMemberEphemeralPublicKey := ephemeralPubKeyMessage.ephemeralPublicKeys[sm.ID]
 
 		// Create symmetric key for the current group member and the other
 		// group member by ECDH'ing the public and private key.
@@ -98,17 +96,18 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 }
 
 // CalculateMembersSharesAndCommitments starts with generating coefficients for
-// two polynomials. It then calculates shares for all group member and packs them
-// in individual messages for each peer member. Additionally, it calculates
-// commitments to `a` coefficients of first polynomial using second's polynomial
-// `b` coefficients.
+// two polynomials. It then calculates shares for all group member and packs
+// them into a broadcast message. Individual shares inside the message are
+// encrypted with the symmetric key of the indended share receiver.
+// Additionally, it calculates commitments to `a` coefficients of first
+// polynomial using second's polynomial `b` coefficients.
 //
-// If there is no symmetric key established with the given group member,
+// If there are no symmetric keys established with all other group members,
 // function yields an error.
 //
 // See Phase 3 of the protocol specification.
 func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
-	[]*PeerSharesMessage,
+	*PeerSharesMessage,
 	*MemberCommitmentsMessage,
 	error,
 ) {
@@ -126,7 +125,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 
 	// Calculate shares for other group members by evaluating polynomials defined
 	// by coefficients `a_i` and `b_i`
-	var sharesMessages []*PeerSharesMessage
+	var sharesMessage = newPeerSharesMessage(cm.ID)
 	for _, receiverID := range cm.group.MemberIDs() {
 		// s_j = f_(j) mod q
 		memberShareS := cm.evaluateMemberShare(receiverID, coefficientsA)
@@ -150,8 +149,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 			)
 		}
 
-		message, err := newPeerSharesMessage(
-			cm.ID,
+		err := sharesMessage.addShares(
 			receiverID,
 			memberShareS,
 			memberShareT,
@@ -159,13 +157,11 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 		)
 		if err != nil {
 			return nil, nil, fmt.Errorf(
-				"could not create PeerSharesMessage for receiver %v [%v]",
+				"could not add shares for receiver %v [%v]",
 				receiverID,
 				err,
 			)
 		}
-
-		sharesMessages = append(sharesMessages, message)
 	}
 
 	commitments := make([]*big.Int, len(coefficientsA))
@@ -182,7 +178,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 		commitments: commitments,
 	}
 
-	return sharesMessages, commitmentsMessage, nil
+	return sharesMessage, commitmentsMessage, nil
 }
 
 // generatePolynomial generates a random polynomial over Z_q of a given degree.
@@ -261,14 +257,14 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				// Decrypt shares using symmetric key established with sender.
 				// Since all the message are validated prior to passing to this
 				// function, decryption error should never happen.
-				shareS, err := sharesMessage.decryptShareS(symmetricKey) // s_ji
+				shareS, err := sharesMessage.decryptShareS(cvm.ID, symmetricKey) // s_ji
 				if err != nil {
 					return nil, fmt.Errorf(
 						"could not decrypt share S [%v]",
 						err,
 					)
 				}
-				shareT, err := sharesMessage.decryptShareT(symmetricKey) // t_ji
+				shareT, err := sharesMessage.decryptShareT(cvm.ID, symmetricKey) // t_ji
 				if err != nil {
 					return nil, fmt.Errorf(
 						"could not decrypt share T [%v]",
@@ -386,12 +382,16 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				return nil, fmt.Errorf("current member cannot be a part of a dispute")
 			}
 
-			symmetricKey := recoverSymmetricKey(
+			symmetricKey, err := recoverSymmetricKey(
 				sjm.protocolConfig.evidenceLog,
-				accuserID,
 				accusedID,
+				accuserID,
 				revealedAccuserPrivateKey,
 			)
+			if err != nil {
+				// TODO Should we disqualify accuser/accused member here?
+				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
+			}
 
 			shareS, shareT, err := recoverShares(
 				sjm.protocolConfig.evidenceLog,
@@ -401,7 +401,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, err
+				return nil, fmt.Errorf("could not decrypt shares [%v]", err)
 			}
 
 			// Check if `commitmentsProduct == expectedProduct`
@@ -423,21 +423,33 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 }
 
 // Recover ephemeral symmetric key used to encrypt communication between sender
-// and receiver.
+// and receiver assuming that receiver revealed its private ephemeral key.
 //
 // Finds ephemeral public key sent by sender to the receiver. Performs ECDH
 // operation between sender's public key and receiver's private key to recover
 // the ephemeral symmetric key.
 func recoverSymmetricKey(
 	evidenceLog evidenceLog,
-	receiverID, senderID MemberID,
+	senderID, receiverID MemberID,
 	receiverPrivateKey *ephemeral.PrivateKey,
-) ephemeral.SymmetricKey {
-	senderPublicKey := evidenceLog.ephemeralPublicKeyMessage(
-		senderID,
-		receiverID,
-	).ephemeralPublicKey
-	return receiverPrivateKey.Ecdh(senderPublicKey)
+) (ephemeral.SymmetricKey, error) {
+	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
+	if ephemeralPublicKeyMessage == nil {
+		return nil, fmt.Errorf(
+			"no ephemeral public key message for sender %v",
+			senderID,
+		)
+	}
+
+	senderPublicKey, ok := ephemeralPublicKeyMessage.ephemeralPublicKeys[receiverID]
+	if !ok {
+		return nil, fmt.Errorf(
+			"no ephemeral public key generated for receiver %v",
+			receiverID,
+		)
+	}
+
+	return receiverPrivateKey.Ecdh(senderPublicKey), nil
 }
 
 // Recovers from the evidence log share S and share T sent by sender to the
@@ -451,19 +463,23 @@ func recoverShares(
 	senderID, receiverID MemberID,
 	symmetricKey ephemeral.SymmetricKey,
 ) (*big.Int, *big.Int, error) {
-	peerSharesMessage := evidenceLog.peerSharesMessage(
-		senderID,
-		receiverID,
-	)
-	shareS, err := peerSharesMessage.decryptShareS(symmetricKey) // s_mj
-	if err != nil {
-		// TODO Should we disqualify accuser/accused member here?
-		return nil, nil, fmt.Errorf("cannot decrypt share S [%v", err)
+	peerSharesMessage := evidenceLog.peerSharesMessage(senderID)
+	if peerSharesMessage == nil {
+		return nil, nil, fmt.Errorf(
+			"no peer shares message for sender %v",
+			senderID,
+		)
 	}
-	shareT, err := peerSharesMessage.decryptShareT(symmetricKey) // t_mj
+
+	shareS, err := peerSharesMessage.decryptShareS(receiverID, symmetricKey) // s_mj
 	if err != nil {
 		// TODO Should we disqualify accuser/accused member here?
-		return nil, nil, fmt.Errorf("cannot decrypt share T [%v", err)
+		return nil, nil, fmt.Errorf("cannot decrypt share S [%v]", err)
+	}
+	shareT, err := peerSharesMessage.decryptShareT(receiverID, symmetricKey) // t_mj
+	if err != nil {
+		// TODO Should we disqualify accuser/accused member here?
+		return nil, nil, fmt.Errorf("cannot decrypt share T [%v]", err)
 	}
 
 	return shareS, shareT, nil
@@ -629,12 +645,16 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 
 			evidenceLog := pjm.protocolConfig.evidenceLog
 
-			recoveredSymmetricKey := recoverSymmetricKey(
+			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,
-				accuserID,
 				accusedID,
+				accuserID,
 				revealedAccuserPrivateKey,
 			)
+			if err != nil {
+				// TODO Should we disqualify accuser/accused member here?
+				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
+			}
 
 			shareS, _, err := recoverShares(
 				evidenceLog,
@@ -644,7 +664,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("cannot decrypt share S [%v", err)
+				return nil, fmt.Errorf("could not decrypt share S [%v]", err)
 			}
 
 			if pjm.isShareValidAgainstPublicKeySharePoints(
@@ -681,8 +701,8 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 	}
 
 	return &DisqualifiedMembersKeysMessage{
-		senderID:                rm.ID,
-		disqualifiedMembersKeys: disqualifiedMembersKeys,
+		senderID:                   rm.ID,
+		privateKeysForDisqualified: disqualifiedMembersKeys,
 	}
 }
 
@@ -720,15 +740,19 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	allRevealedShares := make(map[MemberID]map[MemberID]*big.Int)
 
 	for _, message := range messages {
-		for disqualifiedID, disqualifiedMemberPrivateKey := range message.disqualifiedMembersKeys {
+		for disqualifiedID, privateKeyForDisqualified := range message.privateKeysForDisqualified {
 			evidenceLog := rm.protocolConfig.evidenceLog
 
-			recoveredSymmetricKey := recoverSymmetricKey(
+			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,
-				message.senderID, // k
 				disqualifiedID,   // m
-				disqualifiedMemberPrivateKey,
+				message.senderID, // k
+				privateKeyForDisqualified,
 			)
+			if err != nil {
+				// TODO Should we disqualify sender here?
+				return nil, fmt.Errorf("cannot recover symmetric key [%v]", err)
+			}
 
 			shareS, _, err := recoverShares(
 				evidenceLog,

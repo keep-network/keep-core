@@ -10,15 +10,23 @@ import (
 )
 
 func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
-	keyPair, err := ephemeral.GenerateKeyPair()
+	keyPair1, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	keyPair2, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	publicKeys := make(map[MemberID]*ephemeral.PublicKey)
+	publicKeys[MemberID(2181)] = keyPair1.PublicKey
+	publicKeys[MemberID(9119)] = keyPair2.PublicKey
+
 	msg := &EphemeralPublicKeyMessage{
-		senderID:           MemberID(123456789),
-		receiverID:         MemberID(987654321),
-		ephemeralPublicKey: keyPair.PublicKey,
+		senderID:            MemberID(3548),
+		ephemeralPublicKeys: publicKeys,
 	}
 	unmarshaled := &EphemeralPublicKeyMessage{}
 
@@ -54,12 +62,21 @@ func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 }
 
 func TestPeerSharesMessageRoundtrip(t *testing.T) {
-	msg := &PeerSharesMessage{
-		senderID:        MemberID(997),
-		receiverID:      MemberID(112),
+	shares := make(map[MemberID]*peerShares)
+	shares[MemberID(112)] = &peerShares{
 		encryptedShareS: []byte{0x01, 0x02, 0x03, 0x04, 0x05},
 		encryptedShareT: []byte{0x0F, 0x0E, 0x0D, 0x0C, 0x0B},
 	}
+	shares[MemberID(223)] = &peerShares{
+		encryptedShareS: []byte{0x0A, 0x0E, 0x0F, 0x0F, 0x0F},
+		encryptedShareT: []byte{0x01, 0x0F, 0x0E, 0x0E, 0x0D},
+	}
+
+	msg := &PeerSharesMessage{
+		senderID: MemberID(997),
+		shares:   shares,
+	}
+
 	unmarshaled := &PeerSharesMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)

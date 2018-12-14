@@ -48,6 +48,11 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error)
 	return newWaiter, nil
 }
 
+// CurrentBlock returns the current block number.
+func (counter *localBlockCounter) CurrentBlock() (int, error) {
+	return counter.blockHeight, nil
+}
+
 // count is an internal function that counts up time to simulate the generation
 // of blocks.
 func (counter *localBlockCounter) count() {
