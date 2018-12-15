@@ -13,6 +13,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/pschlump/MiscLib"
+	"github.com/pschlump/godebug"
 )
 
 type localChain struct {
@@ -98,7 +100,7 @@ func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	defer c.submissionsMutex.Unlock()
 	x, ok := c.submissions[bigIntToHex(requestID)]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "Missing requestID in c.submissions - vote will be ignored.\n")
+		fmt.Fprintf(os.Stderr, "%sMissing requestID [%s] in c.submissions ->%s<- - vote will be ignored.%s\n", MiscLib.ColorRed, requestID, godebug.SVarI(c.submissions), MiscLib.ColorReset)
 		return
 	}
 	for pos, sub := range x.Submissions {
@@ -274,6 +276,7 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
 
+	fmt.Printf("\n\n---- Connect ---, called from %s\n\n", godebug.LF(2))
 	return &localChain{
 		relayConfig: relayconfig.Chain{
 			GroupSize: groupSize,
@@ -382,24 +385,30 @@ func (c *localChain) SubmitDKGResult(
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
+	fmt.Printf("%sAt: %s\n\tcalled from %s%s\n", MiscLib.ColorCyan, godebug.LF(), godebug.LF(2), MiscLib.ColorReset)
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
 	if c.IsDKGResultPublished(requestID, resultToPublish) {
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 		dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
 		return dkgResultPublicationPromise
 	}
 
 	c.submittedResults[bigIntToHex(requestID)] = append(c.submittedResults[bigIntToHex(requestID)], resultToPublish)
 
+	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 	c.submissionsMutex.Lock()
 	if c.submissions == nil {
 		c.submissions = make(map[string]relaychain.Submissions)
 	}
 	if _, ok := c.submissions[bigIntToHex(requestID)]; !ok {
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 		groupPublicKey, err := c.GetGroupPubKeyForRequestID(requestID)
 		if err != nil {
+			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 			// FIXME
 		}
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 		ss := relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{
@@ -417,16 +426,20 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.submissionsMutex.Unlock()
 
+	fmt.Printf("%sAt: %s, Submissions.submissions set ->%s<- %s\n", MiscLib.ColorCyan, godebug.LF(), godebug.SVarI(c.submissions), MiscLib.ColorReset)
 	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
 
+	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 	c.handlerMutex.Lock()
 	for _, handler := range c.dkgResultPublicationHandlers {
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 		go func(handler func(*event.DKGResultPublication), dkgResultPublication *event.DKGResultPublication) {
 			handler(dkgResultPublicationEvent)
 		}(handler, dkgResultPublicationEvent)
 	}
 	c.handlerMutex.Unlock()
 
+	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)

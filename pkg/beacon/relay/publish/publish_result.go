@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/pschlump/MiscLib"
 	"github.com/pschlump/godebug"
 )
 
@@ -27,8 +28,8 @@ type Publisher struct {
 	// eligible publishing member. Relates to DKG Phase 13.
 	blockStep int
 
-	// PHASE 14
 	conflictDuration int // T_conflict
+	votingThreshold  int // T_max
 }
 
 // PublishDKGResult sends a result containing i.a. group public key to the blockchain.
@@ -100,9 +101,10 @@ func (pm *Publisher) BlockCounter() (int, error) {
 func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
-	fmt.Printf("At: %s\n", godebug.LF())
+	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorYellow, godebug.LF(), MiscLib.ColorReset)
 	onVoteChan := make(chan *event.DKGResultVote)
 	chainRelay.OnDKGResultVote(func(vote *event.DKGResultVote) {
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 		onVoteChan <- vote
 	})
 	onSubmissionChan := make(chan *event.DKGResultPublication)
@@ -119,8 +121,8 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 		fmt.Printf("At: %s\n", godebug.LF())
 		return fmt.Errorf("nothing submitted")
 	}
-	if !nOfVotesBelowThreshold(submissions) {
-		fmt.Printf("At: %s\n", godebug.LF())
+	if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
+		fmt.Printf("At: %s\n", godebug.LF()) // <<<<<<<<<<<<<<<<
 		return fmt.Errorf("voting threshold exceeded")
 	}
 	fmt.Printf("At: %s\n", godebug.LF())
@@ -158,7 +160,7 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	votesAndSubmissions := func(chainRelay relayChain.Interface) (bool, error) {
 		fmt.Printf("At: %s\n", godebug.LF())
 		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
-		if !nOfVotesBelowThreshold(submissions) {
+		if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
 			fmt.Printf("At: %s\n", godebug.LF())
 			return true, fmt.Errorf("voting threshold exceeded")
 		}
@@ -184,7 +186,7 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 			fmt.Printf("At: %s\n", godebug.LF())
 			return nil
 		case vote := <-onVoteChan:
-			fmt.Printf("At: %s\n", godebug.LF())
+			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
 			if vote.RequestID.Cmp(pm.RequestID) == 0 {
 				fmt.Printf("At: %s\n", godebug.LF())
 				if result, err := votesAndSubmissions(chainRelay); result {
@@ -197,7 +199,7 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
 				fmt.Printf("At: %s\n", godebug.LF())
 				if result, err := votesAndSubmissions(chainRelay); result {
-					fmt.Printf("At: %s\n", godebug.LF())
+					fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 					return err
 				}
 			}
@@ -206,9 +208,8 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 
 }
 
-func nOfVotesBelowThreshold(submissions *relayChain.Submissions) bool {
-	var votingThreshold int // M_max
-	fmt.Printf("At: %s -- submissions=%s\n", godebug.LF(), godebug.SVarI(submissions))
+func nOfVotesBelowThreshold(submissions *relayChain.Submissions, votingThreshold int) bool {
+	fmt.Printf("At: %s\n\tCalled From %s\n\tsubmissions=%s\n", godebug.LF(), godebug.LF(2), godebug.SVarI(submissions))
 	if submissions.Submissions == nil {
 		fmt.Printf("At: %s -- submissions= NIL - no votes yet\n", godebug.LF())
 		return true
