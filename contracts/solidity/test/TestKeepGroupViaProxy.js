@@ -39,7 +39,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
-    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, 6, 10, 1, 1, 1);
+    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, 1, 2, 1, 3, 4);
 
     // Create test groups.
     groupOnePubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -84,7 +84,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     assert.equal(await keepGroupImplViaProxy.stakingWeight(account_two), 0, "Should have staking weight of 0.");
   });
 
-  it("should be able to submit a ticket within initial timeout", async function() {
+  it("should be able to submit a ticket during initial ticket submission", async function() {
 
     let randomBeaconValue = 123456789;
     await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
@@ -96,7 +96,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     assert.equal(proof[1], 3, "Should be able to get submitted ticket proof.");
   });
 
-  it("should not be able to submit a ticket after initial timeout", async function() {
+  it("should be able to submit a ticket during reactive ticket submission", async function() {
 
     let randomBeaconValue = 123456789;
     await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
@@ -110,11 +110,33 @@ contract('TestKeepGroupViaProxy', function(accounts) {
       if (err) console.log("Error mining a block.")
     });
 
-    await keepGroupImplViaProxy.submitTicket(2, 3, 4);
+    await keepGroupImplViaProxy.submitTicket(1, 2, 3);
+    await keepGroupImplViaProxy.submitTicket(2, 2, 3);
 
     let proof = await keepGroupImplViaProxy.getTicketProof(2);
-    assert.equal(proof[0], 0, "Should not be able to get submitted ticket proof.");
-    assert.equal(proof[1], 0, "Should not be able to get submitted ticket proof.");
+    assert.equal(proof[0], 2, "Should be able to get submitted ticket proof.");
+    assert.equal(proof[1], 3, "Should be able to get submitted ticket proof.");
+
+  });
+
+  it("should not be able to submit a ticket during reactive ticket submission after enough tickets received", async function() {
+
+    let randomBeaconValue = 123456789;
+    await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
+
+    await keepGroupImplViaProxy.submitTicket(1, 2, 3);
+    await keepGroupImplViaProxy.submitTicket(2, 2, 3);
+
+    // Mine one block
+    web3.currentProvider.sendAsync({
+      jsonrpc: "2.0",
+      method: "evm_mine",
+      id: 12345
+    }, function(err, _) {
+      if (err) console.log("Error mining a block.")
+    });
+
+    await exceptThrow(keepGroupImplViaProxy.submitTicket(3, 2, 3));
   });
 
   it("should be able to verify a ticket", async function() {

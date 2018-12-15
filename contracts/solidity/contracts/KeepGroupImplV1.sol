@@ -28,8 +28,8 @@ contract KeepGroupImplV1 is Ownable {
 
     struct Proof {
         address sender;
-        uint256 stakerInput;
-        uint256 virtualStakerNumber;
+        uint256 stakerValue;
+        uint256 virtualStakerIndex;
     }
 
     mapping(uint256 => Proof) internal _proofs;
@@ -52,28 +52,27 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Submit ticket to request to participate in a new candidate group.
      * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerInput' and virtualStakerNumber.
-     * @param stakerInput Staker-specific value.
-     * @param virtualStakerNumber Number within a range of 1 to staker's weight.
+     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
+     * @param stakerValue Staker-specific value.
+     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function submitTicket(
         uint256 ticketValue,
-        uint256 stakerInput,
-        uint256 virtualStakerNumber
-    ) public returns(bool) {
+        uint256 stakerValue,
+        uint256 virtualStakerIndex
+    ) public {
 
-        // Check if there are already enough tickets to form a group.
-        require(_tickets.length < _groupSize);
-
-        // Check if initial timeout for the ticket submission is reached.
-        if (block.number > _submissionStart + _timeoutInitial) {
-            return false;
+        if (block.number > _submissionStart + _timeoutSubmission) {
+            revert("Ticket submission period is over.");
         }
 
+        if (block.number > _submissionStart + _timeoutInitial && _tickets.length > _groupSize) {
+            revert("Initial submission period is over with enough tickets received.");
+        }
+ 
         _tickets.push(ticketValue);
-        _proofs[ticketValue] = Proof(msg.sender, stakerInput, virtualStakerNumber);
+        _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
 
-        return true;
     }
 
     /**
@@ -81,8 +80,8 @@ contract KeepGroupImplV1 is Ownable {
      */
     function getTicketProof(uint256 ticketValue) public view returns (uint256, uint256) {
         return (
-            _proofs[ticketValue].stakerInput,
-            _proofs[ticketValue].virtualStakerNumber
+            _proofs[ticketValue].stakerValue,
+            _proofs[ticketValue].virtualStakerIndex
         );
     }
 
@@ -127,7 +126,7 @@ contract KeepGroupImplV1 is Ownable {
 
         Proof memory proof = _proofs[ticketValue];
 
-        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, proof.stakerInput, proof.virtualStakerNumber)));
+        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, proof.stakerValue, proof.virtualStakerIndex)));
 
         if (ticketValue == expected) {
             punish(msg.sender);
