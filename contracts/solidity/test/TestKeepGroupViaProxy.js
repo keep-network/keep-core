@@ -94,11 +94,19 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     let randomBeaconValue = 123456789;
     await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
 
-    await keepGroupImplViaProxy.submitTicket(1, 2, 3);
+    let stakerValue = account_one;
+    let virtualStakerIndex = 1;
 
-    let proof = await keepGroupImplViaProxy.getTicketProof(1);
-    assert.equal(proof[0], 2, "Should be able to get submitted ticket proof.");
-    assert.equal(proof[1], 3, "Should be able to get submitted ticket proof.");
+    let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex);
+
+    let proof = await keepGroupImplViaProxy.getTicketProof(ticketValue);
+    assert.equal(proof[0].equals(new BigNumber(stakerValue)), true , "Should be able to get submitted ticket proof.");
+    assert.equal(proof[1], virtualStakerIndex, "Should be able to get submitted ticket proof.");
   });
 
   it("should be able to submit a ticket during reactive ticket submission", async function() {
@@ -115,12 +123,24 @@ contract('TestKeepGroupViaProxy', function(accounts) {
       if (err) console.log("Error mining a block.")
     });
 
-    await keepGroupImplViaProxy.submitTicket(1, 2, 3);
-    await keepGroupImplViaProxy.submitTicket(2, 2, 3);
+    let stakerValue = account_one;
+    let virtualStakerIndex = 1;
+    let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex);
 
-    let proof = await keepGroupImplViaProxy.getTicketProof(2);
-    assert.equal(proof[0], 2, "Should be able to get submitted ticket proof.");
-    assert.equal(proof[1], 3, "Should be able to get submitted ticket proof.");
+    stakerValue = account_two;
+    ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex, {from: account_two});
+
+    let proof = await keepGroupImplViaProxy.getTicketProof(ticketValue);
+    assert.equal(proof[0].equals(new BigNumber(stakerValue)), true , "Should be able to get submitted ticket proof.");
+    assert.equal(proof[1], virtualStakerIndex, "Should be able to get submitted ticket proof.");
 
   });
 
@@ -129,8 +149,20 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     let randomBeaconValue = 123456789;
     await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
 
-    await keepGroupImplViaProxy.submitTicket(1, 2, 3);
-    await keepGroupImplViaProxy.submitTicket(2, 2, 3);
+    let stakerValue = account_one;
+    let virtualStakerIndex = 1;
+    let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex);
+
+    stakerValue = account_two;
+    ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex, {from: account_two});
 
     // Mine one block
     web3.currentProvider.sendAsync({
@@ -141,7 +173,13 @@ contract('TestKeepGroupViaProxy', function(accounts) {
       if (err) console.log("Error mining a block.")
     });
 
-    await exceptThrow(keepGroupImplViaProxy.submitTicket(3, 2, 3));
+    stakerValue = account_one;
+    virtualStakerIndex = 2;
+    ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+    await exceptThrow(keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex));
   });
 
   it("should be able to verify a ticket", async function() {

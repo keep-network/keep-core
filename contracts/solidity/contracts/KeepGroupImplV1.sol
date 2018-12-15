@@ -77,10 +77,16 @@ contract KeepGroupImplV1 is Ownable {
         if (block.number > _submissionStart + _timeoutInitial && _tickets.length > _groupSize) {
             revert("Initial submission period is over with enough tickets received.");
         }
- 
-        _tickets.push(ticketValue);
-        _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
 
+        // Invalid tickets are rejected and their senders penalized.
+        if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
+            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+            TokenStaking stakingContract = TokenStaking(_stakingContract);
+            stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
+        } else {
+            _tickets.push(ticketValue);
+            _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+        }
     }
 
     /**
