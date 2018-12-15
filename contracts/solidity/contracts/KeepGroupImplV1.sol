@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./StakingProxy.sol";
+import "./TokenStaking.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
@@ -47,6 +48,13 @@ contract KeepGroupImplV1 is Ownable {
     function runGroupSelection(uint256 randomBeaconValue) public onlyOwner {
         _submissionStart = block.number;
         _randomBeaconValue = randomBeaconValue;
+    }
+
+    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+    address internal _stakingContract;
+
+    function authorizeStakingContract(address stakingContract) public onlyOwner {
+        _stakingContract = stakingContract;
     }
 
     /**
@@ -115,9 +123,9 @@ contract KeepGroupImplV1 is Ownable {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public view returns(bool) {
-        require(cheapCheck(staker, stakerValue, virtualStakerIndex));
+        bool passedCheapCheck = cheapCheck(staker, stakerValue, virtualStakerIndex);
         uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, stakerValue, virtualStakerIndex)));
-        return ticketValue == expected;
+        return passedCheapCheck && ticketValue == expected;
     }
 
     function challenge(
@@ -125,21 +133,22 @@ contract KeepGroupImplV1 is Ownable {
     ) public {
 
         Proof memory proof = _proofs[ticketValue];
+        require(proof.sender != 0, "Ticket must be published.");
 
-        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, proof.stakerValue, proof.virtualStakerIndex)));
-
-        if (ticketValue == expected) {
-            punish(msg.sender);
+        // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+        TokenStaking stakingContract = TokenStaking(_stakingContract);
+        if (costlyCheck(
+            proof.sender,
+            ticketValue,
+            proof.stakerValue,
+            proof.virtualStakerIndex
+        )) {
+            // Slash challenger's stake balance.
+            stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
         } else {
-            punish(proof.sender);
+            // Slash invalid ticket sender stake balance and reward the challenger.
+            stakingContract.authorizedTransferFrom(proof.sender, msg.sender, _minStake);
         }
-
-    }
-
-    function punish(
-        address staker
-    ) private {
-        // TODO add permissions to this contract to access staking contracts
     }
 
     // Temporary Code for Milestone 1 follows

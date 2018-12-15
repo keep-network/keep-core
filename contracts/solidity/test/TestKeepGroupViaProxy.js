@@ -14,11 +14,12 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
 contract('TestKeepGroupViaProxy', function(accounts) {
 
-  let token, stakingProxy, stakingContract, 
+  let token, stakingProxy, stakingContract, minimumStake,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupOnePubKey, groupTwoPubKey,
     account_one = accounts[0],
-    account_two = accounts[1];
+    account_two = accounts[1],
+    account_three = accounts[2];
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -35,7 +36,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     await keepRandomBeaconImplViaProxy.initialize(100, duration.days(30));
 
     // Initialize Keep Group contract
-    let minimumStake = 200;
+    minimumStake = 200;
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
@@ -49,6 +50,10 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake, "", {from: account_one});
+
+    // Send tokens to account_two and stake
+    await token.transfer(account_two, minimumStake, {from: account_one});
+    await token.approveAndCall(stakingContract.address, minimumStake, "", {from: account_two});
 
   });
 
@@ -81,7 +86,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   it("should be able to get staking weight", async function() {
     assert.equal(await keepGroupImplViaProxy.stakingWeight(account_one), 1, "Should have the staking weight of 1.");
-    assert.equal(await keepGroupImplViaProxy.stakingWeight(account_two), 0, "Should have staking weight of 0.");
+    assert.equal(await keepGroupImplViaProxy.stakingWeight(account_three), 0, "Should have staking weight of 0.");
   });
 
   it("should be able to submit a ticket during initial ticket submission", async function() {
@@ -163,6 +168,37 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     assert.equal(await keepGroupImplViaProxy.costlyCheck(
       account_one, 1, stakerValue, virtualStakerIndex
     ), false, "Should fail verifying invalid ticket.");
+
+  });
+
+  it("should be able to challenge a ticket", async function() {
+
+    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+    await keepGroupImplViaProxy.authorizeStakingContract(stakingContract.address);
+
+    let randomBeaconValue = 123456789;
+    await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
+
+    // Submit tickets as account_one
+    let stakerValue = account_one;
+    let virtualStakerIndex = 1;
+    let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex);
+    await keepGroupImplViaProxy.submitTicket(1, stakerValue, virtualStakerIndex); // invalid ticket
+
+    // Challenging valid ticket
+    let previousBalance = await stakingContract.stakeBalanceOf(account_two);
+    await keepGroupImplViaProxy.challenge(ticketValue, {from: account_two});
+    assert.equal(await stakingContract.stakeBalanceOf(account_two), previousBalance.toNumber() - minimumStake, "Should result slashing challenger's balance");
+
+    // Challenging invalid ticket
+    previousBalance = await stakingContract.stakeBalanceOf(account_two);
+    await keepGroupImplViaProxy.challenge(1, {from: account_two});
+    assert.equal(await stakingContract.stakeBalanceOf(account_two), previousBalance.toNumber() + minimumStake, "Should result rewarding challenger's balance");
 
   });
 });
