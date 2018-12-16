@@ -64,6 +64,7 @@ func (c *localChain) CurrentBlock() (int, error) {
 	return c.blockCounter.CurrentBlock()
 }
 
+// xyzzy - remove function/interface etc
 // MapRequestIDToGroupPubKey Assoiciate requestID with a groupPubKey
 func (c *localChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error {
 	c.groupPublicKeyMapMutex.Lock()
@@ -72,6 +73,7 @@ func (c *localChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) 
 	return nil
 }
 
+// xyzzy - remove function/interface etc
 // GetGroupPubKeyForRequestID given requestID return the groupPubKey
 func (c *localChain) GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error) {
 	c.groupPublicKeyMapMutex.Lock()
@@ -365,16 +367,18 @@ func (c *localChain) RequestRelayEntry(
 func (c *localChain) IsDKGResultPublished(
 	requestID *big.Int, result *relaychain.DKGResult,
 ) bool {
-	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID == bigIntToHex(requestID) {
-			for _, publishedResult := range publishedResults {
-				if publishedResult.Equals(result) {
-					return true
-				}
+	requestIDstr := bigIntToHex(requestID)
+	fmt.Printf("IsDKGResultPublished: requestID = %s, result = %s, c.submittedResults = %s\n",
+		requestIDstr, godebug.SVarI(result), godebug.SVarI(c.submittedResults))
+	if publishedResults, ok := c.submittedResults[requestIDstr]; ok {
+		for _, publishedResult := range publishedResults {
+			if publishedResult.Equals(result) {
+				fmt.Printf("\nIsDKGResultPublished: return true\n")
+				return true
 			}
-			return false
 		}
 	}
+	fmt.Printf("\nIsDKGResultPublished: return false\n")
 	return false
 }
 
@@ -382,6 +386,7 @@ func (c *localChain) IsDKGResultPublished(
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int, resultToPublish *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
+	requestIDstr := bigIntToHex(requestID)
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
@@ -394,39 +399,43 @@ func (c *localChain) SubmitDKGResult(
 		return dkgResultPublicationPromise
 	}
 
-	c.submittedResults[bigIntToHex(requestID)] = append(c.submittedResults[bigIntToHex(requestID)], resultToPublish)
+	c.submittedResults[requestIDstr] = append(c.submittedResults[requestIDstr], resultToPublish)
 
 	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
 	c.submissionsMutex.Lock()
 	if c.submissions == nil {
 		c.submissions = make(map[string]relaychain.Submissions)
 	}
-	if _, ok := c.submissions[bigIntToHex(requestID)]; !ok {
+	if _, ok := c.submissions[requestIDstr]; !ok {
 		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-		groupPublicKey, err := c.GetGroupPubKeyForRequestID(requestID)
-		if err != nil {
-			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-			// FIXME
-		}
+		fmt.Printf("%s\tMUST SEE THIS! At: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
+		/*
+			xyzzy remove comment
+						groupPublicKey, err := c.GetGroupPubKeyForRequestID(requestID)
+						if err != nil || groupPublicKey == nil {
+							fmt.Printf("%s!!! Error - could not get GroupPubKey for requestID=[%s] At: %s%s\n",
+								MiscLib.ColorRed, requestID, godebug.LF(), MiscLib.ColorReset)
+						}
+		*/
 		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-		ss := relaychain.Submissions{
+		c.submissions[requestIDstr] = relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{
-					DKGResult: &relaychain.DKGResult{
-						Success:        true,
-						GroupPublicKey: groupPublicKey,
-						Disqualified:   []bool{},
-						Inactive:       []bool{},
-					},
-					Votes: 1,
+					DKGResult: resultToPublish,
+					Votes:     1,
 				},
 			},
 		}
-		c.submissions[bigIntToHex(requestID)] = ss
 	}
 	c.submissionsMutex.Unlock()
 
-	fmt.Printf("%sAt: %s, Submissions.submissions set ->%s<- %s\n", MiscLib.ColorCyan, godebug.LF(), godebug.SVarI(c.submissions), MiscLib.ColorReset)
+	fmt.Printf("%s*** FINAL *** At: %s, Submissions.submissions set ->%s<-\n c.submittedResults ->%s<- %s\n",
+		MiscLib.ColorCyan, godebug.LF(), godebug.SVarI(c.submissions), godebug.SVarI(c.submittedResults), MiscLib.ColorReset)
+
+	// ----------------------------------------------------------------------------------
+	// Process event below this point.
+	// ----------------------------------------------------------------------------------
+
 	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
 
 	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)

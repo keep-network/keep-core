@@ -127,7 +127,7 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	}
 	fmt.Printf("At: %s\n", godebug.LF())
 	if !submissions.Contains(correctResult) {
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("At: %s --- Submissions did not contain the 'correctResult' passed, %s\n", godebug.LF(), godebug.SVarI(correctResult))
 		chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
 		return nil
 	}
@@ -195,7 +195,7 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 				}
 			}
 		case submission := <-onSubmissionChan:
-			fmt.Printf("At: %s\n", godebug.LF())
+			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
 				fmt.Printf("At: %s\n", godebug.LF())
 				if result, err := votesAndSubmissions(chainRelay); result {

@@ -2,19 +2,20 @@ package chain
 
 import "math/big"
 
-// Submissions - PHASE 14
+// Submissions is the set of submissions for a requestID
 type Submissions struct {
 	requestID   *big.Int
 	Submissions []*Submission
 }
 
-// Submission - PHASE 14
+// Submission is an individual submission that counts the number of votes
 type Submission struct {
 	DKGResult *DKGResult
 	Votes     int
 }
 
-// Lead returns a submission with the highest number of votes.
+// Lead returns a submission with the highest number of votes.  If there are
+// no submissions it returns nil.
 func (s *Submissions) Lead() *Submission {
 	if len(s.Submissions) == 0 {
 		return nil

@@ -224,6 +224,8 @@ func TestPhase14_pt1(t *testing.T) {
 						defer wg.Done()
 						publisher.Phase14(test.correctResult)
 					}()
+					time.Sleep(1 * time.Second)
+
 				default:
 					fmt.Printf("In test [%s] invalid op [%s] at %d\n", testName, ex.op, pc)
 				}

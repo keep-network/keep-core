@@ -64,14 +64,18 @@ func bigIntEquals(expected *big.Int, actual *big.Int) bool {
 // boolSlicesEqual checks if two slices of bool are equal. Slices need to have
 // the same length and have the same order of entries.
 func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
+	// fmt.Printf("boolSliceEqual: %s v.s. %s\n", godebug.SVarI(expectedSlice), godebug.SVarI(actualSlice))
 	if len(expectedSlice) != len(actualSlice) {
+		// fmt.Printf("boolSliceEqual: false!\n")
 		return false
 	}
 	for i := range expectedSlice {
 		if expectedSlice[i] != actualSlice[i] {
+			// fmt.Printf("boolSliceEqual: false!\n")
 			return false
 		}
 	}
+	// fmt.Printf("boolSliceEqual: Yes - True!\n")
 	return true
 }
 
