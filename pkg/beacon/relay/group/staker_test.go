@@ -51,7 +51,7 @@ func TestValidateProofs(t *testing.T) {
 	binary.LittleEndian.PutUint64(virtualStakerBytes, staker.VirtualStakers)
 	valueBytes = append(valueBytes, virtualStakerBytes...)
 
-	expectedValue := Value(sha256.Sum256(valueBytes[:]))
+	expectedValue := SHAValue(sha256.Sum256(valueBytes[:]))
 
 	tickets, err := staker.GenerateTickets(beaconOutput)
 	if err != nil {
