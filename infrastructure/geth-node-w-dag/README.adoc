@@ -1,0 +1,19 @@
+= Build Geth Node image with prebaked DAG
+
+== WARNING
+This produces a very large (1GB) image. You're trading startup time for size.
+
+To build the docker image
+```
+docker build --pull --squash --no-cache --rm -t $DOCKER_ID_USER/geth-node-w-dag .
+```
+
+You can list your new image with this command:
+```
+docker images | grep geth-node-w-dag
+```
+
+Push the image to Docker Hub:
+```
+docker push $DOCKER_ID_USER/geth-node-w-dag
+```
