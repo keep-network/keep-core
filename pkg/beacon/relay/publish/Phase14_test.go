@@ -111,25 +111,17 @@ func TestPhase14_pt1(t *testing.T) {
 			},
 		},
 		"send a Vote - 1 vote after start": {
-			runIt: true,
+			runIt: false,
 			correctResult: &relayChain.DKGResult{
 				GroupPublicKey: big.NewInt(4001),
 			},
 			publishingIndex: 0,
 			steps: []runCode{
-				//				{
-				//					op:          "setup-requestID-to-GroupPubKey",
-				//					requestID:   big.NewInt(101),
-				//					groupPubKey: big.NewInt(4001),
-				//				},
-				{
-					op:          "setup-requestID-to-GroupPubKey",
-					requestID:   big.NewInt(102),
-					groupPubKey: big.NewInt(4001),
-				},
-				// {op: "sleep-1-sec"},
-				{
-					op:        "submit-result",
+				//	{ op:          "setup-requestID-to-GroupPubKey",
+				//		requestID:   big.NewInt(102),
+				//		groupPubKey: big.NewInt(4001),
+				//	},
+				{op: "submit-result",
 					requestID: big.NewInt(102),
 					resultToPublish: &relayChain.DKGResult{
 						Success:        true,
@@ -139,8 +131,7 @@ func TestPhase14_pt1(t *testing.T) {
 				{op: "call-phase14"}, // Places result onto channel
 				{op: "sleep", intVal: 500},
 				{op: "go-phase14"}, // Process result
-				{
-					op:        "send-vote",
+				{op: "send-vote",
 					requestID: big.NewInt(102),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
@@ -148,16 +139,59 @@ func TestPhase14_pt1(t *testing.T) {
 					},
 				},
 				{op: "dump-submissions", requestID: big.NewInt(102)},
-				{
-					op:        "validate-votes",
+				{op: "validate-votes",
 					requestID: big.NewInt(102), // request to check
 					intVal:    2,               // # of votes to expect
 					intVal2:   0,               // positon in submission set
 				},
 			},
 		},
-		// Send a Vote for a result
 		// Create a result and call with 1 result alreay in place
+		"current test": {
+			runIt: true,
+			correctResult: &relayChain.DKGResult{
+				GroupPublicKey: big.NewInt(4001),
+			},
+			publishingIndex: 0,
+			steps: []runCode{
+				//	{ op:          "setup-requestID-to-GroupPubKey",
+				//		requestID:   big.NewInt(102),
+				//		groupPubKey: big.NewInt(4001),
+				//	},
+				{op: "submit-result",
+					requestID: big.NewInt(102),
+					resultToPublish: &relayChain.DKGResult{
+						Success:        true,
+						GroupPublicKey: big.NewInt(4001),
+					},
+				},
+				// {op: "call-phase14"}, // Places result onto channel
+				{op: "sleep", intVal: 500},
+				{op: "go-phase14"}, // Process result
+				{op: "send-vote",
+					requestID: big.NewInt(102),
+					dkgResult: &relayChain.DKGResult{
+						Success:        true,
+						GroupPublicKey: big.NewInt(4001),
+					},
+				},
+				{op: "dump-submissions", requestID: big.NewInt(102)},
+				{op: "validate-votes",
+					requestID: big.NewInt(102), // request to check
+					intVal:    2,               // # of votes to expect
+					intVal2:   0,               // positon in submission set
+				},
+				{op: "sleep", intVal: 1500},
+				{op: "send-vote",
+					requestID: big.NewInt(102),
+					dkgResult: &relayChain.DKGResult{
+						Success:        true,
+						GroupPublicKey: big.NewInt(4001),
+					},
+				},
+				{op: "sleep", intVal: 1500},
+			},
+		},
 	}
 
 	thresholdRelayChain := chainHandle.ThresholdRelay()
@@ -222,7 +256,10 @@ func TestPhase14_pt1(t *testing.T) {
 					wg.Add(1)
 					go func() {
 						defer wg.Done()
-						publisher.Phase14(test.correctResult)
+						err := publisher.Phase14(test.correctResult)
+						if err != nil {
+							fmt.Printf("Error: [%v]\n", err)
+						}
 					}()
 					time.Sleep(1 * time.Second)
 
@@ -235,17 +272,6 @@ func TestPhase14_pt1(t *testing.T) {
 
 	wg.Wait()
 }
-
-/*
-	chainRelay := publisher.chainHandle.ThresholdRelay()
-	_ = chainRelay
-
-	blockCounter, err := publisher.chainHandle.BlockCounter()
-	if err != nil {
-		t.Fatalf("unexpected error [%v]", err)
-	}
-	_ = blockCounter
-*/
 
 func initChainHandle2(threshold, groupSize int) (chainHandle chain.Handle, initialBlock int, err error) {
 	chainHandle = local.Connect(groupSize, threshold)

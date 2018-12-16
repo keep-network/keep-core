@@ -390,25 +390,33 @@ func (c *localChain) SubmitDKGResult(
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	fmt.Printf("%sAt: %s\n\tcalled from %s%s\n", MiscLib.ColorCyan, godebug.LF(), godebug.LF(2), MiscLib.ColorReset)
+	if db1 {
+		fmt.Printf("%sAt: %s\n\tcalled from %s%s\n", MiscLib.ColorCyan, godebug.LF(), godebug.LF(2), MiscLib.ColorReset)
+	}
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
 	if c.IsDKGResultPublished(requestID, resultToPublish) {
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+		if db1 {
+			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+		}
 		dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
 		return dkgResultPublicationPromise
 	}
 
 	c.submittedResults[requestIDstr] = append(c.submittedResults[requestIDstr], resultToPublish)
 
-	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+	if db1 {
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+	}
 	c.submissionsMutex.Lock()
 	if c.submissions == nil {
 		c.submissions = make(map[string]relaychain.Submissions)
 	}
 	if _, ok := c.submissions[requestIDstr]; !ok {
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-		fmt.Printf("%s\tMUST SEE THIS! At: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
+		if db1 {
+			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+			fmt.Printf("%s\tMUST SEE THIS! At: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
+		}
 		/*
 			xyzzy remove comment
 						groupPublicKey, err := c.GetGroupPubKeyForRequestID(requestID)
@@ -417,7 +425,9 @@ func (c *localChain) SubmitDKGResult(
 								MiscLib.ColorRed, requestID, godebug.LF(), MiscLib.ColorReset)
 						}
 		*/
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+		if db1 {
+			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+		}
 		c.submissions[requestIDstr] = relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{
@@ -429,8 +439,10 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.submissionsMutex.Unlock()
 
-	fmt.Printf("%s*** FINAL *** At: %s, Submissions.submissions set ->%s<-\n c.submittedResults ->%s<- %s\n",
-		MiscLib.ColorCyan, godebug.LF(), godebug.SVarI(c.submissions), godebug.SVarI(c.submittedResults), MiscLib.ColorReset)
+	if db1 {
+		fmt.Printf("%s*** FINAL *** At: %s, Submissions.submissions set ->%s<-\n c.submittedResults ->%s<- %s\n",
+			MiscLib.ColorCyan, godebug.LF(), godebug.SVarI(c.submissions), godebug.SVarI(c.submittedResults), MiscLib.ColorReset)
+	}
 
 	// ----------------------------------------------------------------------------------
 	// Process event below this point.
@@ -438,17 +450,23 @@ func (c *localChain) SubmitDKGResult(
 
 	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
 
-	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+	if db1 {
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+	}
 	c.handlerMutex.Lock()
 	for _, handler := range c.dkgResultPublicationHandlers {
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+		if db1 {
+			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+		}
 		go func(handler func(*event.DKGResultPublication), dkgResultPublication *event.DKGResultPublication) {
 			handler(dkgResultPublicationEvent)
 		}(handler, dkgResultPublicationEvent)
 	}
 	c.handlerMutex.Unlock()
 
-	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+	if db1 {
+		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+	}
 	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
@@ -468,3 +486,5 @@ func (c *localChain) OnDKGResultPublished(
 		handler,
 	)
 }
+
+const db1 = false

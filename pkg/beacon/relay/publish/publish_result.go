@@ -101,15 +101,18 @@ func (pm *Publisher) BlockCounter() (int, error) {
 func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
-	fmt.Printf("%sAt: %s%s\n", MiscLib.ColorYellow, godebug.LF(), MiscLib.ColorReset)
+	fmt.Printf("%sTOP At: %s%s\n", MiscLib.ColorYellow, godebug.LF(), MiscLib.ColorReset)
 	onVoteChan := make(chan *event.DKGResultVote)
 	chainRelay.OnDKGResultVote(func(vote *event.DKGResultVote) {
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
+		fmt.Printf("%sVote Onto Channel%s ========== %s At: %s\n", MiscLib.ColorCyan, MiscLib.ColorGreen, MiscLib.ColorReset, godebug.LF())
 		onVoteChan <- vote
+		fmt.Printf("%sVote Onto Channel%s ++++++++++ %s At: %s\n", MiscLib.ColorCyan, MiscLib.ColorGreen, MiscLib.ColorReset, godebug.LF())
 	})
 	onSubmissionChan := make(chan *event.DKGResultPublication)
 	chainRelay.OnDKGResultPublished(func(result *event.DKGResultPublication) {
+		fmt.Printf("%sSubmission Onto Channel%s ========== %s At: %s\n", MiscLib.ColorCyan, MiscLib.ColorGreen, MiscLib.ColorReset, godebug.LF())
 		onSubmissionChan <- result
+		fmt.Printf("%sSubmission Onto Channel%s ++++++++++ %s At: %s\n", MiscLib.ColorCyan, MiscLib.ColorGreen, MiscLib.ColorReset, godebug.LF())
 	})
 
 	fmt.Printf("At: %s\n", godebug.LF())
@@ -118,24 +121,24 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	}
 	submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
 	if submissions == nil {
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 		return fmt.Errorf("nothing submitted")
 	}
 	if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
-		fmt.Printf("At: %s\n", godebug.LF()) // <<<<<<<<<<<<<<<<
+		fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 		return fmt.Errorf("voting threshold exceeded")
 	}
 	fmt.Printf("At: %s\n", godebug.LF())
 	if !submissions.Contains(correctResult) {
 		fmt.Printf("At: %s --- Submissions did not contain the 'correctResult' passed, %s\n", godebug.LF(), godebug.SVarI(correctResult))
 		chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
-		return nil
+		// return nil
 	}
 
 	fmt.Printf("At: %s\n", godebug.LF())
 	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 		return fmt.Errorf("block counter failure [%v]", err)
 	}
 
@@ -143,7 +146,7 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	// firstBlock := 0 // T_First
 	firstBlock, err := blockCounter.CurrentBlock() // T_First
 	if err != nil {
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 		return fmt.Errorf("current block failure [%v]", err)
 	}
 
@@ -152,55 +155,58 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 	// that we should wait for block `T_first + T_conflict`. Need clarification.
 	phaseDurationWaiter, err := blockCounter.BlockWaiter(firstBlock + pm.conflictDuration)
 	if err != nil {
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 		return fmt.Errorf("block waiter failure [%v]", err)
 	}
 
-	fmt.Printf("At: %s\n", godebug.LF())
 	votesAndSubmissions := func(chainRelay relayChain.Interface) (bool, error) {
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("VotesAndSubmission - At: %s\n", godebug.LF())
 		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
 		if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
-			fmt.Printf("At: %s\n", godebug.LF())
+			fmt.Printf("\tPassed voting threshold - return true - At: %s\n", godebug.LF())
 			return true, fmt.Errorf("voting threshold exceeded")
 		}
-
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("\tAt: %s\n", godebug.LF())
 		if !submissions.Lead().DKGResult.Equals(correctResult) {
-			fmt.Printf("At: %s\n", godebug.LF())
+			fmt.Printf("\tLEADING Result - return true - At: %s\n", godebug.LF())
 			chainRelay.Vote(pm.RequestID, correctResult.Hash())
 			return true, nil
 		} else if !submissions.Contains(correctResult) {
-			fmt.Printf("At: %s\n", godebug.LF())
+			fmt.Printf("\tSubmission contains correctResult - return true - At: %s\n", godebug.LF())
 			chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
 			return true, nil
 		}
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("\tNope Nope Nope ! return false ! At: %s\n", godebug.LF())
 		return false, nil
 	}
 
+	fmt.Printf("\n\n!!!!! %sBefore FOR LOOP%s !!!!!! At: %s\n\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 	for {
-		fmt.Printf("At: %s\n", godebug.LF())
+		fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 		select {
 		case <-phaseDurationWaiter:
-			fmt.Printf("At: %s\n", godebug.LF())
+			fmt.Printf("%sSUCCESS - waited long ehough - At:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 			return nil
 		case vote := <-onVoteChan:
-			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
+			fmt.Printf("%sGOT A VOTE ----- At: %s%s\n", MiscLib.ColorRed, godebug.LF(), MiscLib.ColorReset)
 			if vote.RequestID.Cmp(pm.RequestID) == 0 {
-				fmt.Printf("At: %s\n", godebug.LF())
+				fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 				if result, err := votesAndSubmissions(chainRelay); result {
-					fmt.Printf("At: %s\n", godebug.LF())
-					return err
+					fmt.Printf("%sError: [%s] At:%s %s\n", MiscLib.ColorRed, err, MiscLib.ColorReset, godebug.LF())
+					if err != nil {
+						return err
+					}
 				}
 			}
 		case submission := <-onSubmissionChan:
-			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
+			fmt.Printf("%sGOT A SUBMISSION: At: %s%s\n", MiscLib.ColorRed, godebug.LF(), MiscLib.ColorReset)
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
-				fmt.Printf("At: %s\n", godebug.LF())
+				fmt.Printf("%sAt:%s %s\n", MiscLib.ColorRed, MiscLib.ColorReset, godebug.LF())
 				if result, err := votesAndSubmissions(chainRelay); result {
-					fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-					return err
+					fmt.Printf("%sError: [%s] At:%s %s\n", MiscLib.ColorRed, err, MiscLib.ColorReset, godebug.LF())
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
