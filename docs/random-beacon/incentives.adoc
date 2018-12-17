@@ -267,11 +267,19 @@ may not be paid out. In this case there will be leftovers.
 _R~max~ = R~total~(T~output_expected~)_ +
 _R~leftover~(T) = R~max~ - R~total~(T)_
 
-If _R~leftover~(T) > 0_, the surplus needs to be allocated somehow. One
-pssibility is to establish a _leftover pool_ and use the pool to subsidize
+If _R~leftover~(T) > 0_, the surplus needs to be allocated somehow.
+
+===== Leftover pool
+
+One possibility is to establish a _leftover pool_ and use the pool to subsidize
 later outputs by an amount determined by the currency balance in the pool:
 
 _Bid'~i~ = Bid~i~ + R~leftover_subsidy~(PoolBalance~i~, Bid~i~)_ +
 _PoolBalance~i+1~ = PoolBalance~i~ - R~leftover_subsidy~(PoolBalance~i~, Bid~i~)_
 
+===== Leftover refund
 
+Another possibility is to refund the leftovers to the requester. This could be
+desirable as compensation for slowness of output, but if a large number of
+customers contributed to the request payment it may be inconvenient to refund
+them all proportionally.
