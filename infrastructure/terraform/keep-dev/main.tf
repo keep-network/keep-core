@@ -143,19 +143,9 @@ module "gke_cluster" {
   labels = "${local.labels}"
 }
 
-resource "helm_release" "openvpn" {
-  name      = "helm-openvpn"
-  namespace = "default"
-  chart     = "stable/openvpn"
-  version   = "3.10.0"
-
-  set {
-    name  = "openvpn.redirectGateway"
-    value = "false"
-  }
-
-  set {
-    name  = "openvpn.conf"
-    value = "push \"route 172.16.0.0 255.255.255.240\""
-  }
+resource "google_compute_global_address" "atlantis_external_ip" {
+  name         = "${var.atlantis_ip_name}-${count.index}"
+  project      = "${module.project.project_id}"
+  address_type = "${upper(var.atlantis_ip_address_type)}"
+  labels       = "${local.labels}"
 }
