@@ -424,22 +424,39 @@ power.
 
 TODO: clean up seriously
 
-If the trigger transaction happens at time T, group G_i will not expire. If the transaction happens at T' > T, group G_i will expire. Mallory dislikes group G_i and is able to delay the trigger transaction to block T'.
+===== Why the limited lifespan manipulation is unavoidable
 
-If the trigger transaction is a different transaction than the one that selects the next signing group for output V_j:
+If the trigger transaction happens at time _T_, group _G~i~_ will not expire. If
+the transaction happens at _T' > T_, group _G~i~_ will expire. Mallory dislikes
+group _G~i~_ and is able to delay the trigger transaction to block _T'_.
 
-If the transaction arrives at T, group G_i does not expire, and is present in the pool from which the group to output V_j is selected
-If the transaction arrives at T', group G_i expires, and is absent from the pool for V_j. Mallory's goal is achieved.
-If the trigger transaction is the same one which selects group to produce output V_j, we get two different scenarios based on whether expiration is applied before selection (so any groups that expire are removed from the pool for V_j), or after (so even expiring groups are eligible for V_j but will be removed from the pool for any later outputs).
+If the trigger transaction is a different transaction than the one that selects
+the next signing group for output _V~j~_:
+
+- If the transaction arrives at _T_, group _G~i~_ does not expire, and is
+present in the pool from which the group to output _V~j~_ is selected
+- If the transaction arrives at _T'_, group _G~i~_ expires, and is absent from
+the pool for _V~j~_. Mallory's goal is achieved.
+
+If the trigger transaction is the same one which selects group to produce output
+_V~j~_, we get two different scenarios based on whether expiration is applied
+before selection (so any groups that expire are removed from the pool for
+_V~j~_), or after (so even expiring groups are eligible for _V~j~_ but will be
+removed from the pool for any later outputs).
 
 If expiration is applied before selection:
 
-At T, G_i doesn't expire, and is thus eligible for V_j
-At T', G_i has expired and is not eligible for V_j. Mallory's goal is achived.
+- At _T_, _G~i~_ doesn't expire, and is thus eligible for _V~j~_
+- At _T'_, _G~i~_ has expired and is not eligible for _V~j~_. Mallory's goal is achived.
+
 If expiration is applied after selection:
 
-At T, G_i is eligible for V_j, and is also not removed and thus stays in the pool for V_j+1 as well
-At T', G_i is eligible for V_j despite being marked for expiration, but it will not be in the pool for V_j+1. Mallory's goal is achieved on the next output.
+- At _T_, _G~i~_ is eligible for _V~j~_, and is also not removed and thus stays in
+the pool for _V~j+1~_ as well
+- At _T'_, _G~i~_ is eligible for _V~j~_ despite being marked for expiration,
+but it will not be in the pool for _V~j+1~_. Mallory's goal is achieved on the
+next output.
+
 On the positive side, the impact and success probability of this attack are relatively small. If the size of the group pool is n_GG, the delay window is T_m, and the average delay between group expirations is T_e, Mallory has:
 
 1 / n_GG chance of denying G_i the signing position on a successful attack
