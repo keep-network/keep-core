@@ -120,6 +120,19 @@ Thus an enemy who normally could only control 3.3% of the groups in network can
 stabilise a 32% control fraction. With _T~m~ = 4_ it goes to 43%, and _T~m~ = 5_
 means 51% control.
 
+===== Can we prf on statistics?
+
+While manipulating blockheight requires only miner censorship, manipulating
+beacon history and statistical data is much more involved and requires
+requesting and paying for new outputs.
+
+Superficially it would appear that the cost of manipulating group expiration in
+such a way would exceed the benefits, but a thorough calculation would need to
+address complex aspects of marginal pricing and external incentives.
+
+There isn't really a good reason to feed statistics as input to pseudorandom
+functions, and thus the effort is better spent elsewhere.
+
 == Possible schemes
 
 Due to the previous, we are left with essentially two classes of expiry
