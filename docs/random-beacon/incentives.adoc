@@ -283,3 +283,63 @@ Another possibility is to refund the leftovers to the requester. This could be
 desirable as compensation for slowness of output, but if a large number of
 customers contributed to the request payment it may be inconvenient to refund
 them all proportionally.
+
+=== General
+
+Some rewards and punishments don't fit into a specific category.
+
+==== Individual private key compromise
+
+If a private key is exposed or used inappropriately, the consequences to the
+network could be serious. If the owner of a compromised key is punished for the
+failure to secure it adequately, it can improve the incentives and weed out
+insecure participants.
+
+===== Major punishment: D~KEY_COMPROMISED~
+
+If the individual private key of _P~i~_ is compromised or used to sign an
+inappropriate value _v_, _P~i~_ should be given the major punishment of
+_D~KEY_COMPROMISED~_.
+
+Compromise of an individual private key can be proven by submitting a message
+signed with the key, along with the corresponding public key and its merkle path
+to the root of the individual public key merkle tree, published in DKG result.
+
+===== Reward: R~KEY_COMPROMISE_TATTLETALE~
+
+An operator who submits proof of an individual private key compromise should be
+rewarded by _R~KEY_COMPROMISE_TATTLETALE~_ tokens.
+
+_R~KEY_COMPROMISE_TATTLETALE~ < D~KEY_COMPROMISED~_
+
+==== Group private key compromise
+
+If the private group key of any group is compromised, beacon security can be
+violated for outputs assigned to that group. Detection and termination of such
+groups should be incentivized.
+
+===== Minor punishment: D~GROUP_KEY_COMPROMISED~
+
+If the group private key of _G~i~_ is used to sign an inappropriate value _v_,
+every member in _G~i~_ can be punished by _D~GROUP_KEY_COMPROMISED~_. A group
+whose key has been compromised must be terminated.
+
+Because signing an invalid value requires contribution from at least _H_
+members, the existence of such a signature proves that the honest majority
+assumption has not held. However, because participants disqualified in DKG
+phase 9 have their secret information exposed, it is possible for an adversary
+controlling _M~nofail~ + 1_ members in the group to create such a signature if
+_M~nofail~_ members were disqualified in phase 9. This should be a rare
+occurrence but provides a slight control bootstrapping attack for a sufficiently
+powerful adversary.
+
+===== Reward: R~GROUP_KEY_COMPROMISE_TATTLETALE~
+
+An operator who submits proof of an individual private key compromise should be
+rewarded by _R~GROUP_KEY_COMPROMISE_TATTLETALE~_ tokens.
+
+_R~GROUP_KEY_COMPROMISE_TATTLETALE~ << M~nofail~ * D~GROUP_KEY_COMPROMISED~_
+
+The magnitude of the group key compromise tattletale reward has a significant
+impact on the viability of the control bootstrapping attack for deliberately
+compromising the group key.
