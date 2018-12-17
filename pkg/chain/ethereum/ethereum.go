@@ -37,7 +37,8 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 
 // CurrentBlock rturns the current block number
 func (c *ethereumChain) CurrentBlock() (int, error) {
-	return c.blockCounter.CurrentBlock()
+	// return c.blockCounter.CurrentBlock()
+	return 1, nil // TODO
 }
 
 // HasMinimumStake returns true if the specified address is staked.  False will
