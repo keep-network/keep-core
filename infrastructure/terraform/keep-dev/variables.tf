@@ -151,3 +151,13 @@ variable "gke_subnet" {
     cluster_secondary_ip_cidr_range = "10.102.0.0/20"
   }
 }
+
+variable "atlantis_ip_name" {
+  description = "The name for your Atlantis IP."
+  default     = "keep-dev-atlantis-external-ip"
+}
+
+variable "atlantis_ip_address_type" {
+  description = "Internet facing or not. internal or external"
+  default     = "external"
+}
