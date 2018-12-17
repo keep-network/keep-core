@@ -151,7 +151,19 @@ geth attach http://localhost:8545
 ```
 
 === Boot the Ethereum Kubernetes Testnet
-tbd
+If you want to just boot the Ethereum testnet cluster, you can do that without
+using Skaffold by running the start script:
+
+```
+infrastructure/scripts/geth-startup.sh
+```
+
+To shutdown the testnet cluster:
+
+```
+infrastructure/scripts/geth-shutdown.sh
+```
+
 
 === Develop Keep
 To start developing run the following command:

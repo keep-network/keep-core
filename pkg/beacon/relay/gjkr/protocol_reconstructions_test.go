@@ -59,7 +59,7 @@ func contains(slice []MemberID, value MemberID) bool {
 func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	groupSize := 3
 	threshold := 2
-	dkg := &DKG{P: big.NewInt(179), Q: big.NewInt(89)}
+	dkg := &DKG{P: big.NewInt(179), Q: big.NewInt(89), evidenceLog: newDkgEvidenceLog()}
 	g := big.NewInt(7) // `g` value for public key calculation `y_m = g^{z_m} mod p`
 
 	disqualifiedMembersIDs := []int{4, 5} // m
@@ -101,7 +101,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 2
 	groupSize := 3
-	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
+	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953), evidenceLog: newDkgEvidenceLog()}
 
 	expectedGroupPublicKey := big.NewInt(1620) // 10*20*30*91*92 mod 1620
 
@@ -137,7 +137,8 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*ReconstructingMember, error) {
+func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
+	[]*ReconstructingMember, error) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
 	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize, dkg)
@@ -146,13 +147,9 @@ func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) ([
 	}
 
 	var reconstructingMembers []*ReconstructingMember
-	// TODO Should be handled by the `.Next()`` function
 	for _, pjm := range pointsJustifyingMembers {
 		reconstructingMembers = append(reconstructingMembers,
-			&ReconstructingMember{
-				PointsJustifyingMember: pjm,
-			},
-		)
+			pjm.InitializeReconstruction())
 	}
 
 	return reconstructingMembers, nil
@@ -166,7 +163,8 @@ func disqualifyMembers(
 ) []*DisqualifiedShares {
 	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedMembersIDs))
 	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
-		sharesReceivedFromDisqualifiedMember := make(map[MemberID]*big.Int, len(members)-len(disqualifiedMembersIDs))
+		sharesReceivedFromDisqualifiedMember := make(map[MemberID]*big.Int,
+			len(members)-len(disqualifiedMembersIDs))
 		// for each group member
 		for _, m := range members {
 			// if the member has not been disqualified
@@ -199,15 +197,8 @@ func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Com
 	}
 
 	var combiningMembers []*CombiningMember
-	// TODO Should be handled by the `.Next()`` function
 	for _, rm := range reconstructingMembers {
-		rm.reconstructedIndividualPublicKeys = make(map[MemberID]*big.Int)
-
-		combiningMembers = append(combiningMembers,
-			&CombiningMember{
-				ReconstructingMember: rm,
-			},
-		)
+		combiningMembers = append(combiningMembers, rm.InitializeCombining())
 	}
 
 	return combiningMembers, nil

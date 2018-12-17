@@ -2,6 +2,7 @@ package gjkr
 
 import (
 	"math/big"
+	"strconv"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -9,11 +10,6 @@ import (
 
 // MemberID is a unique-in-group identifier of a member.
 type MemberID uint32
-
-// Int converts `MemberID` to `big.Int`
-func (id MemberID) Int() *big.Int {
-	return new(big.Int).SetUint64(uint64(id))
-}
 
 type memberCore struct {
 	// ID of this group member.
@@ -24,16 +20,16 @@ type memberCore struct {
 	protocolConfig *DKG
 }
 
-// EphemeralKeyGeneratingMember represents one member in a distributed key
-// generating group performing ephemeral key generation. It has a full list of
-// `memberIDs` that belong to its threshold group.
+// EphemeralKeyPairGeneratingMember represents one member in a distributed key
+// generating group performing ephemeral key pair generation. It has a full list
+// of `memberIDs` that belong to its threshold group.
 //
 // Executes Phase 1 of the protocol.
-type EphemeralKeyGeneratingMember struct {
+type EphemeralKeyPairGeneratingMember struct {
 	*memberCore
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
-	ephemeralKeys map[MemberID]*ephemeral.KeyPair
+	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
 }
 
 // SymmetricKeyGeneratingMember represents one member in a distributed key
@@ -41,14 +37,12 @@ type EphemeralKeyGeneratingMember struct {
 //
 // Executes Phase 2 of the protocol.
 type SymmetricKeyGeneratingMember struct {
-	*memberCore
-
-	// Ephemeral key pairs used to create symmetric keys,
-	// generated individually for each other group member.
-	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
+	*EphemeralKeyPairGeneratingMember
 
 	// Symmetric keys used to encrypt confidential information,
-	// generated individually for each other group member.
+	// generated individually for each other group member by ECDH'ing the
+	// broadcasted ephemeral public key intended for this member and the
+	// ephemeral private key generated for the other member.
 	symmetricKeys map[MemberID]ephemeral.SymmetricKey
 }
 
@@ -134,27 +128,6 @@ type SharingMember struct {
 	receivedValidPeerPublicKeySharePoints map[MemberID][]*big.Int
 }
 
-// individualPublicKey returns current member's individual public key.
-// Individual public key is zeroth public key share point `A_i0`.
-func (rm *ReconstructingMember) individualPublicKey() *big.Int {
-	return rm.publicKeySharePoints[0]
-}
-
-// receivedValidPeerIndividualPublicKeys returns individual public keys received
-// from peer members which passed the validation. Individual public key is zeroth
-// public key share point `A_j0`.
-func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
-	var receivedValidPeerIndividualPublicKeys []*big.Int
-
-	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
-		receivedValidPeerIndividualPublicKeys = append(
-			receivedValidPeerIndividualPublicKeys,
-			peerPublicKeySharePoints[0],
-		)
-	}
-	return receivedValidPeerIndividualPublicKeys
-}
-
 // PointsJustifyingMember represents one member in a threshold key sharing group,
 // after it completed public key share points verification and enters justification
 // phase where it resolves public key share points accusations.
@@ -194,4 +167,111 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *big.Int
+}
+
+// Int converts `MemberID` to `big.Int`
+func (id MemberID) Int() *big.Int {
+	return new(big.Int).SetUint64(uint64(id))
+}
+
+// InitializeSymmetricKeyGeneration performs a transition of the member state
+// from phase 1 to phase 2. It returns a member instance ready to execute the
+// next phase of the protocol.
+func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration() *SymmetricKeyGeneratingMember {
+	return &SymmetricKeyGeneratingMember{
+		EphemeralKeyPairGeneratingMember: ekgm,
+		symmetricKeys:                    make(map[MemberID]ephemeral.SymmetricKey),
+	}
+}
+
+// InitializeCommitting returns a member to perform next protocol operations.
+func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting(vss *pedersen.VSS) *CommittingMember {
+	return &CommittingMember{
+		SymmetricKeyGeneratingMember: skgm,
+		vss:                          vss,
+	}
+}
+
+// InitializeCommitmentsVerification returns a member to perform next protocol operations.
+func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
+	return &CommitmentsVerifyingMember{
+		CommittingMember:             cm,
+		receivedValidSharesS:         make(map[MemberID]*big.Int),
+		receivedValidSharesT:         make(map[MemberID]*big.Int),
+		receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+	}
+}
+
+// InitializeSharesJustification returns a member to perform next protocol operations.
+func (cvm *CommitmentsVerifyingMember) InitializeSharesJustification() *SharesJustifyingMember {
+	return &SharesJustifyingMember{cvm}
+}
+
+// InitializeQualified returns a member to perform next protocol operations.
+func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
+	return &QualifiedMember{SharesJustifyingMember: sjm}
+}
+
+// InitializeSharing returns a member to perform next protocol operations.
+func (qm *QualifiedMember) InitializeSharing() *SharingMember {
+	return &SharingMember{
+		QualifiedMember:                       qm,
+		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int),
+	}
+}
+
+// InitializePointsJustification returns a member to perform next protocol operations.
+func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember {
+	return &PointsJustifyingMember{sm}
+}
+
+// InitializeReconstruction returns a member to perform next protocol operations.
+func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
+	return &ReconstructingMember{
+		PointsJustifyingMember:             pjm,
+		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[MemberID]*big.Int),
+	}
+}
+
+// InitializeCombining returns a member to perform next protocol operations.
+func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
+	return &CombiningMember{ReconstructingMember: rm}
+}
+
+// individualPublicKey returns current member's individual public key.
+// Individual public key is zeroth public key share point `A_i0`.
+func (rm *ReconstructingMember) individualPublicKey() *big.Int {
+	return rm.publicKeySharePoints[0]
+}
+
+// receivedValidPeerIndividualPublicKeys returns individual public keys received
+// from peer members which passed the validation. Individual public key is zeroth
+// public key share point `A_j0`.
+func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
+	var receivedValidPeerIndividualPublicKeys []*big.Int
+
+	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
+		receivedValidPeerIndividualPublicKeys = append(
+			receivedValidPeerIndividualPublicKeys,
+			peerPublicKeySharePoints[0],
+		)
+	}
+	return receivedValidPeerIndividualPublicKeys
+}
+
+// HexString converts `MemberID` to hex `string` representation.
+func (id MemberID) HexString() string {
+	return strconv.FormatInt(int64(id), 16)
+}
+
+// MemberIDFromHex returns a `MemberID` created from the hex `string`
+// representation.
+func MemberIDFromHex(hex string) (MemberID, error) {
+	id, err := strconv.ParseUint(hex, 16, 32)
+	if err != nil {
+		return 0, err
+	}
+
+	return MemberID(id), nil
 }

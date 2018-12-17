@@ -1,11 +1,14 @@
 package gjkr
 
-import "github.com/keep-network/keep-core/pkg/net/ephemeral"
+import (
+	"fmt"
+	"sync"
+)
 
 // For complaint resolution, group members need to have access to messages
 // exchanged between the accuser and the accused party. There are two situations
-// in the DKG protocol where group members generate values for every other group
-// member:
+// in the DKG protocol where group members generate values individually for
+// every other group member:
 //
 // - Ephemeral ECDH (phase 2) - after each group member generates an ephemeral
 // keypair for each other group member and broadcasts those ephemeral public keys
@@ -22,24 +25,128 @@ import "github.com/keep-network/keep-core/pkg/net/ephemeral"
 // symmetric key established between the sender and receiver. In the case of an
 // accusation, members performing compliant resolution need to look at the shares
 // sent by the accused party. To do this, they read the round 3 message from the
-// buffer, passing the symmetric key used between the accuser and accused so that
-// the round 3 message from the accused party can be decrypted.
-type messageBuffer interface {
+// log, and decrypt it using the symmetric key used between the accuser and
+// accused party. The key is publicly revealed by the accuser.
+type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
-	// broadcast in the first protocol round by the given sender for the
-	// given receiver.
-	ephemeralPublicKeyMessage(
-		sender int,
-		receiver int,
-	) *EphemeralPublicKeyMessage
+	// broadcast in the first protocol round by the given sender.
+	ephemeralPublicKeyMessage(sender MemberID) *EphemeralPublicKeyMessage
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
-	// protocol round by the given sender for the given receiver. It is required
-	// to pass an `ephemeral.SymmetricKey` used to encrypt the communication
-	// between the sender and receiver.
-	peerSharesMessage(
-		sender int,
-		receiver int,
-		key ephemeral.SymmetricKey,
-	) *PeerSharesMessage
+	// protocol round by the given sender.
+	peerSharesMessage(sender MemberID) *PeerSharesMessage
+
+	// PutEphemeralMessage is a function that takes a single
+	// EphemeralPubKeyMessage, and stores that as evidence for future
+	// accusation trials for a given (sender, receiver) pair. If a message
+	// already exists for the given sender, we return an error to the user.
+	PutEphemeralMessage(pubKeyMessage *EphemeralPublicKeyMessage) error
+
+	// PutPeerSharesMessage is a function that takes a single
+	// PeerSharesMessage, and stores that as evidence for future
+	// accusation trials for a given (sender, receiver) pair. If a message
+	// already exists for the given sender, we return an error to the user.
+	PutPeerSharesMessage(sharesMessage *PeerSharesMessage) error
+}
+
+// dkgEvidenceLog is an implementation of an evidenceLog.
+type dkgEvidenceLog struct {
+	// senderID -> *EphemeralPublicKeyMessage
+	pubKeyMessageLog *messageStorage
+
+	// senderID -> *PeerSharesMessage
+	peerSharesMessageLog *messageStorage
+}
+
+// NewDkgEvidenceLog returns a dkgEvidenceLog with backing stores for future
+// accusations against EphemeralPublicKeyMessages and PeerShareMessages.
+func newDkgEvidenceLog() *dkgEvidenceLog {
+	return &dkgEvidenceLog{
+		pubKeyMessageLog:     newMessageStorage(),
+		peerSharesMessageLog: newMessageStorage(),
+	}
+}
+
+func (d *dkgEvidenceLog) PutEphemeralMessage(
+	pubKeyMessage *EphemeralPublicKeyMessage,
+) error {
+	return d.pubKeyMessageLog.putMessage(
+		pubKeyMessage.senderID,
+		pubKeyMessage,
+	)
+}
+
+func (d *dkgEvidenceLog) PutPeerSharesMessage(
+	sharesMessage *PeerSharesMessage,
+) error {
+	return d.peerSharesMessageLog.putMessage(
+		sharesMessage.senderID,
+		sharesMessage,
+	)
+}
+
+func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
+	sender MemberID,
+) *EphemeralPublicKeyMessage {
+	storedMessage := d.pubKeyMessageLog.getMessage(sender)
+	switch message := storedMessage.(type) {
+	case *EphemeralPublicKeyMessage:
+		return message
+	}
+	return nil
+}
+
+func (d *dkgEvidenceLog) peerSharesMessage(
+	sender MemberID,
+) *PeerSharesMessage {
+	storedMessage := d.peerSharesMessageLog.getMessage(sender)
+	switch message := storedMessage.(type) {
+	case *PeerSharesMessage:
+		return message
+	}
+	return nil
+}
+
+// messageStorage is the underlying cache used by our evidenceLog implementation
+// it implements a generic get and put of messages through a mapping of a
+// sender.
+type messageStorage struct {
+	cache     map[MemberID]interface{}
+	cacheLock sync.Mutex
+}
+
+func newMessageStorage() *messageStorage {
+	return &messageStorage{
+		cache: make(map[MemberID]interface{}),
+	}
+}
+
+func (ms *messageStorage) getMessage(sender MemberID) interface{} {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
+
+	message, ok := ms.cache[sender]
+	if !ok {
+		return nil
+	}
+
+	return message
+}
+
+func (ms *messageStorage) putMessage(
+	sender MemberID,
+	message interface{},
+) error {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
+
+	if _, ok := ms.cache[sender]; ok {
+		return fmt.Errorf(
+			"message exists for sender %v",
+			sender,
+		)
+	}
+
+	ms.cache[sender] = message
+	return nil
 }
