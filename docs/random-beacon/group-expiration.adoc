@@ -459,7 +459,8 @@ power.
 
 TODO: clean up seriously
 
-On the positive side, the impact and success probability of this attack are relatively small. If the size of the group pool is n_GG, the delay window is T_m, and the average delay between group expirations is T_e, Mallory has:
+If the size of the group pool is _n~GG~_, the delay window is _T~m~_, and the
+average delay between group expirations is _T~e~_, Mallory has:
 
 1 / n_GG chance of denying G_i the signing position on a successful attack
 on any given trigger event there is an expected probability of T_m / T_e of there being a group whose expiry can be manipulated (if Mallory can delay a transaction by 3 blocks, and a group expires on every 100th block on average, it gives a 3% chance that a group expiration would occur within that window)
@@ -470,20 +471,36 @@ for a total return on the attack of (R_m - R_i) * T_m / T_e * n_GG. To put some 
 
 (5R_signer - 1) * 3 / 100 * 300 = 12R_signer / 30,000 = 0.0004 * R_signer of expected value per trigger event of doing this attack, or 0.0133 * R_signer value per actual attack with a 0.03 chance of being able to attack on any given trigger event.
 
-On the flipside, what happens if we do the unsafe thing and avalanche the blockheight as a seed for pseudorandom expiration?
+===== Don't prf on the blockheight
 
-Now Mallory has T_m attempts to produce the most favorable/least unfavourable outcome. Since in a stable group pool (and one where every DKG succeeds) each group has a 1 / n_GG chance of expiring, Mallory's favourite group can only expire if all outcomes would lead to its expiration, the probability of which is 1 / n_GG^T_m.
+What happens if we do the unsafe thing and avalanche the blockheight as a seed
+for pseudorandom expiration?
 
-If we assume every expiration trigger event expires exactly one group, and Mallory controls m groups, the probability of that expiring group being Mallory's is is normally m / n_GG. If Mallory gets T_m expiration rerolls, this goes to m^T_m / n_GG^T_m. This means that Mallory can stabilise a new equilibrium where Mallory's number of controlled groups m' is such that: m'^T_m / n_GG^T_m = m / n_GG
+If the size of the group pool is _n~GG~_, the delay window is _T~m~_, and the
+average delay between group expirations is _T~e~_, Mallory has _T~m~_ attempts
+to produce the most favorable/least unfavourable outcome. Since in a stable
+group pool (and one where every DKG succeeds) each group has a _1 / n~GG~_
+chance of expiring, Mallory's favourite group can only expire if all outcomes
+would lead to its expiration, the probability of which is _1 / n~GG~^T~m~^_.
 
-m'^T_m / n_GG^(T_m - 1)= m
-m'^T_m = m * n_GG^(T_m - 1)
+If we assume every expiration trigger event expires exactly one group (for
+simplicity), and Mallory controls _m_ groups, the probability of that expiring
+group being Mallory's is is normally _m / n~GG~_. If Mallory gets _T~m~_
+expiration rerolls, this goes to _m^T~m~^ / n~GG~^T~m~^_. This means that
+Mallory can stabilise a new equilibrium where Mallory's number of controlled
+groups _m'_ is such that
+_m'^T~m~^ / n~GG~^T~m~^ = m / n~GG~_
 
-m' = nthRoot(T_m, (m * n_GG^(T_m - 1)))
+_m'^T~m~^ / n~GG~^(T~m~ - 1)^ = m_ +
+_m'^T~m~^ = m * n~GG~^(T~m~ - 1)^_
 
-or as an example, with a n_GG of 300 , T_m of 3, and n_m of 10, we get:
+_m' = nthRoot(T~m~, (m * n~GG~^(T~m~ - 1)^))_
 
-m'^3 = 10 * 300^2 = 900,000
-m' = 96.5
+or as an example, with _n~GG~ = 300 , T~m~ = 3, n~m~ = 10_, we get:
 
-Thus an enemy who normally could only control 3.3% of the groups in network can stabilise a 32% control fraction. With T_m = 4 it goes to 43%, and T_m = 5 means 51% control.
+_m'^3^ = 10 * 300^2^ = 900,000_ +
+_m' = 96.5_
+
+Thus an enemy who normally could only control 3.3% of the groups in network can
+stabilise a 32% control fraction. With _T~m~ = 4_ it goes to 43%, and _T~m~ = 5_
+means 51% control.
