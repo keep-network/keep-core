@@ -246,7 +246,7 @@ _D~INVALID_SIGNATURE~ * RequestMultiplier_.
 If a reward has been anchored at _T_ and the full output is submitted at _T'_,
 the submitter reward should be adjusted by the anchoring:
 
-_R~submitter~(T') = (R~submitter~(T) * (1 / N)) + (R~submitter~(T') * ((N - 1) / N))_
+_R~submitter~(T') = (R~submitter~(T) * (1 / N)) + (R~submitter~(T') * (N - 1) / N)_
 
 If multiple rewards have been anchored at _T~1~, T~2~..._ the submitter reward
 should be correspondingly:
