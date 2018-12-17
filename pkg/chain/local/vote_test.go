@@ -31,24 +31,11 @@ func TestVote(t *testing.T) {
 			groupPublicKey: big.NewInt(1001),
 			expected:       2,
 		},
-		"test increment of votes when no match occures": {
-			requestID: group,
-			dkgResult: &relaychain.DKGResult{
-				Success:        true,
-				GroupPublicKey: big.NewInt(1002),
-				Disqualified:   []bool{},
-				Inactive:       []bool{},
-			},
-			requestIDset:   group,
-			groupPublicKey: big.NewInt(1001),
-			expected:       1,
-		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			local := Connect(10, 4).ThresholdRelay()
-			local.MapRequestIDToGroupPubKey(test.requestIDset, test.groupPublicKey)
 			promise := local.SubmitDKGResult(test.requestID, test.dkgResult)
 			_ = promise // in this package promice is fulfilled immediatly - so can ignore it.
 			local.Vote(test.requestID, test.dkgResult.Hash())
