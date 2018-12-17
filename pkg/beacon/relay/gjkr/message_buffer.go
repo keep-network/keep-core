@@ -34,7 +34,7 @@ type evidenceLog interface {
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
 	// protocol round by the given sender.
-	peerSharesMessage(sender MemberID, receiver MemberID) *PeerSharesMessage
+	peerSharesMessage(sender MemberID) *PeerSharesMessage
 
 	// PutEphemeralMessage is a function that takes a single
 	// EphemeralPubKeyMessage, and stores that as evidence for future
