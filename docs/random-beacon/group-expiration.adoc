@@ -212,6 +212,33 @@ the pool for _V~j+1~_ as well
 but it will not be in the pool for _V~j+1~_. Mallory's goal is achieved on the
 next output.
 
+===== Is it worth it?
+
+If the size of the group pool is _n~GG~_, the delay window is _T~m~_, and the
+average delay between group expirations is _T~e~_, Mallory has:
+
+- 1 / n~GG~ chance of denying G~i~ the signing position on a successful attack
+- on any given trigger event there is an expected probability of _T~m~ / T~e~_
+of there being a group whose expiry can be manipulated (if Mallory can delay a
+transaction by 3 blocks, and a group expires on every 100th block on average, it
+gives a 3% chance that a group expiration would occur within that window)
+- a _R~m~ - R~i~_ return, where _R~m~_ is the average reward Mallory would get
+if any group except _G~i~_, and _R~i~_ is the reward Mallory would (expect to)
+get if _G~i~_ produces an output
+
+(assuming we only need to consider one group at a time)
+
+for a total return on the attack of _(R~m~ - R~i~) * T~m~ / T~e~ * n~GG~_.
+
+To put some numbers on this, let's assume the active group pool _n~GG~ = 300_,
+_T~m~ = 3, T~e~ = 100_ as above, and Mallory has an average of 5 members in a
+group but only 1 in _G~i~_, we get:
+
+_(5R~signer~ - 1) * 3 / 100 * 300 = 12R~signer~ / 30,000 = 0.0004 * R~signer~_
+of expected value per trigger event of doing this attack, or
+_0.0133 * R~signer~_ value per actual attack with a 0.03 chance of being able to
+attack on any given trigger event.
+
 === Random Expiration
 
 With random expiration, each group is assigned a pseudorandom expiration seed
@@ -507,28 +534,3 @@ power.
 ==== Extra math
 
 TODO: clean up seriously
-
-If the size of the group pool is _n~GG~_, the delay window is _T~m~_, and the
-average delay between group expirations is _T~e~_, Mallory has:
-
-- 1 / n~GG~ chance of denying G~i~ the signing position on a successful attack
-- on any given trigger event there is an expected probability of _T~m~ / T~e~_
-of there being a group whose expiry can be manipulated (if Mallory can delay a
-transaction by 3 blocks, and a group expires on every 100th block on average, it
-gives a 3% chance that a group expiration would occur within that window)
-- a _R~m~ - R~i~_ return, where _R~m~_ is the average reward Mallory would get
-if any group except _G~i~_, and _R~i~_ is the reward Mallory would (expect to)
-get if _G~i~_ produces an output
-
-(assuming we only need to consider one group at a time)
-
-for a total return on the attack of _(R~m~ - R~i~) * T~m~ / T~e~ * n~GG~_.
-
-To put some numbers on this, let's assume the active group pool _n~GG~ = 300_,
-_T~m~ = 3, T~e~ = 100_ as above, and Mallory has an average of 5 members in a
-group but only 1 in _G~i~_, we get:
-
-_(5R~signer~ - 1) * 3 / 100 * 300 = 12R~signer~ / 30,000 = 0.0004 * R~signer~_
-of expected value per trigger event of doing this attack, or
-_0.0133 * R~signer~_ value per actual attack with a 0.03 chance of being able to
-attack on any given trigger event.
