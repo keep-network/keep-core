@@ -383,7 +383,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			}
 
 			symmetricKey, err := recoverSymmetricKey(
-				sjm.protocolConfig.evidenceLog,
+				sjm.evidenceLog,
 				accusedID,
 				accuserID,
 				revealedAccuserPrivateKey,
@@ -394,7 +394,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			}
 
 			shareS, shareT, err := recoverShares(
-				sjm.protocolConfig.evidenceLog,
+				sjm.evidenceLog,
 				accusedID,
 				accuserID,
 				symmetricKey,
@@ -643,7 +643,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				return nil, fmt.Errorf("current member cannot be a part of a dispute")
 			}
 
-			evidenceLog := pjm.protocolConfig.evidenceLog
+			evidenceLog := pjm.evidenceLog
 
 			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,

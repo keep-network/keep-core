@@ -117,7 +117,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			}
 			shares := make(map[MemberID]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
-			member.protocolConfig.evidenceLog.PutPeerSharesMessage(
+			member.evidenceLog.PutPeerSharesMessage(
 				&PeerSharesMessage{
 					senderID: test.accusedID,
 					shares:   shares,
@@ -359,7 +359,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			}
 			shares := make(map[MemberID]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
-			member.protocolConfig.evidenceLog.PutPeerSharesMessage(
+			member.evidenceLog.PutPeerSharesMessage(
 				&PeerSharesMessage{test.accusedID, shares},
 			)
 
