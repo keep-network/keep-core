@@ -2,6 +2,7 @@ package local
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"os"
@@ -13,8 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/pschlump/MiscLib"
-	"github.com/pschlump/godebug"
 )
 
 type localChain struct {
@@ -64,26 +63,6 @@ func (c *localChain) CurrentBlock() (int, error) {
 	return c.blockCounter.CurrentBlock()
 }
 
-// xyzzy - remove function/interface etc
-// MapRequestIDToGroupPubKey Assoiciate requestID with a groupPubKey
-func (c *localChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error {
-	c.groupPublicKeyMapMutex.Lock()
-	defer c.groupPublicKeyMapMutex.Unlock()
-	c.groupPublicKeyMap[bigIntToHex(requestID)] = groupPubKey
-	return nil
-}
-
-// xyzzy - remove function/interface etc
-// GetGroupPubKeyForRequestID given requestID return the groupPubKey
-func (c *localChain) GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error) {
-	c.groupPublicKeyMapMutex.Lock()
-	defer c.groupPublicKeyMapMutex.Unlock()
-	if groupPubKey, ok := c.groupPublicKeyMap[bigIntToHex(requestID)]; ok {
-		return groupPubKey, nil
-	}
-	return nil, fmt.Errorf("invalid requestID [%s]", requestID)
-}
-
 func bigIntToHex(b *big.Int) string {
 	return fmt.Sprintf("%s", b)
 }
@@ -102,7 +81,11 @@ func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	defer c.submissionsMutex.Unlock()
 	x, ok := c.submissions[bigIntToHex(requestID)]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "%sMissing requestID [%s] in c.submissions ->%s<- - vote will be ignored.%s\n", MiscLib.ColorRed, requestID, godebug.SVarI(c.submissions), MiscLib.ColorReset)
+		fmt.Fprintf(os.Stderr,
+			"Missing requestID [%s] in c.submissions ->%s<- - vote will be ignored.\n",
+			requestID,
+			convertToJSON(c.submissions),
+		)
 		return
 	}
 	for pos, sub := range x.Submissions {
@@ -278,7 +261,6 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
 
-	fmt.Printf("\n\n---- Connect ---, called from %s\n\n", godebug.LF(2))
 	return &localChain{
 		relayConfig: relayconfig.Chain{
 			GroupSize: groupSize,
@@ -368,17 +350,15 @@ func (c *localChain) IsDKGResultPublished(
 	requestID *big.Int, result *relaychain.DKGResult,
 ) bool {
 	requestIDstr := bigIntToHex(requestID)
-	fmt.Printf("IsDKGResultPublished: requestID = %s, result = %s, c.submittedResults = %s\n",
-		requestIDstr, godebug.SVarI(result), godebug.SVarI(c.submittedResults))
 	if publishedResults, ok := c.submittedResults[requestIDstr]; ok {
 		for _, publishedResult := range publishedResults {
 			if publishedResult.Equals(result) {
-				fmt.Printf("\nIsDKGResultPublished: return true\n")
+				// fmt.Printf("\nIsDKGResultPublished: return true\n")
 				return true
 			}
 		}
 	}
-	fmt.Printf("\nIsDKGResultPublished: return false\n")
+	// fmt.Printf("\nIsDKGResultPublished: return false\n")
 	return false
 }
 
@@ -390,44 +370,20 @@ func (c *localChain) SubmitDKGResult(
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	if db1 {
-		fmt.Printf("%sAt: %s\n\tcalled from %s%s\n", MiscLib.ColorCyan, godebug.LF(), godebug.LF(2), MiscLib.ColorReset)
-	}
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
 	if c.IsDKGResultPublished(requestID, resultToPublish) {
-		if db1 {
-			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-		}
 		dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
 		return dkgResultPublicationPromise
 	}
 
 	c.submittedResults[requestIDstr] = append(c.submittedResults[requestIDstr], resultToPublish)
 
-	if db1 {
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-	}
 	c.submissionsMutex.Lock()
 	if c.submissions == nil {
 		c.submissions = make(map[string]relaychain.Submissions)
 	}
 	if _, ok := c.submissions[requestIDstr]; !ok {
-		if db1 {
-			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-			fmt.Printf("%s\tMUST SEE THIS! At: %s%s\n", MiscLib.ColorGreen, godebug.LF(), MiscLib.ColorReset)
-		}
-		/*
-			xyzzy remove comment
-						groupPublicKey, err := c.GetGroupPubKeyForRequestID(requestID)
-						if err != nil || groupPublicKey == nil {
-							fmt.Printf("%s!!! Error - could not get GroupPubKey for requestID=[%s] At: %s%s\n",
-								MiscLib.ColorRed, requestID, godebug.LF(), MiscLib.ColorReset)
-						}
-		*/
-		if db1 {
-			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-		}
 		c.submissions[requestIDstr] = relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{
@@ -439,34 +395,16 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.submissionsMutex.Unlock()
 
-	if db1 {
-		fmt.Printf("%s*** FINAL *** At: %s, Submissions.submissions set ->%s<-\n c.submittedResults ->%s<- %s\n",
-			MiscLib.ColorCyan, godebug.LF(), godebug.SVarI(c.submissions), godebug.SVarI(c.submittedResults), MiscLib.ColorReset)
-	}
-
-	// ----------------------------------------------------------------------------------
-	// Process event below this point.
-	// ----------------------------------------------------------------------------------
-
 	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
 
-	if db1 {
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-	}
 	c.handlerMutex.Lock()
 	for _, handler := range c.dkgResultPublicationHandlers {
-		if db1 {
-			fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-		}
 		go func(handler func(*event.DKGResultPublication), dkgResultPublication *event.DKGResultPublication) {
 			handler(dkgResultPublicationEvent)
 		}(handler, dkgResultPublicationEvent)
 	}
 	c.handlerMutex.Unlock()
 
-	if db1 {
-		fmt.Printf("%sAt: %s%s\n", MiscLib.ColorCyan, godebug.LF(), MiscLib.ColorReset)
-	}
 	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
@@ -487,4 +425,13 @@ func (c *localChain) OnDKGResultPublished(
 	)
 }
 
-const db1 = false
+// convertToJSON return the JSON encoded version of the data with tab indentation.
+func convertToJSON(v interface{}) string {
+	// s, err := json.Marshal ( v )
+	s, err := json.MarshalIndent(v, "", "\t")
+	if err != nil {
+		return fmt.Sprintf("Error:%s", err)
+	} else {
+		return string(s)
+	}
+}

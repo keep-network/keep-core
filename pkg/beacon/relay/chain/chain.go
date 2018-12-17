@@ -58,10 +58,6 @@ type Interface interface {
 	Vote(requestID *big.Int, dkgResultHash []byte)
 	// OnDKGResultVote registers a callback when a vote occurs.
 	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
-	// MapRequestIDToGroupPubKey associates a requestID with a groupPubKey
-	MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error
-	// GetGroupPubKeyForRequestID takes a requestID and returns the associated groupPubKey
-	GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error)
 	// CurrentBlock rturns the current block number
 	CurrentBlock() (int, error)
 }

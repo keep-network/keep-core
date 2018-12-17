@@ -82,7 +82,9 @@ func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
 // Hash the DKGResult and return the hashed value.
 func (r1 *DKGResult) Hash() []byte {
 	serial := r1.serialize()
-	return keccak256(serial)
+	d := sha3.NewKeccak256()
+	d.Write(serial)
+	return d.Sum(nil)
 }
 
 // Searialize converts the DKGResult into bytes.  This is so that it can be hashed.
@@ -106,13 +108,4 @@ func (r1 *DKGResult) serialize() []byte {
 		buf.Write(boolToByte(b))
 	}
 	return buf.Bytes()
-}
-
-// keccak256 use the Ethereum Keccak hasing fucntions to return a hash from a list of values.
-func keccak256(data ...[]byte) []byte {
-	d := sha3.NewKeccak256()
-	for _, b := range data {
-		d.Write(b)
-	}
-	return d.Sum(nil)
 }

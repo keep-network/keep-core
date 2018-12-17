@@ -19,13 +19,3 @@ func (ec *ethereumChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 func (ec *ethereumChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
 	// TODO -- implement OnDKGResultVote
 }
-
-func (c *ethereumChain) MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error {
-	// TODO -- implement  MapRequestIDToGroupPubKey(requestID, groupPubKey *big.Int) error {
-	return nil
-}
-
-func (c *ethereumChain) GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error) {
-	// TODO -- implement  GetGroupPubKeyForRequestID(requestID *big.Int) (*big.Int, error) {
-	return nil, nil
-}

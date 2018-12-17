@@ -48,7 +48,7 @@ type DKGResultPublication struct {
 	RequestID *big.Int
 }
 
-// DKGResultVote
+// DKGResultVote represents the data for a vote for a RequestID
 type DKGResultVote struct {
 	RequestID *big.Int
 }
