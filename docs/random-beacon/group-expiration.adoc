@@ -217,7 +217,7 @@ next output.
 If the size of the group pool is _n~GG~_, the delay window is _T~m~_, and the
 average delay between group expirations is _T~e~_, Mallory has:
 
-- 1 / n~GG~ chance of denying G~i~ the signing position on a successful attack
+- _1 / n~GG~_ chance of denying _G~i~_ the signing position on a successful attack
 - on any given trigger event there is an expected probability of _T~m~ / T~e~_
 of there being a group whose expiry can be manipulated (if Mallory can delay a
 transaction by 3 blocks, and a group expires on every 100th block on average, it
@@ -530,7 +530,3 @@ seeking to collude and loot other stakers, the _2r_ factor is the most relevant.
 Consequently the required economic power for this attack is roughly
 _50% * min(1, D~dropout~ / D~terminate_compromise~)_ of the honest participants'
 power.
-
-==== Extra math
-
-TODO: clean up seriously
