@@ -3,7 +3,6 @@ package chain
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/sha3"
@@ -98,7 +97,8 @@ func (r1 *DKGResult) serialize() []byte {
 
 	var buf bytes.Buffer
 	buf.Write(boolToByte(r1.Success))
-	buf.Write([]byte(fmt.Sprintf("%s", r1.GroupPublicKey)))
+	// buf.Write([]byte(fmt.Sprintf("%s", r1.GroupPublicKey)))
+	buf.Write(r1.GroupPublicKey.Bytes())
 	binary.Write(&buf, binary.BigEndian, len(r1.Disqualified))
 	for _, b := range r1.Disqualified {
 		buf.Write(boolToByte(b))
