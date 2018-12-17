@@ -53,7 +53,7 @@ type membership struct {
 // whether the node is or is not eligible for the new group, and group joining
 // and key submission is performed in a background goroutine.
 func (n *Node) JoinGroupIfEligible(
-	relayChain relaychain.Interface,
+	groupChain relaychain.GroupInterface,
 	requestID *big.Int,
 	entryValue *big.Int,
 ) {
@@ -96,7 +96,7 @@ func (n *Node) JoinGroupIfEligible(
 
 			n.registerPendingGroup(requestID.String(), member, groupChannel)
 
-			relayChain.SubmitGroupPublicKey(
+			groupChain.SubmitGroupPublicKey(
 				requestID,
 				member.GroupPublicKeyBytes(),
 			).OnComplete(func(registration *event.GroupRegistration, err error) {
