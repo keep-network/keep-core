@@ -63,38 +63,3 @@ if invalid:
 The tattletale phase goes on separately of the output, and can continue even
 after the valid output has been submitted, or the group has failed entirely to
 submit a valid output.
-
-
-[source, python]
-----
-
-for i in G_6:
-  gx_i = product(
-    for j in G_6:
-      product(
-        for k in [0..T]:
-          A_ik ^ (j^k)
-      )
-  ) mod p
-
-for i where isKnown(z_i):
-  sig_i = hash(msg)^z_i
-  broadcast(sig_i)
-----
-
-==== Phase 2: Share combination
-
-[source, python]
-----
-J = []
-
-for i where isReceived(sig_i):
-  if blsVerify(sig_i, msg, gx_i):
-    J += i
-----
-
-v_i-1, r_i -> v_r
-
-v_r -> G
-
-G, v_r -> v_i
