@@ -24,16 +24,16 @@ def openCommitment(requestID, seed_i):
         abort()
 
     Block_kPlus1 = getBlockByHeight(request_i.placedAt + 1)
-    v_r = Block_kPlus1.blockhash
+    rseed_i = Block_kPlus1.blockhash
 
-    Group_i = select(AllGroups, v_r)
+    Group_i = select(AllGroups, rseed_i)
     v_iMinus1 = request_i.previousOutput
-    toSign = sha3(seed_i, v_r, v_iMinus1)
+    beaconInput = sha3(seed_i, rseed_i, v_iMinus1)
 
     outputWaiting = OpenOutput(
         startedAt    = T_open,
         signingGroup = Group_i,
-        valueToSign  = toSign
+        signingInput = beaconInput
     )
 
     OutputInProgress[requestID] = outputWaiting
@@ -44,13 +44,13 @@ def receiveOutput(requestID, outputSignature):
     request_i = Requests[requestID]
 
     pubkey_Group_i = outputWaiting.signingGroup.groupPubkey
-    valueToSign = outputWaiting.valueToSign
+    input_i = outputWaiting.signingInput
 
     submitter = getSenderPubkey()
 
     signatureValid = blsVerify(
         outputSignature,
-        valueToSign,
+        input_i,
         pubkey_Group_i
     )
 
