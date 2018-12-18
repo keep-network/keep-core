@@ -48,6 +48,54 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 }
 
+func TestStoreSharesMessageForEvidence(t *testing.T) {
+	groupSize := 2
+
+	config, err := predefinedDKG()
+	if err != nil {
+		t.Fatalf("predefined config initialization failed [%s]", err)
+	}
+
+	members, err := initializeCommittingMembersGroup(
+		groupSize, // threshold = group size
+		groupSize,
+		config,
+	)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	member1 := members[0]
+	member2 := members[1]
+
+	sharesMsg1, commitmentsMsg1, err := member1.CalculateMembersSharesAndCommitments()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, _, err := member2.CalculateMembersSharesAndCommitments(); err != nil {
+		t.Fatal(err)
+	}
+
+	verifyingMember2 := member2.InitializeCommitmentsVerification()
+
+	if _, err := verifyingMember2.VerifyReceivedSharesAndCommitmentsMessages(
+		[]*PeerSharesMessage{sharesMsg1},
+		[]*MemberCommitmentsMessage{commitmentsMsg1},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	evidenceMsg := verifyingMember2.evidenceLog.peerSharesMessage(member1.ID)
+
+	if evidenceMsg == nil {
+		t.Fatalf("peer shares message not stored in evidence log")
+	}
+	if !reflect.DeepEqual(sharesMsg1, evidenceMsg) {
+		t.Fatalf("unexpected message stored in evidence log")
+	}
+}
+
 func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	threshold := 2
 	groupSize := 3

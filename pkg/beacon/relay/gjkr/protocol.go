@@ -238,6 +238,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
+	for _, sharesMsg := range sharesMessages {
+		cvm.evidenceLog.PutPeerSharesMessage(sharesMsg)
+	}
+
 	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 	for _, commitmentsMessage := range commitmentsMessages {
 		// Find share message sent by the same member who sent commitment message
