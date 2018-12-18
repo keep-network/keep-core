@@ -49,6 +49,7 @@ func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
 		)
 	}
 }
+
 func TestGenerateEphemeralKeys(t *testing.T) {
 	groupSize := 3
 
