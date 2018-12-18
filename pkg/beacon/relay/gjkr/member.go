@@ -22,7 +22,7 @@ type memberCore struct {
 	protocolConfig *DKG
 
 	// evidenceLog provides access to messages from earlier protocol phases
-	// for the sake of compliant resolution
+	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
 }
 
