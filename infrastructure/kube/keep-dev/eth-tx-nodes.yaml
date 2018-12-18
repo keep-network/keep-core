@@ -24,12 +24,21 @@ spec:
     app: geth
     type: tx
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: eth-tx-node
 spec:
+  serviceName: eth-tx-node
   replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  selector:
+    matchLabels:
+      app: geth
+      type: tx
   template:
     metadata:
       labels:
@@ -68,3 +77,16 @@ spec:
           value: network_1
         - name: BOOTNODE_PUBLIC_IP
           value: eth-dashboard.default.svc.cluster.local
+        - name: HOSTVOLUME
+          value: /mnt/eth-data
+        volumeMounts:
+        - name: eth-tx-node
+          mountPath: /mnt/eth-data
+  volumeClaimTemplates:
+    - metadata:
+        name: eth-tx-node
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
