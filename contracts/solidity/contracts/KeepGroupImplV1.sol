@@ -98,6 +98,22 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Gets participants ordered by their lowest-valued ticket.
+     */
+    function orderedParticipants() public view returns (address[]) {
+
+        uint256[] memory ordered = orderedTickets();
+        address[] memory participants = new address[](ordered.length);
+
+        for (uint i = 0; i < ordered.length; i++) {
+            Proof memory proof = _proofs[ordered[i]];
+            participants[i] = proof.sender;
+        }
+
+        return participants;
+    }
+
+    /**
      * @dev Gets ticket proof.
      */
     function getTicketProof(uint256 ticketValue) public view returns (uint256, uint256) {
