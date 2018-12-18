@@ -16,17 +16,27 @@ spec:
   selector:
     app: eth-dashboard
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: eth-dashboard
 spec:
+  serviceName: eth-dashboard
   replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  selector:
+    matchLabels:
+      app: eth-dashboard
   template:
     metadata:
       labels:
         app: eth-dashboard
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: eth-dashboard
         image: gcr.io/keep-dev-fe24/eth-dashboard-node
@@ -38,3 +48,16 @@ spec:
           value: BANZAI!!!!
         - name: BOOTNODE_URL
           value: http://eth-dashboard.default.svc.cluster.local:3001
+        - name: HOSTVOLUME
+          value: /mnt/eth-data
+        volumeMounts:
+        - name: eth-dashboard
+          mountPath: /mnt/eth-data
+  volumeClaimTemplates:
+    - metadata:
+        name: eth-dashboard
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
