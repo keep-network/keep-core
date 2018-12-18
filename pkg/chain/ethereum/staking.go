@@ -130,7 +130,6 @@ func (s *staking) WatchUnstakedFor(
 					event.Staker,
 					event.Amount,
 				)
-				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
