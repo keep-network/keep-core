@@ -88,11 +88,12 @@ func TestStoreSharesMessageForEvidence(t *testing.T) {
 
 	evidenceMsg := verifyingMember2.evidenceLog.peerSharesMessage(member1.ID)
 
-	if evidenceMsg == nil {
-		t.Fatalf("peer shares message not stored in evidence log")
-	}
 	if !reflect.DeepEqual(sharesMsg1, evidenceMsg) {
-		t.Fatalf("unexpected message stored in evidence log")
+		t.Fatalf(
+			"unexpected message in evidence log\nexpected: %v\n actual:   %v",
+			sharesMsg1,
+			evidenceMsg,
+		)
 	}
 }
 

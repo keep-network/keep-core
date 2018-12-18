@@ -41,11 +41,12 @@ func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
 		member1.ID,
 	)
 
-	if evidenceMsg == nil {
-		t.Fatalf("ephemeral key message not stored in evidence log")
-	}
 	if !reflect.DeepEqual(message1, evidenceMsg) {
-		t.Fatalf("unexpected message stored in evidence log")
+		t.Fatalf(
+			"unexpected message in evidence log\nexpected: %v\n actual:   %v",
+			message1,
+			evidenceMsg,
+		)
 	}
 }
 func TestGenerateEphemeralKeys(t *testing.T) {
