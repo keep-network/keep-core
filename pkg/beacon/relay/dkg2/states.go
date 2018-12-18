@@ -216,7 +216,6 @@ func (cs *committingState) receive(msg net.Message) error {
 		}
 
 		return nil
-
 	case *gjkr.MemberCommitmentsMessage:
 		if !isMessageFromSelf(cs.memberID(), msg) {
 			cs.phaseCommitmentsMessages = append(
