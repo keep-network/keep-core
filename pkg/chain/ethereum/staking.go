@@ -110,7 +110,6 @@ func (s *staking) WatchUnstakedFor(
 	success func(common.Address, *big.Int),
 	fail errorCallback,
 ) error {
-
 	eventChan := make(chan *abi.StakingProxyUnstaked)
 	eventSubscription, err := s.contract.WatchUnstaked(nil, eventChan, []common.Address{address})
 	if err != nil {
@@ -130,40 +129,6 @@ func (s *staking) WatchUnstakedFor(
 					event.Staker,
 					event.Amount,
 				)
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-func (s *staking) WatchUnstaked(
-	success func(common.Address, *big.Int),
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.StakingProxyUnstaked)
-	eventSubscription, err := s.contract.WatchUnstaked(nil, eventChan, nil)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for RelayEntryGenerated event: [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.Staker,
-					event.Amount,
-				)
-				return
 
 			case ee := <-eventSubscription.Err():
 				fail(ee)
