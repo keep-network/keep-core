@@ -71,7 +71,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dkg := &DKG{p, q, vss, newDkgEvidenceLog()}
+	dkg := &DKG{p, q, vss}
 
 	g := big.NewInt(7) // `g` value for public key calculation `y_m = g^{z_m} mod p`
 	vss.G = g
@@ -123,7 +123,7 @@ func TestCombineGroupPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dkg := &DKG{p, q, vss, newDkgEvidenceLog()}
+	dkg := &DKG{p, q, vss}
 
 	expectedGroupPublicKey := big.NewInt(1620) // 10*20*30*91*92 mod 1620
 

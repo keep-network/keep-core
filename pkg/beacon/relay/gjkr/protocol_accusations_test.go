@@ -31,17 +31,15 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			accusedID:      4,
 			expectedResult: []MemberID{3},
 		},
-		"current member as an accuser - error returned": {
+		"current member as an accuser - accusation skipped": {
 			accuserID:      currentMemberID,
 			accusedID:      3,
-			expectedResult: nil,
-			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+			expectedResult: []MemberID{},
 		},
-		"current member as an accused - error returned": {
+		"current member as an accused - accusation skipped": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: nil,
-			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+			expectedResult: []MemberID{},
 		},
 		"incorrect shareS - accused member is punished": {
 			accuserID: 3,
@@ -117,7 +115,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			}
 			shares := make(map[MemberID]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
-			member.protocolConfig.evidenceLog.PutPeerSharesMessage(
+			member.evidenceLog.PutPeerSharesMessage(
 				&PeerSharesMessage{
 					senderID: test.accusedID,
 					shares:   shares,
@@ -289,24 +287,21 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 		modifyShareS               func(shareS *big.Int) *big.Int
 		modifyPublicKeySharePoints func(coefficients []*big.Int) []*big.Int
 		expectedResult             []MemberID
-		expectedError              error
 	}{
 		"false accusation - sender is punished": {
 			accuserID:      3,
 			accusedID:      4,
 			expectedResult: []MemberID{3},
 		},
-		"current member as a sender - error returned": {
+		"current member as a sender - accusation skipped": {
 			accuserID:      currentMemberID,
 			accusedID:      3,
-			expectedResult: nil,
-			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+			expectedResult: []MemberID{},
 		},
-		"current member as an accused - error returned": {
+		"current member as an accused - accusation skipped": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: nil,
-			expectedError:  fmt.Errorf("current member cannot be a part of a dispute"),
+			expectedResult: []MemberID{},
 		},
 		"incorrect shareS - accused member is punished": {
 			accuserID: 3,
@@ -351,15 +346,15 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			symmetricKey := accuser.symmetricKeys[test.accusedID]
 			encryptedShareS, err := symmetricKey.Encrypt(modifiedShareS.Bytes())
 			if err != nil {
-				t.Fatalf("unexpected error: [%v]", err)
+				t.Fatal(err)
 			}
 			encryptedShareT, err := symmetricKey.Encrypt(big.NewInt(13).Bytes())
 			if err != nil {
-				t.Fatalf("unexpected error: [%v]", err)
+				t.Fatal(err)
 			}
 			shares := make(map[MemberID]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
-			member.protocolConfig.evidenceLog.PutPeerSharesMessage(
+			member.evidenceLog.PutPeerSharesMessage(
 				&PeerSharesMessage{test.accusedID, shares},
 			)
 
@@ -378,8 +373,8 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			result, err := member.ResolvePublicKeySharePointsAccusationsMessages(
 				messages,
 			)
-			if !reflect.DeepEqual(err, test.expectedError) {
-				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
+			if err != nil {
+				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)

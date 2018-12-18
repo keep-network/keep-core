@@ -17,9 +17,6 @@ type DKG struct {
 
 	// Pedersen VSS scheme used to calculate commitments.
 	vss *pedersen.VSS
-
-	// TODO evidenceLog placed here temporarily. Need to decide how it will be passed to protocol execution.
-	evidenceLog evidenceLog
 }
 
 // GenerateDKG generates new DKG protocol configuration using randomly chosen
@@ -47,7 +44,7 @@ func GenerateDKG() (*DKG, error) {
 		return nil, fmt.Errorf("could not generate DKG paramters [%v]", err)
 	}
 
-	return &DKG{p, q, vss, newDkgEvidenceLog()}, nil
+	return &DKG{p, q, vss}, nil
 }
 
 // RandomQ generates a random `big.Int` in range (0, q).

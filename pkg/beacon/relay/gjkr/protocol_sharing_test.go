@@ -41,7 +41,7 @@ func TestCombineReceivedShares(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	config := &DKG{p, q, vss, newDkgEvidenceLog()}
+	config := &DKG{p, q, vss}
 
 	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
 	if err != nil {

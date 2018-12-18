@@ -8,6 +8,48 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
+	groupSize := 2
+
+	// Create a group of 2 members
+	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
+		groupSize,
+		groupSize, // threshold = groupSize
+		nil,
+	)
+
+	member1 := ephemeralGeneratingMembers[0]
+	member2 := ephemeralGeneratingMembers[1]
+
+	message1, err := member1.GenerateEphemeralKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := member2.GenerateEphemeralKeyPair(); err != nil {
+		t.Fatal(err)
+	}
+
+	symmetricKeyMember2 := member2.InitializeSymmetricKeyGeneration()
+	if err := symmetricKeyMember2.GenerateSymmetricKeys(
+		[]*EphemeralPublicKeyMessage{message1},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	evidenceMsg := symmetricKeyMember2.evidenceLog.ephemeralPublicKeyMessage(
+		member1.ID,
+	)
+
+	if !reflect.DeepEqual(message1, evidenceMsg) {
+		t.Fatalf(
+			"unexpected message in evidence log\nexpected: %v\n actual:   %v",
+			message1,
+			evidenceMsg,
+		)
+	}
+}
+
 func TestGenerateEphemeralKeys(t *testing.T) {
 	groupSize := 3
 
@@ -111,6 +153,7 @@ func initializeEphemeralKeyPairMembersGroup(
 				ID:             id,
 				group:          group,
 				protocolConfig: dkg,
+				evidenceLog:    newDkgEvidenceLog(),
 			},
 			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 		})
@@ -183,9 +226,12 @@ func generateGroupWithEphemeralKeys(
 			}
 		}
 
-		member1.protocolConfig.evidenceLog.PutEphemeralMessage(
-			&EphemeralPublicKeyMessage{member1.ID, ephemeralKeys},
-		)
+		// simulating message broadcast in the group
+		for _, member := range symmetricKeyMembers {
+			member.evidenceLog.PutEphemeralMessage(
+				&EphemeralPublicKeyMessage{member1.ID, ephemeralKeys},
+			)
+		}
 	}
 
 	return symmetricKeyMembers, nil
