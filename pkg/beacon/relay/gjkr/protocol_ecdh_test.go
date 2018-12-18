@@ -112,6 +112,7 @@ func initializeEphemeralKeyPairMembersGroup(
 				ID:             id,
 				group:          group,
 				protocolConfig: dkg,
+				evidenceLog:    newDkgEvidenceLog(),
 			},
 			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 		})
@@ -184,9 +185,12 @@ func generateGroupWithEphemeralKeys(
 			}
 		}
 
-		member1.protocolConfig.evidenceLog.PutEphemeralMessage(
-			&EphemeralPublicKeyMessage{member1.ID, ephemeralKeys},
-		)
+		// simulating message broadcast in the group
+		for _, member := range symmetricKeyMembers {
+			member.evidenceLog.PutEphemeralMessage(
+				&EphemeralPublicKeyMessage{member1.ID, ephemeralKeys},
+			)
+		}
 	}
 
 	return symmetricKeyMembers, nil
