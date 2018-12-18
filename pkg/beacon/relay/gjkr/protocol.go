@@ -378,7 +378,6 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-
 			if sjm.ID == accuserID || sjm.ID == accusedID {
 				// the member cannot resolve the dispute in which it's involved
 				continue
