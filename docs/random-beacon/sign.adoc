@@ -60,6 +60,9 @@ if invalid:
 
 - punish _P~tattletale~_ by _INVALID_COMPLAINT_PENALTY * stakeMult~i~_
 
+The tattletale phase goes on separately of the output, and can continue even
+after the valid output has been submitted, or the group has failed entirely to
+submit a valid output.
 
 
 [source, python]
