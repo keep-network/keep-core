@@ -69,7 +69,7 @@ func TestFullStateTransitions(t *testing.T) {
 	for i, state := range states {
 		finalState, ok := state.(*combiningState)
 		if !ok {
-			t.Fatalf("Not a final state: %#v", state)
+			t.Fatalf("not a final state: %#v", state)
 		}
 
 		groupPublicKeys[i] = finalState.member.GroupPublicKey()
@@ -79,7 +79,7 @@ func TestFullStateTransitions(t *testing.T) {
 	for i := 1; i < len(groupPublicKeys); i++ {
 		if !reflect.DeepEqual(groupPublicKeys[i], groupPublicKeys[0]) {
 			t.Fatalf(
-				"two different group public keys: %v and %v",
+				"unexpected group public key\nexpected: %v\nactual:   %v",
 				groupPublicKeys[i],
 				groupPublicKeys[0],
 			)
