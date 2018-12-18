@@ -6,11 +6,12 @@ import (
 	"math/big"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-const TicketInitialTimeout = 5
+const ticketInitialTimeout = 5
+const minimumStake = 1
 
 var NaturalThreshold = big.NewInt((2 ^ 256) - 1)
 
@@ -19,7 +20,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 ) error {
-	tickets, err := n.Staker.GenerateTickets(entryValue)
+	tickets, err := groupselection.GenerateTickets(minimumStake, n.Staker, entryValue)
 	if err != nil {
 		return err
 	}
@@ -29,8 +30,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	go func(
 		cancel context.CancelFunc,
-		tickets group.Tickets,
-		relayChain relaychain.Interface,
+		tickets []*groupselection.Ticket,
+		relayChain relaychain.GroupInterface,
 		blockCounter chain.BlockCounter,
 		errCh chan error,
 	) {
