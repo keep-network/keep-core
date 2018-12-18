@@ -238,8 +238,8 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
-	for _, sharesMsg := range sharesMessages {
-		cvm.evidenceLog.PutPeerSharesMessage(sharesMsg)
+	for _, sharesMessage := range sharesMessages {
+		cvm.evidenceLog.PutPeerSharesMessage(sharesMessage)
 	}
 
 	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
