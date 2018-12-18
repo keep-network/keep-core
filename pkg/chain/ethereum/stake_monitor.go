@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/staker"
 )
 
 type ethereumStakeMonitor struct {
@@ -27,7 +26,7 @@ func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
 
 // Staker returns an instance for the given address that allows insight into a
 // staker's stake on Ethereum.
-func (esm *ethereumStakeMonitor) StakerFor(address string) (staker.Staker, error) {
+func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("not a valid ethereum address: %v", address)
 	}

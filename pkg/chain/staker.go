@@ -1,5 +1,4 @@
-// Package staker contains the Staker interface.
-package staker
+package chain
 
 import (
 	"math/big"

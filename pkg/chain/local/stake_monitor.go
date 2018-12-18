@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-core/pkg/staker"
+	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 // StakeMonitor implements `chain.StakeMonitor` interface and works
@@ -33,7 +33,7 @@ func (lsm *StakeMonitor) HasMinimumStake(address string) (bool, error) {
 
 // StakerFor returns a staker.Staker instance for the given address. Returns an
 // error if the address is invalid.
-func (lsm *StakeMonitor) StakerFor(address string) (staker.Staker, error) {
+func (lsm *StakeMonitor) StakerFor(address string) (chain.Staker, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("not a valid ethereum address: %v", address)
 	}

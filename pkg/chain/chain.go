@@ -2,7 +2,6 @@ package chain
 
 import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/staker"
 )
 
 // BlockCounter is an interface that provides the ability to wait for a certain
@@ -28,7 +27,7 @@ type StakeMonitor interface {
 	// a network operator. The minimum stake is an on-chain parameter.
 	HasMinimumStake(address string) (bool, error)
 	// StakerFor returns a Staker for the given address.
-	StakerFor(address string) (staker.Staker, error)
+	StakerFor(address string) (Staker, error)
 }
 
 // Handle represents a handle to a blockchain that provides access to the core
