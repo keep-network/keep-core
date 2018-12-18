@@ -379,7 +379,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if sjm.ID == accuserID || sjm.ID == accusedID {
-				// the member cannot resolve the dispute in which it's involved
+				// The member cannot resolve the dispute in which it's involved.
 				continue
 			}
 
@@ -641,7 +641,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if pjm.ID == message.senderID || pjm.ID == accusedID {
-				// the member cannot resolve the dispute in which it's involved
+				// The member cannot resolve the dispute in which it's involved.
 				continue
 			}
 
