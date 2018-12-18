@@ -8,6 +8,46 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
+	groupSize := 2
+
+	// Create a group of 2 members
+	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
+		groupSize,
+		groupSize, // threshold = groupSize
+		nil,
+	)
+
+	member1 := ephemeralGeneratingMembers[0]
+	member2 := ephemeralGeneratingMembers[1]
+
+	message1, err := member1.GenerateEphemeralKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := member2.GenerateEphemeralKeyPair(); err != nil {
+		t.Fatal(err)
+	}
+
+	symmetricKeyMember2 := member2.InitializeSymmetricKeyGeneration()
+	if err := symmetricKeyMember2.GenerateSymmetricKeys(
+		[]*EphemeralPublicKeyMessage{message1},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	evidenceMsg := symmetricKeyMember2.evidenceLog.ephemeralPublicKeyMessage(
+		member1.ID,
+	)
+
+	if evidenceMsg == nil {
+		t.Fatalf("ephemeral key message not stored in evidence log")
+	}
+	if !reflect.DeepEqual(message1, evidenceMsg) {
+		t.Fatalf("unexpected message stored in evidence log")
+	}
+}
 func TestGenerateEphemeralKeys(t *testing.T) {
 	groupSize := 3
 
