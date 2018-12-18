@@ -30,6 +30,9 @@ contract KeepGroupImplV1 is Ownable {
     uint256[] internal _tickets;
     bytes32[] internal _submissions;
 
+    mapping (bytes32 => uint256) internal _submissionVotes;
+    mapping (address => mapping (bytes32 => bool)) internal _hasVoted;
+
     struct Proof {
         address sender;
         uint256 stakerValue;
@@ -37,6 +40,9 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     mapping(uint256 => Proof) internal _proofs;
+
+    bytes32[] internal _groups;
+    mapping (bytes32 => address[]) internal _groupMembers;
 
     mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
     mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
@@ -192,6 +198,36 @@ contract KeepGroupImplV1 is Ownable {
         );
 
         _submissions.push(groupPubKey);
+    }
+
+    function voteForSubmission(bytes32 groupPubKey) public {
+
+        require(
+            // TODO: get participant number and implement slash/reward described in Phase 13
+            AddressArrayUtils.contains(orderedParticipants(), msg.sender),
+            "Sender must be in selected participants to be able to vote"
+        );
+
+        require(
+            !_hasVoted[msg.sender][groupPubKey],
+            "You already voted for this group pubkey"
+        );
+
+        _hasVoted[msg.sender][groupPubKey] = true;
+        _submissionVotes[groupPubKey]++;
+    }
+
+    function getFinalResult() public {
+
+        // TODO: Implement conflict resolution logic described in Phase 14
+        // for now just use the first submission
+        _groups.push(_submissions[0]);
+
+        // Keep record of group members
+        for (uint i = 0; i < _tickets.length; i++) {
+            Proof memory proof = _proofs[_tickets[i]];
+            _groupMembers[_submissions[0]].push(proof.sender);
+        }
     }
 
     // Temporary Code for Milestone 1 follows
