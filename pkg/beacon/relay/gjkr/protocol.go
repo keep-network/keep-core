@@ -360,7 +360,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // which party of the dispute is lying.
 //
 // The current member cannot be a part of a dispute. If the current member is
-// either an accuser or is accused the function will return an error. The accused
+// either an accuser or is accused, the accusation is ignored. The accused
 // party cannot be a judge in its own case. From the other hand, the accuser has
 // already performed the calculation in the previous phase which resulted in the
 // accusation and waits now for a judgment from other players.
@@ -380,12 +380,13 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	messages []*SecretSharesAccusationsMessage,
 ) ([]MemberID, error) {
-	var disqualifiedMembers []MemberID
+	disqualifiedMembers := make([]MemberID, 0)
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if sjm.ID == accuserID || sjm.ID == accusedID {
-				return nil, fmt.Errorf("current member cannot be a part of a dispute")
+				// The member cannot resolve the dispute in which it's involved.
+				continue
 			}
 
 			symmetricKey, err := recoverSymmetricKey(
@@ -621,7 +622,7 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 // which party of the dispute is lying.
 //
 // The current member cannot be a part of a dispute. If the current member is
-// either an accuser or is accused the function will return an error. The accused
+// either an accuser or is accused, the accusation is ignored. The accused
 // party cannot be a judge in its own case. From the other hand, the accuser has
 // already performed the calculation in the previous phase which resulted in the
 // accusation and waits now for a judgment from other players.
@@ -641,12 +642,13 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessages(
 	messages []*PointsAccusationsMessage,
 ) ([]MemberID, error) {
-	var disqualifiedMembers []MemberID
+	disqualifiedMembers := make([]MemberID, 0)
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if pjm.ID == message.senderID || pjm.ID == accusedID {
-				return nil, fmt.Errorf("current member cannot be a part of a dispute")
+				// The member cannot resolve the dispute in which it's involved.
+				continue
 			}
 
 			evidenceLog := pjm.evidenceLog
