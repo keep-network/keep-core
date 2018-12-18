@@ -34,7 +34,7 @@ func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error)
 	return &ethereumStaker{
 		address:             address,
 		ethereum:            esm.config,
-		stakeChangeHandlers: make([]func(newStake *big.Int), 0, 0),
+		stakeChangeHandlers: make([]func(newStake *big.Int), 0),
 	}, nil
 }
 
