@@ -3,6 +3,7 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./StakingProxy.sol";
 import "./TokenStaking.sol";
+import "./utils/UintArrayUtils.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
@@ -87,6 +88,13 @@ contract KeepGroupImplV1 is Ownable {
             _tickets.push(ticketValue);
             _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         }
+    }
+
+    /**
+     * @dev Gets submitted tickets in ascending order.
+     */
+    function orderedTickets() public view returns (uint256[]) {
+        return UintArrayUtils.sort(_tickets);
     }
 
     /**

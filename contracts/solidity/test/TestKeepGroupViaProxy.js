@@ -55,6 +55,10 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     await token.transfer(account_two, minimumStake, {from: account_one});
     await token.approveAndCall(stakingContract.address, minimumStake, "", {from: account_two});
 
+    // Send tokens to account_three and stake
+    await token.transfer(account_three, minimumStake*3, {from: account_one});
+    await token.approveAndCall(stakingContract.address, minimumStake*3, "", {from: account_three});
+
   });
 
   it("should fail to update minimum stake by non owner", async function() {
@@ -86,7 +90,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   it("should be able to get staking weight", async function() {
     assert.equal(await keepGroupImplViaProxy.stakingWeight(account_one), 1, "Should have the staking weight of 1.");
-    assert.equal(await keepGroupImplViaProxy.stakingWeight(account_three), 0, "Should have staking weight of 0.");
+    assert.equal(await keepGroupImplViaProxy.stakingWeight(account_three), 3, "Should have staking weight of 3.");
   });
 
   it("should be able to submit a ticket during initial ticket submission", async function() {
@@ -96,6 +100,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
     let stakerValue = account_one;
     let virtualStakerIndex = 1;
+    let tickets = [];
 
     let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
       ["uint", "uint", "uint"],
@@ -103,6 +108,33 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     ).toString('hex'));
 
     await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex);
+    tickets.push(ticketValue);
+
+    stakerValue = account_two;
+    ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex, {from: account_two});
+    tickets.push(ticketValue);
+
+    stakerValue = account_three;
+    ticketValue = new BigNumber('0x' + abi.soliditySHA3(
+      ["uint", "uint", "uint"],
+      [randomBeaconValue, stakerValue, virtualStakerIndex]
+    ).toString('hex'));
+
+    await keepGroupImplViaProxy.submitTicket(ticketValue, stakerValue, virtualStakerIndex, {from: account_three});
+    tickets.push(ticketValue);
+
+    tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
+
+    // Test tickets ordering
+    let orderedTickets = await keepGroupImplViaProxy.orderedTickets();
+    assert.equal(orderedTickets[0].equals(tickets[0]), true, "Tickets should be in ascending order.");
+    assert.equal(orderedTickets[1].equals(tickets[1]), true, "Tickets should be in ascending order.");
+    assert.equal(orderedTickets[2].equals(tickets[2]), true, "Tickets should be in ascending order.");
 
     let proof = await keepGroupImplViaProxy.getTicketProof(ticketValue);
     assert.equal(proof[0].equals(new BigNumber(stakerValue)), true , "Should be able to get submitted ticket proof.");
