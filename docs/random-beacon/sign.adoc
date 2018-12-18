@@ -29,7 +29,9 @@ this transaction triggers the signing
 === _Block~T_siginit+T_output~_
 where _1 <= T~output~ <= failureTimeout(request~i~)_
 
-member _P~n~_ of _Group~i~_ submits _blsSign(H(seed~i~, rseed~i~), pk~G~)_
+_input~i~ = H(seed~i~, rseed~i~, v~i-1~)_
+
+member _P~n~_ of _Group~i~_ submits _blsSign(input~i~, pk~G~)_
 
 verify signature
 
