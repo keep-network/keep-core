@@ -19,7 +19,8 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupOnePubKey, groupTwoPubKey,
     account_one = accounts[0],
     account_two = accounts[1],
-    account_three = accounts[2];
+    account_three = accounts[2],
+    account_four = accounts[3];
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -135,6 +136,9 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     assert.equal(orderedTickets[0].equals(tickets[0]), true, "Tickets should be in ascending order.");
     assert.equal(orderedTickets[1].equals(tickets[1]), true, "Tickets should be in ascending order.");
     assert.equal(orderedTickets[2].equals(tickets[2]), true, "Tickets should be in ascending order.");
+    
+    // Test can't submit group pubkey if haven't submitted a ticket
+    await exceptThrow(keepGroupImplViaProxy.submitGroupPublicKey(groupOnePubKey, {from: account_four}));
 
     let proof = await keepGroupImplViaProxy.getTicketProof(ticketValue);
     assert.equal(proof[0].equals(new BigNumber(stakerValue)), true , "Should be able to get submitted ticket proof.");

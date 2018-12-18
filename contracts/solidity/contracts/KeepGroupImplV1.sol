@@ -4,6 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
+import "./utils/AddressArrayUtils.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
@@ -27,6 +28,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _randomBeaconValue;
 
     uint256[] internal _tickets;
+    bytes32[] internal _submissions;
 
     struct Proof {
         address sender;
@@ -179,6 +181,17 @@ contract KeepGroupImplV1 is Ownable {
             // Slash invalid ticket sender stake balance and reward the challenger.
             stakingContract.authorizedTransferFrom(proof.sender, msg.sender, _minStake);
         }
+    }
+
+    function submitGroupPublicKey(bytes32 groupPubKey) public {
+
+        require(
+            // TODO: get participant number and implement slash/reward described in Phase 13
+            AddressArrayUtils.contains(orderedParticipants(), msg.sender),
+            "Sender must be in selected participants to be able to submit group pubkey"
+        );
+
+        _submissions.push(groupPubKey);
     }
 
     // Temporary Code for Milestone 1 follows
