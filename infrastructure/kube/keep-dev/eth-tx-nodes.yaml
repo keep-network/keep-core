@@ -45,6 +45,8 @@ spec:
         app: geth
         type: tx
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: tx
         image: gcr.io/keep-dev-fe24/geth-node
