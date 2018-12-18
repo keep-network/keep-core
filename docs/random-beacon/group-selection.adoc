@@ -120,7 +120,7 @@ The staker creation operation needs to include a proof of the correctness of the
 above values.
 
 Currently the _Stake~j~_ and _Weight~j~_ can be public and _Q~j~_ can be the 
-ECDSA pubkey of _S~j~_. Future work towards indistinguishable staking would make
+address of _S~j~_. Future work towards indistinguishable staking would make
 _Stake~j~_ and _Weight~j~_ values private and enable their verification via
 zero-knowledge proofs.
 
