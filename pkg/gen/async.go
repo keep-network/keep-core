@@ -62,6 +62,11 @@ func main() {
 			Prefix:     "RelayRequest",
 			outputFile: "relay_entry_requested_promise.go",
 		},
+		{
+			Type:       "*event.DKGResultPublication",
+			Prefix:     "DKGResultPublication",
+			outputFile: "dkg_result_publication_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {

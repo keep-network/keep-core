@@ -12,22 +12,32 @@ type PrivateKey btcec.PrivateKey
 // PublicKey is an ephemeral public elliptic curve key.
 type PublicKey btcec.PublicKey
 
+// KeyPair represents the generated ephemeral elliptic curve private and public
+// key pair
+type KeyPair struct {
+	PrivateKey *PrivateKey
+	PublicKey  *PublicKey
+}
+
 func curve() *btcec.KoblitzCurve {
 	return btcec.S256()
 }
 
-// GenerateKeypair generates a pair of public and private ephemeral keys
-// that can be used as an input for ECDH.
-func GenerateKeypair() (*PrivateKey, *PublicKey, error) {
+// GenerateKeyPair generates a pair of public and private elliptic curve
+// ephemeral key that can be used as an input for ECDH.
+func GenerateKeyPair() (*KeyPair, error) {
 	ecdsaKey, err := btcec.NewPrivateKey(curve())
 	if err != nil {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"could not generate new ephemeral keypair [%v]",
 			err,
 		)
 	}
 
-	return (*PrivateKey)(ecdsaKey), (*PublicKey)(&ecdsaKey.PublicKey), nil
+	return &KeyPair{
+		(*PrivateKey)(ecdsaKey),
+		(*PublicKey)(&ecdsaKey.PublicKey),
+	}, nil
 }
 
 // UnmarshalPrivateKey turns a slice of bytes into a `PrivateKey`.

@@ -14,6 +14,8 @@ type BlockCounter interface {
 	// BlockWaiter returns a channel that will emit the current block height
 	// after the given number of blocks has elapsed and then immediately close.
 	BlockWaiter(numBlocks int) (<-chan int, error)
+	// CurrentBlock returns the current block height.
+	CurrentBlock() (int, error)
 }
 
 // StakeMonitor is an interface that provides ability to check and monitor

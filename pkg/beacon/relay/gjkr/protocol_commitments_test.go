@@ -9,19 +9,20 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestCalculateSharesAndCommitments(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize)
+	members, err := initializeCommittingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
 
 	member := members[0]
-	sharesMessages, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+	sharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		t.Fatalf("shares and commitments calculation failed [%s]", err)
 	}
@@ -32,10 +33,10 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 			len(member.secretCoefficients),
 		)
 	}
-	if len(sharesMessages) != (groupSize - 1) {
-		t.Fatalf("\nexpected: %v peer shares messages\nactual:   %v\n",
+	if len(sharesMessage.shares) != (groupSize - 1) {
+		t.Fatalf("\nexpected: %v shares in message\nactual:   %v\n",
 			groupSize-1,
-			len(sharesMessages),
+			len(sharesMessage.shares),
 		)
 	}
 
@@ -47,127 +48,263 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	}
 }
 
-func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
-	threshold := 3
-	groupSize := 5
+func TestStoreSharesMessageForEvidence(t *testing.T) {
+	groupSize := 2
 
 	config, err := predefinedDKG()
 	if err != nil {
 		t.Fatalf("predefined config initialization failed [%s]", err)
 	}
 
+	members, err := initializeCommittingMembersGroup(
+		groupSize, // threshold = group size
+		groupSize,
+		config,
+	)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	member1 := members[0]
+	member2 := members[1]
+
+	sharesMsg1, commitmentsMsg1, err := member1.CalculateMembersSharesAndCommitments()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, _, err := member2.CalculateMembersSharesAndCommitments(); err != nil {
+		t.Fatal(err)
+	}
+
+	verifyingMember2 := member2.InitializeCommitmentsVerification()
+
+	if _, err := verifyingMember2.VerifyReceivedSharesAndCommitmentsMessages(
+		[]*PeerSharesMessage{sharesMsg1},
+		[]*MemberCommitmentsMessage{commitmentsMsg1},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	evidenceMsg := verifyingMember2.evidenceLog.peerSharesMessage(member1.ID)
+
+	if !reflect.DeepEqual(sharesMsg1, evidenceMsg) {
+		t.Fatalf(
+			"unexpected message in evidence log\nexpected: %v\n actual:   %v",
+			sharesMsg1,
+			evidenceMsg,
+		)
+	}
+}
+
+func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
+	threshold := 2
+	groupSize := 3
+
+	config, err := predefinedDKG()
+	if err != nil {
+		t.Fatalf("predefined config initialization failed [%s]", err)
+	}
+
+	members, err := initializeCommittingMembersGroup(threshold, groupSize, config)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	member1 := members[0]
+	member2 := members[1]
+	member3 := members[2]
+
+	verifyingMemberID := member3.ID
+	verifyingMemberKeys := member3.symmetricKeys
+
 	var tests = map[string]struct {
-		modifyPeerShareMessages   func(messages []*PeerSharesMessage)
-		modifyCommitmentsMessages func(messages []*MemberCommitmentsMessage)
-		expectedError             error
-		expectedAccusedIDs        []int
+		modifyPeerSharesMessage  func(messages map[MemberID]*PeerSharesMessage) error
+		modifyCommitmentsMessage func(messages map[MemberID]*MemberCommitmentsMessage)
+		expectedAccusedIDs       []MemberID
 	}{
-		"positive validation - no accusations": {
-			expectedError: nil,
+		"no accusations": {
+			expectedAccusedIDs: []MemberID{},
 		},
-		"negative validation - changed share S": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
-				messages[0].shareS = testutils.NewRandInt(messages[0].shareS, config.Q)
-			},
-			expectedError:      nil,
-			expectedAccusedIDs: []int{2},
-		},
-		"negative validation - changed two shares T": {
-			modifyPeerShareMessages: func(messages []*PeerSharesMessage) {
-				messages[1].shareT = testutils.NewRandInt(messages[1].shareT, config.Q)
-				messages[2].shareT = testutils.NewRandInt(messages[2].shareT, config.Q)
-			},
-			expectedError:      nil,
-			expectedAccusedIDs: []int{3, 4},
-		},
-		"negative validation - changed commitment": {
-			modifyCommitmentsMessages: func(messages []*MemberCommitmentsMessage) {
-				messages[3].commitments[1] = testutils.NewRandInt(
-					messages[3].commitments[1], config.Q,
+		"invalid S share": {
+			modifyPeerSharesMessage: func(messages map[MemberID]*PeerSharesMessage) error {
+				return alterPeerSharesMessage(
+					messages[member2.ID],
+					verifyingMemberID,
+					verifyingMemberKeys[member2.ID],
+					true,
+					false,
+					config,
 				)
 			},
-			expectedError:      nil,
-			expectedAccusedIDs: []int{5},
+			expectedAccusedIDs: []MemberID{member2.ID},
+		},
+		"invalid T share": {
+			modifyPeerSharesMessage: func(messages map[MemberID]*PeerSharesMessage) error {
+				return alterPeerSharesMessage(
+					messages[member1.ID],
+					verifyingMemberID,
+					verifyingMemberKeys[member1.ID],
+					false,
+					true,
+					config,
+				)
+			},
+			expectedAccusedIDs: []MemberID{member1.ID},
+		},
+		"invalid commitment": {
+			modifyCommitmentsMessage: func(messages map[MemberID]*MemberCommitmentsMessage) {
+				message := messages[member2.ID]
+				message.commitments[0] = testutils.NewRandInt(
+					message.commitments[0],
+					config.Q,
+				)
+			},
+			expectedAccusedIDs: []MemberID{member2.ID},
 		},
 	}
+
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializeCommittingMembersGroup(threshold, groupSize)
-			if err != nil {
-				t.Fatalf("group initialization failed [%s]", err)
-			}
-			currentMember := members[0]
-
-			var sharesMessages []*PeerSharesMessage
-			var commitmentsMessages []*MemberCommitmentsMessage
+			shareMessages := make(map[MemberID]*PeerSharesMessage)
+			commitmentMessages := make(map[MemberID]*MemberCommitmentsMessage)
 
 			for _, member := range members {
-				sharesMessage, commitmentsMessage, err := member.CalculateMembersSharesAndCommitments()
+				shares, commitments, err := member.CalculateMembersSharesAndCommitments()
 				if err != nil {
-					t.Fatalf("shares and commitments calculation failed [%s]", err)
+					t.Fatal(err)
 				}
-				sharesMessages = append(sharesMessages, sharesMessage...)
-				commitmentsMessages = append(commitmentsMessages, commitmentsMessage)
+
+				shareMessages[member.ID] = shares
+				commitmentMessages[member.ID] = commitments
 			}
 
-			filteredSharesMessages := filterPeerSharesMessage(sharesMessages, currentMember.ID)
-			filteredCommitmentsMessages := filterMemberCommitmentsMessages(commitmentsMessages, currentMember.ID)
+			if test.modifyPeerSharesMessage != nil {
+				if err = test.modifyPeerSharesMessage(shareMessages); err != nil {
+					t.Fatal(err)
+				}
 
-			if test.modifyPeerShareMessages != nil {
-				test.modifyPeerShareMessages(filteredSharesMessages)
-			}
-			if test.modifyCommitmentsMessages != nil {
-				test.modifyCommitmentsMessages(filteredCommitmentsMessages)
 			}
 
-			accusedMessage, err := currentMember.VerifyReceivedSharesAndCommitmentsMessages(
-				filteredSharesMessages,
-				filteredCommitmentsMessages,
+			if test.modifyCommitmentsMessage != nil {
+				test.modifyCommitmentsMessage(commitmentMessages)
+			}
+
+			verifyingMember := member3.InitializeCommitmentsVerification()
+
+			accusationMessage, err := verifyingMember.VerifyReceivedSharesAndCommitmentsMessages(
+				[]*PeerSharesMessage{
+					shareMessages[member1.ID],
+					shareMessages[member2.ID],
+				},
+				[]*MemberCommitmentsMessage{
+					commitmentMessages[member1.ID],
+					commitmentMessages[member2.ID],
+				},
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assertAccusedMembers(
+				test.expectedAccusedIDs,
+				verifyingMember,
+				accusationMessage,
+				t,
 			)
 
-			if !reflect.DeepEqual(test.expectedError, err) {
-				t.Fatalf(
-					"\nexpected: %v\nactual:   %v\n",
-					test.expectedError,
-					err,
-				)
-			}
-
-			if len(accusedMessage.accusedIDs) != len(test.expectedAccusedIDs) {
-				t.Fatalf("\nexpected: %v accusations\nactual:   %v\n",
-					len(test.expectedAccusedIDs),
-					len(accusedMessage.accusedIDs),
-				)
-			}
-			if !reflect.DeepEqual(accusedMessage.accusedIDs, test.expectedAccusedIDs) {
-				t.Fatalf("incorrect accused members IDs\nexpected: %v\nactual:   %v\n",
-					test.expectedAccusedIDs,
-					accusedMessage.accusedIDs,
-				)
-			}
-
-			expectedReceivedSharesLength := groupSize - 1 - len(test.expectedAccusedIDs)
-			if len(currentMember.receivedValidSharesS) != expectedReceivedSharesLength {
-				t.Fatalf("\nexpected: %v received shares S\nactual:   %v\n",
-					expectedReceivedSharesLength,
-					len(currentMember.receivedValidSharesS),
-				)
-			}
-			if len(currentMember.receivedValidSharesT) != expectedReceivedSharesLength {
-				t.Fatalf("\nexpected: %v received shares T\nactual:   %v\n",
-					expectedReceivedSharesLength,
-					len(currentMember.receivedValidSharesT),
-				)
-			}
-			if len(currentMember.receivedValidPeerCommitments) != expectedReceivedSharesLength {
-				t.Fatalf("\nexpected: %v received commitments\nactual:   %v\n",
-					expectedReceivedSharesLength,
-					len(currentMember.receivedValidPeerCommitments),
-				)
-			}
+			assertValidSharesAndCommitments(
+				test.expectedAccusedIDs,
+				verifyingMember,
+				groupSize,
+				t,
+			)
 		})
 	}
 }
+
+func alterPeerSharesMessage(
+	message *PeerSharesMessage,
+	receiverID MemberID,
+	symmetricKey ephemeral.SymmetricKey,
+	alterS bool,
+	alterT bool,
+	config *DKG,
+) error {
+	oldShareS, err := message.decryptShareS(receiverID, symmetricKey)
+	if err != nil {
+		return err
+	}
+
+	oldShareT, err := message.decryptShareT(receiverID, symmetricKey)
+	if err != nil {
+		return err
+	}
+
+	var newShareS = oldShareS
+	var newShareT = oldShareT
+
+	if alterS {
+		newShareS = testutils.NewRandInt(oldShareS, config.Q)
+	}
+	if alterT {
+		newShareT = testutils.NewRandInt(oldShareT, config.Q)
+	}
+
+	err = message.addShares(receiverID, newShareS, newShareT, symmetricKey)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func assertAccusedMembers(
+	expectedAccusedIDs []MemberID,
+	verifyingMember *CommitmentsVerifyingMember,
+	accusationMessage *SecretSharesAccusationsMessage,
+	t *testing.T,
+) {
+	expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+	for _, id := range expectedAccusedIDs {
+		expectedAccusedMembersKeys[id] = verifyingMember.ephemeralKeyPairs[id].PrivateKey
+	}
+
+	if !reflect.DeepEqual(accusationMessage.accusedMembersKeys, expectedAccusedMembersKeys) {
+		t.Errorf("incorrect accused members IDs\nexpected: %v\nactual:   %v\n",
+			expectedAccusedMembersKeys,
+			accusationMessage.accusedMembersKeys,
+		)
+	}
+}
+
+func assertValidSharesAndCommitments(
+	expectedAccusedIDs []MemberID,
+	verifyingMember *CommitmentsVerifyingMember,
+	groupSize int,
+	t *testing.T,
+) {
+	expectedReceivedSharesLength := groupSize - 1 - len(expectedAccusedIDs)
+	if len(verifyingMember.receivedValidSharesS) != expectedReceivedSharesLength {
+		t.Errorf("\nexpected: %v received shares S\nactual:   %v\n",
+			expectedReceivedSharesLength,
+			len(verifyingMember.receivedValidSharesS),
+		)
+	}
+	if len(verifyingMember.receivedValidSharesT) != expectedReceivedSharesLength {
+		t.Errorf("\nexpected: %v received shares T\nactual:   %v\n",
+			expectedReceivedSharesLength,
+			len(verifyingMember.receivedValidSharesT),
+		)
+	}
+	if len(verifyingMember.receivedValidPeerCommitments) != expectedReceivedSharesLength {
+		t.Errorf("\nexpected: %v received commitments\nactual:   %v\n",
+			expectedReceivedSharesLength,
+			len(verifyingMember.receivedValidPeerCommitments),
+		)
+	}
+}
+
 func TestGeneratePolynomial(t *testing.T) {
 	degree := 3
 	config := &DKG{P: big.NewInt(100), Q: big.NewInt(9)}
@@ -193,43 +330,53 @@ func TestGeneratePolynomial(t *testing.T) {
 	}
 }
 
-func initializeCommittingMembersGroup(threshold, groupSize int) ([]*CommittingMember, error) {
-	config, err := predefinedDKG()
-	if err != nil {
-		return nil, fmt.Errorf("DKG Config initialization failed [%s]", err)
+func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CommittingMember, error) {
+	var err error
+	if dkg == nil {
+		dkg, err = predefinedDKG()
+		if err != nil {
+			return nil, fmt.Errorf("DKG Config initialization failed [%v]", err)
+		}
 	}
 
-	vss, err := pedersen.NewVSS(crand.Reader, config.P, config.Q)
+	symmetricKeyMembers, err := generateGroupWithEphemeralKeys(
+		threshold,
+		groupSize,
+		dkg,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("VSS initialization failed [%s]", err)
+		return nil, fmt.Errorf("group initialization failed [%v]", err)
 	}
 
-	group := &Group{
-		groupSize:          groupSize,
-		dishonestThreshold: threshold,
+	vss, err := pedersen.NewVSS(crand.Reader, dkg.P, dkg.Q)
+	if err != nil {
+		return nil, fmt.Errorf("VSS initialization failed [%v]", err)
 	}
 
 	var members []*CommittingMember
-
-	for i := 1; i <= groupSize; i++ {
-		id := i
-		members = append(members, &CommittingMember{
-			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: config,
-			},
-			vss:                          vss,
-			receivedValidSharesS:         make(map[int]*big.Int),
-			receivedValidSharesT:         make(map[int]*big.Int),
-			receivedValidPeerCommitments: make(map[int][]*big.Int),
-		})
-		group.RegisterMemberID(id)
+	for _, member := range symmetricKeyMembers {
+		committingMember := member.InitializeCommitting(vss)
+		members = append(members, committingMember)
 	}
+
 	return members, nil
 }
 
-// predefinedDKGconfig initializez DKG configuration with predefined 512-bit
+func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CommitmentsVerifyingMember, error) {
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
+	if err != nil {
+		return nil, fmt.Errorf("group initialization failed [%v]", err)
+	}
+
+	var members []*CommitmentsVerifyingMember
+	for _, member := range committingMembers {
+		members = append(members, member.InitializeCommitmentsVerification())
+	}
+
+	return members, nil
+}
+
+// predefinedDKGconfig initializes DKG configuration with predefined 512-bit
 // p and q values.
 func predefinedDKG() (*DKG, error) {
 	// `p` is 512-bit safe prime.
@@ -248,17 +395,16 @@ func predefinedDKG() (*DKG, error) {
 	if !result {
 		return nil, fmt.Errorf("failed to initialize q")
 	}
-	return &DKG{p, q}, nil
+	return &DKG{P: p, Q: q}, nil
 }
 
 func filterPeerSharesMessage(
 	messages []*PeerSharesMessage,
-	receiverID int,
+	receiverID MemberID,
 ) []*PeerSharesMessage {
 	var result []*PeerSharesMessage
 	for _, msg := range messages {
-		if msg.senderID != receiverID &&
-			msg.receiverID == receiverID {
+		if msg.senderID != receiverID {
 			result = append(result, msg)
 		}
 	}
@@ -267,7 +413,7 @@ func filterPeerSharesMessage(
 
 func filterMemberCommitmentsMessages(
 	messages []*MemberCommitmentsMessage,
-	receiverID int,
+	receiverID MemberID,
 ) []*MemberCommitmentsMessage {
 	var result []*MemberCommitmentsMessage
 	for _, msg := range messages {
