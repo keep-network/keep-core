@@ -37,7 +37,7 @@ func newStaking(chainConfig *ethereumChain) (*staking, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to instantiate a KeepRelayBeaconTranactor contract: [%v]",
+			"failed to instantiate a StakingProxyTransactor contract: [%v]",
 			err,
 		)
 	}
@@ -67,7 +67,7 @@ func newStaking(chainConfig *ethereumChain) (*staking, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to instantiate a KeepRelayBeaconCaller contract: [%v]",
+			"failed to instantiate a StakingProxyCaller contract: [%v]",
 			err,
 		)
 	}
@@ -116,7 +116,7 @@ func (s *staking) WatchUnstakedFor(
 	if err != nil {
 		close(eventChan)
 		return fmt.Errorf(
-			"error creating watch for RelayEntryGenerated event: [%v]",
+			"error creating watch for Unstaked event: [%v]",
 			err,
 		)
 	}
