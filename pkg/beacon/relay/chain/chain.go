@@ -45,9 +45,6 @@ type GroupInterface interface {
 // interface that pertains specifically to group formation's distributed key
 // generation process.
 type DistributedKeyGenerationInterface interface {
-	// IsDKGResultPublished checks if the specific DKG result has already been
-	// published to a chain for given request ID.
-	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
 	// SubmitDKGResult sends DKG result to a chain.
 	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
