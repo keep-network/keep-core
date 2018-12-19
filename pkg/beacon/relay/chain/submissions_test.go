@@ -6,7 +6,7 @@ import (
 )
 
 // Test Lead()
-func Test_Lead(t *testing.T) {
+func TestLead(t *testing.T) {
 	tests := map[string]struct {
 		currentSubmissions *Submissions
 		expectedResult     *Submission
@@ -140,11 +140,10 @@ func Test_Lead(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 // Test Contains
-func Test_Contains(t *testing.T) {
+func TestContains(t *testing.T) {
 	tests := map[string]struct {
 		currentSubmissions *Submissions
 		// func (s *Submissions) Contains(result *DKGResult) bool {
@@ -271,5 +270,4 @@ func Test_Contains(t *testing.T) {
 			}
 		})
 	}
-
 }
