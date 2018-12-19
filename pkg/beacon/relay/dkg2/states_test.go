@@ -67,12 +67,12 @@ func TestFullStateTransitions(t *testing.T) {
 	// public keys.
 	groupPublicKeys := make([]*big.Int, groupSize)
 	for i, state := range states {
-		finalState, ok := state.(*combiningState)
+		final, ok := state.(*finalState)
 		if !ok {
 			t.Fatalf("not a final state: %#v", state)
 		}
 
-		groupPublicKeys[i] = finalState.member.GroupPublicKey()
+		groupPublicKeys[i] = final.member.GroupPublicKey()
 	}
 
 	// Check whether all group public keys are the same.
@@ -145,11 +145,13 @@ func doStateTransition(
 
 		next := state.nextState()
 
-		fmt.Printf(
-			"[member:%v, state:%T] Successfully transitioned to the next state\n",
-			state.memberID(),
-			state,
-		)
+		if next != nil {
+			fmt.Printf(
+				"[member:%v, state:%T] Successfully transitioned to the next state\n",
+				state.memberID(),
+				state,
+			)
+		}
 
 		nextStates[i] = next
 	}

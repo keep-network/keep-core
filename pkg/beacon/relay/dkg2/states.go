@@ -2,6 +2,7 @@ package dkg2
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -564,9 +565,37 @@ func (cs *combiningState) receive(msg net.Message) error {
 }
 
 func (cs *combiningState) nextState() keyGenerationState {
-	return nil
+	return &finalState{
+		member: cs.member.Finalize(),
+	}
 }
 
 func (cs *combiningState) memberID() gjkr.MemberID {
 	return cs.member.ID
+}
+
+type finalState struct {
+	member *gjkr.Member
+}
+
+func (fs *finalState) activeBlocks() int { return 1 }
+
+func (fs *finalState) initiate() error {
+	return nil
+}
+
+func (fs *finalState) receive(msg net.Message) error {
+	return fmt.Errorf("unexpected message for final state: [%#v]", msg)
+}
+
+func (fs *finalState) nextState() keyGenerationState {
+	return nil
+}
+
+func (fs *finalState) memberID() gjkr.MemberID {
+	return fs.member.ID
+}
+
+func (fs *finalState) groupPublicKey() *big.Int {
+	return fs.member.GroupPublicKey()
 }
