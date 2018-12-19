@@ -87,6 +87,14 @@ func (r *DKGResult) Hash() []byte {
 }
 
 // Searialize converts the DKGResult into bytes.  This is so that it can be hashed.
+// Format:
+// Byte 0 - 0x01 == true, 0x00 == false - r1.Success
+// Byte 1..4 - length of the group public key in BigEndian format
+// Byte 5..X - the group publick key in bytes
+// Byte X+1..X+5 - length of the set of Disqualified
+// Byte X+6..Y - Set of disqualified as 0x01, 0x00 for true/false
+// Byte Y+1..Y+5 - length of teh set of Inactive
+// Byte X+6..Y - Set of inactive as 0x01, 0x00 for true/false
 func (r *DKGResult) serialize() []byte {
 	boolToByte := func(b bool) []byte {
 		if b {
@@ -97,7 +105,9 @@ func (r *DKGResult) serialize() []byte {
 
 	var buf bytes.Buffer
 	buf.Write(boolToByte(r.Success))
-	buf.Write(r.GroupPublicKey.Bytes())
+	gpk := r.GroupPublicKey.Bytes()
+	binary.Write(&buf, binary.BigEndian, len(gpk))
+	buf.Write(gpk)
 	binary.Write(&buf, binary.BigEndian, len(r.Disqualified))
 	for _, b := range r.Disqualified {
 		buf.Write(boolToByte(b))

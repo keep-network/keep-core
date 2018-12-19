@@ -5,44 +5,6 @@ import (
 	"testing"
 )
 
-func TestBoolSliceEuqal(t *testing.T) {
-	// func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
-	var tests = map[string]struct {
-		a              []bool
-		b              []bool
-		expectedResult bool
-	}{
-		"both nil": {
-			a:              nil,
-			b:              nil,
-			expectedResult: true,
-		},
-		"a nil, b []bool{} == zero length ": {
-			a:              nil,
-			b:              []bool{},
-			expectedResult: true,
-		},
-		"a []bool{} == zero length, b zero lenggth ": {
-			a:              []bool{},
-			b:              []bool{},
-			expectedResult: true,
-		},
-		"a []bool{} == zero length, b nil": {
-			a:              []bool{},
-			b:              nil,
-			expectedResult: true,
-		},
-	}
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			actualResult := boolSlicesEqual(test.a, test.b)
-			if test.expectedResult != actualResult {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
-			}
-		})
-	}
-}
-
 func TestDKGResultEquals(t *testing.T) {
 	var tests = map[string]struct {
 		result1        *DKGResult
