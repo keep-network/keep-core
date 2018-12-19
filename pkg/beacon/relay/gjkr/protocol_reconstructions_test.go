@@ -29,8 +29,8 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	result := member.RevealDisqualifiedMembersKeys(disqualifiedMembers)
 
 	expectedResult := &DisqualifiedEphemeralKeysMessage{
-		senderID:                   member.ID,
-		privateKeysForDisqualified: expectedDisqualifiedKeys,
+		senderID:    member.ID,
+		privateKeys: expectedDisqualifiedKeys,
 	}
 
 	if !reflect.DeepEqual(expectedResult, result) {
@@ -68,8 +68,8 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 		disqualifiedEphemeralKeysMessages = append(
 			disqualifiedEphemeralKeysMessages,
 			&DisqualifiedEphemeralKeysMessage{
-				senderID:                   otherMember.ID,
-				privateKeysForDisqualified: revealedKeys,
+				senderID:    otherMember.ID,
+				privateKeys: revealedKeys,
 			},
 		)
 	}
@@ -292,8 +292,8 @@ func TestReconstructIndividualKeys(t *testing.T) {
 		disqualifiedEphemeralKeysMessages = append(
 			disqualifiedEphemeralKeysMessages,
 			&DisqualifiedEphemeralKeysMessage{
-				senderID:                   otherMember.ID,
-				privateKeysForDisqualified: revealedKeys,
+				senderID:    otherMember.ID,
+				privateKeys: revealedKeys,
 			},
 		)
 	}

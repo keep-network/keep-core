@@ -693,16 +693,16 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 	disqualifiedMembersIDs []MemberID,
 ) *DisqualifiedEphemeralKeysMessage {
-	disqualifiedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+	privateKeys := make(map[MemberID]*ephemeral.PrivateKey)
 
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
-		disqualifiedMembersKeys[disqualifiedMemberID] =
+		privateKeys[disqualifiedMemberID] =
 			rm.ephemeralKeyPairs[disqualifiedMemberID].PrivateKey
 	}
 
 	return &DisqualifiedEphemeralKeysMessage{
-		senderID:                   rm.ID,
-		privateKeysForDisqualified: disqualifiedMembersKeys,
+		senderID:    rm.ID,
+		privateKeys: privateKeys,
 	}
 }
 
@@ -738,14 +738,14 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	allRevealedShares := make(map[MemberID]map[MemberID]*big.Int)
 
 	for _, message := range messages {
-		for disqualifiedID, privateKeyForDisqualified := range message.privateKeysForDisqualified {
+		for disqualifiedID, privateKey := range message.privateKeys {
 			evidenceLog := rm.protocolConfig.evidenceLog
 
 			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,
 				disqualifiedID,   // m
 				message.senderID, // k
-				privateKeyForDisqualified,
+				privateKey,
 			)
 			if err != nil {
 				// TODO Should we disqualify sender here?

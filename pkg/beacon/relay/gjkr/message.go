@@ -91,7 +91,7 @@ type PointsAccusationsMessage struct {
 type DisqualifiedEphemeralKeysMessage struct {
 	senderID MemberID
 
-	privateKeysForDisqualified map[MemberID]*ephemeral.PrivateKey
+	privateKeys map[MemberID]*ephemeral.PrivateKey
 }
 
 func newPeerSharesMessage(senderID MemberID) *PeerSharesMessage {
