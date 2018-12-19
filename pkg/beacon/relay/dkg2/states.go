@@ -30,7 +30,7 @@ func isMessageFromSelf(state keyGenerationState, message net.Message) bool {
 // activePeriod and then enters joinState. No messages are valid in this state.
 type initializationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.EphemeralKeyPairGeneratingMember
+	member  *gjkr.LocalMember
 }
 
 func (is *initializationState) activeBlocks() int { return 1 }
@@ -56,7 +56,7 @@ func (is *initializationState) memberID() gjkr.MemberID {
 // `gjkr.JoinMessage`s are valid in this state.
 type joinState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.EphemeralKeyPairGeneratingMember
+	member  *gjkr.LocalMember
 }
 
 func (js *joinState) activeBlocks() int { return 1 }
@@ -83,7 +83,7 @@ func (js *joinState) receive(msg net.Message) error {
 func (js *joinState) nextState() keyGenerationState {
 	return &ephemeralKeyPairGeneratingState{
 		channel: js.channel,
-		member:  js.member,
+		member:  js.member.InitializeEphemeralKeysGeneration(),
 	}
 }
 

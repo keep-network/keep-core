@@ -96,24 +96,19 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 
 	config.vss = vss
 
-	member := &SharingMember{
-		QualifiedMember: &QualifiedMember{
-			SharesJustifyingMember: &SharesJustifyingMember{
-				CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
-					CommittingMember: &CommittingMember{
-						SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-							EphemeralKeyPairGeneratingMember: &EphemeralKeyPairGeneratingMember{
-								memberCore: &memberCore{
-									protocolConfig: config,
-								},
-							},
-						},
-						secretCoefficients: secretCoefficients,
-					},
-				},
-			},
+	member := (&LocalMember{
+		memberCore: &memberCore{
+			protocolConfig: config,
 		},
-	}
+	}).InitializeEphemeralKeysGeneration().
+		InitializeSymmetricKeyGeneration().
+		InitializeCommitting().
+		InitializeCommitmentsVerification().
+		InitializeSharesJustification().
+		InitializeQualified().
+		InitializeSharing()
+
+	member.secretCoefficients = secretCoefficients
 
 	message := member.CalculatePublicKeySharePoints()
 

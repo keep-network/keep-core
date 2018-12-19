@@ -149,11 +149,13 @@ func initializeEphemeralKeyPairMembersGroup(
 	for i := 1; i <= groupSize; i++ {
 		id := MemberID(i)
 		members = append(members, &EphemeralKeyPairGeneratingMember{
-			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: dkg,
-				evidenceLog:    newDkgEvidenceLog(),
+			LocalMember: &LocalMember{
+				memberCore: &memberCore{
+					ID:             id,
+					group:          group,
+					protocolConfig: dkg,
+					evidenceLog:    newDkgEvidenceLog(),
+				},
 			},
 			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 		})
