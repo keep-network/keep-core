@@ -53,7 +53,7 @@ func (is *initializationState) initiate() error {
 }
 
 func (is *initializationState) receive(msg net.Message) error {
-	return fmt.Errorf("unexpected message for initialization phase: [%#v]", msg)
+	return nil
 }
 
 func (is *initializationState) nextState() keyGenerationState {
@@ -134,14 +134,9 @@ func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 		if !isMessageFromSelf(ekpgs, msg) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, publicKeyMessage)
 		}
-
-		return nil
 	}
 
-	return fmt.Errorf(
-		"unexpected message for ephemeral key generation phase: [%#v]",
-		msg,
-	)
+	return nil
 }
 
 func (ekpgs *ephemeralKeyPairGeneratingState) nextState() keyGenerationState {
@@ -173,10 +168,7 @@ func (skgs *symmetricKeyGeneratingState) initiate() error {
 }
 
 func (skgs *symmetricKeyGeneratingState) receive(msg net.Message) error {
-	return fmt.Errorf(
-		"unexpected message for symmetric key generation phase: [%#v]",
-		msg,
-	)
+	return nil
 }
 
 func (skgs *symmetricKeyGeneratingState) nextState() keyGenerationState {
@@ -228,7 +220,6 @@ func (cs *committingState) receive(msg net.Message) error {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
-		return nil
 	case *gjkr.MemberCommitmentsMessage:
 		if !isMessageFromSelf(cs, msg) {
 			cs.phaseCommitmentsMessages = append(
@@ -236,11 +227,9 @@ func (cs *committingState) receive(msg net.Message) error {
 				phaseMessage,
 			)
 		}
-
-		return nil
 	}
 
-	return fmt.Errorf("unexpected message for committing phase: [%#v]", msg)
+	return nil
 }
 
 func (cs *committingState) nextState() keyGenerationState {
@@ -297,14 +286,9 @@ func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
 				phaseMessage,
 			)
 		}
-
-		return nil
 	}
 
-	return fmt.Errorf(
-		"unexpected message for commitment verification phase: [%#v]",
-		msg,
-	)
+	return nil
 }
 
 func (cvs *commitmentsVerificationState) nextState() keyGenerationState {
@@ -347,10 +331,7 @@ func (sjs *sharesJustificationState) initiate() error {
 }
 
 func (sjs *sharesJustificationState) receive(msg net.Message) error {
-	return fmt.Errorf(
-		"unexpected message for share justification phase: [%#v]",
-		msg,
-	)
+	return nil
 }
 
 func (sjs *sharesJustificationState) nextState() keyGenerationState {
@@ -380,7 +361,7 @@ func (qs *qualifiedState) initiate() error {
 }
 
 func (qs *qualifiedState) receive(msg net.Message) error {
-	return fmt.Errorf("unexpected message for qualified phase: [%#v]", msg)
+	return nil
 }
 
 func (qs *qualifiedState) nextState() keyGenerationState {
@@ -421,13 +402,9 @@ func (pss *pointsSharingState) receive(msg net.Message) error {
 		if !isMessageFromSelf(pss, msg) {
 			pss.phaseMessages = append(pss.phaseMessages, pointsMessage)
 		}
-		return nil
 	}
 
-	return fmt.Errorf(
-		"unexpected message for points sharing phase: [%#v]",
-		msg,
-	)
+	return nil
 }
 
 func (pss *pointsSharingState) nextState() keyGenerationState {
@@ -478,14 +455,9 @@ func (pvs *pointsValidationState) receive(msg net.Message) error {
 		if !isMessageFromSelf(pvs, msg) {
 			pvs.phaseMessages = append(pvs.phaseMessages, pointsAccusationMessage)
 		}
-
-		return nil
 	}
 
-	return fmt.Errorf(
-		"unexpected message for points validation phase: [%#v]",
-		msg,
-	)
+	return nil
 }
 
 func (pvs *pointsValidationState) nextState() keyGenerationState {
@@ -528,10 +500,7 @@ func (pjs *pointsJustificationState) initiate() error {
 }
 
 func (pjs *pointsJustificationState) receive(msg net.Message) error {
-	return fmt.Errorf(
-		"unexpected message for points justification phase: [%#v]",
-		msg,
-	)
+	return nil
 }
 
 func (pjs *pointsJustificationState) nextState() keyGenerationState {
@@ -561,7 +530,7 @@ func (rp *reconstructionState) initiate() error {
 }
 
 func (rp *reconstructionState) receive(msg net.Message) error {
-	return fmt.Errorf("unexpected message for reconstruction phase: [%#v]", msg)
+	return nil
 }
 
 func (rp *reconstructionState) nextState() keyGenerationState {
