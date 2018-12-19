@@ -60,22 +60,18 @@ func (c *localChain) CurrentBlock() (int, error) {
 	return c.blockCounter.CurrentBlock()
 }
 
-func bigIntToHex(b *big.Int) string {
-	return fmt.Sprintf("%s", b)
-}
-
 // GetDKGSubmissions returns the current set of submissions for the requestID.
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
-	return c.submissions[bigIntToHex(requestID)]
+	return c.submissions[requestID.String()]
 }
 
 // Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
 func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
-	x, ok := c.submissions[bigIntToHex(requestID)]
+	x, ok := c.submissions[requestID.String()]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "Missing requestID in c.submissions - vote will be ignored.\n")
 		return
@@ -341,7 +337,7 @@ func (c *localChain) IsDKGResultPublished(
 	requestID *big.Int, result *relaychain.DKGResult,
 ) bool {
 	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID == bigIntToHex(requestID) {
+		if publishedRequestID == requestID.String() {
 			for _, publishedResult := range publishedResults {
 				if publishedResult.Equals(result) {
 					return true
@@ -357,7 +353,7 @@ func (c *localChain) IsDKGResultPublished(
 // the GroupPublicKey is a problem - don't know where to get it from at this point.
 // --------------------------------- ---------------------------------
 func (c *localChain) getGroupPublicKeyFromRequestID(requestID *big.Int) *big.Int {
-	return c.groupPublicKeyMap[bigIntToHex(requestID)]
+	return c.groupPublicKeyMap[requestID.String()]
 }
 
 // SubmitDKGResult submits the result to a chain.
@@ -374,15 +370,15 @@ func (c *localChain) SubmitDKGResult(
 		return dkgResultPublicationPromise
 	}
 
-	c.submittedResults[bigIntToHex(requestID)] = append(c.submittedResults[bigIntToHex(requestID)], resultToPublish)
+	c.submittedResults[requestID.String()] = append(c.submittedResults[requestID.String()], resultToPublish)
 
 	c.submissionsMutex.Lock()
 	if c.submissions == nil {
 		c.submissions = make(map[string]*relaychain.Submissions)
 	}
-	if _, ok := c.submissions[bigIntToHex(requestID)]; !ok {
+	if _, ok := c.submissions[requestID.String()]; !ok {
 		groupPublicKey := c.getGroupPublicKeyFromRequestID(requestID)
-		c.submissions[bigIntToHex(requestID)] = &relaychain.Submissions{
+		c.submissions[requestID.String()] = &relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{
 					DKGResult: &relaychain.DKGResult{
