@@ -692,7 +692,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 // See Phase 10 of the protocol specification.
 func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 	disqualifiedMembersIDs []MemberID,
-) *DisqualifiedMembersKeysMessage {
+) *DisqualifiedEphemeralKeysMessage {
 	disqualifiedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
@@ -700,7 +700,7 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 			rm.ephemeralKeyPairs[disqualifiedMemberID].PrivateKey
 	}
 
-	return &DisqualifiedMembersKeysMessage{
+	return &DisqualifiedEphemeralKeysMessage{
 		senderID:                   rm.ID,
 		privateKeysForDisqualified: disqualifiedMembersKeys,
 	}
@@ -715,8 +715,7 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructIndividualKeys(
-	messages []*DisqualifiedMembersKeysMessage,
-) error {
+	messages []*DisqualifiedEphemeralKeysMessage) error {
 	revealedDisqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
 	if err != nil {
 		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
@@ -733,8 +732,7 @@ func (rm *ReconstructingMember) ReconstructIndividualKeys(
 // containing shares `s_mk` recovered for each member `m` whose ephemeral key
 // was revealed in provided DisqualifiedMembersKeysMessage.
 func (rm *ReconstructingMember) recoverDisqualifiedShares(
-	messages []*DisqualifiedMembersKeysMessage,
-) ([]*DisqualifiedShares, error) {
+	messages []*DisqualifiedEphemeralKeysMessage) ([]*DisqualifiedShares, error) {
 	var revealedDisqualifiedShares []*DisqualifiedShares
 
 	allRevealedShares := make(map[MemberID]map[MemberID]*big.Int)

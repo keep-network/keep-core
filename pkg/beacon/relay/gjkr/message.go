@@ -84,11 +84,11 @@ type PointsAccusationsMessage struct {
 	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }
 
-// DisqualifiedMembersKeysMessage is a message payload that carries sender's
+// DisqualifiedEphemeralKeysMessage is a message payload that carries sender's
 // ephemeral private keys used to generate ephemeral symmetric keys to encrypt
 // communication with members disqualified when points accusations were resolved.
 // It is expected to be broadcast.
-type DisqualifiedMembersKeysMessage struct {
+type DisqualifiedEphemeralKeysMessage struct {
 	senderID MemberID
 
 	privateKeysForDisqualified map[MemberID]*ephemeral.PrivateKey

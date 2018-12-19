@@ -28,7 +28,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 
 	result := member.RevealDisqualifiedMembersKeys(disqualifiedMembers)
 
-	expectedResult := &DisqualifiedMembersKeysMessage{
+	expectedResult := &DisqualifiedEphemeralKeysMessage{
 		senderID:                   member.ID,
 		privateKeysForDisqualified: expectedDisqualifiedKeys,
 	}
@@ -59,15 +59,15 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 	member6 := members[5]
 	disqualifiedMembers := []*ReconstructingMember{member5, member6}
 
-	var disqualifiedMembersKeysMessages []*DisqualifiedMembersKeysMessage
+	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {
 		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
 		for _, disqualifiedMember := range disqualifiedMembers {
 			revealedKeys[disqualifiedMember.ID] = otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
 		}
-		disqualifiedMembersKeysMessages = append(
-			disqualifiedMembersKeysMessages,
-			&DisqualifiedMembersKeysMessage{
+		disqualifiedEphemeralKeysMessages = append(
+			disqualifiedEphemeralKeysMessages,
+			&DisqualifiedEphemeralKeysMessage{
 				senderID:                   otherMember.ID,
 				privateKeysForDisqualified: revealedKeys,
 			},
@@ -97,7 +97,7 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 		evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 	}
 
-	recoveredDisqualifiedShares, err := member1.recoverDisqualifiedShares(disqualifiedMembersKeysMessages)
+	recoveredDisqualifiedShares, err := member1.recoverDisqualifiedShares(disqualifiedEphemeralKeysMessages)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -283,15 +283,15 @@ func TestReconstructIndividualKeys(t *testing.T) {
 	member6 := members[5]
 	disqualifiedMembers := []*ReconstructingMember{member5, member6}
 
-	var disqualifiedMembersKeysMessages []*DisqualifiedMembersKeysMessage
+	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {
 		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
 		for _, disqualifiedMember := range disqualifiedMembers {
 			revealedKeys[disqualifiedMember.ID] = otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
 		}
-		disqualifiedMembersKeysMessages = append(
-			disqualifiedMembersKeysMessages,
-			&DisqualifiedMembersKeysMessage{
+		disqualifiedEphemeralKeysMessages = append(
+			disqualifiedEphemeralKeysMessages,
+			&DisqualifiedEphemeralKeysMessage{
 				senderID:                   otherMember.ID,
 				privateKeysForDisqualified: revealedKeys,
 			},
@@ -317,7 +317,7 @@ func TestReconstructIndividualKeys(t *testing.T) {
 		evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 	}
 
-	member1.ReconstructIndividualKeys(disqualifiedMembersKeysMessages)
+	member1.ReconstructIndividualKeys(disqualifiedEphemeralKeysMessages)
 
 	for _, disqualifiedMember := range disqualifiedMembers {
 		if disqualifiedMember.individualPrivateKey().
