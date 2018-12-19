@@ -68,9 +68,7 @@ func bigIntToHex(b *big.Int) string {
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
-	x := c.submissions[bigIntToHex(requestID)]
-	// return &x
-	return x
+	return c.submissions[bigIntToHex(requestID)]
 }
 
 // Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
