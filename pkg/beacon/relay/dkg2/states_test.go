@@ -143,10 +143,7 @@ func doStateTransition(
 			}
 		}
 
-		next, err := state.nextState()
-		if err != nil {
-			return nil, fmt.Errorf("nextState failed [%v]", err)
-		}
+		next := state.nextState()
 
 		fmt.Printf(
 			"[member:%v, state:%T] Successfully transitioned to the next state\n",

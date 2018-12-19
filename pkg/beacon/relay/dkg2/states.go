@@ -12,7 +12,7 @@ type keyGenerationState interface {
 
 	initiate() error
 	receive(msg net.Message) error
-	nextState() (keyGenerationState, error)
+	nextState() keyGenerationState
 
 	memberID() gjkr.MemberID
 }
@@ -43,8 +43,8 @@ func (is *initializationState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for initialization phase: [%#v]", msg)
 }
 
-func (is *initializationState) nextState() (keyGenerationState, error) {
-	return &joinState{is.channel, is.member}, nil
+func (is *initializationState) nextState() keyGenerationState {
+	return &joinState{is.channel, is.member}
 }
 
 func (is *initializationState) memberID() gjkr.MemberID {
@@ -80,11 +80,11 @@ func (js *joinState) receive(msg net.Message) error {
 	return nil
 }
 
-func (js *joinState) nextState() (keyGenerationState, error) {
+func (js *joinState) nextState() keyGenerationState {
 	return &ephemeralKeyPairGeneratingState{
 		channel: js.channel,
 		member:  js.member,
-	}, nil
+	}
 }
 
 func (js *joinState) memberID() gjkr.MemberID {
@@ -131,12 +131,12 @@ func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 	)
 }
 
-func (ekpgs *ephemeralKeyPairGeneratingState) nextState() (keyGenerationState, error) {
+func (ekpgs *ephemeralKeyPairGeneratingState) nextState() keyGenerationState {
 	return &symmetricKeyGeneratingState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.InitializeSymmetricKeyGeneration(),
 		previousPhaseMessages: ekpgs.phaseMessages,
-	}, nil
+	}
 }
 
 func (ekpgs *ephemeralKeyPairGeneratingState) memberID() gjkr.MemberID {
@@ -166,11 +166,11 @@ func (skgs *symmetricKeyGeneratingState) receive(msg net.Message) error {
 	)
 }
 
-func (skgs *symmetricKeyGeneratingState) nextState() (keyGenerationState, error) {
+func (skgs *symmetricKeyGeneratingState) nextState() keyGenerationState {
 	return &committingState{
 		channel: skgs.channel,
 		member:  skgs.member.InitializeCommitting(),
-	}, nil
+	}
 }
 
 func (skgs *symmetricKeyGeneratingState) memberID() gjkr.MemberID {
@@ -230,14 +230,14 @@ func (cs *committingState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for committing phase: [%#v]", msg)
 }
 
-func (cs *committingState) nextState() (keyGenerationState, error) {
+func (cs *committingState) nextState() keyGenerationState {
 	return &commitmentsVerificationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeCommitmentsVerification(),
 
 		previousPhaseSharesMessages:      cs.phaseSharesMessages,
 		previousPhaseCommitmentsMessages: cs.phaseCommitmentsMessages,
-	}, nil
+	}
 }
 
 func (cs *committingState) memberID() gjkr.MemberID {
@@ -294,13 +294,13 @@ func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
 	)
 }
 
-func (cvs *commitmentsVerificationState) nextState() (keyGenerationState, error) {
+func (cvs *commitmentsVerificationState) nextState() keyGenerationState {
 	return &sharesJustificationState{
 		channel: cvs.channel,
 		member:  cvs.member.InitializeSharesJustification(),
 
 		previousPhaseAccusationsMessages: cvs.phaseAccusationsMessages,
-	}, nil
+	}
 }
 
 func (cvs *commitmentsVerificationState) memberID() gjkr.MemberID {
@@ -340,11 +340,11 @@ func (sjs *sharesJustificationState) receive(msg net.Message) error {
 	)
 }
 
-func (sjs *sharesJustificationState) nextState() (keyGenerationState, error) {
+func (sjs *sharesJustificationState) nextState() keyGenerationState {
 	return &qualifiedState{
 		channel: sjs.channel,
 		member:  sjs.member.InitializeQualified(),
-	}, nil
+	}
 }
 
 func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
@@ -370,11 +370,11 @@ func (qs *qualifiedState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for qualified phase: [%#v]", msg)
 }
 
-func (qs *qualifiedState) nextState() (keyGenerationState, error) {
+func (qs *qualifiedState) nextState() keyGenerationState {
 	return &pointsSharingState{
 		channel: qs.channel,
 		member:  qs.member.InitializeSharing(),
-	}, nil
+	}
 }
 
 func (qs *qualifiedState) memberID() gjkr.MemberID {
@@ -417,13 +417,13 @@ func (pss *pointsSharingState) receive(msg net.Message) error {
 	)
 }
 
-func (pss *pointsSharingState) nextState() (keyGenerationState, error) {
+func (pss *pointsSharingState) nextState() keyGenerationState {
 	return &pointsValidationState{
 		channel: pss.channel,
 		member:  pss.member,
 
 		previousPhaseMessages: pss.phaseMessages,
-	}, nil
+	}
 }
 
 func (pss *pointsSharingState) memberID() gjkr.MemberID {
@@ -475,13 +475,13 @@ func (pvs *pointsValidationState) receive(msg net.Message) error {
 	)
 }
 
-func (pvs *pointsValidationState) nextState() (keyGenerationState, error) {
+func (pvs *pointsValidationState) nextState() keyGenerationState {
 	return &pointsJustificationState{
 		channel: pvs.channel,
 		member:  pvs.member.InitializePointsJustification(),
 
 		previousPhaseMessages: pvs.phaseMessages,
-	}, nil
+	}
 }
 
 func (pvs *pointsValidationState) memberID() gjkr.MemberID {
@@ -521,11 +521,11 @@ func (pjs *pointsJustificationState) receive(msg net.Message) error {
 	)
 }
 
-func (pjs *pointsJustificationState) nextState() (keyGenerationState, error) {
+func (pjs *pointsJustificationState) nextState() keyGenerationState {
 	return &reconstructionState{
 		channel: pjs.channel,
 		member:  pjs.member.InitializeReconstruction(),
-	}, nil
+	}
 }
 
 func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
@@ -551,11 +551,11 @@ func (rp *reconstructionState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for reconstruction phase: [%#v]", msg)
 }
 
-func (rp *reconstructionState) nextState() (keyGenerationState, error) {
+func (rp *reconstructionState) nextState() keyGenerationState {
 	return &combiningState{
 		channel: rp.channel,
 		member:  rp.member.InitializeCombining(),
-	}, nil
+	}
 }
 
 func (rp *reconstructionState) memberID() gjkr.MemberID {
@@ -581,8 +581,8 @@ func (cs *combiningState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for combining phase: [%#v]", msg)
 }
 
-func (cs *combiningState) nextState() (keyGenerationState, error) {
-	return nil, nil
+func (cs *combiningState) nextState() keyGenerationState {
+	return nil
 }
 
 func (cs *combiningState) memberID() gjkr.MemberID {
