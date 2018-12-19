@@ -3,7 +3,6 @@ package chain
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/sha3"
@@ -64,25 +63,31 @@ func bigIntEquals(expected *big.Int, actual *big.Int) bool {
 // boolSlicesEqual checks if two slices of bool are equal. Slices need to have
 // the same length and have the same order of entries.
 func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
+	// fmt.Printf("boolSliceEqual: %s v.s. %s\n", godebug.SVarI(expectedSlice), godebug.SVarI(actualSlice))
 	if len(expectedSlice) != len(actualSlice) {
+		// fmt.Printf("boolSliceEqual: false!\n")
 		return false
 	}
 	for i := range expectedSlice {
 		if expectedSlice[i] != actualSlice[i] {
+			// fmt.Printf("boolSliceEqual: false!\n")
 			return false
 		}
 	}
+	// fmt.Printf("boolSliceEqual: Yes - True!\n")
 	return true
 }
 
 // Hash the DKGResult and return the hashed value.
-func (r1 *DKGResult) Hash() []byte {
-	serial := r1.serialize()
-	return keccak256(serial)
+func (r *DKGResult) Hash() []byte {
+	serial := r.serialize()
+	d := sha3.NewKeccak256()
+	d.Write(serial)
+	return d.Sum(nil)
 }
 
 // Searialize converts the DKGResult into bytes.  This is so that it can be hashed.
-func (r1 *DKGResult) serialize() []byte {
+func (r *DKGResult) serialize() []byte {
 	boolToByte := func(b bool) []byte {
 		if b {
 			return []byte{0x01}
@@ -91,24 +96,15 @@ func (r1 *DKGResult) serialize() []byte {
 	}
 
 	var buf bytes.Buffer
-	buf.Write(boolToByte(r1.Success))
-	buf.Write([]byte(fmt.Sprintf("%s", r1.GroupPublicKey)))
-	binary.Write(&buf, binary.BigEndian, len(r1.Disqualified))
-	for _, b := range r1.Disqualified {
+	buf.Write(boolToByte(r.Success))
+	buf.Write(r.GroupPublicKey.Bytes())
+	binary.Write(&buf, binary.BigEndian, len(r.Disqualified))
+	for _, b := range r.Disqualified {
 		buf.Write(boolToByte(b))
 	}
-	binary.Write(&buf, binary.BigEndian, len(r1.Inactive))
-	for _, b := range r1.Inactive {
+	binary.Write(&buf, binary.BigEndian, len(r.Inactive))
+	for _, b := range r.Inactive {
 		buf.Write(boolToByte(b))
 	}
 	return buf.Bytes()
-}
-
-// keccak256 use the Ethereum Keccak hasing fucntions to return a hash from a list of values.
-func keccak256(data ...[]byte) []byte {
-	d := sha3.NewKeccak256()
-	for _, b := range data {
-		d.Write(b)
-	}
-	return d.Sum(nil)
 }
