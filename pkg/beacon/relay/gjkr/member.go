@@ -14,10 +14,16 @@ type MemberID uint32
 type memberCore struct {
 	// ID of this group member.
 	ID MemberID
+
 	// Group to which this member belongs.
 	group *Group
+
 	// DKG Protocol configuration parameters.
 	protocolConfig *DKG
+
+	// evidenceLog provides access to messages from earlier protocol phases
+	// for the sake of compliant resolution.
+	evidenceLog evidenceLog
 }
 
 // EphemeralKeyPairGeneratingMember represents one member in a distributed key
