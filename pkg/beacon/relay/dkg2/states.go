@@ -18,11 +18,11 @@ type keyGenerationState interface {
 }
 
 func isMessageFromSelf(selfMemberID gjkr.MemberID, message net.Message) bool {
-	if senderID, ok := message.ProtocolSenderID().(gjkr.MemberID); ok {
-		if senderID == selfMemberID {
-			return true
-		}
+	senderID, ok := message.ProtocolSenderID().(gjkr.MemberID)
+	if ok && senderID == selfMemberID {
+		return true
 	}
+
 	return false
 }
 
