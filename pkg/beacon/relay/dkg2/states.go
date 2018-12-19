@@ -8,12 +8,25 @@ import (
 )
 
 type keyGenerationState interface {
+	// activeBlocks returns the number of blocks during which the current state
+	// is active. Blocks are counted after the initiation process of the
+	// current state has completed.
 	activeBlocks() int
 
+	// initiate performs all the required calculations and sends out all the
+	// messages associated with the current state.
 	initiate() error
+
+	// receive is called each time a new message arrived. receive is expected to
+	// be called for all broadcast channel messages, including the member's own
+	// messages.
 	receive(msg net.Message) error
+
+	// nextState performs a state transition to the next state of the protocol.
+	// If the current state is the last one, nextState returns `nil`.
 	nextState() keyGenerationState
 
+	// memberID returns the ID of member associated with the current state.
 	memberID() gjkr.MemberID
 }
 
