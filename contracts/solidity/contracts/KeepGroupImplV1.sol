@@ -9,14 +9,10 @@ import "./utils/AddressArrayUtils.sol";
 
 contract KeepGroupImplV1 is Ownable {
 
-    event GroupExistsEvent(bytes32 groupPubKey, bool exists);
-    event GroupStartedEvent(bytes32 groupPubKey);
-    event GroupCompleteEvent(bytes32 groupPubKey);
-    event GroupErrorCode(uint8 code);
+    event GroupSelected(bytes32 groupPubKey);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
-    uint256 internal _groupsCount;
     uint256 internal _minStake;
     address internal _stakingProxy;
 
@@ -44,11 +40,6 @@ contract KeepGroupImplV1 is Ownable {
     bytes32[] internal _groups;
     mapping (bytes32 => address[]) internal _groupMembers;
 
-    mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
-    mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
-    mapping (bytes32 => bool) internal _groupExists;
-    mapping (bytes32 => bool) internal _groupComplete;
-    mapping (bytes32 => uint256) internal _membersCount;
     mapping (string => bool) internal _initialized;
 
     /**
@@ -228,11 +219,9 @@ contract KeepGroupImplV1 is Ownable {
             Proof memory proof = _proofs[_tickets[i]];
             _groupMembers[_submissions[0]].push(proof.sender);
         }
-    }
 
-    // Temporary Code for Milestone 1 follows
-    bytes32[] private _listOfGroupMembersIDs;
-    // End Temporary Code for Milestone 1
+        emit GroupSelected(_submissions[0]);
+    }
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -268,7 +257,6 @@ contract KeepGroupImplV1 is Ownable {
         _minStake = minStake;
         _groupThreshold = groupThreshold;
         _groupSize = groupSize;
-        _groupsCount = 0;
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
@@ -331,173 +319,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return _groupsCount;
-    }
-
-    /**
-     * @dev Gets public key of a group.
-     * @param groupIndex Index number of a group.
-     */
-    function getGroupPubKey(uint256 groupIndex) public view returns(bytes32) {
-        return _groupIndexToGroupPubKey[groupIndex];
-    }
-
-    /**
-     * @dev Gets group index number.
-     * @param groupPubKey Group public key.
-     */
-    function getGroupIndex(bytes32 groupPubKey) public view returns(uint) {
-        for (uint i = 0; i < _groupsCount; i++) {
-            if (_groupIndexToGroupPubKey[i] == groupPubKey) {
-                return i;
-            }
-        }
-        revert("Group index is not found.");
-    }
-
-    /**
-     * @dev Gets member public key with group and member index numbers.
-     * @param groupIndex Index number of a group.
-     * @param memberIndex Index number of a member.
-     */
-    function getGroupMemberPubKey(uint256 groupIndex, uint256 memberIndex) public view returns(bytes32) {
-        return _memberIndexToMemberPubKey[getGroupPubKey(groupIndex)][memberIndex];
-    }
-
-    /**
-     * @dev Emits events with group status, whether it exists or not.
-     * @param groupPubKey Group public key.
-     */
-    function emitEventGroupExists(bytes32 groupPubKey) public {
-        if (_groupExists[groupPubKey]) {
-            emit GroupExistsEvent(groupPubKey, true);
-        } else {
-            emit GroupExistsEvent(groupPubKey, false);
-        }
-    }
-
-    /**
-     * @dev Creates a new group with provided public key.
-     * @param groupPubKey Group public key.
-     * @return True if group was created, false otherwise.
-     */
-    function createGroup(bytes32 groupPubKey) public returns(bool) {
-
-        if (_groupExists[groupPubKey] == true) {
-            emit GroupErrorCode(20);
-            return false;
-        }
-
-        _groupExists[groupPubKey] = true;
-        _groupComplete[groupPubKey] = false;
-        _membersCount[groupPubKey] = 0;
-
-        _groupIndexToGroupPubKey[_groupsCount] = groupPubKey;
-        _groupsCount++;
-
-        emit GroupStartedEvent(groupPubKey);
-        return true;
-    }
-
-    /**
-     * @dev Removes a group and the list of its members. Last group public
-     * key is moved into the released index and the total group list count
-     * is reduced accordingly.
-     * @param groupPubKey Group public key.
-     * @return True if group was removed, false otherwise.
-     */
-    function dissolveGroup(bytes32 groupPubKey) public onlyOwner returns(bool) {
-
-        if (_groupExists[groupPubKey] != true) {
-            emit GroupErrorCode(10);
-            return false;
-        }
-
-        for (uint i = 0; i < _membersCount[groupPubKey]; i++) {
-            delete _memberIndexToMemberPubKey[groupPubKey][i];
-        }
-
-        delete _membersCount[groupPubKey];
-        delete _groupExists[groupPubKey];
-        delete _groupComplete[groupPubKey];
-
-        uint groupIndex = getGroupIndex(groupPubKey);
-        delete _groupIndexToGroupPubKey[groupIndex];
-
-        // Get last group _groupPubKey and move it into released index
-        uint lastIndex = _groupsCount;
-        bytes32 lastGroup = _groupIndexToGroupPubKey[lastIndex];
-        _groupIndexToGroupPubKey[groupIndex] = lastGroup;
-        _groupsCount--;
-    }
-
-    /**
-     * @dev Checks if member is part of the group.
-     * @param groupPubKey Group public key.
-     * @param memberPubKey Member public key.
-     * @return True if member is part of the group, false otherwise.
-     */
-    function isMember(bytes32 groupPubKey, bytes32 memberPubKey) public view returns(bool) {
-        for (uint i = 0; i < _membersCount[groupPubKey]; i++) {
-            if (_memberIndexToMemberPubKey[groupPubKey][i] == memberPubKey) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Temporary Code for Milestone 1 follows
-
-    event OnStakerAdded(uint32 index, bytes32 groupMemberID);
-
-    /**
-     * @dev Testing for M1 - create a staker.
-     * @param groupMemberID the ID of the member that is being added.
-     */
-    function addStaker(bytes32 groupMemberID) public onlyOwner {
-        // TODO save some info at this point - this is only for use in Milestone 1 and will
-        // not need to be added to the "forever" storage.
-        _listOfGroupMembersIDs.push(groupMemberID);
-        emit OnStakerAdded(uint32(_listOfGroupMembersIDs.length - 1), groupMemberID);
-    }
-
-    /**
-     * @dev Testing for M1 - return true if the staker at _index is _groupMemberID
-     * @param index Index where to find the member.
-     * @param groupMemberID the ID of the member that is being tested for.
-     */
-    function isGroupMemberStaker(uint32 index, bytes32 groupMemberID) public view returns (bool) {
-        require(
-            index >= 0 && index <= _listOfGroupMembersIDs.length,
-            "Index must be within the length of Group member's array."
-        );
-        return _listOfGroupMembersIDs[index] == groupMemberID;
-    }
-
-    /**
-     * @dev Testing for M1 - return the groupMemberID for the _index staker.
-     * @param index Index where to add the member.
-     */
-    function getStaker(uint32 index) public view returns (bytes32) {
-        require(
-            index >= 0 && index <= _listOfGroupMembersIDs.length,
-            "Index must be within the length of Group member's array."
-        );
-        return _listOfGroupMembersIDs[index];
-    }
-
-    /**
-     * @dev Testing for M1 - return the number of stakers
-     */
-    function getNStaker() public view returns (uint256) {
-        return _listOfGroupMembersIDs.length;
-    }
-
-    /**
-     * @dev Testing for M1 - for testing - reset the array to 0 length.
-     */
-    function resetStaker() public onlyOwner {
-        delete _listOfGroupMembersIDs;
+        return _groups.length;
     }
 
     /**
