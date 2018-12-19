@@ -125,16 +125,16 @@ func TestLead(t *testing.T) {
 			if test.expectedResult == nil {
 				if actualResult != nil {
 					t.Errorf(
-						"\nexpected: [nil]\nactual:   [%+v]",
+						"\nexpected: nil\nactual:   %+v",
 						test.expectedResult,
 					)
 				}
 			} else {
 				if !test.expectedResult.DKGResult.Equals(actualResult.DKGResult) {
 					t.Errorf(
-						"\nexpected: [%+v]\nactual:   [%+v]",
-						actualResult,
+						"\nexpected: %+v\nactual:   %+v",
 						test.expectedResult,
+						actualResult,
 					)
 				}
 			}
@@ -262,9 +262,9 @@ func TestContains(t *testing.T) {
 			actualResult := test.currentSubmissions.Contains(test.lookFor)
 			if test.expectedResult != actualResult {
 				t.Errorf(
-					"\nexpected: [%+v]\nactual:   [%+v]",
-					actualResult,
+					"\nexpected: %+v\nactual:   %+v",
 					test.expectedResult,
+					actualResult,
 				)
 			}
 		})
