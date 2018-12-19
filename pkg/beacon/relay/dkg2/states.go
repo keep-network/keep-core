@@ -545,8 +545,8 @@ func (rp *reconstructionState) memberID() gjkr.MemberID {
 	return rp.member.ID
 }
 
-// combiningState is the final state of GJKR protocol during which group
-// members combine together all qualified key shares to form a group public key.
+// combiningState is the of GJKR protocol during which group members combine
+// together all qualified key shares to form a group public key.
 // No messages are valid in this state.
 type combiningState struct {
 	channel net.BroadcastChannel
@@ -574,6 +574,9 @@ func (cs *combiningState) memberID() gjkr.MemberID {
 	return cs.member.ID
 }
 
+// finalState is the final state of the protocol. No actions are performed
+// during this state and its used just as a indicator that the state machine
+// has completed the execution.
 type finalState struct {
 	member *gjkr.Member
 }
