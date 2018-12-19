@@ -265,7 +265,7 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func TestReconstructIndividualKeys(t *testing.T) {
+func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 6
 
@@ -320,7 +320,7 @@ func TestReconstructIndividualKeys(t *testing.T) {
 		evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 	}
 
-	member1.ReconstructIndividualKeys(disqualifiedEphemeralKeysMessages)
+	member1.ReconstructDisqualifiedIndividualKeys(disqualifiedEphemeralKeysMessages)
 
 	for _, disqualifiedMember := range disqualifiedMembers {
 		if disqualifiedMember.individualPrivateKey().
