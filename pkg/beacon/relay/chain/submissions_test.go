@@ -146,9 +146,8 @@ func TestLead(t *testing.T) {
 func TestContains(t *testing.T) {
 	tests := map[string]struct {
 		currentSubmissions *Submissions
-		// func (s *Submissions) Contains(result *DKGResult) bool {
-		lookFor        *DKGResult
-		expectedResult bool
+		lookFor            *DKGResult
+		expectedResult     bool
 	}{
 		"empty set of submissions": {
 			currentSubmissions: &Submissions{},
