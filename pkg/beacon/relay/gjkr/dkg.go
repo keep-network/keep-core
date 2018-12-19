@@ -19,6 +19,17 @@ type DKG struct {
 	vss *pedersen.VSS
 }
 
+// NewDKG creates a new DKG protocol configuration using provided safe prime
+// configuration.
+//
+// TODO: It's just a temporary solution. This function should be removed once
+// we switch to elliptic curves.
+func NewDKG(p, q, g, h *big.Int) *DKG {
+	vss := pedersen.NewVSS(p, q, g, h)
+
+	return &DKG{p, q, vss}
+}
+
 // GenerateDKG generates new DKG protocol configuration using randomly chosen
 // safe prime.
 //
