@@ -106,11 +106,11 @@ func (ekpgs *ephemeralKeyPairGeneratingState) activeBlocks() int { return 1 }
 func (ekpgs *ephemeralKeyPairGeneratingState) initiate() error {
 	message, err := ekpgs.member.GenerateEphemeralKeyPair()
 	if err != nil {
-		return fmt.Errorf("ephemeral key generation phase failed [%v]", err)
+		return err
 	}
 
 	if err := ekpgs.channel.Send(message); err != nil {
-		return fmt.Errorf("ephemeral key generation phase failed [%v]", err)
+		return err
 	}
 	return nil
 }
@@ -194,15 +194,15 @@ func (cs *committingState) activeBlocks() int { return 1 }
 func (cs *committingState) initiate() error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
 	if err != nil {
-		return fmt.Errorf("committing phase failed [%v]", err)
+		return err
 	}
 
 	if err := cs.channel.Send(sharesMsg); err != nil {
-		return fmt.Errorf("committing phase failed [%v]", err)
+		return err
 	}
 
 	if err := cs.channel.Send(commitmentsMsg); err != nil {
-		return fmt.Errorf("committing phase failed [%v]", err)
+		return err
 	}
 
 	return nil
@@ -265,11 +265,11 @@ func (cvs *commitmentsVerificationState) initiate() error {
 		cvs.previousPhaseCommitmentsMessages,
 	)
 	if err != nil {
-		return fmt.Errorf("commitments verification phase failed [%v]", err)
+		return err
 	}
 
 	if err := cvs.channel.Send(accusationsMsg); err != nil {
-		return fmt.Errorf("commitments verification phase failed [%v]", err)
+		return err
 	}
 
 	return nil
@@ -324,7 +324,7 @@ func (sjs *sharesJustificationState) initiate() error {
 		sjs.previousPhaseAccusationsMessages,
 	)
 	if err != nil {
-		return fmt.Errorf("shares justification phase failed [%v]", err)
+		return err
 	}
 
 	// TODO: Handle member disqualification
@@ -396,7 +396,7 @@ func (pss *pointsSharingState) activeBlocks() int { return 1 }
 func (pss *pointsSharingState) initiate() error {
 	message := pss.member.CalculatePublicKeySharePoints()
 	if err := pss.channel.Send(message); err != nil {
-		return fmt.Errorf("points sharing phase failed [%v]", err)
+		return err
 	}
 
 	return nil
@@ -449,11 +449,11 @@ func (pvs *pointsValidationState) initiate() error {
 		pvs.previousPhaseMessages,
 	)
 	if err != nil {
-		return fmt.Errorf("points validation phase failed [%v]", err)
+		return err
 	}
 
 	if err := pvs.channel.Send(accusationMsg); err != nil {
-		return fmt.Errorf("points validation phase failed [%v]", err)
+		return err
 	}
 
 	return nil
@@ -505,7 +505,7 @@ func (pjs *pointsJustificationState) initiate() error {
 		pjs.previousPhaseMessages,
 	)
 	if err != nil {
-		return fmt.Errorf("points justification phase failed [%v]", err)
+		return err
 	}
 
 	// TODO: Handle member disqualification
