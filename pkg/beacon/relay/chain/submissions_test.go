@@ -125,7 +125,8 @@ func TestLead(t *testing.T) {
 			if test.expectedResult == nil {
 				if actualResult != nil {
 					t.Errorf(
-						"\nexpected: nil\nactual:   %+v",
+						"\nexpected: %s\nactual:   %+v",
+						[]byte(nil),
 						test.expectedResult,
 					)
 				}
@@ -144,6 +145,27 @@ func TestLead(t *testing.T) {
 
 // Test Contains
 func TestContains(t *testing.T) {
+
+	dkgResult1 := &DKGResult{
+		Success:        true,
+		GroupPublicKey: big.NewInt(1001),
+		Disqualified:   []bool{},
+		Inactive:       []bool{},
+	}
+	dkgResult2 := &DKGResult{
+		Success:        true,
+		GroupPublicKey: big.NewInt(1001),
+		Disqualified:   []bool{},
+		Inactive:       []bool{},
+	}
+	dkgResult3 := &DKGResult{
+		Success:        true,
+		GroupPublicKey: big.NewInt(1032),
+		Disqualified:   []bool{},
+		Inactive:       []bool{},
+	}
+	_ = dkgResult3
+
 	tests := map[string]struct {
 		currentSubmissions *Submissions
 		lookFor            *DKGResult
@@ -164,31 +186,16 @@ func TestContains(t *testing.T) {
 				requestID: big.NewInt(100),
 				Submissions: []*Submission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult1,
+						Votes:     1,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 2,
+						DKGResult: dkgResult2,
+						Votes:     2,
 					},
 				},
 			},
-			lookFor: &DKGResult{
-				Success:        true,
-				GroupPublicKey: big.NewInt(1001),
-				Disqualified:   []bool{},
-				Inactive:       []bool{},
-			},
+			lookFor:        dkgResult1,
 			expectedResult: true,
 		},
 		"2nd submission is a match": {
@@ -196,31 +203,16 @@ func TestContains(t *testing.T) {
 				requestID: big.NewInt(100),
 				Submissions: []*Submission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult1,
+						Votes:     1,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 2,
+						DKGResult: dkgResult2,
+						Votes:     2,
 					},
 				},
 			},
-			lookFor: &DKGResult{
-				Success:        true,
-				GroupPublicKey: big.NewInt(1002),
-				Disqualified:   []bool{},
-				Inactive:       []bool{},
-			},
+			lookFor:        dkgResult2,
 			expectedResult: true,
 		},
 		"not found - with current submissions": {
@@ -228,31 +220,16 @@ func TestContains(t *testing.T) {
 				requestID: big.NewInt(100),
 				Submissions: []*Submission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult1,
+						Votes:     1,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 2,
+						DKGResult: dkgResult2,
+						Votes:     2,
 					},
 				},
 			},
-			lookFor: &DKGResult{
-				Success:        true,
-				GroupPublicKey: big.NewInt(1032),
-				Disqualified:   []bool{},
-				Inactive:       []bool{},
-			},
+			lookFor:        dkgResult3,
 			expectedResult: false,
 		},
 	}
