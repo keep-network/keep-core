@@ -179,6 +179,12 @@ type CombiningMember struct {
 	groupPublicKey *big.Int
 }
 
+// Member represents one member in a threshold sharing group who completed
+// the entire DKG protocol successfully and is ready for signing.
+type Member struct {
+	*CombiningMember
+}
+
 // NewMember creates a new member in an initial state, ready to execute DKG
 // protocol.
 func NewMember(
@@ -309,9 +315,15 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
 	return receivedValidPeerIndividualPublicKeys
 }
 
+// Finalize returns a final representation of group member that successfully
+// completed DKG protocol and is ready for signing.
+func (cm *CombiningMember) Finalize() *Member {
+	return &Member{CombiningMember: cm}
+}
+
 // GroupPublicKey returns the key generated for the group by DKG protocol.
-func (cm *CombiningMember) GroupPublicKey() *big.Int {
-	return cm.groupPublicKey
+func (m *Member) GroupPublicKey() *big.Int {
+	return m.groupPublicKey
 }
 
 // HexString converts `MemberID` to hex `string` representation.
