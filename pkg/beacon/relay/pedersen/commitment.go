@@ -68,12 +68,12 @@ type DecommitmentKey struct {
 	t *big.Int
 }
 
-// NewVSS generates parameters for a scheme execution.
+// GenerateVSS generates parameters for a scheme execution.
 //
 // It has to be run by a verifier or a trusted party. Executing generation by
 // commiter themself causes that binding property is not held. Commiter gets an
 // ability to change the value they already committed to.
-func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
+func GenerateVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 	if !p.ProbablyPrime(20) || !q.ProbablyPrime(20) {
 		return nil, fmt.Errorf("p and q have to be primes")
 	}

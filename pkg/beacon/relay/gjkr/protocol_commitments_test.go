@@ -391,7 +391,7 @@ func predefinedDKG() (*DKG, error) {
 		return nil, fmt.Errorf("failed to initialize q")
 	}
 
-	vss, err := pedersen.NewVSS(crand.Reader, p, q)
+	vss, err := pedersen.GenerateVSS(crand.Reader, p, q)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate DKG paramters [%v]", err)
 	}

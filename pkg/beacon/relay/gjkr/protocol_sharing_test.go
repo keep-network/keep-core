@@ -36,7 +36,7 @@ func TestCombineReceivedShares(t *testing.T) {
 	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
 	expectedShareT := big.NewInt(48)
 
-	vss, err := pedersen.NewVSS(crand.Reader, p, q)
+	vss, err := pedersen.GenerateVSS(crand.Reader, p, q)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
 	// initialization.
 	mockRandomReader := testutils.NewMockRandReader(big.NewInt(7))
-	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
+	vss, err := pedersen.GenerateVSS(mockRandomReader, config.P, config.Q)
 	if err != nil {
 		t.Fatalf("VSS initialization failed [%s]", err)
 	}

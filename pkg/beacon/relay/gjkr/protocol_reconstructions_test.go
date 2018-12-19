@@ -66,7 +66,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	p := big.NewInt(179)
 	q := big.NewInt(89)
 
-	vss, err := pedersen.NewVSS(rand.Reader, p, q)
+	vss, err := pedersen.GenerateVSS(rand.Reader, p, q)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	p := big.NewInt(1907)
 	q := big.NewInt(953)
 
-	vss, err := pedersen.NewVSS(rand.Reader, p, q)
+	vss, err := pedersen.GenerateVSS(rand.Reader, p, q)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -123,7 +123,7 @@ func TestNewVSSpqValidation(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			_, err := NewVSS(crand.Reader, test.p, test.q)
+			_, err := GenerateVSS(crand.Reader, test.p, test.q)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Fatalf("actual error: %v\nexpected error: %v", err, test.expectedError)
@@ -151,7 +151,7 @@ func initializeVSS() (*VSS, error) {
 		return nil, fmt.Errorf("failed to initialize q")
 	}
 
-	vss, err := NewVSS(crand.Reader, p, q)
+	vss, err := GenerateVSS(crand.Reader, p, q)
 	if err != nil {
 		return nil, fmt.Errorf("vss creation failed [%v]", err)
 	}

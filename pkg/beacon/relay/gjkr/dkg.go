@@ -39,7 +39,7 @@ func GenerateDKG() (*DKG, error) {
 		return nil, fmt.Errorf("could not generate DKG paramters [%v]", err)
 	}
 
-	vss, err := pedersen.NewVSS(crand.Reader, p, q)
+	vss, err := pedersen.GenerateVSS(crand.Reader, p, q)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate DKG paramters [%v]", err)
 	}
