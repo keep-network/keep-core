@@ -26,7 +26,10 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 		disqualifiedMembers[1]: member.ephemeralKeyPairs[disqualifiedMembers[1]].PrivateKey,
 	}
 
-	result := member.RevealDisqualifiedMembersKeys(disqualifiedMembers)
+	result, err := member.RevealDisqualifiedMembersKeys(disqualifiedMembers)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedResult := &DisqualifiedEphemeralKeysMessage{
 		senderID:    member.ID,

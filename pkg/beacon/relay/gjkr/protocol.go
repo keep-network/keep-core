@@ -692,18 +692,24 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 // See Phase 10 of the protocol specification.
 func (rm *RevealingMember) RevealDisqualifiedMembersKeys(
 	disqualifiedMembersIDs []MemberID,
-) *DisqualifiedEphemeralKeysMessage {
+) (*DisqualifiedEphemeralKeysMessage, error) {
 	privateKeys := make(map[MemberID]*ephemeral.PrivateKey)
 
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
-		privateKeys[disqualifiedMemberID] =
-			rm.ephemeralKeyPairs[disqualifiedMemberID].PrivateKey
+		ephemeralKeyPair, ok := rm.ephemeralKeyPairs[disqualifiedMemberID]
+		if !ok {
+			return nil, fmt.Errorf(
+				"no ephemeral key pair for disqualified member %v",
+				disqualifiedMemberID,
+			)
+		}
+		privateKeys[disqualifiedMemberID] = ephemeralKeyPair.PrivateKey
 	}
 
 	return &DisqualifiedEphemeralKeysMessage{
 		senderID:    rm.ID,
 		privateKeys: privateKeys,
-	}
+	}, nil
 }
 
 // ReconstructIndividualKeys reconstructs individual private key `z_m` and  public
