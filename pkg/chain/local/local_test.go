@@ -112,13 +112,13 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		GroupPublicKey: big.NewInt(21),
 	}
 
-	submittedResults[bigIntToHex(submittedRequestID1)] = append(
-		submittedResults[bigIntToHex(submittedRequestID1)],
+	submittedResults[submittedRequestID1.String()] = append(
+		submittedResults[submittedRequestID1.String()],
 		submittedResult11,
 	)
 
-	submittedResults[bigIntToHex(submittedRequestID2)] = append(
-		submittedResults[bigIntToHex(submittedRequestID2)],
+	submittedResults[submittedRequestID2.String()] = append(
+		submittedResults[submittedRequestID2.String()],
 		submittedResult21,
 	)
 
@@ -191,13 +191,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[bigIntToHex(requestID1)],
+		localChain.submittedResults[requestID1.String()],
 		[]*relaychain.DKGResult{submittedResult11},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[bigIntToHex(requestID1)],
+			localChain.submittedResults[requestID1.String()],
 		)
 	}
 	select {
@@ -217,13 +217,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[bigIntToHex(requestID2)],
+		localChain.submittedResults[requestID2.String()],
 		[]*relaychain.DKGResult{submittedResult11},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID2,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[bigIntToHex(requestID2)],
+			localChain.submittedResults[requestID2.String()],
 		)
 	}
 	select {
@@ -241,13 +241,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Submit already submitted result for request ID 1
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[bigIntToHex(requestID1)],
+		localChain.submittedResults[requestID1.String()],
 		[]*relaychain.DKGResult{submittedResult11},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[bigIntToHex(requestID1)],
+			localChain.submittedResults[requestID1.String()],
 		)
 	}
 	select {
