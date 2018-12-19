@@ -49,10 +49,15 @@ type localChain struct {
 	// Note: the map is on the "address" of an allocated big.Int, not on the value - so
 	// this may be an error.
 	submissionsMutex sync.Mutex
-	submissions      map[string]relaychain.Submissions
+	submissions      map[string]*relaychain.Submissions
 	// vote handler
 	voteHandler       []func(dkgResultVote *event.DKGResultVote)
 	groupPublicKeyMap map[string]*big.Int
+}
+
+// CurrentBlock rturns the current block number
+func (c *localChain) CurrentBlock() (int, error) {
+	return c.blockCounter.CurrentBlock()
 }
 
 func bigIntToHex(b *big.Int) string {
@@ -64,7 +69,8 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissio
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
 	x := c.submissions[bigIntToHex(requestID)]
-	return &x
+	// return &x
+	return x
 }
 
 // Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
@@ -260,7 +266,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		submittedResults:        make(map[string][]*relaychain.DKGResult),
 		blockCounter:            bc,
 		stakeMonitor:            NewStakeMonitor(),
-		submissions:             make(map[string]relaychain.Submissions),
+		submissions:             make(map[string]*relaychain.Submissions),
 		groupPublicKeyMap:       make(map[string]*big.Int),
 	}
 }
@@ -374,11 +380,11 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submissionsMutex.Lock()
 	if c.submissions == nil {
-		c.submissions = make(map[string]relaychain.Submissions)
+		c.submissions = make(map[string]*relaychain.Submissions)
 	}
 	if _, ok := c.submissions[bigIntToHex(requestID)]; !ok {
 		groupPublicKey := c.getGroupPublicKeyFromRequestID(requestID)
-		ss := relaychain.Submissions{
+		c.submissions[bigIntToHex(requestID)] = &relaychain.Submissions{
 			Submissions: []*relaychain.Submission{
 				{
 					DKGResult: &relaychain.DKGResult{
@@ -391,7 +397,6 @@ func (c *localChain) SubmitDKGResult(
 				},
 			},
 		}
-		c.submissions[bigIntToHex(requestID)] = ss
 	}
 	c.submissionsMutex.Unlock()
 
