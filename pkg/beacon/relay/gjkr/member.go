@@ -254,7 +254,8 @@ func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
 }
 
 // individualPrivateKey returns current member's individual private key.
-// Individual private key is zeroth polynomial coefficient `a_i0`.
+// Individual private key is zeroth polynomial coefficient `a_i0`. The keys of
+// all group members after combining form a group private key.
 func (rm *ReconstructingMember) individualPrivateKey() *big.Int {
 	return rm.secretCoefficients[0]
 }
