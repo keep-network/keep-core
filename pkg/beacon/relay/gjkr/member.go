@@ -19,9 +19,6 @@ type memberCore struct {
 	// Group to which this member belongs.
 	group *Group
 
-	// DKG Protocol configuration parameters.
-	protocolConfig *DKG
-
 	// evidenceLog provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
@@ -129,10 +126,10 @@ type SharingMember struct {
 	// Public values of each polynomial `a` coefficient defined in secretCoefficients
 	// field. It is denoted as `A_ik` in protocol specification. The zeroth
 	// public key share point `A_i0` is a member's public key share.
-	publicKeySharePoints []*big.Int
-	// Public key share points received from peer group members which passed the
-	// validation. Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerPublicKeySharePoints map[MemberID][]*big.Int
+	publicKeySharePoints []*bn256.G1
+	// Public key share points received from other group members which passed
+	// the validation. Defined as `A_jk` across the protocol documentation.
+	receivedValidPeerPublicKeySharePoints map[MemberID][]*bn256.G1
 }
 
 // PointsJustifyingMember represents one member in a threshold key sharing group,
@@ -161,7 +158,7 @@ type ReconstructingMember struct {
 	// Stored as `<m, y_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
-	reconstructedIndividualPublicKeys map[MemberID]*big.Int
+	reconstructedIndividualPublicKeys map[MemberID]*bn256.G1
 }
 
 // CombiningMember represents one member in a threshold sharing group who is
@@ -173,7 +170,7 @@ type CombiningMember struct {
 
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
-	groupPublicKey *big.Int
+	groupPublicKey *bn256.G1
 }
 
 // Int converts `MemberID` to `big.Int`
@@ -192,10 +189,9 @@ func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration()
 }
 
 // InitializeCommitting returns a member to perform next protocol operations.
-func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting(vss *pedersen.VSS) *CommittingMember {
+func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMember {
 	return &CommittingMember{
 		SymmetricKeyGeneratingMember: skgm,
-		vss: vss,
 	}
 }
 
@@ -223,7 +219,7 @@ func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
 func (qm *QualifiedMember) InitializeSharing() *SharingMember {
 	return &SharingMember{
 		QualifiedMember:                       qm,
-		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int),
+		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*bn256.G1),
 	}
 }
 
@@ -237,7 +233,7 @@ func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMem
 	return &ReconstructingMember{
 		PointsJustifyingMember:             pjm,
 		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
-		reconstructedIndividualPublicKeys:  make(map[MemberID]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[MemberID]*bn256.G1),
 	}
 }
 
@@ -248,15 +244,15 @@ func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
 
 // individualPublicKey returns current member's individual public key.
 // Individual public key is zeroth public key share point `A_i0`.
-func (rm *ReconstructingMember) individualPublicKey() *big.Int {
+func (rm *ReconstructingMember) individualPublicKey() *bn256.G1 {
 	return rm.publicKeySharePoints[0]
 }
 
 // receivedValidPeerIndividualPublicKeys returns individual public keys received
-// from peer members which passed the validation. Individual public key is zeroth
+// from other members which passed the validation. Individual public key is zeroth
 // public key share point `A_j0`.
-func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
-	var receivedValidPeerIndividualPublicKeys []*big.Int
+func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G1 {
+	var receivedValidPeerIndividualPublicKeys []*bn256.G1
 
 	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
 		receivedValidPeerIndividualPublicKeys = append(

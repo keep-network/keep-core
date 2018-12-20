@@ -85,7 +85,10 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializeSharesJustifyingMemberGroup(threshold, groupSize, nil)
+			members, err := initializeSharesJustifyingMemberGroup(
+				threshold,
+				groupSize,
+			)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -288,7 +291,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 		accuserID                  MemberID // j
 		accusedID                  MemberID // m
 		modifyShareS               func(shareS *big.Int) *big.Int
-		modifyPublicKeySharePoints func(coefficients []*big.Int) []*big.Int
+		modifyPublicKeySharePoints func(points []*bn256.G1) []*bn256.G1
 		expectedResult             []MemberID
 	}{
 		"false accusation - sender is punished": {
@@ -317,10 +320,12 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 		"incorrect commitments - accused member is punished": {
 			accuserID: 3,
 			accusedID: 4,
-			modifyPublicKeySharePoints: func(points []*big.Int) []*big.Int {
-				newPoints := make([]*big.Int, len(points))
+			modifyPublicKeySharePoints: func(points []*bn256.G1) []*bn256.G1 {
+				newPoints := make([]*bn256.G1, len(points))
 				for i := range newPoints {
-					newPoints[i] = big.NewInt(int64(990 + i))
+					newPoints[i] = new(bn256.G1).ScalarBaseMult(
+						big.NewInt(int64(i)),
+					)
 				}
 				return newPoints
 			},
@@ -329,7 +334,10 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializePointsJustifyingMemberGroup(threshold, groupSize, nil)
+			members, err := initializePointsJustifyingMemberGroup(
+				threshold,
+				groupSize,
+			)
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
@@ -410,8 +418,12 @@ func findCoefficientsJustifyingMemberByID(
 // It generates coefficients for each group member, calculates commitments and
 // shares for each peer member individually. At the end it stores values for each
 // member just like they would be received from peers.
-func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) ([]*SharesJustifyingMember, error) {
-	commitmentsVerifyingMembers, err := initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize, dkg)
+func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
+	[]*SharesJustifyingMember,
+	error,
+) {
+	commitmentsVerifyingMembers, err :=
+		initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -474,9 +486,8 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int, dkg *DKG) (
 // values for each member just like they would be received from peers.
 func initializePointsJustifyingMemberGroup(
 	threshold, groupSize int,
-	dkg *DKG,
 ) ([]*PointsJustifyingMember, error) {
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, dkg)
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}

@@ -201,7 +201,7 @@ func calculateCommitment(secret *big.Int, t *big.Int) *bn256.G1 {
 
 // generatePolynomial generates a random polynomial over `Z_q` of a given degree.
 // This function will generate a slice of `degree + 1` coefficients. Each value
-// will be a random `big.Int` in range `(0, q)` where `q` is the cardinality of
+// will be a random `big.Int` in range `(0, q)` where `q` is cardinality of
 // alt_bn128 elliptic curve.
 func generatePolynomial(degree int) ([]*big.Int, error) {
 	generateCoefficient := func() (c *big.Int, err error) {
@@ -352,26 +352,26 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 // The verifier checks whether [GJKR 99] 1.(b) holds:
 // `(g ^ s_ji) * (h ^ t_ji) mod p == Π (C_j[k] ^ (i^k)) mod p` for `k` in `[0..T]`
 //
-// Which, using elliptic curve, is the same as:
-// `G * s + H * t == Σ (C_j[k] * (i^k))` for `k` in `[0..T]`
+// What, using elliptic curve, is the same as:
+// `G * s_ji + H * t_ji == Σ (C_j[k] * (i^k))` for `k` in `[0..T]`
 func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	shareS, shareT *big.Int, // s_ji, t_ji
 	commitments []*bn256.G1, // C_j
 	memberID MemberID, // i
 ) bool {
-	var commitmentsSum *bn256.G1 // Σ (C_j[k] * (i^k)) for k in [0..T]
-	for k, c := range commitments {
-		ck := new(bn256.G1).ScalarMult(c, pow(memberID, k))
-		if commitmentsSum == nil {
-			commitmentsSum = ck
+	var sum *bn256.G1                // Σ (C_j[k] * (i^k)) for k in [0..T]
+	for k, ck := range commitments { // k, C_j[k]
+		ci := new(bn256.G1).ScalarMult(ck, pow(memberID, k)) // C_j[k] * (i^k)
+		if sum == nil {
+			sum = ci
 		} else {
-			commitmentsSum = new(bn256.G1).Add(commitmentsSum, ck)
+			sum = new(bn256.G1).Add(sum, ci)
 		}
 	}
 
-	expected := calculateCommitment(shareS, shareT) // G * s + H * t
+	commitment := calculateCommitment(shareS, shareT) // G * s_ji + H * t_ji
 
-	return expected.String() == commitmentsSum.String()
+	return commitment.String() == sum.String()
 }
 
 // ResolveSecretSharesAccusationsMessages resolves complaints received in
@@ -508,11 +508,12 @@ func recoverShares(
 }
 
 // CombineMemberShares sums up all `s` and `t` shares intended for this member.
-// Combines secret shares calculated by current member `i` for itself `s_ii` with
-// shares calculated by peer members `j` for this member `s_ji`.
+// Combines secret shares calculated by current member `i` for itself `s_ii`
+// with shares calculated by peer members `j` for this member `s_ji`.
 //
 // `x_i = Σ s_ji mod q` and `x'_i = Σ t_ji mod q` for `j` in a group of players
-// who passed secret shares accusations stage.
+// who passed secret shares accusations stage. `q` is cardinality of alt_bn128
+// elliptic curve.
 //
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
@@ -520,7 +521,7 @@ func (qm *QualifiedMember) CombineMemberShares() {
 	for _, s := range qm.receivedValidSharesS {
 		combinedSharesS = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesS, s),
-			qm.protocolConfig.Q,
+			bn256.Order,
 		)
 	}
 
@@ -528,7 +529,7 @@ func (qm *QualifiedMember) CombineMemberShares() {
 	for _, t := range qm.receivedValidSharesT {
 		combinedSharesT = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesT, t),
-			qm.protocolConfig.Q,
+			bn256.Order,
 		)
 	}
 
@@ -537,17 +538,13 @@ func (qm *QualifiedMember) CombineMemberShares() {
 }
 
 // CalculatePublicKeySharePoints calculates public values for member's coefficients.
-// It calculates `A_k = g^a_k mod p` for k in [0..T].
+// It calculates `A_k = g^a_k` for k in [0..T].
 //
 // See Phase 7 of the protocol specification.
 func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePointsMessage {
-	sm.publicKeySharePoints = make([]*big.Int, len(sm.secretCoefficients))
+	sm.publicKeySharePoints = make([]*bn256.G1, len(sm.secretCoefficients))
 	for i, a := range sm.secretCoefficients {
-		sm.publicKeySharePoints[i] = new(big.Int).Exp(
-			sm.vss.G,
-			a,
-			sm.protocolConfig.P,
-		)
+		sm.publicKeySharePoints[i] = new(bn256.G1).ScalarBaseMult(a)
 	}
 
 	return &MemberPublicKeySharePointsMessage{
@@ -589,47 +586,34 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 // isShareValidAgainstPublicKeySharePoints verifies if public key share points
 // are valid for passed share S.
 //
-// The `j` member calculated public key share points for their polynomial coefficients
-// and share `s_ji` with a polynomial for a member `i`. In this function the
-// verifier checks if the public key share points are valid against the share S.
+// The `j` member calculated public key share points for their polynomial
+// coefficients and share `s_ji` with a polynomial for a member `i`. In this
+// function the verifier checks if the public key share points are valid against
+// the share S.
 //
-// The verifier checks that:
-// `product == expectedProduct`
-// where:
-// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
-// and
-// `expectedProduct = g^s_ji mod p`.
+// The verifier checks whether [GJKR 99] 4.(b) holds:
+// `g^s_ji mod p == Π (A_jk ^ (i^k)) mod p` for `k` in `[0..T]`
+//
+// What, using elliptic curve, is the same as:
+// G * s_ji == Σ ( A_jk * (i^k) ) for `k` in `[0..T]`
 func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	senderID MemberID,
 	shareS *big.Int,
-	publicKeySharePoints []*big.Int,
+	publicKeySharePoints []*bn256.G1,
 ) bool {
-	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
-	// where: j is sender's ID, i is current member ID, T is threshold.
-	product := big.NewInt(1)
+	var sum *bn256.G1 // Σ ( A_jk * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
-		product = new(big.Int).Mod(
-			new(big.Int).Mul(
-				product,
-				new(big.Int).Exp(
-					a,
-					pow(senderID, k),
-					sm.protocolConfig.P,
-				),
-			),
-			sm.protocolConfig.P,
-		)
+		aj := new(bn256.G1).ScalarMult(a, pow(senderID, k)) // A_jk * (i^k)
+		if sum == nil {
+			sum = aj
+		} else {
+			sum = new(bn256.G1).Add(sum, aj)
+		}
 	}
 
-	// `expectedProduct = g^s_ji mod p`, where:
-	// where: j is sender's ID, i is current member ID.
-	expectedProduct := new(big.Int).Exp(
-		sm.vss.G,
-		shareS,
-		sm.protocolConfig.P,
-	)
+	gs := new(bn256.G1).ScalarBaseMult(shareS) // G * s_ji
 
-	return expectedProduct.Cmp(product) == 0
+	return gs.String() == sum.String()
 }
 
 // ResolvePublicKeySharePointsAccusationsMessages resolves a complaint received
@@ -755,7 +739,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 					// s_mk * a_mk
 					new(big.Int).Mul(peerShareS, lagrangeCoefficient),
 				),
-				rm.protocolConfig.Q,
+				bn256.Order,
 			)
 		}
 		// <m, z_m>
@@ -769,6 +753,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
 // `a_mk = Π (l / (l - k)) mod q` where:
 // - `a_mk` is a lagrange coefficient for the member `k`,
 // - `l` are IDs of members who provided shares,
+// - `q` is an order of alt_bn128 elliptic curve
 // and `l != k`.
 func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, groupMembersIDs []MemberID) *big.Int {
 	lagrangeCoefficient := big.NewInt(1)
@@ -784,10 +769,10 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 							otherID.Int(),
 							memberID.Int(),
 						),
-						rm.protocolConfig.Q,
+						bn256.Order,
 					),
 				),
-				rm.protocolConfig.Q,
+				bn256.Order,
 			)
 
 			// Π (l / (l - k)) mod q
@@ -795,7 +780,7 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 				new(big.Int).Mul(
 					lagrangeCoefficient, quotient,
 				),
-				rm.protocolConfig.Q,
+				bn256.Order,
 			)
 		}
 	}
@@ -809,14 +794,13 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
-	rm.reconstructedIndividualPublicKeys = make(map[MemberID]*big.Int, len(rm.reconstructedIndividualPrivateKeys))
+	rm.reconstructedIndividualPublicKeys = make(
+		map[MemberID]*bn256.G1,
+		len(rm.reconstructedIndividualPrivateKeys),
+	)
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// `y_m = g^{z_m}`
-		individualPublicKey := new(big.Int).Exp(
-			rm.vss.G,
-			individualPrivateKey,
-			rm.protocolConfig.P,
-		)
+		individualPublicKey := new(bn256.G1).ScalarBaseMult(individualPrivateKey)
 		rm.reconstructedIndividualPublicKeys[memberID] = individualPublicKey
 	}
 }
@@ -849,18 +833,13 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 
 	// Multiply received peer group members' individual public keys `A_j0`.
 	for _, peerPublicKey := range rm.receivedValidPeerIndividualPublicKeys() {
-		groupPublicKey = new(big.Int).Mod(
-			new(big.Int).Mul(groupPublicKey, peerPublicKey),
-			rm.protocolConfig.P,
-		)
+		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
 	}
 
 	// Multiply reconstructed disqualified members' individual public keys `g^{z_m}`.
 	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
-		groupPublicKey = new(big.Int).Mod(
-			new(big.Int).Mul(groupPublicKey, peerPublicKey),
-			rm.protocolConfig.P,
-		)
+		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
+
 	}
 
 	rm.groupPublicKey = groupPublicKey

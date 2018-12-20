@@ -1,14 +1,12 @@
 package gjkr
 
 import (
-	crand "crypto/rand"
 	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -17,7 +15,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize, nil)
+	members, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -52,15 +50,9 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 func TestStoreSharesMessageForEvidence(t *testing.T) {
 	groupSize := 2
 
-	config, err := predefinedDKG()
-	if err != nil {
-		t.Fatalf("predefined config initialization failed [%s]", err)
-	}
-
 	members, err := initializeCommittingMembersGroup(
 		groupSize, // threshold = group size
 		groupSize,
-		config,
 	)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
@@ -102,12 +94,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	threshold := 2
 	groupSize := 3
 
-	config, err := predefinedDKG()
-	if err != nil {
-		t.Fatalf("predefined config initialization failed [%s]", err)
-	}
-
-	members, err := initializeCommittingMembersGroup(threshold, groupSize, config)
+	members, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -135,7 +122,6 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 					verifyingMemberKeys[member2.ID],
 					true,
 					false,
-					config,
 				)
 			},
 			expectedAccusedIDs: []MemberID{member2.ID},
@@ -148,7 +134,6 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 					verifyingMemberKeys[member1.ID],
 					false,
 					true,
-					config,
 				)
 			},
 			expectedAccusedIDs: []MemberID{member1.ID},
@@ -230,7 +215,6 @@ func alterPeerSharesMessage(
 	symmetricKey ephemeral.SymmetricKey,
 	alterS bool,
 	alterT bool,
-	config *DKG,
 ) error {
 	oldShareS, err := message.decryptShareS(receiverID, symmetricKey)
 	if err != nil {
@@ -246,10 +230,10 @@ func alterPeerSharesMessage(
 	var newShareT = oldShareT
 
 	if alterS {
-		newShareS = testutils.NewRandInt(oldShareS, config.Q)
+		newShareS = testutils.NewRandInt(oldShareS, bn256.Order)
 	}
 	if alterT {
-		newShareT = testutils.NewRandInt(oldShareT, config.Q)
+		newShareT = testutils.NewRandInt(oldShareT, bn256.Order)
 	}
 
 	err = message.addShares(receiverID, newShareS, newShareT, symmetricKey)
@@ -330,40 +314,35 @@ func TestGeneratePolynomial(t *testing.T) {
 	}
 }
 
-func initializeCommittingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CommittingMember, error) {
-	var err error
-	if dkg == nil {
-		dkg, err = predefinedDKG()
-		if err != nil {
-			return nil, fmt.Errorf("DKG Config initialization failed [%v]", err)
-		}
-	}
-
+func initializeCommittingMembersGroup(threshold, groupSize int) (
+	[]*CommittingMember,
+	error,
+) {
 	symmetricKeyMembers, err := generateGroupWithEphemeralKeys(
 		threshold,
 		groupSize,
-		dkg,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%v]", err)
 	}
 
-	vss, err := pedersen.NewVSS(crand.Reader, dkg.P, dkg.Q)
-	if err != nil {
-		return nil, fmt.Errorf("VSS initialization failed [%v]", err)
-	}
-
 	var members []*CommittingMember
 	for _, member := range symmetricKeyMembers {
-		committingMember := member.InitializeCommitting(vss)
+		committingMember := member.InitializeCommitting()
 		members = append(members, committingMember)
 	}
 
 	return members, nil
 }
 
-func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CommitmentsVerifyingMember, error) {
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, dkg)
+func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int) (
+	[]*CommitmentsVerifyingMember,
+	error,
+) {
+	committingMembers, err := initializeCommittingMembersGroup(
+		threshold,
+		groupSize,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%v]", err)
 	}
@@ -374,28 +353,6 @@ func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int, dkg *
 	}
 
 	return members, nil
-}
-
-// predefinedDKGconfig initializes DKG configuration with predefined 512-bit
-// p and q values.
-func predefinedDKG() (*DKG, error) {
-	// `p` is 512-bit safe prime.
-	pStr := "0xde41693a1522be3f2c14113e26ec7bea81f19d15095fbc0d0aca845ce086537535c6f9bdf4c4e3ac0526f3cf8c064c11483beddbc29464a9baaf6bb7ae5a024b"
-	// `q` is 511-bit Sophie Germain prime.
-	qStr := "0x6f20b49d0a915f1f960a089f13763df540f8ce8a84afde068565422e704329ba9ae37cdefa6271d6029379e7c6032608a41df6ede14a3254dd57b5dbd72d0125"
-
-	var result bool
-
-	p, result := new(big.Int).SetString(pStr, 0)
-	if !result {
-		return nil, fmt.Errorf("failed to initialize p")
-	}
-
-	q, result := new(big.Int).SetString(qStr, 0)
-	if !result {
-		return nil, fmt.Errorf("failed to initialize q")
-	}
-	return &DKG{P: p, Q: q}, nil
 }
 
 func filterPeerSharesMessage(

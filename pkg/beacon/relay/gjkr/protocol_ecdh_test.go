@@ -15,7 +15,6 @@ func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
 	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
 		groupSize,
 		groupSize, // threshold = groupSize
-		nil,
 	)
 
 	member1 := ephemeralGeneratingMembers[0]
@@ -57,7 +56,6 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
 		groupSize,
 		groupSize, // threshold = groupSize
-		nil,
 	)
 
 	// generate ephemeral key pairs for each group member; prepare messages
@@ -139,7 +137,6 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 func initializeEphemeralKeyPairMembersGroup(
 	threshold int,
 	groupSize int,
-	dkg *DKG,
 ) []*EphemeralKeyPairGeneratingMember {
 	group := &Group{
 		groupSize:          groupSize,
@@ -151,10 +148,9 @@ func initializeEphemeralKeyPairMembersGroup(
 		id := MemberID(i)
 		members = append(members, &EphemeralKeyPairGeneratingMember{
 			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: dkg,
-				evidenceLog:    newDkgEvidenceLog(),
+				ID:          id,
+				group:       group,
+				evidenceLog: newDkgEvidenceLog(),
 			},
 			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 		})
@@ -167,9 +163,8 @@ func initializeEphemeralKeyPairMembersGroup(
 func initializeSymmetricKeyMembersGroup(
 	threshold int,
 	groupSize int,
-	dkg *DKG,
 ) ([]*SymmetricKeyGeneratingMember, error) {
-	keyPairMembers := initializeEphemeralKeyPairMembersGroup(threshold, groupSize, dkg)
+	keyPairMembers := initializeEphemeralKeyPairMembersGroup(threshold, groupSize)
 
 	// generate ephemeral key pairs for all other members of the group
 	for _, member1 := range keyPairMembers {
@@ -202,12 +197,10 @@ func initializeSymmetricKeyMembersGroup(
 func generateGroupWithEphemeralKeys(
 	threshold int,
 	groupSize int,
-	dkg *DKG,
 ) ([]*SymmetricKeyGeneratingMember, error) {
 	symmetricKeyMembers, err := initializeSymmetricKeyMembersGroup(
 		threshold,
 		groupSize,
-		dkg,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%v]", err)
