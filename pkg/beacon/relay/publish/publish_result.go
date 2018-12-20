@@ -50,7 +50,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 
 	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
-		return fmt.Errorf("block counter failure [%v]", err)
+		return fmt.Errorf("could not initialize block counter [%v]", err)
 	}
 
 	// Waits until the current member is eligible to submit a result to the
