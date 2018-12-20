@@ -33,15 +33,14 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 		disqualifiedSharingMember1: member.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
 		disqualifiedSharingMember2: member.ephemeralKeyPairs[disqualifiedSharingMember2].PrivateKey,
 	}
+	expectedResult := &DisqualifiedEphemeralKeysMessage{
+		senderID:    member.ID,
+		privateKeys: expectedDisqualifiedKeys,
+	}
 
 	result, err := member.RevealDisqualifiedMembersKeys()
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	expectedResult := &DisqualifiedEphemeralKeysMessage{
-		senderID:    member.ID,
-		privateKeys: expectedDisqualifiedKeys,
 	}
 
 	if !reflect.DeepEqual(expectedResult, result) {
