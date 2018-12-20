@@ -29,3 +29,9 @@ func (g *Group) RegisterMemberID(id MemberID) {
 func (g *Group) DisqualifiedMemberIDs() []MemberID {
 	return g.disqualifiedMemberIDs
 }
+
+// DisqualifyMemberID adds a member to the list of disqualified members.
+func (g *Group) DisqualifyMemberID(id MemberID) {
+	g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, id)
+	// TODO Should we also remove the member from memberIDs list?
+}
