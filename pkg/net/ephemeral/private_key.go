@@ -40,6 +40,14 @@ func GenerateKeyPair() (*KeyPair, error) {
 	}, nil
 }
 
+// VerifyPrivateKey verifies if private key is valid for given public key.
+// It checks if public key equals `g^privateKey`, where `g` is a base point of
+// the curve.
+func (pk *PublicKey) VerifyPrivateKey(privateKey *PrivateKey) bool {
+	expectedX, expectedY := curve().ScalarBaseMult(privateKey.Marshal())
+	return expectedX.Cmp(pk.X) == 0 && expectedY.Cmp(pk.Y) == 0
+}
+
 // UnmarshalPrivateKey turns a slice of bytes into a `PrivateKey`.
 func UnmarshalPrivateKey(bytes []byte) *PrivateKey {
 	priv, _ := btcec.PrivKeyFromBytes(curve(), bytes)
