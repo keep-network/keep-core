@@ -697,6 +697,7 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 ) {
 	privateKeys := make(map[MemberID]*ephemeral.PrivateKey)
 
+	disqualifiedMembersIDs := rm.group.DisqualifiedMemberIDs()
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
 		ephemeralKeyPair, ok := rm.ephemeralKeyPairs[disqualifiedMemberID]
 		if !ok {
