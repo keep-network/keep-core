@@ -59,7 +59,7 @@ func TestPublishDKGResult(t *testing.T) {
 			chainRelay := publisher.chainHandle.ThresholdRelay()
 			blockCounter, err := publisher.chainHandle.BlockCounter()
 			if err != nil {
-				t.Fatalf("unexpected error [%v]", err)
+				t.Fatal(err)
 			}
 
 			if chainRelay.IsAnyDKGResultPublished(publisher.RequestID) {
@@ -72,7 +72,7 @@ func TestPublishDKGResult(t *testing.T) {
 			}
 			currentBlock, err := blockCounter.CurrentBlock()
 			if err != nil {
-				t.Fatalf("unexpected error [%v]", err)
+				t.Fatal(err)
 			}
 			if test.expectedTimeEnd != currentBlock {
 				t.Fatalf("invalid current block\nexpected: %v\nactual:   %v\n", test.expectedTimeEnd, currentBlock)
@@ -133,6 +133,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
+	// TODO Check what results are published on chain
 	if !chainRelay.IsAnyDKGResultPublished(publisher1.RequestID) {
 		t.Fatalf("result is not published on chain")
 	}
@@ -239,17 +240,17 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 
 			blockCounter, err := chainHandle.BlockCounter()
 			if err != nil {
-				t.Fatalf("unexpected error [%v]", err)
+				t.Fatal(err)
 			}
 
 			go func() {
 				err := publisher1.PublishDKGResult(test.resultToPublish1)
 				if err != nil {
-					t.Fatalf("unexpected error %v", err)
+					t.Fatal(err)
 				}
 				currentBlock, err := blockCounter.CurrentBlock()
 				if err != nil {
-					t.Fatalf("unexpected error [%v]", err)
+					t.Fatal(err)
 				}
 
 				result1Chan <- currentBlock
@@ -258,11 +259,11 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 			go func() {
 				err := publisher2.PublishDKGResult(test.resultToPublish2)
 				if err != nil {
-					t.Fatalf("unexpected error %v", err)
+					t.Fatal(err)
 				}
 				currentBlock, err := blockCounter.CurrentBlock()
 				if err != nil {
-					t.Fatalf("unexpected error [%v]", err)
+					t.Fatal(err)
 				}
 
 				result2Chan <- currentBlock
