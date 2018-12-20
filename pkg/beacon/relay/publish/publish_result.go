@@ -26,8 +26,8 @@ type Publisher struct {
 
 // PublishDKGResult sends a result containing i.a. group public key to the blockchain.
 // It checks if the result has already been published to the blockchain with
-// request ID specific for current DKG execution. If not it determines if the
-// current member is eligable to result submission. If allowed it submits the
+// request ID specific for current DKG execution. If not, it determines if the
+// current member is eligable to result submission. If allowed, it submits the
 // results to the blockchain.
 // When member is waiting for their round the function keeps tracking results being
 // published to the blockchain. If any result is published for the current request
