@@ -46,9 +46,6 @@ network participants, <<Core Technologies>> used in the network, and finally the
 <<System Details>> that outline the implementation itself. <<Upgrade Management>>
 is also discussed.
 
-.Keep Threshold Relay
-image::img/generated/relay-diagram.png[Diagram of the Keep threshold relay]
-
 == Prior Work
 
 Dfinity has described their implementation of a random beacon backed by a
