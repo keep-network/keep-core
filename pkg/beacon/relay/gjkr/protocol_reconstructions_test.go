@@ -351,8 +351,6 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 
 func initializeRevealingMembersGroup(threshold, groupSize int, dkg *DKG) (
 	[]*RevealingMember, error) {
-	// TODO When whole protocol is implemented check if SharingMember type is really
-	// the one expected here (should be the member from Phase 10)
 	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
@@ -368,8 +366,6 @@ func initializeRevealingMembersGroup(threshold, groupSize int, dkg *DKG) (
 
 func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
 	[]*ReconstructingMember, error) {
-	// TODO When whole protocol is implemented check if SharingMember type is really
-	// the one expected here (should be the member from Phase 10)
 	revealingMembers, err := initializeRevealingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
@@ -418,8 +414,6 @@ func disqualifyMembers(
 }
 
 func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CombiningMember, error) {
-	// TODO When whole protocol is implemented check if SharingMember type is really
-	// the one expected here (should be the member from Phase 10)
 	reconstructingMembers, err := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
