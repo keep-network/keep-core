@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -89,9 +90,9 @@ type CommitmentsVerifyingMember struct {
 	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
 	receivedValidSharesS, receivedValidSharesT map[MemberID]*big.Int
-	// Commitments to coefficients received from peer group members which passed
-	// the validation.
-	receivedValidPeerCommitments map[MemberID][]*big.Int
+	// Valid commitments to secret shares polynomial coefficients received from
+	// other group members.
+	receivedValidPeerCommitments map[MemberID][]*bn256.G1
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -204,7 +205,7 @@ func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVeri
 		CommittingMember:             cm,
 		receivedValidSharesS:         make(map[MemberID]*big.Int),
 		receivedValidSharesT:         make(map[MemberID]*big.Int),
-		receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+		receivedValidPeerCommitments: make(map[MemberID][]*bn256.G1),
 	}
 }
 

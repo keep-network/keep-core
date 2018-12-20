@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -155,9 +156,9 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		"invalid commitment": {
 			modifyCommitmentsMessage: func(messages map[MemberID]*MemberCommitmentsMessage) {
 				message := messages[member2.ID]
-				message.commitments[0] = testutils.NewRandInt(
+				message.commitments[0] = new(bn256.G1).ScalarMult(
 					message.commitments[0],
-					config.Q,
+					big.NewInt(3),
 				)
 			},
 			expectedAccusedIDs: []MemberID{member2.ID},
@@ -307,9 +308,8 @@ func assertValidSharesAndCommitments(
 
 func TestGeneratePolynomial(t *testing.T) {
 	degree := 3
-	config := &DKG{P: big.NewInt(100), Q: big.NewInt(9)}
 
-	coefficients, err := generatePolynomial(degree, config)
+	coefficients, err := generatePolynomial(degree)
 	if err != nil {
 		t.Fatalf("unexpected error [%s]", err)
 	}
@@ -321,9 +321,9 @@ func TestGeneratePolynomial(t *testing.T) {
 		)
 	}
 	for _, c := range coefficients {
-		if c.Sign() <= 0 || c.Cmp(config.Q) >= 0 {
+		if c.Sign() <= 0 || c.Cmp(bn256.Order) >= 0 {
 			t.Fatalf("coefficient out of range\nexpected: 0 < value < %d\nactual:   %v\n",
-				config.Q,
+				bn256.Order,
 				c,
 			)
 		}
