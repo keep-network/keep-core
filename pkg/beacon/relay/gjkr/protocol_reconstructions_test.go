@@ -11,7 +11,7 @@ import (
 
 func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	threshold := 2
-	groupSize := 5
+	groupSize := 8
 
 	members, err := initializeRevealingMembersGroup(threshold, groupSize, nil)
 	if err != nil {
@@ -19,14 +19,22 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	}
 	member := members[0]
 
-	disqualifiedMembers := []MemberID{2, 3}
+	disqualifiedSharingMember1 := MemberID(2)
+	disqualifiedSharingMember2 := MemberID(3)
+	disqualifiedNotSharingMember := MemberID(6)
+	member.group.DisqualifyMemberID(disqualifiedSharingMember1)
+	member.group.DisqualifyMemberID(disqualifiedSharingMember2)
+	member.group.DisqualifyMemberID(disqualifiedNotSharingMember)
+
+	// Simulate a case where member is disqualified in Phase 5.
+	member.receivedValidSharesS[disqualifiedNotSharingMember] = nil
 
 	expectedDisqualifiedKeys := map[MemberID]*ephemeral.PrivateKey{
-		disqualifiedMembers[0]: member.ephemeralKeyPairs[disqualifiedMembers[0]].PrivateKey,
-		disqualifiedMembers[1]: member.ephemeralKeyPairs[disqualifiedMembers[1]].PrivateKey,
+		disqualifiedSharingMember1: member.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
+		disqualifiedSharingMember2: member.ephemeralKeyPairs[disqualifiedSharingMember2].PrivateKey,
 	}
 
-	result, err := member.RevealDisqualifiedMembersKeys(disqualifiedMembers)
+	result, err := member.RevealDisqualifiedMembersKeys()
 	if err != nil {
 		t.Fatal(err)
 	}
