@@ -16,8 +16,8 @@ type Publisher struct {
 	// Handle to interact with a blockchain.
 	chainHandle chain.Handle
 	// Sequential number of the current member in the publishing group.
-	// The value is used to determine eligible publishing member. Relates to DKG
-	// Phase 13.
+	// The value is used to determine eligible publishing member. Indexing starts
+	// with 1. Relates to DKG Phase 13.
 	publishingIndex int
 	// Predefined step for each publishing window. The value is used to determine
 	// eligible publishing member. Relates to DKG Phase 13.
@@ -56,7 +56,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		pm.publishingIndex * pm.blockStep,
+		(pm.publishingIndex - 1) * pm.blockStep,
 	)
 	if err != nil {
 		return fmt.Errorf("block waiter failure [%v]", err)

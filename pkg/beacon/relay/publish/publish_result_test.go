@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
@@ -30,22 +29,21 @@ func TestPublishDKGResult(t *testing.T) {
 		expectedTimeEnd int
 	}{
 		"first member eligible to publish straight away": {
-			publishingIndex: 0,
+			publishingIndex: 1,
 			expectedTimeEnd: initialBlock, // T_now < T_init + T_step
 		},
 		"second member eligible to publish after T_step block passed": {
-			publishingIndex: 1,
+			publishingIndex: 2,
 			expectedTimeEnd: initialBlock + blockStep, // T_now = T_init + T_step
 		},
 		"fourth member eligable to publish after T_dkg + 2*T_step passed": {
-			publishingIndex: 3,
+			publishingIndex: 4,
 			expectedTimeEnd: initialBlock + 3*blockStep, // T_now = T_init + 3*T_step
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			publisher := &Publisher{
-				ID:              gjkr.MemberID(test.publishingIndex + 1),
 				RequestID:       big.NewInt(101),
 				publishingIndex: test.publishingIndex,
 				chainHandle:     chainHandle,
@@ -97,16 +95,14 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	}
 
 	publisher1 := &Publisher{
-		ID:              1,
 		RequestID:       big.NewInt(101),
-		publishingIndex: 0,
+		publishingIndex: 1,
 		chainHandle:     chainHandle,
 		blockStep:       blockStep,
 	}
 	publisher2 := &Publisher{
-		ID:              2,
 		RequestID:       big.NewInt(101),
-		publishingIndex: 1,
+		publishingIndex: 2,
 		chainHandle:     chainHandle,
 		blockStep:       blockStep,
 	}
@@ -170,13 +166,11 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 	blockStep := 2 // t_step
 
 	publisher1 := &Publisher{
-		ID:              2,
 		publishingIndex: 1, // P1
 		blockStep:       blockStep,
 	}
 	publisher2 := &Publisher{
-		ID:              5,
-		publishingIndex: 4, // P2
+		publishingIndex: 4, // P4
 		blockStep:       blockStep,
 	}
 
@@ -185,8 +179,8 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 		resultToPublish2  *relayChain.DKGResult
 		requestID1        *big.Int
 		requestID2        *big.Int
-		expectedDuration1 int // index * t_step
-		expectedDuration2 int // index * t_step
+		expectedDuration1 int // (index - 1) * t_step
+		expectedDuration2 int // (index - 1) * t_step
 	}{
 		"two members publish the same results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -197,8 +191,8 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: publisher1.publishingIndex * blockStep, // P1 * t_step
-			expectedDuration2: publisher1.publishingIndex * blockStep, // P1 * t_step
+			expectedDuration1: 0, // (P1-1) * t_step
+			expectedDuration2: 0, // (P1-1) * t_step
 		},
 		"two members publish different results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -209,8 +203,8 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: publisher1.publishingIndex * blockStep, // P1 * t_step
-			expectedDuration2: publisher1.publishingIndex * blockStep, // P1 * t_step
+			expectedDuration1: 0, // (P1-1) * t_step
+			expectedDuration2: 0, // (P1-1) * t_step
 		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -221,8 +215,8 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 			},
 			requestID1:        big.NewInt(12),
 			requestID2:        big.NewInt(13),
-			expectedDuration1: publisher1.publishingIndex * blockStep, // P1 * t_step
-			expectedDuration2: publisher2.publishingIndex * blockStep, // P1 * t_step
+			expectedDuration1: 0,                                            // (P1-1) * t_step
+			expectedDuration2: (publisher2.publishingIndex - 1) * blockStep, // (P4-1) * t_step
 		},
 	}
 	for testName, test := range tests {
