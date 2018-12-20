@@ -220,7 +220,7 @@ func (fm *FinalizingMember) Result() *Result {
 
 	return &Result{
 		Success:        true,
-		GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+		GroupPublicKey: fm.groupPublicKey,
 		Disqualified:   disqualifiedMembers,
 		Inactive:       inactiveMembers,
 	}
