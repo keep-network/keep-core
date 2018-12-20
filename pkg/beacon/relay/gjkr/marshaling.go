@@ -3,7 +3,6 @@ package gjkr
 import (
 	"encoding/binary"
 	"fmt"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
@@ -187,7 +186,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Type() string {
 func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	keySharePoints := make([][]byte, 0, len(mpspm.publicKeySharePoints))
 	for _, keySharePoint := range mpspm.publicKeySharePoints {
-		keySharePoints = append(keySharePoints, keySharePoint.Bytes())
+		keySharePoints = append(keySharePoints, keySharePoint.Marshal())
 	}
 
 	return (&pb.MemberPublicKeySharePoints{
@@ -206,9 +205,16 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 
 	mpspm.senderID = bytesToMemberID(pbMsg.SenderID)
 
-	var keySharePoints []*big.Int
+	var keySharePoints []*bn256.G1
 	for _, keySharePointBytes := range pbMsg.PublicKeySharePoints {
-		keySharePoint := new(big.Int).SetBytes(keySharePointBytes)
+		keySharePoint := new(bn256.G1)
+		_, err := keySharePoint.Unmarshal(keySharePointBytes)
+		if err != nil {
+			return fmt.Errorf(
+				"could not unmarshal member's key share point [%v]",
+				err,
+			)
+		}
 		keySharePoints = append(keySharePoints, keySharePoint)
 	}
 	mpspm.publicKeySharePoints = keySharePoints

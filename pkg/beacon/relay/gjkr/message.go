@@ -65,13 +65,14 @@ type SecretSharesAccusationsMessage struct {
 	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }
 
-// MemberPublicKeySharePointsMessage is a message payload that carries the sender's
-// public key share points.
+// MemberPublicKeySharePointsMessage is a message payload that carries the
+// sender's public key share points.
+//
 // It is expected to be broadcast.
 type MemberPublicKeySharePointsMessage struct {
 	senderID MemberID
 
-	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
+	publicKeySharePoints []*bn256.G1 // A_ik = g^{a_ik} mod p
 }
 
 // PointsAccusationsMessage is a message payload that carries all of the sender's
