@@ -19,6 +19,7 @@ type ethereumChain struct {
 	keepGroupContract        *keepGroup
 	keepRandomBeaconContract *KeepRandomBeacon
 	accountKey               *keystore.Key
+	blockCounter             chain.BlockCounter
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
@@ -58,6 +59,15 @@ func Connect(cfg Config) (chain.Handle, error) {
 		clientRPC: clientrpc,
 		clientWS:  clientws,
 	}
+
+	blockCounter, err := pv.BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error setting up BlockCounter: [%v]",
+			err,
+		)
+	}
+	pv.blockCounter = blockCounter
 
 	keepRandomBeaconContract, err := newKeepRandomBeacon(pv)
 	if err != nil {
