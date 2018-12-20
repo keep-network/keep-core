@@ -38,6 +38,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
+	defer close(onPublishedResultChan)
 	chainRelay.OnDKGResultPublished(func(publishedResult *event.DKGResultPublication) {
 		onPublishedResultChan <- publishedResult
 	})
@@ -66,6 +67,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 		select {
 		case <-eligibleToSubmitWaiter:
 			errors := make(chan error)
+			defer close(errors)
 			chainRelay.SubmitDKGResult(pm.RequestID, resultToPublish).
 				OnComplete(func(resultPublicationEvent *event.DKGResultPublication, err error) {
 					errors <- err
