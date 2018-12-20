@@ -6,14 +6,11 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-// Publisher is a member submitting distributed key generation result to a
-// blockchain.
+// Publisher submits distributed key generation result to a blockchain.
 type Publisher struct {
-	ID gjkr.MemberID
 	// ID of distributed key generation execution.
 	RequestID *big.Int
 	// Handle to interact with a blockchain.
