@@ -1,7 +1,6 @@
 package gjkr
 
 import (
-	"math/big"
 	"reflect"
 	"testing"
 )
@@ -23,7 +22,7 @@ func TestGenerateResult(t *testing.T) {
 		"no disqualified or inactive members - success": {
 			expectedResult: &Result{
 				Success:        true,
-				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+				GroupPublicKey: members[0].groupPublicKey,
 				Disqualified:   nil,
 				Inactive:       nil,
 			},
@@ -32,7 +31,7 @@ func TestGenerateResult(t *testing.T) {
 			disqualifiedMemberIDs: []MemberID{2},
 			expectedResult: &Result{
 				Success:        true,
-				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+				GroupPublicKey: members[0].groupPublicKey,
 				Disqualified:   []MemberID{2},
 				Inactive:       nil,
 			},
@@ -41,7 +40,7 @@ func TestGenerateResult(t *testing.T) {
 			inactiveMemberIDs: []MemberID{3, 7},
 			expectedResult: &Result{
 				Success:        true,
-				GroupPublicKey: big.NewInt(123), // TODO: Use group public key after Phase 12 is merged
+				GroupPublicKey: members[0].groupPublicKey,
 				Disqualified:   nil,
 				Inactive:       []MemberID{3, 7},
 			},
