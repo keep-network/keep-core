@@ -99,20 +99,20 @@ type SharesJustifyingMember struct {
 
 // QualifiedMember represents one member in a threshold key sharing group, after
 // it completed secret shares justification. The member holds a share of group
-// master private key.
+// group private key.
 //
 // Executes Phase 6 of the protocol.
 type QualifiedMember struct {
 	*SharesJustifyingMember
 
-	// Member's share of the secret master private key. It is denoted as `z_ik`
+	// Member's share of the secret group private key. It is denoted as `z_ik`
 	// in protocol specification.
 	// TODO: unsure if we need shareT `x'_i` field, it should be removed if not used in further steps
-	masterPrivateKeyShare, shareT *big.Int
+	groupPrivateKeyShare, shareT *big.Int
 }
 
 // SharingMember represents one member in a threshold key sharing group, after it
-// has been qualified to the master private key sharing group. A member shares
+// has been qualified to the group private key sharing. A member shares
 // public values of it's polynomial coefficients with peer members.
 //
 // Executes Phase 7 and Phase 8 of the protocol.

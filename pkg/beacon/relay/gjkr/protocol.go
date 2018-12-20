@@ -510,7 +510,8 @@ func (qm *QualifiedMember) CombineMemberShares() {
 		)
 	}
 
-	qm.masterPrivateKeyShare = combinedSharesS
+	qm.groupPrivateKeyShare = combinedSharesS
+	// TODO Remove qm.shareT field if not used anywhere else
 	qm.shareT = combinedSharesT
 }
 
