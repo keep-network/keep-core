@@ -68,6 +68,17 @@ func TestGenerateResult(t *testing.T) {
 				Inactive: nil,
 			},
 		},
+		"more than half of threshold disqualified members - failure": {
+			disqualifiedMemberIDs: []MemberID{3, 5, 7},
+			expectedResult: &Result{
+				Success:        false,
+				GroupPublicKey: nil,
+				Disqualified:   []MemberID{3, 5, 7},
+				// inactive member ids; this value is nil in the case of a failure, as
+				// only disqualified members are slashed
+				Inactive: nil,
+			},
+		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
