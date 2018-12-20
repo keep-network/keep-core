@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -55,7 +56,7 @@ func (mcm *MemberCommitmentsMessage) Type() string {
 func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	commitmentBytes := make([][]byte, 0, len(mcm.commitments))
 	for _, commitment := range mcm.commitments {
-		commitmentBytes = append(commitmentBytes, commitment.Bytes())
+		commitmentBytes = append(commitmentBytes, commitment.Marshal())
 	}
 
 	return (&pb.MemberCommitments{
@@ -74,9 +75,16 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 
 	mcm.senderID = bytesToMemberID(pbMsg.SenderID)
 
-	var commitments []*big.Int
+	var commitments []*bn256.G1
 	for _, commitmentBytes := range pbMsg.Commitments {
-		commitment := new(big.Int).SetBytes(commitmentBytes)
+		commitment := new(bn256.G1)
+		_, err := commitment.Unmarshal(commitmentBytes)
+		if err != nil {
+			return fmt.Errorf(
+				"could not unmarshal member's commitment [%v]",
+				err,
+			)
+		}
 		commitments = append(commitments, commitment)
 	}
 	mcm.commitments = commitments

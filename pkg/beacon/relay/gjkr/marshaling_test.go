@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -43,10 +44,10 @@ func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 	msg := &MemberCommitmentsMessage{
 		senderID: MemberID(1410),
-		commitments: []*big.Int{
-			big.NewInt(966),
-			big.NewInt(1385),
-			big.NewInt(1569),
+		commitments: []*bn256.G1{
+			new(bn256.G1).ScalarBaseMult(big.NewInt(966)),
+			new(bn256.G1).ScalarBaseMult(big.NewInt(1385)),
+			new(bn256.G1).ScalarBaseMult(big.NewInt(1569)),
 		},
 	}
 	unmarshaled := &MemberCommitmentsMessage{}
