@@ -122,7 +122,7 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 	for _, recoveredDisqualifiedShare := range recoveredDisqualifiedShares {
 		for _, disqualifiedMember := range disqualifiedMembers {
 			if recoveredDisqualifiedShare.disqualifiedMemberID == disqualifiedMember.ID {
-				expectedRecoveredDisqualifiedShares := &DisqualifiedShares{
+				expectedRecoveredDisqualifiedShares := &disqualifiedShares{
 					disqualifiedMemberID: disqualifiedMember.ID,
 					peerSharesS:          disqualifiedMemberShares[disqualifiedMember.ID],
 				}
@@ -384,8 +384,8 @@ func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
 func disqualifyMembers(
 	members []*ReconstructingMember,
 	disqualifiedMembersIDs []MemberID,
-) []*DisqualifiedShares {
-	allDisqualifiedShares := make([]*DisqualifiedShares, len(disqualifiedMembersIDs))
+) []*disqualifiedShares {
+	allDisqualifiedShares := make([]*disqualifiedShares, len(disqualifiedMembersIDs))
 	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
 		sharesReceivedFromDisqualifiedMember := make(map[MemberID]*big.Int,
 			len(members)-len(disqualifiedMembersIDs))
@@ -403,7 +403,7 @@ func disqualifyMembers(
 				}
 			}
 		}
-		allDisqualifiedShares[i] = &DisqualifiedShares{
+		allDisqualifiedShares[i] = &disqualifiedShares{
 			disqualifiedMemberID: disqualifiedMemberID,
 			peerSharesS:          sharesReceivedFromDisqualifiedMember,
 		}

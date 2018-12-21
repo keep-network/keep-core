@@ -754,8 +754,8 @@ func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 // was revealed in provided DisqualifiedMembersKeysMessage.
 func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	messages []*DisqualifiedEphemeralKeysMessage,
-) ([]*DisqualifiedShares, error) {
-	var revealedDisqualifiedShares []*DisqualifiedShares
+) ([]*disqualifiedShares, error) {
+	var revealedDisqualifiedShares []*disqualifiedShares
 
 	// For disqualified member `m` map shares `s_mk` the member calculated for
 	// other members `k` who revealed the ephemeral key.
@@ -804,7 +804,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 	for disqualifiedID, disqualifiedMembersShares := range allRevealedShares {
 		revealedDisqualifiedShares = append(revealedDisqualifiedShares,
-			&DisqualifiedShares{
+			&disqualifiedShares{
 				disqualifiedMemberID: disqualifiedID,
 				peerSharesS:          disqualifiedMembersShares,
 			})
@@ -813,10 +813,10 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	return revealedDisqualifiedShares, nil
 }
 
-// DisqualifiedShares contains shares `s_mk` calculated by the disqualified
+// disqualifiedShares contains shares `s_mk` calculated by the disqualified
 // member `m` for peer members `k`. The shares were revealed due to disqualification
 // of the member `m` from the protocol execution.
-type DisqualifiedShares struct {
+type disqualifiedShares struct {
 	disqualifiedMemberID MemberID              // m
 	peerSharesS          map[MemberID]*big.Int // <k, s_mk>
 }
@@ -833,7 +833,7 @@ type DisqualifiedShares struct {
 // member in a current member's reconstructedIndividualPrivateKeys field:
 // <disqualifiedMemberID, privateKeyShare>
 func (rm *ReconstructingMember) reconstructIndividualPrivateKeys(
-	revealedDisqualifiedShares []*DisqualifiedShares,
+	revealedDisqualifiedShares []*disqualifiedShares,
 ) {
 	rm.reconstructedIndividualPrivateKeys = make(map[MemberID]*big.Int, len(revealedDisqualifiedShares))
 
