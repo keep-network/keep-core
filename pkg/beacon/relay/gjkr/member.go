@@ -21,6 +21,8 @@ type memberCore struct {
 	// evidenceLog provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
+
+	protocolParameters *protocolParameters
 }
 
 // EphemeralKeyPairGeneratingMember represents one member in a distributed key

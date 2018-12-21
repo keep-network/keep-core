@@ -16,7 +16,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -177,7 +176,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 
 	commitments := make([]*bn256.G1, len(coefficientsA))
 	for k := range commitments {
-		commitments[k] = calculateCommitment(coefficientsA[k], coefficientsB[k])
+		commitments[k] = cm.calculateCommitment(coefficientsA[k], coefficientsB[k])
 	}
 	commitmentsMessage := &MemberCommitmentsMessage{
 		senderID:    cm.ID,
@@ -189,12 +188,12 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 
 // calculateCommitment generates a Pedersen commitment to a secret value
 // `secret` with a blinding factor `t`.
-func calculateCommitment(secret *big.Int, t *big.Int) *bn256.G1 {
-	// TODO: make H a protocol parameter
-	h := altbn128.G1HashToPoint(big.NewInt(1337).Bytes())
-
+func (cm *CommittingMember) calculateCommitment(
+	secret *big.Int,
+	t *big.Int,
+) *bn256.G1 {
 	gs := new(bn256.G1).ScalarBaseMult(secret)
-	ht := new(bn256.G1).ScalarMult(h, t)
+	ht := new(bn256.G1).ScalarMult(cm.protocolParameters.H, t)
 
 	return new(bn256.G1).Add(gs, ht)
 }
@@ -369,7 +368,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 		}
 	}
 
-	commitment := calculateCommitment(shareS, shareT) // G * s_ji + H * t_ji
+	commitment := cm.calculateCommitment(shareS, shareT) // G * s_ji + H * t_ji
 
 	return commitment.String() == sum.String()
 }

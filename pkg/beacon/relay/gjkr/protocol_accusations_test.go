@@ -454,7 +454,7 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
 		commitments := make([]*bn256.G1, threshold+1)
 		for k := range memberCoefficientsA {
 
-			commitments[k] = calculateCommitment(
+			commitments[k] = m.calculateCommitment(
 				memberCoefficientsA[k],
 				memberCoefficientsB[k],
 			)

@@ -2,6 +2,7 @@ package gjkr
 
 import (
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -143,14 +144,17 @@ func initializeEphemeralKeyPairMembersGroup(
 		dishonestThreshold: threshold,
 	}
 
+	protocolParameters := newProtocolParameters(big.NewInt(18313131145))
+
 	var members []*EphemeralKeyPairGeneratingMember
 	for i := 1; i <= groupSize; i++ {
 		id := MemberID(i)
 		members = append(members, &EphemeralKeyPairGeneratingMember{
 			memberCore: &memberCore{
-				ID:          id,
-				group:       group,
-				evidenceLog: newDkgEvidenceLog(),
+				ID:                 id,
+				group:              group,
+				evidenceLog:        newDkgEvidenceLog(),
+				protocolParameters: protocolParameters,
 			},
 			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 		})
