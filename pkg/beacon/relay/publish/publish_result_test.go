@@ -2,7 +2,6 @@ package publish
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -84,79 +83,6 @@ func TestPublishDKGResult(t *testing.T) {
 	}
 }
 
-func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
-	threshold := 2
-	groupSize := 5
-	blockStep := 2 // T_step
-
-	chainHandle, _, err := initChainHandle(threshold, groupSize)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	publisher1 := &Publisher{
-		RequestID:       big.NewInt(101),
-		publishingIndex: 1,
-		chainHandle:     chainHandle,
-		blockStep:       blockStep,
-	}
-	publisher2 := &Publisher{
-		RequestID:       big.NewInt(101),
-		publishingIndex: 2,
-		chainHandle:     chainHandle,
-		blockStep:       blockStep,
-	}
-
-	resultToPublish := &relayChain.DKGResult{
-		GroupPublicKey: big.NewInt(12345),
-	}
-
-	chainRelay := chainHandle.ThresholdRelay()
-
-	if chainRelay.IsAnyDKGResultPublished(publisher1.RequestID) {
-		t.Fatalf("result is already published on chain")
-	}
-
-	// Case: Member 1 publishes a result.
-	// Expected: A new result is published successfully by member 1.
-	err = publisher1.PublishDKGResult(resultToPublish)
-	if err != nil {
-		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
-	}
-	if !chainRelay.IsAnyDKGResultPublished(publisher1.RequestID) {
-		t.Fatalf("result is already published on chain")
-	}
-
-	// Case: Member 1 publishes the same result once again.
-	// Expected: A new result is not published.
-	err = publisher1.PublishDKGResult(resultToPublish)
-	if err != nil {
-		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
-	}
-	// TODO Check what results are published on chain
-	if !chainRelay.IsAnyDKGResultPublished(publisher1.RequestID) {
-		t.Fatalf("result is not published on chain")
-	}
-
-	// Case: Member 2 publishes the same result as member 1 already did.
-	// Expected: A new result is not published.
-	var expectedError error
-	expectedError = nil
-
-	if !chainRelay.IsAnyDKGResultPublished(publisher2.RequestID) {
-		t.Fatalf("result is not published on chain")
-	}
-
-	err = publisher2.PublishDKGResult(resultToPublish)
-	if !reflect.DeepEqual(err, expectedError) {
-		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
-	}
-
-	if !chainRelay.IsAnyDKGResultPublished(publisher2.RequestID) {
-		t.Fatalf("result is not published on chain")
-	}
-}
-
 // This tests runs result publication concurrently by two members.
 // Member with lower index gets to publish the result to chain. For the second
 // member loop should be aborted and result published by the first member should
@@ -183,30 +109,30 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 		expectedDuration1 int // (index - 1) * t_step
 		expectedDuration2 int // (index - 1) * t_step
 	}{
-		"two members publish the same results": {
-			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
-			},
-			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
-			},
-			requestID1:        big.NewInt(11),
-			requestID2:        big.NewInt(11),
-			expectedDuration1: 0, // (P1-1) * t_step
-			expectedDuration2: 0, // (P1-1) * t_step
-		},
-		"two members publish different results": {
-			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(201),
-			},
-			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(202),
-			},
-			requestID1:        big.NewInt(11),
-			requestID2:        big.NewInt(11),
-			expectedDuration1: 0, // (P1-1) * t_step
-			expectedDuration2: 0, // (P1-1) * t_step
-		},
+		// "two members publish the same results": {
+		// 	resultToPublish1: &relayChain.DKGResult{
+		// 		GroupPublicKey: big.NewInt(101),
+		// 	},
+		// 	resultToPublish2: &relayChain.DKGResult{
+		// 		GroupPublicKey: big.NewInt(101),
+		// 	},
+		// 	requestID1:        big.NewInt(11),
+		// 	requestID2:        big.NewInt(11),
+		// 	expectedDuration1: 0, // (P1-1) * t_step
+		// 	expectedDuration2: 0, // (P1-1) * t_step
+		// },
+		// "two members publish different results": {
+		// 	resultToPublish1: &relayChain.DKGResult{
+		// 		GroupPublicKey: big.NewInt(201),
+		// 	},
+		// 	resultToPublish2: &relayChain.DKGResult{
+		// 		GroupPublicKey: big.NewInt(202),
+		// 	},
+		// 	requestID1:        big.NewInt(11),
+		// 	requestID2:        big.NewInt(11),
+		// 	expectedDuration1: 0, // (P1-1) * t_step
+		// 	expectedDuration2: 0, // (P1-1) * t_step
+		// },
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
 				GroupPublicKey: big.NewInt(101),
