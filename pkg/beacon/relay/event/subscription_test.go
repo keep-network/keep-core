@@ -1,6 +1,11 @@
 package event
 
-import "testing"
+import (
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+)
 
 func TestUnsubscribe(t *testing.T) {
 	unsubscribed := false
@@ -21,15 +26,28 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 func TestDoNotUnsubscribeTwice(t *testing.T) {
-	unsubscribeCount := 0
+	var unsubscribeCount uint32
 
 	subscription := NewSubscription(func() {
-		unsubscribeCount = unsubscribeCount + 1
+		// make the goroutine a bit longer, it increases
+		// the possibility of race
+		time.Sleep(10 * time.Millisecond)
+
+		atomic.AddUint32(&unsubscribeCount, 1)
 	})
 
-	subscription.Unsubscribe()
-	subscription.Unsubscribe()
-	subscription.Unsubscribe()
+	var wg sync.WaitGroup
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+
+			subscription.Unsubscribe()
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
 
 	if unsubscribeCount != 1 {
 		t.Fatalf("unsubscribe handler should be called only once")

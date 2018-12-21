@@ -30,12 +30,13 @@ type subscription struct {
 }
 
 func (s *subscription) Unsubscribe() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	if s.unsubscribed {
 		return
 	}
 
-	s.mutex.Lock()
 	s.doUnsubscribeFunc()
 	s.unsubscribed = true
-	s.mutex.Unlock()
 }
