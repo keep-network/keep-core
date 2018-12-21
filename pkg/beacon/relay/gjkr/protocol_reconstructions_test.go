@@ -27,7 +27,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	member.group.DisqualifyMemberID(disqualifiedNotSharingMember)
 
 	// Simulate a case where member is disqualified in Phase 5.
-	member.receivedValidSharesS[disqualifiedNotSharingMember] = nil
+	delete(member.receivedValidSharesS, disqualifiedNotSharingMember)
 
 	expectedDisqualifiedKeys := map[MemberID]*ephemeral.PrivateKey{
 		disqualifiedSharingMember1: member.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
