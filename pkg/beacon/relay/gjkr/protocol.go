@@ -569,7 +569,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 	messages []*MemberPublicKeySharePointsMessage,
 ) (*PointsAccusationsMessage, error) {
 	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
-	// `product = Π (A_jk ^ (i^k)) mod p` for k in [0..T],
+	// `product = Π (A_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
 		if !sm.isShareValidAgainstPublicKeySharePoints(
@@ -598,18 +598,18 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 // the share S.
 //
 // The verifier checks whether [GJKR 99] 4.(b) holds:
-// `g^s_ji mod p == Π (A_jk ^ (i^k)) mod p` for `k` in `[0..T]`
+// `g^s_ji mod p == Π (A_j[k] ^ (i^k)) mod p` for `k` in `[0..T]`
 //
 // What, using elliptic curve, is the same as:
-// G * s_ji == Σ ( A_jk * (i^k) ) for `k` in `[0..T]`
+// G * s_ji == Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	senderID MemberID,
 	shareS *big.Int,
 	publicKeySharePoints []*bn256.G1,
 ) bool {
-	var sum *bn256.G1 // Σ ( A_jk * (i^k) ) for `k` in `[0..T]`
+	var sum *bn256.G1 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
-		aj := new(bn256.G1).ScalarMult(a, pow(senderID, k)) // A_jk * (i^k)
+		aj := new(bn256.G1).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)
 		if sum == nil {
 			sum = aj
 		} else {
