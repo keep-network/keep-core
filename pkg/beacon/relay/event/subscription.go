@@ -16,14 +16,14 @@ type Subscription interface {
 // event stream.
 func NewSubscription(doUnsubscribe func()) Subscription {
 	return &subscription{
-		mutex:             &sync.Mutex{},
+		mutex:             sync.Mutex{},
 		unsubscribed:      false,
 		doUnsubscribeFunc: doUnsubscribe,
 	}
 }
 
 type subscription struct {
-	mutex        *sync.Mutex
+	mutex        sync.Mutex
 	unsubscribed bool
 
 	doUnsubscribeFunc func()
