@@ -7,6 +7,15 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// JoinMessage is sent by member to announce its presence in the group.
+//
+// TODO: List of members in the group should come from the group selection
+// protocol. Please remove this message once group selection protocol will be
+// implemented.
+type JoinMessage struct {
+	SenderID MemberID
+}
+
 // EphemeralPublicKeyMessage is a message payload that carries the sender's
 // ephemeral public keys generated for all other group members.
 //

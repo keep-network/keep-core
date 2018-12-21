@@ -382,7 +382,16 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 
 // onStakerAddedFunc is the type of function called when an OnStakerAdded event
 // is observed on-chain and reported to a watching handler.
-type onStakerAddedFunc func(index int, groupMemberID []byte)
+//
+// Function should return true if the observed OnStakerAdded event is what
+// we've been waiting for and watch should be stopped. Otherwise, when we
+// wait for another OnStakerAdded event, function should return false and the
+// watch is continued.
+// Bear in mind, that the OnStakerEvent is global, and although we may wait
+// for the specific staker to be added, OnStakerEvent will be called if some
+// other staker has been added in a meantime. That's why onStakerAddedFunc
+// allows to react on the event by either continuing or stopping the watch.
+type onStakerAddedFunc func(index int, groupMemberID []byte) bool
 
 // WatchGroupStartedEvent watch for GroupStartedEvent
 func (kg *keepGroup) WatchOnStakerAdded(
@@ -401,8 +410,9 @@ func (kg *keepGroup) WatchOnStakerAdded(
 		for {
 			select {
 			case event := <-eventChan:
-				success(int(event.Index), event.GroupMemberID[:])
-				return
+				if success(int(event.Index), event.GroupMemberID[:]) {
+					return
+				}
 
 			case err := <-eventSubscription.Err():
 				fail(err)

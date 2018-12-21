@@ -9,6 +9,29 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// Type returns a string describing a JoinMessage type for marshalling purposes.
+func (jm *JoinMessage) Type() string {
+	return "gjkr/join_message"
+}
+
+// Marshal converts this JoinMessage to a byte array suitable for network
+// communication.
+func (jm *JoinMessage) Marshal() ([]byte, error) {
+	return (&pb.Join{
+		SenderID: memberIDToBytes(jm.SenderID),
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a JoinMessage.
+func (jm *JoinMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.Join{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+	jm.SenderID = bytesToMemberID(pbMsg.SenderID)
+	return nil
+}
+
 // Type returns a string describing an EphemeralPublicKeyMessage type for
 // marshaling purposes.
 func (epkm *EphemeralPublicKeyMessage) Type() string {

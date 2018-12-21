@@ -68,12 +68,21 @@ type DecommitmentKey struct {
 	t *big.Int
 }
 
-// NewVSS generates parameters for a scheme execution.
+// NewVSS creates a new instance of VSS from the provided parameters. Input
+// parameters are not validated.
+//
+// TODO: It's just a temporary solution. This function should be removed once
+// we switch to elliptic curves.
+func NewVSS(p, q, g, h *big.Int) *VSS {
+	return &VSS{p: p, q: q, G: g, h: h}
+}
+
+// GenerateVSS generates parameters for a scheme execution.
 //
 // It has to be run by a verifier or a trusted party. Executing generation by
 // commiter themself causes that binding property is not held. Commiter gets an
 // ability to change the value they already committed to.
-func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
+func GenerateVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 	if !p.ProbablyPrime(20) || !q.ProbablyPrime(20) {
 		return nil, fmt.Errorf("p and q have to be primes")
 	}
@@ -112,7 +121,7 @@ func NewVSS(rand io.Reader, p, q *big.Int) (*VSS, error) {
 		}
 	}
 
-	return &VSS{p: p, q: q, G: g, h: h}, nil
+	return NewVSS(p, q, g, h), nil
 }
 
 // CommitmentTo takes a secret message and a set of parameters and returns

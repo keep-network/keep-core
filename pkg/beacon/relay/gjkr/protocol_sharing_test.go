@@ -36,7 +36,13 @@ func TestCombineReceivedShares(t *testing.T) {
 	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
 	expectedShareT := big.NewInt(48)
 
-	config := &DKG{P: p, Q: q}
+	vss, err := pedersen.GenerateVSS(crand.Reader, p, q)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := &DKG{p, q, vss}
+
 	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
@@ -83,30 +89,26 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
 	// initialization.
 	mockRandomReader := testutils.NewMockRandReader(big.NewInt(7))
-	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
+	vss, err := pedersen.GenerateVSS(mockRandomReader, config.P, config.Q)
 	if err != nil {
 		t.Fatalf("VSS initialization failed [%s]", err)
 	}
 
-	member := &SharingMember{
-		QualifiedMember: &QualifiedMember{
-			SharesJustifyingMember: &SharesJustifyingMember{
-				CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
-					CommittingMember: &CommittingMember{
-						SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-							EphemeralKeyPairGeneratingMember: &EphemeralKeyPairGeneratingMember{
-								memberCore: &memberCore{
-									protocolConfig: config,
-								},
-							},
-						},
-						vss:                vss,
-						secretCoefficients: secretCoefficients,
-					},
-				},
-			},
+	config.vss = vss
+
+	member := (&LocalMember{
+		memberCore: &memberCore{
+			protocolConfig: config,
 		},
-	}
+	}).InitializeEphemeralKeysGeneration().
+		InitializeSymmetricKeyGeneration().
+		InitializeCommitting().
+		InitializeCommitmentsVerification().
+		InitializeSharesJustification().
+		InitializeQualified().
+		InitializeSharing()
+
+	member.secretCoefficients = secretCoefficients
 
 	message := member.CalculatePublicKeySharePoints()
 

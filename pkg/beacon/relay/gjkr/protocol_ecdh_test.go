@@ -8,6 +8,48 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
+	groupSize := 2
+
+	// Create a group of 2 members
+	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
+		groupSize,
+		groupSize, // threshold = groupSize
+		nil,
+	)
+
+	member1 := ephemeralGeneratingMembers[0]
+	member2 := ephemeralGeneratingMembers[1]
+
+	message1, err := member1.GenerateEphemeralKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := member2.GenerateEphemeralKeyPair(); err != nil {
+		t.Fatal(err)
+	}
+
+	symmetricKeyMember2 := member2.InitializeSymmetricKeyGeneration()
+	if err := symmetricKeyMember2.GenerateSymmetricKeys(
+		[]*EphemeralPublicKeyMessage{message1},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	evidenceMsg := symmetricKeyMember2.evidenceLog.ephemeralPublicKeyMessage(
+		member1.ID,
+	)
+
+	if !reflect.DeepEqual(message1, evidenceMsg) {
+		t.Fatalf(
+			"unexpected message in evidence log\nexpected: %v\n actual:   %v",
+			message1,
+			evidenceMsg,
+		)
+	}
+}
+
 func TestGenerateEphemeralKeys(t *testing.T) {
 	groupSize := 3
 
@@ -100,7 +142,6 @@ func initializeEphemeralKeyPairMembersGroup(
 	dkg *DKG,
 ) []*EphemeralKeyPairGeneratingMember {
 	group := &Group{
-		groupSize:          groupSize,
 		dishonestThreshold: threshold,
 	}
 
@@ -108,10 +149,13 @@ func initializeEphemeralKeyPairMembersGroup(
 	for i := 1; i <= groupSize; i++ {
 		id := MemberID(i)
 		members = append(members, &EphemeralKeyPairGeneratingMember{
-			memberCore: &memberCore{
-				ID:             id,
-				group:          group,
-				protocolConfig: dkg,
+			LocalMember: &LocalMember{
+				memberCore: &memberCore{
+					ID:             id,
+					group:          group,
+					protocolConfig: dkg,
+					evidenceLog:    newDkgEvidenceLog(),
+				},
 			},
 			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
 		})
@@ -172,12 +216,23 @@ func generateGroupWithEphemeralKeys(
 
 	// generate symmetric keys with all other members of the group
 	for _, member1 := range symmetricKeyMembers {
+		ephemeralKeys := make(map[MemberID]*ephemeral.PublicKey)
+
 		for _, member2 := range symmetricKeyMembers {
 			if member1.ID != member2.ID {
 				privKey := member1.ephemeralKeyPairs[member2.ID].PrivateKey
 				pubKey := member2.ephemeralKeyPairs[member1.ID].PublicKey
 				member1.symmetricKeys[member2.ID] = privKey.Ecdh(pubKey)
+
+				ephemeralKeys[member2.ID] = member1.ephemeralKeyPairs[member2.ID].PublicKey
 			}
+		}
+
+		// simulating message broadcast in the group
+		for _, member := range symmetricKeyMembers {
+			member.evidenceLog.PutEphemeralMessage(
+				&EphemeralPublicKeyMessage{member1.ID, ephemeralKeys},
+			)
 		}
 	}
 

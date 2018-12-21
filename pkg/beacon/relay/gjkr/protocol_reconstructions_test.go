@@ -1,9 +1,12 @@
 package gjkr
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
 )
 
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
@@ -59,8 +62,19 @@ func contains(slice []MemberID, value MemberID) bool {
 func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	groupSize := 3
 	threshold := 2
-	dkg := &DKG{P: big.NewInt(179), Q: big.NewInt(89)}
+
+	p := big.NewInt(179)
+	q := big.NewInt(89)
+
+	vss, err := pedersen.GenerateVSS(rand.Reader, p, q)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkg := &DKG{p, q, vss}
+
 	g := big.NewInt(7) // `g` value for public key calculation `y_m = g^{z_m} mod p`
+	vss.G = g
 
 	disqualifiedMembersIDs := []int{4, 5} // m
 
@@ -78,7 +92,6 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	}
 
 	for _, member := range members {
-		member.vss.G = g // set fixed `g` value
 		// Simulate phase where individual private keys are reconstructed.
 		member.reconstructedIndividualPrivateKeys = reconstructedIndividualPrivateKeys
 	}
@@ -101,7 +114,16 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 2
 	groupSize := 3
-	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
+
+	p := big.NewInt(1907)
+	q := big.NewInt(953)
+
+	vss, err := pedersen.GenerateVSS(rand.Reader, p, q)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkg := &DKG{p, q, vss}
 
 	expectedGroupPublicKey := big.NewInt(1620) // 10*20*30*91*92 mod 1620
 
