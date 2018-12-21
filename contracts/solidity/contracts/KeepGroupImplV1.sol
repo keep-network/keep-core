@@ -234,8 +234,6 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Initialize Keep Group implementation contract with a linked Staking proxy contract.
      * @param stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
-     * @param groupThreshold Max number of bad members in a group that we can detect as well as “number
-     * of good members needed to produce a relay entry”.
      * @param groupSize Minimum number of members in a group - to form a group.
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
@@ -244,7 +242,6 @@ contract KeepGroupImplV1 is Ownable {
     function initialize(
         address stakingProxy,
         uint256 minStake,
-        uint256 groupThreshold,
         uint256 groupSize,
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
@@ -255,7 +252,6 @@ contract KeepGroupImplV1 is Ownable {
         _initialized["KeepGroupImplV1"] = true;
         _stakingProxy = stakingProxy;
         _minStake = minStake;
-        _groupThreshold = groupThreshold;
         _groupSize = groupSize;
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
@@ -287,25 +283,25 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Allows owner to change the groupSize and Threshold.
+     * @dev Allows owner to change the groupSize.
      */
-    function setGroupSizeThreshold(uint256 groupSize, uint256 groupThreshold) public onlyOwner {
-        _groupThreshold = groupThreshold;
+    function setGroupSize(uint256 groupSize) public onlyOwner {
         _groupSize = groupSize;
     }
 
+    /**
+     * @dev Return natural threshold, the value N virtual stakers' tickets would be expected
+     * to fall below if the tokens were optimally staked, and the tickets' values were evenly 
+     * distributed in the domain of the pseudorandom function.
+     */
+    function naturalThreshold() public view returns (uint256) {
+        return _groupSize*((2**256)-1)/uint256((10**9)/_minStake);
+    }
     /**
      * @dev Checks if this contract is initialized.
      */
     function initialized() public view returns (bool) {
         return _initialized["KeepGroupImplV1"];
-    }
-
-    /**
-     * @dev Gets the threshold size for groups.
-     */
-    function groupThreshold() public view returns(uint256) {
-        return _groupThreshold;
     }
 
     /**

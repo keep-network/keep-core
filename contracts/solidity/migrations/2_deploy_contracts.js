@@ -13,7 +13,6 @@ const withdrawalDelay = 86400; // 1 day
 const minPayment = 1;
 const minStake = 1;
 
-const groupThreshold = 2;
 const groupSize = 5;
 const timeoutInitial = 1;
 const timeoutSubmission = 1;
@@ -34,6 +33,6 @@ module.exports = (deployer) => {
     await deployer.deploy(KeepGroup, KeepGroupImplV1.address);
     await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address).initialize(minPayment, withdrawalDelay);
     await KeepGroupImplV1.at(KeepGroup.address).initialize(
-      StakingProxy.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge);
+      StakingProxy.address, minStake, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge);
   });
 };

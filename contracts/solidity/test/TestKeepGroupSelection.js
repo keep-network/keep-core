@@ -24,7 +24,7 @@ function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
 
 contract('TestKeepGroupSelection', function(accounts) {
 
-  let token, stakingProxy, stakingContract, minimumStake,
+  let token, stakingProxy, stakingContract, minimumStake, groupSize,
     randomBeaconValue = 123456789,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
     staker1 = accounts[0], tickets1,
@@ -42,10 +42,12 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     // Initialize Keep Group contract
     minimumStake = 200;
+    groupSize = 200;
+
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
-    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, 1, 2, 1, 3, 4);
+    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, groupSize, 1, 3, 4);
 
     groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
 
