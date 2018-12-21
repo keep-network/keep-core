@@ -231,7 +231,7 @@ func generatePolynomial(degree int) ([]*big.Int, error) {
 // - `a_k` is k coefficient
 // - `j` is memberID
 // - `T` is threshold
-// - `q` is the cardinality of alt_bn128 elliptic curve
+// - `q` is the order of cyclic group formed over the alt_bn128 curve
 func (cm *CommittingMember) evaluateMemberShare(
 	memberID MemberID,
 	coefficients []*big.Int,
@@ -511,8 +511,8 @@ func recoverShares(
 // with shares calculated by peer members `j` for this member `s_ji`.
 //
 // `x_i = Σ s_ji mod q` and `x'_i = Σ t_ji mod q` for `j` in a group of players
-// who passed secret shares accusations stage. `q` is cardinality of alt_bn128
-// elliptic curve.
+// who passed secret shares accusations stage. `q` is the order of cyclic group
+// formed over the alt_bn128 curve
 //
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
@@ -536,8 +536,15 @@ func (qm *QualifiedMember) CombineMemberShares() {
 	qm.shareT = combinedSharesT
 }
 
-// CalculatePublicKeySharePoints calculates public values for member's coefficients.
-// It calculates `A_k = g^a_k` for k in [0..T].
+// CalculatePublicKeySharePoints calculates public values for member's
+// coefficients.
+//
+// It calculates:
+// `A_k = g^a_k` for `k` in `[0..T]`.
+//
+// What, using elliptic curve, is the same as:
+// `A_k = G * a_k` for `k` in `[0..T]`.
+// where `G` is curve's generator.
 //
 // See Phase 7 of the protocol specification.
 func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePointsMessage {
