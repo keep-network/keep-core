@@ -757,7 +757,9 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 ) ([]*DisqualifiedShares, error) {
 	var revealedDisqualifiedShares []*DisqualifiedShares
 
-	allRevealedShares := make(map[MemberID]map[MemberID]*big.Int)
+	// For disqualified member `m` map shares `s_mk` the member calculated for
+	// other members `k` who revealed the ephemeral key.
+	allRevealedShares := make(map[MemberID]map[MemberID]*big.Int) // <m, <k, s_mk>>
 
 	for _, message := range messages {
 		revealingMemberID := message.senderID
