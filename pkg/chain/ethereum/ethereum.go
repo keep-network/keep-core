@@ -451,6 +451,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) {
+) event.Subscription {
 	// TODO Implement
+	return event.NewSubscription(func() {})
 }
