@@ -82,7 +82,7 @@ spec:
         - name: HOSTVOLUME
           value: /mnt/eth-data
         - name: ETH_IPC_PATH
-          value: $(HOSTVOLUME)/$(NODE_NAME)/geth/geth.ipc
+          value: $(HOSTVOLUME)/geth.ipc
         volumeMounts:
         - name: eth-tx-node
           mountPath: /mnt/eth-data
