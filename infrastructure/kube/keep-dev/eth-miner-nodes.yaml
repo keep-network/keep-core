@@ -86,9 +86,6 @@ spec:
           value: /mnt/eth-data
         - name: ETH_IPC_PATH
           value: $(HOSTVOLUME)/geth.ipc
-        volumeMounts:
-        - name: eth-miner-node
-          mountPath: /mnt/eth-data
   volumeClaimTemplates:
     - metadata:
         name: eth-miner-node
