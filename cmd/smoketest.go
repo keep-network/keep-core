@@ -108,12 +108,21 @@ func createNode(
 		))
 	}
 
+	stakeMonitor, err := chainHandle.StakeMonitor()
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to run setup chainHandle.StakeMonitor: [%v].",
+			err,
+		))
+	}
+
 	netProvider := netlocal.Connect()
 
 	go beacon.Initialize(
 		context,
 		chainHandle.ThresholdRelay(),
 		chainCounter,
+		stakeMonitor,
 		netProvider,
 	)
 }

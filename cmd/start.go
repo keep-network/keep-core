@@ -99,6 +99,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		chainProvider.ThresholdRelay(),
 		blockCounter,
+		stakeMonitor,
 		netProvider,
 	)
 	if err != nil {

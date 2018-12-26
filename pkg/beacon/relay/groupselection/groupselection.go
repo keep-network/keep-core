@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-
-	"github.com/keep-network/keep-core/pkg/staker"
 )
 
 var one = (&big.Int{}).SetUint64(uint64(1))
@@ -16,23 +14,19 @@ var one = (&big.Int{}).SetUint64(uint64(1))
 // tickets.
 func GenerateTickets(
 	minimumStake *big.Int,
-	staker staker.Staker, // S_j
+	stakerID string, // S_j id
+	availableStake *big.Int, // S_j stake
 	entryValue []byte, // V_i
 ) ([]*Ticket, error) {
-	availableStake, err := staker.Stake()
-	if err != nil {
-		return nil, err
-	}
-
 	stakingWeight := &big.Int{} // W_j
 	stakingWeight = stakingWeight.Quo(availableStake, minimumStake)
 
 	stakerValue := &big.Int{} // Q_j
-	stakerValue, ok := stakerValue.SetString(staker.ID(), 16)
+	stakerValue, ok := stakerValue.SetString(stakerID, 16)
 	if !ok {
 		return nil, fmt.Errorf(
 			"staker ID [%v] failed to parse as hex string",
-			staker.ID(),
+			stakerID,
 		)
 	}
 

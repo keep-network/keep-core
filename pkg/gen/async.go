@@ -68,7 +68,7 @@ func main() {
 			outputFile: "dkg_result_publication_promise.go",
 		},
 		{
-			Type:       "*group.Ticket",
+			Type:       "*groupselection.Ticket",
 			Prefix:     "GroupTicket",
 			outputFile: "group_ticket_promise.go",
 		},

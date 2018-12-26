@@ -11,7 +11,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -59,7 +59,7 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-func (c *localChain) SubmitTicket(ticket *group.Ticket) *async.GroupTicketPromise {
+func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
 	return &async.GroupTicketPromise{}
 }
 

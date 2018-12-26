@@ -10,7 +10,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -37,6 +36,7 @@ func Initialize(
 	ctx context.Context,
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
+	stakeMonitor chain.StakeMonitor,
 	netProvider net.Provider,
 ) error {
 	chainConfig, err := relayChain.GetConfig()
@@ -53,8 +53,13 @@ func Initialize(
 		proceed sync.WaitGroup
 		// FIXME Nuke post-M1 when we plug in real staking stuff.
 		stakingID = netProvider.ID().String()[:32]
-		staker    = &group.Staker{StakeID: stakingID}
+		staker    chain.Staker
 	)
+
+	staker, err = stakeMonitor.StakerFor(stakingID)
+	if err != nil {
+		return err
+	}
 
 	node := relay.NewNode(
 		staker,
@@ -77,10 +82,6 @@ func Initialize(
 				curParticipantState = unstaked
 				return
 			}
-
-			// TODO: properly initialize new staker
-			node.Staker = &group.Staker{}
-			node.Staker.StakeID = stake.GroupMemberID
 		})
 	proceed.Wait()
 

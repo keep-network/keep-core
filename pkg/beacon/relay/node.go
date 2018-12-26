@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/staker"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
@@ -23,7 +22,7 @@ type Node struct {
 	StakeID string
 	// Staker is an on-chain identity that this node is using to prove its
 	// stake in the system.
-	Staker staker.Staker
+	Staker chain.Staker
 
 	// External interactors.
 	netProvider  net.Provider

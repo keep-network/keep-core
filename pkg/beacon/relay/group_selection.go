@@ -1,7 +1,6 @@
 package relay
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 
@@ -11,67 +10,56 @@ import (
 )
 
 const ticketInitialTimeout = 5
-const minimumStake = 1
 
-var NaturalThreshold = big.NewInt((2 ^ 256) - 1)
+var minimumStake = big.NewInt(1)
+var naturalThreshold = big.NewInt((2 ^ 256) - 1)
 
 func (n *Node) SubmitTicketsForGroupSelection(
 	entryValue []byte,
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 ) error {
-	tickets, err := groupselection.GenerateTickets(minimumStake, n.Staker, entryValue)
+	initialTimeout, err := blockCounter.BlockWaiter(ticketInitialTimeout)
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	errCh := make(chan error, len(tickets))
+	availableStake, err := n.Staker.Stake()
+	if err != nil {
+		return err
+	}
 
-	go func(
-		cancel context.CancelFunc,
-		tickets []*groupselection.Ticket,
-		relayChain relaychain.GroupInterface,
-		blockCounter chain.BlockCounter,
-		errCh chan error,
-	) {
-		initialTimeout, err := blockCounter.BlockWaiter(
-			TicketInitialTimeout,
+	tickets, err :=
+		groupselection.GenerateTickets(
+			minimumStake,
+			n.Staker.ID(),
+			availableStake,
+			entryValue,
 		)
-		if err != nil {
-			errCh <- fmt.Errorf(
-				"failed to initialize blockCounter with err %v",
-				err,
-			)
-			return
-		}
-		for _, ticket := range tickets {
-			// submit the tickets that fall under the natural threshold
-			if ticket.Value.Int().Cmp(NaturalThreshold) < 0 {
-				// publish the result
-				relayChain.SubmitTicket(
-					ticket,
-				).OnFailure(func(err error) {
+	if err != nil {
+		return err
+	}
+
+	errCh := make(chan error, len(tickets))
+	for _, ticket := range tickets {
+		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
+			relayChain.
+				SubmitTicket(ticket).
+				OnFailure(func(err error) {
 					errCh <- err
 				})
-			}
-			select {
-			// if TicketInitialTimeout blocks have passed, close the context
-			case <-initialTimeout:
-				cancel()
-				return
-			}
 		}
-		cancel()
-	}(cancel, tickets, relayChain, blockCounter, errCh)
+	}
 
 	for {
 		select {
 		case err := <-errCh:
-			// TODO: log this error
-			fmt.Println(err)
-		case <-ctx.Done():
-			close(errCh)
+			fmt.Printf(
+				"Error during ticket submission for entry [%v]: [%v].",
+				entryValue,
+				err,
+			)
+		case <-initialTimeout:
 			return nil
 		}
 	}
