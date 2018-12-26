@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
@@ -8,6 +9,8 @@ import "./utils/AddressArrayUtils.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
+
+    using SafeMath for uint256;
 
     event GroupSelected(bytes32 groupPubKey);
 
@@ -299,8 +302,11 @@ contract KeepGroupImplV1 is Ownable {
      * distributed in the domain of the pseudorandom function.
      */
     function naturalThreshold() public view returns (uint256) {
-        return _groupSize*((2**256)-1)/uint256((10**9)/_minStake);
+        uint256 space = 2**256-1; // Space consisting of all possible tickets.
+        uint256 tokens = 10**9; // Total number of all tokens issued.
+        return _groupSize.mul(space.div(tokens.div(_minStake)));
     }
+
     /**
      * @dev Checks if this contract is initialized.
      */
