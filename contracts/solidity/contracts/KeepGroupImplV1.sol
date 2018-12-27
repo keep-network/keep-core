@@ -77,7 +77,7 @@ contract KeepGroupImplV1 is Ownable {
             revert("Ticket submission period is over.");
         }
 
-        if (block.number > _submissionStart + _timeoutInitial && _tickets.length > _groupSize) {
+        if (block.number > _submissionStart + _timeoutInitial && _tickets.length >= _groupSize) {
             revert("Initial submission period is over with enough tickets received.");
         }
 
