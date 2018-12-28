@@ -32,17 +32,6 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
 
-	beaconTransactor, err := abi.NewKeepRandomBeaconImplV1Transactor(
-		contractAddress,
-		chainConfig.client,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to instantiate a KeepRelayBeaconTranactor contract: [%v]",
-			err,
-		)
-	}
-
 	if chainConfig.accountKey == nil {
 		key, err := DecryptKeyFile(
 			chainConfig.config.Account.KeyFile,
@@ -58,10 +47,6 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		chainConfig.accountKey = key
 	}
 
-	optsTransactor := bind.NewKeyedTransactor(
-		chainConfig.accountKey.PrivateKey,
-	)
-
 	beaconCaller, err := abi.NewKeepRandomBeaconImplV1Caller(
 		contractAddress,
 		chainConfig.client,
@@ -76,6 +61,21 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	optsCaller := &bind.CallOpts{
 		From: contractAddress,
 	}
+
+	beaconTransactor, err := abi.NewKeepRandomBeaconImplV1Transactor(
+		contractAddress,
+		chainConfig.client,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to instantiate a KeepRelayBeaconTranactor contract: [%v]",
+			err,
+		)
+	}
+
+	transactorOptions := bind.NewKeyedTransactor(
+		chainConfig.accountKey.PrivateKey,
+	)
 
 	randomBeaconContract, err := abi.NewKeepRandomBeaconImplV1(
 		contractAddress,
