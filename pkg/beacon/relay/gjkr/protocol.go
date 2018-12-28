@@ -676,9 +676,12 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				shareS,
 				pjm.receivedValidPeerPublicKeySharePoints[accusedID],
 			) {
-				// TODO The accusation turned out to be unfounded. Should we add accused
-				// member's individual public key to receivedValidPeerPublicKeySharePoints?
-				disqualifiedMembers = append(disqualifiedMembers, message.senderID)
+				// TODO The accusation turned out to be unfounded.
+				// Should we add accused member's individual
+				// public key to receivedValidPeerPublicKeySharePoints?
+				disqualifiedMembers = append(
+					disqualifiedMembers, message.senderID,
+				)
 				continue
 			}
 			disqualifiedMembers = append(disqualifiedMembers, accusedID)
