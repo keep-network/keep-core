@@ -11,6 +11,7 @@ import (
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
@@ -451,7 +452,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) event.Subscription {
+) subscription.Subscription {
 	// TODO Implement
-	return event.NewSubscription(func() {})
+	return subscription.NewSubscription(func() {})
 }

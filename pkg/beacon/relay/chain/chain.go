@@ -6,6 +6,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // RelayEntryInterface defines the subset of the relay chain interface that
@@ -55,7 +56,7 @@ type DistributedKeyGenerationInterface interface {
 	// notification of a new, valid published result is seen.
 	OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication),
-	) event.Subscription
+	) subscription.Subscription
 	// IsDKGResultPublished checks if any DKG result has already been published
 	// to a chain for the given request ID.
 	IsDKGResultPublished(requestID *big.Int) bool
