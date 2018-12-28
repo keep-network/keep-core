@@ -13,12 +13,12 @@ import (
 
 // KeepRandomBeacon connection information for interface to the contract.
 type KeepRandomBeacon struct {
-	caller          *abi.KeepRandomBeaconImplV1Caller
-	callerOpts      *bind.CallOpts
-	transactor      *abi.KeepRandomBeaconImplV1Transactor
-	transactorOpts  *bind.TransactOpts
-	contract        *abi.KeepRandomBeaconImplV1
-	contractAddress common.Address
+	caller            *abi.KeepRandomBeaconImplV1Caller
+	callerOptions     *bind.CallOpts
+	transactor        *abi.KeepRandomBeaconImplV1Transactor
+	transactorOptions *bind.TransactOpts
+	contract          *abi.KeepRandomBeaconImplV1
+	contractAddress   common.Address
 }
 
 // NewKeepRandomBeacon creates the necessary connections and configurations for
@@ -58,7 +58,7 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		)
 	}
 
-	optsCaller := &bind.CallOpts{
+	callerOptions := &bind.CallOpts{
 		From: contractAddress,
 	}
 
@@ -90,19 +90,19 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	}
 
 	return &KeepRandomBeacon{
-		transactor:      beaconTransactor,
-		transactorOpts:  optsTransactor,
-		caller:          beaconCaller,
-		callerOpts:      optsCaller,
-		contract:        randomBeaconContract,
-		contractAddress: contractAddress,
+		caller:            beaconCaller,
+		callerOptions:     callerOptions,
+		transactor:        beaconTransactor,
+		transactorOptions: transactorOptions,
+		contract:          randomBeaconContract,
+		contractAddress:   contractAddress,
 	}, nil
 }
 
 // Initialized calls the contract and returns true if the contract has
 // had its Initialize method called.
 func (krb *KeepRandomBeacon) Initialized() (bool, error) {
-	return krb.caller.Initialized(krb.callerOpts)
+	return krb.caller.Initialized(krb.callerOptions)
 }
 
 // RequestRelayEntry requests a new entry in the threshold relay.
@@ -111,9 +111,9 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 	rawseed []byte,
 ) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
-	newTransactorOpts := *krb.transactorOpts
-	newTransactorOpts.Value = big.NewInt(2)
-	return krb.transactor.RequestRelayEntry(&newTransactorOpts, blockReward, seed)
+	newTransactorOptions := *krb.transactorOptions
+	newTransactorOptions.Value = big.NewInt(2)
+	return krb.transactor.RequestRelayEntry(&newTransactorOptions, blockReward, seed)
 }
 
 // SubmitRelayEntry submits a group signature for consideration.
@@ -124,7 +124,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	groupSignature *big.Int,
 ) (*types.Transaction, error) {
 	return krb.transactor.RelayEntry(
-		krb.transactorOpts,
+		krb.transactorOptions,
 		requestID,
 		groupSignature,
 		groupID,
@@ -139,7 +139,7 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	requestID *big.Int,
 ) (*types.Transaction, error) {
 	gpk := byteSliceToSliceOf1Byte(groupPublicKey)
-	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
+	return krb.transactor.SubmitGroupPublicKey(krb.transactorOptions, gpk, requestID)
 }
 
 // relayEntryRequestedFunc type of function called for
