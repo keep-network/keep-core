@@ -647,10 +647,8 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				continue
 			}
 
-			evidenceLog := pjm.evidenceLog
-
 			recoveredSymmetricKey, err := recoverSymmetricKey(
-				evidenceLog,
+				pjm.evidenceLog,
 				accusedID,
 				accuserID,
 				revealedAccuserPrivateKey,
@@ -661,7 +659,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			}
 
 			shareS, _, err := recoverShares(
-				evidenceLog,
+				pjm.evidenceLog,
 				accusedID,
 				accuserID,
 				recoveredSymmetricKey,
