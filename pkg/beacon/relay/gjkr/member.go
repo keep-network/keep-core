@@ -19,8 +19,11 @@ type memberCore struct {
 	// Group to which this member belongs.
 	group *Group
 
-	// Evidence log provides access to messages from earlier protocol phases
-	// for the sake of compliant resolution.
+	// DKG Protocol configuration parameters.
+	protocolConfig *DKG
+
+	// evidenceLog provides access to messages from earlier protocol phases
+	// for the sake of complaint resolution.
 	evidenceLog evidenceLog
 
 	// Cryptographic protocol parameters, the same for all members in the group.
