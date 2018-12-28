@@ -14,6 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 type localChain struct {
@@ -293,14 +294,14 @@ func (c *localChain) SubmitDKGResult(
 
 func (c *localChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) event.Subscription {
+) subscription.Subscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
 	handlerID := rand.Int()
 	c.dkgResultPublicationHandlers[handlerID] = handler
 
-	return event.NewSubscription(func() {
+	return subscription.NewSubscription(func() {
 		c.handlerMutex.Lock()
 		defer c.handlerMutex.Unlock()
 
