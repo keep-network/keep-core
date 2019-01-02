@@ -233,8 +233,8 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
-) {
-	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+) subscription.Subscription {
+	relayEntryRequestedCallback, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
@@ -260,6 +260,8 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			err,
 		)
 	}
+
+	return subscription.NewSubscription(relayEntryRequestedCallback)
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
@@ -294,7 +296,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 	blockReward, seed *big.Int,
 ) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
-	err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+	_, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
