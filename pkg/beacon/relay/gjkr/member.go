@@ -206,8 +206,8 @@ func (fm *FinalizingMember) PublishingIndex() int {
 // is set to failure. Otherwise, it returns the generated group public key along
 // with the disqualified and inactive members.
 func (fm *FinalizingMember) Result() *Result {
-	disqualifiedMembers := fm.group.DisqualifiedMembers() // DQ
-	inactiveMembers := fm.group.InactiveMembers()         // IA
+	disqualifiedMembers := fm.group.disqualifiedMemberIDs // DQ
+	inactiveMembers := fm.group.inactiveMemberIDs         // IA
 
 	if !fm.group.isThresholdSatisfied() {
 		return &Result{
