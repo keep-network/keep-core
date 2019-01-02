@@ -49,7 +49,7 @@ type DistributedKeyGenerationInterface interface {
 	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
-	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication))
+	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) event.Subscription
 	// IsAnyDKGResultPublished checks if any DKG result has already been published
 	// to a chain for given request ID.
 	IsAnyDKGResultPublished(requestID *big.Int) bool

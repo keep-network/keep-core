@@ -149,7 +149,8 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Initialize local chain.
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 	localChain := &localChain{
-		submittedResults: submittedResults,
+		submittedResults:             submittedResults,
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 	}
 	chainHandle := localChain.ThresholdRelay()
 
@@ -237,6 +238,39 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		t.Fatalf("unexpected event was emitted: %v", dkgResultPublicationEvent)
 	case <-ctx.Done():
 		t.Logf("DKG result publication event not generated")
+	}
+}
+
+func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	localChain := &localChain{
+		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+	}
+	relay := localChain.ThresholdRelay()
+
+	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
+	subscription := localChain.OnDKGResultPublished(
+		func(dkgResultPublication *event.DKGResultPublication) {
+			dkgResultPublicationChan <- dkgResultPublication
+		},
+	)
+
+	// Unsubscribe from the event - from this point, callback should
+	// never be called.
+	subscription.Unsubscribe()
+
+	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
+		GroupPublicKey: big.NewInt(888),
+	})
+
+	select {
+	case <-dkgResultPublicationChan:
+		t.Fatalf("event should not be emitted - I have unsubscribed!")
+	case <-ctx.Done():
+		// ok
 	}
 }
 
