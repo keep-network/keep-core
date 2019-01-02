@@ -26,20 +26,6 @@ func (g *Group) RegisterMemberID(id MemberID) {
 	g.memberIDs = append(g.memberIDs, id)
 }
 
-// DisqualifiedMembers returns members disqualified during protocol execution.
-func (g *Group) DisqualifiedMembers() []MemberID {
-	r := make([]MemberID, len(g.disqualifiedMemberIDs))
-	copy(r, g.disqualifiedMemberIDs)
-	return r
-}
-
-// InactiveMembers returns members inactive during protocol execution.
-func (g *Group) InactiveMembers() []MemberID {
-	r := make([]MemberID, len(g.inactiveMemberIDs))
-	copy(r, g.inactiveMemberIDs)
-	return r
-}
-
 func (g *Group) eliminatedMembersCount() int {
 	return len(g.disqualifiedMemberIDs) + len(g.inactiveMemberIDs)
 }
