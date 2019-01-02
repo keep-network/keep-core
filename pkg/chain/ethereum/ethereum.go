@@ -100,7 +100,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
-	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+	_, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -175,8 +175,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) {
-	err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+func (ec *ethereumChain) OnRelayEntryGenerated(
+	handle func(entry *event.Entry),
+) subscription.Subscription {
+	relayEntryGeneratedCallback, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -207,6 +209,8 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 			err,
 		)
 	}
+
+	return subscription.NewSubscription(relayEntryGeneratedCallback)
 }
 
 func (ec *ethereumChain) OnRelayEntryRequested(
