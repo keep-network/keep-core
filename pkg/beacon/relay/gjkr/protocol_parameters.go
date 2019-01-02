@@ -10,7 +10,6 @@ import (
 // protocolParameters holds all cryptographic parameters that must be the same
 // for all members in the group.
 type protocolParameters struct {
-
 	// `H = G*a` is a custom generator where `a` is unknown. It is used to
 	// produce Pedersen commitments.
 	H *bn256.G1
