@@ -687,20 +687,7 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 ) {
 	privateKeys := make(map[MemberID]*ephemeral.PrivateKey)
 
-	disqualifiedMembersIDs := rm.group.disqualifiedMemberIDs
-	// From disqualified members list filter those who provided valid shares in
-	// Phase 3 and are sharing the group private key.
-	var disqualifiedSharingMembers []MemberID
-	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
-		if rm.receivedValidSharesS[disqualifiedMemberID] != nil {
-			disqualifiedSharingMembers = append(
-				disqualifiedSharingMembers,
-				disqualifiedMemberID,
-			)
-		}
-	}
-
-	for _, disqualifiedMemberID := range disqualifiedSharingMembers {
+	for _, disqualifiedMemberID := range rm.disqualifiedSharingMembers() {
 		ephemeralKeyPair, ok := rm.ephemeralKeyPairs[disqualifiedMemberID]
 		if !ok {
 			return nil, fmt.Errorf(
@@ -715,6 +702,23 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 		senderID:    rm.ID,
 		privateKeys: privateKeys,
 	}, nil
+}
+
+func (rm *RevealingMember) disqualifiedSharingMembers() []MemberID {
+	disqualifiedMembersIDs := rm.group.disqualifiedMemberIDs
+
+	// From disqualified members list filter those who provided valid shares in
+	// Phase 3 and are sharing the group private key.
+	var disqualifiedSharingMembers []MemberID
+	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
+		if rm.receivedValidSharesS[disqualifiedMemberID] != nil {
+			disqualifiedSharingMembers = append(
+				disqualifiedSharingMembers,
+				disqualifiedMemberID,
+			)
+		}
+	}
+	return disqualifiedMembersIDs
 }
 
 // ReconstructDisqualifiedIndividualKeys reconstructs individual private key `z_m` and  public
