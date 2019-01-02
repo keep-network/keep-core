@@ -24,12 +24,6 @@ func (g *Group) RegisterMemberID(id MemberID) {
 	g.memberIDs = append(g.memberIDs, id)
 }
 
-// DisqualifiedMemberIDs returns IDs of group members who have been disqualified
-// during protocol execution.
-func (g *Group) DisqualifiedMemberIDs() []MemberID {
-	return g.disqualifiedMemberIDs
-}
-
 // DisqualifyMemberID adds a member to the list of disqualified members.
 func (g *Group) DisqualifyMemberID(id MemberID) {
 	g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, id)
