@@ -697,7 +697,7 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 ) {
 	privateKeys := make(map[MemberID]*ephemeral.PrivateKey)
 
-	disqualifiedMembersIDs := rm.group.DisqualifiedMemberIDs()
+	disqualifiedMembersIDs := rm.group.disqualifiedMemberIDs
 	// From disqualified members list filter those who provided valid shares in
 	// Phase 3 and are sharing the group private key.
 	var disqualifiedSharingMembers []MemberID
