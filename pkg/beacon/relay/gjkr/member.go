@@ -22,6 +22,8 @@ type memberCore struct {
 	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
 
+	// cryptographic protocol parameters, the same
+	// for all members in the group.
 	protocolParameters *protocolParameters
 }
 
