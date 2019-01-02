@@ -18,12 +18,11 @@ type memberCore struct {
 	// Group to which this member belongs.
 	group *Group
 
-	// evidenceLog provides access to messages from earlier protocol phases
+	// Evidence log provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
 
-	// cryptographic protocol parameters, the same
-	// for all members in the group.
+	// Cryptographic protocol parameters, the same for all members in the group.
 	protocolParameters *protocolParameters
 }
 
