@@ -15,6 +15,8 @@ type Group struct {
 }
 
 // MemberIDs returns IDs of all group members.
+// TODO Add ActiveMemberIDs() method to return only active members of the group
+// and use it across the protocol phases to get other members IDs.
 func (g *Group) MemberIDs() []MemberID {
 	return g.memberIDs
 }
@@ -26,6 +28,11 @@ func (g *Group) RegisterMemberID(id MemberID) {
 
 // DisqualifyMemberID adds a member to the list of disqualified members.
 func (g *Group) DisqualifyMemberID(id MemberID) {
+	for _, currentID := range g.disqualifiedMemberIDs {
+		if currentID == id {
+			return
+		}
+	}
+
 	g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, id)
-	// TODO Should we also remove the member from memberIDs list?
 }
