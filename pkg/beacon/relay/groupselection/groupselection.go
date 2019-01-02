@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-var one = (&big.Int{}).SetUint64(uint64(1))
+var one = big.NewInt(1)
 
 // GenerateTickets generates a set of tickets for the given staker and relay
 // entry value given the specified minimum stake. Returns the resulting
@@ -31,7 +31,7 @@ func GenerateTickets(
 	}
 
 	tickets := make(tickets, 0)
-	for virtualStaker := (&big.Int{}).Set(one); virtualStaker.Cmp(stakingWeight) <= 0; virtualStaker.Add(virtualStaker, one) {
+	for virtualStaker := one; virtualStaker.Cmp(stakingWeight) <= 0; virtualStaker.Add(virtualStaker, one) {
 		tickets = append(
 			tickets,
 			calculateTicket(entryValue, stakerValue, virtualStaker), // prf
