@@ -107,8 +107,7 @@ type QualifiedMember struct {
 
 	// Member's share of the secret group private key. It is denoted as `z_ik`
 	// in protocol specification.
-	// TODO: unsure if we need shareT `x'_i` field, it should be removed if not used in further steps
-	groupPrivateKeyShare, shareT *big.Int
+	groupPrivateKeyShare *big.Int
 }
 
 // SharingMember represents one member in a threshold key sharing group, after it

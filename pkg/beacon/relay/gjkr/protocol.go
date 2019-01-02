@@ -485,12 +485,12 @@ func recoverShares(
 	return shareS, shareT, nil
 }
 
-// CombineMemberShares sums up all `s` and `t` shares intended for this member.
+// CombineMemberShares sums up all `s` shares intended for this member.
 // Combines secret shares calculated by current member `i` for itself `s_ii` with
 // shares calculated by peer members `j` for this member `s_ji`.
 //
-// `x_i = Σ s_ji mod q` and `x'_i = Σ t_ji mod q` for `j` in a group of players
-// who passed secret shares accusations stage.
+// `x_i = Σ s_ji mod q` for `j` in a group of players who passed secret shares
+// accusations stage.
 //
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
@@ -502,17 +502,7 @@ func (qm *QualifiedMember) CombineMemberShares() {
 		)
 	}
 
-	combinedSharesT := qm.selfSecretShareT // t_ii
-	for _, t := range qm.receivedValidSharesT {
-		combinedSharesT = new(big.Int).Mod(
-			new(big.Int).Add(combinedSharesT, t),
-			qm.protocolConfig.Q,
-		)
-	}
-
 	qm.groupPrivateKeyShare = combinedSharesS
-	// TODO Remove qm.shareT field if not used anywhere else
-	qm.shareT = combinedSharesT
 }
 
 // CalculatePublicKeySharePoints calculates public values for member's coefficients.

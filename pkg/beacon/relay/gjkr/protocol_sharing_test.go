@@ -17,24 +17,19 @@ func TestCombineReceivedShares(t *testing.T) {
 	groupSize := 7
 
 	selfShareS := big.NewInt(9)
-	selfShareT := big.NewInt(19)
 	p := big.NewInt(107)
 	q := big.NewInt(53)
 
 	receivedShareS := make(map[MemberID]*big.Int)
-	receivedShareT := make(map[MemberID]*big.Int)
 	// Simulate shares received from peer members.
 	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
 	// slice indices.
 	for i := 0; i <= 5; i++ {
 		receivedShareS[MemberID(100+i)] = big.NewInt(int64(10 + i))
-		receivedShareT[MemberID(100+i)] = big.NewInt(int64(20 + i))
 	}
 
 	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 53 = 31
 	expectedShareS := big.NewInt(31)
-	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
-	expectedShareT := big.NewInt(48)
 
 	config := &DKG{P: p, Q: q, evidenceLog: newDkgEvidenceLog()}
 	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
@@ -46,9 +41,7 @@ func TestCombineReceivedShares(t *testing.T) {
 
 	// Replace initialized values with values declared at the begining.
 	member.selfSecretShareS = selfShareS
-	member.selfSecretShareT = selfShareT
 	member.receivedValidSharesS = receivedShareS
-	member.receivedValidSharesT = receivedShareT
 
 	member.CombineMemberShares()
 
@@ -56,12 +49,6 @@ func TestCombineReceivedShares(t *testing.T) {
 		t.Errorf("incorrect combined shares S value\nexpected: %v\nactual:   %v\n",
 			expectedShareS,
 			member.groupPrivateKeyShare,
-		)
-	}
-	if member.shareT.Cmp(expectedShareT) != 0 {
-		t.Errorf("incorrect combined shares T value\nexpected: %v\nactual:   %v\n",
-			expectedShareT,
-			member.shareT,
 		)
 	}
 }
