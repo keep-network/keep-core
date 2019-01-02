@@ -164,16 +164,21 @@ type relayEntryRequestedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
-) error {
+) (func(), error) {
+	subscribeContext, cancel := context.WithCancel(context.Background())
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryRequested)
-	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
+	eventSubscription, err := krb.contract.WatchRelayEntryRequested(
+		&bind.WatchOpts{Context: subscribeContext},
+		eventChan,
+	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"error creating watch for RelayEntryRequested events: [%v]",
 			err,
 		)
 	}
+
 	go func() {
 		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
@@ -195,7 +200,12 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 			}
 		}
 	}()
-	return nil
+
+	unsubscribeCallback := func() {
+		cancel()
+	}
+
+	return unsubscribeCallback, nil
 }
 
 // relayEntryGeneratedFunc type of function called for
