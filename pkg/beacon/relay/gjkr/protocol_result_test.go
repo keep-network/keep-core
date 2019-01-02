@@ -1,7 +1,6 @@
 package gjkr
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -88,7 +87,7 @@ func TestGenerateResult(t *testing.T) {
 
 				resultToPublish := member.Result()
 
-				if !reflect.DeepEqual(test.expectedResult, resultToPublish) {
+				if !test.expectedResult.Equals(resultToPublish) {
 					t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, resultToPublish)
 				}
 			}
