@@ -38,9 +38,10 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
-	chainRelay.OnDKGResultPublished(func(publishedResult *event.DKGResultPublication) {
+	subscription := chainRelay.OnDKGResultPublished(func(publishedResult *event.DKGResultPublication) {
 		onPublishedResultChan <- publishedResult
 	})
+	defer subscription.Unsubscribe()
 
 	// Check if any result has already been published to the chain with current
 	// request ID.
