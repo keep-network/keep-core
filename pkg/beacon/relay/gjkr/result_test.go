@@ -3,9 +3,14 @@ package gjkr
 import (
 	"math/big"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
 func TestResultEquals(t *testing.T) {
+	key1 := new(bn256.G1).ScalarBaseMult(big.NewInt(12))
+	key2 := new(bn256.G1).ScalarBaseMult(big.NewInt(13))
+
 	var tests = map[string]struct {
 		result1        *Result
 		result2        *Result
@@ -37,18 +42,18 @@ func TestResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"group public keys - equal": {
-			result1:        &Result{GroupPublicKey: big.NewInt(2)},
-			result2:        &Result{GroupPublicKey: big.NewInt(2)},
+			result1:        &Result{GroupPublicKey: key1},
+			result2:        &Result{GroupPublicKey: key1},
 			expectedResult: true,
 		},
 		"group public keys - nil and set": {
 			result1:        &Result{GroupPublicKey: nil},
-			result2:        &Result{GroupPublicKey: big.NewInt(1)},
+			result2:        &Result{GroupPublicKey: key2},
 			expectedResult: false,
 		},
 		"group public keys - not equal": {
-			result1:        &Result{GroupPublicKey: big.NewInt(3)},
-			result2:        &Result{GroupPublicKey: big.NewInt(4)},
+			result1:        &Result{GroupPublicKey: key1},
+			result2:        &Result{GroupPublicKey: key2},
 			expectedResult: false,
 		},
 		"disqualified - equal": {
