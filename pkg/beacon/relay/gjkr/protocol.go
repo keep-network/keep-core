@@ -711,14 +711,14 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []MemberID {
 	// Phase 3 and are sharing the group private key.
 	disqualifiedSharingMembers := make([]MemberID, 0)
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
-		if rm.receivedValidSharesS[disqualifiedMemberID] != nil {
+		if _, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
 			disqualifiedSharingMembers = append(
 				disqualifiedSharingMembers,
 				disqualifiedMemberID,
 			)
 		}
 	}
-	return disqualifiedMembersIDs
+	return disqualifiedSharingMembers
 }
 
 // ReconstructDisqualifiedIndividualKeys reconstructs individual private key `z_m` and  public
@@ -764,7 +764,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			publicKey := evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
 				ephemeralPublicKeys[disqualifiedID]
 			if !publicKey.IsKeyMatching(privateKey) {
-				// TODO We should disqualify revealing Member
+				rm.group.DisqualifyMemberID(revealingMemberID)
 				return nil, fmt.Errorf("invalid private key for public key")
 			}
 
