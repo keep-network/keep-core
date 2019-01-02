@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
@@ -12,7 +14,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 
 	disqualifiedMembersIDs := []MemberID{3, 5}
 
-	group, err := initializeReconstructingMembersGroup(threshold, groupSize, nil)
+	group, err := initializeReconstructingMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,26 +61,33 @@ func contains(slice []MemberID, value MemberID) bool {
 func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	groupSize := 3
 	threshold := 2
-	dkg := &DKG{P: big.NewInt(179), Q: big.NewInt(89)}
-	g := big.NewInt(7) // `g` value for public key calculation `y_m = g^{z_m} mod p`
 
 	disqualifiedMembersIDs := []int{4, 5} // m
 
-	reconstructedIndividualPrivateKeys := make(map[MemberID]*big.Int, len(disqualifiedMembersIDs)) // z_m
-	reconstructedIndividualPrivateKeys[4] = big.NewInt(14)                                         // z_4
-	reconstructedIndividualPrivateKeys[5] = big.NewInt(15)                                         // z_5
+	reconstructedIndividualPrivateKeys := make( // z_m
+		map[MemberID]*big.Int,
+		len(disqualifiedMembersIDs),
+	)
+	reconstructedIndividualPrivateKeys[4] = big.NewInt(14) // z_4
+	reconstructedIndividualPrivateKeys[5] = big.NewInt(15) // z_5
 
-	expectedIndividualPublicKeys := make(map[MemberID]*big.Int, len(disqualifiedMembersIDs)) // y_m = g^{z_m} mod p
-	expectedIndividualPublicKeys[4] = big.NewInt(43)                                         // 7^14 mod 179
-	expectedIndividualPublicKeys[5] = big.NewInt(122)                                        // 7^15 mod 179
+	expectedIndividualPublicKeys := make( // y_m = g^{z_m}
+		map[MemberID]*bn256.G1,
+		len(disqualifiedMembersIDs),
+	)
+	expectedIndividualPublicKeys[4] = new(bn256.G1).ScalarBaseMult(
+		reconstructedIndividualPrivateKeys[4],
+	)
+	expectedIndividualPublicKeys[5] = new(bn256.G1).ScalarBaseMult(
+		reconstructedIndividualPrivateKeys[5],
+	)
 
-	members, err := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
+	members, err := initializeReconstructingMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, member := range members {
-		member.vss.G = g // set fixed `g` value
 		// Simulate phase where individual private keys are reconstructed.
 		member.reconstructedIndividualPrivateKeys = reconstructedIndividualPrivateKeys
 	}
@@ -87,11 +96,11 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 		reconstructingMember.ReconstructIndividualPublicKeys()
 
 		for disqualifiedMemberID, expectedIndividualPublicKey := range expectedIndividualPublicKeys {
-			if reconstructingMember.reconstructedIndividualPublicKeys[disqualifiedMemberID].
-				Cmp(expectedIndividualPublicKey) != 0 {
+			actualPublicKey := reconstructingMember.reconstructedIndividualPublicKeys[disqualifiedMemberID]
+			if actualPublicKey.String() != expectedIndividualPublicKey.String() {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n",
 					expectedIndividualPublicKey,
-					reconstructingMember.reconstructedIndividualPublicKeys[disqualifiedMemberID],
+					actualPublicKey,
 				)
 			}
 		}
@@ -101,11 +110,11 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 2
 	groupSize := 3
-	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
-	expectedGroupPublicKey := big.NewInt(1620) // 10*20*30*91*92 mod 1620
-
-	members, err := initializeCombiningMembersGroup(threshold, groupSize, dkg)
+	expectedGroupPublicKey := new(bn256.G1).ScalarBaseMult(
+		big.NewInt(243), // 10 + 20 + 30 + 91 + 92
+	)
+	members, err := initializeCombiningMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,21 +122,37 @@ func TestCombineGroupPublicKey(t *testing.T) {
 
 	// Member's public coefficients. Zeroth coefficient is member's individual
 	// public key.
-	member.publicKeySharePoints = []*big.Int{big.NewInt(10), big.NewInt(11), big.NewInt(12)}
+	member.publicKeySharePoints = []*bn256.G1{
+		new(bn256.G1).ScalarBaseMult(big.NewInt(10)),
+		new(bn256.G1).ScalarBaseMult(big.NewInt(11)),
+		new(bn256.G1).ScalarBaseMult(big.NewInt(12)),
+	}
 
 	// Public coefficients received from peer members. Each peer member's zeroth
 	// coefficient is their individual public key.
-	member.receivedValidPeerPublicKeySharePoints[2] = []*big.Int{big.NewInt(20), big.NewInt(21), big.NewInt(22)}
-	member.receivedValidPeerPublicKeySharePoints[3] = []*big.Int{big.NewInt(30), big.NewInt(31), big.NewInt(32)}
+	member.receivedValidPeerPublicKeySharePoints[2] = []*bn256.G1{
+		new(bn256.G1).ScalarBaseMult(big.NewInt(20)),
+		new(bn256.G1).ScalarBaseMult(big.NewInt(21)),
+		new(bn256.G1).ScalarBaseMult(big.NewInt(22)),
+	}
+	member.receivedValidPeerPublicKeySharePoints[3] = []*bn256.G1{
+		new(bn256.G1).ScalarBaseMult(big.NewInt(30)),
+		new(bn256.G1).ScalarBaseMult(big.NewInt(31)),
+		new(bn256.G1).ScalarBaseMult(big.NewInt(32)),
+	}
 
 	// Reconstructed individual public keys for disqualified members.
-	member.reconstructedIndividualPublicKeys[4] = big.NewInt(91)
-	member.reconstructedIndividualPublicKeys[5] = big.NewInt(92)
+	member.reconstructedIndividualPublicKeys[4] = new(bn256.G1).ScalarBaseMult(
+		big.NewInt(91),
+	)
+	member.reconstructedIndividualPublicKeys[5] = new(bn256.G1).ScalarBaseMult(
+		big.NewInt(92),
+	)
 
 	// Combine individual public keys of group members to get group public key.
 	member.CombineGroupPublicKey()
 
-	if member.groupPublicKey.Cmp(expectedGroupPublicKey) != 0 {
+	if member.groupPublicKey.String() != expectedGroupPublicKey.String() {
 		t.Fatalf(
 			"incorrect group public key for member %d\nexpected: %v\nactual:   %v\n",
 			member.ID,
@@ -137,11 +162,14 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
+func initializeReconstructingMembersGroup(threshold, groupSize int) (
 	[]*ReconstructingMember, error) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
-	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize, dkg)
+	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(
+		threshold,
+		groupSize,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -188,10 +216,16 @@ func disqualifyMembers(
 	return allDisqualifiedShares
 }
 
-func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CombiningMember, error) {
+func initializeCombiningMembersGroup(
+	threshold,
+	groupSize int,
+) ([]*CombiningMember, error) {
 	// TODO When whole protocol is implemented check if SharingMember type is really
 	// the one expected here (should be the member from Phase 10)
-	reconstructingMembers, err := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
+	reconstructingMembers, err := initializeReconstructingMembersGroup(
+		threshold,
+		groupSize,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
