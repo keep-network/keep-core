@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -203,16 +204,21 @@ type relayEntryGeneratedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
-) error {
+) (func(), error) {
+	subscribeContext, cancel := context.WithCancel(context.Background())
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryGenerated)
-	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
+	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(
+		&bind.WatchOpts{Context: subscribeContext},
+		eventChan,
+	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"error creating watch for RelayEntryGenerated event: [%v]",
 			err,
 		)
 	}
+
 	go func() {
 		defer close(eventChan)
 		defer eventSubscription.Unsubscribe()
@@ -234,7 +240,12 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 			}
 		}
 	}()
-	return nil
+
+	unsubscribeCallback := func() {
+		cancel()
+	}
+
+	return unsubscribeCallback, nil
 }
 
 // relayResetEventFunc type of function called for ResetEvent event.
