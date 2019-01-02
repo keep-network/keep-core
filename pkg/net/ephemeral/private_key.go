@@ -40,10 +40,10 @@ func GenerateKeyPair() (*KeyPair, error) {
 	}, nil
 }
 
-// VerifyPrivateKey verifies if private key is valid for given public key.
+// IsKeyMatching verifies if private key is valid for given public key.
 // It checks if public key equals `g^privateKey`, where `g` is a base point of
 // the curve.
-func (pk *PublicKey) VerifyPrivateKey(privateKey *PrivateKey) bool {
+func (pk *PublicKey) IsKeyMatching(privateKey *PrivateKey) bool {
 	expectedX, expectedY := curve().ScalarBaseMult(privateKey.Marshal())
 	return expectedX.Cmp(pk.X) == 0 && expectedY.Cmp(pk.Y) == 0
 }
