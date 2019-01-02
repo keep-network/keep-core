@@ -192,10 +192,10 @@ func (cm *CommittingMember) calculateCommitment(
 	secret *big.Int,
 	t *big.Int,
 ) *bn256.G1 {
-	gs := new(bn256.G1).ScalarBaseMult(secret)
-	ht := new(bn256.G1).ScalarMult(cm.protocolParameters.H, t)
+	gs := new(bn256.G1).ScalarBaseMult(secret)                 // G * secret
+	ht := new(bn256.G1).ScalarMult(cm.protocolParameters.H, t) // H * t
 
-	return new(bn256.G1).Add(gs, ht)
+	return new(bn256.G1).Add(gs, ht) // G * secret + H * t
 }
 
 // generatePolynomial generates a random polynomial over `Z_q` of a given degree.
@@ -796,7 +796,8 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 // ReconstructIndividualPublicKeys calculates and stores individual public keys
 // `y_m` from reconstructed individual private keys `z_m`.
 //
-// Public key is calculated as `g^privateKey mod p`.
+// Public key is calculated as `g^privateKey mod p` what, using elliptic curve,
+// is the same as `G * privateKey`.
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
@@ -805,7 +806,7 @@ func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
 		len(rm.reconstructedIndividualPrivateKeys),
 	)
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
-		// `y_m = g^{z_m}`
+		// y_m = G * z_m
 		individualPublicKey := new(bn256.G1).ScalarBaseMult(individualPrivateKey)
 		rm.reconstructedIndividualPublicKeys[memberID] = individualPublicKey
 	}
@@ -819,8 +820,8 @@ func pow(id MemberID, y int) *big.Int {
 // public keys. Group public key is calculated as a product of individual public
 // keys of all group members including member themself.
 //
-// `Y = Π y_j mod p` for `j`, where `y_j` is individual public key of each qualified
-// group member.
+// `Y = Π y_j mod p` for `j`, where `y_j` is individual public key of each
+// qualified group member. With elliptic curve, it is: `Y = Σ y_j`.
 //
 // This function combines individual public keys of all Qualified Members who were
 // approved for Phase 6. Three categories of individual public keys are considered:
@@ -837,12 +838,12 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 	// Current member's individual public key `A_i0`.
 	groupPublicKey := rm.individualPublicKey()
 
-	// Multiply received peer group members' individual public keys `A_j0`.
+	// Add received peer group members' individual public keys `A_j0`.
 	for _, peerPublicKey := range rm.receivedValidPeerIndividualPublicKeys() {
 		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
 	}
 
-	// Multiply reconstructed disqualified members' individual public keys `g^{z_m}`.
+	// Add reconstructed disqualified members' individual public keys `G * z_m`.
 	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
 		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
 

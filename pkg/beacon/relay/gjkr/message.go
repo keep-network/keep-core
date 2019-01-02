@@ -35,7 +35,7 @@ type EphemeralPublicKeyMessage struct {
 type MemberCommitmentsMessage struct {
 	senderID MemberID
 
-	commitments []*bn256.G1
+	commitments []*bn256.G1 // slice of C_ik
 }
 
 // PeerSharesMessage is a message payload that carries shares `s_ij` and `t_ij`
