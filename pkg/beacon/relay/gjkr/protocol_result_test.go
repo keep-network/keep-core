@@ -96,7 +96,7 @@ func TestGenerateResult(t *testing.T) {
 }
 
 func initializePublishingMembersGroup(threshold, groupSize int) ([]*FinalizingMember, error) {
-	combiningMembers, err := initializeCombiningMembersGroup(threshold, groupSize, nil)
+	combiningMembers, err := initializeCombiningMembersGroup(threshold, groupSize)
 	if err != nil {
 		return nil, err
 	}
