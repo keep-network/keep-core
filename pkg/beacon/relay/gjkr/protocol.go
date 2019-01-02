@@ -722,7 +722,7 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []MemberID {
 }
 
 // ReconstructDisqualifiedIndividualKeys reconstructs individual private key `z_m` and  public
-// key `y_m` of disqualified members `m`. To do that it first needs to  recover
+// key `y_m` of disqualified members `m`. To do that, it first needs to recover
 // shares calculated by disqualified members `m` in Phase 3 for other members `k`.
 // The shares were encrypted before broadcast, so ephemeral symmetric key needs
 // to be recovered. This requires messages containing ephemeral private key
@@ -730,7 +730,8 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []MemberID {
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
-	messages []*DisqualifiedEphemeralKeysMessage) error {
+	messages []*DisqualifiedEphemeralKeysMessage,
+) error {
 	revealedDisqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
 	if err != nil {
 		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
