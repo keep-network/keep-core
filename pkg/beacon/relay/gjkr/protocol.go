@@ -709,7 +709,7 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []MemberID {
 
 	// From disqualified members list filter those who provided valid shares in
 	// Phase 3 and are sharing the group private key.
-	var disqualifiedSharingMembers []MemberID
+	disqualifiedSharingMembers := make([]MemberID, 0)
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
 		if rm.receivedValidSharesS[disqualifiedMemberID] != nil {
 			disqualifiedSharingMembers = append(
