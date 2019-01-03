@@ -69,47 +69,39 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 	member6 := members[5]
 	disqualifiedMembers := []*ReconstructingMember{member5, member6}
 
-	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
-	for _, otherMember := range otherMembers {
-		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
-		for _, disqualifiedMember := range disqualifiedMembers {
-			revealedKeys[disqualifiedMember.ID] = otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
+	disqualifiedEphemeralKeysMessages := generateDisqualifiedEphemeralKeysMessages(otherMembers, disqualifiedMembers)
+	expectedDisqualifiedShares := generateDisqualifiedMemberShares(member1, otherMembers, disqualifiedMembers)
+
+	// Simulate a case when `invalidRevealingMember` reveals invalid ephemeral
+	// private key for `clearedMember`, so the `invalidRevealingMember` gets
+	// disqualified and disqualified share for this pair of members is not recovered.
+	invalidRevealingMember := member3
+	clearedMember := member5
+	for _, message := range disqualifiedEphemeralKeysMessages {
+		if message.senderID == invalidRevealingMember.ID {
+			newKeyPair, err := ephemeral.GenerateKeyPair()
+			if err != nil {
+				t.Fatal(err)
+			}
+			message.privateKeys[clearedMember.ID] = newKeyPair.PrivateKey
+			break
 		}
-		disqualifiedEphemeralKeysMessages = append(
-			disqualifiedEphemeralKeysMessages,
-			&DisqualifiedEphemeralKeysMessage{
-				senderID:    otherMember.ID,
-				privateKeys: revealedKeys,
-			},
-		)
+	}
+	if _, ok := expectedDisqualifiedShares[clearedMember.ID][invalidRevealingMember.ID]; ok {
+		delete(expectedDisqualifiedShares[clearedMember.ID], invalidRevealingMember.ID)
 	}
 
-	disqualifiedMemberShares := make(map[MemberID]map[MemberID]*big.Int)
-	evidenceLog := member1.protocolConfig.evidenceLog
-
-	for _, disqualifiedMember := range disqualifiedMembers {
-		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[MemberID]*big.Int)
-		// Simulate message broadcasted by disqualified member in Phase 3.
-		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
-
-		for _, otherMember := range otherMembers {
-			// Simulate shares evaluation from Phase 3.
-			shareS := disqualifiedMember.evaluateMemberShare(otherMember.ID, disqualifiedMember.secretCoefficients)
-			disqualifiedMemberShares[disqualifiedMember.ID][otherMember.ID] = shareS
-
-			peerSharesMessage.addShares(
-				otherMember.ID,
-				shareS,
-				big.NewInt(0), // share T is not needed
-				disqualifiedMember.symmetricKeys[otherMember.ID],
-			)
-		}
-		evidenceLog.PutPeerSharesMessage(peerSharesMessage)
-	}
-
+	// TEST
 	recoveredDisqualifiedShares, err := member1.recoverDisqualifiedShares(disqualifiedEphemeralKeysMessages)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual([]MemberID{member3.ID}, member1.group.disqualifiedMemberIDs) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			[]MemberID{member3.ID},
+			member1.group.disqualifiedMemberIDs,
+		)
 	}
 
 	if len(recoveredDisqualifiedShares) != len(disqualifiedMembers) {
@@ -124,7 +116,7 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 			if recoveredDisqualifiedShare.disqualifiedMemberID == disqualifiedMember.ID {
 				expectedRecoveredDisqualifiedShares := &disqualifiedShares{
 					disqualifiedMemberID: disqualifiedMember.ID,
-					peerSharesS:          disqualifiedMemberShares[disqualifiedMember.ID],
+					peerSharesS:          expectedDisqualifiedShares[disqualifiedMember.ID],
 				}
 
 				if !reflect.DeepEqual(
@@ -139,6 +131,59 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 			}
 		}
 	}
+}
+
+func generateDisqualifiedEphemeralKeysMessages(
+	otherMembers, disqualifiedMembers []*ReconstructingMember,
+) []*DisqualifiedEphemeralKeysMessage {
+	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
+	for _, otherMember := range otherMembers {
+		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
+		for _, disqualifiedMember := range disqualifiedMembers {
+			revealedKeys[disqualifiedMember.ID] =
+				otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
+		}
+		disqualifiedEphemeralKeysMessages = append(
+			disqualifiedEphemeralKeysMessages,
+			&DisqualifiedEphemeralKeysMessage{
+				senderID:    otherMember.ID,
+				privateKeys: revealedKeys,
+			},
+		)
+	}
+	return disqualifiedEphemeralKeysMessages
+}
+
+func generateDisqualifiedMemberShares(
+	currentMember *ReconstructingMember,
+	otherMembers, disqualifiedMembers []*ReconstructingMember,
+) map[MemberID]map[MemberID]*big.Int {
+	disqualifiedMemberShares := make(map[MemberID]map[MemberID]*big.Int)
+	evidenceLog := currentMember.protocolConfig.evidenceLog
+
+	for _, disqualifiedMember := range disqualifiedMembers {
+		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[MemberID]*big.Int)
+		// Simulate message broadcasted by disqualified member in Phase 3.
+		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+
+		for _, otherMember := range otherMembers {
+			// Simulate shares evaluation from Phase 3.
+			shareS := disqualifiedMember.evaluateMemberShare(
+				otherMember.ID,
+				disqualifiedMember.secretCoefficients,
+			)
+			disqualifiedMemberShares[disqualifiedMember.ID][otherMember.ID] = shareS
+
+			peerSharesMessage.addShares(
+				otherMember.ID,
+				shareS,
+				big.NewInt(0), // share T is not needed
+				disqualifiedMember.symmetricKeys[otherMember.ID],
+			)
+		}
+		evidenceLog.PutPeerSharesMessage(peerSharesMessage)
+	}
+	return disqualifiedMemberShares
 }
 
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
