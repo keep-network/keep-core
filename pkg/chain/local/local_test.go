@@ -93,7 +93,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 			// Block waiter should wait for test.expectedWaitTime at minimum.
 			if elapsed < test.expectedWaitTime {
 				t.Errorf(
-					"waited less than expected; expected %v at min, waited %v",
+					"waited less than expected; expected [%v] at min, waited [%v]",
 					test.expectedWaitTime,
 					elapsed,
 				)
