@@ -412,8 +412,8 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 			)
 		}
 
-		if member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID].
-			Cmp(disqualifiedMember.individualPublicKey()) != 0 {
+		if disqualifiedMember.individualPublicKey().String() !=
+			member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID].String() {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
 				disqualifiedMember.individualPrivateKey(),
 				member1.reconstructedIndividualPublicKeys[disqualifiedMember.ID],
