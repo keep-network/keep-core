@@ -752,9 +752,37 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 ) ([]*disqualifiedShares, error) {
 	var revealedDisqualifiedShares []*disqualifiedShares
 
-	// For disqualified member `m` map shares `s_mk` the member calculated for
+	// For disqualified member `m` add shares `s_mk` the member calculated for
 	// other members `k` who revealed the ephemeral key.
-	allRevealedShares := make(map[MemberID]map[MemberID]*big.Int) // <m, <k, s_mk>>
+	addShare := func(
+		revealedDisqualifiedShares []*disqualifiedShares, // <m, <k, s_mk>>
+		disqualifiedMemberID, revealingMemberID MemberID, // m, k
+		shareS *big.Int, // s_mk
+	) []*disqualifiedShares {
+		// If a `disqualifiedShares` entry already exists in the slice for given
+		// disqualified member add the share.
+		for _, disqualifiedShares := range revealedDisqualifiedShares {
+			if disqualifiedShares.disqualifiedMemberID == disqualifiedMemberID {
+				disqualifiedShares.peerSharesS[revealingMemberID] = shareS
+				return revealedDisqualifiedShares
+			}
+		}
+
+		// When a `disqualifiedShares` entry doesn't exist yet in the slice for given
+		// disqualified member initialize it with the share.
+		newDisqualifiedShares := &disqualifiedShares{
+			disqualifiedMemberID: disqualifiedMemberID,
+			peerSharesS:          make(map[MemberID]*big.Int),
+		}
+		newDisqualifiedShares.peerSharesS[revealingMemberID] = shareS
+
+		revealedDisqualifiedShares = append(
+			revealedDisqualifiedShares,
+			newDisqualifiedShares,
+		)
+
+		return revealedDisqualifiedShares
+	}
 
 	for _, message := range messages {
 		revealingMemberID := message.senderID
@@ -793,21 +821,14 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
-			if allRevealedShares[disqualifiedMemberID] == nil {
-				allRevealedShares[disqualifiedMemberID] = make(map[MemberID]*big.Int)
-			}
-			allRevealedShares[disqualifiedMemberID][revealingMemberID] = shareS
+			revealedDisqualifiedShares = addShare(
+				revealedDisqualifiedShares,
+				disqualifiedMemberID,
+				revealingMemberID,
+				shareS,
+			)
 		}
 	}
-
-	for disqualifiedID, disqualifiedMembersShares := range allRevealedShares {
-		revealedDisqualifiedShares = append(revealedDisqualifiedShares,
-			&disqualifiedShares{
-				disqualifiedMemberID: disqualifiedID,
-				peerSharesS:          disqualifiedMembersShares,
-			})
-	}
-
 	return revealedDisqualifiedShares, nil
 }
 
