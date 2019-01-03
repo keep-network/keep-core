@@ -32,7 +32,8 @@ type block struct {
 	Number string
 }
 
-// WaitForBlocks waits for a minimum of 1 block before returing.
+// WaitForBlocks waits for the specified number of blocks before returning. If
+// the number of blocks is zero or negative, it returns immediately.
 func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 	waiter, err := ebc.BlockWaiter(numBlocks)
 	if err != nil {
@@ -42,8 +43,9 @@ func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 	return nil
 }
 
-// BlockWaiter returns the block number as a channel with a minimum of 1 block
-// wait. 0 and negative numBlocks are converted to 1.
+// BlockWaiter immediately returns a channel that will receive the block number
+// after the specified number of blocks. Reading from the returned channel
+// immediately will effectively behave the same way as calling WaitForBlocks.
 func (ebc *ethereumBlockCounter) BlockWaiter(
 	numBlocks int,
 ) (<-chan int, error) {

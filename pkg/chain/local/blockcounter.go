@@ -16,7 +16,7 @@ type localBlockCounter struct {
 var blockTime = time.Duration(500 * time.Millisecond)
 
 // WaitForBlocks waits for the specified number of blocks before returning. If
-// the number of blocks is zero or negative, it should return immediately.
+// the number of blocks is zero or negative, it returns immediately.
 func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
 	waiter, err := counter.BlockWaiter(numBlocks)
 	if err != nil {
