@@ -31,10 +31,10 @@ func GenerateTickets(
 	}
 
 	tickets := make(tickets, 0)
-	for virtualStaker := startingIndex; virtualStaker.Cmp(stakingWeight) <= 0; virtualStaker.Add(virtualStaker, startingIndex) {
+	for virtualStaker := startingIndex.Int64(); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
 		tickets = append(
 			tickets,
-			calculateTicket(entryValue, stakerValue, virtualStaker), // prf
+			calculateTicket(entryValue, stakerValue, big.NewInt(virtualStaker)), // prf
 		)
 	}
 	sort.Stable(tickets)
