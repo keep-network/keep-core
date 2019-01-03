@@ -776,8 +776,9 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				revealedPrivateKey,
 			)
 			if err != nil {
-				// TODO Should we disqualify revealing member here?
-				return nil, fmt.Errorf("cannot recover symmetric key [%v]", err)
+				fmt.Printf("cannot recover symmetric key [%v]", err)
+				// TODO Disqualify the revealing member
+				continue
 			}
 
 			shareS, _, err := recoverShares(
@@ -787,8 +788,9 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				recoveredSymmetricKey, // s_mk
 			)
 			if err != nil {
-				// TODO Should we disqualify revealing member here?
-				return nil, fmt.Errorf("cannot decrypt share S [%v]", err)
+				fmt.Printf("cannot decrypt share S [%v]", err)
+				// TODO Disqualify the revealing member
+				continue
 			}
 
 			if allRevealedShares[disqualifiedMemberID] == nil {
