@@ -3,7 +3,6 @@ package relay
 import (
 	"fmt"
 	"math/big"
-	"math/rand"
 	"os"
 	"reflect"
 	"sync"
@@ -53,7 +52,7 @@ type membership struct {
 // whether the node is or is not eligible for the new group, and group joining
 // and key submission is performed in a background goroutine.
 func (n *Node) JoinGroupIfEligible(
-	relayChain relaychain.Interface,
+	groupChain relaychain.GroupInterface,
 	requestID *big.Int,
 	entryValue *big.Int,
 ) {
@@ -96,7 +95,7 @@ func (n *Node) JoinGroupIfEligible(
 
 			n.registerPendingGroup(requestID.String(), member, groupChannel)
 
-			relayChain.SubmitGroupPublicKey(
+			groupChain.SubmitGroupPublicKey(
 				requestID,
 				member.GroupPublicKeyBytes(),
 			).OnComplete(func(registration *event.GroupRegistration, err error) {
@@ -120,7 +119,7 @@ func (n *Node) AddStaker(index int, staker string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	if cap(n.stakeIDs) < index {
+	if cap(n.stakeIDs) <= index { // we index from 0
 		// need something larger
 		newSlice := make([]string, index*2)
 		copy(newSlice, n.stakeIDs)
@@ -231,24 +230,13 @@ func (n *Node) registerPendingGroup(
 
 // Returns the 0-based index of this node in the group that will be spawned by
 // the given entry value. If the node will not be in the group, returns -1.
+// TODO: needs to be replaced with index obtained from group selection protocol
 func (n *Node) indexInEntryGroup(entryValue *big.Int) int {
-	// FIXME By only using 64 bits, we're sacrificing a potentially large part
-	// FIXME of the entry. We also need to reproduce this randomizer in
-	// FIXME Solidity.
-	shuffler := rand.New(rand.NewSource(entryValue.Int64()))
-
 	n.mutex.Lock()
-	shuffledStakeIDs := make([]string, n.maxStakeIndex+1)
-	copy(shuffledStakeIDs, n.stakeIDs)
-	currentStake := n.StakeID
-	n.mutex.Unlock()
+	defer n.mutex.Unlock()
 
-	shuffler.Shuffle(len(shuffledStakeIDs), func(i, j int) {
-		shuffledStakeIDs[i], shuffledStakeIDs[j] = shuffledStakeIDs[j], shuffledStakeIDs[i]
-	})
-
-	for i, id := range shuffledStakeIDs {
-		if id == currentStake {
+	for i, id := range n.stakeIDs {
+		if id == n.StakeID {
 			return i
 		}
 	}

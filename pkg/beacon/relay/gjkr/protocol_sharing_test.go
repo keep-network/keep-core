@@ -7,8 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/pedersen"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -17,8 +16,6 @@ func TestCombineReceivedShares(t *testing.T) {
 	groupSize := 7
 
 	selfShareS := big.NewInt(9)
-	p := big.NewInt(107)
-	q := big.NewInt(53)
 
 	receivedShareS := make(map[MemberID]*big.Int)
 	// Simulate shares received from peer members.
@@ -28,11 +25,10 @@ func TestCombineReceivedShares(t *testing.T) {
 		receivedShareS[MemberID(100+i)] = big.NewInt(int64(10 + i))
 	}
 
-	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84 mod 53 = 31
-	expectedShareS := big.NewInt(31)
+	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84
+	expectedShareS := big.NewInt(84)
 
-	config := &DKG{P: p, Q: q, evidenceLog: newDkgEvidenceLog()}
-	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
+	members, err := initializeQualifiedMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -59,41 +55,23 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		big.NewInt(5),
 		big.NewInt(2),
 	}
-	expectedPublicCoefficients := []*big.Int{
-		big.NewInt(343),  // 7^3 mod 1907 = 343
-		big.NewInt(1551), // 7^5 mod 1907 = 1551
-		big.NewInt(49),   // 7^2 mod 1907 = 49
+	expectedPublicCoefficients := make([]*bn256.G1, len(secretCoefficients))
+	for i, secretCoefficient := range secretCoefficients {
+		expectedPublicCoefficients[i] = new(bn256.G1).ScalarBaseMult(
+			secretCoefficient,
+		)
 	}
 
-	config := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
+	member := (&EphemeralKeyPairGeneratingMember{
+		memberCore: &memberCore{},
+	}).InitializeSymmetricKeyGeneration().
+		InitializeCommitting().
+		InitializeCommitmentsVerification().
+		InitializeSharesJustification().
+		InitializeQualified().
+		InitializeSharing()
 
-	// This test uses rand.Reader mock to get specific `g` value in `NewVSS`
-	// initialization.
-	mockRandomReader := testutils.NewMockRandReader(big.NewInt(7))
-	vss, err := pedersen.NewVSS(mockRandomReader, config.P, config.Q)
-	if err != nil {
-		t.Fatalf("VSS initialization failed [%s]", err)
-	}
-
-	member := &SharingMember{
-		QualifiedMember: &QualifiedMember{
-			SharesJustifyingMember: &SharesJustifyingMember{
-				CommitmentsVerifyingMember: &CommitmentsVerifyingMember{
-					CommittingMember: &CommittingMember{
-						SymmetricKeyGeneratingMember: &SymmetricKeyGeneratingMember{
-							EphemeralKeyPairGeneratingMember: &EphemeralKeyPairGeneratingMember{
-								memberCore: &memberCore{
-									protocolConfig: config,
-								},
-							},
-						},
-						vss:                vss,
-						secretCoefficients: secretCoefficients,
-					},
-				},
-			},
-		},
-	}
+	member.secretCoefficients = secretCoefficients
 
 	message := member.CalculatePublicKeySharePoints()
 
@@ -116,7 +94,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize, nil)
+	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -133,23 +111,24 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 		},
 		"negative validation - changed public key share - one accused member": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[1].publicKeySharePoints[1] = testutils.NewRandInt(
+				messages[1].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
 					messages[1].publicKeySharePoints[1],
-					sharingMember.protocolConfig.P,
+					big.NewInt(2),
 				)
+
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []MemberID{3},
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[0].publicKeySharePoints[1] = testutils.NewRandInt(
+				messages[0].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
 					messages[0].publicKeySharePoints[1],
-					sharingMember.protocolConfig.P,
+					big.NewInt(2),
 				)
-				messages[3].publicKeySharePoints[1] = testutils.NewRandInt(
+				messages[3].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
 					messages[3].publicKeySharePoints[1],
-					sharingMember.protocolConfig.P,
+					big.NewInt(2),
 				)
 			},
 			expectedError:      nil,
@@ -197,8 +176,14 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	}
 }
 
-func initializeQualifiedMembersGroup(threshold, groupSize int, dkg *DKG) ([]*QualifiedMember, error) {
-	sharesJustifyingMembers, err := initializeSharesJustifyingMemberGroup(threshold, groupSize, dkg)
+func initializeQualifiedMembersGroup(threshold, groupSize int) (
+	[]*QualifiedMember,
+	error,
+) {
+	sharesJustifyingMembers, err := initializeSharesJustifyingMemberGroup(
+		threshold,
+		groupSize,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -211,8 +196,11 @@ func initializeQualifiedMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Qua
 	return qualifiedMembers, nil
 }
 
-func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*SharingMember, error) {
-	qualifiedMembers, err := initializeQualifiedMembersGroup(threshold, groupSize, dkg)
+func initializeSharingMembersGroup(threshold, groupSize int) (
+	[]*SharingMember,
+	error,
+) {
+	qualifiedMembers, err := initializeQualifiedMembersGroup(threshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -221,7 +209,7 @@ func initializeSharingMembersGroup(threshold, groupSize int, dkg *DKG) ([]*Shari
 	for _, sjm := range qualifiedMembers {
 		sjm.secretCoefficients = make([]*big.Int, threshold+1)
 		for i := 0; i < threshold+1; i++ {
-			sjm.secretCoefficients[i], err = crand.Int(crand.Reader, sjm.protocolConfig.Q)
+			sjm.secretCoefficients[i], err = crand.Int(crand.Reader, bn256.Order)
 			if err != nil {
 				return nil, fmt.Errorf("secret share generation failed [%s]", err)
 			}

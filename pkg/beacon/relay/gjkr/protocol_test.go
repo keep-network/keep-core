@@ -8,7 +8,7 @@ func TestRoundTrip(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize, nil)
+	committingMembers, err := initializeCommittingMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
