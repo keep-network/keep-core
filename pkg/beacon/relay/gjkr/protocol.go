@@ -763,21 +763,20 @@ func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	messages []*DisqualifiedEphemeralKeysMessage,
 ) ([]*disqualifiedShares, error) {
-	var revealedDisqualifiedShares []*disqualifiedShares
+	revealedDisqualifiedShares := make([]*disqualifiedShares, 0)
 
 	// For disqualified member `m` add shares `s_mk` the member calculated for
 	// other members `k` who revealed the ephemeral key.
 	addShare := func(
-		revealedDisqualifiedShares []*disqualifiedShares, // <m, <k, s_mk>>
 		disqualifiedMemberID, revealingMemberID MemberID, // m, k
 		shareS *big.Int, // s_mk
-	) []*disqualifiedShares {
+	) {
 		// If a `disqualifiedShares` entry already exists in the slice for given
 		// disqualified member add the share.
 		for _, disqualifiedShares := range revealedDisqualifiedShares {
 			if disqualifiedShares.disqualifiedMemberID == disqualifiedMemberID {
 				disqualifiedShares.peerSharesS[revealingMemberID] = shareS
-				return revealedDisqualifiedShares
+				return
 			}
 		}
 
@@ -793,8 +792,6 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			revealedDisqualifiedShares,
 			newDisqualifiedShares,
 		)
-
-		return revealedDisqualifiedShares
 	}
 
 	for _, message := range messages {
@@ -832,12 +829,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
-			revealedDisqualifiedShares = addShare(
-				revealedDisqualifiedShares,
-				disqualifiedMemberID,
-				revealingMemberID,
-				shareS,
-			)
+			addShare(disqualifiedMemberID, revealingMemberID, shareS)
 		}
 	}
 	return revealedDisqualifiedShares, nil
