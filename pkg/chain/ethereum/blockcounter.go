@@ -32,8 +32,6 @@ type block struct {
 	Number string
 }
 
-// WaitForBlocks waits for the specified number of blocks before returning. If
-// the number of blocks is zero or negative, it returns immediately.
 func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 	waiter, err := ebc.BlockWaiter(numBlocks)
 	if err != nil {
@@ -43,9 +41,6 @@ func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 	return nil
 }
 
-// BlockWaiter immediately returns a channel that will receive the block number
-// after the specified number of blocks. Reading from the returned channel
-// immediately will effectively behave the same way as calling WaitForBlocks.
 func (ebc *ethereumBlockCounter) BlockWaiter(
 	numBlocks int,
 ) (<-chan int, error) {
@@ -70,7 +65,6 @@ func (ebc *ethereumBlockCounter) BlockWaiter(
 	return newWaiter, nil
 }
 
-// CurrentBlock returns the current block number.
 func (ebc *ethereumBlockCounter) CurrentBlock() (int, error) {
 	return ebc.latestBlockHeight, nil
 }
