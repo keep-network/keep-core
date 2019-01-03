@@ -10,7 +10,7 @@ type Submissions struct {
 	Submissions []*Submission
 }
 
-// Submission is an individual submission that counts the number of votes
+// Submission is an individual submission that counts the number of votes.
 type Submission struct {
 	DKGResult *DKGResult
 	Votes     int

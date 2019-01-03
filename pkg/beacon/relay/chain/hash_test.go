@@ -15,7 +15,7 @@ func TestSerialize(t *testing.T) {
 	actualResult := r1.serialize()
 	expectedResult := []byte{1, 100, 1, 0, 1, 0, 0, 0, 1, 0}
 	if !bytesEqual(actualResult, expectedResult) {
-		t.Errorf("\nexpected: ->%v<-\nactual:   ->%v<-\n", expectedResult, actualResult)
+		t.Errorf("\nexpected: %v\nactual:   %v\n", expectedResult, actualResult)
 	}
 }
 

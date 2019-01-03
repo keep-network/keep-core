@@ -63,18 +63,14 @@ func bigIntEquals(expected *big.Int, actual *big.Int) bool {
 // boolSlicesEqual checks if two slices of bool are equal. Slices need to have
 // the same length and have the same order of entries.
 func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
-	// fmt.Printf("boolSliceEqual: %s v.s. %s\n", godebug.SVarI(expectedSlice), godebug.SVarI(actualSlice))
 	if len(expectedSlice) != len(actualSlice) {
-		// fmt.Printf("boolSliceEqual: false!\n")
 		return false
 	}
 	for i := range expectedSlice {
 		if expectedSlice[i] != actualSlice[i] {
-			// fmt.Printf("boolSliceEqual: false!\n")
 			return false
 		}
 	}
-	// fmt.Printf("boolSliceEqual: Yes - True!\n")
 	return true
 }
 
@@ -86,14 +82,14 @@ func (r *DKGResult) Hash() []byte {
 	return d.Sum(nil)
 }
 
-// Searialize converts the DKGResult into bytes.  This is so that it can be hashed.
+// serialize converts the DKGResult into bytes.  This is so that it can be hashed.
 // Format:
 // Byte 0 - 0x01 == true, 0x00 == false - r1.Success
 // Byte 1..4 - length of the group public key in BigEndian format
-// Byte 5..X - the group publick key in bytes
+// Byte 5..X - the group public key in bytes
 // Byte X+1..X+5 - length of the set of Disqualified
 // Byte X+6..Y - Set of disqualified as 0x01, 0x00 for true/false
-// Byte Y+1..Y+5 - length of teh set of Inactive
+// Byte Y+1..Y+5 - length of the set of Inactive
 // Byte X+6..Y - Set of inactive as 0x01, 0x00 for true/false
 func (r *DKGResult) serialize() []byte {
 	boolToByte := func(b bool) []byte {
