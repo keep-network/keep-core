@@ -764,8 +764,9 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			publicKey := evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
 				ephemeralPublicKeys[disqualifiedID]
 			if !publicKey.IsKeyMatching(privateKey) {
+				fmt.Printf("invalid private key for public key from member %v\n", revealingMemberID)
 				rm.group.DisqualifyMemberID(revealingMemberID)
-				return nil, fmt.Errorf("invalid private key for public key")
+				continue
 			}
 
 			recoveredSymmetricKey, err := recoverSymmetricKey(
