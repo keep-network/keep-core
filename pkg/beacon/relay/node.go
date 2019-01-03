@@ -60,7 +60,7 @@ func (n *Node) JoinGroupIfEligible(
 	err := n.SubmitTicketsForGroupSelection(
 		entryValue.Bytes(),
 		groupChain,
-		nil,
+		n.blockCounter,
 	)
 	if err != nil {
 		fmt.Fprintf(
