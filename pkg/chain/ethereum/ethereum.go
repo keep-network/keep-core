@@ -263,14 +263,21 @@ func (ec *ethereumChain) AddStaker(
 	}
 
 	err := ec.keepGroupContract.WatchOnStakerAdded(
-		func(index int, groupMemberID []byte) {
+		func(index int, stakerID []byte) bool {
+			if string(stakerID) == groupMemberID {
+				// not what we are waiting for, please continue watching
+				return false
+			}
+
 			err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
 				Index:         index,
-				GroupMemberID: string(groupMemberID),
+				GroupMemberID: groupMemberID,
 			})
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
 			}
+
+			return true
 		},
 		func(err error) error {
 			failErr := onStakerAddedPromise.Fail(
@@ -327,11 +334,15 @@ func (ec *ethereumChain) OnStakerAdded(
 	handle func(staker *event.StakerRegistration),
 ) {
 	err := ec.keepGroupContract.WatchOnStakerAdded(
-		func(index int, groupMemberID []byte) {
+		func(index int, groupMemberID []byte) bool {
 			handle(&event.StakerRegistration{
 				Index:         index,
 				GroupMemberID: string(groupMemberID),
 			})
+
+			// we are not interested in any particular staker,
+			// so we stop watching here
+			return true
 		},
 		func(err error) error {
 			return fmt.Errorf("staker event failed with %v", err)
@@ -445,6 +456,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) {
+) event.Subscription {
 	// TODO Implement
+	return event.NewSubscription(func() {})
 }

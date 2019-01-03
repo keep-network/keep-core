@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 kubectl delete service dashboard
 kubectl delete deployment dashboard
@@ -8,4 +8,3 @@ kubectl delete deployment miner-node
 
 kubectl delete service tx-node
 kubectl delete deployment tx-node
-

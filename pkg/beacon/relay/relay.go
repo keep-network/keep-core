@@ -45,7 +45,7 @@ func NewNode(
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
 	request *event.Request,
-	relayChain relaychain.Interface,
+	relayChain relaychain.RelayEntryInterface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
 		request.PreviousValue.Bytes(),
