@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-var startingIndex = big.NewInt(1)
+var one = big.NewInt(1)
 
 // GenerateTickets generates a set of tickets for the given staker and relay
 // entry value given the specified minimum stake. Returns the resulting
@@ -21,7 +21,7 @@ func GenerateTickets(
 	stakingWeight = stakingWeight.Quo(availableStake, minimumStake)
 
 	tickets := make(tickets, 0)
-	for virtualStaker := startingIndex.Int64(); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
+	for virtualStaker := one.Int64(); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
 		tickets = append(
 			tickets,
 			calculateTicket(entryValue, stakerValue, big.NewInt(virtualStaker)), // prf
