@@ -69,7 +69,10 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 	member6 := members[5]
 	disqualifiedMembers := []*ReconstructingMember{member5, member6}
 
-	disqualifiedEphemeralKeysMessages := generateDisqualifiedEphemeralKeysMessages(otherMembers, disqualifiedMembers)
+	disqualifiedEphemeralKeysMessages, err := generateDisqualifiedEphemeralKeysMessages(otherMembers, disqualifiedMembers)
+	if err != nil {
+		t.Fatal(err)
+	}
 	expectedDisqualifiedShares := generateDisqualifiedMemberShares(member1, otherMembers, disqualifiedMembers)
 
 	// Simulate a case when `invalidRevealingMember` reveals invalid ephemeral
@@ -97,17 +100,22 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual([]MemberID{member3.ID}, member1.group.disqualifiedMemberIDs) {
+	expectedDisqualifiedMemberIDs := make([]MemberID, 0)
+	for _, disqualifiedMember := range disqualifiedMembers {
+		expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, disqualifiedMember.ID)
+	}
+	expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, invalidRevealingMember.ID)
+	if !reflect.DeepEqual(expectedDisqualifiedMemberIDs, member1.group.disqualifiedMemberIDs) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			[]MemberID{member3.ID},
+			expectedDisqualifiedMemberIDs,
 			member1.group.disqualifiedMemberIDs,
 		)
 	}
 
 	if len(recoveredDisqualifiedShares) != len(disqualifiedMembers) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			len(recoveredDisqualifiedShares),
 			len(disqualifiedMembers),
+			len(recoveredDisqualifiedShares),
 		)
 	}
 
@@ -135,23 +143,22 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 
 func generateDisqualifiedEphemeralKeysMessages(
 	otherMembers, disqualifiedMembers []*ReconstructingMember,
-) []*DisqualifiedEphemeralKeysMessage {
+) ([]*DisqualifiedEphemeralKeysMessage, error) {
 	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {
-		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
 		for _, disqualifiedMember := range disqualifiedMembers {
-			revealedKeys[disqualifiedMember.ID] =
-				otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
+			otherMember.group.DisqualifyMemberID(disqualifiedMember.ID)
+		}
+		disqualifiedEphemeralKeysMessage, err := otherMember.RevealDisqualifiedMembersKeys()
+		if err != nil {
+			return nil, err
 		}
 		disqualifiedEphemeralKeysMessages = append(
 			disqualifiedEphemeralKeysMessages,
-			&DisqualifiedEphemeralKeysMessage{
-				senderID:    otherMember.ID,
-				privateKeys: revealedKeys,
-			},
+			disqualifiedEphemeralKeysMessage,
 		)
 	}
-	return disqualifiedEphemeralKeysMessages
+	return disqualifiedEphemeralKeysMessages, nil
 }
 
 func generateDisqualifiedMemberShares(
