@@ -51,29 +51,24 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 func TestLocalBlockWaiter(t *testing.T) {
 	var tests = map[string]struct {
-		blockWait    int
-		expectation  time.Duration
-		errorMessage string
+		blockWait   int
+		maxWaitTime time.Duration
 	}{
 		"does wait for a block": {
-			blockWait:    1,
-			expectation:  time.Duration(525) * time.Millisecond,
-			errorMessage: "Failed to wait for a single block; expected %s but took %s.",
+			blockWait:   1,
+			maxWaitTime: time.Duration(525) * time.Millisecond,
 		},
-		"waited for a longer time": {
-			blockWait:    2,
-			expectation:  time.Duration(525*2) * time.Millisecond,
-			errorMessage: "Failed to wait for 2 blocks; expected %s but took %s.",
+		"does wait for two blocks": {
+			blockWait:   2,
+			maxWaitTime: time.Duration(525*2) * time.Millisecond,
 		},
-		"doesn't wait if 0 blocks": {
-			blockWait:    0,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Failed for a 0 block wait; expected %s but took %s.",
+		"does not wait for 0 blocks": {
+			blockWait:   0,
+			maxWaitTime: time.Duration(20) * time.Millisecond,
 		},
-		"doesn't wait if negative number of blocks": {
-			blockWait:    -1,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Failed for a -1 block wait; expected %s but took %s.",
+		"does not wait for negative number of blocks": {
+			blockWait:   -1,
+			maxWaitTime: time.Duration(20) * time.Millisecond,
 		},
 	}
 
@@ -90,8 +85,13 @@ func TestLocalBlockWaiter(t *testing.T) {
 			end := time.Now().UTC()
 
 			elapsed := end.Sub(start)
-			if test.expectation < elapsed {
-				t.Errorf(test.errorMessage, test.expectation, elapsed)
+
+			if elapsed > test.maxWaitTime {
+				t.Errorf(
+					"waited longer than expected; expected %v at max, waited %v",
+					test.maxWaitTime,
+					elapsed,
+				)
 			}
 		})
 	}
