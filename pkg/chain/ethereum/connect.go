@@ -18,6 +18,7 @@ type ethereumChain struct {
 	requestID                *big.Int
 	keepGroupContract        *keepGroup
 	keepRandomBeaconContract *KeepRandomBeacon
+	stakingContract          *staking
 	accountKey               *keystore.Key
 	blockCounter             chain.BlockCounter
 }
@@ -83,6 +84,12 @@ func Connect(cfg Config) (chain.Handle, error) {
 		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
 	}
 	pv.keepGroupContract = keepGroupContract
+
+	stakingContract, err := newStaking(pv)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
+	}
+	pv.stakingContract = stakingContract
 
 	return pv, nil
 }
