@@ -758,11 +758,11 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 	for _, message := range messages {
 		revealingMemberID := message.senderID
-		for disqualifiedID, privateKey := range message.privateKeys {
+		for disqualifiedMemberID, privateKey := range message.privateKeys {
 			evidenceLog := rm.protocolConfig.evidenceLog
 
 			publicKey := evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
-				ephemeralPublicKeys[disqualifiedID]
+				ephemeralPublicKeys[disqualifiedMemberID]
 			if !publicKey.IsKeyMatching(privateKey) {
 				fmt.Printf("invalid private key for public key from member %v\n", revealingMemberID)
 				rm.group.DisqualifyMemberID(revealingMemberID)
@@ -771,8 +771,8 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,
-				disqualifiedID,    // m
-				revealingMemberID, // k
+				disqualifiedMemberID, // m
+				revealingMemberID,    // k
 				privateKey,
 			)
 			if err != nil {
@@ -782,7 +782,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 			shareS, _, err := recoverShares(
 				evidenceLog,
-				disqualifiedID,        // m
+				disqualifiedMemberID,  // m
 				revealingMemberID,     // k
 				recoveredSymmetricKey, // s_mk
 			)
@@ -791,10 +791,10 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				return nil, fmt.Errorf("cannot decrypt share S [%v]", err)
 			}
 
-			if allRevealedShares[disqualifiedID] == nil {
-				allRevealedShares[disqualifiedID] = make(map[MemberID]*big.Int)
+			if allRevealedShares[disqualifiedMemberID] == nil {
+				allRevealedShares[disqualifiedMemberID] = make(map[MemberID]*big.Int)
 			}
-			allRevealedShares[disqualifiedID][revealingMemberID] = shareS
+			allRevealedShares[disqualifiedMemberID][revealingMemberID] = shareS
 		}
 	}
 
