@@ -31,7 +31,7 @@ operator:: The address of a party authorized to operate a stake in the name of a
 magpie:: The address where the incentives are sent, earned by an _operator_ in
   the name of an _owner_.
 
-delegated stake:: All of _owner_ tokens delegated to the _operator_ .
+delegated stake:: All of _owner_ staked tokens delegated to the _operator_ .
 
 == Proposal
 
