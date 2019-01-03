@@ -77,7 +77,9 @@ func TestLocalBlockWaiter(t *testing.T) {
 	}
 
 	for testName, test := range tests {
+		test := test
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
 			c := Connect(10, 4)
 			countWait, err := c.BlockCounter()
 			if err != nil {
