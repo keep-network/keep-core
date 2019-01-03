@@ -57,7 +57,7 @@ func (n *Node) JoinGroupIfEligible(
 	groupChain relaychain.GroupInterface,
 	entryValue *big.Int,
 ) {
-	err := n.submitTicketsForGroupSelection(
+	err := n.SubmitTicketsForGroupSelection(
 		entryValue.Bytes(),
 		groupChain,
 		nil,
