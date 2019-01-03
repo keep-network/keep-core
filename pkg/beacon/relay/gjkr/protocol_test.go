@@ -100,8 +100,8 @@ func TestRoundTrip(t *testing.T) {
 	var combiningMembers []*CombiningMember
 	for _, sm := range sharingMembers {
 		combiningMembers = append(combiningMembers,
-			sm.InitializePointsJustification().InitializeReconstruction().
-				InitializeCombining())
+			sm.InitializePointsJustification().InitializeRevealing().
+				InitializeReconstruction().InitializeCombining())
 	}
 
 	for _, member := range combiningMembers {

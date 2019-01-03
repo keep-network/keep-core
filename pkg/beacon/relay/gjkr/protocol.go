@@ -310,10 +310,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
@@ -506,13 +506,13 @@ func recoverShares(
 	return shareS, shareT, nil
 }
 
-// CombineMemberShares sums up all `s` and `t` shares intended for this member.
+// CombineMemberShares sums up all `s` shares intended for this member.
 // Combines secret shares calculated by current member `i` for itself `s_ii`
 // with shares calculated by peer members `j` for this member `s_ji`.
 //
-// `x_i = Σ s_ji mod q` and `x'_i = Σ t_ji mod q` for `j` in a group of players
-// who passed secret shares accusations stage. `q` is the order of cyclic group
-// formed over the alt_bn128 curve
+// `x_i = Σ s_ji mod q` for `j` in a group of players who passed secret shares
+// accusations stage. `q` is the order of cyclic group formed over the alt_bn128
+// curve.
 //
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
@@ -524,16 +524,7 @@ func (qm *QualifiedMember) CombineMemberShares() {
 		)
 	}
 
-	combinedSharesT := qm.selfSecretShareT // t_ii
-	for _, t := range qm.receivedValidSharesT {
-		combinedSharesT = new(big.Int).Mod(
-			new(big.Int).Add(combinedSharesT, t),
-			bn256.Order,
-		)
-	}
-
-	qm.masterPrivateKeyShare = combinedSharesS
-	qm.shareT = combinedSharesT
+	qm.groupPrivateKeyShare = combinedSharesS
 }
 
 // CalculatePublicKeySharePoints calculates public values for member's
@@ -696,15 +687,163 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	return disqualifiedMembers, nil
 }
 
-// DisqualifiedShares contains shares `s_mk` calculated by the disqualified
+// RevealDisqualifiedMembersKeys reveals ephemeral private keys used to create
+// an ephemeral symmetric key with disqualified members who share a group private
+// key. The function filters members who sent valid share S in Phase 3 but were
+// disqualified in Phase 9. It returns a message containing a map of ephemeral
+// private key for each disqualified member sharing a group private key.
+//
+// See Phase 10 of the protocol specification.
+func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
+	*DisqualifiedEphemeralKeysMessage,
+	error,
+) {
+	privateKeys := make(map[MemberID]*ephemeral.PrivateKey)
+
+	for _, disqualifiedMemberID := range rm.disqualifiedSharingMembers() {
+		ephemeralKeyPair, ok := rm.ephemeralKeyPairs[disqualifiedMemberID]
+		if !ok {
+			return nil, fmt.Errorf(
+				"no ephemeral key pair for disqualified member %v",
+				disqualifiedMemberID,
+			)
+		}
+		privateKeys[disqualifiedMemberID] = ephemeralKeyPair.PrivateKey
+	}
+
+	return &DisqualifiedEphemeralKeysMessage{
+		senderID:    rm.ID,
+		privateKeys: privateKeys,
+	}, nil
+}
+
+func (rm *RevealingMember) disqualifiedSharingMembers() []MemberID {
+	disqualifiedMembersIDs := rm.group.disqualifiedMemberIDs
+
+	// From disqualified members list filter those who provided valid shares in
+	// Phase 3 and are sharing the group private key.
+	disqualifiedSharingMembers := make([]MemberID, 0)
+	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
+		if _, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+			disqualifiedSharingMembers = append(
+				disqualifiedSharingMembers,
+				disqualifiedMemberID,
+			)
+		}
+	}
+	return disqualifiedSharingMembers
+}
+
+// ReconstructDisqualifiedIndividualKeys reconstructs individual private key `z_m` and  public
+// key `y_m` of disqualified members `m`. To do that, it first needs to recover
+// shares calculated by disqualified members `m` in Phase 3 for other members `k`.
+// The shares were encrypted before broadcast, so ephemeral symmetric key needs
+// to be recovered. This requires messages containing ephemeral private key
+// revealed by member `k` used in communication with disqualified member `m`.
+//
+// See Phase 11 of the protocol specification.
+func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
+	messages []*DisqualifiedEphemeralKeysMessage,
+) error {
+	revealedDisqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
+	if err != nil {
+		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
+	}
+	rm.reconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
+	rm.reconstructIndividualPublicKeys()                            // y_m
+	return nil
+}
+
+// Recover shares `s_mk` calculated by members `m` disqualified in Phase 9.
+// The shares were evaluated in Phase 3 by `m` for other members `k` and
+// broadcasted in an encrypted fashion, hence reconstructing member has to
+// recover a symmetric key to decode the shares messages. It returns a slice
+// containing shares `s_mk` recovered for each member `m` whose ephemeral key
+// was revealed in provided DisqualifiedMembersKeysMessage.
+func (rm *ReconstructingMember) recoverDisqualifiedShares(
+	messages []*DisqualifiedEphemeralKeysMessage,
+) ([]*disqualifiedShares, error) {
+	revealedDisqualifiedShares := make([]*disqualifiedShares, 0)
+
+	// For disqualified member `m` add shares `s_mk` the member calculated for
+	// other members `k` who revealed the ephemeral key.
+	addShare := func(
+		disqualifiedMemberID, revealingMemberID MemberID, // m, k
+		shareS *big.Int, // s_mk
+	) {
+		// If a `disqualifiedShares` entry already exists in the slice for given
+		// disqualified member add the share.
+		for _, disqualifiedShares := range revealedDisqualifiedShares {
+			if disqualifiedShares.disqualifiedMemberID == disqualifiedMemberID {
+				disqualifiedShares.peerSharesS[revealingMemberID] = shareS
+				return
+			}
+		}
+
+		// When a `disqualifiedShares` entry doesn't exist yet in the slice for given
+		// disqualified member initialize it with the share.
+		newDisqualifiedShares := &disqualifiedShares{
+			disqualifiedMemberID: disqualifiedMemberID,
+			peerSharesS:          make(map[MemberID]*big.Int),
+		}
+		newDisqualifiedShares.peerSharesS[revealingMemberID] = shareS
+
+		revealedDisqualifiedShares = append(
+			revealedDisqualifiedShares,
+			newDisqualifiedShares,
+		)
+	}
+
+	for _, message := range messages {
+		revealingMemberID := message.senderID
+		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
+			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
+				ephemeralPublicKeys[disqualifiedMemberID]
+			if !publicKey.IsKeyMatching(revealedPrivateKey) {
+				fmt.Printf("invalid private key for public key from member %v\n", revealingMemberID)
+				rm.group.DisqualifyMemberID(revealingMemberID)
+				continue
+			}
+
+			recoveredSymmetricKey, err := recoverSymmetricKey(
+				rm.evidenceLog,
+				disqualifiedMemberID, // m
+				revealingMemberID,    // k
+				revealedPrivateKey,
+			)
+			if err != nil {
+				fmt.Printf("cannot recover symmetric key [%v]", err)
+				// TODO Disqualify the revealing member
+				continue
+			}
+
+			shareS, _, err := recoverShares(
+				rm.evidenceLog,
+				disqualifiedMemberID,  // m
+				revealingMemberID,     // k
+				recoveredSymmetricKey, // s_mk
+			)
+			if err != nil {
+				fmt.Printf("cannot decrypt share S [%v]", err)
+				// TODO Disqualify the revealing member
+				continue
+			}
+
+			addShare(disqualifiedMemberID, revealingMemberID, shareS)
+		}
+	}
+	return revealedDisqualifiedShares, nil
+}
+
+// disqualifiedShares contains shares `s_mk` calculated by the disqualified
 // member `m` for peer members `k`. The shares were revealed due to disqualification
 // of the member `m` from the protocol execution.
-type DisqualifiedShares struct {
+type disqualifiedShares struct {
 	disqualifiedMemberID MemberID              // m
 	peerSharesS          map[MemberID]*big.Int // <k, s_mk>
 }
 
-// ReconstructIndividualPrivateKeys reconstructs disqualified members' individual
+// reconstructIndividualPrivateKeys reconstructs disqualified members' individual
 // private keys `z_m` from provided revealed shares calculated by disqualified
 // members for peer members.
 //
@@ -715,10 +854,8 @@ type DisqualifiedShares struct {
 // It stores a map of reconstructed individual private keys for each disqualified
 // member in a current member's reconstructedIndividualPrivateKeys field:
 // <disqualifiedMemberID, privateKeyShare>
-//
-// See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) ReconstructIndividualPrivateKeys(
-	revealedDisqualifiedShares []*DisqualifiedShares,
+func (rm *ReconstructingMember) reconstructIndividualPrivateKeys(
+	revealedDisqualifiedShares []*disqualifiedShares,
 ) {
 	rm.reconstructedIndividualPrivateKeys = make(map[MemberID]*big.Int, len(revealedDisqualifiedShares))
 
@@ -793,14 +930,14 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 	return lagrangeCoefficient // a_mk
 }
 
-// ReconstructIndividualPublicKeys calculates and stores individual public keys
+// reconstructIndividualPublicKeys calculates and stores individual public keys
 // `y_m` from reconstructed individual private keys `z_m`.
 //
 // Public key is calculated as `g^privateKey mod p` what, using elliptic curve,
 // is the same as `G * privateKey`.
 //
 // See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) ReconstructIndividualPublicKeys() {
+func (rm *ReconstructingMember) reconstructIndividualPublicKeys() {
 	rm.reconstructedIndividualPublicKeys = make(
 		map[MemberID]*bn256.G1,
 		len(rm.reconstructedIndividualPrivateKeys),
