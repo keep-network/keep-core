@@ -758,12 +758,12 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 	for _, message := range messages {
 		revealingMemberID := message.senderID
-		for disqualifiedMemberID, privateKey := range message.privateKeys {
+		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
 			evidenceLog := rm.protocolConfig.evidenceLog
 
 			publicKey := evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
 				ephemeralPublicKeys[disqualifiedMemberID]
-			if !publicKey.IsKeyMatching(privateKey) {
+			if !publicKey.IsKeyMatching(revealedPrivateKey) {
 				fmt.Printf("invalid private key for public key from member %v\n", revealingMemberID)
 				rm.group.DisqualifyMemberID(revealingMemberID)
 				continue
@@ -773,7 +773,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				evidenceLog,
 				disqualifiedMemberID, // m
 				revealingMemberID,    // k
-				privateKey,
+				revealedPrivateKey,
 			)
 			if err != nil {
 				// TODO Should we disqualify revealing member here?
