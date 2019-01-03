@@ -33,7 +33,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		groupselection.GenerateTickets(
 			minimumStake,
 			availableStake,
-			n.Staker.PubKey(),
+			[]byte(n.Staker.ID()),
 			entryValue,
 		)
 	if err != nil {
