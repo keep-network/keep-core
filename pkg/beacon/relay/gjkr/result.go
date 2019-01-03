@@ -47,8 +47,7 @@ func (r *Result) Equals(r2 *Result) bool {
 			return false
 		}
 	} else {
-		if (r.GroupPublicKey == nil && r2.GroupPublicKey != nil) ||
-			(r.GroupPublicKey != nil && r2.GroupPublicKey == nil) {
+		if r.GroupPublicKey != r2.GroupPublicKey {
 			return false
 		}
 	}
@@ -59,6 +58,7 @@ func (r *Result) Equals(r2 *Result) bool {
 	if !MemberIDSlicesEqual(r.Inactive, r2.Inactive) {
 		return false
 	}
+
 	return true
 }
 
