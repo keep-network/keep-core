@@ -43,11 +43,9 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	errCh := make(chan error, len(tickets))
 	for _, ticket := range tickets {
 		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
-			relayChain.
-				SubmitTicket(ticket).
-				OnFailure(func(err error) {
-					errCh <- err
-				})
+			relayChain.SubmitTicket(ticket).OnFailure(func(err error) {
+				errCh <- err
+			})
 		}
 	}
 
