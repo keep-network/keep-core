@@ -263,8 +263,8 @@ proofs later (<<req-5,requirement 5>>). The weights and virtual staker indices
 can use range proofs, and _Q~j~_ is required to be simply a value unique to any
 given staker.
 
-Initially _Q~j~_ can be something public and easy to verify, such as the ECDSA
-pubkey of _S~j~_, but the design of the protocol should be flexible later.
+Initially _Q~j~_ can be something public and easy to verify, such as the address
+of _S~j~_, but the design of the protocol should be flexible later.
 
 Similarly, the protocol specifies a pseudorandom function `prf`; `sha3` can be used
 before staker indistinguishability is required, but any function with the right
