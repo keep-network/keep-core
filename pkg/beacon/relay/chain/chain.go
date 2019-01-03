@@ -60,8 +60,6 @@ type DistributedKeyGenerationInterface interface {
 	Vote(requestID *big.Int, dkgResultHash []byte)
 	// OnDKGResultVote registers a callback when a vote occurs.
 	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
-	// CurrentBlock returns the current block number.
-	CurrentBlock() (int, error)
 }
 
 // Interface represents the interface that the relay expects to interact with

@@ -58,11 +58,6 @@ type localChain struct {
 	groupPublicKeyMap      map[string]*big.Int
 }
 
-// CurrentBlock rturns the current block number
-func (c *localChain) CurrentBlock() (int, error) {
-	return c.blockCounter.CurrentBlock()
-}
-
 // GetDKGSubmissions returns the current set of submissions for the requestID.
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
 	c.submissionsMutex.Lock()
