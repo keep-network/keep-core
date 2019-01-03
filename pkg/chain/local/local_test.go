@@ -51,24 +51,28 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 func TestLocalBlockWaiter(t *testing.T) {
 	var tests = map[string]struct {
-		blockWait   int
-		maxWaitTime time.Duration
+		blockWait        int
+		expectedWaitTime time.Duration
 	}{
 		"does wait for a block": {
-			blockWait:   1,
-			maxWaitTime: time.Duration(525) * time.Millisecond,
+			blockWait:        1,
+			expectedWaitTime: blockTime,
 		},
 		"does wait for two blocks": {
-			blockWait:   2,
-			maxWaitTime: time.Duration(525*2) * time.Millisecond,
+			blockWait:        2,
+			expectedWaitTime: 2 * blockTime,
+		},
+		"does wait for three blocks": {
+			blockWait:        3,
+			expectedWaitTime: 3 * blockTime,
 		},
 		"does not wait for 0 blocks": {
-			blockWait:   0,
-			maxWaitTime: time.Duration(20) * time.Millisecond,
+			blockWait:        0,
+			expectedWaitTime: 0,
 		},
 		"does not wait for negative number of blocks": {
-			blockWait:   -1,
-			maxWaitTime: time.Duration(20) * time.Millisecond,
+			blockWait:        -1,
+			expectedWaitTime: 0,
 		},
 	}
 
@@ -86,10 +90,23 @@ func TestLocalBlockWaiter(t *testing.T) {
 
 			elapsed := end.Sub(start)
 
-			if elapsed > test.maxWaitTime {
+			// Block waiter should wait for test.expectedWaitTime at minimum.
+			if elapsed < test.expectedWaitTime {
+				t.Errorf(
+					"waited less than expected; expected %v at min, waited %v",
+					test.expectedWaitTime,
+					elapsed,
+				)
+			}
+
+			// Block waiter should wait for test.expectedWaitTime plus some
+			// margin at maximum; the margin is the time needed for the return
+			// instructions to execute, setting it to 25ms for this test.
+			margin := time.Duration(25) * time.Millisecond
+			if elapsed > (test.expectedWaitTime + margin) {
 				t.Errorf(
 					"waited longer than expected; expected %v at max, waited %v",
-					test.maxWaitTime,
+					test.expectedWaitTime,
 					elapsed,
 				)
 			}
