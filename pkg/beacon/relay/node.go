@@ -54,7 +54,7 @@ type membership struct {
 // Indirectly, the completion of the process is signaled by the formation of an
 // on-chain group containing at least one of this node's virtual stakers.
 func (n *Node) JoinGroupIfEligible(
-	groupChain relaychain.GroupInterface,
+	groupChain relaychain.Interface,
 	entryValue *big.Int,
 ) {
 	err := n.SubmitTicketsForGroupSelection(

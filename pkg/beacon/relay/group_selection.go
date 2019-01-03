@@ -16,7 +16,7 @@ var naturalThreshold = big.NewInt((2 ^ 256) - 1)
 
 func (n *Node) SubmitTicketsForGroupSelection(
 	entryValue []byte,
-	relayChain relaychain.Interface,
+	relayChain relaychain.GroupInterface,
 	blockCounter chain.BlockCounter,
 ) error {
 	initialTimeout, err := blockCounter.BlockWaiter(ticketInitialTimeout)
