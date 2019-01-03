@@ -60,8 +60,8 @@ require the owner's private key at all.
 fail.
 7. If an _owner_ tries to delegate a stake to an _operator_ who already has a
 stake, the tx must fail.
-8. If an _operator_ tries to operate on a stake that he already operates on, the
-tx must fail.
+8. If an _operator_ tries to operate on a _delegated stake_ that he already
+operates on, the tx must fail.
 9. _delegated stake_ is locked until a particular operation initiated by the
 _operator_ ended.
 10. The end of an _on stake operation_ happens only after all rewards are
