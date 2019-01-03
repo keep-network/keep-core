@@ -36,7 +36,7 @@ func TestCombineReceivedShares(t *testing.T) {
 	// 19 + 20 + 21 + 22 + 23 + 24 + 25 = 154 mod 53 = 48
 	expectedShareT := big.NewInt(48)
 
-	config := &DKG{P: p, Q: q, evidenceLog: newDkgEvidenceLog()}
+	config := &DKG{P: p, Q: q}
 	members, err := initializeQualifiedMembersGroup(threshold, groupSize, config)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)

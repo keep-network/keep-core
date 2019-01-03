@@ -59,7 +59,7 @@ func contains(slice []MemberID, value MemberID) bool {
 func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	groupSize := 3
 	threshold := 2
-	dkg := &DKG{P: big.NewInt(179), Q: big.NewInt(89), evidenceLog: newDkgEvidenceLog()}
+	dkg := &DKG{P: big.NewInt(179), Q: big.NewInt(89)}
 	g := big.NewInt(7) // `g` value for public key calculation `y_m = g^{z_m} mod p`
 
 	disqualifiedMembersIDs := []int{4, 5} // m
@@ -101,7 +101,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 2
 	groupSize := 3
-	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953), evidenceLog: newDkgEvidenceLog()}
+	dkg := &DKG{P: big.NewInt(1907), Q: big.NewInt(953)}
 
 	expectedGroupPublicKey := big.NewInt(1620) // 10*20*30*91*92 mod 1620
 
