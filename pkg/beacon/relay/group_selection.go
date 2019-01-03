@@ -11,9 +11,6 @@ import (
 
 const ticketInitialTimeout = 5
 
-var minimumStake = big.NewInt(1)
-var naturalThreshold = big.NewInt((2 ^ 256) - 1)
-
 func (n *Node) SubmitTicketsForGroupSelection(
 	entryValue []byte,
 	relayChain relaychain.GroupInterface,
@@ -31,7 +28,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	tickets, err :=
 		groupselection.GenerateTickets(
-			minimumStake,
+			groupselection.MinimumStake,
 			availableStake,
 			[]byte(n.Staker.ID()),
 			entryValue,
@@ -41,8 +38,9 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	errCh := make(chan error, len(tickets))
+	virtualStakers := big.NewInt(int64(len(tickets)))
 	for _, ticket := range tickets {
-		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
+		if ticket.Value.Int().Cmp(groupselection.NaturalThreshold(virtualStakers)) < 0 {
 			relayChain.SubmitTicket(ticket).OnFailure(func(err error) {
 				errCh <- err
 			})
