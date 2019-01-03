@@ -13,6 +13,8 @@ type localBlockCounter struct {
 	waiters     map[int][]chan int
 }
 
+var blockTime = time.Duration(500 * time.Millisecond)
+
 // WaitForBlocks waits for the specified number of blocks before returning. If
 // the number of blocks is zero or negative, it should return immediately.
 func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
@@ -56,7 +58,7 @@ func (counter *localBlockCounter) CurrentBlock() (int, error) {
 // count is an internal function that counts up time to simulate the generation
 // of blocks.
 func (counter *localBlockCounter) count() {
-	ticker := time.NewTicker(time.Duration(500 * time.Millisecond))
+	ticker := time.NewTicker(blockTime)
 
 	for range ticker.C {
 		counter.structMutex.Lock()
