@@ -401,7 +401,8 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 }
 
 func initializeRevealingMembersGroup(threshold, groupSize int, dkg *DKG) (
-	[]*RevealingMember, error) {
+	[]*RevealingMember, error,
+) {
 	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
@@ -416,7 +417,8 @@ func initializeRevealingMembersGroup(threshold, groupSize int, dkg *DKG) (
 }
 
 func initializeReconstructingMembersGroup(threshold, groupSize int, dkg *DKG) (
-	[]*ReconstructingMember, error) {
+	[]*ReconstructingMember, error,
+) {
 	revealingMembers, err := initializeRevealingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
@@ -464,7 +466,9 @@ func disqualifyMembers(
 	return allDisqualifiedShares
 }
 
-func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) ([]*CombiningMember, error) {
+func initializeCombiningMembersGroup(threshold, groupSize int, dkg *DKG) (
+	[]*CombiningMember, error,
+) {
 	reconstructingMembers, err := initializeReconstructingMembersGroup(threshold, groupSize, dkg)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
