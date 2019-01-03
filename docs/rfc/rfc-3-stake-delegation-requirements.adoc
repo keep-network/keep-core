@@ -63,7 +63,7 @@ stake, the tx must fail.
 8. If an _operator_ tries to operate on a _delegated stake_ that he already
 operates on, the tx must fail.
 9. _delegated stake_ is locked until a particular operation initiated by the
-_operator_ ended.
+_operator_ ends.
 10. The end of an _on stake operation_ happens only after all rewards are
 granted and all penalties are imposed. 
 11. Rewarding and penalization happens as the last phase of all operations.
