@@ -35,12 +35,6 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 	}, nil
 }
 
-// CurrentBlock rturns the current block number
-func (c *ethereumChain) CurrentBlock() (int, error) {
-	// TODO - stubbed out.  // return c.blockCounter.CurrentBlock()
-	return 1, nil
-}
-
 // HasMinimumStake returns true if the specified address is staked.  False will
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.

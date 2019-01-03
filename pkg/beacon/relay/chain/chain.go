@@ -56,12 +56,10 @@ type DistributedKeyGenerationInterface interface {
 	// GetDKGSubmissions returns the entire set of submissions that is related
 	// to a particular requestID.
 	GetDKGSubmissions(requestID *big.Int) *Submissions
-	// Vote increases the number of votes for a dkgResultHash
+	// Vote increases the number of votes for a dkgResultHash.
 	Vote(requestID *big.Int, dkgResultHash []byte)
 	// OnDKGResultVote registers a callback when a vote occurs.
 	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
-	// CurrentBlock rturns the current block number
-	CurrentBlock() (int, error)
 }
 
 // Interface represents the interface that the relay expects to interact with
