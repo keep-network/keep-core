@@ -21,7 +21,7 @@ type Ticket struct {
 // Proof consists of the components needed to construct the Ticket's value, and
 // also acts as evidence for an accusing challenge against the Ticket's value.
 type Proof struct {
-	StakerValue        *big.Int // Q_j, a staker-specific value
+	StakerValue        []byte   // Q_j, a staker-specific value
 	VirtualStakerIndex *big.Int // vs
 }
 
@@ -31,15 +31,15 @@ type Proof struct {
 // See Phase 2 of the Group Selection protocol specification.
 func calculateTicket(
 	beaconOutput []byte,
-	stakerValue *big.Int,
+	stakerValue []byte,
 	virtualStakerIndex *big.Int,
 ) *Ticket {
 	var combinedValue []byte
 	combinedValue = append(combinedValue, beaconOutput...)
-	combinedValue = append(combinedValue, stakerValue.Bytes()...)
+	combinedValue = append(combinedValue, stakerValue...)
 	combinedValue = append(combinedValue, virtualStakerIndex.Bytes()...)
 
-	value := sha256.Sum256(combinedValue[:])
+	value := SHAValue(sha256.Sum256(combinedValue[:]))
 
 	return &Ticket{
 		Value: value,

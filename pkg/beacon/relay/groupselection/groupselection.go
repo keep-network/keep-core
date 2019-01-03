@@ -1,7 +1,6 @@
 package groupselection
 
 import (
-	"fmt"
 	"math/big"
 	"sort"
 )
@@ -14,21 +13,12 @@ var startingIndex = big.NewInt(1)
 // tickets.
 func GenerateTickets(
 	minimumStake *big.Int,
-	stakerID string, // S_j id
 	availableStake *big.Int, // S_j stake
+	stakerValue []byte, // Q_j
 	entryValue []byte, // V_i
 ) ([]*Ticket, error) {
 	stakingWeight := &big.Int{} // W_j
 	stakingWeight = stakingWeight.Quo(availableStake, minimumStake)
-
-	stakerValue := &big.Int{} // Q_j
-	stakerValue, ok := stakerValue.SetString(stakerID, 16)
-	if !ok {
-		return nil, fmt.Errorf(
-			"staker ID [%v] failed to parse as hex string",
-			stakerID,
-		)
-	}
 
 	tickets := make(tickets, 0)
 	for virtualStaker := startingIndex.Int64(); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
