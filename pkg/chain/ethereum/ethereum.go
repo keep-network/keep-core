@@ -165,7 +165,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
-	_, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+	subscription, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -173,7 +173,6 @@ func (ec *ethereumChain) SubmitRelayEntry(
 			previousEntry *big.Int,
 			blockNumber *big.Int,
 		) {
-
 			err := relayEntryPromise.Fulfill(&event.Entry{
 				RequestID:     requestID,
 				Value:         requestResponse,
@@ -199,6 +198,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		},
 	)
 	if err != nil {
+		subscription.Unsubscribe()
 		promiseErr := relayEntryPromise.Fail(
 			fmt.Errorf(
 				"watch relay entry failed with: [%v]",
@@ -222,6 +222,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		newEntry.Value,
 	)
 	if err != nil {
+		subscription.Unsubscribe()
 		promiseErr := relayEntryPromise.Fail(
 			fmt.Errorf(
 				"submitting relay entry to chain failed with: [%v]",
@@ -243,7 +244,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
 ) subscription.Subscription {
-	relayEntryGeneratedCallback, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+	relayEntryGeneratedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -275,13 +276,13 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 		)
 	}
 
-	return subscription.NewSubscription(relayEntryGeneratedCallback)
+	return relayEntryGeneratedSubscription
 }
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) subscription.Subscription {
-	relayEntryRequestedCallback, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+	relayEntryRequestedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
@@ -308,7 +309,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 		)
 	}
 
-	return subscription.NewSubscription(relayEntryRequestedCallback)
+	return relayEntryRequestedSubscription
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
@@ -343,7 +344,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 	blockReward, seed *big.Int,
 ) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
-	_, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+	subscription, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
@@ -363,11 +364,13 @@ func (ec *ethereumChain) RequestRelayEntry(
 		},
 	)
 	if err != nil {
+		subscription.Unsubscribe()
 		fmt.Fprintf(os.Stderr, "relay request failed with: [%v]", err)
 		return promise
 	}
 	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed.Bytes())
 	if err != nil {
+		subscription.Unsubscribe()
 		promise.Fail(fmt.Errorf("failure to request a relay entry: [%v]", err))
 		return promise
 	}
