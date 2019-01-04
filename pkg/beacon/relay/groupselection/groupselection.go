@@ -17,8 +17,7 @@ func GenerateTickets(
 	stakerValue []byte, // Q_j
 	entryValue []byte, // V_i
 ) ([]*Ticket, error) {
-	stakingWeight := &big.Int{} // W_j
-	stakingWeight = stakingWeight.Quo(availableStake, minimumStake)
+	stakingWeight := (&big.Int{}).Quo(availableStake, minimumStake) // W_j
 
 	tickets := make(tickets, 0)
 	for virtualStaker := one; virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
