@@ -1,8 +1,6 @@
 package gjkr
 
 import (
-	"fmt"
-
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
@@ -24,13 +22,6 @@ type Result struct {
 	Disqualified []MemberID
 	// Inactive members IDs.
 	Inactive []MemberID
-}
-
-// Bytes returns the result as a byte slice.
-// TODO: How should we send it to the chain? Should it be sha256 hash, result
-// serialized to json or something else?
-func (r *Result) Bytes() []byte {
-	return []byte(fmt.Sprintf("%v", r))
 }
 
 // Equals checks if two results are equal.
