@@ -189,7 +189,6 @@ type FinalizingMember struct {
 // PublishingIndex returns sequence number of the current member in a publishing
 // group. Counting starts with `0`.
 func (fm *FinalizingMember) PublishingIndex() int {
-	// TODO Order of members need to be synchronized for all members.
 	for index, memberID := range fm.group.MemberIDs() {
 		if fm.ID == memberID {
 			return index
