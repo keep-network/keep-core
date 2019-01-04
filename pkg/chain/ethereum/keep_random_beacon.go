@@ -203,6 +203,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 		}
 	}()
 
+	// Canceling the context exits the eventSubscription, which results in
+	// proper cleanup (unsubscribing from the subscription, and closing the
+	// channel, in that order).
 	unsubscribeCallback := func() {
 		cancel()
 	}
@@ -262,6 +265,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		}
 	}()
 
+	// Canceling the context exits the eventSubscription, which results in
+	// proper cleanup (unsubscribing from the subscription, and closing the
+	// channel, in that order).
 	unsubscribeCallback := func() {
 		cancel()
 	}
