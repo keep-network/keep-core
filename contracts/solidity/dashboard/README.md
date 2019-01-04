@@ -36,9 +36,8 @@ npm run demo
 ```
 cd keep-core/contracts/solidity
 npm install
-npm run demo
 ```
-* on `npm run demo` failure, run package.json demo scripts individually:
+* run package.json demo scripts individually:
 ```
 truffle migrate --reset
 truffle exec ./scripts/demo.js
