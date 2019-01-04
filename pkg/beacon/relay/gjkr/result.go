@@ -43,19 +43,19 @@ func (r *Result) Equals(r2 *Result) bool {
 		}
 	}
 
-	if !MemberIDSlicesEqual(r.Disqualified, r2.Disqualified) {
+	if !memberIDSlicesEqual(r.Disqualified, r2.Disqualified) {
 		return false
 	}
-	if !MemberIDSlicesEqual(r.Inactive, r2.Inactive) {
+	if !memberIDSlicesEqual(r.Inactive, r2.Inactive) {
 		return false
 	}
 
 	return true
 }
 
-// MemberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
+// memberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
 // to have the same length and have the same order of entries.
-func MemberIDSlicesEqual(expectedSlice []MemberID, actualSlice []MemberID) bool {
+func memberIDSlicesEqual(expectedSlice []MemberID, actualSlice []MemberID) bool {
 	if len(expectedSlice) != len(actualSlice) {
 		return false
 	}
