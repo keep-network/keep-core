@@ -45,7 +45,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 
 	// Check if any result has already been published to the chain with current
 	// request ID.
-	if chainRelay.IsAnyDKGResultPublished(pm.RequestID) {
+	if chainRelay.IsDKGResultPublished(pm.RequestID) {
 		return nil
 	}
 

@@ -50,9 +50,9 @@ type DistributedKeyGenerationInterface interface {
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
 	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) event.Subscription
-	// IsAnyDKGResultPublished checks if any DKG result has already been published
+	// IsDKGResultPublished checks if any DKG result has already been published
 	// to a chain for given request ID.
-	IsAnyDKGResultPublished(requestID *big.Int) bool
+	IsDKGResultPublished(requestID *big.Int) bool
 }
 
 // Interface represents the interface that the relay expects to interact with

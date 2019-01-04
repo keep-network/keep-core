@@ -61,7 +61,7 @@ func TestPublishDKGResult(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if chainRelay.IsAnyDKGResultPublished(publisher.RequestID) {
+			if chainRelay.IsDKGResultPublished(publisher.RequestID) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
@@ -76,7 +76,7 @@ func TestPublishDKGResult(t *testing.T) {
 			if test.expectedTimeEnd != currentBlock {
 				t.Fatalf("invalid current block\nexpected: %v\nactual:   %v\n", test.expectedTimeEnd, currentBlock)
 			}
-			if !chainRelay.IsAnyDKGResultPublished(publisher.RequestID) {
+			if !chainRelay.IsDKGResultPublished(publisher.RequestID) {
 				t.Fatalf("result is not published on chain")
 			}
 		})

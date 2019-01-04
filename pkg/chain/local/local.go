@@ -274,9 +274,9 @@ func (c *localChain) RequestRelayEntry(
 	return promise
 }
 
-// IsAnyDKGResultPublished simulates check if the result was already submitted to a
+// IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsAnyDKGResultPublished(requestID *big.Int) bool {
+func (c *localChain) IsDKGResultPublished(requestID *big.Int) bool {
 	for publishedRequestID := range c.submittedResults {
 		if publishedRequestID.Cmp(requestID) == 0 {
 			return true

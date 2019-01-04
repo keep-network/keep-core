@@ -435,8 +435,8 @@ func (ec *ethereumChain) RequestRelayEntry(
 	return promise
 }
 
-// IsAnyDKGResultPublished checks if the result is already published to a chain.
-func (ec *ethereumChain) IsAnyDKGResultPublished(requestID *big.Int) bool {
+// IsDKGResultPublished checks if the result is already published to a chain.
+func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) bool {
 	// TODO Implement
 	return false
 }
