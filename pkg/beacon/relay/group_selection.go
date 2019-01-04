@@ -2,21 +2,20 @@ package relay
 
 import (
 	"fmt"
-	"math/big"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-const ticketInitialTimeout = 5
-
 func (n *Node) SubmitTicketsForGroupSelection(
 	entryValue []byte,
 	relayChain relaychain.GroupInterface,
 	blockCounter chain.BlockCounter,
 ) error {
-	initialTimeout, err := blockCounter.BlockWaiter(ticketInitialTimeout)
+	initialTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketTimeout,
+	)
 	if err != nil {
 		return err
 	}
@@ -28,7 +27,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	tickets, err :=
 		groupselection.GenerateTickets(
-			groupselection.MinimumStake,
+			n.chainConfig.MinimumStake,
 			availableStake,
 			[]byte(n.Staker.ID()),
 			entryValue,
@@ -38,9 +37,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	errCh := make(chan error, len(tickets))
-	virtualStakers := big.NewInt(int64(len(tickets)))
 	for _, ticket := range tickets {
-		if ticket.Value.Int().Cmp(groupselection.NaturalThreshold(virtualStakers)) < 0 {
+		if ticket.Value.Int().Cmp(n.chainConfig.NaturalThreshold) < 0 {
 			relayChain.SubmitTicket(ticket).OnFailure(func(err error) {
 				errCh <- err
 			})
