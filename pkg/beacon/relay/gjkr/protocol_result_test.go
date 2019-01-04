@@ -22,8 +22,8 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: &Result{
 				Success:        true,
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   nil,
-				Inactive:       nil,
+				Disqualified:   []MemberID{},
+				Inactive:       []MemberID{},
 			},
 		},
 		"one disqualified member - success": {
@@ -32,7 +32,7 @@ func TestGenerateResult(t *testing.T) {
 				Success:        true,
 				GroupPublicKey: members[0].groupPublicKey,
 				Disqualified:   []MemberID{2},
-				Inactive:       nil,
+				Inactive:       []MemberID{},
 			},
 		},
 		"two inactive members - success": {
@@ -40,7 +40,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: &Result{
 				Success:        true,
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   nil,
+				Disqualified:   []MemberID{},
 				Inactive:       []MemberID{3, 7},
 			},
 		},
@@ -51,9 +51,7 @@ func TestGenerateResult(t *testing.T) {
 				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   []MemberID{2},
-				// inactive member ids; this value is nil in the case of a failure, as
-				// only disqualified members are slashed
-				Inactive: nil,
+				Inactive:       []MemberID{3, 7},
 			},
 		},
 		"more than half of threshold inactive members - failure": {
@@ -62,9 +60,7 @@ func TestGenerateResult(t *testing.T) {
 				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   nil,
-				// inactive member ids; this value is nil in the case of a failure, as
-				// only disqualified members are slashed
-				Inactive: nil,
+				Inactive:       []MemberID{3, 5, 7},
 			},
 		},
 		"more than half of threshold disqualified members - failure": {
@@ -73,9 +69,7 @@ func TestGenerateResult(t *testing.T) {
 				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   []MemberID{3, 5, 7},
-				// inactive member ids; this value is nil in the case of a failure, as
-				// only disqualified members are slashed
-				Inactive: nil,
+				Inactive:       []MemberID{},
 			},
 		},
 	}
