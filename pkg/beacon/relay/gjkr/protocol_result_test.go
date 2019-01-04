@@ -8,7 +8,7 @@ func TestGenerateResult(t *testing.T) {
 	threshold := 4
 	groupSize := 8
 
-	members, err := initializePublishingMembersGroup(threshold, groupSize)
+	members, err := initializeFinalizingMembersGroup(threshold, groupSize)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -89,15 +89,15 @@ func TestGenerateResult(t *testing.T) {
 	}
 }
 
-func initializePublishingMembersGroup(threshold, groupSize int) ([]*FinalizingMember, error) {
+func initializeFinalizingMembersGroup(threshold, groupSize int) ([]*FinalizingMember, error) {
 	combiningMembers, err := initializeCombiningMembersGroup(threshold, groupSize)
 	if err != nil {
 		return nil, err
 	}
 
-	var publishingMembers []*FinalizingMember
+	var finalizingMembers []*FinalizingMember
 	for _, cm := range combiningMembers {
-		publishingMembers = append(publishingMembers, cm.InitializeFinalization())
+		finalizingMembers = append(finalizingMembers, cm.InitializeFinalization())
 	}
-	return publishingMembers, nil
+	return finalizingMembers, nil
 }
