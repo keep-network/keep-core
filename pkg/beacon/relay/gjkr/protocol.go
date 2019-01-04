@@ -647,8 +647,10 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				continue
 			}
 
+			evidenceLog := pjm.evidenceLog
+
 			recoveredSymmetricKey, err := recoverSymmetricKey(
-				pjm.evidenceLog,
+				evidenceLog,
 				accusedID,
 				accuserID,
 				revealedAccuserPrivateKey,
@@ -659,7 +661,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			}
 
 			shareS, _, err := recoverShares(
-				pjm.evidenceLog,
+				evidenceLog,
 				accusedID,
 				accuserID,
 				recoveredSymmetricKey,
@@ -674,12 +676,9 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				shareS,
 				pjm.receivedValidPeerPublicKeySharePoints[accusedID],
 			) {
-				// TODO The accusation turned out to be unfounded.
-				// Should we add accused member's individual
-				// public key to receivedValidPeerPublicKeySharePoints?
-				disqualifiedMembers = append(
-					disqualifiedMembers, message.senderID,
-				)
+				// TODO The accusation turned out to be unfounded. Should we add accused
+				// member's individual public key to receivedValidPeerPublicKeySharePoints?
+				disqualifiedMembers = append(disqualifiedMembers, message.senderID)
 				continue
 			}
 			disqualifiedMembers = append(disqualifiedMembers, accusedID)
