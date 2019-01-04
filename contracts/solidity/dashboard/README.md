@@ -29,9 +29,9 @@ npm run demo
 
 * Install [Ganache](https://github.com/trufflesuite/ganache/releases)
 * Install node.js and npm (https://nodejs.org/en/)
-* Run Ganache and make sure it is on the correct port (8545)
+* Run Ganache and make sure it is using the correct port (8545)
 * Start powershell as Administrator
-* depoloy contracts demo setup:
+* deploy contracts demo setup:
 
 ```
 cd keep-core/contracts/solidity
