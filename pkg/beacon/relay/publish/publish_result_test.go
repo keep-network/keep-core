@@ -87,7 +87,7 @@ func TestPublishDKGResult(t *testing.T) {
 // Member with lower index gets to publish the result to chain. For the second
 // member loop should be aborted and result published by the first member should
 // be returned.
-func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
+func TestConcurrentPublishDKGResult(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 	blockStep := 2 // t_step
@@ -109,30 +109,30 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 		expectedDuration1 int // (index - 1) * t_step
 		expectedDuration2 int // (index - 1) * t_step
 	}{
-		// "two members publish the same results": {
-		// 	resultToPublish1: &relayChain.DKGResult{
-		// 		GroupPublicKey: big.NewInt(101),
-		// 	},
-		// 	resultToPublish2: &relayChain.DKGResult{
-		// 		GroupPublicKey: big.NewInt(101),
-		// 	},
-		// 	requestID1:        big.NewInt(11),
-		// 	requestID2:        big.NewInt(11),
-		// 	expectedDuration1: 0, // (P1-1) * t_step
-		// 	expectedDuration2: 0, // (P1-1) * t_step
-		// },
-		// "two members publish different results": {
-		// 	resultToPublish1: &relayChain.DKGResult{
-		// 		GroupPublicKey: big.NewInt(201),
-		// 	},
-		// 	resultToPublish2: &relayChain.DKGResult{
-		// 		GroupPublicKey: big.NewInt(202),
-		// 	},
-		// 	requestID1:        big.NewInt(11),
-		// 	requestID2:        big.NewInt(11),
-		// 	expectedDuration1: 0, // (P1-1) * t_step
-		// 	expectedDuration2: 0, // (P1-1) * t_step
-		// },
+		"two members publish the same results": {
+			resultToPublish1: &relayChain.DKGResult{
+				GroupPublicKey: big.NewInt(101),
+			},
+			resultToPublish2: &relayChain.DKGResult{
+				GroupPublicKey: big.NewInt(101),
+			},
+			requestID1:        big.NewInt(11),
+			requestID2:        big.NewInt(11),
+			expectedDuration1: 0, // (P1-1) * t_step
+			expectedDuration2: 0, // (P1-1) * t_step
+		},
+		"two members publish different results": {
+			resultToPublish1: &relayChain.DKGResult{
+				GroupPublicKey: big.NewInt(201),
+			},
+			resultToPublish2: &relayChain.DKGResult{
+				GroupPublicKey: big.NewInt(202),
+			},
+			requestID1:        big.NewInt(11),
+			requestID2:        big.NewInt(11),
+			expectedDuration1: 0, // (P1-1) * t_step
+			expectedDuration2: 0, // (P1-1) * t_step
+		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
 				GroupPublicKey: big.NewInt(101),
@@ -162,7 +162,9 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 			expectedBlockEnd2 := initialBlock + test.expectedDuration2
 
 			result1Chan := make(chan int)
+			defer close(result1Chan)
 			result2Chan := make(chan int)
+			defer close(result2Chan)
 
 			blockCounter, err := chainHandle.BlockCounter()
 			if err != nil {
