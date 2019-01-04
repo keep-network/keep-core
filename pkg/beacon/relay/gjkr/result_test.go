@@ -31,6 +31,11 @@ func TestResultEquals(t *testing.T) {
 			result2:        &Result{},
 			expectedResult: false,
 		},
+		"empty and nil": {
+			result1:        &Result{},
+			result2:        nil,
+			expectedResult: false,
+		},
 		"success - equal": {
 			result1:        &Result{Success: true},
 			result2:        &Result{Success: true},
