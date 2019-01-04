@@ -27,7 +27,9 @@ type RelayEntryInterface interface {
 	OnRelayEntryGenerated(func(entry *event.Entry)) subscription.Subscription
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(func(request *event.Request)) subscription.Subscription
+	OnRelayEntryRequested(
+		func(request *event.Request),
+	) subscription.Subscription
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains
@@ -37,7 +39,8 @@ type GroupInterface interface {
 	// associated with a request with id requestID. On-chain errors are reported
 	// through the promise.
 	SubmitGroupPublicKey(
-		requestID *big.Int, key [96]byte,
+		requestID *big.Int,
+		key [96]byte,
 	) *async.GroupRegistrationPromise
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
@@ -50,7 +53,8 @@ type GroupInterface interface {
 type DistributedKeyGenerationInterface interface {
 	// SubmitDKGResult sends DKG result to a chain.
 	SubmitDKGResult(
-		requestID *big.Int, dkgResult *DKGResult,
+		requestID *big.Int,
+		dkgResult *DKGResult,
 	) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
