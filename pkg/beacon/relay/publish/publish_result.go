@@ -38,6 +38,8 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
+	defer close(onPublishedResultChan)
+
 	subscription := chainRelay.OnDKGResultPublished(func(publishedResult *event.DKGResultPublication) {
 		onPublishedResultChan <- publishedResult
 	})
