@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // KeepRandomBeacon connection information for interface to the contract.
@@ -164,8 +165,9 @@ type relayEntryRequestedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
-) (func(), error) {
+) (subscription.Subscription, error) {
 	subscribeContext, cancel := context.WithCancel(context.Background())
+
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryRequested)
 	eventSubscription, err := krb.contract.WatchRelayEntryRequested(
 		&bind.WatchOpts{Context: subscribeContext},
@@ -205,7 +207,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 		cancel()
 	}
 
-	return unsubscribeCallback, nil
+	return subscription.NewSubscription(unsubscribeCallback), nil
 }
 
 // relayEntryGeneratedFunc type of function called for
@@ -222,8 +224,9 @@ type relayEntryGeneratedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
-) (func(), error) {
+) (subscription.Subscription, error) {
 	subscribeContext, cancel := context.WithCancel(context.Background())
+
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(
 		&bind.WatchOpts{Context: subscribeContext},
@@ -263,7 +266,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		cancel()
 	}
 
-	return unsubscribeCallback, nil
+	return subscription.NewSubscription(unsubscribeCallback), nil
 }
 
 // relayResetEventFunc type of function called for ResetEvent event.
