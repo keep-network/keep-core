@@ -51,36 +51,35 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 func TestLocalBlockWaiter(t *testing.T) {
 	var tests = map[string]struct {
-		blockWait    int
-		expectation  time.Duration
-		errorMessage string
+		blockWait        int
+		expectedWaitTime time.Duration
 	}{
 		"does wait for a block": {
-			blockWait:    1,
-			expectation:  time.Duration(525) * time.Millisecond,
-			errorMessage: "Failed to wait for a single block; expected %s but took %s.",
+			blockWait:        1,
+			expectedWaitTime: blockTime,
 		},
-		"waited for a longer time": {
-			blockWait:    2,
-			expectation:  time.Duration(525*2) * time.Millisecond,
-			errorMessage: "Failed to wait for 2 blocks; expected %s but took %s.",
+		"does wait for two blocks": {
+			blockWait:        2,
+			expectedWaitTime: 2 * blockTime,
 		},
-		"doesn't wait if 0 blocks": {
-			blockWait:    0,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Failed for a 0 block wait; expected %s but took %s.",
+		"does wait for three blocks": {
+			blockWait:        3,
+			expectedWaitTime: 3 * blockTime,
 		},
-		"invalid value": {
-			blockWait:    -1,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Waiting for a time when it should have errored; expected %s but took %s.",
+		"does not wait for 0 blocks": {
+			blockWait:        0,
+			expectedWaitTime: 0,
+		},
+		"does not wait for negative number of blocks": {
+			blockWait:        -1,
+			expectedWaitTime: 0,
 		},
 	}
 
 	for testName, test := range tests {
+		test := test
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-
 			c := Connect(10, 4)
 			countWait, err := c.BlockCounter()
 			if err != nil {
@@ -92,8 +91,26 @@ func TestLocalBlockWaiter(t *testing.T) {
 			end := time.Now().UTC()
 
 			elapsed := end.Sub(start)
-			if test.expectation < elapsed {
-				t.Errorf(test.errorMessage, test.expectation, elapsed)
+
+			// Block waiter should wait for test.expectedWaitTime at minimum.
+			if elapsed < test.expectedWaitTime {
+				t.Errorf(
+					"waited less than expected; expected [%v] at min, waited [%v]",
+					test.expectedWaitTime,
+					elapsed,
+				)
+			}
+
+			// Block waiter should wait for test.expectedWaitTime plus some
+			// margin at maximum; the margin is the time needed for the return
+			// instructions to execute, setting it to 25ms for this test.
+			margin := time.Duration(25) * time.Millisecond
+			if elapsed > (test.expectedWaitTime + margin) {
+				t.Errorf(
+					"waited longer than expected; expected %v at max, waited %v",
+					test.expectedWaitTime,
+					elapsed,
+				)
 			}
 		})
 	}
