@@ -9,7 +9,7 @@ import (
 )
 
 func (n *Node) SubmitTicketsForGroupSelection(
-	entryValue []byte,
+	beaconValue []byte,
 	relayChain relaychain.GroupInterface,
 	blockCounter chain.BlockCounter,
 ) error {
@@ -30,7 +30,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			n.chainConfig.MinimumStake,
 			availableStake,
 			[]byte(n.Staker.ID()),
-			entryValue,
+			beaconValue,
 		)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case err := <-errCh:
 			fmt.Printf(
 				"Error during ticket submission for entry [%v]: [%v].",
-				entryValue,
+				beaconValue,
 				err,
 			)
 		case <-initialTimeout:
