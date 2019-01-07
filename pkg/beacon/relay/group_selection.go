@@ -2,6 +2,7 @@ package relay
 
 import (
 	"fmt"
+	"math/big"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
@@ -13,15 +14,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	relayChain relaychain.GroupInterface,
 	blockCounter chain.BlockCounter,
 ) error {
-	// Timeout for initial ticket submission, Phase 2a
-	initialTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketInitialTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
-	// Timeout for reactive ticket submission, Phase 2b
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketSubmissionTimeout,
 	)
@@ -46,13 +38,16 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	errCh := make(chan error, len(tickets))
-	for _, ticket := range tickets {
-		if ticket.Value.Int().Cmp(n.chainConfig.NaturalThreshold) < 0 {
-			relayChain.SubmitTicket(ticket).OnFailure(func(err error) {
-				errCh <- err
-			})
-		}
-	}
+	quitTicketSubmission := make(chan struct{}, 0)
+
+	// Phase 2a: submit all tickets that fall under the natural threshold
+	go submitTickets(
+		relayChain,
+		tickets,
+		n.chainConfig.NaturalThreshold,
+		quitTicketSubmission,
+		errCh,
+	)
 
 	for {
 		select {
@@ -62,16 +57,30 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				beaconValue,
 				err,
 			)
-		case <-initialTimeout:
-			// Phase 2b: reactive ticket submission. Submit all
-			// tickets that are above the natural threshold.
-			// get the current best threshold
-
-			return nil
 		case <-submissionTimeout:
+			quitTicketSubmission <- struct{}{}
 			return nil
 		}
 	}
+}
 
-	return nil
+func submitTickets(
+	relayChain relaychain.GroupInterface,
+	tickets []*groupselection.Ticket,
+	naturalThreshold *big.Int,
+	quit <-chan struct{},
+	errCh chan error,
+) {
+	for _, ticket := range tickets {
+		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
+			relayChain.SubmitTicket(ticket).OnFailure(func(err error) {
+				errCh <- err
+			})
+		}
+
+		select {
+		case <-quit:
+			return
+		}
+	}
 }
