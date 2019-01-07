@@ -276,20 +276,8 @@ func (c *localChain) RequestRelayEntry(
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsDKGResultPublished(
-	requestID *big.Int, result *relaychain.DKGResult,
-) bool {
-	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID.Cmp(requestID) == 0 {
-			for _, publishedResult := range publishedResults {
-				if publishedResult.Equals(result) {
-					return true
-				}
-			}
-			return false
-		}
-	}
-	return false
+func (c *localChain) IsDKGResultPublished(requestID *big.Int) bool {
+	return c.submittedResults[requestID] != nil
 }
 
 // SubmitDKGResult submits the result to a chain.
@@ -301,9 +289,15 @@ func (c *localChain) SubmitDKGResult(
 
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
-	if c.IsDKGResultPublished(requestID, resultToPublish) {
-		dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
-		return dkgResultPublicationPromise
+	for publishedRequestID, publishedResults := range c.submittedResults {
+		if publishedRequestID.Cmp(requestID) == 0 {
+			for _, publishedResult := range publishedResults {
+				if publishedResult.Equals(resultToPublish) {
+					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
+					return dkgResultPublicationPromise
+				}
+			}
+		}
 	}
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)

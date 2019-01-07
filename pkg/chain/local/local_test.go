@@ -119,24 +119,14 @@ func TestLocalBlockWaiter(t *testing.T) {
 func TestLocalIsDKGResultPublished(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
-	submittedRequestID1 := big.NewInt(1)
-	submittedResult11 := &relaychain.DKGResult{
+	submittedRequestID := big.NewInt(1)
+	submittedResult := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(11),
 	}
 
-	submittedRequestID2 := big.NewInt(2)
-	submittedResult21 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(21),
-	}
-
-	submittedResults[submittedRequestID1] = append(
-		submittedResults[submittedRequestID1],
-		submittedResult11,
-	)
-
-	submittedResults[submittedRequestID2] = append(
-		submittedResults[submittedRequestID2],
-		submittedResult21,
+	submittedResults[submittedRequestID] = append(
+		submittedResults[submittedRequestID],
+		submittedResult,
 	)
 
 	localChain := &localChain{
@@ -146,29 +136,21 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	var tests = map[string]struct {
 		requestID      *big.Int
-		dkgResult      *relaychain.DKGResult
 		expectedResult bool
 	}{
 		"matched": {
-			requestID:      submittedRequestID2,
-			dkgResult:      submittedResult21,
+			requestID:      submittedRequestID,
 			expectedResult: true,
 		},
 		"not matched - different request ID": {
-			requestID:      submittedRequestID2,
-			dkgResult:      submittedResult11,
-			expectedResult: false,
-		},
-		"not matched - different request ID and DKG Result": {
 			requestID:      big.NewInt(3),
-			dkgResult:      &relaychain.DKGResult{GroupPublicKey: big.NewInt(31)},
 			expectedResult: false,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := chainHandle.IsDKGResultPublished(test.requestID, test.dkgResult)
+			actualResult := chainHandle.IsDKGResultPublished(test.requestID)
 
 			if actualResult != test.expectedResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)

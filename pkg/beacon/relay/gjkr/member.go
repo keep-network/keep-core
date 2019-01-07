@@ -181,7 +181,47 @@ type CombiningMember struct {
 	groupPublicKey *bn256.G1
 }
 
-// Int converts `MemberID` to `big.Int`
+// InitializeFinalization returns a member to perform next protocol operations.
+func (cm *CombiningMember) InitializeFinalization() *FinalizingMember {
+	return &FinalizingMember{CombiningMember: cm}
+}
+
+// FinalizingMember represents one member in a threshold key sharing group,
+// after it completed distributed key generation.
+//
+// Prepares a result to publish in Phase 13 of the protocol.
+type FinalizingMember struct {
+	*CombiningMember
+}
+
+// PublishingIndex returns sequence number of the current member in a publishing
+// group. Counting starts with `0`.
+func (fm *FinalizingMember) PublishingIndex() int {
+	for index, memberID := range fm.group.MemberIDs() {
+		if fm.ID == memberID {
+			return index
+		}
+	}
+	return -1 // should never happen
+}
+
+// Result can be either the successful computation of a round of distributed key
+// generation, or a notification of failure.
+//
+// If the number of disqualified and inactive members is greater than half of the
+// configured dishonest threshold, the group is deemed too weak, and the result
+// is set to failure. Otherwise, it returns the generated group public key along
+// with the disqualified and inactive members.
+func (fm *FinalizingMember) Result() *Result {
+	return &Result{
+		Success:        fm.group.isThresholdSatisfied(),
+		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
+		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
+		Inactive:       fm.group.inactiveMemberIDs,     // IA
+	}
+}
+
+// Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
 }
