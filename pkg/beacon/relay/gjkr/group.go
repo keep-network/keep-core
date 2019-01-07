@@ -10,13 +10,15 @@ type Group struct {
 	// IDs of all members of the group. Contains local member's ID.
 	// Initially empty, populated as each other member announces its presence.
 	memberIDs []MemberID
-	// IDs of group members who were disqualified during protocol execution.
+	// IDs of all disqualified members of the group.
 	disqualifiedMemberIDs []MemberID
-	// IDs of group members who went inactive during protocol execution.
+	// IDs of all inactive members of the group.
 	inactiveMemberIDs []MemberID
 }
 
 // MemberIDs returns IDs of all group members.
+// TODO Add ActiveMemberIDs() method to return only active members of the group
+// and use it across the protocol phases to get other members IDs.
 func (g *Group) MemberIDs() []MemberID {
 	return g.memberIDs
 }
@@ -34,4 +36,15 @@ func (g *Group) eliminatedMembersCount() int {
 // group. If the number is less or equal half of dishonest threshold, returns true.
 func (g *Group) isThresholdSatisfied() bool {
 	return g.eliminatedMembersCount() <= g.dishonestThreshold/2
+}
+
+// DisqualifyMemberID adds a member to the list of disqualified members.
+func (g *Group) DisqualifyMemberID(id MemberID) {
+	for _, currentID := range g.disqualifiedMemberIDs {
+		if currentID == id {
+			return
+		}
+	}
+
+	g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, id)
 }

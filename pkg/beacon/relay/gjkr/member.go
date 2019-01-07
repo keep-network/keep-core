@@ -103,20 +103,19 @@ type SharesJustifyingMember struct {
 
 // QualifiedMember represents one member in a threshold key sharing group, after
 // it completed secret shares justification. The member holds a share of group
-// master private key.
+// group private key.
 //
 // Executes Phase 6 of the protocol.
 type QualifiedMember struct {
 	*SharesJustifyingMember
 
-	// Member's share of the secret master private key. It is denoted as `z_ik`
+	// Member's share of the secret group private key. It is denoted as `z_ik`
 	// in protocol specification.
-	// TODO: unsure if we need shareT `x'_i` field, it should be removed if not used in further steps
-	masterPrivateKeyShare, shareT *big.Int
+	groupPrivateKeyShare *big.Int
 }
 
 // SharingMember represents one member in a threshold key sharing group, after it
-// has been qualified to the master private key sharing group. A member shares
+// has been qualified to the group private key sharing. A member shares
 // public values of it's polynomial coefficients with peer members.
 //
 // Executes Phase 7 and Phase 8 of the protocol.
@@ -141,12 +140,21 @@ type PointsJustifyingMember struct {
 	*SharingMember
 }
 
+// RevealingMember represents one member in a threshold sharing group who is
+// revealing ephemeral private keys used to create ephemeral symmetric key
+// to communicate with other members disqualified in Phase 9.
+//
+// Executes Phase 10 of the protocol.
+type RevealingMember struct {
+	*PointsJustifyingMember
+}
+
 // ReconstructingMember represents one member in a threshold sharing group who
 // is reconstructing individual private and public keys of disqualified group members.
 //
 // Executes Phase 11 of the protocol.
 type ReconstructingMember struct {
-	*PointsJustifyingMember // TODO Update this when all phases of protocol are ready
+	*RevealingMember
 
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
@@ -268,10 +276,15 @@ func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember
 	return &PointsJustifyingMember{sm}
 }
 
+// InitializeRevealing returns a member to perform next protocol operations.
+func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
+	return &RevealingMember{sm}
+}
+
 // InitializeReconstruction returns a member to perform next protocol operations.
-func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
+func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
-		PointsJustifyingMember:             pjm,
+		RevealingMember:                    rm,
 		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
 		reconstructedIndividualPublicKeys:  make(map[MemberID]*bn256.G1),
 	}
@@ -280,6 +293,12 @@ func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMem
 // InitializeCombining returns a member to perform next protocol operations.
 func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
 	return &CombiningMember{ReconstructingMember: rm}
+}
+
+// individualPrivateKey returns current member's individual private key.
+// Individual private key is zeroth polynomial coefficient `a_i0`.
+func (rm *ReconstructingMember) individualPrivateKey() *big.Int {
+	return rm.secretCoefficients[0]
 }
 
 // individualPublicKey returns current member's individual public key.

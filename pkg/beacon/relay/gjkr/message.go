@@ -56,7 +56,7 @@ type peerShares struct {
 // SecretSharesAccusationsMessage is a message payload that carries all of the
 // sender's accusations against other members of the threshold group.
 // If all other members behaved honestly from the sender's point of view, this
-// message should be broadcast but with an empty slice of `accusedIDs`.
+// message should be broadcast but with an empty map of `accusedMembersKeys`.
 //
 // It is expected to be broadcast.
 type SecretSharesAccusationsMessage struct {
@@ -79,12 +79,22 @@ type MemberPublicKeySharePointsMessage struct {
 // accusations against other members of the threshold group after public key share
 // points validation.
 // If all other members behaved honestly from the sender's point of view, this
-// message should be broadcast but with an empty slice of `accusedIDs`.
+// message should be broadcast but with an empty map of `accusedMembersKeys`.
 // It is expected to be broadcast.
 type PointsAccusationsMessage struct {
 	senderID MemberID
 
 	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
+}
+
+// DisqualifiedEphemeralKeysMessage is a message payload that carries sender's
+// ephemeral private keys used to generate ephemeral symmetric keys to encrypt
+// communication with members disqualified when points accusations were resolved.
+// It is expected to be broadcast.
+type DisqualifiedEphemeralKeysMessage struct {
+	senderID MemberID
+
+	privateKeys map[MemberID]*ephemeral.PrivateKey
 }
 
 func newPeerSharesMessage(senderID MemberID) *PeerSharesMessage {
