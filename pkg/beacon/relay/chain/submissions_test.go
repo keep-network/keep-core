@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-// Test Lead()
 func TestLead(t *testing.T) {
 	tests := map[string]struct {
 		currentSubmissions *Submissions
@@ -143,7 +142,6 @@ func TestLead(t *testing.T) {
 	}
 }
 
-// Test Contains
 func TestContains(t *testing.T) {
 
 	dkgResult1 := &DKGResult{

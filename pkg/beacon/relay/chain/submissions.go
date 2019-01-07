@@ -22,15 +22,13 @@ func (s *Submissions) Lead() *Submission {
 	if len(s.Submissions) == 0 {
 		return nil
 	}
-	topVote := -1
-	topPos := 0
+	topSubmission := s.Submissions[0]
 	for pos, submission := range s.Submissions {
-		if topVote < submission.Votes {
-			topPos = pos
-			topVote = submission.Votes
+		if topSubmission.Votes < submission.Votes {
+			topSubmission = s.Submissions[pos]
 		}
 	}
-	return s.Submissions[topPos]
+	return topSubmission
 }
 
 // Contains returns true if 'result' is in the set of submissions.
