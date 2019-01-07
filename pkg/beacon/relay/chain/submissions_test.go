@@ -6,6 +6,18 @@ import (
 )
 
 func TestLead(t *testing.T) {
+	dkgResult1 := &DKGResult{
+		Success:        true,
+		GroupPublicKey: big.NewInt(1001),
+		Disqualified:   []bool{},
+		Inactive:       []bool{},
+	}
+	dkgResult2 := &DKGResult{
+		Success:        true,
+		GroupPublicKey: big.NewInt(1002),
+		Disqualified:   []bool{},
+		Inactive:       []bool{},
+	}
 	tests := map[string]struct {
 		currentSubmissions *Submissions
 		expectedResult     *Submission
@@ -19,33 +31,18 @@ func TestLead(t *testing.T) {
 				requestID: big.NewInt(100),
 				Submissions: []*Submission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult1,
+						Votes:     1,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 2,
+						DKGResult: dkgResult2,
+						Votes:     2,
 					},
 				},
 			},
 			expectedResult: &Submission{
-				DKGResult: &DKGResult{
-					Success:        true,
-					GroupPublicKey: big.NewInt(1002),
-					Disqualified:   []bool{},
-					Inactive:       []bool{},
-				},
-				Votes: 2,
+				DKGResult: dkgResult2,
+				Votes:     2,
 			},
 		},
 		"1st submission has high votes": {
@@ -53,33 +50,18 @@ func TestLead(t *testing.T) {
 				requestID: big.NewInt(100),
 				Submissions: []*Submission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 3,
+						DKGResult: dkgResult1,
+						Votes:     3,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 2,
+						DKGResult: dkgResult2,
+						Votes:     2,
 					},
 				},
 			},
 			expectedResult: &Submission{
-				DKGResult: &DKGResult{
-					Success:        true,
-					GroupPublicKey: big.NewInt(1001),
-					Disqualified:   []bool{},
-					Inactive:       []bool{},
-				},
-				Votes: 3,
+				DKGResult: dkgResult1,
+				Votes:     3,
 			},
 		},
 		"submission has same votes": {
@@ -87,33 +69,18 @@ func TestLead(t *testing.T) {
 				requestID: big.NewInt(100),
 				Submissions: []*Submission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult1,
+						Votes:     1,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult2,
+						Votes:     1,
 					},
 				},
 			},
 			expectedResult: &Submission{
-				DKGResult: &DKGResult{
-					Success:        true,
-					GroupPublicKey: big.NewInt(1001),
-					Disqualified:   []bool{},
-					Inactive:       []bool{},
-				},
-				Votes: 1,
+				DKGResult: dkgResult1,
+				Votes:     1,
 			},
 		},
 	}
