@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -56,10 +57,10 @@ func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 	msg := &MemberCommitmentsMessage{
 		senderID: MemberID(1410),
-		commitments: []*big.Int{
-			big.NewInt(966),
-			big.NewInt(1385),
-			big.NewInt(1569),
+		commitments: []*bn256.G1{
+			new(bn256.G1).ScalarBaseMult(big.NewInt(966)),
+			new(bn256.G1).ScalarBaseMult(big.NewInt(1385)),
+			new(bn256.G1).ScalarBaseMult(big.NewInt(1569)),
 		},
 	}
 	unmarshaled := &MemberCommitmentsMessage{}
@@ -135,11 +136,11 @@ func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 	msg := &MemberPublicKeySharePointsMessage{
 		senderID: MemberID(987112),
-		publicKeySharePoints: []*big.Int{
-			big.NewInt(18211),
-			big.NewInt(12311),
-			big.NewInt(18828),
-			big.NewInt(88711),
+		publicKeySharePoints: []*bn256.G1{
+			new(bn256.G1).ScalarBaseMult(big.NewInt(18211)),
+			new(bn256.G1).ScalarBaseMult(big.NewInt(12311)),
+			new(bn256.G1).ScalarBaseMult(big.NewInt(18828)),
+			new(bn256.G1).ScalarBaseMult(big.NewInt(88711)),
 		},
 	}
 	unmarshaled := &MemberPublicKeySharePointsMessage{}

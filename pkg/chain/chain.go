@@ -11,10 +11,13 @@ import (
 // LocalBlockCounter() for a local implementation.
 type BlockCounter interface {
 	// WaitForBlocks blocks at the caller until numBlocks new blocks have been
-	// seen.
+	// seen. If the number of blocks is zero or negative, it returns
+	// immediately.
 	WaitForBlocks(numBlocks int) error
 	// BlockWaiter returns a channel that will emit the current block height
 	// after the given number of blocks has elapsed and then immediately close.
+	// Reading from the returned channel immediately will effectively behave the
+	// same way as calling WaitForBlocks.
 	BlockWaiter(numBlocks int) (<-chan int, error)
 	// CurrentBlock returns the current block height.
 	CurrentBlock() (int, error)

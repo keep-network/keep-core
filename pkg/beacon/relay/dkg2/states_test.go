@@ -3,11 +3,11 @@ package dkg2
 import (
 	"fmt"
 	"math/big"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
@@ -17,15 +17,12 @@ func TestFullStateTransitions(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 
+	seed := big.NewInt(18293712839)
+
 	channels := make([]net.BroadcastChannel, groupSize)
 	states := make([]keyGenerationState, groupSize)
 
 	provider := local.Connect()
-
-	dkg, err := gjkr.GenerateDKG()
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	// Initialize one state and one channel per one member.
 	// Each state gets a separate channel to have a different transport
@@ -40,7 +37,7 @@ func TestFullStateTransitions(t *testing.T) {
 			gjkr.MemberID(i+1),
 			make([]gjkr.MemberID, 0),
 			threshold,
-			dkg,
+			seed,
 		)
 
 		Init(channel)
@@ -65,7 +62,7 @@ func TestFullStateTransitions(t *testing.T) {
 
 	// Check whether all states are final and extract generated group
 	// public keys.
-	groupPublicKeys := make([]*big.Int, groupSize)
+	groupPublicKeys := make([]*bn256.G1, groupSize)
 	for i, state := range states {
 		finalState, ok := state.(*combiningState)
 		if !ok {
@@ -77,11 +74,11 @@ func TestFullStateTransitions(t *testing.T) {
 
 	// Check whether all group public keys are the same.
 	for i := 1; i < len(groupPublicKeys); i++ {
-		if !reflect.DeepEqual(groupPublicKeys[i], groupPublicKeys[0]) {
+		if groupPublicKeys[i].String() != groupPublicKeys[0].String() {
 			t.Fatalf(
 				"unexpected group public key\nexpected: %v\nactual:   %v",
-				groupPublicKeys[i],
-				groupPublicKeys[0],
+				groupPublicKeys[i].String(),
+				groupPublicKeys[0].String(),
 			)
 		}
 	}

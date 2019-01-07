@@ -506,7 +506,7 @@ func (pjs *pointsJustificationState) receive(msg net.Message) error {
 func (pjs *pointsJustificationState) nextState() keyGenerationState {
 	return &reconstructionState{
 		channel: pjs.channel,
-		member:  pjs.member.InitializeReconstruction(),
+		member:  pjs.member.InitializeRevealing().InitializeReconstruction(),
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -17,12 +18,12 @@ type memberCore struct {
 	// Group to which this member belongs.
 	group *Group
 
-	// DKG Protocol configuration parameters.
-	protocolConfig *DKG
-
-	// evidenceLog provides access to messages from earlier protocol phases
+	// Evidence log provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
+
+	// Cryptographic protocol parameters, the same for all members in the group.
+	protocolParameters *protocolParameters
 }
 
 // LocalMember represents one member in a threshold group, prior to the
@@ -93,9 +94,9 @@ type CommitmentsVerifyingMember struct {
 	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
 	receivedValidSharesS, receivedValidSharesT map[MemberID]*big.Int
-	// Commitments to coefficients received from peer group members which passed
-	// the validation.
-	receivedValidPeerCommitments map[MemberID][]*big.Int
+	// Valid commitments to secret shares polynomial coefficients received from
+	// other group members.
+	receivedValidPeerCommitments map[MemberID][]*bn256.G1
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -109,20 +110,19 @@ type SharesJustifyingMember struct {
 
 // QualifiedMember represents one member in a threshold key sharing group, after
 // it completed secret shares justification. The member holds a share of group
-// master private key.
+// group private key.
 //
 // Executes Phase 6 of the protocol.
 type QualifiedMember struct {
 	*SharesJustifyingMember
 
-	// Member's share of the secret master private key. It is denoted as `z_ik`
+	// Member's share of the secret group private key. It is denoted as `z_ik`
 	// in protocol specification.
-	// TODO: unsure if we need shareT `x'_i` field, it should be removed if not used in further steps
-	masterPrivateKeyShare, shareT *big.Int
+	groupPrivateKeyShare *big.Int
 }
 
 // SharingMember represents one member in a threshold key sharing group, after it
-// has been qualified to the master private key sharing group. A member shares
+// has been qualified to the group private key sharing. A member shares
 // public values of it's polynomial coefficients with peer members.
 //
 // Executes Phase 7 and Phase 8 of the protocol.
@@ -132,10 +132,10 @@ type SharingMember struct {
 	// Public values of each polynomial `a` coefficient defined in secretCoefficients
 	// field. It is denoted as `A_ik` in protocol specification. The zeroth
 	// public key share point `A_i0` is a member's public key share.
-	publicKeySharePoints []*big.Int
-	// Public key share points received from peer group members which passed the
-	// validation. Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerPublicKeySharePoints map[MemberID][]*big.Int
+	publicKeySharePoints []*bn256.G1
+	// Public key share points received from other group members which passed
+	// the validation. Defined as `A_jk` across the protocol documentation.
+	receivedValidPeerPublicKeySharePoints map[MemberID][]*bn256.G1
 }
 
 // PointsJustifyingMember represents one member in a threshold key sharing group,
@@ -147,12 +147,21 @@ type PointsJustifyingMember struct {
 	*SharingMember
 }
 
+// RevealingMember represents one member in a threshold sharing group who is
+// revealing ephemeral private keys used to create ephemeral symmetric key
+// to communicate with other members disqualified in Phase 9.
+//
+// Executes Phase 10 of the protocol.
+type RevealingMember struct {
+	*PointsJustifyingMember
+}
+
 // ReconstructingMember represents one member in a threshold sharing group who
 // is reconstructing individual private and public keys of disqualified group members.
 //
 // Executes Phase 11 of the protocol.
 type ReconstructingMember struct {
-	*PointsJustifyingMember // TODO Update this when all phases of protocol are ready
+	*RevealingMember
 
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
@@ -164,7 +173,7 @@ type ReconstructingMember struct {
 	// Stored as `<m, y_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
-	reconstructedIndividualPublicKeys map[MemberID]*big.Int
+	reconstructedIndividualPublicKeys map[MemberID]*bn256.G1
 }
 
 // CombiningMember represents one member in a threshold sharing group who is
@@ -176,7 +185,20 @@ type CombiningMember struct {
 
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
-	groupPublicKey *big.Int
+	groupPublicKey *bn256.G1
+}
+
+// InitializeFinalization returns a member to perform next protocol operations.
+func (cm *CombiningMember) InitializeFinalization() *FinalizingMember {
+	return &FinalizingMember{CombiningMember: cm}
+}
+
+// FinalizingMember represents one member in a threshold key sharing group,
+// after it completed distributed key generation.
+//
+// Prepares a result to publish in Phase 13 of the protocol.
+type FinalizingMember struct {
+	*CombiningMember
 }
 
 // NewMember creates a new member in an initial state, ready to execute DKG
@@ -185,19 +207,51 @@ func NewMember(
 	memberID MemberID,
 	groupMembers []MemberID,
 	dishonestThreshold int,
-	dkg *DKG,
+	seed *big.Int,
 ) *LocalMember {
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
-			&Group{dishonestThreshold, groupMembers},
-			dkg,
+			&Group{
+				dishonestThreshold,
+				groupMembers,
+				[]MemberID{},
+				[]MemberID{},
+			},
 			newDkgEvidenceLog(),
+			newProtocolParameters(seed),
 		},
 	}
 }
 
-// Int converts `MemberID` to `big.Int`
+// PublishingIndex returns sequence number of the current member in a publishing
+// group. Counting starts with `0`.
+func (fm *FinalizingMember) PublishingIndex() int {
+	for index, memberID := range fm.group.MemberIDs() {
+		if fm.ID == memberID {
+			return index
+		}
+	}
+	return -1 // should never happen
+}
+
+// Result can be either the successful computation of a round of distributed key
+// generation, or a notification of failure.
+//
+// If the number of disqualified and inactive members is greater than half of the
+// configured dishonest threshold, the group is deemed too weak, and the result
+// is set to failure. Otherwise, it returns the generated group public key along
+// with the disqualified and inactive members.
+func (fm *FinalizingMember) Result() *Result {
+	return &Result{
+		Success:        fm.group.isThresholdSatisfied(),
+		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
+		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
+		Inactive:       fm.group.inactiveMemberIDs,     // IA
+	}
+}
+
+// Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
 }
@@ -208,11 +262,6 @@ func (id MemberID) Int() *big.Int {
 // protocol will be implemented.
 func (mc *memberCore) AddToGroup(memberID MemberID) {
 	mc.group.RegisterMemberID(memberID)
-}
-
-// ProtocolConfig returns current member's DKG protocol config.
-func (mc *memberCore) ProtocolConfig() *DKG {
-	return mc.protocolConfig
 }
 
 // InitializeEphemeralKeysGeneration performs a transition of a member state
@@ -247,7 +296,7 @@ func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVeri
 		CommittingMember:             cm,
 		receivedValidSharesS:         make(map[MemberID]*big.Int),
 		receivedValidSharesT:         make(map[MemberID]*big.Int),
-		receivedValidPeerCommitments: make(map[MemberID][]*big.Int),
+		receivedValidPeerCommitments: make(map[MemberID][]*bn256.G1),
 	}
 }
 
@@ -265,7 +314,7 @@ func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
 func (qm *QualifiedMember) InitializeSharing() *SharingMember {
 	return &SharingMember{
 		QualifiedMember:                       qm,
-		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*big.Int),
+		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*bn256.G1),
 	}
 }
 
@@ -274,12 +323,17 @@ func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember
 	return &PointsJustifyingMember{sm}
 }
 
+// InitializeRevealing returns a member to perform next protocol operations.
+func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
+	return &RevealingMember{sm}
+}
+
 // InitializeReconstruction returns a member to perform next protocol operations.
-func (pjm *PointsJustifyingMember) InitializeReconstruction() *ReconstructingMember {
+func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
-		PointsJustifyingMember:             pjm,
+		RevealingMember:                    rm,
 		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
-		reconstructedIndividualPublicKeys:  make(map[MemberID]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[MemberID]*bn256.G1),
 	}
 }
 
@@ -288,17 +342,23 @@ func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
 	return &CombiningMember{ReconstructingMember: rm}
 }
 
+// individualPrivateKey returns current member's individual private key.
+// Individual private key is zeroth polynomial coefficient `a_i0`.
+func (rm *ReconstructingMember) individualPrivateKey() *big.Int {
+	return rm.secretCoefficients[0]
+}
+
 // individualPublicKey returns current member's individual public key.
 // Individual public key is zeroth public key share point `A_i0`.
-func (rm *ReconstructingMember) individualPublicKey() *big.Int {
+func (rm *ReconstructingMember) individualPublicKey() *bn256.G1 {
 	return rm.publicKeySharePoints[0]
 }
 
 // receivedValidPeerIndividualPublicKeys returns individual public keys received
-// from peer members which passed the validation. Individual public key is zeroth
+// from other members which passed the validation. Individual public key is zeroth
 // public key share point `A_j0`.
-func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
-	var receivedValidPeerIndividualPublicKeys []*big.Int
+func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G1 {
+	var receivedValidPeerIndividualPublicKeys []*bn256.G1
 
 	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
 		receivedValidPeerIndividualPublicKeys = append(
@@ -310,7 +370,7 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*big.Int {
 }
 
 // GroupPublicKey returns the key generated for the group by DKG protocol.
-func (cm *CombiningMember) GroupPublicKey() *big.Int {
+func (cm *CombiningMember) GroupPublicKey() *bn256.G1 {
 	return cm.groupPublicKey
 }
 
