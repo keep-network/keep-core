@@ -161,7 +161,7 @@ type symmetricKeyGeneratingState struct {
 	previousPhaseMessages []*gjkr.EphemeralPublicKeyMessage
 }
 
-func (skgs *symmetricKeyGeneratingState) activeBlocks() int { return 1 }
+func (skgs *symmetricKeyGeneratingState) activeBlocks() int { return 0 }
 
 func (skgs *symmetricKeyGeneratingState) initiate() error {
 	return skgs.member.GenerateSymmetricKeys(skgs.previousPhaseMessages)
@@ -314,7 +314,7 @@ type sharesJustificationState struct {
 	previousPhaseAccusationsMessages []*gjkr.SecretSharesAccusationsMessage
 }
 
-func (sjs *sharesJustificationState) activeBlocks() int { return 1 }
+func (sjs *sharesJustificationState) activeBlocks() int { return 0 }
 
 func (sjs *sharesJustificationState) initiate() error {
 	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
@@ -353,7 +353,7 @@ type qualifiedState struct {
 	member  *gjkr.QualifiedMember
 }
 
-func (qs *qualifiedState) activeBlocks() int { return 1 }
+func (qs *qualifiedState) activeBlocks() int { return 0 }
 
 func (qs *qualifiedState) initiate() error {
 	qs.member.CombineMemberShares()
@@ -483,7 +483,7 @@ type pointsJustificationState struct {
 	previousPhaseMessages []*gjkr.PointsAccusationsMessage
 }
 
-func (pjs *pointsJustificationState) activeBlocks() int { return 1 }
+func (pjs *pointsJustificationState) activeBlocks() int { return 0 }
 
 func (pjs *pointsJustificationState) initiate() error {
 	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
@@ -522,7 +522,7 @@ type reconstructionState struct {
 	member  *gjkr.ReconstructingMember
 }
 
-func (rp *reconstructionState) activeBlocks() int { return 1 }
+func (rp *reconstructionState) activeBlocks() int { return 0 }
 
 func (rp *reconstructionState) initiate() error {
 	// TODO: implement once member disqualification will be ready
@@ -552,7 +552,7 @@ type combiningState struct {
 	member  *gjkr.CombiningMember
 }
 
-func (cs *combiningState) activeBlocks() int { return 1 }
+func (cs *combiningState) activeBlocks() int { return 0 }
 
 func (cs *combiningState) initiate() error {
 	cs.member.CombineGroupPublicKey()
