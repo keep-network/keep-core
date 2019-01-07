@@ -29,4 +29,7 @@ func Init(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &gjkr.PointsAccusationsMessage{}
 	})
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &gjkr.DisqualifiedEphemeralKeysMessage{}
+	})
 }
