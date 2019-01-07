@@ -96,8 +96,8 @@ func TestHash(t *testing.T) {
 		Inactive:       []bool{false, false, true, false},
 	}
 	actualResult := r1.Hash()
-	expectedResult := []byte{8, 164, 224, 67, 206, 144, 73, 72, 162, 22, 148, 136, 241,
-		243, 2, 210, 221, 121, 31, 208, 51, 144, 48, 23, 142, 126, 12, 7, 222, 185, 107, 98}
+	expectedResult := []byte{253, 157, 252, 65, 254, 175, 165, 131, 87, 84, 98, 128, 37, 49,
+		106, 147, 230, 64, 192, 22, 193, 71, 150, 55, 101, 1, 110, 4, 10, 189, 121, 38}
 	if !bytes.Equal(actualResult, expectedResult) {
 		t.Errorf("\nexpected: %v\nactual:   %v\n", expectedResult, actualResult)
 	}
@@ -111,7 +111,7 @@ func TestSerialize(t *testing.T) {
 		Inactive:       []bool{false, false, true, false},
 	}
 	actualResult := r1.serialize()
-	expectedResult := []byte{1, 100, 1, 0, 1, 0, 0, 0, 1, 0}
+	expectedResult := []byte{1, 0, 0, 0, 1, 100, 0, 0, 0, 4, 1, 0, 1, 0, 0, 0, 0, 4, 0, 0, 1, 0}
 	if !bytes.Equal(actualResult, expectedResult) {
 		t.Errorf("\nexpected: %v\nactual:   %v\n", expectedResult, actualResult)
 	}

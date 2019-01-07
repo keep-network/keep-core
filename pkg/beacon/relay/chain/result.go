@@ -3,7 +3,9 @@ package chain
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 )
@@ -99,17 +101,26 @@ func (r *DKGResult) serialize() []byte {
 		return []byte{0x00}
 	}
 
-	var buf bytes.Buffer
-	buf.Write(boolToByte(r.Success))
-	gpk := r.GroupPublicKey.Bytes()
-	binary.Write(&buf, binary.BigEndian, len(gpk))
-	buf.Write(gpk)
-	binary.Write(&buf, binary.BigEndian, len(r.Disqualified))
-	for _, b := range r.Disqualified {
+	var buf bytes.Buffer                                         //
+	buf.Write(boolToByte(r.Success))                             // Byte 0 - 0x01 == true, 0x00 == false - r1.Success
+	gpk := r.GroupPublicKey.Bytes()                              //
+	err := binary.Write(&buf, binary.BigEndian, int32(len(gpk))) // Byte 1..4 - length of the group public key in BigEndian format
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
+	}
+	buf.Write(gpk)                                                         // Byte 5..X - the group public key in bytes
+	err = binary.Write(&buf, binary.BigEndian, int32(len(r.Disqualified))) // Byte X+1..X+5 - length of the set of Disqualified
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
+	}
+	for _, b := range r.Disqualified { // Byte X+6..Y - Set of disqualified as 0x01, 0x00 for true/false
 		buf.Write(boolToByte(b))
 	}
-	binary.Write(&buf, binary.BigEndian, len(r.Inactive))
-	for _, b := range r.Inactive {
+	err = binary.Write(&buf, binary.BigEndian, int32(len(r.Inactive))) // Byte Y+1..Y+5 - length of the set of Inactive
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
+	}
+	for _, b := range r.Inactive { // Byte X+6..Y - Set of inactive as 0x01, 0x00 for true/false
 		buf.Write(boolToByte(b))
 	}
 	return buf.Bytes()
