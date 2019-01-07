@@ -91,7 +91,7 @@ func TestLead(t *testing.T) {
 			if test.expectedResult == nil {
 				if actualResult != nil {
 					t.Errorf(
-						"\nexpected: %s\nactual:   %+v",
+						"\nexpected: %s\nactual:   %v",
 						[]byte(nil),
 						test.expectedResult,
 					)
@@ -99,7 +99,7 @@ func TestLead(t *testing.T) {
 			} else {
 				if !test.expectedResult.DKGResult.Equals(actualResult.DKGResult) {
 					t.Errorf(
-						"\nexpected: %+v\nactual:   %+v",
+						"\nexpected: %v\nactual:   %v",
 						test.expectedResult,
 						actualResult,
 					)
@@ -110,7 +110,6 @@ func TestLead(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-
 	dkgResult1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: big.NewInt(1001),
@@ -129,8 +128,6 @@ func TestContains(t *testing.T) {
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
-	_ = dkgResult3
-
 	tests := map[string]struct {
 		currentSubmissions *Submissions
 		lookFor            *DKGResult
@@ -204,7 +201,7 @@ func TestContains(t *testing.T) {
 			actualResult := test.currentSubmissions.Contains(test.lookFor)
 			if test.expectedResult != actualResult {
 				t.Errorf(
-					"\nexpected: %+v\nactual:   %+v",
+					"\nexpected: %v\nactual:   %v",
 					test.expectedResult,
 					actualResult,
 				)
