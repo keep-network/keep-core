@@ -8,7 +8,7 @@ import (
 )
 
 // GetDKGSubmissions returns the set of submissions.
-func (ec *ethereumChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
+func (ec *ethereumChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmissions {
 	// TODO -- implement GetDKGSubmissions
 	return nil
 }

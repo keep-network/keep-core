@@ -46,16 +46,15 @@ type localChain struct {
 
 	stakerList []string
 
-	// Track the submitted votes -
-	submissionsMutex sync.Mutex
-	submissions      map[string]*relaychain.Submissions
-	// vote handler
+	// Track the submitted votes.
+	submissionsMutex  sync.Mutex
+	submissions       map[string]*relaychain.DKGSubmissions
 	voteHandler       []func(dkgResultVote *event.DKGResultVote)
 	groupPublicKeyMap map[string]*big.Int
 }
 
 // GetDKGSubmissions returns the current set of submissions for the requestID.
-func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
+func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmissions {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
 	return c.submissions[requestID.String()]
@@ -70,10 +69,10 @@ func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 		fmt.Fprintf(os.Stderr, "Missing requestID in c.submissions - vote will be ignored.\n")
 		return
 	}
-	for pos, sub := range x.Submissions {
+	for pos, sub := range x.DKGSubmissions {
 		if bytes.Equal(sub.DKGResult.Hash(), dkgResultHash) {
 			sub.Votes++
-			x.Submissions[pos] = sub
+			x.DKGSubmissions[pos] = sub
 			dkgResultVote := &event.DKGResultVote{
 				RequestID: requestID,
 			}
@@ -255,7 +254,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(),
-		submissions:                  make(map[string]*relaychain.Submissions),
+		submissions:                  make(map[string]*relaychain.DKGSubmissions),
 		groupPublicKeyMap:            make(map[string]*big.Int),
 	}
 }
@@ -369,12 +368,12 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submissionsMutex.Lock()
 	if c.submissions == nil {
-		c.submissions = make(map[string]*relaychain.Submissions)
+		c.submissions = make(map[string]*relaychain.DKGSubmissions)
 	}
 	if _, ok := c.submissions[requestID.String()]; !ok {
 		groupPublicKey := c.getGroupPublicKeyFromRequestID(requestID)
-		c.submissions[requestID.String()] = &relaychain.Submissions{
-			Submissions: []*relaychain.Submission{
+		c.submissions[requestID.String()] = &relaychain.DKGSubmissions{
+			DKGSubmissions: []*relaychain.DKGSubmission{
 				{
 					DKGResult: &relaychain.DKGResult{
 						Success:        true,

@@ -19,17 +19,17 @@ func TestLead(t *testing.T) {
 		Inactive:       []bool{},
 	}
 	tests := map[string]struct {
-		currentSubmissions *Submissions
-		expectedResult     *Submission
+		currentSubmissions *DKGSubmissions
+		expectedResult     *DKGSubmission
 	}{
 		"empty set of submissions": {
-			currentSubmissions: &Submissions{},
-			expectedResult:     nil, // &Submission{},
+			currentSubmissions: &DKGSubmissions{},
+			expectedResult:     nil, // &DKGSubmission{},
 		},
 		"2nd submission has high votes": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
@@ -40,15 +40,15 @@ func TestLead(t *testing.T) {
 					},
 				},
 			},
-			expectedResult: &Submission{
+			expectedResult: &DKGSubmission{
 				DKGResult: dkgResult2,
 				Votes:     2,
 			},
 		},
 		"1st submission has high votes": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     3,
@@ -59,15 +59,15 @@ func TestLead(t *testing.T) {
 					},
 				},
 			},
-			expectedResult: &Submission{
+			expectedResult: &DKGSubmission{
 				DKGResult: dkgResult1,
 				Votes:     3,
 			},
 		},
 		"submission has same votes": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
@@ -78,7 +78,7 @@ func TestLead(t *testing.T) {
 					},
 				},
 			},
-			expectedResult: &Submission{
+			expectedResult: &DKGSubmission{
 				DKGResult: dkgResult1,
 				Votes:     1,
 			},
@@ -129,12 +129,12 @@ func TestContains(t *testing.T) {
 		Inactive:       []bool{},
 	}
 	tests := map[string]struct {
-		currentSubmissions *Submissions
+		currentSubmissions *DKGSubmissions
 		lookFor            *DKGResult
 		expectedResult     bool
 	}{
 		"empty set of submissions": {
-			currentSubmissions: &Submissions{},
+			currentSubmissions: &DKGSubmissions{},
 			lookFor: &DKGResult{
 				Success:        true,
 				GroupPublicKey: big.NewInt(1001),
@@ -144,9 +144,9 @@ func TestContains(t *testing.T) {
 			expectedResult: false,
 		},
 		"1st submission is a match": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
@@ -161,9 +161,9 @@ func TestContains(t *testing.T) {
 			expectedResult: true,
 		},
 		"2nd submission is a match": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
@@ -178,9 +178,9 @@ func TestContains(t *testing.T) {
 			expectedResult: true,
 		},
 		"not found - with current submissions": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
