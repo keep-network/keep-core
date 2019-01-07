@@ -277,12 +277,7 @@ func (c *localChain) RequestRelayEntry(
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
 func (c *localChain) IsDKGResultPublished(requestID *big.Int) bool {
-	for publishedRequestID := range c.submittedResults {
-		if publishedRequestID.Cmp(requestID) == 0 {
-			return true
-		}
-	}
-	return false
+	return c.submittedResults[requestID] != nil
 }
 
 // SubmitDKGResult submits the result to a chain.

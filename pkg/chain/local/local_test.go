@@ -99,7 +99,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 	}
 }
 
-func TestLocalIsAnyDKGResultPublished(t *testing.T) {
+func TestLocalIsDKGResultPublished(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
 	submittedRequestID := big.NewInt(1)
