@@ -1,4 +1,4 @@
-package publish
+package dkg2
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ type Publisher struct {
 	blockStep int
 }
 
-// PublishDKGResult sends a result containing i.a. group public key to the blockchain.
+// PublishResult sends a result containing i.a. group public key to the blockchain.
 // It checks if the result has already been published to the blockchain with
 // request ID specific for current DKG execution. If not, it determines if the
 // current member is eligable to result submission. If allowed, it submits the
@@ -34,7 +34,7 @@ type Publisher struct {
 // ID the phase is finished.
 //
 // See Phase 13 of the protocol specification.
-func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) error {
+func (pm *Publisher) PublishResult(result *relayChain.DKGResult) error {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
@@ -69,7 +69,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 		select {
 		case <-eligibleToSubmitWaiter:
 			errors := make(chan error)
-			chainRelay.SubmitDKGResult(pm.RequestID, resultToPublish).
+			chainRelay.SubmitDKGResult(pm.RequestID, result).
 				OnComplete(func(resultPublicationEvent *event.DKGResultPublication, err error) {
 					errors <- err
 				})

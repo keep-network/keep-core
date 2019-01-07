@@ -1,4 +1,4 @@
-package publish
+package dkg2
 
 import (
 	"math/big"
@@ -65,7 +65,7 @@ func TestPublishDKGResult(t *testing.T) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			err = publisher.PublishDKGResult(resultToPublish)
+			err = publisher.PublishResult(resultToPublish)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -172,7 +172,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			}
 
 			go func() {
-				err := publisher1.PublishDKGResult(test.resultToPublish1)
+				err := publisher1.PublishResult(test.resultToPublish1)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -185,7 +185,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			}()
 
 			go func() {
-				err := publisher2.PublishDKGResult(test.resultToPublish2)
+				err := publisher2.PublishResult(test.resultToPublish2)
 				if err != nil {
 					t.Fatal(err)
 				}
