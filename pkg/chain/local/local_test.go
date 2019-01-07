@@ -51,36 +51,35 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 func TestLocalBlockWaiter(t *testing.T) {
 	var tests = map[string]struct {
-		blockWait    int
-		expectation  time.Duration
-		errorMessage string
+		blockWait        int
+		expectedWaitTime time.Duration
 	}{
 		"does wait for a block": {
-			blockWait:    1,
-			expectation:  time.Duration(525) * time.Millisecond,
-			errorMessage: "Failed to wait for a single block; expected %s but took %s.",
+			blockWait:        1,
+			expectedWaitTime: blockTime,
 		},
-		"waited for a longer time": {
-			blockWait:    2,
-			expectation:  time.Duration(525*2) * time.Millisecond,
-			errorMessage: "Failed to wait for 2 blocks; expected %s but took %s.",
+		"does wait for two blocks": {
+			blockWait:        2,
+			expectedWaitTime: 2 * blockTime,
 		},
-		"doesn't wait if 0 blocks": {
-			blockWait:    0,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Failed for a 0 block wait; expected %s but took %s.",
+		"does wait for three blocks": {
+			blockWait:        3,
+			expectedWaitTime: 3 * blockTime,
 		},
-		"invalid value": {
-			blockWait:    -1,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Waiting for a time when it should have errored; expected %s but took %s.",
+		"does not wait for 0 blocks": {
+			blockWait:        0,
+			expectedWaitTime: 0,
+		},
+		"does not wait for negative number of blocks": {
+			blockWait:        -1,
+			expectedWaitTime: 0,
 		},
 	}
 
 	for testName, test := range tests {
+		test := test
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-
 			c := Connect(10, 4)
 			countWait, err := c.BlockCounter()
 			if err != nil {
@@ -92,8 +91,26 @@ func TestLocalBlockWaiter(t *testing.T) {
 			end := time.Now().UTC()
 
 			elapsed := end.Sub(start)
-			if test.expectation < elapsed {
-				t.Errorf(test.errorMessage, test.expectation, elapsed)
+
+			// Block waiter should wait for test.expectedWaitTime at minimum.
+			if elapsed < test.expectedWaitTime {
+				t.Errorf(
+					"waited less than expected; expected [%v] at min, waited [%v]",
+					test.expectedWaitTime,
+					elapsed,
+				)
+			}
+
+			// Block waiter should wait for test.expectedWaitTime plus some
+			// margin at maximum; the margin is the time needed for the return
+			// instructions to execute, setting it to 25ms for this test.
+			margin := time.Duration(25) * time.Millisecond
+			if elapsed > (test.expectedWaitTime + margin) {
+				t.Errorf(
+					"waited longer than expected; expected %v at max, waited %v",
+					test.expectedWaitTime,
+					elapsed,
+				)
 			}
 		})
 	}
@@ -102,24 +119,14 @@ func TestLocalBlockWaiter(t *testing.T) {
 func TestLocalIsDKGResultPublished(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
-	submittedRequestID1 := big.NewInt(1)
-	submittedResult11 := &relaychain.DKGResult{
+	submittedRequestID := big.NewInt(1)
+	submittedResult := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(11),
 	}
 
-	submittedRequestID2 := big.NewInt(2)
-	submittedResult21 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(21),
-	}
-
-	submittedResults[submittedRequestID1] = append(
-		submittedResults[submittedRequestID1],
-		submittedResult11,
-	)
-
-	submittedResults[submittedRequestID2] = append(
-		submittedResults[submittedRequestID2],
-		submittedResult21,
+	submittedResults[submittedRequestID] = append(
+		submittedResults[submittedRequestID],
+		submittedResult,
 	)
 
 	localChain := &localChain{
@@ -129,29 +136,21 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	var tests = map[string]struct {
 		requestID      *big.Int
-		dkgResult      *relaychain.DKGResult
 		expectedResult bool
 	}{
 		"matched": {
-			requestID:      submittedRequestID2,
-			dkgResult:      submittedResult21,
+			requestID:      submittedRequestID,
 			expectedResult: true,
 		},
 		"not matched - different request ID": {
-			requestID:      submittedRequestID2,
-			dkgResult:      submittedResult11,
-			expectedResult: false,
-		},
-		"not matched - different request ID and DKG Result": {
 			requestID:      big.NewInt(3),
-			dkgResult:      &relaychain.DKGResult{GroupPublicKey: big.NewInt(31)},
 			expectedResult: false,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := chainHandle.IsDKGResultPublished(test.requestID, test.dkgResult)
+			actualResult := chainHandle.IsDKGResultPublished(test.requestID)
 
 			if actualResult != test.expectedResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
