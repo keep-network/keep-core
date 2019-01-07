@@ -51,11 +51,6 @@ func TestResultEquals(t *testing.T) {
 			result2:        &Result{GroupPublicKey: key1},
 			expectedResult: true,
 		},
-		"group public keys - nil and set": {
-			result1:        &Result{GroupPublicKey: nil},
-			result2:        &Result{GroupPublicKey: key2},
-			expectedResult: false,
-		},
 		"group public keys - not equal": {
 			result1:        &Result{GroupPublicKey: key1},
 			result2:        &Result{GroupPublicKey: key2},
@@ -94,23 +89,67 @@ func TestResultEquals(t *testing.T) {
 	}
 }
 
+func TestPublicKeysEqual(t *testing.T) {
+	var tests = map[string]struct {
+		key1           *bn256.G1
+		key2           *bn256.G1
+		expectedResult bool
+	}{
+		"both nil": {
+			key1:           nil,
+			key2:           nil,
+			expectedResult: true,
+		},
+		"nil and set": {
+			key1:           nil,
+			key2:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			expectedResult: false,
+		},
+		"set and nil": {
+			key1:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			key2:           nil,
+			expectedResult: false,
+		},
+		"equal": {
+			key1:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			key2:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			expectedResult: true,
+		},
+		"not equal": {
+			key1:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			key2:           new(bn256.G1).ScalarBaseMult(big.NewInt(14)),
+			expectedResult: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResult := publicKeysEqual(test.key1, test.key2)
+
+			if test.expectedResult != actualResult {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
+			}
+		})
+	}
+}
+
 func TestMemberIDSlicesEqual(t *testing.T) {
 	var tests = map[string]struct {
 		slice1         []MemberID
 		slice2         []MemberID
 		expectedResult bool
 	}{
-		"equal - nil": {
+		"both nil": {
 			slice1:         nil,
 			slice2:         nil,
 			expectedResult: true,
 		},
-		"equal - empty": {
+		"both empty": {
 			slice1:         []MemberID{},
 			slice2:         []MemberID{},
 			expectedResult: true,
 		},
-		"equal": {
+		"both equal": {
 			slice1:         []MemberID{1, 2, 3},
 			slice2:         []MemberID{1, 2, 3},
 			expectedResult: true,
@@ -131,21 +170,31 @@ func TestMemberIDSlicesEqual(t *testing.T) {
 			slice2:         []MemberID{1, 2, 3},
 			expectedResult: false,
 		},
-		"not equal - nil": {
+		"not equal - nil and set": {
 			slice1:         nil,
 			slice2:         []MemberID{1, 2, 3},
 			expectedResult: false,
 		},
-		"not equal - empty": {
+		"not equal - set and nil": {
+			slice1:         []MemberID{1, 2, 3},
+			slice2:         nil,
+			expectedResult: false,
+		},
+		"not equal - empty and filled": {
 			slice1:         []MemberID{},
 			slice2:         []MemberID{1, 2, 3},
+			expectedResult: false,
+		},
+		"not equal - filled and empty": {
+			slice1:         []MemberID{1, 2, 3},
+			slice2:         []MemberID{},
 			expectedResult: false,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := MemberIDSlicesEqual(test.slice1, test.slice2)
+			actualResult := memberIDSlicesEqual(test.slice1, test.slice2)
 
 			if test.expectedResult != actualResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)

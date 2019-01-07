@@ -10,7 +10,7 @@ func TestGenerateResult(t *testing.T) {
 
 	members, err := initializeFinalizingMembersGroup(threshold, groupSize)
 	if err != nil {
-		t.Fatalf("%s", err)
+		t.Fatal(err)
 	}
 
 	var tests = map[string]struct {
