@@ -30,11 +30,12 @@ type Publisher struct {
 // current member is eligable to result submission. If allowed, it submits the
 // results to the blockchain.
 // When member is waiting for their round the function keeps tracking results being
-// published to the blockchain. If any result is published for the current request
-// ID the phase is finished.
+// published to the blockchain. If any result is published for the current
+// request ID, the current member finishes the phase immediately, without
+// publishing its own result.
 //
 // See Phase 13 of the protocol specification.
-func (pm *Publisher) PublishResult(result *relayChain.DKGResult) error {
+func (pm *Publisher) PublishResult(result *relayChain.DKGResult) (int, error) {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
@@ -48,12 +49,12 @@ func (pm *Publisher) PublishResult(result *relayChain.DKGResult) error {
 	// Check if any result has already been published to the chain with current
 	// request ID.
 	if chainRelay.IsDKGResultPublished(pm.RequestID) {
-		return nil
+		return -1, nil
 	}
 
 	blockCounter, err := pm.chainHandle.BlockCounter()
 	if err != nil {
-		return fmt.Errorf("could not initialize block counter [%v]", err)
+		return -1, fmt.Errorf("could not initialize block counter [%v]", err)
 	}
 
 	// Waits until the current member is eligible to submit a result to the
@@ -62,21 +63,25 @@ func (pm *Publisher) PublishResult(result *relayChain.DKGResult) error {
 		(pm.publishingIndex - 1) * pm.blockStep,
 	)
 	if err != nil {
-		return fmt.Errorf("block waiter failure [%v]", err)
+		return -1, fmt.Errorf("block waiter failure [%v]", err)
 	}
 
 	for {
 		select {
-		case <-eligibleToSubmitWaiter:
+		case blockHeight := <-eligibleToSubmitWaiter:
 			errors := make(chan error)
+			defer close(errors)
+
+			subscription.Unsubscribe()
+
 			chainRelay.SubmitDKGResult(pm.RequestID, result).
 				OnComplete(func(resultPublicationEvent *event.DKGResultPublication, err error) {
 					errors <- err
 				})
-			return <-errors
+			return blockHeight, <-errors
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
-				return nil
+				return -1, nil // leave without publishing the result
 			}
 		}
 	}

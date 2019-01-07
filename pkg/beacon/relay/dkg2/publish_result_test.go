@@ -56,25 +56,21 @@ func TestPublishDKGResult(t *testing.T) {
 			}
 
 			chainRelay := publisher.chainHandle.ThresholdRelay()
-			blockCounter, err := publisher.chainHandle.BlockCounter()
-			if err != nil {
-				t.Fatal(err)
-			}
 
 			if chainRelay.IsDKGResultPublished(publisher.RequestID) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			err = publisher.PublishResult(resultToPublish)
+			currentBlock, err := publisher.PublishResult(resultToPublish)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
-			currentBlock, err := blockCounter.CurrentBlock()
-			if err != nil {
-				t.Fatal(err)
-			}
 			if test.expectedTimeEnd != currentBlock {
-				t.Fatalf("invalid current block\nexpected: %v\nactual:   %v\n", test.expectedTimeEnd, currentBlock)
+				t.Fatalf(
+					"invalid current block\nexpected: %v\nactual:   %v\n",
+					test.expectedTimeEnd,
+					currentBlock,
+				)
 			}
 			if !chainRelay.IsDKGResultPublished(publisher.RequestID) {
 				t.Fatalf("result is not published on chain")
@@ -88,6 +84,13 @@ func TestPublishDKGResult(t *testing.T) {
 // member loop should be aborted and result published by the first member should
 // be returned.
 func TestConcurrentPublishDKGResult(t *testing.T) {
+	setExpectedBlockEnd := func(initialBlock, expectedDuration int) int {
+		if expectedDuration >= 0 {
+			return initialBlock + expectedDuration
+		}
+		return expectedDuration
+	}
+
 	threshold := 2
 	groupSize := 5
 	blockStep := 2 // t_step
@@ -118,8 +121,8 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: 0, // (P1-1) * t_step
-			expectedDuration2: 0, // (P1-1) * t_step
+			expectedDuration1: 0,  // (P1-1) * t_step
+			expectedDuration2: -1, // result already published by member 1
 		},
 		"two members publish different results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -130,8 +133,8 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: 0, // (P1-1) * t_step
-			expectedDuration2: 0, // (P1-1) * t_step
+			expectedDuration1: 0,  // (P1-1) * t_step
+			expectedDuration2: -1, // result already published by member 1
 		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -158,25 +161,16 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			publisher1.chainHandle = chainHandle
 			publisher2.chainHandle = chainHandle
 
-			expectedBlockEnd1 := initialBlock + test.expectedDuration1
-			expectedBlockEnd2 := initialBlock + test.expectedDuration2
+			expectedBlockEnd1 := setExpectedBlockEnd(initialBlock, test.expectedDuration1)
+			expectedBlockEnd2 := setExpectedBlockEnd(initialBlock, test.expectedDuration2)
 
 			result1Chan := make(chan int)
 			defer close(result1Chan)
 			result2Chan := make(chan int)
 			defer close(result2Chan)
 
-			blockCounter, err := chainHandle.BlockCounter()
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			go func() {
-				err := publisher1.PublishResult(test.resultToPublish1)
-				if err != nil {
-					t.Fatal(err)
-				}
-				currentBlock, err := blockCounter.CurrentBlock()
+				currentBlock, err := publisher1.PublishResult(test.resultToPublish1)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -185,11 +179,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			}()
 
 			go func() {
-				err := publisher2.PublishResult(test.resultToPublish2)
-				if err != nil {
-					t.Fatal(err)
-				}
-				currentBlock, err := blockCounter.CurrentBlock()
+				currentBlock, err := publisher2.PublishResult(test.resultToPublish2)
 				if err != nil {
 					t.Fatal(err)
 				}
