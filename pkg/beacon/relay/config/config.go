@@ -18,6 +18,9 @@ type Chain struct {
 	// final chance to submit tickets is called reactive ticket submission
 	// (defined in the group selection algorithm, 2b).
 	TicketSubmissionTimeout int
+	// TicketChallengeTimeout is the duration (in blocks) the staker has to
+	// submit any challenges for tickets that fail any checks.
+	TicketChallengeTimeout int
 	// MinimumStake is an on-chain value representing the minimum necessary
 	// amount a client must lock up to submit a single ticket
 	MinimumStake *big.Int
