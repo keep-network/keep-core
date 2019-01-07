@@ -84,7 +84,7 @@ func TestPublishDKGResult(t *testing.T) {
 // member loop should be aborted and result published by the first member should
 // be returned.
 func TestConcurrentPublishDKGResult(t *testing.T) {
-	setExpectedBlockEnd := func(initialBlock, expectedDuration int) int {
+	calculateExpectedBlockEnd := func(initialBlock, expectedDuration int) int {
 		if expectedDuration >= 0 {
 			return initialBlock + expectedDuration
 		}
@@ -161,8 +161,8 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			publisher1.chainHandle = chainHandle
 			publisher2.chainHandle = chainHandle
 
-			expectedBlockEnd1 := setExpectedBlockEnd(initialBlock, test.expectedDuration1)
-			expectedBlockEnd2 := setExpectedBlockEnd(initialBlock, test.expectedDuration2)
+			expectedBlockEnd1 := calculateExpectedBlockEnd(initialBlock, test.expectedDuration1)
+			expectedBlockEnd2 := calculateExpectedBlockEnd(initialBlock, test.expectedDuration2)
 
 			result1Chan := make(chan int)
 			defer close(result1Chan)
