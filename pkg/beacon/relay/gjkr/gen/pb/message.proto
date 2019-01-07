@@ -38,3 +38,8 @@ message PointsAccusations {
     bytes senderID = 1;
     map<string, bytes> accusedMembersKeys = 2;
 }
+
+message DisqualifiedEphemeralKeys {
+    bytes senderID = 1;
+    map<string, bytes> privateKeys = 2;
+}
