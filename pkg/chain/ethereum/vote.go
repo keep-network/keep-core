@@ -13,8 +13,8 @@ func (ec *ethereumChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSu
 	return nil
 }
 
-// Vote increments the vote for requestID
-func (ec *ethereumChain) Vote(requestID *big.Int, dkgResultHash []byte) {
+// DKGResultVote increments the vote for requestID
+func (ec *ethereumChain) DKGResultVote(requestID *big.Int, dkgResultHash []byte) {
 	// TODO -- implement Vote
 }
 

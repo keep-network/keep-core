@@ -314,7 +314,7 @@ func TestVote(t *testing.T) {
 		GroupPublicKey: big.NewInt(11),
 	}
 	chainHandle.SubmitDKGResult(requestID, dkgResult)
-	chainHandle.Vote(requestID, dkgResult.Hash())
+	chainHandle.DKGResultVote(requestID, dkgResult.Hash())
 	submissions := chainHandle.GetDKGSubmissions(requestID)
 	expectedNVotes := 2
 	if submissions.DKGSubmissions[0].Votes != expectedNVotes {

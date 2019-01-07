@@ -60,8 +60,8 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmis
 	return c.submissions[requestID.String()]
 }
 
-// Vote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
-func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
+// DKGResultVote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
+func (c *localChain) DKGResultVote(requestID *big.Int, dkgResultHash []byte) {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
 	submissions, ok := c.submissions[requestID.String()]

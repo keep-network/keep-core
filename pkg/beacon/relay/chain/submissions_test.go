@@ -2,6 +2,7 @@ package chain
 
 import (
 	"math/big"
+	"reflect"
 	"testing"
 )
 
@@ -88,22 +89,12 @@ func TestLead(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			actualResult := test.currentSubmissions.Lead()
-			if test.expectedResult == nil {
-				if actualResult != nil {
-					t.Errorf(
-						"\nexpected: %s\nactual:   %v",
-						[]byte(nil),
-						test.expectedResult,
-					)
-				}
-			} else {
-				if !test.expectedResult.DKGResult.Equals(actualResult.DKGResult) {
-					t.Errorf(
-						"\nexpected: %v\nactual:   %v",
-						test.expectedResult,
-						actualResult,
-					)
-				}
+			if !reflect.DeepEqual(test.expectedResult, actualResult) {
+				t.Errorf(
+					"\nexpected: %+v\nactual:   %+v",
+					test.expectedResult,
+					actualResult,
+				)
 			}
 		})
 	}
@@ -135,13 +126,8 @@ func TestContains(t *testing.T) {
 	}{
 		"empty set of submissions": {
 			currentSubmissions: &DKGSubmissions{},
-			lookFor: &DKGResult{
-				Success:        true,
-				GroupPublicKey: big.NewInt(1001),
-				Disqualified:   []bool{},
-				Inactive:       []bool{},
-			},
-			expectedResult: false,
+			lookFor:            dkgResult1,
+			expectedResult:     false,
 		},
 		"1st submission is a match": {
 			currentSubmissions: &DKGSubmissions{
