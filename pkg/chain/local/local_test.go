@@ -299,3 +299,28 @@ func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFu
 	}
 	return context.WithTimeout(context.Background(), defaultTimeout)
 }
+
+func TestVote(t *testing.T) {
+	localChain := &localChain{
+		submittedResults:             make(map[string][]*relaychain.DKGResult),
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+	}
+	chainHandle := localChain.ThresholdRelay()
+	requestID := big.NewInt(12)
+	localChain.groupPublicKeyMap = make(map[string]*big.Int)
+	localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11) // setup  maping from requestID to groupPubKey
+	dkgResult := &relaychain.DKGResult{
+		Success:        true,
+		GroupPublicKey: big.NewInt(11),
+	}
+	chainHandle.SubmitDKGResult(requestID, dkgResult)
+	chainHandle.Vote(requestID, dkgResult.Hash())
+	submissions := chainHandle.GetDKGSubmissions(requestID)
+	expectedNVotes := 2
+	if submissions.DKGSubmissions[0].Votes != expectedNVotes {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			expectedNVotes,
+			submissions.DKGSubmissions[0].Votes,
+		)
+	}
+}

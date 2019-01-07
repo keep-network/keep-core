@@ -64,15 +64,14 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmis
 func (c *localChain) Vote(requestID *big.Int, dkgResultHash []byte) {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
-	x, ok := c.submissions[requestID.String()]
+	submissions, ok := c.submissions[requestID.String()]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "Missing requestID in c.submissions - vote will be ignored.\n")
 		return
 	}
-	for pos, sub := range x.DKGSubmissions {
-		if bytes.Equal(sub.DKGResult.Hash(), dkgResultHash) {
-			sub.Votes++
-			x.DKGSubmissions[pos] = sub
+	for _, submission := range submissions.DKGSubmissions {
+		if bytes.Equal(submission.DKGResult.Hash(), dkgResultHash) {
+			submission.Votes++
 			dkgResultVote := &event.DKGResultVote{
 				RequestID: requestID,
 			}
