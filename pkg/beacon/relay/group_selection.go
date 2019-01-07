@@ -13,8 +13,9 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	relayChain relaychain.GroupInterface,
 	blockCounter chain.BlockCounter,
 ) error {
+	// Timeout for initial ticket submission, Phase 2a
 	initialTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketTimeout,
+		n.chainConfig.TicketInitialTimeout,
 	)
 	if err != nil {
 		return err
@@ -54,6 +55,10 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				err,
 			)
 		case <-initialTimeout:
+			// Phase 2b: reactive ticket submission. Submit all
+			// tickets that are above the natural threshold.
+			// get the current best threshold
+
 			return nil
 		}
 	}

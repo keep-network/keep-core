@@ -9,10 +9,10 @@ type Chain struct {
 	// Threshold is the minimum number of interacting group members needed to
 	// produce a relay entry.
 	Threshold int
-	// TicketTimeout is the duration (in blocks) the staker has to submit
-	// their tickets to satisfy the initial ticket submission (see group
-	// selection, phase 2a)
-	TicketTimeout int
+	// TicketInitialTimeout is the duration (in blocks) the staker has to submit
+	// tickets that fall under the natural threshold to satisfy the initial
+	// ticket timeout (see group selection, phase 2a).
+	TicketInitialTimeout int
 	// MinimumStake is an on-chain value representing the minimum necessary
 	// amount a client must lock up to submit a single ticket
 	MinimumStake *big.Int
