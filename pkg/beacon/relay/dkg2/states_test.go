@@ -190,6 +190,8 @@ func expectedMessagesCount(states []keyGenerationState) int {
 		return statesCount
 	case *pointsValidationState:
 		return statesCount
+	case *revealingState:
+		return statesCount
 	default:
 		return 0
 	}

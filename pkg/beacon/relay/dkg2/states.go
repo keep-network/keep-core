@@ -504,14 +504,62 @@ func (pjs *pointsJustificationState) receive(msg net.Message) error {
 }
 
 func (pjs *pointsJustificationState) nextState() keyGenerationState {
-	return &reconstructionState{
+	return &revealingState{
 		channel: pjs.channel,
-		member:  pjs.member.InitializeRevealing().InitializeReconstruction(),
+		member:  pjs.member.InitializeRevealing(),
 	}
 }
 
 func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 	return pjs.member.ID
+}
+
+// revealingState is the state during which group members reveal ephemeral
+// private keys used to create an ephemeral symmetric keys with disqualified
+// members who share a group private key.
+type revealingState struct {
+	channel net.BroadcastChannel
+	member  *gjkr.RevealingMember
+
+	phaseMessages []*gjkr.DisqualifiedEphemeralKeysMessage
+}
+
+func (rs *revealingState) activeBlocks() int { return 1 }
+
+func (rs *revealingState) initiate() error {
+	revealMsg, err := rs.member.RevealDisqualifiedMembersKeys()
+	if err != nil {
+		return err
+	}
+
+	if err := rs.channel.Send(revealMsg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rs *revealingState) receive(msg net.Message) error {
+	switch revealMessage := msg.Payload().(type) {
+	case *gjkr.DisqualifiedEphemeralKeysMessage:
+		if !isMessageFromSelf(rs, msg) {
+			rs.phaseMessages = append(rs.phaseMessages, revealMessage)
+		}
+	}
+
+	return nil
+}
+
+func (rs *revealingState) nextState() keyGenerationState {
+	return &reconstructionState{
+		channel:               rs.channel,
+		member:                rs.member.InitializeReconstruction(),
+		previousPhaseMessages: rs.phaseMessages,
+	}
+}
+
+func (rs *revealingState) memberID() gjkr.MemberID {
+	return rs.member.ID
 }
 
 // reconstructionState is the state during which group members reconstruct
@@ -520,6 +568,8 @@ func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 type reconstructionState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.ReconstructingMember
+
+	previousPhaseMessages []*gjkr.DisqualifiedEphemeralKeysMessage
 }
 
 func (rp *reconstructionState) activeBlocks() int { return 0 }
