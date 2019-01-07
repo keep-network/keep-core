@@ -572,26 +572,31 @@ type reconstructionState struct {
 	previousPhaseMessages []*gjkr.DisqualifiedEphemeralKeysMessage
 }
 
-func (rp *reconstructionState) activeBlocks() int { return 0 }
+func (rs *reconstructionState) activeBlocks() int { return 0 }
 
-func (rp *reconstructionState) initiate() error {
-	// TODO: implement once member disqualification will be ready
+func (rs *reconstructionState) initiate() error {
+	if err := rs.member.ReconstructDisqualifiedIndividualKeys(
+		rs.previousPhaseMessages,
+	); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (rp *reconstructionState) receive(msg net.Message) error {
+func (rs *reconstructionState) receive(msg net.Message) error {
 	return nil
 }
 
-func (rp *reconstructionState) nextState() keyGenerationState {
+func (rs *reconstructionState) nextState() keyGenerationState {
 	return &combiningState{
-		channel: rp.channel,
-		member:  rp.member.InitializeCombining(),
+		channel: rs.channel,
+		member:  rs.member.InitializeCombining(),
 	}
 }
 
-func (rp *reconstructionState) memberID() gjkr.MemberID {
-	return rp.member.ID
+func (rs *reconstructionState) memberID() gjkr.MemberID {
+	return rs.member.ID
 }
 
 // combiningState is the final state of GJKR protocol during which group
