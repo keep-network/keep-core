@@ -194,7 +194,7 @@ func (fm *FinalizingMember) PublishingIndex() int {
 			return index
 		}
 	}
-	return -1
+	return -1 // should never happen
 }
 
 // Result can be either the successful computation of a round of distributed key
@@ -207,7 +207,7 @@ func (fm *FinalizingMember) PublishingIndex() int {
 func (fm *FinalizingMember) Result() *Result {
 	return &Result{
 		Success:        fm.group.isThresholdSatisfied(),
-		GroupPublicKey: fm.groupPublicKey,
+		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
 		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
 		Inactive:       fm.group.inactiveMemberIDs,     // IA
 	}

@@ -51,7 +51,7 @@ type DistributedKeyGenerationInterface interface {
 	// notification of a new, valid published result is seen.
 	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) event.Subscription
 	// IsDKGResultPublished checks if any DKG result has already been published
-	// to a chain for given request ID.
+	// to a chain for the given request ID.
 	IsDKGResultPublished(requestID *big.Int) bool
 }
 
