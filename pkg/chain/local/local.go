@@ -47,8 +47,6 @@ type localChain struct {
 	stakerList []string
 
 	// Track the submitted votes -
-	// Note: the map is on the "address" of an allocated big.Int, not on the value - so
-	// this may be an error.
 	submissionsMutex sync.Mutex
 	submissions      map[string]*relaychain.Submissions
 	// vote handler
@@ -250,15 +248,15 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			GroupSize: groupSize,
 			Threshold: threshold,
 		},
-		groupRegistrationsMutex: sync.Mutex{},
-		groupRelayEntries:       make(map[string]*big.Int),
-		groupRegistrations:      make(map[string][96]byte),
-		submittedResults:        make(map[string][]*relaychain.DKGResult),
-    dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-		blockCounter:            bc,
-		stakeMonitor:            NewStakeMonitor(),
-		submissions:             make(map[string]*relaychain.Submissions),
-		groupPublicKeyMap:       make(map[string]*big.Int),
+		groupRegistrationsMutex:      sync.Mutex{},
+		groupRelayEntries:            make(map[string]*big.Int),
+		groupRegistrations:           make(map[string][96]byte),
+		submittedResults:             make(map[string][]*relaychain.DKGResult),
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		blockCounter:                 bc,
+		stakeMonitor:                 NewStakeMonitor(),
+		submissions:                  make(map[string]*relaychain.Submissions),
+		groupPublicKeyMap:            make(map[string]*big.Int),
 	}
 }
 
