@@ -33,6 +33,9 @@ type Publisher struct {
 // published to the blockchain. If any result is published for the current
 // request ID, the current member finishes the phase immediately, without
 // publishing its own result.
+// It returns chain block height of the moment when the result was published on
+// chain by the publisher. In case of failure or result already published by
+// another publisher it returns `-1`.
 //
 // See Phase 13 of the protocol specification.
 func (pm *Publisher) PublishResult(result *relayChain.DKGResult) (int, error) {
