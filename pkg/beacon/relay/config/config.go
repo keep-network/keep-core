@@ -13,6 +13,11 @@ type Chain struct {
 	// tickets that fall under the natural threshold to satisfy the initial
 	// ticket timeout (see group selection, phase 2a).
 	TicketInitialTimeout int
+	// TicketSubmissionTimeout is the duration (in blocks) the staker has to
+	// submit any tickets that did not fall under the natural threshold. This
+	// final chance to submit tickets is called reactive ticket submission
+	// (defined in the group selection algorithm, 2b).
+	TicketSubmissionTimeout int
 	// MinimumStake is an on-chain value representing the minimum necessary
 	// amount a client must lock up to submit a single ticket
 	MinimumStake *big.Int

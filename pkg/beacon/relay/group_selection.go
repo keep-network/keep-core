@@ -21,6 +21,14 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
+	// Timeout for reactive ticket submission, Phase 2b
+	submissionTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketSubmissionTimeout,
+	)
+	if err != nil {
+		return err
+	}
+
 	availableStake, err := n.Staker.Stake()
 	if err != nil {
 		return err
@@ -59,6 +67,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			// tickets that are above the natural threshold.
 			// get the current best threshold
 
+			return nil
+		case <-submissionTimeout:
 			return nil
 		}
 	}
