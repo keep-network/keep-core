@@ -257,6 +257,41 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
+// Type returns a string describing DisqualifiedEphemeralKeysMessage type for
+// marshalling purposes.
+func (dekm *DisqualifiedEphemeralKeysMessage) Type() string {
+	return "gjkr/disqualified_ephemeral_keys_message"
+}
+
+// Marshal converts this DisqualifiedEphemeralKeysMessage to a byte array
+// suitable for network communication.
+func (dekm *DisqualifiedEphemeralKeysMessage) Marshal() ([]byte, error) {
+	return (&pb.DisqualifiedEphemeralKeys{
+		SenderID:    memberIDToBytes(dekm.senderID),
+		PrivateKeys: marshalPrivateKeyMap(dekm.privateKeys),
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to
+// a DisqualifiedEphemeralKeysMessage.
+func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.DisqualifiedEphemeralKeys{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	dekm.senderID = bytesToMemberID(pbMsg.SenderID)
+
+	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
+	if err != nil {
+		return err
+	}
+
+	dekm.privateKeys = privateKeys
+
+	return nil
+}
+
 func memberIDToBytes(memberID MemberID) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(memberID))
