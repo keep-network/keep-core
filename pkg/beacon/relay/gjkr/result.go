@@ -33,14 +33,8 @@ func (r *Result) Equals(r2 *Result) bool {
 		return false
 	}
 
-	if r.GroupPublicKey != nil && r2.GroupPublicKey != nil {
-		if r.GroupPublicKey.String() != r2.GroupPublicKey.String() {
-			return false
-		}
-	} else {
-		if r.GroupPublicKey != r2.GroupPublicKey {
-			return false
-		}
+	if !publicKeysEqual(r.GroupPublicKey, r2.GroupPublicKey) {
+		return false
 	}
 
 	if !memberIDSlicesEqual(r.Disqualified, r2.Disqualified) {
@@ -51,6 +45,14 @@ func (r *Result) Equals(r2 *Result) bool {
 	}
 
 	return true
+}
+
+// publicKeysEqual checks if two public keys are equal.
+func publicKeysEqual(expectedKey *bn256.G1, actualKey *bn256.G1) bool {
+	if expectedKey != nil && actualKey != nil {
+		return expectedKey.String() == actualKey.String()
+	}
+	return expectedKey == actualKey
 }
 
 // memberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
