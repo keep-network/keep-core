@@ -31,7 +31,7 @@ func TestGenerateTickets(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// we should have 10 tickets
+	// We should have 10 tickets
 	if len(tickets) != int(virtualStakers) {
 		t.Fatalf(
 			"expected [%d] tickets, received [%d] tickets",
@@ -40,11 +40,21 @@ func TestGenerateTickets(t *testing.T) {
 		)
 	}
 
-	for _, ticket := range tickets {
+	for i, ticket := range tickets {
+		expectedIndex := int64(i + 1)
+		// Tickets should be sorted in ascending order
+		if expectedIndex != ticket.Proof.VirtualStakerIndex.Int64() {
+			t.Fatalf("Got index [%d], want index [%d]",
+				ticket.Proof.VirtualStakerIndex,
+				expectedIndex,
+			)
+		}
+
 		if ticket.Proof.VirtualStakerIndex == big.NewInt(0) {
 			t.Fatal("Virutal stakers should be 1-indexed, not 0-indexed")
 		}
 	}
+
 }
 
 func TestValidateProofs(t *testing.T) {

@@ -4,7 +4,6 @@
 package groupselection
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"math/big"
 )
@@ -60,15 +59,16 @@ func (ts tickets) Len() int {
 
 // Swap is the sort.Interface requirement for Tickets
 func (ts tickets) Swap(i, j int) {
-	ts[i], ts[j] = ts[j], ts[i]
+	ts[i].Proof.VirtualStakerIndex, ts[j].Proof.VirtualStakerIndex =
+		ts[j].Proof.VirtualStakerIndex, ts[i].Proof.VirtualStakerIndex
 }
 
 // Less is the sort.Interface requirement for Tickets
 func (ts tickets) Less(i, j int) bool {
-	iBytes := ts[i].Value.Bytes()
-	jBytes := ts[j].Value.Bytes()
+	iVirtualStakeIndex := ts[i].Proof.VirtualStakerIndex
+	jVirtualStakerIndex := ts[j].Proof.VirtualStakerIndex
 
-	switch bytes.Compare(iBytes, jBytes) {
+	switch iVirtualStakeIndex.Cmp(jVirtualStakerIndex) {
 	case -1:
 		return true
 	case 1:
