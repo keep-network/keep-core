@@ -50,7 +50,6 @@ func Initialize(
 	}
 
 	var (
-		proceed sync.WaitGroup
 		// FIXME Nuke post-M1 when we plug in real staking stuff.
 		stakingID = netProvider.ID().String()[:32]
 	)
@@ -67,6 +66,7 @@ func Initialize(
 		chainConfig,
 	)
 
+	var proceed sync.WaitGroup
 	proceed.Add(1)
 	relayChain.AddStaker(stakingID).
 		OnComplete(func(stake *event.StakerRegistration, err error) {
