@@ -2,8 +2,6 @@ package gjkr
 
 // Group is protocol's members group.
 type Group struct {
-	// The number of members in the complete group.
-	groupSize int
 	// The maximum number of group members who could be dishonest in order for the
 	// generated key to be uncompromised.
 	dishonestThreshold int
@@ -24,8 +22,13 @@ func (g *Group) MemberIDs() []MemberID {
 }
 
 // RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(id MemberID) {
-	g.memberIDs = append(g.memberIDs, id)
+func (g *Group) RegisterMemberID(memberID MemberID) {
+	for _, id := range g.memberIDs {
+		if id == memberID {
+			return // already there
+		}
+	}
+	g.memberIDs = append(g.memberIDs, memberID)
 }
 
 func (g *Group) eliminatedMembersCount() int {

@@ -3,6 +3,10 @@ syntax = "proto3";
 option go_package = "pb";
 package gjkr;
 
+message Join {
+    bytes senderID = 1;
+}
+
 message EphemeralPublicKey {
     bytes senderID = 1;
     bytes receiverID = 2;
