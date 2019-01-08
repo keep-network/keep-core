@@ -9,12 +9,12 @@ type EventSubscription interface {
 	Unsubscribe()
 }
 
-// NewSubscription is used by an event source to create a `EventSubscription`.
+// NewEventSubscription is used by an event source to create a `EventSubscription`.
 // It accepts a callback function that is called as a result of
 // `Unsubscribe` operation on the `EventSubscription`. The callback function
 // executes operation on the event source required to unsubscribe from the
 // event stream.
-func NewSubscription(doUnsubscribe func()) EventSubscription {
+func NewEventSubscription(doUnsubscribe func()) EventSubscription {
 	return &subscription{
 		mutex:             sync.Mutex{},
 		unsubscribed:      false,
