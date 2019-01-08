@@ -34,7 +34,7 @@ func TestGenerateTickets(t *testing.T) {
 	// we should have 10 tickets
 	if len(tickets) != int(virtualStakers) {
 		t.Fatalf(
-			"expected [%d] tickets, got [%d] number of tickets",
+			"expected [%d] tickets, received [%d] tickets",
 			virtualStakers,
 			len(tickets),
 		)
@@ -80,7 +80,7 @@ func TestValidateProofs(t *testing.T) {
 	// we should have virtualStaker number of tickets
 	if len(tickets) != int(virtualStakers.Int64()) {
 		t.Fatalf(
-			"expected [%d] tickets, got [%d] number of tickets",
+			"expected [%d] tickets, received [%d] tickets",
 			virtualStakers,
 			len(tickets),
 		)
