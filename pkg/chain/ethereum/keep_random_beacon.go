@@ -175,7 +175,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	)
 	if err != nil {
 		close(eventChan)
-		return nil, fmt.Errorf(
+		return eventSubscription, fmt.Errorf(
 			"error creating watch for RelayEntryRequested events: [%v]",
 			err,
 		)
@@ -237,7 +237,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	)
 	if err != nil {
 		close(eventChan)
-		return nil, fmt.Errorf(
+		return eventSubscription, fmt.Errorf(
 			"error creating watch for RelayEntryGenerated event: [%v]",
 			err,
 		)
