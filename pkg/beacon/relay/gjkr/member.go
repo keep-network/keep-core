@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -198,12 +198,6 @@ func (cm *CombiningMember) InitializeFinalization() *FinalizingMember {
 //
 // Prepares a result to publish in Phase 13 of the protocol.
 type FinalizingMember struct {
-	*CombiningMember
-}
-
-// Member represents one member in a threshold sharing group who completed
-// the entire DKG protocol successfully and is ready for signing.
-type Member struct {
 	*CombiningMember
 }
 
