@@ -3,6 +3,7 @@ package relay
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
@@ -57,6 +58,9 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		errCh,
 	)
 
+	// kick off background loop to check submitted tickets
+	go verifyTicket(relayChain, n.StakeID, quitTicketChallenge)
+
 	for {
 		select {
 		case err := <-errCh:
@@ -93,4 +97,40 @@ func submitTickets(
 			return
 		}
 	}
+}
+
+func verifyTicket(
+	relayChain relaychain.GroupInterface,
+	self string,
+	quit <-chan struct{},
+) {
+	t := time.NewTimer(1)
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			for _, ticket := range relayChain.GetOrderedTickets() {
+				if !costlyCheck(ticket) {
+					challenge := &groupselection.Challenge{
+						Ticket: ticket,
+						Sender: self,
+					}
+					relayChain.SubmitChallenge(challenge).OnFailure(
+						func(err error) {
+							// TODO: implement
+						},
+					)
+				}
+			}
+			t.Reset(5 * time.Second)
+		case <-quit:
+			// Exit this loop when we get a signal from quit.
+			return
+		}
+	}
+}
+
+func costlyCheck(ticket *groupselection.Ticket) bool {
+	// TODO: implement
+	return true
 }

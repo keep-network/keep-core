@@ -50,6 +50,9 @@ type GroupInterface interface {
 	// submission. The promise is fulfilled with the challenge as seen on-chain,
 	// or failed if there is an error submitting the entry.
 	SubmitChallenge(ticket *groupselection.Challenge) *async.GroupChallengePromise
+	// GetOrderedTickets returns submitted tickets which have passed checks
+	// on-chain.
+	GetOrderedTickets() []*groupselection.Ticket
 }
 
 // DistributedKeyGenerationInterface defines the subset of the relay chain
