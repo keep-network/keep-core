@@ -120,6 +120,7 @@ func createNode(
 
 	go beacon.Initialize(
 		context,
+		netProvider.ID().String()[:32],
 		chainHandle.ThresholdRelay(),
 		chainCounter,
 		stakeMonitor,

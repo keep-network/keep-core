@@ -34,6 +34,7 @@ const (
 // otherwise enters a blocked loop.
 func Initialize(
 	ctx context.Context,
+	stakingID string,
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 	stakeMonitor chain.StakeMonitor,
@@ -48,11 +49,6 @@ func Initialize(
 	if err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
-
-	var (
-		// FIXME Nuke post-M1 when we plug in real staking stuff.
-		stakingID = netProvider.ID().String()[:32]
-	)
 
 	staker, err := stakeMonitor.StakerFor(stakingID)
 	if err != nil {
