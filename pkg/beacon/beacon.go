@@ -53,10 +53,9 @@ func Initialize(
 		proceed sync.WaitGroup
 		// FIXME Nuke post-M1 when we plug in real staking stuff.
 		stakingID = netProvider.ID().String()[:32]
-		staker    chain.Staker
 	)
 
-	staker, err = stakeMonitor.StakerFor(stakingID)
+	staker, err := stakeMonitor.StakerFor(stakingID)
 	if err != nil {
 		return err
 	}
