@@ -267,7 +267,7 @@ func (ec *ethereumChain) AddStaker(
 		return onStakerAddedPromise
 	}
 
-	err := ec.keepGroupContract.WatchOnStakerAdded(
+	subscription, err := ec.keepGroupContract.WatchOnStakerAdded(
 		func(index int, stakerID []byte) bool {
 			if string(stakerID) == groupMemberID {
 				// not what we are waiting for, please continue watching
@@ -304,6 +304,7 @@ func (ec *ethereumChain) AddStaker(
 		},
 	)
 	if err != nil {
+		subscription.Unsubscribe()
 		err = onStakerAddedPromise.Fail(
 			fmt.Errorf(
 				"on staker added failed with: [%v]",
@@ -319,6 +320,7 @@ func (ec *ethereumChain) AddStaker(
 
 	_, err = ec.keepGroupContract.AddStaker(groupMemberID)
 	if err != nil {
+		subscription.Unsubscribe()
 		err = onStakerAddedPromise.Fail(
 			fmt.Errorf(
 				"on staker added failed with: [%v]",
@@ -337,8 +339,8 @@ func (ec *ethereumChain) AddStaker(
 
 func (ec *ethereumChain) OnStakerAdded(
 	handle func(staker *event.StakerRegistration),
-) {
-	err := ec.keepGroupContract.WatchOnStakerAdded(
+) subscription.EventSubscription {
+	stakerAddedSubscription, err := ec.keepGroupContract.WatchOnStakerAdded(
 		func(index int, groupMemberID []byte) bool {
 			handle(&event.StakerRegistration{
 				Index:         index,
@@ -360,6 +362,7 @@ func (ec *ethereumChain) OnStakerAdded(
 			err,
 		)
 	}
+	return stakerAddedSubscription
 }
 
 func (ec *ethereumChain) GetStakerList() ([]string, error) {

@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // keepGroup connection information for interface to KeepGroup contract.
@@ -397,12 +399,20 @@ type onStakerAddedFunc func(index int, groupMemberID []byte) bool
 func (kg *keepGroup) WatchOnStakerAdded(
 	success onStakerAddedFunc,
 	fail errorCallback,
-) error {
+) (subscription.EventSubscription, error) {
+	subscribeContext, cancel := context.WithCancel(context.Background())
+
 	eventChan := make(chan *abi.KeepGroupImplV1OnStakerAdded)
-	eventSubscription, err := kg.contract.WatchOnStakerAdded(nil, eventChan)
+	eventSubscription, err := kg.contract.WatchOnStakerAdded(
+		&bind.WatchOpts{Context: subscribeContext},
+		eventChan,
+	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf("error creating watch for OnStakerAdded events [%v]", err)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for OnStakerAdded events [%v]",
+			err,
+		)
 	}
 	go func() {
 		defer close(eventChan)
@@ -420,5 +430,13 @@ func (kg *keepGroup) WatchOnStakerAdded(
 			}
 		}
 	}()
-	return nil
+
+	// Canceling the context exits the eventSubscription, which results in
+	// proper cleanup (unsubscribing from the subscription, and closing the
+	// channel, in that order).
+	unsubscribeCallback := func() {
+		cancel()
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
