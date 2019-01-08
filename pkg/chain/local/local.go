@@ -184,7 +184,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 
 func (c *localChain) OnRelayEntryGenerated(
 	handler func(entry *event.Entry),
-) subscription.Subscription {
+) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -201,7 +201,7 @@ func (c *localChain) OnRelayEntryGenerated(
 
 func (c *localChain) OnRelayEntryRequested(
 	handler func(request *event.Request),
-) subscription.Subscription {
+) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
