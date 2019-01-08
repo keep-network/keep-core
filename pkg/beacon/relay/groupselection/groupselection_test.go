@@ -50,7 +50,7 @@ func TestGenerateTickets(t *testing.T) {
 func TestValidateProofs(t *testing.T) {
 	minimumStake := big.NewInt(1)
 	availableStake := big.NewInt(1)
-	virtualStakers := big.NewInt(0).Quo(availableStake, minimumStake)
+	virtualStakers := big.NewInt(0).Quo(availableStake, minimumStake) // 1
 
 	stakingPublicKey, err := newTestPublicKey()
 	if err != nil {
@@ -63,6 +63,7 @@ func TestValidateProofs(t *testing.T) {
 	var valueBytes []byte
 	valueBytes = append(valueBytes, beaconOutput...)                           // V_i
 	valueBytes = append(valueBytes, stakingPublicKey.SerializeCompressed()...) // Q_j
+	// only 1 virtual staker, which corresponds to the index, vs
 	valueBytes = append(valueBytes, virtualStakers.Bytes()...)
 
 	expectedValue := SHAValue(sha256.Sum256(valueBytes[:]))
