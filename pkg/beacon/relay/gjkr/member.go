@@ -26,13 +26,20 @@ type memberCore struct {
 	protocolParameters *protocolParameters
 }
 
+// LocalMember represents one member in a threshold group, prior to the
+// initiation of distributed key generation process
+type LocalMember struct {
+	*memberCore
+}
+
 // EphemeralKeyPairGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral key pair generation. It has a full list
 // of `memberIDs` that belong to its threshold group.
 //
 // Executes Phase 1 of the protocol.
 type EphemeralKeyPairGeneratingMember struct {
-	*memberCore
+	*LocalMember
+
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
 	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
@@ -194,6 +201,29 @@ type FinalizingMember struct {
 	*CombiningMember
 }
 
+// NewMember creates a new member in an initial state, ready to execute DKG
+// protocol.
+func NewMember(
+	memberID MemberID,
+	groupMembers []MemberID,
+	dishonestThreshold int,
+	seed *big.Int,
+) *LocalMember {
+	return &LocalMember{
+		memberCore: &memberCore{
+			memberID,
+			&Group{
+				dishonestThreshold,
+				groupMembers,
+				[]MemberID{},
+				[]MemberID{},
+			},
+			newDkgEvidenceLog(),
+			newProtocolParameters(seed),
+		},
+	}
+}
+
 // PublishingIndex returns sequence number of the current member in a publishing
 // group. Counting starts with `0`.
 func (fm *FinalizingMember) PublishingIndex() int {
@@ -224,6 +254,20 @@ func (fm *FinalizingMember) Result() *Result {
 // Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
+}
+
+// AddToGroup adds the provided MemberID to the group
+func (mc *memberCore) AddToGroup(memberID MemberID) {
+	mc.group.RegisterMemberID(memberID)
+}
+
+// InitializeEphemeralKeysGeneration performs a transition of a member state
+// from the local state to phase 1 of the protocol.
+func (lm *LocalMember) InitializeEphemeralKeysGeneration() *EphemeralKeyPairGeneratingMember {
+	return &EphemeralKeyPairGeneratingMember{
+		LocalMember:       lm,
+		ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
+	}
 }
 
 // InitializeSymmetricKeyGeneration performs a transition of the member state
