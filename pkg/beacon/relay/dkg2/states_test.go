@@ -3,7 +3,6 @@ package dkg2
 import (
 	"fmt"
 	"math/big"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -17,15 +16,12 @@ func TestFullStateTransitions(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 
+	seed := big.NewInt(18293712839)
+
 	channels := make([]net.BroadcastChannel, groupSize)
 	states := make([]keyGenerationState, groupSize)
 
 	provider := local.Connect()
-
-	dkg, err := gjkr.GenerateDKG()
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	// Initialize one state and one channel per one member.
 	// Each state gets a separate channel to have a different transport
@@ -40,7 +36,7 @@ func TestFullStateTransitions(t *testing.T) {
 			gjkr.MemberID(i+1),
 			make([]gjkr.MemberID, 0),
 			threshold,
-			dkg,
+			seed,
 		)
 
 		Init(channel)
@@ -63,26 +59,31 @@ func TestFullStateTransitions(t *testing.T) {
 		states = nextStates
 	}
 
-	// Check whether all states are final and extract generated group
-	// public keys.
-	groupPublicKeys := make([]*big.Int, groupSize)
+	// Check whether all states are final and produced the same result.
+	results := make([]*gjkr.Result, groupSize)
 	for i, state := range states {
-		final, ok := state.(*finalState)
+		finalState, ok := state.(*finalizationState)
 		if !ok {
 			t.Fatalf("not a final state: %#v", state)
 		}
 
-		groupPublicKeys[i] = final.member.GroupPublicKey()
+		results[i] = finalState.member.Result()
 	}
 
-	// Check whether all group public keys are the same.
-	for i := 1; i < len(groupPublicKeys); i++ {
-		if !reflect.DeepEqual(groupPublicKeys[i], groupPublicKeys[0]) {
-			t.Fatalf(
-				"unexpected group public key\nexpected: %v\nactual:   %v",
-				groupPublicKeys[i],
-				groupPublicKeys[0],
-			)
+	// Check whether all group public keys are the same, and they are all
+	// successful without DQ or IA members.
+	for _, result := range results {
+		if !result.Success {
+			t.Errorf("unexpected failure result\n[%v]", result)
+		}
+		if len(result.Inactive) != 0 {
+			t.Errorf("expected no IA members\n[%v]", result)
+		}
+		if len(result.Disqualified) != 0 {
+			t.Errorf("expected no DQ members\n[%v]", result)
+		}
+		if !result.Equals(results[0]) {
+			t.Errorf("different results\n[%v]\n[%v]", results[0], result)
 		}
 	}
 }
@@ -185,15 +186,17 @@ func expectedMessagesCount(states []keyGenerationState) int {
 	switch states[0].(type) {
 	case *joinState:
 		return statesCount
-	case *ephemeralKeyPairGeneratingState:
+	case *ephemeralKeyPairGenerationState:
 		return statesCount
-	case *committingState:
+	case *commitmentState:
 		return statesCount * 2 // shares + commitments
 	case *commitmentsVerificationState:
 		return statesCount
-	case *pointsSharingState:
+	case *pointsShareState:
 		return statesCount
 	case *pointsValidationState:
+		return statesCount
+	case *keyRevealState:
 		return statesCount
 	default:
 		return 0

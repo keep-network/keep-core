@@ -3,8 +3,8 @@ package gjkr
 import (
 	"encoding/binary"
 	"fmt"
-	"math/big"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -78,7 +78,7 @@ func (mcm *MemberCommitmentsMessage) Type() string {
 func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	commitmentBytes := make([][]byte, 0, len(mcm.commitments))
 	for _, commitment := range mcm.commitments {
-		commitmentBytes = append(commitmentBytes, commitment.Bytes())
+		commitmentBytes = append(commitmentBytes, commitment.Marshal())
 	}
 
 	return (&pb.MemberCommitments{
@@ -97,9 +97,16 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 
 	mcm.senderID = bytesToMemberID(pbMsg.SenderID)
 
-	var commitments []*big.Int
+	var commitments []*bn256.G1
 	for _, commitmentBytes := range pbMsg.Commitments {
-		commitment := new(big.Int).SetBytes(commitmentBytes)
+		commitment := new(bn256.G1)
+		_, err := commitment.Unmarshal(commitmentBytes)
+		if err != nil {
+			return fmt.Errorf(
+				"could not unmarshal member's commitment [%v]",
+				err,
+			)
+		}
 		commitments = append(commitments, commitment)
 	}
 	mcm.commitments = commitments
@@ -202,7 +209,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Type() string {
 func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	keySharePoints := make([][]byte, 0, len(mpspm.publicKeySharePoints))
 	for _, keySharePoint := range mpspm.publicKeySharePoints {
-		keySharePoints = append(keySharePoints, keySharePoint.Bytes())
+		keySharePoints = append(keySharePoints, keySharePoint.Marshal())
 	}
 
 	return (&pb.MemberPublicKeySharePoints{
@@ -221,9 +228,16 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 
 	mpspm.senderID = bytesToMemberID(pbMsg.SenderID)
 
-	var keySharePoints []*big.Int
+	var keySharePoints []*bn256.G1
 	for _, keySharePointBytes := range pbMsg.PublicKeySharePoints {
-		keySharePoint := new(big.Int).SetBytes(keySharePointBytes)
+		keySharePoint := new(bn256.G1)
+		_, err := keySharePoint.Unmarshal(keySharePointBytes)
+		if err != nil {
+			return fmt.Errorf(
+				"could not unmarshal member's key share point [%v]",
+				err,
+			)
+		}
 		keySharePoints = append(keySharePoints, keySharePoint)
 	}
 	mpspm.publicKeySharePoints = keySharePoints
@@ -262,6 +276,41 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	}
 
 	pam.accusedMembersKeys = accusedMembersKeys
+
+	return nil
+}
+
+// Type returns a string describing DisqualifiedEphemeralKeysMessage type for
+// marshalling purposes.
+func (dekm *DisqualifiedEphemeralKeysMessage) Type() string {
+	return "gjkr/disqualified_ephemeral_keys_message"
+}
+
+// Marshal converts this DisqualifiedEphemeralKeysMessage to a byte array
+// suitable for network communication.
+func (dekm *DisqualifiedEphemeralKeysMessage) Marshal() ([]byte, error) {
+	return (&pb.DisqualifiedEphemeralKeys{
+		SenderID:    memberIDToBytes(dekm.senderID),
+		PrivateKeys: marshalPrivateKeyMap(dekm.privateKeys),
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to
+// a DisqualifiedEphemeralKeysMessage.
+func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.DisqualifiedEphemeralKeys{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	dekm.senderID = bytesToMemberID(pbMsg.SenderID)
+
+	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
+	if err != nil {
+		return err
+	}
+
+	dekm.privateKeys = privateKeys
 
 	return nil
 }
