@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
@@ -60,26 +59,31 @@ func TestFullStateTransitions(t *testing.T) {
 		states = nextStates
 	}
 
-	// Check whether all states are final and extract generated group
-	// public keys.
-	groupPublicKeys := make([]*bn256.G1, groupSize)
+	// Check whether all states are final and produced the same result.
+	results := make([]*gjkr.Result, groupSize)
 	for i, state := range states {
-		finalState, ok := state.(*combiningState)
+		finalState, ok := state.(*finalizationState)
 		if !ok {
 			t.Fatalf("not a final state: %#v", state)
 		}
 
-		groupPublicKeys[i] = finalState.member.GroupPublicKey()
+		results[i] = finalState.member.Result()
 	}
 
-	// Check whether all group public keys are the same.
-	for i := 1; i < len(groupPublicKeys); i++ {
-		if groupPublicKeys[i].String() != groupPublicKeys[0].String() {
-			t.Fatalf(
-				"unexpected group public key\nexpected: %v\nactual:   %v",
-				groupPublicKeys[i].String(),
-				groupPublicKeys[0].String(),
-			)
+	// Check whether all group public keys are the same, and they are all
+	// successful without DQ or IA members.
+	for i := 1; i < len(results); i++ {
+		if !results[i].Success {
+			t.Errorf("unexpected failure result\n[%v]", results[i])
+		}
+		if len(results[i].Inactive) != 0 {
+			t.Errorf("expected no IA members\n[%v]", results[i])
+		}
+		if len(results[i].Disqualified) != 0 {
+			t.Errorf("expected no DQ members\n[%v]", results[i])
+		}
+		if !results[i].Equals(results[0]) {
+			t.Errorf("different results\n[%v]\n[%v]", results[0], results[i])
 		}
 	}
 }
