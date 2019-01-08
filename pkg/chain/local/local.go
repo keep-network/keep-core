@@ -201,6 +201,23 @@ func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration
 	c.handlerMutex.Unlock()
 }
 
+func (c *localChain) OnDKGResultPublished(
+	handler func(dkgResultPublication *event.DKGResultPublication),
+) subscription.EventSubscription {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.dkgResultPublicationHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.dkgResultPublicationHandlers, handlerID)
+	})
+}
+
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
@@ -337,21 +354,4 @@ func (c *localChain) SubmitDKGResult(
 	}
 
 	return dkgResultPublicationPromise
-}
-
-func (c *localChain) OnDKGResultPublished(
-	handler func(dkgResultPublication *event.DKGResultPublication),
-) subscription.EventSubscription {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
-
-	handlerID := rand.Int()
-	c.dkgResultPublicationHandlers[handlerID] = handler
-
-	return subscription.NewEventSubscription(func() {
-		c.handlerMutex.Lock()
-		defer c.handlerMutex.Unlock()
-
-		delete(c.dkgResultPublicationHandlers, handlerID)
-	})
 }
