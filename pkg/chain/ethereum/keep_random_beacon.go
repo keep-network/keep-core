@@ -210,7 +210,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 		cancel()
 	}
 
-	return subscription.NewSubscription(unsubscribeCallback), nil
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
 // relayEntryGeneratedFunc type of function called for
@@ -272,7 +272,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		cancel()
 	}
 
-	return subscription.NewSubscription(unsubscribeCallback), nil
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
 // relayResetEventFunc type of function called for ResetEvent event.
