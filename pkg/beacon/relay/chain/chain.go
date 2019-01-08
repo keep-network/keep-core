@@ -44,7 +44,7 @@ type GroupInterface interface {
 	) *async.GroupRegistrationPromise
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
-	OnGroupRegistered(func(key *event.GroupRegistration))
+	OnGroupRegistered(func(key *event.GroupRegistration)) subscription.EventSubscription
 }
 
 // DistributedKeyGenerationInterface defines the subset of the relay chain
