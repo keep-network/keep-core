@@ -196,7 +196,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
-) subscription.Subscription {
+) subscription.EventSubscription {
 	relayEntryGeneratedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
@@ -234,7 +234,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
-) subscription.Subscription {
+) subscription.EventSubscription {
 	relayEntryRequestedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
@@ -345,7 +345,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) subscription.Subscription {
+) subscription.EventSubscription {
 	// TODO Implement
 	return subscription.NewSubscription(func() {})
 }
