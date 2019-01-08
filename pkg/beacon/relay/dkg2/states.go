@@ -539,7 +539,7 @@ func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 // State covers phase 10 of the protocol.
 type keyRevealState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.RevealingMember
+	member  *gjkr.RevealingMember // TODO: Rename to KeyRevealingMember
 
 	phaseMessages []*gjkr.DisqualifiedEphemeralKeysMessage
 }
