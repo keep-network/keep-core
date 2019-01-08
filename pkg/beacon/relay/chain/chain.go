@@ -45,6 +45,11 @@ type GroupInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise
+	// SubmitChallenge submits a challenge corresponding to a ticket that
+	// fails `costlyCheck`, and returns a promise to track the challenge
+	// submission. The promise is fulfilled with the challenge as seen on-chain,
+	// or failed if there is an error submitting the entry.
+	SubmitChallenge(ticket *groupselection.Challenge) *async.GroupChallengePromise
 }
 
 // DistributedKeyGenerationInterface defines the subset of the relay chain
