@@ -90,8 +90,12 @@ with a pseudo random function that is used for ticket generation.
 Currently the _Space~tickets~_ is equal to _2^256^- 1_, which is due
 to selection of SHA3-256 as our pseudo random function.
 
+|_Supply~tokens~_
+|Is the total number of supplied tokens. The number of issued tokens is set to
+10^9 and will not change during the system lifetime.
+
 |Natural threshold
-|_Threshold~nat~ = floor(N * Space~tickets~ / (Tokens~total~ / MINIMUM_STAKE))_
+|_Threshold~nat~ = floor(N * Space~tickets~ / (Supply~tokens~ / MINIMUM_STAKE))_
 
 In other words, the natural threshold is the value _N_ virtual stakers' tickets
 would be expected to fall below if the tokens were optimally staked, and the
@@ -101,7 +105,7 @@ function.
 Usually _Threshold~P~ > Threshold~nat~_ as not all tokens will be staked and the
 distribution of stakes will not be optimal.
 
-_Tokens~total~_ is used instead of _Stake~total~_ to make it possible to later
+_Supply~tokens~_ is used instead of _Stake~total~_ to make it possible to later
 hide the stakes of individual stakers; otherwise the staking or unstaking of
 tokens would reveal the amount through the update to _Stake~total~_.
 |===
