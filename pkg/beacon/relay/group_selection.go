@@ -10,6 +10,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+// SubmitTicketsForGroupSelection takes the previous beacon value and attempts to
+// generate the appropriate number of tickets for the staker. After ticket
+// generation begins an interactive process, where the staker submits tickets
+// that fall under the natural threshold, while challenging tickets on chain
+// that fail verification. Submission ends at the end of the submission period,
+// and the staker can only contenst incorrect tickets up to the challenge period.
 func (n *Node) SubmitTicketsForGroupSelection(
 	beaconValue []byte,
 	relayChain relaychain.GroupInterface,
@@ -78,6 +84,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 }
 
+// submitTickets checks to see if the submission period is over in between ticket
+// submits.
 func submitTickets(
 	relayChain relaychain.GroupInterface,
 	tickets []*groupselection.Ticket,
@@ -87,9 +95,9 @@ func submitTickets(
 ) {
 	for _, ticket := range tickets {
 		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
-			relayChain.SubmitTicket(ticket).OnFailure(func(err error) {
-				errCh <- err
-			})
+			relayChain.SubmitTicket(ticket).OnFailure(
+				func(err error) { errCh <- err },
+			)
 		}
 
 		select {
