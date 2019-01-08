@@ -25,10 +25,12 @@ type RelayEntryInterface interface {
 
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(func(entry *event.Entry)) subscription.Subscription
+	OnRelayEntryGenerated(func(entry *event.Entry)) subscription.EventSubscription
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(func(request *event.Request)) subscription.Subscription
+	OnRelayEntryRequested(
+		func(request *event.Request),
+	) subscription.EventSubscription
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

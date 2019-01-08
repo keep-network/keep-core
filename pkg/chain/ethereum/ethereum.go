@@ -13,6 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
@@ -306,7 +307,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
-) subscription.Subscription {
+) subscription.EventSubscription {
 	relayEntryGeneratedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
@@ -344,7 +345,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
-) subscription.Subscription {
+) subscription.EventSubscription {
 	relayEntryRequestedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
