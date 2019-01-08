@@ -95,8 +95,19 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupRegistrationPromise
 }
 
+// TODO: implement
 func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
 	return &async.GroupTicketPromise{}
+}
+
+// TODO: implement
+func (ec *ethereumChain) SubmitChallenge(ticket *groupselection.Challenge) *async.GroupChallengePromise {
+	return &async.GroupChallengePromise{}
+}
+
+// TODO: implement
+func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
+	return make([]*groupselection.Ticket, 0)
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
