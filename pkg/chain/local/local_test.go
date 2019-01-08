@@ -300,27 +300,102 @@ func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFu
 	return context.WithTimeout(context.Background(), defaultTimeout)
 }
 
-func TestVote(t *testing.T) {
-	localChain := &localChain{
-		submittedResults:             make(map[string][]*relaychain.DKGResult),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-	}
-	chainHandle := localChain.ThresholdRelay()
+func TestDKGResultVote(t *testing.T) {
 	requestID := big.NewInt(12)
-	localChain.groupPublicKeyMap = make(map[string]*big.Int)
-	localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11) // setup  maping from requestID to groupPubKey
-	dkgResult := &relaychain.DKGResult{
-		Success:        true,
-		GroupPublicKey: big.NewInt(11),
+
+	var tests = map[string]struct {
+		expectedNVotes int
+		callVoteNtimes int
+		requestID      *big.Int
+	}{
+		"after submission and 1 vote": {
+			expectedNVotes: 2,
+			callVoteNtimes: 1,
+			requestID:      requestID,
+		},
+		"after submission and 2 votes": {
+			expectedNVotes: 3,
+			callVoteNtimes: 2,
+			requestID:      requestID,
+		},
 	}
-	chainHandle.SubmitDKGResult(requestID, dkgResult)
-	chainHandle.DKGResultVote(requestID, dkgResult.Hash())
-	submissions := chainHandle.GetDKGSubmissions(requestID)
-	expectedNVotes := 2
-	if submissions.DKGSubmissions[0].Votes != expectedNVotes {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			expectedNVotes,
-			submissions.DKGSubmissions[0].Votes,
-		)
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := &localChain{
+				submittedResults:             make(map[string][]*relaychain.DKGResult),
+				dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+				groupPublicKeyMap:            make(map[string]*big.Int),
+			}
+			chainHandle := localChain.ThresholdRelay()
+			localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11)
+			dkgResult := &relaychain.DKGResult{
+				Success:        true,
+				GroupPublicKey: big.NewInt(11),
+			}
+			chainHandle.SubmitDKGResult(test.requestID, dkgResult)
+			for i := 0; i < test.callVoteNtimes; i++ {
+				chainHandle.DKGResultVote(test.requestID, dkgResult.Hash())
+			}
+			submissions := chainHandle.GetDKGSubmissions(test.requestID)
+			if submissions.DKGSubmissions[0].Votes != test.expectedNVotes {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n",
+					test.expectedNVotes,
+					submissions.DKGSubmissions[0].Votes,
+				)
+			}
+		})
+	}
+}
+
+func TestGetDKGSubmissions(t *testing.T) {
+	// TODO
+}
+
+func TestOnDKGResultVote(t *testing.T) {
+	requestID := big.NewInt(12)
+
+	var tests = map[string]struct {
+		expectedNVotes int
+		callVoteNtimes int
+		requestID      *big.Int
+	}{
+		"after submission and 1 vote": {
+			expectedNVotes: 2,
+			callVoteNtimes: 1,
+			requestID:      requestID,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := &localChain{
+				submittedResults:             make(map[string][]*relaychain.DKGResult),
+				dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+				groupPublicKeyMap:            make(map[string]*big.Int),
+			}
+			chainHandle := localChain.ThresholdRelay()
+			localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11)
+			dkgResult := &relaychain.DKGResult{
+				Success:        true,
+				GroupPublicKey: big.NewInt(11),
+			}
+			chainHandle.SubmitDKGResult(test.requestID, dkgResult)
+
+			messages := make(chan string)
+			localChain.OnDKGResultVote(func(dkgResultVote *event.DKGResultVote) {
+				messages <- "got vote"
+			})
+			for i := 0; i < test.callVoteNtimes; i++ {
+				chainHandle.DKGResultVote(test.requestID, dkgResult.Hash())
+			}
+			msg := <-messages
+			if msg != "got vote" {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n",
+					"got vote",
+					msg,
+				)
+			}
+		})
 	}
 }
