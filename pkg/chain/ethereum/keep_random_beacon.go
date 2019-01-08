@@ -165,7 +165,7 @@ type relayEntryRequestedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
-) (subscription.Subscription, error) {
+) (subscription.EventSubscription, error) {
 	subscribeContext, cancel := context.WithCancel(context.Background())
 
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryRequested)
@@ -227,7 +227,7 @@ type relayEntryGeneratedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
-) (subscription.Subscription, error) {
+) (subscription.EventSubscription, error) {
 	subscribeContext, cancel := context.WithCancel(context.Background())
 
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryGenerated)
