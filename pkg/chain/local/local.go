@@ -172,7 +172,7 @@ func (c *localChain) OnRelayEntryGenerated(
 	handlerID := rand.Int()
 	c.relayEntryHandlers[handlerID] = handler
 
-	return subscription.NewSubscription(func() {
+	return subscription.NewEventSubscription(func() {
 		c.handlerMutex.Lock()
 		defer c.handlerMutex.Unlock()
 
@@ -189,7 +189,7 @@ func (c *localChain) OnRelayEntryRequested(
 	handlerID := rand.Int()
 	c.relayRequestHandlers[handlerID] = handler
 
-	return subscription.NewSubscription(func() {
+	return subscription.NewEventSubscription(func() {
 		c.handlerMutex.Lock()
 		defer c.handlerMutex.Unlock()
 
@@ -319,7 +319,7 @@ func (c *localChain) OnDKGResultPublished(
 	handlerID := rand.Int()
 	c.dkgResultPublicationHandlers[handlerID] = handler
 
-	return subscription.NewSubscription(func() {
+	return subscription.NewEventSubscription(func() {
 		c.handlerMutex.Lock()
 		defer c.handlerMutex.Unlock()
 
