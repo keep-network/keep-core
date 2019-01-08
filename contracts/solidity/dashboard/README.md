@@ -10,7 +10,7 @@ User has the ability to visualize their token and stake balances, token grant ve
 * Install [Ganache](http://truffleframework.com/ganache/) and [Brew](https://brew.sh/)
 * Install node.js via brew `brew install node`
 * Run Ganache and make sure it is using the correct port (8545):
-* - Under settings, change port number to 8545
+  * Under settings, change port number to 8545
 
 * Deploy contracts demo setup to it:
 
@@ -33,7 +33,7 @@ npm run demo
 * Install [Ganache](https://github.com/trufflesuite/ganache/releases)
 * Install node.js and npm. (https://nodejs.org/en/)
 * Run Ganache and make sure it is using the correct port (8545):
-* - Under settings, change port number to 8545.
+  * Under settings, change port number to 8545.
 * Start powershell as Administrator.
 
 * Deploy contracts demo setup:
