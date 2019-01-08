@@ -94,7 +94,7 @@ func (js *joinState) receive(msg net.Message) error {
 }
 
 func (js *joinState) nextState() keyGenerationState {
-	return &ephemeralKeyPairGeneratingState{
+	return &ephemeralKeyPairGenerationState{
 		channel: js.channel,
 		member:  js.member.InitializeEphemeralKeysGeneration(),
 	}
@@ -104,19 +104,19 @@ func (js *joinState) memberID() gjkr.MemberID {
 	return js.member.ID
 }
 
-// ephemeralKeyPairGeneratingState is the state during which members broadcast
+// ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
 // `gjkr.EphemeralPublicKeyMessage`s are valid in this state.
-type ephemeralKeyPairGeneratingState struct {
+type ephemeralKeyPairGenerationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.EphemeralKeyPairGeneratingMember
 
 	phaseMessages []*gjkr.EphemeralPublicKeyMessage
 }
 
-func (ekpgs *ephemeralKeyPairGeneratingState) activeBlocks() int { return 1 }
+func (ekpgs *ephemeralKeyPairGenerationState) activeBlocks() int { return 1 }
 
-func (ekpgs *ephemeralKeyPairGeneratingState) initiate() error {
+func (ekpgs *ephemeralKeyPairGenerationState) initiate() error {
 	message, err := ekpgs.member.GenerateEphemeralKeyPair()
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (ekpgs *ephemeralKeyPairGeneratingState) initiate() error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
+func (ekpgs *ephemeralKeyPairGenerationState) receive(msg net.Message) error {
 	switch publicKeyMessage := msg.Payload().(type) {
 	case *gjkr.EphemeralPublicKeyMessage:
 		if !isMessageFromSelf(ekpgs, msg) {
@@ -139,54 +139,54 @@ func (ekpgs *ephemeralKeyPairGeneratingState) receive(msg net.Message) error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGeneratingState) nextState() keyGenerationState {
-	return &symmetricKeyGeneratingState{
+func (ekpgs *ephemeralKeyPairGenerationState) nextState() keyGenerationState {
+	return &symmetricKeyGenerationState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.InitializeSymmetricKeyGeneration(),
 		previousPhaseMessages: ekpgs.phaseMessages,
 	}
 }
 
-func (ekpgs *ephemeralKeyPairGeneratingState) memberID() gjkr.MemberID {
+func (ekpgs *ephemeralKeyPairGenerationState) memberID() gjkr.MemberID {
 	return ekpgs.member.ID
 }
 
-// symmetricKeyGeneratingState is the state during which members compute
+// symmetricKeyGenerationState is the state during which members compute
 // symmetric keys from the previously exchanged ephemeral public keys.
 // No messages are valid in this state.
-type symmetricKeyGeneratingState struct {
+type symmetricKeyGenerationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.SymmetricKeyGeneratingMember
 
 	previousPhaseMessages []*gjkr.EphemeralPublicKeyMessage
 }
 
-func (skgs *symmetricKeyGeneratingState) activeBlocks() int { return 0 }
+func (skgs *symmetricKeyGenerationState) activeBlocks() int { return 0 }
 
-func (skgs *symmetricKeyGeneratingState) initiate() error {
+func (skgs *symmetricKeyGenerationState) initiate() error {
 	return skgs.member.GenerateSymmetricKeys(skgs.previousPhaseMessages)
 }
 
-func (skgs *symmetricKeyGeneratingState) receive(msg net.Message) error {
+func (skgs *symmetricKeyGenerationState) receive(msg net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGeneratingState) nextState() keyGenerationState {
-	return &committingState{
+func (skgs *symmetricKeyGenerationState) nextState() keyGenerationState {
+	return &commitmentState{
 		channel: skgs.channel,
 		member:  skgs.member.InitializeCommitting(),
 	}
 }
 
-func (skgs *symmetricKeyGeneratingState) memberID() gjkr.MemberID {
+func (skgs *symmetricKeyGenerationState) memberID() gjkr.MemberID {
 	return skgs.member.ID
 }
 
-// committingState is the state during which members compute their individual
+// commitmentState is the state during which members compute their individual
 // shares and commitments to those shares. Two messages are valid in this state:
 // - `gjkr.PeerSharesMessage`
 // - `gjkr.MemberCommitmentsMessage`
-type committingState struct {
+type commitmentState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.CommittingMember
 
@@ -194,9 +194,9 @@ type committingState struct {
 	phaseCommitmentsMessages []*gjkr.MemberCommitmentsMessage
 }
 
-func (cs *committingState) activeBlocks() int { return 1 }
+func (cs *commitmentState) activeBlocks() int { return 1 }
 
-func (cs *committingState) initiate() error {
+func (cs *commitmentState) initiate() error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		return err
@@ -213,7 +213,7 @@ func (cs *committingState) initiate() error {
 	return nil
 }
 
-func (cs *committingState) receive(msg net.Message) error {
+func (cs *commitmentState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.PeerSharesMessage:
 		if !isMessageFromSelf(cs, msg) {
@@ -232,7 +232,7 @@ func (cs *committingState) receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *committingState) nextState() keyGenerationState {
+func (cs *commitmentState) nextState() keyGenerationState {
 	return &commitmentsVerificationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeCommitmentsVerification(),
@@ -242,7 +242,7 @@ func (cs *committingState) nextState() keyGenerationState {
 	}
 }
 
-func (cs *committingState) memberID() gjkr.MemberID {
+func (cs *commitmentState) memberID() gjkr.MemberID {
 	return cs.member.ID
 }
 
@@ -335,7 +335,7 @@ func (sjs *sharesJustificationState) receive(msg net.Message) error {
 }
 
 func (sjs *sharesJustificationState) nextState() keyGenerationState {
-	return &qualifiedState{
+	return &qualificationState{
 		channel: sjs.channel,
 		member:  sjs.member.InitializeQualified(),
 	}
@@ -345,49 +345,49 @@ func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
 	return sjs.member.ID
 }
 
-// qualifiedState is the state during which group members combine all valid
+// qualificationState is the state during which group members combine all valid
 // secret shares published by other group members in the previous states.
 // No messages are valid in this state.
-type qualifiedState struct {
+type qualificationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.QualifiedMember
 }
 
-func (qs *qualifiedState) activeBlocks() int { return 0 }
+func (qs *qualificationState) activeBlocks() int { return 0 }
 
-func (qs *qualifiedState) initiate() error {
+func (qs *qualificationState) initiate() error {
 	qs.member.CombineMemberShares()
 	return nil
 }
 
-func (qs *qualifiedState) receive(msg net.Message) error {
+func (qs *qualificationState) receive(msg net.Message) error {
 	return nil
 }
 
-func (qs *qualifiedState) nextState() keyGenerationState {
-	return &pointsSharingState{
+func (qs *qualificationState) nextState() keyGenerationState {
+	return &pointsShareState{
 		channel: qs.channel,
 		member:  qs.member.InitializeSharing(),
 	}
 }
 
-func (qs *qualifiedState) memberID() gjkr.MemberID {
+func (qs *qualificationState) memberID() gjkr.MemberID {
 	return qs.member.ID
 }
 
-// pointsSharingState is the state during which group members calculate and
+// pointsShareState is the state during which group members calculate and
 // publish their public key share points.
 // `gjkr.MemberPublicKeySharePointsMessage`s are valid in this state.
-type pointsSharingState struct {
+type pointsShareState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.SharingMember // TODO: SharingMember should be renamed to PointsSharingMember
 
 	phaseMessages []*gjkr.MemberPublicKeySharePointsMessage
 }
 
-func (pss *pointsSharingState) activeBlocks() int { return 1 }
+func (pss *pointsShareState) activeBlocks() int { return 1 }
 
-func (pss *pointsSharingState) initiate() error {
+func (pss *pointsShareState) initiate() error {
 	message := pss.member.CalculatePublicKeySharePoints()
 	if err := pss.channel.Send(message); err != nil {
 		return err
@@ -396,7 +396,7 @@ func (pss *pointsSharingState) initiate() error {
 	return nil
 }
 
-func (pss *pointsSharingState) receive(msg net.Message) error {
+func (pss *pointsShareState) receive(msg net.Message) error {
 	switch pointsMessage := msg.Payload().(type) {
 	case *gjkr.MemberPublicKeySharePointsMessage:
 		if !isMessageFromSelf(pss, msg) {
@@ -407,7 +407,7 @@ func (pss *pointsSharingState) receive(msg net.Message) error {
 	return nil
 }
 
-func (pss *pointsSharingState) nextState() keyGenerationState {
+func (pss *pointsShareState) nextState() keyGenerationState {
 	return &pointsValidationState{
 		channel: pss.channel,
 		member:  pss.member,
@@ -416,7 +416,7 @@ func (pss *pointsSharingState) nextState() keyGenerationState {
 	}
 }
 
-func (pss *pointsSharingState) memberID() gjkr.MemberID {
+func (pss *pointsShareState) memberID() gjkr.MemberID {
 	return pss.member.ID
 }
 
@@ -504,7 +504,7 @@ func (pjs *pointsJustificationState) receive(msg net.Message) error {
 }
 
 func (pjs *pointsJustificationState) nextState() keyGenerationState {
-	return &revealingState{
+	return &keyRevealState{
 		channel: pjs.channel,
 		member:  pjs.member.InitializeRevealing(),
 	}
@@ -514,19 +514,19 @@ func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 	return pjs.member.ID
 }
 
-// revealingState is the state during which group members reveal ephemeral
+// keyRevealState is the state during which group members reveal ephemeral
 // private keys used to create an ephemeral symmetric keys with disqualified
 // members who share a group private key.
-type revealingState struct {
+type keyRevealState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.RevealingMember
 
 	phaseMessages []*gjkr.DisqualifiedEphemeralKeysMessage
 }
 
-func (rs *revealingState) activeBlocks() int { return 1 }
+func (rs *keyRevealState) activeBlocks() int { return 1 }
 
-func (rs *revealingState) initiate() error {
+func (rs *keyRevealState) initiate() error {
 	revealMsg, err := rs.member.RevealDisqualifiedMembersKeys()
 	if err != nil {
 		return err
@@ -539,7 +539,7 @@ func (rs *revealingState) initiate() error {
 	return nil
 }
 
-func (rs *revealingState) receive(msg net.Message) error {
+func (rs *keyRevealState) receive(msg net.Message) error {
 	switch revealMessage := msg.Payload().(type) {
 	case *gjkr.DisqualifiedEphemeralKeysMessage:
 		if !isMessageFromSelf(rs, msg) {
@@ -550,7 +550,7 @@ func (rs *revealingState) receive(msg net.Message) error {
 	return nil
 }
 
-func (rs *revealingState) nextState() keyGenerationState {
+func (rs *keyRevealState) nextState() keyGenerationState {
 	return &reconstructionState{
 		channel:               rs.channel,
 		member:                rs.member.InitializeReconstruction(),
@@ -558,7 +558,7 @@ func (rs *revealingState) nextState() keyGenerationState {
 	}
 }
 
-func (rs *revealingState) memberID() gjkr.MemberID {
+func (rs *keyRevealState) memberID() gjkr.MemberID {
 	return rs.member.ID
 }
 
@@ -589,7 +589,7 @@ func (rs *reconstructionState) receive(msg net.Message) error {
 }
 
 func (rs *reconstructionState) nextState() keyGenerationState {
-	return &combiningState{
+	return &combinationState{
 		channel: rs.channel,
 		member:  rs.member.InitializeCombining(),
 	}
@@ -599,33 +599,33 @@ func (rs *reconstructionState) memberID() gjkr.MemberID {
 	return rs.member.ID
 }
 
-// combiningState is the state during which group members combine together all
+// combinationState is the state during which group members combine together all
 // qualified key shares to form a group public key. No messages are valid in
 // this state.
-type combiningState struct {
+type combinationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.CombiningMember
 }
 
-func (cs *combiningState) activeBlocks() int { return 0 }
+func (cs *combinationState) activeBlocks() int { return 0 }
 
-func (cs *combiningState) initiate() error {
+func (cs *combinationState) initiate() error {
 	cs.member.CombineGroupPublicKey()
 	return nil
 }
 
-func (cs *combiningState) receive(msg net.Message) error {
+func (cs *combinationState) receive(msg net.Message) error {
 	return fmt.Errorf("unexpected message for combining phase: [%#v]", msg)
 }
 
-func (cs *combiningState) nextState() keyGenerationState {
+func (cs *combinationState) nextState() keyGenerationState {
 	return &finalizationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeFinalization(),
 	}
 }
 
-func (cs *combiningState) memberID() gjkr.MemberID {
+func (cs *combinationState) memberID() gjkr.MemberID {
 	return cs.member.ID
 }
 

@@ -184,17 +184,17 @@ func expectedMessagesCount(states []keyGenerationState) int {
 	switch states[0].(type) {
 	case *joinState:
 		return statesCount
-	case *ephemeralKeyPairGeneratingState:
+	case *ephemeralKeyPairGenerationState:
 		return statesCount
-	case *committingState:
+	case *commitmentState:
 		return statesCount * 2 // shares + commitments
 	case *commitmentsVerificationState:
 		return statesCount
-	case *pointsSharingState:
+	case *pointsShareState:
 		return statesCount
 	case *pointsValidationState:
 		return statesCount
-	case *revealingState:
+	case *keyRevealState:
 		return statesCount
 	default:
 		return 0
