@@ -9,10 +9,6 @@ import (
 )
 
 // JoinMessage is sent by member to announce its presence in the group.
-//
-// TODO: List of members in the group should come from the group selection
-// protocol. Please remove this message once group selection protocol will be
-// implemented.
 type JoinMessage struct {
 	SenderID MemberID
 }

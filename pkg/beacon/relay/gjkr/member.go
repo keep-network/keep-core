@@ -257,9 +257,6 @@ func (id MemberID) Int() *big.Int {
 }
 
 // AddToGroup adds the provided MemberID to the group
-//
-// TODO: This is a temporary method, please remove it once the group selection
-// protocol will be implemented.
 func (mc *memberCore) AddToGroup(memberID MemberID) {
 	mc.group.RegisterMemberID(memberID)
 }
