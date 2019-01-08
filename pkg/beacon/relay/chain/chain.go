@@ -42,7 +42,7 @@ type GroupInterface interface {
 	SubmitGroupPublicKey(requestID *big.Int, key [96]byte) *async.GroupRegistrationPromise
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
-	OnGroupRegistered(func(key *event.GroupRegistration))
+	OnGroupRegistered(func(key *event.GroupRegistration)) subscription.EventSubscription
 	// SubmitTicket submits a ticket corresponding to the virtual staker to
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an

@@ -316,15 +316,17 @@ type submitGroupPublicKeyEventFunc func(
 func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 	success submitGroupPublicKeyEventFunc,
 	fail errorCallback,
-) error {
+) (subscription.EventSubscription, error) {
+	subscribeContext, cancel := context.WithCancel(context.Background())
+
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
 	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
-		nil,
+		&bind.WatchOpts{Context: subscribeContext},
 		eventChan,
 	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
+		return eventSubscription, fmt.Errorf(
 			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
 			err,
 		)
@@ -345,5 +347,13 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 			}
 		}
 	}()
-	return nil
+
+	// Canceling the context exits the eventSubscription, which results in
+	// proper cleanup (unsubscribing from the subscription, and closing the
+	// channel, in that order).
+	unsubscribeCallback := func() {
+		cancel()
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }

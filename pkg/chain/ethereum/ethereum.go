@@ -50,7 +50,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 ) *async.GroupRegistrationPromise {
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+	subscription, err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
 			groupPublicKey []byte,
 			requestID *big.Int,
@@ -79,6 +79,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		},
 	)
 	if err != nil {
+		subscription.Unsubscribe()
 		fmt.Fprintf(
 			os.Stderr,
 			"watch group public key event failed with: [%v].\n",
@@ -89,6 +90,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 
 	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], requestID)
 	if err != nil {
+		subscription.Unsubscribe()
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise
 	}
@@ -267,23 +269,24 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(registration *event.GroupRegistration),
-) {
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-		func(
-			groupPublicKey []byte,
-			requestID *big.Int,
-			activationBlockHeight *big.Int,
-		) {
-			handle(&event.GroupRegistration{
-				GroupPublicKey:        groupPublicKey,
-				RequestID:             requestID,
-				ActivationBlockHeight: activationBlockHeight,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("entry of group key failed with: [%v]", err)
-		},
-	)
+) subscription.EventSubscription {
+	groupRegisteredSubscription, err :=
+		ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+			func(
+				groupPublicKey []byte,
+				requestID *big.Int,
+				activationBlockHeight *big.Int,
+			) {
+				handle(&event.GroupRegistration{
+					GroupPublicKey:        groupPublicKey,
+					RequestID:             requestID,
+					ActivationBlockHeight: activationBlockHeight,
+				})
+			},
+			func(err error) error {
+				return fmt.Errorf("entry of group key failed with: [%v]", err)
+			},
+		)
 	if err != nil {
 		fmt.Fprintf(
 			os.Stderr,
@@ -291,6 +294,7 @@ func (ec *ethereumChain) OnGroupRegistered(
 			err,
 		)
 	}
+	return groupRegisteredSubscription
 }
 
 func (ec *ethereumChain) RequestRelayEntry(
