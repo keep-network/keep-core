@@ -107,6 +107,8 @@ func (js *joinState) memberID() gjkr.MemberID {
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
 // `gjkr.EphemeralPublicKeyMessage`s are valid in this state.
+//
+// State covers phase 1 of the protocol.
 type ephemeralKeyPairGenerationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.EphemeralKeyPairGeneratingMember
@@ -154,6 +156,8 @@ func (ekpgs *ephemeralKeyPairGenerationState) memberID() gjkr.MemberID {
 // symmetricKeyGenerationState is the state during which members compute
 // symmetric keys from the previously exchanged ephemeral public keys.
 // No messages are valid in this state.
+//
+// State covers phase 2 of the protocol.
 type symmetricKeyGenerationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.SymmetricKeyGeneratingMember
@@ -186,6 +190,8 @@ func (skgs *symmetricKeyGenerationState) memberID() gjkr.MemberID {
 // shares and commitments to those shares. Two messages are valid in this state:
 // - `gjkr.PeerSharesMessage`
 // - `gjkr.MemberCommitmentsMessage`
+//
+// State covers phase 3 of the protocol.
 type commitmentState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.CommittingMember
@@ -249,6 +255,8 @@ func (cs *commitmentState) memberID() gjkr.MemberID {
 // commitmentsVerificationState is the state during which members validate
 // shares and commitments computed and published by other members in the
 // previous phase. `gjkr.SecretShareAccusationMessage`s are valid in this state.
+//
+// State covers phase 4 of the protocol.
 type commitmentsVerificationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.CommitmentsVerifyingMember
@@ -307,6 +315,8 @@ func (cvs *commitmentsVerificationState) memberID() gjkr.MemberID {
 // sharesJustificationState is the state during which members resolve
 // accusations published by other group members in the previous state.
 // No messages are valid in this state.
+//
+// State covers phase 5 of the protocol.
 type sharesJustificationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.SharesJustifyingMember
@@ -348,6 +358,8 @@ func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
 // qualificationState is the state during which group members combine all valid
 // secret shares published by other group members in the previous states.
 // No messages are valid in this state.
+//
+// State covers phase 6 of the protocol.
 type qualificationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.QualifiedMember
@@ -378,6 +390,8 @@ func (qs *qualificationState) memberID() gjkr.MemberID {
 // pointsShareState is the state during which group members calculate and
 // publish their public key share points.
 // `gjkr.MemberPublicKeySharePointsMessage`s are valid in this state.
+//
+// State covers phase 7 of the protocol.
 type pointsShareState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.SharingMember // TODO: SharingMember should be renamed to PointsSharingMember
@@ -423,6 +437,8 @@ func (pss *pointsShareState) memberID() gjkr.MemberID {
 // pointsValidationState is the state during which group members validate
 // public key share points published by other group members in the previous
 // state. `gjkr.PointsAccusationsMessage`s are valid in this state.
+//
+// State covers phase 8 of the protocol.
 type pointsValidationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.SharingMember // TODO: split validation logic into PointsValidatingMember
@@ -476,6 +492,8 @@ func (pvs *pointsValidationState) memberID() gjkr.MemberID {
 // pointsJustificationState is the state during which group members resolve
 // accusations published by other group members in the previous state.
 // No messages are valid in this state.
+//
+// State covers phase 9 of the protocol.
 type pointsJustificationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.PointsJustifyingMember
@@ -517,6 +535,8 @@ func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 // keyRevealState is the state during which group members reveal ephemeral
 // private keys used to create an ephemeral symmetric keys with disqualified
 // members who share a group private key.
+//
+// State covers phase 10 of the protocol.
 type keyRevealState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.RevealingMember
@@ -565,6 +585,8 @@ func (rs *keyRevealState) memberID() gjkr.MemberID {
 // reconstructionState is the state during which group members reconstruct
 // individual keys of members disqualified in previous states. No messages are
 // valid in this state.
+//
+// State covers phase 11 of the protocol.
 type reconstructionState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.ReconstructingMember
@@ -602,6 +624,8 @@ func (rs *reconstructionState) memberID() gjkr.MemberID {
 // combinationState is the state during which group members combine together all
 // qualified key shares to form a group public key. No messages are valid in
 // this state.
+//
+// State covers phase 12 of the protocol.
 type combinationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.CombiningMember
@@ -631,6 +655,9 @@ func (cs *combinationState) memberID() gjkr.MemberID {
 
 // finalizationState is the last state of GJKR DKG protocol - in this state,
 // distributed key generation is completed. No messages are valid in this state.
+//
+// State prepares a result to publish in phase 13 of the protocol but it does
+// not execute that phase.
 type finalizationState struct {
 	channel net.BroadcastChannel
 	member  *gjkr.FinalizingMember
