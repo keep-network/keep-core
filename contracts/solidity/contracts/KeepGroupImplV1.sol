@@ -64,7 +64,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Submit ticket to request to participate in a new candidate group.
      * @param ticketValue Result of a pseudorandom function with input values of
      * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value.
+     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
      * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function submitTicket(
@@ -132,7 +132,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Performs surface-level validation of the ticket.
      * @param staker Address of the staker.
-     * @param stakerValue Staker-specific value.
+     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
      * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function cheapCheck(
@@ -150,7 +150,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param staker Address of the staker.
      * @param ticketValue Result of a pseudorandom function with input values of
      * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value.
+     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
      * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function costlyCheck(
