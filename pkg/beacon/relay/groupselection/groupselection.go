@@ -13,7 +13,7 @@ var one = int64(1)
 // tickets.
 func GenerateTickets(
 	minimumStake *big.Int,
-	availableStake *big.Int, // S_j stake
+	availableStake *big.Int, // S_j
 	stakerValue []byte, // Q_j
 	beaconValue []byte, // V_i
 ) ([]*Ticket, error) {

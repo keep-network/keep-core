@@ -61,8 +61,8 @@ func TestValidateProofs(t *testing.T) {
 
 	// hash(proof) == expected value?
 	var valueBytes []byte
-	valueBytes = append(valueBytes, beaconOutput...)
-	valueBytes = append(valueBytes, stakingPublicKey.SerializeCompressed()...)
+	valueBytes = append(valueBytes, beaconOutput...)                           // V_i
+	valueBytes = append(valueBytes, stakingPublicKey.SerializeCompressed()...) // Q_j
 	valueBytes = append(valueBytes, virtualStakers.Bytes()...)
 
 	expectedValue := SHAValue(sha256.Sum256(valueBytes[:]))

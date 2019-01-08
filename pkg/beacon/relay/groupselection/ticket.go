@@ -15,7 +15,7 @@ import (
 type Ticket struct {
 	Value SHAValue // W_k
 
-	Proof *Proof // Proof(Q_j, vs)
+	Proof *Proof // proof_k = Proof(Q_j, vs)
 }
 
 // Proof consists of the components needed to construct the Ticket's value, and
