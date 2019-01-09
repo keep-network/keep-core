@@ -1,6 +1,7 @@
 package relay
 
 import (
+	"crypto/subtle"
 	"fmt"
 	"math/big"
 	"time"
@@ -65,7 +66,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	)
 
 	// kick off background loop to check submitted tickets
-	go verifyTicket(relayChain, n.StakeID, quitTicketChallenge)
+	go verifyTicket(relayChain, beaconValue, n.StakeID, quitTicketChallenge)
 
 	for {
 		select {
@@ -109,6 +110,7 @@ func submitTickets(
 
 func verifyTicket(
 	relayChain relaychain.GroupInterface,
+	beaconValue []byte,
 	self string,
 	quit <-chan struct{},
 ) {
@@ -118,7 +120,7 @@ func verifyTicket(
 		select {
 		case <-t.C:
 			for _, ticket := range relayChain.GetOrderedTickets() {
-				if !costlyCheck(ticket) {
+				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.Challenge{
 						Ticket: ticket,
 						Sender: self,
@@ -138,7 +140,19 @@ func verifyTicket(
 	}
 }
 
-func costlyCheck(ticket *groupselection.Ticket) bool {
-	// TODO: implement
-	return true
+// costlyCheck takes the on-chain Proof, computes the sha256 hash from the Proof,
+// and then uses a constant time compare to determine if the on-chain value
+// matches the value the client computes for them.
+func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
+	computedValue := groupselection.CalculateTicketValue(
+		beaconValue,
+		ticket.Proof.StakerValue,
+		ticket.Proof.VirtualStakerIndex,
+	)
+	switch subtle.ConstantTimeCompare(computedValue[:], ticket.Value[:]) {
+	case 1:
+		return true
+
+	}
+	return false
 }
