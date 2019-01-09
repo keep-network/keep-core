@@ -111,7 +111,7 @@ func submitTickets(
 func verifyTicket(
 	relayChain relaychain.GroupInterface,
 	beaconValue []byte,
-	self string,
+	selfStakeAddress string,
 	quit <-chan struct{},
 ) {
 	t := time.NewTimer(1)
@@ -123,7 +123,7 @@ func verifyTicket(
 				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.Challenge{
 						Ticket:        ticket,
-						SenderAddress: self,
+						SenderAddress: selfStakeAddress,
 					}
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
