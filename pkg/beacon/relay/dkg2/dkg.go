@@ -53,10 +53,9 @@ func ExecuteDKG(
 	threshold int,
 	seed *big.Int,
 ) ([]byte, error) {
-	if playerIndex < 0 {
-		return nil, fmt.Errorf("playerIndex must be >= 0, got: %v", playerIndex)
+	if playerIndex < 1 {
+		return nil, fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
 	}
-	memberID := gjkr.MemberID(playerIndex + 1)
 
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
