@@ -11,6 +11,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+// getTicketListInterval is the number of seconds we wait before requesting the
+// ordered ticket list (to run ticket verification)from the chain.
+const getTicketListInterval = 5 * time.Second
+
 type groupCandidate struct {
 	address string
 	tickets []*groupselection.Ticket
@@ -139,7 +143,7 @@ func (gc *groupCandidate) verifyTicket(
 					)
 				}
 			}
-			t.Reset(5 * time.Second)
+			t.Reset(getTicketListInterval)
 		case <-quit:
 			// Exit this loop when we get a signal from quit.
 			return
