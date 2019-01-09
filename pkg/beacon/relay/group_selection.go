@@ -11,6 +11,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+type groupCandidate struct {
+	address string
+	tickets []*groupselection.Ticket
+}
+
 // SubmitTicketsForGroupSelection takes the previous beacon value and attempts to
 // generate the appropriate number of tickets for the staker. After ticket
 // generation begins an interactive process, where the staker submits tickets
@@ -55,18 +60,22 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	errCh := make(chan error, len(tickets))
 	quitTicketSubmission := make(chan struct{}, 0)
 	quitTicketChallenge := make(chan struct{}, 0)
+	groupCandidate := &groupCandidate{address: n.StakeID, tickets: tickets}
 
 	// Phase 2a: submit all tickets that fall under the natural threshold
-	go submitTickets(
+	go groupCandidate.submitTickets(
 		relayChain,
-		tickets,
 		n.chainConfig.NaturalThreshold,
 		quitTicketSubmission,
 		errCh,
 	)
 
 	// kick off background loop to check submitted tickets
-	go verifyTicket(relayChain, beaconValue, n.StakeID, quitTicketChallenge)
+	go groupCandidate.verifyTicket(
+		relayChain,
+		beaconValue,
+		quitTicketChallenge,
+	)
 
 	for {
 		select {
@@ -87,14 +96,13 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 // submitTickets checks to see if the submission period is over in between ticket
 // submits.
-func submitTickets(
+func (gc *groupCandidate) submitTickets(
 	relayChain relaychain.GroupInterface,
-	tickets []*groupselection.Ticket,
 	naturalThreshold *big.Int,
 	quit <-chan struct{},
 	errCh chan error,
 ) {
-	for _, ticket := range tickets {
+	for _, ticket := range gc.tickets {
 		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
 			relayChain.SubmitTicket(ticket).OnFailure(
 				func(err error) { errCh <- err },
@@ -108,10 +116,9 @@ func submitTickets(
 	}
 }
 
-func verifyTicket(
+func (gc *groupCandidate) verifyTicket(
 	relayChain relaychain.GroupInterface,
 	beaconValue []byte,
-	selfStakeAddress string,
 	quit <-chan struct{},
 ) {
 	t := time.NewTimer(1)
@@ -123,7 +130,7 @@ func verifyTicket(
 				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.Challenge{
 						Ticket:        ticket,
-						SenderAddress: selfStakeAddress,
+						SenderAddress: gc.address,
 					}
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
