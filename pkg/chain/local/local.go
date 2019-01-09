@@ -34,7 +34,6 @@ type localChain struct {
 	relayEntryHandlers           []func(entry *event.Entry)
 	relayRequestHandlers         []func(request *event.Request)
 	groupRegisteredHandlers      []func(key *event.GroupRegistration)
-	stakerRegistrationHandlers   []func(staker *event.StakerRegistration)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
 	requestID   int64
@@ -220,37 +219,6 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(),
 	}
-}
-
-// AddStaker is a temporary function for Milestone 1 that
-// adds a staker to the group contract.
-func (c *localChain) AddStaker(
-	groupMemberID string,
-) *async.StakerRegistrationPromise {
-	onStakerAddedPromise := &async.StakerRegistrationPromise{}
-	index := len(c.stakerList)
-	c.stakerList = append(c.stakerList, groupMemberID)
-
-	c.handlerMutex.Lock()
-	for _, handler := range c.stakerRegistrationHandlers {
-		go func(handler func(staker *event.StakerRegistration), groupMemberID string, index int) {
-			handler(&event.StakerRegistration{
-				GroupMemberID: groupMemberID,
-				Index:         index,
-			})
-		}(handler, groupMemberID, index)
-	}
-	c.handlerMutex.Unlock()
-
-	err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
-		Index:         index,
-		GroupMemberID: string(groupMemberID),
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
-	}
-
-	return onStakerAddedPromise
 }
 
 // GetStakerList is a temporary function for Milestone 1 that

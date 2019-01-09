@@ -3,8 +3,6 @@ package beacon
 import (
 	"context"
 	"fmt"
-	"os"
-	"sync"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
@@ -62,24 +60,6 @@ func Initialize(
 		chainConfig,
 	)
 
-	var proceed sync.WaitGroup
-	proceed.Add(1)
-	relayChain.AddStaker(stakingID).
-		OnComplete(func(stake *event.StakerRegistration, err error) {
-			defer proceed.Done()
-
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"Failed to register staker with id [%v].",
-					stakingID,
-				)
-				curParticipantState = unstaked
-				return
-			}
-		})
-	proceed.Wait()
-
 	switch curParticipantState {
 	case unstaked:
 		// check for stake command-line parameter to initialize staking?
@@ -121,7 +101,7 @@ func syncStakingListWithRetry(node *relay.Node, relayChain relaychain.Interface)
 
 		select {
 		case <-t.C:
-			list, err := relayChain.GetStakerList()
+			_, err := relayChain.GetStakerList()
 			if err != nil {
 				fmt.Printf(
 					"failed to sync staking list: [%v], retrying...\n",
@@ -132,8 +112,6 @@ func syncStakingListWithRetry(node *relay.Node, relayChain relaychain.Interface)
 				t.Reset(3 * time.Second)
 				continue
 			}
-
-			node.SyncStakingList(list)
 
 			// exit this loop when we've successfully synced
 			return

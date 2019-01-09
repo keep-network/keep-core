@@ -78,9 +78,6 @@ type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (config.Chain, error)
 
-	// AddStaker is a temporary function for Milestone 1 that
-	// adds a staker to the group contract.
-	AddStaker(groupMemberID string) *async.StakerRegistrationPromise
 	// GetStakerList is a temporary function for Milestone 1 that
 	// gets back the list of stakers.
 	GetStakerList() ([]string, error)
