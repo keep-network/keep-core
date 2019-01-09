@@ -351,33 +351,6 @@ func (ec *ethereumChain) AddStaker(
 	return onStakerAddedPromise
 }
 
-func (ec *ethereumChain) OnStakerAdded(
-	handle func(staker *event.StakerRegistration),
-) {
-	err := ec.keepGroupContract.WatchOnStakerAdded(
-		func(index int, groupMemberID []byte) bool {
-			handle(&event.StakerRegistration{
-				Index:         index,
-				GroupMemberID: string(groupMemberID),
-			})
-
-			// we are not interested in any particular staker,
-			// so we stop watching here
-			return true
-		},
-		func(err error) error {
-			return fmt.Errorf("staker event failed with %v", err)
-		},
-	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"failed to watch OnStakerAdded [%v].\n",
-			err,
-		)
-	}
-}
-
 func (ec *ethereumChain) GetStakerList() ([]string, error) {
 	count, err := ec.keepGroupContract.GetNStaker()
 	if err != nil {

@@ -78,9 +78,6 @@ type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (config.Chain, error)
 
-	// OnStakerAdded is a callback that is invoked when an on-chain
-	// notification of a new, valid staker is seen.
-	OnStakerAdded(func(staker *event.StakerRegistration))
 	// AddStaker is a temporary function for Milestone 1 that
 	// adds a staker to the group contract.
 	AddStaker(groupMemberID string) *async.StakerRegistrationPromise

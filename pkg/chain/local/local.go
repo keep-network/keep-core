@@ -198,15 +198,6 @@ func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration)) {
-	c.handlerMutex.Lock()
-	c.stakerRegistrationHandlers = append(
-		c.stakerRegistrationHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
-}
-
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }

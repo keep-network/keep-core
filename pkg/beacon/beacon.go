@@ -85,10 +85,6 @@ func Initialize(
 		// check for stake command-line parameter to initialize staking?
 		return fmt.Errorf("account is unstaked")
 	default:
-		relayChain.OnStakerAdded(func(staker *event.StakerRegistration) {
-			node.AddStaker(staker.Index, staker.GroupMemberID)
-		})
-
 		// Retry until we can sync our staking list
 		syncStakingListWithRetry(&node, relayChain)
 
