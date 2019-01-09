@@ -349,7 +349,41 @@ func TestDKGResultVote(t *testing.T) {
 }
 
 func TestGetDKGSubmissions(t *testing.T) {
-	// TODO
+	requestID := big.NewInt(12)
+	localChain := &localChain{
+		submittedResults:             make(map[string][]*relaychain.DKGResult),
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		groupPublicKeyMap:            make(map[string]*big.Int),
+	}
+	chainHandle := localChain.ThresholdRelay()
+	localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11)
+	dkgResult := &relaychain.DKGResult{
+		Success:        true,
+		GroupPublicKey: big.NewInt(11),
+	}
+	chainHandle.SubmitDKGResult(requestID, dkgResult)
+	submissions := chainHandle.GetDKGSubmissions(requestID)
+
+	expected := &relaychain.DKGSubmissions{
+		DKGSubmissions: []*relaychain.DKGSubmission{
+			{
+				DKGResult: &relaychain.DKGResult{
+					Success:        true,
+					GroupPublicKey: big.NewInt(11),
+					Disqualified:   []bool{},
+					Inactive:       []bool{},
+				},
+				Votes: 1,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(submissions, expected) {
+		t.Fatalf("\nexpected: %+v\nactual:   %+v\n",
+			expected,
+			submissions,
+		)
+	}
 }
 
 func TestOnDKGResultVote(t *testing.T) {
