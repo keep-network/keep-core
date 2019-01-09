@@ -9,10 +9,10 @@ type Chain struct {
 	// Threshold is the minimum number of interacting group members needed to
 	// produce a relay entry.
 	Threshold int
-	// TicketInitialTimeout is the duration (in blocks) the staker has to submit
+	// TicketInitialSubmissionTimeout is the duration (in blocks) the staker has to submit
 	// tickets that fall under the natural threshold to satisfy the initial
 	// ticket timeout (see group selection, phase 2a).
-	TicketInitialTimeout int
+	TicketInitialSubmissionTimeout int
 	// TicketReactiveSubmissionTimeout is the duration (in blocks) the staker has to
 	// submit any tickets that did not fall under the natural threshold. This
 	// final chance to submit tickets is called reactive ticket submission
