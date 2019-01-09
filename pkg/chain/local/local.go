@@ -48,10 +48,9 @@ type localChain struct {
 	stakerList []string
 
 	// Track the submitted votes.
-	submissionsMutex  sync.Mutex
-	submissions       map[string]*relaychain.DKGSubmissions
-	voteHandler       []func(dkgResultVote *event.DKGResultVote)
-	groupPublicKeyMap map[string]*big.Int
+	submissionsMutex sync.Mutex
+	submissions      map[string]*relaychain.DKGSubmissions
+	voteHandler      []func(dkgResultVote *event.DKGResultVote)
 }
 
 // GetDKGSubmissions returns the current set of submissions for the requestID.
@@ -259,7 +258,6 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(),
 		submissions:                  make(map[string]*relaychain.DKGSubmissions),
-		groupPublicKeyMap:            make(map[string]*big.Int),
 	}
 }
 
@@ -338,12 +336,6 @@ func (c *localChain) IsDKGResultPublished(
 	return ok
 }
 
-// getGroupPublicKeyFromRequestID is used inside SubmitDKGResult when we simulate
-// the submission of a result.
-func (c *localChain) getGroupPublicKeyFromRequestID(requestID *big.Int) *big.Int {
-	return c.groupPublicKeyMap[requestID.String()]
-}
-
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
@@ -372,17 +364,11 @@ func (c *localChain) SubmitDKGResult(
 		c.submissions = make(map[string]*relaychain.DKGSubmissions)
 	}
 	if _, ok := c.submissions[requestID.String()]; !ok {
-		groupPublicKey := c.getGroupPublicKeyFromRequestID(requestID)
 		c.submissions[requestID.String()] = &relaychain.DKGSubmissions{
 			DKGSubmissions: []*relaychain.DKGSubmission{
 				{
-					DKGResult: &relaychain.DKGResult{
-						Success:        true,
-						GroupPublicKey: groupPublicKey,
-						Disqualified:   []bool{},
-						Inactive:       []bool{},
-					},
-					Votes: 1,
+					DKGResult: resultToPublish,
+					Votes:     1,
 				},
 			},
 		}

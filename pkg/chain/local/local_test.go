@@ -334,10 +334,8 @@ func TestDKGResultVote(t *testing.T) {
 			localChain := &localChain{
 				submittedResults:             make(map[string][]*relaychain.DKGResult),
 				dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-				groupPublicKeyMap:            make(map[string]*big.Int),
 			}
 			chainHandle := localChain.ThresholdRelay()
-			localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11)
 			dkgResult := &relaychain.DKGResult{
 				Success:        true,
 				GroupPublicKey: big.NewInt(11),
@@ -362,10 +360,8 @@ func TestGetDKGSubmissions(t *testing.T) {
 	localChain := &localChain{
 		submittedResults:             make(map[string][]*relaychain.DKGResult),
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-		groupPublicKeyMap:            make(map[string]*big.Int),
 	}
 	chainHandle := localChain.ThresholdRelay()
-	localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11)
 	dkgResult := &relaychain.DKGResult{
 		Success:        true,
 		GroupPublicKey: big.NewInt(11),
@@ -379,8 +375,6 @@ func TestGetDKGSubmissions(t *testing.T) {
 				DKGResult: &relaychain.DKGResult{
 					Success:        true,
 					GroupPublicKey: big.NewInt(11),
-					Disqualified:   []bool{},
-					Inactive:       []bool{},
 				},
 				Votes: 1,
 			},
@@ -413,10 +407,8 @@ func TestOnDKGResultVote(t *testing.T) {
 			localChain := &localChain{
 				submittedResults:             make(map[string][]*relaychain.DKGResult),
 				dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-				groupPublicKeyMap:            make(map[string]*big.Int),
 			}
 			chainHandle := localChain.ThresholdRelay()
-			localChain.groupPublicKeyMap[requestID.String()] = big.NewInt(11)
 			dkgResult := &relaychain.DKGResult{
 				Success:        true,
 				GroupPublicKey: big.NewInt(11),
