@@ -107,7 +107,17 @@ func (ec *ethereumChain) SubmitChallenge(ticket *groupselection.Challenge) *asyn
 
 // TODO: implement
 func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
+	// TODO: implement
 	return make([]*groupselection.Ticket, 0)
+}
+
+func (c *ethereumChain) CostlyCheck(
+	stakerValue []byte,
+	ticketValue *big.Int,
+	virutalStakerIndex *big.Int,
+) bool {
+	// TODO: implement
+	return true
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
