@@ -15,7 +15,7 @@ import (
 // generation begins an interactive process, where the staker submits tickets
 // that fall under the natural threshold, while challenging tickets on chain
 // that fail verification. Submission ends at the end of the submission period,
-// and the staker can only contenst incorrect tickets up to the challenge period.
+// and the staker can only contest incorrect tickets up to the challenge period.
 func (n *Node) SubmitTicketsForGroupSelection(
 	beaconValue []byte,
 	relayChain relaychain.GroupInterface,
