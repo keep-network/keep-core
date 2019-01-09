@@ -144,6 +144,7 @@ func verifyTicket(
 // and then uses a constant time compare to determine if the on-chain value
 // matches the value the client computes for them.
 func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
+	// cheapCheck is done on chain
 	computedValue := groupselection.CalculateTicketValue(
 		beaconValue,
 		ticket.Proof.StakerValue,
