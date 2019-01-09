@@ -27,9 +27,9 @@ type Proof struct {
 // NewTicket calculates a Ticket Value (SHAValue), and returns the Ticket with
 // the associated Proof.
 func NewTicket(
-	beaconOutput []byte,
-	stakerValue []byte,
-	virtualStakerIndex *big.Int,
+	beaconOutput []byte, // V_i
+	stakerValue []byte, // Q_j
+	virtualStakerIndex *big.Int, // vs
 ) *Ticket {
 	value := CalculateTicketValue(
 		beaconOutput,

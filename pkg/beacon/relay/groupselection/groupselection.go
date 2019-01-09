@@ -12,10 +12,10 @@ var one = int64(1)
 // tickets in sorted order, or an error if there were issues computing the
 // tickets.
 func GenerateTickets(
-	minimumStake *big.Int,
-	availableStake *big.Int, // S_j
-	stakerValue []byte, // Q_j
 	beaconValue []byte, // V_i
+	stakerValue []byte, // Q_j
+	availableStake *big.Int, // S_j
+	minimumStake *big.Int,
 ) ([]*Ticket, error) {
 	stakingWeight := (&big.Int{}).Quo(availableStake, minimumStake) // W_j
 
