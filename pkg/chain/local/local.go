@@ -325,9 +325,10 @@ func (c *localChain) RequestRelayEntry(
 }
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
-// chain.
+// chain and returns true if it has already been submitted.
 func (c *localChain) IsDKGResultPublished(
-	requestID *big.Int, result *relaychain.DKGResult,
+	requestID *big.Int,
+	result *relaychain.DKGResult,
 ) bool {
 	for publishedRequestID, publishedResults := range c.submittedResults {
 		if publishedRequestID == requestID.String() {
@@ -342,16 +343,16 @@ func (c *localChain) IsDKGResultPublished(
 	return false
 }
 
-// --------------------------------- ---------------------------------
-// the GroupPublicKey is a problem - don't know where to get it from at this point.
-// --------------------------------- ---------------------------------
+// getGroupPublicKeyFromRequestID is used inside SubmitDKGResult when we simulate
+// the submission of a result.
 func (c *localChain) getGroupPublicKeyFromRequestID(requestID *big.Int) *big.Int {
 	return c.groupPublicKeyMap[requestID.String()]
 }
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	requestID *big.Int, resultToPublish *relaychain.DKGResult,
+	requestID *big.Int,
+	resultToPublish *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
