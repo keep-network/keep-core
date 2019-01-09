@@ -333,19 +333,9 @@ func (c *localChain) RequestRelayEntry(
 // chain and returns true if it has already been submitted.
 func (c *localChain) IsDKGResultPublished(
 	requestID *big.Int,
-	result *relaychain.DKGResult,
 ) bool {
-	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID == requestID.String() {
-			for _, publishedResult := range publishedResults {
-				if publishedResult.Equals(result) {
-					return true
-				}
-			}
-			return false
-		}
-	}
-	return false
+	_, ok := c.submittedResults[requestID.String()]
+	return ok
 }
 
 // getGroupPublicKeyFromRequestID is used inside SubmitDKGResult when we simulate
@@ -365,7 +355,7 @@ func (c *localChain) SubmitDKGResult(
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
 	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID.Cmp(requestID) == 0 {
+		if publishedRequestID == requestID.String() {
 			for _, publishedResult := range publishedResults {
 				if publishedResult.Equals(resultToPublish) {
 					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
