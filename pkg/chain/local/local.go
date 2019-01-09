@@ -42,8 +42,6 @@ type localChain struct {
 	simulatedHeight int64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
-
-	stakerList []string
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -219,12 +217,6 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(),
 	}
-}
-
-// GetStakerList is a temporary function for Milestone 1 that
-// gets back the list of stakers.
-func (c *localChain) GetStakerList() ([]string, error) {
-	return c.stakerList, nil
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
