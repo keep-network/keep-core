@@ -91,8 +91,8 @@ Currently the _Space~tickets~_ is equal to _2^256^- 1_, which is due
 to selection of SHA3-256 as our pseudo random function.
 
 |_Supply~tokens~_
-|Is the total number of supplied tokens. The number of issued tokens is set to
-10^9 and will not change during the system lifetime.
+|Is the total number of tokens which are going to be supplied during the project
+lifetime and is set to 10^9.
 
 |Natural threshold
 |_Threshold~nat~ = floor(N * Space~tickets~ / (Supply~tokens~ / MINIMUM_STAKE))_
