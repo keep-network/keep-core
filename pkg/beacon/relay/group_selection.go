@@ -26,6 +26,8 @@ type groupCandidate struct {
 // that fall under the natural threshold, while challenging tickets on chain
 // that fail verification. Submission ends at the end of the submission period,
 // and the staker can only contest incorrect tickets up to the challenge period.
+//
+// See the group selection protocol specification for more information.
 func (n *Node) SubmitTicketsForGroupSelection(
 	beaconValue []byte,
 	relayChain relaychain.GroupInterface,
