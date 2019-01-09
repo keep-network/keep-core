@@ -1,7 +1,7 @@
 package relay
 
 import (
-	"crypto/subtle"
+	"bytes"
 	"fmt"
 	"math/big"
 	"time"
@@ -157,10 +157,9 @@ func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
 		ticket.Proof.StakerValue,
 		ticket.Proof.VirtualStakerIndex,
 	)
-	switch subtle.ConstantTimeCompare(computedValue[:], ticket.Value[:]) {
-	case 1:
+	switch bytes.Compare(computedValue[:], ticket.Value[:]) {
+	case 0:
 		return true
-
 	}
 	return false
 }
