@@ -23,7 +23,7 @@ func GenerateTickets(
 	for virtualStaker := one; virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
 		tickets = append(
 			tickets,
-			calculateTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)), // prf
+			NewTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)), // prf
 		)
 	}
 	sort.Stable(tickets)
