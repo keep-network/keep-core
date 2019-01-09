@@ -23,9 +23,9 @@ func (d *DKGSubmissions) Lead() *DKGSubmission {
 		return nil
 	}
 	topSubmission := d.DKGSubmissions[0]
-	for pos, submission := range d.DKGSubmissions {
+	for _, submission := range d.DKGSubmissions {
 		if topSubmission.Votes < submission.Votes {
-			topSubmission = d.DKGSubmissions[pos]
+			topSubmission = submission
 		}
 	}
 	return topSubmission
