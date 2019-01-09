@@ -9,6 +9,29 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// Type returns a string describing a JoinMessage type for marshalling purposes.
+func (jm *JoinMessage) Type() string {
+	return "gjkr/join_message"
+}
+
+// Marshal converts this JoinMessage to a byte array suitable for network
+// communication.
+func (jm *JoinMessage) Marshal() ([]byte, error) {
+	return (&pb.Join{
+		SenderID: memberIDToBytes(jm.SenderID),
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a JoinMessage.
+func (jm *JoinMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.Join{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+	jm.SenderID = bytesToMemberID(pbMsg.SenderID)
+	return nil
+}
+
 // Type returns a string describing an EphemeralPublicKeyMessage type for
 // marshaling purposes.
 func (epkm *EphemeralPublicKeyMessage) Type() string {
@@ -253,6 +276,41 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	}
 
 	pam.accusedMembersKeys = accusedMembersKeys
+
+	return nil
+}
+
+// Type returns a string describing DisqualifiedEphemeralKeysMessage type for
+// marshalling purposes.
+func (dekm *DisqualifiedEphemeralKeysMessage) Type() string {
+	return "gjkr/disqualified_ephemeral_keys_message"
+}
+
+// Marshal converts this DisqualifiedEphemeralKeysMessage to a byte array
+// suitable for network communication.
+func (dekm *DisqualifiedEphemeralKeysMessage) Marshal() ([]byte, error) {
+	return (&pb.DisqualifiedEphemeralKeys{
+		SenderID:    memberIDToBytes(dekm.senderID),
+		PrivateKeys: marshalPrivateKeyMap(dekm.privateKeys),
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to
+// a DisqualifiedEphemeralKeysMessage.
+func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.DisqualifiedEphemeralKeys{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	dekm.senderID = bytesToMemberID(pbMsg.SenderID)
+
+	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
+	if err != nil {
+		return err
+	}
+
+	dekm.privateKeys = privateKeys
 
 	return nil
 }

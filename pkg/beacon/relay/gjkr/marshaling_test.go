@@ -10,6 +10,19 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func TestJoinMessageRoundtrip(t *testing.T) {
+	msg := &JoinMessage{MemberID(1337)}
+	unmarshaled := &JoinMessage{}
+
+	err := pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
 func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 	keyPair1, err := ephemeral.GenerateKeyPair()
 	if err != nil {
@@ -142,7 +155,7 @@ func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 	}
 }
 
-func TestPointsAccusationsMessage(t *testing.T) {
+func TestPointsAccusationsMessageRoundtrip(t *testing.T) {
 	keyPair1, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
@@ -161,6 +174,36 @@ func TestPointsAccusationsMessage(t *testing.T) {
 		},
 	}
 	unmarshaled := &PointsAccusationsMessage{}
+
+	err = pbutils.RoundTrip(msg, unmarshaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestDisqualifiedEphemeralKeysMessageRoundtrip(t *testing.T) {
+	keyPair1, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keyPair2, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg := &DisqualifiedEphemeralKeysMessage{
+		senderID: MemberID(181811),
+		privateKeys: map[MemberID]*ephemeral.PrivateKey{
+			MemberID(1821881): keyPair1.PrivateKey,
+			MemberID(8181818): keyPair2.PrivateKey,
+		},
+	}
+	unmarshaled := &DisqualifiedEphemeralKeysMessage{}
 
 	err = pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {

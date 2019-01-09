@@ -52,6 +52,11 @@ func TestDKGResultEquals(t *testing.T) {
 			result2:        &DKGResult{GroupPublicKey: big.NewInt(1)},
 			expectedResult: false,
 		},
+		"group public keys - set and nil": {
+			result1:        &DKGResult{GroupPublicKey: big.NewInt(1)},
+			result2:        &DKGResult{GroupPublicKey: nil},
+			expectedResult: false,
+		},
 		"group public keys - not equal": {
 			result1:        &DKGResult{GroupPublicKey: big.NewInt(3)},
 			result2:        &DKGResult{GroupPublicKey: big.NewInt(4)},

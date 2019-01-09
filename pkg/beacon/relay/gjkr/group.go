@@ -2,8 +2,6 @@ package gjkr
 
 // Group is protocol's members group.
 type Group struct {
-	// The number of members in the complete group.
-	groupSize int
 	// The maximum number of group members who could be dishonest in order for the
 	// generated key to be uncompromised.
 	dishonestThreshold int
@@ -12,6 +10,8 @@ type Group struct {
 	memberIDs []MemberID
 	// IDs of all disqualified members of the group.
 	disqualifiedMemberIDs []MemberID
+	// IDs of all inactive members of the group.
+	inactiveMemberIDs []MemberID
 }
 
 // MemberIDs returns IDs of all group members.
@@ -22,8 +22,23 @@ func (g *Group) MemberIDs() []MemberID {
 }
 
 // RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(id MemberID) {
-	g.memberIDs = append(g.memberIDs, id)
+func (g *Group) RegisterMemberID(memberID MemberID) {
+	for _, id := range g.memberIDs {
+		if id == memberID {
+			return // already there
+		}
+	}
+	g.memberIDs = append(g.memberIDs, memberID)
+}
+
+func (g *Group) eliminatedMembersCount() int {
+	return len(g.disqualifiedMemberIDs) + len(g.inactiveMemberIDs)
+}
+
+// isThresholdSatisfied checks number of disqualified and inactive members in the
+// group. If the number is less or equal half of dishonest threshold, returns true.
+func (g *Group) isThresholdSatisfied() bool {
+	return g.eliminatedMembersCount() <= g.dishonestThreshold/2
 }
 
 // DisqualifyMemberID adds a member to the list of disqualified members.
