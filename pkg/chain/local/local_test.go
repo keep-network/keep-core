@@ -304,17 +304,17 @@ func TestDKGResultVote(t *testing.T) {
 	requestID := big.NewInt(12)
 
 	var tests = map[string]struct {
-		expectedNVotes int
+		expectedVotes  int
 		callVoteNtimes int
 		requestID      *big.Int
 	}{
 		"after submission and 1 vote": {
-			expectedNVotes: 2,
+			expectedVotes:  2,
 			callVoteNtimes: 1,
 			requestID:      requestID,
 		},
 		"after submission and 2 votes": {
-			expectedNVotes: 3,
+			expectedVotes:  3,
 			callVoteNtimes: 2,
 			requestID:      requestID,
 		},
@@ -338,9 +338,9 @@ func TestDKGResultVote(t *testing.T) {
 				chainHandle.DKGResultVote(test.requestID, dkgResult.Hash())
 			}
 			submissions := chainHandle.GetDKGSubmissions(test.requestID)
-			if submissions.DKGSubmissions[0].Votes != test.expectedNVotes {
+			if submissions.DKGSubmissions[0].Votes != test.expectedVotes {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n",
-					test.expectedNVotes,
+					test.expectedVotes,
 					submissions.DKGSubmissions[0].Votes,
 				)
 			}
@@ -390,12 +390,10 @@ func TestOnDKGResultVote(t *testing.T) {
 	requestID := big.NewInt(12)
 
 	var tests = map[string]struct {
-		expectedNVotes int
 		callVoteNtimes int
 		requestID      *big.Int
 	}{
 		"after submission and 1 vote": {
-			expectedNVotes: 2,
 			callVoteNtimes: 1,
 			requestID:      requestID,
 		},
