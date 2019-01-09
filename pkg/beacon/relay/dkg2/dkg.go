@@ -57,7 +57,7 @@ func ExecuteDKG(
 		return nil, fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
 	}
 
-	memberID := MemberID(playerIndex)
+	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
 	// Use an unbuffered channel to serialize message processing.
