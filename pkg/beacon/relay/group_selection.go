@@ -122,8 +122,8 @@ func verifyTicket(
 			for _, ticket := range relayChain.GetOrderedTickets() {
 				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.Challenge{
-						Ticket: ticket,
-						Sender: self,
+						Ticket:        ticket,
+						SenderAddress: self,
 					}
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
