@@ -120,18 +120,17 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 	submittedResults := make(map[string][]*relaychain.DKGResult)
 
 	submittedRequestID := big.NewInt(1)
-	submittedResult := &relaychain.DKGResult{
+	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(11),
 	}
-
 
 	submittedRequestID2 := big.NewInt(2)
 	submittedResult21 := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(21),
 	}
 
-	submittedResults[submittedRequestID1.String()] = append(
-		submittedResults[submittedRequestID1.String()],
+	submittedResults[submittedRequestID.String()] = append(
+		submittedResults[submittedRequestID.String()],
 		submittedResult11,
 	)
 
