@@ -58,49 +58,7 @@ func ExecuteDKG(
 	}
 	memberID := gjkr.MemberID(playerIndex + 1)
 
-	var (
-		currentState keyGenerationState
-		blockWaiter  <-chan int
-	)
-
-	stateTransition := func() error {
-		fmt.Printf(
-			"[member:%v, state:%T] Transitioning to a new state...\n",
-			currentState.memberID(),
-			currentState,
-		)
-
-		err := blockCounter.WaitForBlocks(1)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to wait 1 block entering state [%T]: [%v]",
-				currentState,
-				err,
-			)
-		}
-
-		err = currentState.initiate()
-		if err != nil {
-			return fmt.Errorf("failed to initiate new state [%v]", err)
-		}
-
-		blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
-		if err != nil {
-			return fmt.Errorf(
-				"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
-				currentState,
-				err,
-			)
-		}
-
-		fmt.Printf(
-			"[member:%v, state:%T] Transitioned to new state\n",
-			currentState.memberID(),
-			currentState,
-		)
-
-		return nil
-	}
+	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -115,11 +73,19 @@ func ExecuteDKG(
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
-	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
-	member := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
+	var (
+		currentState keyGenerationState
+		blockWaiter  <-chan int
+	)
 
+	member := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
 	currentState = &initializationState{channel, member}
-	if err := stateTransition(); err != nil {
+
+	if err := stateTransition(
+		currentState,
+		blockCounter,
+		blockWaiter,
+	); err != nil {
 		return nil, err
 	}
 
@@ -148,11 +114,58 @@ func ExecuteDKG(
 			}
 
 			currentState = currentState.nextState()
-			if err := stateTransition(); err != nil {
+			if err := stateTransition(
+				currentState,
+				blockCounter,
+				blockWaiter,
+			); err != nil {
 				return nil, err
 			}
 
 			continue
 		}
 	}
+}
+
+func stateTransition(
+	currentState keyGenerationState,
+	blockCounter chain.BlockCounter,
+	blockWaiter <-chan int,
+) error {
+	fmt.Printf(
+		"[member:%v, state:%T] Transitioning to a new state...\n",
+		currentState.memberID(),
+		currentState,
+	)
+
+	err := blockCounter.WaitForBlocks(1)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to wait 1 block entering state [%T]: [%v]",
+			currentState,
+			err,
+		)
+	}
+
+	err = currentState.initiate()
+	if err != nil {
+		return fmt.Errorf("failed to initiate new state [%v]", err)
+	}
+
+	blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
+	if err != nil {
+		return fmt.Errorf(
+			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
+			currentState,
+			err,
+		)
+	}
+
+	fmt.Printf(
+		"[member:%v, state:%T] Transitioned to new state\n",
+		currentState.memberID(),
+		currentState,
+	)
+
+	return nil
 }
