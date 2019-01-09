@@ -10,6 +10,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -92,6 +93,10 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	}
 
 	return groupRegistrationPromise
+}
+
+func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+	return &async.GroupTicketPromise{}
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(

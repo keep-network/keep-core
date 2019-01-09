@@ -34,8 +34,10 @@ const (
 // otherwise enters a blocked loop.
 func Initialize(
 	ctx context.Context,
+	stakingID string,
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
+	stakeMonitor chain.StakeMonitor,
 	netProvider net.Provider,
 ) error {
 	chainConfig, err := relayChain.GetConfig()
@@ -48,19 +50,19 @@ func Initialize(
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
 
+	staker, err := stakeMonitor.StakerFor(stakingID)
+	if err != nil {
+		return err
+	}
+
 	node := relay.NewNode(
-		netProvider.ID().String(),
+		staker,
 		netProvider,
 		blockCounter,
 		chainConfig,
 	)
 
-	// FIXME Nuke post-M1 when we plug in real staking stuff.
-	var (
-		proceed   sync.WaitGroup
-		stakingID = netProvider.ID().String()[:32]
-	)
-
+	var proceed sync.WaitGroup
 	proceed.Add(1)
 	relayChain.AddStaker(stakingID).
 		OnComplete(func(stake *event.StakerRegistration, err error) {
@@ -75,8 +77,6 @@ func Initialize(
 				curParticipantState = unstaked
 				return
 			}
-
-			node.StakeID = stake.GroupMemberID
 		})
 	proceed.Wait()
 
@@ -97,7 +97,7 @@ func Initialize(
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-			node.JoinGroupIfEligible(relayChain, entry.RequestID, entry.Value)
+			node.JoinGroupIfEligible(relayChain, entry.Value)
 		})
 
 		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
