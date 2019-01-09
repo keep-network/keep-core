@@ -146,11 +146,13 @@ func doStateTransition(
 
 		next := state.nextState()
 
-		fmt.Printf(
-			"[member:%v, state:%T] Successfully transitioned to the next state\n",
-			state.memberID(),
-			state,
-		)
+		if next != nil {
+			fmt.Printf(
+				"[member:%v, state:%T] Successfully transitioned to the next state\n",
+				state.memberID(),
+				state,
+			)
+		}
 
 		nextStates[i] = next
 	}
