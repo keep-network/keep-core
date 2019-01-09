@@ -18,22 +18,22 @@ type DKGSubmission struct {
 
 // Lead returns a submission with the highest number of votes.  If there are
 // no submissions it returns nil.
-func (s *DKGSubmissions) Lead() *DKGSubmission {
-	if len(s.DKGSubmissions) == 0 {
+func (d *DKGSubmissions) Lead() *DKGSubmission {
+	if len(d.DKGSubmissions) == 0 {
 		return nil
 	}
-	topSubmission := s.DKGSubmissions[0]
-	for pos, submission := range s.DKGSubmissions {
+	topSubmission := d.DKGSubmissions[0]
+	for pos, submission := range d.DKGSubmissions {
 		if topSubmission.Votes < submission.Votes {
-			topSubmission = s.DKGSubmissions[pos]
+			topSubmission = d.DKGSubmissions[pos]
 		}
 	}
 	return topSubmission
 }
 
 // Contains returns true if 'result' is in the set of submissions.
-func (s *DKGSubmissions) Contains(result *DKGResult) bool {
-	for _, submission := range s.DKGSubmissions {
+func (d *DKGSubmissions) Contains(result *DKGResult) bool {
+	for _, submission := range d.DKGSubmissions {
 		if result.Equals(submission.DKGResult) {
 			return true
 		}
