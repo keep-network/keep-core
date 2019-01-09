@@ -101,9 +101,9 @@ func (r *DKGResult) serialize() []byte {
 		return []byte{0x00}
 	}
 
-	var buf bytes.Buffer                                         //
-	buf.Write(boolToByte(r.Success))                             // Byte 0 - 0x01 == true, 0x00 == false - r1.Success
-	gpk := r.GroupPublicKey.Bytes()                              //
+	var buf bytes.Buffer
+	buf.Write(boolToByte(r.Success)) // Byte 0 - 0x01 == true, 0x00 == false - r1.Success
+	gpk := r.GroupPublicKey.Bytes()
 	err := binary.Write(&buf, binary.BigEndian, int32(len(gpk))) // Byte 1..4 - length of the group public key in BigEndian format
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)

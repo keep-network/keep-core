@@ -18,7 +18,7 @@ func (ec *ethereumChain) DKGResultVote(requestID *big.Int, dkgResultHash []byte)
 	// TODO -- implement Vote
 }
 
-// OnDKGResultVote register a function for a callback when a vote occures.
+// OnDKGResultVote register a function for a callback when a vote occurs.
 func (ec *ethereumChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
 	// TODO -- implement OnDKGResultVote
 }

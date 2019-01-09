@@ -109,7 +109,7 @@ func TestContains(t *testing.T) {
 	}
 	dkgResult2 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1001),
+		GroupPublicKey: big.NewInt(1002),
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
