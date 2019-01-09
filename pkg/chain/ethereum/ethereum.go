@@ -10,6 +10,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -92,6 +93,10 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	}
 
 	return groupRegistrationPromise
+}
+
+func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+	return &async.GroupTicketPromise{}
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
@@ -436,7 +441,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 }
 
 // IsDKGResultPublished checks if the result is already published to a chain.
-func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int, result *relaychain.DKGResult) bool {
+func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) bool {
 	// TODO Implement
 	return false
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -39,15 +40,17 @@ type GroupInterface interface {
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
 	OnGroupRegistered(func(key *event.GroupRegistration))
+	// SubmitTicket submits a ticket corresponding to the virtual staker to
+	// the chain, and returns a promise to track the submission. The promise
+	// is fulfilled with the entry as seen on-chain, or failed if there is an
+	// error submitting the entry.
+	SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise
 }
 
 // DistributedKeyGenerationInterface defines the subset of the relay chain
 // interface that pertains specifically to group formation's distributed key
 // generation process.
 type DistributedKeyGenerationInterface interface {
-	// IsDKGResultPublished checks if the specific DKG result has already been
-	// published to a chain for given request ID.
-	IsDKGResultPublished(requestID *big.Int, dkgResult *DKGResult) bool
 	// SubmitDKGResult sends DKG result to a chain.
 	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
@@ -60,6 +63,9 @@ type DistributedKeyGenerationInterface interface {
 	DKGResultVote(requestID *big.Int, dkgResultHash []byte)
 	// OnDKGResultVote registers a callback when a vote occurs.
 	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
+	// IsDKGResultPublished checks if any DKG result has already been published
+	// to a chain for the given request ID.
+	IsDKGResultPublished(requestID *big.Int) bool
 }
 
 // Interface represents the interface that the relay expects to interact with

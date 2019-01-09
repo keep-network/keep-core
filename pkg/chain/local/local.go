@@ -12,6 +12,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -104,6 +105,10 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 
 func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
+}
+
+func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+	return &async.GroupTicketPromise{}
 }
 
 func (c *localChain) SubmitGroupPublicKey(
@@ -326,6 +331,7 @@ func (c *localChain) RequestRelayEntry(
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
+
 func (c *localChain) IsDKGResultPublished(
 	requestID *big.Int, result *relaychain.DKGResult,
 ) bool {
@@ -358,9 +364,15 @@ func (c *localChain) SubmitDKGResult(
 
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
-	if c.IsDKGResultPublished(requestID, resultToPublish) {
-		dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
-		return dkgResultPublicationPromise
+	for publishedRequestID, publishedResults := range c.submittedResults {
+		if publishedRequestID.Cmp(requestID) == 0 {
+			for _, publishedResult := range publishedResults {
+				if publishedResult.Equals(resultToPublish) {
+					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
+					return dkgResultPublicationPromise
+				}
+			}
+		}
 	}
 
 	c.submittedResults[requestID.String()] = append(c.submittedResults[requestID.String()], resultToPublish)

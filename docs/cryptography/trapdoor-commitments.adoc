@@ -51,7 +51,8 @@ will always recover the committed value.
 
 The Pedersen commitment requires to have two large primes `p` and `q` such
 that `q` divides `p - 1`, a `G~q~` which is a unique subgroup of `Z~p~` of order
-`q` and where `g` is a generator of `G~q~`.
+`q` and where `g` is a generator of `G~q~`. We can test whether `g` is a generator
+by checking if it meets the Euler's criterion: `g^q mod p == 1`.
 
 Then we choose a random `h` which is an element of `G~q~` and that `log~g~(h)` is
 unknown.
@@ -59,7 +60,11 @@ unknown.
 ```
 q <- is a prime
 p = 2q + 1 <- is a prime
-g = randomZ[2, q - 1]
+
+do
+    g = randomZ[2, q - 1]
+until g^q mod p == 1 <- g meets the Euler's criterion
+
 h = (g ^ randomZ[0, q - 1]) % q
 ```
 
