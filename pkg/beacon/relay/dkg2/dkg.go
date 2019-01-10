@@ -64,7 +64,7 @@ func ExecuteDKG(
 		return fmt.Errorf("GJKR execution failed [%v]", err)
 	}
 
-	err = ExecutePublishing(
+	err = executePublishing(
 		requestID,
 		playerIndex, // TODO Should we refresh the index to cut out the DQ and IA players removed during GJKR?
 		chainHandle,
