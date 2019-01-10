@@ -2,7 +2,6 @@ package local
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -427,15 +426,12 @@ func TestOnDKGResultVote(t *testing.T) {
 				chainHandle.DKGResultVote(test.requestID, dkgResult.Hash())
 			}
 
-			// fmt.Printf("%s-- test [%s] -- callVoteNtimes=%d --%s\n", MiscLib.ColorYellow, testName, test.callVoteNtimes, MiscLib.ColorReset)
-
 			nMessageReceived := test.callVoteNtimes
 			for i := 0; i < 30; i++ {
 				select {
 				case msg, ok := <-messages:
 					if ok {
 						nMessageReceived--
-						// fmt.Printf("Value -->%s<-- was read. n=%d\n", msg, nMessageReceived)
 						if msg != "got vote" {
 							t.Fatalf("\nexpected: %v\nactual:   %v\n",
 								"got vote",
@@ -452,9 +448,6 @@ func TestOnDKGResultVote(t *testing.T) {
 						)
 					}
 				default:
-					if false {
-						fmt.Println("No value ready, poll again.")
-					}
 				}
 				time.Sleep(100 * time.Millisecond)
 			}
