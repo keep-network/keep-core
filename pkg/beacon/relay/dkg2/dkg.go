@@ -50,6 +50,10 @@ func ExecuteDKG(
 	chainHandle chain.Handle,
 	channel net.BroadcastChannel,
 ) error {
+	if playerIndex < 1 {
+		return fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
+	}
+
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
 		return fmt.Errorf("block counter failure [%v]", err)
@@ -86,10 +90,6 @@ func executeGJKR(
 	threshold int,
 	seed *big.Int,
 ) (*gjkr.Result, error) {
-	if playerIndex < 1 {
-		return nil, fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
-	}
-
 	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
