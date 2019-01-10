@@ -10,7 +10,7 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
 contract('TestKeepGroupViaProxy', function(accounts) {
 
-  let token, stakingProxy, stakingContract, minimumStake, groupSize,
+  let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
     account_one = accounts[0],
     account_two = accounts[1];
@@ -25,11 +25,12 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
     // Initialize Keep Group contract
     minimumStake = 200;
+    groupThreshold = 150;
     groupSize = 200;
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
-    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, groupSize, 1, 3, 4);
+    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, groupThreshold, groupSize, 1, 3, 4);
   });
 
   it("should fail to update minimum stake by non owner", async function() {

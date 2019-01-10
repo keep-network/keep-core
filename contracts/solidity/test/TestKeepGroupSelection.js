@@ -40,7 +40,7 @@ function mineBlocks(blocks) {
 
 contract('TestKeepGroupSelection', function(accounts) {
 
-  let token, stakingProxy, stakingContract, minimumStake, groupSize,
+  let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     randomBeaconValue, naturalThreshold,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
@@ -59,6 +59,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     // Initialize Keep Group contract
     minimumStake = 20000000;
+    groupThreshold = 15;
     groupSize = 20;
     timeoutInitial = 20;
     timeoutSubmission = 40;
@@ -70,7 +71,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
-      stakingProxy.address, minimumStake, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
+      stakingProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
     );
 
     naturalThreshold = await keepGroupImplViaProxy.naturalThreshold();

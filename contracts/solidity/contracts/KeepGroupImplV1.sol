@@ -242,7 +242,8 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Initialize Keep Group implementation contract with a linked Staking proxy contract.
      * @param stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
-     * @param groupSize Minimum number of members in a group - to form a group.
+     * @param groupSize Size of a group in the threshold relay.
+     * @param groupThreshold Minimum number of interacting group members needed to produce a relay entry.
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
@@ -250,6 +251,7 @@ contract KeepGroupImplV1 is Ownable {
     function initialize(
         address stakingProxy,
         uint256 minStake,
+        uint256 groupThreshold,
         uint256 groupSize,
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
@@ -261,9 +263,19 @@ contract KeepGroupImplV1 is Ownable {
         _stakingProxy = stakingProxy;
         _minStake = minStake;
         _groupSize = groupSize;
+        _groupThreshold = groupThreshold;
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
+    }
+
+    /**
+     * @dev Checks that the specified user has enough stake.
+     * @param staker Specifies the identity of the staker.
+     * @return True if staked enough to participate in the group, false otherwise.
+     */
+    function hasMinimumStake(address staker) public view returns(bool) {
+        return stakingWeight(staker) >= 1;
     }
 
     /**
@@ -316,10 +328,17 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Gets the minimum number of members in a group.
+     * @dev Gets size of a group in the threshold relay.
      */
     function groupSize() public view returns(uint256) {
         return _groupSize;
+    }
+
+    /**
+     * @dev Gets number of interacting group members needed to produce a relay entry.
+    */
+    function groupThreshold() public view returns(uint256) {
+        return _groupThreshold;
     }
 
     /**
