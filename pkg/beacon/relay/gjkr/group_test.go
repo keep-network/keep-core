@@ -6,43 +6,34 @@ import (
 )
 
 func TestDisqualifyMemberID(t *testing.T) {
-	group := &Group{}
-
-	id1 := MemberID(123)
-	id2 := MemberID(321)
-
-	if len(group.disqualifiedMemberIDs) != 0 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			0,
-			len(group.disqualifiedMemberIDs),
-		)
+	group := &Group{
+		memberIDs: []MemberID{93, 31, 32},
 	}
 
-	// Disqualify a member.
-	group.DisqualifyMember(id1)
-	if len(group.disqualifiedMemberIDs) != 1 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			1,
-			len(group.disqualifiedMemberIDs),
-		)
+	if group.isDisqualified(32) {
+		t.Errorf("member 32 should not be disqualified yet")
 	}
 
-	// Disqualify the same member for a second time.
-	group.DisqualifyMember(id1)
-	if len(group.disqualifiedMemberIDs) != 1 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			1,
-			len(group.disqualifiedMemberIDs),
-		)
+	group.DisqualifyMember(32)
+
+	if !group.isDisqualified(32) {
+		t.Errorf("member 32 should be disqualified")
+	}
+}
+
+func TestMarkMemberAsInactive(t *testing.T) {
+	group := &Group{
+		memberIDs: []MemberID{18, 29, 19},
 	}
 
-	// Disqualify a next member.
-	group.DisqualifyMember(id2)
-	if len(group.disqualifiedMemberIDs) != 2 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			2,
-			len(group.disqualifiedMemberIDs),
-		)
+	if group.isInactive(29) {
+		t.Errorf("member 29 should not be marked as inactive yet")
+	}
+
+	group.MarkMemberAsInactive(29)
+
+	if !group.isInactive(29) {
+		t.Errorf("member 29 should be marked as inactive")
 	}
 }
 
