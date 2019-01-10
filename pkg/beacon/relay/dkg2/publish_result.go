@@ -38,7 +38,7 @@ type Publisher struct {
 // another publisher it returns `-1`.
 //
 // See Phase 13 of the protocol specification.
-func (pm *Publisher) PublishResult(result *relayChain.DKGResult) (int, error) {
+func (pm *Publisher) publishResult(result *relayChain.DKGResult) (int, error) {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
