@@ -105,7 +105,7 @@ func (gc *groupCandidate) submitTickets(
 	relayChain relaychain.GroupInterface,
 	naturalThreshold *big.Int,
 	quit <-chan struct{},
-	errCh chan error,
+	errCh chan<- error,
 ) {
 	for _, ticket := range gc.tickets {
 		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
