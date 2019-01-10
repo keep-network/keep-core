@@ -366,6 +366,11 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G1 {
 	return receivedValidPeerIndividualPublicKeys
 }
 
+// Equals checks if MemberID equals the passed int value.
+func (id MemberID) Equals(value int) bool {
+	return id == MemberID(value)
+}
+
 // HexString converts `MemberID` to hex `string` representation.
 func (id MemberID) HexString() string {
 	return strconv.FormatInt(int64(id), 16)
