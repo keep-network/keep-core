@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -123,19 +124,9 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		GroupPublicKey: big.NewInt(11),
 	}
 
-	submittedRequestID2 := big.NewInt(2)
-	submittedResult2 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(21),
-	}
-
 	submittedResults[submittedRequestID1.String()] = append(
 		submittedResults[submittedRequestID1.String()],
 		submittedResult1,
-	)
-
-	submittedResults[submittedRequestID2.String()] = append(
-		submittedResults[submittedRequestID2.String()],
-		submittedResult2,
 	)
 
 	localChain := &localChain{
@@ -392,14 +383,25 @@ func TestGetDKGSubmissions(t *testing.T) {
 
 func TestOnDKGResultVote(t *testing.T) {
 	requestID := big.NewInt(12)
+	requestID2 := big.NewInt(22)
 
 	var tests = map[string]struct {
 		callVoteNtimes int
 		requestID      *big.Int
+		expectMessage  bool
+		groupPublicKey *big.Int
 	}{
 		"after submission and 1 vote": {
 			callVoteNtimes: 1,
 			requestID:      requestID,
+			expectMessage:  true,
+			groupPublicKey: big.NewInt(11),
+		},
+		"verify multiple votes": {
+			callVoteNtimes: 3,
+			requestID:      requestID2,
+			expectMessage:  false,
+			groupPublicKey: big.NewInt(21),
 		},
 	}
 
@@ -412,24 +414,55 @@ func TestOnDKGResultVote(t *testing.T) {
 			chainHandle := localChain.ThresholdRelay()
 			dkgResult := &relaychain.DKGResult{
 				Success:        true,
-				GroupPublicKey: big.NewInt(11),
+				GroupPublicKey: test.groupPublicKey,
 			}
 			chainHandle.SubmitDKGResult(test.requestID, dkgResult)
 
-			messages := make(chan string)
+			messages := make(chan string, 3) // big enough
+			defer close(messages)
 			localChain.OnDKGResultVote(func(dkgResultVote *event.DKGResultVote) {
 				messages <- "got vote"
 			})
 			for i := 0; i < test.callVoteNtimes; i++ {
 				chainHandle.DKGResultVote(test.requestID, dkgResult.Hash())
 			}
-			msg := <-messages
-			if msg != "got vote" {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n",
-					"got vote",
-					msg,
-				)
+
+			// fmt.Printf("%s-- test [%s] -- callVoteNtimes=%d --%s\n", MiscLib.ColorYellow, testName, test.callVoteNtimes, MiscLib.ColorReset)
+
+			nMessageReceived := test.callVoteNtimes
+			for i := 0; i < 30; i++ {
+				select {
+				case msg, ok := <-messages:
+					if ok {
+						nMessageReceived--
+						// fmt.Printf("Value -->%s<-- was read. n=%d\n", msg, nMessageReceived)
+						if msg != "got vote" {
+							t.Fatalf("\nexpected: %v\nactual:   %v\n",
+								"got vote",
+								msg,
+							)
+						}
+						if nMessageReceived <= 0 {
+							goto done
+						}
+					} else {
+						t.Fatalf("\nexpected: %v\nactual:   %v\n",
+							test.callVoteNtimes,
+							"failed : channel closed",
+						)
+					}
+				default:
+					if false {
+						fmt.Println("No value ready, poll again.")
+					}
+				}
+				time.Sleep(100 * time.Millisecond)
 			}
+			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+				test.callVoteNtimes,
+				"failed to get correct number of calls",
+			)
+		done:
 		})
 	}
 }
