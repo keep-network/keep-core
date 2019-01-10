@@ -45,10 +45,10 @@ func (g *Group) OperatingMemberIDs() []MemberID {
 	return activeMembers
 }
 
-// DisqualifyMemberID adds the member to the list of disqualified members.
-// If the member is already disqualified or marked as inactive, method does
-// nothing.
-func (g *Group) DisqualifyMemberID(memberID MemberID) { //TODO: rename to DisqualifyMember
+// DisqualifyMember adds the member with the given ID to the list of
+// disqualified members. If the member is already disqualified or marked as
+// inactive, method does nothing.
+func (g *Group) DisqualifyMember(memberID MemberID) {
 	if !g.isOperating(memberID) {
 		return
 	}
@@ -56,9 +56,9 @@ func (g *Group) DisqualifyMemberID(memberID MemberID) { //TODO: rename to Disqua
 	g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, memberID)
 }
 
-// MarkMemberAsInactive adds the member to the list of inactive members.
-// If the member is already disqualified or marked as inactive, method does
-// nothing.
+// MarkMemberAsInactive adds the member with the given ID to the list of
+// inactive members. If the member is already disqualified or marked as
+// inactive, method does nothing.
 func (g *Group) MarkMemberAsInactive(memberID MemberID) {
 	if !g.isOperating(memberID) {
 		return

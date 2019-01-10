@@ -19,7 +19,7 @@ func TestDisqualifyMemberID(t *testing.T) {
 	}
 
 	// Disqualify a member.
-	group.DisqualifyMemberID(id1)
+	group.DisqualifyMember(id1)
 	if len(group.disqualifiedMemberIDs) != 1 {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
 			1,
@@ -28,7 +28,7 @@ func TestDisqualifyMemberID(t *testing.T) {
 	}
 
 	// Disqualify the same member for a second time.
-	group.DisqualifyMemberID(id1)
+	group.DisqualifyMember(id1)
 	if len(group.disqualifiedMemberIDs) != 1 {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
 			1,
@@ -37,7 +37,7 @@ func TestDisqualifyMemberID(t *testing.T) {
 	}
 
 	// Disqualify a next member.
-	group.DisqualifyMemberID(id2)
+	group.DisqualifyMember(id2)
 	if len(group.disqualifiedMemberIDs) != 2 {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
 			2,
@@ -59,7 +59,7 @@ func TestOperatingMembers(t *testing.T) {
 		"one member disqualified": {
 			initialMembers: []MemberID{99, 98, 12, 33, 44},
 			updateFunc: func(g *Group) {
-				g.DisqualifyMemberID(98)
+				g.DisqualifyMember(98)
 			},
 			expectedOperatingMembers: []MemberID{99, 12, 33, 44},
 		},
@@ -73,7 +73,7 @@ func TestOperatingMembers(t *testing.T) {
 		"one member disqualified and one member inactive": {
 			initialMembers: []MemberID{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
-				g.DisqualifyMemberID(19)
+				g.DisqualifyMember(19)
 				g.MarkMemberAsInactive(33)
 			},
 			expectedOperatingMembers: []MemberID{11, 31},
@@ -81,16 +81,16 @@ func TestOperatingMembers(t *testing.T) {
 		"all but one inactive": {
 			initialMembers: []MemberID{28, 19, 29},
 			updateFunc: func(g *Group) {
-				g.DisqualifyMemberID(19)
-				g.DisqualifyMemberID(29)
+				g.DisqualifyMember(19)
+				g.DisqualifyMember(29)
 			},
 			expectedOperatingMembers: []MemberID{28},
 		},
 		"all but one disqualified": {
 			initialMembers: []MemberID{92, 11, 20},
 			updateFunc: func(g *Group) {
-				g.DisqualifyMemberID(92)
-				g.DisqualifyMemberID(11)
+				g.DisqualifyMember(92)
+				g.DisqualifyMember(11)
 			},
 			expectedOperatingMembers: []MemberID{20},
 		},
