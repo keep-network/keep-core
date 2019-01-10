@@ -46,7 +46,6 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
-
 }
 
 func TestLocalBlockWaiter(t *testing.T) {
@@ -119,24 +118,24 @@ func TestLocalBlockWaiter(t *testing.T) {
 func TestLocalIsDKGResultPublished(t *testing.T) {
 	submittedResults := make(map[string][]*relaychain.DKGResult)
 
-	submittedRequestID := big.NewInt(1)
-	submittedResult11 := &relaychain.DKGResult{
+	submittedRequestID1 := big.NewInt(1)
+	submittedResult1 := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(11),
 	}
 
 	submittedRequestID2 := big.NewInt(2)
-	submittedResult21 := &relaychain.DKGResult{
+	submittedResult2 := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(21),
 	}
 
-	submittedResults[submittedRequestID.String()] = append(
-		submittedResults[submittedRequestID.String()],
-		submittedResult11,
+	submittedResults[submittedRequestID1.String()] = append(
+		submittedResults[submittedRequestID1.String()],
+		submittedResult1,
 	)
 
 	submittedResults[submittedRequestID2.String()] = append(
 		submittedResults[submittedRequestID2.String()],
-		submittedResult21,
+		submittedResult2,
 	)
 
 	localChain := &localChain{
@@ -149,7 +148,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		expectedResult bool
 	}{
 		"matched": {
-			requestID:      submittedRequestID,
+			requestID:      submittedRequestID1,
 			expectedResult: true,
 		},
 		"not matched - different request ID": {
@@ -195,18 +194,18 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
-	submittedResult11 := &relaychain.DKGResult{
+	submittedResult1 := &relaychain.DKGResult{
 		GroupPublicKey: big.NewInt(11),
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1.String()],
-		[]*relaychain.DKGResult{submittedResult11},
+		[]*relaychain.DKGResult{submittedResult1},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
-			[]*relaychain.DKGResult{submittedResult11},
+			[]*relaychain.DKGResult{submittedResult1},
 			localChain.submittedResults[requestID1.String()],
 		)
 	}
@@ -225,14 +224,14 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Submit the same result for request ID 2
 	requestID2 := big.NewInt(2)
 
-	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID2, submittedResult1)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2.String()],
-		[]*relaychain.DKGResult{submittedResult11},
+		[]*relaychain.DKGResult{submittedResult1},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID2,
-			[]*relaychain.DKGResult{submittedResult11},
+			[]*relaychain.DKGResult{submittedResult1},
 			localChain.submittedResults[requestID2.String()],
 		)
 	}
@@ -249,14 +248,14 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1.String()],
-		[]*relaychain.DKGResult{submittedResult11},
+		[]*relaychain.DKGResult{submittedResult1},
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
-			[]*relaychain.DKGResult{submittedResult11},
+			[]*relaychain.DKGResult{submittedResult1},
 			localChain.submittedResults[requestID1.String()],
 		)
 	}
@@ -369,22 +368,24 @@ func TestGetDKGSubmissions(t *testing.T) {
 	chainHandle.SubmitDKGResult(requestID, dkgResult)
 	submissions := chainHandle.GetDKGSubmissions(requestID)
 
-	expected := &relaychain.DKGSubmissions{
-		DKGSubmissions: []*relaychain.DKGSubmission{
-			{
-				DKGResult: &relaychain.DKGResult{
-					Success:        true,
-					GroupPublicKey: big.NewInt(11),
-				},
-				Votes: 1,
-			},
-		},
+	if len(submissions.DKGSubmissions) != 1 {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			1,
+			len(submissions.DKGSubmissions),
+		)
 	}
 
-	if !reflect.DeepEqual(submissions, expected) {
-		t.Fatalf("\nexpected: %+v\nactual:   %+v\n",
-			expected,
-			submissions,
+	if submissions.DKGSubmissions[0].Votes != 1 {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			1,
+			submissions.DKGSubmissions[0].Votes,
+		)
+	}
+
+	if !submissions.DKGSubmissions[0].DKGResult.Equals(dkgResult) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			dkgResult,
+			submissions.DKGSubmissions[0].DKGResult,
 		)
 	}
 }
