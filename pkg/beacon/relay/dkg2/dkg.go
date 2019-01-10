@@ -40,7 +40,40 @@ func Init(channel net.BroadcastChannel) {
 	})
 }
 
-// executeGJKR runs the full distributed key generation lifecycle, given a
+// ExecuteDKG runs the full distributed key generation lifecycle,
+func ExecuteDKG(
+	requestID *big.Int,
+	seed *big.Int,
+	playerIndex int, // starts with 0
+	groupSize int,
+	threshold int,
+	chainHandle chain.Handle,
+	channel net.BroadcastChannel,
+) error {
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("block counter failure [%v]", err)
+	}
+
+	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
+	if err != nil {
+		return fmt.Errorf("GJKR execution failed [%v]", err)
+	}
+
+	err = ExecutePublishing(
+		requestID,
+		playerIndex, // TODO Should we refresh the index to cut out the DQ and IA players removed during GJKR?
+		chainHandle,
+		convertResult(gjkrResult, groupSize, playerIndex),
+	)
+	if err != nil {
+		return fmt.Errorf("publishing failed [%v]", err)
+	}
+
+	return nil
+}
+
+// executeGJKR runs the GJKR distributed key generation  protocol, given a
 // broadcast channel to mediate it, a block counter used for time tracking,
 // a player index to use in the group, and a group size and threshold. If
 // generation is successful, it returns a threshold group member who can
