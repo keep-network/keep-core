@@ -84,9 +84,9 @@ func ExecuteDKG(
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
 func executeGJKR(
+	playerIndex int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	groupSize int,
 	threshold int,
 	seed *big.Int,
 ) (*gjkr.Result, error) {
