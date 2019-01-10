@@ -60,8 +60,20 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
+// TODO: implement
 func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
 	return &async.GroupTicketPromise{}
+}
+
+// TODO: implement
+func (c *localChain) SubmitChallenge(
+	ticket *groupselection.TicketChallenge,
+) *async.GroupTicketChallengePromise {
+	return &async.GroupTicketChallengePromise{}
+}
+
+func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
+	return make([]*groupselection.Ticket, 0)
 }
 
 func (c *localChain) SubmitGroupPublicKey(

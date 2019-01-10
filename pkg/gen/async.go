@@ -72,6 +72,11 @@ func main() {
 			Prefix:     "GroupTicket",
 			outputFile: "group_ticket_promise.go",
 		},
+		{
+			Type:       "*groupselection.TicketChallenge",
+			Prefix:     "GroupTicketChallenge",
+			outputFile: "group_ticket_challenge_promise.go",
+		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {
