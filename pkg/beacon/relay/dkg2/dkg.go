@@ -51,7 +51,7 @@ func executeGJKR(
 	groupSize int,
 	threshold int,
 	seed *big.Int,
-) ([]byte, error) {
+) (*gjkr.Result, error) {
 	if playerIndex < 1 {
 		return nil, fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
 	}
@@ -109,7 +109,7 @@ func executeGJKR(
 
 		case <-blockWaiter:
 			if finalState, ok := currentState.(*finalizationState); ok {
-				return finalState.result().GroupPublicKey.Marshal(), nil
+				return finalState.result(), nil
 			}
 
 			currentState = currentState.nextState()
