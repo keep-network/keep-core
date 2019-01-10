@@ -39,14 +39,13 @@ func Init(channel net.BroadcastChannel) {
 	})
 }
 
-// ExecuteDKG runs the full distributed key generation lifecycle, given a
+// executeGJKR runs the full distributed key generation lifecycle, given a
 // broadcast channel to mediate it, a block counter used for time tracking,
 // a player index to use in the group, and a group size and threshold. If
 // generation is successful, it returns a threshold group member who can
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
-func ExecuteDKG(
-	playerIndex int,
+func executeGJKR(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	groupSize int,
