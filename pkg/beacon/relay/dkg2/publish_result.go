@@ -24,11 +24,11 @@ type Publisher struct {
 	blockStep int
 }
 
-// ExecutePublishing runs Distributed Key Generation result publication and voting,
+// executePublishing runs Distributed Key Generation result publication and voting,
 // given unique identifier of DKG execution, a player index in the group, handler
 // to interact with a chain and the Distributed Key Generation result in a format
 // accepted by the chain.
-func ExecutePublishing(
+func executePublishing(
 	requestID *big.Int,
 	publishingIndex int,
 	chainHandle chain.Handle,
