@@ -50,8 +50,8 @@ func ExecuteDKG(
 	chainHandle chain.Handle,
 	channel net.BroadcastChannel,
 ) error {
-	if playerIndex < 1 {
-		return fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
+	if playerIndex < 0 {
+		return fmt.Errorf("playerIndex must be >= 0, got: %v", playerIndex)
 	}
 
 	blockCounter, err := chainHandle.BlockCounter()
