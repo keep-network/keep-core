@@ -24,7 +24,34 @@ type Publisher struct {
 	blockStep int
 }
 
-// PublishResult sends a result containing i.a. group public key to the blockchain.
+// ExecutePublishing runs Distributed Key Generation result publication and voting,
+// given unique identifier of DKG execution, a player index in the group, handler
+// to interact with a chain and the Distributed Key Generation result in a format
+// accepted by the chain.
+func ExecutePublishing(
+	requestID *big.Int,
+	publishingIndex int,
+	chainHandle chain.Handle,
+	result *relayChain.DKGResult,
+) error {
+	publisher := &Publisher{
+		RequestID:       requestID,
+		chainHandle:     chainHandle,
+		publishingIndex: publishingIndex,
+		blockStep:       1,
+	}
+
+	_, err := publisher.publishResult(result)
+	if err != nil {
+		return fmt.Errorf("result publication failed [%v]", err)
+	}
+
+	// TODO Execute Phase 14 here
+
+	return nil
+}
+
+// publishResult sends a result containing i.a. group public key to the blockchain.
 // It checks if the result has already been published to the blockchain with
 // request ID specific for current DKG execution. If not, it determines if the
 // current member is eligable to result submission. If allowed, it submits the
@@ -38,7 +65,7 @@ type Publisher struct {
 // another publisher it returns `-1`.
 //
 // See Phase 13 of the protocol specification.
-func (pm *Publisher) PublishResult(result *relayChain.DKGResult) (int, error) {
+func (pm *Publisher) publishResult(result *relayChain.DKGResult) (int, error) {
 	chainRelay := pm.chainHandle.ThresholdRelay()
 
 	onPublishedResultChan := make(chan *event.DKGResultPublication)

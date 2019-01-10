@@ -62,20 +62,14 @@ func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTic
 }
 
 // TODO: implement
-func (c *localChain) SubmitChallenge(ticket *groupselection.Challenge) *async.GroupChallengePromise {
-	return &async.GroupChallengePromise{}
+func (c *localChain) SubmitChallenge(
+	ticket *groupselection.TicketChallenge,
+) *async.GroupTicketChallengePromise {
+	return &async.GroupTicketChallengePromise{}
 }
 
 func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
 	return make([]*groupselection.Ticket, 0)
-}
-
-func (c *localChain) CostlyCheck(
-	stakerValue []byte,
-	ticketValue *big.Int,
-	virutalStakerIndex *big.Int,
-) bool {
-	return true
 }
 
 func (c *localChain) SubmitGroupPublicKey(

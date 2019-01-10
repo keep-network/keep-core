@@ -101,23 +101,15 @@ func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.Grou
 }
 
 // TODO: implement
-func (ec *ethereumChain) SubmitChallenge(ticket *groupselection.Challenge) *async.GroupChallengePromise {
-	return &async.GroupChallengePromise{}
+func (ec *ethereumChain) SubmitChallenge(
+	ticket *groupselection.TicketChallenge,
+) *async.GroupTicketChallengePromise {
+	return &async.GroupTicketChallengePromise{}
 }
 
 // TODO: implement
 func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
-	// TODO: implement
 	return make([]*groupselection.Ticket, 0)
-}
-
-func (c *ethereumChain) CostlyCheck(
-	stakerValue []byte,
-	ticketValue *big.Int,
-	virutalStakerIndex *big.Int,
-) bool {
-	// TODO: implement
-	return true
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(

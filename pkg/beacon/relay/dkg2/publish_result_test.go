@@ -20,7 +20,7 @@ func TestPublishDKGResult(t *testing.T) {
 	}
 
 	resultToPublish := &relayChain.DKGResult{
-		GroupPublicKey: big.NewInt(12345),
+		GroupPublicKey: []byte{123, 45},
 	}
 
 	var tests = map[string]struct {
@@ -61,7 +61,7 @@ func TestPublishDKGResult(t *testing.T) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			currentBlock, err := publisher.PublishResult(resultToPublish)
+			currentBlock, err := publisher.publishResult(resultToPublish)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -114,10 +114,10 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 	}{
 		"two members publish the same results": {
 			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{101},
 			},
 			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{101},
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
@@ -126,10 +126,10 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 		},
 		"two members publish different results": {
 			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(201),
+				GroupPublicKey: []byte{201},
 			},
 			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(202),
+				GroupPublicKey: []byte{202},
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
@@ -138,10 +138,10 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{101},
 			},
 			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{101},
 			},
 			requestID1:        big.NewInt(12),
 			requestID2:        big.NewInt(13),
@@ -170,7 +170,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			defer close(result2Chan)
 
 			go func() {
-				currentBlock, err := publisher1.PublishResult(test.resultToPublish1)
+				currentBlock, err := publisher1.publishResult(test.resultToPublish1)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -179,7 +179,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			}()
 
 			go func() {
-				currentBlock, err := publisher2.PublishResult(test.resultToPublish2)
+				currentBlock, err := publisher2.publishResult(test.resultToPublish2)
 				if err != nil {
 					t.Fatal(err)
 				}

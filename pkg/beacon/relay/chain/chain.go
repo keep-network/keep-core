@@ -49,13 +49,10 @@ type GroupInterface interface {
 	// fails `costlyCheck`, and returns a promise to track the challenge
 	// submission. The promise is fulfilled with the challenge as seen on-chain,
 	// or failed if there is an error submitting the entry.
-	SubmitChallenge(ticket *groupselection.Challenge) *async.GroupChallengePromise
+	SubmitChallenge(ticket *groupselection.TicketChallenge) *async.GroupTicketChallengePromise
 	// GetOrderedTickets returns submitted tickets which have passed checks
 	// on-chain.
 	GetOrderedTickets() []*groupselection.Ticket
-	// CostlyCheck is an on-chain call that verifies whether the supplied
-	// ticket value matches the proof.
-	CostlyCheck(stakerValue []byte, ticketValue, virtualStakerIndex *big.Int) bool
 }
 
 // DistributedKeyGenerationInterface defines the subset of the relay chain

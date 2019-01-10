@@ -1,6 +1,6 @@
 package groupselection
 
-type Challenge struct {
+type TicketChallenge struct {
 	Ticket        *Ticket
 	SenderAddress string
 }

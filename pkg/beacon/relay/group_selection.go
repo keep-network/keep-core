@@ -1,6 +1,7 @@
 package relay
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"time"
@@ -105,7 +106,7 @@ func (gc *groupCandidate) submitTickets(
 	relayChain relaychain.GroupInterface,
 	naturalThreshold *big.Int,
 	quit <-chan struct{},
-	errCh chan error,
+	errCh chan<- error,
 ) {
 	for _, ticket := range gc.tickets {
 		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
@@ -132,18 +133,17 @@ func (gc *groupCandidate) verifyTicket(
 		select {
 		case <-t.C:
 			for _, ticket := range relayChain.GetOrderedTickets() {
-				if relayChain.CostlyCheck(
-					[]byte(gc.address),
-					ticket.Value.Int(),
-					ticket.Proof.VirtualStakerIndex,
-				) {
-					challenge := &groupselection.Challenge{
+				if !costlyCheck(beaconValue, ticket) {
+					challenge := &groupselection.TicketChallenge{
 						Ticket:        ticket,
 						SenderAddress: gc.address,
 					}
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
-							// TODO: implement
+							fmt.Printf(
+								"Failed to submit challenge with err: [%v]",
+								err,
+							)
 						},
 					)
 				}
@@ -154,4 +154,21 @@ func (gc *groupCandidate) verifyTicket(
 			return
 		}
 	}
+}
+
+// costlyCheck takes the on-chain Proof, computes the sha256 hash from the Proof,
+// and then uses a constant time compare to determine if the on-chain value
+// matches the value the client computes for them.
+func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
+	// cheapCheck is done on chain
+	computedValue := groupselection.CalculateTicketValue(
+		beaconValue,
+		ticket.Proof.StakerValue,
+		ticket.Proof.VirtualStakerIndex,
+	)
+	switch bytes.Compare(computedValue[:], ticket.Value[:]) {
+	case 0:
+		return true
+	}
+	return false
 }
