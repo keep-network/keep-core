@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"time"
 
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -167,4 +168,31 @@ func stateTransition(
 	)
 
 	return nil
+}
+
+func convertResult(
+	gjkrResult *gjkr.Result,
+	currentPlayerIndex,
+	groupSize int,
+) *relayChain.DKGResult {
+	convertToBoolSlice := func(slice []gjkr.MemberID) []bool {
+		boolSlice := make([]bool, groupSize)
+		for index := range boolSlice {
+			if index != currentPlayerIndex {
+				for _, inactiveMemberID := range gjkrResult.Inactive {
+					if inactiveMemberID.Equals(index) {
+						boolSlice[index] = true
+					}
+				}
+			}
+		}
+		return boolSlice
+	}
+
+	return &relayChain.DKGResult{
+		Success:        gjkrResult.Success,
+		GroupPublicKey: gjkrResult.GroupPublicKey.Marshal(),
+		Inactive:       convertToBoolSlice(gjkrResult.Inactive),
+		Disqualified:   convertToBoolSlice(gjkrResult.Disqualified),
+	}
 }
