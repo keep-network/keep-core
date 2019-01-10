@@ -73,9 +73,9 @@ func main() {
 			outputFile: "group_ticket_promise.go",
 		},
 		{
-			Type:       "*groupselection.Challenge",
-			Prefix:     "GroupChallenge",
-			outputFile: "group_challenge_promise.go",
+			Type:       "*groupselection.TicketChallenge",
+			Prefix:     "GroupTicketChallenge",
+			outputFile: "group_ticket_challenge_promise.go",
 		},
 	}
 

@@ -134,7 +134,7 @@ func (gc *groupCandidate) verifyTicket(
 		case <-t.C:
 			for _, ticket := range relayChain.GetOrderedTickets() {
 				if !costlyCheck(beaconValue, ticket) {
-					challenge := &groupselection.Challenge{
+					challenge := &groupselection.TicketChallenge{
 						Ticket:        ticket,
 						SenderAddress: gc.address,
 					}

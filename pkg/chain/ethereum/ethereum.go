@@ -101,8 +101,10 @@ func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.Grou
 }
 
 // TODO: implement
-func (ec *ethereumChain) SubmitChallenge(ticket *groupselection.Challenge) *async.GroupChallengePromise {
-	return &async.GroupChallengePromise{}
+func (ec *ethereumChain) SubmitChallenge(
+	ticket *groupselection.TicketChallenge,
+) *async.GroupTicketChallengePromise {
+	return &async.GroupTicketChallengePromise{}
 }
 
 // TODO: implement
