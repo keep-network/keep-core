@@ -459,3 +459,44 @@ func TestOnDKGResultVote(t *testing.T) {
 		})
 	}
 }
+
+func TestOnDKGResultVoteBadRequestID(t *testing.T) {
+	requestID := big.NewInt(12)
+	requestID2 := big.NewInt(22)
+
+	groupPublicKey := big.NewInt(11)
+
+	localChain := &localChain{
+		submittedResults:             make(map[string][]*relaychain.DKGResult),
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+	}
+	chainHandle := localChain.ThresholdRelay()
+	dkgResult := &relaychain.DKGResult{
+		Success:        true,
+		GroupPublicKey: groupPublicKey,
+	}
+	chainHandle.SubmitDKGResult(requestID, dkgResult)
+
+	chainHandle.DKGResultVote(requestID2, dkgResult.Hash())
+	submissions := chainHandle.GetDKGSubmissions(requestID)
+
+	// check Votes == 1
+	if submissions.DKGSubmissions[0].Votes != 1 {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			1,
+			submissions.DKGSubmissions[0].Votes,
+		)
+	}
+
+	chainHandle.DKGResultVote(requestID, dkgResult.Hash())
+	submissions = chainHandle.GetDKGSubmissions(requestID)
+
+	// check Votes == 2
+	if submissions.DKGSubmissions[0].Votes != 2 {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			2,
+			submissions.DKGSubmissions[0].Votes,
+		)
+	}
+
+}
