@@ -73,14 +73,6 @@ func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
 	return make([]*groupselection.Ticket, 0)
 }
 
-func (c *localChain) CostlyCheck(
-	stakerValue []byte,
-	ticketValue *big.Int,
-	virutalStakerIndex *big.Int,
-) bool {
-	return true
-}
-
 func (c *localChain) SubmitGroupPublicKey(
 	requestID *big.Int,
 	key [96]byte,

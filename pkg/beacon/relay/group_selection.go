@@ -1,6 +1,7 @@
 package relay
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"time"
@@ -132,11 +133,7 @@ func (gc *groupCandidate) verifyTicket(
 		select {
 		case <-t.C:
 			for _, ticket := range relayChain.GetOrderedTickets() {
-				if relayChain.CostlyCheck(
-					[]byte(gc.address),
-					ticket.Value.Int(),
-					ticket.Proof.VirtualStakerIndex,
-				) {
+				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.Challenge{
 						Ticket:        ticket,
 						SenderAddress: gc.address,
@@ -157,4 +154,21 @@ func (gc *groupCandidate) verifyTicket(
 			return
 		}
 	}
+}
+
+// costlyCheck takes the on-chain Proof, computes the sha256 hash from the Proof,
+// and then uses a constant time compare to determine if the on-chain value
+// matches the value the client computes for them.
+func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
+	// cheapCheck is done on chain
+	computedValue := groupselection.CalculateTicketValue(
+		beaconValue,
+		ticket.Proof.StakerValue,
+		ticket.Proof.VirtualStakerIndex,
+	)
+	switch bytes.Compare(computedValue[:], ticket.Value[:]) {
+	case 0:
+		return true
+	}
+	return false
 }
