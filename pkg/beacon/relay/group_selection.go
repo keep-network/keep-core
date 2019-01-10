@@ -140,7 +140,7 @@ func (gc *groupCandidate) verifyTicket(
 					}
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
-							fmt.Println(
+							fmt.Printf(
 								"Failed to submit challenge with err: [%v]",
 								err,
 							)
