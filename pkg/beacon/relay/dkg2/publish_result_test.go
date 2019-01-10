@@ -61,7 +61,7 @@ func TestPublishDKGResult(t *testing.T) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			currentBlock, err := publisher.PublishResult(resultToPublish)
+			currentBlock, err := publisher.publishResult(resultToPublish)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -170,7 +170,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			defer close(result2Chan)
 
 			go func() {
-				currentBlock, err := publisher1.PublishResult(test.resultToPublish1)
+				currentBlock, err := publisher1.publishResult(test.resultToPublish1)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -179,7 +179,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			}()
 
 			go func() {
-				currentBlock, err := publisher2.PublishResult(test.resultToPublish2)
+				currentBlock, err := publisher2.publishResult(test.resultToPublish2)
 				if err != nil {
 					t.Fatal(err)
 				}
