@@ -9,13 +9,13 @@ import (
 func TestLead(t *testing.T) {
 	dkgResult1 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1001),
+		GroupPublicKey: []byte{10, 1},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
 	dkgResult2 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1002),
+		GroupPublicKey: []byte{10, 02},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
@@ -103,19 +103,19 @@ func TestLead(t *testing.T) {
 func TestContains(t *testing.T) {
 	dkgResult1 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1001),
+		GroupPublicKey: []byte{10, 01},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
 	dkgResult2 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1002),
+		GroupPublicKey: []byte{10, 02},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
 	dkgResult3 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1032),
+		GroupPublicKey: []byte{10, 32},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}

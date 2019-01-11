@@ -120,7 +120,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	submittedRequestID1 := big.NewInt(1)
 	submittedResult1 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(11),
+		GroupPublicKey: []byte{11},
 	}
 
 	submittedResults[submittedRequestID1.String()] = append(
@@ -185,7 +185,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
 	submittedResult1 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(11),
+		GroupPublicKey: []byte{11},
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
@@ -327,7 +327,7 @@ func TestDKGResultVote(t *testing.T) {
 			chainHandle := localChain.ThresholdRelay()
 			dkgResult := &relaychain.DKGResult{
 				Success:        true,
-				GroupPublicKey: big.NewInt(11),
+				GroupPublicKey: []byte{11},
 			}
 			chainHandle.SubmitDKGResult(test.requestID, dkgResult)
 			for i := 0; i < test.callVoteNtimes; i++ {
@@ -353,7 +353,7 @@ func TestGetDKGSubmissions(t *testing.T) {
 	chainHandle := localChain.ThresholdRelay()
 	dkgResult := &relaychain.DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(11),
+		GroupPublicKey: []byte{11},
 	}
 	chainHandle.SubmitDKGResult(requestID, dkgResult)
 	submissions := chainHandle.GetDKGSubmissions(requestID)
@@ -388,19 +388,19 @@ func TestOnDKGResultVote(t *testing.T) {
 		callVoteNtimes int
 		requestID      *big.Int
 		expectMessage  bool
-		groupPublicKey *big.Int
+		groupPublicKey []byte
 	}{
 		"after submission and 1 vote": {
 			callVoteNtimes: 1,
 			requestID:      requestID,
 			expectMessage:  true,
-			groupPublicKey: big.NewInt(11),
+			groupPublicKey: []byte{11},
 		},
 		"verify multiple votes": {
 			callVoteNtimes: 3,
 			requestID:      requestID2,
 			expectMessage:  false,
-			groupPublicKey: big.NewInt(21),
+			groupPublicKey: []byte{21},
 		},
 	}
 
@@ -464,7 +464,7 @@ func TestOnDKGResultVoteBadRequestID(t *testing.T) {
 	requestID := big.NewInt(12)
 	requestID2 := big.NewInt(22)
 
-	groupPublicKey := big.NewInt(11)
+	groupPublicKey := []byte{11}
 
 	localChain := &localChain{
 		submittedResults:             make(map[string][]*relaychain.DKGResult),

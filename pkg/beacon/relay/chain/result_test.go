@@ -2,7 +2,6 @@ package chain
 
 import (
 	"bytes"
-	"math/big"
 	"testing"
 )
 
@@ -96,7 +95,7 @@ func TestDKGResultEquals(t *testing.T) {
 func TestHash(t *testing.T) {
 	r1 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(100),
+		GroupPublicKey: []byte{100},
 		Disqualified:   []bool{true, false, true, false},
 		Inactive:       []bool{false, false, true, false},
 	}
@@ -111,7 +110,7 @@ func TestHash(t *testing.T) {
 func TestSerialize(t *testing.T) {
 	r1 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(100),
+		GroupPublicKey: []byte{100},
 		Disqualified:   []bool{true, false, true, false},
 		Inactive:       []bool{false, false, true, false},
 	}
