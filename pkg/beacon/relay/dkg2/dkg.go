@@ -40,7 +40,7 @@ func Init(channel net.BroadcastChannel) {
 	})
 }
 
-// ExecuteDKG runs the full distributed key generation lifecycle,
+// ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
 	requestID *big.Int,
 	seed *big.Int,
