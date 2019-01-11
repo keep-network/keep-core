@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewMemberWithInvalidID(t *testing.T) {
-	expectedError := fmt.Errorf("member ID validation failed [member ID must be >= 1]")
+	expectedError := fmt.Errorf("could not create a new member [member ID must be >= 1]")
 
 	_, err := NewMember(MemberID(0), nil, 13, nil)
 
@@ -18,7 +18,7 @@ func TestNewMemberWithInvalidID(t *testing.T) {
 }
 
 func TestAddToGroupWithInvalidID(t *testing.T) {
-	expectedError := fmt.Errorf("cannot add the member ID to the group [member ID must be >= 1]")
+	expectedError := fmt.Errorf("could not add the member ID to the group [member ID must be >= 1]")
 
 	member, err := NewMember(MemberID(1), nil, 13, big.NewInt(14))
 	if err != nil {
@@ -47,7 +47,7 @@ func TestMemberIDValidate(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		err := test.id.Validate()
+		err := test.id.validate()
 
 		if !reflect.DeepEqual(err, test.expectedError) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedError, err)

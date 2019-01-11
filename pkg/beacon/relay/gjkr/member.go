@@ -210,8 +210,8 @@ func NewMember(
 	dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
-	if err := memberID.Validate(); err != nil {
-		return nil, fmt.Errorf("member ID validation failed [%v]", err)
+	if err := memberID.validate(); err != nil {
+		return nil, fmt.Errorf("could not create a new member [%v]", err)
 	}
 
 	return &LocalMember{
@@ -231,8 +231,8 @@ func NewMember(
 
 // AddToGroup adds the provided MemberID to the group
 func (mc *memberCore) AddToGroup(memberID MemberID) error {
-	if err := memberID.Validate(); err != nil {
-		return fmt.Errorf("cannot add the member ID to the group [%v]", err)
+	if err := memberID.validate(); err != nil {
+		return fmt.Errorf("could not add the member ID to the group [%v]", err)
 	}
 
 	mc.group.RegisterMemberID(memberID)
@@ -387,9 +387,9 @@ func (id MemberID) HexString() string {
 	return strconv.FormatInt(int64(id), 16)
 }
 
-// Validate checks if MemberID has a valid value. MemberID is expected to be
+// validate checks if MemberID has a valid value. MemberID is expected to be
 // equal or greater than `1`.
-func (id MemberID) Validate() error {
+func (id MemberID) validate() error {
 	if id < 1 {
 		return fmt.Errorf("member ID must be >= 1")
 	}
