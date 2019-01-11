@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -374,6 +375,15 @@ func (id MemberID) Equals(value int) bool {
 // HexString converts `MemberID` to hex `string` representation.
 func (id MemberID) HexString() string {
 	return strconv.FormatInt(int64(id), 16)
+}
+
+// Validate checks if MemberID has a valid value. MemberID is expected to be
+// equal or greater than `1`.
+func (id MemberID) Validate() error {
+	if id < 1 {
+		return fmt.Errorf("member ID must be >= 1 but is %v", id)
+	}
+	return nil
 }
 
 // MemberIDFromHex returns a `MemberID` created from the hex `string`
