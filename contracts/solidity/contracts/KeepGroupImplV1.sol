@@ -6,6 +6,14 @@ import "./KeepRandomBeaconImplV1.sol";
 
 contract KeepGroupImplV1 is Ownable {
 
+    struct DkgResult {
+        bool success;
+        bytes32 groupPubKey;
+        bytes disqualified;
+        bytes inactive;
+    }
+
+    event DkgResultPublishedEvent(uint256 requestId);
     event GroupExistsEvent(bytes32 groupPubKey, bool exists);
     event GroupStartedEvent(bytes32 groupPubKey);
     event GroupCompleteEvent(bytes32 groupPubKey);
@@ -16,6 +24,8 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _groupSize;
     uint256 internal _groupsCount;
 
+    mapping (uint256 => DkgResult) internal _requestIdToDkgResult;
+    mapping (uint256 => bool) internal _dkgResultPublished;
     mapping (uint256 => bytes32) internal _groupIndexToGroupPubKey;
     mapping (bytes32 => mapping (uint256 => bytes32)) internal _memberIndexToMemberPubKey;
     mapping (bytes32 => bool) internal _groupExists;
@@ -127,6 +137,39 @@ contract KeepGroupImplV1 is Ownable {
         } else {
             emit GroupExistsEvent(groupPubKey, false);
         }
+    }
+
+    /**
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
+     * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @param success Result of DKG protocol execution; true if success, false otherwise.
+     * @param groupPubKey Group public key generated as a result of protocol execution.
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * means that the member has been disqualified. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     * @param inactive bytes representing inactive group members; 1 at the specific index means
+     * that the member has been marked as inactive. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     */
+    function submitDkgResult(
+        uint256 requestId,
+        bool success, 
+        bytes32 groupPubKey,
+        bytes disqualified,
+        bytes inactive
+    ) public {
+        _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
+        _dkgResultPublished[requestId] = true;
+  
+        emit DkgResultPublishedEvent(requestId);
+    }
+
+    /**
+     * @dev Checks if DKG protocol result has been already published for the
+     * specific relay request ID associated with the protocol execution. 
+     */
+    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
+        return _dkgResultPublished[requestId];
     }
 
     /**
