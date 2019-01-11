@@ -290,7 +290,7 @@ func (c *localChain) SubmitDKGResult(
 
 func (c *localChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) event.Subscription {
+) (event.Subscription, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -302,5 +302,5 @@ func (c *localChain) OnDKGResultPublished(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.dkgResultPublicationHandlers, handlerID)
-	})
+	}), nil
 }

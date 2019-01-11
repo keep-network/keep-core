@@ -272,11 +272,14 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	relay := localChain.ThresholdRelay()
 
 	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
-	subscription := localChain.OnDKGResultPublished(
+	subscription, err := localChain.OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication) {
 			dkgResultPublicationChan <- dkgResultPublication
 		},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Unsubscribe from the event - from this point, callback should
 	// never be called.
