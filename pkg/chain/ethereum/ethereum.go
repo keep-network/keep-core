@@ -322,7 +322,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 
 // IsDKGResultPublished checks if the result is already published to a chain.
 func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
-	return false, nil
+	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
 // SubmitDKGResult sends DKG result to a chain.

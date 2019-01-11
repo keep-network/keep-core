@@ -203,6 +203,10 @@ func (kg *keepGroup) IsMember(
 	)
 }
 
+func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
+	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
+}
+
 // groupCompleteEventFunc defines the function that is called upon
 // group completion.
 type groupCompleteEventFunc func(groupPubKey []byte)
