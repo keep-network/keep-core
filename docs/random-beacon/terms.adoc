@@ -109,6 +109,12 @@ regularly but don't have a specific shorthand are listed below.
 |The probability of some event
 |===
 
+== Specific terms
+
+=== Globally significant values
+
+==== Global security parameters
+
 .Global constants
 [cols="h,e,a"]
 |===
@@ -133,90 +139,10 @@ beyond which security guarantees don't hold
 abort to preserve security
 |===
 
-.Time limits
-[cols="h,a"]
-|===
-|Variable |Meaning
-|T~p~
-|Time limit for phase _p_ of the key generation;
-after _T~p~_ has elapsed every non-inactive participant is assumed
-to have broadcast its own message for phase _p_ and received others' messages
+==== Elliptic curve specifications
 
-|T~dkg~
-|Time limit for the distributed key generation to finish
-and _P~1~_ to submit the result
-
-|T~step~
-|Time limit after which
-the next participant in line
-becomes eligible to submit the result
-
-|T~conflict~
-|Time limit after which
-any disputes over the correct result are assumed to be resolved,
-with the plurality being honest
-
-|T~voteResponse~
-|Extension to the time limit after a new vote has been submitted, to ensure
-honest members are able to react to last-minute votes.
-|===
-
-.Rewards and punishments
-[cols="h,a,a"]
-|===
-|Variable |Stage |Meaning
-
-|R~TICKET_TATTLETALE~
-|Group selection
-|Token reward for operator that challenges an invalid ticket
-
-|D~INVALID_TICKET~
-|Group selection
-|Penalty for operator that submits an invalid ticket that is challenged
-
-|D~INVALID_CHALLENGE~
-|Group selection
-|Penalty for operator that challenges a valid ticket
-
-|D~DKG_DQ~
-|DKG
-|Penalty for members on the disqualified list
-
-|R~submitter~(T)
-|Signing
-|Currency reward for first member to submit a valid output
-
-|R~group~(T)
-|Signing
-|Currency reward for all other members in a group when a valid output is
-submitted
-
-|D~INVALID_SIGNATURE~
-|Signing
-|Penalty for member that submits an invalid output
-
-|D~late_output~(T)
-|Signing
-|Penalty for other group members when an output is submitted too late
-
-|D~KEY_COMPROMISED~
-|Signing
-|Penalty for member whose individual signing key is provably compromised
-
-|R~KEY_COMPROMISE_TATTLETALE~
-|Signing
-|Token reward for operator that presents proof of individual key compromise
-
-|D~GROUP_KEY_COMPROMISED~
-|Signing
-|Penalty for all members of a group whose group private key is provably
-compromised
-
-|R~GROUP_KEY_COMPROMISE_TATTLETALE~
-|Signing
-|Token reward for operator that presents proof of group key compromise
-
-|===
+The pairing operations of the random beacon are performed on the curve
+`alt_bn128`, as specified below:
 
 .Values from `alt_bn128`
 [cols="h,a,a"]
@@ -256,6 +182,49 @@ with generator _P1_
 )
 ....
 |Generator of _G2_
+|===
+
+These terms deviate from the standard naming conventions.
+
+=== Terms used in group selection
+
+=== Terms used in distributed key generation (DKG)
+
+.Time limits
+[cols="h,a"]
+|===
+|Variable |Meaning
+|T~p~
+|Time limit for phase _p_ of the key generation;
+after _T~p~_ has elapsed every non-inactive participant is assumed
+to have broadcast its own message for phase _p_ and received others' messages
+
+|T~dkg~
+|Time limit for the distributed key generation to finish
+and _P~1~_ to submit the result
+
+|T~step~
+|Time limit after which
+the next participant in line
+becomes eligible to submit the result
+
+|T~conflict~
+|Time limit after which
+any disputes over the correct result are assumed to be resolved,
+with the plurality being honest
+
+|T~voteResponse~
+|Extension to the time limit after a new vote has been submitted, to ensure
+honest members are able to react to last-minute votes.
+|===
+
+.Rewards and punishments
+[cols="h,a"]
+|===
+|Variable |Meaning
+
+|D~DKG_DQ~
+|Penalty for members on the disqualified list
 |===
 
 .Values at the time of group creation
@@ -362,3 +331,7 @@ with _P~j~_
 |gx~i~ = x~i~ * P1 = Σ (s~ji~ * P1)
 |The individual public key of _P~i~_ corresponding to a share of _Y_ at _i_
 |===
+
+=== Terms used in output generation
+
+=== Terms used in group expiration
