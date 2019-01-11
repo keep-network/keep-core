@@ -32,12 +32,15 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		member := gjkr.NewMember(
+		member, err := gjkr.NewMember(
 			gjkr.MemberID(i+1),
 			make([]gjkr.MemberID, 0),
 			threshold,
 			seed,
 		)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		Init(channel)
 
