@@ -78,6 +78,7 @@ honest members are able to react to last-minute votes.
 |===
 
 .Rewards and punishments
+[cols="h,a,a"]
 |===
 |Variable |Stage |Meaning
 
