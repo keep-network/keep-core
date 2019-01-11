@@ -22,7 +22,7 @@ func TestConvertResult(t *testing.T) {
 				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   []gjkr.MemberID{},
-				Inactive:       nil,
+				Inactive:       []gjkr.MemberID{},
 			},
 			expectedResult: &relayChain.DKGResult{
 				Success:        false,
