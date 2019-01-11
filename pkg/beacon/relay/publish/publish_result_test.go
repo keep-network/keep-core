@@ -23,7 +23,7 @@ func TestPublishDKGResult(t *testing.T) {
 	}
 
 	resultToPublish := &relayChain.DKGResult{
-		GroupPublicKey: big.NewInt(12345),
+		GroupPublicKey: []byte{23, 45},
 	}
 
 	var tests = map[string]struct {
@@ -47,7 +47,7 @@ func TestPublishDKGResult(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			publisher := &Publisher{
 				ID:              gjkr.MemberID(test.publishingIndex + 1),
-				RequestID:       big.NewInt(101),
+				RequestID:       big.NewInt(1001),
 				publishingIndex: test.publishingIndex,
 				chainHandle:     chainHandle,
 				blockStep:       blockStep,
@@ -67,7 +67,6 @@ func TestPublishDKGResult(t *testing.T) {
 
 			if chainRelay.IsDKGResultPublished(
 				publisher.RequestID,
-				resultToPublish,
 			) {
 				t.Fatalf("result is already published on chain")
 			}
@@ -85,7 +84,6 @@ func TestPublishDKGResult(t *testing.T) {
 			}
 			if !chainRelay.IsDKGResultPublished(
 				publisher.RequestID,
-				resultToPublish,
 			) {
 				t.Fatalf("result is not published on chain")
 			}
@@ -106,26 +104,26 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 
 	publisher1 := &Publisher{
 		ID:              1,
-		RequestID:       big.NewInt(101),
+		RequestID:       big.NewInt(1001),
 		publishingIndex: 0,
 		chainHandle:     chainHandle,
 		blockStep:       blockStep,
 	}
 	publisher2 := &Publisher{
 		ID:              2,
-		RequestID:       big.NewInt(101),
+		RequestID:       big.NewInt(1001),
 		publishingIndex: 1,
 		chainHandle:     chainHandle,
 		blockStep:       blockStep,
 	}
 
 	resultToPublish := &relayChain.DKGResult{
-		GroupPublicKey: big.NewInt(12345),
+		GroupPublicKey: []byte{23, 45},
 	}
 
 	chainRelay := chainHandle.ThresholdRelay()
 
-	if chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
+	if chainRelay.IsDKGResultPublished(publisher1.RequestID) {
 		t.Fatalf("result is already published on chain")
 	}
 
@@ -135,7 +133,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
+	if !chainRelay.IsDKGResultPublished(publisher1.RequestID) {
 		t.Fatalf("result is already published on chain")
 	}
 
@@ -146,7 +144,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !chainRelay.IsDKGResultPublished(publisher1.RequestID, resultToPublish) {
+	if !chainRelay.IsDKGResultPublished(publisher1.RequestID) {
 		t.Fatalf("result is not published on chain")
 	}
 
@@ -156,7 +154,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	var expectedError error
 	expectedError = nil
 
-	if !chainRelay.IsDKGResultPublished(publisher2.RequestID, resultToPublish) {
+	if !chainRelay.IsDKGResultPublished(publisher2.RequestID) {
 		t.Fatalf("result is not published on chain")
 	}
 
@@ -165,7 +163,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
 
-	if !chainRelay.IsDKGResultPublished(publisher2.RequestID, resultToPublish) {
+	if !chainRelay.IsDKGResultPublished(publisher2.RequestID) {
 		t.Fatalf("result is not published on chain")
 	}
 }
@@ -201,10 +199,10 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 	}{
 		"two members publish the same results": {
 			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{10, 1},
 			},
 			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{10, 1},
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
@@ -213,10 +211,10 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 		},
 		"two members publish different results": {
 			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(201),
+				GroupPublicKey: []byte{20, 1},
 			},
 			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(202),
+				GroupPublicKey: []byte{20, 02},
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
@@ -225,10 +223,10 @@ func TestPublishDKGResult_ConcurrentExecution(t *testing.T) {
 		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{10, 1},
 			},
 			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(101),
+				GroupPublicKey: []byte{10, 1},
 			},
 			requestID1:        big.NewInt(12),
 			requestID2:        big.NewInt(13),

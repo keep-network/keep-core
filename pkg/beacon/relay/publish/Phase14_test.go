@@ -44,7 +44,7 @@ func TestPhase14_pt1(t *testing.T) {
 		"vote test with no data, nothing submitted": {
 			runIt: false,
 			correctResult: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(4000),
+				GroupPublicKey: []byte{40, 00},
 			},
 			publishingIndex: 0,
 			steps: []runCode{
@@ -56,7 +56,7 @@ func TestPhase14_pt1(t *testing.T) {
 		"send a Vote - 1 vote after start": {
 			runIt: false,
 			correctResult: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(4001),
+				GroupPublicKey: []byte{40, 01},
 			},
 			publishingIndex: 0,
 			steps: []runCode{
@@ -65,7 +65,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					resultToPublish: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "go-phase14"}, // Process result
@@ -73,7 +73,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "dump-submissions", requestID: big.NewInt(102)},
@@ -87,7 +87,7 @@ func TestPhase14_pt1(t *testing.T) {
 		"multiple votes for a singe successful result waiting for timeout": {
 			runIt: false,
 			correctResult: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(4001),
+				GroupPublicKey: []byte{40, 01},
 			},
 			publishingIndex: 0,
 			steps: []runCode{
@@ -96,7 +96,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					resultToPublish: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "sleep", intVal: 500},
@@ -105,7 +105,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "dump-submissions", requestID: big.NewInt(102)},
@@ -119,7 +119,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "validate-votes",
@@ -133,7 +133,7 @@ func TestPhase14_pt1(t *testing.T) {
 		"pass the voting threshold": {
 			runIt: true,
 			correctResult: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(4001),
+				GroupPublicKey: []byte{40, 01},
 			},
 			publishingIndex: 0,
 			steps: []runCode{
@@ -142,7 +142,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					resultToPublish: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "sleep", intVal: 500},
@@ -151,7 +151,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "dump-submissions", requestID: big.NewInt(102)},
@@ -165,7 +165,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "validate-votes",
@@ -177,7 +177,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(102),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "sleep", intVal: 100},
@@ -186,7 +186,7 @@ func TestPhase14_pt1(t *testing.T) {
 		"pass the voting threshold, 2nd time with new requestID": {
 			runIt: true,
 			correctResult: &relayChain.DKGResult{
-				GroupPublicKey: big.NewInt(4001),
+				GroupPublicKey: []byte{40, 01},
 			},
 			publishingIndex: 0,
 			steps: []runCode{
@@ -195,7 +195,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(103),
 					resultToPublish: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "sleep", intVal: 500},
@@ -204,7 +204,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(103),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "dump-submissions", requestID: big.NewInt(103)},
@@ -218,7 +218,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(103),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "validate-votes",
@@ -230,7 +230,7 @@ func TestPhase14_pt1(t *testing.T) {
 					requestID: big.NewInt(103),
 					dkgResult: &relayChain.DKGResult{
 						Success:        true,
-						GroupPublicKey: big.NewInt(4001),
+						GroupPublicKey: []byte{40, 01},
 					},
 				},
 				{op: "sleep", intVal: 100},
@@ -280,13 +280,13 @@ func TestPhase14_pt1(t *testing.T) {
 					}
 				case "validate-votes": // intVal: 2},
 					submissions := thresholdRelayChain.GetDKGSubmissions(ex.requestID)
-					votes := submissions.Submissions[ex.intVal2].Votes
+					votes := submissions.DKGSubmissions[ex.intVal2].Votes
 					if votes != ex.intVal {
 						t.Errorf("Invalid number of votes\n")
 					}
 				case "send-vote":
 					dkgResultHash := ex.dkgResult.Hash()
-					thresholdRelayChain.Vote(ex.requestID, dkgResultHash)
+					thresholdRelayChain.DKGResultVote(ex.requestID, dkgResultHash)
 				case "go-phase14":
 					wg.Add(1)
 					go func() {
