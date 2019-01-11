@@ -91,6 +91,24 @@ should be considered.
 |A punishment for misbehavior (mnemonic: _disciplinary_ action); always tokens
 |===
 
+=== Common long-form terms
+
+Longhand terms should be self-explanatory wherever possible, and are explained
+locally where they are used. The meanings of some term types that are used
+regularly but don't have a specific shorthand are listed below.
+
+.Used terms
+[cols="h,a"]
+|===
+|Term |Meaning
+
+|Stake~ctx~
+|Some amount of tokens used for staking
+
+|Prob~ctx~
+|The probability of some event
+|===
+
 .Global constants
 [cols="h,e,a"]
 |===
