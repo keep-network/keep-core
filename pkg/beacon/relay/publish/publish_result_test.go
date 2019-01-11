@@ -65,9 +65,9 @@ func TestPublishDKGResult(t *testing.T) {
 				t.Fatalf("unexpected error [%v]", err)
 			}
 
-			if chainRelay.IsDKGResultPublished(
+			if ok, _ := chainRelay.IsDKGResultPublished(
 				publisher.RequestID,
-			) {
+			); ok {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
@@ -82,9 +82,9 @@ func TestPublishDKGResult(t *testing.T) {
 			if test.expectedTimeEnd != currentBlock {
 				t.Fatalf("invalid current block\nexpected: %v\nactual:   %v\n", test.expectedTimeEnd, currentBlock)
 			}
-			if !chainRelay.IsDKGResultPublished(
+			if ok, _ := chainRelay.IsDKGResultPublished(
 				publisher.RequestID,
-			) {
+			); !ok {
 				t.Fatalf("result is not published on chain")
 			}
 		})
@@ -123,7 +123,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 
 	chainRelay := chainHandle.ThresholdRelay()
 
-	if chainRelay.IsDKGResultPublished(publisher1.RequestID) {
+	if ok, _ := chainRelay.IsDKGResultPublished(publisher1.RequestID); ok {
 		t.Fatalf("result is already published on chain")
 	}
 
@@ -133,7 +133,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !chainRelay.IsDKGResultPublished(publisher1.RequestID) {
+	if ok, _ := chainRelay.IsDKGResultPublished(publisher1.RequestID); !ok {
 		t.Fatalf("result is already published on chain")
 	}
 
@@ -144,7 +144,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	if err != nil {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
-	if !chainRelay.IsDKGResultPublished(publisher1.RequestID) {
+	if ok, _ := chainRelay.IsDKGResultPublished(publisher1.RequestID); !ok {
 		t.Fatalf("result is not published on chain")
 	}
 
@@ -154,7 +154,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 	var expectedError error
 	expectedError = nil
 
-	if !chainRelay.IsDKGResultPublished(publisher2.RequestID) {
+	if ok, _ := chainRelay.IsDKGResultPublished(publisher2.RequestID); !ok {
 		t.Fatalf("result is not published on chain")
 	}
 
@@ -163,7 +163,7 @@ func TestPublishDKGResult_AlreadyPublished(t *testing.T) {
 		t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 	}
 
-	if !chainRelay.IsDKGResultPublished(publisher2.RequestID) {
+	if ok, _ := chainRelay.IsDKGResultPublished(publisher2.RequestID); !ok {
 		t.Fatalf("result is not published on chain")
 	}
 }

@@ -47,7 +47,11 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 	})
 
 	// Check if the result has already been published to the chain.
-	if chainRelay.IsDKGResultPublished(pm.RequestID) {
+	found, err := chainRelay.IsDKGResultPublished(pm.RequestID)
+	if err != nil {
+		return err
+	}
+	if found {
 		return nil // TODO What should we return here? Should it be an error?
 	}
 
@@ -76,7 +80,11 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 			return <-errors
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
-				if chainRelay.IsDKGResultPublished(pm.RequestID) {
+				found, err := chainRelay.IsDKGResultPublished(pm.RequestID)
+				if err != nil {
+					return err
+				}
+				if found {
 					return nil
 				}
 			}
