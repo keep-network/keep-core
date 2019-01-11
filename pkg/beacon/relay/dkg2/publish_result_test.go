@@ -57,7 +57,12 @@ func TestPublishDKGResult(t *testing.T) {
 
 			chainRelay := publisher.chainHandle.ThresholdRelay()
 
-			if chainRelay.IsDKGResultPublished(publisher.RequestID) {
+			isPublished, err := chainRelay.IsDKGResultPublished(publisher.RequestID)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if isPublished {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
@@ -72,7 +77,11 @@ func TestPublishDKGResult(t *testing.T) {
 					currentBlock,
 				)
 			}
-			if !chainRelay.IsDKGResultPublished(publisher.RequestID) {
+			isPublished, err = chainRelay.IsDKGResultPublished(publisher.RequestID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !isPublished {
 				t.Fatalf("result is not published on chain")
 			}
 		})

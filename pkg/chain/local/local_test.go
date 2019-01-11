@@ -150,7 +150,10 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := chainHandle.IsDKGResultPublished(test.requestID)
+			actualResult, err := chainHandle.IsDKGResultPublished(test.requestID)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			if actualResult != test.expectedResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
