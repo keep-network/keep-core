@@ -54,7 +54,58 @@ honest members are able to react to last-minute votes.
 
 .Rewards and punishments
 |===
-|Variable |Meaning
+|Variable |Stage |Meaning
+
+|R~TICKET_TATTLETALE~
+|Group selection
+|Token reward for operator that challenges an invalid ticket
+
+|D~INVALID_TICKET~
+|Group selection
+|Penalty for operator that submits an invalid ticket that is challenged
+
+|D~INVALID_CHALLENGE~
+|Group selection
+|Penalty for operator that challenges a valid ticket
+
+|D~DKG_DQ~
+|DKG
+|Penalty for members on the disqualified list
+
+|R~submitter~(T)
+|Signing
+|Currency reward for first member to submit a valid output
+
+|R~group~(T)
+|Signing
+|Currency reward for all other members in a group when a valid output is
+submitted
+
+|D~INVALID_SIGNATURE~
+|Signing
+|Penalty for member that submits an invalid output
+
+|D~late_output~(T)
+|Signing
+|Penalty for other group members when an output is submitted too late
+
+|D~KEY_COMPROMISED~
+|Signing
+|Penalty for member whose individual signing key is provably compromised
+
+|R~KEY_COMPROMISE_TATTLETALE~
+|Signing
+|Token reward for operator that presents proof of individual key compromise
+
+|D~GROUP_KEY_COMPROMISED~
+|Signing
+|Penalty for all members of a group whose group private key is provably
+compromised
+
+|R~GROUP_KEY_COMPROMISE_TATTLETALE~
+|Signing
+|Token reward for operator that presents proof of group key compromise
+
 |===
 
 .Values from `alt_bn128`
