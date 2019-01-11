@@ -66,9 +66,9 @@ func ExecuteDKG(
 
 	err = executePublishing(
 		requestID,
-		playerIndex, // TODO Should we refresh the index to cut out the DQ and IA players removed during GJKR?
+		playerIndex,
 		chainHandle,
-		convertResult(gjkrResult, groupSize, playerIndex),
+		convertResult(gjkrResult, groupSize),
 	)
 	if err != nil {
 		return fmt.Errorf("publishing failed [%v]", err)
@@ -203,19 +203,28 @@ func stateTransition(
 	return nil
 }
 
-func convertResult(
-	gjkrResult *gjkr.Result,
-	currentPlayerIndex,
-	groupSize int,
-) *relayChain.DKGResult {
-	convertToBoolSlice := func(slice []gjkr.MemberID) []bool {
+// convertResult transforms GJKR protocol execution result to a chain specific
+// DKG result form. It serializes a group public key to bytes and converts
+// disqualified and inactive members lists to a boolean list where each entry
+// corresponds to a member in the group and true/false value indicates status of
+// the member.
+func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
+	var serializedGroupPublicKey []byte
+	if gjkrResult.GroupPublicKey != nil {
+		serializedGroupPublicKey = gjkrResult.GroupPublicKey.Marshal()
+	}
+
+	// convertToBoolSlice converts slice containing members IDs to a slice of
+	// group size length where true entry indicates the member was found on
+	// passed members IDs slice. It assumes member IDs for a group starts iterating
+	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
+	// resulting boolean slice will be {false, true, false}.
+	convertToBoolSlice := func(memberIDsSlice []gjkr.MemberID) []bool {
 		boolSlice := make([]bool, groupSize)
 		for index := range boolSlice {
-			if index != currentPlayerIndex {
-				for _, inactiveMemberID := range gjkrResult.Inactive {
-					if inactiveMemberID.Equals(index) {
-						boolSlice[index] = true
-					}
+			for _, memberID := range memberIDsSlice {
+				if memberID.Equals(index + 1) {
+					boolSlice[index] = true
 				}
 			}
 		}
@@ -224,7 +233,7 @@ func convertResult(
 
 	return &relayChain.DKGResult{
 		Success:        gjkrResult.Success,
-		GroupPublicKey: gjkrResult.GroupPublicKey.Marshal(),
+		GroupPublicKey: serializedGroupPublicKey,
 		Inactive:       convertToBoolSlice(gjkrResult.Inactive),
 		Disqualified:   convertToBoolSlice(gjkrResult.Disqualified),
 	}
