@@ -244,8 +244,8 @@ func (c *localChain) RequestRelayEntry(
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsDKGResultPublished(requestID *big.Int) bool {
-	return c.submittedResults[requestID] != nil
+func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
+	return c.submittedResults[requestID] != nil, nil
 }
 
 // SubmitDKGResult submits the result to a chain.
