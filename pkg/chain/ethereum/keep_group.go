@@ -1,12 +1,14 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 )
 
@@ -348,4 +350,43 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 		}
 	}()
 	return nil
+}
+
+type dkgResultPublishedEventFunc func(requestID *big.Int)
+
+func (kg *keepGroup) WatchDKGResultPublishedEvent(
+	success dkgResultPublishedEventFunc,
+	fail errorCallback,
+) (event.Subscription, error) {
+	subscribeContext, cancel := context.WithCancel(context.Background())
+
+	eventChan := make(chan *abi.KeepGroupImplV1DkgResultPublishedEvent)
+	eventSubscription, err := kg.contract.WatchDkgResultPublishedEvent(
+		&bind.WatchOpts{Context: subscribeContext},
+		eventChan,
+	)
+	if err != nil {
+		cancel()
+		close(eventChan)
+		return nil, fmt.Errorf(
+			"could not create watch for DkgResultPublished event [%v]",
+			err,
+		)
+	}
+
+	go func() {
+		for {
+			select {
+			case event := <-eventChan:
+				success(event.RequestId)
+
+			case err := <-eventSubscription.Err():
+				fail(err)
+			}
+		}
+	}()
+
+	return event.NewSubscription(func() {
+		cancel()
+	}), nil
 }
