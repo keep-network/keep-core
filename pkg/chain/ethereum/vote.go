@@ -7,16 +7,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 )
 
-func (ec *ethereumChain) GetDKGSubmissions(requestID *big.Int) *relaychain.Submissions {
+// GetDKGSubmissions returns the set of submissions.
+func (ec *ethereumChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmissions {
 	// TODO -- implement GetDKGSubmissions
 	return nil
 }
 
-// Vote increments the vote for requestID.
-func (ec *ethereumChain) Vote(requestID *big.Int, dkgResultHash []byte) {
+// DKGResultVote increments the vote for requestID
+func (ec *ethereumChain) DKGResultVote(requestID *big.Int, dkgResultHash []byte) {
 	// TODO -- implement Vote
 }
 
+// OnDKGResultVote register a function for a callback when a vote occurs.
 func (ec *ethereumChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
 	// TODO -- implement OnDKGResultVote
 }
