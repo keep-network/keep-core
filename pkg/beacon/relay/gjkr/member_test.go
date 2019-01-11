@@ -1,0 +1,56 @@
+package gjkr
+
+import (
+	"fmt"
+	"math/big"
+	"reflect"
+	"testing"
+)
+
+func TestNewMember(t *testing.T) {
+	expectedError := fmt.Errorf("member ID validation failed [member ID must be >= 1 but is 0]")
+
+	_, err := NewMember(MemberID(0), nil, 13, nil)
+
+	if !reflect.DeepEqual(err, expectedError) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
+	}
+}
+
+func TestAddToGroup(t *testing.T) {
+	expectedError := fmt.Errorf("cannot add the member ID to the group [member ID must be >= 1 but is 0]")
+
+	member, err := NewMember(MemberID(1), nil, 13, big.NewInt(14))
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = member.AddToGroup(MemberID(0))
+
+	if !reflect.DeepEqual(err, expectedError) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
+	}
+}
+
+func TestMemberIDValidate(t *testing.T) {
+	var tests = map[string]struct {
+		id            MemberID
+		expectedError error
+	}{
+		"id = 0": {
+			id:            MemberID(0),
+			expectedError: fmt.Errorf("member ID must be >= 1 but is 0"),
+		},
+		"id = 1": {
+			id:            1,
+			expectedError: nil,
+		},
+	}
+	for _, test := range tests {
+		err := test.id.Validate()
+
+		if !reflect.DeepEqual(err, test.expectedError) {
+			t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedError, err)
+		}
+	}
+}
