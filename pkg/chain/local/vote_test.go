@@ -16,19 +16,19 @@ func TestVote(t *testing.T) {
 		requestID      *big.Int
 		dkgResult      *relaychain.DKGResult
 		requestIDset   *big.Int
-		groupPublicKey *big.Int
+		groupPublicKey []byte
 		expected       int
 	}{
 		"test increment of votes when match occures": {
 			requestID: group,
 			dkgResult: &relaychain.DKGResult{
 				Success:        true,
-				GroupPublicKey: big.NewInt(1001),
+				GroupPublicKey: []byte{10, 1},
 				Disqualified:   []bool{},
 				Inactive:       []bool{},
 			},
 			requestIDset:   group,
-			groupPublicKey: big.NewInt(1001),
+			groupPublicKey: []byte{10, 1},
 			expected:       2,
 		},
 	}
@@ -38,9 +38,9 @@ func TestVote(t *testing.T) {
 			local := Connect(10, 4).ThresholdRelay()
 			promise := local.SubmitDKGResult(test.requestID, test.dkgResult)
 			_ = promise // in this package promice is fulfilled immediatly - so can ignore it.
-			local.Vote(test.requestID, test.dkgResult.Hash())
+			local.DKGResultVote(test.requestID, test.dkgResult.Hash())
 			subs := local.GetDKGSubmissions(test.requestID)
-			actual := subs.Submissions[0].Votes
+			actual := subs.DKGSubmissions[0].Votes
 			if test.expected != actual {
 				t.Errorf(
 					"\nTest: %s\nexpected: [%v]\nactual:   [%v]",
