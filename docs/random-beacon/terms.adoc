@@ -54,6 +54,10 @@ should be considered.
 |===
 |Symbol |Long form |Meaning
 
+|V~i~
+|Value~i~
+|The __i__-th output of the random beacon
+
 |N~ctx~
 |Number~ctx~
 |A number of operators or group members
