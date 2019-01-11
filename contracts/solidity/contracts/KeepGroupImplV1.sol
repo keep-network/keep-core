@@ -276,7 +276,7 @@ contract KeepGroupImplV1 is Ownable {
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return stakingWeight(staker) >= 1;
+        return StakingProxy(_stakingProxy).balanceOf(staker) >= _minStake;
     }
 
     /**
