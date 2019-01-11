@@ -48,7 +48,7 @@ _disciplinary action_ as a mnemonic); alternatives or abolishing this shorthand
 should be considered.
 
 .Symbols
-[cols="h,a"]
+[cols="h,e,a"]
 |===
 |Symbol |Long form |Meaning
 
