@@ -207,22 +207,4 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   });
 
-  it("should be able to submit group pubkey", async function() {
-
-    await keepGroupImplViaProxy.submitTicket(tickets1BelowNatT[0].value, staker1, tickets1BelowNatT[0].virtualStakerIndex, {from: staker1});
-    await keepGroupImplViaProxy.submitTicket(tickets2BelowNatT[0].value, staker2, tickets2BelowNatT[0].virtualStakerIndex, {from: staker2});
-
-    // Test can't submit group pubkey if haven't submitted a ticket
-    await exceptThrow(keepGroupImplViaProxy.submitGroupPublicKey(groupPubKey, {from: staker4}));
-
-    // Test submit group pubkey
-    await keepGroupImplViaProxy.submitGroupPublicKey(groupPubKey, {from: staker1});
-
-    // Test vote for submission of the group key
-    await keepGroupImplViaProxy.voteForSubmission(groupPubKey, {from: staker2});
-
-    // Test group is selected
-    await keepGroupImplViaProxy.getFinalResult();
-  });
-
 });
