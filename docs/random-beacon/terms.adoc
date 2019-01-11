@@ -1,4 +1,41 @@
-== Terms
+= Terms
+
+== Conventions
+
+.Basic conventions
+[cols="h,a"]
+|===
+|Style |Usage
+
+|Term~context~
+|Globally meaningful terms are capitalized, and usually include subscripts.
+_Term_ specifies the broader type, such as _Stake_, and the subscript _context_
+is used to specify the particular purpose and/or usage of this value.
+
+|T~context~
+|Shorthand symbol for commonly used terms. The meaning can be memorized or
+looked up from the shorthand symbol table, as a specific letter always
+corresponds to a specific term.
+
+|Term~GLOBAL_CONSTANT~
+|Hardcoded global constants have their subscript in capitals following the
+common programming convention.
+
+|C
+|A particularly significant global constant can be expressed as a single capital
+letter. Where this letter corresponds to a shorthand symbol, the constant _C_ is
+of the same type as terms _C~context~_, and could alternatively be expressed as
+_C~IMPORTANT_CONSTANT~_.
+
+|Function~context~(input)
+|The value depends on _input_. _Function_ can be (and usually is) a term that is
+normally used as a plain value: eg. _R~submitter~(T)_ means that the submitter
+reward varies depending on time
+
+|variable~context~
+|A local value that is only used briefly, or may even be altogether unknown to
+uninvolved participants.
+|===
 
 .Symbols
 [cols="h,a"]
