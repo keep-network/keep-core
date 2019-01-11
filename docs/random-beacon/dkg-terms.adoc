@@ -1,5 +1,30 @@
 == Terms
 
+.Symbols
+[cols="h,a"]
+|===
+|N
+|_Number_ of operators or group members
+
+|M
+|Number of _malicious_ operators or group members
+
+|G
+|_Group_
+
+|S
+|_Staker_
+
+|T
+|Block number; used as measure of _time_
+
+|R
+|_Reward_; tokens or currency
+
+|D
+|Punishment (_disciplinary_ action); always tokens
+|===
+
 .Global constants
 [cols="h,e,a"]
 |===
