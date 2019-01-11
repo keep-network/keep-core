@@ -66,6 +66,8 @@ spec:
           mountPath: /atlantis
         - name: atlantis-tls-files
           mountPath: /atlantis/tls
+        - name: atlantis-gitconfig
+          mountPath: /home/atlantis/
         - name: terraform-admin-service-account
           mountPath: /mnt/terraform-admin-service-account
         ports:
@@ -94,6 +96,9 @@ spec:
       - name: atlantis-tls-files
         secret:
           secretName: atlantis-tls
+      - name: atlantis-gitconfig
+        secret:
+          secretName: atlantis-gitconfig
       - name: terraform-admin-service-account
         secret:
           secretName: terraform-admin-service-account
