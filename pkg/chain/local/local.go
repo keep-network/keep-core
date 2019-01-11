@@ -34,6 +34,7 @@ type localChain struct {
 	relayEntryHandlers           []func(entry *event.Entry)
 	relayRequestHandlers         []func(request *event.Request)
 	groupRegisteredHandlers      []func(key *event.GroupRegistration)
+	groupSelectionResultHandlers []func(result *groupselection.Result)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
 	requestID   int64
@@ -184,6 +185,15 @@ func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration
 	c.handlerMutex.Lock()
 	c.groupRegisteredHandlers = append(
 		c.groupRegisteredHandlers,
+		handler,
+	)
+	c.handlerMutex.Unlock()
+}
+
+func (c *localChain) OnGroupSelectionResult(handler func(result *groupselection.Result)) {
+	c.handlerMutex.Lock()
+	c.groupSelectionResultHandlers = append(
+		c.groupSelectionResultHandlers,
 		handler,
 	)
 	c.handlerMutex.Unlock()

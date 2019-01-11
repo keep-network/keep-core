@@ -112,6 +112,10 @@ func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
 	return make([]*groupselection.Ticket, 0)
 }
 
+// TODO: implement
+func (ec *ethereumChain) OnGroupSelectionResult(handle func(result *groupselection.Result)) {
+}
+
 func (ec *ethereumChain) SubmitRelayEntry(
 	newEntry *event.Entry,
 ) *async.RelayEntryPromise {
