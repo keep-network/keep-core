@@ -1,7 +1,9 @@
 package dkg2
 
 import (
+	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -9,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
-func TestPublishDKGResult(t *testing.T) {
+func TestPublishResult(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 	blockStep := 2 // T_step
@@ -28,15 +30,15 @@ func TestPublishDKGResult(t *testing.T) {
 		expectedTimeEnd int
 	}{
 		"first member eligible to publish straight away": {
-			publishingIndex: 0,
+			publishingIndex: 1,
 			expectedTimeEnd: initialBlock, // T_now < T_init + T_step
 		},
 		"second member eligible to publish after T_step block passed": {
-			publishingIndex: 1,
+			publishingIndex: 2,
 			expectedTimeEnd: initialBlock + blockStep, // T_now = T_init + T_step
 		},
 		"fourth member eligable to publish after T_dkg + 2*T_step passed": {
-			publishingIndex: 3,
+			publishingIndex: 4,
 			expectedTimeEnd: initialBlock + 3*blockStep, // T_now = T_init + 3*T_step
 		},
 	}
@@ -57,7 +59,12 @@ func TestPublishDKGResult(t *testing.T) {
 
 			chainRelay := publisher.chainHandle.ThresholdRelay()
 
-			if chainRelay.IsDKGResultPublished(publisher.RequestID) {
+			isPublished, err := chainRelay.IsDKGResultPublished(publisher.RequestID)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if isPublished {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
@@ -72,7 +79,11 @@ func TestPublishDKGResult(t *testing.T) {
 					currentBlock,
 				)
 			}
-			if !chainRelay.IsDKGResultPublished(publisher.RequestID) {
+			isPublished, err = chainRelay.IsDKGResultPublished(publisher.RequestID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !isPublished {
 				t.Fatalf("result is not published on chain")
 			}
 		})
@@ -83,7 +94,7 @@ func TestPublishDKGResult(t *testing.T) {
 // Member with lower index gets to publish the result to chain. For the second
 // member loop should be aborted and result published by the first member should
 // be returned.
-func TestConcurrentPublishDKGResult(t *testing.T) {
+func TestConcurrentPublishResult(t *testing.T) {
 	calculateExpectedBlockEnd := func(initialBlock, expectedDuration int) int {
 		if expectedDuration >= 0 {
 			return initialBlock + expectedDuration
@@ -96,11 +107,11 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 	blockStep := 2 // t_step
 
 	publisher1 := &Publisher{
-		publishingIndex: 0, // P1
+		publishingIndex: 1, // P1
 		blockStep:       blockStep,
 	}
 	publisher2 := &Publisher{
-		publishingIndex: 3, // P4
+		publishingIndex: 4, // P4
 		blockStep:       blockStep,
 	}
 
@@ -121,7 +132,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: 0,  // P1 * t_step
+			expectedDuration1: 0,  // (P1-1) * t_step
 			expectedDuration2: -1, // result already published by member 1
 		},
 		"two members publish different results": {
@@ -133,7 +144,7 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: 0,  // P1 * t_step
+			expectedDuration1: 0,  // (P1-1) * t_step
 			expectedDuration2: -1, // result already published by member 1
 		},
 		"two members publish the same results for different Request IDs": {
@@ -145,8 +156,8 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(12),
 			requestID2:        big.NewInt(13),
-			expectedDuration1: 0,                                      // P1 * t_step
-			expectedDuration2: publisher2.publishingIndex * blockStep, // P4 * t_step
+			expectedDuration1: 0,                                            // (P1-1) * t_step
+			expectedDuration2: (publisher2.publishingIndex - 1) * blockStep, // (P4-1) * t_step
 		},
 	}
 	for testName, test := range tests {
@@ -194,6 +205,15 @@ func TestConcurrentPublishDKGResult(t *testing.T) {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd2, result2)
 			}
 		})
+	}
+}
+
+func TestExecutePublishingWithInvalidIndex(t *testing.T) {
+	expectedError := fmt.Errorf("publishing index must be >= 1")
+	err := executePublishing(nil, 0, nil, nil)
+
+	if !reflect.DeepEqual(err, expectedError) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
 	}
 }
 
