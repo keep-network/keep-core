@@ -208,7 +208,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 }
 
-func TestExecutePublishing(t *testing.T) {
+func TestExecutePublishingWithInvalidIndex(t *testing.T) {
 	expectedError := fmt.Errorf("publishing index must be >= 1")
 	err := executePublishing(nil, 0, nil, nil)
 
