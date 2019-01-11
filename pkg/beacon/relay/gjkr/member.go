@@ -209,7 +209,11 @@ func NewMember(
 	groupMembers []MemberID,
 	dishonestThreshold int,
 	seed *big.Int,
-) *LocalMember {
+) (*LocalMember, error) {
+	if err := memberID.Validate(); err != nil {
+		return nil, fmt.Errorf("member ID validation failed [%v]", err)
+	}
+
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
@@ -222,12 +226,18 @@ func NewMember(
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
 		},
-	}
+	}, nil
 }
 
 // AddToGroup adds the provided MemberID to the group
-func (mc *memberCore) AddToGroup(memberID MemberID) {
+func (mc *memberCore) AddToGroup(memberID MemberID) error {
+	if err := memberID.Validate(); err != nil {
+		return fmt.Errorf("cannot add the member ID to the group [%v]", err)
+	}
+
 	mc.group.RegisterMemberID(memberID)
+
+	return nil
 }
 
 // InitializeEphemeralKeysGeneration performs a transition of a member state
