@@ -91,6 +91,7 @@ func (c *localChain) OnDKGResultVote(handler func(dkgResultVote *event.DKGResult
 	c.handlerMutex.Lock()
 	c.voteHandler = append(c.voteHandler, handler)
 	c.handlerMutex.Unlock()
+
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -293,6 +294,7 @@ func (c *localChain) RequestRelayEntry(
 }
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
+
 // chain and returns true if it has already been submitted.
 func (c *localChain) IsDKGResultPublished(
 	requestID *big.Int,
@@ -313,6 +315,7 @@ func (c *localChain) SubmitDKGResult(
 
 	for publishedRequestID, publishedResults := range c.submittedResults {
 		if publishedRequestID == requestID.String() {
+
 			for _, publishedResult := range publishedResults {
 				if publishedResult.Equals(resultToPublish) {
 					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))

@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -26,13 +26,20 @@ type memberCore struct {
 	protocolParameters *protocolParameters
 }
 
+// LocalMember represents one member in a threshold group, prior to the
+// initiation of distributed key generation process
+type LocalMember struct {
+	*memberCore
+}
+
 // EphemeralKeyPairGeneratingMember represents one member in a distributed key
 // generating group performing ephemeral key pair generation. It has a full list
 // of `memberIDs` that belong to its threshold group.
 //
 // Executes Phase 1 of the protocol.
 type EphemeralKeyPairGeneratingMember struct {
-	*memberCore
+	*LocalMember
+
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
 	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
@@ -181,9 +188,54 @@ type CombiningMember struct {
 	groupPublicKey *bn256.G1
 }
 
-// Int converts `MemberID` to `big.Int`
-func (id MemberID) Int() *big.Int {
-	return new(big.Int).SetUint64(uint64(id))
+// InitializeFinalization returns a member to perform next protocol operations.
+func (cm *CombiningMember) InitializeFinalization() *FinalizingMember {
+	return &FinalizingMember{CombiningMember: cm}
+}
+
+// FinalizingMember represents one member in a threshold key sharing group,
+// after it completed distributed key generation.
+//
+// Prepares a result to publish in Phase 13 of the protocol.
+type FinalizingMember struct {
+	*CombiningMember
+}
+
+// NewMember creates a new member in an initial state, ready to execute DKG
+// protocol.
+func NewMember(
+	memberID MemberID,
+	groupMembers []MemberID,
+	dishonestThreshold int,
+	seed *big.Int,
+) *LocalMember {
+	return &LocalMember{
+		memberCore: &memberCore{
+			memberID,
+			&Group{
+				dishonestThreshold,
+				groupMembers,
+				[]MemberID{},
+				[]MemberID{},
+			},
+			newDkgEvidenceLog(),
+			newProtocolParameters(seed),
+		},
+	}
+}
+
+// AddToGroup adds the provided MemberID to the group
+func (mc *memberCore) AddToGroup(memberID MemberID) {
+	mc.group.RegisterMemberID(memberID)
+}
+
+// InitializeEphemeralKeysGeneration performs a transition of a member state
+// from the local state to phase 1 of the protocol.
+func (lm *LocalMember) InitializeEphemeralKeysGeneration() *EphemeralKeyPairGeneratingMember {
+	return &EphemeralKeyPairGeneratingMember{
+		LocalMember:       lm,
+		ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
+	}
 }
 
 // InitializeSymmetricKeyGeneration performs a transition of the member state
@@ -280,6 +332,43 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G1 {
 		)
 	}
 	return receivedValidPeerIndividualPublicKeys
+}
+
+// PublishingIndex returns sequence number of the current member in a publishing
+// group. Counting starts with `0`.
+func (fm *FinalizingMember) PublishingIndex() int {
+	for index, memberID := range fm.group.MemberIDs() {
+		if fm.ID == memberID {
+			return index
+		}
+	}
+	return -1 // should never happen
+}
+
+// Result can be either the successful computation of a round of distributed key
+// generation, or a notification of failure.
+//
+// If the number of disqualified and inactive members is greater than half of the
+// configured dishonest threshold, the group is deemed too weak, and the result
+// is set to failure. Otherwise, it returns the generated group public key along
+// with the disqualified and inactive members.
+func (fm *FinalizingMember) Result() *Result {
+	return &Result{
+		Success:        fm.group.isThresholdSatisfied(),
+		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
+		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
+		Inactive:       fm.group.inactiveMemberIDs,     // IA
+	}
+}
+
+// Int converts `MemberID` to `big.Int`.
+func (id MemberID) Int() *big.Int {
+	return new(big.Int).SetUint64(uint64(id))
+}
+
+// Equals checks if MemberID equals the passed int value.
+func (id MemberID) Equals(value int) bool {
+	return id == MemberID(value)
 }
 
 // HexString converts `MemberID` to hex `string` representation.

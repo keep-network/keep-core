@@ -3,6 +3,10 @@ syntax = "proto3";
 option go_package = "pb";
 package gjkr;
 
+message Join {
+    bytes senderID = 1;
+}
+
 message EphemeralPublicKey {
     bytes senderID = 1;
     bytes receiverID = 2;
@@ -37,4 +41,9 @@ message MemberPublicKeySharePoints {
 message PointsAccusations {
     bytes senderID = 1;
     map<string, bytes> accusedMembersKeys = 2;
+}
+
+message DisqualifiedEphemeralKeys {
+    bytes senderID = 1;
+    map<string, bytes> privateKeys = 2;
 }

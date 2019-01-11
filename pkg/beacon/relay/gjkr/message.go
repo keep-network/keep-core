@@ -8,6 +8,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// JoinMessage is sent by member to announce its presence in the group.
+type JoinMessage struct {
+	SenderID MemberID
+}
+
 // EphemeralPublicKeyMessage is a message payload that carries the sender's
 // ephemeral public keys generated for all other group members.
 //

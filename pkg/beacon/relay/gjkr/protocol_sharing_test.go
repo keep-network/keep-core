@@ -62,9 +62,12 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 		)
 	}
 
-	member := (&EphemeralKeyPairGeneratingMember{
-		memberCore: &memberCore{},
-	}).InitializeSymmetricKeyGeneration().
+	member := (&LocalMember{
+		memberCore: &memberCore{
+			protocolParameters: newProtocolParameters(big.NewInt(8328121)),
+		},
+	}).InitializeEphemeralKeysGeneration().
+		InitializeSymmetricKeyGeneration().
 		InitializeCommitting().
 		InitializeCommitmentsVerification().
 		InitializeSharesJustification().
