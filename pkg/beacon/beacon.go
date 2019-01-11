@@ -69,7 +69,12 @@ func Initialize(
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-			node.JoinGroupIfEligible(relayChain, entry.Value)
+			node.JoinGroupIfEligible(
+				relayChain,
+				entry.RequestID,
+				entry.Seed,
+				entry.Value,
+			)
 		})
 
 		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {

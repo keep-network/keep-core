@@ -55,6 +55,8 @@ type membership struct {
 // on-chain group containing at least one of this node's virtual stakers.
 func (n *Node) JoinGroupIfEligible(
 	groupChain relaychain.Interface,
+	entryRequestID *big.Int,
+	entrySeed *big.Int,
 	entryValue *big.Int,
 ) {
 	err := n.SubmitTicketsForGroupSelection(
