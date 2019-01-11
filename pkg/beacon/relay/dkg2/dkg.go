@@ -111,7 +111,10 @@ func executeGJKR(
 		blockWaiter  <-chan int
 	)
 
-	member := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
+	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create a new member [%v]", err)
+	}
 	currentState = &initializationState{channel, member}
 
 	if err := stateTransition(
