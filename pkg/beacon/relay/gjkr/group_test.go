@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestRegisterMemberID(t *testing.T) {
+func TestRegisterMemberIDWithInvalidID(t *testing.T) {
 	expectedError := fmt.Errorf("cannot register member ID in the group [member ID must be >= 1]")
 
 	group := &Group{}

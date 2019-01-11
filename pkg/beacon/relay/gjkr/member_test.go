@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestNewMember(t *testing.T) {
+func TestNewMemberWithInvalidID(t *testing.T) {
 	expectedError := fmt.Errorf("member ID validation failed [member ID must be >= 1]")
 
 	_, err := NewMember(MemberID(0), nil, 13, nil)
@@ -17,7 +17,7 @@ func TestNewMember(t *testing.T) {
 	}
 }
 
-func TestAddToGroup(t *testing.T) {
+func TestAddToGroupWithInvalidID(t *testing.T) {
 	expectedError := fmt.Errorf("cannot add the member ID to the group [member ID must be >= 1]")
 
 	member, err := NewMember(MemberID(1), nil, 13, big.NewInt(14))
