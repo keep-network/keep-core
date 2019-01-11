@@ -320,9 +320,21 @@ func (ec *ethereumChain) RequestRelayEntry(
 	return promise
 }
 
-// IsDKGResultPublished checks if the result is already published to a chain.
 func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
 	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
+}
+
+func (ec *ethereumChain) OnDKGResultPublished(
+	handler func(dkgResultPublication *event.DKGResultPublication),
+) (event.Subscription, error) {
+	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
+		func(requestID *big.Int) {
+			handler(&event.DKGResultPublication{RequestID: requestID})
+		},
+		func(err error) error {
+			return err
+		},
+	)
 }
 
 // SubmitDKGResult sends DKG result to a chain.
@@ -331,11 +343,4 @@ func (ec *ethereumChain) SubmitDKGResult(
 ) *async.DKGResultPublicationPromise {
 	// TODO Implement
 	return nil
-}
-
-func (ec *ethereumChain) OnDKGResultPublished(
-	handler func(dkgResultPublication *event.DKGResultPublication),
-) (event.Subscription, error) {
-	// TODO Implement
-	return event.NewSubscription(func() {}), nil
 }
