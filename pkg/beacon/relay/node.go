@@ -1,6 +1,7 @@
 package relay
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"os"
@@ -9,6 +10,8 @@ import (
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
@@ -72,6 +75,43 @@ func (n *Node) JoinGroupIfEligible(
 		)
 		return
 	}
+
+	groupChain.OnGroupSelectionResult(func(result *groupselection.Result) {
+		// build the channel name and get the broadcast channel
+		var channelNameBytes []byte
+		for _, ticket := range result.SelectedTickets {
+			channelNameBytes = append(
+				channelNameBytes,
+				ticket.Value.Bytes()...,
+			)
+		}
+		// Add the previous entry as the nonce
+		channelNameBytes = append(
+			channelNameBytes,
+			entryValue.Bytes()...,
+		)
+
+		hashedChannelName := groupselection.SHAValue(
+			sha256.Sum256(channelNameBytes),
+		)
+		_, err := n.netProvider.ChannelFor(
+			string(hashedChannelName.Bytes()),
+		)
+		if err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"Failed to get broadcastChannel for name %s with err: [%v].\n",
+				err,
+			)
+			return
+		}
+
+		for _, ticket := range result.SelectedTickets {
+			if string(ticket.Proof.StakerValue) == n.StakeID {
+				// TODO: Execute DKG
+			}
+		}
+	})
 }
 
 // RegisterGroup registers that a group was successfully created by the given
