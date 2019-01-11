@@ -44,14 +44,14 @@ func Init(channel net.BroadcastChannel) {
 func ExecuteDKG(
 	requestID *big.Int,
 	seed *big.Int,
-	playerIndex int, // starts with 0
+	playerIndex int, // starts with 1
 	groupSize int,
 	threshold int,
 	chainHandle chain.Handle,
 	channel net.BroadcastChannel,
 ) error {
-	if playerIndex < 0 {
-		return fmt.Errorf("playerIndex must be >= 0, got: %v", playerIndex)
+	if playerIndex < 1 {
+		return fmt.Errorf("player index must be >= 1")
 	}
 
 	blockCounter, err := chainHandle.BlockCounter()
