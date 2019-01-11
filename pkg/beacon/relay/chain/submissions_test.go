@@ -2,119 +2,86 @@ package chain
 
 import (
 	"math/big"
+	"reflect"
 	"testing"
 )
 
-// Test Lead()
 func TestLead(t *testing.T) {
+	dkgResult1 := &DKGResult{
+		Success:        true,
+		GroupPublicKey: []byte{10, 1},
+		Disqualified:   []bool{},
+		Inactive:       []bool{},
+	}
+	dkgResult2 := &DKGResult{
+		Success:        true,
+		GroupPublicKey: []byte{10, 02},
+		Disqualified:   []bool{},
+		Inactive:       []bool{},
+	}
 	tests := map[string]struct {
-		currentSubmissions *Submissions
-		expectedResult     *Submission
+		currentSubmissions *DKGSubmissions
+		expectedResult     *DKGSubmission
 	}{
 		"empty set of submissions": {
-			currentSubmissions: &Submissions{},
-			expectedResult:     nil, // &Submission{},
+			currentSubmissions: &DKGSubmissions{},
+			expectedResult:     nil, // &DKGSubmission{},
 		},
 		"2nd submission has high votes": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult1,
+						Votes:     1,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 2,
+						DKGResult: dkgResult2,
+						Votes:     2,
 					},
 				},
 			},
-			expectedResult: &Submission{
-				DKGResult: &DKGResult{
-					Success:        true,
-					GroupPublicKey: big.NewInt(1002),
-					Disqualified:   []bool{},
-					Inactive:       []bool{},
-				},
-				Votes: 2,
+			expectedResult: &DKGSubmission{
+				DKGResult: dkgResult2,
+				Votes:     2,
 			},
 		},
 		"1st submission has high votes": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 3,
+						DKGResult: dkgResult1,
+						Votes:     3,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 2,
+						DKGResult: dkgResult2,
+						Votes:     2,
 					},
 				},
 			},
-			expectedResult: &Submission{
-				DKGResult: &DKGResult{
-					Success:        true,
-					GroupPublicKey: big.NewInt(1001),
-					Disqualified:   []bool{},
-					Inactive:       []bool{},
-				},
-				Votes: 3,
+			expectedResult: &DKGSubmission{
+				DKGResult: dkgResult1,
+				Votes:     3,
 			},
 		},
 		"submission has same votes": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1001),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult1,
+						Votes:     1,
 					},
 					{
-						DKGResult: &DKGResult{
-							Success:        true,
-							GroupPublicKey: big.NewInt(1002),
-							Disqualified:   []bool{},
-							Inactive:       []bool{},
-						},
-						Votes: 1,
+						DKGResult: dkgResult2,
+						Votes:     1,
 					},
 				},
 			},
-			expectedResult: &Submission{
-				DKGResult: &DKGResult{
-					Success:        true,
-					GroupPublicKey: big.NewInt(1001),
-					Disqualified:   []bool{},
-					Inactive:       []bool{},
-				},
-				Votes: 1,
+			expectedResult: &DKGSubmission{
+				DKGResult: dkgResult1,
+				Votes:     1,
 			},
 		},
 	}
@@ -122,69 +89,50 @@ func TestLead(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			actualResult := test.currentSubmissions.Lead()
-			if test.expectedResult == nil {
-				if actualResult != nil {
-					t.Errorf(
-						"\nexpected: %s\nactual:   %+v",
-						[]byte(nil),
-						test.expectedResult,
-					)
-				}
-			} else {
-				if !test.expectedResult.DKGResult.Equals(actualResult.DKGResult) {
-					t.Errorf(
-						"\nexpected: %+v\nactual:   %+v",
-						test.expectedResult,
-						actualResult,
-					)
-				}
+			if !reflect.DeepEqual(test.expectedResult, actualResult) {
+				t.Errorf(
+					"\nexpected: %+v\nactual:   %+v",
+					test.expectedResult,
+					actualResult,
+				)
 			}
 		})
 	}
 }
 
-// Test Contains
 func TestContains(t *testing.T) {
-
 	dkgResult1 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1001),
+		GroupPublicKey: []byte{10, 01},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
 	dkgResult2 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1001),
+		GroupPublicKey: []byte{10, 02},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
 	dkgResult3 := &DKGResult{
 		Success:        true,
-		GroupPublicKey: big.NewInt(1032),
+		GroupPublicKey: []byte{10, 32},
 		Disqualified:   []bool{},
 		Inactive:       []bool{},
 	}
-	_ = dkgResult3
-
 	tests := map[string]struct {
-		currentSubmissions *Submissions
+		currentSubmissions *DKGSubmissions
 		lookFor            *DKGResult
 		expectedResult     bool
 	}{
 		"empty set of submissions": {
-			currentSubmissions: &Submissions{},
-			lookFor: &DKGResult{
-				Success:        true,
-				GroupPublicKey: big.NewInt(1001),
-				Disqualified:   []bool{},
-				Inactive:       []bool{},
-			},
-			expectedResult: false,
+			currentSubmissions: &DKGSubmissions{},
+			lookFor:            dkgResult1,
+			expectedResult:     false,
 		},
 		"1st submission is a match": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
@@ -199,9 +147,9 @@ func TestContains(t *testing.T) {
 			expectedResult: true,
 		},
 		"2nd submission is a match": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
@@ -216,9 +164,9 @@ func TestContains(t *testing.T) {
 			expectedResult: true,
 		},
 		"not found - with current submissions": {
-			currentSubmissions: &Submissions{
+			currentSubmissions: &DKGSubmissions{
 				requestID: big.NewInt(100),
-				Submissions: []*Submission{
+				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
 						Votes:     1,
@@ -239,7 +187,7 @@ func TestContains(t *testing.T) {
 			actualResult := test.currentSubmissions.Contains(test.lookFor)
 			if test.expectedResult != actualResult {
 				t.Errorf(
-					"\nexpected: %+v\nactual:   %+v",
+					"\nexpected: %v\nactual:   %v",
 					test.expectedResult,
 					actualResult,
 				)
