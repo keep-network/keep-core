@@ -47,7 +47,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 	})
 
 	// Check if the result has already been published to the chain.
-	if chainRelay.IsDKGResultPublished(pm.RequestID, resultToPublish) {
+	if chainRelay.IsDKGResultPublished(pm.RequestID) {
 		return nil // TODO What should we return here? Should it be an error?
 	}
 
@@ -76,7 +76,7 @@ func (pm *Publisher) PublishDKGResult(resultToPublish *relayChain.DKGResult) err
 			return <-errors
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
-				if chainRelay.IsDKGResultPublished(pm.RequestID, resultToPublish) {
+				if chainRelay.IsDKGResultPublished(pm.RequestID) {
 					return nil
 				}
 			}
@@ -179,8 +179,8 @@ func (pm *Publisher) Phase14(correctResult *relayChain.DKGResult) error {
 
 }
 
-func nOfVotesBelowThreshold(submissions *relayChain.Submissions, votingThreshold int) bool {
-	if submissions.Submissions == nil {
+func nOfVotesBelowThreshold(submissions *relayChain.DKGSubmissions, votingThreshold int) bool {
+	if submissions.DKGSubmissions == nil {
 		return true
 	}
 
