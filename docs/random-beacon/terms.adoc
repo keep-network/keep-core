@@ -37,29 +37,52 @@ reward varies depending on time
 uninvolved participants.
 |===
 
+=== Shorthand symbols
+
+Some meanings are used so often that it is useful to have single-letter terms
+for them. Each shorthand symbol maps to a specific longhand term.
+
+TODO: Shorthands and terms have been matched to ensure each term maps to its
+initial wherever possible. The exception is _Penalty_ and _D_ (with
+_disciplinary action_ as a mnemonic); alternatives or abolishing this shorthand
+should be considered.
+
 .Symbols
 [cols="h,a"]
 |===
-|N
-|_Number_ of operators or group members
+|Symbol |Long form |Meaning
 
-|M
-|Number of _malicious_ operators or group members
+|N~ctx~
+|Number~ctx~
+|A number of operators or group members
 
-|G
-|_Group_
+|M~ctx~
+|Malicious~ctx~
+|A number of malicious operators or group members
 
-|S
-|_Staker_
+|G~ctx~
+|Group~ctx~
+|Some specific group
 
-|T
-|Block number; used as measure of _time_
+|S~ctx~
+|Staker~ctx~
+|Some specific staker
 
-|R
-|_Reward_; tokens or currency
+|P~ctx~
+|Participant~ctx~
+|A participant in some group
 
-|D
-|Punishment (_disciplinary_ action); always tokens
+|T~ctx~
+|Time~ctx~
+|A block number used as an unambiguous measure of time
+
+|R~ctx~
+|Reward~ctx~
+|A reward for correct operation; tokens or currency
+
+|D~ctx~
+|Penalty~ctx~
+|A punishment for misbehavior (mnemonic: _disciplinary_ action); always tokens
 |===
 
 .Global constants
