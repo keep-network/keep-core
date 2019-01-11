@@ -349,9 +349,8 @@ whoami
 kubectl delete \
   ingress/atlantis-https
 #+END_SRC
-*** Secrets
-
-**** atlantis-git
+*** DONE Secrets
+**** DONE atlantis-git
 ***** DONE Create
 
 #+BEGIN_SRC sh :results pp
@@ -359,16 +358,49 @@ date -u
 whoami
 
 kubectl create secret generic atlantis-git \
-  --from-file=./secrets/atlantis-git/gh-webhook-secret \
-  --from-file=./secrets/atlantis-git/gh-access-token
+  --from-file=./secrets/atlantis/gh-webhook-secret \
+  --from-file=./secrets/atlantis/gh-access-token
 #+END_SRC
 
 #+RESULTS:
 : Mon Dec 17 20:12:37 UTC 2018
 : sthompson22
 : secret/atlantis-git created
+***** DONE Update
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
 
-**** atlantis-tls
+kubectl create secret generic atlantis-git \
+  --from-file=./secrets/atlantis/gh-webhook-secret \
+  --from-file=./secrets/atlantis/gh-access-token \
+  --dry-run \
+  --save-config \
+  -o yaml | kubectl apply -f -
+#+END_SRC
+
+#+RESULTS:
+: Fri Jan 11 21:12:12 UTC 2019
+: sthompson22
+: secret/atlantis-git configured
+
+**** DONE atlantis-gitconfig
+***** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret generic atlantis-gitconfig \
+  --from-file=./secrets/atlantis/.gitconfig
+#+END_SRC
+
+#+RESULTS:
+: Fri Jan 11 21:19:50 UTC 2019
+: sthompson22
+: secret/atlantis-gitconfig created
+
+**** DONE atlantis-tls
 ***** DONE Create
 
 #+BEGIN_SRC sh :results pp
@@ -376,8 +408,8 @@ date -u
 whoami
 
 kubectl create secret tls atlantis-tls \
-  --cert=./secrets/atlantis-tls/atlantis.keep-dev.crt \
-  --key=./secrets/atlantis-tls/atlantis.keep-dev.key
+  --cert=./secrets/atlantis/atlantis.keep-dev.crt \
+  --key=./secrets/atlantis/atlantis.keep-dev.key
 #+END_SRC     
 
 #+RESULTS:
