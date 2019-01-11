@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"time"
 
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -39,24 +40,56 @@ func Init(channel net.BroadcastChannel) {
 	})
 }
 
-// ExecuteDKG runs the full distributed key generation lifecycle, given a
+// ExecuteDKG runs the full distributed key generation lifecycle,
+func ExecuteDKG(
+	requestID *big.Int,
+	seed *big.Int,
+	playerIndex int, // starts with 0
+	groupSize int,
+	threshold int,
+	chainHandle chain.Handle,
+	channel net.BroadcastChannel,
+) error {
+	if playerIndex < 0 {
+		return fmt.Errorf("playerIndex must be >= 0, got: %v", playerIndex)
+	}
+
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("block counter failure [%v]", err)
+	}
+
+	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
+	if err != nil {
+		return fmt.Errorf("GJKR execution failed [%v]", err)
+	}
+
+	err = executePublishing(
+		requestID,
+		playerIndex, // TODO Should we refresh the index to cut out the DQ and IA players removed during GJKR?
+		chainHandle,
+		convertResult(gjkrResult, groupSize, playerIndex),
+	)
+	if err != nil {
+		return fmt.Errorf("publishing failed [%v]", err)
+	}
+
+	return nil
+}
+
+// executeGJKR runs the GJKR distributed key generation  protocol, given a
 // broadcast channel to mediate it, a block counter used for time tracking,
 // a player index to use in the group, and a group size and threshold. If
 // generation is successful, it returns a threshold group member who can
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
-func ExecuteDKG(
+func executeGJKR(
 	playerIndex int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	groupSize int,
 	threshold int,
 	seed *big.Int,
-) ([]byte, error) {
-	if playerIndex < 1 {
-		return nil, fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
-	}
-
+) (*gjkr.Result, error) {
 	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
@@ -110,7 +143,7 @@ func ExecuteDKG(
 
 		case <-blockWaiter:
 			if finalState, ok := currentState.(*finalizationState); ok {
-				return finalState.result().GroupPublicKey.Marshal(), nil
+				return finalState.result(), nil
 			}
 
 			currentState = currentState.nextState()
@@ -168,4 +201,31 @@ func stateTransition(
 	)
 
 	return nil
+}
+
+func convertResult(
+	gjkrResult *gjkr.Result,
+	currentPlayerIndex,
+	groupSize int,
+) *relayChain.DKGResult {
+	convertToBoolSlice := func(slice []gjkr.MemberID) []bool {
+		boolSlice := make([]bool, groupSize)
+		for index := range boolSlice {
+			if index != currentPlayerIndex {
+				for _, inactiveMemberID := range gjkrResult.Inactive {
+					if inactiveMemberID.Equals(index) {
+						boolSlice[index] = true
+					}
+				}
+			}
+		}
+		return boolSlice
+	}
+
+	return &relayChain.DKGResult{
+		Success:        gjkrResult.Success,
+		GroupPublicKey: gjkrResult.GroupPublicKey.Marshal(),
+		Inactive:       convertToBoolSlice(gjkrResult.Inactive),
+		Disqualified:   convertToBoolSlice(gjkrResult.Disqualified),
+	}
 }

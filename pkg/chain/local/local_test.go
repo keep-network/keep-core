@@ -279,7 +279,7 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	subscription.Unsubscribe()
 
 	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(888),
+		GroupPublicKey: []byte{88},
 	})
 
 	select {

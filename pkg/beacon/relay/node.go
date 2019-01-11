@@ -72,33 +72,6 @@ func (n *Node) JoinGroupIfEligible(
 	}
 }
 
-// AddStaker registers a staker seen on-chain for the node's internal tracking.
-func (n *Node) AddStaker(index int, staker string) {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-
-	if cap(n.stakeIDs) <= index { // we index from 0
-		// need something larger
-		newSlice := make([]string, index*2)
-		copy(newSlice, n.stakeIDs)
-		n.stakeIDs = newSlice
-	}
-
-	n.stakeIDs[index] = staker
-
-	if index > n.maxStakeIndex {
-		n.maxStakeIndex = index
-	}
-}
-
-// SyncStakingList performs an initial sync of the on-chain staker list into
-// the node's internal state.
-func (n *Node) SyncStakingList(stakingList []string) {
-	for index, value := range stakingList {
-		n.AddStaker(index, value)
-	}
-}
-
 // RegisterGroup registers that a group was successfully created by the given
 // requestID, and its group public key is groupPublicKey.
 func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {

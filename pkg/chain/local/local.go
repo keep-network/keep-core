@@ -35,7 +35,6 @@ type localChain struct {
 	relayEntryHandlers           []func(entry *event.Entry)
 	relayRequestHandlers         []func(request *event.Request)
 	groupRegisteredHandlers      []func(key *event.GroupRegistration)
-	stakerRegistrationHandlers   []func(staker *event.StakerRegistration)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
 	requestID   int64
@@ -106,8 +105,20 @@ func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
+// TODO: implement
 func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
 	return &async.GroupTicketPromise{}
+}
+
+// TODO: implement
+func (c *localChain) SubmitChallenge(
+	ticket *groupselection.TicketChallenge,
+) *async.GroupTicketChallengePromise {
+	return &async.GroupTicketChallengePromise{}
+}
+
+func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
+	return make([]*groupselection.Ticket, 0)
 }
 
 func (c *localChain) SubmitGroupPublicKey(
@@ -227,15 +238,6 @@ func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration)) {
-	c.handlerMutex.Lock()
-	c.stakerRegistrationHandlers = append(
-		c.stakerRegistrationHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
-}
-
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
@@ -259,43 +261,6 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		stakeMonitor:                 NewStakeMonitor(),
 		submissions:                  make(map[string]*relaychain.DKGSubmissions),
 	}
-}
-
-// AddStaker is a temporary function for Milestone 1 that
-// adds a staker to the group contract.
-func (c *localChain) AddStaker(
-	groupMemberID string,
-) *async.StakerRegistrationPromise {
-	onStakerAddedPromise := &async.StakerRegistrationPromise{}
-	index := len(c.stakerList)
-	c.stakerList = append(c.stakerList, groupMemberID)
-
-	c.handlerMutex.Lock()
-	for _, handler := range c.stakerRegistrationHandlers {
-		go func(handler func(staker *event.StakerRegistration), groupMemberID string, index int) {
-			handler(&event.StakerRegistration{
-				GroupMemberID: groupMemberID,
-				Index:         index,
-			})
-		}(handler, groupMemberID, index)
-	}
-	c.handlerMutex.Unlock()
-
-	err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
-		Index:         index,
-		GroupMemberID: string(groupMemberID),
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
-	}
-
-	return onStakerAddedPromise
-}
-
-// GetStakerList is a temporary function for Milestone 1 that
-// gets back the list of stakers.
-func (c *localChain) GetStakerList() ([]string, error) {
-	return c.stakerList, nil
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
