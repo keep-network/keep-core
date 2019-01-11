@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewMember(t *testing.T) {
-	expectedError := fmt.Errorf("member ID validation failed [member ID must be >= 1 but is 0]")
+	expectedError := fmt.Errorf("member ID validation failed [member ID must be >= 1]")
 
 	_, err := NewMember(MemberID(0), nil, 13, nil)
 
@@ -18,7 +18,7 @@ func TestNewMember(t *testing.T) {
 }
 
 func TestAddToGroup(t *testing.T) {
-	expectedError := fmt.Errorf("cannot add the member ID to the group [member ID must be >= 1 but is 0]")
+	expectedError := fmt.Errorf("cannot add the member ID to the group [member ID must be >= 1]")
 
 	member, err := NewMember(MemberID(1), nil, 13, big.NewInt(14))
 	if err != nil {
@@ -39,7 +39,7 @@ func TestMemberIDValidate(t *testing.T) {
 	}{
 		"id = 0": {
 			id:            MemberID(0),
-			expectedError: fmt.Errorf("member ID must be >= 1 but is 0"),
+			expectedError: fmt.Errorf("member ID must be >= 1"),
 		},
 		"id = 1": {
 			id:            1,

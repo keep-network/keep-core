@@ -391,7 +391,7 @@ func (id MemberID) HexString() string {
 // equal or greater than `1`.
 func (id MemberID) Validate() error {
 	if id < 1 {
-		return fmt.Errorf("member ID must be >= 1 but is %v", id)
+		return fmt.Errorf("member ID must be >= 1")
 	}
 	return nil
 }
