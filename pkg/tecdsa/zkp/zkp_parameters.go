@@ -83,12 +83,16 @@ func GeneratePublicParameters(
 	}
 
 	qTilde := big.NewInt(0)
-	for qTilde, _, err = paillier.GenerateSafePrime(
-		safePrimeBitLength,
-		safePrimeGenConcurrencyLevel,
-		safePrimeGenTimeout,
-		rand.Reader,
-	); err == nil && pTilde.Cmp(qTilde) == 0; {
+	for {
+		qTilde, _, err = paillier.GenerateSafePrime(
+			safePrimeBitLength,
+			safePrimeGenConcurrencyLevel,
+			safePrimeGenTimeout,
+			rand.Reader,
+		)
+		if err != nil || pTilde.Cmp(qTilde) != 0 {
+			break
+		}
 	}
 	if err != nil {
 		return nil, fmt.Errorf(

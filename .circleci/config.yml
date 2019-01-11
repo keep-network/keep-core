@@ -19,11 +19,12 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            echo "Add baseUrl http://docs.keep.network/$CIRCLE_BRANCH/solidity/ to .doxityrc"
-            sed -i '2i "baseUrl": "http://docs.keep.network/'$CIRCLE_BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
-            echo "Add link prefix /$CIRCLE_BRANCH/solidity to .doxityrc"
+            BRANCH=$(sed -e 's/\//\\\//g' <<< $CIRCLE_BRANCH)
+            echo "Add baseUrl http://docs.keep.network/$BRANCH/solidity/ to .doxityrc"
+            sed -i '2i "baseUrl": "http://docs.keep.network/'$BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
+            echo "Add link prefix /$BRANCH/solidity to .doxityrc"
             find='"linkPrefix": ""'
-            replace='"linkPrefix": "\/'$CIRCLE_BRANCH'\/solidity"'
+            replace='"linkPrefix": "\/'$BRANCH'\/solidity"'
             sed -e "s/${find}/${replace}/g" contracts/solidity/docs/.doxityrc > contracts/solidity/docs/.doxityrc.new
             mv contracts/solidity/docs/.doxityrc.new contracts/solidity/docs/.doxityrc
             cd contracts/solidity && npm install
@@ -42,41 +43,18 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - restore_cache:
-          keys:
-            - v1-{{ .Branch }}
-          paths:
-            - /caches/client.tar
-            - /caches/go_build_env.tar
-      - run:
-          name: Load Docker image layer cache
-          command: |
-            set +o pipefail
-            docker load -i /caches/go_build_env.tar | true
-            docker load -i /caches/client.tar | true
       - run:
           name: Run Docker build
           command: |
-            docker build --cache-from go_build_env --target gobuild -t go_build_env .
-            docker build --cache-from go_build_env --cache-from client -t client .
+            docker build --target gobuild -t go_build_env .
+            docker build -t client .
       - run:
           name: Run Go tests
           command: |
             docker run -w /go/src/github.com/keep-network/keep-core go_build_env go test ./.../
-      - run:
-          name: Save Docker image layer cache
-          command: |
-            mkdir -p /caches
-            docker save -o /caches/go_build_env.tar go_build_env
-            docker save -o /caches/client.tar client
-      - save_cache:
-          key: v1-{{ .Branch }}-{{ epoch }}
-          paths:
-            - /caches/go_build_env.tar
-            - /caches/client.tar
   generate_docs_tex:
     docker:
-      - image: thomasweise/texlive
+      - image: keepnetwork/texlive:3
     steps:
       - checkout
       - run:

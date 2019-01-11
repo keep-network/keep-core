@@ -32,7 +32,6 @@ type block struct {
 	Number string
 }
 
-// WaitForBlocks waits for a minimum of 1 block before returing.
 func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 	waiter, err := ebc.BlockWaiter(numBlocks)
 	if err != nil {
@@ -42,8 +41,6 @@ func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 	return nil
 }
 
-// BlockWaiter returns the block number as a channel with a minimum of 1 block
-// wait. 0 and negative numBlocks are converted to 1.
 func (ebc *ethereumBlockCounter) BlockWaiter(
 	numBlocks int,
 ) (<-chan int, error) {
@@ -66,6 +63,10 @@ func (ebc *ethereumBlockCounter) BlockWaiter(
 	}
 
 	return newWaiter, nil
+}
+
+func (ebc *ethereumBlockCounter) CurrentBlock() (int, error) {
+	return ebc.latestBlockHeight, nil
 }
 
 // receiveBlocks gets each new block back from Geth and extracts the

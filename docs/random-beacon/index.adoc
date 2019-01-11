@@ -1,0 +1,107 @@
+:toc: macro
+:toclevels: 4
+:yellowpaper:
+
+= The Keep Random Beacon: An Implementation of a Threshold Relay
+
+toc::[]
+
+[abstract]
+.Abstract
+--
+The Keep Network requires a trusted source of randomness for the process of
+trustless group election. While the network requires that randomness to function
+correctly, the source of randomness is itself broadly applicable. This trusted
+source of randomness takes the form of a BLS Threshold Relay. We discuss
+implementation of this random beacon, including assumptions and mitigations for
+bad actors and poor network connectivity.
+--
+
+== Overview
+
+The threshold relay described herein is a way of generating verifiable
+randomness that is resistant to bad actors both in the relay network and on the
+anchoring blockchain, assumed here to be Ethereum. The basic functioning of the
+relay (further details are in the section on <<System Details>>) is:
+
+* Some number of groups exist in the relay.
+* An arbitrary seed value _v~s~_ counts as the first entry in the relay.footnote:[The
+  importance, from a security perspective, of the seed value goes away almost
+  immediately in a functioning network.]
+* A request _r~i~_ is dispatched to the chain for a new entry.
+* Information about the request is combined with the previous entry to produce
+  a new relay entry seed value _v~r~_.
+* _v~r~_ is used to choose a group to produce the response to the request.
+* _v~r~_ is signed by at least a subset of the chosen group members, and the
+  resulting signature is the entry generated in response to the request. It is
+  published to the anchoring blockchain as the entry _v~i~_.
+* The new entry _v~i~_ triggers the formation of a new group from the set of
+  all members in the relay.
+* A group expires after a certain amount of time.
+
+The following sections will detail how this basic function is implemented in
+practice, including notes on <<Prior Work>> that motivated this design,
+the <<Incentive Structures>> used to economically incentivize good behavior by
+network participants, <<Core Technologies>> used in the network, and finally the
+<<System Details>> that outline the implementation itself. <<Upgrade Management>>
+is also discussed.
+
+== Prior Work
+
+Dfinity has described their implementation of a random beacon backed by a
+threshold relay in their consensus whitepaper
+footnote:[https://dfinity.org/pdf-viewer/library/dfinity-consensus.pdf]. The
+relay described in this paper is heavily based on the one devised by the Dfinity
+team, with certain adjustments for implementation on an existing blockchain. The
+key distinction between the Dfinity implementation and the Keep implementation
+is that Keep has to contend with blockchains that do not implement the same
+primitives as the in-house Dfinity chain targeted in their paper. Concerns such
+as transaction costs and payment for beacon entries are therefore a core part of
+the incentive system built around the Keep random beacon.
+
+As described in the above paper, at the heart of the relay beacon is the
+signature scheme described by Dan Boneh, Ben Lynn, and Hovav Shacham in
+footnote:[D. Boneh, B. Lynn and H. Shacham, “Short signatures from the Weil
+pairing”, Advances in Cryptology – ASIACRYPT 2001, Lecture Notes in Computer
+Science, 2248 (2001), 514–532. Full version: Journal of Cryptology, 17 (2004),
+297–319.], termed BLS. Three properties of the scheme are of particular use in
+this case: BLS signatures can be used in _threshold_ mode, where _k_ of _n_
+participants are sufficient to produce a combined signature; BLS threshold
+signatures produce the same final signature irrespective of the participants;
+and BLS signatures are typically shorter than those of many other threshold
+signature schemes.
+
+Finally, underpinning the process of generating new groups for BLS threshold
+signatures in the system is a distributed key generation algorithm based on work
+by Gennaro, Jarecki, Krawczyk, and Rabin footnote:[R. Gennaro, S. Jarecki, H.
+Krawczyk, and T. Rabin. Advances in Cryptology — EUROCRYPT ’99: International
+Conference on the Theory and Application of Cryptographic Techniques Prague,
+Czech Republic, May 2–6, 1999 Proceedings, chapter Secure Distributed Key
+Generation for Discrete-Log Based Cryptosystems, pages 295–310. Springer Berlin
+Heidelberg, Berlin, Heidelberg, 1999 ;
+http://groups.csail.mit.edu/cis/pubs/stasio/vss.ps.gz], as also described in the
+Dfinity paper above. The Keep Random Beacon publishes group public keys to the
+anchoring blockchain and does member selection on-chain, but key generation
+occurs between nodes with only the final result vote occurring on-chain.
+
+== System Details
+
+The system has two high-level modes of operation, discussed in detail in their
+individual sections:
+
+* Group formation, consisting of group member selection and distributed key
+  generation.
+* Threshold signing, triggered by a beacon request and producing a new entry in
+  the relay (which in turn also triggers the formation of a new group). signing
+  also involves selecting the appropriate price for a new relay entry.
+
+Additionally, the beacon makes money by charging for _beacon requests_. An early
+draft of the pricing mechanism is described in its own section.
+
+include::group-selection.adoc[leveloffset=+2]
+
+include::dkg.adoc[leveloffset=+2]
+
+include::pricing.adoc[leveloffset=+1]
+
+include::glossary.adoc[]

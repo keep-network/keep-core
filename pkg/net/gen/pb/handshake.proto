@@ -3,6 +3,20 @@ syntax = "proto3";
 option go_package = "pb";
 package net;
 
+// Envelope contains a marshalled message, as well as a signature over the
+// the contents of the message (to ensure an adversary hasn't tampered
+// with the contents).
+message HandshakeEnvelope {
+  // The marshalled message.
+  bytes message = 1;
+
+  // Signature of the message.
+  bytes signature = 2;
+
+  // Peer id of the message creator
+  bytes peerID = 3;
+}
+
 // act1Message is sent in the first handshake act by the initiator to the
 // responder. It contains randomly generated `nonce1`, an 8-byte (64-bit)
 // unsigned integer.

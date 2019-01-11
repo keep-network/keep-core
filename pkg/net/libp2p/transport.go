@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	"github.com/keep-network/keep-core/pkg/chain"
 	secure "github.com/libp2p/go-conn-security"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -19,18 +20,23 @@ var _ secure.Conn = (*authenticatedConnection)(nil)
 
 // transport constructs an authenticated communication connection for a peer.
 type transport struct {
-	localPeerID peer.ID
-	privateKey  libp2pcrypto.PrivKey
+	localPeerID  peer.ID
+	privateKey   libp2pcrypto.PrivKey
+	stakeMonitor chain.StakeMonitor
 }
 
-func newAuthenticatedTransport(pk libp2pcrypto.PrivKey) (*transport, error) {
+func newAuthenticatedTransport(
+	pk libp2pcrypto.PrivKey,
+	stakeMonitor chain.StakeMonitor,
+) (*transport, error) {
 	id, err := peer.IDFromPrivateKey(pk)
 	if err != nil {
 		return nil, err
 	}
 	return &transport{
-		localPeerID: id,
-		privateKey:  pk,
+		localPeerID:  id,
+		privateKey:   pk,
+		stakeMonitor: stakeMonitor,
 	}, nil
 }
 
@@ -39,11 +45,11 @@ func (t *transport) SecureInbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
 ) (secure.Conn, error) {
-	return newAuthenticatedConnection(
+	return newAuthenticatedInboundConnection(
 		unauthenticatedConn,
 		t.localPeerID,
 		t.privateKey,
-		"",
+		t.stakeMonitor,
 	)
 }
 
@@ -53,11 +59,12 @@ func (t *transport) SecureOutbound(
 	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
 ) (secure.Conn, error) {
-	return newAuthenticatedConnection(
+	return newAuthenticatedOutboundConnection(
 		unauthenticatedConn,
 		t.localPeerID,
 		t.privateKey,
 		remotePeerID,
+		t.stakeMonitor,
 	)
 }
 

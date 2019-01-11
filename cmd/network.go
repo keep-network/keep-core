@@ -2,16 +2,22 @@ package cmd
 
 import (
 	"context"
-	"crypto/rand"
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/pborman/uuid"
 	"github.com/urfave/cli"
 )
 
@@ -57,13 +63,33 @@ func pingRequest(c *cli.Context) error {
 	var (
 		libp2pConfig = libp2p.Config{Peers: bootstrapPeers}
 		ctx          = context.Background()
+		privKey      *key.NetworkPrivateKey
 	)
-	staticKey, err := key.GenerateStaticNetworkKey(rand.Reader)
-	if err != nil {
-		return err
+
+	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBootstrapPeerNetworkKey()
+	standardPeerPrivKey, standardPeerPubKey := getStandardPeerNetworkKey()
+
+	stakeMonitor := local.NewStakeMonitor()
+
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
+		bootstrapPeerPubKey,
+	))
+	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
+		standardPeerPubKey,
+	))
+
+	if isBootstrapNode {
+		privKey = bootstrapPeerPrivKey
+	} else {
+		privKey = standardPeerPrivKey
 	}
 
-	netProvider, err := libp2p.Connect(ctx, libp2pConfig, staticKey)
+	netProvider, err := libp2p.Connect(
+		ctx,
+		libp2pConfig,
+		privKey,
+		stakeMonitor,
+	)
 	if err != nil {
 		return err
 	}
@@ -228,56 +254,98 @@ func pingRequest(c *cli.Context) error {
 	}
 }
 
+// PingMessage is a network message sent between bootstrap peer and
+// non-bootstrap peer in order to test the connection.
 type PingMessage struct {
 	Sender  string
 	Payload string
 }
 
-func (p *PingMessage) Type() string {
+// Type returns a string type of the `PingMessage` so that it conforms to
+// `net.Message` interface.
+func (pm *PingMessage) Type() string {
 	return ping
 }
 
 // Marshal converts this PingMessage to a byte array suitable for network
 // communication.
-func (p *PingMessage) Marshal() ([]byte, error) {
-	return json.Marshal(p)
+func (pm *PingMessage) Marshal() ([]byte, error) {
+	return json.Marshal(pm)
 }
 
 // Unmarshal converts a byte array produced by Marshal to a PingMessage.
-func (m *PingMessage) Unmarshal(bytes []byte) error {
+func (pm *PingMessage) Unmarshal(bytes []byte) error {
 	var message PingMessage
 	if err := json.Unmarshal(bytes, &message); err != nil {
 		return err
 	}
-	m.Sender = message.Sender
-	m.Payload = message.Payload
+	pm.Sender = message.Sender
+	pm.Payload = message.Payload
 
 	return nil
 }
 
+// PongMessage is a network message sent between bootstrap peer and
+// non-bootstrap peer in order to test the connection.
 type PongMessage struct {
 	Sender  string
 	Payload string
 }
 
-func (p *PongMessage) Type() string {
+// Type returns a string type of the `PongMessage` so that it conforms to
+// `net.Message` interface.
+func (pm *PongMessage) Type() string {
 	return pong
 }
 
 // Marshal converts this PongMessage to a byte array suitable for network
 // communication.
-func (p *PongMessage) Marshal() ([]byte, error) {
-	return json.Marshal(p)
+func (pm *PongMessage) Marshal() ([]byte, error) {
+	return json.Marshal(pm)
 }
 
 // Unmarshal converts a byte array produced by Marshal to a PongMessage.
-func (m *PongMessage) Unmarshal(bytes []byte) error {
+func (pm *PongMessage) Unmarshal(bytes []byte) error {
 	var message PongMessage
 	if err := json.Unmarshal(bytes, &message); err != nil {
 		return err
 	}
-	m.Sender = message.Sender
-	m.Payload = message.Payload
+	pm.Sender = message.Sender
+	pm.Payload = message.Payload
 
 	return nil
+}
+
+// getBootstrapPeerNetworkKey returns hardcoded public and private network key
+// of the bootstrap peer. We hardcode those values because we need to initialize
+// stakes on both sides of the connection using the local, stubbed `StakeMonitor`.
+func getBootstrapPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
+	return getPeerNetworkKey(big.NewInt(128838122312))
+}
+
+// getStandardPeerNetworkKey returns hardcoded public and private network key
+// of the standard peer. We hardcode those values because we need to initialize
+// stake on both sides of the connection using local, stubbed `StakeMonitor`.
+func getStandardPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
+	return getPeerNetworkKey(big.NewInt(6743262236222))
+}
+
+func getPeerNetworkKey(privateEcdsaKey *big.Int) (
+	*key.NetworkPrivateKey,
+	*key.NetworkPublicKey,
+) {
+	curve := secp256k1.S256()
+
+	ecdsaKey := new(ecdsa.PrivateKey)
+	ecdsaKey.PublicKey.Curve = curve
+	ecdsaKey.D = privateEcdsaKey
+	ecdsaKey.PublicKey.X, ecdsaKey.PublicKey.Y = curve.ScalarBaseMult(
+		ecdsaKey.D.Bytes(),
+	)
+
+	return key.EthereumKeyToNetworkKey(&keystore.Key{
+		Id:         uuid.NewRandom(),
+		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
+		PrivateKey: ecdsaKey,
+	})
 }

@@ -17,13 +17,13 @@ import (
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
-	stakeID string,
+	staker chain.Staker,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig config.Chain,
 ) Node {
 	return Node{
-		StakeID:         stakeID,
+		Staker:          staker,
 		netProvider:     netProvider,
 		blockCounter:    blockCounter,
 		chainConfig:     chainConfig,
@@ -44,7 +44,7 @@ func NewNode(
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
 	request *event.Request,
-	relayChain relaychain.Interface,
+	relayChain relaychain.RelayEntryInterface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
 		request.PreviousValue.Bytes(),

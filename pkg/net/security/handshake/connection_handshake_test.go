@@ -74,7 +74,7 @@ func TestRepeatChallengeToFinalize(t *testing.T) {
 	//
 
 	// responder station
-	act2Msg := &act2Message{nonce2, expectedChallenge}
+	act2Msg := &Act2Message{nonce2, expectedChallenge}
 
 	// initiator station
 	initiatorAct2 := &initiatorAct2{nonce1}
@@ -111,7 +111,7 @@ func TestFailAct2ForInvalidChallenge(t *testing.T) {
 
 	// responder station
 	invalidChallenge := [32]byte{0xff, 0xfa}
-	act2Msg := &act2Message{nonce2, invalidChallenge}
+	act2Msg := &Act2Message{nonce2, invalidChallenge}
 
 	// initiator station
 	initiatorAct2 := &initiatorAct2{nonce1}

@@ -1,4 +1,4 @@
-FROM golang:1.10.3-alpine3.7 AS runtime
+FROM golang:1.11.4-alpine3.7 AS runtime
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin \
@@ -75,6 +75,7 @@ COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
 COPY ./pkg/beacon/relay/thresholdsignature/gen $APP_DIR/pkg/beacon/relay/thresholdsignature/gen
+COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 RUN go generate ./.../gen 
 
 COPY ./ $APP_DIR/

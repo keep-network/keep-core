@@ -14,6 +14,15 @@ contract KeepGroupImplV1 is Ownable {
 
     event GroupSelected(bytes32 groupPubKey);
 
+    struct DkgResult {
+        bool success;
+        bytes32 groupPubKey;
+        bytes disqualified;
+        bytes inactive;
+    }
+
+    event DkgResultPublishedEvent(uint256 requestId);
+    
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
     uint256 internal _minStake;
@@ -29,6 +38,8 @@ contract KeepGroupImplV1 is Ownable {
     uint256[] internal _tickets;
     bytes32[] internal _submissions;
 
+    mapping (uint256 => DkgResult) internal _requestIdToDkgResult;
+    mapping (uint256 => bool) internal _dkgResultPublished;
     mapping (bytes32 => uint256) internal _submissionVotes;
     mapping (address => mapping (bytes32 => bool)) internal _hasVoted;
 
@@ -187,47 +198,37 @@ contract KeepGroupImplV1 is Ownable {
         // }
     }
 
-    function submitGroupPublicKey(bytes32 groupPubKey) public {
-
-        require(
-            // TODO: get participant number and implement slash/reward described in Phase 13
-            AddressArrayUtils.contains(orderedParticipants(), msg.sender),
-            "Sender must be in selected participants to be able to submit group pubkey"
-        );
-
-        _submissions.push(groupPubKey);
+    /**
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
+     * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @param success Result of DKG protocol execution; true if success, false otherwise.
+     * @param groupPubKey Group public key generated as a result of protocol execution.
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * means that the member has been disqualified. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     * @param inactive bytes representing inactive group members; 1 at the specific index means
+     * that the member has been marked as inactive. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     */
+    function submitDkgResult(
+        uint256 requestId,
+        bool success, 
+        bytes32 groupPubKey,
+        bytes disqualified,
+        bytes inactive
+    ) public {
+        _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
+        _dkgResultPublished[requestId] = true;
+  
+        emit DkgResultPublishedEvent(requestId);
     }
 
-    function voteForSubmission(bytes32 groupPubKey) public {
-
-        require(
-            // TODO: get participant number and implement slash/reward described in Phase 13
-            AddressArrayUtils.contains(orderedParticipants(), msg.sender),
-            "Sender must be in selected participants to be able to vote"
-        );
-
-        require(
-            !_hasVoted[msg.sender][groupPubKey],
-            "You already voted for this group pubkey"
-        );
-
-        _hasVoted[msg.sender][groupPubKey] = true;
-        _submissionVotes[groupPubKey]++;
-    }
-
-    function getFinalResult() public {
-
-        // TODO: Implement conflict resolution logic described in Phase 14
-        // for now just use the first submission
-        _groups.push(_submissions[0]);
-
-        // Keep record of group members
-        for (uint i = 0; i < _tickets.length; i++) {
-            Proof memory proof = _proofs[_tickets[i]];
-            _groupMembers[_submissions[0]].push(proof.sender);
-        }
-
-        emit GroupSelected(_submissions[0]);
+    /**
+     * @dev Checks if DKG protocol result has been already published for the
+     * specific relay request ID associated with the protocol execution. 
+     */
+    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
+        return _dkgResultPublished[requestId];
     }
 
     /**

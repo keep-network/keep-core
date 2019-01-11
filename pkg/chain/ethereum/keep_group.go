@@ -160,43 +160,9 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-// GetNStaker - temporary code for Milestone 1 - will return
-// the number of stackers that have been added to the contract.
-func (kg *keepGroup) GetNStaker() (int, error) {
-	stakerCount, err := kg.caller.GetNStaker(kg.callerOpts)
-	if err != nil {
-		return 0, err
-	}
-	return int(stakerCount.Int64()), nil
-}
-
-// AddStaker - temporary code for Milestone 1 - will add a
-// staker to the contract.
-func (kg *keepGroup) AddStaker(
-	groupMemberID string,
-) (*types.Transaction, error) {
-	groupMemberIDByte32, err := toByte32([]byte(groupMemberID))
-	if err != nil {
-		return nil, err
-	}
-	return kg.transactor.AddStaker(
-		kg.transactorOpts,
-		groupMemberIDByte32,
-	)
-}
-
 // Just Do It
 func (kg *keepGroup) ResetStaker() (*types.Transaction, error) {
 	return kg.transactor.ResetStaker(kg.transactorOpts)
-}
-
-// function getStaker(uint32 _index) public view returns ( bytes32 ) {
-func (kg *keepGroup) GetStaker(index int) ([]byte, error) {
-	staker, err := kg.caller.GetStaker(kg.callerOpts, uint32(index))
-	if err != nil {
-		return []byte{}, err
-	}
-	return staker[:], nil
 }
 
 // GetGroupMemberPubKey returns the public key for group number i at location
@@ -369,39 +335,6 @@ func (kg *keepGroup) WatchGroupStartedEvent(
 			select {
 			case event := <-eventChan:
 				success(event.GroupPubKey[:])
-				return
-
-			case err := <-eventSubscription.Err():
-				fail(err)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-// onStakerAddedFunc is the type of function called when an OnStakerAdded event
-// is observed on-chain and reported to a watching handler.
-type onStakerAddedFunc func(index int, groupMemberID []byte)
-
-// WatchGroupStartedEvent watch for GroupStartedEvent
-func (kg *keepGroup) WatchOnStakerAdded(
-	success onStakerAddedFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepGroupImplV1OnStakerAdded)
-	eventSubscription, err := kg.contract.WatchOnStakerAdded(nil, eventChan)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf("error creating watch for OnStakerAdded events [%v]", err)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(int(event.Index), event.GroupMemberID[:])
 				return
 
 			case err := <-eventSubscription.Err():

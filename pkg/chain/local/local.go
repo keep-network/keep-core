@@ -3,6 +3,7 @@ package local
 import (
 	"fmt"
 	"math/big"
+	"math/rand"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -10,6 +11,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -23,27 +25,51 @@ type localChain struct {
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[string]*big.Int
 
-	handlerMutex               sync.Mutex
-	relayEntryHandlers         []func(entry *event.Entry)
-	relayRequestHandlers       []func(request *event.Request)
-	groupRegisteredHandlers    []func(key *event.GroupRegistration)
-	stakerRegistrationHandlers []func(staker *event.StakerRegistration)
+	submittedResultsMutex sync.Mutex
+	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
+	// execution.
+	submittedResults map[*big.Int][]*relaychain.DKGResult
+
+	handlerMutex                 sync.Mutex
+	relayEntryHandlers           []func(entry *event.Entry)
+	relayRequestHandlers         []func(request *event.Request)
+	groupRegisteredHandlers      []func(key *event.GroupRegistration)
+	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
 	requestID   int64
 	latestValue *big.Int
 
 	simulatedHeight int64
+	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
-
-	stakerList []string
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
 }
 
+func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
+	return c.stakeMonitor, nil
+}
+
 func (c *localChain) GetConfig() (relayconfig.Chain, error) {
 	return c.relayConfig, nil
+}
+
+// TODO: implement
+func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+	return &async.GroupTicketPromise{}
+}
+
+// TODO: implement
+func (c *localChain) SubmitChallenge(
+	ticket *groupselection.TicketChallenge,
+) *async.GroupTicketChallengePromise {
+	return &async.GroupTicketChallengePromise{}
+}
+
+func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
+	return make([]*groupselection.Ticket, 0)
 }
 
 func (c *localChain) SubmitGroupPublicKey(
@@ -163,15 +189,6 @@ func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration
 	c.handlerMutex.Unlock()
 }
 
-func (c *localChain) OnStakerAdded(handler func(staker *event.StakerRegistration)) {
-	c.handlerMutex.Lock()
-	c.stakerRegistrationHandlers = append(
-		c.stakerRegistrationHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
-}
-
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
@@ -186,48 +203,14 @@ func Connect(groupSize int, threshold int) chain.Handle {
 			GroupSize: groupSize,
 			Threshold: threshold,
 		},
-		groupRegistrationsMutex: sync.Mutex{},
-		groupRelayEntries:       make(map[string]*big.Int),
-		groupRegistrations:      make(map[string][96]byte),
-		blockCounter:            bc,
+		groupRegistrationsMutex:      sync.Mutex{},
+		groupRelayEntries:            make(map[string]*big.Int),
+		groupRegistrations:           make(map[string][96]byte),
+		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		blockCounter:                 bc,
+		stakeMonitor:                 NewStakeMonitor(),
 	}
-}
-
-// AddStaker is a temporary function for Milestone 1 that
-// adds a staker to the group contract.
-func (c *localChain) AddStaker(
-	groupMemberID string,
-) *async.StakerRegistrationPromise {
-	onStakerAddedPromise := &async.StakerRegistrationPromise{}
-	index := len(c.stakerList)
-	c.stakerList = append(c.stakerList, groupMemberID)
-
-	c.handlerMutex.Lock()
-	for _, handler := range c.stakerRegistrationHandlers {
-		go func(handler func(staker *event.StakerRegistration), groupMemberID string, index int) {
-			handler(&event.StakerRegistration{
-				GroupMemberID: groupMemberID,
-				Index:         index,
-			})
-		}(handler, groupMemberID, index)
-	}
-	c.handlerMutex.Unlock()
-
-	err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
-		Index:         index,
-		GroupMemberID: string(groupMemberID),
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
-	}
-
-	return onStakerAddedPromise
-}
-
-// GetStakerList is a temporary function for Milestone 1 that
-// gets back the list of stakers.
-func (c *localChain) GetStakerList() ([]string, error) {
-	return c.stakerList, nil
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
@@ -257,4 +240,67 @@ func (c *localChain) RequestRelayEntry(
 	promise.Fulfill(request)
 
 	return promise
+}
+
+// IsDKGResultPublished simulates check if the result was already submitted to a
+// chain.
+func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
+	return c.submittedResults[requestID] != nil, nil
+}
+
+// SubmitDKGResult submits the result to a chain.
+func (c *localChain) SubmitDKGResult(
+	requestID *big.Int, resultToPublish *relaychain.DKGResult,
+) *async.DKGResultPublicationPromise {
+	c.submittedResultsMutex.Lock()
+	defer c.submittedResultsMutex.Unlock()
+
+	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
+
+	for publishedRequestID, publishedResults := range c.submittedResults {
+		if publishedRequestID.Cmp(requestID) == 0 {
+			for _, publishedResult := range publishedResults {
+				if publishedResult.Equals(resultToPublish) {
+					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
+					return dkgResultPublicationPromise
+				}
+			}
+		}
+	}
+
+	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
+
+	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.dkgResultPublicationHandlers {
+		go func(handler func(*event.DKGResultPublication), dkgResultPublication *event.DKGResultPublication) {
+			handler(dkgResultPublicationEvent)
+		}(handler, dkgResultPublicationEvent)
+	}
+	c.handlerMutex.Unlock()
+
+	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
+	}
+
+	return dkgResultPublicationPromise
+}
+
+func (c *localChain) OnDKGResultPublished(
+	handler func(dkgResultPublication *event.DKGResultPublication),
+) event.Subscription {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.dkgResultPublicationHandlers[handlerID] = handler
+
+	return event.NewSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.dkgResultPublicationHandlers, handlerID)
+	})
 }

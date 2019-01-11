@@ -57,15 +57,6 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error loading static peer's key [%v]", err)
 	}
 
-	ctx := context.Background()
-	netProvider, err := libp2p.Connect(ctx, config.LibP2P, staticKey)
-	if err != nil {
-		return err
-	}
-
-	isBootstrapNode := config.LibP2P.Seed != 0
-	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
-
 	chainProvider, err := ethereum.Connect(config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
@@ -76,10 +67,40 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing blockcounter: [%v]", err)
 	}
 
+	stakeMonitor, err := chainProvider.StakeMonitor()
+	if err != nil {
+		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
+	}
+	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+		config.Ethereum.Account.Address,
+	)
+	if err != nil {
+		return fmt.Errorf("could not check the stake [%v]", err)
+	}
+	if !hasMinimumStake {
+		return fmt.Errorf("stake is below the required minimum")
+	}
+
+	ctx := context.Background()
+	netProvider, err := libp2p.Connect(
+		ctx,
+		config.LibP2P,
+		staticKey,
+		stakeMonitor,
+	)
+	if err != nil {
+		return err
+	}
+
+	isBootstrapNode := config.LibP2P.Seed != 0
+	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
+
 	err = beacon.Initialize(
 		ctx,
+		config.Ethereum.Account.Address,
 		chainProvider.ThresholdRelay(),
 		blockCounter,
+		stakeMonitor,
 		netProvider,
 	)
 	if err != nil {
@@ -96,7 +117,7 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func loadStaticKey(account ethereum.Account) (*key.StaticNetworkKey, error) {
+func loadStaticKey(account ethereum.Account) (*key.NetworkPrivateKey, error) {
 	ethereumKey, err := ethereum.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
@@ -107,5 +128,6 @@ func loadStaticKey(account ethereum.Account) (*key.StaticNetworkKey, error) {
 		)
 	}
 
-	return key.EthereumKeyToNetworkKey(ethereumKey), nil
+	privKey, _ := key.EthereumKeyToNetworkKey(ethereumKey)
+	return privKey, nil
 }
