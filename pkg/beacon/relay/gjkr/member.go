@@ -334,17 +334,6 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G1 {
 	return receivedValidPeerIndividualPublicKeys
 }
 
-// PublishingIndex returns sequence number of the current member in a publishing
-// group. Counting starts with `0`.
-func (fm *FinalizingMember) PublishingIndex() int {
-	for index, memberID := range fm.group.MemberIDs() {
-		if fm.ID == memberID {
-			return index
-		}
-	}
-	return -1 // should never happen
-}
-
 // Result can be either the successful computation of a round of distributed key
 // generation, or a notification of failure.
 //

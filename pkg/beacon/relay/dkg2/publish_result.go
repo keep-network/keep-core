@@ -17,7 +17,7 @@ type Publisher struct {
 	chainHandle chain.Handle
 	// Sequential number of the current member in the publishing group.
 	// The value is used to determine eligible publishing member. Indexing starts
-	// with `0`. Relates to DKG Phase 13.
+	// with `1`. Relates to DKG Phase 13.
 	publishingIndex int
 	// Predefined step for each publishing window. The value is used to determine
 	// eligible publishing member. Relates to DKG Phase 13.
@@ -34,6 +34,10 @@ func executePublishing(
 	chainHandle chain.Handle,
 	result *relayChain.DKGResult,
 ) error {
+	if publishingIndex < 1 {
+		return fmt.Errorf("publishing index must be >= 1")
+	}
+
 	publisher := &Publisher{
 		RequestID:       requestID,
 		chainHandle:     chainHandle,
@@ -56,10 +60,15 @@ func executePublishing(
 // request ID specific for current DKG execution. If not, it determines if the
 // current member is eligable to result submission. If allowed, it submits the
 // results to the blockchain.
+//
+// User allowance to publish is determined based on the user's publishing index
+// and publishing block step.
+//
 // When member is waiting for their round the function keeps tracking results being
 // published to the blockchain. If any result is published for the current
 // request ID, the current member finishes the phase immediately, without
 // publishing its own result.
+//
 // It returns chain block height of the moment when the result was published on
 // chain by the publisher. In case of failure or result already published by
 // another publisher it returns `-1`.
@@ -99,7 +108,7 @@ func (pm *Publisher) publishResult(result *relayChain.DKGResult) (int, error) {
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		pm.publishingIndex * pm.blockStep,
+		(pm.publishingIndex - 1) * pm.blockStep,
 	)
 	if err != nil {
 		return -1, fmt.Errorf("block waiter failure [%v]", err)
