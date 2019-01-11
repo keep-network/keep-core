@@ -12,6 +12,8 @@
 _Term_ specifies the broader type, such as _Stake_, and the subscript _context_
 is used to specify the particular purpose and/or usage of this value.
 
+Terms are formatted as _CamelCase~snake_case~_.
+
 |T~context~
 |Shorthand symbol for commonly used terms. The meaning can be memorized or
 looked up from the shorthand symbol table, as a specific letter always
