@@ -1,8 +1,8 @@
 package relay
 
 import (
+	"crypto/sha256"
 	"fmt"
-	"jrypto/sha256"
 	"math/big"
 	"os"
 	"reflect"
