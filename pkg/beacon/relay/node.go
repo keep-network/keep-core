@@ -120,6 +120,8 @@ func (n *Node) JoinGroupIfEligible(
 					)
 				}
 			}
+			// exit on signal
+			return
 		}
 	}
 }
