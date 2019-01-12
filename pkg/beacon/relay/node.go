@@ -1,8 +1,8 @@
 package relay
 
 import (
-	"crypto/sha256"
 	"fmt"
+	"jrypto/sha256"
 	"math/big"
 	"os"
 	"reflect"
@@ -76,42 +76,75 @@ func (n *Node) JoinGroupIfEligible(
 		return
 	}
 
-	groupChain.OnGroupSelectionResult(func(result *groupselection.Result) {
-		// build the channel name and get the broadcast channel
-		var channelNameBytes []byte
-		for _, ticket := range result.SelectedTickets {
-			channelNameBytes = append(
-				channelNameBytes,
-				ticket.Value.Bytes()...,
-			)
-		}
-		// Add the previous entry as the nonce
-		channelNameBytes = append(
-			channelNameBytes,
-			entryValue.Bytes()...,
-		)
+	onGroupSelectionResultChan := make(chan *groupselection.Result)
+	defer close(onGroupSelectionResultChan)
 
-		hashedChannelName := groupselection.SHAValue(
-			sha256.Sum256(channelNameBytes),
-		)
-		_, err := n.netProvider.ChannelFor(
-			string(hashedChannelName.Bytes()),
-		)
-		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Failed to get broadcastChannel for name %s with err: [%v].\n",
-				err,
-			)
-			return
-		}
+	relayChain.OnGroupSelectionResult(func(result *groupselection.Result) {
+		onGroupSelectionResultChan <- result
+	})
 
-		for _, ticket := range result.SelectedTickets {
-			if string(ticket.Proof.StakerValue) == n.StakeID {
-				// TODO: Execute DKG
+	for {
+		select {
+		case groupSelectionResult := <-onGroupSelectionResultChan:
+			// build the channel name and get the broadcast channel
+			broadcastChannelName := channelNameFromSelectedTickets(
+				entryValue,
+				groupSelectionResult.SelectedTickets,
+			)
+			broadcastChannel, err := n.netProvider.ChannelFor(
+				broadcastChannelName,
+			)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed to get broadcastChannel for name %s with err: [%v].\n",
+					broadcastChannelName,
+					err,
+				)
+				return
+			}
+
+			for index, ticket := range groupSelectionResult.SelectedTickets {
+				// If our ticket is amongst those chosen, kick
+				// off an instance of dkg
+				if string(ticket.Proof.StakerValue) == n.StakeID {
+					go dkg2.ExecuteDKG(
+						entryRequestID,
+						entrySeed,
+						index,
+						n.chainConfig.GroupSize,
+						n.chainConfig.Threshold,
+						n.blockCounter,
+						relayChain,
+						broadcastChannel,
+					)
+				}
 			}
 		}
-	})
+	}
+}
+
+func channelNameFromSelectedTickets(
+	entryValue *big.Int,
+	tickets []*groupselection.Ticket,
+) string {
+	var channelNameBytes []byte
+	for _, ticket := range tickets {
+		channelNameBytes = append(
+			channelNameBytes,
+			ticket.Value.Bytes()...,
+		)
+	}
+	// Add the previous entry as the nonce
+	channelNameBytes = append(
+		channelNameBytes,
+		entryValue.Bytes()...,
+	)
+
+	hashedChannelName := groupselection.SHAValue(
+		sha256.Sum256(channelNameBytes),
+	)
+	return string(hashedChannelName.Bytes())
 }
 
 // RegisterGroup registers that a group was successfully created by the given
