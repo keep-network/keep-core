@@ -12,9 +12,8 @@ import (
 // Publisher submits distributed key generation result to a blockchain.
 type Publisher struct {
 	// ID of distributed key generation execution.
-	RequestID *big.Int
-	// Handle to interact with a blockchain.
-	chainHandle chain.Handle
+	RequestID    *big.Int
+	blockCounter chain.BlockCounter
 	// Sequential number of the current member in the publishing group.
 	// The value is used to determine eligible publishing member. Indexing starts
 	// with `1`. Relates to DKG Phase 13.
