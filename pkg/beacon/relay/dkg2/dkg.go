@@ -47,16 +47,12 @@ func ExecuteDKG(
 	playerIndex int, // starts with 1
 	groupSize int,
 	threshold int,
-	chainHandle chain.Handle,
+	blockCounter chain.BlockCounter,
+	relayChain relayChain.Interface,
 	channel net.BroadcastChannel,
 ) error {
 	if playerIndex < 1 {
 		return fmt.Errorf("player index must be >= 1")
-	}
-
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		return fmt.Errorf("block counter failure [%v]", err)
 	}
 
 	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
@@ -67,7 +63,8 @@ func ExecuteDKG(
 	err = executePublishing(
 		requestID,
 		playerIndex,
-		chainHandle,
+		relayChain,
+		blockCounter,
 		convertResult(gjkrResult, groupSize),
 	)
 	if err != nil {
