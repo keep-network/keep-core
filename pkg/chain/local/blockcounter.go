@@ -46,6 +46,8 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error)
 }
 
 func (counter *localBlockCounter) CurrentBlock() (int, error) {
+	counter.structMutex.Lock()
+	defer counter.structMutex.Unlock()
 	return counter.blockHeight, nil
 }
 
