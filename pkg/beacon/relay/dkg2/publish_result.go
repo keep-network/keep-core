@@ -103,7 +103,7 @@ func (pm *Publisher) publishResult(
 
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
-	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
+	eligibleToSubmitWaiter, err := pm.blockCounter.BlockWaiter(
 		(pm.publishingIndex - 1) * pm.blockStep,
 	)
 	if err != nil {

@@ -223,7 +223,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 
 func TestExecutePublishingWithInvalidIndex(t *testing.T) {
 	expectedError := fmt.Errorf("publishing index must be >= 1")
-	err := executePublishing(nil, 0, nil, nil)
+	err := executePublishing(nil, 0, nil, nil, nil)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
