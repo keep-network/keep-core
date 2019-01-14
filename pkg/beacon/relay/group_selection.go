@@ -29,9 +29,9 @@ type groupCandidate struct {
 //
 // See the group selection protocol specification for more information.
 func (n *Node) SubmitTicketsForGroupSelection(
-	beaconValue []byte,
 	relayChain relaychain.GroupInterface,
 	blockCounter chain.BlockCounter,
+	beaconValue []byte,
 ) error {
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketReactiveSubmissionTimeout,

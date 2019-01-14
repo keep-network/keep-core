@@ -58,74 +58,46 @@ type membership struct {
 // on-chain group containing at least one of this node's virtual stakers.
 func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
-	entryRequestID *big.Int,
-	entrySeed *big.Int,
-	entryValue *big.Int,
+	groupSelectionResult *groupselection.Result,
 ) {
-	err := n.SubmitTicketsForGroupSelection(
-		entryValue.Bytes(),
-		relayChain,
-		n.blockCounter,
+	// build the channel name and get the broadcast channel
+	broadcastChannelName := channelNameFromSelectedTickets(
+		groupSelectionResult.Entry.Value,
+		groupSelectionResult.SelectedTickets,
+	)
+	broadcastChannel, err := n.netProvider.ChannelFor(
+		broadcastChannelName,
 	)
 	if err != nil {
 		fmt.Fprintf(
 			os.Stderr,
-			"Failed submission of tickets for group selection: [%v].\n",
+			"Failed to get broadcastChannel for name %s with err: [%v].\n",
+			broadcastChannelName,
 			err,
 		)
 		return
 	}
 
-	onGroupSelectionResultChan := make(chan *groupselection.Result)
-	defer close(onGroupSelectionResultChan)
-
-	relayChain.OnGroupSelectionResult(func(result *groupselection.Result) {
-		onGroupSelectionResultChan <- result
-	})
-
-	for {
-		select {
-		case groupSelectionResult := <-onGroupSelectionResultChan:
-			// build the channel name and get the broadcast channel
-			broadcastChannelName := channelNameFromSelectedTickets(
-				entryValue,
-				groupSelectionResult.SelectedTickets,
+	for index, ticket := range groupSelectionResult.SelectedTickets {
+		// If our ticket is amongst those chosen, kick
+		// off an instance of DKG. We may have multiple
+		// tickets in the selected tickets (which would
+		// result in multiple instances of DKG).
+		if ticket.IsFromStaker(n.StakeID) {
+			go dkg2.ExecuteDKG(
+				groupSelectionResult.Entry.RequestID,
+				groupSelectionResult.Entry.Seed,
+				index,
+				n.chainConfig.GroupSize,
+				n.chainConfig.Threshold,
+				n.blockCounter,
+				relayChain,
+				broadcastChannel,
 			)
-			broadcastChannel, err := n.netProvider.ChannelFor(
-				broadcastChannelName,
-			)
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"Failed to get broadcastChannel for name %s with err: [%v].\n",
-					broadcastChannelName,
-					err,
-				)
-				return
-			}
-
-			for index, ticket := range groupSelectionResult.SelectedTickets {
-				// If our ticket is amongst those chosen, kick
-				// off an instance of DKG. We may have multiple
-				// tickets in the selected tickets (which would
-				// result in multiple instances of DKG).
-				if ticket.IsFromStaker(n.StakeID) {
-					go dkg2.ExecuteDKG(
-						entryRequestID,
-						entrySeed,
-						index,
-						n.chainConfig.GroupSize,
-						n.chainConfig.Threshold,
-						n.blockCounter,
-						relayChain,
-						broadcastChannel,
-					)
-				}
-			}
-			// exit on signal
-			return
 		}
 	}
+	// exit on signal
+	return
 }
 
 // channelNameFromSelectedTickets takes the selected tickets, and does the
