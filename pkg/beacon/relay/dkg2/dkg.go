@@ -44,13 +44,15 @@ func Init(channel net.BroadcastChannel) {
 func ExecuteDKG(
 	requestID *big.Int,
 	seed *big.Int,
-	playerIndex int, // starts with 1
+	index int, // starts with 0
 	groupSize int,
 	threshold int,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
 	channel net.BroadcastChannel,
 ) error {
+	// The staker index should begin with 1
+	playerIndex := index + 1
 	if playerIndex < 1 {
 		return fmt.Errorf("player index must be >= 1")
 	}

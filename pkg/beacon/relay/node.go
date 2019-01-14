@@ -106,15 +106,6 @@ func (n *Node) JoinGroupIfEligible(
 			}
 
 			for index, ticket := range groupSelectionResult.SelectedTickets {
-				if index < 1 {
-					fmt.Fprintf(
-						os.Stderr,
-						"player index must be >=1; got: [%v].\n",
-						index,
-					)
-					return
-				}
-
 				// If our ticket is amongst those chosen, kick
 				// off an instance of DKG. We may have multiple
 				// tickets in the selected tickets (which would
