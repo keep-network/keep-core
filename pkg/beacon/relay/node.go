@@ -109,7 +109,7 @@ func (n *Node) JoinGroupIfEligible(
 				// off an instance of DKG. We may have multiple
 				// tickets in the selected tickets (which would
 				// result in multiple instances of DKG).
-				if string(ticket.Proof.StakerValue) == n.StakeID {
+				if ticket.IsFromStaker(n.StakeID) {
 					go dkg2.ExecuteDKG(
 						entryRequestID,
 						entrySeed,
