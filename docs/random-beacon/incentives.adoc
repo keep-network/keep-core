@@ -91,18 +91,26 @@ impact on the incentives of the group selection protocol.
 
 ==== Rewards
 
-The DKG has no rewards. The prospect of future rewards from signing beacon
-outputs provides the incentive to participate in the DKG.
+R~DKG_SUBMITTER~::
+
+The member submitting the finally accepted result is paid a submission reward.
+The distributed key generation has no rewards for non-submitting members. The
+prospect of future rewards from signing beacon outputs provides the incentive to
+participate in the DKG.
 
 ==== Punishments
 
+Minor: D~DKG_MISSED_SUBMISSION~::
+
+The DKG expects the first member _P~1~_ of the candidate group _P_ to submit
+the result. If the finally accepted result is submitted by _P~i~, i > 1_, each
+_P~1~ .. P~i-1~_ are penalized by D~DKG_MISSED_SUBMISSION~.
+
+Minor: D~DKG_DQ~::
+
 As the DKG is performed off-chain, only a list of disqualified participants is
-produced. Thus all misbehavior necessarily has the same penalty.
-
-===== Minor: D~DKG_DQ~
-
-Penalty for the members on the disqualified list in a valid DKG outcome
-submission.
+produced. Thus all actual misbehavior necessarily has the same penalty. A member
+on the list of disqualified members will be penalized by D~DKG_DQ~.
 
 *TODO: minor penalty?*
 
