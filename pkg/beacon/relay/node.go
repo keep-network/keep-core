@@ -139,7 +139,7 @@ func (n *Node) JoinGroupIfEligible(
 }
 
 // channelNameFromSelectedTickets takes the selected tickets, and does the
-// following to construct the bloadcastChannel name:
+// following to construct the broadcastChannel name:
 // * grabs the value from each ticket
 // * concatenates all of the values
 // * uses the previous entry value as a nonce (final value)
