@@ -30,6 +30,25 @@ contract('TestPublishDkgResult', function(accounts) {
     
       assert.equal(published, true, "result has been already published")
   });
+  
+  it("should know if member is inactive of disqualified", async function() {
+    let DQbytes = "0x000000000000000101"
+    let IAbytes = "0x000000000000010000"
+    let groupPubKey = "0x100101011";
+    await keepGroupImplV1.submitDkgResult(1814, true, groupPubKey , DQbytes, IAbytes);
+    let DQ = [false, false, false, false, false, false, false, true, true];
+    let IA = [false, false, false, false, false, false, true, false, false];
+    let resDQ = [];
+    let resIA = [];
+    for(let i=0; i< (DQbytes.length -2)/2; i++){
+        resDQ.push(await keepGroupImplV1.isDisqualified(groupPubKey, i));
+        resIA.push(await keepGroupImplV1.isInactive(groupPubKey, i));
+        }
+    
+    assert.equal(JSON.stringify(DQ), JSON.stringify(resDQ), "did not correctly return disqualified members");
+    assert.equal(JSON.stringify(IA), JSON.stringify(resIA), "did not correctly return inactive members");
+ 
+});
 })
 
 
