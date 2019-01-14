@@ -32,6 +32,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
+    uint256 internal _requestId;
 
     uint256 internal _randomBeaconValue;
 
