@@ -12,7 +12,9 @@ import (
 // Publisher submits distributed key generation result to a blockchain.
 type Publisher struct {
 	// ID of distributed key generation execution.
-	RequestID    *big.Int
+	RequestID *big.Int
+	// Initialized BlockCounter which allows for the reading, counting, and
+	// waiting of blocks for the purposes of synchronization.
 	blockCounter chain.BlockCounter
 	// Sequential number of the current member in the publishing group.
 	// The value is used to determine eligible publishing member. Indexing starts

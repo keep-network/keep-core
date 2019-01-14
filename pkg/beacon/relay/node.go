@@ -106,7 +106,9 @@ func (n *Node) JoinGroupIfEligible(
 
 			for index, ticket := range groupSelectionResult.SelectedTickets {
 				// If our ticket is amongst those chosen, kick
-				// off an instance of dkg
+				// off an instance of DKG. We may have multiple
+				// tickets in the selected tickets (which would
+				// result in multiple instances of DKG).
 				if string(ticket.Proof.StakerValue) == n.StakeID {
 					go dkg2.ExecuteDKG(
 						entryRequestID,
@@ -126,6 +128,12 @@ func (n *Node) JoinGroupIfEligible(
 	}
 }
 
+// channelNameFromSelectedTickets takes the selected tickets, and does the
+// following to construct the bloadcastChannel name:
+// * grabs the value from each ticket
+// * concatenates all of the values
+// * uses the previous entry value as a nonce (final value)
+// * returning the hashed concatenated values and nonce
 func channelNameFromSelectedTickets(
 	entryValue *big.Int,
 	tickets []*groupselection.Ticket,
