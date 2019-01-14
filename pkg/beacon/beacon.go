@@ -7,7 +7,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -79,15 +78,6 @@ func Initialize(
 				entry.Seed,
 			)
 		})
-
-		relayChain.OnGroupSelectionResult(
-			func(groupSelectionResult *groupselection.Result,
-			) {
-				// check all tickets, see if some of them are ours, if
-				// so, run ExecuteDKG for them
-				node.JoinGroupIfEligible(relayChain, groupSelectionResult)
-			},
-		)
 
 		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 			node.RegisterGroup(
