@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // RelayEntryInterface defines the subset of the relay chain interface that
@@ -42,7 +43,9 @@ type GroupSelectionInterface interface {
 	// fails `costlyCheck`, and returns a promise to track the challenge
 	// submission. The promise is fulfilled with the challenge as seen on-chain,
 	// or failed if there is an error submitting the entry.
-	SubmitChallenge(ticket *groupselection.TicketChallenge) *async.GroupTicketChallengePromise
+	SubmitChallenge(
+		ticket *groupselection.TicketChallenge,
+	) *async.GroupTicketChallengePromise
 	// GetOrderedTickets returns submitted tickets which have passed checks
 	// on-chain.
 	GetOrderedTickets() ([]*groupselection.Ticket, error)
@@ -72,7 +75,10 @@ type GroupInterface interface {
 // generation process.
 type DistributedKeyGenerationInterface interface {
 	// SubmitDKGResult sends DKG result to a chain.
-	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
+	SubmitDKGResult(
+		requestID *big.Int,
+		dkgResult *DKGResult,
+	) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
 	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) (event.Subscription, error)
