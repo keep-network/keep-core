@@ -121,28 +121,6 @@ func (kg *keepGroup) Initialized() (bool, error) {
 	return kg.caller.Initialized(kg.callerOpts)
 }
 
-// DissolveGroup breaks up the group that is associated with the public key.
-func (kg *keepGroup) DissolveGroup(
-	groupPubKey []byte,
-) (*types.Transaction, error) {
-	groupPubKeyArray, err := toByte32(groupPubKey)
-	if err != nil {
-		return nil, err
-	}
-	return kg.transactor.DissolveGroup(kg.transactorOpts, groupPubKeyArray)
-}
-
-// CreateGroup starts a new group with the specified public key.
-func (kg *keepGroup) CreateGroup(
-	groupPubKey []byte,
-) (*types.Transaction, error) {
-	groupPubKeyArray, err := toByte32(groupPubKey)
-	if err != nil {
-		return nil, err
-	}
-	return kg.transactor.CreateGroup(kg.transactorOpts, groupPubKeyArray)
-}
-
 // GroupThreshold returns the group threshold.  This is the number
 // of members that have to report a value to create a new signature.
 func (kg *keepGroup) GroupThreshold() (int, error) {
@@ -163,47 +141,12 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-// Just Do It
-func (kg *keepGroup) ResetStaker() (*types.Transaction, error) {
-	return kg.transactor.ResetStaker(kg.transactorOpts)
-}
-
-// GetGroupMemberPubKey returns the public key for group number i at location
-// in group j.
-func (kg *keepGroup) GetGroupMemberPubKey(
-	groupIndex,
-	memberIndex int,
-) ([]byte, error) {
-	groupIndexBig := big.NewInt(int64(groupIndex))
-	memberIndexBig := big.NewInt(int64(memberIndex))
-	groupMemberKey, err := kg.caller.GetGroupMemberPubKey(
-		kg.callerOpts,
-		groupIndexBig,
-		memberIndexBig,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return groupMemberKey[:], nil
-}
-
-// IsMember returns true if the member is a part of the specified group.
-func (kg *keepGroup) IsMember(
-	groupPubKey, memberPubKey []byte,
+// HasMinimumStake returns true if the specified address has sufficient
+// state to participate.
+func (kg *keepGroup) HasMinimumStake(
+	address common.Address,
 ) (bool, error) {
-	groupPubKeyArray, err := toByte32(groupPubKey)
-	if err != nil {
-		return false, err
-	}
-	memberPubKeyArray, err := toByte32(memberPubKey)
-	if err != nil {
-		return false, err
-	}
-	return kg.caller.IsMember(
-		kg.callerOpts,
-		groupPubKeyArray,
-		memberPubKeyArray,
-	)
+	return kg.caller.HasMinimumStake(kg.callerOpts, address)
 }
 
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
@@ -222,149 +165,6 @@ func (kg *keepGroup) SubmitDKGResult(
 		result.Disqualified,
 		result.Inactive,
 	)
-}
-
-// groupCompleteEventFunc defines the function that is called upon
-// group completion.
-type groupCompleteEventFunc func(groupPubKey []byte)
-
-// WatchGroupCompleteEvent create a watch for the group completion event.
-func (kg *keepGroup) WatchGroupCompleteEvent(
-	success groupCompleteEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepGroupImplV1GroupCompleteEvent)
-	eventSubscription, err := kg.contract.WatchGroupCompleteEvent(nil, eventChan)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for GroupCompleteEvent events [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(event.GroupPubKey[:])
-				return
-
-			case err := <-eventSubscription.Err():
-				fail(err)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-// groupErrorCodeFunc defines a function to watch for errors.
-type groupErrorCodeFunc func(Code uint8)
-
-// WatchGroupErrorCode creates a watch for the GroupErrorCode event.
-func (kg *keepGroup) WatchGroupErrorCode(
-	success groupErrorCodeFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepGroupImplV1GroupErrorCode)
-	eventSubscription, err := kg.contract.WatchGroupErrorCode(nil, eventChan)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"failed go create watch for GroupErrorCode events: [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(event.Code)
-				return
-
-			case err := <-eventSubscription.Err():
-				fail(err)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-// groupExistsEventFunc defines the function that is called when creating
-// a group.  Exists is true when the group already exists.
-type groupExistsEventFunc func(groupPubKey []byte, Exists bool)
-
-// WatchGroupExistsEvent watches for the GroupExists event.
-func (kg *keepGroup) WatchGroupExistsEvent(
-	success groupExistsEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepGroupImplV1GroupExistsEvent)
-	eventSubscription, err := kg.contract.WatchGroupExistsEvent(nil, eventChan)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for GropExistsEvent events [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(event.GroupPubKey[:], event.Exists)
-				return
-
-			case err := <-eventSubscription.Err():
-				fail(err)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-// groupStartedEventFunc defiens the function that is called when
-// watching for started groups.
-type groupStartedEventFunc func(groupPubKey []byte)
-
-// WatchGroupStartedEvent watch for GroupStartedEvent
-func (kg *keepGroup) WatchGroupStartedEvent(
-	success groupStartedEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepGroupImplV1GroupStartedEvent)
-	eventSubscription, err := kg.contract.WatchGroupStartedEvent(nil, eventChan)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for GorupStartedEvent events [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(event.GroupPubKey[:])
-				return
-
-			case err := <-eventSubscription.Err():
-				fail(err)
-				return
-			}
-		}
-	}()
-	return nil
 }
 
 type dkgResultPublishedEventFunc func(requestID *big.Int)
