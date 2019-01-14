@@ -60,7 +60,8 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
-    function runGroupSelection(uint256 randomBeaconValue) public onlyOwner {
+    function runGroupSelection(uint256 randomBeaconValue) public {
+        require(msg.sender == _randomBeacon);
         _submissionStart = block.number;
         _randomBeaconValue = randomBeaconValue;
     }
