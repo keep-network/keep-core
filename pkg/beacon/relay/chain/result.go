@@ -49,6 +49,15 @@ func (r1 *DKGResult) Equals(r2 *DKGResult) bool {
 	return true
 }
 
+// PublicKeyAsBytes returns public key in the same format as stored on-chain.
+//
+// TODO: Instead of transforming PKey here, change type of GroupPublicKey field.
+func (dkgr *DKGResult) PublicKeyAsByteArray() [32]byte {
+	var arr [32]byte
+	copy(arr[:], dkgr.GroupPublicKey[:32])
+	return arr
+}
+
 // DisqualifiedAsBytes returns DQ array in the same format as stored on-chain.
 //
 // TODO: Instead of transforming DQ here, change type of Disqualified field.
