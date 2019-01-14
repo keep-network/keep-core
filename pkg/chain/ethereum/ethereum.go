@@ -337,10 +337,69 @@ func (ec *ethereumChain) OnDKGResultPublished(
 	)
 }
 
-// SubmitDKGResult sends DKG result to a chain.
 func (ec *ethereumChain) SubmitDKGResult(
-	requestID *big.Int, resultToPublish *relaychain.DKGResult,
+	requestID *big.Int, result *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
-	// TODO Implement
-	return nil
+	resultPublicationPromise := &async.DKGResultPublicationPromise{}
+
+	failPromise := func(err error) {
+		failErr := resultPublicationPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	published := make(chan *event.DKGResultPublication)
+
+	subscription, err := ec.OnDKGResultPublished(
+		func(event *event.DKGResultPublication) {
+			published <- event
+		},
+	)
+	if err != nil {
+		close(published)
+		failPromise(err)
+		return resultPublicationPromise
+	}
+
+	go func() {
+		for {
+			select {
+			case event := <-published:
+				if event.RequestID == requestID {
+					subscription.Unsubscribe()
+					close(published)
+
+					err := resultPublicationPromise.Fulfill(event)
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"fulfilling promise failed with: [%v].\n",
+							err,
+						)
+					}
+				}
+			}
+		}
+	}()
+
+	_, err = ec.keepGroupContract.SubmitDKGResult(
+		requestID,
+		result.Success,
+		[32]byte{}, // TODO: publish pkey
+		result.DisqualifiedAsBytes(),
+		result.InactiveAsBytes(),
+	)
+	if err != nil {
+		subscription.Unsubscribe()
+		close(published)
+		failPromise(err)
+	}
+
+	return resultPublicationPromise
 }

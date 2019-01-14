@@ -209,6 +209,23 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
 }
 
+func (kg *keepGroup) SubmitDKGResult(
+	requestID *big.Int,
+	success bool,
+	groupPubKey [32]byte,
+	disqualified []byte,
+	inactive []byte,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitDkgResult(
+		kg.transactorOpts,
+		requestID,
+		success,
+		groupPubKey,
+		disqualified,
+		inactive,
+	)
+}
+
 // groupCompleteEventFunc defines the function that is called upon
 // group completion.
 type groupCompleteEventFunc func(groupPubKey []byte)
