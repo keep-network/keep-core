@@ -79,10 +79,9 @@ func (n *Node) JoinGroupIfEligible(
 	onGroupSelectionResultChan := make(chan *groupselection.Result)
 	defer close(onGroupSelectionResultChan)
 
-	subscription := relayChain.OnGroupSelectionResult(func(result *groupselection.Result) {
+	relayChain.OnGroupSelectionResult(func(result *groupselection.Result) {
 		onGroupSelectionResultChan <- result
 	})
-	defer subscription.Unsubscribe()
 
 	for {
 		select {
