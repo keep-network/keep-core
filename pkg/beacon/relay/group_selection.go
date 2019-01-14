@@ -96,6 +96,17 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
+			selectedTickets := relayChain.GetOrderedTickets()
+
+			// Read the selected, ordered tickets from the chain,
+			// determine if we're eligible for the next group.
+			go n.JoinGroupIfEligible(
+				relayChain,
+				&groupselection.Result{selectedTickets},
+				beaconValue,
+				entryRequestID,
+				entrySeed,
+			)
 			quitTicketChallenge <- struct{}{}
 			return nil
 		}
