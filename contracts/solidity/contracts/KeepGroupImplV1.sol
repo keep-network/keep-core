@@ -221,6 +221,7 @@ contract KeepGroupImplV1 is Ownable {
     ) public {
         _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
+        _requestId = requestId;
   
         emit DkgResultPublishedEvent(requestId);
     }
