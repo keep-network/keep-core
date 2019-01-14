@@ -12,7 +12,7 @@ contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
 
-    event GroupSelected(bytes32 groupPubKey);
+    event OnGroupRegistered(bytes32 groupPubKey);
 
     struct DkgResult {
         bool success;
@@ -222,6 +222,16 @@ contract KeepGroupImplV1 is Ownable {
         _dkgResultPublished[requestId] = true;
   
         emit DkgResultPublishedEvent(requestId);
+
+        // TODO: Move out these once dispute logic is implemented,
+        // implement conflict resolution logic described in Phase 14,
+        // make sure only valid members are stored.
+        _groups.push(groupPubKey);
+        address[] memory members = orderedParticipants();
+        for (uint i = 0; i < _groupSize; i++) {
+            _groupMembers[groupPubKey].push(members[i]);
+        }
+        emit OnGroupRegistered(groupPubKey);
     }
 
     /**
