@@ -43,45 +43,49 @@ Group selection has no intrinsic rewards. However, presenting a valid challenge
 to an invalid ticket should be amply rewarded to preserve the integrity of the
 interactive protocol.
 
-===== R~TICKET_TATTLETALE~
+R~TICKET_TATTLETALE~::
 
 Token reward for operator that presents a valid challenge to an invalid ticket.
-
++
 _R~TICKET_TATTLETALE~ < D~INVALID_TICKET~_
-
++
 It may be desirable for _R~TICKET_TATTLETALE~_ to include both tokens and
 currency. `CostlyCheck` is expected to be expensive to perform in the future,
 and submitting a valid ticket challenge should always be profitable. If the
 ticket tattletale reward consists of both tokens and currency:
-
++
 _R~TICKET_TATTLETALE~ = R~TICKET_TATTLETALE_TOKENS~ + R~TICKET_TATTLETALE_CURRENCY~_ +
 _R~TICKET_TATTLETALE_TOKENS~ < D~INVALID_TICKET~_ +
 _R~TICKET_TATTLETALE_CURRENCY~ >= GasEstimate(CostlyCheck)_
-
++
 However, group selection provides no source of such currency, and thus it would
 need to be taken from a general pool. It may be prohibitively difficult to
 protect such a pool from getting emptied by attackers.
-
++
 If the tattletale reward consists of only tokens, it would be profitable if
 _R~TICKET_TATTLETALE~ * TokenPrice > GasEstimate(CostlyCheck)_.
 
 ==== Punishments
 
-===== Major: D~INVALID_TICKET~
+D~INVALID_TICKET~::
 
+Major
++
 Penalty for any operator that presents an invalid ticket. The invalid ticket may
 fail either `CheapCheck`, or `CostlyCheck` after being challenged.
-
++
 The requirements on _R~TICKET_TATTLETALE~_ constrain the value of
 _D~INVALID_TICKET~_:
-
++
 _D~INVALID_TICKET~ > GasEstimate(CostlyCheck) / TokenPrice_
-
++
 This is necessary to ensure that the incentives of challenging invalid tickets
 are in place.
 
-===== Major: D~INVALID_CHALLENGE~
+D~INVALID_CHALLENGE~::
 
+Major
++
 Penalty for operator that presents an invalid challenge, and the accused ticket
 passes `CostlyCheck`. Because the gas costs of `CostlyCheck` are incurred by the
 accuser, _D~INVALID_CHALLENGE~_ can be set relatively freely without significant
@@ -100,20 +104,24 @@ participate in the DKG.
 
 ==== Punishments
 
-Minor: D~DKG_MISSED_SUBMISSION~::
+D~DKG_MISSED_SUBMISSION~::
 
+Minor
++
 The DKG expects the first member _P~1~_ of the candidate group _P_ to submit
 the result. If the finally accepted result is submitted by _P~i~, i > 1_, each
 _P~1~ .. P~i-1~_ are penalized by D~DKG_MISSED_SUBMISSION~.
 
-Minor: D~DKG_DQ~::
+D~DKG_DQ~::
 
+Minor
++
 As the DKG is performed off-chain, only a list of disqualified participants is
 produced. Thus all actual misbehavior necessarily has the same penalty. A member
 on the list of disqualified members will be penalized by D~DKG_DQ~.
-
++
 *TODO: minor penalty?*
-
++
 The penalty is minor despite reflecting potentially severe protocol violations
 because the misbehavior was not proven on-chain. A colluding cartel that
 controls the created group can forcibly disqualify even well-behaved members.
@@ -141,58 +149,58 @@ the maximum penalty of _Stake~MIN~_.
 
 ==== Rewards
 
-===== R~submitter~(T), R~group~(T)
+R~submitter~(T), R~group~(T)::
 
 The submitter and group reward will vary over time, where _T_ is the time it
 takes to publish the valid output on-chain (_T' > T_):
-
++
 _R~submitter~(T) > R~group~(T)_
-
++
 The submitter is always rewarded more than the other members. This is partially
 to cover the gas fees of submitting the beacon output (expensive BLS
 verification), and partially to incentivize submissions.
-
++
 _R~submitter~(T) <= R~submitter~(T')_ +
 _R~group~(T) >= R~group~(T')_
-
++
 Over time, the submitter reward grows while the group reward declines. If the
 group takes long enough to submit the output, the group reward can go negative.
-
++
 _R~total~(T) = R~submitter~(T) + (N - 1) * R~group~(T)_ +
 _R~total~(T) >= R~total~(T')_
-
++
 The total reward for the entire group (submitter + other members) declines over
 time.
-
++
 When _T <= T' <= T~output_expected~_: +
 _R~submitter~(T) = R~submitter~(T')_ +
 _R~group~(T) = R~group~(T')_ +
 _R~total~(T) = R~total~(T')_
-
++
 The maximum possible reward is given out when the output is submitted within
 _1 <= T <= T~output_expected~_ from the reveal of the value to be signed. Within
 this window there is no difference in rewards between different submission
 times.
-
++
 When _T' > T > T~output_expected~_: +
 _R~submitter~(T) < R~submitter~(T')_ +
 _R~group~(T) > R~group~(T')_ +
 _R~total~(T) > R~total~(T')_
-
++
 If _T > T~output_expected~_, the total reward is lower, the submitter reward
 grows every block, and the group reward declines every block.
-
++
 The value of _T~output_expected~_ may be set by the output request, or it may be
 a global constant. If _T~output_expected~ = 1_ there is no constant-reward
 window.
-
++
 _R~selfish~(T, m) = R~submitter~(T) + (m - 1) * R~group~(T)_ + 
 _R~selfish~(T, M~nofail~) > R~selfish~(T', M~nofail~)_
-
++
 Because of the selfish signing attack, the submitter reward should not grow
 faster than a moderate multiple of the group reward declines, to avoid creating
 an incentive to delay output publication.
-
++
 A hard limit for this is when _m = M~nofail~_. This is because it takes _H_
 honest participants to produce an output, and the minimum number of active
 participants in a group is _H + M~nofail~_ if _M~nofail~_ members have been lost
@@ -200,39 +208,43 @@ in DKG. If an actor controls less than _M~nofail~_ members in a group, there
 should be enough other members that the output can be completed without the
 adversary's input. This cannot be guaranteed when _m > M~nofail~_, and thus
 selfish signing should always be unprofitable in such a case.
-
++
 _R~group~(T~late~) = D~late_output~(T~late~)_ when _T~late~ > T~MAX_OUTPUT_DELAY~_
-
++
 If the group takes particularly long to submit the output, the group reward can
 go negative. In this case instead of rewarding the group members in _$CURRENCY_,
 their stakes are slashed.
 
 ==== Punishments
 
-===== Major: D~INVALID_SIGNATURE~
+D~INVALID_SIGNATURE~::
 
+Major
++
 If an invalid signature is submitted, its submitter is to be penalized by
 _D~INVALID_SIGNATURE~ * RequestMultiplier_.
-
++
 _D~INVALID_SIGNATURE~ <= Stake~REQUEST_BASE~_
-
++
 The invalid signature penalty is limited by the base stake.
 
-===== Minor: D~late_output~(T)
+D~late_output~(T)::
 
+Minor
++
 _R~group~(T~late~) = D~late_output~(T~late~)_ when _T~late~ > T~MAX_OUTPUT_DELAY~_
-
++
 If the group takes particularly long to submit the output, the group reward can
 go negative. In this case instead of rewarding the group members in _$CURRENCY_,
 their stakes are slashed. Additionally, the unreliable group is terminated.
-
++
 _D~late_output~(T) < D~late_output~(T')_
-
++
 To ensure an incentive to submit a late output remains, the penalty should grow
 over time.
-
++
 _D~late_output~(T~OUTPUT_FAILURE~) = Stake~REQUEST_BASE~_
-
++
 If the output is not submitted within _T~OUTPUT_FAILURE~_, every member in the
 group is penalized by _Stake~REQUEST_BASE~ * RequestMultiplier_.
 
@@ -277,7 +289,7 @@ _R~leftover~(T) = R~max~ - R~total~(T)_
 
 If _R~leftover~(T) > 0_, the surplus needs to be allocated somehow.
 
-===== Leftover pool
+Leftover pool::
 
 One possibility is to establish a _leftover pool_ and use the pool to subsidize
 later outputs by an amount determined by the currency balance in the pool:
@@ -285,7 +297,7 @@ later outputs by an amount determined by the currency balance in the pool:
 _Bid'~i~ = Bid~i~ + R~leftover_subsidy~(PoolBalance~i~, Bid~i~)_ +
 _PoolBalance~i+1~ = PoolBalance~i~ - R~leftover_subsidy~(PoolBalance~i~, Bid~i~)_
 
-===== Leftover refund
+Leftover refund::
 
 Another possibility is to refund the leftovers to the requester. This could be
 desirable as compensation for slowness of output, but if a large number of
@@ -303,21 +315,25 @@ network could be serious. If the owner of a compromised key is punished for the
 failure to secure it adequately, it can improve the incentives and weed out
 insecure participants.
 
-===== Major punishment: D~KEY_COMPROMISED~
+D~KEY_COMPROMISED~::
 
+Major punishment
++
 If the individual private key of _P~i~_ is compromised or used to sign an
 inappropriate value _v_, _P~i~_ should be given the major punishment of
 _D~KEY_COMPROMISED~_.
-
++
 Compromise of an individual private key can be proven by submitting a message
 signed with the key, along with the corresponding public key and its merkle path
 to the root of the individual public key merkle tree, published in DKG result.
 
-===== Reward: R~KEY_COMPROMISE_TATTLETALE~
+R~KEY_COMPROMISE_TATTLETALE~::
 
+Reward
++
 An operator who submits proof of an individual private key compromise should be
 rewarded by _R~KEY_COMPROMISE_TATTLETALE~_ tokens.
-
++
 _R~KEY_COMPROMISE_TATTLETALE~ < D~KEY_COMPROMISED~_
 
 ==== Group private key compromise
@@ -326,12 +342,14 @@ If the private group key of any group is compromised, beacon security can be
 violated for outputs assigned to that group. Detection and termination of such
 groups should be incentivized.
 
-===== Minor punishment: D~GROUP_KEY_COMPROMISED~
+D~GROUP_KEY_COMPROMISED~::
 
+Minor punishment
++
 If the group private key of _G~i~_ is used to sign an inappropriate value _v_,
 every member in _G~i~_ can be punished by _D~GROUP_KEY_COMPROMISED~_. A group
 whose key has been compromised must be terminated.
-
++
 Because signing an invalid value requires contribution from at least _H_
 members, the existence of such a signature proves that the honest majority
 assumption has not held. However, because participants disqualified in DKG
@@ -341,13 +359,15 @@ _M~nofail~_ members were disqualified in phase 9. This should be a rare
 occurrence but provides a slight control bootstrapping attack for a sufficiently
 powerful adversary.
 
-===== Reward: R~GROUP_KEY_COMPROMISE_TATTLETALE~
+R~GROUP_KEY_COMPROMISE_TATTLETALE~::
 
+Reward
++
 An operator who submits proof of an individual private key compromise should be
 rewarded by _R~GROUP_KEY_COMPROMISE_TATTLETALE~_ tokens.
-
++
 _R~GROUP_KEY_COMPROMISE_TATTLETALE~ << M~nofail~ * D~GROUP_KEY_COMPROMISED~_
-
++
 The magnitude of the group key compromise tattletale reward has a significant
 impact on the viability of the control bootstrapping attack for deliberately
 compromising the group key.
