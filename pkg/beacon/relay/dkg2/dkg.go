@@ -212,9 +212,9 @@ func stateTransition(
 // corresponds to a member in the group and true/false value indicates status of
 // the member.
 func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
-	var serializedGroupPublicKey []byte
+	var serializedGroupPublicKey [32]byte
 	if gjkrResult.GroupPublicKey != nil {
-		serializedGroupPublicKey = gjkrResult.GroupPublicKey.Marshal()
+		copy(serializedGroupPublicKey[:], gjkrResult.GroupPublicKey.Marshal())
 	}
 
 	// convertToBoolSlice converts slice containing members IDs to a slice of

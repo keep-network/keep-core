@@ -391,7 +391,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	_, err = ec.keepGroupContract.SubmitDKGResult(
 		requestID,
 		result.Success,
-		result.PublicKeyAsByteArray(),
+		result.GroupPublicKey,
 		result.DisqualifiedAsBytes(),
 		result.InactiveAsBytes(),
 	)
