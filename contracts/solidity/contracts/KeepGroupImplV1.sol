@@ -27,6 +27,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _groupSize;
     uint256 internal _minStake;
     address internal _stakingProxy;
+    address internal _randomBeacon;
 
     uint256 internal _timeoutInitial;
     uint256 internal _timeoutSubmission;
@@ -263,6 +264,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Initialize Keep Group implementation contract with a linked Staking proxy contract.
      * @param stakingProxy Address of a staking proxy contract that will be linked to this contract.
+     * @param randomBeacon Address of a random beacon contract that will be linked to this contract.
      * @param minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      * @param groupSize Size of a group in the threshold relay.
      * @param groupThreshold Minimum number of interacting group members needed to produce a relay entry.
@@ -272,6 +274,7 @@ contract KeepGroupImplV1 is Ownable {
      */
     function initialize(
         address stakingProxy,
+        address randomBeacon,
         uint256 minStake,
         uint256 groupThreshold,
         uint256 groupSize,
@@ -283,6 +286,7 @@ contract KeepGroupImplV1 is Ownable {
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         _initialized["KeepGroupImplV1"] = true;
         _stakingProxy = stakingProxy;
+        _randomBeacon = randomBeacon;
         _minStake = minStake;
         _groupSize = groupSize;
         _groupThreshold = groupThreshold;

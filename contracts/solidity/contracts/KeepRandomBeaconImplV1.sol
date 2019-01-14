@@ -3,6 +3,11 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
+interface GroupContract {
+    function runGroupSelection(uint256 randomBeaconValue) external;
+}
+
+
 /**
  * @title KeepRandomBeaconImplV1
  * @dev Initial version of implementation contract that works under Keep Random
@@ -22,6 +27,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _minPayment;
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
+    address internal _groupContract;
 
     mapping (string => bool) internal _initialized;
     mapping (uint256 => address) internal _requestPayer;
@@ -116,6 +122,14 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
+     * @dev Set group contract.
+     * @param groupContract Group contract address.
+     */
+    function setGroupContract(address groupContract) public onlyOwner {
+        _groupContract = groupContract;
+    }
+
+    /**
      * @dev Get the minimum payment that is required before a relay entry occurs.
      */
     function minimumPayment() public view returns(uint256) {
@@ -129,9 +143,12 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupID Public key of the group that generated the threshold signature.
      */
     function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry) public {
-        _requestGroup[requestID] = groupID;
 
+        // TODO: validate groupSignature using BLS.sol
+    
+        _requestGroup[requestID] = groupID;
         emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number);
+        GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
     /**
