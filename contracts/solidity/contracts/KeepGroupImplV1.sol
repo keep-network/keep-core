@@ -290,6 +290,22 @@ contract KeepGroupImplV1 is Ownable {
         return StakingProxy(_stakingProxy).balanceOf(staker)/_minStake;
     }
 
+     /* 
+     * @dev Check if member is disqualified.
+     * @param groupPubKey public key of the specified group.
+     * @param gmemberIndex position of the member to check.
+     * @return true if staker is disqualified, false otherwise.
+     */
+    function isDisqualified(bytes32 groupPubKey, uint256 memberIndex) public view returns (bool){
+        //NOTE: variable _requestId updated on submitDkgResult()
+        //better way to get DkgResult using groupPubKey?
+        require(_dkgResultPublished[_requestId] == true, 
+            "DKG Result is not currently submitted");
+        require(_requestIdToDkgResult[_requestId].groupPubKey == groupPubKey,
+            "recent DGK submission does not match Group Public Key");
+        return _requestIdToDkgResult[_requestId].disqualified[memberIndex] != 0x00;
+    }
+
     /**
      * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
      * @param minStake Amount in KEEP.
