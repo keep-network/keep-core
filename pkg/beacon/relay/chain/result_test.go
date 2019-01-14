@@ -2,8 +2,6 @@ package chain
 
 import (
 	"testing"
-
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestDKGResultEquals(t *testing.T) {
@@ -53,23 +51,23 @@ func TestDKGResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"disqualified - equal": {
-			result1:        &DKGResult{Disqualified: []bool{false, false, true}},
-			result2:        &DKGResult{Disqualified: []bool{false, false, true}},
+			result1:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
+			result2:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
 			expectedResult: true,
 		},
 		"disqualified - not equal": {
-			result1:        &DKGResult{Disqualified: []bool{false, false, true}},
-			result2:        &DKGResult{Disqualified: []bool{false, true, false}},
+			result1:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
+			result2:        &DKGResult{Disqualified: []byte{0x00, 0x01, 0x00}},
 			expectedResult: false,
 		},
 		"inactive - equal": {
-			result1:        &DKGResult{Inactive: []bool{true, true, false}},
-			result2:        &DKGResult{Inactive: []bool{true, true, false}},
+			result1:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
+			result2:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
 			expectedResult: true,
 		},
 		"inactive - not equal": {
-			result1:        &DKGResult{Inactive: []bool{true, true, false}},
-			result2:        &DKGResult{Inactive: []bool{true, true}},
+			result1:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
+			result2:        &DKGResult{Inactive: []byte{0x01, 0x01}},
 			expectedResult: false,
 		},
 	}
@@ -81,32 +79,4 @@ func TestDKGResultEquals(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestPresentDisqualifiedAsBytes(t *testing.T) {
-	result := &DKGResult{
-		Success:      false,
-		Disqualified: []bool{true, false, true},
-		Inactive:     []bool{false, false, false},
-	}
-
-	testutils.AssertBytesEqual(
-		t,
-		[]byte{0x01, 0x00, 0x01},
-		result.DisqualifiedAsBytes(),
-	)
-}
-
-func TestPresentInactiveAsBytes(t *testing.T) {
-	result := &DKGResult{
-		Success:      false,
-		Disqualified: []bool{false, false, false, false},
-		Inactive:     []bool{true, false, false, true},
-	}
-
-	testutils.AssertBytesEqual(
-		t,
-		[]byte{0x01, 0x00, 0x00, 0x01},
-		result.InactiveAsBytes(),
-	)
 }

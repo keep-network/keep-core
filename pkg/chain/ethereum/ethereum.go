@@ -392,8 +392,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 		requestID,
 		result.Success,
 		result.GroupPublicKey,
-		result.DisqualifiedAsBytes(),
-		result.InactiveAsBytes(),
+		result.Disqualified,
+		result.Inactive,
 	)
 	if err != nil {
 		subscription.Unsubscribe()

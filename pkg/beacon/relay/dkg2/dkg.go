@@ -217,21 +217,21 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 		copy(serializedGroupPublicKey[:], gjkrResult.GroupPublicKey.Marshal())
 	}
 
-	// convertToBoolSlice converts slice containing members IDs to a slice of
-	// group size length where true entry indicates the member was found on
+	// convertToByteSlice converts slice containing members IDs to a slice of
+	// group size length where 0x01 entry indicates the member was found on
 	// passed members IDs slice. It assumes member IDs for a group starts iterating
 	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
-	// resulting boolean slice will be {false, true, false}.
-	convertToBoolSlice := func(memberIDsSlice []gjkr.MemberID) []bool {
-		boolSlice := make([]bool, groupSize)
-		for index := range boolSlice {
+	// resulting byte slice will be {0x00, 0x01, 0x00}.
+	convertToBoolSlice := func(memberIDsSlice []gjkr.MemberID) []byte {
+		bytes := make([]byte, groupSize)
+		for index := range bytes {
 			for _, memberID := range memberIDsSlice {
 				if memberID.Equals(index + 1) {
-					boolSlice[index] = true
+					bytes[index] = 0x01
 				}
 			}
 		}
-		return boolSlice
+		return bytes
 	}
 
 	return &relayChain.DKGResult{

@@ -30,8 +30,8 @@ func TestConvertResult(t *testing.T) {
 			expectedResult: &relayChain.DKGResult{
 				Success:        false,
 				GroupPublicKey: [32]byte{},
-				Disqualified:   []bool{false, false, false, false, false},
-				Inactive:       []bool{false, false, false, false, false},
+				Disqualified:   []byte{0x00, 0x00, 0x00, 0x00, 0x00},
+				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x00},
 			},
 		},
 		"success: true, group public key: provided, DQ and IA: provided": {
@@ -44,8 +44,8 @@ func TestConvertResult(t *testing.T) {
 			expectedResult: &relayChain.DKGResult{
 				Success:        true,
 				GroupPublicKey: serializedPublicKey,
-				Disqualified:   []bool{true, false, true, true, false},
-				Inactive:       []bool{false, false, false, false, true},
+				Disqualified:   []byte{0x01, 0x00, 0x01, 0x01, 0x00},
+				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x01},
 			},
 		},
 	}
