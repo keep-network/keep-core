@@ -13,8 +13,9 @@ import (
 type Publisher struct {
 	// ID of distributed key generation execution.
 	RequestID *big.Int
-	// Handle to interact with a blockchain.
-	chainHandle chain.Handle
+	// Initialized BlockCounter which allows for the reading, counting, and
+	// waiting of blocks for the purposes of synchronization.
+	blockCounter chain.BlockCounter
 	// Sequential number of the current member in the publishing group.
 	// The value is used to determine eligible publishing member. Indexing starts
 	// with `1`. Relates to DKG Phase 13.
@@ -31,7 +32,8 @@ type Publisher struct {
 func executePublishing(
 	requestID *big.Int,
 	publishingIndex int,
-	chainHandle chain.Handle,
+	chainRelay relayChain.Interface,
+	blockCounter chain.BlockCounter,
 	result *relayChain.DKGResult,
 ) error {
 	if publishingIndex < 1 {
@@ -40,12 +42,12 @@ func executePublishing(
 
 	publisher := &Publisher{
 		RequestID:       requestID,
-		chainHandle:     chainHandle,
+		blockCounter:    blockCounter,
 		publishingIndex: publishingIndex,
 		blockStep:       1,
 	}
 
-	_, err := publisher.publishResult(result)
+	_, err := publisher.publishResult(result, chainRelay)
 	if err != nil {
 		return fmt.Errorf("result publication failed [%v]", err)
 	}
@@ -74,9 +76,10 @@ func executePublishing(
 // another publisher it returns `-1`.
 //
 // See Phase 13 of the protocol specification.
-func (pm *Publisher) publishResult(result *relayChain.DKGResult) (int, error) {
-	chainRelay := pm.chainHandle.ThresholdRelay()
-
+func (pm *Publisher) publishResult(
+	result *relayChain.DKGResult,
+	chainRelay relayChain.Interface,
+) (int, error) {
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
 	defer close(onPublishedResultChan)
 
@@ -100,14 +103,9 @@ func (pm *Publisher) publishResult(result *relayChain.DKGResult) (int, error) {
 		return -1, nil
 	}
 
-	blockCounter, err := pm.chainHandle.BlockCounter()
-	if err != nil {
-		return -1, fmt.Errorf("could not initialize block counter [%v]", err)
-	}
-
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
-	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
+	eligibleToSubmitWaiter, err := pm.blockCounter.BlockWaiter(
 		(pm.publishingIndex - 1) * pm.blockStep,
 	)
 	if err != nil {

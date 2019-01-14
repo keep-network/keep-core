@@ -1,6 +1,7 @@
 package relay
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"os"
@@ -9,6 +10,8 @@ import (
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/thresholdgroup"
@@ -54,22 +57,76 @@ type membership struct {
 // Indirectly, the completion of the process is signaled by the formation of an
 // on-chain group containing at least one of this node's virtual stakers.
 func (n *Node) JoinGroupIfEligible(
-	groupChain relaychain.Interface,
-	entryValue *big.Int,
+	relayChain relaychain.Interface,
+	groupSelectionResult *groupselection.Result,
 ) {
-	err := n.SubmitTicketsForGroupSelection(
-		entryValue.Bytes(),
-		groupChain,
-		n.blockCounter,
+	// build the channel name and get the broadcast channel
+	broadcastChannelName := channelNameFromSelectedTickets(
+		groupSelectionResult.Entry.Value,
+		groupSelectionResult.SelectedTickets,
+	)
+	broadcastChannel, err := n.netProvider.ChannelFor(
+		broadcastChannelName,
 	)
 	if err != nil {
 		fmt.Fprintf(
 			os.Stderr,
-			"Failed submission of tickets for group selection: [%v].\n",
+			"Failed to get broadcastChannel for name %s with err: [%v].\n",
+			broadcastChannelName,
 			err,
 		)
 		return
 	}
+
+	for index, ticket := range groupSelectionResult.SelectedTickets {
+		// If our ticket is amongst those chosen, kick
+		// off an instance of DKG. We may have multiple
+		// tickets in the selected tickets (which would
+		// result in multiple instances of DKG).
+		if ticket.IsFromStaker(n.StakeID) {
+			go dkg2.ExecuteDKG(
+				groupSelectionResult.Entry.RequestID,
+				groupSelectionResult.Entry.Seed,
+				index,
+				n.chainConfig.GroupSize,
+				n.chainConfig.Threshold,
+				n.blockCounter,
+				relayChain,
+				broadcastChannel,
+			)
+		}
+	}
+	// exit on signal
+	return
+}
+
+// channelNameFromSelectedTickets takes the selected tickets, and does the
+// following to construct the broadcastChannel name:
+// * grabs the value from each ticket
+// * concatenates all of the values
+// * uses the previous entry value as a nonce (final value)
+// * returning the hashed concatenated values and nonce
+func channelNameFromSelectedTickets(
+	entryValue *big.Int,
+	tickets []*groupselection.Ticket,
+) string {
+	var channelNameBytes []byte
+	for _, ticket := range tickets {
+		channelNameBytes = append(
+			channelNameBytes,
+			ticket.Value.Bytes()...,
+		)
+	}
+	// Add the previous entry as the nonce
+	channelNameBytes = append(
+		channelNameBytes,
+		entryValue.Bytes()...,
+	)
+
+	hashedChannelName := groupselection.SHAValue(
+		sha256.Sum256(channelNameBytes),
+	)
+	return string(hashedChannelName.Bytes())
 }
 
 // RegisterGroup registers that a group was successfully created by the given
