@@ -113,7 +113,10 @@ func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
 }
 
 // TODO: implement
-func (ec *ethereumChain) OnGroupSelectionResult(handle func(result *groupselection.Result)) {
+func (ec *ethereumChain) OnGroupSelectionResult(
+	handle func(result *groupselection.Result),
+) event.Subscription {
+	return nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(

@@ -54,7 +54,7 @@ type GroupInterface interface {
 	// phase of group selection has been completed on-chain, and the chain
 	// emits a notification of an ordered list of seletected tickets.
 	// These tickets represent the stakers eligble to form the next group.
-	OnGroupSelectionResult(func(result *groupselection.Result))
+	OnGroupSelectionResult(func(result *groupselection.Result)) event.Subscription
 	// GetOrderedTickets returns submitted tickets which have passed checks
 	// on-chain.
 	GetOrderedTickets() []*groupselection.Ticket
