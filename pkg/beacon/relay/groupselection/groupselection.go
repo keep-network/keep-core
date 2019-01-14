@@ -3,8 +3,6 @@ package groupselection
 import (
 	"math/big"
 	"sort"
-
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 )
 
 var one = int64(1)
@@ -36,5 +34,4 @@ func GenerateTickets(
 // Result represents ordered, selected tickets from those submitted to the chain.
 type Result struct {
 	SelectedTickets []*Ticket
-	Entry           *event.Entry
 }
