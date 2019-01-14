@@ -75,6 +75,8 @@ func Initialize(
 				relayChain,
 				blockCounter,
 				entry.Value.Bytes(),
+				entry.RequestID,
+				entry.Seed,
 			)
 		})
 
