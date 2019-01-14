@@ -218,6 +218,17 @@ contract KeepGroupImplV1 is Ownable {
         bytes disqualified,
         bytes inactive
     ) public {
+
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        require(
+            _tickets.length >= _groupSize,
+            "There should be enough valid tickets submitted to form a group."
+        );
+
         _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
   
