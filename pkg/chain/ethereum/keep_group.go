@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 )
@@ -211,18 +212,15 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 
 func (kg *keepGroup) SubmitDKGResult(
 	requestID *big.Int,
-	success bool,
-	groupPubKey [32]byte,
-	disqualified []byte,
-	inactive []byte,
+	result *relaychain.DKGResult,
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
 		requestID,
-		success,
-		groupPubKey,
-		disqualified,
-		inactive,
+		result.Success,
+		result.GroupPublicKey,
+		result.Disqualified,
+		result.Inactive,
 	)
 }
 
