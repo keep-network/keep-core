@@ -49,6 +49,36 @@ func (r1 *DKGResult) Equals(r2 *DKGResult) bool {
 	return true
 }
 
+// DisqualifiedAsBytes returns DQ array in the same format as stored on-chain.
+//
+// TODO: Instead of transforming DQ here, change type of Disqualified field.
+func (dkgr *DKGResult) DisqualifiedAsBytes() []byte {
+	disqualified := make([]byte, len(dkgr.Disqualified))
+	for i, dq := range dkgr.Disqualified {
+		if dq {
+			disqualified[i] = 0x01
+		} else {
+			disqualified[i] = 0x00
+		}
+	}
+	return disqualified
+}
+
+// InactiveAsBytes returns IA array in the same format as stored on-chain.
+//
+// TODO: Instead of transforming IA here, change type of Inactive field.
+func (dkgr *DKGResult) InactiveAsBytes() []byte {
+	inactive := make([]byte, len(dkgr.Inactive))
+	for i, ia := range dkgr.Inactive {
+		if ia {
+			inactive[i] = 0x01
+		} else {
+			inactive[i] = 0x00
+		}
+	}
+	return inactive
+}
+
 // bigIntEquals checks if two big.Int values are equal.
 func bigIntEquals(expected *big.Int, actual *big.Int) bool {
 	if expected != nil && actual != nil {
