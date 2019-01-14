@@ -1,8 +1,8 @@
-== Details+Rationale
+= Details+Rationale
 
-=== Message delivery
+== Message delivery
 
-==== Broadcast channel
+=== Broadcast channel
 
 Every group member in phase _p_ can safely assume
 every non-inactive group member has seen
@@ -16,7 +16,7 @@ as the message required in a particular phase of the protocol.
 The implementation details of the broadcast channel
 are currently out of scope for this document.
 
-===== Assumptions and implications
+==== Assumptions and implications
 
 The broadcast channel is assumed to give all participants
 the same view of the world,
@@ -35,7 +35,7 @@ To protect against the latter,
 _escalating votes_ assumes a null result when any single result is opposed
 by _f~max~ + 1_ participants as it means that the honest votes are split.
 
-=== Result format
+== Result format
 
 The result of the DKG protocol can be either a success or a failure.
 
@@ -94,7 +94,7 @@ saving a small amount of space in most cases.
 In practice there is no way it would be worth it,
 especially given the reputation of ternary in this industry.)
 
-=== Dispute resolution
+== Dispute resolution
 
 Given that the protocol is performed off-chain,
 participants may submit incorrect results
@@ -114,7 +114,7 @@ either by members signing valid results, which are then verified on-chain,
 or by designated members being eligible to submit a result
 which may be challenged by others if they consider it incorrect.
 
-==== Full signing w/ ECDSA (FE)
+=== Full signing w/ ECDSA (FE)
 
 The _full signing_ technique of voting is simple.
 The designated eligible submitter _P~sub~_ publishes the correct result
@@ -158,7 +158,7 @@ must have at least one honest participant supporting it.
 |1,021,000
 |===
 
-==== Full signing w/ BLS (FB)
+=== Full signing w/ BLS (FB)
 
 By using a BLS group signature instead of individual ECDSA signatures,
 the on-chain size of the result can be significantly reduced.
@@ -217,7 +217,7 @@ Without cost reductions, this is `570,000` for _H = 101_
 |510,500
 |===
 
-==== Escalating votes
+=== Escalating votes
 
 As an alternative to the above,
 _escalating votes (EV)_ is a protocol where a result is submitted,
@@ -264,7 +264,7 @@ if the average number of votes supporting the highest-voted incorrect result
 is less than 13 out of 200 participants,
 or alternatively if the worst-case scenario occurs at most 1/8 the time.
 
-=== Incentives
+== Incentives
 
 After performing the group creation correctly,
 participants will be members of _G_
@@ -276,7 +276,7 @@ the gas required for these transactions.
 
 Malicious parties who violate the protocol should be penalized.
 
-==== Required transactions
+=== Required transactions
 
 Group selection will be performed as part of a previous transaction.
 
