@@ -245,6 +245,9 @@ func (c *localChain) RequestRelayEntry(
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
 func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
+	c.submittedResultsMutex.Lock()
+	defer c.submittedResultsMutex.Unlock()
+
 	return c.submittedResults[requestID] != nil, nil
 }
 
