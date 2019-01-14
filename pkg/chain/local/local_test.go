@@ -51,36 +51,35 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 func TestLocalBlockWaiter(t *testing.T) {
 	var tests = map[string]struct {
-		blockWait    int
-		expectation  time.Duration
-		errorMessage string
+		blockWait        int
+		expectedWaitTime time.Duration
 	}{
 		"does wait for a block": {
-			blockWait:    1,
-			expectation:  time.Duration(525) * time.Millisecond,
-			errorMessage: "Failed to wait for a single block; expected %s but took %s.",
+			blockWait:        1,
+			expectedWaitTime: blockTime,
 		},
-		"waited for a longer time": {
-			blockWait:    2,
-			expectation:  time.Duration(525*2) * time.Millisecond,
-			errorMessage: "Failed to wait for 2 blocks; expected %s but took %s.",
+		"does wait for two blocks": {
+			blockWait:        2,
+			expectedWaitTime: 2 * blockTime,
 		},
-		"doesn't wait if 0 blocks": {
-			blockWait:    0,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Failed for a 0 block wait; expected %s but took %s.",
+		"does wait for three blocks": {
+			blockWait:        3,
+			expectedWaitTime: 3 * blockTime,
 		},
-		"invalid value": {
-			blockWait:    -1,
-			expectation:  time.Duration(20) * time.Millisecond,
-			errorMessage: "Waiting for a time when it should have errored; expected %s but took %s.",
+		"does not wait for 0 blocks": {
+			blockWait:        0,
+			expectedWaitTime: 0,
+		},
+		"does not wait for negative number of blocks": {
+			blockWait:        -1,
+			expectedWaitTime: 0,
 		},
 	}
 
 	for testName, test := range tests {
+		test := test
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-
 			c := Connect(10, 4)
 			countWait, err := c.BlockCounter()
 			if err != nil {
@@ -92,8 +91,26 @@ func TestLocalBlockWaiter(t *testing.T) {
 			end := time.Now().UTC()
 
 			elapsed := end.Sub(start)
-			if test.expectation < elapsed {
-				t.Errorf(test.errorMessage, test.expectation, elapsed)
+
+			// Block waiter should wait for test.expectedWaitTime at minimum.
+			if elapsed < test.expectedWaitTime {
+				t.Errorf(
+					"waited less than expected; expected [%v] at min, waited [%v]",
+					test.expectedWaitTime,
+					elapsed,
+				)
+			}
+
+			// Block waiter should wait for test.expectedWaitTime plus some
+			// margin at maximum; the margin is the time needed for the return
+			// instructions to execute, setting it to 25ms for this test.
+			margin := time.Duration(25) * time.Millisecond
+			if elapsed > (test.expectedWaitTime + margin) {
+				t.Errorf(
+					"waited longer than expected; expected %v at max, waited %v",
+					test.expectedWaitTime,
+					elapsed,
+				)
 			}
 		})
 	}
@@ -102,24 +119,14 @@ func TestLocalBlockWaiter(t *testing.T) {
 func TestLocalIsDKGResultPublished(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
-	submittedRequestID1 := big.NewInt(1)
-	submittedResult11 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(11),
+	submittedRequestID := big.NewInt(1)
+	submittedResult := &relaychain.DKGResult{
+		GroupPublicKey: []byte{11},
 	}
 
-	submittedRequestID2 := big.NewInt(2)
-	submittedResult21 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(21),
-	}
-
-	submittedResults[submittedRequestID1] = append(
-		submittedResults[submittedRequestID1],
-		submittedResult11,
-	)
-
-	submittedResults[submittedRequestID2] = append(
-		submittedResults[submittedRequestID2],
-		submittedResult21,
+	submittedResults[submittedRequestID] = append(
+		submittedResults[submittedRequestID],
+		submittedResult,
 	)
 
 	localChain := &localChain{
@@ -129,29 +136,24 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	var tests = map[string]struct {
 		requestID      *big.Int
-		dkgResult      *relaychain.DKGResult
 		expectedResult bool
 	}{
 		"matched": {
-			requestID:      submittedRequestID2,
-			dkgResult:      submittedResult21,
+			requestID:      submittedRequestID,
 			expectedResult: true,
 		},
 		"not matched - different request ID": {
-			requestID:      submittedRequestID2,
-			dkgResult:      submittedResult11,
-			expectedResult: false,
-		},
-		"not matched - different request ID and DKG Result": {
 			requestID:      big.NewInt(3),
-			dkgResult:      &relaychain.DKGResult{GroupPublicKey: big.NewInt(31)},
 			expectedResult: false,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := chainHandle.IsDKGResultPublished(test.requestID, test.dkgResult)
+			actualResult, err := chainHandle.IsDKGResultPublished(test.requestID)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			if actualResult != test.expectedResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
@@ -167,7 +169,8 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Initialize local chain.
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 	localChain := &localChain{
-		submittedResults: submittedResults,
+		submittedResults:             submittedResults,
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 	}
 	chainHandle := localChain.ThresholdRelay()
 
@@ -186,7 +189,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
 	submittedResult11 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(11),
+		GroupPublicKey: []byte{11},
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
@@ -255,6 +258,39 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		t.Fatalf("unexpected event was emitted: %v", dkgResultPublicationEvent)
 	case <-ctx.Done():
 		t.Logf("DKG result publication event not generated")
+	}
+}
+
+func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	localChain := &localChain{
+		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
+		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+	}
+	relay := localChain.ThresholdRelay()
+
+	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
+	subscription := localChain.OnDKGResultPublished(
+		func(dkgResultPublication *event.DKGResultPublication) {
+			dkgResultPublicationChan <- dkgResultPublication
+		},
+	)
+
+	// Unsubscribe from the event - from this point, callback should
+	// never be called.
+	subscription.Unsubscribe()
+
+	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
+		GroupPublicKey: []byte{88},
+	})
+
+	select {
+	case <-dkgResultPublicationChan:
+		t.Fatalf("event should not be emitted - I have unsubscribed!")
+	case <-ctx.Done():
+		// ok
 	}
 }
 

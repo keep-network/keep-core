@@ -13,8 +13,8 @@ type localBlockCounter struct {
 	waiters     map[int][]chan int
 }
 
-// WaitForBlocks waits for the specified number of blocks before returning. If
-// the number of blocks is zero or negative, it should return immediately.
+var blockTime = time.Duration(500 * time.Millisecond)
+
 func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
 	waiter, err := counter.BlockWaiter(numBlocks)
 	if err != nil {
@@ -24,9 +24,6 @@ func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
 	return nil
 }
 
-// BlockWaiter immediately returns a channel that will receive the block number
-// after the specified number of blocks. Reading from the returned channel
-// immediately will effectively behave the same way as calling WaitForBlocks.
 func (counter *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
 	newWaiter := make(chan int)
 
@@ -48,15 +45,16 @@ func (counter *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error)
 	return newWaiter, nil
 }
 
-// CurrentBlock returns the current block number.
 func (counter *localBlockCounter) CurrentBlock() (int, error) {
+	counter.structMutex.Lock()
+	defer counter.structMutex.Unlock()
 	return counter.blockHeight, nil
 }
 
 // count is an internal function that counts up time to simulate the generation
 // of blocks.
 func (counter *localBlockCounter) count() {
-	ticker := time.NewTicker(time.Duration(500 * time.Millisecond))
+	ticker := time.NewTicker(blockTime)
 
 	for range ticker.C {
 		counter.structMutex.Lock()

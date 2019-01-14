@@ -328,6 +328,9 @@ within _T~dkg~_ blocks of starting the key generation protocol,
 _P~2~_ becomes eligible to submit the public key.
 After _T~dkg~ + T~step~_ blocks, _P~3~_ becomes eligible,
 after _T~dkg~ + 2 * T~step~_ blocks _P~4~_, and so on.
+Note that _P~n~_ remains eligible in subsequent steps;
+that is, the list of eligibile players grows by one every _T~step~_,
+rather than the eligible player changing every step.
 
 When _P~j~_ submits the result, players _P~k~ | k < j_ will face a small
 penalty for being late, while _P~j~_ will receive the submission reward.

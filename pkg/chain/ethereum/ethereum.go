@@ -10,6 +10,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -39,7 +40,7 @@ func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
 func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
-	return ec.keepRandomBeaconContract.HasMinimumStake(address)
+	return ec.keepGroupContract.HasMinimumStake(address)
 }
 
 func (ec *ethereumChain) SubmitGroupPublicKey(
@@ -92,6 +93,23 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	}
 
 	return groupRegistrationPromise
+}
+
+// TODO: implement
+func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+	return &async.GroupTicketPromise{}
+}
+
+// TODO: implement
+func (ec *ethereumChain) SubmitChallenge(
+	ticket *groupselection.TicketChallenge,
+) *async.GroupTicketChallengePromise {
+	return &async.GroupTicketChallengePromise{}
+}
+
+// TODO: implement
+func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
+	return make([]*groupselection.Ticket, 0)
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
@@ -239,128 +257,6 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	}
 }
 
-func (ec *ethereumChain) AddStaker(
-	groupMemberID string,
-) *async.StakerRegistrationPromise {
-	onStakerAddedPromise := &async.StakerRegistrationPromise{}
-
-	if len(groupMemberID) != 32 {
-		err := onStakerAddedPromise.Fail(
-			fmt.Errorf(
-				"groupMemberID wrong length, need 32, got %d",
-				len(groupMemberID),
-			),
-		)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Promise Fail failed [%v].\n", err)
-		}
-		return onStakerAddedPromise
-	}
-
-	err := ec.keepGroupContract.WatchOnStakerAdded(
-		func(index int, groupMemberID []byte) {
-			err := onStakerAddedPromise.Fulfill(&event.StakerRegistration{
-				Index:         index,
-				GroupMemberID: string(groupMemberID),
-			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Promise Fulfill failed [%v].\n", err)
-			}
-		},
-		func(err error) error {
-			failErr := onStakerAddedPromise.Fail(
-				fmt.Errorf(
-					"adding new staker failed with: [%v]",
-					err,
-				),
-			)
-
-			if failErr != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"Staker added promise failing failed: [%v]\n",
-					err,
-				)
-			}
-
-			return failErr
-		},
-	)
-	if err != nil {
-		err = onStakerAddedPromise.Fail(
-			fmt.Errorf(
-				"on staker added failed with: [%v]",
-				err,
-			),
-		)
-		if err != nil {
-			fmt.Printf("Staker added promise failing failed: [%v]\n", err)
-		}
-
-		return onStakerAddedPromise
-	}
-
-	_, err = ec.keepGroupContract.AddStaker(groupMemberID)
-	if err != nil {
-		err = onStakerAddedPromise.Fail(
-			fmt.Errorf(
-				"on staker added failed with: [%v]",
-				err,
-			),
-		)
-		if err != nil {
-			fmt.Printf("Staker added promise failing failed: [%v]\n", err)
-		}
-
-		return onStakerAddedPromise
-	}
-
-	return onStakerAddedPromise
-}
-
-func (ec *ethereumChain) OnStakerAdded(
-	handle func(staker *event.StakerRegistration),
-) {
-	err := ec.keepGroupContract.WatchOnStakerAdded(
-		func(index int, groupMemberID []byte) {
-			handle(&event.StakerRegistration{
-				Index:         index,
-				GroupMemberID: string(groupMemberID),
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("staker event failed with %v", err)
-		},
-	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"failed to watch OnStakerAdded [%v].\n",
-			err,
-		)
-	}
-}
-
-func (ec *ethereumChain) GetStakerList() ([]string, error) {
-	count, err := ec.keepGroupContract.GetNStaker()
-	if err != nil {
-		err = fmt.Errorf("failed on call to GetNStaker: [%v]", err)
-		return nil, err
-	}
-
-	listOfStakers := make([]string, 0, count)
-	for i := 0; i < count; i++ {
-		staker, err := ec.keepGroupContract.GetStaker(i)
-		if err != nil {
-			return nil,
-				fmt.Errorf("at postion %d out of %d error: [%v]", i, count, err)
-		}
-		listOfStakers = append(listOfStakers, string(staker))
-	}
-
-	return listOfStakers, nil
-}
-
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(registration *event.GroupRegistration),
 ) {
@@ -425,9 +321,8 @@ func (ec *ethereumChain) RequestRelayEntry(
 }
 
 // IsDKGResultPublished checks if the result is already published to a chain.
-func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int, result *relaychain.DKGResult) bool {
-	// TODO Implement
-	return false
+func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
+	return false, nil
 }
 
 // SubmitDKGResult sends DKG result to a chain.
@@ -440,6 +335,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) {
+) event.Subscription {
 	// TODO Implement
+	return event.NewSubscription(func() {})
 }

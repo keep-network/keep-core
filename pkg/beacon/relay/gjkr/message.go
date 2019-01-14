@@ -4,8 +4,14 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
+
+// JoinMessage is sent by member to announce its presence in the group.
+type JoinMessage struct {
+	SenderID MemberID
+}
 
 // EphemeralPublicKeyMessage is a message payload that carries the sender's
 // ephemeral public keys generated for all other group members.
@@ -27,13 +33,14 @@ type EphemeralPublicKeyMessage struct {
 }
 
 // MemberCommitmentsMessage is a message payload that carries the sender's
-// commitments to polynomial coefficients during distributed key generation.
+// commitments to coefficients of the secret shares polynomial generated
+// by member in the third phase of the protocol.
 //
 // It is expected to be broadcast.
 type MemberCommitmentsMessage struct {
 	senderID MemberID
 
-	commitments []*big.Int // slice of `C_ik`
+	commitments []*bn256.G1 // slice of C_ik
 }
 
 // PeerSharesMessage is a message payload that carries shares `s_ij` and `t_ij`
@@ -54,7 +61,7 @@ type peerShares struct {
 // SecretSharesAccusationsMessage is a message payload that carries all of the
 // sender's accusations against other members of the threshold group.
 // If all other members behaved honestly from the sender's point of view, this
-// message should be broadcast but with an empty slice of `accusedIDs`.
+// message should be broadcast but with an empty map of `accusedMembersKeys`.
 //
 // It is expected to be broadcast.
 type SecretSharesAccusationsMessage struct {
@@ -63,25 +70,36 @@ type SecretSharesAccusationsMessage struct {
 	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
 }
 
-// MemberPublicKeySharePointsMessage is a message payload that carries the sender's
-// public key share points.
+// MemberPublicKeySharePointsMessage is a message payload that carries the
+// sender's public key share points.
+//
 // It is expected to be broadcast.
 type MemberPublicKeySharePointsMessage struct {
 	senderID MemberID
 
-	publicKeySharePoints []*big.Int // A_ik = g^{a_ik} mod p
+	publicKeySharePoints []*bn256.G1 // A_ik = g^{a_ik} mod p
 }
 
 // PointsAccusationsMessage is a message payload that carries all of the sender's
 // accusations against other members of the threshold group after public key share
 // points validation.
 // If all other members behaved honestly from the sender's point of view, this
-// message should be broadcast but with an empty slice of `accusedIDs`.
+// message should be broadcast but with an empty map of `accusedMembersKeys`.
 // It is expected to be broadcast.
 type PointsAccusationsMessage struct {
 	senderID MemberID
 
 	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
+}
+
+// DisqualifiedEphemeralKeysMessage is a message payload that carries sender's
+// ephemeral private keys used to generate ephemeral symmetric keys to encrypt
+// communication with members disqualified when points accusations were resolved.
+// It is expected to be broadcast.
+type DisqualifiedEphemeralKeysMessage struct {
+	senderID MemberID
+
+	privateKeys map[MemberID]*ephemeral.PrivateKey
 }
 
 func newPeerSharesMessage(senderID MemberID) *PeerSharesMessage {

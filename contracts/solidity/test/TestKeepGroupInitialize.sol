@@ -6,16 +6,16 @@ import "./helpers/ThrowProxy.sol";
 import "../contracts/KeepGroupImplV1.sol";
 
 
-contract KeepRandomBeaconMock {
-    function hasMinimumStake(address _staker) public view returns(bool) {
-        return true;
+contract StakingProxyMock {
+    function balanceOf(address _staker) public view returns(uint256) {
+        return 200;
     }
 }
 
 
 contract TestKeepGroupInitialize {
-    // Create KEEP random beacon contract mock
-    KeepRandomBeaconMock keepRandomBeacon = new KeepRandomBeaconMock();
+    // Create Staking proxy contract mock
+    StakingProxyMock stakingProxy = new StakingProxyMock();
 
     // Create KEEP Group Contract
     KeepGroupImplV1 keepGroupContract = new KeepGroupImplV1();
@@ -26,16 +26,16 @@ contract TestKeepGroupInitialize {
         ThrowProxy throwProxy = new ThrowProxy(address(keepGroupContract));
 
         // Prime the proxy
-        KeepGroupImplV1(address(throwProxy)).initialize(2, 3, 0);
+        KeepGroupImplV1(address(throwProxy)).initialize(0, 200, 150, 200, 1, 1, 1);
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.
         bool r = throwProxy.execute.gas(200000)();
-        Assert.isFalse(r, "Should fail to initialize without KEEP random beacon contract address.");
+        Assert.isFalse(r, "Should fail to initialize without Staking proxy address.");
     }
 
     function testInitialize() public {
-        keepGroupContract.initialize(2, 3, address(keepRandomBeacon));
+        keepGroupContract.initialize(address(stakingProxy), 200, 150, 200, 1, 1, 1);
         Assert.equal(keepGroupContract.initialized(), true, "Should be initialized.");
     }
 

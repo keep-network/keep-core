@@ -19,11 +19,12 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            echo "Add baseUrl http://docs.keep.network/$CIRCLE_BRANCH/solidity/ to .doxityrc"
-            sed -i '2i "baseUrl": "http://docs.keep.network/'$CIRCLE_BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
-            echo "Add link prefix /$CIRCLE_BRANCH/solidity to .doxityrc"
+            BRANCH=$(sed -e 's/\//\\\//g' <<< $CIRCLE_BRANCH)
+            echo "Add baseUrl http://docs.keep.network/$BRANCH/solidity/ to .doxityrc"
+            sed -i '2i "baseUrl": "http://docs.keep.network/'$BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
+            echo "Add link prefix /$BRANCH/solidity to .doxityrc"
             find='"linkPrefix": ""'
-            replace='"linkPrefix": "\/'$CIRCLE_BRANCH'\/solidity"'
+            replace='"linkPrefix": "\/'$BRANCH'\/solidity"'
             sed -e "s/${find}/${replace}/g" contracts/solidity/docs/.doxityrc > contracts/solidity/docs/.doxityrc.new
             mv contracts/solidity/docs/.doxityrc.new contracts/solidity/docs/.doxityrc
             cd contracts/solidity && npm install

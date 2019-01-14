@@ -1,7 +1,6 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./StakingProxy.sol";
 
 
 /**
@@ -21,8 +20,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
     uint256 internal _seq;
     uint256 internal _minPayment;
-    uint256 internal _minStake;
-    address internal _stakingProxy;
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
 
@@ -40,20 +37,15 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Initialize Keep Random Beacon implementaion contract with a linked staking proxy contract.
-     * @param stakingProxy Address of a staking proxy contract that will be linked to this contract.
+     * @dev Initialize Keep Random Beacon implementaion contract.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
-     * @param minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      */
-    function initialize(address stakingProxy, uint256 minPayment, uint256 minStake, uint256 withdrawalDelay)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay)
         public
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
-        require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
-        _stakingProxy = stakingProxy;
-        _minStake = minStake;
         _minPayment = minPayment;
         _initialized["KeepRandomBeaconImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
@@ -65,17 +57,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
      */
     function initialized() public view returns (bool) {
         return _initialized["KeepRandomBeaconImplV1"];
-    }
-
-    /**
-     * @dev Checks that the specified user has an appropriately large stake.
-     * @param staker Specifies the identity of the random beacon client.
-     * @return True if staked enough to participate in the group, false otherwise.
-     */
-    function hasMinimumStake(address staker) public view returns(bool) {
-        uint256 balance;
-        balance = StakingProxy(_stakingProxy).balanceOf(staker);
-        return (balance >= _minStake);
     }
 
     /**
@@ -135,25 +116,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
-     * @param minStake Amount in KEEP.
-     */
-    function setMinimumStake(uint256 minStake) public onlyOwner {
-        _minStake = minStake;
-    }
-
-    /**
      * @dev Get the minimum payment that is required before a relay entry occurs.
      */
     function minimumPayment() public view returns(uint256) {
         return _minPayment;
-    }
-
-    /**
-     * @dev Get the minimum amount in KEEP that allows KEEP network client to participate in a group.
-     */
-    function minimumStake() public view returns(uint256) {
-        return _minStake;
     }
 
     /**

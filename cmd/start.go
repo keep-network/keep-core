@@ -97,8 +97,10 @@ func Start(c *cli.Context) error {
 
 	err = beacon.Initialize(
 		ctx,
+		config.Ethereum.Account.Address,
 		chainProvider.ThresholdRelay(),
 		blockCounter,
+		stakeMonitor,
 		netProvider,
 	)
 	if err != nil {

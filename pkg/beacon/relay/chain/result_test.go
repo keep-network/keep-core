@@ -1,7 +1,6 @@
 package chain
 
 import (
-	"math/big"
 	"testing"
 )
 
@@ -42,18 +41,23 @@ func TestDKGResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"group public keys - equal": {
-			result1:        &DKGResult{GroupPublicKey: big.NewInt(2)},
-			result2:        &DKGResult{GroupPublicKey: big.NewInt(2)},
+			result1:        &DKGResult{GroupPublicKey: []byte{2}},
+			result2:        &DKGResult{GroupPublicKey: []byte{2}},
 			expectedResult: true,
 		},
 		"group public keys - nil and set": {
 			result1:        &DKGResult{GroupPublicKey: nil},
-			result2:        &DKGResult{GroupPublicKey: big.NewInt(1)},
+			result2:        &DKGResult{GroupPublicKey: []byte{1}},
+			expectedResult: false,
+		},
+		"group public keys - set and nil": {
+			result1:        &DKGResult{GroupPublicKey: []byte{1}},
+			result2:        &DKGResult{GroupPublicKey: nil},
 			expectedResult: false,
 		},
 		"group public keys - not equal": {
-			result1:        &DKGResult{GroupPublicKey: big.NewInt(3)},
-			result2:        &DKGResult{GroupPublicKey: big.NewInt(4)},
+			result1:        &DKGResult{GroupPublicKey: []byte{3}},
+			result2:        &DKGResult{GroupPublicKey: []byte{4}},
 			expectedResult: false,
 		},
 		"disqualified - equal": {

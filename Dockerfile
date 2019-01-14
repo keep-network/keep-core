@@ -1,4 +1,4 @@
-FROM golang:1.10.3-alpine3.7 AS runtime
+FROM golang:1.11.4-alpine3.7 AS runtime
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin \
