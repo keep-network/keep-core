@@ -222,7 +222,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	// passed members IDs slice. It assumes member IDs for a group starts iterating
 	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
 	// resulting byte slice will be {0x00, 0x01, 0x00}.
-	convertToBoolSlice := func(memberIDsSlice []gjkr.MemberID) []byte {
+	convertToByteSlice := func(memberIDsSlice []gjkr.MemberID) []byte {
 		bytes := make([]byte, groupSize)
 		for index := range bytes {
 			for _, memberID := range memberIDsSlice {
@@ -237,7 +237,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	return &relayChain.DKGResult{
 		Success:        gjkrResult.Success,
 		GroupPublicKey: serializedGroupPublicKey,
-		Inactive:       convertToBoolSlice(gjkrResult.Inactive),
-		Disqualified:   convertToBoolSlice(gjkrResult.Disqualified),
+		Inactive:       convertToByteSlice(gjkrResult.Inactive),
+		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
 	}
 }
