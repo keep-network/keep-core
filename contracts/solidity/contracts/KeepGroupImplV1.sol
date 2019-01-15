@@ -237,7 +237,7 @@ contract KeepGroupImplV1 is Ownable {
   
         emit DkgResultPublishedEvent(requestId);
 
-        // TODO: Move out these once dispute logic is implemented,
+        // TODO: Remove this section once dispute logic is implemented,
         // implement conflict resolution logic described in Phase 14,
         // make sure only valid members are stored.
         _groups.push(groupPubKey);
@@ -373,14 +373,20 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Return total number of all tokens issued.
+     */
+    function tokenSupply() public view returns (uint256) {
+        return 10**9;
+    }
+
+    /**
      * @dev Return natural threshold, the value N virtual stakers' tickets would be expected
      * to fall below if the tokens were optimally staked, and the tickets' values were evenly 
      * distributed in the domain of the pseudorandom function.
      */
     function naturalThreshold() public view returns (uint256) {
         uint256 space = 2**256-1; // Space consisting of all possible tickets.
-        uint256 tokens = 10**9; // Total number of all tokens issued.
-        return _groupSize.mul(space.div(tokens.div(_minStake)));
+        return _groupSize.mul(space.div(tokenSupply().div(_minStake)));
     }
 
     /**
