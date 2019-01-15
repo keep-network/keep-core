@@ -1,0 +1,1855 @@
+* Intro
+This document details the steps for boostrapping a gcp project and
+resources via terraform and serves as maintenance record for
+existing terraform managed infrastructure in some environment.
+
+- Environment Details
+Contains general information about environment
+|-------------------+----------------------|
+| Environment       | demo-env             |
+| Project ID        | keep-dev-fe24        |
+| Regions           | us-central1          |
+| VPC               | keep-dev-vpc-network |
+| Pub Subnet CIDR   | 10.0.0.0/16          |
+| Priv Subnet CIDR  | 10.1.0.0/16          |
+| GKE Subnet CIDR   | 10.2.0.0/16          |
+| GKE Services CIDR | 10.102.100.0/24      |
+| GKE Cluster CIDR  | 10.102.0.0/20        |
+
+
+* First time with this environment
+
+This section contains instructions for people who have yet to work
+with this terraform environment
+
+** set default credentials check
+Terraform will attempt to use your gcp users permissions to work with
+the environment.  For that to work you need to set applicaiton default
+credentials with your user.  You can do that with the following:
+
+#+BEGIN_EXAMPLE
+gcloud auth application-default login
+#+END_EXAMPLE
+** environment variables check
+
+*If you've already set these for a different environment, ignore this section.*
+There are a few enviornment variables you need to set locally to work
+with a terraform environment.  These variables are global to the GCP
+account, and somewhat sensitive.  These are applicable to any project
+spun up under Thesis on GCP.  Environment variables must be stored in a particuar format
+=TF_VAR_<var-name>= to be picked up by Terraform variable declarations.
+See example below:
+
+#+BEGIN_EXAMPLE
+# Terraform env vars
+export TF_VAR_gcp_thesis_org_id=$(gcloud organizations list --filter="DISPLAY_NAME:thesis.co" | awk '{print $2}' | grep -v ID)
+export TF_VAR_gcp_thesis_billing_account=$(gcloud alpha billing accounts list --filter="NAME:My Billing Account" | awk '{print $1}' | grep -v ACCOUNT_ID)
+#+END_EXAMPLE
+
+** terraform init
+
+First time users of the environment =keep-dev= need to initialize the
+terraform project on your local.  To do this, =cd /path/to/demo-env=
+and run the following command:
+
+#+BEGIN_EXAMPLE
+terraform init
+#+END_EXAMPLE
+
+=terraform init= operations are idempotent.  If there is nothing new
+to initalize nothing will happen.
+
+** terraform state
+
+To ensure you're properly referencing the remote state you can run the
+following command:
+
+#+BEGIN_EXAMPLE
+terraform state pull
+#+END_EXAMPLE
+
+You should get an output with details for each resource that is part
+of the environment.
+
+
+* Working with this environment
+
+- Resource provisioning in this environment should be done by way of
+  modules.
+
+- Thesis modules are available [[https://github.com/thesis/infrastructure/tree/master/terraform/modules/][here]].
+
+- A module instance should be added to =main.tf= in your environment's
+  terraform directory.  See =/keep-dev/main.tf= for an example.  Your
+  environment's terraform directory is also know as the =root module=.
+
+- If a module is lacking or does not exist for the resource you're
+  trying to work with, feel free to extend an existing module or
+  create a new one.
+
+
+* Working with modules
+
+If you introduce a new module to your root module =main.tf= file, you
+need to initialize the working dir again.  You will not be able to
+plan or apply until this is done.
+
+#+BEGIN_EXAMPLE
+terraform init
+#+END_EXAMPLE
+
+
+* Providers
+
+Terraform providers expose APIs for interacting with different
+services.  Below are the currently required providers.
+
+One globally applicable note for providers, we must define a provider
+version.  Without a version defined the provider will take the lastest
+stable release.  This may or may not include breaking changes for the
+services in your environment.  Provider release updates must be tested
+in lower environments before rollout.
+
+** DONE Google
+
+For our current environments this is the primary provider.  Nothing
+special here at the moment.
+
+** DONE Helm
+
+The Helm provider allows Terraform to deploy and maintain Helm charts
+for a Kubernetes cluster.
+
+Helm actions require the machine running Terraform to have access
+inside some environments network.  e.g. Be on a VPN.
+
+*** <<initial-configuration>>Initial Configuration
+
+Were using a Helm Release to configure the OpenVPN server for some
+environment.  This means we cannot be on the VPN to use a clusters
+private endpoint from the outset, it needs to be installed
+first. During initial configuration of OpenVPN we need to use the
+clusters public endpoint + a temporary whitelist entry on the clusters
+=Master Authorized Networks=.
+
+MAKE SURE YOUR GCLOUD CONTEXT IS SET TO THE CORRECT PROJECT
+
+1.) Authorize your current public IP on cluster master authorized networks
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+gcloud container clusters update keep-dev \
+--enable-master-authorized-networks \
+--master-authorized-networks $(dig @resolver1.opendns.com ANY myip.opendns.com +short)/32 \
+--region us-central1
+#+END_SRC
+
+2.) Configure Helm provider for public access
+
+Sample provider configuration using the public endpoint:
+
+#+BEGIN_EXAMPLE
+provider "helm" {
+  kubernetes {
+    host                   = "https://${module.gke_cluster.public_endpoint}"
+    token                  = "${data.google_client_config.default.access_token}"
+    cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
+  }
+
+  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
+  service_account = "${module.helm_provider_helper.tiller_service_account}"
+  override        = ["spec.template.spec.automountserviceaccounttoken=true"]
+  namespace       = "${module.helm_provider_helper.tiller_namespace}"
+  install_tiller  = true
+}
+#+END_EXAMPLE
+
+3.) Install OpenVPN Helm Release.  Defined in =main.tf=
+
+#+BEGIN_EXAMPLE
+resource "helm_release" "openvpn" {
+  name      = "helm-openvpn"
+  namespace = "default"
+  chart     = "stable/openvpn"
+  version   = "3.10.0"
+
+  set {
+    name  = "openvpn.redirectGateway"
+    value = "false"
+  }
+
+  set {
+    name  = "openvpn.conf"
+    value = "push \"route 172.16.0.0 255.255.255.240\""
+  }
+}
+#+END_EXAMPLE
+
+4.) Terraform Plan/Apply
+
+5.) Create OpenVPN profile and login
+
+See section [[helm-openvpn]] for config generation script.
+
+6.) Move the Helm provider to the cluster master private endpoint
+
+In =variables.tf= set =master_private_endpoint=.
+
+Get master private endpoint:
+#+BEGIN_SRC sh :results pp
+date -u
+whomai
+
+gcloud container clusters describe keep-dev \
+  --format="get(privateClusterConfig.privateEndpoint)" \
+  --region us-central1
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec 10 19:25:18 UTC 2018
+: 172.16.0.2
+
+Sample provider configuration using the Private Endpoint:
+
+#+BEGIN_EXAMPLE
+provider "helm" {
+  kubernetes {
+    host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
+    token                  = "${data.google_client_config.default.access_token}"
+    cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
+  }
+
+  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
+  service_account = "${module.helm_provider_helper.tiller_service_account}"
+  override        = ["spec.template.spec.automountserviceaccounttoken=true"]
+  namespace       = "${module.helm_provider_helper.tiller_namespace}"
+  install_tiller  = true
+}
+#+END_EXAMPLE
+
+7.) Remove whitelist IP entry from cluster master authorized networks
+
+#+BEGIN_SRC sh :results pp
+date -u
+whomai
+
+gcloud container clusters update keep-dev \
+--enable-master-authorized-networks \
+--region us-central1
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec 10 19:26:51 UTC 2018
+
+** DONE Kubernetes
+
+The Kubernetes provider makes sure our Terraform commands are being
+executed against the correct Kubernetes context.  Without the
+Kubernetes provider defined, Terraform will use your current
+environments Kubernetes context.  This may or may not be the
+environment you're currently working on with Terraform.
+
+Kubernetes actions require the machine running Terraform to have
+access inside some environments network.  e.g. Be on a VPN.
+
+If you're configuring the Kubernetes provider in parallel Helm, then you
+will need to follow the same procedure described in the Helm
+[[initial-configuration]] section.
+
+
+* Environment global scope
+Basic information about the global state, and for working with the
+global environment.
+
+** DONE Applied Modules
+
+Generate a list of modules currently applied to the environment.
+Run this after adding or removing a module from the environement.
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform state list
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 17:31:58 UTC 2018
+sthompson22 
+
+google_client_config.default
+helm_release.openvpn
+module.backend_bucket.google_storage_bucket.a_bucket
+module.gke_cluster.google_compute_network.gke_vpc
+module.gke_cluster.google_compute_subnetwork.a_gke_subnet
+module.gke_cluster.google_container_cluster.a_gke_cluster
+module.gke_cluster.google_container_node_pool.a_gke_node_pool
+module.helm_provider_helper.kubernetes_cluster_role_binding.tiller-cluster-role-binding
+module.helm_provider_helper.kubernetes_namespace.tiller
+module.helm_provider_helper.kubernetes_service_account.tiller
+module.nat_gateway_external_ips.google_compute_address.an_ip_set[0]
+module.nat_gateway_external_ips.google_compute_address.an_ip_set[1]
+module.nat_gateway_external_ips.google_compute_address.an_ip_set[2]
+module.nat_gateway_zone_a.google_compute_address.default
+module.nat_gateway_zone_a.google_compute_firewall.nat-gateway
+module.nat_gateway_zone_a.google_compute_network.network
+module.nat_gateway_zone_a.google_compute_route.nat-gateway
+module.nat_gateway_zone_a.module.nat-gateway.google_compute_instance_group.zonal
+module.nat_gateway_zone_a.module.nat-gateway.google_compute_instance_group_manager.default
+module.nat_gateway_zone_a.module.nat-gateway.google_compute_instance_template.default
+module.nat_gateway_zone_a.module.nat-gateway.google_compute_zones.available
+module.nat_gateway_zone_a.module.nat-gateway.null_resource.dummy_dependency
+module.nat_gateway_zone_a.template_file.nat-startup-script
+module.nat_gateway_zone_b.google_compute_address.default
+module.nat_gateway_zone_b.google_compute_firewall.nat-gateway
+module.nat_gateway_zone_b.google_compute_network.network
+module.nat_gateway_zone_b.google_compute_route.nat-gateway
+module.nat_gateway_zone_b.module.nat-gateway.google_compute_instance_group.zonal
+module.nat_gateway_zone_b.module.nat-gateway.google_compute_instance_group_manager.default
+module.nat_gateway_zone_b.module.nat-gateway.google_compute_instance_template.default
+module.nat_gateway_zone_b.module.nat-gateway.google_compute_zones.available
+module.nat_gateway_zone_b.module.nat-gateway.null_resource.dummy_dependency
+module.nat_gateway_zone_b.template_file.nat-startup-script
+module.nat_gateway_zone_c.google_compute_address.default
+module.nat_gateway_zone_c.google_compute_firewall.nat-gateway
+module.nat_gateway_zone_c.google_compute_network.network
+module.nat_gateway_zone_c.google_compute_route.nat-gateway
+module.nat_gateway_zone_c.module.nat-gateway.google_compute_instance_group.zonal
+module.nat_gateway_zone_c.module.nat-gateway.google_compute_instance_group_manager.default
+module.nat_gateway_zone_c.module.nat-gateway.google_compute_instance_template.default
+module.nat_gateway_zone_c.module.nat-gateway.google_compute_zones.available
+module.nat_gateway_zone_c.module.nat-gateway.null_resource.dummy_dependency
+module.nat_gateway_zone_c.template_file.nat-startup-script
+module.project.google_project.a_project
+module.project.google_project_iam_binding.project_iam_binding_owner
+module.project.random_id.random_project_id
+module.vpc.google_compute_firewall.default_subnet_ingress_allow_all
+module.vpc.google_compute_network.a_vpc
+module.vpc.google_compute_subnetwork.a_private_subnet
+module.vpc.google_compute_subnetwork.a_public_subnet
+#+end_example
+
+** TODO Plan
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -out .terraform/tfplan.out \
+#+END_SRC
+
+** TODO Apply
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -lock=true \
+  .terraform/tfplan.out
+#+END_SRC
+
+** TODO Delete
+
+TBD
+
+** DONE Output
+
+Generate configured outputs for the environment.
+Run this after adding or removing resources that generate an output.
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output -json \
+  | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 17:32:16 UTC 2018
+sthompson22 
+
+{
+    "backend_bucket_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-tf-backend-bucket"
+    },
+    "contacts": {
+        "sensitive": false,
+        "type": "string",
+        "value": "sthompson22"
+    },
+    "environment": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev"
+    },
+    "nat_gateway_external_ips": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "35.238.255.240",
+            "35.226.204.36",
+            "35.202.214.39"
+        ]
+    },
+    "nat_gateway_region_route_tag": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1"
+    },
+    "nat_gateway_zone_a_instance": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a/instances/keep-dev-vpc-network-nat-gateway-us-central1-a-k0cm"
+        ]
+    },
+    "nat_gateway_zone_a_route_tag": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1-a"
+    },
+    "nat_gateway_zone_b_instance": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b/instances/keep-dev-vpc-network-nat-gateway-us-central1-b-4r66"
+        ]
+    },
+    "nat_gateway_zone_b_route_tag": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1-b"
+    },
+    "nat_gateway_zone_c_instance": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c/instances/keep-dev-vpc-network-nat-gateway-us-central1-c-cr11"
+        ]
+    },
+    "nat_gateway_zone_c_route_tag": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1-c"
+    },
+    "project_id": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-fe24"
+    },
+    "project_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev"
+    },
+    "project_owner_members": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "user:sloan.thompson@thesis.co",
+            "user:antonio.salazarcardozo@thesis.co",
+            "user:markus.fix@thesis.co",
+            "serviceAccount:terraform-admin@thesis-terraform-admin.iam.gserviceaccount.com"
+        ]
+    },
+    "region_data": {
+        "sensitive": false,
+        "type": "map",
+        "value": {
+            "region": "us-central1",
+            "zone_a": "us-central1-a",
+            "zone_b": "us-central1-b",
+            "zone_c": "us-central1-c",
+            "zone_f": "us-central1-f"
+        }
+    },
+    "vertical": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep"
+    },
+    "vpc_network_gateway_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": ""
+    },
+    "vpc_network_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network"
+    },
+    "vpc_private_subnet_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-subnet-pri-us-central1"
+    },
+    "vpc_public_subnet_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-subnet-pub-us-central1"
+    }
+}
+#+end_example
+
+
+* Environment module scope
+
+For working with individual modules.
+
+** DONE Project
+
+The GCP project, it's likely this won't be touched after creation.
+
+*** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+gcloud projects describe keep-dev-fe24 \
+  --format="json" | python -m json.tool | grep -v id
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 17:36:06 UTC 2018
+sthompson22 
+
+{
+    "createTime": "2018-11-15T16:13:42.042Z",
+    "labels": {
+        "contact": "sthompson22",
+        "environment": "keep-dev",
+        "vertical": "keep"
+    },
+    "lifecycleState": "ACTIVE",
+    "name": "keep-dev",
+    "parent": {
+        "type": "organization"
+    },
+    "projectId": "keep-dev-fe24",
+    "projectNumber": "42518614489"
+}
+#+end_example
+
+*** TODO Plan
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.project \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Apply
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.project \
+  -lock=true \
+  .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Delete
+
+TBD
+
+*** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+terraform output \
+  -module=project \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 17:37:35 UTC 2018
+sthompson22 
+
+{
+    "project_id": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-fe24"
+    },
+    "project_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev"
+    }
+}
+#+end_example
+
+** DONE Backend bucket
+
+The backend bucket, used for configuring remote state.
+
+*** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+gsutil du gs://keep-dev-tf-backend-bucket
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec  3 17:38:56 UTC 2018
+: sthompson22 
+: 
+: 151655      gs://keep-dev-tf-backend-bucket/terraform/state/default.tfstate
+: 151655      gs://keep-dev-tf-backend-bucket/terraform/state/
+: 151655      gs://keep-dev-tf-backend-bucket/terraform/
+
+*** TODO Plan
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.backend_bucket \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+*** TODO Apply
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.backend_bucket \
+  .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Delete
+
+TBD
+
+*** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output \
+  -module=backend_bucket \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 17:39:23 UTC 2018
+sthompson22 
+
+{
+    "bucket_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-tf-backend-bucket"
+    }
+}
+#+end_example
+
+** DONE VPC
+
+=vpc-network= and public/private subnets.  This module has some rigidity
+built in to enforce a standard network toplogy.  Standard topology
+consits of:
+
+- A vpc network
+
+- A public subnet
+
+- A private subnet
+
+- Access between subnets
+
+*** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+gcloud compute networks describe \
+  keep-dev-vpc-network \
+  --format json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 17:46:14 UTC 2018
+sthompson22 
+
+{
+    "autoCreateSubnetworks": false,
+    "creationTimestamp": "2018-11-15T08:21:13.295-08:00",
+    "id": "8524813406740423190",
+    "kind": "compute#network",
+    "name": "keep-dev-vpc-network",
+    "peerings": [
+        {
+            "autoCreateRoutes": true,
+            "name": "gke-be0744d7a80e25b4e19f-f49d-b84d-peer",
+            "network": "https://www.googleapis.com/compute/v1/projects/gke-prod-us-central1-ccb5/global/networks/gke-be0744d7a80e25b4e19f-f49d-3c25-net",
+            "state": "ACTIVE",
+            "stateDetails": "[2018-11-15T08:30:20.408-08:00]: Connected."
+        }
+    ],
+    "routingConfig": {
+        "routingMode": "REGIONAL"
+    },
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/global/networks/keep-dev-vpc-network",
+    "subnetworks": [
+        "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-gke-us-central1",
+        "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-pri-us-central1",
+        "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-pub-us-central1"
+    ],
+    "x_gcloud_bgp_routing_mode": "REGIONAL",
+    "x_gcloud_subnet_mode": "CUSTOM"
+}
+#+end_example
+
+*** TODO Plan
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.vpc \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Apply
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.vpc \
+  .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Delete
+
+TBD
+
+*** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output  \
+  -module=vpc \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 17:46:34 UTC 2018
+sthompson22 
+
+{
+    "vpc_network_gateway_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": ""
+    },
+    "vpc_network_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network"
+    },
+    "vpc_network_self_link": {
+        "sensitive": false,
+        "type": "string",
+        "value": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/global/networks/keep-dev-vpc-network"
+    },
+    "vpc_private_subnet_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-subnet-pri-us-central1"
+    },
+    "vpc_private_subnet_self_link": {
+        "sensitive": false,
+        "type": "string",
+        "value": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-pri-us-central1"
+    },
+    "vpc_public_subnet_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-subnet-pub-us-central1"
+    },
+    "vpc_public_subnet_self_link": {
+        "sensitive": false,
+        "type": "string",
+        "value": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-pub-us-central1"
+    },
+    "vpc_subnet_prefix": {
+        "sensitive": false,
+        "type": "string",
+        "value": "vpc-subnet"
+    }
+}
+#+end_example
+
+** DONE NATs
+
+NATs are provided to esablish a route to the internet for VMs who
+do not have a public address assigned.  Any VM deployed to the
+designated private subnet will need packets bound for the internet to
+routed through one of the available nats.
+
+You can route traffic through the NATs by applying one of the
+following =network-tags= to your VM.
+
+| routing scope    | network-tag                         |
+|------------------+-------------------------------------|
+| regional routing | keep-dev-vpc-network-nat-us-east4   |
+| zone a routing   | keep-dev-vpc-network-nat-us-east4-a |
+| zone b routing   | keep-dev-vpc-network-nat-us-east4-b |
+| zone c routing   | keep-dev-vpc-network-nat-us-east4-c |
+
+For performance routing should be matched to the zone your VM is
+running in.  NAT instances are wrapped in an instance group that will
+replace a failing NAT, resulting in limited downtime.  If maximum
+availablity is required, use the regional routing tag.
+
+For now NATs are provided by a [[https://registry.terraform.io/modules/GoogleCloudPlatform/nat-gateway/google/1.2.1][hosted module]].  It's possible we roll
+our own NAT module in the future.  For now this Google managed
+module gives us everything we need to establish an HA, autoscaled,
+routable NAT setup.  The tradeoff is that we have no control
+over arguments and a few resource names.
+
+*** Zone A
+
+**** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+gcloud compute instances describe \
+  keep-dev-vpc-network-nat-gateway-us-central1-a-k0cm \
+  --zone us-central1-a \
+  --format json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:28:59 UTC 2018
+sthompson22 
+
+{
+    "canIpForward": true,
+    "cpuPlatform": "Intel Sandy Bridge",
+    "creationTimestamp": "2018-11-15T08:28:54.479-08:00",
+    "deletionProtection": false,
+    "disks": [
+        {
+            "autoDelete": true,
+            "boot": true,
+            "deviceName": "persistent-disk-0",
+            "guestOsFeatures": [
+                {
+                    "type": "VIRTIO_SCSI_MULTIQUEUE"
+                }
+            ],
+            "index": 0,
+            "interface": "SCSI",
+            "kind": "compute#attachedDisk",
+            "licenses": [
+                "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/licenses/debian-9-stretch"
+            ],
+            "mode": "READ_WRITE",
+            "source": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a/disks/keep-dev-vpc-network-nat-gateway-us-central1-a-k0cm",
+            "type": "PERSISTENT"
+        }
+    ],
+    "id": "3266717153654480938",
+    "kind": "compute#instance",
+    "labelFingerprint": "RcJaznfIXMY=",
+    "labels": {
+        "contact": "sthompson22",
+        "environment": "keep-dev",
+        "vertical": "keep"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a/machineTypes/n1-standard-1",
+    "metadata": {
+        "fingerprint": "YxkO4aIGJf8=",
+        "items": [
+            {
+                "key": "instance-template",
+                "value": "projects/42518614489/global/instanceTemplates/default-20181115162836395700000002"
+            },
+            {
+                "key": "created-by",
+                "value": "projects/42518614489/zones/us-central1-a/instanceGroupManagers/keep-dev-vpc-network-nat-gateway-us-central1-a"
+            },
+            {
+                "key": "tf_depends_id",
+                "value": ""
+            },
+            {
+                "key": "startup-script",
+                "value": "#!/bin/bash -xe\n\n# Enable ip forwarding and nat\nsysctl -w net.ipv4.ip_forward=1\n\n# Make forwarding persistent.\nsed -i= 's/^[# ]*net.ipv4.ip_forward=[[:digit:]]/net.ipv4.ip_forward=1/g' /etc/sysctl.conf\n\niptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE\n\napt-get update\n\n# Install nginx for instance http health check\napt-get install -y nginx\n\nENABLE_SQUID=\"false\"\n\nif [[ \"$ENABLE_SQUID\" == \"true\" ]]; then\n  apt-get install -y squid3\n\n  cat - > /etc/squid/squid.conf <<'EOM'\nshutdown_lifetime 3 seconds\n\nhttp_access allow all\n\nhttp_port 3128\nhttp_port 3129 transparent\n\n# Anonymous proxy settings\nvia off\nforwarded_for off\n\nrequest_header_access Allow allow all \nrequest_header_access Authorization allow all \nrequest_header_access WWW-Authenticate allow all \nrequest_header_access Proxy-Authorization allow all \nrequest_header_access Proxy-Authenticate allow all \nrequest_header_access Cache-Control allow all \nrequest_header_access Content-Encoding allow all \nrequest_header_access Content-Length allow all \nrequest_header_access Content-Type allow all \nrequest_header_access Date allow all \nrequest_header_access Expires allow all \nrequest_header_access Host allow all \nrequest_header_access If-Modified-Since allow all \nrequest_header_access Last-Modified allow all \nrequest_header_access Location allow all \nrequest_header_access Pragma allow all \nrequest_header_access Accept allow all \nrequest_header_access Accept-Charset allow all \nrequest_header_access Accept-Encoding allow all \nrequest_header_access Accept-Language allow all \nrequest_header_access Content-Language allow all \nrequest_header_access Mime-Version allow all \nrequest_header_access Retry-After allow all \nrequest_header_access Title allow all \nrequest_header_access Connection allow all \nrequest_header_access Proxy-Connection allow all \nrequest_header_access User-Agent allow all \nrequest_header_access Cookie allow all \nrequest_header_access All deny all\nEOM\n\n  systemctl reload squid\nfi\n"
+            }
+        ],
+        "kind": "compute#metadata"
+    },
+    "name": "keep-dev-vpc-network-nat-gateway-us-central1-a-k0cm",
+    "networkInterfaces": [
+        {
+            "accessConfigs": [
+                {
+                    "kind": "compute#accessConfig",
+                    "name": "external-nat",
+                    "natIP": "35.238.255.240",
+                    "networkTier": "PREMIUM",
+                    "type": "ONE_TO_ONE_NAT"
+                }
+            ],
+            "fingerprint": "BNJrrAvKl6A=",
+            "kind": "compute#networkInterface",
+            "name": "nic0",
+            "network": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/global/networks/keep-dev-vpc-network",
+            "networkIP": "10.0.0.2",
+            "subnetwork": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-pub-us-central1"
+        }
+    ],
+    "scheduling": {
+        "automaticRestart": true,
+        "onHostMaintenance": "MIGRATE",
+        "preemptible": false
+    },
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a/instances/keep-dev-vpc-network-nat-gateway-us-central1-a-k0cm",
+    "serviceAccounts": [
+        {
+            "email": "42518614489-compute@developer.gserviceaccount.com",
+            "scopes": [
+                "https://www.googleapis.com/auth/devstorage.full_control",
+                "https://www.googleapis.com/auth/logging.write",
+                "https://www.googleapis.com/auth/compute",
+                "https://www.googleapis.com/auth/monitoring.write"
+            ]
+        }
+    ],
+    "startRestricted": false,
+    "status": "RUNNING",
+    "tags": {
+        "fingerprint": "PVpc2TMWqG0=",
+        "items": [
+            "allow-ssh",
+            "inst-keep-dev-vpc-network-nat-us-central1",
+            "inst-keep-dev-vpc-network-nat-us-central1-a"
+        ]
+    },
+    "zone": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a"
+}
+#+end_example
+
+**** TODO Plan
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.nat_gateway_zone_a \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+**** TODO Apply
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.nat_gateway_zone_a \
+  .terraform/tfplan.out
+#+END_SRC
+
+**** TODO Delete
+
+TBD
+
+**** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output  \
+  -module=nat_gateway_zone_a \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:32:14 UTC 2018
+sthompson22 
+
+{
+    "depends_id": {
+        "sensitive": false,
+        "type": "string",
+        "value": "2428940380811452119"
+    },
+    "external_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": "35.238.255.240"
+    },
+    "gateway_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": ""
+    },
+    "instance": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a/instances/keep-dev-vpc-network-nat-gateway-us-central1-a-k0cm"
+        ]
+    },
+    "routing_tag_regional": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1"
+    },
+    "routing_tag_zonal": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1-a"
+    }
+}
+#+end_example
+
+
+
+
+*** Zone B
+
+**** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+gcloud compute instances describe \
+   keep-dev-vpc-network-nat-gateway-us-central1-b-4r66 \
+  --zone us-central1-b \
+  --format json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:36:54 UTC 2018
+sthompson22 
+
+{
+    "canIpForward": true,
+    "cpuPlatform": "Intel Haswell",
+    "creationTimestamp": "2018-11-15T08:29:07.458-08:00",
+    "deletionProtection": false,
+    "disks": [
+        {
+            "autoDelete": true,
+            "boot": true,
+            "deviceName": "persistent-disk-0",
+            "guestOsFeatures": [
+                {
+                    "type": "VIRTIO_SCSI_MULTIQUEUE"
+                }
+            ],
+            "index": 0,
+            "interface": "SCSI",
+            "kind": "compute#attachedDisk",
+            "licenses": [
+                "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/licenses/debian-9-stretch"
+            ],
+            "mode": "READ_WRITE",
+            "source": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b/disks/keep-dev-vpc-network-nat-gateway-us-central1-b-4r66",
+            "type": "PERSISTENT"
+        }
+    ],
+    "id": "1902356054038028349",
+    "kind": "compute#instance",
+    "labelFingerprint": "RcJaznfIXMY=",
+    "labels": {
+        "contact": "sthompson22",
+        "environment": "keep-dev",
+        "vertical": "keep"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b/machineTypes/n1-standard-1",
+    "metadata": {
+        "fingerprint": "pjx5meNZHg4=",
+        "items": [
+            {
+                "key": "instance-template",
+                "value": "projects/42518614489/global/instanceTemplates/default-20181115162836396700000003"
+            },
+            {
+                "key": "created-by",
+                "value": "projects/42518614489/zones/us-central1-b/instanceGroupManagers/keep-dev-vpc-network-nat-gateway-us-central1-b"
+            },
+            {
+                "key": "tf_depends_id",
+                "value": ""
+            },
+            {
+                "key": "startup-script",
+                "value": "#!/bin/bash -xe\n\n# Enable ip forwarding and nat\nsysctl -w net.ipv4.ip_forward=1\n\n# Make forwarding persistent.\nsed -i= 's/^[# ]*net.ipv4.ip_forward=[[:digit:]]/net.ipv4.ip_forward=1/g' /etc/sysctl.conf\n\niptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE\n\napt-get update\n\n# Install nginx for instance http health check\napt-get install -y nginx\n\nENABLE_SQUID=\"false\"\n\nif [[ \"$ENABLE_SQUID\" == \"true\" ]]; then\n  apt-get install -y squid3\n\n  cat - > /etc/squid/squid.conf <<'EOM'\nshutdown_lifetime 3 seconds\n\nhttp_access allow all\n\nhttp_port 3128\nhttp_port 3129 transparent\n\n# Anonymous proxy settings\nvia off\nforwarded_for off\n\nrequest_header_access Allow allow all \nrequest_header_access Authorization allow all \nrequest_header_access WWW-Authenticate allow all \nrequest_header_access Proxy-Authorization allow all \nrequest_header_access Proxy-Authenticate allow all \nrequest_header_access Cache-Control allow all \nrequest_header_access Content-Encoding allow all \nrequest_header_access Content-Length allow all \nrequest_header_access Content-Type allow all \nrequest_header_access Date allow all \nrequest_header_access Expires allow all \nrequest_header_access Host allow all \nrequest_header_access If-Modified-Since allow all \nrequest_header_access Last-Modified allow all \nrequest_header_access Location allow all \nrequest_header_access Pragma allow all \nrequest_header_access Accept allow all \nrequest_header_access Accept-Charset allow all \nrequest_header_access Accept-Encoding allow all \nrequest_header_access Accept-Language allow all \nrequest_header_access Content-Language allow all \nrequest_header_access Mime-Version allow all \nrequest_header_access Retry-After allow all \nrequest_header_access Title allow all \nrequest_header_access Connection allow all \nrequest_header_access Proxy-Connection allow all \nrequest_header_access User-Agent allow all \nrequest_header_access Cookie allow all \nrequest_header_access All deny all\nEOM\n\n  systemctl reload squid\nfi\n"
+            }
+        ],
+        "kind": "compute#metadata"
+    },
+    "name": "keep-dev-vpc-network-nat-gateway-us-central1-b-4r66",
+    "networkInterfaces": [
+        {
+            "accessConfigs": [
+                {
+                    "kind": "compute#accessConfig",
+                    "name": "external-nat",
+                    "natIP": "35.226.204.36",
+                    "networkTier": "PREMIUM",
+                    "type": "ONE_TO_ONE_NAT"
+                }
+            ],
+            "fingerprint": "Qi6ZsRK79Bw=",
+            "kind": "compute#networkInterface",
+            "name": "nic0",
+            "network": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/global/networks/keep-dev-vpc-network",
+            "networkIP": "10.0.0.4",
+            "subnetwork": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-pub-us-central1"
+        }
+    ],
+    "scheduling": {
+        "automaticRestart": true,
+        "onHostMaintenance": "MIGRATE",
+        "preemptible": false
+    },
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b/instances/keep-dev-vpc-network-nat-gateway-us-central1-b-4r66",
+    "serviceAccounts": [
+        {
+            "email": "42518614489-compute@developer.gserviceaccount.com",
+            "scopes": [
+                "https://www.googleapis.com/auth/devstorage.full_control",
+                "https://www.googleapis.com/auth/logging.write",
+                "https://www.googleapis.com/auth/compute",
+                "https://www.googleapis.com/auth/monitoring.write"
+            ]
+        }
+    ],
+    "startRestricted": false,
+    "status": "RUNNING",
+    "tags": {
+        "fingerprint": "yFengN9cngY=",
+        "items": [
+            "allow-ssh",
+            "inst-keep-dev-vpc-network-nat-us-central1",
+            "inst-keep-dev-vpc-network-nat-us-central1-b"
+        ]
+    },
+    "zone": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b"
+}
+#+end_example
+
+**** TODO Plan
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.nat_gateway_zone_b \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+**** TODO Apply
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.nat_gateway_zone_b \
+  .terraform/tfplan.out
+#+END_SRC
+
+**** TODO Delete
+
+TBD
+
+**** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output  \
+  -module=nat_gateway_zone_b \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:37:55 UTC 2018
+sthompson22 
+
+{
+    "depends_id": {
+        "sensitive": false,
+        "type": "string",
+        "value": "3731707379855754622"
+    },
+    "external_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": "35.226.204.36"
+    },
+    "gateway_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": ""
+    },
+    "instance": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b/instances/keep-dev-vpc-network-nat-gateway-us-central1-b-4r66"
+        ]
+    },
+    "routing_tag_regional": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1"
+    },
+    "routing_tag_zonal": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1-b"
+    }
+}
+#+end_example
+
+
+
+*** Zone C
+
+**** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+gcloud compute instances describe \
+  keep-dev-vpc-network-nat-gateway-us-central1-c-cr11 \
+  --zone us-central1-c \
+  --format json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:39:21 UTC 2018
+sthompson22 
+
+{
+    "canIpForward": true,
+    "cpuPlatform": "Intel Haswell",
+    "creationTimestamp": "2018-11-15T08:29:05.507-08:00",
+    "deletionProtection": false,
+    "disks": [
+        {
+            "autoDelete": true,
+            "boot": true,
+            "deviceName": "persistent-disk-0",
+            "guestOsFeatures": [
+                {
+                    "type": "VIRTIO_SCSI_MULTIQUEUE"
+                }
+            ],
+            "index": 0,
+            "interface": "SCSI",
+            "kind": "compute#attachedDisk",
+            "licenses": [
+                "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/licenses/debian-9-stretch"
+            ],
+            "mode": "READ_WRITE",
+            "source": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c/disks/keep-dev-vpc-network-nat-gateway-us-central1-c-cr11",
+            "type": "PERSISTENT"
+        }
+    ],
+    "id": "775941945120792639",
+    "kind": "compute#instance",
+    "labelFingerprint": "RcJaznfIXMY=",
+    "labels": {
+        "contact": "sthompson22",
+        "environment": "keep-dev",
+        "vertical": "keep"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c/machineTypes/n1-standard-1",
+    "metadata": {
+        "fingerprint": "9Ybgzu3ovHw=",
+        "items": [
+            {
+                "key": "instance-template",
+                "value": "projects/42518614489/global/instanceTemplates/default-20181115162836395600000001"
+            },
+            {
+                "key": "created-by",
+                "value": "projects/42518614489/zones/us-central1-c/instanceGroupManagers/keep-dev-vpc-network-nat-gateway-us-central1-c"
+            },
+            {
+                "key": "tf_depends_id",
+                "value": ""
+            },
+            {
+                "key": "startup-script",
+                "value": "#!/bin/bash -xe\n\n# Enable ip forwarding and nat\nsysctl -w net.ipv4.ip_forward=1\n\n# Make forwarding persistent.\nsed -i= 's/^[# ]*net.ipv4.ip_forward=[[:digit:]]/net.ipv4.ip_forward=1/g' /etc/sysctl.conf\n\niptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE\n\napt-get update\n\n# Install nginx for instance http health check\napt-get install -y nginx\n\nENABLE_SQUID=\"false\"\n\nif [[ \"$ENABLE_SQUID\" == \"true\" ]]; then\n  apt-get install -y squid3\n\n  cat - > /etc/squid/squid.conf <<'EOM'\nshutdown_lifetime 3 seconds\n\nhttp_access allow all\n\nhttp_port 3128\nhttp_port 3129 transparent\n\n# Anonymous proxy settings\nvia off\nforwarded_for off\n\nrequest_header_access Allow allow all \nrequest_header_access Authorization allow all \nrequest_header_access WWW-Authenticate allow all \nrequest_header_access Proxy-Authorization allow all \nrequest_header_access Proxy-Authenticate allow all \nrequest_header_access Cache-Control allow all \nrequest_header_access Content-Encoding allow all \nrequest_header_access Content-Length allow all \nrequest_header_access Content-Type allow all \nrequest_header_access Date allow all \nrequest_header_access Expires allow all \nrequest_header_access Host allow all \nrequest_header_access If-Modified-Since allow all \nrequest_header_access Last-Modified allow all \nrequest_header_access Location allow all \nrequest_header_access Pragma allow all \nrequest_header_access Accept allow all \nrequest_header_access Accept-Charset allow all \nrequest_header_access Accept-Encoding allow all \nrequest_header_access Accept-Language allow all \nrequest_header_access Content-Language allow all \nrequest_header_access Mime-Version allow all \nrequest_header_access Retry-After allow all \nrequest_header_access Title allow all \nrequest_header_access Connection allow all \nrequest_header_access Proxy-Connection allow all \nrequest_header_access User-Agent allow all \nrequest_header_access Cookie allow all \nrequest_header_access All deny all\nEOM\n\n  systemctl reload squid\nfi\n"
+            }
+        ],
+        "kind": "compute#metadata"
+    },
+    "name": "keep-dev-vpc-network-nat-gateway-us-central1-c-cr11",
+    "networkInterfaces": [
+        {
+            "accessConfigs": [
+                {
+                    "kind": "compute#accessConfig",
+                    "name": "external-nat",
+                    "natIP": "35.202.214.39",
+                    "networkTier": "PREMIUM",
+                    "type": "ONE_TO_ONE_NAT"
+                }
+            ],
+            "fingerprint": "U9n3fYjf32k=",
+            "kind": "compute#networkInterface",
+            "name": "nic0",
+            "network": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/global/networks/keep-dev-vpc-network",
+            "networkIP": "10.0.0.3",
+            "subnetwork": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-pub-us-central1"
+        }
+    ],
+    "scheduling": {
+        "automaticRestart": true,
+        "onHostMaintenance": "MIGRATE",
+        "preemptible": false
+    },
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c/instances/keep-dev-vpc-network-nat-gateway-us-central1-c-cr11",
+    "serviceAccounts": [
+        {
+            "email": "42518614489-compute@developer.gserviceaccount.com",
+            "scopes": [
+                "https://www.googleapis.com/auth/devstorage.full_control",
+                "https://www.googleapis.com/auth/logging.write",
+                "https://www.googleapis.com/auth/compute",
+                "https://www.googleapis.com/auth/monitoring.write"
+            ]
+        }
+    ],
+    "startRestricted": false,
+    "status": "RUNNING",
+    "tags": {
+        "fingerprint": "jcABHoDAQ88=",
+        "items": [
+            "allow-ssh",
+            "inst-keep-dev-vpc-network-nat-us-central1",
+            "inst-keep-dev-vpc-network-nat-us-central1-c"
+        ]
+    },
+    "zone": "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c"
+}
+#+end_example
+
+**** TODO Plan
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.nat_gateway_zone_c \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+**** TODO Apply
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.nat_gateway_zone_c \
+  .terraform/tfplan.out
+#+END_SRC
+
+**** TODO Delete
+
+TBD
+
+**** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output  \
+  -module=nat_gateway_zone_c \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:39:53 UTC 2018
+sthompson22 
+
+{
+    "depends_id": {
+        "sensitive": false,
+        "type": "string",
+        "value": "9171285365591061132"
+    },
+    "external_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": "35.202.214.39"
+    },
+    "gateway_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": ""
+    },
+    "instance": {
+        "sensitive": false,
+        "type": "list",
+        "value": [
+            "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c/instances/keep-dev-vpc-network-nat-gateway-us-central1-c-cr11"
+        ]
+    },
+    "routing_tag_regional": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1"
+    },
+    "routing_tag_zonal": {
+        "sensitive": false,
+        "type": "string",
+        "value": "keep-dev-vpc-network-nat-us-central1-c"
+    }
+}
+#+end_example
+
+** DONE GKE
+
+Configures a regional GKE cluster, in a private subnet, with secondary
+ranges for the cluster and services, a node pool.
+
+*** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+gcloud container \
+  clusters describe \
+  keep-dev \
+  --region us-central1 \
+  --format json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:40:10 UTC 2018
+sthompson22 
+
+{
+    "addonsConfig": {
+        "networkPolicyConfig": {}
+    },
+    "clusterIpv4Cidr": "10.102.0.0/20",
+    "createTime": "2018-11-15T16:29:03+00:00",
+    "currentMasterVersion": "1.10.6-gke.11",
+    "currentNodeCount": 3,
+    "currentNodeVersion": "1.10.6-gke.11",
+    "endpoint": "35.226.168.67",
+    "initialClusterVersion": "1.9.7-gke.11",
+    "initialNodeCount": 1,
+    "instanceGroupUrls": [
+        "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c/instanceGroupManagers/gke-keep-dev-default-node-pool-07a6b1e2-grp",
+        "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b/instanceGroupManagers/gke-keep-dev-default-node-pool-c8331243-grp",
+        "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a/instanceGroupManagers/gke-keep-dev-default-node-pool-78d650a4-grp"
+    ],
+    "ipAllocationPolicy": {
+        "clusterIpv4Cidr": "10.102.0.0/20",
+        "clusterIpv4CidrBlock": "10.102.0.0/20",
+        "clusterSecondaryRangeName": "keep-dev-gke-cluster-secondary-range",
+        "servicesIpv4Cidr": "10.102.100.0/24",
+        "servicesIpv4CidrBlock": "10.102.100.0/24",
+        "servicesSecondaryRangeName": "keep-dev-gke-services-secondary-range",
+        "useIpAliases": true
+    },
+    "labelFingerprint": "72a206ae",
+    "legacyAbac": {},
+    "location": "us-central1",
+    "locations": [
+        "us-central1-c",
+        "us-central1-b",
+        "us-central1-a"
+    ],
+    "loggingService": "logging.googleapis.com",
+    "maintenancePolicy": {
+        "window": {
+            "dailyMaintenanceWindow": {
+                "duration": "PT4H0M0S",
+                "startTime": "00:00"
+            }
+        }
+    },
+    "masterAuth": {
+        "clusterCaCertificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDekNDQWZPZ0F3SUJBZ0lRVjRDZ1gxWWloYW9nemhvWE5QVjZhREFOQmdrcWhraUc5dzBCQVFzRkFEQXYKTVMwd0t3WURWUVFERXlRM01tTmxOR1ZrTXkxak1tRTRMVFJpTkdRdE9ETmtOeTAyWTJWbU1UTmpZMlEwTmpNdwpIaGNOTVRneE1URTFNVFV5T1RBMFdoY05Nak14TVRFME1UWXlPVEEwV2pBdk1TMHdLd1lEVlFRREV5UTNNbU5sCk5HVmtNeTFqTW1FNExUUmlOR1F0T0ROa055MDJZMlZtTVROalkyUTBOak13Z2dFaU1BMEdDU3FHU0liM0RRRUIKQVFVQUE0SUJEd0F3Z2dFS0FvSUJBUUMwUEdhRWNvejJySTYyKzZ6Y3RVcTRQUHZxVU1UK2plVWY1MW5SemxvRwoweWtsNWRvZS9GajczU3ZlcXJKdGtSMmUwNjBkYnYyOUVHelZpQVVUNit6Qm15THIvalFrS091bWRiNUs5S0JmCk45Uy91ejkrMFdaMGQrM3FuR1l3c21XMjNsNjlOeTVjZmJ0dllHcDhqWi96OXVEQ21jY1FaY3VlVmVnTUVySjkKNHZQb3k4TXJnK1cvZG5Ha0hKaExCNG8wOWRNQ1Jpa08xU0J4Q1JFaWdHY1lLK3dlTE5tYjBDNVQ2d25TQXhZaQoxTlFzM0xGNFEvWGFGUVZYaUozSEVJdjEzRCtXdE1mUHFSeUpUK2JPTWNQUDlQWU91SWhoQjBrUHc5cEczTjlCCkR1WEg1YjREY2lGM3g5NDRVL1NCYUVPVU9TajlYcWQ3WjEwejN4S0RJeC90QWdNQkFBR2pJekFoTUE0R0ExVWQKRHdFQi93UUVBd0lDQkRBUEJnTlZIUk1CQWY4RUJUQURBUUgvTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFCUQpPTXNUOE1USGc3NGFOQWlBTVVPT29WWWdHMmpoejR5TUNsUHRaZmU2V3ZIZU1BSlEvdnBFZWhrdys0Y1FVby9oCks4VVZtOU1KRjJqbmVnM3U2WUM2OFNheW10VUJST2p2cmtZTXFRTklnT2ZDT3NBU0dHcTlYWVdzczI4WXA4cHgKcGlNbjhzcWI0c0tlaThKYmJJeUVSa1BVcFFQWC9Mb3M3dXhhdlFyUEhjWDFiaGxhR0RpVEVuVzdlcTh3QUF3bAp0RHl3VUIyWWNlK29VTW4xRkR1a0k2TkhRWlp3Q0Vla3hrK2hWUEwrNFRFU2psL0FIWmtUSmg3QkFva0V6YVJJCmlpNHdINDNWeDhxc3ZpM3k5UVB3dzdidit6WFd4aFB1Y0dpUk42ZFdSa0ZoSUJCNmtzZ3JPQU1hRmxXN1hxUm0KMkQ2TzhNSlR0MTVLaUZ5TG45UXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+    },
+    "masterAuthorizedNetworksConfig": {
+        "enabled": true
+    },
+    "monitoringService": "monitoring.googleapis.com",
+    "name": "keep-dev",
+    "network": "keep-dev-vpc-network",
+    "networkConfig": {
+        "network": "projects/keep-dev-fe24/global/networks/keep-dev-vpc-network",
+        "subnetwork": "projects/keep-dev-fe24/regions/us-central1/subnetworks/keep-dev-vpc-subnet-gke-us-central1"
+    },
+    "networkPolicy": {
+        "enabled": true,
+        "provider": "CALICO"
+    },
+    "nodeConfig": {
+        "diskSizeGb": 100,
+        "diskType": "pd-ssd",
+        "imageType": "COS",
+        "labels": {
+            "contact": "sthompson22",
+            "environment": "keep-dev",
+            "vertical": "keep"
+        },
+        "machineType": "n1-standard-2",
+        "oauthScopes": [
+            "https://www.googleapis.com/auth/monitoring",
+            "https://www.googleapis.com/auth/devstorage.read_only",
+            "https://www.googleapis.com/auth/logging.write",
+            "https://www.googleapis.com/auth/compute"
+        ],
+        "serviceAccount": "default",
+        "tags": [
+            "keep-dev-vpc-network-nat-us-central1"
+        ]
+    },
+    "nodeIpv4CidrSize": 24,
+    "nodePools": [
+        {
+            "autoscaling": {
+                "enabled": true,
+                "maxNodeCount": 1,
+                "minNodeCount": 1
+            },
+            "config": {
+                "diskSizeGb": 100,
+                "diskType": "pd-ssd",
+                "imageType": "COS",
+                "labels": {
+                    "contact": "sthompson22",
+                    "environment": "keep-dev",
+                    "vertical": "keep"
+                },
+                "machineType": "n1-standard-2",
+                "oauthScopes": [
+                    "https://www.googleapis.com/auth/monitoring",
+                    "https://www.googleapis.com/auth/devstorage.read_only",
+                    "https://www.googleapis.com/auth/logging.write",
+                    "https://www.googleapis.com/auth/compute"
+                ],
+                "serviceAccount": "default",
+                "tags": [
+                    "keep-dev-vpc-network-nat-us-central1"
+                ]
+            },
+            "initialNodeCount": 1,
+            "instanceGroupUrls": [
+                "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-c/instanceGroupManagers/gke-keep-dev-default-node-pool-07a6b1e2-grp",
+                "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-b/instanceGroupManagers/gke-keep-dev-default-node-pool-c8331243-grp",
+                "https://www.googleapis.com/compute/v1/projects/keep-dev-fe24/zones/us-central1-a/instanceGroupManagers/gke-keep-dev-default-node-pool-78d650a4-grp"
+            ],
+            "management": {
+                "autoRepair": true,
+                "autoUpgrade": true
+            },
+            "name": "default-node-pool",
+            "selfLink": "https://container.googleapis.com/v1/projects/keep-dev-fe24/locations/us-central1/clusters/keep-dev/nodePools/default-node-pool",
+            "status": "RUNNING",
+            "version": "1.10.6-gke.11"
+        }
+    ],
+    "privateClusterConfig": {
+        "enablePrivateNodes": true,
+        "masterIpv4CidrBlock": "172.16.0.0/28",
+        "privateEndpoint": "172.16.0.2",
+        "publicEndpoint": "35.226.168.67"
+    },
+    "resourceLabels": {
+        "contact": "sthompson22",
+        "environment": "keep-dev",
+        "vertical": "keep"
+    },
+    "selfLink": "https://container.googleapis.com/v1/projects/keep-dev-fe24/locations/us-central1/clusters/keep-dev",
+    "servicesIpv4Cidr": "10.102.100.0/24",
+    "status": "RUNNING",
+    "subnetwork": "keep-dev-vpc-subnet-gke-us-central1",
+    "zone": "us-central1"
+}
+#+end_example
+
+*** TODO Plan
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.gke_cluster \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Apply
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.gke_cluster \
+  .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Delete
+
+TBD
+
+*** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output  \
+  -module=gke_cluster \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 18:40:42 UTC 2018
+sthompson22 
+
+{
+    "cluster_ca_certificate": {
+        "sensitive": false,
+        "type": "string",
+        "value": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDekNDQWZPZ0F3SUJBZ0lRVjRDZ1gxWWloYW9nemhvWE5QVjZhREFOQmdrcWhraUc5dzBCQVFzRkFEQXYKTVMwd0t3WURWUVFERXlRM01tTmxOR1ZrTXkxak1tRTRMVFJpTkdRdE9ETmtOeTAyWTJWbU1UTmpZMlEwTmpNdwpIaGNOTVRneE1URTFNVFV5T1RBMFdoY05Nak14TVRFME1UWXlPVEEwV2pBdk1TMHdLd1lEVlFRREV5UTNNbU5sCk5HVmtNeTFqTW1FNExUUmlOR1F0T0ROa055MDJZMlZtTVROalkyUTBOak13Z2dFaU1BMEdDU3FHU0liM0RRRUIKQVFVQUE0SUJEd0F3Z2dFS0FvSUJBUUMwUEdhRWNvejJySTYyKzZ6Y3RVcTRQUHZxVU1UK2plVWY1MW5SemxvRwoweWtsNWRvZS9GajczU3ZlcXJKdGtSMmUwNjBkYnYyOUVHelZpQVVUNit6Qm15THIvalFrS091bWRiNUs5S0JmCk45Uy91ejkrMFdaMGQrM3FuR1l3c21XMjNsNjlOeTVjZmJ0dllHcDhqWi96OXVEQ21jY1FaY3VlVmVnTUVySjkKNHZQb3k4TXJnK1cvZG5Ha0hKaExCNG8wOWRNQ1Jpa08xU0J4Q1JFaWdHY1lLK3dlTE5tYjBDNVQ2d25TQXhZaQoxTlFzM0xGNFEvWGFGUVZYaUozSEVJdjEzRCtXdE1mUHFSeUpUK2JPTWNQUDlQWU91SWhoQjBrUHc5cEczTjlCCkR1WEg1YjREY2lGM3g5NDRVL1NCYUVPVU9TajlYcWQ3WjEwejN4S0RJeC90QWdNQkFBR2pJekFoTUE0R0ExVWQKRHdFQi93UUVBd0lDQkRBUEJnTlZIUk1CQWY4RUJUQURBUUgvTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFCUQpPTXNUOE1USGc3NGFOQWlBTVVPT29WWWdHMmpoejR5TUNsUHRaZmU2V3ZIZU1BSlEvdnBFZWhrdys0Y1FVby9oCks4VVZtOU1KRjJqbmVnM3U2WUM2OFNheW10VUJST2p2cmtZTXFRTklnT2ZDT3NBU0dHcTlYWVdzczI4WXA4cHgKcGlNbjhzcWI0c0tlaThKYmJJeUVSa1BVcFFQWC9Mb3M3dXhhdlFyUEhjWDFiaGxhR0RpVEVuVzdlcTh3QUF3bAp0RHl3VUIyWWNlK29VTW4xRkR1a0k2TkhRWlp3Q0Vla3hrK2hWUEwrNFRFU2psL0FIWmtUSmg3QkFva0V6YVJJCmlpNHdINDNWeDhxc3ZpM3k5UVB3dzdidit6WFd4aFB1Y0dpUk42ZFdSa0ZoSUJCNmtzZ3JPQU1hRmxXN1hxUm0KMkQ2TzhNSlR0MTVLaUZ5TG45UXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+    },
+    "endpoint": {
+        "sensitive": false,
+        "type": "string",
+        "value": "35.226.168.67"
+    }
+}
+#+end_example
+
+** DONE helm-openvpn
+
+Configures an openvpn server for access to private resources.  An
+openvpn profile must be generated for each user.  The below script can
+be used to generate configs.
+
+*** DONE Config Generation
+
+To generate a configuration for the openvpn server you can run the
+following script from your local machine.  You need access to the
+environments private resources to run this script.  If you don't
+already have access, ask an administrator.
+
+#+BEGIN_EXAMPLE
+#!/bin/bash
+
+if [ $# -ne 3 ]
+then
+  echo "Usage: $0 <CLIENT_KEY_NAME> <NAMESPACE> <HELM_RELEASE>"
+  exit
+fi
+
+KEY_NAME=$1
+NAMESPACE=$2
+HELM_RELEASE=$3
+POD_NAME=$(kubectl get pods -n "$NAMESPACE" -l "app=openvpn,release=$HELM_RELEASE" -o jsonpath='{.items[0].metadata.name}')
+SERVICE_NAME=$(kubectl get svc -n "$NAMESPACE" -l "app=openvpn,release=$HELM_RELEASE" -o jsonpath='{.items[0].metadata.name}')
+SERVICE_IP=$(kubectl get svc -n "$NAMESPACE" "$SERVICE_NAME" -o go-template='{{range $k, $v := (index .status.loadBalancer.ingress 0)}}{{$v}}{{end}}')
+kubectl -n "$NAMESPACE" exec -it "$POD_NAME" /etc/openvpn/setup/newClientCert.sh "$KEY_NAME" "$SERVICE_IP"
+kubectl -n "$NAMESPACE" exec -it "$POD_NAME" cat "/etc/openvpn/certs/pki/$KEY_NAME.ovpn" > "$KEY_NAME.ovpn"
+#+END_EXAMPLE
+*** DONE Describe
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+kubectl describe \
+service helm-openvpn
+
+echo "-------"
+
+kubectl describe \
+deployment helm-openvpn
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Mon Dec  3 19:03:30 UTC 2018
+sthompson22 
+
+Name:                     helm-openvpn
+Namespace:                default
+Labels:                   app=openvpn
+                          chart=openvpn-3.10.0
+                          heritage=Tiller
+                          release=helm-openvpn
+Annotations:              <none>
+Selector:                 app=openvpn,release=helm-openvpn
+Type:                     LoadBalancer
+IP:                       10.102.100.167
+LoadBalancer Ingress:     104.155.171.76
+Port:                     openvpn  443/TCP
+TargetPort:               443/TCP
+NodePort:                 openvpn  30970/TCP
+Endpoints:                10.102.0.17:443
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
+-------
+Name:                   helm-openvpn
+Namespace:              default
+CreationTimestamp:      Mon, 03 Dec 2018 10:31:01 -0500
+Labels:                 app=openvpn
+                        chart=openvpn-3.10.0
+                        heritage=Tiller
+                        release=helm-openvpn
+Annotations:            deployment.kubernetes.io/revision: 4
+Selector:               app=openvpn,release=helm-openvpn
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:       app=openvpn
+                release=helm-openvpn
+  Annotations:  checksum/config: 19a6e6882037ad8b07b3d91576666d1d74ac27be0e2666941c5acc0db84ccf0c
+  Containers:
+   openvpn:
+    Image:      jfelten/openvpn-docker:1.1.0
+    Port:       443/TCP
+    Host Port:  0/TCP
+    Command:
+      /etc/openvpn/setup/configure.sh
+    Limits:
+      cpu:     300m
+      memory:  128Mi
+    Requests:
+      cpu:        300m
+      memory:     128Mi
+    Environment:  <none>
+    Mounts:
+      /etc/openvpn/certs from certs (rw)
+      /etc/openvpn/setup from openvpn (rw)
+  Volumes:
+   openvpn:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      helm-openvpn
+    Optional:  false
+   certs:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  helm-openvpn
+    ReadOnly:   false
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  helm-openvpn-555f8c8c5c (1/1 replicas created)
+NewReplicaSet:   <none>
+Events:          <none>
+#+end_example
+
+*** TODO Plan
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform plan \
+  -target module.helm_release.openvpn \
+  -out .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Apply
+
+#+BEGIN_SRC sh :results drawer
+date -u
+echo `whoami` "\n"
+
+terraform apply \
+  -target module.helm_release.openvpn \
+  .terraform/tfplan.out
+#+END_SRC
+
+*** TODO Delete
+
+TBD
+
+*** DONE Output
+
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+terraform output  \
+  -module=helm_release.openvpn \
+  -json | python -m json.tool
+#+END_SRC
+
+#+RESULTS:
+
