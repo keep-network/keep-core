@@ -55,9 +55,14 @@ func TestDKGResultEquals(t *testing.T) {
 			result2:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
 			expectedResult: true,
 		},
-		"disqualified - not equal": {
+		"disqualified - other members DQ": {
 			result1:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
 			result2:        &DKGResult{Disqualified: []byte{0x00, 0x01, 0x00}},
+			expectedResult: false,
+		},
+		"disqualified - different length of DQ members": {
+			result1:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x00}},
+			result2:        &DKGResult{Disqualified: []byte{0x00, 0x00}},
 			expectedResult: false,
 		},
 		"inactive - equal": {
@@ -65,9 +70,14 @@ func TestDKGResultEquals(t *testing.T) {
 			result2:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
 			expectedResult: true,
 		},
-		"inactive - not equal": {
+		"inactive - other members IA": {
 			result1:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
-			result2:        &DKGResult{Inactive: []byte{0x01, 0x01}},
+			result2:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x01}},
+			expectedResult: false,
+		},
+		"inactive - different length of IA members": {
+			result1:        &DKGResult{Inactive: []byte{0x00, 0x00}},
+			result2:        &DKGResult{Inactive: []byte{0x00, 0x00, 0x00}},
 			expectedResult: false,
 		},
 	}
