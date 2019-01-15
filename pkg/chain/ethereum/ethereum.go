@@ -384,6 +384,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 							err,
 						)
 					}
+
+					return
 				}
 			}
 		}
