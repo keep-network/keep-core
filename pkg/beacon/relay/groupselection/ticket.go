@@ -45,6 +45,10 @@ func NewTicket(
 	}
 }
 
+func (t *Ticket) IsFromStaker(stakerAddress string) bool {
+	return string(t.Proof.StakerValue) == stakerAddress
+}
+
 // CalculateTicketValue generates a SHAValue from the previous beacon output, the
 // staker-specific value, and the virtual staker index.
 //
