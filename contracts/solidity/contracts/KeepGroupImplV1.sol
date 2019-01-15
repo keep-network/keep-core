@@ -237,7 +237,7 @@ contract KeepGroupImplV1 is Ownable {
   
         emit DkgResultPublishedEvent(requestId);
 
-        // TODO: Move out these once dispute logic is implemented,
+        // TODO: Remove this section once dispute logic is implemented,
         // implement conflict resolution logic described in Phase 14,
         // make sure only valid members are stored.
         _groups.push(groupPubKey);
