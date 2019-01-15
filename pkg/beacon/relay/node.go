@@ -59,7 +59,6 @@ type membership struct {
 func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
 	groupSelectionResult *groupselection.Result,
-	entryValue []byte,
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
