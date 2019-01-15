@@ -68,7 +68,7 @@ date -u
 whoami
 
 kubectl create secret generic terraform-admin-service-account \
-  --from-file=/Users/sthompson22/.config/gcloud/thesis-terraform-admin-service-account-creds.json
+  --from-file=$HOME/.config/gcloud/thesis-terraform-admin-service-account-creds.json
 #+END_SRC
 
 #+RESULTS:
