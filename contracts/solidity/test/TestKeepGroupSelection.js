@@ -6,6 +6,7 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
+const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
 const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
@@ -43,6 +44,7 @@ contract('TestKeepGroupSelection', function(accounts) {
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     randomBeaconValue, naturalThreshold,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
+    keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
     staker1 = accounts[0], tickets1, tickets1BelowNatT, tickets1AboveNatT,
     staker2 = accounts[1], tickets2, tickets2BelowNatT, tickets2AboveNatT,
@@ -56,6 +58,12 @@ contract('TestKeepGroupSelection', function(accounts) {
     stakingProxy = await StakingProxy.new();
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
     await stakingProxy.authorizeContract(stakingContract.address, {from: staker1})
+
+    // Initialize Keep Random Beacon contract
+    keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
+    keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
+    keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
+    await keepRandomBeaconImplViaProxy.initialize(1,1);
 
     // Initialize Keep Group contract
     minimumStake = 20000000;
@@ -71,7 +79,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
-      stakingProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
+      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
     );
 
     naturalThreshold = await keepGroupImplViaProxy.naturalThreshold();
@@ -110,7 +118,8 @@ contract('TestKeepGroupSelection', function(accounts) {
       return ticket.value.greaterThan(naturalThreshold);
     });
 
-    await keepGroupImplViaProxy.runGroupSelection(randomBeaconValue);
+    await keepRandomBeaconImplViaProxy.setGroupContract(keepGroupProxy.address);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, randomBeaconValue, 1, 1);
   });
 
   it("should be able to get staking weight", async function() {
