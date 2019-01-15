@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 
@@ -173,15 +172,12 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
 	fail errorCallback,
 ) (event.Subscription, error) {
-	subscribeContext, cancel := context.WithCancel(context.Background())
-
 	eventChan := make(chan *abi.KeepGroupImplV1DkgResultPublishedEvent)
 	eventSubscription, err := kg.contract.WatchDkgResultPublishedEvent(
-		&bind.WatchOpts{Context: subscribeContext},
+		&bind.WatchOpts{},
 		eventChan,
 	)
 	if err != nil {
-		cancel()
 		close(eventChan)
 		return nil, fmt.Errorf(
 			"could not create watch for DkgResultPublished event [%v]",
@@ -192,7 +188,11 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	go func() {
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					return
+				}
 				success(event.RequestId)
 
 			case err := <-eventSubscription.Err():
@@ -202,6 +202,7 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	}()
 
 	return event.NewSubscription(func() {
-		cancel()
+		eventSubscription.Unsubscribe()
+		close(eventChan)
 	}), nil
 }
