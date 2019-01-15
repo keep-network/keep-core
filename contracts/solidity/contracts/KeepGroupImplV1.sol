@@ -337,6 +337,41 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev ticketInitialSubmissionTimeout is the duration (in blocks) the
+     * staker has to submit tickets that fall under the natural threshold
+     * to satisfy the initial ticket timeout (see group selection, phase 2a).
+     */
+    function ticketInitialSubmissionTimeout() public view returns (uint256) {
+        return _timeoutInitial;
+    }
+
+    /**
+     * @dev ticketReactiveSubmissionTimeout is the duration (in blocks) the
+     * staker has to submit any tickets that did not fall under the natural
+     * threshold. This final chance to submit tickets is called reactive
+     * ticket submission (defined in the group selection algorithm, 2b).
+     */
+    function ticketReactiveSubmissionTimeout() public view returns (uint256) {
+        return _timeoutSubmission;
+    }
+
+    /**
+     * @dev ticketChallengeTimeout is the duration (in blocks) the staker
+     * has to submit any challenges for tickets that fail any checks.
+     */
+    function ticketChallengeTimeout() public view returns (uint256) {
+        return _timeoutChallenge;
+    }
+
+    /**
+     * @dev ticketSubmissionStartBlock block number at which current group
+     * selection started.
+     */
+    function ticketSubmissionStartBlock() public view returns (uint256) {
+        return _submissionStart;
+    }
+
+    /**
      * @dev Return natural threshold, the value N virtual stakers' tickets would be expected
      * to fall below if the tokens were optimally staked, and the tickets' values were evenly 
      * distributed in the domain of the pseudorandom function.
