@@ -59,10 +59,13 @@ type membership struct {
 func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
 	groupSelectionResult *groupselection.Result,
+	entryValue []byte,
+	entryRequestID *big.Int,
+	entrySeed *big.Int,
 ) {
 	// build the channel name and get the broadcast channel
 	broadcastChannelName := channelNameFromSelectedTickets(
-		groupSelectionResult.Entry.Value,
+		entryValue,
 		groupSelectionResult.SelectedTickets,
 	)
 	broadcastChannel, err := n.netProvider.ChannelFor(
@@ -85,8 +88,8 @@ func (n *Node) JoinGroupIfEligible(
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.StakeID) {
 			go dkg2.ExecuteDKG(
-				groupSelectionResult.Entry.RequestID,
-				groupSelectionResult.Entry.Seed,
+				entryRequestID,
+				entrySeed,
 				index,
 				n.chainConfig.GroupSize,
 				n.chainConfig.Threshold,
@@ -107,7 +110,7 @@ func (n *Node) JoinGroupIfEligible(
 // * uses the previous entry value as a nonce (final value)
 // * returning the hashed concatenated values and nonce
 func channelNameFromSelectedTickets(
-	entryValue *big.Int,
+	entryValue []byte,
 	tickets []*groupselection.Ticket,
 ) string {
 	var channelNameBytes []byte
@@ -120,7 +123,7 @@ func channelNameFromSelectedTickets(
 	// Add the previous entry as the nonce
 	channelNameBytes = append(
 		channelNameBytes,
-		entryValue.Bytes()...,
+		entryValue...,
 	)
 
 	hashedChannelName := groupselection.SHAValue(

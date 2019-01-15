@@ -50,11 +50,6 @@ type GroupInterface interface {
 	// submission. The promise is fulfilled with the challenge as seen on-chain,
 	// or failed if there is an error submitting the entry.
 	SubmitChallenge(ticket *groupselection.TicketChallenge) *async.GroupTicketChallengePromise
-	// OnGroupSelectionResult is a callback that is invoked when the final
-	// phase of group selection has been completed on-chain, and the chain
-	// emits a notification of an ordered list of seletected tickets.
-	// These tickets represent the stakers eligble to form the next group.
-	OnGroupSelectionResult(func(result *groupselection.Result))
 	// GetOrderedTickets returns submitted tickets which have passed checks
 	// on-chain.
 	GetOrderedTickets() []*groupselection.Ticket
