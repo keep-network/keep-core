@@ -288,32 +288,30 @@ kubectl describe \
 
 #+RESULTS:
 :RESULTS:
-Mon Dec 17 21:05:34 UTC 2018
+Tue Jan 15 14:52:42 UTC 2019
 sthompson22
 Name:             atlantis-https
 Namespace:        default
 Address:          35.244.176.50
-Default backend:  atlantis-https:8443 (10.102.1.14:8443)
+Default backend:  atlantis-https:8443 (10.102.1.27:8443)
 TLS:
-  atlantis-tls terminates atlantis.keep-dev.com
+  atlantis-tls terminates 
 Rules:
   Host  Path  Backends
   ----  ----  --------
-  *     *     atlantis-https:8443 (10.102.1.14:8443)
+  *     *     atlantis-https:8443 (10.102.1.27:8443)
 Annotations:
-  ingress.kubernetes.io/backends:               {"k8s-be-30885--2233353f8ad2173d":"Unknown"}
-  ingress.kubernetes.io/https-forwarding-rule:  k8s-fws-default-atlantis-https--2233353f8ad2173d
+  kubectl.kubernetes.io/last-applied-configuration:  {"apiVersion":"extensions/v1beta1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.allow-http":"false","kubernetes.io/ingress.class":"gce","kubernetes.io/ingress.global-static-ip-name":"keep-dev-atlantis-external-ip-0"},"name":"atlantis-https","namespace":"default"},"spec":{"backend":{"serviceName":"atlantis-https","servicePort":8443},"tls":[{"hosts":null,"secretName":"atlantis-tls"}]}}
+
   ingress.kubernetes.io/https-target-proxy:     k8s-tps-default-atlantis-https--2233353f8ad2173d
   ingress.kubernetes.io/ssl-cert:               k8s-ssl-9fac3675b9472b1a-62b905f879ee5ad1--2233353f8ad2173d
   ingress.kubernetes.io/url-map:                k8s-um-default-atlantis-https--2233353f8ad2173d
   kubernetes.io/ingress.allow-http:             false
   kubernetes.io/ingress.class:                  gce
   kubernetes.io/ingress.global-static-ip-name:  keep-dev-atlantis-external-ip-0
-Events:
-  Type    Reason  Age    From                     Message
-  ----    ------  ----   ----                     -------
-  Normal  ADD     2m36s  loadbalancer-controller  default/atlantis-https
-  Normal  CREATE  117s   loadbalancer-controller  ip: 35.244.176.50
+  ingress.kubernetes.io/backends:               {"k8s-be-30885--2233353f8ad2173d":"HEALTHY"}
+  ingress.kubernetes.io/https-forwarding-rule:  k8s-fws-default-atlantis-https--2233353f8ad2173d
+Events:                                         <none>
 :END:
 
 **** DONE Create
@@ -331,7 +329,7 @@ kubectl create \
 : sthompson22
 : ingress.extensions/atlantis-https created
 
-**** TODO Update
+**** DONE Update
 
 #+BEGIN_SRC sh :results pp
 date -u
@@ -340,6 +338,12 @@ whoami
 kubectl apply \
   -f ./atlantis-ingress-https.yaml
 #+END_SRC
+
+#+RESULTS:
+: Tue Jan 15 14:50:25 UTC 2019
+: sthompson22
+: ingress.extensions/atlantis-https configured
+
 **** TODO Delete
 
 #+BEGIN_SRC sh :results pp
