@@ -62,6 +62,7 @@ contract KeepGroupImplV1 is Ownable {
      */
     function runGroupSelection(uint256 randomBeaconValue) public {
         require(msg.sender == _randomBeacon);
+        cleanup();
         _submissionStart = block.number;
         _randomBeaconValue = randomBeaconValue;
     }
@@ -416,4 +417,19 @@ contract KeepGroupImplV1 is Ownable {
     function version() public pure returns (string) {
         return "V1";
     }
+
+    /**
+     * @dev Cleanup data of previous group selection.
+     */
+    function cleanup() private {
+
+        for (uint i = 0; i < _tickets.length; i++) {
+            delete _proofs[_tickets[i]];
+        }
+
+        delete _tickets;
+
+        // TODO: cleanup DkgResults
+    }
+
 }
