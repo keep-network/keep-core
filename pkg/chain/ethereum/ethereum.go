@@ -338,7 +338,8 @@ func (ec *ethereumChain) OnDKGResultPublished(
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
-	requestID *big.Int, result *relaychain.DKGResult,
+	requestID *big.Int,
+	result *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
 	resultPublicationPromise := &async.DKGResultPublicationPromise{}
 
