@@ -9,7 +9,6 @@ metadata:
 spec:
   tls:
     - hosts:
-      - atlantis.keep-dev.com
       # This assumes tls-secret exists and the SSL
       # certificate contains a CN for foo.bar.com
       secretName: atlantis-tls
