@@ -20,7 +20,7 @@ func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
 }
 
 func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
-	size, err := ec.keepGroupContract.GroupSize()
+	groupSize, err := ec.keepGroupContract.GroupSize()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
 	}
@@ -31,7 +31,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	}
 
 	return &relayconfig.Chain{
-		GroupSize: size,
+		GroupSize: groupSize,
 		Threshold: threshold,
 	}, nil
 }
