@@ -45,7 +45,7 @@ type GroupSelectionInterface interface {
 	SubmitChallenge(ticket *groupselection.TicketChallenge) *async.GroupTicketChallengePromise
 	// GetOrderedTickets returns submitted tickets which have passed checks
 	// on-chain.
-	GetOrderedTickets() []*groupselection.Ticket
+	GetOrderedTickets() ([]*groupselection.Ticket, error)
 }
 
 // GroupRegistrationInterface defines the subset of the relay chain interface

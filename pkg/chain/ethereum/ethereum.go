@@ -155,9 +155,24 @@ func (ec *ethereumChain) SubmitChallenge(
 	return &async.GroupTicketChallengePromise{}
 }
 
-// TODO: implement
-func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
-	return make([]*groupselection.Ticket, 0)
+func (ec *ethereumChain) GetOrderedTickets() ([]*groupselection.Ticket, error) {
+	// TODO: return proofs with this method
+	orderedTickets, err := ec.keepGroupContract.OrderedTickets()
+	if err != nil {
+		return nil, err
+	}
+	var tickets []*groupselection.Ticket
+	for _, onChainTicket := range orderedTickets {
+		ticket := &groupselection.Ticket{
+			Value: groupselection.NewShaValue(onChainTicket[0]),
+			Proof: &groupselection.Proof{
+				StakerValue:        onChainTicket[1].Bytes(),
+				VirtualStakerIndex: onChainTicket[2],
+			},
+		}
+		tickets = append(tickets, ticket)
+	}
+	return tickets, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
