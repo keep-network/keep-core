@@ -166,6 +166,18 @@ func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
 	return int(ticketChallengeTimeout.Int64()), nil
 }
 
+func (kg *keepGroup) MinimumStake() (*big.Int, error) {
+	return kg.caller.MinimumStake(kg.callerOpts)
+}
+
+func (kg *keepGroup) TokenSupply() (*big.Int, error) {
+	return kg.caller.TokenSupply(kg.callerOpts)
+}
+
+func (kg *keepGroup) NaturalThreshold() (*big.Int, error) {
+	return kg.caller.NaturalThreshold(kg.callerOpts)
+}
+
 // HasMinimumStake returns true if the specified address has sufficient
 // state to participate.
 func (kg *keepGroup) HasMinimumStake(
