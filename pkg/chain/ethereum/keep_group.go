@@ -2,9 +2,13 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 )
 
@@ -142,4 +146,63 @@ func (kg *keepGroup) HasMinimumStake(
 	address common.Address,
 ) (bool, error) {
 	return kg.caller.HasMinimumStake(kg.callerOpts, address)
+}
+
+func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
+	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
+}
+
+func (kg *keepGroup) SubmitDKGResult(
+	requestID *big.Int,
+	result *relaychain.DKGResult,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitDkgResult(
+		kg.transactorOpts,
+		requestID,
+		result.Success,
+		result.GroupPublicKey,
+		result.Disqualified,
+		result.Inactive,
+	)
+}
+
+type dkgResultPublishedEventFunc func(requestID *big.Int)
+
+func (kg *keepGroup) WatchDKGResultPublishedEvent(
+	success dkgResultPublishedEventFunc,
+	fail errorCallback,
+) (event.Subscription, error) {
+	eventChan := make(chan *abi.KeepGroupImplV1DkgResultPublishedEvent)
+	eventSubscription, err := kg.contract.WatchDkgResultPublishedEvent(
+		&bind.WatchOpts{},
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return nil, fmt.Errorf(
+			"could not create watch for DkgResultPublished event [%v]",
+			err,
+		)
+	}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					return
+				}
+				success(event.RequestId)
+
+			case err := <-eventSubscription.Err():
+				fail(err)
+			}
+		}
+	}()
+
+	return event.NewSubscription(func() {
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}), nil
 }

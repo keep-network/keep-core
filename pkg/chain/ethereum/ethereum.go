@@ -320,22 +320,83 @@ func (ec *ethereumChain) RequestRelayEntry(
 	return promise
 }
 
-// IsDKGResultPublished checks if the result is already published to a chain.
 func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
-	return false, nil
-}
-
-// SubmitDKGResult sends DKG result to a chain.
-func (ec *ethereumChain) SubmitDKGResult(
-	requestID *big.Int, resultToPublish *relaychain.DKGResult,
-) *async.DKGResultPublicationPromise {
-	// TODO Implement
-	return nil
+	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) event.Subscription {
-	// TODO Implement
-	return event.NewSubscription(func() {})
+) (event.Subscription, error) {
+	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
+		func(requestID *big.Int) {
+			handler(&event.DKGResultPublication{RequestID: requestID})
+		},
+		func(err error) error {
+			return err
+		},
+	)
+}
+
+func (ec *ethereumChain) SubmitDKGResult(
+	requestID *big.Int,
+	result *relaychain.DKGResult,
+) *async.DKGResultPublicationPromise {
+	resultPublicationPromise := &async.DKGResultPublicationPromise{}
+
+	failPromise := func(err error) {
+		failErr := resultPublicationPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	published := make(chan *event.DKGResultPublication)
+
+	subscription, err := ec.OnDKGResultPublished(
+		func(event *event.DKGResultPublication) {
+			published <- event
+		},
+	)
+	if err != nil {
+		close(published)
+		failPromise(err)
+		return resultPublicationPromise
+	}
+
+	go func() {
+		for {
+			select {
+			case event := <-published:
+				if event.RequestID == requestID {
+					subscription.Unsubscribe()
+					close(published)
+
+					err := resultPublicationPromise.Fulfill(event)
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"fulfilling promise failed with: [%v].\n",
+							err,
+						)
+					}
+
+					return
+				}
+			}
+		}
+	}()
+
+	_, err = ec.keepGroupContract.SubmitDKGResult(requestID, result)
+	if err != nil {
+		subscription.Unsubscribe()
+		close(published)
+		failPromise(err)
+	}
+
+	return resultPublicationPromise
 }

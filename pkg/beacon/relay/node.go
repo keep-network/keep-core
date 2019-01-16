@@ -59,13 +59,11 @@ type membership struct {
 func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
 	groupSelectionResult *groupselection.Result,
-	entryValue []byte,
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
 	// build the channel name and get the broadcast channel
 	broadcastChannelName := channelNameFromSelectedTickets(
-		entryValue,
 		groupSelectionResult.SelectedTickets,
 	)
 	broadcastChannel, err := n.netProvider.ChannelFor(
@@ -107,10 +105,8 @@ func (n *Node) JoinGroupIfEligible(
 // following to construct the broadcastChannel name:
 // * grabs the value from each ticket
 // * concatenates all of the values
-// * uses the previous entry value as a nonce (final value)
-// * returning the hashed concatenated values and nonce
+// * returns the hashed concatenated values
 func channelNameFromSelectedTickets(
-	entryValue []byte,
 	tickets []*groupselection.Ticket,
 ) string {
 	var channelNameBytes []byte
@@ -120,12 +116,6 @@ func channelNameFromSelectedTickets(
 			ticket.Value.Bytes()...,
 		)
 	}
-	// Add the previous entry as the nonce
-	channelNameBytes = append(
-		channelNameBytes,
-		entryValue...,
-	)
-
 	hashedChannelName := groupselection.SHAValue(
 		sha256.Sum256(channelNameBytes),
 	)

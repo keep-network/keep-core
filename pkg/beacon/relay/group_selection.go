@@ -103,7 +103,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			go n.JoinGroupIfEligible(
 				relayChain,
 				&groupselection.Result{selectedTickets},
-				beaconValue,
 				entryRequestID,
 				entrySeed,
 			)

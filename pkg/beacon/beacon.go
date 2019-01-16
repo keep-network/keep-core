@@ -85,7 +85,6 @@ func Initialize(
 				registration.GroupPublicKey,
 			)
 		})
-
 	}
 
 	<-ctx.Done()

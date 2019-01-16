@@ -11,7 +11,10 @@ import (
 
 func TestConvertResult(t *testing.T) {
 	groupSize := 5
+
 	publicKey := new(bn256.G1).ScalarBaseMult(big.NewInt(2))
+	var serializedPublicKey [32]byte
+	copy(serializedPublicKey[:], publicKey.Marshal())
 
 	var tests = map[string]struct {
 		gjkrResult     *gjkr.Result
@@ -26,9 +29,9 @@ func TestConvertResult(t *testing.T) {
 			},
 			expectedResult: &relayChain.DKGResult{
 				Success:        false,
-				GroupPublicKey: []byte{},
-				Disqualified:   []bool{false, false, false, false, false},
-				Inactive:       []bool{false, false, false, false, false},
+				GroupPublicKey: [32]byte{},
+				Disqualified:   []byte{0x00, 0x00, 0x00, 0x00, 0x00},
+				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x00},
 			},
 		},
 		"success: true, group public key: provided, DQ and IA: provided": {
@@ -40,9 +43,9 @@ func TestConvertResult(t *testing.T) {
 			},
 			expectedResult: &relayChain.DKGResult{
 				Success:        true,
-				GroupPublicKey: publicKey.Marshal(),
-				Disqualified:   []bool{true, false, true, true, false},
-				Inactive:       []bool{false, false, false, false, true},
+				GroupPublicKey: serializedPublicKey,
+				Disqualified:   []byte{0x01, 0x00, 0x01, 0x01, 0x00},
+				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x01},
 			},
 		},
 	}
