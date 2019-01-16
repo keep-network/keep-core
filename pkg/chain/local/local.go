@@ -68,8 +68,8 @@ func (c *localChain) SubmitChallenge(
 	return &async.GroupTicketChallengePromise{}
 }
 
-func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
-	return make([]*groupselection.Ticket, 0)
+func (c *localChain) GetOrderedTickets() ([]*groupselection.Ticket, error) {
+	return make([]*groupselection.Ticket, 0), nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(

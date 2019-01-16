@@ -96,7 +96,14 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			selectedTickets := relayChain.GetOrderedTickets()
+			fmt.Println("challenge timeout end")
+			selectedTickets, err := relayChain.GetOrderedTickets()
+			if err != nil {
+				fmt.Printf(
+					"error getting submitted tickets [%v].",
+					err,
+				)
+			}
 
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
@@ -144,7 +151,15 @@ func (gc *groupCandidate) verifyTicket(
 	for {
 		select {
 		case <-t.C:
-			for _, ticket := range relayChain.GetOrderedTickets() {
+			selectedTickets, err := relayChain.GetOrderedTickets()
+			if err != nil {
+				fmt.Printf(
+					"error getting submitted tickets [%v].",
+					err,
+				)
+			}
+
+			for _, ticket := range selectedTickets {
 				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.TicketChallenge{
 						Ticket:        ticket,
