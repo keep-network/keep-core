@@ -143,9 +143,31 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupRegistrationPromise
 }
 
-// TODO: implement
 func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
-	return &async.GroupTicketPromise{}
+	submittedTicketPromise := &async.GroupTicketPromise{}
+	failPromise := func(err error) {
+		failErr := submittedTicketPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	stakerValueInt := (&big.Int{}).SetBytes(ticket.Proof.StakerValue)
+	_, err := ec.keepGroupContract.SubmitTicket(
+		ticket.Value.Int(),
+		stakerValueInt,
+		ticket.Proof.VirtualStakerIndex,
+	)
+	if err != nil {
+		failPromise(err)
+	}
+
+	return submittedTicketPromise
 }
 
 // TODO: implement
