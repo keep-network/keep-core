@@ -186,6 +186,24 @@ func (kg *keepGroup) HasMinimumStake(
 	return kg.caller.HasMinimumStake(kg.callerOpts, address)
 }
 
+func (kg *keepGroup) OrderedTickets() ([][]*big.Int, error) {
+	orderedTicketValues, err := kg.caller.OrderedTickets(kg.callerOpts)
+	if err != nil {
+		return nil, err
+	}
+	var orderedTickets [][]*big.Int
+	for _, ticketValue := range orderedTicketValues {
+		_, stakerValue, virtualStakerIndex, err :=
+			kg.caller.GetTicketProof(kg.callerOpts, ticketValue)
+		if err != nil {
+			return nil, err
+		}
+		ticket := []*big.Int{ticketValue, stakerValue, virtualStakerIndex}
+		orderedTickets = append(orderedTickets, ticket)
+	}
+	return orderedTickets, nil
+}
+
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
 }
