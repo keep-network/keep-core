@@ -371,3 +371,24 @@ _R~GROUP_KEY_COMPROMISE_TATTLETALE~ << M~nofail~ * D~GROUP_KEY_COMPROMISED~_
 The magnitude of the group key compromise tattletale reward has a significant
 impact on the viability of the control bootstrapping attack for deliberately
 compromising the group key.
+
+== Extra notes
+
+=== Tattletale ratio
+
+The operator can still transfer tokens by abusing the tattletale mechanisms.
+However, the efficiency of this is limited by the
+`tattletale_fraction = tattletale_reward / misbehavior_penalty`
+ratio of the best available exploit.
+
+This seems impossible to mitigate because if the operator is paid
+`operator_reward = operator_fraction * expected_value_multiplier * total_stake`
+and thus the opportunity cost of stealing
+`tattletale_fraction * total_stake`
+is negative only when
+`operator_fraction * expected_value_multiplier > tattletale_fraction`.
+However, in this case it becomes profitable to bribe a potential tattletale
+simply with the earnings one will get in the future from the tokens that would
+be slashed if the tattletale would do their job, and only the presence of a
+sufficient number of non-coordinating potential tattletales keeps this from
+being an easy way out.
