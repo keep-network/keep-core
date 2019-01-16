@@ -19,20 +19,68 @@ func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
 	return ec
 }
 
-func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
-	size, err := ec.keepGroupContract.GroupSize()
+func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
+	groupSize, err := ec.keepGroupContract.GroupSize()
 	if err != nil {
-		return relayconfig.Chain{}, fmt.Errorf("error calling GroupSize: [%v]", err)
+		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
 	}
 
 	threshold, err := ec.keepGroupContract.GroupThreshold()
 	if err != nil {
-		return relayconfig.Chain{}, fmt.Errorf("error calling GroupThreshold: [%v]", err)
+		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
-	return relayconfig.Chain{
-		GroupSize: size,
-		Threshold: threshold,
+	ticketInitialSubmissionTimeout, err :=
+		ec.keepGroupContract.TicketInitialSubmissionTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketInitialSubmissionTimeout: [%v]",
+			err,
+		)
+	}
+
+	ticketReactiveSubmissionTimeout, err :=
+		ec.keepGroupContract.TicketReactiveSubmissionTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketReactiveSubmissionTimeout: [%v]",
+			err,
+		)
+	}
+
+	ticketChallengeTimeout, err :=
+		ec.keepGroupContract.TicketChallengeTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketChallengeTimeout: [%v]",
+			err,
+		)
+	}
+
+	minimumStake, err := ec.keepGroupContract.MinimumStake()
+	if err != nil {
+		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
+	}
+
+	tokenSupply, err := ec.keepGroupContract.TokenSupply()
+	if err != nil {
+		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
+	}
+
+	naturalThreshold, err := ec.keepGroupContract.NaturalThreshold()
+	if err != nil {
+		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
+	}
+
+	return &relayconfig.Chain{
+		GroupSize:                       groupSize,
+		Threshold:                       threshold,
+		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
+		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
+		TicketChallengeTimeout:          ticketChallengeTimeout,
+		MinimumStake:                    minimumStake,
+		TokenSupply:                     tokenSupply,
+		NaturalThreshold:                naturalThreshold,
 	}, nil
 }
 

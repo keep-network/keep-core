@@ -30,7 +30,7 @@ type Node struct {
 	// External interactors.
 	netProvider  net.Provider
 	blockCounter chain.BlockCounter
-	chainConfig  config.Chain
+	chainConfig  *config.Chain
 
 	// The IDs of the known stakes in the system, including this node's StakeID.
 	stakeIDs      []string

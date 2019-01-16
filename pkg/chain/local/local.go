@@ -17,7 +17,7 @@ import (
 )
 
 type localChain struct {
-	relayConfig relayconfig.Chain
+	relayConfig *relayconfig.Chain
 
 	groupRegistrationsMutex sync.Mutex
 	groupRegistrations      map[string][96]byte
@@ -52,7 +52,7 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return c.stakeMonitor, nil
 }
 
-func (c *localChain) GetConfig() (relayconfig.Chain, error) {
+func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
@@ -199,7 +199,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
 
 	return &localChain{
-		relayConfig: relayconfig.Chain{
+		relayConfig: &relayconfig.Chain{
 			GroupSize: groupSize,
 			Threshold: threshold,
 		},

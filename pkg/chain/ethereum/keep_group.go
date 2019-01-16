@@ -125,7 +125,7 @@ func (kg *keepGroup) Initialized() (bool, error) {
 func (kg *keepGroup) GroupThreshold() (int, error) {
 	requiredThresholdMembers, err := kg.caller.GroupThreshold(kg.callerOpts)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 	return int(requiredThresholdMembers.Int64()), nil
 }
@@ -135,9 +135,47 @@ func (kg *keepGroup) GroupThreshold() (int, error) {
 func (kg *keepGroup) GroupSize() (int, error) {
 	groupSize, err := kg.caller.GroupSize(kg.callerOpts)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 	return int(groupSize.Int64()), nil
+}
+
+func (kg *keepGroup) TicketInitialSubmissionTimeout() (int, error) {
+	ticketInitialSubmissionTimeout, err :=
+		kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
+	if err != nil {
+		return -1, err
+	}
+	return int(ticketInitialSubmissionTimeout.Int64()), nil
+}
+
+func (kg *keepGroup) TicketReactiveSubmissionTimeout() (int, error) {
+	ticketReactiveSubmissionTimeout, err :=
+		kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
+	if err != nil {
+		return -1, err
+	}
+	return int(ticketReactiveSubmissionTimeout.Int64()), nil
+}
+
+func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
+	ticketChallengeTimeout, err := kg.caller.TicketChallengeTimeout(kg.callerOpts)
+	if err != nil {
+		return -1, err
+	}
+	return int(ticketChallengeTimeout.Int64()), nil
+}
+
+func (kg *keepGroup) MinimumStake() (*big.Int, error) {
+	return kg.caller.MinimumStake(kg.callerOpts)
+}
+
+func (kg *keepGroup) TokenSupply() (*big.Int, error) {
+	return kg.caller.TokenSupply(kg.callerOpts)
+}
+
+func (kg *keepGroup) NaturalThreshold() (*big.Int, error) {
+	return kg.caller.NaturalThreshold(kg.callerOpts)
 }
 
 // HasMinimumStake returns true if the specified address has sufficient

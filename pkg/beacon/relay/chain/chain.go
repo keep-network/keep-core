@@ -73,7 +73,7 @@ type DistributedKeyGenerationInterface interface {
 // the anchoring blockchain on.
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
-	GetConfig() (config.Chain, error)
+	GetConfig() (*config.Chain, error)
 
 	GroupInterface
 	RelayEntryInterface
