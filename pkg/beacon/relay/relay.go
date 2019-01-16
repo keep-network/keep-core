@@ -20,7 +20,7 @@ func NewNode(
 	staker chain.Staker,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-	chainConfig config.Chain,
+	chainConfig *config.Chain,
 ) Node {
 	return Node{
 		Staker:          staker,
