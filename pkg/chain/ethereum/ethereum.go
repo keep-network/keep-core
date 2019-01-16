@@ -170,11 +170,30 @@ func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.Grou
 	return submittedTicketPromise
 }
 
-// TODO: implement
 func (ec *ethereumChain) SubmitChallenge(
-	ticket *groupselection.TicketChallenge,
+	ticketChallenge *groupselection.TicketChallenge,
 ) *async.GroupTicketChallengePromise {
-	return &async.GroupTicketChallengePromise{}
+	submittedChallengePromise := &async.GroupTicketChallengePromise{}
+	failPromise := func(err error) {
+		failErr := submittedChallengePromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	_, err := ec.keepGroupContract.SubmitChallenge(
+		ticketChallenge.Ticket.Value.Int(),
+	)
+	if err != nil {
+		failPromise(err)
+	}
+
+	return submittedChallengePromise
 }
 
 func (ec *ethereumChain) GetOrderedTickets() ([]*groupselection.Ticket, error) {

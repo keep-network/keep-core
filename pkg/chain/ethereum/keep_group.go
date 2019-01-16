@@ -199,6 +199,15 @@ func (kg *keepGroup) SubmitTicket(
 	)
 }
 
+func (kg *keepGroup) SubmitChallenge(
+	ticketValue *big.Int,
+) (*types.Transaction, error) {
+	return kg.transactor.Challenge(
+		kg.transactorOpts,
+		ticketValue,
+	)
+}
+
 func (kg *keepGroup) OrderedTickets() ([][]*big.Int, error) {
 	orderedTicketValues, err := kg.caller.OrderedTickets(kg.callerOpts)
 	if err != nil {
