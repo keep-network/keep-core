@@ -62,18 +62,19 @@ func (n *Node) JoinGroupIfEligible(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
+	// build the channel name and get the broadcast channel
+	broadcastChannelName := channelNameFromSelectedTickets(
+		groupSelectionResult.SelectedTickets,
+	)
 	for index, ticket := range groupSelectionResult.SelectedTickets {
 		// If our ticket is amongst those chosen, kick
 		// off an instance of DKG. We may have multiple
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.StakeID) {
-			// We should only join the broadcast channel if we're elligible for the group
 			fmt.Println("seeing if elligible for group...")
-			// build the channel name and get the broadcast channel
-			broadcastChannelName := channelNameFromSelectedTickets(
-				groupSelectionResult.SelectedTickets,
-			)
+			// We should only join the broadcast channel if we're
+			// elligible for the group
 			broadcastChannel, err := n.netProvider.ChannelFor(
 				broadcastChannelName,
 			)
