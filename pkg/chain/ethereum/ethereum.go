@@ -30,9 +30,57 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
+	ticketInitialSubmissionTimeout, err :=
+		ec.keepGroupContract.TicketInitialSubmissionTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketInitialSubmissionTimeout: [%v]",
+			err,
+		)
+	}
+
+	ticketReactiveSubmissionTimeout, err :=
+		ec.keepGroupContract.TicketReactiveSubmissionTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketReactiveSubmissionTimeout: [%v]",
+			err,
+		)
+	}
+
+	ticketChallengeTimeout, err :=
+		ec.keepGroupContract.TicketChallengeTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketChallengeTimeout: [%v]",
+			err,
+		)
+	}
+
+	minimumStake, err := ec.keepGroupContract.MinimumStake()
+	if err != nil {
+		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
+	}
+
+	tokenSupply, err := ec.keepGroupContract.TokenSupply()
+	if err != nil {
+		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
+	}
+
+	naturalThreshold, err := ec.keepGroupContract.NaturalThreshold()
+	if err != nil {
+		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
+	}
+
 	return &relayconfig.Chain{
-		GroupSize: groupSize,
-		Threshold: threshold,
+		GroupSize:                       groupSize,
+		Threshold:                       threshold,
+		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
+		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
+		TicketChallengeTimeout:          ticketChallengeTimeout,
+		MinimumStake:                    minimumStake,
+		TokenSupply:                     tokenSupply,
+		NaturalThreshold:                naturalThreshold,
 	}, nil
 }
 
