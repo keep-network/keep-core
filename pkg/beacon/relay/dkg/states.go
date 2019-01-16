@@ -104,7 +104,6 @@ func (cs *commitmentState) receive(msg net.Message) error {
 	case *MemberCommitmentsMessage:
 		if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
 			if senderID.IsEqual(&cs.member.BlsID) {
-				fmt.Printf("sender [%v]", cs.member.BlsID)
 				return nil
 			}
 
