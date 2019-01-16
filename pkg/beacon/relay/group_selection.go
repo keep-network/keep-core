@@ -53,7 +53,12 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	if err != nil {
 		return err
 	}
+	availableStake = big.NewInt(3)
 
+	fmt.Printf(
+		"input value for generate tickets: beaconValue [%+v], stakerID: [%+v], availableStake [%+v], min stake [%+v]\n",
+		beaconValue, n.Staker.ID(), availableStake, n.chainConfig.MinimumStake,
+	)
 	tickets, err :=
 		groupselection.GenerateTickets(
 			beaconValue,
@@ -65,11 +70,14 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
+	fmt.Printf("Generated [%d] tickets [%+v]\n", len(tickets), tickets)
+
 	errCh := make(chan error, len(tickets))
 	quitTicketSubmission := make(chan struct{}, 0)
 	quitTicketChallenge := make(chan struct{}, 0)
 	groupCandidate := &groupCandidate{address: n.StakeID, tickets: tickets}
 
+	fmt.Println("attempting to submit tickets")
 	// Phase 2a: submit all tickets that fall under the natural threshold
 	go groupCandidate.submitTickets(
 		relayChain,
@@ -94,6 +102,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				err,
 			)
 		case <-submissionTimeout:
+			fmt.Println("submission timeout end")
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
 			fmt.Println("challenge timeout end")
@@ -129,9 +138,14 @@ func (gc *groupCandidate) submitTickets(
 ) {
 	for _, ticket := range gc.tickets {
 		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
-			relayChain.SubmitTicket(ticket).OnFailure(
-				func(err error) { errCh <- err },
-			)
+			fmt.Printf("attempting to submit ticket [%+v]", ticket)
+			relayChain.SubmitTicket(ticket).
+				OnSuccess(func(ticket *groupselection.Ticket) {
+					fmt.Println("successfully submitted ticket")
+				}).
+				OnFailure(
+					func(err error) { errCh <- err },
+				)
 		}
 
 		select {

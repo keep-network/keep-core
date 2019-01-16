@@ -1,6 +1,7 @@
 package groupselection
 
 import (
+	"fmt"
 	"math/big"
 	"sort"
 )
@@ -18,9 +19,11 @@ func GenerateTickets(
 	minimumStake *big.Int,
 ) ([]*Ticket, error) {
 	stakingWeight := (&big.Int{}).Quo(availableStake, minimumStake) // W_j
+	fmt.Printf("staking weight: [%+v]\n", stakingWeight)
 
 	tickets := make(tickets, 0)
 	for virtualStaker := one; virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
+		fmt.Printf("virtualStakerIndex: [%d]\n", virtualStaker)
 		tickets = append(
 			tickets,
 			NewTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)), // prf

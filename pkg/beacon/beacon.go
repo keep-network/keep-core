@@ -41,6 +41,9 @@ func Initialize(
 	if err != nil {
 		return err
 	}
+	chainConfig.TicketReactiveSubmissionTimeout = 2
+	chainConfig.TicketChallengeTimeout = 3
+	fmt.Printf("Got chainconfig [%+v]\n", chainConfig)
 
 	curParticipantState, err := checkParticipantState()
 	if err != nil {
@@ -65,10 +68,12 @@ func Initialize(
 		return fmt.Errorf("account is unstaked")
 	default:
 		relayChain.OnRelayEntryRequested(func(request *event.Request) {
+			fmt.Printf("New entry requested [%+v]\n", request)
 			node.GenerateRelayEntryIfEligible(request, relayChain)
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
+			fmt.Printf("Saw new relay entry [%+v]\n", entry)
 			// new entry generated, try to join the group
 			node.SubmitTicketsForGroupSelection(
 				relayChain,
@@ -80,6 +85,7 @@ func Initialize(
 		})
 
 		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+			fmt.Printf("New group registered [%+v]\n", registration)
 			node.RegisterGroup(
 				registration.RequestID.String(),
 				registration.GroupPublicKey,

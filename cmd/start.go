@@ -95,6 +95,7 @@ func Start(c *cli.Context) error {
 	isBootstrapNode := config.LibP2P.Seed != 0
 	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
 
+	fmt.Println("initializing beacon")
 	err = beacon.Initialize(
 		ctx,
 		config.Ethereum.Account.Address,
