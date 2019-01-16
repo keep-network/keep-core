@@ -62,29 +62,33 @@ func (n *Node) JoinGroupIfEligible(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
-	// build the channel name and get the broadcast channel
-	broadcastChannelName := channelNameFromSelectedTickets(
-		groupSelectionResult.SelectedTickets,
-	)
-	broadcastChannel, err := n.netProvider.ChannelFor(
-		broadcastChannelName,
-	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"Failed to get broadcastChannel for name %s with err: [%v].\n",
-			broadcastChannelName,
-			err,
-		)
-		return
-	}
-
 	for index, ticket := range groupSelectionResult.SelectedTickets {
 		// If our ticket is amongst those chosen, kick
 		// off an instance of DKG. We may have multiple
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.StakeID) {
+			// We should only join the broadcast channel if we're elligible for the group
+			fmt.Println("seeing if elligible for group...")
+			// build the channel name and get the broadcast channel
+			broadcastChannelName := channelNameFromSelectedTickets(
+				groupSelectionResult.SelectedTickets,
+			)
+			broadcastChannel, err := n.netProvider.ChannelFor(
+				broadcastChannelName,
+			)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed to get broadcastChannel for name %s with err: [%v].\n",
+					broadcastChannelName,
+					err,
+				)
+				return
+			}
+			fmt.Printf("Joined channel [%s]\n", broadcastChannelName)
+
+			fmt.Println("Executing dkg...")
 			go dkg2.ExecuteDKG(
 				entryRequestID,
 				entrySeed,
