@@ -28,3 +28,12 @@ func (v SHAValue) Int() *big.Int {
 func (v SHAValue) Raw() [sha256.Size]byte {
 	return v
 }
+
+func NewShaValue(int *big.Int) SHAValue {
+	var container [sha256.Size]byte
+	bigIntBytes := int.Bytes()
+	for i := 0; i < 32; i++ {
+		container[i] = bigIntBytes[i]
+	}
+	return container
+}
