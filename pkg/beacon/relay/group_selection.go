@@ -153,11 +153,11 @@ func (gc *groupCandidate) submitTickets(
 					func(err error) { errCh <- err },
 				)
 		}
+	}
 
-		select {
-		case <-quit:
-			return
-		}
+	select {
+	case <-quit:
+		return
 	}
 }
 
