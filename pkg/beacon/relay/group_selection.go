@@ -35,20 +35,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) error {
-	submissionTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketReactiveSubmissionTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
-	challengeTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketChallengeTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
 	availableStake, err := n.Staker.Stake()
 	if err != nil {
 		return err
@@ -69,6 +55,20 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	quitTicketSubmission := make(chan struct{}, 0)
 	quitTicketChallenge := make(chan struct{}, 0)
 	groupCandidate := &groupCandidate{address: n.Staker.ID(), tickets: tickets}
+
+	submissionTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketReactiveSubmissionTimeout,
+	)
+	if err != nil {
+		return err
+	}
+
+	challengeTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketChallengeTimeout,
+	)
+	if err != nil {
+		return err
+	}
 
 	// Phase 2a: submit all tickets that fall under the natural threshold
 	go groupCandidate.submitTickets(
