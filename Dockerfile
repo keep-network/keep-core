@@ -68,8 +68,9 @@ RUN dep ensure -v --vendor-only
 RUN cd vendor/github.com/gogo/protobuf/protoc-gen-gogoslick && go install .
 RUN cd vendor/github.com/ethereum/go-ethereum/cmd/abigen && go install .
 
+
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
-RUN cd $APP_DIR/contracts/solidity && npm install
+RUN cd $APP_DIR/contracts/solidity && cp truffle_sample.js truffle.js && npm install
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
