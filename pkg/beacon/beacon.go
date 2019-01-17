@@ -41,8 +41,9 @@ func Initialize(
 	if err != nil {
 		return err
 	}
-	chainConfig.TicketReactiveSubmissionTimeout = 2
-	chainConfig.TicketChallengeTimeout = 3
+	chainConfig.TicketInitialSubmissionTimeout = 2
+	chainConfig.TicketReactiveSubmissionTimeout = 3
+	chainConfig.TicketChallengeTimeout = 4
 	fmt.Printf("Got chainconfig [%+v]\n", chainConfig)
 
 	curParticipantState, err := checkParticipantState()
