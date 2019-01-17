@@ -72,10 +72,16 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	fmt.Printf("Generated [%d] tickets [%+v]\n", len(tickets), tickets)
 
-	errCh := make(chan error, len(tickets))
-	quitTicketSubmission := make(chan struct{}, 0)
-	quitTicketChallenge := make(chan struct{}, 0)
-	groupCandidate := &groupCandidate{address: n.StakeID, tickets: tickets}
+	var (
+		errCh                = make(chan error, len(tickets))
+		quitTicketSubmission = make(chan struct{}, 0)
+		quitTicketChallenge  = make(chan struct{}, 0)
+
+		groupCandidate = &groupCandidate{
+			address: n.StakeID,
+			tickets: tickets,
+		}
+	)
 
 	fmt.Println("attempting to submit tickets")
 	// Phase 2a: submit all tickets that fall under the natural threshold
