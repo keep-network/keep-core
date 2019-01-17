@@ -143,9 +143,16 @@ func (gc *groupCandidate) submitTickets(
 	errCh chan<- error,
 ) {
 	for _, ticket := range gc.tickets {
-		relayChain.SubmitTicket(ticket).OnFailure(
-			func(err error) { errCh <- err },
-		)
+		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
+			fmt.Printf("attempting to submit ticket [%+v]", ticket)
+			relayChain.SubmitTicket(ticket).
+				OnSuccess(func(ticket *groupselection.Ticket) {
+					fmt.Println("successfully submitted ticket")
+				}).
+				OnFailure(
+					func(err error) { errCh <- err },
+				)
+		}
 
 		select {
 		case <-quit:
