@@ -168,6 +168,7 @@ type symmetricKeyGenerationState struct {
 func (skgs *symmetricKeyGenerationState) activeBlocks() int { return 0 }
 
 func (skgs *symmetricKeyGenerationState) initiate() error {
+	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
 	return skgs.member.GenerateSymmetricKeys(skgs.previousPhaseMessages)
 }
 
