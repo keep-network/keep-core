@@ -67,12 +67,12 @@ func (n *Node) JoinGroupIfEligible(
 		groupSelectionResult.SelectedTickets,
 	)
 	for index, ticket := range groupSelectionResult.SelectedTickets {
+		fmt.Println("seeing if elligible for group...")
 		// If our ticket is amongst those chosen, kick
 		// off an instance of DKG. We may have multiple
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.StakeID) {
-			fmt.Println("seeing if elligible for group...")
 			// We should only join the broadcast channel if we're
 			// elligible for the group
 			broadcastChannel, err := n.netProvider.ChannelFor(

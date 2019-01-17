@@ -3,6 +3,7 @@ package relay
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"math/big"
 	"time"
 
@@ -103,7 +104,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		select {
 		case err := <-errCh:
 			fmt.Printf(
-				"Error during ticket submission for entry [%v]: [%v].",
+				"Error during ticket submission for entry [%v]: [%v].\n",
 				beaconValue,
 				err,
 			)
@@ -115,11 +116,11 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
 				fmt.Printf(
-					"error getting submitted tickets [%v].",
+					"error getting submitted tickets [%v].\n",
 					err,
 				)
 			}
-
+			log.Printf("Got submitted tickets [%+v]\n", selectedTickets)
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
@@ -142,7 +143,9 @@ func (gc *groupCandidate) submitTickets(
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
+	log.Printf("in ticket submit loop, naturalThreshold [%+v]\n", naturalThreshold)
 	for _, ticket := range gc.tickets {
+		log.Printf("submitting ticket [%+v]\n", ticket)
 		relayChain.SubmitTicket(ticket).OnFailure(
 			func(err error) { errCh <- err },
 		)
