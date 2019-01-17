@@ -271,6 +271,10 @@ type commitmentsVerificationState struct {
 func (cvs *commitmentsVerificationState) activeBlocks() int { return 3 }
 
 func (cvs *commitmentsVerificationState) initiate() error {
+	cvs.member.MarkInactiveMembers(
+		cvs.previousPhaseSharesMessages,
+		cvs.previousPhaseCommitmentsMessages,
+	)
 	accusationsMsg, err := cvs.member.VerifyReceivedSharesAndCommitmentsMessages(
 		cvs.previousPhaseSharesMessages,
 		cvs.previousPhaseCommitmentsMessages,
