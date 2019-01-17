@@ -39,6 +39,15 @@ func isMessageFromSelf(state keyGenerationState, message net.Message) bool {
 	return false
 }
 
+func isSenderAccepted(filter gjkr.MessageFiltering, message net.Message) bool {
+	senderID, ok := message.ProtocolSenderID().(gjkr.MemberID)
+	if ok && filter.IsSenderAccepted(senderID) {
+		return true
+	}
+
+	return false
+}
+
 // initializationState is the starting state of key generation; it waits for
 // activePeriod and then enters joinState. No messages are valid in this state.
 type initializationState struct {
@@ -133,7 +142,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) initiate() error {
 func (ekpgs *ephemeralKeyPairGenerationState) receive(msg net.Message) error {
 	switch publicKeyMessage := msg.Payload().(type) {
 	case *gjkr.EphemeralPublicKeyMessage:
-		if !isMessageFromSelf(ekpgs, msg) {
+		if !isMessageFromSelf(ekpgs, msg) && isSenderAccepted(ekpgs.member, msg) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, publicKeyMessage)
 		}
 	}
@@ -223,7 +232,7 @@ func (cs *commitmentState) initiate() error {
 func (cs *commitmentState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.PeerSharesMessage:
-		if !isMessageFromSelf(cs, msg) {
+		if !isMessageFromSelf(cs, msg) && isSenderAccepted(cs.member, msg) {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
@@ -293,7 +302,7 @@ func (cvs *commitmentsVerificationState) initiate() error {
 func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.SecretSharesAccusationsMessage:
-		if !isMessageFromSelf(cvs, msg) {
+		if !isMessageFromSelf(cvs, msg) && isSenderAccepted(cvs.member, msg) {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
 				phaseMessage,
@@ -418,7 +427,7 @@ func (pss *pointsShareState) initiate() error {
 func (pss *pointsShareState) receive(msg net.Message) error {
 	switch pointsMessage := msg.Payload().(type) {
 	case *gjkr.MemberPublicKeySharePointsMessage:
-		if !isMessageFromSelf(pss, msg) {
+		if !isMessageFromSelf(pss, msg) && isSenderAccepted(pss.member, msg) {
 			pss.phaseMessages = append(pss.phaseMessages, pointsMessage)
 		}
 	}
@@ -474,7 +483,7 @@ func (pvs *pointsValidationState) initiate() error {
 func (pvs *pointsValidationState) receive(msg net.Message) error {
 	switch pointsAccusationMessage := msg.Payload().(type) {
 	case *gjkr.PointsAccusationsMessage:
-		if !isMessageFromSelf(pvs, msg) {
+		if !isMessageFromSelf(pvs, msg) && isSenderAccepted(pvs.member, msg) {
 			pvs.phaseMessages = append(pvs.phaseMessages, pointsAccusationMessage)
 		}
 	}
@@ -568,7 +577,7 @@ func (rs *keyRevealState) initiate() error {
 func (rs *keyRevealState) receive(msg net.Message) error {
 	switch revealMessage := msg.Payload().(type) {
 	case *gjkr.DisqualifiedEphemeralKeysMessage:
-		if !isMessageFromSelf(rs, msg) {
+		if !isMessageFromSelf(rs, msg) && isSenderAccepted(rs.member, msg) {
 			rs.phaseMessages = append(rs.phaseMessages, revealMessage)
 		}
 	}
@@ -646,7 +655,7 @@ func (cs *combinationState) initiate() error {
 }
 
 func (cs *combinationState) receive(msg net.Message) error {
-	return fmt.Errorf("unexpected message for combining phase: [%#v]", msg)
+	return nil
 }
 
 func (cs *combinationState) nextState() keyGenerationState {

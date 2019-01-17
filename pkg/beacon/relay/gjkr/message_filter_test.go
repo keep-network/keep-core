@@ -38,7 +38,7 @@ func TestFilterInactiveMembers(t *testing.T) {
 				memberIDs: test.groupMembers,
 			}
 
-			filter := &messageFilter{
+			filter := &inactiveMemberFilter{
 				selfMemberID:       test.selfMemberID,
 				group:              group,
 				phaseActiveMembers: make([]MemberID, 0),

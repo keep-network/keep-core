@@ -1,5 +1,11 @@
 package gjkr
 
+// MessageFiltering interface defines method allowing to filter out messages
+// from members that are not part of the group or were marked as IA or DQ.
+type MessageFiltering interface {
+	IsSenderAccepted(senderID MemberID) bool
+}
+
 // IsSenderAccepted returns true if the message from the given sender should be
 // accepted for further processing. Otherwise, function returns false.
 // Message from the given sender is allowed only if that member is a properly
@@ -65,26 +71,26 @@ func (rm *ReconstructingMember) MarkInactiveMembers(
 	filter.flushInactiveMembers()
 }
 
-func (mc *memberCore) messageFilter() *messageFilter {
-	return &messageFilter{
+func (mc *memberCore) messageFilter() *inactiveMemberFilter {
+	return &inactiveMemberFilter{
 		selfMemberID:       mc.ID,
 		group:              mc.group,
 		phaseActiveMembers: make([]MemberID, 0),
 	}
 }
 
-type messageFilter struct {
+type inactiveMemberFilter struct {
 	selfMemberID MemberID
 	group        *Group
 
 	phaseActiveMembers []MemberID
 }
 
-func (mf *messageFilter) markMemberAsActive(memberID MemberID) {
+func (mf *inactiveMemberFilter) markMemberAsActive(memberID MemberID) {
 	mf.phaseActiveMembers = append(mf.phaseActiveMembers, memberID)
 }
 
-func (mf *messageFilter) flushInactiveMembers() {
+func (mf *inactiveMemberFilter) flushInactiveMembers() {
 	isActive := func(id MemberID) bool {
 		if id == mf.selfMemberID {
 			return true
