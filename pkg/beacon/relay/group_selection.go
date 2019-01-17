@@ -17,7 +17,7 @@ import (
 const getTicketListInterval = 5 * time.Second
 
 type groupCandidate struct {
-	address string
+	address []byte
 	tickets []*groupselection.Ticket
 }
 
@@ -40,16 +40,16 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	if err != nil {
 		return err
 	}
-	availableStake = big.NewInt(3)
+	availableStake = big.NewInt(200000000)
 
 	fmt.Printf(
 		"input value for generate tickets: beaconValue [%+v], stakerID: [%+v], availableStake [%+v], min stake [%+v]\n",
-		beaconValue, n.Staker.ID(), availableStake, n.chainConfig.MinimumStake,
+		beaconValue, string(n.Staker.ID()), availableStake, n.chainConfig.MinimumStake,
 	)
 	tickets, err :=
 		groupselection.GenerateTickets(
 			beaconValue,
-			[]byte(n.Staker.ID()),
+			n.Staker.ID(),
 			availableStake,
 			n.chainConfig.MinimumStake,
 		)
@@ -65,7 +65,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		quitTicketChallenge  = make(chan struct{}, 0)
 
 		groupCandidate = &groupCandidate{
-			address: n.StakeID,
+			address: n.Staker.ID(),
 			tickets: tickets,
 		}
 	)

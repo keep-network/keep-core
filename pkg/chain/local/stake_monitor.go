@@ -67,8 +67,8 @@ type localStaker struct {
 	address string
 }
 
-func (ls *localStaker) ID() string {
-	return ls.address
+func (ls *localStaker) ID() []byte {
+	return []byte(ls.address)
 }
 
 func (ls *localStaker) Stake() (*big.Int, error) {

@@ -64,8 +64,8 @@ type ethereumStaker struct {
 	watchingChain       bool
 }
 
-func (es *ethereumStaker) ID() string {
-	return es.address
+func (es *ethereumStaker) ID() []byte {
+	return []byte(es.address)
 }
 
 func (es *ethereumStaker) Stake() (*big.Int, error) {

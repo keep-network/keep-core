@@ -21,8 +21,6 @@ import (
 type Node struct {
 	mutex sync.Mutex
 
-	// StakeID is the ID this node is using to prove its stake in the system.
-	StakeID string
 	// Staker is an on-chain identity that this node is using to prove its
 	// stake in the system.
 	Staker chain.Staker
@@ -72,7 +70,7 @@ func (n *Node) JoinGroupIfEligible(
 		// off an instance of DKG. We may have multiple
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
-		if ticket.IsFromStaker(n.StakeID) {
+		if ticket.IsFromStaker(n.Staker.ID()) {
 			// We should only join the broadcast channel if we're
 			// elligible for the group
 			broadcastChannel, err := n.netProvider.ChannelFor(
