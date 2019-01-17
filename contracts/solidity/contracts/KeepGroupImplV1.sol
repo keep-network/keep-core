@@ -91,14 +91,6 @@ contract KeepGroupImplV1 is Ownable {
             revert("Ticket submission period is over.");
         }
 
-        if (block.number > _submissionStart + _timeoutInitial && _tickets.length >= _groupSize) {
-            revert("Initial submission period is over with enough tickets received.");
-        }
-
-        if (block.number < _submissionStart + _timeoutInitial && ticketValue > naturalThreshold()) {
-            revert("Ticket must be below natural threshold during initial submission period.");
-        }
-
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
