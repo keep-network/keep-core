@@ -124,11 +124,11 @@ func (gc *groupCandidate) submitTickets(
 		relayChain.SubmitTicket(ticket).OnFailure(
 			func(err error) { errCh <- err },
 		)
+	}
 
-		select {
-		case <-quit:
-			return
-		}
+	select {
+	case <-quit:
+		return
 	}
 }
 
