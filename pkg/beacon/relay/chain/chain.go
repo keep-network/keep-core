@@ -45,6 +45,14 @@ type GroupInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise
+	// SubmitChallenge submits a challenge corresponding to a ticket that
+	// fails `costlyCheck`, and returns a promise to track the challenge
+	// submission. The promise is fulfilled with the challenge as seen on-chain,
+	// or failed if there is an error submitting the entry.
+	SubmitChallenge(ticket *groupselection.TicketChallenge) *async.GroupTicketChallengePromise
+	// GetOrderedTickets returns submitted tickets which have passed checks
+	// on-chain.
+	GetOrderedTickets() []*groupselection.Ticket
 }
 
 // DistributedKeyGenerationInterface defines the subset of the relay chain
@@ -55,27 +63,17 @@ type DistributedKeyGenerationInterface interface {
 	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
-	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) event.Subscription
+	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) (event.Subscription, error)
 	// IsDKGResultPublished checks if any DKG result has already been published
 	// to a chain for the given request ID.
-	IsDKGResultPublished(requestID *big.Int) bool
+	IsDKGResultPublished(requestID *big.Int) (bool, error)
 }
 
 // Interface represents the interface that the relay expects to interact with
 // the anchoring blockchain on.
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
-	GetConfig() (config.Chain, error)
-
-	// OnStakerAdded is a callback that is invoked when an on-chain
-	// notification of a new, valid staker is seen.
-	OnStakerAdded(func(staker *event.StakerRegistration))
-	// AddStaker is a temporary function for Milestone 1 that
-	// adds a staker to the group contract.
-	AddStaker(groupMemberID string) *async.StakerRegistrationPromise
-	// GetStakerList is a temporary function for Milestone 1 that
-	// gets back the list of stakers.
-	GetStakerList() ([]string, error)
+	GetConfig() (*config.Chain, error)
 
 	GroupInterface
 	RelayEntryInterface

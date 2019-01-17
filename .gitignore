@@ -26,3 +26,6 @@ main.test
 # IDEs
 .vscode/
 .idea/
+
+# Infrastructure
+.terraform

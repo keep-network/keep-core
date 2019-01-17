@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"time"
 
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -39,24 +40,55 @@ func Init(channel net.BroadcastChannel) {
 	})
 }
 
-// ExecuteDKG runs the full distributed key generation lifecycle, given a
+// ExecuteDKG runs the full distributed key generation lifecycle.
+func ExecuteDKG(
+	requestID *big.Int,
+	seed *big.Int,
+	index int, // starts with 0
+	groupSize int,
+	threshold int,
+	blockCounter chain.BlockCounter,
+	relayChain relayChain.Interface,
+	channel net.BroadcastChannel,
+) error {
+	// The staker index should begin with 1
+	playerIndex := index + 1
+	if playerIndex < 1 {
+		return fmt.Errorf("player index must be >= 1")
+	}
+
+	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
+	if err != nil {
+		return fmt.Errorf("GJKR execution failed [%v]", err)
+	}
+
+	err = executePublishing(
+		requestID,
+		playerIndex,
+		relayChain,
+		blockCounter,
+		convertResult(gjkrResult, groupSize),
+	)
+	if err != nil {
+		return fmt.Errorf("publishing failed [%v]", err)
+	}
+
+	return nil
+}
+
+// executeGJKR runs the GJKR distributed key generation  protocol, given a
 // broadcast channel to mediate it, a block counter used for time tracking,
 // a player index to use in the group, and a group size and threshold. If
 // generation is successful, it returns a threshold group member who can
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
-func ExecuteDKG(
+func executeGJKR(
 	playerIndex int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	groupSize int,
 	threshold int,
 	seed *big.Int,
-) ([]byte, error) {
-	if playerIndex < 1 {
-		return nil, fmt.Errorf("playerIndex must be >= 1, got: %v", playerIndex)
-	}
-
+) (*gjkr.Result, error) {
 	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
@@ -78,7 +110,10 @@ func ExecuteDKG(
 		blockWaiter  <-chan int
 	)
 
-	member := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
+	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create a new member [%v]", err)
+	}
 	currentState = &initializationState{channel, member}
 
 	if err := stateTransition(
@@ -110,7 +145,7 @@ func ExecuteDKG(
 
 		case <-blockWaiter:
 			if finalState, ok := currentState.(*finalizationState); ok {
-				return finalState.result().GroupPublicKey.Marshal(), nil
+				return finalState.result(), nil
 			}
 
 			currentState = currentState.nextState()
@@ -168,4 +203,40 @@ func stateTransition(
 	)
 
 	return nil
+}
+
+// convertResult transforms GJKR protocol execution result to a chain specific
+// DKG result form. It serializes a group public key to bytes and converts
+// disqualified and inactive members lists to a boolean list where each entry
+// corresponds to a member in the group and true/false value indicates status of
+// the member.
+func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
+	var serializedGroupPublicKey [32]byte
+	if gjkrResult.GroupPublicKey != nil {
+		copy(serializedGroupPublicKey[:], gjkrResult.GroupPublicKey.Marshal())
+	}
+
+	// convertToByteSlice converts slice containing members IDs to a slice of
+	// group size length where 0x01 entry indicates the member was found on
+	// passed members IDs slice. It assumes member IDs for a group starts iterating
+	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
+	// resulting byte slice will be {0x00, 0x01, 0x00}.
+	convertToByteSlice := func(memberIDsSlice []gjkr.MemberID) []byte {
+		bytes := make([]byte, groupSize)
+		for index := range bytes {
+			for _, memberID := range memberIDsSlice {
+				if memberID.Equals(index + 1) {
+					bytes[index] = 0x01
+				}
+			}
+		}
+		return bytes
+	}
+
+	return &relayChain.DKGResult{
+		Success:        gjkrResult.Success,
+		GroupPublicKey: serializedGroupPublicKey,
+		Inactive:       convertToByteSlice(gjkrResult.Inactive),
+		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
+	}
 }

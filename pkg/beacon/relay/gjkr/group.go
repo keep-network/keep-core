@@ -1,5 +1,7 @@
 package gjkr
 
+import "fmt"
+
 // Group is protocol's members group.
 type Group struct {
 	// The maximum number of group members who could be dishonest in order for
@@ -22,13 +24,19 @@ func (g *Group) MemberIDs() []MemberID {
 }
 
 // RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(memberID MemberID) {
+func (g *Group) RegisterMemberID(memberID MemberID) error {
+	if err := memberID.validate(); err != nil {
+		return fmt.Errorf("cannot register member ID in the group [%v]", err)
+	}
+
 	for _, id := range g.memberIDs {
 		if id == memberID {
-			return // already there
+			return nil // already there
 		}
 	}
 	g.memberIDs = append(g.memberIDs, memberID)
+
+	return nil
 }
 
 // OperatingMemberIDs returns IDs of all group members that are active and have

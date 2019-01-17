@@ -104,14 +104,6 @@ func (krb *KeepRandomBeacon) Initialized() (bool, error) {
 	return krb.caller.Initialized(krb.callerOpts)
 }
 
-// HasMinimumStake returns true if the specified address has sufficient
-// state to participate.
-func (krb *KeepRandomBeacon) HasMinimumStake(
-	address common.Address,
-) (bool, error) {
-	return krb.caller.HasMinimumStake(krb.callerOpts, address)
-}
-
 // RequestRelayEntry requests a new entry in the threshold relay.
 func (krb *KeepRandomBeacon) RequestRelayEntry(
 	blockReward *big.Int,

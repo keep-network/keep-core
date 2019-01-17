@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -208,7 +209,11 @@ func NewMember(
 	groupMembers []MemberID,
 	dishonestThreshold int,
 	seed *big.Int,
-) *LocalMember {
+) (*LocalMember, error) {
+	if err := memberID.validate(); err != nil {
+		return nil, fmt.Errorf("could not create a new member [%v]", err)
+	}
+
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
@@ -221,12 +226,18 @@ func NewMember(
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
 		},
-	}
+	}, nil
 }
 
 // AddToGroup adds the provided MemberID to the group
-func (mc *memberCore) AddToGroup(memberID MemberID) {
+func (mc *memberCore) AddToGroup(memberID MemberID) error {
+	if err := memberID.validate(); err != nil {
+		return fmt.Errorf("could not add the member ID to the group [%v]", err)
+	}
+
 	mc.group.RegisterMemberID(memberID)
+
+	return nil
 }
 
 // InitializeEphemeralKeysGeneration performs a transition of a member state
@@ -334,17 +345,6 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G1 {
 	return receivedValidPeerIndividualPublicKeys
 }
 
-// PublishingIndex returns sequence number of the current member in a publishing
-// group. Counting starts with `0`.
-func (fm *FinalizingMember) PublishingIndex() int {
-	for index, memberID := range fm.group.MemberIDs() {
-		if fm.ID == memberID {
-			return index
-		}
-	}
-	return -1 // should never happen
-}
-
 // Result can be either the successful computation of a round of distributed key
 // generation, or a notification of failure.
 //
@@ -366,9 +366,23 @@ func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
 }
 
+// Equals checks if MemberID equals the passed int value.
+func (id MemberID) Equals(value int) bool {
+	return id == MemberID(value)
+}
+
 // HexString converts `MemberID` to hex `string` representation.
 func (id MemberID) HexString() string {
 	return strconv.FormatInt(int64(id), 16)
+}
+
+// validate checks if MemberID has a valid value. MemberID is expected to be
+// equal or greater than `1`.
+func (id MemberID) validate() error {
+	if id < 1 {
+		return fmt.Errorf("member ID must be >= 1")
+	}
+	return nil
 }
 
 // MemberIDFromHex returns a `MemberID` created from the hex `string`

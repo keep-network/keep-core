@@ -24,22 +24,18 @@ type Proof struct {
 	VirtualStakerIndex *big.Int // vs
 }
 
-// calculateTicket generates a Ticket from the previous beacon output, the
-// staker-specific value, and the virtual staker index.
-//
-// See Phase 2 of the Group Selection protocol specification.
-func calculateTicket(
-	beaconOutput []byte,
-	stakerValue []byte,
-	virtualStakerIndex *big.Int,
+// NewTicket calculates a Ticket Value (SHAValue), and returns the Ticket with
+// the associated Proof.
+func NewTicket(
+	beaconOutput []byte, // V_i
+	stakerValue []byte, // Q_j
+	virtualStakerIndex *big.Int, // vs
 ) *Ticket {
-	var combinedValue []byte
-	combinedValue = append(combinedValue, beaconOutput...)
-	combinedValue = append(combinedValue, stakerValue...)
-	combinedValue = append(combinedValue, virtualStakerIndex.Bytes()...)
-
-	value := SHAValue(sha256.Sum256(combinedValue[:]))
-
+	value := CalculateTicketValue(
+		beaconOutput,
+		stakerValue,
+		virtualStakerIndex,
+	)
 	return &Ticket{
 		Value: value,
 		Proof: &Proof{
@@ -47,6 +43,28 @@ func calculateTicket(
 			VirtualStakerIndex: virtualStakerIndex,
 		},
 	}
+}
+
+func (t *Ticket) IsFromStaker(stakerAddress string) bool {
+	return string(t.Proof.StakerValue) == stakerAddress
+}
+
+// CalculateTicketValue generates a SHAValue from the previous beacon output, the
+// staker-specific value, and the virtual staker index.
+//
+// See Phase 2 of the Group Selection protocol specification.
+func CalculateTicketValue(
+	beaconOutput []byte,
+	stakerValue []byte,
+	virtualStakerIndex *big.Int,
+) SHAValue {
+	var combinedValue []byte
+	combinedValue = append(combinedValue, beaconOutput...)
+	combinedValue = append(combinedValue, stakerValue...)
+	combinedValue = append(combinedValue, virtualStakerIndex.Bytes()...)
+
+	return SHAValue(sha256.Sum256(combinedValue[:]))
+
 }
 
 // tickets implements sort.Interface

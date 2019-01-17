@@ -1,7 +1,6 @@
 package chain
 
 import (
-	"math/big"
 	"testing"
 )
 
@@ -42,43 +41,43 @@ func TestDKGResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"group public keys - equal": {
-			result1:        &DKGResult{GroupPublicKey: big.NewInt(2)},
-			result2:        &DKGResult{GroupPublicKey: big.NewInt(2)},
+			result1:        &DKGResult{GroupPublicKey: [32]byte{2}},
+			result2:        &DKGResult{GroupPublicKey: [32]byte{2}},
 			expectedResult: true,
 		},
-		"group public keys - nil and set": {
-			result1:        &DKGResult{GroupPublicKey: nil},
-			result2:        &DKGResult{GroupPublicKey: big.NewInt(1)},
-			expectedResult: false,
-		},
-		"group public keys - set and nil": {
-			result1:        &DKGResult{GroupPublicKey: big.NewInt(1)},
-			result2:        &DKGResult{GroupPublicKey: nil},
-			expectedResult: false,
-		},
 		"group public keys - not equal": {
-			result1:        &DKGResult{GroupPublicKey: big.NewInt(3)},
-			result2:        &DKGResult{GroupPublicKey: big.NewInt(4)},
+			result1:        &DKGResult{GroupPublicKey: [32]byte{3}},
+			result2:        &DKGResult{GroupPublicKey: [32]byte{4}},
 			expectedResult: false,
 		},
 		"disqualified - equal": {
-			result1:        &DKGResult{Disqualified: []bool{false, false, true}},
-			result2:        &DKGResult{Disqualified: []bool{false, false, true}},
+			result1:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
+			result2:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
 			expectedResult: true,
 		},
-		"disqualified - not equal": {
-			result1:        &DKGResult{Disqualified: []bool{false, false, true}},
-			result2:        &DKGResult{Disqualified: []bool{false, true, false}},
+		"disqualified - other members DQ": {
+			result1:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x01}},
+			result2:        &DKGResult{Disqualified: []byte{0x00, 0x01, 0x00}},
+			expectedResult: false,
+		},
+		"disqualified - different length of DQ members": {
+			result1:        &DKGResult{Disqualified: []byte{0x00, 0x00, 0x00}},
+			result2:        &DKGResult{Disqualified: []byte{0x00, 0x00}},
 			expectedResult: false,
 		},
 		"inactive - equal": {
-			result1:        &DKGResult{Inactive: []bool{true, true, false}},
-			result2:        &DKGResult{Inactive: []bool{true, true, false}},
+			result1:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
+			result2:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
 			expectedResult: true,
 		},
-		"inactive - not equal": {
-			result1:        &DKGResult{Inactive: []bool{true, true, false}},
-			result2:        &DKGResult{Inactive: []bool{true, true}},
+		"inactive - other members IA": {
+			result1:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x00}},
+			result2:        &DKGResult{Inactive: []byte{0x01, 0x01, 0x01}},
+			expectedResult: false,
+		},
+		"inactive - different length of IA members": {
+			result1:        &DKGResult{Inactive: []byte{0x00, 0x00}},
+			result2:        &DKGResult{Inactive: []byte{0x00, 0x00, 0x00}},
 			expectedResult: false,
 		},
 	}

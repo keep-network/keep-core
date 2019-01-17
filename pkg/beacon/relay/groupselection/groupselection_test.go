@@ -22,10 +22,10 @@ func TestGenerateTickets(t *testing.T) {
 	previousBeaconOutput := []byte("test beacon output")
 
 	tickets, err := GenerateTickets(
-		minimumStake,
-		availableStake,
-		stakingPublicKey.SerializeCompressed(),
 		previousBeaconOutput,
+		stakingPublicKey.SerializeCompressed(),
+		availableStake,
+		minimumStake,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -79,10 +79,10 @@ func TestValidateProofs(t *testing.T) {
 	expectedValue := SHAValue(sha256.Sum256(valueBytes[:]))
 
 	tickets, err := GenerateTickets(
-		minimumStake,
-		availableStake,
-		stakingPublicKey.SerializeCompressed(),
 		beaconOutput,
+		stakingPublicKey.SerializeCompressed(),
+		availableStake,
+		minimumStake,
 	)
 	if err != nil {
 		t.Fatal(err)

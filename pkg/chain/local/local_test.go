@@ -121,7 +121,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	submittedRequestID := big.NewInt(1)
 	submittedResult := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(11),
+		GroupPublicKey: [32]byte{11},
 	}
 
 	submittedResults[submittedRequestID] = append(
@@ -150,7 +150,10 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := chainHandle.IsDKGResultPublished(test.requestID)
+			actualResult, err := chainHandle.IsDKGResultPublished(test.requestID)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			if actualResult != test.expectedResult {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
@@ -186,7 +189,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
 	submittedResult11 := &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(11),
+		GroupPublicKey: [32]byte{11},
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
@@ -269,18 +272,21 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	relay := localChain.ThresholdRelay()
 
 	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
-	subscription := localChain.OnDKGResultPublished(
+	subscription, err := localChain.OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication) {
 			dkgResultPublicationChan <- dkgResultPublication
 		},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Unsubscribe from the event - from this point, callback should
 	// never be called.
 	subscription.Unsubscribe()
 
 	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
-		GroupPublicKey: big.NewInt(888),
+		GroupPublicKey: [32]byte{88},
 	})
 
 	select {

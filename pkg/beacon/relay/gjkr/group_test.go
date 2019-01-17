@@ -1,9 +1,21 @@
 package gjkr
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
+
+func TestRegisterMemberIDWithInvalidID(t *testing.T) {
+	expectedError := fmt.Errorf("cannot register member ID in the group [member ID must be >= 1]")
+
+	group := &Group{}
+	err := group.RegisterMemberID(MemberID(0))
+
+	if !reflect.DeepEqual(err, expectedError) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
+	}
+}
 
 func TestDisqualifyMemberID(t *testing.T) {
 	group := &Group{
