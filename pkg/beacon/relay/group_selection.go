@@ -35,20 +35,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) error {
-	submissionTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketReactiveSubmissionTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
-	challengeTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketChallengeTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
 	availableStake, err := n.Staker.Stake()
 	if err != nil {
 		return err
@@ -82,6 +68,20 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			tickets: tickets,
 		}
 	)
+
+	submissionTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketReactiveSubmissionTimeout,
+	)
+	if err != nil {
+		return err
+	}
+
+	challengeTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketChallengeTimeout,
+	)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println("attempting to submit tickets")
 	// Phase 2a: submit all tickets that fall under the natural threshold
@@ -124,7 +124,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{selectedTickets},
+				&groupselection.Result{SelectedTickets: selectedTickets},
 				entryRequestID,
 				entrySeed,
 			)
