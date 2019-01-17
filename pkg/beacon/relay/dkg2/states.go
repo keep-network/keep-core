@@ -603,6 +603,7 @@ type reconstructionState struct {
 func (rs *reconstructionState) activeBlocks() int { return 0 }
 
 func (rs *reconstructionState) initiate() error {
+	rs.member.MarkInactiveMembers(rs.previousPhaseMessages)
 	if err := rs.member.ReconstructDisqualifiedIndividualKeys(
 		rs.previousPhaseMessages,
 	); err != nil {
