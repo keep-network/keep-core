@@ -456,6 +456,7 @@ type pointsValidationState struct {
 func (pvs *pointsValidationState) activeBlocks() int { return 3 }
 
 func (pvs *pointsValidationState) initiate() error {
+	pvs.member.MarkInactiveMembers(pvs.previousPhaseMessages)
 	accusationMsg, err := pvs.member.VerifyPublicKeySharePoints(
 		pvs.previousPhaseMessages,
 	)
