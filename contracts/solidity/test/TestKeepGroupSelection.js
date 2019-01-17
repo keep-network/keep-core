@@ -157,25 +157,12 @@ contract('TestKeepGroupSelection', function(accounts) {
     assert.equal(proof[2], tickets1BelowNatT[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
   });
 
-  it("should fail to submit a high value ticket during initial ticket submission", async function() {
-    await exceptThrow(keepGroupImplViaProxy.submitTicket(tickets1AboveNatT[0].value, staker1, tickets1AboveNatT[0].virtualStakerIndex));
-  });
-
   it("should be able to submit a high value ticket during reactive ticket submission", async function() {
     mineBlocks(timeoutInitial);
     await keepGroupImplViaProxy.submitTicket(tickets1AboveNatT[0].value, staker1, tickets1AboveNatT[0].virtualStakerIndex);
     let proof = await keepGroupImplViaProxy.getTicketProof(tickets1AboveNatT[0].value);
     assert.equal(proof[1].equals(new BigNumber(staker1)), true , "Should be able to get submitted ticket proof.");
     assert.equal(proof[2], tickets1AboveNatT[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
-  });
-
-  it("should not be able to submit a ticket during reactive ticket submission after enough tickets received", async function() {
-
-    for (let i = 0; i < groupSize; i++) {
-      await keepGroupImplViaProxy.submitTicket(tickets3BelowNatT[i].value, staker3, tickets3BelowNatT[i].virtualStakerIndex, {from: staker3});
-    }
-
-    await exceptThrow(keepGroupImplViaProxy.submitTicket(tickets1AboveNatT[0].value, staker1, tickets1AboveNatT[0].virtualStakerIndex));
   });
 
   it("should be able to verify a ticket", async function() {
