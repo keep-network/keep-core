@@ -149,9 +149,8 @@ func (n *Node) submitTickets(
 			if n.tickets[i].Value.Int().Cmp(n.chainConfig.NaturalThreshold) < 0 {
 				relayChain.SubmitTicket(n.tickets[i]).OnSuccess(
 					func(submittedTicket *groupselection.Ticket) {
-						if bytes.Compare(submittedTicket.Value[:], n.tickets[i].Value[:]) == 0 {
-							// remove the ticket from the list
-							n.tickets = append(n.tickets[:i], n.tickets[i+1:]...)
+						if submittedTicket == nil {
+							return
 						}
 					},
 				).OnFailure(
