@@ -119,6 +119,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 					"error getting submitted tickets [%v].\n",
 					err,
 				)
+				quitTicketChallenge <- struct{}{}
+				return nil
 			}
 			log.Printf("Got submitted tickets [%+v]\n", selectedTickets)
 			// Read the selected, ordered tickets from the chain,
