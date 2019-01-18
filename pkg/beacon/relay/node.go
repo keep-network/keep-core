@@ -38,6 +38,8 @@ type Node struct {
 	seenPublicKeys  map[string]struct{}
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
+
+	tickets []*groupselection.Ticket
 }
 
 type membership struct {

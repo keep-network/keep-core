@@ -15,11 +15,6 @@ import (
 // ordered ticket list (to run ticket verification)from the chain.
 const getTicketListInterval = 5 * time.Second
 
-type groupCandidate struct {
-	address string
-	tickets []*groupselection.Ticket
-}
-
 // SubmitTicketsForGroupSelection takes the previous beacon value and attempts to
 // generate the appropriate number of tickets for the staker. After ticket
 // generation begins an interactive process, where the staker submits tickets
@@ -51,10 +46,14 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
-	errCh := make(chan error, len(tickets))
-	quitTicketSubmission := make(chan struct{}, 0)
-	quitTicketChallenge := make(chan struct{}, 0)
-	groupCandidate := &groupCandidate{address: n.Staker.ID(), tickets: tickets}
+	n.tickets = tickets
+
+	initialTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketInitialSubmissionTimeout,
+	)
+	if err != nil {
+		return err
+	}
 
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketReactiveSubmissionTimeout,
@@ -70,16 +69,22 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
+	var (
+		initialSubmitErrorChannel    = make(chan error, len(tickets))
+		reactiveSubmitErrorChannel   = make(chan error, len(tickets))
+		quitTicketInitialSubmission  = make(chan struct{}, 0)
+		quitTicketReactiveSubmission = make(chan struct{}, 0)
+		quitTicketChallenge          = make(chan struct{}, 0)
+	)
 	// Phase 2a: submit all tickets that fall under the natural threshold
-	go groupCandidate.submitTickets(
+	go n.submitTickets(
 		relayChain,
-		n.chainConfig.NaturalThreshold,
-		quitTicketSubmission,
-		errCh,
+		quitTicketInitialSubmission,
+		initialSubmitErrorChannel,
 	)
 
 	// kick off background loop to check submitted tickets
-	go groupCandidate.verifyTicket(
+	go n.verifyTicket(
 		relayChain,
 		beaconValue,
 		quitTicketChallenge,
@@ -87,14 +92,30 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	for {
 		select {
-		case err := <-errCh:
+		case err := <-initialSubmitErrorChannel:
 			fmt.Printf(
-				"Error during ticket submission for entry [%v]: [%v].",
+				"Error during initial ticket submission for entry [%v]: [%v].",
+				beaconValue,
+				err,
+			)
+		case <-initialTimeout:
+			quitTicketInitialSubmission <- struct{}{}
+
+			// Phase 2b: submit all tickets, even those above the
+			// natural threshold.
+			go n.submitTicketsReactive(
+				relayChain,
+				quitTicketReactiveSubmission,
+				reactiveSubmitErrorChannel,
+			)
+		case err := <-reactiveSubmitErrorChannel:
+			fmt.Printf(
+				"Error during reactive ticket submission for entry [%v]: [%v].",
 				beaconValue,
 				err,
 			)
 		case <-submissionTimeout:
-			quitTicketSubmission <- struct{}{}
+			quitTicketReactiveSubmission <- struct{}{}
 		case <-challengeTimeout:
 			selectedTickets := relayChain.GetOrderedTickets()
 
@@ -114,16 +135,22 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 // submitTickets checks to see if the submission period is over in between ticket
 // submits.
-func (gc *groupCandidate) submitTickets(
+func (n *Node) submitTickets(
 	relayChain relaychain.GroupInterface,
-	naturalThreshold *big.Int,
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
-	for _, ticket := range gc.tickets {
-		relayChain.SubmitTicket(ticket).OnFailure(
-			func(err error) { errCh <- err },
-		)
+	for i := len(n.tickets) - 1; i >= 0; i-- {
+		if n.tickets[i].Value.Int().Cmp(n.chainConfig.NaturalThreshold) < 0 {
+			relayChain.SubmitTicket(n.tickets[i]).OnSuccess(
+				func(submittedTicket *groupselection.Ticket) {
+					if bytes.Compare(submittedTicket.Value[:], n.tickets[i].Value[:]) == 0 {
+						// remove the ticket from the list
+						n.tickets = append(n.tickets[:i], n.tickets[i+1:]...)
+					}
+				},
+			).OnFailure(func(err error) { errCh <- err })
+		}
 	}
 
 	select {
@@ -132,7 +159,31 @@ func (gc *groupCandidate) submitTickets(
 	}
 }
 
-func (gc *groupCandidate) verifyTicket(
+// submitTicketsReactive checks to see if the submission period is over in between ticket
+// submits.
+func (n *Node) submitTicketsReactive(
+	relayChain relaychain.GroupInterface,
+	quit <-chan struct{},
+	errCh chan<- error,
+) {
+	for i := len(n.tickets) - 1; i >= 0; i-- {
+		relayChain.SubmitTicket(n.tickets[i]).OnSuccess(
+			func(submittedTicket *groupselection.Ticket) {
+				if bytes.Compare(submittedTicket.Value[:], n.tickets[i].Value[:]) == 0 {
+					// remove the ticket from the list
+					n.tickets = append(n.tickets[:i], n.tickets[i+1:]...)
+				}
+			},
+		).OnFailure(func(err error) { errCh <- err })
+	}
+
+	select {
+	case <-quit:
+		return
+	}
+}
+
+func (n *Node) verifyTicket(
 	relayChain relaychain.GroupInterface,
 	beaconValue []byte,
 	quit <-chan struct{},
@@ -146,7 +197,7 @@ func (gc *groupCandidate) verifyTicket(
 				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.TicketChallenge{
 						Ticket:        ticket,
-						SenderAddress: gc.address,
+						SenderAddress: n.Staker.ID(),
 					}
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
