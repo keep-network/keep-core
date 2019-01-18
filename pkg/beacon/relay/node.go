@@ -60,6 +60,7 @@ func (n *Node) JoinGroupIfEligible(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
+	entrySeed = big.NewInt(100003)
 	// build the channel name and get the broadcast channel
 	broadcastChannelName := channelNameFromSelectedTickets(
 		groupSelectionResult.SelectedTickets,

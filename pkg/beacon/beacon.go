@@ -3,6 +3,7 @@ package beacon
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -44,6 +45,7 @@ func Initialize(
 	chainConfig.TicketInitialSubmissionTimeout = 2
 	chainConfig.TicketReactiveSubmissionTimeout = 3
 	chainConfig.TicketChallengeTimeout = 4
+	chainConfig.MinimumStake = big.NewInt(40000000)
 	fmt.Printf("Got chainconfig [%+v]\n", chainConfig)
 
 	curParticipantState, err := checkParticipantState()
