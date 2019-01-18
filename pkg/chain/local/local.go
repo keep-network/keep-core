@@ -83,7 +83,10 @@ func (c *localChain) SubmitChallenge(
 }
 
 func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
-	return make([]*groupselection.Ticket, 0)
+	c.ticketsMutex.Lock()
+	defer c.ticketsMutex.Unlock()
+
+	return c.tickets
 }
 
 func (c *localChain) SubmitGroupPublicKey(
