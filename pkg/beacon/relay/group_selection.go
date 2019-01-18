@@ -136,7 +136,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 // submitTickets submits tickets to the chain. It checks to see if the submission
 // period is over in between ticket submits.
 func (n *Node) submitTickets(
-	relayChain relaychain.GroupInterface,
+	relayChain relaychain.GroupSelectionInterface,
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
@@ -165,32 +165,34 @@ func (n *Node) submitTickets(
 // submitTicketsReactive submits tickets to the chain. It checks to see if the submission
 // period is over in between ticket submits.
 func (n *Node) submitTicketsReactive(
-	relayChain relaychain.GroupInterface,
+	relayChain relaychain.GroupSelectionInterface,
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
-	for i := len(n.tickets) - 1; i >= 0; i-- {
+	for _, ticket := range n.tickets {
 		select {
 		case <-quit:
 			// Exit this loop when we get a signal from quit.
 			return
 		default:
-			relayChain.SubmitTicket(n.tickets[i]).OnSuccess(
-				func(submittedTicket *groupselection.Ticket) {
-					if bytes.Compare(submittedTicket.Value[:], n.tickets[i].Value[:]) == 0 {
-						// remove the ticket from the list
-						n.tickets = append(n.tickets[:i], n.tickets[i+1:]...)
-					}
-				},
-			).OnFailure(
-				func(err error) { errCh <- err },
-			)
+			n.submittedTicketsMutex.Lock()
+			defer n.submittedTicketsMutex.Unlock()
+
+			if !n.submittedTickets[ticket.Value] {
+				relayChain.SubmitTicket(ticket).OnSuccess(
+					func(submittedTicket *groupselection.Ticket) {
+						n.submittedTickets[submittedTicket.Value] = true
+					},
+				).OnFailure(
+					func(err error) { errCh <- err },
+				)
+			}
 		}
 	}
 }
 
 func (n *Node) verifyTicket(
-	relayChain relaychain.GroupInterface,
+	relayChain relaychain.GroupSelectionInterface,
 	beaconValue []byte,
 	quit <-chan struct{},
 ) {
