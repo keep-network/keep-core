@@ -208,7 +208,7 @@ func NewMember(
 	memberID MemberID,
 	groupMembers []MemberID,
 	dishonestThreshold int,
-	seed *big.Int,
+	previousEntry *big.Int,
 ) (*LocalMember, error) {
 	if err := memberID.validate(); err != nil {
 		return nil, fmt.Errorf("could not create a new member [%v]", err)
@@ -224,7 +224,7 @@ func NewMember(
 				[]MemberID{},
 			},
 			newDkgEvidenceLog(),
-			newProtocolParameters(seed),
+			newProtocolParameters(previousEntry),
 		},
 	}, nil
 }

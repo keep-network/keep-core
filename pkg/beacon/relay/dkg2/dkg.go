@@ -43,7 +43,7 @@ func Init(channel net.BroadcastChannel) {
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
 	requestID *big.Int,
-	seed *big.Int,
+	previousEntry *big.Int,
 	index int, // starts with 0
 	groupSize int,
 	threshold int,
@@ -57,7 +57,7 @@ func ExecuteDKG(
 		return fmt.Errorf("[member:%v] player index must be >= 1", playerIndex)
 	}
 
-	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
+	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, previousEntry)
 	if err != nil {
 		return fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
 	}
@@ -90,7 +90,7 @@ func executeGJKR(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	threshold int,
-	seed *big.Int,
+	previousEntry *big.Int,
 ) (*gjkr.Result, error) {
 	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
@@ -115,7 +115,7 @@ func executeGJKR(
 		currentState keyGenerationState
 	)
 
-	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
+	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, previousEntry)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a new member [%v]", err)
 	}
