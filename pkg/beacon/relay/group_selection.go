@@ -35,7 +35,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) error {
-	submissionTimeout, err := blockCounter.BlockWaiter(
+	initialSubmissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketInitialSubmissionTimeout,
 	)
 	if err != nil {
@@ -66,7 +66,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	errCh := make(chan error, len(tickets))
-	quitTicketSubmission := make(chan struct{}, 1)
+	quitInitialTicketSubmission := make(chan struct{}, 1)
 	quitTicketChallenge := make(chan struct{}, 0)
 	groupCandidate := &groupCandidate{address: n.StakeID, tickets: tickets}
 
@@ -74,7 +74,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	go groupCandidate.submitTickets(
 		relayChain,
 		n.chainConfig.NaturalThreshold,
-		quitTicketSubmission,
+		quitInitialTicketSubmission,
 		errCh,
 	)
 
@@ -95,8 +95,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				beaconValue,
 				err,
 			)
-		case <-submissionTimeout:
-			quitTicketSubmission <- struct{}{}
+		case <-initialSubmissionTimeout:
+			quitInitialTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
 			selectedTickets := relayChain.GetOrderedTickets()
 
