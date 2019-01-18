@@ -102,7 +102,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{selectedTickets},
+				&groupselection.Result{SelectedTickets: selectedTickets},
 				entryRequestID,
 				entrySeed,
 			)
