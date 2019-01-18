@@ -104,7 +104,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		select {
 		case err := <-errCh:
 			fmt.Printf(
-				"Error during ticket submission for entry [%v]: [%v].\n",
+				"Error during ticket submission: [%v].\n",
 				beaconValue,
 				err,
 			)
@@ -170,7 +170,7 @@ func (gc *groupCandidate) verifyTicket(
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
 				fmt.Printf(
-					"error getting submitted tickets [%v].",
+					"error getting submitted tickets [%v].\n",
 					err,
 				)
 			}
@@ -184,7 +184,7 @@ func (gc *groupCandidate) verifyTicket(
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
 							fmt.Printf(
-								"Failed to submit challenge with err: [%v]",
+								"Failed to submit challenge with err: [%v]\n",
 								err,
 							)
 						},
