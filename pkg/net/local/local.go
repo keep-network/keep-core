@@ -242,19 +242,12 @@ func (lc *localChannel) RegisterIdentifier(
 	lc.identifiersMutex.Lock()
 	defer lc.identifiersMutex.Unlock()
 
-	if _, exists := lc.transportToProtoIdentifiers[transportIdentifier]; exists {
-		return fmt.Errorf(
-			"already have a protocol identifier associated with [%v]",
-			transportIdentifier)
+	if _, exists := lc.transportToProtoIdentifiers[transportIdentifier]; !exists {
+		lc.transportToProtoIdentifiers[transportIdentifier] = protocolIdentifier
 	}
-	if _, exists := lc.protoToTransportIdentifiers[protocolIdentifier]; exists {
-		return fmt.Errorf(
-			"already have a transport identifier associated with [%v]",
-			protocolIdentifier)
+	if _, exists := lc.protoToTransportIdentifiers[protocolIdentifier]; !exists {
+		lc.protoToTransportIdentifiers[protocolIdentifier] = transportIdentifier
 	}
-
-	lc.transportToProtoIdentifiers[transportIdentifier] = protocolIdentifier
-	lc.protoToTransportIdentifiers[protocolIdentifier] = transportIdentifier
 
 	return nil
 }
