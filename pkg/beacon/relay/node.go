@@ -83,16 +83,23 @@ func (n *Node) JoinGroupIfEligible(
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.Staker.ID()) {
-			go dkg2.ExecuteDKG(
-				entryRequestID,
-				entrySeed,
-				index,
-				n.chainConfig.GroupSize,
-				n.chainConfig.Threshold,
-				n.blockCounter,
-				relayChain,
-				broadcastChannel,
-			)
+			go func(index int) {
+				err := dkg2.ExecuteDKG(
+					entryRequestID,
+					entrySeed,
+					index,
+					n.chainConfig.GroupSize,
+					n.chainConfig.Threshold,
+					n.blockCounter,
+					relayChain,
+					broadcastChannel,
+				)
+				if err != nil {
+					// TODO Panic or Print?
+					// panic(fmt.Sprintf("DKG execution failed [%v]", err))
+					fmt.Printf("DKG execution failed [%v]\n", err)
+				}
+			}(index)
 		}
 	}
 	// exit on signal
