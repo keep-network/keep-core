@@ -113,7 +113,6 @@ func executeGJKR(
 
 	var (
 		currentState keyGenerationState
-		blockWaiter  <-chan int
 	)
 
 	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
@@ -122,11 +121,8 @@ func executeGJKR(
 	}
 	currentState = &initializationState{channel, member}
 
-	if err := stateTransition(
-		currentState,
-		blockCounter,
-		blockWaiter,
-	); err != nil {
+	blockWaiter, err := stateTransition(currentState, blockCounter)
+	if err != nil {
 		return nil, err
 	}
 
@@ -155,11 +151,8 @@ func executeGJKR(
 			}
 
 			currentState = currentState.nextState()
-			if err := stateTransition(
-				currentState,
-				blockCounter,
-				blockWaiter,
-			); err != nil {
+			blockWaiter, err = stateTransition(currentState, blockCounter)
+			if err != nil {
 				return nil, err
 			}
 
@@ -171,8 +164,7 @@ func executeGJKR(
 func stateTransition(
 	currentState keyGenerationState,
 	blockCounter chain.BlockCounter,
-	blockWaiter <-chan int,
-) error {
+) (<-chan int, error) {
 	fmt.Printf(
 		"[member:%v, state:%T] Transitioning to a new state...\n",
 		currentState.memberID(),
@@ -181,7 +173,7 @@ func stateTransition(
 
 	err := blockCounter.WaitForBlocks(1)
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to wait 1 block entering state [%T]: [%v]",
 			currentState,
 			err,
@@ -190,12 +182,12 @@ func stateTransition(
 
 	err = currentState.initiate()
 	if err != nil {
-		return fmt.Errorf("failed to initiate new state [%v]", err)
+		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
 	}
 
-	blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
+	blockWaiter, err := blockCounter.BlockWaiter(currentState.activeBlocks())
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
 			currentState,
 			err,
@@ -208,7 +200,7 @@ func stateTransition(
 		currentState,
 	)
 
-	return nil
+	return blockWaiter, nil
 }
 
 // convertResult transforms GJKR protocol execution result to a chain specific
