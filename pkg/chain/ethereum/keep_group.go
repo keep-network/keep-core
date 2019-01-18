@@ -246,7 +246,7 @@ func (kg *keepGroup) SubmitDKGResult(
 	)
 }
 
-type dkgResultPublishedEventFunc func(requestID *big.Int)
+type dkgResultPublishedEventFunc func(requestID *big.Int, groupPublicKey [32]byte)
 
 func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
@@ -273,7 +273,7 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 				if !subscribed {
 					return
 				}
-				success(event.RequestId)
+				success(event.RequestId, event.GroupPubKey)
 
 			case err := <-eventSubscription.Err():
 				fail(err)
