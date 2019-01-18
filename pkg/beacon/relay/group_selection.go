@@ -35,8 +35,10 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) error {
-	initialSubmissionTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketInitialSubmissionTimeout,
+	// we use reactive submission timeout temporarily, until we properly
+	// implement phases 2a and 2b.
+	submissionTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketReactiveSubmissionTimeout,
 	)
 	if err != nil {
 		return err
@@ -70,15 +72,12 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	quitTicketChallenge := make(chan struct{}, 0)
 	groupCandidate := &groupCandidate{address: n.StakeID, tickets: tickets}
 
-	// Phase 2a: submit all tickets that fall under the natural threshold
 	go groupCandidate.submitTickets(
 		relayChain,
 		n.chainConfig.NaturalThreshold,
 		quitInitialTicketSubmission,
 		errCh,
 	)
-
-	// TODO Phase 2b should be added here
 
 	// kick off background loop to check submitted tickets
 	go groupCandidate.verifyTicket(
@@ -95,7 +94,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				beaconValue,
 				err,
 			)
-		case <-initialSubmissionTimeout:
+		case <-submissionTimeout:
 			quitInitialTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
 			selectedTickets := relayChain.GetOrderedTickets()
@@ -128,11 +127,9 @@ func (gc *groupCandidate) submitTickets(
 			// Exit this loop when we get a signal from quit.
 			return
 		default:
-			if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
-				relayChain.SubmitTicket(ticket).OnFailure(
-					func(err error) { errCh <- err },
-				)
-			}
+			relayChain.SubmitTicket(ticket).OnFailure(
+				func(err error) { errCh <- err },
+			)
 		}
 	}
 }
