@@ -54,12 +54,12 @@ func ExecuteDKG(
 	// The staker index should begin with 1
 	playerIndex := index + 1
 	if playerIndex < 1 {
-		return fmt.Errorf("player index must be >= 1")
+		return fmt.Errorf("[member:%v] player index must be >= 1", playerIndex)
 	}
 
 	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
 	if err != nil {
-		return fmt.Errorf("GJKR execution failed [%v]", err)
+		return fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
 	}
 
 	err = executePublishing(
