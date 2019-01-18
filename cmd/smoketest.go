@@ -73,11 +73,14 @@ func SmokeTest(c *cli.Context) error {
 	// Give the nodes a sec to get going.
 	<-time.NewTimer(time.Second).C
 
+	requestID := big.NewInt(135)
+
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(int64(135)),
-		Value:         big.NewInt(int64(154)),
-		GroupID:       big.NewInt(int64(168)),
+		RequestID:     requestID,
+		Value:         big.NewInt(154),
+		GroupID:       big.NewInt(168),
 		PreviousEntry: &big.Int{},
+		Seed:          big.NewInt(101),
 	})
 
 	// TODO Add validations when DKG Phase 14 is implemented.
