@@ -105,6 +105,9 @@ func executeGJKR(
 		},
 	}
 
+	// Initialize channel to perform distributed key generation.
+	Init(channel)
+
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
