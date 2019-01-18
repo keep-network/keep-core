@@ -40,7 +40,12 @@ func (lsm *StakeMonitor) StakerFor(address string) (chain.Staker, error) {
 		return nil, fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
-	return &localStaker{address}, nil
+	stake := new(big.Int).Mul(
+		minimumStake,
+		big.NewInt(5),
+	)
+
+	return &localStaker{address, stake}, nil
 }
 
 // StakeTokens stakes enough tokens for the provided address to be a network
@@ -67,6 +72,7 @@ func (lsm *StakeMonitor) UnstakeTokens(address string) error {
 
 type localStaker struct {
 	address string
+	stake   *big.Int
 }
 
 func (ls *localStaker) ID() string {
@@ -74,7 +80,7 @@ func (ls *localStaker) ID() string {
 }
 
 func (ls *localStaker) Stake() (*big.Int, error) {
-	return &big.Int{}, nil
+	return ls.stake, nil
 }
 
 func (ls *localStaker) OnStakeChanged(func(newStake *big.Int)) {
