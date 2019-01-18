@@ -80,6 +80,16 @@ func SmokeTest(c *cli.Context) error {
 		PreviousEntry: &big.Int{},
 	})
 
+	// TODO Add validations when DKG Phase 14 is implemented.
+	chainHandle.ThresholdRelay().OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication) {
+		if dkgResultPublication.RequestID.Cmp(requestID) != 0 {
+			panic(fmt.Sprintf("unexpected request ID for published result\nexpected: %v\nactual:   %v\n",
+				requestID,
+				dkgResultPublication.RequestID,
+			))
+		}
+	})
+
 	chainHandle.ThresholdRelay().
 		OnGroupRegistered(func(registration *event.GroupRegistration) {
 			// Give the nodes a sec to all get registered.
