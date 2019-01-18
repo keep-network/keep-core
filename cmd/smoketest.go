@@ -140,13 +140,20 @@ func createNode(
 	}
 
 	netProvider := netlocal.Connect()
-
-	go beacon.Initialize(
-		context,
-		toEthereumAddress(netProvider.ID().String()),
-		chainHandle.ThresholdRelay(),
-		chainCounter,
-		stakeMonitor,
-		netProvider,
-	)
+	go func() {
+		err := beacon.Initialize(
+			context,
+			toEthereumAddress(netProvider.ID().String()),
+			chainHandle.ThresholdRelay(),
+			chainCounter,
+			stakeMonitor,
+			netProvider,
+		)
+		if err != nil {
+			panic(fmt.Sprintf(
+				"Failed to run beacon.Initialize: [%v].",
+				err,
+			))
+		}
+	}()
 }
