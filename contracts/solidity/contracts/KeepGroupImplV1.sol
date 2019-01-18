@@ -21,7 +21,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes inactive;
     }
 
-    event DkgResultPublishedEvent(uint256 requestId);
+    event DkgResultPublishedEvent(uint256 requestId, bytes32 groupPubKey);
     
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -247,7 +247,7 @@ contract KeepGroupImplV1 is Ownable {
         _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
   
-        emit DkgResultPublishedEvent(requestId);
+        emit DkgResultPublishedEvent(requestId, groupPubKey);
 
         // TODO: Remove this section once dispute logic is implemented,
         // implement conflict resolution logic described in Phase 14,
