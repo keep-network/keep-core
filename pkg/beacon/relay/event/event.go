@@ -15,7 +15,6 @@ type Entry struct {
 	GroupID       *big.Int
 	PreviousEntry *big.Int
 	Timestamp     time.Time
-	Seed          *big.Int
 }
 
 // Request represents a request for an entry in the threshold relay.
