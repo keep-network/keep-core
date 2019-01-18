@@ -78,7 +78,7 @@ func SmokeTest(c *cli.Context) error {
 		big.NewInt(int64(minimumStake)),
 	)
 
-	context := context.Background()
+	context, contextCancel := context.WithTimeout(context.Background(), 45*time.Second)
 
 	for i := 0; i < groupSize; i++ {
 		createNode(context, chainHandle, groupSize, threshold)
@@ -100,6 +100,11 @@ func SmokeTest(c *cli.Context) error {
 			<-time.NewTimer(time.Second).C
 			chainHandle.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
 		})
+
+	// TODO We can cancel the context after we are sure that all validation passed
+	// Need to revisit this part after Phase 14 is implemented. Currently
+	// `OnGroupRegistered` is not called so the context is cancelled here.
+	contextCancel()
 
 	select {
 	case <-context.Done():
