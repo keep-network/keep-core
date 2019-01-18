@@ -117,7 +117,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 // submitTickets submits tickets to the chain. It checks to see if the submission
 // period is over in between ticket submits.
 func (gc *groupCandidate) submitTickets(
-	relayChain relaychain.GroupInterface,
+	relayChain relaychain.GroupSelectionInterface,
 	naturalThreshold *big.Int,
 	quit <-chan struct{},
 	errCh chan<- error,
@@ -138,7 +138,7 @@ func (gc *groupCandidate) submitTickets(
 }
 
 func (gc *groupCandidate) verifyTicket(
-	relayChain relaychain.GroupInterface,
+	relayChain relaychain.GroupSelectionInterface,
 	beaconValue []byte,
 	quit <-chan struct{},
 ) {
