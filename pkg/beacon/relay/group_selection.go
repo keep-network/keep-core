@@ -105,7 +105,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case err := <-errCh:
 			fmt.Printf(
 				"Error during ticket submission: [%v].\n",
-				beaconValue,
 				err,
 			)
 		case <-submissionTimeout:
