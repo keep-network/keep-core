@@ -75,7 +75,7 @@ func Initialize(
 				blockCounter,
 				entry.Value.Bytes(),
 				entry.RequestID,
-				entry.Seed,
+				entry.PreviousEntry,
 			)
 		})
 
