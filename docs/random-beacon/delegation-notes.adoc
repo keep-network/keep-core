@@ -55,14 +55,20 @@ Because all forms of atomic staking are isomorphic due to the incentive
 structure created by positive expected value from network participation, it
 seems that these proposals actually break down into the following:
 
-atomic staking vs. multioperation dynamic vs. constant MINIMUM_STAKE instant
-undelegation with penalties vs. delayed undelegation with stake locking
+- atomic staking vs. multioperation
+- dynamic vs. constant MINIMUM_STAKE
+- instant undelegation with penalties vs. delayed undelegation with stake
+locking
 
 '''
 
 If the above are condensed into letters denoting particular combinations:
 
-A : M D : C P : L I think anything from xxP is not very viable because of the
+A : M +
+D : C +
+P : L
+
+I think anything from xxP is not very viable because of the
 problems with instant undelegation, and thus xxL is the design space I'd
 recommend. ACL has inherently limited throughput and is not a long-term viable
 option. This leaves ADL, MDL and MCL .
@@ -459,7 +465,7 @@ authorized contracts: `upgrade_authorizer.contracts += contract_address`
 
 The rationale for this is that the authorizations can be outsourced to a third
 party, and thus it is useful to have the authorizations stored separately to
-reduce costs compared to including them in each delegation contract.
+reduce costs compared to including them in each delegation agreement.
 
 If the new contract is found compromised, the recourse is for the _owner_ or
 _operator_ to unstake or for the _panic button_ to be used to halt all
