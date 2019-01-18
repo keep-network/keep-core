@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -24,8 +25,11 @@ func TestSubmitAllTickets(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, big.NewInt(14).Bytes(), big.NewInt(4)),
 	}
 
-	candidate := &groupCandidate{
+	candidate := &Node{
 		tickets: tickets,
+		chainConfig: &config.Chain{
+			NaturalThreshold: naturalThreshold,
+		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -41,7 +45,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	candidate.submitTickets(mockInterface, naturalThreshold, quit, errCh)
+	candidate.submitTickets(mockInterface, quit, errCh)
 
 	if !reflect.DeepEqual(tickets, submittedTickets) {
 		t.Errorf(
@@ -68,8 +72,11 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, big.NewInt(16).Bytes(), big.NewInt(6)),
 	}
 
-	candidate := &groupCandidate{
+	candidate := &Node{
 		tickets: tickets,
+		chainConfig: &config.Chain{
+			NaturalThreshold: naturalThreshold,
+		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -93,7 +100,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		quit <- struct{}{}
 	}()
 
-	candidate.submitTickets(mockInterface, naturalThreshold, quit, errCh)
+	candidate.submitTickets(mockInterface, quit, errCh)
 
 	if len(tickets) == len(submittedTickets) {
 		t.Errorf("ticket submission has not been cancelled")
