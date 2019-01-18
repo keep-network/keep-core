@@ -33,7 +33,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	blockCounter chain.BlockCounter,
 	beaconValue []byte,
 	entryRequestID *big.Int,
-	entrySeed *big.Int,
+	previousEntry *big.Int,
 ) error {
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketReactiveSubmissionTimeout,
@@ -104,7 +104,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				relayChain,
 				&groupselection.Result{SelectedTickets: selectedTickets},
 				entryRequestID,
-				entrySeed,
+				previousEntry,
 			)
 			quitTicketChallenge <- struct{}{}
 			return nil

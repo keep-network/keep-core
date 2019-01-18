@@ -58,7 +58,7 @@ func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
 	groupSelectionResult *groupselection.Result,
 	entryRequestID *big.Int,
-	entrySeed *big.Int,
+	previousEntry *big.Int,
 ) {
 	// build the channel name and get the broadcast channel
 	broadcastChannelName := channelNameFromSelectedTickets(
@@ -85,7 +85,7 @@ func (n *Node) JoinGroupIfEligible(
 		if ticket.IsFromStaker(n.Staker.ID()) {
 			go dkg2.ExecuteDKG(
 				entryRequestID,
-				entrySeed,
+				previousEntry,
 				index,
 				n.chainConfig.GroupSize,
 				n.chainConfig.Threshold,
