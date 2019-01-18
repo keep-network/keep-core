@@ -42,6 +42,9 @@ type localChain struct {
 	simulatedHeight int64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
+
+	tickets      []*groupselection.Ticket
+	ticketsMutex sync.Mutex
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -210,6 +213,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(),
+		tickets:                      make([]*groupselection.Ticket, 0),
 	}
 }
 
