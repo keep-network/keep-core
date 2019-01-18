@@ -8,6 +8,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+var minimumStake = big.NewInt(20000000)
+
 // StakeMonitor implements `chain.StakeMonitor` interface and works
 // as a local stub for testing.
 type StakeMonitor struct {
