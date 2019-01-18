@@ -78,6 +78,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		errCh,
 	)
 
+	// TODO Phase 2b should be added here
+
 	// kick off background loop to check submitted tickets
 	go groupCandidate.verifyTicket(
 		relayChain,
@@ -112,8 +114,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 }
 
-// submitTickets checks to see if the submission period is over in between ticket
-// submits.
+// submitTickets submits tickets to the chain. It checks to see if the submission
+// period is over in between ticket submits.
 func (gc *groupCandidate) submitTickets(
 	relayChain relaychain.GroupInterface,
 	naturalThreshold *big.Int,
@@ -121,15 +123,16 @@ func (gc *groupCandidate) submitTickets(
 	errCh chan<- error,
 ) {
 	for _, ticket := range gc.tickets {
-		if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
-			relayChain.SubmitTicket(ticket).OnFailure(
-				func(err error) { errCh <- err },
-			)
-		}
-
 		select {
 		case <-quit:
+			// Exit this loop when we get a signal from quit.
 			return
+		default:
+			if ticket.Value.Int().Cmp(naturalThreshold) < 0 {
+				relayChain.SubmitTicket(ticket).OnFailure(
+					func(err error) { errCh <- err },
+				)
+			}
 		}
 	}
 }
