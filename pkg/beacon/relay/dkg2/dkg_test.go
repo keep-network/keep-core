@@ -2,7 +2,6 @@ package dkg2
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -45,23 +44,22 @@ func TestExecuteDKGLocal(t *testing.T) {
 		)
 	}
 
-	results := make([]chan error, groupSize)
-	for index := range results {
-		results[index] = make(chan error)
-		defer close(results[index])
+	errors := make([]chan error, groupSize)
+	for index := range errors {
+		errors[index] = make(chan error)
+		defer close(errors[index])
 
-		go func(result chan error, i int) {
-			result <- executeDKG(i)
-		}(results[index], index)
+		go func(i int) {
+			errors[i] <- executeDKG(i)
+		}(index)
 	}
 
-	for _, result := range results {
-		actualError := <-result
+	for index := range errors {
+		err := <-errors[index]
 
-		if !reflect.DeepEqual(actualError, nil) {
-			t.Errorf("\nexpected: %v\nactual:   %v\n",
-				nil,
-				actualError,
+		if err != nil {
+			t.Errorf("unexpected error: [%v]",
+				err,
 			)
 		}
 	}
