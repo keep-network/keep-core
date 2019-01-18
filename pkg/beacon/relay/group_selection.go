@@ -36,7 +36,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	entrySeed *big.Int,
 ) error {
 	submissionTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketReactiveSubmissionTimeout,
+		n.chainConfig.TicketInitialSubmissionTimeout,
 	)
 	if err != nil {
 		return err
