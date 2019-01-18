@@ -271,7 +271,7 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 				if !subscribed {
 					return
 				}
-				success(event.RequestId)
+				success(event.RequestId, event.GroupPubKey)
 
 			case err := <-eventSubscription.Err():
 				fail(err)

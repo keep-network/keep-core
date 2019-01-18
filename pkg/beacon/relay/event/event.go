@@ -39,5 +39,6 @@ type GroupRegistration struct {
 
 // DKGResultPublication represents a DKG result publication event.
 type DKGResultPublication struct {
-	RequestID *big.Int
+	RequestID      *big.Int
+	GroupPublicKey []byte
 }
