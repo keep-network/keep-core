@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"sort"
 	"sync"
 	"sync/atomic"
 
@@ -59,12 +60,22 @@ func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-// TODO: implement
 func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
-	return &async.GroupTicketPromise{}
+	promise := &async.GroupTicketPromise{}
+
+	c.ticketsMutex.Lock()
+	defer c.ticketsMutex.Unlock()
+
+	c.tickets = append(c.tickets, ticket)
+	sort.SliceStable(c.tickets, func(i, j int) bool {
+		return c.tickets[i].Value.Int().Cmp(c.tickets[j].Value.Int()) == -1
+	})
+
+	promise.Fulfill(ticket)
+
+	return promise
 }
 
-// TODO: implement
 func (c *localChain) SubmitChallenge(
 	ticket *groupselection.TicketChallenge,
 ) *async.GroupTicketChallengePromise {
