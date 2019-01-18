@@ -79,7 +79,9 @@ func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTic
 func (c *localChain) SubmitChallenge(
 	ticket *groupselection.TicketChallenge,
 ) *async.GroupTicketChallengePromise {
-	return &async.GroupTicketChallengePromise{}
+	promise := &async.GroupTicketChallengePromise{}
+	promise.Fail(fmt.Errorf("function not implemented"))
+	return promise
 }
 
 func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
