@@ -140,18 +140,22 @@ func (n *Node) submitTickets(
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
-	for i := len(n.tickets) - 1; i >= 0; i-- {
+	for _, ticket := range n.tickets {
 		select {
 		case <-quit:
 			// Exit this loop when we get a signal from quit.
 			return
 		default:
-			if n.tickets[i].Value.Int().Cmp(n.chainConfig.NaturalThreshold) < 0 {
-				relayChain.SubmitTicket(n.tickets[i]).OnSuccess(
+			if ticket.Value.Int().Cmp(n.chainConfig.NaturalThreshold) < 0 {
+				relayChain.SubmitTicket(ticket).OnSuccess(
 					func(submittedTicket *groupselection.Ticket) {
 						if submittedTicket == nil {
 							return
 						}
+
+						n.submittedTicketsMutex.Lock()
+						n.submittedTickets[submittedTicket.Value] = true
+						n.submittedTicketsMutex.Unlock()
 					},
 				).OnFailure(
 					func(err error) { errCh <- err },

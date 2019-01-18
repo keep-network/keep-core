@@ -26,7 +26,8 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 
 	candidate := &Node{
-		tickets: tickets,
+		tickets:          tickets,
+		submittedTickets: make(map[groupselection.SHAValue]bool),
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
 		},
@@ -73,7 +74,8 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	}
 
 	candidate := &Node{
-		tickets: tickets,
+		tickets:          tickets,
+		submittedTickets: make(map[groupselection.SHAValue]bool),
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
 		},
