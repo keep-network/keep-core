@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -157,8 +158,12 @@ func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.Grou
 		}
 	}
 
-	stakerValueInt := (&big.Int{}).SetBytes(ticket.Proof.StakerValue)
-	_, err := ec.keepGroupContract.SubmitTicket(
+	stakerValueInt, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
+	if err != nil {
+		failPromise(err)
+	}
+
+	_, err = ec.keepGroupContract.SubmitTicket(
 		ticket.Value.Int(),
 		stakerValueInt,
 		ticket.Proof.VirtualStakerIndex,
@@ -207,7 +212,9 @@ func (ec *ethereumChain) GetOrderedTickets() ([]*groupselection.Ticket, error) {
 		ticket := &groupselection.Ticket{
 			Value: groupselection.NewShaValue(onChainTicket[0]),
 			Proof: &groupselection.Proof{
-				StakerValue:        onChainTicket[1].Bytes(),
+				StakerValue: []byte(
+					hexutil.EncodeBig(onChainTicket[1]),
+				),
 				VirtualStakerIndex: onChainTicket[2],
 			},
 		}
