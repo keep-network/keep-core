@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -118,6 +119,10 @@ func createNode(
 	groupSize int,
 	threshold int,
 ) {
+	toEthereumAddress := func(id string) string {
+		return common.BytesToAddress([]byte(id)).Hex()
+	}
+
 	chainCounter, err := chainHandle.BlockCounter()
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -138,7 +143,7 @@ func createNode(
 
 	go beacon.Initialize(
 		context,
-		netProvider.ID().String()[:32],
+		toEthereumAddress(netProvider.ID().String()),
 		chainHandle.ThresholdRelay(),
 		chainCounter,
 		stakeMonitor,
