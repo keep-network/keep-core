@@ -64,7 +64,7 @@ func SmokeTest(c *cli.Context) error {
 	threshold := c.Int(thresholdFlag)
 
 	chainHandle := local.Connect(groupSize, threshold)
-	context := context.Background()
+	context, contextCancel := context.WithTimeout(context.Background(), 30*time.Second)
 
 	for i := 0; i < groupSize; i++ {
 		createNode(context, chainHandle, groupSize, threshold)
@@ -88,6 +88,11 @@ func SmokeTest(c *cli.Context) error {
 				dkgResultPublication.RequestID,
 			))
 		}
+
+		// TODO We can cancel the context after we are sure that all validation passed
+		// Need to revisit this part after Phase 14 is implemented. Currently
+		// `OnGroupRegistered` is not called so the context is cancelled here.
+		contextCancel()
 	})
 
 	chainHandle.ThresholdRelay().
