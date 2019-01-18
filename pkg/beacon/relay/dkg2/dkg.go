@@ -54,13 +54,16 @@ func ExecuteDKG(
 	// The staker index should begin with 1
 	playerIndex := index + 1
 	if playerIndex < 1 {
-		return fmt.Errorf("player index must be >= 1")
+		return fmt.Errorf("[member:%v] player index must be >= 1", playerIndex)
 	}
 
 	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
 	if err != nil {
-		return fmt.Errorf("GJKR execution failed [%v]", err)
+		return fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
 	}
+
+	// TODO Consider removing this print after Phase 14 is implemented and replace it with print at the end of DKG execution.
+	fmt.Printf("[member:%v] GJKR Result: %+v\n", playerIndex, gjkrResult)
 
 	err = executePublishing(
 		requestID,
@@ -102,12 +105,14 @@ func executeGJKR(
 		},
 	}
 
+	// Initialize channel to perform distributed key generation.
+	Init(channel)
+
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
 	var (
 		currentState keyGenerationState
-		blockWaiter  <-chan int
 	)
 
 	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
@@ -116,11 +121,8 @@ func executeGJKR(
 	}
 	currentState = &initializationState{channel, member}
 
-	if err := stateTransition(
-		currentState,
-		blockCounter,
-		blockWaiter,
-	); err != nil {
+	blockWaiter, err := stateTransition(currentState, blockCounter)
+	if err != nil {
 		return nil, err
 	}
 
@@ -136,7 +138,7 @@ func executeGJKR(
 			err := currentState.receive(msg)
 			if err != nil {
 				fmt.Printf(
-					"[member:%v, state: %T] Failed to receive a message [%v]",
+					"[member:%v, state: %T] Failed to receive a message [%v]\n",
 					currentState.memberID(),
 					currentState,
 					err,
@@ -149,11 +151,8 @@ func executeGJKR(
 			}
 
 			currentState = currentState.nextState()
-			if err := stateTransition(
-				currentState,
-				blockCounter,
-				blockWaiter,
-			); err != nil {
+			blockWaiter, err = stateTransition(currentState, blockCounter)
+			if err != nil {
 				return nil, err
 			}
 
@@ -165,8 +164,7 @@ func executeGJKR(
 func stateTransition(
 	currentState keyGenerationState,
 	blockCounter chain.BlockCounter,
-	blockWaiter <-chan int,
-) error {
+) (<-chan int, error) {
 	fmt.Printf(
 		"[member:%v, state:%T] Transitioning to a new state...\n",
 		currentState.memberID(),
@@ -175,7 +173,7 @@ func stateTransition(
 
 	err := blockCounter.WaitForBlocks(1)
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to wait 1 block entering state [%T]: [%v]",
 			currentState,
 			err,
@@ -184,12 +182,12 @@ func stateTransition(
 
 	err = currentState.initiate()
 	if err != nil {
-		return fmt.Errorf("failed to initiate new state [%v]", err)
+		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
 	}
 
-	blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
+	blockWaiter, err := blockCounter.BlockWaiter(currentState.activeBlocks())
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
 			currentState,
 			err,
@@ -202,7 +200,7 @@ func stateTransition(
 		currentState,
 	)
 
-	return nil
+	return blockWaiter, nil
 }
 
 // convertResult transforms GJKR protocol execution result to a chain specific
