@@ -66,7 +66,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	errCh := make(chan error, len(tickets))
-	quitTicketSubmission := make(chan struct{}, 0)
+	quitTicketSubmission := make(chan struct{}, 1)
 	quitTicketChallenge := make(chan struct{}, 0)
 	groupCandidate := &groupCandidate{address: n.StakeID, tickets: tickets}
 
