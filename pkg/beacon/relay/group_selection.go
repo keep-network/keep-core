@@ -68,7 +68,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	errCh := make(chan error, len(tickets))
 	quitTicketSubmission := make(chan struct{}, 0)
 	quitTicketChallenge := make(chan struct{}, 0)
-	groupCandidate := &groupCandidate{address: n.StakeID, tickets: tickets}
+	groupCandidate := &groupCandidate{address: n.Staker.ID(), tickets: tickets}
 
 	// Phase 2a: submit all tickets that fall under the natural threshold
 	go groupCandidate.submitTickets(
@@ -102,7 +102,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{selectedTickets},
+				&groupselection.Result{SelectedTickets: selectedTickets},
 				entryRequestID,
 				entrySeed,
 			)
