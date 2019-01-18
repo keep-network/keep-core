@@ -70,13 +70,17 @@ func Initialize(
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 			// new entry generated, try to join the group
-			node.SubmitTicketsForGroupSelection(
+			err := node.SubmitTicketsForGroupSelection(
 				relayChain,
 				blockCounter,
 				entry.Value.Bytes(),
 				entry.RequestID,
 				entry.Seed,
 			)
+			if err != nil {
+				// TODO Panic or Print?
+				panic(fmt.Sprintf("submit tickets for group selection failed: [%v]", err))
+			}
 		})
 
 		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
