@@ -237,6 +237,69 @@ fail.
 5. If an _owner_ tries to delegate a stake to an _operator_ who already has a
 stake, the tx must fail.
 
+==== Basic design
+
+With this scheme, tokens are staked by signing and publishing a staking contract
+("agreement" to distinguish it from on-chain smart contracts) which specifies
+the various details of any individual staking arrangement. This creates a new
+staker identity in respect to those tokens, which can then be used to
+participate in the network.
+
+To improve security, separate roles are created for each aspect of staking. The
+addresses behind these roles can be the same or different, depending on the
+specific arrangement. This lets token-holders utilize cold storage effectively,
+or delegate different aspects to different parties.
+
+owner::
+The address actually holding the tokens
+
+operator::
+An address authorized to use the tokens as stakes for participating in the
+network
+
+magpie::
+An address designated to receive any rewards from participation
+
+overseer::
+An address with the authority to audit and authorize contract upgrades
+
+==== Roles
+
+===== Owner
+
+The owner is the ultimate holder of the tokens. Before staking, the owner has
+full control over the tokens, and the tokens are returned to the owner after
+staking has finished. The owner's participation is not required in the
+day-to-day operations of the staker, so cold storage can be accommodated to the
+maximum extent.
+
+The owner address is used to initiate staking and create the staker, and to
+finish staking and reclaim the staked tokens.
+
+===== Operator
+
+The operator handles the everyday operations of the staker without actually
+owning the staked tokens. While this enables third-party delegation without eg.
+making it possible for the operator to simply transfer away tokens, it should be
+noted that a malicious operator can exploit stake slashing to steal or destroy
+tokens and thus the entire staked amount is indeed at stake.
+
+The operator address is used to provide network functionality by participating
+in various protocols. A signature from the operator is also required to initiate
+staking, and the operator can unilaterally finish staking and return the tokens
+to the owner.
+
+===== Magpie
+
+The magpie collects rewards earned from staking and participating in the
+network. The magpie doesn't sign or publish any protocol-relevant transactions,
+but any currency or tokens earned by the staker will be transferred to the
+magpie.
+
+===== Overseer
+
+
+
 ==== Stake multioperation
 The stake multioperation feature enables performing several operations on the
 same stake at the same time. As the stake is not locked for any particular
