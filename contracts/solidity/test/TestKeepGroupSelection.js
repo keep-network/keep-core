@@ -127,31 +127,48 @@ contract('TestKeepGroupSelection', function(accounts) {
     assert.equal(await keepGroupImplViaProxy.stakingWeight(staker3), 3000, "Should have expected staking weight.");
   });
 
-  it("should be able to output submited tickets in ascending ordered", async function() {
+  it("should be able to output submitted tickets in ascending ordered", async function() {
+    const staker1Tickets = tickets1BelowNatT.slice(0,10)
+    const staker2Tickets = tickets2BelowNatT.slice(0,10)
+    const staker3Tickets = tickets3BelowNatT.slice(0,10)
 
+    await keepGroupImplViaProxy.submitTickets(
+      staker1, 
+      staker1Tickets.map(t => t.value), 
+      staker1Tickets.map(t => t.virtualStakerIndex),     
+    );  
+  
+    await keepGroupImplViaProxy.submitTickets(
+      staker2, 
+      staker2Tickets.map(t => t.value), 
+      staker2Tickets.map(t => t.virtualStakerIndex), 
+      {from: staker2}
+    );
+    
+    await keepGroupImplViaProxy.submitTickets(
+      staker3, 
+      staker3Tickets.map(t => t.value), 
+      staker3Tickets.map(t => t.virtualStakerIndex), 
+      {from: staker3}
+    );
+    
     let tickets = [];
-
-    await keepGroupImplViaProxy.submitTicket(tickets1BelowNatT[0].value, staker1, tickets1BelowNatT[0].virtualStakerIndex);
-    tickets.push(tickets1BelowNatT[0].value);
-
-    await keepGroupImplViaProxy.submitTicket(tickets2BelowNatT[0].value, staker2, tickets2BelowNatT[0].virtualStakerIndex, {from: staker2});
-    tickets.push(tickets2BelowNatT[0].value);
-
-    await keepGroupImplViaProxy.submitTicket(tickets3BelowNatT[0].value, staker3, tickets3BelowNatT[0].virtualStakerIndex, {from: staker3});
-    tickets.push(tickets3BelowNatT[0].value);
-
+    tickets.push(...staker1Tickets.map(t => t.value));
+    tickets.push(...staker2Tickets.map(t => t.value));
+    tickets.push(...staker3Tickets.map(t => t.value));
     tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
 
     // Test tickets ordering
     let orderedTickets = await keepGroupImplViaProxy.orderedTickets();
-    assert.equal(orderedTickets[0].equals(tickets[0]), true, "Tickets should be in ascending order.");
-    assert.equal(orderedTickets[1].equals(tickets[1]), true, "Tickets should be in ascending order.");
-    assert.equal(orderedTickets[2].equals(tickets[2]), true, "Tickets should be in ascending order.");
 
+    assert.equal(orderedTickets.length, tickets.length, true, "Unexpected number of tickets.");  
+    for (let i = 0; i < orderedTickets.length; i++) {
+      assert.equal(orderedTickets[i].equals(tickets[i]), true, "Tickets should be in ascending order.");
+    }
   });
 
-  it("should be able to submit a ticket during initial ticket submission", async function() {
-    await keepGroupImplViaProxy.submitTicket(tickets1BelowNatT[0].value, staker1, tickets1BelowNatT[0].virtualStakerIndex);
+  it("should be able to submit tickets during initial ticket submission", async function() {
+    await keepGroupImplViaProxy.submitTickets(staker1, [tickets1BelowNatT[0].value], [tickets1BelowNatT[0].virtualStakerIndex]);
     let proof = await keepGroupImplViaProxy.getTicketProof(tickets1BelowNatT[0].value);
     assert.equal(proof[1].equals(new BigNumber(staker1)), true , "Should be able to get submitted ticket proof.");
     assert.equal(proof[2], tickets1BelowNatT[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
@@ -159,7 +176,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should be able to submit a high value ticket during reactive ticket submission", async function() {
     mineBlocks(timeoutInitial);
-    await keepGroupImplViaProxy.submitTicket(tickets1AboveNatT[0].value, staker1, tickets1AboveNatT[0].virtualStakerIndex);
+    await keepGroupImplViaProxy.submitTickets(staker1, [tickets1AboveNatT[0].value], [tickets1AboveNatT[0].virtualStakerIndex]);
     let proof = await keepGroupImplViaProxy.getTicketProof(tickets1AboveNatT[0].value);
     assert.equal(proof[1].equals(new BigNumber(staker1)), true , "Should be able to get submitted ticket proof.");
     assert.equal(proof[2], tickets1AboveNatT[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
@@ -167,7 +184,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should be able to verify a ticket", async function() {
 
-    await keepGroupImplViaProxy.submitTicket(tickets1BelowNatT[0].value, staker1, 1);
+    await keepGroupImplViaProxy.submitTickets(staker1, [tickets1BelowNatT[0].value], [1]);
 
     assert.equal(await keepGroupImplViaProxy.cheapCheck(
       staker1, staker1, 1
@@ -188,8 +205,8 @@ contract('TestKeepGroupSelection', function(accounts) {
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
     await keepGroupImplViaProxy.authorizeStakingContract(stakingContract.address);
 
-    await keepGroupImplViaProxy.submitTicket(tickets1BelowNatT[0].value, staker1, tickets1BelowNatT[0].virtualStakerIndex);
-    await keepGroupImplViaProxy.submitTicket(1, staker1, tickets1BelowNatT[1].virtualStakerIndex); // invalid ticket
+    await keepGroupImplViaProxy.submitTickets(staker1, [tickets1BelowNatT[0].value], [tickets1BelowNatT[0].virtualStakerIndex]);
+    await keepGroupImplViaProxy.submitTickets(staker1, [1], [tickets1BelowNatT[1].virtualStakerIndex]); // invalid ticket
 
     // Challenging valid ticket
     let previousBalance = await stakingContract.stakeBalanceOf(staker2);
@@ -202,5 +219,4 @@ contract('TestKeepGroupSelection', function(accounts) {
     //assert.equal(await stakingContract.stakeBalanceOf(staker2), previousBalance.toNumber() + minimumStake, "Should result rewarding challenger's balance");
 
   });
-
 });

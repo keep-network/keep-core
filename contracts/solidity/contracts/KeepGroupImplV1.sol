@@ -75,30 +75,38 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Submit ticket to request to participate in a new candidate group.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
+     * @dev Submit tickets to request to participate in a new candidate group.
      * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
+     * @param ticketsValues Results of a pseudorandom function with input values of
+     * random beacon output, staker-specific 'stakerValue's and virtualStakerIndexes.
+     * @param virtualStakersIndexes Numbers within a range of 1 to staker's weight.
      */
-    function submitTicket(
-        uint256 ticketValue,
+    function submitTickets(
         uint256 stakerValue,
-        uint256 virtualStakerIndex
+        uint256[] ticketsValues,        
+        uint256[] virtualStakersIndexes
     ) public {
-
         if (block.number > _submissionStart + _timeoutSubmission) {
             revert("Ticket submission period is over.");
         }
 
-        // Invalid tickets are rejected and their senders penalized.
-        if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
-            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            TokenStaking stakingContract = TokenStaking(_stakingContract);
-            stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
-        } else {
-            _tickets.push(ticketValue);
-            _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+        if (ticketsValues.length != virtualStakersIndexes.length) {
+            revert("Please provide the same number of ticket values and virtual staker indexes.");
+        }
+
+        for (uint i = 0; i < ticketsValues.length; i++) {    
+            uint256 ticketValue = ticketsValues[i];
+            uint256 virtualStakerIndex = virtualStakersIndexes[i];
+
+            // Invalid tickets are rejected and their senders penalized.
+            if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
+                // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+                TokenStaking stakingContract = TokenStaking(_stakingContract);
+                stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
+            } else {
+                _tickets.push(ticketValue);
+                _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+          }
         }
     }
 
