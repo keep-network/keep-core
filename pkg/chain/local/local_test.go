@@ -41,7 +41,8 @@ func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
 	actualResult := chain.GetOrderedTickets()
 
 	if !reflect.DeepEqual(expectedResult, actualResult) {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+		t.Fatalf(
+			"\nexpected: %v\nactual:   %v\n",
 			expectedResult,
 			actualResult,
 		)
