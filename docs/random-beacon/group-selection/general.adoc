@@ -13,7 +13,7 @@ that is proportional to their _staker weight_.
 When a _functionality contract_ needs a new group,
 it calls the `initiateGroupSelection` method on the _group selection contract_.
 The _functionality contract_ is required to provide
-a _selection seed_, and the _group size_ of the desired group.
+a _selection seed_, and the _group size_ of the desired group (_n_).
 
 When the `initiateGroupSelection` method is called,
 _stakers_ may begin submitting _tickets_
@@ -32,7 +32,7 @@ can submit them on-chain until _ticket submission timeout_ is reached.
 
 Once _ticket submission timeout_ is reached,
 the new group can be created by calling `finishGroupSelection`
-which returns the best _group size_ tickets.
+which returns the best _n_ tickets.
 
 In the future, alternative group selection contracts can be created
 to provide different features,
@@ -51,7 +51,7 @@ and the _staker weight_ of the ticket's creator, inclusive.
 Each staker can submit a number of tickets equal to their staker weight.
 
 Because `sha3` is pseudorandom,
-each ticket has an independent chance of being in the _group size_ best tickets.
+each ticket has an independent chance of being in the _n_ best tickets.
 This means a given staker may be included multiple times in the same group.
 This independence of tickets is considered desirable
 to simplify the group selection protocol
