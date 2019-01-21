@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"sort"
 	"sync"
 	"sync/atomic"
 
@@ -42,6 +43,9 @@ type localChain struct {
 	simulatedHeight int64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
+
+	tickets      []*groupselection.Ticket
+	ticketsMutex sync.Mutex
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -56,20 +60,35 @@ func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-// TODO: implement
 func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
-	return &async.GroupTicketPromise{}
+	promise := &async.GroupTicketPromise{}
+
+	c.ticketsMutex.Lock()
+	defer c.ticketsMutex.Unlock()
+
+	c.tickets = append(c.tickets, ticket)
+	sort.SliceStable(c.tickets, func(i, j int) bool {
+		return c.tickets[i].Value.Int().Cmp(c.tickets[j].Value.Int()) == -1
+	})
+
+	promise.Fulfill(ticket)
+
+	return promise
 }
 
-// TODO: implement
 func (c *localChain) SubmitChallenge(
 	ticket *groupselection.TicketChallenge,
 ) *async.GroupTicketChallengePromise {
-	return &async.GroupTicketChallengePromise{}
+	promise := &async.GroupTicketChallengePromise{}
+	promise.Fail(fmt.Errorf("function not implemented"))
+	return promise
 }
 
 func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
-	return make([]*groupselection.Ticket, 0)
+	c.ticketsMutex.Lock()
+	defer c.ticketsMutex.Unlock()
+
+	return c.tickets
 }
 
 func (c *localChain) SubmitGroupPublicKey(
@@ -210,6 +229,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(),
+		tickets:                      make([]*groupselection.Ticket, 0),
 	}
 }
 
