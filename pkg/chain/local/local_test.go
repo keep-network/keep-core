@@ -2,16 +2,51 @@ package local
 
 import (
 	"context"
+	"crypto/sha256"
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
+func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
+	c := Connect(10, 4)
+	chain := c.ThresholdRelay()
+
+	shaValue := func(val string) groupselection.SHAValue {
+		var value [sha256.Size]byte
+		copy(value[:], []byte(val))
+		return value
+	}
+
+	ticket1 := &groupselection.Ticket{Value: shaValue("1")}
+	ticket2 := &groupselection.Ticket{Value: shaValue("2")}
+	ticket3 := &groupselection.Ticket{Value: shaValue("3")}
+	ticket4 := &groupselection.Ticket{Value: shaValue("4")}
+
+	chain.SubmitTicket(ticket3)
+	chain.SubmitTicket(ticket1)
+	chain.SubmitTicket(ticket4)
+	chain.SubmitTicket(ticket2)
+
+	expectedResult := []*groupselection.Ticket{
+		ticket1, ticket2, ticket3, ticket4,
+	}
+
+	actualResult := chain.GetOrderedTickets()
+
+	if !reflect.DeepEqual(expectedResult, actualResult) {
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			expectedResult,
+			actualResult,
+		)
+	}
+}
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
