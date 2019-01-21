@@ -6,3 +6,4 @@
 *.out
 *.fdb_latexmk
 img/generated
+*.html
