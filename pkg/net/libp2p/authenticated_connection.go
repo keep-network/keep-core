@@ -130,8 +130,6 @@ func (ac *authenticatedConnection) checkRemotePeerStake() (bool, error) {
 		return false, fmt.Errorf("unexpected type of remote peer's public key")
 	}
 
-	ac.stakeMonitor.StakerFor(key.NetworkPubKeyToEthAddress(networkKey))
-
 	return ac.stakeMonitor.HasMinimumStake(
 		key.NetworkPubKeyToEthAddress(networkKey),
 	)
