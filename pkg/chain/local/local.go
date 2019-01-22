@@ -198,20 +198,9 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 func Connect(groupSize int, threshold int) chain.Handle {
 	bc, _ := blockCounter()
 
-	// ticketsSpace = (2^256)-1
-	ticketsSpace := new(big.Int).Sub(
-		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
-		big.NewInt(1),
-	)
-	// tokenSupply = 10^9
-	tokenSupply := new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil)
-	// naturalThreshold = groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
-	naturalThreshold := new(big.Int).Mul(
-		big.NewInt(int64(groupSize)),
-		new(big.Int).Div(
-			ticketsSpace,
-			new(big.Int).Div(tokenSupply, minimumStake),
-		),
+	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
+		groupSize,
+		minimumStake,
 	)
 
 	return &localChain{
@@ -233,6 +222,31 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(minimumStake),
 	}
+}
+
+func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
+	tokenSupply *big.Int,
+	naturalThreshold *big.Int,
+) {
+	// (2^256)-1
+	ticketsSpace := new(big.Int).Sub(
+		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
+		big.NewInt(1),
+	)
+
+	// 10^9
+	tokenSupply = new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil)
+
+	// groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
+	naturalThreshold = new(big.Int).Mul(
+		big.NewInt(int64(groupSize)),
+		new(big.Int).Div(
+			ticketsSpace,
+			new(big.Int).Div(tokenSupply, minimumStake),
+		),
+	)
+
+	return tokenSupply, naturalThreshold
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
