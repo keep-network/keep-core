@@ -66,7 +66,14 @@ func (lsm *StakeMonitor) UnstakeTokens(address string) error {
 		return fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
-	delete(lsm.stakers, address)
+}
+
+func (lsm *StakeMonitor) findStakerByAddress(address string) *localStaker {
+	for _, staker := range lsm.stakers {
+		if staker.address == address {
+			return staker
+		}
+	}
 	return nil
 }
 
