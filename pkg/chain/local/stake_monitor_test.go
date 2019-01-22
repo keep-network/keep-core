@@ -2,6 +2,7 @@ package local
 
 import (
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 )
@@ -34,13 +35,44 @@ func TestDetectInvalidAddress(t *testing.T) {
 	assertInvalidEthereumAddress(hasStake, err, t)
 }
 
+func TestStakerFor(t *testing.T) {
+	monitor := NewStakeMonitor()
+
+	address := "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
+	staker, err := monitor.StakerFor(address)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedStaker := &localStaker{
+		address: address,
+		stake:   big.NewInt(0),
+	}
+	if !reflect.DeepEqual(staker, expectedStaker) {
+		t.Fatalf(
+			"\nexpected: %+v\nactual:   %+v\n",
+			expectedStaker,
+			staker,
+		)
+	}
+
+	stake, err := staker.Stake()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stake.Cmp(expectedStaker.stake) != 0 {
+		t.Fatalf(
+			"\nexpected: %v\nactual:   %v\n",
+			big.NewInt(0),
+			expectedStaker.stake,
+		)
+	}
+}
+
 func TestNoMinimumStakeByDefault(t *testing.T) {
 	monitor := NewStakeMonitor()
-	address := "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
-	monitor.StakerFor(address)
 
-	hasStake, err := monitor.HasMinimumStake(address)
-
+	hasStake, err := monitor.HasMinimumStake("0x65ea55c1f10491038425725dc00dffeab2a1e28a")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +86,6 @@ func TestHasMinimumStakeIfStakedBefore(t *testing.T) {
 	monitor := NewStakeMonitor()
 
 	address := "0x524f2e0176350d950fa630d9a5a59a0a190daf48"
-	monitor.StakerFor(address)
 
 	err := monitor.StakeTokens(address)
 	if err != nil {
@@ -76,7 +107,6 @@ func TestNoMinimumStakeIfUnstaked(t *testing.T) {
 	monitor := NewStakeMonitor()
 
 	address := "0x524f2e0176350d950fa630d9a5a59a0a190daf48"
-	monitor.StakerFor(address)
 
 	err := monitor.StakeTokens(address)
 	if err != nil {
