@@ -36,10 +36,10 @@ func TestDetectInvalidAddress(t *testing.T) {
 
 func TestNoMinimumStakeByDefault(t *testing.T) {
 	monitor := NewStakeMonitor()
+	address := "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
+	monitor.StakerFor(address)
 
-	hasStake, err := monitor.HasMinimumStake(
-		"0x65ea55c1f10491038425725dc00dffeab2a1e28a",
-	)
+	hasStake, err := monitor.HasMinimumStake(address)
 
 	if err != nil {
 		t.Fatal(err)
