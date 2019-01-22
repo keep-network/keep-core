@@ -53,14 +53,15 @@ func TestNoMinimumStakeByDefault(t *testing.T) {
 func TestHasMinimumStakeIfStakedBefore(t *testing.T) {
 	monitor := NewStakeMonitor()
 
-	err := monitor.StakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
+	address := "0x524f2e0176350d950fa630d9a5a59a0a190daf48"
+	monitor.StakerFor(address)
+
+	err := monitor.StakeTokens(address)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hasStake, err := monitor.HasMinimumStake(
-		"0x524f2e0176350d950fa630d9a5a59a0a190daf48",
-	)
+	hasStake, err := monitor.HasMinimumStake(address)
 
 	if err != nil {
 		t.Fatal(err)
@@ -74,20 +75,20 @@ func TestHasMinimumStakeIfStakedBefore(t *testing.T) {
 func TestNoMinimumStakeIfUnstaked(t *testing.T) {
 	monitor := NewStakeMonitor()
 
-	err := monitor.StakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
+	address := "0x524f2e0176350d950fa630d9a5a59a0a190daf48"
+	monitor.StakerFor(address)
+
+	err := monitor.StakeTokens(address)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = monitor.UnstakeTokens("0x524f2e0176350d950fa630d9a5a59a0a190daf48")
+	err = monitor.UnstakeTokens(address)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hasStake, err := monitor.HasMinimumStake(
-		"0x524f2e0176350d950fa630d9a5a59a0a190daf48",
-	)
-
+	hasStake, err := monitor.HasMinimumStake(address)
 	if err != nil {
 		t.Fatal(err)
 	}
