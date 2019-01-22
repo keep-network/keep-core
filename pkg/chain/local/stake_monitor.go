@@ -8,18 +8,20 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-var minimumStake = big.NewInt(20000000)
+// var minimumStake = big.NewInt(20000000)
 
 // StakeMonitor implements `chain.StakeMonitor` interface and works
 // as a local stub for testing.
 type StakeMonitor struct {
-	stakers []*localStaker
+	minimumStake *big.Int
+	stakers      []*localStaker
 }
 
 // NewStakeMonitor creates a new instance of `StakeMonitor` test stub.
-func NewStakeMonitor() *StakeMonitor {
+func NewStakeMonitor(minimumStake *big.Int) *StakeMonitor {
 	return &StakeMonitor{
-		stakers: make([]*localStaker, 0),
+		minimumStake: minimumStake,
+		stakers:      make([]*localStaker, 0),
 	}
 }
 
@@ -62,7 +64,7 @@ func (lsm *StakeMonitor) HasMinimumStake(address string) (bool, error) {
 		return false, err
 	}
 
-	return stake.Cmp(minimumStake) >= 0, nil
+	return stake.Cmp(lsm.minimumStake) >= 0, nil
 }
 
 // StakeTokens stakes enough tokens for the provided address to be a network
@@ -78,7 +80,7 @@ func (lsm *StakeMonitor) StakeTokens(address string) error {
 		return fmt.Errorf("invalid type of staker")
 	}
 
-	stakerLocal.stake = minimumStake
+	stakerLocal.stake = lsm.minimumStake
 
 	return nil
 }
