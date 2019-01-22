@@ -23,7 +23,7 @@ func TestDetectInvalidAddress(t *testing.T) {
 		}
 	}
 
-	monitor := NewStakeMonitor()
+	monitor := NewStakeMonitor(big.NewInt(200))
 
 	hasStake, err := monitor.HasMinimumStake("0x010102003")
 	assertInvalidEthereumAddress(hasStake, err, t)
@@ -36,7 +36,7 @@ func TestDetectInvalidAddress(t *testing.T) {
 }
 
 func TestStakerFor(t *testing.T) {
-	monitor := NewStakeMonitor()
+	monitor := NewStakeMonitor(big.NewInt(200))
 
 	address := "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
 	staker, err := monitor.StakerFor(address)
@@ -70,7 +70,7 @@ func TestStakerFor(t *testing.T) {
 }
 
 func TestNoMinimumStakeByDefault(t *testing.T) {
-	monitor := NewStakeMonitor()
+	monitor := NewStakeMonitor(big.NewInt(200))
 
 	hasStake, err := monitor.HasMinimumStake("0x65ea55c1f10491038425725dc00dffeab2a1e28a")
 	if err != nil {
@@ -83,7 +83,7 @@ func TestNoMinimumStakeByDefault(t *testing.T) {
 }
 
 func TestHasMinimumStakeIfStakedBefore(t *testing.T) {
-	monitor := NewStakeMonitor()
+	monitor := NewStakeMonitor(big.NewInt(200))
 
 	address := "0x524f2e0176350d950fa630d9a5a59a0a190daf48"
 
@@ -104,7 +104,7 @@ func TestHasMinimumStakeIfStakedBefore(t *testing.T) {
 }
 
 func TestNoMinimumStakeIfUnstaked(t *testing.T) {
-	monitor := NewStakeMonitor()
+	monitor := NewStakeMonitor(big.NewInt(200))
 
 	address := "0x524f2e0176350d950fa630d9a5a59a0a190daf48"
 
