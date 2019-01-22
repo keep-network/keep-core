@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	defaultGroupSize int = 10
-	defaultThreshold int = 4
+	defaultGroupSize    int = 10
+	defaultThreshold    int = 4
+	defaultMinimumStake int = 2000000
 )
 
 // SmokeTestCommand contains the definition of the smoke-test command-line
@@ -24,10 +25,12 @@ const (
 var SmokeTestCommand cli.Command
 
 const (
-	groupSizeFlag  = "group-size"
-	groupSizeShort = "g"
-	thresholdFlag  = "threshold"
-	thresholdShort = "t"
+	groupSizeFlag     = "group-size"
+	groupSizeShort    = "g"
+	thresholdFlag     = "threshold"
+	thresholdShort    = "t"
+	minimumStakeFlag  = "minimum-stake"
+	minimumStakeShort = "s"
 )
 
 const smokeTestDescription = `The smoke-test command creates a local threshold group of the
@@ -53,6 +56,10 @@ func init() {
 				Name:  thresholdFlag + "," + thresholdShort,
 				Value: defaultThreshold,
 			},
+			&cli.IntFlag{
+				Name:  minimumStakeFlag + "," + minimumStakeShort,
+				Value: defaultMinimumStake,
+			},
 		},
 	}
 }
@@ -62,8 +69,14 @@ func init() {
 func SmokeTest(c *cli.Context) error {
 	groupSize := c.Int(groupSizeFlag)
 	threshold := c.Int(thresholdFlag)
+	minimumStake := c.Int(minimumStakeFlag)
 
-	chainHandle := local.Connect(groupSize, threshold)
+	chainHandle := local.Connect(
+		groupSize,
+		threshold,
+		big.NewInt(int64(minimumStake)),
+	)
+
 	context := context.Background()
 
 	for i := 0; i < groupSize; i++ {
