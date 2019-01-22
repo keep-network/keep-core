@@ -23,16 +23,6 @@ func NewStakeMonitor() *StakeMonitor {
 	}
 }
 
-// HasMinimumStake checks if the provided address staked enough to become
-// a network operator. The minimum stake is an on-chain parameter.
-func (lsm *StakeMonitor) HasMinimumStake(address string) (bool, error) {
-	if !common.IsHexAddress(address) {
-		return false, fmt.Errorf("not a valid ethereum address: %v", address)
-	}
-
-	return lsm.stakers[address], nil
-}
-
 // StakerFor returns a staker.Staker instance for the given address. Returns an
 // error if the address is invalid.
 func (lsm *StakeMonitor) StakerFor(address string) (chain.Staker, error) {
@@ -40,12 +30,26 @@ func (lsm *StakeMonitor) StakerFor(address string) (chain.Staker, error) {
 		return nil, fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
-	stake := new(big.Int).Mul(
-		minimumStake,
-		big.NewInt(5),
-	)
+	if staker := lsm.findStakerByAddress(address); staker != nil {
+		return staker, nil
+	}
 
-	return &localStaker{address, stake}, nil
+	newStaker := &localStaker{address: address, stake: big.NewInt(0)}
+	lsm.stakers = append(lsm.stakers, newStaker)
+
+	return newStaker, nil
+}
+
+// HasMinimumStake checks if the provided address staked enough to become
+// a network operator. The minimum stake is an on-chain parameter.
+func (lsm *StakeMonitor) HasMinimumStake(address string) (bool, error) {
+	if !common.IsHexAddress(address) {
+		return false, fmt.Errorf("not a valid ethereum address: %v", address)
+	}
+
+	staker := lsm.findStakerByAddress(address)
+
+	return staker.stake.Cmp(minimumStake) >= 0, nil
 }
 
 // StakeTokens stakes enough tokens for the provided address to be a network
@@ -55,7 +59,8 @@ func (lsm *StakeMonitor) StakeTokens(address string) error {
 		return fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
-	lsm.stakers[address] = true
+	lsm.findStakerByAddress(address).stake = minimumStake
+
 	return nil
 }
 
@@ -66,6 +71,9 @@ func (lsm *StakeMonitor) UnstakeTokens(address string) error {
 		return fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
+	lsm.findStakerByAddress(address).stake = big.NewInt(0)
+
+	return nil
 }
 
 func (lsm *StakeMonitor) findStakerByAddress(address string) *localStaker {
