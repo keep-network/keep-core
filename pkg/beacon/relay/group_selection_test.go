@@ -120,6 +120,6 @@ func (mgi *mockGroupInterface) SubmitChallenge(
 	panic("unexpected")
 }
 
-func (mgi *mockGroupInterface) GetOrderedTickets() []*groupselection.Ticket {
+func (mgi *mockGroupInterface) GetOrderedTickets() ([]*groupselection.Ticket, error) {
 	panic("unexpected")
 }
