@@ -195,7 +195,7 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 
 // Connect initializes a local stub implementation of the chain interfaces
 // for testing.
-func Connect(groupSize int, threshold int) chain.Handle {
+func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 	bc, _ := blockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
