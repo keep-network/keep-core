@@ -13,13 +13,13 @@ var minimumStake = big.NewInt(20000000)
 // StakeMonitor implements `chain.StakeMonitor` interface and works
 // as a local stub for testing.
 type StakeMonitor struct {
-	stakers map[string]bool
+	stakers []*localStaker
 }
 
 // NewStakeMonitor creates a new instance of `StakeMonitor` test stub.
 func NewStakeMonitor() *StakeMonitor {
 	return &StakeMonitor{
-		stakers: make(map[string]bool),
+		stakers: make([]*localStaker, 0),
 	}
 }
 
