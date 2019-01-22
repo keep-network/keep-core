@@ -97,15 +97,10 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			fmt.Println("challenge timeout end")
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
-				fmt.Printf(
-					"error getting submitted tickets [%v].",
-					err,
-				)
 				quitTicketChallenge <- struct{}{}
-				return nil
+				return err
 			}
 
 			// Read the selected, ordered tickets from the chain,
