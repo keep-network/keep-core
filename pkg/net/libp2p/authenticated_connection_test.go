@@ -25,7 +25,11 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 	responder := createTestConnectionConfig(t)
 
 	stakeMonitor := local.NewStakeMonitor()
+
+	stakeMonitor.StakerFor(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+
+	stakeMonitor.StakerFor(key.NetworkPubKeyToEthAddress(responder.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
 	initiatorConn, responderConn := newConnPair()
@@ -124,7 +128,11 @@ func TestHandshake(t *testing.T) {
 	responder := createTestConnectionConfig(t)
 
 	stakeMonitor := local.NewStakeMonitor()
+
+	stakeMonitor.StakerFor(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+
+	stakeMonitor.StakerFor(key.NetworkPubKeyToEthAddress(responder.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
 	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
@@ -163,6 +171,7 @@ func TestHandshakeNoInitiatorStake(t *testing.T) {
 
 	stakeMonitor := local.NewStakeMonitor()
 	// only responder is staked
+	stakeMonitor.StakerFor(key.NetworkPubKeyToEthAddress(responder.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
 	_, _, inboundError, outboundError :=
@@ -191,6 +200,7 @@ func TestHandshakeNoResponderStake(t *testing.T) {
 
 	stakeMonitor := local.NewStakeMonitor()
 	// only initiator is staked
+	stakeMonitor.StakerFor(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 
 	_, _, inboundError, outboundError :=
