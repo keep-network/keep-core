@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -150,8 +151,9 @@ func (gc *groupCandidate) verifyTicket(
 		case <-t.C:
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
-				fmt.Printf(
-					"error getting submitted tickets [%v].",
+				fmt.Fprintf(
+					os.Stderr,
+					"error getting submitted tickets: [%v]",
 					err,
 				)
 			}
@@ -164,8 +166,9 @@ func (gc *groupCandidate) verifyTicket(
 					}
 					relayChain.SubmitChallenge(challenge).OnFailure(
 						func(err error) {
-							fmt.Printf(
-								"Failed to submit challenge with err: [%v]",
+							fmt.Fprintf(
+								os.Stderr,
+								"Failed to submit challenge: [%v]",
 								err,
 							)
 						},
