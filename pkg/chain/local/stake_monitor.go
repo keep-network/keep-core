@@ -106,14 +106,14 @@ type localStaker struct {
 	stake   *big.Int
 }
 
-func (ls localStaker) ID() string {
+func (ls *localStaker) ID() string {
 	return ls.address
 }
 
-func (ls localStaker) Stake() (*big.Int, error) {
+func (ls *localStaker) Stake() (*big.Int, error) {
 	return ls.stake, nil
 }
 
-func (ls localStaker) OnStakeChanged(func(newStake *big.Int)) {
+func (ls *localStaker) OnStakeChanged(func(newStake *big.Int)) {
 	// Do nothing for now.
 }
