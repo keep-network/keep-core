@@ -84,11 +84,11 @@ func (c *localChain) SubmitChallenge(
 	return promise
 }
 
-func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
+func (c *localChain) GetOrderedTickets() ([]*groupselection.Ticket, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
-	return c.tickets
+	return c.tickets, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(
