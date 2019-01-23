@@ -368,10 +368,3 @@ May only be called by an address authorized by the governance structure
 
 ==== Functionality contracts
 
-==== Authorizations
-
-Can't revoke authorizations:
-naively implemented, this functionality would enable evading penalties. 
-It could be made to work
-by keeping track of when a staker actually is active in a contract,
-but this would impose significant storage burdens.

@@ -1,0 +1,109 @@
+= Staking
+
+Notes and speculation
+
+== Authorizations
+
+Can't revoke authorizations:
+naively implemented, this functionality would enable evading penalties. 
+It could be made to work
+by keeping track of when a staker actually is active in a contract,
+but this would impose significant storage burdens.
+
+== Token grants
+
+Problems:
+
+=== Grant-compatible staking
+
+Instead of staking contract, split the responsibilities:
+
+==== Staking proxy
+
+The staking proxy is not called directly;
+instead an entry is created
+when one of the staking contracts has a staking event.
+
+staker[staker_id] -> backend::
+The contract addresses of the rules each staker operates under
+
+initialize(staker_id)::
+
+
+remove(staker_id)::
+Remove the backend address entry of the specified staker
+
+==== Staking backend
+
+A contract that can provide the required interface to the staking proxy:
+
+weight(staker_id) -> int::
+Returns the staker weight of the specified staker.
+
+operator(staker_id) -> address::
+Returns the address which has _operator_ authority for the specified staker.
+
+magpie(staker_id) -> address::
+Returns the address which has _magpie_ authority for the specified staker.
+
+overseer(staker_id) -> address::
+Returns the address which has _overseer_ authority for the specified staker.
+
+reward(staker_id, amount)::
+Rewards the staker with tokens or currency.
+
+slash(staker_id, amount)::
+Seizes _amount_ tokens from the staker and gives them to the calling contract.
+If the staker state is `Active`
+this method is required to transfer the tokens to the calling contract.
+Calling `slash` on an `Unstaking` staker is backend-specific.
+
+===== Backend: free stakes
+
+
+* `amount` of staked tokens
+* `state` of the staker (`Active` or `Unstaking`)
+* `since` time of last change (staking or unstaking)
+* `owner` of the tokens
+* `operator` address performing operations
+* `magpie` address to send rewards to
+* `overseer` address to determine authorized contracts
+
+stake(amount, operator, magpie, overseer)::
+Initiate staking by specifying the addresses of the other roles
+and transferring at least _minimum stake_ tokens to the contract
++
+The caller is designated as the owner
++
+May be called by any address with at least _minimum stake_ tokens
+
+unstake(staker_id)::
+Initiate unstaking, start the unstaking period
+and stop the staker from joining any new operations
++
+May be called by either the owner or the operator of the staker
+
+return_tokens(staker_id)::
+Terminate a staker that has finished unstaking
+and return the staked tokens to the owner
++
+May be called by either the owner or the operator of the staker
+
+reward(staker_id, amount)::
+Reward a staker for correct operation
+and transfer currency or tokens to its magpie address
++
+May be called by a functionality contract
+
+slash(staker_id, amount)::
+Punish a staker for misbehavior and seize some of its tokens
++
+The seized tokens may be used in whathever way is specified by the contract
++
+May be called by a functionality contract authorized by the staker's overseer
+and not blocked by the panic button
+
+
+==== Free token staking
+
+==== Limited token staking
