@@ -66,6 +66,10 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	ephemeralPubKeyMessages []*EphemeralPublicKeyMessage,
 ) error {
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
+		if ephemeralPubKeyMessage.senderID == sm.ID {
+			// ignoring our own key; don't want to ecdh with ourselves
+			continue
+		}
 		sm.evidenceLog.PutEphemeralMessage(ephemeralPubKeyMessage)
 
 		otherMember := ephemeralPubKeyMessage.senderID
@@ -86,7 +90,13 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 
 		// Get the ephemeral public key broadcasted by the other group member,
 		// which was intended for this group member.
-		otherMemberEphemeralPublicKey := ephemeralPubKeyMessage.ephemeralPublicKeys[sm.ID]
+		otherMemberEphemeralPublicKey, ok := ephemeralPubKeyMessage.ephemeralPublicKeys[sm.ID]
+		if !ok {
+			return fmt.Errorf(
+				"could not find broadcasted public key from member %v",
+				sm.ID,
+			)
+		}
 
 		// Create symmetric key for the current group member and the other
 		// group member by ECDH'ing the public and private key.
@@ -270,11 +280,19 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) (*SecretSharesAccusationsMessage, error) {
 	for _, sharesMessage := range sharesMessages {
+		if sharesMessage.senderID == cvm.ID {
+			// ignore messages from ourselves
+			continue
+		}
 		cvm.evidenceLog.PutPeerSharesMessage(sharesMessage)
 	}
 
 	accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
 	for _, commitmentsMessage := range commitmentsMessages {
+		if commitmentsMessage.senderID == cvm.ID {
+			// ignore messages from ourselves
+			continue
+		}
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
@@ -310,10 +328,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
@@ -563,6 +581,10 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 	// `product = Π (A_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
+		if message.senderID == sm.ID {
+			// ignore messages from ourselves
+			continue
+		}
 		if !sm.isShareValidAgainstPublicKeySharePoints(
 			sm.ID,
 			sm.receivedValidSharesS[message.senderID],
