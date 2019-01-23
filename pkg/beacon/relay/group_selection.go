@@ -234,7 +234,7 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 
 func fromChainTicket(ticket *relaychain.Ticket) *groupselection.Ticket {
 	return &groupselection.Ticket{
-		Value: groupselection.NewShaValue(ticket.Value),
+		Value: groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes()),
 		Proof: &groupselection.Proof{
 			StakerValue: []byte(
 				hexutil.EncodeBig(ticket.Proof.StakerValue),

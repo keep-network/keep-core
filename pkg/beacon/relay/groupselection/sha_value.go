@@ -29,9 +29,10 @@ func (v SHAValue) Raw() [sha256.Size]byte {
 	return v
 }
 
-// NewShaValue creates SHAValue from the provided big int.
-func NewShaValue(i *big.Int) SHAValue {
+// SetBytes takes the first 32 bytes from the provided byte slice and sets them
+// as an internal value.
+func (v SHAValue) SetBytes(bytes []byte) SHAValue {
 	var container [sha256.Size]byte
-	copy(container[:], i.Bytes())
+	copy(container[:], bytes[0:sha256.Size])
 	return container
 }
