@@ -13,7 +13,7 @@ import (
 )
 
 func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
-	c := Connect(10, 4)
+	c := Connect(10, 4, big.NewInt(200))
 	chain := c.ThresholdRelay()
 
 	ticket1 := &relaychain.Ticket{Value: big.NewInt(1)}
@@ -47,7 +47,7 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
 			RequestID: big.NewInt(int64(19)),
@@ -111,7 +111,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 		test := test
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			c := Connect(10, 4)
+			c := Connect(10, 4, big.NewInt(200))
 			countWait, err := c.BlockCounter()
 			if err != nil {
 				t.Fatalf("failed to set up block counter: [%v]", err)
