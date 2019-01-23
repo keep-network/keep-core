@@ -4,26 +4,16 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// TransportIdentifier represents the identity of a participant at the transport
-// layer (e.g., libp2p).
-type TransportIdentifier interface {
-	// Returns a string name of the network provider. Expected to be purely
-	// informational.
-	ProviderName() string
-
-	// Returns a string representation of the transport identifier.
-	String() string
-}
-
 // ProtocolIdentifier represents a protocol-level identifier. It is an opaque
 // type to the network layer.
-type ProtocolIdentifier interface{}
+type ProtocolIdentifier interface {
+	String() string
+}
 
 // Message represents a message exchanged within the network layer. It carries
 // a sender id for the transport layer and, if available, for the protocol
 // layer. It also carries an unmarshaled payload.
 type Message interface {
-	TransportSenderID() TransportIdentifier
 	ProtocolSenderID() ProtocolIdentifier
 	Payload() interface{}
 	Type() string
@@ -47,12 +37,12 @@ type TaggedMarshaler interface {
 
 // Provider represents an entity that can provide network access.
 //
-// Providers expose the ability to get a amed BroadcastChannel, the ability to
+// Providers expose the ability to get a named BroadcastChannel, the ability to
 // return a provider type, which is an informational string indicating what type
 // of provider this is, the list of IP addresses on which it can listen, and
 // known peers from peer discovery mechanims.
 type Provider interface {
-	ID() TransportIdentifier
+	ID() ProtocolIdentifier
 
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
@@ -94,24 +84,12 @@ type BroadcastChannel interface {
 	// ProtocolIdentifier.
 	SendTo(recipientIdentifier ProtocolIdentifier, m TaggedMarshaler) error
 
-	// RegisterIdentifier associates the given network identifier with a
-	// protocol-specific identifier that will be passed to the receiving code
-	// in HandleMessageFunc.
-	//
-	// Returns an error if either identifier already has an association for
-	// this channel.
-	RegisterIdentifier(
-		networkIdentifier TransportIdentifier,
-		protocolIdentifier ProtocolIdentifier,
-	) error
-
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error
-	// UnregisterRecv takes the type of HandleMessageFunc and returns an error. This function should
-	// be defered.
+	// UnregisterRecv takes the type of HandleMessageFunc and returns an
+	// error. This function should be defered.
 	UnregisterRecv(handlerType string) error
-
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
 	// registered message handling functions. The unmarshaler should be a
