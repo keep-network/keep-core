@@ -130,13 +130,6 @@ func pingRequest(c *cli.Context) error {
 		return err
 	}
 
-	if err := broadcastChannel.RegisterIdentifier(
-		netProvider.ID(),
-		netProvider.ID().String(),
-	); err != nil {
-		return err
-	}
-
 	var (
 		pingChan = make(chan net.Message)
 		pongChan = make(chan net.Message)
@@ -198,7 +191,7 @@ func pingRequest(c *cli.Context) error {
 		select {
 		case msg := <-pingChan:
 			// don't read our own ping
-			if msg.TransportSenderID().String() == netProvider.ID().String() {
+			if msg.ProtocolIdentifier() == netProvider.ID() {
 				continue
 			}
 			pingPayload, ok := msg.Payload().(*PingMessage)
@@ -211,7 +204,7 @@ func pingRequest(c *cli.Context) error {
 
 			err := broadcastChannel.Send(
 				&PongMessage{
-					Sender:  netProvider.ID().String(),
+					Sender:  netProvider.ID(),
 					Payload: pong})
 			if err != nil {
 				return err
@@ -223,7 +216,7 @@ func pingRequest(c *cli.Context) error {
 			time.Sleep(1 * time.Second)
 		case msg := <-pongChan:
 			// don't read our own pong
-			if msg.TransportSenderID().String() == netProvider.ID().String() {
+			if msg.TransportSenderID() == netProvider.ID() {
 				continue
 			}
 			// if you read a pong message, go ahead and ack and close out
