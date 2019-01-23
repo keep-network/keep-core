@@ -88,10 +88,10 @@ func Initialize(
 		})
 
 		relayChain.OnDKGResultPublished(func(publishedResult *event.DKGResultPublication) {
-			fmt.Printf("New group registered [%+v]\n", registration)
+			fmt.Printf("New group registered [%+v]\n", publishedResult)
 			node.RegisterGroup(
 				publishedResult.RequestID.String(),
-				registration.GroupPublicKey,
+				publishedResult.GroupPublicKey,
 			)
 		})
 	}
