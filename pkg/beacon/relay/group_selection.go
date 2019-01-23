@@ -194,11 +194,7 @@ func (gc *groupCandidate) verifyTicket(
 				}
 
 				if !costlyCheck(beaconValue, ticket) {
-					challenge := &groupselection.TicketChallenge{
-						Ticket:        ticket,
-						SenderAddress: gc.address,
-					}
-					relayChain.SubmitChallenge(challenge).OnFailure(
+					relayChain.SubmitChallenge(ticket.Value.Int()).OnFailure(
 						func(err error) {
 							fmt.Fprintf(
 								os.Stderr,

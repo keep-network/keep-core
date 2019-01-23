@@ -12,7 +12,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -79,7 +78,7 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 }
 
 func (c *localChain) SubmitChallenge(
-	ticket *groupselection.TicketChallenge,
+	ticketValue *big.Int,
 ) *async.GroupTicketChallengePromise {
 	promise := &async.GroupTicketChallengePromise{}
 	promise.Fail(fmt.Errorf("function not implemented"))

@@ -55,7 +55,11 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 
 	for i, ticket := range tickets {
-		submitted := fromChainTicket(submittedTickets[i])
+		submitted, err := fromChainTicket(submittedTickets[i])
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		if !reflect.DeepEqual(ticket, submitted) {
 			t.Errorf(
 				"unexpected ticket at index [%v]\nexpected: [%v]\nactual: [%v]",
@@ -135,7 +139,7 @@ func (mgi *mockGroupInterface) SubmitTicket(
 }
 
 func (mgi *mockGroupInterface) SubmitChallenge(
-	ticket *groupselection.TicketChallenge,
+	ticketValue *big.Int,
 ) *async.GroupTicketChallengePromise {
 	panic("unexpected")
 }

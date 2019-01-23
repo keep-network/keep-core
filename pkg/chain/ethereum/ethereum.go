@@ -11,7 +11,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -166,7 +165,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 }
 
 func (ec *ethereumChain) SubmitChallenge(
-	ticketChallenge *groupselection.TicketChallenge,
+	ticketValue *big.Int,
 ) *async.GroupTicketChallengePromise {
 	submittedChallengePromise := &async.GroupTicketChallengePromise{}
 	failPromise := func(err error) {
@@ -181,12 +180,12 @@ func (ec *ethereumChain) SubmitChallenge(
 		}
 	}
 
-	_, err := ec.keepGroupContract.SubmitChallenge(
-		ticketChallenge.Ticket.Value.Int(),
-	)
+	_, err := ec.keepGroupContract.SubmitChallenge(ticketValue)
 	if err != nil {
 		failPromise(err)
 	}
+
+	// TODO: fulfill when submitted
 
 	return submittedChallengePromise
 }
