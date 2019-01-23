@@ -239,6 +239,22 @@ Thus it may be safe to use tokens
 that are locked at the present time but would vest within the unstaking period
 as collateral.
 
+If minimum stake is 10,000 KEEP or 1/100,000 of the total supply,
+and grants last 2 years,
+the de facto minimum stake to begin staking immediately
+is determined by _minimum stake * (100 weeks / unstaking period)_
+
+.Unstaking period vs. de facto minimum stake at various market caps
+|===
+|Waiting period |$10M |$100M |$1,000M
+
+|1 week   |$10k   |$100k |$1M 
+|2 weeks  |$5k    |$50k  |$500k
+|4 weeks  |$2,500 |$25k  |$250k
+|10 weeks |$1,000 |$10k  |$100k
+|25 weeks |$400   |$4k   |$40k
+|===
+
 === Grant-compatible staking
 
 Instead of staking contract, split the responsibilities:
