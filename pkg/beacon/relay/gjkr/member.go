@@ -12,6 +12,10 @@ import (
 // MemberID is a unique-in-group identifier of a member.
 type MemberID uint32
 
+func (m MemberID) String() string {
+	return m.HexString()
+}
+
 type memberCore struct {
 	// ID of this group member.
 	ID MemberID
