@@ -44,7 +44,7 @@ type localChain struct {
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
-	tickets      []*groupselection.Ticket
+	tickets      []*relaychain.Ticket
 	ticketsMutex sync.Mutex
 }
 
@@ -60,7 +60,7 @@ func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketPromise {
 	promise := &async.GroupTicketPromise{}
 
 	c.ticketsMutex.Lock()
@@ -68,10 +68,12 @@ func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTic
 
 	c.tickets = append(c.tickets, ticket)
 	sort.SliceStable(c.tickets, func(i, j int) bool {
-		return c.tickets[i].Value.Int().Cmp(c.tickets[j].Value.Int()) == -1
+		return c.tickets[i].Value.Cmp(c.tickets[j].Value) == -1
 	})
 
-	promise.Fulfill(ticket)
+	promise.Fulfill(&event.GroupTicketSubmission{
+		TicketValue: ticket.Value,
+	})
 
 	return promise
 }
@@ -84,7 +86,7 @@ func (c *localChain) SubmitChallenge(
 	return promise
 }
 
-func (c *localChain) GetOrderedTickets() ([]*groupselection.Ticket, error) {
+func (c *localChain) GetOrderedTickets() ([]*relaychain.Ticket, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
@@ -229,7 +231,7 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(),
-		tickets:                      make([]*groupselection.Ticket, 0),
+		tickets:                      make([]*relaychain.Ticket, 0),
 	}
 }
 

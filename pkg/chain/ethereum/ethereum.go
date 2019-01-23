@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -144,33 +144,23 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupRegistrationPromise
 }
 
-func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
 	submittedTicketPromise := &async.GroupTicketPromise{}
-	failPromise := func(err error) {
+
+	_, err := ec.keepGroupContract.SubmitTicket(ticket)
+	if err != nil {
 		failErr := submittedTicketPromise.Fail(err)
 		if failErr != nil {
 			fmt.Fprintf(
 				os.Stderr,
-				"failing promise because of: [%v] failed with: [%v].\n",
+				"failing promise because of: [%v] failed with: [%v]\n",
 				err,
 				failErr,
 			)
 		}
 	}
 
-	stakerValueInt, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
-	if err != nil {
-		failPromise(err)
-	}
-
-	_, err = ec.keepGroupContract.SubmitTicket(
-		ticket.Value.Int(),
-		stakerValueInt,
-		ticket.Proof.VirtualStakerIndex,
-	)
-	if err != nil {
-		failPromise(err)
-	}
+	// TODO: fulfill when submitted
 
 	return submittedTicketPromise
 }
@@ -201,26 +191,13 @@ func (ec *ethereumChain) SubmitChallenge(
 	return submittedChallengePromise
 }
 
-func (ec *ethereumChain) GetOrderedTickets() ([]*groupselection.Ticket, error) {
-	// TODO: return proofs with this method
+func (ec *ethereumChain) GetOrderedTickets() ([]*chain.Ticket, error) {
 	orderedTickets, err := ec.keepGroupContract.OrderedTickets()
 	if err != nil {
 		return nil, err
 	}
-	var tickets []*groupselection.Ticket
-	for _, onChainTicket := range orderedTickets {
-		ticket := &groupselection.Ticket{
-			Value: groupselection.NewShaValue(onChainTicket[0]),
-			Proof: &groupselection.Proof{
-				StakerValue: []byte(
-					hexutil.EncodeBig(onChainTicket[1]),
-				),
-				VirtualStakerIndex: onChainTicket[2],
-			},
-		}
-		tickets = append(tickets, ticket)
-	}
-	return tickets, nil
+
+	return orderedTickets, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(

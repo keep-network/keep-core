@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -104,11 +105,16 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				return err
 			}
 
+			var tickets []*groupselection.Ticket
+			for _, chainTicket := range selectedTickets {
+				tickets = append(tickets, fromChainTicket(chainTicket))
+			}
+
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{SelectedTickets: selectedTickets},
+				&groupselection.Result{SelectedTickets: tickets},
 				entryRequestID,
 				entrySeed,
 			)
@@ -132,7 +138,13 @@ func (gc *groupCandidate) submitTickets(
 			// Exit this loop when we get a signal from quit.
 			return
 		default:
-			relayChain.SubmitTicket(ticket).OnFailure(
+			chainTicket, err := toChainTicket(ticket)
+			if err != nil {
+				errCh <- err
+				continue
+			}
+
+			relayChain.SubmitTicket(chainTicket).OnFailure(
 				func(err error) { errCh <- err },
 			)
 		}
@@ -158,7 +170,8 @@ func (gc *groupCandidate) verifyTicket(
 				)
 			}
 
-			for _, ticket := range selectedTickets {
+			for _, selectedTicket := range selectedTickets {
+				ticket := fromChainTicket(selectedTicket)
 				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.TicketChallenge{
 						Ticket:        ticket,
@@ -198,4 +211,35 @@ func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
 		return true
 	}
 	return false
+}
+
+func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
+	stakerValueInt, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not transform ticket to chain representation: [%v]",
+			err,
+		)
+	}
+
+	return &relaychain.Ticket{
+		Value: ticket.Value.Int(),
+		Proof: &relaychain.TicketProof{
+			StakerValue:        stakerValueInt,
+			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+		},
+	}, nil
+
+}
+
+func fromChainTicket(ticket *relaychain.Ticket) *groupselection.Ticket {
+	return &groupselection.Ticket{
+		Value: groupselection.NewShaValue(ticket.Value),
+		Proof: &groupselection.Proof{
+			StakerValue: []byte(
+				hexutil.EncodeBig(ticket.Proof.StakerValue),
+			),
+			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+		},
+	}
 }

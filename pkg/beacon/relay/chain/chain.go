@@ -37,7 +37,7 @@ type GroupSelectionInterface interface {
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
-	SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise
+	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
 	// SubmitChallenge submits a challenge corresponding to a ticket that
 	// fails `costlyCheck`, and returns a promise to track the challenge
 	// submission. The promise is fulfilled with the challenge as seen on-chain,
@@ -45,7 +45,7 @@ type GroupSelectionInterface interface {
 	SubmitChallenge(ticket *groupselection.TicketChallenge) *async.GroupTicketChallengePromise
 	// GetOrderedTickets returns submitted tickets which have passed checks
 	// on-chain.
-	GetOrderedTickets() ([]*groupselection.Ticket, error)
+	GetOrderedTickets() ([]*Ticket, error)
 }
 
 // GroupRegistrationInterface defines the subset of the relay chain interface

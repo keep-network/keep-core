@@ -41,3 +41,9 @@ type GroupRegistration struct {
 type DKGResultPublication struct {
 	RequestID *big.Int
 }
+
+// GroupTicketSubmission represents a group selection ticket
+// submission event.
+type GroupTicketSubmission struct {
+	TicketValue *big.Int
+}
