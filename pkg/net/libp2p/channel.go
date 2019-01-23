@@ -31,10 +31,6 @@ type channel struct {
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
-
-	identifiersMutex            sync.Mutex
-	transportToProtoIdentifiers map[net.TransportIdentifier]net.ProtocolIdentifier
-	protoToTransportIdentifiers map[net.ProtocolIdentifier]net.TransportIdentifier
 }
 
 func (c *channel) Name() string {
@@ -61,17 +57,9 @@ func (c *channel) doSend(
 	recipient net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) error {
-	var transportRecipient net.TransportIdentifier
-	if recipient != nil {
-		c.identifiersMutex.Lock()
-		if transportID, ok := c.protoToTransportIdentifiers[recipient]; ok {
-			transportRecipient = transportID
-		}
-		c.identifiersMutex.Unlock()
-	}
 	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
 	// in an envelope.
-	envelopeBytes, err := c.envelopeProto(transportRecipient, message)
+	envelopeBytes, err := c.envelopeProto(recipient, message)
 	if err != nil {
 		return err
 	}
@@ -110,44 +98,6 @@ func (c *channel) UnregisterRecv(handlerType string) error {
 	return nil
 }
 
-func (c *channel) RegisterIdentifier(
-	transportIdentifier net.TransportIdentifier,
-	protocolIdentifier net.ProtocolIdentifier,
-) error {
-	c.identifiersMutex.Lock()
-	defer c.identifiersMutex.Unlock()
-
-	if _, ok := transportIdentifier.(networkIdentity); !ok {
-		return fmt.Errorf(
-			"incorrect type for transportIdentifier: [%v] in channel [%s]",
-			transportIdentifier, c.name,
-		)
-	}
-
-	if existingProtocolIdentifier, exists := c.transportToProtoIdentifiers[transportIdentifier]; exists {
-		if existingProtocolIdentifier != protocolIdentifier {
-			return fmt.Errorf(
-				"protocol identifier in channel [%s] already associated with [%v]",
-				c.name, transportIdentifier,
-			)
-		}
-	}
-
-	if existingTransportIdentifier, exists := c.protoToTransportIdentifiers[protocolIdentifier]; exists {
-		if existingTransportIdentifier != transportIdentifier {
-			return fmt.Errorf(
-				"transport identifier in channel [%s] already associated with [%v]",
-				c.name, protocolIdentifier,
-			)
-		}
-	}
-
-	c.transportToProtoIdentifiers[transportIdentifier] = protocolIdentifier
-	c.protoToTransportIdentifiers[protocolIdentifier] = transportIdentifier
-
-	return nil
-}
-
 func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
 	tpe := unmarshaler().Type()
 
@@ -163,7 +113,7 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 }
 
 func (c *channel) messageProto(
-	recipient net.TransportIdentifier,
+	recipient net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
@@ -194,7 +144,7 @@ func (c *channel) messageProto(
 }
 
 func (c *channel) sealEnvelope(
-	recipient net.TransportIdentifier,
+	recipient net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) (*pb.NetworkEnvelope, error) {
 	messageBytes, err := c.messageProto(recipient, message)
@@ -213,7 +163,7 @@ func (c *channel) sealEnvelope(
 }
 
 func (c *channel) envelopeProto(
-	recipient net.TransportIdentifier,
+	recipient net.ProtocolIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	envelope, err := c.sealEnvelope(recipient, message)
@@ -342,11 +292,7 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	// Get the associated protocol identifier from an association map.
-	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
-	if err != nil {
-		return err
-	}
+	protocolIdentifier := senderIdentifier
 
 	if message.Recipient != nil {
 		// Construct an identifier from the Recipient.
@@ -365,8 +311,7 @@ func (c *channel) processContainerMessage(
 
 	// Fire a message back to the protocol.
 	protocolMessage := internal.BasicMessage(
-		networkIdentity(senderIdentifier.id),
-		protocolIdentifier,
+		protocolIdentifier.id,
 		unmarshaled,
 		string(message.Type),
 	)
@@ -386,13 +331,6 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	}
 
 	return unmarshaler(), nil
-}
-
-func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.ProtocolIdentifier, error) {
-	c.identifiersMutex.Lock()
-	defer c.identifiersMutex.Unlock()
-
-	return c.transportToProtoIdentifiers[networkIdentity(senderIdentifier.id)], nil
 }
 
 func (c *channel) deliver(message net.Message) error {
