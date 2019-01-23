@@ -67,7 +67,7 @@ func Execute(
 	share := member.SignatureShare(string(bytes))
 
 	// Add local share to map rather than receiving from the network.
-	seenShares[member.BlsID] = share
+	seenShares[*(member.BlsID.Raw())] = share
 
 	err = sendSignatureShare(share, channel, member)
 	if err != nil {
@@ -91,13 +91,13 @@ func Execute(
 
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
-				if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
+				if senderID, ok := msg.ProtocolSenderID().(*thresholdgroup.BlsID); ok {
 					// Ignore our own share, we already have it.
-					if senderID.IsEqual(&member.BlsID) {
+					if senderID.Raw().IsEqual(member.BlsID.Raw()) {
 						continue
 					}
 
-					seenShares[*senderID] = signatureShareMsg.ShareBytes
+					seenShares[*(senderID.Raw())] = signatureShareMsg.ShareBytes
 				}
 			}
 
@@ -123,5 +123,5 @@ func sendSignatureShare(
 	channel net.BroadcastChannel,
 	member *thresholdgroup.Member,
 ) error {
-	return channel.Send(&SignatureShareMessage{&member.BlsID, share})
+	return channel.Send(&SignatureShareMessage{member.BlsID.Raw(), share})
 }
