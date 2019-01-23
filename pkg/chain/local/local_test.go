@@ -15,7 +15,7 @@ import (
 )
 
 func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
-	c := Connect(10, 4)
+	c := Connect(10, 4, big.NewInt(200))
 	chain := c.ThresholdRelay()
 
 	shaValue := func(val string) groupselection.SHAValue {
