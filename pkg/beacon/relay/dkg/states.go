@@ -56,17 +56,12 @@ func (js *joinState) groupMember() thresholdgroup.BaseMember { return js.member 
 func (js *joinState) activeBlocks() int                      { return 1 }
 
 func (js *joinState) initiate() error {
-	return js.channel.Send(&JoinMessage{&js.member.BlsID})
+	return js.channel.Send(&JoinMessage{js.member.BlsID.Raw()})
 }
 
 func (js *joinState) receive(msg net.Message) error {
 	switch joinMsg := msg.Payload().(type) {
 	case *JoinMessage:
-		err := js.channel.RegisterIdentifier(msg.TransportSenderID(), joinMsg.id)
-		if err != nil {
-			return err
-		}
-
 		js.member.RegisterMemberID(joinMsg.id)
 
 		return nil
@@ -94,7 +89,7 @@ func (cs *commitmentState) activeBlocks() int                      { return 2 }
 
 func (cs *commitmentState) initiate() error {
 	return cs.channel.Send(&MemberCommitmentsMessage{
-		&cs.member.BlsID,
+		cs.member.BlsID.Raw(),
 		cs.member.Commitments(),
 	})
 }
@@ -102,8 +97,8 @@ func (cs *commitmentState) initiate() error {
 func (cs *commitmentState) receive(msg net.Message) error {
 	switch commitmentMsg := msg.Payload().(type) {
 	case *MemberCommitmentsMessage:
-		if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
-			if senderID.IsEqual(&cs.member.BlsID) {
+		if senderID, ok := msg.ProtocolSenderID().(*thresholdgroup.BlsID); ok {
+			if senderID.Raw().IsEqual(cs.member.BlsID.Raw()) {
 				fmt.Printf("sender [%v]", cs.member.BlsID)
 				return nil
 			}
@@ -117,9 +112,8 @@ func (cs *commitmentState) receive(msg net.Message) error {
 		}
 
 		return fmt.Errorf(
-			"unknown protocol sender id type [%T]  [%v]",
+			"unknown protocol sender id type [%T]",
 			msg.ProtocolSenderID(),
-			msg.TransportSenderID(),
 		)
 	}
 
@@ -148,7 +142,7 @@ func (ss *sharingState) initiate() error {
 
 		err := ss.channel.SendTo(
 			net.ProtocolIdentifier(receiverID),
-			&MemberShareMessage{&ss.member.BlsID, receiverID, share})
+			&MemberShareMessage{ss.member.BlsID.Raw(), receiverID, share})
 
 		if err != nil {
 			return err
@@ -161,7 +155,7 @@ func (ss *sharingState) initiate() error {
 func (ss *sharingState) receive(msg net.Message) error {
 	switch shareMsg := msg.Payload().(type) {
 	case *MemberShareMessage:
-		if shareMsg.receiverID.IsEqual(&ss.member.BlsID) {
+		if shareMsg.receiverID.IsEqual(ss.member.BlsID.Raw()) {
 			ss.member.AddShareFromID(shareMsg.id, shareMsg.Share)
 		}
 		return nil
@@ -196,7 +190,7 @@ func (as *accusingState) activeBlocks() int                      { return 1 }
 
 func (as *accusingState) initiate() error {
 	return as.channel.Send(&AccusationsMessage{
-		&as.member.BlsID,
+		as.member.BlsID.Raw(),
 		as.member.AccusedIDs(),
 	})
 }
@@ -204,8 +198,8 @@ func (as *accusingState) initiate() error {
 func (as *accusingState) receive(msg net.Message) error {
 	switch accusationMsg := msg.Payload().(type) {
 	case *AccusationsMessage:
-		if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
-			if senderID.IsEqual(&as.member.BlsID) {
+		if senderID, ok := msg.ProtocolSenderID().(*thresholdgroup.BlsID); ok {
+			if senderID.Raw().IsEqual(as.member.BlsID.Raw()) {
 				return nil
 			}
 
@@ -222,8 +216,8 @@ func (as *accusingState) receive(msg net.Message) error {
 		}
 
 		return fmt.Errorf(
-			"unknown protocol sender id for transport id [%v]",
-			msg.TransportSenderID(),
+			"unknown protocol sender id [%v]",
+			msg.ProtocolSenderID(),
 		)
 	}
 
@@ -255,14 +249,14 @@ func (js *justifyingState) activeBlocks() int                      { return 1 }
 
 func (js *justifyingState) initiate() error {
 	return js.channel.Send(
-		&JustificationsMessage{&js.member.BlsID, js.member.Justifications()})
+		&JustificationsMessage{js.member.BlsID.Raw(), js.member.Justifications()})
 }
 
 func (js *justifyingState) receive(msg net.Message) error {
 	switch justificationsMsg := msg.Payload().(type) {
 	case *JustificationsMessage:
-		if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
-			if senderID.IsEqual(&js.member.BlsID) {
+		if senderID, ok := msg.ProtocolSenderID().(*thresholdgroup.BlsID); ok {
+			if senderID.Raw().IsEqual(js.member.BlsID.Raw()) {
 				return nil
 			}
 
@@ -280,8 +274,8 @@ func (js *justifyingState) receive(msg net.Message) error {
 		}
 
 		return fmt.Errorf(
-			"unknown protocol sender id for transport id [%v]",
-			msg.TransportSenderID(),
+			"unknown protocol sender id [%v]",
+			msg.ProtocolSenderID(),
 		)
 	}
 
