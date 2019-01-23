@@ -81,13 +81,6 @@ func (js *joinState) initiate() error {
 func (js *joinState) receive(msg net.Message) error {
 	switch joinMsg := msg.Payload().(type) {
 	case *gjkr.JoinMessage:
-		if err := js.channel.RegisterIdentifier(
-			msg.TransportSenderID(),
-			joinMsg.SenderID,
-		); err != nil {
-			return err
-		}
-
 		js.member.AddToGroup(joinMsg.SenderID)
 	}
 	return nil
