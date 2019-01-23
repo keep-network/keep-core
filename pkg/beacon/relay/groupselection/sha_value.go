@@ -2,6 +2,7 @@ package groupselection
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"math/big"
 )
 
@@ -31,8 +32,13 @@ func (v SHAValue) Raw() [sha256.Size]byte {
 
 // SetBytes takes the first 32 bytes from the provided byte slice and sets them
 // as an internal value.
-func (v SHAValue) SetBytes(bytes []byte) SHAValue {
+func (v SHAValue) SetBytes(bytes []byte) (SHAValue, error) {
 	var container [sha256.Size]byte
+
+	if len(bytes) != sha256.Size {
+		return container, fmt.Errorf("32 bytes expected for SHA value")
+	}
+
 	copy(container[:], bytes[0:sha256.Size])
-	return container
+	return container, nil
 }

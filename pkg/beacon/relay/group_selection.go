@@ -107,7 +107,18 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 			var tickets []*groupselection.Ticket
 			for _, chainTicket := range selectedTickets {
-				tickets = append(tickets, fromChainTicket(chainTicket))
+				ticket, err := fromChainTicket(chainTicket)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"incorrect ticket format: [%v]",
+						err,
+					)
+
+					continue // ignore incorrect ticket
+				}
+
+				tickets = append(tickets, ticket)
 			}
 
 			// Read the selected, ordered tickets from the chain,
@@ -171,7 +182,17 @@ func (gc *groupCandidate) verifyTicket(
 			}
 
 			for _, selectedTicket := range selectedTickets {
-				ticket := fromChainTicket(selectedTicket)
+				ticket, err := fromChainTicket(selectedTicket)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"incorrect ticket format: [%v]",
+						err,
+					)
+
+					continue // ignore incorrect ticket
+				}
+
 				if !costlyCheck(beaconValue, ticket) {
 					challenge := &groupselection.TicketChallenge{
 						Ticket:        ticket,
@@ -232,14 +253,19 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 
 }
 
-func fromChainTicket(ticket *relaychain.Ticket) *groupselection.Ticket {
+func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
+	value, err := groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("incorrect ticket value [%v]", err)
+	}
+
 	return &groupselection.Ticket{
-		Value: groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes()),
+		Value: value,
 		Proof: &groupselection.Proof{
 			StakerValue: []byte(
 				hexutil.EncodeBig(ticket.Proof.StakerValue),
 			),
 			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
 		},
-	}
+	}, nil
 }
