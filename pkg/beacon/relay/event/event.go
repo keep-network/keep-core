@@ -47,3 +47,9 @@ type DKGResultPublication struct {
 type GroupTicketSubmission struct {
 	TicketValue *big.Int
 }
+
+// GroupTicketChallengeSubmission represents a group selection ticket
+// challenge submission event.
+type GroupTicketChallengeSubmission struct {
+	TicketValue *big.Int
+}
