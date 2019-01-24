@@ -50,7 +50,7 @@ func ExecuteDKG(
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
 	channel net.BroadcastChannel,
-) (*thresholdSigner, error) {
+) (*ThresholdSigner, error) {
 	// The staker index should begin with 1
 	playerIndex := index + 1
 	if playerIndex < 1 {
@@ -91,7 +91,7 @@ func executeGJKR(
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,
-) (*gjkr.Result, *thresholdSigner, error) {
+) (*gjkr.Result, *ThresholdSigner, error) {
 	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 

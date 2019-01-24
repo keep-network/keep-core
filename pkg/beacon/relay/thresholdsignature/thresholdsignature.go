@@ -2,12 +2,15 @@ package thresholdsignature
 
 import (
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/dfinity/go-dfinity-crypto/bls"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 const (
@@ -29,7 +32,7 @@ func Execute(
 	bytes []byte,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	member *thresholdgroup.Member,
+	member *dkg2.ThresholdSigner,
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -63,13 +66,13 @@ func Execute(
 		member.MemberID(),
 	)
 
-	seenShares := make(map[bls.ID][]byte)
-	share := member.SignatureShare(string(bytes))
+	seenShares := make(map[gjkr.MemberID]*bn256.G1)
+	share := member.SignatureShare(bytes)
 
 	// Add local share to map rather than receiving from the network.
-	seenShares[*(member.BlsID.Raw())] = share
+	seenShares[member.MemberID()] = share
 
-	err = sendSignatureShare(share, channel, member)
+	err = sendSignatureShare(share.Marshal(), channel, member.MemberID())
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +82,7 @@ func Execute(
 		return nil, err
 	}
 
-	fmt.Printf("[member:%v] Receiving other group signature share.\n", member.ID)
+	fmt.Printf("[member:%v] Receiving other group signature share.\n", member.MemberID())
 
 	for {
 		select {
@@ -91,28 +94,36 @@ func Execute(
 
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
-				if senderID, ok := msg.TransportSenderID().(*thresholdgroup.BlsID); ok {
+				if senderID, ok := msg.TransportSenderID().(gjkr.MemberID); ok {
 					// Ignore our own share, we already have it.
-					if senderID.Raw().IsEqual(member.BlsID.Raw()) {
+					if senderID == member.MemberID() {
 						continue
 					}
 
-					seenShares[*(senderID.Raw())] = signatureShareMsg.ShareBytes
+					share := new(bn256.G1)
+					_, err := share.Unmarshal(signatureShareMsg.ShareBytes)
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"[member:%v] failed to unmarshal signature share: [%v]",
+							member.MemberID(),
+							err,
+						)
+					} else {
+						seenShares[senderID] = share
+					}
 				}
 			}
 
 		case <-blockWaiter:
-			signature, err := member.CompleteSignature(seenShares)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"[member:%v] failed to complete signature inside active period [%v]: [%v]",
-					member.MemberID(),
-					signatureBlocks,
-					err,
-				)
+			allSeen := make([]*bn256.G1, 0)
+			for _, share := range seenShares {
+				allSeen = append(allSeen, share)
 			}
 
-			return signature.Serialize(), nil
+			signature := member.CompleteSignature(allSeen)
+
+			return signature.Marshal(), nil
 
 		}
 	}
@@ -121,7 +132,7 @@ func Execute(
 func sendSignatureShare(
 	share []byte,
 	channel net.BroadcastChannel,
-	member *thresholdgroup.Member,
+	memberID gjkr.MemberID,
 ) error {
-	return channel.Send(&SignatureShareMessage{member.BlsID.Raw(), share})
+	return channel.Send(&SignatureShareMessage{memberID.String(), share})
 }

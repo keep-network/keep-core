@@ -365,6 +365,10 @@ func (fm *FinalizingMember) Result() *Result {
 	}
 }
 
+func (fm *FinalizingMember) GroupPublicKey() *bn256.G1 {
+	return fm.groupPublicKey
+}
+
 func (fm *FinalizingMember) GroupPrivateKeyShare() *big.Int {
 	return fm.groupPrivateKeyShare
 }
