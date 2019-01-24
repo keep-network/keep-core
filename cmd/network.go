@@ -191,7 +191,7 @@ func pingRequest(c *cli.Context) error {
 		select {
 		case msg := <-pingChan:
 			// don't read our own ping
-			if msg.ProtocolSenderID() == netProvider.ID() {
+			if msg.TransportSenderID() == netProvider.ID() {
 				continue
 			}
 			pingPayload, ok := msg.Payload().(*PingMessage)
@@ -216,7 +216,7 @@ func pingRequest(c *cli.Context) error {
 			time.Sleep(1 * time.Second)
 		case msg := <-pongChan:
 			// don't read our own pong
-			if msg.ProtocolSenderID() == netProvider.ID() {
+			if msg.TransportSenderID() == netProvider.ID() {
 				continue
 			}
 			// if you read a pong message, go ahead and ack and close out
@@ -228,7 +228,7 @@ func pingRequest(c *cli.Context) error {
 				)
 			}
 
-			fmt.Printf("Received PONG from %s", msg.ProtocolSenderID().String())
+			fmt.Printf("Received PONG from %s", msg.TransportSenderID().String())
 			return nil
 		case <-ctx.Done():
 			err := ctx.Err()

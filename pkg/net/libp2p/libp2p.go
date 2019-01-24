@@ -65,7 +65,7 @@ func (p *provider) Type() string {
 	return "libp2p"
 }
 
-func (p *provider) ID() net.ProtocolIdentifier {
+func (p *provider) ID() net.TransportIdentifier {
 	return networkIdentity(p.identity.id)
 }
 
