@@ -80,6 +80,10 @@ func (n *Node) JoinGroupIfEligible(
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.Staker.ID()) {
+
+			// capture player index for goroutine
+			playerIndex := index
+
 			// We should only join the broadcast channel if we're
 			// elligible for the group
 			broadcastChannel, err := n.netProvider.ChannelFor(
@@ -96,12 +100,12 @@ func (n *Node) JoinGroupIfEligible(
 			}
 			fmt.Printf("Joined channel [%s]\n", broadcastChannelName)
 
-			fmt.Println("Executing dkg...")
+			fmt.Printf("Executing dkg with index = %v...\n", index)
 			go func() {
 				dkg2.ExecuteDKG(
 					entryRequestID,
 					entrySeed,
-					index,
+					playerIndex,
 					n.chainConfig.GroupSize,
 					n.chainConfig.Threshold,
 					n.blockCounter,
