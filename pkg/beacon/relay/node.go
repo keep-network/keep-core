@@ -60,6 +60,13 @@ func (n *Node) JoinGroupIfEligible(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
+	if !n.initializePendingGroup(entryRequestID.String()) {
+		// Failed to initialize; in progress for this entry.
+		return
+	}
+	// Release control of this group if we error.
+	defer n.flushPendingGroup(entryRequestID.String())
+
 	// build the channel name and get the broadcast channel
 	broadcastChannelName := channelNameFromSelectedTickets(
 		groupSelectionResult.SelectedTickets,
@@ -88,6 +95,7 @@ func (n *Node) JoinGroupIfEligible(
 				)
 				return
 			}
+
 			fmt.Printf("Executing dkg with index = %v...\n", index)
 			go func() {
 				dkg2.ExecuteDKG(
