@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"sync"
 	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -19,6 +20,9 @@ const getTicketListInterval = 5 * time.Second
 type groupCandidate struct {
 	address []byte
 	tickets []*groupselection.Ticket
+
+	selectedTickets     []*groupselection.Ticket
+	selectedTicketsLock sync.Mutex
 }
 
 // SubmitTicketsForGroupSelection takes the previous beacon value and attempts to
@@ -109,22 +113,33 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				err,
 			)
 		case <-submissionTimeout:
-			fmt.Println("submission timeout end")
 			quitTicketSubmission <- struct{}{}
+			fmt.Println("submission timeout end")
 		case <-challengeTimeout:
+			quitTicketChallenge <- struct{}{}
 			fmt.Println("challenge timeout end")
-			submittedTickets, err := relayChain.GetOrderedTickets()
+
+			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
 				fmt.Printf(
 					"error getting submitted tickets [%v].\n",
 					err,
 				)
-				quitTicketChallenge <- struct{}{}
+			}
+
+			if len(selectedTickets) == 0 {
+				groupCandidate.selectedTicketsLock.Lock()
+				selectedTickets = groupCandidate.selectedTickets
+				groupCandidate.selectedTicketsLock.Unlock()
+			}
+
+			if len(selectedTickets) == 0 {
+				fmt.Println("error getting submitted tickets.")
 				return nil
 			}
-			log.Printf("Got submitted tickets [%+v]\n", submittedTickets)
-			groupSelectedTickets := submittedTickets[0:groupSize]
-			log.Printf("Group selected tickets [%+v]\n", submittedTickets)
+
+			groupSelectedTickets := selectedTickets[0:groupSize]
+
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
@@ -133,7 +148,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				entryRequestID,
 				entrySeed,
 			)
-			quitTicketChallenge <- struct{}{}
+
 			return nil
 		}
 	}
@@ -178,6 +193,10 @@ func (gc *groupCandidate) verifyTicket(
 					err,
 				)
 			}
+
+			gc.selectedTicketsLock.Lock()
+			gc.selectedTickets = selectedTickets
+			gc.selectedTicketsLock.Unlock()
 
 			for _, ticket := range selectedTickets {
 				if !costlyCheck(beaconValue, ticket) {
