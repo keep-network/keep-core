@@ -61,6 +61,14 @@ func (n *Node) JoinGroupIfEligible(
 	entrySeed *big.Int,
 ) {
 	entrySeed = big.NewInt(100003)
+
+	if !n.initializePendingGroup(entryRequestID.String()) {
+		// Failed to initialize; in progress for this entry.
+		return
+	}
+	// Release control of this group if we error.
+	defer n.flushPendingGroup(entryRequestID.String())
+
 	// build the channel name and get the broadcast channel
 	broadcastChannelName := channelNameFromSelectedTickets(
 		groupSelectionResult.SelectedTickets,
@@ -89,16 +97,21 @@ func (n *Node) JoinGroupIfEligible(
 			fmt.Printf("Joined channel [%s]\n", broadcastChannelName)
 
 			fmt.Println("Executing dkg...")
-			go dkg2.ExecuteDKG(
-				entryRequestID,
-				entrySeed,
-				index,
-				n.chainConfig.GroupSize,
-				n.chainConfig.Threshold,
-				n.blockCounter,
-				relayChain,
-				broadcastChannel,
-			)
+			go func() {
+				dkg2.ExecuteDKG(
+					entryRequestID,
+					entrySeed,
+					index,
+					n.chainConfig.GroupSize,
+					n.chainConfig.Threshold,
+					n.blockCounter,
+					relayChain,
+					broadcastChannel,
+				)
+
+				// TODO: pass in the member
+				n.registerPendingGroup(entryRequestID.String(), nil, broadcastChannel)
+			}()
 		}
 	}
 	// exit on signal
