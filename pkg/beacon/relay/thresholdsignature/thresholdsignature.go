@@ -91,7 +91,7 @@ func Execute(
 
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
-				if senderID, ok := msg.ProtocolSenderID().(*thresholdgroup.BlsID); ok {
+				if senderID, ok := msg.TransportSenderID().(*thresholdgroup.BlsID); ok {
 					// Ignore our own share, we already have it.
 					if senderID.Raw().IsEqual(member.BlsID.Raw()) {
 						continue

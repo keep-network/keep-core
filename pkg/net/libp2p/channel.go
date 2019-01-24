@@ -11,8 +11,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	peer "github.com/libp2p/go-libp2p-peer"
-	"github.com/libp2p/go-libp2p-peerstore"
-	"github.com/libp2p/go-libp2p-pubsub"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 type channel struct {
@@ -42,7 +42,7 @@ func (c *channel) Send(message net.TaggedMarshaler) error {
 }
 
 func (c *channel) SendTo(
-	recipientIdentifier net.ProtocolIdentifier,
+	recipientIdentifier net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) error {
 	return c.doSend(recipientIdentifier, message)
@@ -54,7 +54,7 @@ func (c *channel) SendTo(
 // should receive the message. Otherwise, given a valid recipient, we will
 // address the message specifically to them.
 func (c *channel) doSend(
-	recipient net.ProtocolIdentifier,
+	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) error {
 	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
@@ -113,7 +113,7 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 }
 
 func (c *channel) messageProto(
-	recipient net.ProtocolIdentifier,
+	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
@@ -144,7 +144,7 @@ func (c *channel) messageProto(
 }
 
 func (c *channel) sealEnvelope(
-	recipient net.ProtocolIdentifier,
+	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) (*pb.NetworkEnvelope, error) {
 	messageBytes, err := c.messageProto(recipient, message)
@@ -163,7 +163,7 @@ func (c *channel) sealEnvelope(
 }
 
 func (c *channel) envelopeProto(
-	recipient net.ProtocolIdentifier,
+	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	envelope, err := c.sealEnvelope(recipient, message)

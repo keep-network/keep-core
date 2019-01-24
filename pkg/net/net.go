@@ -4,9 +4,9 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// ProtocolIdentifier represents a protocol-level identifier. It is an opaque
+// TransportIdentifier represents a protocol-level identifier. It is an opaque
 // type to the network layer.
-type ProtocolIdentifier interface { // TODO: RENAME TO TRANSPORT IDENTIFIER?
+type TransportIdentifier interface {
 	String() string
 }
 
@@ -14,7 +14,7 @@ type ProtocolIdentifier interface { // TODO: RENAME TO TRANSPORT IDENTIFIER?
 // a sender id for the transport layer and, if available, for the protocol
 // layer. It also carries an unmarshaled payload.
 type Message interface {
-	ProtocolSenderID() ProtocolIdentifier // TODO: RENAME TO TRANSPORT IDENTIFIER?
+	TransportSenderID() TransportIdentifier
 	Payload() interface{}
 	Type() string
 }
@@ -42,7 +42,7 @@ type TaggedMarshaler interface {
 // of provider this is, the list of IP addresses on which it can listen, and
 // known peers from peer discovery mechanims.
 type Provider interface {
-	ID() ProtocolIdentifier
+	ID() TransportIdentifier
 
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
@@ -75,14 +75,7 @@ type BroadcastChannel interface {
 	// Given a recipient and a message m that can marshal itself to protobouf,
 	// send the message to the recipient over the broadcast channel such that
 	// only the recipient can understand it.
-	//
-	// The recipient should be a ProtocolIdentifier registered using
-	// RegisterIdentifier, or a ClientIdentifier used by the network layer.
-	//
-	// Returns an error if the recipient identifier is a ProtocolIdentifier that
-	// does not have an associated ClientIdentifier, or if it is not a
-	// ProtocolIdentifier.
-	SendTo(recipientIdentifier ProtocolIdentifier, m TaggedMarshaler) error
+	SendTo(recipientIdentifier TransportIdentifier, m TaggedMarshaler) error
 
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.

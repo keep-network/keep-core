@@ -25,7 +25,7 @@ type localProvider struct {
 	id localIdentifier
 }
 
-func (lp *localProvider) ID() net.ProtocolIdentifier {
+func (lp *localProvider) ID() net.TransportIdentifier {
 	return lp.id
 }
 
@@ -101,7 +101,7 @@ func randomIdentifier() string {
 
 type localChannel struct {
 	name                 string
-	identifier           net.ProtocolIdentifier
+	identifier           net.TransportIdentifier
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
 	unmarshalersMutex    sync.Mutex
@@ -124,7 +124,7 @@ func doSend(
 	// If we have a recipient, filter `targetChannels` down to only the targeted
 	// recipient (the recipient transport identifier is the same as the local
 	// channel's identifier).
-	var transportRecipient net.ProtocolIdentifier
+	var transportRecipient net.TransportIdentifier
 	if transportID, ok := recipient.(*localIdentifier); ok {
 		transportRecipient = transportID
 	} else {
@@ -165,7 +165,7 @@ func doSend(
 	return nil
 }
 
-func (lc *localChannel) deliver(protocolIdentifier net.ProtocolIdentifier, payload interface{}) {
+func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, payload interface{}) {
 	lc.messageHandlersMutex.Lock()
 	snapshot := make([]net.HandleMessageFunc, len(lc.messageHandlers))
 	copy(snapshot, lc.messageHandlers)
@@ -173,7 +173,7 @@ func (lc *localChannel) deliver(protocolIdentifier net.ProtocolIdentifier, paylo
 
 	message :=
 		internal.BasicMessage(
-			protocolIdentifier,
+			transportIdentifier,
 			payload,
 			"local",
 		)
@@ -190,7 +190,7 @@ func (lc *localChannel) Send(message net.TaggedMarshaler) error {
 }
 
 func (lc *localChannel) SendTo(
-	recipient net.ProtocolIdentifier,
+	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler) error {
 	return doSend(lc, recipient, message)
 }
