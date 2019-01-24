@@ -29,7 +29,7 @@ func NewNode(
 		chainConfig:     chainConfig,
 		stakeIDs:        make([]string, 100),
 		groupPublicKeys: make([][]byte, 0),
-		seenPublicKeys:  make(map[string]struct{}),
+		seenPublicKeys:  make(map[string]bool),
 		myGroups:        make(map[string]*membership),
 		pendingGroups:   make(map[string]*membership),
 	}
