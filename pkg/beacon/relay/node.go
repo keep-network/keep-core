@@ -64,18 +64,6 @@ func (n *Node) JoinGroupIfEligible(
 	broadcastChannelName := channelNameFromSelectedTickets(
 		groupSelectionResult.SelectedTickets,
 	)
-	broadcastChannel, err := n.netProvider.ChannelFor(
-		broadcastChannelName,
-	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"Failed to get broadcastChannel for name %s with err: [%v].\n",
-			broadcastChannelName,
-			err,
-		)
-		return
-	}
 
 	for index, ticket := range groupSelectionResult.SelectedTickets {
 		// If our ticket is amongst those chosen, kick
@@ -83,16 +71,39 @@ func (n *Node) JoinGroupIfEligible(
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.Staker.ID()) {
-			go dkg2.ExecuteDKG(
-				entryRequestID,
-				entrySeed,
-				index,
-				n.chainConfig.GroupSize,
-				n.chainConfig.Threshold,
-				n.blockCounter,
-				relayChain,
-				broadcastChannel,
+			// capture player index for goroutine
+			playerIndex := index
+
+			// We should only join the broadcast channel if we're
+			// elligible for the group
+			broadcastChannel, err := n.netProvider.ChannelFor(
+				broadcastChannelName,
 			)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed to get broadcastChannel for name %s with err: [%v].",
+					broadcastChannelName,
+					err,
+				)
+				return
+			}
+			fmt.Printf("Executing dkg with index = %v...\n", index)
+			go func() {
+				dkg2.ExecuteDKG(
+					entryRequestID,
+					entrySeed,
+					playerIndex,
+					n.chainConfig.GroupSize,
+					n.chainConfig.Threshold,
+					n.blockCounter,
+					relayChain,
+					broadcastChannel,
+				)
+
+				// TODO: pass in the member
+				n.registerPendingGroup(entryRequestID.String(), nil, broadcastChannel)
+			}()
 		}
 	}
 	// exit on signal
