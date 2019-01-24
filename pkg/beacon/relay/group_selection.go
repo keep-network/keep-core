@@ -42,6 +42,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	groupSize int,
 ) error {
 	availableStake, err := n.Staker.Stake()
+
 	if err != nil {
 		return err
 	}
@@ -66,7 +67,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	var (
 		errCh                = make(chan error, len(tickets))
-		quitTicketSubmission = make(chan struct{}, 0)
+		quitTicketSubmission = make(chan struct{}, 1)
 		quitTicketChallenge  = make(chan struct{}, 0)
 
 		groupCandidate = &groupCandidate{
@@ -75,6 +76,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		}
 	)
 
+	// we use reactive submission timeout temporarily, until we properly
+	// implement phases 2a and 2b.
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketReactiveSubmissionTimeout,
 	)
@@ -91,6 +94,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	fmt.Println("attempting to submit tickets")
 	// Phase 2a: submit all tickets that fall under the natural threshold
+
 	go groupCandidate.submitTickets(
 		relayChain,
 		n.chainConfig.NaturalThreshold,
@@ -154,30 +158,30 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 }
 
-// submitTickets checks to see if the submission period is over in between ticket
-// submits.
+// submitTickets submits tickets to the chain. It checks to see if the submission
+// period is over in between ticket submits.
 func (gc *groupCandidate) submitTickets(
-	relayChain relaychain.GroupInterface,
+	relayChain relaychain.GroupSelectionInterface,
 	naturalThreshold *big.Int,
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
 	log.Printf("in ticket submit loop, naturalThreshold [%+v]\n", naturalThreshold)
 	for _, ticket := range gc.tickets {
-		log.Printf("submitting ticket [%+v]\n", ticket)
-		relayChain.SubmitTicket(ticket).OnFailure(
-			func(err error) { errCh <- err },
-		)
-	}
-
-	select {
-	case <-quit:
-		return
+		select {
+		case <-quit:
+			// Exit this loop when we get a signal from quit.
+			return
+		default:
+			relayChain.SubmitTicket(ticket).OnFailure(
+				func(err error) { errCh <- err },
+			)
+		}
 	}
 }
 
 func (gc *groupCandidate) verifyTicket(
-	relayChain relaychain.GroupInterface,
+	relayChain relaychain.GroupSelectionInterface,
 	beaconValue []byte,
 	quit <-chan struct{},
 ) {

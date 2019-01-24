@@ -4,6 +4,7 @@ import (
 	"context"
 	crand "crypto/rand"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -204,7 +205,7 @@ func createTestChannel(
 		ctx,
 		networkConfig,
 		staticKey,
-		local.NewStakeMonitor(),
+		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
 		return nil, err
