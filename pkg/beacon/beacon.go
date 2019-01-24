@@ -71,6 +71,9 @@ func Initialize(
 		return fmt.Errorf("account is unstaked")
 	default:
 		relayChain.OnRelayEntryRequested(func(request *event.Request) {
+			if request.PreviousValue == nil {
+				request.PreviousValue = big.NewInt(0)
+			}
 			fmt.Printf("New entry requested [%+v]\n", request)
 			node.GenerateRelayEntryIfEligible(request, relayChain)
 		})
