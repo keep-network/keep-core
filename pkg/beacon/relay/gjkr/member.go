@@ -361,6 +361,12 @@ func (fm *FinalizingMember) Result() *Result {
 	}
 }
 
+// GroupPrivateKeyShare returns member's private key share of a group key.
+// It is used for signing and should never be revealed publicly.
+func (fm *FinalizingMember) GroupPrivateKeyShare() *big.Int {
+	return fm.groupPrivateKeyShare
+}
+
 // Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
