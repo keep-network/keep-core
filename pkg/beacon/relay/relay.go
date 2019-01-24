@@ -78,7 +78,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		newEntry := &event.Entry{
 			RequestID:     request.RequestID,
 			Value:         rightSizeSignature,
-			PreviousEntry: request.PreviousValue,
+			PreviousValue: request.PreviousValue,
 			Timestamp:     time.Now().UTC(),
 			GroupID:       &big.Int{},
 		}

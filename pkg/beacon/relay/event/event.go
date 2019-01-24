@@ -10,17 +10,20 @@ import (
 
 // Entry represents one entry in the threshold relay.
 type Entry struct {
-	RequestID     *big.Int
-	Value         *big.Int
-	GroupID       *big.Int
-	PreviousEntry *big.Int
-	Timestamp     time.Time
-	Seed          *big.Int
+	RequestID *big.Int
+
+	Value     *big.Int
+	GroupID   *big.Int
+	Timestamp time.Time
+	Seed      *big.Int
+
+	PreviousValue *big.Int
 }
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	RequestID   *big.Int
+	RequestID *big.Int
+
 	Payment     *big.Int
 	BlockReward *big.Int
 	Seed        *big.Int

@@ -241,7 +241,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 				RequestID:     requestID,
 				Value:         requestResponse,
 				GroupID:       requestGroupID,
-				PreviousEntry: previousEntry,
+				PreviousValue: previousEntry,
 				Timestamp:     time.Now().UTC(),
 			})
 			if err != nil {
@@ -281,7 +281,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
 		newEntry.RequestID,
 		newEntry.GroupID,
-		newEntry.PreviousEntry,
+		newEntry.PreviousValue,
 		newEntry.Value,
 	)
 	if err != nil {
@@ -316,7 +316,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(handle func(entry *event.Entry)) 
 				RequestID:     requestID,
 				Value:         requestResponse,
 				GroupID:       requestGroupID,
-				PreviousEntry: previousEntry,
+				PreviousValue: previousEntry,
 				Timestamp:     time.Now().UTC(),
 			})
 		},
@@ -409,10 +409,11 @@ func (ec *ethereumChain) RequestRelayEntry(
 			blockNumber *big.Int,
 		) {
 			promise.Fulfill(&event.Request{
-				RequestID:   requestID,
-				Payment:     payment,
-				BlockReward: blockReward,
-				Seed:        seed,
+				RequestID:     requestID,
+				Payment:       payment,
+				BlockReward:   blockReward,
+				Seed:          seed,
+				PreviousValue: big.NewInt(0),
 			})
 		},
 		func(err error) error {
