@@ -365,6 +365,10 @@ func (fm *FinalizingMember) Result() *Result {
 	}
 }
 
+func (fm *FinalizingMember) GroupPrivateKeyShare() *big.Int {
+	return fm.groupPrivateKeyShare
+}
+
 // Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
