@@ -6,7 +6,7 @@ import (
 
 // ProtocolIdentifier represents a protocol-level identifier. It is an opaque
 // type to the network layer.
-type ProtocolIdentifier interface {
+type ProtocolIdentifier interface { // TODO: RENAME TO TRANSPORT IDENTIFIER?
 	String() string
 }
 
@@ -14,7 +14,7 @@ type ProtocolIdentifier interface {
 // a sender id for the transport layer and, if available, for the protocol
 // layer. It also carries an unmarshaled payload.
 type Message interface {
-	ProtocolSenderID() ProtocolIdentifier
+	ProtocolSenderID() ProtocolIdentifier // TODO: RENAME TO TRANSPORT IDENTIFIER?
 	Payload() interface{}
 	Type() string
 }

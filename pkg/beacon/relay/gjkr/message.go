@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// ProtocolMessage represents all messages of GJKR protocol.
+type ProtocolMessage interface {
+	SenderID() MemberID
+}
+
 // JoinMessage is sent by member to announce its presence in the group.
 type JoinMessage struct {
-	SenderID MemberID
+	senderID MemberID
 }
 
 // EphemeralPublicKeyMessage is a message payload that carries the sender's
@@ -100,6 +105,42 @@ type DisqualifiedEphemeralKeysMessage struct {
 	senderID MemberID
 
 	privateKeys map[MemberID]*ephemeral.PrivateKey
+}
+
+func (jm *JoinMessage) SenderID() MemberID {
+	return jm.senderID
+}
+
+func (epkm *EphemeralPublicKeyMessage) SenderID() MemberID {
+	return epkm.senderID
+}
+
+func (mcm *MemberCommitmentsMessage) SenderID() MemberID {
+	return mcm.senderID
+}
+
+func (psm *PeerSharesMessage) SenderID() MemberID {
+	return psm.senderID
+}
+
+func (ssam *SecretSharesAccusationsMessage) SenderID() MemberID {
+	return ssam.senderID
+}
+
+func (mpkspm *MemberPublicKeySharePointsMessage) SenderID() MemberID {
+	return mpkspm.senderID
+}
+
+func (pam *PointsAccusationsMessage) SenderID() MemberID {
+	return pam.senderID
+}
+
+func (dekm *DisqualifiedEphemeralKeysMessage) SenderID() MemberID {
+	return dekm.senderID
+}
+
+func NewJoinMessage(senderID MemberID) *JoinMessage {
+	return &JoinMessage{senderID}
 }
 
 func newPeerSharesMessage(senderID MemberID) *PeerSharesMessage {
