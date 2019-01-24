@@ -35,7 +35,7 @@ type Node struct {
 	maxStakeIndex int
 
 	groupPublicKeys [][]byte
-	seenPublicKeys  map[string]struct{}
+	seenPublicKeys  map[string]bool
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
 }
@@ -131,7 +131,7 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 		return
 	}
 
-	n.seenPublicKeys[requestID] = struct{}{}
+	n.seenPublicKeys[requestID] = true
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	index := len(n.groupPublicKeys) - 1
 
