@@ -75,19 +75,32 @@ func Initialize(
 				request.PreviousValue = big.NewInt(0)
 			}
 			fmt.Printf("New entry requested [%+v]\n", request)
-			node.GenerateRelayEntryIfEligible(request, relayChain)
+
+			node.GenerateRelayEntryIfEligible(
+				request.RequestID,
+				request.PreviousValue,
+				request.Seed,
+				relayChain,
+			)
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 			fmt.Printf("Saw new relay entry [%+v]\n", entry)
 			// new entry generated, try to join the group
-			node.SubmitTicketsForGroupSelection(
+			go node.SubmitTicketsForGroupSelection(
 				relayChain,
 				blockCounter,
 				entry.Value.Bytes(),
 				entry.RequestID,
 				entry.Seed,
 				chainConfig.GroupSize,
+			)
+
+			go node.GenerateRelayEntryIfEligible(
+				entry.RequestID,
+				entry.PreviousValue,
+				entry.Seed,
+				relayChain,
 			)
 		})
 

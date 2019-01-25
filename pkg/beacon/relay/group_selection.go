@@ -15,7 +15,7 @@ import (
 
 // getTicketListInterval is the number of seconds we wait before requesting the
 // ordered ticket list (to run ticket verification)from the chain.
-const getTicketListInterval = 5 * time.Second
+const getTicketListInterval = 1 * time.Second
 
 type groupCandidate struct {
 	address []byte
@@ -138,7 +138,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			}
 
 			if len(selectedTickets) == 0 {
-				fmt.Println("error getting submitted tickets.")
+				fmt.Println("no tickets selected to the group")
 				return nil
 			}
 
@@ -240,5 +240,7 @@ func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
 	case 0:
 		return true
 	}
+
+	fmt.Printf("incorrect ticket: [%v] vs [%v]\n", computedValue, ticket.Value)
 	return false
 }

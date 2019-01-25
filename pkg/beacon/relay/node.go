@@ -1,11 +1,11 @@
 package relay
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"os"
-	"reflect"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 // Node represents the current state of a relay node.
@@ -41,7 +40,7 @@ type Node struct {
 }
 
 type membership struct {
-	member  *thresholdgroup.Member
+	member  *dkg2.ThresholdSigner
 	channel net.BroadcastChannel
 	index   int
 }
@@ -102,7 +101,7 @@ func (n *Node) JoinGroupIfEligible(
 
 			fmt.Printf("Executing dkg with index = %v...\n", index)
 			go func() {
-				dkg2.ExecuteDKG(
+				signer, err := dkg2.ExecuteDKG(
 					entryRequestID,
 					entrySeed,
 					playerIndex,
@@ -112,9 +111,12 @@ func (n *Node) JoinGroupIfEligible(
 					relayChain,
 					broadcastChannel,
 				)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "DKG execution failed: [%v].\n", err)
+					return
+				}
 
-				// TODO: pass in the member
-				n.registerPendingGroup(entryRequestID.String(), nil, broadcastChannel)
+				n.registerPendingGroup(entryRequestID.String(), signer, broadcastChannel)
 			}()
 		}
 	}
@@ -198,33 +200,34 @@ func (n *Node) flushPendingGroup(requestID string) {
 // We overwrite our placeholder membership set by initializePendingGroup.
 func (n *Node) registerPendingGroup(
 	requestID string,
-	member *thresholdgroup.Member,
+	signer *dkg2.ThresholdSigner,
 	channel net.BroadcastChannel,
 ) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	if _, seen := n.seenPublicKeys[requestID]; seen {
-		groupPublicKey := member.GroupPublicKeyBytes()
+		groupPublicKey := signer.GroupPublicKeyBytes()
 		// Start at the end since it's likely the public key was closer to the
 		// end if it happened to come in before we had a chance to register it
 		// as pending.
 		existingIndex := len(n.groupPublicKeys) - 1
-		for ; existingIndex >= 0; existingIndex-- {
-			if reflect.DeepEqual(n.groupPublicKeys[existingIndex], groupPublicKey[:]) {
+		for index := existingIndex; index >= 0; index-- {
+			if bytes.Compare(n.groupPublicKeys[index], groupPublicKey[:]) == 0 {
+				existingIndex = index
 				break
 			}
 		}
 
 		n.myGroups[requestID] = &membership{
 			index:   existingIndex,
-			member:  member,
+			member:  signer,
 			channel: channel,
 		}
 		delete(n.pendingGroups, requestID)
 	} else {
 		n.pendingGroups[requestID] = &membership{
-			member:  member,
+			member:  signer,
 			channel: channel,
 		}
 	}

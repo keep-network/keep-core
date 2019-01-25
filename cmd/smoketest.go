@@ -90,7 +90,7 @@ func SmokeTest(c *cli.Context) error {
 		RequestID:     big.NewInt(int64(135)),
 		Value:         big.NewInt(int64(154)),
 		GroupID:       big.NewInt(int64(168)),
-		PreviousEntry: &big.Int{},
+		PreviousValue: &big.Int{},
 	})
 
 	chainHandle.ThresholdRelay().

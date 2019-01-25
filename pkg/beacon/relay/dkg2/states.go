@@ -676,3 +676,11 @@ func (fs *finalizationState) memberID() gjkr.MemberID {
 func (fs *finalizationState) result() *gjkr.Result {
 	return fs.member.Result()
 }
+
+func (fs *finalizationState) thresholdSigner() *ThresholdSigner {
+	return &ThresholdSigner{
+		memberID:             fs.member.ID,
+		groupPublicKey:       fs.member.GroupPublicKey(),
+		groupPrivateKeyShare: fs.member.GroupPrivateKeyShare(),
+	}
+}
