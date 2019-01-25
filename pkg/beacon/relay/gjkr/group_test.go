@@ -17,35 +17,131 @@ func TestRegisterMemberIDWithInvalidID(t *testing.T) {
 	}
 }
 
-func TestDisqualifyMemberID(t *testing.T) {
-	group := &Group{
-		memberIDs: []MemberID{93, 31, 32},
+func TestMarkMemberAsDisqualified(t *testing.T) {
+	var tests = map[string]struct {
+		initialMembers              []MemberID
+		updateFunc                  func(g *Group)
+		expectedDisqualifiedMembers []MemberID
+		expectedInactiveMembers     []MemberID
+	}{
+		"mark member as disqualified": {
+			initialMembers: []MemberID{19, 11, 31, 33},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsDisqualified(19)
+			},
+			expectedDisqualifiedMembers: []MemberID{19},
+			expectedInactiveMembers:     []MemberID{},
+		},
+		"mark member as disqualified twice": {
+			initialMembers: []MemberID{19, 11, 31, 33},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsDisqualified(11)
+				g.MarkMemberAsDisqualified(11)
+			},
+			expectedDisqualifiedMembers: []MemberID{11},
+			expectedInactiveMembers:     []MemberID{},
+		},
+		"mark member from out of the group as disqualified": {
+			initialMembers: []MemberID{19, 11, 31, 33},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsDisqualified(88)
+			},
+			expectedDisqualifiedMembers: []MemberID{},
+			expectedInactiveMembers:     []MemberID{},
+		},
+		"mark member as inactive": {
+			initialMembers: []MemberID{19, 11, 31, 33},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsInactive(31)
+			},
+			expectedDisqualifiedMembers: []MemberID{},
+			expectedInactiveMembers:     []MemberID{31},
+		},
+		"mark member as inactive twice": {
+			initialMembers: []MemberID{19, 11, 31, 33},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsInactive(33)
+				g.MarkMemberAsInactive(33)
+			},
+			expectedDisqualifiedMembers: []MemberID{},
+			expectedInactiveMembers:     []MemberID{33},
+		},
+		"mark member from out of the group as inactive": {
+			initialMembers: []MemberID{19, 11, 31, 33},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsInactive(99)
+			},
+			expectedDisqualifiedMembers: []MemberID{},
+			expectedInactiveMembers:     []MemberID{},
+		},
 	}
 
-	if group.isDisqualified(32) {
-		t.Errorf("member 32 should not be disqualified yet")
-	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			group := &Group{
+				memberIDs:             test.initialMembers,
+				disqualifiedMemberIDs: []MemberID{},
+				inactiveMemberIDs:     []MemberID{},
+			}
 
-	group.MarkMemberAsDisqualified(32)
+			if test.updateFunc != nil {
+				test.updateFunc(group)
+			}
 
-	if !group.isDisqualified(32) {
-		t.Errorf("member 32 should be disqualified")
+			if !reflect.DeepEqual(
+				test.expectedDisqualifiedMembers,
+				group.disqualifiedMemberIDs,
+			) {
+				t.Fatalf(
+					"unexpected list of disqualified members\nexpected: %v\nactual:   %v\n",
+					test.expectedDisqualifiedMembers,
+					group.disqualifiedMemberIDs,
+				)
+			}
+
+			if !reflect.DeepEqual(
+				test.expectedInactiveMembers,
+				group.inactiveMemberIDs,
+			) {
+				t.Fatalf(
+					"unexpected list of inactive members\nexpected: %v\nactual:   %v\n",
+					test.expectedInactiveMembers,
+					group.inactiveMemberIDs,
+				)
+			}
+		})
 	}
 }
 
-func TestMarkMemberAsInactive(t *testing.T) {
+func TestIsDisqualified(t *testing.T) {
 	group := &Group{
-		memberIDs: []MemberID{18, 29, 19},
+		memberIDs: []MemberID{19, 11, 31, 33},
 	}
 
-	if group.isInactive(29) {
-		t.Errorf("member 29 should not be marked as inactive yet")
+	if group.isDisqualified(19) {
+		t.Errorf("member should not be disqualified at this point")
 	}
 
-	group.MarkMemberAsInactive(29)
+	group.MarkMemberAsDisqualified(19)
 
-	if !group.isInactive(29) {
-		t.Errorf("member 29 should be marked as inactive")
+	if !group.isDisqualified(19) {
+		t.Errorf("member should be disqualified at this point")
+	}
+}
+
+func TestIsInactive(t *testing.T) {
+	group := &Group{
+		memberIDs: []MemberID{19, 11, 31, 33},
+	}
+
+	if group.isInactive(31) {
+		t.Errorf("member should ne be inactive at this point")
+	}
+
+	group.MarkMemberAsInactive(31)
+
+	if !group.isInactive(31) {
+		t.Errorf("member should be inactive at this point")
 	}
 }
 
