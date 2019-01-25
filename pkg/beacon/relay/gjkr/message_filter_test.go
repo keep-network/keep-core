@@ -193,17 +193,13 @@ func TestFilterReconstructingMember(t *testing.T) {
 	assertNotAcceptFrom(member, 43, t)
 }
 
-type senderAcceptationAssertable interface {
-	IsSenderAccepted(senderID MemberID) bool
-}
-
-func assertAcceptsFrom(member senderAcceptationAssertable, senderID MemberID, t *testing.T) {
+func assertAcceptsFrom(member MessageFiltering, senderID MemberID, t *testing.T) {
 	if !member.IsSenderAccepted(senderID) {
 		t.Errorf("member should accept messages from [%v]", senderID)
 	}
 }
 
-func assertNotAcceptFrom(member senderAcceptationAssertable, senderID MemberID, t *testing.T) {
+func assertNotAcceptFrom(member MessageFiltering, senderID MemberID, t *testing.T) {
 	if member.IsSenderAccepted(senderID) {
 		t.Errorf("member should not accept messages from [%v]", senderID)
 	}
