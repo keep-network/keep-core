@@ -1,11 +1,11 @@
 package relay
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"os"
-	"reflect"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -187,8 +187,9 @@ func (n *Node) registerPendingGroup(
 		// end if it happened to come in before we had a chance to register it
 		// as pending.
 		existingIndex := len(n.groupPublicKeys) - 1
-		for ; existingIndex >= 0; existingIndex-- {
-			if reflect.DeepEqual(n.groupPublicKeys[existingIndex], groupPublicKey[:]) {
+		for index := existingIndex; index >= 0; index-- {
+			if bytes.Compare(n.groupPublicKeys[index], groupPublicKey[:]) == 0 {
+				existingIndex = index
 				break
 			}
 		}
