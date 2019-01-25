@@ -15,7 +15,7 @@ import (
 
 // getTicketListInterval is the number of seconds we wait before requesting the
 // ordered ticket list (to run ticket verification)from the chain.
-const getTicketListInterval = 5 * time.Second
+const getTicketListInterval = 1 * time.Second
 
 type groupCandidate struct {
 	address []byte
