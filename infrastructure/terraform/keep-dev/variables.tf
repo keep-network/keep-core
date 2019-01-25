@@ -161,3 +161,20 @@ variable "atlantis_ip_address_type" {
   description = "Internet facing or not. internal or external"
   default     = "external"
 }
+
+# gke_metrics
+variable "gke_metrics_namespace" {
+  default = "metrics"
+}
+
+variable "kube_state_metrics" {
+  default {
+    version = "0.13.0"
+  }
+}
+
+variable "prometheus_to_sd" {
+  default {
+    version = "0.1.1"
+  }
+}
