@@ -38,6 +38,7 @@ func (cvm *CommitmentsVerifyingMember) MarkInactiveMembers(
 		for _, commitmentsMessage := range commitmentsMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				filter.markMemberAsActive(sharesMessage.senderID)
+				break
 			}
 		}
 	}
