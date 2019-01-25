@@ -801,7 +801,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				ephemeralPublicKeys[disqualifiedMemberID]
 			if !publicKey.IsKeyMatching(revealedPrivateKey) {
 				fmt.Printf("invalid private key for public key from member %v\n", revealingMemberID)
-				rm.group.DisqualifyMember(revealingMemberID)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 

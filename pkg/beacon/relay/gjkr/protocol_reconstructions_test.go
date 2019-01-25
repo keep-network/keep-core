@@ -23,9 +23,9 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	disqualifiedSharingMember1 := MemberID(2)
 	disqualifiedSharingMember2 := MemberID(3)
 	disqualifiedNotSharingMember := MemberID(6)
-	member.group.DisqualifyMember(disqualifiedSharingMember1)
-	member.group.DisqualifyMember(disqualifiedSharingMember2)
-	member.group.DisqualifyMember(disqualifiedNotSharingMember)
+	member.group.MarkMemberAsDisqualified(disqualifiedSharingMember1)
+	member.group.MarkMemberAsDisqualified(disqualifiedSharingMember2)
+	member.group.MarkMemberAsDisqualified(disqualifiedNotSharingMember)
 
 	// Simulate a case where member is disqualified in Phase 5.
 	delete(member.receivedValidSharesS, disqualifiedNotSharingMember)
@@ -148,7 +148,7 @@ func generateDisqualifiedEphemeralKeysMessages(
 	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {
 		for _, disqualifiedMember := range disqualifiedMembers {
-			otherMember.group.DisqualifyMember(disqualifiedMember.ID)
+			otherMember.group.MarkMemberAsDisqualified(disqualifiedMember.ID)
 		}
 		disqualifiedEphemeralKeysMessage, err := otherMember.RevealDisqualifiedMembersKeys()
 		if err != nil {
