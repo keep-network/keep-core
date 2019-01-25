@@ -45,7 +45,7 @@ func (g *Group) RegisterMemberID(memberID MemberID) error {
 func (g *Group) OperatingMemberIDs() []MemberID {
 	operatingMembers := make([]MemberID, 0)
 	for _, member := range g.memberIDs {
-		if !g.isInactive(member) && !g.isDisqualified(member) {
+		if g.isOperating(member) {
 			operatingMembers = append(operatingMembers, member)
 		}
 	}
