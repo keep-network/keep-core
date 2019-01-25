@@ -55,7 +55,10 @@ func TestFilterInactiveMembers(t *testing.T) {
 
 			if !reflect.DeepEqual(actual, expected) {
 				t.Fatalf(
-					"unexpected active members\n[%v]\n[%v]", actual, expected)
+					"unexpected active members\nexpected: %v\nactual:   %v\n",
+					expected,
+					actual,
+				)
 			}
 		})
 	}
@@ -196,12 +199,12 @@ type senderAcceptationAssertable interface {
 
 func assertAcceptsFrom(member senderAcceptationAssertable, senderID MemberID, t *testing.T) {
 	if !member.IsSenderAccepted(senderID) {
-		t.Errorf("Member should accept messages from [%v]", senderID)
+		t.Errorf("member should accept messages from [%v]", senderID)
 	}
 }
 
 func assertNotAcceptFrom(member senderAcceptationAssertable, senderID MemberID, t *testing.T) {
 	if member.IsSenderAccepted(senderID) {
-		t.Errorf("Member should not accept messages from [%v]", senderID)
+		t.Errorf("member should not accept messages from [%v]", senderID)
 	}
 }
