@@ -149,3 +149,16 @@ resource "google_compute_global_address" "atlantis_external_ip" {
   address_type = "${upper(var.atlantis_ip_address_type)}"
   labels       = "${local.labels}"
 }
+
+module "demo_dev_gke_cluster_metrics" {
+  source    = "git@github.com:thesis/infrastructure.git//terraform/modules/gke_metrics"
+  namespace = "${var.gke_metrics_namespace}"
+
+  kube_state_metrics {
+    version = "${var.kube_state_metrics["version"]}"
+  }
+
+  prometheus_to_sd {
+    version = "${var.prometheus_to_sd["version"]}"
+  }
+}
