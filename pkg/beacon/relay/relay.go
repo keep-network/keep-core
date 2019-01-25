@@ -48,57 +48,69 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
 ) {
-	combinedEntryToSign := combineEntryToSign(
-		previousValue.Bytes(),
-		seed.Bytes(),
-	)
+	// Ugly loop just to wait when the initial group is created for genesis
+	for {
+		n.myGroupMutex.Lock()
+		if _, ok := n.myGroups[requestID.String()]; ok {
+			n.myGroupMutex.Unlock()
 
-	membership := n.membershipForRequest(previousValue)
-	if membership == nil {
-		return
-	}
-
-	thresholdsignature.Init(membership.channel)
-
-	go func() {
-		signature, err := thresholdsignature.Execute(
-			combinedEntryToSign,
-			n.blockCounter,
-			membership.channel,
-			membership.member,
-		)
-		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"error creating threshold signature: [%v]\n",
-				err,
+			combinedEntryToSign := combineEntryToSign(
+				previousValue.Bytes(),
+				seed.Bytes(),
 			)
-			return
-		}
 
-		rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
-
-		newEntry := &event.Entry{
-			RequestID:     requestID,
-			Value:         rightSizeSignature,
-			PreviousValue: previousValue,
-			Timestamp:     time.Now().UTC(),
-			GroupID:       &big.Int{},
-		}
-
-		relayChain.SubmitRelayEntry(
-			newEntry,
-		).OnFailure(func(err error) {
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"Failed submission of relay entry: [%v].\n",
-					err,
-				)
+			membership := n.membershipForRequest(previousValue)
+			if membership == nil {
 				return
 			}
-		})
-	}()
+
+			thresholdsignature.Init(membership.channel)
+
+			go func() {
+				signature, err := thresholdsignature.Execute(
+					combinedEntryToSign,
+					n.blockCounter,
+					membership.channel,
+					membership.member,
+				)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"error creating threshold signature: [%v]\n",
+						err,
+					)
+					return
+				}
+
+				rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
+
+				newEntry := &event.Entry{
+					RequestID:     requestID,
+					Value:         rightSizeSignature,
+					PreviousValue: previousValue,
+					Timestamp:     time.Now().UTC(),
+					GroupID:       &big.Int{},
+				}
+
+				relayChain.SubmitRelayEntry(
+					newEntry,
+				).OnFailure(func(err error) {
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"Failed submission of relay entry: [%v].\n",
+							err,
+						)
+						return
+					}
+				}).OnSuccess(func(entry *event.Entry) {
+					fmt.Printf("ENTRY SUBMITTED %+v\n", newEntry)
+				})
+				return
+			}()
+			n.myGroupMutex.Unlock()
+		}
+	}
 }
 
 func combineEntryToSign(previousEntry []byte, seed []byte) []byte {

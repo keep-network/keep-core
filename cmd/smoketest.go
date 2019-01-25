@@ -6,8 +6,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	defaultGroupSize    int = 10
-	defaultThreshold    int = 4
+	defaultGroupSize    int = 5
+	defaultThreshold    int = 3
 	defaultMinimumStake int = 2000000
 )
 
@@ -86,19 +86,23 @@ func SmokeTest(c *cli.Context) error {
 	// Give the nodes a sec to get going.
 	<-time.NewTimer(time.Second).C
 
-	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(int64(135)),
-		Value:         big.NewInt(int64(154)),
-		GroupID:       big.NewInt(int64(168)),
-		PreviousValue: &big.Int{},
-	})
+	// requestID := big.NewInt(1)
 
-	chainHandle.ThresholdRelay().
-		OnGroupRegistered(func(registration *event.GroupRegistration) {
-			// Give the nodes a sec to all get registered.
-			<-time.NewTimer(time.Second).C
-			chainHandle.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
-		})
+	chainHandle.ThresholdRelay().RequestRelayEntry(
+		&big.Int{},
+		big.NewInt(12),
+	)
+
+	// chainHandle.ThresholdRelay().
+	// 	OnGroupRegistered(func(registration *event.GroupRegistration) {
+	// 		chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
+	// 			RequestID: new(big.Int).Add(registration.RequestID, big.NewInt(1)),
+	// 			Value:     new(big.Int).SetBytes(registration.GroupPublicKey),
+
+	// 			GroupID:       new(big.Int).Add(registration.RequestID, big.NewInt(1)),
+	// 			PreviousEntry: &big.Int{},
+	// 		})
+	// 	})
 
 	select {
 	case <-context.Done():
@@ -113,6 +117,10 @@ func createNode(
 	groupSize int,
 	threshold int,
 ) {
+	toEthereumAddress := func(id string) string {
+		return common.BytesToAddress([]byte(id)).Hex()
+	}
+
 	chainCounter, err := chainHandle.BlockCounter()
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -133,7 +141,7 @@ func createNode(
 
 	go beacon.Initialize(
 		context,
-		netProvider.ID().String()[:32],
+		toEthereumAddress(netProvider.ID().String()),
 		chainHandle.ThresholdRelay(),
 		chainCounter,
 		stakeMonitor,

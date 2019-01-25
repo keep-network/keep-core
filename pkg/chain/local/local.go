@@ -149,7 +149,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 
 	existing, exists := c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()]
 	if exists {
-		if existing != entry.Value {
+		if existing.Cmp(entry.Value) != 0 {
 			err := fmt.Errorf(
 				"mismatched signature for [%v], submission failed; \n"+
 					"[%v] vs [%v]\n",
@@ -329,7 +329,10 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
 
-	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
+	dkgResultPublicationEvent := &event.DKGResultPublication{
+		RequestID:      requestID,
+		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+	}
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.dkgResultPublicationHandlers {

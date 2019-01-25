@@ -37,6 +37,8 @@ type Node struct {
 	seenPublicKeys  map[string]bool
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
+
+	myGroupMutex sync.Mutex
 }
 
 type membership struct {
@@ -162,7 +164,9 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 
 	if membership, found := n.pendingGroups[requestID]; found && membership != nil {
 		membership.index = index
+		n.myGroupMutex.Lock()
 		n.myGroups[requestID] = membership
+		n.myGroupMutex.Unlock()
 		delete(n.pendingGroups, requestID)
 	}
 }
@@ -218,12 +222,13 @@ func (n *Node) registerPendingGroup(
 				break
 			}
 		}
-
+		n.myGroupMutex.Lock()
 		n.myGroups[requestID] = &membership{
 			index:   existingIndex,
 			member:  signer,
 			channel: channel,
 		}
+		n.myGroupMutex.Unlock()
 		delete(n.pendingGroups, requestID)
 	} else {
 		n.pendingGroups[requestID] = &membership{

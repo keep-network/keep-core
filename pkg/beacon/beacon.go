@@ -71,12 +71,23 @@ func Initialize(
 		return fmt.Errorf("account is unstaked")
 	default:
 		relayChain.OnRelayEntryRequested(func(request *event.Request) {
+			fmt.Printf("Saw new relay entry request [%+v]\n", request)
 			if request.PreviousValue == nil {
 				request.PreviousValue = big.NewInt(0)
+
+				fmt.Printf("Initial group generation\n")
+				go node.SubmitTicketsForGroupSelection(
+					relayChain,
+					blockCounter,
+					request.PreviousValue.Bytes(),
+					request.PreviousValue,
+					request.Seed,
+					chainConfig.GroupSize,
+				)
 			}
 			fmt.Printf("New entry requested [%+v]\n", request)
 
-			node.GenerateRelayEntryIfEligible(
+			go node.GenerateRelayEntryIfEligible(
 				request.RequestID,
 				request.PreviousValue,
 				request.Seed,
@@ -85,19 +96,21 @@ func Initialize(
 		})
 
 		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
+			newRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
+
 			fmt.Printf("Saw new relay entry [%+v]\n", entry)
 			// new entry generated, try to join the group
 			go node.SubmitTicketsForGroupSelection(
 				relayChain,
 				blockCounter,
 				entry.Value.Bytes(),
-				entry.RequestID,
+				newRequestID,
 				entry.Seed,
 				chainConfig.GroupSize,
 			)
 
 			go node.GenerateRelayEntryIfEligible(
-				entry.RequestID,
+				newRequestID,
 				entry.PreviousValue,
 				entry.Seed,
 				relayChain,
