@@ -114,7 +114,7 @@ func TestOperatingMembers(t *testing.T) {
 				operatingMembers,
 			) {
 				t.Fatalf(
-					"unexpected list of operating members\n[%v]\n[%v]",
+					"unexpected list of operating members\nexpected: %v\nactual:   %v\n",
 					test.expectedOperatingMembers,
 					operatingMembers,
 				)
