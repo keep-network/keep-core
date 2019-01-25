@@ -43,14 +43,14 @@ func (g *Group) RegisterMemberID(memberID MemberID) error {
 // not been disqualified. All those members are properly operating in the group
 // at the moment of calling this method.
 func (g *Group) OperatingMemberIDs() []MemberID {
-	activeMembers := make([]MemberID, 0)
+	operatingMembers := make([]MemberID, 0)
 	for _, member := range g.memberIDs {
 		if !g.isInactive(member) && !g.isDisqualified(member) {
-			activeMembers = append(activeMembers, member)
+			operatingMembers = append(operatingMembers, member)
 		}
 	}
 
-	return activeMembers
+	return operatingMembers
 }
 
 // DisqualifyMember adds the member with the given ID to the list of
