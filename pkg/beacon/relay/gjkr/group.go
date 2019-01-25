@@ -54,29 +54,37 @@ func (g *Group) OperatingMemberIDs() []MemberID {
 }
 
 // MarkMemberAsDisqualified adds the member with the given ID to the list of
-// disqualified members. If the member is already disqualified or marked as
-// inactive, method does nothing.
+// disqualified members. If the member is not a part of the group, is already
+// disqualified or marked as inactive, method does nothing.
 func (g *Group) MarkMemberAsDisqualified(memberID MemberID) {
-	if !g.isOperating(memberID) {
-		return
+	if g.isOperating(memberID) {
+		g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, memberID)
 	}
-
-	g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, memberID)
 }
 
 // MarkMemberAsInactive adds the member with the given ID to the list of
-// inactive members. If the member is already disqualified or marked as
-// inactive, method does nothing.
+// inactive members. If the member is not a part of the group, is already
+// disqualified or marked as inactive, method does nothing.
 func (g *Group) MarkMemberAsInactive(memberID MemberID) {
-	if !g.isOperating(memberID) {
-		return
+	if g.isOperating(memberID) {
+		g.inactiveMemberIDs = append(g.inactiveMemberIDs, memberID)
 	}
-
-	g.inactiveMemberIDs = append(g.inactiveMemberIDs, memberID)
 }
 
 func (g *Group) isOperating(memberID MemberID) bool {
-	return !g.isInactive(memberID) && !g.isDisqualified(memberID)
+	return g.isInGroup(memberID) &&
+		!g.isInactive(memberID) &&
+		!g.isDisqualified(memberID)
+}
+
+func (g *Group) isInGroup(memberID MemberID) bool {
+	for _, groupMember := range g.memberIDs {
+		if groupMember == memberID {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (g *Group) isInactive(memberID MemberID) bool {
