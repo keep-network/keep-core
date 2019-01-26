@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"sort"
 	"sync"
 	"sync/atomic"
 
@@ -18,7 +19,7 @@ import (
 )
 
 type localChain struct {
-	relayConfig relayconfig.Chain
+	relayConfig *relayconfig.Chain
 
 	groupRegistrationsMutex sync.Mutex
 	groupRegistrations      map[string][96]byte
@@ -43,6 +44,9 @@ type localChain struct {
 	simulatedHeight int64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
+
+	tickets      []*groupselection.Ticket
+	ticketsMutex sync.Mutex
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -53,24 +57,39 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return c.stakeMonitor, nil
 }
 
-func (c *localChain) GetConfig() (relayconfig.Chain, error) {
+func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-// TODO: implement
 func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
-	return &async.GroupTicketPromise{}
+	promise := &async.GroupTicketPromise{}
+
+	c.ticketsMutex.Lock()
+	defer c.ticketsMutex.Unlock()
+
+	c.tickets = append(c.tickets, ticket)
+	sort.SliceStable(c.tickets, func(i, j int) bool {
+		return c.tickets[i].Value.Int().Cmp(c.tickets[j].Value.Int()) == -1
+	})
+
+	promise.Fulfill(ticket)
+
+	return promise
 }
 
-// TODO: implement
 func (c *localChain) SubmitChallenge(
 	ticket *groupselection.TicketChallenge,
 ) *async.GroupTicketChallengePromise {
-	return &async.GroupTicketChallengePromise{}
+	promise := &async.GroupTicketChallengePromise{}
+	promise.Fail(fmt.Errorf("function not implemented"))
+	return promise
 }
 
 func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
-	return make([]*groupselection.Ticket, 0)
+	c.ticketsMutex.Lock()
+	defer c.ticketsMutex.Unlock()
+
+	return c.tickets
 }
 
 func (c *localChain) SubmitGroupPublicKey(
@@ -212,13 +231,24 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 
 // Connect initializes a local stub implementation of the chain interfaces
 // for testing.
-func Connect(groupSize int, threshold int) chain.Handle {
+func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 	bc, _ := blockCounter()
 
+	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
+		groupSize,
+		minimumStake,
+	)
+
 	return &localChain{
-		relayConfig: relayconfig.Chain{
-			GroupSize: groupSize,
-			Threshold: threshold,
+		relayConfig: &relayconfig.Chain{
+			GroupSize:                       groupSize,
+			Threshold:                       threshold,
+			TicketInitialSubmissionTimeout:  2,
+			TicketReactiveSubmissionTimeout: 3,
+			TicketChallengeTimeout:          4,
+			MinimumStake:                    minimumStake,
+			TokenSupply:                     tokenSupply,
+			NaturalThreshold:                naturalThreshold,
 		},
 		groupRegistrationsMutex:      sync.Mutex{},
 		groupRelayEntries:            make(map[string]*big.Int),
@@ -228,8 +258,34 @@ func Connect(groupSize int, threshold int) chain.Handle {
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
-		stakeMonitor:                 NewStakeMonitor(),
+		stakeMonitor:                 NewStakeMonitor(minimumStake),
+		tickets:                      make([]*groupselection.Ticket, 0),
 	}
+}
+
+func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
+	tokenSupply *big.Int,
+	naturalThreshold *big.Int,
+) {
+	// (2^256)-1
+	ticketsSpace := new(big.Int).Sub(
+		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
+		big.NewInt(1),
+	)
+
+	// 10^9
+	tokenSupply = new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil)
+
+	// groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
+	naturalThreshold = new(big.Int).Mul(
+		big.NewInt(int64(groupSize)),
+		new(big.Int).Div(
+			ticketsSpace,
+			new(big.Int).Div(tokenSupply, minimumStake),
+		),
+	)
+
+	return tokenSupply, naturalThreshold
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
@@ -312,7 +368,7 @@ func (c *localChain) SubmitDKGResult(
 
 func (c *localChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) subscription.EventSubscription {
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -324,5 +380,5 @@ func (c *localChain) OnDKGResultPublished(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.dkgResultPublicationHandlers, handlerID)
-	})
+	}), nil
 }

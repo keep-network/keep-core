@@ -69,7 +69,7 @@ func pingRequest(c *cli.Context) error {
 	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBootstrapPeerNetworkKey()
 	standardPeerPrivKey, standardPeerPubKey := getStandardPeerNetworkKey()
 
-	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
 
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
 		bootstrapPeerPubKey,

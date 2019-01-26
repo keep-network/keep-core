@@ -33,16 +33,9 @@ type RelayEntryInterface interface {
 	) subscription.EventSubscription
 }
 
-// GroupInterface defines the subset of the relay chain interface that pertains
-// specifically to relay group management.
-type GroupInterface interface {
-	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
-	// associated with a request with id requestID. On-chain errors are reported
-	// through the promise.
-	SubmitGroupPublicKey(requestID *big.Int, key [96]byte) *async.GroupRegistrationPromise
-	// OnGroupRegistered is a callback that is invoked when an on-chain
-	// notification of a new, valid group being registered is seen.
-	OnGroupRegistered(func(key *event.GroupRegistration))
+// GroupSelectionInterface defines the subset of the relay chain interface that
+// pertains to relay group selection activities.
+type GroupSelectionInterface interface {
 	// SubmitTicket submits a ticket corresponding to the virtual staker to
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
@@ -60,6 +53,25 @@ type GroupInterface interface {
 	GetOrderedTickets() []*groupselection.Ticket
 }
 
+// GroupRegistrationInterface defines the subset of the relay chain interface
+// that pertains to relay group registration activities.
+type GroupRegistrationInterface interface {
+	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
+	// associated with a request with id requestID. On-chain errors are reported
+	// through the promise.
+	SubmitGroupPublicKey(requestID *big.Int, key [96]byte) *async.GroupRegistrationPromise
+	// OnGroupRegistered is a callback that is invoked when an on-chain
+	// notification of a new, valid group being registered is seen.
+	OnGroupRegistered(func(key *event.GroupRegistration))
+}
+
+// GroupInterface defines the subset of the relay chain interface that pertains
+// specifically to relay group management.
+type GroupInterface interface {
+	GroupSelectionInterface
+	GroupRegistrationInterface
+}
+
 // DistributedKeyGenerationInterface defines the subset of the relay chain
 // interface that pertains specifically to group formation's distributed key
 // generation process.
@@ -73,7 +85,7 @@ type DistributedKeyGenerationInterface interface {
 	// notification of a new, valid published result is seen.
 	OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication),
-	) subscription.EventSubscription
+	) (subscription.EventSubscription, error)
 	// IsDKGResultPublished checks if any DKG result has already been published
 	// to a chain for the given request ID.
 	IsDKGResultPublished(requestID *big.Int) (bool, error)
@@ -83,7 +95,7 @@ type DistributedKeyGenerationInterface interface {
 // the anchoring blockchain on.
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
-	GetConfig() (config.Chain, error)
+	GetConfig() (*config.Chain, error)
 
 	GroupInterface
 	RelayEntryInterface

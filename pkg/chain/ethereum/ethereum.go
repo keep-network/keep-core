@@ -20,20 +20,68 @@ func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
 	return ec
 }
 
-func (ec *ethereumChain) GetConfig() (relayconfig.Chain, error) {
-	size, err := ec.keepGroupContract.GroupSize()
+func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
+	groupSize, err := ec.keepGroupContract.GroupSize()
 	if err != nil {
-		return relayconfig.Chain{}, fmt.Errorf("error calling GroupSize: [%v]", err)
+		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
 	}
 
 	threshold, err := ec.keepGroupContract.GroupThreshold()
 	if err != nil {
-		return relayconfig.Chain{}, fmt.Errorf("error calling GroupThreshold: [%v]", err)
+		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
-	return relayconfig.Chain{
-		GroupSize: size,
-		Threshold: threshold,
+	ticketInitialSubmissionTimeout, err :=
+		ec.keepGroupContract.TicketInitialSubmissionTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketInitialSubmissionTimeout: [%v]",
+			err,
+		)
+	}
+
+	ticketReactiveSubmissionTimeout, err :=
+		ec.keepGroupContract.TicketReactiveSubmissionTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketReactiveSubmissionTimeout: [%v]",
+			err,
+		)
+	}
+
+	ticketChallengeTimeout, err :=
+		ec.keepGroupContract.TicketChallengeTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketChallengeTimeout: [%v]",
+			err,
+		)
+	}
+
+	minimumStake, err := ec.keepGroupContract.MinimumStake()
+	if err != nil {
+		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
+	}
+
+	tokenSupply, err := ec.keepGroupContract.TokenSupply()
+	if err != nil {
+		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
+	}
+
+	naturalThreshold, err := ec.keepGroupContract.NaturalThreshold()
+	if err != nil {
+		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
+	}
+
+	return &relayconfig.Chain{
+		GroupSize:                       groupSize,
+		Threshold:                       threshold,
+		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
+		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
+		TicketChallengeTimeout:          ticketChallengeTimeout,
+		MinimumStake:                    minimumStake,
+		TokenSupply:                     tokenSupply,
+		NaturalThreshold:                naturalThreshold,
 	}, nil
 }
 
@@ -330,22 +378,83 @@ func (ec *ethereumChain) RequestRelayEntry(
 	return promise
 }
 
-// IsDKGResultPublished checks if the result is already published to a chain.
 func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
-	return false, nil
-}
-
-// SubmitDKGResult sends DKG result to a chain.
-func (ec *ethereumChain) SubmitDKGResult(
-	requestID *big.Int, resultToPublish *relaychain.DKGResult,
-) *async.DKGResultPublicationPromise {
-	// TODO Implement
-	return nil
+	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) subscription.EventSubscription {
-	// TODO Implement
-	return subscription.NewEventSubscription(func() {})
+) (subscription.EventSubscription, error) {
+	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
+		func(requestID *big.Int) {
+			handler(&event.DKGResultPublication{RequestID: requestID})
+		},
+		func(err error) error {
+			return err
+		},
+	)
+}
+
+func (ec *ethereumChain) SubmitDKGResult(
+	requestID *big.Int,
+	result *relaychain.DKGResult,
+) *async.DKGResultPublicationPromise {
+	resultPublicationPromise := &async.DKGResultPublicationPromise{}
+
+	failPromise := func(err error) {
+		failErr := resultPublicationPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	published := make(chan *event.DKGResultPublication)
+
+	subscription, err := ec.OnDKGResultPublished(
+		func(event *event.DKGResultPublication) {
+			published <- event
+		},
+	)
+	if err != nil {
+		close(published)
+		failPromise(err)
+		return resultPublicationPromise
+	}
+
+	go func() {
+		for {
+			select {
+			case event := <-published:
+				if event.RequestID == requestID {
+					subscription.Unsubscribe()
+					close(published)
+
+					err := resultPublicationPromise.Fulfill(event)
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"fulfilling promise failed with: [%v].\n",
+							err,
+						)
+					}
+
+					return
+				}
+			}
+		}
+	}()
+
+	_, err = ec.keepGroupContract.SubmitDKGResult(requestID, result)
+	if err != nil {
+		subscription.Unsubscribe()
+		close(published)
+		failPromise(err)
+	}
+
+	return resultPublicationPromise
 }

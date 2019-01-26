@@ -12,6 +12,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
+    keepRandomBeaconImplV1, keepRandomBeaconProxy,
     account_one = accounts[0],
     account_two = accounts[1];
 
@@ -23,6 +24,10 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
     await stakingProxy.authorizeContract(stakingContract.address, {from: account_one})
 
+    // Initialize Keep Random Beacon contract
+    keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new(1,1);
+    keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
+
     // Initialize Keep Group contract
     minimumStake = 200;
     groupThreshold = 150;
@@ -30,7 +35,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
-    await keepGroupImplViaProxy.initialize(stakingProxy.address, minimumStake, groupThreshold, groupSize, 1, 3, 4);
+    await keepGroupImplViaProxy.initialize(stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, 1, 3, 4);
   });
 
   it("should fail to update minimum stake by non owner", async function() {
