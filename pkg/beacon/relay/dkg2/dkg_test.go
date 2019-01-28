@@ -32,7 +32,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 			t.Fatalf("cannot generate broadcast channel [%v]", err)
 		}
 
-		return ExecuteDKG(
+		_, err = ExecuteDKG(
 			requestID,
 			seed,
 			playerIndex,
@@ -42,6 +42,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 			chainHandle.ThresholdRelay(),
 			broadcastChannel,
 		)
+		return err
 	}
 
 	errors := make([]chan error, groupSize)
