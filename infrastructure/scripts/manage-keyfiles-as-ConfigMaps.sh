@@ -78,8 +78,8 @@ if [ "$CREATE" = true ]; then
   echo -e "\nCreating ConfigMap from files found in $KEYSTORE\n"
   ls -1 $KEYSTORE | while read FILENAME; do
     ACCOUNT=`echo "$FILENAME" | cut -d "-" -f9`
-    echo -e "keystore-$ACCOUNT\t$FILENAME"
-    kubectl create configmap keystore-$ACCOUNT --from-file $KEYSTORE/$FILENAME
+    echo -e "$ACCOUNT\t$FILENAME"
+    kubectl create configmap $ACCOUNT --from-file=$ACCOUNT=$KEYSTORE/$FILENAME
   done;
 fi
 
@@ -88,7 +88,7 @@ if [ "$LIST" = true ]; then
   echo -e "\nDescribing ConfigMap from keys found in $KEYSTORE\n"
   ls -1 $KEYSTORE | while read FILENAME; do
     ACCOUNT=`echo "$FILENAME" | cut -d "-" -f9`
-    kubectl describe configmaps keystore-$ACCOUNT
+    kubectl describe configmaps $ACCOUNT
   done;
 fi
 
@@ -97,7 +97,7 @@ if [ "$DELETE" = true ]; then
     echo -e "\nDeleting keys found in $KEYSTORE\n"
     ls -1 $KEYSTORE | while read FILENAME; do
       ACCOUNT=`echo "$FILENAME" | cut -d "-" -f9`
-      kubectl delete configmaps keystore-$ACCOUNT
+      kubectl delete configmaps $ACCOUNT
     done;
     rm -rf $KEYSTORE
 fi
