@@ -7,11 +7,37 @@ import (
 )
 
 func TestReadConfig(t *testing.T) {
+	// check password env variable
 	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	if ethEnvPassword, ok := os.LookupEnv(ethPasswordEnvVariable); ok {
+		if ethEnvPassword != "not-my-password" {
+			t.Fatalf("Environment variable [%s] doesn't match!", ethPasswordEnvVariable)
+		}
+	}
+	// set, read, check account env variable
+	err = os.Setenv("KEEP_ETHEREUM_ACCOUNT", "0xc2a56884538778bacd91aa5bf343bf882c5fb18b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ethEnvAccount, ok := os.LookupEnv(ethAccountEnvVariable); ok {
+		if ethEnvAccount != "0xc2a56884538778bacd91aa5bf343bf882c5fb18b" {
+			t.Fatalf("Environment variable [%s] doesn't match!", ethAccountEnvVariable)
+		}
+	}
+	// set, read, check keyfile env variable
+	err = os.Setenv("KEEP_ETHEREUM_KEYFILE", "not-my-keyfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ethEnvKeyfile, ok := os.LookupEnv(ethKeyfileEnvVariable); ok {
+		if ethEnvKeyfile != "not-my-keyfile" {
+			t.Fatalf("Environment variable [%s] doesn't match!", ethKeyfileEnvVariable)
+		}
+	}
+	// check we can read the test config file
 	filepath := "../test/config.toml"
 	cfg, err := ReadConfig(filepath)
 	if err != nil {
@@ -19,7 +45,6 @@ func TestReadConfig(t *testing.T) {
 			"failed to read test config: [%v]",
 			err,
 		)
-
 	}
 
 	var configReadTests = map[string]struct {
@@ -39,6 +64,12 @@ func TestReadConfig(t *testing.T) {
 				return c.Ethereum.Account.Address
 			},
 			expectedValue: "0xc2a56884538778bacd91aa5bf343bf882c5fb18b",
+		},
+		"Ethereum.Account.KeyFile": {
+			readValueFunc: func(c *Config) interface{} {
+				return c.Ethereum.Account.KeyFile
+			},
+			expectedValue: "not-my-keyfile",
 		},
 		"Ethereum.ContractAddresses": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },

@@ -12,7 +12,9 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+const ethPasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+const ethAccountEnvVariable = "KEEP_ETHEREUM_ACCOUNT"
+const ethKeyfileEnvVariable = "KEEP_ETHEREUM_KEYFILE"
 
 // Config is the top level config structure.
 type Config struct {
@@ -42,7 +44,8 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
 	}
 
-	envPassword := os.Getenv(passwordEnvVariable)
+	// get the keyfile password via prompt or environment variable
+	envPassword := os.Getenv(ethPasswordEnvVariable)
 	if envPassword == "prompt" {
 		var (
 			password string
@@ -57,7 +60,25 @@ func ReadConfig(filePath string) (*Config, error) {
 	}
 
 	if config.Ethereum.Account.KeyFilePassword == "" {
-		return nil, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
+		return nil, fmt.Errorf("Password is required.  Set " + ethPasswordEnvVariable + " environment variable to password or 'prompt'")
+	}
+
+	// override account from environment if set or fallback to configfile
+	if envAccount, ok := os.LookupEnv(ethAccountEnvVariable); ok {
+		config.Ethereum.Account.Address = envAccount
+	}
+	// complain if account is still not set (not in env or config file)
+	if config.Ethereum.Account.Address == "" {
+		return nil, fmt.Errorf("Address is required.  Set " + ethAccountEnvVariable + " environment variable to account")
+	}
+
+	// get keyfile from environment if set or fallback to config file
+	if envKeyfile, ok := os.LookupEnv(ethKeyfileEnvVariable); ok {
+		config.Ethereum.Account.KeyFile = envKeyfile
+	}
+	// complain if keyfile is still not set (not in env or config file)
+	if config.Ethereum.Account.KeyFile == "" {
+		return nil, fmt.Errorf("Keyfile is required.  Set " + ethKeyfileEnvVariable + " environment variable to keyfile")
 	}
 
 	if config.LibP2P.Port == 0 {
