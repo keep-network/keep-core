@@ -97,7 +97,7 @@ func (n *Node) JoinGroupIfEligible(
 				)
 				return
 			}
-			fmt.Printf("Joined channel [%s]\n", broadcastChannelName)
+			fmt.Printf("Joined channel [%x]\n", broadcastChannelName)
 
 			fmt.Printf("Executing dkg with index = %v...\n", index)
 			go func() {
