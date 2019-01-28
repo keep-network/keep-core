@@ -127,8 +127,6 @@ func doSend(
 	var transportRecipient net.TransportIdentifier
 	if transportID, ok := recipient.(*localIdentifier); ok {
 		transportRecipient = transportID
-	} else {
-		return fmt.Errorf("Recipient isn't a valid localIdentifier %v", recipient)
 	}
 
 	if transportRecipient != nil {
