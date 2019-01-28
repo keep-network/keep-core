@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/keep-network/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
