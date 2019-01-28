@@ -6,8 +6,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/keep-network/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -90,6 +91,23 @@ func SmokeTest(c *cli.Context) error {
 		&big.Int{},
 		big.NewInt(12),
 	)
+
+	fmt.Println("Wait until initial group is ready...")
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		panic(err)
+	}
+	err = blockCounter.WaitForBlocks(45)
+	if err != nil {
+		panic(err)
+	}
+
+	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
+		RequestID:     big.NewInt(0),
+		Value:         big.NewInt(1111),
+		Seed:          big.NewInt(13),
+		PreviousValue: big.NewInt(101),
+	})
 
 	select {
 	case <-context.Done():
