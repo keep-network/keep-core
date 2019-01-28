@@ -48,6 +48,10 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
 ) {
+	if seed == nil {
+		fmt.Printf("SEED IS NIL, SETTING TO 1337 (HACK!)\n")
+		seed = big.NewInt(1337)
+	}
 	combinedEntryToSign := combineEntryToSign(
 		previousValue.Bytes(),
 		seed.Bytes(),
@@ -76,6 +80,8 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			return
 		}
 
+		fmt.Printf("Threshold signature created [%v]\n", signature)
+
 		rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
 
 		newEntry := &event.Entry{
@@ -86,9 +92,12 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			GroupID:       &big.Int{},
 		}
 
+		fmt.Printf("Submitting new relay entry... [%v]\n", newEntry)
+
 		relayChain.SubmitRelayEntry(
 			newEntry,
 		).OnFailure(func(err error) {
+			fmt.Printf("Could not submit new relay entry [%v]\n", err)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
