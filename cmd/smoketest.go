@@ -89,9 +89,9 @@ func SmokeTest(c *cli.Context) error {
 
 	fmt.Println("Submit genesis relay entry...")
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(int64(135)),
-		Value:         big.NewInt(int64(154)),
-		GroupID:       big.NewInt(int64(168)),
+		RequestID:     big.NewInt(0),
+		Value:         big.NewInt(0),
+		GroupID:       big.NewInt(0),
 		PreviousEntry: &big.Int{},
 	})
 
