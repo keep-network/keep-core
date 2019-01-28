@@ -94,24 +94,22 @@ func Execute(
 
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
-				if senderID, ok := msg.TransportSenderID().(gjkr.MemberID); ok {
-					// Ignore our own share, we already have it.
-					if senderID == member.MemberID() {
-						continue
-					}
+				// Ignore our own share, we already have it.
+				if signatureShareMsg.senderID == member.MemberID() {
+					continue
+				}
 
-					share := new(bn256.G1)
-					_, err := share.Unmarshal(signatureShareMsg.ShareBytes)
-					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
-							"[member:%v] failed to unmarshal signature share: [%v]",
-							member.MemberID(),
-							err,
-						)
-					} else {
-						seenShares[senderID] = share
-					}
+				share := new(bn256.G1)
+				_, err := share.Unmarshal(signatureShareMsg.ShareBytes)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"[member:%v] failed to unmarshal signature share: [%v]",
+						member.MemberID(),
+						err,
+					)
+				} else {
+					seenShares[signatureShareMsg.senderID] = share
 				}
 			}
 
@@ -134,5 +132,5 @@ func sendSignatureShare(
 	channel net.BroadcastChannel,
 	memberID gjkr.MemberID,
 ) error {
-	return channel.Send(&SignatureShareMessage{memberID.String(), share})
+	return channel.Send(&SignatureShareMessage{memberID, share})
 }

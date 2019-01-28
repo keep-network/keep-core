@@ -9,7 +9,7 @@ package thresholdsignature;
 message SignatureShare {
     // The little-endian BLS ID of the member who is joining the distributed key
     // generation process.
-    bytes id = 1;
+    bytes senderID = 1;
     // The serialized BLS signature share from the member with the above BLS ID.
     bytes share = 2;
 }
