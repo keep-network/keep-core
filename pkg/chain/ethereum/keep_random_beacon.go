@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 
@@ -158,11 +157,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
 ) (subscription.EventSubscription, error) {
-	subscribeContext, cancel := context.WithCancel(context.Background())
-
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryRequested)
 	eventSubscription, err := krb.contract.WatchRelayEntryRequested(
-		&bind.WatchOpts{Context: subscribeContext},
+		nil,
 		eventChan,
 	)
 	if err != nil {
@@ -174,11 +171,13 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	}
 
 	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					return
+				}
 				success(
 					event.RequestID,
 					event.Payment,
@@ -186,8 +185,6 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Seed,
 					event.BlockNumber,
 				)
-				return
-
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
@@ -196,7 +193,8 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	}()
 
 	unsubscribeCallback := func() {
-		cancel()
+		eventSubscription.Unsubscribe()
+		close(eventChan)
 	}
 
 	return subscription.NewEventSubscription(unsubscribeCallback), nil
@@ -217,11 +215,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
 ) (subscription.EventSubscription, error) {
-	subscribeContext, cancel := context.WithCancel(context.Background())
-
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryGenerated)
 	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(
-		&bind.WatchOpts{Context: subscribeContext},
+		nil,
 		eventChan,
 	)
 	if err != nil {
@@ -233,11 +229,13 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	}
 
 	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					return
+				}
 				success(
 					event.RequestID,
 					event.RequestResponse,
@@ -245,8 +243,6 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.PreviousEntry,
 					event.BlockNumber,
 				)
-				return
-
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
@@ -255,7 +251,8 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	}()
 
 	unsubscribeCallback := func() {
-		cancel()
+		eventSubscription.Unsubscribe()
+		close(eventChan)
 	}
 
 	return subscription.NewEventSubscription(unsubscribeCallback), nil
