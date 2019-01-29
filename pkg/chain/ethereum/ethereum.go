@@ -307,8 +307,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
-) subscription.EventSubscription {
-	relayEntryGeneratedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+) (subscription.EventSubscription, error) {
+	return ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -333,20 +333,12 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			return err
 		},
 	)
-	if err != nil {
-		fmt.Printf(
-			"watch relay entry failed with: [%v]",
-			err,
-		)
-	}
-
-	return relayEntryGeneratedSubscription
 }
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
-) subscription.EventSubscription {
-	relayEntryRequestedSubscription, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+) (subscription.EventSubscription, error) {
+	return ec.keepRandomBeaconContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
@@ -365,15 +357,6 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			return fmt.Errorf("relay request event failed with %v", err)
 		},
 	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"watch relay request failed with: [%v]",
-			err,
-		)
-	}
-
-	return relayEntryRequestedSubscription
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
@@ -449,6 +432,7 @@ func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
 ) (event.Subscription, error) {
+	fmt.Println("call back for OnDKGResultPublished registered")
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
 		func(requestID *big.Int, groupPubKey [32]byte) {
 			handler(&event.DKGResultPublication{

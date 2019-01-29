@@ -52,6 +52,9 @@ func Initialize(
 	if err != nil {
 		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
 	}
+	if curParticipantState == unstaked {
+		return fmt.Errorf("account is unstaked")
+	}
 
 	staker, err := stakeMonitor.StakerFor(stakingID)
 	if err != nil {
@@ -65,60 +68,60 @@ func Initialize(
 		chainConfig,
 	)
 
-	switch curParticipantState {
-	case unstaked:
-		// check for stake command-line parameter to initialize staking?
-		return fmt.Errorf("account is unstaked")
-	default:
-		relayChain.OnRelayEntryRequested(func(request *event.Request) {
-			fmt.Printf("Saw new relay entry request [%+v]\n", request)
+	relayChain.OnRelayEntryRequested(func(request *event.Request) {
+		fmt.Printf("Saw new relay entry request [%+v]\n", request)
 
-			if request.PreviousValue == nil {
-				request.PreviousValue = big.NewInt(0)
-			}
+		if request.PreviousValue == nil {
+			request.PreviousValue = big.NewInt(0)
+		}
 
-			go node.SubmitTicketsForGroupSelection(
-				relayChain,
-				blockCounter,
-				request.PreviousValue.Bytes(),
-				request.RequestID,
-				request.Seed,
-				chainConfig.GroupSize,
+		go node.SubmitTicketsForGroupSelection(
+			relayChain,
+			blockCounter,
+			request.PreviousValue.Bytes(),
+			request.RequestID,
+			request.Seed,
+			chainConfig.GroupSize,
+		)
+	})
+
+	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
+		fmt.Printf("Saw new relay entry submitted [%+v]\n", entry)
+		// new entry generated, try to join the group
+		if entry.Seed == nil {
+			entry.Seed = big.NewInt(100)
+		}
+		go node.SubmitTicketsForGroupSelection(
+			relayChain,
+			blockCounter,
+			entry.Value.Bytes(),
+			entry.RequestID,
+			entry.Seed,
+			chainConfig.GroupSize,
+		)
+
+		nextRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
+
+		go node.GenerateRelayEntryIfEligible(
+			nextRequestID,
+			entry.PreviousValue,
+			entry.Seed,
+			relayChain,
+		)
+	})
+
+	fmt.Println("Registering an OnDKGResultPublished")
+	relayChain.OnDKGResultPublished(
+		func(publishedResult *event.DKGResultPublication) {
+			fmt.Printf(
+				"New group registered [%+v]\n", publishedResult,
 			)
-		})
-
-		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-			fmt.Printf("Saw new relay entry submitted [%+v]\n", entry)
-			// new entry generated, try to join the group
-			go node.SubmitTicketsForGroupSelection(
-				relayChain,
-				blockCounter,
-				entry.Value.Bytes(),
-				entry.RequestID,
-				entry.Seed,
-				chainConfig.GroupSize,
-			)
-
-			nextRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
-
-			go node.GenerateRelayEntryIfEligible(
-				nextRequestID,
-				entry.Value,
-				entry.Seed,
-				relayChain,
-			)
-		})
-
-		relayChain.OnDKGResultPublished(func(publishedResult *event.DKGResultPublication) {
-			fmt.Printf("Saw new group registered [%+v]\n", publishedResult)
 			node.RegisterGroup(
 				publishedResult.RequestID.String(),
 				publishedResult.GroupPublicKey,
 			)
-		})
-	}
-
-	<-ctx.Done()
+		},
+	)
 
 	return nil
 }
