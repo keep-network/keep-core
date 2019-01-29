@@ -138,8 +138,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			}
 
 			if len(selectedTickets) == 0 {
-				fmt.Println("no tickets selected to the group")
-				return nil
+				return fmt.Errorf("no tickets selected to the group")
 			}
 
 			groupSelectedTickets := selectedTickets[0:groupSize]
