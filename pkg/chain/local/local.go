@@ -186,7 +186,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 
 func (c *localChain) OnRelayEntryGenerated(
 	handler func(entry *event.Entry),
-) subscription.EventSubscription {
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -198,12 +198,12 @@ func (c *localChain) OnRelayEntryGenerated(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.relayEntryHandlers, handlerID)
-	})
+	}), nil
 }
 
 func (c *localChain) OnRelayEntryRequested(
 	handler func(request *event.Request),
-) subscription.EventSubscription {
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -215,7 +215,7 @@ func (c *localChain) OnRelayEntryRequested(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.relayRequestHandlers, handlerID)
-	})
+	}), nil
 }
 
 func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
@@ -372,7 +372,7 @@ func (c *localChain) SubmitDKGResult(
 
 func (c *localChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) (event.Subscription, error) {
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 

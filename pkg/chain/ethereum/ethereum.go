@@ -431,7 +431,7 @@ func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) 
 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) (event.Subscription, error) {
+) (subscription.EventSubscription, error) {
 	fmt.Println("call back for OnDKGResultPublished registered")
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
 		func(requestID *big.Int, groupPubKey [32]byte) {

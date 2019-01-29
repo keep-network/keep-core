@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // keepGroup connection information for interface to KeepGroup contract.
@@ -249,10 +249,10 @@ type dkgResultPublishedEventFunc func(requestID *big.Int, groupPubKey [32]byte)
 func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
 	fail errorCallback,
-) (event.Subscription, error) {
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.KeepGroupImplV1DkgResultPublishedEvent)
 	eventSubscription, err := kg.contract.WatchDkgResultPublishedEvent(
-		&bind.WatchOpts{},
+		nil,
 		eventChan,
 	)
 	if err != nil {
@@ -275,11 +275,12 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
 
-	return event.NewSubscription(func() {
+	return subscription.NewEventSubscription(func() {
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}), nil
