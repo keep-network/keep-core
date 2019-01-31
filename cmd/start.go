@@ -16,11 +16,9 @@ import (
 var StartCommand cli.Command
 
 const (
-	bootstrapFlag  = "bootstrap"
-	portFlag       = "port"
-	portShort      = "p"
-	requestIDFlag  = "requestid"
-	requestIDShort = "id"
+	bootstrapFlag = "bootstrap"
+	portFlag      = "port"
+	portShort     = "p"
 )
 
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
