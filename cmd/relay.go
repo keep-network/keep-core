@@ -215,11 +215,27 @@ func submitRelayEntry(c *cli.Context, entry *event.Entry) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	var requestID *big.Int
+	if c.Int64(requestIDFlag) >= 0 {
+		requestID = big.NewInt(c.Int64(requestIDFlag))
+	}
+
 	var (
 		wait        = make(chan error)
 		ctx, cancel = context.WithCancel(context.Background())
 	)
 	defer cancel()
+
+	// Seed the network with the first n bits of pi
+	value := relay.GenesisEntryValue()
+
+	entry := &event.Entry{
+		RequestID:     requestID,
+		Value:         value,
+		GroupID:       big.NewInt(0),
+		PreviousValue: big.NewInt(0),
+		Timestamp:     time.Now().UTC(),
+	}
 
 	provider.ThresholdRelay().SubmitRelayEntry(
 		entry,
