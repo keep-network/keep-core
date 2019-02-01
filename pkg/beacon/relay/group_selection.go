@@ -15,7 +15,7 @@ import (
 
 // getTicketListInterval is the number of seconds we wait before requesting the
 // ordered ticket list (to run ticket verification)from the chain.
-const getTicketListInterval = 1 * time.Second
+const getTicketListInterval = 8 * time.Second
 
 type groupCandidate struct {
 	address []byte
@@ -201,22 +201,22 @@ func (gc *groupCandidate) verifyTicket(
 			gc.selectedTickets = selectedTickets
 			gc.selectedTicketsLock.Unlock()
 
-			for _, ticket := range selectedTickets {
-				if !costlyCheck(beaconValue, ticket) {
-					challenge := &groupselection.TicketChallenge{
-						Ticket:        ticket,
-						SenderAddress: gc.address,
-					}
-					relayChain.SubmitChallenge(challenge).OnFailure(
-						func(err error) {
-							fmt.Printf(
-								"Failed to submit challenge with err: [%v]\n",
-								err,
-							)
-						},
-					)
-				}
-			}
+			// for _, ticket := range selectedTickets {
+			// 	if !costlyCheck(beaconValue, ticket) {
+			// 		challenge := &groupselection.TicketChallenge{
+			// 			Ticket:        ticket,
+			// 			SenderAddress: gc.address,
+			// 		}
+			// 		relayChain.SubmitChallenge(challenge).OnFailure(
+			// 			func(err error) {
+			// 				fmt.Printf(
+			// 					"Failed to submit challenge with err: [%v]\n",
+			// 					err,
+			// 				)
+			// 			},
+			// 		)
+			// 	}
+			// }
 			t.Reset(getTicketListInterval)
 		case <-quit:
 			// Exit this loop when we get a signal from quit.
