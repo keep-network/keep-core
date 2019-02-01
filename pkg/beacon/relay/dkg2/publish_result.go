@@ -94,12 +94,12 @@ func (pm *Publisher) publishResult(
 			err,
 		)
 	}
-
 	defer subscription.Unsubscribe()
+	fmt.Println("looking forward to publishing")
 
 	// Check if any result has already been published to the chain with current
 	// request ID.
-	alreadyPublished, err := chainRelay.IsDKGResultPublished(pm.RequestID)
+	_, err = chainRelay.IsDKGResultPublished(pm.RequestID)
 	if err != nil {
 		return -1, fmt.Errorf(
 			"could not check if the result is already published [%v]",
@@ -108,10 +108,10 @@ func (pm *Publisher) publishResult(
 	}
 
 	// Someone who was ahead of us in the queue published the result. Giving up.
-	if alreadyPublished {
-		fmt.Println("giving up publishing")
-		return -1, nil
-	}
+	// if alreadyPublished {
+	// 	fmt.Println("giving up publishing")
+	// 	return -1, nil
+	// }
 
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
