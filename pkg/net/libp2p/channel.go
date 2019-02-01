@@ -83,17 +83,15 @@ func (c *channel) UnregisterRecv(handlerType string) error {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
 
+	handlers := 0
 	for i, mh := range c.messageHandlers {
-		if mh.Type == handlerType {
-			if len(c.messageHandlers) == 1 {
-				c.messageHandlers = c.messageHandlers[:i]
-				return nil
-			}
-
-			// If the underlying type changes to a pointer, this is a memory leak
-			c.messageHandlers = append(c.messageHandlers[:i], c.messageHandlers[i+1:]...)
+		// filter out the handlerType
+		if mh.Type != handlerType {
+			c.messageHandlers[i] = mh
+			handlers++
 		}
 	}
+	c.messageHandlers = c.messageHandlers[:handlers]
 
 	return nil
 }
