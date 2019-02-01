@@ -88,13 +88,13 @@ func (pm *Publisher) publishResult(
 			onPublishedResultChan <- publishedResult
 		},
 	)
+	defer subscription.Unsubscribe()
 	if err != nil {
 		return -1, fmt.Errorf(
 			"could not watch for DKG result publications [%v]",
 			err,
 		)
 	}
-	defer subscription.Unsubscribe()
 	fmt.Println("looking forward to publishing")
 
 	// Check if any result has already been published to the chain with current
