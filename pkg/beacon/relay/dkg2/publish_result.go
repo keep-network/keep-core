@@ -125,16 +125,14 @@ func (pm *Publisher) publishResult(
 	for {
 		select {
 		case blockHeight := <-eligibleToSubmitWaiter:
-			errors := make(chan error)
-			defer close(errors)
-
-			subscription.Unsubscribe()
+			errorChannel := make(chan error)
+			defer close(errorChannel)
 
 			chainRelay.SubmitDKGResult(pm.RequestID, result).
 				OnComplete(func(resultPublicationEvent *event.DKGResultPublication, err error) {
-					errors <- err
+					errorChannel <- err
 				})
-			return blockHeight, <-errors
+			return blockHeight, <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
 				return -1, nil // leave without publishing the result
