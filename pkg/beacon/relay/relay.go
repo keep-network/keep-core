@@ -48,16 +48,6 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
 ) {
-	// TODO: race between pending group and this
-	n.mutex.Lock()
-	group, ok := n.myGroups[requestID.String()]
-	n.mutex.Unlock()
-
-	if group == nil || !ok {
-		return
-	}
-	fmt.Printf("found group for request [%s]", requestID.String())
-
 	if seed == nil {
 		fmt.Printf("SEED IS NIL, SETTING TO 1337 (HACK!)\n")
 		seed = big.NewInt(1337)
