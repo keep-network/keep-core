@@ -233,7 +233,8 @@ func submitRelayEntry(c *cli.Context, entry *event.Entry) error {
 			"Submitted relay entry: [%+v].\n",
 			data,
 		)
-		wait <- err
+		wait <- nil
+		return
 	})
 
 	select {
