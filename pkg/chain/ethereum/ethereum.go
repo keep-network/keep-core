@@ -171,7 +171,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		if failErr != nil {
 			fmt.Fprintf(
 				os.Stderr,
-				"failing promise because of [%v] failed with: [%v]\n",
+				"failing promise because of [%v] failed with [%v]\n",
 				err,
 				failErr,
 			)
@@ -315,38 +315,62 @@ func (ec *ethereumChain) OnGroupRegistered(
 func (ec *ethereumChain) RequestRelayEntry(
 	blockReward, seed *big.Int,
 ) *async.RelayRequestPromise {
-	promise := &async.RelayRequestPromise{}
-	subscription, err := ec.keepRandomBeaconContract.WatchRelayEntryRequested(
-		func(
-			requestID *big.Int,
-			payment *big.Int,
-			blockReward *big.Int,
-			seed *big.Int,
-			blockNumber *big.Int,
-		) {
-			promise.Fulfill(&event.Request{
-				RequestID:   requestID,
-				Payment:     payment,
-				BlockReward: blockReward,
-				Seed:        seed,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("relay request failed with %v", err)
+	relayRequestPromise := &async.RelayRequestPromise{}
+
+	failPromise := func(err error) {
+		failErr := relayRequestPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of [%v] failed with [%v]\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	requested := make(chan *event.Request)
+
+	subscription, err := ec.OnRelayEntryRequested(
+		func(event *event.Request) {
+			requested <- event
 		},
 	)
 	if err != nil {
-		subscription.Unsubscribe()
-		fmt.Fprintf(os.Stderr, "relay request failed with: [%v]", err)
-		return promise
+		close(requested)
+		failPromise(err)
+		return relayRequestPromise
 	}
+
+	go func() {
+		for {
+			select {
+			case event := <-requested:
+				subscription.Unsubscribe()
+				close(requested)
+
+				err := relayRequestPromise.Fulfill(event)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"fulfilling promise failed with [%v]\n",
+						err,
+					)
+				}
+
+				return
+			}
+		}
+	}()
+
 	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed.Bytes())
 	if err != nil {
 		subscription.Unsubscribe()
-		promise.Fail(fmt.Errorf("failure to request a relay entry: [%v]", err))
-		return promise
+		close(requested)
+		failPromise(err)
 	}
-	return promise
+
+	return relayRequestPromise
 }
 
 func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
