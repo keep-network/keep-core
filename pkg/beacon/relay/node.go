@@ -160,7 +160,10 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	index := len(n.groupPublicKeys) - 1
 
+	fmt.Printf("First time registering group; request ID: %+v index %d, gpk: %+v\n", requestID, index, groupPublicKey)
+
 	if membership, found := n.pendingGroups[requestID]; found && membership != nil {
+		fmt.Println("Removing pending group for requestID %+v\n", requestID)
 		membership.index = index
 		n.myGroups[requestID] = membership
 		delete(n.pendingGroups, requestID)
@@ -212,13 +215,16 @@ func (n *Node) registerPendingGroup(
 		// end if it happened to come in before we had a chance to register it
 		// as pending.
 		existingIndex := len(n.groupPublicKeys) - 1
+		fmt.Printf("existing index %d\n", existingIndex)
 		for index := existingIndex; index >= 0; index-- {
 			if bytes.Compare(n.groupPublicKeys[index], groupPublicKey[:]) == 0 {
+				fmt.Printf("Found a match at %d for %+v\n", index, groupPublicKey)
 				existingIndex = index
 				break
 			}
 		}
 
+		fmt.Printf("Setting membership for index %d", existingIndex)
 		n.myGroups[requestID] = &membership{
 			index:   existingIndex,
 			member:  signer,

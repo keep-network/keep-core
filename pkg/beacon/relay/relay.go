@@ -57,11 +57,13 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		seed.Bytes(),
 	)
 
+	fmt.Printf("New combined entry to sign %+v\n", combinedEntryToSign)
 	membership := n.membershipForRequest(previousValue)
 	if membership == nil {
 		return
 	}
 
+	fmt.Printf("Found membership for request: %+v\n", membership)
 	thresholdsignature.Init(membership.channel)
 
 	go func() {
@@ -135,9 +137,13 @@ func (n *Node) membershipForRequest(previousValue *big.Int) *membership {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
+	fmt.Println("looking for index for next group")
 	nextGroup := n.indexForNextGroup(previousValue).Int64()
+	fmt.Printf("index: %d\n", nextGroup)
+	fmt.Printf("myGroups: %+v\n", n.myGroups)
 	// Search our list of memberships to see if we have a member entry.
 	for _, membership := range n.myGroups {
+		fmt.Printf("membership index %d\n", membership.index)
 		if membership.index == int(nextGroup) {
 			return membership
 		}

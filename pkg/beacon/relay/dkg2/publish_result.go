@@ -47,10 +47,12 @@ func executePublishing(
 		blockStep:       1,
 	}
 
-	_, err := publisher.publishResult(result, chainRelay)
+	blockHeight, err := publisher.publishResult(result, chainRelay)
 	if err != nil {
 		return fmt.Errorf("result publication failed [%v]", err)
 	}
+
+	fmt.Printf("blockheight published at %d\n", blockHeight)
 
 	// TODO Execute Phase 14 here
 
@@ -83,6 +85,7 @@ func (pm *Publisher) publishResult(
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
 	defer close(onPublishedResultChan)
 
+	fmt.Println("Registering another OnDKGResultPublished; potentially overwriting")
 	subscription, err := chainRelay.OnDKGResultPublished(
 		func(publishedResult *event.DKGResultPublication) {
 			onPublishedResultChan <- publishedResult
@@ -128,12 +131,14 @@ func (pm *Publisher) publishResult(
 			errorChannel := make(chan error)
 			defer close(errorChannel)
 
+			fmt.Printf("Member that is submitting %+v\n", pm.publishingIndex)
 			chainRelay.SubmitDKGResult(pm.RequestID, result).
 				OnComplete(func(resultPublicationEvent *event.DKGResultPublication, err error) {
 					errorChannel <- err
 				})
 			return blockHeight, <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
+			fmt.Printf("Result published %+v\n", publishedResultEvent)
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
 				return -1, nil // leave without publishing the result
 			}
