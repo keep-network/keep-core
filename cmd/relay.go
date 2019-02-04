@@ -247,9 +247,9 @@ func submitRelayEntry(c *cli.Context, entry *event.Entry) error {
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			return fmt.Errorf("request errored out: [%v]", err)
+			return fmt.Errorf("request encountered error: [%v]", err)
 		}
-		return fmt.Errorf("request errored for unknown reason")
+		return fmt.Errorf("request failed with an error for unknown reason")
 	}
 	return nil
 }
