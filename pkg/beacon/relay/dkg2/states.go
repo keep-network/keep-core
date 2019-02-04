@@ -45,7 +45,7 @@ type initializationState struct {
 	member  *gjkr.LocalMember
 }
 
-func (is *initializationState) activeBlocks() int { return 3 }
+func (is *initializationState) activeBlocks() int { return 1 }
 
 func (is *initializationState) initiate() error {
 	return nil
@@ -71,7 +71,7 @@ type joinState struct {
 	member  *gjkr.LocalMember
 }
 
-func (js *joinState) activeBlocks() int { return 3 }
+func (js *joinState) activeBlocks() int { return 2 }
 
 func (js *joinState) initiate() error {
 	return js.channel.Send(gjkr.NewJoinMessage(js.member.ID))
@@ -108,7 +108,7 @@ type ephemeralKeyPairGenerationState struct {
 	phaseMessages []*gjkr.EphemeralPublicKeyMessage
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) activeBlocks() int { return 3 }
+func (ekpgs *ephemeralKeyPairGenerationState) activeBlocks() int { return 2 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) initiate() error {
 	message, err := ekpgs.member.GenerateEphemeralKeyPair()
@@ -192,7 +192,7 @@ type commitmentState struct {
 	phaseCommitmentsMessages []*gjkr.MemberCommitmentsMessage
 }
 
-func (cs *commitmentState) activeBlocks() int { return 3 }
+func (cs *commitmentState) activeBlocks() int { return 2 }
 
 func (cs *commitmentState) initiate() error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
@@ -259,7 +259,7 @@ type commitmentsVerificationState struct {
 	phaseAccusationsMessages []*gjkr.SecretSharesAccusationsMessage
 }
 
-func (cvs *commitmentsVerificationState) activeBlocks() int { return 3 }
+func (cvs *commitmentsVerificationState) activeBlocks() int { return 2 }
 
 func (cvs *commitmentsVerificationState) initiate() error {
 	accusationsMsg, err := cvs.member.VerifyReceivedSharesAndCommitmentsMessages(
@@ -391,7 +391,7 @@ type pointsShareState struct {
 	phaseMessages []*gjkr.MemberPublicKeySharePointsMessage
 }
 
-func (pss *pointsShareState) activeBlocks() int { return 3 }
+func (pss *pointsShareState) activeBlocks() int { return 2 }
 
 func (pss *pointsShareState) initiate() error {
 	message := pss.member.CalculatePublicKeySharePoints()
@@ -440,7 +440,7 @@ type pointsValidationState struct {
 	phaseMessages []*gjkr.PointsAccusationsMessage
 }
 
-func (pvs *pointsValidationState) activeBlocks() int { return 3 }
+func (pvs *pointsValidationState) activeBlocks() int { return 2 }
 
 func (pvs *pointsValidationState) initiate() error {
 	accusationMsg, err := pvs.member.VerifyPublicKeySharePoints(
