@@ -49,6 +49,16 @@ func TestMarkMemberAsDisqualified(t *testing.T) {
 			expectedDisqualifiedMembers: []MemberID{},
 			expectedInactiveMembers:     []MemberID{},
 		},
+		"mark all members as disqualified": {
+			initialMembers: []MemberID{11, 12, 13},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsDisqualified(11)
+				g.MarkMemberAsDisqualified(13)
+				g.MarkMemberAsDisqualified(12)
+			},
+			expectedDisqualifiedMembers: []MemberID{11, 13, 12},
+			expectedInactiveMembers:     []MemberID{},
+		},
 		"mark member as inactive": {
 			initialMembers: []MemberID{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
@@ -73,6 +83,17 @@ func TestMarkMemberAsDisqualified(t *testing.T) {
 			},
 			expectedDisqualifiedMembers: []MemberID{},
 			expectedInactiveMembers:     []MemberID{},
+		},
+		"mark all members as inactive": {
+			initialMembers: []MemberID{19, 18, 17, 16},
+			updateFunc: func(g *Group) {
+				g.MarkMemberAsInactive(17)
+				g.MarkMemberAsInactive(19)
+				g.MarkMemberAsInactive(16)
+				g.MarkMemberAsInactive(18)
+			},
+			expectedDisqualifiedMembers: []MemberID{},
+			expectedInactiveMembers:     []MemberID{17, 19, 16, 18},
 		},
 	}
 
