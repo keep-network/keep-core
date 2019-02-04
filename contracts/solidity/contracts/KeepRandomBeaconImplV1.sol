@@ -19,7 +19,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber);
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupID, uint256 previousEntry, uint blockNumber);
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
@@ -33,7 +33,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     mapping (uint256 => address) internal _requestPayer;
     mapping (uint256 => uint256) internal _requestPayment;
     mapping (uint256 => uint256) internal _blockReward;
-    mapping (uint256 => uint256) internal _requestGroup;
+    mapping (uint256 => bytes) internal _requestGroup;
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -142,7 +142,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupSignature The generated random number.
      * @param groupID Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry) public {
+    function relayEntry(uint256 requestID, uint256 groupSignature, bytes groupID, uint256 previousEntry) public {
 
         // TODO: validate groupSignature using BLS.sol
     
