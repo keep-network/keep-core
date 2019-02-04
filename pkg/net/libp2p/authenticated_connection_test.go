@@ -5,6 +5,7 @@ import (
 	crand "crypto/rand"
 	"fmt"
 	"io"
+	"math/big"
 	"net"
 	"reflect"
 	"testing"
@@ -24,7 +25,7 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
@@ -123,7 +124,7 @@ func TestHandshake(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
@@ -161,7 +162,7 @@ func TestHandshakeNoInitiatorStake(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
 	// only responder is staked
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
 
@@ -189,7 +190,7 @@ func TestHandshakeNoResponderStake(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
 	// only initiator is staked
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
 

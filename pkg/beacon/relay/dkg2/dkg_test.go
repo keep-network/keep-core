@@ -19,7 +19,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 	seed := big.NewInt(8)
 
 	networkProvider := netLocal.Connect()
-	chainHandle := chainLocal.Connect(groupSize, threshold)
+	chainHandle := chainLocal.Connect(groupSize, threshold, big.NewInt(200))
 
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
