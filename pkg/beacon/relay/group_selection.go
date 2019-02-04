@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -90,24 +92,47 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		select {
 		case err := <-errCh:
 			fmt.Printf(
-				"Error during ticket submission for entry [%v]: [%v].",
-				beaconValue,
+				"error during ticket submission [%v]",
 				err,
 			)
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			selectedTickets := relayChain.GetOrderedTickets()
+			quitTicketChallenge <- struct{}{}
+
+			selectedTickets, err := relayChain.GetOrderedTickets()
+			if err != nil {
+				quitTicketChallenge <- struct{}{}
+				return fmt.Errorf(
+					"could not fetch ordered tickets after challenge timeout [%v]",
+					err,
+				)
+			}
+
+			var tickets []*groupselection.Ticket
+			for _, chainTicket := range selectedTickets {
+				ticket, err := fromChainTicket(chainTicket)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"incorrect ticket format [%v]",
+						err,
+					)
+
+					continue // ignore incorrect ticket
+				}
+
+				tickets = append(tickets, ticket)
+			}
 
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{SelectedTickets: selectedTickets},
+				&groupselection.Result{SelectedTickets: tickets},
 				entryRequestID,
 				entrySeed,
 			)
-			quitTicketChallenge <- struct{}{}
 			return nil
 		}
 	}
@@ -127,7 +152,13 @@ func (gc *groupCandidate) submitTickets(
 			// Exit this loop when we get a signal from quit.
 			return
 		default:
-			relayChain.SubmitTicket(ticket).OnFailure(
+			chainTicket, err := toChainTicket(ticket)
+			if err != nil {
+				errCh <- err
+				continue
+			}
+
+			relayChain.SubmitTicket(chainTicket).OnFailure(
 				func(err error) { errCh <- err },
 			)
 		}
@@ -144,16 +175,33 @@ func (gc *groupCandidate) verifyTicket(
 	for {
 		select {
 		case <-t.C:
-			for _, ticket := range relayChain.GetOrderedTickets() {
+			selectedTickets, err := relayChain.GetOrderedTickets()
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"error getting submitted tickets [%v]",
+					err,
+				)
+			}
+
+			for _, selectedTicket := range selectedTickets {
+				ticket, err := fromChainTicket(selectedTicket)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"incorrect ticket format [%v]",
+						err,
+					)
+
+					continue // ignore incorrect ticket
+				}
+
 				if !costlyCheck(beaconValue, ticket) {
-					challenge := &groupselection.TicketChallenge{
-						Ticket:        ticket,
-						SenderAddress: gc.address,
-					}
-					relayChain.SubmitChallenge(challenge).OnFailure(
+					relayChain.SubmitChallenge(ticket.Value.Int()).OnFailure(
 						func(err error) {
-							fmt.Printf(
-								"Failed to submit challenge with err: [%v]",
+							fmt.Fprintf(
+								os.Stderr,
+								"failed to submit challenge [%v]",
 								err,
 							)
 						},
@@ -183,4 +231,42 @@ func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
 		return true
 	}
 	return false
+}
+
+func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
+	stakerValueInt, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not transform ticket to chain representation [%v]",
+			err,
+		)
+	}
+
+	return &relaychain.Ticket{
+		Value: ticket.Value.Int(),
+		Proof: &relaychain.TicketProof{
+			StakerValue:        stakerValueInt,
+			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+		},
+	}, nil
+}
+
+func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
+	value, err := groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not transform ticket from chain representation [%v]",
+			err,
+		)
+	}
+
+	return &groupselection.Ticket{
+		Value: value,
+		Proof: &groupselection.Proof{
+			StakerValue: []byte(
+				hexutil.EncodeBig(ticket.Proof.StakerValue),
+			),
+			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+		},
+	}, nil
 }
