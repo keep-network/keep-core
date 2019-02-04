@@ -92,8 +92,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		select {
 		case err := <-errCh:
 			fmt.Printf(
-				"Error during ticket submission for entry [%v]: [%v].",
-				beaconValue,
+				"error during ticket submission [%v]",
 				err,
 			)
 		case <-submissionTimeout:
@@ -105,7 +104,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			if err != nil {
 				quitTicketChallenge <- struct{}{}
 				return fmt.Errorf(
-					"could not fetch ordered tickets after challenge timeout: [%v]",
+					"could not fetch ordered tickets after challenge timeout [%v]",
 					err,
 				)
 			}
@@ -116,7 +115,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				if err != nil {
 					fmt.Fprintf(
 						os.Stderr,
-						"incorrect ticket format: [%v]",
+						"incorrect ticket format [%v]",
 						err,
 					)
 
@@ -180,7 +179,7 @@ func (gc *groupCandidate) verifyTicket(
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"error getting submitted tickets: [%v]",
+					"error getting submitted tickets [%v]",
 					err,
 				)
 			}
@@ -190,7 +189,7 @@ func (gc *groupCandidate) verifyTicket(
 				if err != nil {
 					fmt.Fprintf(
 						os.Stderr,
-						"incorrect ticket format: [%v]",
+						"incorrect ticket format [%v]",
 						err,
 					)
 
@@ -202,7 +201,7 @@ func (gc *groupCandidate) verifyTicket(
 						func(err error) {
 							fmt.Fprintf(
 								os.Stderr,
-								"Failed to submit challenge: [%v]",
+								"failed to submit challenge [%v]",
 								err,
 							)
 						},
@@ -238,7 +237,7 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 	stakerValueInt, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not transform ticket to chain representation: [%v]",
+			"could not transform ticket to chain representation [%v]",
 			err,
 		)
 	}
