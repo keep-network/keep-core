@@ -73,7 +73,7 @@ func main() {
 ENVIRONMENT VARIABLES:
    KEEP_ETHEREUM_PASSWORD    keep client password
    KEEP_ETHEREUM_ACCOUNT     keep client account
-	 KEEP_ETHEREUM_KEYFILE     keep client keyfile
+   KEEP_ETHEREUM_KEYFILE     keep client keyfile
 `, cli.AppHelpTemplate)
 
 	err := app.Run(os.Args)
