@@ -99,6 +99,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
+			quitTicketChallenge <- struct{}{}
+
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
 				quitTicketChallenge <- struct{}{}
@@ -132,7 +134,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				entryRequestID,
 				entrySeed,
 			)
-			quitTicketChallenge <- struct{}{}
 			return nil
 		}
 	}
