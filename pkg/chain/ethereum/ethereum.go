@@ -380,13 +380,15 @@ func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) 
 func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
 ) (subscription.EventSubscription, error) {
-	fmt.Println("call back for OnDKGResultPublished registered")
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
 		func(requestID *big.Int) {
 			handler(&event.DKGResultPublication{RequestID: requestID})
 		},
 		func(err error) error {
-			return err
+			return fmt.Errorf(
+				"watch DKG result published failed with [%v]",
+				err,
+			)
 		},
 	)
 }
