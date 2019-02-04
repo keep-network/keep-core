@@ -9,7 +9,6 @@ import (
 )
 
 func TestSetBytes(t *testing.T) {
-
 	tests := map[string]struct {
 		inputBytes    []byte
 		expectedError error
