@@ -102,7 +102,10 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
 				quitTicketChallenge <- struct{}{}
-				return err
+				return fmt.Errorf(
+					"could not fetch ordered tickets after challenge timeout: [%v]",
+					err,
+				)
 			}
 
 			var tickets []*groupselection.Ticket
