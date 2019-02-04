@@ -166,55 +166,53 @@ func (ec *ethereumChain) SubmitRelayEntry(
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
-	subscription, err := ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
-		func(
-			requestID *big.Int,
-			requestResponse *big.Int,
-			requestGroupID *big.Int,
-			previousEntry *big.Int,
-			blockNumber *big.Int,
-		) {
-			err := relayEntryPromise.Fulfill(&event.Entry{
-				RequestID:     requestID,
-				Value:         requestResponse,
-				GroupID:       requestGroupID,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-			})
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"execution of fulfilling promise failed with: [%v]",
-					err,
-				)
-			}
-		},
-		func(err error) error {
-			return relayEntryPromise.Fail(
-				fmt.Errorf(
-					"entry of relay submission failed with: [%v]",
-					err,
-				),
+	failPromise := func(err error) {
+		failErr := relayEntryPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of [%v] failed with: [%v]\n",
+				err,
+				failErr,
 			)
+		}
+	}
+
+	generated := make(chan *event.Entry)
+
+	subscription, err := ec.OnRelayEntryGenerated(
+		func(event *event.Entry) {
+			generated <- event
 		},
 	)
 	if err != nil {
-		subscription.Unsubscribe()
-		promiseErr := relayEntryPromise.Fail(
-			fmt.Errorf(
-				"watch relay entry failed with: [%v]",
-				err,
-			),
-		)
-		if promiseErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"execution of failing promise failed with: [%v]",
-				promiseErr,
-			)
-		}
+		close(generated)
+		failPromise(err)
 		return relayEntryPromise
 	}
+
+	go func() {
+		for {
+			select {
+			case event := <-generated:
+				if event.RequestID == newEntry.RequestID {
+					subscription.Unsubscribe()
+					close(generated)
+
+					err := relayEntryPromise.Fulfill(event)
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"fulfilling promise failed with [%v]\n",
+							err,
+						)
+					}
+
+					return
+				}
+			}
+		}
+	}()
 
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
 		newEntry.RequestID,
@@ -224,19 +222,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	)
 	if err != nil {
 		subscription.Unsubscribe()
-		promiseErr := relayEntryPromise.Fail(
-			fmt.Errorf(
-				"submitting relay entry to chain failed with: [%v]",
-				err,
-			),
-		)
-		if promiseErr != nil {
-			fmt.Printf(
-				"execution of failing promise failed with: [%v]",
-				promiseErr,
-			)
-		}
-		return relayEntryPromise
+		close(generated)
+		failPromise(err)
 	}
 
 	return relayEntryPromise
@@ -390,7 +377,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 		if failErr != nil {
 			fmt.Fprintf(
 				os.Stderr,
-				"failing promise because of: [%v] failed with: [%v].\n",
+				"failing promise because of [%v] failed with [%v]\n",
 				err,
 				failErr,
 			)
@@ -422,7 +409,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 					if err != nil {
 						fmt.Fprintf(
 							os.Stderr,
-							"fulfilling promise failed with: [%v].\n",
+							"fulfilling promise failed with [%v]\n",
 							err,
 						)
 					}
