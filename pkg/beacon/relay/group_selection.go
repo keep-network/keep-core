@@ -254,7 +254,10 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
 	value, err := groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("incorrect ticket value [%v]", err)
+		return nil, fmt.Errorf(
+			"could not transform ticket from chain representation [%v]",
+			err,
+		)
 	}
 
 	return &groupselection.Ticket{
