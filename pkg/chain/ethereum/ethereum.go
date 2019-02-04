@@ -249,12 +249,10 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			})
 		},
 		func(err error) error {
-			fmt.Fprintf(
-				os.Stderr,
-				"watch relay entry failed with: [%v]",
+			return fmt.Errorf(
+				"watch relay entry generated failed with [%v]",
 				err,
 			)
-			return err
 		},
 	)
 }
@@ -278,7 +276,10 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("relay request event failed with %v", err)
+			return fmt.Errorf(
+				"watch relay entry requested failed with [%v]",
+				err,
+			)
 		},
 	)
 }
