@@ -12,7 +12,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -44,7 +43,7 @@ type localChain struct {
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
-	tickets      []*groupselection.Ticket
+	tickets      []*relaychain.Ticket
 	ticketsMutex sync.Mutex
 }
 
@@ -60,7 +59,7 @@ func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
+func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketPromise {
 	promise := &async.GroupTicketPromise{}
 
 	c.ticketsMutex.Lock()
@@ -68,27 +67,29 @@ func (c *localChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTic
 
 	c.tickets = append(c.tickets, ticket)
 	sort.SliceStable(c.tickets, func(i, j int) bool {
-		return c.tickets[i].Value.Int().Cmp(c.tickets[j].Value.Int()) == -1
+		return c.tickets[i].Value.Cmp(c.tickets[j].Value) == -1
 	})
 
-	promise.Fulfill(ticket)
+	promise.Fulfill(&event.GroupTicketSubmission{
+		TicketValue: ticket.Value,
+	})
 
 	return promise
 }
 
 func (c *localChain) SubmitChallenge(
-	ticket *groupselection.TicketChallenge,
+	ticketValue *big.Int,
 ) *async.GroupTicketChallengePromise {
 	promise := &async.GroupTicketChallengePromise{}
 	promise.Fail(fmt.Errorf("function not implemented"))
 	return promise
 }
 
-func (c *localChain) GetOrderedTickets() []*groupselection.Ticket {
+func (c *localChain) GetOrderedTickets() ([]*relaychain.Ticket, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
-	return c.tickets
+	return c.tickets, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(
@@ -240,7 +241,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(minimumStake),
-		tickets:                      make([]*groupselection.Ticket, 0),
+		tickets:                      make([]*relaychain.Ticket, 0),
 	}
 }
 
