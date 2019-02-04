@@ -249,7 +249,6 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
 		},
 	}, nil
-
 }
 
 func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
