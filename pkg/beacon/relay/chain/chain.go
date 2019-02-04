@@ -22,10 +22,11 @@ type RelayEntryInterface interface {
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
-
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(func(entry *event.Entry)) (subscription.EventSubscription, error)
+	OnRelayEntryGenerated(
+		func(entry *event.Entry),
+	) (subscription.EventSubscription, error)
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(
@@ -59,7 +60,10 @@ type GroupRegistrationInterface interface {
 	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
 	// associated with a request with id requestID. On-chain errors are reported
 	// through the promise.
-	SubmitGroupPublicKey(requestID *big.Int, key [96]byte) *async.GroupRegistrationPromise
+	SubmitGroupPublicKey(
+		requestID *big.Int,
+		key [96]byte,
+	) *async.GroupRegistrationPromise
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
 	OnGroupRegistered(func(key *event.GroupRegistration))
@@ -83,7 +87,9 @@ type DistributedKeyGenerationInterface interface {
 	) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
-	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) (subscription.EventSubscription, error)
+	OnDKGResultPublished(
+		func(dkgResultPublication *event.DKGResultPublication),
+	) (subscription.EventSubscription, error)
 	// IsDKGResultPublished checks if any DKG result has already been published
 	// to a chain for the given request ID.
 	IsDKGResultPublished(requestID *big.Int) (bool, error)
