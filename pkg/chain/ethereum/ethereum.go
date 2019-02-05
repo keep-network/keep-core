@@ -368,15 +368,15 @@ func (ec *ethereumChain) RequestRelayEntry(
 		}
 	}
 
-	requested := make(chan *event.Request)
+	requestedEntry := make(chan *event.Request)
 
 	subscription, err := ec.OnRelayEntryRequested(
 		func(event *event.Request) {
-			requested <- event
+			requestedEntry <- event
 		},
 	)
 	if err != nil {
-		close(requested)
+		close(requestedEntry)
 		failPromise(err)
 		return relayRequestPromise
 	}
@@ -384,9 +384,9 @@ func (ec *ethereumChain) RequestRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-requested:
+			case event := <-requestedEntry:
 				subscription.Unsubscribe()
-				close(requested)
+				close(requestedEntry)
 
 				err := relayRequestPromise.Fulfill(event)
 				if err != nil {
@@ -405,7 +405,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed.Bytes())
 	if err != nil {
 		subscription.Unsubscribe()
-		close(requested)
+		close(requestedEntry)
 		failPromise(err)
 	}
 
