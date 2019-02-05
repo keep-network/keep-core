@@ -8,8 +8,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// ProtocolMessage represents all messages of GJKR protocol.
+// ProtocolMessage is a common interface for all messages of GJKR DKG protocol.
 type ProtocolMessage interface {
+	// SenderID returns protocol-level identifier of the message sender.
 	SenderID() MemberID
 }
 
@@ -107,38 +108,47 @@ type DisqualifiedEphemeralKeysMessage struct {
 	privateKeys map[MemberID]*ephemeral.PrivateKey
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (jm *JoinMessage) SenderID() MemberID {
 	return jm.senderID
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (epkm *EphemeralPublicKeyMessage) SenderID() MemberID {
 	return epkm.senderID
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (mcm *MemberCommitmentsMessage) SenderID() MemberID {
 	return mcm.senderID
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (psm *PeerSharesMessage) SenderID() MemberID {
 	return psm.senderID
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (ssam *SecretSharesAccusationsMessage) SenderID() MemberID {
 	return ssam.senderID
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (mpkspm *MemberPublicKeySharePointsMessage) SenderID() MemberID {
 	return mpkspm.senderID
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (pam *PointsAccusationsMessage) SenderID() MemberID {
 	return pam.senderID
 }
 
+// SenderID returns protocol-level identifier of the message sender.
 func (dekm *DisqualifiedEphemeralKeysMessage) SenderID() MemberID {
 	return dekm.senderID
 }
 
+// NewJoinMessage creates a new JoinMessage for the provided sender ID.
 func NewJoinMessage(senderID MemberID) *JoinMessage {
 	return &JoinMessage{senderID}
 }
