@@ -112,35 +112,10 @@ func (lc *localChannel) Name() string {
 	return lc.name
 }
 
-func doSend(
-	channel *localChannel,
-	recipient interface{},
-	payload net.TaggedMarshaler,
-) error {
+func doSend(channel *localChannel, payload net.TaggedMarshaler) error {
 	channelsMutex.Lock()
 	targetChannels := channels[channel.name]
 	channelsMutex.Unlock()
-
-	// If we have a recipient, filter `targetChannels` down to only the targeted
-	// recipient (the recipient transport identifier is the same as the local
-	// channel's identifier).
-	var transportRecipient net.TransportIdentifier
-	if transportID, ok := recipient.(*localIdentifier); ok {
-		transportRecipient = transportID
-	} else {
-		return fmt.Errorf("Recipient isn't a valid localIdentifier %v", recipient)
-	}
-
-	if transportRecipient != nil {
-		potentialTargets := targetChannels
-		targetChannels = make([]*localChannel, 0, 1)
-		for _, targetChannel := range potentialTargets {
-			if transportRecipient == targetChannel.identifier {
-				targetChannels = append(targetChannels, targetChannel)
-				break
-			}
-		}
-	}
 
 	bytes, err := payload.Marshal()
 	if err != nil {
@@ -186,13 +161,7 @@ func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, pay
 }
 
 func (lc *localChannel) Send(message net.TaggedMarshaler) error {
-	return doSend(lc, nil, message)
-}
-
-func (lc *localChannel) SendTo(
-	recipient net.TransportIdentifier,
-	message net.TaggedMarshaler) error {
-	return doSend(lc, recipient, message)
+	return doSend(lc, message)
 }
 
 func (lc *localChannel) Recv(handler net.HandleMessageFunc) error {

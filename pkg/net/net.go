@@ -68,15 +68,9 @@ type TaggedUnmarshaler interface {
 type BroadcastChannel interface {
 	// Name returns the name of this broadcast channel.
 	Name() string
-
 	// Given a message m that can marshal itself to protobuf, broadcast m to
 	// members of the Group through the BroadcastChannel.
 	Send(m TaggedMarshaler) error
-	// Given a recipient and a message m that can marshal itself to protobouf,
-	// send the message to the recipient over the broadcast channel such that
-	// only the recipient can understand it.
-	SendTo(recipientIdentifier TransportIdentifier, m TaggedMarshaler) error
-
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error

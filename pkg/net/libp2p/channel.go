@@ -38,28 +38,9 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	return c.doSend(nil, message)
-}
-
-func (c *channel) SendTo(
-	recipientIdentifier net.TransportIdentifier,
-	message net.TaggedMarshaler,
-) error {
-	return c.doSend(recipientIdentifier, message)
-}
-
-// doSend attempts to send a message, from a sender, to all members of a
-// broadcastChannel, or optionally to a specific recipient. If recipient
-// is nil (the typical case), then all messages of the broadcast channel
-// should receive the message. Otherwise, given a valid recipient, we will
-// address the message specifically to them.
-func (c *channel) doSend(
-	recipient net.TransportIdentifier,
-	message net.TaggedMarshaler,
-) error {
 	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
 	// in an envelope.
-	envelopeBytes, err := c.envelopeProto(recipient, message)
+	envelopeBytes, err := c.envelopeProto(message)
 	if err != nil {
 		return err
 	}
@@ -113,7 +94,6 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 }
 
 func (c *channel) messageProto(
-	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
@@ -126,28 +106,17 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	var recipientIdentityBytes []byte
-	if recipient != nil {
-		recipientIdentity := &identity{id: peer.ID(recipient.(networkIdentity))}
-		recipientIdentityBytes, err = recipientIdentity.Marshal()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return (&pb.NetworkMessage{
-		Payload:   payloadBytes,
-		Sender:    senderIdentityBytes,
-		Recipient: recipientIdentityBytes,
-		Type:      []byte(message.Type()),
+		Payload: payloadBytes,
+		Sender:  senderIdentityBytes,
+		Type:    []byte(message.Type()),
 	}).Marshal()
 }
 
 func (c *channel) sealEnvelope(
-	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) (*pb.NetworkEnvelope, error) {
-	messageBytes, err := c.messageProto(recipient, message)
+	messageBytes, err := c.messageProto(message)
 	if err != nil {
 		return nil, err
 	}
@@ -163,10 +132,9 @@ func (c *channel) sealEnvelope(
 }
 
 func (c *channel) envelopeProto(
-	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
-	envelope, err := c.sealEnvelope(recipient, message)
+	envelope, err := c.sealEnvelope(message)
 	if err != nil {
 		return nil, err
 	}
@@ -293,21 +261,6 @@ func (c *channel) processContainerMessage(
 	}
 
 	protocolIdentifier := senderIdentifier
-
-	if message.Recipient != nil {
-		// Construct an identifier from the Recipient.
-		recipientIdentifier := &identity{}
-		if err := recipientIdentifier.Unmarshal(message.Recipient); err != nil {
-			return err
-		}
-
-		if recipientIdentifier.id.String() != c.clientIdentity.id.String() {
-			return fmt.Errorf(
-				"message not for intended recipient %s",
-				recipientIdentifier.id.String(),
-			)
-		}
-	}
 
 	// Fire a message back to the protocol.
 	protocolMessage := internal.BasicMessage(
