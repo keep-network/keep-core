@@ -252,4 +252,5 @@ func submitRelayEntry(c *cli.Context, entry *event.Entry) error {
 		}
 		return nil
 	}
+	return nil
 }
