@@ -74,6 +74,9 @@ ENVIRONMENT VARIABLES:
    KEEP_ETHEREUM_PASSWORD    keep client password
    KEEP_ETHEREUM_ACCOUNT     keep client account
    KEEP_ETHEREUM_KEYFILE     keep client keyfile
+   KEEP_ETHEREUM_RANDOM_BEACON_CONTRACT  random beacon contract address
+   KEEP_ETHEREUM_KEEP_GROUP_CONTRACT     group contract address
+   KEEP_ETHEREUM_STAKING_PROXY_CONTRACT  staking proxy contract
 `, cli.AppHelpTemplate)
 
 	err := app.Run(os.Args)

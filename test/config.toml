@@ -13,6 +13,7 @@
 [ethereum.ContractAddresses]
 	KeepRandomBeacon = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
 	KeepGroup = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
+	StakingProxy = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
 [libp2p]
 	Port = 27001
