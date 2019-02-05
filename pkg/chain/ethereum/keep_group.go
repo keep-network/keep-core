@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -184,6 +185,56 @@ func (kg *keepGroup) HasMinimumStake(
 	address common.Address,
 ) (bool, error) {
 	return kg.caller.HasMinimumStake(kg.callerOpts, address)
+}
+
+func (kg *keepGroup) SubmitTicket(
+	ticket *relaychain.Ticket,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitTicket(
+		kg.transactorOpts,
+		ticket.Value,
+		ticket.Proof.StakerValue,
+		ticket.Proof.VirtualStakerIndex,
+	)
+}
+
+func (kg *keepGroup) SubmitChallenge(
+	ticketValue *big.Int,
+) (*types.Transaction, error) {
+	return kg.transactor.Challenge(
+		kg.transactorOpts,
+		ticketValue,
+	)
+}
+
+func (kg *keepGroup) OrderedTickets() ([]*chain.Ticket, error) {
+	orderedTicketValues, err := kg.caller.OrderedTickets(kg.callerOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	var orderedTickets []*chain.Ticket
+
+	for _, ticketValue := range orderedTicketValues {
+		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
+			kg.callerOpts,
+			ticketValue,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		ticket := &chain.Ticket{
+			Value: ticketValue,
+			Proof: &chain.TicketProof{
+				StakerValue:        stakerValue,
+				VirtualStakerIndex: virtualStakerIndex,
+			},
+		}
+
+		orderedTickets = append(orderedTickets, ticket)
+	}
+	return orderedTickets, nil
 }
 
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {

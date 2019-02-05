@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -144,21 +144,60 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 	return groupRegistrationPromise
 }
 
-// TODO: implement
-func (ec *ethereumChain) SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise {
-	return &async.GroupTicketPromise{}
+func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
+	submittedTicketPromise := &async.GroupTicketPromise{}
+
+	_, err := ec.keepGroupContract.SubmitTicket(ticket)
+	if err != nil {
+		failErr := submittedTicketPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v]\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	// TODO: fulfill when submitted
+
+	return submittedTicketPromise
 }
 
-// TODO: implement
 func (ec *ethereumChain) SubmitChallenge(
-	ticket *groupselection.TicketChallenge,
+	ticketValue *big.Int,
 ) *async.GroupTicketChallengePromise {
-	return &async.GroupTicketChallengePromise{}
+	submittedChallengePromise := &async.GroupTicketChallengePromise{}
+	failPromise := func(err error) {
+		failErr := submittedChallengePromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	_, err := ec.keepGroupContract.SubmitChallenge(ticketValue)
+	if err != nil {
+		failPromise(err)
+	}
+
+	// TODO: fulfill when submitted
+
+	return submittedChallengePromise
 }
 
-// TODO: implement
-func (ec *ethereumChain) GetOrderedTickets() []*groupselection.Ticket {
-	return make([]*groupselection.Ticket, 0)
+func (ec *ethereumChain) GetOrderedTickets() ([]*chain.Ticket, error) {
+	orderedTickets, err := ec.keepGroupContract.OrderedTickets()
+	if err != nil {
+		return nil, err
+	}
+
+	return orderedTickets, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(

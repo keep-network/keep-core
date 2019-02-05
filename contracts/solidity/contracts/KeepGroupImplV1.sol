@@ -91,14 +91,6 @@ contract KeepGroupImplV1 is Ownable {
             revert("Ticket submission period is over.");
         }
 
-        if (block.number > _submissionStart + _timeoutInitial && _tickets.length >= _groupSize) {
-            revert("Initial submission period is over with enough tickets received.");
-        }
-
-        if (block.number < _submissionStart + _timeoutInitial && ticketValue > naturalThreshold()) {
-            revert("Ticket must be below natural threshold during initial submission period.");
-        }
-
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
@@ -115,6 +107,26 @@ contract KeepGroupImplV1 is Ownable {
      */
     function orderedTickets() public view returns (uint256[]) {
         return UintArrayUtils.sort(_tickets);
+    }
+
+    /**
+     * @dev Gets selected tickets in ascending order.
+     */
+    function selectedTickets() public view returns (uint256[]) {
+
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        uint256[] memory ordered = orderedTickets();
+        uint256[] memory selected = new uint256[](_groupSize);
+
+        for (uint i = 0; i < _groupSize; i++) {
+            selected[i] = ordered[i];
+        }
+
+        return selected;
     }
 
     /**
