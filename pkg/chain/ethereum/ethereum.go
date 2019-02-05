@@ -220,8 +220,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	generatedEntry := make(chan *event.Entry)
 
 	subscription, err := ec.OnRelayEntryGenerated(
-		func(event *event.Entry) {
-			generatedEntry <- event
+		func(onChainEvent *event.Entry) {
+			generatedEntry <- onChainEvent
 		},
 	)
 	if err != nil {
@@ -371,8 +371,8 @@ func (ec *ethereumChain) RequestRelayEntry(
 	requestedEntry := make(chan *event.Request)
 
 	subscription, err := ec.OnRelayEntryRequested(
-		func(event *event.Request) {
-			requestedEntry <- event
+		func(onChainEvent *event.Request) {
+			requestedEntry <- onChainEvent
 		},
 	)
 	if err != nil {
@@ -453,8 +453,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	publishedResult := make(chan *event.DKGResultPublication)
 
 	subscription, err := ec.OnDKGResultPublished(
-		func(event *event.DKGResultPublication) {
-			publishedResult <- event
+		func(onChainEvent *event.DKGResultPublication) {
+			publishedResult <- onChainEvent
 		},
 	)
 	if err != nil {
