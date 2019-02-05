@@ -236,7 +236,7 @@ func initChainHandle(threshold, groupSize int) (
 	initialBlock int,
 	err error,
 ) {
-	chainHandle = local.Connect(groupSize, threshold)
+	chainHandle = local.Connect(groupSize, threshold, big.NewInt(200))
 	blockCounter, err = chainHandle.BlockCounter()
 	if err != nil {
 		return nil, nil, -1, err

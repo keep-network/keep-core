@@ -7,9 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // keepGroup connection information for interface to KeepGroup contract.
@@ -186,6 +187,56 @@ func (kg *keepGroup) HasMinimumStake(
 	return kg.caller.HasMinimumStake(kg.callerOpts, address)
 }
 
+func (kg *keepGroup) SubmitTicket(
+	ticket *relaychain.Ticket,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitTicket(
+		kg.transactorOpts,
+		ticket.Value,
+		ticket.Proof.StakerValue,
+		ticket.Proof.VirtualStakerIndex,
+	)
+}
+
+func (kg *keepGroup) SubmitChallenge(
+	ticketValue *big.Int,
+) (*types.Transaction, error) {
+	return kg.transactor.Challenge(
+		kg.transactorOpts,
+		ticketValue,
+	)
+}
+
+func (kg *keepGroup) OrderedTickets() ([]*chain.Ticket, error) {
+	orderedTicketValues, err := kg.caller.OrderedTickets(kg.callerOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	var orderedTickets []*chain.Ticket
+
+	for _, ticketValue := range orderedTicketValues {
+		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
+			kg.callerOpts,
+			ticketValue,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		ticket := &chain.Ticket{
+			Value: ticketValue,
+			Proof: &chain.TicketProof{
+				StakerValue:        stakerValue,
+				VirtualStakerIndex: virtualStakerIndex,
+			},
+		}
+
+		orderedTickets = append(orderedTickets, ticket)
+	}
+	return orderedTickets, nil
+}
+
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
 }
@@ -209,10 +260,10 @@ type dkgResultPublishedEventFunc func(requestID *big.Int)
 func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
 	fail errorCallback,
-) (event.Subscription, error) {
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.KeepGroupImplV1DkgResultPublishedEvent)
 	eventSubscription, err := kg.contract.WatchDkgResultPublishedEvent(
-		&bind.WatchOpts{},
+		nil,
 		eventChan,
 	)
 	if err != nil {
@@ -235,11 +286,12 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 
 			case err := <-eventSubscription.Err():
 				fail(err)
+				return
 			}
 		}
 	}()
 
-	return event.NewSubscription(func() {
+	return subscription.NewEventSubscription(func() {
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}), nil
