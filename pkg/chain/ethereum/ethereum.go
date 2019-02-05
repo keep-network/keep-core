@@ -217,15 +217,15 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}
 
-	generated := make(chan *event.Entry)
+	generatedEntry := make(chan *event.Entry)
 
 	subscription, err := ec.OnRelayEntryGenerated(
 		func(event *event.Entry) {
-			generated <- event
+			generatedEntry <- event
 		},
 	)
 	if err != nil {
-		close(generated)
+		close(generatedEntry)
 		failPromise(err)
 		return relayEntryPromise
 	}
@@ -233,10 +233,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-generated:
+			case event := <-generatedEntry:
 				if event.RequestID == newEntry.RequestID {
 					subscription.Unsubscribe()
-					close(generated)
+					close(generatedEntry)
 
 					err := relayEntryPromise.Fulfill(event)
 					if err != nil {
@@ -261,7 +261,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	)
 	if err != nil {
 		subscription.Unsubscribe()
-		close(generated)
+		close(generatedEntry)
 		failPromise(err)
 	}
 
