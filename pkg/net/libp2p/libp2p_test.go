@@ -77,10 +77,9 @@ func TestSendReceive(t *testing.T) {
 	defer cancel()
 
 	var (
-		config             = generateDeterministicNetworkConfig(t)
-		name               = "testchannel"
-		expectedPayload    = "some text"
-		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
+		config          = generateDeterministicNetworkConfig(t)
+		name            = "testchannel"
+		expectedPayload = "some text"
 	)
 
 	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
@@ -109,13 +108,6 @@ func TestSendReceive(t *testing.T) {
 
 	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
-	); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := broadcastChannel.RegisterIdentifier(
-		networkIdentity(identity.id),
-		protocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
 	}
