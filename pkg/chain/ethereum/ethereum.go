@@ -450,15 +450,15 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}
 
-	published := make(chan *event.DKGResultPublication)
+	publishedResult := make(chan *event.DKGResultPublication)
 
 	subscription, err := ec.OnDKGResultPublished(
 		func(event *event.DKGResultPublication) {
-			published <- event
+			publishedResult <- event
 		},
 	)
 	if err != nil {
-		close(published)
+		close(publishedResult)
 		failPromise(err)
 		return resultPublicationPromise
 	}
@@ -466,10 +466,10 @@ func (ec *ethereumChain) SubmitDKGResult(
 	go func() {
 		for {
 			select {
-			case event := <-published:
+			case event := <-publishedResult:
 				if event.RequestID == requestID {
 					subscription.Unsubscribe()
-					close(published)
+					close(publishedResult)
 
 					err := resultPublicationPromise.Fulfill(event)
 					if err != nil {
@@ -489,7 +489,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	_, err = ec.keepGroupContract.SubmitDKGResult(requestID, result)
 	if err != nil {
 		subscription.Unsubscribe()
-		close(published)
+		close(publishedResult)
 		failPromise(err)
 	}
 
