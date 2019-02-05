@@ -47,7 +47,6 @@ func TestExecuteDKGLocal(t *testing.T) {
 	errors := make([]chan error, groupSize)
 	for index := range errors {
 		errors[index] = make(chan error)
-		defer close(errors[index])
 
 		go func(i int) {
 			errors[i] <- executeDKG(i)
@@ -56,6 +55,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 
 	for index := range errors {
 		err := <-errors[index]
+		defer close(errors[index])
 
 		if err != nil {
 			t.Errorf("unexpected error: [%v]",
