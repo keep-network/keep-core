@@ -81,7 +81,6 @@ func (pm *Publisher) publishResult(
 	chainRelay relayChain.Interface,
 ) (int, error) {
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
-	defer close(onPublishedResultChan)
 
 	subscription, err := chainRelay.OnDKGResultPublished(
 		func(publishedResult *event.DKGResultPublication) {
@@ -90,6 +89,7 @@ func (pm *Publisher) publishResult(
 	)
 	defer subscription.Unsubscribe()
 	if err != nil {
+		close(onPublishedResultChan)
 		return -1, fmt.Errorf(
 			"could not watch for DKG result publications [%v]",
 			err,
@@ -100,6 +100,7 @@ func (pm *Publisher) publishResult(
 	// request ID.
 	alreadyPublished, err := chainRelay.IsDKGResultPublished(pm.RequestID)
 	if err != nil {
+		close(onPublishedResultChan)
 		return -1, fmt.Errorf(
 			"could not check if the result is already published [%v]",
 			err,
@@ -108,6 +109,7 @@ func (pm *Publisher) publishResult(
 
 	// Someone who was ahead of us in the queue published the result. Giving up.
 	if alreadyPublished {
+		close(onPublishedResultChan)
 		return -1, nil
 	}
 
@@ -117,6 +119,7 @@ func (pm *Publisher) publishResult(
 		(pm.publishingIndex - 1) * pm.blockStep,
 	)
 	if err != nil {
+		close(onPublishedResultChan)
 		return -1, fmt.Errorf("block waiter failure [%v]", err)
 	}
 
@@ -126,13 +129,19 @@ func (pm *Publisher) publishResult(
 			errorChannel := make(chan error)
 			defer close(errorChannel)
 
-			chainRelay.SubmitDKGResult(pm.RequestID, result).
-				OnComplete(func(resultPublicationEvent *event.DKGResultPublication, err error) {
-					errorChannel <- err
-				})
+			chainRelay.
+				SubmitDKGResult(pm.RequestID, result).
+				OnComplete(
+					func(
+						resultPublicationEvent *event.DKGResultPublication,
+						err error,
+					) {
+						errorChannel <- err
+					})
 			return blockHeight, <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
+				close(onPublishedResultChan)
 				return -1, nil // leave without publishing the result
 			}
 		}
