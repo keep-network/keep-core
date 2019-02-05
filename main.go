@@ -77,6 +77,11 @@ ENVIRONMENT VARIABLES:
    KEEP_ETHEREUM_RANDOM_BEACON_CONTRACT  random beacon contract address
    KEEP_ETHEREUM_KEEP_GROUP_CONTRACT     group contract address
    KEEP_ETHEREUM_STAKING_PROXY_CONTRACT  staking proxy contract
+   KEEP_ETHEREUM_URL                     Ethereum connection URL
+   KEEP_ETHEREUM_URL_RPC                 Ethereum RPC connection URL
+   KEEP_LIBP2P_PORT                      LibP2P port number
+   KEEP_LIBP2P_PEERS                     LibP2p peer list
+   KEEP_LIBP2P_SEED                      LibP2p seed number
 `, cli.AppHelpTemplate)
 
 	err := app.Run(os.Args)
