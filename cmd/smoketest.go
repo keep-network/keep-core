@@ -106,8 +106,10 @@ func SmokeTest(c *cli.Context) error {
 	}
 
 	fmt.Println("Submit relay entry...")
+	requestID := big.NewInt(1)
+
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(1),
+		RequestID:     requestID,
 		Value:         big.NewInt(11),
 		Seed:          big.NewInt(111),
 		PreviousEntry: big.NewInt(0),
@@ -121,6 +123,8 @@ func SmokeTest(c *cli.Context) error {
 				dkgResultPublication.RequestID,
 			))
 		}
+
+		fmt.Printf("Published DKG Result: %+v\n", dkgResultPublication)
 
 		// TODO We can cancel the context after we are sure that all validation passed
 		// Need to revisit this part after Phase 14 is implemented. Currently
