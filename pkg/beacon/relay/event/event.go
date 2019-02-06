@@ -15,6 +15,7 @@ type Entry struct {
 	GroupID       *big.Int
 	PreviousEntry *big.Int
 	Timestamp     time.Time
+	Seed          *big.Int
 }
 
 // Request represents a request for an entry in the threshold relay.
@@ -42,6 +43,17 @@ type DKGResultPublication struct {
 }
 
 // DKGResultVote is the data used in a voting event.
-type DKGResultVote struct {
-	RequestID *big.Int
+// OLD: type DKGResultVote struct {
+// OLD:	RequestID *big.Int
+
+// GroupTicketSubmission represents a group selection ticket
+// submission event.
+type GroupTicketSubmission struct {
+	TicketValue *big.Int
+}
+
+// GroupTicketChallengeSubmission represents a group selection ticket
+// challenge submission event.
+type GroupTicketChallengeSubmission struct {
+	TicketValue *big.Int
 }

@@ -2,27 +2,12 @@ package beacon
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-)
-
-type participantState int
-
-const (
-	unstaked participantState = iota
-	staked
-	waitingForGroup
-	inIncompleteGroup
-	inCompleteGroup
-	inInitializingGroup
-	inInitializedGroup
-	inActivatingGroup
-	inActiveGroup
 )
 
 // Initialize kicks off the random beacon by initializing internal state,
@@ -42,11 +27,6 @@ func Initialize(
 		return err
 	}
 
-	curParticipantState, err := checkParticipantState()
-	if err != nil {
-		panic(fmt.Sprintf("Could not resolve current relay state, aborting: [%s]", err))
-	}
-
 	staker, err := stakeMonitor.StakerFor(stakingID)
 	if err != nil {
 		return err
@@ -59,33 +39,27 @@ func Initialize(
 		chainConfig,
 	)
 
-	switch curParticipantState {
-	case unstaked:
-		// check for stake command-line parameter to initialize staking?
-		return fmt.Errorf("account is unstaked")
-	default:
-		relayChain.OnRelayEntryRequested(func(request *event.Request) {
-			node.GenerateRelayEntryIfEligible(request, relayChain)
-		})
+	relayChain.OnRelayEntryRequested(func(request *event.Request) {
+		node.GenerateRelayEntryIfEligible(request, relayChain)
+	})
 
-		relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-			node.JoinGroupIfEligible(relayChain, entry.Value)
-		})
+	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
+		// new entry generated, try to join the group
+		node.SubmitTicketsForGroupSelection(
+			relayChain,
+			blockCounter,
+			entry.Value.Bytes(),
+			entry.RequestID,
+			entry.Seed,
+		)
+	})
 
-		relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-			node.RegisterGroup(
-				registration.RequestID.String(),
-				registration.GroupPublicKey,
-			)
-		})
-
-	}
-
-	<-ctx.Done()
+	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+		node.RegisterGroup(
+			registration.RequestID.String(),
+			registration.GroupPublicKey,
+		)
+	})
 
 	return nil
-}
-
-func checkParticipantState() (participantState, error) {
-	return staked, nil
 }

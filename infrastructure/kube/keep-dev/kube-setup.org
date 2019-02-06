@@ -1,0 +1,422 @@
+* Intro
+
+This document details the steps for boostrapping the GKE cluster
+applications in the =keep-dev= project.  While we continue to
+hand configure the environment this document will serve as 
+command reference and maintenance record.
+
+
+* First time with this environment
+
+- You need to be a member of the project =keep-dev-fe24=.
+
+- You need to configure =gcloud= for the project
+  - Select option 2
+  - Configure project =keep-dev-fe24=
+  - default zone us-central1-a
+
+#+BEGIN_EXAMPLE
+gcloud init
+#+END_EXAMPLE
+
+- Download =kubectl= config for GKE cluster
+
+#+BEGIN_SRC sh :results silent
+gcloud beta container clusters get-credentials keep-dev --region us-central1
+#+END_SRC
+
+
+* Working with this environment
+
+- Set your =gcloud= context.  You can run =gcloud init= again and
+  choose your saved =keep-dev= profile.
+
+- Set your =kubectl= context.
+
+#+BEGIN_SRC sh :results silent
+kubectl config get-contexts \
+  | grep keep-dev \
+  | awk '{print $2}' \
+  | xargs kubectl config use-context
+#+END_SRC
+
+
+* Cluster-wide configurations
+
+** Secrets
+*** DONE Terraform env vars
+**** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret generic terraform-env-vars \
+  --from-file=./secrets/terraform-env-vars/billing-account \
+  --from-file=./secrets/terraform-env-vars/org-id
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec 17 20:07:34 UTC 2018
+: sthompson22
+: secret/terraform-env-vars created
+
+*** DONE Terraform service account
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret generic terraform-admin-service-account \
+  --from-file=$HOME/.config/gcloud/thesis-terraform-admin-service-account-creds.json
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec 17 20:07:04 UTC 2018
+: sthompson22
+: secret/terraform-admin-service-account created
+
+
+* Application configurations
+
+** DONE Atlantis
+
+Atlantis is our tool for running terraform =plan= and =apply= runs in
+prs.
+|--------------+-----------------------------|
+|              | <l>                         |
+| Image        | runatlantis/atlantis:latest |
+| Service Type | NodePort                    |
+| Node Port    | 30885                       |
+| Service Port | 8443                        |
+| Ingress Type | GCE                         |
+| Ingress Port | 443                         |
+
+
+*** DONE Stateful set
+**** DONE Describe
+
+#+BEGIN_SRC sh :results drawer
+date -u
+whoami
+
+kubectl describe \
+  statefulset/atlantis
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Mon Dec 17 21:05:16 UTC 2018
+sthompson22
+Name:               atlantis
+Namespace:          default
+CreationTimestamp:  Mon, 17 Dec 2018 15:54:08 -0500
+Selector:           app=atlantis
+Labels:             <none>
+Annotations:        <none>
+Replicas:           1 desired | 1 total
+Update Strategy:    RollingUpdate
+Pods Status:        1 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=atlantis
+  Containers:
+   atlantis:
+    Image:      runatlantis/atlantis:latest
+    Port:       8443/TCP
+    Host Port:  0/TCP
+    Limits:
+      cpu:     100m
+      memory:  256Mi
+    Requests:
+      cpu:      100m
+      memory:   256Mi
+    Liveness:   http-get https://:8443/healthz delay=0s timeout=1s period=60s #success=1 #failure=3
+    Readiness:  http-get https://:8443/healthz delay=0s timeout=1s period=60s #success=1 #failure=3
+    Environment:
+      GOOGLE_APPLICATION_CREDENTIALS:     /mnt/terraform-admin-service-account/thesis-terraform-admin-service-account-creds.json
+      ATLANTIS_ALLOW_REPO_CONFIG:         true
+      ATLANTIS_ATLANTIS_URL:              https://atlantis.keep-dev.com
+      ATLANTIS_SSL_CERT_FILE:             /atlantis/tls/tls.crt
+      ATLANTIS_SSL_KEY_FILE:              /atlantis/tls/tls.key
+      ATLANTIS_REPO_WHITELIST:            github.com/keep-network/keep-core
+      ATLANTIS_GH_USER:                   thesis-heimdall
+      ATLANTIS_GH_TOKEN:                  <set to the key 'gh-access-token' in secret 'atlantis-git'>    Optional: false
+      ATLANTIS_GH_WEBHOOK_SECRET:         <set to the key 'gh-webhook-secret' in secret 'atlantis-git'>  Optional: false
+      ATLANTIS_DATA_DIR:                  /atlantis
+      ATLANTIS_PORT:                      8443
+      TF_VAR_gcp_thesis_org_id:           <set to the key 'org-id' in secret 'terraform-env-vars'>           Optional: false
+      TF_VAR_gcp_thesis_billing_account:  <set to the key 'billing-account' in secret 'terraform-env-vars'>  Optional: false
+    Mounts:
+      /atlantis from atlantis-data (rw)
+      /atlantis/tls from atlantis-tls-files (rw)
+      /mnt/terraform-admin-service-account from terraform-admin-service-account (rw)
+  Volumes:
+   atlantis-tls-files:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  atlantis-tls
+    Optional:    false
+   terraform-admin-service-account:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  terraform-admin-service-account
+    Optional:    false
+Volume Claims:
+  Name:          atlantis-data
+  StorageClass:  
+  Labels:        <none>
+  Annotations:   <none>
+  Capacity:      1Gi
+  Access Modes:  [ReadWriteOnce]
+Events:
+  Type    Reason            Age   From                    Message
+  ----    ------            ----  ----                    -------
+  Normal  SuccessfulCreate  11m   statefulset-controller  create Pod atlantis-0 in StatefulSet atlantis successful
+:END:
+
+**** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create \
+  -f ./atlantis-statefulset.yaml
+#+END_SRC
+
+#+RESULTS:
+: Fri Nov  2 15:11:58 UTC 2018
+: sthompson22
+: statefulset.apps/atlantis created
+
+**** DONE Update
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl apply \
+  -f ./atlantis-statefulset.yaml
+#+END_SRC
+
+#+RESULTS:
+: Fri Nov  2 21:01:47 UTC 2018
+: sthompson22
+: statefulset.apps/atlantis configured
+
+**** TODO Delete
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl delete \
+  statefulset/<insert-name>
+#+END_SRC
+*** DONE Service
+**** DONE Describe
+
+#+BEGIN_SRC sh :results drawer
+date -u
+whoami
+
+kubectl describe \
+  service/atlantis-https
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Mon Dec 17 21:05:26 UTC 2018
+sthompson22
+Name:                     atlantis-https
+Namespace:                default
+Labels:                   <none>
+Annotations:              service.alpha.kubernetes.io/app-protocols: {"atlantis-https-port":"HTTPS"}
+Selector:                 app=atlantis
+Type:                     NodePort
+IP:                       10.102.100.120
+Port:                     atlantis-https-port  8443/TCP
+TargetPort:               8443/TCP
+NodePort:                 atlantis-https-port  30885/TCP
+Endpoints:                10.102.1.14:8443
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
+:END:
+
+**** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create \
+  -f ./atlantis-service-https.yaml
+#+END_SRC
+
+#+RESULTS:
+: Fri Nov  2 15:13:31 UTC 2018
+: sthompson22
+: service/atlantis-https created
+
+**** TODO Update
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl apply \
+  -f ./atlantis-service-https.yaml
+#+END_SRC
+**** TODO Delete
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl delete \
+  service/<insert service name>
+#+END_SRC
+*** DONE Ingress
+**** DONE Describe
+
+#+BEGIN_SRC sh :results drawer
+date -u
+whoami
+
+kubectl describe \
+  ingress/atlantis-https
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Tue Jan 15 14:52:42 UTC 2019
+sthompson22
+Name:             atlantis-https
+Namespace:        default
+Address:          35.244.176.50
+Default backend:  atlantis-https:8443 (10.102.1.27:8443)
+TLS:
+  atlantis-tls terminates 
+Rules:
+  Host  Path  Backends
+  ----  ----  --------
+  *     *     atlantis-https:8443 (10.102.1.27:8443)
+Annotations:
+  kubectl.kubernetes.io/last-applied-configuration:  {"apiVersion":"extensions/v1beta1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.allow-http":"false","kubernetes.io/ingress.class":"gce","kubernetes.io/ingress.global-static-ip-name":"keep-dev-atlantis-external-ip-0"},"name":"atlantis-https","namespace":"default"},"spec":{"backend":{"serviceName":"atlantis-https","servicePort":8443},"tls":[{"hosts":null,"secretName":"atlantis-tls"}]}}
+
+  ingress.kubernetes.io/https-target-proxy:     k8s-tps-default-atlantis-https--2233353f8ad2173d
+  ingress.kubernetes.io/ssl-cert:               k8s-ssl-9fac3675b9472b1a-62b905f879ee5ad1--2233353f8ad2173d
+  ingress.kubernetes.io/url-map:                k8s-um-default-atlantis-https--2233353f8ad2173d
+  kubernetes.io/ingress.allow-http:             false
+  kubernetes.io/ingress.class:                  gce
+  kubernetes.io/ingress.global-static-ip-name:  keep-dev-atlantis-external-ip-0
+  ingress.kubernetes.io/backends:               {"k8s-be-30885--2233353f8ad2173d":"HEALTHY"}
+  ingress.kubernetes.io/https-forwarding-rule:  k8s-fws-default-atlantis-https--2233353f8ad2173d
+Events:                                         <none>
+:END:
+
+**** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create \
+  -f ./atlantis-ingress-https.yaml
+#+END_SRC
+
+#+RESULTS:
+: Fri Nov  2 15:52:01 UTC 2018
+: sthompson22
+: ingress.extensions/atlantis-https created
+
+**** DONE Update
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl apply \
+  -f ./atlantis-ingress-https.yaml
+#+END_SRC
+
+#+RESULTS:
+: Tue Jan 15 14:50:25 UTC 2019
+: sthompson22
+: ingress.extensions/atlantis-https configured
+
+**** TODO Delete
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl delete \
+  ingress/atlantis-https
+#+END_SRC
+*** DONE Secrets
+**** DONE atlantis-git
+***** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret generic atlantis-git \
+  --from-file=./secrets/atlantis/gh-webhook-secret \
+  --from-file=./secrets/atlantis/gh-access-token
+#+END_SRC
+
+#+RESULTS:
+: Mon Dec 17 20:12:37 UTC 2018
+: sthompson22
+: secret/atlantis-git created
+***** DONE Update
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret generic atlantis-git \
+  --from-file=./secrets/atlantis/gh-webhook-secret \
+  --from-file=./secrets/atlantis/gh-access-token \
+  --dry-run \
+  --save-config \
+  -o yaml | kubectl apply -f -
+#+END_SRC
+
+#+RESULTS:
+: Fri Jan 11 21:12:12 UTC 2019
+: sthompson22
+: secret/atlantis-git configured
+
+**** DONE atlantis-gitconfig
+***** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret generic atlantis-gitconfig \
+  --from-file=./secrets/atlantis/.gitconfig
+#+END_SRC
+
+#+RESULTS:
+: Fri Jan 11 21:19:50 UTC 2019
+: sthompson22
+: secret/atlantis-gitconfig created
+
+**** DONE atlantis-tls
+***** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret tls atlantis-tls \
+  --cert=./secrets/atlantis/atlantis.keep-dev.crt \
+  --key=./secrets/atlantis/atlantis.keep-dev.key
+#+END_SRC     
+
+#+RESULTS:
+: Mon Dec 17 20:17:47 UTC 2018
+: sthompson22
+: secret/atlantis-tls created

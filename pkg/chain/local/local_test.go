@@ -12,11 +12,42 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
+func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
+	c := Connect(10, 4, big.NewInt(200))
+	chain := c.ThresholdRelay()
+
+	ticket1 := &relaychain.Ticket{Value: big.NewInt(1)}
+	ticket2 := &relaychain.Ticket{Value: big.NewInt(2)}
+	ticket3 := &relaychain.Ticket{Value: big.NewInt(3)}
+	ticket4 := &relaychain.Ticket{Value: big.NewInt(4)}
+
+	chain.SubmitTicket(ticket3)
+	chain.SubmitTicket(ticket1)
+	chain.SubmitTicket(ticket4)
+	chain.SubmitTicket(ticket2)
+
+	expectedResult := []*relaychain.Ticket{
+		ticket1, ticket2, ticket3, ticket4,
+	}
+
+	actualResult, err := chain.GetOrderedTickets()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(expectedResult, actualResult) {
+		t.Fatalf(
+			"\nexpected: %v\nactual:   %v\n",
+			expectedResult,
+			actualResult,
+		)
+	}
+}
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
 			RequestID: big.NewInt(int64(19)),
@@ -79,7 +110,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 		test := test
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			c := Connect(10, 4)
+			c := Connect(10, 4, big.NewInt(200))
 			countWait, err := c.BlockCounter()
 			if err != nil {
 				t.Fatalf("failed to set up block counter: [%v]", err)
@@ -118,9 +149,10 @@ func TestLocalBlockWaiter(t *testing.T) {
 func TestLocalIsDKGResultPublished(t *testing.T) {
 	submittedResults := make(map[string][]*relaychain.DKGResult)
 
-	submittedRequestID1 := big.NewInt(1)
-	submittedResult1 := &relaychain.DKGResult{
-		GroupPublicKey: []byte{11},
+	submittedRequestID := big.NewInt(1)
+	submittedResult := &relaychain.DKGResult{
+		GroupPublicKey: [32]byte{11},
+
 	}
 
 	submittedResults[submittedRequestID1.String()] = append(
@@ -189,6 +221,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	requestID1 := big.NewInt(1)
 	submittedResult1 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
+
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
@@ -271,18 +304,21 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	relay := localChain.ThresholdRelay()
 
 	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
-	subscription := localChain.OnDKGResultPublished(
+	subscription, err := localChain.OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication) {
 			dkgResultPublicationChan <- dkgResultPublication
 		},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Unsubscribe from the event - from this point, callback should
 	// never be called.
 	subscription.Unsubscribe()
 
 	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
-		GroupPublicKey: []byte{88},
+		GroupPublicKey: [32]byte{88},
 	})
 
 	select {

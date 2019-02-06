@@ -69,7 +69,7 @@ func pingRequest(c *cli.Context) error {
 	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBootstrapPeerNetworkKey()
 	standardPeerPrivKey, standardPeerPubKey := getStandardPeerNetworkKey()
 
-	stakeMonitor := local.NewStakeMonitor()
+	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
 
 	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
 		bootstrapPeerPubKey,
@@ -126,13 +126,6 @@ func pingRequest(c *cli.Context) error {
 	}
 	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &PongMessage{} },
-	); err != nil {
-		return err
-	}
-
-	if err := broadcastChannel.RegisterIdentifier(
-		netProvider.ID(),
-		netProvider.ID().String(),
 	); err != nil {
 		return err
 	}

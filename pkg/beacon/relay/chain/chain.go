@@ -5,8 +5,8 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // RelayEntryInterface defines the subset of the relay chain interface that
@@ -21,38 +21,56 @@ type RelayEntryInterface interface {
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
-
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(func(entry *event.Entry))
+	OnRelayEntryGenerated(
+		func(entry *event.Entry),
+	) (subscription.EventSubscription, error)
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(func(request *event.Request))
+	OnRelayEntryRequested(
+		func(request *event.Request),
+	) (subscription.EventSubscription, error)
+}
+
+// GroupSelectionInterface defines the subset of the relay chain interface that
+// pertains to relay group selection activities.
+type GroupSelectionInterface interface {
+	// SubmitTicket submits a ticket corresponding to the virtual staker to
+	// the chain, and returns a promise to track the submission. The promise
+	// is fulfilled with the entry as seen on-chain, or failed if there is an
+	// error submitting the entry.
+	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
+	// SubmitChallenge submits a challenge corresponding to a ticket that
+	// fails `costlyCheck`, and returns a promise to track the challenge
+	// submission. The promise is fulfilled with the challenge as seen on-chain,
+	// or failed if there is an error submitting the entry.
+	SubmitChallenge(ticketValue *big.Int) *async.GroupTicketChallengePromise
+	// GetOrderedTickets returns submitted tickets which have passed checks
+	// on-chain.
+	GetOrderedTickets() ([]*Ticket, error)
+}
+
+// GroupRegistrationInterface defines the subset of the relay chain interface
+// that pertains to relay group registration activities.
+type GroupRegistrationInterface interface {
+	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
+	// associated with a request with id requestID. On-chain errors are reported
+	// through the promise.
+	SubmitGroupPublicKey(
+		requestID *big.Int,
+		key [96]byte,
+	) *async.GroupRegistrationPromise
+	// OnGroupRegistered is a callback that is invoked when an on-chain
+	// notification of a new, valid group being registered is seen.
+	OnGroupRegistered(func(key *event.GroupRegistration))
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains
 // specifically to relay group management.
 type GroupInterface interface {
-	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
-	// associated with a request with id requestID. On-chain errors are reported
-	// through the promise.
-	SubmitGroupPublicKey(requestID *big.Int, key [96]byte) *async.GroupRegistrationPromise
-	// OnGroupRegistered is a callback that is invoked when an on-chain
-	// notification of a new, valid group being registered is seen.
-	OnGroupRegistered(func(key *event.GroupRegistration))
-	// SubmitTicket submits a ticket corresponding to the virtual staker to
-	// the chain, and returns a promise to track the submission. The promise
-	// is fulfilled with the entry as seen on-chain, or failed if there is an
-	// error submitting the entry.
-	SubmitTicket(ticket *groupselection.Ticket) *async.GroupTicketPromise
-	// SubmitChallenge submits a challenge corresponding to a ticket that
-	// fails `costlyCheck`, and returns a promise to track the challenge
-	// submission. The promise is fulfilled with the challenge as seen on-chain,
-	// or failed if there is an error submitting the entry.
-	SubmitChallenge(ticket *groupselection.TicketChallenge) *async.GroupTicketChallengePromise
-	// GetOrderedTickets returns submitted tickets which have passed checks
-	// on-chain.
-	GetOrderedTickets() []*groupselection.Ticket
+	GroupSelectionInterface
+	GroupRegistrationInterface
 }
 
 // DistributedKeyGenerationInterface defines the subset of the relay chain
@@ -60,11 +78,16 @@ type GroupInterface interface {
 // generation process.
 type DistributedKeyGenerationInterface interface {
 	// SubmitDKGResult sends DKG result to a chain.
-	SubmitDKGResult(requestID *big.Int, dkgResult *DKGResult) *async.DKGResultPublicationPromise
+	SubmitDKGResult(
+		requestID *big.Int,
+		dkgResult *DKGResult,
+	) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished is a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
-	OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication)) event.Subscription
-	// GetDKGSubmissions returns the entire set of submissions that is related
+	OnDKGResultPublished(
+		func(dkgResultPublication *event.DKGResultPublication),
+	) (subscription.EventSubscription, error)
+  // GetDKGSubmissions returns the entire set of submissions that is related
 	// to a particular requestID.
 	GetDKGSubmissions(requestID *big.Int) *DKGSubmissions
 	// DKGResultVote increases the number of votes for a dkgResultHash.
@@ -80,7 +103,7 @@ type DistributedKeyGenerationInterface interface {
 // the anchoring blockchain on.
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
-	GetConfig() (config.Chain, error)
+	GetConfig() (*config.Chain, error)
 
 	GroupInterface
 	RelayEntryInterface
