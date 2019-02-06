@@ -87,8 +87,8 @@ func (pm *Publisher) publishResult(
 			onPublishedResultChan <- publishedResult
 		},
 	)
-	defer subscription.Unsubscribe()
 	if err != nil {
+		subscription.Unsubscribe()
 		close(onPublishedResultChan)
 		return -1, fmt.Errorf(
 			"could not watch for DKG result publications [%v]",
@@ -100,6 +100,7 @@ func (pm *Publisher) publishResult(
 	// request ID.
 	alreadyPublished, err := chainRelay.IsDKGResultPublished(pm.RequestID)
 	if err != nil {
+		subscription.Unsubscribe()
 		close(onPublishedResultChan)
 		return -1, fmt.Errorf(
 			"could not check if the result is already published [%v]",
@@ -109,6 +110,7 @@ func (pm *Publisher) publishResult(
 
 	// Someone who was ahead of us in the queue published the result. Giving up.
 	if alreadyPublished {
+		subscription.Unsubscribe()
 		close(onPublishedResultChan)
 		return -1, nil
 	}
@@ -119,6 +121,7 @@ func (pm *Publisher) publishResult(
 		(pm.publishingIndex - 1) * pm.blockStep,
 	)
 	if err != nil {
+		subscription.Unsubscribe()
 		close(onPublishedResultChan)
 		return -1, fmt.Errorf("block waiter failure [%v]", err)
 	}
@@ -129,8 +132,10 @@ func (pm *Publisher) publishResult(
 			errorChannel := make(chan error)
 			defer close(errorChannel)
 
-			chainRelay.
-				SubmitDKGResult(pm.RequestID, result).
+			subscription.Unsubscribe()
+			close(onPublishedResultChan)
+
+			chainRelay.SubmitDKGResult(pm.RequestID, result).
 				OnComplete(
 					func(
 						resultPublicationEvent *event.DKGResultPublication,
@@ -141,6 +146,7 @@ func (pm *Publisher) publishResult(
 			return blockHeight, <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
+				subscription.Unsubscribe()
 				close(onPublishedResultChan)
 				return -1, nil // leave without publishing the result
 			}
