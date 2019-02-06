@@ -6,10 +6,12 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/net"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/urfave/cli"
 )
@@ -114,6 +116,12 @@ func createNode(
 	groupSize int,
 	threshold int,
 ) {
+	toEthereumAddress := func(netID net.TransportIdentifier) string {
+		return common.BytesToAddress(
+			[]byte(netID.String()),
+		).String()
+	}
+
 	chainCounter, err := chainHandle.BlockCounter()
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -134,7 +142,7 @@ func createNode(
 
 	go beacon.Initialize(
 		context,
-		netProvider.ID().String()[:32],
+		toEthereumAddress(netProvider.ID()),
 		chainHandle.ThresholdRelay(),
 		chainCounter,
 		stakeMonitor,
