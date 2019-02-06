@@ -144,7 +144,7 @@ func (c *localChain) SubmitGroupPublicKey(
 }
 
 func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
-	c.tickets = make([]*groupselection.Ticket, 0)
+	c.tickets = make([]*relaychain.Ticket, 0)
 
 	relayEntryPromise := &async.RelayEntryPromise{}
 
