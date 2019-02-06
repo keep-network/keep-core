@@ -98,11 +98,21 @@ type BaseMember interface {
 	MemberID() string
 }
 
+type BlsID bls.ID
+
+func (id *BlsID) String() string {
+	return (*bls.ID)(id).GetDecString()
+}
+
+func (id *BlsID) Raw() *bls.ID {
+	return (*bls.ID)(id)
+}
+
 type memberCore struct {
 	// ID of this group member. Hex number in string form.
 	ID string
 	// The BLS ID of this group member, computed from the ID.
-	BlsID bls.ID
+	BlsID *BlsID
 	// The number of members in the complete group.
 	groupSize int
 	// The BLS IDs of all members of this member's group, including the member
@@ -235,8 +245,8 @@ func NewMember(id string, dishonestThreshold int, groupSize int) (*LocalMember, 
 		)
 	}
 
-	blsID := bls.ID{}
-	err := blsID.SetHexString(id)
+	blsID := new(BlsID)
+	err := blsID.Raw().SetHexString(id)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +358,7 @@ func (lm *LocalMember) InitializeSharing() *SharingMember {
 func (sm *SharingMember) OtherMemberIDs() []*bls.ID {
 	otherIDs := make([]*bls.ID, 0, len(sm.memberIDs)-1)
 	for _, memberID := range sm.memberIDs {
-		if !memberID.IsEqual(&sm.BlsID) {
+		if !memberID.IsEqual(sm.BlsID.Raw()) {
 			otherIDs = append(otherIDs, memberID)
 		}
 	}
@@ -395,7 +405,7 @@ func (sm *SharingMember) SharesComplete() bool {
 // Check whether the given share from the sender to this member is valid with
 // respect to the sender's public commitments as seen by this member.
 func (sm *SharingMember) isValidShare(shareSenderID *bls.ID, share *bls.SecretKey) bool {
-	return sm.isValidShareFor(shareSenderID, &sm.BlsID, share)
+	return sm.isValidShareFor(shareSenderID, sm.BlsID.Raw(), share)
 }
 
 // Check whether the given share from the sender to the receiver is valid with
@@ -448,7 +458,7 @@ func (sm *SharingMember) InitializeJustification() *JustifyingMember {
 // `senderID` against the member with id `accusedID`, claiming the accused sent
 // an invalid share to the sender. The accusation may be against this member.
 func (jm *JustifyingMember) AddAccusationFromID(senderID *bls.ID, accusedID *bls.ID) {
-	if accusedID.IsEqual(&jm.BlsID) {
+	if accusedID.IsEqual(jm.BlsID.Raw()) {
 		jm.accuserIDs = append(jm.accuserIDs, *senderID)
 	} else {
 		existingAccusedIDs, found := jm.pendingJustificationIDs[*senderID]
@@ -490,7 +500,7 @@ func (jm *JustifyingMember) RecordJustificationFromID(accusedID *bls.ID, accuser
 			}
 		}
 
-		if accuserID.IsEqual(&jm.BlsID) {
+		if accuserID.IsEqual(jm.BlsID.Raw()) {
 			// If we originally accused, and the justification is valid, then we
 			// can add the valid entry to our received shares.
 			jm.receivedShares[*accuserID] = secretShare
@@ -539,7 +549,7 @@ func (jm *JustifyingMember) FinalizeMember() (*Member, error) {
 
 	// [GJKR 99], Fig 2, 3
 	groupSecretKeyShare := &bls.SecretKey{}
-	groupSecretKeyShare.SetLittleEndian(jm.SecretShareForID(&jm.BlsID).GetLittleEndian())
+	groupSecretKeyShare.SetLittleEndian(jm.SecretShareForID(jm.BlsID.Raw()).GetLittleEndian())
 	for _, share := range jm.receivedShares {
 		groupSecretKeyShare.Add(share)
 	}

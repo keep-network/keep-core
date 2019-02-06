@@ -4,27 +4,17 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// TransportIdentifier represents the identity of a participant at the transport
-// layer (e.g., libp2p).
+// TransportIdentifier represents a protocol-level identifier. It is an opaque
+// type to the network layer.
 type TransportIdentifier interface {
-	// Returns a string name of the network provider. Expected to be purely
-	// informational.
-	ProviderName() string
-
-	// Returns a string representation of the transport identifier.
 	String() string
 }
-
-// ProtocolIdentifier represents a protocol-level identifier. It is an opaque
-// type to the network layer.
-type ProtocolIdentifier interface{}
 
 // Message represents a message exchanged within the network layer. It carries
 // a sender id for the transport layer and, if available, for the protocol
 // layer. It also carries an unmarshaled payload.
 type Message interface {
 	TransportSenderID() TransportIdentifier
-	ProtocolSenderID() ProtocolIdentifier
 	Payload() interface{}
 	Type() string
 }
@@ -47,7 +37,7 @@ type TaggedMarshaler interface {
 
 // Provider represents an entity that can provide network access.
 //
-// Providers expose the ability to get a amed BroadcastChannel, the ability to
+// Providers expose the ability to get a named BroadcastChannel, the ability to
 // return a provider type, which is an informational string indicating what type
 // of provider this is, the list of IP addresses on which it can listen, and
 // known peers from peer discovery mechanims.
@@ -78,40 +68,15 @@ type TaggedUnmarshaler interface {
 type BroadcastChannel interface {
 	// Name returns the name of this broadcast channel.
 	Name() string
-
 	// Given a message m that can marshal itself to protobuf, broadcast m to
 	// members of the Group through the BroadcastChannel.
 	Send(m TaggedMarshaler) error
-	// Given a recipient and a message m that can marshal itself to protobouf,
-	// send the message to the recipient over the broadcast channel such that
-	// only the recipient can understand it.
-	//
-	// The recipient should be a ProtocolIdentifier registered using
-	// RegisterIdentifier, or a ClientIdentifier used by the network layer.
-	//
-	// Returns an error if the recipient identifier is a ProtocolIdentifier that
-	// does not have an associated ClientIdentifier, or if it is not a
-	// ProtocolIdentifier.
-	SendTo(recipientIdentifier ProtocolIdentifier, m TaggedMarshaler) error
-
-	// RegisterIdentifier associates the given network identifier with a
-	// protocol-specific identifier that will be passed to the receiving code
-	// in HandleMessageFunc.
-	//
-	// Returns an error if either identifier already has an association for
-	// this channel.
-	RegisterIdentifier(
-		networkIdentifier TransportIdentifier,
-		protocolIdentifier ProtocolIdentifier,
-	) error
-
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error
-	// UnregisterRecv takes the type of HandleMessageFunc and returns an error. This function should
-	// be defered.
+	// UnregisterRecv takes the type of HandleMessageFunc and returns an
+	// error. This function should be defered.
 	UnregisterRecv(handlerType string) error
-
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
 	// registered message handling functions. The unmarshaler should be a
