@@ -110,7 +110,7 @@ func SmokeTest(c *cli.Context) error {
 		RequestID:     big.NewInt(1),
 		Value:         big.NewInt(11),
 		Seed:          big.NewInt(111),
-		PreviousValue: big.NewInt(0),
+		PreviousEntry: big.NewInt(0),
 	})
 
 	// TODO Add validations when DKG Phase 14 is implemented.
