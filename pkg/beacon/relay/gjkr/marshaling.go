@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -18,7 +18,7 @@ func (jm *JoinMessage) Type() string {
 // communication.
 func (jm *JoinMessage) Marshal() ([]byte, error) {
 	return (&pb.Join{
-		SenderID: memberIDToBytes(jm.SenderID),
+		SenderID: memberIDToBytes(jm.senderID),
 	}).Marshal()
 }
 
@@ -28,7 +28,7 @@ func (jm *JoinMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	jm.SenderID = bytesToMemberID(pbMsg.SenderID)
+	jm.senderID = bytesToMemberID(pbMsg.SenderID)
 	return nil
 }
 

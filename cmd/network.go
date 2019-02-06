@@ -130,13 +130,6 @@ func pingRequest(c *cli.Context) error {
 		return err
 	}
 
-	if err := broadcastChannel.RegisterIdentifier(
-		netProvider.ID(),
-		netProvider.ID().String(),
-	); err != nil {
-		return err
-	}
-
 	var (
 		pingChan = make(chan net.Message)
 		pongChan = make(chan net.Message)

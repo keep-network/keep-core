@@ -34,10 +34,6 @@ func createIdentity(privateKey libp2pcrypto.PrivKey) (*identity, error) {
 	return &identity{peerID, privateKey.GetPublic(), privateKey}, nil
 }
 
-func (networkIdentity) ProviderName() string {
-	return "libp2p"
-}
-
 func (ni networkIdentity) String() string {
 	return peer.ID(ni).Pretty()
 }
