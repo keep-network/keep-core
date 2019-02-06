@@ -88,7 +88,6 @@ func (pm *Publisher) publishResult(
 		},
 	)
 	if err != nil {
-		subscription.Unsubscribe()
 		close(onPublishedResultChan)
 		return -1, fmt.Errorf(
 			"could not watch for DKG result publications [%v]",
