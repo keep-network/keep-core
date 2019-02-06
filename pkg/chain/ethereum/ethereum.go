@@ -466,7 +466,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	go func() {
 		for {
 			select {
-			case event, isOpen := <-published:
+			case event, isOpen := <-publishedResult:
 				if isOpen && event.RequestID == requestID {
 					subscription.Unsubscribe()
 					close(publishedResult)
