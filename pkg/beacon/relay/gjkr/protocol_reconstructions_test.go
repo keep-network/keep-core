@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -23,9 +23,9 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	disqualifiedSharingMember1 := MemberID(2)
 	disqualifiedSharingMember2 := MemberID(3)
 	disqualifiedNotSharingMember := MemberID(6)
-	member.group.DisqualifyMemberID(disqualifiedSharingMember1)
-	member.group.DisqualifyMemberID(disqualifiedSharingMember2)
-	member.group.DisqualifyMemberID(disqualifiedNotSharingMember)
+	member.group.MarkMemberAsDisqualified(disqualifiedSharingMember1)
+	member.group.MarkMemberAsDisqualified(disqualifiedSharingMember2)
+	member.group.MarkMemberAsDisqualified(disqualifiedNotSharingMember)
 
 	// Simulate a case where member is disqualified in Phase 5.
 	delete(member.receivedValidSharesS, disqualifiedNotSharingMember)
@@ -148,7 +148,7 @@ func generateDisqualifiedEphemeralKeysMessages(
 	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {
 		for _, disqualifiedMember := range disqualifiedMembers {
-			otherMember.group.DisqualifyMemberID(disqualifiedMember.ID)
+			otherMember.group.MarkMemberAsDisqualified(disqualifiedMember.ID)
 		}
 		disqualifiedEphemeralKeysMessage, err := otherMember.RevealDisqualifiedMembersKeys()
 		if err != nil {

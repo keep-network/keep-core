@@ -14,6 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 type localChain struct {
@@ -31,8 +32,8 @@ type localChain struct {
 	submittedResults map[*big.Int][]*relaychain.DKGResult
 
 	handlerMutex                 sync.Mutex
-	relayEntryHandlers           []func(entry *event.Entry)
-	relayRequestHandlers         []func(request *event.Request)
+	relayEntryHandlers           map[int]func(entry *event.Entry)
+	relayRequestHandlers         map[int]func(request *event.Request)
 	groupRegisteredHandlers      []func(key *event.GroupRegistration)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
@@ -182,22 +183,38 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	return relayEntryPromise
 }
 
-func (c *localChain) OnRelayEntryGenerated(handler func(entry *event.Entry)) {
+func (c *localChain) OnRelayEntryGenerated(
+	handler func(entry *event.Entry),
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
-	c.relayEntryHandlers = append(
-		c.relayEntryHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.relayEntryHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.relayEntryHandlers, handlerID)
+	}), nil
 }
 
-func (c *localChain) OnRelayEntryRequested(handler func(request *event.Request)) {
+func (c *localChain) OnRelayEntryRequested(
+	handler func(request *event.Request),
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
-	c.relayRequestHandlers = append(
-		c.relayRequestHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.relayRequestHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.relayRequestHandlers, handlerID)
+	}), nil
 }
 
 func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
@@ -238,6 +255,8 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		groupRelayEntries:            make(map[string]*big.Int),
 		groupRegistrations:           make(map[string][96]byte),
 		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
+		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
+		relayRequestHandlers:         make(map[int]func(request *event.Request)),
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(minimumStake),
@@ -350,14 +369,14 @@ func (c *localChain) SubmitDKGResult(
 
 func (c *localChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
-) (event.Subscription, error) {
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
 	handlerID := rand.Int()
 	c.dkgResultPublicationHandlers[handlerID] = handler
 
-	return event.NewSubscription(func() {
+	return subscription.NewEventSubscription(func() {
 		c.handlerMutex.Lock()
 		defer c.handlerMutex.Unlock()
 
