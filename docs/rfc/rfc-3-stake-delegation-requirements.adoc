@@ -12,8 +12,7 @@ Keep tokens are going to be staked by having token owners delegate their staked
 balance to an operator account and use it to run the Keep Client. The operator
 account cannot access the stake directly, nonetheless, it operates on behalf of
 the owner and bad acting will result in slashing the owners' stake. The operator
-may be a third party, or it may be a different address controlled by the owner,
-or it may be the same address that owns the tokens.
+may be a third party, or it may be a different address controlled by the owner.
 
 The stake delegation will be beneficial for the security of Keep users as it
 allows on-stake operations with a "cold wallet". Thus, putting Keep users
@@ -46,269 +45,13 @@ The goal of this proposal is to specify a simple and secure stake delegation
 mechanism. It should enable Keep users to have their wallets offline and their
 stake operated by operators on their behalf. The Keep client software should
 be able to run without exposing Keep operator's private key and should not
-require the owner's private key at all.
+require the owner's private key at all. The stake delegation should also
+optimize the network throughput without compromising the security of owners
+stake.
 
-=== Option 1: Stake delegation with stake atomicity
 
-==== General requirements:
-1. _owner_ can only have one operator.
-2. _owner_ can only delegate all of his stake.
-3. _operator_ cannot have any stake of his own.
-4. _operator_ cannot have any tokens at all.
-5. _operator_ can only have a _delegated stake_ from only one _owner_.
-6. If an _owner_ tries to delegate to more than one operator, the tx must
-fail.
-7. If an _owner_ tries to delegate a stake to an _operator_ who already has a
-stake, the tx must fail.
-8. If an _operator_ tries to operate on a _delegated stake_ that he already
-operates on, the tx must fail.
-9. _delegated stake_ is locked until a particular operation initiated by the
-_operator_ ends.
-10. The end of an _on stake operation_ happens only after all rewards are
-granted and all penalties are imposed. 
-11. Rewarding and penalization happens as the last phase of all operations.
+=== Design Requirements:
 
-==== Stake changes atomicity
-By implementing this proposal we are going to enforce the stake changes 
-atomicity. It means that the stake cannot be changed during an on stake
-operation. When an operator starts to perform an operation (enters a game) on
-the delegated stake, then the stake is locked and no other operations are
-possible to be done on it (requirement 8.). Releasing delegated stake and
-enabling its usage for next operations is possible only after the game ends
-(requirement 9.). The end of the game happens only after all slashing and
-rewarding are done (requirement 10.) and it is the last phase of all of the
-games (requirement 11.). The operator can only have one delegated stake
-(requirement 5.), the owner can delegate only to one operator (requirement 1.),
-and there cannot be more than one on-stake operation at the same time
-(requirement 8.), then there is always a one-to-one relation between the owner,
-stake, operator, and a game. Therefore, during a game, the stake can only be
-changed as a result of slashing which only occurs at the end of the game.
-
-==== Functionality
-
-===== Delegating a stake:
-1. The _owner_, signs a contract where he delegates all of his stake to an
-_operator_ address (who will be operating on the __delegated stake_) and a
-_magpie_ address (where the rewards will be sent).
-2. The _operator_, agrees to the contract, hence making it effective and starts
-operating on the __delegated stake_.
-3. If there will be no acceptance from the _operator_ until a timeout, then the
-__delegated stake_ needs to be returned to the _owner_. In that case the _owner_
-needs to be informed.
-
-===== Undelegating a stake:
-1. The _owner_/_operator_ initiates undelegation of the _delegated stake_.
-2. The _delegated stake_ is locked for a period necessary to finish the 
-operation already initiated by the _operator_. No new actions are possible on a
-locked stake until the timeout.
-3. After a timeout _delegated stake_ is unlocked and transferred to the _owner_.
-
-===== Operating on a stake:
-Any operation on a stake needs to start from presenting a valid stake delegation
-certificate. All of the parties (_operators_) participating in a particular
-operation are required to validate each other's certificates.
-
-To validate the certificate, it is necessary to verify:
-
-- if the contract is valid, (properly signed)
-- if the _operator_ is correct, (is signed by the same party which is presenting
-the contract)
-- if the _owner_ is correct,
-- if the _magpie_ is correct,
-- if _delegated stake_ is at least _minimum stake_.
-
-The _delegated stake_ is taken from the on-chain data of the _owner_. This value
-should not be explicitly written in the contract.
-
-The incentives need always to be sent to the correct _magpie_ address.
-
-The penalties/slashing need always to be done on the correct _owner_ address.
-
-==== Discussion
-The _stake delegation with stake atomicity_ enforces only one on-stake operation
-at a time. It limits the network throughput and rewarding but also penalization.
-Preserving stake atomicity reduces the risk of depleting the _owners_ stake by
-misbehaving _operator_ or due to the _undelegating_ the stake.
-
-=== Option 2: Stake delegation with multioperation
-
-==== General requirements:
-1. _owner_ can only have one operator.
-2. _owner_ can only delegate all of his stake.
-3. _operator_ cannot have any stake of his own.
-4. _operator_ cannot have any tokens at all.
-5. _operator_ can only have a _delegated stake_ from only one _owner_.
-6. If an _owner_ tries to delegate to more than one operator, the tx must
-fail.
-7. If an _owner_ tries to delegate a stake to an _operator_ who already has a
-stake, the tx must fail.
-8. Rewarding and penalization happens as the last phase of all operations.
-
-==== Stake multioperation
-The stake multioperation feature enables performing several operations on the
-same stake at the same time. As the stake is not locked for any particular
-operation then it is possible for the _operator_ to participate in more than one
-parallel operation using the same stake.
-
-==== Functionality
-
-===== Delegating a stake:
-1. The _owner_, signs a contract where he delegates all of his stake to an
-_operator_ address (who will be operating on the __delegated stake_) and a
-_magpie_ address (where the rewards will be sent).
-2. The _operator_, agrees to the contract, hence making it effective and starts
-operating on the __delegated stake_.
-3. If there will be no acceptance from the _operator_ until a timeout, then the
-__delegated stake_ needs to be returned to the _owner_. In that case the _owner_
-needs to be informed.
-
-===== Undelegating a stake:
-1. The _owner_/_operator_ initiates undelegation of the _delegated stake_.
-2. All of the on-stake on-going operations are immediately ended. And for these,
-the penalties are imposed as usual on the _owners_ stake.
-3. After penalization, the stake is returned to the _owner_.
-
-===== Operating on a stake:
-Any operation on a stake needs to start from presenting a valid stake delegation
-certificate. All of the parties (_operators_) participating in a particular
-operation are required to validate each other's certificates.
-
-To validate the certificate, it is necessary to verify:
-
-- if the contract is valid, (properly signed)
-- if the _operator_ is correct, (is signed by the same party which is presenting
-the contract)
-- if the _owner_ is correct,
-- if the _magpie_ is correct,
-- if the _delegated stake_ is at least the _minimum_stake_ necessary for
-starting and continuing on-stake operation.
-
-The _delegated stake_ is taken from the on-chain data of the _owner_. This value
-should not be explicitly written in the contract.
-
-The incentives need always to be sent to the correct _magpie_ address.
-
-The penalties/slashing need always to be done on the correct _owner_ address.
-
-If _delegated stake_ falls bellow _minimum stake_ for a particular operator then
-his participation in the operation needs to be ended immediately and adequate
-slashing needs to be applied.
-
-If an _undelegation_ is invoked for a particular operator, then his
-participation in the operation needs to be ended immediately and adequate
-slashing needs to be done.
-
-==== Discussion
-The _stake delegation with multioperation_ improves overall network throughput
-due to the possibility to participate in many concurrent operations at the same
-time. The _delegated stake_ is in multiple operations at the time and the
-_owner_ will be rewarded for all of them. The same applies to the penalization
-and if the _operator_ will misbehave for all of his operations the _owner_ stake
-will be slashed adequately. Therefore, the multioperation feature can be
-compared to an investing lever where _owner_ can gain a lot and lose a lot.
-Also, there is an _undelegation_ cost issue where the cost of the _undelegation_
-might be higher than the _delegated stake_ due to performing too many operations
-by the _operator_. Therefore, it might be possible to _lock_ an _owner_ to an
-_operator_ by performing so many operations at the same time by the _operator_
-that ending penalties cost would be higher than stake (or economically
-unprofitable).
-
-=== Option 3: Stake delegation with sub-stake atomicity and limited multioperation
-
-==== General requirements:
-1. _owner_ can only delegate all of his stake.
-2. _owner_ can divide his _delegated stake_ into a number of _sub-stakes_.
-3. _owner_ can only have one operator per _sub-stake_.
-4. _operator_ cannot have any stake of his own.
-5. _operator_ cannot have any tokens at all.
-6. _operator_ can only have a _delegated stake_ from only one _owner_.
-7. If an _owner_ tries to delegate his _sub-stake_ to more than one operator,
-the tx must fail.
-8. If an _owner_ tries to delegate a stake to an _operator_ who already has a
-stake, the tx must fail.
-9. If an _operator_ tries to operate on a stake that he already operates on, the
-tx must fail.
-10. _delegated stake_ is locked until a particular operation initiated by the
-_operator_ ended.
-11. The end of an _on stake operation_ happens only after all rewards are
-granted and all penalties are imposed. 
-12. Rewarding and penalization happens as the last phase of all operations.
-
-==== Sub-stake atomicity
-By implementing this proposal we are going to enforce the sub-stake atomicity.
-It means that the stake cannot be changed during an on stake operation. When an
-operator starts to perform an operation (enters a game) on the delegated 
-_sub-stake_, then the stake is locked and no other operations are possible to be
-done on it (requirement 9.). Releasing delegated stake and enabling its usage
-for next operations is possible only after the game ends (requirement 10.). The
-end of the game happens only after all slashing and rewarding are done 
-(requirement 11.) and it is the last phase of all of the games (requirement
-12.). The operator can only have one delegated _sub-stake_ (requirement 6.), the
-owner can delegate _sub-stake_ to only to one operator (requirement 3.), and
-there cannot be more than one on-_sub_stake_ operation at the same time
-(requirement 8.), then there is always a one-to-one relation between the owner,
-sub-stake, operator, and a game. Therefore, during a game, the stake can only be
-changed as a result of slashing which only occurs at the end of the game.
-
-==== Limited multioperation
-The limited stake multioperation feature enables performing a limited number of
-operations on the same stake at the same time. As the stake is divided into many
-_sub-stakes_ which are locked individually for a particular operation,
-therefore, it is possible for the _operator_ to participate in more the number
-of parallel operations limited by the number of _sub-stakes_.
-
-==== Functionality
-
-===== Delegating a stake:
-1. The _owner_, signs a contract where he delegates his _sub-stake_ to an
-_operator_ address (who will be operating on the __delegated stake_) and a
-_magpie_ address (where the rewards will be sent).
-2. The _operator_, agrees to the contract, hence making it effective and starts
-operating on the __delegated stake_.
-3. If there will be no acceptance from the _operator_ until a timeout, then the
-__delegated stake_ needs to be returned to the _owner_. In that case the _owner_
-needs to be informed.
-
-===== Undelegating a stake:
-1. The _owner_/_operator_ initiates undelegation of the _delegated stake_.
-2. The _delegated stake_ is locked for a period necessary to finish the 
-operation already initiated by the _operator_. No new actions are possible on a
-locked stake until the timeout.
-3. After a timeout _delegated stake_ is unlocked and transferred to the _owner_.
-
-===== Operating on a stake:
-Any operation on a stake needs to start from presenting a valid stake delegation
-certificate. All of the parties (_operators_) participating in a particular
-operation are required to validate each other's certificates.
-
-To validate the certificate, it is necessary to verify:
-
-- if the contract is valid, (properly signed)
-- if the _operator_ is correct, (is signed by the same party which is presenting
-the contract)
-- if the _owner_ is correct,
-- if the _magpie_ is correct,
-- if the _delegated sub-stake_ is at least the _minimum_stake_ necessary for
-starting and continuing on-stake operation.
-
-The _delegated sub-stake_ is taken from the on-chain data of the _owner_. This 
-value should not be explicitly written in the contract.
-
-The incentives need always to be sent to the correct _magpie_ address.
-
-The penalties/slashing need always to be done on the correct _owner_ address.
-
-==== Discussion
-The _stake delegation with stake atomicity and limited multioperation_ enables
-better throughput than the _stake delegation with atomicity_ due to dividing
-stake into a number of _sub-stakes_ that can be operated on in parallel. It is
-also safer than the _stake delegation with multioperation_ due to the
-possibility of limiting the number of concurrent on-stake operation to the
-number of _sub-stakes_.
-
-=== Option 4: Stake delegation with somewhat stake atomicity and limited multioperation
-
-==== General requirements:
 1. _owner_ can only have one operator.
 2. _owner_ can only delegate all of his stake.
 3. _operator_ cannot have any stake of his own.
@@ -322,81 +65,116 @@ stake, the tx must fail.
 granted and all penalties are imposed. 
 9. Rewarding and penalization happens as the last phase of all operations.
 
-==== Somewhat stake atomicity
-The somewhat stake atomicity protects the stake by limiting the number of
-concurrent operations to the `DELEGATED_STAKE / MINIMUM_STAKE` and locking the
-_MINIMUM_STAKE_ per each operation the stake (through the _operator_) is
-participating.
 
-==== Limited multioperation
-The limited stake multioperation feature enables performing several operations
-on the same stake at the same time. As only part of the stake is locked per
-particular operation, then it is possible for the _operator_ to participate in
-more than one parallel operation limited by the `DELEGATED_STAKE / 
-MINIMUM_STAKE`.
+=== Design Factors Analysis
 
-==== Functionality
+During the design, we have considered several different factors that impact the performance and the security of the proposed solution. We are going to discuss them in more detail in this section.
 
-===== Delegating a stake:
-1. The _owner_, signs a contract where he delegates all of his stake to an
-_operator_ address (who will be operating on the __delegated stake_) and a
-_magpie_ address (where the rewards will be sent).
-2. The _operator_, agrees to the contract, hence making it effective and starts
-operating on the __delegated stake_.
-3. If there will be no acceptance from the _operator_ until a timeout, then the
-__delegated stake_ needs to be returned to the _owner_. In that case the _owner_
-needs to be informed.
+==== Operating
 
-===== Undelegating a stake:
-1. The _owner_/_operator_ initiates undelegation of the _delegated stake_.
-2. All of the on-stake on-going operations are immediately ended. And for these,
-the penalties are imposed as usual on the _owners_ stake.
-3. After penalization, the stake is returned to the _owner_.
+Operating is the first of the analyzed factors. It has the greatest influence on the performance of the solution as it is strictly associated with network throughput. We have analyzed the following operating strategies and their impact on the proposed solution.
 
-===== Operating on a stake:
-Any operation on a stake needs to start from presenting a valid stake delegation
-certificate. All of the parties (_operators_) participating in a particular
-operation are required to validate each other's certificates.
+===== Atomic Operating
 
-To validate the certificate, it is necessary to verify:
+The atomic operating is an operating strategy that allows only for strict stake where an operator performs one staking operation on time. Such operation locks the stake and no other operations can be done until the end of the current operation. This ensures that the stake cannot be changed during on-stake operation. Hence, we are achieving a high level of stake protection.
 
-- if the contract is valid, (properly signed)
-- if the _operator_ is correct, (is signed by the same party which is presenting
-the contract)
-- if the _owner_ is correct,
-- if the _magpie_ is correct,
-- if the _delegated stake_ is at least the _minimum_stake_ necessary for 
-starting on-stake operation.
+The downside of this solution is that the network throughput is strongly limited as the maximal number of possible concurrent operations is TOTAL_SUPPLY / MINIMUM_STAKE.
 
-The _delegated stake_ is taken from the on-chain data of the _owner_. This value
-should not be explicitly written in the contract.
+===== Multi-Operating
 
-When starting an operation a _MINMUM_STAKE_ needs to be blocked to ensure
-correct participation in a particular operation. The _MINIMUM_STAKE_ value needs
-to be subtracted from the _delegated stake_ and locked until the end of the
-operation. Therefore, the number of concurrent operations is limited to the
-stake divided by the _MINIMUM_STAKE_ and all operations are protected and
-validated by the locked stake.
+Second, analyzed operating strategy is multi-operating where the number of on-stake operations is not limited. Using this strategy an operator can perform as many on-stake operations as possible and is only limited by the stake that is delegated to him. In other words, an operator cannot perform a single on-stake operation with more than his delegates stake but can execute more than one operation at the same time with his delegated stake. Therefore, the multi-operating strategy achieves the highest possible network throughput.
 
-The incentives need always to be sent to the correct _magpie_ address.
+Unfortunately, the multi-operating strategy can lead to severe security and economic ramifications. For example, with such an unlimited operating an operator can start such high number of on-stake operations that the combined penalties would be larger than the total owner stake hence opening a possibility to quickly deplete all of the owner's stake.
 
-The penalties/slashing need always to be done on the correct _owner_ address.
+===== Atomic Multi-Operating
 
-If an _undelegation_ is invoked for a particular operator, then his
-participation in the operation needs to be ended immediately and adequate
-slashing needs to be done.
+The third analyzed strategy is a hybrid approach where we combine atomic operating with multi-operating. This strategy enforces that when an on-stake operation is performed, a portion of a delegated stake is locked (e.g. MINIMUM_STAKE if the penalty for misbehaving is lower than the MINIMUM_STAKE or MAXIMAL_PENALTY otherwise) and cannot be used for other operations until the end of the current operation. Hence, achieving the stake atomicity. The operator can use the remaining delegated stake for other concurrent on-stake operations. Therefore, achieving the multi-staking feature. No more operations are permitted when the amount of unlocked stake is lower than the required portion of a stake to be locked.
 
-==== Discussion
-The _stake delegation with somewhat stake atomicity and limited multioperation_
-enables better network throughput than the _stakte delegation with stake
-atomicity_. It protects the stake better than the _stake delegation with
-multioperation_ as it limits the number of concurrent operations and prohibits
-the situation when the stake would go below the _MINIMUM_STAKE_ during the 
-operation.
+This strategy protects the stake of the owner from being rapidly depleted, unlike the pure multi-operating. It also enables higher network throughput than the pure atomic operating strategy. 
 
-Depending on the way the sub-staking is done it can achieve similar network
-throughput and safety as the _stake delegation with sub-stake atomicity and
-limited multioperation_.
+==== MINIMUM_STAKE
+
+The MINIMUM_STAKE plays a crucial role in the process of on-stake operations. It is the limiting factor of how many concurrent operations an operator take part. Therefore, we have also analyzed tow possible scenarios for setting MINIMUM_STAKE.
+
+===== Static MINIMUM_STAKE
+
+The static approach towards MINIMUM_STAKE is that its value does not change during the lifetime of the system. It can only be updated during the hard forks. This makes the system easier to implement but less flexible for external economic factors. During the lifetime of the system, the costs of operations might change significantly and rapidly, limiting the affordability of further operations. 
+
+===== Dynamic MINIMUM_STAKE
+
+Dynamic MINIMUM_STAKE enables flexible changes of the MINIMUM_STAKE value during the lifetime of the system without forcing a hard fork. This approach makes the system more flexible for adjusting the on-stake operating prices and makes the system more rigid against external economic factors. The downside of this approach is its implementational and operational complexity.
+
+==== Undelegation
+
+Last analyzed factor is undelegation strategy. The way how the stake delegation is canceled plays a crucial role in protecting owners stake against misbehaving operators.
+
+===== Instant Undelegation
+
+The first undelegation strategy is an instant undelegation. It is a straightforward approach where an owner or an operator revokes the stake delegation. When such undelegation is invoked an operator instantly stops all on-stake operations and the stake is returned to the owner. As a result of stopping all of the on-stake operations, the resulting penalties are imposed on the owner's stake. Here we can distinguish between undelegation penalties being treated as inactivity, misbehavior, or as a separate type of penalty - which will be discussed in the penalization section. 
+
+===== Delayed Undelegation
+
+The second strategy for the undelegation is a delayed undelegation. When a stake delegation is revoked using this strategy, the delegated stake is locked for an UNDELEGATION_TIMEOUT period. Starting from the undelegation initiation and during the UNDELEGATION_TIMEOUT no new on-stake operations are allowed (any attempt should be rejected). All of the already started on-stake operations that will finish before the UNDELEGATION_TIMOUT are treated as usual and all rewards and penalties are calculated normally. If an on-stake operation will not end before UNDELEGATION_TIMEOUT period it needs to be terminated instantly at the end of the timeout and the owner stake will be penalized accordingly to the penalization strategy. Therefore, the safest option here is to have UNDELEGATION_TIMEOUT as long as necessary to safely end all (or at least most) of the ongoing operations. After the UNDELEGATION_TIMEOUT the delegated stake is unlocked and is returned to the owner.
+
+==== Penalisation
+
+Last key factor impacting the performance of the solution and its security is the cost of undelegation. The impact of the stake delegation on the mechanics and economy of the solution is strictly related to the way how the undelegation happens. In this section, we will discuss several undelegation penalization strategies.
+
+It is important to emphasize that the penalization happens only when an undelegation hits an ongoing operation and that operation will not end before an effective undelegation. Therefore, any operation that will end before the UNDELEGATION_TIMOUT will not be penalized.
+
+===== Inactive (zero cost)
+
+First penalization strategy is to treat the stake undelegation on an ongoing operation as an operators inactivity. This strategy does not require excessive mechanics as the network should verify in every step the eligibility of the operator to participate in an operation. From the perspective of the owner and impact on the stake, this would be the most beneficial strategy as the stake would not be impacted as the result of the undelegation.
+
+The downside of this approach is that it could be used as a fairly cheap way for an owner to resign from an unfavorable operation due to the low cost (virtually zero cost) of the inactivity penalty. This could lead to major instability of the network operations.
+
+===== Misbehaving (normal cost)
+
+Second penalization strategy is to treat an operator as misbehaving as the result of the undelegation. The undelegation happens on-chain, therefore, we can perform normal penalization as we have an on-chain proof. This strategy is most beneficial for the network as it protects other participants from the undelegation abuse.
+
+The downside of this strategy is its implementation complexity as it requires tracking the undelegation events and aligning them with the inner workings of a particular operation (including adding an internal mechanism for proofing and validating an external undelegation event). 
+
+===== Consequent (opportunistic cost)
+
+A third strategy is a consequent approach, where an undelegated operator is treated as an inactive until an operation fails. If the operation fails due to inactivity of the operator, he will be marked as misbehaving and the owner will be adequately penalized.
+
+=== Design Strategy
+
+Each of the analyzed factors is orthogonal and required to be a part of the designed architecture. As the goal of the proposal is to provide a solution that has high network throughput and is secure we need to eliminate less optimal strategies.
+
+==== Operating
+
+The Atomic Operating is the strategy that has the lowest network throughput, therefore it should be rejected.
+
+The Multi-Operating strategy is the least secure one, therefore it should be rejected.
+
+The Atomic Multi-Operating strategy is the most optimal one as it provides higher network throughput than the Atomic Operating and higher security than the Multi-Operating. Therefore it is the best choice.
+
+==== MINIMUM_STAKE
+
+Both dynamic and static MINIMUM_STAKE strategies are valid ones and do not influence the performance of the network heavily. The dynamic one has an advantage over static one for being more resilient against external factors but for the cost of increased complexity. Therefore, a more optimal choice would be the dynamic MINIMU_STAKE strategy.
+
+==== Undelegation
+
+The Instant Undelegation is associated with high-security risks and in the case of a deliberate operators misbehavior can lead to sever owner stake penalization. Therefore, it should be rejected.
+
+The Delayed Undelegation bares lower security risk and should be perceived as the best choice.
+
+==== Penalisation
+
+Both Consequent and Misbehaving Penalisation strategies have an adequate influence on the performance and the security of the solution. The Consequent Penalisation tends to be more liberal and might lead to minor abuse but its impact on the network throughput is minimal. The Misbehaving Penalisation is more strict and might enforce more conservative behavior of the operators.
+
+The Inactive Penalisation should be rejected as it enables zero cost end of the operation which might impact negatively on the network stability and performance.
+
+
+=== Architecture
+
+Accordingly to the design strategy and the design requirements the design architecture should be based on the following combinations of strategies:
+
+Atomic Multi-Operating with Dynamic or Static MINUMUM_STAKE and Delayed Undelegation with Misbehaving or Consequent Penalisation
+
+Other strategies tend to be suboptimal from the perspective of both security and network throughput requirements.
+
 
 == Open Questions
 
@@ -426,3 +204,4 @@ but not the beacon).
 - https://www.flowdock.com/app/cardforcoin/keep/threads/k6MV7jS9DEd0DnvOpkAt5SjsS9w
 - https://www.flowdock.com/app/cardforcoin/tech/threads/-Lbr4JzmX0gY31CMDTRGnQUbbuw
 - https://github.com/keep-network/keep-core/pull/121
+- https://github.com/keep-network/keep-core/blob/76e3e68430576c21ac76c0a56eec4a320a39a5e2/docs/random-beacon/delegation-notes.adoc
