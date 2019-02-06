@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // KeepRandomBeacon connection information for interface to the contract.
@@ -155,22 +156,28 @@ type relayEntryRequestedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
-) error {
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryRequested)
-	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
+	eventSubscription, err := krb.contract.WatchRelayEntryRequested(
+		nil,
+		eventChan,
+	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
+		return eventSubscription, fmt.Errorf(
 			"error creating watch for RelayEntryRequested events: [%v]",
 			err,
 		)
 	}
+
 	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					return
+				}
 				success(
 					event.RequestID,
 					event.Payment,
@@ -178,15 +185,19 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Seed,
 					event.BlockNumber,
 				)
-				return
-
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
 			}
 		}
 	}()
-	return nil
+
+	unsubscribeCallback := func() {
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
 // relayEntryGeneratedFunc type of function called for
@@ -203,22 +214,28 @@ type relayEntryGeneratedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
-) error {
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryGenerated)
-	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
+	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(
+		nil,
+		eventChan,
+	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
+		return eventSubscription, fmt.Errorf(
 			"error creating watch for RelayEntryGenerated event: [%v]",
 			err,
 		)
 	}
+
 	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					return
+				}
 				success(
 					event.RequestID,
 					event.RequestResponse,
@@ -226,15 +243,19 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.PreviousEntry,
 					event.BlockNumber,
 				)
-				return
-
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
 			}
 		}
 	}()
-	return nil
+
+	unsubscribeCallback := func() {
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
 // relayResetEventFunc type of function called for ResetEvent event.
