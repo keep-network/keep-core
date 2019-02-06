@@ -87,6 +87,7 @@ func SmokeTest(c *cli.Context) error {
 	// Give the nodes a sec to get going.
 	<-time.NewTimer(time.Second).C
 
+	fmt.Println("Submit genesis relay entry...")
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
 		RequestID:     big.NewInt(int64(135)),
 		Value:         big.NewInt(int64(154)),
@@ -94,17 +95,38 @@ func SmokeTest(c *cli.Context) error {
 		PreviousEntry: &big.Int{},
 	})
 
-	chainHandle.ThresholdRelay().
-		OnGroupRegistered(func(registration *event.GroupRegistration) {
-			// Give the nodes a sec to all get registered.
-			<-time.NewTimer(time.Second).C
-			chainHandle.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
-		})
+	fmt.Println("Wait until initial group is ready...")
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		panic(err)
+	}
+	err = blockCounter.WaitForBlocks(45)
+	if err != nil {
+		panic(err)
+	}
 
-	// TODO We can cancel the context after we are sure that all validation passed
-	// Need to revisit this part after Phase 14 is implemented. Currently
-	// `OnGroupRegistered` is not called so the context is cancelled here.
-	contextCancel()
+	fmt.Println("Submit relay entry...")
+	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
+		RequestID:     big.NewInt(1),
+		Value:         big.NewInt(11),
+		Seed:          big.NewInt(111),
+		PreviousValue: big.NewInt(0),
+	})
+
+	// TODO Add validations when DKG Phase 14 is implemented.
+	chainHandle.ThresholdRelay().OnDKGResultPublished(func(dkgResultPublication *event.DKGResultPublication) {
+		if dkgResultPublication.RequestID.Cmp(requestID) != 0 {
+			panic(fmt.Sprintf("unexpected request ID for published result\nexpected: %v\nactual:   %v\n",
+				requestID,
+				dkgResultPublication.RequestID,
+			))
+		}
+
+		// TODO We can cancel the context after we are sure that all validation passed
+		// Need to revisit this part after Phase 14 is implemented. Currently
+		// `OnGroupRegistered` is not called so the context is cancelled here.
+		contextCancel()
+	})
 
 	select {
 	case <-context.Done():
