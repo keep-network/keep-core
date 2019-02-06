@@ -30,7 +30,10 @@ type keyGenerationState interface {
 	memberID() gjkr.MemberID
 }
 
-func isMessageFromSelf(state keyGenerationState, message gjkr.ProtocolMessage) bool {
+func isMessageFromSelf(
+	state keyGenerationState,
+	message gjkr.ProtocolMessage,
+) bool {
 	if message.SenderID() == state.memberID() {
 		return true
 	}
@@ -38,7 +41,10 @@ func isMessageFromSelf(state keyGenerationState, message gjkr.ProtocolMessage) b
 	return false
 }
 
-func isSenderAccepted(filter gjkr.MessageFiltering, message gjkr.ProtocolMessage) bool {
+func isSenderAccepted(
+	filter gjkr.MessageFiltering,
+	message gjkr.ProtocolMessage,
+) bool {
 	return filter.IsSenderAccepted(message.SenderID())
 }
 
@@ -129,7 +135,8 @@ func (ekpgs *ephemeralKeyPairGenerationState) initiate() error {
 func (ekpgs *ephemeralKeyPairGenerationState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.EphemeralPublicKeyMessage:
-		if !isMessageFromSelf(ekpgs, phaseMessage) && isSenderAccepted(ekpgs.member, phaseMessage) {
+		if !isMessageFromSelf(ekpgs, phaseMessage) &&
+			isSenderAccepted(ekpgs.member, phaseMessage) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
@@ -219,7 +226,8 @@ func (cs *commitmentState) initiate() error {
 func (cs *commitmentState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.PeerSharesMessage:
-		if !isMessageFromSelf(cs, phaseMessage) && isSenderAccepted(cs.member, phaseMessage) {
+		if !isMessageFromSelf(cs, phaseMessage) &&
+			isSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
@@ -289,7 +297,8 @@ func (cvs *commitmentsVerificationState) initiate() error {
 func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.SecretSharesAccusationsMessage:
-		if !isMessageFromSelf(cvs, phaseMessage) && isSenderAccepted(cvs.member, phaseMessage) {
+		if !isMessageFromSelf(cvs, phaseMessage) &&
+			isSenderAccepted(cvs.member, phaseMessage) {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
 				phaseMessage,
@@ -414,7 +423,8 @@ func (pss *pointsShareState) initiate() error {
 func (pss *pointsShareState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.MemberPublicKeySharePointsMessage:
-		if !isMessageFromSelf(pss, phaseMessage) && isSenderAccepted(pss.member, phaseMessage) {
+		if !isMessageFromSelf(pss, phaseMessage) &&
+			isSenderAccepted(pss.member, phaseMessage) {
 			pss.phaseMessages = append(pss.phaseMessages, phaseMessage)
 		}
 	}
@@ -470,7 +480,8 @@ func (pvs *pointsValidationState) initiate() error {
 func (pvs *pointsValidationState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.PointsAccusationsMessage:
-		if !isMessageFromSelf(pvs, phaseMessage) && isSenderAccepted(pvs.member, phaseMessage) {
+		if !isMessageFromSelf(pvs, phaseMessage) &&
+			isSenderAccepted(pvs.member, phaseMessage) {
 			pvs.phaseMessages = append(pvs.phaseMessages, phaseMessage)
 		}
 	}
@@ -564,7 +575,8 @@ func (rs *keyRevealState) initiate() error {
 func (rs *keyRevealState) receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *gjkr.DisqualifiedEphemeralKeysMessage:
-		if !isMessageFromSelf(rs, phaseMessage) && isSenderAccepted(rs.member, phaseMessage) {
+		if !isMessageFromSelf(rs, phaseMessage) &&
+			isSenderAccepted(rs.member, phaseMessage) {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
 		}
 	}
