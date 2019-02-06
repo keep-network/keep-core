@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./BLS.sol";
 
 
 interface GroupContract {
@@ -144,8 +145,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
      */
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes groupID, uint256 previousEntry) public {
 
-        // TODO: validate groupSignature using BLS.sol
-    
+        require(BLS.verify(groupID, abi.encodePacked(previousEntry), bytes32(groupSignature)));
+
         _requestGroup[requestID] = groupID;
         emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number);
         GroupContract(_groupContract).runGroupSelection(groupSignature);

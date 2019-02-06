@@ -6,6 +6,7 @@ const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconImplV1 = artifacts.require("./KeepRandomBeaconImplV1.sol");
+const KeepRandomBeaconUpgradeExample = artifacts.require("./KeepRandomBeaconUpgradeExample.sol");
 const KeepGroupImplV1 = artifacts.require("./KeepGroupImplV1.sol");
 const KeepGroup = artifacts.require("./KeepGroup.sol");
 const KeepRandomBeacon = artifacts.require("./KeepRandomBeacon.sol");
@@ -31,6 +32,8 @@ module.exports = (deployer) => {
     await deployer.deploy(StakingProxy);
     await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
     await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
+    await deployer.link(BLS, KeepRandomBeaconImplV1);
+    await deployer.link(BLS, KeepRandomBeaconUpgradeExample);
     await deployer.deploy(KeepRandomBeaconImplV1);
     await deployer.deploy(KeepRandomBeacon, KeepRandomBeaconImplV1.address);
     await deployer.deploy(KeepGroupImplV1);
