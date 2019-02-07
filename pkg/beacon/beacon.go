@@ -51,7 +51,6 @@ func Initialize(
 			entry.Value.Bytes(),
 			entry.RequestID,
 			entry.Seed,
-			chainConfig.GroupSize,
 		)
 	})
 

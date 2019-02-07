@@ -31,7 +31,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	beaconValue []byte,
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
-	groupSize int,
 ) error {
 	availableStake, err := n.Staker.Stake()
 	if err != nil {
