@@ -147,6 +147,18 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
 	submittedTicketPromise := &async.GroupTicketPromise{}
 
+	failPromise := func(err error) {
+		failErr := submittedTicketPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
 	_, err := ec.keepGroupContract.SubmitTicket(ticket)
 	if err != nil {
 		failErr := submittedTicketPromise.Fail(err)
@@ -159,45 +171,22 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 			)
 		}
 	}
-
-	// TODO: fulfill when submitted
-
-	return submittedTicketPromise
-}
-
-func (ec *ethereumChain) SubmitChallenge(
-	ticketValue *big.Int,
-) *async.GroupTicketChallengePromise {
-	submittedChallengePromise := &async.GroupTicketChallengePromise{}
-	failPromise := func(err error) {
-		failErr := submittedChallengePromise.Fail(err)
-		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of: [%v] failed with: [%v].\n",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	_, err := ec.keepGroupContract.SubmitChallenge(ticketValue)
 	if err != nil {
 		failPromise(err)
 	}
 
 	// TODO: fulfill when submitted
 
-	return submittedChallengePromise
+	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) GetOrderedTickets() ([]*chain.Ticket, error) {
-	orderedTickets, err := ec.keepGroupContract.OrderedTickets()
+func (ec *ethereumChain) GetSelectedTickets() ([]*chain.Ticket, error) {
+	selectedTickets, err := ec.keepGroupContract.SelectedTickets()
 	if err != nil {
 		return nil, err
 	}
 
-	return orderedTickets, nil
+	return selectedTickets, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(

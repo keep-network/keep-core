@@ -191,29 +191,6 @@ contract KeepGroupImplV1 is Ownable {
         return passedCheapCheck && ticketValue == expected;
     }
 
-    function challenge(
-        uint256 ticketValue
-    ) public {
-
-        Proof memory proof = _proofs[ticketValue];
-        require(proof.sender != 0, "Ticket must be published.");
-
-        // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-        // TokenStaking stakingContract = TokenStaking(_stakingContract);
-        // if (costlyCheck(
-        //     proof.sender,
-        //     ticketValue,
-        //     proof.stakerValue,
-        //     proof.virtualStakerIndex
-        // )) {
-        //     // Slash challenger's stake balance.
-        //     stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
-        // } else {
-        //     // Slash invalid ticket sender stake balance and reward the challenger.
-        //     stakingContract.authorizedTransferFrom(proof.sender, msg.sender, _minStake);
-        // }
-    }
-
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
