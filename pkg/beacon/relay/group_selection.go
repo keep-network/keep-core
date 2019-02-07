@@ -50,13 +50,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	n.tickets = tickets
 
-	initialTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketInitialSubmissionTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketReactiveSubmissionTimeout,
 	)
@@ -73,7 +66,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	var (
 		initialSubmitErrorChannel    = make(chan error, len(tickets))
-		reactiveSubmitErrorChannel   = make(chan error, len(tickets))
 		quitTicketInitialSubmission  = make(chan struct{}, 1)
 		quitTicketReactiveSubmission = make(chan struct{}, 1)
 		quitTicketChallenge          = make(chan struct{}, 1)
