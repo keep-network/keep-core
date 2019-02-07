@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 // Node represents the current state of a relay node.
@@ -41,7 +40,7 @@ type Node struct {
 }
 
 type membership struct {
-	member  *thresholdgroup.Member
+	member  *dkg2.ThresholdSigner
 	channel net.BroadcastChannel
 	index   int
 }
@@ -194,14 +193,14 @@ func (n *Node) flushPendingGroup(requestID string) {
 // We overwrite our placeholder membership set by initializePendingGroup.
 func (n *Node) registerPendingGroup(
 	requestID string,
-	member *thresholdgroup.Member,
+	signer *dkg2.ThresholdSigner,
 	channel net.BroadcastChannel,
 ) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	if _, seen := n.seenPublicKeys[requestID]; seen {
-		groupPublicKey := member.GroupPublicKeyBytes()
+		groupPublicKey := signer.GroupPublicKeyBytes()
 		// Start at the end since it's likely the public key was closer to the
 		// end if it happened to come in before we had a chance to register it
 		// as pending.
@@ -215,13 +214,13 @@ func (n *Node) registerPendingGroup(
 
 		n.myGroups[requestID] = &membership{
 			index:   existingIndex,
-			member:  member,
+			member:  signer,
 			channel: channel,
 		}
 		delete(n.pendingGroups, requestID)
 	} else {
 		n.pendingGroups[requestID] = &membership{
-			member:  member,
+			member:  signer,
 			channel: channel,
 		}
 	}
