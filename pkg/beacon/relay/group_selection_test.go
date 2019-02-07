@@ -29,7 +29,6 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 
 	candidate := &Node{
-		tickets: tickets,
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
 		},
@@ -48,7 +47,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	candidate.submitTickets(mockInterface, quit, errCh)
+	candidate.submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(tickets) != len(submittedTickets) {
 		t.Errorf(
@@ -93,7 +92,6 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	}
 
 	candidate := &Node{
-		tickets: tickets,
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
 		},
@@ -120,7 +118,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		quit <- struct{}{}
 	}()
 
-	candidate.submitTickets(mockInterface, quit, errCh)
+	candidate.submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(submittedTickets) == 0 {
 		t.Errorf("no tickets submitted")
