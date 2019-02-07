@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -382,11 +383,6 @@ func (id MemberID) Equals(value int) bool {
 	return id == MemberID(value)
 }
 
-// HexString converts `MemberID` to hex `string` representation.
-func (id MemberID) HexString() string {
-	return strconv.FormatInt(int64(id), 16)
-}
-
 // validate checks if MemberID has a valid value. MemberID is expected to be
 // equal or greater than `1`.
 func (id MemberID) validate() error {
@@ -394,6 +390,18 @@ func (id MemberID) validate() error {
 		return fmt.Errorf("member ID must be >= 1")
 	}
 	return nil
+}
+
+// MemberIDFromBytes returns a `MemberID` created from provided bytes.
+func MemberIDFromBytes(bytes []byte) MemberID {
+	return MemberID(binary.LittleEndian.Uint32(bytes))
+}
+
+// Bytes converts `MemberID` to bytes representation.
+func (id MemberID) Bytes() []byte {
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, uint32(id))
+	return bytes
 }
 
 // MemberIDFromHex returns a `MemberID` created from the hex `string`
@@ -405,4 +413,9 @@ func MemberIDFromHex(hex string) (MemberID, error) {
 	}
 
 	return MemberID(id), nil
+}
+
+// HexString converts `MemberID` to hex `string` representation.
+func (id MemberID) HexString() string {
+	return strconv.FormatInt(int64(id), 16)
 }
