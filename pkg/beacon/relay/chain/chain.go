@@ -41,11 +41,6 @@ type GroupSelectionInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
-	// SubmitChallenge submits a challenge corresponding to a ticket that
-	// fails `costlyCheck`, and returns a promise to track the challenge
-	// submission. The promise is fulfilled with the challenge as seen on-chain,
-	// or failed if there is an error submitting the entry.
-	SubmitChallenge(ticketValue *big.Int) *async.GroupTicketChallengePromise
 	// GetOrderedTickets returns submitted tickets which have passed checks
 	// on-chain.
 	GetOrderedTickets() ([]*Ticket, error)

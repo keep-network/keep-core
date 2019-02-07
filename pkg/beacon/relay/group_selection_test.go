@@ -29,8 +29,7 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 
 	candidate := &Node{
-		tickets:          tickets,
-		submittedTickets: make(map[groupselection.SHAValue]bool),
+		tickets: tickets,
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
 		},
@@ -94,8 +93,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	}
 
 	candidate := &Node{
-		tickets:          tickets,
-		submittedTickets: make(map[groupselection.SHAValue]bool),
+		tickets: tickets,
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
 		},
@@ -144,12 +142,6 @@ func (mgi *mockGroupInterface) SubmitTicket(
 		return mgi.mockSubmitTicketFn(ticket)
 	}
 
-	panic("unexpected")
-}
-
-func (mgi *mockGroupInterface) SubmitChallenge(
-	ticketValue *big.Int,
-) *async.GroupTicketChallengePromise {
 	panic("unexpected")
 }
 

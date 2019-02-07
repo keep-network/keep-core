@@ -209,19 +209,6 @@ func (n *Node) getOnChainTickets(
 				n.ticketsMutex.Lock()
 				n.tickets = append(n.tickets, ticket)
 				n.ticketsMutex.Unlock()
-
-				if !costlyCheck(beaconValue, ticket) {
-					relayChain.SubmitChallenge(ticket.Value.Int()).OnFailure(
-						func(err error) {
-							fmt.Fprintf(
-								os.Stderr,
-								"failed to submit challenge [%v]",
-								err,
-							)
-						},
-					)
-				}
-
 			}
 			t.Reset(getTicketListInterval)
 		case <-quit:
