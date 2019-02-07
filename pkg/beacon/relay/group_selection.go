@@ -95,9 +95,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			}
 
 			var tickets []*groupselection.Ticket
-			groupSelectedTickets := selectedTickets[0:groupSize]
-
-			for _, chainTicket := range groupSelectedTickets {
+			for _, chainTicket := range selectedTickets {
 				ticket, err := fromChainTicket(chainTicket)
 				if err != nil {
 					fmt.Fprintf(
