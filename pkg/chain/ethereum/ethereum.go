@@ -180,13 +180,13 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) GetOrderedTickets() ([]*chain.Ticket, error) {
-	orderedTickets, err := ec.keepGroupContract.OrderedTickets()
+func (ec *ethereumChain) GetSelectedTickets() ([]*chain.Ticket, error) {
+	selectedTickets, err := ec.keepGroupContract.SelectedTickets()
 	if err != nil {
 		return nil, err
 	}
 
-	return orderedTickets, nil
+	return selectedTickets, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(

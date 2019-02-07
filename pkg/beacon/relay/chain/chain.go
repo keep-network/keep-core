@@ -41,9 +41,9 @@ type GroupSelectionInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
-	// GetOrderedTickets returns submitted tickets which have passed checks
-	// on-chain.
-	GetOrderedTickets() ([]*Ticket, error)
+	// GetSelectedTickets returns `GroupSize` selected tickets, which have
+	// passed the on-chain checks.
+	GetSelectedTickets() ([]*Ticket, error)
 }
 
 // GroupRegistrationInterface defines the subset of the relay chain interface

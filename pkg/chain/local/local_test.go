@@ -12,7 +12,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
-func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
+func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 	c := Connect(10, 4, big.NewInt(200))
 	chain := c.ThresholdRelay()
 
@@ -30,7 +30,7 @@ func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
 		ticket1, ticket2, ticket3, ticket4,
 	}
 
-	actualResult, err := chain.GetOrderedTickets()
+	actualResult, err := chain.GetSelectedTickets()
 	if err != nil {
 		t.Fatal(err)
 	}

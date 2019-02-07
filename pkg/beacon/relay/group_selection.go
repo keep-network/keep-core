@@ -86,7 +86,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			selectedTickets, err := relayChain.GetOrderedTickets()
+			selectedTickets, err := relayChain.GetSelectedTickets()
 			if err != nil {
 				return fmt.Errorf(
 					"could not fetch ordered tickets after challenge timeout [%v]",

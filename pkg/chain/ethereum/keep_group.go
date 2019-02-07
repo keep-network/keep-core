@@ -198,15 +198,15 @@ func (kg *keepGroup) SubmitTicket(
 	)
 }
 
-func (kg *keepGroup) OrderedTickets() ([]*chain.Ticket, error) {
-	orderedTicketValues, err := kg.caller.OrderedTickets(kg.callerOpts)
+func (kg *keepGroup) SelectedTickets() ([]*chain.Ticket, error) {
+	selectedTicketValues, err := kg.caller.SelectedTickets(kg.callerOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	var orderedTickets []*chain.Ticket
+	var selectedTickets []*chain.Ticket
 
-	for _, ticketValue := range orderedTicketValues {
+	for _, ticketValue := range selectedTicketValues {
 		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
 			kg.callerOpts,
 			ticketValue,
@@ -223,9 +223,9 @@ func (kg *keepGroup) OrderedTickets() ([]*chain.Ticket, error) {
 			},
 		}
 
-		orderedTickets = append(orderedTickets, ticket)
+		selectedTickets = append(selectedTickets, ticket)
 	}
-	return orderedTickets, nil
+	return selectedTickets, nil
 }
 
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {

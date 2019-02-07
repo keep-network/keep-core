@@ -78,7 +78,7 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 	return promise
 }
 
-func (c *localChain) GetOrderedTickets() ([]*relaychain.Ticket, error) {
+func (c *localChain) GetSelectedTickets() ([]*relaychain.Ticket, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
