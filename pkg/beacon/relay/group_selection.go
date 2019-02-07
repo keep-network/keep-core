@@ -31,6 +31,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	beaconValue []byte,
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
+	groupSize int,
 ) error {
 	availableStake, err := n.Staker.Stake()
 	if err != nil {
@@ -104,9 +105,10 @@ func (n *Node) SubmitTicketsForGroupSelection(
 					err,
 				)
 			}
+			groupSelectedTickets := selectedTickets[0:groupSize]
 
 			var tickets []*groupselection.Ticket
-			for _, chainTicket := range selectedTickets {
+			for _, chainTicket := range groupSelectedTickets {
 				ticket, err := fromChainTicket(chainTicket)
 				if err != nil {
 					fmt.Fprintf(
