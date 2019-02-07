@@ -78,8 +78,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		errorChannel,
 	)
 
-	// kick off background loop to check submitted tickets
-	go n.verifyTicket(
+	// kick off background loop to get submitted tickets
+	go n.getOnChainTickets(
 		relayChain,
 		beaconValue,
 		quitTicketChallenge,
@@ -106,32 +106,34 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				)
 			}
 
-			if len(selectedTickets) == 0 {
-				n.ticketsMutex.Lock()
-				selectedTickets = len(n.tickets)
-				n.ticketsMutex.Unlock()
-			}
-
-			if len(selectedTickets) == 0 {
-				return fmt.Errorf("no tickets selected to the group")
-			}
-
-			groupSelectedTickets := selectedTickets[0:groupSize]
-
 			var tickets []*groupselection.Ticket
-			for _, chainTicket := range groupSelectedTickets {
-				ticket, err := fromChainTicket(chainTicket)
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"incorrect ticket format [%v]",
-						err,
-					)
+			if len(selectedTickets) > 0 {
+				groupSelectedTickets := selectedTickets[0:groupSize]
 
-					continue // ignore incorrect ticket
+				for _, chainTicket := range groupSelectedTickets {
+					ticket, err := fromChainTicket(chainTicket)
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"incorrect ticket format [%v]",
+							err,
+						)
+
+						continue // ignore incorrect ticket
+					}
+
+					tickets = append(tickets, ticket)
 				}
+			} else {
+				n.ticketsMutex.Lock()
+				tickets = n.tickets
+				n.ticketsMutex.Unlock()
 
-				tickets = append(tickets, ticket)
+				tickets = tickets[0:groupSize]
+			}
+
+			if len(tickets) == 0 {
+				return fmt.Errorf("no tickets selected to the group")
 			}
 
 			// Read the selected, ordered tickets from the chain,
@@ -173,7 +175,7 @@ func (n *Node) submitTickets(
 	}
 }
 
-func (n *Node) verifyTicket(
+func (n *Node) getOnChainTickets(
 	relayChain relaychain.GroupSelectionInterface,
 	beaconValue []byte,
 	quit <-chan struct{},
