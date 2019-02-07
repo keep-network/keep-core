@@ -48,7 +48,7 @@ func Execute(
 	defer channel.UnregisterRecv(handler.Type)
 
 	fmt.Printf(
-		"[member:%v, state:signing] Waiting for other group members to enter signing state...\n",
+		"[member:%v] Waiting for other group members to enter signing state...\n",
 		member.MemberID(),
 	)
 
@@ -61,10 +61,7 @@ func Execute(
 		)
 	}
 
-	fmt.Printf(
-		"[member:%v] Sending signature share...\n",
-		member.MemberID(),
-	)
+	fmt.Printf("[member:%v] Sending signature share...\n", member.MemberID())
 
 	seenShares := make(map[gjkr.MemberID]*bn256.G1)
 	share := member.SignatureShare(bytes)
@@ -82,13 +79,13 @@ func Execute(
 		return nil, err
 	}
 
-	fmt.Printf("[member:%v] Receiving other group signature share.\n", member.MemberID())
+	fmt.Printf("[member:%v] Receiving other group signature share\n", member.MemberID())
 
 	for {
 		select {
 		case msg := <-recvChan:
 			fmt.Printf(
-				"[member:%v, state:signing] Processing message.\n",
+				"[member:%v] Processing signing message\n",
 				member.MemberID(),
 			)
 
