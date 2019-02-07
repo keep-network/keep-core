@@ -70,7 +70,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	var (
 		errorChannel         = make(chan error, len(tickets))
 		quitTicketSubmission = make(chan struct{}, 1)
-		quitTicketChallenge  = make(chan struct{}, 1)
+		quitGetSelectedTickets  = make(chan struct{}, 1)
 	)
 
 	// submit all tickets
@@ -84,7 +84,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	go n.getOnChainTickets(
 		relayChain,
 		beaconValue,
-		quitTicketChallenge,
+		quitGetSelectedTickets,
 	)
 
 	for {
@@ -97,11 +97,11 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			quitTicketChallenge <- struct{}{}
+			quitGetSelectedTickets <- struct{}{}
 
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
-				quitTicketChallenge <- struct{}{}
+				quitGetSelectedTickets <- struct{}{}
 				return fmt.Errorf(
 					"could not fetch ordered tickets after challenge timeout [%v]",
 					err,
