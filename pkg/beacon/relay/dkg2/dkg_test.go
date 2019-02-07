@@ -62,7 +62,6 @@ func TestExecuteDKGLocal(t *testing.T) {
 		memberID := i
 		go func() {
 			signer, err := executeDKG(memberID)
-			//fmt.Printf("writing to channel [%v, %v]\n", signer, err)
 			resultsChannel <- &result{signer, err}
 			wg.Done()
 		}()
