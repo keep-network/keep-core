@@ -66,16 +66,16 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	var (
-		initialSubmitErrorChannel    = make(chan error, len(tickets))
-		quitTicketInitialSubmission  = make(chan struct{}, 1)
-		quitTicketReactiveSubmission = make(chan struct{}, 1)
-		quitTicketChallenge          = make(chan struct{}, 1)
+		errorChannel         = make(chan error, len(tickets))
+		quitTicketSubmission = make(chan struct{}, 1)
+		quitTicketChallenge  = make(chan struct{}, 1)
 	)
-	// Phase 2a: submit all tickets that fall under the natural threshold
+
+	// submit all tickets
 	go n.submitTickets(
 		relayChain,
-		quitTicketInitialSubmission,
-		initialSubmitErrorChannel,
+		quitTicketSubmission,
+		errorChannel,
 	)
 
 	// kick off background loop to check submitted tickets
@@ -87,13 +87,13 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	for {
 		select {
-		case err := <-initialSubmitErrorChannel:
+		case err := <-errorChannel:
 			fmt.Printf(
 				"error during ticket submission [%v]",
 				err,
 			)
 		case <-submissionTimeout:
-			quitTicketReactiveSubmission <- struct{}{}
+			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
 			quitTicketChallenge <- struct{}{}
 
