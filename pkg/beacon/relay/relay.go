@@ -9,7 +9,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -33,7 +32,6 @@ func NewNode(
 		seenPublicKeys:  make(map[string]bool),
 		myGroups:        make(map[string]*membership),
 		pendingGroups:   make(map[string]*membership),
-		tickets:         make([]*groupselection.Ticket, 0),
 	}
 }
 

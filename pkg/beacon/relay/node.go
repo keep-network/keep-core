@@ -38,9 +38,6 @@ type Node struct {
 	seenPublicKeys  map[string]bool
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
-
-	tickets      []*groupselection.Ticket
-	ticketsMutex sync.Mutex
 }
 
 type membership struct {
