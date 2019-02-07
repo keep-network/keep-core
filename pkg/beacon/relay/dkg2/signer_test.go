@@ -25,7 +25,7 @@ func TestSignAndComplete(t *testing.T) {
 
 	shares := make([]*bn256.G1, len(signers))
 	for i, signer := range signers {
-		shares[i] = signer.SignatureShare(message)
+		shares[i] = signer.CalculateSignatureShare(message)
 	}
 
 	actual := signers[0].CompleteSignature(shares).Marshal()

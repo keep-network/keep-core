@@ -29,9 +29,9 @@ func (ts *ThresholdSigner) GroupPublicKeyBytes() []byte {
 	return ts.groupPublicKey.Marshal()
 }
 
-// SignatureShare takes the message and produces signer's signature share
-// over that message.
-func (ts *ThresholdSigner) SignatureShare(message []byte) *bn256.G1 {
+// CalculateSignatureShare takes the message and calculates signer's signature
+// share over that message.
+func (ts *ThresholdSigner) CalculateSignatureShare(message []byte) *bn256.G1 {
 	return bls.Sign(ts.groupPrivateKeyShare, message)
 }
 

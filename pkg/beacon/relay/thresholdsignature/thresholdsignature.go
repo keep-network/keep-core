@@ -64,7 +64,7 @@ func Execute(
 	fmt.Printf("[member:%v] Sending signature share...\n", member.MemberID())
 
 	seenShares := make(map[gjkr.MemberID]*bn256.G1)
-	share := member.SignatureShare(bytes)
+	share := member.CalculateSignatureShare(bytes)
 
 	// Add local share to map rather than receiving from the network.
 	seenShares[member.MemberID()] = share
