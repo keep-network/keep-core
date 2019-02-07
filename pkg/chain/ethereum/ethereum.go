@@ -147,6 +147,18 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
 	submittedTicketPromise := &async.GroupTicketPromise{}
 
+	failPromise := func(err error) {
+		failErr := submittedTicketPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v].\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
 	_, err := ec.keepGroupContract.SubmitTicket(ticket)
 	if err != nil {
 		failErr := submittedTicketPromise.Fail(err)
@@ -158,6 +170,9 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 				failErr,
 			)
 		}
+	}
+	if err != nil {
+		failPromise(err)
 	}
 
 	// TODO: fulfill when submitted
