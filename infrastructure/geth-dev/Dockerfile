@@ -9,7 +9,8 @@ RUN apk add --no-cache \
   net-tools \
   nodejs \
   nodejs-npm \
-  lsof
+  lsof \
+  jq
 
 RUN npm install -g pm2
 

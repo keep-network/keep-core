@@ -1,7 +1,6 @@
 FROM lispmeister/geth-dev
 MAINTAINER "Markus Fix <Markus.Fix@keep.network>
 
-
 # configure log rotation
 RUN pm2 install pm2-logrotate
 RUN pm2 set pm2-logrotate:max_size 100M
@@ -24,9 +23,12 @@ WORKDIR /root
 # copy passphrase file
 COPY testnet-account-passphrase.txt passphrase
 
-# create accounts and generate genesis.json
+# define default for KEEP_ACCOUNTS
+ARG KEEP_ACCOUNTS=5
+# create mining account, KEEP_ACCOUNTS client accounts and generate genesis.json
+COPY genesis-template.json genesis-template.json
 COPY geth-init.sh geth-init.sh
-RUN /root/geth-init.sh
+RUN /root/geth-init.sh $KEEP_ACCOUNTS
 
 # provision our three services (check app.json for details)
 COPY app.json app.json

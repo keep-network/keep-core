@@ -30,3 +30,7 @@ main.test
 
 # Infrastructure
 .terraform
+
+# keys
+keystore
+keep_accounts
