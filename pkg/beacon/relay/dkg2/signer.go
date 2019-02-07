@@ -24,7 +24,7 @@ func (ts *ThresholdSigner) MemberID() gjkr.MemberID {
 	return ts.memberID
 }
 
-// GroupPublicKeyBytes returns group public key in bytes representation.
+// GroupPublicKeyBytes returns group public key representation in bytes.
 func (ts *ThresholdSigner) GroupPublicKeyBytes() []byte {
 	return ts.groupPublicKey.Marshal()
 }
