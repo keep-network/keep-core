@@ -10,7 +10,7 @@ jobs:
             name: Running testrpc
             command: ganache-cli
             background: true
-        - run: cd contracts/solidity && npm install && npm run test
+        - run: cd contracts/solidity && cp truffle_sample.js truffle.js && npm install && npm run test
   generate_docs_solidity:
     docker:
       - image: ngrinkevich/nodejs-python-solc:latest

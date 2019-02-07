@@ -1,11 +1,11 @@
 package relay
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"os"
-	"reflect"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -35,7 +35,7 @@ type Node struct {
 	maxStakeIndex int
 
 	groupPublicKeys [][]byte
-	seenPublicKeys  map[string]struct{}
+	seenPublicKeys  map[string]bool
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
 }
@@ -60,22 +60,17 @@ func (n *Node) JoinGroupIfEligible(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
+	if !n.initializePendingGroup(entryRequestID.String()) {
+		// Failed to initialize; in progress for this entry.
+		return
+	}
+	// Release control of this group if we error.
+	defer n.flushPendingGroup(entryRequestID.String())
+
 	// build the channel name and get the broadcast channel
 	broadcastChannelName := channelNameFromSelectedTickets(
 		groupSelectionResult.SelectedTickets,
 	)
-	broadcastChannel, err := n.netProvider.ChannelFor(
-		broadcastChannelName,
-	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"Failed to get broadcastChannel for name %s with err: [%v].\n",
-			broadcastChannelName,
-			err,
-		)
-		return
-	}
 
 	for index, ticket := range groupSelectionResult.SelectedTickets {
 		// If our ticket is amongst those chosen, kick
@@ -83,16 +78,40 @@ func (n *Node) JoinGroupIfEligible(
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.Staker.ID()) {
-			go dkg2.ExecuteDKG(
-				entryRequestID,
-				entrySeed,
-				index,
-				n.chainConfig.GroupSize,
-				n.chainConfig.Threshold,
-				n.blockCounter,
-				relayChain,
-				broadcastChannel,
+			// capture player index for goroutine
+			playerIndex := index
+
+			// We should only join the broadcast channel if we're
+			// elligible for the group
+			broadcastChannel, err := n.netProvider.ChannelFor(
+				broadcastChannelName,
 			)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed to get broadcastChannel for name %s with err: [%v].",
+					broadcastChannelName,
+					err,
+				)
+				return
+			}
+
+			fmt.Printf("Executing dkg with index = %v...\n", index)
+			go func() {
+				dkg2.ExecuteDKG(
+					entryRequestID,
+					entrySeed,
+					playerIndex,
+					n.chainConfig.GroupSize,
+					n.chainConfig.Threshold,
+					n.blockCounter,
+					relayChain,
+					broadcastChannel,
+				)
+
+				// TODO: pass in the member
+				n.registerPendingGroup(entryRequestID.String(), nil, broadcastChannel)
+			}()
 		}
 	}
 	// exit on signal
@@ -131,7 +150,7 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 		return
 	}
 
-	n.seenPublicKeys[requestID] = struct{}{}
+	n.seenPublicKeys[requestID] = true
 	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	index := len(n.groupPublicKeys) - 1
 
@@ -187,8 +206,9 @@ func (n *Node) registerPendingGroup(
 		// end if it happened to come in before we had a chance to register it
 		// as pending.
 		existingIndex := len(n.groupPublicKeys) - 1
-		for ; existingIndex >= 0; existingIndex-- {
-			if reflect.DeepEqual(n.groupPublicKeys[existingIndex], groupPublicKey[:]) {
+		for index := existingIndex; index >= 0; index-- {
+			if bytes.Compare(n.groupPublicKeys[index], groupPublicKey[:]) == 0 {
+				existingIndex = index
 				break
 			}
 		}

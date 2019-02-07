@@ -14,38 +14,35 @@ message NetworkEnvelope {
   bytes signature = 2;
 }
 
-// NetworkMessage contains a marshalled payload. It also contains the Identities
-// of the sender and receiver. Optionally, a Message may contain an encrypted
-// payload for messages which need to be secret; in this case, the encrypted
-// field will be set.
+// NetworkMessage contains a marshalled payload. It also contains the Identity
+// of the sender. Optionally, a Message may contain an encrypted payload for
+// messages which need to be secret; in this case, the encrypted field will be 
+// set.
 message NetworkMessage {
   // The PublicKey of the sender.
   bytes sender = 1;
 
-  // The PublicKey of the recipient.
-  bytes recipient = 2;
-
   // A flag indicating whether the payload is encrypted.
-  bool encrypted = 3;
+  bool encrypted = 2;
 
   // A marshaled Protocol Message.
-  bytes payload = 4;
+  bytes payload = 3;
 
   // Type of the message as registered by the protocol.
-  bytes type = 5;
+  bytes type = 4;
 
   // Channel is the group name as well as the pubsub channel
   // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
   // all valid group members.
-  bytes channel = 6;
+  bytes channel = 5;
 
   // Proof that the peer that sent this message knows the channel's name.
-  bytes channel_MAC = 7;
+  bytes channel_MAC = 6;
 
   // Per RFC 2, Section 1.2.5: 
   // The nonce is included in a message in a way that makes it a part of the
   // content used to produce a signature.
-  bytes nonce = 8;
+  bytes nonce = 7;
 }
 
 message Identity {
