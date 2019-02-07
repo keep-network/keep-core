@@ -66,7 +66,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	var (
 		errorChannel         = make(chan error, len(tickets))
 		quitTicketSubmission = make(chan struct{}, 1)
-		quitGetSelectedTickets  = make(chan struct{}, 1)
 	)
 
 	// submit all tickets
@@ -75,13 +74,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		relayChain,
 		quitTicketSubmission,
 		errorChannel,
-	)
-
-	// kick off background loop to get submitted tickets
-	go n.getOnChainTickets(
-		relayChain,
-		beaconValue,
-		quitGetSelectedTickets,
 	)
 
 	for {
@@ -94,11 +86,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			quitGetSelectedTickets <- struct{}{}
-
 			selectedTickets, err := relayChain.GetOrderedTickets()
 			if err != nil {
-				quitGetSelectedTickets <- struct{}{}
 				return fmt.Errorf(
 					"could not fetch ordered tickets after challenge timeout [%v]",
 					err,
@@ -163,49 +152,6 @@ func (n *Node) submitTickets(
 			relayChain.SubmitTicket(chainTicket).OnFailure(
 				func(err error) { errCh <- err },
 			)
-		}
-	}
-}
-
-func (n *Node) getOnChainTickets(
-	relayChain relaychain.GroupSelectionInterface,
-	beaconValue []byte,
-	quit <-chan struct{},
-) {
-	t := time.NewTimer(1)
-	defer t.Stop()
-	for {
-		select {
-		case <-t.C:
-			selectedTickets, err := relayChain.GetOrderedTickets()
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"error getting submitted tickets [%v]",
-					err,
-				)
-			}
-
-			for _, selectedTicket := range selectedTickets {
-				ticket, err := fromChainTicket(selectedTicket)
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"incorrect ticket format [%v]",
-						err,
-					)
-
-					continue // ignore incorrect ticket
-				}
-
-				n.ticketsMutex.Lock()
-				n.tickets = append(n.tickets, ticket)
-				n.ticketsMutex.Unlock()
-			}
-			t.Reset(getTicketListInterval)
-		case <-quit:
-			// Exit this loop when we get a signal from quit.
-			return
 		}
 	}
 }
