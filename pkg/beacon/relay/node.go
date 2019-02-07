@@ -39,9 +39,8 @@ type Node struct {
 	myGroups        map[string]*membership
 	pendingGroups   map[string]*membership
 
-	tickets               []*groupselection.Ticket
-	submittedTicketsMutex sync.Mutex
-	submittedTickets      map[groupselection.SHAValue]bool
+	tickets      []*groupselection.Ticket
+	ticketsMutex sync.Mutex
 }
 
 type membership struct {

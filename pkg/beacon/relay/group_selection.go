@@ -105,6 +105,17 @@ func (n *Node) SubmitTicketsForGroupSelection(
 					err,
 				)
 			}
+
+			if len(selectedTickets) == 0 {
+				n.ticketsMutex.Lock()
+				selectedTickets = len(n.tickets)
+				n.ticketsMutex.Unlock()
+			}
+
+			if len(selectedTickets) == 0 {
+				return fmt.Errorf("no tickets selected to the group")
+			}
+
 			groupSelectedTickets := selectedTickets[0:groupSize]
 
 			var tickets []*groupselection.Ticket
@@ -193,6 +204,10 @@ func (n *Node) verifyTicket(
 					continue // ignore incorrect ticket
 				}
 
+				n.ticketsMutex.Lock()
+				n.tickets = append(n.tickets, ticket)
+				n.ticketsMutex.Unlock()
+
 				if !costlyCheck(beaconValue, ticket) {
 					relayChain.SubmitChallenge(ticket.Value.Int()).OnFailure(
 						func(err error) {
@@ -204,6 +219,7 @@ func (n *Node) verifyTicket(
 						},
 					)
 				}
+
 			}
 			t.Reset(getTicketListInterval)
 		case <-quit:
