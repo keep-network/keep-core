@@ -137,7 +137,9 @@ func (c *localChain) SubmitGroupPublicKey(
 }
 
 func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
+	c.ticketsMutex.Lock()
 	c.tickets = make([]*relaychain.Ticket, 0)
+	c.ticketsMutex.Unlock()
 
 	relayEntryPromise := &async.RelayEntryPromise{}
 
