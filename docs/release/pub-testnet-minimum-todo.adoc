@@ -7,7 +7,7 @@ A stab at minimum effort to get the Keep public testnet off the ground.
 - Private testnet *[Owner: Sloan]*
   ** Running two weeks without a reset
 
-- Audit *[Owner: ""]*
+- Audit *[Owner: Antonio]*
   ** pre-audit
     **** Auditor selection
     **** Decide how we cut to-be audit code
@@ -19,6 +19,7 @@ A stab at minimum effort to get the Keep public testnet off the ground.
   ** Launch N keep seed bootstrap peers (regular peers?)
   ** Metrics dashboard
   ** Business hours on-call rotation
+  ** CI deploy on merge to master
 
 - Documentation *[Owner: ""]*
   ** Where
@@ -31,7 +32,7 @@ A stab at minimum effort to get the Keep public testnet off the ground.
   ** Links to comms channels
   ** API docs
 
-- OSS *[Owner: ""]*
+- OSS *[Owner: Antonio]*
   ** Licensing
   ** How to contribute README
   ** Comms around decision making process here (cultural impact)
@@ -59,18 +60,18 @@ A stab at minimum effort to get the Keep public testnet off the ground.
 == At-launch
 
 - OSS the beacon *[Owner: ""]*
-  ** Sort of coordinated marketing effort/announcement
+  ** Sort of coordinated marketing effort/announcement (Note from Antonio: May be mainnet not sure)
 
-- Coordinated Comms announcement *[Owner: Sam]*
+- Coordinated Comms announcement *[Owner: Laura]*
 
-- party? *[Owner: "ALL"]*
+- ~~party? *[Owner: "ALL"]*~~ Antonio is a party pooper
 
 
 == Post-launch (Current and future testnet releases)
 
 - Multi-regional peer deployment *[Owner: Sloan]*
 
-- Mining *[Owner: ""]*
+- Mining *[Owner: Matt]*
 
 - Slashing *[Owner: ""]*
 
