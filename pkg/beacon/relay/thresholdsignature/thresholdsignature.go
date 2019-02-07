@@ -111,12 +111,12 @@ func Execute(
 			}
 		case <-blockWaiter:
 			// put all seen shares into a slice and complete the signature
-			allSeen := make([]*bn256.G1, 0)
+			seenSharesSlice := make([]*bn256.G1, 0)
 			for _, share := range seenShares {
-				allSeen = append(allSeen, share)
+				seenSharesSlice = append(seenSharesSlice, share)
 			}
 
-			signature := signer.CompleteSignature(allSeen)
+			signature := signer.CompleteSignature(seenSharesSlice)
 
 			return signature.Marshal(), nil
 		}
