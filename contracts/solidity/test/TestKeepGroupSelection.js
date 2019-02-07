@@ -87,8 +87,8 @@ contract('TestKeepGroupSelection', function(accounts) {
     groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
-    await token.approveAndCall(stakingContract.address, minimumStake*1000, "", {from: staker1});
-    tickets1 = generateTickets(randomBeaconValue, staker1, 1000);
+    await token.approveAndCall(stakingContract.address, minimumStake*3000, "", {from: staker1});
+    tickets1 = generateTickets(randomBeaconValue, staker1, 3000);
     tickets1BelowNatT = tickets1.filter(function(ticket) {
       return ticket.value.lessThan(naturalThreshold);
     });
@@ -97,9 +97,9 @@ contract('TestKeepGroupSelection', function(accounts) {
     });
 
     // Send tokens to staker2 and stake
-    await token.transfer(staker2, minimumStake*2000, {from: staker1});
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, "", {from: staker2});
-    tickets2 = generateTickets(randomBeaconValue, staker2, 2000);
+    await token.transfer(staker2, minimumStake*3000, {from: staker1});
+    await token.approveAndCall(stakingContract.address, minimumStake*3000, "", {from: staker2});
+    tickets2 = generateTickets(randomBeaconValue, staker2, 3000);
     tickets2BelowNatT = tickets2.filter(function(ticket) {
       return ticket.value.lessThan(naturalThreshold);
     });
@@ -123,7 +123,7 @@ contract('TestKeepGroupSelection', function(accounts) {
   });
 
   it("should be able to get staking weight", async function() {
-    assert.equal(await keepGroupImplViaProxy.stakingWeight(staker1), 1000, "Should have expected staking weight.");
+    assert.equal(await keepGroupImplViaProxy.stakingWeight(staker1), 3000, "Should have expected staking weight.");
     assert.equal(await keepGroupImplViaProxy.stakingWeight(staker3), 3000, "Should have expected staking weight.");
   });
 
