@@ -1,12 +1,12 @@
 package dkg2
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/bls"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 func TestSignAndComplete(t *testing.T) {
@@ -28,10 +28,8 @@ func TestSignAndComplete(t *testing.T) {
 		shares[i] = signer.SignatureShare(message)
 	}
 
-	complete := signers[0].CompleteSignature(shares)
+	actual := signers[0].CompleteSignature(shares).Marshal()
+	expected := bls.Sign(big.NewInt(34), message).Marshal()
 
-	fmt.Printf("actual = [%v]\n", complete)
-	fmt.Printf("expected = [%v]\n", bls.Sign(big.NewInt(34), message))
-
-	// TODO: use byteutils to compare
+	testutils.AssertBytesEqual(t, expected, actual)
 }
