@@ -49,7 +49,9 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
+	n.ticketsMutex.Lock()
 	n.tickets = tickets
+	n.ticketsMutex.Unlock()
 
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketReactiveSubmissionTimeout,
