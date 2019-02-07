@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -17,12 +19,13 @@ func TestSubmitAllTickets(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
+	stakerValue := []byte("0x123456")
 
 	tickets := []*groupselection.Ticket{
-		groupselection.NewTicket(beaconOutput, big.NewInt(11).Bytes(), big.NewInt(1)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(12).Bytes(), big.NewInt(2)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(13).Bytes(), big.NewInt(3)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(14).Bytes(), big.NewInt(4)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(2)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(3)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
 	}
 
 	candidate := &Node{
@@ -35,25 +38,41 @@ func TestSubmitAllTickets(t *testing.T) {
 
 	errCh := make(chan error, len(tickets))
 	quit := make(chan struct{}, 0)
-	submittedTickets := make([]*groupselection.Ticket, 0)
+	submittedTickets := make([]*chain.Ticket, 0)
 
 	mockInterface := &mockGroupInterface{
-		mockSubmitTicketFn: func(t *groupselection.Ticket) *async.GroupTicketPromise {
+		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
 			submittedTickets = append(submittedTickets, t)
 			promise := &async.GroupTicketPromise{}
-			promise.Fulfill(t)
+			promise.Fulfill(&event.GroupTicketSubmission{TicketValue: t.Value})
 			return promise
 		},
 	}
 
 	candidate.submitTickets(mockInterface, quit, errCh)
 
-	if !reflect.DeepEqual(tickets, submittedTickets) {
+	if len(tickets) != len(submittedTickets) {
 		t.Errorf(
-			"unexpected tickets submitted\n[%v]\n[%v]",
-			tickets,
-			submittedTickets,
+			"unexpected number of tickets submitted\nexpected: [%v]\nactual: [%v]",
+			len(tickets),
+			len(submittedTickets),
 		)
+	}
+
+	for i, ticket := range tickets {
+		submitted, err := fromChainTicket(submittedTickets[i])
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !reflect.DeepEqual(ticket, submitted) {
+			t.Errorf(
+				"unexpected ticket at index [%v]\nexpected: [%v]\nactual: [%v]",
+				i,
+				ticket,
+				submitted,
+			)
+		}
 	}
 }
 
@@ -63,14 +82,15 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
+	stakerValue := []byte("0x123456")
 
 	tickets := []*groupselection.Ticket{
-		groupselection.NewTicket(beaconOutput, big.NewInt(11).Bytes(), big.NewInt(1)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(12).Bytes(), big.NewInt(2)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(13).Bytes(), big.NewInt(3)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(14).Bytes(), big.NewInt(4)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(15).Bytes(), big.NewInt(5)),
-		groupselection.NewTicket(beaconOutput, big.NewInt(16).Bytes(), big.NewInt(6)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(2)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(3)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(5)),
+		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(6)),
 	}
 
 	candidate := &Node{
@@ -83,16 +103,16 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 
 	errCh := make(chan error, len(tickets))
 	quit := make(chan struct{}, 0)
-	submittedTickets := make([]*groupselection.Ticket, 0)
+	submittedTickets := make([]*chain.Ticket, 0)
 
 	mockInterface := &mockGroupInterface{
-		mockSubmitTicketFn: func(t *groupselection.Ticket) *async.GroupTicketPromise {
+		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
 			submittedTickets = append(submittedTickets, t)
 			promise := &async.GroupTicketPromise{}
-			promise.Fulfill(t)
 
 			time.Sleep(500 * time.Millisecond)
 
+			promise.Fulfill(&event.GroupTicketSubmission{TicketValue: t.Value})
 			return promise
 		},
 	}
@@ -104,17 +124,21 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 
 	candidate.submitTickets(mockInterface, quit, errCh)
 
+	if len(submittedTickets) == 0 {
+		t.Errorf("no tickets submitted")
+	}
+
 	if len(tickets) == len(submittedTickets) {
 		t.Errorf("ticket submission has not been cancelled")
 	}
 }
 
 type mockGroupInterface struct {
-	mockSubmitTicketFn func(t *groupselection.Ticket) *async.GroupTicketPromise
+	mockSubmitTicketFn func(t *chain.Ticket) *async.GroupTicketPromise
 }
 
 func (mgi *mockGroupInterface) SubmitTicket(
-	ticket *groupselection.Ticket,
+	ticket *chain.Ticket,
 ) *async.GroupTicketPromise {
 	if mgi.mockSubmitTicketFn != nil {
 		return mgi.mockSubmitTicketFn(ticket)
@@ -124,11 +148,11 @@ func (mgi *mockGroupInterface) SubmitTicket(
 }
 
 func (mgi *mockGroupInterface) SubmitChallenge(
-	ticket *groupselection.TicketChallenge,
+	ticketValue *big.Int,
 ) *async.GroupTicketChallengePromise {
 	panic("unexpected")
 }
 
-func (mgi *mockGroupInterface) GetOrderedTickets() []*groupselection.Ticket {
+func (mgi *mockGroupInterface) GetOrderedTickets() ([]*chain.Ticket, error) {
 	panic("unexpected")
 }

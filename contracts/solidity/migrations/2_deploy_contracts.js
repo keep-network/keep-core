@@ -16,9 +16,9 @@ const minStake = 1;
 
 const groupThreshold = 3;
 const groupSize = 5;
-const timeoutInitial = 1;
-const timeoutSubmission = 1;
-const timeoutChallenge = 1;
+const timeoutInitial = 10;
+const timeoutSubmission = 10;
+const timeoutChallenge = 10;
 
 module.exports = (deployer) => {
   deployer.then(async () => {

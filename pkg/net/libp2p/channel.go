@@ -11,8 +11,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	peer "github.com/libp2p/go-libp2p-peer"
-	"github.com/libp2p/go-libp2p-peerstore"
-	"github.com/libp2p/go-libp2p-pubsub"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 type channel struct {
@@ -31,10 +31,6 @@ type channel struct {
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
-
-	identifiersMutex            sync.Mutex
-	transportToProtoIdentifiers map[net.TransportIdentifier]net.ProtocolIdentifier
-	protoToTransportIdentifiers map[net.ProtocolIdentifier]net.TransportIdentifier
 }
 
 func (c *channel) Name() string {
@@ -42,36 +38,9 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	return c.doSend(nil, message)
-}
-
-func (c *channel) SendTo(
-	recipientIdentifier net.ProtocolIdentifier,
-	message net.TaggedMarshaler,
-) error {
-	return c.doSend(recipientIdentifier, message)
-}
-
-// doSend attempts to send a message, from a sender, to all members of a
-// broadcastChannel, or optionally to a specific recipient. If recipient
-// is nil (the typical case), then all messages of the broadcast channel
-// should receive the message. Otherwise, given a valid recipient, we will
-// address the message specifically to them.
-func (c *channel) doSend(
-	recipient net.ProtocolIdentifier,
-	message net.TaggedMarshaler,
-) error {
-	var transportRecipient net.TransportIdentifier
-	if recipient != nil {
-		c.identifiersMutex.Lock()
-		if transportID, ok := c.protoToTransportIdentifiers[recipient]; ok {
-			transportRecipient = transportID
-		}
-		c.identifiersMutex.Unlock()
-	}
 	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
 	// in an envelope.
-	envelopeBytes, err := c.envelopeProto(transportRecipient, message)
+	envelopeBytes, err := c.envelopeProto(message)
 	if err != nil {
 		return err
 	}
@@ -95,55 +64,15 @@ func (c *channel) UnregisterRecv(handlerType string) error {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
 
+	handlers := 0
 	for i, mh := range c.messageHandlers {
-		if mh.Type == handlerType {
-			if len(c.messageHandlers) == 1 {
-				c.messageHandlers = c.messageHandlers[:i]
-				return nil
-			}
-
-			// If the underlying type changes to a pointer, this is a memory leak
-			c.messageHandlers = append(c.messageHandlers[:i], c.messageHandlers[i+1:]...)
+		// filter out the handlerType
+		if mh.Type != handlerType {
+			c.messageHandlers[i] = mh
+			handlers++
 		}
 	}
-
-	return nil
-}
-
-func (c *channel) RegisterIdentifier(
-	transportIdentifier net.TransportIdentifier,
-	protocolIdentifier net.ProtocolIdentifier,
-) error {
-	c.identifiersMutex.Lock()
-	defer c.identifiersMutex.Unlock()
-
-	if _, ok := transportIdentifier.(networkIdentity); !ok {
-		return fmt.Errorf(
-			"incorrect type for transportIdentifier: [%v] in channel [%s]",
-			transportIdentifier, c.name,
-		)
-	}
-
-	if existingProtocolIdentifier, exists := c.transportToProtoIdentifiers[transportIdentifier]; exists {
-		if existingProtocolIdentifier != protocolIdentifier {
-			return fmt.Errorf(
-				"protocol identifier in channel [%s] already associated with [%v]",
-				c.name, transportIdentifier,
-			)
-		}
-	}
-
-	if existingTransportIdentifier, exists := c.protoToTransportIdentifiers[protocolIdentifier]; exists {
-		if existingTransportIdentifier != transportIdentifier {
-			return fmt.Errorf(
-				"transport identifier in channel [%s] already associated with [%v]",
-				c.name, protocolIdentifier,
-			)
-		}
-	}
-
-	c.transportToProtoIdentifiers[transportIdentifier] = protocolIdentifier
-	c.protoToTransportIdentifiers[protocolIdentifier] = transportIdentifier
+	c.messageHandlers = c.messageHandlers[:handlers]
 
 	return nil
 }
@@ -163,7 +92,6 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 }
 
 func (c *channel) messageProto(
-	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
@@ -176,28 +104,17 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	var recipientIdentityBytes []byte
-	if recipient != nil {
-		recipientIdentity := &identity{id: peer.ID(recipient.(networkIdentity))}
-		recipientIdentityBytes, err = recipientIdentity.Marshal()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return (&pb.NetworkMessage{
-		Payload:   payloadBytes,
-		Sender:    senderIdentityBytes,
-		Recipient: recipientIdentityBytes,
-		Type:      []byte(message.Type()),
+		Payload: payloadBytes,
+		Sender:  senderIdentityBytes,
+		Type:    []byte(message.Type()),
 	}).Marshal()
 }
 
 func (c *channel) sealEnvelope(
-	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) (*pb.NetworkEnvelope, error) {
-	messageBytes, err := c.messageProto(recipient, message)
+	messageBytes, err := c.messageProto(message)
 	if err != nil {
 		return nil, err
 	}
@@ -213,10 +130,9 @@ func (c *channel) sealEnvelope(
 }
 
 func (c *channel) envelopeProto(
-	recipient net.TransportIdentifier,
 	message net.TaggedMarshaler,
 ) ([]byte, error) {
-	envelope, err := c.sealEnvelope(recipient, message)
+	envelope, err := c.sealEnvelope(message)
 	if err != nil {
 		return nil, err
 	}
@@ -342,31 +258,11 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	// Get the associated protocol identifier from an association map.
-	protocolIdentifier, err := c.getProtocolIdentifier(senderIdentifier)
-	if err != nil {
-		return err
-	}
-
-	if message.Recipient != nil {
-		// Construct an identifier from the Recipient.
-		recipientIdentifier := &identity{}
-		if err := recipientIdentifier.Unmarshal(message.Recipient); err != nil {
-			return err
-		}
-
-		if recipientIdentifier.id.String() != c.clientIdentity.id.String() {
-			return fmt.Errorf(
-				"message not for intended recipient %s",
-				recipientIdentifier.id.String(),
-			)
-		}
-	}
+	protocolIdentifier := senderIdentifier
 
 	// Fire a message back to the protocol.
 	protocolMessage := internal.BasicMessage(
-		networkIdentity(senderIdentifier.id),
-		protocolIdentifier,
+		protocolIdentifier.id,
 		unmarshaled,
 		string(message.Type),
 	)
@@ -386,13 +282,6 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	}
 
 	return unmarshaler(), nil
-}
-
-func (c *channel) getProtocolIdentifier(senderIdentifier *identity) (net.ProtocolIdentifier, error) {
-	c.identifiersMutex.Lock()
-	defer c.identifiersMutex.Unlock()
-
-	return c.transportToProtoIdentifiers[networkIdentity(senderIdentifier.id)], nil
 }
 
 func (c *channel) deliver(message net.Message) error {

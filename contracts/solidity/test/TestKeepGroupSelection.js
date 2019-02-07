@@ -66,7 +66,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     await keepRandomBeaconImplViaProxy.initialize(1,1);
 
     // Initialize Keep Group contract
-    minimumStake = 20000000;
+    minimumStake = 200000;
     groupThreshold = 15;
     groupSize = 20;
     timeoutInitial = 20;
@@ -87,8 +87,8 @@ contract('TestKeepGroupSelection', function(accounts) {
     groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
-    await token.approveAndCall(stakingContract.address, minimumStake*100, "", {from: staker1});
-    tickets1 = generateTickets(randomBeaconValue, staker1, 100);
+    await token.approveAndCall(stakingContract.address, minimumStake*1000, "", {from: staker1});
+    tickets1 = generateTickets(randomBeaconValue, staker1, 1000);
     tickets1BelowNatT = tickets1.filter(function(ticket) {
       return ticket.value.lessThan(naturalThreshold);
     });
@@ -97,9 +97,9 @@ contract('TestKeepGroupSelection', function(accounts) {
     });
 
     // Send tokens to staker2 and stake
-    await token.transfer(staker2, minimumStake*200, {from: staker1});
-    await token.approveAndCall(stakingContract.address, minimumStake*200, "", {from: staker2});
-    tickets2 = generateTickets(randomBeaconValue, staker2, 200);
+    await token.transfer(staker2, minimumStake*2000, {from: staker1});
+    await token.approveAndCall(stakingContract.address, minimumStake*2000, "", {from: staker2});
+    tickets2 = generateTickets(randomBeaconValue, staker2, 2000);
     tickets2BelowNatT = tickets2.filter(function(ticket) {
       return ticket.value.lessThan(naturalThreshold);
     });
@@ -123,8 +123,23 @@ contract('TestKeepGroupSelection', function(accounts) {
   });
 
   it("should be able to get staking weight", async function() {
-    assert.equal(await keepGroupImplViaProxy.stakingWeight(staker1), 100, "Should have expected staking weight.");
+    assert.equal(await keepGroupImplViaProxy.stakingWeight(staker1), 1000, "Should have expected staking weight.");
     assert.equal(await keepGroupImplViaProxy.stakingWeight(staker3), 3000, "Should have expected staking weight.");
+  });
+
+  it("should fail to get selected tickets before challenge period is over", async function() {
+    await exceptThrow(keepGroupImplViaProxy.selectedTickets());
+  });
+
+  it("should be able to get selected tickets after challenge period is over", async function() {
+
+    for (let i = 0; i < groupSize*2; i++) {
+      await keepGroupImplViaProxy.submitTicket(tickets1AboveNatT[i].value, staker1, tickets1AboveNatT[i].virtualStakerIndex, {from: staker1});
+    }
+
+    mineBlocks(timeoutChallenge);
+    let selectedTickets = await keepGroupImplViaProxy.selectedTickets();
+    assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
   });
 
   it("should be able to output submited tickets in ascending ordered", async function() {

@@ -110,6 +110,26 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Gets selected tickets in ascending order.
+     */
+    function selectedTickets() public view returns (uint256[]) {
+
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        uint256[] memory ordered = orderedTickets();
+        uint256[] memory selected = new uint256[](_groupSize);
+
+        for (uint i = 0; i < _groupSize; i++) {
+            selected[i] = ordered[i];
+        }
+
+        return selected;
+    }
+
+    /**
      * @dev Gets participants ordered by their lowest-valued ticket.
      */
     function orderedParticipants() public view returns (address[]) {

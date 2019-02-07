@@ -1,4 +1,4 @@
-package event
+package subscription
 
 import (
 	"sync"
@@ -10,7 +10,7 @@ import (
 func TestUnsubscribe(t *testing.T) {
 	unsubscribed := false
 
-	subscription := NewSubscription(func() {
+	subscription := NewEventSubscription(func() {
 		unsubscribed = true
 	})
 
@@ -28,7 +28,7 @@ func TestUnsubscribe(t *testing.T) {
 func TestDoNotUnsubscribeTwice(t *testing.T) {
 	var unsubscribeCount uint32
 
-	subscription := NewSubscription(func() {
+	subscription := NewEventSubscription(func() {
 		// make the goroutine a bit longer, it increases
 		// the possibility of race
 		time.Sleep(10 * time.Millisecond)

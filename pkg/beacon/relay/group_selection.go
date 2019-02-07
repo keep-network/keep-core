@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -94,40 +96,47 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		select {
 		case err := <-initialSubmitErrorChannel:
 			fmt.Printf(
-				"Error during initial ticket submission for entry [%v]: [%v].",
-				beaconValue,
-				err,
-			)
-		case <-initialTimeout:
-			quitTicketInitialSubmission <- struct{}{}
-
-			// Phase 2b: submit all tickets, even those above the
-			// natural threshold.
-			go n.submitTicketsReactive(
-				relayChain,
-				quitTicketReactiveSubmission,
-				reactiveSubmitErrorChannel,
-			)
-		case err := <-reactiveSubmitErrorChannel:
-			fmt.Printf(
-				"Error during reactive ticket submission for entry [%v]: [%v].",
-				beaconValue,
+				"error during ticket submission [%v]",
 				err,
 			)
 		case <-submissionTimeout:
 			quitTicketReactiveSubmission <- struct{}{}
 		case <-challengeTimeout:
-			selectedTickets := relayChain.GetOrderedTickets()
+			quitTicketChallenge <- struct{}{}
+
+			selectedTickets, err := relayChain.GetOrderedTickets()
+			if err != nil {
+				quitTicketChallenge <- struct{}{}
+				return fmt.Errorf(
+					"could not fetch ordered tickets after challenge timeout [%v]",
+					err,
+				)
+			}
+
+			var tickets []*groupselection.Ticket
+			for _, chainTicket := range selectedTickets {
+				ticket, err := fromChainTicket(chainTicket)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"incorrect ticket format [%v]",
+						err,
+					)
+
+					continue // ignore incorrect ticket
+				}
+
+				tickets = append(tickets, ticket)
+			}
 
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{SelectedTickets: selectedTickets},
+				&groupselection.Result{SelectedTickets: tickets},
 				entryRequestID,
 				entrySeed,
 			)
-			quitTicketChallenge <- struct{}{}
 			return nil
 		}
 	}
@@ -146,50 +155,15 @@ func (n *Node) submitTickets(
 			// Exit this loop when we get a signal from quit.
 			return
 		default:
-			if ticket.Value.Int().Cmp(n.chainConfig.NaturalThreshold) < 0 {
-				relayChain.SubmitTicket(ticket).OnSuccess(
-					func(submittedTicket *groupselection.Ticket) {
-						if submittedTicket == nil {
-							return
-						}
-
-						n.submittedTicketsMutex.Lock()
-						n.submittedTickets[submittedTicket.Value] = true
-						n.submittedTicketsMutex.Unlock()
-					},
-				).OnFailure(
-					func(err error) { errCh <- err },
-				)
+			chainTicket, err := toChainTicket(ticket)
+			if err != nil {
+				errCh <- err
+				continue
 			}
-		}
-	}
-}
 
-// submitTicketsReactive submits tickets to the chain. It checks to see if the submission
-// period is over in between ticket submits.
-func (n *Node) submitTicketsReactive(
-	relayChain relaychain.GroupSelectionInterface,
-	quit <-chan struct{},
-	errCh chan<- error,
-) {
-	for _, ticket := range n.tickets {
-		select {
-		case <-quit:
-			// Exit this loop when we get a signal from quit.
-			return
-		default:
-			n.submittedTicketsMutex.Lock()
-			defer n.submittedTicketsMutex.Unlock()
-
-			if !n.submittedTickets[ticket.Value] {
-				relayChain.SubmitTicket(ticket).OnSuccess(
-					func(submittedTicket *groupselection.Ticket) {
-						n.submittedTickets[submittedTicket.Value] = true
-					},
-				).OnFailure(
-					func(err error) { errCh <- err },
-				)
-			}
+			relayChain.SubmitTicket(chainTicket).OnFailure(
+				func(err error) { errCh <- err },
+			)
 		}
 	}
 }
@@ -204,16 +178,33 @@ func (n *Node) verifyTicket(
 	for {
 		select {
 		case <-t.C:
-			for _, ticket := range relayChain.GetOrderedTickets() {
+			selectedTickets, err := relayChain.GetOrderedTickets()
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"error getting submitted tickets [%v]",
+					err,
+				)
+			}
+
+			for _, selectedTicket := range selectedTickets {
+				ticket, err := fromChainTicket(selectedTicket)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"incorrect ticket format [%v]",
+						err,
+					)
+
+					continue // ignore incorrect ticket
+				}
+
 				if !costlyCheck(beaconValue, ticket) {
-					challenge := &groupselection.TicketChallenge{
-						Ticket:        ticket,
-						SenderAddress: n.Staker.ID(),
-					}
-					relayChain.SubmitChallenge(challenge).OnFailure(
+					relayChain.SubmitChallenge(ticket.Value.Int()).OnFailure(
 						func(err error) {
-							fmt.Printf(
-								"Failed to submit challenge with err: [%v]",
+							fmt.Fprintf(
+								os.Stderr,
+								"failed to submit challenge [%v]",
 								err,
 							)
 						},
@@ -243,4 +234,42 @@ func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
 		return true
 	}
 	return false
+}
+
+func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
+	stakerValueInt, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not transform ticket to chain representation [%v]",
+			err,
+		)
+	}
+
+	return &relaychain.Ticket{
+		Value: ticket.Value.Int(),
+		Proof: &relaychain.TicketProof{
+			StakerValue:        stakerValueInt,
+			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+		},
+	}, nil
+}
+
+func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
+	value, err := groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not transform ticket from chain representation [%v]",
+			err,
+		)
+	}
+
+	return &groupselection.Ticket{
+		Value: value,
+		Proof: &groupselection.Proof{
+			StakerValue: []byte(
+				hexutil.EncodeBig(ticket.Proof.StakerValue),
+			),
+			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+		},
+	}, nil
 }
