@@ -32,7 +32,7 @@ func Execute(
 	bytes []byte,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	member *dkg2.ThresholdSigner,
+	signer *dkg2.ThresholdSigner,
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -49,7 +49,7 @@ func Execute(
 
 	fmt.Printf(
 		"[member:%v] Waiting for other group members to enter signing state...\n",
-		member.MemberID(),
+		signer.MemberID(),
 	)
 
 	err := blockCounter.WaitForBlocks(setupBlocks)
@@ -61,15 +61,15 @@ func Execute(
 		)
 	}
 
-	fmt.Printf("[member:%v] Sending signature share...\n", member.MemberID())
+	fmt.Printf("[member:%v] Sending signature share...\n", signer.MemberID())
 
 	seenShares := make(map[gjkr.MemberID]*bn256.G1)
-	share := member.CalculateSignatureShare(bytes)
+	share := signer.CalculateSignatureShare(bytes)
 
 	// Add local share to map rather than receiving from the network.
-	seenShares[member.MemberID()] = share
+	seenShares[signer.MemberID()] = share
 
-	err = sendSignatureShare(share.Marshal(), channel, member.MemberID())
+	err = sendSignatureShare(share.Marshal(), channel, signer.MemberID())
 	if err != nil {
 		return nil, err
 	}
@@ -79,20 +79,20 @@ func Execute(
 		return nil, err
 	}
 
-	fmt.Printf("[member:%v] Receiving other group signature share\n", member.MemberID())
+	fmt.Printf("[member:%v] Receiving other group signature share\n", signer.MemberID())
 
 	for {
 		select {
 		case msg := <-recvChan:
 			fmt.Printf(
 				"[member:%v] Processing signing message\n",
-				member.MemberID(),
+				signer.MemberID(),
 			)
 
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
 				// Ignore our own share, we already have it.
-				if signatureShareMsg.senderID == member.MemberID() {
+				if signatureShareMsg.senderID == signer.MemberID() {
 					continue
 				}
 
@@ -102,7 +102,7 @@ func Execute(
 					fmt.Fprintf(
 						os.Stderr,
 						"[member:%v] failed to unmarshal signature share: [%v]",
-						member.MemberID(),
+						signer.MemberID(),
 						err,
 					)
 				} else {
@@ -116,7 +116,7 @@ func Execute(
 				allSeen = append(allSeen, share)
 			}
 
-			signature := member.CompleteSignature(allSeen)
+			signature := signer.CompleteSignature(allSeen)
 
 			return signature.Marshal(), nil
 		}
