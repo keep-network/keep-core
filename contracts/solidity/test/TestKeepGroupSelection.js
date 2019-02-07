@@ -179,25 +179,4 @@ contract('TestKeepGroupSelection', function(accounts) {
     ), false, "Should fail verifying invalid ticket.");
 
   });
-
-  // it("should be able to challenge a ticket", async function() {
-
-  //   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-  //   await keepGroupImplViaProxy.authorizeStakingContract(stakingContract.address);
-
-  //   await keepGroupImplViaProxy.submitTicket(tickets1[0].value, staker1, tickets1[0].virtualStakerIndex);
-  //   await keepGroupImplViaProxy.submitTicket(1, staker1, tickets1[1].virtualStakerIndex); // invalid ticket
-
-  //   // Challenging valid ticket
-  //   let previousBalance = await stakingContract.stakeBalanceOf(staker2);
-  //   await keepGroupImplViaProxy.challenge(tickets1[0].value, {from: staker2});
-  //   //assert.equal(await stakingContract.stakeBalanceOf(staker2), previousBalance.toNumber() - minimumStake, "Should result slashing challenger's balance");
-
-  //   // Challenging invalid ticket
-  //   previousBalance = await stakingContract.stakeBalanceOf(staker2);
-  //   await keepGroupImplViaProxy.challenge(1, {from: staker2});
-  //   //assert.equal(await stakingContract.stakeBalanceOf(staker2), previousBalance.toNumber() + minimumStake, "Should result rewarding challenger's balance");
-
-  // });
-
 });
