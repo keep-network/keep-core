@@ -109,10 +109,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				tickets = append(tickets, ticket)
 			}
 
-			if len(tickets) == 0 {
-				return fmt.Errorf("no tickets selected to the group")
-			}
-
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
