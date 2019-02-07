@@ -49,10 +49,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
-	n.ticketsMutex.Lock()
-	n.tickets = tickets
-	n.ticketsMutex.Unlock()
-
 	submissionTimeout, err := blockCounter.BlockWaiter(
 		n.chainConfig.TicketReactiveSubmissionTimeout,
 	)
@@ -75,6 +71,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 	// submit all tickets
 	go n.submitTickets(
+		tickets,
 		relayChain,
 		quitTicketSubmission,
 		errorChannel,
@@ -109,29 +106,21 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			}
 
 			var tickets []*groupselection.Ticket
-			if len(selectedTickets) > 0 {
-				groupSelectedTickets := selectedTickets[0:groupSize]
+			groupSelectedTickets := selectedTickets[0:groupSize]
 
-				for _, chainTicket := range groupSelectedTickets {
-					ticket, err := fromChainTicket(chainTicket)
-					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
-							"incorrect ticket format [%v]",
-							err,
-						)
+			for _, chainTicket := range groupSelectedTickets {
+				ticket, err := fromChainTicket(chainTicket)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"incorrect ticket format [%v]",
+						err,
+					)
 
-						continue // ignore incorrect ticket
-					}
-
-					tickets = append(tickets, ticket)
+					continue // ignore incorrect ticket
 				}
-			} else {
-				n.ticketsMutex.Lock()
-				tickets = n.tickets
-				n.ticketsMutex.Unlock()
 
-				tickets = tickets[0:groupSize]
+				tickets = append(tickets, ticket)
 			}
 
 			if len(tickets) == 0 {
@@ -154,11 +143,12 @@ func (n *Node) SubmitTicketsForGroupSelection(
 // submitTickets submits tickets to the chain. It checks to see if the submission
 // period is over in between ticket submits.
 func (n *Node) submitTickets(
+	tickets []*groupselection.Ticket,
 	relayChain relaychain.GroupSelectionInterface,
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
-	for _, ticket := range n.tickets {
+	for _, ticket := range tickets {
 		select {
 		case <-quit:
 			// Exit this loop when we get a signal from quit.
