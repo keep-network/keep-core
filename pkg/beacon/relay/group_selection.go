@@ -36,11 +36,10 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	if err != nil {
 		return err
 	}
-
 	tickets, err :=
 		groupselection.GenerateTickets(
 			beaconValue,
-			[]byte(n.Staker.ID()),
+			n.Staker.ID(),
 			availableStake,
 			n.chainConfig.MinimumStake,
 		)
