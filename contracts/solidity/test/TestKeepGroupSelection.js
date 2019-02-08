@@ -9,6 +9,7 @@ const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
 const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
+const BN = require('bn.js');
 
 
 function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
@@ -16,7 +17,7 @@ function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
   for (let i = 1; i <= stakerWeight; i++) {
     let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
       ["uint", "uint", "uint"],
-      [randomBeaconValue, stakerValue, i]
+      [new BN(randomBeaconValue), stakerValue, i]
     ).toString('hex'));
     let ticket = {
       value: ticketValue,
