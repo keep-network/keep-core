@@ -168,7 +168,7 @@ func submitRelayEntryGenesis(c *cli.Context) error {
 	entry := &event.Entry{
 		RequestID:     big.NewInt(0),
 		Value:         value,
-		GroupID:       big.NewInt(0),
+		GroupID:       make([]byte, 0),
 		PreviousEntry: big.NewInt(0),
 		Timestamp:     time.Now().UTC(),
 		Seed:          big.NewInt(0),
@@ -197,7 +197,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	entry := &event.Entry{
 		RequestID:     big.NewInt(int64(requestID)),
 		Value:         value,
-		GroupID:       big.NewInt(int64(requestID)),
+		GroupID:       big.NewInt(int64(requestID)).Bytes(),
 		PreviousEntry: previousValue,
 		Timestamp:     time.Now().UTC(),
 		Seed:          big.NewInt(0),
