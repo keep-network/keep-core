@@ -141,7 +141,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	c.groupRelayEntriesMutex.Lock()
 	defer c.groupRelayEntriesMutex.Unlock()
 
-	existing, exists := c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()]
+	existing, exists := c.groupRelayEntries[string(entry.GroupID)+entry.RequestID.String()]
 	if exists {
 		if existing != entry.Value {
 			err := fmt.Errorf(
@@ -159,7 +159,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 
 		return relayEntryPromise
 	}
-	c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()] = entry.Value
+	c.groupRelayEntries[string(entry.GroupID)+entry.RequestID.String()] = entry.Value
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayEntryHandlers {

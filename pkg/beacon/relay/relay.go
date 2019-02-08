@@ -83,7 +83,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			Value:         rightSizeSignature,
 			PreviousEntry: previousValue,
 			Timestamp:     time.Now().UTC(),
-			GroupID:       &big.Int{},
+			GroupID:       make([]byte, 0),
 		}
 
 		relayChain.SubmitRelayEntry(

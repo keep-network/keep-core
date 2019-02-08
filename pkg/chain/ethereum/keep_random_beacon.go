@@ -119,7 +119,7 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 // SubmitRelayEntry submits a group signature for consideration.
 func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	requestID *big.Int,
-	groupID *big.Int,
+	groupID []byte,
 	previousEntry *big.Int,
 	groupSignature *big.Int,
 ) (*types.Transaction, error) {
@@ -205,7 +205,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 type relayEntryGeneratedFunc func(
 	requestID *big.Int,
 	requestResponse *big.Int,
-	requestGroupID *big.Int,
+	requestGroupID []byte,
 	previousEntry *big.Int,
 	blockNumber *big.Int,
 )
