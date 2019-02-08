@@ -66,19 +66,20 @@ func (n *Node) JoinGroupIfEligible(
 	// Release control of this group if we error.
 	defer n.flushPendingGroup(entryRequestID.String())
 
-	// build the channel name and get the broadcast channel
-	broadcastChannelName := channelNameFromSelectedTickets(
-		groupSelectionResult.SelectedTickets,
-	)
-
 	for index, ticket := range groupSelectionResult.SelectedTickets {
 		// If our ticket is amongst those chosen, kick
 		// off an instance of DKG. We may have multiple
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.Staker.ID()) {
+			fmt.Println("elligible for group")
 			// capture player index for goroutine
 			playerIndex := index
+
+			// build the channel name and get the broadcast channel
+			broadcastChannelName := channelNameFromSelectedTickets(
+				groupSelectionResult.SelectedTickets,
+			)
 
 			// We should only join the broadcast channel if we're
 			// elligible for the group
