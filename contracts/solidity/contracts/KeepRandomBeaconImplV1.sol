@@ -19,7 +19,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber, uint256 seed);
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint blockNumber, uint256 seed);
 
     uint256 internal _seq;
     uint256 internal _minPayment;
@@ -31,7 +31,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     mapping (uint256 => address) internal _requestPayer;
     mapping (uint256 => uint256) internal _requestPayment;
     mapping (uint256 => uint256) internal _blockReward;
-    mapping (uint256 => uint256) internal _requestGroup;
+    mapping (uint256 => bytes) internal _requestGroup;
 
     mapping (uint256 => bool) internal _relayEntryRequested;
 
@@ -140,9 +140,9 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @dev Creates a new relay entry and stores the associated data on the chain.
      * @param requestID The request that started this generation - to tie the results back to the request.
      * @param groupSignature The generated random number.
-     * @param groupID Public key of the group that generated the threshold signature.
+     * @param groupPubKey Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry, uint256 seed) public {    
+    function relayEntry(uint256 requestID, uint256 groupSignature, bytes groupPubKey, uint256 previousEntry, uint256 seed) public {    
         // Temporary solution for M2. Every group member submits a new relay entry
         // with the same request ID and we filter out duplicates here. 
         // This behavior will change post-M2 when we'll integrate phase 14 and/or 
@@ -154,8 +154,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
         // TODO: validate groupSignature using BLS.sol
 
-        _requestGroup[requestID] = groupID;
-        emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number, seed);
+        _requestGroup[requestID] = groupPubKey;
+        emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, block.number, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
