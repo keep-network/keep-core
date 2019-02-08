@@ -17,11 +17,6 @@ import (
 // ordered ticket list (to run ticket verification)from the chain.
 const getTicketListInterval = 5 * time.Second
 
-type groupCandidate struct {
-	address string
-	tickets []*groupselection.Ticket
-}
-
 // SubmitTicketsForGroupSelection takes the previous beacon value and attempts to
 // generate the appropriate number of tickets for the staker. After ticket
 // generation begins an interactive process, where the staker submits tickets
@@ -37,22 +32,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) error {
-	// we use reactive submission timeout temporarily, until we properly
-	// implement phases 2a and 2b.
-	submissionTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketReactiveSubmissionTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
-	challengeTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketChallengeTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
 	availableStake, err := n.Staker.Stake()
 	if err != nil {
 		return err
@@ -69,28 +48,36 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
-	errCh := make(chan error, len(tickets))
-	quitTicketSubmission := make(chan struct{}, 1)
-	quitTicketChallenge := make(chan struct{}, 0)
-	groupCandidate := &groupCandidate{address: n.Staker.ID(), tickets: tickets}
+	submissionTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketReactiveSubmissionTimeout,
+	)
+	if err != nil {
+		return err
+	}
 
-	go groupCandidate.submitTickets(
-		relayChain,
-		n.chainConfig.NaturalThreshold,
-		quitTicketSubmission,
-		errCh,
+	challengeTimeout, err := blockCounter.BlockWaiter(
+		n.chainConfig.TicketChallengeTimeout,
+	)
+	if err != nil {
+		return err
+	}
+
+	var (
+		errorChannel         = make(chan error, len(tickets))
+		quitTicketSubmission = make(chan struct{}, 1)
 	)
 
-	// kick off background loop to check submitted tickets
-	go groupCandidate.verifyTicket(
+	// submit all tickets
+	go n.submitTickets(
+		tickets,
 		relayChain,
-		beaconValue,
-		quitTicketChallenge,
+		quitTicketSubmission,
+		errorChannel,
 	)
 
 	for {
 		select {
-		case err := <-errCh:
+		case err := <-errorChannel:
 			fmt.Printf(
 				"error during ticket submission [%v]",
 				err,
@@ -98,11 +85,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			quitTicketChallenge <- struct{}{}
-
-			selectedTickets, err := relayChain.GetOrderedTickets()
+			selectedTickets, err := relayChain.GetSelectedTickets()
 			if err != nil {
-				quitTicketChallenge <- struct{}{}
 				return fmt.Errorf(
 					"could not fetch ordered tickets after challenge timeout [%v]",
 					err,
@@ -140,13 +124,13 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 // submitTickets submits tickets to the chain. It checks to see if the submission
 // period is over in between ticket submits.
-func (gc *groupCandidate) submitTickets(
+func (n *Node) submitTickets(
+	tickets []*groupselection.Ticket,
 	relayChain relaychain.GroupSelectionInterface,
-	naturalThreshold *big.Int,
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
-	for _, ticket := range gc.tickets {
+	for _, ticket := range tickets {
 		select {
 		case <-quit:
 			// Exit this loop when we get a signal from quit.
@@ -161,57 +145,6 @@ func (gc *groupCandidate) submitTickets(
 			relayChain.SubmitTicket(chainTicket).OnFailure(
 				func(err error) { errCh <- err },
 			)
-		}
-	}
-}
-
-func (gc *groupCandidate) verifyTicket(
-	relayChain relaychain.GroupSelectionInterface,
-	beaconValue []byte,
-	quit <-chan struct{},
-) {
-	t := time.NewTimer(1)
-	defer t.Stop()
-	for {
-		select {
-		case <-t.C:
-			selectedTickets, err := relayChain.GetOrderedTickets()
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"error getting submitted tickets [%v]",
-					err,
-				)
-			}
-
-			for _, selectedTicket := range selectedTickets {
-				ticket, err := fromChainTicket(selectedTicket)
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"incorrect ticket format [%v]",
-						err,
-					)
-
-					continue // ignore incorrect ticket
-				}
-
-				if !costlyCheck(beaconValue, ticket) {
-					relayChain.SubmitChallenge(ticket.Value.Int()).OnFailure(
-						func(err error) {
-							fmt.Fprintf(
-								os.Stderr,
-								"failed to submit challenge [%v]",
-								err,
-							)
-						},
-					)
-				}
-			}
-			t.Reset(getTicketListInterval)
-		case <-quit:
-			// Exit this loop when we get a signal from quit.
-			return
 		}
 	}
 }

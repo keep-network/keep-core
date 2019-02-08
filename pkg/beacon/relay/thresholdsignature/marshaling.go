@@ -1,7 +1,7 @@
 package thresholdsignature
 
 import (
-	"github.com/dfinity/go-dfinity-crypto/bls"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature/gen/pb"
 )
 
@@ -14,8 +14,8 @@ func (*SignatureShareMessage) Type() string {
 // network communication.
 func (ssm *SignatureShareMessage) Marshal() ([]byte, error) {
 	pbSignatureShare := pb.SignatureShare{
-		Id:    ssm.ID.GetLittleEndian(),
-		Share: ssm.ShareBytes,
+		SenderID: ssm.senderID.Bytes(),
+		Share:    ssm.ShareBytes,
 	}
 
 	return pbSignatureShare.Marshal()
@@ -30,13 +30,7 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	id := &bls.ID{}
-	err = id.SetLittleEndian(pbSignatureShare.Id)
-	if err != nil {
-		return err
-	}
-
-	ssm.ID = id
+	ssm.senderID = gjkr.MemberIDFromBytes(pbSignatureShare.SenderID)
 	ssm.ShareBytes = pbSignatureShare.Share
 
 	return nil
