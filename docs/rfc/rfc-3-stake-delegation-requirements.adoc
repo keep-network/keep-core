@@ -18,7 +18,7 @@ The stake delegation will be beneficial for the security of Keep users as it
 allows on-stake operations with a "cold wallet". Thus, putting Keep users
 wallets offline protects them from "hacks" and stake delegation enables
 continuous rewarding on safe operations on staked assets. Also exposure of
-Keep users private keys will be limited. 
+Keep users public keys will be limited. 
 
 === Terminology
 
@@ -45,9 +45,8 @@ The goal of this proposal is to specify a simple and secure stake delegation
 mechanism. It should enable Keep users to have their wallets offline and their
 stake operated by operators on their behalf. The Keep client software should
 be able to run without exposing Keep operator's private key and should not
-require the owner's private key at all. The stake delegation should also
-optimize the network throughput without compromising the security of owners
-stake.
+require any owner's keys at all. The stake delegation should also optimize
+the network throughput without compromising the security of owners stake.
 
 
 === Design Requirements:
@@ -82,19 +81,19 @@ The downside of this solution is that the network throughput is strongly limited
 
 ===== Multi-Operating
 
-Second, analyzed operating strategy is multi-operating where the number of on-stake operations is not limited. Using this strategy an operator can perform as many on-stake operations as possible and is only limited by the stake that is delegated to him. In other words, an operator cannot perform a single on-stake operation with more than his delegates stake but can execute more than one operation at the same time with his delegated stake. Therefore, the multi-operating strategy achieves the highest possible network throughput.
+Second, analyzed operating strategy is multi-operating where the number of on-stake operations is not limited. Using this strategy an operator can perform as many on-stake operations as possible and is only limited by the stake that is delegated to him. In other words, an operator cannot perform a single on-stake operation with more than his delegates stake but can simultaneously execute an arbitrary number of operations with the same delegated stake. Therefore, the multi-operating strategy achieves the highest possible network throughput.
 
 Unfortunately, the multi-operating strategy can lead to severe security and economic ramifications. For example, with such an unlimited operating an operator can start such high number of on-stake operations that the combined penalties would be larger than the total owner stake hence opening a possibility to quickly deplete all of the owner's stake.
 
 ===== Atomic Multi-Operating
 
-The third analyzed strategy is a hybrid approach where we combine atomic operating with multi-operating. This strategy enforces that when an on-stake operation is performed, a portion of a delegated stake is locked (e.g. MINIMUM_STAKE if the penalty for misbehaving is lower than the MINIMUM_STAKE or MAXIMAL_PENALTY otherwise) and cannot be used for other operations until the end of the current operation. Hence, achieving the stake atomicity. The operator can use the remaining delegated stake for other concurrent on-stake operations. Therefore, achieving the multi-staking feature. No more operations are permitted when the amount of unlocked stake is lower than the required portion of a stake to be locked.
+The third analyzed strategy is a hybrid approach where we combine atomic operating with multi-operating. This strategy enforces that when an on-stake operation is performed, a portion of a delegated stake is locked (e.g. MINIMUM_STAKE if the penalty for misbehaving is lower than the MINIMUM_STAKE or MAXIMAL_PENALTY otherwise) and cannot be used for other operations until the end of the current operation. Hence, achieving the stake atomicity. The operator can use the remaining delegated stake for other concurrent on-stake operations. Therefore, achieving the multi-operating feature. No more operations are permitted when the amount of unlocked stake is lower than the required portion of a stake to be locked.
 
 This strategy protects the stake of the owner from being rapidly depleted, unlike the pure multi-operating. It also enables higher network throughput than the pure atomic operating strategy. 
 
 ==== MINIMUM_STAKE
 
-The MINIMUM_STAKE plays a crucial role in the process of on-stake operations. It is the limiting factor of how many concurrent operations an operator take part. Therefore, we have also analyzed tow possible scenarios for setting MINIMUM_STAKE.
+The MINIMUM_STAKE plays a crucial role in the process of on-stake operations. It is the limiting factor of how many concurrent operations an operator take part. Therefore, we have also analyzed two possible scenarios for setting MINIMUM_STAKE.
 
 ===== Static MINIMUM_STAKE
 
@@ -152,7 +151,7 @@ The Atomic Multi-Operating strategy is the most optimal one as it provides highe
 
 ==== MINIMUM_STAKE
 
-Both dynamic and static MINIMUM_STAKE strategies are valid ones and do not influence the performance of the network heavily. The dynamic one has an advantage over static one for being more resilient against external factors but for the cost of increased complexity. Therefore, a more optimal choice would be the dynamic MINIMU_STAKE strategy.
+Both dynamic and static MINIMUM_STAKE strategies are valid ones and do not influence the performance of the network heavily. The dynamic one has an advantage over static one for being more resilient against external factors but for the cost of increased complexity. Therefore, a more optimal choice would be the dynamic MINIMUM_STAKE strategy.
 
 ==== Undelegation
 
@@ -171,7 +170,7 @@ The Inactive Penalisation should be rejected as it enables zero cost end of the 
 
 Accordingly to the design strategy and the design requirements the design architecture should be based on the following combinations of strategies:
 
-Atomic Multi-Operating with Dynamic or Static MINUMUM_STAKE and Delayed Undelegation with Misbehaving or Consequent Penalisation
+Atomic Multi-Operating with Dynamic or Static MINIMUM_STAKE and Delayed Undelegation with Misbehaving or Consequent Penalisation
 
 Other strategies tend to be suboptimal from the perspective of both security and network throughput requirements.
 
