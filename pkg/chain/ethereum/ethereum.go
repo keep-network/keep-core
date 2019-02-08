@@ -277,7 +277,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
-			requestGroupID *big.Int,
+			requestGroupID []byte,
 			previousEntry *big.Int,
 			blockNumber *big.Int,
 			seed *big.Int,
