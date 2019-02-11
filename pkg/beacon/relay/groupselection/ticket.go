@@ -48,7 +48,7 @@ func NewTicket(
 
 func (t *Ticket) IsFromStaker(tickets []*Ticket) bool {
 	for _, ticket := range tickets {
-		if bytes.Compare(t.Proof.StakerValue, ticket.Proof.StakerValue) == 0 {
+		if bytes.Compare(t.Value.Bytes(), ticket.Value.Bytes()) == 0 {
 			return true
 		}
 	}
