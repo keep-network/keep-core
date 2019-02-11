@@ -152,7 +152,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	submittedRequestID := big.NewInt(1)
 	submittedResult := &relaychain.DKGResult{
-		GroupPublicKey: [32]byte{11},
+		GroupPublicKey: []byte{11},
 	}
 
 	submittedResults[submittedRequestID] = append(
@@ -220,7 +220,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
 	submittedResult11 := &relaychain.DKGResult{
-		GroupPublicKey: [32]byte{11},
+		GroupPublicKey: []byte{11},
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
@@ -317,7 +317,7 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	subscription.Unsubscribe()
 
 	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
-		GroupPublicKey: [32]byte{88},
+		GroupPublicKey: []byte{88},
 	})
 
 	select {
