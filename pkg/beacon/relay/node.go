@@ -98,7 +98,7 @@ func (n *Node) JoinGroupIfEligible(
 
 			fmt.Printf("Executing dkg with index = %v...\n", index)
 			go func() {
-				dkg2.ExecuteDKG(
+				signer, err := dkg2.ExecuteDKG(
 					entryRequestID,
 					entrySeed,
 					playerIndex,
@@ -108,9 +108,15 @@ func (n *Node) JoinGroupIfEligible(
 					relayChain,
 					broadcastChannel,
 				)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"error executing DKG: [%v]\n",
+						err,
+					)
+				}
 
-				// TODO: pass in the member
-				n.registerPendingGroup(entryRequestID.String(), nil, broadcastChannel)
+				n.registerPendingGroup(entryRequestID.String(), signer, broadcastChannel)
 			}()
 		}
 	}
