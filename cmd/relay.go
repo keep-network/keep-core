@@ -171,6 +171,7 @@ func submitRelayEntryGenesis(c *cli.Context) error {
 		GroupID:       big.NewInt(0),
 		PreviousEntry: big.NewInt(0),
 		Timestamp:     time.Now().UTC(),
+		Seed:          big.NewInt(0),
 	}
 
 	return submitRelayEntry(c, entry)
@@ -199,6 +200,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 		GroupID:       big.NewInt(int64(requestID)),
 		PreviousEntry: previousValue,
 		Timestamp:     time.Now().UTC(),
+		Seed:          big.NewInt(0),
 	}
 
 	return submitRelayEntry(c, entry)

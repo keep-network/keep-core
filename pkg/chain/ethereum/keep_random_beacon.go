@@ -122,6 +122,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	groupID *big.Int,
 	previousEntry *big.Int,
 	groupSignature *big.Int,
+	seed *big.Int,
 ) (*types.Transaction, error) {
 	return krb.transactor.RelayEntry(
 		krb.transactorOptions,
@@ -129,6 +130,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 		groupSignature,
 		groupID,
 		previousEntry,
+		seed,
 	)
 }
 
@@ -208,6 +210,7 @@ type relayEntryGeneratedFunc func(
 	requestGroupID *big.Int,
 	previousEntry *big.Int,
 	blockNumber *big.Int,
+	seed *big.Int,
 )
 
 // WatchRelayEntryGenerated watches for event.
@@ -242,6 +245,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.RequestGroupID,
 					event.PreviousEntry,
 					event.BlockNumber,
+					event.Seed,
 				)
 			case ee := <-eventSubscription.Err():
 				fail(ee)
