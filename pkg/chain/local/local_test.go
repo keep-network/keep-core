@@ -13,36 +13,78 @@ import (
 )
 
 func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
-	c := Connect(10, 4, big.NewInt(200))
-	chain := c.ThresholdRelay()
+	groupSize := 4
 
 	ticket1 := &relaychain.Ticket{Value: big.NewInt(1)}
 	ticket2 := &relaychain.Ticket{Value: big.NewInt(2)}
 	ticket3 := &relaychain.Ticket{Value: big.NewInt(3)}
 	ticket4 := &relaychain.Ticket{Value: big.NewInt(4)}
+	ticket5 := &relaychain.Ticket{Value: big.NewInt(5)}
+	ticket6 := &relaychain.Ticket{Value: big.NewInt(6)}
 
-	chain.SubmitTicket(ticket3)
-	chain.SubmitTicket(ticket1)
-	chain.SubmitTicket(ticket4)
-	chain.SubmitTicket(ticket2)
-
-	expectedResult := []*relaychain.Ticket{
-		ticket1, ticket2, ticket3, ticket4,
+	var tests = map[string]struct {
+		submitTickets  func(chain relaychain.Interface)
+		expectedResult []*relaychain.Ticket
+	}{
+		"number of tickets is less than group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedResult: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3,
+			},
+		},
+		"number of tickets is same as group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket4)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedResult: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3, ticket4,
+			},
+		},
+		"number of tickets is greater than as group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket4)
+				chain.SubmitTicket(ticket6)
+				chain.SubmitTicket(ticket5)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedResult: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3, ticket4,
+			},
+		},
 	}
 
-	actualResult, err := chain.GetSelectedTickets()
-	if err != nil {
-		t.Fatal(err)
-	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			c := Connect(groupSize, 4, big.NewInt(200))
+			chain := c.ThresholdRelay()
 
-	if !reflect.DeepEqual(expectedResult, actualResult) {
-		t.Fatalf(
-			"\nexpected: %v\nactual:   %v\n",
-			expectedResult,
-			actualResult,
-		)
+			test.submitTickets(chain)
+
+			actualResult, err := chain.GetSelectedTickets()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !reflect.DeepEqual(test.expectedResult, actualResult) {
+				t.Fatalf(
+					"\nexpected: %v\nactual:   %v\n",
+					test.expectedResult,
+					actualResult,
+				)
+			}
+		})
 	}
 }
+
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
