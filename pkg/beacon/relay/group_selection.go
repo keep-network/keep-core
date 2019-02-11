@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/keep-network/go-ethereum/common/hexutil"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -165,10 +166,14 @@ func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
 }
 
 func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
+	stakerValue, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
+	if err != nil {
+		return nil, err
+	}
 	return &relaychain.Ticket{
 		Value: ticket.Value.Int(),
 		Proof: &relaychain.TicketProof{
-			StakerValue:        new(big.Int).SetBytes(ticket.Proof.StakerValue),
+			StakerValue:        stakerValue,
 			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
 		},
 	}, nil
