@@ -19,7 +19,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber);
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber, uint256 seed);
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
@@ -142,12 +142,12 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupSignature The generated random number.
      * @param groupID Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry) public {
+    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry, uint256 seed) public {
 
         // TODO: validate groupSignature using BLS.sol
     
         _requestGroup[requestID] = groupID;
-        emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number);
+        emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
