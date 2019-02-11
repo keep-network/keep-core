@@ -113,7 +113,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			go n.JoinGroupIfEligible(
 				relayChain,
 				&groupselection.Result{
-					SelectedTickets: selectedTickets,
+					GeneratedTickets: tickets,
+					SelectedTickets:  selectedTickets,
 				},
 				entryRequestID,
 				entrySeed,
