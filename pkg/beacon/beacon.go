@@ -3,6 +3,7 @@ package beacon
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -53,14 +54,20 @@ func Initialize(
 
 	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 		fmt.Printf("Saw new relay entry [%+v]\n", entry)
+
 		// new entry generated, try to join the group
-		go node.SubmitTicketsForGroupSelection(
-			relayChain,
-			blockCounter,
-			entry.Value.Bytes(),
-			entry.RequestID,
-			entry.Seed,
-		)
+		go func() {
+			err := node.SubmitTicketsForGroupSelection(
+				relayChain,
+				blockCounter,
+				entry.Value.Bytes(),
+				entry.RequestID,
+				entry.Seed,
+			)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "tickets submission failed: [%v]\n", err)
+			}
+		}()
 
 		go node.GenerateRelayEntryIfEligible(
 			entry.RequestID,
