@@ -12,7 +12,7 @@ const KeepRandomBeacon = artifacts.require("./KeepRandomBeacon.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const minPayment = 1;
-const minStake = 1;
+const minStake = 2 * (10**5);
 
 const groupThreshold = 3;
 const groupSize = 5;
