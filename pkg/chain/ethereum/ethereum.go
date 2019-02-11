@@ -223,7 +223,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		for {
 			select {
 			case event := <-generatedEntry:
-				if event.RequestID == newEntry.RequestID {
+				if event.RequestID.Cmp(newEntry.RequestID) == 0 {
 					subscription.Unsubscribe()
 					close(generatedEntry)
 
@@ -456,7 +456,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 		for {
 			select {
 			case event, isOpen := <-publishedResult:
-				if isOpen && event.RequestID == requestID {
+				if isOpen && event.RequestID.Cmp(requestID) == 0 {
 					subscription.Unsubscribe()
 					close(publishedResult)
 
