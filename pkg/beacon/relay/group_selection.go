@@ -87,7 +87,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			chainSelectedTickets, err := relayChain.GetSelectedTickets()
 			if err != nil {
 				return fmt.Errorf(
-					"could not fetch ordered tickets after challenge timeout [%v]",
+					"could not fetch selected tickets [%v]",
 					err,
 				)
 			}
