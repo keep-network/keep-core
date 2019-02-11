@@ -12,16 +12,16 @@ contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
 
-    event OnGroupRegistered(bytes32 groupPubKey);
+    event OnGroupRegistered(bytes groupPubKey);
 
     struct DkgResult {
         bool success;
-        bytes32 groupPubKey;
+        bytes groupPubKey;
         bytes disqualified;
         bytes inactive;
     }
 
-    event DkgResultPublishedEvent(uint256 requestId, bytes32 groupPubKey);
+    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
     
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -37,12 +37,12 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _randomBeaconValue;
 
     uint256[] internal _tickets;
-    bytes32[] internal _submissions;
+    bytes[] internal _submissions;
 
     mapping (uint256 => DkgResult) internal _requestIdToDkgResult;
     mapping (uint256 => bool) internal _dkgResultPublished;
-    mapping (bytes32 => uint256) internal _submissionVotes;
-    mapping (address => mapping (bytes32 => bool)) internal _hasVoted;
+    mapping (bytes => uint256) internal _submissionVotes;
+    mapping (address => mapping (bytes => bool)) internal _hasVoted;
 
     struct Proof {
         address sender;
@@ -52,8 +52,8 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    bytes32[] internal _groups;
-    mapping (bytes32 => address[]) internal _groupMembers;
+    bytes[] internal _groups;
+    mapping (bytes => address[]) internal _groupMembers;
 
     mapping (string => bool) internal _initialized;
 
@@ -206,7 +206,7 @@ contract KeepGroupImplV1 is Ownable {
     function submitDkgResult(
         uint256 requestId,
         bool success, 
-        bytes32 groupPubKey,
+        bytes groupPubKey,
         bytes disqualified,
         bytes inactive
     ) public {
