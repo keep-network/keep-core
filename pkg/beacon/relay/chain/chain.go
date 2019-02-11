@@ -87,7 +87,7 @@ type DistributedKeyGenerationInterface interface {
 	OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication),
 	) (subscription.EventSubscription, error)
-  // GetDKGSubmissions returns the entire set of submissions that is related
+	// GetDKGSubmissions returns the entire set of submissions that is related
 	// to a particular requestID.
 	GetDKGSubmissions(requestID *big.Int) *DKGSubmissions
 	// DKGResultVote increases the number of votes for a dkgResultHash.

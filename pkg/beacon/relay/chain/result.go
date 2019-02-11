@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/crypto/sha3"
@@ -56,29 +55,6 @@ func (r1 *DKGResult) Equals(r2 *DKGResult) bool {
 	return true
 }
 
-
-// bigIntEquals checks if two big.Int values are equal.
-func bigIntEquals(expected *big.Int, actual *big.Int) bool {
-	if expected != nil && actual != nil {
-		return expected.Cmp(actual) == 0
-	}
-	return expected == nil && actual == nil
-}
-
-// boolSlicesEqual checks if two slices of bool are equal. Slices need to have
-// the same length and have the same order of entries.
-func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
-	if len(expectedSlice) != len(actualSlice) {
-		return false
-	}
-	for i := range expectedSlice {
-		if expectedSlice[i] != actualSlice[i] {
-			return false
-		}
-	}
-	return true
-}
-
 // Hash the DKGResult and return the hashed value.
 func (r *DKGResult) Hash() []byte {
 	serial := r.serialize()
@@ -111,21 +87,20 @@ func (r *DKGResult) serialize() []byte {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
 	}
-	buf.Write(gpk)                                                         // Byte 5..X - the group public key in bytes
+	buf.Write(gpk[:])                                                      // Byte 5..X - the group public key in bytes
 	err = binary.Write(&buf, binary.BigEndian, int32(len(r.Disqualified))) // Byte X+1..X+5 - length of the set of Disqualified
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
 	}
 	for _, b := range r.Disqualified { // Byte X+6..Y - Set of disqualified as 0x01, 0x00 for true/false
-		buf.Write(boolToByte(b))
+		buf.WriteByte(b)
 	}
 	err = binary.Write(&buf, binary.BigEndian, int32(len(r.Inactive))) // Byte Y+1..Y+5 - length of the set of Inactive
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
 	}
 	for _, b := range r.Inactive { // Byte X+6..Y - Set of inactive as 0x01, 0x00 for true/false
-		buf.Write(boolToByte(b))
+		buf.WriteByte(b)
 	}
 	return buf.Bytes()
 }
-
