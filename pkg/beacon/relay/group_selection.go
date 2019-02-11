@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -36,11 +35,10 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	if err != nil {
 		return err
 	}
-
 	tickets, err :=
 		groupselection.GenerateTickets(
 			beaconValue,
-			[]byte(n.Staker.ID()),
+			n.Staker.ID(),
 			availableStake,
 			n.chainConfig.MinimumStake,
 		)
@@ -167,18 +165,10 @@ func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
 }
 
 func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
-	stakerValueInt, err := hexutil.DecodeBig(string(ticket.Proof.StakerValue))
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not transform ticket to chain representation [%v]",
-			err,
-		)
-	}
-
 	return &relaychain.Ticket{
 		Value: ticket.Value.Int(),
 		Proof: &relaychain.TicketProof{
-			StakerValue:        stakerValueInt,
+			StakerValue:        new(big.Int).SetBytes(ticket.Proof.StakerValue),
 			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
 		},
 	}, nil
@@ -196,9 +186,7 @@ func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) 
 	return &groupselection.Ticket{
 		Value: value,
 		Proof: &groupselection.Proof{
-			StakerValue: []byte(
-				hexutil.EncodeBig(ticket.Proof.StakerValue),
-			),
+			StakerValue:        ticket.Proof.StakerValue.Bytes(),
 			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
 		},
 	}, nil

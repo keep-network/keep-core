@@ -106,8 +106,8 @@ type localStaker struct {
 	stake   *big.Int
 }
 
-func (ls *localStaker) ID() string {
-	return ls.address
+func (ls *localStaker) ID() []byte {
+	return []byte(ls.address)
 }
 
 func (ls *localStaker) Stake() (*big.Int, error) {

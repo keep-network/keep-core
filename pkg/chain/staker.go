@@ -10,7 +10,7 @@ import (
 type Staker interface {
 	// ID returns a unique identifier for the represented stake. Two
 	// representations of the same stake should return the same ID.
-	ID() string
+	ID() []byte
 	// Stake returns the current stake of this staker according to the connected
 	// chain state as a promise. If setup of the promise fails, an error is
 	// returned.
