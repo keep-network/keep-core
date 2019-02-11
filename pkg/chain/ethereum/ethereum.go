@@ -161,17 +161,6 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 
 	_, err := ec.keepGroupContract.SubmitTicket(ticket)
 	if err != nil {
-		failErr := submittedTicketPromise.Fail(err)
-		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of: [%v] failed with: [%v]\n",
-				err,
-				failErr,
-			)
-		}
-	}
-	if err != nil {
 		failPromise(err)
 	}
 
