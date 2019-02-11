@@ -80,5 +80,12 @@ func Initialize(
 		)
 	})
 
+	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+		node.RegisterGroup(
+			registration.RequestID.String(),
+			registration.GroupPublicKey,
+		)
+	})
+
 	return nil
 }
