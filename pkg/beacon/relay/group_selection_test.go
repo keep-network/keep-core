@@ -19,7 +19,7 @@ func TestSubmitAllTickets(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("StakerValue1001")
+	stakerValue := []byte("0x35171fff656b23d7ab1e395cf3c2bf134dbfd76d")
 
 	tickets := []*groupselection.Ticket{
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
@@ -80,7 +80,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("StakerValue1001")
+	stakerValue := []byte("0x35171fff656b23d7ab1e395cf3c2bf134dbfd76d")
 
 	tickets := []*groupselection.Ticket{
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
