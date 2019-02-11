@@ -83,7 +83,14 @@ func (c *localChain) GetSelectedTickets() ([]*relaychain.Ticket, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
-	return c.tickets, nil
+	if len(c.tickets) <= c.relayConfig.GroupSize {
+		return c.tickets, nil
+	}
+
+	selectedTickets := make([]*relaychain.Ticket, c.relayConfig.GroupSize)
+	copy(selectedTickets, c.tickets)
+
+	return selectedTickets, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(
