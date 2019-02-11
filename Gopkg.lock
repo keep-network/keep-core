@@ -307,6 +307,14 @@
   revision = "b497e2f366b8624394fb2e89c10ab607bebdde0b"
 
 [[projects]]
+  digest = "1:8acdd83e35b407d026e546bf4d18cc778e9604433d03d468eccca62b9c51c718"
+  name = "github.com/keep-network/go-ethereum"
+  packages = ["common/hexutil"]
+  pruneopts = ""
+  revision = "89451f7c382ad2185987ee369f16416f89c28a7d"
+  version = "v1.8.15"
+
+[[projects]]
   digest = "1:49ad34519824c6236d200b0f8d07a071a6cb32714f7dda837a2651cee3acd442"
   name = "github.com/keep-network/paillier"
   packages = ["."]
@@ -897,7 +905,11 @@
     "blowfish",
     "ed25519",
     "ed25519/internal/edwards25519",
+    "internal/subtle",
+    "nacl/secretbox",
     "pbkdf2",
+    "poly1305",
+    "salsa20/salsa",
     "scrypt",
     "sha3",
     "ssh/terminal",
@@ -1004,6 +1016,7 @@
     "github.com/gogo/protobuf/sortkeys",
     "github.com/ipfs/go-datastore",
     "github.com/ipfs/go-datastore/sync",
+    "github.com/keep-network/go-ethereum/common/hexutil",
     "github.com/keep-network/paillier",
     "github.com/libp2p/go-addr-util",
     "github.com/libp2p/go-conn-security",
@@ -1019,6 +1032,7 @@
     "github.com/multiformats/go-multiaddr",
     "github.com/pborman/uuid",
     "github.com/urfave/cli",
+    "golang.org/x/crypto/nacl/secretbox",
     "golang.org/x/crypto/sha3",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/tools/imports",
