@@ -63,12 +63,12 @@ func TestSubmitAllTickets(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !reflect.DeepEqual(ticket, submitted) {
+		if !reflect.DeepEqual(ticket.Value, submitted.Value) {
 			t.Errorf(
 				"unexpected ticket at index [%v]\nexpected: [%v]\nactual: [%v]",
 				i,
-				ticket,
-				submitted,
+				ticket.Value,
+				submitted.Value,
 			)
 		}
 	}

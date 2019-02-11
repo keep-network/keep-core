@@ -205,22 +205,9 @@ func (kg *keepGroup) SelectedTickets() ([]*chain.Ticket, error) {
 	}
 
 	var selectedTickets []*chain.Ticket
-
 	for _, ticketValue := range selectedTicketValues {
-		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
-			kg.callerOpts,
-			ticketValue,
-		)
-		if err != nil {
-			return nil, err
-		}
-
 		ticket := &chain.Ticket{
 			Value: ticketValue,
-			Proof: &chain.TicketProof{
-				StakerValue:        stakerValue,
-				VirtualStakerIndex: virtualStakerIndex,
-			},
 		}
 
 		selectedTickets = append(selectedTickets, ticket)

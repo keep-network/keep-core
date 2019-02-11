@@ -191,11 +191,5 @@ func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) 
 		)
 	}
 
-	return &groupselection.Ticket{
-		Value: value,
-		Proof: &groupselection.Proof{
-			StakerValue:        ticket.Proof.StakerValue.Bytes(),
-			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
-		},
-	}, nil
+	return &groupselection.Ticket{Value: value}, nil
 }
