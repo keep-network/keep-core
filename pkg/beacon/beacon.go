@@ -3,6 +3,7 @@ package beacon
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
@@ -69,8 +70,10 @@ func Initialize(
 			}
 		}()
 
+		nextRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
+
 		go node.GenerateRelayEntryIfEligible(
-			entry.RequestID,
+			nextRequestID,
 			entry.PreviousEntry,
 			entry.Seed,
 			relayChain,
