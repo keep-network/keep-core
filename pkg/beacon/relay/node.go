@@ -71,7 +71,7 @@ func (n *Node) JoinGroupIfEligible(
 		// off an instance of DKG. We may have multiple
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
-		if ticket.IsFromStaker(n.Staker.ID()) {
+		if ticket.IsFromStaker(groupSelectionResult.GeneratedTickets) {
 			fmt.Println("elligible for group")
 			// capture player index for goroutine
 			playerIndex := index
