@@ -84,7 +84,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			selectedTickets, err := relayChain.GetSelectedTickets()
+			chainSelectedTickets, err := relayChain.GetSelectedTickets()
 			if err != nil {
 				return fmt.Errorf(
 					"could not fetch ordered tickets after challenge timeout [%v]",
@@ -92,8 +92,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				)
 			}
 
-			var tickets []*groupselection.Ticket
-			for _, chainTicket := range selectedTickets {
+			var selectedTickets []*groupselection.Ticket
+			for _, chainTicket := range chainSelectedTickets {
 				ticket, err := fromChainTicket(chainTicket)
 				if err != nil {
 					fmt.Fprintf(
@@ -105,14 +105,16 @@ func (n *Node) SubmitTicketsForGroupSelection(
 					continue // ignore incorrect ticket
 				}
 
-				tickets = append(tickets, ticket)
+				selectedTickets = append(selectedTickets, ticket)
 			}
 
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{SelectedTickets: tickets},
+				&groupselection.Result{
+					SelectedTickets: selectedTickets,
+				},
 				entryRequestID,
 				entrySeed,
 			)
