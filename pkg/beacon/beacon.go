@@ -65,7 +65,7 @@ func Initialize(
 				entry.Seed,
 			)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "tickets submission failed: [%v]", err)
+				fmt.Fprintf(os.Stderr, "tickets submission failed: [%v]\n", err)
 			}
 		}()
 
