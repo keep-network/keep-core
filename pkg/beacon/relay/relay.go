@@ -84,6 +84,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			PreviousEntry: previousValue,
 			Timestamp:     time.Now().UTC(),
 			GroupID:       &big.Int{},
+			Seed:          seed,
 		}
 
 		relayChain.SubmitRelayEntry(

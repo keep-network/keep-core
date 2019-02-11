@@ -223,7 +223,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		for {
 			select {
 			case event := <-generatedEntry:
-				if event.RequestID == newEntry.RequestID {
+				if event.RequestID.Cmp(newEntry.RequestID) == 0 {
 					subscription.Unsubscribe()
 					close(generatedEntry)
 
@@ -247,6 +247,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		newEntry.GroupID,
 		newEntry.PreviousEntry,
 		newEntry.Value,
+		newEntry.Seed,
 	)
 	if err != nil {
 		subscription.Unsubscribe()
@@ -267,6 +268,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			requestGroupID *big.Int,
 			previousEntry *big.Int,
 			blockNumber *big.Int,
+			seed *big.Int,
 		) {
 			handle(&event.Entry{
 				RequestID:     requestID,
@@ -274,6 +276,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 				GroupID:       requestGroupID,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
+				Seed:          seed,
 			})
 		},
 		func(err error) error {
@@ -459,7 +462,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 		for {
 			select {
 			case event, isOpen := <-publishedResult:
-				if isOpen && event.RequestID == requestID {
+				if isOpen && event.RequestID.Cmp(requestID) == 0 {
 					subscription.Unsubscribe()
 					close(publishedResult)
 

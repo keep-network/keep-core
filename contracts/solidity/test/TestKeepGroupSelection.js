@@ -101,7 +101,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     tickets3 = generateTickets(randomBeaconValue, staker3, 3000);
 
     await keepRandomBeaconImplViaProxy.setGroupContract(keepGroupProxy.address);
-    await keepRandomBeaconImplViaProxy.relayEntry(1, randomBeaconValue, 1, 1);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, randomBeaconValue, 1, 1, 1);
   });
 
   it("should be able to get staking weight", async function() {
