@@ -80,7 +80,26 @@ func Initialize(
 		)
 	})
 
+	// TODO: This is a temporary solution until Phase 14 is ready.
+	// We assume that only one DKG result is published and submit it as a group
+	// public key.
+	relayChain.OnDKGResultPublished(
+		func(dkgResultPublication *event.DKGResultPublication) {
+			fmt.Printf("Saw new DKG result published [%+v]\n", dkgResultPublication)
+			var key [96]byte
+
+			copy(dkgResultPublication.GroupPublicKey[:], key[0:96])
+
+			relayChain.SubmitGroupPublicKey(
+				dkgResultPublication.RequestID,
+				key,
+			)
+		},
+	)
+
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+		fmt.Printf("Saw new group registered [%+v]\n", registration)
+
 		node.RegisterGroup(
 			registration.RequestID.String(),
 			registration.GroupPublicKey,
