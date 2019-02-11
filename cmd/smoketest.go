@@ -91,6 +91,7 @@ func SmokeTest(c *cli.Context) error {
 		RequestID:     big.NewInt(0),
 		Value:         big.NewInt(0),
 		GroupID:       big.NewInt(0),
+		Seed:          big.NewInt(0),
 		PreviousEntry: &big.Int{},
 	})
 
