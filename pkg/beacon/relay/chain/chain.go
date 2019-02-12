@@ -49,9 +49,9 @@ type GroupSelectionInterface interface {
 // GroupRegistrationInterface defines the subset of the relay chain interface
 // that pertains to relay group registration activities.
 type GroupRegistrationInterface interface {
-	// SubmitGroupPublicKey submits a BLS public key to the blockchain,
-	// associated with a request with id requestID. On-chain errors are reported
-	// through the promise.
+	// SubmitGroupPublicKey submits a public key to the blockchain, associated
+	// with a request with id requestID. On-chain errors are reported through
+	// the promise.
 	SubmitGroupPublicKey(
 		requestID *big.Int,
 		groupPublicKey []byte,
