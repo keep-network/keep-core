@@ -140,8 +140,7 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	groupPublicKey []byte,
 	requestID *big.Int,
 ) (*types.Transaction, error) {
-	gpk := byteSliceToSliceOf1Byte(groupPublicKey)
-	return krb.transactor.SubmitGroupPublicKey(krb.transactorOptions, gpk, requestID)
+	return krb.transactor.SubmitGroupPublicKey(krb.transactorOptions, groupPublicKey, requestID)
 }
 
 // relayEntryRequestedFunc type of function called for
@@ -336,8 +335,11 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 		for {
 			select {
 			case event := <-eventChan:
-				gpk := sliceOf1ByteToByteSlice(event.GroupPublicKey)
-				success(gpk, event.RequestID, event.ActivationBlockHeight)
+				success(
+					event.GroupPublicKey,
+					event.RequestID,
+					event.ActivationBlockHeight,
+				)
 				return
 
 			case ee := <-eventSubscription.Err():

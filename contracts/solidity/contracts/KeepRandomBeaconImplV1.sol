@@ -156,7 +156,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupPublicKey Group public key.
      * @param requestID Request ID.
      */
-    function submitGroupPublicKey(byte[] groupPublicKey, uint256 requestID) public {
+    function submitGroupPublicKey(bytes groupPublicKey, uint256 requestID) public {
         uint256 activationBlockHeight = block.number;
 
         // TODO -- lots of stuff - don't know yet.
