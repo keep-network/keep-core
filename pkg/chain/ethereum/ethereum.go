@@ -316,7 +316,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
-	handle func(registration *event.GroupRegistration),
+	handle func(groupRegistration *event.GroupRegistration),
 ) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(

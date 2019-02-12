@@ -35,7 +35,7 @@ type localChain struct {
 	handlerMutex                 sync.Mutex
 	relayEntryHandlers           map[int]func(entry *event.Entry)
 	relayRequestHandlers         map[int]func(request *event.Request)
-	groupRegisteredHandlers      []func(key *event.GroupRegistration)
+	groupRegisteredHandlers      []func(groupRegistration *event.GroupRegistration)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
 	requestID   int64
@@ -93,7 +93,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	groupID := requestID.String()
 
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
-	registration := &event.GroupRegistration{
+	groupRegistration := &event.GroupRegistration{
 		GroupPublicKey:        groupPublicKey[:],
 		RequestID:             requestID,
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
@@ -114,20 +114,20 @@ func (c *localChain) SubmitGroupPublicKey(
 
 			groupRegistrationPromise.Fail(err)
 		} else {
-			groupRegistrationPromise.Fulfill(registration)
+			groupRegistrationPromise.Fulfill(groupRegistration)
 		}
 
 		return groupRegistrationPromise
 	}
 	c.groupRegistrations[groupID] = groupPublicKey
 
-	groupRegistrationPromise.Fulfill(registration)
+	groupRegistrationPromise.Fulfill(groupRegistration)
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.groupRegisteredHandlers {
-		go func(handler func(registration *event.GroupRegistration), registration *event.GroupRegistration) {
+		go func(handler func(groupRegistration *event.GroupRegistration), registration *event.GroupRegistration) {
 			handler(registration)
-		}(handler, registration)
+		}(handler, groupRegistration)
 	}
 	c.handlerMutex.Unlock()
 
@@ -210,7 +210,9 @@ func (c *localChain) OnRelayEntryRequested(
 	}), nil
 }
 
-func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
+func (c *localChain) OnGroupRegistered(
+	handler func(groupRegistration *event.GroupRegistration),
+) {
 	c.handlerMutex.Lock()
 	c.groupRegisteredHandlers = append(
 		c.groupRegisteredHandlers,
