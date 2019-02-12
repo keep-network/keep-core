@@ -94,7 +94,7 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	requestID *big.Int,
-	key [96]byte,
+	groupPublicKey []byte,
 ) *async.GroupRegistrationPromise {
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
@@ -135,7 +135,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], requestID)
+	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise
@@ -316,7 +316,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
-	handle func(registration *event.GroupRegistration),
+	handle func(groupRegistration *event.GroupRegistration),
 ) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
@@ -412,8 +412,11 @@ func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
 ) (subscription.EventSubscription, error) {
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
-		func(requestID *big.Int) {
-			handler(&event.DKGResultPublication{RequestID: requestID})
+		func(requestID *big.Int, groupPubKey [32]byte) {
+			handler(&event.DKGResultPublication{
+				RequestID:      requestID,
+				GroupPublicKey: groupPubKey[:],
+			})
 		},
 		func(err error) error {
 			return fmt.Errorf(
