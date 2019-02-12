@@ -2,10 +2,13 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/gen/async"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
@@ -43,6 +46,144 @@ func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 		)
 	}
 }
+
+func TestSubmitGroupPublicKey(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	requestID1 := big.NewInt(1)
+	requestID2 := big.NewInt(2)
+	requestID3 := big.NewInt(3)
+
+	groupPublicKey1 := []byte("100")
+	groupPublicKey2 := []byte("200")
+	groupPublicKey3 := []byte("300")
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	validateResult := func(
+		testName string,
+		groupRegistrationPromise *async.GroupRegistrationPromise,
+		expectedError error,
+		expectedGroupRegistration *event.GroupRegistration,
+	) {
+		done := make(chan *event.GroupRegistration)
+
+		groupRegistrationPromise.OnSuccess(func(event *event.GroupRegistration) {
+			done <- event
+		}).OnFailure(func(err error) {
+			if expectedError == nil {
+				t.Fatalf("'%v' failed: [%v]", testName, err)
+			}
+			if !reflect.DeepEqual(expectedError, err) {
+				t.Fatalf(
+					"'%v' failed\nexpected: %v\nactual:   %v\n",
+					testName,
+					expectedError,
+					err,
+				)
+			}
+		})
+
+		if expectedError == nil {
+			select {
+			case groupRegistration := <-done:
+				if !reflect.DeepEqual(expectedGroupRegistration, groupRegistration) {
+					t.Fatalf(
+						"'%v' failed\nexpected: %v\nactual:   %v\n",
+						testName,
+						expectedGroupRegistration,
+						groupRegistration,
+					)
+				}
+			case <-ctx.Done():
+				t.Fatal(ctx.Err())
+			}
+		}
+	}
+
+	testName := "Submit new group public key with new request ID"
+	groupRegistrationPromise := chainHandle.SubmitGroupPublicKey(
+		requestID1,
+		groupPublicKey1,
+	)
+	validateResult(
+		testName,
+		groupRegistrationPromise,
+		nil,
+		&event.GroupRegistration{
+			GroupPublicKey:        groupPublicKey1,
+			RequestID:             requestID1,
+			ActivationBlockHeight: big.NewInt(0),
+		},
+	)
+
+	testName = "Submit new group public key with new request ID"
+	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
+		requestID2,
+		groupPublicKey2,
+	)
+	validateResult(
+		testName,
+		groupRegistrationPromise,
+		nil,
+		&event.GroupRegistration{
+			GroupPublicKey:        groupPublicKey2,
+			RequestID:             requestID2,
+			ActivationBlockHeight: big.NewInt(1),
+		},
+	)
+
+	testName = "Submit same group public key with new request ID"
+	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
+		requestID3,
+		groupPublicKey2,
+	)
+	validateResult(
+		testName,
+		groupRegistrationPromise,
+		nil,
+		&event.GroupRegistration{
+			GroupPublicKey:        groupPublicKey2,
+			RequestID:             requestID3,
+			ActivationBlockHeight: big.NewInt(2),
+		},
+	)
+
+	testName = "Submit new group public key with same request ID"
+	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
+		requestID2,
+		groupPublicKey3,
+	)
+	validateResult(
+		testName,
+		groupRegistrationPromise,
+		fmt.Errorf(
+			"mismatched public key for [%v], submission failed; \n[%v] vs [%v]",
+			requestID2,
+			groupPublicKey2,
+			groupPublicKey3,
+		),
+		nil,
+	)
+
+	testName = "Submit same group public key with same request ID"
+	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
+		requestID1,
+		groupPublicKey1,
+	)
+	validateResult(
+		testName,
+		groupRegistrationPromise,
+		nil,
+		&event.GroupRegistration{
+			GroupPublicKey:        groupPublicKey1,
+			RequestID:             requestID1,
+			ActivationBlockHeight: big.NewInt(3),
+		},
+	)
+}
+
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
