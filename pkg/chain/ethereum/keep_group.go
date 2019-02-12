@@ -246,7 +246,7 @@ func (kg *keepGroup) SubmitDKGResult(
 	)
 }
 
-type dkgResultPublishedEventFunc func(requestID *big.Int, groupPublicKey [32]byte)
+type dkgResultPublishedEventFunc func(requestID *big.Int, groupPublicKey []byte)
 
 func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
