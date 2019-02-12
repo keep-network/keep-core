@@ -65,7 +65,7 @@ type ethereumStaker struct {
 }
 
 func (es *ethereumStaker) ID() []byte {
-	return []byte(es.address)
+	return common.HexToAddress(es.address).Bytes()
 }
 
 func (es *ethereumStaker) Stake() (*big.Int, error) {
