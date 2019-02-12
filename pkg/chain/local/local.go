@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -21,7 +22,7 @@ type localChain struct {
 	relayConfig *relayconfig.Chain
 
 	groupRegistrationsMutex sync.Mutex
-	groupRegistrations      map[string][96]byte
+	groupRegistrations      map[string][]byte
 
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[string]*big.Int
@@ -87,7 +88,7 @@ func (c *localChain) GetSelectedTickets() ([]*relaychain.Ticket, error) {
 
 func (c *localChain) SubmitGroupPublicKey(
 	requestID *big.Int,
-	key [96]byte,
+	key []byte,
 ) *async.GroupRegistrationPromise {
 	groupID := requestID.String()
 
@@ -101,7 +102,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
 	if existing, exists := c.groupRegistrations[groupID]; exists {
-		if existing != key {
+		if bytes.Compare(existing, key) != 0 {
 			err := fmt.Errorf(
 				"mismatched public key for [%s], submission failed; \n"+
 					"[%v] vs [%v]",
@@ -245,7 +246,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		},
 		groupRegistrationsMutex:      sync.Mutex{},
 		groupRelayEntries:            make(map[string]*big.Int),
-		groupRegistrations:           make(map[string][96]byte),
+		groupRegistrations:           make(map[string][]byte),
 		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
 		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
