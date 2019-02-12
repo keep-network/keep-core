@@ -150,8 +150,10 @@ resource "google_compute_global_address" "atlantis_external_ip" {
   labels       = "${local.labels}"
 }
 
-module "demo_dev_gke_cluster_metrics" {
-  source    = "git@github.com:thesis/infrastructure.git//terraform/modules/gke_metrics"
+module "gke_cluster_metrics" {
+  source = "../../../../thesis/infrastructure/terraform/modules/gke_metrics"
+
+  #source    = "git@github.com:thesis/infrastructure.git//terraform/modules/gke_metrics"
   namespace = "${var.gke_metrics_namespace}"
 
   kube_state_metrics {
