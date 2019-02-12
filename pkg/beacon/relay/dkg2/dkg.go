@@ -209,6 +209,11 @@ func stateTransition(
 // corresponds to a member in the group and true/false value indicates status of
 // the member.
 func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
+	groupPublicKey := make([]byte, 0)
+	if gjkrResult.GroupPublicKey != nil {
+		groupPublicKey = gjkrResult.GroupPublicKey.Marshal()
+	}
+
 	// convertToByteSlice converts slice containing members IDs to a slice of
 	// group size length where 0x01 entry indicates the member was found on
 	// passed members IDs slice. It assumes member IDs for a group starts iterating
@@ -228,7 +233,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 
 	return &relayChain.DKGResult{
 		Success:        gjkrResult.Success,
-		GroupPublicKey: gjkrResult.GroupPublicKey.Marshal(),
+		GroupPublicKey: groupPublicKey,
 		Inactive:       convertToByteSlice(gjkrResult.Inactive),
 		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
 	}
