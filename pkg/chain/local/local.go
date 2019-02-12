@@ -94,7 +94,7 @@ func (c *localChain) SubmitGroupPublicKey(
 
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 	groupRegistration := &event.GroupRegistration{
-		GroupPublicKey:        groupPublicKey[:],
+		GroupPublicKey:        groupPublicKey,
 		RequestID:             requestID,
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
 	}
