@@ -134,15 +134,6 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	)
 }
 
-// SubmitGroupPublicKey upon completion of a sgiagure make the contract
-// call to put it on chain.
-func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
-	groupPublicKey []byte,
-	requestID *big.Int,
-) (*types.Transaction, error) {
-	return krb.transactor.SubmitGroupPublicKey(krb.transactorOptions, groupPublicKey, requestID)
-}
-
 // relayEntryRequestedFunc type of function called for
 // RelayEntryRequested event.
 type relayEntryRequestedFunc func(
@@ -292,53 +283,6 @@ func (krb *KeepRandomBeacon) WatchRelayResetEvent(
 					event.LastValidRelayEntry,
 					event.LastValidRelayTxHash,
 					event.LastValidRelayBlock,
-				)
-				return
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-// submitGroupPublicKeyEventFunc type of function called for
-// SubmitGroupPublicKeyEvent event.
-type submitGroupPublicKeyEventFunc func(
-	groupPublicKey []byte,
-	requestID *big.Int,
-	activationBlockHeight *big.Int,
-)
-
-// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
-func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
-	success submitGroupPublicKeyEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
-	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.GroupPublicKey,
-					event.RequestID,
-					event.ActivationBlockHeight,
 				)
 				return
 
