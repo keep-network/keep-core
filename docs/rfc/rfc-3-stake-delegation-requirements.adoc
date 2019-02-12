@@ -306,6 +306,20 @@ Undelegation with Misbehaving or Consequent Penalisation
 Other strategies tend to be suboptimal from the perspective of both security and
 network throughput requirements.
 
+=== General requirements notes
+
+==== Slashing operator
+Adding a slashing bound between an owner and an operator should create positive
+feedback and decrease an operators motivation to misbehave. This can be done
+either by defining an additional slashing address for the operator or by
+enabling the operator to have its own stake. Therefore, the requirement from the
+operator to not have any stake might be loosened.
+
+==== Operator and owner on the same address
+If an operator would be allowed to have his own stake and to operate on it, then
+it might be possible to allow an address to be both the operator and the owner.
+This might be contradicted by the security and privacy argument as we want to
+separate roles/addresses to protect owner keys from the exposure.
 
 == Open Questions
 
