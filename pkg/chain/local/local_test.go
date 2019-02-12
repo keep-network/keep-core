@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
-
-	"github.com/keep-network/keep-core/pkg/gen/async"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
@@ -61,38 +60,106 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
-	validateResult := func(
-		testName string,
-		groupRegistrationPromise *async.GroupRegistrationPromise,
-		expectedError error,
-		expectedGroupRegistration *event.GroupRegistration,
-	) {
+	var tests = map[string]struct {
+		requestID                 *big.Int
+		groupPublicKey            []byte
+		expectedError             error
+		expectedGroupRegistration *event.GroupRegistration
+	}{
+		"1. Submit first": {
+			requestID:      requestID1,
+			groupPublicKey: groupPublicKey1,
+			expectedError:  nil,
+			expectedGroupRegistration: &event.GroupRegistration{
+				GroupPublicKey:        groupPublicKey1,
+				RequestID:             requestID1,
+				ActivationBlockHeight: big.NewInt(0),
+			},
+		},
+		"2. Submit new group public key with new request ID": {
+			requestID:      requestID2,
+			groupPublicKey: groupPublicKey2,
+			expectedError:  nil,
+			expectedGroupRegistration: &event.GroupRegistration{
+				GroupPublicKey:        groupPublicKey2,
+				RequestID:             requestID2,
+				ActivationBlockHeight: big.NewInt(1),
+			},
+		},
+		"3. Submit same group public key with new request ID": {
+			requestID:      requestID3,
+			groupPublicKey: groupPublicKey2,
+			expectedError:  nil,
+			expectedGroupRegistration: &event.GroupRegistration{
+				GroupPublicKey:        groupPublicKey2,
+				RequestID:             requestID3,
+				ActivationBlockHeight: big.NewInt(2),
+			},
+		},
+		"4. Submit new group public key with same request ID": {
+			requestID:      requestID2,
+			groupPublicKey: groupPublicKey3,
+			expectedError: fmt.Errorf(
+				"mismatched public key for [%v], submission failed; \n[%v] vs [%v]",
+				requestID2,
+				groupPublicKey2,
+				groupPublicKey3,
+			),
+			expectedGroupRegistration: nil,
+		},
+		"5. Submit same group public key with same request ID": {
+			requestID:      requestID1,
+			groupPublicKey: groupPublicKey1,
+			expectedError:  nil,
+			expectedGroupRegistration: &event.GroupRegistration{
+				GroupPublicKey:        groupPublicKey1,
+				RequestID:             requestID1,
+				ActivationBlockHeight: big.NewInt(3),
+			},
+		},
+	}
+
+	// Execute tests in specific order. Tests are sorted by the test name.
+	testNames := make([]string, 0)
+	for t := range tests {
+		testNames = append(testNames, t)
+	}
+	sort.Strings(testNames)
+
+	for _, testName := range testNames {
+		test := tests[testName]
+
+		groupRegistrationPromise := chainHandle.SubmitGroupPublicKey(
+			test.requestID,
+			test.groupPublicKey,
+		)
+
 		done := make(chan *event.GroupRegistration)
 
 		groupRegistrationPromise.OnSuccess(func(event *event.GroupRegistration) {
 			done <- event
 		}).OnFailure(func(err error) {
-			if expectedError == nil {
+			if test.expectedError == nil {
 				t.Fatalf("'%v' failed: [%v]", testName, err)
 			}
-			if !reflect.DeepEqual(expectedError, err) {
+			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
 					"'%v' failed\nexpected: %v\nactual:   %v\n",
 					testName,
-					expectedError,
+					test.expectedError,
 					err,
 				)
 			}
 		})
 
-		if expectedError == nil {
+		if test.expectedError == nil {
 			select {
 			case groupRegistration := <-done:
-				if !reflect.DeepEqual(expectedGroupRegistration, groupRegistration) {
+				if !reflect.DeepEqual(test.expectedGroupRegistration, groupRegistration) {
 					t.Fatalf(
-						"'%v' failed\nexpected: %v\nactual:   %v\n",
+						"'%v' failed\nexpected: %+v\nactual:   %+v\n",
 						testName,
-						expectedGroupRegistration,
+						test.expectedGroupRegistration,
 						groupRegistration,
 					)
 				}
@@ -101,87 +168,6 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 			}
 		}
 	}
-
-	testName := "Submit new group public key with new request ID"
-	groupRegistrationPromise := chainHandle.SubmitGroupPublicKey(
-		requestID1,
-		groupPublicKey1,
-	)
-	validateResult(
-		testName,
-		groupRegistrationPromise,
-		nil,
-		&event.GroupRegistration{
-			GroupPublicKey:        groupPublicKey1,
-			RequestID:             requestID1,
-			ActivationBlockHeight: big.NewInt(0),
-		},
-	)
-
-	testName = "Submit new group public key with new request ID"
-	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
-		requestID2,
-		groupPublicKey2,
-	)
-	validateResult(
-		testName,
-		groupRegistrationPromise,
-		nil,
-		&event.GroupRegistration{
-			GroupPublicKey:        groupPublicKey2,
-			RequestID:             requestID2,
-			ActivationBlockHeight: big.NewInt(1),
-		},
-	)
-
-	testName = "Submit same group public key with new request ID"
-	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
-		requestID3,
-		groupPublicKey2,
-	)
-	validateResult(
-		testName,
-		groupRegistrationPromise,
-		nil,
-		&event.GroupRegistration{
-			GroupPublicKey:        groupPublicKey2,
-			RequestID:             requestID3,
-			ActivationBlockHeight: big.NewInt(2),
-		},
-	)
-
-	testName = "Submit new group public key with same request ID"
-	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
-		requestID2,
-		groupPublicKey3,
-	)
-	validateResult(
-		testName,
-		groupRegistrationPromise,
-		fmt.Errorf(
-			"mismatched public key for [%v], submission failed; \n[%v] vs [%v]",
-			requestID2,
-			groupPublicKey2,
-			groupPublicKey3,
-		),
-		nil,
-	)
-
-	testName = "Submit same group public key with same request ID"
-	groupRegistrationPromise = chainHandle.SubmitGroupPublicKey(
-		requestID1,
-		groupPublicKey1,
-	)
-	validateResult(
-		testName,
-		groupRegistrationPromise,
-		nil,
-		&event.GroupRegistration{
-			GroupPublicKey:        groupPublicKey1,
-			RequestID:             requestID1,
-			ActivationBlockHeight: big.NewInt(3),
-		},
-	)
 }
 
 func TestLocalSubmitRelayEntry(t *testing.T) {
