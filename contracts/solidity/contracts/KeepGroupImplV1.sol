@@ -365,7 +365,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Return total number of all tokens issued.
      */
     function tokenSupply() public view returns (uint256) {
-        return 10**9;
+        return (10**9) * (10**18);
     }
 
     /**
