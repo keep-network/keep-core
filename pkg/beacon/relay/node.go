@@ -35,8 +35,8 @@ type Node struct {
 
 	groupPublicKeys [][]byte
 	seenPublicKeys  map[string]bool
-	myGroups        map[string]*membership
-	pendingGroups   map[string]*membership
+	myGroups        map[string][]*membership
+	pendingGroups   map[string][]*membership
 }
 
 type membership struct {
@@ -148,18 +148,18 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	// If we've already registered a group for this request ID, return early.
-	if _, exists := n.seenPublicKeys[requestID]; exists {
-		return
+	// If we've already registered a group for this request ID, no need to
+	// add to our list of known group public keys.
+	if _, exists := n.seenPublicKeys[requestID]; !exists {
+		n.seenPublicKeys[requestID] = true
+		n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	}
 
-	n.seenPublicKeys[requestID] = true
-	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
-	index := len(n.groupPublicKeys) - 1
-
-	if membership, found := n.pendingGroups[requestID]; found && membership != nil {
-		membership.index = index
-		n.myGroups[requestID] = membership
+	if memberships, found := n.pendingGroups[requestID]; found {
+		for _, membership := range memberships {
+			membership.index = len(n.groupPublicKeys) - 1
+			n.myGroups[requestID] = append(n.myGroups[requestID], membership)
+		}
 		delete(n.pendingGroups, requestID)
 	}
 }
@@ -216,16 +216,16 @@ func (n *Node) registerPendingGroup(
 			}
 		}
 
-		n.myGroups[requestID] = &membership{
+		n.myGroups[requestID] = append(n.myGroups[requestID], &membership{
 			index:   existingIndex,
 			member:  signer,
 			channel: channel,
-		}
+		})
 		delete(n.pendingGroups, requestID)
 	} else {
-		n.pendingGroups[requestID] = &membership{
+		n.pendingGroups[requestID] = append(n.pendingGroups[requestID], &membership{
 			member:  signer,
 			channel: channel,
-		}
+		})
 	}
 }
