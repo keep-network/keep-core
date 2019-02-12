@@ -120,6 +120,7 @@ variable "gke_cluster" {
     daily_maintenance_window_start_time = "00:00"
     network_policy_enabled              = true
     network_policy_provider             = "CALICO"
+    logging_service                     = "logging.googleapis.com/kubernetes"
   }
 }
 

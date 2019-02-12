@@ -126,6 +126,7 @@ module "gke_cluster" {
     daily_maintenance_window_start_time = "${var.gke_cluster["daily_maintenance_window_start_time"]}"
     network_policy_enabled              = "${var.gke_cluster["network_policy_enabled"]}"
     network_policy_provider             = "${var.gke_cluster["network_policy_provider"]}"
+    logging_service                     = "${var.gke_cluster["logging_service"]}"
   }
 
   gke_node_pool {
@@ -150,7 +151,7 @@ resource "google_compute_global_address" "atlantis_external_ip" {
   labels       = "${local.labels}"
 }
 
-module "demo_dev_gke_cluster_metrics" {
+module "gke_cluster_metrics" {
   source    = "git@github.com:thesis/infrastructure.git//terraform/modules/gke_metrics"
   namespace = "${var.gke_metrics_namespace}"
 
