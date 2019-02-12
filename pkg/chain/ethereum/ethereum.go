@@ -94,7 +94,7 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	requestID *big.Int,
-	key []byte,
+	groupPublicKey []byte,
 ) *async.GroupRegistrationPromise {
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
@@ -135,7 +135,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key, requestID)
+	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise

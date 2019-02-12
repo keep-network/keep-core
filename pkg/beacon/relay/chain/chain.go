@@ -54,7 +54,7 @@ type GroupRegistrationInterface interface {
 	// through the promise.
 	SubmitGroupPublicKey(
 		requestID *big.Int,
-		key []byte,
+		groupPublicKey []byte,
 	) *async.GroupRegistrationPromise
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.

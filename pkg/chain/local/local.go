@@ -88,13 +88,13 @@ func (c *localChain) GetSelectedTickets() ([]*relaychain.Ticket, error) {
 
 func (c *localChain) SubmitGroupPublicKey(
 	requestID *big.Int,
-	key []byte,
+	groupPublicKey []byte,
 ) *async.GroupRegistrationPromise {
 	groupID := requestID.String()
 
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 	registration := &event.GroupRegistration{
-		GroupPublicKey:        key[:],
+		GroupPublicKey:        groupPublicKey[:],
 		RequestID:             requestID,
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
 	}
@@ -102,13 +102,13 @@ func (c *localChain) SubmitGroupPublicKey(
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
 	if existing, exists := c.groupRegistrations[groupID]; exists {
-		if bytes.Compare(existing, key) != 0 {
+		if bytes.Compare(existing, groupPublicKey) != 0 {
 			err := fmt.Errorf(
 				"mismatched public key for [%s], submission failed; \n"+
 					"[%v] vs [%v]",
 				groupID,
 				existing,
-				key,
+				groupPublicKey,
 			)
 			fmt.Fprintf(os.Stderr, err.Error())
 
@@ -119,7 +119,7 @@ func (c *localChain) SubmitGroupPublicKey(
 
 		return groupRegistrationPromise
 	}
-	c.groupRegistrations[groupID] = key
+	c.groupRegistrations[groupID] = groupPublicKey
 
 	groupRegistrationPromise.Fulfill(registration)
 
