@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -21,7 +22,7 @@ type localChain struct {
 	relayConfig *relayconfig.Chain
 
 	groupRegistrationsMutex sync.Mutex
-	groupRegistrations      map[string][96]byte
+	groupRegistrations      map[string][]byte
 
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[string]*big.Int
@@ -34,7 +35,7 @@ type localChain struct {
 	handlerMutex                 sync.Mutex
 	relayEntryHandlers           map[int]func(entry *event.Entry)
 	relayRequestHandlers         map[int]func(request *event.Request)
-	groupRegisteredHandlers      []func(key *event.GroupRegistration)
+	groupRegisteredHandlers      []func(groupRegistration *event.GroupRegistration)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
 	requestID   int64
@@ -87,13 +88,13 @@ func (c *localChain) GetSelectedTickets() ([]*relaychain.Ticket, error) {
 
 func (c *localChain) SubmitGroupPublicKey(
 	requestID *big.Int,
-	key [96]byte,
+	groupPublicKey []byte,
 ) *async.GroupRegistrationPromise {
 	groupID := requestID.String()
 
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
-	registration := &event.GroupRegistration{
-		GroupPublicKey:        key[:],
+	groupRegistration := &event.GroupRegistration{
+		GroupPublicKey:        groupPublicKey,
 		RequestID:             requestID,
 		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
 	}
@@ -101,32 +102,32 @@ func (c *localChain) SubmitGroupPublicKey(
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
 	if existing, exists := c.groupRegistrations[groupID]; exists {
-		if existing != key {
+		if bytes.Compare(existing, groupPublicKey) != 0 {
 			err := fmt.Errorf(
 				"mismatched public key for [%s], submission failed; \n"+
 					"[%v] vs [%v]",
 				groupID,
 				existing,
-				key,
+				groupPublicKey,
 			)
 			fmt.Fprintf(os.Stderr, err.Error())
 
 			groupRegistrationPromise.Fail(err)
 		} else {
-			groupRegistrationPromise.Fulfill(registration)
+			groupRegistrationPromise.Fulfill(groupRegistration)
 		}
 
 		return groupRegistrationPromise
 	}
-	c.groupRegistrations[groupID] = key
+	c.groupRegistrations[groupID] = groupPublicKey
 
-	groupRegistrationPromise.Fulfill(registration)
+	groupRegistrationPromise.Fulfill(groupRegistration)
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.groupRegisteredHandlers {
-		go func(handler func(registration *event.GroupRegistration), registration *event.GroupRegistration) {
+		go func(handler func(groupRegistration *event.GroupRegistration), registration *event.GroupRegistration) {
 			handler(registration)
-		}(handler, registration)
+		}(handler, groupRegistration)
 	}
 	c.handlerMutex.Unlock()
 
@@ -209,7 +210,9 @@ func (c *localChain) OnRelayEntryRequested(
 	}), nil
 }
 
-func (c *localChain) OnGroupRegistered(handler func(key *event.GroupRegistration)) {
+func (c *localChain) OnGroupRegistered(
+	handler func(groupRegistration *event.GroupRegistration),
+) {
 	c.handlerMutex.Lock()
 	c.groupRegisteredHandlers = append(
 		c.groupRegisteredHandlers,
@@ -245,7 +248,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		},
 		groupRegistrationsMutex:      sync.Mutex{},
 		groupRelayEntries:            make(map[string]*big.Int),
-		groupRegistrations:           make(map[string][96]byte),
+		groupRegistrations:           make(map[string][]byte),
 		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
 		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
@@ -341,7 +344,10 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
 
-	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
+	dkgResultPublicationEvent := &event.DKGResultPublication{
+		RequestID:      requestID,
+		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+	}
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.dkgResultPublicationHandlers {
