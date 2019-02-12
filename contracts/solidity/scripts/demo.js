@@ -35,7 +35,7 @@ module.exports = async function() {
   // during the KEEP token contract deployment. Here, we stake those tokens.
   let staked = await token.approveAndCall(
     tokenStaking.address, 
-    formatAmount(10, 5), 
+    formatAmount(1000000, 18), 
     "", 
     {from: accounts[0]}
   ).catch((err) => {
@@ -52,14 +52,14 @@ module.exports = async function() {
 
     await token.transfer(
       account, 
-      formatAmount(100, 5)
+      formatAmount(1000000, 18)
     ).catch((err) => { 
       console.log(`could not transfer KEEP tokens for ${account}: ${err}`); 
     });
 
     staked = await token.approveAndCall(
       tokenStaking.address, 
-      formatAmount(10, 5),
+      formatAmount(1000000, 18),
       "", 
       {from: account}
     ).catch((err) => {
@@ -72,16 +72,17 @@ module.exports = async function() {
   }
 
   // Grant tokens to the second account
-  let amount = formatAmount(10, 2);
+  let amount = formatAmount(70000, 18);
   let vestingDuration = 86400*60;
   let start = web3.eth.getBlock('latest').timestamp;
   let cliff = 86400*10;
   let revocable = true;
+  await token.transfer(accounts[1], formatAmount(70000,18))
   await token.approve(tokenGrant.address, amount);
   await tokenGrant.grant(amount, accounts[1], vestingDuration, start, cliff, revocable);
 
   // Grant tokens from the second account
-  amount = formatAmount(10, 2);
+  amount = formatAmount(1000, 18);
   await token.approve(tokenGrant.address, amount, {from: accounts[1]});
   await tokenGrant.grant(amount, accounts[0], vestingDuration, start, cliff, revocable, {from: accounts[1]});
 };
