@@ -336,3 +336,4 @@ but not the beacon).
 - https://www.flowdock.com/app/cardforcoin/tech/threads/-Lbr4JzmX0gY31CMDTRGnQUbbuw
 - https://github.com/keep-network/keep-core/pull/121
 - https://github.com/keep-network/keep-core/blob/76e3e68430576c21ac76c0a56eec4a320a39a5e2/docs/random-beacon/delegation-notes.adoc
+- https://www.flowdock.com/app/cardforcoin/keep/threads/kLxyy_0DH71UiQkTXHRQnaZyN_C
