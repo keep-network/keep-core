@@ -8,16 +8,26 @@ import (
 
 func TestLead(t *testing.T) {
 	dkgResult1 := &DKGResult{
-		Success:        true,
-		GroupPublicKey: []byte{10, 1},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Success: true,
+		GroupPublicKey: [32]byte{
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102,
+		},
+		Disqualified: []byte{},
+		Inactive:     []byte{},
 	}
 	dkgResult2 := &DKGResult{
-		Success:        true,
-		GroupPublicKey: []byte{10, 02},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Success: true,
+		GroupPublicKey: [32]byte{
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102,
+		},
+		Disqualified: []byte{},
+		Inactive:     []byte{},
 	}
 	tests := map[string]struct {
 		currentSubmissions *DKGSubmissions
@@ -102,22 +112,37 @@ func TestLead(t *testing.T) {
 
 func TestContains(t *testing.T) {
 	dkgResult1 := &DKGResult{
-		Success:        true,
-		GroupPublicKey: []byte{10, 01},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Success: true,
+		GroupPublicKey: [32]byte{
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102,
+		},
+		Disqualified: []byte{},
+		Inactive:     []byte{},
 	}
 	dkgResult2 := &DKGResult{
-		Success:        true,
-		GroupPublicKey: []byte{10, 02},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Success: true,
+		GroupPublicKey: [32]byte{
+			101, 104, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102,
+		},
+		Disqualified: []byte{},
+		Inactive:     []byte{},
 	}
 	dkgResult3 := &DKGResult{
-		Success:        true,
-		GroupPublicKey: []byte{10, 32},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Success: true,
+		GroupPublicKey: [32]byte{
+			101, 105, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102,
+		},
+		Disqualified: []byte{},
+		Inactive:     []byte{},
 	}
 	tests := map[string]struct {
 		currentSubmissions *DKGSubmissions
