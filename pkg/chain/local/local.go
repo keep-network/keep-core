@@ -341,7 +341,10 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
 
-	dkgResultPublicationEvent := &event.DKGResultPublication{RequestID: requestID}
+	dkgResultPublicationEvent := &event.DKGResultPublication{
+		RequestID:      requestID,
+		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+	}
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.dkgResultPublicationHandlers {

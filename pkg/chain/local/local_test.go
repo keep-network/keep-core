@@ -222,6 +222,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: [32]byte{11},
 	}
+	expectedEvent1 := &event.DKGResultPublication{
+		RequestID:      requestID1,
+		GroupPublicKey: submittedResult11.GroupPublicKey[:],
+	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
 	if !reflect.DeepEqual(
@@ -236,10 +240,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if dkgResultPublicationEvent.RequestID.Cmp(requestID1) != 0 {
+		if !reflect.DeepEqual(expectedEvent1, dkgResultPublicationEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				requestID1,
-				dkgResultPublicationEvent.RequestID,
+				expectedEvent1,
+				dkgResultPublicationEvent,
 			)
 		}
 	case <-ctx.Done():
@@ -248,6 +252,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit the same result for request ID 2
 	requestID2 := big.NewInt(2)
+	expectedEvent2 := &event.DKGResultPublication{
+		RequestID:      requestID2,
+		GroupPublicKey: submittedResult11.GroupPublicKey[:],
+	}
 
 	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
 	if !reflect.DeepEqual(
@@ -262,10 +270,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if dkgResultPublicationEvent.RequestID.Cmp(requestID2) != 0 {
+		if !reflect.DeepEqual(expectedEvent2, dkgResultPublicationEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				requestID2,
-				dkgResultPublicationEvent.RequestID,
+				expectedEvent2,
+				dkgResultPublicationEvent,
 			)
 		}
 	case <-ctx.Done():
