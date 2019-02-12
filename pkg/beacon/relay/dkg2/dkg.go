@@ -209,9 +209,9 @@ func stateTransition(
 // corresponds to a member in the group and true/false value indicates status of
 // the member.
 func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
-	var serializedGroupPublicKey [32]byte
+	groupPublicKey := make([]byte, 0)
 	if gjkrResult.GroupPublicKey != nil {
-		copy(serializedGroupPublicKey[:], gjkrResult.GroupPublicKey.Marshal())
+		groupPublicKey = gjkrResult.GroupPublicKey.Marshal()
 	}
 
 	// convertToByteSlice converts slice containing members IDs to a slice of
@@ -233,7 +233,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 
 	return &relayChain.DKGResult{
 		Success:        gjkrResult.Success,
-		GroupPublicKey: serializedGroupPublicKey,
+		GroupPublicKey: groupPublicKey,
 		Inactive:       convertToByteSlice(gjkrResult.Inactive),
 		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
 	}

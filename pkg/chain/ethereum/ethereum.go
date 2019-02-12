@@ -401,10 +401,10 @@ func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
 ) (subscription.EventSubscription, error) {
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
-		func(requestID *big.Int, groupPubKey [32]byte) {
+		func(requestID *big.Int, groupPubKey []byte) {
 			handler(&event.DKGResultPublication{
 				RequestID:      requestID,
-				GroupPublicKey: groupPubKey[:],
+				GroupPublicKey: groupPubKey,
 			})
 		},
 		func(err error) error {
