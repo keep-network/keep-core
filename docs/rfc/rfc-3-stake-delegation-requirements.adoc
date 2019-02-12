@@ -106,6 +106,15 @@ operator can start such high number of on-stake operations that the combined
 penalties would be larger than the total owner stake hence opening a possibility
 to quickly deplete all of the owner's stake.
 
+The multi-operating strategy gives uncontrolled leverage to the operators, who
+can operate on a stake as many times as possible without any limits (except
+MINIMUM_STAKE requirement). This poses several economical threats as operators
+hyperactivity is promoted without much of influence form the size of the stake.
+If an operator A operates on more than the MINIMUM_STAKE he can participate in
+the same number of operations as an operator B who has multiple MINIMUM_STAKE.
+Such a possibility might have a negative impact on the owners' motivation to
+delegate more than the necessary minimum.
+
 ===== Atomic Multi-Operating
 
 The third analyzed strategy is a hybrid approach where we combine atomic
@@ -121,7 +130,17 @@ of a stake to be locked.
 
 This strategy protects the stake of the owner from being rapidly depleted,
 unlike the pure multi-operating. It also enables higher network throughput than
-the pure atomic operating strategy. 
+the pure atomic operating strategy.
+
+The atomic property limits the operating leverage introduced by the
+multi-operating strategy. It gives more control over the number of operations
+that an operator can perform. Therefore, it promotes owners with a more
+delegated stake as more stake is operated, more rewards can be received. The
+controlling mechanism of atomicity can be used in a more flexible manner to
+increase network throughput. This can be achieved by introducing a stake
+operation multiplier, where each operator is allowed to operate on a multiple of
+the delegated stake. This mechanism can be used as an additional benefit for
+early players and the value of multiplier could gradually decrease over time.
 
 ==== MINIMUM_STAKE
 
@@ -177,8 +196,9 @@ before UNDELEGATION_TIMEOUT period it needs to be terminated instantly at the
 end of the timeout and the owner stake will be penalized accordingly to the
 penalization strategy. Therefore, the safest option here is to have
 UNDELEGATION_TIMEOUT as long as necessary to safely end all of the ongoing
-operations. After the UNDELEGATION_TIMEOUT the delegated stake is unlocked and
-is returned to the owner.
+operations - it should be longer than duration of any operation in the network.
+After the UNDELEGATION_TIMEOUT the delegated stake is unlocked and is returned
+to the owner.
 
 ==== Penalisation
 
