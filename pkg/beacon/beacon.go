@@ -87,9 +87,12 @@ func Initialize(
 		func(dkgResultPublication *event.DKGResultPublication) {
 			fmt.Printf("Saw new DKG result published [%+v]\n", dkgResultPublication)
 
+			var groupPublicKey96 [96]byte
+			copy(groupPublicKey96[:], dkgResultPublication.GroupPublicKey[:96])
+
 			relayChain.SubmitGroupPublicKey(
 				dkgResultPublication.RequestID,
-				dkgResultPublication.GroupPublicKey,
+				groupPublicKey96,
 			)
 		},
 	)
