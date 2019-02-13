@@ -41,29 +41,24 @@ type GroupSelectionInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
-	// SubmitChallenge submits a challenge corresponding to a ticket that
-	// fails `costlyCheck`, and returns a promise to track the challenge
-	// submission. The promise is fulfilled with the challenge as seen on-chain,
-	// or failed if there is an error submitting the entry.
-	SubmitChallenge(ticketValue *big.Int) *async.GroupTicketChallengePromise
-	// GetOrderedTickets returns submitted tickets which have passed checks
-	// on-chain.
-	GetOrderedTickets() ([]*Ticket, error)
+	// GetSelectedTickets returns `GroupSize` tickets which have passed
+	// the on-chain checks and have been selected to the group. ``
+	GetSelectedTickets() ([]*Ticket, error)
 }
 
 // GroupRegistrationInterface defines the subset of the relay chain interface
 // that pertains to relay group registration activities.
 type GroupRegistrationInterface interface {
-	// SubmitGroupPublicKey submits a 96-byte BLS public key to the blockchain,
-	// associated with a request with id requestID. On-chain errors are reported
-	// through the promise.
+	// SubmitGroupPublicKey submits a public key to the blockchain, associated
+	// with a request with id requestID. On-chain errors are reported through
+	// the promise.
 	SubmitGroupPublicKey(
 		requestID *big.Int,
-		key [96]byte,
+		groupPublicKey []byte,
 	) *async.GroupRegistrationPromise
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
-	OnGroupRegistered(func(key *event.GroupRegistration))
+	OnGroupRegistered(func(groupRegistration *event.GroupRegistration))
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains

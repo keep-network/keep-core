@@ -12,7 +12,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
-func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
+func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 	c := Connect(10, 4, big.NewInt(200))
 	chain := c.ThresholdRelay()
 
@@ -30,7 +30,7 @@ func TestSubmitTicketAndGetOrderedTickets(t *testing.T) {
 		ticket1, ticket2, ticket3, ticket4,
 	}
 
-	actualResult, err := chain.GetOrderedTickets()
+	actualResult, err := chain.GetSelectedTickets()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,8 +151,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	submittedRequestID := big.NewInt(1)
 	submittedResult := &relaychain.DKGResult{
-		GroupPublicKey: [32]byte{11},
-
+	    GroupPublicKey: []byte{11},
 	}
 
 	submittedResults[submittedRequestID1.String()] = append(
@@ -219,9 +218,12 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
-	submittedResult1 := &relaychain.DKGResult{
+	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
-
+	}
+	expectedEvent1 := &event.DKGResultPublication{
+		RequestID:      requestID1,
+		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
@@ -237,10 +239,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if dkgResultPublicationEvent.RequestID.Cmp(requestID1) != 0 {
+		if !reflect.DeepEqual(expectedEvent1, dkgResultPublicationEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				requestID1,
-				dkgResultPublicationEvent.RequestID,
+				expectedEvent1,
+				dkgResultPublicationEvent,
 			)
 		}
 	case <-ctx.Done():
@@ -249,6 +251,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit the same result for request ID 2
 	requestID2 := big.NewInt(2)
+	expectedEvent2 := &event.DKGResultPublication{
+		RequestID:      requestID2,
+		GroupPublicKey: submittedResult11.GroupPublicKey[:],
+	}
 
 	chainHandle.SubmitDKGResult(requestID2, submittedResult1)
 	if !reflect.DeepEqual(
@@ -263,10 +269,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if dkgResultPublicationEvent.RequestID.Cmp(requestID2) != 0 {
+		if !reflect.DeepEqual(expectedEvent2, dkgResultPublicationEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				requestID2,
-				dkgResultPublicationEvent.RequestID,
+				expectedEvent2,
+				dkgResultPublicationEvent,
 			)
 		}
 	case <-ctx.Done():
@@ -318,7 +324,7 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	subscription.Unsubscribe()
 
 	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
-		GroupPublicKey: [32]byte{88},
+		GroupPublicKey: []byte{88},
 	})
 
 	select {

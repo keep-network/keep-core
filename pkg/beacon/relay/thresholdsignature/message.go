@@ -1,10 +1,10 @@
 package thresholdsignature
 
-import "github.com/dfinity/go-dfinity-crypto/bls"
+import "github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 
 // SignatureShareMessage is a message payload that carries the sender's
 // signature share for the given message.
 type SignatureShareMessage struct {
-	ID         *bls.ID
+	senderID   gjkr.MemberID
 	ShareBytes []byte
 }

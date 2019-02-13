@@ -59,7 +59,7 @@ module.exports = async function() {
 
     staked = await token.approveAndCall(
       tokenStaking.address, 
-      formatAmount(70000, 18),
+      formatAmount(1000000, 18),
       "", 
       {from: account}
     ).catch((err) => {
@@ -77,6 +77,7 @@ module.exports = async function() {
   let start = web3.eth.getBlock('latest').timestamp;
   let cliff = 86400*10;
   let revocable = true;
+  await token.transfer(accounts[1], formatAmount(70000,18))
   await token.approve(tokenGrant.address, amount);
   await tokenGrant.grant(amount, accounts[1], vestingDuration, start, cliff, revocable);
 

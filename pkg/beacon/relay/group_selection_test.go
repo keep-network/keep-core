@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -18,7 +19,7 @@ func TestSubmitAllTickets(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("0x123456")
+	stakerValue := []byte("StakerValue1001")
 
 	tickets := []*groupselection.Ticket{
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
@@ -27,8 +28,10 @@ func TestSubmitAllTickets(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
 	}
 
-	candidate := &groupCandidate{
-		tickets: tickets,
+	candidate := &Node{
+		chainConfig: &config.Chain{
+			NaturalThreshold: naturalThreshold,
+		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -44,7 +47,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	candidate.submitTickets(mockInterface, naturalThreshold, quit, errCh)
+	candidate.submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(tickets) != len(submittedTickets) {
 		t.Errorf(
@@ -77,7 +80,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("0x123456")
+	stakerValue := []byte("StakerValue1001")
 
 	tickets := []*groupselection.Ticket{
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
@@ -88,8 +91,10 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(6)),
 	}
 
-	candidate := &groupCandidate{
-		tickets: tickets,
+	candidate := &Node{
+		chainConfig: &config.Chain{
+			NaturalThreshold: naturalThreshold,
+		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -113,7 +118,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		quit <- struct{}{}
 	}()
 
-	candidate.submitTickets(mockInterface, naturalThreshold, quit, errCh)
+	candidate.submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(submittedTickets) == 0 {
 		t.Errorf("no tickets submitted")
@@ -138,12 +143,6 @@ func (mgi *mockGroupInterface) SubmitTicket(
 	panic("unexpected")
 }
 
-func (mgi *mockGroupInterface) SubmitChallenge(
-	ticketValue *big.Int,
-) *async.GroupTicketChallengePromise {
-	panic("unexpected")
-}
-
-func (mgi *mockGroupInterface) GetOrderedTickets() ([]*chain.Ticket, error) {
+func (mgi *mockGroupInterface) GetSelectedTickets() ([]*chain.Ticket, error) {
 	panic("unexpected")
 }

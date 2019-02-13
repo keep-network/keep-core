@@ -2,6 +2,9 @@ package beacon
 
 import (
 	"context"
+	"fmt"
+	"math/big"
+	"os"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -40,21 +43,60 @@ func Initialize(
 	)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		node.GenerateRelayEntryIfEligible(request, relayChain)
-	})
+		fmt.Printf("New entry requested [%+v]\n", request)
 
-	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-		// new entry generated, try to join the group
-		node.SubmitTicketsForGroupSelection(
+		go node.GenerateRelayEntryIfEligible(
+			request.RequestID,
+			request.PreviousValue,
+			request.Seed,
 			relayChain,
-			blockCounter,
-			entry.Value.Bytes(),
-			entry.RequestID,
-			entry.Seed,
 		)
 	})
 
+	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
+		fmt.Printf("Saw new relay entry [%+v]\n", entry)
+
+		// new entry generated, try to join the group
+		go func() {
+			err := node.SubmitTicketsForGroupSelection(
+				relayChain,
+				blockCounter,
+				entry.Value.Bytes(),
+				entry.RequestID,
+				entry.Seed,
+			)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "tickets submission failed: [%v]\n", err)
+			}
+		}()
+
+		nextRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
+
+		go node.GenerateRelayEntryIfEligible(
+			nextRequestID,
+			entry.PreviousEntry,
+			entry.Seed,
+			relayChain,
+		)
+	})
+
+	// TODO: This is a temporary solution until DKG Phase 14 is ready. We assume
+	// that only one DKG result is published in DKG Phase 13 and submit it as a
+	// final group public key.
+	relayChain.OnDKGResultPublished(
+		func(dkgResultPublication *event.DKGResultPublication) {
+			fmt.Printf("Saw new DKG result published [%+v]\n", dkgResultPublication)
+
+			relayChain.SubmitGroupPublicKey(
+				dkgResultPublication.RequestID,
+				dkgResultPublication.GroupPublicKey,
+			)
+		},
+	)
+
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+		fmt.Printf("Saw new group registered [%+v]\n", registration)
+
 		node.RegisterGroup(
 			registration.RequestID.String(),
 			registration.GroupPublicKey,

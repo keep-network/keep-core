@@ -3,3 +3,4 @@ DIRNAME=`dirname $0`
 kubectl create -f $DIRNAME/../kube/lcl/dashboard.yaml
 kubectl create -f $DIRNAME/../kube/lcl/miner-nodes.yaml
 kubectl create -f $DIRNAME/../kube/lcl/tx-nodes.yaml
+echo "EthStats Dashboard address: http://localhost:3000"

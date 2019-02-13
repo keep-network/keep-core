@@ -94,7 +94,7 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 
 func (ec *ethereumChain) SubmitGroupPublicKey(
 	requestID *big.Int,
-	key [96]byte,
+	groupPublicKey []byte,
 ) *async.GroupRegistrationPromise {
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
@@ -135,7 +135,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(key[:], requestID)
+	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise
@@ -147,30 +147,8 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
 	submittedTicketPromise := &async.GroupTicketPromise{}
 
-	_, err := ec.keepGroupContract.SubmitTicket(ticket)
-	if err != nil {
-		failErr := submittedTicketPromise.Fail(err)
-		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of: [%v] failed with: [%v]\n",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	// TODO: fulfill when submitted
-
-	return submittedTicketPromise
-}
-
-func (ec *ethereumChain) SubmitChallenge(
-	ticketValue *big.Int,
-) *async.GroupTicketChallengePromise {
-	submittedChallengePromise := &async.GroupTicketChallengePromise{}
 	failPromise := func(err error) {
-		failErr := submittedChallengePromise.Fail(err)
+		failErr := submittedTicketPromise.Fail(err)
 		if failErr != nil {
 			fmt.Fprintf(
 				os.Stderr,
@@ -181,23 +159,23 @@ func (ec *ethereumChain) SubmitChallenge(
 		}
 	}
 
-	_, err := ec.keepGroupContract.SubmitChallenge(ticketValue)
+	_, err := ec.keepGroupContract.SubmitTicket(ticket)
 	if err != nil {
 		failPromise(err)
 	}
 
 	// TODO: fulfill when submitted
 
-	return submittedChallengePromise
+	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) GetOrderedTickets() ([]*chain.Ticket, error) {
-	orderedTickets, err := ec.keepGroupContract.OrderedTickets()
+func (ec *ethereumChain) GetSelectedTickets() ([]*chain.Ticket, error) {
+	selectedTickets, err := ec.keepGroupContract.SelectedTickets()
 	if err != nil {
 		return nil, err
 	}
 
-	return orderedTickets, nil
+	return selectedTickets, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
@@ -233,8 +211,14 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-generatedEntry:
-				if event.RequestID == newEntry.RequestID {
+			case event, success := <-generatedEntry:
+				// Channel is closed when SubmitRelayEntry failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
+				if event.RequestID.Cmp(newEntry.RequestID) == 0 {
 					subscription.Unsubscribe()
 					close(generatedEntry)
 
@@ -258,6 +242,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		newEntry.GroupID,
 		newEntry.PreviousEntry,
 		newEntry.Value,
+		newEntry.Seed,
 	)
 	if err != nil {
 		subscription.Unsubscribe()
@@ -278,6 +263,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			requestGroupID *big.Int,
 			previousEntry *big.Int,
 			blockNumber *big.Int,
+			seed *big.Int,
 		) {
 			handle(&event.Entry{
 				RequestID:     requestID,
@@ -285,6 +271,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 				GroupID:       requestGroupID,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
+				Seed:          seed,
 			})
 		},
 		func(err error) error {
@@ -324,7 +311,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
-	handle func(registration *event.GroupRegistration),
+	handle func(groupRegistration *event.GroupRegistration),
 ) {
 	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
 		func(
@@ -384,7 +371,13 @@ func (ec *ethereumChain) RequestRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-requestedEntry:
+			case event, success := <-requestedEntry:
+				// Channel is closed when RequestRelayEntry failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
 				subscription.Unsubscribe()
 				close(requestedEntry)
 
@@ -420,8 +413,11 @@ func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
 ) (subscription.EventSubscription, error) {
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
-		func(requestID *big.Int) {
-			handler(&event.DKGResultPublication{RequestID: requestID})
+		func(requestID *big.Int, groupPubKey []byte) {
+			handler(&event.DKGResultPublication{
+				RequestID:      requestID,
+				GroupPublicKey: groupPubKey,
+			})
 		},
 		func(err error) error {
 			return fmt.Errorf(
@@ -466,8 +462,14 @@ func (ec *ethereumChain) SubmitDKGResult(
 	go func() {
 		for {
 			select {
-			case event := <-publishedResult:
-				if event.RequestID == requestID {
+			case event, success := <-publishedResult:
+				// Channel is closed when SubmitDKGResult failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
+				if event.RequestID.Cmp(requestID) == 0 {
 					subscription.Unsubscribe()
 					close(publishedResult)
 

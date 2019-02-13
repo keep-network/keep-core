@@ -1,11 +1,11 @@
 package relay
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"os"
-	"reflect"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 // Node represents the current state of a relay node.
@@ -35,13 +34,13 @@ type Node struct {
 	maxStakeIndex int
 
 	groupPublicKeys [][]byte
-	seenPublicKeys  map[string]struct{}
-	myGroups        map[string]*membership
-	pendingGroups   map[string]*membership
+	seenPublicKeys  map[string]bool
+	myGroups        map[string][]*membership
+	pendingGroups   map[string][]*membership
 }
 
 type membership struct {
-	member  *thresholdgroup.Member
+	member  *dkg2.ThresholdSigner
 	channel net.BroadcastChannel
 	index   int
 }
@@ -60,22 +59,12 @@ func (n *Node) JoinGroupIfEligible(
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
 ) {
-	// build the channel name and get the broadcast channel
-	broadcastChannelName := channelNameFromSelectedTickets(
-		groupSelectionResult.SelectedTickets,
-	)
-	broadcastChannel, err := n.netProvider.ChannelFor(
-		broadcastChannelName,
-	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"Failed to get broadcastChannel for name %s with err: [%v].\n",
-			broadcastChannelName,
-			err,
-		)
+	if !n.initializePendingGroup(entryRequestID.String()) {
+		// Failed to initialize; in progress for this entry.
 		return
 	}
+	// Release control of this group if we error.
+	defer n.flushPendingGroup(entryRequestID.String())
 
 	for index, ticket := range groupSelectionResult.SelectedTickets {
 		// If our ticket is amongst those chosen, kick
@@ -83,16 +72,49 @@ func (n *Node) JoinGroupIfEligible(
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.Staker.ID()) {
-			go dkg2.ExecuteDKG(
-				entryRequestID,
-				entrySeed,
-				index,
-				n.chainConfig.GroupSize,
-				n.chainConfig.Threshold,
-				n.blockCounter,
-				relayChain,
-				broadcastChannel,
+			fmt.Println("elligible for group")
+			// capture player index for goroutine
+			playerIndex := index
+
+			// build the channel name and get the broadcast channel
+			broadcastChannelName := channelNameFromSelectedTickets(
+				groupSelectionResult.SelectedTickets,
 			)
+
+			// We should only join the broadcast channel if we're
+			// elligible for the group
+			broadcastChannel, err := n.netProvider.ChannelFor(
+				broadcastChannelName,
+			)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Failed to get broadcastChannel for name %s with err: [%v].",
+					broadcastChannelName,
+					err,
+				)
+				return
+			}
+
+			fmt.Printf("Executing dkg with index = %v...\n", index)
+			go func() {
+				signer, err := dkg2.ExecuteDKG(
+					entryRequestID,
+					entrySeed,
+					playerIndex,
+					n.chainConfig.GroupSize,
+					n.chainConfig.Threshold,
+					n.blockCounter,
+					relayChain,
+					broadcastChannel,
+				)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].", err)
+					return
+				}
+
+				n.registerPendingGroup(entryRequestID.String(), signer, broadcastChannel)
+			}()
 		}
 	}
 	// exit on signal
@@ -126,18 +148,18 @@ func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	// If we've already registered a group for this request ID, return early.
-	if _, exists := n.seenPublicKeys[requestID]; exists {
-		return
+	// If we've already registered a group for this request ID, no need to
+	// add to our list of known group public keys.
+	if _, exists := n.seenPublicKeys[requestID]; !exists {
+		n.seenPublicKeys[requestID] = true
+		n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
 	}
 
-	n.seenPublicKeys[requestID] = struct{}{}
-	n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
-	index := len(n.groupPublicKeys) - 1
-
-	if membership, found := n.pendingGroups[requestID]; found && membership != nil {
-		membership.index = index
-		n.myGroups[requestID] = membership
+	if memberships, found := n.pendingGroups[requestID]; found {
+		for _, membership := range memberships {
+			membership.index = len(n.groupPublicKeys) - 1
+			n.myGroups[requestID] = append(n.myGroups[requestID], membership)
+		}
 		delete(n.pendingGroups, requestID)
 	}
 }
@@ -175,34 +197,35 @@ func (n *Node) flushPendingGroup(requestID string) {
 // We overwrite our placeholder membership set by initializePendingGroup.
 func (n *Node) registerPendingGroup(
 	requestID string,
-	member *thresholdgroup.Member,
+	signer *dkg2.ThresholdSigner,
 	channel net.BroadcastChannel,
 ) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	if _, seen := n.seenPublicKeys[requestID]; seen {
-		groupPublicKey := member.GroupPublicKeyBytes()
+		groupPublicKey := signer.GroupPublicKeyBytes()
 		// Start at the end since it's likely the public key was closer to the
 		// end if it happened to come in before we had a chance to register it
 		// as pending.
 		existingIndex := len(n.groupPublicKeys) - 1
-		for ; existingIndex >= 0; existingIndex-- {
-			if reflect.DeepEqual(n.groupPublicKeys[existingIndex], groupPublicKey[:]) {
+		for index := existingIndex; index >= 0; index-- {
+			if bytes.Compare(n.groupPublicKeys[index], groupPublicKey[:]) == 0 {
+				existingIndex = index
 				break
 			}
 		}
 
-		n.myGroups[requestID] = &membership{
+		n.myGroups[requestID] = append(n.myGroups[requestID], &membership{
 			index:   existingIndex,
-			member:  member,
+			member:  signer,
 			channel: channel,
-		}
+		})
 		delete(n.pendingGroups, requestID)
 	} else {
-		n.pendingGroups[requestID] = &membership{
-			member:  member,
+		n.pendingGroups[requestID] = append(n.pendingGroups[requestID], &membership{
+			member:  signer,
 			channel: channel,
-		}
+		})
 	}
 }
