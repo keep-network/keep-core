@@ -176,6 +176,7 @@ resource "helm_release" "openvpn" {
   namespace = "default"
   chart     = "stable/openvpn"
   version   = "3.10.0"
+  keyring   = ""
 
   set {
     name  = "openvpn.redirectGateway"
