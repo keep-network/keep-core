@@ -127,3 +127,34 @@ func TestNoMinimumStakeIfUnstaked(t *testing.T) {
 		t.Fatal("address should have no stake if unstaked earlier")
 	}
 }
+
+func TestStake(t *testing.T) {
+	minimumStake := big.NewInt(200)
+	expectedStake := new(big.Int).Mul(big.NewInt(5), minimumStake)
+
+	monitor := NewStakeMonitor(minimumStake)
+	address := "0x524f2e0176350d950fa630d9a5a59a0a190daf48"
+
+	staker, err := monitor.StakerFor(address)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = monitor.StakeTokens(address)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stake, err := staker.Stake()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if stake.Cmp(expectedStake) != 0 {
+		t.Fatalf(
+			"\nexpected: %v\nactual:   %v\n",
+			expectedStake,
+			stake,
+		)
+	}
+}
