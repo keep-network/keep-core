@@ -95,25 +95,6 @@ func (pm *Publisher) publishResult(
 		)
 	}
 
-	// Check if any result has already been published to the chain with current
-	// request ID.
-	alreadyPublished, err := chainRelay.IsDKGResultPublished(pm.RequestID)
-	if err != nil {
-		subscription.Unsubscribe()
-		close(onPublishedResultChan)
-		return -1, fmt.Errorf(
-			"could not check if the result is already published [%v]",
-			err,
-		)
-	}
-
-	// Someone who was ahead of us in the queue published the result. Giving up.
-	if alreadyPublished {
-		subscription.Unsubscribe()
-		close(onPublishedResultChan)
-		return -1, nil
-	}
-
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := pm.blockCounter.BlockWaiter(
@@ -144,6 +125,8 @@ func (pm *Publisher) publishResult(
 					})
 			return blockHeight, <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
+			// If someone, who was ahead of us in the queue,
+			// published the result, we give up.
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
 				subscription.Unsubscribe()
 				close(onPublishedResultChan)
