@@ -36,8 +36,7 @@ func (lsm *StakeMonitor) StakerFor(address string) (chain.Staker, error) {
 
 	newStaker := &localStaker{
 		address: address,
-		// Set stake for new member to `5 * minimumStake` by default
-		stake: new(big.Int).Mul(big.NewInt(5), lsm.minimumStake),
+		stake:   big.NewInt(0),
 	}
 	lsm.stakers = append(lsm.stakers, newStaker)
 
