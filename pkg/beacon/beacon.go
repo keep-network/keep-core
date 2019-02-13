@@ -44,8 +44,10 @@ func Initialize(
 
 	// Current entry holds currently processed entry received from relay entry
 	// submission. After generating a new group this entry will be used to
-	//  generate a new entry. With this solution group selection and new relay
+	// generate a new entry. With this solution group selection and new relay
 	// entry submission will be executed sequentially.
+	// TODO: This is temporary workaround for M2. It should be removed as soon as
+	// relay request support is implemented.
 	var currentEntry *event.Entry
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
