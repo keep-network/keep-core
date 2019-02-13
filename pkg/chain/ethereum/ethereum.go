@@ -211,7 +211,13 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-generatedEntry:
+			case event, success := <-generatedEntry:
+				// Channel is closed when SubmitRelayEntry failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
 				if event.RequestID.Cmp(newEntry.RequestID) == 0 {
 					subscription.Unsubscribe()
 					close(generatedEntry)
@@ -365,7 +371,13 @@ func (ec *ethereumChain) RequestRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-requestedEntry:
+			case event, success := <-requestedEntry:
+				// Channel is closed when RequestRelayEntry failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
 				subscription.Unsubscribe()
 				close(requestedEntry)
 
@@ -450,8 +462,14 @@ func (ec *ethereumChain) SubmitDKGResult(
 	go func() {
 		for {
 			select {
-			case event, isOpen := <-publishedResult:
-				if isOpen && event.RequestID.Cmp(requestID) == 0 {
+			case event, success := <-publishedResult:
+				// Channel is closed when SubmitDKGResult failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
+				if event.RequestID.Cmp(requestID) == 0 {
 					subscription.Unsubscribe()
 					close(publishedResult)
 
