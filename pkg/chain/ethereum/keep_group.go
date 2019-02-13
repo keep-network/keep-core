@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -265,16 +266,20 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 		)
 	}
 
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
 		for {
 			select {
 			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
+					subscriptionMutex.Unlock()
 					return
 				}
 				success(event.RequestId, event.GroupPubKey)
-
+				subscriptionMutex.Unlock()
 			case err := <-eventSubscription.Err():
 				fail(err)
 				return
@@ -283,6 +288,9 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	}()
 
 	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}), nil
