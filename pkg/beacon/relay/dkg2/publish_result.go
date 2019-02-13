@@ -84,7 +84,9 @@ func (pm *Publisher) publishResult(
 
 	subscription, err := chainRelay.OnDKGResultPublished(
 		func(publishedResult *event.DKGResultPublication) {
+			fmt.Printf("[publisher: %v, requestID: %v] OnDKGResultPublished - START\n", pm.publishingIndex, pm.RequestID)
 			onPublishedResultChan <- publishedResult
+			fmt.Printf("[publisher: %v, requestID: %v] OnDKGResultPublished - FINISH\n", pm.publishingIndex, pm.RequestID)
 		},
 	)
 	if err != nil {
@@ -109,8 +111,10 @@ func (pm *Publisher) publishResult(
 
 	// Someone who was ahead of us in the queue published the result. Giving up.
 	if alreadyPublished {
+		fmt.Printf("[publisher: %v, requestID: %v] in alreadyPublished - START\n", pm.publishingIndex, pm.RequestID)
 		subscription.Unsubscribe()
 		close(onPublishedResultChan)
+		fmt.Printf("[publisher: %v, requestID: %v] in alreadyPublished - FINISH\n", pm.publishingIndex, pm.RequestID)
 		return -1, nil
 	}
 
@@ -128,6 +132,7 @@ func (pm *Publisher) publishResult(
 	for {
 		select {
 		case blockHeight := <-eligibleToSubmitWaiter:
+			fmt.Printf("[publisher: %v, requestID: %v] submit\n", pm.publishingIndex, pm.RequestID)
 			errorChannel := make(chan error)
 			defer close(errorChannel)
 
@@ -144,6 +149,7 @@ func (pm *Publisher) publishResult(
 					})
 			return blockHeight, <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
+			fmt.Printf("[publisher: %v, requestID: %v] result is published\n", pm.publishingIndex, pm.RequestID)
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
 				subscription.Unsubscribe()
 				close(onPublishedResultChan)
