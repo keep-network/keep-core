@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -171,12 +172,16 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 		)
 	}
 
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
 		for {
 			select {
 			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
+					subscriptionMutex.Unlock()
 					return
 				}
 				success(
@@ -186,6 +191,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Seed,
 					event.BlockNumber,
 				)
+				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
@@ -194,6 +200,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	}()
 
 	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}
@@ -230,12 +239,16 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		)
 	}
 
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
 		for {
 			select {
 			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
+					subscriptionMutex.Unlock()
 					return
 				}
 				success(
@@ -246,6 +259,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.BlockNumber,
 					event.Seed,
 				)
+				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
@@ -254,6 +268,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	}()
 
 	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}
