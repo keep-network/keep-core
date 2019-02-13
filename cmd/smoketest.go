@@ -35,13 +35,12 @@ const (
 	minimumStakeShort = "s"
 )
 
-const smokeTestDescription = `The smoke-test command creates a local threshold group of the
-   specified size and with the specified threshold and simulates a
-   distributed key generation process with an in-process broadcast
-   channel and chain implementation. Once the process is complete,
-   a threshold signature is executed, once again with an in-process
-   broadcast channel and chain, and the final signature is verified
-   by each member of the group.`
+const smokeTestDescription = `The smoke-test command creates a local threshold
+   group of the specified size and with the specified threshold and simulates a
+   distributed key generation process with an in-process broadcast channel and 
+   chain implementation. Once the process is complete, a threshold signature is 
+   executed, once again with an in-process broadcast channel and chain, and the 
+   final signature is verified by each member of the group.`
 
 func init() {
 	SmokeTestCommand = cli.Command{
