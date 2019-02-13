@@ -9,6 +9,8 @@
   "scripts": {
     "truffle": "truffle",
     "test": "truffle test",
+    "testm": "truffle test ./test/TestPublishDkgResult.js",
+    "testk": "truffle test ./test/TestKeepGroupSelection.js",
     "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",

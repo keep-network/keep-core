@@ -42,11 +42,14 @@ contract KeepGroupImplV1 is Ownable {
 
     uint256[] internal _tickets;
     bytes[] internal _submissions;
+    
+    bytes32[] internal _DkgResultHashes;
 
+    mapping (bytes32 => bool) internal _votedDkg;
+    mapping (bytes32 => bool) internal _resultPublished;
     mapping (address => DkgResult) internal _publisherToDkgResult;
-    mapping (uint256 => bool) internal _dkgResultPublished;
-    mapping (bytes => uint256) internal _submissionVotes;
-    mapping (address => mapping (bytes => bool)) internal _hasVoted;
+    mapping (bytes32 => DkgResult) internal _receivedSubmissions;
+    mapping (bytes32 => uint) internal _submissionVotes;
 
     struct Proof {
         address sender;
@@ -276,6 +279,187 @@ contract KeepGroupImplV1 is Ownable {
     function setGroupSize(uint256 groupSize) public onlyOwner {
         _groupSize = groupSize;
     }
+    
+    /*
+     * @dev Check if member is inactive.
+     * @param dqBytes bytes representing disqualified members.
+     * @param gmemberIndex position of the member to check.
+     * @return true if staker is inactive, false otherwise.
+     */
+    function _isDisqualified(bytes dqBytes, uint256 memberIndex) internal view returns (bool){
+        return dqBytes[memberIndex] != 0x00;
+    }
+
+     /*
+     * @dev Check if member is inactive.
+     * @param iaBytes bytes representing inactive members.
+     * @param gmemberIndex position of the member to check.
+     * @return true if staker is inactive, false otherwise.
+     */
+    function _isInactive(bytes iaBytes, uint256 memberIndex) internal view returns (bool){
+        return iaBytes[memberIndex] != 0x00;
+    }
+
+
+    /*
+     * @dev receives a DKG result submission, will be added if conditions are met.
+     * @param index the claimed index of the user.
+     * @param success Result of DKG protocol execution; true if success, false otherwise.
+     * @param groupPubKey Group public key generated as a result of protocol execution.
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * means that the member has been disqualified. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     * @param inactive bytes representing inactive group members; 1 at the specific index means
+     * that the member has been marked as inactive. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     */
+   
+    function receiveSubmission(
+        uint256 index, 
+        bool success, 
+        bytes groupPubKey,
+        bytes disqualified,
+        bytes inactive)public {
+
+        require(validateIndex(index));
+
+        bytes32 resultHash = keccak256(abi.encodePacked(success, groupPubKey, disqualified, inactive));
+        bytes32 submitterID = keccak256(abi.encodePacked(msg.sender, index, _randomBeaconValue));
+    
+        require(eligibleSubmitter(index), "not an eligible submitter yet");
+        require(!_votedDkg[submitterID], "already voted for or submitted a result");
+         //Find better place for this, checking every submission seems pointless
+        require(
+            _tickets.length >= _groupSize,
+            "There should be enough valid tickets submitted to form a group."
+            );
+        //TODO: make logic prettier
+        if(!_resultPublished[resultHash]){//check empty for first submitter incentives. Should not re enter. voting begins after first submission
+            if(_DkgResultHashes.length == 0){
+                //First submitter incentive logic.
+            }
+            _receivedSubmissions[resultHash] = DkgResult(success, groupPubKey, disqualified, inactive);
+            _DkgResultHashes.push(resultHash);
+            _submissionVotes[resultHash] = 1;
+            _votedDkg[submitterID] = true;//cannot vote after submiting DKG result
+            _resultPublished[resultHash] = true;
+            _publisherToDkgResult[msg.sender] = _receivedSubmissions[resultHash];
+            emit DkgResultPublishedEvent(msg.sender, groupPubKey);
+            //TODO: punish/reward
+            
+        }
+        else{
+            _addVote(resultHash, submitterID);
+        }  
+    }
+    // if(_DkgResultHashes.length == 0)
+         /*
+     * @dev receives vote for provided resultHash.
+     * @param index the claimed index of the user.
+     * @param resultHash Hash of DKG result to vote for
+     */
+    function receiveVote(uint256 index, bytes32 resultHash)public {
+        require(validateIndex(index));
+        bytes32 submitterID = keccak256(abi.encodePacked(msg.sender, index, _randomBeaconValue));
+        require(!_votedDkg[submitterID], "already voted for or submitted a result");
+        require(_submissionVotes[resultHash] != 0, "Result hash not published yet");
+        _addVote(resultHash, submitterID);
+    }
+
+    /*
+     * @dev Check if submitter is eligible to submit.
+     * @param index the claimed index of the submitter.
+     * @return true if the submitter is eligible. False otherwise.
+     */
+    function eligibleSubmitter(uint index) public returns (bool){
+        //Placeholder time logic vatiables
+        uint T_now = block.number;
+        uint T_step = 1; //time between eligibility increments
+        uint T_init = _submissionStart + _timeoutChallenge;// ticket challenge period is over and DKG results can be submitted
+        uint T_elapsed = T_now - T_init;//time elapsed since DKGSubmissions opened
+        uint T_dkg = T_init + (2 * T_step);//time perioed for index 1 to submit
+        require(
+            T_now > T_init,
+            "Ticket submission challenge period must be over."
+        );
+
+        require(index != 0, "can't be 0 index");
+        require(index <= _groupSize, "must be within selected range");
+
+        if(index == 1){
+            return true;
+        }
+        else if(T_elapsed >= T_dkg + (index-2) * T_step){
+            return true;
+        }
+        else{
+            return false;
+        }
+        
+    }
+
+    /*
+     * @dev Check if provided index belongs to staker owner.
+     * @param index the claimed index of the user.
+     * @return true if the ticket at the given index is issued by msg.sender. False otherwise.
+     */
+    function validateIndex(uint index)public returns(bool){   
+        require(index != 0, "can't be 0 index"); 
+        uint256[] memory ordered = orderedTickets();
+        return(_proofs[ordered[index - 1]].sender == msg.sender);
+    }
+
+    /*
+     * @dev add vote for provided resultHash.
+     * @param resultHash the hash of the DKG result the player claims is correct.
+     * @param playerID Hash of the player index and address
+     */
+    function _addVote(bytes32 resultHash, bytes32 submitterID) internal{
+        _votedDkg[submitterID] = true;
+        _submissionVotes[resultHash] += 1;
+    }
+
+    /*
+     * @dev returns the final DKG result.
+     */
+    function submitGroupPublicKey()public returns (bytes32) {
+        bytes32 leadingResult;
+        uint highestVoteN;
+        uint highestVoteNtemp;
+        uint totalVotes;
+        uint f_max; //calculate f_max
+        uint activationBlockHeight = block.number;
+
+        for(uint i = 0; i < _DkgResultHashes.length; i++){
+
+            highestVoteNtemp = _submissionVotes[_DkgResultHashes[i]];
+
+            if(highestVoteNtemp > highestVoteN){
+                highestVoteN = highestVoteNtemp;
+                leadingResult = _DkgResultHashes[i];
+            }
+            totalVotes += highestVoteNtemp;
+        }
+
+        if(totalVotes - highestVoteN >= f_max){
+            return 0x0;
+            //return Result.failure(disqualified = [])
+        }
+        else{
+            address[] memory members = orderedParticipants();
+            bytes memory groupPublicKey = _receivedSubmissions[leadingResult].groupPubKey;
+            for (i = 0; i < _groupSize; i++) {
+                if(!_isInactive(_receivedSubmissions[leadingResult].inactive, i) && !_isDisqualified(_receivedSubmissions[leadingResult].disqualified, i)){
+                    _groupMembers[groupPublicKey].push(members[i]);
+                }
+            }
+            _groups.push(groupPublicKey);
+            emit SubmitGroupPublicKeyEvent(groupPublicKey, activationBlockHeight);//add RequestID replacement
+            return leadingResult;
+        }
+
+    }
+
 
     /**
      * @dev ticketInitialSubmissionTimeout is the duration (in blocks) the
