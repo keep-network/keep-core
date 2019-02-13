@@ -295,3 +295,59 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 		close(eventChan)
 	}), nil
 }
+
+// SubmitGroupPublicKey upon completion of a signature make the contract
+// call to put it on chain.
+func (kg *keepGroup) SubmitGroupPublicKey(
+	groupPublicKey []byte,
+	requestID *big.Int,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitGroupPublicKey(kg.transactorOpts, groupPublicKey, requestID)
+}
+
+// submitGroupPublicKeyEventFunc type of function called for
+// SubmitGroupPublicKeyEvent event.
+type submitGroupPublicKeyEventFunc func(
+	groupPublicKey []byte,
+	requestID *big.Int,
+	activationBlockHeight *big.Int,
+)
+
+// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
+func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
+	success submitGroupPublicKeyEventFunc,
+	fail errorCallback,
+) error {
+	eventChan := make(chan *abi.KeepGroupImplV1SubmitGroupPublicKeyEvent)
+	eventSubscription, err := kg.contract.WatchSubmitGroupPublicKeyEvent(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return fmt.Errorf(
+			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
+			err,
+		)
+	}
+	go func() {
+		defer close(eventChan)
+		defer eventSubscription.Unsubscribe()
+		for {
+			select {
+			case event := <-eventChan:
+				success(
+					event.GroupPublicKey,
+					event.RequestID,
+					event.ActivationBlockHeight,
+				)
+				return
+
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+	return nil
+}
