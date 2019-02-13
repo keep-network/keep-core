@@ -118,7 +118,7 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 
 // SubmitRelayEntry submits a group signature for consideration.
 func (krb *KeepRandomBeacon) SubmitRelayEntry(
-	requestID *big.Int,
+	// requestID *big.Int,
 	groupID *big.Int,
 	previousEntry *big.Int,
 	groupSignature *big.Int,
@@ -126,7 +126,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 ) (*types.Transaction, error) {
 	return krb.transactor.RelayEntry(
 		krb.transactorOptions,
-		requestID,
+		// requestID,
 		groupSignature,
 		groupID,
 		previousEntry,
@@ -140,7 +140,13 @@ func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
 	groupPublicKey []byte,
 	requestID *big.Int,
 ) (*types.Transaction, error) {
-	return krb.transactor.SubmitGroupPublicKey(krb.transactorOptions, groupPublicKey, requestID)
+	var groupPublicKeyCopy [][1]byte
+	for _, v := range groupPublicKey {
+		var vv [1]byte
+		vv[0] = v
+		groupPublicKeyCopy = append(groupPublicKeyCopy, vv)
+	}
+	return krb.transactor.SubmitGroupPublicKey(krb.transactorOptions, groupPublicKeyCopy, requestID)
 }
 
 // relayEntryRequestedFunc type of function called for
@@ -238,13 +244,14 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 				if !subscribed {
 					return
 				}
+				missingSeed := big.NewInt(0)
 				success(
 					event.RequestID,
 					event.RequestResponse,
 					event.RequestGroupID,
 					event.PreviousEntry,
 					event.BlockNumber,
-					event.Seed,
+					missingSeed, // OLD event.Seed,
 				)
 			case ee := <-eventSubscription.Err():
 				fail(ee)
@@ -335,8 +342,12 @@ func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
 		for {
 			select {
 			case event := <-eventChan:
+				var groupPublicKeyCopy []byte
+				for _, v := range event.GroupPublicKey {
+					groupPublicKeyCopy = append(groupPublicKeyCopy, v[0])
+				}
 				success(
-					event.GroupPublicKey,
+					groupPublicKeyCopy,
 					event.RequestID,
 					event.ActivationBlockHeight,
 				)

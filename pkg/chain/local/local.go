@@ -45,7 +45,7 @@ type localChain struct {
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
-	stakerList []string
+	//OLD stakerList []string
 
 	// Track the submitted votes.
 	submissionsMutex sync.Mutex
@@ -76,7 +76,7 @@ func (c *localChain) DKGResultVote(requestID *big.Int, dkgResultHash []byte) {
 		if bytes.Equal(submission.DKGResult.Hash(), dkgResultHash) {
 			submission.Votes++
 			dkgResultVote := &event.DKGResultVote{
-				RequestID: requestID,
+				//OLD RequestID: requestID,
 			}
 			c.handlerMutex.Lock()
 			for _, handler := range c.voteHandler {
@@ -302,11 +302,10 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		blockCounter:                 bc,
 		submissions:                  make(map[string]*relaychain.DKGSubmissions),
 
-		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
-		relayRequestHandlers:         make(map[int]func(request *event.Request)),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-		stakeMonitor:                 NewStakeMonitor(minimumStake),
-		tickets:                      make([]*relaychain.Ticket, 0),
+		relayEntryHandlers:   make(map[int]func(request *event.Entry)),
+		relayRequestHandlers: make(map[int]func(request *event.Request)),
+		stakeMonitor:         NewStakeMonitor(minimumStake),
+		tickets:              make([]*relaychain.Ticket, 0),
 	}
 }
 
@@ -369,7 +368,6 @@ func (c *localChain) RequestRelayEntry(
 func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
-
 	return c.submittedResults[requestID.String()] != nil, nil
 }
 

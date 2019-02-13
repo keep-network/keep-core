@@ -31,42 +31,42 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
-	ticketInitialSubmissionTimeout, err :=
-		ec.keepGroupContract.TicketInitialSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketInitialSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	ticketReactiveSubmissionTimeout, err :=
-		ec.keepGroupContract.TicketReactiveSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketReactiveSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	ticketChallengeTimeout, err :=
-		ec.keepGroupContract.TicketChallengeTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketChallengeTimeout: [%v]",
-			err,
-		)
-	}
+	//OLD 	ticketInitialSubmissionTimeout, err :=
+	//OLD 		ec.keepGroupContract.TicketInitialSubmissionTimeout()
+	//OLD 	if err != nil {
+	//OLD 		return nil, fmt.Errorf(
+	//OLD 			"error calling TicketInitialSubmissionTimeout: [%v]",
+	//OLD 			err,
+	//OLD 		)
+	//OLD 	}
+	//OLD
+	//OLD 	ticketReactiveSubmissionTimeout, err :=
+	//OLD 		ec.keepGroupContract.TicketReactiveSubmissionTimeout()
+	//OLD 	if err != nil {
+	//OLD 		return nil, fmt.Errorf(
+	//OLD 			"error calling TicketReactiveSubmissionTimeout: [%v]",
+	//OLD 			err,
+	//OLD 		)
+	//OLD 	}
+	//OLD
+	//OLD 	ticketChallengeTimeout, err :=
+	//OLD 		ec.keepGroupContract.TicketChallengeTimeout()
+	//OLD 	if err != nil {
+	//OLD 		return nil, fmt.Errorf(
+	//OLD 			"error calling TicketChallengeTimeout: [%v]",
+	//OLD 			err,
+	//OLD 		)
+	//OLD 	}
 
 	minimumStake, err := ec.keepGroupContract.MinimumStake()
 	if err != nil {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
 
-	tokenSupply, err := ec.keepGroupContract.TokenSupply()
-	if err != nil {
-		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
-	}
+	//OLD	tokenSupply, err := ec.keepGroupContract.TokenSupply()
+	//OLD	if err != nil {
+	//OLD		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
+	//OLD	}
 
 	naturalThreshold, err := ec.keepGroupContract.NaturalThreshold()
 	if err != nil {
@@ -74,14 +74,14 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	}
 
 	return &relayconfig.Chain{
-		GroupSize:                       groupSize,
-		Threshold:                       threshold,
-		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
-		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
-		TicketChallengeTimeout:          ticketChallengeTimeout,
-		MinimumStake:                    minimumStake,
-		TokenSupply:                     tokenSupply,
-		NaturalThreshold:                naturalThreshold,
+		GroupSize: groupSize,
+		Threshold: threshold,
+		//OLD TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
+		//OLD TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
+		//OLD TicketChallengeTimeout:          ticketChallengeTimeout,
+		MinimumStake: minimumStake,
+		//OLD TokenSupply:      tokenSupply,
+		NaturalThreshold: naturalThreshold,
 	}, nil
 }
 
@@ -135,7 +135,8 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
+	//OLD: _, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
+	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise
@@ -170,12 +171,14 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 }
 
 func (ec *ethereumChain) GetSelectedTickets() ([]*chain.Ticket, error) {
-	selectedTickets, err := ec.keepGroupContract.SelectedTickets()
-	if err != nil {
-		return nil, err
-	}
-
-	return selectedTickets, nil
+	panic("COMMENTED OUT - TODO ")
+	//OLD  	selectedTickets, err := ec.keepGroupContract.SelectedTickets()
+	//OLD  	if err != nil {
+	//OLD  		return nil, err
+	//OLD  	}
+	//OLD
+	//OLD  	return selectedTickets, nil
+	return nil, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
@@ -238,7 +241,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	}()
 
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
-		newEntry.RequestID,
+		//OLD: newEntry.RequestID,
 		newEntry.GroupID,
 		newEntry.PreviousEntry,
 		newEntry.Value,

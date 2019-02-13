@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -141,39 +140,39 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-func (kg *keepGroup) TicketInitialSubmissionTimeout() (int, error) {
-	ticketInitialSubmissionTimeout, err :=
-		kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketInitialSubmissionTimeout.Int64()), nil
-}
+//OLD func (kg *keepGroup) TicketInitialSubmissionTimeout() (int, error) {
+//OLD 	ticketInitialSubmissionTimeout, err :=
+//OLD 		kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
+//OLD 	if err != nil {
+//OLD 		return -1, err
+//OLD 	}
+//OLD 	return int(ticketInitialSubmissionTimeout.Int64()), nil
+//OLD }
 
-func (kg *keepGroup) TicketReactiveSubmissionTimeout() (int, error) {
-	ticketReactiveSubmissionTimeout, err :=
-		kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketReactiveSubmissionTimeout.Int64()), nil
-}
+//OLD func (kg *keepGroup) TicketReactiveSubmissionTimeout() (int, error) {
+//OLD 	ticketReactiveSubmissionTimeout, err :=
+//OLD 		kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
+//OLD 	if err != nil {
+//OLD 		return -1, err
+//OLD 	}
+//OLD 	return int(ticketReactiveSubmissionTimeout.Int64()), nil
+//OLD }
 
-func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
-	ticketChallengeTimeout, err := kg.caller.TicketChallengeTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketChallengeTimeout.Int64()), nil
-}
+//OLD func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
+//OLD 	ticketChallengeTimeout, err := kg.caller.TicketChallengeTimeout(kg.callerOpts)
+//OLD 	if err != nil {
+//OLD 		return -1, err
+//OLD 	}
+//OLD 	return int(ticketChallengeTimeout.Int64()), nil
+//OLD }
 
 func (kg *keepGroup) MinimumStake() (*big.Int, error) {
 	return kg.caller.MinimumStake(kg.callerOpts)
 }
 
-func (kg *keepGroup) TokenSupply() (*big.Int, error) {
-	return kg.caller.TokenSupply(kg.callerOpts)
-}
+//OLD func (kg *keepGroup) TokenSupply() (*big.Int, error) {
+//OLD 	return kg.caller.TokenSupply(kg.callerOpts)
+//OLD }
 
 func (kg *keepGroup) NaturalThreshold() (*big.Int, error) {
 	return kg.caller.NaturalThreshold(kg.callerOpts)
@@ -198,35 +197,35 @@ func (kg *keepGroup) SubmitTicket(
 	)
 }
 
-func (kg *keepGroup) SelectedTickets() ([]*chain.Ticket, error) {
-	selectedTicketValues, err := kg.caller.SelectedTickets(kg.callerOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	var selectedTickets []*chain.Ticket
-
-	for _, ticketValue := range selectedTicketValues {
-		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
-			kg.callerOpts,
-			ticketValue,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		ticket := &chain.Ticket{
-			Value: ticketValue,
-			Proof: &chain.TicketProof{
-				StakerValue:        stakerValue,
-				VirtualStakerIndex: virtualStakerIndex,
-			},
-		}
-
-		selectedTickets = append(selectedTickets, ticket)
-	}
-	return selectedTickets, nil
-}
+//OLD func (kg *keepGroup) SelectedTickets() ([]*chain.Ticket, error) {
+//OLD 	selectedTicketValues, err := kg.caller.SelectedTickets(kg.callerOpts)
+//OLD 	if err != nil {
+//OLD 		return nil, err
+//OLD 	}
+//OLD
+//OLD 	var selectedTickets []*chain.Ticket
+//OLD
+//OLD 	for _, ticketValue := range selectedTicketValues {
+//OLD 		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
+//OLD 			kg.callerOpts,
+//OLD 			ticketValue,
+//OLD 		)
+//OLD 		if err != nil {
+//OLD 			return nil, err
+//OLD 		}
+//OLD
+//OLD 		ticket := &chain.Ticket{
+//OLD 			Value: ticketValue,
+//OLD 			Proof: &chain.TicketProof{
+//OLD 				StakerValue:        stakerValue,
+//OLD 				VirtualStakerIndex: virtualStakerIndex,
+//OLD 			},
+//OLD 		}
+//OLD
+//OLD 		selectedTickets = append(selectedTickets, ticket)
+//OLD 	}
+//OLD 	return selectedTickets, nil
+//OLD }
 
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
@@ -238,7 +237,7 @@ func (kg *keepGroup) SubmitDKGResult(
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
-		requestID,
+		//OLD requestID,
 		result.Success,
 		result.GroupPublicKey,
 		result.Disqualified,
