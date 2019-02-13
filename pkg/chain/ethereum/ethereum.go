@@ -98,7 +98,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 ) *async.GroupRegistrationPromise {
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+	err := ec.keepGroupContract.WatchSubmitGroupPublicKeyEvent(
 		func(
 			groupPublicKey []byte,
 			requestID *big.Int,
@@ -135,7 +135,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
+	_, err = ec.keepGroupContract.SubmitGroupPublicKey(groupPublicKey, requestID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise
@@ -211,7 +211,13 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-generatedEntry:
+			case event, success := <-generatedEntry:
+				// Channel is closed when SubmitRelayEntry failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
 				if event.RequestID.Cmp(newEntry.RequestID) == 0 {
 					subscription.Unsubscribe()
 					close(generatedEntry)
@@ -307,7 +313,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) {
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+	err := ec.keepGroupContract.WatchSubmitGroupPublicKeyEvent(
 		func(
 			groupPublicKey []byte,
 			requestID *big.Int,
@@ -365,7 +371,13 @@ func (ec *ethereumChain) RequestRelayEntry(
 	go func() {
 		for {
 			select {
-			case event := <-requestedEntry:
+			case event, success := <-requestedEntry:
+				// Channel is closed when RequestRelayEntry failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
 				subscription.Unsubscribe()
 				close(requestedEntry)
 
@@ -450,8 +462,14 @@ func (ec *ethereumChain) SubmitDKGResult(
 	go func() {
 		for {
 			select {
-			case event, isOpen := <-publishedResult:
-				if isOpen && event.RequestID.Cmp(requestID) == 0 {
+			case event, success := <-publishedResult:
+				// Channel is closed when SubmitDKGResult failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
+				if event.RequestID.Cmp(requestID) == 0 {
 					subscription.Unsubscribe()
 					close(publishedResult)
 

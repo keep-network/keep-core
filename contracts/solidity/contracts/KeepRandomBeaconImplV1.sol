@@ -20,8 +20,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber, uint256 seed);
-    event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
     uint256 internal _seq;
     uint256 internal _minPayment;
@@ -149,18 +147,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _requestGroup[requestID] = groupID;
         emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
-    }
-
-    /**
-     * @dev Takes a generated key and place it on the blockchain. Creates an event.
-     * @param groupPublicKey Group public key.
-     * @param requestID Request ID.
-     */
-    function submitGroupPublicKey(bytes groupPublicKey, uint256 requestID) public {
-        uint256 activationBlockHeight = block.number;
-
-        // TODO -- lots of stuff - don't know yet.
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID, activationBlockHeight);
     }
 
     /**
