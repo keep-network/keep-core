@@ -1,9 +1,11 @@
 package dkg2
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"reflect"
+	"sync"
 	"testing"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -251,4 +253,55 @@ func initChainHandle(threshold, groupSize int) (
 		return nil, nil, -1, err
 	}
 	return
+}
+
+// THIS IS A DEVELOPMENT TEST - DO NOT MERGE TO MASTER
+func TestPublishResultDEV(t *testing.T) {
+	threshold := 1
+	groupSize := 10
+	blockStep := 2 // t_step
+
+	resultToPublish := &relayChain.DKGResult{
+		GroupPublicKey: []byte{101},
+	}
+
+	chainHandle, blockCounter, _, err := initChainHandle(threshold, groupSize)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resultsMutex sync.Mutex
+
+	results := make([]int, 0)
+
+	requestID, _ := rand.Int(rand.Reader, big.NewInt(10000000000000))
+
+	for i := 1; i <= groupSize; i++ {
+		publisher := &Publisher{
+			publishingIndex: i,
+			blockStep:       blockStep,
+		}
+		publisher.RequestID = requestID
+		publisher.blockCounter = blockCounter
+		go func(publisher *Publisher) {
+			_, err := publisher.publishResult(
+				resultToPublish,
+				chainHandle.ThresholdRelay(),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			resultsMutex.Lock()
+			results = append(results, publisher.publishingIndex)
+			resultsMutex.Unlock()
+		}(publisher)
+	}
+
+	for {
+		resultsMutex.Lock()
+		if len(results) == groupSize {
+			return
+		}
+		resultsMutex.Unlock()
+	}
 }
