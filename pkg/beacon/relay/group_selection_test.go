@@ -7,17 +7,12 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 func TestSubmitAllTickets(t *testing.T) {
-	// 2^257 is bigger than any SHA256 generated number. We want all tickets to
-	// be accepted
-	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
-
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
@@ -28,12 +23,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
 	}
 
-	candidate := &Node{
-		chainConfig: &config.Chain{
-			NaturalThreshold: naturalThreshold,
-		},
-	}
-
+	candidate := &Node{}
 	errCh := make(chan error, len(tickets))
 	quit := make(chan struct{}, 0)
 	submittedTickets := make([]*chain.Ticket, 0)
@@ -75,10 +65,6 @@ func TestSubmitAllTickets(t *testing.T) {
 }
 
 func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
-	// 2^257 is bigger than any SHA256 generated number. We want all tickets to
-	// be accepted
-	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
-
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
@@ -91,12 +77,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(6)),
 	}
 
-	candidate := &Node{
-		chainConfig: &config.Chain{
-			NaturalThreshold: naturalThreshold,
-		},
-	}
-
+	candidate := &Node{}
 	errCh := make(chan error, len(tickets))
 	quit := make(chan struct{}, 0)
 	submittedTickets := make([]*chain.Ticket, 0)
