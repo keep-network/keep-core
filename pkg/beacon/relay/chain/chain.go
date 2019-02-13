@@ -42,7 +42,7 @@ type GroupSelectionInterface interface {
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
 	// GetSelectedTickets returns `GroupSize` tickets which have passed
-	// the on-chain checks and have been selected to the group. ``
+	// the on-chain checks and have been selected to the group.
 	GetSelectedTickets() ([]*Ticket, error)
 }
 
