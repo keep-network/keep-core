@@ -155,9 +155,14 @@ func createNode(
 	netProvider := netlocal.Connect()
 
 	go func() {
+		stakingID := toEthereumAddress(netProvider.ID())
+
+		localMonitor := stakeMonitor.(*local.StakeMonitor)
+		localMonitor.StakeTokens(stakingID)
+
 		err := beacon.Initialize(
 			context,
-			toEthereumAddress(netProvider.ID()),
+			stakingID,
 			chainHandle.ThresholdRelay(),
 			chainCounter,
 			stakeMonitor,
