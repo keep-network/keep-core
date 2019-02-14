@@ -259,6 +259,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
 		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
+		groupRegisteredHandlers:      make(map[int]func(groupRegistration *event.GroupRegistration)),
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(minimumStake),
