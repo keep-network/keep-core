@@ -11,6 +11,7 @@ import (
 func TestSetBytes(t *testing.T) {
 	tests := map[string]struct {
 		inputBytes    []byte
+		expectedBytes []byte
 		expectedError error
 	}{
 		"less than 32 bytes": {
@@ -20,7 +21,13 @@ func TestSetBytes(t *testing.T) {
 				0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
 				0x31,
 			},
-			expectedError: fmt.Errorf("32 bytes expected for SHA value"),
+			expectedBytes: []byte{
+				0x00,
+				0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
+				0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20,
+				0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
+				0x31,
+			},
 		},
 		"32 bytes": {
 			inputBytes: []byte{
@@ -54,7 +61,11 @@ func TestSetBytes(t *testing.T) {
 			}
 
 			if test.expectedError == nil {
-				testutils.AssertBytesEqual(t, test.inputBytes, shaValue.Bytes())
+				expectedBytes := test.inputBytes
+				if test.expectedBytes != nil {
+					expectedBytes = test.expectedBytes
+				}
+				testutils.AssertBytesEqual(t, expectedBytes, shaValue.Bytes())
 			}
 		})
 	}
