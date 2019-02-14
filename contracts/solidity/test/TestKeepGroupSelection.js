@@ -113,7 +113,11 @@ contract('TestKeepGroupSelection', function(accounts) {
     await exceptThrow(keepGroupImplViaProxy.selectedTickets());
   });
 
-  it("should be able to get selected tickets after challenge period is over", async function() {
+  it("should fail to get selected participants before challenge period is over", async function() {
+    await exceptThrow(keepGroupImplViaProxy.selectedParticipants());
+  });
+
+  it("should be able to get selected tickets and participants after challenge period is over", async function() {
 
     for (let i = 0; i < groupSize*2; i++) {
       await keepGroupImplViaProxy.submitTicket(tickets1[i].value, staker1, tickets1[i].virtualStakerIndex, {from: staker1});
@@ -122,6 +126,9 @@ contract('TestKeepGroupSelection', function(accounts) {
     mineBlocks(timeoutChallenge);
     let selectedTickets = await keepGroupImplViaProxy.selectedTickets();
     assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
+
+    let selectedParticipants = await keepGroupImplViaProxy.selectedParticipants();
+    assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
   });
 
   it("should be able to output submited tickets in ascending ordered", async function() {
