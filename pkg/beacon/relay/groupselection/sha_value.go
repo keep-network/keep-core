@@ -30,15 +30,16 @@ func (v SHAValue) Raw() [sha256.Size]byte {
 	return v
 }
 
-// SetBytes takes the first 32 bytes from the provided byte slice and sets them
-// as an internal value.
+// SetBytes takes 32 bytes from the provided byte slice and sets them as an
+// internal value. If slice length is less than 32 bytes it precedes it with
+// zeros. If slice length is greater than 32 bytes it returns an error.
 func (v SHAValue) SetBytes(bytes []byte) (SHAValue, error) {
 	var container [sha256.Size]byte
 
-	if len(bytes) != sha256.Size {
-		return container, fmt.Errorf("32 bytes expected for SHA value")
+	if len(bytes) <= sha256.Size {
+		copy(container[sha256.Size-len(bytes):], bytes)
+		return container, nil
 	}
 
-	copy(container[:], bytes[0:sha256.Size])
-	return container, nil
+	return container, fmt.Errorf("%v bytes expected for SHA value", sha256.Size)
 }
