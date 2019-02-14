@@ -2,6 +2,7 @@ package relay
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -116,6 +117,37 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				entrySeed,
 			)
 			return nil
+		}
+	}
+}
+
+// TODO: Remove this retry hack after M2
+func (n *Node) getSelectedTicketsWithRetry(
+	ctx context.Context,
+	relayChain relaychain.Interface,
+) ([]*relaychain.Ticket, error) {
+	t := time.NewTimer(1)
+	defer t.Stop()
+
+	counter := time.Duration(2)
+	for {
+		select {
+		case <-t.C:
+			selectedTickets, err := relayChain.GetSelectedTickets()
+			if err != nil {
+				fmt.Printf(
+					"could not fetch ordered tickets after challenge timeout [%v]\n",
+					err,
+				)
+
+				t.Reset(counter * time.Second)
+				counter = counter * time.Duration(2)
+
+				continue
+			}
+			return selectedTickets, nil
+		case <-ctx.Done():
+			return nil, fmt.Errorf("could not fetch ordered tickets within timeout")
 		}
 	}
 }
