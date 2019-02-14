@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -134,15 +135,6 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	)
 }
 
-// SubmitGroupPublicKey upon completion of a sgiagure make the contract
-// call to put it on chain.
-func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
-	groupPublicKey []byte,
-	requestID *big.Int,
-) (*types.Transaction, error) {
-	return krb.transactor.SubmitGroupPublicKey(krb.transactorOptions, groupPublicKey, requestID)
-}
-
 // relayEntryRequestedFunc type of function called for
 // RelayEntryRequested event.
 type relayEntryRequestedFunc func(
@@ -171,12 +163,16 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 		)
 	}
 
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
 		for {
 			select {
 			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
+					subscriptionMutex.Unlock()
 					return
 				}
 				success(
@@ -186,6 +182,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Seed,
 					event.BlockNumber,
 				)
+				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
@@ -194,6 +191,9 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	}()
 
 	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}
@@ -230,12 +230,16 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 		)
 	}
 
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
 		for {
 			select {
 			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
+					subscriptionMutex.Unlock()
 					return
 				}
 				success(
@@ -246,6 +250,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.BlockNumber,
 					event.Seed,
 				)
+				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
@@ -254,99 +259,12 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	}()
 
 	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}
 
 	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-// relayResetEventFunc type of function called for ResetEvent event.
-type relayResetEventFunc func(
-	LastValidRelayEntry *big.Int,
-	LastValidRelayTxHash *big.Int,
-	LastValidRelayBlock *big.Int,
-)
-
-// WatchRelayResetEvent watches for event WatchRelayResetEvent.
-func (krb *KeepRandomBeacon) WatchRelayResetEvent(
-	success relayResetEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayResetEvent)
-	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for RelayResetEvent event: [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.LastValidRelayEntry,
-					event.LastValidRelayTxHash,
-					event.LastValidRelayBlock,
-				)
-				return
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-// submitGroupPublicKeyEventFunc type of function called for
-// SubmitGroupPublicKeyEvent event.
-type submitGroupPublicKeyEventFunc func(
-	groupPublicKey []byte,
-	requestID *big.Int,
-	activationBlockHeight *big.Int,
-)
-
-// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
-func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
-	success submitGroupPublicKeyEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
-	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.GroupPublicKey,
-					event.RequestID,
-					event.ActivationBlockHeight,
-				)
-				return
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-	return nil
 }

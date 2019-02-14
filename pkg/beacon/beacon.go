@@ -42,6 +42,14 @@ func Initialize(
 		chainConfig,
 	)
 
+	// Current entry holds currently processed entry received from relay entry
+	// submission. After generating a new group this entry will be used to
+	// generate a new entry. With this solution group selection and new relay
+	// entry submission will be executed sequentially.
+	// TODO: This is temporary workaround for M2. It should be removed as soon as
+	// relay request support is implemented.
+	var currentEntry *event.Entry
+
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		fmt.Printf("New entry requested [%+v]\n", request)
 
@@ -56,6 +64,8 @@ func Initialize(
 	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
 		fmt.Printf("Saw new relay entry [%+v]\n", entry)
 
+		currentEntry = entry
+
 		// new entry generated, try to join the group
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
@@ -66,18 +76,9 @@ func Initialize(
 				entry.Seed,
 			)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "tickets submission failed: [%v]\n", err)
+				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)
 			}
 		}()
-
-		nextRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
-
-		go node.GenerateRelayEntryIfEligible(
-			nextRequestID,
-			entry.PreviousEntry,
-			entry.Seed,
-			relayChain,
-		)
 	})
 
 	// TODO: This is a temporary solution until DKG Phase 14 is ready. We assume
@@ -90,7 +91,18 @@ func Initialize(
 			relayChain.SubmitGroupPublicKey(
 				dkgResultPublication.RequestID,
 				dkgResultPublication.GroupPublicKey,
-			)
+			).OnSuccess(func(event *event.GroupRegistration) {
+				fmt.Printf(
+					"Group public key submitted for requestID=[%v]\n",
+					event.RequestID,
+				)
+			}).OnFailure(func(err error) {
+				fmt.Fprintf(
+					os.Stderr,
+					"Group public key submission failed: [%v]\n",
+					err,
+				)
+			})
 		},
 	)
 
@@ -100,6 +112,15 @@ func Initialize(
 		node.RegisterGroup(
 			registration.RequestID.String(),
 			registration.GroupPublicKey,
+		)
+
+		entry := currentEntry
+		nextRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
+		go node.GenerateRelayEntryIfEligible(
+			nextRequestID,
+			entry.Value,
+			entry.Seed,
+			relayChain,
 		)
 	})
 
