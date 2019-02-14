@@ -178,10 +178,7 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
 	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((ticket.Value.Bytes()))
 	if err != nil {
-		return nil, fmt.Errorf(
-			"could not pad ticket value [%v]",
-			err,
-		)
+		return nil, fmt.Errorf("could not pad ticket value [%v]", err)
 	}
 
 	value, err := groupselection.SHAValue{}.SetBytes(paddedTicketValue)
