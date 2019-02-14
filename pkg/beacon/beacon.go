@@ -76,7 +76,7 @@ func Initialize(
 				entry.Seed,
 			)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "tickets submission failed: [%v]\n", err)
+				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)
 			}
 		}()
 	})
@@ -91,7 +91,18 @@ func Initialize(
 			relayChain.SubmitGroupPublicKey(
 				dkgResultPublication.RequestID,
 				dkgResultPublication.GroupPublicKey,
-			)
+			).OnSuccess(func(event *event.GroupRegistration) {
+				fmt.Printf(
+					"Group public key submitted for requestID=[%v]\n",
+					event.RequestID,
+				)
+			}).OnFailure(func(err error) {
+				fmt.Fprintf(
+					os.Stderr,
+					"Group public key submission failed: [%v]\n",
+					err,
+				)
+			})
 		},
 	)
 
