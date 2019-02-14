@@ -84,12 +84,13 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			selectedTickets, err := relayChain.GetSelectedTickets()
+			fmt.Println("challenge period over")
+			ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
+			defer cancel()
+
+			selectedTickets, err := n.getSelectedTicketsWithRetry(ctx, relayChain)
 			if err != nil {
-				return fmt.Errorf(
-					"could not fetch ordered tickets after challenge timeout [%v]",
-					err,
-				)
+				return err
 			}
 
 			var tickets []*groupselection.Ticket
@@ -126,9 +127,11 @@ func (n *Node) getSelectedTicketsWithRetry(
 	ctx context.Context,
 	relayChain relaychain.Interface,
 ) ([]*relaychain.Ticket, error) {
+	// the first tick is immediate
 	t := time.NewTimer(1)
 	defer t.Stop()
 
+	// the next tick happens 2 seconds later
 	counter := time.Duration(2)
 	for {
 		select {
@@ -141,6 +144,7 @@ func (n *Node) getSelectedTicketsWithRetry(
 				)
 
 				t.Reset(counter * time.Second)
+				// use exponential backoff for retries
 				counter = counter * time.Duration(2)
 
 				continue
