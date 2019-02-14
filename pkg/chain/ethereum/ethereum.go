@@ -135,8 +135,7 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 		return groupRegistrationPromise
 	}
 
-	//OLD: _, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey)
+	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
 		return groupRegistrationPromise
@@ -241,7 +240,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	}()
 
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
-		//OLD: newEntry.RequestID,
+		newEntry.RequestID,
 		newEntry.GroupID,
 		newEntry.PreviousEntry,
 		newEntry.Value,

@@ -237,7 +237,7 @@ func (kg *keepGroup) SubmitDKGResult(
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
-		//OLD requestID,
+		requestID,
 		result.Success,
 		result.GroupPublicKey,
 		result.Disqualified,
