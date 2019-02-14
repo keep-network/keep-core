@@ -10,6 +10,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 // getTicketListInterval is the number of seconds we wait before requesting the
@@ -175,7 +176,15 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 }
 
 func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
-	value, err := groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes())
+	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((ticket.Value.Bytes()))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not pad ticket value [%v]",
+			err,
+		)
+	}
+
+	value, err := groupselection.SHAValue{}.SetBytes(paddedTicketValue)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not transform ticket from chain representation [%v]",
