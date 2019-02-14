@@ -35,7 +35,7 @@ type localChain struct {
 	handlerMutex                 sync.Mutex
 	relayEntryHandlers           map[int]func(entry *event.Entry)
 	relayRequestHandlers         map[int]func(request *event.Request)
-	groupRegisteredHandlers      []func(groupRegistration *event.GroupRegistration)
+	groupRegisteredHandlers      map[int]func(groupRegistration *event.GroupRegistration)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
 
 	requestID   int64
@@ -212,13 +212,20 @@ func (c *localChain) OnRelayEntryRequested(
 
 func (c *localChain) OnGroupRegistered(
 	handler func(groupRegistration *event.GroupRegistration),
-) {
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
-	c.groupRegisteredHandlers = append(
-		c.groupRegisteredHandlers,
-		handler,
-	)
-	c.handlerMutex.Unlock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+
+	c.groupRegisteredHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.groupRegisteredHandlers, handlerID)
+	}), nil
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {
@@ -252,6 +259,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
 		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
+		groupRegisteredHandlers:      make(map[int]func(groupRegistration *event.GroupRegistration)),
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(minimumStake),
