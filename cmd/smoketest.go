@@ -88,31 +88,13 @@ func SmokeTest(c *cli.Context) error {
 	// Give the nodes a sec to get going.
 	<-time.NewTimer(time.Second).C
 
-	fmt.Println("Submit genesis relay entry...")
+	fmt.Println("Submit relay entry...")
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
 		RequestID:     big.NewInt(0),
 		Value:         big.NewInt(0),
 		GroupID:       big.NewInt(0),
 		Seed:          big.NewInt(0),
 		PreviousEntry: &big.Int{},
-	})
-
-	fmt.Println("Wait until initial group is ready...")
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		panic(err)
-	}
-	err = blockCounter.WaitForBlocks(50)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Submit relay entry...")
-	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(1),
-		Value:         big.NewInt(11),
-		Seed:          big.NewInt(111),
-		PreviousEntry: big.NewInt(0),
 	})
 
 	// TODO Add validations when DKG Phase 14 is implemented.
