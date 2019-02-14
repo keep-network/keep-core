@@ -22,7 +22,7 @@ func (v SHAValue) Bytes() []byte {
 
 // Int returns a version of the byte array interpreted as a big.Int.
 func (v SHAValue) Int() *big.Int {
-	return big.NewInt(0).SetBytes(v.Bytes())
+	return new(big.Int).SetBytes(v.Bytes())
 }
 
 // Raw returns the underlying fixed sha256.Size-size byte array.
