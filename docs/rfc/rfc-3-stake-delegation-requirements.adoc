@@ -259,12 +259,18 @@ strategies.
 The Atomic Operating is the strategy that has the lowest network throughput,
 therefore it should be rejected.
 
-The Multi-Operating strategy is the least secure one, therefore it should be
-rejected.
+The Multi-Operating strategy is the theoretically slightly least secure, but
+practically at the same level of security as Atomic Operating, therefore it
+should be considered as an available solution.
 
-The Atomic Multi-Operating strategy is the most optimal one as it provides
-higher network throughput than the Atomic Operating and higher security than the
-Multi-Operating. Therefore it is the best choice.
+The Atomic Multi-Operating strategy is also a viable solution as it provides
+higher network throughput (assuming version with stake multiplier) than the
+Atomic Operating and theoretically more secure than the Multi-Operating (against
+"leveraged staking/penalization") but realistically similar. The only benefit
+over Multi-Operating is the possibility to control the network throughput
+through the stake multiplier, which might become an important feature for
+mitigating the influence of external (associated) currencies fluctuations on the
+economy of the solution.
 
 ==== MINIMUM_STAKE
 
