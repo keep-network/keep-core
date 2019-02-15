@@ -44,6 +44,9 @@ func Execute(
 		},
 	}
 
+	// Initialize channel to perform threshold signing process.
+	Init(channel)
+
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 

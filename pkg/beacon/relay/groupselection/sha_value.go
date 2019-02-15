@@ -22,7 +22,7 @@ func (v SHAValue) Bytes() []byte {
 
 // Int returns a version of the byte array interpreted as a big.Int.
 func (v SHAValue) Int() *big.Int {
-	return big.NewInt(0).SetBytes(v.Bytes())
+	return new(big.Int).SetBytes(v.Bytes())
 }
 
 // Raw returns the underlying fixed sha256.Size-size byte array.
@@ -30,15 +30,16 @@ func (v SHAValue) Raw() [sha256.Size]byte {
 	return v
 }
 
-// SetBytes takes the first 32 bytes from the provided byte slice and sets them
-// as an internal value.
+// SetBytes takes 32 bytes from the provided byte slice and sets them as an
+// internal value. If slice length is different than 32 bytes it returns an error.
 func (v SHAValue) SetBytes(bytes []byte) (SHAValue, error) {
 	var container [sha256.Size]byte
 
 	if len(bytes) != sha256.Size {
-		return container, fmt.Errorf("32 bytes expected for SHA value")
+		return container, fmt.Errorf("%v bytes expected for SHA value", sha256.Size)
 	}
 
 	copy(container[:], bytes[0:sha256.Size])
+
 	return container, nil
 }

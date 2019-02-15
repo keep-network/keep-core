@@ -98,47 +98,64 @@ func (ec *ethereumChain) SubmitGroupPublicKey(
 ) *async.GroupRegistrationPromise {
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
-		func(
-			groupPublicKey []byte,
-			requestID *big.Int,
-			activationBlockHeight *big.Int,
-		) {
-			err := groupRegistrationPromise.Fulfill(&event.GroupRegistration{
-				GroupPublicKey:        groupPublicKey,
-				RequestID:             requestID,
-				ActivationBlockHeight: activationBlockHeight,
-			})
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"fulfilling promise failed with: [%v].\n",
-					err,
-				)
-			}
-		},
-		func(err error) error {
-			return groupRegistrationPromise.Fail(
-				fmt.Errorf(
-					"entry of group key failed with: [%v]",
-					err,
-				),
+	failPromise := func(err error) {
+		failErr := groupRegistrationPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of [%v] failed with [%v]\n",
+				err,
+				failErr,
 			)
-		},
-	)
+		}
+	}
+
+	groupRegistered := make(chan *event.GroupRegistration)
+
+	subscription, err := ec.OnGroupRegistered(
+		func(groupRegistrationEvent *event.GroupRegistration) {
+			groupRegistered <- groupRegistrationEvent
+		})
 	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"watch group public key event failed with: [%v].\n",
-			err,
-		)
+		close(groupRegistered)
+		failPromise(err)
 		return groupRegistrationPromise
 	}
 
-	_, err = ec.keepRandomBeaconContract.SubmitGroupPublicKey(groupPublicKey, requestID)
+	go func() {
+		for {
+			select {
+			case event, success := <-groupRegistered:
+				// Channel is closed when SubmitGroupPublicKey failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
+				if event.RequestID.Cmp(requestID) == 0 {
+					subscription.Unsubscribe()
+					close(groupRegistered)
+
+					err := groupRegistrationPromise.Fulfill(event)
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"fulfilling promise failed with [%v]\n",
+							err,
+						)
+					}
+
+					return
+				}
+			}
+		}
+	}()
+
+	_, err = ec.keepGroupContract.SubmitGroupPublicKey(groupPublicKey, requestID)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to submit GroupPublicKey [%v].\n", err)
-		return groupRegistrationPromise
+		subscription.Unsubscribe()
+		close(groupRegistered)
+		failPromise(err)
 	}
 
 	return groupRegistrationPromise
@@ -315,8 +332,8 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
-) {
-	err := ec.keepRandomBeaconContract.WatchSubmitGroupPublicKeyEvent(
+) (subscription.EventSubscription, error) {
+	return ec.keepGroupContract.WatchSubmitGroupPublicKeyEvent(
 		func(
 			groupPublicKey []byte,
 			requestID *big.Int,
@@ -332,13 +349,6 @@ func (ec *ethereumChain) OnGroupRegistered(
 			return fmt.Errorf("entry of group key failed with: [%v]", err)
 		},
 	)
-	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"watch group public key event failed with: [%v].\n",
-			err,
-		)
-	}
 }
 
 func (ec *ethereumChain) RequestRelayEntry(

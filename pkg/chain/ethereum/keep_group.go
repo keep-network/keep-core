@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -259,21 +260,25 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"could not create watch for DkgResultPublished event [%v]",
+			"could not create watch for DkgResultPublished event: [%v]",
 			err,
 		)
 	}
+
+	var subscriptionMutex = &sync.Mutex{}
 
 	go func() {
 		for {
 			select {
 			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
+					subscriptionMutex.Unlock()
 					return
 				}
 				success(event.RequestId, event.GroupPubKey)
-
+				subscriptionMutex.Unlock()
 			case err := <-eventSubscription.Err():
 				fail(err)
 				return
@@ -282,6 +287,78 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	}()
 
 	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}), nil
+}
+
+// SubmitGroupPublicKey upon completion of a signature make the contract
+// call to put it on chain.
+func (kg *keepGroup) SubmitGroupPublicKey(
+	groupPublicKey []byte,
+	requestID *big.Int,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitGroupPublicKey(kg.transactorOpts, groupPublicKey, requestID)
+}
+
+// submitGroupPublicKeyEventFunc type of function called for
+// SubmitGroupPublicKeyEvent event.
+type submitGroupPublicKeyEventFunc func(
+	groupPublicKey []byte,
+	requestID *big.Int,
+	activationBlockHeight *big.Int,
+)
+
+// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
+func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
+	success submitGroupPublicKeyEventFunc,
+	fail errorCallback,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.KeepGroupImplV1SubmitGroupPublicKeyEvent)
+	eventSubscription, err := kg.contract.WatchSubmitGroupPublicKeyEvent(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return nil, fmt.Errorf(
+			"could not create watch for SubmitGroupPublicKeyEvent event: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.GroupPublicKey,
+					event.RequestID,
+					event.ActivationBlockHeight,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}), nil
