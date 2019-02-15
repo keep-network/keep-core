@@ -9,7 +9,7 @@ import (
 func TestLead(t *testing.T) {
 	dkgResult1 := &DKGResult{
 		Success: true,
-		GroupPublicKey: [32]byte{
+		GroupPublicKey: []byte{
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -20,7 +20,7 @@ func TestLead(t *testing.T) {
 	}
 	dkgResult2 := &DKGResult{
 		Success: true,
-		GroupPublicKey: [32]byte{
+		GroupPublicKey: []byte{
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -113,7 +113,7 @@ func TestLead(t *testing.T) {
 func TestContains(t *testing.T) {
 	dkgResult1 := &DKGResult{
 		Success: true,
-		GroupPublicKey: [32]byte{
+		GroupPublicKey: []byte{
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -124,7 +124,7 @@ func TestContains(t *testing.T) {
 	}
 	dkgResult2 := &DKGResult{
 		Success: true,
-		GroupPublicKey: [32]byte{
+		GroupPublicKey: []byte{
 			101, 104, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -135,7 +135,7 @@ func TestContains(t *testing.T) {
 	}
 	dkgResult3 := &DKGResult{
 		Success: true,
-		GroupPublicKey: [32]byte{
+		GroupPublicKey: []byte{
 			101, 105, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,

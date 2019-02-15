@@ -95,7 +95,7 @@ func TestDKGResultEquals(t *testing.T) {
 func TestHash(t *testing.T) {
 	r1 := &DKGResult{
 		Success: true,
-		GroupPublicKey: [32]byte{
+		GroupPublicKey: []byte{
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -129,7 +129,7 @@ func TestSerialize(t *testing.T) {
 		"1st Test - General Case": {
 			result: &DKGResult{
 				Success: true,
-				GroupPublicKey: [32]byte{
+				GroupPublicKey: []byte{
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -146,7 +146,7 @@ func TestSerialize(t *testing.T) {
 		"Empty Group Public Key ": {
 			result: &DKGResult{
 				Success: true,
-				GroupPublicKey: [32]byte{
+				GroupPublicKey: []byte{
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -163,7 +163,7 @@ func TestSerialize(t *testing.T) {
 		"Disqualified Empty": {
 			result: &DKGResult{
 				Success: true,
-				GroupPublicKey: [32]byte{
+				GroupPublicKey: []byte{
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -181,7 +181,7 @@ func TestSerialize(t *testing.T) {
 		"Inactive Empty": {
 			result: &DKGResult{
 				Success: true,
-				GroupPublicKey: [32]byte{
+				GroupPublicKey: []byte{
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
@@ -199,7 +199,7 @@ func TestSerialize(t *testing.T) {
 		"Both Disqualified and Inactive Empty": {
 			result: &DKGResult{
 				Success: true,
-				GroupPublicKey: [32]byte{
+				GroupPublicKey: []byte{
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
 					101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
