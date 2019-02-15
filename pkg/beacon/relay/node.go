@@ -92,7 +92,6 @@ func (n *Node) JoinGroupIfEligible(
 				return
 			}
 
-			fmt.Printf("Executing dkg with index = %v...\n", index)
 			go func() {
 				signer, err := dkg2.ExecuteDKG(
 					entryRequestID,
