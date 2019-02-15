@@ -66,20 +66,16 @@ func (n *Node) JoinGroupIfEligible(
 	// Release control of this group if we error.
 	defer n.flushPendingGroup(entryRequestID.String())
 
-	for index, ticket := range groupSelectionResult.SelectedTickets {
-		// If our ticket is amongst those chosen, kick
-		// off an instance of DKG. We may have multiple
-		// tickets in the selected tickets (which would
-		// result in multiple instances of DKG).
-		if ticket.IsFromStaker(n.Staker.ID()) {
-			fmt.Println("elligible for group")
+	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
+		// If we are amongst those chosen, kick off an instance of DKG. We may
+		// have been selected multiple times (which would result in multiple
+		// instances of DKG).
+		if bytes.Compare(selectedStaker, n.Staker.ID()) == 0 {
 			// capture player index for goroutine
 			playerIndex := index
 
 			// build the channel name and get the broadcast channel
-			broadcastChannelName := channelNameFromSelectedTickets(
-				groupSelectionResult.SelectedTickets,
-			)
+			broadcastChannelName := channelNameForGroup(groupSelectionResult)
 
 			// We should only join the broadcast channel if we're
 			// elligible for the group
@@ -121,20 +117,14 @@ func (n *Node) JoinGroupIfEligible(
 	return
 }
 
-// channelNameFromSelectedTickets takes the selected tickets, and does the
+// channelNameForGroup takes the selected stakers, and does the
 // following to construct the broadcastChannel name:
-// * grabs the value from each ticket
-// * concatenates all of the values
+// * concatenates all of the staker values
 // * returns the hashed concatenated values
-func channelNameFromSelectedTickets(
-	tickets []*groupselection.Ticket,
-) string {
+func channelNameForGroup(group *groupselection.Result) string {
 	var channelNameBytes []byte
-	for _, ticket := range tickets {
-		channelNameBytes = append(
-			channelNameBytes,
-			ticket.Value.Bytes()...,
-		)
+	for _, staker := range group.SelectedStakers {
+		channelNameBytes = append(channelNameBytes, staker...)
 	}
 	hashedChannelName := groupselection.SHAValue(
 		sha256.Sum256(channelNameBytes),

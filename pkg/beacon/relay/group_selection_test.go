@@ -197,6 +197,6 @@ func (mgi *mockGroupInterface) SubmitTicket(
 	panic("unexpected")
 }
 
-func (mgi *mockGroupInterface) GetSelectedTickets() ([]*chain.Ticket, error) {
+func (mgi *mockGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
 	panic("unexpected")
 }

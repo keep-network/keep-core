@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -199,34 +198,8 @@ func (kg *keepGroup) SubmitTicket(
 	)
 }
 
-func (kg *keepGroup) SelectedTickets() ([]*chain.Ticket, error) {
-	selectedTicketValues, err := kg.caller.SelectedTickets(kg.callerOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	var selectedTickets []*chain.Ticket
-
-	for _, ticketValue := range selectedTicketValues {
-		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
-			kg.callerOpts,
-			ticketValue,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		ticket := &chain.Ticket{
-			Value: ticketValue,
-			Proof: &chain.TicketProof{
-				StakerValue:        stakerValue,
-				VirtualStakerIndex: virtualStakerIndex,
-			},
-		}
-
-		selectedTickets = append(selectedTickets, ticket)
-	}
-	return selectedTickets, nil
+func (kg *keepGroup) SelectedParticipants() ([]common.Address, error) {
+	return kg.caller.SelectedParticipants(kg.callerOpts)
 }
 
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
