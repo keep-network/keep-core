@@ -176,6 +176,7 @@ func (ec *ethereumChain) GetSelectedTickets() ([]*chain.Ticket, error) {
 	//OLD  		return nil, err
 	//OLD  	}
 	//OLD
+	//OLD
 	//OLD  	return selectedTickets, nil
 	return nil, nil
 }
