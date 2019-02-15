@@ -49,7 +49,7 @@ require any owner's keys at all. The stake delegation should also optimize
 the network throughput without compromising the security of owners stake.
 
 
-=== Design Requirements:
+=== Design Assumptions
 
 1. _owner_ can only have one operator.
 2. _owner_ can only delegate all of his stake.
@@ -113,7 +113,8 @@ hyperactivity is promoted without much of influence form the size of the stake.
 If an operator A operates on more than the MINIMUM_STAKE he can participate in
 the same number of operations as an operator B who has multiple MINIMUM_STAKE.
 Such a possibility might have a negative impact on the owners' motivation to
-delegate more than the necessary minimum.
+delegate more than the necessary minimum if it would be possible to withdraw 
+a fraction of stake instantly after being selected to the group.
 
 ===== Atomic Multi-Operating
 
@@ -266,7 +267,7 @@ should be considered as an available solution.
 The Atomic Multi-Operating strategy is also a viable solution as it provides
 higher network throughput (assuming version with stake multiplier) than the
 Atomic Operating and theoretically more secure than the Multi-Operating (against
-"leveraged staking/penalization") but realistically similar. The only benefit
+"leveraged staking/penalization") but realistically similar. One of the benefits
 over Multi-Operating is the possibility to control the network throughput
 through the stake multiplier, which might become an important feature for
 mitigating the influence of external (associated) currencies fluctuations on the
@@ -336,12 +337,12 @@ mechanics of proposed contracts might not be conflicting with each other and it
 might be beneficial to have parallel contract types fulfilling the particular
 needs of our users.
 
-=== Penalization:
+=== Penalization
 How to penalise misbehaviour?
 
 Should an _operator_ have an accountable address which will be slashed?
 
-=== Timeouts:
+=== Timeouts
 What timeouts are reasonable?
 
 == Future work
