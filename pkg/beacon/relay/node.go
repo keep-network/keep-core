@@ -72,7 +72,6 @@ func (n *Node) JoinGroupIfEligible(
 		// tickets in the selected tickets (which would
 		// result in multiple instances of DKG).
 		if ticket.IsFromStaker(n.Staker.ID()) {
-			fmt.Println("elligible for group")
 			// capture player index for goroutine
 			playerIndex := index
 
@@ -96,7 +95,6 @@ func (n *Node) JoinGroupIfEligible(
 				return
 			}
 
-			fmt.Printf("Executing dkg with index = %v...\n", index)
 			go func() {
 				signer, err := dkg2.ExecuteDKG(
 					entryRequestID,
