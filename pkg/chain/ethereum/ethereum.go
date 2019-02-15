@@ -186,13 +186,21 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) GetSelectedTickets() ([]*chain.Ticket, error) {
-	selectedTickets, err := ec.keepGroupContract.SelectedTickets()
+func (ec *ethereumChain) GetSelectedParticipants() (
+	[]chain.StakerAddress,
+	error,
+) {
+	selectedParticipants, err := ec.keepGroupContract.SelectedParticipants()
 	if err != nil {
 		return nil, err
 	}
 
-	return selectedTickets, nil
+	stakerAddresses := make([]chain.StakerAddress, len(selectedParticipants))
+	for i, selectedParticipant := range selectedParticipants {
+		stakerAddresses[i] = selectedParticipant.Bytes()
+	}
+
+	return stakerAddresses, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
