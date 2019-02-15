@@ -66,7 +66,7 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 		expectedError             error
 		expectedGroupRegistration *event.GroupRegistration
 	}{
-		"1. Submit first": {
+		"1. Submit first group public key": {
 			requestID:      requestID1,
 			groupPublicKey: groupPublicKey1,
 			expectedError:  nil,
@@ -76,7 +76,7 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 				ActivationBlockHeight: big.NewInt(0),
 			},
 		},
-		"2. Submit new group public key with new request ID": {
+		"2. Submit a new group public key with a new request ID": {
 			requestID:      requestID2,
 			groupPublicKey: groupPublicKey2,
 			expectedError:  nil,
@@ -86,7 +86,7 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 				ActivationBlockHeight: big.NewInt(1),
 			},
 		},
-		"3. Submit same group public key with new request ID": {
+		"3. Submit previous group public key again, but with a new request ID": {
 			requestID:      requestID3,
 			groupPublicKey: groupPublicKey2,
 			expectedError:  nil,
@@ -96,7 +96,7 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 				ActivationBlockHeight: big.NewInt(2),
 			},
 		},
-		"4. Submit new group public key with same request ID": {
+		"4. Submit a new group public key with a previously used request ID": {
 			requestID:      requestID2,
 			groupPublicKey: groupPublicKey3,
 			expectedError: fmt.Errorf(
@@ -107,7 +107,7 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 			),
 			expectedGroupRegistration: nil,
 		},
-		"5. Submit same group public key with same request ID": {
+		"5. Submit a previously submitted group public key with its associated request ID": {
 			requestID:      requestID1,
 			groupPublicKey: groupPublicKey1,
 			expectedError:  nil,
