@@ -64,7 +64,7 @@ type ethereumStaker struct {
 	watchingChain       bool
 }
 
-func (es *ethereumStaker) ID() []byte {
+func (es *ethereumStaker) ID() chain.StakerAddress {
 	return common.HexToAddress(es.address).Bytes()
 }
 

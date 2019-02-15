@@ -106,7 +106,7 @@ type localStaker struct {
 	stake   *big.Int
 }
 
-func (ls *localStaker) ID() []byte {
+func (ls *localStaker) ID() chain.StakerAddress {
 	return []byte(ls.address)
 }
 
