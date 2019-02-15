@@ -121,8 +121,8 @@ func TestSubmitGroupPublicKey(t *testing.T) {
 
 	// Execute tests in specific order. Tests are sorted by the test name.
 	testNames := make([]string, 0)
-	for t := range tests {
-		testNames = append(testNames, t)
+	for test := range tests {
+		testNames = append(testNames, test)
 	}
 	sort.Strings(testNames)
 
