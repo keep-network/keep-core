@@ -16,21 +16,48 @@ func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 	c := Connect(10, 4, big.NewInt(200))
 	chain := c.ThresholdRelay()
 
-	ticket1 := &relaychain.Ticket{Value: big.NewInt(1)}
-	ticket2 := &relaychain.Ticket{Value: big.NewInt(2)}
-	ticket3 := &relaychain.Ticket{Value: big.NewInt(3)}
-	ticket4 := &relaychain.Ticket{Value: big.NewInt(4)}
+	ticket1 := &relaychain.Ticket{
+		Value: big.NewInt(111),
+		Proof: &relaychain.TicketProof{
+			StakerValue:        big.NewInt(11),
+			VirtualStakerIndex: big.NewInt(1),
+		},
+	}
+	ticket2 := &relaychain.Ticket{
+		Value: big.NewInt(222),
+		Proof: &relaychain.TicketProof{
+			StakerValue:        big.NewInt(22),
+			VirtualStakerIndex: big.NewInt(2),
+		},
+	}
+	ticket3 := &relaychain.Ticket{
+		Value: big.NewInt(333),
+		Proof: &relaychain.TicketProof{
+			StakerValue:        big.NewInt(33),
+			VirtualStakerIndex: big.NewInt(3),
+		},
+	}
+	ticket4 := &relaychain.Ticket{
+		Value: big.NewInt(444),
+		Proof: &relaychain.TicketProof{
+			StakerValue:        big.NewInt(44),
+			VirtualStakerIndex: big.NewInt(4),
+		},
+	}
 
 	chain.SubmitTicket(ticket3)
 	chain.SubmitTicket(ticket1)
 	chain.SubmitTicket(ticket4)
 	chain.SubmitTicket(ticket2)
 
-	expectedResult := []*relaychain.Ticket{
-		ticket1, ticket2, ticket3, ticket4,
+	expectedResult := []relaychain.StakerAddress{
+		ticket1.Proof.StakerValue.Bytes(),
+		ticket2.Proof.StakerValue.Bytes(),
+		ticket3.Proof.StakerValue.Bytes(),
+		ticket4.Proof.StakerValue.Bytes(),
 	}
 
-	actualResult, err := chain.GetSelectedTickets()
+	actualResult, err := chain.GetSelectedParticipants()
 	if err != nil {
 		t.Fatal(err)
 	}

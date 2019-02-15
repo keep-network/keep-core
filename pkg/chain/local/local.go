@@ -79,11 +79,16 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 	return promise
 }
 
-func (c *localChain) GetSelectedTickets() ([]*relaychain.Ticket, error) {
+func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
-	return c.tickets, nil
+	participants := make([]relaychain.StakerAddress, len(c.tickets))
+	for i, ticket := range c.tickets {
+		participants[i] = ticket.Proof.StakerValue.Bytes()
+	}
+
+	return participants, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(
