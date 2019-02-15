@@ -81,31 +81,6 @@ func Initialize(
 		}()
 	})
 
-	// TODO: This is a temporary solution until DKG Phase 14 is ready. We assume
-	// that only one DKG result is published in DKG Phase 13 and submit it as a
-	// final group public key.
-	relayChain.OnDKGResultPublished(
-		func(dkgResultPublication *event.DKGResultPublication) {
-			fmt.Printf("Saw new DKG result published [%+v]\n", dkgResultPublication)
-
-			relayChain.SubmitGroupPublicKey(
-				dkgResultPublication.RequestID,
-				dkgResultPublication.GroupPublicKey,
-			).OnSuccess(func(event *event.GroupRegistration) {
-				fmt.Printf(
-					"Group public key submitted for requestID=[%v]\n",
-					event.RequestID,
-				)
-			}).OnFailure(func(err error) {
-				fmt.Fprintf(
-					os.Stderr,
-					"Group public key submission failed: [%v]\n",
-					err,
-				)
-			})
-		},
-	)
-
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		fmt.Printf("Saw new group registered [%+v]\n", registration)
 
