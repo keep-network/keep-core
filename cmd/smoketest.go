@@ -78,8 +78,7 @@ func SmokeTest(c *cli.Context) error {
 		big.NewInt(int64(minimumStake)),
 	)
 
-	context, cancel := context.WithTimeout(context.Background(), 360*time.Second)
-	defer cancel()
+	context := context.Background()
 
 	for i := 0; i < groupSize; i++ {
 		createNode(context, chainHandle, groupSize, threshold)
