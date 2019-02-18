@@ -57,7 +57,7 @@ func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
 				ticket1, ticket2, ticket3, ticket4,
 			},
 		},
-		"number of tickets is greater than as group size": {
+		"number of tickets is greater than group size": {
 			submitTickets: func(chain relaychain.Interface) {
 				chain.SubmitTicket(ticket3)
 				chain.SubmitTicket(ticket1)
