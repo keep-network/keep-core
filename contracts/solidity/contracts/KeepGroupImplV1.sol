@@ -153,6 +153,27 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Gets selected participants in ascending order of their tickets.
+     */
+    function selectedParticipants() public view returns (address[]) {
+
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        uint256[] memory ordered = orderedTickets();
+        address[] memory selected = new address[](_groupSize);
+
+        for (uint i = 0; i < _groupSize; i++) {
+            Proof memory proof = _proofs[ordered[i]];
+            selected[i] = proof.sender;
+        }
+
+        return selected;
+    }
+
+    /**
      * @dev Gets ticket proof.
      */
     function getTicketProof(uint256 ticketValue) public view returns (address, uint256, uint256) {
@@ -283,7 +304,7 @@ contract KeepGroupImplV1 is Ownable {
     /*
      * @dev Check if member is inactive.
      * @param dqBytes bytes representing disqualified members.
-     * @param gmemberIndex position of the member to check.
+     * @param memberIndex position of the member to check.
      * @return true if staker is inactive, false otherwise.
      */
     function _isDisqualified(bytes dqBytes, uint256 memberIndex) internal view returns (bool){
@@ -300,10 +321,9 @@ contract KeepGroupImplV1 is Ownable {
         return iaBytes[memberIndex] != 0x00;
     }
 
-
     /*
      * @dev receives a DKG result submission, will be added if conditions are met.
-     * @param index the claimed index of the user.
+     * @param index the claimed index (P_i) of the user.
      * @param success Result of DKG protocol execution; true if success, false otherwise.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index 
@@ -333,9 +353,10 @@ contract KeepGroupImplV1 is Ownable {
             _tickets.length >= _groupSize,
             "There should be enough valid tickets submitted to form a group."
             );
-        //TODO: make logic prettier
-        if(!_resultPublished[resultHash]){//check empty for first submitter incentives. Should not re enter. voting begins after first submission
+        //check empty for first submitter incentives. Should not re enter. voting begins after first submission
+        if(!_resultPublished[resultHash]){
             if(_DkgResultHashes.length == 0){
+                //TODO: punish/reward
                 //First submitter incentive logic.
             }
             _receivedSubmissions[resultHash] = DkgResult(success, groupPubKey, disqualified, inactive);
@@ -345,15 +366,14 @@ contract KeepGroupImplV1 is Ownable {
             _resultPublished[resultHash] = true;
             _publisherToDkgResult[msg.sender] = _receivedSubmissions[resultHash];
             emit DkgResultPublishedEvent(msg.sender, groupPubKey);
-            //TODO: punish/reward
             
         }
         else{
             _addVote(resultHash, submitterID);
         }  
     }
-    // if(_DkgResultHashes.length == 0)
-         /*
+   
+    /*
      * @dev receives vote for provided resultHash.
      * @param index the claimed index of the user.
      * @param resultHash Hash of DKG result to vote for
@@ -372,30 +392,18 @@ contract KeepGroupImplV1 is Ownable {
      * @return true if the submitter is eligible. False otherwise.
      */
     function eligibleSubmitter(uint index) public returns (bool){
-        //Placeholder time logic vatiables
-        uint T_now = block.number;
-        uint T_step = 1; //time between eligibility increments
-        uint T_init = _submissionStart + _timeoutChallenge;// ticket challenge period is over and DKG results can be submitted
-        uint T_elapsed = T_now - T_init;//time elapsed since DKGSubmissions opened
-        uint T_dkg = T_init + (2 * T_step);//time perioed for index 1 to submit
-        require(
-            T_now > T_init,
-            "Ticket submission challenge period must be over."
-        );
-
-        require(index != 0, "can't be 0 index");
-        require(index <= _groupSize, "must be within selected range");
-
-        if(index == 1){
-            return true;
-        }
-        else if(T_elapsed >= T_dkg + (index-2) * T_step){
-            return true;
-        }
-        else{
-            return false;
-        }
+        uint T_init = _submissionStart + _timeoutChallenge;
+        uint T_step = 2; //time between eligibility increments Placeholder
+        require(block.number > T_init, "Ticket submission challenge period must be over.");
+        if(index == 1) return true;
         
+        //(2* (T_step)) -> time for first submitter to submit DKG Result.
+        //No way to calculate DKG time on-chain, so DKG result submission opens on ticket-challenge close.
+        //first submitter usable time period is really (2 * T_step - DKG time).
+        else if(block.number >= ((T_init + (2 * (T_step))) + ((index-2) * T_step))){
+            return true;
+        }
+        else return false;
     }
 
     /*
@@ -405,14 +413,15 @@ contract KeepGroupImplV1 is Ownable {
      */
     function validateIndex(uint index)public returns(bool){   
         require(index != 0, "can't be 0 index"); 
+        require(index <= _groupSize, "must be within selected range");
         uint256[] memory ordered = orderedTickets();
         return(_proofs[ordered[index - 1]].sender == msg.sender);
     }
 
     /*
      * @dev add vote for provided resultHash.
-     * @param resultHash the hash of the DKG result the player claims is correct.
-     * @param playerID Hash of the player index and address
+     * @param resultHash the hash of the DKG result the submitter claims is correct.
+     * @param submitterID Hash of the submitterID index and address
      */
     function _addVote(bytes32 resultHash, bytes32 submitterID) internal{
         _votedDkg[submitterID] = true;
@@ -427,35 +436,41 @@ contract KeepGroupImplV1 is Ownable {
         uint highestVoteN;
         uint highestVoteNtemp;
         uint totalVotes;
-        uint f_max; //calculate f_max
-        uint activationBlockHeight = block.number;
+        uint f_max = _groupSize/2 + 1;
+
+        //TODO:
+        //method cannot be called before voting period is over or everyone has voted as it is liked with cleanup()
 
         for(uint i = 0; i < _DkgResultHashes.length; i++){
-
             highestVoteNtemp = _submissionVotes[_DkgResultHashes[i]];
-
             if(highestVoteNtemp > highestVoteN){
                 highestVoteN = highestVoteNtemp;
                 leadingResult = _DkgResultHashes[i];
             }
             totalVotes += highestVoteNtemp;
         }
-
         if(totalVotes - highestVoteN >= f_max){
+            cleanup();
             return 0x0;
+            //TODO
             //return Result.failure(disqualified = [])
         }
         else{
             address[] memory members = orderedParticipants();
             bytes memory groupPublicKey = _receivedSubmissions[leadingResult].groupPubKey;
             for (i = 0; i < _groupSize; i++) {
-                if(!_isInactive(_receivedSubmissions[leadingResult].inactive, i) && !_isDisqualified(_receivedSubmissions[leadingResult].disqualified, i)){
+                if(!_isInactive(_receivedSubmissions[leadingResult].inactive, i) &&
+                    !_isDisqualified(_receivedSubmissions[leadingResult].disqualified, i)){
                     _groupMembers[groupPublicKey].push(members[i]);
                 }
             }
             _groups.push(groupPublicKey);
-            emit SubmitGroupPublicKeyEvent(groupPublicKey, activationBlockHeight);//add RequestID replacement
+            //emist _randomBeaconValue instead of RequestID
+            emit SubmitGroupPublicKeyEvent(groupPublicKey, _randomBeaconValue);
+            cleanup();
             return leadingResult;
+            //TODO:
+            //return value as DKG result
         }
 
     }
@@ -562,4 +577,24 @@ contract KeepGroupImplV1 is Ownable {
         // TODO: cleanup DkgResults
     }
 
+    /**
+     * @dev Gets number of active groups.
+     */
+    function blockHeight() public view returns(uint256) {
+        return block.number;
+    }
+
+     /*
+     * @dev Helper - get block height when user at given index is eligible to submit DKG result
+     * @param index the claimed index of the submitter.
+     * @return the block number when a user is eligible.
+     */
+    function eligibleTime(uint index) public view returns(uint){
+        uint T_init = _submissionStart + _timeoutChallenge;
+        uint T_step = 2; //time between eligibility increments Placeholder
+        if(index == 1 ){
+            return T_init + 1;
+        }
+        return ((T_init + (2 * (T_step))) + ((index-2) * T_step));
+    }
 }

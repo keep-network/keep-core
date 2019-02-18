@@ -10,7 +10,7 @@
     "truffle": "truffle",
     "test": "truffle test",
     "testm": "truffle test ./test/TestPublishDkgResult.js",
-    "testk": "truffle test ./test/TestKeepGroupSelection.js",
+    "testk": "truffle test ./test/TestDkgConflictResolution.js",
     "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "openzeppelin-solidity": "^2.0.0"
+    "openzeppelin-solidity": "^2.0.0",
+    "web3": "^1.0.0-beta.37"
   },
   "devDependencies": {
     "@digix/doxity": "github:keep-network/doxity#master",
