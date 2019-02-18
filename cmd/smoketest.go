@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/net"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/urfave/cli"
 )
@@ -110,9 +109,9 @@ func createNode(
 	groupSize int,
 	threshold int,
 ) {
-	toEthereumAddress := func(netID net.TransportIdentifier) string {
+	toEthereumAddress := func(value string) string {
 		return common.BytesToAddress(
-			[]byte(netID.String()),
+			[]byte(value),
 		).String()
 	}
 
@@ -135,7 +134,9 @@ func createNode(
 	netProvider := netlocal.Connect()
 
 	go func() {
-		stakingID := toEthereumAddress(netProvider.ID())
+		// Generate staker's ID. It needs to be a properly formatter ethereum
+		// address. Address can be created from any string.
+		stakingID := toEthereumAddress(netProvider.ID().String())
 
 		localMonitor := stakeMonitor.(*local.StakeMonitor)
 		localMonitor.StakeTokens(stakingID)
