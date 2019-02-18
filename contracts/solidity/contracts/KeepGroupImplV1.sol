@@ -577,7 +577,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Gets number of active groups.
+     * @dev Get block height
      */
     function blockHeight() public view returns(uint256) {
         return block.number;
