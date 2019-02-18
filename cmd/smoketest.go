@@ -87,7 +87,6 @@ func SmokeTest(c *cli.Context) error {
 	// Give the nodes a sec to get going.
 	<-time.NewTimer(time.Second).C
 
-	fmt.Println("Submit relay entry...")
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
 		RequestID:     big.NewInt(0),
 		Value:         big.NewInt(0),
