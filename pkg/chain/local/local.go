@@ -79,18 +79,28 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 	return promise
 }
 
-func (c *localChain) GetSelectedTickets() ([]*relaychain.Ticket, error) {
+func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
-	if len(c.tickets) <= c.relayConfig.GroupSize {
-		return c.tickets, nil
+	selectTickets := func() []*relaychain.Ticket {
+		if len(c.tickets) <= c.relayConfig.GroupSize {
+			return c.tickets
+		}
+
+		selectedTickets := make([]*relaychain.Ticket, c.relayConfig.GroupSize)
+		copy(selectedTickets, c.tickets)
+		return selectedTickets
 	}
 
-	selectedTickets := make([]*relaychain.Ticket, c.relayConfig.GroupSize)
-	copy(selectedTickets, c.tickets)
+	selectedTickets := selectTickets()
 
-	return selectedTickets, nil
+	selectedParticipants := make([]relaychain.StakerAddress, len(selectedTickets))
+	for i, ticket := range selectedTickets {
+		selectedParticipants[i] = ticket.Proof.StakerValue.Bytes()
+	}
+
+	return selectedParticipants, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(

@@ -12,19 +12,29 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
-func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
+func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
 	groupSize := 4
 
-	ticket1 := &relaychain.Ticket{Value: big.NewInt(1)}
-	ticket2 := &relaychain.Ticket{Value: big.NewInt(2)}
-	ticket3 := &relaychain.Ticket{Value: big.NewInt(3)}
-	ticket4 := &relaychain.Ticket{Value: big.NewInt(4)}
-	ticket5 := &relaychain.Ticket{Value: big.NewInt(5)}
-	ticket6 := &relaychain.Ticket{Value: big.NewInt(6)}
+	generateTicket := func(index int64) *relaychain.Ticket {
+		return &relaychain.Ticket{
+			Value: big.NewInt(10 * index),
+			Proof: &relaychain.TicketProof{
+				StakerValue:        big.NewInt(100 * index),
+				VirtualStakerIndex: big.NewInt(index),
+			},
+		}
+	}
+
+	ticket1 := generateTicket(1)
+	ticket2 := generateTicket(2)
+	ticket3 := generateTicket(3)
+	ticket4 := generateTicket(4)
+	ticket5 := generateTicket(5)
+	ticket6 := generateTicket(6)
 
 	var tests = map[string]struct {
-		submitTickets  func(chain relaychain.Interface)
-		expectedResult []*relaychain.Ticket
+		submitTickets           func(chain relaychain.Interface)
+		expectedSelectedTickets []*relaychain.Ticket
 	}{
 		"number of tickets is less than group size": {
 			submitTickets: func(chain relaychain.Interface) {
@@ -32,7 +42,7 @@ func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 				chain.SubmitTicket(ticket1)
 				chain.SubmitTicket(ticket2)
 			},
-			expectedResult: []*relaychain.Ticket{
+			expectedSelectedTickets: []*relaychain.Ticket{
 				ticket1, ticket2, ticket3,
 			},
 		},
@@ -43,7 +53,7 @@ func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 				chain.SubmitTicket(ticket4)
 				chain.SubmitTicket(ticket2)
 			},
-			expectedResult: []*relaychain.Ticket{
+			expectedSelectedTickets: []*relaychain.Ticket{
 				ticket1, ticket2, ticket3, ticket4,
 			},
 		},
@@ -56,7 +66,7 @@ func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 				chain.SubmitTicket(ticket5)
 				chain.SubmitTicket(ticket2)
 			},
-			expectedResult: []*relaychain.Ticket{
+			expectedSelectedTickets: []*relaychain.Ticket{
 				ticket1, ticket2, ticket3, ticket4,
 			},
 		},
@@ -69,16 +79,24 @@ func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
 
 			test.submitTickets(chain)
 
-			actualResult, err := chain.GetSelectedTickets()
+			actualSelectedParticipants, err := chain.GetSelectedParticipants()
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if !reflect.DeepEqual(test.expectedResult, actualResult) {
+			expectedSelectedParticipants := make(
+				[]relaychain.StakerAddress,
+				len(test.expectedSelectedTickets),
+			)
+			for i, ticket := range test.expectedSelectedTickets {
+				expectedSelectedParticipants[i] = ticket.Proof.StakerValue.Bytes()
+			}
+
+			if !reflect.DeepEqual(expectedSelectedParticipants, actualSelectedParticipants) {
 				t.Fatalf(
 					"\nexpected: %v\nactual:   %v\n",
-					test.expectedResult,
-					actualResult,
+					expectedSelectedParticipants,
+					actualSelectedParticipants,
 				)
 			}
 		})
