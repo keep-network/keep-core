@@ -84,8 +84,6 @@ contract('TestDkgConflictResolution', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
     );
 
-    naturalThreshold = await keepGroupImplViaProxy.naturalThreshold();
-
     tickets = []
     success = true
     disqualified = '0x0000000110000000110000000110000000110000'
@@ -164,7 +162,7 @@ contract('TestDkgConflictResolution', function(accounts) {
     assert.equal(tickets.length, groupSize, "ticket number equal to group size");
 
 });
-it("should reject DKG submission if submitter is not yet eligable", async function() {
+it("should reject DKG submission if submitter is not yet eligible", async function() {
 
     let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
     let sender = finalParticipants[1];
