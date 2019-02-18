@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -199,34 +198,8 @@ func (kg *keepGroup) SubmitTicket(
 	)
 }
 
-func (kg *keepGroup) SelectedTickets() ([]*chain.Ticket, error) {
-	selectedTicketValues, err := kg.caller.SelectedTickets(kg.callerOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	var selectedTickets []*chain.Ticket
-
-	for _, ticketValue := range selectedTicketValues {
-		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
-			kg.callerOpts,
-			ticketValue,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		ticket := &chain.Ticket{
-			Value: ticketValue,
-			Proof: &chain.TicketProof{
-				StakerValue:        stakerValue,
-				VirtualStakerIndex: virtualStakerIndex,
-			},
-		}
-
-		selectedTickets = append(selectedTickets, ticket)
-	}
-	return selectedTickets, nil
+func (kg *keepGroup) SelectedParticipants() ([]common.Address, error) {
+	return kg.caller.SelectedParticipants(kg.callerOpts)
 }
 
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
@@ -261,7 +234,7 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"could not create watch for DkgResultPublished event [%v]",
+			"could not create watch for DkgResultPublished event: [%v]",
 			err,
 		)
 	}
@@ -317,7 +290,7 @@ type submitGroupPublicKeyEventFunc func(
 func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
 	success submitGroupPublicKeyEventFunc,
 	fail errorCallback,
-) error {
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.KeepGroupImplV1SubmitGroupPublicKeyEvent)
 	eventSubscription, err := kg.contract.WatchSubmitGroupPublicKeyEvent(
 		nil,
@@ -325,29 +298,42 @@ func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
 	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
+		return nil, fmt.Errorf(
+			"could not create watch for SubmitGroupPublicKeyEvent event: [%v]",
 			err,
 		)
 	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
 				success(
 					event.GroupPublicKey,
 					event.RequestID,
 					event.ActivationBlockHeight,
 				)
-				return
-
+				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
 			}
 		}
 	}()
-	return nil
+
+	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}), nil
 }

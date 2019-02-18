@@ -219,7 +219,6 @@ contract KeepGroupImplV1 is Ownable {
         return passedCheapCheck && ticketValue == expected;
     }
 
-
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */

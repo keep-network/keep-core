@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
-	"os"
 	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 // getTicketListInterval is the number of seconds we wait before requesting the
@@ -83,35 +83,24 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
 		case <-challengeTimeout:
-			selectedTickets, err := relayChain.GetSelectedTickets()
+			selectedParticipants, err := relayChain.GetSelectedParticipants()
 			if err != nil {
 				return fmt.Errorf(
-					"could not fetch ordered tickets after challenge timeout [%v]",
+					"could not fetch selected participants after challenge timeout [%v]",
 					err,
 				)
 			}
 
-			var tickets []*groupselection.Ticket
-			for _, chainTicket := range selectedTickets {
-				ticket, err := fromChainTicket(chainTicket)
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"incorrect ticket format [%v]",
-						err,
-					)
-
-					continue // ignore incorrect ticket
-				}
-
-				tickets = append(tickets, ticket)
+			selectedStakers := make([][]byte, len(selectedParticipants))
+			for i, participant := range selectedParticipants {
+				selectedStakers[i] = []byte(participant)
 			}
 
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
-				&groupselection.Result{SelectedTickets: tickets},
+				&groupselection.Result{SelectedStakers: selectedStakers},
 				entryRequestID,
 				entrySeed,
 			)
@@ -175,7 +164,12 @@ func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 }
 
 func fromChainTicket(ticket *relaychain.Ticket) (*groupselection.Ticket, error) {
-	value, err := groupselection.SHAValue{}.SetBytes(ticket.Value.Bytes())
+	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((ticket.Value.Bytes()))
+	if err != nil {
+		return nil, fmt.Errorf("could not pad ticket value [%v]", err)
+	}
+
+	value, err := groupselection.SHAValue{}.SetBytes(paddedTicketValue)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not transform ticket from chain representation [%v]",
