@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -109,7 +110,7 @@ type localStaker struct {
 	stake   *big.Int
 }
 
-func (ls *localStaker) ID() []byte {
+func (ls *localStaker) ID() relaychain.StakerAddress {
 	return []byte(ls.address)
 }
 

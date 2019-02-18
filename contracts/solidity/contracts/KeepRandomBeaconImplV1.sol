@@ -33,6 +33,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
     mapping (uint256 => uint256) internal _blockReward;
     mapping (uint256 => uint256) internal _requestGroup;
 
+    mapping (uint256 => bool) internal _relayEntryRequested;
+
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
@@ -140,10 +142,18 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupSignature The generated random number.
      * @param groupID Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry, uint256 seed) public {
+    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry, uint256 seed) public {    
+        // Temporary solution for M2. Every group member submits a new relay entry
+        // with the same request ID and we filter out duplicates here. 
+        // This behavior will change post-M2 when we'll integrate phase 14 and/or 
+        // implement relay requests.
+        if (_relayEntryRequested[requestID]) {
+            return;
+        }
+        _relayEntryRequested[requestID] = true;
 
         // TODO: validate groupSignature using BLS.sol
-    
+
         _requestGroup[requestID] = groupID;
         emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);

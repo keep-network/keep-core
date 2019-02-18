@@ -150,6 +150,27 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Gets selected participants in ascending order of their tickets.
+     */
+    function selectedParticipants() public view returns (address[]) {
+
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        uint256[] memory ordered = orderedTickets();
+        address[] memory selected = new address[](_groupSize);
+
+        for (uint i = 0; i < _groupSize; i++) {
+            Proof memory proof = _proofs[ordered[i]];
+            selected[i] = proof.sender;
+        }
+
+        return selected;
+    }
+
+    /**
      * @dev Gets ticket proof.
      */
     function getTicketProof(uint256 ticketValue) public view returns (address, uint256, uint256) {
@@ -229,21 +250,22 @@ contract KeepGroupImplV1 is Ownable {
         _dkgResultPublished[requestId] = true;
   
         emit DkgResultPublishedEvent(requestId, groupPubKey);
-
-        // TODO: Remove this section once dispute logic is implemented,
-        // implement conflict resolution logic described in Phase 14,
-        // make sure only valid members are stored.
-        _groups.push(groupPubKey);
-        address[] memory members = orderedParticipants();
-        for (uint i = 0; i < _groupSize; i++) {
-            _groupMembers[groupPubKey].push(members[i]);
-        }
-        emit OnGroupRegistered(groupPubKey);
     }
 
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
     function submitGroupPublicKey(bytes groupPublicKey, uint256 requestID) public {
+
+        // TODO: Remove this section once dispute logic is implemented,
+        // implement conflict resolution logic described in Phase 14,
+        // make sure only valid members are stored.
+        _groups.push(groupPublicKey);
+        address[] memory members = orderedParticipants();
+        for (uint i = 0; i < _groupSize; i++) {
+            _groupMembers[groupPublicKey].push(members[i]);
+        }
+        emit OnGroupRegistered(groupPublicKey);
+
         uint256 activationBlockHeight = block.number;
         emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID, activationBlockHeight);
     }

@@ -9,6 +9,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
+// StakerAddress represents chain-specific address of the staker.
+type StakerAddress []byte
+
 // RelayEntryInterface defines the subset of the relay chain interface that
 // pertains specifically to submission and retrieval of relay requests and
 // entries.
@@ -41,9 +44,9 @@ type GroupSelectionInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
-	// GetSelectedTickets returns `GroupSize` tickets which have passed
-	// the on-chain checks and have been selected to the group.
-	GetSelectedTickets() ([]*Ticket, error)
+	// GetSelectedParticipants returns `GroupSize` slice of addresses of
+	// candidates which have been selected to the group.
+	GetSelectedParticipants() ([]StakerAddress, error)
 }
 
 // GroupRegistrationInterface defines the subset of the relay chain interface

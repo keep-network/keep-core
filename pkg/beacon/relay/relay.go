@@ -59,9 +59,6 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	}
 
 	for _, signer := range memberships {
-
-		thresholdsignature.Init(signer.channel)
-
 		go func(signer *membership) {
 			signature, err := thresholdsignature.Execute(
 				combinedEntryToSign,
