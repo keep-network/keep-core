@@ -12,64 +12,97 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
-func TestSubmitTicketAndGetSelectedTickets(t *testing.T) {
-	c := Connect(10, 4, big.NewInt(200))
-	chain := c.ThresholdRelay()
+func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
+	groupSize := 4
 
-	ticket1 := &relaychain.Ticket{
-		Value: big.NewInt(111),
-		Proof: &relaychain.TicketProof{
-			StakerValue:        big.NewInt(11),
-			VirtualStakerIndex: big.NewInt(1),
+	generateTicket := func(index int64) *relaychain.Ticket {
+		return &relaychain.Ticket{
+			Value: big.NewInt(10 * index),
+			Proof: &relaychain.TicketProof{
+				StakerValue:        big.NewInt(100 * index),
+				VirtualStakerIndex: big.NewInt(index),
+			},
+		}
+	}
+
+	ticket1 := generateTicket(1)
+	ticket2 := generateTicket(2)
+	ticket3 := generateTicket(3)
+	ticket4 := generateTicket(4)
+	ticket5 := generateTicket(5)
+	ticket6 := generateTicket(6)
+
+	var tests = map[string]struct {
+		submitTickets           func(chain relaychain.Interface)
+		expectedSelectedTickets []*relaychain.Ticket
+	}{
+		"number of tickets is less than group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedSelectedTickets: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3,
+			},
+		},
+		"number of tickets is same as group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket4)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedSelectedTickets: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3, ticket4,
+			},
+		},
+		"number of tickets is greater than group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket4)
+				chain.SubmitTicket(ticket6)
+				chain.SubmitTicket(ticket5)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedSelectedTickets: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3, ticket4,
+			},
 		},
 	}
-	ticket2 := &relaychain.Ticket{
-		Value: big.NewInt(222),
-		Proof: &relaychain.TicketProof{
-			StakerValue:        big.NewInt(22),
-			VirtualStakerIndex: big.NewInt(2),
-		},
-	}
-	ticket3 := &relaychain.Ticket{
-		Value: big.NewInt(333),
-		Proof: &relaychain.TicketProof{
-			StakerValue:        big.NewInt(33),
-			VirtualStakerIndex: big.NewInt(3),
-		},
-	}
-	ticket4 := &relaychain.Ticket{
-		Value: big.NewInt(444),
-		Proof: &relaychain.TicketProof{
-			StakerValue:        big.NewInt(44),
-			VirtualStakerIndex: big.NewInt(4),
-		},
-	}
 
-	chain.SubmitTicket(ticket3)
-	chain.SubmitTicket(ticket1)
-	chain.SubmitTicket(ticket4)
-	chain.SubmitTicket(ticket2)
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			c := Connect(groupSize, 4, big.NewInt(200))
+			chain := c.ThresholdRelay()
 
-	expectedResult := []relaychain.StakerAddress{
-		ticket1.Proof.StakerValue.Bytes(),
-		ticket2.Proof.StakerValue.Bytes(),
-		ticket3.Proof.StakerValue.Bytes(),
-		ticket4.Proof.StakerValue.Bytes(),
-	}
+			test.submitTickets(chain)
 
-	actualResult, err := chain.GetSelectedParticipants()
-	if err != nil {
-		t.Fatal(err)
-	}
+			actualSelectedParticipants, err := chain.GetSelectedParticipants()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	if !reflect.DeepEqual(expectedResult, actualResult) {
-		t.Fatalf(
-			"\nexpected: %v\nactual:   %v\n",
-			expectedResult,
-			actualResult,
-		)
+			expectedSelectedParticipants := make(
+				[]relaychain.StakerAddress,
+				len(test.expectedSelectedTickets),
+			)
+			for i, ticket := range test.expectedSelectedTickets {
+				expectedSelectedParticipants[i] = ticket.Proof.StakerValue.Bytes()
+			}
+
+			if !reflect.DeepEqual(expectedSelectedParticipants, actualSelectedParticipants) {
+				t.Fatalf(
+					"\nexpected: %v\nactual:   %v\n",
+					expectedSelectedParticipants,
+					actualSelectedParticipants,
+				)
+			}
+		})
 	}
 }
+
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()

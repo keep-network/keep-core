@@ -35,7 +35,10 @@ func (lsm *StakeMonitor) StakerFor(address string) (chain.Staker, error) {
 		return staker, nil
 	}
 
-	newStaker := &localStaker{address: address, stake: big.NewInt(0)}
+	newStaker := &localStaker{
+		address: address,
+		stake:   big.NewInt(0),
+	}
 	lsm.stakers = append(lsm.stakers, newStaker)
 
 	return newStaker, nil
@@ -67,7 +70,7 @@ func (lsm *StakeMonitor) HasMinimumStake(address string) (bool, error) {
 }
 
 // StakeTokens stakes enough tokens for the provided address to be a network
-// operator.
+// operator. It stakes `5 * minimumStake` by default.
 func (lsm *StakeMonitor) StakeTokens(address string) error {
 	staker, err := lsm.StakerFor(address)
 	if err != nil {
@@ -79,7 +82,7 @@ func (lsm *StakeMonitor) StakeTokens(address string) error {
 		return fmt.Errorf("invalid type of staker")
 	}
 
-	stakerLocal.stake = lsm.minimumStake
+	stakerLocal.stake = new(big.Int).Mul(big.NewInt(5), lsm.minimumStake)
 
 	return nil
 }

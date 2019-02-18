@@ -83,12 +83,24 @@ func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, erro
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
 
-	participants := make([]relaychain.StakerAddress, len(c.tickets))
-	for i, ticket := range c.tickets {
-		participants[i] = ticket.Proof.StakerValue.Bytes()
+	selectTickets := func() []*relaychain.Ticket {
+		if len(c.tickets) <= c.relayConfig.GroupSize {
+			return c.tickets
+		}
+
+		selectedTickets := make([]*relaychain.Ticket, c.relayConfig.GroupSize)
+		copy(selectedTickets, c.tickets)
+		return selectedTickets
 	}
 
-	return participants, nil
+	selectedTickets := selectTickets()
+
+	selectedParticipants := make([]relaychain.StakerAddress, len(selectedTickets))
+	for i, ticket := range selectedTickets {
+		selectedParticipants[i] = ticket.Proof.StakerValue.Bytes()
+	}
+
+	return selectedParticipants, nil
 }
 
 func (c *localChain) SubmitGroupPublicKey(
@@ -142,6 +154,10 @@ func (c *localChain) SubmitGroupPublicKey(
 }
 
 func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
+	c.ticketsMutex.Lock()
+	c.tickets = make([]*relaychain.Ticket, 0)
+	c.ticketsMutex.Unlock()
+
 	relayEntryPromise := &async.RelayEntryPromise{}
 
 	c.groupRelayEntriesMutex.Lock()
@@ -149,7 +165,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 
 	existing, exists := c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()]
 	if exists {
-		if existing != entry.Value {
+		if existing.Cmp(entry.Value) != 0 {
 			err := fmt.Errorf(
 				"mismatched signature for [%v], submission failed; \n"+
 					"[%v] vs [%v]\n",
