@@ -96,8 +96,8 @@ func TestHash(t *testing.T) {
 	r1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: []byte{100},
-		Disqualified:   []bool{true, false, true, false},
-		Inactive:       []bool{false, false, true, false},
+		Disqualified:   []byte{1, 0, 1, 0},
+		Inactive:       []byte{0, 0, 1, 0},
 	}
 	actualResult := r1.Hash()
 	expectedResult := []byte{253, 157, 252, 65, 254, 175, 165, 131, 87, 84, 98, 128, 37, 49,
@@ -111,8 +111,8 @@ func TestSerialize(t *testing.T) {
 	r1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: []byte{100},
-		Disqualified:   []bool{true, false, true, false},
-		Inactive:       []bool{false, false, true, false},
+		Disqualified:   []byte{1, 0, 1, 0},
+		Inactive:       []byte{0, 0, 1, 0},
 	}
 	actualResult := r1.serialize()
 	expectedResult := []byte{1, 0, 0, 0, 1, 100, 0, 0, 0, 4, 1, 0, 1, 0, 0, 0, 0, 4, 0, 0, 1, 0}

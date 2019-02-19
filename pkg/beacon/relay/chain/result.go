@@ -105,25 +105,24 @@ func (r *DKGResult) serialize() []byte {
 
 	var buf bytes.Buffer
 	buf.Write(boolToByte(r.Success)) // Byte 0 - 0x01 == true, 0x00 == false - r1.Success
+
 	gpk := r.GroupPublicKey
 	err := binary.Write(&buf, binary.BigEndian, int32(len(gpk))) // Byte 1..4 - length of the group public key in BigEndian format
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
 	}
-	buf.Write(gpk)                                                         // Byte 5..X - the group public key in bytes
+	buf.Write(gpk) // Byte 5..X - the group public key in bytes
+
 	err = binary.Write(&buf, binary.BigEndian, int32(len(r.Disqualified))) // Byte X+1..X+5 - length of the set of Disqualified
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
 	}
-	for _, b := range r.Disqualified { // Byte X+6..Y - Set of disqualified as 0x01, 0x00 for true/false
-		buf.Write(boolToByte(b))
-	}
+	buf.Write(r.Disqualified)                                          // Byte X+6..Y - Set of disqualified as 0x01, 0x00 for true/false
 	err = binary.Write(&buf, binary.BigEndian, int32(len(r.Inactive))) // Byte Y+1..Y+5 - length of the set of Inactive
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid Type: [%v]\n", err)
 	}
-	for _, b := range r.Inactive { // Byte X+6..Y - Set of inactive as 0x01, 0x00 for true/false
-		buf.Write(boolToByte(b))
-	}
+	buf.Write(r.Inactive) // Byte X+6..Y - Set of inactive as 0x01, 0x00 for true/false
+
 	return buf.Bytes()
 }

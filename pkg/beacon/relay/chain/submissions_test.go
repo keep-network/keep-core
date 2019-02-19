@@ -10,14 +10,14 @@ func TestLead(t *testing.T) {
 	dkgResult1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: []byte{10, 1},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Disqualified:   []byte{},
+		Inactive:       []byte{},
 	}
 	dkgResult2 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: []byte{10, 02},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Disqualified:   []byte{},
+		Inactive:       []byte{},
 	}
 	tests := map[string]struct {
 		currentSubmissions *DKGSubmissions
@@ -104,20 +104,20 @@ func TestContains(t *testing.T) {
 	dkgResult1 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: []byte{10, 01},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Disqualified:   []byte{},
+		Inactive:       []byte{},
 	}
 	dkgResult2 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: []byte{10, 02},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Disqualified:   []byte{},
+		Inactive:       []byte{},
 	}
 	dkgResult3 := &DKGResult{
 		Success:        true,
 		GroupPublicKey: []byte{10, 32},
-		Disqualified:   []bool{},
-		Inactive:       []bool{},
+		Disqualified:   []byte{},
+		Inactive:       []byte{},
 	}
 	tests := map[string]struct {
 		currentSubmissions *DKGSubmissions
