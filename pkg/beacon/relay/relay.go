@@ -82,7 +82,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				Value:         rightSizeSignature,
 				PreviousEntry: previousValue,
 				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   make([]byte, 0),
+				GroupPubKey:   signer.member.GroupPublicKeyBytes(),
 				Seed:          seed,
 			}
 
