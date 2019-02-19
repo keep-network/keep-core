@@ -1,0 +1,139 @@
+= Random Beacon Signing
+
+Input:
+
+- _request~i~_
+  - _commit(seed~i~)_
+  - sender pubkey _pk~j~_
+  - request value multiplier _RequestMultiplier~i~_
+- groups _GG_
+- previous output _v~i-1~_
+
+=== Request submission
+
+in _Block~k~_
+
+includes _request~i~_
+
+The requester has placed their bid in escrow, and the funds are locked up until
+either:
+
+- the next valid output is submitted, and the payment is distributed to the
+members of the group that signed output
+- the signing failure deadline is reached, and the payment is refunded due to
+the selected group's failure to produce the output in time
+
+=== Signing group selection
+
+in _Block~k+1~_
+
+take hash of _Block~k+1~_, _rseed~i~ = blockHash(k+1)_
+
+use _rseed~i~_ to select _Group~i~_ from _GG_
+
+This value is locked in at _Block~k+1~_ but in actuality only calculated at the
+seed reveal stage, because the blockchain cannot perform spontaneous operations.
+
+=== Seed reveal
+
+in _Block~k+1+T_open~_ +
+where _1 <= T~open~ <= T~open_seed~(request~i~)_
+
+_T~siginit~ = k + 1 + T~open~_
+
+Includes opening of commitment, _seed~i~_ signed by _pk~j~_
+
+If the seed is not revealed before _T~open_seed~_:
+
+- with a solo request: abort signing (TODO: refund y/n?)
+- with a crowdfunded request where other bidders are present: try again with the
+next bidder
+- with a crowdfunded request with no more bidders available: abort signing
+
+This transaction triggers the signing. Calculate _rseed~i~_ based on the hash of
+_Block~k+1~_, then select _Group~i~_ from _GG_ with _rseed~i~_.
+
+The value to be signed is _input~i~ = H(seed~i~, rseed~i~, v~i-1~)_.
+
+_Group~i~_ now has _T~signing_failure~(request~i~)_ blocks to submit the
+signature to _input~i~_.
+
+If a valid output _v~i~_ is not submitted before
+_Block~T_siginit+T_signing_failure(request_i)~_, the signing fails and the group
+is terminated, with each member penalized for their (lack of) contribution to
+the failure.
+
+Because the blockchain cannot perform autonomous actions, this is done by having
+anyone submit a signing failure transaction. Attempts to submit the output after
+the failure deadline should be treated as signing failure transactions instead.
+The signing failure transaction needs no specific content; it triggers the stake
+slashing for the group members and refunds the output bid to the requester.
+
+=== Output submission
+
+in _Block~T_siginit+T_output~_ +
+where _1 <= T~output~ < T~signing_failure~(request~i~)_
+
+_input~i~ = H(seed~i~, rseed~i~, v~i-1~)_
+
+member _P~submitter~_ of _Group~i~_ submits _v'~i~ = blsSign(input~i~, pk~G~)_
+
+verify signature
+
+if valid, _blsVerify(v'~i~, input~i~, Y~G_i~) == True_:
+
+- reward _P~submitter~_ by
+_R~submitter~(T~output~) * RequestMultiplier~i~_
+- reward _P~o~!= P~submitter~_ of _Group~i~_ by
+_R~group~(T~output~) * RequestMultiplier~i~_
+- set the beacon output as _v~i~ = v'~i~_
+
+if invalid:
+
+- punish _P~n~_ by _D~INVALID_SIGNATURE~ * RequestMultiplier~i~_
+
+If _T~output~ > T~signing_deadline~(request~i~)_, the other members of
+_Group~i~_ apart from _P~submitter~_ will be penalized for a late output.
+
+==== Output share submission
+
+If reward anchoring is used, members of _Group~i~_ can also submit signature
+shares to anchor their reward to _T~share~_, an earlier moment than the final
+submission of the output.
+
+An output share can be submitted by any member _P~n~_ of _Group~i~_, if a valid
+output _v~i~_ has not been submitted yet. The submission should contain:
+
+- the individual public key of _P~n~_: _gx~n~ = P1 * x~n~_
+- the signature share: _blsSign(input~i~, x~n~)_
+- the merkle path from _gx~n~_ to the merkle root of _Group~i~_
+
+The signature share is verified like the output submission would be, but using
+_gx~n~_ instead of _Y~i~_. Additionally, the merkle path of _gx~n~_ is verified.
+
+If the share is valid, _P~n~_ should be rewarded by _R~group~(T~share~)_.
+
+If the share is invalid, _P~n~_ should be punished as if they had submitted an
+invalid output.
+
+=== Tattletale phase
+
+in _Block~T_siginit+T_complain~_
+where _1 <= T~complain~ <= SIGNING_COMPLAINT_TIMEOUT_
+
+members of _Group~i~_ may submit proof of misbehavior by other members
+
+member _P~tattletale~_ submits _complaint(P~accused~, P~tattletale~, proof)_
+
+if valid:
+
+- reward _P~tattletale~_ by _TATTLETALE_REWARD * RequestMultiplier~i~_
+- punish _P~accused~_ by _INVALID_SHARE_PENALTY * RequestMultiplier~i~_
+
+if invalid:
+
+- punish _P~tattletale~_ by _INVALID_COMPLAINT_PENALTY * RequestMultiplier~i~_
+
+The tattletale phase goes on separately of the output, and can continue even
+after the valid output has been submitted, or the group has failed entirely to
+submit a valid output.
