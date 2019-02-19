@@ -87,10 +87,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/docs
           paths:
-            - ./*.pdf
-            - ./*/*.pdf
-            - ./*.html
-            - ./*/*.html
+            - ./
   upload_docs:
     docker:
       - image: google/cloud-sdk:slim
