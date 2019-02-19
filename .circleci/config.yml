@@ -79,12 +79,14 @@ jobs:
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           command: |
+            set -x
             shopt -s extglob globstar nullglob
             cd docs
             asciidoctor *.adoc **/*.adoc
-            for a in $(ls *.html */*.html); do mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            set -x
             asciidoctor-pdf *.adoc **/*.adoc
-            for a in $(ls *.pdf */*.pdf); do mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
       - persist_to_workspace:
           root: /tmp/docs
           paths:
