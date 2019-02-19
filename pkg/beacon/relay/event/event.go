@@ -43,8 +43,9 @@ type DKGResultPublication struct {
 }
 
 // DKGResultVote is the data used in a voting event.
-// OLD: type DKGResultVote struct {
-// OLD:	RequestID *big.Int
+type DKGResultVote struct {
+	RequestID *big.Int
+}
 
 // GroupTicketSubmission represents a group selection ticket
 // submission event.
