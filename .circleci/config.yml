@@ -79,10 +79,10 @@ jobs:
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           command: |
-            set -x
+            set -ex
             shopt -s extglob globstar nullglob
             cd docs
-            asciidoctor *.adoc **/*.adoc
+            asciidoctor --failure-level=ERROR *.adoc **/*.adoc
             for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
             set -x
             asciidoctor-pdf *.adoc **/*.adoc
