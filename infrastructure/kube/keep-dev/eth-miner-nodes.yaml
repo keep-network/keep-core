@@ -55,6 +55,9 @@ spec:
         - containerPort: 8545
         - containerPort: 8546
         - containerPort: 30303
+        volumeMounts:
+        - name: eth-miner-node
+          mountPath: /mnt/eth-data
         env:
         - name: INSTANCE_NAME
           valueFrom:

@@ -1,12 +1,14 @@
 package relay
 
 import (
+	"encoding/hex"
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -18,7 +20,7 @@ func TestSubmitAllTickets(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("0x123456")
+	stakerValue := []byte("StakerValue1001")
 
 	tickets := []*groupselection.Ticket{
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
@@ -27,8 +29,10 @@ func TestSubmitAllTickets(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
 	}
 
-	candidate := &groupCandidate{
-		tickets: tickets,
+	candidate := &Node{
+		chainConfig: &config.Chain{
+			NaturalThreshold: naturalThreshold,
+		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -44,7 +48,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	candidate.submitTickets(mockInterface, naturalThreshold, quit, errCh)
+	candidate.submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(tickets) != len(submittedTickets) {
 		t.Errorf(
@@ -77,7 +81,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
 
 	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("0x123456")
+	stakerValue := []byte("StakerValue1001")
 
 	tickets := []*groupselection.Ticket{
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
@@ -88,8 +92,10 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(6)),
 	}
 
-	candidate := &groupCandidate{
-		tickets: tickets,
+	candidate := &Node{
+		chainConfig: &config.Chain{
+			NaturalThreshold: naturalThreshold,
+		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -113,7 +119,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		quit <- struct{}{}
 	}()
 
-	candidate.submitTickets(mockInterface, naturalThreshold, quit, errCh)
+	candidate.submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(submittedTickets) == 0 {
 		t.Errorf("no tickets submitted")
@@ -121,6 +127,59 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 
 	if len(tickets) == len(submittedTickets) {
 		t.Errorf("ticket submission has not been cancelled")
+	}
+}
+
+func TestToFromChainTicket(t *testing.T) {
+	tests := map[string]struct {
+		shaValue      string
+		expectedError error
+	}{
+		"ticket sha value": {
+			shaValue: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+		},
+		"ticket sha value starts with zeros": {
+			shaValue: "00de2289dfca6b3f9034688598756c996eda3e29eb665240d137248610b4137e",
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			hash, err := hex.DecodeString(test.shaValue)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var array [32]byte
+			copy(array[:], hash[:])
+			ticketValue := groupselection.SHAValue(array)
+
+			ticket := &groupselection.Ticket{
+				Value: ticketValue,
+				Proof: &groupselection.Proof{
+					StakerValue:        []byte("staker-value"),
+					VirtualStakerIndex: big.NewInt(123),
+				},
+			}
+
+			chainTicket, err := toChainTicket(ticket)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			actualTicket, err := fromChainTicket(chainTicket)
+
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Fatalf("\nexpected: [%+v]\nactual: [%+v]", test.expectedError, err)
+			}
+
+			if !reflect.DeepEqual(actualTicket, ticket) {
+				t.Fatalf(
+					"\nexpected: [%+v]\nactual:   [%+v]",
+					ticket,
+					actualTicket,
+				)
+			}
+		})
 	}
 }
 
@@ -138,12 +197,6 @@ func (mgi *mockGroupInterface) SubmitTicket(
 	panic("unexpected")
 }
 
-func (mgi *mockGroupInterface) SubmitChallenge(
-	ticketValue *big.Int,
-) *async.GroupTicketChallengePromise {
-	panic("unexpected")
-}
-
-func (mgi *mockGroupInterface) GetOrderedTickets() ([]*chain.Ticket, error) {
+func (mgi *mockGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
 	panic("unexpected")
 }

@@ -2,14 +2,12 @@ package cmd
 
 import (
 	"context"
-	crand "crypto/rand"
 	"fmt"
 	"math/big"
 	"os"
 	"sync"
 	"time"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -18,7 +16,7 @@ import (
 )
 
 const (
-	defaultRequestID int = 1
+	defaultRequestID int = 0
 )
 
 // RelayCommand contains the definition of the relay command-line subcommand and
@@ -53,11 +51,6 @@ func init() {
 				Name:   "entry",
 				Usage:  "Requests the entry associated with the given request id from the relay.",
 				Action: relayEntry,
-			},
-			{
-				Name:   "genesis",
-				Usage:  "Submits a genesis entry to the relay; only for testing.",
-				Action: submitRelayEntryGenesis,
 			},
 			{
 				Name:   "submit",
@@ -158,53 +151,21 @@ func relayEntry(c *cli.Context) error {
 	return fmt.Errorf("relay entry lookups are currently unimplemented")
 }
 
-// submitRelayEntryGenesis creates a genesis entry for the threshold relay. It
-// should be called to initialize a first group selection. It creates an entry
-// with request ID equal `0`.
-func submitRelayEntryGenesis(c *cli.Context) error {
-	// Seed the network with the first n bits of pi
-	value := relay.GenesisEntryValue()
-
-	entry := &event.Entry{
-		RequestID:     big.NewInt(0),
-		Value:         value,
-		GroupID:       big.NewInt(0),
-		PreviousEntry: big.NewInt(0),
-		Timestamp:     time.Now().UTC(),
-	}
-
-	return submitRelayEntry(c, entry)
-}
-
 // submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
 // off the group selection process, and prints the newly generated value. By
-// default, it uses a request ID equal `1` and generates a random value and
-// previous value.
+// default, it uses a request ID equal `0`.
 func submitRelayEntrySeed(c *cli.Context) error {
 	requestID := c.Int(requestIDFlag)
 
-	value, err := crand.Int(crand.Reader, bn256.Order)
-	if err != nil {
-		return err
-	}
-
-	previousValue, err := crand.Int(crand.Reader, bn256.Order)
-	if err != nil {
-		return err
-	}
-
 	entry := &event.Entry{
 		RequestID:     big.NewInt(int64(requestID)),
-		Value:         value,
+		Value:         relay.GenesisEntryValue(),
 		GroupID:       big.NewInt(int64(requestID)),
-		PreviousEntry: previousValue,
+		PreviousEntry: big.NewInt(0),
 		Timestamp:     time.Now().UTC(),
+		Seed:          big.NewInt(0),
 	}
 
-	return submitRelayEntry(c, entry)
-}
-
-func submitRelayEntry(c *cli.Context, entry *event.Entry) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)

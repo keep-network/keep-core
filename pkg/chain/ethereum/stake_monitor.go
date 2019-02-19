@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -64,8 +65,8 @@ type ethereumStaker struct {
 	watchingChain       bool
 }
 
-func (es *ethereumStaker) ID() string {
-	return es.address
+func (es *ethereumStaker) ID() relaychain.StakerAddress {
+	return common.HexToAddress(es.address).Bytes()
 }
 
 func (es *ethereumStaker) Stake() (*big.Int, error) {

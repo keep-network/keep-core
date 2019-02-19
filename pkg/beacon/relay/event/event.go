@@ -39,7 +39,8 @@ type GroupRegistration struct {
 
 // DKGResultPublication represents a DKG result publication event.
 type DKGResultPublication struct {
-	RequestID *big.Int
+	RequestID      *big.Int
+	GroupPublicKey []byte
 }
 
 // DKGResultVote is the data used in a voting event.
@@ -50,11 +51,5 @@ type DKGResultVote struct {
 // GroupTicketSubmission represents a group selection ticket
 // submission event.
 type GroupTicketSubmission struct {
-	TicketValue *big.Int
-}
-
-// GroupTicketChallengeSubmission represents a group selection ticket
-// challenge submission event.
-type GroupTicketChallengeSubmission struct {
 	TicketValue *big.Int
 }

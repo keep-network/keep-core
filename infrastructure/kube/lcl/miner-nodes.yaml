@@ -30,7 +30,7 @@ kind: Deployment
 metadata:
   name: miner-node
 spec:
-  replicas: 2
+  replicas: 1  # must be 1 to utilize local persistent volume (see docs)
   template:
     metadata:
       labels:
@@ -39,7 +39,10 @@ spec:
     spec:
       containers:
       - name: miner
-        image: lispmeister/geth-node-w-dag
+        image: lispmeister/geth-node
+        volumeMounts:
+          - mountPath: "/hostvolume"
+            name: hostvolume
         ports:
         - containerPort: 8545
         - containerPort: 8546
@@ -58,7 +61,7 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         - name: NETWORKID
-          value: "20181114"
+          value: "9384767738"
         - name: WS_SERVER
           value: ws://dashboard:3000
         - name: WS_SECRET
@@ -67,7 +70,18 @@ spec:
           value: http://dashboard:3001
         - name: BOOTNODE_NETWORK
           value: network_1
+        - name: BOOTNODE_PUBLIC_IP
+          value: dashboard
         - name: ENABLE_MINER
           value: "1"
         - name: MINER_THREADS
           value: "1"
+        - name: HOSTVOLUME
+          value: "/hostvolume"
+        - name: ETH_IPC_PATH
+          value: "/root/.geth/geth.ipc"
+      volumes:
+      - name: hostvolume
+        hostPath:
+          path: /tmp/k8-volumes/miner
+          type: DirectoryOrCreate

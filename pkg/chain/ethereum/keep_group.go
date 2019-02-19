@@ -3,11 +3,11 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -198,43 +198,8 @@ func (kg *keepGroup) SubmitTicket(
 	)
 }
 
-func (kg *keepGroup) SubmitChallenge(
-	ticketValue *big.Int,
-) (*types.Transaction, error) {
-	return kg.transactor.Challenge(
-		kg.transactorOpts,
-		ticketValue,
-	)
-}
-
-func (kg *keepGroup) OrderedTickets() ([]*chain.Ticket, error) {
-	orderedTicketValues, err := kg.caller.OrderedTickets(kg.callerOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	var orderedTickets []*chain.Ticket
-
-	for _, ticketValue := range orderedTicketValues {
-		_, stakerValue, virtualStakerIndex, err := kg.caller.GetTicketProof(
-			kg.callerOpts,
-			ticketValue,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		ticket := &chain.Ticket{
-			Value: ticketValue,
-			Proof: &chain.TicketProof{
-				StakerValue:        stakerValue,
-				VirtualStakerIndex: virtualStakerIndex,
-			},
-		}
-
-		orderedTickets = append(orderedTickets, ticket)
-	}
-	return orderedTickets, nil
+func (kg *keepGroup) SelectedParticipants() ([]common.Address, error) {
+	return kg.caller.SelectedParticipants(kg.callerOpts)
 }
 
 func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
@@ -255,7 +220,7 @@ func (kg *keepGroup) SubmitDKGResult(
 	)
 }
 
-type dkgResultPublishedEventFunc func(requestID *big.Int)
+type dkgResultPublishedEventFunc func(requestID *big.Int, groupPublicKey []byte)
 
 func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
@@ -269,21 +234,25 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"could not create watch for DkgResultPublished event [%v]",
+			"could not create watch for DkgResultPublished event: [%v]",
 			err,
 		)
 	}
+
+	var subscriptionMutex = &sync.Mutex{}
 
 	go func() {
 		for {
 			select {
 			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
+					subscriptionMutex.Unlock()
 					return
 				}
-				success(event.RequestId)
-
+				success(event.RequestId, event.GroupPubKey)
+				subscriptionMutex.Unlock()
 			case err := <-eventSubscription.Err():
 				fail(err)
 				return
@@ -292,6 +261,78 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	}()
 
 	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}), nil
+}
+
+// SubmitGroupPublicKey upon completion of a signature make the contract
+// call to put it on chain.
+func (kg *keepGroup) SubmitGroupPublicKey(
+	groupPublicKey []byte,
+	requestID *big.Int,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitGroupPublicKey(kg.transactorOpts, groupPublicKey, requestID)
+}
+
+// submitGroupPublicKeyEventFunc type of function called for
+// SubmitGroupPublicKeyEvent event.
+type submitGroupPublicKeyEventFunc func(
+	groupPublicKey []byte,
+	requestID *big.Int,
+	activationBlockHeight *big.Int,
+)
+
+// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
+func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
+	success submitGroupPublicKeyEventFunc,
+	fail errorCallback,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.KeepGroupImplV1SubmitGroupPublicKeyEvent)
+	eventSubscription, err := kg.contract.WatchSubmitGroupPublicKeyEvent(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return nil, fmt.Errorf(
+			"could not create watch for SubmitGroupPublicKeyEvent event: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.GroupPublicKey,
+					event.RequestID,
+					event.ActivationBlockHeight,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
 		eventSubscription.Unsubscribe()
 		close(eventChan)
 	}), nil

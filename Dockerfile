@@ -68,6 +68,7 @@ RUN dep ensure -v --vendor-only
 RUN cd vendor/github.com/gogo/protobuf/protoc-gen-gogoslick && go install .
 RUN cd vendor/github.com/ethereum/go-ethereum/cmd/abigen && go install .
 
+
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
 RUN cd $APP_DIR/contracts/solidity && npm install
 

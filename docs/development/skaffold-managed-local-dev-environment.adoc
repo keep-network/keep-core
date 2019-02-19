@@ -134,6 +134,80 @@ Whatever you choose make sure you're using version `v0.17.0` or
 higher.
 
 == Local Development
+=== Ethereum Testnet Components
+
+```
+
+ ╔═════════════════════════════════════════════════════════════════════════════════════════════════╗
+ ║                                                                                                 ║
+ ║                                     ┏━━━━━━━━━━━━━━━━━━━━━┓                                     ║
+ ║                                     ┃ ┌─────────────────┐ ┃                                     ║
+ ║                                     ┃ │                 │ ┃                                     ║
+ ║                     register        ┃ │    Boot Node    │ ┃           register                  ║
+ ║               ┌───────node──────────╋▶│    Registrar    │◀╋─────────────node─────┐              ║
+ ║               │                     ┃ │                 │ ┃                      │              ║
+ ║               │                     ┃ └─────────────────┘ ┃                      │              ║
+ ║               │                     ┃                     ┃                      │              ║
+ ║               │                     ┃                     ┃                      │              ║
+ ║               │                     ┃                     ┃                      │              ║
+ ║               │                     ┃                     ┃                      │              ║
+ ║               │                     ┃                     ┃                      │              ║
+ ║               │                     ┃                     ┃                      │              ║
+ ║               │                     ┃                     ┃                      │              ║
+ ║               │                     ┃ ┌─────────────────┐ ┃                      │              ║
+ ║               │                     ┃ │                 │ ┃                      │              ║
+ ║               │                     ┃ │  Eth-Netstats   │ ┃                      │              ║
+ ║               │               ┌─────╋▶│    Dashboard    │◀╋─────┐                │              ║
+ ║    ┏━━━━━━━━━━╋━━━━━━━━━━┓    │     ┃ │                 │ ┃     │     ┏━━━━━━━━━━╋━━━━━━━━━━┓   ║
+ ║    ┃          │          ┃    │     ┃ └─────────────────┘ ┃     │     ┃          │          ┃   ║
+ ║    ┃ ┌─────────────────┐ ┃    │     ┃                     ┃     │     ┃ ┌─────────────────┐ ┃   ║
+ ║    ┃ │                 │ ┃    │     ┃    Dashboard Pod    ┃     │     ┃ │                 │ ┃   ║
+ ║    ┃ │    Boot Node    │ ┃    │     ┗━━━━━━━━━━━━━━━━━━━━━┛     │     ┃ │    Boot Node    │ ┃   ║
+ ║    ┃ │    Reporter     │ ┃    │                                 │     ┃ │    Reporter     │ ┃   ║
+ ║    ┃ │                 │ ┃    │                                 │     ┃ │                 │ ┃   ║
+ ║    ┃ └─────────────────┘ ┃    │                                 │     ┃ └─────────────────┘ ┃   ║
+ ║    ┃                     ┃    │                              report   ┃                     ┃   ║
+ ║    ┃ ┌─────────────────┐ ┃ report                             node    ┃ ┌─────────────────┐ ┃   ║
+ ║    ┃ │                 │ ┃  node                             stats    ┃ │                 │ ┃   ║
+ ║    ┃ │    EthStats     │ ┃ stats                                │     ┃ │    EthStats     │ ┃   ║
+ ║    ┃ │       Api       │─╋────┘                                 └─────╋─│       Api       │ ┃   ║
+ ║    ┃ │                 │ ┃                                            ┃ │                 │ ┃   ║
+ ║    ┃ └────────▲────────┘ ┃                                            ┃ └────────▲────────┘ ┃   ║
+ ║    ┃          │          ┃                                            ┃          │          ┃   ║
+ ║    ┃          │          ┃                                            ┃          │          ┃   ║
+ ║    ┃          │          ┃                                            ┃          │          ┃   ║
+ ║    ┃ ┌────────┴────────┐ ┃                                            ┃ ┌────────┴────────┐ ┃   ║
+ ║    ┃ │                 │ ┃                                            ┃ │                 │ ┃   ║
+ ║    ┃ │      geth       │ ┃                 P2P                        ┃ │      geth       │ ┃   ║
+ ║    ┃ │                 │◀┃─ ─ ─ ─ ─ ─ ─ ─ block ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ╋▶│                 │ ┃   ║
+ ║    ┃ │                 │ ┃               updates                      ┃ │                 │ ┃   ║
+ ║    ┃ └─────────────────┘ ┃                                            ┃ └─────────────────┘ ┃   ║
+ ║    ┃                     ┃                                            ┃                     ┃   ║
+ ║    ┃      Miner Pod      ┃                                            ┃       TX Pod        ┃   ║
+ ║    ┗━━━━━━━━━━━━━━━━━━━━━┛                                            ┗━━━━━━━━━━━━━━━━━━━━━┛   ║
+ ║                                           Kubernetes                                            ║
+ ╚═════════════════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+When we boot the testnet via Kubernetes it brings up a minimum of three pods.
+The `dashboard` pod presents a view of the Ethereum testnet with live nodes,
+block propagation times and other relevant stats. The `miner` pod mines new
+Ethereum blocks. The `tx` pod processes requests from clients via the geth API.
+
+Both `miner` and `tx` pods run a `bootNodeReporter` daemon that reports to the
+`bootNodeRegistrar` daemon that runs on the `dashboard` pod. Any new booting
+`miner` or `tx` pod will query the registrar on the `dashboard` pod for known
+addresses of `geth` peers. We don't use auto-discovery on our testnet.
+
+Both `miner` and `tx` pods run a `EthStatsApi` daemon that queries the local
+`geth` daemon for vital stats and reports those to the `EthNetstats` dashboard
+where they are displayed.
+
+All `miner` and `tx` pods also communicate with each other via P2P protocol
+and inform each other about new blocks.
+
+
+
 === Boot Ethereum Node Docker Container
 You will need to build the Docker container following
 the instructions in
@@ -155,15 +229,31 @@ If you want to just boot the Ethereum testnet cluster, you can do that without
 using Skaffold by running the start script:
 
 ```
-infrastructure/scripts/geth-startup.sh
+infrastructure/scripts/up
 ```
 
 To shutdown the testnet cluster:
 
 ```
-infrastructure/scripts/geth-shutdown.sh
+infrastructure/scripts/down
 ```
 
+==== Important Note
+The current setup supports Kubernetes PersistentVolume for chain data. To
+simplify setup we are only allowing one mining node and one tx node. They
+write to distinct subdirectories underneath `/tmp/k8-volumes` assuming that
+your Docker Desktop is configured to share `/tmp` with containers which is
+the default. The benefit of writing to PersistentVolumes in the test cluster
+is that you can retain chain data like deployed contracts between restarts and
+don't have to go through the full setup routing again.
+
+If you need to restart the chain from a clean slate you will have to manually
+delete the `/tmp/k8-volumes` directory and all subdirectories.
+
+If you don't care about preserving chain data and need to run more miner or
+tx nodes just comment out the definition of the `HOSTVOLUME` environment
+variable in the coresponding `yaml` file for miner and/or tx node. The pod
+will then fallback to ephemeral storage inside the container at boot time.
 
 === Develop Keep
 To start developing run the following command:

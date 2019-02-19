@@ -12,17 +12,21 @@ contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
 
-    event OnGroupRegistered(bytes32 groupPubKey);
+    event OnGroupRegistered(bytes groupPubKey);
 
     struct DkgResult {
         bool success;
-        bytes32 groupPubKey;
+        bytes groupPubKey;
         bytes disqualified;
         bytes inactive;
     }
 
-    event DkgResultPublishedEvent(uint256 requestId);
-    
+    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
+
+    // Legacy code moved from Random Beacon contract
+    // TODO: refactor according to the Phase 14
+    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
+
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
     uint256 internal _minStake;
@@ -37,12 +41,12 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _randomBeaconValue;
 
     uint256[] internal _tickets;
-    bytes32[] internal _submissions;
+    bytes[] internal _submissions;
 
     mapping (uint256 => DkgResult) internal _requestIdToDkgResult;
     mapping (uint256 => bool) internal _dkgResultPublished;
-    mapping (bytes32 => uint256) internal _submissionVotes;
-    mapping (address => mapping (bytes32 => bool)) internal _hasVoted;
+    mapping (bytes => uint256) internal _submissionVotes;
+    mapping (address => mapping (bytes => bool)) internal _hasVoted;
 
     struct Proof {
         address sender;
@@ -52,8 +56,8 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    bytes32[] internal _groups;
-    mapping (bytes32 => address[]) internal _groupMembers;
+    bytes[] internal _groups;
+    mapping (bytes => address[]) internal _groupMembers;
 
     mapping (string => bool) internal _initialized;
 
@@ -146,6 +150,27 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Gets selected participants in ascending order of their tickets.
+     */
+    function selectedParticipants() public view returns (address[]) {
+
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        uint256[] memory ordered = orderedTickets();
+        address[] memory selected = new address[](_groupSize);
+
+        for (uint i = 0; i < _groupSize; i++) {
+            Proof memory proof = _proofs[ordered[i]];
+            selected[i] = proof.sender;
+        }
+
+        return selected;
+    }
+
+    /**
      * @dev Gets ticket proof.
      */
     function getTicketProof(uint256 ticketValue) public view returns (address, uint256, uint256) {
@@ -191,29 +216,6 @@ contract KeepGroupImplV1 is Ownable {
         return passedCheapCheck && ticketValue == expected;
     }
 
-    function challenge(
-        uint256 ticketValue
-    ) public {
-
-        Proof memory proof = _proofs[ticketValue];
-        require(proof.sender != 0, "Ticket must be published.");
-
-        // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-        // TokenStaking stakingContract = TokenStaking(_stakingContract);
-        // if (costlyCheck(
-        //     proof.sender,
-        //     ticketValue,
-        //     proof.stakerValue,
-        //     proof.virtualStakerIndex
-        // )) {
-        //     // Slash challenger's stake balance.
-        //     stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
-        // } else {
-        //     // Slash invalid ticket sender stake balance and reward the challenger.
-        //     stakingContract.authorizedTransferFrom(proof.sender, msg.sender, _minStake);
-        // }
-    }
-
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
@@ -229,7 +231,7 @@ contract KeepGroupImplV1 is Ownable {
     function submitDkgResult(
         uint256 requestId,
         bool success, 
-        bytes32 groupPubKey,
+        bytes groupPubKey,
         bytes disqualified,
         bytes inactive
     ) public {
@@ -247,17 +249,25 @@ contract KeepGroupImplV1 is Ownable {
         _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
   
-        emit DkgResultPublishedEvent(requestId);
+        emit DkgResultPublishedEvent(requestId, groupPubKey);
+    }
+
+    // Legacy code moved from Random Beacon contract
+    // TODO: refactor according to the Phase 14
+    function submitGroupPublicKey(bytes groupPublicKey, uint256 requestID) public {
 
         // TODO: Remove this section once dispute logic is implemented,
         // implement conflict resolution logic described in Phase 14,
         // make sure only valid members are stored.
-        _groups.push(groupPubKey);
+        _groups.push(groupPublicKey);
         address[] memory members = orderedParticipants();
         for (uint i = 0; i < _groupSize; i++) {
-            _groupMembers[groupPubKey].push(members[i]);
+            _groupMembers[groupPublicKey].push(members[i]);
         }
-        emit OnGroupRegistered(groupPubKey);
+        emit OnGroupRegistered(groupPublicKey);
+
+        uint256 activationBlockHeight = block.number;
+        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID, activationBlockHeight);
     }
 
     /**
@@ -388,7 +398,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Return total number of all tokens issued.
      */
     function tokenSupply() public view returns (uint256) {
-        return 10**9;
+        return (10**9) * (10**18);
     }
 
     /**

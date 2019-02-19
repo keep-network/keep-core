@@ -21,3 +21,8 @@ Start a bash shell inside this Docker container:
 ```
 docker run -it lispmeister/geth-dev
 ```
+
+Check version of geth installed:
+```
+docker run --entrypoint="" --rm $DOCKER_ID_USER/geth-dev /geth version
+```
