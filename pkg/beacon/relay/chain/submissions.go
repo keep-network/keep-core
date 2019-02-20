@@ -49,3 +49,17 @@ func (d *DKGSubmissions) Contains(result *DKGResult) bool {
 	}
 	return false
 }
+
+// IsOnlyLead checks if given result is the only leading submission. If the
+// submissions set is empty it returns false.
+func (d *DKGSubmissions) IsOnlyLead(result *DKGResult) bool {
+	leadingSubmissions := d.Leads()
+
+	if len(leadingSubmissions) == 1 {
+		if leadingSubmissions[0].DKGResult.Equals(result) {
+			return true
+		}
+	}
+
+	return false
+}
