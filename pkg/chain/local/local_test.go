@@ -111,7 +111,7 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
 			RequestID: big.NewInt(int64(19)),
-			GroupID:   big.NewInt(int64(1)),
+			GroupPubKey: []byte("1"),
 		},
 	)
 

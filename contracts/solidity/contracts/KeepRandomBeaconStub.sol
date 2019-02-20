@@ -12,7 +12,7 @@ contract KeepRandomBeaconStub is Ownable {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber);
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupPubKey, uint256 previousEntry, uint blockNumber);
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
 
@@ -58,8 +58,8 @@ contract KeepRandomBeaconStub is Ownable {
 
         // Return mocked data instead of interacting with relay.
         uint256 groupSignature = uint256(keccak256(abi.encodePacked(_previousEntry, block.timestamp, seed)));
-        uint256 groupID = uint256(keccak256(abi.encodePacked(block.timestamp, uint(1))));
-        emit RelayEntryGenerated(requestID, groupSignature, groupID, _previousEntry, block.number);
+        uint256 groupPubKey = uint256(keccak256(abi.encodePacked(block.timestamp, uint(1))));
+        emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, _previousEntry, block.number);
 
         _previousEntry = groupSignature;
         return requestID;

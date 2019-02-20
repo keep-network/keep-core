@@ -264,7 +264,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
 		newEntry.RequestID,
-		newEntry.GroupID,
+		newEntry.GroupPubKey,
 		newEntry.PreviousEntry,
 		newEntry.Value,
 		newEntry.Seed,
@@ -285,7 +285,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
-			requestGroupID *big.Int,
+			requestGroupPubKey []byte,
 			previousEntry *big.Int,
 			blockNumber *big.Int,
 			seed *big.Int,
@@ -293,7 +293,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			handle(&event.Entry{
 				RequestID:     requestID,
 				Value:         requestResponse,
-				GroupID:       requestGroupID,
+				GroupPubKey:   requestGroupPubKey,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
 				Seed:          seed,

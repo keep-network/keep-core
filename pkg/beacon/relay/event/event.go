@@ -12,7 +12,7 @@ import (
 type Entry struct {
 	RequestID     *big.Int
 	Value         *big.Int
-	GroupID       *big.Int
+	GroupPubKey   []byte
 	PreviousEntry *big.Int
 	Timestamp     time.Time
 	Seed          *big.Int

@@ -107,7 +107,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	requestID *big.Int,
 	groupPublicKey []byte,
 ) *async.GroupRegistrationPromise {
-	groupID := requestID.String()
+	groupPubKey := requestID.String()
 
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 	groupRegistration := &event.GroupRegistration{
@@ -118,12 +118,12 @@ func (c *localChain) SubmitGroupPublicKey(
 
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
-	if existing, exists := c.groupRegistrations[groupID]; exists {
+	if existing, exists := c.groupRegistrations[groupPubKey]; exists {
 		if bytes.Compare(existing, groupPublicKey) != 0 {
 			err := fmt.Errorf(
 				"mismatched public key for [%s], submission failed; \n"+
 					"[%v] vs [%v]",
-				groupID,
+				groupPubKey,
 				existing,
 				groupPublicKey,
 			)
@@ -136,7 +136,7 @@ func (c *localChain) SubmitGroupPublicKey(
 
 		return groupRegistrationPromise
 	}
-	c.groupRegistrations[groupID] = groupPublicKey
+	c.groupRegistrations[groupPubKey] = groupPublicKey
 
 	groupRegistrationPromise.Fulfill(groupRegistration)
 
@@ -163,13 +163,13 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	c.groupRelayEntriesMutex.Lock()
 	defer c.groupRelayEntriesMutex.Unlock()
 
-	existing, exists := c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()]
+	existing, exists := c.groupRelayEntries[string(entry.GroupPubKey)+entry.RequestID.String()]
 	if exists {
 		if existing.Cmp(entry.Value) != 0 {
 			err := fmt.Errorf(
 				"mismatched signature for [%v], submission failed; \n"+
 					"[%v] vs [%v]\n",
-				entry.GroupID,
+				entry.GroupPubKey,
 				existing,
 				entry.Value,
 			)
@@ -181,7 +181,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 
 		return relayEntryPromise
 	}
-	c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()] = entry.Value
+	c.groupRelayEntries[string(entry.GroupPubKey)+entry.RequestID.String()] = entry.Value
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayEntryHandlers {
