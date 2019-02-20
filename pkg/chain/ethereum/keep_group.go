@@ -141,39 +141,39 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-//OLD func (kg *keepGroup) TicketInitialSubmissionTimeout() (int, error) {
-//OLD 	ticketInitialSubmissionTimeout, err :=
-//OLD 		kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
-//OLD 	if err != nil {
-//OLD 		return -1, err
-//OLD 	}
-//OLD 	return int(ticketInitialSubmissionTimeout.Int64()), nil
-//OLD }
+func (kg *keepGroup) TicketInitialSubmissionTimeout() (int, error) {
+	ticketInitialSubmissionTimeout, err :=
+		kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
+	if err != nil {
+		return -1, err
+	}
+	return int(ticketInitialSubmissionTimeout.Int64()), nil
+}
 
-//OLD func (kg *keepGroup) TicketReactiveSubmissionTimeout() (int, error) {
-//OLD 	ticketReactiveSubmissionTimeout, err :=
-//OLD 		kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
-//OLD 	if err != nil {
-//OLD 		return -1, err
-//OLD 	}
-//OLD 	return int(ticketReactiveSubmissionTimeout.Int64()), nil
-//OLD }
+func (kg *keepGroup) TicketReactiveSubmissionTimeout() (int, error) {
+	ticketReactiveSubmissionTimeout, err :=
+		kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
+	if err != nil {
+		return -1, err
+	}
+	return int(ticketReactiveSubmissionTimeout.Int64()), nil
+}
 
-//OLD func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
-//OLD 	ticketChallengeTimeout, err := kg.caller.TicketChallengeTimeout(kg.callerOpts)
-//OLD 	if err != nil {
-//OLD 		return -1, err
-//OLD 	}
-//OLD 	return int(ticketChallengeTimeout.Int64()), nil
-//OLD }
+func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
+	ticketChallengeTimeout, err := kg.caller.TicketChallengeTimeout(kg.callerOpts)
+	if err != nil {
+		return -1, err
+	}
+	return int(ticketChallengeTimeout.Int64()), nil
+}
 
 func (kg *keepGroup) MinimumStake() (*big.Int, error) {
 	return kg.caller.MinimumStake(kg.callerOpts)
 }
 
-//OLD func (kg *keepGroup) TokenSupply() (*big.Int, error) {
-//OLD 	return kg.caller.TokenSupply(kg.callerOpts)
-//OLD }
+func (kg *keepGroup) TokenSupply() (*big.Int, error) {
+	return kg.caller.TokenSupply(kg.callerOpts)
+}
 
 func (kg *keepGroup) NaturalThreshold() (*big.Int, error) {
 	return kg.caller.NaturalThreshold(kg.callerOpts)

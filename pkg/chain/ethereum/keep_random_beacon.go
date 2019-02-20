@@ -242,14 +242,13 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					subscriptionMutex.Unlock()
 					return
 				}
-				missingSeed := big.NewInt(0)
 				success(
 					event.RequestID,
 					event.RequestResponse,
 					event.RequestGroupID,
 					event.PreviousEntry,
 					event.BlockNumber,
-					missingSeed, // OLD event.Seed,
+					event.Seed,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():

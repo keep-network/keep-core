@@ -20,10 +20,11 @@ type Entry struct {
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	RequestID     *big.Int
-	Payment       *big.Int
-	BlockReward   *big.Int
-	Seed          *big.Int
+	RequestID   *big.Int
+	Payment     *big.Int
+	BlockReward *big.Int
+	Seed        *big.Int
+
 	PreviousValue *big.Int
 }
 

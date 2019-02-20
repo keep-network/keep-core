@@ -30,5 +30,4 @@ func (ec *ethereumChain) DKGResultVote(
 // OnDKGResultVote register a function for a callback when a vote occurs.
 func (ec *ethereumChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
 	// TODO -- implement OnDKGResultVote
-	panic("NOT IMPLEMENTED")
 }

@@ -45,7 +45,7 @@ type localChain struct {
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
-	//OLD stakerList []string
+	stakerList []string
 
 	// Track the submitted votes.
 	submissionsMutex sync.Mutex
@@ -87,7 +87,7 @@ func (c *localChain) DKGResultVote(
 		if bytes.Equal(submission.DKGResult.Hash(), dkgResultHash) {
 			submission.Votes++
 			dkgResultVote := &event.DKGResultVote{
-				//OLD RequestID: requestID,
+				RequestID: requestID,
 			}
 			c.handlerMutex.Lock()
 			for _, handler := range c.voteHandler {
