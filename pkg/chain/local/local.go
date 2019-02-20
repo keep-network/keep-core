@@ -64,14 +64,25 @@ func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmis
 }
 
 // DKGResultVote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
-func (c *localChain) DKGResultVote(requestID *big.Int, dkgResultHash []byte) {
+func (c *localChain) DKGResultVote(
+	requestID *big.Int,
+	dkgResultHash []byte,
+) *async.DKGResultVotePromise {
+	dkgResultVotePromise := &async.DKGResultVotePromise{}
+
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
 	submissions, ok := c.submissions[requestID.String()]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "Missing requestID in c.submissions - vote will be ignored.\n")
-		return
+		err := dkgResultVotePromise.Fail(
+			fmt.Errorf("no submissions for given request id"),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
+		}
+		return dkgResultVotePromise
 	}
+
 	for _, submission := range submissions.DKGSubmissions {
 		if bytes.Equal(submission.DKGResult.Hash(), dkgResultHash) {
 			submission.Votes++
@@ -85,9 +96,17 @@ func (c *localChain) DKGResultVote(requestID *big.Int, dkgResultHash []byte) {
 				}(handler, dkgResultVote)
 			}
 			c.handlerMutex.Unlock()
-			return
+
+			err := dkgResultVotePromise.Fulfill(dkgResultVote)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "promise fulfill failed [%v]\n", err)
+			}
+
+			break
 		}
 	}
+
+	return dkgResultVotePromise
 }
 
 // OnDKGResultVote sets up to call the passed handler function when a vote occurs.
