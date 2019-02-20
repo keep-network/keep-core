@@ -12,11 +12,102 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
+func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
+	groupSize := 4
+
+	generateTicket := func(index int64) *relaychain.Ticket {
+		return &relaychain.Ticket{
+			Value: big.NewInt(10 * index),
+			Proof: &relaychain.TicketProof{
+				StakerValue:        big.NewInt(100 * index),
+				VirtualStakerIndex: big.NewInt(index),
+			},
+		}
+	}
+
+	ticket1 := generateTicket(1)
+	ticket2 := generateTicket(2)
+	ticket3 := generateTicket(3)
+	ticket4 := generateTicket(4)
+	ticket5 := generateTicket(5)
+	ticket6 := generateTicket(6)
+
+	var tests = map[string]struct {
+		submitTickets           func(chain relaychain.Interface)
+		expectedSelectedTickets []*relaychain.Ticket
+	}{
+		"number of tickets is less than group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedSelectedTickets: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3,
+			},
+		},
+		"number of tickets is same as group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket4)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedSelectedTickets: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3, ticket4,
+			},
+		},
+		"number of tickets is greater than group size": {
+			submitTickets: func(chain relaychain.Interface) {
+				chain.SubmitTicket(ticket3)
+				chain.SubmitTicket(ticket1)
+				chain.SubmitTicket(ticket4)
+				chain.SubmitTicket(ticket6)
+				chain.SubmitTicket(ticket5)
+				chain.SubmitTicket(ticket2)
+			},
+			expectedSelectedTickets: []*relaychain.Ticket{
+				ticket1, ticket2, ticket3, ticket4,
+			},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			c := Connect(groupSize, 4, big.NewInt(200))
+			chain := c.ThresholdRelay()
+
+			test.submitTickets(chain)
+
+			actualSelectedParticipants, err := chain.GetSelectedParticipants()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			expectedSelectedParticipants := make(
+				[]relaychain.StakerAddress,
+				len(test.expectedSelectedTickets),
+			)
+			for i, ticket := range test.expectedSelectedTickets {
+				expectedSelectedParticipants[i] = ticket.Proof.StakerValue.Bytes()
+			}
+
+			if !reflect.DeepEqual(expectedSelectedParticipants, actualSelectedParticipants) {
+				t.Fatalf(
+					"\nexpected: %v\nactual:   %v\n",
+					expectedSelectedParticipants,
+					actualSelectedParticipants,
+				)
+			}
+		})
+	}
+}
+
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
 			RequestID: big.NewInt(int64(19)),
@@ -79,7 +170,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 		test := test
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			c := Connect(10, 4)
+			c := Connect(10, 4, big.NewInt(200))
 			countWait, err := c.BlockCounter()
 			if err != nil {
 				t.Fatalf("failed to set up block counter: [%v]", err)
@@ -123,9 +214,9 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		GroupPublicKey: []byte{11},
 	}
 
-	submittedResults[submittedRequestID1.String()] = append(
-		submittedResults[submittedRequestID1.String()],
-		submittedResult1,
+	submittedResults[submittedRequestID.String()] = append(
+		submittedResults[submittedRequestID.String()],
+		submittedResult,
 	)
 
 	localChain := &localChain{
@@ -190,6 +281,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	submittedResult1 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
+	expectedEvent1 := &event.DKGResultPublication{
+		RequestID:      requestID1,
+		GroupPublicKey: submittedResult1.GroupPublicKey[:],
+	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
 	if !reflect.DeepEqual(
@@ -204,10 +299,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if dkgResultPublicationEvent.RequestID.Cmp(requestID1) != 0 {
+		if !reflect.DeepEqual(expectedEvent1, dkgResultPublicationEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				requestID1,
-				dkgResultPublicationEvent.RequestID,
+				expectedEvent1,
+				dkgResultPublicationEvent,
 			)
 		}
 	case <-ctx.Done():
@@ -216,6 +311,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit the same result for request ID 2
 	requestID2 := big.NewInt(2)
+	expectedEvent2 := &event.DKGResultPublication{
+		RequestID:      requestID2,
+		GroupPublicKey: submittedResult1.GroupPublicKey[:],
+	}
 
 	chainHandle.SubmitDKGResult(requestID2, submittedResult1)
 	if !reflect.DeepEqual(
@@ -230,10 +329,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if dkgResultPublicationEvent.RequestID.Cmp(requestID2) != 0 {
+		if !reflect.DeepEqual(expectedEvent2, dkgResultPublicationEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
-				requestID2,
-				dkgResultPublicationEvent.RequestID,
+				expectedEvent2,
+				dkgResultPublicationEvent,
 			)
 		}
 	case <-ctx.Done():
@@ -271,11 +370,14 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	relay := localChain.ThresholdRelay()
 
 	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
-	subscription := localChain.OnDKGResultPublished(
+	subscription, err := localChain.OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication) {
 			dkgResultPublicationChan <- dkgResultPublication
 		},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Unsubscribe from the event - from this point, callback should
 	// never be called.

@@ -15,6 +15,7 @@ type Entry struct {
 	GroupID       *big.Int
 	PreviousEntry *big.Int
 	Timestamp     time.Time
+	Seed          *big.Int
 }
 
 // Request represents a request for an entry in the threshold relay.
@@ -36,19 +37,19 @@ type GroupRegistration struct {
 	ActivationBlockHeight *big.Int
 }
 
-// StakerRegistration is the data for the OnStakerAdded event.  This type may
-// only be needed in Milestone 1 - it may change at Milestone 2.
-type StakerRegistration struct {
-	Index         int
-	GroupMemberID string
-}
-
 // DKGResultPublication represents a DKG result publication event.
 type DKGResultPublication struct {
+	RequestID      *big.Int
+	GroupPublicKey []byte
+}
+
+// DKGResultVote is the data used in a voting event.
+type DKGResultVote struct {
 	RequestID *big.Int
 }
 
-// DKGResultVote represents the data for a vote for a RequestID
-type DKGResultVote struct {
-	RequestID *big.Int
+// GroupTicketSubmission represents a group selection ticket
+// submission event.
+type GroupTicketSubmission struct {
+	TicketValue *big.Int
 }

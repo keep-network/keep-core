@@ -63,14 +63,14 @@ func main() {
 			outputFile: "dkg_result_publication_promise.go",
 		},
 		{
-			Type:       "*groupselection.Ticket",
-			Prefix:     "GroupTicket",
-			outputFile: "group_ticket_promise.go",
+			Type:       "*event.DKGResultVote",
+			Prefix:     "DKGResultVote",
+			outputFile: "dkg_result_vote_promise.go",
 		},
 		{
-			Type:       "*groupselection.TicketChallenge",
-			Prefix:     "GroupTicketChallenge",
-			outputFile: "group_ticket_challenge_promise.go",
+			Type:       "*event.GroupTicketSubmission",
+			Prefix:     "GroupTicket",
+			outputFile: "group_ticket_submission_promise.go",
 		},
 	}
 

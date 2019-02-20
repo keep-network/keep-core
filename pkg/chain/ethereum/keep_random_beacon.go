@@ -3,21 +3,23 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // KeepRandomBeacon connection information for interface to the contract.
 type KeepRandomBeacon struct {
-	caller          *abi.KeepRandomBeaconImplV1Caller
-	callerOpts      *bind.CallOpts
-	transactor      *abi.KeepRandomBeaconImplV1Transactor
-	transactorOpts  *bind.TransactOpts
-	contract        *abi.KeepRandomBeaconImplV1
-	contractAddress common.Address
+	caller            *abi.KeepRandomBeaconImplV1Caller
+	callerOptions     *bind.CallOpts
+	transactor        *abi.KeepRandomBeaconImplV1Transactor
+	transactorOptions *bind.TransactOpts
+	contract          *abi.KeepRandomBeaconImplV1
+	contractAddress   common.Address
 }
 
 // NewKeepRandomBeacon creates the necessary connections and configurations for
@@ -30,17 +32,6 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		)
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
-
-	beaconTransactor, err := abi.NewKeepRandomBeaconImplV1Transactor(
-		contractAddress,
-		chainConfig.client,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to instantiate a KeepRelayBeaconTranactor contract: [%v]",
-			err,
-		)
-	}
 
 	if chainConfig.accountKey == nil {
 		key, err := DecryptKeyFile(
@@ -57,10 +48,6 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		chainConfig.accountKey = key
 	}
 
-	optsTransactor := bind.NewKeyedTransactor(
-		chainConfig.accountKey.PrivateKey,
-	)
-
 	beaconCaller, err := abi.NewKeepRandomBeaconImplV1Caller(
 		contractAddress,
 		chainConfig.client,
@@ -72,9 +59,24 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		)
 	}
 
-	optsCaller := &bind.CallOpts{
+	callerOptions := &bind.CallOpts{
 		From: contractAddress,
 	}
+
+	beaconTransactor, err := abi.NewKeepRandomBeaconImplV1Transactor(
+		contractAddress,
+		chainConfig.client,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to instantiate a KeepRelayBeaconTranactor contract: [%v]",
+			err,
+		)
+	}
+
+	transactorOptions := bind.NewKeyedTransactor(
+		chainConfig.accountKey.PrivateKey,
+	)
 
 	randomBeaconContract, err := abi.NewKeepRandomBeaconImplV1(
 		contractAddress,
@@ -89,27 +91,19 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	}
 
 	return &KeepRandomBeacon{
-		transactor:      beaconTransactor,
-		transactorOpts:  optsTransactor,
-		caller:          beaconCaller,
-		callerOpts:      optsCaller,
-		contract:        randomBeaconContract,
-		contractAddress: contractAddress,
+		caller:            beaconCaller,
+		callerOptions:     callerOptions,
+		transactor:        beaconTransactor,
+		transactorOptions: transactorOptions,
+		contract:          randomBeaconContract,
+		contractAddress:   contractAddress,
 	}, nil
 }
 
 // Initialized calls the contract and returns true if the contract has
 // had its Initialize method called.
 func (krb *KeepRandomBeacon) Initialized() (bool, error) {
-	return krb.caller.Initialized(krb.callerOpts)
-}
-
-// HasMinimumStake returns true if the specified address has sufficient
-// state to participate.
-func (krb *KeepRandomBeacon) HasMinimumStake(
-	address common.Address,
-) (bool, error) {
-	return krb.caller.HasMinimumStake(krb.callerOpts, address)
+	return krb.caller.Initialized(krb.callerOptions)
 }
 
 // RequestRelayEntry requests a new entry in the threshold relay.
@@ -118,9 +112,9 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 	rawseed []byte,
 ) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
-	newTransactorOpts := *krb.transactorOpts
-	newTransactorOpts.Value = big.NewInt(2)
-	return krb.transactor.RequestRelayEntry(&newTransactorOpts, blockReward, seed)
+	newTransactorOptions := *krb.transactorOptions
+	newTransactorOptions.Value = big.NewInt(2)
+	return krb.transactor.RequestRelayEntry(&newTransactorOptions, blockReward, seed)
 }
 
 // SubmitRelayEntry submits a group signature for consideration.
@@ -129,24 +123,16 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	groupID *big.Int,
 	previousEntry *big.Int,
 	groupSignature *big.Int,
+	seed *big.Int,
 ) (*types.Transaction, error) {
 	return krb.transactor.RelayEntry(
-		krb.transactorOpts,
+		krb.transactorOptions,
 		requestID,
 		groupSignature,
 		groupID,
 		previousEntry,
+		seed,
 	)
-}
-
-// SubmitGroupPublicKey upon completion of a sgiagure make the contract
-// call to put it on chain.
-func (krb *KeepRandomBeacon) SubmitGroupPublicKey(
-	groupPublicKey []byte,
-	requestID *big.Int,
-) (*types.Transaction, error) {
-	gpk := byteSliceToSliceOf1Byte(groupPublicKey)
-	return krb.transactor.SubmitGroupPublicKey(krb.transactorOpts, gpk, requestID)
 }
 
 // relayEntryRequestedFunc type of function called for
@@ -163,22 +149,32 @@ type relayEntryRequestedFunc func(
 func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
-) error {
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryRequested)
-	eventSubscription, err := krb.contract.WatchRelayEntryRequested(nil, eventChan)
+	eventSubscription, err := krb.contract.WatchRelayEntryRequested(
+		nil,
+		eventChan,
+	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
+		return eventSubscription, fmt.Errorf(
 			"error creating watch for RelayEntryRequested events: [%v]",
 			err,
 		)
 	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
 				success(
 					event.RequestID,
 					event.Payment,
@@ -186,15 +182,23 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Seed,
 					event.BlockNumber,
 				)
-				return
-
+				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
 			}
 		}
 	}()
-	return nil
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
 // relayEntryGeneratedFunc type of function called for
@@ -205,129 +209,62 @@ type relayEntryGeneratedFunc func(
 	requestGroupID *big.Int,
 	previousEntry *big.Int,
 	blockNumber *big.Int,
+	seed *big.Int,
 )
 
 // WatchRelayEntryGenerated watches for event.
 func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
-) error {
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayEntryGenerated)
-	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(nil, eventChan)
+	eventSubscription, err := krb.contract.WatchRelayEntryGenerated(
+		nil,
+		eventChan,
+	)
 	if err != nil {
 		close(eventChan)
-		return fmt.Errorf(
+		return eventSubscription, fmt.Errorf(
 			"error creating watch for RelayEntryGenerated event: [%v]",
 			err,
 		)
 	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
 	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
 		for {
 			select {
-			case event := <-eventChan:
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
 				success(
 					event.RequestID,
 					event.RequestResponse,
 					event.RequestGroupID,
 					event.PreviousEntry,
 					event.BlockNumber,
+					event.Seed,
 				)
-				return
-
+				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
 				fail(ee)
 				return
 			}
 		}
 	}()
-	return nil
-}
 
-// relayResetEventFunc type of function called for ResetEvent event.
-type relayResetEventFunc func(
-	LastValidRelayEntry *big.Int,
-	LastValidRelayTxHash *big.Int,
-	LastValidRelayBlock *big.Int,
-)
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
 
-// WatchRelayResetEvent watches for event WatchRelayResetEvent.
-func (krb *KeepRandomBeacon) WatchRelayResetEvent(
-	success relayResetEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepRandomBeaconImplV1RelayResetEvent)
-	eventSubscription, err := krb.contract.WatchRelayResetEvent(nil, eventChan)
-	if err != nil {
+		eventSubscription.Unsubscribe()
 		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for RelayResetEvent event: [%v]",
-			err,
-		)
 	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				success(
-					event.LastValidRelayEntry,
-					event.LastValidRelayTxHash,
-					event.LastValidRelayBlock,
-				)
-				return
 
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-// submitGroupPublicKeyEventFunc type of function called for
-// SubmitGroupPublicKeyEvent event.
-type submitGroupPublicKeyEventFunc func(
-	groupPublicKey []byte,
-	requestID *big.Int,
-	activationBlockHeight *big.Int,
-)
-
-// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
-func (krb *KeepRandomBeacon) WatchSubmitGroupPublicKeyEvent(
-	success submitGroupPublicKeyEventFunc,
-	fail errorCallback,
-) error {
-	eventChan := make(chan *abi.KeepRandomBeaconImplV1SubmitGroupPublicKeyEvent)
-	eventSubscription, err := krb.contract.WatchSubmitGroupPublicKeyEvent(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return fmt.Errorf(
-			"error creating watch for SubmitGroupPublicKeyEvent event: [%v]",
-			err,
-		)
-	}
-	go func() {
-		defer close(eventChan)
-		defer eventSubscription.Unsubscribe()
-		for {
-			select {
-			case event := <-eventChan:
-				gpk := sliceOf1ByteToByteSlice(event.GroupPublicKey)
-				success(gpk, event.RequestID, event.ActivationBlockHeight)
-				return
-
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-	return nil
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }

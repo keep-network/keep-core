@@ -15,9 +15,18 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	defaultRequestID int = 0
+)
+
 // RelayCommand contains the definition of the relay command-line subcommand and
 // its own subcommands.
 var RelayCommand cli.Command
+
+const (
+	requestIDFlag  = "request-id"
+	requestIDShort = "r"
+)
 
 const relayDescription = `The relay command allows access to the two functions
    possible in the Keep threshold relay implementation of a random
@@ -47,6 +56,12 @@ func init() {
 				Name:   "submit",
 				Usage:  "Submits a new seed entry to the relay; only for testing.",
 				Action: submitRelayEntrySeed,
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:  requestIDFlag + "," + requestIDShort,
+						Value: defaultRequestID,
+					},
+				},
 			},
 		},
 	}
@@ -68,6 +83,8 @@ func relayRequest(c *cli.Context) error {
 
 	requestMutex := sync.Mutex{}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	wait := make(chan struct{})
 	var requestID *big.Int
 	provider.ThresholdRelay().OnRelayEntryRequested(func(request *event.Request) {
@@ -117,18 +134,15 @@ func relayRequest(c *cli.Context) error {
 
 	select {
 	case <-wait:
-		cancel()
 		return nil
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			return fmt.Errorf("Request errored out: [%v].\n", err)
-		} else {
-			return fmt.Errorf("Request errored for unknown reason.\n")
+			return fmt.Errorf("request errored out [%v]", err)
 		}
-	}
+		return fmt.Errorf("request errored for unknown reason")
 
-	return nil
+	}
 }
 
 // relayEntry requests an entry with a particular id from the threshold relay
@@ -139,8 +153,19 @@ func relayEntry(c *cli.Context) error {
 
 // submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
 // off the group selection process, and prints the newly generated value. By
-// default, it uses a random big integer as the value.
+// default, it uses a request ID equal `0`.
 func submitRelayEntrySeed(c *cli.Context) error {
+	requestID := c.Int(requestIDFlag)
+
+	entry := &event.Entry{
+		RequestID:     big.NewInt(int64(requestID)),
+		Value:         relay.GenesisEntryValue(),
+		GroupID:       big.NewInt(int64(requestID)),
+		PreviousEntry: big.NewInt(0),
+		Timestamp:     time.Now().UTC(),
+		Seed:          big.NewInt(0),
+	}
+
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
@@ -155,59 +180,38 @@ func submitRelayEntrySeed(c *cli.Context) error {
 		wait        = make(chan error)
 		ctx, cancel = context.WithCancel(context.Background())
 	)
-
-	// Seed the network with the first n bits of pi
-	value := relay.GenesisEntryValue()
-
-	entry := &event.Entry{
-		RequestID:     big.NewInt(0),
-		Value:         value,
-		GroupID:       big.NewInt(0),
-		PreviousEntry: big.NewInt(0),
-		Timestamp:     time.Now().UTC(),
-	}
+	defer cancel()
 
 	provider.ThresholdRelay().SubmitRelayEntry(
 		entry,
-	).OnSuccess(func(data *event.Entry) {
+	).OnComplete(func(data *event.Entry, err error) {
+		if err != nil {
+			wait <- err
+			return
+		}
 		fmt.Fprintf(
 			os.Stdout,
-			"Submitted relay entry: [%v].\n",
+			"Submitted relay entry: [%+v].\n",
 			data,
 		)
 		wait <- nil
 		return
-	}).OnFailure(func(err error) {
-		wait <- err
-		return
-	})
-
-	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
-		fmt.Fprintf(
-			os.Stderr,
-			"Relay entry received with value: [%v].\n",
-			entry.Value,
-		)
 	})
 
 	select {
 	case err := <-wait:
 		if err != nil {
 			return fmt.Errorf(
-				"Error in submitting relay entry: [%v].\n",
+				"error in submitting relay entry: [%v]",
 				err,
 			)
-		} else {
-			cancel()
 		}
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			return fmt.Errorf("Request errored out: [%v].\n", err)
-		} else {
-			return fmt.Errorf("Request errored for unknown reason.\n")
+			return fmt.Errorf("context done, with error: [%v]", err)
 		}
+		return nil
 	}
-
 	return nil
 }

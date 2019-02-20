@@ -4,6 +4,7 @@
 package groupselection
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"math/big"
 )
@@ -43,6 +44,10 @@ func NewTicket(
 			VirtualStakerIndex: virtualStakerIndex,
 		},
 	}
+}
+
+func (t *Ticket) IsFromStaker(stakerAddress []byte) bool {
+	return bytes.Compare(t.Proof.StakerValue, stakerAddress) == 0
 }
 
 // CalculateTicketValue generates a SHAValue from the previous beacon output, the

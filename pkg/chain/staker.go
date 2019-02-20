@@ -2,6 +2,8 @@ package chain
 
 import (
 	"math/big"
+
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
 // Staker represents a single staker in the system. Stakers provide access to a
@@ -10,7 +12,7 @@ import (
 type Staker interface {
 	// ID returns a unique identifier for the represented stake. Two
 	// representations of the same stake should return the same ID.
-	ID() string
+	ID() relaychain.StakerAddress
 	// Stake returns the current stake of this staker according to the connected
 	// chain state as a promise. If setup of the promise fails, an error is
 	// returned.

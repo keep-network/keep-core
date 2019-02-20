@@ -4,6 +4,7 @@ import (
 	"context"
 	crand "crypto/rand"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -108,7 +109,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	maliciousPayload := "You never can tell with bees."
 
 	// Create and publish message with a correct signature...
-	envelope, err := ch.sealEnvelope(nil, &testMessage{Payload: honestPayload})
+	envelope, err := ch.sealEnvelope(&testMessage{Payload: honestPayload})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +128,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	envelope, err = ch.sealEnvelope(nil, &testMessage{Payload: maliciousPayload})
+	envelope, err = ch.sealEnvelope(&testMessage{Payload: maliciousPayload})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +205,7 @@ func createTestChannel(
 		ctx,
 		networkConfig,
 		staticKey,
-		local.NewStakeMonitor(),
+		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
 		return nil, err

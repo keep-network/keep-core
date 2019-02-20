@@ -1,10 +1,9 @@
 package gjkr
 
 import (
-	"encoding/binary"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -18,7 +17,7 @@ func (jm *JoinMessage) Type() string {
 // communication.
 func (jm *JoinMessage) Marshal() ([]byte, error) {
 	return (&pb.Join{
-		SenderID: memberIDToBytes(jm.SenderID),
+		SenderID: jm.senderID.Bytes(),
 	}).Marshal()
 }
 
@@ -28,7 +27,7 @@ func (jm *JoinMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	jm.SenderID = bytesToMemberID(pbMsg.SenderID)
+	jm.senderID = MemberIDFromBytes(pbMsg.SenderID)
 	return nil
 }
 
@@ -42,7 +41,7 @@ func (epkm *EphemeralPublicKeyMessage) Type() string {
 // network communication.
 func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	return (&pb.EphemeralPublicKey{
-		SenderID:            memberIDToBytes(epkm.senderID),
+		SenderID:            epkm.senderID.Bytes(),
 		EphemeralPublicKeys: marshalPublicKeyMap(epkm.ephemeralPublicKeys),
 	}).Marshal()
 }
@@ -55,7 +54,7 @@ func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	epkm.senderID = bytesToMemberID(pbMsg.SenderID)
+	epkm.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
 	ephemeralPublicKeys, err := unmarshalPublicKeyMap(pbMsg.EphemeralPublicKeys)
 	if err != nil {
@@ -82,7 +81,7 @@ func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.MemberCommitments{
-		SenderID:    memberIDToBytes(mcm.senderID),
+		SenderID:    mcm.senderID.Bytes(),
 		Commitments: commitmentBytes,
 	}).Marshal()
 }
@@ -95,7 +94,7 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	mcm.senderID = bytesToMemberID(pbMsg.SenderID)
+	mcm.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
 	var commitments []*bn256.G1
 	for _, commitmentBytes := range pbMsg.Commitments {
@@ -132,7 +131,7 @@ func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.PeerShares{
-		SenderID: memberIDToBytes(psm.senderID),
+		SenderID: psm.senderID.Bytes(),
 		Shares:   pbShares,
 	}).Marshal()
 }
@@ -144,7 +143,7 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	psm.senderID = bytesToMemberID(pbMsg.SenderID)
+	psm.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
 	shares := make(map[MemberID]*peerShares)
 	for memberIDHex, pbShares := range pbMsg.Shares {
@@ -173,7 +172,7 @@ func (ssam *SecretSharesAccusationsMessage) Type() string {
 // suitable for network communication.
 func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
 	return (&pb.SecretSharesAccusations{
-		SenderID:           memberIDToBytes(ssam.senderID),
+		SenderID:           ssam.senderID.Bytes(),
 		AccusedMembersKeys: marshalPrivateKeyMap(ssam.accusedMembersKeys),
 	}).Marshal()
 }
@@ -186,7 +185,7 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	ssam.senderID = bytesToMemberID(pbMsg.SenderID)
+	ssam.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
 	if err != nil {
@@ -213,7 +212,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.MemberPublicKeySharePoints{
-		SenderID:             memberIDToBytes(mpspm.senderID),
+		SenderID:             mpspm.senderID.Bytes(),
 		PublicKeySharePoints: keySharePoints,
 	}).Marshal()
 }
@@ -226,7 +225,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	mpspm.senderID = bytesToMemberID(pbMsg.SenderID)
+	mpspm.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
 	var keySharePoints []*bn256.G1
 	for _, keySharePointBytes := range pbMsg.PublicKeySharePoints {
@@ -255,7 +254,7 @@ func (pam *PointsAccusationsMessage) Type() string {
 // for network communication.
 func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
 	return (&pb.PointsAccusations{
-		SenderID:           memberIDToBytes(pam.senderID),
+		SenderID:           pam.senderID.Bytes(),
 		AccusedMembersKeys: marshalPrivateKeyMap(pam.accusedMembersKeys),
 	}).Marshal()
 }
@@ -268,7 +267,7 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	pam.senderID = bytesToMemberID(pbMsg.SenderID)
+	pam.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
 	if err != nil {
@@ -290,7 +289,7 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Type() string {
 // suitable for network communication.
 func (dekm *DisqualifiedEphemeralKeysMessage) Marshal() ([]byte, error) {
 	return (&pb.DisqualifiedEphemeralKeys{
-		SenderID:    memberIDToBytes(dekm.senderID),
+		SenderID:    dekm.senderID.Bytes(),
 		PrivateKeys: marshalPrivateKeyMap(dekm.privateKeys),
 	}).Marshal()
 }
@@ -303,7 +302,7 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	dekm.senderID = bytesToMemberID(pbMsg.SenderID)
+	dekm.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
 	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
 	if err != nil {
@@ -313,16 +312,6 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 	dekm.privateKeys = privateKeys
 
 	return nil
-}
-
-func memberIDToBytes(memberID MemberID) []byte {
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, uint32(memberID))
-	return bytes
-}
-
-func bytesToMemberID(bytes []byte) MemberID {
-	return MemberID(binary.LittleEndian.Uint32(bytes))
 }
 
 func marshalPublicKeyMap(

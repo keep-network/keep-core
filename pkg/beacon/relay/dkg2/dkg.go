@@ -44,37 +44,39 @@ func Init(channel net.BroadcastChannel) {
 func ExecuteDKG(
 	requestID *big.Int,
 	seed *big.Int,
-	playerIndex int, // starts with 1
+	index int, // starts with 0
 	groupSize int,
 	threshold int,
-	chainHandle chain.Handle,
+	blockCounter chain.BlockCounter,
+	relayChain relayChain.Interface,
 	channel net.BroadcastChannel,
-) error {
+) (*ThresholdSigner, error) {
+	// The staker index should begin with 1
+	playerIndex := index + 1
 	if playerIndex < 1 {
-		return fmt.Errorf("player index must be >= 1")
+		return nil, fmt.Errorf("[member:%v] player index must be >= 1", playerIndex)
 	}
 
-	blockCounter, err := chainHandle.BlockCounter()
+	gjkrResult, signer, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
 	if err != nil {
-		return fmt.Errorf("block counter failure [%v]", err)
+		return nil, fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
 	}
 
-	gjkrResult, err := executeGJKR(playerIndex, blockCounter, channel, threshold, seed)
-	if err != nil {
-		return fmt.Errorf("GJKR execution failed [%v]", err)
-	}
+	// TODO Consider removing this print after Phase 14 is implemented and replace it with print at the end of DKG execution.
+	fmt.Printf("[member:%v] GJKR Result: %+v\n", playerIndex, gjkrResult)
 
 	err = executePublishing(
 		requestID,
 		playerIndex,
-		chainHandle,
+		relayChain,
+		blockCounter,
 		convertResult(gjkrResult, groupSize),
 	)
 	if err != nil {
-		return fmt.Errorf("publishing failed [%v]", err)
+		return nil, fmt.Errorf("publishing failed [%v]", err)
 	}
 
-	return nil
+	return signer, nil
 }
 
 // executeGJKR runs the GJKR distributed key generation  protocol, given a
@@ -89,7 +91,7 @@ func executeGJKR(
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,
-) (*gjkr.Result, error) {
+) (*gjkr.Result, *ThresholdSigner, error) {
 	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
@@ -103,26 +105,25 @@ func executeGJKR(
 		},
 	}
 
+	// Initialize channel to perform distributed key generation.
+	Init(channel)
+
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
 	var (
 		currentState keyGenerationState
-		blockWaiter  <-chan int
 	)
 
 	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create a new member [%v]", err)
+		return nil, nil, fmt.Errorf("cannot create a new member [%v]", err)
 	}
 	currentState = &initializationState{channel, member}
 
-	if err := stateTransition(
-		currentState,
-		blockCounter,
-		blockWaiter,
-	); err != nil {
-		return nil, err
+	blockWaiter, err := stateTransition(currentState, blockCounter)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	for {
@@ -137,7 +138,7 @@ func executeGJKR(
 			err := currentState.receive(msg)
 			if err != nil {
 				fmt.Printf(
-					"[member:%v, state: %T] Failed to receive a message [%v]",
+					"[member:%v, state: %T] Failed to receive a message [%v]\n",
 					currentState.memberID(),
 					currentState,
 					err,
@@ -146,16 +147,13 @@ func executeGJKR(
 
 		case <-blockWaiter:
 			if finalState, ok := currentState.(*finalizationState); ok {
-				return finalState.result(), nil
+				return finalState.result(), finalState.thresholdSigner(), nil
 			}
 
 			currentState = currentState.nextState()
-			if err := stateTransition(
-				currentState,
-				blockCounter,
-				blockWaiter,
-			); err != nil {
-				return nil, err
+			blockWaiter, err = stateTransition(currentState, blockCounter)
+			if err != nil {
+				return nil, nil, err
 			}
 
 			continue
@@ -166,8 +164,7 @@ func executeGJKR(
 func stateTransition(
 	currentState keyGenerationState,
 	blockCounter chain.BlockCounter,
-	blockWaiter <-chan int,
-) error {
+) (<-chan int, error) {
 	fmt.Printf(
 		"[member:%v, state:%T] Transitioning to a new state...\n",
 		currentState.memberID(),
@@ -176,7 +173,7 @@ func stateTransition(
 
 	err := blockCounter.WaitForBlocks(1)
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to wait 1 block entering state [%T]: [%v]",
 			currentState,
 			err,
@@ -185,12 +182,12 @@ func stateTransition(
 
 	err = currentState.initiate()
 	if err != nil {
-		return fmt.Errorf("failed to initiate new state [%v]", err)
+		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
 	}
 
-	blockWaiter, err = blockCounter.BlockWaiter(currentState.activeBlocks())
+	blockWaiter, err := blockCounter.BlockWaiter(currentState.activeBlocks())
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
 			currentState,
 			err,
@@ -203,7 +200,7 @@ func stateTransition(
 		currentState,
 	)
 
-	return nil
+	return blockWaiter, nil
 }
 
 // convertResult transforms GJKR protocol execution result to a chain specific
@@ -212,32 +209,32 @@ func stateTransition(
 // corresponds to a member in the group and true/false value indicates status of
 // the member.
 func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
-	var serializedGroupPublicKey []byte
+	groupPublicKey := make([]byte, 0)
 	if gjkrResult.GroupPublicKey != nil {
-		serializedGroupPublicKey = gjkrResult.GroupPublicKey.Marshal()
+		groupPublicKey = gjkrResult.GroupPublicKey.Marshal()
 	}
 
-	// convertToBoolSlice converts slice containing members IDs to a slice of
-	// group size length where true entry indicates the member was found on
+	// convertToByteSlice converts slice containing members IDs to a slice of
+	// group size length where 0x01 entry indicates the member was found on
 	// passed members IDs slice. It assumes member IDs for a group starts iterating
 	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
-	// resulting boolean slice will be {false, true, false}.
-	convertToBoolSlice := func(memberIDsSlice []gjkr.MemberID) []bool {
-		boolSlice := make([]bool, groupSize)
-		for index := range boolSlice {
+	// resulting byte slice will be {0x00, 0x01, 0x00}.
+	convertToByteSlice := func(memberIDsSlice []gjkr.MemberID) []byte {
+		bytes := make([]byte, groupSize)
+		for index := range bytes {
 			for _, memberID := range memberIDsSlice {
 				if memberID.Equals(index + 1) {
-					boolSlice[index] = true
+					bytes[index] = 0x01
 				}
 			}
 		}
-		return boolSlice
+		return bytes
 	}
 
 	return &relayChain.DKGResult{
 		Success:        gjkrResult.Success,
-		GroupPublicKey: serializedGroupPublicKey,
-		Inactive:       convertToBoolSlice(gjkrResult.Inactive),
-		Disqualified:   convertToBoolSlice(gjkrResult.Disqualified),
+		GroupPublicKey: groupPublicKey,
+		Inactive:       convertToByteSlice(gjkrResult.Inactive),
+		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
 	}
 }

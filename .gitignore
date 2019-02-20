@@ -1,4 +1,5 @@
 node_modules/
+./contracts/solidity/truffle.js
 build/
 vendor/
 _local/
@@ -26,3 +27,10 @@ main.test
 # IDEs
 .vscode/
 .idea/
+
+# Infrastructure
+.terraform
+
+# keys
+keystore
+keep_accounts

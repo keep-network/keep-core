@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"math/big"
 	"sync"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ func TestProviderReturnsType(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(t),
 		privKey,
-		local.NewStakeMonitor(),
+		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +58,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(t),
 		privKey,
-		local.NewStakeMonitor(),
+		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -76,10 +77,9 @@ func TestSendReceive(t *testing.T) {
 	defer cancel()
 
 	var (
-		config             = generateDeterministicNetworkConfig(t)
-		name               = "testchannel"
-		expectedPayload    = "some text"
-		protocolIdentifier = &protocolIdentifier{id: "testProtocolIdentifier"}
+		config          = generateDeterministicNetworkConfig(t)
+		name            = "testchannel"
+		expectedPayload = "some text"
 	)
 
 	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
@@ -96,7 +96,7 @@ func TestSendReceive(t *testing.T) {
 		ctx,
 		config,
 		privKey,
-		local.NewStakeMonitor(),
+		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -108,13 +108,6 @@ func TestSendReceive(t *testing.T) {
 
 	if err := broadcastChannel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
-	); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := broadcastChannel.RegisterIdentifier(
-		networkIdentity(identity.id),
-		protocolIdentifier,
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -157,116 +150,6 @@ func TestSendReceive(t *testing.T) {
 			return
 		case <-ctx.Done():
 			t.Fatal(err)
-		}
-	}
-}
-
-func TestSendToReceiveFrom(t *testing.T) {
-	ctx, cancel := newTestContext()
-	defer cancel()
-
-	var (
-		config1                  = generateDeterministicNetworkConfig(t)
-		senderProtocolIdentifier = &protocolIdentifier{id: "sender"}
-
-		recipientprotocolIdentifier = &protocolIdentifier{id: "recipient"}
-
-		name            = "testchannel"
-		expectedPayload = "some text"
-	)
-
-	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	identity1, err := createIdentity(privKey)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	identity2, err := newTestIdentity()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	provider, err := Connect(
-		ctx,
-		config1,
-		privKey,
-		local.NewStakeMonitor(),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	broadcastChannel, err := provider.ChannelFor(name)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := broadcastChannel.RegisterUnmarshaler(
-		func() net.TaggedUnmarshaler { return &testMessage{} },
-	); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := broadcastChannel.RegisterIdentifier(
-		networkIdentity(identity1.id),
-		senderProtocolIdentifier,
-	); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := broadcastChannel.RegisterIdentifier(
-		networkIdentity(identity2.id),
-		recipientprotocolIdentifier,
-	); err != nil {
-		t.Fatal(err)
-	}
-
-	err = broadcastChannel.SendTo(
-		identity2.id,
-		&testMessage{
-			Sender:  identity1,
-			Payload: expectedPayload,
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	recvChan := make(chan net.Message)
-	if err := broadcastChannel.Recv(net.HandleMessageFunc{
-		Type: "test",
-		Handler: func(msg net.Message) error {
-			recvChan <- msg
-			return nil
-		},
-	}); err != nil {
-		t.Fatal(err)
-	}
-
-	for {
-		select {
-		case msg := <-recvChan:
-			testPayload, ok := msg.Payload().(*testMessage)
-			if !ok {
-				t.Fatalf(
-					"expected: payload type string\ngot:   payload type [%v]",
-					testPayload,
-				)
-			}
-
-			if expectedPayload != testPayload.Payload {
-				t.Fatalf(
-					"expected: message payload [%s]\ngot:   payload [%s]",
-					expectedPayload,
-					testPayload.Payload,
-				)
-			}
-			return
-		case <-ctx.Done():
-			t.Fatal(ctx.Err())
 		}
 	}
 }
@@ -340,7 +223,12 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, 8080, local.NewStakeMonitor())
+	host, err := discoverAndListen(
+		ctx,
+		identity,
+		8080,
+		local.NewStakeMonitor(big.NewInt(200)),
+	)
 	if err != nil {
 		return nil, err
 	}

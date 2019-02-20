@@ -73,15 +73,13 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	}
 
 	channel := &channel{
-		name:                        name,
-		clientIdentity:              cm.identity,
-		peerStore:                   cm.peerStore,
-		pubsub:                      cm.pubsub,
-		subscription:                sub,
-		messageHandlers:             make([]net.HandleMessageFunc, 0),
-		unmarshalersByType:          make(map[string]func() net.TaggedUnmarshaler),
-		transportToProtoIdentifiers: make(map[net.TransportIdentifier]net.ProtocolIdentifier),
-		protoToTransportIdentifiers: make(map[net.ProtocolIdentifier]net.TransportIdentifier),
+		name:               name,
+		clientIdentity:     cm.identity,
+		peerStore:          cm.peerStore,
+		pubsub:             cm.pubsub,
+		subscription:       sub,
+		messageHandlers:    make([]net.HandleMessageFunc, 0),
+		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 	}
 
 	go channel.handleMessages(cm.ctx)

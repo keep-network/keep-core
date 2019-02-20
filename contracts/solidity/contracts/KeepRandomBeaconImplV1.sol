@@ -1,7 +1,11 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./StakingProxy.sol";
+
+
+interface GroupContract {
+    function runGroupSelection(uint256 randomBeaconValue) external;
+}
 
 
 /**
@@ -15,22 +19,21 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber);
-    event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
-    event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupID, uint256 previousEntry, uint blockNumber, uint256 seed);
 
     uint256 internal _seq;
     uint256 internal _minPayment;
-    uint256 internal _minStake;
-    address internal _stakingProxy;
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
+    address internal _groupContract;
 
     mapping (string => bool) internal _initialized;
     mapping (uint256 => address) internal _requestPayer;
     mapping (uint256 => uint256) internal _requestPayment;
     mapping (uint256 => uint256) internal _blockReward;
     mapping (uint256 => uint256) internal _requestGroup;
+
+    mapping (uint256 => bool) internal _relayEntryRequested;
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -40,20 +43,15 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Initialize Keep Random Beacon implementaion contract with a linked staking proxy contract.
-     * @param stakingProxy Address of a staking proxy contract that will be linked to this contract.
+     * @dev Initialize Keep Random Beacon implementaion contract.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
-     * @param minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      */
-    function initialize(address stakingProxy, uint256 minPayment, uint256 minStake, uint256 withdrawalDelay)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay)
         public
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
-        require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
-        _stakingProxy = stakingProxy;
-        _minStake = minStake;
         _minPayment = minPayment;
         _initialized["KeepRandomBeaconImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
@@ -65,17 +63,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
      */
     function initialized() public view returns (bool) {
         return _initialized["KeepRandomBeaconImplV1"];
-    }
-
-    /**
-     * @dev Checks that the specified user has an appropriately large stake.
-     * @param staker Specifies the identity of the random beacon client.
-     * @return True if staked enough to participate in the group, false otherwise.
-     */
-    function hasMinimumStake(address staker) public view returns(bool) {
-        uint256 balance;
-        balance = StakingProxy(_stakingProxy).balanceOf(staker);
-        return (balance >= _minStake);
     }
 
     /**
@@ -135,11 +122,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
-     * @param minStake Amount in KEEP.
+     * @dev Set group contract.
+     * @param groupContract Group contract address.
      */
-    function setMinimumStake(uint256 minStake) public onlyOwner {
-        _minStake = minStake;
+    function setGroupContract(address groupContract) public onlyOwner {
+        _groupContract = groupContract;
     }
 
     /**
@@ -150,34 +137,26 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Get the minimum amount in KEEP that allows KEEP network client to participate in a group.
-     */
-    function minimumStake() public view returns(uint256) {
-        return _minStake;
-    }
-
-    /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
      * @param requestID The request that started this generation - to tie the results back to the request.
      * @param groupSignature The generated random number.
      * @param groupID Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry) public {
+    function relayEntry(uint256 requestID, uint256 groupSignature, uint256 groupID, uint256 previousEntry, uint256 seed) public {    
+        // Temporary solution for M2. Every group member submits a new relay entry
+        // with the same request ID and we filter out duplicates here. 
+        // This behavior will change post-M2 when we'll integrate phase 14 and/or 
+        // implement relay requests.
+        if (_relayEntryRequested[requestID]) {
+            return;
+        }
+        _relayEntryRequested[requestID] = true;
+
+        // TODO: validate groupSignature using BLS.sol
+
         _requestGroup[requestID] = groupID;
-
-        emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number);
-    }
-
-    /**
-     * @dev Takes a generated key and place it on the blockchain. Creates an event.
-     * @param groupPublicKey Group public key.
-     * @param requestID Request ID.
-     */
-    function submitGroupPublicKey(byte[] groupPublicKey, uint256 requestID) public {
-        uint256 activationBlockHeight = block.number;
-
-        // TODO -- lots of stuff - don't know yet.
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID, activationBlockHeight);
+        emit RelayEntryGenerated(requestID, groupSignature, groupID, previousEntry, block.number, seed);
+        GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
     /**

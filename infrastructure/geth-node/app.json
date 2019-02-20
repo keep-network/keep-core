@@ -28,7 +28,7 @@
       "RPC_HOST"        : "localhost",
       "RPC_PORT"        : "8545",
       "LISTENING_PORT"  : "30303",
-      "VERBOSITY"       : 3
+      "VERBOSITY"       : 1
     }
   },
   {
@@ -44,8 +44,7 @@
     "env":
     {
       "NODE_ENV"        : "production",
-      "VERBOSITY"       : 3,
-      "ETH_IPC_PATH"	: "/root/.geth/geth.ipc"
+      "VERBOSITY"       : 1
     }
   }
 ]

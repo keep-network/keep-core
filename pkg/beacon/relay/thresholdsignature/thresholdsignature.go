@@ -2,12 +2,15 @@ package thresholdsignature
 
 import (
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/dfinity/go-dfinity-crypto/bls"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/thresholdgroup"
 )
 
 const (
@@ -29,7 +32,7 @@ func Execute(
 	bytes []byte,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	member *thresholdgroup.Member,
+	signer *dkg2.ThresholdSigner,
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -41,12 +44,15 @@ func Execute(
 		},
 	}
 
+	// Initialize channel to perform threshold signing process.
+	Init(channel)
+
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
 	fmt.Printf(
-		"[member:%v, state:signing] Waiting for other group members to enter signing state...\n",
-		member.MemberID(),
+		"[member:%v] Waiting for other group members to enter signing state...\n",
+		signer.MemberID(),
 	)
 
 	err := blockCounter.WaitForBlocks(setupBlocks)
@@ -58,18 +64,15 @@ func Execute(
 		)
 	}
 
-	fmt.Printf(
-		"[member:%v] Sending signature share...\n",
-		member.MemberID(),
-	)
+	fmt.Printf("[member:%v] Sending signature share...\n", signer.MemberID())
 
-	seenShares := make(map[bls.ID][]byte)
-	share := member.SignatureShare(string(bytes))
+	seenShares := make(map[gjkr.MemberID]*bn256.G1)
+	share := signer.CalculateSignatureShare(bytes)
 
 	// Add local share to map rather than receiving from the network.
-	seenShares[member.BlsID] = share
+	seenShares[signer.MemberID()] = share
 
-	err = sendSignatureShare(share, channel, member)
+	err = sendSignatureShare(share.Marshal(), channel, signer.MemberID())
 	if err != nil {
 		return nil, err
 	}
@@ -79,41 +82,46 @@ func Execute(
 		return nil, err
 	}
 
-	fmt.Printf("[member:%v] Receiving other group signature share.\n", member.ID)
+	fmt.Printf("[member:%v] Receiving other group signature share\n", signer.MemberID())
 
 	for {
 		select {
 		case msg := <-recvChan:
 			fmt.Printf(
-				"[member:%v, state:signing] Processing message.\n",
-				member.MemberID(),
+				"[member:%v] Processing signing message\n",
+				signer.MemberID(),
 			)
 
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
-				if senderID, ok := msg.ProtocolSenderID().(*bls.ID); ok {
-					// Ignore our own share, we already have it.
-					if senderID.IsEqual(&member.BlsID) {
-						continue
-					}
+				// Ignore our own share, we already have it.
+				if signatureShareMsg.senderID == signer.MemberID() {
+					continue
+				}
 
-					seenShares[*senderID] = signatureShareMsg.ShareBytes
+				share := new(bn256.G1)
+				_, err := share.Unmarshal(signatureShareMsg.ShareBytes)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"[member:%v] failed to unmarshal signature share: [%v]",
+						signer.MemberID(),
+						err,
+					)
+				} else {
+					seenShares[signatureShareMsg.senderID] = share
 				}
 			}
-
 		case <-blockWaiter:
-			signature, err := member.CompleteSignature(seenShares)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"[member:%v] failed to complete signature inside active period [%v]: [%v]",
-					member.MemberID(),
-					signatureBlocks,
-					err,
-				)
+			// put all seen shares into a slice and complete the signature
+			seenSharesSlice := make([]*bn256.G1, 0)
+			for _, share := range seenShares {
+				seenSharesSlice = append(seenSharesSlice, share)
 			}
 
-			return signature.Serialize(), nil
+			signature := signer.CompleteSignature(seenSharesSlice)
 
+			return signature.Marshal(), nil
 		}
 	}
 }
@@ -121,7 +129,7 @@ func Execute(
 func sendSignatureShare(
 	share []byte,
 	channel net.BroadcastChannel,
-	member *thresholdgroup.Member,
+	memberID gjkr.MemberID,
 ) error {
-	return channel.Send(&SignatureShareMessage{&member.BlsID, share})
+	return channel.Send(&SignatureShareMessage{memberID, share})
 }

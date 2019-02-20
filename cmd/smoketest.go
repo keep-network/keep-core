@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -15,8 +16,9 @@ import (
 )
 
 const (
-	defaultGroupSize int = 10
-	defaultThreshold int = 4
+	defaultGroupSize    int = 10
+	defaultThreshold    int = 4
+	defaultMinimumStake int = 2000000
 )
 
 // SmokeTestCommand contains the definition of the smoke-test command-line
@@ -24,19 +26,20 @@ const (
 var SmokeTestCommand cli.Command
 
 const (
-	groupSizeFlag  = "group-size"
-	groupSizeShort = "g"
-	thresholdFlag  = "threshold"
-	thresholdShort = "t"
+	groupSizeFlag     = "group-size"
+	groupSizeShort    = "g"
+	thresholdFlag     = "threshold"
+	thresholdShort    = "t"
+	minimumStakeFlag  = "minimum-stake"
+	minimumStakeShort = "s"
 )
 
-const smokeTestDescription = `The smoke-test command creates a local threshold group of the
-   specified size and with the specified threshold and simulates a
-   distributed key generation process with an in-process broadcast
-   channel and chain implementation. Once the process is complete,
-   a threshold signature is executed, once again with an in-process
-   broadcast channel and chain, and the final signature is verified
-   by each member of the group.`
+const smokeTestDescription = `The smoke-test command creates a local threshold
+   group of the specified size and with the specified threshold and simulates a
+   distributed key generation process with an in-process broadcast channel and 
+   chain implementation. Once the process is complete, a threshold signature is 
+   executed, once again with an in-process broadcast channel and chain, and the 
+   final signature is verified by each member of the group.`
 
 func init() {
 	SmokeTestCommand = cli.Command{
@@ -53,6 +56,10 @@ func init() {
 				Name:  thresholdFlag + "," + thresholdShort,
 				Value: defaultThreshold,
 			},
+			&cli.IntFlag{
+				Name:  minimumStakeFlag + "," + minimumStakeShort,
+				Value: defaultMinimumStake,
+			},
 		},
 	}
 }
@@ -62,8 +69,14 @@ func init() {
 func SmokeTest(c *cli.Context) error {
 	groupSize := c.Int(groupSizeFlag)
 	threshold := c.Int(thresholdFlag)
+	minimumStake := c.Int(minimumStakeFlag)
 
-	chainHandle := local.Connect(groupSize, threshold)
+	chainHandle := local.Connect(
+		groupSize,
+		threshold,
+		big.NewInt(int64(minimumStake)),
+	)
+
 	context := context.Background()
 
 	for i := 0; i < groupSize; i++ {
@@ -74,18 +87,14 @@ func SmokeTest(c *cli.Context) error {
 	<-time.NewTimer(time.Second).C
 
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(int64(135)),
-		Value:         big.NewInt(int64(154)),
-		GroupID:       big.NewInt(int64(168)),
+		RequestID:     big.NewInt(0),
+		Value:         big.NewInt(0),
+		GroupID:       big.NewInt(0),
+		Seed:          big.NewInt(0),
 		PreviousEntry: &big.Int{},
 	})
 
-	chainHandle.ThresholdRelay().
-		OnGroupRegistered(func(registration *event.GroupRegistration) {
-			// Give the nodes a sec to all get registered.
-			<-time.NewTimer(time.Second).C
-			chainHandle.ThresholdRelay().RequestRelayEntry(&big.Int{}, &big.Int{})
-		})
+	// TODO Add validations when DKG Phase 14 is implemented.
 
 	select {
 	case <-context.Done():
@@ -100,6 +109,12 @@ func createNode(
 	groupSize int,
 	threshold int,
 ) {
+	toEthereumAddress := func(value string) string {
+		return common.BytesToAddress(
+			[]byte(value),
+		).String()
+	}
+
 	chainCounter, err := chainHandle.BlockCounter()
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -118,12 +133,27 @@ func createNode(
 
 	netProvider := netlocal.Connect()
 
-	go beacon.Initialize(
-		context,
-		netProvider.ID().String()[:32],
-		chainHandle.ThresholdRelay(),
-		chainCounter,
-		stakeMonitor,
-		netProvider,
-	)
+	go func() {
+		// Generate staker's ID. It needs to be a properly formatter ethereum
+		// address. Address can be created from any string.
+		stakingID := toEthereumAddress(netProvider.ID().String())
+
+		localMonitor := stakeMonitor.(*local.StakeMonitor)
+		localMonitor.StakeTokens(stakingID)
+
+		err := beacon.Initialize(
+			context,
+			stakingID,
+			chainHandle.ThresholdRelay(),
+			chainCounter,
+			stakeMonitor,
+			netProvider,
+		)
+		if err != nil {
+			panic(fmt.Sprintf(
+				"Failed to run beacon.Initialize: [%v].",
+				err,
+			))
+		}
+	}()
 }

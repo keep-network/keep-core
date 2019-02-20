@@ -30,3 +30,8 @@ func GenerateTickets(
 
 	return tickets, nil
 }
+
+// Result represents ordered, selected tickets from those submitted to the chain.
+type Result struct {
+	SelectedStakers [][]byte
+}

@@ -25,18 +25,29 @@ spec:
     app: geth
     type: miner
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: eth-miner-node
 spec:
+  serviceName: eth-miner-node
   replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  selector:
+    matchLabels:
+      app: geth
+      type: miner
   template:
     metadata:
       labels:
         app: geth
         type: miner
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: miner
         image: gcr.io/keep-dev-fe24/geth-node
@@ -44,6 +55,9 @@ spec:
         - containerPort: 8545
         - containerPort: 8546
         - containerPort: 30303
+        volumeMounts:
+        - name: eth-miner-node
+          mountPath: /mnt/eth-data
         env:
         - name: INSTANCE_NAME
           valueFrom:
@@ -58,7 +72,7 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         - name: NETWORKID
-          value: "20181114"
+          value: "9384767738"
         - name: WS_SERVER
           value: ws://eth-dashboard.default.svc.cluster.local:3000
         - name: WS_SECRET
@@ -71,3 +85,15 @@ spec:
           value: "1"
         - name: MINER_THREADS
           value: "1"
+        - name: HOSTVOLUME
+          value: /mnt/eth-data
+        - name: ETH_IPC_PATH
+          value: $(HOSTVOLUME)/geth.ipc
+  volumeClaimTemplates:
+    - metadata:
+        name: eth-miner-node
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

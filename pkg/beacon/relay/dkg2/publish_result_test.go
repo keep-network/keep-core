@@ -16,7 +16,7 @@ func TestPublishResult(t *testing.T) {
 	groupSize := 5
 	blockStep := 2 // T_step
 
-	chainHandle, initialBlock, err := initChainHandle(threshold, groupSize)
+	chainHandle, blockCounter, initialBlock, err := initChainHandle(threshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,20 +46,20 @@ func TestPublishResult(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			publisher := &Publisher{
 				RequestID:       big.NewInt(101),
+				blockCounter:    blockCounter,
 				publishingIndex: test.publishingIndex,
-				chainHandle:     chainHandle,
 				blockStep:       blockStep,
 			}
 
 			// Reinitialize chain to reset block counter
-			publisher.chainHandle, initialBlock, err = initChainHandle(threshold, groupSize)
+			chainHandle, publisher.blockCounter, _, err = initChainHandle(threshold, groupSize)
 			if err != nil {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
 
-			chainRelay := publisher.chainHandle.ThresholdRelay()
+			relayChain := chainHandle.ThresholdRelay()
 
-			isPublished, err := chainRelay.IsDKGResultPublished(publisher.RequestID)
+			isPublished, err := relayChain.IsDKGResultPublished(publisher.RequestID)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -68,7 +68,10 @@ func TestPublishResult(t *testing.T) {
 				t.Fatalf("result is already published on chain")
 			}
 			// TEST
-			currentBlock, err := publisher.publishResult(resultToPublish)
+			currentBlock, err := publisher.publishResult(
+				resultToPublish,
+				relayChain,
+			)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -79,7 +82,7 @@ func TestPublishResult(t *testing.T) {
 					currentBlock,
 				)
 			}
-			isPublished, err = chainRelay.IsDKGResultPublished(publisher.RequestID)
+			isPublished, err = relayChain.IsDKGResultPublished(publisher.RequestID)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -165,15 +168,19 @@ func TestConcurrentPublishResult(t *testing.T) {
 			publisher1.RequestID = test.requestID1
 			publisher2.RequestID = test.requestID2
 
-			chainHandle, initialBlock, err := initChainHandle(threshold, groupSize)
+			chainHandle, blockCounter, initialBlock, err :=
+				initChainHandle(threshold, groupSize)
 			if err != nil {
 				t.Fatal(err)
 			}
-			publisher1.chainHandle = chainHandle
-			publisher2.chainHandle = chainHandle
 
-			expectedBlockEnd1 := calculateExpectedBlockEnd(initialBlock, test.expectedDuration1)
-			expectedBlockEnd2 := calculateExpectedBlockEnd(initialBlock, test.expectedDuration2)
+			publisher1.blockCounter = blockCounter
+			publisher2.blockCounter = blockCounter
+
+			expectedBlockEnd1 :=
+				calculateExpectedBlockEnd(initialBlock, test.expectedDuration1)
+			expectedBlockEnd2 :=
+				calculateExpectedBlockEnd(initialBlock, test.expectedDuration2)
 
 			result1Chan := make(chan int)
 			defer close(result1Chan)
@@ -181,7 +188,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 			defer close(result2Chan)
 
 			go func() {
-				currentBlock, err := publisher1.publishResult(test.resultToPublish1)
+				currentBlock, err := publisher1.publishResult(
+					test.resultToPublish1,
+					chainHandle.ThresholdRelay(),
+				)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -190,7 +200,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 			}()
 
 			go func() {
-				currentBlock, err := publisher2.publishResult(test.resultToPublish2)
+				currentBlock, err := publisher2.publishResult(
+					test.resultToPublish2,
+					chainHandle.ThresholdRelay(),
+				)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -210,27 +223,32 @@ func TestConcurrentPublishResult(t *testing.T) {
 
 func TestExecutePublishingWithInvalidIndex(t *testing.T) {
 	expectedError := fmt.Errorf("publishing index must be >= 1")
-	err := executePublishing(nil, 0, nil, nil)
+	err := executePublishing(nil, 0, nil, nil, nil)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
 	}
 }
 
-func initChainHandle(threshold, groupSize int) (chainHandle chain.Handle, initialBlock int, err error) {
-	chainHandle = local.Connect(groupSize, threshold)
-	blockCounter, err := chainHandle.BlockCounter()
+func initChainHandle(threshold, groupSize int) (
+	chainHandle chain.Handle,
+	blockCounter chain.BlockCounter,
+	initialBlock int,
+	err error,
+) {
+	chainHandle = local.Connect(groupSize, threshold, big.NewInt(200))
+	blockCounter, err = chainHandle.BlockCounter()
 	if err != nil {
-		return nil, -1, err
+		return nil, nil, -1, err
 	}
 	err = blockCounter.WaitForBlocks(1)
 	if err != nil {
-		return nil, -1, err
+		return nil, nil, -1, err
 	}
 
 	initialBlock, err = blockCounter.CurrentBlock()
 	if err != nil {
-		return nil, -1, err
+		return nil, nil, -1, err
 	}
 	return
 }

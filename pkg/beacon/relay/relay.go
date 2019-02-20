@@ -20,7 +20,7 @@ func NewNode(
 	staker chain.Staker,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-	chainConfig config.Chain,
+	chainConfig *config.Chain,
 ) Node {
 	return Node{
 		Staker:          staker,
@@ -29,9 +29,9 @@ func NewNode(
 		chainConfig:     chainConfig,
 		stakeIDs:        make([]string, 100),
 		groupPublicKeys: make([][]byte, 0),
-		seenPublicKeys:  make(map[string]struct{}),
-		myGroups:        make(map[string]*membership),
-		pendingGroups:   make(map[string]*membership),
+		seenPublicKeys:  make(map[string]bool),
+		myGroups:        make(map[string][]*membership),
+		pendingGroups:   make(map[string][]*membership),
 	}
 }
 
@@ -43,59 +43,63 @@ func NewNode(
 // determining whether the node is or is not is a member of the requested group, and
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
-	request *event.Request,
+	requestID *big.Int,
+	previousValue *big.Int,
+	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
-		request.PreviousValue.Bytes(),
-		request.Seed.Bytes(),
+		previousValue.Bytes(),
+		seed.Bytes(),
 	)
 
-	membership := n.membershipForRequest(request)
-	if membership == nil {
+	memberships := n.membershipsForRequest(previousValue)
+	if len(memberships) < 1 {
 		return
 	}
 
-	thresholdsignature.Init(membership.channel)
-	go func() {
-		signature, err := thresholdsignature.Execute(
-			combinedEntryToSign,
-			n.blockCounter,
-			membership.channel,
-			membership.member,
-		)
-		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"error creating threshold signature: [%v]\n",
-				err,
+	for _, signer := range memberships {
+		go func(signer *membership) {
+			signature, err := thresholdsignature.Execute(
+				combinedEntryToSign,
+				n.blockCounter,
+				signer.channel,
+				signer.member,
 			)
-			return
-		}
-
-		rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
-
-		newEntry := &event.Entry{
-			RequestID:     request.RequestID,
-			Value:         rightSizeSignature,
-			PreviousEntry: request.PreviousValue,
-			Timestamp:     time.Now().UTC(),
-			GroupID:       &big.Int{},
-		}
-
-		relayChain.SubmitRelayEntry(
-			newEntry,
-		).OnFailure(func(err error) {
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Failed submission of relay entry: [%v].\n",
+					"error creating threshold signature: [%v]\n",
 					err,
 				)
 				return
 			}
-		})
-	}()
+
+			rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
+
+			newEntry := &event.Entry{
+				RequestID:     requestID,
+				Value:         rightSizeSignature,
+				PreviousEntry: previousValue,
+				Timestamp:     time.Now().UTC(),
+				GroupID:       &big.Int{},
+				Seed:          seed,
+			}
+
+			relayChain.SubmitRelayEntry(
+				newEntry,
+			).OnFailure(func(err error) {
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"Failed submission of relay entry: [%v].\n",
+						err,
+					)
+					return
+				}
+			})
+		}(signer)
+	}
 }
 
 func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
@@ -105,10 +109,10 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 	return combinedEntryToSign
 }
 
-func (n *Node) indexForNextGroup(request *event.Request) *big.Int {
+func (n *Node) indexForNextGroup(previousValue *big.Int) *big.Int {
 	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
 
-	return nextGroupIndex(request.PreviousValue, numberOfGroups)
+	return nextGroupIndex(previousValue, numberOfGroups)
 }
 
 func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
@@ -119,19 +123,22 @@ func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
 	return (&big.Int{}).Mod(entry, numberOfGroups)
 }
 
-func (n *Node) membershipForRequest(
-	request *event.Request,
-) *membership {
+func (n *Node) membershipsForRequest(previousValue *big.Int) []*membership {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	nextGroup := n.indexForNextGroup(request).Int64()
-	// Search our list of memberships to see if we have a member entry.
-	for _, membership := range n.myGroups {
-		if membership.index == int(nextGroup) {
-			return membership
+	nextGroup := n.indexForNextGroup(previousValue).Int64()
+	// Search our list of memberships to see if we have a member entries.
+	membershipsForRequest := make([]*membership, 0)
+	for _, memberships := range n.myGroups {
+		for _, membership := range memberships {
+			if membership.index == int(nextGroup) {
+				membershipsForRequest = append(
+					membershipsForRequest, membership,
+				)
+			}
 		}
 	}
 
-	return nil
+	return membershipsForRequest
 }

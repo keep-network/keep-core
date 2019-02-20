@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -361,6 +362,17 @@ func (fm *FinalizingMember) Result() *Result {
 	}
 }
 
+// GroupPublicKey returns the full group public key.
+func (fm *FinalizingMember) GroupPublicKey() *bn256.G1 {
+	return fm.groupPublicKey
+}
+
+// GroupPrivateKeyShare returns member's private key share of a group key.
+// It is used for signing and should never be revealed publicly.
+func (fm *FinalizingMember) GroupPrivateKeyShare() *big.Int {
+	return fm.groupPrivateKeyShare
+}
+
 // Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
 	return new(big.Int).SetUint64(uint64(id))
@@ -369,11 +381,6 @@ func (id MemberID) Int() *big.Int {
 // Equals checks if MemberID equals the passed int value.
 func (id MemberID) Equals(value int) bool {
 	return id == MemberID(value)
-}
-
-// HexString converts `MemberID` to hex `string` representation.
-func (id MemberID) HexString() string {
-	return strconv.FormatInt(int64(id), 16)
 }
 
 // validate checks if MemberID has a valid value. MemberID is expected to be
@@ -385,6 +392,18 @@ func (id MemberID) validate() error {
 	return nil
 }
 
+// MemberIDFromBytes returns a `MemberID` created from provided bytes.
+func MemberIDFromBytes(bytes []byte) MemberID {
+	return MemberID(binary.LittleEndian.Uint32(bytes))
+}
+
+// Bytes converts `MemberID` to bytes representation.
+func (id MemberID) Bytes() []byte {
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, uint32(id))
+	return bytes
+}
+
 // MemberIDFromHex returns a `MemberID` created from the hex `string`
 // representation.
 func MemberIDFromHex(hex string) (MemberID, error) {
@@ -394,4 +413,9 @@ func MemberIDFromHex(hex string) (MemberID, error) {
 	}
 
 	return MemberID(id), nil
+}
+
+// HexString converts `MemberID` to hex `string` representation.
+func (id MemberID) HexString() string {
+	return strconv.FormatInt(int64(id), 16)
 }

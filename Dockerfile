@@ -68,12 +68,12 @@ RUN dep ensure -v --vendor-only
 RUN cd vendor/github.com/gogo/protobuf/protoc-gen-gogoslick && go install .
 RUN cd vendor/github.com/ethereum/go-ethereum/cmd/abigen && go install .
 
+
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
 RUN cd $APP_DIR/contracts/solidity && npm install
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
-COPY ./pkg/beacon/relay/dkg/gen $APP_DIR/pkg/beacon/relay/dkg/gen
 COPY ./pkg/beacon/relay/thresholdsignature/gen $APP_DIR/pkg/beacon/relay/thresholdsignature/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 RUN go generate ./.../gen 
