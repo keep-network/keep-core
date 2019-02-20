@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -28,6 +29,9 @@ func (ec *ethereumChain) DKGResultVote(
 }
 
 // OnDKGResultVote register a function for a callback when a vote occurs.
-func (ec *ethereumChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
+func (ec *ethereumChain) OnDKGResultVote(
+	func(dkgResultVote *event.DKGResultVote),
+) (subscription.EventSubscription, error) {
 	// TODO -- implement OnDKGResultVote
+	panic("NOT IMPLEMENTED")
 }

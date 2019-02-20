@@ -50,7 +50,7 @@ type localChain struct {
 	// Track the submitted votes.
 	submissionsMutex sync.Mutex
 	submissions      map[string]*relaychain.DKGSubmissions
-	voteHandler      []func(dkgResultVote *event.DKGResultVote)
+	voteHandler      map[int]func(dkgResultVote *event.DKGResultVote)
 
 	tickets      []*relaychain.Ticket
 	ticketsMutex sync.Mutex
@@ -109,10 +109,21 @@ func (c *localChain) DKGResultVote(
 }
 
 // OnDKGResultVote sets up to call the passed handler function when a vote occurs.
-func (c *localChain) OnDKGResultVote(handler func(dkgResultVote *event.DKGResultVote)) {
+func (c *localChain) OnDKGResultVote(
+	handler func(dkgResultVote *event.DKGResultVote),
+) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
-	c.voteHandler = append(c.voteHandler, handler)
-	c.handlerMutex.Unlock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.voteHandler[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.voteHandler, handlerID)
+	}), nil
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {

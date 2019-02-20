@@ -99,7 +99,9 @@ type DistributedKeyGenerationInterface interface {
 		dkgResultHash []byte,
 	) *async.DKGResultVotePromise
 	// OnDKGResultVote registers a callback when a vote occurs.
-	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
+	OnDKGResultVote(
+		func(dkgResultVote *event.DKGResultVote),
+	) (subscription.EventSubscription, error)
 }
 
 // Interface represents the interface that the relay expects to interact with
