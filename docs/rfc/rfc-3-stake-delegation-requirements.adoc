@@ -17,8 +17,7 @@ may be a third party, or it may be a different address controlled by the owner.
 Stake delegation will be beneficial for the security of Keep users as it allows
 for on-stake operations with a "cold wallet". Thus, putting Keep users wallets
 offline protects them from "hacks" and stake delegation enables continuous
-rewarding on safe operations on staked assets. Also exposure of Keep users
-public keys will be limited. 
+rewarding on safe operations on staked assets. 
 
 === Terminology
 
@@ -57,16 +56,15 @@ the network throughput without compromising the security of owners stake.
 
 1. _owner_ can only have one operator.
 2. _owner_ can only delegate all of his stake.
-3. _operator_ cannot have any stake of his own.
-4. _operator_ cannot have any tokens at all.
-5. _operator_ can only have a _delegated stake_ from only one _owner_.
-6. If an _owner_ tries to delegate to more than one operator, the tx must
+3. _operator_ cannot have any KEEP tokens at all.
+4. _operator_ can only have a _delegated stake_ from only one _owner_.
+5. If an _owner_ tries to delegate to more than one operator, the tx must
 fail.
-7. If an _owner_ tries to delegate a stake to an _operator_ who already has a
+6. If an _owner_ tries to delegate a stake to an _operator_ who already has a
 stake, the tx must fail.
-8. The end of an _on stake operation_ happens only after all rewards are
+7. The end of an _on stake operation_ happens only after all rewards are
 granted and all penalties are imposed. 
-9. Rewarding and penalization happens as the last phase of all operations.
+8. Rewarding and penalization happens as the last phase of all operations.
 
 
 === Design Factors Analysis
@@ -310,8 +308,8 @@ operation which might impact negatively on the network stability and performance
 Accordingly to the design strategy and the design requirements the design
 architecture should be based on the following combinations of strategies:
 
-Atomic Multi-Operating with Dynamic or Static MINIMUM_STAKE and Delayed
-Undelegation with Consequent Penalisation
+(optionally Atomic) Multi-Operating with Dynamic or Static MINIMUM_STAKE and 
+Delayed Undelegation with Consequent Penalisation
 
 Other strategies tend to be suboptimal from the perspective of both security and
 network throughput requirements, or from implementation.
