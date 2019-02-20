@@ -214,9 +214,9 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		GroupPublicKey: []byte{11},
 	}
 
-	submittedResults[submittedRequestID1.String()] = append(
-		submittedResults[submittedRequestID1.String()],
-		submittedResult1,
+	submittedResults[submittedRequestID.String()] = append(
+		submittedResults[submittedRequestID.String()],
+		submittedResult,
 	)
 
 	localChain := &localChain{
@@ -229,7 +229,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		expectedResult bool
 	}{
 		"matched": {
-			requestID:      submittedRequestID1,
+			requestID:      submittedRequestID,
 			expectedResult: true,
 		},
 		"not matched - different request ID": {
@@ -278,12 +278,12 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
-	submittedResult11 := &relaychain.DKGResult{
+	submittedResult1 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 	expectedEvent1 := &event.DKGResultPublication{
 		RequestID:      requestID1,
-		GroupPublicKey: submittedResult11.GroupPublicKey[:],
+		GroupPublicKey: submittedResult1.GroupPublicKey[:],
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
@@ -313,7 +313,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	requestID2 := big.NewInt(2)
 	expectedEvent2 := &event.DKGResultPublication{
 		RequestID:      requestID2,
-		GroupPublicKey: submittedResult11.GroupPublicKey[:],
+		GroupPublicKey: submittedResult1.GroupPublicKey[:],
 	}
 
 	chainHandle.SubmitDKGResult(requestID2, submittedResult1)
