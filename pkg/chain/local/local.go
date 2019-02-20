@@ -351,12 +351,11 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		blockCounter:                 bc,
 		submissions:                  make(map[string]*relaychain.DKGSubmissions),
 
-		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
-		relayRequestHandlers:         make(map[int]func(request *event.Request)),
-		groupRegisteredHandlers:      make(map[int]func(groupRegistration *event.GroupRegistration)),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-		stakeMonitor:                 NewStakeMonitor(minimumStake),
-		tickets:                      make([]*relaychain.Ticket, 0),
+		relayEntryHandlers:      make(map[int]func(request *event.Entry)),
+		relayRequestHandlers:    make(map[int]func(request *event.Request)),
+		groupRegisteredHandlers: make(map[int]func(groupRegistration *event.GroupRegistration)),
+		stakeMonitor:            NewStakeMonitor(minimumStake),
+		tickets:                 make([]*relaychain.Ticket, 0),
 	}
 }
 
