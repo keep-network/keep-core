@@ -90,13 +90,16 @@ type DistributedKeyGenerationInterface interface {
 	// GetDKGSubmissions returns the entire set of submissions that is related
 	// to a particular requestID.
 	GetDKGSubmissions(requestID *big.Int) *DKGSubmissions
-	// DKGResultVote increases the number of votes for a dkgResultHash.
-	DKGResultVote(requestID *big.Int, dkgResultHash []byte)
-	// OnDKGResultVote registers a callback when a vote occurs.
-	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
 	// IsDKGResultPublished checks if any DKG result has already been published
 	// to a chain for the given request ID.
 	IsDKGResultPublished(requestID *big.Int) (bool, error)
+	// DKGResultVote increases the number of votes for a dkgResultHash.
+	DKGResultVote(
+		requestID *big.Int,
+		dkgResultHash []byte,
+	) *async.DKGResultVotePromise
+	// OnDKGResultVote registers a callback when a vote occurs.
+	OnDKGResultVote(func(dkgResultVote *event.DKGResultVote))
 }
 
 // Interface represents the interface that the relay expects to interact with
