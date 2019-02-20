@@ -1,4 +1,4 @@
-package publish
+package dkg2
 
 import (
 	"encoding/json"

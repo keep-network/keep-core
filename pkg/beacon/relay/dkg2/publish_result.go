@@ -166,3 +166,96 @@ func (pm *Publisher) publishResult(
 		}
 	}
 }
+
+// Phase14 - PHASE 14
+func (pm *Publisher) Phase14(
+	correctResult *relayChain.DKGResult,
+	chainRelay relayChain.Interface,
+) error {
+	onVoteChan := make(chan *event.DKGResultVote)
+	chainRelay.OnDKGResultVote(func(vote *event.DKGResultVote) {
+		onVoteChan <- vote
+	})
+	onSubmissionChan := make(chan *event.DKGResultPublication)
+	chainRelay.OnDKGResultPublished(func(result *event.DKGResultPublication) {
+		onSubmissionChan <- result
+	})
+
+	if pm.RequestID == nil {
+	}
+	submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
+	if submissions == nil {
+		return fmt.Errorf("nothing submitted")
+	}
+	if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
+		return fmt.Errorf("voting threshold exceeded")
+	}
+	if !submissions.Contains(correctResult) {
+		chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
+		// return nil
+	}
+
+	blockCounter, err := pm.chainHandle.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("block counter failure [%v]", err)
+	}
+
+	// firstBlock := 0 // T_First
+	firstBlock, err := blockCounter.CurrentBlock() // T_First
+	if err != nil {
+		return fmt.Errorf("current block failure [%v]", err)
+	}
+
+	// NOTE: We wait for T_conflict blocks but the protocol specification states
+	// that we should wait for block `T_first + T_conflict`. Need clarification.
+	phaseDurationWaiter, err := blockCounter.BlockWaiter(firstBlock + pm.conflictDuration)
+	if err != nil {
+		return fmt.Errorf("block waiter failure [%v]", err)
+	}
+
+	votesAndSubmissions := func(chainRelay relayChain.Interface) (bool, error) {
+		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
+		if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
+			return true, fmt.Errorf("voting threshold exceeded")
+		}
+		if !submissions.Lead().DKGResult.Equals(correctResult) {
+			// chainRelay.Vote(pm.RequestID, correctResult.Hash())
+			// return true, nil
+		} else if !submissions.Contains(correctResult) {
+			chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
+			// return true, nil
+		}
+		return false, nil
+	}
+
+	for {
+		select {
+		case <-phaseDurationWaiter:
+			return nil
+		case vote := <-onVoteChan:
+			if vote.RequestID.Cmp(pm.RequestID) == 0 {
+				if result, err := votesAndSubmissions(chainRelay); result {
+					return nil
+				} else if err != nil {
+					return err
+				}
+			}
+		case submission := <-onSubmissionChan:
+			if submission.RequestID.Cmp(pm.RequestID) == 0 {
+				if result, err := votesAndSubmissions(chainRelay); result {
+				} else if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+}
+
+func nOfVotesBelowThreshold(submissions *relayChain.DKGSubmissions, votingThreshold int) bool {
+	if submissions.DKGSubmissions == nil {
+		return true
+	}
+
+	return submissions.Lead().Votes <= votingThreshold // leadResult.votes > M_max
+}
