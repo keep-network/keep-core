@@ -2,9 +2,8 @@ package chain
 
 import "math/big"
 
-// DKGSubmissions is the set of submissions for a requestID.
-// DKGSubmissions tracks the number of votes for each unique
-// submission and associates this set with a requestID.
+// DKGSubmissions is the set of submissions for a requestID. It tracks the number
+// of votes for each unique submission and associates this set with a requestID.
 type DKGSubmissions struct {
 	requestID      *big.Int
 	DKGSubmissions []*DKGSubmission
@@ -16,19 +15,29 @@ type DKGSubmission struct {
 	Votes     int
 }
 
-// Lead returns a submission with the highest number of votes.  If there are
+// Leads returns submissions with the highest number of votes. If there are
 // no submissions it returns nil.
-func (d *DKGSubmissions) Lead() *DKGSubmission {
+func (d *DKGSubmissions) Leads() []*DKGSubmission {
+	leadingSubmissions := make([]*DKGSubmission, 0)
+
 	if len(d.DKGSubmissions) == 0 {
-		return nil
+		return leadingSubmissions
 	}
-	topSubmission := d.DKGSubmissions[0]
+
+	highestVotes := d.DKGSubmissions[0].Votes
 	for _, submission := range d.DKGSubmissions {
-		if topSubmission.Votes < submission.Votes {
-			topSubmission = submission
+		if submission.Votes > highestVotes {
+			highestVotes = submission.Votes
 		}
 	}
-	return topSubmission
+
+	for _, submission := range d.DKGSubmissions {
+		if submission.Votes == highestVotes {
+			leadingSubmissions = append(leadingSubmissions, submission)
+		}
+	}
+
+	return leadingSubmissions
 }
 
 // Contains returns true if 'result' is in the set of submissions.
