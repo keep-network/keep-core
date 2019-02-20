@@ -3,6 +3,7 @@ package dkg2
 import (
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -65,16 +66,19 @@ func ExecuteDKG(
 	// TODO Consider removing this print after Phase 14 is implemented and replace it with print at the end of DKG execution.
 	fmt.Printf("[member:%v] GJKR Result: %+v\n", playerIndex, gjkrResult)
 
-	err = executePublishing(
-		requestID,
-		playerIndex,
-		relayChain,
-		blockCounter,
-		convertResult(gjkrResult, groupSize),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("publishing failed [%v]", err)
-	}
+	go func() {
+		err = executePublishing(
+			requestID,
+			playerIndex,
+			relayChain,
+			blockCounter,
+			convertResult(gjkrResult, groupSize),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "publishing failed [%v]", err)
+			return
+		}
+	}()
 
 	return signer, nil
 }
