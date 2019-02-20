@@ -94,13 +94,20 @@ func TestDKGResultEquals(t *testing.T) {
 
 func TestHash(t *testing.T) {
 	dkgResult := &DKGResult{
-		Success:        true,
-		GroupPublicKey: []byte{100},
-		Disqualified:   []byte{1, 0, 1, 0},
-		Inactive:       []byte{0, 0, 1, 0},
+		Success: true,
+		GroupPublicKey: []byte{
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+			101, 102,
+		},
+		Disqualified: []byte{1, 0, 1, 0},
+		Inactive:     []byte{0, 0, 1, 0},
 	}
-	expectedHash := []byte{253, 157, 252, 65, 254, 175, 165, 131, 87, 84, 98, 128, 37, 49,
-		106, 147, 230, 64, 192, 22, 193, 71, 150, 55, 101, 1, 110, 4, 10, 189, 121, 38}
+	expectedHash := []byte{
+		80, 164, 35, 227, 202, 182, 90, 75, 211, 124, 161, 54, 169, 20, 65, 149,
+		33, 135, 254, 232, 161, 217, 97, 65, 216, 193, 251, 217, 126, 78, 137, 114,
+	}
 
 	actualHash := dkgResult.Hash()
 
@@ -108,6 +115,13 @@ func TestHash(t *testing.T) {
 		t.Errorf("\nexpected: %v\nactual:   %v\n", expectedHash, actualHash)
 	}
 }
+
+/*
+Should we add some more cases to check serialization?
+E.g.
+	`Disqualified` empty,
+	`Inactive` empty,
+*/
 
 func TestSerialize(t *testing.T) {
 	var tests = map[string]struct {

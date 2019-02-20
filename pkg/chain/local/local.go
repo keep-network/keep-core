@@ -45,7 +45,7 @@ type localChain struct {
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
-	stakerList []string
+	//OLD stakerList []string
 
 	// Track the submitted votes.
 	submissionsMutex sync.Mutex
@@ -87,7 +87,7 @@ func (c *localChain) DKGResultVote(
 		if bytes.Equal(submission.DKGResult.Hash(), dkgResultHash) {
 			submission.Votes++
 			dkgResultVote := &event.DKGResultVote{
-				RequestID: requestID,
+				//OLD RequestID: requestID,
 			}
 			c.handlerMutex.Lock()
 			for _, handler := range c.voteHandler {
@@ -416,12 +416,10 @@ func (c *localChain) RequestRelayEntry(
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
 func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
-
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
 	return c.submittedResults[requestID.String()] != nil, nil
-
 }
 
 // SubmitDKGResult submits the result to a chain.

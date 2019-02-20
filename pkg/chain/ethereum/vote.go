@@ -13,7 +13,7 @@ import (
 // GetDKGSubmissions returns the set of submissions.
 func (ec *ethereumChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmissions {
 	// TODO -- implement GetDKGSubmissions
-	return nil
+	panic("NOT IMPLEMENTED")
 }
 
 // DKGResultVote increments the vote for requestID
@@ -30,4 +30,5 @@ func (ec *ethereumChain) DKGResultVote(
 // OnDKGResultVote register a function for a callback when a vote occurs.
 func (ec *ethereumChain) OnDKGResultVote(func(dkgResultVote *event.DKGResultVote)) {
 	// TODO -- implement OnDKGResultVote
+	panic("NOT IMPLEMENTED")
 }

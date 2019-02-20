@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/crypto/sha3"
@@ -52,28 +51,6 @@ func (r *DKGResult) Equals(r2 *DKGResult) bool {
 	}
 	if !bytes.Equal(r.Inactive, r2.Inactive) {
 		return false
-	}
-	return true
-}
-
-// bigIntEquals checks if two big.Int values are equal.
-func bigIntEquals(expected *big.Int, actual *big.Int) bool {
-	if expected != nil && actual != nil {
-		return expected.Cmp(actual) == 0
-	}
-	return expected == nil && actual == nil
-}
-
-// boolSlicesEqual checks if two slices of bool are equal. Slices need to have
-// the same length and have the same order of entries.
-func boolSlicesEqual(expectedSlice []bool, actualSlice []bool) bool {
-	if len(expectedSlice) != len(actualSlice) {
-		return false
-	}
-	for i := range expectedSlice {
-		if expectedSlice[i] != actualSlice[i] {
-			return false
-		}
 	}
 	return true
 }

@@ -605,3 +605,14 @@ func TestOnDKGResultVoteBadRequestID(t *testing.T) {
 	}
 
 }
+
+/*
+# github.com/keep-network/keep-core/pkg/chain/local
+./local_test.go:229:42: undefined: submittedResult1
+./local_test.go:232:27: undefined: submittedResult1
+./local_test.go:236:28: undefined: submittedResult1
+./local_test.go:259:42: undefined: submittedResult1
+./local_test.go:262:27: undefined: submittedResult1
+./local_test.go:266:28: undefined: submittedResult1
+./local_test.go:266:28: too many errors
+*/
