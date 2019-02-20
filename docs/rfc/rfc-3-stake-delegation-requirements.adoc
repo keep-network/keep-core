@@ -263,7 +263,7 @@ strategies.
 The Atomic Operating is the strategy that has the lowest network throughput,
 therefore it should be rejected.
 
-The Multi-Operating strategy is the theoretically slightly least secure, but
+The Multi-Operating strategy is the theoretically slightly less secure, but
 practically at the same level of security as Atomic Operating, therefore it
 should be considered as an available solution.
 
@@ -311,10 +311,11 @@ Accordingly to the design strategy and the design requirements the design
 architecture should be based on the following combinations of strategies:
 
 Atomic Multi-Operating with Dynamic or Static MINIMUM_STAKE and Delayed
-Undelegation with Misbehaving or Consequent Penalisation
+Undelegation with Consequent Penalisation
 
 Other strategies tend to be suboptimal from the perspective of both security and
-network throughput requirements.
+network throughput requirements, or from implementation.
+
 
 === General requirements notes
 
