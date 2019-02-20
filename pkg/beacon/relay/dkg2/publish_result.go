@@ -23,6 +23,10 @@ type Publisher struct {
 	// Predefined step for each publishing window. The value is used to determine
 	// eligible publishing member. Relates to DKG Phase 13.
 	blockStep int
+
+	conflictDuration int // T_conflict
+
+	dishonestThreshold int // M
 }
 
 // executePublishing runs Distributed Key Generation result publication and voting,
@@ -173,59 +177,96 @@ func (pm *Publisher) Phase14(
 	chainRelay relayChain.Interface,
 ) error {
 	onVoteChan := make(chan *event.DKGResultVote)
-	chainRelay.OnDKGResultVote(func(vote *event.DKGResultVote) {
-		onVoteChan <- vote
-	})
-	onSubmissionChan := make(chan *event.DKGResultPublication)
-	chainRelay.OnDKGResultPublished(func(result *event.DKGResultPublication) {
-		onSubmissionChan <- result
-	})
-
-	if pm.RequestID == nil {
+	onVoteSubscription, err := chainRelay.OnDKGResultVote(
+		func(vote *event.DKGResultVote) {
+			onVoteChan <- vote
+		},
+	)
+	if err != nil {
+		close(onVoteChan)
+		return fmt.Errorf(
+			"could not watch for DKG result vote [%v]",
+			err,
+		)
 	}
+	defer onVoteSubscription.Unsubscribe()
+
+	onSubmissionChan := make(chan *event.DKGResultPublication)
+	defer close(onSubmissionChan)
+	onPublishedResultSubscription, err := chainRelay.OnDKGResultPublished(
+		func(result *event.DKGResultPublication) {
+			onSubmissionChan <- result
+		},
+	)
+	if err != nil {
+		close(onVoteChan)
+		return fmt.Errorf(
+			"could not watch for DKG result vote [%v]",
+			err,
+		)
+	}
+	defer onPublishedResultSubscription.Unsubscribe()
+
 	submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
 	if submissions == nil {
 		return fmt.Errorf("nothing submitted")
 	}
-	if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
-		return fmt.Errorf("voting threshold exceeded")
+
+	if pm.leadHasEnoughVotes(submissions) {
+		return nil
 	}
+
 	if !submissions.Contains(correctResult) {
 		chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
-		// return nil
-	}
-
-	blockCounter, err := pm.chainHandle.BlockCounter()
-	if err != nil {
-		return fmt.Errorf("block counter failure [%v]", err)
-	}
-
-	// firstBlock := 0 // T_First
-	firstBlock, err := blockCounter.CurrentBlock() // T_First
-	if err != nil {
-		return fmt.Errorf("current block failure [%v]", err)
+		return nil
 	}
 
 	// NOTE: We wait for T_conflict blocks but the protocol specification states
 	// that we should wait for block `T_first + T_conflict`. Need clarification.
-	phaseDurationWaiter, err := blockCounter.BlockWaiter(firstBlock + pm.conflictDuration)
+	phaseDurationWaiter, err := pm.blockCounter.BlockWaiter(pm.conflictDuration)
 	if err != nil {
 		return fmt.Errorf("block waiter failure [%v]", err)
 	}
 
+	// Returns already submitted
 	votesAndSubmissions := func(chainRelay relayChain.Interface) (bool, error) {
+		errorChannel := make(chan error)
+		defer close(errorChannel)
+
 		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
-		if !nOfVotesBelowThreshold(submissions, pm.votingThreshold) {
-			return true, fmt.Errorf("voting threshold exceeded")
+
+		if pm.leadHasEnoughVotes(submissions) {
+			return false, nil
 		}
-		if !submissions.Lead().DKGResult.Equals(correctResult) {
-			// chainRelay.Vote(pm.RequestID, correctResult.Hash())
-			// return true, nil
-		} else if !submissions.Contains(correctResult) {
-			chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
-			// return true, nil
+
+		if submissions.IsOnlyLead(correctResult) {
+			return false, nil
 		}
-		return false, nil
+
+		if submissions.Contains(correctResult) {
+			chainRelay.DKGResultVote(pm.RequestID, correctResult.Hash()).
+				OnSuccess(func(groupRegisteredEvent *event.DKGResultVote) {
+					fmt.Printf(
+						"vote submitted for requestID=[%v]\n",
+						groupRegisteredEvent.RequestID,
+					)
+				}).OnFailure(func(err error) {
+				errorChannel <- err
+			})
+			return true, <-errorChannel
+		}
+
+		chainRelay.SubmitDKGResult(pm.RequestID, correctResult).
+			OnSuccess(func(dkgResultPublishedEvent *event.DKGResultPublication) {
+				fmt.Printf(
+					"result submitted for requestID=[%v]\n",
+					dkgResultPublishedEvent.RequestID,
+				)
+			}).
+			OnFailure(func(err error) {
+				errorChannel <- err
+			})
+		return true, <-errorChannel
 	}
 
 	for {
@@ -233,29 +274,29 @@ func (pm *Publisher) Phase14(
 		case <-phaseDurationWaiter:
 			return nil
 		case vote := <-onVoteChan:
+			// TODO Check if channel is closed?
 			if vote.RequestID.Cmp(pm.RequestID) == 0 {
-				if result, err := votesAndSubmissions(chainRelay); result {
-					return nil
-				} else if err != nil {
+				alreadySubmitted, err := votesAndSubmissions(chainRelay)
+				if alreadySubmitted || err != nil {
 					return err
 				}
 			}
 		case submission := <-onSubmissionChan:
+			// TODO Check if channel is closed?
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
-				if result, err := votesAndSubmissions(chainRelay); result {
-				} else if err != nil {
+				alreadySubmitted, err := votesAndSubmissions(chainRelay)
+				if alreadySubmitted || err != nil {
 					return err
 				}
 			}
 		}
 	}
-
 }
 
-func nOfVotesBelowThreshold(submissions *relayChain.DKGSubmissions, votingThreshold int) bool {
-	if submissions.DKGSubmissions == nil {
-		return true
+func (pm *Publisher) leadHasEnoughVotes(submissions *relayChain.DKGSubmissions) bool {
+	if leads := submissions.Leads(); len(leads) > 0 {
+		return submissions.Leads()[0].Votes > pm.dishonestThreshold
 	}
 
-	return submissions.Lead().Votes <= votingThreshold // leadResult.votes > M_max
+	return false
 }
