@@ -98,9 +98,9 @@ individual sections:
 Additionally, the beacon makes money by charging for _beacon requests_. An early
 draft of the pricing mechanism is described in its own section.
 
-include::group-selection.adoc[leveloffset=+2]
+include::group-selection/index.adoc[leveloffset=+2]
 
-include::dkg.adoc[leveloffset=+2]
+include::dkg/index.adoc[leveloffset=+2]
 
 include::pricing.adoc[leveloffset=+1]
 

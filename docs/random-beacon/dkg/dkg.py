@@ -42,6 +42,14 @@ broadcast(messagePhase1(ephemeralPubkeys))
 # tag::phase-2[]
 # Receive messages from phase 1:
 # - ephemeral public keys of other participants
+#     IA if message not received
+#
+# Validate:
+# - message from P_j must contain a public key for all P_k, k != j
+#     DQ if public key absent
+# - all public keys must be valid curve points of the ECDH curve
+#     DQ if invalid
+#
 messages.receive(1)
 
 for j in goodParticipants[2], j != i:
@@ -103,6 +111,18 @@ broadcast(messagePhase3(encryptedShares, self.commitments))
 # Receive messages from phase 3:
 # - commitments to the secret sharing polynomials
 # - encrypted share payloads
+#     IA if message not present
+#
+# Validate:
+# - the expected number of commitments (M + 1) is present
+#     DQ if n of commitments incorrect
+# - commitments must be valid curve points of G1
+#     DQ if a commitment is not valid curve point
+# - message from P_j must contain encrypted payloads for all other participants
+#     DQ if payload absent
+# - the length of each payload must be: 2 * G1_SCALAR_LENGTH + MAC_LENGTH
+#     DQ if a payload has incorrect length
+#
 messages.receive(3)
 
 shareComplaints = []
@@ -129,7 +149,16 @@ broadcast(messagePhase4(shareComplaints))
 
 # tag::phase-5[]
 # Receive messages from phase 4:
-# - complaints about inconsistent shares
+# - complaints about inconsistent shares, or "no complaints"
+#     IA if not present
+#
+# Validate:
+# - each revealed private key must be a valid scalar for ECDH
+#     DQ if invalid
+# - each revealed private key must correspond to the public key
+#     DQ if does not match
+#     (explicit in pseudocode)
+#
 messages.receive(4)
 
 for complaint in messages[4]:
@@ -208,6 +237,14 @@ broadcast(messagePhase7(self.pubkeyCoeffs))
 # tag::phase-8[]
 # Receive messages from phase 7:
 # - public key coefficients
+#     IA if message not present
+#
+# Validate:
+# - the expected number (M + 1) of pubkey coefficients must be present
+#     DQ if incorrect number of coeffs
+# - public key coefficients must be valid curve points for G1
+#     DQ if a coefficient is not a valid curve point
+#
 messages.receive(7)
 
 pubkeyComplaints = []
@@ -228,7 +265,16 @@ broadcast(messagePhase8(pubkeyComplaints))
 
 # tag::phase-9[]
 # Receive messages from phase 8:
-# - complaints about invalid public key coefficients
+# - complaints about invalid public key coefficients, or "no complaints"
+#     IA if no message sent
+#
+# Validate:
+# - each revealed private key must be a valid scalar for ECDH
+#     DQ if invalid
+# - each revealed private key must correspond to the public key
+#     DQ if does not match pubkey from phase 1
+#     (explicit in pseudocode)
+#
 messages.receive(8)
 
 for complaint in messages[8]:
@@ -274,6 +320,17 @@ broadcast(messagePhase10(disqualifiedKeys))
 # tag::phase-11[]
 # Receive messages from phase 10:
 # - good participants' ephemeral private keys for each disqualified participant
+#     IA if no message sent
+#
+# Validate:
+# - all expected private keys are revealed
+#     DQ if number of keys is incorrect
+# - each revealed private key must be a valid scalar for ECDH
+#     DQ if a private key is invalid
+# - each revealed private key must correspond to the public key
+#     DQ if private key does not match public key from phase 1
+#     (explicit in pseudocode)
+#
 messages.receive(10)
 
 for keys_j in messages[10]:

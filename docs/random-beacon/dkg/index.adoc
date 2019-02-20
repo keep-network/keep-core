@@ -22,9 +22,13 @@ is defined.
 
 ifndef::yellowpaper[toc::[]]
 
-include::dkg-terms.adoc[]
+:leveloffset: +1
 
-include::dkg-concepts.adoc[]
+include::terms.adoc[]
+
+include::concepts.adoc[]
+
+:leveloffset: -1
 
 
 == Protocol
