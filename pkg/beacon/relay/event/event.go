@@ -17,7 +17,7 @@ type Entry struct {
 	Timestamp     time.Time
 	Seed          *big.Int
 
-	BlockNumber *big.Int
+	BlockNumber uint64
 }
 
 // Request represents a request for an entry in the threshold relay.
@@ -28,7 +28,7 @@ type Request struct {
 	Seed          *big.Int
 	PreviousValue *big.Int
 
-	BlockNumber *big.Int
+	BlockNumber uint64
 }
 
 // GroupRegistration represents a registered group in the threshold relay with a

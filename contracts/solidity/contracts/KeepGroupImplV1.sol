@@ -25,7 +25,7 @@ contract KeepGroupImplV1 is Ownable {
 
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
+    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;

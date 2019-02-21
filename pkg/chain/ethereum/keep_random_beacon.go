@@ -142,7 +142,7 @@ type relayEntryRequestedFunc func(
 	payment *big.Int,
 	blockReward *big.Int,
 	seed *big.Int,
-	blockNumber *big.Int,
+	blockNumber uint64,
 )
 
 // WatchRelayEntryRequested watches for event RelayEntryRequested.
@@ -180,7 +180,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Payment,
 					event.BlockReward,
 					event.Seed,
-					event.BlockNumber,
+					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
@@ -209,7 +209,7 @@ type relayEntryGeneratedFunc func(
 	requestGroupPubKey []byte,
 	previousEntry *big.Int,
 	seed *big.Int,
-	blockNumber *big.Int,
+	blockNumber uint64,
 )
 
 // WatchRelayEntryGenerated watches for event.
@@ -248,7 +248,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.RequestGroupPubKey,
 					event.PreviousEntry,
 					event.Seed,
-					event.BlockNumber,
+					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():

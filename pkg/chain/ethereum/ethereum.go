@@ -288,7 +288,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			requestGroupPubKey []byte,
 			previousEntry *big.Int,
 			seed *big.Int,
-			blockNumber *big.Int,
+			blockNumber uint64,
 		) {
 			handle(&event.Entry{
 				RequestID:     requestID,
@@ -318,7 +318,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			payment *big.Int,
 			blockReward *big.Int,
 			seed *big.Int,
-			blockNumber *big.Int,
+			blockNumber uint64,
 		) {
 			handle(&event.Request{
 				RequestID:   requestID,
