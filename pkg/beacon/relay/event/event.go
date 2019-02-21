@@ -45,6 +45,8 @@ type GroupRegistration struct {
 type DKGResultPublication struct {
 	RequestID      *big.Int
 	GroupPublicKey []byte
+
+	BlockNumber uint64
 }
 
 // GroupTicketSubmission represents a group selection ticket
