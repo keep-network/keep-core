@@ -939,12 +939,12 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) reconstructIndividualPublicKeys() {
 	rm.reconstructedIndividualPublicKeys = make(
-		map[MemberID]*bn256.G1,
+		map[MemberID]*bn256.G2,
 		len(rm.reconstructedIndividualPrivateKeys),
 	)
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// y_m = G * z_m
-		individualPublicKey := new(bn256.G1).ScalarBaseMult(individualPrivateKey)
+		individualPublicKey := new(bn256.G2).ScalarBaseMult(individualPrivateKey)
 		rm.reconstructedIndividualPublicKeys[memberID] = individualPublicKey
 	}
 }
@@ -977,12 +977,12 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 
 	// Add received peer group members' individual public keys `A_j0`.
 	for _, peerPublicKey := range rm.receivedValidPeerIndividualPublicKeys() {
-		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
+		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 	}
 
 	// Add reconstructed disqualified members' individual public keys `G * z_m`.
 	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
-		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
+		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 
 	}
 

@@ -327,10 +327,10 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 
 	// Reconstructed individual public keys for disqualified members.
-	member.reconstructedIndividualPublicKeys[4] = new(bn256.G1).ScalarBaseMult(
+	member.reconstructedIndividualPublicKeys[4] = new(bn256.G2).ScalarBaseMult(
 		big.NewInt(91),
 	)
-	member.reconstructedIndividualPublicKeys[5] = new(bn256.G1).ScalarBaseMult(
+	member.reconstructedIndividualPublicKeys[5] = new(bn256.G2).ScalarBaseMult(
 		big.NewInt(92),
 	)
 

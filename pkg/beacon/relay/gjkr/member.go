@@ -175,7 +175,7 @@ type ReconstructingMember struct {
 	// Stored as `<m, y_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
-	reconstructedIndividualPublicKeys map[MemberID]*bn256.G1
+	reconstructedIndividualPublicKeys map[MemberID]*bn256.G2
 }
 
 // CombiningMember represents one member in a threshold sharing group who is
@@ -187,7 +187,7 @@ type CombiningMember struct {
 
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
-	groupPublicKey *bn256.G1
+	groupPublicKey *bn256.G2
 }
 
 // InitializeFinalization returns a member to perform next protocol operations.
@@ -310,7 +310,7 @@ func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
 		RevealingMember:                    rm,
 		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
-		reconstructedIndividualPublicKeys:  make(map[MemberID]*bn256.G1),
+		reconstructedIndividualPublicKeys:  make(map[MemberID]*bn256.G2),
 	}
 }
 
@@ -327,15 +327,15 @@ func (rm *ReconstructingMember) individualPrivateKey() *big.Int {
 
 // individualPublicKey returns current member's individual public key.
 // Individual public key is zeroth public key share point `A_i0`.
-func (rm *ReconstructingMember) individualPublicKey() *bn256.G1 {
+func (rm *ReconstructingMember) individualPublicKey() *bn256.G2 {
 	return rm.publicKeySharePoints[0]
 }
 
 // receivedValidPeerIndividualPublicKeys returns individual public keys received
 // from other members which passed the validation. Individual public key is zeroth
 // public key share point `A_j0`.
-func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G1 {
-	var receivedValidPeerIndividualPublicKeys []*bn256.G1
+func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G2 {
+	var receivedValidPeerIndividualPublicKeys []*bn256.G2
 
 	for _, peerPublicKeySharePoints := range sm.receivedValidPeerPublicKeySharePoints {
 		receivedValidPeerIndividualPublicKeys = append(
