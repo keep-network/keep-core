@@ -265,9 +265,7 @@ contract KeepGroupImplV1 is Ownable {
             _groupMembers[groupPublicKey].push(members[i]);
         }
         emit OnGroupRegistered(groupPublicKey);
-
-        uint256 activationBlockHeight = block.number;
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID, activationBlockHeight);
+        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
     }
 
     /**

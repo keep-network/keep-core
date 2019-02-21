@@ -344,12 +344,12 @@ func (ec *ethereumChain) OnGroupRegistered(
 		func(
 			groupPublicKey []byte,
 			requestID *big.Int,
-			activationBlockHeight *big.Int,
+			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
-				GroupPublicKey:        groupPublicKey,
-				RequestID:             requestID,
-				ActivationBlockHeight: activationBlockHeight,
+				GroupPublicKey: groupPublicKey,
+				RequestID:      requestID,
+				BlockNumber:    blockNumber,
 			})
 		},
 		func(err error) error {

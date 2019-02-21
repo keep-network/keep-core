@@ -35,9 +35,10 @@ type Request struct {
 // public key, that is considered active at ActivationBlockHeight, and was
 // spawned by the relay request with id, RequestID.
 type GroupRegistration struct {
-	GroupPublicKey        []byte
-	RequestID             *big.Int
-	ActivationBlockHeight *big.Int
+	GroupPublicKey []byte
+	RequestID      *big.Int
+
+	BlockNumber uint64
 }
 
 // DKGResultPublication represents a DKG result publication event.

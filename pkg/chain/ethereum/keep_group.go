@@ -283,7 +283,7 @@ func (kg *keepGroup) SubmitGroupPublicKey(
 type submitGroupPublicKeyEventFunc func(
 	groupPublicKey []byte,
 	requestID *big.Int,
-	activationBlockHeight *big.Int,
+	blockNumber uint64,
 )
 
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
@@ -319,7 +319,7 @@ func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
 				success(
 					event.GroupPublicKey,
 					event.RequestID,
-					event.ActivationBlockHeight,
+					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
