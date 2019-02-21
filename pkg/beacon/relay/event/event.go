@@ -16,6 +16,8 @@ type Entry struct {
 	PreviousEntry *big.Int
 	Timestamp     time.Time
 	Seed          *big.Int
+
+	BlockNumber *big.Int
 }
 
 // Request represents a request for an entry in the threshold relay.

@@ -208,8 +208,8 @@ type relayEntryGeneratedFunc func(
 	requestResponse *big.Int,
 	requestGroupPubKey []byte,
 	previousEntry *big.Int,
-	blockNumber *big.Int,
 	seed *big.Int,
+	blockNumber *big.Int,
 )
 
 // WatchRelayEntryGenerated watches for event.
@@ -247,8 +247,8 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 					event.RequestResponse,
 					event.RequestGroupPubKey,
 					event.PreviousEntry,
-					event.BlockNumber,
 					event.Seed,
+					event.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():

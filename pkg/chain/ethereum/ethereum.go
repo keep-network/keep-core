@@ -287,8 +287,8 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			requestResponse *big.Int,
 			requestGroupPubKey []byte,
 			previousEntry *big.Int,
-			blockNumber *big.Int,
 			seed *big.Int,
+			blockNumber *big.Int,
 		) {
 			handle(&event.Entry{
 				RequestID:     requestID,
@@ -297,6 +297,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
 				Seed:          seed,
+				BlockNumber:   blockNumber,
 			})
 		},
 		func(err error) error {
