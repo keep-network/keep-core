@@ -363,7 +363,7 @@ func (fm *FinalizingMember) Result() *Result {
 }
 
 // GroupPublicKey returns the full group public key.
-func (fm *FinalizingMember) GroupPublicKey() *bn256.G1 {
+func (fm *FinalizingMember) GroupPublicKey() *bn256.G2 {
 	return fm.groupPublicKey
 }
 
