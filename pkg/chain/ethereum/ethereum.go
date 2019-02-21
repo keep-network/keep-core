@@ -324,6 +324,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 				Payment:     payment,
 				BlockReward: blockReward,
 				Seed:        seed,
+				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {
