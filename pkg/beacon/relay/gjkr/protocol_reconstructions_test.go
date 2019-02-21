@@ -257,13 +257,13 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	reconstructedIndividualPrivateKeys[5] = big.NewInt(15) // z_5
 
 	expectedIndividualPublicKeys := make( // y_m = g^{z_m}
-		map[MemberID]*bn256.G1,
+		map[MemberID]*bn256.G2,
 		len(disqualifiedMembersIDs),
 	)
-	expectedIndividualPublicKeys[4] = new(bn256.G1).ScalarBaseMult(
+	expectedIndividualPublicKeys[4] = new(bn256.G2).ScalarBaseMult(
 		reconstructedIndividualPrivateKeys[4],
 	)
-	expectedIndividualPublicKeys[5] = new(bn256.G1).ScalarBaseMult(
+	expectedIndividualPublicKeys[5] = new(bn256.G2).ScalarBaseMult(
 		reconstructedIndividualPrivateKeys[5],
 	)
 
@@ -296,7 +296,7 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 2
 	groupSize := 3
 
-	expectedGroupPublicKey := new(bn256.G1).ScalarBaseMult(
+	expectedGroupPublicKey := new(bn256.G2).ScalarBaseMult(
 		big.NewInt(243), // 10 + 20 + 30 + 91 + 92
 	)
 	members, err := initializeCombiningMembersGroup(threshold, groupSize)
