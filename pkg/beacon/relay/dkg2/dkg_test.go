@@ -104,7 +104,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 func TestConvertResult(t *testing.T) {
 	groupSize := 5
 
-	publicKey := new(bn256.G1).ScalarBaseMult(big.NewInt(2))
+	publicKey := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
 
 	var tests = map[string]struct {
 		gjkrResult     *gjkr.Result
