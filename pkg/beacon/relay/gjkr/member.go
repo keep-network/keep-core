@@ -134,10 +134,10 @@ type SharingMember struct {
 	// Public values of each polynomial `a` coefficient defined in secretCoefficients
 	// field. It is denoted as `A_ik` in protocol specification. The zeroth
 	// public key share point `A_i0` is a member's public key share.
-	publicKeySharePoints []*bn256.G1
+	publicKeySharePoints []*bn256.G2
 	// Public key share points received from other group members which passed
 	// the validation. Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerPublicKeySharePoints map[MemberID][]*bn256.G1
+	receivedValidPeerPublicKeySharePoints map[MemberID][]*bn256.G2
 }
 
 // PointsJustifyingMember represents one member in a threshold key sharing group,
@@ -291,7 +291,7 @@ func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
 func (qm *QualifiedMember) InitializeSharing() *SharingMember {
 	return &SharingMember{
 		QualifiedMember:                       qm,
-		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*bn256.G1),
+		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*bn256.G2),
 	}
 }
 

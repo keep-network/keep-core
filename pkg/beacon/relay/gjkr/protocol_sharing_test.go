@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -114,7 +114,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 		},
 		"negative validation - changed public key share - one accused member": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[1].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
+				messages[1].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[1].publicKeySharePoints[1],
 					big.NewInt(2),
 				)
@@ -125,11 +125,11 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[0].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
+				messages[0].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[0].publicKeySharePoints[1],
 					big.NewInt(2),
 				)
-				messages[3].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
+				messages[3].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[3].publicKeySharePoints[1],
 					big.NewInt(2),
 				)
