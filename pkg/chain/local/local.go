@@ -41,7 +41,7 @@ type localChain struct {
 	requestID   int64
 	latestValue *big.Int
 
-	simulatedHeight int64
+	simulatedHeight uint64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
@@ -113,7 +113,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	groupRegistration := &event.GroupRegistration{
 		GroupPublicKey: groupPublicKey,
 		RequestID:      requestID,
-		BlockNumber:    uint64(c.simulatedHeight),
+		BlockNumber:    c.simulatedHeight,
 	}
 
 	c.groupRegistrationsMutex.Lock()
@@ -148,7 +148,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	}
 	c.handlerMutex.Unlock()
 
-	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddUint64(&c.simulatedHeight, 1)
 
 	return groupRegistrationPromise
 }
@@ -326,7 +326,7 @@ func (c *localChain) RequestRelayEntry(
 		BlockReward:   blockReward,
 		Seed:          seed,
 	}
-	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddUint64(&c.simulatedHeight, 1)
 	atomic.AddInt64(&c.requestID, 1)
 
 	c.handlerMutex.Lock()
