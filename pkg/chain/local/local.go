@@ -74,6 +74,7 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 
 	promise.Fulfill(&event.GroupTicketSubmission{
 		TicketValue: ticket.Value,
+		BlockNumber: c.simulatedHeight,
 	})
 
 	return promise

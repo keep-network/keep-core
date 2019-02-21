@@ -53,4 +53,6 @@ type DKGResultPublication struct {
 // submission event.
 type GroupTicketSubmission struct {
 	TicketValue *big.Int
+
+	BlockNumber uint64
 }
