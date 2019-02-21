@@ -15,7 +15,7 @@ import (
 // represented by this ThresholdSigner instance.
 type ThresholdSigner struct {
 	memberID             gjkr.MemberID
-	groupPublicKey       *bn256.G1
+	groupPublicKey       *bn256.G2
 	groupPrivateKeyShare *big.Int
 }
 

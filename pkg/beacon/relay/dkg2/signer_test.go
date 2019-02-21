@@ -11,7 +11,7 @@ import (
 
 func TestSignAndComplete(t *testing.T) {
 	groupPrivateKey := big.NewInt(34)
-	groupPublicKey := new(bn256.G1).ScalarBaseMult(groupPrivateKey)
+	groupPublicKey := new(bn256.G2).ScalarBaseMult(groupPrivateKey)
 
 	signers := []*ThresholdSigner{
 		&ThresholdSigner{1, groupPublicKey, big.NewInt(2)},
