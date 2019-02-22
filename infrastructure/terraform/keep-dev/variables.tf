@@ -118,8 +118,8 @@ variable "gke_cluster" {
     master_ipv4_cidr_block              = "172.16.0.0/28"
     master_private_endpoint             = "172.16.0.2"
     daily_maintenance_window_start_time = "00:00"
-    network_policy_enabled              = true
-    network_policy_provider             = "CALICO"
+    network_policy_enabled              = false
+    network_policy_provider             = "PROVIDER_UNSPECIFIED"
     logging_service                     = "logging.googleapis.com/kubernetes"
   }
 }
@@ -177,5 +177,19 @@ variable "kube_state_metrics" {
 variable "prometheus_to_sd" {
   default {
     version = "0.1.1"
+  }
+}
+
+variable "openvpn" {
+  default {
+    name    = "helm-openvpn"
+    version = "3.10.0"
+  }
+}
+
+variable "openvpn_parameters" {
+  default {
+    route_all_traffic_through_vpn = "false"
+    gke_master_ipv4_cidr_address  = "172.16.0.0"
   }
 }
