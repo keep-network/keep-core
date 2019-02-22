@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/bls"
 )
@@ -26,7 +27,8 @@ func (ts *ThresholdSigner) MemberID() gjkr.MemberID {
 
 // GroupPublicKeyBytes returns group public key representation in bytes.
 func (ts *ThresholdSigner) GroupPublicKeyBytes() []byte {
-	return ts.groupPublicKey.Marshal()
+	altbn128GroupPublicKey := altbn128.G2Point{ts.groupPublicKey}
+	return altbn128GroupPublicKey.Compress()
 }
 
 // CalculateSignatureShare takes the message and calculates signer's signature
