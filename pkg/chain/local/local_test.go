@@ -110,7 +110,7 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
-			RequestID: big.NewInt(int64(19)),
+			RequestID:   big.NewInt(int64(19)),
 			GroupPubKey: []byte("1"),
 		},
 	)
@@ -138,6 +138,78 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 		t.Fatal(ctx.Err())
 	}
 
+}
+
+func TestLocalBlockHeightWaiter(t *testing.T) {
+	var tests = map[string]struct {
+		blockHeight      int
+		initialDelay     time.Duration
+		expectedWaitTime time.Duration
+	}{
+		"does not wait for negative block height": {
+			blockHeight:      -1,
+			expectedWaitTime: 0,
+		},
+		"returns immediately for genesis block": {
+			blockHeight:      0,
+			expectedWaitTime: 0,
+		},
+		"returns immediately for block height already reached": {
+			blockHeight:      2,
+			initialDelay:     3 * blockTime,
+			expectedWaitTime: 0,
+		},
+		"waits for block height not yet reached": {
+			blockHeight:      5,
+			initialDelay:     2 * blockTime,
+			expectedWaitTime: 3 * blockTime,
+		},
+	}
+
+	for testName, test := range tests {
+		test := test
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+			c := Connect(10, 4, big.NewInt(100))
+
+			blockCounter, err := c.BlockCounter()
+			if err != nil {
+				t.Fatalf("failed to set up block counter: [%v]", err)
+			}
+
+			time.Sleep(test.initialDelay)
+
+			start := time.Now().UTC()
+			blockCounter.WaitForBlockHeight(test.blockHeight)
+			end := time.Now().UTC()
+
+			elapsed := end.Sub(start)
+
+			// Block waiter should wait for test.expectedWaitTime minus some
+			// margin at minimum; the margin is needed because clock is not
+			// always that precise. Setting it to 5ms for this test.
+			minMargin := time.Duration(5) * time.Millisecond
+			if elapsed < (test.expectedWaitTime - minMargin) {
+				t.Errorf(
+					"waited less than expected; expected [%v] at min, waited [%v]",
+					test.expectedWaitTime,
+					elapsed,
+				)
+			}
+
+			// Block waiter should wait for test.expectedWaitTime plus some
+			// margin at maximum; the margin is the time needed for the return
+			// instructions to execute, setting it to 25ms for this test.
+			maxMargin := time.Duration(25) * time.Millisecond
+			if elapsed > (test.expectedWaitTime + maxMargin) {
+				t.Errorf(
+					"waited longer than expected; expected %v at max, waited %v",
+					test.expectedWaitTime,
+					elapsed,
+				)
+			}
+		})
+	}
 }
 
 func TestLocalBlockWaiter(t *testing.T) {
@@ -183,11 +255,14 @@ func TestLocalBlockWaiter(t *testing.T) {
 
 			elapsed := end.Sub(start)
 
-			// Block waiter should wait for test.expectedWaitTime at minimum.
-			if elapsed < test.expectedWaitTime {
+			// Block waiter should wait for test.expectedWaitTime minus some
+			// margin at minimum; the margin is needed because clock is not
+			// always that precise. Setting it to 5ms for this test.
+			minMargin := time.Duration(5) * time.Millisecond
+			if elapsed < (test.expectedWaitTime - minMargin) {
 				t.Errorf(
 					"waited less than expected; expected [%v] at min, waited [%v]",
-					test.expectedWaitTime,
+					test.expectedWaitTime+minMargin,
 					elapsed,
 				)
 			}
@@ -195,8 +270,8 @@ func TestLocalBlockWaiter(t *testing.T) {
 			// Block waiter should wait for test.expectedWaitTime plus some
 			// margin at maximum; the margin is the time needed for the return
 			// instructions to execute, setting it to 25ms for this test.
-			margin := time.Duration(25) * time.Millisecond
-			if elapsed > (test.expectedWaitTime + margin) {
+			maxMargin := time.Duration(25) * time.Millisecond
+			if elapsed > (test.expectedWaitTime + maxMargin) {
 				t.Errorf(
 					"waited longer than expected; expected %v at max, waited %v",
 					test.expectedWaitTime,
