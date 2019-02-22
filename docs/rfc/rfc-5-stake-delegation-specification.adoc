@@ -1,6 +1,6 @@
 :toc: macro
 
-= RFC: Stake delegation specification
+= RFC 5: Stake delegation specification
 
 :icons: font
 :numbered:
@@ -11,14 +11,13 @@ toc::[]
 Keep tokens are going to be staked by having token owners delegate their staked
 balance to an operator account and use it to run the Keep Client. The operator
 account cannot access the stake directly, nonetheless, it operates on behalf of
-the owner and bad acting will result in slashing the owners' stake. The operator
+the owner and bad acting will result in slashing the owner's stake. The operator
 may be a third party, or it may be a different address controlled by the owner.
 
 Stake delegation will be beneficial for the security of Keep users as it allows
 for on-stake operations with a "cold wallet". Thus, putting Keep users wallets
 offline protects them from "hacks" and stake delegation enables continuous
-rewarding on safe operations on staked assets. Also exposure of Keep users
-public keys will be limited. 
+rewarding on safe operations on staked assets.
 
 === Terminology
 
@@ -56,16 +55,15 @@ the network throughput without compromising the security of owners stake.
 
 1. _owner_ can only have one operator.
 2. _owner_ can only delegate all of his stake.
-3. _operator_ cannot have any stake of his own.
-4. _operator_ cannot have any tokens at all.
-5. _operator_ can only have a _delegated stake_ from only one _owner_.
-6. If an _owner_ tries to delegate to more than one operator, the tx must
+3. _operator_ cannot have any KEEP tokens at all.
+4. _operator_ can only have a _delegated stake_ from only one _owner_.
+5. If an _owner_ tries to delegate to more than one operator, the tx must
 fail.
-7. If an _owner_ tries to delegate a stake to an _operator_ who already has a
+6. If an _owner_ tries to delegate a stake to an _operator_ who already has a
 stake, the tx must fail.
-8. The end of an _on stake operation_ happens only after all rewards are
-granted and all penalties are imposed. 
-9. Rewarding and penalization happens as the last phase of all operations.
+7. The end of an _on stake operation_ happens only after all rewards are
+granted and all penalties are imposed.
+8. Rewarding and penalization happens as the last phase of all operations.
 
 == Roles
 
@@ -74,93 +72,82 @@ They are briefly characterized in this section.
 
 === Owner
 
-The owner is the ultimate holder of the tokens. Before staking, the owner has
-full control over the tokens, and the tokens are returned to the owner after
-staking has finished. The owner's participation is not required in the
-day-to-day operations of the staker, so cold storage can be accommodated to the
-maximum extent.
+The owner is the ultimate holder of the tokens. Before stake delegation, the
+owner has full control over the tokens, and the tokens are returned to the owner
+after stake delegation has finished. The owner's participation is not required
+in the day-to-day operations on the stake, so cold storage can be accommodated
+to the maximum extent.
 
-The owner address is used to initiate staking and create the staker, and to
-finish staking and reclaim the staked tokens.
+The owner address is used to initiate and 
+<<delegating, create a stake delegation>>, and to
+<<undelegating, finish the delegation>> and
+<<claiming, reclaim the staked tokens>>.
 
 === Operator
 
-The operator handles the everyday operations of the staker without actually
-owning the staked tokens. While this enables third-party delegation without eg.
-making it possible for the operator to simply transfer away tokens, it should be
-noted that a malicious operator can exploit stake slashing to steal or destroy
-tokens and thus the entire staked amount is indeed at stake.
+The operator handles the everyday operations on the delegated stake without
+actually owning the staked tokens. While this enables third-party delegation
+without, e.g., making it possible for the operator to simply transfer away
+tokens., it should be noted that a malicious operator can exploit stake slashing
+to destroy tokens and thus the entire staked amount is indeed at stake.
 
-The operator address is used to provide network functionality by participating
-in various protocols. A signature from the operator is also required to initiate
-staking, and the operator can unilaterally finish staking and return the tokens
-to the owner.
+The operator address is used to provide network functionality by
+<<operating,participating in various protocols>>. A signature from the operator
+is also required to initiate <<delegating, stake delegation>>, and the operator
+can unilaterally
+<<undelegating, finish delegation>> and 
+<<claiming, return the tokens to the owner>>.
 
 === Magpie
 
-The magpie collects rewards earned from staking and participating in the
-network. The magpie doesn't sign or publish any protocol-relevant transactions,
-but any currency or tokens earned by the staker will be transferred to the
-magpie.
+The magpie collects <<rewards,rewards>> earned from
+<<delegating, stake delegation>> and
+<<operating, participation in the network>>. The magpie doesn't sign or publish
+any protocol-relevant transactions, but any currency or tokens earned by the
+operator will be transferred to the magpie.
+
 
 == Specification Architecture
 
-Accordingly to the design strategy and design requirements the design
-architecture should be based on the following combinations of strategies:
+<<RFC 3,rfc-3-stake-delegation-requirements>> discusses the architectural
+tradeoffs to be considered for the stake delegation design. That document
+concludes with the preferred architectural approaches, and the remainder of this
+section describes a subset of these; the approaches in RFC 3 that are not
+detailed below are omitted in the interests of a simpler initial implementation,
+but may be layered on in later RFCs. For now, this document focuses on a system
+that uses _(optionally atomic) multi operation with static minimum stake and
+delayed undelegation with consequent penalisation_. 
 
-(optional Atomic) Multi-Operating with Dynamic or Static MINIMUM_STAKE and
-Delayed Undelegation with Misbehaving or Consequent Penalisation
+Following is a high-level description of each of the features in that sentence:
 
-Other strategies tend to be suboptimal from the perspective of both security and
-network throughput requirements.
+Atomic Operation (optional)::
+    An optional feature that locks a part of a delegated stake for every joined
+    operation, consequently each of operations is backed up by a real stake
+    regardless of the outcome of other operations.
 
-From the engineering perspective, the solution that is selected and specified in
-this document is: _(optional Atomic) Multi-Operating with Static MINIMUM_STAKE
-and Delayed Undelegation with Consequent Penalisation_. The main motivation
-behind choosing these particular strategies is its simplicity and minimization
-of the number of necessary changes to the current implementation and shorten the
-time to deliver a workable solution.
+Multi Operation::
+    A feature that enables a virtually unlimited number of operations on a
+    delegated stake. It allows operators to operate on a delegated stake without
+    any limits (except the minimum stake requirements).
 
-=== Atomic Multi-Operating with Static MINIMUM_STAKE and Delayed Undelegation with Consequent Penalisation
+Static Minimum Stake::
+    A feature that determines the value of the minimum stake will be constant
+    through the network lifetime. It can only be changed during a hard-fork.
 
-In this section, we are going into the details of the main proposal. First, we
-are going to briefly describe specific features of the solution and then we will
-focus on implementation and functional details.
+Delayed Undelegation::
+    Is a mechanism for revoking a delegation. The undelegation happens during an
+    undelegation period when an operator has time to end all of the ongoing
+    operations. During the undelegation period, the delegated stake is locked
+    and no additional operations are allowed, except those already started.
+    After an undelegation period timeout, the delegated stake is released to the
+    owner and a bond between operator, stake, and the owner is removed.
 
-==== Features characterization
-The features of the proposed solution are briefly described in this section. For
-more in detail characterization and discussion please refer to the Stake
-Delegation Requirements RFC document.
-
-===== (optional) Atomic Operating
-Atomic Operating is an optional feature, that limits the number of possible
-operations, which can be executed by an operator. It enables monitoring and
-limiting the stake usage/burning process, therefore it also decreases the
-network throughput.
-
-===== Multi-Operating
-Multi-Operating feature enables a virtually unlimited number of operations
-on a delegated stake. It allows operators to operate on a delegated stake
-without any limits (except the MINIMUM_STAKE requirements).
-
-===== Static MINIMUM_STAKE
-Static MINIMUM_STAKE feature determines that the value of the MINIMUM_STAKE will
-be constant through the network lifetime. It can only be changed during a
-hard-fork.
-
-===== Delayed Undelegation
-Delayed Undelegation defines a mechanism for revoking a delegation. The
-undelegation happens during an undelegation period when an operator has time to
-end all of the ongoing operations. During the undelegation period, the delegated
-stake is locked and no additional operations are allowed, except those already
-started. After an undelegation period timeout, the delegated stake is released
-to the owner and a bound between operator, stake, and the owner is removed.
-
-===== Consequent Penalization
-Consequent Penalization refers to the way to penalize undelegation. When an
-undelegation happens during an operation and operations terminates successfully,
-then there is no penalty. If the operation terminates unsuccessfully, then the
-penalties are imposed.
+Consequent Penalization::
+    Is the way undelegation is penalized. When an undelegation happens during an
+    operation and the operation terminates successfully, then there is no
+    penalty. If the operation terminates unsuccessfully, then the penalties are
+    imposed. This the same way as standard penalization happens for an inactive
+    peer.
 
 == Specification
 
@@ -169,14 +156,14 @@ penalties are imposed.
 ==== Delegating contrat
 * _delegating contract_
   ** _tokens[owner] -> amount_ table
-  ** _staking[owner] -> delegation_id_ table
+  ** _delegating[owner] -> delegation_id_ table
   ** _operating[operator] -> delegation_id_ table
   ** _op_agreement[delegation_id] -> agreement_ table with:
     *** _amount_ of staked tokens
     *** (if atomic alternative is desired:)
       **** _free_tokens_ unallocated to any contract
       **** _locked_tokens[contract_address] -> amount_ table of allocated tokens
-    *** _state_ of the staking agreement
+    *** _state_ of the delegating agreement
     *** _since_ last change
     *** _owner_ of the tokens
     *** _operator_ performing actions
@@ -184,16 +171,17 @@ penalties are imposed.
   ** `delegate` method for delegating
   ** `undelegate` method for initiating undelegation
   ** `reclaim` method for finishing undelegation and freeing tokens
-  ** `penalize` method for slashing stakes and rewarding tattletales with tokens
+  ** `penalize` method for slashing stake
   ** `reward` method for paying out currency rewards
   ** (if atomic alternative is desired: `lock` method for assigning tokens to
   contracts and `unlock` to free the tokens)
 
 === Functionality
 
+[#delegating]
 ==== Delegating a stake
 
-1. The _owner_ chooses the _staked amount_, and the _operator_, _magpie_ and
+1. The _owner_ chooses the _staked amount_, _operator_, and _magpie_ and
 creates a _delegation order_ containing this information.
 
 2. Both the _owner_ and _operator_ sign the _delegation order_.
@@ -205,16 +193,16 @@ any condition is unfulfilled, processing aborts):
   * _delegation order_ is signed by the owner declared in the delegation order
   * _delegation order_ is signed by the operator declared in the delegation order
   * `magpie == nil`
-  * `staking[owner] == nil`
+  * `delegating[owner] == nil`
   * `operating[operator] == nil`
   * `tokens[owner] >= staked_amount >= minimum_stake`
 
 5. If all conditions are satisfied the contract processes the _delegation order_
 and sets the following:
-  * `staking_time := current_time`
+  * `delegating_time := current_time`
   * `delegation_id := hash(owner, operator)`
   * `tokens[owner] -= staked_amount`
-  * `staking[owner] := delegation_id`
+  * `delegating[owner] := delegation_id`
   * `operating[operator] := delegation_id`
   *  {blank}
 +
@@ -223,7 +211,7 @@ op_agreement[delegation_id] := {
   amount = staked_amount,
   (for atomic alternative) free_tokens = staked_amount,
   state = Active,
-  since = staking_time,
+  since = delegating_time,
   owner = owner,
   operator = operator,
   magpie = magpie
@@ -232,25 +220,16 @@ op_agreement[delegation_id] := {
 
 6. The _operator_ can now use delegated stake for operating.
 
-==== An N-to-N variant note
-A _n-to-n_ variant can be designed where owners and operators are not tied to a
-single delegation, but an owner can delegate to unlimited operators, an operator
-can operate for unlimited owners, and each _owner, operator_ pair can have
-unlimited delegation agreements between each other.
-
-This would be done by eliminating the `staking[owner]` and `operating[operator]`
-tables, and by setting `delegation_id := hash(owner, operator, staking_time)`.
-With this change, the only limit is that the owner and operator can only
-establish a single delegation agreement in a single block.
-
-
+[#undelegating]
 === Undelegating a stake
 
-1. The _owner_ or _operator_ chooses to unstake, and creates a
+1. The _owner_ or _operator_ chooses to undelegate the stake, and creates a
 _undelegation order_ containing the _delegation ID_.
 
 2. Either the _owner_ or _operator_ signs the _undelegation order_ and publishes
-it on-chain.
+it on-chain.footnote:[On Ethereum, by publishing on-chain the owner or operator
+has already signed; that is, no additional signature is needed, the call to the
+contract is itself sufficient.]
 
 3. The contract receives the _undelegation order_ and verifies the following
 (`d_agreement := op_agreements[delegation_id]`):
@@ -260,18 +239,19 @@ it on-chain.
 
 4. If the conditions are satisfied, the contract processes the
 _undelegation order_ and sets the following:
-  * `unstaking_time := current_time`
-  * `d_agreement.state := Unstaking`
-  * `d_agreement.since := unstaking_time`
+  * `undelegating_time := current_time`
+  * `d_agreement.state := Undelegating`
+  * `d_agreement.since := undelegating_time`
   * (for atomic alternative) `unlock` the `locked_tokens` associated with this
   _delegation ID_
 
 5. The _operator_ can not enter new operations until the undelegated stake is
 reclaimed and the _owner_ can not delegate to new a _operator_.
 
+[#claiming]
 === Claiming undelegated stake
 
-1. After `unstake_delay` has passed since the _undelegation order_ has been
+1. After `undelegating_delay` has passed since the _undelegation order_ has been
 processed, the _owner_ or _operator_ creates, signs and publishes a
 _stake reclaiming order_ containing the _delegation ID_.
 
@@ -280,14 +260,14 @@ following (`d_agreement := op_agreements[delegation_id]`):
   * `d_agreement != nil`
   * The _stake reclaiming order_ is signed by either `d_agreement.owner` or
   `d_agreement.operator`
-  * `d_agreement.state == Unstaking`
-  * `d_agreement.since + unstake_delay =< current_time`
+  * `d_agreement.state == Undelegating`
+  * `d_agreement.since + undelegating_delay =< current_time`
 
 3. The contract processes the _stake reclaiming order_ and sets the following:
   * `tokens_undelegated := d_agreement.amount - undelegation_penalties` 
-  (`undelegation_penalties` applies if eg. an operation is still underway and 
-  it has been decided to set penalties for reclaiming stakes in such a situation)
-  * `staking[owner] := nil`
+  (`undelegation_penalties` applies if, e.g., an operation is still underway and 
+  it has been decided to set penalties for reclaiming stake in such a situation)
+  * `delegating[owner] := nil`
   * `operating[operator] := nil`
   * `op_agreements[delegation_id] := nil`
   * `tokens[owner] += tokens_undelegated`
@@ -295,14 +275,11 @@ following (`d_agreement := op_agreements[delegation_id]`):
 4. The _operator_ is now free to start operating for a new _owner_ and the 
 _owner_ can delegate to a new _operator_.
 
-==== An N-to-N variant note
-In the _n-to-n_ variant the `staking[owner]` and `operating[operator]` tables
-are absent.
-
+[#operating]
 === Operating on a stake
 
-1. When the _operator_ tries to join an operation (eg. present a ticket for
-beacon group selection) they should create a _operation initialization order_
+1. When the _operator_ tries to join an operation (e.g., present a ticket for
+beacon group selection) they should create an _operation initialization order_
 including the _delegation ID_ and the _contract address_, signed by the
 _operator_.
 
@@ -311,22 +288,21 @@ required to join the operation, after which the following should be checked
 (`d_agreement := op_agreements[delegation_id]`:
   * `d_agreement != nil`
   * `d_agreement.state == Active`
-  * If there is a requirement that the operator be staked before _deadline_,
-  then `d_agreement.since =< deadline`
   * The request is signed by `d_agreement.operator`
   * `d_agreement.amount >= minimum_stake`
   * (for atomic alternative) `d_agreement.free_tokens >= minimum_stake`
 
 3. If the checks pass, the operator may join the operations, (for atomic 
-alternative) the `lock` method should be used to lock the `minimum_stake` for
-the operation and the `unlock` method should be used after the end of the
-operation.
+alternative) the `lock` method should be used to lock part of a stake for the
+operation and the `unlock` method should be used after the end of the operation.
 
+[#rewards]
 === Rewards
 
 1. If the operator is awarded a _reward_ of currency, the reward should be paid
 to `d_agreement.magpie`.
 
+[#penalties]
 === Penalties
 
 1. If the operator is to be punished by stake slashing, the
@@ -344,8 +320,8 @@ following:
   * `actual_penalty := min(penalty_amount, d_agreement.amount)`
   * `d_agreement.amount -= actual_penalty`
   * If `d_agreement.amount < minimum_stake`, then the operator is blocked from
-joining any new operations and the tokens are automatically unstaked:
-    ** `d_agreement.state := Unstaking`
+joining any new operations and the tokens are automatically undelegated:
+    ** `d_agreement.state := Undelegating`
     ** `d_agreement.since := current_time`
 
 3. (for atomic alternative instead of the above) If the penalty is valid, the
