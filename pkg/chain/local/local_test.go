@@ -483,52 +483,129 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	}
 }
 
-func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFunc) {
-	defaultTimeout := 3 * time.Second
-	if len(timeout) > 0 {
-		defaultTimeout = timeout[0]
-	}
-	return context.WithTimeout(context.Background(), defaultTimeout)
-}
-
 func TestDKGResultVote(t *testing.T) {
-	requestID := big.NewInt(12)
+	ctx, cancel := newTestContext()
+	defer cancel()
 
-	var tests = map[string]struct {
-		expectedVotes  int
-		callVoteNtimes int
-	}{
-		"after submission and 1 vote": {
-			expectedVotes:  2,
-			callVoteNtimes: 1,
+	c := Connect(10, 4, big.NewInt(200))
+	chain := c.ThresholdRelay()
+
+	voteChan := make(chan *event.DKGResultVote)
+	defer close(voteChan)
+
+	subscription, err := chain.OnDKGResultVote(
+		func(dkgResultVote *event.DKGResultVote) {
+			voteChan <- dkgResultVote
 		},
-		"after submission and 2 votes": {
-			expectedVotes:  3,
-			callVoteNtimes: 2,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer subscription.Unsubscribe()
+
+	dkgResult1 := &relaychain.DKGResult{
+		GroupPublicKey: []byte{100},
+	}
+	dkgResult2 := &relaychain.DKGResult{
+		GroupPublicKey: []byte{200},
+	}
+	requestID0 := big.NewInt(0)
+	requestID1 := big.NewInt(1)
+
+	c.submissions = map[string]*relaychain.DKGSubmissions{
+		requestID1.String(): &relaychain.DKGSubmissions{
+			DKGSubmissions: []*relaychain.DKGSubmission{
+				&relaychain.DKGSubmission{
+					DKGResult: dkgResult1,
+					Votes:     3,
+				},
+				&relaychain.DKGSubmission{
+					DKGResult: dkgResult2,
+					Votes:     1,
+				},
+			},
+		},
+	}
+
+	tests := map[string]struct {
+		requestID           *big.Int
+		dkgResult           *relaychain.DKGResult
+		expectedSubmissions func(chain *localChain) map[string]*relaychain.DKGSubmissions
+		expectedEvent       *event.DKGResultVote
+		expectedError       error
+	}{
+		"invalid vote when no submissions for given request id": {
+			requestID: requestID0,
+			dkgResult: dkgResult1,
+			expectedSubmissions: func(chain *localChain) map[string]*relaychain.DKGSubmissions {
+				return chain.submissions
+			},
+			expectedEvent: nil,
+			expectedError: fmt.Errorf("no submissions for given request id"),
+		},
+		"invalid vote for dkg result not matching submitted one": {
+			requestID: requestID1,
+			dkgResult: &relaychain.DKGResult{GroupPublicKey: []byte{99}},
+			expectedSubmissions: func(chain *localChain) map[string]*relaychain.DKGSubmissions {
+				return chain.submissions
+			},
+			expectedError: fmt.Errorf("no submissions matching given dkg result hash"),
+		},
+		"valid vote for submitted dkg result": {
+			requestID: requestID1,
+			dkgResult: dkgResult2,
+			expectedSubmissions: func(chain *localChain) map[string]*relaychain.DKGSubmissions {
+				chain.submissions[requestID1.String()].DKGSubmissions[1].Votes = 2
+				return chain.submissions
+			},
+			expectedEvent: &event.DKGResultVote{RequestID: requestID1},
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			localChain := &localChain{
-				submissions:        make(map[string]*relaychain.DKGSubmissions),
-				submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-			}
-			chainHandle := localChain.ThresholdRelay()
-			dkgResult := &relaychain.DKGResult{
-				Success:        true,
-				GroupPublicKey: []byte{11},
-			}
-			chainHandle.SubmitDKGResult(requestID, dkgResult)
-			for i := 0; i < test.callVoteNtimes; i++ {
-				chainHandle.DKGResultVote(requestID, dkgResult.Hash())
-			}
-			submissions := chainHandle.GetDKGSubmissions(requestID)
-			if submissions.DKGSubmissions[0].Votes != test.expectedVotes {
+
+			promise := chain.DKGResultVote(test.requestID, test.dkgResult.Hash())
+
+			promise.OnComplete(func(event *event.DKGResultVote, err error) {
+				if !reflect.DeepEqual(test.expectedError, err) {
+					t.Fatalf("\nexpected: %v\nactual:   %v\n",
+						test.expectedError,
+						err,
+					)
+				}
+			})
+
+			expectedSubmissions := test.expectedSubmissions(c)
+			if !reflect.DeepEqual(
+				expectedSubmissions,
+				c.submissions,
+			) {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n",
-					test.expectedVotes,
-					submissions.DKGSubmissions[0].Votes,
+					expectedSubmissions,
+					c.submissions,
 				)
+			}
+
+			if test.expectedEvent == nil {
+				select {
+				case dkgResultVoteEvent := <-voteChan:
+					t.Fatalf("unexpected event was emitted: %v", dkgResultVoteEvent)
+				case <-time.After(100 * time.Millisecond):
+					break
+				}
+			} else {
+				select {
+				case dkgResultVoteEvent := <-voteChan:
+					if !reflect.DeepEqual(test.expectedEvent, dkgResultVoteEvent) {
+						t.Fatalf("\nexpected: %v\nactual:   %v\n",
+							test.expectedEvent,
+							dkgResultVoteEvent,
+						)
+					}
+				case <-ctx.Done():
+					t.Fatalf("expected event was not emitted")
+				}
 			}
 		})
 	}
@@ -688,43 +765,10 @@ func TestOnDKGResultVote(t *testing.T) {
 	}
 }
 
-func TestOnDKGResultVoteBadRequestID(t *testing.T) {
-	requestID := big.NewInt(12)
-	requestID2 := big.NewInt(22)
-
-	groupPublicKey := []byte{11}
-
-	localChain := &localChain{
-		submissions:        make(map[string]*relaychain.DKGSubmissions),
-		submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFunc) {
+	defaultTimeout := 3 * time.Second
+	if len(timeout) > 0 {
+		defaultTimeout = timeout[0]
 	}
-	chainHandle := localChain.ThresholdRelay()
-	dkgResult := &relaychain.DKGResult{
-		Success:        true,
-		GroupPublicKey: groupPublicKey,
-	}
-	chainHandle.SubmitDKGResult(requestID, dkgResult)
-
-	chainHandle.DKGResultVote(requestID2, dkgResult.Hash())
-	submissions := chainHandle.GetDKGSubmissions(requestID)
-
-	// check Votes == 1
-	if submissions.DKGSubmissions[0].Votes != 1 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			1,
-			submissions.DKGSubmissions[0].Votes,
-		)
-	}
-
-	chainHandle.DKGResultVote(requestID, dkgResult.Hash())
-	submissions = chainHandle.GetDKGSubmissions(requestID)
-
-	// check Votes == 2
-	if submissions.DKGSubmissions[0].Votes != 2 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			2,
-			submissions.DKGSubmissions[0].Votes,
-		)
-	}
-
+	return context.WithTimeout(context.Background(), defaultTimeout)
 }
