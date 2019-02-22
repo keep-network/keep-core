@@ -27,16 +27,18 @@ type localChain struct {
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[string]*big.Int
 
-	submittedResultsMutex sync.Mutex
-	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
-	// execution.
-	submittedResults map[string][]*relaychain.DKGResult
+	submissionsMutex sync.Mutex
+	submissions      map[string]*relaychain.DKGSubmissions
 
-	handlerMutex                 sync.Mutex
-	relayEntryHandlers           map[int]func(entry *event.Entry)
-	relayRequestHandlers         map[int]func(request *event.Request)
-	groupRegisteredHandlers      map[int]func(groupRegistration *event.GroupRegistration)
-	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
+	ticketsMutex sync.Mutex
+	tickets      []*relaychain.Ticket
+
+	handlerMutex            sync.Mutex
+	relayEntryHandlers      map[int]func(entry *event.Entry)
+	relayRequestHandlers    map[int]func(request *event.Request)
+	groupRegisteredHandlers map[int]func(groupRegistration *event.GroupRegistration)
+	submissionHandlers      map[int]func(dkgResultPublication *event.DKGResultPublication)
+	voteHandler             map[int]func(dkgResultVote *event.DKGResultVote)
 
 	requestID   int64
 	latestValue *big.Int
@@ -44,23 +46,18 @@ type localChain struct {
 	simulatedHeight int64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
-
-	stakerList []string
-
-	// Track the submitted votes.
-	submissionsMutex sync.Mutex
-	submissions      map[string]*relaychain.DKGSubmissions
-	voteHandler      map[int]func(dkgResultVote *event.DKGResultVote)
-
-	tickets      []*relaychain.Ticket
-	ticketsMutex sync.Mutex
 }
 
 // GetDKGSubmissions returns the current set of submissions for the requestID.
 func (c *localChain) GetDKGSubmissions(requestID *big.Int) *relaychain.DKGSubmissions {
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
-	return c.submissions[requestID.String()]
+
+	if submissions, ok := c.submissions[requestID.String()]; ok {
+		return submissions
+	}
+
+	return &relaychain.DKGSubmissions{}
 }
 
 // DKGResultVote places a vote for dkgResultHash and causes OnDKGResultVote event to occurs.
@@ -351,22 +348,22 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
 		},
-		groupRegistrationsMutex: sync.Mutex{},
-		groupRelayEntries:       make(map[string]*big.Int),
-
 		groupRegistrations: make(map[string][]byte),
 
-		submittedResults:             make(map[string][]*relaychain.DKGResult),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-		blockCounter:                 bc,
-		submissions:                  make(map[string]*relaychain.DKGSubmissions),
+		groupRelayEntries: make(map[string]*big.Int),
+
+		submissions: make(map[string]*relaychain.DKGSubmissions),
+
+		tickets: make([]*relaychain.Ticket, 0),
 
 		relayEntryHandlers:      make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:    make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers: make(map[int]func(groupRegistration *event.GroupRegistration)),
+		submissionHandlers:      make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 		voteHandler:             make(map[int]func(dkgResultVote *event.DKGResultVote)),
-		stakeMonitor:            NewStakeMonitor(minimumStake),
-		tickets:                 make([]*relaychain.Ticket, 0),
+
+		stakeMonitor: NewStakeMonitor(minimumStake),
+		blockCounter: bc,
 	}
 }
 
@@ -427,10 +424,14 @@ func (c *localChain) RequestRelayEntry(
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
 func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
-	c.submittedResultsMutex.Lock()
-	defer c.submittedResultsMutex.Unlock()
+	c.submissionsMutex.Lock()
+	defer c.submissionsMutex.Unlock()
 
-	return c.submittedResults[requestID.String()] != nil, nil
+	if submissions, ok := c.submissions[requestID.String()]; ok {
+		return len(submissions.DKGSubmissions) > 0, nil
+	}
+
+	return false, nil
 }
 
 // SubmitDKGResult submits the result to a chain.
@@ -438,47 +439,43 @@ func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
 	resultToPublish *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
-	c.submittedResultsMutex.Lock()
-	defer c.submittedResultsMutex.Unlock()
+	c.submissionsMutex.Lock()
+	defer c.submissionsMutex.Unlock()
 
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
-	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID == requestID.String() {
-			for _, publishedResult := range publishedResults {
-				if publishedResult.Equals(resultToPublish) {
-					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
-					return dkgResultPublicationPromise
-				}
-			}
+	// If map is not initialized for given request ID.
+	if c.submissions[requestID.String()] == nil {
+		c.submissions[requestID.String()] = &relaychain.DKGSubmissions{}
+	}
+
+	dkgSubmissions := c.submissions[requestID.String()]
+
+	// If the result is already submitted for the given request ID.
+	for _, submission := range dkgSubmissions.DKGSubmissions {
+		if submission.DKGResult.Equals(resultToPublish) {
+			dkgResultPublicationPromise.Fail(
+				fmt.Errorf("result already submitted"),
+			)
+			return dkgResultPublicationPromise
 		}
 	}
 
-	c.submittedResults[requestID.String()] = append(c.submittedResults[requestID.String()], resultToPublish)
-
-	c.submissionsMutex.Lock()
-	if c.submissions == nil {
-		c.submissions = make(map[string]*relaychain.DKGSubmissions)
-	}
-	if _, ok := c.submissions[requestID.String()]; !ok {
-		c.submissions[requestID.String()] = &relaychain.DKGSubmissions{
-			DKGSubmissions: []*relaychain.DKGSubmission{
-				{
-					DKGResult: resultToPublish,
-					Votes:     1,
-				},
-			},
-		}
-	}
-	c.submissionsMutex.Unlock()
+	// Submit the unique result for the given request ID.
+	dkgSubmissions.DKGSubmissions = append(dkgSubmissions.DKGSubmissions,
+		&relaychain.DKGSubmission{
+			DKGResult: resultToPublish,
+			Votes:     1,
+		},
+	)
 
 	dkgResultPublicationEvent := &event.DKGResultPublication{
 		RequestID:      requestID,
-		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		GroupPublicKey: resultToPublish.GroupPublicKey,
 	}
 
 	c.handlerMutex.Lock()
-	for _, handler := range c.dkgResultPublicationHandlers {
+	for _, handler := range c.submissionHandlers {
 		go func(handler func(*event.DKGResultPublication), dkgResultPublication *event.DKGResultPublication) {
 			handler(dkgResultPublicationEvent)
 		}(handler, dkgResultPublicationEvent)
@@ -500,12 +497,12 @@ func (c *localChain) OnDKGResultPublished(
 	defer c.handlerMutex.Unlock()
 
 	handlerID := rand.Int()
-	c.dkgResultPublicationHandlers[handlerID] = handler
+	c.submissionHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
 		c.handlerMutex.Lock()
 		defer c.handlerMutex.Unlock()
 
-		delete(c.dkgResultPublicationHandlers, handlerID)
+		delete(c.submissionHandlers, handlerID)
 	}), nil
 }
