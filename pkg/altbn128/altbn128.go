@@ -5,7 +5,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
@@ -16,8 +16,6 @@ type G1Point struct {
 type G2Point struct {
 	*bn256.G2
 }
-
-type compressedPoint []byte
 
 // Quadratic extension field element as seen in bn256/gfp2.go
 type gfP2 struct {
@@ -144,9 +142,9 @@ func yParity(y *big.Int) byte {
 
 // Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func (g G1Point) Compress() compressedPoint {
+func (g G1Point) Compress() []byte {
 
-	rt := make(compressedPoint, 32)
+	rt := make([]byte, 32)
 
 	marshalled := g.Marshal()
 
@@ -166,10 +164,10 @@ func (g G1Point) Compress() compressedPoint {
 
 // Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func (g G2Point) Compress() compressedPoint {
+func (g G2Point) Compress() []byte {
 
 	// X of G2 point is a 64 bytes value.
-	rt := make(compressedPoint, 64)
+	rt := make([]byte, 64)
 
 	marshalled := g.Marshal()
 
@@ -191,7 +189,7 @@ func (g G2Point) Compress() compressedPoint {
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
 // top byte as 0x01 (even) or 0x00 (odd).
-func (m compressedPoint) DecompressToG1() (*bn256.G1, error) {
+func DecompressToG1(m []byte) (*bn256.G1, error) {
 
 	// Get the original X.
 	x := new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:]...))
@@ -217,7 +215,7 @@ func (m compressedPoint) DecompressToG1() (*bn256.G1, error) {
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
 // top byte as 0x01 (even) or 0x00 (odd).
-func (m compressedPoint) DecompressToG2() (*bn256.G2, error) {
+func DecompressToG2(m []byte) (*bn256.G2, error) {
 
 	// Get the X.
 	x := new(gfP2)

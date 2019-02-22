@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
@@ -24,10 +24,10 @@ func TestCompressG1(t *testing.T) {
 func TestDecompressG1(t *testing.T) {
 	errorSeen := false
 	for i := 0; i < 100; i++ {
-		buffer := make(compressedPoint, 32)
+		buffer := make([]byte, 32)
 		_, err := rand.Read(buffer)
 		if err == nil {
-			_, err2 := buffer.DecompressToG1()
+			_, err2 := DecompressToG1(buffer)
 
 			if err2 == nil {
 				errorSeen = true
@@ -51,7 +51,7 @@ func TestCompressDecompressGivesSameG1Point(t *testing.T) {
 
 		t.Logf("Compressed G1 to [%v]", buffer)
 
-		p2, _ := buffer.DecompressToG1()
+		p2, _ := DecompressToG1(buffer)
 
 		testutils.AssertBytesEqual(t, p1.Marshal(), p2.Marshal())
 	}
@@ -69,7 +69,7 @@ func TestCompressDecompressGivesSameG2Point(t *testing.T) {
 
 		t.Logf("Compressed G2 to [%v]", buffer)
 
-		p2, _ := buffer.DecompressToG2()
+		p2, _ := DecompressToG2(buffer)
 
 		testutils.AssertBytesEqual(t, p1.Marshal(), p2.Marshal())
 	}
