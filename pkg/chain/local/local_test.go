@@ -2,11 +2,13 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -207,20 +209,24 @@ func TestLocalBlockWaiter(t *testing.T) {
 }
 
 func TestLocalIsDKGResultPublished(t *testing.T) {
-	submittedResults := make(map[string][]*relaychain.DKGResult)
+	dkgSubmissions := make(map[string]*relaychain.DKGSubmissions)
 
-	submittedRequestID1 := big.NewInt(1)
-	submittedResult1 := &relaychain.DKGResult{
-		GroupPublicKey: []byte{11},
+	requestID := big.NewInt(1)
+	dkgSubmission := &relaychain.DKGSubmission{
+		DKGResult: &relaychain.DKGResult{
+			GroupPublicKey: []byte{11},
+		},
+		Votes: 1,
 	}
 
-	submittedResults[submittedRequestID.String()] = append(
-		submittedResults[submittedRequestID.String()],
-		submittedResult,
-	)
+	dkgSubmissions[requestID.String()] = &relaychain.DKGSubmissions{
+		DKGSubmissions: []*relaychain.DKGSubmission{
+			dkgSubmission,
+		},
+	}
 
 	localChain := &localChain{
-		submittedResults: submittedResults,
+		submissions: dkgSubmissions,
 	}
 	chainHandle := localChain.ThresholdRelay()
 
@@ -229,7 +235,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 		expectedResult bool
 	}{
 		"matched": {
-			requestID:      submittedRequestID1,
+			requestID:      requestID,
 			expectedResult: true,
 		},
 		"not matched - different request ID": {
@@ -257,46 +263,61 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	defer cancel()
 
 	// Initialize local chain.
-	submittedResults := make(map[string][]*relaychain.DKGResult)
 	localChain := &localChain{
-		submittedResults:             submittedResults,
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		submissions:        make(map[string]*relaychain.DKGSubmissions),
+		submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 	}
 	chainHandle := localChain.ThresholdRelay()
 
 	// Channel for DKGResultPublication events.
 	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
-	localChain.OnDKGResultPublished(
+	defer close(dkgResultPublicationChan)
+	subscription, err := localChain.OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication) {
 			dkgResultPublicationChan <- dkgResultPublication
 		},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer subscription.Unsubscribe()
 
-	if len(localChain.submittedResults) > 0 {
+	if len(localChain.submissions) > 0 {
 		t.Fatalf("initial submitted results map is not empty")
 	}
 
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
-	submittedResult1 := &relaychain.DKGResult{
+	dkgResult1 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 	expectedEvent1 := &event.DKGResultPublication{
 		RequestID:      requestID1,
-		GroupPublicKey: submittedResult1.GroupPublicKey[:],
+		GroupPublicKey: dkgResult1.GroupPublicKey,
+	}
+	expectedsubmissions1 := &relaychain.DKGSubmissions{
+		DKGSubmissions: []*relaychain.DKGSubmission{
+			&relaychain.DKGSubmission{
+				DKGResult: dkgResult1,
+				Votes:     1,
+			},
+		},
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
+	chainHandle.SubmitDKGResult(requestID1, dkgResult1).
+		OnFailure(func(err error) {
+			t.Fatal(err)
+		})
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1.String()],
-		[]*relaychain.DKGResult{submittedResult1},
+		expectedsubmissions1,
+		localChain.submissions[requestID1.String()],
 	) {
-		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID1,
-			[]*relaychain.DKGResult{submittedResult1},
-			localChain.submittedResults[requestID1.String()],
+		t.Fatalf("\nexpected: %+v\nactual:   %+v\n",
+			expectedsubmissions1,
+			localChain.submissions[requestID1.String()],
 		)
 	}
+
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
 		if !reflect.DeepEqual(expectedEvent1, dkgResultPublicationEvent) {
@@ -313,18 +334,28 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	requestID2 := big.NewInt(2)
 	expectedEvent2 := &event.DKGResultPublication{
 		RequestID:      requestID2,
-		GroupPublicKey: submittedResult1.GroupPublicKey[:],
+		GroupPublicKey: dkgResult1.GroupPublicKey,
+	}
+	expectedSubmissions2 := &relaychain.DKGSubmissions{
+		DKGSubmissions: []*relaychain.DKGSubmission{
+			&relaychain.DKGSubmission{
+				DKGResult: dkgResult1,
+				Votes:     1,
+			},
+		},
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, submittedResult1)
+	chainHandle.SubmitDKGResult(requestID2, dkgResult1).
+		OnFailure(func(err error) {
+			t.Fatal(err)
+		})
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID2.String()],
-		[]*relaychain.DKGResult{submittedResult1},
+		expectedSubmissions2,
+		localChain.submissions[requestID2.String()],
 	) {
-		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID2,
-			[]*relaychain.DKGResult{submittedResult1},
-			localChain.submittedResults[requestID2.String()],
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			expectedSubmissions2,
+			localChain.submissions[requestID2.String()],
 		)
 	}
 	select {
@@ -340,22 +371,79 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, submittedResult1)
+	expectedError := fmt.Errorf("result already submitted")
+
+	chainHandle.SubmitDKGResult(requestID1, dkgResult1).
+		OnFailure(func(err error) {
+			if !reflect.DeepEqual(expectedError, err) {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n",
+					expectedError,
+					err,
+				)
+			}
+		})
+
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1.String()],
-		[]*relaychain.DKGResult{submittedResult1},
+		expectedsubmissions1,
+		localChain.submissions[requestID1.String()],
 	) {
-		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID1,
-			[]*relaychain.DKGResult{submittedResult1},
-			localChain.submittedResults[requestID1.String()],
+		t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			expectedsubmissions1,
+			localChain.submissions[requestID1.String()],
 		)
 	}
 	select {
 	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
 		t.Fatalf("unexpected event was emitted: %v", dkgResultPublicationEvent)
+	case <-time.After(500 * time.Millisecond):
+		break
+	}
+
+	// Submit new result for request ID 1
+	dkgResult2 := &relaychain.DKGResult{
+		GroupPublicKey: []byte{12},
+	}
+	expectedEvent3 := &event.DKGResultPublication{
+		RequestID:      requestID1,
+		GroupPublicKey: dkgResult2.GroupPublicKey,
+	}
+	expectedSubmissions3 := &relaychain.DKGSubmissions{
+		DKGSubmissions: []*relaychain.DKGSubmission{
+			&relaychain.DKGSubmission{
+				DKGResult: dkgResult1,
+				Votes:     1,
+			},
+			&relaychain.DKGSubmission{
+				DKGResult: dkgResult2,
+				Votes:     1,
+			},
+		},
+	}
+
+	chainHandle.SubmitDKGResult(requestID1, dkgResult2).
+		OnFailure(func(err error) {
+			t.Fatal(err)
+		})
+	if !reflect.DeepEqual(
+		expectedSubmissions3,
+		localChain.submissions[requestID1.String()],
+	) {
+		t.Fatalf("\nexpected: %+v\nactual:   %+v\n",
+			expectedSubmissions3,
+			localChain.submissions[requestID1.String()],
+		)
+	}
+
+	select {
+	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
+		if !reflect.DeepEqual(expectedEvent3, dkgResultPublicationEvent) {
+			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+				expectedEvent3,
+				dkgResultPublicationEvent,
+			)
+		}
 	case <-ctx.Done():
-		t.Logf("DKG result publication event not generated")
+		t.Fatalf("expected event was not emitted")
 	}
 }
 
@@ -364,8 +452,8 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	defer cancel()
 
 	localChain := &localChain{
-		submittedResults:             make(map[string][]*relaychain.DKGResult),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		submissions:        make(map[string]*relaychain.DKGSubmissions),
+		submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 	}
 	relay := localChain.ThresholdRelay()
 
@@ -391,7 +479,7 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	case <-dkgResultPublicationChan:
 		t.Fatalf("event should not be emitted - I have unsubscribed!")
 	case <-ctx.Done():
-		// ok
+		break
 	}
 }
 
@@ -409,36 +497,33 @@ func TestDKGResultVote(t *testing.T) {
 	var tests = map[string]struct {
 		expectedVotes  int
 		callVoteNtimes int
-		requestID      *big.Int
 	}{
 		"after submission and 1 vote": {
 			expectedVotes:  2,
 			callVoteNtimes: 1,
-			requestID:      requestID,
 		},
 		"after submission and 2 votes": {
 			expectedVotes:  3,
 			callVoteNtimes: 2,
-			requestID:      requestID,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			localChain := &localChain{
-				submittedResults:             make(map[string][]*relaychain.DKGResult),
-				dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+				submissions:        make(map[string]*relaychain.DKGSubmissions),
+				submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 			}
 			chainHandle := localChain.ThresholdRelay()
 			dkgResult := &relaychain.DKGResult{
 				Success:        true,
 				GroupPublicKey: []byte{11},
 			}
-			chainHandle.SubmitDKGResult(test.requestID, dkgResult)
+			chainHandle.SubmitDKGResult(requestID, dkgResult)
 			for i := 0; i < test.callVoteNtimes; i++ {
-				chainHandle.DKGResultVote(test.requestID, dkgResult.Hash())
+				chainHandle.DKGResultVote(requestID, dkgResult.Hash())
 			}
-			submissions := chainHandle.GetDKGSubmissions(test.requestID)
+			submissions := chainHandle.GetDKGSubmissions(requestID)
 			if submissions.DKGSubmissions[0].Votes != test.expectedVotes {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n",
 					test.expectedVotes,
@@ -449,39 +534,76 @@ func TestDKGResultVote(t *testing.T) {
 	}
 }
 
-func TestGetDKGSubmissions(t *testing.T) {
-	requestID := big.NewInt(12)
+func TestSubmitAndGetDKGSubmissions(t *testing.T) {
+	requestID1 := big.NewInt(1)
+	requestID2 := big.NewInt(2)
+	dkgResult1 := &chain.DKGResult{
+		GroupPublicKey: []byte{100},
+	}
+	dkgResult2 := &chain.DKGResult{
+		GroupPublicKey: []byte{200},
+	}
+
 	localChain := &localChain{
-		submittedResults:             make(map[string][]*relaychain.DKGResult),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-	}
-	chainHandle := localChain.ThresholdRelay()
-	dkgResult := &relaychain.DKGResult{
-		Success:        true,
-		GroupPublicKey: []byte{11},
-	}
-	chainHandle.SubmitDKGResult(requestID, dkgResult)
-	submissions := chainHandle.GetDKGSubmissions(requestID)
-
-	if len(submissions.DKGSubmissions) != 1 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			1,
-			len(submissions.DKGSubmissions),
-		)
+		submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		submissions:        make(map[string]*relaychain.DKGSubmissions),
 	}
 
-	if submissions.DKGSubmissions[0].Votes != 1 {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			1,
-			submissions.DKGSubmissions[0].Votes,
-		)
+	var tests = map[string]struct {
+		requestID           *big.Int
+		resultsToSubmit     []*chain.DKGResult
+		expectedSubmissions *chain.DKGSubmissions
+	}{
+		"no submissions": {
+			requestID:           big.NewInt(0),
+			resultsToSubmit:     []*chain.DKGResult{},
+			expectedSubmissions: &chain.DKGSubmissions{},
+		},
+		"one submission for given request ID": {
+			requestID:       requestID1,
+			resultsToSubmit: []*chain.DKGResult{dkgResult1},
+			expectedSubmissions: &chain.DKGSubmissions{
+				DKGSubmissions: []*chain.DKGSubmission{
+					&chain.DKGSubmission{
+						DKGResult: dkgResult1,
+						Votes:     1,
+					},
+				},
+			},
+		},
+		"two submissions for given request ID": {
+			requestID:       requestID2,
+			resultsToSubmit: []*chain.DKGResult{dkgResult1, dkgResult2},
+			expectedSubmissions: &chain.DKGSubmissions{
+				DKGSubmissions: []*relaychain.DKGSubmission{
+					&chain.DKGSubmission{
+						DKGResult: dkgResult1,
+						Votes:     1,
+					},
+					&chain.DKGSubmission{
+						DKGResult: dkgResult2,
+						Votes:     1,
+					},
+				},
+			},
+		},
 	}
 
-	if !submissions.DKGSubmissions[0].DKGResult.Equals(dkgResult) {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n",
-			dkgResult,
-			submissions.DKGSubmissions[0].DKGResult,
-		)
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			chainHandle := localChain.ThresholdRelay()
+			for _, dkgResult := range test.resultsToSubmit {
+				chainHandle.SubmitDKGResult(test.requestID, dkgResult)
+			}
+
+			submissions := chainHandle.GetDKGSubmissions(test.requestID)
+			if !reflect.DeepEqual(test.expectedSubmissions, submissions) {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n",
+					test.expectedSubmissions,
+					submissions,
+				)
+			}
+		})
 	}
 }
 
@@ -512,8 +634,9 @@ func TestOnDKGResultVote(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			localChain := &localChain{
-				submittedResults:             make(map[string][]*relaychain.DKGResult),
-				dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+				submissions:        make(map[string]*relaychain.DKGSubmissions),
+				submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+				voteHandler:        make(map[int]func(dkgResultVote *event.DKGResultVote)),
 			}
 			chainHandle := localChain.ThresholdRelay()
 			dkgResult := &relaychain.DKGResult{
@@ -572,8 +695,8 @@ func TestOnDKGResultVoteBadRequestID(t *testing.T) {
 	groupPublicKey := []byte{11}
 
 	localChain := &localChain{
-		submittedResults:             make(map[string][]*relaychain.DKGResult),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		submissions:        make(map[string]*relaychain.DKGSubmissions),
+		submissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 	}
 	chainHandle := localChain.ThresholdRelay()
 	dkgResult := &relaychain.DKGResult{
