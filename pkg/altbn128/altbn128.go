@@ -224,7 +224,7 @@ func DecompressToG2(m []byte) (*bn256.G2, error) {
 	x.y = new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:32]...))
 
 	// Get one of the two possible Y on curve y² = x³ + twistB.
-	y2 := new(gfP2).Pow(x, big.NewInt(3))
+	y2 := new(gfP2).pow(x, big.NewInt(3))
 	y2.add(y2, twistB)
 	y := sqrtGfP2(y2)
 
@@ -259,7 +259,7 @@ func (e *gfP2) add(a, b *gfP2) *gfP2 {
 
 // x2y compares if y^2 equals x.
 func x2y(x, y *gfP2) bool {
-	y = new(gfP2).Pow(y, big.NewInt(2))
+	y = new(gfP2).pow(y, big.NewInt(2))
 	return y.x.Cmp(x.x) == 0 && y.y.Cmp(x.y) == 0
 }
 
@@ -269,7 +269,7 @@ func sqrtGfP2(x *gfP2) *gfP2 {
 	// (bn256.p^2 + 15) // 32)
 	var exp = bigFromBase10("14971724250519463826312126413021210649976634891596900701138993820439690427699319920245032869357433499099632259837909383182382988566862092145199781964622")
 
-	y := new(gfP2).Pow(x, exp)
+	y := new(gfP2).pow(x, exp)
 
 	// Multiply y by hexRoot constant to find correct y.
 	for !x2y(x, y) {
@@ -278,8 +278,8 @@ func sqrtGfP2(x *gfP2) *gfP2 {
 	return y
 }
 
-// Pow returns gfP2 element to the power of the provided exponent.
-func (e *gfP2) Pow(base *gfP2, exp *big.Int) *gfP2 {
+// pow returns gfP2 element to the power of the provided exponent.
+func (e *gfP2) pow(base *gfP2, exp *big.Int) *gfP2 {
 
 	e.x = big.NewInt(1)
 	e.y = big.NewInt(0)
