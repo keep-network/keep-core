@@ -225,7 +225,7 @@ func DecompressToG2(m []byte) (*bn256.G2, error) {
 
 	// Get one of the two possible Y on curve y² = x³ + twistB.
 	y2 := new(gfP2).Pow(x, big.NewInt(3))
-	y2.Add(y2, twistB)
+	y2.add(y2, twistB)
 	y := sqrtGfP2(y2)
 
 	// Compare calculated Y parity with the original Y parity in the top bit of
@@ -239,8 +239,8 @@ func DecompressToG2(m []byte) (*bn256.G2, error) {
 	return G2FromInts(x, y)
 }
 
-// Multiply returns multiplication of two gfP2 elements.
-func (e *gfP2) Multiply(a, b *gfP2) *gfP2 {
+// multiply returns multiplication of two gfP2 elements.
+func (e *gfP2) multiply(a, b *gfP2) *gfP2 {
 	xx := mod(new(big.Int).Mul(a.x, b.x), bn256.P)
 	xy := mod(new(big.Int).Mul(a.x, b.y), bn256.P)
 	yx := mod(new(big.Int).Mul(a.y, b.x), bn256.P)
@@ -250,8 +250,8 @@ func (e *gfP2) Multiply(a, b *gfP2) *gfP2 {
 	return e
 }
 
-// Add returns addition of two gfP2 elements.
-func (e *gfP2) Add(a, b *gfP2) *gfP2 {
+// add returns addition of two gfP2 elements.
+func (e *gfP2) add(a, b *gfP2) *gfP2 {
 	e.x = mod(new(big.Int).Add(a.x, b.x), bn256.P)
 	e.y = mod(new(big.Int).Add(a.y, b.y), bn256.P)
 	return e
@@ -273,7 +273,7 @@ func sqrtGfP2(x *gfP2) *gfP2 {
 
 	// Multiply y by hexRoot constant to find correct y.
 	for !x2y(x, y) {
-		y.Multiply(y, hexRoot)
+		y.multiply(y, hexRoot)
 	}
 	return y
 }
@@ -289,11 +289,11 @@ func (e *gfP2) Pow(base *gfP2, exp *big.Int) *gfP2 {
 	for exp.Cmp(big.NewInt(0)) == 1 {
 
 		if yParity(exp) == 1 {
-			e.Multiply(e, base)
+			e.multiply(e, base)
 		}
 
 		exp = new(big.Int).Rsh(exp, 1)
-		base = new(gfP2).Multiply(base, base)
+		base = new(gfP2).multiply(base, base)
 	}
 	return e
 }
