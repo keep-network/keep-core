@@ -25,21 +25,36 @@ func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
 }
 
 func (counter *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
+	notifyBlockHeight := counter.blockHeight + numBlocks
+	return counter.BlockHeightWaiter(notifyBlockHeight)
+}
+
+func (counter *localBlockCounter) WaitForBlockHeight(blockNumber int) error {
+	waiter, err := counter.BlockHeightWaiter(blockNumber)
+	if err != nil {
+		return err
+	}
+	<-waiter
+	return nil
+}
+
+func (counter *localBlockCounter) BlockHeightWaiter(
+	blockNumber int,
+) (<-chan int, error) {
 	newWaiter := make(chan int)
 
 	counter.structMutex.Lock()
 	defer counter.structMutex.Unlock()
-	notifyBlockHeight := counter.blockHeight + numBlocks
 
-	if notifyBlockHeight <= counter.blockHeight {
-		go func() { newWaiter <- notifyBlockHeight }()
+	if blockNumber <= counter.blockHeight {
+		go func() { newWaiter <- blockNumber }()
 	} else {
-		waiterList, exists := counter.waiters[notifyBlockHeight]
+		waiterList, exists := counter.waiters[blockNumber]
 		if !exists {
 			waiterList = make([]chan int, 0)
 		}
 
-		counter.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
+		counter.waiters[blockNumber] = append(waiterList, newWaiter)
 	}
 
 	return newWaiter, nil

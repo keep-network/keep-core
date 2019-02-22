@@ -44,22 +44,36 @@ func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
 func (ebc *ethereumBlockCounter) BlockWaiter(
 	numBlocks int,
 ) (<-chan int, error) {
+	notifyBlockHeight := ebc.latestBlockHeight + numBlocks
+	return ebc.BlockHeightWaiter(notifyBlockHeight)
+}
+
+func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber int) error {
+	waiter, err := ebc.BlockHeightWaiter(blockNumber)
+	if err != nil {
+		return err
+	}
+	<-waiter
+	return nil
+}
+
+func (ebc *ethereumBlockCounter) BlockHeightWaiter(
+	blockNumber int,
+) (<-chan int, error) {
 	newWaiter := make(chan int)
 
 	ebc.structMutex.Lock()
 	defer ebc.structMutex.Unlock()
 
-	notifyBlockHeight := ebc.latestBlockHeight + numBlocks
-
-	if notifyBlockHeight <= ebc.latestBlockHeight {
-		go func() { newWaiter <- notifyBlockHeight }()
+	if blockNumber <= ebc.latestBlockHeight {
+		go func() { newWaiter <- blockNumber }()
 	} else {
-		waiterList, exists := ebc.waiters[notifyBlockHeight]
+		waiterList, exists := ebc.waiters[blockNumber]
 		if !exists {
 			waiterList = make([]chan int, 0)
 		}
 
-		ebc.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
+		ebc.waiters[blockNumber] = append(waiterList, newWaiter)
 	}
 
 	return newWaiter, nil
