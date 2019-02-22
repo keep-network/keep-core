@@ -121,7 +121,6 @@ module "gke_cluster" {
   gke_cluster {
     name                                = "${var.gke_cluster["name"]}"
     private_cluster                     = "${var.gke_cluster["private_cluster"]}"
-    subnetwork                          = "${module.vpc.vpc_private_subnet_self_link}"
     master_ipv4_cidr_block              = "${var.gke_cluster["master_ipv4_cidr_block"]}"
     daily_maintenance_window_start_time = "${var.gke_cluster["daily_maintenance_window_start_time"]}"
     network_policy_enabled              = "${var.gke_cluster["network_policy_enabled"]}"
@@ -170,21 +169,16 @@ module "gke_cluster_metrics" {
   }
 }
 
-# OpenVPN
-resource "helm_release" "openvpn" {
-  name      = "helm-openvpn"
-  namespace = "default"
-  chart     = "stable/openvpn"
-  version   = "3.10.0"
-  keyring   = ""
+module "openvpn" {
+  source = "git@github.com:thesis/infrastructure.git//terraform/modules/helm_openvpn"
 
-  set {
-    name  = "openvpn.redirectGateway"
-    value = "false"
+  openvpn {
+    name    = "${var.openvpn["name"]}"
+    version = "${var.openvpn["version"]}"
   }
 
-  set {
-    name  = "openvpn.conf"
-    value = "push \"route 172.16.0.0 255.255.255.240\""
+  openvpn_parameters {
+    route_all_traffic_through_vpn = "${var.openvpn_parameters["route_all_traffic_through_vpn"]}"
+    gke_master_ipv4_cidr_address  = "${var.openvpn_parameters["gke_master_ipv4_cidr_address"]}"
   }
 }
