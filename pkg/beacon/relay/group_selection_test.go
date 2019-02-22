@@ -43,7 +43,10 @@ func TestSubmitAllTickets(t *testing.T) {
 		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
 			submittedTickets = append(submittedTickets, t)
 			promise := &async.GroupTicketPromise{}
-			promise.Fulfill(&event.GroupTicketSubmission{TicketValue: t.Value})
+			promise.Fulfill(&event.GroupTicketSubmission{
+				TicketValue: t.Value,
+				BlockNumber: 111,
+			})
 			return promise
 		},
 	}
@@ -109,7 +112,10 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 
 			time.Sleep(500 * time.Millisecond)
 
-			promise.Fulfill(&event.GroupTicketSubmission{TicketValue: t.Value})
+			promise.Fulfill(&event.GroupTicketSubmission{
+				TicketValue: t.Value,
+				BlockNumber: 222,
+			})
 			return promise
 		},
 	}

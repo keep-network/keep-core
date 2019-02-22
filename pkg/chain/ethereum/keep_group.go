@@ -220,7 +220,11 @@ func (kg *keepGroup) SubmitDKGResult(
 	)
 }
 
-type dkgResultPublishedEventFunc func(requestID *big.Int, groupPublicKey []byte)
+type dkgResultPublishedEventFunc func(
+	requestID *big.Int,
+	groupPublicKey []byte,
+	blockNumber uint64,
+)
 
 func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
@@ -251,7 +255,11 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 					subscriptionMutex.Unlock()
 					return
 				}
-				success(event.RequestId, event.GroupPubKey)
+				success(
+					event.RequestId,
+					event.GroupPubKey,
+					event.Raw.BlockNumber,
+				)
 				subscriptionMutex.Unlock()
 			case err := <-eventSubscription.Err():
 				fail(err)
@@ -283,7 +291,7 @@ func (kg *keepGroup) SubmitGroupPublicKey(
 type submitGroupPublicKeyEventFunc func(
 	groupPublicKey []byte,
 	requestID *big.Int,
-	activationBlockHeight *big.Int,
+	blockNumber uint64,
 )
 
 // WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
@@ -319,7 +327,7 @@ func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
 				success(
 					event.GroupPublicKey,
 					event.RequestID,
-					event.ActivationBlockHeight,
+					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():

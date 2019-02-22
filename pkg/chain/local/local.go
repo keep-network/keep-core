@@ -41,7 +41,7 @@ type localChain struct {
 	requestID   int64
 	latestValue *big.Int
 
-	simulatedHeight int64
+	simulatedHeight uint64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
@@ -74,6 +74,7 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 
 	promise.Fulfill(&event.GroupTicketSubmission{
 		TicketValue: ticket.Value,
+		BlockNumber: c.simulatedHeight,
 	})
 
 	return promise
@@ -111,9 +112,9 @@ func (c *localChain) SubmitGroupPublicKey(
 
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 	groupRegistration := &event.GroupRegistration{
-		GroupPublicKey:        groupPublicKey,
-		RequestID:             requestID,
-		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
+		GroupPublicKey: groupPublicKey,
+		RequestID:      requestID,
+		BlockNumber:    c.simulatedHeight,
 	}
 
 	c.groupRegistrationsMutex.Lock()
@@ -148,7 +149,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	}
 	c.handlerMutex.Unlock()
 
-	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddUint64(&c.simulatedHeight, 1)
 
 	return groupRegistrationPromise
 }
@@ -326,7 +327,7 @@ func (c *localChain) RequestRelayEntry(
 		BlockReward:   blockReward,
 		Seed:          seed,
 	}
-	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddUint64(&c.simulatedHeight, 1)
 	atomic.AddInt64(&c.requestID, 1)
 
 	c.handlerMutex.Lock()

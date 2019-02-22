@@ -287,8 +287,8 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			requestResponse *big.Int,
 			requestGroupPubKey []byte,
 			previousEntry *big.Int,
-			blockNumber *big.Int,
 			seed *big.Int,
+			blockNumber uint64,
 		) {
 			handle(&event.Entry{
 				RequestID:     requestID,
@@ -297,6 +297,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
 				Seed:          seed,
+				BlockNumber:   blockNumber,
 			})
 		},
 		func(err error) error {
@@ -317,13 +318,14 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			payment *big.Int,
 			blockReward *big.Int,
 			seed *big.Int,
-			blockNumber *big.Int,
+			blockNumber uint64,
 		) {
 			handle(&event.Request{
 				RequestID:   requestID,
 				Payment:     payment,
 				BlockReward: blockReward,
 				Seed:        seed,
+				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {
@@ -342,12 +344,12 @@ func (ec *ethereumChain) OnGroupRegistered(
 		func(
 			groupPublicKey []byte,
 			requestID *big.Int,
-			activationBlockHeight *big.Int,
+			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
-				GroupPublicKey:        groupPublicKey,
-				RequestID:             requestID,
-				ActivationBlockHeight: activationBlockHeight,
+				GroupPublicKey: groupPublicKey,
+				RequestID:      requestID,
+				BlockNumber:    blockNumber,
 			})
 		},
 		func(err error) error {
@@ -431,10 +433,11 @@ func (ec *ethereumChain) OnDKGResultPublished(
 	handler func(dkgResultPublication *event.DKGResultPublication),
 ) (subscription.EventSubscription, error) {
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
-		func(requestID *big.Int, groupPubKey []byte) {
+		func(requestID *big.Int, groupPubKey []byte, blockNumber uint64) {
 			handler(&event.DKGResultPublication{
 				RequestID:      requestID,
 				GroupPublicKey: groupPubKey,
+				BlockNumber:    blockNumber,
 			})
 		},
 		func(err error) error {

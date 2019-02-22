@@ -18,8 +18,8 @@ interface GroupContract {
 contract KeepRandomBeaconImplV1 is Ownable {
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint blockNumber, uint256 seed);
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed); 
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     uint256 internal _seq;
     uint256 internal _minPayment;
@@ -83,7 +83,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _requestPayment[requestID] = msg.value;
         _blockReward[requestID] = blockReward;
 
-        emit RelayEntryRequested(requestID, msg.value, blockReward, seed, block.number);
+        emit RelayEntryRequested(requestID, msg.value, blockReward, seed);
         return requestID;
     }
 
@@ -155,7 +155,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         // TODO: validate groupSignature using BLS.sol
 
         _requestGroup[requestID] = groupPubKey;
-        emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, block.number, seed);
+        emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
