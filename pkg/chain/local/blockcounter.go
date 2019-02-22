@@ -15,8 +15,8 @@ type localBlockCounter struct {
 
 var blockTime = time.Duration(500 * time.Millisecond)
 
-func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
-	waiter, err := counter.BlockWaiter(numBlocks)
+func (lbc *localBlockCounter) WaitForBlocks(numBlocks int) error {
+	waiter, err := lbc.BlockWaiter(numBlocks)
 	if err != nil {
 		return err
 	}
@@ -24,45 +24,60 @@ func (counter *localBlockCounter) WaitForBlocks(numBlocks int) error {
 	return nil
 }
 
-func (counter *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
+func (lbc *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
+	notifyBlockHeight := lbc.blockHeight + numBlocks
+	return lbc.BlockHeightWaiter(notifyBlockHeight)
+}
+
+func (lbc *localBlockCounter) WaitForBlockHeight(blockNumber int) error {
+	waiter, err := lbc.BlockHeightWaiter(blockNumber)
+	if err != nil {
+		return err
+	}
+	<-waiter
+	return nil
+}
+
+func (lbc *localBlockCounter) BlockHeightWaiter(
+	blockNumber int,
+) (<-chan int, error) {
 	newWaiter := make(chan int)
 
-	counter.structMutex.Lock()
-	defer counter.structMutex.Unlock()
-	notifyBlockHeight := counter.blockHeight + numBlocks
+	lbc.structMutex.Lock()
+	defer lbc.structMutex.Unlock()
 
-	if notifyBlockHeight <= counter.blockHeight {
-		go func() { newWaiter <- notifyBlockHeight }()
+	if blockNumber <= lbc.blockHeight {
+		go func() { newWaiter <- blockNumber }()
 	} else {
-		waiterList, exists := counter.waiters[notifyBlockHeight]
+		waiterList, exists := lbc.waiters[blockNumber]
 		if !exists {
 			waiterList = make([]chan int, 0)
 		}
 
-		counter.waiters[notifyBlockHeight] = append(waiterList, newWaiter)
+		lbc.waiters[blockNumber] = append(waiterList, newWaiter)
 	}
 
 	return newWaiter, nil
 }
 
-func (counter *localBlockCounter) CurrentBlock() (int, error) {
-	counter.structMutex.Lock()
-	defer counter.structMutex.Unlock()
-	return counter.blockHeight, nil
+func (lbc *localBlockCounter) CurrentBlock() (int, error) {
+	lbc.structMutex.Lock()
+	defer lbc.structMutex.Unlock()
+	return lbc.blockHeight, nil
 }
 
 // count is an internal function that counts up time to simulate the generation
 // of blocks.
-func (counter *localBlockCounter) count() {
+func (lbc *localBlockCounter) count() {
 	ticker := time.NewTicker(blockTime)
 
 	for range ticker.C {
-		counter.structMutex.Lock()
-		counter.blockHeight++
-		height := counter.blockHeight
-		waiters, exists := counter.waiters[height]
-		delete(counter.waiters, height)
-		counter.structMutex.Unlock()
+		lbc.structMutex.Lock()
+		lbc.blockHeight++
+		height := lbc.blockHeight
+		waiters, exists := lbc.waiters[height]
+		delete(lbc.waiters, height)
+		lbc.structMutex.Unlock()
 
 		if exists {
 			for _, waiter := range waiters {
