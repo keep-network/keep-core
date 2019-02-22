@@ -1,7 +1,6 @@
 package chain
 
 import (
-	"math/big"
 	"reflect"
 	"testing"
 )
@@ -30,7 +29,6 @@ func TestLeads(t *testing.T) {
 		},
 		"only one submission in the set": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
@@ -47,7 +45,6 @@ func TestLeads(t *testing.T) {
 		},
 		"1st submission has high votes": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
@@ -76,7 +73,6 @@ func TestLeads(t *testing.T) {
 		},
 		"2nd submission has highest votes": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
@@ -105,7 +101,6 @@ func TestLeads(t *testing.T) {
 		},
 		"1st and 3rd submissions has highest votes": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
@@ -138,7 +133,6 @@ func TestLeads(t *testing.T) {
 		},
 		"2nd and 4th submissions has highest votes": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
@@ -217,7 +211,6 @@ func TestContains(t *testing.T) {
 		},
 		"1st submission is a match": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
@@ -234,7 +227,6 @@ func TestContains(t *testing.T) {
 		},
 		"2nd submission is a match": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,
@@ -251,7 +243,6 @@ func TestContains(t *testing.T) {
 		},
 		"not found - with current submissions": {
 			currentSubmissions: &DKGSubmissions{
-				requestID: big.NewInt(100),
 				DKGSubmissions: []*DKGSubmission{
 					{
 						DKGResult: dkgResult1,

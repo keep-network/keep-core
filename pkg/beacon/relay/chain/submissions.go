@@ -1,11 +1,8 @@
 package chain
 
-import "math/big"
-
 // DKGSubmissions is the set of submissions for a requestID. It tracks the number
 // of votes for each unique submission and associates this set with a requestID.
 type DKGSubmissions struct {
-	requestID      *big.Int
 	DKGSubmissions []*DKGSubmission
 }
 
