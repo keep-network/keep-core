@@ -53,6 +53,16 @@ func Initialize(
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		fmt.Printf("New entry requested [%+v]\n", request)
 
+		// THIS WILL ALLOW ALL GROUPS TO REGISTER LOCALLY.
+		// HACKY BUT TEMPORARY (NOT NEEDED WITH RELAY REQUESTS)
+		if err := blockCounter.WaitForBlocks(2); err != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failed to wait 2 blocks before determining eligibility: [%v]",
+				err,
+			)
+		}
+
 		go node.GenerateRelayEntryIfEligible(
 			request.RequestID,
 			request.PreviousValue,
