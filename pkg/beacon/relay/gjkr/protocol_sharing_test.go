@@ -49,7 +49,7 @@ func TestCombineReceivedShares(t *testing.T) {
 	}
 }
 
-func TestCalculatePublicCoefficients(t *testing.T) {
+func TestCalculatePublicKeySharePoints(t *testing.T) {
 	secretCoefficients := []*big.Int{
 		big.NewInt(3),
 		big.NewInt(5),
