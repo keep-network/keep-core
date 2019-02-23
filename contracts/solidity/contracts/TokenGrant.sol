@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
@@ -127,7 +127,7 @@ contract TokenGrant {
      * @param _beneficiaryOrCreator The address to query.
      * @return An uint256 array of grant IDs.
      */
-    function getGrants(address _beneficiaryOrCreator) public view returns (uint256[]) {
+    function getGrants(address _beneficiaryOrCreator) public view returns (uint256[] memory) {
         return grantIndices[_beneficiaryOrCreator];
     }
 
@@ -166,7 +166,7 @@ contract TokenGrant {
         // Maintain a record to make it easier to query grants by beneficiary.
         grantIndices[_beneficiary].push(id);
 
-        token.transferFrom(msg.sender, this, _amount);
+        token.transferFrom(msg.sender, address(this), _amount);
 
         // Maintain a record of the vested amount 
         balances[_beneficiary] = balances[_beneficiary].add(_amount);

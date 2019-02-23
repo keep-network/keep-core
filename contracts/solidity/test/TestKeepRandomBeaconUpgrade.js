@@ -46,12 +46,9 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     let newVar = await impl2ViaProxy.getNewVar();
     assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
 
-    const relayEntryRequestedEvent = impl2ViaProxy.RelayEntryRequested();
     await impl2ViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100})
 
-    relayEntryRequestedEvent.get(function(error, result){
-      assert.equal(result[0].args.requestID.toNumber(), 3, "requestID should not be reset and should continue to increment where it was left in previous implementation.");
-    });
+    assert.equal((await impl2ViaProxy.getPastEvents())[0].args['requestID'], 3, "requestID should not be reset and should continue to increment where it was left in previous implementation.");
 
   });
 

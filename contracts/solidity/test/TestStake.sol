@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -6,13 +6,14 @@ import "../contracts/KeepToken.sol";
 import "../contracts/TokenStaking.sol";
 import "./helpers/ThrowProxy.sol";
 
-contract TestStake {  
-  
+
+contract TestStake {
+
   // Create KEEP token
   KeepToken token = new KeepToken();
 
   // Create staking contract with 30 days withdrawal delay
-  TokenStaking stakingContract = new TokenStaking(token, 0, 30 days);
+  TokenStaking stakingContract = new TokenStaking(address(token), address(0), 30 days);
 
   uint withdrawalId;
 
@@ -25,7 +26,7 @@ contract TestStake {
   function testCanStake() public {
     uint balance = token.balanceOf(address(this));
 
-    token.approveAndCall(address(stakingContract), 100, "");
+    token.approveAndCall(address(stakingContract), 100, "0x00");
     
     Assert.equal(token.balanceOf(address(this)), balance - 100, "Stake amount should be taken out from token holder's main balance.");
     Assert.equal(stakingContract.stakeBalanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance.");
@@ -68,9 +69,8 @@ contract TestStake {
 
   // Token holder should not be able to stake without providing correct stakingContract address.
   function testCanNotStakeWithWrongRecipient() public {
-
-    bytes4 methodId = bytes4(keccak256("approveAndCall(address,uint256,bytes)"));
-    Assert.isFalse(address(token).call(
-      methodId, address(0), 100, 0x1234), "Should throw when trying to stake.");
+    bytes memory callData = abi.encodeWithSignature("approveAndCall(address,uint256,bytes)", address(0), 100, "0x1234");
+    (bool result, ) = address(token).call(callData);
+    Assert.isFalse(result, "Should throw when trying to stake.");
   }
 }

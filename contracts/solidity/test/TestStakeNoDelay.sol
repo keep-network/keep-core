@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -10,7 +10,7 @@ contract TestStakeNoDelay {
     KeepToken token = new KeepToken();
 
     // Create staking contract with no withdrawal delay
-    TokenStaking stakingContract = new TokenStaking(token, 0, 0);
+    TokenStaking stakingContract = new TokenStaking(address(token), address(0), 0);
 
     uint withdrawalId;
 
@@ -18,7 +18,7 @@ contract TestStakeNoDelay {
     function testCanStake() public {
         uint balance = token.balanceOf(address(this));
 
-        token.approveAndCall(address(stakingContract), 100, "");
+        token.approveAndCall(address(stakingContract), 100, "0x00");
 
         Assert.equal(token.balanceOf(address(this)), balance - 100, "Stake amount should be taken out from token holder's main balance.");
         Assert.equal(stakingContract.stakeBalanceOf(address(this)), 100, "Stake amount should be added to token holder's stake balance.");
