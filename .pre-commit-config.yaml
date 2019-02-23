@@ -20,4 +20,4 @@ repos:
       - --dir=contracts/solidity/contracts/
       - --config=contracts/solidity/.soliumrc.json
       additional_dependencies:
-      - solium@1.1.8
+      - ethlint@1.2.3
