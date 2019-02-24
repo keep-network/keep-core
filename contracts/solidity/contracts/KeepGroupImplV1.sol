@@ -23,9 +23,8 @@ contract KeepGroupImplV1 is Ownable {
 
     event DkgResultPublishedEvent(address publisher, bytes groupPubKey);
 
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 activationBlockHeight);//add RequestId replacement
+  
+    event GetFinalResultEvent(bytes groupPublicKey, uint256 activationBlockHeight);//add RequestId replacement
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -336,7 +335,7 @@ contract KeepGroupImplV1 is Ownable {
      * group, as outputted by the group selection protocol.
      */
    
-    function receiveSubmission(
+    function submitDkgResult(
         uint256 index, 
         bool success, 
         bytes groupPubKey,
@@ -428,7 +427,7 @@ contract KeepGroupImplV1 is Ownable {
     /*
      * @dev returns the final DKG result.
      */
-    function submitGroupPublicKey()public returns (bytes32) {
+    function getFinalResult()public returns (bytes32) {
         bytes32 leadingResult;
         uint highestVoteN;
         uint highestVoteNtemp;
@@ -463,7 +462,7 @@ contract KeepGroupImplV1 is Ownable {
             }
             _groups.push(groupPublicKey);
             //emist _randomBeaconValue instead of RequestID
-            emit SubmitGroupPublicKeyEvent(groupPublicKey, _randomBeaconValue);
+            emit GetFinalResultEvent(groupPublicKey, _randomBeaconValue);
             cleanup();
             return leadingResult;
             //TODO:
