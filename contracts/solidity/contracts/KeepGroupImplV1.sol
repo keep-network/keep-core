@@ -47,7 +47,6 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping (bytes32 => bool) internal _votedDkg;
     mapping (bytes32 => bool) internal _resultPublished;
-    mapping (address => DkgResult) internal _publisherToDkgResult;
     mapping (bytes32 => DkgResult) internal _receivedSubmissions;
     mapping (bytes32 => uint) internal _submissionVotes;
 
@@ -363,7 +362,6 @@ contract KeepGroupImplV1 is Ownable {
             _submissionVotes[resultHash] = 1;
             _votedDkg[submitterID] = true;//cannot vote after submiting DKG result
             _resultPublished[resultHash] = true;
-            _publisherToDkgResult[msg.sender] = _receivedSubmissions[resultHash];
             emit DkgResultPublishedEvent(msg.sender, groupPubKey);
             
         }
