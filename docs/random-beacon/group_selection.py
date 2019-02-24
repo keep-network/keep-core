@@ -28,7 +28,7 @@ class GroupSelectionContext:
         """
         t_staker = stakers[t.sender]
 
-        valid_Q_j = t.proof.Q_j == t_staker.ecdsaPubkey
+        valid_Q_j = t.proof.Q_j == t_staker.address
         valid_vs = t_staker.weight() > t.proof.vs >= 1
 
         return valid_Q_j && valid_vs
@@ -139,7 +139,7 @@ class TicketProof:
     whether a ticket is valid
     """
     vs:  int
-    Q_j: EcdsaPubkey
+    Q_j: Address
 
 
 class Challenge:
@@ -152,7 +152,7 @@ class Challenge:
 
 def getTicketValue(
         V_i: BlsSignature,
-        Q_j: EcdsaPubkey,
+        Q_j: Address,
         vs:  int
 ) -> Sha3Digest:
     """
@@ -162,6 +162,7 @@ def getTicketValue(
 
 
 class Staker:
+    address:      Address
     ecdsaPubkey:  EcdsaPubkey
     blsPubkey:    BlsPubkey
     stakedTokens: TokenAmount
@@ -185,7 +186,7 @@ class Staker:
         The leading tickets in the resulting list can be queried for promising ones
         """
         virtualStakers = range(1, weight())
-        Q_j = s.ecdsaPubkey
+        Q_j = s.address
 
         createdTickets = []
         for vs in virtualStakers:

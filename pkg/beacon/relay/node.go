@@ -108,7 +108,16 @@ func (n *Node) JoinGroupIfEligible(
 					return
 				}
 
-				n.registerPendingGroup(entryRequestID.String(), signer, broadcastChannel)
+				// TODO: we will refactor it into one method in another PR
+				n.registerPendingGroup(
+					entryRequestID.String(),
+					signer,
+					broadcastChannel,
+				)
+				n.RegisterGroup(
+					entryRequestID.String(),
+					signer.GroupPublicKeyBytes(),
+				)
 			}()
 		}
 	}

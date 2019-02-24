@@ -160,7 +160,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	entry := &event.Entry{
 		RequestID:     big.NewInt(int64(requestID)),
 		Value:         relay.GenesisEntryValue(),
-		GroupID:       big.NewInt(int64(requestID)),
+		GroupPubKey:   big.NewInt(0).Bytes(),
 		PreviousEntry: big.NewInt(0),
 		Timestamp:     time.Now().UTC(),
 		Seed:          big.NewInt(0),

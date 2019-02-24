@@ -25,7 +25,11 @@ contract KeepGroupImplV1 is Ownable {
 
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
+<<<<<<< HEAD
     event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 activationBlockHeight);//add RequestId replacement
+=======
+    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
+>>>>>>> master
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -220,6 +224,69 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+<<<<<<< HEAD
+=======
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
+     * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @param success Result of DKG protocol execution; true if success, false otherwise.
+     * @param groupPubKey Group public key generated as a result of protocol execution.
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * means that the member has been disqualified. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     * @param inactive bytes representing inactive group members; 1 at the specific index means
+     * that the member has been marked as inactive. Indexes reflect positions of members in the
+     * group, as outputted by the group selection protocol.
+     */
+    function submitDkgResult(
+        uint256 requestId,
+        bool success, 
+        bytes groupPubKey,
+        bytes disqualified,
+        bytes inactive
+    ) public {
+
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        require(
+            _tickets.length >= _groupSize,
+            "There should be enough valid tickets submitted to form a group."
+        );
+
+        _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
+        _dkgResultPublished[requestId] = true;
+  
+        emit DkgResultPublishedEvent(requestId, groupPubKey);
+    }
+
+    // Legacy code moved from Random Beacon contract
+    // TODO: refactor according to the Phase 14
+    function submitGroupPublicKey(bytes groupPublicKey, uint256 requestID) public {
+
+        // TODO: Remove this section once dispute logic is implemented,
+        // implement conflict resolution logic described in Phase 14,
+        // make sure only valid members are stored.
+        _groups.push(groupPublicKey);
+        address[] memory members = orderedParticipants();
+        for (uint i = 0; i < _groupSize; i++) {
+            _groupMembers[groupPublicKey].push(members[i]);
+        }
+        emit OnGroupRegistered(groupPublicKey);
+        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
+    }
+
+    /**
+     * @dev Checks if DKG protocol result has been already published for the
+     * specific relay request ID associated with the protocol execution. 
+     */
+    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
+        return _dkgResultPublished[requestId];
+    }
+
+    /**
+>>>>>>> master
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() public payable {

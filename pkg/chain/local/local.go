@@ -41,7 +41,7 @@ type localChain struct {
 	requestID   int64
 	latestValue *big.Int
 
-	simulatedHeight int64
+	simulatedHeight uint64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
@@ -74,6 +74,7 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 
 	promise.Fulfill(&event.GroupTicketSubmission{
 		TicketValue: ticket.Value,
+		BlockNumber: c.simulatedHeight,
 	})
 
 	return promise
@@ -107,23 +108,23 @@ func (c *localChain) SubmitGroupPublicKey(
 	requestID *big.Int,
 	groupPublicKey []byte,
 ) *async.GroupRegistrationPromise {
-	groupID := requestID.String()
+	groupPubKey := requestID.String()
 
 	groupRegistrationPromise := &async.GroupRegistrationPromise{}
 	groupRegistration := &event.GroupRegistration{
-		GroupPublicKey:        groupPublicKey,
-		RequestID:             requestID,
-		ActivationBlockHeight: big.NewInt(c.simulatedHeight),
+		GroupPublicKey: groupPublicKey,
+		RequestID:      requestID,
+		BlockNumber:    c.simulatedHeight,
 	}
 
 	c.groupRegistrationsMutex.Lock()
 	defer c.groupRegistrationsMutex.Unlock()
-	if existing, exists := c.groupRegistrations[groupID]; exists {
+	if existing, exists := c.groupRegistrations[groupPubKey]; exists {
 		if bytes.Compare(existing, groupPublicKey) != 0 {
 			err := fmt.Errorf(
 				"mismatched public key for [%s], submission failed; \n"+
 					"[%v] vs [%v]",
-				groupID,
+				groupPubKey,
 				existing,
 				groupPublicKey,
 			)
@@ -136,7 +137,7 @@ func (c *localChain) SubmitGroupPublicKey(
 
 		return groupRegistrationPromise
 	}
-	c.groupRegistrations[groupID] = groupPublicKey
+	c.groupRegistrations[groupPubKey] = groupPublicKey
 
 	groupRegistrationPromise.Fulfill(groupRegistration)
 
@@ -148,7 +149,7 @@ func (c *localChain) SubmitGroupPublicKey(
 	}
 	c.handlerMutex.Unlock()
 
-	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddUint64(&c.simulatedHeight, 1)
 
 	return groupRegistrationPromise
 }
@@ -163,13 +164,13 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	c.groupRelayEntriesMutex.Lock()
 	defer c.groupRelayEntriesMutex.Unlock()
 
-	existing, exists := c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()]
+	existing, exists := c.groupRelayEntries[string(entry.GroupPubKey)+entry.RequestID.String()]
 	if exists {
 		if existing.Cmp(entry.Value) != 0 {
 			err := fmt.Errorf(
 				"mismatched signature for [%v], submission failed; \n"+
 					"[%v] vs [%v]\n",
-				entry.GroupID,
+				entry.GroupPubKey,
 				existing,
 				entry.Value,
 			)
@@ -181,7 +182,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 
 		return relayEntryPromise
 	}
-	c.groupRelayEntries[entry.GroupID.String()+entry.RequestID.String()] = entry.Value
+	c.groupRelayEntries[string(entry.GroupPubKey)+entry.RequestID.String()] = entry.Value
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayEntryHandlers {
@@ -326,7 +327,7 @@ func (c *localChain) RequestRelayEntry(
 		BlockReward:   blockReward,
 		Seed:          seed,
 	}
-	atomic.AddInt64(&c.simulatedHeight, 1)
+	atomic.AddUint64(&c.simulatedHeight, 1)
 	atomic.AddInt64(&c.requestID, 1)
 
 	c.handlerMutex.Lock()

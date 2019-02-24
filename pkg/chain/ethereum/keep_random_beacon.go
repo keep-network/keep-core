@@ -120,7 +120,7 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 // SubmitRelayEntry submits a group signature for consideration.
 func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	requestID *big.Int,
-	groupID *big.Int,
+	groupPubKey []byte,
 	previousEntry *big.Int,
 	groupSignature *big.Int,
 	seed *big.Int,
@@ -129,7 +129,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 		krb.transactorOptions,
 		requestID,
 		groupSignature,
-		groupID,
+		groupPubKey,
 		previousEntry,
 		seed,
 	)
@@ -142,7 +142,7 @@ type relayEntryRequestedFunc func(
 	payment *big.Int,
 	blockReward *big.Int,
 	seed *big.Int,
-	blockNumber *big.Int,
+	blockNumber uint64,
 )
 
 // WatchRelayEntryRequested watches for event RelayEntryRequested.
@@ -180,7 +180,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Payment,
 					event.BlockReward,
 					event.Seed,
-					event.BlockNumber,
+					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
@@ -206,10 +206,10 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 type relayEntryGeneratedFunc func(
 	requestID *big.Int,
 	requestResponse *big.Int,
-	requestGroupID *big.Int,
+	requestGroupPubKey []byte,
 	previousEntry *big.Int,
-	blockNumber *big.Int,
 	seed *big.Int,
+	blockNumber uint64,
 )
 
 // WatchRelayEntryGenerated watches for event.
@@ -245,10 +245,10 @@ func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
 				success(
 					event.RequestID,
 					event.RequestResponse,
-					event.RequestGroupID,
+					event.RequestGroupPubKey,
 					event.PreviousEntry,
-					event.BlockNumber,
 					event.Seed,
+					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
 			case ee := <-eventSubscription.Err():
