@@ -160,6 +160,10 @@ contract KeepGroupImplV1 is Ownable {
             block.number > _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
+        require(
+            _tickets.length >= _groupSize,
+            "There should be enough valid tickets submitted to form a group."
+            );
 
         uint256[] memory ordered = orderedTickets();
         address[] memory selected = new address[](_groupSize);
@@ -346,11 +350,7 @@ contract KeepGroupImplV1 is Ownable {
     
         require(eligibleSubmitter(index), "not an eligible submitter yet");
         require(!_votedDkg[submitterID], "already voted for or submitted a result");
-         //Find better place for this, checking every submission seems pointless
-        require(
-            _tickets.length >= _groupSize,
-            "There should be enough valid tickets submitted to form a group."
-            );
+        
         //check empty for first submitter incentives. Should not re enter. voting begins after first submission
         if(!_resultPublished[resultHash]){
             if(_dkgResultHashes.length == 0){
