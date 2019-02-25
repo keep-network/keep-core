@@ -57,8 +57,6 @@ func executePublishing(
 		return fmt.Errorf("result publication failed [%v]", err)
 	}
 
-	// TODO Execute Phase 14 here
-
 	err = publisher.resultConflictResolution(result, chainRelay)
 	if err != nil {
 		return fmt.Errorf("result conflict resolution failed [%v]", err)
