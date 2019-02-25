@@ -177,13 +177,13 @@ func (pm *Publisher) Phase14(
 	chainRelay relayChain.Interface,
 ) error {
 	onVoteChan := make(chan *event.DKGResultVote)
+	defer close(onVoteChan)
 	onVoteSubscription, err := chainRelay.OnDKGResultVote(
 		func(vote *event.DKGResultVote) {
 			onVoteChan <- vote
 		},
 	)
 	if err != nil {
-		close(onVoteChan)
 		return fmt.Errorf(
 			"could not watch for DKG result vote [%v]",
 			err,
@@ -193,20 +193,23 @@ func (pm *Publisher) Phase14(
 
 	onSubmissionChan := make(chan *event.DKGResultPublication)
 	defer close(onSubmissionChan)
-	onPublishedResultSubscription, err := chainRelay.OnDKGResultPublished(
+	onSubmissionSubscription, err := chainRelay.OnDKGResultPublished(
 		func(result *event.DKGResultPublication) {
 			onSubmissionChan <- result
 		},
 	)
 	if err != nil {
-		close(onVoteChan)
 		return fmt.Errorf(
 			"could not watch for DKG result vote [%v]",
 			err,
 		)
 	}
-	defer onPublishedResultSubscription.Unsubscribe()
+	defer onSubmissionSubscription.Unsubscribe()
 
+	errorChannel := make(chan error)
+	defer close(errorChannel)
+
+	// TODO: Do we need this?
 	submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
 	if submissions == nil {
 		return fmt.Errorf("nothing submitted")
@@ -217,8 +220,8 @@ func (pm *Publisher) Phase14(
 	}
 
 	if !submissions.Contains(correctResult) {
-		chainRelay.SubmitDKGResult(pm.RequestID, correctResult)
-		return nil
+		onSubmissionSubscription.Unsubscribe()
+
 	}
 
 	// NOTE: We wait for T_conflict blocks but the protocol specification states
@@ -230,9 +233,6 @@ func (pm *Publisher) Phase14(
 
 	// Returns already submitted
 	votesAndSubmissions := func(chainRelay relayChain.Interface) (bool, error) {
-		errorChannel := make(chan error)
-		defer close(errorChannel)
-
 		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
 
 		if pm.leadHasEnoughVotes(submissions) {
@@ -245,11 +245,12 @@ func (pm *Publisher) Phase14(
 
 		if submissions.Contains(correctResult) {
 			chainRelay.DKGResultVote(pm.RequestID, correctResult.Hash()).
-				OnSuccess(func(groupRegisteredEvent *event.DKGResultVote) {
+				OnSuccess(func(dkgResultVote *event.DKGResultVote) {
 					fmt.Printf(
 						"vote submitted for requestID=[%v]\n",
-						groupRegisteredEvent.RequestID,
+						dkgResultVote.RequestID,
 					)
+					errorChannel <- nil
 				}).OnFailure(func(err error) {
 				errorChannel <- err
 			})
@@ -262,6 +263,7 @@ func (pm *Publisher) Phase14(
 					"result submitted for requestID=[%v]\n",
 					dkgResultPublishedEvent.RequestID,
 				)
+				errorChannel <- nil
 			}).
 			OnFailure(func(err error) {
 				errorChannel <- err
