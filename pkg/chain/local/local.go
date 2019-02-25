@@ -65,12 +65,13 @@ func (c *localChain) DKGResultVote(
 	requestID *big.Int,
 	dkgResultHash []byte,
 ) *async.DKGResultVotePromise {
-	dkgResultVotePromise := &async.DKGResultVotePromise{}
-
 	c.submissionsMutex.Lock()
 	defer c.submissionsMutex.Unlock()
+
+	dkgResultVotePromise := &async.DKGResultVotePromise{}
+
 	submissions, ok := c.submissions[requestID.String()]
-	if !ok {
+	if !ok || len(submissions.DKGSubmissions) == 0 {
 		err := dkgResultVotePromise.Fail(
 			fmt.Errorf("no submissions for given request id"),
 		)
@@ -79,17 +80,18 @@ func (c *localChain) DKGResultVote(
 		}
 		return dkgResultVotePromise
 	}
+
 	for _, submission := range submissions.DKGSubmissions {
 		if bytes.Equal(submission.DKGResult.Hash(), dkgResultHash) {
 			submission.Votes++
+
 			dkgResultVote := &event.DKGResultVote{
 				RequestID: requestID,
 			}
+
 			c.handlerMutex.Lock()
 			for _, handler := range c.voteHandler {
-				go func(handler func(*event.DKGResultVote), dkgResultVote *event.DKGResultVote) {
-					handler(dkgResultVote)
-				}(handler, dkgResultVote)
+				go handler(dkgResultVote)
 			}
 			c.handlerMutex.Unlock()
 
@@ -98,8 +100,15 @@ func (c *localChain) DKGResultVote(
 				fmt.Fprintf(os.Stderr, "promise fulfill failed [%v]\n", err)
 			}
 
-			break
+			return dkgResultVotePromise
 		}
+	}
+
+	err := dkgResultVotePromise.Fail(
+		fmt.Errorf("no submissions matching given dkg result hash"),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
 	}
 
 	return dkgResultVotePromise
@@ -454,9 +463,12 @@ func (c *localChain) SubmitDKGResult(
 	// If the result is already submitted for the given request ID.
 	for _, submission := range dkgSubmissions.DKGSubmissions {
 		if submission.DKGResult.Equals(resultToPublish) {
-			dkgResultPublicationPromise.Fail(
+			err := dkgResultPublicationPromise.Fail(
 				fmt.Errorf("result already submitted"),
 			)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
+			}
 			return dkgResultPublicationPromise
 		}
 	}
