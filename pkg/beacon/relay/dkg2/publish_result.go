@@ -222,6 +222,20 @@ func (pm *Publisher) Phase14(
 	if !submissions.Contains(correctResult) {
 		onSubmissionSubscription.Unsubscribe()
 
+		chainRelay.SubmitDKGResult(pm.RequestID, correctResult).
+			// TODO CHANGE TO OnComplete
+			OnSuccess(func(dkgResultPublishedEvent *event.DKGResultPublication) {
+				fmt.Printf(
+					"result submitted for requestID=[%v]\n",
+					dkgResultPublishedEvent.RequestID,
+				)
+				errorChannel <- nil
+			}).
+			OnFailure(func(err error) {
+				errorChannel <- err
+			})
+
+		return <-errorChannel
 	}
 
 	// NOTE: We wait for T_conflict blocks but the protocol specification states
