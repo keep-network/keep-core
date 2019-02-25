@@ -222,10 +222,12 @@ func (pm *Publisher) Phase14(
 	}
 
 	if pm.leadHasEnoughVotes(submissions) {
+		fmt.Printf("Initial check: Lead has enough votes.\n")
 		return nil
 	}
 
 	if !submissions.Contains(correctResult) {
+		fmt.Printf("Initial check: Result not submitted yet.\n")
 		onSubmissionSubscription.Unsubscribe()
 
 		chainRelay.SubmitDKGResult(pm.RequestID, correctResult).
@@ -256,14 +258,17 @@ func (pm *Publisher) Phase14(
 		submissions := chainRelay.GetDKGSubmissions(pm.RequestID)
 
 		if pm.leadHasEnoughVotes(submissions) {
+			fmt.Printf("Loop check: Lead has enough votes.\n")
 			return false, nil
 		}
 
 		if submissions.IsOnlyLead(correctResult) {
+			fmt.Printf("Loop check: Result is the only lead.\n")
 			return false, nil
 		}
 
 		if submissions.Contains(correctResult) {
+			fmt.Printf("Loop check: Vote for the result.\n")
 			chainRelay.DKGResultVote(pm.RequestID, correctResult.Hash()).
 				OnSuccess(func(dkgResultVote *event.DKGResultVote) {
 					fmt.Printf(
@@ -277,6 +282,7 @@ func (pm *Publisher) Phase14(
 			return true, <-errorChannel
 		}
 
+		fmt.Printf("Loop check: Submit the result.\n")
 		chainRelay.SubmitDKGResult(pm.RequestID, correctResult).
 			OnSuccess(func(dkgResultPublishedEvent *event.DKGResultPublication) {
 				fmt.Printf(
@@ -296,8 +302,10 @@ func (pm *Publisher) Phase14(
 	for {
 		select {
 		case <-phaseDurationWaiter:
+			fmt.Printf("Select: Phase duration timeout.\n")
 			return nil
 		case vote := <-onVoteChan:
+			fmt.Printf("Select: On vote.\n")
 			votesAndSubmissionsMutex.Lock()
 			if vote.RequestID.Cmp(pm.RequestID) == 0 {
 				alreadySubmitted, err := votesAndSubmissions(chainRelay)
@@ -308,6 +316,7 @@ func (pm *Publisher) Phase14(
 			}
 			votesAndSubmissionsMutex.Unlock()
 		case submission := <-onSubmissionChan:
+			fmt.Printf("Select: On submission.\n")
 			votesAndSubmissionsMutex.Lock()
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
 				alreadySubmitted, err := votesAndSubmissions(chainRelay)
