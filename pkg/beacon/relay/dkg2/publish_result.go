@@ -28,6 +28,9 @@ type Publisher struct {
 	conflictDuration int // T_conflict
 
 	dishonestThreshold int // M
+	// Tracks if member has a right to submit DKG result or vote to the chain.
+	// Member is eligible to only one submission.
+	alreadySubmitted bool
 }
 
 // executePublishing runs Distributed Key Generation result publication and voting,
@@ -164,6 +167,9 @@ func (pm *Publisher) publishResult(
 				OnFailure(func(err error) {
 					errorChannel <- err
 				})
+
+			pm.alreadySubmitted = true
+
 			return blockHeight, <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
@@ -240,6 +246,7 @@ func (pm *Publisher) resultConflictResolution(
 			OnFailure(func(err error) {
 				errorChannel <- err
 			})
+		pm.alreadySubmitted = true
 
 		return <-errorChannel
 	}
@@ -305,7 +312,7 @@ func (pm *Publisher) resultConflictResolution(
 		case vote := <-onVoteChan:
 			fmt.Printf("Select: On vote.\n")
 			votesAndSubmissionsMutex.Lock()
-			if vote.RequestID.Cmp(pm.RequestID) == 0 {
+			if !pm.alreadySubmitted && vote.RequestID.Cmp(pm.RequestID) == 0 {
 				alreadySubmitted, err := votesAndSubmissions(chainRelay)
 				if alreadySubmitted || err != nil {
 					votesAndSubmissionsMutex.Unlock()
@@ -316,7 +323,7 @@ func (pm *Publisher) resultConflictResolution(
 		case submission := <-onSubmissionChan:
 			fmt.Printf("Select: On submission.\n")
 			votesAndSubmissionsMutex.Lock()
-			if submission.RequestID.Cmp(pm.RequestID) == 0 {
+			if !pm.alreadySubmitted && submission.RequestID.Cmp(pm.RequestID) == 0 {
 				alreadySubmitted, err := votesAndSubmissions(chainRelay)
 				if alreadySubmitted || err != nil {
 					votesAndSubmissionsMutex.Unlock()
