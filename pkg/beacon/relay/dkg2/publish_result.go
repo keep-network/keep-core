@@ -59,6 +59,11 @@ func executePublishing(
 
 	// TODO Execute Phase 14 here
 
+	err = publisher.Phase14(result, chainRelay)
+	if err != nil {
+		return fmt.Errorf("Phase14 failed [%v]", err)
+	}
+
 	return nil
 }
 
