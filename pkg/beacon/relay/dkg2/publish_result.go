@@ -3,6 +3,7 @@ package dkg2
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -285,26 +286,32 @@ func (pm *Publisher) Phase14(
 		return true, <-errorChannel
 	}
 
+	votesAndSubmissionsMutex := &sync.Mutex{}
+
 	for {
 		select {
 		case <-phaseDurationWaiter:
 			return nil
 		case vote := <-onVoteChan:
-			// TODO Check if channel is closed?
+			votesAndSubmissionsMutex.Lock()
 			if vote.RequestID.Cmp(pm.RequestID) == 0 {
 				alreadySubmitted, err := votesAndSubmissions(chainRelay)
 				if alreadySubmitted || err != nil {
+					votesAndSubmissionsMutex.Unlock()
 					return err
 				}
 			}
+			votesAndSubmissionsMutex.Unlock()
 		case submission := <-onSubmissionChan:
-			// TODO Check if channel is closed?
+			votesAndSubmissionsMutex.Lock()
 			if submission.RequestID.Cmp(pm.RequestID) == 0 {
 				alreadySubmitted, err := votesAndSubmissions(chainRelay)
 				if alreadySubmitted || err != nil {
+					votesAndSubmissionsMutex.Unlock()
 					return err
 				}
 			}
+			votesAndSubmissionsMutex.Unlock()
 		}
 	}
 }
