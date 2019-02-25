@@ -10,9 +10,6 @@ import (
 	"time"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 func TestPhase14_pt1(t *testing.T) {
@@ -20,7 +17,7 @@ func TestPhase14_pt1(t *testing.T) {
 	groupSize := 5
 	blockStep := 2 // T_step
 
-	chainHandle, _ /*initialBlock*/, err := initChainHandle2(threshold, groupSize)
+	chainHandle, _ /*initialBlock*/, _, err := initChainHandle(threshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,6 +236,7 @@ func TestPhase14_pt1(t *testing.T) {
 	}
 
 	thresholdRelayChain := chainHandle.ThresholdRelay()
+	blockCounter, _ := chainHandle.BlockCounter()
 	var wg sync.WaitGroup
 
 	for testName, test := range tests {
@@ -253,13 +251,12 @@ func TestPhase14_pt1(t *testing.T) {
 				switch ex.op {
 				case "setup":
 					publisher = &Publisher{
-						ID:               gjkr.MemberID(test.publishingIndex + 1),
-						RequestID:        big.NewInt(int64(ex.intVal)),
-						publishingIndex:  test.publishingIndex,
-						chainHandle:      chainHandle,
-						blockStep:        blockStep,
-						conflictDuration: 8, // T_conflict
-						votingThreshold:  3, // T_max
+						RequestID:          big.NewInt(int64(ex.intVal)),
+						publishingIndex:    test.publishingIndex,
+						blockStep:          blockStep,
+						conflictDuration:   8, // T_conflict
+						dishonestThreshold: 3, // T_max
+						blockCounter:       blockCounter,
 					}
 
 				case "sleep-1-sec":
@@ -269,7 +266,7 @@ func TestPhase14_pt1(t *testing.T) {
 					// fmt.Printf("*** Sleep for %d millisecond ***\n", ex.intVal)
 					time.Sleep(time.Duration(ex.intVal) * time.Millisecond)
 				case "call-phase14": // blocking call to publisher.Phase14!
-					publisher.Phase14(test.correctResult)
+					publisher.Phase14(test.correctResult, thresholdRelayChain)
 				case "submit-result":
 					promise := thresholdRelayChain.SubmitDKGResult(ex.requestID, ex.resultToPublish)
 					_ = promise // local test will immediately fulfil so can be ignored.
@@ -291,7 +288,7 @@ func TestPhase14_pt1(t *testing.T) {
 					wg.Add(1)
 					go func() {
 						defer wg.Done()
-						err := publisher.Phase14(test.correctResult)
+						err := publisher.Phase14(test.correctResult, thresholdRelayChain)
 						if err != nil {
 							fmt.Printf("**** Error: [%v]\n", err)
 							t.Errorf("Returned an error from Phase14 - [%v]\n", err)
@@ -309,31 +306,12 @@ func TestPhase14_pt1(t *testing.T) {
 	wg.Wait()
 }
 
-func initChainHandle2(threshold, groupSize int) (chainHandle chain.Handle, initialBlock int, err error) {
-	chainHandle = local.Connect(groupSize, threshold)
-	blockCounter, err := chainHandle.BlockCounter() // PJS - save blockCounter?
-	if err != nil {
-		return nil, -1, err
-	}
-	err = blockCounter.WaitForBlocks(1)
-	if err != nil {
-		return nil, -1, err
-	}
-
-	initialBlock, err = blockCounter.CurrentBlock() // PJS - need CurrentBlock to make this work
-	if err != nil {
-		return nil, -1, err
-	}
-	return
-}
-
 // convertToJSON return the JSON encoded version of the data with tab indentation.
 func convertToJSON(v interface{}) string {
 	// s, err := json.Marshal ( v )
 	s, err := json.MarshalIndent(v, "", "\t")
 	if err != nil {
 		return fmt.Sprintf("Error:%s", err)
-	} else {
-		return string(s)
 	}
+	return string(s)
 }
