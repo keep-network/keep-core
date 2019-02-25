@@ -487,7 +487,7 @@ func TestDKGResultVote(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	c := Connect(10, 4, big.NewInt(200))
+	c := Connect(10, 4, big.NewInt(200)).(*localChain)
 	chain := c.ThresholdRelay()
 
 	voteChan := make(chan *event.DKGResultVote)
