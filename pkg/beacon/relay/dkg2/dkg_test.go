@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -105,6 +106,7 @@ func TestConvertResult(t *testing.T) {
 	groupSize := 5
 
 	publicKey := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
+	compressedPublicKey := altbn128.G2Point{publicKey}.Compress()
 
 	var tests = map[string]struct {
 		gjkrResult     *gjkr.Result
@@ -133,7 +135,7 @@ func TestConvertResult(t *testing.T) {
 			},
 			expectedResult: &relayChain.DKGResult{
 				Success:        true,
-				GroupPublicKey: publicKey.Marshal(),
+				GroupPublicKey: compressedPublicKey,
 				Disqualified:   []byte{0x01, 0x00, 0x01, 0x01, 0x00},
 				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x01},
 			},
