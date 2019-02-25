@@ -248,7 +248,10 @@ func (pm *Publisher) resultConflictResolution(
 			})
 		pm.alreadySubmitted = true
 
-		return <-errorChannel
+		err := <-errorChannel
+		if err != nil {
+			return err
+		}
 	}
 
 	// NOTE: We wait for T_conflict blocks but the protocol specification states
@@ -313,8 +316,8 @@ func (pm *Publisher) resultConflictResolution(
 			fmt.Printf("Select: On vote.\n")
 			votesAndSubmissionsMutex.Lock()
 			if !pm.alreadySubmitted && vote.RequestID.Cmp(pm.RequestID) == 0 {
-				alreadySubmitted, err := votesAndSubmissions(chainRelay)
-				if alreadySubmitted || err != nil {
+				pm.alreadySubmitted, err = votesAndSubmissions(chainRelay)
+				if err != nil {
 					votesAndSubmissionsMutex.Unlock()
 					return err
 				}
@@ -324,8 +327,8 @@ func (pm *Publisher) resultConflictResolution(
 			fmt.Printf("Select: On submission.\n")
 			votesAndSubmissionsMutex.Lock()
 			if !pm.alreadySubmitted && submission.RequestID.Cmp(pm.RequestID) == 0 {
-				alreadySubmitted, err := votesAndSubmissions(chainRelay)
-				if alreadySubmitted || err != nil {
+				pm.alreadySubmitted, err = votesAndSubmissions(chainRelay)
+				if err != nil {
 					votesAndSubmissionsMutex.Unlock()
 					return err
 				}
