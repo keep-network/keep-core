@@ -266,7 +266,7 @@ func TestPhase14_pt1(t *testing.T) {
 					// fmt.Printf("*** Sleep for %d millisecond ***\n", ex.intVal)
 					time.Sleep(time.Duration(ex.intVal) * time.Millisecond)
 				case "call-phase14": // blocking call to publisher.Phase14!
-					publisher.Phase14(test.correctResult, thresholdRelayChain)
+					publisher.resultConflictResolution(test.correctResult, thresholdRelayChain)
 				case "submit-result":
 					promise := thresholdRelayChain.SubmitDKGResult(ex.requestID, ex.resultToPublish)
 					_ = promise // local test will immediately fulfil so can be ignored.
@@ -288,7 +288,7 @@ func TestPhase14_pt1(t *testing.T) {
 					wg.Add(1)
 					go func() {
 						defer wg.Done()
-						err := publisher.Phase14(test.correctResult, thresholdRelayChain)
+						err := publisher.resultConflictResolution(test.correctResult, thresholdRelayChain)
 						if err != nil {
 							fmt.Printf("**** Error: [%v]\n", err)
 							t.Errorf("Returned an error from Phase14 - [%v]\n", err)

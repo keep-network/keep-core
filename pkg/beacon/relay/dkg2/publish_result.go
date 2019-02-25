@@ -59,9 +59,9 @@ func executePublishing(
 
 	// TODO Execute Phase 14 here
 
-	err = publisher.Phase14(result, chainRelay)
+	err = publisher.resultConflictResolution(result, chainRelay)
 	if err != nil {
-		return fmt.Errorf("Phase14 failed [%v]", err)
+		return fmt.Errorf("result conflict resolution failed [%v]", err)
 	}
 
 	return nil
@@ -177,8 +177,8 @@ func (pm *Publisher) publishResult(
 	}
 }
 
-// Phase14 - PHASE 14
-func (pm *Publisher) Phase14(
+// resultConflictResolution - PHASE 14
+func (pm *Publisher) resultConflictResolution(
 	correctResult *relayChain.DKGResult,
 	chainRelay relayChain.Interface,
 ) error {
