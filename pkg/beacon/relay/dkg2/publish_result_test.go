@@ -82,6 +82,15 @@ func TestPublishResult(t *testing.T) {
 					currentBlock,
 				)
 			}
+
+			if !publisher.alreadySubmitted {
+				t.Fatalf(
+					"alreadySubmitted property not set\nexpected: %v\nactual:   %v\n",
+					true,
+					publisher.alreadySubmitted,
+				)
+			}
+
 			isPublished, err = relayChain.IsDKGResultPublished(publisher.RequestID)
 			if err != nil {
 				t.Fatal(err)
@@ -119,12 +128,14 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		resultToPublish1  *relayChain.DKGResult
-		resultToPublish2  *relayChain.DKGResult
-		requestID1        *big.Int
-		requestID2        *big.Int
-		expectedDuration1 int // index * t_step
-		expectedDuration2 int // index * t_step
+		resultToPublish1          *relayChain.DKGResult
+		resultToPublish2          *relayChain.DKGResult
+		requestID1                *big.Int
+		requestID2                *big.Int
+		expectedDuration1         int // index * t_step
+		expectedDuration2         int // index * t_step
+		expectedAlreadySubmitted1 bool
+		expectedAlreadySubmitted2 bool
 	}{
 		"two members publish the same results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -133,10 +144,12 @@ func TestConcurrentPublishResult(t *testing.T) {
 			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
-			requestID1:        big.NewInt(11),
-			requestID2:        big.NewInt(11),
-			expectedDuration1: 0,  // (P1-1) * t_step
-			expectedDuration2: -1, // result already published by member 1
+			requestID1:                big.NewInt(11),
+			requestID2:                big.NewInt(11),
+			expectedDuration1:         0,  // (P1-1) * t_step
+			expectedDuration2:         -1, // result already published by member 1
+			expectedAlreadySubmitted1: true,
+			expectedAlreadySubmitted2: false,
 		},
 		"two members publish different results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -145,10 +158,12 @@ func TestConcurrentPublishResult(t *testing.T) {
 			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: []byte{202},
 			},
-			requestID1:        big.NewInt(11),
-			requestID2:        big.NewInt(11),
-			expectedDuration1: 0,  // (P1-1) * t_step
-			expectedDuration2: -1, // result already published by member 1
+			requestID1:                big.NewInt(11),
+			requestID2:                big.NewInt(11),
+			expectedDuration1:         0,  // (P1-1) * t_step
+			expectedDuration2:         -1, // result already published by member 1
+			expectedAlreadySubmitted1: true,
+			expectedAlreadySubmitted2: false,
 		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -157,10 +172,12 @@ func TestConcurrentPublishResult(t *testing.T) {
 			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
-			requestID1:        big.NewInt(12),
-			requestID2:        big.NewInt(13),
-			expectedDuration1: 0,                                            // (P1-1) * t_step
-			expectedDuration2: (publisher2.publishingIndex - 1) * blockStep, // (P4-1) * t_step
+			requestID1:                big.NewInt(12),
+			requestID2:                big.NewInt(13),
+			expectedDuration1:         0,                                            // (P1-1) * t_step
+			expectedDuration2:         (publisher2.publishingIndex - 1) * blockStep, // (P4-1) * t_step
+			expectedAlreadySubmitted1: true,
+			expectedAlreadySubmitted2: true,
 		},
 	}
 	for testName, test := range tests {
@@ -216,6 +233,21 @@ func TestConcurrentPublishResult(t *testing.T) {
 			}
 			if result2 := <-result2Chan; result2 != expectedBlockEnd2 {
 				t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedBlockEnd2, result2)
+			}
+
+			if publisher1.alreadySubmitted != test.expectedAlreadySubmitted1 {
+				t.Fatalf(
+					"\nexpected: %v\nactual:   %v\n",
+					test.expectedAlreadySubmitted1,
+					publisher1.alreadySubmitted,
+				)
+			}
+			if publisher2.alreadySubmitted != test.expectedAlreadySubmitted2 {
+				t.Fatalf(
+					"\nexpected: %v\nactual:   %v\n",
+					test.expectedAlreadySubmitted2,
+					publisher2.alreadySubmitted,
+				)
 			}
 		})
 	}
