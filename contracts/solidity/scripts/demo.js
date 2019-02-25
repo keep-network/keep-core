@@ -4,7 +4,7 @@ const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 
 function formatAmount(amount, decimals) {
-  return amount * (10 ** decimals)
+  return web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals)))
 }
 
 function getAccounts() {
@@ -36,7 +36,7 @@ module.exports = async function() {
   let staked = await token.approveAndCall(
     tokenStaking.address, 
     formatAmount(1000000, 18), 
-    "", 
+    "0x00",
     {from: accounts[0]}
   ).catch((err) => {
     console.log(`could not stake KEEP tokens for ${accounts[0]}: ${err}`);
@@ -60,7 +60,7 @@ module.exports = async function() {
     staked = await token.approveAndCall(
       tokenStaking.address, 
       formatAmount(1000000, 18),
-      "", 
+      "0x00",
       {from: account}
     ).catch((err) => {
       console.log(`could not stake KEEP tokens for ${account}: ${err}`);
@@ -73,9 +73,9 @@ module.exports = async function() {
 
   // Grant tokens to the second account
   let amount = formatAmount(70000, 18);
-  let vestingDuration = 86400*60;
-  let start = web3.eth.getBlock('latest').timestamp;
-  let cliff = 86400*10;
+  let vestingDuration = web3.utils.toBN(86400).mul(web3.utils.toBN(60));
+  let start = (await web3.eth.getBlock('latest')).timestamp;
+  let cliff = web3.utils.toBN(86400).mul(web3.utils.toBN(10));
   let revocable = true;
   await token.transfer(accounts[1], formatAmount(70000,18))
   await token.approve(tokenGrant.address, amount);
