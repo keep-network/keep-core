@@ -83,7 +83,7 @@ type SecretSharesAccusationsMessage struct {
 type MemberPublicKeySharePointsMessage struct {
 	senderID MemberID
 
-	publicKeySharePoints []*bn256.G1 // A_ik = g^{a_ik} mod p
+	publicKeySharePoints []*bn256.G2 // A_ik = g^{a_ik} mod p
 }
 
 // PointsAccusationsMessage is a message payload that carries all of the sender's

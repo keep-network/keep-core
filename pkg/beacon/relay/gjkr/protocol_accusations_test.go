@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -291,7 +291,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 		accuserID                  MemberID // j
 		accusedID                  MemberID // m
 		modifyShareS               func(shareS *big.Int) *big.Int
-		modifyPublicKeySharePoints func(points []*bn256.G1) []*bn256.G1
+		modifyPublicKeySharePoints func(points []*bn256.G2) []*bn256.G2
 		expectedResult             []MemberID
 	}{
 		"false accusation - sender is punished": {
@@ -320,10 +320,10 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 		"incorrect commitments - accused member is punished": {
 			accuserID: 3,
 			accusedID: 4,
-			modifyPublicKeySharePoints: func(points []*bn256.G1) []*bn256.G1 {
-				newPoints := make([]*bn256.G1, len(points))
+			modifyPublicKeySharePoints: func(points []*bn256.G2) []*bn256.G2 {
+				newPoints := make([]*bn256.G2, len(points))
 				for i := range newPoints {
-					newPoints[i] = new(bn256.G1).ScalarBaseMult(
+					newPoints[i] = new(bn256.G2).ScalarBaseMult(
 						big.NewInt(int64(i)),
 					)
 				}

@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -49,15 +49,15 @@ func TestCombineReceivedShares(t *testing.T) {
 	}
 }
 
-func TestCalculatePublicCoefficients(t *testing.T) {
+func TestCalculatePublicKeySharePoints(t *testing.T) {
 	secretCoefficients := []*big.Int{
 		big.NewInt(3),
 		big.NewInt(5),
 		big.NewInt(2),
 	}
-	expectedPublicCoefficients := make([]*bn256.G1, len(secretCoefficients))
+	expectedPublicKeySharePoints := make([]*bn256.G2, len(secretCoefficients))
 	for i, secretCoefficient := range secretCoefficients {
-		expectedPublicCoefficients[i] = new(bn256.G1).ScalarBaseMult(
+		expectedPublicKeySharePoints[i] = new(bn256.G2).ScalarBaseMult(
 			secretCoefficient,
 		)
 	}
@@ -78,16 +78,16 @@ func TestCalculatePublicCoefficients(t *testing.T) {
 
 	message := member.CalculatePublicKeySharePoints()
 
-	if !reflect.DeepEqual(member.publicKeySharePoints, expectedPublicCoefficients) {
+	if !reflect.DeepEqual(member.publicKeySharePoints, expectedPublicKeySharePoints) {
 		t.Errorf("incorrect member's public shares\nexpected: %v\nactual:   %v\n",
-			expectedPublicCoefficients,
+			expectedPublicKeySharePoints,
 			member.publicKeySharePoints,
 		)
 	}
 
-	if !reflect.DeepEqual(message.publicKeySharePoints, expectedPublicCoefficients) {
+	if !reflect.DeepEqual(message.publicKeySharePoints, expectedPublicKeySharePoints) {
 		t.Errorf("incorrect public shares in message\nexpected: %v\nactual:   %v\n",
-			expectedPublicCoefficients,
+			expectedPublicKeySharePoints,
 			message.publicKeySharePoints,
 		)
 	}
@@ -114,7 +114,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 		},
 		"negative validation - changed public key share - one accused member": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[1].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
+				messages[1].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[1].publicKeySharePoints[1],
 					big.NewInt(2),
 				)
@@ -125,11 +125,11 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
-				messages[0].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
+				messages[0].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[0].publicKeySharePoints[1],
 					big.NewInt(2),
 				)
-				messages[3].publicKeySharePoints[1] = new(bn256.G1).ScalarMult(
+				messages[3].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[3].publicKeySharePoints[1],
 					big.NewInt(2),
 				)

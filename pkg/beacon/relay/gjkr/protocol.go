@@ -310,10 +310,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
@@ -539,9 +539,9 @@ func (qm *QualifiedMember) CombineMemberShares() {
 //
 // See Phase 7 of the protocol specification.
 func (sm *SharingMember) CalculatePublicKeySharePoints() *MemberPublicKeySharePointsMessage {
-	sm.publicKeySharePoints = make([]*bn256.G1, len(sm.secretCoefficients))
+	sm.publicKeySharePoints = make([]*bn256.G2, len(sm.secretCoefficients))
 	for i, a := range sm.secretCoefficients {
-		sm.publicKeySharePoints[i] = new(bn256.G1).ScalarBaseMult(a)
+		sm.publicKeySharePoints[i] = new(bn256.G2).ScalarBaseMult(a)
 	}
 
 	return &MemberPublicKeySharePointsMessage{
@@ -596,19 +596,19 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	senderID MemberID,
 	shareS *big.Int,
-	publicKeySharePoints []*bn256.G1,
+	publicKeySharePoints []*bn256.G2,
 ) bool {
-	var sum *bn256.G1 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
+	var sum *bn256.G2 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
-		aj := new(bn256.G1).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)
+		aj := new(bn256.G2).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)
 		if sum == nil {
 			sum = aj
 		} else {
-			sum = new(bn256.G1).Add(sum, aj)
+			sum = new(bn256.G2).Add(sum, aj)
 		}
 	}
 
-	gs := new(bn256.G1).ScalarBaseMult(shareS) // G * s_ji
+	gs := new(bn256.G2).ScalarBaseMult(shareS) // G * s_ji
 
 	return gs.String() == sum.String()
 }
@@ -939,12 +939,12 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID MemberID, 
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) reconstructIndividualPublicKeys() {
 	rm.reconstructedIndividualPublicKeys = make(
-		map[MemberID]*bn256.G1,
+		map[MemberID]*bn256.G2,
 		len(rm.reconstructedIndividualPrivateKeys),
 	)
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// y_m = G * z_m
-		individualPublicKey := new(bn256.G1).ScalarBaseMult(individualPrivateKey)
+		individualPublicKey := new(bn256.G2).ScalarBaseMult(individualPrivateKey)
 		rm.reconstructedIndividualPublicKeys[memberID] = individualPublicKey
 	}
 }
@@ -977,12 +977,12 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 
 	// Add received peer group members' individual public keys `A_j0`.
 	for _, peerPublicKey := range rm.receivedValidPeerIndividualPublicKeys() {
-		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
+		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 	}
 
 	// Add reconstructed disqualified members' individual public keys `G * z_m`.
 	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
-		groupPublicKey = new(bn256.G1).Add(groupPublicKey, peerPublicKey)
+		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 
 	}
 
