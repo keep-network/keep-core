@@ -25,7 +25,7 @@ contract KeepGroupImplV1 is Ownable {
 
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
+    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -265,9 +265,7 @@ contract KeepGroupImplV1 is Ownable {
             _groupMembers[groupPublicKey].push(members[i]);
         }
         emit OnGroupRegistered(groupPublicKey);
-
-        uint256 activationBlockHeight = block.number;
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID, activationBlockHeight);
+        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
     }
 
     /**

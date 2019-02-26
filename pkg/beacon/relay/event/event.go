@@ -16,35 +16,43 @@ type Entry struct {
 	PreviousEntry *big.Int
 	Timestamp     time.Time
 	Seed          *big.Int
+
+	BlockNumber uint64
 }
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	RequestID   *big.Int
-	Payment     *big.Int
-	BlockReward *big.Int
-	Seed        *big.Int
-
+	RequestID     *big.Int
+	Payment       *big.Int
+	BlockReward   *big.Int
+	Seed          *big.Int
 	PreviousValue *big.Int
+
+	BlockNumber uint64
 }
 
 // GroupRegistration represents a registered group in the threshold relay with a
 // public key, that is considered active at ActivationBlockHeight, and was
 // spawned by the relay request with id, RequestID.
 type GroupRegistration struct {
-	GroupPublicKey        []byte
-	RequestID             *big.Int
-	ActivationBlockHeight *big.Int
+	GroupPublicKey []byte
+	RequestID      *big.Int
+
+	BlockNumber uint64
 }
 
 // DKGResultPublication represents a DKG result publication event.
 type DKGResultPublication struct {
 	RequestID      *big.Int
 	GroupPublicKey []byte
+
+	BlockNumber uint64
 }
 
 // GroupTicketSubmission represents a group selection ticket
 // submission event.
 type GroupTicketSubmission struct {
 	TicketValue *big.Int
+
+	BlockNumber uint64
 }
