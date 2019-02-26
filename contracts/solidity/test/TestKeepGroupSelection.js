@@ -14,10 +14,9 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
   let tickets = [];
   for (let i = 1; i <= stakerWeight; i++) {
-    let ticketValue = new BigNumber('0x' + abi.soliditySHA3(
-      ["uint", "uint", "uint"],
-      [randomBeaconValue, stakerValue, i]
-    ).toString('hex'));
+    let ticketValue = web3.utils.toBN(
+      web3.utils.soliditySha3({t: 'uint', v: randomBeaconValue}, {t: 'uint', v: stakerValue}, {t: 'uint', v: i})
+    );
     let ticket = {
       value: ticketValue,
       virtualStakerIndex: i
@@ -29,7 +28,7 @@ function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
 
 function mineBlocks(blocks) {
   for (let i = 0; i <= blocks; i++) {
-    web3.currentProvider.sendAsync({
+    web3.currentProvider.send({
       jsonrpc: "2.0",
       method: "evm_mine",
       id: 12345
@@ -87,26 +86,26 @@ contract('TestKeepGroupSelection', function(accounts) {
     groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
-    await token.approveAndCall(stakingContract.address, minimumStake*1000, "", {from: staker1});
-    tickets1 = generateTickets(randomBeaconValue, staker1, 1000);
+    await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});
+    tickets1 = generateTickets(randomBeaconValue, staker1, 2000);
 
     // Send tokens to staker2 and stake
     await token.transfer(staker2, minimumStake*2000, {from: staker1});
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, "", {from: staker2});
+    await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker2});
     tickets2 = generateTickets(randomBeaconValue, staker2, 2000);
 
     // Send tokens to staker3 and stake
     await token.transfer(staker3, minimumStake*3000, {from: staker1});
-    await token.approveAndCall(stakingContract.address, minimumStake*3000, "", {from: staker3});
+    await token.approveAndCall(stakingContract.address, minimumStake*3000, "0x00", {from: staker3});
     tickets3 = generateTickets(randomBeaconValue, staker3, 3000);
 
     await keepRandomBeaconImplViaProxy.setGroupContract(keepGroupProxy.address);
-    await keepRandomBeaconImplViaProxy.relayEntry(1, randomBeaconValue, 1, 1, 1);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, randomBeaconValue, "0x01", 1, 1);
   });
 
   it("should be able to get staking weight", async function() {
-    assert.equal(await keepGroupImplViaProxy.stakingWeight(staker1), 1000, "Should have expected staking weight.");
-    assert.equal(await keepGroupImplViaProxy.stakingWeight(staker3), 3000, "Should have expected staking weight.");
+    assert.equal(web3.utils.toBN(2000).eq(await keepGroupImplViaProxy.stakingWeight(staker1)), true, "Should have expected staking weight.");
+    assert.equal(web3.utils.toBN(3000).eq(await keepGroupImplViaProxy.stakingWeight(staker3)), true, "Should have expected staking weight.");
   });
 
   it("should fail to get selected tickets before challenge period is over", async function() {
@@ -148,16 +147,16 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     // Test tickets ordering
     let orderedTickets = await keepGroupImplViaProxy.orderedTickets();
-    assert.equal(orderedTickets[0].equals(tickets[0]), true, "Tickets should be in ascending order.");
-    assert.equal(orderedTickets[1].equals(tickets[1]), true, "Tickets should be in ascending order.");
-    assert.equal(orderedTickets[2].equals(tickets[2]), true, "Tickets should be in ascending order.");
+    assert.equal(orderedTickets[0].eq(tickets[0]), true, "Tickets should be in ascending order.");
+    assert.equal(orderedTickets[1].eq(tickets[1]), true, "Tickets should be in ascending order.");
+    assert.equal(orderedTickets[2].eq(tickets[2]), true, "Tickets should be in ascending order.");
 
   });
 
   it("should be able to submit a ticket during ticket submission period", async function() {
     await keepGroupImplViaProxy.submitTicket(tickets1[0].value, staker1, tickets1[0].virtualStakerIndex);
     let proof = await keepGroupImplViaProxy.getTicketProof(tickets1[0].value);
-    assert.equal(proof[1].equals(new BigNumber(staker1)), true , "Should be able to get submitted ticket proof.");
+    assert.equal(proof[1].eq(web3.utils.toBN(staker1)), true , "Should be able to get submitted ticket proof.");
     assert.equal(proof[2], tickets1[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
   });
 

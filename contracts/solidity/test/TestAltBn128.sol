@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "../contracts/utils/ModUtils.sol";
@@ -37,8 +37,8 @@ contract TestAltBn128 {
         AltBn128.G1Point memory p_3;
         AltBn128.G1Point memory p_4;
 
-        p_3 = AltBn128.add(p_1, p_2);
-        p_4 = AltBn128.add(p_2, p_1);
+        p_3 = AltBn128.g1Add(p_1, p_2);
+        p_4 = AltBn128.g1Add(p_2, p_1);
 
         Assert.equal(p_3.x, p_4.x, "Point addition should be commutative.");
         Assert.equal(p_3.y, p_4.y, "Point addition should be commutative.");
@@ -119,11 +119,11 @@ contract TestAltBn128 {
         for (i = 0; i < randomG1.length; i++) {
             for (j = 0; j < randomG1.length; j++) {
 
-                p_1 = AltBn128.add(
+                p_1 = AltBn128.g1Add(
                     AltBn128.G1Point(randomG1[i][0], randomG1[i][1]),
                     AltBn128.G1Point(randomG1[j][0], randomG1[j][1])
                 );
-                p_2 = AltBn128.add(
+                p_2 = AltBn128.g1Add(
                     AltBn128.G1Point(randomG1[j][0], randomG1[j][1]),
                     AltBn128.G1Point(randomG1[i][0], randomG1[i][1])
                 );
@@ -150,7 +150,7 @@ contract TestAltBn128 {
 
             p_2 = AltBn128.G1Point(randomG1[i][0], randomG1[i][1]);
             for (j = 1; j < i; j++) {
-                p_2 = AltBn128.add(p_2, AltBn128.G1Point(randomG1[i][0], randomG1[i][1]));
+                p_2 = AltBn128.g1Add(p_2, AltBn128.G1Point(randomG1[i][0], randomG1[i][1]));
             }
 
             Assert.equal(p_1.x, p_2.x, "Scalar multiplication should match repeat addition.");
@@ -233,7 +233,7 @@ contract TestAltBn128 {
             Assert.isTrue(AltBn128.isG2PointOnCurve(point), "Valid points should be on the curve.");
         }
 
-        for (i = 0; i < randomG2.length; i++) {
+        for (uint i = 0; i < randomG2.length; i++) {
             point.x.x = randomG2[i][2];
             point.x.y = randomG2[i][3];
             point.y.x = randomG2[i][0];

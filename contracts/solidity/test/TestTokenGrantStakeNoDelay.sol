@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -12,7 +12,7 @@ contract TestTokenGrantStakeNoDelay {
     KeepToken t = new KeepToken();
 
     // Create token grant contract with no withdrawal delay
-    TokenGrant c = new TokenGrant(t, 0, 0);
+    TokenGrant c = new TokenGrant(address(t), address(0), 0);
 
     uint id;
     address beneficiary = address(this); // For test simplicity set beneficiary the same as sender.

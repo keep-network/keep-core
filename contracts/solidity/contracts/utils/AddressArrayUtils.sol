@@ -1,9 +1,9 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 
 library AddressArrayUtils {
 
-    function contains(address[] self, address _address) 
+    function contains(address[] memory self, address _address)
         internal
         pure
         returns (bool)
@@ -16,9 +16,9 @@ library AddressArrayUtils {
         return false;
     }
 
-    function removeAddress(address[] storage self, address _addressToRemove) 
+    function removeAddress(address[] storage self, address _addressToRemove)
         internal
-        returns (address[])
+        returns (address[] storage)
     {
         for (uint i = 0; i < self.length; i++) {
             // If address is found in array.

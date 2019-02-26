@@ -9,7 +9,8 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
   let implV1, proxy, implViaProxy,
     account_one = accounts[0],
-    account_two = accounts[1];
+    account_two = accounts[1],
+    account_three = accounts[2];
 
   beforeEach(async () => {
     implV1 = await KeepRandomBeaconImplV1.new();
@@ -28,24 +29,19 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via implementation contract with enough ether", async function() {
-    const relayEntryRequestedEvent = implViaProxy.RelayEntryRequested();
     await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100})
 
-    relayEntryRequestedEvent.get(function(error, result){
-      assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
-    });
+    assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
 
-    let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
+    let contractBalance = await web3.eth.getBalance(implViaProxy.address);
     assert.equal(contractBalance, 100, "Keep Random Beacon contract should receive ether.");
 
-    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address).toNumber();
+    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address);
     assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon contract new balance should be visible via proxy.");
 
   });
 
   it("should be able to request relay entry via proxy contract with enough ether", async function() {
-    const relayEntryRequestedEvent = implViaProxy.RelayEntryRequested();
-
     await exceptThrow(proxy.sendTransaction({from: account_two, value: 1000}));
 
     await web3.eth.sendTransaction({
@@ -53,44 +49,44 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
       data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
     });
 
-    relayEntryRequestedEvent.get(function(error, result){
-      assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
-    });
+    assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
 
-    let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
+    let contractBalance = await web3.eth.getBalance(implViaProxy.address);
     assert.equal(contractBalance, 100, "Keep Random Beacon contract should receive ether.");
 
-    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address).toNumber();
+    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address);
     assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon contract new balance should be visible via proxy.");
   });
 
   it("owner should be able to withdraw ether from random beacon contract", async function() {
 
+    let amount = web3.utils.toWei('1', 'ether');
     await web3.eth.sendTransaction({
-      from: account_two, value: web3.toWei(1, 'ether'), gas: 200000, to: proxy.address,
+      from: account_two, value: amount, gas: 200000, to: proxy.address,
       data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
     });
 
-    let ownerStartBalance = web3.fromWei(await web3.eth.getBalance(account_one).toNumber(), 'ether');
-
     // should fail to withdraw if not owner
     await exceptThrow(implViaProxy.initiateWithdrawal({from: account_two}));
-    await exceptThrow(implViaProxy.finishWithdrawal({from: account_two}));
+    await exceptThrow(implViaProxy.finishWithdrawal(account_two, {from: account_two}));
 
     await implViaProxy.initiateWithdrawal({from: account_one});
-    await exceptThrow(implViaProxy.finishWithdrawal({from: account_one}));
+    await exceptThrow(implViaProxy.finishWithdrawal(account_three, {from: account_one}));
 
+    let contractStartBalance = await web3.eth.getBalance(implViaProxy.address);
     // jump in time, full withdrawal delay
-    await increaseTimeTo(latestTime()+duration.days(30));
-    await implViaProxy.finishWithdrawal({from: account_one});
+    await increaseTimeTo(await latestTime()+duration.days(30));
 
-    let contractBalance = await web3.eth.getBalance(implViaProxy.address).toNumber();
-    assert.equal(contractBalance, 0, "Keep Random Beacon contract should send all ether.");
-    let contractBalanceViaProxy = await web3.eth.getBalance(proxy.address).toNumber();
-    assert.equal(contractBalanceViaProxy, 0, "Keep Random Beacon contract updated balance should be visible via proxy.");
+    let receiverStartBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
+    await implViaProxy.finishWithdrawal(account_three, {from: account_one});
+    let receiverEndBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
+    assert(receiverEndBalance > receiverStartBalance, "Receiver updated balance should include received ether.");
 
-    let ownerEndBalance = web3.fromWei(await web3.eth.getBalance(account_one).toNumber(), 'ether');
-    assert(ownerEndBalance > ownerStartBalance, "Owner updated balance should include received ether.");
+    let contractEndBalance = await web3.eth.getBalance(implViaProxy.address);
+    assert.equal(contractEndBalance, contractStartBalance - amount, "Keep Random Beacon contract should send all ether.");
+    let contractEndBalanceViaProxy = await web3.eth.getBalance(proxy.address);
+    assert.equal(contractEndBalanceViaProxy, contractStartBalance - amount, "Keep Random Beacon contract updated balance should be visible via proxy.");
+
   });
 
   it("should fail to update minimum payment by non owner", async function() {
