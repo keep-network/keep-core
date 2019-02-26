@@ -127,7 +127,7 @@ Consequent Penalization::
 
 === Contract structure
 
-Delegating contract should consist of following information:
+Delegating contract should consist of the following information:
 
 * _owner_ address,
 * _operator_ address,
@@ -150,7 +150,7 @@ The contract should also have following methods:
 [#delegating]
 ==== Delegating a stake
 
-1. The _owner_ chooses the amount of tokens to delegate, _operator_, and
+1. The _owner_ chooses the number of tokens to delegate, _operator_, and
 _magpie_ and creates a _delegation order_ containing this information.
 
 2. Both the _owner_ and _operator_ agree on the _delegation order_.
@@ -171,7 +171,7 @@ and sets the variables accordingly to the _delegation order_, and binds the
 owner with the operator. The contract state is set to `active`, and the contract
 state change time is set to current time,
   
-5. The _operator_ can now use delegated stake for operating.
+5. The _operator_ can now use a delegated stake for operating.
 
 [#undelegating]
 === Undelegating a stake
@@ -193,8 +193,8 @@ _undelegation order_ and sets the following:
   * contract state is set to `undelegating`,
   * contract state change time is set to current time.
 
-5. The _operator_ can not enter new operations until the undelegated stake is
-reclaimed and the _owner_ can not delegate to new a _operator_.
+5. The _operator_ cannot enter new operations until the undelegated stake is
+reclaimed and the _owner_ cannot delegate to new an _operator_.
 
 [#claiming]
 === Claiming undelegated stake
@@ -219,14 +219,14 @@ following:
 [#operating]
 === Operating on a stake
 
-1. When the _operator_ tries to join an operation (e.g., present a ticket for
+1. When the _operator_ tries to join operation (e.g., present a ticket for
 beacon group selection) they should create an _operation initialization order_,
 signed by the _operator_.
 
 2. The _operation initialization order_ is published along with any other data
 required to join the operation, after which the following should be checked:
   * the agreement is valid,
-  * the state of agreement is `active`,
+  * the state of the agreement is `active`,
   * the request is signed by the operator,
   * the amount of delegated stake is higher or equal to the minimum stake.
 
@@ -248,9 +248,9 @@ The _penalty_ should contain the following:
   * the _operator_ address.
 
 2. The _delegation contract_ should then check the _penalty amount_ is not 
-higher then the minimum stake.
+higher than the minimum stake.
 
-3. If the penalty is valid, the _delegation contract_ will substract the 
+3. If the penalty is valid, the _delegation contract_ will subtract the 
 _penalty amount_ from the delegated stake. If the _penalty amount_ is higher
 than the delegated stake then the delegated stake should be set to zero.
 
