@@ -36,6 +36,8 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
+    uint256 internal _voteTimeIncrement;//value of per-vote increment
+    uint256 internal _voteTime;//value of current extention
 
     uint256 internal _randomBeaconValue;
 
@@ -347,7 +349,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes32 resultHash = keccak256(abi.encodePacked(success, groupPubKey, disqualified, inactive));
         bytes32 submitterID = keccak256(abi.encodePacked(msg.sender, index, _randomBeaconValue));
     
-        require(eligibleSubmitter(index), "not an eligible submitter yet");
+        require(eligibleSubmitter(index), "not an eligible submitter");
         require(!_votedDkg[submitterID], "already voted for or submitted a result");
         
         //check empty for first submitter incentives. Should not re enter. voting begins after first submission
@@ -361,6 +363,7 @@ contract KeepGroupImplV1 is Ownable {
             _submissionVotes[resultHash] = 1;
             _votedDkg[submitterID] = true;//cannot vote after submiting DKG result
             _resultPublished[resultHash] = true;
+            _voteTime += _voteTimeIncrement;
             emit DkgResultPublishedEvent(msg.sender, groupPubKey);
             
         }
@@ -388,10 +391,12 @@ contract KeepGroupImplV1 is Ownable {
      * @return true if the submitter is eligible. False otherwise.
      */
     function eligibleSubmitter(uint index) public returns (bool){
+        require(block.timestamp <= _voteTime, "voting period is over");
+        if(_dkgResultHashes.length > 0) return true;
         uint T_init = _submissionStart + _timeoutChallenge;
         uint T_step = 2; //time between eligibility increments Placeholder
         require(block.number > T_init, "Ticket submission challenge period must be over.");
-        if(index == 1) return true;
+        if(index == 1)return true;
         
         //(2* (T_step)) -> time for first submitter to submit DKG Result.
         //No way to calculate DKG time on-chain, so DKG result submission opens on ticket-challenge close.
@@ -422,15 +427,15 @@ contract KeepGroupImplV1 is Ownable {
     function _addVote(bytes32 resultHash, bytes32 submitterID) internal{
         _votedDkg[submitterID] = true;
         _submissionVotes[resultHash] += 1;
+        _voteTime += _voteTimeIncrement;
     }
 
     /*
      * @dev returns the final DKG result.
      */
-    function getFinalResult()public returns (bytes32) {
+    function getFinalResult()public returns (bytes) {
         bytes32 leadingResult;
         uint highestVoteN;
-        uint highestVoteNtemp;
         uint totalVotes;
         uint f_max = _groupSize/2 + 1;
 
@@ -438,12 +443,11 @@ contract KeepGroupImplV1 is Ownable {
         //method cannot be called before voting period is over or everyone has voted as it is liked with cleanup()
 
         for(uint i = 0; i < _dkgResultHashes.length; i++){
-            highestVoteNtemp = _submissionVotes[_dkgResultHashes[i]];
-            if(highestVoteNtemp > highestVoteN){
-                highestVoteN = highestVoteNtemp;
+            if(_submissionVotes[_dkgResultHashes[i]] > highestVoteN){
+                highestVoteN = _submissionVotes[_dkgResultHashes[i]];
                 leadingResult = _dkgResultHashes[i];
             }
-            totalVotes += highestVoteNtemp;
+            totalVotes += _submissionVotes[_dkgResultHashes[i]];
         }
         if(totalVotes - highestVoteN >= f_max){
             cleanup();
@@ -464,7 +468,7 @@ contract KeepGroupImplV1 is Ownable {
             //emist _randomBeaconValue instead of RequestID
             emit GetFinalResultEvent(groupPublicKey, _randomBeaconValue);
             cleanup();
-            return leadingResult;
+            return _receivedSubmissions[leadingResult].groupPubKey;
             //TODO:
             //return value as DKG result
         }
@@ -569,6 +573,9 @@ contract KeepGroupImplV1 is Ownable {
         }
 
         delete _tickets;
+        _voteTimeIncrement = 0;
+        _voteExtention = 0;
+        _votingStarted = false;
 
         // TODO: cleanup DkgResults
     }
