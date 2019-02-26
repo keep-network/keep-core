@@ -45,7 +45,7 @@ contract KeepGroupImplV1 is Ownable {
     bytes[] internal _submissions;
     
     bytes32[] internal _dkgResultHashes;
-
+    
     mapping (bytes32 => bool) internal _votedDkg;
     mapping (bytes32 => bool) internal _resultPublished;
     mapping (bytes32 => DkgResult) internal _receivedSubmissions;
@@ -475,7 +475,13 @@ contract KeepGroupImplV1 is Ownable {
 
     }
 
-
+    function getDkgResultSubmissions() public view returns (bytes32[], uint256[]) {
+        uint256[] memory votes = new uint256[](_dkgResultHashes.length);
+        for(uint i = 0; i < _dkgResultHashes.length; i++){
+            votes[i] = _submissionVotes[dkgResultHashes[i]];
+        }
+        return (_dkgResultHashes, votes);
+    }   
     /**
      * @dev ticketInitialSubmissionTimeout is the duration (in blocks) the
      * staker has to submit tickets that fall under the natural threshold
