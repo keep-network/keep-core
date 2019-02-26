@@ -29,6 +29,7 @@
     "babel-register": "^6.26.0",
     "ethereumjs-abi": "^0.6.5",
     "solc": "^0.5.4",
-    "truffle": "^5.0.4"
+    "truffle": "^5.0.4",
+    "websocket": "^1.0.28"
   }
 }
