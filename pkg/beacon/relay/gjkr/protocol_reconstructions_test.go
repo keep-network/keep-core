@@ -257,13 +257,13 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	reconstructedIndividualPrivateKeys[5] = big.NewInt(15) // z_5
 
 	expectedIndividualPublicKeys := make( // y_m = g^{z_m}
-		map[MemberID]*bn256.G1,
+		map[MemberID]*bn256.G2,
 		len(disqualifiedMembersIDs),
 	)
-	expectedIndividualPublicKeys[4] = new(bn256.G1).ScalarBaseMult(
+	expectedIndividualPublicKeys[4] = new(bn256.G2).ScalarBaseMult(
 		reconstructedIndividualPrivateKeys[4],
 	)
-	expectedIndividualPublicKeys[5] = new(bn256.G1).ScalarBaseMult(
+	expectedIndividualPublicKeys[5] = new(bn256.G2).ScalarBaseMult(
 		reconstructedIndividualPrivateKeys[5],
 	)
 
@@ -296,7 +296,7 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	threshold := 2
 	groupSize := 3
 
-	expectedGroupPublicKey := new(bn256.G1).ScalarBaseMult(
+	expectedGroupPublicKey := new(bn256.G2).ScalarBaseMult(
 		big.NewInt(243), // 10 + 20 + 30 + 91 + 92
 	)
 	members, err := initializeCombiningMembersGroup(threshold, groupSize)
@@ -307,30 +307,30 @@ func TestCombineGroupPublicKey(t *testing.T) {
 
 	// Member's public coefficients. Zeroth coefficient is member's individual
 	// public key.
-	member.publicKeySharePoints = []*bn256.G1{
-		new(bn256.G1).ScalarBaseMult(big.NewInt(10)),
-		new(bn256.G1).ScalarBaseMult(big.NewInt(11)),
-		new(bn256.G1).ScalarBaseMult(big.NewInt(12)),
+	member.publicKeySharePoints = []*bn256.G2{
+		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(11)),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(12)),
 	}
 
 	// Public coefficients received from peer members. Each peer member's zeroth
 	// coefficient is their individual public key.
-	member.receivedValidPeerPublicKeySharePoints[2] = []*bn256.G1{
-		new(bn256.G1).ScalarBaseMult(big.NewInt(20)),
-		new(bn256.G1).ScalarBaseMult(big.NewInt(21)),
-		new(bn256.G1).ScalarBaseMult(big.NewInt(22)),
+	member.receivedValidPeerPublicKeySharePoints[2] = []*bn256.G2{
+		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(21)),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(22)),
 	}
-	member.receivedValidPeerPublicKeySharePoints[3] = []*bn256.G1{
-		new(bn256.G1).ScalarBaseMult(big.NewInt(30)),
-		new(bn256.G1).ScalarBaseMult(big.NewInt(31)),
-		new(bn256.G1).ScalarBaseMult(big.NewInt(32)),
+	member.receivedValidPeerPublicKeySharePoints[3] = []*bn256.G2{
+		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(31)),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(32)),
 	}
 
 	// Reconstructed individual public keys for disqualified members.
-	member.reconstructedIndividualPublicKeys[4] = new(bn256.G1).ScalarBaseMult(
+	member.reconstructedIndividualPublicKeys[4] = new(bn256.G2).ScalarBaseMult(
 		big.NewInt(91),
 	)
-	member.reconstructedIndividualPublicKeys[5] = new(bn256.G1).ScalarBaseMult(
+	member.reconstructedIndividualPublicKeys[5] = new(bn256.G2).ScalarBaseMult(
 		big.NewInt(92),
 	)
 

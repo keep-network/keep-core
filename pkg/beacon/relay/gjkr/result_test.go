@@ -4,12 +4,12 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
 func TestResultEquals(t *testing.T) {
-	key1 := new(bn256.G1).ScalarBaseMult(big.NewInt(12))
-	key2 := new(bn256.G1).ScalarBaseMult(big.NewInt(13))
+	key1 := new(bn256.G2).ScalarBaseMult(big.NewInt(12))
+	key2 := new(bn256.G2).ScalarBaseMult(big.NewInt(13))
 
 	var tests = map[string]struct {
 		result1        *Result
@@ -91,8 +91,8 @@ func TestResultEquals(t *testing.T) {
 
 func TestPublicKeysEqual(t *testing.T) {
 	var tests = map[string]struct {
-		key1           *bn256.G1
-		key2           *bn256.G1
+		key1           *bn256.G2
+		key2           *bn256.G2
 		expectedResult bool
 	}{
 		"both nil": {
@@ -102,22 +102,22 @@ func TestPublicKeysEqual(t *testing.T) {
 		},
 		"nil and set": {
 			key1:           nil,
-			key2:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			key2:           new(bn256.G2).ScalarBaseMult(big.NewInt(13)),
 			expectedResult: false,
 		},
 		"set and nil": {
-			key1:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			key1:           new(bn256.G2).ScalarBaseMult(big.NewInt(13)),
 			key2:           nil,
 			expectedResult: false,
 		},
 		"equal": {
-			key1:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
-			key2:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
+			key1:           new(bn256.G2).ScalarBaseMult(big.NewInt(13)),
+			key2:           new(bn256.G2).ScalarBaseMult(big.NewInt(13)),
 			expectedResult: true,
 		},
 		"not equal": {
-			key1:           new(bn256.G1).ScalarBaseMult(big.NewInt(13)),
-			key2:           new(bn256.G1).ScalarBaseMult(big.NewInt(14)),
+			key1:           new(bn256.G2).ScalarBaseMult(big.NewInt(13)),
+			key2:           new(bn256.G2).ScalarBaseMult(big.NewInt(14)),
 			expectedResult: false,
 		},
 	}

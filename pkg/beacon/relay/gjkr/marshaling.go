@@ -227,9 +227,9 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 
 	mpspm.senderID = MemberIDFromBytes(pbMsg.SenderID)
 
-	var keySharePoints []*bn256.G1
+	var keySharePoints []*bn256.G2
 	for _, keySharePointBytes := range pbMsg.PublicKeySharePoints {
-		keySharePoint := new(bn256.G1)
+		keySharePoint := new(bn256.G2)
 		_, err := keySharePoint.Unmarshal(keySharePointBytes)
 		if err != nil {
 			return fmt.Errorf(
