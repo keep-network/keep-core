@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/keep-network/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func TestDKGResultEquals(t *testing.T) {

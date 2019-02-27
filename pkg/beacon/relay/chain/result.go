@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/keep-network/go-ethereum/accounts/abi"
-	"github.com/keep-network/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/crypto/sha3"
 )
 
 // DKGResult is a result of distributed key generation protocol.
