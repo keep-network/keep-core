@@ -265,6 +265,11 @@ contract KeepGroupImplV1 is Ownable {
         return _dkgResultPublished[requestId];
     }
 
+    /*
+     * @dev Gets number of votes for each submitted DKG result hash. 
+     * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @return Hashes of submitted DKG results and number of votes for each hash.
+     */
     function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
         // TODO: Implement
         bytes32[] memory resultsHashes;
