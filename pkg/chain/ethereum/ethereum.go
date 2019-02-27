@@ -518,3 +518,30 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 	return resultPublicationPromise
 }
+
+// GetDKGResultsVotes returns a map containing number of votes for each DKG
+// result hash registered under specific request ID.
+func (ec *ethereumChain) GetDKGResultsVotes(
+	requestID *big.Int,
+) relaychain.DKGResultsVotes {
+	panic("function not implemented") // TODO: Implement function
+}
+
+// VoteOnDKGResult registers a vote for the DKG result hash.
+func (ec *ethereumChain) VoteOnDKGResult(
+	requestID *big.Int,
+	memberIndex int,
+	dkgResultHash relaychain.DKGResultHash,
+) *async.DKGResultVotePromise {
+	dkgResultVotePromise := &async.DKGResultVotePromise{}
+	dkgResultVotePromise.Fail(fmt.Errorf("function not implemented")) // TODO: Implement function
+	return dkgResultVotePromise
+}
+
+// OnDKGResultVote registers a callback that is invoked when an on-chain
+// notification of a new, valid vote is seen.
+func (ec *ethereumChain) OnDKGResultVote(
+	func(dkgResultVote *event.DKGResultVote),
+) (subscription.EventSubscription, error) {
+	panic("function not implemented") // TODO: Implement function
+}
