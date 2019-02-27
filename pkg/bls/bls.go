@@ -72,13 +72,13 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 
 	// Get sufficient number of participants with valid shares.
 	for _, s := range shares {
+		if len(validParticipants) == threshold {
+			break
+		}
 		if s == nil || s.V == nil || s.I < 0 {
 			continue
 		}
 		validParticipants = append(validParticipants, big.NewInt(int64(s.I)))
-		if len(validParticipants) == threshold {
-			break
-		}
 	}
 
 	if len(validParticipants) < threshold {
