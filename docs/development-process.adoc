@@ -74,20 +74,26 @@ codebase, what should they do next and in what order.
 
 === Example of a good Daily Standup message
 
-* Yesterday
-** Conflict resolution phase. 
-*** Opened PR with a stub interface for the on-chain part: <link>. 
-*** Did initial work on off-chain voting event handling code, just local chain 
+*Yesterday*
+
+* Conflict resolution phase. 
+** Opened PR with a stub interface for the on-chain part: <link>. 
+** Did initial work on off-chain voting event handling code, just local chain 
 stub implementation.
-* Today
-** Continuing work on the conflict resolution phase
-*** I received a review on my stub on-chain interface, want to address all 
+
+*Today*
+
+* Continuing work on the conflict resolution phase
+** I received a review on my stub on-chain interface, want to address all 
 comments. Should be ready today for another review round.
-**** I want to finish ethereum off-chain voting event handling code and open 
+** I want to finish ethereum off-chain voting event handling code and open 
 PR today. Should be ready for review at the end of the day
-* Blockers
-** I do not understand how conflict resolution phase votes are summarized, need 
+
+*Blockers*
+
+* I do not understand how conflict resolution phase votes are summarized, need 
 to talk with someone about it.
+
 
 == Definition of Done
 
