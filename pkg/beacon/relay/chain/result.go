@@ -30,6 +30,9 @@ type DKGResult struct {
 	Inactive []byte
 }
 
+// DKGResultHash is a Keccak-256 hash of DKG Result.
+type DKGResultHash [32]byte
+
 // Equals checks if two DKG results are equal.
 func (r1 *DKGResult) Equals(r2 *DKGResult) bool {
 	if r1 == nil || r2 == nil {
