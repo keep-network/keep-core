@@ -30,6 +30,7 @@ func Init(channel net.BroadcastChannel) {
 // bytes, or an error.
 func Execute(
 	bytes []byte,
+	threshold int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	signer *dkg2.ThresholdSigner,

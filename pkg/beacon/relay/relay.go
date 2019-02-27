@@ -62,6 +62,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		go func(signer *membership) {
 			signature, err := thresholdsignature.Execute(
 				combinedEntryToSign,
+				n.chainConfig.Threshold,
 				n.blockCounter,
 				signer.channel,
 				signer.member,
