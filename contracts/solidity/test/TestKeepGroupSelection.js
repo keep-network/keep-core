@@ -41,7 +41,7 @@ function mineBlocks(blocks) {
 contract('TestKeepGroupSelection', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
-    randomBeaconValue, naturalThreshold,
+    previousEntry, randomBeaconValue, naturalThreshold,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
@@ -72,7 +72,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     timeoutSubmission = 40;
     timeoutChallenge = 60;
 
-    randomBeaconValue = 123456789;
+    previousEntry = '61647192470559497961835987041772849466909869278998228659325527399967350471301';
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
@@ -83,7 +83,9 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     naturalThreshold = await keepGroupImplViaProxy.naturalThreshold();
 
-    groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
+    // Data generated using client Go code with master secret key 123
+    groupPubKey = "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0";
+    randomBeaconValue = '14338479826386391162410575915611605755963697664966940200639296307898208140504';
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});
@@ -100,7 +102,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     tickets3 = generateTickets(randomBeaconValue, staker3, 3000);
 
     await keepRandomBeaconImplViaProxy.setGroupContract(keepGroupProxy.address);
-    await keepRandomBeaconImplViaProxy.relayEntry(1, randomBeaconValue, "0x01", 1, 1);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, web3.utils.toBN(randomBeaconValue), groupPubKey,  web3.utils.toBN(previousEntry), 1);
   });
 
   it("should be able to get staking weight", async function() {
