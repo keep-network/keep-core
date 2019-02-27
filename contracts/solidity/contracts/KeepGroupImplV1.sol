@@ -21,7 +21,11 @@ contract KeepGroupImplV1 is Ownable {
         bytes inactive;
     }
 
-    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
+    // TODO: Rename to DkgResultSubmittedEvent
+    // TODO: Add memberIndex
+    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
+    
+    event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
 
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
@@ -230,6 +234,7 @@ contract KeepGroupImplV1 is Ownable {
      */
     function submitDkgResult(
         uint256 requestId,
+//        uint256 memberIndex, TODO: Add memberIndex 
         bool success,
         bytes memory groupPubKey,
         bytes memory disqualified,
@@ -252,6 +257,35 @@ contract KeepGroupImplV1 is Ownable {
         emit DkgResultPublishedEvent(requestId, groupPubKey);
     }
 
+    /**
+     * @dev Checks if DKG protocol result has been already published for the
+     * specific relay request ID associated with the protocol execution. 
+     */
+    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
+        return _dkgResultPublished[requestId];
+    }
+
+    function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
+        // TODO: Implement
+        bytes32[] memory resultsHashes;
+        uint256[] memory resultsVotes;
+
+        return (resultsHashes, resultsVotes);
+    }
+
+    /*
+     * @dev receives vote for provided resultHash.
+     * @param index the claimed index of the user.
+     * @param resultHash Hash of DKG result to vote for
+     */
+    function voteOnDkgResult(
+        uint256 requestId,
+        uint256 memberIndex,
+        bytes32 resultHash
+    ) public {
+        // TODO: Implement
+    }
+
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
     function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
@@ -266,14 +300,6 @@ contract KeepGroupImplV1 is Ownable {
         }
         emit OnGroupRegistered(groupPublicKey);
         emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
-    }
-
-    /**
-     * @dev Checks if DKG protocol result has been already published for the
-     * specific relay request ID associated with the protocol execution. 
-     */
-    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
-        return _dkgResultPublished[requestId];
     }
 
     /**
