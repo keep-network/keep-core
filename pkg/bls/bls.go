@@ -75,7 +75,7 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 		if s == nil || s.V == nil || s.I < 0 {
 			continue
 		}
-		validParticipants = append(validParticipants, big.NewInt(int64(1+s.I)))
+		validParticipants = append(validParticipants, big.NewInt(int64(s.I)))
 		if len(validParticipants) == threshold {
 			break
 		}
@@ -86,7 +86,6 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 	}
 
 	result := new(bn256.G1)
-
 	for i := range validParticipants {
 		basis := lagrangeBasis(i, validParticipants)
 		result.Add(result, new(bn256.G1).ScalarMult(shares[i].V, basis))
