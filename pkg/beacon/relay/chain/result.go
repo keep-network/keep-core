@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/keep-network/go-ethereum/accounts/abi"
+	"github.com/keep-network/go-ethereum/crypto/sha3"
 )
 
 // DKGResult is a result of distributed key generation protocol.
@@ -57,6 +58,17 @@ func (r *DKGResult) Equals(r2 *DKGResult) bool {
 		return false
 	}
 	return true
+}
+
+// Hash returns Keccak-256 hash of the DKG result.
+func (r *DKGResult) Hash() (dkgResultHash DKGResultHash, err error) {
+	encodedDKGResult, err := r.encode()
+
+	h := sha3.NewKeccak256()
+	h.Write(encodedDKGResult)
+	h.Sum(dkgResultHash[:0])
+
+	return
 }
 
 // encode returns DKG result encoded to the format described by Solidity Contract
