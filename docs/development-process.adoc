@@ -34,7 +34,7 @@ Meeting: reviewing items, making sure they are well-understood and preparing
 questions if needed.
 
 
-Planning Meeting consists of two parts Retrospective and New Milestone Planning.
+Planning Meeting consists of two parts: Retrospective and New Milestone Planning.
 
 === Retrospective
 
@@ -70,7 +70,7 @@ Everyone should answer three questions for a Daily Standup:
 
 Development Team members should be specific and provide enough details so that 
 other team members know the current status, and if they work on the same 
-codebase, what should they do next and in what order.
+item, what should they do next and in what order.
 
 === Example of a good Daily Standup message
 
@@ -79,7 +79,7 @@ codebase, what should they do next and in what order.
 * Conflict resolution phase. 
 ** Opened PR with a stub interface for the on-chain part: <link>. 
 ** Did initial work on off-chain voting event handling code, just local chain 
-stub implementation.
+stub implementation, no PR yet.
 
 *Today*
 
@@ -87,7 +87,8 @@ stub implementation.
 ** I received a review on my stub on-chain interface, want to address all 
 comments. Should be ready today for another review round.
 ** I want to finish ethereum off-chain voting event handling code and open 
-PR today. Should be ready for review at the end of the day
+PR today. It will containg local chain stub implementation as well. 
+Should be ready for review at the end of the day.
 
 *Blockers*
 
