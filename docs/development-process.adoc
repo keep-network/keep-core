@@ -110,3 +110,14 @@ in the item’s description
 Development Team member
 * Tests implemented and passing
 * Item does not break other existing functionalities
+
+== Work Tracking
+
+We use GitHub to capture backlog items, plan Development Team work and track 
+progress on Milestone. 
+
+Each backlog item is a separate GitHub issue. Each Milestone has a separate 
+project board under Keep Network project. All backlog items are ordered under 
+a separate Backlog project in Keep Network project. 
+
+All Pull Requests implementing Milestone items reference appropriate issue. 
