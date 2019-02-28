@@ -1,4 +1,4 @@
-package chain
+package dkg2
 
 import (
 	"bytes"
@@ -8,29 +8,29 @@ import (
 )
 
 func TestContains(t *testing.T) {
-	dkgResult1Hash := DKGResultHash{10}
-	dkgResult2Hash := DKGResultHash{20}
-	dkgResult3Hash := DKGResultHash{30}
+	dkgResult1Hash := dkgResultHash{10}
+	dkgResult2Hash := dkgResultHash{20}
+	dkgResult3Hash := dkgResultHash{30}
 
 	tests := map[string]struct {
-		currentDKGResultsVotes DKGResultsVotes
-		lookFor                DKGResultHash
+		currentDKGResultsVotes dkgResultsVotes
+		lookFor                dkgResultHash
 		expectedResult         bool
 	}{
 		"empty set of results votes": {
-			currentDKGResultsVotes: DKGResultsVotes{},
+			currentDKGResultsVotes: dkgResultsVotes{},
 			lookFor:                dkgResult1Hash,
 			expectedResult:         false,
 		},
 		"only one result votes": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 			},
 			lookFor:        dkgResult1Hash,
 			expectedResult: true,
 		},
 		"1st result is a match": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 				dkgResult2Hash: 2,
 			},
@@ -38,7 +38,7 @@ func TestContains(t *testing.T) {
 			expectedResult: true,
 		},
 		"2nd result is a match": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 				dkgResult2Hash: 2,
 			},
@@ -46,7 +46,7 @@ func TestContains(t *testing.T) {
 			expectedResult: true,
 		},
 		"result not found in current results votes": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 				dkgResult2Hash: 2,
 			},
@@ -70,69 +70,69 @@ func TestContains(t *testing.T) {
 }
 
 func TestLeads(t *testing.T) {
-	dkgResult1Hash := DKGResultHash{10}
-	dkgResult2Hash := DKGResultHash{20}
-	dkgResult3Hash := DKGResultHash{30}
-	dkgResult4Hash := DKGResultHash{40}
+	dkgResult1Hash := dkgResultHash{10}
+	dkgResult2Hash := dkgResultHash{20}
+	dkgResult3Hash := dkgResultHash{30}
+	dkgResult4Hash := dkgResultHash{40}
 
 	tests := map[string]struct {
-		currentDKGResultsVotes DKGResultsVotes
-		expectedLeads          []DKGResultHash
+		currentDKGResultsVotes dkgResultsVotes
+		expectedLeads          []dkgResultHash
 	}{
 		"empty set of results votes": {
-			currentDKGResultsVotes: DKGResultsVotes{},
-			expectedLeads:          []DKGResultHash{},
+			currentDKGResultsVotes: dkgResultsVotes{},
+			expectedLeads:          []dkgResultHash{},
 		},
 		"only one result vote in the set": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 			},
-			expectedLeads: []DKGResultHash{
+			expectedLeads: []dkgResultHash{
 				dkgResult1Hash,
 			},
 		},
 		"1st result hash has the highest number of votes": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 3,
 				dkgResult2Hash: 2,
 				dkgResult3Hash: 2,
 				dkgResult4Hash: 1,
 			},
-			expectedLeads: []DKGResultHash{
+			expectedLeads: []dkgResultHash{
 				dkgResult1Hash,
 			},
 		},
 		"2nd result hash has the highest number of votes": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 				dkgResult2Hash: 3,
 				dkgResult3Hash: 2,
 				dkgResult4Hash: 1,
 			},
-			expectedLeads: []DKGResultHash{
+			expectedLeads: []dkgResultHash{
 				dkgResult2Hash,
 			},
 		},
 		"1st and 3rd results hashes have the highest number of votes": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 3,
 				dkgResult2Hash: 2,
 				dkgResult3Hash: 3,
 				dkgResult4Hash: 1,
 			},
-			expectedLeads: []DKGResultHash{
+			expectedLeads: []dkgResultHash{
 				dkgResult1Hash,
 				dkgResult3Hash,
 			},
 		},
 		"2nd and 4th results hashes have the highest number of votes": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 2,
 				dkgResult2Hash: 4,
 				dkgResult3Hash: 1,
 				dkgResult4Hash: 4,
 			},
-			expectedLeads: []DKGResultHash{
+			expectedLeads: []dkgResultHash{
 				dkgResult2Hash,
 				dkgResult4Hash,
 			},
@@ -157,7 +157,7 @@ func TestLeads(t *testing.T) {
 	}
 }
 
-func sortDKGResultHashes(slice []DKGResultHash) {
+func sortDKGResultHashes(slice []dkgResultHash) {
 	sort.SliceStable(
 		slice,
 		func(i, j int) bool { return (bytes.Compare(slice[i][:], slice[j][:]) < 0) },
@@ -165,29 +165,29 @@ func sortDKGResultHashes(slice []DKGResultHash) {
 }
 
 func TestIsStrictlyLeading(t *testing.T) {
-	dkgResult1Hash := DKGResultHash{10}
-	dkgResult2Hash := DKGResultHash{20}
-	dkgResult3Hash := DKGResultHash{30}
+	dkgResult1Hash := dkgResultHash{10}
+	dkgResult2Hash := dkgResultHash{20}
+	dkgResult3Hash := dkgResultHash{30}
 
 	tests := map[string]struct {
-		currentDKGResultsVotes DKGResultsVotes
-		lookFor                DKGResultHash
+		currentDKGResultsVotes dkgResultsVotes
+		lookFor                dkgResultHash
 		expectedResult         bool
 	}{
 		"empty set of results votes": {
-			currentDKGResultsVotes: DKGResultsVotes{},
+			currentDKGResultsVotes: dkgResultsVotes{},
 			lookFor:                dkgResult1Hash,
 			expectedResult:         false,
 		},
 		"only one result votes": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 			},
 			lookFor:        dkgResult1Hash,
 			expectedResult: true,
 		},
 		"two leading results": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 2,
 				dkgResult2Hash: 2,
 			},
@@ -195,7 +195,7 @@ func TestIsStrictlyLeading(t *testing.T) {
 			expectedResult: false,
 		},
 		"result is not not leading": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 3,
 				dkgResult2Hash: 2,
 			},
@@ -203,7 +203,7 @@ func TestIsStrictlyLeading(t *testing.T) {
 			expectedResult: false,
 		},
 		"result is strictly leading": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 				dkgResult2Hash: 2,
 			},
@@ -211,7 +211,7 @@ func TestIsStrictlyLeading(t *testing.T) {
 			expectedResult: true,
 		},
 		"result is not registered": {
-			currentDKGResultsVotes: DKGResultsVotes{
+			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 				dkgResult2Hash: 2,
 			},

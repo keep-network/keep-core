@@ -1,24 +1,22 @@
-package chain
+package dkg2
 
-// DKGResultsVotes is a map of votes for each DKG Result.
-type DKGResultsVotes map[DKGResultHash]int
+import "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+
+type dkgResultsVotes chain.DKGResultsVotes
+type dkgResultHash = chain.DKGResultHash
 
 // Contains returns true if result hash is in the set of DKG results votes.
-func (d DKGResultsVotes) Contains(resultHash DKGResultHash) bool {
-	for dkgResultHash := range d {
-		if resultHash == dkgResultHash {
-			return true
-		}
-	}
-	return false
+func (d dkgResultsVotes) Contains(resultHash dkgResultHash) bool {
+	_, contains := d[resultHash]
+	return contains
 }
 
 // Leads returns hashes of DKG results with the highest number of registered votes.
 // In case there are more than one result registered with the same highest number
 // of votes the function will return multiple DKR result hashes. If the set of
-// DKG results votes is empty it returns nil.
-func (d DKGResultsVotes) Leads() []DKGResultHash {
-	leadingResultsHashes := make([]DKGResultHash, 0)
+// DKG results votes is empty it returns empty slice.
+func (d dkgResultsVotes) Leads() []dkgResultHash {
+	leadingResultsHashes := make([]dkgResultHash, 0)
 
 	if len(d) == 0 {
 		return leadingResultsHashes
@@ -42,7 +40,7 @@ func (d DKGResultsVotes) Leads() []DKGResultHash {
 
 // IsStrictlyLeading checks if given result hash is the only leading DKG result.
 // If the set of DKG results votes is empty it returns false.
-func (d DKGResultsVotes) IsStrictlyLeading(resultHash DKGResultHash) bool {
+func (d dkgResultsVotes) IsStrictlyLeading(resultHash dkgResultHash) bool {
 	leadingDKGResults := d.Leads()
 
 	if len(leadingDKGResults) == 1 {

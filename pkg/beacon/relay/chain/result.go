@@ -30,8 +30,12 @@ type DKGResult struct {
 	Inactive []byte
 }
 
-// DKGResultHash is a Keccak-256 hash of DKG Result.
+// DKGResultHash is a 256-bit hash of DKG Result. The hashing algorithm should
+// be the same as the one used on-chain.
 type DKGResultHash [32]byte
+
+// DKGResultsVotes is a map of votes for each DKG Result.
+type DKGResultsVotes map[DKGResultHash]int
 
 // Equals checks if two DKG results are equal.
 func (r1 *DKGResult) Equals(r2 *DKGResult) bool {
