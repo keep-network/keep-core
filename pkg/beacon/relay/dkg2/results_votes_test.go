@@ -5,16 +5,18 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
 func TestContains(t *testing.T) {
-	dkgResult1Hash := dkgResultHash{10}
-	dkgResult2Hash := dkgResultHash{20}
-	dkgResult3Hash := dkgResultHash{30}
+	dkgResult1Hash := chain.DKGResultHash{10}
+	dkgResult2Hash := chain.DKGResultHash{20}
+	dkgResult3Hash := chain.DKGResultHash{30}
 
 	tests := map[string]struct {
 		currentDKGResultsVotes dkgResultsVotes
-		lookFor                dkgResultHash
+		lookFor                chain.DKGResultHash
 		expectedResult         bool
 	}{
 		"empty set of results votes": {
@@ -70,24 +72,24 @@ func TestContains(t *testing.T) {
 }
 
 func TestLeads(t *testing.T) {
-	dkgResult1Hash := dkgResultHash{10}
-	dkgResult2Hash := dkgResultHash{20}
-	dkgResult3Hash := dkgResultHash{30}
-	dkgResult4Hash := dkgResultHash{40}
+	dkgResult1Hash := chain.DKGResultHash{10}
+	dkgResult2Hash := chain.DKGResultHash{20}
+	dkgResult3Hash := chain.DKGResultHash{30}
+	dkgResult4Hash := chain.DKGResultHash{40}
 
 	tests := map[string]struct {
 		currentDKGResultsVotes dkgResultsVotes
-		expectedLeads          []dkgResultHash
+		expectedLeads          []chain.DKGResultHash
 	}{
 		"empty set of results votes": {
 			currentDKGResultsVotes: dkgResultsVotes{},
-			expectedLeads:          []dkgResultHash{},
+			expectedLeads:          []chain.DKGResultHash{},
 		},
 		"only one result vote in the set": {
 			currentDKGResultsVotes: dkgResultsVotes{
 				dkgResult1Hash: 1,
 			},
-			expectedLeads: []dkgResultHash{
+			expectedLeads: []chain.DKGResultHash{
 				dkgResult1Hash,
 			},
 		},
@@ -98,7 +100,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 2,
 				dkgResult4Hash: 1,
 			},
-			expectedLeads: []dkgResultHash{
+			expectedLeads: []chain.DKGResultHash{
 				dkgResult1Hash,
 			},
 		},
@@ -109,7 +111,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 2,
 				dkgResult4Hash: 1,
 			},
-			expectedLeads: []dkgResultHash{
+			expectedLeads: []chain.DKGResultHash{
 				dkgResult2Hash,
 			},
 		},
@@ -120,7 +122,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 3,
 				dkgResult4Hash: 1,
 			},
-			expectedLeads: []dkgResultHash{
+			expectedLeads: []chain.DKGResultHash{
 				dkgResult1Hash,
 				dkgResult3Hash,
 			},
@@ -132,7 +134,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 1,
 				dkgResult4Hash: 4,
 			},
-			expectedLeads: []dkgResultHash{
+			expectedLeads: []chain.DKGResultHash{
 				dkgResult2Hash,
 				dkgResult4Hash,
 			},
@@ -157,7 +159,7 @@ func TestLeads(t *testing.T) {
 	}
 }
 
-func sortDKGResultHashes(slice []dkgResultHash) {
+func sortDKGResultHashes(slice []chain.DKGResultHash) {
 	sort.SliceStable(
 		slice,
 		func(i, j int) bool { return (bytes.Compare(slice[i][:], slice[j][:]) < 0) },
@@ -165,13 +167,13 @@ func sortDKGResultHashes(slice []dkgResultHash) {
 }
 
 func TestIsStrictlyLeading(t *testing.T) {
-	dkgResult1Hash := dkgResultHash{10}
-	dkgResult2Hash := dkgResultHash{20}
-	dkgResult3Hash := dkgResultHash{30}
+	dkgResult1Hash := chain.DKGResultHash{10}
+	dkgResult2Hash := chain.DKGResultHash{20}
+	dkgResult3Hash := chain.DKGResultHash{30}
 
 	tests := map[string]struct {
 		currentDKGResultsVotes dkgResultsVotes
-		lookFor                dkgResultHash
+		lookFor                chain.DKGResultHash
 		expectedResult         bool
 	}{
 		"empty set of results votes": {
