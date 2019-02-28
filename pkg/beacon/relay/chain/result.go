@@ -2,10 +2,6 @@ package chain
 
 import (
 	"bytes"
-	"fmt"
-
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
 )
 
 // DKGResult is a result of distributed key generation protocol.
@@ -58,42 +54,4 @@ func (r *DKGResult) Equals(r2 *DKGResult) bool {
 		return false
 	}
 	return true
-}
-
-// Hash returns Keccak-256 hash of the DKG result.
-func (r *DKGResult) Hash() (dkgResultHash DKGResultHash, err error) {
-	encodedDKGResult, err := r.encode()
-
-	h := sha3.NewKeccak256()
-	h.Write(encodedDKGResult)
-	h.Sum(dkgResultHash[:0])
-
-	return
-}
-
-// encode returns DKG result encoded to the format described by Solidity Contract
-// Application Binary Interface (ABI).
-func (r *DKGResult) encode() ([]byte, error) {
-	boolType, err := abi.NewType("bool")
-	if err != nil {
-		return nil, fmt.Errorf("bool type creation failed [%v]", err)
-	}
-	bytesType, err := abi.NewType("bytes")
-	if err != nil {
-		return nil, fmt.Errorf("bytes type creation failed [%v]", err)
-	}
-
-	arguments := abi.Arguments{
-		{Type: boolType},
-		{Type: bytesType},
-		{Type: bytesType},
-		{Type: bytesType},
-	}
-
-	bytes, err := arguments.Pack(r.Success, r.GroupPublicKey, r.Disqualified, r.Inactive)
-	if err != nil {
-		return nil, fmt.Errorf("encoding failed [%v]", err)
-	}
-
-	return bytes, nil
 }
