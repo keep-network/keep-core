@@ -51,7 +51,7 @@ operation:: Refers to the group selection, the process of selecting _operator_
 2. _operator_ can only have a _delegated stake_ from only one _owner_.
 3. The end of an _on stake operation_ happens only after all rewards are
 granted and all penalties are imposed.
-4. Rewarding and penalzing happens as the last phase of all operations.
+4. Rewarding and penalizing happens as the last phase of all operations.
 
 == Roles
 
@@ -126,7 +126,7 @@ Consequent Penalization::
 
 === Contract
 
-Contract should include the following information:
+The contract should include the following information:
 
 * _owner_ address,
 * _operator_ address,
@@ -236,7 +236,7 @@ required to join the operation, after which the following should be checked:
 ==== Rewarding
 
 If the operator is awarded a _reward_ of currency, the reward should be paid
-to magpie address. In this document, we are not specifing how the rewarding
+to magpie address. In this document, we are not specifying how rewarding
 should be done.
 
 [#penalizing]
