@@ -57,7 +57,7 @@ func TestContains(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := test.currentDKGResultsVotes.Contains(test.lookFor)
+			actualResult := test.currentDKGResultsVotes.contains(test.lookFor)
 			if test.expectedResult != actualResult {
 				t.Errorf(
 					"\nexpected: %v\nactual:   %v",
@@ -141,7 +141,7 @@ func TestLeads(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := test.currentDKGResultsVotes.Leads()
+			actualResult := test.currentDKGResultsVotes.leads()
 
 			sortDKGResultHashes(actualResult)
 			sortDKGResultHashes(test.expectedLeads)
@@ -222,7 +222,7 @@ func TestIsStrictlyLeading(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := test.currentDKGResultsVotes.IsStrictlyLeading(test.lookFor)
+			actualResult := test.currentDKGResultsVotes.isStrictlyLeading(test.lookFor)
 			if test.expectedResult != actualResult {
 				t.Errorf(
 					"\nexpected: %v\nactual:   %v",
