@@ -14,7 +14,9 @@ func (d DKGResultsVotes) Contains(resultHash DKGResultHash) bool {
 }
 
 // Leads returns hashes of DKG results with the highest number of registered votes.
-// If the set of DKG results votes is empty it returns nil.
+// In case there are more than one result registered with the same highest number
+// of votes the function will return multiple DKR result hashes. If the set of
+// DKG results votes is empty it returns nil.
 func (d DKGResultsVotes) Leads() []DKGResultHash {
 	leadingResultsHashes := make([]DKGResultHash, 0)
 
