@@ -25,7 +25,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 seed); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
-    uint256 internal _seq;
+    uint256 internal _requestCounter;
     uint256 internal _minPayment;
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
@@ -82,7 +82,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(uint256 seed) public payable returns (uint256 requestID) {
+    function requestRelayEntry(uint256 seed) public payable returns (uint256) {
         require(
             msg.value >= _minPayment,
             "Payment is less than required minimum."
@@ -91,18 +91,12 @@ contract KeepRandomBeaconImplV1 is Ownable {
         // TODO: Select group for request.
         bytes memory groupPubKey = hex"1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0";
 
-        requestID = _seq++;
-        _requests[requestID] = Request(msg.sender, msg.value, groupPubKey);
+        _requestCounter++;
 
-        emit RelayEntryRequested(requestID, msg.value, seed);
-        return requestID;
-    }
+        _requests[_requestCounter] = Request(msg.sender, msg.value, groupPubKey);
 
-    /**
-     * @dev Return the current RequestID - used in testing.
-     */
-    function getRequestId() public view returns (uint256 requestID) {
-        return _seq;
+        emit RelayEntryRequested(_requestCounter, msg.value, seed);
+        return _requestCounter;
     }
 
     /**

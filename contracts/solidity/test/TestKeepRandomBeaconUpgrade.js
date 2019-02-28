@@ -51,7 +51,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
 
     await impl2ViaProxy.requestRelayEntry(0, {from: account_two, value: 100})
 
-    assert.equal((await impl2ViaProxy.getPastEvents())[0].args['requestID'], 3, "requestID should not be reset and should continue to increment where it was left in previous implementation.");
+    assert.equal((await impl2ViaProxy.getPastEvents())[0].args['requestID'], 4, "requestID should not be reset and should continue to increment where it was left in previous implementation.");
 
   });
 

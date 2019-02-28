@@ -82,7 +82,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, keepGroupProxy.address);
     await keepRandomBeaconImplViaProxy.requestRelayEntry(seed, {from: staker3, value: 100});
-    await keepRandomBeaconImplViaProxy.relayEntry(0, bls.groupSignature, bls.groupPubKey, bls.previousEntry, 1);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, 1);
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});

@@ -19,6 +19,7 @@ contract('TestRelayEntry', function() {
 
     keepGroupStub = await KeepGroupStub.new();
     await keepRandomBeaconImplViaProxy.initialize(1,1, bls.previousEntry, keepGroupStub.address);
+    await keepRandomBeaconImplViaProxy.requestRelayEntry(1, {value: 100});
 
     relayEntryGeneratedEvent = keepRandomBeaconImplViaProxy.RelayEntryGenerated();
   });
