@@ -8,12 +8,9 @@ import (
 )
 
 func TestContains(t *testing.T) {
-	dkgResult1 := &DKGResult{GroupPublicKey: []byte{10, 01}}
-	dkgResult2 := &DKGResult{GroupPublicKey: []byte{10, 02}}
-	dkgResult3 := &DKGResult{GroupPublicKey: []byte{10, 32}}
-	dkgResult1Hash, _ := dkgResult1.Hash()
-	dkgResult2Hash, _ := dkgResult2.Hash()
-	dkgResult3Hash, _ := dkgResult3.Hash()
+	dkgResult1Hash := DKGResultHash{10}
+	dkgResult2Hash := DKGResultHash{20}
+	dkgResult3Hash := DKGResultHash{30}
 
 	tests := map[string]struct {
 		currentDKGResultsVotes DKGResultsVotes
@@ -73,22 +70,10 @@ func TestContains(t *testing.T) {
 }
 
 func TestLeads(t *testing.T) {
-	dkgResult1 := &DKGResult{
-		GroupPublicKey: []byte{10, 1},
-	}
-	dkgResult2 := &DKGResult{
-		GroupPublicKey: []byte{10, 02},
-	}
-	dkgResult3 := &DKGResult{
-		GroupPublicKey: []byte{10, 03},
-	}
-	dkgResult4 := &DKGResult{
-		GroupPublicKey: []byte{10, 04},
-	}
-	dkgResult1Hash, _ := dkgResult1.Hash()
-	dkgResult2Hash, _ := dkgResult2.Hash()
-	dkgResult3Hash, _ := dkgResult3.Hash()
-	dkgResult4Hash, _ := dkgResult4.Hash()
+	dkgResult1Hash := DKGResultHash{10}
+	dkgResult2Hash := DKGResultHash{20}
+	dkgResult3Hash := DKGResultHash{30}
+	dkgResult4Hash := DKGResultHash{40}
 
 	tests := map[string]struct {
 		currentDKGResultsVotes DKGResultsVotes
@@ -180,12 +165,9 @@ func sortDKGResultHashes(slice []DKGResultHash) {
 }
 
 func TestIsStrictlyLeading(t *testing.T) {
-	dkgResult1 := &DKGResult{GroupPublicKey: []byte{10, 01}}
-	dkgResult2 := &DKGResult{GroupPublicKey: []byte{10, 02}}
-	dkgResult3 := &DKGResult{GroupPublicKey: []byte{10, 32}}
-	dkgResult1Hash, _ := dkgResult1.Hash()
-	dkgResult2Hash, _ := dkgResult2.Hash()
-	dkgResult3Hash, _ := dkgResult3.Hash()
+	dkgResult1Hash := DKGResultHash{10}
+	dkgResult2Hash := DKGResultHash{20}
+	dkgResult3Hash := DKGResultHash{30}
 
 	tests := map[string]struct {
 		currentDKGResultsVotes DKGResultsVotes
