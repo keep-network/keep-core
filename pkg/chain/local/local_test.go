@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -468,6 +469,36 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 		t.Fatalf("event should not be emitted - I have unsubscribed!")
 	case <-ctx.Done():
 		// ok
+	}
+}
+
+func TestCalculateDKGResultHash(t *testing.T) {
+	localChain := &localChain{}
+
+	dkgResult := &relaychain.DKGResult{
+		Success:        true,
+		GroupPublicKey: []byte{3, 40, 200},
+		Disqualified:   []byte{1, 0, 1, 0},
+		Inactive:       []byte{0, 1, 1, 0},
+	}
+	expectedHashString := "135a0a776b24afbdb70a3548d2b01d197f67972b7482df68703caeae4453134e"
+
+	actualHash, err := localChain.CalculateDKGResultHash(dkgResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedHash := relaychain.DKGResultHash{}
+	copy(
+		expectedHash[:],
+		common.Hex2Bytes(expectedHashString)[:32],
+	)
+
+	if expectedHash != actualHash {
+		t.Fatalf("\nexpected: %x\nactual:   %x\n",
+			expectedHash,
+			actualHash,
+		)
 	}
 }
 
