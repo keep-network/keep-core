@@ -38,7 +38,10 @@ func (d dkgResultsVotes) leads() []chain.DKGResultHash {
 }
 
 // isStrictlyLeading checks if given result hash is the only leading DKG result.
-// If the set of DKG results votes is empty it returns false.
+// It returns true if the given DKG result hash is the only result with the highest
+// number of votes. It means that if the given result does not have the highest
+// number of votes or there are two or more results on the leading position it
+// will return false. If the set of DKG results votes is empty it returns false.
 func (d dkgResultsVotes) isStrictlyLeading(resultHash chain.DKGResultHash) bool {
 	leadingDKGResults := d.leads()
 
