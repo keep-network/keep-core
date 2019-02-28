@@ -11,7 +11,7 @@ toc::[]
 <<rfc-3-stake-delegation-requirements, RFC 3,>> discusses the architectural
 tradeoffs to be considered for the stake delegation design. That document
 concludes with the preferred architectural approaches, and the remainder of this
-section describes a subset of these; the approaches in RFC 3 that are not
+section describes a subset of these. The approaches in RFC 3 that are not
 detailed below are omitted in the interests of a simpler initial implementation,
 but may be layered on in later RFCs. For now, this document focuses on a system
 that uses _multi operation with static minimum stake and delayed undelegation
@@ -42,21 +42,20 @@ delegated stake:: An _owner_'s staked tokens, delegated to the _operator_ by the
 on-stake:: Refers to the type of operations performed by an _operator_ on a
   _delegated stake_.
 
-=== Design Assumptions
+operation:: Refers to the group selection, the process of selecting _operator_ 
+  as new a member of a new group.
+
+=== Design Requirements
 
 1. _operator_ cannot have any KEEP tokens at all.
 2. _operator_ can only have a _delegated stake_ from only one _owner_.
-3. If an _owner_ tries to delegate to more than one operator, the tx must
-fail.
-4. If an _owner_ tries to delegate a stake to an _operator_ who already has a
-stake, the tx must fail.
-5. The end of an _on stake operation_ happens only after all rewards are
+3. The end of an _on stake operation_ happens only after all rewards are
 granted and all penalties are imposed.
-6. Rewarding and penalization happens as the last phase of all operations.
+4. Rewarding and penalzing happens as the last phase of all operations.
 
 == Roles
 
-In this proposal, we are specifying three roles, owner, operator, and magpie.
+In this proposal, we are specifying three roles: owner, operator, and magpie.
 They are briefly characterized in this section.
 
 === Owner
@@ -67,10 +66,9 @@ after stake delegation has finished. The owner's participation is not required
 in the day-to-day operations on the stake, so cold storage can be accommodated
 to the maximum extent.
 
-The owner address is used to initiate and 
-<<delegating, create a stake delegation>>, and to
-<<undelegating, finish the delegation>> and
-<<claiming, reclaim the staked tokens>>.
+The owner can <<delegating, delegate its stake>>,
+<<undelegating, undelegate its stake>> and
+<<restoring, restoring the delegated tokens>>.
 
 === Operator
 
@@ -81,15 +79,15 @@ tokens, it should be noted that a malicious operator can exploit stake slashing
 to destroy tokens and thus the entire staked amount is indeed at stake.
 
 The operator address is used to provide network functionality by
-<<operating,participating in various protocols>>. A signature from the operator
+<<operating, participating in group selection>>. A signature from the operator
 is also required to initiate <<delegating, stake delegation>>, and the operator
 can unilaterally
 <<undelegating, finish delegation>> and 
-<<claiming, return the tokens to the owner>>.
+<<restoring, return the tokens to the owner>>.
 
 === Magpie
 
-The magpie collects <<rewards,rewards>> earned from
+The magpie collects <<rewarding,rewards>> earned from
 <<delegating, stake delegation>> and
 <<operating, participation in the network>>. The magpie doesn't sign or publish
 any protocol-relevant transactions, but any currency or tokens earned by the
@@ -109,10 +107,11 @@ Static Minimum Stake::
     through the network lifetime. It can only be changed during a hard-fork.
 
 Delayed Undelegation::
-    Is a mechanism for revoking a delegation. The undelegation happens during an
-    undelegation period when an operator has time to end all of the ongoing
-    operations. During the undelegation period, the delegated stake is locked
-    and no additional operations are allowed, except those already started.
+    Is a mechanism for revoking a delegation. The undelegation starts when the
+    undelegation is requested. Lasts through the undelegation period during
+    which an operator has time to end all of the ongoing operations. In the 
+    undelegation period, the delegated stake is locked and no additional
+    operations are allowed, except continuation of those already started.
     After an undelegation period timeout, the delegated stake is released to the
     owner and a bond between operator, stake, and the owner is removed.
 
@@ -125,23 +124,23 @@ Consequent Penalization::
 
 == Specification
 
-=== Contract structure
+=== Contract
 
-Delegating contract should consist of the following information:
+Contract should include the following information:
 
 * _owner_ address,
 * _operator_ address,
 * _magpie_ address,
 * _bond_ indicator between an operator and an owner,
 * amount of delegated _tokens_,
-* contract _state_,
-* contract state _change_ time.
+* _state_ of the agreement between an owner and an operator,
+* agreement state _change_ time.
 
 The contract should also have following methods:
 
 * <<delegating, `delegate`>>,
 * <<undelegating, `undelegate`>>,
-* <<reclaiming, `reclaim`>>,
+* <<restoring, `restore`>>,
 * <<penalizing, `penalize`>>,
 * <<rewarding, `reward`>>.
 
@@ -163,18 +162,19 @@ any condition is unfulfilled, processing aborts):
   * _operator_ does not have any KEEP tokens,
   * _magpie_ address is set,
   * _operator_ is not involved in another active delegating contract,
-  * amount of delegated tokens is higher or equal to the owner staked tokens,
+  * amount of delegated tokens is lower or equal to the owner staked tokens,
   * amount of delegated tokens is higher or equal to the minimum stake.
 
 4. If all conditions are satisfied the contract processes the _delegation order_
 and sets the variables accordingly to the _delegation order_, and binds the
-owner with the operator. The contract state is set to `active`, and the contract
-state change time is set to current time,
+owner with the operator. The state of agreement between the owner and the
+operator is set to `active`, and the agreement state change time is set to
+current time,
   
-5. The _operator_ can now use a delegated stake for operating.
+5. The _operator_ can now use this delegated stake for operating.
 
 [#undelegating]
-=== Undelegating a stake
+==== Undelegating a stake
 
 1. The _owner_ or _operator_ chooses to undelegate the stake, and creates a
 _undelegation order_.
@@ -185,7 +185,7 @@ has already signed; that is, no additional signature is needed, the call to the
 contract is itself sufficient.]
 
 3. The contract receives the _undelegation order_ and verifies the following:
-  * the agreement is valid,
+  * the agreement exists,
   * the _undelegation order_ is properly signed.
 
 4. If the conditions are satisfied, the contract processes the
@@ -194,22 +194,23 @@ _undelegation order_ and sets the following:
   * contract state change time is set to current time.
 
 5. The _operator_ cannot enter new operations until the undelegated stake is
-reclaimed and the _owner_ cannot delegate to new an _operator_.
+restored and the _owner_ cannot delegate the delegated stake to a new
+_operator_.
 
-[#claiming]
-=== Claiming undelegated stake
+[#restoring]
+==== Restoring undelegated stake
 
 1. After undelegating delay timeout since the _undelegation order_ has been
-processed, the _owner_ or _operator_ creates a _stake reclaiming order_.
+processed, the _owner_ or _operator_ creates a _stake restoration order_.
 
-2. The contract receives the _stake reclaiming order_ and verifies the
+2. The contract receives the _stake restoration order_ and verifies the
 following:
-  * the agreement is valid,
-  * the _stake reclaiming order_ is signed by either owner or operator,
+  * the agreement exists,
+  * the _stake restoration order_ is signed by either owner or operator,
   * the contract state is set to undelegating,
   * undelegation timeout has passed.
 
-3. The contract processes the _stake reclaiming order_ and sets the following:
+3. The contract processes the _stake restoration order_ and sets the following:
   * returns delegated stake to the owner (minus any undelegation penalties if
     applicable),
   * removes the bond between the operator and the owner.
@@ -217,7 +218,7 @@ following:
 4. The _operator_ is now free to start operating for a new _owner_.
 
 [#operating]
-=== Operating on a stake
+==== Operating on a stake
 
 1. When the _operator_ tries to join operation (e.g., present a ticket for
 beacon group selection) they should create an _operation initialization order_,
@@ -225,21 +226,21 @@ signed by the _operator_.
 
 2. The _operation initialization order_ is published along with any other data
 required to join the operation, after which the following should be checked:
-  * the agreement is valid,
+  * the agreement exists,
   * the state of the agreement is `active`,
-  * the request is signed by the operator,
-  * the amount of delegated stake is higher or equal to the minimum stake.
+  * the request is signed by the operator.
 
 3. If the checks pass, the operator may join the operations.
 
-[#rewards]
-=== Rewards
+[#rewarding]
+==== Rewarding
 
-1. If the operator is awarded a _reward_ of currency, the reward should be paid
-to magpie address.
+If the operator is awarded a _reward_ of currency, the reward should be paid
+to magpie address. In this document, we are not specifing how the rewarding
+should be done.
 
-[#penalties]
-=== Penalties
+[#penalizing]
+==== Penalizing
 
 1. If the operator is to be punished by stake slashing, the
 _penalizing contract_ should call the _delegation contract_ with the _penalty_.
