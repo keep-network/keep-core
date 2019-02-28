@@ -33,11 +33,14 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _previousEntry;
 
     mapping (string => bool) internal _initialized;
-    mapping (uint256 => address) internal _requestPayer;
-    mapping (uint256 => uint256) internal _requestPayment;
-    mapping (uint256 => bytes) internal _requestGroup;
 
-    mapping (uint256 => bool) internal _relayEntryRequested;
+    struct Request {
+        address sender;
+        uint256 payment;
+        bytes groupPubKey;
+    }
+
+    mapping(uint256 => Request) internal _requests;
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -85,9 +88,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
             "Payment is less than required minimum."
         );
 
+        // TODO: Select group for request.
+        bytes memory groupPubKey = hex"1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0";
+
         requestID = _seq++;
-        _requestPayer[requestID] = msg.sender;
-        _requestPayment[requestID] = msg.value;
+        _requests[requestID] = Request(msg.sender, msg.value, groupPubKey);
 
         emit RelayEntryRequested(requestID, msg.value, seed);
         return requestID;
@@ -140,19 +145,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupSignature The generated random number.
      * @param groupPubKey Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {    
-        // Temporary solution for M2. Every group member submits a new relay entry
-        // with the same request ID and we filter out duplicates here. 
-        // This behavior will change post-M2 when we'll integrate phase 14 and/or 
-        // implement relay requests.
-        if (_relayEntryRequested[requestID]) {
-            return;
-        }
-        _relayEntryRequested[requestID] = true;
+    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
 
-        require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry), bytes32(groupSignature)));
+        require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request."); 
+        require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry), bytes32(groupSignature)), "Group signature should pass BLS verification.");
 
-        _requestGroup[requestID] = groupPubKey;
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
