@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/keep-network/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
