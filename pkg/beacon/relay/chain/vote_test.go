@@ -92,17 +92,17 @@ func TestLeads(t *testing.T) {
 
 	tests := map[string]struct {
 		currentDKGResultsVotes DKGResultsVotes
-		expectedResultHash     []DKGResultHash
+		expectedLeads          []DKGResultHash
 	}{
 		"empty set of results votes": {
 			currentDKGResultsVotes: DKGResultsVotes{},
-			expectedResultHash:     []DKGResultHash{},
+			expectedLeads:          []DKGResultHash{},
 		},
 		"only one result vote in the set": {
 			currentDKGResultsVotes: DKGResultsVotes{
 				dkgResult1Hash: 1,
 			},
-			expectedResultHash: []DKGResultHash{
+			expectedLeads: []DKGResultHash{
 				dkgResult1Hash,
 			},
 		},
@@ -113,7 +113,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 2,
 				dkgResult4Hash: 1,
 			},
-			expectedResultHash: []DKGResultHash{
+			expectedLeads: []DKGResultHash{
 				dkgResult1Hash,
 			},
 		},
@@ -124,7 +124,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 2,
 				dkgResult4Hash: 1,
 			},
-			expectedResultHash: []DKGResultHash{
+			expectedLeads: []DKGResultHash{
 				dkgResult2Hash,
 			},
 		},
@@ -135,7 +135,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 3,
 				dkgResult4Hash: 1,
 			},
-			expectedResultHash: []DKGResultHash{
+			expectedLeads: []DKGResultHash{
 				dkgResult1Hash,
 				dkgResult3Hash,
 			},
@@ -147,7 +147,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash: 1,
 				dkgResult4Hash: 4,
 			},
-			expectedResultHash: []DKGResultHash{
+			expectedLeads: []DKGResultHash{
 				dkgResult2Hash,
 				dkgResult4Hash,
 			},
@@ -159,12 +159,12 @@ func TestLeads(t *testing.T) {
 			actualResult := test.currentDKGResultsVotes.Leads()
 
 			sortDKGResultHashes(actualResult)
-			sortDKGResultHashes(test.expectedResultHash)
+			sortDKGResultHashes(test.expectedLeads)
 
-			if !reflect.DeepEqual(test.expectedResultHash, actualResult) {
+			if !reflect.DeepEqual(test.expectedLeads, actualResult) {
 				t.Errorf(
 					"\nexpected: %+v\nactual:   %+v",
-					test.expectedResultHash,
+					test.expectedLeads,
 					actualResult,
 				)
 			}
