@@ -106,7 +106,7 @@ func TestLeads(t *testing.T) {
 				dkgResult1Hash,
 			},
 		},
-		"1st result hash has highest votes": {
+		"1st result hash has the highest number of votes": {
 			currentDKGResultsVotes: DKGResultsVotes{
 				dkgResult1Hash: 3,
 				dkgResult2Hash: 2,
@@ -117,7 +117,7 @@ func TestLeads(t *testing.T) {
 				dkgResult1Hash,
 			},
 		},
-		"2nd result hash has highest votes": {
+		"2nd result hash has the highest number of votes": {
 			currentDKGResultsVotes: DKGResultsVotes{
 				dkgResult1Hash: 1,
 				dkgResult2Hash: 3,
@@ -128,7 +128,7 @@ func TestLeads(t *testing.T) {
 				dkgResult2Hash,
 			},
 		},
-		"1st and 3rd results hashes has highest votes": {
+		"1st and 3rd results hashes have the highest number of votes": {
 			currentDKGResultsVotes: DKGResultsVotes{
 				dkgResult1Hash: 3,
 				dkgResult2Hash: 2,
@@ -140,7 +140,7 @@ func TestLeads(t *testing.T) {
 				dkgResult3Hash,
 			},
 		},
-		"2nd and 4th results hashes has highest votes": {
+		"2nd and 4th results hashes have the highest number of votes": {
 			currentDKGResultsVotes: DKGResultsVotes{
 				dkgResult1Hash: 2,
 				dkgResult2Hash: 4,
