@@ -93,6 +93,9 @@ type DistributedKeyGenerationInterface interface {
 	// to a chain for the given request ID.
 	// TODO: Change to: IsDKGResultSubmitted
 	IsDKGResultPublished(requestID *big.Int) (bool, error)
+	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
+	// specific for the chain. Operation is performed off-chain.
+	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
 	// GetDKGResultsVotes returns a map containing number of votes for each DKG
 	// result hash registered under specific request ID.
 	GetDKGResultsVotes(requestID *big.Int) DKGResultsVotes
