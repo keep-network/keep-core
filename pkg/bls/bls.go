@@ -110,7 +110,7 @@ func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
 	return &SecretKeyShare{i, share}
 }
 
-func (s SecretKeyShare) publicKeyShare() *PublicKeyShare {
+func (s *SecretKeyShare) PublicKeyShare() *PublicKeyShare {
 	return &PublicKeyShare{s.I, new(bn256.G2).ScalarBaseMult(s.V)}
 }
 

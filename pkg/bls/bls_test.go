@@ -79,9 +79,12 @@ func TestThresholdBLS(t *testing.T) {
 	// if the message was sign with the main secret.
 	for i := 0; i < numOfPlayers; i++ {
 		secretKeyShare := GetSecretKeyShare(masterSecretKey, int(i))
-		publicKeyShares = append(publicKeyShares, secretKeyShare.publicKeyShare())
+		publicKeyShares = append(publicKeyShares, secretKeyShare.PublicKeyShare())
 		signatureShare := Sign(secretKeyShare.V, message)
-		signatureShares = append(signatureShares, &SignatureShare{i, signatureShare})
+		signatureShares = append(signatureShares, &SignatureShare{
+			I: i + 1, // always 1-indexed
+			V: signatureShare,
+		})
 	}
 
 	// Shuffle signatureShares array. It's irrelevant which signatures shares
