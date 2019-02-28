@@ -6,9 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -519,53 +517,6 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	return resultPublicationPromise
-}
-
-// CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
-// is performed off-chain.
-//
-// It first encodes the result using solidity ABI and then calculates Keccak-256
-// hash over it. This corresponds to the DKG result hash calculation on-chain.
-// Hashes calculated off-chain and on-chain must always match.
-func (ec *ethereumChain) CalculateDKGResultHash(
-	dkgResult *relaychain.DKGResult,
-) (relaychain.DKGResultHash, error) {
-	dkgResultHash := relaychain.DKGResultHash{}
-
-	// Encode DKG result to the format described by Solidity Contract Application
-	// Binary Interface (ABI).
-	boolType, err := abi.NewType("bool")
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("bool type creation failed: [%v]", err)
-	}
-	bytesType, err := abi.NewType("bytes")
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
-	}
-
-	arguments := abi.Arguments{
-		{Type: boolType},
-		{Type: bytesType},
-		{Type: bytesType},
-		{Type: bytesType},
-	}
-
-	encodedDKGResult, err := arguments.Pack(
-		dkgResult.Success,
-		dkgResult.GroupPublicKey,
-		dkgResult.Disqualified,
-		dkgResult.Inactive,
-	)
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("encoding failed: [%v]", err)
-	}
-
-	// Calculate Keccak-256 hash.
-	hash := sha3.NewKeccak256()
-	hash.Write(encodedDKGResult)
-	hash.Sum(dkgResultHash[:0])
-
-	return dkgResultHash, nil
 }
 
 // GetDKGResultsVotes returns a map containing number of votes for each DKG
