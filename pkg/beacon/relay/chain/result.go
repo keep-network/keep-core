@@ -38,20 +38,20 @@ type DKGResultHash [32]byte
 type DKGResultsVotes map[DKGResultHash]int
 
 // Equals checks if two DKG results are equal.
-func (r1 *DKGResult) Equals(r2 *DKGResult) bool {
-	if r1 == nil || r2 == nil {
-		return r1 == r2
+func (r *DKGResult) Equals(r2 *DKGResult) bool {
+	if r == nil || r2 == nil {
+		return r == r2
 	}
-	if r1.Success != r2.Success {
+	if r.Success != r2.Success {
 		return false
 	}
-	if !bytes.Equal(r1.GroupPublicKey, r2.GroupPublicKey) {
+	if !bytes.Equal(r.GroupPublicKey, r2.GroupPublicKey) {
 		return false
 	}
-	if !bytes.Equal(r1.Disqualified, r2.Disqualified) {
+	if !bytes.Equal(r.Disqualified, r2.Disqualified) {
 		return false
 	}
-	if !bytes.Equal(r1.Inactive, r2.Inactive) {
+	if !bytes.Equal(r.Inactive, r2.Inactive) {
 		return false
 	}
 	return true
