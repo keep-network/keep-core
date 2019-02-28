@@ -8,6 +8,11 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
+// TestCalculateDKGResultHash validates if calculated DKG result hash matches
+// expected one.
+//
+// Expected hashes has been calculated on-chain with:
+// `keccak256(abi.encode(success, groupPubKey, disqualified, inactive))`.
 func TestCalculateDKGResultHash(t *testing.T) {
 	chain := &ethereumChain{}
 
