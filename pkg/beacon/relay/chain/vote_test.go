@@ -179,7 +179,7 @@ func sortDKGResultHashes(slice []DKGResultHash) {
 	)
 }
 
-func TestIsOnlyLead(t *testing.T) {
+func TestIsStrictlyLeading(t *testing.T) {
 	dkgResult1 := &DKGResult{GroupPublicKey: []byte{10, 01}}
 	dkgResult2 := &DKGResult{GroupPublicKey: []byte{10, 02}}
 	dkgResult3 := &DKGResult{GroupPublicKey: []byte{10, 32}}
@@ -240,7 +240,7 @@ func TestIsOnlyLead(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult := test.currentDKGResultsVotes.IsOnlyLead(test.lookFor)
+			actualResult := test.currentDKGResultsVotes.IsStrictlyLeading(test.lookFor)
 			if test.expectedResult != actualResult {
 				t.Errorf(
 					"\nexpected: %v\nactual:   %v",

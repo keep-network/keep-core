@@ -40,9 +40,9 @@ func (d DKGResultsVotes) Leads() []DKGResultHash {
 	return leadingResultsHashes
 }
 
-// IsOnlyLead checks if given result hash is the only leading DKG result. If the
-// set of DKG results votes is empty it returns false.
-func (d DKGResultsVotes) IsOnlyLead(resultHash DKGResultHash) bool {
+// IsStrictlyLeading checks if given result hash is the only leading DKG result.
+// If the set of DKG results votes is empty it returns false.
+func (d DKGResultsVotes) IsStrictlyLeading(resultHash DKGResultHash) bool {
 	leadingDKGResults := d.Leads()
 
 	if len(leadingDKGResults) == 1 {
