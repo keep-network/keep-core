@@ -34,6 +34,9 @@ type localChain struct {
 	dkgResultsVotesMutex sync.Mutex
 	dkgResultsVotes      map[string]relaychain.DKGResultsVotes
 
+	alreadySubmittedOrVotedMutex sync.Mutex
+	alreadySubmittedOrVoted      map[string][]int
+
 	handlerMutex                 sync.Mutex
 	relayEntryHandlers           map[int]func(entry *event.Entry)
 	relayRequestHandlers         map[int]func(request *event.Request)
@@ -283,6 +286,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		groupRegistrations:      make(map[string][]byte),
 		submittedResults:        make(map[string][]*relaychain.DKGResult),
 		dkgResultsVotes:         make(map[string]relaychain.DKGResultsVotes),
+		alreadySubmittedOrVoted: make(map[string][]int),
 
 		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
@@ -354,9 +358,11 @@ func (c *localChain) RequestRelayEntry(
 func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
+
 	if submissions, ok := c.submittedResults[requestID.String()]; ok {
 		return len(submissions) > 0, nil
 	}
+
 	return false, nil
 }
 
@@ -496,15 +502,113 @@ func (c *localChain) VoteOnDKGResult(
 	memberIndex int,
 	dkgResultHash relaychain.DKGResultHash,
 ) *async.DKGResultVotePromise {
+	c.dkgResultsVotesMutex.Lock()
+	defer c.dkgResultsVotesMutex.Unlock()
+
+	c.alreadySubmittedOrVotedMutex.Lock()
+	defer c.alreadySubmittedOrVotedMutex.Unlock()
+
 	dkgResultVotePromise := &async.DKGResultVotePromise{}
-	dkgResultVotePromise.Fail(fmt.Errorf("function not implemented")) // TODO: Implement function
+
+	// Member cannot vote if already submitted DKG result or voted before.
+	alreadySubmittedOrVoted, ok := c.alreadySubmittedOrVoted[requestID.String()]
+	if !ok {
+		err := dkgResultVotePromise.Fail(
+			fmt.Errorf("no registered submissions or votes for given request id"),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
+		}
+		return dkgResultVotePromise
+	}
+	for _, index := range alreadySubmittedOrVoted {
+		if memberIndex == index {
+			err := dkgResultVotePromise.Fail(
+				fmt.Errorf("this member already submitted or voted on DKG result for given request id"),
+			)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
+			}
+			return dkgResultVotePromise
+		}
+	}
+
+	dkgResultsVotes, ok := c.dkgResultsVotes[requestID.String()]
+	// If there are no result submissions registered in results votes map.
+	if !ok || len(dkgResultsVotes) == 0 {
+		err := dkgResultVotePromise.Fail(
+			fmt.Errorf("no registered dkg results votes for given request id"),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
+		}
+		return dkgResultVotePromise
+	}
+
+	// It's not possible to vote on a dkg result which submission has not been
+	// registered yet.
+	if _, ok = dkgResultsVotes[dkgResultHash]; !ok {
+		err := dkgResultVotePromise.Fail(
+			fmt.Errorf("result hash is not registered in dkg results votes map"),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
+		}
+		return dkgResultVotePromise
+	}
+
+	// Register vote for the DKG result hash.
+	dkgResultsVotes[dkgResultHash]++
+
+	// Register that member already voted.
+	c.alreadySubmittedOrVoted[requestID.String()] = append(
+		alreadySubmittedOrVoted,
+		memberIndex,
+	)
+
+	// Emit an event on DKG result vote.
+	currentBlock, err := c.blockCounter.CurrentBlock()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cannot get current block [%v]\n", err)
+	}
+
+	dkgResultVote := &event.DKGResultVote{
+		RequestID:     requestID,
+		MemberIndex:   memberIndex,
+		DKGResultHash: dkgResultHash,
+		BlockNumber:   uint64(currentBlock),
+	}
+
+	c.handlerMutex.Lock()
+	for _, handler := range c.dkgResultVoteHandler {
+		go handler(dkgResultVote)
+	}
+	c.handlerMutex.Unlock()
+
+	// Fulfill the promise.
+	err = dkgResultVotePromise.Fulfill(dkgResultVote)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v]\n", err)
+	}
+
 	return dkgResultVotePromise
 }
 
 // OnDKGResultVote registers a callback that is invoked when an on-chain
 // notification of a new, valid vote is seen.
 func (c *localChain) OnDKGResultVote(
-	func(dkgResultVote *event.DKGResultVote),
+	handler func(dkgResultVote *event.DKGResultVote),
 ) (subscription.EventSubscription, error) {
-	panic("function not implemented") // TODO: Implement function
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.dkgResultVoteHandler[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.dkgResultVoteHandler, handlerID)
+	}), nil
 }
