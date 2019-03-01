@@ -39,10 +39,9 @@ module.exports = async function(deployer) {
   await deployer.deploy(KeepGroup, KeepGroupImplV1.address);
 
   const keepRandomBeacon = await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address);
-  await keepRandomBeacon.initialize(minPayment, withdrawalDelay);
   const keepGroup = await KeepGroupImplV1.at(KeepGroup.address);
   await keepGroup.initialize(
     StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
   );
-  await keepRandomBeacon.setGroupContract(KeepGroup.address);
+  await keepRandomBeacon.initialize(minPayment, withdrawalDelay, 123456789, KeepGroup.address);
 };

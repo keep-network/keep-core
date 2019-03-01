@@ -27,6 +27,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
+    uint256 internal _previousEntry;
 
     mapping (string => bool) internal _initialized;
     mapping (uint256 => address) internal _requestPayer;
@@ -47,8 +48,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @dev Initialize Keep Random Beacon implementaion contract.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
+     * @param genesisEntry Initial relay entry to create first group.
+     * @param groupContract Group contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, address groupContract)
         public
         onlyOwner
     {
@@ -57,6 +60,9 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _initialized["KeepRandomBeaconImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
+        _previousEntry = genesisEntry;
+        _groupContract = groupContract;
+        GroupContract(_groupContract).runGroupSelection(_previousEntry);
     }
 
     /**
@@ -120,14 +126,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
      */
     function setMinimumPayment(uint256 minPayment) public onlyOwner {
         _minPayment = minPayment;
-    }
-
-    /**
-     * @dev Set group contract.
-     * @param groupContract Group contract address.
-     */
-    function setGroupContract(address groupContract) public onlyOwner {
-        _groupContract = groupContract;
     }
 
     /**
