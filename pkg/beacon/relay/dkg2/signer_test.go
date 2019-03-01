@@ -26,7 +26,7 @@ func TestSignAndComplete(t *testing.T) {
 	for i, privateKeyShareString := range privateKeySharesSlice {
 		privateKeyShare, _ := new(big.Int).SetString(privateKeyShareString, 10)
 		publicKeyShare := (&bls.SecretKeyShare{
-			I: i,
+			I: i + 1,
 			V: privateKeyShare,
 		}).PublicKeyShare()
 		publicKeyShares = append(publicKeyShares, publicKeyShare)
@@ -41,7 +41,7 @@ func TestSignAndComplete(t *testing.T) {
 	for i, privateKeyShare := range privateKeySharesSlice {
 		share, _ := new(big.Int).SetString(privateKeyShare, 10)
 		signers = append(signers, &ThresholdSigner{
-			memberID:             gjkr.MemberID(i),
+			memberID:             gjkr.MemberID(i + 1),
 			groupPublicKey:       groupPublicKey,
 			groupPrivateKeyShare: share,
 		})
@@ -49,10 +49,10 @@ func TestSignAndComplete(t *testing.T) {
 
 	message := []byte("hello world")
 	shares := make([]*bls.SignatureShare, 0)
-	for i, signer := range signers {
+	for _, signer := range signers {
 		shares = append(shares,
 			&bls.SignatureShare{
-				I: i + 1, // always 1-indexed
+				I: int(signer.MemberID()),
 				V: signer.CalculateSignatureShare(message),
 			},
 		)
