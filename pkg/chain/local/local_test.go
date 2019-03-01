@@ -334,10 +334,7 @@ func TestOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	localChain := &localChain{
-		dkgSubmittedResults:         make(map[string][]*relaychain.DKGResult),
-		dkgResultSubmissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-	}
+	localChain := Connect(10, 5, big.NewInt(20)).(*localChain)
 	relay := localChain.ThresholdRelay()
 
 	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
