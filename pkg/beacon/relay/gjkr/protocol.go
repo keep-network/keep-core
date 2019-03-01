@@ -16,6 +16,7 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/bls"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -942,6 +943,7 @@ func (rm *ReconstructingMember) reconstructIndividualPublicKeys() {
 		map[MemberID]*bn256.G2,
 		len(rm.reconstructedIndividualPrivateKeys),
 	)
+
 	for memberID, individualPrivateKey := range rm.reconstructedIndividualPrivateKeys {
 		// y_m = G * z_m
 		individualPublicKey := new(bn256.G2).ScalarBaseMult(individualPrivateKey)
@@ -972,19 +974,34 @@ func pow(id MemberID, y int) *big.Int {
 //
 // See Phase 12 of the protocol specification.
 func (rm *CombiningMember) CombineGroupPublicKey() {
-	// Current member's individual public key `A_i0`.
-	groupPublicKey := rm.individualPublicKey()
+	var publicKeyShares []*bls.PublicKeyShare
 
-	// Add received peer group members' individual public keys `A_j0`.
-	for _, peerPublicKey := range rm.receivedValidPeerIndividualPublicKeys() {
-		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
-	}
+	// Current member's individual public key `A_i0`.
+	selfPublicKey := rm.individualPublicKey()
+	publicKeyShares = append(publicKeyShares, &bls.PublicKeyShare{
+		I: int(rm.ID),
+		V: selfPublicKey,
+	})
 
 	// Add reconstructed disqualified members' individual public keys `G * z_m`.
-	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
-		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
-
+	for id, peerPublicKey := range rm.receivedValidPeerPublicKeySharePoints {
+		// Individual public key is zeroth public key share point `A_j0`.
+		publicKeyShares = append(publicKeyShares, &bls.PublicKeyShare{
+			I: int(id),
+			V: peerPublicKey[0],
+		})
 	}
 
+	for id, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
+		publicKeyShares = append(publicKeyShares, &bls.PublicKeyShare{
+			I: int(id),
+			V: peerPublicKey,
+		})
+	}
+
+	groupPublicKey, err := bls.RecoverPublicKey(publicKeyShares, rm.group.dishonestThreshold)
+	if err != nil {
+		panic(fmt.Sprintf("failed with err %+v", err))
+	}
 	rm.groupPublicKey = groupPublicKey
 }
