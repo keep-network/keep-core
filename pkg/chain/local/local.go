@@ -354,8 +354,10 @@ func (c *localChain) RequestRelayEntry(
 func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
-
-	return c.submittedResults[requestID] != nil, nil
+	if submissions, ok := c.submittedResults[requestID.String()]; ok {
+		return len(submissions) > 0, nil
+	}
+	return false, nil
 }
 
 // SubmitDKGResult submits the result to a chain.
