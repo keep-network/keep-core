@@ -469,6 +469,14 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Returns a group from available groups using modulo operator.
+     * @param i Any uint256 number.
+     */
+    function modSelectGroup(uint256 i) public view returns(bytes memory) {
+        return _groups[i % _groups.length];
+    }
+
+    /**
      * @dev Gets version of the current implementation.
     */
     function version() public pure returns (string memory) {

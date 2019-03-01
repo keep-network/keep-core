@@ -7,6 +7,7 @@ import "./BLS.sol";
 
 interface GroupContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
+    function modSelectGroup(uint256 i) external view returns(bytes memory);
 }
 
 
@@ -88,8 +89,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
             "Payment is less than required minimum."
         );
 
-        // TODO: Select group for request.
-        bytes memory groupPubKey = hex"1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0";
+        bytes memory groupPubKey = GroupContract(_groupContract).modSelectGroup(_previousEntry);
 
         _requestCounter++;
 
