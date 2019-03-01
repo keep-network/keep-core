@@ -29,9 +29,7 @@ type localChain struct {
 	groupRelayEntries      map[string]*big.Int
 
 	submittedResultsMutex sync.Mutex
-	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
-	// execution.
-	submittedResults map[*big.Int][]*relaychain.DKGResult
+	submittedResults      map[string][]*relaychain.DKGResult
 
 	handlerMutex                 sync.Mutex
 	relayEntryHandlers           map[int]func(entry *event.Entry)
@@ -276,10 +274,11 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
 		},
-		groupRegistrationsMutex:      sync.Mutex{},
-		groupRelayEntries:            make(map[string]*big.Int),
-		groupRegistrations:           make(map[string][]byte),
-		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
+		groupRegistrationsMutex: sync.Mutex{},
+		groupRelayEntries:       make(map[string]*big.Int),
+		groupRegistrations:      make(map[string][]byte),
+		submittedResults:        make(map[string][]*relaychain.DKGResult),
+
 		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:      make(map[int]func(groupRegistration *event.GroupRegistration)),
