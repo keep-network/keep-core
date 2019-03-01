@@ -104,9 +104,7 @@ func TestThresholdBLS(t *testing.T) {
 	publicKey, _ := RecoverPublicKey(publicKeyShares, threshold)
 	testutils.AssertBytesEqual(t, publicKey.Marshal(), masterPublicKey[0].Marshal())
 
-	result := Verify(publicKey, message, signature)
-
-	if !result {
+	if !Verify(publicKey, message, signature) {
 		t.Errorf("Error verifying BLS threshold signature.")
 	}
 }
