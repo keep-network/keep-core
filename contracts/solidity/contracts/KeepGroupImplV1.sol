@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -21,7 +21,11 @@ contract KeepGroupImplV1 is Ownable {
         bytes inactive;
     }
 
-    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
+    // TODO: Rename to DkgResultSubmittedEvent
+    // TODO: Add memberIndex
+    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
+    
+    event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
 
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
@@ -99,7 +103,7 @@ contract KeepGroupImplV1 is Ownable {
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
             TokenStaking stakingContract = TokenStaking(_stakingContract);
-            stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
+            stakingContract.authorizedTransferFrom(msg.sender, address(this), _minStake);
         } else {
             _tickets.push(ticketValue);
             _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
@@ -109,14 +113,14 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets submitted tickets in ascending order.
      */
-    function orderedTickets() public view returns (uint256[]) {
+    function orderedTickets() public view returns (uint256[] memory) {
         return UintArrayUtils.sort(_tickets);
     }
 
     /**
      * @dev Gets selected tickets in ascending order.
      */
-    function selectedTickets() public view returns (uint256[]) {
+    function selectedTickets() public view returns (uint256[] memory) {
 
         require(
             block.number > _submissionStart + _timeoutChallenge,
@@ -136,7 +140,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets participants ordered by their lowest-valued ticket.
      */
-    function orderedParticipants() public view returns (address[]) {
+    function orderedParticipants() public view returns (address[] memory) {
 
         uint256[] memory ordered = orderedTickets();
         address[] memory participants = new address[](ordered.length);
@@ -152,7 +156,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view returns (address[]) {
+    function selectedParticipants() public view returns (address[] memory) {
 
         require(
             block.number > _submissionStart + _timeoutChallenge,
@@ -230,10 +234,11 @@ contract KeepGroupImplV1 is Ownable {
      */
     function submitDkgResult(
         uint256 requestId,
-        bool success, 
-        bytes groupPubKey,
-        bytes disqualified,
-        bytes inactive
+//        uint256 memberIndex, TODO: Add memberIndex 
+        bool success,
+        bytes memory groupPubKey,
+        bytes memory disqualified,
+        bytes memory inactive
     ) public {
 
         require(
@@ -252,9 +257,43 @@ contract KeepGroupImplV1 is Ownable {
         emit DkgResultPublishedEvent(requestId, groupPubKey);
     }
 
+    /**
+     * @dev Checks if DKG protocol result has been already published for the
+     * specific relay request ID associated with the protocol execution. 
+     */
+    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
+        return _dkgResultPublished[requestId];
+    }
+
+    /*
+     * @dev Gets number of votes for each submitted DKG result hash. 
+     * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @return Hashes of submitted DKG results and number of votes for each hash.
+     */
+    function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
+        // TODO: Implement
+        bytes32[] memory resultsHashes;
+        uint256[] memory resultsVotes;
+
+        return (resultsHashes, resultsVotes);
+    }
+
+    /*
+     * @dev receives vote for provided resultHash.
+     * @param index the claimed index of the user.
+     * @param resultHash Hash of DKG result to vote for
+     */
+    function voteOnDkgResult(
+        uint256 requestId,
+        uint256 memberIndex,
+        bytes32 resultHash
+    ) public {
+        // TODO: Implement
+    }
+
     // Legacy code moved from Random Beacon contract
     // TODO: refactor according to the Phase 14
-    function submitGroupPublicKey(bytes groupPublicKey, uint256 requestID) public {
+    function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
 
         // TODO: Remove this section once dispute logic is implemented,
         // implement conflict resolution logic described in Phase 14,
@@ -269,17 +308,9 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Checks if DKG protocol result has been already published for the
-     * specific relay request ID associated with the protocol execution. 
-     */
-    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
-        return _dkgResultPublished[requestId];
-    }
-
-    /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
-    function() public payable {
+    function() external payable {
         revert("Can not call contract without explicitly calling a function.");
     }
 
@@ -395,7 +426,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Return total number of all tokens issued.
      */
-    function tokenSupply() public view returns (uint256) {
+    function tokenSupply() public pure returns (uint256) {
         return (10**9) * (10**18);
     }
 
@@ -440,7 +471,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets version of the current implementation.
     */
-    function version() public pure returns (string) {
+    function version() public pure returns (string memory) {
         return "V1";
     }
 

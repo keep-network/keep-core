@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/ethereum/go-ethereum/crypto/sha3"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -410,4 +411,43 @@ func (c *localChain) OnDKGResultPublished(
 
 		delete(c.dkgResultPublicationHandlers, handlerID)
 	}), nil
+}
+
+// CalculateDKGResultHash calculates a 256-bit hash of the DKG result.
+func (c *localChain) CalculateDKGResultHash(
+	dkgResult *relaychain.DKGResult,
+) (relaychain.DKGResultHash, error) {
+	encodedDKGResult := fmt.Sprint(dkgResult)
+	dkgResultHash := relaychain.DKGResultHash(
+		sha3.Sum256([]byte(encodedDKGResult)),
+	)
+
+	return dkgResultHash, nil
+}
+
+// GetDKGResultsVotes returns a map containing number of votes for each DKG
+// result hash registered under specific request ID.
+func (c *localChain) GetDKGResultsVotes(
+	requestID *big.Int,
+) relaychain.DKGResultsVotes {
+	panic("function not implemented") // TODO: Implement function
+}
+
+// VoteOnDKGResult registers a vote for the DKG result hash.
+func (c *localChain) VoteOnDKGResult(
+	requestID *big.Int,
+	memberIndex int,
+	dkgResultHash relaychain.DKGResultHash,
+) *async.DKGResultVotePromise {
+	dkgResultVotePromise := &async.DKGResultVotePromise{}
+	dkgResultVotePromise.Fail(fmt.Errorf("function not implemented")) // TODO: Implement function
+	return dkgResultVotePromise
+}
+
+// OnDKGResultVote registers a callback that is invoked when an on-chain
+// notification of a new, valid vote is seen.
+func (c *localChain) OnDKGResultVote(
+	func(dkgResultVote *event.DKGResultVote),
+) (subscription.EventSubscription, error) {
+	panic("function not implemented") // TODO: Implement function
 }

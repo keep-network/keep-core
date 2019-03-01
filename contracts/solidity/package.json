@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "openzeppelin-solidity": "^2.0.0"
+    "openzeppelin-solidity": "^2.1.2"
   },
   "devDependencies": {
     "@digix/doxity": "github:keep-network/doxity#master",
@@ -28,7 +28,8 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "ethereumjs-abi": "^0.6.5",
-    "solc": "^0.4.25",
-    "truffle": "^4.1.14"
+    "solc": "^0.5.4",
+    "truffle": "^5.0.4",
+    "websocket": "^1.0.28"
   }
 }

@@ -1,5 +1,4 @@
-pragma solidity ^0.4.21;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.5.4;
 
 import "./ModUtils.sol";
 
@@ -44,7 +43,7 @@ library AltBn128 {
      * @dev Gets generator of G1 group.
      * Taken from go-ethereum/crypto/bn256/cloudflare/curve.go
      */
-    function g1() internal pure returns (G1Point) {
+    function g1() internal pure returns (G1Point memory) {
         return G1Point(uint256(1), uint256(2));
     }
 
@@ -52,7 +51,7 @@ library AltBn128 {
      * @dev Gets generator of G2 group.
      * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
-    function g2() internal pure returns (G2Point) {
+    function g2() internal pure returns (G2Point memory) {
         return G2Point(
             gfP2(
                 11559732032986387107991004021392285783925812861821192530917403151452391805634,
@@ -69,7 +68,7 @@ library AltBn128 {
      * @dev Gets twist curve B constant.
      * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
-    function twistB() public pure returns (gfP2) {
+    function twistB() private pure returns (gfP2 memory) {
         return gfP2(
             266929791119991161246907387137283842545076965332900288569378510910307636690,
             19485874751759354771024239261021720505790618469301721065564631296452457478373
@@ -79,7 +78,7 @@ library AltBn128 {
     /**
      * @dev Gets root of the point where x and y are equal.
      */
-    function hexRoot() public pure returns (gfP2) {
+    function hexRoot() private pure returns (gfP2 memory) {
         return gfP2(
             21573744529824266246521972077326577680729363968861965890554801909984373949499,
             16854739155576650954933913186877292401521110422362946064090026408937773542853
@@ -105,9 +104,9 @@ library AltBn128 {
      * given X, and allows a point on the curve to be represented by just
      * an X value + a sign bit.
      */
-    function g2YFromX(gfP2 _x)
+    function g2YFromX(gfP2 memory _x)
         internal
-        view returns(gfP2 y)
+        pure returns(gfP2 memory y)
     {
         gfP2 memory x = gfP2Add(gfP2Pow(_x, 3), twistB());
 
@@ -131,9 +130,9 @@ library AltBn128 {
      * lower gas cost on the EVM, rather than good distribution of points on
      * G1.
      */
-    function g1HashToPoint(bytes m)
+    function g1HashToPoint(bytes memory m)
         internal
-        view returns(G1Point)
+        view returns(G1Point memory)
     {
         bytes32 h = sha256(m);
         uint256 x = uint256(h) % p;
@@ -153,21 +152,21 @@ library AltBn128 {
      * @return 0x01 if y is an even number and 0x00 if it's odd.
      */
     function parity(uint256 value) private pure returns (byte) {
-        return bytes32(value)[31] & byte(1);
+        return bytes32(value)[31] & 0x01;
     }
 
     /**
      * @dev Compress a point on G1 to a single uint256 for serialization.
      */
-    function g1Compress(G1Point point)
+    function g1Compress(G1Point memory point)
         internal
         pure returns(bytes32)
     {
         bytes32 m = bytes32(point.x);
 
         byte leadM = m[0] | parity(point.y) << 7;
-        bytes32 mask = 0xff << 31*8;
-        m = (m & ~mask) | (leadM >> 0);
+        uint256 mask = 0xff << 31*8;
+        m = (m & ~bytes32(mask)) | (leadM >> 0);
 
         return m;
     }
@@ -175,15 +174,15 @@ library AltBn128 {
     /**
      * @dev Compress a point on G2 to a pair of uint256 for serialization.
      */
-    function g2Compress(G2Point point)
+    function g2Compress(G2Point memory point)
         internal
-        pure returns(bytes)
+        pure returns(bytes memory)
     {
         bytes32 m = bytes32(point.x.x);
 
         byte leadM = m[0] | parity(point.y.x) << 7;
-        bytes32 mask = 0xff << 31*8;
-        m = (m & ~mask) | (leadM >> 0);
+        uint256 mask = 0xff << 31*8;
+        m = (m & ~bytes32(mask)) | (leadM >> 0);
 
         return abi.encodePacked(m, bytes32(point.x.y));
     }
@@ -193,17 +192,17 @@ library AltBn128 {
      */
     function g1Decompress(bytes32 m)
         internal
-        view returns(G1Point)
+        view returns(G1Point memory)
     {
         bytes32 mX = bytes32(0);
-        byte leadX = m[0] & byte(127);
-        bytes32 mask = 0xff << 31*8;
-        mX = (m & ~mask) | (leadX >> 0);
+        byte leadX = m[0] & 0x7f;
+        uint256 mask = 0xff << 31*8;
+        mX = (m & ~bytes32(mask)) | (leadX >> 0);
 
         uint256 x = uint256(mX);
         uint256 y = g1YFromX(x);
 
-        if (parity(y) != (m[0] & byte(128)) >> 7) {
+        if (parity(y) != (m[0] & 0x80) >> 7) {
             y = p - y;
         }
 
@@ -215,9 +214,9 @@ library AltBn128 {
     /**
      * @dev Decompress a point on G2 from a pair of uint256.
      */
-    function g2Decompress(bytes m)
+    function g2Decompress(bytes memory m)
         internal
-        view returns(G2Point)
+        pure returns(G2Point memory)
     {
         bytes32 x1;
         bytes32 x2;
@@ -233,14 +232,14 @@ library AltBn128 {
         }
 
         bytes32 mX = bytes32(0);
-        byte leadX = x1[0] & byte(127);
-        bytes32 mask = 0xff << 31*8;
-        mX = (x1 & ~mask) | (leadX >> 0);
+        byte leadX = x1[0] & 0x7f;
+        uint256 mask = 0xff << 31*8;
+        mX = (x1 & ~bytes32(mask)) | (leadX >> 0);
 
         gfP2 memory x = gfP2(uint256(mX), uint256(x2));
         gfP2 memory y = g2YFromX(x);
 
-        if (parity(y.x) != (m[0] & byte(128)) >> 7) {
+        if (parity(y.x) != (m[0] & 0x80) >> 7) {
             y.x = p - y.x;
             y.y = p - y.y;
         }
@@ -254,7 +253,7 @@ library AltBn128 {
      * the sum of two points on G1. Revert if the provided points aren't on the
      * curve.
      */
-    function add(G1Point a, G1Point b) internal view returns (G1Point) {
+    function g1Add(G1Point memory a, G1Point memory b) internal view returns (G1Point memory) {
         uint256[4] memory arg;
         arg[0] = a.x;
         arg[1] = a.y;
@@ -265,7 +264,7 @@ library AltBn128 {
         /* solium-disable-next-line */
         assembly {
             // 0x60 is the ECADD precompile address
-            if iszero(call(not(0), 0x06, 0, arg, 0x80, c, 0x40)) {
+            if iszero(staticcall(not(0), 0x06, arg, 0x80, c, 0x40)) {
                 revert(0, 0)
             }
         }
@@ -276,7 +275,7 @@ library AltBn128 {
     /**
      * @dev Return the sum of two gfP2 field elements.
      */
-    function gfP2Add(gfP2 a, gfP2 b) internal pure returns(gfP2) {
+    function gfP2Add(gfP2 memory a, gfP2 memory b) internal pure returns(gfP2 memory) {
         return gfP2(
             addmod(a.x, b.x, p),
             addmod(a.y, b.y, p)
@@ -286,7 +285,7 @@ library AltBn128 {
     /**
      * @dev Return multiplication of two gfP2 field elements.
      */
-    function gfP2Multiply(gfP2 a, gfP2 b) internal pure returns(gfP2) {
+    function gfP2Multiply(gfP2 memory a, gfP2 memory b) internal pure returns(gfP2 memory) {
         return gfP2(
             addmod(mulmod(a.x, b.y, p), mulmod(b.x, a.y, p), p),
             addmod(mulmod(a.y, b.y, p), p - mulmod(a.x, b.x, p), p)
@@ -296,7 +295,7 @@ library AltBn128 {
     /**
      * @dev Return gfP2 element to the power of the provided exponent.
      */
-    function gfP2Pow(gfP2 _a, uint256 _exp) internal view returns(gfP2 result) {
+    function gfP2Pow(gfP2 memory _a, uint256 _exp) internal pure returns(gfP2 memory result) {
         uint256 exp = _exp;
         gfP2 memory a;
         result.x = 0;
@@ -307,7 +306,7 @@ library AltBn128 {
         // Reduce exp dividing by 2 gradually to 0 while computing final
         // result only when exp is an odd number.
         while (exp > 0) {
-            if (parity(exp) == 1) {
+            if (parity(exp) == 0x01) {
                 result = gfP2Multiply(result, a);
             }
 
@@ -319,7 +318,7 @@ library AltBn128 {
     /**
      * @dev Return true if G2 point's y^2 equals x.
      */
-    function g2X2y(gfP2 x, gfP2 y) internal view returns(bool) {
+    function g2X2y(gfP2 memory x, gfP2 memory y) internal pure returns(bool) {
        
         gfP2 memory y2;
         y2 = gfP2Pow(y, 2);
@@ -330,14 +329,14 @@ library AltBn128 {
     /**
      * @dev Return true if G1 point is on the curve.
      */
-    function isG1PointOnCurve(G1Point point) internal view returns (bool) {
+    function isG1PointOnCurve(G1Point memory point) internal view returns (bool) {
         return point.y.modExp(2, p) == (point.x.modExp(3, p) + 3) % p;
     }
 
     /**
      * @dev Return true if G2 point is on the curve.
      */
-    function isG2PointOnCurve(G2Point point) internal view returns(bool) {
+    function isG2PointOnCurve(G2Point memory point) internal pure returns(bool) {
 
         gfP2 memory y2;
         gfP2 memory x3;
@@ -354,7 +353,7 @@ library AltBn128 {
      * match the point added to itself the same number of times. Revert if the
      * provided point isn't on the curve.
      */
-    function scalarMultiply(G1Point p_1, uint256 scalar) internal view returns (G1Point) {
+    function scalarMultiply(G1Point memory p_1, uint256 scalar) internal view returns (G1Point memory) {
         uint256[3] memory arg;
         arg[0] = p_1.x;
         arg[1] = p_1.y;
@@ -363,7 +362,7 @@ library AltBn128 {
         /* solium-disable-next-line */
         assembly {
             // 0x70 is the ECMUL precompile address
-            if iszero(call(not(0), 0x07, 0, arg, 0x60, p_2, 0x40)) {
+            if iszero(staticcall(not(0), 0x07, arg, 0x60, p_2, 0x40)) {
                 revert(0, 0)
             }
         }
@@ -374,7 +373,7 @@ library AltBn128 {
      * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
      * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
      */
-    function pairing(G1Point p1, G2Point p2, G1Point p3, G2Point p4) internal view returns (bool) {
+    function pairing(G1Point memory p1, G2Point memory p2, G1Point memory p3, G2Point memory p4) internal view returns (bool) {
         uint256[12] memory arg = [
             p1.x, p1.y, p2.x.x, p2.x.y, p2.y.x, p2.y.y, p3.x, p3.y, p4.x.x, p4.x.y, p4.y.x, p4.y.y
         ];
@@ -382,7 +381,7 @@ library AltBn128 {
         /* solium-disable-next-line */
         assembly {
             // call(gasLimit, to, value, inputOffset, inputSize, outputOffset, outputSize)
-            if iszero(call(not(0), 0x08, 0, arg, 0x180, c, 0x20)) {
+            if iszero(staticcall(not(0), 0x08, arg, 0x180, c, 0x20)) {
                 revert(0, 0)
             }
         }

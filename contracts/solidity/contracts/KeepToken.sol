@@ -1,11 +1,11 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 /**
  @dev Interface of recipient contract for approveAndCall pattern.
 */
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
 
 
 /**
@@ -33,10 +33,10 @@ contract KeepToken is ERC20 {
      * @param _value The max amount they can spend.
      * @param _extraData Extra information to send to the approved contract.
      */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+    function approveAndCall(address _spender, uint256 _value, bytes memory _extraData) public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            spender.receiveApproval(msg.sender, _value, address(this), _extraData);
             return true;
         }
     }

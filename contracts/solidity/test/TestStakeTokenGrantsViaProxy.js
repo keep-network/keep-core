@@ -24,7 +24,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
     let amount = 1000000000;
     let vestingDuration = duration.days(60);
-    let start = latestTime();
+    let start = await latestTime();
     let cliff = duration.days(10);
     let revocable = true;
 
@@ -49,27 +49,19 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
     // Owner of stakingProxy should be able to authorize a token grant contract
     await stakingProxy.authorizeContract(grantContract.address, {from: account_one})
-    stakingProxy.isAuthorized(grantContract.address).then(function(result){
-      assert.equal(result, true, "StakingProxy owner should be able to authorize a token grant contract.");
-    });
+    assert.equal(await stakingProxy.isAuthorized(grantContract.address), true, "StakingProxy owner should be able to authorize a token grant contract.");
 
     // Stake granted tokens
     await grantContract.stake(id, {from: account_two})
-    proxyStakedEvent.get(function(error, result){
-      assert.equal(result[0].event, 'Staked', "Staked event on the proxy contract should occur.");
-    });
-    
+    assert.equal((await stakingProxy.getPastEvents())[0].event, 'Staked', "Staked event on the proxy contract should occur.");
+
     // Initiate unstake of granted tokens by grant beneficiary
     await grantContract.initiateUnstake(id, {from: account_two});
-    proxyUnstakedEvent.get(function(error, result){
-      assert.equal(result[0].event, 'Unstaked', "Unstaked event on the proxy contract should occur.");
-    });
+    assert.equal((await stakingProxy.getPastEvents())[0].event, 'Unstaked', "Unstaked event on the proxy contract should occur.");
 
     // Owner of stakingProxy should be able to deauthorize a token grant contract
     await stakingProxy.deauthorizeContract(grantContract.address, {from: account_one})
-    stakingProxy.isAuthorized(grantContract.address).then(function(result){
-      assert.equal(result, false, "StakingProxy owner should be able to deauthorize a token grant contract.");
-    });
+    assert.equal(await stakingProxy.isAuthorized(grantContract.address), false, "StakingProxy owner should be able to deauthorize a token grant contract.");
 
   });
 });

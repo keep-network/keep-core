@@ -1,11 +1,11 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 
 library UintArrayUtils {
 
     function removeValue(uint256[] storage self, uint256 _value) 
         internal
-        returns(uint256[])
+        returns(uint256[] storage)
     {
         for (uint i = 0; i < self.length; i++) {
             // If value is found in array.
