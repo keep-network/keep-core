@@ -362,40 +362,83 @@ func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	requestID *big.Int, resultToPublish *relaychain.DKGResult,
+	requestID *big.Int,
+	resultToPublish *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
+	c.dkgResultsVotesMutex.Lock()
+	defer c.dkgResultsVotesMutex.Unlock()
+
 	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
 
-	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID.Cmp(requestID) == 0 {
-			for _, publishedResult := range publishedResults {
-				if publishedResult.Equals(resultToPublish) {
-					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
-					return dkgResultPublicationPromise
-				}
-			}
+	// Submit DKG result.
+	dkgResults, ok := c.submittedResults[requestID.String()]
+	// Initialize map entry if it is a first submission for given request ID.
+	if !ok {
+		dkgResults = []*relaychain.DKGResult{}
+	}
+
+	// If the result is already submitted for the given request ID.
+	for _, dkgResult := range dkgResults {
+		if dkgResult.Equals(resultToPublish) {
+			dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
+			return dkgResultPublicationPromise
 		}
 	}
 
-	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
+	c.submittedResults[requestID.String()] = append(dkgResults, resultToPublish)
 
-	dkgResultPublicationEvent := &event.DKGResultPublication{
+	// Vote on DKG result.
+	dkgResultsVotes, ok := c.dkgResultsVotes[requestID.String()]
+	// Initialize map entry if it is a first submission for given request ID.
+	if !ok {
+		c.dkgResultsVotes[requestID.String()] = relaychain.DKGResultsVotes{}
+	}
+
+	resultToPublishHash, err := c.CalculateDKGResultHash(resultToPublish)
+	if err != nil {
+		dkgResultPublicationPromise.Fail(fmt.Errorf("hash calculation failed"))
+		return dkgResultPublicationPromise
+	}
+
+	// If the result is already registered in votes map for the given request ID,
+	// it shouldn't be possible to register it again. One should use OnDKGResultVote
+	// function to submit a vote.
+	if _, ok := dkgResultsVotes[resultToPublishHash]; ok {
+		err := dkgResultPublicationPromise.Fail(
+			fmt.Errorf("result already registered in votes map, use vote function to submit a vote"),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "promise fail failed [%v]\n", err)
+		}
+		return dkgResultPublicationPromise
+	}
+
+	// Register initial vote for newly submitted result.
+	c.dkgResultsVotes[requestID.String()][resultToPublishHash] = 1
+
+	// Emit an event on DKG result submission.
+	currentBlock, err := c.blockCounter.CurrentBlock()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cannot get current block [%v]\n", err)
+	}
+
+	dkgResultSubmissionEvent := &event.DKGResultPublication{
 		RequestID:      requestID,
-		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		GroupPublicKey: resultToPublish.GroupPublicKey,
+		BlockNumber:    uint64(currentBlock),
 	}
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.dkgResultPublicationHandlers {
-		go func(handler func(*event.DKGResultPublication), dkgResultPublication *event.DKGResultPublication) {
-			handler(dkgResultPublicationEvent)
-		}(handler, dkgResultPublicationEvent)
+		go handler(dkgResultSubmissionEvent)
 	}
 	c.handlerMutex.Unlock()
 
-	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
+	// Fulfill the promise.
+	err = dkgResultPublicationPromise.Fulfill(dkgResultSubmissionEvent)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
 	}
