@@ -31,11 +31,15 @@ type localChain struct {
 	submittedResultsMutex sync.Mutex
 	submittedResults      map[string][]*relaychain.DKGResult
 
+	dkgResultsVotesMutex sync.Mutex
+	dkgResultsVotes      map[string]relaychain.DKGResultsVotes
+
 	handlerMutex                 sync.Mutex
 	relayEntryHandlers           map[int]func(entry *event.Entry)
 	relayRequestHandlers         map[int]func(request *event.Request)
 	groupRegisteredHandlers      map[int]func(groupRegistration *event.GroupRegistration)
 	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
+	dkgResultVoteHandler         map[int]func(dkgResultVote *event.DKGResultVote)
 
 	requestID   int64
 	latestValue *big.Int
@@ -278,11 +282,13 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		groupRelayEntries:       make(map[string]*big.Int),
 		groupRegistrations:      make(map[string][]byte),
 		submittedResults:        make(map[string][]*relaychain.DKGResult),
+		dkgResultsVotes:         make(map[string]relaychain.DKGResultsVotes),
 
 		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:         make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:      make(map[int]func(groupRegistration *event.GroupRegistration)),
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		dkgResultVoteHandler:         make(map[int]func(dkgResultVote *event.DKGResultVote)),
 		blockCounter:                 bc,
 		stakeMonitor:                 NewStakeMonitor(minimumStake),
 		tickets:                      make([]*relaychain.Ticket, 0),
