@@ -480,7 +480,14 @@ func (c *localChain) CalculateDKGResultHash(
 func (c *localChain) GetDKGResultsVotes(
 	requestID *big.Int,
 ) relaychain.DKGResultsVotes {
-	panic("function not implemented") // TODO: Implement function
+	c.dkgResultsVotesMutex.Lock()
+	defer c.dkgResultsVotesMutex.Unlock()
+
+	if submissions, ok := c.dkgResultsVotes[requestID.String()]; ok {
+		return submissions
+	}
+
+	return relaychain.DKGResultsVotes{}
 }
 
 // VoteOnDKGResult registers a vote for the DKG result hash.
