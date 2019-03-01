@@ -9,7 +9,7 @@ import (
 )
 
 func TestSignAndComplete(t *testing.T) {
-	threshold := 6
+	var message = []byte("hello world")
 
 	// Obtained by running `TestFullStateTransitions` and outputting shares.
 	privateKeySharesSlice := []string{
@@ -21,51 +21,80 @@ func TestSignAndComplete(t *testing.T) {
 		"476414470139165825449834970450656200990319293028518982997364506493673497757",
 	}
 
-	// First get SecretKeyShares from slice of privateKeyShares
-	var publicKeyShares []*bls.PublicKeyShare
-	for i, privateKeyShareString := range privateKeySharesSlice {
-		privateKeyShare, _ := new(big.Int).SetString(privateKeyShareString, 10)
-		publicKeyShare := (&bls.SecretKeyShare{
-			I: i + 1,
-			V: privateKeyShare,
-		}).PublicKeyShare()
-		publicKeyShares = append(publicKeyShares, publicKeyShare)
-	}
-	// Build up the group public key
-	groupPublicKey, err := bls.RecoverPublicKey(publicKeyShares, threshold)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var signers []*ThresholdSigner
-	for i, privateKeyShare := range privateKeySharesSlice {
-		share, _ := new(big.Int).SetString(privateKeyShare, 10)
-		signers = append(signers, &ThresholdSigner{
-			memberID:             gjkr.MemberID(i + 1),
-			groupPublicKey:       groupPublicKey,
-			groupPrivateKeyShare: share,
-		})
+	var tests = map[string]struct {
+		threshold        int
+		privateKeyShares []string
+		expectedError    string
+	}{
+		"success: all members sign the message": {
+			threshold:        6,
+			privateKeyShares: privateKeySharesSlice,
+			expectedError:    "",
+		},
+		"success: at least t members sign the message": {
+			threshold:        3,
+			privateKeyShares: privateKeySharesSlice[0:4],
+			expectedError:    "",
+		},
+		"failure: less than t members sign a message": {
+			threshold:        4,
+			privateKeyShares: privateKeySharesSlice[0:2],
+			expectedError:    "not enough shares to reconstruct public key",
+		},
 	}
 
-	message := []byte("hello world")
-	shares := make([]*bls.SignatureShare, 0)
-	for _, signer := range signers {
-		shares = append(shares,
-			&bls.SignatureShare{
-				I: int(signer.MemberID()),
-				V: signer.CalculateSignatureShare(message),
-			},
-		)
-	}
+	for _, test := range tests {
+		// First get SecretKeyShares from slice of privateKeyShares
+		var publicKeyShares []*bls.PublicKeyShare
+		for i, privateKeyShareString := range test.privateKeyShares {
+			privateKeyShare, _ := new(big.Int).SetString(privateKeyShareString, 10)
+			publicKeyShare := (&bls.SecretKeyShare{
+				I: i + 1,
+				V: privateKeyShare,
+			}).PublicKeyShare()
+			publicKeyShares = append(publicKeyShares, publicKeyShare)
+		}
+		// Build up the group public key
+		groupPublicKey, err := bls.RecoverPublicKey(publicKeyShares, test.threshold)
+		if err != nil {
+			if err.Error() != test.expectedError {
+				t.Errorf(
+					"\nexpected: %v\nactual:   %v",
+					test.expectedError,
+					err,
+				)
+			}
+			// exit the test as we errored correctly
+			continue
+		}
 
-	signature, err := signers[0].CompleteSignature(shares, threshold)
-	if err != nil {
-		t.Fatal(err)
-	}
+		var signers []*ThresholdSigner
+		for i, privateKeyShare := range test.privateKeyShares {
+			share, _ := new(big.Int).SetString(privateKeyShare, 10)
+			signers = append(signers, &ThresholdSigner{
+				memberID:             gjkr.MemberID(i + 1),
+				groupPublicKey:       groupPublicKey,
+				groupPrivateKeyShare: share,
+			})
+		}
 
-	if !bls.Verify(groupPublicKey, message, signature) {
-		t.Fatal("Failed to verify recovered signature")
+		shares := make([]*bls.SignatureShare, 0)
+		for _, signer := range signers {
+			shares = append(shares,
+				&bls.SignatureShare{
+					I: int(signer.MemberID()),
+					V: signer.CalculateSignatureShare(message),
+				},
+			)
+		}
+
+		signature, err := signers[0].CompleteSignature(shares, test.threshold)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bls.Verify(groupPublicKey, message, signature) {
+			t.Fatal("Failed to verify recovered signature")
+		}
 	}
 }
-
-// 3 tests - 1 where we have 0 that work, 1 where we have under t, one where we have t
