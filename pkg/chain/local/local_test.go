@@ -286,20 +286,20 @@ func TestLocalBlockWaiter(t *testing.T) {
 }
 
 func TestLocalIsDKGResultPublished(t *testing.T) {
-	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
+	dkgResults := make(map[string][]*relaychain.DKGResult)
 
 	submittedRequestID := big.NewInt(1)
 	submittedResult := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 
-	submittedResults[submittedRequestID] = append(
-		submittedResults[submittedRequestID],
+	dkgResults[submittedRequestID.String()] = append(
+		dkgResults[submittedRequestID.String()],
 		submittedResult,
 	)
 
 	localChain := &localChain{
-		submittedResults: submittedResults,
+		submittedResults: dkgResults,
 	}
 	chainHandle := localChain.ThresholdRelay()
 
@@ -332,12 +332,12 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 }
 
 func TestSubmitDKGResult(t *testing.T) {
-	localChain := Connect(10, 4, big.NewInt(200))
-	chainHandle := localChain.ThresholdRelay()
+	chain := Connect(10, 4, big.NewInt(200)).(*localChain)
+	chainHandle := chain.ThresholdRelay()
 
 	// Channel for callback on DKG result submission.
 	onResultSubmissionCallbackChan := make(chan *event.DKGResultPublication)
-	subscription, err := localChain.OnDKGResultPublished(
+	subscription, err := chain.OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication) {
 			onResultSubmissionCallbackChan <- dkgResultPublication
 		},
@@ -359,10 +359,10 @@ func TestSubmitDKGResult(t *testing.T) {
 	dkgResult1Hash, _ := chainHandle.CalculateDKGResultHash(dkgResult1)
 
 	// Register a result in the chain as initial state.
-	localChain.dkgResults = map[string][]*relaychain.DKGResult{
+	chain.submittedResults = map[string][]*relaychain.DKGResult{
 		requestID0.String(): []*relaychain.DKGResult{dkgResult0},
 	}
-	localChain.submissions = map[string]relaychain.DKGResultsVotes{
+	chain.dkgResultsVotes = map[string]relaychain.DKGResultsVotes{
 		requestID0.String(): relaychain.DKGResultsVotes{
 			dkgResult0Hash: 1,
 		},
@@ -450,10 +450,10 @@ func TestSubmitDKGResult(t *testing.T) {
 			expectedResults := make(map[string][]*relaychain.DKGResult)
 			expectedResultsVotes := make(map[string]relaychain.DKGResultsVotes)
 
-			for k, v := range localChain.dkgResults {
+			for k, v := range chain.submittedResults {
 				expectedResults[k] = v
 			}
-			for k, v := range localChain.submissions {
+			for k, v := range chain.dkgResultsVotes {
 				expectedResultsVotes[k] = v
 			}
 
@@ -465,7 +465,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			}
 
 			if test.expectedEvent != nil {
-				currentBlock, _ := localChain.blockCounter.CurrentBlock()
+				currentBlock, _ := chain.blockCounter.CurrentBlock()
 				test.expectedEvent.BlockNumber = uint64(currentBlock)
 			}
 
@@ -487,16 +487,16 @@ func TestSubmitDKGResult(t *testing.T) {
 			waitForCompleted.Wait()
 
 			// Validate registered results and votes.
-			if !reflect.DeepEqual(expectedResults, localChain.dkgResults) {
+			if !reflect.DeepEqual(expectedResults, chain.submittedResults) {
 				t.Errorf("\nexpected: %+v\nactual:   %+v\n",
 					expectedResults,
-					localChain.dkgResults,
+					chain.submittedResults,
 				)
 			}
-			if !reflect.DeepEqual(expectedResultsVotes, localChain.submissions) {
+			if !reflect.DeepEqual(expectedResultsVotes, chain.dkgResultsVotes) {
 				t.Errorf("\nexpected: %+v\nactual:   %+v\n",
 					expectedResultsVotes,
-					localChain.submissions,
+					chain.dkgResultsVotes,
 				)
 			}
 
@@ -524,7 +524,7 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	defer cancel()
 
 	localChain := &localChain{
-		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
+		submittedResults:             make(map[string][]*relaychain.DKGResult),
 		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 	}
 	relay := localChain.ThresholdRelay()
