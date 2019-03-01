@@ -973,7 +973,7 @@ func pow(id MemberID, y int) *big.Int {
 //    in Phase 11.
 //
 // See Phase 12 of the protocol specification.
-func (rm *CombiningMember) CombineGroupPublicKey() {
+func (rm *CombiningMember) CombineGroupPublicKey() error {
 	var publicKeyShares []*bls.PublicKeyShare
 
 	// Current member's individual public key `A_i0`.
@@ -1001,7 +1001,9 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 
 	groupPublicKey, err := bls.RecoverPublicKey(publicKeyShares, rm.group.dishonestThreshold)
 	if err != nil {
-		panic(fmt.Sprintf("failed with err %+v", err))
+		return err
 	}
+
 	rm.groupPublicKey = groupPublicKey
+	return nil
 }

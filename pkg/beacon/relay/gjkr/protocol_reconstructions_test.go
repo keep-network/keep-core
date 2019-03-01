@@ -335,7 +335,9 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	)
 
 	// Combine individual public keys of group members to get group public key.
-	member.CombineGroupPublicKey()
+	if err := member.CombineGroupPublicKey(); err != nil {
+		t.Fatal(err)
+	}
 
 	if member.groupPublicKey.String() != expectedGroupPublicKey.String() {
 		t.Fatalf(

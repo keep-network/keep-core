@@ -649,8 +649,7 @@ type combinationState struct {
 func (cs *combinationState) activeBlocks() int { return 0 }
 
 func (cs *combinationState) initiate() error {
-	cs.member.CombineGroupPublicKey()
-	return nil
+	return cs.member.CombineGroupPublicKey()
 }
 
 func (cs *combinationState) receive(msg net.Message) error {

@@ -105,7 +105,9 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	for _, member := range combiningMembers {
-		member.CombineGroupPublicKey()
+		if err := member.CombineGroupPublicKey(); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 }
