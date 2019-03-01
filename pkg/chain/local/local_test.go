@@ -15,6 +15,42 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
+func TestSubmitRelayEntry(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	relayEntryPromise := chainHandle.SubmitRelayEntry(
+		&event.Entry{
+			RequestID:   big.NewInt(int64(19)),
+			GroupPubKey: []byte("1"),
+		},
+	)
+
+	done := make(chan *event.Entry)
+	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
+		done <- entry
+	}).OnFailure(func(err error) {
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	select {
+	case entry := <-done:
+		expected := int64(19)
+		if entry.RequestID.Int64() != expected {
+			t.Fatalf(
+				"expected [%v], got [%v]",
+				expected,
+				entry.RequestID.Int64(),
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
 func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
 	groupSize := 4
 
@@ -106,231 +142,6 @@ func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
 	}
 }
 
-func TestLocalSubmitRelayEntry(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
-	relayEntryPromise := chainHandle.SubmitRelayEntry(
-		&event.Entry{
-			RequestID:   big.NewInt(int64(19)),
-			GroupPubKey: []byte("1"),
-		},
-	)
-
-	done := make(chan *event.Entry)
-	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
-		done <- entry
-	}).OnFailure(func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	select {
-	case entry := <-done:
-		expected := int64(19)
-		if entry.RequestID.Int64() != expected {
-			t.Fatalf(
-				"expected [%v], got [%v]",
-				expected,
-				entry.RequestID.Int64(),
-			)
-		}
-	case <-ctx.Done():
-		t.Fatal(ctx.Err())
-	}
-
-}
-
-func TestLocalBlockHeightWaiter(t *testing.T) {
-	var tests = map[string]struct {
-		blockHeight      int
-		initialDelay     time.Duration
-		expectedWaitTime time.Duration
-	}{
-		"does not wait for negative block height": {
-			blockHeight:      -1,
-			expectedWaitTime: 0,
-		},
-		"returns immediately for genesis block": {
-			blockHeight:      0,
-			expectedWaitTime: 0,
-		},
-		"returns immediately for block height already reached": {
-			blockHeight:      2,
-			initialDelay:     3 * blockTime,
-			expectedWaitTime: 0,
-		},
-		"waits for block height not yet reached": {
-			blockHeight:      5,
-			initialDelay:     2 * blockTime,
-			expectedWaitTime: 3 * blockTime,
-		},
-	}
-
-	for testName, test := range tests {
-		test := test
-		t.Run(testName, func(t *testing.T) {
-			t.Parallel()
-			c := Connect(10, 4, big.NewInt(100))
-
-			blockCounter, err := c.BlockCounter()
-			if err != nil {
-				t.Fatalf("failed to set up block counter: [%v]", err)
-			}
-
-			time.Sleep(test.initialDelay)
-
-			start := time.Now().UTC()
-			blockCounter.WaitForBlockHeight(test.blockHeight)
-			end := time.Now().UTC()
-
-			elapsed := end.Sub(start)
-
-			// Block waiter should wait for test.expectedWaitTime minus some
-			// margin at minimum; the margin is needed because clock is not
-			// always that precise. Setting it to 5ms for this test.
-			minMargin := time.Duration(5) * time.Millisecond
-			if elapsed < (test.expectedWaitTime - minMargin) {
-				t.Errorf(
-					"waited less than expected; expected [%v] at min, waited [%v]",
-					test.expectedWaitTime,
-					elapsed,
-				)
-			}
-
-			// Block waiter should wait for test.expectedWaitTime plus some
-			// margin at maximum; the margin is the time needed for the return
-			// instructions to execute, setting it to 25ms for this test.
-			maxMargin := time.Duration(25) * time.Millisecond
-			if elapsed > (test.expectedWaitTime + maxMargin) {
-				t.Errorf(
-					"waited longer than expected; expected %v at max, waited %v",
-					test.expectedWaitTime,
-					elapsed,
-				)
-			}
-		})
-	}
-}
-
-func TestLocalBlockWaiter(t *testing.T) {
-	var tests = map[string]struct {
-		blockWait        int
-		expectedWaitTime time.Duration
-	}{
-		"does wait for a block": {
-			blockWait:        1,
-			expectedWaitTime: blockTime,
-		},
-		"does wait for two blocks": {
-			blockWait:        2,
-			expectedWaitTime: 2 * blockTime,
-		},
-		"does wait for three blocks": {
-			blockWait:        3,
-			expectedWaitTime: 3 * blockTime,
-		},
-		"does not wait for 0 blocks": {
-			blockWait:        0,
-			expectedWaitTime: 0,
-		},
-		"does not wait for negative number of blocks": {
-			blockWait:        -1,
-			expectedWaitTime: 0,
-		},
-	}
-
-	for testName, test := range tests {
-		test := test
-		t.Run(testName, func(t *testing.T) {
-			t.Parallel()
-			c := Connect(10, 4, big.NewInt(200))
-			countWait, err := c.BlockCounter()
-			if err != nil {
-				t.Fatalf("failed to set up block counter: [%v]", err)
-			}
-
-			start := time.Now().UTC()
-			countWait.WaitForBlocks(test.blockWait)
-			end := time.Now().UTC()
-
-			elapsed := end.Sub(start)
-
-			// Block waiter should wait for test.expectedWaitTime minus some
-			// margin at minimum; the margin is needed because clock is not
-			// always that precise. Setting it to 5ms for this test.
-			minMargin := time.Duration(5) * time.Millisecond
-			if elapsed < (test.expectedWaitTime - minMargin) {
-				t.Errorf(
-					"waited less than expected; expected [%v] at min, waited [%v]",
-					test.expectedWaitTime+minMargin,
-					elapsed,
-				)
-			}
-
-			// Block waiter should wait for test.expectedWaitTime plus some
-			// margin at maximum; the margin is the time needed for the return
-			// instructions to execute, setting it to 25ms for this test.
-			maxMargin := time.Duration(25) * time.Millisecond
-			if elapsed > (test.expectedWaitTime + maxMargin) {
-				t.Errorf(
-					"waited longer than expected; expected %v at max, waited %v",
-					test.expectedWaitTime,
-					elapsed,
-				)
-			}
-		})
-	}
-}
-
-func TestLocalIsDKGResultPublished(t *testing.T) {
-	dkgResults := make(map[string][]*relaychain.DKGResult)
-
-	submittedRequestID := big.NewInt(1)
-	submittedResult := &relaychain.DKGResult{
-		GroupPublicKey: []byte{11},
-	}
-
-	dkgResults[submittedRequestID.String()] = append(
-		dkgResults[submittedRequestID.String()],
-		submittedResult,
-	)
-
-	localChain := &localChain{
-		submittedResults: dkgResults,
-	}
-	chainHandle := localChain.ThresholdRelay()
-
-	var tests = map[string]struct {
-		requestID      *big.Int
-		expectedResult bool
-	}{
-		"matched": {
-			requestID:      submittedRequestID,
-			expectedResult: true,
-		},
-		"not matched - different request ID": {
-			requestID:      big.NewInt(3),
-			expectedResult: false,
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			actualResult, err := chainHandle.IsDKGResultPublished(test.requestID)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if actualResult != test.expectedResult {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
-			}
-		})
-	}
-}
-
 func TestSubmitDKGResult(t *testing.T) {
 	chain := Connect(10, 4, big.NewInt(200)).(*localChain)
 	chainHandle := chain.ThresholdRelay()
@@ -359,7 +170,7 @@ func TestSubmitDKGResult(t *testing.T) {
 	dkgResult1Hash, _ := chainHandle.CalculateDKGResultHash(dkgResult1)
 
 	// Register a result in the chain as initial state.
-	chain.submittedResults = map[string][]*relaychain.DKGResult{
+	chain.dkgSubmittedResults = map[string][]*relaychain.DKGResult{
 		requestID0.String(): []*relaychain.DKGResult{dkgResult0},
 	}
 	chain.dkgResultsVotes = map[string]relaychain.DKGResultsVotes{
@@ -450,7 +261,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			expectedResults := make(map[string][]*relaychain.DKGResult)
 			expectedResultsVotes := make(map[string]relaychain.DKGResultsVotes)
 
-			for k, v := range chain.submittedResults {
+			for k, v := range chain.dkgSubmittedResults {
 				expectedResults[k] = v
 			}
 			for k, v := range chain.dkgResultsVotes {
@@ -487,10 +298,10 @@ func TestSubmitDKGResult(t *testing.T) {
 			waitForCompleted.Wait()
 
 			// Validate registered results and votes.
-			if !reflect.DeepEqual(expectedResults, chain.submittedResults) {
+			if !reflect.DeepEqual(expectedResults, chain.dkgSubmittedResults) {
 				t.Errorf("\nexpected: %+v\nactual:   %+v\n",
 					expectedResults,
-					chain.submittedResults,
+					chain.dkgSubmittedResults,
 				)
 			}
 			if !reflect.DeepEqual(expectedResultsVotes, chain.dkgResultsVotes) {
@@ -519,13 +330,13 @@ func TestSubmitDKGResult(t *testing.T) {
 	}
 }
 
-func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
+func TestOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
 	localChain := &localChain{
-		submittedResults:             make(map[string][]*relaychain.DKGResult),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		dkgSubmittedResults:         make(map[string][]*relaychain.DKGResult),
+		dkgResultSubmissionHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
 	}
 	relay := localChain.ThresholdRelay()
 
@@ -552,6 +363,52 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 		t.Fatalf("event should not be emitted - I have unsubscribed!")
 	case <-ctx.Done():
 		// ok
+	}
+}
+
+func TestIsDKGResultPublished(t *testing.T) {
+	dkgResults := make(map[string][]*relaychain.DKGResult)
+
+	submittedRequestID := big.NewInt(1)
+	submittedResult := &relaychain.DKGResult{
+		GroupPublicKey: []byte{11},
+	}
+
+	dkgResults[submittedRequestID.String()] = append(
+		dkgResults[submittedRequestID.String()],
+		submittedResult,
+	)
+
+	localChain := &localChain{
+		dkgSubmittedResults: dkgResults,
+	}
+	chainHandle := localChain.ThresholdRelay()
+
+	var tests = map[string]struct {
+		requestID      *big.Int
+		expectedResult bool
+	}{
+		"matched": {
+			requestID:      submittedRequestID,
+			expectedResult: true,
+		},
+		"not matched - different request ID": {
+			requestID:      big.NewInt(3),
+			expectedResult: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResult, err := chainHandle.IsDKGResultPublished(test.requestID)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if actualResult != test.expectedResult {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
+			}
+		})
 	}
 }
 
@@ -614,7 +471,7 @@ func TestVoteOnDKGResult(t *testing.T) {
 			dkgResult0Hash: 1,
 		},
 	}
-	chain.alreadySubmittedOrVoted = map[string][]int{
+	chain.dkgAlreadySubmittedOrVoted = map[string][]int{
 		requestID0.String(): []int{0},
 	}
 
@@ -688,7 +545,7 @@ func TestVoteOnDKGResult(t *testing.T) {
 			}
 
 			expectedAlreadySubmittedOrVoted := make(map[string][]int)
-			for k, v := range chain.alreadySubmittedOrVoted {
+			for k, v := range chain.dkgAlreadySubmittedOrVoted {
 				expectedAlreadySubmittedOrVoted[k] = v
 			}
 			if test.expectedAlreadySubmittedOrVotedUpdate != nil {
@@ -732,11 +589,11 @@ func TestVoteOnDKGResult(t *testing.T) {
 			}
 			if !reflect.DeepEqual(
 				expectedAlreadySubmittedOrVoted,
-				chain.alreadySubmittedOrVoted,
+				chain.dkgAlreadySubmittedOrVoted,
 			) {
 				t.Errorf("\nexpected: %+v\nactual:   %+v\n",
 					expectedAlreadySubmittedOrVoted,
-					chain.alreadySubmittedOrVoted,
+					chain.dkgAlreadySubmittedOrVoted,
 				)
 			}
 
