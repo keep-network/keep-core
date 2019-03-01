@@ -12,7 +12,6 @@ import (
 
 // Test verifying BLS aggregated signature.
 func TestAggregateBLS(t *testing.T) {
-
 	// Public keys and signatures to aggregate.
 	var signatures []*bn256.G1
 	var publicKeys []*bn256.G2
@@ -49,7 +48,6 @@ func TestAggregateBLS(t *testing.T) {
 
 // Test verifying BLS threshold signature.
 func TestThresholdBLS(t *testing.T) {
-
 	message := []byte("Hello!")
 
 	numOfPlayers := 5
@@ -77,12 +75,14 @@ func TestThresholdBLS(t *testing.T) {
 	// signature shares. Threshold amount of these signature shares are
 	// sufficient to reconstruct the signature which is the same value as
 	// if the message was sign with the main secret.
-	for i := 0; i < numOfPlayers; i++ {
+	//
+	// NOTE: The loop begins from 1 rather than 0 as our members are 1-indexed.
+	for i := 1; i <= numOfPlayers; i++ {
 		secretKeyShare := GetSecretKeyShare(masterSecretKey, int(i))
 		publicKeyShares = append(publicKeyShares, secretKeyShare.PublicKeyShare())
 		signatureShare := Sign(secretKeyShare.V, message)
 		signatureShares = append(signatureShares, &SignatureShare{
-			I: i + 1, // always 1-indexed
+			I: i,
 			V: signatureShare,
 		})
 	}
