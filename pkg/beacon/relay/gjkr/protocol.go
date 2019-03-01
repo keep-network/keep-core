@@ -984,11 +984,11 @@ func (rm *CombiningMember) CombineGroupPublicKey() error {
 	})
 
 	// Add reconstructed disqualified members' individual public keys `G * z_m`.
-	for id, peerPublicKey := range rm.receivedValidPeerPublicKeySharePoints {
+	for id, publicKeySharePoints := range rm.receivedValidPeerPublicKeySharePoints {
 		// Individual public key is zeroth public key share point `A_j0`.
 		publicKeyShares = append(publicKeyShares, &bls.PublicKeyShare{
 			I: int(id),
-			V: peerPublicKey[0],
+			V: publicKeySharePoints[0],
 		})
 	}
 
