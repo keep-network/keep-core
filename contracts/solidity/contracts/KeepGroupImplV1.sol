@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+   pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -46,11 +46,14 @@ contract KeepGroupImplV1 is Ownable {
 
     uint256[] internal _tickets;
     bytes[] internal _submissions;
+    bytes32[] internal _dkgResultHashes;
 
     mapping (uint256 => DkgResult) internal _requestIdToDkgResult;
-    mapping (uint256 => bool) internal _dkgResultPublished;
-    mapping (bytes => uint256) internal _submissionVotes;
-    mapping (address => mapping (bytes => bool)) internal _hasVoted;
+    mapping (uint256 => bool) internal _dkgResultPublished; 
+    mapping (bytes32 => DkgResult) internal _receivedSubmissions;
+    mapping (bytes32 => bool) internal _votedDkg;
+    mapping (bytes32 => uint256) internal _submissionVotes;
+    mapping (bytes32 => bool) internal _resultPublished;
 
     struct Proof {
         address sender;
@@ -116,7 +119,7 @@ contract KeepGroupImplV1 is Ownable {
     function orderedTickets() public view returns (uint256[] memory) {
         return UintArrayUtils.sort(_tickets);
     }
-
+    
     /**
      * @dev Gets selected tickets in ascending order.
      */
@@ -220,9 +223,30 @@ contract KeepGroupImplV1 is Ownable {
         return passedCheapCheck && ticketValue == expected;
     }
 
+       /*
+     * @dev Check if member is inactive.
+     * @param dqBytes bytes representing disqualified members.
+     * @param memberIndex position of the member to check.
+     * @return true if staker is inactive, false otherwise.
+     */
+    function _isDisqualified(bytes memory dqBytes, uint256 memberIndex) internal pure returns (bool){
+        return dqBytes[memberIndex] != 0x00;
+    }
+
+     /*
+     * @dev Check if member is inactive.
+     * @param iaBytes bytes representing inactive members.
+     * @param memberIndex position of the member to check.
+     * @return true if staker is inactive, false otherwise.
+     */
+    function _isInactive(bytes memory iaBytes, uint256 memberIndex) internal pure returns (bool){
+        return iaBytes[memberIndex] != 0x00;
+    }
+
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @param memberIndex position the user claims to be.
      * @param success Result of DKG protocol execution; true if success, false otherwise.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index 
@@ -234,27 +258,36 @@ contract KeepGroupImplV1 is Ownable {
      */
     function submitDkgResult(
         uint256 requestId,
-//        uint256 memberIndex, TODO: Add memberIndex 
+        uint256 memberIndex,  
         bool success,
         bytes memory groupPubKey,
         bytes memory disqualified,
         bytes memory inactive
     ) public {
+        require(validateIndex(memberIndex));
 
-        require(
-            block.number > _submissionStart + _timeoutChallenge,
-            "Ticket submission challenge period must be over."
-        );
-
-        require(
-            _tickets.length >= _groupSize,
-            "There should be enough valid tickets submitted to form a group."
-        );
-
-        _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
-        _dkgResultPublished[requestId] = true;
-  
-        emit DkgResultPublishedEvent(requestId, groupPubKey);
+        bytes32 resultHash = keccak256(abi.encode(success, groupPubKey, disqualified, inactive));
+        bytes32 submitterID = keccak256(abi.encodePacked(msg.sender, memberIndex, _randomBeaconValue));
+    
+        require(eligibleSubmitter(memberIndex), "not an eligible submitter");
+        require(!_votedDkg[submitterID], "already voted for or submitted a result");
+        
+        //check empty for first submitter incentives. Should not re enter. voting begins after first submission
+        if(!_resultPublished[resultHash]){
+            if(_dkgResultHashes.length == 0){
+                //TODO: punish/reward
+                //First submitter incentive logic.
+            }
+            _receivedSubmissions[resultHash] = DkgResult(success, groupPubKey, disqualified, inactive);
+            _dkgResultHashes.push(resultHash);
+            _submissionVotes[resultHash] = 1;
+            _votedDkg[submitterID] = true;//cannot vote after submiting DKG result
+            _resultPublished[resultHash] = true;
+            emit DkgResultPublishedEvent(requestId, groupPubKey);
+        }
+        else{
+            _addVote(resultHash, submitterID, requestId, memberIndex);
+        }  
     }
 
     /**
@@ -265,22 +298,60 @@ contract KeepGroupImplV1 is Ownable {
         return _dkgResultPublished[requestId];
     }
 
-    /*
-     * @dev Gets number of votes for each submitted DKG result hash. 
-     * @param requestId Relay request ID assosciated with DKG protocol execution.
-     * @return Hashes of submitted DKG results and number of votes for each hash.
+    /** 
+     * @dev Check if submitter is eligible to submit.
+     * @param memberIndex the claimed index of the submitter.
+     * @return true if the submitter is eligible. False otherwise.
      */
-    function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
-        // TODO: Implement
-        bytes32[] memory resultsHashes;
-        uint256[] memory resultsVotes;
-
-        return (resultsHashes, resultsVotes);
+    function eligibleSubmitter(uint memberIndex) public returns (bool){
+        require(memberIndex != 0);
+        return true;
     }
 
-    /*
+    /**
+     * @dev Check if provided index belongs to staker owner.
+     * @param memberIndex the claimed index of the user.
+     * @return true if the ticket at the given index is issued by msg.sender. False otherwise.
+     */
+    function validateIndex(uint memberIndex)public returns(bool){
+        require(memberIndex != 0);
+        return true;
+    }
+
+    /** 
+    * @dev returns the final agreed upn DKG result or error result
+    */
+    function getFinalResult(uint256 requestId)public returns (bytes memory) {
+        bytes32 leadingResult;
+        uint highestVoteN;
+
+        for(uint i = 0; i < _dkgResultHashes.length; i++){
+            if(_submissionVotes[_dkgResultHashes[i]] > highestVoteN){
+                highestVoteN = _submissionVotes[_dkgResultHashes[i]];
+                leadingResult = _dkgResultHashes[i];
+            }
+        }
+        _dkgResultPublished[requestId] = true;
+        
+        address[] memory members = orderedParticipants();
+        bytes memory groupPublicKey = _receivedSubmissions[leadingResult].groupPubKey;
+        for (uint i = 0; i < _groupSize; i++) {
+            if(!_isInactive(_receivedSubmissions[leadingResult].inactive, i) &&
+                !_isDisqualified(_receivedSubmissions[leadingResult].disqualified, i)){
+                _groupMembers[groupPublicKey].push(members[i]);
+            }
+        }
+        _groups.push(groupPublicKey);
+        
+        emit SubmitGroupPublicKeyEvent(_receivedSubmissions[leadingResult].groupPubKey, requestId);
+        emit OnGroupRegistered(_receivedSubmissions[leadingResult].groupPubKey);
+        cleanup();
+        return _receivedSubmissions[leadingResult].groupPubKey;
+    }
+
+    /** 
      * @dev receives vote for provided resultHash.
-     * @param index the claimed index of the user.
+     * @param memberIndex the claimed index of the user.
      * @param resultHash Hash of DKG result to vote for
      */
     function voteOnDkgResult(
@@ -288,24 +359,30 @@ contract KeepGroupImplV1 is Ownable {
         uint256 memberIndex,
         bytes32 resultHash
     ) public {
-        // TODO: Implement
+        bytes32 submitterID = keccak256(abi.encodePacked(msg.sender, memberIndex, _randomBeaconValue));
+        _addVote(resultHash, submitterID, requestId, memberIndex);
+    }
+ 
+     /** 
+     * @dev adds vote for provided resultHash.
+     * @param resultHash the hash of the DKG result the submitter claims is correct.
+     * @param submitterID Hash of the submitterID index and address
+     */
+    function _addVote(bytes32 resultHash, bytes32 submitterID, uint256 requestId, uint256 memberIndex) internal{
+        _votedDkg[submitterID] = true;
+        _submissionVotes[resultHash] += 1;
+        emit DkgResultVoteEvent(requestId, memberIndex, resultHash);
     }
 
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
-
-        // TODO: Remove this section once dispute logic is implemented,
-        // implement conflict resolution logic described in Phase 14,
-        // make sure only valid members are stored.
-        _groups.push(groupPublicKey);
-        address[] memory members = orderedParticipants();
-        for (uint i = 0; i < _groupSize; i++) {
-            _groupMembers[groupPublicKey].push(members[i]);
+    //returns vote Hashes and vote numbers as arrays
+    function getDkgResultSubmissions() public view returns (bytes32[] memory, uint256[] memory) {
+        uint256[] memory votes = new uint256[](_dkgResultHashes.length);
+        for(uint i = 0; i < _dkgResultHashes.length; i++){
+            votes[i] = _submissionVotes[_dkgResultHashes[i]];
         }
-        emit OnGroupRegistered(groupPublicKey);
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
-    }
+        return (_dkgResultHashes, votes);
+    }  
+
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -485,8 +562,7 @@ contract KeepGroupImplV1 is Ownable {
         }
 
         delete _tickets;
-
-        // TODO: cleanup DkgResults
+        delete _dkgResultHashes;
     }
 
 }
