@@ -585,6 +585,179 @@ func TestCalculateDKGResultHash(t *testing.T) {
 	}
 }
 
+func TestVoteOnDKGResult(t *testing.T) {
+	chain := Connect(10, 4, big.NewInt(200)).(*localChain)
+	chainHandle := chain.ThresholdRelay()
+
+	// Channel for callback on DKG result submission.
+	onResultVoteCallbackChan := make(chan *event.DKGResultVote)
+	subscription, err := chain.OnDKGResultVote(
+		func(event *event.DKGResultVote) {
+			onResultVoteCallbackChan <- event
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer subscription.Unsubscribe()
+
+	// Test data.
+	requestID0 := big.NewInt(0)
+	requestID1 := big.NewInt(1)
+
+	dkgResult0Hash := relaychain.DKGResultHash{00}
+	dkgResult1Hash := relaychain.DKGResultHash{11}
+
+	// Register a result in the chain as initial state.
+	chain.dkgResultsVotes = map[string]relaychain.DKGResultsVotes{
+		requestID0.String(): relaychain.DKGResultsVotes{
+			dkgResult0Hash: 1,
+		},
+	}
+	chain.alreadySubmittedOrVoted = map[string][]int{
+		requestID0.String(): []int{0},
+	}
+
+	var tests = map[string]struct {
+		requestID     *big.Int
+		memberIndex   int
+		dkgResultHash relaychain.DKGResultHash
+
+		expectedResultsVotesUpdate            func(initialResultsVotes map[string]relaychain.DKGResultsVotes)
+		expectedAlreadySubmittedOrVotedUpdate func(alreadySubmittedOrVoted map[string][]int)
+		expectedEvent                         *event.DKGResultVote
+		expectedError                         error
+	}{
+		"submit a vote for a request ID with no previous submissions": {
+			requestID:     requestID1,
+			memberIndex:   1,
+			dkgResultHash: dkgResult1Hash,
+
+			expectedError: fmt.Errorf("no registered submissions or votes for given request id"),
+		},
+		"submit a vote with request ID with previous submissions but not existing DKG result hash": {
+			requestID:     requestID0,
+			memberIndex:   1,
+			dkgResultHash: dkgResult1Hash,
+
+			expectedError: fmt.Errorf("result hash is not registered in dkg results votes map"),
+		},
+		"submit again a vote for the same request ID": {
+			requestID:     requestID0,
+			memberIndex:   0,
+			dkgResultHash: dkgResult1Hash,
+
+			expectedError: fmt.Errorf("this member already submitted or voted on DKG result for given request id"),
+		},
+		"submit a vote for a DKG result submitted before": {
+			requestID:     requestID0,
+			memberIndex:   1,
+			dkgResultHash: dkgResult0Hash,
+
+			expectedResultsVotesUpdate: func(initialResultsVotes map[string]relaychain.DKGResultsVotes) {
+				initialResultsVotes[requestID0.String()] =
+					map[relaychain.DKGResultHash]int{
+						dkgResult0Hash: 2,
+					}
+			},
+			expectedAlreadySubmittedOrVotedUpdate: func(alreadySubmittedOrVoted map[string][]int) {
+				alreadySubmittedOrVoted[requestID0.String()] = append(alreadySubmittedOrVoted[requestID0.String()],
+					1,
+				)
+			},
+			expectedEvent: &event.DKGResultVote{
+				RequestID:     requestID0,
+				MemberIndex:   1,
+				DKGResultHash: dkgResult0Hash,
+			},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			ctx, cancel := newTestContext()
+			defer cancel()
+
+			expectedResultsVotes := make(map[string]relaychain.DKGResultsVotes)
+			for k, v := range chain.dkgResultsVotes {
+				expectedResultsVotes[k] = v
+			}
+
+			if test.expectedResultsVotesUpdate != nil {
+				test.expectedResultsVotesUpdate(expectedResultsVotes)
+			}
+
+			expectedAlreadySubmittedOrVoted := make(map[string][]int)
+			for k, v := range chain.alreadySubmittedOrVoted {
+				expectedAlreadySubmittedOrVoted[k] = v
+			}
+			if test.expectedAlreadySubmittedOrVotedUpdate != nil {
+				test.expectedAlreadySubmittedOrVotedUpdate(
+					expectedAlreadySubmittedOrVoted,
+				)
+			}
+
+			if test.expectedEvent != nil {
+				currentBlock, _ := chain.blockCounter.CurrentBlock()
+				test.expectedEvent.BlockNumber = uint64(currentBlock)
+			}
+
+			waitForCompleted := sync.WaitGroup{}
+			waitForCompleted.Add(1)
+
+			chainHandle.VoteOnDKGResult(
+				test.requestID,
+				test.memberIndex,
+				test.dkgResultHash,
+			).
+				// Validate the promise.
+				OnComplete(func(event *event.DKGResultVote, err error) {
+					waitForCompleted.Done()
+
+					if !reflect.DeepEqual(test.expectedError, err) {
+						t.Errorf("\nexpected: %v\nactual:   %v\n", test.expectedError, err)
+					}
+					if !reflect.DeepEqual(test.expectedEvent, event) {
+						t.Errorf("\nexpected: %+v\nactual:   %+v\n", test.expectedEvent, event)
+					}
+				})
+			waitForCompleted.Wait()
+
+			// Validate registered votes.
+			if !reflect.DeepEqual(expectedResultsVotes, chain.dkgResultsVotes) {
+				t.Errorf("\nexpected: %+v\nactual:   %+v\n",
+					expectedResultsVotes,
+					chain.dkgResultsVotes,
+				)
+			}
+			if !reflect.DeepEqual(
+				expectedAlreadySubmittedOrVoted,
+				chain.alreadySubmittedOrVoted,
+			) {
+				t.Errorf("\nexpected: %+v\nactual:   %+v\n",
+					expectedAlreadySubmittedOrVoted,
+					chain.alreadySubmittedOrVoted,
+				)
+			}
+
+			// Validate event in callback.
+			select {
+			case event := <-onResultVoteCallbackChan:
+				if !reflect.DeepEqual(test.expectedEvent, event) {
+					t.Errorf("\nexpected: %v\nactual:   %v\n",
+						test.expectedEvent,
+						event,
+					)
+				}
+			case <-ctx.Done():
+				if test.expectedError == nil {
+					t.Errorf("expected event was not emitted")
+				}
+			}
+		})
+	}
+}
+
 func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFunc) {
 	defaultTimeout := 3 * time.Second
 	if len(timeout) > 0 {
