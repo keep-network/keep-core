@@ -98,8 +98,7 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 // coefficients taken from masterSecretKey. This is based on Shamir's Secret
 // Sharing scheme and 'i' represents participant index.
 func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
-
-	xi := big.NewInt(int64(1 + i))
+	xi := big.NewInt(int64(i))
 	share := big.NewInt(0)
 
 	for j := 0; j < len(masterSecretKey); j++ {
