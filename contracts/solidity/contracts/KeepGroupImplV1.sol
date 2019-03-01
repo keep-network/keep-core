@@ -1,4 +1,4 @@
-   pragma solidity ^0.5.4;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -23,7 +23,7 @@ contract KeepGroupImplV1 is Ownable {
 
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
-    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
+    event DkgResultSubmittedEvent(uint256 requestId, bytes groupPubKey); 
     
     event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
 
@@ -223,7 +223,7 @@ contract KeepGroupImplV1 is Ownable {
         return passedCheapCheck && ticketValue == expected;
     }
 
-       /*
+    /**
      * @dev Check if member is inactive.
      * @param dqBytes bytes representing disqualified members.
      * @param memberIndex position of the member to check.
@@ -233,7 +233,7 @@ contract KeepGroupImplV1 is Ownable {
         return dqBytes[memberIndex] != 0x00;
     }
 
-     /*
+     /** 
      * @dev Check if member is inactive.
      * @param iaBytes bytes representing inactive members.
      * @param memberIndex position of the member to check.
@@ -258,7 +258,7 @@ contract KeepGroupImplV1 is Ownable {
      */
     function submitDkgResult(
         uint256 requestId,
-        uint256 memberIndex,  
+        uint256 memberIndex,
         bool success,
         bytes memory groupPubKey,
         bytes memory disqualified,
@@ -276,14 +276,14 @@ contract KeepGroupImplV1 is Ownable {
         if(!_resultPublished[resultHash]){
             if(_dkgResultHashes.length == 0){
                 //TODO: punish/reward
-                //First submitter incentive logic.
+                //First submitter incentive logic.kl
             }
             _receivedSubmissions[resultHash] = DkgResult(success, groupPubKey, disqualified, inactive);
             _dkgResultHashes.push(resultHash);
             _submissionVotes[resultHash] = 1;
             _votedDkg[submitterID] = true;//cannot vote after submiting DKG result
             _resultPublished[resultHash] = true;
-            emit DkgResultPublishedEvent(requestId, groupPubKey);
+            emit DkgResultSubmittedEvent(requestId, groupPubKey);
         }
         else{
             _addVote(resultHash, submitterID, requestId, memberIndex);
@@ -374,7 +374,10 @@ contract KeepGroupImplV1 is Ownable {
         emit DkgResultVoteEvent(requestId, memberIndex, resultHash);
     }
 
-    //returns vote Hashes and vote numbers as arrays
+     /** 
+     * @dev get resultHashes and corresponding votes
+     * @return  bytes32 array of result Hashes and uint256 array of corresponding result votes 
+     */
     function getDkgResultSubmissions() public view returns (bytes32[] memory, uint256[] memory) {
         uint256[] memory votes = new uint256[](_dkgResultHashes.length);
         for(uint i = 0; i < _dkgResultHashes.length; i++){
