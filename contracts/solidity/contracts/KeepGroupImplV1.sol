@@ -36,8 +36,8 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
-    uint256 internal _voteTimeIncrement;//value of per-vote increment
-    uint256 internal _voteTime;//value of current extention
+    uint256 internal _voteTimeIncrement;//value of per-vote increment. find good set location
+    uint256 internal _voteTime;//current vote time. same locationas _voteTimeIncrement
 
     uint256 internal _randomBeaconValue;
 
@@ -310,7 +310,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param memberIndex position of the member to check.
      * @return true if staker is inactive, false otherwise.
      */
-    function _isDisqualified(bytes dqBytes, uint256 memberIndex) internal view returns (bool){
+    function _isDisqualified(bytes memory dqBytes, uint256 memberIndex) internal pure returns (bool){
         return dqBytes[memberIndex] != 0x00;
     }
 
@@ -320,7 +320,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param gmemberIndex position of the member to check.
      * @return true if staker is inactive, false otherwise.
      */
-    function _isInactive(bytes iaBytes, uint256 memberIndex) internal view returns (bool){
+    function _isInactive(bytes memory iaBytes, uint256 memberIndex) internal pure returns (bool){
         return iaBytes[memberIndex] != 0x00;
     }
 
@@ -340,9 +340,9 @@ contract KeepGroupImplV1 is Ownable {
     function submitDkgResult(
         uint256 index, 
         bool success, 
-        bytes groupPubKey,
-        bytes disqualified,
-        bytes inactive)public {
+        bytes memory groupPubKey,
+        bytes memory disqualified,
+        bytes memory inactive)public {
 
         require(validateIndex(index));
 
@@ -390,7 +390,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param index the claimed index of the submitter.
      * @return true if the submitter is eligible. False otherwise.
      */
-    function eligibleSubmitter(uint index) public returns (bool){
+    function eligibleSubmitter(uint index) public view returns (bool){
         require(block.timestamp <= _voteTime, "voting period is over");
         if(_dkgResultHashes.length > 0) return true;
         uint T_init = _submissionStart + _timeoutChallenge;
@@ -412,7 +412,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param index the claimed index of the user.
      * @return true if the ticket at the given index is issued by msg.sender. False otherwise.
      */
-    function validateIndex(uint index)public returns(bool){   
+    function validateIndex(uint index)public view returns(bool){   
         require(index != 0, "can't be 0 index"); 
         require(index <= _groupSize, "must be within selected range");
         uint256[] memory ordered = orderedTickets();
@@ -433,7 +433,7 @@ contract KeepGroupImplV1 is Ownable {
     /*
      * @dev returns the final DKG result.
      */
-    function getFinalResult()public returns (bytes) {
+    function getFinalResult()public returns (bytes memory) {
         bytes32 leadingResult;
         uint highestVoteN;
         uint totalVotes;
@@ -451,14 +451,14 @@ contract KeepGroupImplV1 is Ownable {
         }
         if(totalVotes - highestVoteN >= f_max){
             cleanup();
-            return 0x0;
+            return "";
             //TODO
             //return Result.failure(disqualified = [])
         }
         else{
             address[] memory members = orderedParticipants();
             bytes memory groupPublicKey = _receivedSubmissions[leadingResult].groupPubKey;
-            for (i = 0; i < _groupSize; i++) {
+            for (uint i = 0; i < _groupSize; i++) {
                 if(!_isInactive(_receivedSubmissions[leadingResult].inactive, i) &&
                     !_isDisqualified(_receivedSubmissions[leadingResult].disqualified, i)){
                     _groupMembers[groupPublicKey].push(members[i]);
@@ -475,10 +475,10 @@ contract KeepGroupImplV1 is Ownable {
 
     }
 
-    function getDkgResultSubmissions() public view returns (bytes32[], uint256[]) {
+    function getDkgResultSubmissions() public view returns (bytes32[] memory, uint256[] memory) {
         uint256[] memory votes = new uint256[](_dkgResultHashes.length);
         for(uint i = 0; i < _dkgResultHashes.length; i++){
-            votes[i] = _submissionVotes[dkgResultHashes[i]];
+            votes[i] = _submissionVotes[_dkgResultHashes[i]];
         }
         return (_dkgResultHashes, votes);
     }   
@@ -579,9 +579,6 @@ contract KeepGroupImplV1 is Ownable {
         }
 
         delete _tickets;
-        _voteTimeIncrement = 0;
-        _voteExtention = 0;
-        _votingStarted = false;
 
         // TODO: cleanup DkgResults
     }
