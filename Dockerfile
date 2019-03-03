@@ -55,7 +55,7 @@ RUN apk add --update --no-cache \
 
 COPY --from=cbuild $LIB_DIR $LIB_DIR
 COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
-COPY --from=ethereum/solc:0.4.24 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.5.4 /usr/bin/solc /usr/bin/solc
 
 RUN mkdir -p $APP_DIR
 

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "./utils/AltBn128.sol";
 
@@ -15,7 +15,7 @@ library BLS {
      * @dev Verify performs the pairing operation to check if the signature
      * is correct for the provided message and the corresponding public key.
      */
-    function verify(bytes publicKey, bytes message, bytes32 signature) public view returns (bool) {
+    function verify(bytes memory publicKey, bytes memory message, bytes32 signature) public view returns (bool) {
 
         AltBn128.G1Point memory _signature;
         _signature = AltBn128.g1Decompress(signature);

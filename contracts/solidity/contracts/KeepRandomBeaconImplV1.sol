@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
@@ -38,7 +38,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
-    function() public payable {
+    function() external payable {
         revert("Can not call contract without explicitly calling a function.");
     }
 
@@ -104,13 +104,13 @@ contract KeepRandomBeaconImplV1 is Ownable {
     /**
      * @dev Finish withdrawal of this contract balance to the owner.
      */
-    function finishWithdrawal() public onlyOwner {
+    function finishWithdrawal(address payable payee) public onlyOwner {
         require(_pendingWithdrawal > 0, "Pending withdrawal timestamp must be set and be greater than zero.");
         require(block.timestamp >= _pendingWithdrawal, "The current time must pass the pending withdrawal timestamp.");
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
         _pendingWithdrawal = 0;
-        owner().transfer(address(this).balance);
+        payee.transfer(address(this).balance);
     }
 
     /**
@@ -142,7 +142,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupSignature The generated random number.
      * @param groupPubKey Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, bytes groupPubKey, uint256 previousEntry, uint256 seed) public {    
+    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {    
         // Temporary solution for M2. Every group member submits a new relay entry
         // with the same request ID and we filter out duplicates here. 
         // This behavior will change post-M2 when we'll integrate phase 14 and/or 
@@ -162,7 +162,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     /**
      * @dev Gets version of the current implementation.
     */
-    function version() public pure returns (string) {
+    function version() public pure returns (string memory) {
         return "V1";
     }
 }

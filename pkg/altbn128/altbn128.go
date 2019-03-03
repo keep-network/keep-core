@@ -5,7 +5,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
@@ -16,8 +16,6 @@ type G1Point struct {
 type G2Point struct {
 	*bn256.G2
 }
-
-type compressedPoint []byte
 
 // Quadratic extension field element as seen in bn256/gfp2.go
 type gfP2 struct {
@@ -144,9 +142,9 @@ func yParity(y *big.Int) byte {
 
 // Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func (g G1Point) Compress() compressedPoint {
+func (g G1Point) Compress() []byte {
 
-	rt := make(compressedPoint, 32)
+	rt := make([]byte, 32)
 
 	marshalled := g.Marshal()
 
@@ -166,10 +164,10 @@ func (g G1Point) Compress() compressedPoint {
 
 // Compress compresses point by using X value and the parity bit of Y
 // encoded into the first byte.
-func (g G2Point) Compress() compressedPoint {
+func (g G2Point) Compress() []byte {
 
 	// X of G2 point is a 64 bytes value.
-	rt := make(compressedPoint, 64)
+	rt := make([]byte, 64)
 
 	marshalled := g.Marshal()
 
@@ -191,7 +189,7 @@ func (g G2Point) Compress() compressedPoint {
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
 // top byte as 0x01 (even) or 0x00 (odd).
-func (m compressedPoint) DecompressToG1() (*bn256.G1, error) {
+func DecompressToG1(m []byte) (*bn256.G1, error) {
 
 	// Get the original X.
 	x := new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:]...))
@@ -217,7 +215,7 @@ func (m compressedPoint) DecompressToG1() (*bn256.G1, error) {
 // bit from the first byte, extracting X value and calculating original Y
 // value based on the extracted Y parity. The parity bit is encoded in the
 // top byte as 0x01 (even) or 0x00 (odd).
-func (m compressedPoint) DecompressToG2() (*bn256.G2, error) {
+func DecompressToG2(m []byte) (*bn256.G2, error) {
 
 	// Get the X.
 	x := new(gfP2)
@@ -226,8 +224,8 @@ func (m compressedPoint) DecompressToG2() (*bn256.G2, error) {
 	x.y = new(big.Int).SetBytes(append([]byte{m[0] & 0x7F}, m[1:32]...))
 
 	// Get one of the two possible Y on curve y² = x³ + twistB.
-	y2 := new(gfP2).Pow(x, big.NewInt(3))
-	y2.Add(y2, twistB)
+	y2 := new(gfP2).pow(x, big.NewInt(3))
+	y2.add(y2, twistB)
 	y := sqrtGfP2(y2)
 
 	// Compare calculated Y parity with the original Y parity in the top bit of
@@ -241,8 +239,8 @@ func (m compressedPoint) DecompressToG2() (*bn256.G2, error) {
 	return G2FromInts(x, y)
 }
 
-// Multiply returns multiplication of two gfP2 elements.
-func (e *gfP2) Multiply(a, b *gfP2) *gfP2 {
+// multiply returns multiplication of two gfP2 elements.
+func (e *gfP2) multiply(a, b *gfP2) *gfP2 {
 	xx := mod(new(big.Int).Mul(a.x, b.x), bn256.P)
 	xy := mod(new(big.Int).Mul(a.x, b.y), bn256.P)
 	yx := mod(new(big.Int).Mul(a.y, b.x), bn256.P)
@@ -252,8 +250,8 @@ func (e *gfP2) Multiply(a, b *gfP2) *gfP2 {
 	return e
 }
 
-// Add returns addition of two gfP2 elements.
-func (e *gfP2) Add(a, b *gfP2) *gfP2 {
+// add returns addition of two gfP2 elements.
+func (e *gfP2) add(a, b *gfP2) *gfP2 {
 	e.x = mod(new(big.Int).Add(a.x, b.x), bn256.P)
 	e.y = mod(new(big.Int).Add(a.y, b.y), bn256.P)
 	return e
@@ -261,7 +259,7 @@ func (e *gfP2) Add(a, b *gfP2) *gfP2 {
 
 // x2y compares if y^2 equals x.
 func x2y(x, y *gfP2) bool {
-	y = new(gfP2).Pow(y, big.NewInt(2))
+	y = new(gfP2).pow(y, big.NewInt(2))
 	return y.x.Cmp(x.x) == 0 && y.y.Cmp(x.y) == 0
 }
 
@@ -271,17 +269,17 @@ func sqrtGfP2(x *gfP2) *gfP2 {
 	// (bn256.p^2 + 15) // 32)
 	var exp = bigFromBase10("14971724250519463826312126413021210649976634891596900701138993820439690427699319920245032869357433499099632259837909383182382988566862092145199781964622")
 
-	y := new(gfP2).Pow(x, exp)
+	y := new(gfP2).pow(x, exp)
 
 	// Multiply y by hexRoot constant to find correct y.
 	for !x2y(x, y) {
-		y.Multiply(y, hexRoot)
+		y.multiply(y, hexRoot)
 	}
 	return y
 }
 
-// Pow returns gfP2 element to the power of the provided exponent.
-func (e *gfP2) Pow(base *gfP2, exp *big.Int) *gfP2 {
+// pow returns gfP2 element to the power of the provided exponent.
+func (e *gfP2) pow(base *gfP2, exp *big.Int) *gfP2 {
 
 	e.x = big.NewInt(1)
 	e.y = big.NewInt(0)
@@ -291,11 +289,11 @@ func (e *gfP2) Pow(base *gfP2, exp *big.Int) *gfP2 {
 	for exp.Cmp(big.NewInt(0)) == 1 {
 
 		if yParity(exp) == 1 {
-			e.Multiply(e, base)
+			e.multiply(e, base)
 		}
 
 		exp = new(big.Int).Rsh(exp, 1)
-		base = new(gfP2).Multiply(base, base)
+		base = new(gfP2).multiply(base, base)
 	}
 	return e
 }

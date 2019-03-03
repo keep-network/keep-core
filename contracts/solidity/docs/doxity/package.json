@@ -5,7 +5,7 @@
   "author": "Chris Hitchcott <hitchcott@gmail.com>",
   "dependencies": {
     "@hitchcott/semantic-ui-react": "^0.61.1",
-    "highlight.js": "^9.7.0",
+    "highlight.js": "~9.14.0",
     "highlightjs-solidity": "^1.0.5",
     "react-document-title": "^2.0.1",
     "react-markdown": "^2.4.2",

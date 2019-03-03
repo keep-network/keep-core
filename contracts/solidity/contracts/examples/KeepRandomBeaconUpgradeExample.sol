@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "../KeepRandomBeaconImplV1.sol";
 
@@ -43,7 +43,7 @@ contract KeepRandomBeaconUpgradeExample is KeepRandomBeaconImplV1 {
         return _newVar;
     }
 
-    function version() public pure returns (string) {
+    function version() public pure returns (string memory) {
         return "V2";
     }
 }

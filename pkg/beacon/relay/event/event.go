@@ -31,6 +31,13 @@ type Request struct {
 	BlockNumber uint64
 }
 
+// GroupTicketSubmission represents a group selection ticket submission event.
+type GroupTicketSubmission struct {
+	TicketValue *big.Int
+
+	BlockNumber uint64
+}
+
 // GroupRegistration represents a registered group in the threshold relay with a
 // public key, that is considered active at ActivationBlockHeight, and was
 // spawned by the relay request with id, RequestID.
@@ -42,17 +49,20 @@ type GroupRegistration struct {
 }
 
 // DKGResultPublication represents a DKG result publication event.
+// TODO: Change name to: DKGResultSubmission
 type DKGResultPublication struct {
-	RequestID      *big.Int
+	RequestID *big.Int
+	// 	MemberIndex   int TODO: add member index
 	GroupPublicKey []byte
 
 	BlockNumber uint64
 }
 
-// GroupTicketSubmission represents a group selection ticket
-// submission event.
-type GroupTicketSubmission struct {
-	TicketValue *big.Int
+// DKGResultVote represents a DKG result voting event.
+type DKGResultVote struct {
+	RequestID     *big.Int
+	MemberIndex   int
+	DKGResultHash [32]byte
 
 	BlockNumber uint64
 }

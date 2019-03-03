@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -12,7 +12,7 @@ contract TestTokenGrantStake {
     KeepToken t = new KeepToken();
 
     // Create token grant contract with 30 days withdrawal delay.
-    TokenGrant c = new TokenGrant(t, 0, 30 days);
+    TokenGrant c = new TokenGrant(address(t), address(0), 30 days);
 
     uint id;
     address beneficiary = address(this); // For test simplicity set beneficiary the same as sender.

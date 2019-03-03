@@ -48,6 +48,11 @@ func main() {
 			outputFile: "relay_entry_promise.go",
 		},
 		{
+			Type:       "*event.GroupTicketSubmission",
+			Prefix:     "GroupTicket",
+			outputFile: "group_ticket_submission_promise.go",
+		},
+		{
 			Type:       "*event.GroupRegistration",
 			Prefix:     "GroupRegistration",
 			outputFile: "group_registration_promise.go",
@@ -63,9 +68,9 @@ func main() {
 			outputFile: "dkg_result_publication_promise.go",
 		},
 		{
-			Type:       "*event.GroupTicketSubmission",
-			Prefix:     "GroupTicket",
-			outputFile: "group_ticket_submission_promise.go",
+			Type:       "*event.DKGResultVote",
+			Prefix:     "DKGResultVote",
+			outputFile: "dkg_result_vote_promise.go",
 		},
 	}
 

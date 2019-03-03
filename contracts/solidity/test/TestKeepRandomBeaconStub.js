@@ -16,28 +16,17 @@ contract('TestKeepRandomBeaconStub', function(accounts) {
   });
 
   it("should be able to request relay entry and get response", async function() {
-    const relayEntryRequestedEvent = implViaProxy.RelayEntryRequested();
-    const relayEntryGeneratedEvent = implViaProxy.RelayEntryGenerated();
-    let previousRandomNumber;
-
     await implViaProxy.requestRelayEntry(10, 123456789, {from: account_one, value: 100});
 
-    relayEntryRequestedEvent.get(function(error, result){
-      assert.equal(result[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
-    });
+    assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
+    assert.equal((await implViaProxy.getPastEvents())[1].event, 'RelayEntryGenerated', "RelayEntryGenerated event should occur on the implementation contract.");
 
-    relayEntryGeneratedEvent.get(function(error, result){
-      previousRandomNumber = result[0].args['requestResponse'].toNumber();
-      assert.equal(result[0].event, 'RelayEntryGenerated', "RelayEntryGenerated event should occur on the implementation contract.");
-    });
-
-    await increaseTimeTo(latestTime()+duration.seconds(1));
+    let previousRandomNumber = (await implViaProxy.getPastEvents())[1].args['requestResponse'].toString();  
+    await increaseTimeTo(await latestTime()+duration.seconds(1));
     await implViaProxy.requestRelayEntry(10, 123456789, {from: account_one, value: 100});
 
-    relayEntryGeneratedEvent.get(function(error, result){
-      assert.equal(result[0].args['previousEntry'].toNumber(), previousRandomNumber, "Previous entry should be present in the event.");
-      assert.notEqual(result[0].args['requestResponse'].toNumber(), previousRandomNumber, "New number should be different from previous.");
-    });
+    assert.equal((await implViaProxy.getPastEvents())[1].args['previousEntry'].toString(), previousRandomNumber, "Previous entry should be present in the event.");
+    assert.notEqual((await implViaProxy.getPastEvents())[1].args['requestResponse'].toString(), previousRandomNumber, "New number should be different from previous.");
 
   });
 

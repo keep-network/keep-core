@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.4;
 
 
 library ModUtils {
@@ -18,7 +18,7 @@ library ModUtils {
         /* solium-disable-next-line */
         assembly {
             // 0x05 is the modular exponent contract address
-            if iszero(call(not(0), 0x05, 0, args, 0xc0, output, 0x20)) {
+            if iszero(staticcall(not(0), 0x05, args, 0xc0, output, 0x20)) {
                 revert(0, 0)
             }
         }

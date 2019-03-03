@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
@@ -23,7 +23,7 @@ contract KeepRandomBeaconStub is Ownable {
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
-    function() public payable {
+    function() external payable {
         revert("Can not call contract without explicitly calling a function.");
     }
 

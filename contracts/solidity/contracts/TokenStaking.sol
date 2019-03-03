@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
@@ -60,7 +60,7 @@ contract TokenStaking {
      * @param _token Token contract address.
      * @param extraData_ Any extra data.
      */
-    function receiveApproval(address _from, uint256 _value, address _token, bytes extraData_) public {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes memory extraData_) public {
         extraData_; // Suppress unused variable warning.
         emit ReceivedApproval(_value);
 
@@ -68,7 +68,7 @@ contract TokenStaking {
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
 
         // Transfer tokens to this contract.
-        token.transferFrom(_from, this, _value);
+        token.transferFrom(_from, address(this), _value);
 
         // Maintain a record of the stake amount by the sender.
         balances[_from] = balances[_from].add(_value);
@@ -146,7 +146,7 @@ contract TokenStaking {
      * @param _staker The address to query.
      * @return An uint256 array of withdrawal IDs.
      */
-    function getWithdrawals(address _staker) public view returns (uint256[]) {
+    function getWithdrawals(address _staker) public view returns (uint256[] memory) {
         return withdrawalIndices[_staker];
     }
 

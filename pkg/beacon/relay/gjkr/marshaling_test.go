@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -136,11 +136,11 @@ func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 	msg := &MemberPublicKeySharePointsMessage{
 		senderID: MemberID(987112),
-		publicKeySharePoints: []*bn256.G1{
-			new(bn256.G1).ScalarBaseMult(big.NewInt(18211)),
-			new(bn256.G1).ScalarBaseMult(big.NewInt(12311)),
-			new(bn256.G1).ScalarBaseMult(big.NewInt(18828)),
-			new(bn256.G1).ScalarBaseMult(big.NewInt(88711)),
+		publicKeySharePoints: []*bn256.G2{
+			new(bn256.G2).ScalarBaseMult(big.NewInt(18211)),
+			new(bn256.G2).ScalarBaseMult(big.NewInt(12311)),
+			new(bn256.G2).ScalarBaseMult(big.NewInt(18828)),
+			new(bn256.G2).ScalarBaseMult(big.NewInt(88711)),
 		},
 	}
 	unmarshaled := &MemberPublicKeySharePointsMessage{}

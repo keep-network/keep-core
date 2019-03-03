@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -102,7 +102,7 @@ contract KeepGroupImplV1 is Ownable {
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
             TokenStaking stakingContract = TokenStaking(_stakingContract);
-            stakingContract.authorizedTransferFrom(msg.sender, this, _minStake);
+            stakingContract.authorizedTransferFrom(msg.sender, address(this), _minStake);
         } else {
             _tickets.push(ticketValue);
             _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
@@ -112,14 +112,14 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets submitted tickets in ascending order.
      */
-    function orderedTickets() public view returns (uint256[]) {
+    function orderedTickets() public view returns (uint256[] memory) {
         return UintArrayUtils.sort(_tickets);
     }
 
     /**
      * @dev Gets selected tickets in ascending order.
      */
-    function selectedTickets() public view returns (uint256[]) {
+    function selectedTickets() public view returns (uint256[] memory) {
 
         require(
             block.number > _submissionStart + _timeoutChallenge,
@@ -139,7 +139,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets participants ordered by their lowest-valued ticket.
      */
-    function orderedParticipants() public view returns (address[]) {
+    function orderedParticipants() public view returns (address[] memory) {
 
         uint256[] memory ordered = orderedTickets();
         address[] memory participants = new address[](ordered.length);
@@ -155,7 +155,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view returns (address[]) {
+    function selectedParticipants() public view returns (address[] memory) {
 
         require(
             block.number > _submissionStart + _timeoutChallenge,
@@ -226,7 +226,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
-    function() public payable {
+    function() external payable {
         revert("Can not call contract without explicitly calling a function.");
     }
 
@@ -520,7 +520,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Return total number of all tokens issued.
      */
-    function tokenSupply() public view returns (uint256) {
+    function tokenSupply() public pure returns (uint256) {
         return (10**9) * (10**18);
     }
 
@@ -565,7 +565,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets version of the current implementation.
     */
-    function version() public pure returns (string) {
+    function version() public pure returns (string memory) {
         return "V1";
     }
 
@@ -586,7 +586,7 @@ contract KeepGroupImplV1 is Ownable {
         // TODO: cleanup DkgResults
     }
 
-    /**
+    /**s
      * @dev Get block height
      */
     function blockHeight() public view returns(uint256) {

@@ -80,16 +80,36 @@ type DistributedKeyGenerationInterface interface {
 	// SubmitDKGResult sends DKG result to a chain.
 	SubmitDKGResult(
 		requestID *big.Int,
+		// memberIndex int, TODO: Add memberIndex
 		dkgResult *DKGResult,
 	) *async.DKGResultPublicationPromise
-	// OnDKGResultPublished is a callback that is invoked when an on-chain
+	// OnDKGResultPublished registers a callback that is invoked when an on-chain
 	// notification of a new, valid published result is seen.
+	// TODO: Change to: OnDKGResultSubmitted
 	OnDKGResultPublished(
 		func(dkgResultPublication *event.DKGResultPublication),
 	) (subscription.EventSubscription, error)
 	// IsDKGResultPublished checks if any DKG result has already been published
 	// to a chain for the given request ID.
+	// TODO: Change to: IsDKGResultSubmitted
 	IsDKGResultPublished(requestID *big.Int) (bool, error)
+	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
+	// specific for the chain. Operation is performed off-chain.
+	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
+	// GetDKGResultsVotes returns a map containing number of votes for each DKG
+	// result hash registered under specific request ID.
+	GetDKGResultsVotes(requestID *big.Int) DKGResultsVotes
+	// VoteOnDKGResult registers a vote for the DKG result hash.
+	VoteOnDKGResult(
+		requestID *big.Int,
+		memberIndex int,
+		dkgResultHash DKGResultHash,
+	) *async.DKGResultVotePromise
+	// OnDKGResultVote registers a callback that is invoked when an on-chain
+	// notification of a new, valid vote is seen.
+	OnDKGResultVote(
+		func(dkgResultVote *event.DKGResultVote),
+	) (subscription.EventSubscription, error)
 }
 
 // Interface represents the interface that the relay expects to interact with
