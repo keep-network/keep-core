@@ -136,22 +136,7 @@ func (pm *Publisher) publishResult(
 
 			chainRelay.SubmitDKGResult(pm.RequestID, pm.publishingIndex, result).
 				OnSuccess(func(dkgResultPublishedEvent *event.DKGResultPublication) {
-					// TODO: This is a temporary solution until DKG Phase 14 is
-					// ready. We assume that only one DKG result is published in
-					// DKG Phase 13 and submit it as a final group public key.
-
-					chainRelay.SubmitGroupPublicKey(
-						pm.RequestID,
-						dkgResultPublishedEvent.GroupPublicKey,
-					).OnSuccess(func(groupRegisteredEvent *event.GroupRegistration) {
-						fmt.Printf(
-							"Group public key submitted for requestID=[%v]\n",
-							pm.RequestID,
-						)
-						errorChannel <- nil
-					}).OnFailure(func(err error) {
-						errorChannel <- err
-					})
+					errorChannel <- nil
 				}).
 				OnFailure(func(err error) {
 					errorChannel <- err

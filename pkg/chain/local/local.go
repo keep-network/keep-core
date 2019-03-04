@@ -1,7 +1,6 @@
 package local
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -103,56 +102,6 @@ func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, erro
 	}
 
 	return selectedParticipants, nil
-}
-
-func (c *localChain) SubmitGroupPublicKey(
-	requestID *big.Int,
-	groupPublicKey []byte,
-) *async.GroupRegistrationPromise {
-	groupPubKey := requestID.String()
-
-	groupRegistrationPromise := &async.GroupRegistrationPromise{}
-	groupRegistration := &event.GroupRegistration{
-		GroupPublicKey: groupPublicKey,
-		RequestID:      requestID,
-		BlockNumber:    c.simulatedHeight,
-	}
-
-	c.groupRegistrationsMutex.Lock()
-	defer c.groupRegistrationsMutex.Unlock()
-	if existing, exists := c.groupRegistrations[groupPubKey]; exists {
-		if bytes.Compare(existing, groupPublicKey) != 0 {
-			err := fmt.Errorf(
-				"mismatched public key for [%s], submission failed; \n"+
-					"[%v] vs [%v]",
-				groupPubKey,
-				existing,
-				groupPublicKey,
-			)
-			fmt.Fprintf(os.Stderr, err.Error())
-
-			groupRegistrationPromise.Fail(err)
-		} else {
-			groupRegistrationPromise.Fulfill(groupRegistration)
-		}
-
-		return groupRegistrationPromise
-	}
-	c.groupRegistrations[groupPubKey] = groupPublicKey
-
-	groupRegistrationPromise.Fulfill(groupRegistration)
-
-	c.handlerMutex.Lock()
-	for _, handler := range c.groupRegisteredHandlers {
-		go func(handler func(groupRegistration *event.GroupRegistration), registration *event.GroupRegistration) {
-			handler(registration)
-		}(handler, groupRegistration)
-	}
-	c.handlerMutex.Unlock()
-
-	atomic.AddUint64(&c.simulatedHeight, 1)
-
-	return groupRegistrationPromise
 }
 
 func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
