@@ -53,3 +53,13 @@ func (d dkgResultsVotes) isStrictlyLeading(resultHash chain.DKGResultHash) bool 
 
 	return false
 }
+
+// leadHasEnoughVotes checks if leading results' number of votes for is greater
+// than threshold value.
+func (d dkgResultsVotes) leadHasEnoughVotes(dishonestThreshold int) bool {
+	if leads := d.leads(); len(leads) > 0 {
+		return d[leads[0]] > dishonestThreshold
+	}
+
+	return false
+}
