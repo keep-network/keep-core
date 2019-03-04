@@ -14,10 +14,10 @@ import (
 func TestPublishResult(t *testing.T) {
 	threshold := 2
 	groupSize := 5
-	blockStep := 2 // T_step
+	blockStep := uint64(2) // T_step
 
 	chainHandle, blockCounter, initialBlock, err := initChainHandle(threshold, groupSize)
-	if err != nil {
+	if err != nil || initialBlock < 0 {
 		t.Fatal(err)
 	}
 
@@ -27,19 +27,19 @@ func TestPublishResult(t *testing.T) {
 
 	var tests = map[string]struct {
 		publishingIndex int
-		expectedTimeEnd int
+		expectedTimeEnd uint64
 	}{
 		"first member eligible to publish straight away": {
 			publishingIndex: 1,
-			expectedTimeEnd: initialBlock, // T_now < T_init + T_step
+			expectedTimeEnd: uint64(initialBlock), // T_now < T_init + T_step
 		},
 		"second member eligible to publish after T_step block passed": {
 			publishingIndex: 2,
-			expectedTimeEnd: initialBlock + blockStep, // T_now = T_init + T_step
+			expectedTimeEnd: uint64(initialBlock) + blockStep, // T_now = T_init + T_step
 		},
 		"fourth member eligable to publish after T_dkg + 2*T_step passed": {
 			publishingIndex: 4,
-			expectedTimeEnd: initialBlock + 3*blockStep, // T_now = T_init + 3*T_step
+			expectedTimeEnd: uint64(initialBlock) + 3*blockStep, // T_now = T_init + 3*T_step
 		},
 	}
 	for testName, test := range tests {
@@ -75,7 +75,7 @@ func TestPublishResult(t *testing.T) {
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
-			if test.expectedTimeEnd != currentBlock {
+			if test.expectedTimeEnd != uint64(currentBlock) {
 				t.Fatalf(
 					"invalid current block\nexpected: %v\nactual:   %v\n",
 					test.expectedTimeEnd,
@@ -98,7 +98,7 @@ func TestPublishResult(t *testing.T) {
 // member loop should be aborted and result published by the first member should
 // be returned.
 func TestConcurrentPublishResult(t *testing.T) {
-	calculateExpectedBlockEnd := func(initialBlock, expectedDuration int) int {
+	calculateExpectedBlockEnd := func(initialBlock, expectedDuration int64) int64 {
 		if expectedDuration >= 0 {
 			return initialBlock + expectedDuration
 		}
@@ -107,7 +107,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 
 	threshold := 2
 	groupSize := 5
-	blockStep := 2 // t_step
+	blockStep := uint64(2) // t_step
 
 	publisher1 := &Publisher{
 		publishingIndex: 1, // P1
@@ -119,12 +119,14 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		resultToPublish1  *relayChain.DKGResult
-		resultToPublish2  *relayChain.DKGResult
-		requestID1        *big.Int
-		requestID2        *big.Int
-		expectedDuration1 int // index * t_step
-		expectedDuration2 int // index * t_step
+		resultToPublish1          *relayChain.DKGResult
+		resultToPublish2          *relayChain.DKGResult
+		requestID1                *big.Int
+		requestID2                *big.Int
+		expectedDuration1         int64 // index * t_step
+		expectedDuration2         int64 // index * t_step
+		expectedAlreadySubmitted1 bool
+		expectedAlreadySubmitted2 bool
 	}{
 		"two members publish the same results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -157,10 +159,12 @@ func TestConcurrentPublishResult(t *testing.T) {
 			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
-			requestID1:        big.NewInt(12),
-			requestID2:        big.NewInt(13),
-			expectedDuration1: 0,                                            // (P1-1) * t_step
-			expectedDuration2: (publisher2.publishingIndex - 1) * blockStep, // (P4-1) * t_step
+			requestID1:                big.NewInt(12),
+			requestID2:                big.NewInt(13),
+			expectedDuration1:         0,                                                       // (P1-1) * t_step
+			expectedDuration2:         int64(uint64(publisher2.publishingIndex-1) * blockStep), // (P4-1) * t_step
+			expectedAlreadySubmitted1: true,
+			expectedAlreadySubmitted2: true,
 		},
 	}
 	for testName, test := range tests {
@@ -182,9 +186,9 @@ func TestConcurrentPublishResult(t *testing.T) {
 			expectedBlockEnd2 :=
 				calculateExpectedBlockEnd(initialBlock, test.expectedDuration2)
 
-			result1Chan := make(chan int)
+			result1Chan := make(chan int64)
 			defer close(result1Chan)
-			result2Chan := make(chan int)
+			result2Chan := make(chan int64)
 			defer close(result2Chan)
 
 			go func() {
@@ -223,7 +227,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 
 func TestExecutePublishingWithInvalidIndex(t *testing.T) {
 	expectedError := fmt.Errorf("publishing index must be >= 1")
-	err := executePublishing(nil, 0, nil, nil, nil)
+	err := executePublishing(nil, 0, 0, nil, nil, nil)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
@@ -233,7 +237,7 @@ func TestExecutePublishingWithInvalidIndex(t *testing.T) {
 func initChainHandle(threshold, groupSize int) (
 	chainHandle chain.Handle,
 	blockCounter chain.BlockCounter,
-	initialBlock int,
+	initialBlock int64,
 	err error,
 ) {
 	chainHandle = local.Connect(groupSize, threshold, big.NewInt(200))
@@ -246,9 +250,10 @@ func initChainHandle(threshold, groupSize int) (
 		return nil, nil, -1, err
 	}
 
-	initialBlock, err = blockCounter.CurrentBlock()
+	initialBlockUint, err := blockCounter.CurrentBlock()
 	if err != nil {
 		return nil, nil, -1, err
 	}
+	initialBlock = int64(initialBlockUint)
 	return
 }
