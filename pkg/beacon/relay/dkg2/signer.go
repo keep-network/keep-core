@@ -39,7 +39,9 @@ func (ts *ThresholdSigner) CalculateSignatureShare(message []byte) *bn256.G1 {
 
 // CompleteSignature accepts signature shares from all group threshold signers
 // and produces a final group signature from them. Input slice should contain
-// signature of the current signer as well.
+// signature of the current signer as well. We parameterize the threshold (number
+// of honest members we require), as we recover a threshold signature, not an
+// aggregate signature (one which would require all members).
 func (ts *ThresholdSigner) CompleteSignature(
 	signatureShares []*bls.SignatureShare,
 	threshold int,
