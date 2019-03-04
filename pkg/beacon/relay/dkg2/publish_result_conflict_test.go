@@ -176,7 +176,6 @@ func TestResultConflictResolution_SingleMemberTests(t *testing.T) {
 //    3 | 2  1  0  | P3 joins, result R1 is already leading, so no action required
 //    4 | 3  2  0  | P4 joins and votes for R2 [2 2 0] -> P3 votes for R1 [3 2 0]
 //    6 | 3  2  0  | P5 joins and votes for R3
-
 func TestResultConflictResolution_Concurrent(t *testing.T) {
 	type TestStats struct {
 		blockNumber int64
