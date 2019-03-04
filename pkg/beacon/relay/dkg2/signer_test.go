@@ -60,7 +60,8 @@ func TestSignAndComplete(t *testing.T) {
 			}
 			privateKeyShares[memberID] = share
 		}
-		// First get SecretKeyShares from slice of privateKeyShares
+
+		// First, get SecretKeyShares from slice of privateKeyShares.
 		var publicKeyShares []*bls.PublicKeyShare
 		for memberID, privateKeyShareString := range privateKeyShares {
 			privateKeyShare, _ := new(big.Int).SetString(privateKeyShareString, 10)
@@ -71,6 +72,7 @@ func TestSignAndComplete(t *testing.T) {
 			publicKeyShares = append(publicKeyShares, publicKeyShare)
 		}
 
+		// Next, build up signers from public key shares.
 		var signers []*ThresholdSigner
 		for memberID, privateKeyShare := range privateKeyShares {
 			share, _ := new(big.Int).SetString(privateKeyShare, 10)
@@ -81,6 +83,7 @@ func TestSignAndComplete(t *testing.T) {
 			})
 		}
 
+		// Ensure we get a valid signature share from every signer.
 		shares := make([]*bls.SignatureShare, 0)
 		for _, signer := range signers {
 			shares = append(shares,
@@ -91,6 +94,7 @@ func TestSignAndComplete(t *testing.T) {
 			)
 		}
 
+		// Attempt to recover a signature from the present shares.
 		signature, err := signers[0].CompleteSignature(shares, test.threshold)
 		if err != nil {
 			if err.Error() != test.expectedError {
@@ -104,6 +108,7 @@ func TestSignAndComplete(t *testing.T) {
 			continue
 		}
 
+		// Does the signature match the public key that we have for the group?
 		if !bls.Verify(groupPublicKey, message, signature) {
 			t.Fatal("Failed to verify recovered signature")
 		}
