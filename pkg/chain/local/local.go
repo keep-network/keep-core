@@ -355,7 +355,9 @@ func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	requestID *big.Int, resultToPublish *relaychain.DKGResult,
+	requestID *big.Int,
+	memberIndex int,
+	resultToPublish *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()

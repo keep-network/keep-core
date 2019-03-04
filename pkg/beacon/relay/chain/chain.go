@@ -80,7 +80,7 @@ type DistributedKeyGenerationInterface interface {
 	// SubmitDKGResult sends DKG result to a chain.
 	SubmitDKGResult(
 		requestID *big.Int,
-		// memberIndex int, TODO: Add memberIndex
+		memberIndex int, // TODO: make it uint32
 		dkgResult *DKGResult,
 	) *async.DKGResultPublicationPromise
 	// OnDKGResultPublished registers a callback that is invoked when an on-chain
@@ -102,7 +102,7 @@ type DistributedKeyGenerationInterface interface {
 	// VoteOnDKGResult registers a vote for the DKG result hash.
 	VoteOnDKGResult(
 		requestID *big.Int,
-		memberIndex int,
+		memberIndex int, // TODO: make it uint32
 		dkgResultHash DKGResultHash,
 	) *async.DKGResultVotePromise
 	// OnDKGResultVote registers a callback that is invoked when an on-chain

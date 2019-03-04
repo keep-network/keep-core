@@ -453,6 +453,7 @@ func (ec *ethereumChain) OnDKGResultPublished(
 
 func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
+	memberIndex int,
 	result *relaychain.DKGResult,
 ) *async.DKGResultPublicationPromise {
 	resultPublicationPromise := &async.DKGResultPublicationPromise{}
@@ -511,7 +512,11 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
-	_, err = ec.keepGroupContract.SubmitDKGResult(requestID, result)
+	_, err = ec.keepGroupContract.SubmitDKGResult(
+		requestID,
+		big.NewInt(int64(memberIndex)),
+		result,
+	)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(publishedResult)
