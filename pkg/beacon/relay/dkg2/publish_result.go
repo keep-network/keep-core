@@ -3,6 +3,7 @@ package dkg2
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -64,7 +65,10 @@ func executePublishing(
 		return fmt.Errorf("block height is less than zero [%v]", blockHeight)
 	}
 
-	// TODO Execute Phase 14 here
+	_, err = publisher.resultConflictResolution(result, chainRelay, uint64(blockHeight))
+	if err != nil {
+		return fmt.Errorf("result conflict resolution failed [%v]", err)
+	}
 
 	return nil
 }
@@ -185,6 +189,207 @@ func (pm *Publisher) publishResult(
 				close(onPublishedResultChan)
 				return int64(publishedResultEvent.BlockNumber), nil // leave without publishing the result
 			}
+		}
+	}
+}
+
+// resultConflictResolution executes conflict resolution if the member considers
+// other than currently leading on-chain DKG result to be a corrent one.
+//
+// If the correct DKG result is not yet submitted to the chain the member will
+// submit it. Otherwise member will vote for a hash of the currently submitted
+// result.
+//
+// Each member is allowed to exactly one submission or vote. If the member
+// submitted a DKG result in the previous phase, their won't be able to submit
+// or vote again in this phase.
+//
+// It requires starting block height to be provided as a reference when the
+// phase begins. The value is block height of the previous phase end.
+//
+// It returns chain block height of the moment when the last DKG result was
+// submitted or voted. In case the result has the majority of votes it returns
+// current block height. In case of failure it returns `-1`.
+//
+// See Phase 14 of the protocol specification.
+func (pm *Publisher) resultConflictResolution(
+	correctResult *relayChain.DKGResult,
+	chainRelay relayChain.Interface,
+	startingBlockHeight uint64,
+) (int64, error) {
+	onVoteChan := make(chan *event.DKGResultVote)
+	defer close(onVoteChan)
+	onVoteSubscription, err := chainRelay.OnDKGResultVote(
+		func(vote *event.DKGResultVote) {
+			onVoteChan <- vote
+		},
+	)
+	if err != nil {
+		return -1, fmt.Errorf("could not watch for DKG result vote [%v]", err)
+	}
+	defer onVoteSubscription.Unsubscribe()
+
+	onSubmissionChan := make(chan *event.DKGResultPublication)
+	defer close(onSubmissionChan)
+	onSubmissionSubscription, err := chainRelay.OnDKGResultPublished(
+		func(result *event.DKGResultPublication) {
+			onSubmissionChan <- result
+		},
+	)
+	if err != nil {
+		return -1, fmt.Errorf("could not watch for DKG result vote [%v]", err)
+	}
+	defer onSubmissionSubscription.Unsubscribe()
+
+	errorChannel := make(chan error)
+	defer close(errorChannel)
+
+	resultsVotes := dkgResultsVotes(chainRelay.GetDKGResultsVotes(pm.RequestID))
+	if resultsVotes == nil || len(resultsVotes) == 0 {
+		return -1, fmt.Errorf("nothing submitted")
+	}
+
+	if resultsVotes.leadHasEnoughVotes(pm.dishonestThreshold) {
+		currentBlock, err := pm.blockCounter.CurrentBlock()
+		if err != nil {
+			return -1, err
+		}
+
+		fmt.Printf(
+			"[publisher: %v] Lead has enough votes.\n",
+			pm.publishingIndex,
+		)
+		return int64(currentBlock), nil
+	}
+
+	blockNumber := int64(-1)
+
+	correctResultHash, err := chainRelay.CalculateDKGResultHash(correctResult)
+	if err != nil {
+		return -1, fmt.Errorf("could not calculate dkg result hash [%v]", err)
+	}
+
+	if !resultsVotes.contains(correctResultHash) && !pm.alreadySubmitted {
+		blockNumberChan := make(chan uint64)
+		fmt.Printf(
+			"[publisher: %v] Initial check: Result not submitted yet.\n",
+			pm.publishingIndex,
+		)
+		onSubmissionSubscription.Unsubscribe()
+
+		chainRelay.SubmitDKGResult(pm.RequestID, correctResult).
+			OnComplete(
+				func(dkgResultPublishedEvent *event.DKGResultPublication, err error) {
+					if dkgResultPublishedEvent != nil {
+						blockNumberChan <- dkgResultPublishedEvent.BlockNumber
+					}
+					errorChannel <- nil
+				},
+			)
+		blockNumber = int64(<-blockNumberChan)
+		pm.alreadySubmitted = true
+
+		err := <-errorChannel
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	// TODO: Timeout should be extended after receiving last minute votes.
+	phaseTimeout := int(startingBlockHeight + pm.conflictDuration)
+	phaseDurationWaiter, err := pm.blockCounter.BlockHeightWaiter(phaseTimeout)
+	if err != nil {
+		return -1, fmt.Errorf("block waiter failure [%v]", err)
+	}
+
+	// Returns already submitted
+	votesAndSubmissions := func(
+		blockNumber uint64,
+		chainRelay relayChain.Interface,
+	) (bool, int64, error) {
+		blockNumberChan := make(chan uint64)
+
+		submissions := dkgResultsVotes(chainRelay.GetDKGResultsVotes(pm.RequestID))
+
+		if submissions.leadHasEnoughVotes(pm.dishonestThreshold) {
+			fmt.Printf("[publisher: %v] Lead has enough votes.\n", pm.publishingIndex)
+			return false, int64(blockNumber), nil
+		}
+
+		if submissions.isStrictlyLeading(correctResultHash) {
+			fmt.Printf(
+				"[publisher: %v] Result is the only lead.\n",
+				pm.publishingIndex,
+			)
+			return false, int64(blockNumber), nil
+		}
+
+		if submissions.contains(correctResultHash) {
+			fmt.Printf("[publisher: %v] Vote for the result.\n", pm.publishingIndex)
+			chainRelay.VoteOnDKGResult(
+				pm.RequestID, pm.publishingIndex,
+				correctResultHash,
+			).OnComplete(func(dkgResultVote *event.DKGResultVote, err error) {
+				if dkgResultVote != nil {
+					blockNumberChan <- dkgResultVote.BlockNumber
+				}
+				errorChannel <- nil
+			})
+			return true, int64(<-blockNumberChan), <-errorChannel
+		}
+
+		fmt.Printf("[publisher: %v] Submit the result.\n", pm.publishingIndex)
+		chainRelay.SubmitDKGResult(pm.RequestID, correctResult).
+			OnComplete(
+				func(dkgResultPublishedEvent *event.DKGResultPublication, err error) {
+					if dkgResultPublishedEvent != nil {
+						blockNumberChan <- dkgResultPublishedEvent.BlockNumber
+					}
+					errorChannel <- nil
+				},
+			)
+		return true, int64(<-blockNumberChan), <-errorChannel
+	}
+
+	votesAndSubmissionsMutex := &sync.Mutex{}
+
+	for {
+		select {
+		case <-phaseDurationWaiter:
+			fmt.Printf("[publisher: %v] Result conflict resolution timeout.\n", pm.publishingIndex)
+			return blockNumber, nil
+		case vote := <-onVoteChan:
+			votesAndSubmissionsMutex.Lock()
+
+			if vote.RequestID.Cmp(pm.RequestID) == 0 {
+				fmt.Printf("[publisher: %v] Vote event received.\n", pm.publishingIndex)
+				blockNumber = int64(vote.BlockNumber)
+
+				if !pm.alreadySubmitted {
+					pm.alreadySubmitted, blockNumber, err = votesAndSubmissions(vote.BlockNumber, chainRelay)
+					if err != nil {
+						votesAndSubmissionsMutex.Unlock()
+						return blockNumber, err
+					}
+				}
+			}
+			votesAndSubmissionsMutex.Unlock()
+		case submission := <-onSubmissionChan:
+			votesAndSubmissionsMutex.Lock()
+
+			if submission.RequestID.Cmp(pm.RequestID) == 0 {
+				fmt.Printf("[publisher: %v] Submission event received.\n", pm.publishingIndex)
+				blockNumber = int64(submission.BlockNumber)
+
+				if !pm.alreadySubmitted {
+					pm.alreadySubmitted, blockNumber, err = votesAndSubmissions(submission.BlockNumber, chainRelay)
+					if err != nil {
+						votesAndSubmissionsMutex.Unlock()
+						return blockNumber, err
+					}
+				}
+			}
+			votesAndSubmissionsMutex.Unlock()
 		}
 	}
 }
