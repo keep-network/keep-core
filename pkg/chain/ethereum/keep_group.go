@@ -232,15 +232,15 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
 	fail errorCallback,
 ) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.KeepGroupImplV1DkgResultPublishedEvent)
-	eventSubscription, err := kg.contract.WatchDkgResultPublishedEvent(
+	eventChan := make(chan *abi.KeepGroupImplV1DkgResultSubmittedEvent)
+	eventSubscription, err := kg.contract.WatchDkgResultSubmittedEvent(
 		nil,
 		eventChan,
 	)
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"could not create watch for DkgResultPublished event: [%v]",
+			"could not create watch for DkgResultSubmitted event: [%v]",
 			err,
 		)
 	}
