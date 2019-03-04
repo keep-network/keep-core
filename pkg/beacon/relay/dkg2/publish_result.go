@@ -56,9 +56,12 @@ func executePublishing(
 		dishonestThreshold: dishonestThreshold,
 	}
 
-	_, err := publisher.publishResult(result, chainRelay)
+	blockHeight, err := publisher.publishResult(result, chainRelay)
 	if err != nil {
 		return fmt.Errorf("result publication failed [%v]", err)
+	}
+	if blockHeight < 0 {
+		return fmt.Errorf("block height is less than zero [%v]", blockHeight)
 	}
 
 	// TODO Execute Phase 14 here
@@ -81,14 +84,14 @@ func executePublishing(
 // publishing its own result.
 //
 // It returns chain block height of the moment when the result was published on
-// chain by the publisher. In case of failure or result already published by
-// another publisher it returns `-1`.
+// chain in case the result has been already published by another publisher it
+// returns current block height. In case of failure it returns `-1`.
 //
 // See Phase 13 of the protocol specification.
 func (pm *Publisher) publishResult(
 	result *relayChain.DKGResult,
 	chainRelay relayChain.Interface,
-) (int, error) {
+) (int64, error) {
 	onPublishedResultChan := make(chan *event.DKGResultPublication)
 
 	subscription, err := chainRelay.OnDKGResultPublished(
@@ -118,15 +121,20 @@ func (pm *Publisher) publishResult(
 
 	// Someone who was ahead of us in the queue published the result. Giving up.
 	if alreadyPublished {
+		// TODO: Should `IsDKGResultPublished` return block height when the result was published?
+		// We wouldn't have to return currentBlock then.
+		currentBlock, err := pm.blockCounter.CurrentBlock()
+
 		subscription.Unsubscribe()
 		close(onPublishedResultChan)
-		return -1, nil
+
+		return int64(currentBlock), err
 	}
 
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := pm.blockCounter.BlockWaiter(
-		(pm.publishingIndex - 1) * pm.blockStep,
+		(pm.publishingIndex - 1) * int(pm.blockStep),
 	)
 	if err != nil {
 		subscription.Unsubscribe()
@@ -136,15 +144,18 @@ func (pm *Publisher) publishResult(
 
 	for {
 		select {
-		case blockHeight := <-eligibleToSubmitWaiter:
+		case <-eligibleToSubmitWaiter:
+			blockHeight := make(chan uint64)
+			defer close(blockHeight)
 			errorChannel := make(chan error)
 			defer close(errorChannel)
 
 			subscription.Unsubscribe()
 			close(onPublishedResultChan)
 
-			chainRelay.SubmitDKGResult(pm.RequestID, result).
+			chainRelay.SubmitDKGResult(pm.RequestID /*, pm.publishingIndex,*/, result).
 				OnSuccess(func(dkgResultPublishedEvent *event.DKGResultPublication) {
+					blockHeight <- dkgResultPublishedEvent.BlockNumber
 					// TODO: This is a temporary solution until DKG Phase 14 is
 					// ready. We assume that only one DKG result is published in
 					// DKG Phase 13 and submit it as a final group public key.
@@ -165,12 +176,14 @@ func (pm *Publisher) publishResult(
 				OnFailure(func(err error) {
 					errorChannel <- err
 				})
-			return blockHeight, <-errorChannel
+
+			pm.alreadySubmitted = true
+			return int64(<-blockHeight), <-errorChannel
 		case publishedResultEvent := <-onPublishedResultChan:
 			if publishedResultEvent.RequestID.Cmp(pm.RequestID) == 0 {
 				subscription.Unsubscribe()
 				close(onPublishedResultChan)
-				return -1, nil // leave without publishing the result
+				return int64(publishedResultEvent.BlockNumber), nil // leave without publishing the result
 			}
 		}
 	}
