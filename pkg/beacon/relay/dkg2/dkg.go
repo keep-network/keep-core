@@ -69,6 +69,7 @@ func ExecuteDKG(
 	err = executePublishing(
 		requestID,
 		playerIndex,
+		threshold,
 		relayChain,
 		blockCounter,
 		convertResult(gjkrResult, groupSize),
@@ -215,7 +216,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	// We convert the point G2, to compress the point correctly
 	// (ensuring we encode the parity bit).
 	if gjkrResult.GroupPublicKey != nil {
-		altbn128GroupPublicKey := altbn128.G2Point{gjkrResult.GroupPublicKey}
+		altbn128GroupPublicKey := altbn128.G2Point{G2: gjkrResult.GroupPublicKey}
 		groupPublicKey = altbn128GroupPublicKey.Compress()
 	}
 

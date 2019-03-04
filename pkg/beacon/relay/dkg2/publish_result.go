@@ -32,6 +32,7 @@ type Publisher struct {
 func executePublishing(
 	requestID *big.Int,
 	publishingIndex int,
+	dishonestThreshold int,
 	chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
 	result *relayChain.DKGResult,
@@ -41,10 +42,11 @@ func executePublishing(
 	}
 
 	publisher := &Publisher{
-		RequestID:       requestID,
-		blockCounter:    blockCounter,
-		publishingIndex: publishingIndex,
-		blockStep:       1,
+		RequestID:          requestID,
+		blockCounter:       blockCounter,
+		publishingIndex:    publishingIndex,
+		blockStep:          1,
+		dishonestThreshold: dishonestThreshold,
 	}
 
 	_, err := publisher.publishResult(result, chainRelay)
