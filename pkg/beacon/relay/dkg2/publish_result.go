@@ -22,7 +22,14 @@ type Publisher struct {
 	publishingIndex int
 	// Predefined step for each publishing window. The value is used to determine
 	// eligible publishing member. Relates to DKG Phase 13.
-	blockStep int
+	blockStep uint64
+	// Tracks if member still has a right to submit DKG result or vote to the
+	// chain. Member is eligible to only one submission.
+	alreadySubmitted bool
+	// Result conflict resolution duration.
+	conflictDuration uint64
+	// Maximum number of malicious members.
+	dishonestThreshold int
 }
 
 // executePublishing runs Distributed Key Generation result publication and voting,
