@@ -12,33 +12,28 @@ func TestSignAndComplete(t *testing.T) {
 	var message = []byte("hello world")
 
 	// Obtained by running `TestFullStateTransitions` and outputting shares.
-	privateKeySharesSlice := []string{
-		"7965280207209549879164292761852524476109477664957641865927295346590476704711",
-		"6106610144639464785158072029008498287824734372346580964957055618768317731307",
-		"1440342545552619026306193227443878557590393893287770611896928291936003327327",
-		"4784636576436291513911847371324649154255552173376284038648549444705786002507",
-		"11155341033982526633651061739311639943498023031242960281134125600620928234282",
-		"476414470139165825449834970450656200990319293028518982997364506493673497757",
+	privateKeySharesMap := map[int]string{
+		1: "7965280207209549879164292761852524476109477664957641865927295346590476704711",
+		2: "6106610144639464785158072029008498287824734372346580964957055618768317731307",
+		3: "1440342545552619026306193227443878557590393893287770611896928291936003327327",
+		4: "4784636576436291513911847371324649154255552173376284038648549444705786002507",
+		5: "11155341033982526633651061739311639943498023031242960281134125600620928234282",
+		6: "476414470139165825449834970450656200990319293028518982997364506493673497757",
 	}
 
 	var tests = map[string]struct {
 		threshold        int
-		privateKeyShares []string
+		privateKeyShares map[int]string
 		expectedError    string
 	}{
 		"success: all members sign the message": {
 			threshold:        6,
-			privateKeyShares: privateKeySharesSlice,
-			expectedError:    "",
-		},
-		"success: at least t members sign the message": {
-			threshold:        3,
-			privateKeyShares: privateKeySharesSlice[0:4],
+			privateKeyShares: privateKeySharesMap,
 			expectedError:    "",
 		},
 		"failure: less than t members sign a message": {
 			threshold:        4,
-			privateKeyShares: privateKeySharesSlice[0:2],
+			privateKeyShares: privateKeySharesMap,
 			expectedError:    "not enough shares to reconstruct public key",
 		},
 	}
@@ -46,10 +41,10 @@ func TestSignAndComplete(t *testing.T) {
 	for _, test := range tests {
 		// First get SecretKeyShares from slice of privateKeyShares
 		var publicKeyShares []*bls.PublicKeyShare
-		for i, privateKeyShareString := range test.privateKeyShares {
+		for memberID, privateKeyShareString := range test.privateKeyShares {
 			privateKeyShare, _ := new(big.Int).SetString(privateKeyShareString, 10)
 			publicKeyShare := (&bls.SecretKeyShare{
-				I: i + 1,
+				I: memberID,
 				V: privateKeyShare,
 			}).PublicKeyShare()
 			publicKeyShares = append(publicKeyShares, publicKeyShare)
@@ -69,10 +64,10 @@ func TestSignAndComplete(t *testing.T) {
 		}
 
 		var signers []*ThresholdSigner
-		for i, privateKeyShare := range test.privateKeyShares {
+		for memberID, privateKeyShare := range test.privateKeyShares {
 			share, _ := new(big.Int).SetString(privateKeyShare, 10)
 			signers = append(signers, &ThresholdSigner{
-				memberID:             gjkr.MemberID(i + 1),
+				memberID:             gjkr.MemberID(memberID),
 				groupPublicKey:       groupPublicKey,
 				groupPrivateKeyShare: share,
 			})
