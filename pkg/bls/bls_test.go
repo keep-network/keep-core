@@ -76,7 +76,7 @@ func TestThresholdBLS(t *testing.T) {
 	// sufficient to reconstruct the signature which is the same value as
 	// if the message was sign with the main secret.
 	//
-	// NOTE: The loop begins from 1 rather than 0 as our members are 1-indexed.
+	// NOTE: The loop begins from 1, not 0, as shares must be 1-indexed.
 	for i := 1; i <= numOfPlayers; i++ {
 		secretKeyShare := GetSecretKeyShare(masterSecretKey, int(i))
 		publicKeyShares = append(publicKeyShares, secretKeyShare.PublicKeyShare())

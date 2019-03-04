@@ -12,6 +12,7 @@ func TestSignAndComplete(t *testing.T) {
 	var message = []byte("hello world")
 
 	// Obtained by running `TestFullStateTransitions` and outputting shares.
+	// MemberIDs are 1-indexed.
 	privateKeySharesMap := map[int]string{
 		1: "7965280207209549879164292761852524476109477664957641865927295346590476704711",
 		2: "6106610144639464785158072029008498287824734372346580964957055618768317731307",
