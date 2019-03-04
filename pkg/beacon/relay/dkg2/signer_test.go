@@ -23,26 +23,38 @@ func TestSignAndComplete(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		threshold        int
-		privateKeyShares map[int]string
-		expectedError    string
+		threshold              int
+		numberPrivateKeyShares int
+		expectedError          string
 	}{
 		"success: all members sign the message": {
-			threshold:        6,
-			privateKeyShares: privateKeySharesMap,
-			expectedError:    "",
+			threshold:              6,
+			numberPrivateKeyShares: 6,
+			expectedError:          "",
+		},
+		"success: at least t members sign the message": {
+			threshold:              3,
+			numberPrivateKeyShares: 4,
+			expectedError:          "",
 		},
 		"failure: less than t members sign a message": {
-			threshold:        4,
-			privateKeyShares: privateKeySharesMap,
-			expectedError:    "not enough shares to reconstruct public key",
+			threshold:              4,
+			numberPrivateKeyShares: 3,
+			expectedError:          "not enough shares to reconstruct public key",
 		},
 	}
 
 	for _, test := range tests {
+		privateKeyShares := make(map[int]string)
+		for memberID, share := range privateKeySharesMap {
+			if len(privateKeyShares) == test.numberPrivateKeyShares {
+				break
+			}
+			privateKeyShares[memberID] = share
+		}
 		// First get SecretKeyShares from slice of privateKeyShares
 		var publicKeyShares []*bls.PublicKeyShare
-		for memberID, privateKeyShareString := range test.privateKeyShares {
+		for memberID, privateKeyShareString := range privateKeyShares {
 			privateKeyShare, _ := new(big.Int).SetString(privateKeyShareString, 10)
 			publicKeyShare := (&bls.SecretKeyShare{
 				I: memberID,
@@ -65,7 +77,7 @@ func TestSignAndComplete(t *testing.T) {
 		}
 
 		var signers []*ThresholdSigner
-		for memberID, privateKeyShare := range test.privateKeyShares {
+		for memberID, privateKeyShare := range privateKeyShares {
 			share, _ := new(big.Int).SetString(privateKeyShare, 10)
 			signers = append(signers, &ThresholdSigner{
 				memberID:             gjkr.MemberID(memberID),
