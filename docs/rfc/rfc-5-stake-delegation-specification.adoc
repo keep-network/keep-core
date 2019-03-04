@@ -136,13 +136,10 @@ The contract should include the following information:
 * _state_ of the agreement between an owner and an operator,
 * agreement state _change_ time.
 
-The contract should also have following methods:
-
-* <<delegating, `delegate`>>,
-* <<undelegating, `undelegate`>>,
-* <<restoring, `restore`>>,
-* <<penalizing, `penalize`>>,
-* <<rewarding, `reward`>>.
+The contract should also have the following discrete pieces of functionality:
+ <<delegating, `delegation`>>, <<undelegating, `undelegation`>>,
+ <<restoring, `restoration`>>, <<penalizing, `penalization`>>,
+ and <<rewarding, `rewarding`>>.
 
 === Functionality
 
