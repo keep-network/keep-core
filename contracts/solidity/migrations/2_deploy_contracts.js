@@ -19,6 +19,8 @@ const groupSize = 5;
 const timeoutInitial = 4;
 const timeoutSubmission = 4;
 const timeoutChallenge = 4;
+const dkgVoteTimeout = 7;
+const dkgVoteTimeoutIncrement = 4;
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -39,7 +41,7 @@ module.exports = async function(deployer) {
   await keepRandomBeacon.initialize(minPayment, withdrawalDelay);
   const keepGroup = await KeepGroupImplV1.at(KeepGroup.address);
   await keepGroup.initialize(
-    StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
+    StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, dkgVoteTimeout, dkgVoteTimeoutIncrement
   );
   await keepRandomBeacon.setGroupContract(KeepGroup.address);
 };

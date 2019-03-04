@@ -36,8 +36,8 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
-    uint256 internal _voteTimeIncrement;//value of per-vote increment. find good set location
-    uint256 internal _voteTime;//current vote time. same locationas _voteTimeIncrement
+    uint256 internal _dkgVoteTimeoutIncrement;//value of per-vote increment. find good set location
+    uint256 internal _dkgVoteTimeout;//current vote time. same locationas_dkgVoteTimeoutIncrement
 
     uint256 internal _randomBeaconValue;
 
@@ -249,7 +249,9 @@ contract KeepGroupImplV1 is Ownable {
         uint256 groupSize,
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
-        uint256 timeoutChallenge
+        uint256 timeoutChallenge,
+        uint256 dkgVoteTimeout,
+        uint256 dkgVoteTimeoutIncrement
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -262,6 +264,8 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
+        _dkgVoteTimeout = dkgVoteTimeout + timeoutChallenge;
+        _dkgVoteTimeoutIncrement = dkgVoteTimeoutIncrement;
     }
 
     /**
@@ -363,7 +367,7 @@ contract KeepGroupImplV1 is Ownable {
             _submissionVotes[resultHash] = 1;
             _votedDkg[submitterID] = true;//cannot vote after submiting DKG result
             _resultPublished[resultHash] = true;
-            _voteTime += _voteTimeIncrement;
+            _dkgVoteTimeout += _dkgVoteTimeoutIncrement;
             emit DkgResultPublishedEvent(msg.sender, groupPubKey);
             
         }
@@ -391,7 +395,7 @@ contract KeepGroupImplV1 is Ownable {
      * @return true if the submitter is eligible. False otherwise.
      */
     function eligibleSubmitter(uint index) public view returns (bool){
-        require(block.timestamp <= _voteTime, "voting period is over");
+        require(block.number <= _submissionStart + _dkgVoteTimeout, "voting period is over");
         if(_dkgResultHashes.length > 0) return true;
         uint T_init = _submissionStart + _timeoutChallenge;
         uint T_step = 2; //time between eligibility increments Placeholder
@@ -427,7 +431,7 @@ contract KeepGroupImplV1 is Ownable {
     function _addVote(bytes32 resultHash, bytes32 submitterID) internal{
         _votedDkg[submitterID] = true;
         _submissionVotes[resultHash] += 1;
-        _voteTime += _voteTimeIncrement;
+        _dkgVoteTimeout += _dkgVoteTimeoutIncrement;
     }
 
     /*
@@ -439,9 +443,7 @@ contract KeepGroupImplV1 is Ownable {
         uint totalVotes;
         uint f_max = _groupSize/2 + 1;
 
-        //TODO:
-        //method cannot be called before voting period is over or everyone has voted as it is liked with cleanup()
-
+        require(block.number >= _submissionStart + _dkgVoteTimeout, "Voting period not over");
         for(uint i = 0; i < _dkgResultHashes.length; i++){
             if(_submissionVotes[_dkgResultHashes[i]] > highestVoteN){
                 highestVoteN = _submissionVotes[_dkgResultHashes[i]];
@@ -465,14 +467,10 @@ contract KeepGroupImplV1 is Ownable {
                 }
             }
             _groups.push(groupPublicKey);
-            //emist _randomBeaconValue instead of RequestID
             emit GetFinalResultEvent(groupPublicKey, _randomBeaconValue);
             cleanup();
             return _receivedSubmissions[leadingResult].groupPubKey;
-            //TODO:
-            //return value as DKG result
         }
-
     }
 
     function getDkgResultSubmissions() public view returns (bytes32[] memory, uint256[] memory) {
@@ -583,7 +581,8 @@ contract KeepGroupImplV1 is Ownable {
         // TODO: cleanup DkgResults
     }
 
-    /**s
+    //Hoarding some helper methods for testing.
+    /**
      * @dev Get block height
      */
     function blockHeight() public view returns(uint256) {
@@ -602,5 +601,12 @@ contract KeepGroupImplV1 is Ownable {
             return T_init + 1;
         }
         return ((T_init + (2 * (T_step))) + ((index-2) * T_step));
+    }
+
+    /**
+    * @dev gets current vote timeout;
+    */
+    function getDkgTimeout() public view returns (uint){
+        return _submissionStart + _dkgVoteTimeout;
     }
 }

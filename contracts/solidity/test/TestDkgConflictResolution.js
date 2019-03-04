@@ -43,12 +43,14 @@ contract('TestDkgConflictResolution', function(accounts) {
     let ordered, blockNum, submissionStart, DkgSubmissionT,tickets, success,
     disqualified, inactive, token, stakingProxy, stakingContract, 
     minimumStake, groupThreshold, groupSize, randomBeaconValue,
-    timeoutInitial, timeoutSubmission, timeoutChallenge,
+    timeoutInitial, timeoutSubmission, timeoutChallenge, dkgVoteTimeout, dkgVoteTimeoutIncrement,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
     staker1 = accounts[0], tickets1,
     staker2 = accounts[1], tickets2,
     staker3 = accounts[2], tickets3
+
+    dkgVoteTimeout, dkgVoteTimeoutIncrement,
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -71,14 +73,15 @@ contract('TestDkgConflictResolution', function(accounts) {
     timeoutInitial = 20;
     timeoutSubmission = 40;
     timeoutChallenge = 60;
+    dkgVoteTimeout = 7;
+    dkgVoteTimeoutIncrement = 4;
 
     randomBeaconValue = 123456789;
-
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
-      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
+      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, dkgVoteTimeout, dkgVoteTimeoutIncrement
     );
 
     tickets = []
@@ -147,49 +150,61 @@ contract('TestDkgConflictResolution', function(accounts) {
 
 });
 
-//   it("should accept first DKG submission with correct index and fail subsequent attempts", async function() {
+  it("should accept first DKG submission with correct index and fail subsequent attempts", async function() {
 
-//     let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
-//     let sender = finalParticipants[0];
-    
-//     await keepGroupImplViaProxy.receiveSubmission(1,success,groupPubKey,disqualified,inactive, {from: sender});
-//     await exceptThrow(keepGroupImplViaProxy.receiveSubmission(1,success,groupPubKey,disqualified,inactive, {from: sender}));
-//     assert.equal(tickets.length, ordered.length, "should have 20 tickets");
-//     assert.equal(tickets.length, groupSize, "ticket number equal to group size");
+    let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
+    let sender = finalParticipants[0];
+    await keepGroupImplViaProxy.submitDkgResult(1,success,groupPubKey,disqualified,inactive, {from: sender});  
+    await exceptThrow(keepGroupImplViaProxy.submitDkgResult(1,success,groupPubKey,disqualified,inactive, {from: sender}));
+    assert.equal(tickets.length, ordered.length, "should have 20 tickets");
+    assert.equal(tickets.length, groupSize, "ticket number equal to group size");
 
-// });
-// it("should reject DKG submission if submitter is not yet eligible", async function() {
+});
+it("should reject DKG submission if submitter is not yet eligible", async function() {
 
-//     let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
-//     let sender = finalParticipants[1];
-//     let Tstep = 2;//time between eligibility increments
+    let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
+    let sender = finalParticipants[1];
+    let Tstep = 2;//time between eligibility increments
 
-//     await exceptThrow(keepGroupImplViaProxy.receiveSubmission(2,success,groupPubKey,disqualified,inactive, {from: sender}));
-//     mineBlocks(Tstep)
-//     await keepGroupImplViaProxy.receiveSubmission(2,success,groupPubKey,disqualified,inactive, {from: sender});
+    await exceptThrow(keepGroupImplViaProxy.submitDkgResult(2,success,groupPubKey,disqualified,inactive, {from: sender}));
+    mineBlocks(Tstep)
+    await keepGroupImplViaProxy.submitDkgResult(2,success,groupPubKey,disqualified,inactive, {from: sender});
+    assert.equal(tickets.length, ordered.length, "should have 20 tickets");
+    assert.equal(tickets.length, groupSize, "ticket number equal to group size");
 
-//     assert.equal(tickets.length, ordered.length, "should have 20 tickets");
-//     assert.equal(tickets.length, groupSize, "ticket number equal to group size");
+  });
 
-//   });
-
-//     it("Should accept and reject votes properly and return correct DKG result", async function() {
-//       let eligibility;
-//       let blocknum;
-//       let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
-//       let sender;
+  it("Should accept votes and properly get final result according to Vote deadline", async function() {
+      let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
+      let sender;
      
-//       for(let i=1;i<=tickets.length;i++){
-//         sender = finalParticipants[i - 1];
-//         eligibility = await keepGroupImplViaProxy.eligibleTime(i)
-//         blocknum = await keepGroupImplViaProxy.blockHeight();
-//        while(eligibility > blocknum){
-//           await exceptThrow(keepGroupImplViaProxy.receiveSubmission(i,success,groupPubKey,disqualified,inactive, {from: sender}));
-//           mineBlocks(0);
-//           blocknum = await keepGroupImplViaProxy.blockHeight();  
-//         }
-//         await keepGroupImplViaProxy.receiveSubmission(i,success,groupPubKey,disqualified,inactive, {from: sender});
-//       }
-//       assert.equal(await keepGroupImplViaProxy.submitGroupPublicKey.call(), newWeb3.utils.soliditySha3(success,groupPubKey, disqualified, inactive) , "get correct final result");
-//     });
+      for(let i=1;i<=tickets.length;i++){
+        sender = finalParticipants[i - 1];
+        await keepGroupImplViaProxy.submitDkgResult(i,success,groupPubKey,disqualified,inactive, {from: sender});
+      }
+
+      let currentBlock = await web3.eth.getBlockNumber();
+      let callBlock = await keepGroupImplViaProxy.getDkgTimeout();
+      mineBlocks(callBlock - currentBlock - 3);//stop two blocks short of VoteDEadline
+      //executed one block short (fails) then on time (succeeds)
+      await exceptThrow(keepGroupImplViaProxy.getFinalResult.call());
+      mineBlocks(0);
+      assert.equal(await keepGroupImplViaProxy.getFinalResult.call(), groupPubKey, "get correct final result");
+    });
+
+    it("Should not accept subsission untill user is eligible, and should return result correctly", async function(){
+      let finalParticipants = await keepGroupImplViaProxy.selectedParticipants();
+      let sender = finalParticipants[1];
+      let Tstep = 2;//time between eligibility increments
+
+      await exceptThrow(keepGroupImplViaProxy.submitDkgResult(2,success,groupPubKey,disqualified,inactive, {from: sender}));
+      mineBlocks(Tstep)
+      await keepGroupImplViaProxy.submitDkgResult(2,success,groupPubKey,disqualified,inactive, {from: sender});
+      assert.equal(tickets.length, ordered.length, "should have 20 tickets");
+      assert.equal(tickets.length, groupSize, "ticket number equal to group size")
+      let currentBlock = await web3.eth.getBlockNumber();
+      let callBlock = await keepGroupImplViaProxy.getDkgTimeout();
+      mineBlocks(callBlock - currentBlock);//stop two blocks short of VoteDEadline
+      assert.equal(await keepGroupImplViaProxy.getFinalResult.call(), groupPubKey , "get correct final result");
+    });
 });
