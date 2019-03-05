@@ -12,7 +12,7 @@ contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
 
-    event OnGroupRegistered(bytes groupPubKey);
+    event GroupRegisteredEvent(bytes groupPubKey);
 
     struct DkgResult {
         bool success;
@@ -344,7 +344,7 @@ contract KeepGroupImplV1 is Ownable {
         _groups.push(groupPublicKey);
         
         emit SubmitGroupPublicKeyEvent(_receivedSubmissions[leadingResult].groupPubKey, requestId);
-        emit OnGroupRegistered(_receivedSubmissions[leadingResult].groupPubKey);
+        emit GroupRegisteredEvent(_receivedSubmissions[leadingResult].groupPubKey);
         cleanup();
         return _receivedSubmissions[leadingResult].groupPubKey;
     }
