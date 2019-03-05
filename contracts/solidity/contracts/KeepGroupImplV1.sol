@@ -12,8 +12,6 @@ contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
 
-    event GroupRegisteredEvent(uint256 requestId, bytes groupPubKey);
-
     struct DkgResult {
         bool success;
         bytes groupPubKey;
@@ -21,13 +19,9 @@ contract KeepGroupImplV1 is Ownable {
         bytes inactive;
     }
 
-    event DkgResultSubmittedEvent(uint256 requestId, uint256 memberIndex, bytes groupPubKey); 
-    
+    event GroupRegisteredEvent(uint256 requestId, bytes groupPubKey);
+    event DkgResultSubmittedEvent(uint256 requestId, uint256 memberIndex, bytes groupPubKey);     
     event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
-
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -341,7 +335,6 @@ contract KeepGroupImplV1 is Ownable {
         }
         _groups.push(groupPublicKey);
         
-        emit SubmitGroupPublicKeyEvent(_receivedSubmissions[leadingResult].groupPubKey, requestId);
         emit GroupRegisteredEvent(requestId, _receivedSubmissions[leadingResult].groupPubKey);
         cleanup();
         return _receivedSubmissions[leadingResult].groupPubKey;
