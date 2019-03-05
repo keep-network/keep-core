@@ -37,10 +37,11 @@ spec:
         app: geth
         type: miner
     spec:
+      imagePullSecrets:
+      - name: google-container-registry-auth
       containers:
       - name: miner
         image: gcr.io/keep-dev-fe24/eth-geth-node:latest
-        imagePullPolicy: Never
         volumeMounts:
           - mountPath: "/hostvolume"
             name: hostvolume
