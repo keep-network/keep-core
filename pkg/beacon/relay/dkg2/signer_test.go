@@ -63,18 +63,14 @@ func TestSignAndComplete(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		// First, restrict shares to test.numberPrivateKeyShares.
-		privateKeyShares := make(map[gjkr.MemberID]string)
-		for memberID, share := range privateKeySharesMap {
-			if len(privateKeyShares) == test.numberPrivateKeyShares {
+		// Build up signers from public key shares, and restrict the
+		// number of signers to test.numberPrivateKeyShares.
+		var signers []*ThresholdSigner
+		for memberID, privateKeyShare := range privateKeySharesMap {
+			if len(signers) == test.numberPrivateKeyShares {
 				break
 			}
-			privateKeyShares[memberID] = share
-		}
 
-		// Next, build up signers from public key shares.
-		var signers []*ThresholdSigner
-		for memberID, privateKeyShare := range privateKeyShares {
 			share, _ := new(big.Int).SetString(privateKeyShare, 10)
 			signers = append(signers, &ThresholdSigner{
 				memberID:             memberID,
