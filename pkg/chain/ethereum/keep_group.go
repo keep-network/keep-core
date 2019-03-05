@@ -335,3 +335,9 @@ func (kg *keepGroup) WatchGroupRegisteredEvent(
 		close(eventChan)
 	}), nil
 }
+
+func (kg *keepGroup) ElectDkgResult(
+	requestID *big.Int,
+) (*types.Transaction, error) {
+	return kg.contract.GetFinalResult(kg.transactorOpts, requestID)
+}

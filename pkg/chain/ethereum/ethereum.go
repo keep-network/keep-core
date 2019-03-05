@@ -94,6 +94,82 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepGroupContract.HasMinimumStake(address)
 }
 
+func (ec *ethereumChain) ElectDKGResult(
+	requestID *big.Int,
+) *async.DKGResultElectionPromise {
+	resultElectedPromise := &async.DKGResultElectionPromise{}
+
+	failPromise := func(err error) {
+		failErr := resultElectedPromise.Fail(err)
+		if failErr != nil {
+			fmt.Fprintf(
+				os.Stderr,
+				"failing promise because of: [%v] failed with: [%v]\n",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	resultElected := make(chan *event.GroupRegistration)
+
+	// TODO: OnGroupRegistered is a success scenario; what about failure?
+	subscription, err := ec.OnGroupRegistered(
+		func(onChainEvent *event.GroupRegistration) {
+			resultElected <- onChainEvent
+		},
+	)
+	if err != nil {
+		close(resultElected)
+		failPromise(err)
+		return resultElectedPromise
+	}
+
+	go func() {
+		for {
+			select {
+			case electedEvent, success := <-resultElected:
+				// Channel is closed when ElectDkgResult failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
+				if electedEvent.RequestID.Cmp(requestID) == 0 {
+					subscription.Unsubscribe()
+					close(resultElected)
+
+					err := resultElectedPromise.Fulfill(
+						&event.DKGResultElected{
+							RequestID:      electedEvent.RequestID,
+							GroupPublicKey: electedEvent.GroupPublicKey,
+							Success:        true,
+							BlockNumber:    electedEvent.BlockNumber,
+						})
+					if err != nil {
+						fmt.Fprintf(
+							os.Stderr,
+							"fulfilling promise failed with: [%v]\n",
+							err,
+						)
+					}
+
+					return
+				}
+			}
+		}
+	}()
+
+	_, err = ec.keepGroupContract.ElectDkgResult(requestID)
+	if err != nil {
+		subscription.Unsubscribe()
+		close(resultElected)
+		failPromise(err)
+	}
+
+	return resultElectedPromise
+}
+
 func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
 	submittedTicketPromise := &async.GroupTicketPromise{}
 

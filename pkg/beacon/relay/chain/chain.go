@@ -103,6 +103,9 @@ type DistributedKeyGenerationInterface interface {
 	OnDKGResultVote(
 		func(dkgResultVote *event.DKGResultVote),
 	) (subscription.EventSubscription, error)
+	// ElectDKGResult should be called after result submission and voting phase
+	// to perform election of the final DKG result on-chain.
+	ElectDKGResult(requestID *big.Int) *async.DKGResultElectionPromise
 }
 
 // Interface represents the interface that the relay expects to interact with

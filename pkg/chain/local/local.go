@@ -395,6 +395,28 @@ func (c *localChain) VoteOnDKGResult(
 	return dkgResultVotePromise
 }
 
+func (c *localChain) ElectDKGResult(
+	requestID *big.Int,
+) *async.DKGResultElectionPromise {
+	dkgResultElectionPromise := &async.DKGResultElectionPromise{}
+
+	results, ok := c.submittedResults[requestID]
+	if !ok {
+		dkgResultElectionPromise.Fail(fmt.Errorf("no results published"))
+		return dkgResultElectionPromise
+	}
+
+	// TODO: we take the first result; need to take into account voting result
+	dkgResultElectionPromise.Fulfill(&event.DKGResultElected{
+		RequestID:      requestID,
+		GroupPublicKey: results[0].GroupPublicKey,
+		Success:        true,
+		BlockNumber:    c.simulatedHeight,
+	})
+
+	return dkgResultElectionPromise
+}
+
 // OnDKGResultVote registers a callback that is invoked when an on-chain
 // notification of a new, valid vote is seen.
 func (c *localChain) OnDKGResultVote(
