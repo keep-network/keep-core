@@ -31,7 +31,8 @@ spec:
     spec:
       containers:
       - name: dashboard
-        image: lispmeister/eth-stats-dashboard
+        image: gcr.io/keep-dev-fe24/eth-dashboard-node:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 3000
         - containerPort: 3001
