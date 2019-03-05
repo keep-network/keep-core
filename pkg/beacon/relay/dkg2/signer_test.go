@@ -14,13 +14,13 @@ func TestSignAndComplete(t *testing.T) {
 
 	// Obtained by running `TestFullStateTransitions` and outputting shares
 	// and group public key. MemberIDs are 1-indexed.
-	privateKeySharesMap := map[int]string{
-		1: "+20447821705176695776117400920440893381372259028396365458583014272617533574429",
-		2: "+10311498259490277582707403215942210669382166384656845373229012913757750213620",
-		3: "+12931471259504366138666739996593106353126621511383680527266384358924878290714",
-		4: "+6419497833379686221749005517136305344057260008160836576996924421543109310094",
-		5: "+12663820852955513054200605522829082730722446275404347866118837288188251767377",
-		6: "+9776197446392571413775134268414163424573815912698180050933918772284497166946",
+	privateKeySharesMap := map[gjkr.MemberID]string{
+		gjkr.MemberID(1): "+20447821705176695776117400920440893381372259028396365458583014272617533574429",
+		gjkr.MemberID(2): "+10311498259490277582707403215942210669382166384656845373229012913757750213620",
+		gjkr.MemberID(3): "+12931471259504366138666739996593106353126621511383680527266384358924878290714",
+		gjkr.MemberID(4): "+6419497833379686221749005517136305344057260008160836576996924421543109310094",
+		gjkr.MemberID(5): "+12663820852955513054200605522829082730722446275404347866118837288188251767377",
+		gjkr.MemberID(6): "+9776197446392571413775134268414163424573815912698180050933918772284497166946",
 	}
 
 	groupPublicKeyBytes := []byte{
@@ -63,7 +63,8 @@ func TestSignAndComplete(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		privateKeyShares := make(map[int]string)
+		// First, restrict shares to test.numberPrivateKeyShares.
+		privateKeyShares := make(map[gjkr.MemberID]string)
 		for memberID, share := range privateKeySharesMap {
 			if len(privateKeyShares) == test.numberPrivateKeyShares {
 				break
@@ -76,7 +77,7 @@ func TestSignAndComplete(t *testing.T) {
 		for memberID, privateKeyShare := range privateKeyShares {
 			share, _ := new(big.Int).SetString(privateKeyShare, 10)
 			signers = append(signers, &ThresholdSigner{
-				memberID:             gjkr.MemberID(memberID),
+				memberID:             memberID,
 				groupPublicKey:       groupPublicKey,
 				groupPrivateKeyShare: share,
 			})
