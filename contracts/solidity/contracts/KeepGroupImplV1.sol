@@ -21,9 +21,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes inactive;
     }
 
-    // TODO: Rename to DkgResultSubmittedEvent
-    // TODO: Add memberIndex
-    event DkgResultSubmittedEvent(uint256 requestId, bytes groupPubKey); 
+    event DkgResultSubmittedEvent(uint256 requestId, uint256 memberIndex, bytes groupPubKey); 
     
     event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
 
@@ -283,7 +281,7 @@ contract KeepGroupImplV1 is Ownable {
             _submissionVotes[resultHash] = 1;
             _votedDkg[submitterID] = true;//cannot vote after submiting DKG result
             _resultPublished[resultHash] = true;
-            emit DkgResultSubmittedEvent(requestId, groupPubKey);
+            emit DkgResultSubmittedEvent(requestId, memberIndex, groupPubKey);
         }
         else{
             _addVote(resultHash, submitterID, requestId, memberIndex);
