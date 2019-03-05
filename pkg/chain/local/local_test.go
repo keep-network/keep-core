@@ -330,6 +330,8 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 }
 
 func TestLocalSubmitDKGResult(t *testing.T) {
+	memberIndex := 1
+
 	ctx, cancel := newTestContext()
 	defer cancel()
 
@@ -363,7 +365,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID1, memberIndex, submittedResult11)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -393,7 +395,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID2, memberIndex, submittedResult11)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -417,7 +419,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID1, memberIndex, submittedResult11)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -437,6 +439,8 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 }
 
 func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
+	memberIndex := 1
+
 	ctx, cancel := newTestContext()
 	defer cancel()
 
@@ -460,7 +464,7 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	// never be called.
 	subscription.Unsubscribe()
 
-	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
+	relay.SubmitDKGResult(big.NewInt(999), memberIndex, &relaychain.DKGResult{
 		GroupPublicKey: []byte{88},
 	})
 
