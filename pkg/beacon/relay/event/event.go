@@ -66,3 +66,13 @@ type DKGResultVote struct {
 
 	BlockNumber uint64
 }
+
+// DKGResultElected represents event fired after result publication and voting
+// phase when one of the results have been elected as the final one.
+type DKGResultElected struct {
+	RequestID      *big.Int
+	GroupPublicKey []byte
+	Success        bool
+
+	BlockNumber uint64
+}
