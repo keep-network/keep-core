@@ -19,9 +19,10 @@ contract KeepGroupImplV1 is Ownable {
         bytes inactive;
     }
 
-    event GroupRegisteredEvent(uint256 requestId, bytes groupPubKey);
     event DkgResultSubmittedEvent(uint256 requestId, uint256 memberIndex, bytes groupPubKey);     
     event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
+    event DkgResultElectedEvent(uint256 requestId, bool success);
+    event GroupRegisteredEvent(uint256 requestId, bytes groupPubKey);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -337,6 +338,7 @@ contract KeepGroupImplV1 is Ownable {
         }
         _groups.push(groupPublicKey);
         
+        emit DkgResultElectedEvent(requestId, true);
         emit GroupRegisteredEvent(requestId, _receivedSubmissions[leadingResult].groupPubKey);
         cleanup();
         return _receivedSubmissions[leadingResult].groupPubKey;

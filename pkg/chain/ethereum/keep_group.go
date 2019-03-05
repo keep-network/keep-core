@@ -336,8 +336,65 @@ func (kg *keepGroup) WatchGroupRegisteredEvent(
 	}), nil
 }
 
-func (kg *keepGroup) ElectDkgResult(
+func (kg *keepGroup) ElectDKGResult(
 	requestID *big.Int,
 ) (*types.Transaction, error) {
 	return kg.contract.GetFinalResult(kg.transactorOpts, requestID)
+}
+
+type dkgResultElectedEventFunc func(
+	requestID *big.Int,
+	success bool,
+	blockNumber uint64,
+)
+
+func (kg *keepGroup) WatchDKGResultElected(
+	success dkgResultElectedEventFunc,
+	fail errorCallback,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.KeepGroupImplV1DkgResultElectedEvent)
+	eventSubscription, err := kg.contract.WatchDkgResultElectedEvent(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return nil, fmt.Errorf(
+			"could not create watch for DkgResultElectedEvent: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.RequestId,
+					event.Success,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case err := <-eventSubscription.Err():
+				fail(err)
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}), nil
 }
