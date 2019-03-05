@@ -71,17 +71,6 @@ func TestSignAndComplete(t *testing.T) {
 			privateKeyShares[memberID] = share
 		}
 
-		// First, get SecretKeyShares from slice of privateKeyShares.
-		var publicKeyShares []*bls.PublicKeyShare
-		for memberID, privateKeyShareString := range privateKeyShares {
-			privateKeyShare, _ := new(big.Int).SetString(privateKeyShareString, 10)
-			publicKeyShare := (&bls.SecretKeyShare{
-				I: memberID,
-				V: privateKeyShare,
-			}).PublicKeyShare()
-			publicKeyShares = append(publicKeyShares, publicKeyShare)
-		}
-
 		// Next, build up signers from public key shares.
 		var signers []*ThresholdSigner
 		for memberID, privateKeyShare := range privateKeyShares {
