@@ -295,7 +295,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param memberIndex the claimed index of the submitter.
      * @return true if the submitter is eligible. False otherwise.
      */
-    function eligibleSubmitter(uint memberIndex) public returns (bool){
+    function eligibleSubmitter(uint memberIndex) internal pure returns (bool) {
+        // TODO: implement
         require(memberIndex != 0);
         return true;
     }
@@ -305,7 +306,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param memberIndex the claimed index of the user.
      * @return true if the ticket at the given index is issued by msg.sender. False otherwise.
      */
-    function validateIndex(uint memberIndex)public returns(bool){
+    function validateIndex(uint memberIndex) internal pure returns (bool) {
+        // TODO: implement
         require(memberIndex != 0);
         return true;
     }
