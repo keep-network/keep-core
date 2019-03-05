@@ -273,10 +273,10 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchSubmitGroupPublicKeyEvent(
+	return ec.keepGroupContract.WatchGroupRegisteredEvent(
 		func(
-			groupPublicKey []byte,
 			requestID *big.Int,
+			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
