@@ -42,16 +42,16 @@ delegated stake:: An _owner_'s staked tokens, delegated to the _operator_ by the
 on-stake:: Refers to the type of operations performed by an _operator_ on a
   _delegated stake_.
 
-operation:: Refers to the group selection, the process of selecting _operator_ 
-  as new a member of a new group.
+operation:: A set of interactions with the system with a defined start and
+  finish, executed entirely by an _operator_, during which the operator does
+  tasks on behalf of all or part of a _delegated stake_.
 
 === Design Requirements
 
-1. _operator_ cannot have any KEEP tokens at all.
-2. _operator_ can only have a _delegated stake_ from only one _owner_.
-3. The end of an _on stake operation_ happens only after all rewards are
+1. _operator_ can only have a _delegated stake_ from only one _owner_.
+2. The end of an _on stake operation_ happens only after all rewards are
 granted and all penalties are imposed.
-4. Rewarding and penalizing happens as the last phase of all operations.
+3. Rewarding and penalizing happens as the last phase of all operations.
 
 == Roles
 
@@ -68,7 +68,7 @@ to the maximum extent.
 
 The owner can <<delegating, delegate its stake>>,
 <<undelegating, undelegate its stake>> and
-<<restoring, restoring the delegated tokens>>.
+<<restoring, restore the delegated tokens>>.
 
 === Operator
 
@@ -79,11 +79,10 @@ tokens, it should be noted that a malicious operator can exploit stake slashing
 to destroy tokens and thus the entire staked amount is indeed at stake.
 
 The operator address is used to provide network functionality by
-<<operating, participating in group selection>>. A signature from the operator
-is also required to initiate <<delegating, stake delegation>>, and the operator
-can unilaterally
-<<undelegating, finish delegation>> and 
-<<restoring, return the tokens to the owner>>.
+<<operating, participating in various operations>>. A signature from the
+operator is also required to initiate <<delegating, stake delegation>>, and the
+operator can unilaterally <<undelegating, finish delegation>> and 
+<<restoring, restore the tokens to the owner>>.
 
 === Magpie
 
@@ -107,13 +106,13 @@ Static Minimum Stake::
     through the network lifetime. It can only be changed during a hard-fork.
 
 Delayed Undelegation::
-    Is a mechanism for revoking a delegation. The undelegation starts when the
-    undelegation is requested. Lasts through the undelegation period during
-    which an operator has time to end all of the ongoing operations. In the 
-    undelegation period, the delegated stake is locked and no additional
-    operations are allowed, except continuation of those already started.
-    After an undelegation period timeout, the delegated stake is released to the
-    owner and a bond between operator, stake, and the owner is removed.
+    A mechanism for revoking a delegation. Undelegation starts when an
+    undelegation request is submitted, and lasts through the undelegation
+    period. During this period, the operator has time to end all ongoing
+    operations. During the undelegation period, the delegated stake is locked
+    and no new operations are allowed. Already-started operations may be
+    continued. After the undelegation period timeout, the delegated stake is
+    released to the owner, and the bond between operator and owner is removed.
 
 Consequent Penalization::
     Is the way undelegation is penalized. When an undelegation happens during an
