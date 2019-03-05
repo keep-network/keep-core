@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 )
 
@@ -72,13 +72,13 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 
 	// Get sufficient number of participants with valid shares.
 	for _, s := range shares {
-		if s == nil || s.V == nil || s.I < 0 {
-			continue
-		}
-		validParticipants = append(validParticipants, big.NewInt(int64(1+s.I)))
 		if len(validParticipants) == threshold {
 			break
 		}
+		if s == nil || s.V == nil || s.I < 0 {
+			continue
+		}
+		validParticipants = append(validParticipants, big.NewInt(int64(s.I)))
 	}
 
 	if len(validParticipants) < threshold {
@@ -86,7 +86,6 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 	}
 
 	result := new(bn256.G1)
-
 	for i := range validParticipants {
 		basis := lagrangeBasis(i, validParticipants)
 		result.Add(result, new(bn256.G1).ScalarMult(shares[i].V, basis))
@@ -99,8 +98,7 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 // coefficients taken from masterSecretKey. This is based on Shamir's Secret
 // Sharing scheme and 'i' represents participant index.
 func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
-
-	xi := big.NewInt(int64(1 + i))
+	xi := big.NewInt(int64(i))
 	share := big.NewInt(0)
 
 	for j := 0; j < len(masterSecretKey); j++ {
@@ -111,7 +109,8 @@ func GetSecretKeyShare(masterSecretKey []*big.Int, i int) *SecretKeyShare {
 	return &SecretKeyShare{i, share}
 }
 
-func (s SecretKeyShare) publicKeyShare() *PublicKeyShare {
+// PublicKeyShare returns public key share from the current secret key share.
+func (s *SecretKeyShare) PublicKeyShare() *PublicKeyShare {
 	return &PublicKeyShare{s.I, new(bn256.G2).ScalarBaseMult(s.V)}
 }
 
@@ -127,7 +126,7 @@ func RecoverPublicKey(shares []*PublicKeyShare, threshold int) (*bn256.G2, error
 		if s == nil || s.V == nil || s.I < 0 {
 			continue
 		}
-		validParticipants = append(validParticipants, big.NewInt(int64(1+s.I)))
+		validParticipants = append(validParticipants, big.NewInt(int64(s.I)))
 		if len(validParticipants) == threshold {
 			break
 		}

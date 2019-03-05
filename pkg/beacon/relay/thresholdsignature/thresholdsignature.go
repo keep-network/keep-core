@@ -8,6 +8,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/bls"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -30,6 +31,7 @@ func Init(channel net.BroadcastChannel) {
 // bytes, or an error.
 func Execute(
 	bytes []byte,
+	threshold int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	signer *dkg2.ThresholdSigner,
@@ -114,12 +116,16 @@ func Execute(
 			}
 		case <-blockWaiter:
 			// put all seen shares into a slice and complete the signature
-			seenSharesSlice := make([]*bn256.G1, 0)
-			for _, share := range seenShares {
-				seenSharesSlice = append(seenSharesSlice, share)
+			seenSharesSlice := make([]*bls.SignatureShare, 0)
+			for memberID, share := range seenShares {
+				signatureShare := &bls.SignatureShare{I: int(memberID), V: share}
+				seenSharesSlice = append(seenSharesSlice, signatureShare)
 			}
 
-			signature := signer.CompleteSignature(seenSharesSlice)
+			signature, err := signer.CompleteSignature(seenSharesSlice, threshold)
+			if err != nil {
+				return nil, err
+			}
 
 			return signature.Marshal(), nil
 		}

@@ -63,7 +63,8 @@ func ExecuteDKG(
 		return nil, fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
 	}
 
-	// TODO Consider removing this print after Phase 14 is implemented and replace it with print at the end of DKG execution.
+	// TODO Consider removing this print after Phase 14 is implemented and
+	// replace it with print at the end of DKG execution.
 	fmt.Printf("[member:%v] GJKR Result: %+v\n", playerIndex, gjkrResult)
 
 	err = executePublishing(
