@@ -136,7 +136,20 @@ func (pm *Publisher) publishResult(
 
 			chainRelay.SubmitDKGResult(pm.RequestID, pm.publishingIndex, result).
 				OnSuccess(func(dkgResultPublishedEvent *event.DKGResultPublication) {
-					errorChannel <- nil
+					// TODO: This is a temporary solution until DKG Phase 14 is
+					// ready. We assume that only one DKG result is published in
+					// DKG Phase 13 and we call DKG result election immediately.
+					chainRelay.ElectDKGResult(
+						pm.RequestID,
+					).OnSuccess(func(resultElectedEvent *event.DKGResultElected) {
+						fmt.Printf(
+							"DKG result elected for requestID=[%v]\n",
+							pm.RequestID,
+						)
+						errorChannel <- nil
+					}).OnFailure(func(err error) {
+						errorChannel <- err
+					})
 				}).
 				OnFailure(func(err error) {
 					errorChannel <- err
