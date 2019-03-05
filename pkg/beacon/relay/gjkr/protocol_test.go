@@ -1,7 +1,11 @@
 package gjkr
 
 import (
+	"fmt"
 	"testing"
+
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/bls"
 )
 
 func TestRoundTrip(t *testing.T) {
@@ -106,6 +110,33 @@ func TestRoundTrip(t *testing.T) {
 
 	for _, member := range combiningMembers {
 		member.CombineGroupPublicKey()
+	}
+
+	fmt.Printf("Combined group public key: %x\n", combiningMembers[0].groupPublicKey.Marshal())
+
+	publicKeyShares := make([]*bls.PublicKeyShare, 0)
+
+	for _, member := range combiningMembers {
+		groupPublicKeyShare := new(bn256.G2).ScalarBaseMult(member.groupPrivateKeyShare)
+
+		publicKeyShares = append(publicKeyShares, &bls.PublicKeyShare{
+			I: int(member.ID),
+			V: groupPublicKeyShare,
+		})
+	}
+
+	recoveredPublicKey, err := bls.RecoverPublicKey(publicKeyShares, threshold)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("Recovered group public key: %x\n", recoveredPublicKey.Marshal())
+
+	if recoveredPublicKey.String() != combiningMembers[0].groupPublicKey.String() {
+		t.Fatalf(
+			"\nexpected: %v\nactual:   %x\n",
+			combiningMembers[0].groupPublicKey.Marshal(),
+			recoveredPublicKey.Marshal(),
+		)
 	}
 
 }

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 )
 
@@ -127,7 +127,7 @@ func RecoverPublicKey(shares []*PublicKeyShare, threshold int) (*bn256.G2, error
 		if s == nil || s.V == nil || s.I < 0 {
 			continue
 		}
-		validParticipants = append(validParticipants, big.NewInt(int64(1+s.I)))
+		validParticipants = append(validParticipants, big.NewInt(int64(s.I)))
 		if len(validParticipants) == threshold {
 			break
 		}
