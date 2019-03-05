@@ -39,7 +39,8 @@ spec:
     spec:
       containers:
       - name: tx
-        image: lispmeister/geth-node
+        image: gcr.io/keep-dev-fe24/eth-geth-node:latest
+        imagePullPolicy: Never
         volumeMounts:
           - mountPath: "/hostvolume"
             name: hostvolume
@@ -61,7 +62,7 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         - name: NETWORKID
-          value: "9384767738"
+          value: "1101"
         - name: WS_SERVER
           value: ws://dashboard:3000
         - name: WS_SECRET
