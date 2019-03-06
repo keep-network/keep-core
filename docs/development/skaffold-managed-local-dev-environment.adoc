@@ -133,6 +133,26 @@ mv skaffold /usr/local/bin
 Whatever you choose make sure you're using version `v0.17.0` or
 higher.
 
+=== Google Cloud SDK
+
+Install Google Cloud SDK via Homebrew:
+```
+brew cask install google-cloud-sdk
+```
+Or by following an https://cloud.google.com/sdk/docs/quickstart-macos[instruction].
+
+Initialize gcloud by running `gcloud init`. Login with your `@thesis.co` e-mail
+and configure:
+
+_Pick cloud project to use_ : `keep-dev-fe24`
+
+_Do you want to configure a default Compute Region and Zone?_: `n`
+
+Execute script to configure access to the Google Container Registry:
+```
+./infrasctructure/scripts/create-google-container-registry-secret.sh -c docker-for-desktop
+```
+
 == Local Development
 === Ethereum Testnet Components
 
@@ -345,3 +365,10 @@ There's only one exact match to the regular expression in this case and containe
 two is killed immediately. If there were a set of containers named `fervent_xxx`
 then it would kill one of them at random every 3s until you abort `pumba` with
 Ctrl-C.
+
+=== Authenticate Docker to access Google Container Registry
+
+If you need to access GCR directly from Docker execute following command:
+```
+gcloud auth configure-docker
+```
