@@ -9,12 +9,12 @@ toc::[]
 We use Skaffold to manage the local development environment. Skaffold
 takes care of booting up a sane local Kubernetes environment that includes:
 
-- a local Ethereum test network (n nodes)
-- a local Keep client (n nodes)
+- a local Ethereum test network (_n_ nodes)
+- a local Keep client (_n_ nodes)
 - when started in `dev` mode Skaffold will automatically build new Keep
 binaries on file changes.
 
-The n we set here is the number of replicas or each type of node. We will
+The _n_ we set here is the number of replicas of each type of node. We will
 initially set that in the yaml files and later parameterize that so we
 can define it on the command line.
 
@@ -82,6 +82,10 @@ Make sure the Xcode developer tools are installed:
 ```
 xcode-select --install
 ```
+Expected output: 
+```
+xcode-select: error: command line tools are already installed, use "Software Update" to install updates
+````
 
 On Mojave you will need to install the missing header files:
 
@@ -90,11 +94,14 @@ open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10
 ```
 
 === Docker for Mac
-Install Docker for Mac via Homebrew. Make sure you run at least
-version `18.09.0-ce-beta1` or higher.
-
+Install Docker for Mac via Homebrew or download the installer from https://docs.docker.com/docker-for-mac/install/[Docker website].
 ```
 brew cask install docker
+```
+Make sure you run at least version `18.09.0-ce-beta1` or higher.
+```
+$ docker --version
+Docker version 18.09.2, build 6247962
 ```
 
 === Kubernetes
@@ -141,6 +148,10 @@ mv skaffold /usr/local/bin
 
 Whatever you choose make sure you're using version `v0.17.0` or
 higher.
+```
+$ skaffold version
+v0.24.0
+```
 
 === Google Cloud SDK
 
@@ -241,13 +252,13 @@ If you want to just boot the Ethereum testnet cluster, you can do that without
 using Skaffold by running the start script:
 
 ```
-infrastructure/scripts/up
+./infrastructure/scripts/up
 ```
 
 To shutdown the testnet cluster:
 
 ```
-infrastructure/scripts/down
+./infrastructure/scripts/down
 ```
 
 ==== Important Note
