@@ -29,9 +29,11 @@ spec:
       labels:
         app: dashboard
     spec:
+      imagePullSecrets:
+      - name: google-container-registry-auth
       containers:
       - name: dashboard
-        image: lispmeister/eth-stats-dashboard
+        image: gcr.io/keep-dev-fe24/eth-dashboard-node:latest
         ports:
         - containerPort: 3000
         - containerPort: 3001
