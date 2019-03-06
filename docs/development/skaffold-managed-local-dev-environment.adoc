@@ -97,21 +97,30 @@ version `18.09.0-ce-beta1` or higher.
 brew cask install docker
 ```
 
-Or download the installer from here:
-https://docs.docker.com/docker-for-mac/install/
+=== Kubernetes
 
-After the installation activate Kubernetes in the Docker preferences
-and make sure you are running at least version `v1.10.3` or higher.
+Activate Kubernetes in the Docker preferences: _Docker_ -> _Preferences_ -> 
+_Kubernetes_ -> _Enable Kubernetes_.
+Make sure you are running at least version `v1.10.3` or higher.
+```
+$ kubectl version --short
+Client Version: v1.10.11
+Server Version: v1.10.11
+```
 
-=== Kubernetes-CLI
+==== Kubernetes-CLI
 Docker for Mac comes with an older version of `kubectl`. You'll want
 to upgrade that. Make sure you are using version `v1.12.0` or higher.
-
 ```
-kubectl version
+$ kubectl version --short
+Client Version: v1.10.11    <-- this is kubectl version
+Server Version: v1.10.11
+```
+If _Client version_ is less than required upgrade it:
+```
 mv /usr/local/bin/kubectl /usr/local/bin/kubectl-Docker-for-Mac
 brew install kubernetes-cli
-kubectl version
+kubectl version --short
 ```
 
 
