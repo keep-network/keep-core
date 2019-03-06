@@ -236,23 +236,6 @@ All `miner` and `tx` pods also communicate with each other via P2P protocol
 and inform each other about new blocks.
 
 
-
-=== Boot Ethereum Node Docker Container
-You will need to build the Docker container following
-the instructions in
-link:../../infrastructure/geth-node/README{ext-relative}[].
-
-Boot the container in a separate shell with this Docker
-command:
-```
-docker run -it -p 8545:8545 lispmeister/geth-node
-```
-
-To connect to the JSON-RPC interface:
-```
-geth attach http://localhost:8545
-```
-
 === Boot the Ethereum Kubernetes Testnet
 If you want to just boot the Ethereum testnet cluster, you can do that without
 using Skaffold by running the start script:
