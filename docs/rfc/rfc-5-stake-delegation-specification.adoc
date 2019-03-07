@@ -172,7 +172,7 @@ current time,
 [#undelegating]
 ==== Undelegating a stake
 
-1. The _owner_ or _operator_ chooses to undelegate the stake, and creates a
+1. The _owner_ or _operator_ chooses to undelegate the stake, and creates an
 _undelegation order_.
 
 2. Either the _owner_ or _operator_ signs the _undelegation order_ and publishes
