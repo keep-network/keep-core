@@ -77,22 +77,26 @@ type GroupInterface interface {
 // interface that pertains specifically to group formation's distributed key
 // generation process.
 type DistributedKeyGenerationInterface interface {
-	// SubmitDKGResult sends DKG result to a chain.
+	// SubmitDKGResult sends DKG result to a chain, along with signatures over
+	// result hash from group participants supporting the result. Signatures map
+	// keys are participant's indices. Participants are indexed starting with 1.
 	SubmitDKGResult(
 		requestID *big.Int,
-		// memberIndex int, TODO: Add memberIndex
+		participantIndex uint32,
 		dkgResult *DKGResult,
-	) *async.DKGResultPublicationPromise
-	// OnDKGResultPublished registers a callback that is invoked when an on-chain
-	// notification of a new, valid published result is seen.
-	// TODO: Change to: OnDKGResultSubmitted
-	OnDKGResultPublished(
-		func(dkgResultPublication *event.DKGResultPublication),
+		signatures map[uint32][]byte,
+	) *async.DKGResultSubmissionPromise
+	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
+	// notification of a new, valid submitted result is seen.
+	OnDKGResultSubmitted(
+		func(event *event.DKGResultSubmission),
 	) (subscription.EventSubscription, error)
-	// IsDKGResultPublished checks if any DKG result has already been published
-	// to a chain for the given request ID.
-	// TODO: Change to: IsDKGResultSubmitted
-	IsDKGResultPublished(requestID *big.Int) (bool, error)
+	// IsDKGResultSubmitted checks if a DKG result of the given hash has already
+	// been published to a chain for the given request ID.
+	IsDKGResultSubmitted(
+		requestID *big.Int,
+		dkgResultHash DKGResultHash,
+	) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
