@@ -34,3 +34,6 @@ main.test
 # keys
 keystore
 keep_accounts
+
+# Ipython Notebook Checkpoints
+*.ipynb_checkpoints
