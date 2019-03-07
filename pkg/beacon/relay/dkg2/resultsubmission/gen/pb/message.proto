@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option go_package = "pb";
-package dkg2;
+package resultsubmission;
 
 message DKGResultHashSignature {
   uint32 senderID = 1;
