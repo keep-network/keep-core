@@ -91,11 +91,10 @@ type DistributedKeyGenerationInterface interface {
 	OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission),
 	) (subscription.EventSubscription, error)
-	// IsDKGResultSubmitted checks if a DKG result of the given hash has already
-	// been published to a chain for the given request ID.
+	// IsDKGResultSubmitted checks if a DKG result hash has already been
+	// submitted to a chain for the given request ID.
 	IsDKGResultSubmitted(
 		requestID *big.Int,
-		dkgResultHash DKGResultHash,
 	) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
