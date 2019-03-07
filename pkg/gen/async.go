@@ -67,11 +67,6 @@ func main() {
 			Prefix:     "DKGResultPublication",
 			outputFile: "dkg_result_publication_promise.go",
 		},
-		{
-			Type:       "*event.DKGResultVote",
-			Prefix:     "DKGResultVote",
-			outputFile: "dkg_result_vote_promise.go",
-		},
 	}
 
 	if err := generatePromisesCode(configs); err != nil {

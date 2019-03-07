@@ -96,20 +96,6 @@ type DistributedKeyGenerationInterface interface {
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
-	// GetDKGResultsVotes returns a map containing number of votes for each DKG
-	// result hash registered under specific request ID.
-	GetDKGResultsVotes(requestID *big.Int) DKGResultsVotes
-	// VoteOnDKGResult registers a vote for the DKG result hash.
-	VoteOnDKGResult(
-		requestID *big.Int,
-		memberIndex int,
-		dkgResultHash DKGResultHash,
-	) *async.DKGResultVotePromise
-	// OnDKGResultVote registers a callback that is invoked when an on-chain
-	// notification of a new, valid vote is seen.
-	OnDKGResultVote(
-		func(dkgResultVote *event.DKGResultVote),
-	) (subscription.EventSubscription, error)
 }
 
 // Interface represents the interface that the relay expects to interact with

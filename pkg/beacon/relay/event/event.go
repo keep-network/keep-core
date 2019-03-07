@@ -57,12 +57,3 @@ type DKGResultPublication struct {
 
 	BlockNumber uint64
 }
-
-// DKGResultVote represents a DKG result voting event.
-type DKGResultVote struct {
-	RequestID     *big.Int
-	MemberIndex   int
-	DKGResultHash [32]byte
-
-	BlockNumber uint64
-}
