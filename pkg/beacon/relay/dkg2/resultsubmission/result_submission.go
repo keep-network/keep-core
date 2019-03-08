@@ -7,6 +7,9 @@ import (
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
+// Signature ...
+type Signature []byte
+
 // SignDKGResult  // TODO: Write docs
 func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	*DKGResultHashSignatureMessage,
@@ -56,7 +59,7 @@ func (fm *ResultSigningMember) sign(resultHash relayChain.DKGResultHash) []byte 
 func (fm *ResultSigningMember) verifySignature(
 	participantIndex ParticipantIndex,
 	hash relayChain.DKGResultHash,
-	signature []byte,
+	signature Signature,
 ) bool {
 	// TODO: Implement
 	// ecdsa.Verify(fm.publicKeys[participantIndex], hash, r, s)

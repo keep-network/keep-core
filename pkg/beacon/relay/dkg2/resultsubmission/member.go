@@ -27,5 +27,5 @@ type ResultSigningMember struct {
 
 	// Received valid signatures supporting the same DKG result as current's
 	// participants prefer. Contains also current's participant's signature.
-	validResultSignatures map[ParticipantIndex][]byte
+	validResultSignatures map[ParticipantIndex]Signature // TODO: Rename: receivedValidResultSignatures
 }
