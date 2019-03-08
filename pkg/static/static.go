@@ -41,10 +41,9 @@ func GenerateStaticKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
 }
 
 // EthereumKeyToStaticKey transforms `go-ethereum`-based ECDSA key into the
-// format supported by the network layer. Because all curve parameters of
-// secp256k1 curve defined by `go-ethereum` and all curve parameters of
-// secp256k1 curve defined by `btcsuite` used by `lipb2b` under the hood are
-// identical, we can simply rewrite the private key.
+// format supported by all packages used in keep-core. Because all curve
+// parameters of secp256k1 curve defined by `go-ethereum`, `btcsuite`, and other
+// packages used in keep-core are identical, we can simply rewrite the private key.
 func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey) {
 	privKey, pubKey := btcec.PrivKeyFromBytes(
 		btcec.S256(), ethereumKey.PrivateKey.D.Bytes(),
