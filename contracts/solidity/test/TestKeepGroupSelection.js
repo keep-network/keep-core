@@ -1,7 +1,6 @@
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
-import BigNumber from 'bignumber.js';
-import abi from 'ethereumjs-abi';
+import {bls} from './helpers/data';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -71,7 +70,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     timeoutSubmission = 50;
     timeoutChallenge = 60;
 
-    randomBeaconValue = web3.utils.toBN('0x884b130ed81751b63d0f5882483d4a24a7640bdf371f23b78dbeb520c84e3a85');
+    randomBeaconValue = bls.groupSignature;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
@@ -81,6 +80,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     );
 
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, keepGroupProxy.address);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, 1);
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});
