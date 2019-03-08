@@ -80,10 +80,10 @@ func (pm *Publisher) publishResult(
 	result *relayChain.DKGResult,
 	chainRelay relayChain.Interface,
 ) (int, error) {
-	onPublishedResultChan := make(chan *event.DKGResultPublication)
+	onPublishedResultChan := make(chan *event.DKGResultSubmission)
 
-	subscription, err := chainRelay.OnDKGResultPublished(
-		func(publishedResult *event.DKGResultPublication) {
+	subscription, err := chainRelay.OnDKGResultSubmitted(
+		func(publishedResult *event.DKGResultSubmission) {
 			onPublishedResultChan <- publishedResult
 		},
 	)
@@ -97,7 +97,7 @@ func (pm *Publisher) publishResult(
 
 	// Check if any result has already been published to the chain with current
 	// request ID.
-	alreadyPublished, err := chainRelay.IsDKGResultPublished(pm.RequestID)
+	alreadyPublished, err := chainRelay.IsDKGResultSubmitted(pm.RequestID)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(onPublishedResultChan)
@@ -134,8 +134,8 @@ func (pm *Publisher) publishResult(
 			subscription.Unsubscribe()
 			close(onPublishedResultChan)
 
-			chainRelay.SubmitDKGResult(pm.RequestID, result).
-				OnSuccess(func(dkgResultPublishedEvent *event.DKGResultPublication) {
+			chainRelay.SubmitDKGResult(pm.RequestID, uint32(pm.publishingIndex), result, nil).
+				OnSuccess(func(dkgResultPublishedEvent *event.DKGResultSubmission) {
 					// TODO: This is a temporary solution until DKG Phase 14 is
 					// ready. We assume that only one DKG result is published in
 					// DKG Phase 13 and submit it as a final group public key.

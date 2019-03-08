@@ -59,7 +59,7 @@ func TestPublishResult(t *testing.T) {
 
 			relayChain := chainHandle.ThresholdRelay()
 
-			isPublished, err := relayChain.IsDKGResultPublished(publisher.RequestID)
+			isPublished, err := relayChain.IsDKGResultSubmitted(publisher.RequestID)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -82,7 +82,7 @@ func TestPublishResult(t *testing.T) {
 					currentBlock,
 				)
 			}
-			isPublished, err = relayChain.IsDKGResultPublished(publisher.RequestID)
+			isPublished, err = relayChain.IsDKGResultSubmitted(publisher.RequestID)
 			if err != nil {
 				t.Fatal(err)
 			}
