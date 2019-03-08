@@ -48,21 +48,13 @@ type GroupRegistration struct {
 	BlockNumber uint64
 }
 
-// DKGResultPublication represents a DKG result publication event.
-// TODO: Change name to: DKGResultSubmission
-type DKGResultPublication struct {
-	RequestID *big.Int
-	// 	MemberIndex   int TODO: add member index
+// DKGResultSubmission represents a DKG result submission event. It is emitted
+// after a submitted DKG result is positively validated on the chain. It contains
+// index of the member who submitted the result and a final public key of the group.
+type DKGResultSubmission struct {
+	RequestID      *big.Int
+	MemberIndex    uint32
 	GroupPublicKey []byte
-
-	BlockNumber uint64
-}
-
-// DKGResultVote represents a DKG result voting event.
-type DKGResultVote struct {
-	RequestID     *big.Int
-	MemberIndex   int
-	DKGResultHash [32]byte
 
 	BlockNumber uint64
 }

@@ -427,16 +427,16 @@ func (ec *ethereumChain) RequestRelayEntry(
 	return relayRequestPromise
 }
 
-func (ec *ethereumChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
+func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
-func (ec *ethereumChain) OnDKGResultPublished(
-	handler func(dkgResultPublication *event.DKGResultPublication),
+func (ec *ethereumChain) OnDKGResultSubmitted(
+	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
 	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
 		func(requestID *big.Int, groupPubKey []byte, blockNumber uint64) {
-			handler(&event.DKGResultPublication{
+			handler(&event.DKGResultSubmission{
 				RequestID:      requestID,
 				GroupPublicKey: groupPubKey,
 				BlockNumber:    blockNumber,
@@ -453,9 +453,11 @@ func (ec *ethereumChain) OnDKGResultPublished(
 
 func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
+	participantIndex uint32,
 	result *relaychain.DKGResult,
-) *async.DKGResultPublicationPromise {
-	resultPublicationPromise := &async.DKGResultPublicationPromise{}
+	signatures map[uint32][]byte,
+) *async.DKGResultSubmissionPromise {
+	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
 	failPromise := func(err error) {
 		failErr := resultPublicationPromise.Fail(err)
@@ -469,10 +471,10 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}
 
-	publishedResult := make(chan *event.DKGResultPublication)
+	publishedResult := make(chan *event.DKGResultSubmission)
 
-	subscription, err := ec.OnDKGResultPublished(
-		func(onChainEvent *event.DKGResultPublication) {
+	subscription, err := ec.OnDKGResultSubmitted(
+		func(onChainEvent *event.DKGResultSubmission) {
 			publishedResult <- onChainEvent
 		},
 	)
@@ -566,31 +568,4 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	hash.Sum(dkgResultHash[:0])
 
 	return dkgResultHash, nil
-}
-
-// GetDKGResultsVotes returns a map containing number of votes for each DKG
-// result hash registered under specific request ID.
-func (ec *ethereumChain) GetDKGResultsVotes(
-	requestID *big.Int,
-) relaychain.DKGResultsVotes {
-	panic("function not implemented") // TODO: Implement function
-}
-
-// VoteOnDKGResult registers a vote for the DKG result hash.
-func (ec *ethereumChain) VoteOnDKGResult(
-	requestID *big.Int,
-	memberIndex int,
-	dkgResultHash relaychain.DKGResultHash,
-) *async.DKGResultVotePromise {
-	dkgResultVotePromise := &async.DKGResultVotePromise{}
-	dkgResultVotePromise.Fail(fmt.Errorf("function not implemented")) // TODO: Implement function
-	return dkgResultVotePromise
-}
-
-// OnDKGResultVote registers a callback that is invoked when an on-chain
-// notification of a new, valid vote is seen.
-func (ec *ethereumChain) OnDKGResultVote(
-	func(dkgResultVote *event.DKGResultVote),
-) (subscription.EventSubscription, error) {
-	panic("function not implemented") // TODO: Implement function
 }

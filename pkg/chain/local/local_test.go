@@ -317,7 +317,7 @@ func TestLocalIsDKGResultPublished(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult, err := chainHandle.IsDKGResultPublished(test.requestID)
+			actualResult, err := chainHandle.IsDKGResultSubmitted(test.requestID)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -336,16 +336,16 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	// Initialize local chain.
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 	localChain := &localChain{
-		submittedResults:             submittedResults,
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		submittedResults:         submittedResults,
+		resultSubmissionHandlers: make(map[int]func(event *event.DKGResultSubmission)),
 	}
 	chainHandle := localChain.ThresholdRelay()
 
-	// Channel for DKGResultPublication events.
-	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
-	localChain.OnDKGResultPublished(
-		func(dkgResultPublication *event.DKGResultPublication) {
-			dkgResultPublicationChan <- dkgResultPublication
+	// Channel for DKGResultSubmission events.
+	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
+	localChain.OnDKGResultSubmitted(
+		func(DKGResultSubmission *event.DKGResultSubmission) {
+			DKGResultSubmissionChan <- DKGResultSubmission
 		},
 	)
 
@@ -358,12 +358,12 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
-	expectedEvent1 := &event.DKGResultPublication{
+	expectedEvent1 := &event.DKGResultSubmission{
 		RequestID:      requestID1,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -375,11 +375,11 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		)
 	}
 	select {
-	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if !reflect.DeepEqual(expectedEvent1, dkgResultPublicationEvent) {
+	case DKGResultSubmissionEvent := <-DKGResultSubmissionChan:
+		if !reflect.DeepEqual(expectedEvent1, DKGResultSubmissionEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
 				expectedEvent1,
-				dkgResultPublicationEvent,
+				DKGResultSubmissionEvent,
 			)
 		}
 	case <-ctx.Done():
@@ -388,12 +388,12 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit the same result for request ID 2
 	requestID2 := big.NewInt(2)
-	expectedEvent2 := &event.DKGResultPublication{
+	expectedEvent2 := &event.DKGResultSubmission{
 		RequestID:      requestID2,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -405,11 +405,11 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		)
 	}
 	select {
-	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		if !reflect.DeepEqual(expectedEvent2, dkgResultPublicationEvent) {
+	case DKGResultSubmissionEvent := <-DKGResultSubmissionChan:
+		if !reflect.DeepEqual(expectedEvent2, DKGResultSubmissionEvent) {
 			t.Fatalf("\nexpected: %v\nactual:   %v\n",
 				expectedEvent2,
-				dkgResultPublicationEvent,
+				DKGResultSubmissionEvent,
 			)
 		}
 	case <-ctx.Done():
@@ -417,7 +417,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, submittedResult11)
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -429,8 +429,8 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		)
 	}
 	select {
-	case dkgResultPublicationEvent := <-dkgResultPublicationChan:
-		t.Fatalf("unexpected event was emitted: %v", dkgResultPublicationEvent)
+	case DKGResultSubmissionEvent := <-DKGResultSubmissionChan:
+		t.Fatalf("unexpected event was emitted: %v", DKGResultSubmissionEvent)
 	case <-ctx.Done():
 		t.Logf("DKG result publication event not generated")
 	}
@@ -441,15 +441,15 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	defer cancel()
 
 	localChain := &localChain{
-		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
+		submittedResults:         make(map[*big.Int][]*relaychain.DKGResult),
+		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 	}
 	relay := localChain.ThresholdRelay()
 
-	dkgResultPublicationChan := make(chan *event.DKGResultPublication)
-	subscription, err := localChain.OnDKGResultPublished(
-		func(dkgResultPublication *event.DKGResultPublication) {
-			dkgResultPublicationChan <- dkgResultPublication
+	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
+	subscription, err := localChain.OnDKGResultSubmitted(
+		func(DKGResultSubmission *event.DKGResultSubmission) {
+			DKGResultSubmissionChan <- DKGResultSubmission
 		},
 	)
 	if err != nil {
@@ -460,12 +460,17 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	// never be called.
 	subscription.Unsubscribe()
 
-	relay.SubmitDKGResult(big.NewInt(999), &relaychain.DKGResult{
-		GroupPublicKey: []byte{88},
-	})
+	relay.SubmitDKGResult(
+		big.NewInt(999),
+		1,
+		&relaychain.DKGResult{
+			GroupPublicKey: []byte{88},
+		},
+		nil, // TODO: Update test to include signatures
+	)
 
 	select {
-	case <-dkgResultPublicationChan:
+	case <-DKGResultSubmissionChan:
 		t.Fatalf("event should not be emitted - I have unsubscribed!")
 	case <-ctx.Done():
 		// ok
