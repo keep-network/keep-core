@@ -157,11 +157,16 @@ func relayEntry(c *cli.Context) error {
 func submitRelayEntrySeed(c *cli.Context) error {
 	requestID := c.Int(requestIDFlag)
 
+	// Kick off relay with valid BLS data (genesis entry signed with secret key 123)
+	// TODO: cleanup when we implement requests
+	groupSignature, _ := new(big.Int).SetString("74560694049107338302356136109934642897454940120077607875321259222904924161997", 10)
+	groupPubKey, _ := new(big.Int).SetString("1628784103815942674299239066242726112511450376641013822284443195847788435348135361496349396979397205976156326270947064778088969857642249155858801250949584", 10)
+
 	entry := &event.Entry{
 		RequestID:     big.NewInt(int64(requestID)),
-		Value:         relay.GenesisEntryValue(),
-		GroupPubKey:   big.NewInt(0).Bytes(),
-		PreviousEntry: big.NewInt(0),
+		Value:         groupSignature,
+		GroupPubKey:   groupPubKey.Bytes(),
+		PreviousEntry: relay.GenesisEntryValue(),
 		Timestamp:     time.Now().UTC(),
 		Seed:          big.NewInt(0),
 	}
