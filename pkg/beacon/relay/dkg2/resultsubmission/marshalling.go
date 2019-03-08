@@ -2,16 +2,16 @@ package resultsubmission
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/resultsubmission/gen/pb"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/resultsubmission/gen/pb"
 )
 
 // Marshal converts this DKGResultHashSignatureMessage to a byte array suitable
 // for network communication.
 func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
 	return (&pb.DKGResultHashSignature{
-		SenderID:   d.senderIndex,
-		ResultHash: d.resultHash[:],
-		Signature:  d.signature,
+		SenderIndex: d.senderIndex,
+		ResultHash:  d.resultHash[:],
+		Signature:   d.signature,
 	}).Marshal()
 }
 
@@ -22,7 +22,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	d.senderIndex = pbMsg.SenderID
+	d.senderIndex = pbMsg.SenderIndex
 
 	resultHash, err := chain.DKGResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {
