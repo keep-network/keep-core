@@ -92,7 +92,7 @@ type DistributedKeyGenerationInterface interface {
 		func(event *event.DKGResultSubmission),
 	) (subscription.EventSubscription, error)
 	// IsDKGResultSubmitted checks if a DKG result hash has already been
-	// submitted to a chain for the given request ID.
+	// submitted to the chain for the given request ID.
 	IsDKGResultSubmitted(
 		requestID *big.Int,
 	) (bool, error)

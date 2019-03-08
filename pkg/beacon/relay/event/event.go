@@ -50,7 +50,8 @@ type GroupRegistration struct {
 
 // DKGResultSubmission represents a DKG result submission event. It is emitted
 // after a submitted DKG result is positively validated on the chain. It contains
-// index of the member who submitted the result and a final public key of the group.
+// the index of the member who submitted the result and a final public key of
+// the group.
 type DKGResultSubmission struct {
 	RequestID      *big.Int
 	MemberIndex    uint32

@@ -2,6 +2,7 @@ package chain
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // DKGResult is a result of distributed key generation protocol.
@@ -32,7 +33,9 @@ type DKGResult struct {
 
 // DKGResultHash is a 256-bit hash of DKG Result. The hashing algorithm should
 // be the same as the one used on-chain.
-type DKGResultHash [32]byte
+type DKGResultHash [hashByteSize]byte
+
+const hashByteSize = 32
 
 // DKGResultsVotes is a map of votes for each DKG Result.
 type DKGResultsVotes map[DKGResultHash]int
@@ -55,4 +58,17 @@ func (r *DKGResult) Equals(r2 *DKGResult) bool {
 		return false
 	}
 	return true
+}
+
+// DKGResultHashFromBytes converts bytes slice to DKG Result Hash. It requires
+// provided bytes slice size to be exactly 32 bytes.
+func DKGResultHashFromBytes(bytes []byte) (DKGResultHash, error) {
+	var hash DKGResultHash
+
+	if len(bytes) != hashByteSize {
+		return hash, fmt.Errorf("bytes length is not equal %v", hashByteSize)
+	}
+	copy(hash[:], bytes[:])
+
+	return hash, nil
 }
