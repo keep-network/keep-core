@@ -1,15 +1,12 @@
 package key
 
 import (
-	"crypto/ecdsa"
 	"io"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/keep-core/pkg/static"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
-	"github.com/pborman/uuid"
 )
 
 // NetworkPrivateKey represents peer's static key associated with an on-chain
@@ -25,25 +22,16 @@ type NetworkPublicKey = libp2pcrypto.Secp256k1PublicKey
 // GenerateStaticNetworkKey generates a new, random static key based on
 // secp256k1 ethereum curve.
 func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivateKey, *NetworkPublicKey, error) {
-	id := uuid.NewRandom()
-
-	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
+	privKey, pubKey, err := static.GenerateStaticKeyPair(rand)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	key := &keystore.Key{
-		Id:         id,
-		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
-		PrivateKey: ecdsaKey,
-	}
-
-	privKey, pubKey := EthereumKeyToNetworkKey(key)
-	return privKey, pubKey, nil
+	networkPrivateKey, networkPublicKey := StaticKeyToNetworkKey(privKey, pubKey)
+	return networkPrivateKey, networkPublicKey, nil
 }
 
-// EthereumKeyToNetworkKey transforms `go-ethereum`-based ECDSA key into the
-// format supported by the network layer. Because all curve parameters of
+// StaticKeyToNetworkKey transforms a static ECDSA key into the format supported
+// by the network layer. Because all curve parameters of
 // secp256k1 curve defined by `go-ethereum` and all curve parameters of
 // secp256k1 curve defined by `btcsuite` used by `lipb2b` under the hood are
 // identical, we can simply rewrite the private key.
@@ -52,12 +40,11 @@ func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivateKey, *NetworkPubli
 // creating peer's ID or deserializing the key, operation fails with
 // unrecognized curve error. This is no longer a problem if we transform the
 // key using this function.
-func EthereumKeyToNetworkKey(ethereumKey *keystore.Key) (*NetworkPrivateKey, *NetworkPublicKey) {
-	privKey, pubKey := btcec.PrivKeyFromBytes(
-		btcec.S256(), ethereumKey.PrivateKey.D.Bytes(),
-	)
-
-	return (*NetworkPrivateKey)(privKey), (*NetworkPublicKey)(pubKey)
+func StaticKeyToNetworkKey(
+	staticPrivateKey *static.PrivateKey,
+	staticPublicKey *static.PublicKey,
+) (*NetworkPrivateKey, *NetworkPublicKey) {
+	return (*NetworkPrivateKey)(staticPrivateKey), (*NetworkPublicKey)(staticPublicKey)
 }
 
 // NetworkPubKeyToEthAddress transforms NetworkPublicKey into Ethereum account
