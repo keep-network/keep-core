@@ -62,7 +62,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
         _groupContract = groupContract;
-        GroupContract(_groupContract).runGroupSelection(_previousEntry);
     }
 
     /**
