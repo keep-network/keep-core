@@ -17,6 +17,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/static"
 	"github.com/pborman/uuid"
 	"github.com/urfave/cli"
 )
@@ -336,9 +337,13 @@ func getPeerNetworkKey(privateEcdsaKey *big.Int) (
 		ecdsaKey.D.Bytes(),
 	)
 
-	return key.EthereumKeyToNetworkKey(&keystore.Key{
+	ethereumKey := &keystore.Key{
 		Id:         uuid.NewRandom(),
 		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
 		PrivateKey: ecdsaKey,
-	})
+	}
+
+	return key.StaticKeyToNetworkKey(
+		static.EthereumKeyToStaticKey(ethereumKey),
+	)
 }

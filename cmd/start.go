@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/static"
 	"github.com/urfave/cli"
 )
 
@@ -128,6 +129,9 @@ func loadStaticKey(account ethereum.Account) (*key.NetworkPrivateKey, error) {
 		)
 	}
 
-	privKey, _ := key.EthereumKeyToNetworkKey(ethereumKey)
+	privKey, _ := key.StaticKeyToNetworkKey(
+		static.EthereumKeyToStaticKey(ethereumKey),
+	)
+
 	return privKey, nil
 }
