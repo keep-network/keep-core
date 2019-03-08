@@ -9,8 +9,10 @@ import (
 //
 // It is expected to be broadcast within the group.
 type DKGResultHashSignatureMessage struct {
-	senderIndex uint32 // i
-
+	// Index of the sender in the group.
+	senderIndex uint32
+	// Hash of the DKG result preferred by the sender.
 	resultHash chain.DKGResultHash
-	signature  []byte
+	// Signature over the DKG result hash calculated by the sender.
+	signature []byte
 }
