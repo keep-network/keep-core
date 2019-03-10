@@ -280,6 +280,14 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
+func (ec *ethereumChain) LatestServedRelayRequestID() (*big.Int, error) {
+	return ec.keepRandomBeaconContract.GetLatestServedRequestID()
+}
+
+func (ec *ethereumChain) LatestServedRelayValue() (*big.Int, error) {
+	return ec.keepRandomBeaconContract.GetLatestServedRelayValue()
+}
+
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
 ) (subscription.EventSubscription, error) {

@@ -135,6 +135,27 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	)
 }
 
+// GetLatestServedRequestID returns the request ID of the latest served relay
+// entry.
+func (krb *KeepRandomBeacon) GetLatestServedRequestID() (*big.Int, error) {
+	requestID, err := krb.caller.GetLatestServedRequestID(krb.callerOptions)
+	if err != nil {
+		return &big.Int{}, err
+	}
+
+	return requestID, nil
+}
+
+// GetLatestServedRelayValue returns the value of the latest served relay entry.
+func (krb *KeepRandomBeacon) GetLatestServedRelayValue() (*big.Int, error) {
+	relayEntryValue, err := krb.caller.GetLatestServedRelayValue(krb.callerOptions)
+	if err != nil {
+		return &big.Int{}, err
+	}
+
+	return relayEntryValue, nil
+}
+
 // relayEntryRequestedFunc type of function called for
 // RelayEntryRequested event.
 type relayEntryRequestedFunc func(
