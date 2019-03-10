@@ -39,8 +39,9 @@ type localChain struct {
 	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
 	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
 
-	requestID   int64
-	latestValue *big.Int
+	requestID             int64
+	latestServedRequestID atomic.Value
+	latestServedValue     atomic.Value
 
 	simulatedHeight uint64
 	stakeMonitor    chain.StakeMonitor
@@ -193,10 +194,35 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	}
 	c.handlerMutex.Unlock()
 
-	c.latestValue = entry.Value
+	c.latestServedRequestID.Store(entry.RequestID)
+	c.latestServedValue.Store(entry.Value)
 	relayEntryPromise.Fulfill(entry)
 
 	return relayEntryPromise
+}
+
+func (c *localChain) LatestServedRelayRequestID() (*big.Int, error) {
+	requestID, ok := c.latestServedRequestID.Load().(*big.Int)
+	if !ok {
+		return nil, fmt.Errorf(
+			"failed to cast [%v] to *big.Int",
+			c.latestServedRequestID.Load(),
+		)
+	}
+
+	return requestID, nil
+}
+
+func (c *localChain) LatestServedRelayValue() (*big.Int, error) {
+	requestID, ok := c.latestServedValue.Load().(*big.Int)
+	if !ok {
+		return nil, fmt.Errorf(
+			"failed to cast [%v] to *big.Int",
+			c.latestServedRequestID.Load(),
+		)
+	}
+
+	return requestID, nil
 }
 
 func (c *localChain) OnRelayEntryGenerated(
@@ -322,7 +348,7 @@ func (c *localChain) RequestRelayEntry(
 	promise := &async.RelayRequestPromise{}
 
 	request := &event.Request{
-		PreviousValue: c.latestValue,
+		PreviousValue: c.latestServedValue.Load().(*big.Int),
 		RequestID:     big.NewInt(c.requestID),
 		Payment:       big.NewInt(1),
 		BlockReward:   blockReward,
