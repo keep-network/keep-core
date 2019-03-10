@@ -22,6 +22,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     uint256 internal _seq;
+    uint256 internal _latestEntry;
+    uint256 internal _latestServedRequestID;
     uint256 internal _minPayment;
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
@@ -155,8 +157,18 @@ contract KeepRandomBeaconImplV1 is Ownable {
         // TODO: validate groupSignature using BLS.sol
 
         _requestGroup[requestID] = groupPubKey;
+        _latestServedRequestID = requestID;
+        _latestEntry = groupSignature;
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
+    }
+
+    function getLatestServedRequestID() public view returns (uint256) {
+        return _latestServedRequestID;
+    }
+
+    function getLatestServedRelayValue() public view returns (uint256) {
+        return _latestEntry;
     }
 
     /**
