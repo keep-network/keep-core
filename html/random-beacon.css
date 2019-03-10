@@ -1,0 +1,173 @@
+/* #7850CD // purple
+    #48DBB4 // green
+    #AC6E16 // brown
+    #0A0806 // black */
+
+body {
+    font-family: 'Work Sans', sans-serif;
+    color: #0A0806;
+    background: #f1f1f1;
+}
+
+heading, main {
+    margin: 0 auto;
+    width: 50%;
+    min-width: 300px;
+}
+
+heading {
+    display: block;
+    position: relative;
+}
+
+#logo > img {
+    position: absolute;
+    left: 0;
+    top: 1.25rem;
+    height: 2.5rem;
+
+    -webkit-clip-path: inset(0 7rem 0 0);
+    clip-path: inset(0 7rem 0 0);
+}
+
+h1 {
+    font-weight: 800;
+}
+
+heading > h1 {
+    background: #0A0806;
+
+    font-size: 3rem;
+    text-align: center;
+    color: #48DBB4;
+
+    margin: 0 -100% 0;
+    padding: 1rem 100% 1rem;
+}
+
+section {
+    margin: 8rem auto 0;
+    width: 70%;
+}
+
+#latest-number {
+    display: flex;
+    flex-direction: column;
+}
+
+#latest-number > * {
+    box-sizing: border-box;
+    width: 100%;
+    text-align: center;
+}
+
+#latest-number-value {
+    order: 0;
+
+    background: #7850CD;
+
+    font-size: 2.5rem;
+    color: white;
+
+    padding: 15px 0;
+    border: 3px solid #0A0806;
+}
+
+#latest-number > h1 {
+    order: 1;
+
+    font-size: 1.5rem;
+    font-weight: 600;
+
+    margin-top: 0.5rem;
+}
+
+#security-guarantees {
+    font-size: 1.5rem;
+}
+
+#security-guarantees > h1 {
+    font-size: 2rem;
+    text-align: center;
+
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+#security-guarantees li {
+    padding-left: 1.5rem;
+    line-height: 1.8rem;
+}
+
+#security-guarantees span.complete, #security-guarantees span.incomplete {
+    display: inline-block;
+    width: 0;
+
+    background: #f1f1f1;
+    color: #f1f1f1;
+    font-size: 1.5rem;
+
+    margin-right: -0.5rem;
+}
+
+#security-guarantees span.complete:before, #security-guarantees span.incomplete:before {
+    margin-left: -1.5rem;
+    font-weight: 800;
+}
+
+#security-guarantees span.incomplete:before {
+    content: "\2717";
+    color: #48DBB4;
+    width: 20px;
+}
+
+#security-guarantees li.incomplete {
+    color: #48DBB4;
+}
+
+#security-guarantees span.complete:before {
+    content: "\2713";
+    color: #7850CD;
+}
+
+#security-guarantees li.complete {
+    color: #7850CD;
+}
+
+@media (max-width: 1500px) {
+    heading, main {
+        min-width: 750px;
+    }
+}
+
+@media (max-width: 780px) {
+    html {
+        font-size: 10px;
+    }
+
+    heading, main {
+        width: 100%;
+        min-width: auto;
+    }
+
+    heading > h1 {
+        font-size: 2.7rem;
+    }
+
+    #logo > img {
+        top: 1rem;
+        left: 1.25rem;
+    }
+
+    section {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 0 20px;
+    }
+}
+
+@media (max-width: 350px) {
+    #latest-number-value {
+        font-size: 1.9rem;
+    }
+}

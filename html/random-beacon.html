@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Keep Random Beacon</title>
+
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css">
+        <link rel="stylesheet" type="text/css" href="random-beacon.css">
+        <link href="https://fonts.googleapis.com/css?family=Work+Sans:400,500,600,700,800" rel="stylesheet">
+
+        <script type="text/javascript">
+            document.addEventListener("readystatechange", () => {
+                setInterval(fetchLatestEntry, 1000)
+            })
+
+            function fetchLatestEntry() {
+                fetch("/api/v0/random-beacon/latest")
+                    .then((response) => response.json())
+                    .then((json) => {
+                        document.getElementById('latest-number-value').innerHTML = json.value;
+                    })
+                    .catch((error) => {
+                        if (console.error) {
+                            console.error("Error loading latest number value: ", error);
+                        } else if (console.log) {
+                            console.log("Error loading latest number value: ", error);
+                        }
+                    })
+            }
+        </script>
+    </head>
+
+    <heading>
+        <a id="logo" href="https://keep.network/">
+            <img src="keep-logo.svg">
+        </a>
+        <h1>Random Beacon</h1>
+    </heading>
+
+    <main>
+        <section id="latest-number">
+            <h1>Latest Number</h1>
+            <p id="latest-number-value">&nbsp;</p>
+        </section>
+
+        <section id="security-guarantees">
+            <h1>Security Guarantees</h1>
+
+            <ul>
+                <li class="complete"><span class="complete">Complete</span> Stake required to join</li>
+                <li class="complete"><span class="complete">Complete</span> Secure group member selection</li>
+                <li class="complete"><span class="complete">Complete</span> Secure distributed key generation</li>
+                <li class="incomplete"><span class="incomplete">Incomplete</span> On-chain signature verification</li>
+                <li class="incomplete"><span class="incomplete">Incomplete</span> Random number requests</li>
+                <li class="incomplete"><span class="incomplete">Incomplete</span> Stake slashing in effect</li>
+                <li class="incomplete"><span class="incomplete">Incomplete</span> Secure network layer</li>
+                <li class="incomplete"><span class="incomplete">Incomplete</span> Network fuzzing in effect</li>
+            </ul>
+        </section>
+    </main>
+</html>
