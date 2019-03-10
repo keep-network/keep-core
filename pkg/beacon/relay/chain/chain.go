@@ -24,6 +24,13 @@ type RelayEntryInterface interface {
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
+
+	// LatestServedRelayRequestID returns a promise for the value of the latest
+	// relay entry's associated request ID.
+	LatestServedRelayRequestID() (*big.Int, error)
+	// LatestServedRelayValue returns a promise for the value of the latest relay
+	// entry.
+	LatestServedRelayValue() (*big.Int, error)
 	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntryGenerated(
