@@ -119,6 +119,7 @@ plt.bar(x, S40)
 def create_cdf(nodes,ticket_distr):
     cdf = np.zeros(nodes)
     for node,ticketmax in enumerate(ticket_distr):
+        
         cdf[node]=sum(ticket_distr[0:node+1])
     return cdf
 
