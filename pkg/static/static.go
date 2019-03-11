@@ -13,12 +13,12 @@ import (
 
 // PrivateKey represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for attributability (signing).
-type PrivateKey = btcec.PrivateKey
+type PrivateKey = ecdsa.PrivateKey
 
 // PublicKey represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for attributability
 // (verification).
-type PublicKey = btcec.PublicKey
+type PublicKey = ecdsa.PublicKey
 
 // GenerateStaticKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
@@ -56,6 +56,5 @@ func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey)
 // PubKeyToEthAddress transforms a static PubKey into an Ethereum account
 // address, in a string format.
 func PubKeyToEthAddress(publicKey *PublicKey) string {
-	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
-	return crypto.PubkeyToAddress(*ecdsaKey).String()
+	return crypto.PubkeyToAddress(*publicKey).String()
 }
