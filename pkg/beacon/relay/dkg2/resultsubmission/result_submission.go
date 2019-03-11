@@ -7,10 +7,10 @@ import (
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
-// Signature ...
-type Signature []byte
-
-// SignDKGResult  // TODO: Write docs
+// SignDKGResult calculates hash of DKG result and member's signature over this
+// hash. It packs the hash and signature into a broadcast message.
+//
+// See Phase 13 of the protocol specification.
 func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	*DKGResultHashSignatureMessage,
 	error,
@@ -36,11 +36,25 @@ func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	}, nil
 }
 
-// VerifyDKGResultSignatures // TODO: Write docs
+// VerifyDKGResultSignatures verifies signatures received in messages from other
+// group members.
+//
+// It collects signatures supporting only the same DKG result hash as the one
+// preferred by the current member.
+//
+// Each member is allowed to broadcast only one signature over a preferred DKG
+// result hash. This function tracks members who delivered multiple signatures.
+// It returns the map of members' indices along with signatures of members who
+// delivered multiple signatures.
+//
+// See Phase 13 of the protocol specification.
 func (fm *ResultSigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
 ) (map[ParticipantIndex][]Signature, error) {
-	alreadyReceivedSignature := make([]ParticipantIndex, 0) // track if member already send signature
+	// alreadyReceivedSignature tracks if the other member already send a signature.
+	alreadyReceivedSignature := make([]ParticipantIndex, 0)
+	// accusations collects indices and signatures of members who delivered
+	// multiple signatures.
 	accusations := make(map[ParticipantIndex][]Signature)
 
 messagesCheck:

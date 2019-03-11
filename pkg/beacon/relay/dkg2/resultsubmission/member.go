@@ -18,12 +18,12 @@ type ResultSigningMember struct {
 
 	chainHandle chain.Handle
 
-	// Hash of DKG result preferred by the current participant.
-	dkgResultHash relayChain.DKGResultHash
-
 	// Keys used for signing the DKG result hash.
-	privateKey     ecdsa.PrivateKey
-	peerPublicKeys map[ParticipantIndex]ecdsa.PublicKey
+	privateKey             *ecdsa.PrivateKey
+	otherMembersPublicKeys map[ParticipantIndex]*ecdsa.PublicKey
+
+	// Hash of DKG result preferred by the current participant.
+	dkgResultHash relayChain.DKGResultHash // TODO: Rename to: preferredDKGResultHash
 
 	// Received valid signatures supporting the same DKG result as current's
 	// participants prefer. Contains also current's participant's signature.
