@@ -112,7 +112,7 @@ func TestSameKeyAsEthereum(t *testing.T) {
 	}
 }
 
-func TestNetworkPubKeyToAddress(t *testing.T) {
+func TestStaticPubKeyToAddress(t *testing.T) {
 	ethereumKey, err := generateEthereumKey()
 	if err != nil {
 		t.Fatal(err)
