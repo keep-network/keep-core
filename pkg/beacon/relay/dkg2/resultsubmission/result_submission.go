@@ -19,7 +19,7 @@ func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
-	fm.dkgResultHash = resultHash
+	fm.preferredDKGResultHash = resultHash
 
 	signature, err := fm.sign(resultHash)
 	if err != nil {
@@ -85,7 +85,7 @@ messagesCheck:
 
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
-		if message.resultHash != fm.dkgResultHash {
+		if message.resultHash != fm.preferredDKGResultHash {
 			fmt.Println("signature for result different than preferred")
 			continue
 		}

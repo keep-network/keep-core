@@ -96,7 +96,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	}
 
 	verifyingMember := members[0]
-	verifyingMember.dkgResultHash = dkgResultHash1
+	verifyingMember.preferredDKGResultHash = dkgResultHash1
 
 	member2 := members[1]
 	member3 := members[2]
