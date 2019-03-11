@@ -1,0 +1,68 @@
+:toc: macro
+
+= RFC 7: DKG voting update specification
+
+:icons: font
+:numbered:
+toc::[]
+
+== Proposal
+The document specifies an update to the voting procedure of KEEP Distributed Key
+Generation protocol.
+
+=== Goal
+The goal of this modification is to present simple to implement and an up to
+date version of the voting mechanism.
+
+== Specification
+
+=== Phase 13
+
+===== Off-chain
+Once the result has been determined, all participants evaluate the hash of their
+preferred result, sign the hash and broadcast the hash and a signature over it
+in the group broadcast channel. Each participant collects the signatures
+matching their preferred result, stores them along with the signers' member
+indices.
+
+If the signature of hash broadcasted off-chain is invalid, it should be rejected
+and not published on-chain.
+
+If multiple signatures from the same member on the same result are found, they
+should all be filtered-out before publishing on-chain.
+
+=== Phase 14
+
+===== On-chain
+When a participant becomes eligible to submit the result on-chain they submit if
+they have at least `H` signatures for that result (including their own). 
+
+`P_1` is always eligible to submit the result. `P_2` becomes eligible after
+`T_dkg + T_step` and remains eligible until the result is accepted by the chain.
+In other words, `P_n` becomes eligible after`T_dkg + (n-1) * T_step` and remains
+eligible until the result is accepted by the chain. If `P_1` is late and `P_2`
+tries to submit, whichever gets mined first wins and subsequent submissions are
+disregarded immediately to avoid burdening the loser with excess gas fees
+
+When the result is submitted on-chain along with the signatures, the contract
+checks that there are at least `H` signatures or more, and that each signature
+is valid for the submitted result and the corresponding member ID. `H` is the
+honest majority - a constant for the given group size. Submissions containing
+duplicate signatures on the same result from the same member are rejected.
+
+If the above checks pass, the result is considered canonical for the group. All
+other group members should abort publishing their results and no new result
+submissions will be accepted by the chain.
+
+If the above checks do not pass, the result is rejected.
+
+If the result has been rejected and `P_2` became eligible, `P_2` can submit its
+result. Same checks are applied as for `P_1`. 
+
+If no canonical result has been published until `T_dkg + N * T_step`, where `N`
+is the group size, DKG operation is marked as failed.
+
+[bibliography]
+== Related Links
+- https://github.com/keep-network/keep-core/issues/625
+- https://github.com/keep-network/keep-core/issues/628
