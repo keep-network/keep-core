@@ -116,8 +116,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	var tests = map[string]struct {
 		messages []*DKGResultHashSignatureMessage
 
-		expectedReceivedValidSignatures map[ParticipantIndex]Signature
-		expectedAccusations             map[ParticipantIndex][]Signature
+		expectedReceivedValidSignatures map[MemberIndex]Signature
+		expectedAccusations             map[MemberIndex][]Signature
 		expectedError                   error
 	}{
 		"received valid messages with signatures for the preferred result": {
@@ -133,11 +133,11 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature311,
 				},
 			},
-			expectedReceivedValidSignatures: map[ParticipantIndex]Signature{
+			expectedReceivedValidSignatures: map[MemberIndex]Signature{
 				member2.index: signature21,
 				member3.index: signature311,
 			},
-			expectedAccusations: map[ParticipantIndex][]Signature{},
+			expectedAccusations: map[MemberIndex][]Signature{},
 		},
 		"received messages from other member with duplicated signatures for the preferred result": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -157,8 +157,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature311,
 				},
 			},
-			expectedReceivedValidSignatures: map[ParticipantIndex]Signature{},
-			expectedAccusations: map[ParticipantIndex][]Signature{
+			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
+			expectedAccusations: map[MemberIndex][]Signature{
 				member3.index: []Signature{signature311, signature312, signature311},
 			},
 		},
@@ -175,8 +175,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature421,
 				},
 			},
-			expectedReceivedValidSignatures: map[ParticipantIndex]Signature{},
-			expectedAccusations: map[ParticipantIndex][]Signature{
+			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
+			expectedAccusations: map[MemberIndex][]Signature{
 				member4.index: []Signature{signature411, signature421},
 			},
 		},
@@ -188,8 +188,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature52,
 				},
 			},
-			expectedReceivedValidSignatures: map[ParticipantIndex]Signature{},
-			expectedAccusations:             map[ParticipantIndex][]Signature{},
+			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
+			expectedAccusations:             map[MemberIndex][]Signature{},
 		},
 		"received a message from other member with invalid signature": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -199,8 +199,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   Signature{99},
 				},
 			},
-			expectedReceivedValidSignatures: map[ParticipantIndex]Signature{},
-			expectedAccusations:             map[ParticipantIndex][]Signature{},
+			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
+			expectedAccusations:             map[MemberIndex][]Signature{},
 		},
 		"mixed cases with received valid signatures and duplicated signatures": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -235,10 +235,10 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature52,
 				},
 			},
-			expectedReceivedValidSignatures: map[ParticipantIndex]Signature{
+			expectedReceivedValidSignatures: map[MemberIndex]Signature{
 				member2.index: signature21,
 			},
-			expectedAccusations: map[ParticipantIndex][]Signature{
+			expectedAccusations: map[MemberIndex][]Signature{
 				member3.index: []Signature{signature311, signature312},
 				member4.index: []Signature{signature411, signature421},
 			},
@@ -247,7 +247,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			verifyingMember.validResultSignatures = make(map[ParticipantIndex]Signature)
+			verifyingMember.validResultSignatures = make(map[MemberIndex]Signature)
 
 			actualAccusations, err := verifyingMember.VerifyDKGResultSignatures(test.messages)
 
@@ -291,20 +291,20 @@ func initializeResultSigningMembers(groupSize, threshold int, minimumStake *big.
 
 	members := make([]*ResultSigningMember, 0)
 	for i := 1; i <= groupSize; i++ {
-		peerMemberPublicKeys := make(map[ParticipantIndex]*ecdsa.PublicKey)
+		peerMemberPublicKeys := make(map[MemberIndex]*ecdsa.PublicKey)
 
 		for j := 1; j <= groupSize; j++ {
 			if i != j {
-				peerMemberPublicKeys[ParticipantIndex(j)] = &privateKeys[j].PublicKey
+				peerMemberPublicKeys[MemberIndex(j)] = &privateKeys[j].PublicKey
 			}
 		}
 
 		members = append(members, &ResultSigningMember{
-			index:                 ParticipantIndex(i),
-			chainHandle:           chainHandle,
-			privateKey:            privateKeys[i],
-			peerPublicKeys:        peerMemberPublicKeys,
-			validResultSignatures: make(map[ParticipantIndex]Signature),
+			index:                  MemberIndex(i),
+			chainHandle:            chainHandle,
+			privateKey:             privateKeys[i],
+			otherMembersPublicKeys: peerMemberPublicKeys,
+			validResultSignatures:  make(map[MemberIndex]Signature),
 		})
 	}
 

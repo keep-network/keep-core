@@ -50,12 +50,12 @@ func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 // See Phase 13 of the protocol specification.
 func (fm *ResultSigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
-) (map[ParticipantIndex][]Signature, error) {
+) (map[MemberIndex][]Signature, error) {
 	// alreadyReceivedSignature tracks if the other member already send a signature.
-	alreadyReceivedSignature := make([]ParticipantIndex, 0)
+	alreadyReceivedSignature := make([]MemberIndex, 0)
 	// accusations collects indices and signatures of members who delivered
 	// multiple signatures.
-	accusations := make(map[ParticipantIndex][]Signature)
+	accusations := make(map[MemberIndex][]Signature)
 
 messagesCheck:
 	for _, message := range messages {
