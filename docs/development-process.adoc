@@ -74,9 +74,10 @@ should invest some time in preparation for the meeting by thoroughly reviewing
 selected items and writing down questions.
 
 Estimates are provided by team members and should include enough development 
-effort to meet the definition of done for the given item. During the meeting 
-each item has one or more team members assigned depending on the estimate and 
-individual team member's workload. 
+effort to meet the definition of done for the given item. At the end of the 
+planning meeting, each individual item should have at least one team member 
+assigned, but accountability for completion of the items in the milestone 
+belongs to the whole team.
 
 By the end of the engineering planning meeting, each team member should be able 
 to explain how they intend to work to implement the selected items. Individual 
