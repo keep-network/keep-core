@@ -33,11 +33,11 @@ type localChain struct {
 	// execution.
 	submittedResults map[*big.Int][]*relaychain.DKGResult
 
-	handlerMutex                 sync.Mutex
-	relayEntryHandlers           map[int]func(entry *event.Entry)
-	relayRequestHandlers         map[int]func(request *event.Request)
-	groupRegisteredHandlers      map[int]func(groupRegistration *event.GroupRegistration)
-	dkgResultPublicationHandlers map[int]func(dkgResultPublication *event.DKGResultPublication)
+	handlerMutex             sync.Mutex
+	relayEntryHandlers       map[int]func(entry *event.Entry)
+	relayRequestHandlers     map[int]func(request *event.Request)
+	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
+	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
 
 	requestID   int64
 	latestValue *big.Int
@@ -276,17 +276,17 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
 		},
-		groupRegistrationsMutex:      sync.Mutex{},
-		groupRelayEntries:            make(map[string]*big.Int),
-		groupRegistrations:           make(map[string][]byte),
-		submittedResults:             make(map[*big.Int][]*relaychain.DKGResult),
-		relayEntryHandlers:           make(map[int]func(request *event.Entry)),
-		relayRequestHandlers:         make(map[int]func(request *event.Request)),
-		groupRegisteredHandlers:      make(map[int]func(groupRegistration *event.GroupRegistration)),
-		dkgResultPublicationHandlers: make(map[int]func(dkgResultPublication *event.DKGResultPublication)),
-		blockCounter:                 bc,
-		stakeMonitor:                 NewStakeMonitor(minimumStake),
-		tickets:                      make([]*relaychain.Ticket, 0),
+		groupRegistrationsMutex:  sync.Mutex{},
+		groupRelayEntries:        make(map[string]*big.Int),
+		groupRegistrations:       make(map[string][]byte),
+		submittedResults:         make(map[*big.Int][]*relaychain.DKGResult),
+		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
+		relayRequestHandlers:     make(map[int]func(request *event.Request)),
+		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
+		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
+		blockCounter:             bc,
+		stakeMonitor:             NewStakeMonitor(minimumStake),
+		tickets:                  make([]*relaychain.Ticket, 0),
 	}
 }
 
@@ -346,7 +346,7 @@ func (c *localChain) RequestRelayEntry(
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
-func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
+func (c *localChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
@@ -355,12 +355,15 @@ func (c *localChain) IsDKGResultPublished(requestID *big.Int) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	requestID *big.Int, resultToPublish *relaychain.DKGResult,
-) *async.DKGResultPublicationPromise {
+	requestID *big.Int,
+	participantIndex uint32,
+	resultToPublish *relaychain.DKGResult,
+	signatures map[uint32][]byte,
+) *async.DKGResultSubmissionPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	dkgResultPublicationPromise := &async.DKGResultPublicationPromise{}
+	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
 	for publishedRequestID, publishedResults := range c.submittedResults {
 		if publishedRequestID.Cmp(requestID) == 0 {
@@ -375,14 +378,14 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
 
-	dkgResultPublicationEvent := &event.DKGResultPublication{
+	dkgResultPublicationEvent := &event.DKGResultSubmission{
 		RequestID:      requestID,
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
 	}
 
 	c.handlerMutex.Lock()
-	for _, handler := range c.dkgResultPublicationHandlers {
-		go func(handler func(*event.DKGResultPublication), dkgResultPublication *event.DKGResultPublication) {
+	for _, handler := range c.resultSubmissionHandlers {
+		go func(handler func(*event.DKGResultSubmission), dkgResultPublication *event.DKGResultSubmission) {
 			handler(dkgResultPublicationEvent)
 		}(handler, dkgResultPublicationEvent)
 	}
@@ -396,20 +399,20 @@ func (c *localChain) SubmitDKGResult(
 	return dkgResultPublicationPromise
 }
 
-func (c *localChain) OnDKGResultPublished(
-	handler func(dkgResultPublication *event.DKGResultPublication),
+func (c *localChain) OnDKGResultSubmitted(
+	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
 	handlerID := rand.Int()
-	c.dkgResultPublicationHandlers[handlerID] = handler
+	c.resultSubmissionHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
 		c.handlerMutex.Lock()
 		defer c.handlerMutex.Unlock()
 
-		delete(c.dkgResultPublicationHandlers, handlerID)
+		delete(c.resultSubmissionHandlers, handlerID)
 	}), nil
 }
 
@@ -423,31 +426,4 @@ func (c *localChain) CalculateDKGResultHash(
 	)
 
 	return dkgResultHash, nil
-}
-
-// GetDKGResultsVotes returns a map containing number of votes for each DKG
-// result hash registered under specific request ID.
-func (c *localChain) GetDKGResultsVotes(
-	requestID *big.Int,
-) relaychain.DKGResultsVotes {
-	panic("function not implemented") // TODO: Implement function
-}
-
-// VoteOnDKGResult registers a vote for the DKG result hash.
-func (c *localChain) VoteOnDKGResult(
-	requestID *big.Int,
-	memberIndex int,
-	dkgResultHash relaychain.DKGResultHash,
-) *async.DKGResultVotePromise {
-	dkgResultVotePromise := &async.DKGResultVotePromise{}
-	dkgResultVotePromise.Fail(fmt.Errorf("function not implemented")) // TODO: Implement function
-	return dkgResultVotePromise
-}
-
-// OnDKGResultVote registers a callback that is invoked when an on-chain
-// notification of a new, valid vote is seen.
-func (c *localChain) OnDKGResultVote(
-	func(dkgResultVote *event.DKGResultVote),
-) (subscription.EventSubscription, error) {
-	panic("function not implemented") // TODO: Implement function
 }
