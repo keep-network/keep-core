@@ -58,6 +58,9 @@ estimating, breaking down, and discussing all the technical issues related to
 backlog product items. Engineering team consist of all verticals involved in 
 the software development process: research, devops, and developers.
 
+Everyone is welcome to join the meeting but only purely technical subjects
+are discussed.
+
 Engineering planning meeting is time-boxed to one hour.
 
 At the beginning of meeting, there is a 10-minutes time-box for technical 
