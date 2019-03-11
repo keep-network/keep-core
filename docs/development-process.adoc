@@ -14,7 +14,7 @@ a transparent, adaptable and predictable development process.
 
 Sprint is a time-box of one week during which a product increment is created. 
 Product increment is a sum of all items completed within the sprint by the team. 
-Each sprint has a goal of what is to be built, and a plan guiding the build 
+Each sprint has a goal of what is to be built, and a plan guiding the building 
 process. A new sprint starts immediately after the conclusion of the previous 
 sprint. The scope of a sprint is identified during the sprint planning meeting. 
 Individual team members may have a specialized area of focus but they all 
@@ -44,12 +44,12 @@ to tell what in their opinion went particularly well and what could be improved.
 
 === New sprint planning
 
-The input to the meeting is product backlog, latest product increment, and any 
-other prior planning work performed by specialized verticals independently.
-The entire team collaborates on understanding the work that is going to be 
-performed in the next sprint. Sprint planning should result in crafting a sprint 
-goal which is an objective to be met by the implementation of items in the 
-sprint. 
+The input to new sprint planning is product backlog, latest product increment, 
+and any other prior planning work performed by specialized verticals 
+independently. The entire team collaborates on understanding the work that is 
+going to be performed in the next sprint. Sprint planning should result in 
+crafting a sprint goal which is an objective to be met by the implementation of 
+items in the sprint. 
 
 == Engineering planning meeting
 
@@ -76,8 +76,8 @@ selected items and writing down questions.
 Estimates are provided by team members and should include enough development 
 effort to meet the definition of done for the given item. At the end of the 
 planning meeting, each individual item should have at least one team member 
-assigned, but accountability for completion of the items in the milestone 
-belongs to the whole team.
+assigned, but accountability for completion of the items in the sprint belongs 
+to the whole team.
 
 By the end of the engineering planning meeting, each team member should be able 
 to explain how they intend to work to implement the selected items. Individual 
@@ -87,7 +87,7 @@ tasks may be clarified and re-organized later as more is learned.
 
 The goal of the daily standup is to optimize team performance and collaboration. 
 The target audience of daily standup is not primarily the manager; instead, it 
-is a way for the other team members to track milestone progress, identify 
+is a way for the other team members to track sprint progress, identify 
 impediments, and synchronize about required development work.
 
 Everyone should answer three questions for a daily standup:
@@ -143,8 +143,9 @@ understanding of what “Done” means. For a milestone item to be considered as
 We use GitHub to capture backlog items, plan development team work and track 
 progress on sprint and milestone. 
 
-Each backlog item is a separate GitHub issue. Each Milestone has a separate 
-milestone board under Keep Network project. All backlog items are ordered under 
-a separate backlog project in the Keep Network project. 
+Each item is a separate GitHub issue. Each sprint has a separate board
+under the Keep Network project. Each milestone has a separate milestone board 
+under Keep Network project. All backlog items are ordered under a separate 
+backlog project in the Keep Network project. 
 
 All pull requests implementing sprint items reference appropriate issue. 
