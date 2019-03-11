@@ -1,0 +1,195 @@
+== Goals
+The pricing and request model needs to serve
+the overall design goals of the system.
+
+The most important goal is _beacon integrity_:
+no requester should be able to ruin things for everyone.
+On the other hand,
+resistance to _requester manipulation_ is actively undesirable;
+a nefarious requester should be able to tease out
+more or less arbitrary outputs from the beacon,
+without leaving evidence of their shenanigans.
+The beacon should also be able to _capture_ some of the value it creates,
+by incentivizing high bids.
+
+=== Beacon integrity
+Beacon integrity means
+that the system needs to tolerate adversarial behavior from individual actors
+without compromising the value of the beacon to other users.
+
+An example of integrity failure would be
+if there was some way to "lock" the beacon
+into only using some specific group or groups for signing entries.
+If entries were produced as
+`entry = groups.choose(parentEntry).sign(parentEntry, requestSeed)`
+it would be possible to select the _request seed_
+of a high-bidding request
+so that all subsequent entries would
+use a group controlled by the attacker.
+
+In general,
+beacon integrity requires that output controlled by one user
+should not alone dictate the input for another.
+This is especially important in selecting groups.
+
+=== Requester manipulateability
+The beacon should not try to protect requesters from themselves.
+It is desirable that a nefarious requester can
+manipulate the beacon into producing outputs controlled by the requester,
+without leaving evidence of it.
+
+Preventing output manipulation entirely would require
+a complex scheme with a commit-reveal operation.
+This would make the system slower and more difficult to use
+for everyone,
+regardless of their need for non-manipulateable outputs.
+Nonetheless, the users who desire a trust-free scheme can have one,
+implemented on top of the manipulateable version.
+It would not be possible to turn a non-manipulateable system manipulateable.
+
+Output manipulateability implies
+that the real choice of signing group and signing input
+lie entirely in the requester.
+
+==== Manipulating signer selection
+It should be possible to make a request
+that reliably leads into one specific group being selected
+for producing the corresponding entry.
+This ensures that a requester who controls one single group
+can front-run any entries they request.
+
+To achieve this,
+the input for choosing the signing group
+should consist of values
+that are known at the time the request is placed,
+and at least one value should be freely chosen by the requester.
+Because there is a relatively small number of possible signing groups,
+it is easy to calculate an input
+which results in the desired group being selected.
+
+==== Manipulating the signature
+When the requester's favorite group is chosen to sign the entry,
+the resulting signature should be under the requester's control
+to the greatest possible extent.
+
+Because the BLS signature scheme is fully deterministic,
+this requires that the requester can select the input freely.
+It is not possible to calculate "backwards"
+from a desired output to the required input,
+but brute-force attacks should be as easy as possible.
+
+This implies that it is desirable for the input for the signature
+to be independent of the input for the signing group.
+
+If the same seed value is used for both,
+the number of attempts required to brute-force a favorable outcome
+is determined by _1 / (P(favorable group) * P(favorable signature))_.
+If the seed values are independent,
+only _1 / P(favorable group) + 1 / P(favorable signature)_
+attempts are required.
+
+However, in either case
+the number of pairing calculations required
+is _1 / P(favorable signature)_.
+
+==== Reducing manipulateability
+The goal of beacon integrity already covers the case
+of _someone else_ trying to mess with a requester's entries.
+
+For most purposes it is enough
+that the requester can trust the output to be pseudorandom.
+It is not necessary to exercise the option
+of manipulating the signing group choice,
+and a requester who does not control a single group
+would not be able to frontrun the entry no matter what.
+A requester who has generated the seed values honestly
+could not have unduly influenced the output.
+
+However, in some cases
+the integrity of the process
+needs to be demonstrated to third parties.
+The requester can be prevented from manipulating the beacon output
+by generating the seed values transparently
+in a manner which incorporates information from many different sources.
+A commit-reveal scheme should be used
+to prevent any single source from influencing the outcome.
+
+For example,
+the requester could select a hidden value _s_,
+and publish a commitment to it.
+A parent entry would be selected after the commitment had been mined,
+and finally the hash of a new block
+would be combined with the revealed value _s_ to provide the input.
+This ensures that the requester could not have manipulated the process
+unless they front-ran the parent entry
+and were also able to manipulate the mining of the block.
+For especially high-assurance purposes,
+an arbitrary level of hardening could be achieved.
+
+=== Capture of value
+The beacon should ideally be able to turn a profit
+independent of any applications relying on it.
+
+Because the beacon produces random numbers,
+capturing value is somewhat challenging;
+a freerider can simply wait for someone else to request an entry,
+and combine it with their own salt.
+It appears safe to conjecture
+that there is no way to communicate entropy over a public channel
+without the transcript being usable
+as a source of an equal amount of entropy.
+Thus any imaginable DRM scheme would be defeated
+by the simple application of a hash function.
+The inability to render the entropy itself unusable to freeriders
+means that other solutions need to be sought.
+
+==== Crowdfunding
+If the time between entries is high,
+the beacon acts as a textbook public good.
+Many actors would benefit from a reliable source of on-chain entropy,
+but funding the beacon presents a collective action problem.
+An actor will fund the beacon by an amount _X_
+if it leads to a marginal reduction in time to the next output
+which is worth _Y > X_ to the actor.
+
+Because there are few actors
+valuing the existence of on-chain randomness enough,
+different actors should be able to pool their contributions.
+An on-chain assurance contract could manage the crowdfunding.
+There is no need to implement such functionality
+in the pricing and request scheme itself.
+
+==== Callbacks
+Autonomous use of the beacon
+provides another opportunity to capture value.
+A requester-manipulateable scheme without commit-reveal
+can be used by any smart contract
+to generate randomness without active human input.
+A request could include a callback,
+and when the beacon entry is produced
+it would be given as input to the callback.
+
+Providing a built-in facility for callbacks
+has many desirable characteristics.
+Limiting each entry to one callback
+is both simple from a design perspective,
+and a source of scarcity.
+
+This scarcity can be further leveraged
+by incentivizing high bids.
+If multiple entries are received in a given timespan,
+the value of the top entry relative to the others
+can be increased by reducing the speed, reliability or integrity
+of the lower-bidder entries.
+
+A reduction in speed and reliability can be achieved
+by making lower-ranked entries depend on the higher-ranked ones.
+If an entry cannot be produced
+before all higher-ranked entries are mined,
+the best-case delay is a linear number of blocks
+and any disruptions to earlier entries compound onto later ones.
+
+Reducing the integrity of lower-ranked entries is also possible,
+but has not been thoroughly investigated.
+Methods to achieve this would inevitably conflict
+with the goal of requester manipulateability.
