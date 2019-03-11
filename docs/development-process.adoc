@@ -1,93 +1,117 @@
 :toc: macro
 
-= KEEP Development Process
+= Keep Development Process
 
 :icons: font
 :numbered:
 toc::[]
 
-In this document, we describe the Keep development process from an organizational 
-perspective. We identify events and artifacts allowing for a transparent, 
-adaptable and predictable development process.
+In this document, we describe the Keep development process from an  
+organizational perspective. We identify events and artifacts allowing for 
+a transparent, adaptable and predictable development process.
+
+== Sprint
+
+Sprint is a time-box of one week during which a product increment is created. 
+Product increment is a sum of all items completed within the sprint by the team. 
+Each sprint has a goal of what is to be built, and a plan guiding the build 
+process. A new sprint starts immediately after the conclusion of the previous 
+sprint. The scope of a sprint is identified during the sprint planning meeting. 
+Individual team members may have a specialized area of focus but they all 
+cooperate on the implementation of sprint items and accountability for reaching 
+the sprint goal belongs to the team as a whole.
 
 == Milestone
 
 Milestone is a box of items identifying releasable product increment with no 
-more than one-month horizon of development effort. New Milestone starts 
-immediately after the conclusion of the previous Milestone. Milestone scope is 
-identified during the Planning Meeting and is a plan of work for the Development 
-Team for the next couple of weeks. Individual team members may have a 
-specialized area of focus but they all cooperate on the implementation of 
-Milestone items and accountability for delivering the Milestone belongs to the 
-team as a whole. Each Milestone has an expected delivery date assigned. Expected 
-delivery date is evaluated from estimates provided by Development Team members 
-during the Planning Meeting. 
+more than one-month horizon of development effort. Milestone contains items from 
+one or more sprints. Each milestone has an expected delivery date assigned, 
+evaluated from estimates. 
 
-== Planning Meeting
+== Sprint planning meeting
 
-The Planning Meeting is a time-boxed event of 45 minutes happening at the 
-beginning of each new Milestone. Before the Planning Meeting, Tech Lead sends a 
-list of items from the top of the backlog. Items should be presented in a clear 
-way allowing the Development Team to understand items to the level needed. Each 
-Development Team member should invest some time in preparing to Planning 
-Meeting: reviewing items, making sure they are well-understood and preparing 
-questions if needed.
+The sprint planning meeting is a time-boxed event of one hour happening at the 
+beginning of each new sprint where all verticals, such as growth, design and 
+engineering identify work planned for the next sprint.
 
-
-Planning Meeting consists of two parts: Retrospective and New Milestone Planning.
+Planning meeting consists of two parts: retrospective and new sprint planning.
 
 === Retrospective
 
 Retrospective part is time-boxed to a maximum of 15 minutes. During this part, 
-the Development Team inspects how the previous Milestone went. Every Development 
-Team member has a chance to tell what in their opinion went particularly well 
-and what could be improved. 
+the Keep team inspects how the previous sprint went. Every  member has a chance 
+to tell what in their opinion went particularly well and what could be improved. 
 
-=== New Milestone Planning
+=== New sprint planning
 
-On the beginning of the New Milestone Planning part, Tech Lead presents items 
-from the top of the backlog and Development Team works on providing estimates to 
-those items and splitting work on them. The provided estimate should include 
-enough development effort to meet the definition of Done for the given item. 
-Development Team members are assigned to individual items during the Planning 
-Meeting but the accountability belongs to the entire team. Work on individual 
-items is split into smaller tasks during the Planning Meeting, enough to start 
-work on them immediately. Tasks may be clarified and re-organized later as more 
-is learned.
+The input to the meeting is product backlog, latest product increment, and any 
+other prior planning work performed by specialized verticals independently.
+The entire team collaborates on understanding the work that is going to be 
+performed in the next sprint. Sprint planning should result in crafting a sprint 
+goal which is an objective to be met by the implementation of items in the 
+sprint. 
+
+== Engineering planning meeting
+
+Before each new sprint planning, engineering team meets to collaborate on 
+estimating, breaking down, and discussing all the technical issues related to 
+backlog product items. Engineering team consist of all verticals involved in 
+the software development process: research, devops, and developers.
+
+Engineering planning meeting is time-boxed to one hour.
+
+At the beginning of meeting, there is a 10-minutes time-box for technical 
+retrospective.
+
+Before the meeting, tech lead sends to all participants a list of items from the 
+top of the backlog that are going to be discussed during the meeting. 
+Items should be presented in a clear way allowing the development team to 
+understand all the details to the level needed. Each development team member 
+should invest some time in preparation for the meeting by thoroughly reviewing 
+selected items and writing down questions.
+
+Estimates are provided by team members and should include enough development 
+effort to meet the definition of done for the given item. During the meeting 
+each item has one or more team members assigned depending on the estimate and 
+individual team member's workload. 
+
+By the end of the engineering planning meeting, each team member should be able 
+to explain how they intend to work to implement the selected items. Individual 
+tasks may be clarified and re-organized later as more is learned.
 
 == Daily Standup
 
-The goal of the Daily Standup is to optimize team performance and collaboration. 
-The team uses Daily Standups to track Milestone progress, identify impediments 
-and synchronize about required development work. Daily Standup should not be 
-considered as a management report duty. 
+The goal of the daily standup is to optimize team performance and collaboration. 
+The target audience of daily standup is not primarily the manager; instead, it 
+is a way for the other team members to track milestone progress, identify 
+impediments, and synchronize about required development work.
 
-Everyone should answer three questions for a Daily Standup:
+Everyone should answer three questions for a daily standup:
 
-1. What did I do since the last Daily Standup?
-2. What will I do today to progress work towards achieving the Milestone goal? 
+1. What did I do since the last daily standup?
+2. What will I do today to progress work towards achieving the sprint goal? 
 3. Are there any blockers that prevent me from progressing the work?
 
-Development Team members should be specific and provide enough details so that 
+Development team members should be specific and provide enough details so that 
 other team members know the current status, and if they work on the same 
 item, what should they do next and in what order.
 
-=== Example of a good Daily Standup message
+=== Example of a good daily standup
 
 *Yesterday*
 
-* Conflict resolution phase. 
-** Opened PR with a stub interface for the on-chain part: <link>. 
+* DKG result conflict resolution phase
+** Opened PR with a stub interface for the on-chain part: <link>,
 ** Did initial work on off-chain voting event handling code, just local chain 
 stub implementation, no PR yet.
 
 *Today*
 
-* Continuing work on the conflict resolution phase
+* Continuing work on the DKG result conflict resolution phase
 ** I received a review on my stub on-chain interface, want to address all 
-comments. Should be ready today for another review round.
-** I want to finish ethereum off-chain voting event handling code and open 
-PR today. It will containg local chain stub implementation as well. 
+comments. Should be ready today for another review round,
+** I want to finish Ethereum off-chain voting event handling code and open 
+PR today. It will contain local chain stub implementation as well. 
 Should be ready for review at the end of the day.
 
 *Blockers*
@@ -98,26 +122,25 @@ to talk with someone about it.
 
 == Definition of Done
 
-When Milestone item is described as “Done” everyone must share the same 
+When sprint item is described as “Done” everyone must share the same 
 understanding of what “Done” means. For a milestone item to be considered as 
 “Done”, the following requirements must be met: 
 
+* The implemented code has been reviewed and approved by at least one other development team member
 * Code merged to `master` branch
-* The feature described by the item working as expected
-* The implemented code is of high quality, no technical debt other than agreed 
-in the item’s description 
-* The implemented code has been reviewed and approved by at least one other 
-Development Team member
+* The feature described by the item works as expected
+* The code is implemented according to the guidelines
+* No technical debt other than agreed in the item’s description 
 * Tests implemented and passing
 * Item does not break other existing functionalities
 
-== Work Tracking
+== Work tracking
 
-We use GitHub to capture backlog items, plan Development Team work and track 
-progress on Milestone. 
+We use GitHub to capture backlog items, plan development team work and track 
+progress on sprint and milestone. 
 
 Each backlog item is a separate GitHub issue. Each Milestone has a separate 
-project board under Keep Network project. All backlog items are ordered under 
-a separate Backlog project in Keep Network project. 
+milestone board under Keep Network project. All backlog items are ordered under 
+a separate backlog project in the Keep Network project. 
 
-All Pull Requests implementing Milestone items reference appropriate issue. 
+All pull requests implementing sprint items reference appropriate issue. 
