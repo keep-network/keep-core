@@ -6,7 +6,7 @@
 :numbered:
 toc::[]
 
-In this document, we describe KEEP development process from an organizational 
+In this document, we describe the Keep development process from an organizational 
 perspective. We identify events and artifacts allowing for a transparent, 
 adaptable and predictable development process.
 
