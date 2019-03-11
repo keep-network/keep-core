@@ -26,5 +26,5 @@ type ResultSigningMember struct {
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Received valid signatures supporting the same DKG result as current's
 	// participants prefer. Contains also current's participant's signature.
-	validResultSignatures map[MemberIndex]Signature // TODO: Rename: receivedValidResultSignatures
+	receivedValidResultSignatures map[MemberIndex]Signature
 }

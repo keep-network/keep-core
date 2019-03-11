@@ -27,7 +27,7 @@ func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	}
 
 	// Register self signature.
-	fm.validResultSignatures[fm.index] = signature
+	fm.receivedValidResultSignatures[fm.index] = signature
 
 	return &DKGResultHashSignatureMessage{
 		senderIndex: fm.index,
@@ -64,13 +64,13 @@ messagesCheck:
 			if message.senderIndex == alreadySignedIndex {
 				fmt.Println("message from member who already send a message")
 
-				if signature, ok := fm.validResultSignatures[message.senderIndex]; ok {
+				if signature, ok := fm.receivedValidResultSignatures[message.senderIndex]; ok {
 					accusations[message.senderIndex] = append(
 						accusations[message.senderIndex],
 						signature,
 					)
 
-					delete(fm.validResultSignatures, message.senderIndex)
+					delete(fm.receivedValidResultSignatures, message.senderIndex)
 				}
 
 				accusations[message.senderIndex] = append(
@@ -91,13 +91,17 @@ messagesCheck:
 		}
 
 		// Signature is invalid.
-		if !fm.verifySignature(message.senderIndex, message.resultHash, message.signature) {
+		if !fm.verifySignature(
+			message.senderIndex,
+			message.resultHash,
+			message.signature,
+		) {
 			fmt.Fprintf(os.Stderr, "invalid signature in message: [%+v]", message)
 			// TODO: Should we accuse the member who send invalid signature?
 			continue
 		}
 
-		fm.validResultSignatures[message.senderIndex] = message.signature
+		fm.receivedValidResultSignatures[message.senderIndex] = message.signature
 	}
 
 	return accusations, nil

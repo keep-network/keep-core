@@ -56,8 +56,12 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 			messages = append(messages, message)
 		}
 
-		if len(currentMember.validResultSignatures) != 1 {
-			t.Errorf("\nexpected: %v\nactual:   %v\n", 1, len(currentMember.validResultSignatures))
+		if len(currentMember.receivedValidResultSignatures) != 1 {
+			t.Errorf(
+				"\nexpected: %v\nactual:   %v\n",
+				1,
+				len(currentMember.receivedValidResultSignatures),
+			)
 		}
 	}
 
@@ -66,8 +70,12 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(currentMember.validResultSignatures) != groupSize {
-		t.Errorf("\nexpected: %v\nactual:   %v\n", groupSize, len(currentMember.validResultSignatures))
+	if len(currentMember.receivedValidResultSignatures) != groupSize {
+		t.Errorf(
+			"\nexpected: %v\nactual:   %v\n",
+			groupSize,
+			len(currentMember.receivedValidResultSignatures),
+		)
 	}
 
 	if len(actualAccusations) != 0 {
@@ -75,9 +83,13 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	}
 
 	for _, message := range messages {
-		if !bytes.Equal(currentMember.validResultSignatures[message.senderIndex],
+		if !bytes.Equal(currentMember.receivedValidResultSignatures[message.senderIndex],
 			message.signature) {
-			t.Errorf("\nexpected: %x\nactual:   %x\n", message.signature, currentMember.validResultSignatures[message.senderIndex])
+			t.Errorf(
+				"\nexpected: %x\nactual:   %x\n",
+				message.signature,
+				currentMember.receivedValidResultSignatures[message.senderIndex],
+			)
 		}
 	}
 }
@@ -247,7 +259,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			verifyingMember.validResultSignatures = make(map[MemberIndex]Signature)
+			verifyingMember.receivedValidResultSignatures = make(map[MemberIndex]Signature)
 
 			actualAccusations, err := verifyingMember.VerifyDKGResultSignatures(test.messages)
 
@@ -264,13 +276,13 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(
-				verifyingMember.validResultSignatures,
+				verifyingMember.receivedValidResultSignatures,
 				test.expectedReceivedValidSignatures,
 			) {
 				t.Errorf(
 					"\nexpected: %v\nactual:   %v\n",
 					test.expectedReceivedValidSignatures,
-					verifyingMember.validResultSignatures,
+					verifyingMember.receivedValidResultSignatures,
 				)
 			}
 		})
@@ -300,11 +312,11 @@ func initializeResultSigningMembers(groupSize, threshold int, minimumStake *big.
 		}
 
 		members = append(members, &ResultSigningMember{
-			index:                  MemberIndex(i),
-			chainHandle:            chainHandle,
-			privateKey:             privateKeys[i],
-			otherMembersPublicKeys: peerMemberPublicKeys,
-			validResultSignatures:  make(map[MemberIndex]Signature),
+			index:                         MemberIndex(i),
+			chainHandle:                   chainHandle,
+			privateKey:                    privateKeys[i],
+			otherMembersPublicKeys:        peerMemberPublicKeys,
+			receivedValidResultSignatures: make(map[MemberIndex]Signature),
 		})
 	}
 
