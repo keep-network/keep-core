@@ -85,6 +85,8 @@ func VerifySignature(
 		return false
 	}
 
+	// `crypto.VerifySignature` function require signature in 64-byte [R || S]
+	// format. We need to truncate our signature to 64-bytes.
 	return crypto.VerifySignature(
 		secp256k1.S256().Marshal(publicKey.X, publicKey.Y),
 		hash[:],
