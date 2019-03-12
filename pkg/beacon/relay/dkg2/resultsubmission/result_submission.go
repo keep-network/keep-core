@@ -59,6 +59,11 @@ func (fm *ResultSigningMember) VerifyDKGResultSignatures(
 
 messagesCheck:
 	for _, message := range messages {
+		// Check if message from self.
+		if message.senderIndex == fm.index {
+			continue
+		}
+
 		// Check if sender sent multiple signatures.
 		for _, alreadySignedIndex := range alreadyReceivedSignature {
 			if message.senderIndex == alreadySignedIndex {
