@@ -31,10 +31,10 @@ func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivateKey, *NetworkPubli
 }
 
 // StaticKeyToNetworkKey transforms a static ECDSA key into the format supported
-// by the network layer. Because all curve parameters of
-// secp256k1 curve defined by `go-ethereum` and all curve parameters of
-// secp256k1 curve defined by `btcsuite` used by `lipb2b` under the hood are
-// identical, we can simply rewrite the private key.
+// by the network layer. Because all curve parameters of the secp256k1 curve
+// defined by `go-ethereum` and all curve parameters of secp256k1 curve defined
+// by `btcsuite` used by `lipb2b` under the hood are identical, we can simply
+// rewrite the private key.
 //
 // `libp2p` does not recognize `go-ethereum` curves and when it comes to
 // creating peer's ID or deserializing the key, operation fails with
@@ -44,7 +44,10 @@ func StaticKeyToNetworkKey(
 	staticPrivateKey *static.PrivateKey,
 	staticPublicKey *static.PublicKey,
 ) (*NetworkPrivateKey, *NetworkPublicKey) {
-	return (*NetworkPrivateKey)(staticPrivateKey), (*NetworkPublicKey)(staticPublicKey)
+	privKey, pubKey := btcec.PrivKeyFromBytes(
+		btcec.S256(), staticPrivateKey.D.Bytes(),
+	)
+	return (*NetworkPrivateKey)(privKey), (*NetworkPublicKey)(pubKey)
 }
 
 // NetworkPubKeyToEthAddress transforms NetworkPublicKey into Ethereum account

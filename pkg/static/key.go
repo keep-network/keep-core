@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"io"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
@@ -40,14 +39,9 @@ func GenerateStaticKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
 	return privKey, pubKey, nil
 }
 
-// EthereumKeyToStaticKey transforms `go-ethereum`-based ECDSA key into the
-// format supported by all packages used in keep-core. Because all curve
-// parameters of secp256k1 curve defined by `go-ethereum`, `btcsuite`, and other
-// packages used in keep-core are identical, we can simply rewrite the private key.
+// EthereumKeyToStaticKey transforms a `go-ethereum`-based ECDSA key into the
+// format supported by all packages used in keep-core.
 func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey) {
-	privKey, pubKey := btcec.PrivKeyFromBytes(
-		btcec.S256(), ethereumKey.PrivateKey.D.Bytes(),
-	)
-
-	return (*PrivateKey)(privKey), (*PublicKey)(pubKey)
+	privKey := ethereumKey.PrivateKey
+	return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey)
 }
