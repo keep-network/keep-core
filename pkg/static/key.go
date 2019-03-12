@@ -51,9 +51,3 @@ func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey)
 
 	return (*PrivateKey)(privKey), (*PublicKey)(pubKey)
 }
-
-// PubKeyToEthAddress transforms a static PubKey into an Ethereum account
-// address, in a string format.
-func PubKeyToEthAddress(publicKey *PublicKey) string {
-	return crypto.PubkeyToAddress(*publicKey).String()
-}
