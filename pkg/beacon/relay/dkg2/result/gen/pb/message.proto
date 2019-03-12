@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option go_package = "pb";
-package resultsubmission;
+package result;
 
 // DKGResultHashSignature contains a marshalled hash of the DKG result preferred
 // by the sender, as well as a marshalled signature over this hash.

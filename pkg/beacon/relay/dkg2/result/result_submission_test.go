@@ -1,4 +1,4 @@
-package resultsubmission
+package result
 
 import (
 	"bytes"

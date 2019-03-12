@@ -1,8 +1,8 @@
-package resultsubmission
+package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/resultsubmission/gen/pb"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result/gen/pb"
 )
 
 // Marshal converts this DKGResultHashSignatureMessage to a byte array suitable

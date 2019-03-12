@@ -1,4 +1,4 @@
-package resultsubmission
+package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
