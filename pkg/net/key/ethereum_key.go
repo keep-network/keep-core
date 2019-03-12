@@ -22,7 +22,7 @@ type NetworkPublic = libp2pcrypto.Secp256k1PublicKey
 // GenerateStaticNetworkKey generates a new, random static key based on
 // secp256k1 ethereum curve.
 func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivate, *NetworkPublic, error) {
-	privKey, pubKey, err := operator.GenerateStaticKeyPair(rand)
+	privKey, pubKey, err := operator.GenerateKeyPair(rand)
 	if err != nil {
 		return nil, nil, err
 	}

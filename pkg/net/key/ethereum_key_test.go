@@ -22,7 +22,7 @@ import (
 // `btcsuite` are the same. If this test starts to fails, we'll need to revisit
 // how the key is ported from one instance to another in `toLibp2pKey` function.
 func TestSameCurveAsEthereum(t *testing.T) {
-	privateKey, publicKey, err := operator.GenerateStaticKeyPair(rand.Reader)
+	privateKey, publicKey, err := operator.GenerateKeyPair(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestSameCurveAsEthereum(t *testing.T) {
 }
 
 func TestSameKeyAsEthereum(t *testing.T) {
-	staticPrivateKey, staticPublicKey, err := operator.GenerateStaticKeyPair(
+	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair(
 		rand.Reader,
 	)
 	if err != nil {
@@ -119,7 +119,7 @@ func TestSameKeyAsEthereum(t *testing.T) {
 }
 
 func TestNetworkPubKeyToAddress(t *testing.T) {
-	staticPrivateKey, staticPublicKey, err := operator.GenerateStaticKeyPair(
+	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair(
 		rand.Reader,
 	)
 	if err != nil {

@@ -19,9 +19,9 @@ type PrivateKey = ecdsa.PrivateKey
 // (verification).
 type PublicKey = ecdsa.PublicKey
 
-// GenerateStaticKeyPair generates a new, random static key based on
+// GenerateKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
-func GenerateStaticKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
+func GenerateKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
 	id := uuid.NewRandom()
 
 	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
