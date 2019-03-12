@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./BLS.sol";
 
 
@@ -17,6 +18,8 @@ interface GroupContract {
  * must inherit from this contract and have to be initialized under updated version name
  */
 contract KeepRandomBeaconImplV1 is Ownable {
+
+    using BytesLib for bytes;
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed); 
