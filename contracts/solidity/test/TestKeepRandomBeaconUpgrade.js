@@ -22,9 +22,9 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     await implViaProxy.initialize(100, duration.days(0), genesisEntry, keepGroup.address);
 
     // Add a few calls that modify state so we can test later that eternal storage works as expected after upgrade
-    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100});
-    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100});
-    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100});
+    await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100});
+    await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100});
+    await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100});
 
   });
 
@@ -49,7 +49,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     let newVar = await impl2ViaProxy.getNewVar();
     assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
 
-    await impl2ViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100})
+    await impl2ViaProxy.requestRelayEntry(0, {from: account_two, value: 100})
 
     assert.equal((await impl2ViaProxy.getPastEvents())[0].args['requestID'], 3, "requestID should not be reset and should continue to increment where it was left in previous implementation.");
 

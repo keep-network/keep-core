@@ -28,11 +28,11 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 99}));
+    await exceptThrow(implViaProxy.requestRelayEntry(0, {from: account_two, value: 99}));
   });
 
   it("should be able to request relay entry via implementation contract with enough ether", async function() {
-    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100})
+    await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100})
 
     assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
 
@@ -49,7 +49,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
     await web3.eth.sendTransaction({
       from: account_two, value: 100, gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
+      data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
     assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
@@ -66,7 +66,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let amount = web3.utils.toWei('1', 'ether');
     await web3.eth.sendTransaction({
       from: account_two, value: amount, gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
+      data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
     // should fail to withdraw if not owner

@@ -318,14 +318,12 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
-			blockReward *big.Int,
 			seed *big.Int,
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
 				RequestID:   requestID,
 				Payment:     payment,
-				BlockReward: blockReward,
 				Seed:        seed,
 				BlockNumber: blockNumber,
 			})
@@ -361,7 +359,7 @@ func (ec *ethereumChain) OnGroupRegistered(
 }
 
 func (ec *ethereumChain) RequestRelayEntry(
-	blockReward, seed *big.Int,
+	seed *big.Int,
 ) *async.RelayRequestPromise {
 	relayRequestPromise := &async.RelayRequestPromise{}
 
@@ -417,7 +415,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(blockReward, seed.Bytes())
+	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed.Bytes())
 	if err != nil {
 		subscription.Unsubscribe()
 		close(requestedEntry)

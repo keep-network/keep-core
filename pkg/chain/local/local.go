@@ -317,7 +317,7 @@ func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
 
 // RequestRelayEntry simulates calling to start the random generation process.
 func (c *localChain) RequestRelayEntry(
-	blockReward, seed *big.Int,
+	seed *big.Int,
 ) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
 
@@ -325,7 +325,6 @@ func (c *localChain) RequestRelayEntry(
 		PreviousValue: c.latestValue,
 		RequestID:     big.NewInt(c.requestID),
 		Payment:       big.NewInt(1),
-		BlockReward:   blockReward,
 		Seed:          seed,
 	}
 	atomic.AddUint64(&c.simulatedHeight, 1)

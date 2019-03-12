@@ -11,7 +11,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 contract KeepRandomBeaconStub is Ownable {
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed, uint blockNumber); 
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 seed, uint blockNumber); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupPubKey, uint256 previousEntry, uint blockNumber);
     event RelayResetEvent(uint256 lastValidRelayEntry, uint256 lastValidRelayTxHash, uint256 lastValidRelayBlock);
     event SubmitGroupPublicKeyEvent(byte[] groupPublicKey, uint256 requestID, uint256 activationBlockHeight);
@@ -48,13 +48,12 @@ contract KeepRandomBeaconStub is Ownable {
     /**
      * @dev Stub method to simulate successful request to generate a new relay entry,
      * which will include a random number (by signing the previous entry's random number).
-     * @param blockReward The value in KEEP for generating the signature.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(uint256 blockReward, uint256 seed) public payable returns (uint256 requestID) {
+    function requestRelayEntry(uint256 seed) public payable returns (uint256 requestID) {
         requestID = _seq++;
-        emit RelayEntryRequested(requestID, msg.value, blockReward, seed, block.number);
+        emit RelayEntryRequested(requestID, msg.value, seed, block.number);
 
         // Return mocked data instead of interacting with relay.
         uint256 groupSignature = uint256(keccak256(abi.encodePacked(_previousEntry, block.timestamp, seed)));

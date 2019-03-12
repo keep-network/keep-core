@@ -22,7 +22,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     using BytesLib for bytes;
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed); 
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 seed); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     uint256 internal _seq;
@@ -35,7 +35,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
     mapping (string => bool) internal _initialized;
     mapping (uint256 => address) internal _requestPayer;
     mapping (uint256 => uint256) internal _requestPayment;
-    mapping (uint256 => uint256) internal _blockReward;
     mapping (uint256 => bytes) internal _requestGroup;
 
     mapping (uint256 => bool) internal _relayEntryRequested;
@@ -77,11 +76,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
-     * @param blockReward The value in KEEP for generating the signature.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(uint256 blockReward, uint256 seed) public payable returns (uint256 requestID) {
+    function requestRelayEntry(uint256 seed) public payable returns (uint256 requestID) {
         require(
             msg.value >= _minPayment,
             "Payment is less than required minimum."
@@ -90,9 +88,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
         requestID = _seq++;
         _requestPayer[requestID] = msg.sender;
         _requestPayment[requestID] = msg.value;
-        _blockReward[requestID] = blockReward;
 
-        emit RelayEntryRequested(requestID, msg.value, blockReward, seed);
+        emit RelayEntryRequested(requestID, msg.value, seed);
         return requestID;
     }
 

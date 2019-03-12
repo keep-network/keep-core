@@ -118,7 +118,6 @@ func relayRequest(c *cli.Context) error {
 
 	provider.ThresholdRelay().RequestRelayEntry(
 		big.NewInt(0),
-		big.NewInt(0),
 	).OnComplete(func(request *event.Request, err error) {
 		if err != nil {
 			fmt.Fprintf(
