@@ -1,4 +1,4 @@
-package static
+package operator
 
 import (
 	"crypto/ecdsa"
