@@ -33,3 +33,9 @@ type Chain struct {
 	// pseudorandom function
 	NaturalThreshold *big.Int
 }
+
+// Honest threshold is the sufficient amount of valid signature shares required
+// to reconstruct group BLS signature after threshold signing.
+func (c *Chain) HonestThreshold() int {
+	return c.Threshold + 1
+}
