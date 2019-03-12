@@ -26,11 +26,11 @@ func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivate, *NetworkPublic, 
 	if err != nil {
 		return nil, nil, err
 	}
-	networkPrivateKey, networkPublicKey := StaticKeyToNetworkKey(privKey, pubKey)
+	networkPrivateKey, networkPublicKey := OperatorKeyToNetworkKey(privKey, pubKey)
 	return networkPrivateKey, networkPublicKey, nil
 }
 
-// StaticKeyToNetworkKey transforms a static ECDSA key into the format supported
+// OperatorKeyToNetworkKey transforms a static ECDSA key into the format supported
 // by the network layer. Because all curve parameters of the secp256k1 curve
 // defined by `go-ethereum` and all curve parameters of secp256k1 curve defined
 // by `btcsuite` used by `lipb2b` under the hood are identical, we can simply
@@ -40,12 +40,12 @@ func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivate, *NetworkPublic, 
 // creating peer's ID or deserializing the key, operation fails with
 // unrecognized curve error. This is no longer a problem if we transform the
 // key using this function.
-func StaticKeyToNetworkKey(
-	staticPrivateKey *operator.PrivateKey,
-	staticPublicKey *operator.PublicKey,
+func OperatorKeyToNetworkKey(
+	operatorPrivateKey *operator.PrivateKey,
+	operatorPublicKey *operator.PublicKey,
 ) (*NetworkPrivate, *NetworkPublic) {
 	privKey, pubKey := btcec.PrivKeyFromBytes(
-		btcec.S256(), staticPrivateKey.D.Bytes(),
+		btcec.S256(), operatorPrivateKey.D.Bytes(),
 	)
 	return (*NetworkPrivate)(privKey), (*NetworkPublic)(pubKey)
 }

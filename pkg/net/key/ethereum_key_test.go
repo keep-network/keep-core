@@ -27,7 +27,7 @@ func TestSameCurveAsEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pKey, _ := StaticKeyToNetworkKey(privateKey, publicKey)
+	libp2pKey, _ := OperatorKeyToNetworkKey(privateKey, publicKey)
 
 	ethereumCurve := privateKey.Curve.Params()
 	libp2pCurve := libp2pKey.Curve.Params()
@@ -89,7 +89,7 @@ func TestSameKeyAsEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pPrivKey, libp2pPubKey := StaticKeyToNetworkKey(
+	libp2pPrivKey, libp2pPubKey := OperatorKeyToNetworkKey(
 		staticPrivateKey, staticPublicKey,
 	)
 
@@ -126,7 +126,7 @@ func TestNetworkPubKeyToAddress(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pPrivateKey, libp2pPublicKey := StaticKeyToNetworkKey(
+	libp2pPrivateKey, libp2pPublicKey := OperatorKeyToNetworkKey(
 		staticPrivateKey, staticPublicKey,
 	)
 

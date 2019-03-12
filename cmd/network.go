@@ -343,7 +343,7 @@ func getPeerNetworkKey(privateEcdsaKey *big.Int) (
 		PrivateKey: ecdsaKey,
 	}
 
-	return key.StaticKeyToNetworkKey(
+	return key.OperatorKeyToNetworkKey(
 		operator.EthereumKeyToStaticKey(ethereumKey),
 	)
 }

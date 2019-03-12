@@ -129,7 +129,7 @@ func loadStaticKey(account ethereum.Account) (*key.NetworkPrivate, error) {
 		)
 	}
 
-	privKey, _ := key.StaticKeyToNetworkKey(
+	privKey, _ := key.OperatorKeyToNetworkKey(
 		operator.EthereumKeyToStaticKey(ethereumKey),
 	)
 
