@@ -5,7 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/keep-network/keep-core/pkg/static"
+	"github.com/keep-network/keep-core/pkg/operator/key"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 )
 
@@ -22,7 +22,7 @@ type NetworkPublic = libp2pcrypto.Secp256k1PublicKey
 // GenerateStaticNetworkKey generates a new, random static key based on
 // secp256k1 ethereum curve.
 func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivate, *NetworkPublic, error) {
-	privKey, pubKey, err := static.GenerateStaticKeyPair(rand)
+	privKey, pubKey, err := key.GenerateStaticKeyPair(rand)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -41,8 +41,8 @@ func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivate, *NetworkPublic, 
 // unrecognized curve error. This is no longer a problem if we transform the
 // key using this function.
 func StaticKeyToNetworkKey(
-	staticPrivateKey *static.PrivateKey,
-	staticPublicKey *static.PublicKey,
+	staticPrivateKey *key.OperatorPrivate,
+	staticPublicKey *key.OperatorPublic,
 ) (*NetworkPrivate, *NetworkPublic) {
 	privKey, pubKey := btcec.PrivKeyFromBytes(
 		btcec.S256(), staticPrivateKey.D.Bytes(),
