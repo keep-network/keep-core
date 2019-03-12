@@ -101,7 +101,7 @@ func (p *provider) Peers() []string {
 func Connect(
 	ctx context.Context,
 	config Config,
-	staticKey *key.NetworkPrivateKey,
+	staticKey *key.NetworkPrivate,
 	stakeMonitor chain.StakeMonitor,
 ) (net.Provider, error) {
 	identity, err := createIdentity(staticKey)
