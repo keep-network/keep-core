@@ -1,7 +1,7 @@
 package resultsubmission
 
 import (
-	"github.com/keep-network/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
