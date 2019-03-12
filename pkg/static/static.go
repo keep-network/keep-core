@@ -20,6 +20,9 @@ type PrivateKey ecdsa.PrivateKey
 // (verification).
 type PublicKey = ecdsa.PublicKey
 
+// Signature represents 65-byte signature over a hash in the [R || S || V] format.
+type Signature = []byte
+
 // GenerateStaticKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
 func GenerateStaticKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
