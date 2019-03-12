@@ -1,4 +1,4 @@
-package key
+package operator
 
 import (
 	"crypto/ecdsa"
@@ -10,18 +10,18 @@ import (
 	"github.com/pborman/uuid"
 )
 
-// OperatorPrivate represents peer's static key associated with an on-chain
+// PrivateKey represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for attributability (signing).
-type OperatorPrivate = ecdsa.PrivateKey
+type PrivateKey = ecdsa.PrivateKey
 
-// OperatorPublic represents peer's static key associated with an on-chain
+// PublicKey represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for attributability
 // (verification).
-type OperatorPublic = ecdsa.PublicKey
+type PublicKey = ecdsa.PublicKey
 
 // GenerateStaticKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
-func GenerateStaticKeyPair(rand io.Reader) (*OperatorPrivate, *OperatorPublic, error) {
+func GenerateStaticKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
 	id := uuid.NewRandom()
 
 	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
@@ -41,7 +41,7 @@ func GenerateStaticKeyPair(rand io.Reader) (*OperatorPrivate, *OperatorPublic, e
 
 // EthereumKeyToStaticKey transforms a `go-ethereum`-based ECDSA key into the
 // format supported by all packages used in keep-core.
-func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*OperatorPrivate, *OperatorPublic) {
+func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey) {
 	privKey := ethereumKey.PrivateKey
-	return (*OperatorPrivate)(privKey), (*OperatorPublic)(&privKey.PublicKey)
+	return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey)
 }
