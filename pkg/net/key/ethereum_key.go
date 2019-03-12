@@ -9,19 +9,19 @@ import (
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 )
 
-// NetworkPrivateKey represents peer's static key associated with an on-chain
+// NetworkPrivate represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for message attributability
 // - each message leaving the peer is signed with its private network key.
-type NetworkPrivateKey = libp2pcrypto.Secp256k1PrivateKey
+type NetworkPrivate = libp2pcrypto.Secp256k1PrivateKey
 
-// NetworkPublicKey represents peer's static key associated with an on-chain
+// NetworkPublic represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for message attributability
 // - each received message is validated against sender's public network key.
-type NetworkPublicKey = libp2pcrypto.Secp256k1PublicKey
+type NetworkPublic = libp2pcrypto.Secp256k1PublicKey
 
 // GenerateStaticNetworkKey generates a new, random static key based on
 // secp256k1 ethereum curve.
-func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivateKey, *NetworkPublicKey, error) {
+func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivate, *NetworkPublic, error) {
 	privKey, pubKey, err := static.GenerateStaticKeyPair(rand)
 	if err != nil {
 		return nil, nil, err
@@ -43,16 +43,16 @@ func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivateKey, *NetworkPubli
 func StaticKeyToNetworkKey(
 	staticPrivateKey *static.PrivateKey,
 	staticPublicKey *static.PublicKey,
-) (*NetworkPrivateKey, *NetworkPublicKey) {
+) (*NetworkPrivate, *NetworkPublic) {
 	privKey, pubKey := btcec.PrivKeyFromBytes(
 		btcec.S256(), staticPrivateKey.D.Bytes(),
 	)
-	return (*NetworkPrivateKey)(privKey), (*NetworkPublicKey)(pubKey)
+	return (*NetworkPrivate)(privKey), (*NetworkPublic)(pubKey)
 }
 
-// NetworkPubKeyToEthAddress transforms NetworkPublicKey into Ethereum account
+// NetworkPubKeyToEthAddress transforms NetworkPublic into Ethereum account
 // address in a string format.
-func NetworkPubKeyToEthAddress(publicKey *NetworkPublicKey) string {
+func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
 	return crypto.PubkeyToAddress(*ecdsaKey).String()
 }
