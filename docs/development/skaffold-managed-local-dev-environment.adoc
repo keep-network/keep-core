@@ -85,7 +85,7 @@ xcode-select --install
 Expected output: 
 ```
 xcode-select: error: command line tools are already installed, use "Software Update" to install updates
-````
+```
 
 On Mojave you will need to install the missing header files:
 
