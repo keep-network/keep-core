@@ -3,12 +3,12 @@ package resultsubmission
 import (
 	"bytes"
 	"crypto/ecdsa"
-	crand "crypto/rand"
 	"math/big"
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
@@ -40,6 +40,8 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		member.otherMembersPublicKeys[message.senderIndex] = &member.privateKey.PublicKey
 
 		if message.senderIndex != member.index {
 			t.Errorf("\nexpected: %+v\nactual:   %+v\n", member.index, message.senderIndex)
@@ -294,7 +296,7 @@ func initializeResultSigningMembers(groupSize, threshold int, minimumStake *big.
 
 	privateKeys := make(map[int]*ecdsa.PrivateKey)
 	for i := 1; i <= groupSize; i++ {
-		privateKey, err := ecdsa.GenerateKey(secp256k1.S256(), crand.Reader)
+		privateKey, err := crypto.GenerateKey() // TODO: Replace with static.GenerateKey
 		if err != nil {
 			return nil, err
 		}
