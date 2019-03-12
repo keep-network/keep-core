@@ -59,3 +59,37 @@ func Sign(hash []byte, prv *PrivateKey) ([]byte, error) {
 	sig[64] = v
 	return sig, nil
 }
+
+// VerifySignature checks that the given pubkey created signature over message.
+// The public key should be in compressed (33 bytes) or uncompressed (65 bytes) format.
+// The signature should be in [R || S] format.
+func VerifySignature(publicKey *PublicKey, hash, signature []byte) error {
+	// Convert the operator's static key into an uncompressed public key
+	// which should be 65 bytes in length.
+	uncompressedPubKey := (*btcec.PublicKey)(publicKey).SerializeUncompressed()
+
+	// If our signature is in the [R || S || V] format, ensure we strip out
+	// the Ethereum-specific recovery-id, V, if it already hasn't been done.
+	if len(signature) == 65 {
+		signature = signature[:len(signature)-1]
+	}
+
+	// The signature should be 64 bytes.
+	if len(signature) != 64 {
+		return fmt.Errorf(
+			"malformed signature %+v with length %d",
+			signature,
+			len(signature),
+		)
+	}
+
+	if verified := crypto.VerifySignature(
+		uncompressedPubKey,
+		hash,
+		signature,
+	); !verified {
+		return fmt.Errorf("failed to verify signature")
+	}
+
+	return nil
+}
