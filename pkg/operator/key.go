@@ -29,14 +29,14 @@ func GenerateKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
 		return nil, nil, err
 	}
 
-	key := &keystore.Key{
+	ethereumKey := &keystore.Key{
 		Id:         id,
 		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
 		PrivateKey: ecdsaKey,
 	}
 
-	privKey, pubKey := EthereumKeyToStaticKey(key)
-	return privKey, pubKey, nil
+	privateKey, publicKey := EthereumKeyToStaticKey(ethereumKey)
+	return privateKey, publicKey, nil
 }
 
 // EthereumKeyToStaticKey transforms a `go-ethereum`-based ECDSA key into the
