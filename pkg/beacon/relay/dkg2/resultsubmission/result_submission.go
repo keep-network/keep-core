@@ -21,7 +21,7 @@ func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	}
 	fm.preferredDKGResultHash = resultHash
 
-	signature, err := fm.sign(resultHash)
+	signature, err := fm.sign(resultHash) // TODO: Update to fm.privateKey.Sign(resultHash)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash signing failed [%v]", err)
 	}
@@ -96,8 +96,8 @@ messagesCheck:
 		}
 
 		// Signature is invalid.
-		if !fm.verifySignature(
-			message.senderIndex,
+		if !fm.verifySignature( // TODO: Change to static.VerifySignature
+			message.senderIndex, // TODO: Chagne to fm.otherMembersPublicKeys[message.senderIndex]
 			message.resultHash,
 			message.signature,
 		) {
@@ -110,19 +110,4 @@ messagesCheck:
 	}
 
 	return accusations, nil
-}
-
-func (fm *ResultSigningMember) sign(resultHash relayChain.DKGResultHash) []byte {
-	// TODO: Implement
-	return append([]byte("Signed:"), resultHash[:]...)
-}
-
-func (fm *ResultSigningMember) verifySignature(
-	participantIndex ParticipantIndex,
-	hash relayChain.DKGResultHash,
-	signature Signature,
-) bool {
-	// TODO: Implement
-	// ecdsa.Verify(fm.publicKeys[participantIndex], hash, r, s)
-	return true
 }
