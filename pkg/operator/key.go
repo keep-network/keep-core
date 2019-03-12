@@ -35,13 +35,13 @@ func GenerateKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
 		PrivateKey: ecdsaKey,
 	}
 
-	privateKey, publicKey := EthereumKeyToStaticKey(ethereumKey)
+	privateKey, publicKey := EthereumKeyToOperatorKey(ethereumKey)
 	return privateKey, publicKey, nil
 }
 
-// EthereumKeyToStaticKey transforms a `go-ethereum`-based ECDSA key into the
+// EthereumKeyToOperatorKey transforms a `go-ethereum`-based ECDSA key into the
 // format supported by all packages used in keep-core.
-func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey) {
+func EthereumKeyToOperatorKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey) {
 	privKey := ethereumKey.PrivateKey
 	return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey)
 }
