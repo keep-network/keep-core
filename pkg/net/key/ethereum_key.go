@@ -50,8 +50,8 @@ func OperatorKeyToNetworkKey(
 	return (*NetworkPrivate)(privKey), (*NetworkPublic)(pubKey)
 }
 
-// NetworkPubKeyToEthAddress transforms NetworkPublic into Ethereum account
-// address in a string format.
+// NetworkPubKeyToEthAddress transforms the network public key into an Ethereum
+// account address, in a string format.
 func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
 	return crypto.PubkeyToAddress(*ecdsaKey).String()
