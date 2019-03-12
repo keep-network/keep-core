@@ -1,4 +1,4 @@
-package operator
+package key
 
 import (
 	"crypto/ecdsa"
