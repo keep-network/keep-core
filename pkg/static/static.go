@@ -61,3 +61,33 @@ func EthereumKeyToStaticKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey)
 func PubKeyToEthAddress(publicKey *PublicKey) string {
 	return crypto.PubkeyToAddress(*publicKey).String()
 }
+
+// Sign calculates an ECDSA signature over 32-byte hash.
+//
+// The produced signature is in the 65-byte [R || S || V] format where V is 0
+// or 1.
+func (pk *PrivateKey) Sign(hash []byte) (Signature, error) {
+	ecdsaPrivateKey := &ecdsa.PrivateKey{
+		PublicKey: pk.PublicKey,
+		D:         pk.D,
+	}
+	return crypto.Sign(hash, ecdsaPrivateKey)
+}
+
+// VerifySignature checks that the given public key created signature over hash.
+// The signature should be in the 65-byte [R || S || V] format.
+func VerifySignature(
+	publicKey *PublicKey,
+	hash []byte,
+	signature Signature,
+) bool {
+	if len(signature) != 65 {
+		return false
+	}
+
+	return crypto.VerifySignature(
+		secp256k1.S256().Marshal(publicKey.X, publicKey.Y),
+		hash[:],
+		signature[:64],
+	)
+}
