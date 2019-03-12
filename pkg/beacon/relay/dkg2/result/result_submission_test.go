@@ -22,7 +22,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		GroupPublicKey: []byte{10},
 	}
 
-	members, err := initializeResultSigningMembers(groupSize, threshold, minimumStake)
+	members, err := initializeSigningMembers(groupSize, threshold, minimumStake)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	dkgResultHash1 := relayChain.DKGResultHash{10}
 	dkgResultHash2 := relayChain.DKGResultHash{20}
 
-	members, err := initializeResultSigningMembers(groupSize, threshold, minimumStake)
+	members, err := initializeSigningMembers(groupSize, threshold, minimumStake)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -291,7 +291,11 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	}
 }
 
-func initializeResultSigningMembers(groupSize, threshold int, minimumStake *big.Int) ([]*ResultSigningMember, error) {
+func initializeSigningMembers(
+	groupSize int,
+	threshold int,
+	minimumStake *big.Int,
+) ([]*SigningMember, error) {
 	chainHandle := local.Connect(groupSize, threshold, minimumStake)
 
 	privateKeys := make(map[int]*ecdsa.PrivateKey)
@@ -303,7 +307,7 @@ func initializeResultSigningMembers(groupSize, threshold int, minimumStake *big.
 		privateKeys[i] = privateKey
 	}
 
-	members := make([]*ResultSigningMember, 0)
+	members := make([]*SigningMember, 0)
 	for i := 1; i <= groupSize; i++ {
 		peerMemberPublicKeys := make(map[MemberIndex]*ecdsa.PublicKey)
 
@@ -313,7 +317,7 @@ func initializeResultSigningMembers(groupSize, threshold int, minimumStake *big.
 			}
 		}
 
-		members = append(members, &ResultSigningMember{
+		members = append(members, &SigningMember{
 			index:                         MemberIndex(i),
 			chainHandle:                   chainHandle,
 			privateKey:                    privateKeys[i],

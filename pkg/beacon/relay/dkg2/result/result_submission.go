@@ -11,7 +11,7 @@ import (
 // hash. It packs the hash and signature into a broadcast message.
 //
 // See Phase 13 of the protocol specification.
-func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
+func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	*DKGResultHashSignatureMessage,
 	error,
 ) {
@@ -48,7 +48,7 @@ func (fm *ResultSigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 // delivered multiple signatures.
 //
 // See Phase 13 of the protocol specification.
-func (fm *ResultSigningMember) VerifyDKGResultSignatures(
+func (fm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
 ) (map[MemberIndex][]Signature, error) {
 	// alreadyReceivedSignature tracks if the other member already send a signature.

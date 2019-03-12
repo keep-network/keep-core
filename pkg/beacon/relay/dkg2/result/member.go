@@ -11,9 +11,9 @@ import (
 // Indexing starts with `1`.
 type MemberIndex uint32
 
-// ResultSigningMember represents a member sharing preferred DKG result hash
+// SigningMember represents a member sharing preferred DKG result hash
 // and signature over this hash with peer members.
-type ResultSigningMember struct {
+type SigningMember struct {
 	index MemberIndex
 
 	chainHandle chain.Handle

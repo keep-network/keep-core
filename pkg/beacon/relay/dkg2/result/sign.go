@@ -12,7 +12,7 @@ import (
 type Signature = []byte // TODO: Remove and replace with static.Signature
 
 // TODO: Remove and replace with static.Sign
-func (fm *ResultSigningMember) sign(resultHash relayChain.DKGResultHash) (Signature, error) {
+func (fm *SigningMember) sign(resultHash relayChain.DKGResultHash) (Signature, error) {
 	// TODO: Implement
 
 	sig, err := crypto.Sign(resultHash[:], fm.privateKey)
@@ -20,7 +20,7 @@ func (fm *ResultSigningMember) sign(resultHash relayChain.DKGResultHash) (Signat
 }
 
 // TODO: Remove and replace with static.VerifySignature
-func (fm *ResultSigningMember) verifySignature(
+func (fm *SigningMember) verifySignature(
 	otherMemberIndex MemberIndex,
 	hash relayChain.DKGResultHash,
 	signature Signature,
