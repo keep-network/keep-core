@@ -48,7 +48,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 			t.Errorf("\nexpected: %+v\nactual:   %+v\n", expectedResultHash, message.resultHash)
 		}
 
-		if !member.verifySignature(message.senderIndex, expectedResultHash, message.signature, message.publicKey) {
+		if !member.verifySignature(expectedResultHash, message.signature, message.publicKey) {
 			t.Errorf("invalid signature")
 		}
 
@@ -65,7 +65,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		}
 	}
 
-	actualAccusations, err := currentMember.VerifyDKGResultSignatures(messages)
+	err = currentMember.VerifyDKGResultSignatures(messages)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,10 +76,6 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 			groupSize,
 			len(currentMember.receivedValidResultSignatures),
 		)
-	}
-
-	if len(actualAccusations) != 0 {
-		t.Errorf("\nexpected: %v\nactual:   %v\n", 0, len(actualAccusations))
 	}
 
 	for _, message := range messages {
@@ -129,7 +125,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		messages []*DKGResultHashSignatureMessage
 
 		expectedReceivedValidSignatures map[gjkr.MemberID]Signature
-		expectedAccusations             map[gjkr.MemberID][]Signature
 		expectedError                   error
 	}{
 		"received valid messages with signatures for the preferred result": {
@@ -151,7 +146,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				member2.index: signature21,
 				member3.index: signature311,
 			},
-			expectedAccusations: map[gjkr.MemberID][]Signature{},
 		},
 		"received messages from other member with duplicated signatures for the preferred result": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -175,9 +169,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
-			expectedAccusations: map[gjkr.MemberID][]Signature{
-				member3.index: []Signature{signature311, signature312, signature311},
-			},
 		},
 		"received messages from other member with signatures for two different results": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -195,9 +186,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
-			expectedAccusations: map[gjkr.MemberID][]Signature{
-				member4.index: []Signature{signature411, signature421},
-			},
 		},
 		"received a message from other member with signature for result different than preferred": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -209,7 +197,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
-			expectedAccusations:             map[gjkr.MemberID][]Signature{},
 		},
 		"received a message from other member with invalid signature": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -221,7 +208,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
-			expectedAccusations:             map[gjkr.MemberID][]Signature{},
 		},
 		"received a message from other member with invalid public key": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -233,7 +219,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
-			expectedAccusations:             map[gjkr.MemberID][]Signature{},
 		},
 		"mixed cases with received valid signatures and duplicated signatures": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -277,10 +262,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{
 				member2.index: signature21,
 			},
-			expectedAccusations: map[gjkr.MemberID][]Signature{
-				member3.index: []Signature{signature311, signature312},
-				member4.index: []Signature{signature411, signature421},
-			},
 		},
 	}
 
@@ -288,18 +269,10 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			verifyingMember.receivedValidResultSignatures = make(map[gjkr.MemberID]Signature)
 
-			actualAccusations, err := verifyingMember.VerifyDKGResultSignatures(test.messages)
+			err := verifyingMember.VerifyDKGResultSignatures(test.messages)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Errorf("\nexpected: %v\nactual:   %v\n", test.expectedError, err)
-			}
-
-			if !reflect.DeepEqual(actualAccusations, test.expectedAccusations) {
-				t.Errorf(
-					"\nexpected: %+v\nactual:   %+v\n",
-					test.expectedAccusations,
-					actualAccusations,
-				)
 			}
 
 			if !reflect.DeepEqual(
