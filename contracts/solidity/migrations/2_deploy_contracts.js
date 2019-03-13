@@ -6,6 +6,7 @@ const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconImplV1 = artifacts.require("./KeepRandomBeaconImplV1.sol");
+const KeepRandomBeaconUpgradeExample = artifacts.require("./KeepRandomBeaconUpgradeExample.sol");
 const KeepGroupImplV1 = artifacts.require("./KeepGroupImplV1.sol");
 const KeepGroup = artifacts.require("./KeepGroup.sol");
 const KeepRandomBeacon = artifacts.require("./KeepRandomBeacon.sol");
@@ -30,16 +31,22 @@ module.exports = async function(deployer) {
   await deployer.deploy(StakingProxy);
   await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
   await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
+  await deployer.link(BLS, KeepRandomBeaconImplV1);
+  await deployer.link(BLS, KeepRandomBeaconUpgradeExample);
   await deployer.deploy(KeepRandomBeaconImplV1);
   await deployer.deploy(KeepRandomBeacon, KeepRandomBeaconImplV1.address);
   await deployer.deploy(KeepGroupImplV1);
   await deployer.deploy(KeepGroup, KeepGroupImplV1.address);
 
   const keepRandomBeacon = await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address);
-  await keepRandomBeacon.initialize(minPayment, withdrawalDelay);
   const keepGroup = await KeepGroupImplV1.at(KeepGroup.address);
   await keepGroup.initialize(
     StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
   );
-  await keepRandomBeacon.setGroupContract(KeepGroup.address);
+  await keepRandomBeacon.initialize(
+    minPayment,
+    withdrawalDelay,
+    web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'), // Matches genesis entry value in Go client
+    KeepGroup.address
+  );
 };

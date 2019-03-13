@@ -256,8 +256,8 @@ func connectInitiatorAndResponder(
 }
 
 type testConnectionConfig struct {
-	privKey *key.NetworkPrivateKey
-	pubKey  *key.NetworkPublicKey
+	privKey *key.NetworkPrivate
+	pubKey  *key.NetworkPublic
 	peerID  peer.ID
 }
 
