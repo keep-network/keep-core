@@ -1,10 +1,10 @@
 package result
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -18,13 +18,13 @@ type SigningMember struct {
 	chainHandle chain.Handle
 
 	// Key used for signing the DKG result hash.
-	privateKey *ecdsa.PrivateKey // TODO: Change to static.PrivateKey
+	privateKey *operator.PrivateKey
 
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Received valid signatures supporting the same DKG result as current's
 	// participant prefers. Contains also current's participant's signature.
-	receivedValidResultSignatures map[gjkr.MemberID]Signature // TODO: Change to static.Signature
+	receivedValidResultSignatures map[gjkr.MemberID]Signature // TODO: Change to operator.Signature
 }
 
 // SignDKGResult calculates hash of DKG result and member's signature over this
@@ -106,7 +106,7 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 		}
 
 		// Signature is invalid.
-		if !fm.verifySignature( // TODO: Change to static.VerifySignature
+		if !fm.verifySignature( // TODO: Change to operator.VerifySignature
 			message.resultHash,
 			message.signature,
 			message.publicKey,

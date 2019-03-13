@@ -1,19 +1,18 @@
 package result
 
 import (
-	"crypto/ecdsa"
-
 	"github.com/ethereum/go-ethereum/crypto"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
-// TODO: This file is just temporary util signatures are properly implemented in
-// `static` package.
+// // TODO: This file is just temporary util signatures are properly implemented in
+// // `operator` package.
 
 // Signature is 65-byte signature
-type Signature = []byte // TODO: Remove and replace with static.Signature
+type Signature = []byte // TODO: Remove and replace with operator.Signature
 
-// TODO: Remove and replace with static.Sign
+// TODO: Remove and replace with operator.Sign
 func (fm *SigningMember) sign(resultHash relayChain.DKGResultHash) (Signature, error) {
 	// TODO: Implement
 
@@ -21,11 +20,11 @@ func (fm *SigningMember) sign(resultHash relayChain.DKGResultHash) (Signature, e
 	return sig, err
 }
 
-// TODO: Remove and replace with static.VerifySignature
+// TODO: Remove and replace with operator.VerifySignature
 func (fm *SigningMember) verifySignature(
 	hash relayChain.DKGResultHash,
 	signature Signature,
-	publicKey *ecdsa.PublicKey, // TODO: Change to static.PublicKey
+	publicKey *operator.PublicKey,
 ) bool {
 	if len(signature) != 65 {
 		return false

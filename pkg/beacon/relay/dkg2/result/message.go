@@ -1,10 +1,9 @@
 package result
 
 import (
-	"crypto/ecdsa"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // DKGResultHashSignatureMessage is a message payload that carries a hash of
@@ -20,5 +19,5 @@ type DKGResultHashSignatureMessage struct {
 	signature Signature // TODO: Change to static.Signature
 	// Public key of the sender. It will be used to verify the signature by
 	// the receiver.
-	publicKey *ecdsa.PublicKey // TODO: Change to static.PublicKey
+	publicKey *operator.PublicKey
 }
