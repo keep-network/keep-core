@@ -5,9 +5,7 @@ import (
 	"io"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/pborman/uuid"
 )
 
 // PrivateKey represents peer's static key associated with an on-chain
@@ -22,21 +20,12 @@ type PublicKey = ecdsa.PublicKey
 // GenerateKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
 func GenerateKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
-	id := uuid.NewRandom()
-
 	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	ethereumKey := &keystore.Key{
-		Id:         id,
-		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
-		PrivateKey: ecdsaKey,
-	}
-
-	privateKey, publicKey := EthereumKeyToOperatorKey(ethereumKey)
-	return privateKey, publicKey, nil
+	return (*PrivateKey)(ecdsaKey), (*PublicKey)(&ecdsaKey.PublicKey), nil
 }
 
 // EthereumKeyToOperatorKey transforms a `go-ethereum`-based ECDSA key into the
