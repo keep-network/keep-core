@@ -38,7 +38,7 @@ func EthereumKeyToOperatorKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKe
 	return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey)
 }
 
-// Sign calculates an ECDSA signature. Modified code from go-ethereum.
+// Sign calculates an ECDSA signature.
 //
 // This function is susceptible to chosen plaintext attacks that can leak
 // information about the private key that is used for signing. Callers must
@@ -46,19 +46,8 @@ func EthereumKeyToOperatorKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKe
 // solution is to hash any input before calculating the signature.
 //
 // The produced signature is in the [R || S || V] format where V is 0 or 1.
-func Sign(hash []byte, prv *PrivateKey) ([]byte, error) {
-	if len(hash) != 32 {
-		return nil, fmt.Errorf("hash is required to be exactly 32 bytes (%d)", len(hash))
-	}
-	sig, err := btcec.SignCompact(btcec.S256(), (*btcec.PrivateKey)(prv), hash, false)
-	if err != nil {
-		return nil, err
-	}
-	// Convert to Ethereum signature format with 'recovery id' v at the end.
-	v := sig[0] - 27
-	copy(sig, sig[1:])
-	sig[64] = v
-	return sig, nil
+func Sign(hash []byte, privateKey *PrivateKey) ([]byte, error) {
+	return crypto.Sign(hash, privateKey)
 }
 
 // VerifySignature checks that the given pubkey created signature over message.
