@@ -7,16 +7,16 @@
 toc::[]
 
 == Proposal
-The document specifies an update to the voting procedure of KEEP Distributed Key
-Generation protocol.
+The document specifies an update to the voting procedure of the Keep Distributed
+Key Generation protocol.
 
 === Goal
-The goal of this modification is to present simple to implement and an up to
-date version of the voting mechanism.
+The goal of this proposal is to specify the first version of the DKG result
+publication mechanism implementation based on result hash signatures.
 
 == Specification
 
-=== Phase 13
+=== DKG Phase 13
 
 ===== Off-chain
 Once the result has been determined, all participants evaluate the hash of their
@@ -26,29 +26,37 @@ matching their preferred result, stores them along with the signers' member
 indices.
 
 If the signature of hash broadcasted off-chain is invalid, it should be rejected
-and not published on-chain.
+and not published to the chain in the next phase.
 
 If multiple signatures from the same member on the same result are found, they
-should all be filtered-out before publishing on-chain.
+should all be filtered-out so that none of them is published to the chain in the
+next phase.
 
-=== Phase 14
+If multiple signatures from the same member on different results are found, they
+should all be filtered-oud and that member should be marked as malicious.
+
+=== DKG Phase 14
+
+===== Off-chain
+When a participant becomes eligible to submit the result on-chain they submit if
+they have at least the honest majority (marked as `H` - constant for the given
+group size) of signatures for that result (including their own). 
+
+_First player_ is always eligible to submit the result. _Second player_ becomes
+eligible after initial timeout (time necessary to perform DKG protocol plus step
+time `T_dkg + T_step`) and remains eligible until the result is accepted by the
+chain. In other words, _Nth player_ becomes eligible to submit the result after
+`T_dkg + (N-1) * T_step` and remains eligible until the result is accepted by
+the chain. If _first player_ is late and _second player_ tries to submit,
+whichever gets mined first wins and subsequent submissions are disregarded
+immediately to avoid burdening the loser with excess gas fees.
 
 ===== On-chain
-When a participant becomes eligible to submit the result on-chain they submit if
-they have at least `H` signatures for that result (including their own). 
-
-`P_1` is always eligible to submit the result. `P_2` becomes eligible after
-`T_dkg + T_step` and remains eligible until the result is accepted by the chain.
-In other words, `P_n` becomes eligible after`T_dkg + (n-1) * T_step` and remains
-eligible until the result is accepted by the chain. If `P_1` is late and `P_2`
-tries to submit, whichever gets mined first wins and subsequent submissions are
-disregarded immediately to avoid burdening the loser with excess gas fees
-
 When the result is submitted on-chain along with the signatures, the contract
 checks that there are at least `H` signatures or more, and that each signature
-is valid for the submitted result and the corresponding member ID. `H` is the
-honest majority - a constant for the given group size. Submissions containing
-duplicate signatures on the same result from the same member are rejected.
+is valid for the submitted result and the corresponding member ID. Submissions
+containing multiple signatures on the same result from the same member are
+rejected.
 
 If the above checks pass, the result is considered canonical for the group. All
 other group members should abort publishing their results and no new result
@@ -56,8 +64,10 @@ submissions will be accepted by the chain.
 
 If the above checks do not pass, the result is rejected.
 
-If the result has been rejected and `P_2` became eligible, `P_2` can submit its
-result. Same checks are applied as for `P_1`. 
+===== Off-chain
+If the result has been rejected and _second player_ became eligible, 
+_second player_ can submit its result. Same checks are applied as for 
+_first player_. 
 
 If no canonical result has been published until `T_dkg + N * T_step`, where `N`
 is the group size, DKG operation is marked as failed.
