@@ -13,6 +13,7 @@ func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
 		SenderIndex: uint32(d.senderIndex),
 		ResultHash:  d.resultHash[:],
 		Signature:   d.signature,
+		// PublicKey:   , // TODO: Add public key marshalling when static.PublicKey is ready
 	}).Marshal()
 }
 
@@ -32,6 +33,8 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	d.resultHash = resultHash
 
 	d.signature = pbMsg.Signature
+
+	// d.publicKey =    // TODO: Add public key unmarshalling when static.PublicKey is ready
 
 	return nil
 }

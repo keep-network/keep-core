@@ -1,6 +1,8 @@
 package result
 
 import (
+	"crypto/ecdsa"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 )
@@ -16,4 +18,7 @@ type DKGResultHashSignatureMessage struct {
 	resultHash chain.DKGResultHash
 	// Signature over the DKG result hash calculated by the sender.
 	signature Signature // TODO: Change to static.Signature
+	// Public key of the sender. It will be used to verify the signature by
+	// the receiver.
+	publicKey *ecdsa.PublicKey // TODO: Change to static.PublicKey
 }
