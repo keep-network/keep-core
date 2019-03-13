@@ -2,7 +2,6 @@ package result
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"math/big"
 	"reflect"
 	"testing"
@@ -42,8 +41,6 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		member.otherMembersPublicKeys[message.senderIndex] = &member.privateKey.PublicKey
-
 		if message.senderIndex != member.index {
 			t.Errorf("\nexpected: %+v\nactual:   %+v\n", member.index, message.senderIndex)
 		}
@@ -51,7 +48,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 			t.Errorf("\nexpected: %+v\nactual:   %+v\n", expectedResultHash, message.resultHash)
 		}
 
-		if !member.verifySignature(message.senderIndex, expectedResultHash, message.signature) {
+		if !member.verifySignature(message.senderIndex, expectedResultHash, message.signature, message.publicKey) {
 			t.Errorf("invalid signature")
 		}
 
@@ -141,11 +138,13 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
+					publicKey:   &member2.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
+					publicKey:   &member3.privateKey.PublicKey,
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{
@@ -160,16 +159,19 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
+					publicKey:   &member3.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature312,
+					publicKey:   &member3.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
+					publicKey:   &member3.privateKey.PublicKey,
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
@@ -183,11 +185,13 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature411,
+					publicKey:   &member4.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature421,
+					publicKey:   &member4.privateKey.PublicKey,
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
@@ -201,6 +205,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member5.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature52,
+					publicKey:   &member5.privateKey.PublicKey,
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
@@ -212,6 +217,19 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   Signature{99},
+					publicKey:   &member2.privateKey.PublicKey,
+				},
+			},
+			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
+			expectedAccusations:             map[gjkr.MemberID][]Signature{},
+		},
+		"received a message from other member with invalid public key": {
+			messages: []*DKGResultHashSignatureMessage{
+				&DKGResultHashSignatureMessage{
+					senderIndex: member2.index,
+					resultHash:  dkgResultHash1,
+					signature:   signature21,
+					publicKey:   &members[0].privateKey.PublicKey,
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
@@ -223,31 +241,37 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
+					publicKey:   &member2.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
+					publicKey:   &member3.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature312,
+					publicKey:   &member3.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature411,
+					publicKey:   &member4.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature421,
+					publicKey:   &member4.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member5.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature52,
+					publicKey:   &member5.privateKey.PublicKey,
 				},
 			},
 			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{
@@ -299,30 +323,17 @@ func initializeSigningMembers(
 ) ([]*SigningMember, error) {
 	chainHandle := local.Connect(groupSize, threshold, minimumStake)
 
-	privateKeys := make(map[int]*ecdsa.PrivateKey)
+	members := make([]*SigningMember, 0)
 	for i := 1; i <= groupSize; i++ {
 		privateKey, err := crypto.GenerateKey() // TODO: Replace with static.GenerateKey
 		if err != nil {
 			return nil, err
 		}
-		privateKeys[i] = privateKey
-	}
-
-	members := make([]*SigningMember, 0)
-	for i := 1; i <= groupSize; i++ {
-		peerMemberPublicKeys := make(map[gjkr.MemberID]*ecdsa.PublicKey)
-
-		for j := 1; j <= groupSize; j++ {
-			if i != j {
-				peerMemberPublicKeys[gjkr.MemberID(j)] = &privateKeys[j].PublicKey
-			}
-		}
 
 		members = append(members, &SigningMember{
 			index:                         gjkr.MemberID(i),
 			chainHandle:                   chainHandle,
-			privateKey:                    privateKeys[i],
-			otherMembersPublicKeys:        peerMemberPublicKeys,
+			privateKey:                    privateKey,
 			receivedValidResultSignatures: make(map[gjkr.MemberID]Signature),
 		})
 	}
