@@ -7,7 +7,7 @@ import "./BLS.sol";
 
 interface GroupContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
-    function modSelectGroup(uint256 i) external view returns(bytes memory);
+    function selectGroup(uint256 previousEntry) external view returns(bytes memory);
 }
 
 
@@ -55,10 +55,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param genesisEntry Initial relay entry to create first group.
-     * @param genesisGroup Group to respond to the initial relay entry request.
+     * @param genesisGroupPubKey Group to respond to the initial relay entry request.
      * @param groupContract Group contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroup, address groupContract)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address groupContract)
         public
         onlyOwner
     {
@@ -70,8 +70,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _previousEntry = genesisEntry;
         _groupContract = groupContract;
 
+        // Create initial relay entry request. This will allow relayEntry to be called once
+        // to trigger the creation of the first group. Requests are removed on successful
+        // entries so genesis entry can only be called once.
         _requestCounter++;
-        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroup); // Initial relay entry request.
+        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey); 
     }
 
     /**
@@ -93,7 +96,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
             "Payment is less than required minimum."
         );
 
-        bytes memory groupPubKey = GroupContract(_groupContract).modSelectGroup(_previousEntry);
+        bytes memory groupPubKey = GroupContract(_groupContract).selectGroup(_previousEntry);
 
         _requestCounter++;
 

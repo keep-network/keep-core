@@ -18,10 +18,10 @@ contract KeepGroupStub {
 
     /**
      * @dev Returns a group from available groups using modulo operator.
-     * @param i Any uint256 number.
+     * @param previousEntry Previous random beacon value.
      */
-    function modSelectGroup(uint256 i) public pure returns(bytes memory) {
-        i;
+    function selectGroup(uint256 previousEntry) public pure returns(bytes memory) {
+        previousEntry;
         // Compressed public key (G2 point) generated with Go client using secret key 123
         return hex"1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0";
     }

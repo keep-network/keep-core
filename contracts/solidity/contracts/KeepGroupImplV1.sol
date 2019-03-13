@@ -470,10 +470,10 @@ contract KeepGroupImplV1 is Ownable {
 
     /**
      * @dev Returns a group from available groups using modulo operator.
-     * @param i Any uint256 number.
+     * @param previousEntry Previous random beacon value.
      */
-    function modSelectGroup(uint256 i) public view returns(bytes memory) {
-        return _groups[i % _groups.length];
+    function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
+        return _groups[previousEntry % _groups.length];
     }
 
     /**
