@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
@@ -130,8 +131,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	var tests = map[string]struct {
 		messages []*DKGResultHashSignatureMessage
 
-		expectedReceivedValidSignatures map[MemberIndex]Signature
-		expectedAccusations             map[MemberIndex][]Signature
+		expectedReceivedValidSignatures map[gjkr.MemberID]Signature
+		expectedAccusations             map[gjkr.MemberID][]Signature
 		expectedError                   error
 	}{
 		"received valid messages with signatures for the preferred result": {
@@ -147,11 +148,11 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature311,
 				},
 			},
-			expectedReceivedValidSignatures: map[MemberIndex]Signature{
+			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{
 				member2.index: signature21,
 				member3.index: signature311,
 			},
-			expectedAccusations: map[MemberIndex][]Signature{},
+			expectedAccusations: map[gjkr.MemberID][]Signature{},
 		},
 		"received messages from other member with duplicated signatures for the preferred result": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -171,8 +172,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature311,
 				},
 			},
-			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
-			expectedAccusations: map[MemberIndex][]Signature{
+			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
+			expectedAccusations: map[gjkr.MemberID][]Signature{
 				member3.index: []Signature{signature311, signature312, signature311},
 			},
 		},
@@ -189,8 +190,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature421,
 				},
 			},
-			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
-			expectedAccusations: map[MemberIndex][]Signature{
+			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
+			expectedAccusations: map[gjkr.MemberID][]Signature{
 				member4.index: []Signature{signature411, signature421},
 			},
 		},
@@ -202,8 +203,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature52,
 				},
 			},
-			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
-			expectedAccusations:             map[MemberIndex][]Signature{},
+			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
+			expectedAccusations:             map[gjkr.MemberID][]Signature{},
 		},
 		"received a message from other member with invalid signature": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -213,8 +214,8 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   Signature{99},
 				},
 			},
-			expectedReceivedValidSignatures: map[MemberIndex]Signature{},
-			expectedAccusations:             map[MemberIndex][]Signature{},
+			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{},
+			expectedAccusations:             map[gjkr.MemberID][]Signature{},
 		},
 		"mixed cases with received valid signatures and duplicated signatures": {
 			messages: []*DKGResultHashSignatureMessage{
@@ -249,10 +250,10 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature52,
 				},
 			},
-			expectedReceivedValidSignatures: map[MemberIndex]Signature{
+			expectedReceivedValidSignatures: map[gjkr.MemberID]Signature{
 				member2.index: signature21,
 			},
-			expectedAccusations: map[MemberIndex][]Signature{
+			expectedAccusations: map[gjkr.MemberID][]Signature{
 				member3.index: []Signature{signature311, signature312},
 				member4.index: []Signature{signature411, signature421},
 			},
@@ -261,7 +262,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			verifyingMember.receivedValidResultSignatures = make(map[MemberIndex]Signature)
+			verifyingMember.receivedValidResultSignatures = make(map[gjkr.MemberID]Signature)
 
 			actualAccusations, err := verifyingMember.VerifyDKGResultSignatures(test.messages)
 
@@ -309,20 +310,20 @@ func initializeSigningMembers(
 
 	members := make([]*SigningMember, 0)
 	for i := 1; i <= groupSize; i++ {
-		peerMemberPublicKeys := make(map[MemberIndex]*ecdsa.PublicKey)
+		peerMemberPublicKeys := make(map[gjkr.MemberID]*ecdsa.PublicKey)
 
 		for j := 1; j <= groupSize; j++ {
 			if i != j {
-				peerMemberPublicKeys[MemberIndex(j)] = &privateKeys[j].PublicKey
+				peerMemberPublicKeys[gjkr.MemberID(j)] = &privateKeys[j].PublicKey
 			}
 		}
 
 		members = append(members, &SigningMember{
-			index:                         MemberIndex(i),
+			index:                         gjkr.MemberID(i),
 			chainHandle:                   chainHandle,
 			privateKey:                    privateKeys[i],
 			otherMembersPublicKeys:        peerMemberPublicKeys,
-			receivedValidResultSignatures: make(map[MemberIndex]Signature),
+			receivedValidResultSignatures: make(map[gjkr.MemberID]Signature),
 		})
 	}
 

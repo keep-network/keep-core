@@ -3,6 +3,7 @@ package result
 import (
 	"github.com/ethereum/go-ethereum/crypto"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 )
 
 // TODO: This file is just temporary util signatures are properly implemented in
@@ -21,7 +22,7 @@ func (fm *SigningMember) sign(resultHash relayChain.DKGResultHash) (Signature, e
 
 // TODO: Remove and replace with static.VerifySignature
 func (fm *SigningMember) verifySignature(
-	otherMemberIndex MemberIndex,
+	otherMemberIndex gjkr.MemberID,
 	hash relayChain.DKGResultHash,
 	signature Signature,
 ) bool {

@@ -5,30 +5,28 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-// MemberIndex is an index of a participant in the group.
-// Indexing starts with `1`.
-type MemberIndex uint32
-
 // SigningMember represents a member sharing preferred DKG result hash
 // and signature over this hash with peer members.
 type SigningMember struct {
-	index MemberIndex
+	index gjkr.MemberID
 
 	chainHandle chain.Handle
 
 	// Keys used for signing the DKG result hash.
-	privateKey             *ecdsa.PrivateKey                // TODO: Change to static.PrivateKey
-	otherMembersPublicKeys map[MemberIndex]*ecdsa.PublicKey // TODO: Change to static.PrivateKey
+	privateKey             *ecdsa.PrivateKey                  // TODO: Change to static.PrivateKey
+	otherMembersPublicKeys map[gjkr.MemberID]*ecdsa.PublicKey // TODO: Change to static.PrivateKey
 
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Received valid signatures supporting the same DKG result as current's
 	// participants prefer. Contains also current's participant's signature.
-	receivedValidResultSignatures map[MemberIndex]Signature // TODO: Change to static.Signature
+	receivedValidResultSignatures map[gjkr.MemberID]Signature // TODO: Change to static.Signature
 }
 
 // SignDKGResult calculates hash of DKG result and member's signature over this
@@ -74,12 +72,12 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 // See Phase 13 of the protocol specification.
 func (fm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
-) (map[MemberIndex][]Signature, error) {
+) (map[gjkr.MemberID][]Signature, error) {
 	// alreadyReceivedSignature tracks if the other member already send a signature.
-	alreadyReceivedSignature := make([]MemberIndex, 0)
+	alreadyReceivedSignature := make([]gjkr.MemberID, 0)
 	// accusations collects indices and signatures of members who delivered
 	// multiple signatures.
-	accusations := make(map[MemberIndex][]Signature)
+	accusations := make(map[gjkr.MemberID][]Signature)
 
 messagesCheck:
 	for _, message := range messages {
