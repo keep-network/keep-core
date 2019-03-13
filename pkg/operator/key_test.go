@@ -1,6 +1,8 @@
 package operator
 
 import (
+	"crypto/rand"
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,28 +17,103 @@ func TestOperatorKeySignAndVerify(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		sign              func(hash []byte, priv *PrivateKey) ([]byte, error)
-		signingError      error
-		verificationError error
+		sign              func(h []byte, p *PrivateKey) ([]byte, error)
+		verificationError func(sig []byte) string
 	}{
 		"signature is equal to 65 bytes": {
 			sign: func(hash []byte, priv *PrivateKey) ([]byte, error) {
 				return Sign(hash, priv)
 			},
-			signingError:      nil,
 			verificationError: nil,
+		},
+		"signature is greater than 65 bytes": {
+			sign: func(hash []byte, priv *PrivateKey) ([]byte, error) {
+				sig, err := Sign(hash, priv)
+				if err != nil {
+					return nil, err
+				}
+				sig = append(sig, byte('0'))
+				return sig, nil
+			},
+			verificationError: func(sig []byte) string {
+				return fmt.Sprintf(
+					"malformed signature %+v with length %d",
+					sig,
+					len(sig),
+				)
+			},
+		},
+		"signature is equal to 64 bytes": {
+			sign: func(hash []byte, priv *PrivateKey) ([]byte, error) {
+				sig, err := Sign(hash, priv)
+				if err != nil {
+					return nil, err
+				}
+				sig = sig[:len(sig)-1]
+				return sig, nil
+			},
+			verificationError: nil,
+		},
+		"signature is less than 64 bytes": {
+			sign: func(hash []byte, priv *PrivateKey) ([]byte, error) {
+				sig, err := Sign(hash, priv)
+				if err != nil {
+					return nil, err
+				}
+				return sig[:32], nil
+			},
+			verificationError: func(signature []byte) string {
+				return fmt.Sprintf(
+					"malformed signature %+v with length %d",
+					signature,
+					len(signature),
+				)
+			},
+		},
+		"incorrect signature algorithm": {
+			sign: func(hash []byte, priv *PrivateKey) ([]byte, error) {
+				// Use the go crypto library ecdsa sign method
+				sig, err := priv.Sign(rand.Reader, hash, nil)
+				if err != nil {
+					return nil, err
+				}
+				return sig, nil
+			},
+			// verificationError: nil,
+			verificationError: func(signature []byte) string {
+				return fmt.Sprintf(
+					"malformed signature %+v with length %d",
+					signature,
+					len(signature),
+				)
+			},
+		},
+		"invalid signature": {
+			sign: func(hash []byte, priv *PrivateKey) ([]byte, error) {
+				// hash a different message
+				fakeHash := crypto.Keccak256([]byte("fake!"))
+				sig, err := Sign(fakeHash, priv)
+				if err != nil {
+					return nil, err
+				}
+				return sig, nil
+			},
+			// verificationError: nil,
+			verificationError: func(signature []byte) string {
+				return fmt.Sprint("failed to verify signature")
+			},
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			hashedMessage := crypto.Keccak256([]byte(testMessage))
 			sig, err := test.sign(hashedMessage, operatorPrivateKey)
-			if err != nil && err != test.signingError {
+			if err != nil {
 				t.Fatal(err)
 			}
 
 			err = VerifySignature(operatorPublicKey, hashedMessage, sig)
-			if err != nil && err != test.verificationError {
+			if err != nil && err.Error() != test.verificationError(sig) {
 				t.Fatal(err)
 			}
 		})
