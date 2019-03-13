@@ -3,7 +3,6 @@ package result
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"os"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 
@@ -112,7 +111,7 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 			message.signature,
 			message.publicKey,
 		) {
-			fmt.Fprintf(os.Stderr, "invalid signature in message: [%+v]", message)
+			fmt.Printf("invalid signature in message: [%+v]", message)
 			continue
 		}
 
