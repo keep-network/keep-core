@@ -24,7 +24,7 @@ type SigningMember struct {
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Received valid signatures supporting the same DKG result as current's
-	// participants prefer. Contains also current's participant's signature.
+	// participant prefers. Contains also current's participant's signature.
 	receivedValidResultSignatures map[gjkr.MemberID]Signature // TODO: Change to static.Signature
 }
 
@@ -125,7 +125,6 @@ messagesCheck:
 			message.publicKey,
 		) {
 			fmt.Fprintf(os.Stderr, "invalid signature in message: [%+v]", message)
-			// TODO: Should we accuse the member who send invalid signature?
 			continue
 		}
 
