@@ -3,12 +3,10 @@ package operator
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"io"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 // PrivateKey represents peer's static key associated with an on-chain
@@ -22,8 +20,8 @@ type PublicKey = ecdsa.PublicKey
 
 // GenerateKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
-func GenerateKeyPair(rand io.Reader) (*PrivateKey, *PublicKey, error) {
-	ecdsaKey, err := ecdsa.GenerateKey(secp256k1.S256(), rand)
+func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
+	ecdsaKey, err := crypto.GenerateKey()
 	if err != nil {
 		return nil, nil, err
 	}

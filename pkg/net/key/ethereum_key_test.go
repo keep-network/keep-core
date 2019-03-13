@@ -1,7 +1,6 @@
 package key
 
 import (
-	"crypto/rand"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -22,7 +21,7 @@ import (
 // `btcsuite` are the same. If this test starts to fails, we'll need to revisit
 // how the key is ported from one instance to another in `toLibp2pKey` function.
 func TestSameCurveAsEthereum(t *testing.T) {
-	privateKey, publicKey, err := operator.GenerateKeyPair(rand.Reader)
+	privateKey, publicKey, err := operator.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,9 +81,7 @@ func TestSameCurveAsEthereum(t *testing.T) {
 }
 
 func TestSameKeyAsEthereum(t *testing.T) {
-	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair(
-		rand.Reader,
-	)
+	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,9 +116,7 @@ func TestSameKeyAsEthereum(t *testing.T) {
 }
 
 func TestNetworkPubKeyToAddress(t *testing.T) {
-	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair(
-		rand.Reader,
-	)
+	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
