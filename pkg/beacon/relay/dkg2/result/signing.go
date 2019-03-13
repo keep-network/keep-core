@@ -71,29 +71,33 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 func (fm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
 ) error {
-	// alreadyReceivedSignature tracks if the other member already send a signature.
-	alreadyReceivedSignature := make([]gjkr.MemberID, 0)
+	duplicatedMessagesFromSender := func(senderIndex gjkr.MemberID) bool {
+		numberOfMessagesFromSender := 0
+		for _, message := range messages {
+			if message.senderIndex == senderIndex {
+				if numberOfMessagesFromSender >= 1 {
+					return true
+				}
+				numberOfMessagesFromSender++
+			}
+		}
+		return false
+	}
 
-messagesCheck:
 	for _, message := range messages {
 		// Check if message from self.
 		if message.senderIndex == fm.index {
 			continue
 		}
 
-		// Check if sender sent multiple signatures.
-		for _, alreadySignedIndex := range alreadyReceivedSignature {
-			if message.senderIndex == alreadySignedIndex {
-				fmt.Println("message from member who already send a message")
-
-				if _, ok := fm.receivedValidResultSignatures[message.senderIndex]; ok {
-					delete(fm.receivedValidResultSignatures, message.senderIndex)
-				}
-
-				continue messagesCheck
-			}
+		// Check if sender sent multiple messages.
+		if duplicatedMessagesFromSender(message.senderIndex) {
+			fmt.Printf(
+				"received multiple messages from sender [%d]",
+				message.senderIndex,
+			)
+			continue
 		}
-		alreadyReceivedSignature = append(alreadyReceivedSignature, message.senderIndex)
 
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
