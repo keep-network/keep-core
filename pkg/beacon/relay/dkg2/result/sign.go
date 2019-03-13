@@ -1,6 +1,8 @@
 package result
 
 import (
+	"crypto/ecdsa"
+
 	"github.com/ethereum/go-ethereum/crypto"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
@@ -25,6 +27,7 @@ func (fm *SigningMember) verifySignature(
 	otherMemberIndex gjkr.MemberID,
 	hash relayChain.DKGResultHash,
 	signature Signature,
+	publicKey *ecdsa.PublicKey, // TODO: Change to static.PublicKey
 ) bool {
 	if len(signature) != 65 {
 		return false
@@ -32,7 +35,7 @@ func (fm *SigningMember) verifySignature(
 
 	// TODO: Implement
 	return crypto.VerifySignature(
-		crypto.CompressPubkey(fm.otherMembersPublicKeys[otherMemberIndex]),
+		crypto.CompressPubkey(publicKey),
 		hash[:],
 		signature[:64],
 	)

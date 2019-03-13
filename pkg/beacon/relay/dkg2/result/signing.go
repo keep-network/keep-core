@@ -18,9 +18,8 @@ type SigningMember struct {
 
 	chainHandle chain.Handle
 
-	// Keys used for signing the DKG result hash.
-	privateKey             *ecdsa.PrivateKey                  // TODO: Change to static.PrivateKey
-	otherMembersPublicKeys map[gjkr.MemberID]*ecdsa.PublicKey // TODO: Change to static.PrivateKey
+	// Key used for signing the DKG result hash.
+	privateKey *ecdsa.PrivateKey // TODO: Change to static.PrivateKey
 
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
@@ -55,6 +54,7 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 		senderIndex: fm.index,
 		resultHash:  resultHash,
 		signature:   signature,
+		publicKey:   &fm.privateKey.PublicKey,
 	}, nil
 }
 
@@ -122,6 +122,7 @@ messagesCheck:
 			message.senderIndex, // TODO: Chagne to fm.otherMembersPublicKeys[message.senderIndex]
 			message.resultHash,
 			message.signature,
+			message.publicKey,
 		) {
 			fmt.Fprintf(os.Stderr, "invalid signature in message: [%+v]", message)
 			// TODO: Should we accuse the member who send invalid signature?
