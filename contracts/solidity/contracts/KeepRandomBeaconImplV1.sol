@@ -148,6 +148,9 @@ contract KeepRandomBeaconImplV1 is Ownable {
         require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request.");
         require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry), bytes32(groupSignature)), "Group signature should pass BLS verification.");
 
+        delete _requests[requestID];
+        _previousEntry = groupSignature;
+
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
