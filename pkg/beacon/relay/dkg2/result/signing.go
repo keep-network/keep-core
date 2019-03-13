@@ -104,7 +104,6 @@ messagesCheck:
 
 		// Signature is invalid.
 		if !fm.verifySignature( // TODO: Change to static.VerifySignature
-			message.senderIndex, // TODO: Change to fm.otherMembersPublicKeys[message.senderIndex]
 			message.resultHash,
 			message.signature,
 			message.publicKey,
