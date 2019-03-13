@@ -55,9 +55,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param genesisEntry Initial relay entry to create first group.
+     * @param genesisGroup Group to respond to the initial relay entry request.
      * @param groupContract Group contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, address groupContract)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroup, address groupContract)
         public
         onlyOwner
     {
@@ -68,6 +69,9 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
         _groupContract = groupContract;
+
+        _requestCounter++;
+        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroup); // Initial relay entry request.
     }
 
     /**
@@ -141,7 +145,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
      */
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
 
-        require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request."); 
+        require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request.");
         require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry), bytes32(groupSignature)), "Group signature should pass BLS verification.");
 
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);

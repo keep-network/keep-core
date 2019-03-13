@@ -8,14 +8,14 @@ import (
 	"sync"
 	"time"
 
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/config"
+	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/bls"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/urfave/cli"
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/altbn128"
-	"github.com/keep-network/keep-core/pkg/bls"
 )
 
 const (
@@ -159,8 +159,10 @@ func relayEntry(c *cli.Context) error {
 func submitRelayEntrySeed(c *cli.Context) error {
 	requestID := c.Int(requestIDFlag)
 
-	// Kick off relay with valid BLS data (genesis entry signed with secret key 123)
-	// TODO: cleanup when we implement requests
+	// The data below should match genesis relay request data defined on contract
+	// initialization in 2_deploy_contracts.js. Successfull entry will trigger
+	// creation of the first group that will be chosen to respond on the next relay
+	// request, resulting another relay entry with creation of another group and so on.
 	secretKey := big.NewInt(123)
 	groupPubKey := altbn128.G2Point{new(bn256.G2).ScalarBaseMult(secretKey)}.Compress()
 	groupSignature := altbn128.G1Point{bls.Sign(secretKey, relay.GenesisEntryValue().Bytes())}.Compress()

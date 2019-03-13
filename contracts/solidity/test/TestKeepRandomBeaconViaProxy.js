@@ -1,3 +1,4 @@
+import {bls} from './helpers/data';
 import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
@@ -8,7 +9,7 @@ const KeepGroup = artifacts.require('./KeepGroupStub.sol');
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
-  let implV1, proxy, implViaProxy, keepGroup, genesisEntry,
+  let implV1, proxy, implViaProxy, keepGroup,
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2];
@@ -18,8 +19,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
     keepGroup = await KeepGroup.new()
-    genesisEntry = 123456789;
-    await implViaProxy.initialize(100, duration.days(30), genesisEntry, keepGroup.address);
+    await implViaProxy.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, keepGroup.address);
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
