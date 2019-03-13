@@ -65,19 +65,14 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 // preferred by the current member.
 //
 // Each member is allowed to broadcast only one signature over a preferred DKG
-// result hash. This function tracks members who delivered multiple signatures.
-// It returns the map of members' indices along with signatures of members who
-// delivered multiple signatures.
+// result hash.
 //
 // See Phase 13 of the protocol specification.
 func (fm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
-) (map[gjkr.MemberID][]Signature, error) {
+) error {
 	// alreadyReceivedSignature tracks if the other member already send a signature.
 	alreadyReceivedSignature := make([]gjkr.MemberID, 0)
-	// accusations collects indices and signatures of members who delivered
-	// multiple signatures.
-	accusations := make(map[gjkr.MemberID][]Signature)
 
 messagesCheck:
 	for _, message := range messages {
@@ -91,19 +86,9 @@ messagesCheck:
 			if message.senderIndex == alreadySignedIndex {
 				fmt.Println("message from member who already send a message")
 
-				if signature, ok := fm.receivedValidResultSignatures[message.senderIndex]; ok {
-					accusations[message.senderIndex] = append(
-						accusations[message.senderIndex],
-						signature,
-					)
-
+				if _, ok := fm.receivedValidResultSignatures[message.senderIndex]; ok {
 					delete(fm.receivedValidResultSignatures, message.senderIndex)
 				}
-
-				accusations[message.senderIndex] = append(
-					accusations[message.senderIndex],
-					message.signature,
-				)
 
 				continue messagesCheck
 			}
@@ -119,7 +104,7 @@ messagesCheck:
 
 		// Signature is invalid.
 		if !fm.verifySignature( // TODO: Change to static.VerifySignature
-			message.senderIndex, // TODO: Chagne to fm.otherMembersPublicKeys[message.senderIndex]
+			message.senderIndex, // TODO: Change to fm.otherMembersPublicKeys[message.senderIndex]
 			message.resultHash,
 			message.signature,
 			message.publicKey,
@@ -131,5 +116,5 @@ messagesCheck:
 		fm.receivedValidResultSignatures[message.senderIndex] = message.signature
 	}
 
-	return accusations, nil
+	return nil
 }
