@@ -1,8 +1,6 @@
 package key
 
 import (
-	"io"
-
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -21,8 +19,8 @@ type NetworkPublic = libp2pcrypto.Secp256k1PublicKey
 
 // GenerateStaticNetworkKey generates a new, random static key based on
 // secp256k1 ethereum curve.
-func GenerateStaticNetworkKey(rand io.Reader) (*NetworkPrivate, *NetworkPublic, error) {
-	privKey, pubKey, err := operator.GenerateKeyPair(rand)
+func GenerateStaticNetworkKey() (*NetworkPrivate, *NetworkPublic, error) {
+	privKey, pubKey, err := operator.GenerateKeyPair()
 	if err != nil {
 		return nil, nil, err
 	}
