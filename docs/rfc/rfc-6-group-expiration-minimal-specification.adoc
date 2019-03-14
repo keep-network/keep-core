@@ -7,22 +7,34 @@
 toc::[]
 
 == Proposal
-This document focuses on specifying a group expiration mechanism. The proposed functionality enables a group to expire after particular conditions are met. Members of an expired group are forbidden from taking any new actions within the group, but all of the already ongoing in-group operations can still continue. 
+This document focuses on specifying a group expiration mechanism. The proposed
+functionality enables a group to expire after particular conditions are met.
+Members of an expired group are forbidden from taking any new actions within the
+group,but all of the already ongoing in-group operations can still continue. 
 
 === Goal
-The goal is to provide a minimal set of functions necessary for implementing the group expiration mechanism into the KEEP network. The group expires when group expiration timeout passes or when the number of active members falls below a threshold.
+The goal is to provide a minimal set of functions necessary for implementing the
+group expiration mechanism into the KEEP network. The group expires when group
+expiration timeout passes or when the number of active members falls below a
+threshold.
 
 == Specification
 
 === Contract
 
-Group selection contract should include the following information (per group formation agreement):
+Group selection contract should include the following information (per group
+formation agreement):
 
 - group formation agreement identifier,
 - group members identifiers,
-- group size, number of the members,
-- group members statuses, indicating which member is active, inactive or misbehaving,
-- group threshold, a minimal number of active users required for the group to still be active, (we can have it explicitly here or always calculated)
+- group size, number of the members, (we can have it explicitly here or always
+calculated)
+- group members statuses, indicating which member is active, inactive or
+misbehaving,
+- group threshold, a minimal number of active users required for the group to
+still be active, this might be a different value than the system constant
+group threshold for adding an additional overhead in case of a failure, (we can
+have it explicitly here or always calculated)
 - the initiation time when the group was created,
 - timeout, after which the group expires,
 - current state indicating if the group is active or expired.
@@ -34,11 +46,12 @@ The contract should also have the following discrete pieces of functionality:
 
 [#initiation]
 ==== Initiation
-When a group is formed, the group formation agreement is created and filled with:
+When a group is formed, the group formation agreement is created and filled
+with:
 
 - unique group formation agreement identifier,
 - group members identifiers,
-- group size set to the number of the members,
+- group size set to the number of the members, (explicit or implicit)
 - group members statuses set to _active_,
 - group threshold set accordingly to the group size, (explicit or calculated)
 - initiation time set to current block time,
@@ -47,33 +60,53 @@ When a group is formed, the group formation agreement is created and filled with
 
 [#operation]
 ==== Operation
-When a group operation is invoked, the operating contract (one that is invoking the operation) needs to call the group selection contract with the group formation agreement identifier. During the call, the group selection contract performs <<verification, group agreement status verification>>. When the group formation agreement is active, then the <<active, operation on an active group is performed>>, otherwise the <<expired, operation on expired group happens>>.
+When a group operation is invoked, the operating contract (one that is invoking
+the operation) needs to call the group selection contract with the group
+formation agreement identifier. During the call, the group selection contract
+performs <<verification, group agreement status verification>>. When the group
+formation agreement is active, then the
+<<active, group selection contract responds with active group information>>
+otherwise, the 
+<<expired, group selection contract responds with expired group information>>.
 
 [#active]
-===== Operation on active group
-The group selection contract sends the following information to the operating contract:
+===== Active group response
+The group selection contract sends the following information to the operating
+contract:
 
 - group size,
 - group members identifiers,
 - group members statuses.
 
-The operating contract is obligated to verify the validity of received information and forbid non-members from group operations. The operating contract is free to filter out inactive or misbehaving members.
+The operating contract is obligated to forbid non-members from group operations.
+The operating contract is free to filter out inactive or misbehaving members.
 
-At the end of the operation the operating contract is obligated to <<update, perform a group contract member status update>>.
+At the end of the operation the operating contract is obligated to perform a
+<<update, group contract members status update>> in case the status of at least
+one of the group members have changed.
 
 [#expired]
-===== Operation on expired group
-The group selection contract sends _expired_ group status to the operating contract. The operating contract should not commence any new operation. It should inform its invoker or group of invokers about the fact that the group expired.
+===== Expired group response
+The group selection contract sends _expired_ group status to the operating
+contract. The operating contract should not commence any new operation. It
+should inform its invoker or group of invokers about the fact that the group expired.
 
 [#verification]
 ===== Group agreement status verification
-1. If the current block time is larger than the group initiation time plus the threshold then set the group agreement status to _expired_.
-2. If the number of members with _active_ status is smaller than the group threshold then set the group agreement status to _expired_.
+1. If the current block time is larger than the group initiation time plus the
+threshold then set the group agreement status to _expired_.
+2. If the number of members with _active_ status is smaller than the group
+threshold then set the group agreement status to _expired_.
 
 [#update]
 ===== Post-operation members status update
-The operating contract is obligated to return an updated list of group agreement members statuses indicating which member was active, inactive or misbehaving during the execution of the operating contract. The group selection contract updates the members' statuses of appropriate group formation agreement.
+If at least one group member status changed during an operation the operating
+contract is obligated to call into the group selection contract upon completion
+of its operation to updated list of group agreement members statuses indicating
+which member was active, inactive or misbehaving during the execution of the
+operating contract. The group selection contract updates the members' statuses
+of appropriate group formation agreement.
 
 [bibliography]
 == Related Links
-- https://github.com/keep-network/random-beacon-yellowpaper/blob/master/group-expiration/index.adoc
+- https://docs.keep.network/random-beacon/group-expiration/
