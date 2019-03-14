@@ -17,6 +17,7 @@ type Message interface {
 	TransportSenderID() TransportIdentifier
 	Payload() interface{}
 	Type() string
+	SenderPublicKey() []byte
 }
 
 // HandleMessageFunc is the type of function called for each Message m furnished
