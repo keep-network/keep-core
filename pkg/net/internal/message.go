@@ -10,11 +10,13 @@ func BasicMessage(
 	transportSenderID net.TransportIdentifier,
 	payload interface{},
 	messageType string,
+	senderPublicKey []byte,
 ) net.Message {
 	return &basicMessage{
 		transportSenderID,
 		payload,
 		messageType,
+		senderPublicKey,
 	}
 }
 
