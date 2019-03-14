@@ -6,14 +6,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto"
-
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// TestResultSigningAndVerificationRoundTrip simulates Phase 13 execution when
+// a group of members produces messages containing signatures and than one member
+// verifies messages received from other group members.
 func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	groupSize := 10
 	threshold := 5
@@ -43,10 +44,18 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		}
 
 		if message.senderIndex != member.index {
-			t.Errorf("\nexpected: %+v\nactual:   %+v\n", member.index, message.senderIndex)
+			t.Errorf(
+				"unexpected mesage sender index\nexpected: %+v\nactual:   %+v\n",
+				member.index,
+				message.senderIndex,
+			)
 		}
 		if message.resultHash != expectedResultHash {
-			t.Errorf("\nexpected: %+v\nactual:   %+v\n", expectedResultHash, message.resultHash)
+			t.Errorf(
+				"unexpected result hash\nexpected: %+v\nactual:   %+v\n",
+				expectedResultHash,
+				message.resultHash,
+			)
 		}
 
 		err = operator.VerifySignature(
@@ -55,16 +64,22 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 			message.signature,
 		)
 		if err != nil {
-			t.Errorf("invalid signature [%v]", err)
+			t.Errorf(
+				"invalid signature [%v]\nsignature:  %v\npublic key: %+v\n",
+				message.signature,
+				message.publicKey,
+				err,
+			)
 		}
 
+		// Don't register message from self.
 		if member.index != currentMember.index {
 			messages = append(messages, message)
 		}
 
 		if len(currentMember.receivedValidResultSignatures) != 1 {
 			t.Errorf(
-				"\nexpected: %v\nactual:   %v\n",
+				"unexpected number of registered valid signatures\nexpected: %v\nactual:   %v\n",
 				1,
 				len(currentMember.receivedValidResultSignatures),
 			)
@@ -78,7 +93,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 
 	if len(currentMember.receivedValidResultSignatures) != groupSize {
 		t.Errorf(
-			"\nexpected: %v\nactual:   %v\n",
+			"unexpected number of registered valid signatures\nexpected: %v\nactual:   %v\n",
 			groupSize,
 			len(currentMember.receivedValidResultSignatures),
 		)
@@ -88,7 +103,8 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		if !bytes.Equal(currentMember.receivedValidResultSignatures[message.senderIndex],
 			message.signature) {
 			t.Errorf(
-				"\nexpected: %x\nactual:   %x\n",
+				"unexpected registered signature for member %d\nexpected: %x\nactual:   %x\n",
+				message.senderIndex,
 				message.signature,
 				currentMember.receivedValidResultSignatures[message.senderIndex],
 			)
@@ -153,7 +169,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				member3.index: signature311,
 			},
 		},
-		"received messages from other member with duplicated signatures for the preferred result": {
+		"received messages from other member with duplicated different signatures for the preferred result": {
 			messages: []*DKGResultHashSignatureMessage{
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
@@ -165,6 +181,23 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature312,
+					publicKey:   &member3.privateKey.PublicKey,
+				},
+				&DKGResultHashSignatureMessage{
+					senderIndex: member3.index,
+					resultHash:  dkgResultHash1,
+					signature:   signature311,
+					publicKey:   &member3.privateKey.PublicKey,
+				},
+			},
+			expectedReceivedValidSignatures: map[gjkr.MemberID]operator.Signature{},
+		},
+		"received messages from other member with the same signatures for the preferred result": {
+			messages: []*DKGResultHashSignatureMessage{
+				&DKGResultHashSignatureMessage{
+					senderIndex: member3.index,
+					resultHash:  dkgResultHash1,
+					signature:   signature311,
 					publicKey:   &member3.privateKey.PublicKey,
 				},
 				&DKGResultHashSignatureMessage{
@@ -228,12 +261,14 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		},
 		"mixed cases with received valid signatures and duplicated signatures": {
 			messages: []*DKGResultHashSignatureMessage{
+				// Valid signature supporting the same result as preferred.
 				&DKGResultHashSignatureMessage{
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
 					publicKey:   &member2.privateKey.PublicKey,
 				},
+				// Multiple signatures from the same member supporting the same result as preferred.
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
@@ -246,6 +281,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature312,
 					publicKey:   &member3.privateKey.PublicKey,
 				},
+				// Multiple signatures from the same member supporting two different results.
 				&DKGResultHashSignatureMessage{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash1,
@@ -258,6 +294,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					signature:   signature421,
 					publicKey:   &member4.privateKey.PublicKey,
 				},
+				// Member supporting different result than preferred.
 				&DKGResultHashSignatureMessage{
 					senderIndex: member5.index,
 					resultHash:  dkgResultHash2,
@@ -278,7 +315,11 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 			err := verifyingMember.VerifyDKGResultSignatures(test.messages)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
-				t.Errorf("\nexpected: %v\nactual:   %v\n", test.expectedError, err)
+				t.Errorf(
+					"unexpected error\nexpected: %v\nactual:   %v\n",
+					test.expectedError,
+					err,
+				)
 			}
 
 			if !reflect.DeepEqual(
@@ -286,7 +327,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				test.expectedReceivedValidSignatures,
 			) {
 				t.Errorf(
-					"\nexpected: %v\nactual:   %v\n",
+					"unexpected registered received valid signatures\nexpected: %v\nactual:   %v\n",
 					test.expectedReceivedValidSignatures,
 					verifyingMember.receivedValidResultSignatures,
 				)
@@ -304,7 +345,7 @@ func initializeSigningMembers(
 
 	members := make([]*SigningMember, 0)
 	for i := 1; i <= groupSize; i++ {
-		privateKey, err := crypto.GenerateKey() // TODO: Replace with static.GenerateKey
+		privateKey, _, err := operator.GenerateKeyPair()
 		if err != nil {
 			return nil, err
 		}
