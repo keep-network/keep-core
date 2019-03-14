@@ -24,7 +24,7 @@ type SigningMember struct {
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Received valid signatures supporting the same DKG result as current's
 	// participant prefers. Contains also current's participant's signature.
-	receivedValidResultSignatures map[gjkr.MemberID]Signature // TODO: Change to operator.Signature
+	receivedValidResultSignatures map[gjkr.MemberID]operator.Signature
 }
 
 // SignDKGResult calculates hash of DKG result and member's signature over this
@@ -41,7 +41,7 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 	}
 	fm.preferredDKGResultHash = resultHash
 
-	signature, err := fm.sign(resultHash) // TODO: Update to fm.privateKey.Sign(resultHash)
+	signature, err := operator.Sign(resultHash[:], fm.privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash signing failed [%v]", err)
 	}
@@ -106,12 +106,13 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 		}
 
 		// Signature is invalid.
-		if !fm.verifySignature( // TODO: Change to operator.VerifySignature
-			message.resultHash,
-			message.signature,
+		err := operator.VerifySignature(
 			message.publicKey,
-		) {
-			fmt.Printf("invalid signature in message: [%+v]", message)
+			message.resultHash[:],
+			message.signature,
+		)
+		if err != nil {
+			fmt.Printf("signature verification failed: [%+v]", message)
 			continue
 		}
 

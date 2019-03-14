@@ -16,7 +16,7 @@ type DKGResultHashSignatureMessage struct {
 	// Hash of the DKG result preferred by the sender.
 	resultHash chain.DKGResultHash
 	// Signature over the DKG result hash calculated by the sender.
-	signature Signature // TODO: Change to static.Signature
+	signature operator.Signature
 	// Public key of the sender. It will be used to verify the signature by
 	// the receiver.
 	publicKey *operator.PublicKey
