@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"math/big"
 	"sync"
@@ -19,7 +18,7 @@ func TestProviderReturnsType(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +48,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	testName := "testname"
 
-	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +81,7 @@ func TestSendReceive(t *testing.T) {
 		expectedPayload = "some text"
 	)
 
-	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +204,7 @@ func newTestContext() (context.Context, context.CancelFunc) {
 }
 
 func newTestIdentity() (*identity, error) {
-	privKey, _, err := key.GenerateStaticNetworkKey(rand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		return nil, err
 	}
