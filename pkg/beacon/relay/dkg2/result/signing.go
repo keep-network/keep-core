@@ -71,13 +71,13 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
 ) error {
 	duplicatedMessagesFromSender := func(senderIndex gjkr.MemberID) bool {
-		numberOfMessagesFromSender := 0
+		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
 			if message.senderIndex == senderIndex {
-				if numberOfMessagesFromSender >= 1 {
+				if messageFromSenderAlreadySeen {
 					return true
 				}
-				numberOfMessagesFromSender++
+				messageFromSenderAlreadySeen = true
 			}
 		}
 		return false
