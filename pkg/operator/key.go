@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -62,8 +61,7 @@ func Sign(hash []byte, privateKey *PrivateKey) (Signature, error) {
 func VerifySignature(publicKey *PublicKey, hash []byte, sig Signature) error {
 	// Convert the operator's static key into an uncompressed public key
 	// which should be 65 bytes in length.
-	uncompressedPubKey := (*btcec.PublicKey)(publicKey).SerializeUncompressed()
-
+	uncompressedPubKey := crypto.FromECDSAPub(publicKey)
 	// If our sig is in the [R || S || V] format, ensure we strip out
 	// the Ethereum-specific recovery-id, V, if it already hasn't been done.
 	if len(sig) == 65 {
