@@ -92,7 +92,8 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 		// Check if sender sent multiple messages.
 		if duplicatedMessagesFromSender(message.senderIndex) {
 			fmt.Printf(
-				"received multiple messages from sender [%d]",
+				"[member: %v] received multiple messages from sender [%d]",
+				fm.index,
 				message.senderIndex,
 			)
 			continue
@@ -101,7 +102,11 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
 		if message.resultHash != fm.preferredDKGResultHash {
-			fmt.Println("signature for result different than preferred")
+			fmt.Printf(
+				"[member: %v] signature from sender [%d] supports result different than preferred",
+				fm.index,
+				message.senderIndex,
+			)
 			continue
 		}
 
@@ -112,7 +117,12 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 			message.signature,
 		)
 		if err != nil {
-			fmt.Printf("signature verification failed: [%+v]", message)
+			fmt.Printf(
+				"[member: %v] verification of signature from sender [%d] failed [%+v]",
+				fm.index,
+				message.senderIndex,
+				message,
+			)
 			continue
 		}
 
