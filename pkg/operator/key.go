@@ -87,3 +87,19 @@ func VerifySignature(publicKey *PublicKey, hash []byte, sig Signature) error {
 
 	return nil
 }
+
+// Marshal takes an operator's PublicKey and produces an uncompressed public key
+// as a slice of bytes (as specified in ANSI X9.62).
+func Marshal(publicKey *PublicKey) []byte {
+	return crypto.FromECDSAPub(publicKey)
+}
+
+// Unmarshal takes a slice of bytes, and attempts to produce a valid ecdsa key
+// (as an Operator public key). It returns an error if it fails to do so.
+func Unmarshal(publicKeyBytes []byte) (*PublicKey, error) {
+	pubKey, err := crypto.UnmarshalPubkey(publicKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+	return (*PublicKey)(pubKey), nil
+}
