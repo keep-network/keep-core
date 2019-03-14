@@ -54,3 +54,23 @@ func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
 	return crypto.PubkeyToAddress(*ecdsaKey).String()
 }
+
+// NetworkKeyToECDSABytes takes a network public key, converts it into an ecdsa
+// public key, and uses go-ethereum's ecdsa Marshal method to convert to a slice
+// of bytes. This allows external consumers of this key to verify integrity of
+// the key without having to understand the internals of the net pkg.
+func NetworkKeyToECDSABytes(publicKey *NetworkPublic) []byte {
+	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
+	return crypto.FromECDSAPub(ecdsaKey)
+}
+
+// Libp2pKeyToNetworkKey takes an interface type, libp2pcrypto.PubKey, and
+// returns the concrete type specific to this package. If it fails to do so, it
+// returns nil.
+func Libp2pKeyToNetworkKey(publicKey libp2pcrypto.PubKey) *NetworkPublic {
+	switch networkKey := publicKey.(type) {
+	case *libp2pcrypto.Secp256k1PublicKey:
+		return (*NetworkPublic)(networkKey)
+	}
+	return nil
+}
