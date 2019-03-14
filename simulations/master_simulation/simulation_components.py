@@ -8,11 +8,12 @@ import pandas as pd
 class Node:
     #Node states based on Antonio's diagramming on Feb 15 2019
     #Assume staking mechanism is complete
-    def __init__(self, env, identity, start_time, sim_cycles):
+    def __init__(self, env, identity, start_time, sim_cycles, tickets, group_members):
         self.env = env
         self.id = identity
         self.starttime = start_time
         self.current_state = "not connected"
+        self.process = env.process(self.Connect_Node(env))
         self.relay_request_time = 0
         self.relay_entry_watch_time = 0
         self.ingroup = False
@@ -23,28 +24,30 @@ class Node:
         self.cycle_count = 0
         self.node_status = "online"
         self.max_cycles = sim_cycles
-        self.process = env.process(self.Connect_Node(env))
+        self.group_members = group_members
+
 
     #Connecting to Ethereum
+ 
     def Connect_Node(self, env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
+        self.node_failure_generator() 
+        if self.node_status == "failed": yield env.exit() #checks if the node has failed
         while True:
-            ethereum_conection_time = np.random.lognormal(3,1,)
+            ethereum_conection_time = np.random.lognormal(3,1,) # assumes a lognormal distribution of connection time
             if ethereum_conection_time>=30:
                 print (str(self.id) + " ethereum connection Failure" + "cycle="+str(self.cycle_count))
                 self.current_state = " not connected"
-                self.Connect_Node(env)
+                env.process(self.Connect_Node(env))
             else:
                 print (str(self.id) + " ethereum connection success" + " cycle="+str(self.cycle_count))
                 env.process(self.Forking_MainLoop(env))               
                 self.current_state = " connected"
-                yield env.exit()
+        yield env.exit()
     
     def Forking_MainLoop(self,env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
-        #print(str(self.id) + " Forking Main Loop" + " cycle="+str(self.cycle_count))
+        print(str(self.id) + " Forking Main Loop" + " cycle="+str(self.cycle_count))
         env.process(self.Watching_RelayRequest(env))
         env.process(self.Watching_RelayEntry(env))  
         yield env.exit()
@@ -53,16 +56,16 @@ class Node:
     def Watching_RelayRequest(self, env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
-        #print(str(self.id)+" Watching Relay Request" + " cycle="+str(self.cycle_count))
+        print(str(self.id)+" Watching Relay Request" + " cycle="+str(self.cycle_count))
         self.relay_request_time = np.random.normal(3,1,)
         env.process(self.Group_Selection(env))
         yield env.exit()
     
-    #watching for relay entry
+    # watching for relay entry
     def Watching_RelayEntry(self, env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
-        #print(str(self.id)+" Watching Relay Entry" + " cycle="+str(self.cycle_count))
+        print(str(self.id)+" Watching Relay Entry" + " cycle="+str(self.cycle_count))
         self.relay_entry_watch_time = np.random.normal(3,1,)
         yield env.exit()
     
@@ -84,10 +87,10 @@ class Node:
         if self.node_status == "failed": yield env.exit()
         if self.ingroup == True:
             env.process(self.Entry_Generation(env))
-            #print (str(self.id)+" in a group" + " cycle="+str(self.cycle_count))
+            print (str(self.id)+" in a group" + " cycle="+str(self.cycle_count))
             yield env.exit()
         else:
-            #print(str(self.id)+" not a group member" + " cycle="+str(self.cycle_count))
+            print(str(self.id)+" not a group member" + " cycle="+str(self.cycle_count))
             env.process(self.Watching_RelayEntry(env))
             yield env.exit()
         
@@ -95,7 +98,7 @@ class Node:
     def Entry_Generation(self,env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
-        #print(str(self.id)+" generated entry" + " cycle="+str(self.cycle_count))
+        print(str(self.id)+" generated entry" + " cycle="+str(self.cycle_count))
         self.number_of_entries_generated += 1
         self.ingroup = False
         self.cycle_count +=1
@@ -108,7 +111,10 @@ class Node:
     def Group_Formation(self,env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
-        #print(str(self.id)+" formed group" + " cycle="+str(self.cycle_count))
+        if self.group_membership[self.cycle_count][self.id]>0:
+            self.ingroup == True
+        
+        print(str(self.id)+" formed group" + " cycle="+str(self.cycle_count))
         self.ingroup = True
         self.number_of_groups_joined +=1
         env.process(self.Group_Member_Check(env)) #doing it here instead of waiting for relay entry
@@ -118,7 +124,6 @@ class Node:
         failure = np.random.lognormal(1,0)
         if failure < 0.5 or failure >1.5 :
             self.node_status = "failed"
-        self.node_status = "online"
         yield self.node_status
 
 def min_index(ticket_array, group_size):
@@ -166,14 +171,17 @@ def group_distr(runs, nodes, group_members, cdf):
 # function to calculate group ownership distribution
     total_group_distr = np.zeros(nodes)
     max_owned = np.zeros(runs)
-    for i in range(0,runs):
+    group_distr_matrix = np.zeros((runs,nodes))
+    for i in range(runs):
         group_distr = np.zeros(nodes)
-        group_distr[0] = sum(group_members[i]<cdf[0])
+        group_distr[1] = sum(group_members[i]<cdf[0])
         for j in range(1,nodes):
             group_distr[j] = sum(group_members[i]<cdf[j])-sum(group_members[i]<cdf[j-1])
         max_owned[i] = max(group_distr)/sum(group_distr)
         total_group_distr +=group_distr
-    return total_group_distr, max_owned, group_distr
+        group_distr_matrix[i] = group_distr #saves the group ticket distribution for each run
+        print(group_distr_matrix[i])
+    return total_group_distr, max_owned, group_distr_matrix
 
 def node_failure_modes(nodes, runs):
 # Calculates if a node has gone offline
@@ -185,3 +193,27 @@ def node_failure_modes(nodes, runs):
     return timeout+http_error403+http_error503+http_error500
 
 
+""" # Setup and start the simulation
+sim_cycles = 5
+TOTAL_TOKEN_AMT = 100
+
+print('Node States')
+
+# Create an environment and start the setup process
+env = simpy.Environment()
+print("creating nodes")
+nodes = [Node(env, 'Node %d' % i, datetime.datetime.now(), sim_cycles)
+            for i in range(100)] #number of nodes
+env.run()
+print("xxxxxxxxxxxxxxxxxxxx")
+print(" final node states ")
+for n in nodes:
+    print(str(n.id) + ", # of Entries = " 
+    + str(n.number_of_entries_generated) 
+    + ", # Groups Joined = " 
+    + str(n.number_of_groups_joined)
+    + ", Total relay request time = "
+    + str(n.relay_request_time)
+    + ", Total relay watch time = "
+    + str(n.relay_entry_watch_time)
+    + ", Node Status = " + str(n.node_status))  """

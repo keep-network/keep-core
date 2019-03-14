@@ -126,7 +126,7 @@ class Node:
             self.node_status = "failed"
         yield self.node_status
 
-""" # Setup and start the simulation
+# Setup and start the simulation
 sim_cycles = 5
 TOTAL_TOKEN_AMT = 100
 
@@ -135,7 +135,7 @@ print('Node States')
 # Create an environment and start the setup process
 env = simpy.Environment()
 print("creating nodes")
-nodes = [ns.Node(env, 'Node %d' % i, datetime.datetime.now(), sim_cycles)
+nodes = [Node(env, 'Node %d' % i, datetime.datetime.now(), sim_cycles)
             for i in range(100)] #number of nodes
 env.run()
 print("xxxxxxxxxxxxxxxxxxxx")
@@ -149,4 +149,4 @@ for n in nodes:
     + str(n.relay_request_time)
     + ", Total relay watch time = "
     + str(n.relay_entry_watch_time)
-    + ", Node Status = " + str(n.node_status)) """
+    + ", Node Status = " + str(n.node_status)) 
