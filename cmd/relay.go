@@ -38,8 +38,8 @@ func init() {
 				Action: relayRequest,
 			},
 			{
-				Name:   "submit",
-				Usage:  "Submits a new seed entry to the relay; only for testing.",
+				Name:   "seed",
+				Usage:  "Seeds the threshold relay. Can be executed only one time",
 				Action: submitRelayEntrySeed,
 			},
 		},
