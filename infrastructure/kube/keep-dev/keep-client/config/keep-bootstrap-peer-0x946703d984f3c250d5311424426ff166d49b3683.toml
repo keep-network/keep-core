@@ -12,11 +12,11 @@
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x41fe31d3c42c0d738e8b941e0983cb4aefffc54f"
+  KeepRandomBeacon = "0xb913b3d6E14B51e45062113C2e7b6d83955a231A"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xb9d75f85747ecfccb81b7d787221f3cca3b92648"
+  KeepGroup = "0xAA8EBDedE631f8a38F8F27475B724acdbf7A3b1c"
   # StakingProxy
-  Staking = "0x16e501789b53aebed2613d35a9b48445a0d4ee47"
+  Staking = "0x22DEe6b2d61Afa48EFeFc494780a501Ab1605d44"
 
 # Bootstrap node creating a new network.
   [LibP2P]
