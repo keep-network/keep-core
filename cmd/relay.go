@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	crand "crypto/rand"
+
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -60,6 +62,15 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	// seed is a cryptographically secure pseudo-random number in [0, 2^256)
+	seed, err := crand.Int(
+		crand.Reader,
+		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
+	)
+	if err != nil {
+		return fmt.Errorf("could not generate seed: [%v]", err)
+	}
+
 	requestMutex := sync.Mutex{}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -92,23 +103,22 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
-	provider.ThresholdRelay().RequestRelayEntry(
-		big.NewInt(0),
-	).OnComplete(func(request *event.Request, err error) {
-		if err != nil {
+	provider.ThresholdRelay().RequestRelayEntry(seed).
+		OnComplete(func(request *event.Request, err error) {
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Error in requesting relay entry: [%v].\n",
+					err,
+				)
+				return
+			}
 			fmt.Fprintf(
-				os.Stderr,
-				"Error in requesting relay entry: [%v].\n",
-				err,
+				os.Stdout,
+				"Relay entry requested: [%v].\n",
+				request,
 			)
-			return
-		}
-		fmt.Fprintf(
-			os.Stdout,
-			"Relay entry requested: [%v].\n",
-			request,
-		)
-	})
+		})
 
 	select {
 	case <-wait:
