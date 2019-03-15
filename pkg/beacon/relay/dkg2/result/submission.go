@@ -8,8 +8,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 )
 
+// SubmittingMember represents a member submitting a DKG result to the
+// blockchain along with signatures received from other group members supporting
+// the result.
+type SubmittingMember struct {
+	*SigningMember
+	// Predefined step for each submitting window. The value is used to determine
+	// eligible submitting member.
+	blockStep uint32
+}
+
 // SubmitDKGResult is ... TODO: write documentation
-func (rsm *ResultSubmittingMember) SubmitDKGResult(
+func (rsm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
 ) (int64, error) {
