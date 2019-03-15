@@ -262,7 +262,7 @@ func (c *channel) processContainerMessage(
 	networkKey := key.Libp2pKeyToNetworkKey(senderIdentifier.pubKey)
 	if networkKey == nil {
 		return fmt.Errorf(
-			"Sender [%v] with key [%v] is not of correct type",
+			"sender [%v] with key [%v] is not of correct type",
 			senderIdentifier.id,
 			senderIdentifier.pubKey,
 		)
