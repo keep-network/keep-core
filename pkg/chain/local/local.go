@@ -14,8 +14,10 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -358,7 +360,7 @@ func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
 	participantIndex uint32,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[uint32][]byte,
+	signatures map[gjkr.MemberID]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
@@ -378,9 +380,17 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
 
+	currentBlock, err := c.blockCounter.CurrentBlock()
+	if err != nil {
+		dkgResultPublicationPromise.Fail(fmt.Errorf("cannot read current block"))
+		return dkgResultPublicationPromise
+	}
+
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
 		RequestID:      requestID,
+		MemberIndex:    participantIndex,
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		BlockNumber:    uint64(currentBlock),
 	}
 
 	c.handlerMutex.Lock()
@@ -391,7 +401,7 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.handlerMutex.Unlock()
 
-	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
+	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
 	}
