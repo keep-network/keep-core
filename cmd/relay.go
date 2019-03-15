@@ -15,18 +15,9 @@ import (
 	"github.com/urfave/cli"
 )
 
-const (
-	defaultRequestID int = 0
-)
-
 // RelayCommand contains the definition of the relay command-line subcommand and
 // its own subcommands.
 var RelayCommand cli.Command
-
-const (
-	requestIDFlag  = "request-id"
-	requestIDShort = "r"
-)
 
 const relayDescription = `The relay command allows access to the two functions
    possible in the Keep threshold relay implementation of a random
@@ -56,12 +47,6 @@ func init() {
 				Name:   "submit",
 				Usage:  "Submits a new seed entry to the relay; only for testing.",
 				Action: submitRelayEntrySeed,
-				Flags: []cli.Flag{
-					&cli.IntFlag{
-						Name:  requestIDFlag + "," + requestIDShort,
-						Value: defaultRequestID,
-					},
-				},
 			},
 		},
 	}
