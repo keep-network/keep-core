@@ -23,7 +23,27 @@ type SubmittingMember struct {
 	blockStep uint64
 }
 
-// SubmitDKGResult is ... TODO: write documentation
+// SubmitDKGResult sends a result containing i.a. group public key and signatures
+// supporting this result to the blockchain.
+//
+// It checks if the result has already been published to the blockchain with
+// request ID specific for current DKG execution. If not, it determines if the
+// current member is eligable to result submission. If allowed, it submits the
+// results to the blockchain.
+//
+// User allowance to publish is determined based on the user's index and block
+// step.
+//
+// When member is waiting for their round the function keeps tracking results being
+// submitted to the blockchain. If any result is submitted for the current
+// request ID, the current member finishes the phase immediately, without
+// submitting its own result.
+//
+// It returns chain block height of the moment when the result was successfully
+// submitted on chain by the member. In case of failure or result already
+// submitted by another member it returns `0`.
+//
+// See Phase 14 of the protocol specification.
 func (sm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
