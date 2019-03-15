@@ -11,6 +11,7 @@ import (
 )
 
 // MemberID is a unique-in-group identifier of a member.
+// TODO: Rename to MemberIndex since it's used around DKG as index.
 type MemberID uint32
 
 // Int converts `MemberID` to `big.Int`.
