@@ -6,25 +6,31 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // SubmittingMember represents a member submitting a DKG result to the
 // blockchain along with signatures received from other group members supporting
 // the result.
 type SubmittingMember struct {
-	*SigningMember
+	index gjkr.MemberID
+
+	chainHandle chain.Handle
 	// Predefined step for each submitting window. The value is used to determine
 	// eligible submitting member.
 	blockStep uint32
 }
 
 // SubmitDKGResult is ... TODO: write documentation
-func (rsm *SubmittingMember) SubmitDKGResult(
+func (sm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
+	signatures map[gjkr.MemberID]operator.Signature,
 ) (int64, error) {
-	chainRelay := rsm.chainHandle.ThresholdRelay()
-	blockCounter, err := rsm.chainHandle.BlockCounter()
+	chainRelay := sm.chainHandle.ThresholdRelay()
+	blockCounter, err := sm.chainHandle.BlockCounter()
 	if err != nil {
 		return -1, err
 	}
@@ -66,7 +72,7 @@ func (rsm *SubmittingMember) SubmitDKGResult(
 	// Waits until the current member is eligible to submit a result to the
 	// blockchain.
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		int((rsm.index - 1)) * int(rsm.blockStep),
+		int((sm.index - 1)) * int(sm.blockStep),
 	)
 	if err != nil {
 		subscription.Unsubscribe()
@@ -87,9 +93,9 @@ func (rsm *SubmittingMember) SubmitDKGResult(
 
 			chainRelay.SubmitDKGResult(
 				requestID,
-				uint32(rsm.index),
+				uint32(sm.index),
 				result,
-				rsm.receivedValidResultSignatures,
+				signatures,
 			).
 				OnComplete(func(
 					dkgResultPublishedEvent *event.DKGResultSubmission,
