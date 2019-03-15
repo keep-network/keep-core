@@ -420,3 +420,366 @@ kubectl create secret tls atlantis-tls \
 : Mon Dec 17 20:17:47 UTC 2018
 : sthompson22
 : secret/atlantis-tls created
+** DONE Keep-client
+*** DONE ConfigMaps
+**** DONE keep-bootstrap-peer-0x946703d984f3c250d5311424426ff166d49b3683
+***** DONE Create
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create configmap keep-bootstrap-peer-0x946703d984f3c250d5311424426ff166d49b3683 \
+  --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-01T16-58-47.103908600Z--946703d984f3c250d5311424426ff166d49b3683 \
+  --from-file=keep-client-config.toml=./keep-client/config/keep-bootstrap-peer-0x946703d984f3c250d5311424426ff166d49b3683.toml
+#+END_SRC 
+
+#+RESULTS:
+: Fri Mar 15 16:04:05 UTC 2019
+: sthompson22
+: configmap/keep-bootstrap-peer-0x946703d984f3c250d5311424426ff166d49b3683 created
+
+***** DONE Describe
+#+BEGIN_SRC sh :results pp
+date -u
+whoami 
+
+kubectl describe configmaps keep-bootstrap-peer-0x946703d984f3c250d5311424426ff166d49b3683
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Fri Mar 15 16:13:07 UTC 2019
+sthompson22
+Name:         keep-bootstrap-peer-0x946703d984f3c250d5311424426ff166d49b3683
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+eth-keyfile:
+----
+{"address":"946703d984f3c250d5311424426ff166d49b3683","crypto":{"cipher":"aes-128-ctr","ciphertext":"cbed24bb2da5b961fd81fec0f49dffa1ba5bd49e34a3905eb67f01909d14b1c3","cipherparams":{"iv":"675e3a7d5bfa9ef44234eb77bab7f853"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"3dcdffe470f1db79a8b5d106691d5d0cc47a474ebfda25b098065eec2605c88b"},"mac":"c56d605aede565a104ad4b6bb38368d4abf1336f4f74bc25cd0f1ca15e7492dd"},"id":"d32a9cab-3b39-45d6-877c-f351086ac013","version":3}
+keep-client-config.toml:
+----
+# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
+
+# Provider Initialization Example
+
+[ethereum]
+  URL                = "ws://10.102.100.98:8546"
+  URLRPC             = "http://10.102.100.98:8545"
+
+[ethereum.account]
+  Address            = "0x946703d984f3c250d5311424426ff166d49b3683"
+  KeyFile            = "/mnt/eth-data/eth-keyfile"
+
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeacon contract
+  KeepRandomBeacon = "0x41fe31d3c42c0d738e8b941e0983cb4aefffc54f"
+  # Hex-encoded address of KeepGroup contract
+  KeepGroup = "0xb9d75f85747ecfccb81b7d787221f3cca3b92648"
+  # StakingProxy
+  Staking = "0x16e501789b53aebed2613d35a9b48445a0d4ee47"
+
+# Bootstrap node creating a new network.
+  [LibP2P]
+   Seed = 2
+   Port = 3919
+
+Events:  <none>
+#+end_example
+
+***** Update
+***** Delete
+**** DONE keep-standard-peer-0x9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a
+***** DONE Create
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create configmap keep-standard-peer-0x9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a \
+  --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-01T16-58-48.631843600Z--9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a \
+  --from-file=keep-client-config.toml=./keep-client/config/keep-standard-peer-0x9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a.toml
+#+END_SRC 
+
+#+RESULTS:
+: Fri Mar 15 16:19:29 UTC 2019
+: sthompson22
+: configmap/keep-standard-peer-0x9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a created
+
+***** DONE Describe
+#+BEGIN_SRC sh :results pp
+date -u
+whoami 
+
+kubectl describe configmaps keep-standard-peer-0x9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Fri Mar 15 16:21:33 UTC 2019
+sthompson22
+Name:         keep-standard-peer-0x9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+eth-keyfile:
+----
+{"address":"9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a","crypto":{"cipher":"aes-128-ctr","ciphertext":"56fc73284bf61d53d93fb647a7f751bbcf229659bb307829c9a040f17338e8e3","cipherparams":{"iv":"201a8f67edc6f02a893dd9172383a988"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"deaee419fcf6ad7d8928c60870c016b3b38bf955cf54fd6b303f2865d1c3bd56"},"mac":"b708ef7f4b708aee802969c785e10b1fb1ceac638ca1fdad35124f267b6a41b0"},"id":"f4099972-d740-49aa-8ead-61f98c7e5007","version":3}
+keep-client-config.toml:
+----
+# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
+
+# Provider Initialization Example
+
+[ethereum]
+  URL                = "ws://10.102.100.98:8546"
+  URLRPC             = "http://10.102.100.98:8545"
+
+[ethereum.account]
+  Address            = "0x9ef36d051ce8c7e6f626f7b5883d40b6fe8b7a2a"
+  KeyFile            = "/mnt/eth-data/eth-keyfile"
+
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeacon contract
+  KeepRandomBeacon = "0x41fe31d3c42c0d738e8b941e0983cb4aefffc54f"
+  # Hex-encoded address of KeepGroup contract
+  KeepGroup = "0xb9d75f85747ecfccb81b7d787221f3cca3b92648"
+  # StakingProxy
+  Staking = "0x16e501789b53aebed2613d35a9b48445a0d4ee47"
+
+[LibP2P]
+  Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAkzJ9a9DNJs1q82EHDYUZgFwuhAhBG2eijoDrQFhqJ8yAC"]
+  Port = 3922
+Events:  <none>
+#+end_example
+
+***** Update
+***** Delete
+**** DONE keep-standard-peer-0x415650a368157dec773cc556965856188c6ca84a
+***** DONE Create
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create configmap keep-standard-peer-0x415650a368157dec773cc556965856188c6ca84a \
+  --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-01T16-58-50.282974600Z--415650a368157dec773cc556965856188c6ca84a \
+  --from-file=keep-client-config.toml=./keep-client/config/keep-standard-peer-0x415650a368157dec773cc556965856188c6ca84a.toml
+#+END_SRC 
+
+#+RESULTS:
+: Fri Mar 15 16:27:26 UTC 2019
+: sthompson22
+: configmap/keep-standard-peer-0x415650a368157dec773cc556965856188c6ca84a created
+
+***** DONE Describe
+#+BEGIN_SRC sh :results pp
+date -u
+whoami 
+
+kubectl describe configmaps keep-standard-peer-0x415650a368157dec773cc556965856188c6ca84a
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Fri Mar 15 16:27:47 UTC 2019
+sthompson22
+Name:         keep-standard-peer-0x415650a368157dec773cc556965856188c6ca84a
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+eth-keyfile:
+----
+{"address":"415650a368157dec773cc556965856188c6ca84a","crypto":{"cipher":"aes-128-ctr","ciphertext":"672513214692f08d4a1e76403e7d0d07a48344ec5383f1e74782c4e461d37f0d","cipherparams":{"iv":"35c9819eae22c1360a66eed2bb49de6c"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"1d7dc6ce92ce6fde6b323abcde6a0fef2182dcf22b9bdb02711ca2c40d948a90"},"mac":"50edaacb60d45e5b44522ebda8142e23ab15279ddd2707519d24b7dbccf6293c"},"id":"c946a1ad-4554-4284-b5d2-330221998e70","version":3}
+keep-client-config.toml:
+----
+# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
+
+# Provider Initialization Example
+
+[ethereum]
+  URL                = "ws://10.102.100.98:8546"
+  URLRPC             = "http://10.102.100.98:8545"
+
+[ethereum.account]
+  Address            = "0x415650a368157dec773cc556965856188c6ca84a"
+  KeyFile            = "/tmp/UTC--2019-03-01T16-58-50.282974600Z--415650a368157dec773cc556965856188c6ca84a"
+
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeacon contract
+  KeepRandomBeacon = "0x41fe31d3c42c0d738e8b941e0983cb4aefffc54f"
+  # Hex-encoded address of KeepGroup contract
+  KeepGroup = "0xb9d75f85747ecfccb81b7d787221f3cca3b92648"
+  # StakingProxy
+  Staking = "0x16e501789b53aebed2613d35a9b48445a0d4ee47"
+
+[LibP2P]
+  Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAkzJ9a9DNJs1q82EHDYUZgFwuhAhBG2eijoDrQFhqJ8yAC"]
+  Port = 3923
+
+Events:  <none>
+#+end_example
+
+***** Update
+***** Delete
+**** DONE keep-standard-peer-0xca006d1947dbd8df153750fabd13cae3c5f0870e
+***** DONE Create
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create configmap keep-standard-peer-0xca006d1947dbd8df153750fabd13cae3c5f0870e \
+  --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-01T16-58-52.239814000Z--ca006d1947dbd8df153750fabd13cae3c5f0870e \
+  --from-file=keep-client-config.toml=./keep-client/config/keep-standard-peer-0xca006d1947dbd8df153750fabd13cae3c5f0870e.toml
+#+END_SRC 
+
+#+RESULTS:
+: Fri Mar 15 16:32:20 UTC 2019
+: sthompson22
+: configmap/keep-standard-peer-0xca006d1947dbd8df153750fabd13cae3c5f0870e created
+
+***** DONE Describe
+#+BEGIN_SRC sh :results pp
+date -u
+whoami 
+
+kubectl describe configmaps keep-standard-peer-0xca006d1947dbd8df153750fabd13cae3c5f0870e
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Fri Mar 15 16:32:47 UTC 2019
+sthompson22
+Name:         keep-standard-peer-0xca006d1947dbd8df153750fabd13cae3c5f0870e
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+keep-client-config.toml:
+----
+# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
+
+# Provider Initialization Example
+
+[ethereum]
+  URL                = "ws://10.102.100.98:8546"
+  URLRPC             = "http://10.102.100.98:8545"
+
+[ethereum.account]
+  Address            = "0xca006d1947dbd8df153750fabd13cae3c5f0870e"
+  KeyFile            = "/mnt/eth-data/eth-keyfile"
+
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeacon contract
+  KeepRandomBeacon = "0x41fe31d3c42c0d738e8b941e0983cb4aefffc54f"
+  # Hex-encoded address of KeepGroup contract
+  KeepGroup = "0xb9d75f85747ecfccb81b7d787221f3cca3b92648"
+  # StakingProxy
+  Staking = "0x16e501789b53aebed2613d35a9b48445a0d4ee47"
+
+[LibP2P]
+  Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAkzJ9a9DNJs1q82EHDYUZgFwuhAhBG2eijoDrQFhqJ8yAC"]
+  Port = 3924
+
+eth-keyfile:
+----
+{"address":"ca006d1947dbd8df153750fabd13cae3c5f0870e","crypto":{"cipher":"aes-128-ctr","ciphertext":"961a6acb62de1e4270a408f09a23cd1af608255b588d346d3cc25daf6340d38c","cipherparams":{"iv":"439d4faa992637c3f5d98e1d3efbe8fd"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"68ff2b4157eacb692879cb7f8c19c361170210fc39caf4ac5edcc66313e343c8"},"mac":"9441878e186344370115d01cdffbc1d7e450eb9d6705258e79a8ef0312353469"},"id":"0ba33e93-db93-4c10-8ed9-2c7ccae55790","version":3}
+Events:  <none>
+#+end_example
+
+***** Update
+***** Delete
+**** DONE keep-standard-peer-0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0
+***** DONE Create
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create configmap keep-standard-peer-0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0 \
+  --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-01T16-58-54.160023200Z--5772807fb7cc8a641dfd96f3af8d1489954ee4b0 \
+  --from-file=keep-client-config.toml=./keep-client/config/keep-standard-peer-0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0.toml
+#+END_SRC 
+
+#+RESULTS:
+: Fri Mar 15 16:37:08 UTC 2019
+: sthompson22
+: configmap/keep-standard-peer-0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0 created
+
+***** DONE Describe
+#+BEGIN_SRC sh :results pp
+date -u
+whoami 
+
+kubectl describe configmaps keep-standard-peer-0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Fri Mar 15 16:37:39 UTC 2019
+sthompson22
+Name:         keep-standard-peer-0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+eth-keyfile:
+----
+{"address":"5772807fb7cc8a641dfd96f3af8d1489954ee4b0","crypto":{"cipher":"aes-128-ctr","ciphertext":"98754a2623b932ee0bf2ac4cc45fab6941b97b8ce77230e2fac203ad3a1443c4","cipherparams":{"iv":"e8ad9f63ed9b825cd7ada6341a998a60"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"32f520d2726f4839572762b88425212d55343e98553ee38df90800631f5e613a"},"mac":"fee885516e3ae9ee76101d1d97c2df0457b9693e1e0063a6f32e8adfbec95245"},"id":"8894e0e6-07e0-4eaa-8b13-d208f68961a0","version":3}
+keep-client-config.toml:
+----
+# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
+
+# Provider Initialization Example
+
+[ethereum]
+  URL                = "ws://10.102.100.98:8546"
+  URLRPC             = "http://10.102.100.98:8545"
+
+[ethereum.account]
+  Address            = "0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0"
+  KeyFile            = "/mnt/eth-data/eth-keyfile"
+
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeacon contract
+  KeepRandomBeacon = "0x41fe31d3c42c0d738e8b941e0983cb4aefffc54f"
+  # Hex-encoded address of KeepGroup contract
+  KeepGroup = "0xb9d75f85747ecfccb81b7d787221f3cca3b92648"
+  # StakingProxy
+  Staking = "0x16e501789b53aebed2613d35a9b48445a0d4ee47"
+
+[LibP2P]
+  Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAkzJ9a9DNJs1q82EHDYUZgFwuhAhBG2eijoDrQFhqJ8yAC"]
+  Port = 3925
+
+Events:  <none>
+#+end_example
+
+***** Update
+***** Delete
+*** DONE Secrets
+**** DONE eth-keyfile-passphrase
+***** DONE Create
+
+#+BEGIN_SRC sh :results pp
+date -u
+whoami
+
+kubectl create secret generic eth-account-passphrase \
+  --from-file=./secrets/eth/account-passphrase \
+#+END_SRC
+
+#+RESULTS:
+: Fri Mar 15 16:42:02 UTC 2019
+: sthompson22
+: secret/eth-account-passphrase created
