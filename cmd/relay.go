@@ -151,20 +151,8 @@ func relayEntry(c *cli.Context) error {
 }
 
 // submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
-// off the group selection process, and prints the newly generated value. By
-// default, it uses a request ID equal `0`.
+// off the group selection process, and prints the newly generated value.
 func submitRelayEntrySeed(c *cli.Context) error {
-	requestID := c.Int(requestIDFlag)
-
-	entry := &event.Entry{
-		RequestID:     big.NewInt(int64(requestID)),
-		Value:         new(big.Int).SetBytes(relay.GenesisGroupSignature()),
-		GroupPubKey:   relay.GenesisGroupPubKey(),
-		PreviousEntry: relay.GenesisEntryValue(),
-		Timestamp:     time.Now().UTC(),
-		Seed:          big.NewInt(0),
-	}
-
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
@@ -182,17 +170,13 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	defer cancel()
 
 	provider.ThresholdRelay().SubmitRelayEntry(
-		entry,
+		relay.GenesisRelayEntry(),
 	).OnComplete(func(data *event.Entry, err error) {
 		if err != nil {
 			wait <- err
 			return
 		}
-		fmt.Fprintf(
-			os.Stdout,
-			"Submitted relay entry: [%+v].\n",
-			data,
-		)
+		fmt.Printf("Submitted seed relay entry: [%+v]\n", data)
 		wait <- nil
 		return
 	})
@@ -200,15 +184,12 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	select {
 	case err := <-wait:
 		if err != nil {
-			return fmt.Errorf(
-				"error in submitting relay entry: [%v]",
-				err,
-			)
+			return fmt.Errorf("error in submitting seed relay entry: [%v]", err)
 		}
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			return fmt.Errorf("context done, with error: [%v]", err)
+			return fmt.Errorf("context done with error: [%v]", err)
 		}
 		return nil
 	}

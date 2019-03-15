@@ -1,9 +1,14 @@
 package relay
 
-import "math/big"
-import bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-import "github.com/keep-network/keep-core/pkg/altbn128"
-import "github.com/keep-network/keep-core/pkg/bls"
+import (
+	"math/big"
+	"time"
+
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/bls"
+)
 
 // The data below should match genesis relay request data defined on contract
 // initialization i.e. in 2_deploy_contracts.js. Successfull genesis entry will
@@ -14,21 +19,33 @@ import "github.com/keep-network/keep-core/pkg/bls"
 const piAsString = "31415926535897932384626433832795028841971693993751058209749445923078164062862"
 const secretKey = "123"
 
-// GenesisEntryValue is the seed value for the network. The n digits of pi that fit into a
-// *big.Int represent a "nothing up our sleeve" value that all consumers of this
-// network can verify.
-func GenesisEntryValue() *big.Int {
-	return bigFromBase10(piAsString)
-}
+// TODO: improve documentation
 
-// GenesisGroupPubKey is the public key for provided secretKey
-func GenesisGroupPubKey() []byte {
-	return altbn128.G2Point{new(bn256.G2).ScalarBaseMult(bigFromBase10(secretKey))}.Compress()
-}
+// GenesisRelayEntry generates genesis relay entry.
+func GenesisRelayEntry() *event.Entry {
+	// genesisEntryValue is the seed value for the network. The n digits of pi
+	// that fit into a  *big.Int represent a "nothing up our sleeve" value that
+	// all consumers of this network can verify.
+	genesisEntryValue := bigFromBase10(piAsString)
 
-// GenesisGroupSignature is BLS signature for provided GenesisEntryValue signed with secretKey
-func GenesisGroupSignature() []byte {
-	return altbn128.G1Point{bls.Sign(bigFromBase10(secretKey), GenesisEntryValue().Bytes())}.Compress()
+	// BLS signature for provided genesisEntryValue signed with secretKey
+	genesisGroupSignature := altbn128.G1Point{
+		G1: bls.Sign(bigFromBase10(secretKey), genesisEntryValue.Bytes()),
+	}.Compress()
+
+	// public key for provided secretKey
+	genesisGroupPubKey := altbn128.G2Point{
+		G2: new(bn256.G2).ScalarBaseMult(bigFromBase10(secretKey)),
+	}.Compress()
+
+	return &event.Entry{
+		RequestID:     big.NewInt(int64(1)),
+		Value:         new(big.Int).SetBytes(genesisGroupSignature),
+		GroupPubKey:   genesisGroupPubKey,
+		PreviousEntry: genesisEntryValue,
+		Timestamp:     time.Now().UTC(),
+		Seed:          big.NewInt(0),
+	}
 }
 
 // bigFromBase10 returns a big number from it's string representation.
