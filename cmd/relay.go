@@ -13,6 +13,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/urfave/cli"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
+	"github.com/keep-network/keep-core/pkg/bls"
 )
 
 const (
@@ -157,11 +160,17 @@ func relayEntry(c *cli.Context) error {
 func submitRelayEntrySeed(c *cli.Context) error {
 	requestID := c.Int(requestIDFlag)
 
+	// Kick off relay with valid BLS data (genesis entry signed with secret key 123)
+	// TODO: cleanup when we implement requests
+	secretKey := big.NewInt(123)
+	groupPubKey := altbn128.G2Point{new(bn256.G2).ScalarBaseMult(secretKey)}.Compress()
+	groupSignature := altbn128.G1Point{bls.Sign(secretKey, relay.GenesisEntryValue().Bytes())}.Compress()
+
 	entry := &event.Entry{
 		RequestID:     big.NewInt(int64(requestID)),
-		Value:         relay.GenesisEntryValue(),
-		GroupPubKey:   big.NewInt(0).Bytes(),
-		PreviousEntry: big.NewInt(0),
+		Value:         new(big.Int).SetBytes(groupSignature),
+		GroupPubKey:   groupPubKey,
+		PreviousEntry: relay.GenesisEntryValue(),
 		Timestamp:     time.Now().UTC(),
 		Seed:          big.NewInt(0),
 	}

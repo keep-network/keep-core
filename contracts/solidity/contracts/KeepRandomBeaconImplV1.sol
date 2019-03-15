@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./BLS.sol";
 
 
 interface GroupContract {
@@ -26,6 +27,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
+    uint256 internal _previousEntry;
 
     mapping (string => bool) internal _initialized;
     mapping (uint256 => address) internal _requestPayer;
@@ -46,8 +48,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @dev Initialize Keep Random Beacon implementaion contract.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
+     * @param genesisEntry Initial relay entry to create first group.
+     * @param groupContract Group contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, address groupContract)
         public
         onlyOwner
     {
@@ -56,6 +60,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _initialized["KeepRandomBeaconImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
+        _previousEntry = genesisEntry;
+        _groupContract = groupContract;
     }
 
     /**
@@ -122,14 +128,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Set group contract.
-     * @param groupContract Group contract address.
-     */
-    function setGroupContract(address groupContract) public onlyOwner {
-        _groupContract = groupContract;
-    }
-
-    /**
      * @dev Get the minimum payment that is required before a relay entry occurs.
      */
     function minimumPayment() public view returns(uint256) {
@@ -152,7 +150,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         }
         _relayEntryRequested[requestID] = true;
 
-        // TODO: validate groupSignature using BLS.sol
+        require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry), bytes32(groupSignature)));
 
         _requestGroup[requestID] = groupPubKey;
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);

@@ -125,7 +125,7 @@ func newAuthenticatedOutboundConnection(
 }
 
 func (ac *authenticatedConnection) checkRemotePeerStake() (bool, error) {
-	networkKey, ok := ac.remotePeerPublicKey.(*key.NetworkPublicKey)
+	networkKey, ok := ac.remotePeerPublicKey.(*key.NetworkPublic)
 	if !ok {
 		return false, fmt.Errorf("unexpected type of remote peer's public key")
 	}

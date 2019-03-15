@@ -1,7 +1,9 @@
-package resultsubmission
+package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // DKGResultHashSignatureMessage is a message payload that carries a hash of
@@ -10,9 +12,12 @@ import (
 // It is expected to be broadcast within the group.
 type DKGResultHashSignatureMessage struct {
 	// Index of the sender in the group.
-	senderIndex uint32
+	senderIndex gjkr.MemberID
 	// Hash of the DKG result preferred by the sender.
 	resultHash chain.DKGResultHash
 	// Signature over the DKG result hash calculated by the sender.
-	signature []byte
+	signature operator.Signature
+	// Public key of the sender. It will be used to verify the signature by
+	// the receiver.
+	publicKey *operator.PublicKey
 }
