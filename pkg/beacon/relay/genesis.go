@@ -12,21 +12,29 @@ import (
 
 // The data below should match genesis relay request data defined on contract
 // initialization i.e. in 2_deploy_contracts.js. Successfull genesis entry will
-// trigger creation of the first group that will be chosen to respond on the next
-// relay request, resulting another relay entry with creation of another group and so on.
+// trigger creation of the first group that will be chosen to respond on the
+// next relay request, resulting another relay entry with creation of another
+// group and so on.
 
 // https://www.wolframalpha.com/input/?i=pi+to+78+digits
 const piAsString = "31415926535897932384626433832795028841971693993751058209749445923078164062862"
-const secretKey = "123"
 
-// TODO: improve documentation
+// https://www.wolframalpha.com/input/?i=e+to+78+digits
+const eAsString = "271828182845904523536028747135266249775724709369995957496696762772407663035355"
+
+const secretKey = "123"
 
 // GenesisRelayEntry generates genesis relay entry.
 func GenesisRelayEntry() *event.Entry {
-	// genesisEntryValue is the seed value for the network. The n digits of pi
-	// that fit into a  *big.Int represent a "nothing up our sleeve" value that
-	// all consumers of this network can verify.
+	// genesisEntryValue is the initial entry value for the network.
+	// The n digits of pi that fit into a big.Int represent a "nothing up our
+	// sleeve" value that all consumers of this network can verify.
 	genesisEntryValue := bigFromBase10(piAsString)
+
+	// genesisSeed value is the seed value used for the initial entry for the
+	// network. The n digits of e that fit into a big.Int represent a "nothing
+	// up our sleeve" value that all consumers of this network can verify.
+	genesisSeedValue := bigFromBase10(eAsString)
 
 	// BLS signature for provided genesisEntryValue signed with secretKey
 	genesisGroupSignature := altbn128.G1Point{
@@ -44,11 +52,11 @@ func GenesisRelayEntry() *event.Entry {
 		GroupPubKey:   genesisGroupPubKey,
 		PreviousEntry: genesisEntryValue,
 		Timestamp:     time.Now().UTC(),
-		Seed:          big.NewInt(0),
+		Seed:          genesisSeedValue,
 	}
 }
 
-// bigFromBase10 returns a big number from it's string representation.
+// bigFromBase10 returns a big number from its string representation.
 func bigFromBase10(s string) *big.Int {
 	value, success := new(big.Int).SetString(s, 10)
 	if !success {
