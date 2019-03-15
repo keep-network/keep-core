@@ -39,11 +39,6 @@ func init() {
 				Action: relayRequest,
 			},
 			{
-				Name:   "entry",
-				Usage:  "Requests the entry associated with the given request id from the relay.",
-				Action: relayEntry,
-			},
-			{
 				Name:   "submit",
 				Usage:  "Submits a new seed entry to the relay; only for testing.",
 				Action: submitRelayEntrySeed,
@@ -127,12 +122,6 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("request errored for unknown reason")
 
 	}
-}
-
-// relayEntry requests an entry with a particular id from the threshold relay
-// and prints that entry.
-func relayEntry(c *cli.Context) error {
-	return fmt.Errorf("relay entry lookups are currently unimplemented")
 }
 
 // submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
