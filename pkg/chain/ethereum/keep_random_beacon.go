@@ -139,6 +139,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 type relayEntryRequestedFunc func(
 	requestID *big.Int,
 	payment *big.Int,
+	previousEntry *big.Int,
 	seed *big.Int,
 	blockNumber uint64,
 )
@@ -176,6 +177,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 				success(
 					event.RequestID,
 					event.Payment,
+					event.PreviousEntry,
 					event.Seed,
 					event.Raw.BlockNumber,
 				)

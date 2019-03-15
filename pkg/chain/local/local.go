@@ -322,9 +322,9 @@ func (c *localChain) RequestRelayEntry(
 	promise := &async.RelayRequestPromise{}
 
 	request := &event.Request{
-		PreviousValue: c.latestValue,
 		RequestID:     big.NewInt(c.requestID),
 		Payment:       big.NewInt(1),
+		PreviousEntry: c.latestValue,
 		Seed:          seed,
 	}
 	atomic.AddUint64(&c.simulatedHeight, 1)

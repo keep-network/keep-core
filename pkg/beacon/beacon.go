@@ -41,7 +41,7 @@ func Initialize(
 
 		go node.GenerateRelayEntryIfEligible(
 			request.RequestID,
-			request.PreviousValue,
+			request.PreviousEntry,
 			request.Seed,
 			relayChain,
 		)
