@@ -33,14 +33,16 @@ should all be filtered-out so that none of them is published to the chain in the
 next phase.
 
 If multiple signatures from the same member on different results are found, they
-should all be filtered-oud and that member should be marked as malicious.
+should all be filtered-out so that none of them is published to the chain in the
+next phase.
 
 === DKG Phase 14
 
 ===== Off-chain
-When a participant becomes eligible to submit the result on-chain they submit if
-they have at least the honest majority (marked as `H` - constant for the given
-group size) of signatures for that result (including their own). 
+When a participant becomes eligible to submit the result (with supporting
+signatures) on-chain they submit if they have at least the honest majority
+(marked as `H` - constant for the given group size) of signatures for that
+result (including their own). 
 
 _First player_ is always eligible to submit the result. _Second player_ becomes
 eligible after initial timeout (time necessary to perform DKG protocol plus step
