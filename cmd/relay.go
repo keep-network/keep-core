@@ -19,13 +19,12 @@ import (
 // its own subcommands.
 var RelayCommand cli.Command
 
-const relayDescription = `The relay command allows access to the two functions
-   possible in the Keep threshold relay implementation of a random
-   beacon: requesting a new entry (equivalent to asking the beacon
-   for a new random number) and retrieving an existing entry (using
-   the request ID). Each of these is a subcommand (respectively,
-   request and entry). The request subcommand waits for the entry
-   to appear on-chain and then reports its value.`
+const relayDescription = `The relay command allows interacting with Keep 
+   threshold relay implementation of a random beacon. It is possible
+   to request a new entry (equivalent to asking the bacon for a new random
+   number. The request subcommand waits for the entry to appear on-chain and 
+   then reports its value. It is also possible to seed the relay - this action 
+   can be done only once and can not be repeated ever again.`
 
 func init() {
 	RelayCommand = cli.Command{
