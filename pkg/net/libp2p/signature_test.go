@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	crand "crypto/rand"
 	"fmt"
 	"math/big"
 	"strings"
@@ -95,7 +94,7 @@ func TestDetectMalformedMessageSignature(t *testing.T) {
 func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	ctx := context.Background()
 
-	privKey, _, err := key.GenerateStaticNetworkKey(crand.Reader)
+	privKey, _, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +122,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 
 	// Create and publish message with a signature created with other key than
 	// sender's...
-	adversaryPrivKey, _, err := key.GenerateStaticNetworkKey(crand.Reader)
+	adversaryPrivKey, _, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +197,7 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 // tested.
 func createTestChannel(
 	ctx context.Context,
-	staticKey *key.NetworkPrivateKey) (*channel, error) {
+	staticKey *key.NetworkPrivate) (*channel, error) {
 	networkConfig := Config{Port: 8080}
 
 	provider, err := Connect(
