@@ -31,7 +31,7 @@ evaluated from estimates.
 == Sprint planning meeting
 
 The sprint planning meeting is a time-boxed event of one hour happening at the 
-beginning of each new sprint where all verticals, such as growth, design and 
+beginning of each new sprint where all dsciplines, such as growth, design and 
 engineering identify work planned for the next sprint.
 
 Planning meeting consists of two parts: retrospective and new sprint planning.
@@ -45,7 +45,7 @@ to tell what in their opinion went particularly well and what could be improved.
 === New sprint planning
 
 The input to new sprint planning is product backlog, latest product increment, 
-and any other prior planning work performed by specialized verticals 
+and any other prior planning work performed by specialized disciplines 
 independently. The entire team collaborates on understanding the work that is 
 going to be performed in the next sprint. Sprint planning should result in 
 crafting a sprint goal which is an objective to be met by the implementation of 
@@ -55,7 +55,7 @@ items in the sprint.
 
 Before each new sprint planning, engineering team meets to collaborate on 
 estimating, breaking down, and discussing all the technical issues related to 
-backlog product items. Engineering team consist of all verticals involved in 
+backlog product items. Engineering team consist of all disciplines involved in 
 the software development process: research, devops, and developers.
 
 Everyone is welcome to join the meeting but only purely technical subjects
