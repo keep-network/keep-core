@@ -40,7 +40,7 @@ function mineBlocks(blocks) {
 contract('TestKeepGroupSelection', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
-    randomBeaconValue, seed,
+    randomBeaconValue,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
@@ -71,7 +71,6 @@ contract('TestKeepGroupSelection', function(accounts) {
     timeoutChallenge = 60;
 
     randomBeaconValue = bls.groupSignature;
-    seed = 123456789;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
@@ -81,7 +80,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     );
 
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
-    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, 1);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});
