@@ -36,9 +36,13 @@ func GenesisRelayEntry() *event.Entry {
 	// up our sleeve" value that all consumers of this network can verify.
 	genesisSeedValue := bigFromBase10(eAsString)
 
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, genesisEntryValue.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, genesisSeedValue.Bytes()...)
+
 	// BLS signature for provided genesisEntryValue signed with secretKey
 	genesisGroupSignature := altbn128.G1Point{
-		G1: bls.Sign(bigFromBase10(secretKey), genesisEntryValue.Bytes()),
+		G1: bls.Sign(bigFromBase10(secretKey), combinedEntryToSign),
 	}.Compress()
 
 	// public key for provided secretKey
