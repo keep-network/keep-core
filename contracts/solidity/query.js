@@ -1,20 +1,22 @@
-var keepGroupAddress = "0x6B9e133df21b3F7Ed43f333c3253EfB598D39B4d";
-var keepRandomBeaconAddress = "0x1dff256549dBFeeE5116444D25c43392E0166f6A";
+const KeepGroupProxy = artifacts.require('KeepGroup.sol');
+const KeepRandomBeaconProxy = artifacts.require('KeepRandomBeacon.sol');
+const KeepGroup = artifacts.require("KeepGroupImplV1");
+const KeepRandomBeacon = artifacts.require("KeepRandomBeaconImplV1");
 
-var KeepGroup = artifacts.require("KeepGroupImplV1");
-var KeepRandomBeacon = artifacts.require("KeepRandomBeaconImplV1");
+module.exports = async function () {
 
-module.exports = function () {
+  const keepRandomBeaconProxy = await KeepRandomBeaconProxy.deployed();
+  const keepGroupProxy = await KeepGroupProxy.deployed();
 
   async function printLastRelayEntry() {
-    let contractRef = await KeepRandomBeacon.at(keepRandomBeaconAddress);
+    let contractRef = await KeepRandomBeacon.at(keepRandomBeaconProxy.address);
     let lastEntry = await contractRef.lastEntryValue();
 
     console.log('Last relay entry: ' + lastEntry.toString());
   }
 
   async function printNumberOfGroups() {
-    let contractRef = await KeepGroup.at(keepGroupAddress);
+    let contractRef = await KeepGroup.at(keepGroupProxy.address);
     let groupsCount = await contractRef.numberOfGroups();
 
     console.log('Number of active groups: ' + groupsCount.toString());
