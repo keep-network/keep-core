@@ -7,6 +7,7 @@ import "./BLS.sol";
 
 interface GroupContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
+    function numberOfGroups() external view returns(uint256);
     function selectGroup(uint256 previousEntry) external view returns(bytes memory);
 }
 
@@ -94,6 +95,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
         require(
             msg.value >= _minPayment,
             "Payment is less than required minimum."
+        );
+
+        require(
+            GroupContract(_groupContract).numberOfGroups() > 0,
+            "At least one group needed to serve the request."
         );
 
         bytes memory groupPubKey = GroupContract(_groupContract).selectGroup(_previousEntry);

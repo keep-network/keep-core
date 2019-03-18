@@ -17,6 +17,13 @@ contract KeepGroupStub {
     }
 
     /**
+     * @dev Gets number of active groups.
+     */
+    function numberOfGroups() public view returns(uint256) {
+        return 1;
+    }
+
+    /**
      * @dev Returns a group from available groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */
