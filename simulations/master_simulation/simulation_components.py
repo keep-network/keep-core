@@ -196,16 +196,25 @@ class Group:
         self.status = "inactive"
         self.id = identity
         self.member_check = np.zeros(group_size)
-        self.group = group_distr_matrix[identity] > 0
+        self.group = np.array(group_distr_matrix) > 0
 
     def connect(self, node_id):
         self.member_check[node_id] = 1
+    
+    def disconnect(self, node_id):
+        self.member_check[node_id] = 0
 
     def is_ready(self, env):
         if np.array_equal(self.member_check, self.group):
             self.status = "active"
         else:
             self.status = "pending"
+
+    def __del__(self): 
+        print('Group #'+self.id+' deleted') 
+
+
+    
         
 
         
