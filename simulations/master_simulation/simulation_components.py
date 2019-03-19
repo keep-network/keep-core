@@ -195,7 +195,7 @@ class Group:
         self.current_member_count = 0
         self.status = "inactive"
         self.id = identity
-        self.member_check = np.zeroes(group_size)
+        self.member_check = np.zeros(group_size)
         self.group = group_distr_matrix[identity] > 0
 
     def connect(self, node_id):
