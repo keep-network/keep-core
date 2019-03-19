@@ -1,6 +1,8 @@
 package key
 
 import (
+	"crypto/elliptic"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -56,12 +58,13 @@ func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
 }
 
 // NetworkKeyToECDSABytes takes a network public key, converts it into an ecdsa
-// public key, and uses go-ethereum's ecdsa Marshal method to convert to a slice
-// of bytes. This allows external consumers of this key to verify integrity of
-// the key without having to understand the internals of the net pkg.
+// public key, and uses go's standard library elliptic marshal method to
+// convert the public key into a slice of bytes in the correct format for the key
+// type. This allows external consumers of this key to verify integrity of the
+// key without having to understand the internals of the net pkg.
 func NetworkKeyToECDSABytes(publicKey *NetworkPublic) []byte {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
-	return crypto.FromECDSAPub(ecdsaKey)
+	return elliptic.Marshal(ecdsaKey.Curve, ecdsaKey.X, ecdsaKey.Y)
 }
 
 // Libp2pKeyToNetworkKey takes an interface type, libp2pcrypto.PubKey, and
