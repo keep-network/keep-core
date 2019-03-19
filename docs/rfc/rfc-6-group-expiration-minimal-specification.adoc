@@ -50,8 +50,8 @@ agreement is filled with:
 - unique group formation agreement identifier,
 - group members identifiers,
 - initiation time set to current block time,
-- timeout evaluated as an arbitrary time to mark a group as expired counted in
-  blocks (explicit or implicit),
+- timeout evaluated as the time required to mark a group as expired, counted in
+  blocks, (it might be explicit or implicit),
 - current agreement state set to _active_.
 
 [#operation]
@@ -60,8 +60,7 @@ When a group operation is invoked, the operating contract (the one that is
 invoking the operation) needs to call the group selection contract. When called,
 the group selection contract selects at random potential group from the active 
 groups list and performs the <<verification, group status verification>>.
-When the group formation agreement is active or if the active groups counter is
-below the threshold, then and only then the
+And then the 
 <<active, group selection contract responds with group information>>.
 
 [#active]
