@@ -63,6 +63,7 @@ func relayRequest(c *cli.Context) error {
 	}
 
 	// seed is a cryptographically secure pseudo-random number in [0, 2^256)
+	// 2^256 - 1 (uint256) is the maximum seed value supported by smart contract
 	seed, err := crand.Int(
 		crand.Reader,
 		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
