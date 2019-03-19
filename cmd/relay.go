@@ -8,36 +8,25 @@ import (
 	"sync"
 	"time"
 
+	crand "crypto/rand"
+
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/urfave/cli"
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/altbn128"
-	"github.com/keep-network/keep-core/pkg/bls"
-)
-
-const (
-	defaultRequestID int = 0
 )
 
 // RelayCommand contains the definition of the relay command-line subcommand and
 // its own subcommands.
 var RelayCommand cli.Command
 
-const (
-	requestIDFlag  = "request-id"
-	requestIDShort = "r"
-)
-
-const relayDescription = `The relay command allows access to the two functions
-   possible in the Keep threshold relay implementation of a random
-   beacon: requesting a new entry (equivalent to asking the beacon
-   for a new random number) and retrieving an existing entry (using
-   the request ID). Each of these is a subcommand (respectively,
-   request and entry). The request subcommand waits for the entry
-   to appear on-chain and then reports its value.`
+const relayDescription = `The relay command allows interacting with Keep's
+	threshold relay. The "request" subcommand allows for requesting a new entry
+	from the relay, which is equivalent to asking for a new random number. This
+	subcommand waits for the entry to appear on-chain and then reports the value.
+	The "genesis" subcommand submits initial genesis value to the relay. This
+	action can be done only once and can not be repeated ever again.`
 
 func init() {
 	RelayCommand = cli.Command{
@@ -51,20 +40,9 @@ func init() {
 				Action: relayRequest,
 			},
 			{
-				Name:   "entry",
-				Usage:  "Requests the entry associated with the given request id from the relay.",
-				Action: relayEntry,
-			},
-			{
-				Name:   "submit",
-				Usage:  "Submits a new seed entry to the relay; only for testing.",
-				Action: submitRelayEntrySeed,
-				Flags: []cli.Flag{
-					&cli.IntFlag{
-						Name:  requestIDFlag + "," + requestIDShort,
-						Value: defaultRequestID,
-					},
-				},
+				Name:   "genesis",
+				Usage:  "Submits genesis relay entry. Can be executed only one time.",
+				Action: submitGenesisRelayEntry,
 			},
 		},
 	}
@@ -84,8 +62,18 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	// seed is a cryptographically secure pseudo-random number in [0, 2^256)
+	// 2^256 - 1 (uint256) is the maximum seed value supported by smart contract
+	seed, err := crand.Int(
+		crand.Reader,
+		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
+	)
+	if err != nil {
+		return fmt.Errorf("could not generate seed: [%v]", err)
+	}
+
 	requestMutex := sync.Mutex{}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	wait := make(chan struct{})
@@ -116,24 +104,22 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
-	provider.ThresholdRelay().RequestRelayEntry(
-		big.NewInt(0),
-		big.NewInt(0),
-	).OnComplete(func(request *event.Request, err error) {
-		if err != nil {
+	provider.ThresholdRelay().RequestRelayEntry(seed).
+		OnComplete(func(request *event.Request, err error) {
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"Error in requesting relay entry: [%v].\n",
+					err,
+				)
+				return
+			}
 			fmt.Fprintf(
-				os.Stderr,
-				"Error in requesting relay entry: [%v].\n",
-				err,
+				os.Stdout,
+				"Relay entry requested: [%v].\n",
+				request,
 			)
-			return
-		}
-		fmt.Fprintf(
-			os.Stdout,
-			"Relay entry requested: [%v].\n",
-			request,
-		)
-	})
+		})
 
 	select {
 	case <-wait:
@@ -148,33 +134,9 @@ func relayRequest(c *cli.Context) error {
 	}
 }
 
-// relayEntry requests an entry with a particular id from the threshold relay
-// and prints that entry.
-func relayEntry(c *cli.Context) error {
-	return fmt.Errorf("relay entry lookups are currently unimplemented")
-}
-
-// submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
-// off the group selection process, and prints the newly generated value. By
-// default, it uses a request ID equal `0`.
-func submitRelayEntrySeed(c *cli.Context) error {
-	requestID := c.Int(requestIDFlag)
-
-	// Kick off relay with valid BLS data (genesis entry signed with secret key 123)
-	// TODO: cleanup when we implement requests
-	secretKey := big.NewInt(123)
-	groupPubKey := altbn128.G2Point{new(bn256.G2).ScalarBaseMult(secretKey)}.Compress()
-	groupSignature := altbn128.G1Point{bls.Sign(secretKey, relay.GenesisEntryValue().Bytes())}.Compress()
-
-	entry := &event.Entry{
-		RequestID:     big.NewInt(int64(requestID)),
-		Value:         new(big.Int).SetBytes(groupSignature),
-		GroupPubKey:   groupPubKey,
-		PreviousEntry: relay.GenesisEntryValue(),
-		Timestamp:     time.Now().UTC(),
-		Seed:          big.NewInt(0),
-	}
-
+// submitGenesisRelayEntry submits genesis entry for the threshold relay,
+// kicking off protocol to create the first group.
+func submitGenesisRelayEntry(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
@@ -192,17 +154,13 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	defer cancel()
 
 	provider.ThresholdRelay().SubmitRelayEntry(
-		entry,
+		relay.GenesisRelayEntry(),
 	).OnComplete(func(data *event.Entry, err error) {
 		if err != nil {
 			wait <- err
 			return
 		}
-		fmt.Fprintf(
-			os.Stdout,
-			"Submitted relay entry: [%+v].\n",
-			data,
-		)
+		fmt.Printf("Submitted genesis relay entry: [%+v]\n", data)
 		wait <- nil
 		return
 	})
@@ -210,15 +168,12 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	select {
 	case err := <-wait:
 		if err != nil {
-			return fmt.Errorf(
-				"error in submitting relay entry: [%v]",
-				err,
-			)
+			return fmt.Errorf("error in submitting genesis relay entry: [%v]", err)
 		}
 	case <-ctx.Done():
 		err := ctx.Err()
 		if err != nil {
-			return fmt.Errorf("context done, with error: [%v]", err)
+			return fmt.Errorf("context done with error: [%v]", err)
 		}
 		return nil
 	}

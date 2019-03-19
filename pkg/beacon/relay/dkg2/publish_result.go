@@ -44,7 +44,7 @@ func executePublishing(
 		RequestID:       requestID,
 		blockCounter:    blockCounter,
 		publishingIndex: publishingIndex,
-		blockStep:       1,
+		blockStep:       3,
 	}
 
 	_, err := publisher.publishResult(result, chainRelay)

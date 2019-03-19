@@ -108,13 +108,12 @@ func (krb *KeepRandomBeacon) Initialized() (bool, error) {
 
 // RequestRelayEntry requests a new entry in the threshold relay.
 func (krb *KeepRandomBeacon) RequestRelayEntry(
-	blockReward *big.Int,
 	rawseed []byte,
 ) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
 	newTransactorOptions := *krb.transactorOptions
 	newTransactorOptions.Value = big.NewInt(2)
-	return krb.transactor.RequestRelayEntry(&newTransactorOptions, blockReward, seed)
+	return krb.transactor.RequestRelayEntry(&newTransactorOptions, seed)
 }
 
 // SubmitRelayEntry submits a group signature for consideration.
@@ -140,7 +139,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 type relayEntryRequestedFunc func(
 	requestID *big.Int,
 	payment *big.Int,
-	blockReward *big.Int,
+	previousEntry *big.Int,
 	seed *big.Int,
 	blockNumber uint64,
 )
@@ -178,7 +177,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 				success(
 					event.RequestID,
 					event.Payment,
-					event.BlockReward,
+					event.PreviousEntry,
 					event.Seed,
 					event.Raw.BlockNumber,
 				)

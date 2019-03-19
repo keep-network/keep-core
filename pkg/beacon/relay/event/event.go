@@ -24,9 +24,8 @@ type Entry struct {
 type Request struct {
 	RequestID     *big.Int
 	Payment       *big.Int
-	BlockReward   *big.Int
+	PreviousEntry *big.Int
 	Seed          *big.Int
-	PreviousValue *big.Int
 
 	BlockNumber uint64
 }
