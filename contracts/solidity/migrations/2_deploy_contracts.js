@@ -1,5 +1,6 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
 const ModUtils = artifacts.require("./utils/ModUtils.sol");
+const BytesUtils = artifacts.require("./utils/BytesUtils.sol");
 const AltBn128 = artifacts.require("./AltBn128.sol");
 const BLS = artifacts.require("./BLS.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
@@ -24,6 +25,8 @@ const timeoutChallenge = 4;
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
+  await deployer.deploy(BytesUtils);
+  await deployer.link(BytesUtils, KeepGroupImplV1);
   await deployer.deploy(AltBn128);
   await deployer.link(AltBn128, BLS);
   await deployer.deploy(BLS);
