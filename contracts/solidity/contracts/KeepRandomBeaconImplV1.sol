@@ -165,7 +165,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Get the last relay entry value.
+     * @dev Gets the previous relay entry value.
      */
     function previousEntry() public view returns(uint256) {
         return _previousEntry;
