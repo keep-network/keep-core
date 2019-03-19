@@ -22,6 +22,6 @@ module.exports = async function () {
     console.log('Number of active groups: ' + groupsCount.toString());
   }
 
-  printLastRelayEntry()
+  printLastRelayEntry();
   printNumberOfGroups();
 }
