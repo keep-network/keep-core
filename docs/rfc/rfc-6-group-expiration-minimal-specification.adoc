@@ -76,14 +76,14 @@ The operating contract is obligated to forbid non-members from group operations.
 If the number of active groups is below the _active groups threshold_ all
 remaining groups on the _active groups list_ are treated as _active_.
 
-Otherwise the following is performed.
+Otherwise, the following is performed.
 
 If the current block time is larger than the group initiation time plus the
 timeout then set the group agreement status to _expired_. Move the expired group
-agreement from the active gropus list to the expired groups list and decrease
-the active group counter by one. Then the next group is selected and its status
-is verified unitl an active group is found or the number of active groups falls
-below the _active groups threshold_. 
+agreement from the _active groups list_ to the _expired groups list_ and
+decrease the _active group counter_ by one. Then the next group is selected and
+its status is verified until an active group is found or the number of active
+groups falls below the _active groups threshold_.
 
 
 [bibliography]
