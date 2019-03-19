@@ -22,7 +22,7 @@ const piAsString = "314159265358979323846264338327950288419716939937510582097494
 // https://www.wolframalpha.com/input/?i=e+to+78+digits
 const eAsString = "27182818284590452353602874713526624977572470936999595749669676277240766303535"
 
-const secretKey = "123"
+const privateKey = "123"
 
 // GenesisRelayEntry generates genesis relay entry.
 func GenesisRelayEntry() *event.Entry {
@@ -42,14 +42,14 @@ func GenesisRelayEntry() *event.Entry {
 	)
 
 	// BLS signature for provided genesisEntryValue and seed signed with
-	// the secretKey
+	// the privateKey
 	genesisGroupSignature := altbn128.G1Point{
-		G1: bls.Sign(bigFromBase10(secretKey), combinedEntryToSign),
+		G1: bls.Sign(bigFromBase10(privateKey), combinedEntryToSign),
 	}.Compress()
 
-	// public key for provided secretKey
+	// public key for provided privateKey
 	genesisGroupPubKey := altbn128.G2Point{
-		G2: new(bn256.G2).ScalarBaseMult(bigFromBase10(secretKey)),
+		G2: new(bn256.G2).ScalarBaseMult(bigFromBase10(privateKey)),
 	}.Compress()
 
 	return &event.Entry{
