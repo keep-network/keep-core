@@ -188,6 +188,7 @@ def node_failure_modes(nodes, runs):
     return timeout
 
 class Group:
+    #Group class
     def __init__(self, env, identity, group_size, group_distr_matrix):
         self.cycle = 0
         self.tries = 0
@@ -205,10 +206,19 @@ class Group:
         self.member_check[node_id] = 0
 
     def is_ready(self, env):
-        if np.array_equal(self.member_check, self.group):
-            self.status = "active"
+
+        if self.status == "inactive" and np.array_equal(self.member_check, self.group):
+            self.status == "active"
+        elif self.status == "inactive":
+            self.status == "pending"
+        elif self.status == "active" and not np.array_equal(self.member_check, self.group):
+            self.status == "failed"
         else:
-            self.status = "pending"
+            self.status == "uknown error"
+
+
+
+
 
     def __del__(self): 
         print('Group #'+self.id+' deleted') 
