@@ -8,7 +8,7 @@ import pandas as pd
 class Node:
     #Node states based on Antonio's diagramming on Feb 15 2019
     #Assume staking mechanism is complete
-    def __init__(self, env, identity, start_time, sim_cycles, tickets, group_members):
+    def __init__(self, env, identity, start_time, sim_cycles, tickets, group_members, forming_group):
         self.env = env
         self.id = identity
         self.starttime = start_time
@@ -111,8 +111,6 @@ class Node:
     def Group_Formation(self,env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
-        if self.group_membership[self.cycle_count][self.id]>0:
-            self.ingroup == True
         
         print(str(self.id)+" formed group" + " cycle="+str(self.cycle_count))
         self.ingroup = True
@@ -132,7 +130,7 @@ def min_index(ticket_array, group_size):
     #print(group)
     indexes = [] #initializes the array of indexes for min ticket values
     
-    for ticket in group: # iterates through each ticket value in the sorted list
+    for ticket in group: #iterates through each ticket value in the sorted list
         
         ticket_index = np.where(array==(ticket)) #finds the index with the ticket value
         #print("ticket_index = " + str(ticket_index))
@@ -187,10 +185,45 @@ def node_failure_modes(nodes, runs):
 # Calculates if a node has gone offline
 # https://livemap.pingdom.com/
     timeout = np.random.rand(nodes, runs) < 0.15
-    http_error403 = np.random.rand(nodes,runs) < (np.random.random_sample(1)*0.05+0.05)
-    http_error503 = np.random.rand(nodes,runs) < (np.random.random_sample(1)*0.05+0.05)
-    http_error500 = np.random.rand(nodes,runs) < (np.random.random_sample(1)*0.05+0.05)
-    return timeout+http_error403+http_error503+http_error500
+    return timeout
+
+class Group:
+    def __init__(self, env, identity, group_size, group_distr_matrix):
+        self.cycle = 0
+        self.tries = 0
+        self.failures = 0
+        self.current_member_count = 0
+        self.status = "inactive"
+        self.id = identity
+        self.member_check = np.zeroes(group_size)
+        self.group = group_distr_matrix[identity] > 0
+
+    def connect(self, node_id):
+        self.member_check[node_id] = 1
+
+    def is_ready(self, env):
+        if np.array_equal(self.member_check, self.group):
+            self.status = "active"
+        else:
+            self.status = "pending"
+        
+
+        
+        
+
+
+        
+
+
+
+    
+
+
+
+
+
+
+
 
 
 """ # Setup and start the simulation
