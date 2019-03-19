@@ -92,7 +92,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 	}
 
 	// assert result has been published to the chain
-	isResultPublished, err := chainHandle.ThresholdRelay().IsDKGResultPublished(requestID)
+	isResultPublished, err := chainHandle.ThresholdRelay().IsDKGResultSubmitted(requestID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -106,7 +106,7 @@ func TestConvertResult(t *testing.T) {
 	groupSize := 5
 
 	publicKey := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
-	compressedPublicKey := altbn128.G2Point{publicKey}.Compress()
+	compressedPublicKey := altbn128.G2Point{G2: publicKey}.Compress()
 
 	var tests = map[string]struct {
 		gjkrResult     *gjkr.Result

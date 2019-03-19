@@ -8,21 +8,27 @@ toc::[]
 
 == Proposal
 This document focuses on specifying a group expiration mechanism. The proposed
-functionality enables a group to expire after particular condition is met.
+functionality enables a group to expire after a particular condition is met.
 Members of an expired group are forbidden from taking any new actions within the
 group, but all of the already ongoing in-group operations can still continue. 
 
 === Goal
 The goal is to provide a minimal set of functions necessary for implementing the
-group expiration mechanism into the KEEP network. The group expires when group
+group expiration mechanism into the Keep network. The group expires when group
 expiration timeout passes.
 
 == Specification
 
 === Contract
 
-Group selection contract should include the following information (per group
-formation agreement):
+Group selection contract should include the following information:
+
+- active groups list (with group formation agreements),
+- active groups counter,
+- active groups threshold (which protects the network from expiring all groups),
+- expired groups list,
+
+and (per group formation agreement):
 
 - group formation agreement identifier,
 - group members identifiers,
@@ -37,44 +43,48 @@ The contract should also have the following discrete pieces of functionality:
 
 [#initiation]
 ==== Initiation
-When a group is formed, the group formation agreement is created and filled
-with:
+When a group is formed, the group formation agreement is added to the active 
+groups list, the active groups counter is incremented, and the 
+agreement is filled with:
 
 - unique group formation agreement identifier,
 - group members identifiers,
 - initiation time set to current block time,
-- timeout set to an arbitrary time to group expiration counted in blocks,
+- timeout evaluated as an arbitrary time to mark a group as expired counted in
+  blocks (explicit or implicit),
 - current agreement state set to _active_.
 
 [#operation]
 ==== Operation
-When a group operation is invoked, the operating contract (one that is invoking
-the operation) needs to call the group selection contract with the group
-formation agreement identifier. During the call, the group selection contract
-performs <<verification, group agreement status verification>>. When the group
-formation agreement is active, then the
-<<active, group selection contract responds with active group information>>
-otherwise, the 
-<<expired, group selection contract responds with expired group information>>.
+When a group operation is invoked, the operating contract (the one that is
+invoking the operation) needs to call the group selection contract. When called,
+the group selection contract selects at random potential group from the active 
+groups list and performs the <<verification, group status verification>>.
+When the group formation agreement is active or if the active groups counter is
+below the threshold, then and only then the
+<<active, group selection contract responds with group information>>.
 
 [#active]
-===== Active group response
+===== Group information response
 The group selection contract sends _group members identifiers_ to the operating
 contract.
 
 The operating contract is obligated to forbid non-members from group operations.
 
-[#expired]
-===== Expired group response
-The group selection contract sends _expired_ group status to the operating
-contract. The operating contract should not commence any new operation. It
-should inform its invoker or group of invokers about the fact that the group
-expired.
-
 [#verification]
-===== Group agreement status verification
+===== Group status verification
+If the number of active groups is below the _active groups threshold_ all
+remaining groups on the _active groups list_ are treated as _active_.
+
+Otherwise the following is performed.
+
 If the current block time is larger than the group initiation time plus the
-threshold then set the group agreement status to _expired_.
+timeout then set the group agreement status to _expired_. Move the expired group
+agreement from the active gropus list to the expired groups list and decrease
+the active group counter by one. Then the next group is selected and its status
+is verified unitl an active group is found or the number of active groups falls
+below the _active groups threshold_. 
+
 
 [bibliography]
 == Related Links

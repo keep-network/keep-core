@@ -63,14 +63,9 @@ func main() {
 			outputFile: "relay_entry_requested_promise.go",
 		},
 		{
-			Type:       "*event.DKGResultPublication",
-			Prefix:     "DKGResultPublication",
-			outputFile: "dkg_result_publication_promise.go",
-		},
-		{
-			Type:       "*event.DKGResultVote",
-			Prefix:     "DKGResultVote",
-			outputFile: "dkg_result_vote_promise.go",
+			Type:       "*event.DKGResultSubmission",
+			Prefix:     "DKGResultSubmission",
+			outputFile: "dkg_result_submission_promise.go",
 		},
 	}
 

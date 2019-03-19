@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	crand "crypto/rand"
 	"fmt"
 	"io"
 	"math/big"
@@ -256,13 +255,13 @@ func connectInitiatorAndResponder(
 }
 
 type testConnectionConfig struct {
-	privKey *key.NetworkPrivateKey
-	pubKey  *key.NetworkPublicKey
+	privKey *key.NetworkPrivate
+	pubKey  *key.NetworkPublic
 	peerID  peer.ID
 }
 
 func createTestConnectionConfig(t *testing.T) *testConnectionConfig {
-	privKey, pubKey, err := key.GenerateStaticNetworkKey(crand.Reader)
+	privKey, pubKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}

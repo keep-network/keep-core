@@ -6,6 +6,7 @@ import (
 	"time"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/bls"
@@ -127,7 +128,7 @@ func Execute(
 				return nil, err
 			}
 
-			return signature.Marshal(), nil
+			return altbn128.G1Point{signature}.Compress(), nil
 		}
 	}
 }
