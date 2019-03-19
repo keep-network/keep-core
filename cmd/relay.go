@@ -134,7 +134,7 @@ func relayRequest(c *cli.Context) error {
 }
 
 // submitGenesisRelayEntry submits genesis entry for the threshold relay,
-// kicking off DKG process to create the first group.
+// kicking off protocol to create the first group.
 func submitGenesisRelayEntry(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
