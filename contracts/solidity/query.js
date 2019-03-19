@@ -10,7 +10,7 @@ module.exports = async function () {
 
   async function printLastRelayEntry() {
     let contractRef = await KeepRandomBeacon.at(keepRandomBeaconProxy.address);
-    let lastEntry = await contractRef.lastEntryValue();
+    let lastEntry = await contractRef.previousEntry();
 
     console.log('Last relay entry: ' + lastEntry.toString());
   }

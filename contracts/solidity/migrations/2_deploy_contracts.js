@@ -43,7 +43,7 @@ module.exports = async function(deployer) {
   await keepGroup.initialize(
     StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
   );
-  // Initialize contract genesis entry value and genesis group defined in Go client submitRelayEntrySeed()
+  // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeacon.initialize(
     minPayment,
     withdrawalDelay,

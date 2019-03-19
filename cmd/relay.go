@@ -21,12 +21,12 @@ import (
 // its own subcommands.
 var RelayCommand cli.Command
 
-const relayDescription = `The relay command allows interacting with Keep 
-   threshold relay implementation of a random beacon. It is possible
-   to request a new entry (equivalent to asking the bacon for a new random
-   number. The request subcommand waits for the entry to appear on-chain and 
-   then reports its value. It is also possible to seed the relay - this action 
-   can be done only once and can not be repeated ever again.`
+const relayDescription = `The relay command allows interacting with Keep's
+	threshold relay. The "request" subcommand allows for requesting a new entry
+	from the relay, which is equivalent to asking for a new random number. This
+	subcommand waits for the entry to appear on-chain and then reports the value.
+	The "genesis" subcommand submits initial genesis value to the relay. This
+	action can be done only once and can not be repeated ever again.`
 
 func init() {
 	RelayCommand = cli.Command{
@@ -40,9 +40,9 @@ func init() {
 				Action: relayRequest,
 			},
 			{
-				Name:   "seed",
-				Usage:  "Seeds the threshold relay. Can be executed only one time",
-				Action: submitRelayEntrySeed,
+				Name:   "genesis",
+				Usage:  "Submits genesis relay entry. Can be executed only one time.",
+				Action: submitGenesisRelayEntry,
 			},
 		},
 	}
@@ -133,9 +133,9 @@ func relayRequest(c *cli.Context) error {
 	}
 }
 
-// submitRelayEntrySeed creates a new seed entry for the threshold relay, kicking
-// off the group selection process, and prints the newly generated value.
-func submitRelayEntrySeed(c *cli.Context) error {
+// submitGenesisRelayEntry submits genesis entry for the threshold relay,
+// kicking off DKG process to create the first group.
+func submitGenesisRelayEntry(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
@@ -159,7 +159,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 			wait <- err
 			return
 		}
-		fmt.Printf("Submitted seed relay entry: [%+v]\n", data)
+		fmt.Printf("Submitted genesis relay entry: [%+v]\n", data)
 		wait <- nil
 		return
 	})
@@ -167,7 +167,7 @@ func submitRelayEntrySeed(c *cli.Context) error {
 	select {
 	case err := <-wait:
 		if err != nil {
-			return fmt.Errorf("error in submitting seed relay entry: [%v]", err)
+			return fmt.Errorf("error in submitting genesis relay entry: [%v]", err)
 		}
 	case <-ctx.Done():
 		err := ctx.Err()

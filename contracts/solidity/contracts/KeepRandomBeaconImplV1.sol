@@ -155,7 +155,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
 
         require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request.");
-        require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry, seed), bytes32(groupSignature)), "Group signature should pass BLS verification.");
+        require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry, seed), bytes32(groupSignature)), "Group signature failed to pass BLS verification.");
 
         delete _requests[requestID];
         _previousEntry = groupSignature;
@@ -167,7 +167,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     /**
      * @dev Get the last relay entry value.
      */
-    function lastEntryValue() public view returns(uint256) {
+    function previousEntry() public view returns(uint256) {
         return _previousEntry;
     }
 
