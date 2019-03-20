@@ -70,8 +70,7 @@ And then the
 
 [#active]
 ===== Group information response
-The group selection contract presents _group members identifiers_ to the work
-contract.
+The group selection contract presents the selected group to the work contract.
 
 The work contract is obligated to forbid non-members from group operations.
 
