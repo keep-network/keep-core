@@ -120,7 +120,6 @@ func TestConvertResult(t *testing.T) {
 				Inactive:       []gjkr.MemberID{},
 			},
 			expectedResult: &relayChain.DKGResult{
-				Success:        false,
 				GroupPublicKey: []byte{},
 				Disqualified:   []byte{0x00, 0x00, 0x00, 0x00, 0x00},
 				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x00},
@@ -134,7 +133,6 @@ func TestConvertResult(t *testing.T) {
 				Inactive:       []gjkr.MemberID{5},
 			},
 			expectedResult: &relayChain.DKGResult{
-				Success:        true,
 				GroupPublicKey: compressedPublicKey,
 				Disqualified:   []byte{0x01, 0x00, 0x01, 0x01, 0x00},
 				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x01},
