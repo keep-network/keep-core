@@ -37,42 +37,42 @@ and (per group formation agreement):
 
 - group formation agreement identifier,
 - group members identifiers,
-- the initiation time when the group was created,
+- registration time when the group was created,
 - timeout, after which the group expires,
 - current state indicating if the group is active or expired.
 
 The contract should also have the following discrete pieces of functionality:
-<<initiation, initiation>>, and <<operation, operation>>.
+<<registration, group registration>>, and <<selection, group selection>>.
 
 === Functionality
 
-[#initiation]
-==== Initiation
+[#registration]
+==== Registration
 When a group is formed, the group formation agreement is added to the active 
 groups list, the active groups counter is incremented, and the 
 agreement is filled with:
 
 - unique group formation agreement identifier,
 - group members identifiers,
-- initiation time set to current block time,
+- registration time set to current block time,
 - timeout evaluated as the time required to mark a group as expired, counted in
   blocks, (it might be explicit or implicit),
 - current agreement state set to _active_.
 
-[#operation]
-==== Operation
-When a group operation is invoked, the work contract (the one that is
-invoking the operation) needs to call the group selection contract. When called,
-the group selection contract selects at random potential group from the active 
-groups list and performs the <<verification, group status verification>>.
+[#selection]
+==== Selection
+When a group selection is invoked, the work contract (the one that is
+starting the group selection) needs to call the group selection contract. When
+called, the group selection contract selects at random potential group from the 
+active groups list and performs the <<verification, group status verification>>.
 And then the 
-<<active, group selection contract responds with group information>>.
+<<response, group selection contract responds with group information>>.
 
-[#active]
+[#response]
 ===== Group information response
 The group selection contract presents the selected group to the work contract.
 
-The work contract is obligated to forbid non-members from group operations.
+The work contract is obligated to forbid non-members from group work.
 
 [#verification]
 ===== Group status verification
@@ -81,7 +81,7 @@ remaining groups on the _active groups list_ are treated as _active_.
 
 Otherwise, the following is performed.
 
-If the current block time is larger than the group initiation time plus the
+If the current block time is larger than the group registration time plus the
 timeout then set the group agreement status to _expired_. Move the expired group
 agreement from the _active groups list_ to the _expired groups list_ and
 decrease the _active group counter_ by one. Then the next group is selected and
