@@ -9,13 +9,18 @@ toc::[]
 == Proposal
 This document focuses on specifying a group expiration mechanism. The proposed
 functionality enables a group to expire after a particular condition is met.
-Members of an expired group are forbidden from taking any new actions within the
-group, but all of the already ongoing in-group operations can still continue. 
+An expired group can not be chosen to perform new actions, but any ongoing group
+actions will continue until finished.
 
 === Goal
 The goal is to provide a minimal set of functions necessary for implementing the
 group expiration mechanism into the Keep network. The group expires when group
 expiration timeout passes.
+
+=== Terminology
+
+work contract:: Referes to any contract performing a system action for which it
+  needs to have an active group assigned. 
 
 == Specification
 
@@ -56,7 +61,7 @@ agreement is filled with:
 
 [#operation]
 ==== Operation
-When a group operation is invoked, the operating contract (the one that is
+When a group operation is invoked, the work contract (the one that is
 invoking the operation) needs to call the group selection contract. When called,
 the group selection contract selects at random potential group from the active 
 groups list and performs the <<verification, group status verification>>.
@@ -65,10 +70,10 @@ And then the
 
 [#active]
 ===== Group information response
-The group selection contract sends _group members identifiers_ to the operating
+The group selection contract presents _group members identifiers_ to the work
 contract.
 
-The operating contract is obligated to forbid non-members from group operations.
+The work contract is obligated to forbid non-members from group operations.
 
 [#verification]
 ===== Group status verification
