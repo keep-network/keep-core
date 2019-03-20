@@ -15,11 +15,13 @@ import (
 // blockchain along with signatures received from other group members supporting
 // the result.
 type SubmittingMember struct {
+        // Represents the member's position for submission.
 	index gjkr.MemberID
 
+	// Interface to access submission methods specific to the chain.
 	chainHandle chain.Handle
 	// Predefined step for each submitting window. The value is used to determine
-	// eligible submitting member.
+	// the eligible submitting member.
 	blockStep uint64
 }
 
