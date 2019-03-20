@@ -73,7 +73,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			if isSubmitted {
 				t.Fatalf("result is already submitted to the chain")
 			}
-			// TEST
+
 			currentBlock, err := member.SubmitDKGResult(
 				requestID,
 				result,
