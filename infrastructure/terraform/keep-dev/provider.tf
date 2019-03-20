@@ -2,16 +2,17 @@ data "google_client_config" "default" {}
 
 # Configure the Google Cloud provider
 provider "google" {
-  version = "~> 1.19"
+  version = "<= 1.19.0"
   region  = "${var.region_data["region"]}"
 }
 
 provider "google-beta" {
-  version = "~> 1.19"
+  version = "<= 1.19.0"
   region  = "${var.region_data["region"]}"
 }
 
 provider "kubernetes" {
+  version                = "<= 1.5.0"
   load_config_file       = false
   host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
   token                  = "${data.google_client_config.default.access_token}"
@@ -24,6 +25,8 @@ module "helm_provider_helper" {
 }
 
 provider "helm" {
+  version = "<= 0.7.0"
+
   kubernetes {
     host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
     token                  = "${data.google_client_config.default.access_token}"
@@ -35,4 +38,16 @@ provider "helm" {
   override        = ["spec.template.spec.automountserviceaccounttoken=true"]
   namespace       = "${module.helm_provider_helper.tiller_namespace}"
   install_tiller  = true
+}
+
+provider "null" {
+  version = "<= 2.0.0"
+}
+
+provider "random" {
+  version = "<= 2.0.0"
+}
+
+provider "template" {
+  version = "<= 1.0.0"
 }

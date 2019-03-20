@@ -3,7 +3,6 @@ package beacon
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
@@ -35,48 +34,22 @@ func Initialize(
 		return err
 	}
 
-	node := relay.NewNode(
-		staker,
-		netProvider,
-		blockCounter,
-		chainConfig,
-	)
-
-	// Current entry holds currently processed entry received from relay entry
-	// submission. After generating a new group this entry will be used to
-	// generate a new entry. With this solution group selection and new relay
-	// entry submission will be executed sequentially.
-	// TODO: This is temporary workaround for M2. It should be removed as soon as
-	// relay request support is implemented.
-	var currentEntry *event.Entry
+	node := relay.NewNode(staker, netProvider, blockCounter, chainConfig)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		fmt.Printf("New entry requested [%+v]\n", request)
-
-		// THIS WILL ALLOW ALL GROUPS TO REGISTER LOCALLY.
-		// HACKY BUT TEMPORARY (NOT NEEDED WITH RELAY REQUESTS)
-		if err := blockCounter.WaitForBlocks(2); err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failed to wait 2 blocks before determining eligibility: [%v]",
-				err,
-			)
-		}
+		fmt.Printf("New relay entry requested [%+v]\n", request)
 
 		go node.GenerateRelayEntryIfEligible(
 			request.RequestID,
-			request.PreviousValue,
+			request.PreviousEntry,
 			request.Seed,
 			relayChain,
 		)
 	})
 
 	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-		fmt.Printf("Saw new relay entry [%+v]\n", entry)
+		fmt.Printf("New relay entry generated [%+v]\n", entry)
 
-		currentEntry = entry
-
-		// new entry generated, try to join the group
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
 				relayChain,
@@ -92,20 +65,11 @@ func Initialize(
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		fmt.Printf("Saw new group registered [%+v]\n", registration)
+		fmt.Printf("New group registered [%+v]\n", registration)
 
 		node.RegisterGroup(
 			registration.RequestID.String(),
 			registration.GroupPublicKey,
-		)
-
-		entry := currentEntry
-		nextRequestID := new(big.Int).Add(entry.RequestID, big.NewInt(1))
-		go node.GenerateRelayEntryIfEligible(
-			nextRequestID,
-			entry.Value,
-			entry.Seed,
-			relayChain,
 		)
 	})
 
