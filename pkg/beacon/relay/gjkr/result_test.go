@@ -36,16 +36,6 @@ func TestResultEquals(t *testing.T) {
 			result2:        nil,
 			expectedResult: false,
 		},
-		"success - equal": {
-			result1:        &Result{Success: true},
-			result2:        &Result{Success: true},
-			expectedResult: true,
-		},
-		"success - not equal": {
-			result1:        &Result{Success: true},
-			result2:        &Result{Success: false},
-			expectedResult: false,
-		},
 		"group public keys - equal": {
 			result1:        &Result{GroupPublicKey: key1},
 			result2:        &Result{GroupPublicKey: key1},

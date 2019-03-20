@@ -114,7 +114,6 @@ func TestConvertResult(t *testing.T) {
 	}{
 		"success: false, group public key: nil, DQ and IA: empty": {
 			gjkrResult: &gjkr.Result{
-				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   []gjkr.MemberID{},
 				Inactive:       []gjkr.MemberID{},
@@ -127,7 +126,6 @@ func TestConvertResult(t *testing.T) {
 		},
 		"success: true, group public key: provided, DQ and IA: provided": {
 			gjkrResult: &gjkr.Result{
-				Success:        true,
 				GroupPublicKey: publicKey,
 				Disqualified:   []gjkr.MemberID{1, 3, 4},
 				Inactive:       []gjkr.MemberID{5},
