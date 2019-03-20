@@ -2,6 +2,7 @@ package operator
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -86,4 +87,10 @@ func VerifySignature(publicKey *PublicKey, hash []byte, sig Signature) error {
 	}
 
 	return nil
+}
+
+// Marshal takes an operator's PublicKey and produces an uncompressed public key
+// as a slice of bytes (as specified in ANSI X9.62).
+func Marshal(publicKey *PublicKey) []byte {
+	return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 }

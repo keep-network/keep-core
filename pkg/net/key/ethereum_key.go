@@ -1,6 +1,8 @@
 package key
 
 import (
+	"crypto/elliptic"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -53,4 +55,25 @@ func OperatorKeyToNetworkKey(
 func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
 	return crypto.PubkeyToAddress(*ecdsaKey).String()
+}
+
+// Marshal takes a network public key, converts it into an ecdsa
+// public key, and uses go's standard library elliptic marshal method to
+// convert the public key into a slice of bytes in the correct format for the key
+// type. This allows external consumers of this key to verify integrity of the
+// key without having to understand the internals of the net pkg.
+func Marshal(publicKey *NetworkPublic) []byte {
+	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
+	return elliptic.Marshal(ecdsaKey.Curve, ecdsaKey.X, ecdsaKey.Y)
+}
+
+// Libp2pKeyToNetworkKey takes an interface type, libp2pcrypto.PubKey, and
+// returns the concrete type specific to this package. If it fails to do so, it
+// returns nil.
+func Libp2pKeyToNetworkKey(publicKey libp2pcrypto.PubKey) *NetworkPublic {
+	switch networkKey := publicKey.(type) {
+	case *libp2pcrypto.Secp256k1PublicKey:
+		return (*NetworkPublic)(networkKey)
+	}
+	return nil
 }

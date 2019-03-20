@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -113,6 +114,22 @@ func TestSameKeyAsEthereum(t *testing.T) {
 			libp2pPubKey.Y,
 		)
 	}
+}
+
+func TestSameKeySerializationMethod(t *testing.T) {
+	privateOperatorKey, publicOperatorKey, err := operator.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, publicNetworkKey := OperatorKeyToNetworkKey(
+		privateOperatorKey, publicOperatorKey,
+	)
+
+	operatorKeyBytes := operator.Marshal(publicOperatorKey)
+	networkKeyBytes := Marshal(publicNetworkKey)
+
+	testutils.AssertBytesEqual(t, operatorKeyBytes, networkKeyBytes)
 }
 
 func TestNetworkPubKeyToAddress(t *testing.T) {
