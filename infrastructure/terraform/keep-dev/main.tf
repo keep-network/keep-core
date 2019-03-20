@@ -121,11 +121,11 @@ module "gke_cluster" {
   gke_cluster {
     name                                = "${var.gke_cluster["name"]}"
     private_cluster                     = "${var.gke_cluster["private_cluster"]}"
-    subnetwork                          = "${module.vpc.vpc_private_subnet_self_link}"
     master_ipv4_cidr_block              = "${var.gke_cluster["master_ipv4_cidr_block"]}"
     daily_maintenance_window_start_time = "${var.gke_cluster["daily_maintenance_window_start_time"]}"
     network_policy_enabled              = "${var.gke_cluster["network_policy_enabled"]}"
     network_policy_provider             = "${var.gke_cluster["network_policy_provider"]}"
+    logging_service                     = "${var.gke_cluster["logging_service"]}"
   }
 
   gke_node_pool {
@@ -148,4 +148,37 @@ resource "google_compute_global_address" "atlantis_external_ip" {
   project      = "${module.project.project_id}"
   address_type = "${upper(var.atlantis_ip_address_type)}"
   labels       = "${local.labels}"
+}
+
+/* Using this module will create a data read and an update for the
+ * prometheus-to-sd resource on each Terraform planand apply run.  These
+ * updates will do nothing and are an artifact of the depends_on in the
+ * modules data resource. Terraform team is aware and have a proposed fix
+ * in the works.
+*/
+module "gke_cluster_metrics" {
+  source    = "git@github.com:thesis/infrastructure.git//terraform/modules/gke_metrics"
+  namespace = "${var.gke_metrics_namespace}"
+
+  kube_state_metrics {
+    version = "${var.kube_state_metrics["version"]}"
+  }
+
+  prometheus_to_sd {
+    version = "${var.prometheus_to_sd["version"]}"
+  }
+}
+
+module "openvpn" {
+  source = "git@github.com:thesis/infrastructure.git//terraform/modules/helm_openvpn"
+
+  openvpn {
+    name    = "${var.openvpn["name"]}"
+    version = "${var.openvpn["version"]}"
+  }
+
+  openvpn_parameters {
+    route_all_traffic_through_vpn = "${var.openvpn_parameters["route_all_traffic_through_vpn"]}"
+    gke_master_ipv4_cidr_address  = "${var.openvpn_parameters["gke_master_ipv4_cidr_address"]}"
+  }
 }

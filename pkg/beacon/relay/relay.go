@@ -44,16 +44,16 @@ func NewNode(
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
 	requestID *big.Int,
-	previousValue *big.Int,
+	previousEntry *big.Int,
 	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
 ) {
 	combinedEntryToSign := combineEntryToSign(
-		previousValue.Bytes(),
+		previousEntry.Bytes(),
 		seed.Bytes(),
 	)
 
-	memberships := n.membershipsForRequest(previousValue)
+	memberships := n.membershipsForRequest(previousEntry)
 	if len(memberships) < 1 {
 		return
 	}
@@ -81,7 +81,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			newEntry := &event.Entry{
 				RequestID:     requestID,
 				Value:         rightSizeSignature,
-				PreviousEntry: previousValue,
+				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
 				GroupPubKey:   signer.member.GroupPublicKeyBytes(),
 				Seed:          seed,

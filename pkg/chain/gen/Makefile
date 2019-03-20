@@ -22,6 +22,6 @@ gen_go:
 	make -f ${OP_DIR}/Makefile ${SOL}
 
 %.go : %.sol
-	( cd ${SOL_DIR} ; solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
+	( cd ${SOL_DIR} ; solc solidity-bytes-utils/=../node_modules/solidity-bytes-utils/ openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
 	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg abi --type $* --out ${GEN_DIR}/$@ )
 

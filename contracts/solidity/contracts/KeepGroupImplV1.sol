@@ -469,6 +469,14 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Returns public key of a group from available groups using modulo operator.
+     * @param previousEntry Previous random beacon value.
+     */
+    function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
+        return _groups[previousEntry % _groups.length];
+    }
+
+    /**
      * @dev Gets version of the current implementation.
     */
     function version() public pure returns (string memory) {

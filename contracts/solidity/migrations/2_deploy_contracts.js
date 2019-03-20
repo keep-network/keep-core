@@ -43,10 +43,12 @@ module.exports = async function(deployer) {
   await keepGroup.initialize(
     StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
   );
+  // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeacon.initialize(
     minPayment,
     withdrawalDelay,
-    web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'), // Matches genesis entry value in Go client
+    web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),
+    "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",
     KeepGroup.address
   );
 };

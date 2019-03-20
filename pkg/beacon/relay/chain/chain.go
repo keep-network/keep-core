@@ -21,7 +21,7 @@ type StakerAddress []byte
 type RelayEntryInterface interface {
 	// RequestRelayEntry makes an on-chain request to start generation of a
 	// random signature.  An event is generated.
-	RequestRelayEntry(blockReward, seed *big.Int) *async.RelayRequestPromise
+	RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
