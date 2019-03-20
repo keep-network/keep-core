@@ -273,7 +273,7 @@ func (c *channel) processContainerMessage(
 		senderIdentifier.id,
 		unmarshaled,
 		string(message.Type),
-		key.NetworkKeyToECDSABytes(networkKey),
+		key.Marshal(networkKey),
 	)
 
 	return c.deliver(protocolMessage)

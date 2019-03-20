@@ -57,12 +57,12 @@ func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
 	return crypto.PubkeyToAddress(*ecdsaKey).String()
 }
 
-// NetworkKeyToECDSABytes takes a network public key, converts it into an ecdsa
+// Marshal takes a network public key, converts it into an ecdsa
 // public key, and uses go's standard library elliptic marshal method to
 // convert the public key into a slice of bytes in the correct format for the key
 // type. This allows external consumers of this key to verify integrity of the
 // key without having to understand the internals of the net pkg.
-func NetworkKeyToECDSABytes(publicKey *NetworkPublic) []byte {
+func Marshal(publicKey *NetworkPublic) []byte {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
 	return elliptic.Marshal(ecdsaKey.Curve, ecdsaKey.X, ecdsaKey.Y)
 }
