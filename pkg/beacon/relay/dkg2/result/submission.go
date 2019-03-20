@@ -101,7 +101,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	// TODO: Check if we need to use BlockHeighWaiter. To do that we would need
 	// to pass block height when previous phase ended so we can synchronize.
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		int((sm.index - 1)) * int(sm.blockStep),
+		(int(sm.index) - 1) * int(sm.blockStep),
 	)
 	if err != nil {
 		subscription.Unsubscribe()
