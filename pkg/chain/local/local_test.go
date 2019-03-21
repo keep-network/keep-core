@@ -483,8 +483,9 @@ func TestCalculateDKGResultHash(t *testing.T) {
 		GroupPublicKey: []byte{3, 40, 200},
 		Disqualified:   []byte{1, 0, 1, 0},
 		Inactive:       []byte{0, 1, 1, 0},
+		Signatures:     []byte{0, 1, 1, 0},
 	}
-	expectedHashString := "f65d6c5e938537224bbd2716d2f24895746a756978d29e1eaaf46fb97a555716"
+	expectedHashString := "c9a4e88ce2b91f5ede9d7593a25c6a030611b8bd3d0d50763fda207589c51d35"
 
 	actualHash, err := localChain.CalculateDKGResultHash(dkgResult)
 	if err != nil {
