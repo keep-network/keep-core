@@ -7,12 +7,13 @@ import (
 	"strconv"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/states"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 // MemberID is a unique-in-group identifier of a member.
 // TODO: Rename to MemberIndex since it's used around DKG as index.
-type MemberID uint32
+type MemberID states.MemberIndex
 
 // Int converts `MemberID` to `big.Int`.
 func (id MemberID) Int() *big.Int {
