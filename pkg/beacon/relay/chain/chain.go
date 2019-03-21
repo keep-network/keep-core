@@ -78,13 +78,12 @@ type GroupInterface interface {
 // generation process.
 type DistributedKeyGenerationInterface interface {
 	// SubmitDKGResult sends DKG result to a chain, along with signatures over
-	// result hash from group participants supporting the result. Signatures map
-	// keys are participant's indices. Participants are indexed starting with 1.
+	// result hash from group participants supporting the result.
+	// Participants are indexed starting with 1.
 	SubmitDKGResult(
 		requestID *big.Int,
 		participantIndex uint32,
 		dkgResult *DKGResult,
-		signatures map[uint32][]byte,
 	) *async.DKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.

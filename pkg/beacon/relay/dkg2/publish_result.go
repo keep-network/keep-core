@@ -134,7 +134,7 @@ func (pm *Publisher) publishResult(
 			subscription.Unsubscribe()
 			close(onPublishedResultChan)
 
-			chainRelay.SubmitDKGResult(pm.RequestID, uint32(pm.publishingIndex), result, nil).
+			chainRelay.SubmitDKGResult(pm.RequestID, uint32(pm.publishingIndex), result).
 				OnSuccess(func(dkgResultPublishedEvent *event.DKGResultSubmission) {
 					// TODO: This is a temporary solution until DKG Phase 14 is
 					// ready. We assume that only one DKG result is published in

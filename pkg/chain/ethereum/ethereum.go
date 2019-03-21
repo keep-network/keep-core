@@ -455,7 +455,6 @@ func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
 	participantIndex uint32,
 	result *relaychain.DKGResult,
-	signatures map[uint32][]byte,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
