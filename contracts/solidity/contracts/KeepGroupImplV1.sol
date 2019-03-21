@@ -48,6 +48,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256[] internal _tickets;
     bytes[] internal _submissions;
 
+    mapping (uint256 => DkgResult) internal _requestIdToDkgResult;
     mapping (uint256 => bool) internal _dkgResultPublished;
     mapping (bytes => uint256) internal _submissionVotes;
     mapping (address => mapping (bytes => bool)) internal _hasVoted;
@@ -247,6 +248,18 @@ contract KeepGroupImplV1 is Ownable {
             "Ticket submission challenge period must be over."
         );
 
+        // TODO: remove this require; here to silence warnings
+        require(
+            signatures.length > 0,
+            "Ticket submission challenge period must be over."
+        );
+
+        // TODO: remove this require; here to silence warnings
+        require(
+            index > 0,
+            "Index must be at least 1."
+        );
+
         require(
             _tickets.length >= _groupSize,
             "There should be enough valid tickets submitted to form a group."
@@ -264,19 +277,6 @@ contract KeepGroupImplV1 is Ownable {
      */
     function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
         return _dkgResultPublished[requestId];
-    }
-
-    /*
-     * @dev Gets number of votes for each submitted DKG result hash. 
-     * @param requestId Relay request ID assosciated with DKG protocol execution.
-     * @return Hashes of submitted DKG results and number of votes for each hash.
-     */
-    function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
-        // TODO: Implement
-        bytes32[] memory resultsHashes;
-        uint256[] memory resultsVotes;
-
-        return (resultsHashes, resultsVotes);
     }
 
     /*
