@@ -3,8 +3,6 @@ package chain
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // DKGResult is a result of distributed key generation protocol.
@@ -29,9 +27,9 @@ type DKGResult struct {
 	// the same as the members group. Inactive members are marked as 0x01,
 	// active members as 0x00.
 	Inactive []byte
-	// Signatures are the ordered, collected signer hashes that are submitted
-	// to the chain.
-	Signatures []operator.Signature
+	// Signatures are the ordered, collected, and concatenated (65 bytes each)
+	// signer hashes that are submitted to the chain.
+	Signatures []byte
 }
 
 // DKGResultHash is a 256-bit hash of DKG Result. The hashing algorithm should
@@ -57,6 +55,10 @@ func (r *DKGResult) Equals(r2 *DKGResult) bool {
 	if !bytes.Equal(r.Inactive, r2.Inactive) {
 		return false
 	}
+	if !bytes.Equal(r.Signatures, r2.Signatures) {
+		return false
+	}
+
 	return true
 }
 
