@@ -3,43 +3,14 @@ package dkg2
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/states"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
-
-// Init initializes a given broadcast channel to be able to perform distributed
-// key generation interactions.
-func Init(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.JoinMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.EphemeralPublicKeyMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.MemberCommitmentsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.PeerSharesMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.SecretSharesAccusationsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.MemberPublicKeySharePointsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.PointsAccusationsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &gjkr.DisqualifiedEphemeralKeysMessage{}
-	})
-}
 
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
@@ -97,112 +68,35 @@ func executeGJKR(
 	memberID := gjkr.MemberID(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
-	// Use an unbuffered channel to serialize message processing.
-	recvChan := make(chan net.Message)
-	handler := net.HandleMessageFunc{
-		Type: fmt.Sprintf("dkg/%s", string(time.Now().UTC().UnixNano())),
-		Handler: func(msg net.Message) error {
-			recvChan <- msg
-			return nil
-		},
-	}
-
-	// Initialize channel to perform distributed key generation.
-	Init(channel)
-
-	channel.Recv(handler)
-	defer channel.UnregisterRecv(handler.Type)
-
-	var (
-		currentState keyGenerationState
-	)
-
 	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create a new member [%v]", err)
 	}
-	currentState = &initializationState{channel, member}
+	initialState := gjkr.InitializationState(channel, member)
 
-	blockWaiter, err := stateTransition(currentState, blockCounter)
+	finalState, err := states.Execute(
+		channel,
+		gjkr.Init(channel),
+		initialState,
+		blockCounter,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	for {
-		select {
-		case msg := <-recvChan:
-			fmt.Printf(
-				"[member:%v, state:%T] Processing message\n",
-				currentState.memberID(),
-				currentState,
-			)
-
-			err := currentState.receive(msg)
-			if err != nil {
-				fmt.Printf(
-					"[member:%v, state: %T] Failed to receive a message [%v]\n",
-					currentState.memberID(),
-					currentState,
-					err,
-				)
-			}
-
-		case <-blockWaiter:
-			if finalState, ok := currentState.(*finalizationState); ok {
-				return finalState.result(), finalState.thresholdSigner(), nil
-			}
-
-			currentState = currentState.nextState()
-			blockWaiter, err = stateTransition(currentState, blockCounter)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			continue
-		}
-	}
-}
-
-func stateTransition(
-	currentState keyGenerationState,
-	blockCounter chain.BlockCounter,
-) (<-chan int, error) {
-	fmt.Printf(
-		"[member:%v, state:%T] Transitioning to a new state...\n",
-		currentState.memberID(),
-		currentState,
-	)
-
-	err := blockCounter.WaitForBlocks(1)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to wait 1 block entering state [%T]: [%v]",
-			currentState,
-			err,
-		)
+	// TODO: Rename states to be exported
+	if finalState, ok := finalState.(*gjkr.FinalizationState); ok {
+		gjkrResult := finalState.Result()
+		return gjkrResult,
+			&ThresholdSigner{
+				memberID:             gjkr.MemberID(finalState.MemberID()),
+				groupPublicKey:       gjkrResult.GroupPublicKey,
+				groupPrivateKeyShare: finalState.GroupPrivateKeyShare(),
+			},
+			nil
 	}
 
-	err = currentState.initiate()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
-	}
-
-	blockWaiter, err := blockCounter.BlockWaiter(currentState.activeBlocks())
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
-			currentState,
-			err,
-		)
-	}
-
-	fmt.Printf(
-		"[member:%v, state:%T] Transitioned to new state\n",
-		currentState.memberID(),
-		currentState,
-	)
-
-	return blockWaiter, nil
+	return nil, nil, fmt.Errorf("invalid state at the end")
 }
 
 // convertResult transforms GJKR protocol execution result to a chain specific
