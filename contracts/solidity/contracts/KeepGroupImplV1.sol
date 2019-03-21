@@ -7,13 +7,13 @@ import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
-import "./utils/BytesUtils.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
-    using BytesUtils for bytes;
+    using BytesLib for bytes;
     using ECDSA for bytes32;
 
     event OnGroupRegistered(bytes groupPubKey);
@@ -294,7 +294,7 @@ contract KeepGroupImplV1 is Ownable {
             require(indices[i] > 0, "invalid index");
             require(!_votedDkg[VoteID],"index already voted");
             _votedDkg[VoteID] = true;
-            current = signatures.slice(0x41*i);           
+            current = signatures.slice(0x41*i, 0x41);           
             address voter = resultHash.recover(current);
             require(indices[i] <= ordered.length,"Provided index is out of bounds");
             require(

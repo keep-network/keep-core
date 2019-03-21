@@ -42,13 +42,13 @@ contract('TestPublishDkgResult', function(accounts) {
 
 //   let signatures, votes, resultHash,
   let pks = [
-    // '51b13e5e39dfbaa497653490a5bd04a4f3293de4a309dc1a26bc36dfbdb67c59',
-    // '9e27a55a55b139be2bd0676f9aa68b0ec1dac89b09ae0dcdc7e61d2544e4fce0',
-    // 'e0cef4ec8b5ebbea96a12c340ad3ea1d0e6de932a9c90df48663ece213384c92',
-    // '6be271a329ef155847f81aea752b4a1a465c0e174ec493a815dda037ff601521',
-    // 'e288d27643dc3637ffc9d22c7018fad45f3cf5b21f40260b4e08529db009019d',
-    // 'bc534249a87da0664aca5129e7b99d2aa55ecfdece866712f4c19f385a791af4',
-    // 'a0daf6d444d2c16d4046bd61196cae8ea6e87a372c3bbaf57f5b230ed24fb12d'
+    '51b13e5e39dfbaa497653490a5bd04a4f3293de4a309dc1a26bc36dfbdb67c59',
+    '9e27a55a55b139be2bd0676f9aa68b0ec1dac89b09ae0dcdc7e61d2544e4fce0',
+    'e0cef4ec8b5ebbea96a12c340ad3ea1d0e6de932a9c90df48663ece213384c92',
+    '6be271a329ef155847f81aea752b4a1a465c0e174ec493a815dda037ff601521',
+    'e288d27643dc3637ffc9d22c7018fad45f3cf5b21f40260b4e08529db009019d',
+    'bc534249a87da0664aca5129e7b99d2aa55ecfdece866712f4c19f385a791af4',
+    'a0daf6d444d2c16d4046bd61196cae8ea6e87a372c3bbaf57f5b230ed24fb12d'
 ]
 
   disqualified = '0x0000000110000000110000000110000000110000'
@@ -92,8 +92,8 @@ contract('TestPublishDkgResult', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
     );
 
-    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, keepGroupProxy.address);
-    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, 1);
+    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});
@@ -129,8 +129,7 @@ contract('TestPublishDkgResult', function(accounts) {
         tickets.push(tickets3[i].value);
       }
       let op = await keepGroupImplViaProxy.orderedParticipants.call()
-
-      for(let i=0;i<op.length;i++){
+      for(let i=0;i<op.length;i++){        
         caller = accounts.indexOf(op[i]);
         signature = EthUtil.ecsign(msgHash, new Buffer(pks[caller], 'hex'));
         signatureRPC = EthUtil.toRpcSig(signature.v, signature.r, signature.s)
@@ -143,7 +142,7 @@ contract('TestPublishDkgResult', function(accounts) {
         }
       }
       let getA = await keepGroupImplViaProxy.submitDkgResult(1, 0, groupPubKey, disqualified, inactive, signatures, positions, msgHash)
-      //console.log(getA.receipt.gasUsed);
+      console.log(getA.receipt.gasUsed);
     }
     else{
       assert.equal(1,1,"holder")
