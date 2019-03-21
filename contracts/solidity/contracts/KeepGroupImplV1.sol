@@ -266,6 +266,48 @@ contract KeepGroupImplV1 is Ownable {
         return _dkgResultPublished[requestId];
     }
 
+    /*
+     * @dev Gets number of votes for each submitted DKG result hash. 
+     * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @return Hashes of submitted DKG results and number of votes for each hash.
+     */
+    function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
+        // TODO: Implement
+        bytes32[] memory resultsHashes;
+        uint256[] memory resultsVotes;
+
+        return (resultsHashes, resultsVotes);
+    }
+
+    /*
+     * @dev receives vote for provided resultHash.
+     * @param index the claimed index of the user.
+     * @param resultHash Hash of DKG result to vote for
+     */
+    function voteOnDkgResult(
+        uint256 requestId,
+        uint256 memberIndex,
+        bytes32 resultHash
+    ) public {
+        // TODO: Implement
+    }
+
+    // Legacy code moved from Random Beacon contract
+    // TODO: refactor according to the Phase 14
+    function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
+
+        // TODO: Remove this section once dispute logic is implemented,
+        // implement conflict resolution logic described in Phase 14,
+        // make sure only valid members are stored.
+        _groups.push(groupPublicKey);
+        address[] memory members = orderedParticipants();
+        for (uint i = 0; i < _groupSize; i++) {
+            _groupMembers[groupPublicKey].push(members[i]);
+        }
+        emit OnGroupRegistered(groupPublicKey);
+        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
+    }
+
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
