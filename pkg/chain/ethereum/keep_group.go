@@ -206,6 +206,21 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
 }
 
+func (kg *keepGroup) SubmitDKGResult(
+	requestID *big.Int,
+	result *relaychain.DKGResult,
+) (*types.Transaction, error) {
+	return kg.transactor.SubmitDkgResult(
+		kg.transactorOpts,
+		index,
+		requestID,
+		result.GroupPublicKey,
+		result.Disqualified,
+		result.Inactive,
+		result.Signatures,
+	)
+}
+
 type dkgResultPublishedEventFunc func(
 	requestID *big.Int,
 	groupPublicKey []byte,
