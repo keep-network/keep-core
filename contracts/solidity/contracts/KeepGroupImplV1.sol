@@ -16,6 +16,12 @@ contract KeepGroupImplV1 is Ownable {
 
     event OnGroupRegistered(bytes groupPubKey);
 
+    struct DkgResult {
+        bytes groupPubKey;
+        bytes disqualified;
+        bytes inactive;
+    }
+
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
@@ -236,7 +242,20 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory inactive,
         bytes memory signatures
     ) public {
-      // TODO: fill in
+        require(
+            block.number > _submissionStart + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+
+        require(
+            _tickets.length >= _groupSize,
+            "There should be enough valid tickets submitted to form a group."
+        );
+
+        _requestIdToDkgResult[requestId] = DkgResult(groupPubKey, disqualified, inactive);
+        _dkgResultPublished[requestId] = true;
+  
+        emit DkgResultPublishedEvent(requestId, groupPubKey);
     }
 
     /**

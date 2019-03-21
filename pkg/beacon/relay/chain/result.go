@@ -48,9 +48,6 @@ func (r *DKGResult) Equals(r2 *DKGResult) bool {
 	if r == nil || r2 == nil {
 		return r == r2
 	}
-	if r.Success != r2.Success {
-		return false
-	}
 	if !bytes.Equal(r.GroupPublicKey, r2.GroupPublicKey) {
 		return false
 	}
