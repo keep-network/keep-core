@@ -18,13 +18,6 @@ contract KeepGroupImplV1 is Ownable {
 
     event OnGroupRegistered(bytes groupPubKey);
 
-    struct DkgResult {
-        bool success;
-        bytes groupPubKey;
-        bytes disqualified;
-        bytes inactive;
-    }
-
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
@@ -50,8 +43,9 @@ contract KeepGroupImplV1 is Ownable {
 
     uint256[] internal _tickets;
     bytes[] internal _submissions;
-
+    //check if DkgResult has been published (uint256: given requestID)
     mapping (uint256 => bool) internal _dkgResultPublished;
+    //checeks if a user has submitted a result (bytes32: unique hash for voting scenario)
     mapping (bytes32 => bool) internal _votedDkg;
 
     struct Proof {
@@ -123,11 +117,6 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Gets selected tickets in ascending order.
      */
     function selectedTickets() public view returns (uint256[] memory) {
-
-        require(
-            _tickets.length >= _groupSize,
-            "There should be enough valid tickets submitted to form a group."
-        );
 
         require(
             block.number > _submissionStart + _timeoutChallenge,
@@ -258,7 +247,7 @@ contract KeepGroupImplV1 is Ownable {
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
      * @param signatures concatination of signer resultHashes collected off-chain
-     * @param positions represents indicies of each 
+     * @param positions indices of members corresponding to each signature
      * @param inactive bytes representing inactive group members; 1 at the specific index means
      */
     function submitDkgResult(
