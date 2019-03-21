@@ -541,11 +541,17 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
 	}
 
+	abiUintSlice, err := abi.NewType("uint256[]")
+	if err != nil {
+		return dkgResultHash, err
+	}
+
 	arguments := abi.Arguments{
 		{Type: bytesType},
 		{Type: bytesType},
 		{Type: bytesType},
 		{Type: bytesType},
+		{Type: abiUintSlice},
 	}
 
 	encodedDKGResult, err := arguments.Pack(
@@ -553,6 +559,7 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 		dkgResult.Disqualified,
 		dkgResult.Inactive,
 		dkgResult.Signatures,
+		dkgResult.MembersIndex,
 	)
 	if err != nil {
 		return dkgResultHash, fmt.Errorf("encoding failed: [%v]", err)

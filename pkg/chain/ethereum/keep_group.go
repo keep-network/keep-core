@@ -219,6 +219,7 @@ func (kg *keepGroup) SubmitDKGResult(
 		result.Disqualified,
 		result.Inactive,
 		result.Signatures,
+		result.MembersIndex,
 	)
 }
 

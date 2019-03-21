@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"bytes"
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -24,19 +25,19 @@ func TestCalculateDKGResultHash(t *testing.T) {
 			dkgResult: &relaychain.DKGResult{
 				GroupPublicKey: []byte{100},
 			},
-			expectedHash: "671bad81349c7ca7e84a03d0391f81cd5ce1be283c647a483a1b486f50568514",
+			expectedHash: "8c02c7e313864b017de1ee793885d605cf1b1b284fadd75a77b9e0fff9da0b7c",
 		},
 		"dkg result has only disqualified provided": {
 			dkgResult: &relaychain.DKGResult{
 				Disqualified: []byte{1, 0, 1, 0},
 			},
-			expectedHash: "99fa6d1e99db7b175b604749ca68cf3f394d8960374e152a822d7d89bb76a51e",
+			expectedHash: "2c5bf2525411b853078fb94d7207ac01f50f980d5c968111d1442e725e3f3679",
 		},
 		"dkg result has only inactive provided": {
 			dkgResult: &relaychain.DKGResult{
 				Inactive: []byte{0, 1, 1, 1},
 			},
-			expectedHash: "2e88c0c8ee5d3eb46ad34ca09b0fedb850ee0308b9587da0d61f81b93870b185",
+			expectedHash: "318308ca31953665e300d6cef621318bdd49f703ea8d25e83c0f88d93031c6bd",
 		},
 		"dkg result has all parameters provided": {
 			dkgResult: &relaychain.DKGResult{
@@ -44,8 +45,14 @@ func TestCalculateDKGResultHash(t *testing.T) {
 				Disqualified:   []byte{1, 0, 1, 0},
 				Inactive:       []byte{0, 1, 1, 0},
 				Signatures:     []byte{0, 1, 1, 0},
+				MembersIndex: []*big.Int{
+					big.NewInt(1),
+					big.NewInt(2),
+					big.NewInt(3),
+					big.NewInt(4),
+				},
 			},
-			expectedHash: "572a86082d4aec6a725a7773ecfc167403759cc97a85b5bbdf4e4249861102d5",
+			expectedHash: "111aaf3129f18e9b282dbb41dc2d80d52a7b669f74a3c566541328827800e261",
 		},
 		"dkg result has disqualified longer than 32 bytes": {
 			dkgResult: &relaychain.DKGResult{
@@ -58,7 +65,7 @@ func TestCalculateDKGResultHash(t *testing.T) {
 					1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
 				},
 			},
-			expectedHash: "3f00c2ff8473a18f8e3d8044b4ac71737c3e5f38aa4d2b4655624404e5c873ee",
+			expectedHash: "971a4b89a4a5d4fa64242676d627aa4032b5db2b39403f5bc7f20306f7006b4b",
 		},
 		"dkg result has group public key longer than 64 bytes": {
 			dkgResult: &relaychain.DKGResult{
@@ -73,7 +80,7 @@ func TestCalculateDKGResultHash(t *testing.T) {
 					27, 252, 25, 38, 201, 41, 127, 179, 75, 112,
 				},
 			},
-			expectedHash: "619d37acff738c2075f75b1e5112925303c0d315cbaf84384665b7e3cf03605c",
+			expectedHash: "bd124c53943f83558b4e0788c90cfa38b0ea61746c7232c11f452e3f66d8d7ad",
 		},
 	}
 
