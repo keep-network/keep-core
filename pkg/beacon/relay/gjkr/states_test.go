@@ -1,4 +1,4 @@
-package dkg2
+package gjkr
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
 )
@@ -32,9 +31,9 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		member, err := gjkr.NewMember(
-			gjkr.MemberID(i+1),
-			make([]gjkr.MemberID, 0),
+		member, err := NewMember(
+			MemberID(i+1),
+			make([]MemberID, 0),
 			threshold,
 			seed,
 		)
@@ -63,7 +62,7 @@ func TestFullStateTransitions(t *testing.T) {
 	}
 
 	// Check whether all states are final and produced the same result.
-	results := make([]*gjkr.Result, groupSize)
+	results := make([]*Result, groupSize)
 	for i, state := range states {
 		finalState, ok := state.(*finalizationState)
 		if !ok {
