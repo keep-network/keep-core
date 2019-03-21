@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 // SigningMember represents a member sharing preferred DKG result hash
@@ -15,27 +15,35 @@ import (
 type SigningMember struct {
 	index gjkr.MemberID
 
-	chainHandle chain.Handle
-
 	// Key used for signing the DKG result hash.
 	privateKey *operator.PrivateKey
 
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
-	// Received valid signatures supporting the same DKG result as current's
-	// participant prefers. Contains also current's participant's signature.
-	receivedValidResultSignatures map[gjkr.MemberID]operator.Signature
+
+	selfDKGResultSignature operator.Signature
+}
+
+type SignaturesVerifyingMember struct {
+	*SigningMember
+}
+
+func NewSigningMember(memberindex gjkr.MemberID, operatorPrivateKey *operator.PrivateKey) *SigningMember {
+	return &SigningMember{
+		index:      memberindex,
+		privateKey: operatorPrivateKey,
+	}
 }
 
 // SignDKGResult calculates hash of DKG result and member's signature over this
 // hash. It packs the hash and signature into a broadcast message.
 //
 // See Phase 13 of the protocol specification.
-func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
+func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult, chainHandle chain.Handle) (
 	*DKGResultHashSignatureMessage,
 	error,
 ) {
-	resultHash, err := fm.chainHandle.ThresholdRelay().CalculateDKGResultHash(dkgResult)
+	resultHash, err := chainHandle.ThresholdRelay().CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
@@ -46,11 +54,10 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 		return nil, fmt.Errorf("dkg result hash signing failed [%v]", err)
 	}
 
-	// Register self signature.
-	fm.receivedValidResultSignatures[fm.index] = signature
+	fm.selfDKGResultSignature = signature
 
 	return &DKGResultHashSignatureMessage{
-		senderIndex: fm.index,
+		senderindex: fm.index,
 		resultHash:  resultHash,
 		signature:   signature,
 		publicKey:   &fm.privateKey.PublicKey,
@@ -67,13 +74,17 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 // result hash.
 //
 // See Phase 13 of the protocol specification.
-func (fm *SigningMember) VerifyDKGResultSignatures(
+func (fm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
-) error {
-	duplicatedMessagesFromSender := func(senderIndex gjkr.MemberID) bool {
+) (map[gjkr.MemberID]operator.Signature, error) {
+	// Received valid signatures supporting the same DKG result as current's
+	// participant prefers. Contains also current's participant's signature.
+	receivedValidResultSignatures := make(map[gjkr.MemberID]operator.Signature)
+
+	duplicatedMessagesFromSender := func(senderindex gjkr.MemberID) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
-			if message.senderIndex == senderIndex {
+			if message.senderindex == senderindex {
 				if messageFromSenderAlreadySeen {
 					return true
 				}
@@ -85,16 +96,16 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 
 	for _, message := range messages {
 		// Check if message from self.
-		if message.senderIndex == fm.index {
+		if message.senderindex == fm.index {
 			continue
 		}
 
 		// Check if sender sent multiple messages.
-		if duplicatedMessagesFromSender(message.senderIndex) {
+		if duplicatedMessagesFromSender(message.senderindex) {
 			fmt.Printf(
 				"[member: %v] received multiple messages from sender [%d]",
 				fm.index,
-				message.senderIndex,
+				message.senderindex,
 			)
 			continue
 		}
@@ -105,7 +116,7 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 			fmt.Printf(
 				"[member: %v] signature from sender [%d] supports result different than preferred",
 				fm.index,
-				message.senderIndex,
+				message.senderindex,
 			)
 			continue
 		}
@@ -120,14 +131,21 @@ func (fm *SigningMember) VerifyDKGResultSignatures(
 			fmt.Printf(
 				"[member: %v] verification of signature from sender [%d] failed [%+v]",
 				fm.index,
-				message.senderIndex,
+				message.senderindex,
 				message,
 			)
 			continue
 		}
 
-		fm.receivedValidResultSignatures[message.senderIndex] = message.signature
+		receivedValidResultSignatures[message.senderindex] = message.signature
 	}
 
-	return nil
+	// Register member's self signature.
+	receivedValidResultSignatures[fm.index] = fm.selfDKGResultSignature
+
+	return receivedValidResultSignatures, nil
+}
+
+func (sm *SigningMember) InitializeSignaturesVerification() *SignaturesVerifyingMember {
+	return &SignaturesVerifyingMember{sm}
 }
