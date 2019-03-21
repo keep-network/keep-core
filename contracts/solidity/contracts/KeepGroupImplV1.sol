@@ -248,18 +248,6 @@ contract KeepGroupImplV1 is Ownable {
             "Ticket submission challenge period must be over."
         );
 
-        // TODO: remove this require; here to silence warnings
-        require(
-            signatures.length >= 0,
-            "Ticket submission challenge period must be over."
-        );
-
-        // TODO: remove this require; here to silence warnings
-        require(
-            index > 0,
-            "Index must be at least 1."
-        );
-
         require(
             _tickets.length >= _groupSize,
             "There should be enough valid tickets submitted to form a group."
