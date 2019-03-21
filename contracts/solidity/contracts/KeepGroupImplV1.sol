@@ -234,8 +234,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory groupPubKey,
         bytes memory disqualified,
         bytes memory inactive,
-        bytes memory signatures,
-        bytes32 resultHash
+        bytes memory signatures
     ) public {
       // TODO: fill in
     }
