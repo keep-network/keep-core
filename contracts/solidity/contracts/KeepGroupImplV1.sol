@@ -250,7 +250,7 @@ contract KeepGroupImplV1 is Ownable {
 
         // TODO: remove this require; here to silence warnings
         require(
-            signatures.length > 0,
+            signatures.length >= 0,
             "Ticket submission challenge period must be over."
         );
 
