@@ -217,9 +217,8 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
-     * @param success Result of DKG protocol execution; true if success, false otherwise.
      * @param groupPubKey Group public key generated as a result of protocol execution.
-     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
      * @param inactive bytes representing inactive group members; 1 at the specific index means
@@ -227,12 +226,14 @@ contract KeepGroupImplV1 is Ownable {
      * group, as outputted by the group selection protocol.
      */
     function submitDkgResult(
+        uint256 index,
         uint256 requestId,
-//        uint256 memberIndex, TODO: Add memberIndex 
-        bool success,
         bytes memory groupPubKey,
         bytes memory disqualified,
-        bytes memory inactive
+        bytes memory inactive,
+        bytes memory signatures,
+        uint[] memory positions,
+        bytes32 resultHash
     ) public {
       // TODO: fill in
     }
