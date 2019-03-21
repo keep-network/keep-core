@@ -512,6 +512,14 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
+	submitterIndex := new(big.Int).SetUint64(uint64(participantIndex))
+	_, err = ec.keepGroupContract.SubmitDKGResult(submitterIndex, requestID, result)
+	if err != nil {
+		subscription.Unsubscribe()
+		close(publishedResult)
+		failPromise(err)
+	}
+
 	return resultPublicationPromise
 }
 
