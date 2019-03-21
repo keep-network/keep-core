@@ -6,11 +6,13 @@ import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
+    using BytesLib for bytes;
 
     event OnGroupRegistered(bytes groupPubKey);
 
