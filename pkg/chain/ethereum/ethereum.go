@@ -543,6 +543,7 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 		dkgResult.GroupPublicKey,
 		dkgResult.Disqualified,
 		dkgResult.Inactive,
+		dkgResult.Signatures,
 	)
 	if err != nil {
 		return dkgResultHash, fmt.Errorf("encoding failed: [%v]", err)
