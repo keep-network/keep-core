@@ -545,6 +545,7 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 		{Type: bytesType},
 		{Type: bytesType},
 		{Type: bytesType},
+		{Type: bytesType},
 	}
 
 	encodedDKGResult, err := arguments.Pack(
