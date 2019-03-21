@@ -213,7 +213,6 @@ func (kg *keepGroup) SubmitDKGResult(
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
 		requestID,
-		result.Success,
 		result.GroupPublicKey,
 		result.Disqualified,
 		result.Inactive,

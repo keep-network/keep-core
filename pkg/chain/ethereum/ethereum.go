@@ -536,24 +536,18 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 	// Encode DKG result to the format described by Solidity Contract Application
 	// Binary Interface (ABI).
-	boolType, err := abi.NewType("bool")
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("bool type creation failed: [%v]", err)
-	}
 	bytesType, err := abi.NewType("bytes")
 	if err != nil {
 		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
 	}
 
 	arguments := abi.Arguments{
-		{Type: boolType},
 		{Type: bytesType},
 		{Type: bytesType},
 		{Type: bytesType},
 	}
 
 	encodedDKGResult, err := arguments.Pack(
-		dkgResult.Success,
 		dkgResult.GroupPublicKey,
 		dkgResult.Disqualified,
 		dkgResult.Inactive,
