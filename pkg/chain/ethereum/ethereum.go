@@ -513,13 +513,6 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
-	_, err = ec.keepGroupContract.SubmitDKGResult(requestID, result)
-	if err != nil {
-		subscription.Unsubscribe()
-		close(publishedResult)
-		failPromise(err)
-	}
-
 	return resultPublicationPromise
 }
 
