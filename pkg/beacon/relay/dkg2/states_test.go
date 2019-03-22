@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
 )
@@ -33,8 +34,8 @@ func TestFullStateTransitions(t *testing.T) {
 		}
 
 		member, err := gjkr.NewMember(
-			gjkr.MemberID(i+1),
-			make([]gjkr.MemberID, 0),
+			member.Index(i+1),
+			make([]member.Index, 0),
 			threshold,
 			seed,
 		)
@@ -73,12 +74,9 @@ func TestFullStateTransitions(t *testing.T) {
 		results[i] = finalState.member.Result()
 	}
 
-	// Check whether all group public keys are the same, and they are all
-	// successful without DQ or IA members.
+	// Check whether all group public keys are the same, and they have no
+	// disqualified or inactive  members.
 	for _, result := range results {
-		if !result.Success {
-			t.Errorf("unexpected failure result\n[%v]", result)
-		}
 		if len(result.Inactive) != 0 {
 			t.Errorf("expected no IA members\n[%v]", result)
 		}

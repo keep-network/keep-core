@@ -15,7 +15,6 @@ contract KeepGroupImplV1 is Ownable {
     event OnGroupRegistered(bytes groupPubKey);
 
     struct DkgResult {
-        bool success;
         bytes groupPubKey;
         bytes disqualified;
         bytes inactive;
@@ -223,7 +222,6 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
-     * @param success Result of DKG protocol execution; true if success, false otherwise.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index 
      * means that the member has been disqualified. Indexes reflect positions of members in the
@@ -235,7 +233,6 @@ contract KeepGroupImplV1 is Ownable {
     function submitDkgResult(
         uint256 requestId,
 //        uint256 memberIndex, TODO: Add memberIndex 
-        bool success,
         bytes memory groupPubKey,
         bytes memory disqualified,
         bytes memory inactive
@@ -251,7 +248,7 @@ contract KeepGroupImplV1 is Ownable {
             "There should be enough valid tickets submitted to form a group."
         );
 
-        _requestIdToDkgResult[requestId] = DkgResult(success, groupPubKey, disqualified, inactive);
+        _requestIdToDkgResult[requestId] = DkgResult(groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
   
         emit DkgResultPublishedEvent(requestId, groupPubKey);

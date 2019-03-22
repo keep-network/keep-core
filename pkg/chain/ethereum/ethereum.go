@@ -13,9 +13,8 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -455,9 +454,9 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 
 func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
-	participantIndex uint32,
+	participantIndex member.Index,
 	result *relaychain.DKGResult,
-	signatures map[gjkr.MemberID]operator.Signature,
+	signatures map[member.Index][]byte,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
@@ -538,24 +537,18 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 	// Encode DKG result to the format described by Solidity Contract Application
 	// Binary Interface (ABI).
-	boolType, err := abi.NewType("bool")
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("bool type creation failed: [%v]", err)
-	}
 	bytesType, err := abi.NewType("bytes")
 	if err != nil {
 		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
 	}
 
 	arguments := abi.Arguments{
-		{Type: boolType},
 		{Type: bytesType},
 		{Type: bytesType},
 		{Type: bytesType},
 	}
 
 	encodedDKGResult, err := arguments.Pack(
-		dkgResult.Success,
 		dkgResult.GroupPublicKey,
 		dkgResult.Disqualified,
 		dkgResult.Inactive,

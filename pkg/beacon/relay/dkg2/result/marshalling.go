@@ -3,7 +3,7 @@ package result
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result/gen/pb"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 )
 
 // Marshal converts this DKGResultHashSignatureMessage to a byte array suitable
@@ -24,7 +24,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	d.senderIndex = gjkr.MemberID(pbMsg.SenderIndex)
+	d.senderIndex = member.Index(pbMsg.SenderIndex)
 
 	resultHash, err := chain.DKGResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {
