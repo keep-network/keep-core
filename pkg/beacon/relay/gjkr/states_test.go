@@ -1,4 +1,4 @@
-package dkg2
+package gjkr
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
@@ -33,7 +32,7 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		member, err := gjkr.NewMember(
+		member, err := NewMember(
 			member.Index(i+1),
 			make([]member.Index, 0),
 			threshold,
@@ -43,7 +42,7 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		Init(channel)
+		channelInitialization(channel)
 
 		channels[i] = channel
 		states[i] = &initializationState{channel, member}
@@ -64,7 +63,7 @@ func TestFullStateTransitions(t *testing.T) {
 	}
 
 	// Check whether all states are final and produced the same result.
-	results := make([]*gjkr.Result, groupSize)
+	results := make([]*Result, groupSize)
 	for i, state := range states {
 		finalState, ok := state.(*finalizationState)
 		if !ok {
@@ -122,9 +121,9 @@ func doStateTransition(
 	// Once we have the message handler installed, we let all members to init
 	// the phase and send their messages if they want to.
 	for _, state := range states {
-		fmt.Printf("[member:%v, state:%T] Executing\n", state.memberID(), state)
+		fmt.Printf("[member:%v, state:%T] Executing\n", state.MemberIndex(), state)
 
-		if err := state.initiate(); err != nil {
+		if err := state.Initiate(); err != nil {
 			return nil, fmt.Errorf("initiate failed [%v]", err)
 		}
 	}
@@ -140,17 +139,17 @@ func doStateTransition(
 	nextStates := make([]keyGenerationState, len(states))
 	for i, state := range states {
 		for _, message := range phaseMessages {
-			if err := state.receive(message); err != nil {
+			if err := state.Receive(message); err != nil {
 				return nil, fmt.Errorf("receive failed [%v]", err)
 			}
 		}
 
-		next := state.nextState()
+		next := state.NextState()
 
 		if next != nil {
 			fmt.Printf(
 				"[member:%v, state:%T] Successfully transitioned to the next state\n",
-				state.memberID(),
+				state.MemberIndex(),
 				state,
 			)
 		}
