@@ -124,9 +124,9 @@ func (psm *PeerSharesMessage) Type() string {
 // Marshal converts this PeerSharesMessage to a byte array suitable for
 // network communication.
 func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
-	pbShares := make(map[string]*pb.PeerShares_Shares)
-	for member, shares := range psm.shares {
-		pbShares[member.HexString()] = &pb.PeerShares_Shares{
+	pbShares := make(map[uint32]*pb.PeerShares_Shares)
+	for memberID, shares := range psm.shares {
+		pbShares[uint32(memberID)] = &pb.PeerShares_Shares{
 			EncryptedShareS: shares.encryptedShareS,
 			EncryptedShareT: shares.encryptedShareT,
 		}
@@ -148,12 +148,8 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 	psm.senderID = member.IndexFromBytes(pbMsg.SenderID)
 
 	shares := make(map[MemberID]*peerShares)
-	for memberIDHex, pbShares := range pbMsg.Shares {
-		memberID, err := member.IndexFromHex(memberIDHex)
-		if err != nil {
-			return fmt.Errorf("could not unmarshal member's ID [%v]", err)
-		}
-		shares[memberID] = &peerShares{
+	for memberID, pbShares := range pbMsg.Shares {
+		shares[MemberID(memberID)] = &peerShares{
 			encryptedShareS: pbShares.EncryptedShareS,
 			encryptedShareT: pbShares.EncryptedShareT,
 		}
@@ -318,30 +314,25 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 
 func marshalPublicKeyMap(
 	publicKeys map[MemberID]*ephemeral.PublicKey,
-) map[string][]byte {
-	marshalled := make(map[string][]byte, len(publicKeys))
+) map[uint32][]byte {
+	marshalled := make(map[uint32][]byte, len(publicKeys))
 	for id, publicKey := range publicKeys {
-		marshalled[id.HexString()] = publicKey.Marshal()
+		marshalled[uint32(id)] = publicKey.Marshal()
 	}
 	return marshalled
 }
 
 func unmarshalPublicKeyMap(
-	publicKeys map[string][]byte,
+	publicKeys map[uint32][]byte,
 ) (map[MemberID]*ephemeral.PublicKey, error) {
 	var unmarshalled = make(map[MemberID]*ephemeral.PublicKey, len(publicKeys))
-	for memberIDHex, publicKeyBytes := range publicKeys {
-		memberID, err := member.IndexFromHex(memberIDHex)
-		if err != nil {
-			return nil, fmt.Errorf("could not unmarshal member's ID [%v]", err)
-		}
-
+	for memberID, publicKeyBytes := range publicKeys {
 		publicKey, err := ephemeral.UnmarshalPublicKey(publicKeyBytes)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal public key [%v]", err)
 		}
 
-		unmarshalled[memberID] = publicKey
+		unmarshalled[MemberID(memberID)] = publicKey
 
 	}
 
@@ -350,24 +341,20 @@ func unmarshalPublicKeyMap(
 
 func marshalPrivateKeyMap(
 	privateKeys map[MemberID]*ephemeral.PrivateKey,
-) map[string][]byte {
-	marshalled := make(map[string][]byte, len(privateKeys))
+) map[uint32][]byte {
+	marshalled := make(map[uint32][]byte, len(privateKeys))
 	for id, privateKey := range privateKeys {
-		marshalled[id.HexString()] = privateKey.Marshal()
+		marshalled[uint32(id)] = privateKey.Marshal()
 	}
 	return marshalled
 }
 
 func unmarshalPrivateKeyMap(
-	privateKeys map[string][]byte,
+	privateKeys map[uint32][]byte,
 ) (map[MemberID]*ephemeral.PrivateKey, error) {
 	var unmarshalled = make(map[MemberID]*ephemeral.PrivateKey, len(privateKeys))
-	for memberIDHex, privateKeyBytes := range privateKeys {
-		memberID, err := member.IndexFromHex(memberIDHex)
-		if err != nil {
-			return nil, fmt.Errorf("could not unmarshal member's ID [%v]", err)
-		}
-		unmarshalled[memberID] = ephemeral.UnmarshalPrivateKey(privateKeyBytes)
+	for memberID, privateKeyBytes := range privateKeys {
+		unmarshalled[MemberID(memberID)] = ephemeral.UnmarshalPrivateKey(privateKeyBytes)
 	}
 
 	return unmarshalled, nil
