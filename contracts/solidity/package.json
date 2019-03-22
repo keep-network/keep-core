@@ -19,7 +19,6 @@
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
     "openzeppelin-solidity": "^2.1.2",
-    "ethereumjs-utils": "^5.2.5",
     "solidity-bytes-utils": "0.0.7"
   },
   "devDependencies": {
