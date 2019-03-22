@@ -6,8 +6,9 @@ import (
 	"time"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/bls"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -68,7 +69,7 @@ func Execute(
 
 	fmt.Printf("[member:%v] Sending signature share...\n", signer.MemberID())
 
-	seenShares := make(map[gjkr.MemberID]*bn256.G1)
+	seenShares := make(map[member.Index]*bn256.G1)
 	share := signer.CalculateSignatureShare(bytes)
 
 	// Add local share to map rather than receiving from the network.
@@ -127,7 +128,7 @@ func Execute(
 				return nil, err
 			}
 
-			return signature.Marshal(), nil
+			return altbn128.G1Point{G1: signature}.Compress(), nil
 		}
 	}
 }
@@ -135,7 +136,7 @@ func Execute(
 func sendSignatureShare(
 	share []byte,
 	channel net.BroadcastChannel,
-	memberID gjkr.MemberID,
+	memberID member.Index,
 ) error {
 	return channel.Send(&SignatureShareMessage{memberID, share})
 }

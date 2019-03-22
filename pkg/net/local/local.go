@@ -151,6 +151,7 @@ func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, pay
 			transportIdentifier,
 			payload,
 			"local",
+			make([]byte, 0),
 		)
 
 	go func() {

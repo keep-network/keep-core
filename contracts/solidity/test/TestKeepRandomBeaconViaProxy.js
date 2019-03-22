@@ -1,13 +1,15 @@
+import {bls} from './helpers/data';
 import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 const Proxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
+const KeepGroup = artifacts.require('./KeepGroupStub.sol');
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
-  let implV1, proxy, implViaProxy,
+  let implV1, proxy, implViaProxy, keepGroup,
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2];
@@ -16,7 +18,8 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     implV1 = await KeepRandomBeaconImplV1.new();
     proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
-    await implViaProxy.initialize(100, duration.days(30));
+    keepGroup = await KeepGroup.new()
+    await implViaProxy.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, keepGroup.address);
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
@@ -25,11 +28,11 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 99}));
+    await exceptThrow(implViaProxy.requestRelayEntry(0, {from: account_two, value: 99}));
   });
 
   it("should be able to request relay entry via implementation contract with enough ether", async function() {
-    await implViaProxy.requestRelayEntry(0, 0, {from: account_two, value: 100})
+    await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100})
 
     assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
 
@@ -46,7 +49,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
     await web3.eth.sendTransaction({
       from: account_two, value: 100, gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
+      data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
     assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
@@ -63,7 +66,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let amount = web3.utils.toWei('1', 'ether');
     await web3.eth.sendTransaction({
       from: account_two, value: amount, gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256', 'uint256'], [0,0])
+      data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
     // should fail to withdraw if not owner

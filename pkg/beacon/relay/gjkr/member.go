@@ -1,64 +1,16 @@
 package gjkr
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"strconv"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 // MemberID is a unique-in-group identifier of a member.
-type MemberID uint32
-
-// Int converts `MemberID` to `big.Int`.
-func (id MemberID) Int() *big.Int {
-	return new(big.Int).SetUint64(uint64(id))
-}
-
-// Equals checks if MemberID equals the passed int value.
-func (id MemberID) Equals(value int) bool {
-	return id == MemberID(value)
-}
-
-// validate checks if MemberID has a valid value. MemberID is expected to be
-// equal or greater than `1`.
-func (id MemberID) validate() error {
-	if id < 1 {
-		return fmt.Errorf("member ID must be >= 1")
-	}
-	return nil
-}
-
-// MemberIDFromBytes returns a `MemberID` created from provided bytes.
-func MemberIDFromBytes(bytes []byte) MemberID {
-	return MemberID(binary.LittleEndian.Uint32(bytes))
-}
-
-// Bytes converts `MemberID` to bytes representation.
-func (id MemberID) Bytes() []byte {
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, uint32(id))
-	return bytes
-}
-
-// MemberIDFromHex returns a `MemberID` created from the hex `string`
-// representation.
-func MemberIDFromHex(hex string) (MemberID, error) {
-	id, err := strconv.ParseUint(hex, 16, 32)
-	if err != nil {
-		return 0, err
-	}
-
-	return MemberID(id), nil
-}
-
-// HexString converts `MemberID` to hex `string` representation.
-func (id MemberID) HexString() string {
-	return strconv.FormatInt(int64(id), 16)
-}
+type MemberID = member.Index
 
 type memberCore struct {
 	// ID of this group member.
@@ -258,7 +210,7 @@ func NewMember(
 	dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
-	if err := memberID.validate(); err != nil {
+	if err := memberID.Validate(); err != nil {
 		return nil, fmt.Errorf("could not create a new member [%v]", err)
 	}
 
@@ -279,7 +231,7 @@ func NewMember(
 
 // AddToGroup adds the provided MemberID to the group
 func (mc *memberCore) AddToGroup(memberID MemberID) error {
-	if err := memberID.validate(); err != nil {
+	if err := memberID.Validate(); err != nil {
 		return fmt.Errorf("could not add the member ID to the group [%v]", err)
 	}
 
@@ -402,7 +354,6 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G2 {
 // with the disqualified and inactive members.
 func (fm *FinalizingMember) Result() *Result {
 	return &Result{
-		Success:        fm.group.isThresholdSatisfied(),
 		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
 		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
 		Inactive:       fm.group.inactiveMemberIDs,     // IA

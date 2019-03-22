@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -258,13 +259,21 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	protocolIdentifier := senderIdentifier
+	networkKey := key.Libp2pKeyToNetworkKey(senderIdentifier.pubKey)
+	if networkKey == nil {
+		return fmt.Errorf(
+			"sender [%v] with key [%v] is not of correct type",
+			senderIdentifier.id,
+			senderIdentifier.pubKey,
+		)
+	}
 
 	// Fire a message back to the protocol.
 	protocolMessage := internal.BasicMessage(
-		protocolIdentifier.id,
+		senderIdentifier.id,
 		unmarshaled,
 		string(message.Type),
+		key.Marshal(networkKey),
 	)
 
 	return c.deliver(protocolMessage)

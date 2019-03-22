@@ -1,7 +1,6 @@
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
-import BigNumber from 'bignumber.js';
-import abi from 'ethereumjs-abi';
+import {bls} from './helpers/data';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -41,7 +40,7 @@ function mineBlocks(blocks) {
 contract('TestKeepGroupSelection', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
-    randomBeaconValue, naturalThreshold,
+    randomBeaconValue,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
@@ -62,17 +61,16 @@ contract('TestKeepGroupSelection', function(accounts) {
     keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
-    await keepRandomBeaconImplViaProxy.initialize(1,1);
 
     // Initialize Keep Group contract
     minimumStake = 200000;
     groupThreshold = 15;
     groupSize = 20;
     timeoutInitial = 20;
-    timeoutSubmission = 40;
+    timeoutSubmission = 50;
     timeoutChallenge = 60;
 
-    randomBeaconValue = 123456789;
+    randomBeaconValue = bls.groupSignature;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
@@ -81,9 +79,8 @@ contract('TestKeepGroupSelection', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
     );
 
-    naturalThreshold = await keepGroupImplViaProxy.naturalThreshold();
-
-    groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000";
+    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
+    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     // Stake tokens as account one so it has minimum stake to be able to get into a group.
     await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});
@@ -99,8 +96,6 @@ contract('TestKeepGroupSelection', function(accounts) {
     await token.approveAndCall(stakingContract.address, minimumStake*3000, "0x00", {from: staker3});
     tickets3 = generateTickets(randomBeaconValue, staker3, 3000);
 
-    await keepRandomBeaconImplViaProxy.setGroupContract(keepGroupProxy.address);
-    await keepRandomBeaconImplViaProxy.relayEntry(1, randomBeaconValue, "0x01", 1, 1);
   });
 
   it("should be able to get staking weight", async function() {

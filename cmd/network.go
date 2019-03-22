@@ -17,6 +17,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/pborman/uuid"
 	"github.com/urfave/cli"
 )
@@ -63,7 +64,7 @@ func pingRequest(c *cli.Context) error {
 	var (
 		libp2pConfig = libp2p.Config{Peers: bootstrapPeers}
 		ctx          = context.Background()
-		privKey      *key.NetworkPrivateKey
+		privKey      *key.NetworkPrivate
 	)
 
 	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBootstrapPeerNetworkKey()
@@ -312,20 +313,20 @@ func (pm *PongMessage) Unmarshal(bytes []byte) error {
 // getBootstrapPeerNetworkKey returns hardcoded public and private network key
 // of the bootstrap peer. We hardcode those values because we need to initialize
 // stakes on both sides of the connection using the local, stubbed `StakeMonitor`.
-func getBootstrapPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
+func getBootstrapPeerNetworkKey() (*key.NetworkPrivate, *key.NetworkPublic) {
 	return getPeerNetworkKey(big.NewInt(128838122312))
 }
 
 // getStandardPeerNetworkKey returns hardcoded public and private network key
 // of the standard peer. We hardcode those values because we need to initialize
 // stake on both sides of the connection using local, stubbed `StakeMonitor`.
-func getStandardPeerNetworkKey() (*key.NetworkPrivateKey, *key.NetworkPublicKey) {
+func getStandardPeerNetworkKey() (*key.NetworkPrivate, *key.NetworkPublic) {
 	return getPeerNetworkKey(big.NewInt(6743262236222))
 }
 
 func getPeerNetworkKey(privateEcdsaKey *big.Int) (
-	*key.NetworkPrivateKey,
-	*key.NetworkPublicKey,
+	*key.NetworkPrivate,
+	*key.NetworkPublic,
 ) {
 	curve := secp256k1.S256()
 
@@ -336,9 +337,13 @@ func getPeerNetworkKey(privateEcdsaKey *big.Int) (
 		ecdsaKey.D.Bytes(),
 	)
 
-	return key.EthereumKeyToNetworkKey(&keystore.Key{
+	ethereumKey := &keystore.Key{
 		Id:         uuid.NewRandom(),
 		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
 		PrivateKey: ecdsaKey,
-	})
+	}
+
+	return key.OperatorKeyToNetworkKey(
+		operator.EthereumKeyToOperatorKey(ethereumKey),
+	)
 }

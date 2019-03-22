@@ -1,10 +1,14 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./BLS.sol";
 
 
 interface GroupContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
+    function numberOfGroups() external view returns(uint256);
+    function selectGroup(uint256 previousEntry) external view returns(bytes memory);
 }
 
 
@@ -17,23 +21,28 @@ interface GroupContract {
  */
 contract KeepRandomBeaconImplV1 is Ownable {
 
+    using BytesLib for bytes;
+
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 blockReward, uint256 seed); 
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
-    uint256 internal _seq;
+    uint256 internal _requestCounter;
     uint256 internal _minPayment;
     uint256 internal _withdrawalDelay;
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
+    uint256 internal _previousEntry;
 
     mapping (string => bool) internal _initialized;
-    mapping (uint256 => address) internal _requestPayer;
-    mapping (uint256 => uint256) internal _requestPayment;
-    mapping (uint256 => uint256) internal _blockReward;
-    mapping (uint256 => bytes) internal _requestGroup;
 
-    mapping (uint256 => bool) internal _relayEntryRequested;
+    struct Request {
+        address sender;
+        uint256 payment;
+        bytes groupPubKey;
+    }
+
+    mapping(uint256 => Request) internal _requests;
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -46,8 +55,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @dev Initialize Keep Random Beacon implementaion contract.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
+     * @param genesisEntry Initial relay entry to create first group.
+     * @param genesisGroupPubKey Group to respond to the initial relay entry request.
+     * @param groupContract Group contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address groupContract)
         public
         onlyOwner
     {
@@ -56,6 +68,14 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _initialized["KeepRandomBeaconImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
+        _previousEntry = genesisEntry;
+        _groupContract = groupContract;
+
+        // Create initial relay entry request. This will allow relayEntry to be called once
+        // to trigger the creation of the first group. Requests are removed on successful
+        // entries so genesis entry can only be called once.
+        _requestCounter++;
+        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey); 
     }
 
     /**
@@ -68,30 +88,28 @@ contract KeepRandomBeaconImplV1 is Ownable {
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
-     * @param blockReward The value in KEEP for generating the signature.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
-     * @return An uint256 representing uniquely generated ID. It is also returned as part of the event.
+     * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(uint256 blockReward, uint256 seed) public payable returns (uint256 requestID) {
+    function requestRelayEntry(uint256 seed) public payable returns (uint256) {
         require(
             msg.value >= _minPayment,
             "Payment is less than required minimum."
         );
 
-        requestID = _seq++;
-        _requestPayer[requestID] = msg.sender;
-        _requestPayment[requestID] = msg.value;
-        _blockReward[requestID] = blockReward;
+        require(
+            GroupContract(_groupContract).numberOfGroups() > 0,
+            "At least one group needed to serve the request."
+        );
 
-        emit RelayEntryRequested(requestID, msg.value, blockReward, seed);
-        return requestID;
-    }
+        bytes memory groupPubKey = GroupContract(_groupContract).selectGroup(_previousEntry);
 
-    /**
-     * @dev Return the current RequestID - used in testing.
-     */
-    function getRequestId() public view returns (uint256 requestID) {
-        return _seq;
+        _requestCounter++;
+
+        _requests[_requestCounter] = Request(msg.sender, msg.value, groupPubKey);
+
+        emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed);
+        return _requestCounter;
     }
 
     /**
@@ -122,14 +140,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
-     * @dev Set group contract.
-     * @param groupContract Group contract address.
-     */
-    function setGroupContract(address groupContract) public onlyOwner {
-        _groupContract = groupContract;
-    }
-
-    /**
      * @dev Get the minimum payment that is required before a relay entry occurs.
      */
     function minimumPayment() public view returns(uint256) {
@@ -142,21 +152,23 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param groupSignature The generated random number.
      * @param groupPubKey Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {    
-        // Temporary solution for M2. Every group member submits a new relay entry
-        // with the same request ID and we filter out duplicates here. 
-        // This behavior will change post-M2 when we'll integrate phase 14 and/or 
-        // implement relay requests.
-        if (_relayEntryRequested[requestID]) {
-            return;
-        }
-        _relayEntryRequested[requestID] = true;
+    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
 
-        // TODO: validate groupSignature using BLS.sol
+        require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request.");
+        require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry, seed), bytes32(groupSignature)), "Group signature failed to pass BLS verification.");
 
-        _requestGroup[requestID] = groupPubKey;
+        delete _requests[requestID];
+        _previousEntry = groupSignature;
+
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
+    }
+
+    /**
+     * @dev Gets the previous relay entry value.
+     */
+    function previousEntry() public view returns(uint256) {
+        return _previousEntry;
     }
 
     /**

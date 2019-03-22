@@ -1,14 +1,11 @@
 package key
 
 import (
-	"crypto/ecdsa"
-	"crypto/rand"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/pborman/uuid"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // `geth` uses `go-ethereum` library to generate key with secp256k1 curve.
@@ -25,14 +22,14 @@ import (
 // `btcsuite` are the same. If this test starts to fails, we'll need to revisit
 // how the key is ported from one instance to another in `toLibp2pKey` function.
 func TestSameCurveAsEthereum(t *testing.T) {
-	ethereumKey, err := generateEthereumKey()
+	privateKey, publicKey, err := operator.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	libp2pKey, _ := EthereumKeyToNetworkKey(ethereumKey)
+	libp2pKey, _ := OperatorKeyToNetworkKey(privateKey, publicKey)
 
-	ethereumCurve := ethereumKey.PrivateKey.Curve.Params()
+	ethereumCurve := privateKey.Curve.Params()
 	libp2pCurve := libp2pKey.Curve.Params()
 
 	if ethereumCurve.P.Cmp(libp2pCurve.P) != 0 {
@@ -85,48 +82,69 @@ func TestSameCurveAsEthereum(t *testing.T) {
 }
 
 func TestSameKeyAsEthereum(t *testing.T) {
-	ethereumKey, err := generateEthereumKey()
+	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	libp2pPrivKey, libp2pPubKey := EthereumKeyToNetworkKey(ethereumKey)
+	libp2pPrivKey, libp2pPubKey := OperatorKeyToNetworkKey(
+		staticPrivateKey, staticPublicKey,
+	)
 
-	if ethereumKey.PrivateKey.D.Cmp(libp2pPrivKey.D) != 0 {
+	if staticPrivateKey.D.Cmp(libp2pPrivKey.D) != 0 {
 		t.Errorf(
 			"unexpected D\nexpected: %v\nactual: %v",
-			ethereumKey.PrivateKey.D,
+			staticPrivateKey.D,
 			libp2pPrivKey.D,
 		)
 	}
 
-	if ethereumKey.PrivateKey.PublicKey.X.Cmp(libp2pPubKey.X) != 0 {
+	if staticPublicKey.X.Cmp(libp2pPubKey.X) != 0 {
 		t.Errorf(
 			"unexpected X\nexpected: %v\nactual: %v",
-			ethereumKey.PrivateKey.PublicKey.X,
+			staticPublicKey.X,
 			libp2pPubKey.X,
 		)
 	}
 
-	if ethereumKey.PrivateKey.PublicKey.Y.Cmp(libp2pPubKey.Y) != 0 {
+	if staticPrivateKey.PublicKey.Y.Cmp(libp2pPubKey.Y) != 0 {
 		t.Errorf(
 			"unexpected Y\nexpected: %v\nactual: %v",
-			ethereumKey.PrivateKey.PublicKey.Y,
+			staticPrivateKey.PublicKey.Y,
 			libp2pPubKey.Y,
 		)
 	}
 }
 
-func TestNetworkPubKeyToAddress(t *testing.T) {
-	ethereumKey, err := generateEthereumKey()
+func TestSameKeySerializationMethod(t *testing.T) {
+	privateOperatorKey, publicOperatorKey, err := operator.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ethAddress := crypto.PubkeyToAddress(ethereumKey.PrivateKey.PublicKey).String()
+	_, publicNetworkKey := OperatorKeyToNetworkKey(
+		privateOperatorKey, publicOperatorKey,
+	)
 
-	_, pubKey := EthereumKeyToNetworkKey(ethereumKey)
-	libp2pAddress := NetworkPubKeyToEthAddress(pubKey)
+	operatorKeyBytes := operator.Marshal(publicOperatorKey)
+	networkKeyBytes := Marshal(publicNetworkKey)
+
+	testutils.AssertBytesEqual(t, operatorKeyBytes, networkKeyBytes)
+}
+
+func TestNetworkPubKeyToAddress(t *testing.T) {
+	staticPrivateKey, staticPublicKey, err := operator.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	libp2pPrivateKey, libp2pPublicKey := OperatorKeyToNetworkKey(
+		staticPrivateKey, staticPublicKey,
+	)
+
+	ethAddress := crypto.PubkeyToAddress(libp2pPrivateKey.PublicKey).String()
+
+	libp2pAddress := NetworkPubKeyToEthAddress(libp2pPublicKey)
 
 	if ethAddress != libp2pAddress {
 		t.Errorf(
@@ -135,21 +153,4 @@ func TestNetworkPubKeyToAddress(t *testing.T) {
 			libp2pAddress,
 		)
 	}
-}
-
-func generateEthereumKey() (*keystore.Key, error) {
-	ethCurve := secp256k1.S256()
-
-	ethereumKey, err := ecdsa.GenerateKey(ethCurve, rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	id := uuid.NewRandom()
-
-	return &keystore.Key{
-		Id:         id,
-		Address:    crypto.PubkeyToAddress(ethereumKey.PublicKey),
-		PrivateKey: ethereumKey,
-	}, nil
 }

@@ -1853,3 +1853,148 @@ terraform output  \
 
 #+RESULTS:
 
+** DONE gke-metrics
+Configures monitoring and metrics collection for a GKE cluster.
+
+NOTE: Using this module will create a data read and an update for the
+prometheus-to-sd resource on each Terraform planand apply run.  These
+updates will do nothing and are an artifact of the depends_on in the
+modules data resource. Terraform team is aware and have a proposed fix
+in the works.
+
+*** Describe
+#+BEGIN_SRC sh :results pp
+date -u
+echo `whoami` "\n"
+
+kubectl describe \
+service helm-kube-state-metrics \
+--namespace metrics
+
+echo "-------"
+
+kubectl describe \
+deployment helm-kube-state-metrics \
+--namespace metrics
+
+echo "-------"
+
+kubectl describe \
+deployment helm-prometheus-to-sd \
+--namespace metrics
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Wed Feb 13 15:50:08 UTC 2019
+sthompson22 
+
+Name:              helm-kube-state-metrics
+Namespace:         metrics
+Labels:            app=kube-state-metrics
+                   chart=kube-state-metrics-0.13.0
+                   heritage=Tiller
+                   release=helm-kube-state-metrics
+Annotations:       prometheus.io/scrape: true
+Selector:          app=kube-state-metrics,release=helm-kube-state-metrics
+Type:              ClusterIP
+IP:                10.102.100.169
+Port:              http  8080/TCP
+TargetPort:        8080/TCP
+Endpoints:         10.102.3.15:8080
+Session Affinity:  None
+Events:            <none>
+-------
+Name:                   helm-kube-state-metrics
+Namespace:              metrics
+CreationTimestamp:      Tue, 12 Feb 2019 11:18:51 -0500
+Labels:                 app=kube-state-metrics
+                        chart=kube-state-metrics-0.13.0
+                        heritage=Tiller
+                        release=helm-kube-state-metrics
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=kube-state-metrics,release=helm-kube-state-metrics
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  1 max unavailable, 1 max surge
+Pod Template:
+  Labels:           app=kube-state-metrics
+                    release=helm-kube-state-metrics
+  Service Account:  helm-kube-state-metrics
+  Containers:
+   kube-state-metrics:
+    Image:      quay.io/coreos/kube-state-metrics:v1.4.0
+    Port:       8080/TCP
+    Host Port:  0/TCP
+    Args:
+      --collectors=configmaps
+      --collectors=cronjobs
+      --collectors=daemonsets
+      --collectors=deployments
+      --collectors=endpoints
+      --collectors=horizontalpodautoscalers
+      --collectors=jobs
+      --collectors=limitranges
+      --collectors=namespaces
+      --collectors=nodes
+      --collectors=persistentvolumeclaims
+      --collectors=persistentvolumes
+      --collectors=pods
+      --collectors=replicasets
+      --collectors=replicationcontrollers
+      --collectors=resourcequotas
+      --collectors=secrets
+      --collectors=services
+      --collectors=statefulsets
+    Readiness:    http-get http://:8080/healthz delay=5s timeout=5s period=10s #success=1 #failure=3
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   helm-kube-state-metrics-898cb4bf7 (1/1 replicas created)
+Events:          <none>
+-------
+Name:                   helm-prometheus-to-sd
+Namespace:              metrics
+CreationTimestamp:      Tue, 12 Feb 2019 11:18:57 -0500
+Labels:                 app=prometheus-to-sd
+                        chart=prometheus-to-sd-0.1.1
+                        heritage=Tiller
+                        release=helm-prometheus-to-sd
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=prometheus-to-sd,release=helm-prometheus-to-sd
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=prometheus-to-sd
+           release=helm-prometheus-to-sd
+  Containers:
+   prometheus-to-sd:
+    Image:      gcr.io/google-containers/prometheus-to-sd:v0.2.2
+    Port:       6060/TCP
+    Host Port:  0/TCP
+    Command:
+      /monitor
+      --stackdriver-prefix=custom.googleapis.com
+      --source=kube-state-metrics:http://10.102.100.169:8080
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   helm-prometheus-to-sd-7447796c5 (1/1 replicas created)
+Events:          <none>
+#+end_example
+

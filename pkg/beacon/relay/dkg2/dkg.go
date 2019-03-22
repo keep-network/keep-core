@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -94,7 +95,7 @@ func executeGJKR(
 	threshold int,
 	seed *big.Int,
 ) (*gjkr.Result, *ThresholdSigner, error) {
-	memberID := gjkr.MemberID(playerIndex)
+	memberID := member.Index(playerIndex)
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberID)
 
 	// Use an unbuffered channel to serialize message processing.
@@ -117,7 +118,12 @@ func executeGJKR(
 		currentState keyGenerationState
 	)
 
-	member, err := gjkr.NewMember(memberID, make([]gjkr.MemberID, 0), threshold, seed)
+	member, err := gjkr.NewMember(
+		memberID,
+		make([]member.Index, 0),
+		threshold,
+		seed,
+	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create a new member [%v]", err)
 	}
@@ -225,7 +231,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	// passed members IDs slice. It assumes member IDs for a group starts iterating
 	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
 	// resulting byte slice will be {0x00, 0x01, 0x00}.
-	convertToByteSlice := func(memberIDsSlice []gjkr.MemberID) []byte {
+	convertToByteSlice := func(memberIDsSlice []member.Index) []byte {
 		bytes := make([]byte, groupSize)
 		for index := range bytes {
 			for _, memberID := range memberIDsSlice {
@@ -238,7 +244,6 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	}
 
 	return &relayChain.DKGResult{
-		Success:        gjkrResult.Success,
 		GroupPublicKey: groupPublicKey,
 		Inactive:       convertToByteSlice(gjkrResult.Inactive),
 		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
