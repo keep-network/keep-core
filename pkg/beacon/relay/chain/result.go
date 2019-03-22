@@ -62,6 +62,9 @@ func (r *DKGResult) Equals(r2 *DKGResult) bool {
 	if !bytes.Equal(r.Signatures, r2.Signatures) {
 		return false
 	}
+	if len(r.MembersIndex) != len(r.MembersIndex) {
+		return false
+	}
 	for index, r1MemberIndex := range r.MembersIndex {
 		if r1MemberIndex.Cmp(r2.MembersIndex[index]) != 0 {
 			return false
