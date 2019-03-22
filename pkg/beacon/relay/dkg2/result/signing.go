@@ -3,17 +3,17 @@ package result
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 // SigningMember represents a member sharing preferred DKG result hash
 // and signature over this hash with peer members.
 type SigningMember struct {
-	index gjkr.MemberID
+	index member.Index
 
 	chainHandle chain.Handle
 
@@ -24,7 +24,7 @@ type SigningMember struct {
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Received valid signatures supporting the same DKG result as current's
 	// participant prefers. Contains also current's participant's signature.
-	receivedValidResultSignatures map[gjkr.MemberID]operator.Signature
+	receivedValidResultSignatures map[member.Index]operator.Signature
 }
 
 // SignDKGResult calculates hash of DKG result and member's signature over this
@@ -70,7 +70,7 @@ func (fm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 func (fm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
 ) error {
-	duplicatedMessagesFromSender := func(senderIndex gjkr.MemberID) bool {
+	duplicatedMessagesFromSender := func(senderIndex member.Index) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
 			if message.senderIndex == senderIndex {
