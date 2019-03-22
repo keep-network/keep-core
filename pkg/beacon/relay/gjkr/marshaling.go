@@ -3,8 +3,6 @@ package gjkr
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
-
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -133,7 +131,7 @@ func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.PeerShares{
-		SenderID: psm.senderID.Bytes(),
+		SenderID: uint32(psm.senderID),
 		Shares:   pbShares,
 	}).Marshal()
 }
@@ -145,7 +143,7 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	psm.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	psm.senderID = MemberID(pbMsg.SenderID)
 
 	shares := make(map[MemberID]*peerShares)
 	for memberID, pbShares := range pbMsg.Shares {

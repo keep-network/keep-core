@@ -24,7 +24,7 @@ message PeerShares {
         bytes encryptedShareT = 2;
     }
 
-    bytes senderID = 1;
+    uint32 senderID = 1;
     map<uint32, Shares> shares = 2;
 }
 
