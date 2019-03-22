@@ -24,12 +24,15 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		GroupPublicKey: []byte{10},
 	}
 
+	chainHandle := local.Connect(groupSize, threshold, minimumStake)
+
 	members, err := initializeSigningMembers(groupSize, threshold, minimumStake)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedResultHash, err := members[0].chainHandle.ThresholdRelay().CalculateDKGResultHash(dkgResult)
+	expectedResultHash, err := chainHandle.ThresholdRelay().
+		CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +41,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	messages := make([]*DKGResultHashSignatureMessage, 0)
 
 	for _, member := range members {
-		message, err := member.SignDKGResult(dkgResult)
+		message, err := member.SignDKGResult(dkgResult, chainHandle)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -343,8 +346,6 @@ func initializeSigningMembers(
 	threshold int,
 	minimumStake *big.Int,
 ) ([]*SigningMember, error) {
-	chainHandle := local.Connect(groupSize, threshold, minimumStake)
-
 	members := make([]*SigningMember, 0)
 	for i := 1; i <= groupSize; i++ {
 		privateKey, _, err := operator.GenerateKeyPair()
@@ -354,7 +355,6 @@ func initializeSigningMembers(
 
 		members = append(members, &SigningMember{
 			index:                         gjkr.MemberID(i),
-			chainHandle:                   chainHandle,
 			privateKey:                    privateKey,
 			receivedValidResultSignatures: make(map[gjkr.MemberID]operator.Signature),
 		})

@@ -4,18 +4,16 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 // SigningMember represents a member sharing preferred DKG result hash
 // and signature over this hash with peer members.
 type SigningMember struct {
 	index gjkr.MemberID
-
-	chainHandle chain.Handle
 
 	// Key used for signing the DKG result hash.
 	privateKey *operator.PrivateKey
@@ -37,11 +35,14 @@ type SignaturesVerifyingMember struct {
 // hash. It packs the hash and signature into a broadcast message.
 //
 // See Phase 13 of the protocol specification.
-func (sm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
+func (sm *SigningMember) SignDKGResult(
+	dkgResult *relayChain.DKGResult,
+	chainHandle chain.Handle,
+) (
 	*DKGResultHashSignatureMessage,
 	error,
 ) {
-	resultHash, err := sm.chainHandle.ThresholdRelay().CalculateDKGResultHash(dkgResult)
+	resultHash, err := chainHandle.ThresholdRelay().CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
