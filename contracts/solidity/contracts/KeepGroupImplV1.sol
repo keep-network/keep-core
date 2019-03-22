@@ -232,7 +232,6 @@ contract KeepGroupImplV1 is Ownable {
      * @param inactive bytes representing inactive group members; 1 at the specific index means
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
-     * @param inactive bytes representing inactive group members; 1 at the specific index means.
      * @param signatures concatenation of signer resultHashes collected off-chain. Ordering matters.
      * @param positions are the indices of members corresponding to each signature.
      */
