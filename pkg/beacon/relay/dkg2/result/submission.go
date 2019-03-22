@@ -15,11 +15,9 @@ import (
 // blockchain along with signatures received from other group members supporting
 // the result.
 type SubmittingMember struct {
-        // Represents the member's position for submission.
+	// Represents the member's position for submission.
 	index gjkr.MemberID
 
-	// Interface to access submission methods specific to the chain.
-	chainHandle chain.Handle
 	// Predefined step for each submitting window. The value is used to determine
 	// the eligible submitting member.
 	blockStep uint64
@@ -48,10 +46,11 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
 	signatures map[gjkr.MemberID]operator.Signature,
+	chainHandle chain.Handle,
 ) (uint64, error) {
 	onSubmittedResultChan := make(chan *event.DKGResultSubmission)
 
-	chainRelay := sm.chainHandle.ThresholdRelay()
+	chainRelay := chainHandle.ThresholdRelay()
 	subscription, err := chainRelay.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			onSubmittedResultChan <- event
@@ -65,7 +64,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		)
 	}
 
-	blockCounter, err := sm.chainHandle.BlockCounter()
+	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
 		return 0, err
 	}
