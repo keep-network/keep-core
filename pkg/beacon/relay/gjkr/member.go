@@ -1,12 +1,11 @@
 package gjkr
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"strconv"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -211,7 +210,7 @@ func NewMember(
 	dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
-	if err := memberID.validate(); err != nil {
+	if err := memberID.Validate(); err != nil {
 		return nil, fmt.Errorf("could not create a new member [%v]", err)
 	}
 
@@ -232,7 +231,7 @@ func NewMember(
 
 // AddToGroup adds the provided MemberID to the group
 func (mc *memberCore) AddToGroup(memberID MemberID) error {
-	if err := memberID.validate(); err != nil {
+	if err := memberID.Validate(); err != nil {
 		return fmt.Errorf("could not add the member ID to the group [%v]", err)
 	}
 
