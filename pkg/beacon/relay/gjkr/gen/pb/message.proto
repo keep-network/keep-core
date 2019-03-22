@@ -4,17 +4,17 @@ option go_package = "pb";
 package gjkr;
 
 message Join {
-    bytes senderID = 1;
+    uint32 senderID = 1;
 }
 
 message EphemeralPublicKey {
-    bytes senderID = 1;
-    bytes receiverID = 2;
-    map<string, bytes> ephemeralPublicKeys = 3;
+    uint32 senderID = 1;
+    uint32 receiverID = 2;
+    map<uint32, bytes> ephemeralPublicKeys = 3;
 }
 
 message MemberCommitments {
-    bytes senderID = 1;
+    uint32 senderID = 1;
     repeated bytes commitments = 2;
 }
 
@@ -24,26 +24,26 @@ message PeerShares {
         bytes encryptedShareT = 2;
     }
 
-    bytes senderID = 1;
-    map<string, Shares> shares = 2;
+    uint32 senderID = 1;
+    map<uint32, Shares> shares = 2;
 }
 
 message SecretSharesAccusations {
-    bytes senderID = 1;
-    map<string, bytes> accusedMembersKeys = 2;
+    uint32 senderID = 1;
+    map<uint32, bytes> accusedMembersKeys = 2;
 }
 
 message MemberPublicKeySharePoints {
-    bytes senderID = 1;
+    uint32 senderID = 1;
     repeated bytes publicKeySharePoints = 2;
 }
 
 message PointsAccusations {
-    bytes senderID = 1;
-    map<string, bytes> accusedMembersKeys = 2;
+    uint32 senderID = 1;
+    map<uint32, bytes> accusedMembersKeys = 2;
 }
 
 message DisqualifiedEphemeralKeys {
-    bytes senderID = 1;
-    map<string, bytes> privateKeys = 2;
+    uint32 senderID = 1;
+    map<uint32, bytes> privateKeys = 2;
 }
