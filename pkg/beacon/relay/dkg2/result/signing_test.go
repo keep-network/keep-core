@@ -89,9 +89,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		}
 	}
 
-	verifyingMember := currentMember.InitializeSignaturesVerification()
-
-	receivedValidSignatures, err := verifyingMember.VerifyDKGResultSignatures(messages)
+	receivedValidSignatures, err := currentMember.VerifyDKGResultSignatures(messages)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,7 +128,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	verifyingMember := members[0].InitializeSignaturesVerification()
+	verifyingMember := members[0]
 	verifyingMember.preferredDKGResultHash = dkgResultHash1
 
 	selfSignature, _ := operator.Sign(dkgResultHash1[:], verifyingMember.privateKey)

@@ -24,12 +24,6 @@ type SigningMember struct {
 	selfDKGResultSignature operator.Signature
 }
 
-// SignaturesVerifyingMember represents a member verifying signatures received
-// from other members.
-type SignaturesVerifyingMember struct {
-	*SigningMember
-}
-
 // NewSigningMember creates a member to execute signing DKG result hash.
 func NewSigningMember(
 	memberIndex gjkr.MemberID,
@@ -84,7 +78,7 @@ func (sm *SigningMember) SignDKGResult(
 // result hash.
 //
 // See Phase 13 of the protocol specification.
-func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
+func (sm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
 ) (map[gjkr.MemberID]operator.Signature, error) {
 	duplicatedMessagesFromSender := func(senderIndex gjkr.MemberID) bool {
@@ -112,7 +106,7 @@ func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 		if duplicatedMessagesFromSender(message.senderIndex) {
 			fmt.Printf(
 				"[member: %v] received multiple messages from sender [%d]",
-				svm.index,
+				sm.index,
 				message.senderIndex,
 			)
 			continue
@@ -120,10 +114,10 @@ func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
-		if message.resultHash != svm.preferredDKGResultHash {
+		if message.resultHash != sm.preferredDKGResultHash {
 			fmt.Printf(
 				"[member: %v] signature from sender [%d] supports result different than preferred",
-				svm.index,
+				sm.index,
 				message.senderIndex,
 			)
 			continue
@@ -138,7 +132,7 @@ func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 		if err != nil {
 			fmt.Printf(
 				"[member: %v] verification of signature from sender [%d] failed [%+v]",
-				svm.index,
+				sm.index,
 				message.senderIndex,
 				message,
 			)
@@ -149,12 +143,10 @@ func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 	}
 
 	// Register member's self signature.
-	receivedValidResultSignatures[svm.index] = svm.selfDKGResultSignature
+	receivedValidResultSignatures[sm.index] = sm.selfDKGResultSignature
 
 	return receivedValidResultSignatures, nil
 }
 
-// InitializeSignaturesVerification returns a member to perform next protocol operations.
-func (sm *SigningMember) InitializeSignaturesVerification() *SignaturesVerifyingMember {
-	return &SignaturesVerifyingMember{sm}
-}
+
+
