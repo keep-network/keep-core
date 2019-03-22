@@ -19,7 +19,7 @@ func (jm *JoinMessage) Type() string {
 // communication.
 func (jm *JoinMessage) Marshal() ([]byte, error) {
 	return (&pb.Join{
-		SenderID: jm.senderID.Bytes(),
+		SenderID: uint32(jm.senderID),
 	}).Marshal()
 }
 
@@ -29,7 +29,7 @@ func (jm *JoinMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	jm.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	jm.senderID = MemberID(pbMsg.SenderID)
 	return nil
 }
 
@@ -43,7 +43,7 @@ func (epkm *EphemeralPublicKeyMessage) Type() string {
 // network communication.
 func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
 	return (&pb.EphemeralPublicKey{
-		SenderID:            epkm.senderID.Bytes(),
+		SenderID:            uint32(epkm.senderID),
 		EphemeralPublicKeys: marshalPublicKeyMap(epkm.ephemeralPublicKeys),
 	}).Marshal()
 }
@@ -56,7 +56,7 @@ func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	epkm.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	epkm.senderID = MemberID(pbMsg.SenderID)
 
 	ephemeralPublicKeys, err := unmarshalPublicKeyMap(pbMsg.EphemeralPublicKeys)
 	if err != nil {
@@ -83,7 +83,7 @@ func (mcm *MemberCommitmentsMessage) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.MemberCommitments{
-		SenderID:    mcm.senderID.Bytes(),
+		SenderID:    uint32(mcm.senderID),
 		Commitments: commitmentBytes,
 	}).Marshal()
 }
@@ -96,7 +96,7 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	mcm.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	mcm.senderID = MemberID(pbMsg.SenderID)
 
 	var commitments []*bn256.G1
 	for _, commitmentBytes := range pbMsg.Commitments {
@@ -174,7 +174,7 @@ func (ssam *SecretSharesAccusationsMessage) Type() string {
 // suitable for network communication.
 func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
 	return (&pb.SecretSharesAccusations{
-		SenderID:           ssam.senderID.Bytes(),
+		SenderID:           uint32(ssam.senderID),
 		AccusedMembersKeys: marshalPrivateKeyMap(ssam.accusedMembersKeys),
 	}).Marshal()
 }
@@ -187,7 +187,7 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	ssam.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	ssam.senderID = MemberID(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
 	if err != nil {
@@ -214,7 +214,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.MemberPublicKeySharePoints{
-		SenderID:             mpspm.senderID.Bytes(),
+		SenderID:             uint32(mpspm.senderID),
 		PublicKeySharePoints: keySharePoints,
 	}).Marshal()
 }
@@ -227,7 +227,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	mpspm.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	mpspm.senderID = MemberID(pbMsg.SenderID)
 
 	var keySharePoints []*bn256.G2
 	for _, keySharePointBytes := range pbMsg.PublicKeySharePoints {
@@ -256,7 +256,7 @@ func (pam *PointsAccusationsMessage) Type() string {
 // for network communication.
 func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
 	return (&pb.PointsAccusations{
-		SenderID:           pam.senderID.Bytes(),
+		SenderID:           uint32(pam.senderID),
 		AccusedMembersKeys: marshalPrivateKeyMap(pam.accusedMembersKeys),
 	}).Marshal()
 }
@@ -269,7 +269,7 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	pam.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	pam.senderID = MemberID(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
 	if err != nil {
@@ -291,7 +291,7 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Type() string {
 // suitable for network communication.
 func (dekm *DisqualifiedEphemeralKeysMessage) Marshal() ([]byte, error) {
 	return (&pb.DisqualifiedEphemeralKeys{
-		SenderID:    dekm.senderID.Bytes(),
+		SenderID:    uint32(dekm.senderID),
 		PrivateKeys: marshalPrivateKeyMap(dekm.privateKeys),
 	}).Marshal()
 }
@@ -304,7 +304,7 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	dekm.senderID = member.IndexFromBytes(pbMsg.SenderID)
+	dekm.senderID = MemberID(pbMsg.SenderID)
 
 	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
 	if err != nil {
