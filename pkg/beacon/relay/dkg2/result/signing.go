@@ -27,6 +27,12 @@ type SigningMember struct {
 	receivedValidResultSignatures map[gjkr.MemberID]operator.Signature
 }
 
+// SignaturesVerifyingMember represents a member verifying signatures received
+// from other members.
+type SignaturesVerifyingMember struct {
+	*SigningMember
+}
+
 // SignDKGResult calculates hash of DKG result and member's signature over this
 // hash. It packs the hash and signature into a broadcast message.
 //
@@ -67,7 +73,7 @@ func (sm *SigningMember) SignDKGResult(dkgResult *relayChain.DKGResult) (
 // result hash.
 //
 // See Phase 13 of the protocol specification.
-func (sm *SigningMember) VerifyDKGResultSignatures(
+func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
 ) error {
 	duplicatedMessagesFromSender := func(senderIndex gjkr.MemberID) bool {
@@ -85,7 +91,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 
 	for _, message := range messages {
 		// Check if message from self.
-		if message.senderIndex == sm.index {
+		if message.senderIndex == svm.index {
 			continue
 		}
 
@@ -93,7 +99,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		if duplicatedMessagesFromSender(message.senderIndex) {
 			fmt.Printf(
 				"[member: %v] received multiple messages from sender [%d]",
-				sm.index,
+				svm.index,
 				message.senderIndex,
 			)
 			continue
@@ -101,10 +107,10 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 
 		// Sender's preferred DKG result hash doesn't match current member's
 		// preferred DKG result hash.
-		if message.resultHash != sm.preferredDKGResultHash {
+		if message.resultHash != svm.preferredDKGResultHash {
 			fmt.Printf(
 				"[member: %v] signature from sender [%d] supports result different than preferred",
-				sm.index,
+				svm.index,
 				message.senderIndex,
 			)
 			continue
@@ -119,15 +125,20 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		if err != nil {
 			fmt.Printf(
 				"[member: %v] verification of signature from sender [%d] failed [%+v]",
-				sm.index,
+				svm.index,
 				message.senderIndex,
 				message,
 			)
 			continue
 		}
 
-		sm.receivedValidResultSignatures[message.senderIndex] = message.signature
+		svm.receivedValidResultSignatures[message.senderIndex] = message.signature
 	}
 
 	return nil
+}
+
+// InitializeSignaturesVerification returns a member to perform next protocol operations.
+func (sm *SigningMember) InitializeSignaturesVerification() *SignaturesVerifyingMember {
+	return &SignaturesVerifyingMember{sm}
 }
