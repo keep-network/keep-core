@@ -30,16 +30,6 @@ func TestDKGResultEquals(t *testing.T) {
 			result2:        nil,
 			expectedResult: false,
 		},
-		"success - equal": {
-			result1:        &DKGResult{Success: true},
-			result2:        &DKGResult{Success: true},
-			expectedResult: true,
-		},
-		"success - not equal": {
-			result1:        &DKGResult{Success: true},
-			result2:        &DKGResult{Success: false},
-			expectedResult: false,
-		},
 		"group public keys - equal": {
 			result1:        &DKGResult{GroupPublicKey: []byte{2}},
 			result2:        &DKGResult{GroupPublicKey: []byte{2}},

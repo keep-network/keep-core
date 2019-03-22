@@ -20,7 +20,6 @@ func TestGenerateResult(t *testing.T) {
 	}{
 		"no disqualified or inactive members - success": {
 			expectedResult: &Result{
-				Success:        true,
 				GroupPublicKey: members[0].groupPublicKey,
 				Disqualified:   []MemberID{},
 				Inactive:       []MemberID{},
@@ -29,7 +28,6 @@ func TestGenerateResult(t *testing.T) {
 		"one disqualified member - success": {
 			disqualifiedMemberIDs: []MemberID{2},
 			expectedResult: &Result{
-				Success:        true,
 				GroupPublicKey: members[0].groupPublicKey,
 				Disqualified:   []MemberID{2},
 				Inactive:       []MemberID{},
@@ -38,7 +36,6 @@ func TestGenerateResult(t *testing.T) {
 		"two inactive members - success": {
 			inactiveMemberIDs: []MemberID{3, 7},
 			expectedResult: &Result{
-				Success:        true,
 				GroupPublicKey: members[0].groupPublicKey,
 				Disqualified:   []MemberID{},
 				Inactive:       []MemberID{3, 7},
@@ -48,7 +45,6 @@ func TestGenerateResult(t *testing.T) {
 			disqualifiedMemberIDs: []MemberID{2},
 			inactiveMemberIDs:     []MemberID{3, 7},
 			expectedResult: &Result{
-				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   []MemberID{2},
 				Inactive:       []MemberID{3, 7},
@@ -57,7 +53,6 @@ func TestGenerateResult(t *testing.T) {
 		"more than half of threshold inactive members - failure": {
 			inactiveMemberIDs: []MemberID{3, 5, 7},
 			expectedResult: &Result{
-				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   nil,
 				Inactive:       []MemberID{3, 5, 7},
@@ -66,7 +61,6 @@ func TestGenerateResult(t *testing.T) {
 		"more than half of threshold disqualified members - failure": {
 			disqualifiedMemberIDs: []MemberID{3, 5, 7},
 			expectedResult: &Result{
-				Success:        false,
 				GroupPublicKey: nil,
 				Disqualified:   []MemberID{3, 5, 7},
 				Inactive:       []MemberID{},

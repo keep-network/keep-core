@@ -403,7 +403,6 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G2 {
 // with the disqualified and inactive members.
 func (fm *FinalizingMember) Result() *Result {
 	return &Result{
-		Success:        fm.group.isThresholdSatisfied(),
 		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
 		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
 		Inactive:       fm.group.inactiveMemberIDs,     // IA

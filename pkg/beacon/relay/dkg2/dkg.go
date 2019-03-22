@@ -238,7 +238,6 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	}
 
 	return &relayChain.DKGResult{
-		Success:        gjkrResult.Success,
 		GroupPublicKey: groupPublicKey,
 		Inactive:       convertToByteSlice(gjkrResult.Inactive),
 		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
