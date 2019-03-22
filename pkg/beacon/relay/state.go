@@ -1,0 +1,149 @@
+package relay
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/net"
+)
+
+// State is and interface against which relay states should be implemented.
+type State interface {
+	// activeBlocks returns the number of blocks during which the current state
+	// is active. Blocks are counted after the initiation process of the
+	// current state has completed.
+	activeBlocks() int
+
+	// initiate performs all the required calculations and sends out all the
+	// messages associated with the current state.
+	initiate() error
+
+	// Receive is called each time a new message arrived. receive is expected to
+	// be called for all broadcast channel messages, including the member's own
+	// messages.
+	receive(msg net.Message) error
+
+	// nextNextStateState performs a state transition to the next state of the protocol.
+	// If the current state is the last one, nextState returns `nil`.
+	nextState() State
+
+	// memberIndex returns the index of member associated with the current state.
+	memberIndex() member.Index
+
+	// isFinalState returns true when final state is reached.
+	isFinalState() bool
+}
+
+// Execute state machine starting with initial state up to finalization.
+// It requires a broadcast channel and an initialization function for the channel
+// to be able to perform interactions.
+func Execute(
+	channel net.BroadcastChannel,
+	channelInitialization func(channel net.BroadcastChannel),
+	initialState State,
+	blockCounter chain.BlockCounter,
+) (State, error) {
+	// Use an unbuffered channel to serialize message processing.
+	recvChan := make(chan net.Message)
+	handler := net.HandleMessageFunc{
+		Type: fmt.Sprintf("dkg/%s", string(time.Now().UTC().UnixNano())),
+		Handler: func(msg net.Message) error {
+			recvChan <- msg
+			return nil
+		},
+	}
+
+	channelInitialization(channel)
+
+	channel.Recv(handler)
+	defer channel.UnregisterRecv(handler.Type)
+
+	var (
+		currentState State
+	)
+
+	currentState = initialState
+
+	blockWaiter, err := stateTransition(currentState, blockCounter)
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		select {
+		case msg := <-recvChan:
+			fmt.Printf(
+				"[member:%v, state:%T] Processing message\n",
+				currentState.memberIndex(),
+				currentState,
+			)
+
+			err := currentState.receive(msg)
+			if err != nil {
+				fmt.Printf(
+					"[member:%v, state: %T] Failed to receive a message [%v]\n",
+					currentState.memberIndex(),
+					currentState,
+					err,
+				)
+			}
+
+		case <-blockWaiter:
+			if currentState.isFinalState() {
+				return currentState, nil
+			}
+
+			currentState = currentState.nextState()
+			blockWaiter, err = stateTransition(currentState, blockCounter)
+			if err != nil {
+				return nil, err
+			}
+
+			continue
+		}
+	}
+}
+
+func stateTransition(
+	currentState State,
+	blockCounter chain.BlockCounter,
+) (<-chan int, error) {
+	fmt.Printf(
+		"[member:%v, state:%T] Transitioning to a new state...\n",
+		currentState.memberIndex(),
+		currentState,
+	)
+
+	err := blockCounter.WaitForBlocks(1)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to wait 1 block entering state [%T]: [%v]",
+			currentState,
+			err,
+		)
+	}
+
+	err = currentState.initiate()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
+	}
+
+	blockWaiter, err := blockCounter.BlockWaiter(currentState.activeBlocks())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
+			currentState,
+			err,
+		)
+	}
+
+	fmt.Printf(
+		"[member:%v, state:%T] Transitioned to new state\n",
+		currentState.memberIndex(),
+		currentState,
+	)
+
+	return blockWaiter, nil
+}
