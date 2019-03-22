@@ -10,7 +10,7 @@ import (
 // for network communication.
 func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
 	return (&pb.DKGResultHashSignature{
-		SenderIndex: uint32(d.senderIndex),
+		SenderIndex: d.senderIndex.Bytes(),
 		ResultHash:  d.resultHash[:],
 		Signature:   d.signature,
 		// PublicKey:   , // TODO: Add public key marshalling when static.PublicKey is ready
@@ -24,7 +24,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	d.senderIndex = member.Index(pbMsg.SenderIndex)
+	d.senderIndex = member.IndexFromBytes(pbMsg.SenderIndex)
 
 	resultHash, err := chain.DKGResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {

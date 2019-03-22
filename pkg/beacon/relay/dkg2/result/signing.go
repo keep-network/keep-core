@@ -3,12 +3,10 @@ package result
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/operator"
-
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // SigningMember represents a member sharing preferred DKG result hash
@@ -27,7 +25,7 @@ type SigningMember struct {
 
 // NewSigningMember creates a member to execute signing DKG result hash.
 func NewSigningMember(
-	memberIndex gjkr.MemberID,
+	memberIndex member.Index,
 	operatorPrivateKey *operator.PrivateKey,
 ) *SigningMember {
 	return &SigningMember{
