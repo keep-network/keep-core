@@ -233,7 +233,7 @@ contract KeepGroupImplV1 is Ownable {
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
      * @param signatures concatenation of signer resultHashes collected off-chain. Ordering matters.
-     * @param positions are the indices of members corresponding to each signature.
+     * @param membersIndex are the indices of members corresponding to each signature.
      */
     function submitDkgResult(
         uint256 index,
@@ -242,7 +242,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory disqualified,
         bytes memory inactive,
         bytes memory signatures,
-        uint[] memory positions
+        uint[] memory membersIndex
     ) public {
         require(
             block.number > _submissionStart + _timeoutChallenge,
