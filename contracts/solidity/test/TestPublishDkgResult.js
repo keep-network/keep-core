@@ -27,40 +27,23 @@ function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
 }
 
 contract('TestPublishDkgResult', function(accounts) {
-  let  b1, b2, b3, b4, bufferFinal, success,
-  disqualified, inactive, msgHash,
-  signature, signatureRPC, positions, token, stakingProxy,
+  let  disqualified, inactive, resultHash,
+  signature, positions, token, stakingProxy,
    stakingContract, minimumStake, groupThreshold, groupSize,
-    randomBeaconValue,
+    randomBeaconValue, requestId,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
     staker1 = accounts[0], tickets1,
     staker2 = accounts[1], tickets2,
-    staker3 = accounts[2], tickets3,
-    staker4 = accounts[3], tickets4;
-
-//   let signatures, votes, resultHash,
-  let pks = [
-    // '51b13e5e39dfbaa497653490a5bd04a4f3293de4a309dc1a26bc36dfbdb67c59',
-    // '9e27a55a55b139be2bd0676f9aa68b0ec1dac89b09ae0dcdc7e61d2544e4fce0',
-    // 'e0cef4ec8b5ebbea96a12c340ad3ea1d0e6de932a9c90df48663ece213384c92',
-    // '6be271a329ef155847f81aea752b4a1a465c0e174ec493a815dda037ff601521',
-    // 'e288d27643dc3637ffc9d22c7018fad45f3cf5b21f40260b4e08529db009019d',
-    // 'bc534249a87da0664aca5129e7b99d2aa55ecfdece866712f4c19f385a791af4',
-    // 'a0daf6d444d2c16d4046bd61196cae8ea6e87a372c3bbaf57f5b230ed24fb12d'
-]
-
+    staker3 = accounts[2], tickets3;
+  requestId = 0;
   disqualified = '0x0000000110000000110000000110000000110000'
   inactive =  '0x0000001000000001000000001000000001000000'
   groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000"
 
-  b1 = new Buffer("0x01", 'hex')
-  b2 = new Buffer(disqualified, 'hex')
-  b3 = new Buffer(inactive, 'hex')
-  b4 = new Buffer(groupPubKey, 'hex')
-  bufferFinal = Buffer.concat([b1, b2, b3, b4]);
-  msgHash = EthUtil.hashPersonalMessage(bufferFinal);
+  
+  resultHash = web3.utils.soliditySha3(disqualified, inactive, groupPubKey);
   
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -78,9 +61,9 @@ contract('TestPublishDkgResult', function(accounts) {
     // Initialize Keep Group contract
     minimumStake = 200000;
     groupThreshold = 15;
-    groupSize = 20;
+    groupSize = 75;
     timeoutInitial = 20;
-    timeoutSubmission = 50;
+    timeoutSubmission = 100;
     timeoutChallenge = 60;
 
     randomBeaconValue = bls.groupSignature;
@@ -109,43 +92,31 @@ contract('TestPublishDkgResult', function(accounts) {
     await token.approveAndCall(stakingContract.address, minimumStake*3000, "0x00", {from: staker3});
     tickets3 = generateTickets(randomBeaconValue, staker3, 3000);    
   })
-
   it("should generate signatures and submit a correct result", async function() {
-    if(pks.length!=0){
-      positions = []
-      let tickets = []
-      let signatures; 
-      let caller;
-      for(let i=0;i<10;i++){
-        await keepGroupImplViaProxy.submitTicket(tickets1[i].value, staker1, tickets1[i].virtualStakerIndex, {from: staker1});
-        tickets.push(tickets1[i].value);
-      }
-      for(let i=0;i<7;i++){
-        await keepGroupImplViaProxy.submitTicket(tickets2[i].value, staker2, tickets2[i].virtualStakerIndex, {from: staker2});
-        tickets.push(tickets2[i].value);
-      }
-      for(let i=0;i<3;i++){
-        await keepGroupImplViaProxy.submitTicket(tickets3[i].value, staker3, tickets3[i].virtualStakerIndex, {from: staker3});
-        tickets.push(tickets3[i].value);
-      }
-      let op = await keepGroupImplViaProxy.orderedParticipants.call()
-      for(let i=0;i<op.length;i++){        
-        caller = accounts.indexOf(op[i]);
-        signature = EthUtil.ecsign(msgHash, new Buffer(pks[caller], 'hex'));
-        signatureRPC = EthUtil.toRpcSig(signature.v, signature.r, signature.s)
-        positions.push(i+1);
-        if(signatures == undefined){
-          signatures = signatureRPC
-      }
-        else{
-            signatures+=signatureRPC.slice(2,signatureRPC.length);
-        }
-      }
-      let getA = await keepGroupImplViaProxy.submitDkgResult(1, 0, groupPubKey, disqualified, inactive, signatures, positions, msgHash)
-      console.log(getA.receipt.gasUsed);
+
+    positions = []
+    let signatures; 
+    let callerIndex;
+    for(let i=0;i<10;i++){
+      await keepGroupImplViaProxy.submitTicket(tickets1[i].value, staker1, tickets1[i].virtualStakerIndex, {from: staker1});
     }
-    else{
-      assert.equal(1,1,"holder")
+    for(let i=0;i<7;i++){
+      await keepGroupImplViaProxy.submitTicket(tickets2[i].value, staker2, tickets2[i].virtualStakerIndex, {from: staker2});
     }
+    for(let i=0;i<3;i++){
+      await keepGroupImplViaProxy.submitTicket(tickets3[i].value, staker3, tickets3[i].virtualStakerIndex, {from: staker3});
+    }
+    let orderedParticipants = await keepGroupImplViaProxy.orderedParticipants.call()
+    for(let i=0;i<orderedParticipants.length;i++){    
+      callerIndex = accounts.indexOf(orderedParticipants[i]);    
+      signature =  await web3.eth.sign(resultHash, accounts[callerIndex]);
+      positions.push(i+1);
+      if (signatures == undefined) signatures = signature
+      else signatures+=signature.slice(2,signature.length);
+    }
+
+    await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, positions)
+    let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
+    assert.equal(submitted, true, "DkgResult should should be submitted");
   });
 })  
