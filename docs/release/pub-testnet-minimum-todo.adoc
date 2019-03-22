@@ -19,7 +19,7 @@ A stab at minimum effort to get the Keep public testnet off the ground.
   ** Launch N keep seed bootstrap peers (regular peers?)
   ** Metrics dashboard
   ** Business hours on-call rotation
-  ** CI deploy on merge to master
+  ** Deploy on merge to master
 
 - Documentation *[Owner: ""]*
   ** Where
