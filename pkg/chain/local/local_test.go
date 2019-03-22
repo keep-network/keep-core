@@ -363,7 +363,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -393,7 +393,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, nil, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -417,7 +417,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -465,7 +465,9 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 		1,
 		&relaychain.DKGResult{
 			GroupPublicKey: []byte{88},
-		}, // TODO: Update test to include signatures
+		},
+		nil,
+		nil, // TODO: Update test to include signatures
 	)
 
 	select {
@@ -483,15 +485,8 @@ func TestCalculateDKGResultHash(t *testing.T) {
 		GroupPublicKey: []byte{3, 40, 200},
 		Disqualified:   []byte{1, 0, 1, 0},
 		Inactive:       []byte{0, 1, 1, 0},
-		Signatures:     []byte{0, 1, 1, 0},
-		MembersIndex: []*big.Int{
-			big.NewInt(1),
-			big.NewInt(2),
-			big.NewInt(3),
-			big.NewInt(4),
-		},
 	}
-	expectedHashString := "656d41775c0aa60f8b6db19eb8622ce92c19e5770be5eb806e1f4ee521a348e1"
+	expectedHashString := "f65d6c5e938537224bbd2716d2f24895746a756978d29e1eaaf46fb97a555716"
 
 	actualHash, err := localChain.CalculateDKGResultHash(dkgResult)
 	if err != nil {

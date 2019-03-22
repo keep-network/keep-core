@@ -358,6 +358,8 @@ func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
 	participantIndex member.Index,
 	resultToPublish *relaychain.DKGResult,
+	signatures []byte,
+	membersIndex []member.Index,
 ) *async.DKGResultSubmissionPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()

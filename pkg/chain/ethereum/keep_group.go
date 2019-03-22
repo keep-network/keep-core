@@ -210,6 +210,8 @@ func (kg *keepGroup) SubmitDKGResult(
 	submitterIndex *big.Int,
 	requestID *big.Int,
 	result *relaychain.DKGResult,
+	signatures []byte,
+	membersIndex []*big.Int,
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
@@ -218,8 +220,8 @@ func (kg *keepGroup) SubmitDKGResult(
 		result.GroupPublicKey,
 		result.Disqualified,
 		result.Inactive,
-		result.Signatures,
-		result.MembersIndex,
+		signatures,
+		membersIndex,
 	)
 }
 

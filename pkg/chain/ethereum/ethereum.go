@@ -456,6 +456,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
 	participantIndex member.Index,
 	result *relaychain.DKGResult,
+	signatures []byte,
+	membersIndex []member.Index,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
@@ -513,10 +515,17 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
+	var membersIndexOnChainFormat []*big.Int
+	for _, index := range membersIndex {
+		membersIndexOnChainFormat = append(membersIndexOnChainFormat, index.Int())
+	}
+
 	if _, err = ec.keepGroupContract.SubmitDKGResult(
 		participantIndex.Int(),
 		requestID,
 		result,
+		signatures,
+		membersIndexOnChainFormat,
 	); err != nil {
 		subscription.Unsubscribe()
 		close(publishedResult)
@@ -544,25 +553,16 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
 	}
 
-	abiUintSlice, err := abi.NewType("uint256[]")
-	if err != nil {
-		return dkgResultHash, err
-	}
-
 	arguments := abi.Arguments{
 		{Type: bytesType},
 		{Type: bytesType},
 		{Type: bytesType},
-		{Type: bytesType},
-		{Type: abiUintSlice},
 	}
 
 	encodedDKGResult, err := arguments.Pack(
 		dkgResult.GroupPublicKey,
 		dkgResult.Disqualified,
 		dkgResult.Inactive,
-		dkgResult.Signatures,
-		dkgResult.MembersIndex,
 	)
 	if err != nil {
 		return dkgResultHash, fmt.Errorf("encoding failed: [%v]", err)
