@@ -13,6 +13,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -453,7 +454,7 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 
 func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
-	participantIndex uint32,
+	participantIndex member.Index,
 	result *relaychain.DKGResult,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}

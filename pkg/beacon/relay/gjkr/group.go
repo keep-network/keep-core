@@ -25,7 +25,7 @@ func (g *Group) MemberIDs() []MemberID {
 
 // RegisterMemberID adds a member to the list of group members.
 func (g *Group) RegisterMemberID(memberID MemberID) error {
-	if err := memberID.validate(); err != nil {
+	if err := memberID.Validate(); err != nil {
 		return fmt.Errorf("cannot register member ID in the group [%v]", err)
 	}
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
 )
@@ -33,8 +34,8 @@ func TestFullStateTransitions(t *testing.T) {
 		}
 
 		member, err := gjkr.NewMember(
-			gjkr.MemberID(i+1),
-			make([]gjkr.MemberID, 0),
+			member.Index(i+1),
+			make([]member.Index, 0),
 			threshold,
 			seed,
 		)
