@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -27,7 +28,7 @@ type keyGenerationState interface {
 	nextState() keyGenerationState
 
 	// memberID returns the ID of member associated with the current state.
-	memberID() gjkr.MemberID
+	memberID() member.Index // TODO: Rename function to memberIndex
 }
 
 func isMessageFromSelf(
@@ -69,7 +70,7 @@ func (is *initializationState) nextState() keyGenerationState {
 	return &joinState{is.channel, is.member}
 }
 
-func (is *initializationState) memberID() gjkr.MemberID {
+func (is *initializationState) memberID() member.Index {
 	return is.member.ID
 }
 
@@ -102,7 +103,7 @@ func (js *joinState) nextState() keyGenerationState {
 	}
 }
 
-func (js *joinState) memberID() gjkr.MemberID {
+func (js *joinState) memberID() member.Index {
 	return js.member.ID
 }
 
@@ -152,7 +153,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) nextState() keyGenerationState {
 	}
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) memberID() gjkr.MemberID {
+func (ekpgs *ephemeralKeyPairGenerationState) memberID() member.Index {
 	return ekpgs.member.ID
 }
 
@@ -186,7 +187,7 @@ func (skgs *symmetricKeyGenerationState) nextState() keyGenerationState {
 	}
 }
 
-func (skgs *symmetricKeyGenerationState) memberID() gjkr.MemberID {
+func (skgs *symmetricKeyGenerationState) memberID() member.Index {
 	return skgs.member.ID
 }
 
@@ -253,7 +254,7 @@ func (cs *commitmentState) nextState() keyGenerationState {
 	}
 }
 
-func (cs *commitmentState) memberID() gjkr.MemberID {
+func (cs *commitmentState) memberID() member.Index {
 	return cs.member.ID
 }
 
@@ -318,7 +319,7 @@ func (cvs *commitmentsVerificationState) nextState() keyGenerationState {
 	}
 }
 
-func (cvs *commitmentsVerificationState) memberID() gjkr.MemberID {
+func (cvs *commitmentsVerificationState) memberID() member.Index {
 	return cvs.member.ID
 }
 
@@ -361,7 +362,7 @@ func (sjs *sharesJustificationState) nextState() keyGenerationState {
 	}
 }
 
-func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
+func (sjs *sharesJustificationState) memberID() member.Index {
 	return sjs.member.ID
 }
 
@@ -393,7 +394,7 @@ func (qs *qualificationState) nextState() keyGenerationState {
 	}
 }
 
-func (qs *qualificationState) memberID() gjkr.MemberID {
+func (qs *qualificationState) memberID() member.Index {
 	return qs.member.ID
 }
 
@@ -441,7 +442,7 @@ func (pss *pointsShareState) nextState() keyGenerationState {
 	}
 }
 
-func (pss *pointsShareState) memberID() gjkr.MemberID {
+func (pss *pointsShareState) memberID() member.Index {
 	return pss.member.ID
 }
 
@@ -498,7 +499,7 @@ func (pvs *pointsValidationState) nextState() keyGenerationState {
 	}
 }
 
-func (pvs *pointsValidationState) memberID() gjkr.MemberID {
+func (pvs *pointsValidationState) memberID() member.Index {
 	return pvs.member.ID
 }
 
@@ -541,7 +542,7 @@ func (pjs *pointsJustificationState) nextState() keyGenerationState {
 	}
 }
 
-func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
+func (pjs *pointsJustificationState) memberID() member.Index {
 	return pjs.member.ID
 }
 
@@ -592,7 +593,7 @@ func (rs *keyRevealState) nextState() keyGenerationState {
 	}
 }
 
-func (rs *keyRevealState) memberID() gjkr.MemberID {
+func (rs *keyRevealState) memberID() member.Index {
 	return rs.member.ID
 }
 
@@ -632,7 +633,7 @@ func (rs *reconstructionState) nextState() keyGenerationState {
 	}
 }
 
-func (rs *reconstructionState) memberID() gjkr.MemberID {
+func (rs *reconstructionState) memberID() member.Index {
 	return rs.member.ID
 }
 
@@ -664,7 +665,7 @@ func (cs *combinationState) nextState() keyGenerationState {
 	}
 }
 
-func (cs *combinationState) memberID() gjkr.MemberID {
+func (cs *combinationState) memberID() member.Index {
 	return cs.member.ID
 }
 
@@ -692,7 +693,7 @@ func (fs *finalizationState) nextState() keyGenerationState {
 	return nil
 }
 
-func (fs *finalizationState) memberID() gjkr.MemberID {
+func (fs *finalizationState) memberID() member.Index {
 	return fs.member.ID
 }
 
