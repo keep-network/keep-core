@@ -31,6 +31,17 @@ type SignaturesVerifyingMember struct {
 	*SigningMember
 }
 
+// NewSigningMember creates a member to execute signing DKG result hash.
+func NewSigningMember(
+	memberIndex gjkr.MemberID,
+	operatorPrivateKey *operator.PrivateKey,
+) *SigningMember {
+	return &SigningMember{
+		index:      memberIndex,
+		privateKey: operatorPrivateKey,
+	}
+}
+
 // SignDKGResult calculates hash of DKG result and member's signature over this
 // hash. It packs the hash and signature into a broadcast message.
 //
