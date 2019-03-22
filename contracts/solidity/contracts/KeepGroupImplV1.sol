@@ -21,12 +21,6 @@ contract KeepGroupImplV1 is Ownable {
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
-    
-    event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
-
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -46,7 +40,7 @@ contract KeepGroupImplV1 is Ownable {
     //check if DkgResult has been published (uint256: given requestID)
     mapping (uint256 => bool) internal _dkgResultPublished;
     //checeks if a user has submitted a result (bytes32: unique hash for voting scenario)
-    mapping (bytes32 => bool) internal _votedDkg;
+    mapping (bytes32 => bool) internal _submittedDkg;
 
     struct Proof {
         address sender;
@@ -251,20 +245,21 @@ contract KeepGroupImplV1 is Ownable {
      * @param inactive bytes representing inactive group members; 1 at the specific index means
      */
     function submitDkgResult(
-        uint256 index,
         uint256 requestId,
+        uint256 index,
         bytes memory groupPubKey,
         bytes memory disqualified,
         bytes memory inactive,
         bytes memory signatures,
-        uint[] memory positions,
-        bytes32 resultHash
+        uint[] memory positions
     ) public {
+        bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
         require(eligibleSubmitter(index),"User not eligible");
-        require(verify(signatures, positions, resultHash),"could not verify");
-        
+        require(verify(signatures, positions, resultHash),"Could not verify");
+        //change to selectedPArticipants() in full implmementation
         address[] memory members = orderedParticipants();
-        for (uint i = 0; i < members.length; i++) {
+        //check IA/DQ length match members
+        for (uint i = 0; i < positions.length; i++) {
             if(!_isInactive(inactive, i) &&
                 !_isDisqualified(disqualified, i)){
                 _groupMembers[groupPubKey].push(members[i]);
@@ -285,21 +280,26 @@ contract KeepGroupImplV1 is Ownable {
     function verify(bytes memory signatures, uint256[] memory indices, bytes32 resultHash) internal returns (bool) {
         bytes memory current;//current signature to be checked
         uint256[] memory ordered = orderedTickets();
+        //can comebine requires below, but avoiding for error catching
         require(signatures.length >= 65, "signature too short");
-        require(signatures.length % 65 == 0, "bad signatures submission");
-        require(signatures.length / 65 == indices.length, "signatures and indices don't match");
-        uint256 votes = signatures.length / 65;
-        for(uint i = 0; i < votes; i++){
-            bytes32 VoteID = keccak256(abi.encodePacked(resultHash, _randomBeaconValue, indices[i]));
-            require(indices[i] > 0, "invalid index");
-            require(!_votedDkg[VoteID],"index already voted");
-            _votedDkg[VoteID] = true;
+        require(signatures.length % 65 == 0, "Bad signatures submission");
+        require(signatures.length / 65 == indices.length, "Signatures and indices don't match");
+
+        uint256 submissionCount = signatures.length / 65;
+        for(uint i = 0; i < submissionCount; i++){
+            bytes32 submitterId = keccak256(abi.encodePacked(resultHash, _randomBeaconValue, indices[i]));
+
+            require(indices[i] > 0, "Invalid index");
+            require(!_submittedDkg[submitterId],"Index already submitted");
+
+            _submittedDkg[submitterId] = true;
             current = signatures.slice(0x41*i, 0x41);           
-            address voter = resultHash.recover(current);
+            address recovered = resultHash.toEthSignedMessageHash().recover(current);
+
             require(indices[i] <= ordered.length,"Provided index is out of bounds");
             require(
-                _proofs[ordered[indices[i] - 1]].sender == voter,
-                "signer and address at provided index don't match"
+                _proofs[ordered[indices[i] - 1]].sender == recovered,
+                "Signer and recovered address at provided index don't match"
             );
         }       
         return true;
@@ -361,7 +361,7 @@ contract KeepGroupImplV1 is Ownable {
      * @return true if the submitter is eligible. False otherwise.
      */
     function eligibleSubmitter(uint index) public view returns (bool){
-        require(index > 0, "index must be greater than 1");
+        require(index > 0, "index must be greater than 0");
         return true;
     }
 
