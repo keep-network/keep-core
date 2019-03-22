@@ -180,6 +180,7 @@ variable "prometheus_to_sd" {
   }
 }
 
+# openvpn
 variable "openvpn" {
   default {
     name    = "helm-openvpn"
@@ -191,5 +192,22 @@ variable "openvpn_parameters" {
   default {
     route_all_traffic_through_vpn = "false"
     gke_master_ipv4_cidr_address  = "172.16.0.0"
+  }
+}
+
+# deployment infrastructure
+
+variable "keel" {
+  default {
+    namespace = "tiller"
+    version   = "0.7.7"
+  }
+}
+
+variable "keel_parameters" {
+  default {
+    helm_provider_enabled = true
+    rbac_install_enabled  = true
+    gcr_enabled           = true
   }
 }
