@@ -20,9 +20,8 @@ type SigningMember struct {
 
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
-	// Received valid signatures supporting the same DKG result as current's
-	// participant prefers. Contains also current's participant's signature.
-	receivedValidResultSignatures map[gjkr.MemberID]operator.Signature
+	// Signature over preferredDKGResultHash calculated by the member.
+	selfDKGResultSignature operator.Signature
 }
 
 // SignaturesVerifyingMember represents a member verifying signatures received
@@ -65,7 +64,7 @@ func (sm *SigningMember) SignDKGResult(
 	}
 
 	// Register self signature.
-	sm.receivedValidResultSignatures[sm.index] = signature
+	sm.selfDKGResultSignature = signature
 
 	return &DKGResultHashSignatureMessage{
 		senderIndex: sm.index,
