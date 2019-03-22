@@ -456,7 +456,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
 	participantIndex member.Index,
 	result *relaychain.DKGResult,
-	signatures map[member.Index][]byte,
+	signatures []byte,
+	membersIndex []member.Index,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
@@ -514,8 +515,18 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
-	_, err = ec.keepGroupContract.SubmitDKGResult(requestID, result)
-	if err != nil {
+	var membersIndexOnChainFormat []*big.Int
+	for _, index := range membersIndex {
+		membersIndexOnChainFormat = append(membersIndexOnChainFormat, index.Int())
+	}
+
+	if _, err = ec.keepGroupContract.SubmitDKGResult(
+		participantIndex.Int(),
+		requestID,
+		result,
+		signatures,
+		membersIndexOnChainFormat,
+	); err != nil {
 		subscription.Unsubscribe()
 		close(publishedResult)
 		failPromise(err)
