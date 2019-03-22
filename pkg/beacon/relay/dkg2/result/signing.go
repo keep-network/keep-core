@@ -86,7 +86,7 @@ func (sm *SigningMember) SignDKGResult(
 // See Phase 13 of the protocol specification.
 func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
-) error {
+) (map[gjkr.MemberID]operator.Signature, error) {
 	duplicatedMessagesFromSender := func(senderIndex gjkr.MemberID) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
@@ -99,6 +99,8 @@ func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 		}
 		return false
 	}
+
+	receivedValidResultSignatures := make(map[gjkr.MemberID]operator.Signature)
 
 	for _, message := range messages {
 		// Check if message from self.
@@ -143,10 +145,13 @@ func (svm *SignaturesVerifyingMember) VerifyDKGResultSignatures(
 			continue
 		}
 
-		svm.receivedValidResultSignatures[message.senderIndex] = message.signature
+		receivedValidResultSignatures[message.senderIndex] = message.signature
 	}
 
-	return nil
+	// Register member's self signature.
+	receivedValidResultSignatures[svm.index] = svm.selfDKGResultSignature
+
+	return receivedValidResultSignatures, nil
 }
 
 // InitializeSignaturesVerification returns a member to perform next protocol operations.
