@@ -34,8 +34,9 @@ type SubmittingMember struct {
 // A user's turn to publish is determined based on the user's index and block
 // step.
 //
-// If any result is submitted for the current request ID, the current member
-// finishes the phase immediately, without submitting their own result.
+// If a result is submitted for the current request ID and it's accepted by the
+// chain, the current member finishes the phase immediately, without submitting
+// their own result.
 //
 // It returns the on-chain block height of the moment when the result was
 // successfully submitted on chain by the member. In case of failure or result
@@ -140,8 +141,8 @@ func (sm *SubmittingMember) SubmitDKGResult(
 				})
 			return <-blockHeight, <-errorChannel
 		case publishedResultEvent := <-onSubmittedResultChan:
-			// A result has been submitted by other member.
 			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
+				// A result has been submitted by other member.
 				subscription.Unsubscribe()
 				close(onSubmittedResultChan)
 				// Leave without publishing the result.
