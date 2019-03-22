@@ -67,7 +67,16 @@ func ExecuteDKG(
 	// replace it with print at the end of DKG execution.
 	fmt.Printf("[member:%v] GJKR Result: %+v\n", playerIndex, gjkrResult)
 
-	// TODO: Execute new Phase 14.
+	err = executePublishing(
+		requestID,
+		playerIndex,
+		relayChain,
+		blockCounter,
+		convertResult(gjkrResult, groupSize),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("publishing failed [%v]", err)
+	}
 
 	return signer, nil
 }
