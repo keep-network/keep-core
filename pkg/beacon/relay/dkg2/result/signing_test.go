@@ -86,12 +86,14 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		}
 	}
 
-	err = currentMember.VerifyDKGResultSignatures(messages)
+	verifyingMember := currentMember.InitializeSignaturesVerification()
+
+	err = verifyingMember.VerifyDKGResultSignatures(messages)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(currentMember.receivedValidResultSignatures) != groupSize {
+	if len(verifyingMember.receivedValidResultSignatures) != groupSize {
 		t.Errorf(
 			"unexpected number of registered valid signatures\nexpected: %v\nactual:   %v\n",
 			groupSize,
@@ -100,13 +102,13 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	}
 
 	for _, message := range messages {
-		if !bytes.Equal(currentMember.receivedValidResultSignatures[message.senderIndex],
+		if !bytes.Equal(verifyingMember.receivedValidResultSignatures[message.senderIndex],
 			message.signature) {
 			t.Errorf(
 				"unexpected registered signature for member %d\nexpected: %x\nactual:   %x\n",
 				message.senderIndex,
 				message.signature,
-				currentMember.receivedValidResultSignatures[message.senderIndex],
+				verifyingMember.receivedValidResultSignatures[message.senderIndex],
 			)
 		}
 	}
@@ -125,7 +127,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	verifyingMember := members[0]
+	verifyingMember := members[0].InitializeSignaturesVerification()
 	verifyingMember.preferredDKGResultHash = dkgResultHash1
 
 	member2 := members[1]
