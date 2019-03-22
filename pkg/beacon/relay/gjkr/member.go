@@ -11,55 +11,7 @@ import (
 )
 
 // MemberID is a unique-in-group identifier of a member.
-// TODO: Rename to MemberIndex since it's used around DKG as index.
-type MemberID uint32
-
-// Int converts `MemberID` to `big.Int`.
-func (id MemberID) Int() *big.Int {
-	return new(big.Int).SetUint64(uint64(id))
-}
-
-// Equals checks if MemberID equals the passed int value.
-func (id MemberID) Equals(value int) bool {
-	return id == MemberID(value)
-}
-
-// validate checks if MemberID has a valid value. MemberID is expected to be
-// equal or greater than `1`.
-func (id MemberID) validate() error {
-	if id < 1 {
-		return fmt.Errorf("member ID must be >= 1")
-	}
-	return nil
-}
-
-// MemberIDFromBytes returns a `MemberID` created from provided bytes.
-func MemberIDFromBytes(bytes []byte) MemberID {
-	return MemberID(binary.LittleEndian.Uint32(bytes))
-}
-
-// Bytes converts `MemberID` to bytes representation.
-func (id MemberID) Bytes() []byte {
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, uint32(id))
-	return bytes
-}
-
-// MemberIDFromHex returns a `MemberID` created from the hex `string`
-// representation.
-func MemberIDFromHex(hex string) (MemberID, error) {
-	id, err := strconv.ParseUint(hex, 16, 32)
-	if err != nil {
-		return 0, err
-	}
-
-	return MemberID(id), nil
-}
-
-// HexString converts `MemberID` to hex `string` representation.
-func (id MemberID) HexString() string {
-	return strconv.FormatInt(int64(id), 16)
-}
+type MemberID = member.Index
 
 type memberCore struct {
 	// ID of this group member.
