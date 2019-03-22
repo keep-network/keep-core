@@ -74,12 +74,16 @@ func TestSubmitDKGResult(t *testing.T) {
 				t.Fatalf("result is already submitted to the chain")
 			}
 
-			currentBlock, err := member.SubmitDKGResult(
+			err = member.SubmitDKGResult(
 				requestID,
 				result,
 				signatures,
 				chainHandle,
 			)
+
+			blockCounter, _ := chainHandle.BlockCounter()
+			currentBlock, _ := blockCounter.CurrentBlock()
+
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
@@ -193,7 +197,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 			defer close(result2Chan)
 
 			go func() {
-				currentBlock, err := member1.SubmitDKGResult(
+				err := member1.SubmitDKGResult(
 					test.requestID1,
 					test.resultToPublish1,
 					signatures,
@@ -203,11 +207,14 @@ func TestConcurrentPublishResult(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				result1Chan <- currentBlock
+				blockCounter, _ := chainHandle.BlockCounter()
+				currentBlock, _ := blockCounter.CurrentBlock()
+
+				result1Chan <- uint64(currentBlock)
 			}()
 
 			go func() {
-				currentBlock, err := member2.SubmitDKGResult(
+				err := member2.SubmitDKGResult(
 					test.requestID2,
 					test.resultToPublish2,
 					signatures,
@@ -217,7 +224,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				result2Chan <- currentBlock
+				blockCounter, _ := chainHandle.BlockCounter()
+				currentBlock, _ := blockCounter.CurrentBlock()
+
+				result2Chan <- uint64(currentBlock)
 			}()
 
 			if result1 := <-result1Chan; result1 != expectedBlockEnd1 {

@@ -48,7 +48,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	result *relayChain.DKGResult,
 	signatures map[gjkr.MemberID]operator.Signature,
 	chainHandle chain.Handle,
-) (uint64, error) {
+) error {
 	onSubmittedResultChan := make(chan *event.DKGResultSubmission)
 
 	chainRelay := chainHandle.ThresholdRelay()
@@ -59,7 +59,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	)
 	if err != nil {
 		close(onSubmittedResultChan)
-		return 0, fmt.Errorf(
+		return fmt.Errorf(
 			"could not watch for DKG result publications [%v]",
 			err,
 		)
@@ -67,7 +67,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	// Check if any result has already been published to the chain with current
@@ -76,7 +76,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	if err != nil {
 		subscription.Unsubscribe()
 		close(onSubmittedResultChan)
-		return 0, fmt.Errorf(
+		return fmt.Errorf(
 			"could not check if the result is already published [%v]",
 			err,
 		)
@@ -86,14 +86,8 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	if alreadyPublished {
 		subscription.Unsubscribe()
 		close(onSubmittedResultChan)
-		// TODO: Should we return block height of the moment the result was submitted
-		// or current block?
-		currentBlock, err := blockCounter.CurrentBlock()
-		if err != nil {
-			return 0, err
-		}
 
-		return uint64(currentBlock), nil
+		return nil
 	}
 
 	// Waits until the current member is eligible to submit a result to the
@@ -106,15 +100,13 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	if err != nil {
 		subscription.Unsubscribe()
 		close(onSubmittedResultChan)
-		return 0, fmt.Errorf("block waiter failure [%v]", err)
+		return fmt.Errorf("block waiter failure [%v]", err)
 	}
 
 	for {
 		select {
-		case eligibleToSubmitBlock := <-eligibleToSubmitWaiter:
+		case <-eligibleToSubmitWaiter:
 			// Member becomes eligible to submit the result.
-			blockHeight := make(chan uint64)
-			defer close(blockHeight)
 			errorChannel := make(chan error)
 			defer close(errorChannel)
 
@@ -127,26 +119,20 @@ func (sm *SubmittingMember) SubmitDKGResult(
 				result,
 				signatures,
 			).
-				OnFailure(func(err error) {
-					// Block height when member became eligible to submit.
-					blockHeight <- uint64(eligibleToSubmitBlock)
-					errorChannel <- err
-				}).
-				OnSuccess(func(
+				OnComplete(func(
 					dkgResultPublishedEvent *event.DKGResultSubmission,
+					err error,
 				) {
-					// Block height when result was successfully submitted.
-					blockHeight <- dkgResultPublishedEvent.BlockNumber
 					errorChannel <- nil
 				})
-			return <-blockHeight, <-errorChannel
+			return <-errorChannel
 		case publishedResultEvent := <-onSubmittedResultChan:
 			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
 				// A result has been submitted by other member.
 				subscription.Unsubscribe()
 				close(onSubmittedResultChan)
 				// Leave without publishing the result.
-				return publishedResultEvent.BlockNumber, nil
+				return nil
 			}
 		}
 	}
