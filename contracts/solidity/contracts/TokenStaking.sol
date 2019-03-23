@@ -42,6 +42,8 @@ contract TokenStaking {
     mapping(address => uint256) public balances;
     mapping(address => uint256[]) public withdrawalIndices;
     mapping(uint256 => Withdrawal) public withdrawals;
+    mapping(address => address) public operatorToOwner;
+    mapping(address => address) public magpieToOwner;
 
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
