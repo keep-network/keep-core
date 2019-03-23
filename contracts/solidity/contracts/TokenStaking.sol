@@ -64,23 +64,32 @@ contract TokenStaking {
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
-     * @param extraData_ Any extra data.
+     * @param _extraData Data for stake delegation. This byte array must have the
+     * following values concatenated: Magpie address (20 bytes) where the rewards for participation
+     * are sent and the operator's ECDSA (65 bytes) signature of the address of the stake owner.
      */
-    function receiveApproval(address _from, uint256 _value, address _token, bytes memory extraData_) public {
-        extraData_; // Suppress unused variable warning.
+    function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         emit ReceivedApproval(_value);
 
         require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
+        require(_extraData.length == 85, "Stake delegation data must be provided.");
+
+        address magpie = _extraData.toAddress(0);
+        address operator = keccak256(abi.encodePacked(_from)).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
+        require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
+
+        operatorToOwner[operator] = _from;
+        magpieToOwner[magpie] = _from;
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, address(this), _value);
 
         // Maintain a record of the stake amount by the sender.
-        balances[_from] = balances[_from].add(_value);
-        emit Staked(_from, _value);
+        balances[operator] = balances[operator].add(_value);
+        emit Staked(operator, _value);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(_from, _value);
+            stakingProxy.emitStakedEvent(operator, _value);
         }
     }
 
@@ -90,11 +99,12 @@ contract TokenStaking {
      * unstake once withdrawal delay is over.
      * @param _value The amount to be unstaked.
      */
-    function initiateUnstake(uint256 _value) public returns (uint256 id) {
+    function initiateUnstake(uint256 _value, address _operator) public returns (uint256 id) {
 
-        require(_value <= balances[msg.sender], "Staker must have enough tokens to unstake.");
+        require(msg.sender == operatorToOwner[_operator], "Only owner of the stake can initiate unstake.");
+        require(_value <= balances[_operator], "Staker must have enough tokens to unstake.");
 
-        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_operator] = balances[_operator].sub(_value);
 
         id = numWithdrawals++;
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
