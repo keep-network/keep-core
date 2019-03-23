@@ -3,6 +3,8 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./StakingProxy.sol";
 import "./utils/UintArrayUtils.sol";
 
@@ -17,6 +19,8 @@ contract TokenStaking {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
     using UintArrayUtils for uint256[];
+    using BytesLib for bytes;
+    using ECDSA for bytes32;
 
     ERC20 public token;
     StakingProxy public stakingProxy;
