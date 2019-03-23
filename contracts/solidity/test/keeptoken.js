@@ -10,7 +10,9 @@ contract('KeepToken', function(accounts) {
 
   let token, grantContract, stakingContract, stakingProxy,
     account_one = accounts[0],
-    account_two = accounts[1];
+    account_one_operator = accounts[1],
+    account_one_magpie = accounts[2],
+    account_two = accounts[3];
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -47,18 +49,21 @@ contract('KeepToken', function(accounts) {
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
 
+    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
+    let data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature]);
+
     // Stake tokens using approveAndCall pattern
-    await token.approveAndCall(stakingContract.address, stakingAmount, "0x00", {from: account_one});
+    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
 
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    let account_one_operator_stake_balance = await stakingContract.stakeBalanceOf.call(account_one_operator);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transfered from sender balance");
-    assert.equal(account_one_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance");
-    
+    assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance");
+
     // Initiate unstake tokens
-    let stakeWithdrawalId = await stakingContract.initiateUnstake(stakingAmount, {from: account_one}).then((result)=>{
+    let stakeWithdrawalId = await stakingContract.initiateUnstake(stakingAmount, account_one_operator, {from: account_one}).then((result)=>{
       // Look for initiateUnstake event in transaction receipt and get stake withdrawal id
       for (var i = 0; i < result.logs.length; i++) {
         var log = result.logs[i];
@@ -85,10 +90,10 @@ contract('KeepToken', function(accounts) {
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_stake_balance = await stakingContract.stakeBalanceOf.call(account_one);
+    account_one_operator_stake_balance = await stakingContract.stakeBalanceOf.call(account_one_operator);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance), true, "Staking amount should be transfered to sender balance");
-    assert.equal(account_one_stake_balance.isZero(), true, "Staking amount should be removed from sender staking balance");
+    assert.equal(account_one_operator_stake_balance.isZero(), true, "Staking amount should be removed from sender staking balance");
 
   });
 
@@ -103,7 +108,7 @@ contract('KeepToken', function(accounts) {
     
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
-    let account_two_starting_balance = await token.balanceOf.call(account_two);
+    let account_two_starting_balance = await token.balanceOf.call(account_one_operator);
 
     // Grant tokens
     await token.approve(grantContract.address, amount, {from: account_one});
