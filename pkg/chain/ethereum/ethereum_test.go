@@ -3,7 +3,6 @@ package ethereum
 import (
 	"bytes"
 	"fmt"
-	"math/big"
 	"reflect"
 	"testing"
 
@@ -116,26 +115,14 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 
 	invalidSignature := operator.Signature(common.LeftPadBytes([]byte("invalid"), 64))
 
-	concatenateBytes := func(bytesSlice [][]byte) []byte {
-		var result []byte
-		for _, entry := range bytesSlice {
-			result = append(result, entry...)
-		}
-		return result
-	}
-
 	var tests = map[string]struct {
-		signaturesMap      map[member.Index]operator.Signature
-		expectedIndices    []*big.Int
-		expectedSignatures []byte
-		expectedError      error
+		signaturesMap map[member.Index]operator.Signature
+		expectedError error
 	}{
 		"one valid signature": {
 			signaturesMap: map[member.Index]operator.Signature{
 				memberIndex1: signature1,
 			},
-			expectedIndices:    []*big.Int{memberIndex1.Int()},
-			expectedSignatures: signature1,
 		},
 		"five valid signatures": {
 			signaturesMap: map[member.Index]operator.Signature{
@@ -145,26 +132,20 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 				memberIndex5: signature5,
 				memberIndex2: signature2,
 			},
-			expectedIndices: []*big.Int{
-				memberIndex1.Int(), memberIndex2.Int(), memberIndex3.Int(),
-				memberIndex4.Int(), memberIndex5.Int(),
-			},
-			expectedSignatures: concatenateBytes([][]byte{
-				signature1, signature2, signature3, signature4, signature5,
-			}),
 		},
 		"invalid signature": {
 			signaturesMap: map[member.Index]operator.Signature{
 				memberIndex1: signature1,
 				memberIndex2: invalidSignature,
 			},
-			expectedError: fmt.Errorf("invalid signature length [64] required [65]"),
+			expectedError: fmt.Errorf("invalid signature size for member [2] got [64]-bytes but required [65]-bytes"),
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			indicesSlice, signaturesSlice, err :=
 				convertSignaturesToChainFormat(test.signaturesMap)
+
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Errorf(
 					"invalid error\nexpected: %v\nactual:   %v\n",
@@ -172,19 +153,40 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 					err,
 				)
 			}
-			if !reflect.DeepEqual(indicesSlice, test.expectedIndices) {
-				t.Errorf(
-					"invalid members indices slice\nexpected: %v\nactual:   %v\n",
-					test.expectedIndices,
-					indicesSlice,
-				)
+
+			if test.expectedError == nil {
+				if len(indicesSlice) != len(test.signaturesMap) {
+					t.Errorf(
+						"invalid member indices slice length\nexpected: %v\nactual:   %v\n",
+						len(test.signaturesMap),
+						len(indicesSlice),
+					)
+				}
+
+				if len(signaturesSlice) != (operator.SignatureSize * len(indicesSlice)) {
+					t.Errorf(
+						"invalid signatures slice size\nexpected: %v\nactual:   %v\n",
+						(operator.SignatureSize * len(indicesSlice)),
+						len(signaturesSlice),
+					)
+				}
 			}
-			if !bytes.Equal(signaturesSlice, test.expectedSignatures) {
-				t.Errorf(
-					"invalid signatures slice\nexpected: %v\nactual:   %v\n",
-					test.expectedSignatures,
-					signaturesSlice,
-				)
+
+			for i, actualMemberIndex := range indicesSlice {
+				memberIndex := member.Index(actualMemberIndex.Uint64())
+
+				actualSignature := signaturesSlice[operator.SignatureSize*i : operator.SignatureSize*(i+1)]
+				if !bytes.Equal(
+					test.signaturesMap[memberIndex],
+					actualSignature,
+				) {
+					t.Errorf(
+						"invalid signatures for member %v\nexpected: %v\nactual:   %v\n",
+						actualMemberIndex,
+						test.signaturesMap[memberIndex],
+						actualSignature,
+					)
+				}
 			}
 		})
 	}

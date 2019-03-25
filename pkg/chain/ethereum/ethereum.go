@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -542,30 +541,24 @@ func (ec *ethereumChain) SubmitDKGResult(
 // convertSignaturesToChainFormat converts signatures map to two slices. First
 // slice contains indices of members from the map, second slice is a slice of
 // concatenated signatures. Signatures and member indices are returned in the
-// matching order sorted by the member index. It requires each signature to be
-// exactly 65-byte long.
+// matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
 	signatures map[member.Index]operator.Signature,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
-	for memberIndex := range signatures {
-		membersIndices = append(membersIndices, memberIndex.Int())
-	}
-	sort.SliceStable(membersIndices, func(i, j int) bool {
-		return membersIndices[i].Cmp(membersIndices[j]) < 0
-	})
-
 	var signaturesSlice []byte
-	for _, memberIndexBig := range membersIndices {
-		memberIndex := member.Index((memberIndexBig.Uint64()))
+
+	for memberIndex, signature := range signatures {
 		if len(signatures[memberIndex]) != operator.SignatureSize {
 			return nil, nil, fmt.Errorf(
-				"invalid signature size [%d]-bytes required [%d]-bytes",
+				"invalid signature size for member [%v] got [%d]-bytes but required [%d]-bytes",
+				memberIndex,
 				len(signatures[memberIndex]),
 				operator.SignatureSize,
 			)
 		}
-		signaturesSlice = append(signaturesSlice, signatures[memberIndex]...)
+		membersIndices = append(membersIndices, memberIndex.Int())
+		signaturesSlice = append(signaturesSlice, signature...)
 	}
 
 	return membersIndices, signaturesSlice, nil
