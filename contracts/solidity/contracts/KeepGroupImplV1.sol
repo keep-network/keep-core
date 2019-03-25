@@ -65,7 +65,7 @@ contract KeepGroupImplV1 is Ownable {
 
     struct Group {
         bytes groupId;
-        uint registrationTime;
+        uint registrationBlockHeight;
     }
 
     Group[] internal _groups;
@@ -478,7 +478,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Gets number of active groups.
      */
     function verifyAndReturnGroup(uint256 previousEntry) public returns (bytes memory) { 
-        while (_groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].registrationTime + _groupTimeout < block.number) {
+        while (_groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].registrationBlockHeight + _groupTimeout < block.number) {
             if (_groups.length - _expiredOffset > _minGroups) {
                 _expiredOffset += previousEntry % (_groups.length - _expiredOffset);
             } else break;
