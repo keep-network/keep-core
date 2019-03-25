@@ -61,7 +61,12 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    bytes[] internal _groups;
+    struct Group {
+        bytes groupId;
+        uint registrationTime;
+    }
+
+    Group[] internal _groups;
     mapping (bytes => address[]) internal _groupMembers;
 
     mapping (string => bool) internal _initialized;
@@ -288,7 +293,7 @@ contract KeepGroupImplV1 is Ownable {
         // TODO: Remove this section once dispute logic is implemented,
         // implement conflict resolution logic described in Phase 14,
         // make sure only valid members are stored.
-        _groups.push(groupPublicKey);
+        _groups.push(Group(groupPublicKey, block.number));
         address[] memory members = orderedParticipants();
         for (uint i = 0; i < _groupSize; i++) {
             _groupMembers[groupPublicKey].push(members[i]);
@@ -463,7 +468,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param previousEntry Previous random beacon value.
      */
     function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
-        return _groups[previousEntry % _groups.length];
+        return _groups[previousEntry % _groups.length].groupId;
     }
 
     /**
