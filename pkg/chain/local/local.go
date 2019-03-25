@@ -17,6 +17,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -358,7 +359,7 @@ func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
 	participantIndex member.Index,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[member.Index][]byte,
+	signatures map[member.Index]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()

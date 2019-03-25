@@ -6,11 +6,13 @@ import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
+    using BytesLib for bytes;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -59,7 +61,12 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    bytes[] internal _groups;
+    struct Group {
+        bytes groupId;
+        uint registrationTime;
+    }
+
+    Group[] internal _groups;
     mapping (bytes => address[]) internal _groupMembers;
 
     mapping (string => bool) internal _initialized;
@@ -221,23 +228,27 @@ contract KeepGroupImplV1 is Ownable {
 
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
+     * @param index claimed index of the staker. We pass this for gas efficiency purposes.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
-     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
      * @param inactive bytes representing inactive group members; 1 at the specific index means
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
+     * @param signatures concatenation of signer resultHashes collected off-chain. Ordering matters.
+     * @param membersIndex are the indices of members corresponding to each signature.
      */
     function submitDkgResult(
+        uint256 index,
         uint256 requestId,
-//        uint256 memberIndex, TODO: Add memberIndex 
         bytes memory groupPubKey,
         bytes memory disqualified,
-        bytes memory inactive
+        bytes memory inactive,
+        bytes memory signatures,
+        uint[] memory membersIndex
     ) public {
-
         require(
             block.number > _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
@@ -263,19 +274,6 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /*
-     * @dev Gets number of votes for each submitted DKG result hash. 
-     * @param requestId Relay request ID assosciated with DKG protocol execution.
-     * @return Hashes of submitted DKG results and number of votes for each hash.
-     */
-    function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
-        // TODO: Implement
-        bytes32[] memory resultsHashes;
-        uint256[] memory resultsVotes;
-
-        return (resultsHashes, resultsVotes);
-    }
-
-    /*
      * @dev receives vote for provided resultHash.
      * @param index the claimed index of the user.
      * @param resultHash Hash of DKG result to vote for
@@ -295,7 +293,7 @@ contract KeepGroupImplV1 is Ownable {
         // TODO: Remove this section once dispute logic is implemented,
         // implement conflict resolution logic described in Phase 14,
         // make sure only valid members are stored.
-        _groups.push(groupPublicKey);
+        _groups.push(Group(groupPublicKey, block.number));
         address[] memory members = orderedParticipants();
         for (uint i = 0; i < _groupSize; i++) {
             _groupMembers[groupPublicKey].push(members[i]);
@@ -470,7 +468,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param previousEntry Previous random beacon value.
      */
     function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
-        return _groups[previousEntry % _groups.length];
+        return _groups[previousEntry % _groups.length].groupId;
     }
 
     /**
