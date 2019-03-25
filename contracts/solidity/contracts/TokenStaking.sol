@@ -1,11 +1,6 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./StakingProxy.sol";
+import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 
 
@@ -15,15 +10,9 @@ import "./utils/UintArrayUtils.sol";
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
-contract TokenStaking {
-    using SafeMath for uint256;
-    using SafeERC20 for ERC20;
-    using UintArrayUtils for uint256[];
-    using BytesLib for bytes;
-    using ECDSA for bytes32;
+contract TokenStaking is StakeDelegatable {
 
-    ERC20 public token;
-    StakingProxy public stakingProxy;
+    using UintArrayUtils for uint256[];
 
     event ReceivedApproval(uint256 _value);
     event Staked(address indexed from, uint256 value);
@@ -36,14 +25,9 @@ contract TokenStaking {
         uint256 createdAt;
     }
 
-    uint256 public withdrawalDelay;
     uint256 public numWithdrawals;
-
-    mapping(address => uint256) public balances;
     mapping(address => uint256[]) public withdrawalIndices;
     mapping(uint256 => Withdrawal) public withdrawals;
-    mapping(address => address) public operatorToOwner;
-    mapping(address => address) public magpieToOwner;
 
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
@@ -55,7 +39,7 @@ contract TokenStaking {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
-        withdrawalDelay = _delay;
+        stakeWithdrawalDelay = _delay;
     }
 
     /**
@@ -86,7 +70,7 @@ contract TokenStaking {
         token.transferFrom(_from, address(this), _value);
 
         // Maintain a record of the stake amount by the sender.
-        balances[operator] = balances[operator].add(_value);
+        stakeBalances[operator] = stakeBalances[operator].add(_value);
         emit Staked(operator, _value);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitStakedEvent(operator, _value);
@@ -102,9 +86,9 @@ contract TokenStaking {
     function initiateUnstake(uint256 _value, address _operator) public returns (uint256 id) {
 
         require(msg.sender == operatorToOwner[_operator], "Only owner of the stake can initiate unstake.");
-        require(_value <= balances[_operator], "Staker must have enough tokens to unstake.");
+        require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
-        balances[_operator] = balances[_operator].sub(_value);
+        stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
 
         id = numWithdrawals++;
         withdrawals[id] = Withdrawal(msg.sender, _value, now);
@@ -123,7 +107,7 @@ contract TokenStaking {
      * @param _id Withdrawal ID.
      */
     function finishUnstake(uint256 _id) public {
-        require(now >= withdrawals[_id].createdAt.add(withdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
+        require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
 
         address staker = withdrawals[_id].staker;
 
@@ -137,15 +121,6 @@ contract TokenStaking {
         delete withdrawals[_id];
 
         emit FinishedUnstake(_id);
-    }
-
-    /**
-     * @dev Gets the stake balance of the specified address.
-     * @param _staker The address to query the balance of.
-     * @return An uint256 representing the amount owned by the passed address.
-     */
-    function stakeBalanceOf(address _staker) public view returns (uint256 balance) {
-        return balances[_staker];
     }
 
     /**
@@ -168,8 +143,8 @@ contract TokenStaking {
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
     function authorizedTransferFrom(address from, address to, uint256 amount) public {
-        balances[from] = balances[from].sub(amount);
-        balances[to] = balances[to].add(amount);
+        stakeBalances[from] = stakeBalances[from].sub(amount);
+        stakeBalances[to] = stakeBalances[to].add(amount);
     }
 
 }

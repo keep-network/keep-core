@@ -1,11 +1,6 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./StakingProxy.sol";
+import "./StakeDelegatable.sol";
 
 
 /**
@@ -16,19 +11,12 @@ import "./StakingProxy.sol";
  * released gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant creator.
  */
-contract TokenGrant {
-    using SafeMath for uint256;
-    using SafeERC20 for ERC20;
-    using BytesLib for bytes;
-    using ECDSA for bytes32;
+contract TokenGrant is StakeDelegatable {
 
     event CreatedTokenGrant(uint256 id);
     event ReleasedTokenGrant(uint256 amount);
     event InitiatedTokenGrantUnstake(uint256 id);
     event RevokedTokenGrant(uint256 id);
-
-    ERC20 public token;
-    StakingProxy public stakingProxy;
 
     struct Grant {
         address owner; // Creator of token grant.
@@ -43,7 +31,6 @@ contract TokenGrant {
         uint256 released; // Amount that was released to the beneficiary.
     }
 
-    uint256 public stakeWithdrawalDelay;
     uint256 public numGrants;
 
     // Token grants.
@@ -58,14 +45,8 @@ contract TokenGrant {
     // available to be released to the beneficiary
     mapping(address => uint256) public balances;
 
-    // Token grants stake balances.
-    mapping(address => uint256) public stakeBalances;
-
     // Token grants stake withdrawals.
     mapping(uint256 => uint256) public stakeWithdrawalStart;
-
-    mapping(address => address) public operatorToOwner;
-    mapping(address => address) public magpieToOwner;
 
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
@@ -87,15 +68,6 @@ contract TokenGrant {
      */
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
-    }
-
-    /**
-     * @dev Gets the grants stake balance of the specified address.
-     * @param _address The address to query the grants balance of.
-     * @return An uint256 representing the grants stake balance owned by the passed address.
-     */
-    function stakeBalanceOf(address _address) public view returns (uint256 balance) {
-        return stakeBalances[_address];
     }
 
     /**
