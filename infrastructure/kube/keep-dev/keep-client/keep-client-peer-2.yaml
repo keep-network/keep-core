@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: keep-client-peer-2
-        image: gcr.io/keep-dev-fe24/keep-client-peer-2
+        image: gcr.io/keep-dev-fe24/keep-client
         ports:
           - containerPort: 3924
         env:
