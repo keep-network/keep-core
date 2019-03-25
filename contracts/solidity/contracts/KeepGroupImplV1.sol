@@ -475,7 +475,8 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Gets number of active groups.
+     * @dev Verifies and returns an active group.
+     * @param previousEntry Previous random beacon value.
      */
     function verifyAndReturnGroup(uint256 previousEntry) public returns (bytes memory) { 
         while (_groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].registrationBlockHeight + _groupTimeout < block.number) {
