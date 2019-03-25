@@ -2,10 +2,15 @@ package ethereum
 
 import (
 	"bytes"
+	"fmt"
+	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // TestCalculateDKGResultHash validates if calculated DKG result hash matches
@@ -78,7 +83,6 @@ func TestCalculateDKGResultHash(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			// expectedEncodedResult := common.Hex2Bytes(test.expectedSerializedResult)
 			expectedHash := common.Hex2Bytes(test.expectedHash)
 
 			actualHash, err := chain.CalculateDKGResultHash(test.dkgResult)
@@ -91,6 +95,98 @@ func TestCalculateDKGResultHash(t *testing.T) {
 					"\nexpected: %v\nactual:   %x\n",
 					test.expectedHash,
 					actualHash,
+				)
+			}
+		})
+	}
+}
+
+func TestConvertSignaturesToChainFormat(t *testing.T) {
+	memberIndex1 := member.Index(1)
+	memberIndex2 := member.Index(2)
+	memberIndex3 := member.Index(3)
+	memberIndex4 := member.Index(4)
+	memberIndex5 := member.Index(5)
+
+	signature1 := operator.Signature(common.LeftPadBytes([]byte("marry"), 65))
+	signature2 := operator.Signature(common.LeftPadBytes([]byte("had"), 65))
+	signature3 := operator.Signature(common.LeftPadBytes([]byte("a"), 65))
+	signature4 := operator.Signature(common.LeftPadBytes([]byte("little"), 65))
+	signature5 := operator.Signature(common.LeftPadBytes([]byte("lamb"), 65))
+
+	invalidSignature := operator.Signature(common.LeftPadBytes([]byte("invalid"), 64))
+
+	concatenateBytes := func(bytesSlice [][]byte) []byte {
+		var buffer bytes.Buffer
+		for _, entry := range bytesSlice {
+			_, err := buffer.Write(entry)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		return buffer.Bytes()
+	}
+
+	var tests = map[string]struct {
+		signaturesMap      map[member.Index]operator.Signature
+		expectedIndices    []*big.Int
+		expectedSignatures []byte
+		expectedError      error
+	}{
+		"one valid signature": {
+			signaturesMap: map[member.Index]operator.Signature{
+				memberIndex1: signature1,
+			},
+			expectedIndices:    []*big.Int{memberIndex1.Int()},
+			expectedSignatures: signature1,
+		},
+		"five valid signatures": {
+			signaturesMap: map[member.Index]operator.Signature{
+				memberIndex3: signature3,
+				memberIndex1: signature1,
+				memberIndex4: signature4,
+				memberIndex5: signature5,
+				memberIndex2: signature2,
+			},
+			expectedIndices: []*big.Int{
+				memberIndex1.Int(), memberIndex2.Int(), memberIndex3.Int(),
+				memberIndex4.Int(), memberIndex5.Int(),
+			},
+			expectedSignatures: concatenateBytes([][]byte{
+				signature1, signature2, signature3, signature4, signature5,
+			}),
+		},
+		"invalid signature": {
+			signaturesMap: map[member.Index]operator.Signature{
+				memberIndex1: signature1,
+				memberIndex2: invalidSignature,
+			},
+			expectedError: fmt.Errorf("invalid signature length [64] required [65]"),
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			indicesSlice, signaturesSlice, err :=
+				convertSignaturesToChainFormat(test.signaturesMap)
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+			if !reflect.DeepEqual(indicesSlice, test.expectedIndices) {
+				t.Errorf(
+					"invalid members indices slice\nexpected: %v\nactual:   %v\n",
+					test.expectedIndices,
+					indicesSlice,
+				)
+			}
+			if !bytes.Equal(signaturesSlice, test.expectedSignatures) {
+				t.Errorf(
+					"invalid signatures slice\nexpected: %v\nactual:   %v\n",
+					test.expectedSignatures,
+					signaturesSlice,
 				)
 			}
 		})
