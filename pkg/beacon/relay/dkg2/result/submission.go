@@ -6,7 +6,6 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -47,7 +46,7 @@ type SubmittingMember struct {
 func (sm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
-	signatures map[gjkr.MemberID]operator.Signature,
+	signatures map[member.Index]operator.Signature,
 	chainHandle chain.Handle,
 ) error {
 	onSubmittedResultChan := make(chan *event.DKGResultSubmission)
