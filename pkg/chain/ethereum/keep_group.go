@@ -282,15 +282,6 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 	}), nil
 }
 
-// SubmitGroupPublicKey upon completion of a signature make the contract
-// call to put it on chain.
-func (kg *keepGroup) SubmitGroupPublicKey(
-	groupPublicKey []byte,
-	requestID *big.Int,
-) (*types.Transaction, error) {
-	return kg.transactor.SubmitGroupPublicKey(kg.transactorOpts, groupPublicKey, requestID)
-}
-
 // submitGroupPublicKeyEventFunc type of function called for
 // SubmitGroupPublicKeyEvent event.
 type submitGroupPublicKeyEventFunc func(
