@@ -59,6 +59,10 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
+    uint internal _minGroups = 1;
+    uint internal _groupTimeout = 1;
+    uint internal _expiredOffset = 0;
+
     struct Group {
         bytes groupId;
         uint registrationTime;
@@ -467,15 +471,28 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return _groups.length;
+        return _groups.length - _expiredOffset;
     }
+
+    /**
+     * @dev Gets number of active groups.
+     */
+    function verifyAndReturnGroup(uint256 previousEntry) public returns (bytes memory) { 
+        while (_groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].registrationTime + _groupTimeout < block.number) {
+            if (_groups.length - _expiredOffset > _minGroups) {
+                _expiredOffset += previousEntry % (_groups.length - _expiredOffset);
+            } else break;
+        }
+        return _groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].groupId;
+    }
+
 
     /**
      * @dev Returns public key of a group from available groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */
-    function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
-        return _groups[previousEntry % _groups.length].groupId;
+    function selectGroup(uint256 previousEntry) public returns(bytes memory) {
+        return verifyAndReturnGroup(previousEntry);
     }
 
     /**
