@@ -1,0 +1,154 @@
+:toc: macro
+
+= RFC 8: Beacon signature share verification
+
+:icons: font
+:numbered:
+toc::[]
+
+== Proposal
+The document specifies an update
+to verify threshold signature shares for the random beacon.
+
+=== Goal
+The goal of this proposal is to specify a method
+for beacon operators to verify signature shares received from other operators,
+and for on-chain resolution of misbehavior proofs on invalid signature shares.
+
+== Invalid shares as DoS attack vector
+When beacon operators generate the threshold signature
+to produce a new entry,
+they use their individual private keys to sign the entry input
+to create signature shares
+which are then broadcast to other members in the group.
+These signature shares are combined
+to reconstruct the threshold signature,
+which is then submitted as the next entry for the beacon.
+
+If one or more participants broadcast invalid signature shares,
+they may significantry hinder or altogether prevent
+the entry generation within the allotted time.
+If an invalid share is included in the `H` signature shares
+the threshold signature is reconstructed from,
+the reconstruction will fail to produce a valid threshold signature.
+If the received shares are not verified,
+the only recourse is to try new combinations of signature shares
+until a valid signature is produced.
+With `m` invalid shares being broadcast,
+trying all possible combinations takes _O(N^m)_ time.
+
+== Proposed method
+When receiving signature shares from other members in the signing group,
+the shares are verified using the senders' individual private keys
+stored at the conclusion of the DKG.
+
+Invalid signature shares are rejected,
+and the recipient should prepare and publish a proof of misbehavior on-chain.
+The proof of misbehavior is verified
+by using a merkle path from the accused participant's individual private key
+to a merkle root stored on-chain as a part of the DKG result.
+
+Using an on-chain merkle root minimizes storage requirements,
+while permitting _O(log(N))_ verification of misbehavior proofs.
+The merkle root is also useful for other purposes.
+
+=== Specification
+`X_k`:: The group private key of `Group_k`
+`Y_k`:: The group public key: `Y_k = P1 * X_k`
+`Entry_e`:: The entry matching the entry identifier `e`
+`Input_e`:: The input for generating the new entry:
+`Entry_e = Input_e * X`
+`x_i`:: The individual private key of `P_i`
+`y_i`:: The individual public key of `P_i`: `y_i = P1 * x_i`
+`Share_i`:: The signature share by `P_i`: `Share_i = Input_e * x_i`
+
+==== Off-chain
+Each `Share_i` must be broadcast as a _signature share message_
+adhering to a strict canonical format.
+
+The _signature share message_ must contain:
+* the entry identifier `e` for this particular entry
+* the signature share `Share_i`
+* the sender `P_i`'s member index `i`
+* a signature by `P_i` to the above data,
+using `P_i`'s _operator ECDSA key_
+
+When `P_i` receives a _signature share message_ from `P_j`,
+they must verify the following:
+* the message is correctly formatted
+* the entry identifier `e` is correct
+* the signature with `P_i`'s _operator ECDSA key_ is valid
+
+If any of the above checks fail,
+the message must be rejected as invalid.
+If the above checks pass,
+the _message_ is valid but `Share_j` may still be invalid.
+
+When `P_i` receives a signature share `Share_j`
+from a valid signature share message broadcast by `P_j`,
+the share can be verified by `blsVerify(Share_j, y_j, Input_e)`.
+If `Share_j` is valid,
+`P_i` can use it for reconstructing the threshold signature.
+If `Share_j` is invalid,
+`P_i` must not use it for reconstructing the entry,
+and instead should produce and publish a proof of misbehavior on-chain.
+
+==== On-chain
+When `P_i` receives a valid _signature share message_
+(_"message"_ for short from now on)
+from `P_j`, containing an invalid `Share_j`,
+`P_i` should produce and publish a _proof of misbehavior_ (_"proof"_).
+
+The _proof_ must contain:
+* the _message_ with the invalid share from `P_j`
+* the individual private key `y_j` of `P_j`
+and a _merkle path_ from `y_j` to the _merkle root_ of the group `Group_k`
+* the member index `i` of the tattletale `P_i`
+
+When the _proof_ is processed on-chain,
+the _message_ is parsed and its elements extracted.
+If the _message_ is incorrectly formatted,
+the processing is aborted.
+
+The _entry identifier_ `e` is used
+to determine the `Group_k` tasked with producing `Entry_e`.
+The _member index_ `j` is used
+to retrieve the _operator ECDSA key_ of `P_j`,
+and the signature on the _message_ is checked.
+If the signature is invalid, processing is aborted.
+
+The _merkle root_ of `Group_k`, `MerkleRoot_k` is retrieved.
+The individual public key `y_j` and the _merkle path_ from the _proof_
+are checked against `MerkleRoot_k`.
+If the merkle path is invalid for the member index `j` from the _message_,
+processing is aborted.
+
+If the merkle path is valid,
+the _signature share_ is checked with `blsVerify(Share_j, y_j, Input_e)`.
+If the share is invalid,
+`P_j` is punished for broadcasting an invalid signature share,
+and `P_i` is rewarded for proving `P_j`'s misbehavior.
+If multiple _proofs of misbehavior_ are presented
+for the same _signature share message_,
+and proofs after the first one must be immediately rejected.
+
+==== Rationale
+The signature share message:
+* `e` is used to prevent replay attacks and to identify `Group_k`.
+* `i` is used to identify `P_i`:
+the _operator ECDSA key_ can be identified from `Group_k` and `i`,
+but `P_i` cannot be identified from `Group_k` and the operator key.
+* The signature ensures that the message was produced
+by an actor who knows `P_i`'s secret ECDSA key.
+
+The misbehavior proof:
+* `y_j` is used to verify `Share_j`.
+* The _merkle path_ is used to verify the provided `y_j`
+and that the correct member is accused.
+* `i` is used to reward the correct party if the proof is valid.
+It is not necessary to verify the sender,
+as `P_i` is not punished if the proof is invalid.
+
+[bibliography]
+== Related Links
+- https://github.com/keep-network/keep-core/pull/628
