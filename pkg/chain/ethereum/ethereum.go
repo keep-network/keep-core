@@ -547,8 +547,6 @@ func (ec *ethereumChain) SubmitDKGResult(
 func convertSignaturesToChainFormat(
 	signatures map[member.Index]operator.Signature,
 ) ([]*big.Int, []byte, error) {
-	signatureLength := 65
-
 	var membersIndices []*big.Int
 	for memberIndex := range signatures {
 		membersIndices = append(membersIndices, memberIndex.Int())
@@ -560,11 +558,11 @@ func convertSignaturesToChainFormat(
 	var signaturesSlice []byte
 	for _, memberIndexBig := range membersIndices {
 		memberIndex := member.Index((memberIndexBig.Uint64()))
-		if len(signatures[memberIndex]) != signatureLength {
+		if len(signatures[memberIndex]) != operator.SignatureSize {
 			return nil, nil, fmt.Errorf(
-				"invalid signature length [%d] required [%d]",
+				"invalid signature size [%d]-bytes required [%d]-bytes",
 				len(signatures[memberIndex]),
-				signatureLength,
+				operator.SignatureSize,
 			)
 		}
 		signaturesSlice = append(signaturesSlice, signatures[memberIndex]...)
