@@ -1,10 +1,8 @@
 package member
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"strconv"
 )
 
 // Index is an index of a member in a group.
@@ -27,32 +25,4 @@ func (id Index) Validate() error {
 		return fmt.Errorf("member index must be >= 1")
 	}
 	return nil
-}
-
-// IndexFromBytes returns a `Index` created from provided bytes.
-func IndexFromBytes(bytes []byte) Index {
-	return Index(binary.LittleEndian.Uint32(bytes))
-}
-
-// Bytes converts `Index` to bytes representation.
-func (id Index) Bytes() []byte {
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, uint32(id))
-	return bytes
-}
-
-// IndexFromHex returns a `Index` created from the hex `string`
-// representation.
-func IndexFromHex(hex string) (Index, error) {
-	id, err := strconv.ParseUint(hex, 16, 32)
-	if err != nil {
-		return 0, err
-	}
-
-	return Index(id), nil
-}
-
-// HexString converts `Index` to hex `string` representation.
-func (id Index) HexString() string {
-	return strconv.FormatInt(int64(id), 16)
 }

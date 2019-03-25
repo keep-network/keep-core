@@ -13,12 +13,12 @@ contract('TestPublishDkgResult', function (accounts) {
   });
 
   it("should publish DKG result", async function () {
-    await keepGroupImplV1.submitDkgResult(1812, "0x100101011", "0x000000011", "0x000000100");
+      await keepGroupImplV1.submitDkgResult(1, 1812, "0x100101011", "0x000000011", "0x000000100", "0x000000111", [1,2,3]);
     assert.equal((await keepGroupImplV1.getPastEvents())[0].event, 'DkgResultPublishedEvent', "DkgResultPublishedEvent should occur");
   });
 
   it("should now that result has been already published", async function () {
-    await keepGroupImplV1.submitDkgResult(1813, "0x100101011", "0x000000011", "0x000000100");
+      await keepGroupImplV1.submitDkgResult(1, 1813, "0x100101011", "0x000000011", "0x000000100", "0x000000111", [1,2,3]);
     let published = await keepGroupImplV1.isDkgResultSubmitted(1813);
     assert.equal(published, true, "result has been already published")
   });
