@@ -387,7 +387,7 @@ func (c *localChain) SubmitDKGResult(
 
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
 		RequestID:      requestID,
-		MemberIndex:    participantIndex,
+		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
 		BlockNumber:    uint64(currentBlock),
 	}
