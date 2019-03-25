@@ -365,14 +365,14 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		BlockNumber:    0,
 	}
 
-	// TODO: Update test to include signatures
+	// TODO: Update test to include signatures and validate results
 	signatures := map[gjkr.MemberID]operator.Signature{
 		1: operator.Signature{101},
 		2: operator.Signature{102},
 		3: operator.Signature{103},
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
