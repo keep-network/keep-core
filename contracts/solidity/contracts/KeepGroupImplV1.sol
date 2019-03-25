@@ -286,22 +286,6 @@ contract KeepGroupImplV1 is Ownable {
         // TODO: Implement
     }
 
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
-
-        // TODO: Remove this section once dispute logic is implemented,
-        // implement conflict resolution logic described in Phase 14,
-        // make sure only valid members are stored.
-        _groups.push(Group(groupPublicKey, block.number));
-        address[] memory members = orderedParticipants();
-        for (uint i = 0; i < _groupSize; i++) {
-            _groupMembers[groupPublicKey].push(members[i]);
-        }
-        emit OnGroupRegistered(groupPublicKey);
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
-    }
-
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
