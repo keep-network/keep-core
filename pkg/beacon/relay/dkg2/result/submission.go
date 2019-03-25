@@ -66,11 +66,6 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		)
 	}
 
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		return err
-	}
-
 	// Check if any result has already been published to the chain with current
 	// request ID.
 	alreadyPublished, err := chainRelay.IsDKGResultSubmitted(requestID)
@@ -91,17 +86,16 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		return nil
 	}
 
-	// Waits until the current member is eligible to submit a result to the
-	// blockchain.
-	// TODO: Check if we need to use BlockHeighWaiter. To do that we would need
-	// to pass block height when previous phase ended so we can synchronize.
-	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		(int(sm.index) - 1) * int(sm.blockStep),
-	)
+	// Wait until the current member is eligible to submit the result.
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		return err
+	}
+	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(blockCounter)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(onSubmittedResultChan)
-		return fmt.Errorf("block waiter failure [%v]", err)
+		return fmt.Errorf("wait for eligibility failure [%v]", err)
 	}
 
 	for {
@@ -137,4 +131,18 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			}
 		}
 	}
+}
+
+// waitForSubmissionEligibility waits until the current member is eligible to
+// submit a result to the blockchain. First member is eligible to submit straight
+// away, each following member is eligible after pre-defined block step.
+func (sm *SubmittingMember) waitForSubmissionEligibility(blockCounter chain.BlockCounter) (<-chan int, error) {
+	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
+		(int(sm.index) - 1) * int(sm.blockStep),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("block waiter failure [%v]", err)
+	}
+
+	return eligibleToSubmitWaiter, err
 }
