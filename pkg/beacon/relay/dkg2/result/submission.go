@@ -7,6 +7,7 @@ import (
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
@@ -16,7 +17,7 @@ import (
 // the result.
 type SubmittingMember struct {
 	// Represents the member's position for submission.
-	index gjkr.MemberID
+	index member.Index
 
 	// Predefined step for each submitting window. The value is used to determine
 	// the eligible submitting member.
@@ -115,7 +116,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 			chainRelay.SubmitDKGResult(
 				requestID,
-				uint32(sm.index),
+				sm.index,
 				result,
 				signatures,
 			).
