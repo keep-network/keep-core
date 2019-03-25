@@ -140,7 +140,6 @@ func (pm *Publisher) publishResult(
 				member.Index(pm.publishingIndex),
 				result,
 				nil,
-				nil,
 			).
 				OnSuccess(func(dkgResultPublishedEvent *event.DKGResultSubmission) {
 					// TODO: This is a temporary solution until DKG Phase 14 is

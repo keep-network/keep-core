@@ -363,7 +363,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -393,7 +393,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, nil, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -417,7 +417,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -466,7 +466,6 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 		&relaychain.DKGResult{
 			GroupPublicKey: []byte{88},
 		},
-		nil,
 		nil, // TODO: Update test to include signatures
 	)
 

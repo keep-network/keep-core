@@ -15,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -456,8 +457,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
 	participantIndex member.Index,
 	result *relaychain.DKGResult,
-	signatures []byte,
-	membersIndex []member.Index,
+	signatures map[member.Index]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
@@ -515,17 +515,20 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
-	var membersIndexOnChainFormat []*big.Int
-	for _, index := range membersIndex {
-		membersIndexOnChainFormat = append(membersIndexOnChainFormat, index.Int())
+	membersIndicesOnChainFormat, signaturesOnChainFormat, err :=
+		convertSignaturesToChainFormat(signatures)
+	if err != nil {
+		close(publishedResult)
+		failPromise(fmt.Errorf("converting signatures failed [%v]", err))
+		return resultPublicationPromise
 	}
 
 	if _, err = ec.keepGroupContract.SubmitDKGResult(
 		participantIndex.Int(),
 		requestID,
 		result,
-		signatures,
-		membersIndexOnChainFormat,
+		signaturesOnChainFormat,
+		membersIndicesOnChainFormat,
 	); err != nil {
 		subscription.Unsubscribe()
 		close(publishedResult)
@@ -533,6 +536,32 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	return resultPublicationPromise
+}
+
+// convertSignaturesToChainFormat converts signatures map to two slices. First
+// slice contains indices of members from the map, second slice is a slice of
+// concatenated signatures. Signatures and member indices are returned in the
+// matching order. It requires each signature to be exactly 65-byte long.
+func convertSignaturesToChainFormat(
+	signatures map[member.Index]operator.Signature,
+) ([]*big.Int, []byte, error) {
+	var membersIndices []*big.Int
+	var signaturesSlice []byte
+
+	for memberIndex, signature := range signatures {
+		if len(signatures[memberIndex]) != operator.SignatureSize {
+			return nil, nil, fmt.Errorf(
+				"invalid signature size for member [%v] got [%d]-bytes but required [%d]-bytes",
+				memberIndex,
+				len(signatures[memberIndex]),
+				operator.SignatureSize,
+			)
+		}
+		membersIndices = append(membersIndices, memberIndex.Int())
+		signaturesSlice = append(signaturesSlice, signature...)
+	}
+
+	return membersIndices, signaturesSlice, nil
 }
 
 // CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation

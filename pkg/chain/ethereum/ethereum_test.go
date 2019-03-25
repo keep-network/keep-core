@@ -2,10 +2,14 @@ package ethereum
 
 import (
 	"bytes"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // TestCalculateDKGResultHash validates if calculated DKG result hash matches
@@ -78,7 +82,6 @@ func TestCalculateDKGResultHash(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			// expectedEncodedResult := common.Hex2Bytes(test.expectedSerializedResult)
 			expectedHash := common.Hex2Bytes(test.expectedHash)
 
 			actualHash, err := chain.CalculateDKGResultHash(test.dkgResult)
@@ -92,6 +95,98 @@ func TestCalculateDKGResultHash(t *testing.T) {
 					test.expectedHash,
 					actualHash,
 				)
+			}
+		})
+	}
+}
+
+func TestConvertSignaturesToChainFormat(t *testing.T) {
+	memberIndex1 := member.Index(1)
+	memberIndex2 := member.Index(2)
+	memberIndex3 := member.Index(3)
+	memberIndex4 := member.Index(4)
+	memberIndex5 := member.Index(5)
+
+	signature1 := operator.Signature(common.LeftPadBytes([]byte("marry"), 65))
+	signature2 := operator.Signature(common.LeftPadBytes([]byte("had"), 65))
+	signature3 := operator.Signature(common.LeftPadBytes([]byte("a"), 65))
+	signature4 := operator.Signature(common.LeftPadBytes([]byte("little"), 65))
+	signature5 := operator.Signature(common.LeftPadBytes([]byte("lamb"), 65))
+
+	invalidSignature := operator.Signature(common.LeftPadBytes([]byte("invalid"), 64))
+
+	var tests = map[string]struct {
+		signaturesMap map[member.Index]operator.Signature
+		expectedError error
+	}{
+		"one valid signature": {
+			signaturesMap: map[member.Index]operator.Signature{
+				memberIndex1: signature1,
+			},
+		},
+		"five valid signatures": {
+			signaturesMap: map[member.Index]operator.Signature{
+				memberIndex3: signature3,
+				memberIndex1: signature1,
+				memberIndex4: signature4,
+				memberIndex5: signature5,
+				memberIndex2: signature2,
+			},
+		},
+		"invalid signature": {
+			signaturesMap: map[member.Index]operator.Signature{
+				memberIndex1: signature1,
+				memberIndex2: invalidSignature,
+			},
+			expectedError: fmt.Errorf("invalid signature size for member [2] got [64]-bytes but required [65]-bytes"),
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			indicesSlice, signaturesSlice, err :=
+				convertSignaturesToChainFormat(test.signaturesMap)
+
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if test.expectedError == nil {
+				if len(indicesSlice) != len(test.signaturesMap) {
+					t.Errorf(
+						"invalid member indices slice length\nexpected: %v\nactual:   %v\n",
+						len(test.signaturesMap),
+						len(indicesSlice),
+					)
+				}
+
+				if len(signaturesSlice) != (operator.SignatureSize * len(indicesSlice)) {
+					t.Errorf(
+						"invalid signatures slice size\nexpected: %v\nactual:   %v\n",
+						(operator.SignatureSize * len(indicesSlice)),
+						len(signaturesSlice),
+					)
+				}
+			}
+
+			for i, actualMemberIndex := range indicesSlice {
+				memberIndex := member.Index(actualMemberIndex.Uint64())
+
+				actualSignature := signaturesSlice[operator.SignatureSize*i : operator.SignatureSize*(i+1)]
+				if !bytes.Equal(
+					test.signaturesMap[memberIndex],
+					actualSignature,
+				) {
+					t.Errorf(
+						"invalid signatures for member %v\nexpected: %v\nactual:   %v\n",
+						actualMemberIndex,
+						test.signaturesMap[memberIndex],
+						actualSignature,
+					)
+				}
 			}
 		})
 	}

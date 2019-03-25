@@ -22,6 +22,9 @@ type PublicKey = ecdsa.PublicKey
 // message.
 type Signature = []byte
 
+// SignatureSize is a byte size of the calculated Signature.
+const SignatureSize = 65
+
 // GenerateKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
 func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
