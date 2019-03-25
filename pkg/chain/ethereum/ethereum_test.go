@@ -117,14 +117,11 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 	invalidSignature := operator.Signature(common.LeftPadBytes([]byte("invalid"), 64))
 
 	concatenateBytes := func(bytesSlice [][]byte) []byte {
-		var buffer bytes.Buffer
+		var result []byte
 		for _, entry := range bytesSlice {
-			_, err := buffer.Write(entry)
-			if err != nil {
-				t.Fatal(err)
-			}
+			result = append(result, entry...)
 		}
-		return buffer.Bytes()
+		return result
 	}
 
 	var tests = map[string]struct {

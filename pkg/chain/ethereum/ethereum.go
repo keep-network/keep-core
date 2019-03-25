@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"os"
@@ -558,7 +557,7 @@ func convertSignaturesToChainFormat(
 		return membersIndices[i].Cmp(membersIndices[j]) < 0
 	})
 
-	var signaturesBuffer bytes.Buffer
+	var signaturesSlice []byte
 	for _, memberIndexBig := range membersIndices {
 		memberIndex := member.Index((memberIndexBig.Uint64()))
 		if len(signatures[memberIndex]) != signatureLength {
@@ -568,13 +567,10 @@ func convertSignaturesToChainFormat(
 				signatureLength,
 			)
 		}
-		_, err := signaturesBuffer.Write(signatures[memberIndex])
-		if err != nil {
-			return nil, nil, fmt.Errorf("adding signature failed [%v]", err)
-		}
+		signaturesSlice = append(signaturesSlice, signatures[memberIndex]...)
 	}
 
-	return membersIndices, signaturesBuffer.Bytes(), nil
+	return membersIndices, signaturesSlice, nil
 }
 
 // CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
