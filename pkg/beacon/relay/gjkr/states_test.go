@@ -144,7 +144,7 @@ func doStateTransition(
 			}
 		}
 
-		next := state.NextState()
+		next := state.Next()
 
 		if next != nil {
 			fmt.Printf(
