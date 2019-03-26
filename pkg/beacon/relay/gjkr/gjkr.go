@@ -22,7 +22,7 @@ func Execute(
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,
-) (*Result, *big.Int, error) {
+) (*Result, error) {
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberIndex)
 
 	member, err := NewMember(
@@ -32,7 +32,7 @@ func Execute(
 		seed,
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot create a new member [%v]", err)
+		return nil, fmt.Errorf("cannot create a new member [%v]", err)
 	}
 
 	initialState := &initializationState{
@@ -49,11 +49,10 @@ func Execute(
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, nil, fmt.Errorf("execution ended on state %T", lastState)
+		return nil, fmt.Errorf("execution ended on state %T", lastState)
 	}
 
 	return finalizationState.result(),
-		finalizationState.member.GroupPrivateKeyShare(),
 		nil
 }
 

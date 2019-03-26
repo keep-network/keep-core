@@ -1,6 +1,10 @@
 package gjkr
 
-import bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+import (
+	"math/big"
+
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+)
 
 // Result of distributed key generation protocol.
 type Result struct {
@@ -10,6 +14,8 @@ type Result struct {
 	Disqualified []MemberID
 	// Inactive members IDs.
 	Inactive []MemberID
+	// Group private key share.
+	GroupPrivateKeyShare *big.Int
 }
 
 // Equals checks if two results are equal.

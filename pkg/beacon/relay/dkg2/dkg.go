@@ -29,7 +29,7 @@ func ExecuteDKG(
 		return nil, fmt.Errorf("[member:%v] player index must be >= 1", playerIndex)
 	}
 
-	gjkrResult, groupPrivateKeyShare, err := gjkr.Execute(playerIndex, blockCounter, channel, threshold, seed)
+	gjkrResult, err := gjkr.Execute(playerIndex, blockCounter, channel, threshold, seed)
 	if err != nil {
 		return nil, fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
 	}
@@ -37,7 +37,7 @@ func ExecuteDKG(
 	signer := &ThresholdSigner{
 		memberID:             playerIndex,
 		groupPublicKey:       gjkrResult.GroupPublicKey,
-		groupPrivateKeyShare: groupPrivateKeyShare,
+		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
 	}
 
 	// TODO Consider removing this print after Phase 14 is implemented and
