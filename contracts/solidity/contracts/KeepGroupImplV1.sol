@@ -48,9 +48,15 @@ contract KeepGroupImplV1 is Ownable {
         uint256 virtualStakerIndex;
     }
 
+    struct Group {
+        bytes groupId;
+        uint registrationTime;
+    }
+
     mapping(uint256 => Proof) internal _proofs;
 
-    bytes[] internal _groups;
+    Group[] internal _groups;
+
     mapping (bytes => address[]) internal _groupMembers;
 
     mapping (string => bool) internal _initialized;
@@ -265,7 +271,7 @@ contract KeepGroupImplV1 is Ownable {
                 _groupMembers[groupPubKey].push(members[i]);
             }
         }
-        _groups.push(groupPubKey);
+        _groups.push(Group(groupPubKey, block.number));
         //TODO: punish/reward logic
         cleanup();
         _dkgResultPublished[requestId] = true;
@@ -281,19 +287,18 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory current;//current signature to be checked
         uint256[] memory ordered = orderedTickets();
         //can comebine requires below, but avoiding for error catching
+        uint256 submissionCount = signatures.length / 65;
         require(signatures.length >= 65, "signature too short");
         require(signatures.length % 65 == 0, "Bad signatures submission");
-        require(signatures.length / 65 == indices.length, "Signatures and indices don't match");
+        require(submissionCount == indices.length, "Signatures and indices don't match");
 
-        uint256 submissionCount = signatures.length / 65;
         for(uint i = 0; i < submissionCount; i++){
             bytes32 submitterId = keccak256(abi.encodePacked(resultHash, _randomBeaconValue, indices[i]));
 
             require(indices[i] > 0, "Invalid index");
             require(!_submittedDkg[submitterId],"Index already submitted");
-
             _submittedDkg[submitterId] = true;
-            current = signatures.slice(0x41*i, 0x41);           
+            current = signatures.slice(65*i, 65);           
             address recovered = resultHash.toEthSignedMessageHash().recover(current);
 
             require(indices[i] <= ordered.length,"Provided index is out of bounds");
@@ -490,7 +495,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param previousEntry Previous random beacon value.
      */
     function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
-        return _groups[previousEntry % _groups.length];
+        return _groups[previousEntry % _groups.length].groupId;
     }
 
     /**
