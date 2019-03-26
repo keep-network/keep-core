@@ -355,17 +355,6 @@ func (fm *FinalizingMember) Result() *Result {
 		GroupPublicKey:       fm.groupPublicKey,              // nil if threshold not satisfied
 		Disqualified:         fm.group.disqualifiedMemberIDs, // DQ
 		Inactive:             fm.group.inactiveMemberIDs,     // IA
-		GroupPrivateKeyShare: fm.GroupPrivateKeyShare(),
+		GroupPrivateKeyShare: fm.groupPrivateKeyShare,
 	}
-}
-
-// GroupPublicKey returns the full group public key.
-func (fm *FinalizingMember) GroupPublicKey() *bn256.G2 {
-	return fm.groupPublicKey
-}
-
-// GroupPrivateKeyShare returns member's private key share of a group key.
-// It is used for signing and should never be revealed publicly.
-func (fm *FinalizingMember) GroupPrivateKeyShare() *big.Int {
-	return fm.groupPrivateKeyShare
 }
