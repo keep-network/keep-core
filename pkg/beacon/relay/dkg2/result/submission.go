@@ -65,36 +65,39 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		)
 	}
 
+	returnWithError := func(err error) error {
+		subscription.Unsubscribe()
+		close(onSubmittedResultChan)
+		return err
+	}
+
 	// Check if any result has already been published to the chain with current
 	// request ID.
 	alreadyPublished, err := chainRelay.IsDKGResultSubmitted(requestID)
 	if err != nil {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-		return fmt.Errorf(
-			"could not check if the result is already published [%v]",
-			err,
+		return returnWithError(
+			fmt.Errorf(
+				"could not check if the result is already published [%v]",
+				err,
+			),
 		)
 	}
 
 	// Someone who was ahead of us in the queue published the result. Giving up.
 	if alreadyPublished {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-
-		return nil
+		return returnWithError(nil)
 	}
 
 	// Wait until the current member is eligible to submit the result.
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
-		return err
+		return returnWithError(err)
 	}
 	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(blockCounter)
 	if err != nil {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-		return fmt.Errorf("wait for eligibility failure [%v]", err)
+		return returnWithError(
+			fmt.Errorf("wait for eligibility failure [%v]", err),
+		)
 	}
 
 	for {
@@ -124,9 +127,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
 				// A result has been submitted by other member. Leave without
 				// publishing the result.
-				subscription.Unsubscribe()
-				close(onSubmittedResultChan)
-				return nil
+				return returnWithError(nil)
 			}
 		}
 	}
