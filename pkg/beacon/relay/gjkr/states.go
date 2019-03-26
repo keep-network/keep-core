@@ -53,10 +53,6 @@ func (is *initializationState) MemberIndex() member.Index {
 	return is.member.ID
 }
 
-func (is *initializationState) IsFinalState() bool {
-	return false
-}
-
 // joinState is the state during which a member announces itself to the key
 // generation broadcast channel to initiate the distributed protocol.
 // `JoinMessage`s are valid in this state.
@@ -88,10 +84,6 @@ func (js *joinState) NextState() keyGenerationState {
 
 func (js *joinState) MemberIndex() member.Index {
 	return js.member.ID
-}
-
-func (js *joinState) IsFinalState() bool {
-	return false
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -144,10 +136,6 @@ func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() member.Index {
 	return ekpgs.member.ID
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) IsFinalState() bool {
-	return false
-}
-
 // symmetricKeyGenerationState is the state during which members compute
 // symmetric keys from the previously exchanged ephemeral public keys.
 // No messages are valid in this state.
@@ -180,9 +168,6 @@ func (skgs *symmetricKeyGenerationState) NextState() keyGenerationState {
 
 func (skgs *symmetricKeyGenerationState) MemberIndex() member.Index {
 	return skgs.member.ID
-}
-func (skgs *symmetricKeyGenerationState) IsFinalState() bool {
-	return false
 }
 
 // commitmentState is the state during which members compute their individual
@@ -252,10 +237,6 @@ func (cs *commitmentState) MemberIndex() member.Index {
 	return cs.member.ID
 }
 
-func (cs *commitmentState) IsFinalState() bool {
-	return false
-}
-
 // commitmentsVerificationState is the state during which members validate
 // shares and commitments computed and published by other members in the
 // previous phase. `SecretShareAccusationMessage`s are valid in this state.
@@ -321,10 +302,6 @@ func (cvs *commitmentsVerificationState) MemberIndex() member.Index {
 	return cvs.member.ID
 }
 
-func (cvs *commitmentsVerificationState) IsFinalState() bool {
-	return false
-}
-
 // sharesJustificationState is the state during which members resolve
 // accusations published by other group members in the previous state.
 // No messages are valid in this state.
@@ -367,9 +344,6 @@ func (sjs *sharesJustificationState) NextState() keyGenerationState {
 func (sjs *sharesJustificationState) MemberIndex() member.Index {
 	return sjs.member.ID
 }
-func (sjs *sharesJustificationState) IsFinalState() bool {
-	return false
-}
 
 // qualificationState is the state during which group members combine all valid
 // secret shares published by other group members in the previous states.
@@ -401,9 +375,6 @@ func (qs *qualificationState) NextState() keyGenerationState {
 
 func (qs *qualificationState) MemberIndex() member.Index {
 	return qs.member.ID
-}
-func (qs *qualificationState) IsFinalState() bool {
-	return false
 }
 
 // pointsShareState is the state during which group members calculate and
@@ -452,9 +423,6 @@ func (pss *pointsShareState) NextState() keyGenerationState {
 
 func (pss *pointsShareState) MemberIndex() member.Index {
 	return pss.member.ID
-}
-func (pss *pointsShareState) IsFinalState() bool {
-	return false
 }
 
 // pointsValidationState is the state during which group members validate
@@ -513,9 +481,6 @@ func (pvs *pointsValidationState) NextState() keyGenerationState {
 func (pvs *pointsValidationState) MemberIndex() member.Index {
 	return pvs.member.ID
 }
-func (pvs *pointsValidationState) IsFinalState() bool {
-	return false
-}
 
 // pointsJustificationState is the state during which group members resolve
 // accusations published by other group members in the previous state.
@@ -558,9 +523,6 @@ func (pjs *pointsJustificationState) NextState() keyGenerationState {
 
 func (pjs *pointsJustificationState) MemberIndex() member.Index {
 	return pjs.member.ID
-}
-func (pjs *pointsJustificationState) IsFinalState() bool {
-	return false
 }
 
 // keyRevealState is the state during which group members reveal ephemeral
@@ -614,10 +576,6 @@ func (rs *keyRevealState) MemberIndex() member.Index {
 	return rs.member.ID
 }
 
-func (rs *keyRevealState) IsFinalState() bool {
-	return false
-}
-
 // reconstructionState is the state during which group members reconstruct
 // individual keys of members disqualified in previous states. No messages are
 // valid in this state.
@@ -658,10 +616,6 @@ func (rs *reconstructionState) MemberIndex() member.Index {
 	return rs.member.ID
 }
 
-func (rs *reconstructionState) IsFinalState() bool {
-	return false
-}
-
 // combinationState is the state during which group members combine together all
 // qualified key shares to form a group public key. No messages are valid in
 // this state.
@@ -694,10 +648,6 @@ func (cs *combinationState) MemberIndex() member.Index {
 	return cs.member.ID
 }
 
-func (cs *combinationState) IsFinalState() bool {
-	return false
-}
-
 // finalizationState is the last state of GJKR DKG protocol - in this state,
 // distributed key generation is completed. No messages are valid in this state.
 //
@@ -724,10 +674,6 @@ func (fs *finalizationState) NextState() keyGenerationState {
 
 func (fs *finalizationState) MemberIndex() member.Index {
 	return fs.member.ID
-}
-
-func (fs *finalizationState) IsFinalState() bool {
-	return true
 }
 
 func (fs *finalizationState) result() *Result {

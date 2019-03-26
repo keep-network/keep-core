@@ -31,9 +31,6 @@ type State interface {
 
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() member.Index
-
-	// IsFinalState returns true when final state is reached.
-	IsFinalState() bool
 }
 
 // Execute state machine starting with initial state up to finalization.
@@ -87,7 +84,8 @@ func Execute(
 			}
 
 		case <-blockWaiter:
-			if currentState.IsFinalState() {
+			nextState := currentState.NextState()
+			if nextState == nil {
 				fmt.Printf(
 					"[member:%v, state:%T] Final state reached\n",
 					currentState.MemberIndex(),
@@ -96,7 +94,8 @@ func Execute(
 				return currentState, nil
 			}
 
-			currentState = currentState.NextState()
+			currentState = nextState
+
 			blockWaiter, err = stateTransition(currentState, blockCounter)
 			if err != nil {
 				return nil, err

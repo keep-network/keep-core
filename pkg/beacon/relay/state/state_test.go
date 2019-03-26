@@ -65,7 +65,7 @@ func TestExecute(t *testing.T) {
 		t.Errorf("unexpected error [%v]", err)
 	}
 
-	if !finalState.IsFinalState() {
+	if _, ok := finalState.(*testState4); !ok {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
@@ -121,7 +121,6 @@ func (ts testState1) Receive(msg net.Message) error {
 }
 func (ts testState1) NextState() State          { return &testState2{ts} }
 func (ts testState1) MemberIndex() member.Index { return ts.memberIndex }
-func (ts testState1) IsFinalState() bool        { return false }
 
 type testState2 struct {
 	testState1
@@ -141,7 +140,6 @@ func (ts testState2) Receive(msg net.Message) error {
 }
 func (ts testState2) NextState() State          { return &testState3{ts} }
 func (ts testState2) MemberIndex() member.Index { return ts.memberIndex }
-func (ts testState2) IsFinalState() bool        { return false }
 
 type testState3 struct {
 	testState2
@@ -164,7 +162,6 @@ func (ts testState3) Receive(msg net.Message) error {
 
 func (ts testState3) NextState() State          { return &testState4{ts} }
 func (ts testState3) MemberIndex() member.Index { return ts.memberIndex }
-func (ts testState3) IsFinalState() bool        { return false }
 
 type testState4 struct {
 	testState3
@@ -184,7 +181,6 @@ func (ts testState4) Receive(msg net.Message) error {
 }
 func (ts testState4) NextState() State          { return nil }
 func (ts testState4) MemberIndex() member.Index { return ts.memberIndex }
-func (ts testState4) IsFinalState() bool        { return true }
 
 type TestMessage struct {
 	content string
