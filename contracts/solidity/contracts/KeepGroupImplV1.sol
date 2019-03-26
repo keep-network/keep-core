@@ -39,7 +39,7 @@ contract KeepGroupImplV1 is Ownable {
     bytes[] internal _submissions;
     //check if DkgResult has been published (uint256: given requestID)
     mapping (uint256 => bool) internal _dkgResultPublished;
-    //checeks if a user has submitted a result (bytes32: unique hash for voting scenario)
+    //checks if a user has submitted a result (bytes32: unique hash for voting scenario)
     mapping (bytes32 => bool) internal _submittedDkg;
 
     struct Proof {
@@ -216,7 +216,7 @@ contract KeepGroupImplV1 is Ownable {
         return passedCheapCheck && ticketValue == expected;
     }
 
-    /*
+    /** 
      * @dev Check if member is inactive.
      * @param dqBytes bytes representing disqualified members.
      * @param memberIndex position of the member to check.
@@ -226,10 +226,10 @@ contract KeepGroupImplV1 is Ownable {
         return dqBytes[memberIndex] != 0x00;
     }
 
-     /*
+     /** 
      * @dev Check if member is inactive.
      * @param iaBytes bytes representing inactive members.
-     * @param gmemberIndex position of the member to check.
+     * @param memberIndex position of the member to check.
      * @return true if staker is inactive, false otherwise.
      */
     function _isInactive(bytes memory iaBytes, uint256 memberIndex) internal pure returns (bool){
@@ -260,8 +260,9 @@ contract KeepGroupImplV1 is Ownable {
         uint[] memory positions
     ) public {
         bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
+        require(_proofs[ordered[index - 1]].sender == msg.sender, "index does not match sender address");
         require(eligibleSubmitter(index),"User not eligible");
-        require(verify(signatures, positions, resultHash),"Could not verify");
+        require(verifySignatures(signatures, positions, resultHash),"Could not verify");
         //change to selectedPArticipants() in full implmementation
         address[] memory members = orderedParticipants();
         //check IA/DQ length match members
@@ -279,31 +280,31 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-    * @dev takes signed hash and corresponding signatures. Adds valid signers to _signers[]
-    * @param resultHash the result hash signed by the users
-    * @param signatures concatination of user-generated signatures
+    * @dev takes signed hash and corresponding signatures. Adds valid signers to _signers[].
+    * @param signatures concatination of user-generated signatures.
+    * @param resultHash the result hash signed by the users.
+    * @param indices indices of members corresponding to each signature.
     */
-    function verify(bytes memory signatures, uint256[] memory indices, bytes32 resultHash) internal returns (bool) {
-        bytes memory current;//current signature to be checked
+    function verifySignatures(bytes memory signatures, uint256[] memory indices, bytes32 resultHash) internal returns (bool) {
+        bytes memory current; //current signature to be checked
         uint256[] memory ordered = orderedTickets();
-        //can comebine requires below, but avoiding for error catching
         uint256 submissionCount = signatures.length / 65;
         require(signatures.length >= 65, "signature too short");
         require(signatures.length % 65 == 0, "Bad signatures submission");
-        require(submissionCount == indices.length, "Signatures and indices don't match");
+        require(submissionCount == indices.length, "Number of ignatures and indices don't match");
 
         for(uint i = 0; i < submissionCount; i++){
             bytes32 submitterId = keccak256(abi.encodePacked(resultHash, _randomBeaconValue, indices[i]));
 
-            require(indices[i] > 0, "Invalid index");
-            require(!_submittedDkg[submitterId],"Index already submitted");
+            require(indices[i] > 0, "Index should be greater than zero");
+            require(!_submittedDkg[submitterId],"Participant at index already submitted a result");
             _submittedDkg[submitterId] = true;
             current = signatures.slice(65*i, 65);           
-            address recovered = resultHash.toEthSignedMessageHash().recover(current);
+            address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
-            require(indices[i] <= ordered.length,"Provided index is out of bounds");
+            require(indices[i] <= ordered.length,"Provided index is out of acceptable tickets bound");
             require(
-                _proofs[ordered[indices[i] - 1]].sender == recovered,
+                _proofs[ordered[indices[i] - 1]].sender == recoveredAddress,
                 "Signer and recovered address at provided index don't match"
             );
         }       
