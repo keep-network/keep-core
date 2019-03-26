@@ -60,10 +60,10 @@ echo "Installing bn and it's dependencies..."
 	make install
 )
 
-echo "*************************************************************************"
-echo "*** NOTE: Please add above PATH, LD_LIBRARY_PATH, DYLD_LIBRARY_PATH   ***" 
-echo "*** export commands to your shell configuration file. 				***"
-echo "*** Ex. for bash shell - ~/.bash_profile, for zsh - ~/.zshrc          ***"
-echo "*************************************************************************"
+echo "******************************************************************"
+echo "*** Please configure PATH, LD_LIBRARY_PATH, DYLD_LIBRARY_PATH  ***"
+echo "*** environment variables in your shell configuration file.    ***"
+echo "*** Ex. for bash shell - ~/.bash_profile, for zsh - ~/.zshrc   ***"
+echo "******************************************************************"
 
 echo "Ready to rock! See above for any extra environment-related instructions."
