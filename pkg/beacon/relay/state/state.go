@@ -55,10 +55,9 @@ func NewMachine(
 	}
 }
 
-// Execute state machine starting with initial state up to finalization.
-func (m *Machine) Execute(
-	channelInitialization func(channel net.BroadcastChannel),
-) (State, error) {
+// Execute state machine starting with initial state up to finalization. It
+// requires the broadcast channel to be pre-initialized.
+func (m *Machine) Execute() (State, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
 	handler := net.HandleMessageFunc{
@@ -68,8 +67,6 @@ func (m *Machine) Execute(
 			return nil
 		},
 	}
-
-	channelInitialization(m.channel)
 
 	m.channel.Recv(handler)
 	defer m.channel.UnregisterRecv(handler.Type)

@@ -42,7 +42,7 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		channelInitialization(channel)
+		initializeChannel(channel)
 
 		channels[i] = channel
 		states[i] = &initializationState{channel, member}

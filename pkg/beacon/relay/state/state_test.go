@@ -38,17 +38,9 @@ func TestExecute(t *testing.T) {
 		channel.Send(&TestMessage{"message_3"})
 	}(blockCounter)
 
-	initChannel := func(channel net.BroadcastChannel) {
-		currentBlock, _ := blockCounter.CurrentBlock()
-		testLog[currentBlock] = append(
-			testLog[currentBlock],
-			"init_channel-"+channel.Name(),
-		)
-
-		channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-			return &TestMessage{}
-		})
-	}
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &TestMessage{}
+	})
 
 	initialState := testState1{
 		memberIndex: member.Index(1),
@@ -57,7 +49,7 @@ func TestExecute(t *testing.T) {
 
 	stateMachine := NewMachine(channel, blockCounter, initialState)
 
-	finalState, err := stateMachine.Execute(initChannel)
+	finalState, err := stateMachine.Execute()
 	if err != nil {
 		t.Errorf("unexpected error [%v]", err)
 	}
@@ -67,7 +59,6 @@ func TestExecute(t *testing.T) {
 	}
 
 	expectedTestLog := map[int][]string{
-		0: []string{"init_channel-transitions_test"},
 		1: []string{
 			"1-state.testState1-initiate",
 			"1-state.testState1-receive-message_1",

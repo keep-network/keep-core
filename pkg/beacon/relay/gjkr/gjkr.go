@@ -35,6 +35,8 @@ func Execute(
 		return nil, fmt.Errorf("cannot create a new member [%v]", err)
 	}
 
+	initializeChannel(channel)
+
 	initialState := &initializationState{
 		channel: channel,
 		member:  member,
@@ -42,7 +44,7 @@ func Execute(
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, err := stateMachine.Execute(channelInitialization)
+	lastState, err := stateMachine.Execute()
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
@@ -53,9 +55,9 @@ func Execute(
 		nil
 }
 
-// channelInitialization initializes a given broadcast channel to be able to
+// initializeChannel initializes a given broadcast channel to be able to
 // perform distributed key generation interactions.
-func channelInitialization(channel net.BroadcastChannel) {
+func initializeChannel(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &JoinMessage{}
 	})
