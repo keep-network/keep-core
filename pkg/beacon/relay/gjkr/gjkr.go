@@ -40,12 +40,9 @@ func Execute(
 		member:  member,
 	}
 
-	lastState, err := state.Execute(
-		channel,
-		channelInitialization,
-		initialState,
-		blockCounter,
-	)
+	stateMachine := state.NewMachine(channel, blockCounter, initialState)
+
+	lastState, err := stateMachine.Execute(channelInitialization)
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {

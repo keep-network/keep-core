@@ -55,12 +55,9 @@ func TestExecute(t *testing.T) {
 		channel:     channel,
 	}
 
-	finalState, err := Execute(
-		channel,
-		initChannel,
-		initialState,
-		blockCounter,
-	)
+	stateMachine := NewMachine(channel, blockCounter, initialState)
+
+	finalState, err := stateMachine.Execute(initChannel)
 	if err != nil {
 		t.Errorf("unexpected error [%v]", err)
 	}

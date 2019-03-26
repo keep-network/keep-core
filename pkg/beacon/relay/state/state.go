@@ -9,6 +9,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+// Machine is a state machine that executes over states implemented from State
+// interface.
+type Machine struct {
+	channel      net.BroadcastChannel
+	blockCounter chain.BlockCounter
+	initialState State // first state from which execution starts
+}
+
 // State is and interface against which relay states should be implemented.
 type State interface {
 	// ActiveBlocks returns the number of blocks during which the current state
@@ -33,14 +41,23 @@ type State interface {
 	MemberIndex() member.Index
 }
 
-// Execute state machine starting with initial state up to finalization.
-// It requires a broadcast channel and an initialization function for the channel
-// to be able to perform interactions.
-func Execute(
+// NewMachine returns a new state machine. It requires a broadcast channel and
+// an initialization function for the channel to be able to perform interactions.
+func NewMachine(
 	channel net.BroadcastChannel,
-	channelInitialization func(channel net.BroadcastChannel),
-	initialState State,
 	blockCounter chain.BlockCounter,
+	initialState State,
+) *Machine {
+	return &Machine{
+		channel:      channel,
+		blockCounter: blockCounter,
+		initialState: initialState,
+	}
+}
+
+// Execute state machine starting with initial state up to finalization.
+func (m *Machine) Execute(
+	channelInitialization func(channel net.BroadcastChannel),
 ) (State, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -52,14 +69,14 @@ func Execute(
 		},
 	}
 
-	channelInitialization(channel)
+	channelInitialization(m.channel)
 
-	channel.Recv(handler)
-	defer channel.UnregisterRecv(handler.Type)
+	m.channel.Recv(handler)
+	defer m.channel.UnregisterRecv(handler.Type)
 
-	currentState := initialState
+	currentState := m.initialState
 
-	blockWaiter, err := stateTransition(currentState, blockCounter)
+	blockWaiter, err := stateTransition(currentState, m.blockCounter)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +113,7 @@ func Execute(
 
 			currentState = nextState
 
-			blockWaiter, err = stateTransition(currentState, blockCounter)
+			blockWaiter, err = stateTransition(currentState, m.blockCounter)
 			if err != nil {
 				return nil, err
 			}
