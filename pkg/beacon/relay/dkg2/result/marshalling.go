@@ -6,6 +6,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 )
 
+// Type returns a string describing a DKGResultHashSignatureMessage type for
+// marshalling purposes.
+func (d *DKGResultHashSignatureMessage) Type() string {
+	return "result/dkg_result_hash_signature_message"
+}
+
 // Marshal converts this DKGResultHashSignatureMessage to a byte array suitable
 // for network communication.
 func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
