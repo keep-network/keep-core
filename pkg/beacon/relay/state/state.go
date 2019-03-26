@@ -88,6 +88,11 @@ func Execute(
 
 		case <-blockWaiter:
 			if currentState.IsFinalState() {
+				fmt.Printf(
+					"[member:%v, state:%T] Final state reached\n",
+					currentState.MemberIndex(),
+					currentState,
+				)
 				return currentState, nil
 			}
 
