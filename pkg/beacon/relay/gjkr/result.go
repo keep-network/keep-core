@@ -19,6 +19,7 @@ type Result struct {
 }
 
 // Equals checks if two results are equal.
+// TODO: Check if we still need this function. If not remove.
 func (r *Result) Equals(r2 *Result) bool {
 	if r == nil || r2 == nil {
 		return r == r2
