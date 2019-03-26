@@ -122,10 +122,10 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			return <-errorChannel
 		case publishedResultEvent := <-onSubmittedResultChan:
 			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
-				// A result has been submitted by other member.
+				// A result has been submitted by other member. Leave without
+				// publishing the result.
 				subscription.Unsubscribe()
 				close(onSubmittedResultChan)
-				// Leave without publishing the result.
 				return nil
 			}
 		}
