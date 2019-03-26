@@ -60,11 +60,7 @@ func Execute(
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
-	var (
-		currentState State
-	)
-
-	currentState = initialState
+	currentState := initialState
 
 	blockWaiter, err := stateTransition(currentState, blockCounter)
 	if err != nil {
