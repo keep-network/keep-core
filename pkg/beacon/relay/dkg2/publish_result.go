@@ -10,6 +10,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+// TODO: Remove this when new Phases 13/14 are implemented.
+
 // Publisher submits distributed key generation result to a blockchain.
 type Publisher struct {
 	// ID of distributed key generation execution.
@@ -32,19 +34,19 @@ type Publisher struct {
 // accepted by the chain.
 func executePublishing(
 	requestID *big.Int,
-	publishingIndex int,
+	publishingIndex member.Index,
 	chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
 	result *relayChain.DKGResult,
 ) error {
-	if publishingIndex < 1 {
+	if err := publishingIndex.Validate(); err != nil {
 		return fmt.Errorf("publishing index must be >= 1")
 	}
 
 	publisher := &Publisher{
 		RequestID:       requestID,
 		blockCounter:    blockCounter,
-		publishingIndex: publishingIndex,
+		publishingIndex: int(publishingIndex),
 		blockStep:       3,
 	}
 

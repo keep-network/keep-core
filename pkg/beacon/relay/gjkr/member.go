@@ -347,26 +347,14 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G2 {
 
 // Result can be either the successful computation of a round of distributed key
 // generation, or a notification of failure.
-//
-// If the number of disqualified and inactive members is greater than half of the
-// configured dishonest threshold, the group is deemed too weak, and the result
-// is set to failure. Otherwise, it returns the generated group public key along
-// with the disqualified and inactive members.
+// It returns the generated group public key and a private key share of a group
+// key along with the disqualified and inactive members. The group private key
+// share is used for signing and should never be revealed publicly.
 func (fm *FinalizingMember) Result() *Result {
 	return &Result{
-		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
-		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
-		Inactive:       fm.group.inactiveMemberIDs,     // IA
+		GroupPublicKey:       fm.groupPublicKey, // nil if threshold not satisfied
+		GroupPrivateKeyShare: fm.groupPrivateKeyShare,
+		Disqualified:         fm.group.disqualifiedMemberIDs, // DQ
+		Inactive:             fm.group.inactiveMemberIDs,     // IA
 	}
-}
-
-// GroupPublicKey returns the full group public key.
-func (fm *FinalizingMember) GroupPublicKey() *bn256.G2 {
-	return fm.groupPublicKey
-}
-
-// GroupPrivateKeyShare returns member's private key share of a group key.
-// It is used for signing and should never be revealed publicly.
-func (fm *FinalizingMember) GroupPrivateKeyShare() *big.Int {
-	return fm.groupPrivateKeyShare
 }
