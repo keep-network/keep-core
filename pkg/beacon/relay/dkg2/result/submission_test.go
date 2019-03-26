@@ -240,7 +240,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 }
 
-// TODO: Add test where submission fails on chain
+// TODO: Add test where submission fails on chain due to signatures verification failure.
 
 func initChainHandle(threshold, groupSize int) (chain.Handle, uint64, error) {
 	chainHandle := local.Connect(groupSize, threshold, big.NewInt(200))
