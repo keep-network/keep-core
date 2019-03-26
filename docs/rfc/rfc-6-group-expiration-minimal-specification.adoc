@@ -88,6 +88,8 @@ decrease the _active group counter_ by one. Then the next group is selected and
 its status is verified until an active group is found or the number of active
 groups falls below the _active groups threshold_.
 
+Expired groups need not be tracked for an unlimited time. They might be removed
+when deemed unnecessary for current network operations.
 
 [bibliography]
 == Related Links
