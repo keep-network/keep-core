@@ -87,9 +87,9 @@ func TestSubmitDKGResult(t *testing.T) {
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
 			}
-			if test.expectedTimeEnd != uint64(currentBlock) {
+			if uint64(currentBlock) < test.expectedTimeEnd {
 				t.Errorf(
-					"invalid current block\nexpected: %v\nactual:   %v\n",
+					"invalid current block\nexpected: >= %v\nactual:      %v\n",
 					test.expectedTimeEnd,
 					currentBlock,
 				)
