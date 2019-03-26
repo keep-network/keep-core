@@ -45,7 +45,7 @@ func (is *initializationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (is *initializationState) NextState() keyGenerationState {
+func (is *initializationState) Next() keyGenerationState {
 	return &joinState{is.channel, is.member}
 }
 
@@ -75,7 +75,7 @@ func (js *joinState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (js *joinState) NextState() keyGenerationState {
+func (js *joinState) Next() keyGenerationState {
 	return &ephemeralKeyPairGenerationState{
 		channel: js.channel,
 		member:  js.member.InitializeEphemeralKeysGeneration(),
@@ -124,7 +124,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) NextState() keyGenerationState {
+func (ekpgs *ephemeralKeyPairGenerationState) Next() keyGenerationState {
 	return &symmetricKeyGenerationState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.InitializeSymmetricKeyGeneration(),
@@ -159,7 +159,7 @@ func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGenerationState) NextState() keyGenerationState {
+func (skgs *symmetricKeyGenerationState) Next() keyGenerationState {
 	return &commitmentState{
 		channel: skgs.channel,
 		member:  skgs.member.InitializeCommitting(),
@@ -223,7 +223,7 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *commitmentState) NextState() keyGenerationState {
+func (cs *commitmentState) Next() keyGenerationState {
 	return &commitmentsVerificationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeCommitmentsVerification(),
@@ -289,7 +289,7 @@ func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cvs *commitmentsVerificationState) NextState() keyGenerationState {
+func (cvs *commitmentsVerificationState) Next() keyGenerationState {
 	return &sharesJustificationState{
 		channel: cvs.channel,
 		member:  cvs.member.InitializeSharesJustification(),
@@ -334,7 +334,7 @@ func (sjs *sharesJustificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (sjs *sharesJustificationState) NextState() keyGenerationState {
+func (sjs *sharesJustificationState) Next() keyGenerationState {
 	return &qualificationState{
 		channel: sjs.channel,
 		member:  sjs.member.InitializeQualified(),
@@ -366,7 +366,7 @@ func (qs *qualificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (qs *qualificationState) NextState() keyGenerationState {
+func (qs *qualificationState) Next() keyGenerationState {
 	return &pointsShareState{
 		channel: qs.channel,
 		member:  qs.member.InitializeSharing(),
@@ -412,7 +412,7 @@ func (pss *pointsShareState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (pss *pointsShareState) NextState() keyGenerationState {
+func (pss *pointsShareState) Next() keyGenerationState {
 	return &pointsValidationState{
 		channel: pss.channel,
 		member:  pss.member,
@@ -469,7 +469,7 @@ func (pvs *pointsValidationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (pvs *pointsValidationState) NextState() keyGenerationState {
+func (pvs *pointsValidationState) Next() keyGenerationState {
 	return &pointsJustificationState{
 		channel: pvs.channel,
 		member:  pvs.member.InitializePointsJustification(),
@@ -514,7 +514,7 @@ func (pjs *pointsJustificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (pjs *pointsJustificationState) NextState() keyGenerationState {
+func (pjs *pointsJustificationState) Next() keyGenerationState {
 	return &keyRevealState{
 		channel: pjs.channel,
 		member:  pjs.member.InitializeRevealing(),
@@ -564,7 +564,7 @@ func (rs *keyRevealState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rs *keyRevealState) NextState() keyGenerationState {
+func (rs *keyRevealState) Next() keyGenerationState {
 	return &reconstructionState{
 		channel:               rs.channel,
 		member:                rs.member.InitializeReconstruction(),
@@ -605,7 +605,7 @@ func (rs *reconstructionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rs *reconstructionState) NextState() keyGenerationState {
+func (rs *reconstructionState) Next() keyGenerationState {
 	return &combinationState{
 		channel: rs.channel,
 		member:  rs.member.InitializeCombining(),
@@ -637,7 +637,7 @@ func (cs *combinationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *combinationState) NextState() keyGenerationState {
+func (cs *combinationState) Next() keyGenerationState {
 	return &finalizationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeFinalization(),
@@ -668,7 +668,7 @@ func (fs *finalizationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (fs *finalizationState) NextState() keyGenerationState {
+func (fs *finalizationState) Next() keyGenerationState {
 	return nil
 }
 

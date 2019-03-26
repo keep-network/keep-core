@@ -144,7 +144,7 @@ func doStateTransition(
 			}
 		}
 
-		next := state.NextState()
+		next := state.Next()
 
 		if next != nil {
 			fmt.Printf(
@@ -157,7 +157,7 @@ func doStateTransition(
 		nextStates[i] = next
 	}
 
-	// When there is no next phase to be exected, `nextState()` in
+	// When there is no next phase to be exected, `Next()` in
 	// `keyGenerationState` returns `nil`. To say that all states have
 	// executed completely, all `states` must be `nil`.
 	allCompleted := true

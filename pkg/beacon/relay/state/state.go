@@ -28,14 +28,14 @@ type State interface {
 	// messages associated with the current state.
 	Initiate() error
 
-	// Receive is called each time a new message arrived. receive is expected to
+	// Receive is called each time a new message arrived. Receive is expected to
 	// be called for all broadcast channel messages, including the member's own
 	// messages.
 	Receive(msg net.Message) error
 
 	// NextState performs a state transition to the next state of the protocol.
 	// If the current state is the last one, nextState returns `nil`.
-	NextState() State
+	Next() State
 
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() member.Index
@@ -98,7 +98,7 @@ func (m *Machine) Execute() (State, error) {
 			}
 
 		case <-blockWaiter:
-			nextState := currentState.NextState()
+			nextState := currentState.Next()
 			if nextState == nil {
 				fmt.Printf(
 					"[member:%v, state:%T] Final state reached\n",
