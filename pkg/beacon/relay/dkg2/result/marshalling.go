@@ -41,7 +41,11 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 
 	d.signature = pbMsg.Signature
 
-	// d.publicKey =    // TODO: Add public key unmarshalling when static.PublicKey is ready
+	publicKey, err := operator.Unmarshal(pbMsg.PublicKey)
+	if err != nil {
+		return err
+	}
+	d.publicKey = publicKey
 
 	return nil
 }
