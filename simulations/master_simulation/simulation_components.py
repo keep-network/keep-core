@@ -8,7 +8,7 @@ import pandas as pd
 class Node:
     #Node states based on Antonio's diagramming on Feb 15 2019
     #Assume staking mechanism is complete
-    def __init__(self, env, identity, start_time, sim_cycles, tickets, group_members, forming_group):
+    def __init__(self, env, identity, start_time, tickets):
         self.env = env
         self.id = identity
         self.starttime = start_time
@@ -23,11 +23,7 @@ class Node:
         self.STAKING_AMT = np.random.lognormal(3,1,) #find total tokens from contract
         self.cycle_count = 0
         self.node_status = "online"
-        self.max_cycles = sim_cycles
-        self.group_members = group_members
         
-
-
     #Connecting to Ethereum
  
     def Connect_Node(self, env):
@@ -78,19 +74,6 @@ class Node:
             self.groups_joined.append(group_object.id)
         else:
             group_object.disconnect(self.id)
-        
-    # Generate Entry
-    def Entry_Generation(self,env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
-        print(str(self.id)+" generated entry" + " cycle="+str(self.cycle_count))
-        self.number_of_entries_generated += 1
-        self.ingroup = False
-        self.cycle_count +=1
-        if self. cycle_count > self.max_cycles:
-            yield env.exit()
-        else:
-            env.process(self.Forking_MainLoop(env))
         
 
     def node_failure_generator(self):
@@ -195,7 +178,6 @@ class Group:
             self.status == "uknown error"
     
 
-
 def relay_entry(env, runs, group_object_array, node_object_array):
     sign_successes =[]
     for i in range(runs):
@@ -211,6 +193,7 @@ def relay_entry(env, runs, group_object_array, node_object_array):
             sign_successes.append(1) # if ready add 1 to successfull signing events array
         else:
             sign_successes.append(0) # if not ready add 0 to successful signing events array
+    
 
 
 
