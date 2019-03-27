@@ -196,8 +196,8 @@ class Group:
         self.current_member_count = 0
         self.status = "inactive"
         self.id = identity
-        self.member_check = np.zeros(group_size)
-        self.group = np.array(group_distr_matrix) > 0
+        self.member_check = np.zeros(group_size) #tally of how many members are currently connected to the group
+        self.group = np.array(group_distr_matrix[identity]) > 0
 
     def connect(self, node_id):
         self.member_check[node_id] = 1
@@ -216,12 +216,6 @@ class Group:
         else:
             self.status == "uknown error"
 
-
-
-
-
-    def __del__(self): 
-        print('Group #'+self.id+' deleted') 
 
 
     
