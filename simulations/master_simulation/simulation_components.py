@@ -107,16 +107,6 @@ class Node:
         else:
             env.process(self.Forking_MainLoop(env))
         
-    # Form Group
-    def Group_Formation(self,env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
-        
-        print(str(self.id)+" formed group" + " cycle="+str(self.cycle_count))
-        self.ingroup = True
-        self.number_of_groups_joined +=1
-        env.process(self.Group_Member_Check(env)) #doing it here instead of waiting for relay entry
-        env.exit()
 
     def node_failure_generator(self):
         failure = np.random.lognormal(1,0)
@@ -198,6 +188,7 @@ class Group:
         self.id = identity
         self.member_check = np.zeros(group_size) #tally of how many members are currently connected to the group
         self.group = np.array(group_distr_matrix[self.id]) > 0
+        self.signing_events =[]
 
     def connect(self, node_id):
         self.member_check[node_id] = 1
@@ -216,13 +207,22 @@ class Group:
         else:
             self.status == "uknown error"
     
-    def signed()
+    def signed():
+        #checks if the group has signed and if the last one was successful
 
 
-def group_picker(env, runs):
-    while True:
-        current_group = np.random.randint(0,runs-1) #generates a random number less than the total number of pre-processed groups
-        yield current_group
+def signing_process(env, runs, group_object_array, node_object_array):
+
+    for i in range(runs):
+        group_pick = np.random.randint(0,runs-1) #picks the group id to perform the signature
+        for each
+        
+        if group
+
+
+
+
+
 
 
 
