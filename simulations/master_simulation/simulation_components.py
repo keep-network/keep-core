@@ -59,7 +59,6 @@ class Node:
         if self.node_status == "failed": yield env.exit()
         print(str(self.id)+" Watching Relay Request" + " cycle="+str(self.cycle_count))
         self.relay_request_time = np.random.normal(3,1,)
-        env.process(self.Group_Selection(env))
         yield env.exit()
     
     # watching for relay entry
@@ -71,7 +70,7 @@ class Node:
         yield env.exit()
 
     #join group
-    def join_group(self,group_object):
+    def join_group(self,group_object,env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
         if group_object.group:
@@ -195,8 +194,6 @@ class Group:
         else:
             self.status == "uknown error"
     
-    def signed():
-        #checks if the group has signed and if the last one was successful
 
 
 def relay_entry(env, runs, group_object_array, node_object_array):
@@ -206,7 +203,8 @@ def relay_entry(env, runs, group_object_array, node_object_array):
         group = group_object_array[np.random.randint(0,runs-1)]
         
         for node in node_object_array:
-            node.join_group(group)
+            node.join_group(group,env)
+        
         group.is_ready() #check if the group is ready
 
         if group.status == "active":
