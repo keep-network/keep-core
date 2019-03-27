@@ -215,6 +215,15 @@ class Group:
             self.status == "failed"
         else:
             self.status == "uknown error"
+    
+    def signed()
+
+
+def group_picker(env, runs):
+    while True:
+        current_group = np.random.randint(0,runs-1) #generates a random number less than the total number of pre-processed groups
+        yield current_group
+
 
 
 
