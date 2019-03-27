@@ -22,9 +22,13 @@ type resultSigningState struct {
 func (rs *resultSigningState) ActiveBlocks() int { return 3 }
 
 func (rs *resultSigningState) Initiate() error {
-	// sign the dkg result
-	// send it on the broadcast channel
-
+	message, err := rs.member.SignDKGResult(nil, nil)
+	if err != nil {
+		return err
+	}
+	if err := rs.channel.Send(message); err != nil {
+		return err
+	}
 	return nil
 }
 
