@@ -47,7 +47,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: tx
-        image: gcr.io/keep-dev-fe24/geth-node
+        image: gcr.io/keep-dev-fe24/eth-geth-node
         ports:
         - containerPort: 8545
         - containerPort: 8546
