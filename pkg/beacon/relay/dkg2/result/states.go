@@ -35,9 +35,18 @@ func (rs *resultSigningState) Initiate() error {
 }
 
 func (rs *resultSigningState) Receive(msg net.Message) error {
-	// is message from self?
-	// is message sender accepted?
-	// then add it to our list
+	switch phaseMessage := msg.Payload().(type) {
+	case *DKGResultHashSignatureMessage:
+		// ignore messages from ourselves
+		if phaseMessage.senderIndex == rs.member.index {
+			return nil
+		}
+
+		// is message sender accepted?
+
+		// then add it to our list
+		rs.signedHashResults = append(rs.signedHashResults)
+	}
 	return nil
 }
 
