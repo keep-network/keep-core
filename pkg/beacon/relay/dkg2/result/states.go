@@ -17,6 +17,8 @@ type signingState = state.State
 type resultSigningState struct {
 	channel net.BroadcastChannel
 	member  *SigningMember
+
+	signedHashResults []*DKGResultHashSignatureMessage
 }
 
 func (rs *resultSigningState) ActiveBlocks() int { return 3 }
