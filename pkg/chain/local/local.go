@@ -379,9 +379,17 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
 
+	currentBlock, err := c.blockCounter.CurrentBlock()
+	if err != nil {
+		dkgResultPublicationPromise.Fail(fmt.Errorf("cannot read current block"))
+		return dkgResultPublicationPromise
+	}
+
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
 		RequestID:      requestID,
+		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		BlockNumber:    uint64(currentBlock),
 	}
 
 	c.handlerMutex.Lock()
@@ -392,7 +400,7 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.handlerMutex.Unlock()
 
-	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
+	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
 	}

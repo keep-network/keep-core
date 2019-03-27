@@ -3,12 +3,11 @@ package chain
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
-	"github.com/keep-network/keep-core/pkg/operator"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 

@@ -92,15 +92,8 @@ func TestExecuteDKGLocal(t *testing.T) {
 		testutils.AssertBytesEqual(t, key0, keyi)
 	}
 
-	// assert result has been published to the chain
-	isResultPublished, err := chainHandle.ThresholdRelay().IsDKGResultSubmitted(requestID)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if !isResultPublished {
-		t.Fatal("result is not published")
-	}
+	// TODO: Add verification of result submission when new Phase 14 is added to
+	// states machine.
 }
 
 func TestConvertResult(t *testing.T) {

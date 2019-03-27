@@ -9,6 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
@@ -334,16 +336,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	defer cancel()
 
 	// Initialize local chain.
-	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
-	localChain := &localChain{
-		submittedResults:         submittedResults,
-		resultSubmissionHandlers: make(map[int]func(event *event.DKGResultSubmission)),
-	}
+	localChain := Connect(10, 4, big.NewInt(200)).(*localChain)
+
 	chainHandle := localChain.ThresholdRelay()
 
 	// Channel for DKGResultSubmission events.
 	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
-	localChain.OnDKGResultSubmitted(
+	chainHandle.OnDKGResultSubmitted(
 		func(DKGResultSubmission *event.DKGResultSubmission) {
 			DKGResultSubmissionChan <- DKGResultSubmission
 		},
@@ -355,15 +354,24 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
+	memberIndex := uint32(1)
 	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 	expectedEvent1 := &event.DKGResultSubmission{
 		RequestID:      requestID1,
+		MemberIndex:    memberIndex,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
+		BlockNumber:    0,
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
+	signatures := map[gjkr.MemberID]operator.Signature{
+		1: operator.Signature{101},
+		2: operator.Signature{102},
+		3: operator.Signature{103},
+	}
+
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -377,7 +385,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	select {
 	case DKGResultSubmissionEvent := <-DKGResultSubmissionChan:
 		if !reflect.DeepEqual(expectedEvent1, DKGResultSubmissionEvent) {
-			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			t.Fatalf("\nexpected: %+v\nactual:   %+v\n",
 				expectedEvent1,
 				DKGResultSubmissionEvent,
 			)
@@ -390,10 +398,11 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	requestID2 := big.NewInt(2)
 	expectedEvent2 := &event.DKGResultSubmission{
 		RequestID:      requestID2,
+		MemberIndex:    memberIndex,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -417,7 +426,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -440,11 +449,9 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	localChain := &localChain{
-		submittedResults:         make(map[*big.Int][]*relaychain.DKGResult),
-		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
-	}
-	relay := localChain.ThresholdRelay()
+	localChain := Connect(10, 4, big.NewInt(200)).(*localChain)
+
+	chainHandle := localChain.ThresholdRelay()
 
 	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
 	subscription, err := localChain.OnDKGResultSubmitted(
@@ -460,7 +467,7 @@ func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
 	// never be called.
 	subscription.Unsubscribe()
 
-	relay.SubmitDKGResult(
+	chainHandle.SubmitDKGResult(
 		big.NewInt(999),
 		1,
 		&relaychain.DKGResult{
