@@ -3,6 +3,7 @@ package operator
 import (
 	"crypto/rand"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -117,5 +118,26 @@ func TestOperatorKeySignAndVerify(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+	}
+}
+
+func TestMarshalRoundTrip(t *testing.T) {
+	_, operatorPublicKey, err := GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	marshalled := Marshal(operatorPublicKey)
+	unmarshalled, err := Unmarshal(marshalled)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(unmarshalled, operatorPublicKey) {
+		t.Fatalf(
+			"Unexpected unmarshalled public key\nExpected: %v\nActual:   %v",
+			operatorPublicKey,
+			unmarshalled,
+		)
 	}
 }
