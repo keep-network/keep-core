@@ -1,9 +1,11 @@
 package result
 
 import (
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -17,9 +19,11 @@ type signingState = state.State
 // State covers phase 13 of the protocol.
 type resultSigningState struct {
 	channel net.BroadcastChannel
-	member  *SigningMember
+	handle  chain.Handle
 
-	result                gjkr.Result
+	member *SigningMember
+
+	result                relayChain.DKGResult
 	disqualifiedMemberIDs []gjkr.MemberID
 	inactiveMemberIDs     []gjkr.MemberID
 
@@ -29,10 +33,7 @@ type resultSigningState struct {
 func (rs *resultSigningState) ActiveBlocks() int { return 3 }
 
 func (rs *resultSigningState) Initiate() error {
-	rs.disqualifiedMemberIDs = rs.result.Disqualified
-	rs.inactiveMemberIDs = rs.result.Inactive
-
-	message, err := rs.member.SignDKGResult(nil, nil)
+	message, err := rs.member.SignDKGResult(rs.result, rs.handle)
 	if err != nil {
 		return err
 	}
