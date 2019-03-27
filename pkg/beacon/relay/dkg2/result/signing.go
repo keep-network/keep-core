@@ -11,8 +11,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-// SigningMember represents a member sharing preferred DKG result hash
-// and signature over this hash with peer members.
+// SigningMember represents a group member sharing their preferred DKG result hash
+// and signature (over this hash) with other peer members.
 type SigningMember struct {
 	index member.Index
 
