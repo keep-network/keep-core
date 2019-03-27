@@ -197,7 +197,7 @@ class Group:
         self.status = "inactive"
         self.id = identity
         self.member_check = np.zeros(group_size) #tally of how many members are currently connected to the group
-        self.group = np.array(group_distr_matrix[identity]) > 0
+        self.group = np.array(group_distr_matrix[self.id]) > 0
 
     def connect(self, node_id):
         self.member_check[node_id] = 1
