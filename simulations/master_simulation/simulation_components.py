@@ -211,7 +211,7 @@ class Group:
         #checks if the group has signed and if the last one was successful
 
 
-def signing_process(env, runs, group_object_array, node_object_array):
+def relay_entry(env, runs, group_object_array, node_object_array):
 
     for i in range(runs):
         group_pick = np.random.randint(0,runs-1) #picks the group id to perform the signature
