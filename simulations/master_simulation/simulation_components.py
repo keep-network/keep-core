@@ -19,12 +19,13 @@ class Node:
         self.ingroup = False
         self.inrelay = False
         self.number_of_entries_generated = 0
-        self.number_of_groups_joined = 0
+        self.groups_joined= [] #keeps track of groups joined by this node
         self.STAKING_AMT = np.random.lognormal(3,1,) #find total tokens from contract
         self.cycle_count = 0
         self.node_status = "online"
         self.max_cycles = sim_cycles
         self.group_members = group_members
+        
 
 
     #Connecting to Ethereum
@@ -68,6 +69,16 @@ class Node:
         print(str(self.id)+" Watching Relay Entry" + " cycle="+str(self.cycle_count))
         self.relay_entry_watch_time = np.random.normal(3,1,)
         yield env.exit()
+
+    #join group
+    def join_group(self,group_object):
+        self.node_failure_generator()
+        if self.node_status == "failed": yield env.exit()
+        if group_object.group:
+            group_object.connect(self.id)
+            self.groups_joined.append(group_object.id)
+        else:
+            group_object.disconnect(self.id)
         
     # Generate Entry
     def Entry_Generation(self,env):
@@ -171,9 +182,11 @@ class Group:
     def disconnect(self, node_id):
         self.member_check[node_id] = 0
 
-    def is_ready(self, env):
+    def is_ready(self):
 
         if self.status == "inactive" and np.array_equal(self.member_check, self.group):
+            self.status == "active"
+        elif self.status == "active" and np.array_equal(self.member_check, self.group):
             self.status == "active"
         elif self.status == "inactive":
             self.status == "pending"
@@ -187,11 +200,19 @@ class Group:
 
 
 def relay_entry(env, runs, group_object_array, node_object_array):
+    sign_successes =[]
     for i in range(runs):
-        group_pick = np.random.randint(0,runs-1) #picks the group id to perform the signature
-        for each
+        #picks the group id to perform the signature
+        group = group_object_array[np.random.randint(0,runs-1)]
         
-        if group
+        for node in node_object_array:
+            node.join_group(group)
+        group.is_ready() #check if the group is ready
+
+        if group.status == "active":
+            sign_successes.append(1) # if ready add 1 to successfull signing events array
+        else:
+            sign_successes.append(0) # if not ready add 0 to successful signing events array
 
 
 
