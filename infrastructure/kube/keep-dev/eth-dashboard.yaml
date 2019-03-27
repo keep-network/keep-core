@@ -17,16 +17,14 @@ spec:
     app: eth-dashboard
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: eth-dashboard
+  namespace: default
 spec:
-  serviceName: eth-dashboard
   replicas: 1
-  updateStrategy:
+  strategy:
     type: RollingUpdate
-    rollingUpdate:
-      partition: 0
   selector:
     matchLabels:
       app: eth-dashboard
@@ -48,16 +46,3 @@ spec:
           value: BANZAI!!!!
         - name: BOOTNODE_URL
           value: http://eth-dashboard.default.svc.cluster.local:3001
-        - name: HOSTVOLUME
-          value: /mnt/eth-data
-        volumeMounts:
-        - name: eth-dashboard
-          mountPath: /mnt/eth-data
-  volumeClaimTemplates:
-    - metadata:
-        name: eth-dashboard
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 5Gi
