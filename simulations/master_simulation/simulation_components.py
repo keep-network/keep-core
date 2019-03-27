@@ -68,31 +68,6 @@ class Node:
         print(str(self.id)+" Watching Relay Entry" + " cycle="+str(self.cycle_count))
         self.relay_entry_watch_time = np.random.normal(3,1,)
         yield env.exit()
-    
-    # Group Selection
-    def Group_Selection(self, env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
-        while True:
-            if np.random.randint(10)<5:
-                env.process(self.Group_Formation(env))
-                yield env.exit()
-                
-            else:
-                print(str(self.id)+" group formation failure" + "cycle="+str(self.cycle_count))
-        
-    # check if this node is a member of a signing group (assuming this is another process)
-    def Group_Member_Check(self, env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
-        if self.ingroup == True:
-            env.process(self.Entry_Generation(env))
-            print (str(self.id)+" in a group" + " cycle="+str(self.cycle_count))
-            yield env.exit()
-        else:
-            print(str(self.id)+" not a group member" + " cycle="+str(self.cycle_count))
-            env.process(self.Watching_RelayEntry(env))
-            yield env.exit()
         
     # Generate Entry
     def Entry_Generation(self,env):
@@ -212,7 +187,6 @@ class Group:
 
 
 def relay_entry(env, runs, group_object_array, node_object_array):
-
     for i in range(runs):
         group_pick = np.random.randint(0,runs-1) #picks the group id to perform the signature
         for each
