@@ -104,8 +104,7 @@ func Unmarshal(data []byte) (*PublicKey, error) {
 	x, y := elliptic.Unmarshal(crypto.S256(), data)
 	if x == nil {
 		return nil, fmt.Errorf(
-			"incorrect public key; not of type %+v",
-			crypto.S256(),
+			"incorrect public key bytes",
 		)
 	}
 	ecdsaPublicKey := &ecdsa.PublicKey{Curve: crypto.S256(), X: x, Y: y}
