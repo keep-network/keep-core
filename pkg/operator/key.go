@@ -97,3 +97,17 @@ func VerifySignature(publicKey *PublicKey, hash []byte, sig Signature) error {
 func Marshal(publicKey *PublicKey) []byte {
 	return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 }
+
+// Unmarshal takes raw bytes and produces an uncompressed, operator's PublicKey.
+// Unmarshal assumes the PublicKey's curve is of type S256 as defined in geth.
+func Unmarshal(data []byte) (*PublicKey, error) {
+	x, y := elliptic.Unmarshal(crypto.S256(), data)
+	if x == nil {
+		return nil, fmt.Errorf(
+			"incorrect public key; not of type %+v",
+			crypto.S256(),
+		)
+	}
+	ecdsaPublicKey := &ecdsa.PublicKey{Curve: crypto.S256(), X: x, Y: y}
+	return (*PublicKey)(ecdsaPublicKey), nil
+}
