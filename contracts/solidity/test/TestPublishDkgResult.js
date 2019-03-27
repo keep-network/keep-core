@@ -9,7 +9,6 @@ const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
 const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
-let EthUtil = require('ethereumjs-utils');
 
 function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
   let tickets = [];
@@ -29,17 +28,17 @@ function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
 contract('TestPublishDkgResult', function(accounts) {
   let  disqualified, inactive, resultHash,
   signature, positions, token, stakingProxy,
-   stakingContract, minimumStake, groupThreshold, groupSize,
-    randomBeaconValue, requestId,
-    timeoutInitial, timeoutSubmission, timeoutChallenge,
-    keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
-    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
-    staker1 = accounts[0], tickets1,
-    staker2 = accounts[1], tickets2,
-    staker3 = accounts[2], tickets3;
+  stakingContract, minimumStake, groupThreshold, groupSize,
+  randomBeaconValue, requestId,
+  timeoutInitial, timeoutSubmission, timeoutChallenge,
+  keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
+  keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
+  staker1 = accounts[0], tickets1,
+  staker2 = accounts[1], tickets2,
+  staker3 = accounts[2], tickets3;
   requestId = 0;
-  disqualified = '0x0000000110000000110000000110000000110000'
-  inactive =  '0x0000001000000001000000001000000001000000'
+  disqualified = '0x00000001100000001100000001100000001100000000000110000000110000000110000000110000000000011000000011000000011000000011000000000001100000001100000001100000001100000000'
+  inactive =  '0x00000010000000010000000010000000010000000000001000000001000000001000000001000000000000100000000100000000100000000100000000000010000000010000000010000000010000000000'
   groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000"
 
   
@@ -97,16 +96,18 @@ contract('TestPublishDkgResult', function(accounts) {
     positions = []
     let signatures; 
     let callerIndex;
-    for(let i=0;i<10;i++){
+
+    for(let i=0;i<5;i++){
       await keepGroupImplViaProxy.submitTicket(tickets1[i].value, staker1, tickets1[i].virtualStakerIndex, {from: staker1});
     }
-    for(let i=0;i<7;i++){
+    for(let i=0;i<2;i++){
       await keepGroupImplViaProxy.submitTicket(tickets2[i].value, staker2, tickets2[i].virtualStakerIndex, {from: staker2});
     }
-    for(let i=0;i<3;i++){
+    for(let i=0;i<1;i++){
       await keepGroupImplViaProxy.submitTicket(tickets3[i].value, staker3, tickets3[i].virtualStakerIndex, {from: staker3});
     }
     let orderedParticipants = await keepGroupImplViaProxy.orderedParticipants.call()
+
     for(let i=0;i<orderedParticipants.length;i++){    
       callerIndex = accounts.indexOf(orderedParticipants[i]);    
       signature =  await web3.eth.sign(resultHash, accounts[callerIndex]);
@@ -114,7 +115,7 @@ contract('TestPublishDkgResult', function(accounts) {
       if (signatures == undefined) signatures = signature
       else signatures+=signature.slice(2,signature.length);
     }
-
+    
     await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, positions)
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");

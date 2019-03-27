@@ -260,6 +260,7 @@ contract KeepGroupImplV1 is Ownable {
         uint[] memory positions
     ) public {
         bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
+        uint256[] memory ordered = orderedTickets();
         require(_proofs[ordered[index - 1]].sender == msg.sender, "index does not match sender address");
         require(eligibleSubmitter(index),"User not eligible");
         require(verifySignatures(signatures, positions, resultHash),"Could not verify");
@@ -295,7 +296,7 @@ contract KeepGroupImplV1 is Ownable {
 
         for(uint i = 0; i < submissionCount; i++){
             bytes32 submitterId = keccak256(abi.encodePacked(resultHash, _randomBeaconValue, indices[i]));
-
+            
             require(indices[i] > 0, "Index should be greater than zero");
             require(!_submittedDkg[submitterId],"Participant at index already submitted a result");
             _submittedDkg[submitterId] = true;
