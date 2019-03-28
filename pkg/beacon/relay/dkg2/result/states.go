@@ -173,6 +173,7 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 }
 
 func (rss *resultSubmissionState) Next() signingState {
+	// returning nil represents this is the final state
 	return nil
 }
 
