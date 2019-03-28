@@ -15,6 +15,26 @@ The goal of this proposal is to specify a method
 for beacon operators to verify signature shares received from other operators,
 and for on-chain resolution of misbehavior proofs on invalid signature shares.
 
+=== Terminology
+`P1`:: The generator point for the BLS elliptic curve
+
+`X_k`:: The group private key of `Group_k`
+
+`Y_k`:: The group public key: `Y_k = P1 * X_k`
+
+`Entry_e`:: The entry matching the entry identifier `e`
+
+`Input_e`:: The input for generating the new entry:
+`Entry_e = Input_e * X`
+
+`x_i`:: The individual private key of `P_i`
+
+`y_i`:: The individual public key of `P_i`: `y_i = P1 * x_i`
+
+`Share_i`:: The signature share by `P_i`: `Share_i = Input_e * x_i`
+
+`H`:: The number of members required for a honest majority
+
 == Invalid shares as DoS attack vector
 When beacon operators generate the threshold signature
 to produce a new entry,
@@ -53,15 +73,6 @@ while permitting _O(log(N))_ verification of misbehavior proofs.
 The merkle root is also useful for other purposes.
 
 === Specification
-`P1`:: The generator point for the BLS elliptic curve
-`X_k`:: The group private key of `Group_k`
-`Y_k`:: The group public key: `Y_k = P1 * X_k`
-`Entry_e`:: The entry matching the entry identifier `e`
-`Input_e`:: The input for generating the new entry:
-`Entry_e = Input_e * X`
-`x_i`:: The individual private key of `P_i`
-`y_i`:: The individual public key of `P_i`: `y_i = P1 * x_i`
-`Share_i`:: The signature share by `P_i`: `Share_i = Input_e * x_i`
 
 ==== Off-chain
 Each `Share_i` must be broadcast as a _signature share message_
