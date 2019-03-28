@@ -127,3 +127,41 @@ func (vs *verificationState) Next() signingState {
 func (vs *verificationState) MemberIndex() member.Index {
 	return vs.member.index
 }
+
+// resultSubmissionState is the state during which group members submit the dkg
+// result to the chain.
+//
+// State covers phase 14 of the protocol.
+type resultSubmissionState struct {
+	channel net.BroadcastChannel
+	handle  chain.Handle
+
+	member *SubmittingMember
+
+	requestID  *big.Int
+	result     *relayChain.DKGResult
+	signatures map[member.Index]operator.Signature
+}
+
+func (rss *resultSubmissionState) ActiveBlocks() int { return 3 }
+
+func (rss *resultSubmissionState) Initiate() error {
+	return rss.member.SubmitDKGResult(
+		rss.requestID,
+		rss.result,
+		rss.signatures,
+		rss.handle,
+	)
+}
+
+func (rss *resultSubmissionState) Receive(msg net.Message) error {
+	return nil
+}
+
+func (rss *resultSubmissionState) Next() signingState {
+	return nil
+}
+
+func (rss *resultSubmissionState) MemberIndex() member.Index {
+	return rss.member.index
+}
