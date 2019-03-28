@@ -100,7 +100,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     for (var i = 1; i <= 100; i++)
       await keepGroupImplV1.submitGroupPublicKey([i], i);
 
-    for (var i = 1; i <= 101; i++)
+    for (var i = 1; i <= 111; i++)
       await keepGroupImplV1.selectGroup(i);
 
     let after = await keepGroupImplV1.numberOfGroups();
