@@ -6,6 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -34,28 +35,33 @@ func ExecuteDKG(
 		return nil, fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
 	}
 
-	signer := &ThresholdSigner{
-		memberID:             playerIndex,
-		groupPublicKey:       gjkrResult.GroupPublicKey,
-		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
+	err = result.SignAndSubmit(
+		channel,
+		relayChain,
+		blockCounter,
+		playerIndex,
+		requestID,
+		convertResult(gjkrResult, groupSize),
+		gjkrResult.Disqualified,
+		gjkrResult.Inactive,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"[member:%v] DKG signing and submission process failed [%v]",
+			playerIndex,
+			err,
+		)
 	}
 
 	// TODO Consider removing this print after Phase 14 is implemented and
 	// replace it with print at the end of DKG execution.
-	fmt.Printf("[member:%v] GJKR Result: %+v\n", playerIndex, gjkrResult)
+	fmt.Printf("[member:%v] DKG Result: %+v\n", playerIndex, gjkrResult)
 
-	err = executePublishing(
-		requestID,
-		playerIndex,
-		relayChain,
-		blockCounter,
-		convertResult(gjkrResult, groupSize),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("publishing failed [%v]", err)
-	}
-
-	return signer, nil
+	return &ThresholdSigner{
+		memberID:             playerIndex,
+		groupPublicKey:       gjkrResult.GroupPublicKey,
+		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
+	}, nil
 }
 
 // convertResult transforms GJKR protocol execution result to a chain specific
