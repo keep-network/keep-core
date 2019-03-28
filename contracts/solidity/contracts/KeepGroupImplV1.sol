@@ -260,19 +260,18 @@ contract KeepGroupImplV1 is Ownable {
         uint[] memory positions
     ) public {
         bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
-        uint256[] memory ordered = orderedTickets();
-        require(_proofs[ordered[index - 1]].sender == msg.sender, "index does not match sender address");
         require(eligibleSubmitter(index),"User not eligible");
         require(verifySignatures(signatures, positions, resultHash),"Could not verify");
         //change to selectedPArticipants() in full implmementation
         address[] memory members = orderedParticipants();
-        //check IA/DQ length match members
+        //TODO: check IA/DQ length match members
         for (uint i = 0; i < positions.length; i++) {
             if(!_isInactive(inactive, i) &&
                 !_isDisqualified(disqualified, i)){
                 _groupMembers[groupPubKey].push(members[i]);
             }
         }
+        //TODO: we should minimum of H participants
         _groups.push(Group(groupPubKey, block.number));
         //TODO: punish/reward logic
         cleanup();
@@ -292,10 +291,10 @@ contract KeepGroupImplV1 is Ownable {
         uint256 submissionCount = signatures.length / 65;
         require(signatures.length >= 65, "signature too short");
         require(signatures.length % 65 == 0, "Bad signatures submission");
-        require(submissionCount == indices.length, "Number of ignatures and indices don't match");
+        require(submissionCount == indices.length, "Number of signatures and indices don't match");
 
         for(uint i = 0; i < submissionCount; i++){
-            bytes32 submitterId = keccak256(abi.encodePacked(resultHash, _randomBeaconValue, indices[i]));
+            bytes32 submitterId = keccak256(abi.encodePacked(msg.sender, _randomBeaconValue, indices[i]));
             
             require(indices[i] > 0, "Index should be greater than zero");
             require(!_submittedDkg[submitterId],"Participant at index already submitted a result");
@@ -368,6 +367,8 @@ contract KeepGroupImplV1 is Ownable {
      * @return true if the submitter is eligible. False otherwise.
      */
     function eligibleSubmitter(uint index) public view returns (bool){
+        uint256[] memory ordered = orderedTickets();
+        require(_proofs[ordered[index - 1]].sender == msg.sender, "index does not match sender address");
         require(index > 0, "index must be greater than 0");
         return true;
     }
