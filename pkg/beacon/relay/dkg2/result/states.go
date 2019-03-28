@@ -91,9 +91,16 @@ func (rss *resultSigningState) MemberIndex() member.Index {
 //
 // State is part of phase 13 of the protocol.
 type signaturesVerificationState struct {
-	*resultSigningState
+	channel net.BroadcastChannel
+	handle  chain.Handle
 
-	validSignatures map[member.Index]operator.Signature
+	member *SigningMember
+
+	requestID *big.Int
+	result    *relayChain.DKGResult
+
+	signatureMessages []*DKGResultHashSignatureMessage
+	validSignatures   map[member.Index]operator.Signature
 }
 
 func (svs *signaturesVerificationState) ActiveBlocks() int { return 0 }
