@@ -34,55 +34,55 @@ type resultSigningState struct {
 	signedHashResults []*DKGResultHashSignatureMessage
 }
 
-func (rs *resultSigningState) ActiveBlocks() int { return 3 }
+func (rss *resultSigningState) ActiveBlocks() int { return 3 }
 
-func (rs *resultSigningState) Initiate() error {
-	message, err := rs.member.SignDKGResult(rs.result, rs.handle)
+func (rss *resultSigningState) Initiate() error {
+	message, err := rss.member.SignDKGResult(rss.result, rss.handle)
 	if err != nil {
 		return err
 	}
-	if err := rs.channel.Send(message); err != nil {
+	if err := rss.channel.Send(message); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (rs *resultSigningState) Receive(msg net.Message) error {
+func (rss *resultSigningState) Receive(msg net.Message) error {
 	switch signedMessage := msg.Payload().(type) {
 	case *DKGResultHashSignatureMessage:
 		// ignore messages from ourselves
-		if signedMessage.senderIndex == rs.member.index {
+		if signedMessage.senderIndex == rss.member.index {
 			return nil
 		}
 
 		// ignore messages from DQ
-		for _, disqualifiedMember := range rs.disqualifiedMemberIDs {
+		for _, disqualifiedMember := range rss.disqualifiedMemberIDs {
 			if signedMessage.senderIndex == disqualifiedMember {
 				return nil
 			}
 		}
 
 		// ignore messages from IA
-		for _, inactiveMemeber := range rs.inactiveMemberIDs {
+		for _, inactiveMemeber := range rss.inactiveMemberIDs {
 			if signedMessage.senderIndex == inactiveMemeber {
 				return nil
 			}
 		}
 
 		// then add it to our list
-		rs.signedHashResults = append(rs.signedHashResults)
+		rss.signedHashResults = append(rss.signedHashResults)
 	}
 	return nil
 }
 
-func (rs *resultSigningState) Next() signingState {
+func (rss *resultSigningState) Next() signingState {
 	// set up the verification state, phase 13 part 2
-	return &verificationState{rs, nil}
+	return &verificationState{rss, nil}
 
 }
 
-func (rs *resultSigningState) MemberIndex() member.Index {
-	return rs.member.index
+func (rss *resultSigningState) MemberIndex() member.Index {
+	return rss.member.index
 }
 
 // verificationState is the state during which group members verify all signatures
