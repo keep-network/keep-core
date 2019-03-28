@@ -51,8 +51,7 @@ func Execute(
 		return nil, fmt.Errorf("execution ended on state %T", lastState)
 	}
 
-	return finalizationState.result(),
-		nil
+	return finalizationState.result(), nil
 }
 
 // initializeChannel initializes a given broadcast channel to be able to
