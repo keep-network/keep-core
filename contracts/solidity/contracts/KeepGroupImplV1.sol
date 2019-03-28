@@ -64,7 +64,7 @@ contract KeepGroupImplV1 is Ownable {
     uint internal _expiredOffset = 0;
 
     struct Group {
-        bytes groupId;
+        bytes groupPubKey;
         uint registrationBlockHeight;
     }
 
@@ -486,7 +486,7 @@ contract KeepGroupImplV1 is Ownable {
                 } else _expiredOffset += previousEntry % (_groups.length - _expiredOffset);
             } else break;
         }
-        return _groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].groupId;
+        return _groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].groupPubKey;
     }
 
     /**
