@@ -8,7 +8,6 @@ import (
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
-	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 // SigningMember represents a group member sharing their preferred DKG result hash
@@ -42,12 +41,12 @@ func NewSigningMember(
 // See Phase 13 of the protocol specification.
 func (sm *SigningMember) SignDKGResult(
 	dkgResult *relayChain.DKGResult,
-	chainHandle chain.Handle,
+	relayChain relayChain.Interface,
 ) (
 	*DKGResultHashSignatureMessage,
 	error,
 ) {
-	resultHash, err := chainHandle.ThresholdRelay().CalculateDKGResultHash(dkgResult)
+	resultHash, err := relayChain.CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
