@@ -1,6 +1,8 @@
 package result
 
 import (
+	"math/big"
+
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
@@ -24,6 +26,7 @@ type resultSigningState struct {
 
 	member *SigningMember
 
+	requestID             *big.Int
 	result                *relayChain.DKGResult
 	disqualifiedMemberIDs []gjkr.MemberID
 	inactiveMemberIDs     []gjkr.MemberID
@@ -114,6 +117,7 @@ func (vs *verificationState) Next() signingState {
 		channel:    vs.channel,
 		handle:     vs.handle,
 		member:     NewSubmittingMember(vs.member.index),
+		requestID:  vs.requestID,
 		result:     vs.result,
 		signatures: vs.signatures,
 	}
