@@ -39,6 +39,8 @@ func SignAndSubmit(
 		signatureMessages:     make([]*DKGResultHashSignatureMessage, 0),
 	}
 
+	initializeChannel(channel)
+
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
 	lastState, err := stateMachine.Execute()
@@ -52,4 +54,12 @@ func SignAndSubmit(
 	}
 
 	return nil
+}
+
+// initializeChannel initializes a given broadcast channel to be able to
+// perform distributed key generation interactions.
+func initializeChannel(channel net.BroadcastChannel) {
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &DKGResultHashSignatureMessage{}
+	})
 }
