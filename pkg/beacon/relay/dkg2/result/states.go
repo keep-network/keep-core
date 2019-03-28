@@ -73,8 +73,9 @@ func (rs *resultSigningState) Receive(msg net.Message) error {
 }
 
 func (rs *resultSigningState) Next() signingState {
-	// set up the verification state, phase 14
-	return nil
+	// set up the verification state, phase 13 part 2
+	return &verificationState{rs, nil}
+
 }
 
 func (rs *resultSigningState) MemberIndex() member.Index {
