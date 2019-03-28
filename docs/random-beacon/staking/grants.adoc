@@ -1,0 +1,83 @@
+= Grant-compatible staking
+
+OS::
+Original Spec
+
+== Requirements
+* promise to investors: can stake with full stake to start with
+* avoid distortions
+** limit the benefit from short vesting
+** treat locked vs liquid tokens fairly
+** ensure sufficient stakes for operations
+* avoid special cases and system complexity
+** avoid needing to enforce t-transfer invariants
+** minimize number of integrity-critical contracts
+
+== Options
+
+=== OS w/ stakeahead
+
+Breaks the promise of staking with all tokens
+
+Short vesting has significantly more weight early on
+
+Most elegant and simple
+
+=== Active stake limiting
+
+Use all tokens to derive _weight_,
+but only liquid tokens as actual stakes.
+Looks like everybody is staking on full
+
+If amount of unlocked stakes falls behind minimum,
+force unstaking despite weight remaining positive
+
+Requires either special cases in staking contract,
+or making grant contract integrity-critical
+by offloading staker weight determination to it
+
+Enables exploits by deliberately locking up tokens
+to minimize stakes while maximizing weight
+
+=== Systemwide liquidity reduction
+
+All tokens can be used for staking in the same liquidity-reduced manner
+as OS 2-year stakeahead
+
+Locked tokens cannot be transferred
+
+Revocable grants subtract slashed stakes from revocable portion
+
+Free tokens still subject to the same staking rules for 2 years
+
+Requires initial special case,
+custody of all tokens in a special contract?
+Or special case in staking contract?
+(Make `weight = floor(original_stake - (slashed * multiplier))`?
+That can be gamed though, by moving stakes to fresh addr?)
+
+Protects everybody's stake equally,
+limits real stakes without distortions
+
+No distortion b/w short and long vesting
+
+Later grants need separate treatment?
+
+=== Stake maturing
+
+Impose full 2-year liquidity reduction on all stakes from staking moment
+
+Significantly incentivizes static holdings
+
+Requires non-increaseable stakes to avoid gaming
+
+=== OS, ignore t-transfer on grants
+
+Just pretend we didn't think of these considerations,
+and avoid creating easy t-transfer methods.
+
+Let non-revoc grants be staked in full while revoc grants stake-ahead.
+
+Makes us look like we don't know what we're doing if anyone looks too closely
+
+Avoids the PITA of t-transfer invariant enforcement
