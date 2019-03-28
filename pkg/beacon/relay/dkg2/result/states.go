@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // represents a given state in the state machine for signing dkg results
@@ -78,4 +79,46 @@ func (rs *resultSigningState) Next() signingState {
 
 func (rs *resultSigningState) MemberIndex() member.Index {
 	return rs.member.index
+}
+
+// verificationState is the state during which group members verify all signatures
+// that valid submitters sent over the broadcast channel in the previous state.
+// Valid signatures are added to the state.
+//
+// State is part of phase 13 of the protocol.
+type verificationState struct {
+	*resultSigningState
+
+	signatures map[member.Index]operator.Signature
+}
+
+func (vs *verificationState) ActiveBlocks() int { return 0 }
+
+func (vs *verificationState) Initiate() error {
+	signatures, err := vs.member.VerifyDKGResultSignatures(vs.signedHashResults)
+	if err != nil {
+		return err
+	}
+
+	vs.signatures = signatures
+	return nil
+}
+
+func (vs *verificationState) Receive(msg net.Message) error {
+	return nil
+}
+
+func (vs *verificationState) Next() signingState {
+	return &resultSubmissionState{
+		channel:    vs.channel,
+		handle:     vs.handle,
+		member:     NewSubmittingMember(vs.member.index),
+		result:     vs.result,
+		signatures: vs.signatures,
+	}
+
+}
+
+func (vs *verificationState) MemberIndex() member.Index {
+	return vs.member.index
 }
