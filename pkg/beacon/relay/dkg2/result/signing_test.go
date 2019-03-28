@@ -41,7 +41,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	messages := make([]*DKGResultHashSignatureMessage, 0)
 
 	for _, member := range members {
-		message, err := member.SignDKGResult(dkgResult, chainHandle)
+		message, err := member.SignDKGResult(dkgResult, chainHandle.ThresholdRelay())
 		if err != nil {
 			t.Fatal(err)
 		}
