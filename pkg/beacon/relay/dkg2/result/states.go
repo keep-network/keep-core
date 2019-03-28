@@ -31,7 +31,7 @@ type resultSigningState struct {
 	disqualifiedMemberIDs []gjkr.MemberID
 	inactiveMemberIDs     []gjkr.MemberID
 
-	signedHashResults []*DKGResultHashSignatureMessage
+	signatureMessages []*DKGResultHashSignatureMessage
 }
 
 func (rss *resultSigningState) ActiveBlocks() int { return 3 }
@@ -70,7 +70,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 		}
 
 		// then add it to our list
-		rss.signedHashResults = append(rss.signedHashResults)
+		rss.signatureMessages = append(rss.signatureMessages, signedMessage)
 	}
 	return nil
 }
@@ -99,7 +99,7 @@ type verificationState struct {
 func (vs *verificationState) ActiveBlocks() int { return 0 }
 
 func (vs *verificationState) Initiate() error {
-	signatures, err := vs.member.VerifyDKGResultSignatures(vs.signedHashResults)
+	signatures, err := vs.member.VerifyDKGResultSignatures(vs.signatureMessages)
 	if err != nil {
 		return err
 	}
