@@ -62,7 +62,13 @@ If the received shares are not verified,
 the only recourse is to try new combinations of signature shares
 until a valid signature is produced.
 With `m` invalid shares being broadcast,
-trying all possible combinations takes _O(N^m)_ time.
+trying all possible combinations takes _O(N^m)_ time:
+first `choose(H+1, 1)` attempts
+excluding each share on its own,
+then `choose(H+2, 2)` attempts
+to see if rejecting two shares leads to a valid signature,
+then `choose(H+3, 3)` attempts excluding all combinations of 3 shares,
+and so on for a total of `sum(i in [1 .. m], choose(H+i, i))` attempts.
 
 == Proposed method
 When receiving signature shares from other members in the signing group,
