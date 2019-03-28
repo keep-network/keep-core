@@ -81,7 +81,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await keepGroupImplV1.submitGroupPublicKey(["6"], 6);
 
     await keepGroupImplV1.submitGroupPublicKey(["7"], 7);
-
   });
 
   it("should be able to check if groups were added", async function() {
@@ -108,4 +107,14 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(after.toString(), "1", "Number of groups should be equal 1");
   });
 
+  it("should be able to survive this stress test", async function() {
+    for (var i = 1; i <= 100; i++)
+      await keepGroupImplV1.submitGroupPublicKey([i], i);
+
+    for (var i = 1; i <= 101; i++)
+      await keepGroupImplV1.selectGroup(i);
+
+    let after = await keepGroupImplV1.numberOfGroups();
+    assert.equal(after.toString(), "1", "Number of groups should be equal 1");
+  });
 });
