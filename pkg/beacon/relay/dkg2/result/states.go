@@ -85,15 +85,15 @@ func (rss *resultSigningState) MemberIndex() member.Index {
 	return rss.member.index
 }
 
-// verificationState is the state during which group members verify all signatures
+// verificationState is the state during which group members verify all validSignatures
 // that valid submitters sent over the broadcast channel in the previous state.
-// Valid signatures are added to the state.
+// Valid validSignatures are added to the state.
 //
 // State is part of phase 13 of the protocol.
 type verificationState struct {
 	*resultSigningState
 
-	signatures map[member.Index]operator.Signature
+	validSignatures map[member.Index]operator.Signature
 }
 
 func (vs *verificationState) ActiveBlocks() int { return 0 }
@@ -104,7 +104,7 @@ func (vs *verificationState) Initiate() error {
 		return err
 	}
 
-	vs.signatures = signatures
+	vs.validSignatures = signatures
 	return nil
 }
 
@@ -119,7 +119,7 @@ func (vs *verificationState) Next() signingState {
 		member:     NewSubmittingMember(vs.member.index),
 		requestID:  vs.requestID,
 		result:     vs.result,
-		signatures: vs.signatures,
+		signatures: vs.validSignatures,
 	}
 
 }
