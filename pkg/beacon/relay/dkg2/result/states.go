@@ -77,7 +77,15 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 
 func (rss *resultSigningState) Next() signingState {
 	// set up the verification state, phase 13 part 2
-	return &signaturesVerificationState{rss, nil}
+	return &signaturesVerificationState{
+		channel:           rss.channel,
+		handle:            rss.handle,
+		member:            rss.member,
+		requestID:         rss.requestID,
+		result:            rss.result,
+		signatureMessages: rss.signatureMessages,
+		validSignatures:   make(map[member.Index]operator.Signature),
+	}
 
 }
 
