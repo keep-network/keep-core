@@ -31,6 +31,7 @@ func SignAndSubmit(
 	initialState := &resultSigningState{
 		channel:               channel,
 		relayChain:            relayChain,
+		blockCounter:          blockCounter,
 		member:                NewSigningMember(playerIndex, nil),
 		requestID:             requestID,
 		result:                result,

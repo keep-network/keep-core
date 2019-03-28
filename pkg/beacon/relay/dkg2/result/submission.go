@@ -57,11 +57,11 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
 	signatures map[member.Index]operator.Signature,
-	chainHandle chain.Handle,
+	chainRelay relayChain.Interface,
+	blockCounter chain.BlockCounter,
 ) error {
 	onSubmittedResultChan := make(chan *event.DKGResultSubmission)
 
-	chainRelay := chainHandle.ThresholdRelay()
 	subscription, err := chainRelay.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			onSubmittedResultChan <- event
@@ -99,10 +99,6 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	}
 
 	// Wait until the current member is eligible to submit the result.
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		return returnWithError(err)
-	}
 	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(blockCounter)
 	if err != nil {
 		return returnWithError(

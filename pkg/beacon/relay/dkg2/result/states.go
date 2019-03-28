@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
@@ -20,8 +21,9 @@ type signingState = state.State
 //
 // State is part of phase 13 of the protocol.
 type resultSigningState struct {
-	channel    net.BroadcastChannel
-	relayChain relayChain.Interface
+	channel      net.BroadcastChannel
+	relayChain   relayChain.Interface
+	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
@@ -79,6 +81,7 @@ func (rss *resultSigningState) Next() signingState {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
 		relayChain:        rss.relayChain,
+		blockCounter:      rss.blockCounter,
 		member:            rss.member,
 		requestID:         rss.requestID,
 		result:            rss.result,
@@ -98,8 +101,9 @@ func (rss *resultSigningState) MemberIndex() member.Index {
 //
 // State is part of phase 13 of the protocol.
 type signaturesVerificationState struct {
-	channel    net.BroadcastChannel
-	relayChain relayChain.Interface
+	channel      net.BroadcastChannel
+	relayChain   relayChain.Interface
+	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
@@ -128,12 +132,13 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 
 func (svs *signaturesVerificationState) Next() signingState {
 	return &resultSubmissionState{
-		channel:    svs.channel,
-		relayChain: svs.relayChain,
-		member:     NewSubmittingMember(svs.member.index),
-		requestID:  svs.requestID,
-		result:     svs.result,
-		signatures: svs.validSignatures,
+		channel:      svs.channel,
+		relayChain:   svs.relayChain,
+		blockCounter: svs.blockCounter,
+		member:       NewSubmittingMember(svs.member.index),
+		requestID:    svs.requestID,
+		result:       svs.result,
+		signatures:   svs.validSignatures,
 	}
 
 }
@@ -147,8 +152,9 @@ func (svs *signaturesVerificationState) MemberIndex() member.Index {
 //
 // State covers, the final phase, phase 14 of the protocol.
 type resultSubmissionState struct {
-	channel    net.BroadcastChannel
-	relayChain relayChain.Interface
+	channel      net.BroadcastChannel
+	relayChain   relayChain.Interface
+	blockCounter chain.BlockCounter
 
 	member *SubmittingMember
 
@@ -165,6 +171,7 @@ func (rss *resultSubmissionState) Initiate() error {
 		rss.result,
 		rss.signatures,
 		rss.relayChain,
+		rss.blockCounter,
 	)
 }
 
