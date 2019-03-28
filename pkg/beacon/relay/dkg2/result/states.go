@@ -16,14 +16,14 @@ type signingState = state.State
 // dkg result (by hashing their dkg result, and then signing the result), and
 // share this over the broadcast channel.
 //
-// State covers phase 13 of the protocol.
+// State is part of phase 13 of the protocol.
 type resultSigningState struct {
 	channel net.BroadcastChannel
 	handle  chain.Handle
 
 	member *SigningMember
 
-	result                relayChain.DKGResult
+	result                *relayChain.DKGResult
 	disqualifiedMemberIDs []gjkr.MemberID
 	inactiveMemberIDs     []gjkr.MemberID
 
