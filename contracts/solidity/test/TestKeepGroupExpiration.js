@@ -68,19 +68,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
     );
 
-    await keepGroupImplV1.submitGroupPublicKey(["1"], 1);
-
-    await keepGroupImplV1.submitGroupPublicKey(["2"], 2);
-
-    await keepGroupImplV1.submitGroupPublicKey(["3"], 3);
-
-    await keepGroupImplV1.submitGroupPublicKey(["4"], 4);
-
-    await keepGroupImplV1.submitGroupPublicKey(["5"], 5);
-
-    await keepGroupImplV1.submitGroupPublicKey(["6"], 6);
-
-    await keepGroupImplV1.submitGroupPublicKey(["7"], 7);
+    for (var i = 1; i <= 7; i++)
+      await keepGroupImplV1.submitGroupPublicKey([i], i);
   });
 
   it("should be able to check if groups were added", async function() {
