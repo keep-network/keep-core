@@ -77,7 +77,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 
 func (rss *resultSigningState) Next() signingState {
 	// set up the verification state, phase 13 part 2
-	return &verificationState{rss, nil}
+	return &signaturesVerificationState{rss, nil}
 
 }
 
@@ -85,47 +85,47 @@ func (rss *resultSigningState) MemberIndex() member.Index {
 	return rss.member.index
 }
 
-// verificationState is the state during which group members verify all validSignatures
+// signaturesVerificationState is the state during which group members verify all validSignatures
 // that valid submitters sent over the broadcast channel in the previous state.
 // Valid validSignatures are added to the state.
 //
 // State is part of phase 13 of the protocol.
-type verificationState struct {
+type signaturesVerificationState struct {
 	*resultSigningState
 
 	validSignatures map[member.Index]operator.Signature
 }
 
-func (vs *verificationState) ActiveBlocks() int { return 0 }
+func (svs *signaturesVerificationState) ActiveBlocks() int { return 0 }
 
-func (vs *verificationState) Initiate() error {
-	signatures, err := vs.member.VerifyDKGResultSignatures(vs.signatureMessages)
+func (svs *signaturesVerificationState) Initiate() error {
+	signatures, err := svs.member.VerifyDKGResultSignatures(svs.signatureMessages)
 	if err != nil {
 		return err
 	}
 
-	vs.validSignatures = signatures
+	svs.validSignatures = signatures
 	return nil
 }
 
-func (vs *verificationState) Receive(msg net.Message) error {
+func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (vs *verificationState) Next() signingState {
+func (svs *signaturesVerificationState) Next() signingState {
 	return &resultSubmissionState{
-		channel:    vs.channel,
-		handle:     vs.handle,
-		member:     NewSubmittingMember(vs.member.index),
-		requestID:  vs.requestID,
-		result:     vs.result,
-		signatures: vs.validSignatures,
+		channel:    svs.channel,
+		handle:     svs.handle,
+		member:     NewSubmittingMember(svs.member.index),
+		requestID:  svs.requestID,
+		result:     svs.result,
+		signatures: svs.validSignatures,
 	}
 
 }
 
-func (vs *verificationState) MemberIndex() member.Index {
-	return vs.member.index
+func (svs *signaturesVerificationState) MemberIndex() member.Index {
+	return svs.member.index
 }
 
 // resultSubmissionState is the state during which group members submit the dkg
