@@ -1,10 +1,10 @@
-= Staking models
+= Operating models
 
 To develop a suitable staking model for the network,
 it is necessary to choose between two different models
-for handling stakes: _leveraged_ or _fully backed_.
+for operating on stakes: _leveraged_ or _fully backed_.
 
-== Fully backed staking
+== Fully backed operation
 Staked tokens are divided to
 _free stakes_ that can be used as collateral for new operations,
 and _locked stakes_ that are already backing some existing operation.
@@ -24,7 +24,7 @@ However, the network throughput is limited
 because there is only so much stake available for collateral,
 especially for operations requiring high stakes.
 
-== Leveraged staking
+== Leveraged operation
 When operations require tokens as collateral,
 stakers who join the operation are required to hold sufficient stake
 without considering other operations.
@@ -41,26 +41,26 @@ The possibility of a default
 can significantly reduce the incentives for correct behavior.
 
 On the upside,
-leveraged staking is simpler and cheaper to implement,
+leveraged operation is simpler and cheaper to implement,
 it has no limits on the number of concurrent operations,
 and the _marginal deterrent_ to misbehavior can be higher.
 
 == Demand and network throughput
 Let a staker's _used stake_ be the sum of the stakes required
 for each operation they participate in.
-In fully backed staking _used stake = locked stake_.
-With leveraged staking,
+In fully backed operation _used stake = locked stake_.
+With leveraged operation,
 _used stake_ equals the sum of all penalties the staker could incur
 from misbehaving on each operation they participate in.
 
 A staker's _usage ratio (UR)_ equals ther _used stake / total stake_.
-In fully backed staking
+In fully backed operation
 each staker by definition has a usage ratio between 0 and 1.
 Let the system's _average usage ratio (AUR)_ be
 the _total used stake / total tokens staked_ across all stakers.
 This is also between 0 and 1.
 
-=== Scaling with fully backed staking
+=== Scaling with fully backed operation
 Because _used stake = stake per operation * concurrent operations_,
 the limit of _UR = 1_ limits the number of concurrent operations
 to _total tokens staked / stake per operation_.
@@ -132,7 +132,7 @@ and stakes would be freed up immediately to match growing demand.
 
 == Leverage, overleverage and attacks
 Call the ratio _used stake / stake_ the _leverage ratio_.
-This is the same formula as the _usage ratio_ of fully backed staking,
+This is the same formula as the _usage ratio_ of fully backed operation,
 but is not constrained to be below 1.
 
 If Alice has 50 stake and is participating in 7 operations,
@@ -195,7 +195,7 @@ divided by Mallory's leverage ratio.
 ==== Demand ratio and overleverage
 When analyzed in a vacuum,
 it appears as if any degree of leverage would render the network vulnerable.
-However, when comparing fully backed and leveraged staking,
+However, when comparing fully backed and leveraged operation,
 it is necessary to consider the demand ratio as well.
 
 When the demand ratio (DR) is below 1,
@@ -204,17 +204,17 @@ With the average leverage ratio (ALR) equaling the demand ratio,
 all stakers whose stakes are leveraged are by definition overleveraged.
 
 When the DR exceeds 1,
-fully backed staking necessitates reducing the minimum stake. 
-This changes the balance between fully backed and leveraged staking,
-as fully backed staking can only sustain a maximum penalty of
+fully backed operation necessitates reducing the minimum stake. 
+This changes the balance between fully backed and leveraged operation,
+as fully backed operation can only sustain a maximum penalty of
 _initial minimum stake / demand ratio_.
-Leveraged stake has no such constraint
+Leveraged operation has no such constraint
 and the minimum stake and maximum penalty can stay constant.
 
 The result of this asymmetry is that an absolutely leveraged staker
 whose leverage ratio equals the DR = ALR
 will still have the same _total deterrent_ over all their operations
-as they would under fully backed staking,
+as they would under fully backed operation,
 while having a significantly greater _marginal deterrent_.
 This discrepancy is arguably desirable
 if opportunities to profitably misbehave are uncommon.
@@ -223,12 +223,12 @@ A different picture emerges when considering a staker
 who is _overleveraged_ compared to the average.
 In this case the marginal deterrent remains high,
 but the effective _per-operation deterrent_ is divided by the OR.
-Under fully backed staking it is not possible to become overleveraged
+Under fully backed operation it is not possible to become overleveraged
 and per-operation deterrent remains constant.
 
 .Deterrent amounts
 |===
-|Type |Value under fully backed staking |Value under leveraged staking
+|Type |Value under fully backed operation |Value under leveraged operation
 
 |Marginal deterrent
 |minimum stake / DR
