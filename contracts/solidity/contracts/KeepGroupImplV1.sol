@@ -475,10 +475,10 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Verifies and returns an active group.
+     * @dev Returns public key of a group from active groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */
-    function verifyAndReturnGroup(uint256 previousEntry) public returns (bytes memory) { 
+    function selectGroup(uint256 previousEntry) public returns(bytes memory) {
         while (_groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].registrationBlockHeight + _groupTimeout < block.number) {
             if (_groups.length - _expiredOffset > _minGroups) {
                 if (previousEntry % (_groups.length - _expiredOffset) == 0) {
@@ -487,14 +487,6 @@ contract KeepGroupImplV1 is Ownable {
             } else break;
         }
         return _groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].groupPubKey;
-    }
-
-    /**
-     * @dev Returns public key of a group from available groups using modulo operator.
-     * @param previousEntry Previous random beacon value.
-     */
-    function selectGroup(uint256 previousEntry) public returns(bytes memory) {
-        return verifyAndReturnGroup(previousEntry);
     }
 
     /**
