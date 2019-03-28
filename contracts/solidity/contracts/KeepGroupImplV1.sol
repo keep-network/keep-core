@@ -481,12 +481,13 @@ contract KeepGroupImplV1 is Ownable {
     function verifyAndReturnGroup(uint256 previousEntry) public returns (bytes memory) { 
         while (_groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].registrationBlockHeight + _groupTimeout < block.number) {
             if (_groups.length - _expiredOffset > _minGroups) {
-                _expiredOffset += previousEntry % (_groups.length - _expiredOffset);
+                if (previousEntry % (_groups.length - _expiredOffset) == 0) {
+                    _expiredOffset++;
+                } else _expiredOffset += previousEntry % (_groups.length - _expiredOffset);
             } else break;
         }
         return _groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].groupId;
     }
-
 
     /**
      * @dev Returns public key of a group from available groups using modulo operator.
