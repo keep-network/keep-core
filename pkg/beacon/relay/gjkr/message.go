@@ -9,12 +9,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// ProtocolMessage is a common interface for all messages of GJKR DKG protocol.
-type ProtocolMessage interface {
-	// SenderID returns protocol-level identifier of the message sender.
-	SenderID() group.MemberIndex
-}
-
 // JoinMessage is sent by member to announce its presence in the group.
 type JoinMessage struct {
 	senderID group.MemberIndex

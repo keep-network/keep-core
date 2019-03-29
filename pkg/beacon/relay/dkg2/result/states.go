@@ -25,10 +25,8 @@ type resultSigningState struct {
 
 	member *SigningMember
 
-	requestID             *big.Int
-	result                *relayChain.DKGResult
-	disqualifiedMemberIDs []group.MemberIndex
-	inactiveMemberIDs     []group.MemberIndex
+	requestID *big.Int
+	result    *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
 }
@@ -49,28 +47,12 @@ func (rss *resultSigningState) Initiate() error {
 func (rss *resultSigningState) Receive(msg net.Message) error {
 	switch signedMessage := msg.Payload().(type) {
 	case *DKGResultHashSignatureMessage:
-		// ignore messages from ourselves
-		if signedMessage.senderIndex == rss.member.index {
-			return nil
+		if !group.IsMessageFromSelf(rss.member.index, signedMessage) &&
+			group.IsSenderAccepted(rss.member, signedMessage) {
+			rss.signatureMessages = append(rss.signatureMessages, signedMessage)
 		}
-
-		// ignore messages from DQ
-		for _, disqualifiedMember := range rss.disqualifiedMemberIDs {
-			if signedMessage.senderIndex == disqualifiedMember {
-				return nil
-			}
-		}
-
-		// ignore messages from IA
-		for _, inactiveMemeber := range rss.inactiveMemberIDs {
-			if signedMessage.senderIndex == inactiveMemeber {
-				return nil
-			}
-		}
-
-		// then add it to our list
-		rss.signatureMessages = append(rss.signatureMessages, signedMessage)
 	}
+
 	return nil
 }
 

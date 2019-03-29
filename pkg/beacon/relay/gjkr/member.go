@@ -14,7 +14,7 @@ type memberCore struct {
 	ID group.MemberIndex
 
 	// Group to which this member belongs.
-	group *Group
+	group *group.Group
 
 	// Evidence log provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
@@ -214,12 +214,7 @@ func NewMember(
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
-			&Group{
-				dishonestThreshold,
-				groupMembers,
-				[]group.MemberIndex{},
-				[]group.MemberIndex{},
-			},
+			group.NewDkgGroup(dishonestThreshold, groupMembers),
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
 		},
@@ -351,7 +346,7 @@ func (fm *FinalizingMember) Result() *Result {
 	return &Result{
 		GroupPublicKey:       fm.groupPublicKey, // nil if threshold not satisfied
 		GroupPrivateKeyShare: fm.groupPrivateKeyShare,
-		Disqualified:         fm.group.disqualifiedMemberIDs, // DQ
-		Inactive:             fm.group.inactiveMemberIDs,     // IA
+		Disqualified:         fm.group.DisqualifiedMemberIDs(), // DQ
+		Inactive:             fm.group.InactiveMemberIDs(),     // IA
 	}
 }

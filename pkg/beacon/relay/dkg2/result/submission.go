@@ -18,6 +18,9 @@ type SubmittingMember struct {
 	// Represents the member's position for submission.
 	index group.MemberIndex
 
+	// Group to which this member belongs.
+	group *group.Group
+
 	// Predefined step for each submitting window. The value is used to determine
 	// the eligible submitting member.
 	blockStep uint64

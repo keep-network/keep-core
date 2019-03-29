@@ -15,6 +15,9 @@ import (
 type SigningMember struct {
 	index group.MemberIndex
 
+	// Group to which this member belongs.
+	group *group.Group
+
 	// Key used for signing the DKG result hash.
 	privateKey *operator.PrivateKey
 
@@ -27,10 +30,12 @@ type SigningMember struct {
 // NewSigningMember creates a member to execute signing DKG result hash.
 func NewSigningMember(
 	memberIndex group.MemberIndex,
+	dkgGroup *group.Group,
 	operatorPrivateKey *operator.PrivateKey,
 ) *SigningMember {
 	return &SigningMember{
 		index:      memberIndex,
+		group:      dkgGroup,
 		privateKey: operatorPrivateKey,
 	}
 }
@@ -146,4 +151,8 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 	receivedValidResultSignatures[sm.index] = sm.selfDKGResultSignature
 
 	return receivedValidResultSignatures, nil
+}
+
+func (sm *SigningMember) IsSenderAccepted(senderID group.MemberIndex) bool {
+	return sm.group.IsOperating(senderID)
 }

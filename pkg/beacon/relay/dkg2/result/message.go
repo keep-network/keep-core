@@ -21,3 +21,8 @@ type DKGResultHashSignatureMessage struct {
 	// the receiver.
 	publicKey *operator.PublicKey
 }
+
+// SenderID returns protocol-level identifier of the message sender.
+func (m *DKGResultHashSignatureMessage) SenderID() group.MemberIndex {
+	return m.senderIndex
+}
