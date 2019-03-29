@@ -5,18 +5,19 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 // ProtocolMessage is a common interface for all messages of GJKR DKG protocol.
 type ProtocolMessage interface {
 	// SenderID returns protocol-level identifier of the message sender.
-	SenderID() MemberID
+	SenderID() member.Index
 }
 
 // JoinMessage is sent by member to announce its presence in the group.
 type JoinMessage struct {
-	senderID MemberID
+	senderID member.Index
 }
 
 // EphemeralPublicKeyMessage is a message payload that carries the sender's
@@ -33,9 +34,9 @@ type JoinMessage struct {
 // this message contains all the generated public keys and it is broadcast
 // within the group.
 type EphemeralPublicKeyMessage struct {
-	senderID MemberID // i
+	senderID member.Index // i
 
-	ephemeralPublicKeys map[MemberID]*ephemeral.PublicKey // j -> Y_ij
+	ephemeralPublicKeys map[member.Index]*ephemeral.PublicKey // j -> Y_ij
 }
 
 // MemberCommitmentsMessage is a message payload that carries the sender's
@@ -44,7 +45,7 @@ type EphemeralPublicKeyMessage struct {
 //
 // It is expected to be broadcast.
 type MemberCommitmentsMessage struct {
-	senderID MemberID
+	senderID member.Index
 
 	commitments []*bn256.G1 // slice of C_ik
 }
@@ -54,9 +55,9 @@ type MemberCommitmentsMessage struct {
 //
 // It is expected to be broadcast within the group.
 type PeerSharesMessage struct {
-	senderID MemberID // i
+	senderID member.Index // i
 
-	shares map[MemberID]*peerShares // j -> (s_ij, t_ij)
+	shares map[member.Index]*peerShares // j -> (s_ij, t_ij)
 }
 
 type peerShares struct {
@@ -71,9 +72,9 @@ type peerShares struct {
 //
 // It is expected to be broadcast.
 type SecretSharesAccusationsMessage struct {
-	senderID MemberID
+	senderID member.Index
 
-	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
+	accusedMembersKeys map[member.Index]*ephemeral.PrivateKey
 }
 
 // MemberPublicKeySharePointsMessage is a message payload that carries the
@@ -81,7 +82,7 @@ type SecretSharesAccusationsMessage struct {
 //
 // It is expected to be broadcast.
 type MemberPublicKeySharePointsMessage struct {
-	senderID MemberID
+	senderID member.Index
 
 	publicKeySharePoints []*bn256.G2 // A_ik = g^{a_ik} mod p
 }
@@ -93,9 +94,9 @@ type MemberPublicKeySharePointsMessage struct {
 // message should be broadcast but with an empty map of `accusedMembersKeys`.
 // It is expected to be broadcast.
 type PointsAccusationsMessage struct {
-	senderID MemberID
+	senderID member.Index
 
-	accusedMembersKeys map[MemberID]*ephemeral.PrivateKey
+	accusedMembersKeys map[member.Index]*ephemeral.PrivateKey
 }
 
 // DisqualifiedEphemeralKeysMessage is a message payload that carries sender's
@@ -103,65 +104,65 @@ type PointsAccusationsMessage struct {
 // communication with members disqualified when points accusations were resolved.
 // It is expected to be broadcast.
 type DisqualifiedEphemeralKeysMessage struct {
-	senderID MemberID
+	senderID member.Index
 
-	privateKeys map[MemberID]*ephemeral.PrivateKey
+	privateKeys map[member.Index]*ephemeral.PrivateKey
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (jm *JoinMessage) SenderID() MemberID {
+func (jm *JoinMessage) SenderID() member.Index {
 	return jm.senderID
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (epkm *EphemeralPublicKeyMessage) SenderID() MemberID {
+func (epkm *EphemeralPublicKeyMessage) SenderID() member.Index {
 	return epkm.senderID
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (mcm *MemberCommitmentsMessage) SenderID() MemberID {
+func (mcm *MemberCommitmentsMessage) SenderID() member.Index {
 	return mcm.senderID
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (psm *PeerSharesMessage) SenderID() MemberID {
+func (psm *PeerSharesMessage) SenderID() member.Index {
 	return psm.senderID
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (ssam *SecretSharesAccusationsMessage) SenderID() MemberID {
+func (ssam *SecretSharesAccusationsMessage) SenderID() member.Index {
 	return ssam.senderID
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (mpkspm *MemberPublicKeySharePointsMessage) SenderID() MemberID {
+func (mpkspm *MemberPublicKeySharePointsMessage) SenderID() member.Index {
 	return mpkspm.senderID
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (pam *PointsAccusationsMessage) SenderID() MemberID {
+func (pam *PointsAccusationsMessage) SenderID() member.Index {
 	return pam.senderID
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (dekm *DisqualifiedEphemeralKeysMessage) SenderID() MemberID {
+func (dekm *DisqualifiedEphemeralKeysMessage) SenderID() member.Index {
 	return dekm.senderID
 }
 
 // NewJoinMessage creates a new JoinMessage for the provided sender ID.
-func NewJoinMessage(senderID MemberID) *JoinMessage {
+func NewJoinMessage(senderID member.Index) *JoinMessage {
 	return &JoinMessage{senderID}
 }
 
-func newPeerSharesMessage(senderID MemberID) *PeerSharesMessage {
+func newPeerSharesMessage(senderID member.Index) *PeerSharesMessage {
 	return &PeerSharesMessage{
 		senderID: senderID,
-		shares:   make(map[MemberID]*peerShares),
+		shares:   make(map[member.Index]*peerShares),
 	}
 }
 
 func (psm *PeerSharesMessage) addShares(
-	receiverID MemberID,
+	receiverID member.Index,
 	shareS, shareT *big.Int,
 	symmetricKey ephemeral.SymmetricKey,
 ) error {
@@ -181,7 +182,7 @@ func (psm *PeerSharesMessage) addShares(
 }
 
 func (psm *PeerSharesMessage) decryptShareS(
-	receiverID MemberID,
+	receiverID member.Index,
 	key ephemeral.SymmetricKey,
 ) (*big.Int, error) {
 	shares, ok := psm.shares[receiverID]
@@ -198,7 +199,7 @@ func (psm *PeerSharesMessage) decryptShareS(
 }
 
 func (psm *PeerSharesMessage) decryptShareT(
-	receiverID MemberID,
+	receiverID member.Index,
 	key ephemeral.SymmetricKey,
 ) (*big.Int, error) {
 	shares, ok := psm.shares[receiverID]
@@ -221,7 +222,7 @@ func (psm *PeerSharesMessage) decryptShareT(
 // an invalid message. In such case, it should be rejected to do not cause
 // a failure in DKG protocol.
 func (psm *PeerSharesMessage) CanDecrypt(
-	receiverID MemberID,
+	receiverID member.Index,
 	key ephemeral.SymmetricKey,
 ) bool {
 	if _, err := psm.decryptShareS(receiverID, key); err != nil {

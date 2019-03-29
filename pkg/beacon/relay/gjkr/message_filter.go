@@ -1,16 +1,18 @@
 package gjkr
 
+import "github.com/keep-network/keep-core/pkg/beacon/relay/member"
+
 // MessageFiltering interface defines method allowing to filter out messages
 // from members that are not part of the group or were marked as IA or DQ.
 type MessageFiltering interface {
-	IsSenderAccepted(senderID MemberID) bool
+	IsSenderAccepted(senderID member.Index) bool
 }
 
 // IsSenderAccepted returns true if the message from the given sender should be
 // accepted for further processing. Otherwise, function returns false.
 // Message from the given sender is allowed only if that member is a properly
 // operating group member - it was not DQ or IA so far.
-func (mc *memberCore) IsSenderAccepted(senderID MemberID) bool {
+func (mc *memberCore) IsSenderAccepted(senderID member.Index) bool {
 	return mc.group.isOperating(senderID)
 }
 
@@ -76,23 +78,23 @@ func (mc *memberCore) messageFilter() *inactiveMemberFilter {
 	return &inactiveMemberFilter{
 		selfMemberID:       mc.ID,
 		group:              mc.group,
-		phaseActiveMembers: make([]MemberID, 0),
+		phaseActiveMembers: make([]member.Index, 0),
 	}
 }
 
 type inactiveMemberFilter struct {
-	selfMemberID MemberID
+	selfMemberID member.Index
 	group        *Group
 
-	phaseActiveMembers []MemberID
+	phaseActiveMembers []member.Index
 }
 
-func (mf *inactiveMemberFilter) markMemberAsActive(memberID MemberID) {
+func (mf *inactiveMemberFilter) markMemberAsActive(memberID member.Index) {
 	mf.phaseActiveMembers = append(mf.phaseActiveMembers, memberID)
 }
 
 func (mf *inactiveMemberFilter) flushInactiveMembers() {
-	isActive := func(id MemberID) bool {
+	isActive := func(id member.Index) bool {
 		if id == mf.selfMemberID {
 			return true
 		}

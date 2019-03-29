@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -28,8 +27,8 @@ type resultSigningState struct {
 
 	requestID             *big.Int
 	result                *relayChain.DKGResult
-	disqualifiedMemberIDs []gjkr.MemberID
-	inactiveMemberIDs     []gjkr.MemberID
+	disqualifiedMemberIDs []member.Index
+	inactiveMemberIDs     []member.Index
 
 	signatureMessages []*DKGResultHashSignatureMessage
 }

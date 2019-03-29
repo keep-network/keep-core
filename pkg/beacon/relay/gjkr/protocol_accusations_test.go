@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -15,32 +16,32 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	currentMemberID := MemberID(2) // i
+	currentMemberID := member.Index(2) // i
 
 	var tests = map[string]struct {
-		accuserID               MemberID // j
-		accusedID               MemberID // m
+		accuserID               member.Index // j
+		accusedID               member.Index // m
 		modifyShareS            func(shareS *big.Int) *big.Int
 		modifyShareT            func(shareT *big.Int) *big.Int
 		modifyCommitments       func(commitments []*bn256.G1) []*bn256.G1
 		modifyAccusedPrivateKey func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey
-		expectedResult          []MemberID
+		expectedResult          []member.Index
 		expectedError           error
 	}{
 		"false accusation - accuser is punished": {
 			accuserID:      3,
 			accusedID:      4,
-			expectedResult: []MemberID{3},
+			expectedResult: []member.Index{3},
 		},
 		"current member as an accuser - accusation skipped": {
 			accuserID:      currentMemberID,
 			accusedID:      3,
-			expectedResult: []MemberID{},
+			expectedResult: []member.Index{},
 		},
 		"current member as an accused - accusation skipped": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: []MemberID{},
+			expectedResult: []member.Index{},
 		},
 		"incorrect shareS - accused member is punished": {
 			accuserID: 3,
@@ -48,7 +49,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			modifyShareS: func(shareS *big.Int) *big.Int {
 				return new(big.Int).Sub(shareS, big.NewInt(1))
 			},
-			expectedResult: []MemberID{4},
+			expectedResult: []member.Index{4},
 		},
 		"incorrect shareT - accused member is punished": {
 			accuserID: 3,
@@ -56,7 +57,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			modifyShareT: func(shareT *big.Int) *big.Int {
 				return new(big.Int).Sub(shareT, big.NewInt(13))
 			},
-			expectedResult: []MemberID{4},
+			expectedResult: []member.Index{4},
 		},
 		"incorrect commitments - accused member is punished": {
 			accuserID: 3,
@@ -70,7 +71,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				}
 				return newCommitments
 			},
-			expectedResult: []MemberID{4},
+			expectedResult: []member.Index{4},
 		},
 		"incorrect accused private key - error returned": {
 			accuserID: 3,
@@ -92,7 +93,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
-			member := findSharesJustifyingMemberByID(members, currentMemberID)
+			justifyingMember := findSharesJustifyingMemberByID(members, currentMemberID)
 
 			accuser := findSharesJustifyingMemberByID(members, test.accuserID)
 			modifiedShareS := accuser.receivedValidSharesS[test.accusedID]
@@ -105,8 +106,10 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				modifiedShareT = test.modifyShareT(modifiedShareT)
 			}
 			if test.modifyCommitments != nil {
-				member.receivedValidPeerCommitments[test.accusedID] =
-					test.modifyCommitments(member.receivedValidPeerCommitments[test.accusedID])
+				justifyingMember.receivedValidPeerCommitments[test.accusedID] =
+					test.modifyCommitments(
+						justifyingMember.receivedValidPeerCommitments[test.accusedID],
+					)
 			}
 
 			// Simulate received PeerSharesMessage send by accused member.
@@ -119,9 +122,9 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: [%v]", err)
 			}
-			shares := make(map[MemberID]*peerShares)
+			shares := make(map[member.Index]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
-			member.evidenceLog.PutPeerSharesMessage(
+			justifyingMember.evidenceLog.PutPeerSharesMessage(
 				&PeerSharesMessage{
 					senderID: test.accusedID,
 					shares:   shares,
@@ -129,7 +132,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			)
 
 			// Generate SecretSharesAccusationsMessages
-			accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			accusedMembersKeys := make(map[member.Index]*ephemeral.PrivateKey)
 			accusedMembersKeys[test.accusedID] = accuser.ephemeralKeyPairs[test.accusedID].PrivateKey
 			if test.modifyAccusedPrivateKey != nil {
 				accusedMembersKeys[test.accusedID] = test.modifyAccusedPrivateKey(accusedMembersKeys[test.accusedID])
@@ -140,7 +143,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				accusedMembersKeys: accusedMembersKeys,
 			})
 
-			result, err := member.ResolveSecretSharesAccusationsMessages(
+			result, err := justifyingMember.ResolveSecretSharesAccusationsMessages(
 				messages,
 			)
 
@@ -156,13 +159,13 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 }
 
 func TestRecoverSymmetricKey(t *testing.T) {
-	member1ID := MemberID(1)
+	member1ID := member.Index(1)
 	member1KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	member2ID := MemberID(2)
+	member2ID := member.Index(2)
 	member2KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
@@ -172,14 +175,14 @@ func TestRecoverSymmetricKey(t *testing.T) {
 
 	messageBuffer := newDkgEvidenceLog()
 
-	ephemeralPublicKeys1 := make(map[MemberID]*ephemeral.PublicKey)
+	ephemeralPublicKeys1 := make(map[member.Index]*ephemeral.PublicKey)
 	ephemeralPublicKeys1[member2ID] = member1KeyPair.PublicKey
 	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
 		member1ID,
 		ephemeralPublicKeys1,
 	})
 
-	ephemeralPublicKeys2 := make(map[MemberID]*ephemeral.PublicKey)
+	ephemeralPublicKeys2 := make(map[member.Index]*ephemeral.PublicKey)
 	ephemeralPublicKeys2[member1ID] = member2KeyPair.PublicKey
 	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
 		member2ID,
@@ -202,13 +205,13 @@ func TestRecoverSymmetricKey(t *testing.T) {
 }
 
 func TestRecoverShares(t *testing.T) {
-	member1ID := MemberID(1)
+	member1ID := member.Index(1)
 	member1KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	member2ID := MemberID(2)
+	member2ID := member.Index(2)
 	member2KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
@@ -228,7 +231,7 @@ func TestRecoverShares(t *testing.T) {
 	}
 
 	messageBuffer := newDkgEvidenceLog()
-	shares := make(map[MemberID]*peerShares)
+	shares := make(map[member.Index]*peerShares)
 	shares[member2ID] = &peerShares{encryptedShareS, encryptedShareT}
 	messageBuffer.PutPeerSharesMessage(&PeerSharesMessage{member1ID, shares})
 
@@ -285,29 +288,29 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	threshold := 3
 	groupSize := 5
 
-	currentMemberID := MemberID(2) // i
+	currentMemberID := member.Index(2) // i
 
 	var tests = map[string]struct {
-		accuserID                  MemberID // j
-		accusedID                  MemberID // m
+		accuserID                  member.Index // j
+		accusedID                  member.Index // m
 		modifyShareS               func(shareS *big.Int) *big.Int
 		modifyPublicKeySharePoints func(points []*bn256.G2) []*bn256.G2
-		expectedResult             []MemberID
+		expectedResult             []member.Index
 	}{
 		"false accusation - sender is punished": {
 			accuserID:      3,
 			accusedID:      4,
-			expectedResult: []MemberID{3},
+			expectedResult: []member.Index{3},
 		},
 		"current member as a sender - accusation skipped": {
 			accuserID:      currentMemberID,
 			accusedID:      3,
-			expectedResult: []MemberID{},
+			expectedResult: []member.Index{},
 		},
 		"current member as an accused - accusation skipped": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: []MemberID{},
+			expectedResult: []member.Index{},
 		},
 		"incorrect shareS - accused member is punished": {
 			accuserID: 3,
@@ -315,7 +318,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			modifyShareS: func(shareS *big.Int) *big.Int {
 				return new(big.Int).Sub(shareS, big.NewInt(1))
 			},
-			expectedResult: []MemberID{4},
+			expectedResult: []member.Index{4},
 		},
 		"incorrect commitments - accused member is punished": {
 			accuserID: 3,
@@ -329,7 +332,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				}
 				return newPoints
 			},
-			expectedResult: []MemberID{4},
+			expectedResult: []member.Index{4},
 		},
 	}
 	for testName, test := range tests {
@@ -341,7 +344,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			if err != nil {
 				t.Fatalf("group initialization failed [%s]", err)
 			}
-			member := findCoefficientsJustifyingMemberByID(members, currentMemberID)
+			justifyingMember := findCoefficientsJustifyingMemberByID(members, currentMemberID)
 
 			accuser := findCoefficientsJustifyingMemberByID(members, test.accuserID)
 			modifiedShareS := accuser.receivedValidSharesS[test.accusedID]
@@ -349,8 +352,10 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				modifiedShareS = test.modifyShareS(modifiedShareS)
 			}
 			if test.modifyPublicKeySharePoints != nil {
-				member.receivedValidPeerPublicKeySharePoints[test.accusedID] =
-					test.modifyPublicKeySharePoints(member.receivedValidPeerPublicKeySharePoints[test.accusedID])
+				justifyingMember.receivedValidPeerPublicKeySharePoints[test.accusedID] =
+					test.modifyPublicKeySharePoints(
+						justifyingMember.receivedValidPeerPublicKeySharePoints[test.accusedID],
+					)
 			}
 
 			// Simulate received PeerSharesMessage send by accused member.
@@ -363,14 +368,14 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			shares := make(map[MemberID]*peerShares)
+			shares := make(map[member.Index]*peerShares)
 			shares[test.accuserID] = &peerShares{encryptedShareS, encryptedShareT}
-			member.evidenceLog.PutPeerSharesMessage(
+			justifyingMember.evidenceLog.PutPeerSharesMessage(
 				&PeerSharesMessage{test.accusedID, shares},
 			)
 
 			// Generate PointsAccusationMessages
-			accusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			accusedMembersKeys := make(map[member.Index]*ephemeral.PrivateKey)
 			accusedMembersKeys[test.accusedID] = accuser.ephemeralKeyPairs[test.accusedID].PrivateKey
 
 			var messages []*PointsAccusationsMessage
@@ -379,7 +384,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				accusedMembersKeys: accusedMembersKeys,
 			})
 
-			result, err := member.ResolvePublicKeySharePointsAccusationsMessages(
+			result, err := justifyingMember.ResolvePublicKeySharePointsAccusationsMessages(
 				messages,
 			)
 			if err != nil {
@@ -392,7 +397,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	}
 }
 
-func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id MemberID) *SharesJustifyingMember {
+func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id member.Index) *SharesJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
 			return m
@@ -403,7 +408,7 @@ func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id Member
 
 func findCoefficientsJustifyingMemberByID(
 	members []*PointsJustifyingMember,
-	id MemberID,
+	id member.Index,
 ) *PointsJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
@@ -436,9 +441,9 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
 
 	// Maps which will keep coefficients and commitments of all group members,
 	// with members IDs as keys.
-	groupCoefficientsA := make(map[MemberID][]*big.Int, groupSize)
-	groupCoefficientsB := make(map[MemberID][]*big.Int, groupSize)
-	groupCommitments := make(map[MemberID][]*bn256.G1, groupSize)
+	groupCoefficientsA := make(map[member.Index][]*big.Int, groupSize)
+	groupCoefficientsB := make(map[member.Index][]*big.Int, groupSize)
+	groupCommitments := make(map[member.Index][]*bn256.G1, groupSize)
 
 	// Generate threshold+1 coefficients and commitments for each group member.
 	for _, m := range sharesJustifyingMembers {

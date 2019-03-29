@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 )
 
 // Result of distributed key generation protocol.
@@ -14,9 +15,9 @@ type Result struct {
 	// be revealed publicly.
 	GroupPrivateKeyShare *big.Int
 	// Disqualified members IDs.
-	Disqualified []MemberID
+	Disqualified []member.Index
 	// Inactive members IDs.
-	Inactive []MemberID
+	Inactive []member.Index
 }
 
 // Equals checks if two results are equal.
@@ -50,7 +51,7 @@ func publicKeysEqual(expectedKey *bn256.G2, actualKey *bn256.G2) bool {
 
 // memberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
 // to have the same length and have the same order of entries.
-func memberIDSlicesEqual(expectedSlice []MemberID, actualSlice []MemberID) bool {
+func memberIDSlicesEqual(expectedSlice []member.Index, actualSlice []member.Index) bool {
 	if len(expectedSlice) != len(actualSlice) {
 		return false
 	}

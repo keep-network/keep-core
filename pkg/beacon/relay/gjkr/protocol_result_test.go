@@ -2,6 +2,8 @@ package gjkr
 
 import (
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 )
 
 func TestGenerateResult(t *testing.T) {
@@ -14,56 +16,56 @@ func TestGenerateResult(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		disqualifiedMemberIDs []MemberID
-		inactiveMemberIDs     []MemberID
+		disqualifiedMemberIDs []member.Index
+		inactiveMemberIDs     []member.Index
 		expectedResult        *Result
 	}{
 		"no disqualified or inactive members - success": {
 			expectedResult: &Result{
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   []MemberID{},
-				Inactive:       []MemberID{},
+				Disqualified:   []member.Index{},
+				Inactive:       []member.Index{},
 			},
 		},
 		"one disqualified member - success": {
-			disqualifiedMemberIDs: []MemberID{2},
+			disqualifiedMemberIDs: []member.Index{2},
 			expectedResult: &Result{
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   []MemberID{2},
-				Inactive:       []MemberID{},
+				Disqualified:   []member.Index{2},
+				Inactive:       []member.Index{},
 			},
 		},
 		"two inactive members - success": {
-			inactiveMemberIDs: []MemberID{3, 7},
+			inactiveMemberIDs: []member.Index{3, 7},
 			expectedResult: &Result{
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   []MemberID{},
-				Inactive:       []MemberID{3, 7},
+				Disqualified:   []member.Index{},
+				Inactive:       []member.Index{3, 7},
 			},
 		},
 		"more than half of threshold disqualified and inactive members - failure": {
-			disqualifiedMemberIDs: []MemberID{2},
-			inactiveMemberIDs:     []MemberID{3, 7},
+			disqualifiedMemberIDs: []member.Index{2},
+			inactiveMemberIDs:     []member.Index{3, 7},
 			expectedResult: &Result{
 				GroupPublicKey: nil,
-				Disqualified:   []MemberID{2},
-				Inactive:       []MemberID{3, 7},
+				Disqualified:   []member.Index{2},
+				Inactive:       []member.Index{3, 7},
 			},
 		},
 		"more than half of threshold inactive members - failure": {
-			inactiveMemberIDs: []MemberID{3, 5, 7},
+			inactiveMemberIDs: []member.Index{3, 5, 7},
 			expectedResult: &Result{
 				GroupPublicKey: nil,
 				Disqualified:   nil,
-				Inactive:       []MemberID{3, 5, 7},
+				Inactive:       []member.Index{3, 5, 7},
 			},
 		},
 		"more than half of threshold disqualified members - failure": {
-			disqualifiedMemberIDs: []MemberID{3, 5, 7},
+			disqualifiedMemberIDs: []member.Index{3, 5, 7},
 			expectedResult: &Result{
 				GroupPublicKey: nil,
-				Disqualified:   []MemberID{3, 5, 7},
-				Inactive:       []MemberID{},
+				Disqualified:   []member.Index{3, 5, 7},
+				Inactive:       []member.Index{},
 			},
 		},
 	}

@@ -5,6 +5,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr/gen/pb"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -27,7 +28,7 @@ func (jm *JoinMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	jm.senderID = MemberID(pbMsg.SenderID)
+	jm.senderID = member.Index(pbMsg.SenderID)
 	return nil
 }
 
@@ -54,7 +55,7 @@ func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	epkm.senderID = MemberID(pbMsg.SenderID)
+	epkm.senderID = member.Index(pbMsg.SenderID)
 
 	ephemeralPublicKeys, err := unmarshalPublicKeyMap(pbMsg.EphemeralPublicKeys)
 	if err != nil {
@@ -94,7 +95,7 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	mcm.senderID = MemberID(pbMsg.SenderID)
+	mcm.senderID = member.Index(pbMsg.SenderID)
 
 	var commitments []*bn256.G1
 	for _, commitmentBytes := range pbMsg.Commitments {
@@ -143,11 +144,11 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	psm.senderID = MemberID(pbMsg.SenderID)
+	psm.senderID = member.Index(pbMsg.SenderID)
 
-	shares := make(map[MemberID]*peerShares)
+	shares := make(map[member.Index]*peerShares)
 	for memberID, pbShares := range pbMsg.Shares {
-		shares[MemberID(memberID)] = &peerShares{
+		shares[member.Index(memberID)] = &peerShares{
 			encryptedShareS: pbShares.EncryptedShareS,
 			encryptedShareT: pbShares.EncryptedShareT,
 		}
@@ -181,7 +182,7 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	ssam.senderID = MemberID(pbMsg.SenderID)
+	ssam.senderID = member.Index(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
 	if err != nil {
@@ -221,7 +222,7 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	mpspm.senderID = MemberID(pbMsg.SenderID)
+	mpspm.senderID = member.Index(pbMsg.SenderID)
 
 	var keySharePoints []*bn256.G2
 	for _, keySharePointBytes := range pbMsg.PublicKeySharePoints {
@@ -263,7 +264,7 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	pam.senderID = MemberID(pbMsg.SenderID)
+	pam.senderID = member.Index(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
 	if err != nil {
@@ -298,7 +299,7 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	dekm.senderID = MemberID(pbMsg.SenderID)
+	dekm.senderID = member.Index(pbMsg.SenderID)
 
 	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
 	if err != nil {
@@ -311,7 +312,7 @@ func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 }
 
 func marshalPublicKeyMap(
-	publicKeys map[MemberID]*ephemeral.PublicKey,
+	publicKeys map[member.Index]*ephemeral.PublicKey,
 ) map[uint32][]byte {
 	marshalled := make(map[uint32][]byte, len(publicKeys))
 	for id, publicKey := range publicKeys {
@@ -322,15 +323,15 @@ func marshalPublicKeyMap(
 
 func unmarshalPublicKeyMap(
 	publicKeys map[uint32][]byte,
-) (map[MemberID]*ephemeral.PublicKey, error) {
-	var unmarshalled = make(map[MemberID]*ephemeral.PublicKey, len(publicKeys))
+) (map[member.Index]*ephemeral.PublicKey, error) {
+	var unmarshalled = make(map[member.Index]*ephemeral.PublicKey, len(publicKeys))
 	for memberID, publicKeyBytes := range publicKeys {
 		publicKey, err := ephemeral.UnmarshalPublicKey(publicKeyBytes)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal public key [%v]", err)
 		}
 
-		unmarshalled[MemberID(memberID)] = publicKey
+		unmarshalled[member.Index(memberID)] = publicKey
 
 	}
 
@@ -338,7 +339,7 @@ func unmarshalPublicKeyMap(
 }
 
 func marshalPrivateKeyMap(
-	privateKeys map[MemberID]*ephemeral.PrivateKey,
+	privateKeys map[member.Index]*ephemeral.PrivateKey,
 ) map[uint32][]byte {
 	marshalled := make(map[uint32][]byte, len(privateKeys))
 	for id, privateKey := range privateKeys {
@@ -349,10 +350,10 @@ func marshalPrivateKeyMap(
 
 func unmarshalPrivateKeyMap(
 	privateKeys map[uint32][]byte,
-) (map[MemberID]*ephemeral.PrivateKey, error) {
-	var unmarshalled = make(map[MemberID]*ephemeral.PrivateKey, len(privateKeys))
+) (map[member.Index]*ephemeral.PrivateKey, error) {
+	var unmarshalled = make(map[member.Index]*ephemeral.PrivateKey, len(privateKeys))
 	for memberID, privateKeyBytes := range privateKeys {
-		unmarshalled[MemberID(memberID)] = ephemeral.UnmarshalPrivateKey(privateKeyBytes)
+		unmarshalled[member.Index(memberID)] = ephemeral.UnmarshalPrivateKey(privateKeyBytes)
 	}
 
 	return unmarshalled, nil

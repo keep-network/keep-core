@@ -3,6 +3,8 @@ package gjkr
 import (
 	"fmt"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 )
 
 // For complaint resolution, group members need to have access to messages
@@ -30,11 +32,11 @@ import (
 type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
 	// broadcast in the first protocol round by the given sender.
-	ephemeralPublicKeyMessage(sender MemberID) *EphemeralPublicKeyMessage
+	ephemeralPublicKeyMessage(sender member.Index) *EphemeralPublicKeyMessage
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
 	// protocol round by the given sender.
-	peerSharesMessage(sender MemberID) *PeerSharesMessage
+	peerSharesMessage(sender member.Index) *PeerSharesMessage
 
 	// PutEphemeralMessage is a function that takes a single
 	// EphemeralPubKeyMessage, and stores that as evidence for future
@@ -86,7 +88,7 @@ func (d *dkgEvidenceLog) PutPeerSharesMessage(
 }
 
 func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
-	sender MemberID,
+	sender member.Index,
 ) *EphemeralPublicKeyMessage {
 	storedMessage := d.pubKeyMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
@@ -97,7 +99,7 @@ func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 }
 
 func (d *dkgEvidenceLog) peerSharesMessage(
-	sender MemberID,
+	sender member.Index,
 ) *PeerSharesMessage {
 	storedMessage := d.peerSharesMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
@@ -111,17 +113,17 @@ func (d *dkgEvidenceLog) peerSharesMessage(
 // it implements a generic get and put of messages through a mapping of a
 // sender.
 type messageStorage struct {
-	cache     map[MemberID]interface{}
+	cache     map[member.Index]interface{}
 	cacheLock sync.Mutex
 }
 
 func newMessageStorage() *messageStorage {
 	return &messageStorage{
-		cache: make(map[MemberID]interface{}),
+		cache: make(map[member.Index]interface{}),
 	}
 }
 
-func (ms *messageStorage) getMessage(sender MemberID) interface{} {
+func (ms *messageStorage) getMessage(sender member.Index) interface{} {
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()
 
@@ -134,7 +136,7 @@ func (ms *messageStorage) getMessage(sender MemberID) interface{} {
 }
 
 func (ms *messageStorage) putMessage(
-	sender MemberID,
+	sender member.Index,
 	message interface{},
 ) error {
 	ms.cacheLock.Lock()

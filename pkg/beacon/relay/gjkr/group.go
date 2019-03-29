@@ -1,6 +1,10 @@
 package gjkr
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+)
 
 // Group is protocol's members group.
 type Group struct {
@@ -9,22 +13,22 @@ type Group struct {
 	dishonestThreshold int
 	// IDs of all members of the group. Contains local member's ID.
 	// Initially empty, populated as each other member announces its presence.
-	memberIDs []MemberID
+	memberIDs []member.Index
 	// IDs of all disqualified members of the group.
-	disqualifiedMemberIDs []MemberID
+	disqualifiedMemberIDs []member.Index
 	// IDs of all inactive members of the group.
-	inactiveMemberIDs []MemberID
+	inactiveMemberIDs []member.Index
 }
 
 // MemberIDs returns IDs of all group members, as initially selected to the
 // group. Returned list contains IDs of all members, including those marked as
 // inactive or disqualified.
-func (g *Group) MemberIDs() []MemberID {
+func (g *Group) MemberIDs() []member.Index {
 	return g.memberIDs
 }
 
 // RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(memberID MemberID) error {
+func (g *Group) RegisterMemberID(memberID member.Index) error {
 	if err := memberID.Validate(); err != nil {
 		return fmt.Errorf("cannot register member ID in the group [%v]", err)
 	}
@@ -42,8 +46,8 @@ func (g *Group) RegisterMemberID(memberID MemberID) error {
 // OperatingMemberIDs returns IDs of all group members that are active and have
 // not been disqualified. All those members are properly operating in the group
 // at the moment of calling this method.
-func (g *Group) OperatingMemberIDs() []MemberID {
-	operatingMembers := make([]MemberID, 0)
+func (g *Group) OperatingMemberIDs() []member.Index {
+	operatingMembers := make([]member.Index, 0)
 	for _, member := range g.memberIDs {
 		if g.isOperating(member) {
 			operatingMembers = append(operatingMembers, member)
@@ -56,7 +60,7 @@ func (g *Group) OperatingMemberIDs() []MemberID {
 // MarkMemberAsDisqualified adds the member with the given ID to the list of
 // disqualified members. If the member is not a part of the group, is already
 // disqualified or marked as inactive, method does nothing.
-func (g *Group) MarkMemberAsDisqualified(memberID MemberID) {
+func (g *Group) MarkMemberAsDisqualified(memberID member.Index) {
 	if g.isOperating(memberID) {
 		g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, memberID)
 	}
@@ -65,19 +69,19 @@ func (g *Group) MarkMemberAsDisqualified(memberID MemberID) {
 // MarkMemberAsInactive adds the member with the given ID to the list of
 // inactive members. If the member is not a part of the group, is already
 // disqualified or marked as inactive, method does nothing.
-func (g *Group) MarkMemberAsInactive(memberID MemberID) {
+func (g *Group) MarkMemberAsInactive(memberID member.Index) {
 	if g.isOperating(memberID) {
 		g.inactiveMemberIDs = append(g.inactiveMemberIDs, memberID)
 	}
 }
 
-func (g *Group) isOperating(memberID MemberID) bool {
+func (g *Group) isOperating(memberID member.Index) bool {
 	return g.isInGroup(memberID) &&
 		!g.isInactive(memberID) &&
 		!g.isDisqualified(memberID)
 }
 
-func (g *Group) isInGroup(memberID MemberID) bool {
+func (g *Group) isInGroup(memberID member.Index) bool {
 	for _, groupMember := range g.memberIDs {
 		if groupMember == memberID {
 			return true
@@ -87,7 +91,7 @@ func (g *Group) isInGroup(memberID MemberID) bool {
 	return false
 }
 
-func (g *Group) isInactive(memberID MemberID) bool {
+func (g *Group) isInactive(memberID member.Index) bool {
 	for _, inactiveMemberID := range g.inactiveMemberIDs {
 		if memberID == inactiveMemberID {
 			return true
@@ -97,7 +101,7 @@ func (g *Group) isInactive(memberID MemberID) bool {
 	return false
 }
 
-func (g *Group) isDisqualified(memberID MemberID) bool {
+func (g *Group) isDisqualified(memberID member.Index) bool {
 	for _, disqualifiedMemberID := range g.disqualifiedMemberIDs {
 		if memberID == disqualifiedMemberID {
 			return true

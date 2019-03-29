@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestJoinMessageRoundtrip(t *testing.T) {
-	msg := &JoinMessage{MemberID(1337)}
+	msg := &JoinMessage{member.Index(1337)}
 	unmarshaled := &JoinMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
@@ -34,12 +35,12 @@ func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	publicKeys := make(map[MemberID]*ephemeral.PublicKey)
-	publicKeys[MemberID(2181)] = keyPair1.PublicKey
-	publicKeys[MemberID(9119)] = keyPair2.PublicKey
+	publicKeys := make(map[member.Index]*ephemeral.PublicKey)
+	publicKeys[member.Index(2181)] = keyPair1.PublicKey
+	publicKeys[member.Index(9119)] = keyPair2.PublicKey
 
 	msg := &EphemeralPublicKeyMessage{
-		senderID:            MemberID(3548),
+		senderID:            member.Index(3548),
 		ephemeralPublicKeys: publicKeys,
 	}
 	unmarshaled := &EphemeralPublicKeyMessage{}
@@ -56,7 +57,7 @@ func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 
 func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 	msg := &MemberCommitmentsMessage{
-		senderID: MemberID(1410),
+		senderID: member.Index(1410),
 		commitments: []*bn256.G1{
 			new(bn256.G1).ScalarBaseMult(big.NewInt(966)),
 			new(bn256.G1).ScalarBaseMult(big.NewInt(1385)),
@@ -76,18 +77,18 @@ func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 }
 
 func TestPeerSharesMessageRoundtrip(t *testing.T) {
-	shares := make(map[MemberID]*peerShares)
-	shares[MemberID(112)] = &peerShares{
+	shares := make(map[member.Index]*peerShares)
+	shares[member.Index(112)] = &peerShares{
 		encryptedShareS: []byte{0x01, 0x02, 0x03, 0x04, 0x05},
 		encryptedShareT: []byte{0x0F, 0x0E, 0x0D, 0x0C, 0x0B},
 	}
-	shares[MemberID(223)] = &peerShares{
+	shares[member.Index(223)] = &peerShares{
 		encryptedShareS: []byte{0x0A, 0x0E, 0x0F, 0x0F, 0x0F},
 		encryptedShareT: []byte{0x01, 0x0F, 0x0E, 0x0E, 0x0D},
 	}
 
 	msg := &PeerSharesMessage{
-		senderID: MemberID(997),
+		senderID: member.Index(997),
 		shares:   shares,
 	}
 
@@ -115,10 +116,10 @@ func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 	}
 
 	msg := &SecretSharesAccusationsMessage{
-		senderID: MemberID(12121),
-		accusedMembersKeys: map[MemberID]*ephemeral.PrivateKey{
-			MemberID(1283): keyPair1.PrivateKey,
-			MemberID(9712): keyPair2.PrivateKey,
+		senderID: member.Index(12121),
+		accusedMembersKeys: map[member.Index]*ephemeral.PrivateKey{
+			member.Index(1283): keyPair1.PrivateKey,
+			member.Index(9712): keyPair2.PrivateKey,
 		},
 	}
 	unmarshaled := &SecretSharesAccusationsMessage{}
@@ -135,7 +136,7 @@ func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 
 func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 	msg := &MemberPublicKeySharePointsMessage{
-		senderID: MemberID(987112),
+		senderID: member.Index(987112),
 		publicKeySharePoints: []*bn256.G2{
 			new(bn256.G2).ScalarBaseMult(big.NewInt(18211)),
 			new(bn256.G2).ScalarBaseMult(big.NewInt(12311)),
@@ -167,10 +168,10 @@ func TestPointsAccusationsMessageRoundtrip(t *testing.T) {
 	}
 
 	msg := &PointsAccusationsMessage{
-		senderID: MemberID(129841),
-		accusedMembersKeys: map[MemberID]*ephemeral.PrivateKey{
-			MemberID(12341): keyPair1.PrivateKey,
-			MemberID(51111): keyPair2.PrivateKey,
+		senderID: member.Index(129841),
+		accusedMembersKeys: map[member.Index]*ephemeral.PrivateKey{
+			member.Index(12341): keyPair1.PrivateKey,
+			member.Index(51111): keyPair2.PrivateKey,
 		},
 	}
 	unmarshaled := &PointsAccusationsMessage{}
@@ -197,10 +198,10 @@ func TestDisqualifiedEphemeralKeysMessageRoundtrip(t *testing.T) {
 	}
 
 	msg := &DisqualifiedEphemeralKeysMessage{
-		senderID: MemberID(181811),
-		privateKeys: map[MemberID]*ephemeral.PrivateKey{
-			MemberID(1821881): keyPair1.PrivateKey,
-			MemberID(8181818): keyPair2.PrivateKey,
+		senderID: member.Index(181811),
+		privateKeys: map[member.Index]*ephemeral.PrivateKey{
+			member.Index(1821881): keyPair1.PrivateKey,
+			member.Index(8181818): keyPair2.PrivateKey,
 		},
 	}
 	unmarshaled := &DisqualifiedEphemeralKeysMessage{}
