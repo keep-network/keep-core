@@ -84,18 +84,20 @@ contract TokenStaking is StakeDelegatable {
      * @param _value The amount to be unstaked.
      */
     function initiateUnstake(uint256 _value, address _operator) public returns (uint256 id) {
-
-        require(msg.sender == operatorToOwner[_operator], "Only owner of the stake can initiate unstake.");
+        address owner = operatorToOwner[_operator];
+        require(
+            msg.sender == _operator ||
+            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
         require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
         stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
 
         id = numWithdrawals++;
-        withdrawals[id] = Withdrawal(msg.sender, _value, now);
-        withdrawalIndices[msg.sender].push(id);
+        withdrawals[id] = Withdrawal(owner, _value, now);
+        withdrawalIndices[owner].push(id);
         emit InitiatedUnstake(id);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(msg.sender, _value);
+            stakingProxy.emitUnstakedEvent(owner, _value);
         }
         return id;
     }

@@ -248,9 +248,12 @@ contract TokenGrant is StakeDelegatable {
      */
     function initiateUnstake(uint256 _id, address _operator) public {
 
+        address owner = operatorToOwner[_operator];
+        require(
+            msg.sender == _operator ||
+            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
         require(grants[_id].staked, "Grant must be staked.");
         require(!grants[_id].revoked, "Grant must not be be revoked.");
-        require(msg.sender == operatorToOwner[_operator], "Only owner of the stake can initiate unstake.");
         require(stakeWithdrawalStart[_id] == 0, "Grant withdrawal start must not be already set.");
 
         // Set token grant stake withdrawal start.
