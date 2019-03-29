@@ -11,7 +11,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
@@ -109,8 +109,8 @@ func TestConvertResult(t *testing.T) {
 		"success: false, group public key: nil, DQ and IA: empty": {
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: nil,
-				Disqualified:   []member.Index{},
-				Inactive:       []member.Index{},
+				Disqualified:   []group.MemberIndex{},
+				Inactive:       []group.MemberIndex{},
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: []byte{},
@@ -121,8 +121,8 @@ func TestConvertResult(t *testing.T) {
 		"success: true, group public key: provided, DQ and IA: provided": {
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Disqualified:   []member.Index{1, 3, 4},
-				Inactive:       []member.Index{5},
+				Disqualified:   []group.MemberIndex{1, 3, 4},
+				Inactive:       []group.MemberIndex{5},
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: compressedPublicKey,

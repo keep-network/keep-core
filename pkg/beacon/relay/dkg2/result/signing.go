@@ -6,15 +6,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 // SigningMember represents a group member sharing their preferred DKG result hash
 // and signature (over this hash) with other peer members.
 type SigningMember struct {
-	index member.Index
+	index group.MemberIndex
 
 	// Key used for signing the DKG result hash.
 	privateKey *operator.PrivateKey
@@ -27,7 +26,7 @@ type SigningMember struct {
 
 // NewSigningMember creates a member to execute signing DKG result hash.
 func NewSigningMember(
-	memberIndex gjkr.MemberID,
+	memberIndex group.MemberIndex,
 	operatorPrivateKey *operator.PrivateKey,
 ) *SigningMember {
 	return &SigningMember{
@@ -81,8 +80,8 @@ func (sm *SigningMember) SignDKGResult(
 // See Phase 13 of the protocol specification.
 func (sm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
-) (map[member.Index]operator.Signature, error) {
-	duplicatedMessagesFromSender := func(senderIndex member.Index) bool {
+) (map[group.MemberIndex]operator.Signature, error) {
+	duplicatedMessagesFromSender := func(senderIndex group.MemberIndex) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
 			if message.senderIndex == senderIndex {
@@ -95,7 +94,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		return false
 	}
 
-	receivedValidResultSignatures := make(map[member.Index]operator.Signature)
+	receivedValidResultSignatures := make(map[group.MemberIndex]operator.Signature)
 
 	for _, message := range messages {
 		// Check if message from self.

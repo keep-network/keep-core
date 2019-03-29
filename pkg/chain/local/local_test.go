@@ -9,7 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -365,7 +365,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		BlockNumber:    0,
 	}
 
-	signatures := map[gjkr.MemberID]operator.Signature{
+	signatures := map[group.MemberIndex]operator.Signature{
 		1: operator.Signature{101},
 		2: operator.Signature{102},
 		3: operator.Signature{103},

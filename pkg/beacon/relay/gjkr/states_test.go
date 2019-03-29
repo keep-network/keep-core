@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
 )
@@ -33,8 +33,8 @@ func TestFullStateTransitions(t *testing.T) {
 		}
 
 		member, err := NewMember(
-			member.Index(i+1),
-			make([]member.Index, 0),
+			group.MemberIndex(i+1),
+			make([]group.MemberIndex, 0),
 			threshold,
 			seed,
 		)

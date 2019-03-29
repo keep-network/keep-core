@@ -3,7 +3,7 @@ package result
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result/gen/pb"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -31,7 +31,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	d.senderIndex = member.Index(pbMsg.SenderIndex)
+	d.senderIndex = group.MemberIndex(pbMsg.SenderIndex)
 
 	resultHash, err := chain.DKGResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {

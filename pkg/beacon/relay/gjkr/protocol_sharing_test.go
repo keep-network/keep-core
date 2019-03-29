@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -17,12 +18,12 @@ func TestCombineReceivedShares(t *testing.T) {
 
 	selfShareS := big.NewInt(9)
 
-	receivedShareS := make(map[MemberID]*big.Int)
+	receivedShareS := make(map[group.MemberIndex]*big.Int)
 	// Simulate shares received from peer members.
 	// Peer members IDs are in [100, 101, 102, 103, 104, 105] to differ them from
 	// slice indices.
 	for i := 0; i <= 5; i++ {
-		receivedShareS[MemberID(100+i)] = big.NewInt(int64(10 + i))
+		receivedShareS[group.MemberIndex(100+i)] = big.NewInt(int64(10 + i))
 	}
 
 	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84
@@ -107,7 +108,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	var tests = map[string]struct {
 		modifyPublicKeySharePointsMessages func(messages []*MemberPublicKeySharePointsMessage)
 		expectedError                      error
-		expectedAccusedIDs                 []MemberID
+		expectedAccusedIDs                 []group.MemberIndex
 	}{
 		"positive validation - no accusations": {
 			expectedError: nil,
@@ -121,7 +122,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []MemberID{3},
+			expectedAccusedIDs: []group.MemberIndex{3},
 		},
 		"negative validation - changed public key share - two accused members": {
 			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
@@ -135,7 +136,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 				)
 			},
 			expectedError:      nil,
-			expectedAccusedIDs: []MemberID{2, 5},
+			expectedAccusedIDs: []group.MemberIndex{2, 5},
 		},
 	}
 	for testName, test := range tests {
@@ -164,7 +165,7 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 					err,
 				)
 			}
-			expectedAccusedMembersKeys := make(map[MemberID]*ephemeral.PrivateKey)
+			expectedAccusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			for _, id := range test.expectedAccusedIDs {
 				expectedAccusedMembersKeys[id] = sharingMember.ephemeralKeyPairs[id].PrivateKey
 			}
@@ -230,7 +231,8 @@ func initializeSharingMembersGroup(threshold, groupSize int) (
 }
 
 func filterMemberPublicKeySharePointsMessages(
-	messages []*MemberPublicKeySharePointsMessage, receiverID MemberID,
+	messages []*MemberPublicKeySharePointsMessage,
+	receiverID group.MemberIndex,
 ) []*MemberPublicKeySharePointsMessage {
 	var result []*MemberPublicKeySharePointsMessage
 	for _, msg := range messages {
