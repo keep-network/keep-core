@@ -30,10 +30,18 @@ func (r *Result) Equals(r2 *Result) bool {
 		return false
 	}
 
-	if !memberIDSlicesEqual(r.Disqualified, r2.Disqualified) {
+	if r.Group == nil || r2.Group == nil {
+		return r.Group == r2.Group
+	}
+
+	if !memberIDSlicesEqual(
+		r.Group.DisqualifiedMemberIDs(), r2.Group.DisqualifiedMemberIDs(),
+	) {
 		return false
 	}
-	if !memberIDSlicesEqual(r.Inactive, r2.Inactive) {
+	if !memberIDSlicesEqual(
+		r.Group.InactiveMemberIDs(), r2.Group.InactiveMemberIDs(),
+	) {
 		return false
 	}
 
