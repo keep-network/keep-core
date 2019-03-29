@@ -110,14 +110,17 @@ func TestConvertResult(t *testing.T) {
 	compressedPublicKey := altbn128.G2Point{G2: publicKey}.Compress()
 
 	var tests = map[string]struct {
-		gjkrResult     *gjkr.Result
-		expectedResult *relayChain.DKGResult
+		disqualifiedMemberIDs []group.MemberIndex
+		inactiveMemberIDs     []group.MemberIndex
+		gjkrResult            *gjkr.Result
+		expectedResult        *relayChain.DKGResult
 	}{
 		"success: false, group public key: nil, DQ and IA: empty": {
+			disqualifiedMemberIDs: []group.MemberIndex{},
+			inactiveMemberIDs:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: nil,
-				Disqualified:   []group.MemberIndex{},
-				Inactive:       []group.MemberIndex{},
+				Group:          group.NewEmptyDkgGroup(5),
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: []byte{},
@@ -126,10 +129,11 @@ func TestConvertResult(t *testing.T) {
 			},
 		},
 		"success: true, group public key: provided, DQ and IA: provided": {
+			disqualifiedMemberIDs: []group.MemberIndex{1, 3, 4},
+			inactiveMemberIDs:     []group.MemberIndex{5},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Disqualified:   []group.MemberIndex{1, 3, 4},
-				Inactive:       []group.MemberIndex{5},
+				Group:          group.NewDkgGroup(3, []group.MemberIndex{1, 2, 3, 4, 5}),
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: compressedPublicKey,
@@ -139,6 +143,14 @@ func TestConvertResult(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		for _, disqualifiedMember := range test.disqualifiedMemberIDs {
+			test.gjkrResult.Group.MarkMemberAsDisqualified(disqualifiedMember)
+		}
+
+		for _, inactiveMember := range test.inactiveMemberIDs {
+			test.gjkrResult.Group.MarkMemberAsInactive(inactiveMember)
+		}
+
 		convertedResult := convertResult(test.gjkrResult, groupSize)
 
 		if !test.expectedResult.Equals(convertedResult) {

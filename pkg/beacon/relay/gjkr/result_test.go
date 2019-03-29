@@ -48,23 +48,23 @@ func TestResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"disqualified - equal": {
-			result1:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
-			result2:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
+			result1:        initializeGroupForResult([]group.MemberIndex{1, 2, 3}, []group.MemberIndex{}),
+			result2:        initializeGroupForResult([]group.MemberIndex{1, 2, 3}, []group.MemberIndex{}),
 			expectedResult: true,
 		},
 		"disqualified - not equal": {
-			result1:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
-			result2:        &Result{Disqualified: []group.MemberIndex{1, 4, 3}},
+			result1:        initializeGroupForResult([]group.MemberIndex{1, 2, 3}, []group.MemberIndex{}),
+			result2:        initializeGroupForResult([]group.MemberIndex{1, 4, 3}, []group.MemberIndex{}),
 			expectedResult: false,
 		},
 		"inactive - equal": {
-			result1:        &Result{Inactive: []group.MemberIndex{3, 2, 1}},
-			result2:        &Result{Inactive: []group.MemberIndex{3, 2, 1}},
+			result1:        initializeGroupForResult(nil, []group.MemberIndex{3, 2, 1}),
+			result2:        initializeGroupForResult(nil, []group.MemberIndex{3, 2, 1}),
 			expectedResult: true,
 		},
 		"inactive - not equal": {
-			result1:        &Result{Inactive: []group.MemberIndex{1, 2, 3}},
-			result2:        &Result{Inactive: []group.MemberIndex{1, 2}},
+			result1:        initializeGroupForResult(nil, []group.MemberIndex{1, 2, 3}),
+			result2:        initializeGroupForResult(nil, []group.MemberIndex{1, 2}),
 			expectedResult: false,
 		},
 	}
@@ -78,6 +78,23 @@ func TestResultEquals(t *testing.T) {
 			}
 		})
 	}
+}
+
+func initializeGroupForResult(
+	disqualifiedMembers []group.MemberIndex,
+	inactiveMembers []group.MemberIndex,
+) *Result {
+	defaultMemberList := []group.MemberIndex{1, 2, 3, 4, 5, 6, 7}
+	group := group.NewDkgGroup(3, defaultMemberList)
+
+	for _, disqualified := range disqualifiedMembers {
+		group.MarkMemberAsDisqualified(disqualified)
+	}
+	for _, inactive := range inactiveMembers {
+		group.MarkMemberAsInactive(inactive)
+	}
+
+	return &Result{Group: group}
 }
 
 func TestPublicKeysEqual(t *testing.T) {
