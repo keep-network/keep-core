@@ -27,7 +27,7 @@ module.exports = async function() {
   console.log(`Total accounts: ${accounts.length}`)
   console.log(`---------------------------------`)
 
-  for(let i = 1; i < accounts.length; i++) {
+  for(let i = 0; i < accounts.length; i++) {
     let account = accounts[i]
 
     try {
