@@ -3,7 +3,7 @@ package gjkr
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
 // Group is protocol's members group.
@@ -13,22 +13,22 @@ type Group struct {
 	dishonestThreshold int
 	// IDs of all members of the group. Contains local member's ID.
 	// Initially empty, populated as each other member announces its presence.
-	memberIDs []member.MemberIndex
+	memberIDs []group.MemberIndex
 	// IDs of all disqualified members of the group.
-	disqualifiedMemberIDs []member.MemberIndex
+	disqualifiedMemberIDs []group.MemberIndex
 	// IDs of all inactive members of the group.
-	inactiveMemberIDs []member.MemberIndex
+	inactiveMemberIDs []group.MemberIndex
 }
 
 // MemberIDs returns IDs of all group members, as initially selected to the
 // group. Returned list contains IDs of all members, including those marked as
 // inactive or disqualified.
-func (g *Group) MemberIDs() []member.MemberIndex {
+func (g *Group) MemberIDs() []group.MemberIndex {
 	return g.memberIDs
 }
 
 // RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(memberID member.MemberIndex) error {
+func (g *Group) RegisterMemberID(memberID group.MemberIndex) error {
 	if err := memberID.Validate(); err != nil {
 		return fmt.Errorf("cannot register member ID in the group [%v]", err)
 	}
@@ -46,8 +46,8 @@ func (g *Group) RegisterMemberID(memberID member.MemberIndex) error {
 // OperatingMemberIDs returns IDs of all group members that are active and have
 // not been disqualified. All those members are properly operating in the group
 // at the moment of calling this method.
-func (g *Group) OperatingMemberIDs() []member.MemberIndex {
-	operatingMembers := make([]member.MemberIndex, 0)
+func (g *Group) OperatingMemberIDs() []group.MemberIndex {
+	operatingMembers := make([]group.MemberIndex, 0)
 	for _, member := range g.memberIDs {
 		if g.isOperating(member) {
 			operatingMembers = append(operatingMembers, member)
@@ -60,7 +60,7 @@ func (g *Group) OperatingMemberIDs() []member.MemberIndex {
 // MarkMemberAsDisqualified adds the member with the given ID to the list of
 // disqualified members. If the member is not a part of the group, is already
 // disqualified or marked as inactive, method does nothing.
-func (g *Group) MarkMemberAsDisqualified(memberID member.MemberIndex) {
+func (g *Group) MarkMemberAsDisqualified(memberID group.MemberIndex) {
 	if g.isOperating(memberID) {
 		g.disqualifiedMemberIDs = append(g.disqualifiedMemberIDs, memberID)
 	}
@@ -69,19 +69,19 @@ func (g *Group) MarkMemberAsDisqualified(memberID member.MemberIndex) {
 // MarkMemberAsInactive adds the member with the given ID to the list of
 // inactive members. If the member is not a part of the group, is already
 // disqualified or marked as inactive, method does nothing.
-func (g *Group) MarkMemberAsInactive(memberID member.MemberIndex) {
+func (g *Group) MarkMemberAsInactive(memberID group.MemberIndex) {
 	if g.isOperating(memberID) {
 		g.inactiveMemberIDs = append(g.inactiveMemberIDs, memberID)
 	}
 }
 
-func (g *Group) isOperating(memberID member.MemberIndex) bool {
+func (g *Group) isOperating(memberID group.MemberIndex) bool {
 	return g.isInGroup(memberID) &&
 		!g.isInactive(memberID) &&
 		!g.isDisqualified(memberID)
 }
 
-func (g *Group) isInGroup(memberID member.MemberIndex) bool {
+func (g *Group) isInGroup(memberID group.MemberIndex) bool {
 	for _, groupMember := range g.memberIDs {
 		if groupMember == memberID {
 			return true
@@ -91,7 +91,7 @@ func (g *Group) isInGroup(memberID member.MemberIndex) bool {
 	return false
 }
 
-func (g *Group) isInactive(memberID member.MemberIndex) bool {
+func (g *Group) isInactive(memberID group.MemberIndex) bool {
 	for _, inactiveMemberID := range g.inactiveMemberIDs {
 		if memberID == inactiveMemberID {
 			return true
@@ -101,7 +101,7 @@ func (g *Group) isInactive(memberID member.MemberIndex) bool {
 	return false
 }
 
-func (g *Group) isDisqualified(memberID member.MemberIndex) bool {
+func (g *Group) isDisqualified(memberID group.MemberIndex) bool {
 	for _, disqualifiedMemberID := range g.disqualifiedMemberIDs {
 		if memberID == disqualifiedMemberID {
 			return true

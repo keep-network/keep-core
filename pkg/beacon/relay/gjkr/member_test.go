@@ -6,13 +6,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
 func TestNewMemberWithInvalidID(t *testing.T) {
 	expectedError := fmt.Errorf("could not create a new member [member index must be >= 1]")
 
-	_, err := NewMember(member.MemberIndex(0), nil, 13, nil)
+	_, err := NewMember(group.MemberIndex(0), nil, 13, nil)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
@@ -22,12 +22,12 @@ func TestNewMemberWithInvalidID(t *testing.T) {
 func TestAddToGroupWithInvalidID(t *testing.T) {
 	expectedError := fmt.Errorf("could not add the member ID to the group [member index must be >= 1]")
 
-	newMember, err := NewMember(member.MemberIndex(1), nil, 13, big.NewInt(14))
+	newMember, err := NewMember(group.MemberIndex(1), nil, 13, big.NewInt(14))
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = newMember.AddToGroup(member.MemberIndex(0))
+	err = newMember.AddToGroup(group.MemberIndex(0))
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
@@ -36,11 +36,11 @@ func TestAddToGroupWithInvalidID(t *testing.T) {
 
 func TestMemberIDValidate(t *testing.T) {
 	var tests = map[string]struct {
-		id            member.MemberIndex
+		id            group.MemberIndex
 		expectedError error
 	}{
 		"id = 0": {
-			id:            member.MemberIndex(0),
+			id:            group.MemberIndex(0),
 			expectedError: fmt.Errorf("member index must be >= 1"),
 		},
 		"id = 1": {

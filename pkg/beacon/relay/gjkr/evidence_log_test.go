@@ -5,30 +5,30 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
 func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
-		sender                      member.MemberIndex
+		sender                      group.MemberIndex
 		modifyPubKeyMessageLogState func(
-			sender member.MemberIndex, log *dkgEvidenceLog,
+			sender group.MemberIndex, log *dkgEvidenceLog,
 		) error
 		expectedError error
 	}{
 		"EphemeralPubKeyMessage successfully stored for sender": {
-			sender: member.MemberIndex(1),
+			sender: group.MemberIndex(1),
 			modifyPubKeyMessageLogState: func(
-				sender member.MemberIndex, log *dkgEvidenceLog,
+				sender group.MemberIndex, log *dkgEvidenceLog,
 			) error {
 				return nil
 			},
 			expectedError: nil,
 		},
 		"EphemeralPubKeyMessage already exists for sender": {
-			sender: member.MemberIndex(1),
+			sender: group.MemberIndex(1),
 			modifyPubKeyMessageLogState: func(
-				sender member.MemberIndex, log *dkgEvidenceLog,
+				sender group.MemberIndex, log *dkgEvidenceLog,
 			) error {
 				msg := &EphemeralPublicKeyMessage{
 					senderID: sender,
@@ -77,17 +77,17 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 
 func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
-		sender         member.MemberIndex
+		sender         group.MemberIndex
 		expectedResult *EphemeralPublicKeyMessage
 	}{
 		"valid EphemeralPubKeyMessage returned for sender": {
-			sender: member.MemberIndex(uint32(1)),
+			sender: group.MemberIndex(uint32(1)),
 			expectedResult: &EphemeralPublicKeyMessage{
-				senderID: member.MemberIndex(uint32(1)),
+				senderID: group.MemberIndex(uint32(1)),
 			},
 		},
 		"no EphemeralPubKeyMessage for sender": {
-			sender:         member.MemberIndex(uint32(1)),
+			sender:         group.MemberIndex(uint32(1)),
 			expectedResult: nil,
 		},
 	}

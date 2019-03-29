@@ -6,7 +6,7 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
@@ -16,7 +16,7 @@ import (
 // the result.
 type SubmittingMember struct {
 	// Represents the member's position for submission.
-	index member.MemberIndex
+	index group.MemberIndex
 
 	// Predefined step for each submitting window. The value is used to determine
 	// the eligible submitting member.
@@ -25,7 +25,7 @@ type SubmittingMember struct {
 
 // NewSubmittingMember creates a member to execute submitting the DKG result hash.
 func NewSubmittingMember(
-	memberIndex member.MemberIndex) *SubmittingMember {
+	memberIndex group.MemberIndex) *SubmittingMember {
 	return &SubmittingMember{
 		index: memberIndex,
 	}
@@ -54,7 +54,7 @@ func NewSubmittingMember(
 func (sm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
-	signatures map[member.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex]operator.Signature,
 	chainHandle chain.Handle,
 ) error {
 	onSubmittedResultChan := make(chan *event.DKGResultSubmission)

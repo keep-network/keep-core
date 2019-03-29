@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
 // For complaint resolution, group members need to have access to messages
@@ -32,11 +32,11 @@ import (
 type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
 	// broadcast in the first protocol round by the given sender.
-	ephemeralPublicKeyMessage(sender member.MemberIndex) *EphemeralPublicKeyMessage
+	ephemeralPublicKeyMessage(sender group.MemberIndex) *EphemeralPublicKeyMessage
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
 	// protocol round by the given sender.
-	peerSharesMessage(sender member.MemberIndex) *PeerSharesMessage
+	peerSharesMessage(sender group.MemberIndex) *PeerSharesMessage
 
 	// PutEphemeralMessage is a function that takes a single
 	// EphemeralPubKeyMessage, and stores that as evidence for future
@@ -88,7 +88,7 @@ func (d *dkgEvidenceLog) PutPeerSharesMessage(
 }
 
 func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
-	sender member.MemberIndex) *EphemeralPublicKeyMessage {
+	sender group.MemberIndex) *EphemeralPublicKeyMessage {
 	storedMessage := d.pubKeyMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *EphemeralPublicKeyMessage:
@@ -98,7 +98,7 @@ func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 }
 
 func (d *dkgEvidenceLog) peerSharesMessage(
-	sender member.MemberIndex) *PeerSharesMessage {
+	sender group.MemberIndex) *PeerSharesMessage {
 	storedMessage := d.peerSharesMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *PeerSharesMessage:
@@ -111,17 +111,17 @@ func (d *dkgEvidenceLog) peerSharesMessage(
 // it implements a generic get and put of messages through a mapping of a
 // sender.
 type messageStorage struct {
-	cache     map[member.MemberIndex]interface{}
+	cache     map[group.MemberIndex]interface{}
 	cacheLock sync.Mutex
 }
 
 func newMessageStorage() *messageStorage {
 	return &messageStorage{
-		cache: make(map[member.MemberIndex]interface{}),
+		cache: make(map[group.MemberIndex]interface{}),
 	}
 }
 
-func (ms *messageStorage) getMessage(sender member.MemberIndex) interface{} {
+func (ms *messageStorage) getMessage(sender group.MemberIndex) interface{} {
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()
 
@@ -134,7 +134,7 @@ func (ms *messageStorage) getMessage(sender member.MemberIndex) interface{} {
 }
 
 func (ms *messageStorage) putMessage(
-	sender member.MemberIndex, message interface{},
+	sender group.MemberIndex, message interface{},
 ) error {
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()

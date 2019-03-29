@@ -6,7 +6,7 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -34,7 +34,7 @@ type Publisher struct {
 // accepted by the chain.
 func executePublishing(
 	requestID *big.Int,
-	publishingIndex member.MemberIndex, chainRelay relayChain.Interface,
+	publishingIndex group.MemberIndex, chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
 	result *relayChain.DKGResult,
 ) error {
@@ -138,7 +138,7 @@ func (pm *Publisher) publishResult(
 
 			chainRelay.SubmitDKGResult(
 				pm.RequestID,
-				member.MemberIndex(pm.publishingIndex),
+				group.MemberIndex(pm.publishingIndex),
 				result,
 				nil,
 			).

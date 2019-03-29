@@ -5,7 +5,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
 )
 
@@ -15,13 +15,13 @@ import (
 // revealed. It also contains group's public key and ID of GJKR Member
 // represented by this ThresholdSigner instance.
 type ThresholdSigner struct {
-	memberID             member.MemberIndex
+	memberID             group.MemberIndex
 	groupPublicKey       *bn256.G2
 	groupPrivateKeyShare *big.Int
 }
 
 // MemberID returns GJKR MemberID represented by this ThresholdSigner.
-func (ts *ThresholdSigner) MemberID() member.MemberIndex {
+func (ts *ThresholdSigner) MemberID() group.MemberIndex {
 	return ts.memberID
 }
 

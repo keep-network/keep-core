@@ -2,7 +2,7 @@ package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -12,7 +12,7 @@ import (
 // It is expected to be broadcast within the group.
 type DKGResultHashSignatureMessage struct {
 	// Index of the sender in the group.
-	senderIndex member.MemberIndex
+	senderIndex group.MemberIndex
 	// Hash of the DKG result preferred by the sender.
 	resultHash chain.DKGResultHash
 	// Signature over the DKG result hash calculated by the sender.

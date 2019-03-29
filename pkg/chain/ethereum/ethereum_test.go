@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -101,11 +101,11 @@ func TestCalculateDKGResultHash(t *testing.T) {
 }
 
 func TestConvertSignaturesToChainFormat(t *testing.T) {
-	memberIndex1 := member.MemberIndex(1)
-	memberIndex2 := member.MemberIndex(2)
-	memberIndex3 := member.MemberIndex(3)
-	memberIndex4 := member.MemberIndex(4)
-	memberIndex5 := member.MemberIndex(5)
+	memberIndex1 := group.MemberIndex(1)
+	memberIndex2 := group.MemberIndex(2)
+	memberIndex3 := group.MemberIndex(3)
+	memberIndex4 := group.MemberIndex(4)
+	memberIndex5 := group.MemberIndex(5)
 
 	signature1 := operator.Signature(common.LeftPadBytes([]byte("marry"), 65))
 	signature2 := operator.Signature(common.LeftPadBytes([]byte("had"), 65))
@@ -116,16 +116,16 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 	invalidSignature := operator.Signature(common.LeftPadBytes([]byte("invalid"), 64))
 
 	var tests = map[string]struct {
-		signaturesMap map[member.MemberIndex]operator.Signature
+		signaturesMap map[group.MemberIndex]operator.Signature
 		expectedError error
 	}{
 		"one valid signature": {
-			signaturesMap: map[member.MemberIndex]operator.Signature{
+			signaturesMap: map[group.MemberIndex]operator.Signature{
 				memberIndex1: signature1,
 			},
 		},
 		"five valid signatures": {
-			signaturesMap: map[member.MemberIndex]operator.Signature{
+			signaturesMap: map[group.MemberIndex]operator.Signature{
 				memberIndex3: signature3,
 				memberIndex1: signature1,
 				memberIndex4: signature4,
@@ -134,7 +134,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			},
 		},
 		"invalid signature": {
-			signaturesMap: map[member.MemberIndex]operator.Signature{
+			signaturesMap: map[group.MemberIndex]operator.Signature{
 				memberIndex1: signature1,
 				memberIndex2: invalidSignature,
 			},
@@ -173,7 +173,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			}
 
 			for i, actualMemberIndex := range indicesSlice {
-				memberIndex := member.MemberIndex(actualMemberIndex.Uint64())
+				memberIndex := group.MemberIndex(actualMemberIndex.Uint64())
 
 				actualSignature := signaturesSlice[operator.SignatureSize*i : operator.SignatureSize*(i+1)]
 				if !bytes.Equal(

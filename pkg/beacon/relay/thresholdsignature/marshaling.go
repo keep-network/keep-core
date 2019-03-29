@@ -1,7 +1,7 @@
 package thresholdsignature
 
 import (
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature/gen/pb"
 )
 
@@ -30,7 +30,7 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	ssm.senderID = member.MemberIndex(pbSignatureShare.SenderID)
+	ssm.senderID = group.MemberIndex(pbSignatureShare.SenderID)
 	ssm.ShareBytes = pbSignatureShare.Share
 
 	return nil

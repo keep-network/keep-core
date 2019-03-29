@@ -1,10 +1,10 @@
 package thresholdsignature
 
-import "github.com/keep-network/keep-core/pkg/beacon/relay/member"
+import "github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 // SignatureShareMessage is a message payload that carries the sender's
 // signature share for the given message.
 type SignatureShareMessage struct {
-	senderID   member.MemberIndex
+	senderID   group.MemberIndex
 	ShareBytes []byte
 }

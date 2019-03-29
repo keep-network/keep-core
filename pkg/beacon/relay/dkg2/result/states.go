@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -27,8 +27,8 @@ type resultSigningState struct {
 
 	requestID             *big.Int
 	result                *relayChain.DKGResult
-	disqualifiedMemberIDs []member.MemberIndex
-	inactiveMemberIDs     []member.MemberIndex
+	disqualifiedMemberIDs []group.MemberIndex
+	inactiveMemberIDs     []group.MemberIndex
 
 	signatureMessages []*DKGResultHashSignatureMessage
 }
@@ -83,12 +83,12 @@ func (rss *resultSigningState) Next() signingState {
 		requestID:         rss.requestID,
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
-		validSignatures:   make(map[member.MemberIndex]operator.Signature),
+		validSignatures:   make(map[group.MemberIndex]operator.Signature),
 	}
 
 }
 
-func (rss *resultSigningState) MemberIndex() member.MemberIndex {
+func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 	return rss.member.index
 }
 
@@ -107,7 +107,7 @@ type signaturesVerificationState struct {
 	result    *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
-	validSignatures   map[member.MemberIndex]operator.Signature
+	validSignatures   map[group.MemberIndex]operator.Signature
 }
 
 func (svs *signaturesVerificationState) ActiveBlocks() int { return 0 }
@@ -138,7 +138,7 @@ func (svs *signaturesVerificationState) Next() signingState {
 
 }
 
-func (svs *signaturesVerificationState) MemberIndex() member.MemberIndex {
+func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
 	return svs.member.index
 }
 
@@ -154,7 +154,7 @@ type resultSubmissionState struct {
 
 	requestID  *big.Int
 	result     *relayChain.DKGResult
-	signatures map[member.MemberIndex]operator.Signature
+	signatures map[group.MemberIndex]operator.Signature
 }
 
 func (rss *resultSubmissionState) ActiveBlocks() int { return 3 }
@@ -176,6 +176,6 @@ func (rss *resultSubmissionState) Next() signingState {
 	return nil
 }
 
-func (rss *resultSubmissionState) MemberIndex() member.MemberIndex {
+func (rss *resultSubmissionState) MemberIndex() group.MemberIndex {
 	return rss.member.index
 }
