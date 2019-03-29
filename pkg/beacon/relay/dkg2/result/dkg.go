@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -22,11 +22,11 @@ func SignAndSubmit(
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
-	playerIndex gjkr.MemberID,
+	playerIndex group.MemberIndex,
 	requestID *big.Int,
 	result *relayChain.DKGResult,
-	disqualified []gjkr.MemberID,
-	inactive []gjkr.MemberID,
+	disqualified []group.MemberIndex,
+	inactive []group.MemberIndex,
 ) error {
 	initialState := &resultSigningState{
 		channel:               channel,
