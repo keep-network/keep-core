@@ -11,7 +11,7 @@ import (
 
 type memberCore struct {
 	// ID of this group member.
-	ID member.Index
+	ID member.MemberIndex
 
 	// Group to which this member belongs.
 	group *Group
@@ -40,7 +40,7 @@ type EphemeralKeyPairGeneratingMember struct {
 
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
-	ephemeralKeyPairs map[member.Index]*ephemeral.KeyPair
+	ephemeralKeyPairs map[member.MemberIndex]*ephemeral.KeyPair
 }
 
 // SymmetricKeyGeneratingMember represents one member in a distributed key
@@ -54,7 +54,7 @@ type SymmetricKeyGeneratingMember struct {
 	// generated individually for each other group member by ECDH'ing the
 	// broadcasted ephemeral public key intended for this member and the
 	// ephemeral private key generated for the other member.
-	symmetricKeys map[member.Index]ephemeral.SymmetricKey
+	symmetricKeys map[member.MemberIndex]ephemeral.SymmetricKey
 }
 
 // CommittingMember represents one member in a distributed key generation group,
@@ -91,10 +91,10 @@ type CommitmentsVerifyingMember struct {
 	//
 	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
-	receivedValidSharesS, receivedValidSharesT map[member.Index]*big.Int
+	receivedValidSharesS, receivedValidSharesT map[member.MemberIndex]*big.Int
 	// Valid commitments to secret shares polynomial coefficients received from
 	// other group members.
-	receivedValidPeerCommitments map[member.Index][]*bn256.G1
+	receivedValidPeerCommitments map[member.MemberIndex][]*bn256.G1
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -133,7 +133,7 @@ type SharingMember struct {
 	publicKeySharePoints []*bn256.G2
 	// Public key share points received from other group members which passed
 	// the validation. Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerPublicKeySharePoints map[member.Index][]*bn256.G2
+	receivedValidPeerPublicKeySharePoints map[member.MemberIndex][]*bn256.G2
 }
 
 // PointsJustifyingMember represents one member in a threshold key sharing group,
@@ -166,12 +166,12 @@ type ReconstructingMember struct {
 	// Stored as `<m, z_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `z_m` is reconstructed individual private key of member `m`
-	reconstructedIndividualPrivateKeys map[member.Index]*big.Int
+	reconstructedIndividualPrivateKeys map[member.MemberIndex]*big.Int
 	// Individual public keys calculated from reconstructed individual private keys.
 	// Stored as `<m, y_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
-	reconstructedIndividualPublicKeys map[member.Index]*bn256.G2
+	reconstructedIndividualPublicKeys map[member.MemberIndex]*bn256.G2
 }
 
 // CombiningMember represents one member in a threshold sharing group who is
@@ -202,9 +202,7 @@ type FinalizingMember struct {
 // NewMember creates a new member in an initial state, ready to execute DKG
 // protocol.
 func NewMember(
-	memberID member.Index,
-	groupMembers []member.Index,
-	dishonestThreshold int,
+	memberID member.MemberIndex, groupMembers []member.MemberIndex, dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
 	if err := memberID.Validate(); err != nil {
@@ -217,8 +215,8 @@ func NewMember(
 			&Group{
 				dishonestThreshold,
 				groupMembers,
-				[]member.Index{},
-				[]member.Index{},
+				[]member.MemberIndex{},
+				[]member.MemberIndex{},
 			},
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
@@ -227,7 +225,7 @@ func NewMember(
 }
 
 // AddToGroup adds the provided MemberID to the group
-func (mc *memberCore) AddToGroup(memberID member.Index) error {
+func (mc *memberCore) AddToGroup(memberID member.MemberIndex) error {
 	if err := memberID.Validate(); err != nil {
 		return fmt.Errorf("could not add the member ID to the group [%v]", err)
 	}
@@ -242,7 +240,7 @@ func (mc *memberCore) AddToGroup(memberID member.Index) error {
 func (lm *LocalMember) InitializeEphemeralKeysGeneration() *EphemeralKeyPairGeneratingMember {
 	return &EphemeralKeyPairGeneratingMember{
 		LocalMember:       lm,
-		ephemeralKeyPairs: make(map[member.Index]*ephemeral.KeyPair),
+		ephemeralKeyPairs: make(map[member.MemberIndex]*ephemeral.KeyPair),
 	}
 }
 
@@ -252,7 +250,7 @@ func (lm *LocalMember) InitializeEphemeralKeysGeneration() *EphemeralKeyPairGene
 func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration() *SymmetricKeyGeneratingMember {
 	return &SymmetricKeyGeneratingMember{
 		EphemeralKeyPairGeneratingMember: ekgm,
-		symmetricKeys:                    make(map[member.Index]ephemeral.SymmetricKey),
+		symmetricKeys:                    make(map[member.MemberIndex]ephemeral.SymmetricKey),
 	}
 }
 
@@ -267,9 +265,9 @@ func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMemb
 func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
 		CommittingMember:             cm,
-		receivedValidSharesS:         make(map[member.Index]*big.Int),
-		receivedValidSharesT:         make(map[member.Index]*big.Int),
-		receivedValidPeerCommitments: make(map[member.Index][]*bn256.G1),
+		receivedValidSharesS:         make(map[member.MemberIndex]*big.Int),
+		receivedValidSharesT:         make(map[member.MemberIndex]*big.Int),
+		receivedValidPeerCommitments: make(map[member.MemberIndex][]*bn256.G1),
 	}
 }
 
@@ -287,7 +285,7 @@ func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
 func (qm *QualifiedMember) InitializeSharing() *SharingMember {
 	return &SharingMember{
 		QualifiedMember:                       qm,
-		receivedValidPeerPublicKeySharePoints: make(map[member.Index][]*bn256.G2),
+		receivedValidPeerPublicKeySharePoints: make(map[member.MemberIndex][]*bn256.G2),
 	}
 }
 
@@ -305,8 +303,8 @@ func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
 func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
 		RevealingMember:                    rm,
-		reconstructedIndividualPrivateKeys: make(map[member.Index]*big.Int),
-		reconstructedIndividualPublicKeys:  make(map[member.Index]*bn256.G2),
+		reconstructedIndividualPrivateKeys: make(map[member.MemberIndex]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[member.MemberIndex]*bn256.G2),
 	}
 }
 

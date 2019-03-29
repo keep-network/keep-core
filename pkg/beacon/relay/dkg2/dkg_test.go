@@ -109,8 +109,8 @@ func TestConvertResult(t *testing.T) {
 		"success: false, group public key: nil, DQ and IA: empty": {
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: nil,
-				Disqualified:   []member.Index{},
-				Inactive:       []member.Index{},
+				Disqualified:   []member.MemberIndex{},
+				Inactive:       []member.MemberIndex{},
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: []byte{},
@@ -121,8 +121,8 @@ func TestConvertResult(t *testing.T) {
 		"success: true, group public key: provided, DQ and IA: provided": {
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Disqualified:   []member.Index{1, 3, 4},
-				Inactive:       []member.Index{5},
+				Disqualified:   []member.MemberIndex{1, 3, 4},
+				Inactive:       []member.MemberIndex{5},
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: compressedPublicKey,

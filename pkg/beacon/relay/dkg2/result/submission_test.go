@@ -25,7 +25,7 @@ func TestSubmitDKGResult(t *testing.T) {
 	result := &relayChain.DKGResult{
 		GroupPublicKey: []byte{123, 45},
 	}
-	signatures := map[member.Index]operator.Signature{
+	signatures := map[member.MemberIndex]operator.Signature{
 		1: operator.Signature{101},
 		2: operator.Signature{102},
 		3: operator.Signature{103},
@@ -53,7 +53,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			requestID := big.NewInt(101)
 
 			member := &SubmittingMember{
-				index:     member.Index(test.memberIndex),
+				index:     member.MemberIndex(test.memberIndex),
 				blockStep: blockStep,
 			}
 
@@ -119,15 +119,15 @@ func TestConcurrentPublishResult(t *testing.T) {
 	blockStep := uint64(2) // t_step
 
 	member1 := &SubmittingMember{
-		index:     member.Index(1), // P1
+		index:     member.MemberIndex(1), // P1
 		blockStep: blockStep,
 	}
 	member2 := &SubmittingMember{
-		index:     member.Index(4), // P4
+		index:     member.MemberIndex(4), // P4
 		blockStep: blockStep,
 	}
 
-	signatures := map[member.Index]operator.Signature{
+	signatures := map[member.MemberIndex]operator.Signature{
 		1: operator.Signature{101},
 		2: operator.Signature{102},
 		3: operator.Signature{103},

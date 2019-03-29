@@ -33,8 +33,8 @@ func TestFullStateTransitions(t *testing.T) {
 		}
 
 		member, err := NewMember(
-			member.Index(i+1),
-			make([]member.Index, 0),
+			member.MemberIndex(i+1),
+			make([]member.MemberIndex, 0),
 			threshold,
 			seed,
 		)

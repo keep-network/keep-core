@@ -32,11 +32,11 @@ import (
 type evidenceLog interface {
 	// ephemeralPublicKeyMessage returns the `EphemeralPublicKeyMessage`
 	// broadcast in the first protocol round by the given sender.
-	ephemeralPublicKeyMessage(sender member.Index) *EphemeralPublicKeyMessage
+	ephemeralPublicKeyMessage(sender member.MemberIndex) *EphemeralPublicKeyMessage
 
 	// peerSharesMessage returns the `PeerShareMessage` broadcast in the third
 	// protocol round by the given sender.
-	peerSharesMessage(sender member.Index) *PeerSharesMessage
+	peerSharesMessage(sender member.MemberIndex) *PeerSharesMessage
 
 	// PutEphemeralMessage is a function that takes a single
 	// EphemeralPubKeyMessage, and stores that as evidence for future
@@ -88,8 +88,7 @@ func (d *dkgEvidenceLog) PutPeerSharesMessage(
 }
 
 func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
-	sender member.Index,
-) *EphemeralPublicKeyMessage {
+	sender member.MemberIndex) *EphemeralPublicKeyMessage {
 	storedMessage := d.pubKeyMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *EphemeralPublicKeyMessage:
@@ -99,8 +98,7 @@ func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 }
 
 func (d *dkgEvidenceLog) peerSharesMessage(
-	sender member.Index,
-) *PeerSharesMessage {
+	sender member.MemberIndex) *PeerSharesMessage {
 	storedMessage := d.peerSharesMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *PeerSharesMessage:
@@ -113,17 +111,17 @@ func (d *dkgEvidenceLog) peerSharesMessage(
 // it implements a generic get and put of messages through a mapping of a
 // sender.
 type messageStorage struct {
-	cache     map[member.Index]interface{}
+	cache     map[member.MemberIndex]interface{}
 	cacheLock sync.Mutex
 }
 
 func newMessageStorage() *messageStorage {
 	return &messageStorage{
-		cache: make(map[member.Index]interface{}),
+		cache: make(map[member.MemberIndex]interface{}),
 	}
 }
 
-func (ms *messageStorage) getMessage(sender member.Index) interface{} {
+func (ms *messageStorage) getMessage(sender member.MemberIndex) interface{} {
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()
 
@@ -136,8 +134,7 @@ func (ms *messageStorage) getMessage(sender member.Index) interface{} {
 }
 
 func (ms *messageStorage) putMessage(
-	sender member.Index,
-	message interface{},
+	sender member.MemberIndex, message interface{},
 ) error {
 	ms.cacheLock.Lock()
 	defer ms.cacheLock.Unlock()

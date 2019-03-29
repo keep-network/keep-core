@@ -15,13 +15,13 @@ import (
 // revealed. It also contains group's public key and ID of GJKR Member
 // represented by this ThresholdSigner instance.
 type ThresholdSigner struct {
-	memberID             member.Index
+	memberID             member.MemberIndex
 	groupPublicKey       *bn256.G2
 	groupPrivateKeyShare *big.Int
 }
 
 // MemberID returns GJKR MemberID represented by this ThresholdSigner.
-func (ts *ThresholdSigner) MemberID() member.Index {
+func (ts *ThresholdSigner) MemberID() member.MemberIndex {
 	return ts.memberID
 }
 

@@ -108,15 +108,15 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 	verifyingMemberKeys := member3.symmetricKeys
 
 	var tests = map[string]struct {
-		modifyPeerSharesMessage  func(messages map[member.Index]*PeerSharesMessage) error
-		modifyCommitmentsMessage func(messages map[member.Index]*MemberCommitmentsMessage)
-		expectedAccusedIDs       []member.Index
+		modifyPeerSharesMessage  func(messages map[member.MemberIndex]*PeerSharesMessage) error
+		modifyCommitmentsMessage func(messages map[member.MemberIndex]*MemberCommitmentsMessage)
+		expectedAccusedIDs       []member.MemberIndex
 	}{
 		"no accusations": {
-			expectedAccusedIDs: []member.Index{},
+			expectedAccusedIDs: []member.MemberIndex{},
 		},
 		"invalid S share": {
-			modifyPeerSharesMessage: func(messages map[member.Index]*PeerSharesMessage) error {
+			modifyPeerSharesMessage: func(messages map[member.MemberIndex]*PeerSharesMessage) error {
 				return alterPeerSharesMessage(
 					messages[member2.ID],
 					verifyingMemberID,
@@ -125,10 +125,10 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 					false,
 				)
 			},
-			expectedAccusedIDs: []member.Index{member2.ID},
+			expectedAccusedIDs: []member.MemberIndex{member2.ID},
 		},
 		"invalid T share": {
-			modifyPeerSharesMessage: func(messages map[member.Index]*PeerSharesMessage) error {
+			modifyPeerSharesMessage: func(messages map[member.MemberIndex]*PeerSharesMessage) error {
 				return alterPeerSharesMessage(
 					messages[member1.ID],
 					verifyingMemberID,
@@ -137,24 +137,24 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 					true,
 				)
 			},
-			expectedAccusedIDs: []member.Index{member1.ID},
+			expectedAccusedIDs: []member.MemberIndex{member1.ID},
 		},
 		"invalid commitment": {
-			modifyCommitmentsMessage: func(messages map[member.Index]*MemberCommitmentsMessage) {
+			modifyCommitmentsMessage: func(messages map[member.MemberIndex]*MemberCommitmentsMessage) {
 				message := messages[member2.ID]
 				message.commitments[0] = new(bn256.G1).ScalarMult(
 					message.commitments[0],
 					big.NewInt(3),
 				)
 			},
-			expectedAccusedIDs: []member.Index{member2.ID},
+			expectedAccusedIDs: []member.MemberIndex{member2.ID},
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			shareMessages := make(map[member.Index]*PeerSharesMessage)
-			commitmentMessages := make(map[member.Index]*MemberCommitmentsMessage)
+			shareMessages := make(map[member.MemberIndex]*PeerSharesMessage)
+			commitmentMessages := make(map[member.MemberIndex]*MemberCommitmentsMessage)
 
 			for _, member := range members {
 				shares, commitments, err := member.CalculateMembersSharesAndCommitments()
@@ -212,8 +212,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 
 func alterPeerSharesMessage(
 	message *PeerSharesMessage,
-	receiverID member.Index,
-	symmetricKey ephemeral.SymmetricKey,
+	receiverID member.MemberIndex, symmetricKey ephemeral.SymmetricKey,
 	alterS bool,
 	alterT bool,
 ) error {
@@ -246,12 +245,11 @@ func alterPeerSharesMessage(
 }
 
 func assertAccusedMembers(
-	expectedAccusedIDs []member.Index,
-	verifyingMember *CommitmentsVerifyingMember,
+	expectedAccusedIDs []member.MemberIndex, verifyingMember *CommitmentsVerifyingMember,
 	accusationMessage *SecretSharesAccusationsMessage,
 	t *testing.T,
 ) {
-	expectedAccusedMembersKeys := make(map[member.Index]*ephemeral.PrivateKey)
+	expectedAccusedMembersKeys := make(map[member.MemberIndex]*ephemeral.PrivateKey)
 	for _, id := range expectedAccusedIDs {
 		expectedAccusedMembersKeys[id] = verifyingMember.ephemeralKeyPairs[id].PrivateKey
 	}
@@ -265,8 +263,7 @@ func assertAccusedMembers(
 }
 
 func assertValidSharesAndCommitments(
-	expectedAccusedIDs []member.Index,
-	verifyingMember *CommitmentsVerifyingMember,
+	expectedAccusedIDs []member.MemberIndex, verifyingMember *CommitmentsVerifyingMember,
 	groupSize int,
 	t *testing.T,
 ) {
@@ -358,8 +355,7 @@ func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int) (
 
 func filterPeerSharesMessage(
 	messages []*PeerSharesMessage,
-	receiverID member.Index,
-) []*PeerSharesMessage {
+	receiverID member.MemberIndex) []*PeerSharesMessage {
 	var result []*PeerSharesMessage
 	for _, msg := range messages {
 		if msg.senderID != receiverID {
@@ -371,8 +367,7 @@ func filterPeerSharesMessage(
 
 func filterMemberCommitmentsMessages(
 	messages []*MemberCommitmentsMessage,
-	receiverID member.Index,
-) []*MemberCommitmentsMessage {
+	receiverID member.MemberIndex) []*MemberCommitmentsMessage {
 	var result []*MemberCommitmentsMessage
 	for _, msg := range messages {
 		if msg.senderID != receiverID {

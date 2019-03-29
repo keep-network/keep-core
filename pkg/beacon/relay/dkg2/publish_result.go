@@ -34,8 +34,7 @@ type Publisher struct {
 // accepted by the chain.
 func executePublishing(
 	requestID *big.Int,
-	publishingIndex member.Index,
-	chainRelay relayChain.Interface,
+	publishingIndex member.MemberIndex, chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
 	result *relayChain.DKGResult,
 ) error {
@@ -139,7 +138,7 @@ func (pm *Publisher) publishResult(
 
 			chainRelay.SubmitDKGResult(
 				pm.RequestID,
-				member.Index(pm.publishingIndex),
+				member.MemberIndex(pm.publishingIndex),
 				result,
 				nil,
 			).

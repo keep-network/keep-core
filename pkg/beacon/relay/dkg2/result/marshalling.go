@@ -31,7 +31,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
-	d.senderIndex = member.Index(pbMsg.SenderIndex)
+	d.senderIndex = member.MemberIndex(pbMsg.SenderIndex)
 
 	resultHash, err := chain.DKGResultHashFromBytes(pbMsg.ResultHash)
 	if err != nil {

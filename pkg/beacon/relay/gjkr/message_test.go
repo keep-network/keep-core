@@ -11,8 +11,8 @@ import (
 )
 
 func TestAddAndDecryptSharesFromMessage(t *testing.T) {
-	sender := member.Index(4181)
-	receiver := member.Index(1231)
+	sender := member.MemberIndex(4181)
+	receiver := member.MemberIndex(1231)
 	shareS := big.NewInt(1381319)
 	shareT := big.NewInt(1010212)
 
@@ -54,8 +54,8 @@ func TestAddAndDecryptSharesFromMessage(t *testing.T) {
 }
 
 func TestNoSharesForReceiver(t *testing.T) {
-	sender := member.Index(4181)
-	receiver := member.Index(1231)
+	sender := member.MemberIndex(4181)
+	receiver := member.MemberIndex(1231)
 	shareS := big.NewInt(1381319)
 	shareT := big.NewInt(1010212)
 
@@ -71,7 +71,7 @@ func TestNoSharesForReceiver(t *testing.T) {
 
 	expectedError := fmt.Errorf("no shares for receiver 9")
 
-	_, err = peerSharesMessage.decryptShareS(member.Index(9), key)
+	_, err = peerSharesMessage.decryptShareS(member.MemberIndex(9), key)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v",
@@ -80,7 +80,7 @@ func TestNoSharesForReceiver(t *testing.T) {
 		)
 	}
 
-	_, err = peerSharesMessage.decryptShareT(member.Index(9), key)
+	_, err = peerSharesMessage.decryptShareT(member.MemberIndex(9), key)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v",
@@ -91,8 +91,8 @@ func TestNoSharesForReceiver(t *testing.T) {
 }
 
 func TestCanDecrypt(t *testing.T) {
-	sender := member.Index(4181)
-	receiver := member.Index(1231)
+	sender := member.MemberIndex(4181)
+	receiver := member.MemberIndex(1231)
 
 	var tests = map[string]struct {
 		modifyMessage  func(msg *PeerSharesMessage)
@@ -147,7 +147,7 @@ func TestCanDecrypt(t *testing.T) {
 	}
 }
 
-func newTestPeerSharesMessage(senderID, receiverID member.Index, shareS, shareT *big.Int) (
+func newTestPeerSharesMessage(senderID, receiverID member.MemberIndex, shareS, shareT *big.Int) (
 	*PeerSharesMessage,
 	ephemeral.SymmetricKey,
 	error,

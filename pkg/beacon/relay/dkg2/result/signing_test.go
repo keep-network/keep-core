@@ -152,7 +152,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	var tests = map[string]struct {
 		messages []*DKGResultHashSignatureMessage
 
-		expectedReceivedValidSignatures map[member.Index]operator.Signature
+		expectedReceivedValidSignatures map[member.MemberIndex]operator.Signature
 		expectedError                   error
 	}{
 		"received valid messages with signatures for the preferred result": {
@@ -170,7 +170,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &member3.privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 				member2.index:         signature21,
 				member3.index:         signature311,
@@ -197,7 +197,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &member3.privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -216,7 +216,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &member3.privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -235,7 +235,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &member4.privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -248,7 +248,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &member5.privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -261,7 +261,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &member2.privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -274,7 +274,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &members[0].privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -321,7 +321,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					publicKey:   &member5.privateKey.PublicKey,
 				},
 			},
-			expectedReceivedValidSignatures: map[member.Index]operator.Signature{
+			expectedReceivedValidSignatures: map[member.MemberIndex]operator.Signature{
 				verifyingMember.index: selfSignature,
 				member2.index:         signature21,
 			},
@@ -367,7 +367,7 @@ func initializeSigningMembers(
 		}
 
 		members = append(members, &SigningMember{
-			index:      member.Index(i),
+			index:      member.MemberIndex(i),
 			privateKey: privateKey,
 		})
 	}

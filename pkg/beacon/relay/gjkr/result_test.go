@@ -48,23 +48,23 @@ func TestResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"disqualified - equal": {
-			result1:        &Result{Disqualified: []member.Index{1, 2, 3}},
-			result2:        &Result{Disqualified: []member.Index{1, 2, 3}},
+			result1:        &Result{Disqualified: []member.MemberIndex{1, 2, 3}},
+			result2:        &Result{Disqualified: []member.MemberIndex{1, 2, 3}},
 			expectedResult: true,
 		},
 		"disqualified - not equal": {
-			result1:        &Result{Disqualified: []member.Index{1, 2, 3}},
-			result2:        &Result{Disqualified: []member.Index{1, 4, 3}},
+			result1:        &Result{Disqualified: []member.MemberIndex{1, 2, 3}},
+			result2:        &Result{Disqualified: []member.MemberIndex{1, 4, 3}},
 			expectedResult: false,
 		},
 		"inactive - equal": {
-			result1:        &Result{Inactive: []member.Index{3, 2, 1}},
-			result2:        &Result{Inactive: []member.Index{3, 2, 1}},
+			result1:        &Result{Inactive: []member.MemberIndex{3, 2, 1}},
+			result2:        &Result{Inactive: []member.MemberIndex{3, 2, 1}},
 			expectedResult: true,
 		},
 		"inactive - not equal": {
-			result1:        &Result{Inactive: []member.Index{1, 2, 3}},
-			result2:        &Result{Inactive: []member.Index{1, 2}},
+			result1:        &Result{Inactive: []member.MemberIndex{1, 2, 3}},
+			result2:        &Result{Inactive: []member.MemberIndex{1, 2}},
 			expectedResult: false,
 		},
 	}
@@ -126,8 +126,8 @@ func TestPublicKeysEqual(t *testing.T) {
 
 func TestMemberIDSlicesEqual(t *testing.T) {
 	var tests = map[string]struct {
-		slice1         []member.Index
-		slice2         []member.Index
+		slice1         []member.MemberIndex
+		slice2         []member.MemberIndex
 		expectedResult bool
 	}{
 		"both nil": {
@@ -136,49 +136,49 @@ func TestMemberIDSlicesEqual(t *testing.T) {
 			expectedResult: true,
 		},
 		"both empty": {
-			slice1:         []member.Index{},
-			slice2:         []member.Index{},
+			slice1:         []member.MemberIndex{},
+			slice2:         []member.MemberIndex{},
 			expectedResult: true,
 		},
 		"both equal": {
-			slice1:         []member.Index{1, 2, 3},
-			slice2:         []member.Index{1, 2, 3},
+			slice1:         []member.MemberIndex{1, 2, 3},
+			slice2:         []member.MemberIndex{1, 2, 3},
 			expectedResult: true,
 		},
 
 		"not equal - changed order": {
-			slice1:         []member.Index{1, 2, 3},
-			slice2:         []member.Index{1, 3, 2},
+			slice1:         []member.MemberIndex{1, 2, 3},
+			slice2:         []member.MemberIndex{1, 3, 2},
 			expectedResult: false,
 		},
 		"not equal - different one entry": {
-			slice1:         []member.Index{1, 2, 3},
-			slice2:         []member.Index{1, 4, 3},
+			slice1:         []member.MemberIndex{1, 2, 3},
+			slice2:         []member.MemberIndex{1, 4, 3},
 			expectedResult: false,
 		},
 		"not equal - different length": {
-			slice1:         []member.Index{1, 2},
-			slice2:         []member.Index{1, 2, 3},
+			slice1:         []member.MemberIndex{1, 2},
+			slice2:         []member.MemberIndex{1, 2, 3},
 			expectedResult: false,
 		},
 		"not equal - nil and set": {
 			slice1:         nil,
-			slice2:         []member.Index{1, 2, 3},
+			slice2:         []member.MemberIndex{1, 2, 3},
 			expectedResult: false,
 		},
 		"not equal - set and nil": {
-			slice1:         []member.Index{1, 2, 3},
+			slice1:         []member.MemberIndex{1, 2, 3},
 			slice2:         nil,
 			expectedResult: false,
 		},
 		"not equal - empty and filled": {
-			slice1:         []member.Index{},
-			slice2:         []member.Index{1, 2, 3},
+			slice1:         []member.MemberIndex{},
+			slice2:         []member.MemberIndex{1, 2, 3},
 			expectedResult: false,
 		},
 		"not equal - filled and empty": {
-			slice1:         []member.Index{1, 2, 3},
-			slice2:         []member.Index{},
+			slice1:         []member.MemberIndex{1, 2, 3},
+			slice2:         []member.MemberIndex{},
 			expectedResult: false,
 		},
 	}

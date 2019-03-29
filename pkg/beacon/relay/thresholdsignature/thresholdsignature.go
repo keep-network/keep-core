@@ -69,7 +69,7 @@ func Execute(
 
 	fmt.Printf("[member:%v] Sending signature share...\n", signer.MemberID())
 
-	seenShares := make(map[member.Index]*bn256.G1)
+	seenShares := make(map[member.MemberIndex]*bn256.G1)
 	share := signer.CalculateSignatureShare(bytes)
 
 	// Add local share to map rather than receiving from the network.
@@ -136,7 +136,6 @@ func Execute(
 func sendSignatureShare(
 	share []byte,
 	channel net.BroadcastChannel,
-	memberID member.Index,
-) error {
+	memberID member.MemberIndex) error {
 	return channel.Send(&SignatureShareMessage{memberID, share})
 }

@@ -10,28 +10,25 @@ import (
 
 func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
-		sender                      member.Index
+		sender                      member.MemberIndex
 		modifyPubKeyMessageLogState func(
-			sender member.Index,
-			log *dkgEvidenceLog,
+			sender member.MemberIndex, log *dkgEvidenceLog,
 		) error
 		expectedError error
 	}{
 		"EphemeralPubKeyMessage successfully stored for sender": {
-			sender: member.Index(1),
+			sender: member.MemberIndex(1),
 			modifyPubKeyMessageLogState: func(
-				sender member.Index,
-				log *dkgEvidenceLog,
+				sender member.MemberIndex, log *dkgEvidenceLog,
 			) error {
 				return nil
 			},
 			expectedError: nil,
 		},
 		"EphemeralPubKeyMessage already exists for sender": {
-			sender: member.Index(1),
+			sender: member.MemberIndex(1),
 			modifyPubKeyMessageLogState: func(
-				sender member.Index,
-				log *dkgEvidenceLog,
+				sender member.MemberIndex, log *dkgEvidenceLog,
 			) error {
 				msg := &EphemeralPublicKeyMessage{
 					senderID: sender,
@@ -80,17 +77,17 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 
 func TestGetEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
-		sender         member.Index
+		sender         member.MemberIndex
 		expectedResult *EphemeralPublicKeyMessage
 	}{
 		"valid EphemeralPubKeyMessage returned for sender": {
-			sender: member.Index(uint32(1)),
+			sender: member.MemberIndex(uint32(1)),
 			expectedResult: &EphemeralPublicKeyMessage{
-				senderID: member.Index(uint32(1)),
+				senderID: member.MemberIndex(uint32(1)),
 			},
 		},
 		"no EphemeralPubKeyMessage for sender": {
-			sender:         member.Index(uint32(1)),
+			sender:         member.MemberIndex(uint32(1)),
 			expectedResult: nil,
 		},
 	}

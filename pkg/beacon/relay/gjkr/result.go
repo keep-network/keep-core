@@ -15,9 +15,9 @@ type Result struct {
 	// be revealed publicly.
 	GroupPrivateKeyShare *big.Int
 	// Disqualified members IDs.
-	Disqualified []member.Index
+	Disqualified []member.MemberIndex
 	// Inactive members IDs.
-	Inactive []member.Index
+	Inactive []member.MemberIndex
 }
 
 // Equals checks if two results are equal.
@@ -51,7 +51,7 @@ func publicKeysEqual(expectedKey *bn256.G2, actualKey *bn256.G2) bool {
 
 // memberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
 // to have the same length and have the same order of entries.
-func memberIDSlicesEqual(expectedSlice []member.Index, actualSlice []member.Index) bool {
+func memberIDSlicesEqual(expectedSlice []member.MemberIndex, actualSlice []member.MemberIndex) bool {
 	if len(expectedSlice) != len(actualSlice) {
 		return false
 	}

@@ -16,56 +16,56 @@ func TestGenerateResult(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		disqualifiedMemberIDs []member.Index
-		inactiveMemberIDs     []member.Index
+		disqualifiedMemberIDs []member.MemberIndex
+		inactiveMemberIDs     []member.MemberIndex
 		expectedResult        *Result
 	}{
 		"no disqualified or inactive members - success": {
 			expectedResult: &Result{
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   []member.Index{},
-				Inactive:       []member.Index{},
+				Disqualified:   []member.MemberIndex{},
+				Inactive:       []member.MemberIndex{},
 			},
 		},
 		"one disqualified member - success": {
-			disqualifiedMemberIDs: []member.Index{2},
+			disqualifiedMemberIDs: []member.MemberIndex{2},
 			expectedResult: &Result{
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   []member.Index{2},
-				Inactive:       []member.Index{},
+				Disqualified:   []member.MemberIndex{2},
+				Inactive:       []member.MemberIndex{},
 			},
 		},
 		"two inactive members - success": {
-			inactiveMemberIDs: []member.Index{3, 7},
+			inactiveMemberIDs: []member.MemberIndex{3, 7},
 			expectedResult: &Result{
 				GroupPublicKey: members[0].groupPublicKey,
-				Disqualified:   []member.Index{},
-				Inactive:       []member.Index{3, 7},
+				Disqualified:   []member.MemberIndex{},
+				Inactive:       []member.MemberIndex{3, 7},
 			},
 		},
 		"more than half of threshold disqualified and inactive members - failure": {
-			disqualifiedMemberIDs: []member.Index{2},
-			inactiveMemberIDs:     []member.Index{3, 7},
+			disqualifiedMemberIDs: []member.MemberIndex{2},
+			inactiveMemberIDs:     []member.MemberIndex{3, 7},
 			expectedResult: &Result{
 				GroupPublicKey: nil,
-				Disqualified:   []member.Index{2},
-				Inactive:       []member.Index{3, 7},
+				Disqualified:   []member.MemberIndex{2},
+				Inactive:       []member.MemberIndex{3, 7},
 			},
 		},
 		"more than half of threshold inactive members - failure": {
-			inactiveMemberIDs: []member.Index{3, 5, 7},
+			inactiveMemberIDs: []member.MemberIndex{3, 5, 7},
 			expectedResult: &Result{
 				GroupPublicKey: nil,
 				Disqualified:   nil,
-				Inactive:       []member.Index{3, 5, 7},
+				Inactive:       []member.MemberIndex{3, 5, 7},
 			},
 		},
 		"more than half of threshold disqualified members - failure": {
-			disqualifiedMemberIDs: []member.Index{3, 5, 7},
+			disqualifiedMemberIDs: []member.MemberIndex{3, 5, 7},
 			expectedResult: &Result{
 				GroupPublicKey: nil,
-				Disqualified:   []member.Index{3, 5, 7},
-				Inactive:       []member.Index{},
+				Disqualified:   []member.MemberIndex{3, 5, 7},
+				Inactive:       []member.MemberIndex{},
 			},
 		},
 	}

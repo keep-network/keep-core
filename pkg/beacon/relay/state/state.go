@@ -26,5 +26,5 @@ type State interface {
 	Next() State
 
 	// MemberIndex returns the index of member associated with the current state.
-	MemberIndex() member.Index
+	MemberIndex() member.MemberIndex
 }

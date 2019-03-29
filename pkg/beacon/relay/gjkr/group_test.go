@@ -12,7 +12,7 @@ func TestRegisterMemberIDWithInvalidID(t *testing.T) {
 	expectedError := fmt.Errorf("cannot register member ID in the group [member index must be >= 1]")
 
 	group := &Group{}
-	err := group.RegisterMemberID(member.Index(0))
+	err := group.RegisterMemberID(member.MemberIndex(0))
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
@@ -21,81 +21,81 @@ func TestRegisterMemberIDWithInvalidID(t *testing.T) {
 
 func TestMarkMemberAsDisqualified(t *testing.T) {
 	var tests = map[string]struct {
-		initialMembers              []member.Index
+		initialMembers              []member.MemberIndex
 		updateFunc                  func(g *Group)
-		expectedDisqualifiedMembers []member.Index
-		expectedInactiveMembers     []member.Index
+		expectedDisqualifiedMembers []member.MemberIndex
+		expectedInactiveMembers     []member.MemberIndex
 	}{
 		"mark member as disqualified": {
-			initialMembers: []member.Index{19, 11, 31, 33},
+			initialMembers: []member.MemberIndex{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(19)
 			},
-			expectedDisqualifiedMembers: []member.Index{19},
-			expectedInactiveMembers:     []member.Index{},
+			expectedDisqualifiedMembers: []member.MemberIndex{19},
+			expectedInactiveMembers:     []member.MemberIndex{},
 		},
 		"mark member as disqualified twice": {
-			initialMembers: []member.Index{19, 11, 31, 33},
+			initialMembers: []member.MemberIndex{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(11)
 				g.MarkMemberAsDisqualified(11)
 			},
-			expectedDisqualifiedMembers: []member.Index{11},
-			expectedInactiveMembers:     []member.Index{},
+			expectedDisqualifiedMembers: []member.MemberIndex{11},
+			expectedInactiveMembers:     []member.MemberIndex{},
 		},
 		"mark member from out of the group as disqualified": {
-			initialMembers: []member.Index{19, 11, 31, 33},
+			initialMembers: []member.MemberIndex{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(88)
 			},
-			expectedDisqualifiedMembers: []member.Index{},
-			expectedInactiveMembers:     []member.Index{},
+			expectedDisqualifiedMembers: []member.MemberIndex{},
+			expectedInactiveMembers:     []member.MemberIndex{},
 		},
 		"mark all members as disqualified": {
-			initialMembers: []member.Index{11, 12, 13},
+			initialMembers: []member.MemberIndex{11, 12, 13},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(11)
 				g.MarkMemberAsDisqualified(13)
 				g.MarkMemberAsDisqualified(12)
 			},
-			expectedDisqualifiedMembers: []member.Index{11, 13, 12},
-			expectedInactiveMembers:     []member.Index{},
+			expectedDisqualifiedMembers: []member.MemberIndex{11, 13, 12},
+			expectedInactiveMembers:     []member.MemberIndex{},
 		},
 		"mark member as inactive": {
-			initialMembers: []member.Index{19, 11, 31, 33},
+			initialMembers: []member.MemberIndex{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsInactive(31)
 			},
-			expectedDisqualifiedMembers: []member.Index{},
-			expectedInactiveMembers:     []member.Index{31},
+			expectedDisqualifiedMembers: []member.MemberIndex{},
+			expectedInactiveMembers:     []member.MemberIndex{31},
 		},
 		"mark member as inactive twice": {
-			initialMembers: []member.Index{19, 11, 31, 33},
+			initialMembers: []member.MemberIndex{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsInactive(33)
 				g.MarkMemberAsInactive(33)
 			},
-			expectedDisqualifiedMembers: []member.Index{},
-			expectedInactiveMembers:     []member.Index{33},
+			expectedDisqualifiedMembers: []member.MemberIndex{},
+			expectedInactiveMembers:     []member.MemberIndex{33},
 		},
 		"mark member from out of the group as inactive": {
-			initialMembers: []member.Index{19, 11, 31, 33},
+			initialMembers: []member.MemberIndex{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsInactive(99)
 			},
-			expectedDisqualifiedMembers: []member.Index{},
-			expectedInactiveMembers:     []member.Index{},
+			expectedDisqualifiedMembers: []member.MemberIndex{},
+			expectedInactiveMembers:     []member.MemberIndex{},
 		},
 		"mark all members as inactive": {
-			initialMembers: []member.Index{19, 18, 17, 16},
+			initialMembers: []member.MemberIndex{19, 18, 17, 16},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsInactive(17)
 				g.MarkMemberAsInactive(19)
 				g.MarkMemberAsInactive(16)
 				g.MarkMemberAsInactive(18)
 			},
-			expectedDisqualifiedMembers: []member.Index{},
-			expectedInactiveMembers:     []member.Index{17, 19, 16, 18},
+			expectedDisqualifiedMembers: []member.MemberIndex{},
+			expectedInactiveMembers:     []member.MemberIndex{17, 19, 16, 18},
 		},
 	}
 
@@ -103,8 +103,8 @@ func TestMarkMemberAsDisqualified(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			group := &Group{
 				memberIDs:             test.initialMembers,
-				disqualifiedMemberIDs: []member.Index{},
-				inactiveMemberIDs:     []member.Index{},
+				disqualifiedMemberIDs: []member.MemberIndex{},
+				inactiveMemberIDs:     []member.MemberIndex{},
 			}
 
 			if test.updateFunc != nil {
@@ -138,7 +138,7 @@ func TestMarkMemberAsDisqualified(t *testing.T) {
 
 func TestIsDisqualified(t *testing.T) {
 	group := &Group{
-		memberIDs: []member.Index{19, 11, 31, 33},
+		memberIDs: []member.MemberIndex{19, 11, 31, 33},
 	}
 
 	if group.isDisqualified(19) {
@@ -154,7 +154,7 @@ func TestIsDisqualified(t *testing.T) {
 
 func TestIsInactive(t *testing.T) {
 	group := &Group{
-		memberIDs: []member.Index{19, 11, 31, 33},
+		memberIDs: []member.MemberIndex{19, 11, 31, 33},
 	}
 
 	if group.isInactive(31) {
@@ -170,51 +170,51 @@ func TestIsInactive(t *testing.T) {
 
 func TestOperatingMembers(t *testing.T) {
 	var tests = map[string]struct {
-		initialMembers           []member.Index
+		initialMembers           []member.MemberIndex
 		updateFunc               func(g *Group)
-		expectedOperatingMembers []member.Index
+		expectedOperatingMembers []member.MemberIndex
 	}{
 		"all members remain operating": {
-			initialMembers:           []member.Index{10, 12, 33, 11},
-			expectedOperatingMembers: []member.Index{10, 12, 33, 11},
+			initialMembers:           []member.MemberIndex{10, 12, 33, 11},
+			expectedOperatingMembers: []member.MemberIndex{10, 12, 33, 11},
 		},
 		"one member disqualified": {
-			initialMembers: []member.Index{99, 98, 12, 33, 44},
+			initialMembers: []member.MemberIndex{99, 98, 12, 33, 44},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(98)
 			},
-			expectedOperatingMembers: []member.Index{99, 12, 33, 44},
+			expectedOperatingMembers: []member.MemberIndex{99, 12, 33, 44},
 		},
 		"one member inactive": {
-			initialMembers: []member.Index{38, 19, 39, 22, 11},
+			initialMembers: []member.MemberIndex{38, 19, 39, 22, 11},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsInactive(11)
 			},
-			expectedOperatingMembers: []member.Index{38, 19, 39, 22},
+			expectedOperatingMembers: []member.MemberIndex{38, 19, 39, 22},
 		},
 		"one member disqualified and one member inactive": {
-			initialMembers: []member.Index{19, 11, 31, 33},
+			initialMembers: []member.MemberIndex{19, 11, 31, 33},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(19)
 				g.MarkMemberAsInactive(33)
 			},
-			expectedOperatingMembers: []member.Index{11, 31},
+			expectedOperatingMembers: []member.MemberIndex{11, 31},
 		},
 		"all but one inactive": {
-			initialMembers: []member.Index{28, 19, 29},
+			initialMembers: []member.MemberIndex{28, 19, 29},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(19)
 				g.MarkMemberAsDisqualified(29)
 			},
-			expectedOperatingMembers: []member.Index{28},
+			expectedOperatingMembers: []member.MemberIndex{28},
 		},
 		"all but one disqualified": {
-			initialMembers: []member.Index{92, 11, 20},
+			initialMembers: []member.MemberIndex{92, 11, 20},
 			updateFunc: func(g *Group) {
 				g.MarkMemberAsDisqualified(92)
 				g.MarkMemberAsDisqualified(11)
 			},
-			expectedOperatingMembers: []member.Index{20},
+			expectedOperatingMembers: []member.MemberIndex{20},
 		},
 	}
 

@@ -27,8 +27,8 @@ type resultSigningState struct {
 
 	requestID             *big.Int
 	result                *relayChain.DKGResult
-	disqualifiedMemberIDs []member.Index
-	inactiveMemberIDs     []member.Index
+	disqualifiedMemberIDs []member.MemberIndex
+	inactiveMemberIDs     []member.MemberIndex
 
 	signatureMessages []*DKGResultHashSignatureMessage
 }
@@ -83,12 +83,12 @@ func (rss *resultSigningState) Next() signingState {
 		requestID:         rss.requestID,
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
-		validSignatures:   make(map[member.Index]operator.Signature),
+		validSignatures:   make(map[member.MemberIndex]operator.Signature),
 	}
 
 }
 
-func (rss *resultSigningState) MemberIndex() member.Index {
+func (rss *resultSigningState) MemberIndex() member.MemberIndex {
 	return rss.member.index
 }
 
@@ -107,7 +107,7 @@ type signaturesVerificationState struct {
 	result    *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
-	validSignatures   map[member.Index]operator.Signature
+	validSignatures   map[member.MemberIndex]operator.Signature
 }
 
 func (svs *signaturesVerificationState) ActiveBlocks() int { return 0 }
@@ -138,7 +138,7 @@ func (svs *signaturesVerificationState) Next() signingState {
 
 }
 
-func (svs *signaturesVerificationState) MemberIndex() member.Index {
+func (svs *signaturesVerificationState) MemberIndex() member.MemberIndex {
 	return svs.member.index
 }
 
@@ -154,7 +154,7 @@ type resultSubmissionState struct {
 
 	requestID  *big.Int
 	result     *relayChain.DKGResult
-	signatures map[member.Index]operator.Signature
+	signatures map[member.MemberIndex]operator.Signature
 }
 
 func (rss *resultSubmissionState) ActiveBlocks() int { return 3 }
@@ -176,6 +176,6 @@ func (rss *resultSubmissionState) Next() signingState {
 	return nil
 }
 
-func (rss *resultSubmissionState) MemberIndex() member.Index {
+func (rss *resultSubmissionState) MemberIndex() member.MemberIndex {
 	return rss.member.index
 }

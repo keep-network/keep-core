@@ -365,7 +365,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		BlockNumber:    0,
 	}
 
-	signatures := map[member.Index]operator.Signature{
+	signatures := map[member.MemberIndex]operator.Signature{
 		1: operator.Signature{101},
 		2: operator.Signature{102},
 		3: operator.Signature{103},

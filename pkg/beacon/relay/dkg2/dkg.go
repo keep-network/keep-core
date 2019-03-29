@@ -24,7 +24,7 @@ func ExecuteDKG(
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
 	// The staker index should begin with 1
-	playerIndex := member.Index(index + 1)
+	playerIndex := member.MemberIndex(index + 1)
 	if playerIndex < 1 {
 		return nil, fmt.Errorf("[member:%v] player index must be >= 1", playerIndex)
 	}
@@ -78,7 +78,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	// passed members IDs slice. It assumes member IDs for a group starts iterating
 	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
 	// resulting byte slice will be {0x00, 0x01, 0x00}.
-	convertToByteSlice := func(memberIDsSlice []member.Index) []byte {
+	convertToByteSlice := func(memberIDsSlice []member.MemberIndex) []byte {
 		bytes := make([]byte, groupSize)
 		for index := range bytes {
 			for _, memberID := range memberIDsSlice {

@@ -30,7 +30,7 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	ssm.senderID = member.Index(pbSignatureShare.SenderID)
+	ssm.senderID = member.MemberIndex(pbSignatureShare.SenderID)
 	ssm.ShareBytes = pbSignatureShare.Share
 
 	return nil

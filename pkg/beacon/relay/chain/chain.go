@@ -85,9 +85,8 @@ type DistributedKeyGenerationInterface interface {
 	// member index.
 	SubmitDKGResult(
 		requestID *big.Int,
-		participantIndex member.Index,
-		dkgResult *DKGResult,
-		signatures map[member.Index]operator.Signature,
+		participantIndex member.MemberIndex, dkgResult *DKGResult,
+		signatures map[member.MemberIndex]operator.Signature,
 	) *async.DKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.

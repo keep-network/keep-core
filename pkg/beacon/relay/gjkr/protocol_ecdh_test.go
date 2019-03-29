@@ -61,7 +61,7 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 	)
 
 	// generate ephemeral key pairs for each group member; prepare messages
-	broadcastedPubKeyMessages := make(map[member.Index]*EphemeralPublicKeyMessage)
+	broadcastedPubKeyMessages := make(map[member.MemberIndex]*EphemeralPublicKeyMessage)
 	for _, ephemeralGeneratingMember := range ephemeralGeneratingMembers {
 		message, err := ephemeralGeneratingMember.GenerateEphemeralKeyPair()
 		if err != nil {
@@ -87,7 +87,7 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 	}
 
 	// Simulate the each member receiving all messages from the network
-	receivedPubKeyMessages := make(map[member.Index][]*EphemeralPublicKeyMessage)
+	receivedPubKeyMessages := make(map[member.MemberIndex][]*EphemeralPublicKeyMessage)
 	for memberID, ephemeralPubKeyMessage := range broadcastedPubKeyMessages {
 		for _, otherMember := range ephemeralGeneratingMembers {
 			// We would only receive messages from the other members
@@ -148,7 +148,7 @@ func initializeEphemeralKeyPairMembersGroup(
 
 	var members []*EphemeralKeyPairGeneratingMember
 	for i := 1; i <= groupSize; i++ {
-		id := member.Index(i)
+		id := member.MemberIndex(i)
 		members = append(members, &EphemeralKeyPairGeneratingMember{
 			LocalMember: &LocalMember{
 				memberCore: &memberCore{
@@ -158,7 +158,7 @@ func initializeEphemeralKeyPairMembersGroup(
 					protocolParameters: protocolParameters,
 				},
 			},
-			ephemeralKeyPairs: make(map[member.Index]*ephemeral.KeyPair),
+			ephemeralKeyPairs: make(map[member.MemberIndex]*ephemeral.KeyPair),
 		})
 		group.RegisterMemberID(id)
 	}
@@ -214,7 +214,7 @@ func generateGroupWithEphemeralKeys(
 
 	// generate symmetric keys with all other members of the group
 	for _, member1 := range symmetricKeyMembers {
-		ephemeralKeys := make(map[member.Index]*ephemeral.PublicKey)
+		ephemeralKeys := make(map[member.MemberIndex]*ephemeral.PublicKey)
 
 		for _, member2 := range symmetricKeyMembers {
 			if member1.ID != member2.ID {
