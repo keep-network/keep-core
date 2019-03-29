@@ -10,23 +10,6 @@ import (
 
 type keyGenerationState = state.State
 
-func isMessageFromSelf(
-	memberIndex group.MemberIndex, message ProtocolMessage,
-) bool {
-	if message.SenderID() == memberIndex {
-		return true
-	}
-
-	return false
-}
-
-func isSenderAccepted(
-	filter group.MessageFiltering,
-	message ProtocolMessage,
-) bool {
-	return filter.IsSenderAccepted(message.SenderID())
-}
-
 // initializationState is the starting state of key generation; it waits for
 // activePeriod and then enters joinState. No messages are valid in this state.
 type initializationState struct {
@@ -114,8 +97,8 @@ func (ekpgs *ephemeralKeyPairGenerationState) Initiate() error {
 func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *EphemeralPublicKeyMessage:
-		if !isMessageFromSelf(ekpgs.member.ID, phaseMessage) &&
-			isSenderAccepted(ekpgs.member, phaseMessage) {
+		if !group.IsMessageFromSelf(ekpgs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(ekpgs.member, phaseMessage) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
@@ -205,13 +188,13 @@ func (cs *commitmentState) Initiate() error {
 func (cs *commitmentState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PeerSharesMessage:
-		if !isMessageFromSelf(cs.member.ID, phaseMessage) &&
-			isSenderAccepted(cs.member, phaseMessage) {
+		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
 	case *MemberCommitmentsMessage:
-		if !isMessageFromSelf(cs.member.ID, phaseMessage) {
+		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
 				phaseMessage,
@@ -276,8 +259,8 @@ func (cvs *commitmentsVerificationState) Initiate() error {
 func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *SecretSharesAccusationsMessage:
-		if !isMessageFromSelf(cvs.member.ID, phaseMessage) &&
-			isSenderAccepted(cvs.member, phaseMessage) {
+		if !group.IsMessageFromSelf(cvs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(cvs.member, phaseMessage) {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
 				phaseMessage,
@@ -402,8 +385,8 @@ func (pss *pointsShareState) Initiate() error {
 func (pss *pointsShareState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *MemberPublicKeySharePointsMessage:
-		if !isMessageFromSelf(pss.member.ID, phaseMessage) &&
-			isSenderAccepted(pss.member, phaseMessage) {
+		if !group.IsMessageFromSelf(pss.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(pss.member, phaseMessage) {
 			pss.phaseMessages = append(pss.phaseMessages, phaseMessage)
 		}
 	}
@@ -459,8 +442,8 @@ func (pvs *pointsValidationState) Initiate() error {
 func (pvs *pointsValidationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PointsAccusationsMessage:
-		if !isMessageFromSelf(pvs.member.ID, phaseMessage) &&
-			isSenderAccepted(pvs.member, phaseMessage) {
+		if !group.IsMessageFromSelf(pvs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(pvs.member, phaseMessage) {
 			pvs.phaseMessages = append(pvs.phaseMessages, phaseMessage)
 		}
 	}
@@ -554,8 +537,8 @@ func (rs *keyRevealState) Initiate() error {
 func (rs *keyRevealState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *DisqualifiedEphemeralKeysMessage:
-		if !isMessageFromSelf(rs.member.ID, phaseMessage) &&
-			isSenderAccepted(rs.member, phaseMessage) {
+		if !group.IsMessageFromSelf(rs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(rs.member, phaseMessage) {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
 		}
 	}

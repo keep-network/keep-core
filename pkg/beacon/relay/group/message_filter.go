@@ -11,6 +11,12 @@ type MessageFiltering interface {
 	IsSenderAccepted(senderID MemberIndex) bool
 }
 
+// ProtocolMessage is a common interface for all messages of GJKR DKG protocol.
+type ProtocolMessage interface {
+	// SenderID returns protocol-level identifier of the message sender.
+	SenderID() MemberIndex
+}
+
 // InactiveMemberFilter is a proxy facilitates filtering out inactive members
 // in the given phase and registering their final list in DKG Group.
 type InactiveMemberFilter struct {
@@ -63,4 +69,20 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 			mf.group.MarkMemberAsInactive(operatingMemberID)
 		}
 	}
+}
+
+// IsMessageFromSelf is an auxiliary function determining whether the given
+// ProtocolMessage is from the current member itself.
+func IsMessageFromSelf(memberIndex MemberIndex, message ProtocolMessage) bool {
+	if message.SenderID() == memberIndex {
+		return true
+	}
+
+	return false
+}
+
+// IsSenderAccepted determines if sender of the given ProtocoLMessage is
+// accepted by group (not marked as inactive or disqualified).
+func IsSenderAccepted(filter MessageFiltering, message ProtocolMessage) bool {
+	return filter.IsSenderAccepted(message.SenderID())
 }
