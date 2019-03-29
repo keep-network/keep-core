@@ -1,5 +1,7 @@
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
+import mineBlocks from './helpers/mineBlocks';
+import generateTickets from './helpers/generateTickets';
 import {bls} from './helpers/data';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
@@ -9,33 +11,6 @@ const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol')
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
 const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
-
-function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
-  let tickets = [];
-  for (let i = 1; i <= stakerWeight; i++) {
-    let ticketValue = web3.utils.toBN(
-      web3.utils.soliditySha3({t: 'uint', v: randomBeaconValue}, {t: 'uint', v: stakerValue}, {t: 'uint', v: i})
-    );
-    let ticket = {
-      value: ticketValue,
-      virtualStakerIndex: i
-    }
-    tickets.push(ticket);
-  }
-  return tickets
-}
-
-function mineBlocks(blocks) {
-  for (let i = 0; i <= blocks; i++) {
-    web3.currentProvider.send({
-      jsonrpc: "2.0",
-      method: "evm_mine",
-      id: 12345
-    }, function(err, _) {
-      if (err) console.log("Error mining a block.")
-    });
-  }
-}
 
 contract('TestKeepGroupSelection', function(accounts) {
 
