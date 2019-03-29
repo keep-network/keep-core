@@ -25,7 +25,7 @@ type Node struct {
 	// stake in the system.
 	Staker chain.Staker
 
-	privateKey *operator.PrivateKey
+	operatorPrivateKey *operator.PrivateKey
 
 	// External interactors.
 	netProvider  net.Provider
@@ -100,7 +100,7 @@ func (n *Node) JoinGroupIfEligible(
 					entryRequestID,
 					entrySeed,
 					playerIndex,
-					n.privateKey,
+					n.operatorPrivateKey,
 					n.chainConfig.GroupSize,
 					n.chainConfig.Threshold,
 					n.blockCounter,

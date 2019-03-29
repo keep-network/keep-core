@@ -6,7 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	dkgResult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -19,7 +19,7 @@ func ExecuteDKG(
 	requestID *big.Int,
 	seed *big.Int,
 	index int, // starts with 0
-	privateKey *operator.PrivateKey,
+	operatorPrivateKey *operator.PrivateKey,
 	groupSize int,
 	threshold int,
 	blockCounter chain.BlockCounter,
@@ -47,8 +47,8 @@ func ExecuteDKG(
 		)
 	}
 
-	err = dkgResult.SignAndSubmit(
-		privateKey,
+	err = result.SignAndSubmit(
+		operatorPrivateKey,
 		channel,
 		relayChain,
 		blockCounter,
