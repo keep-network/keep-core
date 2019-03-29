@@ -26,15 +26,25 @@ func ExecuteDKG(
 	relayChain relayChain.Interface,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
-	// The staker index should begin with 1
 	playerIndex := member.Index(index + 1)
-	if playerIndex < 1 {
-		return nil, fmt.Errorf("[member:%v] player index must be >= 1", playerIndex)
+	err := playerIndex.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("[member:%v] %v", playerIndex, err)
 	}
 
-	gjkrResult, err := gjkr.Execute(playerIndex, blockCounter, channel, threshold, seed)
+	gjkrResult, err := gjkr.Execute(
+		playerIndex,
+		blockCounter,
+		channel,
+		threshold,
+		seed,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("[member:%v] GJKR execution failed [%v]", playerIndex, err)
+		return nil, fmt.Errorf(
+			"[member:%v] GJKR execution failed [%v]",
+			playerIndex,
+			err,
+		)
 	}
 
 	err = dkgResult.SignAndSubmit(
