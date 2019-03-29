@@ -146,8 +146,13 @@ contract('KeepToken', function(accounts) {
     assert.equal(account_two_grant_balance.eq(amount), true, "Amount should be added to the beneficiary grant balance");
     assert.equal(account_two_ending_balance.eq(account_two_starting_balance), true, "Beneficiary main balance should stay unchanged");
 
+    // Should not be able to release token grant (0 unreleased amount)
+    await exceptThrow(grantContract.release(id))
+
     // jump in time, third vesting duration
     await increaseTimeTo(await latestTime()+vestingDuration/3);
+
+    // Should be able to release token grant unreleased amount
     await grantContract.release(id)
 
     // should release some of grant to the main balance
