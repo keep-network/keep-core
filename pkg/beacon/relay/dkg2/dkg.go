@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // ExecuteDKG runs the full distributed key generation lifecycle.
@@ -18,6 +19,7 @@ func ExecuteDKG(
 	requestID *big.Int,
 	seed *big.Int,
 	index int, // starts with 0
+	privateKey *operator.PrivateKey,
 	groupSize int,
 	threshold int,
 	blockCounter chain.BlockCounter,
@@ -36,6 +38,7 @@ func ExecuteDKG(
 	}
 
 	err = dkgResult.SignAndSubmit(
+		privateKey,
 		channel,
 		relayChain,
 		blockCounter,
