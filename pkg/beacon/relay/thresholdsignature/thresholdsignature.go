@@ -136,6 +136,7 @@ func Execute(
 func sendSignatureShare(
 	share []byte,
 	channel net.BroadcastChannel,
-	memberID group.MemberIndex) error {
+	memberID group.MemberIndex,
+) error {
 	return channel.Send(&SignatureShareMessage{memberID, share})
 }

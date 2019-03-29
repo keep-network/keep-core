@@ -157,7 +157,7 @@ func newPeerSharesMessage(senderID group.MemberIndex) *PeerSharesMessage {
 
 func (psm *PeerSharesMessage) addShares(
 	receiverID group.MemberIndex,
-	shareS,
+	shareS *big.Int,
 	shareT *big.Int,
 	symmetricKey ephemeral.SymmetricKey,
 ) error {

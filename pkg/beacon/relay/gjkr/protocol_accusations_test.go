@@ -397,7 +397,10 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	}
 }
 
-func findSharesJustifyingMemberByID(members []*SharesJustifyingMember, id group.MemberIndex) *SharesJustifyingMember {
+func findSharesJustifyingMemberByID(
+	members []*SharesJustifyingMember,
+	id group.MemberIndex,
+) *SharesJustifyingMember {
 	for _, m := range members {
 		if m.ID == id {
 			return m
