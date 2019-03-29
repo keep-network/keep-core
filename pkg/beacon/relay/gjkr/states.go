@@ -21,7 +21,7 @@ func isMessageFromSelf(
 }
 
 func isSenderAccepted(
-	filter MessageFiltering,
+	filter group.MessageFiltering,
 	message ProtocolMessage,
 ) bool {
 	return filter.IsSenderAccepted(message.SenderID())

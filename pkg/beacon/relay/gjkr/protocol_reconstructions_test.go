@@ -107,10 +107,10 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 		expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, disqualifiedMember.ID)
 	}
 	expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, invalidRevealingMember.ID)
-	if !reflect.DeepEqual(expectedDisqualifiedMemberIDs, member1.group.disqualifiedMemberIDs) {
+	if !reflect.DeepEqual(expectedDisqualifiedMemberIDs, member1.group.DisqualifiedMemberIDs()) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
 			expectedDisqualifiedMemberIDs,
-			member1.group.disqualifiedMemberIDs,
+			member1.group.DisqualifiedMemberIDs(),
 		)
 	}
 

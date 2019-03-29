@@ -32,7 +32,7 @@ func (em *EphemeralKeyPairGeneratingMember) GenerateEphemeralKeyPair() (
 	ephemeralKeys := make(map[group.MemberIndex]*ephemeral.PublicKey)
 
 	// Calculate ephemeral key pair for every other group member
-	for _, member := range em.group.memberIDs {
+	for _, member := range em.group.MemberIDs() {
 		if member == em.ID {
 			// don’t actually generate a key with ourselves
 			continue
@@ -116,7 +116,7 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 	*MemberCommitmentsMessage,
 	error,
 ) {
-	polynomialDegree := cm.group.dishonestThreshold
+	polynomialDegree := cm.group.DishonestThreshold()
 	coefficientsA, err := generatePolynomial(polynomialDegree)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
@@ -716,7 +716,7 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 }
 
 func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
-	disqualifiedMembersIDs := rm.group.disqualifiedMemberIDs
+	disqualifiedMembersIDs := rm.group.DisqualifiedMemberIDs()
 
 	// From disqualified members list filter those who provided valid shares in
 	// Phase 3 and are sharing the group private key.

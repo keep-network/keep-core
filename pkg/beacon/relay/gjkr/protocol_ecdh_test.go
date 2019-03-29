@@ -140,9 +140,7 @@ func initializeEphemeralKeyPairMembersGroup(
 	threshold int,
 	groupSize int,
 ) []*EphemeralKeyPairGeneratingMember {
-	dkgGroup := &Group{
-		dishonestThreshold: threshold,
-	}
+	dkgGroup := group.NewEmptyDkgGroup(threshold)
 
 	protocolParameters := newProtocolParameters(big.NewInt(18313131145))
 

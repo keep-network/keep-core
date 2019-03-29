@@ -72,8 +72,12 @@ func TestGenerateResult(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			for _, member := range members {
-				member.group.disqualifiedMemberIDs = test.disqualifiedMemberIDs
-				member.group.inactiveMemberIDs = test.inactiveMemberIDs
+				for _, dq := range test.disqualifiedMemberIDs {
+					member.group.MarkMemberAsDisqualified(dq)
+				}
+				for _, ia := range test.inactiveMemberIDs {
+					member.group.MarkMemberAsInactive(ia)
+				}
 
 				resultToPublish := member.Result()
 
