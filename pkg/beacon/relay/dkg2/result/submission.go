@@ -6,6 +6,7 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -21,6 +22,15 @@ type SubmittingMember struct {
 	// Predefined step for each submitting window. The value is used to determine
 	// the eligible submitting member.
 	blockStep uint64
+}
+
+// NewSubmittingMember creates a member to execute submitting the DKG result hash.
+func NewSubmittingMember(
+	memberIndex gjkr.MemberID,
+) *SubmittingMember {
+	return &SubmittingMember{
+		index: memberIndex,
+	}
 }
 
 // SubmitDKGResult sends a result, which contains the group public key and
