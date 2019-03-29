@@ -88,7 +88,8 @@ func (d *dkgEvidenceLog) PutPeerSharesMessage(
 }
 
 func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
-	sender group.MemberIndex) *EphemeralPublicKeyMessage {
+	sender group.MemberIndex,
+) *EphemeralPublicKeyMessage {
 	storedMessage := d.pubKeyMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *EphemeralPublicKeyMessage:
@@ -98,7 +99,8 @@ func (d *dkgEvidenceLog) ephemeralPublicKeyMessage(
 }
 
 func (d *dkgEvidenceLog) peerSharesMessage(
-	sender group.MemberIndex) *PeerSharesMessage {
+	sender group.MemberIndex,
+) *PeerSharesMessage {
 	storedMessage := d.peerSharesMessageLog.getMessage(sender)
 	switch message := storedMessage.(type) {
 	case *PeerSharesMessage:

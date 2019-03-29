@@ -17,7 +17,8 @@ import (
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
 func Execute(
-	memberIndex group.MemberIndex, blockCounter chain.BlockCounter,
+	memberIndex group.MemberIndex,
+	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,

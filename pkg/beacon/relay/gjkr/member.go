@@ -202,7 +202,9 @@ type FinalizingMember struct {
 // NewMember creates a new member in an initial state, ready to execute DKG
 // protocol.
 func NewMember(
-	memberID group.MemberIndex, groupMembers []group.MemberIndex, dishonestThreshold int,
+	memberID group.MemberIndex,
+	groupMembers []group.MemberIndex,
+	dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
 	if err := memberID.Validate(); err != nil {

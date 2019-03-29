@@ -12,14 +12,16 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 	var tests = map[string]struct {
 		sender                      group.MemberIndex
 		modifyPubKeyMessageLogState func(
-			sender group.MemberIndex, log *dkgEvidenceLog,
+			sender group.MemberIndex,
+			log *dkgEvidenceLog,
 		) error
 		expectedError error
 	}{
 		"EphemeralPubKeyMessage successfully stored for sender": {
 			sender: group.MemberIndex(1),
 			modifyPubKeyMessageLogState: func(
-				sender group.MemberIndex, log *dkgEvidenceLog,
+				sender group.MemberIndex,
+				log *dkgEvidenceLog,
 			) error {
 				return nil
 			},
@@ -28,7 +30,8 @@ func TestPutEphemeralPubKeyEvidenceLog(t *testing.T) {
 		"EphemeralPubKeyMessage already exists for sender": {
 			sender: group.MemberIndex(1),
 			modifyPubKeyMessageLogState: func(
-				sender group.MemberIndex, log *dkgEvidenceLog,
+				sender group.MemberIndex,
+				log *dkgEvidenceLog,
 			) error {
 				msg := &EphemeralPublicKeyMessage{
 					senderID: sender,

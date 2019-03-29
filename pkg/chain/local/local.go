@@ -357,7 +357,8 @@ func (c *localChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
-	participantIndex group.MemberIndex, resultToPublish *relaychain.DKGResult,
+	participantIndex group.MemberIndex,
+	resultToPublish *relaychain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
 	c.submittedResultsMutex.Lock()

@@ -231,7 +231,9 @@ func initializeSharingMembersGroup(threshold, groupSize int) (
 }
 
 func filterMemberPublicKeySharePointsMessages(
-	messages []*MemberPublicKeySharePointsMessage, receiverID group.MemberIndex) []*MemberPublicKeySharePointsMessage {
+	messages []*MemberPublicKeySharePointsMessage,
+	receiverID group.MemberIndex,
+) []*MemberPublicKeySharePointsMessage {
 	var result []*MemberPublicKeySharePointsMessage
 	for _, msg := range messages {
 		if msg.senderID != receiverID {

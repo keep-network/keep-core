@@ -162,7 +162,9 @@ func newPeerSharesMessage(senderID group.MemberIndex) *PeerSharesMessage {
 }
 
 func (psm *PeerSharesMessage) addShares(
-	receiverID group.MemberIndex, shareS, shareT *big.Int,
+	receiverID group.MemberIndex,
+	shareS,
+	shareT *big.Int,
 	symmetricKey ephemeral.SymmetricKey,
 ) error {
 	encryptedS, err := symmetricKey.Encrypt(shareS.Bytes())
@@ -181,7 +183,8 @@ func (psm *PeerSharesMessage) addShares(
 }
 
 func (psm *PeerSharesMessage) decryptShareS(
-	receiverID group.MemberIndex, key ephemeral.SymmetricKey,
+	receiverID group.MemberIndex,
+	key ephemeral.SymmetricKey,
 ) (*big.Int, error) {
 	shares, ok := psm.shares[receiverID]
 	if !ok {
@@ -197,7 +200,8 @@ func (psm *PeerSharesMessage) decryptShareS(
 }
 
 func (psm *PeerSharesMessage) decryptShareT(
-	receiverID group.MemberIndex, key ephemeral.SymmetricKey,
+	receiverID group.MemberIndex,
+	key ephemeral.SymmetricKey,
 ) (*big.Int, error) {
 	shares, ok := psm.shares[receiverID]
 	if !ok {
@@ -219,7 +223,8 @@ func (psm *PeerSharesMessage) decryptShareT(
 // an invalid message. In such case, it should be rejected to do not cause
 // a failure in DKG protocol.
 func (psm *PeerSharesMessage) CanDecrypt(
-	receiverID group.MemberIndex, key ephemeral.SymmetricKey,
+	receiverID group.MemberIndex,
+	key ephemeral.SymmetricKey,
 ) bool {
 	if _, err := psm.decryptShareS(receiverID, key); err != nil {
 		return false

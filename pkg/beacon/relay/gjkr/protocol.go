@@ -234,7 +234,8 @@ func generatePolynomial(degree int) ([]*big.Int, error) {
 // - `T` is threshold
 // - `q` is the order of cyclic group formed over the alt_bn128 curve
 func (cm *CommittingMember) evaluateMemberShare(
-	memberID group.MemberIndex, coefficients []*big.Int,
+	memberID group.MemberIndex,
+	coefficients []*big.Int,
 ) *big.Int {
 	result := big.NewInt(0)
 	for k, a := range coefficients {

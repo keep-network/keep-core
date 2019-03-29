@@ -25,7 +25,8 @@ type SubmittingMember struct {
 
 // NewSubmittingMember creates a member to execute submitting the DKG result hash.
 func NewSubmittingMember(
-	memberIndex group.MemberIndex) *SubmittingMember {
+	memberIndex group.MemberIndex,
+) *SubmittingMember {
 	return &SubmittingMember{
 		index: memberIndex,
 	}
