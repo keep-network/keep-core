@@ -10,9 +10,7 @@ import (
 
 type keyGenerationState = state.State
 
-func isMessageFromSelf(
-	memberIndex group.MemberIndex, message ProtocolMessage,
-) bool {
+func isMessageFromSelf(memberIndex group.MemberIndex, message ProtocolMessage) bool {
 	if message.SenderID() == memberIndex {
 		return true
 	}
@@ -20,10 +18,7 @@ func isMessageFromSelf(
 	return false
 }
 
-func isSenderAccepted(
-	filter MessageFiltering,
-	message ProtocolMessage,
-) bool {
+func isSenderAccepted(filter MessageFiltering, message ProtocolMessage) bool {
 	return filter.IsSenderAccepted(message.SenderID())
 }
 

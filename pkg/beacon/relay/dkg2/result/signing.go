@@ -26,7 +26,8 @@ type SigningMember struct {
 
 // NewSigningMember creates a member to execute signing DKG result hash.
 func NewSigningMember(
-	memberIndex group.MemberIndex, operatorPrivateKey *operator.PrivateKey,
+	memberIndex group.MemberIndex,
+	operatorPrivateKey *operator.PrivateKey,
 ) *SigningMember {
 	return &SigningMember{
 		index:      memberIndex,

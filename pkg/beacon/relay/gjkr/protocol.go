@@ -311,10 +311,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
@@ -452,7 +452,8 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 // the ephemeral symmetric key.
 func recoverSymmetricKey(
 	evidenceLog evidenceLog,
-	senderID, receiverID group.MemberIndex, receiverPrivateKey *ephemeral.PrivateKey,
+	senderID, receiverID group.MemberIndex,
+	receiverPrivateKey *ephemeral.PrivateKey,
 ) (ephemeral.SymmetricKey, error) {
 	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
 	if ephemeralPublicKeyMessage == nil {
@@ -481,7 +482,8 @@ func recoverSymmetricKey(
 // key.
 func recoverShares(
 	evidenceLog evidenceLog,
-	senderID, receiverID group.MemberIndex, symmetricKey ephemeral.SymmetricKey,
+	senderID, receiverID group.MemberIndex,
+	symmetricKey ephemeral.SymmetricKey,
 ) (*big.Int, *big.Int, error) {
 	peerSharesMessage := evidenceLog.peerSharesMessage(senderID)
 	if peerSharesMessage == nil {
@@ -593,7 +595,8 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 // What, using elliptic curve, is the same as:
 // G * s_ji == Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
-	senderID group.MemberIndex, shareS *big.Int,
+	senderID group.MemberIndex,
+	shareS *big.Int,
 	publicKeySharePoints []*bn256.G2,
 ) bool {
 	var sum *bn256.G2 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
