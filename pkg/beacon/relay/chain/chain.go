@@ -5,7 +5,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -85,9 +85,9 @@ type DistributedKeyGenerationInterface interface {
 	// member index.
 	SubmitDKGResult(
 		requestID *big.Int,
-		participantIndex member.Index,
+		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
-		signatures map[member.Index]operator.Signature,
+		signatures map[group.MemberIndex]operator.Signature,
 	) *async.DKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.

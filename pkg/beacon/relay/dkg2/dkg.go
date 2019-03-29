@@ -8,7 +8,7 @@ import (
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -26,7 +26,8 @@ func ExecuteDKG(
 	relayChain relayChain.Interface,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
-	playerIndex := member.Index(index + 1)
+	// The staker index should begin with 1
+	playerIndex := group.MemberIndex(index + 1)
 	err := playerIndex.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("[member:%v] %v", playerIndex, err)
@@ -97,7 +98,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	// passed members IDs slice. It assumes member IDs for a group starts iterating
 	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
 	// resulting byte slice will be {0x00, 0x01, 0x00}.
-	convertToByteSlice := func(memberIDsSlice []member.Index) []byte {
+	convertToByteSlice := func(memberIDsSlice []group.MemberIndex) []byte {
 		bytes := make([]byte, groupSize)
 		for index := range bytes {
 			for _, memberID := range memberIDsSlice {

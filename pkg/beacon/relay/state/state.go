@@ -1,7 +1,7 @@
 package state
 
 import (
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -26,5 +26,5 @@ type State interface {
 	Next() State
 
 	// MemberIndex returns the index of member associated with the current state.
-	MemberIndex() member.Index
+	MemberIndex() group.MemberIndex
 }

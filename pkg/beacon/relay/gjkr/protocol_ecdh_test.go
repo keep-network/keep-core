@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -60,7 +61,7 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 	)
 
 	// generate ephemeral key pairs for each group member; prepare messages
-	broadcastedPubKeyMessages := make(map[MemberID]*EphemeralPublicKeyMessage)
+	broadcastedPubKeyMessages := make(map[group.MemberIndex]*EphemeralPublicKeyMessage)
 	for _, ephemeralGeneratingMember := range ephemeralGeneratingMembers {
 		message, err := ephemeralGeneratingMember.GenerateEphemeralKeyPair()
 		if err != nil {
@@ -86,7 +87,7 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 	}
 
 	// Simulate the each member receiving all messages from the network
-	receivedPubKeyMessages := make(map[MemberID][]*EphemeralPublicKeyMessage)
+	receivedPubKeyMessages := make(map[group.MemberIndex][]*EphemeralPublicKeyMessage)
 	for memberID, ephemeralPubKeyMessage := range broadcastedPubKeyMessages {
 		for _, otherMember := range ephemeralGeneratingMembers {
 			// We would only receive messages from the other members
@@ -139,7 +140,7 @@ func initializeEphemeralKeyPairMembersGroup(
 	threshold int,
 	groupSize int,
 ) []*EphemeralKeyPairGeneratingMember {
-	group := &Group{
+	dkgGroup := &Group{
 		dishonestThreshold: threshold,
 	}
 
@@ -147,19 +148,19 @@ func initializeEphemeralKeyPairMembersGroup(
 
 	var members []*EphemeralKeyPairGeneratingMember
 	for i := 1; i <= groupSize; i++ {
-		id := MemberID(i)
+		id := group.MemberIndex(i)
 		members = append(members, &EphemeralKeyPairGeneratingMember{
 			LocalMember: &LocalMember{
 				memberCore: &memberCore{
 					ID:                 id,
-					group:              group,
+					group:              dkgGroup,
 					evidenceLog:        newDkgEvidenceLog(),
 					protocolParameters: protocolParameters,
 				},
 			},
-			ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
+			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})
-		group.RegisterMemberID(id)
+		dkgGroup.RegisterMemberID(id)
 	}
 
 	return members
@@ -213,7 +214,7 @@ func generateGroupWithEphemeralKeys(
 
 	// generate symmetric keys with all other members of the group
 	for _, member1 := range symmetricKeyMembers {
-		ephemeralKeys := make(map[MemberID]*ephemeral.PublicKey)
+		ephemeralKeys := make(map[group.MemberIndex]*ephemeral.PublicKey)
 
 		for _, member2 := range symmetricKeyMembers {
 			if member1.ID != member2.ID {

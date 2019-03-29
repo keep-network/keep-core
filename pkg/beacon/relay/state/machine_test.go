@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -43,7 +43,7 @@ func TestExecute(t *testing.T) {
 	})
 
 	initialState := testState1{
-		memberIndex: member.Index(1),
+		memberIndex: group.MemberIndex(1),
 		channel:     channel,
 	}
 
@@ -91,7 +91,7 @@ func addToTestLog(testState State, functionName string) {
 }
 
 type testState1 struct {
-	memberIndex member.Index
+	memberIndex group.MemberIndex
 	channel     net.BroadcastChannel
 }
 
@@ -107,8 +107,8 @@ func (ts testState1) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState1) Next() State               { return &testState2{ts} }
-func (ts testState1) MemberIndex() member.Index { return ts.memberIndex }
+func (ts testState1) Next() State                    { return &testState2{ts} }
+func (ts testState1) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState2 struct {
 	testState1
@@ -126,8 +126,8 @@ func (ts testState2) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState2) Next() State               { return &testState3{ts} }
-func (ts testState2) MemberIndex() member.Index { return ts.memberIndex }
+func (ts testState2) Next() State                    { return &testState3{ts} }
+func (ts testState2) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState3 struct {
 	testState2
@@ -148,8 +148,8 @@ func (ts testState3) Receive(msg net.Message) error {
 	return nil
 }
 
-func (ts testState3) Next() State               { return &testState4{ts} }
-func (ts testState3) MemberIndex() member.Index { return ts.memberIndex }
+func (ts testState3) Next() State                    { return &testState4{ts} }
+func (ts testState3) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type testState4 struct {
 	testState3
@@ -167,8 +167,8 @@ func (ts testState4) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState4) Next() State               { return nil }
-func (ts testState4) MemberIndex() member.Index { return ts.memberIndex }
+func (ts testState4) Next() State                    { return nil }
+func (ts testState4) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type TestMessage struct {
 	content string

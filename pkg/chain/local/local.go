@@ -14,7 +14,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -357,9 +357,9 @@ func (c *localChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
-	participantIndex member.Index,
+	participantIndex group.MemberIndex,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[member.Index]operator.Signature,
+	signatures map[group.MemberIndex]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()

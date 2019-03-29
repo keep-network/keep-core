@@ -3,17 +3,14 @@ package gjkr
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
 type keyGenerationState = state.State
 
-func isMessageFromSelf(
-	memberIndex member.Index,
-	message ProtocolMessage,
-) bool {
+func isMessageFromSelf(memberIndex group.MemberIndex, message ProtocolMessage) bool {
 	if message.SenderID() == memberIndex {
 		return true
 	}
@@ -21,10 +18,7 @@ func isMessageFromSelf(
 	return false
 }
 
-func isSenderAccepted(
-	filter MessageFiltering,
-	message ProtocolMessage,
-) bool {
+func isSenderAccepted(filter MessageFiltering, message ProtocolMessage) bool {
 	return filter.IsSenderAccepted(message.SenderID())
 }
 
@@ -49,7 +43,7 @@ func (is *initializationState) Next() keyGenerationState {
 	return &joinState{is.channel, is.member}
 }
 
-func (is *initializationState) MemberIndex() member.Index {
+func (is *initializationState) MemberIndex() group.MemberIndex {
 	return is.member.ID
 }
 
@@ -82,7 +76,7 @@ func (js *joinState) Next() keyGenerationState {
 	}
 }
 
-func (js *joinState) MemberIndex() member.Index {
+func (js *joinState) MemberIndex() group.MemberIndex {
 	return js.member.ID
 }
 
@@ -132,7 +126,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Next() keyGenerationState {
 	}
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() member.Index {
+func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() group.MemberIndex {
 	return ekpgs.member.ID
 }
 
@@ -166,7 +160,7 @@ func (skgs *symmetricKeyGenerationState) Next() keyGenerationState {
 	}
 }
 
-func (skgs *symmetricKeyGenerationState) MemberIndex() member.Index {
+func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
 	return skgs.member.ID
 }
 
@@ -233,7 +227,7 @@ func (cs *commitmentState) Next() keyGenerationState {
 	}
 }
 
-func (cs *commitmentState) MemberIndex() member.Index {
+func (cs *commitmentState) MemberIndex() group.MemberIndex {
 	return cs.member.ID
 }
 
@@ -298,7 +292,7 @@ func (cvs *commitmentsVerificationState) Next() keyGenerationState {
 	}
 }
 
-func (cvs *commitmentsVerificationState) MemberIndex() member.Index {
+func (cvs *commitmentsVerificationState) MemberIndex() group.MemberIndex {
 	return cvs.member.ID
 }
 
@@ -341,7 +335,7 @@ func (sjs *sharesJustificationState) Next() keyGenerationState {
 	}
 }
 
-func (sjs *sharesJustificationState) MemberIndex() member.Index {
+func (sjs *sharesJustificationState) MemberIndex() group.MemberIndex {
 	return sjs.member.ID
 }
 
@@ -373,7 +367,7 @@ func (qs *qualificationState) Next() keyGenerationState {
 	}
 }
 
-func (qs *qualificationState) MemberIndex() member.Index {
+func (qs *qualificationState) MemberIndex() group.MemberIndex {
 	return qs.member.ID
 }
 
@@ -421,7 +415,7 @@ func (pss *pointsShareState) Next() keyGenerationState {
 	}
 }
 
-func (pss *pointsShareState) MemberIndex() member.Index {
+func (pss *pointsShareState) MemberIndex() group.MemberIndex {
 	return pss.member.ID
 }
 
@@ -478,7 +472,7 @@ func (pvs *pointsValidationState) Next() keyGenerationState {
 	}
 }
 
-func (pvs *pointsValidationState) MemberIndex() member.Index {
+func (pvs *pointsValidationState) MemberIndex() group.MemberIndex {
 	return pvs.member.ID
 }
 
@@ -521,7 +515,7 @@ func (pjs *pointsJustificationState) Next() keyGenerationState {
 	}
 }
 
-func (pjs *pointsJustificationState) MemberIndex() member.Index {
+func (pjs *pointsJustificationState) MemberIndex() group.MemberIndex {
 	return pjs.member.ID
 }
 
@@ -572,7 +566,7 @@ func (rs *keyRevealState) Next() keyGenerationState {
 	}
 }
 
-func (rs *keyRevealState) MemberIndex() member.Index {
+func (rs *keyRevealState) MemberIndex() group.MemberIndex {
 	return rs.member.ID
 }
 
@@ -612,7 +606,7 @@ func (rs *reconstructionState) Next() keyGenerationState {
 	}
 }
 
-func (rs *reconstructionState) MemberIndex() member.Index {
+func (rs *reconstructionState) MemberIndex() group.MemberIndex {
 	return rs.member.ID
 }
 
@@ -644,7 +638,7 @@ func (cs *combinationState) Next() keyGenerationState {
 	}
 }
 
-func (cs *combinationState) MemberIndex() member.Index {
+func (cs *combinationState) MemberIndex() group.MemberIndex {
 	return cs.member.ID
 }
 
@@ -672,7 +666,7 @@ func (fs *finalizationState) Next() keyGenerationState {
 	return nil
 }
 
-func (fs *finalizationState) MemberIndex() member.Index {
+func (fs *finalizationState) MemberIndex() group.MemberIndex {
 	return fs.member.ID
 }
 

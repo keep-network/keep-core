@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
 func TestResultEquals(t *testing.T) {
@@ -47,23 +48,23 @@ func TestResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"disqualified - equal": {
-			result1:        &Result{Disqualified: []MemberID{1, 2, 3}},
-			result2:        &Result{Disqualified: []MemberID{1, 2, 3}},
+			result1:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
+			result2:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
 			expectedResult: true,
 		},
 		"disqualified - not equal": {
-			result1:        &Result{Disqualified: []MemberID{1, 2, 3}},
-			result2:        &Result{Disqualified: []MemberID{1, 4, 3}},
+			result1:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
+			result2:        &Result{Disqualified: []group.MemberIndex{1, 4, 3}},
 			expectedResult: false,
 		},
 		"inactive - equal": {
-			result1:        &Result{Inactive: []MemberID{3, 2, 1}},
-			result2:        &Result{Inactive: []MemberID{3, 2, 1}},
+			result1:        &Result{Inactive: []group.MemberIndex{3, 2, 1}},
+			result2:        &Result{Inactive: []group.MemberIndex{3, 2, 1}},
 			expectedResult: true,
 		},
 		"inactive - not equal": {
-			result1:        &Result{Inactive: []MemberID{1, 2, 3}},
-			result2:        &Result{Inactive: []MemberID{1, 2}},
+			result1:        &Result{Inactive: []group.MemberIndex{1, 2, 3}},
+			result2:        &Result{Inactive: []group.MemberIndex{1, 2}},
 			expectedResult: false,
 		},
 	}
@@ -125,8 +126,8 @@ func TestPublicKeysEqual(t *testing.T) {
 
 func TestMemberIDSlicesEqual(t *testing.T) {
 	var tests = map[string]struct {
-		slice1         []MemberID
-		slice2         []MemberID
+		slice1         []group.MemberIndex
+		slice2         []group.MemberIndex
 		expectedResult bool
 	}{
 		"both nil": {
@@ -135,49 +136,49 @@ func TestMemberIDSlicesEqual(t *testing.T) {
 			expectedResult: true,
 		},
 		"both empty": {
-			slice1:         []MemberID{},
-			slice2:         []MemberID{},
+			slice1:         []group.MemberIndex{},
+			slice2:         []group.MemberIndex{},
 			expectedResult: true,
 		},
 		"both equal": {
-			slice1:         []MemberID{1, 2, 3},
-			slice2:         []MemberID{1, 2, 3},
+			slice1:         []group.MemberIndex{1, 2, 3},
+			slice2:         []group.MemberIndex{1, 2, 3},
 			expectedResult: true,
 		},
 
 		"not equal - changed order": {
-			slice1:         []MemberID{1, 2, 3},
-			slice2:         []MemberID{1, 3, 2},
+			slice1:         []group.MemberIndex{1, 2, 3},
+			slice2:         []group.MemberIndex{1, 3, 2},
 			expectedResult: false,
 		},
 		"not equal - different one entry": {
-			slice1:         []MemberID{1, 2, 3},
-			slice2:         []MemberID{1, 4, 3},
+			slice1:         []group.MemberIndex{1, 2, 3},
+			slice2:         []group.MemberIndex{1, 4, 3},
 			expectedResult: false,
 		},
 		"not equal - different length": {
-			slice1:         []MemberID{1, 2},
-			slice2:         []MemberID{1, 2, 3},
+			slice1:         []group.MemberIndex{1, 2},
+			slice2:         []group.MemberIndex{1, 2, 3},
 			expectedResult: false,
 		},
 		"not equal - nil and set": {
 			slice1:         nil,
-			slice2:         []MemberID{1, 2, 3},
+			slice2:         []group.MemberIndex{1, 2, 3},
 			expectedResult: false,
 		},
 		"not equal - set and nil": {
-			slice1:         []MemberID{1, 2, 3},
+			slice1:         []group.MemberIndex{1, 2, 3},
 			slice2:         nil,
 			expectedResult: false,
 		},
 		"not equal - empty and filled": {
-			slice1:         []MemberID{},
-			slice2:         []MemberID{1, 2, 3},
+			slice1:         []group.MemberIndex{},
+			slice2:         []group.MemberIndex{1, 2, 3},
 			expectedResult: false,
 		},
 		"not equal - filled and empty": {
-			slice1:         []MemberID{1, 2, 3},
-			slice2:         []MemberID{},
+			slice1:         []group.MemberIndex{1, 2, 3},
+			slice2:         []group.MemberIndex{},
 			expectedResult: false,
 		},
 	}
