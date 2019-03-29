@@ -12,7 +12,6 @@ class Node:
         self.env = env
         self.id = identity
         self.starttime = start_time
-        self.current_state = "not connected"
         self.process = env.process(self.Connect_Node(env))
         self.relay_request_time = 0
         self.relay_entry_watch_time = 0
@@ -22,18 +21,20 @@ class Node:
         self.groups_joined= [] #keeps track of groups joined by this node
         self.STAKING_AMT = np.random.lognormal(3,1,) #find total tokens from contract
         self.cycle_count = 0
-        self.node_status = "online"
-        
+        self.node_status = "online" #change later to event - currently used for node failure process
+        self.reconnect_event = env.event()
+
+
     #Connecting to Ethereum
     def Connect_Node(self, env):
         while True:
             self.node_failure_generator() 
             if self.node_status == "failed": yield self.env.timeout(1) #checks if the node has failed
-            ethereum_conection_time = np.random.randint(1,100) # assumes a linear distribution 
+            ethereum_conection_time = np.random.randint(1,100) #assumes a linear distribution 
             if ethereum_conection_time>=90:
                 print (str(self.id) + " ethereum connection Failure" + "cycle=" + str(self.cycle_count))
                 self.current_state = "not connected"
-                yield self.env.process
+                self.reconnect_event = env.event()
         else:
             print (str(self.id) + " ethereum connection success" + "cycle="+str(self.cycle_count))            
             self.current_state = "connected"
@@ -44,16 +45,15 @@ class Node:
             self.node_failure_generator()
             if self.node_status == "failed": yield env.exit()
             print(str(self.id) + " Forking Main Loop" + " cycle="+str(self.cycle_count))
-            yield self.env.timeout(1)
+            yield self.env.process(self.Watching_RelayRequest(env))
         #env.process(self.Watching_RelayRequest(env))
         #env.process(self.Watching_RelayEntry(env))  
     
-    """ # wait for relay request
+     # wait for relay request
     def Watching_RelayRequest(self, env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
-        print(str(self.id)+" Watching Relay Request" + " cycle="+str(self.cycle_count))
-        self.relay_request_time = np.random.normal(3,1,) """
+        yield self.reconnect_event #stops watching if reconnect event is triggered 
     
     """ # watching for relay entry
     def Watching_RelayEntry(self, env):
@@ -64,7 +64,7 @@ class Node:
         yield env.exit() """
 
     #join group
-    def join_group(self,group_object,env):
+    def join_group(self, group_object, env):
         self.node_failure_generator()
         if self.node_status == "failed": yield env.exit()
         if group_object.group:
@@ -72,7 +72,7 @@ class Node:
             self.groups_joined.append(group_object.id)
         else:
             group_object.disconnect(self.id)
-        
+
 
     def node_failure_generator(self):
         failure = np.random.lognormal(1,0)
@@ -181,19 +181,20 @@ def relay_entry(env, runs, group_object_array, node_object_array):
     entry_cycles = 0
     while True:
         entry_cycles += 1
-        #picks the group id to perform the signature
         print("run # = "+str(entry_cycles))
-        group = group_object_array[np.random.randint(0,runs-1)]
-        
+        group = group_object_array[np.random.randint(0,runs-1)] #picks the group id to perform the signature
+        signing_event = env.event()
         for node in node_object_array:
             node.join_group(group,env)
         
         group.is_ready() #check if the group is ready
 
         if group.status == "active":
+            print("group ready, begin signing")
             sign_successes.append(1) # if ready add 1 to successfull signing events array
             # add signing process here
         else:
+            print("group not ready, signing failed")
             sign_successes.append(0) # if not ready add 0 to successful signing events array
 
         if entry_cycles == runs : yield env.exit()
