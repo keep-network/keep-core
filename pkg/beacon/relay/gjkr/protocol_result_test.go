@@ -20,8 +20,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Disqualified:   []group.MemberIndex{},
-					Inactive:       []group.MemberIndex{},
+					Group:          initalizeGroup(threshold, []group.MemberIndex{}, []group.MemberIndex{}),
 				}
 			},
 		},
@@ -30,8 +29,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Disqualified:   []group.MemberIndex{2},
-					Inactive:       []group.MemberIndex{},
+					Group:          initalizeGroup(threshold, []group.MemberIndex{2}, []group.MemberIndex{}),
 				}
 			},
 		},
@@ -40,8 +38,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Disqualified:   []group.MemberIndex{},
-					Inactive:       []group.MemberIndex{3, 7},
+					Group:          initalizeGroup(threshold, []group.MemberIndex{}, []group.MemberIndex{3, 7}),
 				}
 			},
 		},
@@ -51,8 +48,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Disqualified:   []group.MemberIndex{2},
-					Inactive:       []group.MemberIndex{3, 7},
+					Group:          initalizeGroup(threshold, []group.MemberIndex{2}, []group.MemberIndex{3, 7}),
 				}
 			},
 		},
@@ -61,8 +57,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Disqualified:   nil,
-					Inactive:       []group.MemberIndex{3, 5, 7},
+					Group:          initalizeGroup(threshold, nil, []group.MemberIndex{3, 5, 7}),
 				}
 			},
 		},
@@ -71,8 +66,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Disqualified:   []group.MemberIndex{3, 5, 7},
-					Inactive:       []group.MemberIndex{},
+					Group:          initalizeGroup(threshold, []group.MemberIndex{3, 5, 7}, []group.MemberIndex{}),
 				}
 			},
 		},
