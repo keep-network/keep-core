@@ -106,6 +106,38 @@ func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
 	}
 }
 
+func TestLocalRequestRelayEntry(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	relayRequestPromise := chainHandle.RequestRelayEntry(big.NewInt(42))
+
+	done := make(chan *event.Request)
+	relayRequestPromise.OnSuccess(func(entry *event.Request) {
+		done <- entry
+	}).OnFailure(func(err error) {
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	select {
+	case entry := <-done:
+		expected := int64(42)
+		if entry.Seed.Int64() != expected {
+			t.Fatalf(
+				"expected [%v], got [%v]",
+				expected,
+				entry.Seed.Int64(),
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+
+}
+
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
