@@ -6,7 +6,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result"
+	dkgResult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -48,16 +48,15 @@ func ExecuteDKG(
 		)
 	}
 
-	err = result.SignAndSubmit(
+	err = dkgResult.SignAndSubmit(
 		operatorPrivateKey,
+		playerIndex,
+		requestID,
+		gjkrResult.Group,
+		convertResult(gjkrResult, groupSize),
 		channel,
 		relayChain,
 		blockCounter,
-		playerIndex,
-		requestID,
-		convertResult(gjkrResult, groupSize),
-		gjkrResult.Disqualified,
-		gjkrResult.Inactive,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -112,7 +111,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 
 	return &relayChain.DKGResult{
 		GroupPublicKey: groupPublicKey,
-		Inactive:       convertToByteSlice(gjkrResult.Inactive),
-		Disqualified:   convertToByteSlice(gjkrResult.Disqualified),
+		Inactive:       convertToByteSlice(gjkrResult.Group.InactiveMemberIDs()),
+		Disqualified:   convertToByteSlice(gjkrResult.Group.DisqualifiedMemberIDs()),
 	}
 }

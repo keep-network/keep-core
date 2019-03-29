@@ -19,25 +19,22 @@ import (
 // along with everyone's votes.
 func SignAndSubmit(
 	privateKey *operator.PrivateKey,
+	playerIndex group.MemberIndex,
+	requestID *big.Int,
+	dkgGroup *group.Group,
+	result *relayChain.DKGResult,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
-	playerIndex group.MemberIndex,
-	requestID *big.Int,
-	result *relayChain.DKGResult,
-	disqualified []group.MemberIndex,
-	inactive []group.MemberIndex,
 ) error {
 	initialState := &resultSigningState{
-		channel:               channel,
-		relayChain:            relayChain,
-		blockCounter:          blockCounter,
-		member:                NewSigningMember(playerIndex, privateKey),
-		requestID:             requestID,
-		result:                result,
-		disqualifiedMemberIDs: disqualified,
-		inactiveMemberIDs:     inactive,
-		signatureMessages:     make([]*DKGResultHashSignatureMessage, 0),
+		channel:           channel,
+		relayChain:        relayChain,
+		blockCounter:      blockCounter,
+		member:            NewSigningMember(playerIndex, dkgGroup, privateKey),
+		requestID:         requestID,
+		result:            result,
+		signatureMessages: make([]*DKGResultHashSignatureMessage, 0),
 	}
 
 	initializeChannel(channel)
