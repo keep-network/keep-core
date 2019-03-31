@@ -230,6 +230,7 @@ contract TokenGrant is StakeDelegatable {
 
         operatorToOwner[operator] = msg.sender;
         magpieToOwner[magpie] = msg.sender;
+        ownerOperators[msg.sender].push(operator);
 
         // Mark as staked. This also locks grant from releasing its balance.
         grants[_id].staked = true;

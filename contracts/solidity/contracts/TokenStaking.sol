@@ -65,6 +65,7 @@ contract TokenStaking is StakeDelegatable {
 
         operatorToOwner[operator] = _from;
         magpieToOwner[magpie] = _from;
+        ownerOperators[_from].push(operator);
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, address(this), _value);
