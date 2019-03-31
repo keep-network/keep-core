@@ -1,6 +1,7 @@
 package result
 
 import (
+	"bytes"
 	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -45,10 +46,30 @@ func (rss *resultSigningState) Initiate() error {
 }
 
 func (rss *resultSigningState) Receive(msg net.Message) error {
+	// Network layer determines message sender's public key based on network
+	// client's pinned identity. Sender can not use other public key than the
+	// one it is identified with in the network and sender must posses the
+	// private key - each network message is signed with it.
+	//
+	// Network layer rejects message with incorrect signature or altered
+	// public key. At this point we know that the sender public key as presented
+	// in the network net.Message is the correct one.
+	//
+	// We need to compare that key with one used to produce a signature over
+	// DKG result hash. If those keys don't match, it means that an incorrect
+	// key was used to sign DKG result hash and the message should be rejected.
+	isValidKeyUsed := func(phaseMessage *DKGResultHashSignatureMessage) bool {
+		return bytes.Compare(
+			operator.Marshal(phaseMessage.publicKey),
+			msg.SenderPublicKey(),
+		) == 0
+	}
+
 	switch signedMessage := msg.Payload().(type) {
 	case *DKGResultHashSignatureMessage:
 		if !group.IsMessageFromSelf(rss.member.index, signedMessage) &&
-			group.IsSenderAccepted(rss.member, signedMessage) {
+			group.IsSenderAccepted(rss.member, signedMessage) &&
+			isValidKeyUsed(signedMessage) {
 			rss.signatureMessages = append(rss.signatureMessages, signedMessage)
 		}
 	}
