@@ -1,6 +1,8 @@
 package result
 
 import (
+	"bytes"
+	"fmt"
 	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -48,6 +50,13 @@ func (rss *resultSigningState) Initiate() error {
 func (rss *resultSigningState) Receive(msg net.Message) error {
 	switch signedMessage := msg.Payload().(type) {
 	case *DKGResultHashSignatureMessage:
+		// Ensure the Sender's Public Key (the one responsible for signing
+		// the outer layer of the network message) matches the public key
+		// we have responsible for signing the inside of the message.
+		if !bytes.Equal(operator.Marshal(signedMessage.publicKey), msg.SenderPublicKey()) {
+			return fmt.Errorf("message public key doesn't match sender's public key")
+		}
+
 		if !group.IsMessageFromSelf(rss.member.index, signedMessage) &&
 			group.IsSenderAccepted(rss.member, signedMessage) {
 			rss.signatureMessages = append(rss.signatureMessages, signedMessage)
