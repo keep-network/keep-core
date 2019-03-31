@@ -26,7 +26,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 
 	chainHandle := local.Connect(groupSize, threshold, minimumStake)
 
-	members, err := initializeSigningMembers(groupSize, threshold, minimumStake)
+	members, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,14 +116,12 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 }
 
 func TestVerifyDKGResultSignatures(t *testing.T) {
-	threshold := 3
 	groupSize := 5
-	minimumStake := big.NewInt(200)
 
 	dkgResultHash1 := relayChain.DKGResultHash{10}
 	dkgResultHash2 := relayChain.DKGResultHash{20}
 
-	members, err := initializeSigningMembers(groupSize, threshold, minimumStake)
+	members, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -354,22 +352,21 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	}
 }
 
-func initializeSigningMembers(
-	groupSize int,
-	threshold int,
-	minimumStake *big.Int,
-) ([]*SigningMember, error) {
-	members := make([]*SigningMember, 0)
-	for i := 1; i <= groupSize; i++ {
+func initializeSigningMembers(groupSize int) ([]*SigningMember, error) {
+	dkgGroup := group.NewEmptyDkgGroup(5)
+
+	members := make([]*SigningMember, 5)
+
+	for i := 0; i < groupSize; i++ {
+		memberIndex := group.MemberIndex(i + 1)
+
 		privateKey, _, err := operator.GenerateKeyPair()
 		if err != nil {
 			return nil, err
 		}
 
-		members = append(members, &SigningMember{
-			index:      group.MemberIndex(i),
-			privateKey: privateKey,
-		})
+		dkgGroup.RegisterMemberID(memberIndex)
+		members[i] = NewSigningMember(memberIndex, dkgGroup, privateKey)
 	}
 
 	return members, nil
