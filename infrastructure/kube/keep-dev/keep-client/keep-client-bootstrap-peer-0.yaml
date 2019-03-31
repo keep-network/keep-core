@@ -51,13 +51,13 @@ spec:
       volumes:
       - name: eth-keyfile
         configMap:
-          name: keep-bootstrap-peer-0
+          name: keep-client-bootstrap-peer-0
           items:
             - key: eth-keyfile
               path: eth-keyfile
       - name: keep-client-config
         configMap:
-          name: keep-bootstrap-peer-0
+          name: keep-client-bootstrap-peer-0
           items:
             - key: keep-client-config.toml
               path: keep-client-config.toml

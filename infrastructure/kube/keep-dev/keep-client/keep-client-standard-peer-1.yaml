@@ -51,13 +51,13 @@ spec:
       volumes:
       - name: eth-keyfile
         configMap:
-          name: keep-standard-peer-1
+          name: keep-client-standard-peer-1
           items:
             - key: eth-keyfile
               path: eth-keyfile
       - name: keep-client-config
         configMap:
-          name: keep-standard-peer-1
+          name: keep-client-standard-peer-1
           items:
             - key: keep-client-config.toml
               path: keep-client-config.toml
