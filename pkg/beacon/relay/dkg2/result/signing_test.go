@@ -353,9 +353,9 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 }
 
 func initializeSigningMembers(groupSize int) ([]*SigningMember, error) {
-	dkgGroup := group.NewEmptyDkgGroup(5)
+	dkgGroup := group.NewEmptyDkgGroup(groupSize)
 
-	members := make([]*SigningMember, 5)
+	members := make([]*SigningMember, groupSize)
 
 	for i := 0; i < groupSize; i++ {
 		memberIndex := group.MemberIndex(i + 1)
