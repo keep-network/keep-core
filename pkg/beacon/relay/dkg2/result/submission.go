@@ -28,7 +28,8 @@ func NewSubmittingMember(
 	memberIndex group.MemberIndex,
 ) *SubmittingMember {
 	return &SubmittingMember{
-		index: memberIndex,
+		index:     memberIndex,
+		blockStep: 3, // TODO: this should be on-chain parameter!
 	}
 }
 
