@@ -30,7 +30,11 @@ func ExecuteDKG(
 	playerIndex := group.MemberIndex(index + 1)
 	err := playerIndex.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("[member:%v] %v", playerIndex, err)
+		return nil, fmt.Errorf(
+			"[member:%v] could not start DKG: [%v]",
+			playerIndex,
+			err,
+		)
 	}
 
 	gjkrResult, err := gjkr.Execute(
@@ -48,7 +52,7 @@ func ExecuteDKG(
 		)
 	}
 
-	err = dkgResult.SignAndSubmit(
+	err = dkgResult.Publish(
 		operatorPrivateKey,
 		playerIndex,
 		requestID,
@@ -60,7 +64,7 @@ func ExecuteDKG(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"[member:%v] DKG signing and submission process failed [%v]",
+			"[member:%v] DKG result publication process failed [%v]",
 			playerIndex,
 			err,
 		)

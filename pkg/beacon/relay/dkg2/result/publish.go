@@ -12,12 +12,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
-// SignAndSubmit executes Phase 13 and 14 of DKG as a state machine. First, the
+// Publish executes Phase 13 and 14 of DKG as a state machine. First, the
 // chosen result is hashed, signed, and sent over a broadcast channel. Then, all
 // other signatures and results are received and accounted for. Those that match
 // our own result and added to the list of votes. Finally, we submit the result
 // along with everyone's votes.
-func SignAndSubmit(
+func Publish(
 	privateKey *operator.PrivateKey,
 	playerIndex group.MemberIndex,
 	requestID *big.Int,
