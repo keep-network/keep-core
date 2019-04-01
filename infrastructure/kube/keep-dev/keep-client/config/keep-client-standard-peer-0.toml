@@ -3,8 +3,8 @@
 # Provider Initialization Example
 
 [ethereum]
-  URL                = "ws://10.102.100.98:8546"
-  URLRPC             = "http://10.102.100.98:8545"
+  URL                = "ws://eth-tx-node.default.svc.cluster.local:8546"
+  URLRPC             = "http://eth-tx-node.default.svc.cluster.local:8545"
 
 [ethereum.account]
   Address            = "0xc82C480E82Ee76Ae607a3446CAc22314FaBdD19e"
