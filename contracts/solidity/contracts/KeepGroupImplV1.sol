@@ -60,6 +60,7 @@ contract KeepGroupImplV1 is Ownable {
     mapping(uint256 => Proof) internal _proofs;
 
     uint internal _minimumGroupsThreshold = 1;
+// _groupTimeout is the time in block after which a group expires
     uint internal _groupTimeout = 1000;
     uint internal _expiredOffset = 0;
 
