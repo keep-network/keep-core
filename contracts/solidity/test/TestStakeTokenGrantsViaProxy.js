@@ -9,7 +9,8 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
   let token, stakingProxy, grantContract,
     account_one = accounts[0],
-    account_two = accounts[1];
+    account_two = accounts[1],
+    account_two_operator = accounts[2];
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -41,8 +42,11 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
       }
     })
 
+    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let delegation = '0x' + Buffer.concat([Buffer.from(account_two.substr(2), 'hex'), signature]).toString('hex');
+
     // Stake should fail since grantContract was not added to the staking proxy
-    await exceptThrow(grantContract.stake(id, {from: account_two}));
+    await exceptThrow(grantContract.stake(id, delegation, {from: account_two}));
 
     // Non-owner of stakingProxy should not be able to authorize a token grant contract
     await exceptThrow(stakingProxy.authorizeContract(grantContract.address, {from: account_two}));
@@ -52,11 +56,11 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
     assert.equal(await stakingProxy.isAuthorized(grantContract.address), true, "StakingProxy owner should be able to authorize a token grant contract.");
 
     // Stake granted tokens
-    await grantContract.stake(id, {from: account_two})
+    await grantContract.stake(id, delegation, {from: account_two})
     assert.equal((await stakingProxy.getPastEvents())[0].event, 'Staked', "Staked event on the proxy contract should occur.");
 
     // Initiate unstake of granted tokens by grant beneficiary
-    await grantContract.initiateUnstake(id, {from: account_two});
+    await grantContract.initiateUnstake(id, account_two_operator, {from: account_two});
     assert.equal((await stakingProxy.getPastEvents())[0].event, 'Unstaked', "Unstaked event on the proxy contract should occur.");
 
     // Owner of stakingProxy should be able to deauthorize a token grant contract
