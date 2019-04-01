@@ -175,6 +175,116 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 }
 
+func TestLocalOnRelayEntryGenerated(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Entry)
+
+	subscription, err := chainHandle.OnRelayEntryGenerated(
+		func(entry *event.Entry) {
+			eventFired <- entry
+		},
+	)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	expectedRequestID := big.NewInt(42)
+	expectedValue := big.NewInt(19)
+	expectedGroupPubKey := []byte("1")
+	expectedSeed := big.NewInt(30)
+	expectedBlockNumber := uint64(123)
+
+	chainHandle.SubmitRelayEntry(
+		&event.Entry{
+			RequestID:   expectedRequestID,
+			Value:       expectedValue,
+			GroupPubKey: expectedGroupPubKey,
+			Seed:        expectedSeed,
+			BlockNumber: expectedBlockNumber,
+		},
+	)
+
+	select {
+	case event := <-eventFired:
+		if event.RequestID.Cmp(expectedRequestID) != 0 {
+			t.Fatalf(
+				"Unexpected relay entry request id\nExpected: [%v]\nActual:   [%v]",
+				expectedRequestID,
+				event.RequestID.Int64(),
+			)
+		}
+		if event.Value.Cmp(expectedValue) != 0 {
+			t.Fatalf(
+				"Unexpected relay entry value\nExpected: [%v]\nActual:   [%v]",
+				expectedValue,
+				event.Value.Int64(),
+			)
+		}
+		if len(event.GroupPubKey) != 1 {
+			t.Fatalf(
+				"Unexpected relay entry group pub key length\nExpected: [%v]\nActual:   [%v]",
+				1,
+				len(event.GroupPubKey),
+			)
+		}
+		if event.Seed.Cmp(expectedSeed) != 0 {
+			t.Fatalf(
+				"Unexpected relay entry seed\nExpected: [%v]\nActual:   [%v]",
+				expectedSeed,
+				event.Seed.Int64(),
+			)
+		}
+		if event.BlockNumber != expectedBlockNumber {
+			t.Fatalf(
+				"Unexpected relay entry block number\nExpected: [%v]\nActual:   [%v]",
+				expectedBlockNumber,
+				event.BlockNumber,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Entry)
+
+	subscription, err := chainHandle.OnRelayEntryGenerated(
+		func(entry *event.Entry) {
+			eventFired <- entry
+		},
+	)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	chainHandle.SubmitRelayEntry(
+		&event.Entry{},
+	)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockHeight      int
