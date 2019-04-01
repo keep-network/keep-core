@@ -59,7 +59,7 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    uint internal _minGroups = 1;
+    uint internal _minimumGroupsThreshold = 1;
     uint internal _groupTimeout = 1;
     uint internal _expiredOffset = 0;
 
@@ -482,7 +482,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 activeGroupsNumber = _groups.length - _expiredOffset;
         uint256 selectedGroup = previousEntry % activeGroupsNumber;
         while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupTimeout < block.number) {
-            if (activeGroupsNumber > _minGroups) {
+            if (activeGroupsNumber > _minimumGroupsThreshold) {
                 if (selectedGroup == 0) {
                     _expiredOffset++;
                     activeGroupsNumber--;
