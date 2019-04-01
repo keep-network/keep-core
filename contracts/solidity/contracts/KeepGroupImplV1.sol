@@ -60,8 +60,10 @@ contract KeepGroupImplV1 is Ownable {
     mapping(uint256 => Proof) internal _proofs;
 
     uint internal _minimumGroupsThreshold = 1;
-// _groupExpirationTimeout is the time in block after which a group expires
+    // _groupExpirationTimeout is the time in block after which a group expires
     uint internal _groupExpirationTimeout = 1000;
+    // _expiredOffset is pointing to the first active group, it is also the
+    // expired groups counter
     uint internal _expiredOffset = 0;
 
     struct Group {
@@ -340,7 +342,9 @@ contract KeepGroupImplV1 is Ownable {
         uint256 groupSize,
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
-        uint256 timeoutChallenge
+        uint256 timeoutChallenge,
+        uint groupExpirationTimeout,
+        uint minimumGroupsThreshold
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
