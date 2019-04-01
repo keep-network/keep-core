@@ -66,10 +66,6 @@ func ExecuteDKG(
 		)
 	}
 
-	// TODO Consider removing this print after Phase 14 is implemented and
-	// replace it with print at the end of DKG execution.
-	fmt.Printf("[member:%v] DKG Result: %+v\n", playerIndex, gjkrResult)
-
 	return &ThresholdSigner{
 		memberID:             playerIndex,
 		groupPublicKey:       gjkrResult.GroupPublicKey,
