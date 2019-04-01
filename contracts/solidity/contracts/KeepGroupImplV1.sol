@@ -25,8 +25,6 @@ contract KeepGroupImplV1 is Ownable {
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
-    
-    event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
