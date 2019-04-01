@@ -479,17 +479,24 @@ contract KeepGroupImplV1 is Ownable {
      * @param previousEntry Previous random beacon value.
      */
     function selectGroup(uint256 previousEntry) public returns(bytes memory) {
-        while (_groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].registrationBlockHeight + _groupTimeout < block.number) {
-            if (_groups.length - _expiredOffset > _minGroups) {
-                if (previousEntry % (_groups.length - _expiredOffset) == 0) {
+        uint256 activeGroupsNumber = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % activeGroupsNumber;
+        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupTimeout < block.number) {
+            if (activeGroupsNumber > _minGroups) {
+                if (selectedGroup == 0) {
                     _expiredOffset++;
-                } else _expiredOffset += previousEntry % (_groups.length - _expiredOffset);
+                    activeGroupsNumber--;
+                } else {
+                    _expiredOffset += selectedGroup;
+                    activeGroupsNumber -= selectedGroup;
+                }
+                selectedGroup = previousEntry % activeGroupsNumber;
             } else break;
         }
-        return _groups[_expiredOffset + (previousEntry % (_groups.length - _expiredOffset))].groupPubKey;
+        return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
 
-    /**
+    /** test
      * @dev Gets version of the current implementation.
     */
     function version() public pure returns (string memory) {
