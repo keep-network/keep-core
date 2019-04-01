@@ -159,7 +159,7 @@ class Group:
 
     def is_ready(self,env):
         while True:
-            if (self.member_check - self.group)< self.node_failure_threshold:
+            if sum(self.member_check - self.group)< self.node_failure_threshold:
                 print("group is active")
                 self.status = "active"
                 yield env.exit()
