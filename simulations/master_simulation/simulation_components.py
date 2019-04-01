@@ -22,23 +22,23 @@ class Node:
         self.STAKING_AMT = np.random.lognormal(3,1,) #find total tokens from contract
         self.cycle_count = 0
         self.node_status = "online" #change later to event - currently used for node failure process
-        self.reconnect_event = env.event()
+        self.reconnect_event = env.event() #used to trigger node reconnection
 
 
     #Connecting to Ethereum
     def Connect_Node(self, env):
         while True:
-            self.node_failure_generator() 
-            if self.node_status == "failed": yield self.env.timeout(1) #checks if the node has failed
+            #self.node_failure_generator() 
+            #if self.node_status == "failed": yield self.env.timeout(1) #checks if the node has failed
             ethereum_conection_time = np.random.randint(1,100) #assumes a linear distribution 
             if ethereum_conection_time>=90:
-                print (str(self.id) + " ethereum connection Failure" + "cycle=" + str(self.cycle_count))
+                #print (str(self.id) + " ethereum connection Failure" + "cycle=" + str(self.cycle_count))
                 self.current_state = "not connected"
                 self.reconnect_event = env.event()
-        else:
-            print (str(self.id) + " ethereum connection success" + "cycle="+str(self.cycle_count))            
-            self.current_state = "connected"
-            yield self.env.process(self.Forking_MainLoop(env))
+            else:
+                #print (str(self.id) + " ethereum connection success" + "cycle="+str(self.cycle_count))            
+                self.current_state = "connected"
+                yield self.env.process(self.Forking_MainLoop(env))
     
     def Forking_MainLoop(self,env):
         while True:
@@ -51,28 +51,22 @@ class Node:
     
      # wait for relay request
     def Watching_RelayRequest(self, env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
+        #self.node_failure_generator()
+        #if self.node_status == "failed": yield env.exit()
         yield self.reconnect_event #stops watching if reconnect event is triggered 
-    
-    """ # watching for relay entry
-    def Watching_RelayEntry(self, env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
-        print(str(self.id)+" Watching Relay Entry" + " cycle="+str(self.cycle_count))
-        self.relay_entry_watch_time = np.random.normal(3,1,)
-        yield env.exit() """
 
     #join group
-    def join_group(self, group_object, env):
-        self.node_failure_generator()
-        if self.node_status == "failed": yield env.exit()
-        if group_object.group:
+    def join_group(self, env, group_object):
+        #self.node_failure_generator()
+        #if self.node_status == "failed": yield env.exit()
+        if group_object.group[self.id]:
+            print(self.id)
+            print("Node# = "+ str(self.id) + "joining group")
             group_object.connect(self.id)
-            self.groups_joined.append(group_object.id)
+            yield env.timeout(1)
         else:
-            group_object.disconnect(self.id)
-
+            print("Node# = "+ str(self.id) +" did not join group")
+            yield env.timeout(1)
 
     def node_failure_generator(self):
         failure = np.random.lognormal(1,0)
@@ -183,11 +177,11 @@ def relay_entry(env, runs, group_object_array, node_object_array):
         entry_cycles += 1
         print("run # = "+str(entry_cycles))
         group = group_object_array[np.random.randint(0,runs-1)] #picks the group id to perform the signature
-        signing_event = env.event()
         for node in node_object_array:
-            node.join_group(group,env)
+            yield env.process(node.join_group(env, group))
         
         group.is_ready() #check if the group is ready
+        print(group.member_check)
 
         if group.status == "active":
             print("group ready, begin signing")
