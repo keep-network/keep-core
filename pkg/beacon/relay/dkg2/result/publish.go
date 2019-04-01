@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -22,7 +23,7 @@ func Publish(
 	playerIndex group.MemberIndex,
 	requestID *big.Int,
 	dkgGroup *group.Group,
-	result *relayChain.DKGResult,
+	result *gjkr.Result,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
@@ -33,7 +34,7 @@ func Publish(
 		blockCounter:      blockCounter,
 		member:            NewSigningMember(playerIndex, dkgGroup, privateKey),
 		requestID:         requestID,
-		result:            result,
+		result:            convertResult(result, dkgGroup.GroupSize()),
 		signatureMessages: make([]*DKGResultHashSignatureMessage, 0),
 	}
 
