@@ -19,6 +19,10 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: keep-client-standard-peer-0
+  labels:
+    keel.sh/policy: all
+    app: keep-client
+    type: bootstrap-peer-0
 spec:
   replicas: 1
   selector:
