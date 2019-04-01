@@ -83,6 +83,7 @@ contract TokenStaking is StakeDelegatable {
      * You will be able to call `finishUnstake()` with this ID and finish
      * unstake once withdrawal delay is over.
      * @param _value The amount to be unstaked.
+     * @param _operator Address of the stake operator.
      */
     function initiateUnstake(uint256 _value, address _operator) public returns (uint256 id) {
         address owner = operatorToOwner[_operator];
