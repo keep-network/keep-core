@@ -111,7 +111,8 @@ func TestLocalRequestRelayEntry(t *testing.T) {
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
-	relayRequestPromise := chainHandle.RequestRelayEntry(big.NewInt(42))
+	seed := big.NewInt(42)
+	relayRequestPromise := chainHandle.RequestRelayEntry(seed)
 
 	done := make(chan *event.Request)
 	relayRequestPromise.OnSuccess(func(entry *event.Request) {
@@ -124,11 +125,10 @@ func TestLocalRequestRelayEntry(t *testing.T) {
 
 	select {
 	case entry := <-done:
-		expected := int64(42)
-		if entry.Seed.Int64() != expected {
+		if entry.Seed.Cmp(seed) != 0 {
 			t.Fatalf(
-				"expected [%v], got [%v]",
-				expected,
+				"Unexpected relay entry seed\nExpected: [%v]\nActual:  [%v]",
+				seed,
 				entry.Seed.Int64(),
 			)
 		}
@@ -143,9 +143,10 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	requestID := int64(19)
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
-			RequestID:   big.NewInt(int64(19)),
+			RequestID:   big.NewInt(requestID),
 			GroupPubKey: []byte("1"),
 		},
 	)
@@ -161,11 +162,10 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	select {
 	case entry := <-done:
-		expected := int64(19)
-		if entry.RequestID.Int64() != expected {
+		if entry.RequestID.Int64() != requestID {
 			t.Fatalf(
-				"expected [%v], got [%v]",
-				expected,
+				"Unexpected relay entry request id\nExpected: [%v]\nActual:  [%v]",
+				requestID,
 				entry.RequestID.Int64(),
 			)
 		}
