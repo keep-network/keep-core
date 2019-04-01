@@ -46,18 +46,21 @@ func (rss *resultSigningState) Initiate() error {
 }
 
 func (rss *resultSigningState) Receive(msg net.Message) error {
-	// Network layer determines message sender's public key based on network
-	// client's pinned identity. Sender can not use other public key than the
-	// one it is identified with in the network and sender must posses the
-	// private key - each network message is signed with it.
+	// The network layer determines the message sender's public key based on
+	// the network client's pinned identity. The sender can not use any other
+	// public key than the one it is identified with in the network.
+	// Furthermore, the sender must possess the associated private key - each
+	// network message is signed with it.
 	//
-	// Network layer rejects message with incorrect signature or altered
-	// public key. At this point we know that the sender public key as presented
-	// in the network net.Message is the correct one.
+	// The network layer rejects any message with an incorrect signature or
+	// altered public key. By this point, we've conducted enough checks to
+	// be very certain that the sender' public key presented in the network
+	// net.Message is the correct one.
 	//
-	// We need to compare that key with one used to produce a signature over
-	// DKG result hash. If those keys don't match, it means that an incorrect
-	// key was used to sign DKG result hash and the message should be rejected.
+	// In this final step, we compare the pinned network key with one used to
+	// produce a signature over the DKG result hash. If the keys don't match,
+	// it means that an incorrect key was used to sign DKG result hash and
+	// the message should be rejected.
 	isValidKeyUsed := func(phaseMessage *DKGResultHashSignatureMessage) bool {
 		return bytes.Compare(
 			operator.Marshal(phaseMessage.publicKey),
