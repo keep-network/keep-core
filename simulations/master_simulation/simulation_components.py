@@ -104,7 +104,7 @@ def preprocess_groups(tickets, runs, group_size):
 # Pre-processing groups
     group_members = []
     for i in range(0, runs):
-        group_members.append(min_index(tickets[i],group_size)) # finds the index of group members with min ticket values
+        group_members.append(min_index(tickets[i], group_size)) # finds the index of group members with min ticket values
     return group_members
 
 def create_cdf(nodes,ticket_distr):
@@ -139,16 +139,17 @@ def node_failure_modes(nodes, runs):
 
 class Group:
     #Group class
-    def __init__(self, env, identity, group_size, group_distr_matrix):
+    def __init__(self, env, identity, group_size, group_distr_matrix, node_failure_threshold_input):
         self.cycle = 0
         self.tries = 0
         self.failures = 0
         self.current_member_count = 0
-        self.status = "inactive"
+        self.status = ""
         self.id = identity
         self.member_check = np.zeros(group_size) #tally of how many members are currently connected to the group
         self.group = np.array(group_distr_matrix[self.id]) > 0 # the group distribution
         self.signing_events =[]
+        self.node_failure_threshold = node_failure_threshold_input #threshold number of group members not available to sign causing the group to be inactive
 
     def connect(self, node_id):
         self.member_check[node_id] = 1
@@ -156,32 +157,32 @@ class Group:
     def disconnect(self, node_id):
         self.member_check[node_id] = 0
 
-    def is_ready(self):
-
-        if self.status == "inactive" and np.array_equal(self.member_check, self.group):
-            self.status == "active"
-        elif self.status == "active" and np.array_equal(self.member_check, self.group):
-            self.status == "active"
-        elif self.status == "inactive":
-            self.status == "pending"
-        elif self.status == "active" and not np.array_equal(self.member_check, self.group):
-            self.status == "failed"
-        else:
-            self.status == "uknown error"
+    def is_ready(self,env):
+        while True:
+            if (self.member_check - self.group)< self.node_failure_threshold:
+                print("group is active")
+                self.status = "active"
+                yield env.exit()
+            else:
+                print("group is inactive")
+                self.status = "inactive"
+                yield env.exit()
     
 
-def relay_entry(env, runs, group_object_array, node_object_array):
-    sign_successes =[]
+def relay_entry(env, runs, group_object_array, node_object_array, sign_successes):
     entry_cycles = 0
+    sign_successes = []
     while True:
         entry_cycles += 1
         print("run # = "+str(entry_cycles))
         group = group_object_array[np.random.randint(0,runs-1)] #picks the group id to perform the signature
         for node in node_object_array:
             yield env.process(node.join_group(env, group))
-        
-        group.is_ready() #check if the group is ready
+        print("checking if the group is ready")
+        yield env.process(group.is_ready(env)) #check if the group is ready
+        print("group ID" + str(group.id))
         print(group.member_check)
+        print(group.group)
 
         if group.status == "active":
             print("group ready, begin signing")
@@ -190,39 +191,10 @@ def relay_entry(env, runs, group_object_array, node_object_array):
         else:
             print("group not ready, signing failed")
             sign_successes.append(0) # if not ready add 0 to successful signing events array
+        print(sign_successes)
 
         if entry_cycles == runs : yield env.exit()
         
-    
-
-
-
-
-
-
-
-
-
-    
-        
-
-        
-        
-
-
-        
-
-
-
-    
-
-
-
-
-
-
-
-
 
 """ # Setup and start the simulation
 sim_cycles = 5
