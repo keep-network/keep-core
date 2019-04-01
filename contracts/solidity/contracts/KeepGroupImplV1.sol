@@ -28,10 +28,6 @@ contract KeepGroupImplV1 is Ownable {
     
     event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
 
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
-
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
     uint256 internal _minStake;
