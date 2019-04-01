@@ -60,8 +60,8 @@ contract KeepGroupImplV1 is Ownable {
     mapping(uint256 => Proof) internal _proofs;
 
     uint internal _minimumGroupsThreshold = 1;
-// _groupTimeout is the time in block after which a group expires
-    uint internal _groupTimeout = 1000;
+// _groupExpirationTimeout is the time in block after which a group expires
+    uint internal _groupExpirationTimeout = 1000;
     uint internal _expiredOffset = 0;
 
     struct Group {
@@ -482,7 +482,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectGroup(uint256 previousEntry) public returns(bytes memory) {
         uint256 activeGroupsNumber = _groups.length - _expiredOffset;
         uint256 selectedGroup = previousEntry % activeGroupsNumber;
-        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupTimeout < block.number) {
+        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
             if (activeGroupsNumber > _minimumGroupsThreshold) {
                 if (selectedGroup == 0) {
                     _expiredOffset++;
