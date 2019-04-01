@@ -221,7 +221,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param index claimed index of the staker. We pass this for gas efficiency purposes.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
@@ -253,10 +253,22 @@ contract KeepGroupImplV1 is Ownable {
             "There should be enough valid tickets submitted to form a group."
         );
 
+        // TODO: This is just a temporary implementation for the sake of
+        // development of the off-chain part.
+
         _requestIdToDkgResult[requestId] = DkgResult(groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
   
         emit DkgResultPublishedEvent(requestId, groupPubKey);
+
+        _groups.push(Group(groupPubKey, block.number));
+
+        address[] memory members = orderedParticipants();
+        for (uint i = 0; i < _groupSize; i++) {
+            _groupMembers[groupPubKey].push(members[i]);
+        }
+
+        emit OnGroupRegistered(groupPubKey);
     }
 
     /**
