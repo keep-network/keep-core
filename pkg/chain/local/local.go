@@ -318,9 +318,7 @@ func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
-func (c *localChain) RequestRelayEntry(
-	seed *big.Int,
-) *async.RelayRequestPromise {
+func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
 
 	request := &event.Request{
