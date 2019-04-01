@@ -81,6 +81,10 @@ func (sm *SigningMember) SignDKGResult(
 // Each member is allowed to broadcast only one signature over a preferred DKG
 // result hash.
 //
+// The function assumes that the public key presented in the message is the
+// correct one. This key needs to be compared against the one used by network
+// client earlier, before this function is called.
+//
 // See Phase 13 of the protocol specification.
 func (sm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
@@ -152,6 +156,8 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 	return receivedValidResultSignatures, nil
 }
 
+// IsSenderAccepted determines if sender of the message is accepted by group
+// (not marked as inactive or disqualified).
 func (sm *SigningMember) IsSenderAccepted(senderID group.MemberIndex) bool {
 	return sm.group.IsOperating(senderID)
 }
