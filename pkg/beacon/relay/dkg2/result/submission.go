@@ -17,10 +17,6 @@ import (
 type SubmittingMember struct {
 	// Represents the member's position for submission.
 	index group.MemberIndex
-
-	// Predefined step for each submitting window. The value is used to determine
-	// the eligible submitting member.
-	blockStep uint64
 }
 
 // NewSubmittingMember creates a member to execute submitting the DKG result hash.
@@ -28,8 +24,7 @@ func NewSubmittingMember(
 	memberIndex group.MemberIndex,
 ) *SubmittingMember {
 	return &SubmittingMember{
-		index:     memberIndex,
-		blockStep: 3, // TODO: this should be on-chain parameter!
+		index: memberIndex,
 	}
 }
 
@@ -60,6 +55,14 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
 ) error {
+	config, err := chainRelay.GetConfig()
+	if err != nil {
+		return fmt.Errorf(
+			"could not fetch chain's config [%v]",
+			err,
+		)
+	}
+
 	onSubmittedResultChan := make(chan *event.DKGResultSubmission)
 
 	subscription, err := chainRelay.OnDKGResultSubmitted(
@@ -99,7 +102,10 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	}
 
 	// Wait until the current member is eligible to submit the result.
-	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(blockCounter)
+	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(
+		blockCounter,
+		config.ResultPublicationBlockStep,
+	)
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf("wait for eligibility failure [%v]", err),
@@ -147,9 +153,12 @@ func (sm *SubmittingMember) SubmitDKGResult(
 // waitForSubmissionEligibility waits until the current member is eligible to
 // submit a result to the blockchain. First member is eligible to submit straight
 // away, each following member is eligible after pre-defined block step.
-func (sm *SubmittingMember) waitForSubmissionEligibility(blockCounter chain.BlockCounter) (<-chan int, error) {
+func (sm *SubmittingMember) waitForSubmissionEligibility(
+	blockCounter chain.BlockCounter,
+	blockStep int,
+) (<-chan int, error) {
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		(int(sm.index) - 1) * int(sm.blockStep), // T_init + (member_index - 1) * T_step
+		(int(sm.index) - 1) * blockStep, // T_init + (member_index - 1) * T_step
 	)
 	if err != nil {
 		return nil, fmt.Errorf("block waiter failure [%v]", err)

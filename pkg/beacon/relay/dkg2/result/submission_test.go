@@ -15,9 +15,13 @@ import (
 func TestSubmitDKGResult(t *testing.T) {
 	threshold := 2
 	groupSize := 5
-	blockStep := uint64(2) // T_step
 
-	_, initialBlock, err := initChainHandle(threshold, groupSize)
+	chainHandle, initialBlock, err := initChainHandle(threshold, groupSize)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config, err := chainHandle.ThresholdRelay().GetConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,6 +35,8 @@ func TestSubmitDKGResult(t *testing.T) {
 		3: operator.Signature{103},
 	}
 
+	tStep := uint64(config.ResultPublicationBlockStep)
+
 	var tests = map[string]struct {
 		memberIndex     int
 		expectedTimeEnd uint64
@@ -41,11 +47,11 @@ func TestSubmitDKGResult(t *testing.T) {
 		},
 		"second member eligible to submit after T_step block passed": {
 			memberIndex:     2,
-			expectedTimeEnd: initialBlock + blockStep, // T_now = T_init + T_step
+			expectedTimeEnd: initialBlock + tStep, // T_now = T_init + T_step
 		},
 		"fourth member eligable to submit after T_dkg + 2*T_step passed": {
 			memberIndex:     4,
-			expectedTimeEnd: initialBlock + 3*blockStep, // T_now = T_init + 3*T_step
+			expectedTimeEnd: initialBlock + 3*tStep, // T_now = T_init + 3*T_step
 		},
 	}
 	for testName, test := range tests {
@@ -53,8 +59,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			requestID := big.NewInt(101)
 
 			member := &SubmittingMember{
-				index:     group.MemberIndex(test.memberIndex),
-				blockStep: blockStep,
+				index: group.MemberIndex(test.memberIndex),
 			}
 
 			// Reinitialize chain to reset block counter
@@ -111,21 +116,14 @@ func TestSubmitDKGResult(t *testing.T) {
 // member loop should be aborted and result published by the first member should
 // be returned.
 func TestConcurrentPublishResult(t *testing.T) {
-	calculateExpectedBlockEnd := func(initialBlock, expectedDuration uint64) uint64 {
-		return initialBlock + expectedDuration
-	}
-
 	threshold := 2
 	groupSize := 5
-	blockStep := uint64(2) // t_step
 
 	member1 := &SubmittingMember{
-		index:     group.MemberIndex(1), // P1
-		blockStep: blockStep,
+		index: group.MemberIndex(1), // P1
 	}
 	member2 := &SubmittingMember{
-		index:     group.MemberIndex(4), // P4
-		blockStep: blockStep,
+		index: group.MemberIndex(4), // P4
 	}
 
 	signatures := map[group.MemberIndex]operator.Signature{
@@ -139,8 +137,8 @@ func TestConcurrentPublishResult(t *testing.T) {
 		resultToPublish2  *relayChain.DKGResult
 		requestID1        *big.Int
 		requestID2        *big.Int
-		expectedDuration1 uint64 // index * t_step
-		expectedDuration2 uint64 // index * t_step
+		expectedDuration1 func(tStep uint64) uint64 // index * t_step
+		expectedDuration2 func(tStep uint64) uint64 // index * t_step
 	}{
 		"two members publish the same results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -151,8 +149,8 @@ func TestConcurrentPublishResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: 0, // (P1-1) * t_step
-			expectedDuration2: 0, // result already published by member 1 -1
+			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
+			expectedDuration2: func(tStep uint64) uint64 { return 0 }, // result already published by member 1 -1
 		},
 		"two members publish different results": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -163,8 +161,8 @@ func TestConcurrentPublishResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(11),
 			requestID2:        big.NewInt(11),
-			expectedDuration1: 0, // (P1-1) * t_step
-			expectedDuration2: 0, // result already published by member 1 -1
+			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
+			expectedDuration2: func(tStep uint64) uint64 { return 0 }, // result already published by member 1 -1
 		},
 		"two members publish the same results for different Request IDs": {
 			resultToPublish1: &relayChain.DKGResult{
@@ -175,8 +173,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 			},
 			requestID1:        big.NewInt(12),
 			requestID2:        big.NewInt(13),
-			expectedDuration1: 0,                                       // (P1-1) * t_step
-			expectedDuration2: (uint64(member2.index) - 1) * blockStep, // (P4-1) * t_step
+			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
+			expectedDuration2: func(tStep uint64) uint64 {
+				return (uint64(member2.index) - 1) * tStep // (P4-1) * t_step
+			},
 		},
 	}
 	for testName, test := range tests {
@@ -187,10 +187,15 @@ func TestConcurrentPublishResult(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			expectedBlockEnd1 :=
-				calculateExpectedBlockEnd(initialBlock, test.expectedDuration1)
-			expectedBlockEnd2 :=
-				calculateExpectedBlockEnd(initialBlock, test.expectedDuration2)
+			config, err := chainHandle.ThresholdRelay().GetConfig()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			tStep := uint64(config.ResultPublicationBlockStep)
+
+			expectedBlockEnd1 := initialBlock + test.expectedDuration1(tStep)
+			expectedBlockEnd2 := initialBlock + test.expectedDuration2(tStep)
 
 			result1Chan := make(chan uint64)
 			defer close(result1Chan)
