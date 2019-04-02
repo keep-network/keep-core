@@ -106,7 +106,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.isBelow(Number(after), testGroupsNumber - 1, "Number of groups should be at least 2 below the test group numbers");
   });
 
-  it("nuber of groups should not be able to go below the active groups threshold", async function() {
+  it("number of groups should not be able to go below the active groups threshold", async function() {
     for (var i = 1; i <= 10; i++)
       await keepGroupImplV1.submitGroupPublicKey([i], i);
 
