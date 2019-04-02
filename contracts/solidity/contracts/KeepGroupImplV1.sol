@@ -59,7 +59,7 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    uint internal _minimumGroupsThreshold = 1;
+    uint internal _activeGroupsThreshold = 1;
     // _groupExpirationTimeout is the time in block after which a group expires
     uint internal _groupExpirationTimeout = 1;
     // _expiredOffset is pointing to the first active group, it is also the
@@ -344,7 +344,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
         uint groupExpirationTimeout,
-        uint minimumGroupsThreshold
+        uint activeGroupsThreshold
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -358,7 +358,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
         _groupExpirationTimeout = groupExpirationTimeout;
-        _minimumGroupsThreshold = minimumGroupsThreshold;
+        _activeGroupsThreshold = activeGroupsThreshold;
     }
 
     /**
@@ -489,7 +489,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 activeGroupsNumber = _groups.length - _expiredOffset;
         uint256 selectedGroup = previousEntry % activeGroupsNumber;
         while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
-            if (activeGroupsNumber > _minimumGroupsThreshold) {
+            if (activeGroupsNumber > _activeGroupsThreshold) {
                 if (selectedGroup == 0) {
                     _expiredOffset++;
                     activeGroupsNumber--;
