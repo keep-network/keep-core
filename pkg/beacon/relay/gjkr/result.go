@@ -48,14 +48,6 @@ func (r *Result) Equals(r2 *Result) bool {
 	return true
 }
 
-// publicKeysEqual checks if two public keys are equal.
-func publicKeysEqual(expectedKey *bn256.G2, actualKey *bn256.G2) bool {
-	if expectedKey != nil && actualKey != nil {
-		return expectedKey.String() == actualKey.String()
-	}
-	return expectedKey == actualKey
-}
-
 // memberIDSlicesEqual checks if two slices of MemberIDs are equal. Slices need
 // to have the same length and have the same order of entries.
 func memberIDSlicesEqual(expectedSlice []group.MemberIndex, actualSlice []group.MemberIndex) bool {

@@ -9,7 +9,7 @@ import (
 )
 
 func TestGenerateResult(t *testing.T) {
-	threshold := 3
+	threshold := 5
 	groupSize := 8
 
 	var tests = map[string]struct {
@@ -92,9 +92,12 @@ func TestGenerateResult(t *testing.T) {
 
 				resultToPublish := member.Result()
 
-				if expectedResult.GroupPublicKey != resultToPublish.GroupPublicKey {
+				if !publicKeysEqual(
+					expectedResult.GroupPublicKey,
+					resultToPublish.GroupPublicKey,
+				) {
 					t.Fatalf(
-						"Unexpected group public key\nExpected: [%v]\nActual: [%v]\n",
+						"Unexpected group public key\nExpected: [%v]\nActual:   [%v]\n",
 						expectedResult.GroupPublicKey,
 						resultToPublish.GroupPublicKey,
 					)
@@ -109,6 +112,13 @@ func TestGenerateResult(t *testing.T) {
 			}
 		})
 	}
+}
+
+func publicKeysEqual(expectedKey *bn256.G2, actualKey *bn256.G2) bool {
+	if expectedKey != nil && actualKey != nil {
+		return expectedKey.String() == actualKey.String()
+	}
+	return expectedKey == actualKey
 }
 
 func initializeFinalizingMembersGroup(threshold, groupSize int) ([]*FinalizingMember, error) {
