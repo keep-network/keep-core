@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
-import "./helpers/ThrowProxy.sol";
+import "../contracts/utils/ThrowProxy.sol";
 import "../contracts/KeepGroupImplV1.sol";
 
 
