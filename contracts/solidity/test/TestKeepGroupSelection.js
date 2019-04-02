@@ -18,11 +18,12 @@ contract('TestKeepGroupSelection', function(accounts) {
     randomBeaconValue,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
-    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
-    staker1 = accounts[0], tickets1,
-    staker2 = accounts[1], tickets2,
-    staker3 = accounts[2], tickets3,
-    staker4 = accounts[3], tickets4;
+    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
+    owner = accounts[0], magpie = accounts[1], signature, delegation,
+    operator1 = accounts[2], tickets1,
+    operator2 = accounts[3], tickets2,
+    operator3 = accounts[4], tickets3,
+    operator4 = accounts[5], tickets4;
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -30,7 +31,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     // Initialize staking contract under proxy
     stakingProxy = await StakingProxy.new();
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
-    await stakingProxy.authorizeContract(stakingContract.address, {from: staker1})
+    await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
 
     // Initialize Keep Random Beacon contract
     keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
@@ -57,25 +58,29 @@ contract('TestKeepGroupSelection', function(accounts) {
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
-    // Stake tokens as account one so it has minimum stake to be able to get into a group.
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker1});
-    tickets1 = generateTickets(randomBeaconValue, staker1, 2000);
+    // Stake delegate tokens to operator1
+    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator1)).substr(2), 'hex');
+    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+    await token.approveAndCall(stakingContract.address, minimumStake*2000, delegation, {from: owner});
+    tickets1 = generateTickets(randomBeaconValue, operator1, 2000);
 
-    // Send tokens to staker2 and stake
-    await token.transfer(staker2, minimumStake*2000, {from: staker1});
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, "0x00", {from: staker2});
-    tickets2 = generateTickets(randomBeaconValue, staker2, 2000);
+    // Stake delegate tokens to operator2
+    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator2)).substr(2), 'hex');
+    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+    await token.approveAndCall(stakingContract.address, minimumStake*2000, delegation, {from: owner});
+    tickets2 = generateTickets(randomBeaconValue, operator2, 2000);
 
-    // Send tokens to staker3 and stake
-    await token.transfer(staker3, minimumStake*3000, {from: staker1});
-    await token.approveAndCall(stakingContract.address, minimumStake*3000, "0x00", {from: staker3});
-    tickets3 = generateTickets(randomBeaconValue, staker3, 3000);
+    // Stake delegate tokens to operator3
+    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator3)).substr(2), 'hex');
+    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+    await token.approveAndCall(stakingContract.address, minimumStake*3000, delegation, {from: owner});
+    tickets3 = generateTickets(randomBeaconValue, operator3, 3000);
 
   });
 
   it("should be able to get staking weight", async function() {
-    assert.equal(web3.utils.toBN(2000).eq(await keepGroupImplViaProxy.stakingWeight(staker1)), true, "Should have expected staking weight.");
-    assert.equal(web3.utils.toBN(3000).eq(await keepGroupImplViaProxy.stakingWeight(staker3)), true, "Should have expected staking weight.");
+    assert.equal(web3.utils.toBN(2000).eq(await keepGroupImplViaProxy.stakingWeight(operator1)), true, "Should have expected staking weight.");
+    assert.equal(web3.utils.toBN(3000).eq(await keepGroupImplViaProxy.stakingWeight(operator3)), true, "Should have expected staking weight.");
   });
 
   it("should fail to get selected tickets before challenge period is over", async function() {
@@ -89,7 +94,7 @@ contract('TestKeepGroupSelection', function(accounts) {
   it("should be able to get selected tickets and participants after challenge period is over", async function() {
 
     for (let i = 0; i < groupSize*2; i++) {
-      await keepGroupImplViaProxy.submitTicket(tickets1[i].value, staker1, tickets1[i].virtualStakerIndex, {from: staker1});
+      await keepGroupImplViaProxy.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
 
     mineBlocks(timeoutChallenge);
@@ -104,13 +109,13 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     let tickets = [];
 
-    await keepGroupImplViaProxy.submitTicket(tickets1[0].value, staker1, tickets1[0].virtualStakerIndex);
+    await keepGroupImplViaProxy.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
     tickets.push(tickets1[0].value);
 
-    await keepGroupImplViaProxy.submitTicket(tickets2[0].value, staker2, tickets2[0].virtualStakerIndex, {from: staker2});
+    await keepGroupImplViaProxy.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
     tickets.push(tickets2[0].value);
 
-    await keepGroupImplViaProxy.submitTicket(tickets3[0].value, staker3, tickets3[0].virtualStakerIndex, {from: staker3});
+    await keepGroupImplViaProxy.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
     tickets.push(tickets3[0].value);
 
     tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
@@ -124,26 +129,26 @@ contract('TestKeepGroupSelection', function(accounts) {
   });
 
   it("should be able to submit a ticket during ticket submission period", async function() {
-    await keepGroupImplViaProxy.submitTicket(tickets1[0].value, staker1, tickets1[0].virtualStakerIndex);
+    await keepGroupImplViaProxy.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
     let proof = await keepGroupImplViaProxy.getTicketProof(tickets1[0].value);
-    assert.equal(proof[1].eq(web3.utils.toBN(staker1)), true , "Should be able to get submitted ticket proof.");
+    assert.equal(proof[1].eq(web3.utils.toBN(operator1)), true , "Should be able to get submitted ticket proof.");
     assert.equal(proof[2], tickets1[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
   });
 
   it("should be able to verify a ticket", async function() {
 
-    await keepGroupImplViaProxy.submitTicket(tickets1[0].value, staker1, 1);
+    await keepGroupImplViaProxy.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
     assert.equal(await keepGroupImplViaProxy.cheapCheck(
-      staker1, staker1, 1
+      operator1, operator1, 1
     ), true, "Should be able to verify a valid ticket.");
     
     assert.equal(await keepGroupImplViaProxy.costlyCheck(
-      staker1, tickets1[0].value, staker1, tickets1[0].virtualStakerIndex
+      operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
     ), true, "Should be able to verify a valid ticket.");
   
     assert.equal(await keepGroupImplViaProxy.costlyCheck(
-      staker1, 0, staker1, tickets1[0].virtualStakerIndex
+      operator1, 0, operator1, tickets1[0].virtualStakerIndex
     ), false, "Should fail verifying invalid ticket.");
 
   });

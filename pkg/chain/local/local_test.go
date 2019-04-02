@@ -175,6 +175,80 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 }
 
+func TestLocalOnRelayEntryGenerated(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Entry)
+
+	subscription, err := chainHandle.OnRelayEntryGenerated(
+		func(entry *event.Entry) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	expectedEntry := &event.Entry{
+		RequestID:   big.NewInt(42),
+		Value:       big.NewInt(19),
+		GroupPubKey: []byte("1"),
+		Seed:        big.NewInt(30),
+		BlockNumber: uint64(123),
+	}
+
+	chainHandle.SubmitRelayEntry(expectedEntry)
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedEntry) {
+			t.Fatalf(
+				"Unexpected relay entry\nExpected: [%v]\nActual:   [%v]",
+				expectedEntry,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Entry)
+
+	subscription, err := chainHandle.OnRelayEntryGenerated(
+		func(entry *event.Entry) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	chainHandle.SubmitRelayEntry(
+		&event.Entry{},
+	)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockHeight      int

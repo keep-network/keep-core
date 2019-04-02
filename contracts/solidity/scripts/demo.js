@@ -31,43 +31,28 @@ module.exports = async function() {
     stakingProxy.authorizeContract(tokenGrant.address);
   }
 
-  // KEEP tokens has been transfered to the first account on the list 
-  // during the KEEP token contract deployment. Here, we stake those tokens.
-  let staked = await token.approveAndCall(
-    tokenStaking.address, 
-    formatAmount(1000000, 18), 
-    "0x00",
-    {from: accounts[0]}
-  ).catch((err) => {
-    console.log(`could not stake KEEP tokens for ${accounts[0]}: ${err}`);
-  });
+  let owner = accounts[0]; // The address of an owner of the staked tokens.
+  let magpie = accounts[0]; // The address where the rewards for participation are sent.
 
-  if (staked) {
-    console.log(`successfully staked KEEP tokens for account ${accounts[0]}`)
-  }
+  // Stake delegate tokens for each account as an operator,
+  // including the first account where owner operating for themself.
+  for(let i = 0; i < accounts.length; i++) {
+    let operator = accounts[i]
 
-  // Transfer KEEP tokens to all other accounts and stake them.
-  for(let i = 1; i < accounts.length; i++) {    
-    let account = accounts[i]
-
-    await token.transfer(
-      account, 
-      formatAmount(1000000, 18)
-    ).catch((err) => { 
-      console.log(`could not transfer KEEP tokens for ${account}: ${err}`); 
-    });
+    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
+    let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
     staked = await token.approveAndCall(
       tokenStaking.address, 
       formatAmount(1000000, 18),
-      "0x00",
-      {from: account}
+      delegation,
+      {from: owner}
     ).catch((err) => {
-      console.log(`could not stake KEEP tokens for ${account}: ${err}`);
+      console.log(`could not stake KEEP tokens for ${operator}: ${err}`);
     });
 
     if (staked) {
-      console.log(`successfully staked KEEP tokens for account ${account}`)
+      console.log(`successfully staked KEEP tokens for account ${operator}`)
     }
   }
 
@@ -85,4 +70,6 @@ module.exports = async function() {
   amount = formatAmount(1000, 18);
   await token.approve(tokenGrant.address, amount, {from: accounts[1]});
   await tokenGrant.grant(amount, accounts[0], vestingDuration, start, cliff, revocable, {from: accounts[1]});
+
+  process.exit();
 };
