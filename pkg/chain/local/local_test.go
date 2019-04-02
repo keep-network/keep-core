@@ -249,6 +249,87 @@ func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
 	}
 }
 
+func TestLocalOnGroupRegistered(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.GroupRegistration)
+
+	subscription, err := chainHandle.OnGroupRegistered(
+		func(entry *event.GroupRegistration) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	expectedGroupRegistrationEvent := &event.GroupRegistration{
+		GroupPublicKey: []byte("1"),
+		RequestID:      big.NewInt(42),
+	}
+
+	chainHandle.SubmitDKGResult(
+		big.NewInt(42),
+		1,
+		&relaychain.DKGResult{
+			GroupPublicKey: []byte("1"),
+		},
+		nil,
+	)
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedGroupRegistrationEvent) {
+			t.Fatalf(
+				"Unexpected group registration entry\nExpected: [%v]\nActual:   [%v]",
+				expectedGroupRegistrationEvent,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.GroupRegistration)
+
+	subscription, err := chainHandle.OnGroupRegistered(
+		func(entry *event.GroupRegistration) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	chainHandle.SubmitDKGResult(
+		big.NewInt(42),
+		1,
+		&relaychain.DKGResult{},
+		nil,
+	)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// // expected execution of goroutine
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockHeight      int
