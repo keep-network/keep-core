@@ -61,7 +61,7 @@ contract KeepGroupImplV1 is Ownable {
 
     uint internal _minimumGroupsThreshold = 1;
     // _groupExpirationTimeout is the time in block after which a group expires
-    uint internal _groupExpirationTimeout = 1000;
+    uint internal _groupExpirationTimeout = 1;
     // _expiredOffset is pointing to the first active group, it is also the
     // expired groups counter
     uint internal _expiredOffset = 0;
@@ -357,6 +357,8 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
+        _groupExpirationTimeout = groupExpirationTimeout;
+        _minimumGroupsThreshold = minimumGroupsThreshold;
     }
 
     /**
